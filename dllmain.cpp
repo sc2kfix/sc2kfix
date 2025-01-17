@@ -1,8 +1,6 @@
 // sc2kfix dllmain.cpp: all the magic happens here
 // (c) 2025 github.com/araxestroy - released under the MIT license
 
-#define DEBUG
-
 #define GETPROC(i, name) fpHookList[i] = GetProcAddress(hRealWinMM, #name);
 #define DEFPROC(i, name) extern "C" __declspec(naked) void __stdcall _##name() { __asm { jmp fpHookList[i*4] }};
 
