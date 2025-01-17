@@ -9,4 +9,7 @@ The following issues are patched by this DLL:
 * Frozen palette cycling animations
 
 ## How do I use it?
-Simply copy the winmm.dll from the latest release to the same folder as simcity.exe, then start the game.
+Simply copy the winmm.dll from the latest release to the same folder as simcity.exe, then start the game. If the lights in the game's splash screen are animated, it's working!
+
+## To-do/known issues
+* There seems to be an earlier release of the Special Edition CD-ROM with an August 1995 timestamp. If someone has a copy of it please let me know so I can add support for it.
