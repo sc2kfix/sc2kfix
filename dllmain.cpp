@@ -7,6 +7,7 @@
 #undef UNICODE
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <psapi.h>
 
 #include "winmm_exports.h"
 
@@ -55,6 +56,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         MessageBox(GetActiveWindow(), "Hooked winmm.dll!", "sc2kfix", MB_OK | MB_ICONINFORMATION);
 #endif
 
+        // Make sure this isn't SCURK
+        char szModuleBaseName[200];
+        GetModuleBaseName(GetCurrentProcess(), NULL, szModuleBaseName, 200);
+        if (!_stricmp(szModuleBaseName, "winscurk.exe"))
+            return true;
+
         // Palette animation fix
         DWORD dummy;
         VirtualProtect((LPVOID)0x004571D3, 30, PAGE_EXECUTE_READWRITE, &dummy);
@@ -66,6 +73,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         VirtualProtect((LPVOID)0x004A0559, 2, PAGE_EXECUTE_READWRITE, &dummy);
         *(LPBYTE)0x004A0559 = 0xEB;
         *(LPBYTE)0x004A055A = 0xEB;
+
+        // Remove palette warnings
+        VirtualProtect((LPVOID)0x00408A79, 2, PAGE_EXECUTE_READWRITE, &dummy);
+        VirtualProtect((LPVOID)0x00408ABE, 18, PAGE_EXECUTE_READWRITE, &dummy);
+        *(LPBYTE)0x00408A79 = 0x90;
+        *(LPBYTE)0x00408A7A = 0x90;
+        memset((LPVOID)0x00408ABE, 0x90, 18);   // nop nop nop nop nop
 
 #ifdef DEBUG
         MessageBox(GetActiveWindow(), "Patched SC2K!", "sc2kfix", MB_OK | MB_ICONINFORMATION);
