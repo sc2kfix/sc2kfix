@@ -24,8 +24,8 @@ BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 	case WM_INITDIALOG:
 		// These both come from the game themselves.
 		// I don't know if they're used anywhere, but they're there.
-		SetDlgItemText(hwndDlg, IDC_EDIT1, "Marvin Maxis");
-		SetDlgItemText(hwndDlg, IDC_EDIT2, "Q37 Space Modulator Mfg.");
+		SetDlgItemText(hwndDlg, IDC_EDIT_MAYOR, "Marvin Maxis");
+		SetDlgItemText(hwndDlg, IDC_EDIT_COMPANY, "Q37 Space Modulator Mfg.");
 
 		// Center the dialog box
 		hwndDesktop = GetDesktopWindow();
@@ -41,9 +41,9 @@ BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case IDOK:
-			if (!GetDlgItemText(hwndDlg, IDC_EDIT1, szMayorName, 63))
+			if (!GetDlgItemText(hwndDlg, IDC_EDIT_MAYOR, szMayorName, 63))
 				strcpy_s(szMayorName, 64, "Marvin Maxis");
-			if (!GetDlgItemText(hwndDlg, IDC_EDIT2, szCompanyName, 63))
+			if (!GetDlgItemText(hwndDlg, IDC_EDIT_COMPANY, szCompanyName, 63))
 				strcpy_s(szCompanyName, 64, "Q37 Space Modulator Mfg.");
 			EndDialog(hwndDlg, wParam);
 			return TRUE;
@@ -66,7 +66,7 @@ BOOL DoRegistryCheckAndInstall(void) {
 		// Fake an install.
 		
 		// Prompt the user for the mayor and company names
-		DialogBox(hSC2KFixModule, MAKEINTRESOURCE(IDD_DIALOG1), NULL, InstallDialogProc);
+		DialogBox(hSC2KFixModule, MAKEINTRESOURCE(IDD_INSTALL), NULL, InstallDialogProc);
 
 #ifdef DEBUG
 		char msg[300];
