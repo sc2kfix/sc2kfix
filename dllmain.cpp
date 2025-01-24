@@ -4,20 +4,24 @@
 #define GETPROC(i, name) fpHookList[i] = GetProcAddress(hRealWinMM, #name);
 #define DEFPROC(i, name) extern "C" __declspec(naked) void __stdcall _##name() { __asm { jmp fpHookList[i*4] }};
 
-#define VERSION_UNKNOWN 0
-#define VERSION_1995    1
-#define VERSION_1996    2
-
 #undef UNICODE
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <psapi.h>
 #include <stdio.h>
 
+#include "sc2kfix.h"
+#include "resource.h"
 #include "winmm_exports.h"
 
+// From registry_install.cpp
+extern char szMayorName[64];
+extern char szCompanyName[64];
+
+// Global variables that we need to keep handy
 HMODULE hRealWinMM = NULL;
 HMODULE hSC2KAppModule = NULL;
+HMODULE hSC2KFixModule = NULL;
 FARPROC fpHookList[180] = { NULL };
 DWORD dwDetectedVersion = VERSION_UNKNOWN;
 DWORD dwSC2KAppTimestamp = 0;
@@ -53,6 +57,9 @@ BYTE bAnimationPatch1995[30] = {
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
     switch (reason) {
     case DLL_PROCESS_ATTACH:
+        // Save our own module handle
+        hSC2KFixModule = hModule;
+
         // Find the actual WinMM library
         char buf[200];
         GetSystemDirectory(buf, 200);
@@ -101,6 +108,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             MessageBox(GetActiveWindow(), msg, "sc2kfix warning", MB_OK | MB_ICONWARNING);
         }
 
+        // Registry check
+        DoRegistryCheckAndInstall();
 
         // Palette animation fix
         LPVOID lpAnimationFix;
