@@ -14,6 +14,7 @@ The following issues are patched by this DLL:
    * Make sure to copy the SC2K folder somewhere writable, as the game stores its saves in a subfolder of that directory.
 2. [Download the latest release](https://github.com/araxestroy/sc2kfix/releases) or build it from source. The whole plugin is a single file called `winmm.dll`.
 3. Copy the `winmm.dll` to your SC2K folder. It should end up in the same folder as your `simcity.exe` executable.
+   * If you're running the game on Wine/Proton, you'll need to set a DLL override for `simcity.exe` to use "native, then builtin" load order for the `winmm` library, otherwise Wine/Proton will not load the local `winmm.dll`.
 4. Play the game! On the first run of a new install, the game will prompt you for a mayor and organization name. This simulates the original SimCity 2000 installer.
 
 
