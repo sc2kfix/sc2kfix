@@ -68,7 +68,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         // Load the actual WinMM library
         if (!(hRealWinMM = LoadLibrary(buf))) {
             MessageBox(GetActiveWindow(), "Could not load winmm.dll (???)", "sc2kfix error", MB_OK | MB_ICONERROR);
-            return false;
+            return FALSE;
         }
 
         // Retrieve the list of functions we need to pass through to WinMM
@@ -82,13 +82,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         char szModuleBaseName[200];
         GetModuleBaseName(GetCurrentProcess(), NULL, szModuleBaseName, 200);
         if (!_stricmp(szModuleBaseName, "winscurk.exe"))
-            return true;
+            return TRUE;
 
         // Determine what version of SC2K this is
         // HACK: there's probably a better way to do this
         if (!(hSC2KAppModule = GetModuleHandle(NULL))) {
             MessageBox(GetActiveWindow(), "Could not GetModuleHandle(NULL) (???)", "sc2kfix error", MB_OK | MB_ICONERROR);
-            return false;
+            return FALSE;
         }
         dwSC2KAppTimestamp = ((PIMAGE_NT_HEADERS)(((PIMAGE_DOS_HEADER)hSC2KAppModule)->e_lfanew + (UINT_PTR)hSC2KAppModule))->FileHeader.TimeDateStamp;
         switch (dwSC2KAppTimestamp) {
@@ -182,7 +182,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
     case DLL_PROCESS_DETACH:
         break;
     }
-    return true;
+    return TRUE;
 }
 
 // Exports for WinMM hook
