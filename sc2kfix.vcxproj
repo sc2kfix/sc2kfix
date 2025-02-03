@@ -61,6 +61,7 @@
     <ClInclude Include="winmm_exports.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="console.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="registry_install.cpp" />
   </ItemGroup>

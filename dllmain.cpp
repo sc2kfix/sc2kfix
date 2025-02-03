@@ -9,6 +9,7 @@
 #include <windows.h>
 #include <psapi.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "sc2kfix.h"
 #include "resource.h"
@@ -54,6 +55,31 @@ BYTE bAnimationPatch1995[30] = {
     0x00, 0x5D, 0x5F, 0x5E, 0x5B, 0xC3
 };
 
+void DebugOutput(const char* fmt, ...) {
+    va_list args;
+    int len;
+    char* buf;
+
+    va_start(args, fmt);
+    len = _vscprintf(fmt, args) + 1;
+    buf = (char*)malloc(len);
+    if (buf) {
+        vsprintf_s(buf, len, fmt, args);
+
+#ifdef DEBUG
+        MessageBox(GetActiveWindow(), buf, "sc2kfix", MB_OK | MB_ICONINFORMATION);
+#endif
+
+#ifdef HOOK_ENABLED
+        printf("%s\n", buf);
+#endif
+        
+        free(buf);
+    }
+
+    va_end(args);
+}
+
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
     switch (reason) {
     case DLL_PROCESS_ATTACH:
@@ -74,9 +100,22 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         // Retrieve the list of functions we need to pass through to WinMM
         ALLEXPORTS(GETPROC);
 
-#ifdef DEBUG
-        MessageBox(GetActiveWindow(), "DEBUG: Hooked winmm.dll!", "sc2kfix", MB_OK | MB_ICONINFORMATION);
+#ifdef HOOK_ENABLED
+        // Allocate ourselves a console and redirect libc stdio to it
+        {
+            AllocConsole();
+            SetConsoleTitle("sc2kfix console");
+            FILE* fdDummy = NULL;
+            freopen_s(&fdDummy, "CONIN$", "r", stdin);
+            freopen_s(&fdDummy, "CONOUT$", "w", stdout);
+            freopen_s(&fdDummy, "CONOUT$", "w", stderr);
+            printf("sc2kfix version %s started - https://github.com/araxestroy/sc2kfix\n\n", SC2KFIX_VERSION);
+
+            hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, NULL);
+        }
 #endif
+
+        DebugOutput("DEBUG: Hooked winmm.dll!");
 
         // Make sure this isn't SCURK
         char szModuleBaseName[200];
@@ -173,9 +212,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         *(LPBYTE)((UINT_PTR)lpWarningFix1 + 1) = 0x90;
         memset((LPVOID)lpWarningFix2, 0x90, 18);   // nop nop nop nop nop
 
-#ifdef DEBUG
-        MessageBox(GetActiveWindow(), "DEBUG: Patched SC2K!", "sc2kfix", MB_OK | MB_ICONINFORMATION);
-#endif
+        DebugOutput("DEBUG: Patched SC2K!");
 
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
