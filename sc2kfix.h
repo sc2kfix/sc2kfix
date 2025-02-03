@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <windows.h>
+
 // Turning this on spits out a bunch of debug dialog boxes. You have been warned.
 // #define DEBUG
 
