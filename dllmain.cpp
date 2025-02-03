@@ -26,6 +26,7 @@ HMODULE hSC2KFixModule = NULL;
 FARPROC fpHookList[180] = { NULL };
 DWORD dwDetectedVersion = VERSION_UNKNOWN;
 DWORD dwSC2KAppTimestamp = 0;
+const char* szSC2KFixVersion = SC2KFIX_VERSION;
 
 // This code replaces the original stack cleanup and return after the engine
 // cycles the animation palette.
@@ -109,7 +110,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             freopen_s(&fdDummy, "CONIN$", "r", stdin);
             freopen_s(&fdDummy, "CONOUT$", "w", stdout);
             freopen_s(&fdDummy, "CONOUT$", "w", stderr);
-            printf("sc2kfix version %s started - https://github.com/araxestroy/sc2kfix\n\n", SC2KFIX_VERSION);
+            printf("sc2kfix version %s started - https://github.com/araxestroy/sc2kfix\n\n", szSC2KFixVersion);
 
             hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, NULL);
         }
