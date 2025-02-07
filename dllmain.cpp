@@ -149,7 +149,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         ConsoleLog("INFO:  SC2K session started at %lld.\n", time(NULL));
 
 #ifdef CONSOLE_ENABLED
-        ConsoleLog("INFO:  Spawned console session.\n")
+        ConsoleLog("INFO:  Spawned console session.\n");
         CmdShowDebug();
         hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, NULL);
 #endif
