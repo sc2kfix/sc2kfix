@@ -53,16 +53,17 @@ extern "C" BOOL _stdcall Hook_mciSendCommandA(void* pReturnAddress, MCIERROR* re
     case MCI_OPEN: {
         if (mci_debug) {
             MCI_OPEN_PARMS* pMCIOpenParms = (MCI_OPEN_PARMS*)dwParam;
-            ConsoleLog( "    MCI_OPEN_PARMS {\n"
-                        "        dwCallback       = 0x%08X,\n"
-                        "        wDeviceID        = 0x%08X,\n"
-                        "        lpstrDeviceType  = %s,\n"
-                        "        lpstrElementName = %s,\n"
-                        "        lpstrAlias       = %s\n"
-                        "    }\n\n", pMCIOpenParms->dwCallback, pMCIOpenParms->wDeviceID,
-                        ((UINT)(pMCIOpenParms->lpstrDeviceType) > 4096 ? pMCIOpenParms->lpstrDeviceType : HexPls((UINT)(pMCIOpenParms->lpstrDeviceType))),
-                        pMCIOpenParms->lpstrElementName,
-                        ((UINT)(pMCIOpenParms->lpstrAlias) == 0 ? pMCIOpenParms->lpstrAlias : "NULL"));
+			ConsoleLog(
+                "MCI_OPEN_PARMS {\n"
+				"    dwCallback       = 0x%08X,\n"
+				"    wDeviceID        = 0x%08X,\n"
+				"    lpstrDeviceType  = %s,\n"
+				"    lpstrElementName = %s,\n"
+				"    lpstrAlias       = %s\n"
+				"}\n\n", pMCIOpenParms->dwCallback, pMCIOpenParms->wDeviceID,
+				((UINT)(pMCIOpenParms->lpstrDeviceType) > 4096 ? pMCIOpenParms->lpstrDeviceType : HexPls((UINT)(pMCIOpenParms->lpstrDeviceType))),
+				pMCIOpenParms->lpstrElementName,
+				((UINT)(pMCIOpenParms->lpstrAlias) == 0 ? pMCIOpenParms->lpstrAlias : "NULL"));
         }
         break;
     }
@@ -70,12 +71,13 @@ extern "C" BOOL _stdcall Hook_mciSendCommandA(void* pReturnAddress, MCIERROR* re
     case MCI_STATUS: {
         if (mci_debug) {
             MCI_STATUS_PARMS* pMCIStatusParms = (MCI_STATUS_PARMS*)dwParam;
-            ConsoleLog( "    MCI_STATUS_PARMS {\n"
-                        "        dwCallback = 0x%08X,\n"
-                        "        dwReturn   = 0x%08X,\n"
-                        "        dwItem     = 0x%08X,\n"
-                        "        dwTrack    = 0x%08X\n"
-                        "    }\n\n", pMCIStatusParms->dwCallback, pMCIStatusParms->dwReturn, pMCIStatusParms->dwItem, pMCIStatusParms->dwTrack);
+			ConsoleLog(
+                "MCI_STATUS_PARMS {\n"
+				"    dwCallback = 0x%08X,\n"
+				"    dwReturn   = 0x%08X,\n"
+				"    dwItem     = 0x%08X,\n"
+				"    dwTrack    = 0x%08X\n"
+				"}\n\n", pMCIStatusParms->dwCallback, pMCIStatusParms->dwReturn, pMCIStatusParms->dwItem, pMCIStatusParms->dwTrack);
         }
         break;
     }
@@ -83,11 +85,12 @@ extern "C" BOOL _stdcall Hook_mciSendCommandA(void* pReturnAddress, MCIERROR* re
     case MCI_PLAY: {
         if (mci_debug) {
             MCI_PLAY_PARMS* pMCIPlayParms = (MCI_PLAY_PARMS*)dwParam;
-            ConsoleLog( "    MCI_PLAY_PARMS {\n"
-                        "        dwCallback = 0x%08X,\n"
-                        "        dwFrom     = 0x%08X,\n"
-                        "        dwTo       = 0x%08X\n"
-                        "    }\n\n", pMCIPlayParms->dwCallback, pMCIPlayParms->dwFrom, pMCIPlayParms->dwTo);
+			ConsoleLog(
+                "MCI_PLAY_PARMS {\n"
+				"    dwCallback = 0x%08X,\n"
+				"    dwFrom     = 0x%08X,\n"
+				"    dwTo       = 0x%08X\n"
+				"}\n\n", pMCIPlayParms->dwCallback, pMCIPlayParms->dwFrom, pMCIPlayParms->dwTo);
         }
         break;
     }
