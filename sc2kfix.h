@@ -20,7 +20,7 @@
 BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 BOOL DoRegistryCheckAndInstall(void);
 const char* HexPls(UINT uNumber);
-void DebugOutput(const char* fmt, ...);
+void ConsoleLog(const char* fmt, ...);
 
 DWORD WINAPI ConsoleThread(LPVOID lpParameter);
 

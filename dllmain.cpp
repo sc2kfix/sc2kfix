@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <intrin.h>
+#include <time.h>
 
 #include "sc2kfix.h"
 #include "resource.h"
@@ -32,6 +33,7 @@ FARPROC fpWinMMHookList[180] = { NULL };
 DWORD dwDetectedVersion = SC2KVERSION_UNKNOWN;
 DWORD dwSC2KAppTimestamp = 0;
 const char* szSC2KFixVersion = SC2KFIX_VERSION;
+FILE* fdLog = NULL;
 
 // This code replaces the original stack cleanup and return after the engine
 // cycles the animation palette.
@@ -67,7 +69,7 @@ const char* HexPls(UINT uNumber) {
     return szRet;
 }
 
-void DebugOutput(const char* fmt, ...) {
+void ConsoleLog(const char* fmt, ...) {
     va_list args;
     int len;
     char* buf;
@@ -78,12 +80,11 @@ void DebugOutput(const char* fmt, ...) {
     if (buf) {
         vsprintf_s(buf, len, fmt, args);
 
-#ifdef DEBUGALL
-        MessageBox(GetActiveWindow(), buf, "sc2kfix", MB_OK | MB_ICONINFORMATION);
-#endif
+        if (fdLog)
+            fprintf(fdLog, "%s", buf);
 
-#ifdef HOOK_ENABLED
-        printf("%s\n", buf);
+#ifdef CONSOLE_ENABLED
+        printf("%s", buf);
 #endif
         
         free(buf);
@@ -124,6 +125,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             return FALSE;
         }
 
+        // Open a log file. If it fails, we handle that safely elsewhere
+        fopen_s(&fdLog, "sc2kfix.log", "w");
+
 #ifdef CONSOLE_ENABLED
         // Allocate ourselves a console and redirect libc stdio to it
         // TODO: make this a command-line option instead of a #define
@@ -134,17 +138,20 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             freopen_s(&fdDummy, "CONIN$", "r", stdin);
             freopen_s(&fdDummy, "CONOUT$", "w", stdout);
             freopen_s(&fdDummy, "CONOUT$", "w", stderr);
-            printf("sc2kfix version %s started - https://github.com/araxestroy/sc2kfix\n", szSC2KFixVersion);
-
-#ifdef DEBUGALL
-            printf("DEBUG: sc2kfix built with DEBUGALL. Strap in.\n");
-#endif
-            
-            CmdShowDebug();
-            printf("\n");
-
-            hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, NULL);
         }
+#endif
+
+        ConsoleLog("sc2kfix version %s started - https://github.com/araxestroy/sc2kfix\n", szSC2KFixVersion);
+#ifdef DEBUGALL
+        ConsoleLog("DEBUG: sc2kfix built with DEBUGALL. Strap in.\n");
+#endif
+
+        ConsoleLog("INFO:  SC2K session started at %lld.\n", time(NULL));
+
+#ifdef CONSOLE_ENABLED
+        ConsoleLog("INFO:  Spawned console session.\n")
+        CmdShowDebug();
+        hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, NULL);
 #endif
 
         // Determine what version of SC2K this is
@@ -165,12 +172,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             sprintf_s(msg, 300, "Could not detect SC2K version (got timestamp %08Xd). Your game will probably crash.\r\n\r\n"
                 "Please let us know in a GitHub issue what version of the game you're running so we can look into this.", dwSC2KAppTimestamp);
             MessageBox(GetActiveWindow(), msg, "sc2kfix warning", MB_OK | MB_ICONWARNING);
-            printf("WARN:  SC2K version could not be detected (got timestamp 0x%08X). Game will probably crash.\n", dwSC2KAppTimestamp);
+            ConsoleLog("WARN:  SC2K version could not be detected (got timestamp 0x%08X). Game will probably crash.\n", dwSC2KAppTimestamp);
         }
 
         // Registry check
         if (DoRegistryCheckAndInstall())
-            printf("INFO:  Registry entries created by faux-installer.");
+            ConsoleLog("INFO:  Registry entries created by faux-installer.");
 
         // Palette animation fix
         LPVOID lpAnimationFix;
@@ -192,7 +199,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         DWORD dummy;
         VirtualProtect(lpAnimationFix, uAnimationFixLength, PAGE_EXECUTE_READWRITE, &dummy);
         memcpy(lpAnimationFix, lpAnimationFixSrc, uAnimationFixLength);
-        printf("INFO:  Patched palette animation fix.\n");
+        ConsoleLog("INFO:  Patched palette animation fix.\n");
 
         // Dialog crash fix - hat tip to Aleksander Krimsky (@alekasm on GitHub)
         LPVOID lpDialogFix1;
@@ -214,7 +221,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         VirtualProtect(lpDialogFix2, 2, PAGE_EXECUTE_READWRITE, &dummy);
         *(LPBYTE)lpDialogFix2 = 0xEB;
         *(LPBYTE)((UINT_PTR)lpDialogFix2 + 1) = 0xEB;
-        printf("INFO:  Patched dialog crash fix.\n");
+        ConsoleLog("INFO:  Patched dialog crash fix.\n");
 
         // Remove palette warnings
         LPVOID lpWarningFix1;
@@ -235,14 +242,23 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         *(LPBYTE)lpWarningFix1 = 0x90;
         *(LPBYTE)((UINT_PTR)lpWarningFix1 + 1) = 0x90;
         memset((LPVOID)lpWarningFix2, 0x90, 18);   // nop nop nop nop nop
-        printf("INFO:  Patched 8-bit colour warnings.\n");
+        ConsoleLog("INFO:  Patched 8-bit colour warnings.\n");
 
         // Print the console prompt and let the console thread take over.
-        printf("> ");
+        printf("\n> ");
+        break;
 
+    // Nothing to do for these two cases
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
+        break;
+
+    // Clean up after ourselves and get ready to exit
     case DLL_PROCESS_DETACH:
+        // Send a closing message and close the log file
+        ConsoleLog("INFO:  Closing down at %lld. Goodnight!\n", time(NULL));
+        fflush(fdLog);
+        fclose(fdLog);
         break;
     }
     return TRUE;
