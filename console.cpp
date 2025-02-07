@@ -10,6 +10,16 @@
 #include "sc2kfix.h"
 
 HANDLE hConsoleThread;
+char szCmdBuf[256] = { 0 };
+
+BOOL WINAPI ConsoleCtrlHandler(DWORD fdwCtrlType) {
+	switch (fdwCtrlType) {
+	case CTRL_C_EVENT:
+		// TODO - reset the console input handler somehow
+		return TRUE;
+	}
+	return FALSE;
+}
 
 void CmdShowDebug(void) {
 	printf("Debugging labels enabled: ");
@@ -20,7 +30,7 @@ void CmdShowDebug(void) {
 }
 
 DWORD WINAPI ConsoleThread(LPVOID lpParameter) {
-	char szCmdBuf[256] = { 0 };
+	SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
 	for (;;) {
 		gets_s(szCmdBuf, 256);
 

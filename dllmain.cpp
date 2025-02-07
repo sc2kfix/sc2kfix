@@ -169,7 +169,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         }
 
         // Registry check
-        DoRegistryCheckAndInstall();
+        if (DoRegistryCheckAndInstall())
+            printf("INFO:  Registry entries created by faux-installer.");
 
         // Palette animation fix
         LPVOID lpAnimationFix;
