@@ -68,12 +68,6 @@ BOOL DoRegistryCheckAndInstall(void) {
 		// Prompt the user for the mayor and company names
 		DialogBox(hSC2KFixModule, MAKEINTRESOURCE(IDD_INSTALL), NULL, InstallDialogProc);
 
-#ifdef DEBUG
-		char msg[300];
-		sprintf_s(msg, 300, "MAYOR: %s\r\nCOMPANY: %s", szMayorName, szCompanyName);
-		MessageBox(GetActiveWindow(), msg, "sc2kfix debug", MB_OK | MB_ICONINFORMATION);
-#endif
-
 		// Write registration strings
 		RegSetValueEx(hkeySC2KRegistration, "Mayor Name", NULL, REG_SZ, (BYTE*)szMayorName, strlen(szMayorName) + 1);
 		RegSetValueEx(hkeySC2KRegistration, "Company Name", NULL, REG_SZ, (BYTE*)szCompanyName, strlen(szCompanyName) + 1);
