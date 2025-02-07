@@ -3,7 +3,10 @@
 
 #pragma once
 
-#define ALLEXPORTS(f) \
+#define ALLEXPORTS_HOOKED(f) \
+    f(41, mciSendCommandA)
+
+#define ALLEXPORTS_PASSTHROUGH(f) \
     f(0, CloseDriver) \
     f(1, DefDriverProc) \
     f(2, DriverCallback) \
@@ -45,7 +48,6 @@
     f(38, mciGetErrorStringW) \
     f(39, mciGetYieldProc) \
     f(40, mciLoadCommandResource) \
-    f(41, mciSendCommandA) \
     f(42, mciSendCommandW) \
     f(43, mciSendStringA) \
     f(44, mciSendStringW) \

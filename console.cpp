@@ -11,10 +11,21 @@
 
 HANDLE hConsoleThread;
 
+void CmdShowDebug(void) {
+	printf("Debugging labels enabled: ");
+	if (mci_debug) {
+		printf("MCI");
+	}
+	printf("\n");
+}
+
 DWORD WINAPI ConsoleThread(LPVOID lpParameter) {
 	char szCmdBuf[256] = { 0 };
 	for (;;) {
-		printf("> ");
 		gets_s(szCmdBuf, 256);
+
+		// TODO - add actual console processing here
+
+		printf("> ");
 	}
 }

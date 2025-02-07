@@ -35,6 +35,9 @@
     <ClCompile Include="console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="hook_mcisendcommand.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def">

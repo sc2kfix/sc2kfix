@@ -63,6 +63,7 @@
   <ItemGroup>
     <ClCompile Include="console.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="hook_mcisendcommand.cpp" />
     <ClCompile Include="registry_install.cpp" />
   </ItemGroup>
   <ItemGroup>
