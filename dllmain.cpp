@@ -184,7 +184,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
 #ifdef CONSOLE_ENABLED
         ConsoleLog(LOG_INFO, "Spawned console session.\n");
-        ConsoleLog(LOG_INFO, "");
+        printf("INFO  :");
         CmdShowDebug();
         hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, NULL);
 #endif
