@@ -112,8 +112,10 @@ void ConsoleLog(int iLogLevel, const char* fmt, ...) {
     if (buf) {
         vsprintf_s(buf, len, fmt, args);
 
-        if (fdLog)
+        if (fdLog) {
             fprintf(fdLog, "%s%s", prefix, buf);
+            fflush(fdLog);
+        }
 
 #ifdef CONSOLE_ENABLED
         printf("%s%s", prefix, buf);
