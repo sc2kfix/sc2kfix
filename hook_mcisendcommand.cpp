@@ -95,6 +95,9 @@ extern "C" BOOL _stdcall Hook_mciSendCommandA(void* pReturnAddress, MCIERROR* re
         break;
     }
 
+    case MCI_CLOSE:
+        break;
+
     default:
         if (mci_debug)
             ConsoleLog(LOG_WARNING, "MCA: mciSendCommand sent with unexpected uMsg %s.\n", MCIMessageIDToString(uMsg));

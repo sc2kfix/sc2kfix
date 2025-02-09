@@ -18,9 +18,6 @@
 
 #pragma intrinsic(_ReturnAddress)
 
-// From console.cpp
-void CmdShowDebug(void);
-
 // From registry_install.cpp
 extern char szMayorName[64];
 extern char szCompanyName[64];
@@ -33,6 +30,7 @@ FARPROC fpWinMMHookList[180] = { NULL };
 DWORD dwDetectedVersion = SC2KVERSION_UNKNOWN;
 DWORD dwSC2KAppTimestamp = 0;
 const char* szSC2KFixVersion = SC2KFIX_VERSION;
+const char* szSC2KFixBuildInfo = __DATE__ " " __TIME__;
 FILE* fdLog = NULL;
 
 // This code replaces the original stack cleanup and return after the engine
@@ -184,8 +182,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
 #ifdef CONSOLE_ENABLED
         ConsoleLog(LOG_INFO, "Spawned console session.\n");
-        printf("INFO  :");
-        CmdShowDebug();
+        printf("INFO:  ");
+        ConsoleCmdShowDebug(NULL, NULL);
         hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, NULL);
 #endif
 
