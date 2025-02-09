@@ -17,10 +17,22 @@
 
 #define SC2KFIX_VERSION	"0.5-dev"
 
+enum {
+	LOG_NONE = -1,
+	LOG_EMERGENCY,
+	LOG_ALERT,
+	LOG_CRITICAL,
+	LOG_ERROR,
+	LOG_WARNING,
+	LOG_NOTICE,
+	LOG_INFO,
+	LOG_DEBUG
+};
+
 BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 BOOL DoRegistryCheckAndInstall(void);
 const char* HexPls(UINT uNumber);
-void ConsoleLog(const char* fmt, ...);
+void ConsoleLog(int iLogLevel, const char* fmt, ...);
 
 DWORD WINAPI ConsoleThread(LPVOID lpParameter);
 

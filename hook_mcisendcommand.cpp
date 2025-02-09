@@ -48,12 +48,12 @@ static const char* MCIMessageIDToString(UINT uMsg) {
 
 extern "C" BOOL _stdcall Hook_mciSendCommandA(void* pReturnAddress, MCIERROR* retval, MCIDEVICEID IDDevice, UINT uMsg, DWORD_PTR fdwCommand, DWORD_PTR dwParam) {
     if (mci_debug)
-        ConsoleLog("MCI: 0x%08p -> mciSendCommand(0x%08X, %s, 0x%08X, 0x%08X)\n", pReturnAddress, IDDevice, MCIMessageIDToString(uMsg), fdwCommand, dwParam);
+        ConsoleLog(LOG_DEBUG, "MCI: 0x%08p -> mciSendCommand(0x%08X, %s, 0x%08X, 0x%08X)\n", pReturnAddress, IDDevice, MCIMessageIDToString(uMsg), fdwCommand, dwParam);
     switch (uMsg) {
     case MCI_OPEN: {
         if (mci_debug) {
             MCI_OPEN_PARMS* pMCIOpenParms = (MCI_OPEN_PARMS*)dwParam;
-			ConsoleLog(
+			ConsoleLog(LOG_NONE,
                 "MCI_OPEN_PARMS {\n"
 				"    dwCallback       = 0x%08X,\n"
 				"    wDeviceID        = 0x%08X,\n"
@@ -71,7 +71,7 @@ extern "C" BOOL _stdcall Hook_mciSendCommandA(void* pReturnAddress, MCIERROR* re
     case MCI_STATUS: {
         if (mci_debug) {
             MCI_STATUS_PARMS* pMCIStatusParms = (MCI_STATUS_PARMS*)dwParam;
-			ConsoleLog(
+			ConsoleLog(LOG_NONE,
                 "MCI_STATUS_PARMS {\n"
 				"    dwCallback = 0x%08X,\n"
 				"    dwReturn   = 0x%08X,\n"
@@ -85,7 +85,7 @@ extern "C" BOOL _stdcall Hook_mciSendCommandA(void* pReturnAddress, MCIERROR* re
     case MCI_PLAY: {
         if (mci_debug) {
             MCI_PLAY_PARMS* pMCIPlayParms = (MCI_PLAY_PARMS*)dwParam;
-			ConsoleLog(
+			ConsoleLog(LOG_NONE,
                 "MCI_PLAY_PARMS {\n"
 				"    dwCallback = 0x%08X,\n"
 				"    dwFrom     = 0x%08X,\n"
@@ -94,6 +94,10 @@ extern "C" BOOL _stdcall Hook_mciSendCommandA(void* pReturnAddress, MCIERROR* re
         }
         break;
     }
+
+    default:
+        if (mci_debug)
+            ConsoleLog(LOG_WARNING, "MCA: mciSendCommand sent with unexpected uMsg %s.\n", MCIMessageIDToString(uMsg));
     }
 
     *retval = 0;

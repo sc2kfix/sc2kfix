@@ -69,10 +69,42 @@ const char* HexPls(UINT uNumber) {
     return szRet;
 }
 
-void ConsoleLog(const char* fmt, ...) {
+void ConsoleLog(int iLogLevel, const char* fmt, ...) {
     va_list args;
     int len;
     char* buf;
+    const char* prefix;
+
+    switch (iLogLevel) {
+    case LOG_EMERGENCY:
+        prefix = "EMERG: ";
+        break;
+    case LOG_ALERT:
+        prefix = "ALERT: ";
+        break;
+    case LOG_CRITICAL:
+        prefix = "CRIT:  ";
+        break;
+    case LOG_ERROR:
+        prefix = "ERROR: ";
+        break;
+    case LOG_WARNING:
+        prefix = "WARN:  ";
+        break;
+    case LOG_NOTICE:
+        prefix = "NOTE:  ";
+        break;
+    case LOG_INFO:
+        prefix = "INFO:  ";
+        break;
+    case LOG_DEBUG:
+        prefix = "DEBUG: ";
+        break;
+    case LOG_NONE:
+    default:                            // XXX - can this be a constexpr error?
+        prefix = "";
+        break;
+    }
 
     va_start(args, fmt);
     len = _vscprintf(fmt, args) + 1;
@@ -81,10 +113,10 @@ void ConsoleLog(const char* fmt, ...) {
         vsprintf_s(buf, len, fmt, args);
 
         if (fdLog)
-            fprintf(fdLog, "%s", buf);
+            fprintf(fdLog, "%s%s", prefix, buf);
 
 #ifdef CONSOLE_ENABLED
-        printf("%s", buf);
+        printf("%s%s", prefix, buf);
 #endif
         
         free(buf);
@@ -141,15 +173,16 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         }
 #endif
 
-        ConsoleLog("sc2kfix version %s started - https://github.com/araxestroy/sc2kfix\n", szSC2KFixVersion);
+        ConsoleLog(LOG_NONE, "sc2kfix version %s started - https://github.com/araxestroy/sc2kfix\n", szSC2KFixVersion);
 #ifdef DEBUGALL
-        ConsoleLog("DEBUG: sc2kfix built with DEBUGALL. Strap in.\n");
+        ConsoleLog(LOG_DEBUG, "sc2kfix built with DEBUGALL. Strap in.\n");
 #endif
 
-        ConsoleLog("INFO:  SC2K session started at %lld.\n", time(NULL));
+        ConsoleLog(LOG_INFO, "SC2K session started at %lld.\n", time(NULL));
 
 #ifdef CONSOLE_ENABLED
-        ConsoleLog("INFO:  Spawned console session.\n");
+        ConsoleLog(LOG_INFO, "Spawned console session.\n");
+        ConsoleLog(LOG_INFO, "");
         CmdShowDebug();
         hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, NULL);
 #endif
@@ -172,12 +205,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             sprintf_s(msg, 300, "Could not detect SC2K version (got timestamp %08Xd). Your game will probably crash.\r\n\r\n"
                 "Please let us know in a GitHub issue what version of the game you're running so we can look into this.", dwSC2KAppTimestamp);
             MessageBox(GetActiveWindow(), msg, "sc2kfix warning", MB_OK | MB_ICONWARNING);
-            ConsoleLog("WARN:  SC2K version could not be detected (got timestamp 0x%08X). Game will probably crash.\n", dwSC2KAppTimestamp);
+            ConsoleLog(LOG_WARNING, "SC2K version could not be detected (got timestamp 0x%08X). Game will probably crash.\n", dwSC2KAppTimestamp);
         }
 
         // Registry check
         if (DoRegistryCheckAndInstall())
-            ConsoleLog("INFO:  Registry entries created by faux-installer.");
+            ConsoleLog(LOG_INFO, "Registry entries created by faux-installer.");
 
         // Palette animation fix
         LPVOID lpAnimationFix;
@@ -199,7 +232,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         DWORD dummy;
         VirtualProtect(lpAnimationFix, uAnimationFixLength, PAGE_EXECUTE_READWRITE, &dummy);
         memcpy(lpAnimationFix, lpAnimationFixSrc, uAnimationFixLength);
-        ConsoleLog("INFO:  Patched palette animation fix.\n");
+        ConsoleLog(LOG_INFO, "Patched palette animation fix.\n");
 
         // Dialog crash fix - hat tip to Aleksander Krimsky (@alekasm on GitHub)
         LPVOID lpDialogFix1;
@@ -221,7 +254,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         VirtualProtect(lpDialogFix2, 2, PAGE_EXECUTE_READWRITE, &dummy);
         *(LPBYTE)lpDialogFix2 = 0xEB;
         *(LPBYTE)((UINT_PTR)lpDialogFix2 + 1) = 0xEB;
-        ConsoleLog("INFO:  Patched dialog crash fix.\n");
+        ConsoleLog(LOG_INFO, "Patched dialog crash fix.\n");
 
         // Remove palette warnings
         LPVOID lpWarningFix1;
@@ -242,7 +275,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         *(LPBYTE)lpWarningFix1 = 0x90;
         *(LPBYTE)((UINT_PTR)lpWarningFix1 + 1) = 0x90;
         memset((LPVOID)lpWarningFix2, 0x90, 18);   // nop nop nop nop nop
-        ConsoleLog("INFO:  Patched 8-bit colour warnings.\n");
+        ConsoleLog(LOG_INFO, "Patched 8-bit colour warnings.\n");
 
         // Print the console prompt and let the console thread take over.
         printf("\n> ");
@@ -256,7 +289,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
     // Clean up after ourselves and get ready to exit
     case DLL_PROCESS_DETACH:
         // Send a closing message and close the log file
-        ConsoleLog("INFO:  Closing down at %lld. Goodnight!\n", time(NULL));
+        ConsoleLog(LOG_INFO, "Closing down at %lld. Goodnight!\n", time(NULL));
         fflush(fdLog);
         fclose(fdLog);
         break;
