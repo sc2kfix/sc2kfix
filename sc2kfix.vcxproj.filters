@@ -35,7 +35,10 @@
     <ClCompile Include="console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="hook_mcisendcommand.cpp">
+    <ClCompile Include="hook_mciSendCommand.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="hook_sndPlaySound.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

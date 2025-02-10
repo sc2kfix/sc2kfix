@@ -4,7 +4,8 @@
 #pragma once
 
 #define ALLEXPORTS_HOOKED(f) \
-    f(41, mciSendCommandA)
+    f(41, mciSendCommandA) \
+    f(132, sndPlaySoundA)
 
 #define ALLEXPORTS_PASSTHROUGH(f) \
     f(0, CloseDriver) \
@@ -138,7 +139,6 @@
     f(129, mmioStringToFOURCCW) \
     f(130, mmioWrite) \
     f(131, mmsystemGetVersion) \
-    f(132, sndPlaySoundA) \
     f(133, sndPlaySoundW) \
     f(134, timeBeginPeriod) \
     f(135, timeEndPeriod) \

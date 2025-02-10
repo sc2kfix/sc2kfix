@@ -33,6 +33,9 @@ const char* szSC2KFixVersion = SC2KFIX_VERSION;
 const char* szSC2KFixBuildInfo = __DATE__ " " __TIME__;
 FILE* fdLog = NULL;
 
+// Statics
+static DWORD dwDummy;
+
 // This code replaces the original stack cleanup and return after the engine
 // cycles the animation palette.
 // 
@@ -229,8 +232,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             lpAnimationFixSrc = bAnimationPatch1996;
             uAnimationFixLength = 30;
         }
-        DWORD dummy;
-        VirtualProtect(lpAnimationFix, uAnimationFixLength, PAGE_EXECUTE_READWRITE, &dummy);
+        
+        VirtualProtect(lpAnimationFix, uAnimationFixLength, PAGE_EXECUTE_READWRITE, &dwDummy);
         memcpy(lpAnimationFix, lpAnimationFixSrc, uAnimationFixLength);
         ConsoleLog(LOG_INFO, "Patched palette animation fix.\n");
 
@@ -249,9 +252,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             lpDialogFix2 = (LPVOID)0x004A0559;
         }
 
-        VirtualProtect(lpDialogFix1, 1, PAGE_EXECUTE_READWRITE, &dummy);
+        VirtualProtect(lpDialogFix1, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
         *(LPBYTE)lpDialogFix1 = 0x20;
-        VirtualProtect(lpDialogFix2, 2, PAGE_EXECUTE_READWRITE, &dummy);
+        VirtualProtect(lpDialogFix2, 2, PAGE_EXECUTE_READWRITE, &dwDummy);
         *(LPBYTE)lpDialogFix2 = 0xEB;
         *(LPBYTE)((UINT_PTR)lpDialogFix2 + 1) = 0xEB;
         ConsoleLog(LOG_INFO, "Patched dialog crash fix.\n");
@@ -270,12 +273,19 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             lpWarningFix1 = (LPVOID)0x00408A79;
             lpWarningFix2 = (LPVOID)0x00408ABE;
         }
-        VirtualProtect(lpWarningFix1, 2, PAGE_EXECUTE_READWRITE, &dummy);
-        VirtualProtect(lpWarningFix2, 18, PAGE_EXECUTE_READWRITE, &dummy);
+        VirtualProtect(lpWarningFix1, 2, PAGE_EXECUTE_READWRITE, &dwDummy);
+        VirtualProtect(lpWarningFix2, 18, PAGE_EXECUTE_READWRITE, &dwDummy);
         *(LPBYTE)lpWarningFix1 = 0x90;
         *(LPBYTE)((UINT_PTR)lpWarningFix1 + 1) = 0x90;
         memset((LPVOID)lpWarningFix2, 0x90, 18);   // nop nop nop nop nop
         ConsoleLog(LOG_INFO, "Patched 8-bit colour warnings.\n");
+
+        // Hooks we only want to inject on the 1996 Special Edition version
+        if (dwDetectedVersion == SC2KVERSION_1996) {
+            // Intercept call to 0x480140 at 0x401F9B
+            VirtualProtect((LPVOID)0x401F9B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+            NEWJMP((LPVOID)0x401F9B, Hook_401F9B)
+        }
 
         // Print the console prompt and let the console thread take over.
         printf("\n> ");

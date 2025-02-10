@@ -6,6 +6,7 @@
 #include <psapi.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <map>
 
 #include "sc2kfix.h"
 
@@ -45,12 +46,16 @@ BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
 		printf(
 			"  show debug     Display enabled debugging options\n"
+			"  show sound     Display sound info\n"
 			"  show version   Display sc2kfix version info\n");
 		return TRUE;
 	}
 
 	if (!strcmp(szArguments, "debug"))
 		return ConsoleCmdShowDebug(szCommand, szArguments);
+
+	if (!strcmp(szArguments, "sound") || !strncmp(szArguments, "sound ", 6))
+		return ConsoleCmdShowSound(szCommand, szArguments);
 
 	if (!strcmp(szArguments, "version"))
 		return ConsoleCmdShowVersion(szCommand, szArguments);
@@ -62,10 +67,37 @@ BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 BOOL ConsoleCmdShowDebug(const char* szCommand, const char* szArguments) {
 	printf("Debugging labels enabled: ");
 	if (mci_debug) {
-		printf("MCI");
+		printf("MCI ");
+	}
+	if (snd_debug) {
+		printf("SND ");
 	}
 	printf("\n");
 
+	return TRUE;
+}
+
+BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
+	if (dwDetectedVersion != SC2KVERSION_1996) {
+		printf("Command only available when attached to 1996 Special Edition.\n");
+		return TRUE;
+	}
+
+	if (*(szArguments + 5) == '\0' || *(szArguments + 6) == '\0' || !strcmp(szArguments + 6, "?")) {
+		printf(
+			"  show sound buffers   Dump loaded WAV buffers\n");
+		return TRUE;
+	}
+
+	if (!strcmp(szArguments + 6, "buffers")) {
+		printf("Loaded WAV buffers:\n");
+		int i = 0;
+		for (const auto& iter : mapSoundBuffers)
+			printf("  %i: <0x%08X>   %i.wav   (reloads: %i)\n", i++, iter.first, iter.second.iSoundID, iter.second.iReloadCount);
+		return TRUE;
+	}
+
+	printf("Invalid argument.\n");
 	return TRUE;
 }
 
@@ -112,12 +144,16 @@ BOOL ConsoleCmdSet(const char* szCommand, const char* szArguments) {
 BOOL ConsoleCmdSetDebug(const char* szCommand, const char* szArguments) {
 	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
 		printf(
-			"  set debug mci   Enable MCI debugging\n");
+			"  set debug mci   Enable MCI debugging\n"
+			"  set debug snd   Enable WAV debugging\n");
 		return TRUE;
 	}
 	
 	if (!strcmp(szArguments, "mci")) {
 		mci_debug = TRUE;
+		return TRUE;
+	} else if (!strcmp(szArguments, "snd")) {
+		snd_debug = TRUE;
 		return TRUE;
 	}
 }

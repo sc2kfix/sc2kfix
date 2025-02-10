@@ -4,6 +4,7 @@
 #pragma once
 
 #include <windows.h>
+#include <map>
 
 // Turning this on enables every debugging option. You have been warned.
 // #define DEBUGALL
@@ -17,6 +18,10 @@
 
 #define SC2KFIX_VERSION	"0.5-dev"
 
+#define RELATIVE_OFFSET(from, to) *(DWORD*)((DWORD)(from)) = (DWORD)(to) - (DWORD)(from) - 4;
+#define NEWCALL(from, to) *(BYTE*)(from) = 0xE8; RELATIVE_OFFSET((DWORD)(from)+1, to)
+#define NEWJMP(from, to) *(BYTE*)(from) = 0xE9; RELATIVE_OFFSET((DWORD)(from)+1, to)
+
 typedef BOOL (*console_cmdproc_t)(const char* szCommand, const char* szArguments);
 
 typedef struct {
@@ -25,6 +30,11 @@ typedef struct {
 	int iUndocumented;
 	const char* szDescription;
 } console_command_t;
+
+typedef struct {
+	int iSoundID;
+	int iReloadCount;
+} soundbufferinfo_t;
 
 enum {
 	CONSOLE_COMMAND_DOCUMENTED = 0,
@@ -55,6 +65,7 @@ BOOL ConsoleEvaluateCommand(const char* szCommandLine);
 BOOL ConsoleCmdHelp(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowDebug(const char* szCommand, const char* szArguments);
+BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdSet(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdSetDebug(const char* szCommand, const char* szArguments);
@@ -69,6 +80,13 @@ extern DWORD dwSC2KAppTimestamp;
 extern const char* szSC2KFixVersion;
 extern const char* szSC2KFixBuildInfo;
 
+extern std::map<DWORD, soundbufferinfo_t> mapSoundBuffers;
+
+// Hooks to inject in dllmain.cpp
+
+extern "C" void _stdcall Hook_401F9B(int iSoundID, void* lpBuffer);
+
 // Debugging settings
 
 extern UINT mci_debug;
+extern UINT snd_debug;
