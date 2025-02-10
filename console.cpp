@@ -1,4 +1,4 @@
-// sc2kfix console.cpp: experiment console
+// sc2kfix console.cpp: exactly what it says on the tin
 // (c) 2025 github.com/araxestroy - released under the MIT license
 
 #undef UNICODE
@@ -18,7 +18,8 @@ console_command_t fpConsoleCommands[] = {
 	{ "?", ConsoleCmdHelp, CONSOLE_COMMAND_ALIAS, "" },
 	{ "help", ConsoleCmdHelp, CONSOLE_COMMAND_DOCUMENTED, "Display this help" },
 	{ "set", ConsoleCmdSet, CONSOLE_COMMAND_DOCUMENTED, "Modify game and plugin behaviour" },
-	{ "show", ConsoleCmdShow, CONSOLE_COMMAND_DOCUMENTED, "Display various game and plugin information" }
+	{ "show", ConsoleCmdShow, CONSOLE_COMMAND_DOCUMENTED, "Display various game and plugin information" },
+	{ "unset", ConsoleCmdSet, CONSOLE_COMMAND_DOCUMENTED, "Modify game and plugin behaviour" },
 };
 
 // COMMMAND: help / ?
@@ -125,15 +126,19 @@ BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments) {
 BOOL ConsoleCmdSet(const char* szCommand, const char* szArguments) {
 	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
 		printf(
-			"  set debug [...]   Enable debugging output\n");
+			"  [un]set debug [...]   Enable debugging output\n");
 		return TRUE;
 	}
+
+	BOOL bOperation = TRUE;
+	if (!strcmp(szCommand, "unset"))
+		bOperation = FALSE;
 
 	if (!strncmp(szArguments, "debug ", 6))
 		return ConsoleCmdSetDebug(szCommand, szArguments + 6);
 
 	if (!strcmp(szArguments, "undocumented")) {
-		bConsoleUndocumentedMode = TRUE;
+		bConsoleUndocumentedMode = bOperation;
 		return TRUE;
 	}
 
@@ -144,18 +149,25 @@ BOOL ConsoleCmdSet(const char* szCommand, const char* szArguments) {
 BOOL ConsoleCmdSetDebug(const char* szCommand, const char* szArguments) {
 	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
 		printf(
-			"  set debug mci   Enable MCI debugging\n"
-			"  set debug snd   Enable WAV debugging\n");
+			"  [un]set debug mci   Enable MCI debugging\n"
+			"  [un]set debug snd   Enable WAV debugging\n");
 		return TRUE;
 	}
+
+	BOOL bOperation = TRUE;
+	if (!strcmp(szCommand, "unset"))
+		bOperation = FALSE;
 	
 	if (!strcmp(szArguments, "mci")) {
-		mci_debug = TRUE;
-		return TRUE;
+		mci_debug = bOperation;
+		printf("%sabled MCI debugging.\n", (bOperation ? "En" : "Dis"));
 	} else if (!strcmp(szArguments, "snd")) {
-		snd_debug = TRUE;
-		return TRUE;
+		snd_debug = bOperation;
+		printf("%sabled WAV debugging.\n", (bOperation ? "En" : "Dis"));
+	} else {
+		printf("Invalid argument.\n");
 	}
+	return TRUE;
 }
 
 // CONSOLE THREAD
