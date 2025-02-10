@@ -10,7 +10,7 @@
 #include <map>
 #include <string>
 
-#include "sc2kfix.h"
+#include "..\sc2kfix.h"
 
 #pragma intrinsic(_ReturnAddress)
 

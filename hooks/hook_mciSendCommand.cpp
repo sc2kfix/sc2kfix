@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <intrin.h>
 
-#include "sc2kfix.h"
+#include "..\sc2kfix.h"
 
 #pragma intrinsic(_ReturnAddress)
 
