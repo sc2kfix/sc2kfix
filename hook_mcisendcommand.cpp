@@ -46,7 +46,7 @@ static const char* MCIMessageIDToString(UINT uMsg) {
     }
 }
 
-extern "C" BOOL _stdcall Hook_mciSendCommandA(void* pReturnAddress, MCIERROR* retval, MCIDEVICEID IDDevice, UINT uMsg, DWORD_PTR fdwCommand, DWORD_PTR dwParam) {
+extern "C" BOOL __stdcall Hook_mciSendCommandA(void* pReturnAddress, MCIERROR* retval, MCIDEVICEID IDDevice, UINT uMsg, DWORD_PTR fdwCommand, DWORD_PTR dwParam) {
     if (mci_debug)
         ConsoleLog(LOG_DEBUG, "MCI: 0x%08p -> mciSendCommand(0x%08X, %s, 0x%08X, 0x%08X)\n", pReturnAddress, IDDevice, MCIMessageIDToString(uMsg), fdwCommand, dwParam);
     switch (uMsg) {
@@ -107,11 +107,11 @@ extern "C" BOOL _stdcall Hook_mciSendCommandA(void* pReturnAddress, MCIERROR* re
     return TRUE;
 }
 
-extern "C" BOOL _stdcall HookAfter_mciSendCommandA(void* pReturnAddress, MCIERROR* retval, MCIDEVICEID IDDevice, UINT uMsg, DWORD_PTR fdwCommand, DWORD_PTR dwParam) {
+extern "C" BOOL __stdcall HookAfter_mciSendCommandA(void* pReturnAddress, MCIERROR* retval, MCIDEVICEID IDDevice, UINT uMsg, DWORD_PTR fdwCommand, DWORD_PTR dwParam) {
     return TRUE;
 }
 
-extern "C" MCIERROR _stdcall _mciSendCommandA(MCIDEVICEID IDDevice, UINT uMsg, DWORD_PTR fdwCommand, DWORD_PTR dwParam) {
+extern "C" MCIERROR __stdcall _mciSendCommandA(MCIDEVICEID IDDevice, UINT uMsg, DWORD_PTR fdwCommand, DWORD_PTR dwParam) {
     MCIERROR retval = 0;
     if (!Hook_mciSendCommandA(_ReturnAddress(), &retval, IDDevice, uMsg, fdwCommand, dwParam))
         return retval;

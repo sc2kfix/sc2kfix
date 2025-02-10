@@ -85,7 +85,7 @@ extern std::map<DWORD, soundbufferinfo_t> mapSoundBuffers;
 
 // Hooks to inject in dllmain.cpp
 
-extern "C" void _stdcall Hook_401F9B(int iSoundID, void* lpBuffer);
+extern "C" void __stdcall Hook_401F9B(int iSoundID, void* lpBuffer);
 
 // Debugging settings
 

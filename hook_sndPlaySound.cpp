@@ -44,7 +44,7 @@ extern "C" void __stdcall Hook_401F9B(int iSoundID, void* lpBuffer) {
     }
 }
 
-extern "C" BOOL _stdcall Hook_sndPlaySoundA(void* pReturnAddress, BOOL* retval, LPCTSTR lpszSound, UINT fuSound) {
+extern "C" BOOL __stdcall Hook_sndPlaySoundA(void* pReturnAddress, BOOL* retval, LPCTSTR lpszSound, UINT fuSound) {
     if (snd_debug) {
         if (fuSound & SND_MEMORY)
             ConsoleLog(LOG_DEBUG, "SND: 0x%08p -> sndPlaySound(<0x%08X>, 0x%08X)\n", pReturnAddress, lpszSound, fuSound);
@@ -58,11 +58,11 @@ extern "C" BOOL _stdcall Hook_sndPlaySoundA(void* pReturnAddress, BOOL* retval, 
     return TRUE;
 }
 
-extern "C" BOOL _stdcall HookAfter_sndPlaySoundA(void* pReturnAddress, BOOL* retval, LPCTSTR lpszSound, UINT fuSound) {
+extern "C" BOOL __stdcall HookAfter_sndPlaySoundA(void* pReturnAddress, BOOL* retval, LPCTSTR lpszSound, UINT fuSound) {
     return TRUE;
 }
 
-extern "C" BOOL _stdcall _sndPlaySoundA(LPCTSTR lpszSound, UINT fuSound) {
+extern "C" BOOL __stdcall _sndPlaySoundA(LPCTSTR lpszSound, UINT fuSound) {
     BOOL retval = TRUE;
     if (!Hook_sndPlaySoundA(_ReturnAddress(), &retval, lpszSound, fuSound))
         return retval;
