@@ -65,6 +65,7 @@ BOOL ConsoleEvaluateCommand(const char* szCommandLine);
 BOOL ConsoleCmdHelp(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowDebug(const char* szCommand, const char* szArguments);
+BOOL ConsoleCmdShowMemory(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdSet(const char* szCommand, const char* szArguments);

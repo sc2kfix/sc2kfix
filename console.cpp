@@ -46,14 +46,18 @@ BOOL ConsoleCmdHelp(const char* szCommand, const char* szArguments) {
 BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
 		printf(
-			"  show debug     Display enabled debugging options\n"
-			"  show sound     Display sound info\n"
-			"  show version   Display sc2kfix version info\n");
+			"  show debug        Display enabled debugging options\n"
+			"  show memory ...   Display memory contents\n"
+			"  show sound        Display sound info\n"
+			"  show version      Display sc2kfix version info\n");
 		return TRUE;
 	}
 
 	if (!strcmp(szArguments, "debug"))
 		return ConsoleCmdShowDebug(szCommand, szArguments);
+
+	if (!strcmp(szArguments, "memory") || !strncmp(szArguments, "memory ", 7))
+		return ConsoleCmdShowMemory(szCommand, szArguments);
 
 	if (!strcmp(szArguments, "sound") || !strncmp(szArguments, "sound ", 6))
 		return ConsoleCmdShowSound(szCommand, szArguments);
@@ -75,6 +79,59 @@ BOOL ConsoleCmdShowDebug(const char* szCommand, const char* szArguments) {
 	}
 	printf("\n");
 
+	return TRUE;
+}
+
+BOOL ConsoleCmdShowMemory(const char* szCommand, const char* szArguments) {
+	if (dwDetectedVersion != SC2KVERSION_1996) {
+		printf("Command only available when attached to 1996 Special Edition.\n");
+		return TRUE;
+	}
+
+	if (*(szArguments + 6) == '\0' || *(szArguments + 7) == '\0' || !strcmp(szArguments + 7, "?")) {
+		printf(
+			"Usage:\n"
+			"  show memory <address> [operand_size] [range_size]\n"
+			"\n"
+			"    <address>: Address in hexadecimal\n"
+			"    [operand_size]: Optional, one of: { byte, word, dword, range }\n"
+			"    [range_size]: Size of range if operand_size is \"range\" (default 16)\n");
+		return TRUE;
+	}
+
+	DWORD dwAddress = NULL;
+	char szOperandSize[6] = { 0 };
+	int iRange = 16;
+	sscanf_s(szArguments + 7, "%X %s %i", &dwAddress, szOperandSize, sizeof(szOperandSize), &iRange);
+
+	__try {
+		if (!*szOperandSize || !strcmp(szOperandSize, "dword"))
+			printf("0x%08X: (dword) 0x%08X\n", dwAddress, *(DWORD*)dwAddress);
+		else if (!strcmp(szOperandSize, "word"))
+			printf("0x%08X: (word) 0x%04X\n", dwAddress, *(WORD*)dwAddress);
+		else if (!strcmp(szOperandSize, "byte"))
+			printf("0x%08X: (byte) 0x%02X\n", dwAddress, *(BYTE*)dwAddress);
+		else if (!strcmp(szOperandSize, "range")) {
+			if (iRange == 0)
+				iRange = 16;
+
+			printf("0x%08X: ", dwAddress);
+
+			for (int i = 0; i < iRange; i++)
+				printf("%02X ", *(BYTE*)(dwAddress + i));
+
+			printf("\n");
+		} else {
+			printf("Invalid argument.\n");
+		}
+		return TRUE;
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER) {
+		ConsoleLog(LOG_ERROR, "Segmentation fault caught. Don't do that again.\n");
+		return TRUE;
+	}
+
+	printf("Invalid argument.\n");
 	return TRUE;
 }
 
