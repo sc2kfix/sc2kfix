@@ -284,7 +284,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         if (dwDetectedVersion == SC2KVERSION_1996) {
             // Intercept call to 0x480140 at 0x401F9B
             VirtualProtect((LPVOID)0x401F9B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-            NEWJMP((LPVOID)0x401F9B, Hook_401F9B)
+            NEWJMP((LPVOID)0x401F9B, Hook_401F9B);
+
+            // Install miscellaneous hooks
+            InstallMiscHooks();
         }
 
         // Print the console prompt and let the console thread take over.

@@ -64,6 +64,7 @@
     <ClCompile Include="console.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="hook_mciSendCommand.cpp" />
+    <ClCompile Include="hook_miscellaneous.cpp" />
     <ClCompile Include="hook_sndPlaySound.cpp" />
     <ClCompile Include="registry_install.cpp" />
   </ItemGroup>
