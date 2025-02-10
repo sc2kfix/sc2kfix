@@ -8,8 +8,8 @@
 #include <shlwapi.h>
 #include <stdio.h>
 
-#include "sc2kfix.h"
-#include "resource.h"
+#include <sc2kfix.h>
+#include <resource.h>
 
 char szSC2KPath[MAX_PATH];
 char szSC2KGoodiesPath[MAX_PATH];

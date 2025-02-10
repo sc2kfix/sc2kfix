@@ -12,9 +12,9 @@
 #include <intrin.h>
 #include <time.h>
 
-#include "sc2kfix.h"
-#include "resource.h"
-#include "winmm_exports.h"
+#include <sc2kfix.h>
+#include <resource.h>
+#include <winmm_exports.h>
 
 #pragma intrinsic(_ReturnAddress)
 

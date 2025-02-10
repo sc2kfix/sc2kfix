@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <map>
 
-#include "sc2kfix.h"
+#include <sc2kfix.h>
 
 HANDLE hConsoleThread;
 char szCmdBuf[256] = { 0 };

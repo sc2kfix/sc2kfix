@@ -16,28 +16,22 @@
     <Filter Include="Source Files\Hooks">
       <UniqueIdentifier>{5095a6dd-9e70-4280-a650-3d17364c3b3d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\DLLMain">
+      <UniqueIdentifier>{c8504672-9bae-4b70-85e6-898f6fa37a00}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="winmm_exports.h">
+    <ClInclude Include="include\resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h">
+    <ClInclude Include="include\sc2kfix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="sc2kfix.h">
+    <ClInclude Include="include\winmm_exports.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dllmain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="registry_install.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="console.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="hooks\hook_mciSendCommand.cpp">
       <Filter>Source Files\Hooks</Filter>
     </ClCompile>
@@ -47,15 +41,24 @@
     <ClCompile Include="hooks\hook_sndPlaySound.cpp">
       <Filter>Source Files\Hooks</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="exports.def">
-      <Filter>Source Files</Filter>
-    </None>
+    <ClCompile Include="console.cpp">
+      <Filter>Source Files\DLLMain</Filter>
+    </ClCompile>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Source Files\DLLMain</Filter>
+    </ClCompile>
+    <ClCompile Include="registry_install.cpp">
+      <Filter>Source Files\DLLMain</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="sc2kfix.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="hooks\exports.def">
+      <Filter>Source Files\Hooks</Filter>
+    </None>
   </ItemGroup>
 </Project>
