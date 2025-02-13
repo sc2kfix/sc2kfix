@@ -80,6 +80,7 @@ extern DWORD dwDetectedVersion;
 extern DWORD dwSC2KAppTimestamp;
 extern const char* szSC2KFixVersion;
 extern const char* szSC2KFixBuildInfo;
+extern BOOL bInSCURK;
 
 extern std::map<DWORD, soundbufferinfo_t> mapSoundBuffers;
 
@@ -92,3 +93,7 @@ extern "C" void __stdcall Hook_401F9B(int iSoundID, void* lpBuffer);
 
 extern UINT mci_debug;
 extern UINT snd_debug;
+
+// SCURK specific stuff
+
+BOOL InjectSCURKFix(void);

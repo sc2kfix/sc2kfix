@@ -32,6 +32,7 @@ DWORD dwSC2KAppTimestamp = 0;
 const char* szSC2KFixVersion = SC2KFIX_VERSION;
 const char* szSC2KFixBuildInfo = __DATE__ " " __TIME__;
 FILE* fdLog = NULL;
+BOOL bInSCURK = FALSE;
 
 // Statics
 static DWORD dwDummy;
@@ -149,12 +150,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         ALLEXPORTS_HOOKED(GETPROC);
         ALLEXPORTS_PASSTHROUGH(GETPROC);
 
-        // If we're attached to SCURK, we can just return at this point
-        char szModuleBaseName[200];
-        GetModuleBaseName(GetCurrentProcess(), NULL, szModuleBaseName, 200);
-        if (!_stricmp(szModuleBaseName, "winscurk.exe"))
-            return TRUE;
-
         if (!(hSC2KAppModule = GetModuleHandle(NULL))) {
             MessageBox(GetActiveWindow(), "Could not GetModuleHandle(NULL) (???)", "sc2kfix error", MB_OK | MB_ICONERROR);
             return FALSE;
@@ -189,6 +184,14 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         ConsoleCmdShowDebug(NULL, NULL);
         hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, NULL);
 #endif
+
+        // If we're attached to SCURK, switch over to the SCURK fix code
+        char szModuleBaseName[200];
+        GetModuleBaseName(GetCurrentProcess(), NULL, szModuleBaseName, 200);
+        if (!_stricmp(szModuleBaseName, "winscurk.exe")) {
+            InjectSCURKFix();
+            break;
+        }
 
         // Determine what version of SC2K this is
         // HACK: there's probably a better way to do this

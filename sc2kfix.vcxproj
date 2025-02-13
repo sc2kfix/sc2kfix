@@ -71,6 +71,7 @@
     <ClCompile Include="hooks\hook_miscellaneous.cpp" />
     <ClCompile Include="hooks\hook_sndPlaySound.cpp" />
     <ClCompile Include="registry_install.cpp" />
+    <ClCompile Include="scurkfix.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="hooks\exports.def" />
