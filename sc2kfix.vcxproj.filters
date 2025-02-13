@@ -19,6 +19,9 @@
     <Filter Include="Source Files\DLLMain">
       <UniqueIdentifier>{c8504672-9bae-4b70-85e6-898f6fa37a00}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Documentation">
+      <UniqueIdentifier>{8abc9d55-b301-4faa-8e10-878c7a6f314e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\resource.h">
@@ -62,6 +65,12 @@
   <ItemGroup>
     <None Include="hooks\exports.def">
       <Filter>Source Files\Hooks</Filter>
+    </None>
+    <None Include="README.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="hooks\hooks.md">
+      <Filter>Documentation</Filter>
     </None>
   </ItemGroup>
 </Project>

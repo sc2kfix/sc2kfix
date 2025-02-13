@@ -8,6 +8,10 @@ The following issues are patched by this DLL:
 * Replaces non-functional 16-bit installer by updating registry on first run
 * Load/save dialog crash bug
 * Frozen palette cycling animations
+   * This this has been fixed in both the 1995 CD Collection and 1996 Special Edition of SimCity 2000, as well as the 1996 Special Edition version of SCURK. A fix for the 1995 CD Collection version of SCURK is pending.
+
+For the 1996 Special Edition version of SimCity 2000, sc2kfix also implements multiple hooks and a work-in-progress framework for detouring and injecting new code into the game. These are documented in the hooks/hooks.md file. These are currently being used to assist in reverse engineering various components of the game's code, but attaching them to eg. a scripting language of some sorts in the future is not entirely unlikely. There is also a debugging console that can be enabled by passing "-console" to SimCity 2000. While the debugging console generally tries to stop you from doing anything too dangerous, it will happily let you probe any valid memory in the game's address space, which could have adverse effect on any loaded cities. Please be careful when writing to arbitrary memory addresses.
+* Note: It is not likely that this will ever be fully functional on the 1995 CD Collection version of the game as that would require reverse engineering two different builds of the same game for minimal practical improvement.
 
 ## How do I use it?
 1. If you are installing the game from scratch, copy the SC2K folder from your CD (under the WIN95 folder in the Special Edition CD) to your hard drive.
@@ -20,4 +24,5 @@ The following issues are patched by this DLL:
 
 ## To-do/known issues
 * 1995 BUG: Clicking the "Load Saved City" option and then canceling the dialog box crashes the game
-* TODO: Fix animations in SCURK as well
+* 1995 TODO: Fix animations in SCURK 1995
+* BUG: Something may have changed in Windows 11 24H2 that breaks SCURK's pick-and-place tool; this is being investigated.

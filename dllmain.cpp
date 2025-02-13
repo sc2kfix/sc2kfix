@@ -119,9 +119,8 @@ void ConsoleLog(int iLogLevel, const char* fmt, ...) {
             fflush(fdLog);
         }
 
-#ifdef CONSOLE_ENABLED
-        printf("%s%s", prefix, buf);
-#endif
+        if (bConsoleEnabled)
+            printf("%s%s", prefix, buf);
         
         free(buf);
     }
@@ -130,6 +129,9 @@ void ConsoleLog(int iLogLevel, const char* fmt, ...) {
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
+    int argc = 0;
+    LPWSTR* argv = NULL;
+
     switch (reason) {
     case DLL_PROCESS_ATTACH:
         // Save our own module handle
@@ -155,13 +157,21 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             return FALSE;
         }
 
+        // Get our command line. WARNING: This uses WIDE STRINGS.
+        argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+        if (argv) {
+            for (int i = 0; i < argc; i++) {
+                if (!lstrcmpiW(argv[i], L"-console"))
+                    bConsoleEnabled = TRUE;
+                // TODO - put some debug options here
+            }
+        }
+
         // Open a log file. If it fails, we handle that safely elsewhere
         fopen_s(&fdLog, "sc2kfix.log", "w");
 
-#ifdef CONSOLE_ENABLED
         // Allocate ourselves a console and redirect libc stdio to it
-        // TODO: make this a command-line option instead of a #define
-        {
+        if (bConsoleEnabled) {
             AllocConsole();
             SetConsoleTitle("sc2kfix console");
             FILE* fdDummy = NULL;
@@ -169,7 +179,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             freopen_s(&fdDummy, "CONOUT$", "w", stdout);
             freopen_s(&fdDummy, "CONOUT$", "w", stderr);
         }
-#endif
 
         ConsoleLog(LOG_NONE, "sc2kfix version %s started - https://github.com/araxestroy/sc2kfix\n", szSC2KFixVersion);
 #ifdef DEBUGALL
@@ -178,12 +187,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
         ConsoleLog(LOG_INFO, "SC2K session started at %lld.\n", time(NULL));
 
-#ifdef CONSOLE_ENABLED
-        ConsoleLog(LOG_INFO, "Spawned console session.\n");
-        printf("INFO:  ");
-        ConsoleCmdShowDebug(NULL, NULL);
-        hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, NULL);
-#endif
+        if (bConsoleEnabled) {
+            ConsoleLog(LOG_INFO, "Spawned console session.\n");
+            printf("INFO:  ");
+            ConsoleCmdShowDebug(NULL, NULL);
+            hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, NULL);
+        }
 
         // If we're attached to SCURK, switch over to the SCURK fix code
         char szModuleBaseName[200];

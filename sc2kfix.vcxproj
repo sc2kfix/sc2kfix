@@ -75,6 +75,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="hooks\exports.def" />
+    <None Include="hooks\hooks.md" />
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="sc2kfix.rc" />

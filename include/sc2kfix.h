@@ -9,8 +9,8 @@
 // Turning this on enables every debugging option. You have been warned.
 // #define DEBUGALL
 
-// Turning this on enables experimental features. You have been warned.
-#define CONSOLE_ENABLED
+// Turning this on forces the console to be enabled, as if -console was passed to SIMCITY.EXE.
+// #define CONSOLE_ENABLED
 
 #define SC2KVERSION_UNKNOWN 0
 #define SC2KVERSION_1995    1
@@ -81,6 +81,7 @@ extern DWORD dwSC2KAppTimestamp;
 extern const char* szSC2KFixVersion;
 extern const char* szSC2KFixBuildInfo;
 extern BOOL bInSCURK;
+extern BOOL bConsoleEnabled;
 
 extern std::map<DWORD, soundbufferinfo_t> mapSoundBuffers;
 

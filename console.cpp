@@ -10,6 +10,12 @@
 
 #include <sc2kfix.h>
 
+#ifdef CONSOLE_ENABLED
+BOOL bConsoleEnabled = TRUE;
+#else
+BOOL bConsoleEnabled = FALSE;
+#endif
+
 HANDLE hConsoleThread;
 char szCmdBuf[256] = { 0 };
 BOOL bConsoleUndocumentedMode = FALSE;
