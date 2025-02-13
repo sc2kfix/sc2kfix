@@ -1,5 +1,5 @@
 # sc2kfix
-A bugfix DLL for SimCity 2000 Special Edition
+![A GIF of SimCity 2000's palette animations in action.](https://i.imgur.com/DYl508z.gif)
 
 ## What does this do?
 This is a DLL that patches the Special Edition (and 1995 CD Collection) release of SimCity 2000 for Windows 95 to work properly on modern Windows systems (Windows 7-11 and Wine/Proton). While the game itself is capable of running at high resolutions, oversights in the game's programming and techniques designed for use with 256-colour SVGA cards common in the mid 1990s cause problems with animations on truecolour displays. It also resolves the crashes that can occasionally happen with the load/save dialog boxes using a similar technique to Aleksander Krimsky's SC2000X patcher, but sc2kfix does so on in memory instead of creating a patched copy of your original EXE files.
