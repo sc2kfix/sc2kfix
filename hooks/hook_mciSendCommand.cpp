@@ -1,4 +1,4 @@
-// sc2kfix hook_mcisendcommand.cpp: hook for mciSendCommandA
+// sc2kfix hooks/hook_mciSendCommand.cpp: hook for mciSendCommandA
 // (c) 2025 github.com/araxestroy - released under the MIT license
 
 #undef UNICODE

@@ -1,4 +1,4 @@
-// sc2kfix hook_miscellaneous.cpp: miscellaneous hooks to be injected
+// sc2kfix hooks/hook_miscellaneous.cpp: miscellaneous hooks to be injected
 // (c) 2025 github.com/araxestroy - released under the MIT license
 
 #undef UNICODE
