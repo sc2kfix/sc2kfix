@@ -170,6 +170,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         // Open a log file. If it fails, we handle that safely elsewhere
         fopen_s(&fdLog, "sc2kfix.log", "w");
 
+        // Force the console to be enabled if DEBUGALL is defined
+#ifdef DEBUGALL
+        bConsoleEnabled = true;
+#endif
+
         // Allocate ourselves a console and redirect libc stdio to it
         if (bConsoleEnabled) {
             AllocConsole();
