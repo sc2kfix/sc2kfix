@@ -56,6 +56,9 @@
     <ClCompile Include="scurkfix.cpp">
       <Filter>Source Files\DLLMain</Filter>
     </ClCompile>
+    <ClCompile Include="hooks\hook_mmtimers.cpp">
+      <Filter>Source Files\Hooks</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="sc2kfix.rc">

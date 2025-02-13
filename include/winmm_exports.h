@@ -5,7 +5,8 @@
 
 #define ALLEXPORTS_HOOKED(f) \
     f(41, mciSendCommandA) \
-    f(132, sndPlaySoundA)
+    f(132, sndPlaySoundA) \
+    f(140, timeSetEvent)
 
 #define ALLEXPORTS_PASSTHROUGH(f) \
     f(0, CloseDriver) \
@@ -146,7 +147,6 @@
     f(137, timeGetSystemTime) \
     f(138, timeGetTime) \
     f(139, timeKillEvent) \
-    f(140, timeSetEvent) \
     f(141, waveInAddBuffer) \
     f(142, waveInClose) \
     f(143, waveInGetDevCapsA) \

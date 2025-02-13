@@ -10,6 +10,7 @@ Since sc2kfix works by being locally loaded as winmm.dll before the system's own
 Currently, sc2kfix intercepts the following winmm.dll calls and performs its own processing before passing data through to the system winmm.dll library:
 - `mciSendCommandA()`
 - `sndPlaySoundA()`
+- `timeSetEvent()`
 
 ### Type 2: FARPROC call thunk hooks
 SimCity 2000 for Windows was written using an early MFC library that uses a lot of thunks to man-in-the-middle relative offset calls with `jmp imm32` instructions. This is extremely useful for us as we can overwrite those `jmp imm32` instructions to point at our own code with the `NEWJMP()` macro, and after we're done we can just call back into the original SimCity 2000 code and return to the caller.

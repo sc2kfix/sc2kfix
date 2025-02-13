@@ -94,6 +94,7 @@ extern "C" void __stdcall Hook_401F9B(int iSoundID, void* lpBuffer);
 
 extern UINT mci_debug;
 extern UINT snd_debug;
+extern UINT timer_debug;
 
 // SCURK specific stuff
 
