@@ -177,5 +177,10 @@ void InstallMiscHooks(void) {
 	// Music in background
 	VirtualProtect((LPVOID)0x40BFDA, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	memset((LPVOID)0x40BFDA, 0x90, 5);
+
+	// Fix the broken cheat
+	UINT uCheatPatch[9] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+	memcpy_s((LPVOID)0x4E65C8, 10, "mrsoleary", 10);
+	memcpy_s((LPVOID)0x4E6490, sizeof(uCheatPatch), uCheatPatch, sizeof(uCheatPatch));
 }
 
