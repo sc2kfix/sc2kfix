@@ -120,6 +120,13 @@ extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR l
 }
 
 // Fix military bases not growing.
+// XXX - This could use a few extra lines as it's currently possible for a few placeable buildings
+// to overwrite and effectively erase military zoned tiles, and I don't know what that will do to
+// the simulation engine since it keeps meticulous track of things like that.
+//
+// We also might want to optionally add in a few more buildings to the growth algorithm for Army
+// bases, as currently Army bases only ever build 0xE8 Small Hangar and 0xEF Military Parking Lot.
+// Maybe add in 0xE3 Warehouse or 0xF1 Top Secret, since those seem to only grow on naval bases?
 extern "C" void _declspec(naked) Hook_FixMilitaryBaseGrowth(void) {
 	__asm {
 		cmp bp, 0xDD
@@ -134,7 +141,7 @@ extern "C" void _declspec(naked) Hook_FixMilitaryBaseGrowth(void) {
 	}
 }
 
-// Hook to reset iMilitaryBaseTries if needed
+// Hook to reset iMilitaryBaseTries if needed (new/loaded game, gilmartin)
 extern "C" void _declspec(naked) Hook_SimulationProposeMilitaryBase(void) {
 	if (mischook_debug & 2)
 		ConsoleLog(LOG_DEBUG, "MISC: SimulationProposeMilitaryBase called, resetting iMilitaryBaseTries.\n");
@@ -146,6 +153,8 @@ extern "C" void _declspec(naked) Hook_SimulationProposeMilitaryBase(void) {
 }
 
 // Fix the game giving up after one attempt at placing a military base.
+// 10 tries was enough to get an army base to spawn in the smallest crags of a map with a maxed-
+// out mountain slider, so that's what we're going with here.
 extern "C" void _declspec(naked) Hook_AttemptMultipleMilitaryBases(void) {
 	if (iMilitaryBaseTries++ < 10) {
 		if (mischook_debug & 2)
@@ -166,9 +175,11 @@ void InstallMiscHooks(void) {
 	// Install LoadStringA hook
 	*(DWORD*)(0x4EFBE8) = (DWORD)Hook_LoadStringA;
 
+	// Fix military bases not growing
 	VirtualProtect((LPVOID)0x440D4F, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJZ((LPVOID)0x440D4F, Hook_FixMilitaryBaseGrowth);
 
+	// Make multiple attempts at building a military base before giving up
 	VirtualProtect((LPVOID)0x4146B5, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJNZ((LPVOID)0x4146B5, Hook_AttemptMultipleMilitaryBases);
 	VirtualProtect((LPVOID)0x403017, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
