@@ -30,6 +30,8 @@ UINT mischook_debug = MISCHOOK_DEBUG;
 
 static DWORD dwDummy;
 
+UINT iMilitaryBaseTries = 0;
+
 extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMax) {
 	// This is mostly just a proof of concept showing we can arbitrarily intercept Win32 API calls.
 	// We'll use this for something useful later, I bet.
@@ -37,7 +39,7 @@ extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR l
 }
 
 // Fix military bases not growing.
-extern "C" void _declspec(naked) Hook_FixMilitaryBaseGrowth() {
+extern "C" void _declspec(naked) Hook_FixMilitaryBaseGrowth(void) {
 	__asm {
 		cmp bp, 0xDD
 		jb bail
@@ -51,12 +53,45 @@ extern "C" void _declspec(naked) Hook_FixMilitaryBaseGrowth() {
 	}
 }
 
+// Hook to reset iMilitaryBaseTries if needed
+extern "C" void _declspec(naked) Hook_SimulationProposeMilitaryBase(void) {
+	if (mischook_debug & 2)
+		ConsoleLog(LOG_DEBUG, "MISC: SimulationProposeMilitaryBase called, resetting iMilitaryBaseTries.\n");
+	iMilitaryBaseTries = 0;
+	__asm {
+		push 0x4142C0
+		retn
+	}
+}
+
+// Fix the game giving up after one attempt at placing a military base.
+extern "C" void _declspec(naked) Hook_AttemptMultipleMilitaryBases(void) {
+	if (iMilitaryBaseTries++ < 10) {
+		if (mischook_debug & 2)
+			ConsoleLog(LOG_DEBUG, "MISC: Failed military base placement, attempting again.\n");
+		__asm {
+			push 0x4142E9
+			retn
+		}
+	} else {
+		__asm {
+			push 0x4147AF
+			retn
+		}
+	}
+}
+
 void InstallMiscHooks(void) {
 	// Install LoadStringA hook
 	*(DWORD*)(0x4EFBE8) = (DWORD)Hook_LoadStringA;
 
 	VirtualProtect((LPVOID)0x440D4F, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJZ((LPVOID)0x440D4F, Hook_FixMilitaryBaseGrowth)
+	NEWJZ((LPVOID)0x440D4F, Hook_FixMilitaryBaseGrowth);
+
+	VirtualProtect((LPVOID)0x4146B5, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJNZ((LPVOID)0x4146B5, Hook_AttemptMultipleMilitaryBases);
+	VirtualProtect((LPVOID)0x403017, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x403017, Hook_SimulationProposeMilitaryBase);
 
 	// Music in background
 	VirtualProtect((LPVOID)0x40BFDA, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
