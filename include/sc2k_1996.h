@@ -75,6 +75,160 @@ enum {
 	MILITARY_BASE_MISSILE_SILOS
 };
 
+// XTER map
+//
+// Terrain tiles only need to consider the surface display (terrain tile id)
+//
+// Water tiles need to consider the surface display (water tile id) and
+// the subsurface display (terrain tile id)
+enum {
+  TERRAIN_00 = 0x00,         // terrain tile id: 256
+  TERRAIN_01,                // terrain tile id: 257
+  TERRAIN_02,                // terrain tile id: 258
+  TERRAIN_03,                // terrain tile id: 259
+  TERRAIN_04,                // terrain tile id: 260
+  TERRAIN_05,                // terrain tile id: 261
+  TERRAIN_06,                // terrain tile id: 262
+  TERRAIN_07,                // terrain tile id: 263
+  TERRAIN_08,                // terrain tile id: 264
+  TERRAIN_09,                // terrain tile id: 265
+  TERRAIN_10,                // terrain tile id: 266
+  TERRAIN_11,                // terrain tile id: 267
+  TERRAIN_12,                // terrain tile id: 268
+  TERRAIN_13,                // terrain tile id: 269
+  SUBMERGED_00 = 0x10,       // terrain tild id: 256, water tile id: 270
+  SUBMERGED_01,              // terrain tild id: 257, water tile id: 270
+  SUBMERGED_02,              // terrain tild id: 258, water tile id: 270
+  SUBMERGED_03,              // terrain tild id: 259, water tile id: 270
+  SUBMERGED_04,              // terrain tild id: 260, water tile id: 270
+  SUBMERGED_05,              // terrain tild id: 261, water tile id: 270
+  SUBMERGED_06,              // terrain tild id: 262, water tile id: 270
+  SUBMERGED_07,              // terrain tild id: 263, water tile id: 270
+  SUBMERGED_08,              // terrain tild id: 264, water tile id: 270
+  SUBMERGED_09,              // terrain tild id: 265, water tile id: 270
+  SUBMERGED_10,              // terrain tild id: 266, water tile id: 270
+  SUBMERGED_11,              // terrain tild id: 267, water tile id: 270
+  SUBMERGED_12,              // terrain tild id: 268, water tile id: 270
+  SUBMERGED_13,              // terrain tild id: 269, water tile id: 270
+  COAST_00 = 0x20,           // terrain tile id: 256, water tile id: 270
+  COAST_01,                  // terrain tile id: 257, water tile id: 271
+  COAST_02,                  // terrain tile id: 258, water tile id: 272
+  COAST_03,                  // terrain tile id: 259, water tile id: 273
+  COAST_04,                  // terrain tile id: 260, water tile id: 274
+  COAST_05,                  // terrain tile id: 261, water tile id: 275
+  COAST_06,                  // terrain tile id: 262, water tile id: 276
+  COAST_07,                  // terrain tile id: 263, water tile id: 277
+  COAST_08,                  // terrain tile id: 264, water tile id: 278
+  COAST_09,                  // terrain tile id: 265, water tile id: 279
+  COAST_10,                  // terrain tile id: 266, water tile id: 280
+  COAST_11,                  // terrain tile id: 267, water tile id: 281
+  COAST_12,                  // terrain tile id: 268, water tile id: 282
+  COAST_13,                  // terrain tile id: 269, water tile id: 283
+  SURFACE_WATER_00 = 0x30,   // terrain tile id: 256, water tile id: 270
+  SURFACE_WATER_01,          // terrain tile id: 256, water tile id: 271
+  SURFACE_WATER_02,          // terrain tile id: 256, water tile id: 272
+  SURFACE_WATER_03,          // terrain tile id: 256, water tile id: 273
+  SURFACE_WATER_04,          // terrain tile id: 256, water tile id: 274
+  SURFACE_WATER_05,          // terrain tile id: 256, water tile id: 275
+  SURFACE_WATER_06,          // terrain tile id: 256, water tile id: 276
+  SURFACE_WATER_07,          // terrain tile id: 256, water tile id: 277
+  SURFACE_WATER_08,          // terrain tile id: 256, water tile id: 278
+  SURFACE_WATER_09,          // terrain tile id: 256, water tile id: 279
+  SURFACE_WATER_10,          // terrain tile id: 256, water tile id: 280
+  SURFACE_WATER_11,          // terrain tile id: 256, water tile id: 281
+  SURFACE_WATER_12,          // terrain tile id: 256, water tile id: 282
+  SURFACE_WATER_13,          // terrain tile id: 256, water tile id: 283
+  WATERFALL = 0x3e,          // terrain tile id: 269, water tile id: 284
+  SURFACE_STREAM_00 = 0x40,  // terrain tile id: 256, water tile id: 285
+  SURFACE_STREAM_01,         // terrain tile id: 256, water tile id: 286
+  SURFACE_STREAM_02,         // terrain tile id: 256, water tile id: 287
+  SURFACE_STREAM_03,         // terrain tile id: 256, water tile id: 288
+  SURFACE_STREAM_04,         // terrain tile id: 256, water tile id: 289
+  SURFACE_STREAM_05          // terrain tile id: 256, water tile id: 290
+};
+
+// XTHG types
+enum {
+  XTHG_UNKNOWN_0 = 0,
+  XTHG_AIRPLANE,
+  XTHG_HELICOPTER,
+  XTHG_CARGO_SHIP,
+  XTHG_UNKNOWN_1,
+  XTHG_MONSTER,
+  XTHG_UNKNOWN_2,
+  XTHG_DEPLOY_POLICE,
+  XTHG_DEPLOY_FIRE,
+  XTHG_SAILBOAT,
+  XTHG_TRAIN_ENGINE,
+  XTHG_TRAIN_CAR,
+  XTHG_UNKNOWN_3,
+  XTHG_UNKNOWN_4,
+  XTHG_DEPLOY_MILITARY,
+  XTHG_TORNADO,
+  XTHG_MAXIS_MAN
+};
+
+enum {
+  XTHG_DIRECTION_NORTH = 0,
+  XTHG_DIRECTION_NORTH_EAST,
+  XTHG_DIRECTION_EAST,
+  XTHG_DIRECTION_SOUTH_EAST,
+  XTHG_DIRECTION_SOUTH,
+  XTHG_DIRECTION_SOUTH_WEST,
+  XTHG_DIRECTION_WEST,
+  XTHG_DIRECTION_NORTH_WEST
+};
+
+enum {
+  GAME_MODE_TERRAIN_EDIT = 0,
+  GAME_MODE_CITY,
+  GAME_MODE_DISASTER
+};
+
+enum {
+  GAME_DIFFICULTY_NONE = 0,
+  GAME_DIFFICULTY_EASY,
+  GAME_DIFFICULTY_MEDIUM,
+  GAME_DIFFICULTY_HARD
+};
+
+enum {
+  GAME_SPEED_PAUSED = 0,
+  GAME_SPEED_TURTLE,
+  GAME_SPEED_LLAMA,
+  GAME_SPEED_CHEETAH,
+  GAME_SPEED_AFRICAN_SWALLOW
+};
+
+enum {
+  CITY_INDUSTRY_STEEL_OR_MINING = 0,
+  CITY_INDUSTRY_TEXTILES,
+  CITY_INDUSTRY_PETROCHEMICAL,
+  CITY_INDUSTRY_FOOD,
+  CITY_INDUSTRY_CONSTRUCTION,
+  CITY_INDUSTRY_AUTOMOTIVE,
+  CITY_INDUSTRY_AEROSPACE,
+  CITY_INDUSTRY_FINANCE,
+  CITY_INDUSTRY_MEDIA,
+  CITY_INDUSTRY_ELECTRONICS,
+  CITY_INDUSTRY_TOURISM
+};
+
+enum {
+  WEATHER_TREND_COLD = 0,
+  WEATHER_TREND_CLEAR,
+  WEATHER_TREND_HOT,
+  WEATHER_TREND_FOGGY,
+  WEATHER_TREND_CHILLY,
+  WEATHER_TREND_OVERCAST,
+  WEATHER_TREND_SNOW,
+  WEATHER_TREND_RAIN,
+  WEATHER_TREND_WINDY,
+  WEATHER_TREND_BLIZZARD,
+  WEATHER_TREND_HURRICANE,
+  WEATHER_TREND_TORNADO
+};
+
 
 // Structs
 
@@ -82,11 +236,12 @@ typedef struct {
 	BYTE bDunno[32];
 } neighbor_city_t;
 
+
 typedef struct {
 	struct {
-		WORD iDunno : 6;
-		WORD iWaterLevel : 5;
-		WORD iLandAltitude : 5;
+		WORD iTunnelLevels : 6; // how many levels below altitude should we display a grey block for a tunnel?
+		WORD iWaterLevel : 5;   // not always accurate (rely on XTER value instead)
+		WORD iLandAltitude : 5; // level / altitude
 	} w[128];
 } map_ALTM_t;
 
@@ -102,7 +257,7 @@ typedef struct {
 } map_XBLD_t;
 
 typedef struct {
-	BYTE bDunno[128];
+	BYTE iTileId[128]; // reference XTER map
 } map_XTER_t;
 
 typedef struct {
@@ -125,6 +280,23 @@ typedef struct {
 		BYTE iSaltWater : 1;
 	} b[128];
 } map_XBIT_t;
+
+typedef struct {
+  BYTE iId : 1; // use xthg types enum to determine
+  BYTE iDirection: 1; // use xthg directions enum; for types airplane, helicopter, cargo ship, monster, etc; not sure how this is used for "deployment" types like fire, police, etc
+  BYTE iDunno1 : 1; // identifier? sequence number? type?
+  BYTE iPositionX : 1;
+  BYTE iPositionY : 1;
+  BYTE iPositionZ : 1;
+  BYTE iDunno2 : 1;
+  BYTE iDunno3 : 1;
+  BYTE iDunno4 : 1;
+  BYTE iDunno5 : 1;
+  BYTE iDunno6 : 1;
+  BYTE iDunno7 : 1;
+} map_XTHG_t;
+
+
 
 
 // Pointers
