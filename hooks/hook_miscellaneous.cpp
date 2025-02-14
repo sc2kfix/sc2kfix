@@ -74,8 +74,8 @@ extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR l
 			break;
 		case 240:
 			if (!strcpy_s(lpBuffer, cchBufferMax,
-				"Your nation's military is interested in building a base on your city's soil."
-				"This could mean extra revenue. It could also raise new problems."
+				"Your nation's military is interested in building a base on your city's soil. "
+				"This could mean extra revenue. It could also raise new problems. "
 				"Do you wish to grant land to the military?"))
 				return strlen(lpBuffer);
 			break;
