@@ -206,6 +206,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             InjectSCURKFix();
             break;
         }
+        
+        // Seed the libc RNG -- we'll need this later
+        srand((unsigned int)time(NULL));
 
         // Determine what version of SC2K this is
         // HACK: there's probably a better way to do this

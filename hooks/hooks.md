@@ -13,7 +13,7 @@ Currently, sc2kfix intercepts the following winmm.dll calls and performs its own
 - `timeSetEvent()`
 
 ### Type 2: FARPROC call thunk hooks
-SimCity 2000 for Windows was written using an early MFC library that uses a lot of thunks to man-in-the-middle relative offset calls with `jmp imm32` instructions. This is extremely useful for us as we can overwrite those `jmp imm32` instructions to point at our own code with the `NEWJMP()` macro, and after we're done we can just call back into the original SimCity 2000 code and return to the caller.
+SimCity 2000 for Windows was written using an early MFC library that uses a lot of thunks to man-in-the-middle relative offset calls with `jmp imm32` instructions. This is extremely useful for us as we can overwrite those `jmp imm32` instructions to point at our own code with the `NEWJMP()` macro, and after we're done we can just call back into the original SimCity 2000 code and return to the caller. Starting in 0.6-dev there are also macros for doing the same but with conditional branch instructions.
 
 Currently, sc2kfix hooks the following call thunks this way:
 - 0x401F9B (`jmp 0x480140`) -- intercepts loading WAV files into the SC2K internal sound buffers
@@ -37,3 +37,7 @@ Example:
 5. Otherwise, the real `sndPlaySoundA()` is called with the original parameters, and its return value is placed in `retval`.
 6. `HookAfter_sndPlaySoundA(void* pReturnAddress, BOOL* retval, ...)` is called with `_ReturnAddress()` as the first added parameter and `&retval` as the second.
 7. The original caller is returned to with the contents of `retval` as the return code of `sndPlaySoundA()`.
+
+
+## What other cool stuff that aren't hooks do we have?
+The header file `include/sc2k_1996.h` is your friend. Inside there are enums, structs, and a whole bunch of reference pointer definitions that let the native code in sc2kfix manipulate game state as if it's operating in the game thread itself. This is a new feature as of 0.6-dev and is probably something you don't want to mess with unless you really know what you're doing.

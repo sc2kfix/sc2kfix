@@ -6,6 +6,8 @@
 #include <windows.h>
 #include <map>
 
+#include <sc2k_1996.h>
+
 // Turning this on enables every debugging option. You have been warned.
 // #define DEBUGALL
 
@@ -16,11 +18,15 @@
 #define SC2KVERSION_1995    1
 #define SC2KVERSION_1996    2
 
-#define SC2KFIX_VERSION	"0.5"
+#define SC2KFIX_VERSION	"0.6-dev"
 
 #define RELATIVE_OFFSET(from, to) *(DWORD*)((DWORD)(from)) = (DWORD)(to) - (DWORD)(from) - 4;
 #define NEWCALL(from, to) *(BYTE*)(from) = 0xE8; RELATIVE_OFFSET((DWORD)(from)+1, to)
 #define NEWJMP(from, to) *(BYTE*)(from) = 0xE9; RELATIVE_OFFSET((DWORD)(from)+1, to)
+#define NEWJB(from, to) *(BYTE*)(from) = 0x0F; *(BYTE*)((DWORD)(from)+1) = 0x82; RELATIVE_OFFSET((DWORD)(from)+2, to)
+#define NEWJNB(from, to) *(BYTE*)(from) = 0x0F; *(BYTE*)((DWORD)(from)+1) = 0x83; RELATIVE_OFFSET((DWORD)(from)+2, to)
+#define NEWJZ(from, to) *(BYTE*)(from) = 0x0F; *(BYTE*)((DWORD)(from)+1) = 0x84; RELATIVE_OFFSET((DWORD)(from)+2, to)
+#define NEWJNZ(from, to) *(BYTE*)(from) = 0x0F; *(BYTE*)((DWORD)(from)+1) = 0x85; RELATIVE_OFFSET((DWORD)(from)+2, to)
 
 typedef BOOL (*console_cmdproc_t)(const char* szCommand, const char* szArguments);
 
@@ -95,6 +101,7 @@ extern "C" void __stdcall Hook_401F9B(int iSoundID, void* lpBuffer);
 extern UINT mci_debug;
 extern UINT snd_debug;
 extern UINT timer_debug;
+extern UINT mischook_debug;
 
 // SCURK specific stuff
 

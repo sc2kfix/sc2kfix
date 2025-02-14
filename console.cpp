@@ -20,6 +20,8 @@ HANDLE hConsoleThread;
 char szCmdBuf[256] = { 0 };
 BOOL bConsoleUndocumentedMode = FALSE;
 
+static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments);
+
 console_command_t fpConsoleCommands[] = {
 	{ "?", ConsoleCmdHelp, CONSOLE_COMMAND_ALIAS, "" },
 	{ "help", ConsoleCmdHelp, CONSOLE_COMMAND_DOCUMENTED, "Display this help" },
@@ -68,6 +70,9 @@ BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 	if (!strcmp(szArguments, "sound") || !strncmp(szArguments, "sound ", 6))
 		return ConsoleCmdShowSound(szCommand, szArguments);
 
+	if (!strcmp(szArguments, "test"))
+		return ConsoleCmdShowTest(szCommand, szArguments);
+
 	if (!strcmp(szArguments, "version"))
 		return ConsoleCmdShowVersion(szCommand, szArguments);
 
@@ -82,6 +87,12 @@ BOOL ConsoleCmdShowDebug(const char* szCommand, const char* szArguments) {
 	}
 	if (snd_debug) {
 		printf("SND ");
+	}
+	if (timer_debug) {
+		printf("TIMER ");
+	}
+	if (mischook_debug) {
+		printf("MISC ");
 	}
 	printf("\n");
 
@@ -165,6 +176,12 @@ BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
 	return TRUE;
 }
 
+static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments) {
+	printf("0x%08X[0] = %u\n", dwCityNoticeStringIDs, dwCityNoticeStringIDs[0]);
+
+	return TRUE;
+}
+
 BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments) {
 	const char* szSC2KVersion = "unknown";
 	switch (dwDetectedVersion) {
@@ -178,7 +195,8 @@ BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments) {
 		"sc2kfix version %s - https://github.com/araxestroy/sc2kfix\n"
 		"Plugin build info: %s\n"
 		"SimCity 2000 version: %s\n"
-		"Plugin loaded at 0x%08X\n", szSC2KFixVersion, szSC2KFixBuildInfo, szSC2KVersion, (DWORD)hSC2KFixModule);
+		"Plugin loaded at 0x%08X\n"
+		"City days: %u\n", szSC2KFixVersion, szSC2KFixBuildInfo, szSC2KVersion, (DWORD)hSC2KFixModule, dwCityDays);
 	printf("\n");
 
 	return TRUE;
@@ -227,6 +245,12 @@ BOOL ConsoleCmdSetDebug(const char* szCommand, const char* szArguments) {
 	} else if (!strcmp(szArguments, "snd")) {
 		snd_debug = bOperation;
 		printf("%sabled WAV debugging.\n", (bOperation ? "En" : "Dis"));
+	} else if (!strcmp(szArguments, "timer")) {
+		timer_debug = bOperation;
+		printf("%sabled timer debugging.\n", (bOperation ? "En" : "Dis"));
+	} else if (!strcmp(szArguments, "misc")) {
+		mischook_debug = bOperation;
+		printf("%sabled misc hook debugging.\n", (bOperation ? "En" : "Dis"));
 	} else {
 		printf("Invalid argument.\n");
 	}

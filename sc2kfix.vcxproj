@@ -63,6 +63,7 @@
     <ClInclude Include="include\resource.h" />
     <ClInclude Include="include\sc2kfix.h" />
     <ClInclude Include="include\winmm_exports.h" />
+    <ClInclude Include="include\sc2k_1996.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="console.cpp" />
@@ -71,6 +72,7 @@
     <ClCompile Include="hooks\hook_miscellaneous.cpp" />
     <ClCompile Include="hooks\hook_sndPlaySound.cpp" />
     <ClCompile Include="hooks\hook_mmtimers.cpp" />
+    <ClCompile Include="hooks\sc2k_1996.cpp" />
     <ClCompile Include="registry_install.cpp" />
     <ClCompile Include="scurkfix.cpp" />
   </ItemGroup>
