@@ -12,16 +12,21 @@ Currently, sc2kfix intercepts the following winmm.dll calls and performs its own
 - `sndPlaySoundA()`
 - `timeSetEvent()`
 
-### Type 2: FARPROC call thunk hooks
+### Type 2: FARPROC call thunk / branch instruction hooks
 SimCity 2000 for Windows was written using an early MFC library that uses a lot of thunks to man-in-the-middle relative offset calls with `jmp imm32` instructions. This is extremely useful for us as we can overwrite those `jmp imm32` instructions to point at our own code with the `NEWJMP()` macro, and after we're done we can just call back into the original SimCity 2000 code and return to the caller. Starting in 0.6-dev there are also macros for doing the same but with conditional branch instructions.
 
-Currently, sc2kfix hooks the following call thunks this way:
+Currently, sc2kfix intercepts the following branch instructions this way:
 - 0x401F9B (`jmp 0x480140`) -- intercepts loading WAV files into the SC2K internal sound buffers
+- 0x440D4F, 0x4146B5, 0x403017 -- intercepts military base placement and growth routines to fix bugs
 
-### Type 3: FARPROC call hooks, direct style
-We can also intercept calls directly with the `NEWCALL()` macro. It works similarly but by inserting a `call imm32` instruction (0xE8) instead of a `jmp imm32` instruction (0xE9).
+### Type 3: FARPROC import address hooks
+We can also intercept calls made to other libraries from SimCity 2000 by replacing the import addresses in SimCiy 2000's memory with address of our own equivalent functions. This lets us selectively change the behaviour of various calls.
 
-We aren't currently using this anywhere.
+Currently, sc2kfix hooks the following library functions this way:
+- `LoadStringA()`
+- `DialogBoxParamA()`
+- `LoadMenuA()`
+- `EnableMenuItem()`
 
 
 ## What do these hooks look like?
