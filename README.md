@@ -23,7 +23,7 @@ For the 1996 Special Edition version of SimCity 2000, sc2kfix also implements mu
    * If you're running the game on Wine/Proton, you'll need to set a DLL override for `simcity.exe` to use "native, then builtin" load order for the `winmm` library, otherwise Wine/Proton will not load the local `winmm.dll`.
 4. Play the game! On the first run of a new install, the game will prompt you for a mayor and organization name. This simulates the original SimCity 2000 installer.
 
-You can configure different aspects of sc2kfix by 
+You can configure different aspects of sc2kfix by clicking on the "sc2kfix Settings" button on the game's main menu, or while you're in a gameplay session by selecting the same option from the Options menu. Settings marked with an asterisk require restarting the game for them to take effect.
 
 ## To-do/known issues
 * 1995 BUG: Clicking the "Load Saved City" option and then canceling the dialog box crashes the game
