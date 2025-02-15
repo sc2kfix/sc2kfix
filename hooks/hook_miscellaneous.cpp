@@ -38,6 +38,8 @@ static DWORD dwDummy;
 
 UINT iMilitaryBaseTries = 0;
 
+AFX_MSGMAP_ENTRY afxMessageMapMainMenu[9];
+
 // Override some strings that have egregiously bad grammar/capitalization.
 // Maxis fail English? That's unpossible!
 extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMax) {
@@ -140,6 +142,13 @@ extern "C" BOOL __stdcall Hook_EnableMenuItem(HMENU hMenu, UINT uIDEnableItem, U
 	return EnableMenuItem(hMenu, uIDEnableItem, uEnable);
 }
 
+// Load our own version of the main menu
+extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam) {
+	if (hInstance == hSC2KAppModule && (DWORD)lpTemplateName == 103)
+		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
+	return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
+}
+
 // Fix military bases not growing.
 // XXX - This could use a few extra lines as it's currently possible for a few placeable buildings
 // to overwrite and effectively erase military zoned tiles, and I don't know what that will do to
@@ -199,6 +208,7 @@ void InstallMiscHooks(void) {
 	// Install LoadMenuA hook
 	*(DWORD*)(0x4EFDCC) = (DWORD)Hook_LoadMenuA;
 	*(DWORD*)(0x4EFE58) = (DWORD)Hook_EnableMenuItem;
+	*(DWORD*)(0x4EFC64) = (DWORD)Hook_DialogBoxParamA;
 
 	// Fix military bases not growing
 	VirtualProtect((LPVOID)0x440D4F, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -248,6 +258,17 @@ void InstallMiscHooks(void) {
 		if (mischook_debug & MISCHOOK_DEBUG_MENU)
 			ConsoleLog(LOG_DEBUG, "MISC: Updated game menu.\n");
 	}
+
+	// Copy the main menu's message map 
+	VirtualProtect((LPVOID)0x4D513C, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memcpy_s(afxMessageMapMainMenu, sizeof(afxMessageMapMainMenu), (LPVOID)0x4D5140, sizeof(AFX_MSGMAP_ENTRY) * 8);
+	afxMessageMapMainMenu[7] = { WM_COMMAND, 0, 118, 118, 0x0A, ShowSettingsDialog };
+	afxMessageMapMainMenu[8] = { 0 };
+	*(DWORD*)0x4D513C = (DWORD)afxMessageMapMainMenu;
+
+	VirtualProtect((LPVOID)0x41503F, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP(0x41503F, 0x415161);
+	*(BYTE*)0x415044 = 0x90;
 
 skipmenu:
 	// Part two!
