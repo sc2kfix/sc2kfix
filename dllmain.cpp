@@ -128,6 +128,7 @@ void ConsoleLog(int iLogLevel, const char* fmt, ...) {
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
     int argc = 0;
     LPWSTR* argv = NULL;
+    BOOL bSkipLoadSettings = FALSE;
 
     switch (reason) {
     case DLL_PROCESS_ATTACH:
@@ -160,6 +161,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             for (int i = 0; i < argc; i++) {
                 if (!lstrcmpiW(argv[i], L"-console"))
                     bConsoleEnabled = TRUE;
+                if (!lstrcmpiW(argv[i], L"-defaults"))
+                    bSkipLoadSettings = TRUE;
                 // TODO - put some debug options here
             }
         }
@@ -233,7 +236,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             ConsoleLog(LOG_INFO, "Registry entries created by faux-installer.");
 
         // Load settings
-        LoadSettings();
+        if (!bSkipLoadSettings)
+            LoadSettings();
+        else
+            ConsoleLog(LOG_INFO, "-default passed, skipping LoadSettings().\n");
 
         // Palette animation fix
         LPVOID lpAnimationFix;
