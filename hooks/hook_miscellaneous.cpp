@@ -43,7 +43,7 @@ AFX_MSGMAP_ENTRY afxMessageMapMainMenu[9];
 // Override some strings that have egregiously bad grammar/capitalization.
 // Maxis fail English? That's unpossible!
 extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMax) {
-	if (hInstance == hSC2KAppModule) {
+	if (hInstance == hSC2KAppModule && bSettingsUseNewStrings) {
 		switch (uID) {
 		case 108:
 			if (!strcpy_s(lpBuffer, cchBufferMax,
