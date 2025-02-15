@@ -42,7 +42,7 @@ BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
-		case IDOK:
+		case ID_INSTALL_OK:
 			if (!GetDlgItemText(hwndDlg, IDC_EDIT_MAYOR, szSettingsMayorName, 63))
 				strcpy_s(szSettingsMayorName, 64, "Marvin Maxis");
 			if (!GetDlgItemText(hwndDlg, IDC_EDIT_COMPANY, szSettingsCompanyName, 63))
