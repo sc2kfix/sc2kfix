@@ -9,19 +9,21 @@
 #include <stdio.h>
 
 #include <sc2kfix.h>
-#include <resource.h>
+#include "resource.h"
 
 char szSC2KPath[MAX_PATH];
 char szSC2KGoodiesPath[MAX_PATH];
-char szMayorName[64];
-char szCompanyName[64];
 
-HWND hwndDesktop;
-RECT rcTemp, rcDlg, rcDesktop;
+static HWND hwndDesktop;
+static RECT rcTemp, rcDlg, rcDesktop;
 
 BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 	case WM_INITDIALOG:
+		// Set the dialog box icon
+		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)LoadIcon(hSC2KAppModule, MAKEINTRESOURCE(1)));
+		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(hSC2KAppModule, MAKEINTRESOURCE(2)));
+
 		// These both come from the game themselves.
 		// I don't know if they're used anywhere, but they're there.
 		SetDlgItemText(hwndDlg, IDC_EDIT_MAYOR, "Marvin Maxis");
@@ -41,10 +43,10 @@ BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case IDOK:
-			if (!GetDlgItemText(hwndDlg, IDC_EDIT_MAYOR, szMayorName, 63))
-				strcpy_s(szMayorName, 64, "Marvin Maxis");
-			if (!GetDlgItemText(hwndDlg, IDC_EDIT_COMPANY, szCompanyName, 63))
-				strcpy_s(szCompanyName, 64, "Q37 Space Modulator Mfg.");
+			if (!GetDlgItemText(hwndDlg, IDC_EDIT_MAYOR, szSettingsMayorName, 63))
+				strcpy_s(szSettingsMayorName, 64, "Marvin Maxis");
+			if (!GetDlgItemText(hwndDlg, IDC_EDIT_COMPANY, szSettingsCompanyName, 63))
+				strcpy_s(szSettingsCompanyName, 64, "Q37 Space Modulator Mfg.");
 			EndDialog(hwndDlg, wParam);
 			return TRUE;
 		}
@@ -70,8 +72,8 @@ BOOL DoRegistryCheckAndInstall(void) {
 		DialogBox(hSC2KFixModule, MAKEINTRESOURCE(IDD_INSTALL), NULL, InstallDialogProc);
 
 		// Write registration strings
-		RegSetValueEx(hkeySC2KRegistration, "Mayor Name", NULL, REG_SZ, (BYTE*)szMayorName, strlen(szMayorName) + 1);
-		RegSetValueEx(hkeySC2KRegistration, "Company Name", NULL, REG_SZ, (BYTE*)szCompanyName, strlen(szCompanyName) + 1);
+		RegSetValueEx(hkeySC2KRegistration, "Mayor Name", NULL, REG_SZ, (BYTE*)szSettingsMayorName, strlen(szSettingsMayorName) + 1);
+		RegSetValueEx(hkeySC2KRegistration, "Company Name", NULL, REG_SZ, (BYTE*)szSettingsCompanyName, strlen(szSettingsCompanyName) + 1);
 
 		// Generate paths
 		char szSC2KExePath[MAX_PATH] = { 0 };

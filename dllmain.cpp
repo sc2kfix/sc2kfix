@@ -13,19 +13,16 @@
 #include <time.h>
 
 #include <sc2kfix.h>
-#include <resource.h>
 #include <winmm_exports.h>
+#include "resource.h"
 
 #pragma intrinsic(_ReturnAddress)
-
-// From registry_install.cpp
-extern char szMayorName[64];
-extern char szCompanyName[64];
 
 // Global variables that we need to keep handy
 HMODULE hRealWinMM = NULL;
 HMODULE hSC2KAppModule = NULL;
 HMODULE hSC2KFixModule = NULL;
+HMENU hGameMenu = NULL;
 FARPROC fpWinMMHookList[180] = { NULL };
 DWORD dwDetectedVersion = SC2KVERSION_UNKNOWN;
 DWORD dwSC2KAppTimestamp = 0;
@@ -234,6 +231,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         // Registry check
         if (DoRegistryCheckAndInstall())
             ConsoleLog(LOG_INFO, "Registry entries created by faux-installer.");
+
+        // Load settings
+        LoadSettings();
 
         // Palette animation fix
         LPVOID lpAnimationFix;

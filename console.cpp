@@ -9,6 +9,7 @@
 #include <map>
 
 #include <sc2kfix.h>
+#include "resource.h"
 
 #ifdef CONSOLE_ENABLED
 BOOL bConsoleEnabled = TRUE;
@@ -21,11 +22,13 @@ char szCmdBuf[256] = { 0 };
 BOOL bConsoleUndocumentedMode = FALSE;
 
 static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments);
+BOOL ConsoleCmdSettings(const char* szCommand, const char* szArguments);
 
 console_command_t fpConsoleCommands[] = {
 	{ "?", ConsoleCmdHelp, CONSOLE_COMMAND_ALIAS, "" },
 	{ "help", ConsoleCmdHelp, CONSOLE_COMMAND_DOCUMENTED, "Display this help" },
 	{ "set", ConsoleCmdSet, CONSOLE_COMMAND_DOCUMENTED, "Modify game and plugin behaviour" },
+	{ "settings", ConsoleCmdSettings, CONSOLE_COMMAND_DOCUMENTED, "Open sc2kfix settings dialog" },
 	{ "show", ConsoleCmdShow, CONSOLE_COMMAND_DOCUMENTED, "Display various game and plugin information" },
 	{ "unset", ConsoleCmdSet, CONSOLE_COMMAND_DOCUMENTED, "Modify game and plugin behaviour" },
 };
@@ -50,6 +53,13 @@ BOOL ConsoleCmdHelp(const char* szCommand, const char* szArguments) {
 }
 
 // COMMAND: show [...]
+
+// COMMAND: settings
+
+BOOL ConsoleCmdSettings(const char* szCommand, const char* szArguments) {
+	DialogBox(hSC2KFixModule, MAKEINTRESOURCE(IDD_SETTINGS), NULL, SettingsDialogProc);
+	return TRUE;
+}
 
 BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {

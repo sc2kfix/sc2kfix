@@ -19,7 +19,13 @@
 
 #pragma intrinsic(_ReturnAddress)
 
-#define MISCHOOK_DEBUG 2
+
+#define MISCHOOK_DEBUG_OTHER 1
+#define MISCHOOK_DEBUG_MILITARY 2
+#define MISCHOOK_DEBUG_MENU 4
+
+
+#define MISCHOOK_DEBUG MISCHOOK_DEBUG_MILITARY
 
 #ifdef DEBUGALL
 #undef MISCHOOK_DEBUG
@@ -119,6 +125,21 @@ extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR l
 	return LoadStringA(hInstance, uID, lpBuffer, cchBufferMax);
 }
 
+// Hook LoadMenuA so we can insert our own menu items.
+extern "C" HMENU __stdcall Hook_LoadMenuA(HINSTANCE hInstance, LPCSTR lpMenuName) {
+	if ((DWORD)lpMenuName == 3 && hGameMenu)
+		return hGameMenu;
+	return LoadMenuA(hInstance, lpMenuName);
+}
+
+// Make sure our own menu items get enabled instead of disabled
+extern "C" BOOL __stdcall Hook_EnableMenuItem(HMENU hMenu, UINT uIDEnableItem, UINT uEnable) {
+	// XXX - There's gotta be a better way to do this.
+	if (uIDEnableItem == 5 && uEnable == 0x403)
+		return EnableMenuItem(hMenu, uIDEnableItem, MF_BYPOSITION | MF_ENABLED);
+	return EnableMenuItem(hMenu, uIDEnableItem, uEnable);
+}
+
 // Fix military bases not growing.
 // XXX - This could use a few extra lines as it's currently possible for a few placeable buildings
 // to overwrite and effectively erase military zoned tiles, and I don't know what that will do to
@@ -143,7 +164,7 @@ extern "C" void _declspec(naked) Hook_FixMilitaryBaseGrowth(void) {
 
 // Hook to reset iMilitaryBaseTries if needed (new/loaded game, gilmartin)
 extern "C" void _declspec(naked) Hook_SimulationProposeMilitaryBase(void) {
-	if (mischook_debug & 2)
+	if (mischook_debug & MISCHOOK_DEBUG_MILITARY)
 		ConsoleLog(LOG_DEBUG, "MISC: SimulationProposeMilitaryBase called, resetting iMilitaryBaseTries.\n");
 	iMilitaryBaseTries = 0;
 	__asm {
@@ -157,7 +178,7 @@ extern "C" void _declspec(naked) Hook_SimulationProposeMilitaryBase(void) {
 // out mountain slider, so that's what we're going with here.
 extern "C" void _declspec(naked) Hook_AttemptMultipleMilitaryBases(void) {
 	if (iMilitaryBaseTries++ < 10) {
-		if (mischook_debug & 2)
+		if (mischook_debug & MISCHOOK_DEBUG_MILITARY)
 			ConsoleLog(LOG_DEBUG, "MISC: Failed military base placement, attempting again.\n");
 		__asm {
 			push 0x4142E9
@@ -175,6 +196,10 @@ void InstallMiscHooks(void) {
 	// Install LoadStringA hook
 	*(DWORD*)(0x4EFBE8) = (DWORD)Hook_LoadStringA;
 
+	// Install LoadMenuA hook
+	*(DWORD*)(0x4EFDCC) = (DWORD)Hook_LoadMenuA;
+	*(DWORD*)(0x4EFE58) = (DWORD)Hook_EnableMenuItem;
+
 	// Fix military bases not growing
 	VirtualProtect((LPVOID)0x440D4F, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJZ((LPVOID)0x440D4F, Hook_FixMilitaryBaseGrowth);
@@ -185,13 +210,60 @@ void InstallMiscHooks(void) {
 	VirtualProtect((LPVOID)0x403017, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x403017, Hook_SimulationProposeMilitaryBase);
 
-	// Music in background
-	VirtualProtect((LPVOID)0x40BFDA, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	memset((LPVOID)0x40BFDA, 0x90, 5);
-
 	// Fix the broken cheat
 	UINT uCheatPatch[9] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
 	memcpy_s((LPVOID)0x4E65C8, 10, "mrsoleary", 10);
 	memcpy_s((LPVOID)0x4E6490, sizeof(uCheatPatch), uCheatPatch, sizeof(uCheatPatch));
+
+	// Add settings buttons to SC2K's menus
+	hGameMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(3));
+	if (hGameMenu) {
+		HMENU hOptionsPopup;
+		MENUITEMINFO miiOptionsPopup;
+		miiOptionsPopup.cbSize = sizeof(MENUITEMINFO);
+		miiOptionsPopup.fMask = MIIM_SUBMENU;
+		if (!GetMenuItemInfo(hGameMenu, 2, TRUE, &miiOptionsPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
+			goto skipmenu;
+		}
+		hOptionsPopup = miiOptionsPopup.hSubMenu;
+		if (!AppendMenu(hOptionsPopup, MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: AppendMenuA #1 failed, error = 0x%08X.\n", GetLastError());
+			goto skipmenu;
+		}
+		if (!AppendMenu(hOptionsPopup, MF_STRING, 40000, "sc2kfix &Settings...") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: AppendMenuA #2 failed, error = 0x%08X.\n", GetLastError());
+			goto skipmenu;
+		}
+		AFX_MSGMAP_ENTRY afxMessageMapEntry = {
+			WM_COMMAND,
+			0,
+			40000,
+			40000,
+			0x0A,
+			ShowSettingsDialog
+		};
+		VirtualProtect((LPVOID)0x4D45C0, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
+		memcpy_s((LPVOID)0x4D45C0, sizeof(afxMessageMapEntry), &afxMessageMapEntry, sizeof(afxMessageMapEntry));
+		if (mischook_debug & MISCHOOK_DEBUG_MENU)
+			ConsoleLog(LOG_DEBUG, "MISC: Updated game menu.\n");
+	}
+
+skipmenu:
+	// Part two!
+	UpdateMiscHooks();
+}
+
+// The difference between InstallMiscHooks and UpdateMiscHooks is that UpdateMiscHooks can be run
+// again at runtime because it can patch back in original game code. It's used for small stuff.
+void UpdateMiscHooks(void) {
+	// Music in background
+	VirtualProtect((LPVOID)0x40BFDA, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	if (bSettingsMusicInBackground)
+		memset((LPVOID)0x40BFDA, 0x90, 5);
+	else {
+		BYTE bOriginalCode[5] = { 0xE8, 0xFD, 0x50, 0xFF, 0xFF };
+		memcpy_s((LPVOID)0x40BFDA, 5, bOriginalCode, 5);
+	}
 }
 

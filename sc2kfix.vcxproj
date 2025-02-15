@@ -56,14 +56,15 @@
       <AdditionalDependencies>"shlwapi.lib";%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>"include"</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>
+      </AdditionalIncludeDirectories>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\resource.h" />
     <ClInclude Include="include\sc2kfix.h" />
     <ClInclude Include="include\winmm_exports.h" />
     <ClInclude Include="include\sc2k_1996.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="console.cpp" />
@@ -75,6 +76,7 @@
     <ClCompile Include="hooks\sc2k_1996.cpp" />
     <ClCompile Include="registry_install.cpp" />
     <ClCompile Include="scurkfix.cpp" />
+    <ClCompile Include="settings.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="hooks\exports.def" />

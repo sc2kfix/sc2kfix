@@ -28,6 +28,15 @@
 #define NEWJZ(from, to) *(BYTE*)(from) = 0x0F; *(BYTE*)((DWORD)(from)+1) = 0x84; RELATIVE_OFFSET((DWORD)(from)+2, to)
 #define NEWJNZ(from, to) *(BYTE*)(from) = 0x0F; *(BYTE*)((DWORD)(from)+1) = 0x85; RELATIVE_OFFSET((DWORD)(from)+2, to)
 
+typedef struct {
+	UINT nMessage;
+	UINT nCode;
+	UINT nID;
+	UINT nLastID;
+	UINT_PTR nSig;
+	void* pfn;
+} AFX_MSGMAP_ENTRY;
+
 typedef BOOL (*console_cmdproc_t)(const char* szCommand, const char* szArguments);
 
 typedef struct {
@@ -60,8 +69,21 @@ enum {
 	LOG_DEBUG
 };
 
+// Settings globals
+extern char szSettingsMayorName[64];
+extern char szSettingsCompanyName[64];
+extern BOOL bSettingsMusicInBackground;
+extern BOOL bSettingsMilitaryBaseRevenue;
+extern BOOL bSettingsAlwaysConsole;
+
+// Globals etc.
+
 BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
+BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 BOOL DoRegistryCheckAndInstall(void);
+void LoadSettings(void);
+void SaveSettings(void);
+void ShowSettingsDialog(void);
 const char* HexPls(UINT uNumber);
 void ConsoleLog(int iLogLevel, const char* fmt, ...);
 
@@ -81,6 +103,7 @@ extern HMODULE hRealWinMM;
 extern HMODULE hSC2KAppModule;
 extern HMODULE hSC2KFixModule;
 extern HANDLE hConsoleThread;
+extern HMENU hGameMenu;
 extern FARPROC fpWinMMHookList[180];
 extern DWORD dwDetectedVersion;
 extern DWORD dwSC2KAppTimestamp;
@@ -94,6 +117,7 @@ extern std::map<DWORD, soundbufferinfo_t> mapSoundBuffers;
 // Hooks to inject in dllmain.cpp
 
 void InstallMiscHooks(void);
+void UpdateMiscHooks(void);
 extern "C" void __stdcall Hook_401F9B(int iSoundID, void* lpBuffer);
 
 // Debugging settings
