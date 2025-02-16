@@ -41,7 +41,7 @@ extern "C" void __stdcall Hook_401F9B(int iSoundID, void* lpBuffer) {
         mapSoundBuffers[(DWORD)lpBuffer] = { iSoundID, 1 };
     }
 
-    if (mapReplacementSounds.find(iSoundID) != mapReplacementSounds.end()) {
+    if (mapReplacementSounds.find(iSoundID) != mapReplacementSounds.end() && bSettingsUseSoundReplacements) {
         memcpy_s(lpBuffer, mapReplacementSounds[iSoundID].nBufSize, mapReplacementSounds[iSoundID].bBuffer, mapReplacementSounds[iSoundID].nBufSize);
         if (snd_debug & SND_DEBUG_PLAYS)
             ConsoleLog(LOG_DEBUG, "SND: Detour! Copied replacement %d.wav into buffer <0x%08X>.\n", iSoundID, lpBuffer);

@@ -235,6 +235,9 @@ void InstallMiscHooks(void) {
 	VirtualProtect((LPVOID)0x480C7B, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
 	*(DWORD*)0x480C7B = 262144;
 
+	// Load higher quality sounds from DLL resources
+	LoadReplacementSounds();
+
 	// Add settings buttons to SC2K's menus
 	hGameMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(3));
 	if (hGameMenu) {
@@ -296,8 +299,5 @@ void UpdateMiscHooks(void) {
 		BYTE bOriginalCode[5] = { 0xE8, 0xFD, 0x50, 0xFF, 0xFF };
 		memcpy_s((LPVOID)0x40BFDA, 5, bOriginalCode, 5);
 	}
-	
-	// Replacement sounds
-	LoadReplacementSounds();
 }
 

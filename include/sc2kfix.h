@@ -81,6 +81,7 @@ extern char szSettingsMayorName[64];
 extern char szSettingsCompanyName[64];
 extern BOOL bSettingsMusicInBackground;
 extern BOOL bSettingsUseNewStrings;
+extern BOOL bSettingsUseSoundReplacements;
 extern BOOL bSettingsMilitaryBaseRevenue;
 extern BOOL bSettingsAlwaysConsole;
 

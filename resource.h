@@ -16,6 +16,7 @@
 #define IDC_SETTINGS_CHECK_MILITARY_REVENUE 21011
 #define IDC_SETTINGS_CHECK_CONSOLE      21012
 #define IDC_SETTINGS_CHECK_NEW_STRINGS  21013
+#define IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS  21014
 #define IDR_WAVE_500                    23001
 #define IDR_WAVE_514                    23002
 #define IDR_WAVE_529                    23003
@@ -26,7 +27,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        23004
 #define _APS_NEXT_COMMAND_VALUE         40002
-#define _APS_NEXT_CONTROL_VALUE         21014
+#define _APS_NEXT_CONTROL_VALUE         21015
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
