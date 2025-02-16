@@ -18,7 +18,7 @@
 
 #ifdef DEBUGALL
 #undef TIMER_DEBUG
-#define TIMER_DEBUG 1
+#define TIMER_DEBUG DEBUG_FLAGS_EVERYTHING
 #endif
 
 UINT timer_debug = TIMER_DEBUG;

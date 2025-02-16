@@ -85,4 +85,15 @@
       <Filter>Documentation</Filter>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Media Include="blobs\500.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="blobs\529.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="blobs\514.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+  </ItemGroup>
 </Project>

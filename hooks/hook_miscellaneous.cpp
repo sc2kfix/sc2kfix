@@ -19,17 +19,15 @@
 
 #pragma intrinsic(_ReturnAddress)
 
-
 #define MISCHOOK_DEBUG_OTHER 1
 #define MISCHOOK_DEBUG_MILITARY 2
 #define MISCHOOK_DEBUG_MENU 4
-
 
 #define MISCHOOK_DEBUG 0
 
 #ifdef DEBUGALL
 #undef MISCHOOK_DEBUG
-#define MISCHOOK_DEBUG 0xFFFFFFFF
+#define MISCHOOK_DEBUG DEBUG_FLAGS_EVERYTHING
 #endif
 
 UINT mischook_debug = MISCHOOK_DEBUG;
@@ -225,6 +223,18 @@ void InstallMiscHooks(void) {
 	memcpy_s((LPVOID)0x4E65C8, 10, "mrsoleary", 10);
 	memcpy_s((LPVOID)0x4E6490, sizeof(uCheatPatch), uCheatPatch, sizeof(uCheatPatch));
 
+	// Increase sound buffer sizes to 256K each
+	VirtualProtect((LPVOID)0x480C2B, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(DWORD*)0x480C2B = 262144;
+	VirtualProtect((LPVOID)0x480C4B, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(DWORD*)0x480C4B = 262144;
+	VirtualProtect((LPVOID)0x480C5B, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(DWORD*)0x480C5B = 262144;
+	VirtualProtect((LPVOID)0x480C6B, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(DWORD*)0x480C6B = 262144;
+	VirtualProtect((LPVOID)0x480C7B, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(DWORD*)0x480C7B = 262144;
+
 	// Add settings buttons to SC2K's menus
 	hGameMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(3));
 	if (hGameMenu) {
@@ -286,5 +296,8 @@ void UpdateMiscHooks(void) {
 		BYTE bOriginalCode[5] = { 0xE8, 0xFD, 0x50, 0xFF, 0xFF };
 		memcpy_s((LPVOID)0x40BFDA, 5, bOriginalCode, 5);
 	}
+	
+	// Replacement sounds
+	LoadReplacementSounds();
 }
 

@@ -18,7 +18,7 @@
 #define SC2KVERSION_1995    1
 #define SC2KVERSION_1996    2
 
-#define SC2KFIX_VERSION	"0.6"
+#define SC2KFIX_VERSION	"0.7-dev"
 
 #define RELATIVE_OFFSET(from, to) *(DWORD*)((DWORD)(from)) = (DWORD)(to) - (DWORD)(from) - 4;
 #define NEWCALL(from, to) *(BYTE*)(from) = 0xE8; RELATIVE_OFFSET((DWORD)(from)+1, to)
@@ -27,6 +27,8 @@
 #define NEWJNB(from, to) *(BYTE*)(from) = 0x0F; *(BYTE*)((DWORD)(from)+1) = 0x83; RELATIVE_OFFSET((DWORD)(from)+2, to)
 #define NEWJZ(from, to) *(BYTE*)(from) = 0x0F; *(BYTE*)((DWORD)(from)+1) = 0x84; RELATIVE_OFFSET((DWORD)(from)+2, to)
 #define NEWJNZ(from, to) *(BYTE*)(from) = 0x0F; *(BYTE*)((DWORD)(from)+1) = 0x85; RELATIVE_OFFSET((DWORD)(from)+2, to)
+
+#define DEBUG_FLAGS_EVERYTHING 0xFFFFFFFF
 
 typedef struct {
 	UINT nMessage;
@@ -50,6 +52,11 @@ typedef struct {
 	int iSoundID;
 	int iReloadCount;
 } soundbufferinfo_t;
+
+typedef struct {
+	BYTE* bBuffer;
+	DWORD nBufSize;
+} sound_replacement_t;
 
 enum {
 	CONSOLE_COMMAND_DOCUMENTED = 0,
@@ -85,6 +92,7 @@ BOOL DoRegistryCheckAndInstall(void);
 void LoadSettings(void);
 void SaveSettings(void);
 void ShowSettingsDialog(void);
+void LoadReplacementSounds(void);
 const char* HexPls(UINT uNumber);
 void ConsoleLog(int iLogLevel, const char* fmt, ...);
 

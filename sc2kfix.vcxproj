@@ -86,6 +86,11 @@
   <ItemGroup>
     <ResourceCompile Include="sc2kfix.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <Media Include="blobs\500.wav" />
+    <Media Include="blobs\514.wav" />
+    <Media Include="blobs\529.wav" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

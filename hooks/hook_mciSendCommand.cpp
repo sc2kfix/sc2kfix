@@ -16,7 +16,7 @@
 
 #ifdef DEBUGALL
 #undef MCI_DEBUG
-#define MCI_DEBUG 1
+#define MCI_DEBUG DEBUG_FLAGS_EVERYTHING
 #endif
 
 UINT mci_debug = MCI_DEBUG;

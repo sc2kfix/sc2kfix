@@ -93,16 +93,16 @@ BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 BOOL ConsoleCmdShowDebug(const char* szCommand, const char* szArguments) {
 	printf("Debugging labels enabled: ");
 	if (mci_debug) {
-		printf("MCI ");
+		printf("MCI=0x%08X ", mci_debug);
 	}
 	if (snd_debug) {
-		printf("SND ");
+		printf("SND=0x%08X ", snd_debug);
 	}
 	if (timer_debug) {
-		printf("TIMER ");
+		printf("TIMER=0x%08X ", timer_debug);
 	}
 	if (mischook_debug) {
-		printf("MISC ");
+		printf("MISC=0x%08X ", mischook_debug);
 	}
 	printf("\n");
 
@@ -240,12 +240,15 @@ BOOL ConsoleCmdSet(const char* szCommand, const char* szArguments) {
 BOOL ConsoleCmdSetDebug(const char* szCommand, const char* szArguments) {
 	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
 		printf(
-			"  [un]set debug mci   Enable MCI debugging\n"
-			"  [un]set debug snd   Enable WAV debugging\n");
+			"  [un]set debug misc    Enable miscellaneous hook debugging\n"
+			"  [un]set debug mci     Enable MCI debugging\n"
+			"  [un]set debug snd     Enable WAV debugging\n"
+			"  [un]set debug timer   Enable timer debugging\n");
 		return TRUE;
 	}
 
-	BOOL bOperation = TRUE;
+	// FIRE IN THE HOLE
+	DWORD bOperation = DEBUG_FLAGS_EVERYTHING;
 	if (!strcmp(szCommand, "unset"))
 		bOperation = FALSE;
 	
