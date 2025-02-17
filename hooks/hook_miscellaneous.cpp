@@ -225,6 +225,17 @@ void InstallMiscHooks(void) {
 	*(DWORD*)(0x4EFE58) = (DWORD)Hook_EnableMenuItem;
 	*(DWORD*)(0x4EFC64) = (DWORD)Hook_DialogBoxParamA;
 
+	// Fix power and water grid updates slowing down after the population hits 50,000
+	VirtualProtect((LPVOID)0x440943, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(DWORD*)0x440943 = 50000000;
+	VirtualProtect((LPVOID)0x440987, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(DWORD*)0x440987 = 50000000;
+	VirtualProtect((LPVOID)0x43F428, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(DWORD*)0x43F428 = 50000000;
+	VirtualProtect((LPVOID)0x43F3A3, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(DWORD*)0x43F3A3 = 50000000;
+	
+
 	// Fix military bases not growing
 	VirtualProtect((LPVOID)0x440D4F, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJZ((LPVOID)0x440D4F, Hook_FixMilitaryBaseGrowth);
