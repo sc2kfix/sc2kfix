@@ -38,6 +38,8 @@ UINT iMilitaryBaseTries = 0;
 WORD wMilitaryBaseX = 0, wMilitaryBaseY = 0;
 
 AFX_MSGMAP_ENTRY afxMessageMapMainMenu[9];
+DLGPROC lpNewCityAfxProc = NULL;
+char szTempMayorName[24] = { 0 };
 
 // Override some strings that have egregiously bad grammar/capitalization.
 // Maxis fail English? That's unpossible!
@@ -141,10 +143,32 @@ extern "C" BOOL __stdcall Hook_EnableMenuItem(HMENU hMenu, UINT uIDEnableItem, U
 	return EnableMenuItem(hMenu, uIDEnableItem, uEnable);
 }
 
-// Load our own version of the main menu
+static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
+	switch (message) {
+	case WM_INITDIALOG:
+		SetDlgItemText(hwndDlg, 150, szSettingsMayorName);
+		break;
+	case WM_DESTROY:
+		// XXX - there's probably a better window message to use here.
+		memset(szTempMayorName, 0, 24);
+		if (!GetDlgItemText(hwndDlg, 150, szTempMayorName, 24))
+			strcpy_s(szTempMayorName, 24, szSettingsMayorName);
+
+		strcpy_s(*bMapXLAB, 24, szTempMayorName);
+		break;
+	}
+
+	return lpNewCityAfxProc(hwndDlg, message, wParam, lParam);
+}
+
+// Load our own version of the main menu and the New City dialog when called
 extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam) {
 	if (hInstance == hSC2KAppModule && (DWORD)lpTemplateName == 103)
 		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
+	if (hInstance == hSC2KAppModule && (DWORD)lpTemplateName == 101) {
+		lpNewCityAfxProc = lpDialogFunc;
+		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_NewCityDialogProc, dwInitParam);
+	}
 	return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 }
 

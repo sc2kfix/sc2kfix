@@ -613,6 +613,10 @@ typedef struct {
 	BYTE bDunno[32];
 } neighbor_city_t;
 
+typedef struct {
+	BYTE bTileID;
+	BYTE bMicrosimData[7];
+} microsim_t;
 
 typedef struct {
 	struct {
@@ -673,7 +677,9 @@ typedef struct {
 	BYTE iDunno7 : 1;
 } map_XTHG_t;
 
-
+typedef struct {
+	char szLabel[25];
+} map_XLAB_t;
 
 
 // Pointers
@@ -698,7 +704,7 @@ GAMEOFF(BYTE,	bWeatherTrend,				0x4CB40C)
 GAMEOFF(DWORD,	dwNewspaperExtra,			0x4CC4BC)
 GAMEOFF(BOOL,	dwNoDisasters,				0x4CC4D4)
 GAMEOFF(BYTE,	bMilitaryBaseType,			0x4CC4E4)
-GAMEOFF(DWORD,	dwCityBonds,				0x4CC4E8)
+GAMEOFF(int,	dwCityBonds,				0x4CC4E8)
 GAMEOFF(DWORD,	dwPRNGState,				0x4CDB80)
 GAMEOFF(DWORD,	dwSimulationSubtickCounter,	0x4E63D8)
 GAMEOFF_ARR(DWORD, dwCityProgressionRequirements, 0x4E6984)
@@ -707,6 +713,11 @@ GAMEOFF_ARR(DWORD, dwZoneNameStringIDs,		0x4E7140)
 GAMEOFF_ARR(DWORD, dwCityNoticeStringIDs,	0x4E98B8)
 GAMEOFF(DWORD,	dwCityRewardsUnlocked,		0x4E9A24)
 
+#ifdef GAMEOFF_IMPL
+char* pszCityName = (char*)0x4CA1A0;
+#else
+extern char* pszCityName;
+#endif
 
 // Pointers to map arrays
 
@@ -717,3 +728,4 @@ GAMEOFF_ARR(map_XBIT_t*,	dwMapXBIT,	0x4CAB10)
 GAMEOFF_ARR(map_ALTM_t*,	dwMapALTM,	0x4CAE10)
 GAMEOFF_ARR(map_XUND_t*,	dwMapXUND,	0x4CB1D0)
 GAMEOFF_ARR(map_XBLD_t*,	dwMapXBLD,	0x4CC4F0)
+GAMEOFF_ARR(char*,			bMapXLAB,	0x4CA198)
