@@ -216,6 +216,12 @@ extern "C" void _declspec(naked) Hook_41442E(void) {
 	}
 }
 
+// Hooks save filename determiner
+extern "C" void __cdecl Hook_432870(LPSTR* szFilename, char* szExtension) {
+	// XXX - do we need to do anything here or can this entire call be turned into a NOP chain?
+	return;
+}
+
 void InstallMiscHooks(void) {
 	// Install LoadStringA hook
 	*(DWORD*)(0x4EFBE8) = (DWORD)Hook_LoadStringA;
@@ -224,6 +230,10 @@ void InstallMiscHooks(void) {
 	*(DWORD*)(0x4EFDCC) = (DWORD)Hook_LoadMenuA;
 	*(DWORD*)(0x4EFE58) = (DWORD)Hook_EnableMenuItem;
 	*(DWORD*)(0x4EFC64) = (DWORD)Hook_DialogBoxParamA;
+
+	// Savegame hook test
+	VirtualProtect((LPVOID)0x4321B9, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWCALL((LPVOID)0x4321B9, Hook_432870);
 
 	// Fix power and water grid updates slowing down after the population hits 50,000
 	VirtualProtect((LPVOID)0x440943, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
