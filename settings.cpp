@@ -4,7 +4,7 @@
 #undef UNICODE
 #include <windows.h>
 #include <windowsx.h>
-#include <psapi.h>
+#include <commctrl.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -23,6 +23,32 @@ BOOL bSettingsAlwaysConsole = FALSE;
 
 static HWND hwndDesktop;
 static RECT rcTemp, rcDlg, rcDesktop;
+
+HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText) {
+	if (!hDlg || !hControl || !szText)
+		return NULL;
+
+	HWND hTooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL, WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX, 0, 0, 0, 0, hDlg, NULL, hSC2KFixModule, NULL);
+	if (!hTooltip)
+		return NULL;
+
+	char* lpszText = _strdup(szText);
+	if (!lpszText)
+		return NULL;
+
+	SendMessage(hTooltip, TTM_ACTIVATE, TRUE, 0);
+	SendMessage(hTooltip, TTM_SETMAXTIPWIDTH, 0, 400);
+
+	TOOLINFO tooltipInfo = { 0 };
+	tooltipInfo.cbSize = sizeof(TOOLINFO);
+	tooltipInfo.hwnd = hDlg;
+	tooltipInfo.uId = (UINT_PTR)hControl;
+	tooltipInfo.uFlags = TTF_SUBCLASS | TTF_IDISHWND;
+	tooltipInfo.lpszText = lpszText;
+	SendMessage(hTooltip, TTM_ADDTOOL, NULL, (LPARAM)&tooltipInfo);
+
+	return hTooltip;
+}
 
 void LoadSettings(void) {
 	HKEY hkeySC2KRegistration;
@@ -129,6 +155,19 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 		// Set the dialog box icon
 		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)LoadIcon(hSC2KAppModule, MAKEINTRESOURCE(1)));
 		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(hSC2KAppModule, MAKEINTRESOURCE(2)));
+
+		// Create tooltips.
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS),
+			"Certain versions of SimCity 2000 had higher quality sounds than the Windows 95 versions. "
+			"This option controls whether or not SimCity 2000 plays higher quality versions of various sounds for which said higher quality versions exist.");
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_REVENUE),
+			"Military bases were originally intended to increase commercial demand and generate city revenue. "
+			"This was never implemented, though the negative aspects of military base ownership were. "
+			"This makes military bases in vanilla SimCity 2000 a rather poor mayoral decision.\n\n"
+
+			"Enabling this option will allow military bases to generate a population based annual income in the form of a stipend from the federal government, "
+			"as well as increased commercial demand, both of which scale with the size and type of the base, and may fluctuate depending on military needs and "
+			"base redevelopment efforts.");
 
 		// Load the existing settings into the dialog
 		SetDlgItemText(hwndDlg, IDC_SETTINGS_MAYOR, szSettingsMayorName);

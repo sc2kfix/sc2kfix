@@ -7,6 +7,7 @@
 #undef UNICODE
 #include <windows.h>
 #include <psapi.h>
+#include <commctrl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <intrin.h>
@@ -15,6 +16,9 @@
 #include <sc2kfix.h>
 #include <winmm_exports.h>
 #include "resource.h"
+
+#pragma comment(lib, "comctl32.lib")
+#pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 #pragma intrinsic(_ReturnAddress)
 
@@ -129,6 +133,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
     int argc = 0;
     LPWSTR* argv = NULL;
     BOOL bSkipLoadSettings = FALSE;
+    INITCOMMONCONTROLSEX icc = { sizeof(INITCOMMONCONTROLSEX), ICC_WIN95_CLASSES };
 
     switch (reason) {
     case DLL_PROCESS_ATTACH:
@@ -150,10 +155,14 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         ALLEXPORTS_HOOKED(GETPROC);
         ALLEXPORTS_PASSTHROUGH(GETPROC);
 
+        // Save the SimCity 2000 EXE's module handle
         if (!(hSC2KAppModule = GetModuleHandle(NULL))) {
             MessageBox(GetActiveWindow(), "Could not GetModuleHandle(NULL) (???)", "sc2kfix error", MB_OK | MB_ICONERROR);
             return FALSE;
         }
+
+        // Ensure that the common controls library is loaded
+        InitCommonControlsEx(&icc);
 
         // Get our command line. WARNING: This uses WIDE STRINGS.
         argv = CommandLineToArgvW(GetCommandLineW(), &argc);

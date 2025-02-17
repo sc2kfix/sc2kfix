@@ -65,6 +65,33 @@ enum {
 	ZONE_SEAPORT
 };
 
+static inline const char* GetZoneName(int iZoneID) {
+	switch (iZoneID) {
+	case ZONE_NONE:
+		return "Unzoned";
+	case ZONE_LIGHT_RESIDENTIAL:
+		return "Light Residential";
+	case ZONE_DENSE_RESIDENTIAL:
+		return "Dense Residential";
+	case ZONE_LIGHT_COMMERCIAL:
+		return "Light Commercial";
+	case ZONE_DENSE_COMMERCIAL:
+		return "Dense Commercial";
+	case ZONE_LIGHT_INDUSTRIAL:
+		return "Light Industrial";
+	case ZONE_DENSE_INDUSTRIAL:
+		return "Dense Industrial";
+	case ZONE_MILITARY:
+		return "Military";
+	case ZONE_AIRPORT:
+		return "Airport";
+	case ZONE_SEAPORT:
+		return "Seaport";
+	default:
+		return "INVALID";
+	}
+}
+
 // Military base types
 enum {
 	MILITARY_BASE_NONE = 0,
@@ -298,7 +325,7 @@ enum {
 	TILE_MISC_3X3_CONSTRUCTION1,
 	TILE_MISC_3X3_CONSTRUCTION2,
 	TILE_MISC_3X3_ABANDONED1,
-	TILE_MISC_3X3_ABANDONED1,
+	TILE_MISC_3X3_ABANDONED2,
 
 	TILE_POWERPLANT_HYDRO1,
 	TILE_POWERPLANT_HYDRO2,
@@ -603,11 +630,11 @@ typedef struct {
 } map_XZON_t;
 
 typedef struct {
-	BYTE iBuildingID[128];
+	BYTE iTileID[128];
 } map_XBLD_t;
 
 typedef struct {
-	BYTE iTileId[128]; // reference XTER map
+	BYTE iTileID[128]; // reference XTER map
 } map_XTER_t;
 
 typedef struct {
@@ -683,10 +710,10 @@ GAMEOFF(DWORD,	dwCityRewardsUnlocked,		0x4E9A24)
 
 // Pointers to map arrays
 
-GAMEOFF_ARR(map_XTER_t,	dwMapXTER,	0x4C9F58)
-GAMEOFF_ARR(map_XZON_t,	dwMapXZON,	0x4CA1F0)
-GAMEOFF_ARR(map_XTXT_t,	dwMapXTXT,	0x4CA600)
-GAMEOFF_ARR(map_XBIT_t,	dwMapXBIT,	0x4CAB10)
-GAMEOFF_ARR(map_ALTM_t,	dwMapALTM,	0x4CAE10)
-GAMEOFF_ARR(map_XUND_t,	dwMapXUND,	0x4CB1D0)
-GAMEOFF_ARR(map_XBLD_t,	dwMapXBLD,	0x4CC4F0)
+GAMEOFF_ARR(map_XTER_t*,	dwMapXTER,	0x4C9F58)
+GAMEOFF_ARR(map_XZON_t*,	dwMapXZON,	0x4CA1F0)
+GAMEOFF_ARR(map_XTXT_t*,	dwMapXTXT,	0x4CA600)
+GAMEOFF_ARR(map_XBIT_t*,	dwMapXBIT,	0x4CAB10)
+GAMEOFF_ARR(map_ALTM_t*,	dwMapALTM,	0x4CAE10)
+GAMEOFF_ARR(map_XUND_t*,	dwMapXUND,	0x4CB1D0)
+GAMEOFF_ARR(map_XBLD_t*,	dwMapXBLD,	0x4CC4F0)

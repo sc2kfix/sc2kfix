@@ -35,6 +35,7 @@ UINT mischook_debug = MISCHOOK_DEBUG;
 static DWORD dwDummy;
 
 UINT iMilitaryBaseTries = 0;
+WORD wMilitaryBaseX = 0, wMilitaryBaseY = 0;
 
 AFX_MSGMAP_ENTRY afxMessageMapMainMenu[9];
 
@@ -199,6 +200,22 @@ extern "C" void _declspec(naked) Hook_AttemptMultipleMilitaryBases(void) {
 	}
 }
 
+// Quick detour to pull the top-left corner coordinates of a spawned military base.
+extern "C" void _declspec(naked) Hook_41442E(void) {
+	__asm {
+		mov edx, 0x4B234F				// AfxMessageBox
+		call edx
+
+		mov edx, [esp + 0x5C - 0x38]
+		mov word ptr [wMilitaryBaseX], dx
+		mov edx, [esp + 0x5C - 0x34]
+		mov word ptr [wMilitaryBaseY], dx
+
+		push 0x414433
+		retn
+	}
+}
+
 void InstallMiscHooks(void) {
 	// Install LoadStringA hook
 	*(DWORD*)(0x4EFBE8) = (DWORD)Hook_LoadStringA;
@@ -217,6 +234,24 @@ void InstallMiscHooks(void) {
 	NEWJNZ((LPVOID)0x4146B5, Hook_AttemptMultipleMilitaryBases);
 	VirtualProtect((LPVOID)0x403017, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x403017, Hook_SimulationProposeMilitaryBase);
+
+	// Store the coordinates of the military base
+	VirtualProtect((LPVOID)0x41442E, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x41442E, Hook_41442E);
+
+	// Allow military tiles to be rotated. I don't know if this will work or not.
+	// 
+	// (no. it does not work. leaving this here for now as a potential to-to list item.)
+	/*VirtualProtect((LPVOID)0x43931E, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(BYTE*)0x43931E = 0x7F;
+	VirtualProtect((LPVOID)0x4393B5, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(BYTE*)0x4393B5 = 0x7F;*/
+
+	// Move the alt+query bottom text to not be blocked by the OK button
+	VirtualProtect((LPVOID)0x428FB1, 3, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(BYTE*)0x428FB1 = 0x83;
+	*(BYTE*)0x428FB2 = 0xE8;
+	*(BYTE*)0x428FB3 = 0x32;
 
 	// Fix the broken cheat
 	UINT uCheatPatch[9] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
@@ -272,13 +307,20 @@ void InstallMiscHooks(void) {
 			ConsoleLog(LOG_DEBUG, "MISC: Updated game menu.\n");
 	}
 
-	// Copy the main menu's message map 
+	// Copy the main menu's message map and update the runtime class to use it
 	VirtualProtect((LPVOID)0x4D513C, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
 	memcpy_s(afxMessageMapMainMenu, sizeof(afxMessageMapMainMenu), (LPVOID)0x4D5140, sizeof(AFX_MSGMAP_ENTRY) * 8);
 	afxMessageMapMainMenu[7] = { WM_COMMAND, 0, 118, 118, 0x0A, ShowSettingsDialog };
 	afxMessageMapMainMenu[8] = { 0 };
 	*(DWORD*)0x4D513C = (DWORD)afxMessageMapMainMenu;
 
+	// Skip over the strange bit of code that re-arranges the original main menu.
+	// 
+	// For some reason the main menu dialog resource in simcity.exe has the Load Tile Set button
+	// at the exact same coordinates as the Quit button. The code we're skipping (because we're
+	// using our own dialog resource for the main menu) programatically resizes the dialog and
+	// rearranges the buttons to fit on it. Why they didn't just fix the button coordinates in
+	// the dialog resource instead is beyond me.
 	VirtualProtect((LPVOID)0x41503F, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP(0x41503F, 0x415161);
 	*(BYTE*)0x415044 = 0x90;

@@ -83,6 +83,9 @@ BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 	if (!strcmp(szArguments, "test"))
 		return ConsoleCmdShowTest(szCommand, szArguments);
 
+	if (!strcmp(szArguments, "tile") || !strncmp(szArguments, "tile ", 5))
+		return ConsoleCmdShowTile(szCommand, szArguments);
+
 	if (!strcmp(szArguments, "version"))
 		return ConsoleCmdShowVersion(szCommand, szArguments);
 
@@ -187,8 +190,43 @@ BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
 }
 
 static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments) {
-	printf("0x%08X[0] = %u\n", dwCityNoticeStringIDs, dwCityNoticeStringIDs[0]);
+	extern WORD wMilitaryBaseX, wMilitaryBaseY;
+	if (bMilitaryBaseType > 1)
+		printf("Military base located at (%u, %u)\n", wMilitaryBaseX, wMilitaryBaseY);
+	else
+		printf("Military base not built in city.\n");
 
+	return TRUE;
+}
+
+BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments) {
+	if (dwDetectedVersion != SC2KVERSION_1996) {
+		printf("Command only available when attached to 1996 Special Edition.\n");
+		return TRUE;
+	}
+
+	if (*(szArguments + 4) == '\0' || *(szArguments + 5) == '\0' || !strcmp(szArguments + 5, "?")) {
+		printf(
+			"Usage:\n"
+			"  show tile <x> <y>\n");
+		return TRUE;
+	}
+
+	int iTileX = -1, iTileY = -1;
+	sscanf_s(szArguments + 5, "%i %i", &iTileX, &iTileY);
+
+	if (iTileX >= 0 && iTileX < 128 && iTileY >= 0 && iTileY < 128) {
+		int iTileID = dwMapXBLD[iTileX]->iTileID[iTileY];
+
+		printf(
+			"Tile (%i, %i):\n"
+			"  iTileID: %i\n"
+			"  Zone: %s\n"
+			"  XBIT: 0x%02X\n", iTileX, iTileY, iTileID, GetZoneName(dwMapXZON[iTileX]->b[iTileY].iZoneType), dwMapXBIT[iTileX]->b[iTileY]);
+		return TRUE;
+	}
+
+	printf("Invalid argument.\n");
 	return TRUE;
 }
 
@@ -217,7 +255,8 @@ BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments) {
 BOOL ConsoleCmdSet(const char* szCommand, const char* szArguments) {
 	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
 		printf(
-			"  [un]set debug [...]   Enable debugging output\n");
+			"  [un]set debug [...]   Enable debugging output\n"
+			"  [un]set tile [...]    Modify tile parameters\n");
 		return TRUE;
 	}
 
@@ -227,6 +266,9 @@ BOOL ConsoleCmdSet(const char* szCommand, const char* szArguments) {
 
 	if (!strncmp(szArguments, "debug ", 6))
 		return ConsoleCmdSetDebug(szCommand, szArguments + 6);
+
+	if (!strcmp(szArguments, "tile") || !strncmp(szArguments, "tile ", 5))
+		return ConsoleCmdSetTile(szCommand, szArguments + 5);
 
 	if (!strcmp(szArguments, "undocumented")) {
 		bConsoleUndocumentedMode = bOperation;
@@ -267,6 +309,32 @@ BOOL ConsoleCmdSetDebug(const char* szCommand, const char* szArguments) {
 	} else {
 		printf("Invalid argument.\n");
 	}
+	return TRUE;
+}
+
+BOOL ConsoleCmdSetTile(const char* szCommand, const char* szArguments) {
+	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
+		printf(
+			"  [un]set tile <x> <y> rotate    Enable rotate flag on tile\n");
+		return TRUE;
+	}
+
+	DWORD bOperation = TRUE;
+	if (!strcmp(szCommand, "unset"))
+		bOperation = FALSE;
+
+	char szTileOperation[12] = { 0 };
+	int iTileX = -1, iTileY = -1;
+	sscanf_s(szArguments, "%i %i %s", &iTileX, &iTileY, szTileOperation, sizeof(szTileOperation));
+
+	if (iTileX >= 0 && iTileX < 128 && iTileY >= 0 && iTileY < 128) {
+		if (!strcmp(szTileOperation, "rotate")) {
+			dwMapXBIT[iTileX]->b[iTileY].iRotated = bOperation;
+			return TRUE;
+		}
+	}
+	
+	printf("Invalid argument.\n");
 	return TRUE;
 }
 
