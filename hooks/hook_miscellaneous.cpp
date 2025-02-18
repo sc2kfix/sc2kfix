@@ -22,6 +22,7 @@
 #define MISCHOOK_DEBUG_OTHER 1
 #define MISCHOOK_DEBUG_MILITARY 2
 #define MISCHOOK_DEBUG_MENU 4
+#define MISCHOOK_DEBUG_SAVES 8
 
 #define MISCHOOK_DEBUG 0
 
@@ -244,10 +245,26 @@ extern "C" void _declspec(naked) Hook_41442E(void) {
 	}
 }
 
-// Hooks save filename determiner
-extern "C" void __cdecl Hook_432870(LPSTR* szFilename, char* szExtension) {
-	// XXX - do we need to do anything here or can this entire call be turned into a NOP chain?
-	return;
+// Fix rail and highway border connections not loading properly
+extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
+	short* wCityNeighborConnections1500 = (short*)0x4CA3F0;
+	*wCityNeighborConnections1500 = 0;
+	*(DWORD*)0x4C85A0 = 0;
+
+	for (int x = 0; x < 128; x++) {
+		for (int y = 0; y < 128; y++) {
+			if (dwMapXTXT[x]->bTextOverlay[y] == 0xFA) {
+				BYTE iTileID = dwMapXBLD[x]->iTileID[y];
+				if (iTileID >= TILE_RAIL_LR && iTileID < TILE_TUNNEL_T
+					|| iTileID >= TILE_CROSSOVER_ROADLR_RAILTB && iTileID < TILE_SUSPENSION_BRIDGE_START_B
+					|| iTileID >= TILE_HIGHWAY_HTB && iTileID < TILE_REINFORCED_BRIDGE_PYLON)
+					++*wCityNeighborConnections1500;
+			}
+		}
+	}
+
+	if (mischook_debug & MISCHOOK_DEBUG_SAVES)
+		ConsoleLog(LOG_DEBUG, "Loaded %d $1500 neighbor connections.\n", *wCityNeighborConnections1500);
 }
 
 void InstallMiscHooks(void) {
@@ -258,10 +275,6 @@ void InstallMiscHooks(void) {
 	*(DWORD*)(0x4EFDCC) = (DWORD)Hook_LoadMenuA;
 	*(DWORD*)(0x4EFE58) = (DWORD)Hook_EnableMenuItem;
 	*(DWORD*)(0x4EFC64) = (DWORD)Hook_DialogBoxParamA;
-
-	// Savegame hook test
-	VirtualProtect((LPVOID)0x4321B9, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWCALL((LPVOID)0x4321B9, Hook_432870);
 
 	// Fix the sign fonts
 	VirtualProtect((LPVOID)0x4E7267, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -286,6 +299,11 @@ void InstallMiscHooks(void) {
 	memset((LPVOID)0x42FE6C, 0x90, 5);
 	VirtualProtect((LPVOID)0x42FEA3, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	memset((LPVOID)0x42FEA3, 0x90, 5);
+
+	// Fix $1500 neighbor connections on game load
+	VirtualProtect((LPVOID)0x434BEA, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWCALL((LPVOID)0x434BEA, Hook_LoadNeighborConnections1500);
+	*(BYTE*)0x434BEF = 0x90;
 
 	// Fix military bases not growing
 	VirtualProtect((LPVOID)0x440D4F, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
