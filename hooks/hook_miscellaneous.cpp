@@ -170,8 +170,7 @@ extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lp
 		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_NewCityDialogProc, dwInitParam);
 	case 102:
 	case 103:
-		lpNewCityAfxProc = lpDialogFunc;
-		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_NewCityDialogProc, dwInitParam);
+		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	default:
 		return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	}
@@ -295,10 +294,11 @@ void InstallMiscHooks(void) {
 	*(DWORD*)0x43F3A4 = 50000000;
 	
 	// Fix city name being overwritten by filename on save
-	VirtualProtect((LPVOID)0x42FE6C, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	memset((LPVOID)0x42FE6C, 0x90, 5);
-	VirtualProtect((LPVOID)0x42FEA3, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	memset((LPVOID)0x42FEA3, 0x90, 5);
+	BYTE bFilenamePatch[6] = { 0xB9, 0xA0, 0xA1, 0x4C, 0x00, 0x51 };
+	VirtualProtect((LPVOID)0x42FE62, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memcpy((LPVOID)0x42FE62, bFilenamePatch, 6);
+	VirtualProtect((LPVOID)0x42FE99, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memcpy((LPVOID)0x42FE99, bFilenamePatch, 6);
 
 	// Fix save filenames going wonky 
 	VirtualProtect((LPVOID)0x4321B9, 8, PAGE_EXECUTE_READWRITE, &dwDummy);
