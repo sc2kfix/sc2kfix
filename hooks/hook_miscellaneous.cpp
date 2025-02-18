@@ -300,6 +300,10 @@ void InstallMiscHooks(void) {
 	VirtualProtect((LPVOID)0x42FEA3, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	memset((LPVOID)0x42FEA3, 0x90, 5);
 
+	// Fix save filenames going wonky 
+	VirtualProtect((LPVOID)0x4321B9, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memset((LPVOID)0x4321B9, 0x90, 5);
+
 	// Fix $1500 neighbor connections on game load
 	VirtualProtect((LPVOID)0x434BEA, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWCALL((LPVOID)0x434BEA, Hook_LoadNeighborConnections1500);
