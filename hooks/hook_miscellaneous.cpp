@@ -264,10 +264,10 @@ void InstallMiscHooks(void) {
 	*(DWORD*)0x440943 = 50000000;
 	VirtualProtect((LPVOID)0x440987, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
 	*(DWORD*)0x440987 = 50000000;
-	VirtualProtect((LPVOID)0x43F428, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(DWORD*)0x43F428 = 50000000;
-	VirtualProtect((LPVOID)0x43F3A3, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(DWORD*)0x43F3A3 = 50000000;
+	VirtualProtect((LPVOID)0x43F429, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(DWORD*)0x43F429 = 50000000;
+	VirtualProtect((LPVOID)0x43F3A4, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(DWORD*)0x43F3A4 = 50000000;
 	
 	// Fix city name being overwritten by filename on save
 	VirtualProtect((LPVOID)0x42FE6C, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
