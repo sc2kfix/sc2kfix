@@ -25,6 +25,7 @@
 
 #define GAMEOFF_PTR GAMEOFF_ARR
 
+#define BITMASK(x) (1 << x)
 
 // Enums
 

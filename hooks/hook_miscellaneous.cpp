@@ -163,13 +163,17 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 
 // Load our own version of the main menu and the New City dialog when called
 extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam) {
-	if (hInstance == hSC2KAppModule && (DWORD)lpTemplateName == 103)
-		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
-	if (hInstance == hSC2KAppModule && (DWORD)lpTemplateName == 101) {
+	switch ((DWORD)lpTemplateName) {
+	case 101:
 		lpNewCityAfxProc = lpDialogFunc;
 		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_NewCityDialogProc, dwInitParam);
+	case 102:
+	case 103:
+		lpNewCityAfxProc = lpDialogFunc;
+		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_NewCityDialogProc, dwInitParam);
+	default:
+		return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	}
-	return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 }
 
 // Fix military bases not growing.
@@ -258,6 +262,14 @@ void InstallMiscHooks(void) {
 	// Savegame hook test
 	VirtualProtect((LPVOID)0x4321B9, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWCALL((LPVOID)0x4321B9, Hook_432870);
+
+	// Fix the sign fonts
+	VirtualProtect((LPVOID)0x4E7267, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(BYTE*)0x4E7267 = 'a';
+	VirtualProtect((LPVOID)0x44DC42, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(BYTE*)0x44DC42 = 5;
+	VirtualProtect((LPVOID)0x44DC4F, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(BYTE*)0x44DC4F = 10;
 
 	// Fix power and water grid updates slowing down after the population hits 50,000
 	VirtualProtect((LPVOID)0x440943, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
