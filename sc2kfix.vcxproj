@@ -91,6 +91,20 @@
     <Media Include="blobs\514.wav" />
     <Media Include="blobs\529.wav" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="blobs\weather0.png" />
+    <Image Include="blobs\weather1.png" />
+    <Image Include="blobs\weather10.png" />
+    <Image Include="blobs\weather11.png" />
+    <Image Include="blobs\weather2.png" />
+    <Image Include="blobs\weather3.png" />
+    <Image Include="blobs\weather4.png" />
+    <Image Include="blobs\weather5.png" />
+    <Image Include="blobs\weather6.png" />
+    <Image Include="blobs\weather7.png" />
+    <Image Include="blobs\weather8.png" />
+    <Image Include="blobs\weather9.png" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
