@@ -5,6 +5,9 @@
 
 #include <windows.h>
 #include <map>
+#include <vector>
+#include <algorithm>
+#include <random>
 
 #include <sc2k_1996.h>
 
@@ -18,7 +21,7 @@
 #define SC2KVERSION_1995    1
 #define SC2KVERSION_1996    2
 
-#define SC2KFIX_VERSION	"0.7"
+#define SC2KFIX_VERSION	"0.8-dev"
 
 #define RELATIVE_OFFSET(from, to) *(DWORD*)((DWORD)(from)) = (DWORD)(to) - (DWORD)(from) - 4;
 #define NEWCALL(from, to) *(BYTE*)(from) = 0xE8; RELATIVE_OFFSET((DWORD)(from)+1, to)
@@ -125,12 +128,16 @@ extern BOOL bInSCURK;
 extern BOOL bConsoleEnabled;
 
 extern std::map<DWORD, soundbufferinfo_t> mapSoundBuffers;
+extern std::vector<int> vectorRandomSongIDs;
+extern std::random_device rdRandomDevice;
+extern std::mt19937 mtMersenneTwister;
 
 // Hooks to inject in dllmain.cpp
 
 void InstallMiscHooks(void);
 void UpdateMiscHooks(void);
 extern "C" void __stdcall Hook_401F9B(int iSoundID, void* lpBuffer);
+extern "C" int __stdcall MusicPlayNextRefocusSong(void);
 
 // Debugging settings
 

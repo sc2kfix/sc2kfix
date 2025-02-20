@@ -3,17 +3,17 @@
 
 #undef UNICODE
 #include <windows.h>
-#include <psapi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <map>
+#include <mmsystem.h>
 
 #include <sc2kfix.h>
 #include "resource.h"
 
 #ifdef CONSOLE_ENABLED
 BOOL bConsoleEnabled = TRUE;
-#else
+#else 
 BOOL bConsoleEnabled = FALSE;
 #endif
 
@@ -165,6 +165,27 @@ BOOL ConsoleCmdShowMemory(const char* szCommand, const char* szArguments) {
 	return TRUE;
 }
 
+static const char* GetMidiDeviceTechnologyString(WORD wTechnology) {
+	switch (wTechnology) {
+	case MOD_MIDIPORT:
+		return "Hardware MIDI port";
+	case MOD_SYNTH:
+		return "Hardware synthesizer";
+	case MOD_SQSYNTH:
+		return "Square wave synthesizer";
+	case MOD_FMSYNTH:
+		return "FM synthesizer";
+	case MOD_MAPPER:
+		return "Microsoft MIDI mapper";
+	case MOD_WAVETABLE:
+		return "Wavetable synthesizer";
+	case MOD_SWSYNTH:
+		return "Software synthesizer";
+	default:
+		return "Unknown";
+	}
+}
+
 BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
 	if (dwDetectedVersion != SC2KVERSION_1996) {
 		printf("Command only available when attached to 1996 Special Edition.\n");
@@ -173,7 +194,9 @@ BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
 
 	if (*(szArguments + 5) == '\0' || *(szArguments + 6) == '\0' || !strcmp(szArguments + 6, "?")) {
 		printf(
-			"  show sound buffers   Dump loaded WAV buffers\n");
+			"  show sound buffers   Dump loaded WAV buffers\n"
+			"  show sound midi      Show all MIDI devices\n"
+			"  show sound songs     Show the current song list\n");
 		return TRUE;
 	}
 
@@ -185,6 +208,30 @@ BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
 		return TRUE;
 	}
 
+	if (!strcmp(szArguments + 6, "midi")) {
+		printf("MIDI devices (max %u):\n", midiOutGetNumDevs());
+		int maxdevs = midiOutGetNumDevs();
+		for (int i = -1; i < maxdevs; i++) {
+			MIDIOUTCAPS moc;
+			midiOutGetDevCaps(i, &moc, sizeof(MIDIOUTCAPS));
+			printf(
+				"  Device %i:\n"
+				"    Product ID:   %04X:%04X\n"
+				"    Name:         %s\n"
+				"    Technology:   %s\n", i, moc.wMid, moc.wPid, moc.szPname, GetMidiDeviceTechnologyString(moc.wTechnology));
+		}
+		return TRUE;
+	}
+
+	if (!strcmp(szArguments + 6, "songs")) {
+		extern int iCurrentSong;
+		printf("Current song list: ");
+		for (int i = 0; i < (int)vectorRandomSongIDs.size(); i++)
+			printf("%i%s ", vectorRandomSongIDs[i], (i == iCurrentSong ? "*" : ""));
+		printf("\n");
+		return TRUE;
+	}
+	
 	printf("Invalid argument.\n");
 	return TRUE;
 }

@@ -357,6 +357,10 @@ void InstallMiscHooks(void) {
 	// Load higher quality sounds from DLL resources
 	LoadReplacementSounds();
 
+	// Restore additional music
+	VirtualProtect((LPVOID)0x401A9B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x401A9B, MusicPlayNextRefocusSong);
+
 	// Add settings buttons to SC2K's menus
 	hGameMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(3));
 	if (hGameMenu) {

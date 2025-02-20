@@ -35,6 +35,9 @@ const char* szSC2KFixBuildInfo = __DATE__ " " __TIME__;
 FILE* fdLog = NULL;
 BOOL bInSCURK = FALSE;
 
+std::random_device rdRandomDevice;
+std::mt19937 mtMersenneTwister(rdRandomDevice());
+
 // Statics
 static DWORD dwDummy;
 

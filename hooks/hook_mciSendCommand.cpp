@@ -7,10 +7,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <intrin.h>
+#include <vector>
 
 #include <sc2kfix.h>
 
 #pragma intrinsic(_ReturnAddress)
+
+#define MCI_DEBUG_CALLS 1
+#define MCI_DEBUG_DUMPS 2
+#define MCI_DEBUG_SONGS 4
 
 #define MCI_DEBUG 0
 
@@ -20,6 +25,53 @@
 #endif
 
 UINT mci_debug = MCI_DEBUG;
+
+std::vector<int> vectorRandomSongIDs = { 10001, 10004, 10008, 10012, 10018, 10003, 10007, 10011, 10013 };
+int iCurrentSong = 0;
+BOOL bShuffleSongs = FALSE;
+
+// Replaces the original MusicPlayNextRefocusSong
+extern "C" int __stdcall MusicPlayNextRefocusSong(void) {
+    UINT uThis;
+    int retval, iSongToPlay;
+    
+    // This is actually a __thiscall we're overriding, so save "this"
+    __asm {
+        mov [uThis], ecx
+    }
+
+    iSongToPlay = vectorRandomSongIDs[iCurrentSong++];
+    if (mci_debug & MCI_DEBUG_SONGS)
+        ConsoleLog(LOG_DEBUG, "MCI: Playing song %i (next iCurrentSong will be %i).\n", iSongToPlay, (iCurrentSong > 8 ? 0 : iCurrentSong));
+
+    __asm {
+        mov ecx, [uThis]
+        mov edx, [iSongToPlay]
+        push edx
+        mov edx, 0x402414
+        call edx
+        mov [retval], eax
+    }
+
+    // Loop and/or shuffle.
+    if (iCurrentSong > 8) {
+        iCurrentSong = 0;
+
+        // Shuffle the songs, making sure we don't get the same one twice in a row
+        if (bShuffleSongs) {
+            do {
+                std::shuffle(vectorRandomSongIDs.begin(), vectorRandomSongIDs.end(), mtMersenneTwister);
+            } while (vectorRandomSongIDs[0] == iSongToPlay);
+
+            if (mci_debug & MCI_DEBUG_SONGS)
+                ConsoleLog(LOG_DEBUG, "MCI: Shuffled song list (next song will be %i).\n", vectorRandomSongIDs[iCurrentSong]);
+        }
+    }
+
+    __asm {
+        mov eax, [retval]
+    }
+}
 
 static const char* MCIMessageIDToString(UINT uMsg) {
     switch (uMsg) {
@@ -47,11 +99,11 @@ static const char* MCIMessageIDToString(UINT uMsg) {
 }
 
 extern "C" BOOL __stdcall Hook_mciSendCommandA(void* pReturnAddress, MCIERROR* retval, MCIDEVICEID IDDevice, UINT uMsg, DWORD_PTR fdwCommand, DWORD_PTR dwParam) {
-    if (mci_debug)
+    if (mci_debug & MCI_DEBUG_CALLS)
         ConsoleLog(LOG_DEBUG, "MCI: 0x%08p -> mciSendCommand(0x%08X, %s, 0x%08X, 0x%08X)\n", pReturnAddress, IDDevice, MCIMessageIDToString(uMsg), fdwCommand, dwParam);
     switch (uMsg) {
     case MCI_OPEN: {
-        if (mci_debug) {
+        if (mci_debug & (MCI_DEBUG_CALLS | MCI_DEBUG_DUMPS)) {
             MCI_OPEN_PARMS* pMCIOpenParms = (MCI_OPEN_PARMS*)dwParam;
 			ConsoleLog(LOG_NONE,
                 "MCI_OPEN_PARMS {\n"
@@ -69,7 +121,7 @@ extern "C" BOOL __stdcall Hook_mciSendCommandA(void* pReturnAddress, MCIERROR* r
     }
 
     case MCI_STATUS: {
-        if (mci_debug) {
+        if (mci_debug & (MCI_DEBUG_CALLS | MCI_DEBUG_DUMPS)) {
             MCI_STATUS_PARMS* pMCIStatusParms = (MCI_STATUS_PARMS*)dwParam;
 			ConsoleLog(LOG_NONE,
                 "MCI_STATUS_PARMS {\n"
@@ -83,7 +135,7 @@ extern "C" BOOL __stdcall Hook_mciSendCommandA(void* pReturnAddress, MCIERROR* r
     }
 
     case MCI_PLAY: {
-        if (mci_debug) {
+        if (mci_debug & (MCI_DEBUG_CALLS | MCI_DEBUG_DUMPS)) {
             MCI_PLAY_PARMS* pMCIPlayParms = (MCI_PLAY_PARMS*)dwParam;
 			ConsoleLog(LOG_NONE,
                 "MCI_PLAY_PARMS {\n"
@@ -99,7 +151,7 @@ extern "C" BOOL __stdcall Hook_mciSendCommandA(void* pReturnAddress, MCIERROR* r
         break;
 
     default:
-        if (mci_debug)
+        if (mci_debug & MCI_DEBUG_CALLS)
             ConsoleLog(LOG_WARNING, "MCA: mciSendCommand sent with unexpected uMsg %s.\n", MCIMessageIDToString(uMsg));
     }
 
