@@ -4,6 +4,7 @@
 //
 #define IDD_INSTALL                     20101
 #define IDD_SETTINGS                    20102
+#define IDD_SIMULATIONSTATUS            20103
 #define ID_INSTALL_OK                   21001
 #define IDC_EDIT_MAYOR                  21002
 #define IDC_EDIT_COMPANY                21003
@@ -19,29 +20,32 @@
 #define IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS 21014
 #define IDC_COMBO1                      21016
 #define IDC_COMBO_MIDIOUTPUT            21016
+#define IDC_STATIC_SELECTEDTOOL         21017
+#define IDC_STATIC_STATUSSTRING         21018
+#define IDC_STATIC_WEATHERICON          21019
 #define IDR_WAVE_500                    23001
 #define IDR_WAVE_514                    23002
 #define IDR_WAVE_529                    23003
-#define IDB_WEATHERICON_COLD            23005
-#define IDB_WEATHERICON_CLEAR           23006
-#define IDB_WEATHERICON_HOT             23007
-#define IDB_WEATHERICON_FOGGY           23008
-#define IDB_WEATHERICON_CHILLY          23009
-#define IDB_WEATHERICON_OVERCAST        23010
-#define IDB_WEATHERICON_SNOW            23011
-#define IDB_WEATHERICON_RAIN            23012
-#define IDB_WEATHERICON_WINDY           23013
-#define IDB_WEATHERICON_BLIZZARD        23014
-#define IDB_WEATHERICON_HURRICANE       23015
-#define IDB_WEATHERICON_TORNADO         23016
+#define IDB_WEATHER0                    23020
+#define IDB_WEATHER1                    23021
+#define IDB_WEATHER2                    23022
+#define IDB_WEATHER3                    23023
+#define IDB_WEATHER4                    23024
+#define IDB_WEATHER5                    23025
+#define IDB_WEATHER6                    23026
+#define IDB_WEATHER7                    23027
+#define IDB_WEATHER8                    23028
+#define IDB_WEATHER9                    23029
+#define IDB_WEATHER10                   23030
+#define IDB_WEATHER11                   23031
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        23017
+#define _APS_NEXT_RESOURCE_VALUE        23032
 #define _APS_NEXT_COMMAND_VALUE         40002
-#define _APS_NEXT_CONTROL_VALUE         21017
+#define _APS_NEXT_CONTROL_VALUE         21019
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -25,8 +25,8 @@
     <Filter Include="Resource Files\WAVE">
       <UniqueIdentifier>{38a0588b-aa0e-481d-8b6c-c14b81a97b10}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\PNG">
-      <UniqueIdentifier>{23d75eba-f466-433c-8909-2fa056588ab2}</UniqueIdentifier>
+    <Filter Include="Resource Files\BITMAP">
+      <UniqueIdentifier>{cf0f4b75-116a-4952-8c1b-97e2ba3bcaa4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -74,6 +74,9 @@
     <ClCompile Include="settings.cpp">
       <Filter>Source Files\DLLMain</Filter>
     </ClCompile>
+    <ClCompile Include="status_dialog.cpp">
+      <Filter>Source Files\DLLMain</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="sc2kfix.rc">
@@ -103,41 +106,41 @@
     </Media>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="blobs\weather0.png">
-      <Filter>Resource Files\PNG</Filter>
+    <Image Include="blobs\weather0.bmp">
+      <Filter>Resource Files\BITMAP</Filter>
     </Image>
-    <Image Include="blobs\weather1.png">
-      <Filter>Resource Files\PNG</Filter>
+    <Image Include="blobs\weather1.bmp">
+      <Filter>Resource Files\BITMAP</Filter>
     </Image>
-    <Image Include="blobs\weather2.png">
-      <Filter>Resource Files\PNG</Filter>
+    <Image Include="blobs\weather2.bmp">
+      <Filter>Resource Files\BITMAP</Filter>
     </Image>
-    <Image Include="blobs\weather3.png">
-      <Filter>Resource Files\PNG</Filter>
+    <Image Include="blobs\weather3.bmp">
+      <Filter>Resource Files\BITMAP</Filter>
     </Image>
-    <Image Include="blobs\weather4.png">
-      <Filter>Resource Files\PNG</Filter>
+    <Image Include="blobs\weather4.bmp">
+      <Filter>Resource Files\BITMAP</Filter>
     </Image>
-    <Image Include="blobs\weather5.png">
-      <Filter>Resource Files\PNG</Filter>
+    <Image Include="blobs\weather5.bmp">
+      <Filter>Resource Files\BITMAP</Filter>
     </Image>
-    <Image Include="blobs\weather6.png">
-      <Filter>Resource Files\PNG</Filter>
+    <Image Include="blobs\weather6.bmp">
+      <Filter>Resource Files\BITMAP</Filter>
     </Image>
-    <Image Include="blobs\weather7.png">
-      <Filter>Resource Files\PNG</Filter>
+    <Image Include="blobs\weather7.bmp">
+      <Filter>Resource Files\BITMAP</Filter>
     </Image>
-    <Image Include="blobs\weather8.png">
-      <Filter>Resource Files\PNG</Filter>
+    <Image Include="blobs\weather8.bmp">
+      <Filter>Resource Files\BITMAP</Filter>
     </Image>
-    <Image Include="blobs\weather9.png">
-      <Filter>Resource Files\PNG</Filter>
+    <Image Include="blobs\weather9.bmp">
+      <Filter>Resource Files\BITMAP</Filter>
     </Image>
-    <Image Include="blobs\weather10.png">
-      <Filter>Resource Files\PNG</Filter>
+    <Image Include="blobs\weather10.bmp">
+      <Filter>Resource Files\BITMAP</Filter>
     </Image>
-    <Image Include="blobs\weather11.png">
-      <Filter>Resource Files\PNG</Filter>
+    <Image Include="blobs\weather11.bmp">
+      <Filter>Resource Files\BITMAP</Filter>
     </Image>
   </ItemGroup>
 </Project>

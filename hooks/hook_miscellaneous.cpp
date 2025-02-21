@@ -361,6 +361,10 @@ void InstallMiscHooks(void) {
 	VirtualProtect((LPVOID)0x401A9B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x401A9B, MusicPlayNextRefocusSong);
 
+	// Status dialog
+	VirtualProtect((LPVOID)0x402793, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402793, Hook_402793);
+
 	// Add settings buttons to SC2K's menus
 	hGameMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(3));
 	if (hGameMenu) {
@@ -381,6 +385,7 @@ void InstallMiscHooks(void) {
 			ConsoleLog(LOG_DEBUG, "MISC: AppendMenuA #2 failed, error = 0x%08X.\n", GetLastError());
 			goto skipmenu;
 		}
+		extern HWND ShowStatusDialog(void);
 		AFX_MSGMAP_ENTRY afxMessageMapEntry = {
 			WM_COMMAND,
 			0,

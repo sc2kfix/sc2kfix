@@ -138,6 +138,7 @@ void InstallMiscHooks(void);
 void UpdateMiscHooks(void);
 extern "C" void __stdcall Hook_401F9B(int iSoundID, void* lpBuffer);
 extern "C" int __stdcall MusicPlayNextRefocusSong(void);
+extern "C" int __stdcall Hook_402793(int iStatic, char* szText, int iMaybeAlways1, COLORREF crColor);
 
 // Debugging settings
 
