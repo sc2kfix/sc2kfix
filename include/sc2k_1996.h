@@ -673,14 +673,14 @@ typedef struct {
 
 typedef struct {
 	struct {
-		BYTE iPowerable : 1;
-		BYTE iPowered : 1;
-		BYTE iPiped : 1;
-		BYTE iWatered : 1;
-		BYTE iXVALMask : 1;
-		BYTE iWater : 1;
-		BYTE iRotated : 1;
 		BYTE iSaltWater : 1;
+		BYTE iRotated : 1;
+		BYTE iWater : 1;
+		BYTE iXVALMask : 1;
+		BYTE iWatered : 1;
+		BYTE iPiped : 1;
+		BYTE iPowered : 1;
+		BYTE iPowerable : 1;
 	} b[128];
 } map_XBIT_t;
 
@@ -734,6 +734,9 @@ GAMEOFF(DWORD,	dwNextRefocusSongID,		0x4E6F8C)
 GAMEOFF_ARR(DWORD, dwZoneNameStringIDs,		0x4E7140)
 GAMEOFF_ARR(DWORD, dwCityNoticeStringIDs,	0x4E98B8)
 GAMEOFF(DWORD,	dwCityRewardsUnlocked,		0x4E9A24)
+
+// hic sunt dracones
+GAMEOFF(void*, pCwndMainWindow, 0x4C702C)
 
 #ifdef GAMEOFF_IMPL
 char* pszCityName = (char*)0x4CA1A0;
