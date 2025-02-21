@@ -67,6 +67,7 @@ BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 			"  show debug        Display enabled debugging options\n"
 			"  show memory ...   Display memory contents\n"
 			"  show sound        Display sound info\n"
+			"  show tile ...     Display tile info\n"
 			"  show version      Display sc2kfix version info\n");
 		return TRUE;
 	}
@@ -243,6 +244,9 @@ static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments) {
 	else
 		printf("Military base not built in city.\n");
 
+	extern HWND ShowStatusDialog(void);
+	ShowStatusDialog();
+
 	return TRUE;
 }
 
@@ -265,11 +269,33 @@ BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments) {
 	if (iTileX >= 0 && iTileX < 128 && iTileY >= 0 && iTileY < 128) {
 		int iTileID = dwMapXBLD[iTileX]->iTileID[iTileY];
 
+		char szXBITFormatted[256] = { 0 };
+		if (dwMapXBIT[iTileX]->b[iTileY].iPowerable)
+			strcat_s(szXBITFormatted, 256, "powerable ");
+		if (dwMapXBIT[iTileX]->b[iTileY].iPowered)
+			strcat_s(szXBITFormatted, 256, "powered ");
+		if (dwMapXBIT[iTileX]->b[iTileY].iPiped)
+			strcat_s(szXBITFormatted, 256, "piped ");
+		if (dwMapXBIT[iTileX]->b[iTileY].iWatered)
+			strcat_s(szXBITFormatted, 256, "watered ");
+		if (dwMapXBIT[iTileX]->b[iTileY].iXVALMask)
+			strcat_s(szXBITFormatted, 256, "xvalmask ");
+		if (dwMapXBIT[iTileX]->b[iTileY].iWater)
+			strcat_s(szXBITFormatted, 256, "water ");
+		if (dwMapXBIT[iTileX]->b[iTileY].iRotated)
+			strcat_s(szXBITFormatted, 256, "rotated ");
+		if (dwMapXBIT[iTileX]->b[iTileY].iSaltWater)
+			strcat_s(szXBITFormatted, 256, "saltwater ");
+		if (szXBITFormatted[0] == '\0')
+			strcpy_s(szXBITFormatted, 256, "none");
+		if (szXBITFormatted[strlen(szXBITFormatted) - 1] == ' ')
+			szXBITFormatted[strlen(szXBITFormatted) - 1] = '\0';
+
 		printf(
 			"Tile (%i, %i):\n"
 			"  iTileID: %i\n"
 			"  Zone: %s\n"
-			"  XBIT: 0x%02X\n", iTileX, iTileY, iTileID, GetZoneName(dwMapXZON[iTileX]->b[iTileY].iZoneType), dwMapXBIT[iTileX]->b[iTileY]);
+			"  XBIT: 0x%02X (%s)\n", iTileX, iTileY, iTileID, GetZoneName(dwMapXZON[iTileX]->b[iTileY].iZoneType), dwMapXBIT[iTileX]->b[iTileY], szXBITFormatted);
 		return TRUE;
 	}
 
