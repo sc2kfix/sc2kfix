@@ -319,14 +319,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         ConsoleLog(LOG_INFO, "Patched 8-bit colour warnings.\n");
 
         // Hooks we only want to inject on the 1996 Special Edition version
-        if (dwDetectedVersion == SC2KVERSION_1996) {
-            // Intercept call to 0x480140 at 0x401F9B
-            VirtualProtect((LPVOID)0x401F9B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-            NEWJMP((LPVOID)0x401F9B, Hook_401F9B);
-
-            // Install miscellaneous hooks
+        if (dwDetectedVersion == SC2KVERSION_1996)
             InstallMiscHooks();
-        }
 
         // Print the console prompt and let the console thread take over.
         printf("\n> ");

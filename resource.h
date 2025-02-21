@@ -23,6 +23,7 @@
 #define IDC_STATIC_SELECTEDTOOL         21017
 #define IDC_STATIC_STATUSSTRING         21018
 #define IDC_STATIC_WEATHERICON          21019
+#define IDC_SETTINGS_CHECK_SHUFFLE_MUSIC 21020
 #define IDR_WAVE_500                    23001
 #define IDR_WAVE_514                    23002
 #define IDR_WAVE_529                    23003
@@ -45,7 +46,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        23032
 #define _APS_NEXT_COMMAND_VALUE         40002
-#define _APS_NEXT_CONTROL_VALUE         21019
+#define _APS_NEXT_CONTROL_VALUE         21021
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

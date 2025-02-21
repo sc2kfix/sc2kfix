@@ -30,7 +30,7 @@ UINT snd_debug = SND_DEBUG;
 std::map<DWORD, soundbufferinfo_t> mapSoundBuffers;
 std::map<int, sound_replacement_t> mapReplacementSounds;
 
-extern "C" void __stdcall Hook_401F9B(int iSoundID, void* lpBuffer) {
+extern "C" void __stdcall LoadSoundBuffer(int iSoundID, void* lpBuffer) {
     if (snd_debug & SND_DEBUG_PLAYS)
         ConsoleLog(LOG_DEBUG, "SND: Loading %d.wav into buffer <0x%08X>.\n", iSoundID, lpBuffer);
 

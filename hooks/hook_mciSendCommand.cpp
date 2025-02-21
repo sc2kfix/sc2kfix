@@ -28,7 +28,17 @@ UINT mci_debug = MCI_DEBUG;
 
 std::vector<int> vectorRandomSongIDs = { 10001, 10004, 10008, 10012, 10018, 10003, 10007, 10011, 10013 };
 int iCurrentSong = 0;
-BOOL bShuffleSongs = FALSE;
+
+void MusicShufflePlaylist(int iLastSongPlayed) {
+    if (bSettingsShuffleMusic) {
+        do {
+            std::shuffle(vectorRandomSongIDs.begin(), vectorRandomSongIDs.end(), mtMersenneTwister);
+        } while (vectorRandomSongIDs[0] == iLastSongPlayed);
+
+        if (mci_debug & MCI_DEBUG_SONGS)
+            ConsoleLog(LOG_DEBUG, "MCI: Shuffled song list (next song will be %i).\n", vectorRandomSongIDs[iCurrentSong]);
+    }
+}
 
 // Replaces the original MusicPlayNextRefocusSong
 extern "C" int __stdcall MusicPlayNextRefocusSong(void) {
@@ -58,14 +68,7 @@ extern "C" int __stdcall MusicPlayNextRefocusSong(void) {
         iCurrentSong = 0;
 
         // Shuffle the songs, making sure we don't get the same one twice in a row
-        if (bShuffleSongs) {
-            do {
-                std::shuffle(vectorRandomSongIDs.begin(), vectorRandomSongIDs.end(), mtMersenneTwister);
-            } while (vectorRandomSongIDs[0] == iSongToPlay);
-
-            if (mci_debug & MCI_DEBUG_SONGS)
-                ConsoleLog(LOG_DEBUG, "MCI: Shuffled song list (next song will be %i).\n", vectorRandomSongIDs[iCurrentSong]);
-        }
+        MusicShufflePlaylist(iSongToPlay);
     }
 
     __asm {

@@ -86,6 +86,7 @@ extern BOOL bSettingsMusicInBackground;
 extern BOOL bSettingsUseNewStrings;
 extern BOOL bSettingsUseSoundReplacements;
 extern BOOL bSettingsMilitaryBaseRevenue;
+extern BOOL bSettingsShuffleMusic;
 extern BOOL bSettingsAlwaysConsole;
 
 // Globals etc.
@@ -97,6 +98,7 @@ void LoadSettings(void);
 void SaveSettings(void);
 void ShowSettingsDialog(void);
 void LoadReplacementSounds(void);
+void MusicShufflePlaylist(int iLastSongPlayed);
 const char* HexPls(UINT uNumber);
 void ConsoleLog(int iLogLevel, const char* fmt, ...);
 
@@ -136,7 +138,7 @@ extern std::mt19937 mtMersenneTwister;
 
 void InstallMiscHooks(void);
 void UpdateMiscHooks(void);
-extern "C" void __stdcall Hook_401F9B(int iSoundID, void* lpBuffer);
+extern "C" void __stdcall LoadSoundBuffer(int iSoundID, void* lpBuffer);
 extern "C" int __stdcall MusicPlayNextRefocusSong(void);
 extern "C" int __stdcall Hook_402793(int iStatic, char* szText, int iMaybeAlways1, COLORREF crColor);
 

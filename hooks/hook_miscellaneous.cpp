@@ -266,6 +266,8 @@ extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
 		ConsoleLog(LOG_DEBUG, "Loaded %d $1500 neighbor connections.\n", *wCityNeighborConnections1500);
 }
 
+// Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
+// This should probably have a better name. And maybe be broken out into smaller functions.
 void InstallMiscHooks(void) {
 	// Install LoadStringA hook
 	*(DWORD*)(0x4EFBE8) = (DWORD)Hook_LoadStringA;
@@ -357,11 +359,18 @@ void InstallMiscHooks(void) {
 	// Load higher quality sounds from DLL resources
 	LoadReplacementSounds();
 
+	// Hook sound buffer loading
+	VirtualProtect((LPVOID)0x401F9B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x401F9B, LoadSoundBuffer);
+
 	// Restore additional music
 	VirtualProtect((LPVOID)0x401A9B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x401A9B, MusicPlayNextRefocusSong);
 
-	// Status dialog
+	// Shuffle music if the shuffle setting is enabled
+	MusicShufflePlaylist(0);
+
+	// Hook status bar updates for the status dialog implementation
 	VirtualProtect((LPVOID)0x402793, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402793, Hook_402793);
 
