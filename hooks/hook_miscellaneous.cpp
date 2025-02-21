@@ -361,11 +361,11 @@ void InstallMiscHooks(void) {
 
 	// Hook sound buffer loading
 	VirtualProtect((LPVOID)0x401F9B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x401F9B, LoadSoundBuffer);
+	NEWJMP((LPVOID)0x401F9B, Hook_LoadSoundBuffer);
 
 	// Restore additional music
 	VirtualProtect((LPVOID)0x401A9B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x401A9B, MusicPlayNextRefocusSong);
+	NEWJMP((LPVOID)0x401A9B, Hook_MusicPlayNextRefocusSong);
 
 	// Shuffle music if the shuffle setting is enabled
 	MusicShufflePlaylist(0);

@@ -138,8 +138,8 @@ extern std::mt19937 mtMersenneTwister;
 
 void InstallMiscHooks(void);
 void UpdateMiscHooks(void);
-extern "C" void __stdcall LoadSoundBuffer(int iSoundID, void* lpBuffer);
-extern "C" int __stdcall MusicPlayNextRefocusSong(void);
+extern "C" void __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer);
+extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void);
 extern "C" int __stdcall Hook_402793(int iStatic, char* szText, int iMaybeAlways1, COLORREF crColor);
 
 // Debugging settings

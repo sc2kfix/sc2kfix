@@ -41,7 +41,7 @@ void MusicShufflePlaylist(int iLastSongPlayed) {
 }
 
 // Replaces the original MusicPlayNextRefocusSong
-extern "C" int __stdcall MusicPlayNextRefocusSong(void) {
+extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void) {
     UINT uThis;
     int retval, iSongToPlay;
     
