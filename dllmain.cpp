@@ -228,6 +228,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         switch (dwSC2KAppTimestamp) {
         case 0x302FEA8A:
             dwDetectedVersion = SC2KVERSION_1995;
+            ConsoleLog(LOG_NOTICE, "1995 CD Collection version detected. Most features and gameplay fixes will not be available.\n");
+            ConsoleLog(LOG_NOTICE, "Please consider using the 1996 Special Edition for the fully restored SimCity 2000 experience.\n");
             break;
 
         case 0x313E706E:
