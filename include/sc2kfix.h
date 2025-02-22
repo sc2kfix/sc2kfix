@@ -134,6 +134,10 @@ extern std::vector<int> vectorRandomSongIDs;
 extern std::random_device rdRandomDevice;
 extern std::mt19937 mtMersenneTwister;
 
+extern HWND hStatusDialog;
+extern HFONT hStatusDialogBoldFont;
+extern HANDLE hWeatherBitmaps[12];
+
 // Hooks to inject in dllmain.cpp
 
 void InstallMiscHooks(void);

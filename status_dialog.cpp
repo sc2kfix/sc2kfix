@@ -8,18 +8,22 @@
 #include <shlwapi.h>
 #include <stdio.h>
 #include <intrin.h>
+#include <string>
+#include <regex>
 
 #include <sc2kfix.h>
 #include "resource.h"
 
 HWND hStatusDialog = NULL;
 HFONT hStatusDialogBoldFont = NULL;
+HANDLE hWeatherBitmaps[12];
 static HCURSOR hDefaultCursor = NULL;
 static HWND hwndDesktop;
 static RECT rcTemp, rcDlg, rcDesktop;
 
 static COLORREF crToolColor = RGB(0, 0, 0);
 static COLORREF crStatusColor = RGB(0, 0, 0);
+static HBRUSH hBrushBkg = NULL;
 
 extern "C" int __stdcall Hook_402793(int iStatic, char* szText, int iMaybeAlways1, COLORREF crColor) {
 	__asm {
@@ -27,21 +31,30 @@ extern "C" int __stdcall Hook_402793(int iStatic, char* szText, int iMaybeAlways
 	}
 	if (hStatusDialog) {
 		if (iStatic == 0) {
-			SetDlgItemText(hStatusDialog, IDC_STATIC_SELECTEDTOOL, szText);
-			crToolColor = crColor;
-			InvalidateRect(GetDlgItem(hStatusDialog, IDC_STATIC_SELECTEDTOOL), NULL, TRUE);
+			char szCurrentText[200];
+			GetDlgItemText(hStatusDialog, IDC_STATIC_SELECTEDTOOL, szCurrentText, 200);
+			if (crColor != crToolColor || strcmp(szText, szCurrentText)) {
+				SetDlgItemText(hStatusDialog, IDC_STATIC_SELECTEDTOOL, szText);
+				crToolColor = crColor;
+				InvalidateRect(GetDlgItem(hStatusDialog, IDC_STATIC_SELECTEDTOOL), NULL, TRUE);
+			}
 		} else if (iStatic == 1) {
-			SetDlgItemText(hStatusDialog, IDC_STATIC_STATUSSTRING, szText);
-			crStatusColor = crColor;
-			InvalidateRect(GetDlgItem(hStatusDialog, IDC_STATIC_STATUSSTRING), NULL, TRUE);
+			char szCurrentText[200];
+			GetDlgItemText(hStatusDialog, IDC_STATIC_STATUSSTRING, szCurrentText, 200);
+
+			// XXX - this is incredibly ugly
+			std::string strText = szText;
+			strText = std::regex_replace(strText, std::regex("&"), "&&");
+			if (crColor != crStatusColor || strcmp(strText.c_str(), szCurrentText)) {
+				SetDlgItemText(hStatusDialog, IDC_STATIC_STATUSSTRING, strText.c_str());
+				crStatusColor = crColor;
+				InvalidateRect(GetDlgItem(hStatusDialog, IDC_STATIC_STATUSSTRING), NULL, TRUE);
+			}
 		} else if (iStatic == 2) {
-			HANDLE hBitmap = LoadImage(hSC2KFixModule, MAKEINTRESOURCE(IDB_WEATHER0 + bWeatherTrend), IMAGE_BITMAP, 40, 40, LR_SHARED);
-			if (GetLastError())
-				ConsoleLog(LOG_ERROR, "LoadImage failed, %u\n", GetLastError());
-			SendMessage(GetDlgItem(hStatusDialog, IDC_STATIC_WEATHERICON), STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hBitmap);
+			SendMessage(GetDlgItem(hStatusDialog, IDC_STATIC_WEATHERICON), STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hWeatherBitmaps[bWeatherTrend]);
 			InvalidateRect(GetDlgItem(hStatusDialog, IDC_STATIC_WEATHERICON), NULL, TRUE);
-		}
-		InvalidateRect(hStatusDialog, NULL, FALSE);
+		} else
+			InvalidateRect(hStatusDialog, NULL, FALSE);
 	}
 
 	__asm {
@@ -56,6 +69,7 @@ extern "C" int __stdcall Hook_402793(int iStatic, char* szText, int iMaybeAlways
 }
 
 BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
+	static 
 	LRESULT hit = 0;
 	switch (message) {
 	case WM_INITDIALOG:
@@ -68,8 +82,11 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 			SetTextColor((HDC)wParam, crToolColor);
 		else if ((HWND)lParam == GetDlgItem(hwndDlg, IDC_STATIC_STATUSSTRING))
 			SetTextColor((HDC)wParam, crStatusColor);
-		SetBkMode((HDC)wParam, TRANSPARENT);
-		return (LONG)GetStockObject(NULL_BRUSH);
+		
+		SetBkColor((HDC)wParam, RGB(240, 240, 240));
+		if (!hBrushBkg)
+			hBrushBkg = CreateSolidBrush(RGB(240, 240, 240));
+		return (LONG)hBrushBkg;
 
 	case WM_NCHITTEST:
 		return HTCAPTION;
@@ -79,6 +96,10 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 
 HWND ShowStatusDialog(void) {
 	DWORD* CWndMainWindow = (DWORD*)*(DWORD*)0x4C702C;	// god this is awful
+
+	if (hStatusDialog)
+		return hStatusDialog;
+
 	hStatusDialog = CreateDialogParam(hSC2KFixModule, MAKEINTRESOURCE(IDD_SIMULATIONSTATUS), (HWND)(CWndMainWindow[7]), StatusDialogProc, NULL);
 	if (!hStatusDialog) {
 		ConsoleLog(LOG_ERROR, "Couldn't create statuss dialog: 0x%08X\n", GetLastError());

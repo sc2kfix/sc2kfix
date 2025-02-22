@@ -16,6 +16,7 @@
 #include <string>
 
 #include <sc2kfix.h>
+#include "../resource.h"
 
 #pragma intrinsic(_ReturnAddress)
 
@@ -370,6 +371,16 @@ void InstallMiscHooks(void) {
 	// Shuffle music if the shuffle setting is enabled
 	MusicShufflePlaylist(0);
 
+	// Load weather icons
+	for (int i = 0; i < 12; i++) {
+		ConsoleLog(LOG_DEBUG, "Loading bitmap IDB_WEATHER%i.\n", i);
+		HANDLE hBitmap = LoadImage(hSC2KFixModule, MAKEINTRESOURCE(IDB_WEATHER0 + i), IMAGE_BITMAP, 40, 40, NULL);
+		if (hBitmap)
+			hWeatherBitmaps[i] = hBitmap;
+		else
+			ConsoleLog(LOG_ERROR, "Couldn't load weather bitmap IDB_WEATHER%i: 0x%08X\n", i, GetLastError());
+	}
+
 	// Hook status bar updates for the status dialog implementation
 	VirtualProtect((LPVOID)0x402793, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402793, Hook_402793);
@@ -394,6 +405,10 @@ void InstallMiscHooks(void) {
 			ConsoleLog(LOG_DEBUG, "MISC: AppendMenuA #2 failed, error = 0x%08X.\n", GetLastError());
 			goto skipmenu;
 		}
+		if (!AppendMenu(hOptionsPopup, MF_STRING, 40001, "Show Status Dialog") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: AppendMenuA #3 failed, error = 0x%08X.\n", GetLastError());
+			goto skipmenu;
+		}
 		extern HWND ShowStatusDialog(void);
 		AFX_MSGMAP_ENTRY afxMessageMapEntry = {
 			WM_COMMAND,
@@ -405,6 +420,17 @@ void InstallMiscHooks(void) {
 		};
 		VirtualProtect((LPVOID)0x4D45C0, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
 		memcpy_s((LPVOID)0x4D45C0, sizeof(afxMessageMapEntry), &afxMessageMapEntry, sizeof(afxMessageMapEntry));
+
+		afxMessageMapEntry = {
+			WM_COMMAND,
+			0,
+			40001,
+			40001,
+			0x0A,
+			ShowStatusDialog
+		};
+		VirtualProtect((LPVOID)0x4D45D8, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
+		memcpy_s((LPVOID)0x4D45D8, sizeof(afxMessageMapEntry), &afxMessageMapEntry, sizeof(afxMessageMapEntry));
 		if (mischook_debug & MISCHOOK_DEBUG_MENU)
 			ConsoleLog(LOG_DEBUG, "MISC: Updated game menu.\n");
 	}
