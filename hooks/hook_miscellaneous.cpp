@@ -113,6 +113,11 @@ extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR l
 				"Do you wish to construct the tunnel?"))
 				return strlen(lpBuffer);
 			break;
+		case 640:
+			if (!strcpy_s(lpBuffer, cchBufferMax,
+				"Grocery store"))
+				return strlen(lpBuffer);
+			break;
 		case 745:
 			if (!strcpy_s(lpBuffer, cchBufferMax,
 				"Launch Arcology"))
