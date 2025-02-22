@@ -64,11 +64,12 @@ BOOL ConsoleCmdSettings(const char* szCommand, const char* szArguments) {
 BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
 		printf(
-			"  show debug        Display enabled debugging options\n"
-			"  show memory ...   Display memory contents\n"
-			"  show sound        Display sound info\n"
-			"  show tile ...     Display tile info\n"
-			"  show version      Display sc2kfix version info\n");
+			"  show debug          Display enabled debugging options\n"
+			"  show memory ...     Display memory contents\n"
+			"  show microsim ...   Display microsim info\n"
+			"  show sound          Display sound info\n"
+			"  show tile ...       Display tile info\n"
+			"  show version        Display sc2kfix version info\n");
 		return TRUE;
 	}
 
@@ -77,6 +78,9 @@ BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 
 	if (!strcmp(szArguments, "memory") || !strncmp(szArguments, "memory ", 7))
 		return ConsoleCmdShowMemory(szCommand, szArguments);
+
+	if (!strcmp(szArguments, "microsim") || !strncmp(szArguments, "microsim ", 9))
+		return ConsoleCmdShowMicrosim(szCommand, szArguments);
 
 	if (!strcmp(szArguments, "sound") || !strncmp(szArguments, "sound ", 6))
 		return ConsoleCmdShowSound(szCommand, szArguments);
@@ -160,6 +164,47 @@ BOOL ConsoleCmdShowMemory(const char* szCommand, const char* szArguments) {
 	__except (EXCEPTION_EXECUTE_HANDLER) {
 		ConsoleLog(LOG_ERROR, "Segmentation fault caught. Don't do that again.\n");
 		return TRUE;
+	}
+
+	printf("Invalid argument.\n");
+	return TRUE;
+}
+
+BOOL ConsoleCmdShowMicrosim(const char* szCommand, const char* szArguments) {
+	if (dwDetectedVersion != SC2KVERSION_1996) {
+		printf("Command only available when attached to 1996 Special Edition.\n");
+		return TRUE;
+	}
+
+	if (*(szArguments + 8) == '\0' || *(szArguments + 9) == '\0' || !strcmp(szArguments + 9, "?")) {
+		printf(
+			"  show microsim <id>   Show specific microsim data\n"
+			"  show microsim list   Show list of provisioned microsims\n");
+		return TRUE;
+	}
+
+	if (!strcmp(szArguments + 9, "list")) {
+		printf("Provisioned microsims:\n");
+		for (int i = 0; i < 150; i++)
+			if (pMicrosimArr[i].bTileID != TILE_CLEAR)
+				printf("  %i: bTileID = %u\n", i, pMicrosimArr[i].bTileID);
+		printf("\n");
+		return TRUE;
+	}
+
+	int iMicrosimID = 0;
+	if (sscanf_s(szArguments + 9, "%i", &iMicrosimID)) {
+		if (iMicrosimID >= 0 && iMicrosimID < 150) {
+			printf(
+				"Microsim %i:\n"
+				"  Tile ID:       %i\n"
+				"  Data (Byte):   %i\n"
+				"  Data (Word 1): %i\n"
+				"  Data (Word 2): %i\n"
+				"  Data (Word 3): %i\n", iMicrosimID, pMicrosimArr[iMicrosimID].bTileID, pMicrosimArr[iMicrosimID].bMicrosimData[0],
+				*(WORD*)(&pMicrosimArr[iMicrosimID].bMicrosimData[1]), *(WORD*)(&pMicrosimArr[iMicrosimID].bMicrosimData[3]), *(WORD*)(&pMicrosimArr[iMicrosimID].bMicrosimData[5]));
+			return TRUE;
+		}
 	}
 
 	printf("Invalid argument.\n");
