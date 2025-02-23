@@ -21,6 +21,7 @@ BOOL bSettingsUseSoundReplacements = TRUE;
 BOOL bSettingsShuffleMusic = FALSE;
 BOOL bSettingsUseStatusDialog = FALSE;
 BOOL bSettingsAlwaysConsole = FALSE;
+BOOL bSettingsCheckForUpdates = TRUE;
 BOOL bSettingsMilitaryBaseRevenue = FALSE;	// NYI
 BOOL bSettingsFixOrdinances = FALSE;		// NYI
 
@@ -130,6 +131,12 @@ void LoadSettings(void) {
 	}
 
 	dwSizeofBool = sizeof(BOOL);
+	if (RegGetValue(hkeySC2KFix, NULL, "bSettingsCheckForUpdates", RRF_RT_REG_DWORD, NULL, &bSettingsCheckForUpdates, &dwSizeofBool)) {
+		bSettingsCheckForUpdates = TRUE;
+		RegSetValueEx(hkeySC2KFix, "bSettingsCheckForUpdates", NULL, REG_DWORD, (BYTE*)&bSettingsCheckForUpdates, sizeof(BOOL));
+	}
+
+	dwSizeofBool = sizeof(BOOL);
 	if (RegGetValue(hkeySC2KFix, NULL, "bSettingsMilitaryBaseRevenue", RRF_RT_REG_DWORD, NULL, &bSettingsMilitaryBaseRevenue, &dwSizeofBool)) {
 		bSettingsMilitaryBaseRevenue = FALSE;
 		RegSetValueEx(hkeySC2KFix, "bSettingsMilitaryBaseRevenue", NULL, REG_DWORD, (BYTE*)&bSettingsMilitaryBaseRevenue, sizeof(BOOL));
@@ -165,6 +172,7 @@ void SaveSettings(void) {
 	RegSetValueEx(hkeySC2KFix, "bSettingsShuffleMusic", NULL, REG_DWORD, (BYTE*)&bSettingsShuffleMusic, sizeof(BOOL));
 	RegSetValueEx(hkeySC2KFix, "bSettingsUseStatusDialog", NULL, REG_DWORD, (BYTE*)&bSettingsUseStatusDialog, sizeof(BOOL));
 	RegSetValueEx(hkeySC2KFix, "bSettingsAlwaysConsole", NULL, REG_DWORD, (BYTE*)&bSettingsAlwaysConsole, sizeof(BOOL));
+	RegSetValueEx(hkeySC2KFix, "bSettingsCheckForUpdates", NULL, REG_DWORD, (BYTE*)&bSettingsCheckForUpdates, sizeof(BOOL));
 
 	RegSetValueEx(hkeySC2KFix, "bSettingsMilitaryBaseRevenue", NULL, REG_DWORD, (BYTE*)&bSettingsMilitaryBaseRevenue, sizeof(BOOL));
 	RegSetValueEx(hkeySC2KFix, "bSettingsFixOrdinances", NULL, REG_DWORD, (BYTE*)&bSettingsFixOrdinances, sizeof(BOOL));
@@ -203,6 +211,10 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			"This setting forces sc2kfix to always start the console along with the game, even if the -console argument is not passed.\n\n"
 
 			"Enabling or disabling this setting takes effect after restarting the game.");
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES),
+			"This setting checks to see if there's a newer release of sc2kfix available when the game starts.\n\n"
+
+			"Enabling or disabling this setting takes effect after restarting the game.");
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_REVENUE),
 			"Military bases were originally intended to increase commercial demand and generate city revenue. "
 			"This was never implemented, though the negative aspects of military base ownership were. "
@@ -224,6 +236,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SHUFFLE_MUSIC), bSettingsShuffleMusic ? BST_CHECKED : BST_UNCHECKED);
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG), bSettingsUseStatusDialog ? BST_CHECKED : BST_UNCHECKED);
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE), bSettingsAlwaysConsole ? BST_CHECKED : BST_UNCHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES), bSettingsCheckForUpdates ? BST_CHECKED : BST_UNCHECKED);
 
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_REVENUE), bSettingsMilitaryBaseRevenue ? BST_CHECKED : BST_UNCHECKED);
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_FIX_ORDINANCES), bSettingsFixOrdinances ? BST_CHECKED : BST_UNCHECKED);
@@ -250,10 +263,11 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			bSettingsMusicInBackground = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_BKGDMUSIC));
 			bSettingsUseNewStrings = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS));
 			bSettingsUseSoundReplacements = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS));
-			bSettingsMilitaryBaseRevenue = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_REVENUE));
 			bSettingsShuffleMusic = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SHUFFLE_MUSIC));
 			bSettingsUseStatusDialog = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG));
 			bSettingsAlwaysConsole = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE));
+			bSettingsCheckForUpdates = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES));
+			bSettingsMilitaryBaseRevenue = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_REVENUE));
 
 			// Save the settings
 			SaveSettings();

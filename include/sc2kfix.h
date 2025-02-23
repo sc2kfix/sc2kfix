@@ -86,10 +86,11 @@ extern char szSettingsCompanyName[64];
 extern BOOL bSettingsMusicInBackground;
 extern BOOL bSettingsUseNewStrings;
 extern BOOL bSettingsUseSoundReplacements;
-extern BOOL bSettingsMilitaryBaseRevenue;
 extern BOOL bSettingsShuffleMusic;
 extern BOOL bSettingsUseStatusDialog;
 extern BOOL bSettingsAlwaysConsole;
+extern BOOL bSettingsCheckForUpdates;
+extern BOOL bSettingsMilitaryBaseRevenue;
 
 // Globals etc.
 
@@ -104,6 +105,8 @@ void LoadReplacementSounds(void);
 void MusicShufflePlaylist(int iLastSongPlayed);
 const char* HexPls(UINT uNumber);
 void ConsoleLog(int iLogLevel, const char* fmt, ...);
+BOOL UpdaterCheckForUpdates(void);
+DWORD WINAPI UpdaterThread(LPVOID lpParameter);
 
 BOOL WINAPI ConsoleCtrlHandler(DWORD fdwCtrlType);
 DWORD WINAPI ConsoleThread(LPVOID lpParameter);
@@ -142,6 +145,9 @@ extern std::mt19937 mtMersenneTwister;
 extern HWND hStatusDialog;
 extern HFONT hStatusDialogBoldFont;
 extern HANDLE hWeatherBitmaps[12];
+
+extern char szLatestRelease[24];
+extern BOOL bUpdateAvailable;
 
 // Hooks to inject in dllmain.cpp
 

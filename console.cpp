@@ -284,22 +284,7 @@ BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
 }
 
 static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments) {
-	extern WORD wMilitaryBaseX, wMilitaryBaseY;
-	if (bMilitaryBaseType > 1)
-		printf("Military base located at (%u, %u)\n", wMilitaryBaseX, wMilitaryBaseY);
-	else
-		printf("Military base not built in city.\n");
-
-	HDC hDC = GetDC(NULL);
-	int w = GetDeviceCaps(hDC, HORZRES);
-	int h = GetDeviceCaps(hDC, VERTRES);
-	printf("GetDC(NULL) res = %ix%i\n", w, h);
-	HWND hwndDesktop = GetDesktopWindow();
-	RECT rcDesktop;
-	GetWindowRect(hwndDesktop, &rcDesktop);
-	w = rcDesktop.right - rcDesktop.left;
-	h = rcDesktop.bottom - rcDesktop.top;
-	printf("GetDesktopWindow() res = %ix%i\n", w, h);
+	UpdaterCheckForUpdates();
 
 	return TRUE;
 }

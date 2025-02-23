@@ -256,6 +256,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         else
             ConsoleLog(LOG_INFO, "-default passed, skipping LoadSettings().\n");
 
+        // Check for updates
+        if (bSettingsCheckForUpdates)
+            CreateThread(NULL, 0, UpdaterThread, 0, 0, NULL);
+
         // Palette animation fix
         LPVOID lpAnimationFix;
         PBYTE lpAnimationFixSrc;

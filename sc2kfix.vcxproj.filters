@@ -77,6 +77,9 @@
     <ClCompile Include="status_dialog.cpp">
       <Filter>Source Files\DLLMain</Filter>
     </ClCompile>
+    <ClCompile Include="update_notifier.cpp">
+      <Filter>Source Files\DLLMain</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="sc2kfix.rc">

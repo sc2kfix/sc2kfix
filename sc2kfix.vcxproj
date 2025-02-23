@@ -53,7 +53,7 @@
       <EnableUAC>false</EnableUAC>
       <ModuleDefinitionFile>hooks\exports.def</ModuleDefinitionFile>
       <DataExecutionPrevention>false</DataExecutionPrevention>
-      <AdditionalDependencies>"comctl32.lib";"shlwapi.lib";"winmm.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>"comctl32.lib";"shlwapi.lib";"winmm.lib";"wininet.lib";%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>
@@ -78,6 +78,7 @@
     <ClCompile Include="scurkfix.cpp" />
     <ClCompile Include="settings.cpp" />
     <ClCompile Include="status_dialog.cpp" />
+    <ClCompile Include="update_notifier.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="hooks\exports.def" />
