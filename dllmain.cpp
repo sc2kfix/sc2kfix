@@ -31,6 +31,7 @@ FARPROC fpWinMMHookList[180] = { NULL };
 DWORD dwDetectedVersion = SC2KVERSION_UNKNOWN;
 DWORD dwSC2KAppTimestamp = 0;
 const char* szSC2KFixVersion = SC2KFIX_VERSION;
+const char* szSC2KFixReleaseTag = SC2KFIX_RELEASE_TAG;
 const char* szSC2KFixBuildInfo = __DATE__ " " __TIME__;
 FILE* fdLog = NULL;
 BOOL bInSCURK = FALSE;

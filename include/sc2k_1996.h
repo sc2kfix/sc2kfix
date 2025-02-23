@@ -392,6 +392,8 @@ enum {
 	TILE_OTHER_BRAUNLLAMADOME
 };
 
+extern const char* szTileNames[256];
+
 #define TILE_IS_MILITARY(iTileID) \
 	((iTileID == 0xDD) || (iTileID == 0xDE) || (iTileID == 0xEF) || (iTileID == 0xF2) || (iTileID == 0xEA) || (iTileID == 0xE3) \
 	|| (iTileID == 0xE4) || (iTileID == 0xE5) || (iTileID == 0xF1) || (iTileID == 0xE0) || (iTileID == 0xE2) || (iTileID == 0xE7) \

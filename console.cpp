@@ -195,13 +195,14 @@ BOOL ConsoleCmdShowMicrosim(const char* szCommand, const char* szArguments) {
 	int iMicrosimID = 0;
 	if (sscanf_s(szArguments + 9, "%i", &iMicrosimID)) {
 		if (iMicrosimID >= 0 && iMicrosimID < 150) {
+			int iTileID = pMicrosimArr[iMicrosimID].bTileID;
 			printf(
 				"Microsim %i:\n"
-				"  Tile ID:       %i\n"
+				"  Tile/Building: %s (%i / 0x%02X)\n"
 				"  Data (Byte):   %i\n"
 				"  Data (Word 1): %i\n"
 				"  Data (Word 2): %i\n"
-				"  Data (Word 3): %i\n", iMicrosimID, pMicrosimArr[iMicrosimID].bTileID, pMicrosimArr[iMicrosimID].bMicrosimData[0],
+				"  Data (Word 3): %i\n", iMicrosimID, szTileNames[iTileID], iTileID, iTileID, pMicrosimArr[iMicrosimID].bMicrosimData[0],
 				*(WORD*)(&pMicrosimArr[iMicrosimID].bMicrosimData[1]), *(WORD*)(&pMicrosimArr[iMicrosimID].bMicrosimData[3]), *(WORD*)(&pMicrosimArr[iMicrosimID].bMicrosimData[5]));
 			return TRUE;
 		}
@@ -338,9 +339,9 @@ BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments) {
 
 		printf(
 			"Tile (%i, %i):\n"
-			"  iTileID: %i\n"
-			"  Zone: %s\n"
-			"  XBIT: 0x%02X (%s)\n", iTileX, iTileY, iTileID, GetZoneName(dwMapXZON[iTileX]->b[iTileY].iZoneType), dwMapXBIT[iTileX]->b[iTileY], szXBITFormatted);
+			"  iTileID: %s (%i / 0x%02X)\n"
+			"  Zone:    %s\n"
+			"  XBIT:    0x%02X (%s)\n", iTileX, iTileY, szTileNames[iTileID], iTileID, iTileID, GetZoneName(dwMapXZON[iTileX]->b[iTileY].iZoneType), dwMapXBIT[iTileX]->b[iTileY], szXBITFormatted);
 		return TRUE;
 	}
 
