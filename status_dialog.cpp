@@ -153,7 +153,10 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 			POINT ptCurrentCursorPos;
 			GetCursorPos(&ptCurrentCursorPos);
 			GetWindowRect(hwndDlg, &rectWindow);
+			SetWindowRedraw(hwndDlg, FALSE);
 			MoveWindow(hwndDlg, ptCurrentCursorPos.x - ptPreviousCursorPos.x, ptCurrentCursorPos.y - ptPreviousCursorPos.y, rectWindow.right - rectWindow.left, rectWindow.bottom - rectWindow.top, FALSE);
+			SetWindowRedraw(hwndDlg, TRUE);
+			InvalidateRect(hwndDlg, NULL, TRUE);
 		}
 		return FALSE;
 	case WM_LBUTTONDOWN:
