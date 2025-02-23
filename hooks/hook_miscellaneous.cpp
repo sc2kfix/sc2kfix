@@ -49,6 +49,11 @@ char szTempMayorName[24] = { 0 };
 extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMax) {
 	if (hInstance == hSC2KAppModule && bSettingsUseNewStrings) {
 		switch (uID) {
+		case 97:
+			if (!strcpy_s(lpBuffer, cchBufferMax,
+				"Hydroelectric Dam"))
+				return strlen(lpBuffer);
+			break;
 		case 108:
 			if (!strcpy_s(lpBuffer, cchBufferMax,
 				"Hydroelectric dams can only be placed on waterfall tiles."))
@@ -82,6 +87,21 @@ extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR l
 		case 116:
 			if (!strcpy_s(lpBuffer, cchBufferMax,
 				"Tunnel entrances must be placed on a hillside."))
+				return strlen(lpBuffer);
+			break;
+		case 129:
+			if (!strcpy_s(lpBuffer, cchBufferMax,
+				"Nuclear Power"))
+				return strlen(lpBuffer);
+			break;
+		case 132:
+			if (!strcpy_s(lpBuffer, cchBufferMax,
+				"Microwave Power"))
+				return strlen(lpBuffer);
+			break;
+		case 133:
+			if (!strcpy_s(lpBuffer, cchBufferMax,
+				"Fusion Power"))
 				return strlen(lpBuffer);
 			break;
 		case 240:
