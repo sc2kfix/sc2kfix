@@ -55,6 +55,8 @@ BOOL UpdaterCheckForUpdates(void) {
 	HINTERNET hHttpRequest = InternetOpenUrl(hInet, szGitHubRepoReleases, "X-GitHub-Api-Version: 2022-11-28\r\n", -1L, INTERNET_FLAG_SECURE, (DWORD_PTR)&dwContext);
 #pragma warning(pop)
 	if (!hHttpRequest) {
+		if (GetLastError() == 12002)
+			ConsoleLog(LOG_WARNING, "Update notifier timed out after 3000 milliseconds.\n");
 		if (updatenotifier_debug)
 			ConsoleLog(LOG_ERROR, "UPD: InternetOpenUrl failed, 0x%08X.\n", GetLastError());
 		return FALSE;
@@ -119,7 +121,7 @@ BOOL UpdaterCheckForUpdates(void) {
 		ConsoleLog(LOG_DEBUG, "UPD: Latest release: %s\n", szLatestRelease);
 
 	if (strcmp(szSC2KFixReleaseTag, szLatestRelease)) {
-		ConsoleLog(LOG_INFO, "UPD: New release available: %s (currently running %s)\n", szLatestRelease, szSC2KFixReleaseTag);
+		ConsoleLog(LOG_INFO, "New release available: %s (currently running %s)\n", szLatestRelease, szSC2KFixReleaseTag);
 		return TRUE;
 	}
 
