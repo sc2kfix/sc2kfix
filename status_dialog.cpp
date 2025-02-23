@@ -52,8 +52,8 @@ extern "C" int __stdcall Hook_402793(int iStatic, char* szText, int iMaybeAlways
 				InvalidateRect(GetDlgItem(hStatusDialog, IDC_STATIC_STATUSSTRING), NULL, TRUE);
 			}
 		} else if (iStatic == 2) {
-			SendMessage(GetDlgItem(hStatusDialog, IDC_STATIC_WEATHERICON), STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hWeatherBitmaps[bWeatherTrend]);
-			InvalidateRect(GetDlgItem(hStatusDialog, IDC_STATIC_WEATHERICON), NULL, TRUE);
+			SendMessage(GetDlgItem(hStatusDialog, IDC_BUTTON_WEATHERICON), BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hWeatherBitmaps[bWeatherTrend]);
+			InvalidateRect(GetDlgItem(hStatusDialog, IDC_BUTTON_WEATHERICON), NULL, TRUE);
 		} else
 			InvalidateRect(hStatusDialog, NULL, FALSE);
 	}
@@ -129,6 +129,23 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 		if (!hBrushBkg)
 			hBrushBkg = CreateSolidBrush(RGB(240, 240, 240));
 		return (LONG)hBrushBkg;
+
+	case WM_COMMAND:
+		switch (GET_WM_COMMAND_ID(wParam, lParam)) {
+			case IDC_BUTTON_WEATHERICON:
+				if (GET_WM_COMMAND_CMD(wParam, lParam) == BN_CLICKED) {
+					HWND phWnd = GetParent(hwndDlg);
+					if (phWnd) {
+						HWND dhWnd = GetDlgItem(phWnd, 111);
+						if (dhWnd) {
+							SendMessage(GetDlgItem(dhWnd, 120), BM_CLICK, 0, 0);
+						}
+					}
+					return FALSE;
+				}
+				break;
+		}
+		break;
 
 	case WM_MOUSEMOVE:
 		if (bMouseDown) {
