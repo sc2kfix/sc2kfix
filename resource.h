@@ -42,12 +42,13 @@
 #define IDB_WEATHER9                    23029
 #define IDB_WEATHER10                   23030
 #define IDB_WEATHER11                   23031
+#define IDB_GOTO						23032
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        23032
+#define _APS_NEXT_RESOURCE_VALUE        23033
 #define _APS_NEXT_COMMAND_VALUE         40002
 #define _APS_NEXT_CONTROL_VALUE         21023
 #define _APS_NEXT_SYMED_VALUE           101

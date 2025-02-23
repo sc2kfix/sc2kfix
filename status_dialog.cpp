@@ -17,7 +17,7 @@
 
 HWND hStatusDialog = NULL;
 HFONT hStatusDialogBoldFont = NULL;
-HANDLE hWeatherBitmaps[12];
+HANDLE hWeatherBitmaps[13];
 static HCURSOR hDefaultCursor = NULL;
 static HWND hwndDesktop;
 static RECT rcTemp, rcDlg, rcDesktop;
@@ -52,7 +52,10 @@ extern "C" int __stdcall Hook_402793(int iStatic, char* szText, int iMaybeAlways
 				InvalidateRect(GetDlgItem(hStatusDialog, IDC_STATIC_STATUSSTRING), NULL, TRUE);
 			}
 		} else if (iStatic == 2) {
-			SendMessage(GetDlgItem(hStatusDialog, IDC_BUTTON_WEATHERICON), BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hWeatherBitmaps[bWeatherTrend]);
+			if (crStatusColor == RGB(255, 0, 0))
+				SendMessage(GetDlgItem(hStatusDialog, IDC_BUTTON_WEATHERICON), BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hWeatherBitmaps[12]);
+			else
+				SendMessage(GetDlgItem(hStatusDialog, IDC_BUTTON_WEATHERICON), BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hWeatherBitmaps[bWeatherTrend]);
 			InvalidateRect(GetDlgItem(hStatusDialog, IDC_BUTTON_WEATHERICON), NULL, TRUE);
 		} else
 			InvalidateRect(hStatusDialog, NULL, FALSE);

@@ -145,5 +145,8 @@
     <Image Include="blobs\weather11.bmp">
       <Filter>Resource Files\BITMAP</Filter>
     </Image>
+    <Image Include="blobs\goto.bmp">
+      <Filter>Resource Files\BITMAP</Filter>
+    </Image>
   </ItemGroup>
 </Project>

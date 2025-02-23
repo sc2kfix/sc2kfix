@@ -417,7 +417,7 @@ void InstallMiscHooks(void) {
 	MusicShufflePlaylist(0);
 
 	// Load weather icons
-	for (int i = 0; i < 12; i++) {
+	for (int i = 0; i < 13; i++) {
 		HANDLE hBitmap = LoadImage(hSC2KFixModule, MAKEINTRESOURCE(IDB_WEATHER0 + i), IMAGE_BITMAP, 40, 40, NULL);
 		if (hBitmap)
 			hWeatherBitmaps[i] = hBitmap;

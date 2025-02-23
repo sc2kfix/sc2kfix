@@ -94,6 +94,7 @@
     <Media Include="blobs\529.wav" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="blobs\goto.bmp" />
     <Image Include="blobs\weather0.bmp" />
     <Image Include="blobs\weather1.bmp" />
     <Image Include="blobs\weather10.bmp" />

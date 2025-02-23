@@ -409,6 +409,8 @@ IDB_WEATHER10           BITMAP                  "blobs\\weather10.bmp"
 
 IDB_WEATHER11           BITMAP                  "blobs\\weather11.bmp"
 
+IDB_GOTO                BITMAP                  "blobs\\goto.bmp"
+
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
