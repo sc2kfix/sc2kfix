@@ -198,6 +198,11 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			"Enabling this setting will use the floating status dialog instead of the bottom status bar.\n\n"
 			
 			"Enabling or disabling this setting takes effect after restarting the game.");
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE),
+			"sc2kfix has a debugging console that can be activated by passing the -console argument to SimCity 2000's command line. "
+			"This setting forces sc2kfix to always start the console along with the game, even if the -console argument is not passed.\n\n"
+
+			"Enabling or disabling this setting takes effect after restarting the game.");
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_REVENUE),
 			"Military bases were originally intended to increase commercial demand and generate city revenue. "
 			"This was never implemented, though the negative aspects of military base ownership were. "
@@ -205,7 +210,9 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 
 			"Enabling this setting will allow military bases to generate a population based annual income in the form of a stipend from the federal government, "
 			"as well as increased commercial demand, both of which scale with the size and type of the base, and may fluctuate depending on military needs and "
-			"base redevelopment efforts.");
+			"base redevelopment efforts.\n\n"
+
+			"Enabling or disabling this setting takes effect after restarting the game.");
 
 		// Load the existing settings into the dialog
 		SetDlgItemText(hwndDlg, IDC_SETTINGS_MAYOR, szSettingsMayorName);
