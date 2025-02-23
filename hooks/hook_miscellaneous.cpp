@@ -24,8 +24,9 @@
 #define MISCHOOK_DEBUG_MILITARY 2
 #define MISCHOOK_DEBUG_MENU 4
 #define MISCHOOK_DEBUG_SAVES 8
+#define MISCHOOK_DEBUG_WINDOW 16
 
-#define MISCHOOK_DEBUG 0
+#define MISCHOOK_DEBUG 0;
 
 #ifdef DEBUGALL
 #undef MISCHOOK_DEBUG
@@ -148,6 +149,19 @@ extern "C" BOOL __stdcall Hook_EnableMenuItem(HMENU hMenu, UINT uIDEnableItem, U
 	if (uIDEnableItem == 5 && uEnable == 0x403)
 		return EnableMenuItem(hMenu, uIDEnableItem, MF_BYPOSITION | MF_ENABLED);
 	return EnableMenuItem(hMenu, uIDEnableItem, uEnable);
+}
+
+extern "C" BOOL __stdcall Hook_ShowWindow(HWND hWnd, int nCmdShow) {
+	if (mischook_debug & MISCHOOK_DEBUG_WINDOW)
+		ConsoleLog(LOG_DEBUG, "WND: 0x%08X -> ShowWindow(0x%08X, %i)\n", _ReturnAddress(), hWnd, nCmdShow);
+	DWORD* CWndMainWindow = (DWORD*)*(DWORD*)0x4C702C;
+	HWND hWndStatusBar = (HWND)CWndMainWindow[68];
+	if (hWnd == hWndStatusBar && bSettingsUseStatusDialog) {
+		if (hStatusDialog)
+			ShowWindow(hStatusDialog, SW_SHOW);
+		return ShowWindow(hWnd, SW_HIDE);
+	}
+	return ShowWindow(hWnd, nCmdShow);
 }
 
 static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -283,6 +297,9 @@ void InstallMiscHooks(void) {
 	*(DWORD*)(0x4EFE58) = (DWORD)Hook_EnableMenuItem;
 	*(DWORD*)(0x4EFC64) = (DWORD)Hook_DialogBoxParamA;
 
+	// Install ShowWindow hook
+	*(DWORD*)(0x4EFE70) = (DWORD)Hook_ShowWindow;
+
 	// Fix the sign fonts
 	VirtualProtect((LPVOID)0x4E7267, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
 	*(BYTE*)0x4E7267 = 'a';
@@ -388,6 +405,10 @@ void InstallMiscHooks(void) {
 	// Hook status bar updates for the status dialog implementation
 	VirtualProtect((LPVOID)0x402793, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402793, Hook_402793);
+	VirtualProtect((LPVOID)0x4021A8, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4021A8, Hook_4021A8);
+	VirtualProtect((LPVOID)0x40103C, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x40103C, Hook_40103C);
 
 	// Add settings buttons to SC2K's menus
 	hGameMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(3));
@@ -413,7 +434,7 @@ void InstallMiscHooks(void) {
 			ConsoleLog(LOG_DEBUG, "MISC: AppendMenuA #3 failed, error = 0x%08X.\n", GetLastError());
 			goto skipmenu;
 		}
-		extern HWND ShowStatusDialog(void);
+
 		AFX_MSGMAP_ENTRY afxMessageMapEntry = {
 			WM_COMMAND,
 			0,

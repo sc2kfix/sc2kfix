@@ -4,6 +4,7 @@
 #undef UNICODE
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <windowsx.h>
 #include <psapi.h>
 #include <shlwapi.h>
 #include <stdio.h>
@@ -68,9 +69,50 @@ extern "C" int __stdcall Hook_402793(int iStatic, char* szText, int iMaybeAlways
 	}
 }
 
+extern "C" int __stdcall Hook_4021A8(int iShow) {
+	__asm {
+		push ecx
+	}
+
+	int iActualShow = iShow;
+
+	if (bSettingsUseStatusDialog)
+		iActualShow = 0;
+
+	if (hStatusDialog)
+		ShowWindow(hStatusDialog, iShow ? 5 : 0);
+	else if (bSettingsUseStatusDialog)
+		ShowStatusDialog();
+
+	__asm {
+		pop ecx
+		push [iActualShow]
+		mov edi, 0x40C3E0
+		call edi
+	}
+}
+
+extern "C" int __stdcall Hook_40103C(int iShow) {
+	__asm {
+		push ecx
+	}
+
+	if (hStatusDialog)
+		ShowWindow(hStatusDialog, iShow ? 5 : 0);
+
+	__asm {
+		pop ecx
+		push iShow
+		mov edi, 0x40B9E0
+		call edi
+	}
+}
+
 BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
-	static 
-	LRESULT hit = 0;
+	static BOOL bMouseDown = FALSE;
+	static POINT ptPreviousCursorPos;
+	RECT rectWindow;
+
 	switch (message) {
 	case WM_INITDIALOG:
 		hStatusDialogBoldFont = CreateFont(-MulDiv(10, GetDeviceCaps(GetDC(NULL), LOGPIXELSY), 72), 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "MS Sans Serif");
@@ -88,8 +130,26 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 			hBrushBkg = CreateSolidBrush(RGB(240, 240, 240));
 		return (LONG)hBrushBkg;
 
-	case WM_NCHITTEST:
-		return HTCAPTION;
+	case WM_MOUSEMOVE:
+		if (bMouseDown) {
+			POINT ptCurrentCursorPos;
+			GetCursorPos(&ptCurrentCursorPos);
+			GetWindowRect(hwndDlg, &rectWindow);
+			MoveWindow(hwndDlg, ptCurrentCursorPos.x - ptPreviousCursorPos.x, ptCurrentCursorPos.y - ptPreviousCursorPos.y, rectWindow.right - rectWindow.left, rectWindow.bottom - rectWindow.top, FALSE);
+		}
+		return FALSE;
+	case WM_LBUTTONDOWN:
+		bMouseDown = TRUE;
+		SetCapture(hwndDlg);
+		GetCursorPos(&ptPreviousCursorPos);
+		GetWindowRect(hwndDlg, &rectWindow);
+		ptPreviousCursorPos.x -= rectWindow.left;
+		ptPreviousCursorPos.y -= rectWindow.top;
+		return FALSE;
+	case WM_LBUTTONUP:
+		bMouseDown = FALSE;
+		ReleaseCapture();
+		return FALSE;
 	}
 	return FALSE;
 }
@@ -105,14 +165,9 @@ HWND ShowStatusDialog(void) {
 		ConsoleLog(LOG_ERROR, "Couldn't create statuss dialog: 0x%08X\n", GetLastError());
 		return NULL;
 	}
-	hDefaultCursor = LoadCursor(NULL, IDC_ARROW);
 	hwndDesktop = GetDesktopWindow();
 	GetWindowRect(hwndDesktop, &rcDesktop);
-	GetWindowRect(hwndDesktop, &rcTemp);
-	GetWindowRect(hStatusDialog, &rcDlg);
-	OffsetRect(&rcDlg, -rcDlg.left, -rcDlg.top);
-	OffsetRect(&rcTemp, -rcDesktop.left, -rcDesktop.top);
-	OffsetRect(&rcTemp, -rcDlg.right, -rcDlg.bottom);
-	SetWindowPos(hStatusDialog, HWND_TOP, rcDesktop.left + (rcTemp.right / 2), rcDesktop.top + (rcTemp.bottom / 2), 0, 0, SWP_NOSIZE);
+	SetWindowPos(hStatusDialog, HWND_TOP, rcDesktop.left + (rcDesktop.right - rcDesktop.left) / 8 + 128, rcDesktop.top + (rcDesktop.bottom - rcDesktop.top) / 8, 0, 0, SWP_NOSIZE);
+	ShowWindow(hStatusDialog, SW_HIDE);
 	return hStatusDialog;
 }

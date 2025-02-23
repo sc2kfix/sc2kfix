@@ -88,6 +88,7 @@ extern BOOL bSettingsUseNewStrings;
 extern BOOL bSettingsUseSoundReplacements;
 extern BOOL bSettingsMilitaryBaseRevenue;
 extern BOOL bSettingsShuffleMusic;
+extern BOOL bSettingsUseStatusDialog;
 extern BOOL bSettingsAlwaysConsole;
 
 // Globals etc.
@@ -98,6 +99,7 @@ BOOL DoRegistryCheckAndInstall(void);
 void LoadSettings(void);
 void SaveSettings(void);
 void ShowSettingsDialog(void);
+HWND ShowStatusDialog(void);
 void LoadReplacementSounds(void);
 void MusicShufflePlaylist(int iLastSongPlayed);
 const char* HexPls(UINT uNumber);
@@ -148,6 +150,8 @@ void UpdateMiscHooks(void);
 extern "C" void __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer);
 extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void);
 extern "C" int __stdcall Hook_402793(int iStatic, char* szText, int iMaybeAlways1, COLORREF crColor);
+extern "C" int __stdcall Hook_4021A8(int iShow);
+extern "C" int __stdcall Hook_40103C(int iShow);
 
 // Debugging settings
 
