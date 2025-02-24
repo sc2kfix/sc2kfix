@@ -16,7 +16,6 @@
 #include "resource.h"
 
 HWND hStatusDialog = NULL;
-HFONT hStatusDialogBoldFont = NULL;
 HANDLE hWeatherBitmaps[13];
 static HCURSOR hDefaultCursor = NULL;
 static HWND hwndDesktop;
@@ -118,8 +117,7 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 
 	switch (message) {
 	case WM_INITDIALOG:
-		hStatusDialogBoldFont = CreateFont(-MulDiv(10, GetDeviceCaps(GetDC(NULL), LOGPIXELSY), 72), 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "MS Sans Serif");
-		SendMessage(GetDlgItem(hwndDlg, IDC_STATIC_SELECTEDTOOL), WM_SETFONT, (WPARAM)hStatusDialogBoldFont, TRUE);
+		SendMessage(GetDlgItem(hwndDlg, IDC_STATIC_SELECTEDTOOL), WM_SETFONT, (WPARAM)hFontMSSansSerifBold10, TRUE);
 		return TRUE;
 
 	case WM_CTLCOLORSTATIC:

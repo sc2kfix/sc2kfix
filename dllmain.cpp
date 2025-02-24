@@ -36,6 +36,14 @@ const char* szSC2KFixBuildInfo = __DATE__ " " __TIME__;
 FILE* fdLog = NULL;
 BOOL bInSCURK = FALSE;
 
+HFONT hFontMSSansSerifRegular8;
+HFONT hFontMSSansSerifBold8;
+HFONT hFontMSSansSerifRegular10;
+HFONT hFontMSSansSerifBold10;
+HFONT hFontArialRegular10;
+HFONT hFontArialBold10;
+HFONT hSystemRegular12;
+
 std::random_device rdRandomDevice;
 std::mt19937 mtMersenneTwister(rdRandomDevice());
 
@@ -259,6 +267,15 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         // Check for updates
         if (bSettingsCheckForUpdates)
             CreateThread(NULL, 0, UpdaterThread, 0, 0, NULL);
+
+        // Generate 
+        hFontMSSansSerifRegular8 = CreateFont(8, 0, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "MS Sans Serif");
+        hFontMSSansSerifBold8 = CreateFont(8, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "MS Sans Serif");
+        hFontMSSansSerifRegular10 = CreateFont(10, 0, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "MS Sans Serif");
+        hFontMSSansSerifBold10 = CreateFont(10, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "MS Sans Serif");
+        hFontArialRegular10 = CreateFont(10, 0, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Arial");
+        hFontArialBold10 = CreateFont(10, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Arial");
+        hSystemRegular12 = CreateFont(12, 0, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "System");
 
         // Palette animation fix
         LPVOID lpAnimationFix;

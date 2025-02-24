@@ -137,13 +137,20 @@ extern const char* szSC2KFixBuildInfo;
 extern BOOL bInSCURK;
 extern BOOL bConsoleEnabled;
 
+extern HFONT hFontMSSansSerifRegular8;
+extern HFONT hFontMSSansSerifBold8;
+extern HFONT hFontMSSansSerifRegular10;
+extern HFONT hFontMSSansSerifBold10;
+extern HFONT hFontArialRegular10;
+extern HFONT hFontArialBold10;
+extern HFONT hSystemRegular12;
+
 extern std::map<DWORD, soundbufferinfo_t> mapSoundBuffers;
 extern std::vector<int> vectorRandomSongIDs;
 extern std::random_device rdRandomDevice;
 extern std::mt19937 mtMersenneTwister;
 
 extern HWND hStatusDialog;
-extern HFONT hStatusDialogBoldFont;
 extern HANDLE hWeatherBitmaps[13];
 
 extern char szLatestRelease[24];
