@@ -27,6 +27,10 @@
 #define IDC_SETTINGS_CHECK_SHUFFLE_MUSIC 21020
 #define IDC_SETTINGS_CHECK_STATUS_DIALOG 21021
 #define IDC_SETTINGS_CHECK_FIX_ORDINANCES 21022
+#define IDC_STATIC_UPDATENOTICE         21023
+#define IDC_STATIC_TILENAME             21024
+#define IDC_STATIC_TILECOORDS           21025
+#define IDC_STATIC_TILEDATA             21027
 #define IDR_WAVE_500                    23001
 #define IDR_WAVE_514                    23002
 #define IDR_WAVE_529                    23003
@@ -42,15 +46,16 @@
 #define IDB_WEATHER9                    23029
 #define IDB_WEATHER10                   23030
 #define IDB_WEATHER11                   23031
-#define IDB_GOTO						23032
+#define IDB_GOTO                        23032
+#define IDD_ADVANCEDQUERY               23033
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        23033
+#define _APS_NEXT_RESOURCE_VALUE        23035
 #define _APS_NEXT_COMMAND_VALUE         40002
-#define _APS_NEXT_CONTROL_VALUE         21023
+#define _APS_NEXT_CONTROL_VALUE         21028
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

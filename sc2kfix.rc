@@ -17,6 +17,7 @@
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -149,7 +150,7 @@ BEGIN
     PUSHBUTTON      "Load Tile Set",116,5,101,61,14,WS_GROUP
     PUSHBUTTON      "sc2kfix Settings",118,5,120,61,14,WS_GROUP
     PUSHBUTTON      "Quit",115,5,139,61,14,WS_GROUP
-    CTEXT           "A new version of sc2kfix is available for download from the GitHub releases page.",IDC_STATIC,2,158,68,34
+    CTEXT           "A new version of sc2kfix is available for download from the GitHub releases page.",IDC_STATIC_UPDATENOTICE,2,158,68,34
 END
 
 101 DIALOGEX 0, 0, 181, 110
@@ -273,6 +274,18 @@ BEGIN
     PUSHBUTTON      "Quit",115,5,139,61,14,WS_GROUP
 END
 
+IDD_ADVANCEDQUERY DIALOGEX 0, 0, 269, 186
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
+EXSTYLE WS_EX_TOPMOST
+FONT 10, "System", 700, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,109,168,50,14
+    CTEXT           "Industrial Thingamajig (iTileID 190 / 0xBE)\nCoordinates:   X=1  Y=109",IDC_STATIC_TILENAME,18,12,228,18
+    CONTROL         "High-Density Industrial\n250 feet (ALTM: 0x1234)\n$65,000/acre\nLow\nMedium\n\nTop-left corner, iZoneID 6\n0xF1: powerable powered piped watered saltwater\n\nCrossover (PIPETB_SUBWAYLR) (XUND 31 / 0x1F)\nNone",IDC_STATIC_TILEDATA,
+                    "Static",SS_LEFTNOWORDWRAP | SS_NOPREFIX | WS_GROUP,54,36,210,126
+    RTEXT           "Zone:\nAltitude:\nLand Value:\nCrime:\nPollution:\n\nXZON:\nXBIT:\n\nUnderground:\niMicrosimID:\nData 0:\nData 1:\nData 2:\nData 3:",IDC_STATIC,0,36,48,126
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -323,6 +336,14 @@ BEGIN
     20104, DIALOG
     BEGIN
     END
+
+    IDD_ADVANCEDQUERY, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 262
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 179
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -363,6 +384,11 @@ BEGIN
 END
 
 103 AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_ADVANCEDQUERY AFX_DIALOG_LAYOUT
 BEGIN
     0
 END
