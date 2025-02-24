@@ -371,14 +371,6 @@ void InstallMiscHooks(void) {
 	VirtualProtect((LPVOID)0x41442E, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x41442E, Hook_41442E);
 
-	// Allow military tiles to be rotated. I don't know if this will work or not.
-	// 
-	// (no. it does not work. leaving this here for now as a potential to-to list item.)
-	/*VirtualProtect((LPVOID)0x43931E, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(BYTE*)0x43931E = 0x7F;
-	VirtualProtect((LPVOID)0x4393B5, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(BYTE*)0x4393B5 = 0x7F;*/
-
 	// Move the alt+query bottom text to not be blocked by the OK button
 	VirtualProtect((LPVOID)0x428FB1, 3, PAGE_EXECUTE_READWRITE, &dwDummy);
 	*(BYTE*)0x428FB1 = 0x83;
