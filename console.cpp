@@ -193,8 +193,46 @@ BOOL ConsoleCmdShowMicrosim(const char* szCommand, const char* szArguments) {
 	}
 
 	int iMicrosimID = 0;
+	if (!strcmp(szArguments + 9, "bus")) {
+		iMicrosimID = 1;
+		goto skipscanf;
+	}
+	if (!strcmp(szArguments + 9, "rail")) {
+		iMicrosimID = 2;
+		goto skipscanf;
+	}
+	if (!strcmp(szArguments + 9, "subway")) {
+		iMicrosimID = 3;
+		goto skipscanf;
+	}
+	if (!strcmp(szArguments + 9, "wind")) {
+		iMicrosimID = 4;
+		goto skipscanf;
+	}
+	if (!strcmp(szArguments + 9, "hydro")) {
+		iMicrosimID = 5;
+		goto skipscanf;
+	}
+	if (!strcmp(szArguments + 9, "bigpark")) {
+		iMicrosimID = 6;
+		goto skipscanf;
+	}
+	if (!strcmp(szArguments + 9, "museum")) {
+		iMicrosimID = 7;
+		goto skipscanf;
+	}
+	if (!strcmp(szArguments + 9, "library")) {
+		iMicrosimID = 8;
+		goto skipscanf;
+	}
+	if (!strcmp(szArguments + 9, "marina")) {
+		iMicrosimID = 9;
+		goto skipscanf;
+	}
+
 	if (sscanf_s(szArguments + 9, "%i", &iMicrosimID)) {
 		if (iMicrosimID >= 0 && iMicrosimID < 150) {
+skipscanf:
 			int iTileID = pMicrosimArr[iMicrosimID].bTileID;
 			printf(
 				"Microsim %i:\n"
