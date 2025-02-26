@@ -25,35 +25,6 @@ BOOL bSettingsCheckForUpdates = TRUE;
 BOOL bSettingsMilitaryBaseRevenue = FALSE;	// NYI
 BOOL bSettingsFixOrdinances = FALSE;		// NYI
 
-static HWND hwndDesktop;
-static RECT rcTemp, rcDlg, rcDesktop;
-
-HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText) {
-	if (!hDlg || !hControl || !szText)
-		return NULL;
-
-	HWND hTooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL, WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX, 0, 0, 0, 0, hDlg, NULL, hSC2KFixModule, NULL);
-	if (!hTooltip)
-		return NULL;
-
-	char* lpszText = _strdup(szText);
-	if (!lpszText)
-		return NULL;
-
-	SendMessage(hTooltip, TTM_ACTIVATE, TRUE, 0);
-	SendMessage(hTooltip, TTM_SETMAXTIPWIDTH, 0, 400);
-
-	TOOLINFO tooltipInfo = { 0 };
-	tooltipInfo.cbSize = sizeof(TOOLINFO);
-	tooltipInfo.hwnd = hDlg;
-	tooltipInfo.uId = (UINT_PTR)hControl;
-	tooltipInfo.uFlags = TTF_SUBCLASS | TTF_IDISHWND;
-	tooltipInfo.lpszText = lpszText;
-	SendMessage(hTooltip, TTM_ADDTOOL, NULL, (LPARAM)&tooltipInfo);
-
-	return hTooltip;
-}
-
 void LoadSettings(void) {
 	HKEY hkeySC2KRegistration;
 	LSTATUS lResultRegistration = RegCreateKeyEx(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Registration", NULL, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkeySC2KRegistration, NULL);
@@ -242,14 +213,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_FIX_ORDINANCES), bSettingsFixOrdinances ? BST_CHECKED : BST_UNCHECKED);
 
 		// Center the dialog box
-		hwndDesktop = GetDesktopWindow();
-		GetWindowRect(hwndDesktop, &rcDesktop);
-		GetWindowRect(hwndDesktop, &rcTemp);
-		GetWindowRect(hwndDlg, &rcDlg);
-		OffsetRect(&rcDlg, -rcDlg.left, -rcDlg.top);
-		OffsetRect(&rcTemp, -rcDesktop.left, -rcDesktop.top);
-		OffsetRect(&rcTemp, -rcDlg.right, -rcDlg.bottom);
-		SetWindowPos(hwndDlg, HWND_TOP, rcDesktop.left + (rcTemp.right / 2), rcDesktop.top + (rcTemp.bottom / 2), 0, 0, SWP_NOSIZE);
+		CenterDialogBox(hwndDlg);
 		return TRUE;
 
 	case WM_COMMAND:

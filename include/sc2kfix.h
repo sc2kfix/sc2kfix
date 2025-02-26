@@ -92,6 +92,16 @@ extern BOOL bSettingsAlwaysConsole;
 extern BOOL bSettingsCheckForUpdates;
 extern BOOL bSettingsMilitaryBaseRevenue;
 
+// Utility functions
+
+void CenterDialogBox(HWND hwndDlg);
+HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText);
+const char* HexPls(UINT uNumber, int width);
+void ConsoleLog(int iLogLevel, const char* fmt, ...);
+int GetTileID(int iTileX, int iTileY);
+const char* GetZoneName(int iZoneID);
+const char* GetLowHighScale(BYTE bScale);
+
 // Globals etc.
 
 BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
@@ -103,8 +113,6 @@ void ShowSettingsDialog(void);
 HWND ShowStatusDialog(void);
 void LoadReplacementSounds(void);
 void MusicShufflePlaylist(int iLastSongPlayed);
-const char* HexPls(UINT uNumber);
-void ConsoleLog(int iLogLevel, const char* fmt, ...);
 BOOL UpdaterCheckForUpdates(void);
 DWORD WINAPI UpdaterThread(LPVOID lpParameter);
 
@@ -160,6 +168,7 @@ extern BOOL bUpdateAvailable;
 
 void InstallMiscHooks(void);
 void UpdateMiscHooks(void);
+void InstallQueryHooks(void);
 extern "C" void __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer);
 extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void);
 extern "C" int __stdcall Hook_402793(int iStatic, char* szText, int iMaybeAlways1, COLORREF crColor);

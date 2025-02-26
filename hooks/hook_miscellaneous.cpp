@@ -195,7 +195,7 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		if (!GetDlgItemText(hwndDlg, 150, szTempMayorName, 24))
 			strcpy_s(szTempMayorName, 24, szSettingsMayorName);
 
-		strcpy_s(*bMapXLAB, 24, szTempMayorName);
+		strcpy_s(dwMapXLAB[0]->szLabel, 24, szTempMayorName);
 		break;
 	}
 
@@ -376,6 +376,9 @@ void InstallMiscHooks(void) {
 	*(BYTE*)0x428FB1 = 0x83;
 	*(BYTE*)0x428FB2 = 0xE8;
 	*(BYTE*)0x428FB3 = 0x32;
+	
+	// Install the advanced query hook
+	InstallQueryHooks();
 
 	// Fix the broken cheat
 	UINT uCheatPatch[9] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };

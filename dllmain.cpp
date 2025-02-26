@@ -78,69 +78,6 @@ BYTE bAnimationPatch1995[30] = {
     0x00, 0x5D, 0x5F, 0x5E, 0x5B, 0xC3
 };
 
-const char* HexPls(UINT uNumber) {
-    thread_local char szRet[16] = { 0 };
-    sprintf_s(szRet, 16, "0x%08X", uNumber);
-    return szRet;
-}
-
-void ConsoleLog(int iLogLevel, const char* fmt, ...) {
-    va_list args;
-    int len;
-    char* buf;
-    const char* prefix;
-
-    switch (iLogLevel) {
-    case LOG_EMERGENCY:
-        prefix = "EMERG: ";
-        break;
-    case LOG_ALERT:
-        prefix = "ALERT: ";
-        break;
-    case LOG_CRITICAL:
-        prefix = "CRIT:  ";
-        break;
-    case LOG_ERROR:
-        prefix = "ERROR: ";
-        break;
-    case LOG_WARNING:
-        prefix = "WARN:  ";
-        break;
-    case LOG_NOTICE:
-        prefix = "NOTE:  ";
-        break;
-    case LOG_INFO:
-        prefix = "INFO:  ";
-        break;
-    case LOG_DEBUG:
-        prefix = "DEBUG: ";
-        break;
-    case LOG_NONE:
-    default:                            // XXX - can this be a constexpr error?
-        prefix = "";
-        break;
-    }
-
-    va_start(args, fmt);
-    len = _vscprintf(fmt, args) + 1;
-    buf = (char*)malloc(len);
-    if (buf) {
-        vsprintf_s(buf, len, fmt, args);
-
-        if (fdLog) {
-            fprintf(fdLog, "%s%s", prefix, buf);
-            fflush(fdLog);
-        }
-
-        if (bConsoleEnabled)
-            printf("%s%s", prefix, buf);
-        
-        free(buf);
-    }
-
-    va_end(args);
-}
-
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
     int argc = 0;
     LPWSTR* argv = NULL;

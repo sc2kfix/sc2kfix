@@ -71,6 +71,7 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="hooks\hook_mciSendCommand.cpp" />
     <ClCompile Include="hooks\hook_miscellaneous.cpp" />
+    <ClCompile Include="hooks\hook_querydialog.cpp" />
     <ClCompile Include="hooks\hook_sndPlaySound.cpp" />
     <ClCompile Include="hooks\hook_mmtimers.cpp" />
     <ClCompile Include="hooks\sc2k_1996.cpp" />
@@ -79,6 +80,7 @@
     <ClCompile Include="settings.cpp" />
     <ClCompile Include="status_dialog.cpp" />
     <ClCompile Include="update_notifier.cpp" />
+    <ClCompile Include="utility.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="hooks\exports.def" />

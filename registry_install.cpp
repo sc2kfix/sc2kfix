@@ -14,9 +14,6 @@
 char szSC2KPath[MAX_PATH];
 char szSC2KGoodiesPath[MAX_PATH];
 
-static HWND hwndDesktop;
-static RECT rcTemp, rcDlg, rcDesktop;
-
 BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 	case WM_INITDIALOG:
@@ -30,14 +27,7 @@ BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 		SetDlgItemText(hwndDlg, IDC_EDIT_COMPANY, "Q37 Space Modulator Mfg.");
 
 		// Center the dialog box
-		hwndDesktop = GetDesktopWindow();
-		GetWindowRect(hwndDesktop, &rcDesktop);
-		GetWindowRect(hwndDesktop, &rcTemp);
-		GetWindowRect(hwndDlg, &rcDlg);
-		OffsetRect(&rcDlg, -rcDlg.left, -rcDlg.top);
-		OffsetRect(&rcTemp, -rcDesktop.left, -rcDesktop.top);
-		OffsetRect(&rcTemp, -rcDlg.right, -rcDlg.bottom);
-		SetWindowPos(hwndDlg, HWND_TOP, rcDesktop.left + (rcTemp.right / 2), rcDesktop.top + (rcTemp.bottom / 2), 0, 0, SWP_NOSIZE);
+		CenterDialogBox(hwndDlg);
 		return TRUE;
 
 	case WM_COMMAND:

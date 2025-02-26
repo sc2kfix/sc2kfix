@@ -293,3 +293,45 @@ const char* szTileNames[256] = {
 
 	"Braun-Llama Dome"
 };
+
+const char* szUndergroundNames[36] = {
+	"None",
+
+	"Subway (LR)",
+	"Subway (TB)",
+	"Subway (HTB)",
+	"Subway (LHR)",
+	"Subway (THB)",
+	"Subway (HLR)",
+	"Subway (BR)",
+	"Subway (BL)",
+	"Subway (TL)",
+	"Subway (TR)",
+	"Subway (RTB)",
+	"Subway (LBR)",
+	"Subway (TLB)",
+	"Subway (LTR)",
+	"Subway (LTBR)",
+
+	"Pipes (LR)",
+	"Pipes (TB)",
+	"Pipes (HTB)",
+	"Pipes (LHR)",
+	"Pipes (THB)",
+	"Pipes (HLR)",
+	"Pipes (BR)",
+	"Pipes (BL)",
+	"Pipes (TL)",
+	"Pipes (TR)",
+	"Pipes (RTB)",
+	"Pipes (LBR)",
+	"Pipes (TLB)",
+	"Pipes (LTR)",
+	"Pipes (LTBR)",
+
+	"Crossover (PIPESTB_SUBWAYLR)",
+	"Crossover (PIPESLR_SUBWAYTB)",
+	"Unknown",
+	"Missile Silo",
+	"Subway Entrance"
+};

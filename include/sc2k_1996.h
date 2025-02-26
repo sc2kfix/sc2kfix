@@ -393,6 +393,7 @@ enum {
 };
 
 extern const char* szTileNames[256];
+extern const char* szUndergroundNames[36];
 
 #define TILE_IS_MILITARY(iTileID) \
 	((iTileID == 0xDD) || (iTileID == 0xDE) || (iTileID == 0xEF) || (iTileID == 0xF2) || (iTileID == 0xEA) || (iTileID == 0xE3) \
@@ -644,9 +645,9 @@ typedef struct {
 
 typedef struct {
 	struct {
-		WORD iTunnelLevels : 6; // how many levels below altitude should we display a grey block for a tunnel?
-		WORD iWaterLevel : 5;   // not always accurate (rely on XTER value instead)
 		WORD iLandAltitude : 5; // level / altitude
+		WORD iWaterLevel : 5;   // not always accurate (rely on XTER value instead)
+		WORD iTunnelLevels : 6; // how many levels below altitude should we display a grey block for a tunnel?
 	} w[128];
 } map_ALTM_t;
 
@@ -674,6 +675,14 @@ typedef struct {
 } map_XTXT_t;
 
 typedef struct {
+	BYTE bBlock[64];
+} map_mini64_t;
+
+typedef struct {
+	BYTE bBlock[32];
+} map_mini32_t;
+
+typedef struct {
 	struct {
 		BYTE iSaltWater : 1;
 		BYTE iRotated : 1;
@@ -687,22 +696,23 @@ typedef struct {
 } map_XBIT_t;
 
 typedef struct {
-	BYTE iId : 1; // use xthg types enum to determine
-	BYTE iDirection: 1; // use xthg directions enum; for types airplane, helicopter, cargo ship, monster, etc; not sure how this is used for "deployment" types like fire, police, etc
-	BYTE iDunno1 : 1; // identifier? sequence number? type?
-	BYTE iPositionX : 1;
-	BYTE iPositionY : 1;
-	BYTE iPositionZ : 1;
-	BYTE iDunno2 : 1;
-	BYTE iDunno3 : 1;
-	BYTE iDunno4 : 1;
-	BYTE iDunno5 : 1;
-	BYTE iDunno6 : 1;
-	BYTE iDunno7 : 1;
+	BYTE iId; // use xthg types enum to determine
+	BYTE iDirection; // use xthg directions enum; for types airplane, helicopter, cargo ship, monster, etc; not sure how this is used for "deployment" types like fire, police, etc
+	BYTE iDunno1; // identifier? sequence number? type?
+	BYTE iPositionX;
+	BYTE iPositionY;
+	BYTE iPositionZ;
+	BYTE iDunno2;
+	BYTE iDunno3;
+	BYTE iDunno4;
+	BYTE iDunno5;
+	BYTE iDunno6;
+	BYTE iDunno7;
 } map_XTHG_t;
 
 typedef struct {
-	char szLabel[25];
+	char szLabel[24];
+	BYTE bPadding;
 } map_XLAB_t;
 
 
@@ -714,6 +724,7 @@ GAMEOFF(DWORD,	dwCityLandValue,			0x4CA440)
 GAMEOFF(DWORD,	dwCityFunds,				0x4CA444)
 GAMEOFF_ARR(WORD, dwTileCount,				0x4CA4C8)
 GAMEOFF(WORD,	wCityStartYear,				0x4CA5F4)
+GAMEOFF(short,	wWaterLevel,				0x4CA818)
 GAMEOFF(DWORD,	dwCityPopulation,			0x4CAA74)
 GAMEOFF(DWORD,	dwInScenario,				0x4CAD44)
 GAMEOFF_ARR(neighbor_city_t, stNeighborCities, 0x4CAD58)	// stNeighborCities[4]
@@ -749,6 +760,7 @@ extern char* pszCityName;
 
 // Pointers to map arrays
 
+// 128x128
 GAMEOFF_ARR(map_XTER_t*,	dwMapXTER,	0x4C9F58)
 GAMEOFF_ARR(map_XZON_t*,	dwMapXZON,	0x4CA1F0)
 GAMEOFF_ARR(map_XTXT_t*,	dwMapXTXT,	0x4CA600)
@@ -756,4 +768,17 @@ GAMEOFF_ARR(map_XBIT_t*,	dwMapXBIT,	0x4CAB10)
 GAMEOFF_ARR(map_ALTM_t*,	dwMapALTM,	0x4CAE10)
 GAMEOFF_ARR(map_XUND_t*,	dwMapXUND,	0x4CB1D0)
 GAMEOFF_ARR(map_XBLD_t*,	dwMapXBLD,	0x4CC4F0)
-GAMEOFF_ARR(char*,			bMapXLAB,	0x4CA198)
+
+// 64x64
+GAMEOFF_ARR(map_mini64_t*,	dwMapXCRM,	0x4CA4D8)
+GAMEOFF_ARR(map_mini64_t*,	dwMapXPLT,	0x4CA828)
+GAMEOFF_ARR(map_mini64_t*,	dwMapXTRF,	0x4CA940)
+GAMEOFF_ARR(map_mini64_t*,	dwMapXVAL,	0x4CB0A8)
+
+// totally different
+GAMEOFF_ARR(map_XLAB_t*,	dwMapXLAB,	0x4CA198)
+
+
+static inline const char* GetXLABEntry(int iLabelID) {
+	return (*dwMapXLAB + iLabelID)->szLabel;
+}

@@ -322,7 +322,11 @@ BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
 }
 
 static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments) {
-	UpdaterCheckForUpdates();
+	printf("dwMapXLAB:  0x%08X\n", (DWORD)dwMapXLAB);
+	printf("*dwMapXLAB: 0x%08X\n", (DWORD)*dwMapXLAB);
+	for (int i = 0; i < 256; i++) {
+		printf("XLAB %i (0x%08X): \"%s\"\n", i, (DWORD)(*dwMapXLAB + i), (*dwMapXLAB + i)->szLabel);
+	}
 
 	return TRUE;
 }
