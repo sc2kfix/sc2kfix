@@ -322,11 +322,11 @@ BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
 }
 
 static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments) {
-	printf("dwMapXLAB:  0x%08X\n", (DWORD)dwMapXLAB);
-	printf("*dwMapXLAB: 0x%08X\n", (DWORD)*dwMapXLAB);
-	for (int i = 0; i < 256; i++) {
-		printf("XLAB %i (0x%08X): \"%s\"\n", i, (DWORD)(*dwMapXLAB + i), (*dwMapXLAB + i)->szLabel);
-	}
+	printf("pArrSpriteHeaders  = 0x%08X\n", (DWORD)pArrSpriteHeaders);
+	printf("*pArrSpriteHeaders = 0x%08X\n", (DWORD)*pArrSpriteHeaders);
+	printf("Sprite 0 = 0x%08X (%ix%i)\n", GetSpriteHeader(0)->dwAddress, GetSpriteHeader(0)->wWidth, GetSpriteHeader(0)->wHeight);
+	printf("Sprite 1 = 0x%08X (%ix%i)\n", GetSpriteHeader(1)->dwAddress, GetSpriteHeader(1)->wWidth, GetSpriteHeader(1)->wHeight);
+	printf("Sprite 2 = 0x%08X (%ix%i)\n", GetSpriteHeader(2)->dwAddress, GetSpriteHeader(2)->wWidth, GetSpriteHeader(2)->wHeight);
 
 	return TRUE;
 }

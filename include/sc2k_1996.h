@@ -644,6 +644,12 @@ typedef struct {
 } microsim_t;
 
 typedef struct {
+	DWORD dwAddress;
+	WORD wHeight;
+	WORD wWidth;
+} sprite_header_t;
+
+typedef struct {
 	struct {
 		WORD iLandAltitude : 5; // level / altitude
 		WORD iWaterLevel : 5;   // not always accurate (rely on XTER value instead)
@@ -732,7 +738,8 @@ GAMEOFF(DWORD,	dwCityDays,					0x4CAE04)
 GAMEOFF(WORD,	wCityProgression,			0x4CB010)
 GAMEOFF(WORD,	wCityCurrentMonth,			0x4CB01C)
 GAMEOFF(WORD,	wCityElapsedYears,			0x4CB020)
-GAMEOFF(microsim_t*, pMicrosimArr,		0x4CB3EC)
+GAMEOFF_ARR(sprite_header_t*, pArrSpriteHeaders, 0x4CB1B8)
+GAMEOFF(microsim_t*, pMicrosimArr,			0x4CB3EC)
 GAMEOFF(DWORD,	dwNewspaperSubscription,	0x4CB3D0)
 GAMEOFF(WORD,	wCityCurrentSeason,			0x4CB3E8)
 GAMEOFF(WORD,	wCityDifficulty,			0x4CB404)
@@ -778,7 +785,10 @@ GAMEOFF_ARR(map_mini64_t*,	dwMapXVAL,	0x4CB0A8)
 // totally different
 GAMEOFF_ARR(map_XLAB_t*,	dwMapXLAB,	0x4CA198)
 
-
 static inline const char* GetXLABEntry(int iLabelID) {
 	return (*dwMapXLAB + iLabelID)->szLabel;
+}
+
+static inline sprite_header_t* GetSpriteHeader(int iSpriteID) {
+	return (*pArrSpriteHeaders + iSpriteID);
 }
