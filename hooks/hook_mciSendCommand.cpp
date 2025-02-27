@@ -61,6 +61,9 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 
     while (GetMessage(&msg, NULL, 0, 0)) {
         if (msg.message == WM_MUSIC_STOP) {
+            if (!mciDevice)
+                goto next;
+
             dwMCIError = mciSendCommand(mciDevice, MCI_CLOSE, MCI_WAIT, NULL);
 
             if (mci_debug & MCI_DEBUG_THREAD)
@@ -69,12 +72,15 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
             if (dwMCIError) {
                 char szErrorBuf[MAXERRORLENGTH];
                 mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
-                ConsoleLog(LOG_ERROR, "MUS: MCI_CLOSE failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
+                if (dwMCIError == 0x101)
+                    ConsoleLog(LOG_DEBUG, "MUS: MCI_CLOSE failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
+                else
+                    ConsoleLog(LOG_ERROR, "MUS: MCI_CLOSE failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
                 goto next;
             }
             mciDevice = NULL;
         } else if (msg.message == WM_MUSIC_PLAY) {
-            if (bOptionsMusicEnabled && mciDevice == NULL) {
+            if (bOptionsMusicEnabled && !mciDevice) {
                 if (msg.wParam >= 10000 && msg.wParam <= 10018) {
                     std::string strSongPath = (char*)0x4CDB88;      // szSoundsPath
                     strSongPath += std::to_string(msg.wParam);
