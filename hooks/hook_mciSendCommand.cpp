@@ -19,7 +19,7 @@
 #define MCI_DEBUG_SONGS 4
 #define MCI_DEBUG_THREAD 8
 
-#define MCI_DEBUG 0
+#define MCI_DEBUG DEBUG_FLAGS_NONE
 
 #ifdef DEBUGALL
 #undef MCI_DEBUG
@@ -43,6 +43,15 @@ void MusicShufflePlaylist(int iLastSongPlayed) {
         if (mci_debug & MCI_DEBUG_SONGS)
             ConsoleLog(LOG_DEBUG, "MCI: Shuffled song list (next song will be %i).\n", vectorRandomSongIDs[iCurrentSong]);
     }
+}
+
+DWORD WINAPI MusicMCINotifyCallback(WPARAM wFlags, LPARAM lDevID) {
+    if (wFlags & MCI_NOTIFY_SUCCESSFUL) {
+        PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
+        if (mci_debug & MCI_DEBUG_THREAD)
+            ConsoleLog(LOG_DEBUG, "MUS: MusicMCINotifyCallback posted WM_MUSIC_STOP.\n");
+    }
+    return 0;
 }
 
 DWORD WINAPI MusicThread(LPVOID lpParameter) {
@@ -97,6 +106,10 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
                         goto next;
                     }
                 }
+            } else if (bOptionsMusicEnabled) {
+                if (mci_debug & MCI_DEBUG_THREAD)
+                    ConsoleLog(LOG_DEBUG, "MUS: WM_MUSIC_PLAY message received but MCI is still active; discarding message.\n");
+                goto next;
             }
         } else if (msg.message == WM_APP+3) {
             ConsoleLog(LOG_DEBUG, "MUS: Hello from the music thread!\n");
@@ -118,7 +131,19 @@ extern "C" int __stdcall Hook_MusicPlay(int iSongID) {
         mov [uThis], ecx
     }
 
-    // Post a message to the music thread
+    // Certain songs should interrupt others
+    switch (iSongID) {
+    case 10002:
+    case 10005:
+    case 10010:
+    case 10012:
+        PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
+        if (mci_debug & MCI_DEBUG_THREAD)
+            ConsoleLog(LOG_DEBUG, "MUS: Hook_MusicPlay posted WM_MUSIC_STOP.\n");
+        break;
+    }
+
+    // Post the play message to the music thread
     PostThreadMessage(dwMusicThreadID, WM_MUSIC_PLAY, iSongID, NULL);
     if (mci_debug & MCI_DEBUG_THREAD)
         ConsoleLog(LOG_DEBUG, "MUS: Hook_MusicPlay posted WM_MUSIC_PLAY for iSongID = %u.\n", iSongID);
@@ -136,10 +161,10 @@ extern "C" int __stdcall Hook_MusicStop(void) {
         mov [uThis], ecx
     }
 
-    // Post a message to the music thread
+    // Post the stop message to the music thread
     PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
     if (mci_debug & MCI_DEBUG_THREAD)
-        ConsoleLog(LOG_DEBUG, "MUS: Hook_MusicPlay posted WM_MUSIC_STOP.\n");
+        ConsoleLog(LOG_DEBUG, "MUS: Hook_MusicStop posted WM_MUSIC_STOP.\n");
 
     // Restore "this" and leave
     __asm {

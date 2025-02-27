@@ -26,7 +26,7 @@
 #define MISCHOOK_DEBUG_SAVES 8
 #define MISCHOOK_DEBUG_WINDOW 16
 
-#define MISCHOOK_DEBUG 0;
+#define MISCHOOK_DEBUG DEBUG_FLAGS_NONE
 
 #ifdef DEBUGALL
 #undef MISCHOOK_DEBUG
@@ -417,6 +417,8 @@ void InstallMiscHooks(void) {
 		NEWJMP((LPVOID)0x402414, Hook_MusicPlay);
 		VirtualProtect((LPVOID)0x402BE4, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 		NEWJMP((LPVOID)0x402BE4, Hook_MusicStop);
+		VirtualProtect((LPVOID)0x4D2BFC, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+		*(DWORD*)0x4D2BFC = (DWORD)MusicMCINotifyCallback;
 	}
 
 	// Load weather icons

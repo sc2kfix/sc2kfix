@@ -120,6 +120,7 @@ void MusicShufflePlaylist(int iLastSongPlayed);
 BOOL UpdaterCheckForUpdates(void);
 DWORD WINAPI UpdaterThread(LPVOID lpParameter);
 DWORD WINAPI MusicThread(LPVOID lpParameter);
+DWORD WINAPI MusicMCINotifyCallback(WPARAM wFlags, LPARAM lDevID);
 
 BOOL WINAPI ConsoleCtrlHandler(DWORD fdwCtrlType);
 DWORD WINAPI ConsoleThread(LPVOID lpParameter);
