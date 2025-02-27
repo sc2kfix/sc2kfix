@@ -111,10 +111,6 @@ extern "C" int __stdcall Hook_40103C(int iShow) {
 }
 
 BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
-	static BOOL bMouseDown = FALSE;
-	static POINT ptPreviousCursorPos;
-	RECT rectWindow;
-
 	switch (message) {
 	case WM_INITDIALOG:
 		SendMessage(GetDlgItem(hwndDlg, IDC_STATIC_SELECTEDTOOL), WM_SETFONT, (WPARAM)hFontMSSansSerifBold10, TRUE);
@@ -148,25 +144,12 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 		}
 		break;
 
-	case WM_MOUSEMOVE:
-		if (bMouseDown) {
-			POINT ptCurrentCursorPos;
-			GetCursorPos(&ptCurrentCursorPos);
-			GetWindowRect(hwndDlg, &rectWindow);
-			MoveWindow(hwndDlg, ptCurrentCursorPos.x - ptPreviousCursorPos.x, ptCurrentCursorPos.y - ptPreviousCursorPos.y, rectWindow.right - rectWindow.left, rectWindow.bottom - rectWindow.top, FALSE);
-		}
-		return FALSE;
 	case WM_LBUTTONDOWN:
-		bMouseDown = TRUE;
-		SetCapture(hwndDlg);
-		GetCursorPos(&ptPreviousCursorPos);
-		GetWindowRect(hwndDlg, &rectWindow);
-		ptPreviousCursorPos.x -= rectWindow.left;
-		ptPreviousCursorPos.y -= rectWindow.top;
-		return FALSE;
-	case WM_LBUTTONUP:
-		bMouseDown = FALSE;
-		ReleaseCapture();
+		// With the following you'll be able to click the client area
+		// of the dialogue and drag it around.
+		// The only detail is that the pointer reverts to the one set
+		// by Windows not the one that's currently active in the game.
+		SendMessage(hwndDlg, WM_SYSCOMMAND, (SC_MOVE | HTCAPTION), 0);
 		return FALSE;
 	}
 	return FALSE;

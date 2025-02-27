@@ -32,6 +32,7 @@
 #define IDC_STATIC_TILECOORDS           21025
 #define IDC_STATIC_TILEDATA             21027
 #define IDC_STATIC_TILERENDER           21028
+#define IDC_STATIC_SIMSTAT_BGD          21029
 #define IDR_WAVE_500                    23001
 #define IDR_WAVE_514                    23002
 #define IDR_WAVE_529                    23003
@@ -56,7 +57,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        23035
 #define _APS_NEXT_COMMAND_VALUE         40002
-#define _APS_NEXT_CONTROL_VALUE         21029
+#define _APS_NEXT_CONTROL_VALUE         21030
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
