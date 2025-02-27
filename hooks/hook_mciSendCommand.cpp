@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <intrin.h>
 #include <vector>
+#include <string>
 
 #include <sc2kfix.h>
 
@@ -16,6 +17,7 @@
 #define MCI_DEBUG_CALLS 1
 #define MCI_DEBUG_DUMPS 2
 #define MCI_DEBUG_SONGS 4
+#define MCI_DEBUG_THREAD 8
 
 #define MCI_DEBUG 0
 
@@ -28,6 +30,9 @@ UINT mci_debug = MCI_DEBUG;
 
 std::vector<int> vectorRandomSongIDs = { 10001, 10004, 10008, 10012, 10018, 10003, 10007, 10011, 10013 };
 int iCurrentSong = 0;
+DWORD dwMusicThreadID;
+MCIDEVICEID mciDevice = NULL;
+BOOL bUseMultithreadedMusic = TRUE;
 
 void MusicShufflePlaylist(int iLastSongPlayed) {
     if (bSettingsShuffleMusic) {
@@ -37,6 +42,109 @@ void MusicShufflePlaylist(int iLastSongPlayed) {
 
         if (mci_debug & MCI_DEBUG_SONGS)
             ConsoleLog(LOG_DEBUG, "MCI: Shuffled song list (next song will be %i).\n", vectorRandomSongIDs[iCurrentSong]);
+    }
+}
+
+DWORD WINAPI MusicThread(LPVOID lpParameter) {
+    MSG msg;
+    MCIERROR dwMCIError = NULL;
+    ConsoleLog(LOG_INFO, "MUS: Music thread started.\n");
+
+    while (GetMessage(&msg, NULL, 0, 0)) {
+        if (msg.message == WM_MUSIC_STOP) {
+            dwMCIError = mciSendCommand(mciDevice, MCI_CLOSE, MCI_WAIT, NULL);
+
+            if (mci_debug & MCI_DEBUG_THREAD)
+                ConsoleLog(LOG_DEBUG, "MUS: Sent MCI_CLOSE to mciDevice 0x%08X.\n", mciDevice);
+
+            if (dwMCIError) {
+                char szErrorBuf[MAXERRORLENGTH];
+                mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
+                ConsoleLog(LOG_ERROR, "MUS: MCI_CLOSE failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
+                goto next;
+            }
+            mciDevice = NULL;
+        } else if (msg.message == WM_MUSIC_PLAY) {
+            if (bOptionsMusicEnabled && mciDevice == NULL) {
+                if (msg.wParam >= 10000 && msg.wParam <= 10018) {
+                    std::string strSongPath = (char*)0x4CDB88;      // szSoundsPath
+                    strSongPath += std::to_string(msg.wParam);
+                    strSongPath += ".mid";
+
+                    MCI_OPEN_PARMS mciOpenParms = { NULL, NULL, "sequencer", strSongPath.c_str(), NULL };
+                    dwMCIError = mciSendCommand(NULL, MCI_OPEN, MCI_OPEN_TYPE | MCI_OPEN_ELEMENT, (DWORD_PTR)&mciOpenParms);
+                    if (dwMCIError) {
+                        char szErrorBuf[MAXERRORLENGTH];
+                        mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
+                        ConsoleLog(LOG_ERROR, "MUS: MCI_OPEN failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
+                        goto next;
+                    }
+
+                    if (mci_debug & MCI_DEBUG_THREAD)
+                        ConsoleLog(LOG_DEBUG, "MUS: Received mciDevice 0x%08X from MCI_OPEN.\n", mciDevice);
+
+                    mciDevice = mciOpenParms.wDeviceID;
+                    DWORD* CWndMainWindow = (DWORD*)*(DWORD*)0x4C702C;
+                    HWND hWndMainWindow = (HWND)CWndMainWindow[7];
+                    MCI_PLAY_PARMS mciPlayParms = { (DWORD_PTR)hWndMainWindow, NULL, NULL };
+                    dwMCIError = mciSendCommand(mciDevice, MCI_PLAY, MCI_NOTIFY, (DWORD_PTR)&mciPlayParms);
+                    // SC2K sometimes tries to run over its own sequencer device. We ignore the
+                    // error that causes (0x151) just like the game itself does.
+                    if (dwMCIError && dwMCIError != 0x151) {
+                        char szErrorBuf[MAXERRORLENGTH];
+                        mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
+                        ConsoleLog(LOG_ERROR, "MUS: MCI_PLAY failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
+                        goto next;
+                    }
+                }
+            }
+        } else if (msg.message == WM_APP+3) {
+            ConsoleLog(LOG_DEBUG, "MUS: Hello from the music thread!\n");
+        } else if (msg.message == WM_QUIT)
+            break;
+        
+next:
+        DispatchMessage(&msg);
+    }
+
+    if (mciDevice)
+        mciSendCommand(mciDevice, MCI_CLOSE, MCI_WAIT, NULL);
+    ConsoleLog(LOG_INFO, "MUS: Shutting down music thread.\n");
+}
+
+extern "C" int __stdcall Hook_MusicPlay(int iSongID) {
+    UINT uThis;
+    __asm {
+        mov [uThis], ecx
+    }
+
+    // Post a message to the music thread
+    PostThreadMessage(dwMusicThreadID, WM_MUSIC_PLAY, iSongID, NULL);
+    if (mci_debug & MCI_DEBUG_THREAD)
+        ConsoleLog(LOG_DEBUG, "MUS: Hook_MusicPlay posted WM_MUSIC_PLAY for iSongID = %u.\n", iSongID);
+
+    // Restore "this" and leave
+    __asm {
+        mov ecx, [uThis]
+        mov eax, 1
+    }
+}
+
+extern "C" int __stdcall Hook_MusicStop(void) {
+    UINT uThis;
+    __asm {
+        mov [uThis], ecx
+    }
+
+    // Post a message to the music thread
+    PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
+    if (mci_debug & MCI_DEBUG_THREAD)
+        ConsoleLog(LOG_DEBUG, "MUS: Hook_MusicPlay posted WM_MUSIC_STOP.\n");
+
+    // Restore "this" and leave
+    __asm {
+        mov ecx, [uThis]
+        xor eax, eax
     }
 }
 

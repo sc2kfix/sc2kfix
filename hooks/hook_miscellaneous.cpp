@@ -411,6 +411,14 @@ void InstallMiscHooks(void) {
 	// Shuffle music if the shuffle setting is enabled
 	MusicShufflePlaylist(0);
 
+	// Replace music functions with ones to post messages to the music thread
+	if (bUseMultithreadedMusic) {
+		VirtualProtect((LPVOID)0x402414, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+		NEWJMP((LPVOID)0x402414, Hook_MusicPlay);
+		VirtualProtect((LPVOID)0x402BE4, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+		NEWJMP((LPVOID)0x402BE4, Hook_MusicStop);
+	}
+
 	// Load weather icons
 	for (int i = 0; i < 13; i++) {
 		HANDLE hBitmap = LoadImage(hSC2KFixModule, MAKEINTRESOURCE(IDB_WEATHER0 + i), IMAGE_BITMAP, 40, 40, NULL);

@@ -32,7 +32,11 @@
 #define NEWJZ(from, to) *(BYTE*)(from) = 0x0F; *(BYTE*)((DWORD)(from)+1) = 0x84; RELATIVE_OFFSET((DWORD)(from)+2, to)
 #define NEWJNZ(from, to) *(BYTE*)(from) = 0x0F; *(BYTE*)((DWORD)(from)+1) = 0x85; RELATIVE_OFFSET((DWORD)(from)+2, to)
 
-#define DEBUG_FLAGS_EVERYTHING 0xFFFFFFFF
+#define DEBUG_FLAGS_NONE		0
+#define DEBUG_FLAGS_EVERYTHING	0xFFFFFFFF
+
+#define WM_MUSIC_STOP WM_APP+1
+#define WM_MUSIC_PLAY WM_APP+2
 
 typedef struct {
 	UINT nMessage;
@@ -115,6 +119,7 @@ void LoadReplacementSounds(void);
 void MusicShufflePlaylist(int iLastSongPlayed);
 BOOL UpdaterCheckForUpdates(void);
 DWORD WINAPI UpdaterThread(LPVOID lpParameter);
+DWORD WINAPI MusicThread(LPVOID lpParameter);
 
 BOOL WINAPI ConsoleCtrlHandler(DWORD fdwCtrlType);
 DWORD WINAPI ConsoleThread(LPVOID lpParameter);
@@ -164,12 +169,17 @@ extern HANDLE hWeatherBitmaps[13];
 extern char szLatestRelease[24];
 extern BOOL bUpdateAvailable;
 
+extern BOOL bUseMultithreadedMusic;
+extern DWORD dwMusicThreadID;
+
 // Hooks to inject in dllmain.cpp
 
 void InstallMiscHooks(void);
 void UpdateMiscHooks(void);
 void InstallQueryHooks(void);
 extern "C" void __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer);
+extern "C" int __stdcall Hook_MusicPlay(int iSongID);
+extern "C" int __stdcall Hook_MusicStop(void);
 extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void);
 extern "C" int __stdcall Hook_402793(int iStatic, char* szText, int iMaybeAlways1, COLORREF crColor);
 extern "C" int __stdcall Hook_4021A8(int iShow);

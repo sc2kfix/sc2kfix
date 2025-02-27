@@ -206,6 +206,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         if (bSettingsCheckForUpdates)
             CreateThread(NULL, 0, UpdaterThread, 0, 0, NULL);
 
+        // Create music thread
+        if (bUseMultithreadedMusic)
+            CreateThread(NULL, 0, MusicThread, 0, 0, &dwMusicThreadID);
+
         // Generate fonts
         hDC = GetDC(0);
         hFontMSSansSerifRegular8 = CreateFont(-MulDiv(8, GetDeviceCaps(hDC, LOGPIXELSY), 72), 0, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "MS Sans Serif");
@@ -296,6 +300,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
     // Clean up after ourselves and get ready to exit
     case DLL_PROCESS_DETACH:
+        // Shut down the music thread
+        PostThreadMessage(dwMusicThreadID, WM_QUIT, NULL, NULL);
+
         // Send a closing message and close the log file
         ConsoleLog(LOG_INFO, "Closing down at %lld. Goodnight!\n", time(NULL));
         fflush(fdLog);

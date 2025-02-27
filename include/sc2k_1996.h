@@ -724,6 +724,7 @@ typedef struct {
 
 // Pointers
 
+GAMEOFF(BOOL,	bOptionsMusicEnabled,		0x4C71F0)
 GAMEOFF(WORD,	wSimulationSpeed,			0x4C7318)
 GAMEOFF(WORD,	wDisasterType,				0x4CA420)
 GAMEOFF(DWORD,	dwCityLandValue,			0x4CA440)
@@ -744,6 +745,7 @@ GAMEOFF(DWORD,	dwNewspaperSubscription,	0x4CB3D0)
 GAMEOFF(WORD,	wCityCurrentSeason,			0x4CB3E8)
 GAMEOFF(WORD,	wCityDifficulty,			0x4CB404)
 GAMEOFF(BYTE,	bWeatherTrend,				0x4CB40C)
+GAMEOFF_ARR(WORD,	wCityInventionYears,	0x4CB430)
 GAMEOFF(DWORD,	dwNewspaperExtra,			0x4CC4BC)
 GAMEOFF(BOOL,	dwNoDisasters,				0x4CC4D4)
 GAMEOFF(BYTE,	bMilitaryBaseType,			0x4CC4E4)
