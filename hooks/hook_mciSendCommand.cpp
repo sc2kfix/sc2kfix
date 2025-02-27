@@ -129,6 +129,8 @@ next:
     if (mciDevice)
         mciSendCommand(mciDevice, MCI_CLOSE, MCI_WAIT, NULL);
     ConsoleLog(LOG_INFO, "MUS: Shutting down music thread.\n");
+
+    return EXIT_SUCCESS;
 }
 
 extern "C" int __stdcall Hook_MusicPlay(int iSongID) {
