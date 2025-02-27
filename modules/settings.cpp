@@ -9,7 +9,7 @@
 #include <stdlib.h>
 
 #include <sc2kfix.h>
-#include "resource.h"
+#include "../resource.h"
 
 static DWORD dwDummy;
 

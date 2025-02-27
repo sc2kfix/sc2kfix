@@ -16,9 +16,6 @@
     <Filter Include="Source Files\Hooks">
       <UniqueIdentifier>{5095a6dd-9e70-4280-a650-3d17364c3b3d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\DLLMain">
-      <UniqueIdentifier>{c8504672-9bae-4b70-85e6-898f6fa37a00}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Documentation">
       <UniqueIdentifier>{8abc9d55-b301-4faa-8e10-878c7a6f314e}</UniqueIdentifier>
     </Filter>
@@ -27,6 +24,9 @@
     </Filter>
     <Filter Include="Resource Files\BITMAP">
       <UniqueIdentifier>{cf0f4b75-116a-4952-8c1b-97e2ba3bcaa4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Modules">
+      <UniqueIdentifier>{c8504672-9bae-4b70-85e6-898f6fa37a00}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -53,38 +53,38 @@
     <ClCompile Include="hooks\hook_sndPlaySound.cpp">
       <Filter>Source Files\Hooks</Filter>
     </ClCompile>
-    <ClCompile Include="console.cpp">
-      <Filter>Source Files\DLLMain</Filter>
+    <ClCompile Include="modules\console.cpp">
+      <Filter>Source Files\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="dllmain.cpp">
-      <Filter>Source Files\DLLMain</Filter>
+    <ClCompile Include="modules\registry_install.cpp">
+      <Filter>Source Files\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="registry_install.cpp">
-      <Filter>Source Files\DLLMain</Filter>
-    </ClCompile>
-    <ClCompile Include="scurkfix.cpp">
-      <Filter>Source Files\DLLMain</Filter>
+    <ClCompile Include="modules\scurkfix.cpp">
+      <Filter>Source Files\Modules</Filter>
     </ClCompile>
     <ClCompile Include="hooks\hook_mmtimers.cpp">
       <Filter>Source Files\Hooks</Filter>
     </ClCompile>
-    <ClCompile Include="hooks\sc2k_1996.cpp">
-      <Filter>Source Files\Hooks</Filter>
+    <ClCompile Include="modules\settings.cpp">
+      <Filter>Source Files\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="settings.cpp">
-      <Filter>Source Files\DLLMain</Filter>
+    <ClCompile Include="modules\status_dialog.cpp">
+      <Filter>Source Files\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="status_dialog.cpp">
-      <Filter>Source Files\DLLMain</Filter>
-    </ClCompile>
-    <ClCompile Include="update_notifier.cpp">
-      <Filter>Source Files\DLLMain</Filter>
+    <ClCompile Include="modules\update_notifier.cpp">
+      <Filter>Source Files\Modules</Filter>
     </ClCompile>
     <ClCompile Include="hooks\hook_querydialog.cpp">
       <Filter>Source Files\Hooks</Filter>
     </ClCompile>
     <ClCompile Include="utility.cpp">
-      <Filter>Source Files\DLLMain</Filter>
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\sc2k_1996.cpp">
+      <Filter>Source Files\Modules</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

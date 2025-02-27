@@ -67,19 +67,19 @@
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="console.cpp" />
+    <ClCompile Include="modules\console.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="hooks\hook_mciSendCommand.cpp" />
     <ClCompile Include="hooks\hook_miscellaneous.cpp" />
     <ClCompile Include="hooks\hook_querydialog.cpp" />
     <ClCompile Include="hooks\hook_sndPlaySound.cpp" />
     <ClCompile Include="hooks\hook_mmtimers.cpp" />
-    <ClCompile Include="hooks\sc2k_1996.cpp" />
-    <ClCompile Include="registry_install.cpp" />
-    <ClCompile Include="scurkfix.cpp" />
-    <ClCompile Include="settings.cpp" />
-    <ClCompile Include="status_dialog.cpp" />
-    <ClCompile Include="update_notifier.cpp" />
+    <ClCompile Include="modules\sc2k_1996.cpp" />
+    <ClCompile Include="modules\registry_install.cpp" />
+    <ClCompile Include="modules\scurkfix.cpp" />
+    <ClCompile Include="modules\settings.cpp" />
+    <ClCompile Include="modules\status_dialog.cpp" />
+    <ClCompile Include="modules\update_notifier.cpp" />
     <ClCompile Include="utility.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -9,7 +9,7 @@
 #include <mmsystem.h>
 
 #include <sc2kfix.h>
-#include "resource.h"
+#include "../resource.h"
 
 #ifdef CONSOLE_ENABLED
 BOOL bConsoleEnabled = TRUE;

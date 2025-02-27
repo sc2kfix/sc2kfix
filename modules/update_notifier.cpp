@@ -9,7 +9,7 @@
 #include <stdio.h>
 
 #include <sc2kfix.h>
-#include "resource.h"
+#include "../resource.h"
 
 #define UPDATENOTIFIER_DEBUG 0
 

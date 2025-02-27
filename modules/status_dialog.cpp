@@ -13,7 +13,7 @@
 #include <regex>
 
 #include <sc2kfix.h>
-#include "resource.h"
+#include "../resource.h"
 
 HWND hStatusDialog = NULL;
 HANDLE hWeatherBitmaps[13];
