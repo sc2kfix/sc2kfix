@@ -43,6 +43,8 @@ WORD wMilitaryBaseX = 0, wMilitaryBaseY = 0;
 AFX_MSGMAP_ENTRY afxMessageMapMainMenu[9];
 DLGPROC lpNewCityAfxProc = NULL;
 char szTempMayorName[24] = { 0 };
+char szCurrentMonthDay[24] = { 0 };
+const char* szMonthNames[12] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
 
 // Override some strings that have egregiously bad grammar/capitalization.
 // Maxis fail English? That's unpossible!
@@ -309,6 +311,38 @@ extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
 		ConsoleLog(LOG_DEBUG, "Loaded %d $1500 neighbor connections.\n", *wCityNeighborConnections1500);
 }
 
+// Window title hook, part 1
+extern "C" char* __stdcall Hook_40D67D(void) {
+	sprintf_s(szCurrentMonthDay, 24, "%s %d,", szMonthNames[dwCityDays / 25 % 12], dwCityDays % 25 + 1);
+	return szCurrentMonthDay;
+}
+
+extern "C" void _declspec(naked) Hook_4315D2(void) {
+	__asm {
+		push edx
+		mov edx, 0x4E66F8
+		mov ecx, [edx]
+		mov edx, 0x4017B2
+		call edx
+
+	}
+
+	ConsoleLog(LOG_DEBUG, "ohayo\n");
+
+	__asm {
+		pop edx
+		cmp edx, 24
+		ja def
+
+		push 0x4135DB
+		retn
+
+	def:
+		push 0x413ABF
+		retn
+	}
+}
+
 // Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
 // This should probably have a better name. And maybe be broken out into smaller functions.
 void InstallMiscHooks(void) {
@@ -437,6 +471,14 @@ void InstallMiscHooks(void) {
 	NEWJMP((LPVOID)0x4021A8, Hook_4021A8);
 	VirtualProtect((LPVOID)0x40103C, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x40103C, Hook_40103C);
+
+	// Window title calendar
+	VirtualProtect((LPVOID)0x40D67D, 10, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWCALL((LPVOID)0x40D67D, Hook_40D67D);
+	memset((LPVOID)0x40D682, 0x90, 5);
+	VirtualProtect((LPVOID)0x4135D2, 9, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4135D2, Hook_4315D2);
+	memset((LPVOID)0x4135D7, 0x90, 4);
 
 	// Add settings buttons to SC2K's menus
 	hGameMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(3));
