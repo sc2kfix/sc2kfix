@@ -317,19 +317,26 @@ extern "C" char* __stdcall Hook_40D67D(void) {
 	return szCurrentMonthDay;
 }
 
+
+// Window title hook, part 2 and refresh hook
 extern "C" void _declspec(naked) Hook_4315D2(void) {
 	__asm {
+		// Update title bar
 		push edx
 		mov edx, 0x4E66F8
 		mov ecx, [edx]
 		mov edx, 0x4017B2
 		call edx
 
-	}
+		// Refresh view for growth
+		mov edx, 0x4E66F8
+		mov ecx, [edx]
+		push 0
+		push 2
+		push 0
+		mov edx, 0x4AE0BC
+		call edx
 
-	ConsoleLog(LOG_DEBUG, "ohayo\n");
-
-	__asm {
 		pop edx
 		cmp edx, 24
 		ja def
