@@ -21,7 +21,7 @@
 #define SC2KVERSION_1995    1
 #define SC2KVERSION_1996    2
 
-#define SC2KFIX_VERSION		"0.8"
+#define SC2KFIX_VERSION		"0.9-dev"
 #define SC2KFIX_RELEASE_TAG	"r8"
 
 #define RELATIVE_OFFSET(from, to) *(DWORD*)((DWORD)(from)) = (DWORD)(to) - (DWORD)(from) - 4;
