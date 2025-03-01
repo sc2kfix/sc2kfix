@@ -32,7 +32,6 @@ std::vector<int> vectorRandomSongIDs = { 10001, 10004, 10008, 10012, 10018, 1000
 int iCurrentSong = 0;
 DWORD dwMusicThreadID;
 MCIDEVICEID mciDevice = NULL;
-BOOL bUseMultithreadedMusic = TRUE;
 
 void MusicShufflePlaylist(int iLastSongPlayed) {
     if (bSettingsShuffleMusic) {
@@ -41,7 +40,7 @@ void MusicShufflePlaylist(int iLastSongPlayed) {
         } while (vectorRandomSongIDs[0] == iLastSongPlayed);
 
         if (mci_debug & MCI_DEBUG_SONGS)
-            ConsoleLog(LOG_DEBUG, "MCI: Shuffled song list (next song will be %i).\n", vectorRandomSongIDs[iCurrentSong]);
+            ConsoleLog(LOG_DEBUG, "MCI:  Shuffled song list (next song will be %i).\n", vectorRandomSongIDs[iCurrentSong]);
     }
 }
 
@@ -49,7 +48,7 @@ DWORD WINAPI MusicMCINotifyCallback(WPARAM wFlags, LPARAM lDevID) {
     if (wFlags & MCI_NOTIFY_SUCCESSFUL) {
         PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
         if (mci_debug & MCI_DEBUG_THREAD)
-            ConsoleLog(LOG_DEBUG, "MUS: MusicMCINotifyCallback posted WM_MUSIC_STOP.\n");
+            ConsoleLog(LOG_DEBUG, "MUS:  MusicMCINotifyCallback posted WM_MUSIC_STOP.\n");
     }
     return 0;
 }
@@ -57,7 +56,6 @@ DWORD WINAPI MusicMCINotifyCallback(WPARAM wFlags, LPARAM lDevID) {
 DWORD WINAPI MusicThread(LPVOID lpParameter) {
     MSG msg;
     MCIERROR dwMCIError = NULL;
-    ConsoleLog(LOG_INFO, "MUS: Music thread started.\n");
 
     while (GetMessage(&msg, NULL, 0, 0)) {
         if (msg.message == WM_MUSIC_STOP) {
@@ -67,15 +65,15 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
             dwMCIError = mciSendCommand(mciDevice, MCI_CLOSE, MCI_WAIT, NULL);
 
             if (mci_debug & MCI_DEBUG_THREAD)
-                ConsoleLog(LOG_DEBUG, "MUS: Sent MCI_CLOSE to mciDevice 0x%08X.\n", mciDevice);
+                ConsoleLog(LOG_DEBUG, "MUS:  Sent MCI_CLOSE to mciDevice 0x%08X.\n", mciDevice);
 
             if (dwMCIError) {
                 char szErrorBuf[MAXERRORLENGTH];
                 mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
                 if (dwMCIError == 0x101)
-                    ConsoleLog(LOG_DEBUG, "MUS: MCI_CLOSE failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
+                    ConsoleLog(LOG_DEBUG, "MUS:  MCI_CLOSE failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
                 else
-                    ConsoleLog(LOG_ERROR, "MUS: MCI_CLOSE failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
+                    ConsoleLog(LOG_ERROR, "MUS:  MCI_CLOSE failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
                 goto next;
             }
             mciDevice = NULL;
@@ -91,12 +89,12 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
                     if (dwMCIError) {
                         char szErrorBuf[MAXERRORLENGTH];
                         mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
-                        ConsoleLog(LOG_ERROR, "MUS: MCI_OPEN failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
+                        ConsoleLog(LOG_ERROR, "MUS:  MCI_OPEN failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
                         goto next;
                     }
 
                     if (mci_debug & MCI_DEBUG_THREAD)
-                        ConsoleLog(LOG_DEBUG, "MUS: Received mciDevice 0x%08X from MCI_OPEN.\n", mciDevice);
+                        ConsoleLog(LOG_DEBUG, "MUS:  Received mciDevice 0x%08X from MCI_OPEN.\n", mciDevice);
 
                     mciDevice = mciOpenParms.wDeviceID;
                     DWORD* CWndMainWindow = (DWORD*)*(DWORD*)0x4C702C;
@@ -108,17 +106,17 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
                     if (dwMCIError && dwMCIError != 0x151) {
                         char szErrorBuf[MAXERRORLENGTH];
                         mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
-                        ConsoleLog(LOG_ERROR, "MUS: MCI_PLAY failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
+                        ConsoleLog(LOG_ERROR, "MUS:  MCI_PLAY failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
                         goto next;
                     }
                 }
             } else if (bOptionsMusicEnabled) {
                 if (mci_debug & MCI_DEBUG_THREAD)
-                    ConsoleLog(LOG_DEBUG, "MUS: WM_MUSIC_PLAY message received but MCI is still active; discarding message.\n");
+                    ConsoleLog(LOG_DEBUG, "MUS:  WM_MUSIC_PLAY message received but MCI is still active; discarding message.\n");
                 goto next;
             }
         } else if (msg.message == WM_APP+3) {
-            ConsoleLog(LOG_DEBUG, "MUS: Hello from the music thread!\n");
+            ConsoleLog(LOG_DEBUG, "MUS:  Hello from the music thread!\n");
         } else if (msg.message == WM_QUIT)
             break;
         
@@ -128,7 +126,7 @@ next:
 
     if (mciDevice)
         mciSendCommand(mciDevice, MCI_CLOSE, MCI_WAIT, NULL);
-    ConsoleLog(LOG_INFO, "MUS: Shutting down music thread.\n");
+    ConsoleLog(LOG_INFO, "MUS:  Shutting down music thread.\n");
 
     return EXIT_SUCCESS;
 }
@@ -147,14 +145,14 @@ extern "C" int __stdcall Hook_MusicPlay(int iSongID) {
     case 10012:
         PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
         if (mci_debug & MCI_DEBUG_THREAD)
-            ConsoleLog(LOG_DEBUG, "MUS: Hook_MusicPlay posted WM_MUSIC_STOP.\n");
+            ConsoleLog(LOG_DEBUG, "MUS:  Hook_MusicPlay posted WM_MUSIC_STOP.\n");
         break;
     }
 
     // Post the play message to the music thread
     PostThreadMessage(dwMusicThreadID, WM_MUSIC_PLAY, iSongID, NULL);
     if (mci_debug & MCI_DEBUG_THREAD)
-        ConsoleLog(LOG_DEBUG, "MUS: Hook_MusicPlay posted WM_MUSIC_PLAY for iSongID = %u.\n", iSongID);
+        ConsoleLog(LOG_DEBUG, "MUS:  Hook_MusicPlay posted WM_MUSIC_PLAY for iSongID = %u.\n", iSongID);
 
     // Restore "this" and leave
     __asm {
@@ -172,7 +170,7 @@ extern "C" int __stdcall Hook_MusicStop(void) {
     // Post the stop message to the music thread
     PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
     if (mci_debug & MCI_DEBUG_THREAD)
-        ConsoleLog(LOG_DEBUG, "MUS: Hook_MusicStop posted WM_MUSIC_STOP.\n");
+        ConsoleLog(LOG_DEBUG, "MUS:  Hook_MusicStop posted WM_MUSIC_STOP.\n");
 
     // Restore "this" and leave
     __asm {
@@ -193,7 +191,7 @@ extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void) {
 
     iSongToPlay = vectorRandomSongIDs[iCurrentSong++];
     if (mci_debug & MCI_DEBUG_SONGS)
-        ConsoleLog(LOG_DEBUG, "MCI: Playing song %i (next iCurrentSong will be %i).\n", iSongToPlay, (iCurrentSong > 8 ? 0 : iCurrentSong));
+        ConsoleLog(LOG_DEBUG, "MCI:  Playing song %i (next iCurrentSong will be %i).\n", iSongToPlay, (iCurrentSong > 8 ? 0 : iCurrentSong));
 
     __asm {
         mov ecx, [uThis]
@@ -244,7 +242,7 @@ static const char* MCIMessageIDToString(UINT uMsg) {
 
 extern "C" BOOL __stdcall Hook_mciSendCommandA(void* pReturnAddress, MCIERROR* retval, MCIDEVICEID IDDevice, UINT uMsg, DWORD_PTR fdwCommand, DWORD_PTR dwParam) {
     if (mci_debug & MCI_DEBUG_CALLS)
-        ConsoleLog(LOG_DEBUG, "MCI: 0x%08p -> mciSendCommand(0x%08X, %s, 0x%08X, 0x%08X)\n", pReturnAddress, IDDevice, MCIMessageIDToString(uMsg), fdwCommand, dwParam);
+        ConsoleLog(LOG_DEBUG, "MCI:  0x%08p -> mciSendCommand(0x%08X, %s, 0x%08X, 0x%08X)\n", pReturnAddress, IDDevice, MCIMessageIDToString(uMsg), fdwCommand, dwParam);
     switch (uMsg) {
     case MCI_OPEN: {
         if (mci_debug & (MCI_DEBUG_CALLS | MCI_DEBUG_DUMPS)) {
@@ -296,7 +294,7 @@ extern "C" BOOL __stdcall Hook_mciSendCommandA(void* pReturnAddress, MCIERROR* r
 
     default:
         if (mci_debug & MCI_DEBUG_CALLS)
-            ConsoleLog(LOG_WARNING, "MCA: mciSendCommand sent with unexpected uMsg %s.\n", MCIMessageIDToString(uMsg));
+            ConsoleLog(LOG_WARNING, "MCI:  mciSendCommand sent with unexpected uMsg %s.\n", MCIMessageIDToString(uMsg));
     }
 
     *retval = 0;

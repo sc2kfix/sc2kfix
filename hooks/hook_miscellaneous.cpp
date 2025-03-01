@@ -175,7 +175,7 @@ extern "C" BOOL __stdcall Hook_EnableMenuItem(HMENU hMenu, UINT uIDEnableItem, U
 
 extern "C" BOOL __stdcall Hook_ShowWindow(HWND hWnd, int nCmdShow) {
 	if (mischook_debug & MISCHOOK_DEBUG_WINDOW)
-		ConsoleLog(LOG_DEBUG, "WND: 0x%08X -> ShowWindow(0x%08X, %i)\n", _ReturnAddress(), hWnd, nCmdShow);
+		ConsoleLog(LOG_DEBUG, "WND:  0x%08X -> ShowWindow(0x%08X, %i)\n", _ReturnAddress(), hWnd, nCmdShow);
 	DWORD* CWndMainWindow = (DWORD*)*(DWORD*)0x4C702C;
 	HWND hWndStatusBar = (HWND)CWndMainWindow[68];
 	if (hWnd == hWndStatusBar && bSettingsUseStatusDialog) {
@@ -308,12 +308,15 @@ extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
 	}
 
 	if (mischook_debug & MISCHOOK_DEBUG_SAVES)
-		ConsoleLog(LOG_DEBUG, "Loaded %d $1500 neighbor connections.\n", *wCityNeighborConnections1500);
+		ConsoleLog(LOG_DEBUG, "SAVE: Loaded %d $1500 neighbor connections.\n", *wCityNeighborConnections1500);
 }
 
 // Window title hook, part 1
 extern "C" char* __stdcall Hook_40D67D(void) {
-	sprintf_s(szCurrentMonthDay, 24, "%s %d,", szMonthNames[dwCityDays / 25 % 12], dwCityDays % 25 + 1);
+	if (bSettingsTitleCalendar)
+		sprintf_s(szCurrentMonthDay, 24, "%s %d,", szMonthNames[dwCityDays / 25 % 12], dwCityDays % 25 + 1);
+	else
+		sprintf_s(szCurrentMonthDay, 24, "%s", szMonthNames[dwCityDays / 25 % 12]);
 	return szCurrentMonthDay;
 }
 
@@ -328,6 +331,9 @@ extern "C" void _declspec(naked) Hook_4315D2(void) {
 		mov edx, 0x4017B2
 		call edx
 
+		cmp [bSettingsFrequentCityRefresh], 0
+		je skip_refresh
+
 		// Refresh view for growth
 		mov edx, 0x4E66F8
 		mov ecx, [edx]
@@ -337,6 +343,7 @@ extern "C" void _declspec(naked) Hook_4315D2(void) {
 		mov edx, 0x4AE0BC
 		call edx
 
+	skip_refresh:
 		pop edx
 		cmp edx, 24
 		ja def
@@ -453,7 +460,7 @@ void InstallMiscHooks(void) {
 	MusicShufflePlaylist(0);
 
 	// Replace music functions with ones to post messages to the music thread
-	if (bUseMultithreadedMusic) {
+	if (bSettingsUseMultithreadedMusic) {
 		VirtualProtect((LPVOID)0x402414, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 		NEWJMP((LPVOID)0x402414, Hook_MusicPlay);
 		VirtualProtect((LPVOID)0x402BE4, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -468,7 +475,7 @@ void InstallMiscHooks(void) {
 		if (hBitmap)
 			hWeatherBitmaps[i] = hBitmap;
 		else
-			ConsoleLog(LOG_ERROR, "Couldn't load weather bitmap IDB_WEATHER%i: 0x%08X\n", i, GetLastError());
+			ConsoleLog(LOG_ERROR, "MISC: Couldn't load weather bitmap IDB_WEATHER%i: 0x%08X\n", i, GetLastError());
 	}
 
 	// Hook status bar updates for the status dialog implementation

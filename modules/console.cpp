@@ -28,7 +28,6 @@ console_command_t fpConsoleCommands[] = {
 	{ "?", ConsoleCmdHelp, CONSOLE_COMMAND_ALIAS, "" },
 	{ "help", ConsoleCmdHelp, CONSOLE_COMMAND_DOCUMENTED, "Display this help" },
 	{ "set", ConsoleCmdSet, CONSOLE_COMMAND_DOCUMENTED, "Modify game and plugin behaviour" },
-	{ "settings", ConsoleCmdSettings, CONSOLE_COMMAND_DOCUMENTED, "Open sc2kfix settings dialog" },
 	{ "show", ConsoleCmdShow, CONSOLE_COMMAND_DOCUMENTED, "Display various game and plugin information" },
 	{ "unset", ConsoleCmdSet, CONSOLE_COMMAND_DOCUMENTED, "Modify game and plugin behaviour" },
 };
@@ -493,14 +492,14 @@ BOOL ConsoleCmdSetTile(const char* szCommand, const char* szArguments) {
 DWORD WINAPI ConsoleThread(LPVOID lpParameter) {
 	SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
 	for (;;) {
-		gets_s(szCmdBuf, 256);
-		if (!ConsoleEvaluateCommand(szCmdBuf))
-			printf("Invalid command.\n");
-
 		if (bConsoleUndocumentedMode)
 			printf("# ");
 		else
 			printf("> ");
+
+		gets_s(szCmdBuf, 256);
+		if (!ConsoleEvaluateCommand(szCmdBuf))
+			printf("Invalid command.\n");
 	}
 }
 

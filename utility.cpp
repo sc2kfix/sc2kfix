@@ -69,28 +69,28 @@ void ConsoleLog(int iLogLevel, const char* fmt, ...) {
 
 	switch (iLogLevel) {
 	case LOG_EMERGENCY:
-		prefix = "EMERG: ";
+		prefix = "[EMERG] ";
 		break;
 	case LOG_ALERT:
-		prefix = "ALERT: ";
+		prefix = "[ALERT] ";
 		break;
 	case LOG_CRITICAL:
-		prefix = "CRIT:  ";
+		prefix = "[CRIT ] ";
 		break;
 	case LOG_ERROR:
-		prefix = "ERROR: ";
+		prefix = "[ERROR] ";
 		break;
 	case LOG_WARNING:
-		prefix = "WARN:  ";
+		prefix = "[WARN ] ";
 		break;
 	case LOG_NOTICE:
-		prefix = "NOTE:  ";
+		prefix = "[NOTE ] ";
 		break;
 	case LOG_INFO:
-		prefix = "INFO:  ";
+		prefix = "[INFO ] ";
 		break;
 	case LOG_DEBUG:
-		prefix = "DEBUG: ";
+		prefix = "[DEBUG] ";
 		break;
 	case LOG_NONE:
 	default:                            // XXX - can this be a constexpr error?

@@ -11,7 +11,7 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
-#define UPDATENOTIFIER_DEBUG 0
+#define UPDATENOTIFIER_DEBUG DEBUG_FLAGS_NONE
 
 #ifdef DEBUGALL
 #undefine UPDATENOTIFIER_DEBUG

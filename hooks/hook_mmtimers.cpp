@@ -14,7 +14,7 @@
 
 #pragma intrinsic(_ReturnAddress)
 
-#define TIMER_DEBUG 0
+#define TIMER_DEBUG DEBUG_FLAGS_NONE
 
 #ifdef DEBUGALL
 #undef TIMER_DEBUG
@@ -25,14 +25,14 @@ UINT timer_debug = TIMER_DEBUG;
 
 extern "C" BOOL __stdcall Hook_timeSetEvent(void* pReturnAddress, MMRESULT* retval, UINT uDelay, UINT uResolution, LPTIMECALLBACK lpTimeProc, DWORD_PTR dwUser, UINT fuEvent) {
     if (timer_debug && (DWORD)pReturnAddress < 0x563000)
-        ConsoleLog(LOG_DEBUG, "TIMER: 0x%08p -> timeSetEvent(%u, %u, 0x%08X, 0x%08X, 0x%04X)\n", pReturnAddress, uDelay, uResolution, lpTimeProc, dwUser, fuEvent);
+        ConsoleLog(LOG_DEBUG, "TIME: 0x%08p -> timeSetEvent(%u, %u, 0x%08X, 0x%08X, 0x%04X)\n", pReturnAddress, uDelay, uResolution, lpTimeProc, dwUser, fuEvent);
 
     return TRUE;
 }
 
 extern "C" BOOL __stdcall HookAfter_timeSetEvent(void* pReturnAddress, MMRESULT* retval, UINT uDelay, UINT uResolution, LPTIMECALLBACK lpTimeProc, DWORD_PTR dwUser, UINT fuEvent) {
     if (timer_debug && (DWORD)pReturnAddress < 0x563000)
-        ConsoleLog(LOG_DEBUG, "TIMER: timeSetEvent() returned 0x%08X\n", *retval);
+        ConsoleLog(LOG_DEBUG, "TIME: timeSetEvent() returned 0x%08X\n", *retval);
 
     return TRUE;
 }

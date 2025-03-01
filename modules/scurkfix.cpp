@@ -32,16 +32,16 @@ extern "C" __declspec(naked) void __cdecl Hook_SCURK1996AnimationFix(void) {
 }
 
 BOOL InjectSCURKFix(void) {
-	ConsoleLog(LOG_INFO, "Injecting SCURK fixes...\n");
+	ConsoleLog(LOG_INFO, "CORE: Injecting SCURK fixes...\n");
 	hSCURKAppModule = GetModuleHandle(NULL);
 	dwSCURKAppTimestamp = ((PIMAGE_NT_HEADERS)(((PIMAGE_DOS_HEADER)hSCURKAppModule)->e_lfanew + (UINT_PTR)hSCURKAppModule))->FileHeader.TimeDateStamp;
 	switch (dwSCURKAppTimestamp) {
 	case 0xBC7B1F0E:							// Yes, for some reason the timestamp is set to 2070.
 		dwSCURKAppVersion = SC2KVERSION_1996;
-		ConsoleLog(LOG_DEBUG, "SCURK version 1996\n");
+		ConsoleLog(LOG_DEBUG, "CORE: SCURK version 1996 detected.\n");
 		break;
 	default:
-		ConsoleLog(LOG_ERROR, "Could not detect SCURK version. Not injecting animation fix.\n");
+		ConsoleLog(LOG_ERROR, "CORE: Could not detect SCURK version. Not injecting animation fix.\n");
 		return TRUE;
 	}
 
@@ -52,6 +52,6 @@ BOOL InjectSCURKFix(void) {
 	// Intercept call to 0x480140 at 0x48A683
 	VirtualProtect((LPVOID)0x4497F5, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4497F5, Hook_SCURK1996AnimationFix);
-	ConsoleLog(LOG_INFO, "Patched palette animation fix for SCURK.\n");
+	ConsoleLog(LOG_INFO, "CORE: Patched palette animation fix for SCURK.\n");
 	return TRUE;
 }

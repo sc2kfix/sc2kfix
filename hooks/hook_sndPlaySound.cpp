@@ -18,7 +18,7 @@
 #define SND_DEBUG_PLAYS 1
 #define SND_DEBUG_REPLACEMENTS 2
 
-#define SND_DEBUG 0
+#define SND_DEBUG DEBUG_FLAGS_NONE
 
 #ifdef DEBUGALL
 #undef SND_DEBUG
@@ -32,7 +32,7 @@ std::map<int, sound_replacement_t> mapReplacementSounds;
 
 extern "C" void __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer) {
     if (snd_debug & SND_DEBUG_PLAYS)
-        ConsoleLog(LOG_DEBUG, "SND: Loading %d.wav into buffer <0x%08X>.\n", iSoundID, lpBuffer);
+        ConsoleLog(LOG_DEBUG, "SND:  Loading %d.wav into buffer <0x%08X>.\n", iSoundID, lpBuffer);
 
     if (mapSoundBuffers.find((DWORD)lpBuffer) != mapSoundBuffers.end()) {
         mapSoundBuffers[(DWORD)lpBuffer].iSoundID = iSoundID;
@@ -44,7 +44,7 @@ extern "C" void __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer) {
     if (mapReplacementSounds.find(iSoundID) != mapReplacementSounds.end() && bSettingsUseSoundReplacements) {
         memcpy_s(lpBuffer, mapReplacementSounds[iSoundID].nBufSize, mapReplacementSounds[iSoundID].bBuffer, mapReplacementSounds[iSoundID].nBufSize);
         if (snd_debug & SND_DEBUG_PLAYS)
-            ConsoleLog(LOG_DEBUG, "SND: Detour! Copied replacement %d.wav into buffer <0x%08X>.\n", iSoundID, lpBuffer);
+            ConsoleLog(LOG_DEBUG, "SND:  Detour! Copied replacement %d.wav into buffer <0x%08X>.\n", iSoundID, lpBuffer);
         return;
     }
 
@@ -59,11 +59,11 @@ extern "C" void __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer) {
 extern "C" BOOL __stdcall Hook_sndPlaySoundA(void* pReturnAddress, BOOL* retval, LPCTSTR lpszSound, UINT fuSound) {
     if (snd_debug & SND_DEBUG_PLAYS) {
         if (fuSound & SND_MEMORY)
-            ConsoleLog(LOG_DEBUG, "SND: 0x%08p -> sndPlaySound(<0x%08X>, 0x%08X)\n", pReturnAddress, lpszSound, fuSound);
+            ConsoleLog(LOG_DEBUG, "SND:  0x%08p -> sndPlaySound(<0x%08X>, 0x%08X)\n", pReturnAddress, lpszSound, fuSound);
         else if (!lpszSound && !fuSound)
-            ConsoleLog(LOG_DEBUG, "SND: 0x%08p -> sndPlaySound(0, 0)\n", pReturnAddress);
+            ConsoleLog(LOG_DEBUG, "SND:  0x%08p -> sndPlaySound(0, 0)\n", pReturnAddress);
         else
-            ConsoleLog(LOG_DEBUG, "SND: 0x%08p -> sndPlaySound(%s, 0x%08X)\n", pReturnAddress, (lpszSound ? lpszSound : "NULL"), fuSound);
+            ConsoleLog(LOG_DEBUG, "SND:  0x%08p -> sndPlaySound(%s, 0x%08X)\n", pReturnAddress, (lpszSound ? lpszSound : "NULL"), fuSound);
     }
         
 
@@ -109,15 +109,15 @@ void LoadReplacementSounds(void) {
                     memcpy_s(entry.bBuffer, entry.nBufSize, ptr, entry.nBufSize);
                     FreeResource(hWaveResource);
                     if (snd_debug & SND_DEBUG_REPLACEMENTS)
-                        ConsoleLog(LOG_DEBUG, "SND: Loaded replacement for 500.wav.\n");
+                        ConsoleLog(LOG_DEBUG, "SND:  Loaded replacement for 500.wav.\n");
                 }
             } else
                 if(snd_debug & SND_DEBUG_REPLACEMENTS)
-                    ConsoleLog(LOG_DEBUG, "SND: Couldn't allocate replacement sound buffer.\n");
+                    ConsoleLog(LOG_DEBUG, "SND:  Couldn't allocate replacement sound buffer.\n");
         }
     } else
         if (snd_debug & SND_DEBUG_REPLACEMENTS)
-            ConsoleLog(LOG_DEBUG, "SND: Couldn't find resource for sound 500.\n");
+            ConsoleLog(LOG_DEBUG, "SND:  Couldn't find resource for sound 500.\n");
 
     hResFind = FindResourceA(hSC2KFixModule, MAKEINTRESOURCE(IDR_WAVE_514), "WAVE");
     if (hResFind) {
@@ -134,17 +134,17 @@ void LoadReplacementSounds(void) {
                     memcpy_s(entry.bBuffer, entry.nBufSize, ptr, entry.nBufSize);
                     FreeResource(hWaveResource);
                     if (snd_debug & SND_DEBUG_REPLACEMENTS)
-                        ConsoleLog(LOG_DEBUG, "SND: Loaded replacement for 514.wav.\n");
+                        ConsoleLog(LOG_DEBUG, "SND:  Loaded replacement for 514.wav.\n");
                 }
             }
             else
                 if (snd_debug & SND_DEBUG_REPLACEMENTS)
-                    ConsoleLog(LOG_DEBUG, "SND: Couldn't allocate replacement sound buffer.\n");
+                    ConsoleLog(LOG_DEBUG, "SND:  Couldn't allocate replacement sound buffer.\n");
         }
     }
     else
         if (snd_debug & SND_DEBUG_REPLACEMENTS)
-            ConsoleLog(LOG_DEBUG, "SND: Couldn't find resource for sound 514.\n");
+            ConsoleLog(LOG_DEBUG, "SND:  Couldn't find resource for sound 514.\n");
 
     hResFind = FindResourceA(hSC2KFixModule, MAKEINTRESOURCE(IDR_WAVE_529), "WAVE");
     if (hResFind) {
@@ -161,15 +161,15 @@ void LoadReplacementSounds(void) {
                     memcpy_s(entry.bBuffer, entry.nBufSize, ptr, entry.nBufSize);
                     FreeResource(hWaveResource);
                     if (snd_debug & SND_DEBUG_REPLACEMENTS)
-                        ConsoleLog(LOG_DEBUG, "SND: Loaded replacement for 529.wav.\n");
+                        ConsoleLog(LOG_DEBUG, "SND:  Loaded replacement for 529.wav.\n");
                 }
             }
             else
                 if (snd_debug & SND_DEBUG_REPLACEMENTS)
-                    ConsoleLog(LOG_DEBUG, "SND: Couldn't allocate replacement sound buffer.\n");
+                    ConsoleLog(LOG_DEBUG, "SND:  Couldn't allocate replacement sound buffer.\n");
         }
     }
     else
         if (snd_debug & SND_DEBUG_REPLACEMENTS)
-            ConsoleLog(LOG_DEBUG, "SND: Couldn't find resource for sound 529.\n");
+            ConsoleLog(LOG_DEBUG, "SND:  Couldn't find resource for sound 529.\n");
 }

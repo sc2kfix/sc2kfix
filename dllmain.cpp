@@ -126,6 +126,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             }
         }
 
+        // Load settings
+        if (!bSkipLoadSettings)
+            LoadSettings();
+        else
+            ConsoleLog(LOG_INFO, "CORE: -default passed, skipping LoadSettings().\n");
+
         // Open a log file. If it fails, we handle that safely elsewhere
         fopen_s(&fdLog, "sc2kfix.log", "w");
 
@@ -144,18 +150,17 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             freopen_s(&fdDummy, "CONOUT$", "w", stderr);
         }
 
-        ConsoleLog(LOG_NONE, "sc2kfix version %s started - https://github.com/araxestroy/sc2kfix\n", szSC2KFixVersion);
+        ConsoleLog(LOG_INFO, "sc2kfix version %s started - https://github.com/araxestroy/sc2kfix\n", szSC2KFixVersion);
 #ifdef DEBUGALL
-        ConsoleLog(LOG_DEBUG, "sc2kfix built with DEBUGALL. Strap in.\n");
+        ConsoleLog(LOG_DEBUG, "CORE: sc2kfix built with DEBUGALL. Strap in.\n");
 #endif
 
-        ConsoleLog(LOG_INFO, "SC2K session started at %lld.\n", time(NULL));
+        ConsoleLog(LOG_INFO, "CORE: SC2K session started at %lld.\n", time(NULL));
 
         if (bConsoleEnabled) {
-            ConsoleLog(LOG_INFO, "Spawned console session.\n");
-            printf("INFO:  ");
+            ConsoleLog(LOG_INFO, "CORE: Spawned console session.\n");
+            printf("[INFO ] CORE: ");
             ConsoleCmdShowDebug(NULL, NULL);
-            hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, NULL);
         }
 
         // If we're attached to SCURK, switch over to the SCURK fix code
@@ -175,8 +180,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         switch (dwSC2KAppTimestamp) {
         case 0x302FEA8A:
             dwDetectedVersion = SC2KVERSION_1995;
-            ConsoleLog(LOG_NOTICE, "1995 CD Collection version detected. Most features and gameplay fixes will not be available.\n");
-            ConsoleLog(LOG_NOTICE, "Please consider using the 1996 Special Edition for the fully restored SimCity 2000 experience.\n");
+            ConsoleLog(LOG_NOTICE, "CORE: 1995 CD Collection version detected. Most features and gameplay fixes will not be available.\n");
+            ConsoleLog(LOG_NOTICE, "CORE: Please consider using the 1996 Special Edition for the fully restored SimCity 2000 experience.\n");
             break;
 
         case 0x313E706E:
@@ -189,26 +194,24 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             sprintf_s(msg, 300, "Could not detect SC2K version (got timestamp %08Xd). Your game will probably crash.\r\n\r\n"
                 "Please let us know in a GitHub issue what version of the game you're running so we can look into this.", dwSC2KAppTimestamp);
             MessageBox(GetActiveWindow(), msg, "sc2kfix warning", MB_OK | MB_ICONWARNING);
-            ConsoleLog(LOG_WARNING, "SC2K version could not be detected (got timestamp 0x%08X). Game will probably crash.\n", dwSC2KAppTimestamp);
+            ConsoleLog(LOG_WARNING, "CORE: SC2K version could not be detected (got timestamp 0x%08X). Game will probably crash.\n", dwSC2KAppTimestamp);
         }
 
         // Registry check
         if (DoRegistryCheckAndInstall())
-            ConsoleLog(LOG_INFO, "Registry entries created by faux-installer.");
-
-        // Load settings
-        if (!bSkipLoadSettings)
-            LoadSettings();
-        else
-            ConsoleLog(LOG_INFO, "-default passed, skipping LoadSettings().\n");
+            ConsoleLog(LOG_INFO, "CORE: Registry entries created by faux-installer.");
 
         // Check for updates
-        if (bSettingsCheckForUpdates)
+        if (bSettingsCheckForUpdates) {
             CreateThread(NULL, 0, UpdaterThread, 0, 0, NULL);
+            ConsoleLog(LOG_INFO, "UPD:  Update notifier thread started.\n");
+        }
 
         // Create music thread
-        if (bUseMultithreadedMusic)
+        if (bSettingsUseMultithreadedMusic) {
             CreateThread(NULL, 0, MusicThread, 0, 0, &dwMusicThreadID);
+            ConsoleLog(LOG_INFO, "MUS:  Music thread started.\n");
+        }
 
         // Generate fonts
         hDC = GetDC(0);
@@ -240,7 +243,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         
         VirtualProtect(lpAnimationFix, uAnimationFixLength, PAGE_EXECUTE_READWRITE, &dwDummy);
         memcpy(lpAnimationFix, lpAnimationFixSrc, uAnimationFixLength);
-        ConsoleLog(LOG_INFO, "Patched palette animation fix.\n");
+        ConsoleLog(LOG_INFO, "CORE: Patched palette animation fix.\n");
 
         // Dialog crash fix - hat tip to Aleksander Krimsky (@alekasm on GitHub)
         LPVOID lpDialogFix1;
@@ -262,7 +265,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         VirtualProtect(lpDialogFix2, 2, PAGE_EXECUTE_READWRITE, &dwDummy);
         *(LPBYTE)lpDialogFix2 = 0xEB;
         *(LPBYTE)((UINT_PTR)lpDialogFix2 + 1) = 0xEB;
-        ConsoleLog(LOG_INFO, "Patched dialog crash fix.\n");
+        ConsoleLog(LOG_INFO, "CORE: Patched dialog crash fix.\n");
 
         // Remove palette warnings
         LPVOID lpWarningFix1;
@@ -283,14 +286,18 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         *(LPBYTE)lpWarningFix1 = 0x90;
         *(LPBYTE)((UINT_PTR)lpWarningFix1 + 1) = 0x90;
         memset((LPVOID)lpWarningFix2, 0x90, 18);   // nop nop nop nop nop
-        ConsoleLog(LOG_INFO, "Patched 8-bit colour warnings.\n");
+        ConsoleLog(LOG_INFO, "CORE: Patched 8-bit colour warnings.\n");
 
         // Hooks we only want to inject on the 1996 Special Edition version
         if (dwDetectedVersion == SC2KVERSION_1996)
             InstallMiscHooks();
 
-        // Print the console prompt and let the console thread take over.
-        printf("\n> ");
+        // Start the console thread.
+        if (bConsoleEnabled) {
+            ConsoleLog(LOG_INFO, "CORE: Starting console thread.\n");
+            printf("\n");
+            hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, NULL);
+        }
         break;
 
     // Nothing to do for these two cases
@@ -304,7 +311,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         PostThreadMessage(dwMusicThreadID, WM_QUIT, NULL, NULL);
 
         // Send a closing message and close the log file
-        ConsoleLog(LOG_INFO, "Closing down at %lld. Goodnight!\n", time(NULL));
+        ConsoleLog(LOG_INFO, "CORE: Closing down at %lld. Goodnight!\n", time(NULL));
         fflush(fdLog);
         fclose(fdLog);
         break;

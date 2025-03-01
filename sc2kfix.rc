@@ -115,30 +115,37 @@ BEGIN
     CTEXT           "Organization Name",IDC_STATIC,14,59,82,8
     PUSHBUTTON      "Cancel",ID_SETTINGS_CANCEL,203,252,50,14
     GROUPBOX        "Game Settings",IDC_STATIC,7,23,261,59
-    GROUPBOX        "sc2kfix Settings - QoL / Interface Mods",IDC_STATIC,7,88,261,113
+    GROUPBOX        "Quality of Life / Performance Settings",IDC_STATIC,7,88,261,134
     CTEXT           "Settings with an asterisk next to them take effect on next game start.  Hover over a setting or button for more details.",IDC_SETTINGS_HEADER,6,8,534,8
-    CONTROL         " Continue to play music when the game is in the background (Default: off)",IDC_SETTINGS_CHECK_BKGDMUSIC,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,101,247,10
+    CONTROL         " Continue to play music when the game is in the background (Default: on)",IDC_SETTINGS_CHECK_BKGDMUSIC,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,101,250,10
     CONTROL         " Use grammar-corrected and disambiguated dialog strings (Default: on)",IDC_SETTINGS_CHECK_NEW_STRINGS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,115,247,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,284,64,247,10
     CONTROL         " Use higher quality sounds (Default: on)",IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,129,247,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,115,247,10
     CONTROL         " Shuffle music instead of looping predefined playlist (Default: off)",IDC_SETTINGS_CHECK_SHUFFLE_MUSIC,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,143,247,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,129,247,10
     CONTROL         " *Use DOS/Mac style floating dialog instead of status bar (Default: off)",IDC_SETTINGS_CHECK_STATUS_DIALOG,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,157,247,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,284,35,247,10
     CONTROL         " *Always start the sc2kfix console on game startup (Default: off)",IDC_SETTINGS_CHECK_CONSOLE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,171,247,10
-    GROUPBOX        "sc2kfix Settings - Gameplay Mods",IDC_STATIC,277,23,261,43
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,192,247,10
+    GROUPBOX        "Gameplay Mod Settings",IDC_STATIC,277,88,261,55
     CONTROL         " *Military bases generate revenue (Default: off)",IDC_SETTINGS_CHECK_MILITARY_REVENUE,
-                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,36,247,10
+                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,101,247,10
     CONTROL         " *Fully restore partially-implemented ordinances (Default: off)",IDC_SETTINGS_CHECK_FIX_ORDINANCES,
-                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,50,247,10
+                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,115,247,10
     CONTROL         " *Check for sc2kfix updates on game startup (Default: on)",IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,185,247,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,206,247,10
     PUSHBUTTON      "Defaults",ID_SETTINGS_DEFAULTS,293,252,50,14
     PUSHBUTTON      "Vanilla",ID_SETTINGS_VANILLA,359,252,50,14
     RTEXT           "sc2kfix version 0.0-dev (tag)",IDC_STATIC_VERSIONINFO,420,262,126,8,WS_DISABLED
+    CONTROL         " *Use multithreaded music engine (Default: on)",IDC_SETTINGS_CHECK_MULTITHREADED_MUSIC,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,143,247,10
+    GROUPBOX        "Interface Settings",IDC_STATIC,277,23,261,59
+    CONTROL         " Display full SimCalendar date in title bar (Default: on)",IDC_SETTINGS_CHECK_TITLE_DATE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,284,49,247,10
+    CONTROL         " Display city growth in real-time instead of in batches (Default: on)",IDC_SETTINGS_CHECK_REFRESH_RATE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,157,247,10
 END
 
 103 DIALOGEX 0, 0, 72, 195

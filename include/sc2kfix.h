@@ -88,13 +88,20 @@ enum {
 extern char szSettingsMayorName[64];
 extern char szSettingsCompanyName[64];
 extern BOOL bSettingsMusicInBackground;
-extern BOOL bSettingsUseNewStrings;
 extern BOOL bSettingsUseSoundReplacements;
 extern BOOL bSettingsShuffleMusic;
-extern BOOL bSettingsUseStatusDialog;
+extern BOOL bSettingsUseMultithreadedMusic;
+extern BOOL bSettingsFrequentCityRefresh;
+
 extern BOOL bSettingsAlwaysConsole;
 extern BOOL bSettingsCheckForUpdates;
+
+extern BOOL bSettingsUseStatusDialog;
+extern BOOL bSettingsTitleCalendar;
+extern BOOL bSettingsUseNewStrings;
+
 extern BOOL bSettingsMilitaryBaseRevenue;
+extern BOOL bSettingsFixOrdinances;
 
 // Utility functions
 
