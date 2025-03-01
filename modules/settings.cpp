@@ -7,6 +7,7 @@
 #include <commctrl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string>
 
 #include <sc2kfix.h>
 #include "../resource.h"
@@ -15,7 +16,7 @@ static DWORD dwDummy;
 
 char szSettingsMayorName[64];
 char szSettingsCompanyName[64];
-BOOL bSettingsMusicInBackground = FALSE;
+BOOL bSettingsMusicInBackground = TRUE;
 BOOL bSettingsUseNewStrings = TRUE;
 BOOL bSettingsUseSoundReplacements = TRUE;
 BOOL bSettingsShuffleMusic = FALSE;
@@ -67,7 +68,7 @@ void LoadSettings(void) {
 
 	DWORD dwSizeofBool = sizeof(BOOL);
 	if (RegGetValue(hkeySC2KFix, NULL, "bSettingsMusicInBackground", RRF_RT_REG_DWORD, NULL, &bSettingsMusicInBackground, &dwSizeofBool) != ERROR_SUCCESS) {
-		bSettingsMusicInBackground = FALSE;
+		bSettingsMusicInBackground = TRUE;
 		RegSetValueEx(hkeySC2KFix, "bSettingsMusicInBackground", NULL, REG_DWORD, (BYTE*)&bSettingsMusicInBackground, sizeof(BOOL));
 	}
 
@@ -154,6 +155,7 @@ void SaveSettings(void) {
 }
 
 BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
+	std::string strVersionInfo;
 	switch (message) {
 	case WM_INITDIALOG:
 		// Set the dialog box icon
@@ -161,6 +163,15 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(hSC2KAppModule, MAKEINTRESOURCE(2)));
 
 		// Create tooltips.
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, ID_SETTINGS_OK),
+			"Saves the currently selected settings and closes the settings dialog.");
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, ID_SETTINGS_CANCEL),
+			"Discards changed settings and closes the settings dialog.");
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, ID_SETTINGS_DEFAULTS),
+			"Changes the settings to the default sc2kfix experience but does not save settings or close the dialog.");
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, ID_SETTINGS_VANILLA),
+			"Changes the settings to disable all quality of life, interface and gameplay enhancements but does not save settings or close the dialog.");
+
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_BKGDMUSIC),
 			"By default, SimCity 2000 stops the currently-playing song when the game window loses focus. This setting continues playing music in the background until the end of the track, "
 			"after which a new song will be selected when the game window regains focus.");
@@ -196,6 +207,14 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			"base redevelopment efforts.\n\n"
 
 			"Enabling or disabling this setting takes effect after restarting the game.");
+
+		// Set the version string.
+		strVersionInfo = "sc2kfix ";
+		strVersionInfo += szSC2KFixVersion;
+		strVersionInfo += " (";
+		strVersionInfo += szSC2KFixReleaseTag;
+		strVersionInfo += ")";
+		SetDlgItemText(hwndDlg, IDC_STATIC_RELEASEINFO, strVersionInfo.c_str());
 
 		// Load the existing settings into the dialog
 		SetDlgItemText(hwndDlg, IDC_SETTINGS_MAYOR, szSettingsMayorName);
@@ -235,10 +254,37 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 
 			// Save the settings
 			SaveSettings();
-
-			// Fall through
+			EndDialog(hwndDlg, wParam);
+			break;
 		case ID_SETTINGS_CANCEL:
 			EndDialog(hwndDlg, wParam);
+			break;
+		case ID_SETTINGS_DEFAULTS:
+			// Set all the checkboxes to the defaults.
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_BKGDMUSIC), BST_CHECKED);
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS), BST_CHECKED);
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS), BST_CHECKED);
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SHUFFLE_MUSIC), BST_UNCHECKED);
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG), BST_UNCHECKED);
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE), BST_UNCHECKED);
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES), BST_CHECKED);
+
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_REVENUE), BST_UNCHECKED);
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_FIX_ORDINANCES), BST_UNCHECKED);
+			break;
+		case ID_SETTINGS_VANILLA:
+			// Clear all checkboxes except for the update checker.
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_BKGDMUSIC), BST_UNCHECKED);
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS), BST_UNCHECKED);
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS), BST_UNCHECKED);
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SHUFFLE_MUSIC), BST_UNCHECKED);
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG), BST_UNCHECKED);
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE), BST_UNCHECKED);
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES), BST_CHECKED);
+
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_REVENUE), BST_UNCHECKED);
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_FIX_ORDINANCES), BST_UNCHECKED);
+			break;
 		}
 		return TRUE;
 	}

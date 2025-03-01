@@ -12,6 +12,7 @@
 #define ID_SETTINGS_CANCEL              21005
 #define IDC_SETTINGS_MAYOR              21006
 #define IDC_SETTINGS_COMPANY            21007
+#define ID_SETTINGS_DEFAULTS            21008
 #define IDC_SETTINGS_HEADER             21009
 #define IDC_SETTINGS_CHECK_BKGDMUSIC    21010
 #define IDC_SETTINGS_CHECK_MILITARY_REVENUE 21011
@@ -21,6 +22,7 @@
 #define IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES 21015
 #define IDC_COMBO1                      21016
 #define IDC_COMBO_MIDIOUTPUT            21016
+#define ID_SETTINGS_VANILLA             21016
 #define IDC_STATIC_SELECTEDTOOL         21017
 #define IDC_STATIC_STATUSSTRING         21018
 #define IDC_BUTTON_WEATHERICON          21019
@@ -33,6 +35,8 @@
 #define IDC_STATIC_TILEDATA             21027
 #define IDC_STATIC_TILERENDER           21028
 #define IDC_STATIC_SIMSTAT_BGD          21029
+#define IDC_STATIC_RELEASEINFO          21031
+#define IDC_STATIC_VERSIONINFO          21031
 #define IDR_WAVE_500                    23001
 #define IDR_WAVE_514                    23002
 #define IDR_WAVE_529                    23003
@@ -57,7 +61,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        23035
 #define _APS_NEXT_COMMAND_VALUE         40002
-#define _APS_NEXT_CONTROL_VALUE         21030
+#define _APS_NEXT_CONTROL_VALUE         21032
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

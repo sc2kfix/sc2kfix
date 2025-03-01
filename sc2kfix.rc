@@ -102,21 +102,21 @@ BEGIN
     CTEXT           "Organization Name",IDC_STATIC,56,69,150,8
 END
 
-IDD_SETTINGS DIALOGEX 0, 0, 275, 281
+IDD_SETTINGS DIALOGEX 0, 0, 547, 272
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOPMOST
 CAPTION "sc2kfix Settings"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",ID_SETTINGS_OK,62,259,50,14
+    DEFPUSHBUTTON   "OK",ID_SETTINGS_OK,137,252,50,14
     EDITTEXT        IDC_SETTINGS_MAYOR,101,37,154,14,ES_CENTER | ES_AUTOHSCROLL
     EDITTEXT        IDC_SETTINGS_COMPANY,101,56,154,14,ES_CENTER | ES_AUTOHSCROLL
     CTEXT           "Default Mayor Name",IDC_STATIC,14,40,82,8
     CTEXT           "Organization Name",IDC_STATIC,14,59,82,8
-    PUSHBUTTON      "Cancel",ID_SETTINGS_CANCEL,162,259,50,14
+    PUSHBUTTON      "Cancel",ID_SETTINGS_CANCEL,203,252,50,14
     GROUPBOX        "Game Settings",IDC_STATIC,7,23,261,59
     GROUPBOX        "sc2kfix Settings - QoL / Interface Mods",IDC_STATIC,7,88,261,113
-    CTEXT           "Settings with an asterisk next to them take effect on next game start.",IDC_SETTINGS_HEADER,7,8,261,8
+    CTEXT           "Settings with an asterisk next to them take effect on next game start.  Hover over a setting or button for more details.",IDC_SETTINGS_HEADER,6,8,534,8
     CONTROL         " Continue to play music when the game is in the background (Default: off)",IDC_SETTINGS_CHECK_BKGDMUSIC,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,101,247,10
     CONTROL         " Use grammar-corrected and disambiguated dialog strings (Default: on)",IDC_SETTINGS_CHECK_NEW_STRINGS,
@@ -129,13 +129,16 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,157,247,10
     CONTROL         " *Always start the sc2kfix console on game startup (Default: off)",IDC_SETTINGS_CHECK_CONSOLE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,171,247,10
-    GROUPBOX        "sc2kfix Settings - Gameplay Mods",IDC_STATIC,7,208,261,43
+    GROUPBOX        "sc2kfix Settings - Gameplay Mods",IDC_STATIC,277,23,261,43
     CONTROL         " *Military bases generate revenue (Default: off)",IDC_SETTINGS_CHECK_MILITARY_REVENUE,
-                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,14,221,247,10
+                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,36,247,10
     CONTROL         " *Fully restore partially-implemented ordinances (Default: off)",IDC_SETTINGS_CHECK_FIX_ORDINANCES,
-                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,14,235,247,10
+                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,50,247,10
     CONTROL         " *Check for sc2kfix updates on game startup (Default: on)",IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,185,247,10
+    PUSHBUTTON      "Defaults",ID_SETTINGS_DEFAULTS,293,252,50,14
+    PUSHBUTTON      "Vanilla",ID_SETTINGS_VANILLA,359,252,50,14
+    RTEXT           "sc2kfix version 0.0-dev (tag)",IDC_STATIC_VERSIONINFO,420,262,126,8,WS_DISABLED
 END
 
 103 DIALOGEX 0, 0, 72, 195
@@ -308,9 +311,9 @@ BEGIN
     IDD_SETTINGS, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 268
+        RIGHTMARGIN, 540
         TOPMARGIN, 7
-        BOTTOMMARGIN, 274
+        BOTTOMMARGIN, 265
     END
 
     103, DIALOG
