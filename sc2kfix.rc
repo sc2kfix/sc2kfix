@@ -129,11 +129,11 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,284,35,247,10
     CONTROL         " *Always start the sc2kfix console on game startup (Default: off)",IDC_SETTINGS_CHECK_CONSOLE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,192,247,10
-    GROUPBOX        "Gameplay Mod Settings",IDC_STATIC,277,88,261,55
+    GROUPBOX        "Gameplay Mod Settings",IDC_STATIC,277,88,261,134
     CONTROL         " *Military bases generate revenue (Default: off)",IDC_SETTINGS_CHECK_MILITARY_REVENUE,
                     "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,101,247,10
     CONTROL         " *Fully restore partially-implemented ordinances (Default: off)",IDC_SETTINGS_CHECK_FIX_ORDINANCES,
-                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,115,247,10
+                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,129,247,10
     CONTROL         " *Check for sc2kfix updates on game startup (Default: on)",IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,206,247,10
     PUSHBUTTON      "Defaults",ID_SETTINGS_DEFAULTS,293,252,50,14
@@ -146,6 +146,10 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,284,49,247,10
     CONTROL         " Display city growth in real-time instead of in batches (Default: on)",IDC_SETTINGS_CHECK_REFRESH_RATE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,157,247,10
+    CONTROL         " *Use expanded list of buildings for Army bases (Default: off)",IDC_SETTINGS_CHECK_MILITARY_BUILDINGS,
+                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,115,247,10
+    CONTROL         " *Use rebalanced radioactive decay algorithm (Default: off)",IDC_SETTINGS_CHECK_RADIOACTIVE_DECAY,
+                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,143,247,10
 END
 
 103 DIALOGEX 0, 0, 72, 195

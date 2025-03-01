@@ -254,19 +254,29 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			"This was never implemented, though the negative aspects of military base ownership were. "
 			"This makes military bases in vanilla SimCity 2000 a rather poor mayoral decision.\n\n"
 
-			"Enabling this setting will allow military bases to generate a population based annual income in the form of a stipend from the federal government, "
+			"Enabling this mod will allow military bases to generate a population based annual income in the form of a stipend from the federal government, "
 			"as well as increased commercial demand, both of which scale with the size and type of the base, and may fluctuate depending on military needs and "
 			"base redevelopment efforts.\n\n"
 
 			"Enabling or disabling this setting takes effect after restarting the game.");
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_BUILDINGS),
+			"Army bases in vanilla SimCity 2000 only grow military parking lots and 1x1 military warehouses. This mod allows Army bases to grow Top Secret, "
+			"nondescript military buildings and rotated 1x1 military warehouses.\n\n"
+
+			"Enabling or disabling this setting takes effect after restarting the game.");
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_FIX_ORDINANCES),
 			"Certain ordinances were not fully implemented in SimCity 2000. This setting re-implements certain aspects of them based on information from design "
-			"documents, interviews, and implementations in later games in the series\n\n"
+			"documents, interviews, and implementations in later games in the series.\n\n"
 
-			"When this setting is enabled, the following ordinances gain the following effects:\n"
+			"When this mod is enabled, the following ordinances gain the following effects:\n"
 			" - Parking Fines: Increases mass transit usage and residential demand slightly.\n"
 			" - Free Clinics: Increases life expectancy and reduces hospital demand slightly.\n"
 			" - Junior Sports: Increases life expectancy and commercial demand slightly.\n"
+
+			"Enabling or disabling this setting takes effect after restarting the game.");
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_RADIOACTIVE_DECAY),
+			"The vanilla SimCity 2000 algorithm for radioactive decay an apparent oversight that results in any given month having a 1/21845 chance of a single radioactive "
+			"tile decaying into a clear tile. This mod reworks radioactive decay by ensuring that at least one radioactivity tile will be given a fair chance to decay per month.\n\n"
 
 			"Enabling or disabling this setting takes effect after restarting the game.");
 
