@@ -183,6 +183,11 @@ extern "C" BOOL __stdcall Hook_ShowWindow(HWND hWnd, int nCmdShow) {
 			ShowWindow(hStatusDialog, SW_SHOW);
 		return ShowWindow(hWnd, SW_HIDE);
 	}
+
+	// Workaround for the game window not showing if started by a launcher process
+	if (nCmdShow == 11 && (DWORD)_ReturnAddress() == 0x40586C)
+		return ShowWindow(hWnd, SW_MAXIMIZE);
+
 	return ShowWindow(hWnd, nCmdShow);
 }
 
