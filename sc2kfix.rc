@@ -115,7 +115,7 @@ BEGIN
     CTEXT           "Organization Name",IDC_STATIC,14,59,82,8
     PUSHBUTTON      "Cancel",ID_SETTINGS_CANCEL,203,252,50,14
     GROUPBOX        "Game Settings",IDC_STATIC,7,23,261,59
-    GROUPBOX        "Quality of Life / Performance Settings",IDC_STATIC,7,88,261,134
+    GROUPBOX        "Quality of Life / Performance Settings",IDC_STATIC,7,88,261,86
     CTEXT           "Settings with an asterisk next to them take effect on next game start.  Hover over a setting or button for more details.",IDC_SETTINGS_HEADER,6,8,534,8
     CONTROL         " Continue to play music when the game is in the background (Default: on)",IDC_SETTINGS_CHECK_BKGDMUSIC,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,101,250,10
@@ -150,6 +150,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,115,247,10
     CONTROL         " *Use rebalanced radioactive decay algorithm (Default: off)",IDC_SETTINGS_CHECK_RADIOACTIVE_DECAY,
                     "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,143,247,10
+    GROUPBOX        "sc2kfix Core Settings",IDC_STATIC,7,179,261,43
 END
 
 103 DIALOGEX 0, 0, 72, 195
