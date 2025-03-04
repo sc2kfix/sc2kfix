@@ -1,5 +1,5 @@
 # sc2kfix
-![A GIF of SimCity 2000's palette animations in action.](https://i.imgur.com/DYl508z.gif)
+![A GIF of SimCity 2000's palette animations in action, with the sc2kfix logo overlaid on top of it.](https://i.imgur.com/pHtNuSo.gif)
 
 ## What does this do?
 This is a DLL that patches the Special Edition release of SimCity 2000 for Windows 95 to work properly on modern Windows systems (Windows 7-11 and Wine/Proton) as well as fixing several original game bugs, adding quality of life features, and optionally enabling new gameplay features. While the game itself was always capable of running at high resolutions, oversights in the game's programming and techniques designed for use with 256-colour SVGA cards common in the mid 1990s cause problems with animations on truecolour displays. There are also a number of other bugs in the game ranging from minor rendering issues to major gameplay-damaging bugs that sc2kfix fixes.
@@ -39,5 +39,4 @@ You can configure different aspects of sc2kfix by clicking on the "sc2kfix Setti
 ## To-do/known issues
 * NOTICE: The 1995 CD Collection version of the game is now deprecated. Please use the 1996 Special Edition version of the game going forward to receive the latest updates.
 * 1995 BUG: Clicking the "Load Saved City" option and then canceling the dialog box crashes the game
-* 1995 TODO: Fix animations in SCURK 1995
 * BUG: Something may have changed in Windows 11 24H2 that breaks SCURK's pick-and-place tool; this is being investigated.
