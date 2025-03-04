@@ -20,7 +20,7 @@
 
 UINT updatenotifier_debug = UPDATENOTIFIER_DEBUG;
 
-const char* szGitHubRepoReleases = "https://api.github.com/repos/araxestroy/sc2kfix/releases?per_page=1";
+const char* szGitHubRepoReleases = "https://api.github.com/repos/sc2kfix/sc2kfix/releases?per_page=1";
 const char* szGitHubAPIType[] = { "Accept: application/vnd.github+json", NULL };
 char szLatestRelease[24] = { 0 };
 BOOL bUpdateAvailable = FALSE;
@@ -37,18 +37,18 @@ BOOL UpdaterCheckForUpdates(void) {
 	HINTERNET hInet = InternetOpen("sc2kfix Update Notifier", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, NULL);
 	if (!hInet) {
 		if (updatenotifier_debug)
-			ConsoleLog(LOG_ERROR, "UPD: Couldn't open hInet.\n");
+			ConsoleLog(LOG_ERROR, "UPD:  Couldn't open hInet.\n");
 		return FALSE;
 	}
 
 	if (updatenotifier_debug)
-		ConsoleLog(LOG_DEBUG, "UPD: InternetOpen()\n");
+		ConsoleLog(LOG_DEBUG, "UPD:  InternetOpen()\n");
 
 	DWORD dwTimeoutMilliseconds = 3000;
 	InternetSetOption(hInet, INTERNET_OPTION_CONNECT_TIMEOUT, &dwTimeoutMilliseconds, sizeof(DWORD));
 
 	if (updatenotifier_debug)
-		ConsoleLog(LOG_DEBUG, "UPD: InternetSetOption()\n");
+		ConsoleLog(LOG_DEBUG, "UPD:  InternetSetOption()\n");
 
 #pragma warning(push)
 #pragma warning(disable:6385)
@@ -56,53 +56,53 @@ BOOL UpdaterCheckForUpdates(void) {
 #pragma warning(pop)
 	if (!hHttpRequest) {
 		if (GetLastError() == 12002)
-			ConsoleLog(LOG_WARNING, "Update notifier timed out after 3000 milliseconds.\n");
+			ConsoleLog(LOG_WARNING, "UPD:  Update notifier timed out after 3000 milliseconds.\n");
 		if (updatenotifier_debug)
-			ConsoleLog(LOG_ERROR, "UPD: InternetOpenUrl failed, 0x%08X.\n", GetLastError());
+			ConsoleLog(LOG_ERROR, "UPD:  InternetOpenUrl failed, 0x%08X.\n", GetLastError());
 		return FALSE;
 	}
 
 	if (updatenotifier_debug)
-		ConsoleLog(LOG_DEBUG, "UPD: InternetOpenUrl()\n");
+		ConsoleLog(LOG_DEBUG, "UPD:  InternetOpenUrl()\n");
 
 	DWORD dwBytesGrabbed = 0;
 	char* szBuffer = (char*)malloc(16384);
 	if (!szBuffer) {
 		if (updatenotifier_debug)
-			ConsoleLog(LOG_ERROR, "UPD: Couldn't allocate szBuffer.\n");
+			ConsoleLog(LOG_ERROR, "UPD:  Couldn't allocate szBuffer.\n");
 		return FALSE;
 	}
 
 	if (updatenotifier_debug)
-		ConsoleLog(LOG_DEBUG, "UPD: malloc()\n");
+		ConsoleLog(LOG_DEBUG, "UPD:  malloc()\n");
 
 	if (updatenotifier_debug)
-		ConsoleLog(LOG_DEBUG, "UPD: Bytes to grab: %u\n", 16384);
+		ConsoleLog(LOG_DEBUG, "UPD:  Bytes to grab: %u\n", 16384);
 
 	if (!InternetReadFile(hHttpRequest, szBuffer, 16384, &dwBytesGrabbed)) {
 		if (updatenotifier_debug)
-			ConsoleLog(LOG_ERROR, "UPD: InternetReadFile failed, 0x%08X.\n", GetLastError());
+			ConsoleLog(LOG_ERROR, "UPD:  InternetReadFile failed, 0x%08X.\n", GetLastError());
 		return FALSE;
 	}
 
 	if (updatenotifier_debug)
-		ConsoleLog(LOG_DEBUG, "UPD: InternetReadFile()\n");
+		ConsoleLog(LOG_DEBUG, "UPD:  InternetReadFile()\n");
 
 	InternetCloseHandle(hHttpRequest);
 	InternetCloseHandle(hInet);
 
 	if (updatenotifier_debug)
-		ConsoleLog(LOG_DEBUG, "UPD: InternetCloseHandle()\n");
+		ConsoleLog(LOG_DEBUG, "UPD:  InternetCloseHandle()\n");
 
 	if (updatenotifier_debug)
-		ConsoleLog(LOG_DEBUG, "UPD: Bytes received: %u\n", dwBytesGrabbed);
+		ConsoleLog(LOG_DEBUG, "UPD:  Bytes received: %u\n", dwBytesGrabbed);
 
 	szBuffer[16383] = '\0';
 
 	char* szTagString = strstr(szBuffer, "\"tag_name\"");
 	if (!szTagString) {
 		if (updatenotifier_debug)
-			ConsoleLog(LOG_ERROR, "UPD: No release tag name found (1).\n");
+			ConsoleLog(LOG_ERROR, "UPD:  No release tag name found (1).\n");
 		return FALSE;
 	}
 
@@ -113,15 +113,15 @@ BOOL UpdaterCheckForUpdates(void) {
 	int n = sscanf_s(szThrowaway, "\"tag_name\":\"%s\"", szLatestRelease, 23);
 	if (!*szLatestRelease) {
 		if (updatenotifier_debug)
-			ConsoleLog(LOG_ERROR, "UPD: No release tag name found (2) - scanned %i fields.\n", n);
+			ConsoleLog(LOG_ERROR, "UPD:  No release tag name found (2) - scanned %i fields.\n", n);
 		return FALSE;
 	}
 
 	if (updatenotifier_debug)
-		ConsoleLog(LOG_DEBUG, "UPD: Latest release: %s\n", szLatestRelease);
+		ConsoleLog(LOG_DEBUG, "UPD:  Latest release: %s\n", szLatestRelease);
 
 	if (strcmp(szSC2KFixReleaseTag, szLatestRelease)) {
-		ConsoleLog(LOG_INFO, "New release available: %s (currently running %s)\n", szLatestRelease, szSC2KFixReleaseTag);
+		ConsoleLog(LOG_INFO, "UPD:  New release available: %s (currently running %s)\n", szLatestRelease, szSC2KFixReleaseTag);
 		return TRUE;
 	}
 
