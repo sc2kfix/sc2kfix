@@ -86,6 +86,7 @@
     <None Include="hooks\exports.def" />
     <None Include="hooks\hooks.md" />
     <None Include="README.md" />
+    <None Include="script.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="sc2kfix.rc" />
@@ -97,6 +98,7 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="blobs\goto.bmp" />
+    <Image Include="blobs\topsecret.ico" />
     <Image Include="blobs\weather0.bmp" />
     <Image Include="blobs\weather1.bmp" />
     <Image Include="blobs\weather10.bmp" />

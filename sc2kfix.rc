@@ -454,6 +454,16 @@ IDB_WEATHER11           BITMAP                  "blobs\\weather11.bmp"
 
 IDB_GOTO                BITMAP                  "blobs\\goto.bmp"
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_TOPSECRET           ICON                    "blobs\\topsecret.ico"
+
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 

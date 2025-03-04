@@ -102,6 +102,9 @@
     <None Include="hooks\hooks.md">
       <Filter>Documentation</Filter>
     </None>
+    <None Include="script.md">
+      <Filter>Documentation</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Media Include="blobs\500.wav">
@@ -153,6 +156,9 @@
     </Image>
     <Image Include="blobs\goto.bmp">
       <Filter>Resource Files\BITMAP</Filter>
+    </Image>
+    <Image Include="blobs\topsecret.ico">
+      <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
 </Project>

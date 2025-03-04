@@ -35,7 +35,6 @@
 #define IDC_STATIC_UPDATENOTICE         21023
 #define IDC_SETTINGS_CHECK_TITLE_DATE   21023
 #define IDC_STATIC_TILENAME             21024
-#define IDC_SETTINGS_CHECK_FIX_ORDINANCES2 21024
 #define IDC_SETTINGS_CHECK_RADIOACTIVE_DECAY 21024
 #define IDC_STATIC_TILECOORDS           21025
 #define IDC_STATIC_TILEDATA             21027
@@ -59,12 +58,13 @@
 #define IDB_WEATHER11                   23031
 #define IDB_GOTO                        23032
 #define IDD_ADVANCEDQUERY               23033
+#define IDI_TOPSECRET                   23035
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        23035
+#define _APS_NEXT_RESOURCE_VALUE        23036
 #define _APS_NEXT_COMMAND_VALUE         40002
 #define _APS_NEXT_CONTROL_VALUE         21032
 #define _APS_NEXT_SYMED_VALUE           101

@@ -148,8 +148,15 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             freopen_s(&fdDummy, "CONIN$", "r", stdin);
             freopen_s(&fdDummy, "CONOUT$", "w", stdout);
             freopen_s(&fdDummy, "CONOUT$", "w", stderr);
+
+            // Set the console window icon
+            HWND hConsoleWindow = GetConsoleWindow();
+            SendMessage(hConsoleWindow, WM_SETICON, ICON_BIG, (LPARAM)LoadIcon(hSC2KFixModule, MAKEINTRESOURCE(IDI_TOPSECRET)));
+            SendMessage(hConsoleWindow, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(hSC2KFixModule, MAKEINTRESOURCE(IDI_TOPSECRET)));
         }
 
+        // Print the version banner
+        // Yes, I know, there's no CORE: prefix here. That's intentional. I promise.
         ConsoleLog(LOG_INFO, "sc2kfix version %s started - https://github.com/araxestroy/sc2kfix\n", szSC2KFixVersion);
 #ifdef DEBUGALL
         ConsoleLog(LOG_DEBUG, "CORE: sc2kfix built with DEBUGALL. Strap in.\n");

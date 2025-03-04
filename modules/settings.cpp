@@ -38,7 +38,7 @@ void LoadSettings(void) {
 	LSTATUS lResultRegistration = RegCreateKeyEx(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Registration", NULL, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkeySC2KRegistration, NULL);
 	if (lResultRegistration != ERROR_SUCCESS) {
 		MessageBox(NULL, "Couldn't open registry keys for editing", "sc2kfix error", MB_OK | MB_ICONEXCLAMATION);
-		ConsoleLog(LOG_ERROR, "Couldn't open registry keys for settings load, error = 0x%08X\n", lResultRegistration);
+		ConsoleLog(LOG_ERROR, "CORE: Couldn't open registry keys for settings load, error = 0x%08X\n", lResultRegistration);
 		return;
 	}
 
@@ -54,7 +54,7 @@ void LoadSettings(void) {
 		strcpy_s(szSettingsMayorName, "Marvin Maxis");
 		char* buf;
 		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, retval, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&buf, 0, NULL);
-		ConsoleLog(LOG_WARNING, "Error %s loading mayor name; resetting to default.\n", buf);
+		ConsoleLog(LOG_WARNING, "CORE: Error %s loading mayor name; resetting to default.\n", buf);
 		break;
 	}
 
@@ -66,7 +66,7 @@ void LoadSettings(void) {
 		strcpy_s(szSettingsCompanyName, "Q37 Space Modulator Mfg.");
 		char* buf;
 		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, retval, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&buf, 0, NULL);
-		ConsoleLog(LOG_WARNING, "Error %s loading company name; resetting to default.\n", buf);
+		ConsoleLog(LOG_WARNING, "CORE: Error %s loading company name; resetting to default.\n", buf);
 		break;
 	}
 
@@ -159,7 +159,7 @@ void SaveSettings(void) {
 	LSTATUS lResultRegistration = RegCreateKeyEx(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Registration", NULL, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkeySC2KRegistration, NULL);
 	if (lResultRegistration != ERROR_SUCCESS) {
 		MessageBox(NULL, "Couldn't open registry keys for editing", "sc2kfix error", MB_OK | MB_ICONEXCLAMATION);
-		ConsoleLog(LOG_ERROR, "Couldn't open registry keys for registry check, error = 0x%08X\n", lResultRegistration);
+		ConsoleLog(LOG_ERROR, "CORE: Couldn't open registry keys for registry check, error = 0x%08X\n", lResultRegistration);
 		return;
 	}
 
@@ -186,7 +186,7 @@ void SaveSettings(void) {
 
 	RegSetValueEx(hkeySC2KFix, "bSettingsMilitaryBaseRevenue", NULL, REG_DWORD, (BYTE*)&bSettingsMilitaryBaseRevenue, sizeof(BOOL));
 	RegSetValueEx(hkeySC2KFix, "bSettingsFixOrdinances", NULL, REG_DWORD, (BYTE*)&bSettingsFixOrdinances, sizeof(BOOL));
-	ConsoleLog(LOG_INFO, "Saved sc2kfix settings.\n");
+	ConsoleLog(LOG_INFO, "CORE: Saved sc2kfix settings.\n");
 
 	// Update any hooks we need to.
 	UpdateMiscHooks();
@@ -197,8 +197,8 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 	switch (message) {
 	case WM_INITDIALOG:
 		// Set the dialog box icon
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)LoadIcon(hSC2KAppModule, MAKEINTRESOURCE(1)));
-		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(hSC2KAppModule, MAKEINTRESOURCE(2)));
+		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)LoadIcon(hSC2KFixModule, MAKEINTRESOURCE(IDI_TOPSECRET)));
+		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(hSC2KFixModule, MAKEINTRESOURCE(IDI_TOPSECRET)));
 
 		// Create tooltips.
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, ID_SETTINGS_OK),

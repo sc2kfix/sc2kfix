@@ -163,7 +163,7 @@ HWND ShowStatusDialog(void) {
 
 	hStatusDialog = CreateDialogParam(hSC2KFixModule, MAKEINTRESOURCE(IDD_SIMULATIONSTATUS), (HWND)(CWndMainWindow[7]), StatusDialogProc, NULL);
 	if (!hStatusDialog) {
-		ConsoleLog(LOG_ERROR, "Couldn't create statuss dialog: 0x%08X\n", GetLastError());
+		ConsoleLog(LOG_ERROR, "CORE: Couldn't create status dialog: 0x%08X\n", GetLastError());
 		return NULL;
 	}
 	hwndDesktop = GetDesktopWindow();
