@@ -25,8 +25,9 @@
 #define MISCHOOK_DEBUG_MENU 4
 #define MISCHOOK_DEBUG_SAVES 8
 #define MISCHOOK_DEBUG_WINDOW 16
+#define MISCHOOK_DEBUG_DISASTERS 32
 
-#define MISCHOOK_DEBUG DEBUG_FLAGS_NONE
+#define MISCHOOK_DEBUG MISCHOOK_DEBUG_DISASTERS
 
 #ifdef DEBUGALL
 #undef MISCHOOK_DEBUG
@@ -362,6 +363,16 @@ extern "C" void _declspec(naked) Hook_4315D2(void) {
 	}
 }
 
+extern "C" void _declspec(naked) Hook_SimulationStartDisaster(void) {
+	if (mischook_debug & MISCHOOK_DEBUG_DISASTERS)
+		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> SimulationStartDisaster(), wDisasterType = %u.\n", _ReturnAddress(), wDisasterType);
+
+	__asm {
+		push 0x45CF10
+		retn
+	}
+}
+
 // Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
 // This should probably have a better name. And maybe be broken out into smaller functions.
 void InstallMiscHooks(void) {
@@ -498,6 +509,10 @@ void InstallMiscHooks(void) {
 	VirtualProtect((LPVOID)0x4135D2, 9, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4135D2, Hook_4315D2);
 	memset((LPVOID)0x4135D7, 0x90, 4);
+
+	// Hook SimulationStartDisaster
+	VirtualProtect((LPVOID)0x402527, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402527, Hook_SimulationStartDisaster);
 
 	// Add settings buttons to SC2K's menus
 	hGameMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(3));
