@@ -69,7 +69,8 @@ typedef struct {
 enum {
 	CONSOLE_COMMAND_DOCUMENTED = 0,
 	CONSOLE_COMMAND_UNDOCUMENTED,
-	CONSOLE_COMMAND_ALIAS
+	CONSOLE_COMMAND_ALIAS,
+	CONSOLE_COMMAND_SCRIPTONLY
 };
 
 enum {
@@ -112,6 +113,7 @@ void ConsoleLog(int iLogLevel, const char* fmt, ...);
 int GetTileID(int iTileX, int iTileY);
 const char* GetZoneName(int iZoneID);
 const char* GetLowHighScale(BYTE bScale);
+BOOL FileExists(const char* name);
 
 // Globals etc.
 
@@ -131,7 +133,11 @@ DWORD WINAPI MusicMCINotifyCallback(WPARAM wFlags, LPARAM lDevID);
 
 BOOL WINAPI ConsoleCtrlHandler(DWORD fdwCtrlType);
 DWORD WINAPI ConsoleThread(LPVOID lpParameter);
-BOOL ConsoleEvaluateCommand(const char* szCommandLine);
+BOOL ConsoleEvaluateCommand(const char* szCommandLine, BOOL bInteractive);
+BOOL ConsoleCmdClear(const char* szCommand, const char* szArguments);
+BOOL ConsoleCmdEcho(const char* szCommand, const char* szArguments);
+BOOL ConsoleCmdRun(const char* szCommand, const char* szArguments);
+BOOL ConsoleCmdWait(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdHelp(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowDebug(const char* szCommand, const char* szArguments);

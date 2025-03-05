@@ -1,12 +1,27 @@
-// sc2kfix console.cpp: exactly what it says on the tin
+// sc2kfix console.cpp: sc2kfix console and SX2 interpreter
 // (c) 2025 github.com/araxestroy - released under the MIT license
+
+// Notes: 2025-03-01 (@araxestroy)
+//
+// This might be getting a bit out of hand. We're now implementing a quick-and-dirty scripting
+// language in this console using regexes and C++ strings. It's not great but it seems to work
+// well enough to actually be useful in a few scenarios. I still hate it though.
+//
+// I think I'd rather have a proper Lua implementation but this is good enough for now. It helps
+// with the reverse engineering process and that's what matters to me.
+//
+// I'd say I remember when I used to have standards, but I never have.
 
 #undef UNICODE
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <map>
 #include <mmsystem.h>
+#include <io.h>
+#include <fstream>
+#include <map>
+#include <regex>
+#include <string>
 
 #include <sc2kfix.h>
 #include "../resource.h"
@@ -17,20 +32,114 @@ BOOL bConsoleEnabled = TRUE;
 BOOL bConsoleEnabled = FALSE;
 #endif
 
+typedef struct {
+	int iType;
+	DWORD dwContents;
+} script_variable_t;
+
 HANDLE hConsoleThread;
 char szCmdBuf[256] = { 0 };
 BOOL bConsoleUndocumentedMode = FALSE;
+int iConsoleScriptNest = 0;
+std::map<std::string, script_variable_t> mapVariables;
 
 static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments);
-BOOL ConsoleCmdSettings(const char* szCommand, const char* szArguments);
 
 console_command_t fpConsoleCommands[] = {
 	{ "?", ConsoleCmdHelp, CONSOLE_COMMAND_ALIAS, "" },
+	{ "clear", ConsoleCmdClear, CONSOLE_COMMAND_DOCUMENTED, "Clear all variables" },
+	{ "echo", ConsoleCmdEcho, CONSOLE_COMMAND_DOCUMENTED, "Print to console" },
+	{ "echo!", ConsoleCmdEcho, CONSOLE_COMMAND_UNDOCUMENTED, "Print to console without newline" },
 	{ "help", ConsoleCmdHelp, CONSOLE_COMMAND_DOCUMENTED, "Display this help" },
+	//{ "label", ConsoleCmdLabel, CONSOLE_COMMAND_SCRIPTONLY, "Script label" },
+	{ "run", ConsoleCmdRun, CONSOLE_COMMAND_DOCUMENTED, "Run console script" },
 	{ "set", ConsoleCmdSet, CONSOLE_COMMAND_DOCUMENTED, "Modify game and plugin behaviour" },
 	{ "show", ConsoleCmdShow, CONSOLE_COMMAND_DOCUMENTED, "Display various game and plugin information" },
 	{ "unset", ConsoleCmdSet, CONSOLE_COMMAND_DOCUMENTED, "Modify game and plugin behaviour" },
+	{ "wait", ConsoleCmdWait, CONSOLE_COMMAND_UNDOCUMENTED, "Wait for a number of milliseconds" },
 };
+
+void ConsoleScriptSleep(DWORD dwMilliseconds) {
+	int i = dwMilliseconds / 100;
+	do {
+		if (!iConsoleScriptNest)
+			return;
+		Sleep(100);
+		i--;
+	} while (i);
+}
+
+BOOL ConsoleCmdLabel(const char* szCommand, const char* szArguments) {
+	if (!szArguments || !*szArguments)
+		return FALSE;
+}
+
+// COMMAND: run ...
+
+BOOL ConsoleCmdRun(const char* szCommand, const char* szArguments) {
+	std::string strPossibleScriptName;
+	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
+		printf("  run <filename>   Executes a file as a series of console commands\n");
+		return TRUE;
+	}
+
+	// Try to find the script we want
+	strPossibleScriptName = szArguments;
+	if (!FileExists(strPossibleScriptName.c_str())) {
+		strPossibleScriptName += ".sx2";
+		if (!FileExists(strPossibleScriptName.c_str())) {
+			ConsoleLog(LOG_ERROR, "CORE: Couldn't find script %s.\n", szArguments);
+			return TRUE;
+		}
+	}
+
+	// Iterate through the script and run lines until they fail
+	std::ifstream fsScriptFile(strPossibleScriptName);
+	std::string strScriptLine;
+	int i = 1;
+	iConsoleScriptNest++;
+	while (std::getline(fsScriptFile, strScriptLine)) {
+		if (!ConsoleEvaluateCommand(strScriptLine.c_str(), FALSE) || !iConsoleScriptNest) {
+			ConsoleLog(LOG_ERROR, "CORE: Script %s aborted on line %d.\n", strPossibleScriptName.c_str(), i);
+			return TRUE;
+		}
+
+		// We survived!
+		i++;
+	}
+
+	// Decrement the nesting count and break	
+	iConsoleScriptNest--;
+	return TRUE;
+}
+
+BOOL ConsoleCmdClear(const char* szCommand, const char* szArguments) {
+	mapVariables.clear();
+	if (!iConsoleScriptNest)
+		printf("Variable map cleared.\n");
+	return TRUE;
+}
+
+BOOL ConsoleCmdEcho(const char* szCommand, const char* szArguments) {
+	printf("%s%s", szArguments, (!strcmp(szCommand, "echo!") ? "" : "\n"));
+	return TRUE;
+}
+
+BOOL ConsoleCmdWait(const char* szCommand, const char* szArguments) {
+	int iMilliseconds = 0;
+
+	// Function only valid in script mode
+	if (!iConsoleScriptNest)
+		return FALSE;
+
+	// Sleep for N milliseconds
+	if (!sscanf_s(szArguments, "%d", &iMilliseconds)) {
+		ConsoleLog(LOG_ERROR, "CORE: Bad argument to `wait`.\n");
+		return FALSE;
+	}
+	ConsoleScriptSleep(iMilliseconds);
+	return TRUE;
+}
 
 // COMMMAND: help / ?
 
@@ -39,26 +148,19 @@ BOOL ConsoleCmdHelp(const char* szCommand, const char* szArguments) {
 	size_t uLongestCommand = 0;
 
 	for (size_t i = 0; i < sizeof(fpConsoleCommands) / sizeof(console_command_t); i++)
-		if (strlen(fpConsoleCommands[i].szCommand) > uLongestCommand && (fpConsoleCommands[i].iUndocumented || (bConsoleUndocumentedMode && fpConsoleCommands[i].iUndocumented != CONSOLE_COMMAND_ALIAS)))
+		if (strlen(fpConsoleCommands[i].szCommand) > uLongestCommand && (fpConsoleCommands[i].iUndocumented || (bConsoleUndocumentedMode && fpConsoleCommands[i].iUndocumented < CONSOLE_COMMAND_ALIAS)))
 			uLongestCommand = strlen(fpConsoleCommands[i].szCommand);
 
 	uLongestCommand += 6;
 
 	for (size_t i = 0; i < sizeof(fpConsoleCommands) / sizeof(console_command_t); i++)
-		if (!fpConsoleCommands[i].iUndocumented || (bConsoleUndocumentedMode && fpConsoleCommands[i].iUndocumented != CONSOLE_COMMAND_ALIAS))
+		if (!fpConsoleCommands[i].iUndocumented || (bConsoleUndocumentedMode && fpConsoleCommands[i].iUndocumented < CONSOLE_COMMAND_ALIAS))
 			printf(" %c%-*s%s\n", (fpConsoleCommands[i].iUndocumented == CONSOLE_COMMAND_UNDOCUMENTED ? '*' : ' '), (int)uLongestCommand, fpConsoleCommands[i].szCommand, fpConsoleCommands[i].szDescription);
 
 	return TRUE;
 }
 
 // COMMAND: show [...]
-
-// COMMAND: settings
-
-BOOL ConsoleCmdSettings(const char* szCommand, const char* szArguments) {
-	DialogBox(hSC2KFixModule, MAKEINTRESOURCE(IDD_SETTINGS), NULL, SettingsDialogProc);
-	return TRUE;
-}
 
 BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
@@ -161,7 +263,7 @@ BOOL ConsoleCmdShowMemory(const char* szCommand, const char* szArguments) {
 		return TRUE;
 	}
 	__except (EXCEPTION_EXECUTE_HANDLER) {
-		ConsoleLog(LOG_ERROR, "Segmentation fault caught. Don't do that again.\n");
+		ConsoleLog(LOG_ERROR, "CORE: Segmentation fault caught. Don't do that again.\n");
 		return TRUE;
 	}
 
@@ -498,7 +600,7 @@ DWORD WINAPI ConsoleThread(LPVOID lpParameter) {
 			printf("> ");
 
 		gets_s(szCmdBuf, 256);
-		if (!ConsoleEvaluateCommand(szCmdBuf))
+		if (!ConsoleEvaluateCommand(szCmdBuf, TRUE))
 			printf("Invalid command.\n");
 	}
 }
@@ -506,13 +608,18 @@ DWORD WINAPI ConsoleThread(LPVOID lpParameter) {
 BOOL WINAPI ConsoleCtrlHandler(DWORD fdwCtrlType) {
 	switch (fdwCtrlType) {
 	case CTRL_C_EVENT:
-		// TODO - reset the console input handler somehow
+		if (iConsoleScriptNest)
+			printf("\nScript halted due to Control-C interrupt.\n\n");
+		iConsoleScriptNest = 0;
 		return TRUE;
 	}
 	return FALSE;
 }
 
-BOOL ConsoleEvaluateCommand(const char* szCommandLine) {
+BOOL ConsoleEvaluateCommand(const char* szCommandLine, BOOL bInteractive) {
+	if (*szCommandLine == '\r' || *szCommandLine == '\n' || !*szCommandLine)
+		return TRUE;
+
 	size_t uCmdLen = strchr(szCommandLine, ' ') - szCommandLine;
 	const char* szArguments = "";
 	if (!strchr(szCommandLine, ' '))
@@ -524,13 +631,13 @@ BOOL ConsoleEvaluateCommand(const char* szCommandLine) {
 		if (uCmdLen != strlen(fpConsoleCommands[i].szCommand))
 			continue;
 		if (!memcmp(szCommandLine, fpConsoleCommands[i].szCommand, uCmdLen)) {
+			if (bInteractive && fpConsoleCommands[i].iUndocumented == CONSOLE_COMMAND_SCRIPTONLY)
+				return FALSE;
+
 			BOOL bRetval = fpConsoleCommands[i].fpProc(fpConsoleCommands[i].szCommand, szArguments);
 			return bRetval;
 		}
 	}
-
-	if (!*szCommandLine)
-		return TRUE;
 
 	return FALSE;
 }

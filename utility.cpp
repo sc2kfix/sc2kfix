@@ -136,3 +136,12 @@ const char* GetLowHighScale(BYTE bScale) {
 		return "High";
 	return "Very High";
 }
+
+BOOL FileExists(const char* name) {
+	FILE* fdTest;
+	if (!fopen_s(&fdTest, name, "r")) {
+		fclose(fdTest);
+		return TRUE;
+	}
+	return FALSE;
+}
