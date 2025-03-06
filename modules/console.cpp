@@ -1,5 +1,5 @@
 // sc2kfix console.cpp: sc2kfix console and SX2 interpreter
-// (c) 2025 github.com/araxestroy - released under the MIT license
+// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 // Notes: 2025-03-01 (@araxestroy)
 //
@@ -228,9 +228,8 @@ BOOL ConsoleCmdShowMemory(const char* szCommand, const char* szArguments) {
 		printf(
 			"Usage:\n"
 			"  show memory <address> [operand_size] [range_size]\n"
-			"\n"
 			"    <address>: Address in hexadecimal\n"
-			"    [operand_size]: Optional, one of: { byte, word, dword, range }\n"
+			"    [operand_size]: Optional, one of: { byte, word, dword, range } (default dword)\n"
 			"    [range_size]: Size of range if operand_size is \"range\" (default 16)\n");
 		return TRUE;
 	}
@@ -491,7 +490,7 @@ BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments) {
 	}
 
 	printf(
-		"sc2kfix version %s - https://github.com/araxestroy/sc2kfix\n"
+		"sc2kfix version %s - https://sc2kfix.net\n"
 		"Plugin build info: %s\n"
 		"SimCity 2000 version: %s\n"
 		"Plugin loaded at 0x%08X\n"
