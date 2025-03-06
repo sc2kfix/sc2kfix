@@ -11,6 +11,9 @@
 //
 // I'm usually a C guy.
 
+// Do you want documentation? Because we've got documentation!
+// Check it out here: https://wiki.sc2kfix.net/Known_global_variables
+
 #pragma once
 
 #ifdef GAMEOFF_IMPL
@@ -724,33 +727,68 @@ typedef struct {
 
 // Pointers
 
+GAMEOFF(void*,	pCwndMainWindow,			0x4C702C)
+GAMEOFF(BOOL,	bPriscillaActivated,		0x4C7104)
 GAMEOFF(BOOL,	bOptionsMusicEnabled,		0x4C71F0)
 GAMEOFF(WORD,	wSimulationSpeed,			0x4C7318)
+GAMEOFF(WORD,	wViewRotation,				0x4C942C)
+GAMEOFF(DWORD,	dwArcologyPopulation,		0x4C94C4)
+GAMEOFF(WORD,	wNationalEconomyTrend,		0x4CA1BC)
+GAMEOFF(WORD,	wCityNeighborConnections1500,	0x4CA3F0)
+GAMEOFF(WORD,	wSubwayXUNDCount,			0x4CA41C)
 GAMEOFF(WORD,	wDisasterType,				0x4CA420)
-GAMEOFF(DWORD,	dwCityLandValue,			0x4CA440)
-GAMEOFF(DWORD,	dwCityFunds,				0x4CA444)
-GAMEOFF_ARR(WORD, dwTileCount,				0x4CA4C8)
+GAMEOFF(WORD,	wCityMode,					0x4CA42C)
+GAMEOFF(int,	dwCityLandValue,			0x4CA440)
+GAMEOFF(int,	dwCityFunds,				0x4CA444)
+GAMEOFF_ARR(WORD, dwTileCount,				0x4CA4C8)		// WORD dwTileCount[256]
+GAMEOFF(DWORD,	dwCityValue,				0x4CA4D0)
 GAMEOFF(WORD,	wCityStartYear,				0x4CA5F4)
 GAMEOFF(short,	wWaterLevel,				0x4CA818)
+GAMEOFF(WORD,	wMonsterXTHGIndex,			0x4CA81C)
+GAMEOFF(DWORD,	dwNationalPopulation,		0x4CA928)
+GAMEOFF(WORD*,	dwMilitaryTiles,			0x4CA934)
+GAMEOFF(WORD,	wMilitaryTiles,				0x4CA938)
+GAMEOFF(DWORD,	dwCityOrdinances,			0x4CAA40)
+GAMEOFF(DWORD,	dwPowerUsedPercentage,		0x4CAA50)
 GAMEOFF(DWORD,	dwCityPopulation,			0x4CAA74)
-GAMEOFF(DWORD,	dwInScenario,				0x4CAD44)
-GAMEOFF_ARR(neighbor_city_t, stNeighborCities, 0x4CAD58)	// stNeighborCities[4]
+GAMEOFF(BOOL,	bYearEndFlag,				0x4CAD2C)
+GAMEOFF(BOOL,	bInScenario,				0x4CAD44)
+GAMEOFF_ARR(neighbor_city_t, stNeighborCities, 0x4CAD58)	// neighbor_city_t stNeighborCities[4]
+GAMEOFF(BYTE,	bWeatherHeat,				0x4CADE0)
 GAMEOFF(DWORD,	dwCityDays,					0x4CAE04)
+GAMEOFF(BYTE,	bWeatherWind,				0x4CAE0C)
 GAMEOFF(WORD,	wCityProgression,			0x4CB010)
+GAMEOFF(DWORD,	dwNationalValue,			0x4CB014)
+GAMEOFF(DWORD,	dwCityAdvertising,			0x4CB018)
 GAMEOFF(WORD,	wCityCurrentMonth,			0x4CB01C)
 GAMEOFF(WORD,	wCityElapsedYears,			0x4CB020)
 GAMEOFF_ARR(sprite_header_t*, pArrSpriteHeaders, 0x4CB1B8)
-GAMEOFF(microsim_t*, pMicrosimArr,			0x4CB3EC)
-GAMEOFF(DWORD,	dwNewspaperSubscription,	0x4CB3D0)
+GAMEOFF(BOOL,	bNewspaperSubscription,		0x4CB3D0)
+GAMEOFF(BYTE,	bWeatherHumidity,			0x4CB3D4)
 GAMEOFF(WORD,	wCityCurrentSeason,			0x4CB3E8)
+GAMEOFF(microsim_t*, pMicrosimArr,			0x4CB3EC)
 GAMEOFF(WORD,	wCityDifficulty,			0x4CB404)
 GAMEOFF(BYTE,	bWeatherTrend,				0x4CB40C)
 GAMEOFF_ARR(WORD,	wCityInventionYears,	0x4CB430)
-GAMEOFF(DWORD,	dwNewspaperExtra,			0x4CC4BC)
-GAMEOFF(BOOL,	dwNoDisasters,				0x4CC4D4)
+GAMEOFF(DWORD,	dwCityCrime,				0x4CB454)
+GAMEOFF(WORD,	wCurrentToolGroup,			0x4CB464)
+GAMEOFF(DWORD,	dwWaterUsedPercentage,		0x4CC4B8)
+GAMEOFF(BOOL,	bNewspaperExtra,			0x4CC4BC)
+GAMEOFF(void*,	dwBudgetArr,				0x4CC4CC)		// Needs reverse engineering. See wiki.
+GAMEOFF(BOOL,	bNoDisasters,				0x4CC4D4)
+GAMEOFF(WORD,	wCityNeighborConnections1000,	0x4CC4D8)
 GAMEOFF(BYTE,	bMilitaryBaseType,			0x4CC4E4)
+GAMEOFF(WORD,	wCityResidentialDemand,		0x4CC8F8)
+GAMEOFF(WORD,	wCityCommericalDemand,		0x4CC8FA)
+GAMEOFF(WORD,	wCityIndustrialDemand,		0x4CC8FC)
 GAMEOFF(int,	dwCityBonds,				0x4CC4E8)
-GAMEOFF(DWORD,	dwPRNGState,				0x4CDB80)
+GAMEOFF(DWORD,	dwCityPollution,			0x4CC910)		// Needs reverse engineering. See wiki.
+GAMEOFF(DWORD,	dwLFSRState,				0x4CDB7C)
+GAMEOFF(DWORD,	dwLCGState,					0x4CDB80)
+GAMEOFF(void*,	pCWinApp,					0x4CE8C0)
+
+// XXX - I think these ones aren't in BSS? I forget why I separated these out.
+// They'll go on the wiki as soon as I remember what the hell they do.
 GAMEOFF(DWORD,	dwSimulationSubtickCounter,	0x4E63D8)
 GAMEOFF_ARR(DWORD, dwCityProgressionRequirements, 0x4E6984)
 GAMEOFF(DWORD,	dwNextRefocusSongID,		0x4E6F8C)
@@ -758,9 +796,7 @@ GAMEOFF_ARR(DWORD, dwZoneNameStringIDs,		0x4E7140)
 GAMEOFF_ARR(DWORD, dwCityNoticeStringIDs,	0x4E98B8)
 GAMEOFF(DWORD,	dwCityRewardsUnlocked,		0x4E9A24)
 
-// hic sunt dracones
-GAMEOFF(void*, pCwndMainWindow, 0x4C702C)
-
+// TODO - figure out why I made this one work this way
 #ifdef GAMEOFF_IMPL
 char* pszCityName = (char*)0x4CA1A0;
 #else
@@ -784,8 +820,16 @@ GAMEOFF_ARR(map_mini64_t*,	dwMapXPLT,	0x4CA828)
 GAMEOFF_ARR(map_mini64_t*,	dwMapXTRF,	0x4CA940)
 GAMEOFF_ARR(map_mini64_t*,	dwMapXVAL,	0x4CB0A8)
 
+// 32x32
+GAMEOFF_ARR(map_mini32_t*,	dwMapXPLC,	0x4C9430)
+GAMEOFF_ARR(map_mini32_t*,	dwMapXPOP,	0x4CA448)
+GAMEOFF_ARR(map_mini32_t*,	dwMapXFIR,	0x4CAA78)
+GAMEOFF_ARR(map_mini32_t*,	dwMapXROG,	0x4CB028)
+
 // totally different
 GAMEOFF_ARR(map_XLAB_t*,	dwMapXLAB,	0x4CA198)
+GAMEOFF_ARR(map_XTHG_t*,	dwMapXTHG,	0x4CA434)
+GAMEOFF(void*,				dwMapXGRP,	0x4CC470)
 
 static inline const char* GetXLABEntry(int iLabelID) {
 	return (*dwMapXLAB + iLabelID)->szLabel;
