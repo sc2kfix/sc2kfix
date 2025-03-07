@@ -50,7 +50,9 @@ char szCurrentMonthDay[24] = { 0 };
 const char* szMonthNames[12] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
 
 static void AdjustDefDataPathDrive() {
-	const char *temp = GetSetGoodiesPath();
+	// Let's get the drive letter from
+	// the movies path.
+	const char *temp = GetSetMoviesPath();
 	if (!temp)
 		return;
 	def_data_path[0] = temp[0];
@@ -64,7 +66,7 @@ static const char *AdjustSource(char *buf, const char *path) {
 	}
 
 	char temp[MAX_PATH+1];
-	const char *ptemp = GetSetGoodiesPath();
+	const char *ptemp = GetSetMoviesPath();
 	if (!ptemp) {
 		return path;
 	}
@@ -75,6 +77,9 @@ static const char *AdjustSource(char *buf, const char *path) {
 
 	strcpy_s(buf, MAX_PATH, ptemp);
 	strcat_s(buf, MAX_PATH, temp);
+
+	if (mischook_debug & MISCHOOK_DEBUG_OTHER)
+		ConsoleLog(LOG_DEBUG, "File: 0x%08X -> Adjustment - %s -> %s\n", _ReturnAddress(), path, buf);
 
 	return buf;
 }

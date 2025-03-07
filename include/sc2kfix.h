@@ -12,10 +12,10 @@
 #include <sc2k_1996.h>
 
 // Turning this on enables every debugging option. You have been warned.
-// #define DEBUGALL
+#define DEBUGALL
 
 // Turning this on forces the console to be enabled, as if -console was passed to SIMCITY.EXE.
-// #define CONSOLE_ENABLED
+#define CONSOLE_ENABLED
 
 #define SC2KVERSION_UNKNOWN 0
 #define SC2KVERSION_1995    1
@@ -106,7 +106,7 @@ extern BOOL bSettingsFixOrdinances;
 
 // Path functions (from registry area)
 
-const char *GetSetGoodiesPath();
+const char *GetSetMoviesPath();
 
 // Utility functions
 

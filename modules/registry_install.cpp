@@ -13,9 +13,10 @@
 
 char szSC2KPath[MAX_PATH];
 char szSC2KGoodiesPath[MAX_PATH];
+char szSC2KMoviesPath[MAX_PATH];
 
-const char *GetSetGoodiesPath() {
-	return szSC2KGoodiesPath;
+const char *GetSetMoviesPath() {
+	return szSC2KMoviesPath;
 }
 
 BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -71,11 +72,11 @@ BOOL DoRegistryCheckAndInstall(void) {
 
 		// Generate paths
 		char szSC2KExePath[MAX_PATH] = { 0 };
-		char szSC2KPaths[9][MAX_PATH];
+		char szSC2KPaths[10][MAX_PATH];
 		GetModuleFileNameEx(GetCurrentProcess(), NULL, szSC2KExePath, MAX_PATH);
 		PathRemoveFileSpecA(szSC2KExePath);
 		
-		for (int i = 0; i < 9; i++)
+		for (int i = 0; i < 10; i++)
 			strcpy_s(szSC2KPaths[i], MAX_PATH, szSC2KExePath);
 
 		strcat_s(szSC2KPaths[0], MAX_PATH, "\\CITIES");
@@ -87,8 +88,9 @@ BOOL DoRegistryCheckAndInstall(void) {
 		strcat_s(szSC2KPaths[6], MAX_PATH, "\\CITIES");
 		strcat_s(szSC2KPaths[7], MAX_PATH, "\\SCENARIO");
 		strcat_s(szSC2KPaths[8], MAX_PATH, "\\SCURKART");
+		strcat_s(szSC2KPaths[9], MAX_PATH, "\\Movies");
 
-		strcpy_s(szSC2KGoodiesPath, MAX_PATH, szSC2KPaths[2]);
+		strcpy_s(szSC2KMoviesPath, MAX_PATH, szSC2KPaths[9]);
 
 		// Write paths
 		HKEY hkeySC2KPaths;
@@ -102,6 +104,7 @@ BOOL DoRegistryCheckAndInstall(void) {
 		RegSetValueEx(hkeySC2KPaths, "SaveGame", NULL, REG_SZ, (BYTE*)szSC2KPaths[6], strlen(szSC2KPaths[6]) + 1);
 		RegSetValueEx(hkeySC2KPaths, "Scenarios", NULL, REG_SZ, (BYTE*)szSC2KPaths[7], strlen(szSC2KPaths[7]) + 1);
 		RegSetValueEx(hkeySC2KPaths, "TileSets", NULL, REG_SZ, (BYTE*)szSC2KPaths[8], strlen(szSC2KPaths[8]) + 1);
+		RegSetValueEx(hkeySC2KPaths, "Movies", NULL, REG_SZ, (BYTE*)szSC2KPaths[9], strlen(szSC2KPaths[9]) + 1);
 
 		// Write version info
 		HKEY hkeySC2KVersion;
@@ -139,8 +142,8 @@ BOOL DoRegistryCheckAndInstall(void) {
 			return FALSE;
 		}
 
-		DWORD dwSC2KGoodiesPathSize = MAX_PATH + 1;
-		LSTATUS retval = RegGetValue(hkeySC2KPaths, NULL, "Goodies", RRF_RT_REG_SZ, NULL, szSC2KGoodiesPath, &dwSC2KGoodiesPathSize);
+		DWORD dwSC2KMoviesPathSize = MAX_PATH;
+		LSTATUS retval = RegGetValue(hkeySC2KPaths, NULL, "Movies", RRF_RT_REG_SZ, NULL, szSC2KMoviesPath, &dwSC2KMoviesPathSize);
 		switch (retval) {
 		case ERROR_SUCCESS:
 			break;
@@ -150,12 +153,15 @@ BOOL DoRegistryCheckAndInstall(void) {
 			GetModuleFileNameEx(GetCurrentProcess(), NULL, szSC2KExePath, MAX_PATH);
 			PathRemoveFileSpecA(szSC2KExePath);
 
-			strcpy_s(szSC2KGoodiesPath, szSC2KExePath);
-			strcat_s(szSC2KGoodiesPath, MAX_PATH, "\\GOODIES");
+			strcpy_s(szSC2KMoviesPath, szSC2KExePath);
+			strcat_s(szSC2KMoviesPath, MAX_PATH, "\\MOVIES");
+
+			RegSetValueEx(hkeySC2KPaths, "Movies", NULL, REG_SZ, (BYTE*)szSC2KMoviesPath, strlen(szSC2KMoviesPath) + 1);
 
 			char* buf;
 			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, retval, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&buf, 0, NULL);
-			ConsoleLog(LOG_WARNING, "CORE: Error %s loading 'Goodies' path; resetting to default.\n", buf);
+			ConsoleLog(LOG_WARNING, "CORE: Error loading 'Goodies' path; resetting to default. Reg: %s", buf); // The lack of the newline is deliberate.
+
 			break;
 		}
 	}
