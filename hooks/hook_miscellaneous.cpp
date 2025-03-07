@@ -58,6 +58,8 @@ static void AdjustDefDataPathDrive() {
 	def_data_path[0] = temp[0];
 }
 
+// Reference and inspiration for this comes from the separate
+// 'simcity-noinstall' project.
 static const char *AdjustSource(char *buf, const char *path) {
 	int plen = strlen(path);
 	int flen = strlen(def_data_path);
