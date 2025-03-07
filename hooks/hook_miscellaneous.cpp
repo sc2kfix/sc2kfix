@@ -49,17 +49,61 @@ char szTempMayorName[24] = { 0 };
 char szCurrentMonthDay[24] = { 0 };
 const char* szMonthNames[12] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
 
+static void AdjustDefDataPathDrive() {
+	const char *temp = GetSetGoodiesPath();
+	if (!temp)
+		return;
+	def_data_path[0] = temp[0];
+}
+
+static const char *AdjustSource(char *buf, const char *path) {
+	int plen = strlen(path);
+	int flen = strlen(def_data_path);
+	if (plen <= flen || _strnicmp(def_data_path, path, flen) != 0) {
+		return path;
+	}
+
+	char temp[MAX_PATH+1];
+	const char *ptemp = GetSetGoodiesPath();
+	if (!ptemp) {
+		return path;
+	}
+
+	memset(temp, 0, sizeof(temp));
+
+	strcpy_s(temp, MAX_PATH, path + (flen - 1));
+
+	strcpy_s(buf, MAX_PATH, ptemp);
+	strcat_s(buf, MAX_PATH, temp);
+
+	return buf;
+}
+
 extern "C" HANDLE __stdcall Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
 	LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {
 	if (mischook_debug & MISCHOOK_DEBUG_OTHER)
 		ConsoleLog(LOG_DEBUG, "File:  0x%08X -> CreateFileA(%s, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X)\n", _ReturnAddress(), lpFileName,
 			dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+	if ((DWORD)_ReturnAddress() == 0x4A8A90) {
+		char buf[MAX_PATH+1];
+
+		memset(buf, 0, sizeof(buf));
+
+		return CreateFileA(AdjustSource(buf, lpFileName), dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+	}
 	return CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 }
 
 extern "C" HANDLE __stdcall Hook_FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData) {
 	if (mischook_debug & MISCHOOK_DEBUG_OTHER)
 		ConsoleLog(LOG_DEBUG, "File:  0x%08X -> FindFirstFileA(%s, 0x%08X)\n", _ReturnAddress(), lpFileName, lpFindFileData);
+	if ((DWORD)_ReturnAddress() == 0x4A8A90) {
+		char buf[MAX_PATH+1];
+
+		memset(buf, 0, sizeof(buf));
+
+		return FindFirstFileA(AdjustSource(buf, lpFileName), lpFindFileData);
+	}
 	return FindFirstFileA(lpFileName, lpFindFileData);
 }
 
@@ -402,6 +446,8 @@ extern "C" int __cdecl Hook_SimulationPrepareDisaster(DWORD* a1, __int16 a2, __i
 // Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
 // This should probably have a better name. And maybe be broken out into smaller functions.
 void InstallMiscHooks(void) {
+
+	AdjustDefDataPathDrive();
 
 	// Install CreateFileA hook
 	*(DWORD*)(0x4EFADC) = (DWORD)Hook_CreateFileA;

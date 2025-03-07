@@ -104,6 +104,10 @@ extern BOOL bSettingsUseNewStrings;
 extern BOOL bSettingsMilitaryBaseRevenue;
 extern BOOL bSettingsFixOrdinances;
 
+// Path functions (from registry area)
+
+const char *GetSetGoodiesPath();
+
 // Utility functions
 
 void CenterDialogBox(HWND hwndDlg);

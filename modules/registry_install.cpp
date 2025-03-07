@@ -14,6 +14,10 @@
 char szSC2KPath[MAX_PATH];
 char szSC2KGoodiesPath[MAX_PATH];
 
+const char *GetSetGoodiesPath() {
+	return szSC2KGoodiesPath;
+}
+
 BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 	case WM_INITDIALOG:
@@ -84,6 +88,8 @@ BOOL DoRegistryCheckAndInstall(void) {
 		strcat_s(szSC2KPaths[7], MAX_PATH, "\\SCENARIO");
 		strcat_s(szSC2KPaths[8], MAX_PATH, "\\SCURKART");
 
+		strcpy_s(szSC2KGoodiesPath, MAX_PATH, szSC2KPaths[2]);
+
 		// Write paths
 		HKEY hkeySC2KPaths;
 		RegCreateKeyEx(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Paths", NULL, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkeySC2KPaths, NULL);
@@ -124,6 +130,34 @@ BOOL DoRegistryCheckAndInstall(void) {
 
 		// Signal that we had to fake an install.
 		return TRUE;
+	} else {
+		HKEY hkeySC2KPaths;
+		LRESULT lResultPaths = RegCreateKeyEx(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Paths", NULL, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkeySC2KPaths, NULL);
+		if (lResultPaths != ERROR_SUCCESS) {
+			MessageBox(NULL, "Couldn't open path registry keys for editing", "sc2kfix error", MB_OK | MB_ICONEXCLAMATION);
+			ConsoleLog(LOG_ERROR, "CORE: Couldn't open path registry keys for load, error = 0x%08X\n", lResultPaths);
+			return FALSE;
+		}
+
+		DWORD dwSC2KGoodiesPathSize = MAX_PATH + 1;
+		LSTATUS retval = RegGetValue(hkeySC2KPaths, NULL, "Goodies", RRF_RT_REG_SZ, NULL, szSC2KGoodiesPath, &dwSC2KGoodiesPathSize);
+		switch (retval) {
+		case ERROR_SUCCESS:
+			break;
+		default:
+			// Generate paths
+			char szSC2KExePath[MAX_PATH] = { 0 };
+			GetModuleFileNameEx(GetCurrentProcess(), NULL, szSC2KExePath, MAX_PATH);
+			PathRemoveFileSpecA(szSC2KExePath);
+
+			strcpy_s(szSC2KGoodiesPath, szSC2KExePath);
+			strcat_s(szSC2KGoodiesPath, MAX_PATH, "\\GOODIES");
+
+			char* buf;
+			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, retval, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&buf, 0, NULL);
+			ConsoleLog(LOG_WARNING, "CORE: Error %s loading 'Goodies' path; resetting to default.\n", buf);
+			break;
+		}
 	}
 	return FALSE;
 }
