@@ -1,5 +1,5 @@
 // sc2kfix sc2k_1996.h: defines specific to the 1996 Special Edition version
-// (c) 2025 github.com/araxestroy - released under the MIT license
+// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 // !!! HIC SUNT DRACONES !!!
 // This is basically a live interface to a bunch of the reverse engineering I've done. Some of it
@@ -483,7 +483,7 @@ enum {
 	XTHG_CARGO_SHIP,
 	XTHG_BULLDOZER,
 	XTHG_MONSTER,
-	XTHG_UNKNOWN_2,
+	XTHG_EXPLOSION,
 	XTHG_DEPLOY_POLICE,
 	XTHG_DEPLOY_FIRE,
 	XTHG_SAILBOAT,

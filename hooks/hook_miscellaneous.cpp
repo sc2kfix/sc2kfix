@@ -1,5 +1,5 @@
 // sc2kfix hooks/hook_miscellaneous.cpp: miscellaneous hooks to be injected
-// (c) 2025 github.com/araxestroy - released under the MIT license
+// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 // !!! HIC SUNT DRACONES !!!
 // This is where I test a bunch of stuff live to cross reference what I think is going on in the
@@ -27,7 +27,7 @@
 #define MISCHOOK_DEBUG_WINDOW 16
 #define MISCHOOK_DEBUG_DISASTERS 32
 
-#define MISCHOOK_DEBUG MISCHOOK_DEBUG_DISASTERS
+#define MISCHOOK_DEBUG DEBUG_FLAGS_NONE
 
 #ifdef DEBUGALL
 #undef MISCHOOK_DEBUG
@@ -373,6 +373,16 @@ extern "C" void _declspec(naked) Hook_SimulationStartDisaster(void) {
 	}
 }
 
+extern "C" int __cdecl Hook_SimulationPrepareDisaster(DWORD* a1, __int16 a2, __int16 a3) {
+	if (mischook_debug & MISCHOOK_DEBUG_DISASTERS)
+		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> SimulationPrepareDisaster(0x%08X, %i, %i).\n", _ReturnAddress(), a1, a2, a3);
+
+	a1[0] = a2;
+	a1[1] = a3;
+
+	return a2;
+}
+
 // Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
 // This should probably have a better name. And maybe be broken out into smaller functions.
 void InstallMiscHooks(void) {
@@ -513,6 +523,10 @@ void InstallMiscHooks(void) {
 	// Hook SimulationStartDisaster
 	VirtualProtect((LPVOID)0x402527, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402527, Hook_SimulationStartDisaster);
+
+	// Hook SimulationPrepareDisaster
+	VirtualProtect((LPVOID)0x40174E, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x40174E, Hook_SimulationPrepareDisaster);
 
 	// Add settings buttons to SC2K's menus
 	hGameMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(3));
