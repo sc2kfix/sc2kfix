@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Release|Win32">
@@ -62,6 +62,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\sc2kfix.h" />
+    <ClInclude Include="include\smk.h" />
     <ClInclude Include="include\winmm_exports.h" />
     <ClInclude Include="include\sc2k_1996.h" />
     <ClInclude Include="resource.h" />
@@ -80,6 +81,7 @@
     <ClCompile Include="modules\settings.cpp" />
     <ClCompile Include="modules\status_dialog.cpp" />
     <ClCompile Include="modules\update_notifier.cpp" />
+    <ClCompile Include="smk.cpp" />
     <ClCompile Include="utility.cpp" />
   </ItemGroup>
   <ItemGroup>

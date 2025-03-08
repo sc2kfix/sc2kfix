@@ -26,6 +26,8 @@
 #define MISCHOOK_DEBUG_SAVES 8
 #define MISCHOOK_DEBUG_WINDOW 16
 #define MISCHOOK_DEBUG_DISASTERS 32
+#define MISCHOOK_DEBUG_MOVIES 64
+#define MISCHOOK_DEBUG_SMACK 128
 
 #define MISCHOOK_DEBUG DEBUG_FLAGS_NONE
 
@@ -86,12 +88,26 @@ static const char *AdjustSource(char *buf, const char *path) {
 	return buf;
 }
 
+extern "C" DWORD __stdcall Hook_GetFullPathNameA(LPCSTR lpFileName, DWORD nBufferLength, LPSTR lpBuffer, LPSTR *lpFilePart) {
+	if (mischook_debug & MISCHOOK_DEBUG_OTHER)
+		ConsoleLog(LOG_DEBUG, "File:  0x%08X -> GetFullPathNameA(%s, 0x%08x, 0x%08x, 0x%08x)\n", _ReturnAddress(), lpFileName, nBufferLength, lpBuffer, lpFilePart);
+	return GetFullPathNameA(lpFileName, nBufferLength, lpBuffer, lpFilePart);
+}
+
+extern "C" DWORD __stdcall Hook_GetLogicalDrives(void) {
+	DWORD res = GetLogicalDrives();
+	if (mischook_debug & MISCHOOK_DEBUG_OTHER)
+		ConsoleLog(LOG_DEBUG, "File:  0x%08X -> GetLogicalDrives(%x%08x)\n", _ReturnAddress(), res);
+	return res;
+}
+
 extern "C" HANDLE __stdcall Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
 	LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {
 	if (mischook_debug & MISCHOOK_DEBUG_OTHER)
 		ConsoleLog(LOG_DEBUG, "File:  0x%08X -> CreateFileA(%s, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X)\n", _ReturnAddress(), lpFileName,
 			dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-	if ((DWORD)_ReturnAddress() == 0x4A8A90) {
+	if ((DWORD)_ReturnAddress() == 0x4A8A90 ||
+		(DWORD)_ReturnAddress() == 0x48A810) {
 		char buf[MAX_PATH+1];
 
 		memset(buf, 0, sizeof(buf));
@@ -104,12 +120,15 @@ extern "C" HANDLE __stdcall Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDesiredA
 extern "C" HANDLE __stdcall Hook_FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData) {
 	if (mischook_debug & MISCHOOK_DEBUG_OTHER)
 		ConsoleLog(LOG_DEBUG, "File:  0x%08X -> FindFirstFileA(%s, 0x%08X)\n", _ReturnAddress(), lpFileName, lpFindFileData);
-	if ((DWORD)_ReturnAddress() == 0x4A8A90) {
+	if ((DWORD)_ReturnAddress() == 0x4A8A90 ||
+		(DWORD)_ReturnAddress() == 0x48A810) {
 		char buf[MAX_PATH+1];
 
 		memset(buf, 0, sizeof(buf));
 
-		return FindFirstFileA(AdjustSource(buf, lpFileName), lpFindFileData);
+		HANDLE hFileHandle = FindFirstFileA(AdjustSource(buf, lpFileName), lpFindFileData);
+		ConsoleLog(LOG_DEBUG, "File:  0x%08X -> FindFirstFileA(%s, 0x%08X) (0x%08x)\n", _ReturnAddress(), buf, lpFindFileData, hFileHandle);
+		return hFileHandle;
 	}
 	return FindFirstFileA(lpFileName, lpFindFileData);
 }
@@ -257,6 +276,17 @@ extern "C" BOOL __stdcall Hook_ShowWindow(HWND hWnd, int nCmdShow) {
 		return ShowWindow(hWnd, SW_MAXIMIZE);
 
 	return ShowWindow(hWnd, nCmdShow);
+}
+
+extern "C" DWORD __cdecl Hook_SmackOpen(LPCSTR lpFileName, DWORD a2, DWORD a3) {
+	if (mischook_debug & MISCHOOK_DEBUG_SMACK)
+		ConsoleLog(LOG_DEBUG, "SMK:  0x%08X -> _SmackOpen(%s, %u, %u)\n", _ReturnAddress(), lpFileName, a2, a3);
+
+	char buf[MAX_PATH + 1];
+
+	memset(buf, 0, sizeof(buf));
+
+	return SMKOpenProc(AdjustSource(buf, lpFileName), a2, a3);
 }
 
 static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -456,11 +486,17 @@ void InstallMiscHooks(void) {
 
 	AdjustDefDataPathDrive();
 
+	// Install GetLogicalDrives hook
+	*(DWORD*)(0x4EFA60) = (DWORD)Hook_GetLogicalDrives;
+
 	// Install CreateFileA hook
 	*(DWORD*)(0x4EFADC) = (DWORD)Hook_CreateFileA;
 
 	// Install FindFirstFileA hook
 	*(DWORD*)(0x4EFB8C) = (DWORD)Hook_FindFirstFileA;
+
+	// Install GetFullPathNameA hook
+	*(DWORD*)(0x4EFABC) = (DWORD)Hook_GetFullPathNameA;
 
 	// Install LoadStringA hook
 	*(DWORD*)(0x4EFBE8) = (DWORD)Hook_LoadStringA;
@@ -472,6 +508,9 @@ void InstallMiscHooks(void) {
 
 	// Install ShowWindow hook
 	*(DWORD*)(0x4EFE70) = (DWORD)Hook_ShowWindow;
+
+	// Install Smacker function hooks
+	*(DWORD*)(0x4EFF00) = (DWORD)Hook_SmackOpen;
 
 	// Fix the sign fonts
 	VirtualProtect((LPVOID)0x4E7267, 1, PAGE_EXECUTE_READWRITE, &dwDummy);

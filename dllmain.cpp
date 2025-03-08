@@ -177,6 +177,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             InjectSCURKFix();
             break;
         }
+
+        // SMK..
+        GetSMKFuncs();
         
         // Seed the libc RNG -- we'll need this later
         srand((unsigned int)time(NULL));
@@ -318,6 +321,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         PostThreadMessage(dwMusicThreadID, WM_QUIT, NULL, NULL);
 
         // Send a closing message and close the log file
+        ReleaseSMKFuncs();
         ConsoleLog(LOG_INFO, "CORE: Closing down at %lld. Goodnight!\n", time(NULL));
         fflush(fdLog);
         fclose(fdLog);
