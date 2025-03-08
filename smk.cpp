@@ -26,7 +26,7 @@ void GetSMKFuncs() {
 	strcat_s(szSMKLibPath, MAX_PATH, "\\smackw32.dll");
 
 	hMod_SMK = LoadLibraryA(szSMKLibPath);
-	if (!hMod_SMK) {
+	if ( ((UINT)hMod_SMK) < ((UINT)HINSTANCE_ERROR) ) {
 		ConsoleLog(LOG_ERROR, "Failed to load smacker library, related hooks will be disabled.\n");
 		return;
 	}
