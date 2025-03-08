@@ -88,19 +88,6 @@ static const char *AdjustSource(char *buf, const char *path) {
 	return buf;
 }
 
-extern "C" DWORD __stdcall Hook_GetFullPathNameA(LPCSTR lpFileName, DWORD nBufferLength, LPSTR lpBuffer, LPSTR *lpFilePart) {
-	if (mischook_debug & MISCHOOK_DEBUG_OTHER)
-		ConsoleLog(LOG_DEBUG, "File:  0x%08X -> GetFullPathNameA(%s, 0x%08x, 0x%08x, 0x%08x)\n", _ReturnAddress(), lpFileName, nBufferLength, lpBuffer, lpFilePart);
-	return GetFullPathNameA(lpFileName, nBufferLength, lpBuffer, lpFilePart);
-}
-
-extern "C" DWORD __stdcall Hook_GetLogicalDrives(void) {
-	DWORD res = GetLogicalDrives();
-	if (mischook_debug & MISCHOOK_DEBUG_OTHER)
-		ConsoleLog(LOG_DEBUG, "File:  0x%08X -> GetLogicalDrives(%x%08x)\n", _ReturnAddress(), res);
-	return res;
-}
-
 extern "C" HANDLE __stdcall Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
 	LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {
 	if (mischook_debug & MISCHOOK_DEBUG_OTHER)
@@ -486,17 +473,11 @@ void InstallMiscHooks(void) {
 
 	AdjustDefDataPathDrive();
 
-	// Install GetLogicalDrives hook
-	*(DWORD*)(0x4EFA60) = (DWORD)Hook_GetLogicalDrives;
-
 	// Install CreateFileA hook
 	*(DWORD*)(0x4EFADC) = (DWORD)Hook_CreateFileA;
 
 	// Install FindFirstFileA hook
 	*(DWORD*)(0x4EFB8C) = (DWORD)Hook_FindFirstFileA;
-
-	// Install GetFullPathNameA hook
-	*(DWORD*)(0x4EFABC) = (DWORD)Hook_GetFullPathNameA;
 
 	// Install LoadStringA hook
 	*(DWORD*)(0x4EFBE8) = (DWORD)Hook_LoadStringA;
