@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <random>
 
+#include <smk.h>
 #include <sc2k_1996.h>
 
 // Turning this on enables every debugging option. You have been warned.
@@ -103,6 +104,15 @@ extern BOOL bSettingsUseNewStrings;
 
 extern BOOL bSettingsMilitaryBaseRevenue;
 extern BOOL bSettingsFixOrdinances;
+
+// Path functions (from registry area)
+
+const char *GetSetMoviesPath();
+
+// SMK funcs
+
+void GetSMKFuncs();
+void ReleaseSMKFuncs();
 
 // Utility functions
 

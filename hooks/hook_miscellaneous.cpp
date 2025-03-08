@@ -26,6 +26,8 @@
 #define MISCHOOK_DEBUG_SAVES 8
 #define MISCHOOK_DEBUG_WINDOW 16
 #define MISCHOOK_DEBUG_DISASTERS 32
+#define MISCHOOK_DEBUG_MOVIES 64
+#define MISCHOOK_DEBUG_SMACK 128
 
 #define MISCHOOK_DEBUG DEBUG_FLAGS_NONE
 
@@ -38,6 +40,8 @@ UINT mischook_debug = MISCHOOK_DEBUG;
 
 static DWORD dwDummy;
 
+static char def_data_path[] = "A:\\DATA\\";
+
 UINT iMilitaryBaseTries = 0;
 WORD wMilitaryBaseX = 0, wMilitaryBaseY = 0;
 
@@ -46,6 +50,75 @@ DLGPROC lpNewCityAfxProc = NULL;
 char szTempMayorName[24] = { 0 };
 char szCurrentMonthDay[24] = { 0 };
 const char* szMonthNames[12] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+
+static void AdjustDefDataPathDrive() {
+	// Let's get the drive letter from
+	// the movies path.
+	const char *temp = GetSetMoviesPath();
+	if (!temp)
+		return;
+	def_data_path[0] = temp[0];
+}
+
+// Reference and inspiration for this comes from the separate
+// 'simcity-noinstall' project.
+static const char *AdjustSource(char *buf, const char *path) {
+	int plen = strlen(path);
+	int flen = strlen(def_data_path);
+	if (plen <= flen || _strnicmp(def_data_path, path, flen) != 0) {
+		return path;
+	}
+
+	char temp[MAX_PATH+1];
+	const char *ptemp = GetSetMoviesPath();
+	if (!ptemp) {
+		return path;
+	}
+
+	memset(temp, 0, sizeof(temp));
+
+	strcpy_s(temp, MAX_PATH, path + (flen - 1));
+
+	strcpy_s(buf, MAX_PATH, ptemp);
+	strcat_s(buf, MAX_PATH, temp);
+
+	if (mischook_debug & MISCHOOK_DEBUG_OTHER)
+		ConsoleLog(LOG_DEBUG, "File: 0x%08X -> Adjustment - %s -> %s\n", _ReturnAddress(), path, buf);
+
+	return buf;
+}
+
+extern "C" HANDLE __stdcall Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
+	LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {
+	if (mischook_debug & MISCHOOK_DEBUG_OTHER)
+		ConsoleLog(LOG_DEBUG, "File:  0x%08X -> CreateFileA(%s, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X)\n", _ReturnAddress(), lpFileName,
+			dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+	if ((DWORD)_ReturnAddress() == 0x4A8A90 ||
+		(DWORD)_ReturnAddress() == 0x48A810) {
+		char buf[MAX_PATH+1];
+
+		memset(buf, 0, sizeof(buf));
+
+		return CreateFileA(AdjustSource(buf, lpFileName), dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+	}
+	return CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+}
+
+extern "C" HANDLE __stdcall Hook_FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData) {
+	if (mischook_debug & MISCHOOK_DEBUG_OTHER)
+		ConsoleLog(LOG_DEBUG, "File:  0x%08X -> FindFirstFileA(%s, 0x%08X)\n", _ReturnAddress(), lpFileName, lpFindFileData);
+	if ((DWORD)_ReturnAddress() == 0x4A8A90 ||
+		(DWORD)_ReturnAddress() == 0x48A810) {
+		char buf[MAX_PATH+1];
+
+		memset(buf, 0, sizeof(buf));
+
+		HANDLE hFileHandle = FindFirstFileA(AdjustSource(buf, lpFileName), lpFindFileData);
+		ConsoleLog(LOG_DEBUG, "File:  0x%08X -> FindFirstFileA(%s, 0x%08X) (0x%08x)\n", _ReturnAddress(), buf, lpFindFileData, hFileHandle);
+		return hFileHandle;
+	}
+	return FindFirstFileA(lpFileName, lpFindFileData);
+}
 
 // Override some strings that have egregiously bad grammar/capitalization.
 // Maxis fail English? That's unpossible!
@@ -190,6 +263,17 @@ extern "C" BOOL __stdcall Hook_ShowWindow(HWND hWnd, int nCmdShow) {
 		return ShowWindow(hWnd, SW_MAXIMIZE);
 
 	return ShowWindow(hWnd, nCmdShow);
+}
+
+extern "C" DWORD __cdecl Hook_SmackOpen(LPCSTR lpFileName, DWORD a2, DWORD a3) {
+	if (mischook_debug & MISCHOOK_DEBUG_SMACK)
+		ConsoleLog(LOG_DEBUG, "SMK:  0x%08X -> _SmackOpen(%s, %u, %u)\n", _ReturnAddress(), lpFileName, a2, a3);
+
+	char buf[MAX_PATH + 1];
+
+	memset(buf, 0, sizeof(buf));
+
+	return SMKOpenProc(AdjustSource(buf, lpFileName), a2, a3);
 }
 
 static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -386,6 +470,15 @@ extern "C" int __cdecl Hook_SimulationPrepareDisaster(DWORD* a1, __int16 a2, __i
 // Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
 // This should probably have a better name. And maybe be broken out into smaller functions.
 void InstallMiscHooks(void) {
+
+	AdjustDefDataPathDrive();
+
+	// Install CreateFileA hook
+	*(DWORD*)(0x4EFADC) = (DWORD)Hook_CreateFileA;
+
+	// Install FindFirstFileA hook
+	*(DWORD*)(0x4EFB8C) = (DWORD)Hook_FindFirstFileA;
+
 	// Install LoadStringA hook
 	*(DWORD*)(0x4EFBE8) = (DWORD)Hook_LoadStringA;
 
@@ -396,6 +489,9 @@ void InstallMiscHooks(void) {
 
 	// Install ShowWindow hook
 	*(DWORD*)(0x4EFE70) = (DWORD)Hook_ShowWindow;
+
+	// Install Smacker function hooks
+	*(DWORD*)(0x4EFF00) = (DWORD)Hook_SmackOpen;
 
 	// Fix the sign fonts
 	VirtualProtect((LPVOID)0x4E7267, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
