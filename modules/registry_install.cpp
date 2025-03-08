@@ -160,7 +160,7 @@ BOOL DoRegistryCheckAndInstall(void) {
 
 			char* buf;
 			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, retval, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&buf, 0, NULL);
-			ConsoleLog(LOG_WARNING, "CORE: Error loading 'Goodies' path; resetting to default. Reg: %s", buf); // The lack of the newline is deliberate.
+			ConsoleLog(LOG_WARNING, "CORE: Error loading 'Movies' path; resetting to default. Reg: %s", buf); // The lack of the newline is deliberate.
 
 			break;
 		}
