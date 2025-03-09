@@ -61,6 +61,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\music.h" />
     <ClInclude Include="include\sc2kfix.h" />
     <ClInclude Include="include\smk.h" />
     <ClInclude Include="include\winmm_exports.h" />
@@ -75,6 +76,7 @@
     <ClCompile Include="hooks\hook_querydialog.cpp" />
     <ClCompile Include="hooks\hook_sndPlaySound.cpp" />
     <ClCompile Include="hooks\hook_mmtimers.cpp" />
+    <ClCompile Include="modules\music.cpp" />
     <ClCompile Include="modules\sc2k_1996.cpp" />
     <ClCompile Include="modules\registry_install.cpp" />
     <ClCompile Include="modules\scurkfix.cpp" />

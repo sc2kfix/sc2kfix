@@ -3,6 +3,10 @@
 
 #pragma once
 
-typedef DWORD(__cdecl *SMKOpenPtr) (LPCSTR lpFileName, uint32_t uFlags, int32_t iExBuf);
+typedef DWORD(__cdecl* SMKOpenPtr) (LPCSTR lpFileName, uint32_t uFlags, int32_t iExBuf);
 
+extern BOOL smk_enabled;
 extern SMKOpenPtr SMKOpenProc;
+
+void GetSMKFuncs();
+void ReleaseSMKFuncs();

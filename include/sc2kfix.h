@@ -11,6 +11,7 @@
 
 #include <smk.h>
 #include <sc2k_1996.h>
+#include <music.h>
 
 // Turning this on enables every debugging option. You have been warned.
 // #define DEBUGALL
@@ -35,9 +36,6 @@
 
 #define DEBUG_FLAGS_NONE		0
 #define DEBUG_FLAGS_EVERYTHING	0xFFFFFFFF
-
-#define WM_MUSIC_STOP WM_APP+1
-#define WM_MUSIC_PLAY WM_APP+2
 
 typedef struct {
 	UINT nMessage;
@@ -113,13 +111,6 @@ extern BOOL bSettingsFixOrdinances;
 const char *GetGoodiesPath();
 const char *GetSetMoviesPath();
 
-// SMK funcs
-
-extern BOOL smk_enabled;
-
-void GetSMKFuncs();
-void ReleaseSMKFuncs();
-
 // Utility functions
 
 void CenterDialogBox(HWND hwndDlg);
@@ -141,11 +132,8 @@ void SaveSettings(void);
 void ShowSettingsDialog(void);
 HWND ShowStatusDialog(void);
 void LoadReplacementSounds(void);
-void MusicShufflePlaylist(int iLastSongPlayed);
 BOOL UpdaterCheckForUpdates(void);
 DWORD WINAPI UpdaterThread(LPVOID lpParameter);
-DWORD WINAPI MusicThread(LPVOID lpParameter);
-DWORD WINAPI MusicMCINotifyCallback(WPARAM wFlags, LPARAM lDevID);
 
 BOOL WINAPI ConsoleCtrlHandler(DWORD fdwCtrlType);
 DWORD WINAPI ConsoleThread(LPVOID lpParameter);
@@ -199,9 +187,6 @@ extern HANDLE hWeatherBitmaps[13];
 
 extern char szLatestRelease[24];
 extern BOOL bUpdateAvailable;
-
-extern BOOL bUseMultithreadedMusic;
-extern DWORD dwMusicThreadID;
 
 // Hooks to inject in dllmain.cpp
 
