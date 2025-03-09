@@ -727,12 +727,14 @@ typedef struct {
 
 // Pointers
 
+GAMEOFF_PTR(void, pCWinAppThis,				0x4C7010)
 GAMEOFF(void*,	pCwndMainWindow,			0x4C702C)
 GAMEOFF(BOOL,	bPriscillaActivated,		0x4C7104)
 GAMEOFF(BOOL,	bOptionsMusicEnabled,		0x4C71F0)
 GAMEOFF(WORD,	wSimulationSpeed,			0x4C7318)
 GAMEOFF(WORD,	wViewRotation,				0x4C942C)
 GAMEOFF(DWORD,	dwArcologyPopulation,		0x4C94C4)
+GAMEOFF_PTR(char, pszCityName,				0x4CA1A0)
 GAMEOFF(WORD,	wNationalEconomyTrend,		0x4CA1BC)
 GAMEOFF(WORD,	wCityNeighborConnections1500,	0x4CA3F0)
 GAMEOFF(WORD,	wSubwayXUNDCount,			0x4CA41C)
@@ -796,13 +798,6 @@ GAMEOFF_ARR(DWORD, dwZoneNameStringIDs,		0x4E7140)
 GAMEOFF_ARR(DWORD, dwCityNoticeStringIDs,	0x4E98B8)
 GAMEOFF(DWORD,	dwCityRewardsUnlocked,		0x4E9A24)
 
-// TODO - figure out why I made this one work this way
-#ifdef GAMEOFF_IMPL
-char* pszCityName = (char*)0x4CA1A0;
-#else
-extern char* pszCityName;
-#endif
-
 // Pointers to map arrays
 
 // 128x128
@@ -837,4 +832,18 @@ static inline const char* GetXLABEntry(int iLabelID) {
 
 static inline sprite_header_t* GetSpriteHeader(int iSpriteID) {
 	return (*pArrSpriteHeaders + iSpriteID);
+}
+
+static inline HPALETTE GameGetPalette(void) {
+	DWORD* CWinAppThis = (DWORD*)pCWinAppThis;
+	DWORD* CPalette;
+
+	// Exactly what sub_4069B0 does.
+	if (CWinAppThis[59])
+		CPalette = (DWORD*)CWinAppThis[67];
+	else
+		CPalette = (DWORD*)CWinAppThis[68];
+
+	// ...and this is what CDC::SelectPalette does.
+	return (HPALETTE)CPalette[1];
 }
