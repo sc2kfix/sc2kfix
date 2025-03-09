@@ -6,6 +6,7 @@
 #define WM_MUSIC_STOP WM_APP+1
 #define WM_MUSIC_PLAY WM_APP+2
 
+void InstallMusicEngineHooks(void);
 DWORD WINAPI MusicThread(LPVOID lpParameter);
 DWORD WINAPI MusicMCINotifyCallback(WPARAM wFlags, LPARAM lDevID);
 void MusicShufflePlaylist(int iLastSongPlayed);

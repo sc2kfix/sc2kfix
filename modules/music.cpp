@@ -25,6 +25,8 @@
 
 UINT mus_debug = MUS_DEBUG;
 
+static DWORD dwDummy;
+
 std::vector<int> vectorRandomSongIDs = { 10001, 10004, 10008, 10012, 10018, 10003, 10007, 10011, 10013 };
 int iCurrentSong = 0;
 DWORD dwMusicThreadID;
@@ -89,7 +91,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 			if (dwMCIError) {
 				char szErrorBuf[MAXERRORLENGTH];
 				mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
-				if (dwMCIError == 0x101)
+				if (dwMCIError == 0x101 && mus_debug & MUS_DEBUG_THREAD)
 					ConsoleLog(LOG_DEBUG, "MUS:  MCI_CLOSE failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
 				else
 					ConsoleLog(LOG_ERROR, "MUS:  MCI_CLOSE failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
@@ -238,5 +240,24 @@ extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void) {
 
 	__asm {
 		mov eax, [retval]
+	}
+}
+
+void InstallMusicEngineHooks(void) {
+	// Restore additional music
+	VirtualProtect((LPVOID)0x401A9B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x401A9B, Hook_MusicPlayNextRefocusSong);
+
+	// Shuffle music if the shuffle setting is enabled
+	MusicShufflePlaylist(0);
+
+	// Replace music functions with ones to post messages to the music thread
+	if (bSettingsUseMultithreadedMusic) {
+		VirtualProtect((LPVOID)0x402414, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+		NEWJMP((LPVOID)0x402414, Hook_MusicPlay);
+		VirtualProtect((LPVOID)0x402BE4, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+		NEWJMP((LPVOID)0x402BE4, Hook_MusicStop);
+		VirtualProtect((LPVOID)0x4D2BFC, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+		*(DWORD*)0x4D2BFC = (DWORD)MusicMCINotifyCallback;
 	}
 }

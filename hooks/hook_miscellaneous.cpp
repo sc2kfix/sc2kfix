@@ -617,22 +617,8 @@ void InstallMiscHooks(void) {
 	VirtualProtect((LPVOID)0x401F9B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x401F9B, Hook_LoadSoundBuffer);
 
-	// Restore additional music
-	VirtualProtect((LPVOID)0x401A9B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x401A9B, Hook_MusicPlayNextRefocusSong);
-
-	// Shuffle music if the shuffle setting is enabled
-	MusicShufflePlaylist(0);
-
-	// Replace music functions with ones to post messages to the music thread
-	if (bSettingsUseMultithreadedMusic) {
-		VirtualProtect((LPVOID)0x402414, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-		NEWJMP((LPVOID)0x402414, Hook_MusicPlay);
-		VirtualProtect((LPVOID)0x402BE4, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-		NEWJMP((LPVOID)0x402BE4, Hook_MusicStop);
-		VirtualProtect((LPVOID)0x4D2BFC, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
-		*(DWORD*)0x4D2BFC = (DWORD)MusicMCINotifyCallback;
-	}
+	// Install music engine hooks
+	InstallMusicEngineHooks();
 
 	// Load weather icons
 	for (int i = 0; i < 13; i++) {
