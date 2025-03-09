@@ -1,5 +1,5 @@
 // sc2kfix smk.cpp: run-time loading/releasing functions for smk.
-// (c) 2025 github.com/araxestroy - released under the MIT license
+// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
 #define WIN32_LEAN_AND_MEAN
