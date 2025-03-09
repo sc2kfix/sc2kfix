@@ -300,7 +300,7 @@ extern "C" DWORD __cdecl Hook_SmackOpen(LPCSTR lpFileName, uint32_t uFlags, int3
 	if (mischook_debug & MISCHOOK_DEBUG_SMACK)
 		ConsoleLog(LOG_DEBUG, "SMK:  0x%08X -> _SmackOpen(%s, %u, %i)\n", _ReturnAddress(), lpFileName, uFlags, iExBuf);
 
-	if (bSkipIntro)
+	if (bSkipIntro || bSettingsAlwaysSkipIntro)
 		if (strrchr(lpFileName, '\\'))
 			if (!strcmp(strrchr(lpFileName, '\\'), "\\INTROA.SMK") || !strcmp(strrchr(lpFileName, '\\'), "\\INTROB.SMK"))
 				return NULL;
