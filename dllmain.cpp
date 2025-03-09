@@ -135,6 +135,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         // Open a log file. If it fails, we handle that safely elsewhere
         fopen_s(&fdLog, "sc2kfix.log", "w");
 
+        // Force the console to be enabled if bSettingsAlwaysConsole is set
+        if (bSettingsAlwaysConsole)
+            bConsoleEnabled = true;
+
         // Force the console to be enabled if DEBUGALL is defined
 #ifdef DEBUGALL
         bConsoleEnabled = true;
@@ -157,7 +161,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
         // Print the version banner
         // Yes, I know, there's no CORE: prefix here. That's intentional. I promise.
-        ConsoleLog(LOG_INFO, "sc2kfix version %s started - https://github.com/araxestroy/sc2kfix\n", szSC2KFixVersion);
+        ConsoleLog(LOG_INFO, "sc2kfix version %s started - https://sc2kfix.net\n", szSC2KFixVersion);
 #ifdef DEBUGALL
         ConsoleLog(LOG_DEBUG, "CORE: sc2kfix built with DEBUGALL. Strap in.\n");
 #endif
