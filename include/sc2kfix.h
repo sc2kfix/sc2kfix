@@ -101,6 +101,7 @@ extern BOOL bSettingsCheckForUpdates;
 extern BOOL bSettingsUseStatusDialog;
 extern BOOL bSettingsTitleCalendar;
 extern BOOL bSettingsUseNewStrings;
+extern BOOL bSettingsUseLocalMovies;
 
 extern BOOL bSettingsMilitaryBaseRevenue;
 extern BOOL bSettingsFixOrdinances;
@@ -110,6 +111,8 @@ extern BOOL bSettingsFixOrdinances;
 const char *GetSetMoviesPath();
 
 // SMK funcs
+
+extern BOOL smk_enabled;
 
 void GetSMKFuncs();
 void ReleaseSMKFuncs();

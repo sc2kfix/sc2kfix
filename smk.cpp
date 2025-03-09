@@ -16,6 +16,8 @@
 
 SMKOpenPtr SMKOpenProc;
 
+BOOL smk_enabled = FALSE;
+
 static HMODULE hMod_SMK = 0;
 
 void GetSMKFuncs() {
@@ -33,13 +35,14 @@ void GetSMKFuncs() {
 
 	SMKOpenProc = (SMKOpenPtr) GetProcAddress(hMod_SMK, "_SmackOpen");
 	if (!SMKOpenProc) {
-		ConsoleLog(LOG_INFO, "Failed to load smacker open function.\n");
+		ConsoleLog(LOG_ERROR, "Failed to load smacker open function. related hooks will be disabled\n");
 
 		FreeLibrary(hMod_SMK);
 		hMod_SMK = 0;
 		return;
 	}
 
+	smk_enabled = TRUE;
 	ConsoleLog(LOG_INFO, "Loaded smacker functions.\n");
 }
 

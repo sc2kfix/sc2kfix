@@ -129,11 +129,11 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,284,35,247,10
     CONTROL         " *Always start the sc2kfix console on game startup (Default: off)",IDC_SETTINGS_CHECK_CONSOLE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,192,247,10
-    GROUPBOX        "Gameplay Mod Settings",IDC_STATIC,277,88,261,134
+    GROUPBOX        "Gameplay Mod Settings",IDC_STATIC,277,102,261,120
     CONTROL         " *Military bases generate revenue (Default: off)",IDC_SETTINGS_CHECK_MILITARY_REVENUE,
-                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,101,247,10
+                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,115,247,10
     CONTROL         " *Fully restore partially-implemented ordinances (Default: off)",IDC_SETTINGS_CHECK_FIX_ORDINANCES,
-                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,129,247,10
+                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,143,247,10
     CONTROL         " *Check for sc2kfix updates on game startup (Default: on)",IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,206,247,10
     PUSHBUTTON      "Defaults",ID_SETTINGS_DEFAULTS,293,252,50,14
@@ -141,15 +141,17 @@ BEGIN
     RTEXT           "sc2kfix version 0.0-dev (tag)",IDC_STATIC_VERSIONINFO,420,262,126,8,WS_DISABLED
     CONTROL         " *Use multithreaded music engine (Default: on)",IDC_SETTINGS_CHECK_MULTITHREADED_MUSIC,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,143,247,10
-    GROUPBOX        "Interface Settings",IDC_STATIC,277,23,261,59
+    GROUPBOX        "Interface Settings",IDC_STATIC,277,23,261,73
     CONTROL         " Display full SimCalendar date in title bar (Default: on)",IDC_SETTINGS_CHECK_TITLE_DATE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,284,49,247,10
     CONTROL         " Display city growth in real-time instead of in batches (Default: on)",IDC_SETTINGS_CHECK_REFRESH_RATE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,157,247,10
     CONTROL         " *Use expanded list of buildings for Army bases (Default: off)",IDC_SETTINGS_CHECK_MILITARY_BUILDINGS,
-                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,115,247,10
+                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,129,247,10
     CONTROL         " *Use rebalanced radioactive decay algorithm (Default: off)",IDC_SETTINGS_CHECK_RADIOACTIVE_DECAY,
-                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,143,247,10
+                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,157,247,10
+    CONTROL         " Use videos inside your game's 'Movies' directory (Default: on)", IDC_SETTINGS_CHECK_LOCAL_MOVIES,
+                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 284, 78, 247, 10
     GROUPBOX        "sc2kfix Core Settings",IDC_STATIC,7,179,261,43
 END
 
