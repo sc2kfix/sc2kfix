@@ -83,7 +83,7 @@ static const char *AdjustSource(char *buf, const char *path) {
 	strcat_s(buf, MAX_PATH, temp);
 
 	if (mischook_debug & MISCHOOK_DEBUG_OTHER)
-		ConsoleLog(LOG_DEBUG, "File: 0x%08X -> Adjustment - %s -> %s\n", _ReturnAddress(), path, buf);
+		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> Adjustment - %s -> %s\n", _ReturnAddress(), path, buf);
 
 	return buf;
 }
@@ -91,7 +91,7 @@ static const char *AdjustSource(char *buf, const char *path) {
 extern "C" HANDLE __stdcall Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
 	LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {
 	if (mischook_debug & MISCHOOK_DEBUG_OTHER)
-		ConsoleLog(LOG_DEBUG, "File:  0x%08X -> CreateFileA(%s, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X)\n", _ReturnAddress(), lpFileName,
+		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> CreateFileA(%s, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X)\n", _ReturnAddress(), lpFileName,
 			dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 	if (bSettingsUseLocalMovies) {
 		if ((DWORD)_ReturnAddress() == 0x4A8A90 ||
@@ -102,7 +102,7 @@ extern "C" HANDLE __stdcall Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDesiredA
 
 			HANDLE hFileHandle = CreateFileA(AdjustSource(buf, lpFileName), dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 			if (mischook_debug & MISCHOOK_DEBUG_OTHER)
-				ConsoleLog(LOG_DEBUG, "File (Modification):  0x%08X -> CreateFileA(%s, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X) (0x%08x)\n", _ReturnAddress(), lpFileName,
+				ConsoleLog(LOG_DEBUG, "MISC: (Modification): 0x%08X -> CreateFileA(%s, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X) (0x%08x)\n", _ReturnAddress(), lpFileName,
 					dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile, hFileHandle);
 			return hFileHandle;
 		}
@@ -112,7 +112,7 @@ extern "C" HANDLE __stdcall Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDesiredA
 
 extern "C" HANDLE __stdcall Hook_FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData) {
 	if (mischook_debug & MISCHOOK_DEBUG_OTHER)
-		ConsoleLog(LOG_DEBUG, "File:  0x%08X -> FindFirstFileA(%s, 0x%08X)\n", _ReturnAddress(), lpFileName, lpFindFileData);
+		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> FindFirstFileA(%s, 0x%08X)\n", _ReturnAddress(), lpFileName, lpFindFileData);
 	if (bSettingsUseLocalMovies) {
 		if ((DWORD)_ReturnAddress() == 0x4A8A90 ||
 			(DWORD)_ReturnAddress() == 0x48A810) {
@@ -122,7 +122,7 @@ extern "C" HANDLE __stdcall Hook_FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_
 
 			HANDLE hFileHandle = FindFirstFileA(AdjustSource(buf, lpFileName), lpFindFileData);
 			if (mischook_debug & MISCHOOK_DEBUG_OTHER)
-				ConsoleLog(LOG_DEBUG, "File (Modification):  0x%08X -> FindFirstFileA(%s, 0x%08X) (0x%08x)\n", _ReturnAddress(), buf, lpFindFileData, hFileHandle);
+				ConsoleLog(LOG_DEBUG, "MISC: (Modification): 0x%08X -> FindFirstFileA(%s, 0x%08X) (0x%08x)\n", _ReturnAddress(), buf, lpFindFileData, hFileHandle);
 			return hFileHandle;
 		}
 	}

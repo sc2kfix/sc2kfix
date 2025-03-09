@@ -1,4 +1,4 @@
-// sc2kfix hooks/hook_mciSendCommand.cpp: hooks for music playbcak
+// sc2kfix hooks/hook_mciSendCommand.cpp: hooks for music playback
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
