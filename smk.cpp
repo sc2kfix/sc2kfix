@@ -1,4 +1,4 @@
-// sc2kfix utility.cpp: utility functions to save me from reinventing the wheel
+// sc2kfix smk.cpp: run-time loading/releasing functions for smk.
 // (c) 2025 github.com/araxestroy - released under the MIT license
 
 #undef UNICODE
