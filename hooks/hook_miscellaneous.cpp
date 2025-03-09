@@ -93,13 +93,19 @@ extern "C" HANDLE __stdcall Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDesiredA
 	if (mischook_debug & MISCHOOK_DEBUG_OTHER)
 		ConsoleLog(LOG_DEBUG, "File:  0x%08X -> CreateFileA(%s, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X)\n", _ReturnAddress(), lpFileName,
 			dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-	if ((DWORD)_ReturnAddress() == 0x4A8A90 ||
-		(DWORD)_ReturnAddress() == 0x48A810) {
-		char buf[MAX_PATH+1];
+	if (bSettingsUseLocalMovies) {
+		if ((DWORD)_ReturnAddress() == 0x4A8A90 ||
+			(DWORD)_ReturnAddress() == 0x48A810) {
+			char buf[MAX_PATH + 1];
 
-		memset(buf, 0, sizeof(buf));
+			memset(buf, 0, sizeof(buf));
 
-		return CreateFileA(AdjustSource(buf, lpFileName), dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+			HANDLE hFileHandle = CreateFileA(AdjustSource(buf, lpFileName), dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+			if (mischook_debug & MISCHOOK_DEBUG_OTHER)
+				ConsoleLog(LOG_DEBUG, "File (Modification):  0x%08X -> CreateFileA(%s, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X) (0x%08x)\n", _ReturnAddress(), lpFileName,
+					dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile, hFileHandle);
+			return hFileHandle;
+		}
 	}
 	return CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 }
@@ -107,15 +113,18 @@ extern "C" HANDLE __stdcall Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDesiredA
 extern "C" HANDLE __stdcall Hook_FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData) {
 	if (mischook_debug & MISCHOOK_DEBUG_OTHER)
 		ConsoleLog(LOG_DEBUG, "File:  0x%08X -> FindFirstFileA(%s, 0x%08X)\n", _ReturnAddress(), lpFileName, lpFindFileData);
-	if ((DWORD)_ReturnAddress() == 0x4A8A90 ||
-		(DWORD)_ReturnAddress() == 0x48A810) {
-		char buf[MAX_PATH+1];
+	if (bSettingsUseLocalMovies) {
+		if ((DWORD)_ReturnAddress() == 0x4A8A90 ||
+			(DWORD)_ReturnAddress() == 0x48A810) {
+			char buf[MAX_PATH + 1];
 
-		memset(buf, 0, sizeof(buf));
+			memset(buf, 0, sizeof(buf));
 
-		HANDLE hFileHandle = FindFirstFileA(AdjustSource(buf, lpFileName), lpFindFileData);
-		ConsoleLog(LOG_DEBUG, "File:  0x%08X -> FindFirstFileA(%s, 0x%08X) (0x%08x)\n", _ReturnAddress(), buf, lpFindFileData, hFileHandle);
-		return hFileHandle;
+			HANDLE hFileHandle = FindFirstFileA(AdjustSource(buf, lpFileName), lpFindFileData);
+			if (mischook_debug & MISCHOOK_DEBUG_OTHER)
+				ConsoleLog(LOG_DEBUG, "File (Modification):  0x%08X -> FindFirstFileA(%s, 0x%08X) (0x%08x)\n", _ReturnAddress(), buf, lpFindFileData, hFileHandle);
+			return hFileHandle;
+		}
 	}
 	return FindFirstFileA(lpFileName, lpFindFileData);
 }
@@ -265,15 +274,17 @@ extern "C" BOOL __stdcall Hook_ShowWindow(HWND hWnd, int nCmdShow) {
 	return ShowWindow(hWnd, nCmdShow);
 }
 
-extern "C" DWORD __cdecl Hook_SmackOpen(LPCSTR lpFileName, DWORD a2, DWORD a3) {
+extern "C" DWORD __cdecl Hook_SmackOpen(LPCSTR lpFileName, uint32_t uFlags, int32_t iExBuf) {
 	if (mischook_debug & MISCHOOK_DEBUG_SMACK)
-		ConsoleLog(LOG_DEBUG, "SMK:  0x%08X -> _SmackOpen(%s, %u, %u)\n", _ReturnAddress(), lpFileName, a2, a3);
+		ConsoleLog(LOG_DEBUG, "SMK:  0x%08X -> _SmackOpen(%s, %u, %i)\n", _ReturnAddress(), lpFileName, uFlags, iExBuf);
+	if (bSettingsUseLocalMovies) {
+		char buf[MAX_PATH + 1];
 
-	char buf[MAX_PATH + 1];
+		memset(buf, 0, sizeof(buf));
 
-	memset(buf, 0, sizeof(buf));
-
-	return SMKOpenProc(AdjustSource(buf, lpFileName), a2, a3);
+		return SMKOpenProc(AdjustSource(buf, lpFileName), uFlags, iExBuf);
+	}
+	return SMKOpenProc(lpFileName, uFlags, iExBuf);
 }
 
 static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -490,8 +501,11 @@ void InstallMiscHooks(void) {
 	// Install ShowWindow hook
 	*(DWORD*)(0x4EFE70) = (DWORD)Hook_ShowWindow;
 
-	// Install Smacker function hooks
-	*(DWORD*)(0x4EFF00) = (DWORD)Hook_SmackOpen;
+	// Only install this hook if SMK is enabled.
+	if (smk_enabled) {
+		// Install Smacker function hooks
+		*(DWORD*)(0x4EFF00) = (DWORD)Hook_SmackOpen;
+	}
 
 	// Fix the sign fonts
 	VirtualProtect((LPVOID)0x4E7267, 1, PAGE_EXECUTE_READWRITE, &dwDummy);

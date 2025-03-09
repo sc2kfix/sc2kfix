@@ -29,6 +29,7 @@ BOOL bSettingsCheckForUpdates = TRUE;
 BOOL bSettingsUseStatusDialog = FALSE;
 BOOL bSettingsTitleCalendar = TRUE;
 BOOL bSettingsUseNewStrings = TRUE;
+BOOL bSettingsUseLocalMovies = TRUE;
 
 BOOL bSettingsMilitaryBaseRevenue = FALSE;	// NYI
 BOOL bSettingsFixOrdinances = FALSE;		// NYI
@@ -139,6 +140,12 @@ void LoadSettings(void) {
 		RegSetValueEx(hkeySC2KFix, "bSettingsUseNewStrings", NULL, REG_DWORD, (BYTE*)&bSettingsUseNewStrings, sizeof(BOOL));
 	}
 
+	dwSizeofBool = sizeof(BOOL);
+	if (RegGetValue(hkeySC2KFix, NULL, "bSettingsUseLocalMovies", RRF_RT_REG_DWORD, NULL, &bSettingsUseLocalMovies, &dwSizeofBool)) {
+		bSettingsUseLocalMovies = TRUE;
+		RegSetValueEx(hkeySC2KFix, "bSettingsUseLocalMovies", NULL, REG_DWORD, (BYTE*)&bSettingsUseLocalMovies, sizeof(BOOL));
+	}
+
 	// Gameplay mods
 
 	dwSizeofBool = sizeof(BOOL);
@@ -183,6 +190,7 @@ void SaveSettings(void) {
 	RegSetValueEx(hkeySC2KFix, "bSettingsUseStatusDialog", NULL, REG_DWORD, (BYTE*)&bSettingsUseStatusDialog, sizeof(BOOL));
 	RegSetValueEx(hkeySC2KFix, "bSettingsTitleCalendar", NULL, REG_DWORD, (BYTE*)&bSettingsTitleCalendar, sizeof(BOOL));
 	RegSetValueEx(hkeySC2KFix, "bSettingsUseNewStrings", NULL, REG_DWORD, (BYTE*)&bSettingsUseNewStrings, sizeof(BOOL));
+	RegSetValueEx(hkeySC2KFix, "bSettingsUseLocalMovies", NULL, REG_DWORD, (BYTE*)&bSettingsUseLocalMovies, sizeof(BOOL));
 
 	RegSetValueEx(hkeySC2KFix, "bSettingsMilitaryBaseRevenue", NULL, REG_DWORD, (BYTE*)&bSettingsMilitaryBaseRevenue, sizeof(BOOL));
 	RegSetValueEx(hkeySC2KFix, "bSettingsFixOrdinances", NULL, REG_DWORD, (BYTE*)&bSettingsFixOrdinances, sizeof(BOOL));
@@ -247,6 +255,8 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			"By default the title bar only displays the month and year. Enabling this setting will display the full in-game date instead.");
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS),
 			"Certain strings in the game have typos, grammatical issues, and/or ambiguous wording. This setting loads corrected strings in memory in place of the affected originals.");
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_LOCAL_MOVIES),
+			"While enabled if you've got the original game video files stored locally under 'Movies' in your game directory the introductions will play on startup and the Will Wright movies will be playable.");
 
 		// Gameplay mod settings
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_REVENUE),
@@ -304,6 +314,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG), bSettingsUseStatusDialog ? BST_CHECKED : BST_UNCHECKED);
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE), bSettingsTitleCalendar ? BST_CHECKED : BST_UNCHECKED);
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS), bSettingsUseNewStrings ? BST_CHECKED : BST_UNCHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_LOCAL_MOVIES), bSettingsUseLocalMovies ? BST_CHECKED : BST_UNCHECKED);
 
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_REVENUE), bSettingsMilitaryBaseRevenue ? BST_CHECKED : BST_UNCHECKED);
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_FIX_ORDINANCES), bSettingsFixOrdinances ? BST_CHECKED : BST_UNCHECKED);
@@ -333,6 +344,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			bSettingsUseStatusDialog = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG));
 			bSettingsTitleCalendar = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE));
 			bSettingsUseNewStrings = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS));
+			bSettingsUseLocalMovies = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_LOCAL_MOVIES));
 
 			bSettingsMilitaryBaseRevenue = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_REVENUE));
 			bSettingsFixOrdinances = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_FIX_ORDINANCES));
@@ -358,6 +370,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG), BST_UNCHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE), BST_CHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS), BST_CHECKED);
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_LOCAL_MOVIES), BST_CHECKED);
 
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_REVENUE), BST_UNCHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_FIX_ORDINANCES), BST_UNCHECKED);
@@ -376,6 +389,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG), BST_UNCHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE), BST_UNCHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS), BST_UNCHECKED);
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_LOCAL_MOVIES), BST_UNCHECKED);
 
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_REVENUE), BST_UNCHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_FIX_ORDINANCES), BST_UNCHECKED);
