@@ -1,5 +1,5 @@
 // sc2kfix sc2kfix.h: globals that need to be used elsewhere
-// (c) 2025 github.com/araxestroy - released under the MIT license
+// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #pragma once
 
@@ -89,11 +89,13 @@ enum {
 // Settings globals
 extern char szSettingsMayorName[64];
 extern char szSettingsCompanyName[64];
+
 extern BOOL bSettingsMusicInBackground;
 extern BOOL bSettingsUseSoundReplacements;
 extern BOOL bSettingsShuffleMusic;
 extern BOOL bSettingsUseMultithreadedMusic;
 extern BOOL bSettingsFrequentCityRefresh;
+extern BOOL bSettingsUseMP3Music;
 
 extern BOOL bSettingsAlwaysConsole;
 extern BOOL bSettingsCheckForUpdates;

@@ -1,5 +1,5 @@
-// sc2kfix hooks/hook_mciSendCommand.cpp: hook for mciSendCommandA
-// (c) 2025 github.com/araxestroy - released under the MIT license
+// sc2kfix hooks/hook_mciSendCommand.cpp: hooks for music playbcak
+// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
 #include <windows.h>
@@ -57,6 +57,28 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
     MSG msg;
     MCIERROR dwMCIError = NULL;
 
+    MCIDEVICEID mciDeviceList[19] = { 0 };
+    // test to see how many of these things we can load at once
+    /*ConsoleLog(LOG_INFO, "MUS:  Starting MCI load test.\n");
+    DWORD dwStartTicks = GetTickCount();
+    for (int i = 0; i < 19; i++) {
+        std::string strSongPath = "sounds\\";      // szSoundsPath
+        strSongPath += std::to_string(i + 10000);
+        strSongPath += ".mp3";
+
+        MCI_OPEN_PARMS mciOpenParms = { NULL, NULL, "mpegvideo", strSongPath.c_str(), NULL};
+        dwMCIError = mciSendCommand(NULL, MCI_OPEN, MCI_OPEN_TYPE | MCI_OPEN_ELEMENT, (DWORD_PTR)&mciOpenParms);
+        if (dwMCIError) {
+            char szErrorBuf[MAXERRORLENGTH];
+            mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
+            ConsoleLog(LOG_ERROR, "MUS:  Test MCI_OPEN of %i.mp3 failed, 0x%08X (%s)\n", i + 10000, dwMCIError, szErrorBuf);
+            continue;
+        }
+        mciDeviceList[i] = mciOpenParms.wDeviceID;
+        ConsoleLog(LOG_INFO, "MUS:  Test %i.mp3 loaded into device ID %i.\n", i + 10000, mciOpenParms.wDeviceID);
+    }
+    ConsoleLog(LOG_INFO, "MUS:  MCI load test took %i milliseconds.\n", GetTickCount() - dwStartTicks);*/
+
     while (GetMessage(&msg, NULL, 0, 0)) {
         if (msg.message == WM_MUSIC_STOP) {
             if (!mciDevice)
@@ -82,9 +104,12 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
                 if (msg.wParam >= 10000 && msg.wParam <= 10018) {
                     std::string strSongPath = (char*)0x4CDB88;      // szSoundsPath
                     strSongPath += std::to_string(msg.wParam);
-                    strSongPath += ".mid";
+                    if (bSettingsUseMP3Music)
+                        strSongPath += ".mp3";
+                    else
+                        strSongPath += ".mid";
 
-                    MCI_OPEN_PARMS mciOpenParms = { NULL, NULL, "sequencer", strSongPath.c_str(), NULL };
+                    MCI_OPEN_PARMS mciOpenParms = { NULL, NULL, (bSettingsUseMP3Music ? "mpegvideo" : "sequencer"), strSongPath.c_str(), NULL };
                     dwMCIError = mciSendCommand(NULL, MCI_OPEN, MCI_OPEN_TYPE | MCI_OPEN_ELEMENT, (DWORD_PTR)&mciOpenParms);
                     if (dwMCIError) {
                         char szErrorBuf[MAXERRORLENGTH];

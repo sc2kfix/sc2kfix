@@ -1,5 +1,5 @@
 // sc2kfix settings.cpp: settings dialog code and configurator
-// (c) 2025 github.com/araxestroy - released under the MIT license
+// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
 #include <windows.h>
@@ -22,6 +22,7 @@ BOOL bSettingsUseSoundReplacements = TRUE;
 BOOL bSettingsShuffleMusic = FALSE;
 BOOL bSettingsUseMultithreadedMusic = TRUE;
 BOOL bSettingsFrequentCityRefresh = TRUE;
+BOOL bSettingsUseMP3Music = FALSE;
 
 BOOL bSettingsAlwaysConsole = FALSE;
 BOOL bSettingsCheckForUpdates = TRUE;
@@ -106,6 +107,12 @@ void LoadSettings(void) {
 		RegSetValueEx(hkeySC2KFix, "bSettingsFrequentCityRefresh", NULL, REG_DWORD, (BYTE*)&bSettingsFrequentCityRefresh, sizeof(BOOL));
 	}
 
+	dwSizeofBool = sizeof(BOOL);
+	if (RegGetValue(hkeySC2KFix, NULL, "bSettingsUseMP3Music", RRF_RT_REG_DWORD, NULL, &bSettingsUseMP3Music, &dwSizeofBool)) {
+		bSettingsUseMP3Music = FALSE;
+		RegSetValueEx(hkeySC2KFix, "bSettingsUseMP3Music", NULL, REG_DWORD, (BYTE*)&bSettingsUseMP3Music, sizeof(BOOL));
+	}
+
 	// sc2kfix settings
 
 	dwSizeofBool = sizeof(BOOL);
@@ -183,6 +190,7 @@ void SaveSettings(void) {
 	RegSetValueEx(hkeySC2KFix, "bSettingsShuffleMusic", NULL, REG_DWORD, (BYTE*)&bSettingsShuffleMusic, sizeof(BOOL));
 	RegSetValueEx(hkeySC2KFix, "bSettingsUseMultithreadedMusic", NULL, REG_DWORD, (BYTE*)&bSettingsUseMultithreadedMusic, sizeof(BOOL));
 	RegSetValueEx(hkeySC2KFix, "bSettingsFrequentCityRefresh", NULL, REG_DWORD, (BYTE*)&bSettingsFrequentCityRefresh, sizeof(BOOL));
+	RegSetValueEx(hkeySC2KFix, "bSettingsUseMP3Music", NULL, REG_DWORD, (BYTE*)&bSettingsUseMP3Music, sizeof(BOOL));
 
 	RegSetValueEx(hkeySC2KFix, "bSettingsAlwaysConsole", NULL, REG_DWORD, (BYTE*)&bSettingsAlwaysConsole, sizeof(BOOL));
 	RegSetValueEx(hkeySC2KFix, "bSettingsCheckForUpdates", NULL, REG_DWORD, (BYTE*)&bSettingsCheckForUpdates, sizeof(BOOL));
@@ -235,6 +243,8 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_REFRESH_RATE),
 			"SimCity 2000 was designed to spend more CPU time on simulation than on rendering by only updating the city's growth when the display moves or on the 24th day of the month. "
 			"Enabling this setting allows the game to refresh the city display in real-time instead of batching display updates.");
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MP3_MUSIC),
+			"Enabling this setting will play music from MP3s instead of MIDI files if you have previously-rendered MP3 versions of the game's soundtrack in the SOUNDS directory.");
 
 		// sc2kfix core settings
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE),
@@ -256,7 +266,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS),
 			"Certain strings in the game have typos, grammatical issues, and/or ambiguous wording. This setting loads corrected strings in memory in place of the affected originals.");
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_LOCAL_MOVIES),
-			"While enabled if you've got the original game video files stored locally under 'Movies' in your game directory the introductions will play on startup and the Will Wright movies will be playable.");
+			"Enabling this setting will play the introduction \"in-flight movie\" and the WillTV interview videos from the MOVIES directory, if the video files have been copied there from the install CD.");
 
 		// Gameplay mod settings
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_REVENUE),
@@ -307,6 +317,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SHUFFLE_MUSIC), bSettingsShuffleMusic ? BST_CHECKED : BST_UNCHECKED);
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MULTITHREADED_MUSIC), bSettingsUseMultithreadedMusic ? BST_CHECKED : BST_UNCHECKED);
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_REFRESH_RATE), bSettingsFrequentCityRefresh ? BST_CHECKED : BST_UNCHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MP3_MUSIC), bSettingsUseMP3Music ? BST_CHECKED : BST_UNCHECKED);
 
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE), bSettingsAlwaysConsole ? BST_CHECKED : BST_UNCHECKED);
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES), bSettingsCheckForUpdates ? BST_CHECKED : BST_UNCHECKED);
@@ -337,6 +348,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			bSettingsShuffleMusic = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SHUFFLE_MUSIC));
 			bSettingsUseMultithreadedMusic = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MULTITHREADED_MUSIC));
 			bSettingsFrequentCityRefresh = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_REFRESH_RATE));
+			bSettingsUseMP3Music = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MP3_MUSIC));
 
 			bSettingsAlwaysConsole = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE));
 			bSettingsCheckForUpdates = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES));
@@ -363,6 +375,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SHUFFLE_MUSIC), BST_UNCHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MULTITHREADED_MUSIC), BST_CHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_REFRESH_RATE), BST_CHECKED);
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MP3_MUSIC), BST_UNCHECKED);
 
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE), BST_UNCHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES), BST_CHECKED);
@@ -382,6 +395,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SHUFFLE_MUSIC), BST_UNCHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MULTITHREADED_MUSIC), BST_UNCHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_REFRESH_RATE), BST_UNCHECKED);
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MP3_MUSIC), BST_UNCHECKED);
 
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE), BST_UNCHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES), BST_CHECKED);
