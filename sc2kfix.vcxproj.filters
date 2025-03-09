@@ -89,8 +89,8 @@
     <ClCompile Include="modules\sc2k_1996.cpp">
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="smk.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="modules\smk.cpp">
+      <Filter>Source Files\Modules</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -103,9 +103,6 @@
       <Filter>Source Files\Hooks</Filter>
     </None>
     <None Include="README.md">
-      <Filter>Documentation</Filter>
-    </None>
-    <None Include="hooks\hooks.md">
       <Filter>Documentation</Filter>
     </None>
     <None Include="script.md">
