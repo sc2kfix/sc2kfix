@@ -673,10 +673,6 @@ void InstallMiscHooks(void) {
 			ConsoleLog(LOG_DEBUG, "MISC: AppendMenuA #2 failed, error = 0x%08X.\n", GetLastError());
 			goto skipmenu;
 		}
-		if (!AppendMenu(hOptionsPopup, MF_STRING, 40001, "Show Status Dialog") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: AppendMenuA #3 failed, error = 0x%08X.\n", GetLastError());
-			goto skipmenu;
-		}
 
 		AFX_MSGMAP_ENTRY afxMessageMapEntry = {
 			WM_COMMAND,
