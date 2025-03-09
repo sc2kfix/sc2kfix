@@ -17,6 +17,7 @@
 SMKOpenPtr SMKOpenProc;
 
 BOOL smk_enabled = FALSE;
+BOOL bSkipIntro = FALSE;
 
 static HMODULE hMod_SMK = 0;
 

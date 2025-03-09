@@ -1,5 +1,5 @@
 // sc2kfix dllmain.cpp: all the magic happens here
-// (c) 2025 github.com/araxestroy - released under the MIT license
+// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #define GETPROC(i, name) fpWinMMHookList[i] = GetProcAddress(hRealWinMM, #name);
 #define DEFPROC(i, name) extern "C" __declspec(naked) void __stdcall _##name() { __asm { jmp fpWinMMHookList[i*4] }};
@@ -122,6 +122,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
                     bConsoleEnabled = TRUE;
                 if (!lstrcmpiW(argv[i], L"-defaults"))
                     bSkipLoadSettings = TRUE;
+                if (!lstrcmpiW(argv[i], L"-skipintro"))
+                    bSkipIntro = TRUE;
                 // TODO - put some debug options here
             }
         }

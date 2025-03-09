@@ -179,6 +179,7 @@ extern const char* szSC2KFixReleaseTag;
 extern const char* szSC2KFixBuildInfo;
 extern BOOL bInSCURK;
 extern BOOL bConsoleEnabled;
+extern BOOL bSkipIntro;
 
 extern HFONT hFontMSSansSerifRegular8;
 extern HFONT hFontMSSansSerifBold8;
