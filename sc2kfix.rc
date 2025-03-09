@@ -98,7 +98,7 @@ BEGIN
     CTEXT           "SimCity 2000 needs some information to run on this computer.\nYou can change these at any time in the sc2kfix Settings dialog in-game.",IDC_STATIC,12,12,240,23
     EDITTEXT        IDC_EDIT_MAYOR,55,51,150,14,ES_CENTER | ES_AUTOHSCROLL
     EDITTEXT        IDC_EDIT_COMPANY,55,78,150,14,ES_CENTER | ES_AUTOHSCROLL
-    CTEXT           "Mayor Name",IDC_STATIC,56,41,150,8
+    CTEXT           "Default Mayor Name",IDC_STATIC,56,41,150,8
     CTEXT           "Organization Name",IDC_STATIC,56,69,150,8
 END
 
