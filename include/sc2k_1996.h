@@ -847,3 +847,7 @@ static inline HPALETTE GameGetPalette(void) {
 	// ...and this is what CDC::SelectPalette does.
 	return (HPALETTE)CPalette[1];
 }
+
+static inline HWND GameGetRootWindowHandle(void) {
+	return (HWND)((DWORD*)pCwndMainWindow)[7];
+}

@@ -281,8 +281,8 @@ extern "C" BOOL __stdcall Hook_EnableMenuItem(HMENU hMenu, UINT uIDEnableItem, U
 extern "C" BOOL __stdcall Hook_ShowWindow(HWND hWnd, int nCmdShow) {
 	if (mischook_debug & MISCHOOK_DEBUG_WINDOW)
 		ConsoleLog(LOG_DEBUG, "WND:  0x%08X -> ShowWindow(0x%08X, %i)\n", _ReturnAddress(), hWnd, nCmdShow);
-	DWORD* CWndMainWindow = (DWORD*)*(DWORD*)0x4C702C;
-	HWND hWndStatusBar = (HWND)CWndMainWindow[68];
+
+	HWND hWndStatusBar = (HWND)((DWORD*)pCwndMainWindow)[68];
 	if (hWnd == hWndStatusBar && bSettingsUseStatusDialog) {
 		if (hStatusDialog)
 			ShowWindow(hStatusDialog, SW_SHOW);

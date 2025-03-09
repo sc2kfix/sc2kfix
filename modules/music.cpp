@@ -122,9 +122,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 						ConsoleLog(LOG_DEBUG, "MUS:  Received mciDevice 0x%08X from MCI_OPEN.\n", mciDevice);
 
 					mciDevice = mciOpenParms.wDeviceID;
-					DWORD* CWndMainWindow = (DWORD*)*(DWORD*)0x4C702C;
-					HWND hWndMainWindow = (HWND)CWndMainWindow[7];
-					MCI_PLAY_PARMS mciPlayParms = { (DWORD_PTR)hWndMainWindow, NULL, NULL };
+					MCI_PLAY_PARMS mciPlayParms = { (DWORD_PTR)GameGetRootWindowHandle(), NULL, NULL};
 					dwMCIError = mciSendCommand(mciDevice, MCI_PLAY, MCI_NOTIFY, (DWORD_PTR)&mciPlayParms);
 					// SC2K sometimes tries to run over its own sequencer device. We ignore the
 					// error that causes (0x151) just like the game itself does.

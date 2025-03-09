@@ -156,12 +156,10 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 }
 
 HWND ShowStatusDialog(void) {
-	DWORD* CWndMainWindow = (DWORD*)*(DWORD*)0x4C702C;	// god this is awful
-
 	if (hStatusDialog)
 		return hStatusDialog;
 
-	hStatusDialog = CreateDialogParam(hSC2KFixModule, MAKEINTRESOURCE(IDD_SIMULATIONSTATUS), (HWND)(CWndMainWindow[7]), StatusDialogProc, NULL);
+	hStatusDialog = CreateDialogParam(hSC2KFixModule, MAKEINTRESOURCE(IDD_SIMULATIONSTATUS), GameGetRootWindowHandle(), StatusDialogProc, NULL);
 	if (!hStatusDialog) {
 		ConsoleLog(LOG_ERROR, "CORE: Couldn't create status dialog: 0x%08X\n", GetLastError());
 		return NULL;
