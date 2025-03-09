@@ -110,6 +110,7 @@ extern BOOL bSettingsFixOrdinances;
 
 // Path functions (from registry area)
 
+const char *GetGoodiesPath();
 const char *GetSetMoviesPath();
 
 // SMK funcs
