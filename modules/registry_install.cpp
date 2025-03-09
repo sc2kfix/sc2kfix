@@ -15,6 +15,10 @@ char szSC2KPath[MAX_PATH];
 char szSC2KGoodiesPath[MAX_PATH];
 char szSC2KMoviesPath[MAX_PATH];
 
+const char *GetGoodiesPath() {
+	return szSC2KGoodiesPath;
+}
+
 const char *GetSetMoviesPath() {
 	return szSC2KMoviesPath;
 }
@@ -90,6 +94,7 @@ BOOL DoRegistryCheckAndInstall(void) {
 		strcat_s(szSC2KPaths[8], MAX_PATH, "\\SCURKART");
 		strcat_s(szSC2KPaths[9], MAX_PATH, "\\Movies");
 
+		strcpy_s(szSC2KGoodiesPath, MAX_PATH, szSC2KPaths[2]);
 		strcpy_s(szSC2KMoviesPath, MAX_PATH, szSC2KPaths[9]);
 
 		// Write paths
@@ -134,6 +139,8 @@ BOOL DoRegistryCheckAndInstall(void) {
 		// Signal that we had to fake an install.
 		return TRUE;
 	} else {
+		LSTATUS retval;
+
 		HKEY hkeySC2KPaths;
 		LRESULT lResultPaths = RegCreateKeyEx(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Paths", NULL, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkeySC2KPaths, NULL);
 		if (lResultPaths != ERROR_SUCCESS) {
@@ -142,17 +149,37 @@ BOOL DoRegistryCheckAndInstall(void) {
 			return FALSE;
 		}
 
-		DWORD dwSC2KMoviesPathSize = MAX_PATH;
-		LSTATUS retval = RegGetValue(hkeySC2KPaths, NULL, "Movies", RRF_RT_REG_SZ, NULL, szSC2KMoviesPath, &dwSC2KMoviesPathSize);
+		// Generate paths
+		char szSC2KExePath[MAX_PATH] = { 0 };
+		GetModuleFileNameEx(GetCurrentProcess(), NULL, szSC2KExePath, MAX_PATH);
+		PathRemoveFileSpecA(szSC2KExePath);
+
+		DWORD dwSC2KGoodiesPathSize = MAX_PATH;
+		retval = RegGetValue(hkeySC2KPaths, NULL, "Goodies", RRF_RT_REG_SZ, NULL, szSC2KGoodiesPath, &dwSC2KGoodiesPathSize);
 		switch (retval) {
 		case ERROR_SUCCESS:
 			break;
 		default:
-			// Generate paths
-			char szSC2KExePath[MAX_PATH] = { 0 };
-			GetModuleFileNameEx(GetCurrentProcess(), NULL, szSC2KExePath, MAX_PATH);
-			PathRemoveFileSpecA(szSC2KExePath);
+			// Generate path - This will default to your main game directory.
+			strcpy_s(szSC2KGoodiesPath, szSC2KExePath);
+			strcat_s(szSC2KGoodiesPath, MAX_PATH, "\\GOODIES");
 
+			RegSetValueEx(hkeySC2KPaths, "Goodies", NULL, REG_SZ, (BYTE*)szSC2KGoodiesPath, strlen(szSC2KGoodiesPath) + 1);
+
+			char* buf;
+			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, retval, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&buf, 0, NULL);
+			ConsoleLog(LOG_WARNING, "CORE: Error loading 'Goodies' path; resetting to default. Reg: %s", buf); // The lack of the newline is deliberate.
+
+			break;
+		}
+
+		DWORD dwSC2KMoviesPathSize = MAX_PATH;
+		retval = RegGetValue(hkeySC2KPaths, NULL, "Movies", RRF_RT_REG_SZ, NULL, szSC2KMoviesPath, &dwSC2KMoviesPathSize);
+		switch (retval) {
+		case ERROR_SUCCESS:
+			break;
+		default:
+			// Generate path
 			strcpy_s(szSC2KMoviesPath, szSC2KExePath);
 			strcat_s(szSC2KMoviesPath, MAX_PATH, "\\MOVIES");
 
