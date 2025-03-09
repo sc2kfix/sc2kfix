@@ -685,16 +685,6 @@ void InstallMiscHooks(void) {
 		VirtualProtect((LPVOID)0x4D45C0, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
 		memcpy_s((LPVOID)0x4D45C0, sizeof(afxMessageMapEntry), &afxMessageMapEntry, sizeof(afxMessageMapEntry));
 
-		afxMessageMapEntry = {
-			WM_COMMAND,
-			0,
-			40001,
-			40001,
-			0x0A,
-			ShowStatusDialog
-		};
-		VirtualProtect((LPVOID)0x4D45D8, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
-		memcpy_s((LPVOID)0x4D45D8, sizeof(afxMessageMapEntry), &afxMessageMapEntry, sizeof(afxMessageMapEntry));
 		if (mischook_debug & MISCHOOK_DEBUG_MENU)
 			ConsoleLog(LOG_DEBUG, "MISC: Updated game menu.\n");
 	}
