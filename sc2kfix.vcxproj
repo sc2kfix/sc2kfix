@@ -86,7 +86,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="hooks\exports.def" />
-    <None Include="hooks\hooks.md" />
     <None Include="README.md" />
     <None Include="script.md" />
   </ItemGroup>
