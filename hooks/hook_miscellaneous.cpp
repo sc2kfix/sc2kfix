@@ -453,12 +453,62 @@ extern "C" int __stdcall Hook_AddAllInventions(void) {
 
 	__asm {
 		call ToolMenuUpdate
-		push 202h
-		mov  ecx, SoundPlaying
+		push SOUND_ZAP
+		mov  ecx, pCWinAppThis
 		call PassSound
 	}
 
 	return 0;
+}
+
+// Hook the middle mouse button as a centering tool shortcut
+extern "C" int __stdcall Hook_CSimcityView_WM_MBUTTONDOWN(WPARAM wMouseKeys, POINT pt) {
+	__int16 wTileCoords = 0;
+	BYTE bTileX = 0, bTileY = 0;
+	//SetCapture(GameGetRootWindowHandle());
+	__asm {
+		// Transform the on-screen point to tile coordinates
+		mov eax, [pt.y]
+		push eax
+		mov eax, [pt.x]
+		push eax
+		mov edx, 0x401D16
+		call edx
+		add esp, 8
+
+		// Store the coordinates
+		mov [wTileCoords], ax
+		mov [bTileX], al
+		mov [bTileY], ah
+	}
+
+	if (wTileCoords & 0x8000)
+		return wTileCoords;
+	else {
+		if (wMouseKeys & MK_CONTROL)
+			;
+		else if (wMouseKeys & MK_SHIFT)
+			;
+		else {
+			__asm {
+				// Click sound
+				push SOUND_CLICK
+				mov ecx, pCWinAppThis
+				mov edx, 0x401096
+				call edx
+
+				// Goto
+				movzx eax, [bTileY]
+				push eax
+				movzx eax, [bTileX]
+				push eax
+				mov edx, 0x4019EC
+				call edx
+				add esp, 8
+			}
+		}
+	}
+	return wTileCoords;
 }
 
 // Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
@@ -603,6 +653,7 @@ void InstallMiscHooks(void) {
 	// Add settings buttons to SC2K's menus
 	hGameMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(3));
 	if (hGameMenu) {
+		AFX_MSGMAP_ENTRY afxMessageMapEntry;
 		HMENU hOptionsPopup;
 		MENUITEMINFO miiOptionsPopup;
 		miiOptionsPopup.cbSize = sizeof(MENUITEMINFO);
@@ -621,7 +672,7 @@ void InstallMiscHooks(void) {
 			goto skipmenu;
 		}
 
-		AFX_MSGMAP_ENTRY afxMessageMapEntry = {
+		afxMessageMapEntry = {
 			WM_COMMAND,
 			0,
 			40000,
@@ -635,6 +686,20 @@ void InstallMiscHooks(void) {
 		if (mischook_debug & MISCHOOK_DEBUG_MENU)
 			ConsoleLog(LOG_DEBUG, "MISC: Updated game menu.\n");
 	}
+
+skipmenu:
+
+	// Add hook to center with the middle mouse button
+	AFX_MSGMAP_ENTRY afxMessageMapEntrySimCityView = {
+		WM_MBUTTONDOWN,
+		0,
+		0,
+		0,
+		0x2A,
+		Hook_CSimcityView_WM_MBUTTONDOWN
+	};
+	VirtualProtect((LPVOID)0x4D45D8, sizeof(afxMessageMapEntrySimCityView), PAGE_EXECUTE_READWRITE, &dwDummy);
+	memcpy_s((LPVOID)0x4D45D8, sizeof(afxMessageMapEntrySimCityView), &afxMessageMapEntrySimCityView, sizeof(afxMessageMapEntrySimCityView));
 
 	// Copy the main menu's message map and update the runtime class to use it
 	VirtualProtect((LPVOID)0x4D513C, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -654,7 +719,6 @@ void InstallMiscHooks(void) {
 	NEWJMP(0x41503F, 0x415161);
 	*(BYTE*)0x415044 = 0x90;
 
-skipmenu:
 	// Part two!
 	UpdateMiscHooks();
 }
