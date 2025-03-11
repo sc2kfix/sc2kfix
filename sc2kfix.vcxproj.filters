@@ -98,6 +98,9 @@
     <ClCompile Include="modules\music.cpp">
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="modules\military.cpp">
+      <Filter>Source Files\Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="sc2kfix.rc">
