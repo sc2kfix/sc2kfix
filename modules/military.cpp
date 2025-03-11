@@ -17,7 +17,7 @@
 #define MILITARY_DEBUG_PLACEMENT 1
 #define MILITARY_DEBUG_PLACEMENT_NAVAL 2
 
-#define MILITARY_DEBUG DEBUG_FLAGS_NONE
+#define MILITARY_DEBUG MILITARY_DEBUG_PLACEMENT
 
 #ifdef DEBUGALL
 #undef MILITARY_DEBUG
@@ -60,10 +60,7 @@ extern "C" void _declspec(naked) Hook_SimulationProposeMilitaryBase(void) {
 	if (military_debug & MILITARY_DEBUG_PLACEMENT)
 		ConsoleLog(LOG_DEBUG, "MIL:  SimulationProposeMilitaryBase called, resetting iMilitaryBaseTries.\n");
 	iMilitaryBaseTries = 0;
-	__asm {
-		push 0x4142C0
-		retn
-	}
+	GAMEJMP(0x4142C0)
 }
 
 // Fix the game giving up after one attempt at placing a military base.
@@ -195,22 +192,10 @@ extern "C" void _declspec(naked) Hook_AttemptMultipleMilitaryBases(void) {
 				ConsoleLog(LOG_DEBUG, "MIL:  Military base placed at %i, %i.\n", wMilitaryBaseX, wMilitaryBaseY);
 
 			// Run the message box, center the view on the location, and return
+			Game_AfxMessageBox(243, 4, 0xFFFFFFFF);
+			Game_CenterOnTileCoords(wMilitaryBaseX, wMilitaryBaseY);
+
 			__asm {
-				push 0xFFFFFFFF
-				push 4
-				push 243
-
-				mov edx, 0x4B234F		// AfxMessageBox
-				call edx
-				
-				movzx eax, [wMilitaryBaseY]
-				push eax
-				movzx eax, [wMilitaryBaseX]
-				push eax
-				mov edx, 0x4019EC				// Goto
-				call edx
-				add esp, 8
-
 				pop ebp
 				pop esi
 				pop edi
@@ -222,23 +207,15 @@ extern "C" void _declspec(naked) Hook_AttemptMultipleMilitaryBases(void) {
 
 		// Pass through to original function
 notnavalbase:
-		__asm {
-			push 0x4142E9
-			retn
-		}
-	} else {
-		__asm {
-			push 0x4147AF
-			retn
-		}
-	}
+		GAMEJMP(0x4142E9)
+	} else
+		GAMEJMP(0x4147AF)
 }
 
 // Quick detour to pull the top-left corner coordinates of a spawned military base.
 extern "C" void _declspec(naked) Hook_41442E(void) {
 	__asm {
-		mov edx, 0x4B234F				// AfxMessageBox
-		call edx
+		call Game_AfxMessageBox
 
 		mov edx, [esp + 0x5C - 0x38]
 		mov word ptr [wMilitaryBaseX], dx
@@ -249,10 +226,7 @@ extern "C" void _declspec(naked) Hook_41442E(void) {
 	if (military_debug & MILITARY_DEBUG_PLACEMENT)
 		ConsoleLog(LOG_DEBUG, "MIL:  Military base placed at %i, %i.\n", wMilitaryBaseX, wMilitaryBaseY);
 
-	__asm {
-		push 0x414433
-		retn
-	}
+	GAMEJMP(0x414433)
 }
 
 void InstallMilitaryHooks(void) {

@@ -381,28 +381,19 @@ extern "C" char* __stdcall Hook_40D67D(void) {
 
 
 // Window title hook, part 2 and refresh hook
-extern "C" void _declspec(naked) Hook_4315D2(void) {
+// TODO: Clean this hook up to be as pure C/C++ as possible. I'm sure we can make it nice and
+// clean, I just need more time to fiddle with it.
+extern "C" void _declspec(naked) Hook_SimulationProcessTickDaySwitch(void) {
 	__asm {
-		// Update title bar
 		push edx
-		mov edx, 0x4E66F8
-		mov ecx, [edx]
-		mov edx, 0x4017B2
-		call edx
+	}
 
-		cmp [bSettingsFrequentCityRefresh], 0
-		je skip_refresh
+	Game_RefreshTitleBar(pCDocumentMainWindow);
 
-		// Refresh view for growth
-		mov edx, 0x4E66F8
-		mov ecx, [edx]
-		push 0
-		push 2
-		push 0
-		mov edx, 0x4AE0BC
-		call edx
+	if (bSettingsFrequentCityRefresh)
+		Game_CDocument_UpdateAllViews(pCDocumentMainWindow, NULL, 2, NULL);
 
-	skip_refresh:
+__asm {
 		pop edx
 		cmp edx, 24
 		ja def
@@ -410,7 +401,7 @@ extern "C" void _declspec(naked) Hook_4315D2(void) {
 		push 0x4135DB
 		retn
 
-	def:
+def:
 		push 0x413ABF
 		retn
 	}
@@ -420,10 +411,7 @@ extern "C" void _declspec(naked) Hook_SimulationStartDisaster(void) {
 	if (mischook_debug & MISCHOOK_DEBUG_DISASTERS)
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> SimulationStartDisaster(), wDisasterType = %u.\n", _ReturnAddress(), wDisasterType);
 
-	__asm {
-		push 0x45CF10
-		retn
-	}
+	GAMEJMP(0x45CF10)
 }
 
 extern "C" int __cdecl Hook_SimulationPrepareDisaster(DWORD* a1, __int16 a2, __int16 a3) {
@@ -452,22 +440,9 @@ extern "C" int __stdcall Hook_AddAllInventions(void) {
 extern "C" int __stdcall Hook_CSimcityView_WM_MBUTTONDOWN(WPARAM wMouseKeys, POINT pt) {
 	__int16 wTileCoords = 0;
 	BYTE bTileX = 0, bTileY = 0;
-	//SetCapture(GameGetRootWindowHandle());
-	__asm {
-		// Transform the on-screen point to tile coordinates
-		mov eax, [pt.y]
-		push eax
-		mov eax, [pt.x]
-		push eax
-		mov edx, 0x401D16
-		call edx
-		add esp, 8
-
-		// Store the coordinates
-		mov [wTileCoords], ax
-		mov [bTileX], al
-		mov [bTileY], ah
-	}
+	wTileCoords = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
+	bTileX = LOBYTE(wTileCoords);
+	bTileY = HIBYTE(wTileCoords);
 
 	if (wTileCoords & 0x8000)
 		return wTileCoords;
@@ -479,22 +454,8 @@ extern "C" int __stdcall Hook_CSimcityView_WM_MBUTTONDOWN(WPARAM wMouseKeys, POI
 		else if (GetAsyncKeyState(VK_MENU) < 0)
 			Game_SoundPlaySound(pCWinAppThis, SOUND_CHEERS);
 		else {
-			__asm {
-				// Click sound
-				push SOUND_CLICK
-				mov ecx, pCWinAppThis
-				mov edx, 0x401096
-				call edx
-
-				// Goto
-				movzx eax, [bTileY]
-				push eax
-				movzx eax, [bTileX]
-				push eax
-				mov edx, 0x4019EC
-				call edx
-				add esp, 8
-			}
+			Game_SoundPlaySound(pCWinAppThis, SOUND_CLICK);
+			Game_CenterOnTileCoords(bTileX, bTileY);
 		}
 	}
 	return wTileCoords;
@@ -624,7 +585,7 @@ void InstallMiscHooks(void) {
 	NEWCALL((LPVOID)0x40D67D, Hook_40D67D);
 	memset((LPVOID)0x40D682, 0x90, 5);
 	VirtualProtect((LPVOID)0x4135D2, 9, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4135D2, Hook_4315D2);
+	NEWJMP((LPVOID)0x4135D2, Hook_SimulationProcessTickDaySwitch);
 	memset((LPVOID)0x4135D7, 0x90, 4);
 
 	// Hook SimulationStartDisaster

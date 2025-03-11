@@ -71,12 +71,13 @@ extern "C" int __stdcall Hook_402793(int iStatic, char* szText, int iMaybeAlways
 	}
 }
 
-extern "C" int __stdcall Hook_4021A8(int iShow) {
+extern "C" int __stdcall Hook_4021A8(HWND iShow) {
+	HWND* iThis;
 	__asm {
-		push ecx
+		mov [iThis], ecx
 	}
 
-	int iActualShow = iShow;
+	HWND iActualShow = iShow;
 
 	if (bSettingsUseStatusDialog)
 		iActualShow = 0;
@@ -95,12 +96,7 @@ extern "C" int __stdcall Hook_4021A8(int iShow) {
 	else if (bSettingsUseStatusDialog)
 		ShowStatusDialog();
 
-	__asm {
-		pop ecx
-		push [iActualShow]
-		mov edi, 0x40C3E0
-		call edi
-	}
+	Game_CFrameWnd_ShowStatusBar(iThis, iActualShow);
 }
 
 extern "C" int __stdcall Hook_40103C(int iShow) {

@@ -200,7 +200,7 @@ extern "C" int __stdcall Hook_MusicPlay(int iSongID);
 extern "C" int __stdcall Hook_MusicStop(void);
 extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void);
 extern "C" int __stdcall Hook_402793(int iStatic, char* szText, int iMaybeAlways1, COLORREF crColor);
-extern "C" int __stdcall Hook_4021A8(int iShow);
+extern "C" int __stdcall Hook_4021A8(HWND iShow);
 extern "C" int __stdcall Hook_40103C(int iShow);
 
 // Debugging settings

@@ -207,26 +207,19 @@ extern "C" int __stdcall Hook_MusicStop(void) {
 
 // Replaces the original MusicPlayNextRefocusSong
 extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void) {
-	UINT uThis;
+	DWORD pThis;
 	int retval, iSongToPlay;
 
 	// This is actually a __thiscall we're overriding, so save "this"
 	__asm {
-		mov[uThis], ecx
+		mov [pThis], ecx
 	}
 
 	iSongToPlay = vectorRandomSongIDs[iCurrentSong++];
 	if (mus_debug & MUS_DEBUG_SONGS)
 		ConsoleLog(LOG_DEBUG, "MUS:  Playing song %i (next iCurrentSong will be %i).\n", iSongToPlay, (iCurrentSong > 8 ? 0 : iCurrentSong));
 
-	__asm {
-		mov ecx, [uThis]
-		mov edx, [iSongToPlay]
-		push edx
-		mov edx, 0x402414
-		call edx
-		mov [retval], eax
-	}
+	retval = Game_MusicPlay(pThis, iSongToPlay);
 
 	// Loop and/or shuffle.
 	if (iCurrentSong > 8) {

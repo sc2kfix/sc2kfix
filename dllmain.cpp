@@ -51,6 +51,11 @@ std::mt19937 mtMersenneTwister(rdRandomDevice());
 // Statics
 static DWORD dwDummy;
 
+// TODO: Bring this bit of code up to standard with the rest of the project. It's literally the
+// oldest hook in sc2kfix and its the kind of quick-and-dirty thing I'd rather rewrite to be more
+// digestible. We can hook anything in the game, we don't need to jam hand-assembled code into
+// code segments anymore.
+// 
 // This code replaces the original stack cleanup and return after the engine
 // cycles the animation palette.
 // 

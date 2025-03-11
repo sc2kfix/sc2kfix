@@ -1,5 +1,5 @@
 // sc2kfix hooks/hook_sndPlaySound.cpp: hook for sndPlaySoundA
-// (c) 2025 github.com/araxestroy - released under the MIT license
+// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
 #include <windows.h>
@@ -48,12 +48,7 @@ extern "C" void __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer) {
         return;
     }
 
-    __asm {
-        push lpBuffer
-        push iSoundID
-        mov edi, 0x480140
-        call edi
-    }
+    Game_LoadSoundBuffer(iSoundID, lpBuffer);
 }
 
 extern "C" BOOL __stdcall Hook_sndPlaySoundA(void* pReturnAddress, BOOL* retval, LPCTSTR lpszSound, UINT fuSound) {
