@@ -102,6 +102,7 @@ extern BOOL bSettingsUseStatusDialog;
 extern BOOL bSettingsTitleCalendar;
 extern BOOL bSettingsUseNewStrings;
 extern BOOL bSettingsUseLocalMovies;
+extern BOOL bSettingsAlwaysSkipIntro;
 
 extern BOOL bSettingsMilitaryBaseRevenue;
 extern BOOL bSettingsFixOrdinances;
