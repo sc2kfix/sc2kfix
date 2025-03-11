@@ -159,9 +159,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 
 extern "C" int __stdcall Hook_MusicPlay(int iSongID) {
 	UINT uThis;
-	__asm {
-		mov [uThis], ecx
-	}
+	__asm mov [uThis], ecx
 
 	// Certain songs should interrupt others
 	switch (iSongID) {
@@ -189,9 +187,7 @@ extern "C" int __stdcall Hook_MusicPlay(int iSongID) {
 
 extern "C" int __stdcall Hook_MusicStop(void) {
 	UINT uThis;
-	__asm {
-		mov[uThis], ecx
-	}
+	__asm mov [uThis], ecx
 
 	// Post the stop message to the music thread
 	PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
@@ -211,9 +207,7 @@ extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void) {
 	int retval, iSongToPlay;
 
 	// This is actually a __thiscall we're overriding, so save "this"
-	__asm {
-		mov [pThis], ecx
-	}
+	__asm mov [pThis], ecx
 
 	iSongToPlay = vectorRandomSongIDs[iCurrentSong++];
 	if (mus_debug & MUS_DEBUG_SONGS)
@@ -229,9 +223,7 @@ extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void) {
 		MusicShufflePlaylist(iSongToPlay);
 	}
 
-	__asm {
-		mov eax, [retval]
-	}
+	__asm mov eax, [retval]
 }
 
 void InstallMusicEngineHooks(void) {

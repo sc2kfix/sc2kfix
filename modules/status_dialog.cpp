@@ -26,9 +26,8 @@ static COLORREF crStatusColor = RGB(0, 0, 0);
 static HBRUSH hBrushBkg = NULL;
 
 extern "C" int __stdcall Hook_402793(int iStatic, char* szText, int iMaybeAlways1, COLORREF crColor) {
-	__asm {
-		push ecx
-	}
+	__asm push ecx
+
 	if (hStatusDialog) {
 		if (iStatic == 0) {
 			char szCurrentText[200];
@@ -73,9 +72,7 @@ extern "C" int __stdcall Hook_402793(int iStatic, char* szText, int iMaybeAlways
 
 extern "C" int __stdcall Hook_4021A8(HWND iShow) {
 	HWND* iThis;
-	__asm {
-		mov [iThis], ecx
-	}
+	__asm mov [iThis], ecx
 
 	HWND iActualShow = iShow;
 
@@ -100,9 +97,7 @@ extern "C" int __stdcall Hook_4021A8(HWND iShow) {
 }
 
 extern "C" int __stdcall Hook_40103C(int iShow) {
-	__asm {
-		push ecx
-	}
+	__asm push ecx
 
 	if (hStatusDialog) {
 		int iCmdShow;

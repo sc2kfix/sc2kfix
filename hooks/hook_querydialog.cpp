@@ -211,20 +211,13 @@ extern "C" void _declspec(naked) Hook_QueryJumpTable(void) {
 	// See if we need to intercept
 	if (GetAsyncKeyState(VK_MENU) < 0) {
 		DialogBox(hSC2KFixModule, MAKEINTRESOURCE(IDD_ADVANCEDQUERY), NULL, AdvancedQueryDialogProc);
-		__asm {
-			// Skip the regular call (and its stack cleanup)
-			popa
-			push 0x43F837
-			retn
-		}
+		__asm popa
+		GAMEJMP(0x43F837)
 	}
 
-	__asm {
-		// Go onto the regular call otherwise
-		popa
-		push 0x43F80C
-		retn
-	}
+	// Go onto the regular call otherwise
+	__asm popa
+	GAMEJMP(0x43F80C)
 }
 
 void InstallQueryHooks(void) {

@@ -384,9 +384,7 @@ extern "C" char* __stdcall Hook_40D67D(void) {
 // TODO: Clean this hook up to be as pure C/C++ as possible. I'm sure we can make it nice and
 // clean, I just need more time to fiddle with it.
 extern "C" void _declspec(naked) Hook_SimulationProcessTickDaySwitch(void) {
-	__asm {
-		push edx
-	}
+	__asm push edx
 
 	Game_RefreshTitleBar(pCDocumentMainWindow);
 
@@ -425,9 +423,8 @@ extern "C" int __cdecl Hook_SimulationPrepareDisaster(DWORD* a1, __int16 a2, __i
 }
 
 extern "C" int __stdcall Hook_AddAllInventions(void) {
-	if (mischook_debug & MISCHOOK_DEBUG_CHEAT) {
+	if (mischook_debug & MISCHOOK_DEBUG_CHEAT)
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> AddAllInventions()\n", _ReturnAddress());
-	}
 
 	memset(wCityInventionYears, 0, sizeof(WORD)*MAX_CITY_INVENTION_YEARS);
 	Game_ToolMenuUpdate();
