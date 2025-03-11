@@ -512,7 +512,6 @@ extern "C" int __stdcall Hook_AddAllInventions(void) {
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> AddAllInventions()\n", _ReturnAddress());
 	}
 
-	struct CDocument *doc;
 	DWORD ToolMenuUpdate,
 		SoundPlaying,
 		PassSound;
@@ -521,9 +520,7 @@ extern "C" int __stdcall Hook_AddAllInventions(void) {
 	SoundPlaying = 0x4C7010;
 	PassSound = 0x401096;
 
-	doc = (CDocument *)((DWORD *)pCwndMainWindow)[12];
 	memset(wCityInventionYears, 0, 0x20u);
-	*(WORD *)(0x4CB450) = 0;
 
 	__asm {
 		call ToolMenuUpdate
