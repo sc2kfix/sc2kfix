@@ -28,6 +28,17 @@
 
 #define GAMEOFF_PTR GAMEOFF_ARR
 
+#ifdef GAMEOFF_IMPL
+#define GAMECALL(address, type, conv, name, ...) \
+	typedef type (conv *GameFuncPtr_##name)(__VA_ARGS__); \
+	GameFuncPtr_##name Game_##name = (GameFuncPtr_##name)address;
+#else
+#define GAMECALL(address, type, conv, name, ...) \
+	typedef type (conv *GameFuncPtr_##name)(__VA_ARGS__);\
+	extern GameFuncPtr_##name Game_##name;
+#endif
+
+
 #define BITMASK(x) (1 << x)
 
 #define MAX_CITY_INVENTION_YEARS 17
@@ -726,6 +737,11 @@ typedef struct {
 	BYTE bPadding;
 } map_XLAB_t;
 
+
+// Function pointers
+
+GAMECALL(0x401096, int, __thiscall, SoundPlaySound, void*, int)
+GAMECALL(0x4023EC, void, __stdcall, ToolMenuUpdate, void)
 
 // Pointers
 

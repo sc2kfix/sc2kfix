@@ -441,22 +441,9 @@ extern "C" int __stdcall Hook_AddAllInventions(void) {
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> AddAllInventions()\n", _ReturnAddress());
 	}
 
-	DWORD ToolMenuUpdate,
-		SoundPlaying,
-		PassSound;
-
-	ToolMenuUpdate = 0x4023EC;
-	SoundPlaying = 0x4C7010;
-	PassSound = 0x401096;
-
 	memset(wCityInventionYears, 0, sizeof(WORD)*MAX_CITY_INVENTION_YEARS);
-
-	__asm {
-		call ToolMenuUpdate
-		push SOUND_ZAP
-		mov  ecx, pCWinAppThis
-		call PassSound
-	}
+	Game_ToolMenuUpdate();
+	Game_SoundPlaySound(pCWinAppThis, SOUND_ZAP);
 
 	return 0;
 }
@@ -489,6 +476,8 @@ extern "C" int __stdcall Hook_CSimcityView_WM_MBUTTONDOWN(WPARAM wMouseKeys, POI
 			;
 		else if (wMouseKeys & MK_SHIFT)
 			;
+		else if (GetAsyncKeyState(VK_MENU) < 0)
+			Game_SoundPlaySound(pCWinAppThis, SOUND_CHEERS);
 		else {
 			__asm {
 				// Click sound
