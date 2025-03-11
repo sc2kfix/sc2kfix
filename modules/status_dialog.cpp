@@ -81,8 +81,17 @@ extern "C" int __stdcall Hook_4021A8(int iShow) {
 	if (bSettingsUseStatusDialog)
 		iActualShow = 0;
 
-	if (hStatusDialog)
-		ShowWindow(hStatusDialog, iShow ? 5 : 0);
+	if (hStatusDialog) {
+		int iCmdShow;
+
+		if (!wCityMode) {
+			iCmdShow = SW_HIDE;
+		}
+		else {
+			iCmdShow = (iShow) ? SW_SHOW : SW_HIDE;
+		}
+		ShowWindow(hStatusDialog, iCmdShow);
+	}
 	else if (bSettingsUseStatusDialog)
 		ShowStatusDialog();
 
@@ -99,8 +108,17 @@ extern "C" int __stdcall Hook_40103C(int iShow) {
 		push ecx
 	}
 
-	if (hStatusDialog)
-		ShowWindow(hStatusDialog, iShow ? 5 : 0);
+	if (hStatusDialog) {
+		int iCmdShow;
+		
+		if (!wCityMode) {
+			iCmdShow = SW_HIDE;
+		}
+		else {
+			iCmdShow = (iShow) ? SW_SHOW : SW_HIDE;
+		}
+		ShowWindow(hStatusDialog, iCmdShow);
+	}
 
 	__asm {
 		pop ecx
