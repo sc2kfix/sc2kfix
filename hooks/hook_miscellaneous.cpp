@@ -28,7 +28,8 @@
 #define MISCHOOK_DEBUG_DISASTERS 32
 #define MISCHOOK_DEBUG_MOVIES 64
 #define MISCHOOK_DEBUG_SMACK 128
-#define MISCHOOK_DEBUG_REGISTRY 256
+#define MISCHOOK_DEBUG_CHEAT 256
+#define MISCHOOK_DEBUG_REGISTRY 512
 
 #define MISCHOOK_DEBUG DEBUG_FLAGS_NONE
 
@@ -435,6 +436,31 @@ extern "C" int __cdecl Hook_SimulationPrepareDisaster(DWORD* a1, __int16 a2, __i
 	return a2;
 }
 
+extern "C" int __stdcall Hook_AddAllInventions(void) {
+	if (mischook_debug & MISCHOOK_DEBUG_CHEAT) {
+		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> AddAllInventions()\n", _ReturnAddress());
+	}
+
+	DWORD ToolMenuUpdate,
+		SoundPlaying,
+		PassSound;
+
+	ToolMenuUpdate = 0x4023EC;
+	SoundPlaying = 0x4C7010;
+	PassSound = 0x401096;
+
+	memset(wCityInventionYears, 0, sizeof(WORD)*MAX_CITY_INVENTION_YEARS);
+
+	__asm {
+		call ToolMenuUpdate
+		push 202h
+		mov  ecx, SoundPlaying
+		call PassSound
+	}
+
+	return 0;
+}
+
 // Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
 // This should probably have a better name. And maybe be broken out into smaller functions.
 void InstallMiscHooks(void) {
@@ -569,6 +595,10 @@ void InstallMiscHooks(void) {
 	// Hook SimulationPrepareDisaster
 	VirtualProtect((LPVOID)0x40174E, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x40174E, Hook_SimulationPrepareDisaster);
+
+	// Hook AddAllInventions
+	VirtualProtect((LPVOID)0x402388, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402388, Hook_AddAllInventions);
 
 	// Add settings buttons to SC2K's menus
 	hGameMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(3));
