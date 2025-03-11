@@ -422,8 +422,6 @@ BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
 }
 
 static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments) {
-	PostThreadMessage(dwMusicThreadID, WM_APP + 3, NULL, NULL);
-
 	return TRUE;
 }
 

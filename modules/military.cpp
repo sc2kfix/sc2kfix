@@ -15,6 +15,7 @@
 #pragma intrinsic(_ReturnAddress)
 
 #define MILITARY_DEBUG_PLACEMENT 1
+#define MILITARY_DEBUG_PLACEMENT_NAVAL 2
 
 #define MILITARY_DEBUG DEBUG_FLAGS_NONE
 
@@ -72,6 +73,155 @@ extern "C" void _declspec(naked) Hook_AttemptMultipleMilitaryBases(void) {
 	if (iMilitaryBaseTries++ <= 10) {
 		if (military_debug & MILITARY_DEBUG_PLACEMENT)
 			ConsoleLog(LOG_DEBUG, "MIL:  Military base placement attempt %i.\n", iMilitaryBaseTries);
+
+		// Skip attempting to generate a naval base on oceanless maps.
+		if (!bCityHasOcean) {
+			if (military_debug & MILITARY_DEBUG_PLACEMENT_NAVAL)
+				ConsoleLog(LOG_DEBUG, "MIL:  Not attempting naval base, city has no ocean.\n");
+			goto notnavalbase;
+		}
+
+		// Prioritize naval bases on ocean maps.
+		if (!(rand() & 3)) {
+			if (military_debug & MILITARY_DEBUG_PLACEMENT_NAVAL)
+				ConsoleLog(LOG_DEBUG, "MIL:  Not attempting naval base, dice roll failed.\n");
+			goto notnavalbase;
+		}
+
+		// Attempt to generate a naval base.
+		{
+			int iTileX = 127;
+			int iTileY;
+			int iCoastlineRetries = 0;
+
+			// Make a few attempts to find a coastline that isn't immediately bad.
+			// Could probably use some refining.
+			while (iCoastlineRetries < 10) {
+				iTileY = rand() & 0x7F;
+				while (TRUE) {
+					iTileX--;
+					if (!dwMapXBIT[iTileX]->b[iTileY].iSaltWater || !dwMapXBIT[iTileX]->b[iTileY].iWater)
+						break;
+				}
+
+				if (dwMapXTER[iTileX]->iTileID[iTileY]) {
+					if (military_debug & MILITARY_DEBUG_PLACEMENT)
+						ConsoleLog(LOG_DEBUG, "MIL:  Bad coastline. Trying again.\n");
+					iCoastlineRetries++;
+					continue;
+				}
+				break;
+			}
+
+			if (military_debug & MILITARY_DEBUG_PLACEMENT)
+				ConsoleLog(LOG_DEBUG, "MIL:  Found potential edge of coast at %i, %i. Moving back four tiles.\n", iTileX + 1, iTileY);
+			iTileX -= 3;
+
+			int i = 0, j = 0, iValidTiles = 0;
+			while (TRUE) {
+				if (iTileX + i == 127) {
+					i = 0;
+					j++;
+				}
+				if (j == 12 || i == 0 && iValidTiles >= 48)
+					break;
+
+				if (dwMapXBLD[iTileX + i]->iTileID[iTileY + j] > TILE_TREES7 ||
+					dwMapXBLD[iTileX + i]->iTileID[iTileY + j] == TILE_RADIOACTIVITY ||
+					dwMapXZON[iTileX + i]->b[iTileY + j].iZoneType ||
+					dwMapXBIT[iTileX + i]->b[iTileY + j].iWater ||
+					dwMapXTER[iTileX + i]->iTileID[iTileY + j]) {
+					//printf("Tile at %i, %i no good", iTileX + i, iTileY + j);
+					if (dwMapXBIT[iTileX + i]->b[iTileY + j].iWater && dwMapXBIT[iTileX + i]->b[iTileY + j].iSaltWater) {
+						i = 0;
+						j++;
+						//printf(" (coastline hit)");
+					}
+					//printf(".\n");
+				}
+				else
+					iValidTiles++;
+				i++;
+			}
+
+			// Placement 
+			if (iValidTiles >= 40)
+				if (military_debug & MILITARY_DEBUG_PLACEMENT)
+					ConsoleLog(LOG_DEBUG, "MIL:  Found zone for naval base at %i, %i: %i valid tiles total, %i height.\n", iTileX, iTileY, iValidTiles, j);
+			else {
+				if (military_debug & MILITARY_DEBUG_PLACEMENT)
+					ConsoleLog(LOG_DEBUG, "MIL:  Failed to place naval base at %i, %i: Only found %i valid tiles, height %i.\n", iTileX, iTileY, iValidTiles, j);
+				goto notnavalbase;
+			}
+
+			if (military_debug & MILITARY_DEBUG_PLACEMENT)
+				ConsoleLog(LOG_DEBUG, "MIL:  Setting military base flag to 4 and zoning tiles...");
+			bMilitaryBaseType = 4;
+			i = 0;
+			j = 0;
+			iValidTiles = 0;
+
+			// Zone valid tiles as ZONE_MILITARY
+			while (TRUE) {
+				if (iTileX + i == 127) {
+					i = 0;
+					j++;
+				}
+				if (j == 12 || i == 0 && iValidTiles >= 48)
+					break;
+
+				if (dwMapXBLD[iTileX + i]->iTileID[iTileY + j] > TILE_TREES7 ||
+					dwMapXBLD[iTileX + i]->iTileID[iTileY + j] == TILE_RADIOACTIVITY ||
+					dwMapXZON[iTileX + i]->b[iTileY + j].iZoneType ||
+					dwMapXBIT[iTileX + i]->b[iTileY + j].iWater ||
+					dwMapXTER[iTileX + i]->iTileID[iTileY + j]) {
+					if (dwMapXBIT[iTileX + i]->b[iTileY + j].iWater && dwMapXBIT[iTileX + i]->b[iTileY + j].iSaltWater) {
+						i = 0;
+						j++;
+					}
+				}
+				else {
+					dwMapXZON[iTileX + i]->b[iTileY + j].iZoneType = ZONE_MILITARY;
+					iValidTiles++;
+				}
+				i++;
+			}
+
+			// Save the coordinates in case we need them later
+			wMilitaryBaseX = iTileX;
+			wMilitaryBaseY = iTileY;
+
+			if (military_debug & MILITARY_DEBUG_PLACEMENT)
+				ConsoleLog(LOG_DEBUG, "MIL:  Military base placed at %i, %i.\n", wMilitaryBaseX, wMilitaryBaseY);
+
+			// Run the message box, center the view on the location, and return
+			__asm {
+				push 0xFFFFFFFF
+				push 4
+				push 243
+
+				mov edx, 0x4B234F		// AfxMessageBox
+				call edx
+				
+				movzx eax, [wMilitaryBaseY]
+				push eax
+				movzx eax, [wMilitaryBaseX]
+				push eax
+				mov edx, 0x4019EC				// Goto
+				call edx
+				add esp, 8
+
+				pop ebp
+				pop esi
+				pop edi
+				pop edx
+				add esp, 0x4C
+				retn
+			}
+		}
+
+		// Pass through to original function
+notnavalbase:
 		__asm {
 			push 0x4142E9
 			retn
@@ -99,7 +249,7 @@ extern "C" void _declspec(naked) Hook_41442E(void) {
 	if (military_debug & MILITARY_DEBUG_PLACEMENT)
 		ConsoleLog(LOG_DEBUG, "MIL:  Military base placed at %i, %i.\n", wMilitaryBaseX, wMilitaryBaseY);
 
-	__asm{
+	__asm {
 		push 0x414433
 		retn
 	}
@@ -115,6 +265,8 @@ void InstallMilitaryHooks(void) {
 	NEWJNZ((LPVOID)0x4142D8, Hook_AttemptMultipleMilitaryBases);
 	VirtualProtect((LPVOID)0x4146B5, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJNZ((LPVOID)0x4146B5, Hook_AttemptMultipleMilitaryBases);
+
+	// Restore the functionality to place naval bases on maps with coastlines
 	VirtualProtect((LPVOID)0x403017, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x403017, Hook_SimulationProposeMilitaryBase);
 
