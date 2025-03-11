@@ -520,7 +520,7 @@ extern "C" int __stdcall Hook_AddAllInventions(void) {
 	SoundPlaying = 0x4C7010;
 	PassSound = 0x401096;
 
-	memset(wCityInventionYears, 0, 0x20u);
+	memset(wCityInventionYears, 0, sizeof(WORD)*MAX_CITY_INVENTION_YEARS);
 
 	__asm {
 		call ToolMenuUpdate

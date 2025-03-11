@@ -30,6 +30,8 @@
 
 #define BITMASK(x) (1 << x)
 
+#define MAX_CITY_INVENTION_YEARS 17
+
 // Enums
 
 // Disaster IDs
