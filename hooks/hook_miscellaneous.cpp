@@ -518,35 +518,16 @@ extern "C" __int16 __stdcall Hook_MovePerhaps(WPARAM iMouseKeys, POINT pt) {
 					*(DWORD *)(pThis + 256) = 1;
 					if ((iMouseKeys & MK_LBUTTON) != 0) {
 						if (*(DWORD *)(pThis + 248)) {
-							int iAllowDrag;
 							if (wCityMode) {
-								iAllowDrag = 0;
-								if (wCurrentCityToolGroup != 17) {
-									iAllowDrag = 1;
-								}
-								else {
-									if (GetAsyncKeyState(VK_MENU)) {
-										iAllowDrag = 1;
-									}
-								}
-								ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> MovePerhaps() (wCurrentCityToolGroup == %i) (wCityMode == %i) (iAllowDrag == %i)\n", _ReturnAddress(), wCurrentCityToolGroup, wCityMode, iAllowDrag);
-								if (iAllowDrag) {
+								ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> MovePerhaps() (wCurrentCityToolGroup == %i) (wCityMode == %i)\n", _ReturnAddress(), wCurrentCityToolGroup, wCityMode);
+								if ((wCurrentCityToolGroup != 17) || GetAsyncKeyState(VK_MENU)) {
 									iCurrPos = H_CityToolMenuAction(iMouseKeys, pt);
 									iCurrPos = LOWORD(iCurrPos);
 								}
 							}
 							else {
-								iAllowDrag = 0;
-								if (wCurrentMapToolGroup != 9) {
-									iAllowDrag = 1;
-								}
-								else {
-									if (GetAsyncKeyState(VK_MENU)) {
-										iAllowDrag = 1;
-									}
-								}
-								ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> MovePerhaps() (wCurrentMapToolGroup == %i) (wCityMode == %i) (iAllowDrag == %i)\n", _ReturnAddress(), wCurrentMapToolGroup, wCityMode, iAllowDrag);
-								if (iAllowDrag) {
+								ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> MovePerhaps() (wCurrentMapToolGroup == %i) (wCityMode == %i)\n", _ReturnAddress(), wCurrentMapToolGroup, wCityMode);
+								if ((wCurrentMapToolGroup != 9) || GetAsyncKeyState(VK_MENU)) {
 									iCurrPos = H_MapToolMenuAction(iMouseKeys, pt);
 									iCurrPos = LOWORD(iCurrPos);
 								}
