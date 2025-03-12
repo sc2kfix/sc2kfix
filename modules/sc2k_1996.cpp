@@ -340,7 +340,6 @@ int PlaceRoadsAlongPath(int x1, int y1, int x2, int y2) {
 	int retval = 0;
 	WORD wOldToolGroup = wMaybeActiveToolGroup;
 	wMaybeActiveToolGroup = TOOL_GROUP_ROADS;
-	ConsoleLog(LOG_DEBUG, "MISC: Attempting road test.\n");
 	if (Game_MaybeCheckViablePlacementPath(x1, y1, x2, y2)) {
 		__int16 x = x1;
 		__int16 y = y1;
