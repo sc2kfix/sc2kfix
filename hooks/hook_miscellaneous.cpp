@@ -520,14 +520,14 @@ extern "C" __int16 __stdcall Hook_MovePerhaps(WPARAM iMouseKeys, POINT pt) {
 						if (*(DWORD *)(pThis + 248)) {
 							if (wCityMode) {
 								ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> MovePerhaps() (wCurrentCityToolGroup == %i) (wCityMode == %i)\n", _ReturnAddress(), wCurrentCityToolGroup, wCityMode);
-								if ((wCurrentCityToolGroup != 17) || GetAsyncKeyState(VK_MENU)) {
+								if ((wCurrentCityToolGroup != 17) || GetAsyncKeyState(VK_MENU) & 0x8000) {
 									iCurrPos = H_CityToolMenuAction(iMouseKeys, pt);
 									iCurrPos = LOWORD(iCurrPos);
 								}
 							}
 							else {
 								ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> MovePerhaps() (wCurrentMapToolGroup == %i) (wCityMode == %i)\n", _ReturnAddress(), wCurrentMapToolGroup, wCityMode);
-								if ((wCurrentMapToolGroup != 9) || GetAsyncKeyState(VK_MENU)) {
+								if ((wCurrentMapToolGroup != 9) || GetAsyncKeyState(VK_MENU) & 0x8000) {
 									iCurrPos = H_MapToolMenuAction(iMouseKeys, pt);
 									iCurrPos = LOWORD(iCurrPos);
 								}
