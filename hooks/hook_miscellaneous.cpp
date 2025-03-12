@@ -453,14 +453,14 @@ extern "C" __int16 __stdcall Hook_ClickPerhaps(WPARAM iMouseKeys, POINT pt) {
 					Game_CWnd_FromHandle(hWnd);
 					ret = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
 					ret = LOWORD(ret);
-					*(WORD *)(0x4C7A98) = ret;
+					wCurrentTileCoordinates = ret;
 					if ((__int16)ret >= 0) {
 						*(WORD *)(0x4C7AB0) = (uint8_t)ret;
 						*(WORD *)(0x4E6808) = (uint8_t)ret;
-						*(WORD *)(0x4C7AB4) = *(WORD *)(0x4C7A98) >> 8;
-						*(WORD *)(0x4E680C) = *(WORD *)(0x4C7A98) >> 8;
-						*(WORD *)(0x4C7AD8) = pt.x;
-						*(WORD *)(0x4C7ADC) = pt.y;
+						*(WORD *)(0x4C7AB4) = wCurrentTileCoordinates >> 8;
+						*(WORD *)(0x4E680C) = wCurrentTileCoordinates >> 8;
+						wGameAreaX = pt.x;
+						wGameAreaY = pt.y;
 						*(DWORD *)(pThis + 252) = 1;
 						*(DWORD *)(pThis + 248) = 1;
 						if (wCityMode) {
@@ -507,14 +507,14 @@ extern "C" __int16 __stdcall Hook_MovePerhaps(WPARAM iMouseKeys, POINT pt) {
 	if (iThisSomething) {
 		iCurrPos = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
 		iCurrPos = LOWORD(iCurrPos);
-		*(WORD *)(0x4C7A98) = iCurrPos;
+		wCurrentTileCoordinates = iCurrPos;
 		if ((__int16)iCurrPos >= 0) {
 			*(WORD *)(0x4C7AB0) = (unsigned __int8)iCurrPos;
-			iCurrPos = *(WORD *)(0x4C7A98) >> 8;
+			iCurrPos = wCurrentTileCoordinates >> 8;
 			iCurrPos = LOWORD(iCurrPos);
-			*(WORD *)(0x4C7AB4) = *(WORD *)(0x4C7A98) >> 8;
+			*(WORD *)(0x4C7AB4) = wCurrentTileCoordinates >> 8;
 			if ( *(WORD *)(0x4E6808) != *(WORD *)(0x4C7AB0) || *(WORD *)(0x4E680C) != (WORD)iCurrPos ) {
-				if ( (int)abs(*(WORD *)(0x4C7AD8) - pt.x) > 1 || (iCurrPos = abs(*(WORD *)(0x4C7ADC) - pt.y), iCurrPos > 1) ) {
+				if ( (int)abs(wGameAreaX - pt.x) > 1 || (iCurrPos = abs(wGameAreaY - pt.y), iCurrPos > 1) ) {
 					*(DWORD *)(pThis + 256) = 1;
 					if ((iMouseKeys & MK_LBUTTON) != 0) {
 						if (*(DWORD *)(pThis + 248)) {
@@ -538,8 +538,8 @@ extern "C" __int16 __stdcall Hook_MovePerhaps(WPARAM iMouseKeys, POINT pt) {
 					iCurrPos = LOWORD(iCurrPos);
 					*(WORD *)(0x4E6808) = *(WORD *)(0x4C7AB0);
 					*(WORD *)(0x4E680C) = *(WORD *)(0x4C7AB4);
-					*(WORD *)(0x4C7AD8) = pt.x;
-					*(WORD *)(0x4C7ADC) = pt.y;
+					wGameAreaX = pt.x;
+					wGameAreaY = pt.y;
 				}
 			}
 		}
