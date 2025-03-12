@@ -397,7 +397,8 @@ extern "C" __int16 __stdcall Hook_ClickPerhaps(int iMouseKeys, POINT pt) {
 
 	int(__thiscall *H_GetRectInfo)(DWORD, LPRECT) = (int(__thiscall *)(DWORD, LPRECT))0x402F9A;
 	int(__thiscall *H_GetPosInfo)(DWORD, int, __int16, int) = (int(__thiscall *)(DWORD, int, __int16, int))0x4027A7;
-	int(__cdecl *H_PassScreenPt)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x401D16;
+	int(__cdecl *H_CityToolMenuAction)(char, POINT) = (int(__cdecl *)(char, POINT))0x43F220;
+	__int16(__cdecl *H_MapToolMenuAction)(int, POINT) = (__int16(__cdecl *)(int, POINT))0x402B44;
 
 	ConsoleLog(LOG_DEBUG, "0\n");
 	ret = *(DWORD *)(pThis + 268);
@@ -443,19 +444,34 @@ extern "C" __int16 __stdcall Hook_ClickPerhaps(int iMouseKeys, POINT pt) {
 				}
 				ConsoleLog(LOG_DEBUG, "8\n");
 			}
-		}
-		else {
-			ret = *(DWORD *)(pThis + 252);
-			ConsoleLog(LOG_DEBUG, "9\n");
-			if (!ret) {
-				ConsoleLog(LOG_DEBUG, "9.5\n");
-				hWnd = SetCapture(*(HWND *)(pThis + 28));
-				Game_CWnd_FromHandle(hWnd);
-				ret = H_PassScreenPt(pt.x, pt.y);
-				ret = LOWORD(ret);
-				*(WORD *)(0x4C7A98) = ret;
-				if ((__int16)ret >= 0) {
-
+			else {
+				ret = *(DWORD *)(pThis + 252);
+				ConsoleLog(LOG_DEBUG, "9\n");
+				if (!ret) {
+					ConsoleLog(LOG_DEBUG, "9.5\n");
+					hWnd = SetCapture(*(HWND *)(pThis + 28));
+					Game_CWnd_FromHandle(hWnd);
+					ret = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
+					ret = LOWORD(ret);
+					*(WORD *)(0x4C7A98) = ret;
+					if ((__int16)ret >= 0) {
+						*(WORD *)(0x4C7AB0) = (uint8_t)ret;
+						*(WORD *)(0x4E6808) = (uint8_t)ret;
+						*(WORD *)(0x4C7AB4) = *(WORD *)(0x4C7A98) >> 8;
+						*(WORD *)(0x4E680C) = *(WORD *)(0x4C7A98) >> 8;
+						*(WORD *)(0x4C7AD8) = pt.x;
+						*(WORD *)(0x4C7ADC) = pt.y;
+						*(DWORD *)(pThis + 252) = 1;
+						*(DWORD *)(pThis + 248) = 1;
+						if (wCityMode) {
+							ret = H_CityToolMenuAction((char)iMouseKeys, pt);
+							ret = LOWORD(ret);
+						}
+						else {
+							ret = H_MapToolMenuAction(iMouseKeys, pt);
+							ret = LOWORD(ret);
+						}
+					}
 				}
 			}
 		}
