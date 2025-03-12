@@ -491,6 +491,11 @@ extern "C" __int16 __stdcall Hook_MovePerhaps(int iMouseKeys, POINT pt) {
 
 	__asm mov[pThis], ecx
 
+	int iCurrXPt;
+
+	iCurrXPt = pt.x;
+	iCurrXPt = LOWORD(iCurrXPt);
+
 	//ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> MovePerhaps(%i, 0x%08X)\n", _ReturnAddress(), iMouseKeys, pt);
 
 	// Message disabled, much spam.
@@ -498,9 +503,10 @@ extern "C" __int16 __stdcall Hook_MovePerhaps(int iMouseKeys, POINT pt) {
 	// The thought now occurs that what's happening is a two-step process.
 
 	// Thunk -> Main
-	__int16(__thiscall *PassMovePerhaps)(DWORD, int, POINT) = (__int16(__thiscall *)(DWORD, int, POINT))0x410560;
+	//__int16(__thiscall *PassMovePerhaps)(DWORD, int, POINT) = (__int16(__thiscall *)(DWORD, int, POINT))0x410560;
 
-	return PassMovePerhaps(pThis, iMouseKeys, pt);
+	//return PassMovePerhaps(pThis, iMouseKeys, pt);
+	return iCurrXPt;
 }
 
 // Placeholder.
