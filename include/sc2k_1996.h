@@ -763,6 +763,7 @@ GAMECALL(0x480140, void, __stdcall, LoadSoundBuffer, int iSoundID, void* pBuffer
 // MFC function pointers. Use with care.
 GAMECALL(0x4017B2, void, __thiscall, RefreshTitleBar, void* pThis)
 GAMECALL(0x40C3E0, void, __thiscall, CFrameWnd_ShowStatusBar, HWND* pThis, HWND hWnd)
+GAMECALL(0x4A3BDF, struct CWnd, __stdcall, CWnd_FromHandle, HWND hWnd)
 GAMECALL(0x4AE0BC, void, __thiscall, CDocument_UpdateAllViews, void* pThis, void* pSender, int lHint, void* pHint)
 GAMECALL(0x4B234F, int, __stdcall, AfxMessageBox, unsigned int nIDPrompt, unsigned int nType, unsigned int nIDHelp)
 

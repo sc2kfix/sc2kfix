@@ -363,6 +363,113 @@ extern "C" int __stdcall Hook_CSimcityView_WM_MBUTTONDOWN(WPARAM wMouseKeys, POI
 	return wTileCoords;
 }
 
+extern "C" int __stdcall Hook_PlaySoundPlay(int SndID) {
+	DWORD pThis;
+
+	__asm mov [pThis], ecx
+
+	ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> PlaySoundPlay(%i)\n", _ReturnAddress(), SndID);
+
+	// Thunk -> Main
+	int(__thiscall *PassPlaySoundPlay)(DWORD, int) = (int(__thiscall *)(DWORD, int))0x4251D0;
+
+	return PassPlaySoundPlay(pThis, SndID);
+}
+
+extern "C" int __cdecl Hook_ClickAround(char cPos, POINT pt) {
+	ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> ClickAround(0x%08X, 0x%08X)\n", _ReturnAddress(), cPos, pt);
+
+	// Thunk -> Main
+	int(__cdecl *PassClickAround)(char, POINT) = (int(__cdecl *)(char, POINT))0x43F220;
+
+	return PassClickAround(cPos, pt);
+}
+
+extern "C" __int16 __stdcall Hook_ClickPerhaps(int iMouseKeys, POINT pt) {
+	DWORD pThis;
+
+	__asm mov[pThis], ecx
+
+	int ret;
+	HWND hWnd;
+	int iYVar;
+	tagRECT Rect;
+
+	int(__thiscall *H_GetRectInfo)(DWORD, LPRECT) = (int(__thiscall *)(DWORD, LPRECT))0x402F9A;
+	int(__thiscall *H_GetPosInfo)(DWORD, int, __int16, int) = (int(__thiscall *)(DWORD, int, __int16, int))0x4027A7;
+	int(__cdecl *H_PassScreenPt)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x401D16;
+
+	ConsoleLog(LOG_DEBUG, "0\n");
+	ret = *(DWORD *)(pThis + 268);
+	if (ret) {
+		*(DWORD *)(pThis + 268) = 0;
+		ConsoleLog(LOG_DEBUG, "-1\n");
+	}
+	else {
+		ret = PtInRect((const RECT *)(pThis + 232), pt);
+		ConsoleLog(LOG_DEBUG, "1 (%d)\n", ret);
+		if (!ret) {
+			ConsoleLog(LOG_DEBUG, "1.5\n");
+			H_GetRectInfo(pThis, &Rect);
+			ConsoleLog(LOG_DEBUG, "2\n");
+			if (PtInRect((const RECT *)(pThis + 88), pt)) {
+				if (PtInRect((const RECT *)(pThis + 120), pt)) {
+					ret = H_GetPosInfo(pThis, 1, 0, *(DWORD *)(pThis + 76));
+					ret = LOWORD(ret);
+					ConsoleLog(LOG_DEBUG, "3\n");
+				}
+				else if (PtInRect((const RECT *)(pThis + 104), pt)) {
+					ret = H_GetPosInfo(pThis, 0, 0, *(DWORD *)(pThis + 76));
+					ret = LOWORD(ret);
+					ConsoleLog(LOG_DEBUG, "4\n");
+				}
+				else if (PtInRect((const RECT *)(pThis + 136), pt)) {
+					ret = H_GetPosInfo(pThis, 5, pt.y, *(DWORD *)(pThis + 76));
+					ret = LOWORD(ret);
+					ConsoleLog(LOG_DEBUG, "5\n");
+				}
+				else {
+					iYVar = *(DWORD *)(pThis + 76);
+					if (*(DWORD *)(pThis + 140) >= pt.y) {
+						ret = H_GetPosInfo(pThis, 2, 0, iYVar);
+						ret = LOWORD(ret);
+						ConsoleLog(LOG_DEBUG, "6\n");
+					}
+					else {
+						ret = H_GetPosInfo(pThis, 3, 0, iYVar);
+						ret = LOWORD(ret);
+						ConsoleLog(LOG_DEBUG, "7\n");
+					}
+				}
+				ConsoleLog(LOG_DEBUG, "8\n");
+			}
+		}
+		else {
+			ret = *(DWORD *)(pThis + 252);
+			ConsoleLog(LOG_DEBUG, "9\n");
+			if (!ret) {
+				ConsoleLog(LOG_DEBUG, "9.5\n");
+				hWnd = SetCapture(*(HWND *)(pThis + 28));
+				Game_CWnd_FromHandle(hWnd);
+				ret = H_PassScreenPt(pt.x, pt.y);
+				ret = LOWORD(ret);
+				*(WORD *)(0x4C7A98) = ret;
+				if ((__int16)ret >= 0) {
+
+				}
+			}
+		}
+	}
+
+	ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> ClickPerhaps(%i, 0x%08X)\n", _ReturnAddress(), iMouseKeys, pt);
+
+	// Thunk -> Main
+	//__int16(__thiscall *PassClickPerhaps)(DWORD, int, POINT) = (__int16(__thiscall *)(DWORD, int, POINT))0x4106C0;
+
+	//return PassClickPerhaps(pThis, a2, pt);
+	return ret;
+}
+
 // Placeholder.
 void ShowModSettingsDialog(void) {
 	ConsoleLog(LOG_DEBUG, "FUCK");
@@ -562,6 +669,15 @@ void InstallMiscHooks(void) {
 	}
 
 skipmenu:
+
+	VirtualProtect((LPVOID)0x401096, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x401096, Hook_PlaySoundPlay);
+
+	VirtualProtect((LPVOID)0x402C25, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402C25, Hook_ClickAround);
+
+	VirtualProtect((LPVOID)0x401523, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x401523, Hook_ClickPerhaps);
 
 	// Add hook to center with the middle mouse button
 	AFX_MSGMAP_ENTRY afxMessageMapEntrySimCityView = {
