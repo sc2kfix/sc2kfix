@@ -742,19 +742,21 @@ typedef struct {
 
 // Function pointers
 
-GAMECALL(0x401096, int, __thiscall, SoundPlaySound, void*, int)
-GAMECALL(0x4019EC, int, __cdecl, CenterOnTileCoords, __int16, __int16)
-GAMECALL(0x401D16, __int16, __cdecl, GetTileCoordsFromScreenCoords, __int16, __int16)
+GAMECALL(0x401096, int, __thiscall, SoundPlaySound, void* pThis, int iSoundID)
+GAMECALL(0x401519, void, __thiscall, ToolMenuEnable, void* pThis)
+GAMECALL(0x4019EC, int, __cdecl, CenterOnTileCoords, __int16 x, __int16 y)
+GAMECALL(0x401D16, __int16, __cdecl, GetTileCoordsFromScreenCoords, __int16 x, __int16 y)
 GAMECALL(0x4023EC, void, __stdcall, ToolMenuUpdate, void)
-GAMECALL(0x402414, int, __thiscall, MusicPlay, DWORD, int)
-GAMECALL(0x480140, void, __stdcall, LoadSoundBuffer, int, void*)
+GAMECALL(0x402414, int, __thiscall, MusicPlay, DWORD pThis, int iSongID)
+GAMECALL(0x402937, void, __thiscall, ToolMenuDisable, void* pThis)
+GAMECALL(0x480140, void, __stdcall, LoadSoundBuffer, int iSoundID, void* pBuffer)
 
 
 // MFC function pointers. Use with care.
-GAMECALL(0x4017B2, void, __thiscall, RefreshTitleBar, void*)
-GAMECALL(0x40C3E0, void, __thiscall, CFrameWnd_ShowStatusBar, HWND*, HWND)
-GAMECALL(0x4AE0BC, void, __thiscall, CDocument_UpdateAllViews, void*, void*, int, void*)
-GAMECALL(0x4B234F, int, __stdcall, AfxMessageBox, unsigned int, unsigned int, unsigned int)
+GAMECALL(0x4017B2, void, __thiscall, RefreshTitleBar, void* pThis)
+GAMECALL(0x40C3E0, void, __thiscall, CFrameWnd_ShowStatusBar, HWND* pThis, HWND hWnd)
+GAMECALL(0x4AE0BC, void, __thiscall, CDocument_UpdateAllViews, void* pThis, void* pSender, int lHint, void* pHint)
+GAMECALL(0x4B234F, int, __stdcall, AfxMessageBox, unsigned int nIDPrompt, unsigned int nType, unsigned int nIDHelp)
 
 // Pointers
 

@@ -210,7 +210,9 @@ extern "C" void _declspec(naked) Hook_QueryJumpTable(void) {
 
 	// See if we need to intercept
 	if (GetAsyncKeyState(VK_MENU) < 0) {
+		Game_ToolMenuDisable((char*)pCwndMainWindow + 408);
 		DialogBox(hSC2KFixModule, MAKEINTRESOURCE(IDD_ADVANCEDQUERY), NULL, AdvancedQueryDialogProc);
+		Game_ToolMenuEnable((char*)pCwndMainWindow + 408);
 		__asm popa
 		GAMEJMP(0x43F837)
 	}
