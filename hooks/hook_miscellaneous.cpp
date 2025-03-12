@@ -486,6 +486,23 @@ extern "C" __int16 __stdcall Hook_ClickPerhaps(int iMouseKeys, POINT pt) {
 	return ret;
 }
 
+extern "C" __int16 __stdcall Hook_MovePerhaps(int iMouseKeys, POINT pt) {
+	DWORD pThis;
+
+	__asm mov[pThis], ecx
+
+	//ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> MovePerhaps(%i, 0x%08X)\n", _ReturnAddress(), iMouseKeys, pt);
+
+	// Message disabled, much spam.
+	// This appears to be for general mouse movement within the game area.
+	// The thought now occurs that what's happening is a two-step process.
+
+	// Thunk -> Main
+	__int16(__thiscall *PassMovePerhaps)(DWORD, int, POINT) = (__int16(__thiscall *)(DWORD, int, POINT))0x410560;
+
+	return PassMovePerhaps(pThis, iMouseKeys, pt);
+}
+
 // Placeholder.
 void ShowModSettingsDialog(void) {
 	ConsoleLog(LOG_DEBUG, "FUCK");
@@ -694,6 +711,9 @@ skipmenu:
 
 	VirtualProtect((LPVOID)0x401523, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x401523, Hook_ClickPerhaps);
+
+	VirtualProtect((LPVOID)0x4016EA, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4016EA, Hook_MovePerhaps);
 
 	// Add hook to center with the middle mouse button
 	AFX_MSGMAP_ENTRY afxMessageMapEntrySimCityView = {
