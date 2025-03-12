@@ -385,7 +385,7 @@ extern "C" int __cdecl Hook_ClickAround(char cPos, POINT pt) {
 	return PassClickAround(cPos, pt);
 }
 
-extern "C" __int16 __stdcall Hook_ClickPerhaps(int iMouseKeys, POINT pt) {
+extern "C" __int16 __stdcall Hook_ClickPerhaps(WPARAM iMouseKeys, POINT pt) {
 	DWORD pThis;
 
 	__asm mov[pThis], ecx
@@ -464,7 +464,7 @@ extern "C" __int16 __stdcall Hook_ClickPerhaps(int iMouseKeys, POINT pt) {
 						*(DWORD *)(pThis + 252) = 1;
 						*(DWORD *)(pThis + 248) = 1;
 						if (wCityMode) {
-							ret = H_CityToolMenuAction((char)iMouseKeys, pt);
+							ret = H_CityToolMenuAction(iMouseKeys, pt);
 							ret = LOWORD(ret);
 						}
 						else {
@@ -478,6 +478,7 @@ extern "C" __int16 __stdcall Hook_ClickPerhaps(int iMouseKeys, POINT pt) {
 	}
 
 	ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> ClickPerhaps(%i, 0x%08X)\n", _ReturnAddress(), iMouseKeys, pt);
+	ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> ClickPerhaps() (wCurrentToolGroup == %i) (wCurrentMapToolGroup == %i) (wCityMode == %i)\n", _ReturnAddress(), wCurrentToolGroup, *(WORD*)(0x4CA1EC), wCityMode);
 
 	// Thunk -> Main
 	//__int16(__thiscall *PassClickPerhaps)(DWORD, int, POINT) = (__int16(__thiscall *)(DWORD, int, POINT))0x4106C0;
@@ -486,17 +487,72 @@ extern "C" __int16 __stdcall Hook_ClickPerhaps(int iMouseKeys, POINT pt) {
 	return ret;
 }
 
-extern "C" __int16 __stdcall Hook_MovePerhaps(int iMouseKeys, POINT pt) {
+extern "C" __int16 __stdcall Hook_MovePerhaps(WPARAM iMouseKeys, POINT pt) {
 	DWORD pThis;
 
 	__asm mov[pThis], ecx
 
-	int iCurrXPt;
+	int iCurrPos;
+	int iThisSomething;
 
-	iCurrXPt = pt.x;
-	iCurrXPt = LOWORD(iCurrXPt);
+	int(__cdecl *H_CityToolMenuAction)(char, POINT) = (int(__cdecl *)(char, POINT))0x43F220;
+	__int16(__cdecl *H_MapToolMenuAction)(int, POINT) = (__int16(__cdecl *)(int, POINT))0x402B44;
 
 	//ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> MovePerhaps(%i, 0x%08X)\n", _ReturnAddress(), iMouseKeys, pt);
+
+	iCurrPos = pt.x;
+	iCurrPos = LOWORD(iCurrPos);
+	iThisSomething = *(DWORD *)(pThis + 252);
+	*(struct tagPOINT *)(pThis + 260) = pt; // Placement position.
+	if (iThisSomething) {
+		iCurrPos = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
+		iCurrPos = LOWORD(iCurrPos);
+		*(WORD *)(0x4C7A98) = iCurrPos;
+		if ((__int16)iCurrPos >= 0) {
+			*(WORD *)(0x4C7AB0) = (unsigned __int8)iCurrPos;
+			iCurrPos = *(WORD *)(0x4C7A98) >> 8;
+			iCurrPos = LOWORD(iCurrPos);
+			*(WORD *)(0x4C7AB4) = *(WORD *)(0x4C7A98) >> 8;
+			if ( *(WORD *)(0x4E6808) != *(WORD *)(0x4C7AB0) || *(WORD *)(0x4E680C) != (WORD)iCurrPos ) {
+				if ( (int)abs(*(WORD *)(0x4C7AD8) - pt.x) > 1 || (iCurrPos = abs(*(WORD *)(0x4C7ADC) - pt.y), iCurrPos > 1) ) {
+					*(DWORD *)(pThis + 256) = 1;
+					if ((iMouseKeys & MK_LBUTTON) != 0) {
+						if (*(DWORD *)(pThis + 248)) {
+							int iAllowDrag;
+							if (wCityMode) {
+								iAllowDrag = 0;
+								if (wCurrentToolGroup != 17) {
+									iAllowDrag = 1;
+								}
+								ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> MovePerhaps() (wCurrentToolGroup == %i) (wCityMode == %i) (iAllowDrag == %i\n", _ReturnAddress(), wCurrentToolGroup, wCityMode, iAllowDrag);
+								if (iAllowDrag) {
+									iCurrPos = H_CityToolMenuAction(iMouseKeys, pt);
+									iCurrPos = LOWORD(iCurrPos);
+								}
+							}
+							else {
+								iAllowDrag = 0;
+								if (*(WORD*)(0x4CA1EC) != 9) {
+									iAllowDrag = 1;
+								}
+								ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> MovePerhaps() (wCurrentMapToolGroup == %i) (wCityMode == %i) (iAllowDrag == %i\n", _ReturnAddress(), *(WORD*)(0x4CA1EC), wCityMode, iAllowDrag);
+								if (iAllowDrag) {
+									iCurrPos = H_MapToolMenuAction(iMouseKeys, pt);
+									iCurrPos = LOWORD(iCurrPos);
+								}
+							}
+						}
+					}
+					iCurrPos = *(WORD *)(0x4C7AB0);
+					iCurrPos = LOWORD(iCurrPos);
+					*(WORD *)(0x4E6808) = *(WORD *)(0x4C7AB0);
+					*(WORD *)(0x4E680C) = *(WORD *)(0x4C7AB4);
+					*(WORD *)(0x4C7AD8) = pt.x;
+					*(WORD *)(0x4C7ADC) = pt.y;
+				}
+			}
+		}
+	}
 
 	// Message disabled, much spam.
 	// This appears to be for general mouse movement within the game area.
@@ -506,7 +562,7 @@ extern "C" __int16 __stdcall Hook_MovePerhaps(int iMouseKeys, POINT pt) {
 	//__int16(__thiscall *PassMovePerhaps)(DWORD, int, POINT) = (__int16(__thiscall *)(DWORD, int, POINT))0x410560;
 
 	//return PassMovePerhaps(pThis, iMouseKeys, pt);
-	return iCurrXPt;
+	return iCurrPos;
 }
 
 // Placeholder.
