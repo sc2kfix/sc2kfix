@@ -226,6 +226,65 @@ extern "C" void _declspec(naked) Hook_41442E(void) {
 	if (military_debug & MILITARY_DEBUG_PLACEMENT)
 		ConsoleLog(LOG_DEBUG, "MIL:  Military base placed at %i, %i.\n", wMilitaryBaseX, wMilitaryBaseY);
 
+	if (bMilitaryBaseType == MILITARY_BASE_ARMY) {
+		// The DOS and Mac versions plant a grid of roads on army bases and then a set of runway
+		// cross tiles at the ends to give the base some commercial demand cap bonuses.
+		// 
+		// This is more or less the exact algorithm from the DOS version. And it is equally as
+		// terrifyingly ugly. My apologies (also, goddammit Maxis).
+		PlaceRoadsAlongPath(wMilitaryBaseX + 2, wMilitaryBaseY, wMilitaryBaseX + 2, wMilitaryBaseY + 7);
+		PlaceRoadsAlongPath(wMilitaryBaseX + 5, wMilitaryBaseY, wMilitaryBaseX + 5, wMilitaryBaseY + 7);
+		PlaceRoadsAlongPath(wMilitaryBaseX, wMilitaryBaseY + 2, wMilitaryBaseX + 7, wMilitaryBaseY + 2);
+		PlaceRoadsAlongPath(wMilitaryBaseX, wMilitaryBaseY + 5, wMilitaryBaseX + 7, wMilitaryBaseY + 5);
+
+		if (GetTileID(wMilitaryBaseX + 2, wMilitaryBaseY) == TILE_ROAD_TB || GetTileID(wMilitaryBaseX + 2, wMilitaryBaseY) == TILE_ROAD_LR)	{
+			dwMapXZON[wMilitaryBaseX + 2]->b[wMilitaryBaseY].iZoneType = ZONE_MILITARY;
+			dwMapXZON[wMilitaryBaseX + 2]->b[wMilitaryBaseY].iCorners = 0x0F;
+			Game_PlaceTileWithMilitaryCheck(wMilitaryBaseX + 2, wMilitaryBaseY, TILE_INFRASTRUCTURE_RUNWAYCROSS);
+		}
+		if (GetTileID(wMilitaryBaseX + 5, wMilitaryBaseY) == TILE_ROAD_TB || GetTileID(wMilitaryBaseX + 5, wMilitaryBaseY) == TILE_ROAD_LR) {
+			dwMapXZON[wMilitaryBaseX + 5]->b[wMilitaryBaseY].iZoneType = ZONE_MILITARY;
+			dwMapXZON[wMilitaryBaseX + 5]->b[wMilitaryBaseY].iCorners = 0x0F;
+			Game_PlaceTileWithMilitaryCheck(wMilitaryBaseX + 5, wMilitaryBaseY, TILE_INFRASTRUCTURE_RUNWAYCROSS);
+		}
+
+		if (GetTileID(wMilitaryBaseX + 2, wMilitaryBaseY + 7) == TILE_ROAD_TB || GetTileID(wMilitaryBaseX + 2, wMilitaryBaseY + 7) == TILE_ROAD_LR) {
+			dwMapXZON[wMilitaryBaseX + 2]->b[wMilitaryBaseY + 7].iZoneType = ZONE_MILITARY;
+			dwMapXZON[wMilitaryBaseX + 2]->b[wMilitaryBaseY + 7].iCorners = 0x0F;
+			Game_PlaceTileWithMilitaryCheck(wMilitaryBaseX + 2, wMilitaryBaseY + 7, TILE_INFRASTRUCTURE_RUNWAYCROSS);
+		}
+		if (GetTileID(wMilitaryBaseX + 5, wMilitaryBaseY + 7) == TILE_ROAD_TB || GetTileID(wMilitaryBaseX + 5, wMilitaryBaseY + 7) == TILE_ROAD_LR)	{
+			dwMapXZON[wMilitaryBaseX + 5]->b[wMilitaryBaseY + 7].iZoneType = ZONE_MILITARY;
+			dwMapXZON[wMilitaryBaseX + 5]->b[wMilitaryBaseY + 7].iCorners = 0x0F;
+			Game_PlaceTileWithMilitaryCheck(wMilitaryBaseX + 5, wMilitaryBaseY + 7, TILE_INFRASTRUCTURE_RUNWAYCROSS);
+		}
+
+		if (GetTileID(wMilitaryBaseX, wMilitaryBaseY + 2) == TILE_ROAD_TB || GetTileID(wMilitaryBaseX, wMilitaryBaseY + 2) == TILE_ROAD_LR) {
+			dwMapXZON[wMilitaryBaseX]->b[wMilitaryBaseY + 2].iZoneType = ZONE_MILITARY;
+			dwMapXZON[wMilitaryBaseX]->b[wMilitaryBaseY + 2].iCorners = 0x0F;
+			Game_PlaceTileWithMilitaryCheck(wMilitaryBaseX, wMilitaryBaseY + 2, TILE_INFRASTRUCTURE_RUNWAYCROSS);
+		}
+		if (GetTileID(wMilitaryBaseX, wMilitaryBaseY + 5) == TILE_ROAD_TB || GetTileID(wMilitaryBaseX, wMilitaryBaseY + 5) == TILE_ROAD_LR) {
+			dwMapXZON[wMilitaryBaseX]->b[wMilitaryBaseY + 5].iZoneType = ZONE_MILITARY;
+			dwMapXZON[wMilitaryBaseX]->b[wMilitaryBaseY + 5].iCorners = 0x0F;
+			Game_PlaceTileWithMilitaryCheck(wMilitaryBaseX, wMilitaryBaseY + 5, TILE_INFRASTRUCTURE_RUNWAYCROSS);
+		}
+
+		if (GetTileID(wMilitaryBaseX + 7, wMilitaryBaseY + 2) == TILE_ROAD_TB || GetTileID(wMilitaryBaseX + 7, wMilitaryBaseY + 2) == TILE_ROAD_LR) {
+			dwMapXZON[wMilitaryBaseX + 7]->b[wMilitaryBaseY + 2].iZoneType = ZONE_MILITARY;
+			dwMapXZON[wMilitaryBaseX + 7]->b[wMilitaryBaseY + 2].iCorners = 0x0F;
+			Game_PlaceTileWithMilitaryCheck(wMilitaryBaseX + 7, wMilitaryBaseY + 2, TILE_INFRASTRUCTURE_RUNWAYCROSS);
+		}
+		if (GetTileID(wMilitaryBaseX + 7, wMilitaryBaseY + 5) == TILE_ROAD_TB || GetTileID(wMilitaryBaseX + 7, wMilitaryBaseY + 5) == TILE_ROAD_LR) {
+			dwMapXZON[wMilitaryBaseX + 7]->b[wMilitaryBaseY + 5].iZoneType = ZONE_MILITARY;
+			dwMapXZON[wMilitaryBaseX + 7]->b[wMilitaryBaseY + 5].iCorners = 0x0F;
+			Game_PlaceTileWithMilitaryCheck(wMilitaryBaseX + 7, wMilitaryBaseY + 5, TILE_INFRASTRUCTURE_RUNWAYCROSS);
+		}
+
+		// Update the view to reflect the new placements
+		Game_CDocument_UpdateAllViews(pCDocumentMainWindow, NULL, 2, NULL);
+	}
+
 	GAMEJMP(0x414433)
 }
 

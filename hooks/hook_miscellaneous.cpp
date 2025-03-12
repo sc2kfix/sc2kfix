@@ -448,9 +448,9 @@ extern "C" int __stdcall Hook_CSimcityView_WM_MBUTTONDOWN(WPARAM wMouseKeys, POI
 			;
 		else if (wMouseKeys & MK_SHIFT)
 			;
-		else if (GetAsyncKeyState(VK_MENU) < 0)
-			Game_SoundPlaySound(pCWinAppThis, SOUND_CHEERS);
-		else {
+		else if (GetAsyncKeyState(VK_MENU) < 0) {
+			// useful for tests
+		} else {
 			Game_SoundPlaySound(pCWinAppThis, SOUND_CLICK);
 			Game_CenterOnTileCoords(bTileX, bTileY);
 		}

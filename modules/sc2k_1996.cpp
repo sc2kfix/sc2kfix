@@ -335,3 +335,29 @@ const char* szUndergroundNames[36] = {
 	"Missile Silo",
 	"Subway Entrance"
 };
+
+int PlaceRoadsAlongPath(int x1, int y1, int x2, int y2) {
+	int retval = 0;
+	WORD wOldToolGroup = wMaybeActiveToolGroup;
+	wMaybeActiveToolGroup = TOOL_GROUP_ROADS;
+	ConsoleLog(LOG_DEBUG, "MISC: Attempting road test.\n");
+	if (Game_MaybeCheckViablePlacementPath(x1, y1, x2, y2)) {
+		__int16 x = x1;
+		__int16 y = y1;
+		*(DWORD*)0x4C7D58 = 0;
+		*(DWORD*)0x4C7D84 = 0;
+
+		do {
+			(*(DWORD*)0x4C7D84)++;
+			if (dwMapXTER[x]->iTileID[y] < 0x30)
+				if (*(((DWORD*)0x4E7B28) + (dwMapXTER[x]->iTileID[y] & 0xF)))
+					(*(DWORD*)0x4C7D58)++;
+			Game_PlaceRoadAtCoordinates(x, y);
+		} while (Game_MaybeRoadViabilityAlongPath(&x, &y));
+		Game_CDocument_UpdateAllViews(pCDocumentMainWindow, NULL, 2, NULL);
+		retval = 1;
+	} else
+		retval = 0;
+	wMaybeActiveToolGroup = wOldToolGroup;
+	return retval;
+}
