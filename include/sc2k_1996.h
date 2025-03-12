@@ -770,7 +770,7 @@ GAMECALL(0x4B234F, int, __stdcall, AfxMessageBox, unsigned int nIDPrompt, unsign
 // Pointers
 
 GAMEOFF_PTR(void, pCWinAppThis,				0x4C7010)
-GAMEOFF(void*,	pCwndMainWindow,			0x4C702C)
+GAMEOFF(void*,	pCWndRootWindow,			0x4C702C)
 GAMEOFF(BOOL,	bPriscillaActivated,		0x4C7104)
 GAMEOFF(BOOL,	bOptionsMusicEnabled,		0x4C71F0)
 GAMEOFF(WORD,	wSimulationSpeed,			0x4C7318)
@@ -896,5 +896,5 @@ static inline HPALETTE GameGetPalette(void) {
 }
 
 static inline HWND GameGetRootWindowHandle(void) {
-	return (HWND)((DWORD*)pCwndMainWindow)[7];
+	return (HWND)((DWORD*)pCWndRootWindow)[7];
 }

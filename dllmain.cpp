@@ -62,7 +62,7 @@ static DWORD dwDummy;
 // 6881000000      push dword 0x81              ; flags = RDW_INVALIDATE | RDW_ALLCHILDREN
 // 6A00            push 0                       ; hrgnUpdate = NULL
 // 6A00            push 0                       ; lprcUpdate = NULL
-// 8B0D2C704C00    mov ecx, [pCwndMainWindow]
+// 8B0D2C704C00    mov ecx, [pCWndRootWindow]
 // 8B511C          mov edx, [ecx+0x1C]
 // 52              push edx                     ; hWnd
 // FF155CFD4E00    call [RedrawWindow]

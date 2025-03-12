@@ -1,5 +1,5 @@
 // sc2kfix hooks/hook_querydialog.cpp: hook for new query dialog features
-// (c) 2025 github.com/araxestroy - released under the MIT license
+// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
 #include <windows.h>
@@ -210,9 +210,9 @@ extern "C" void _declspec(naked) Hook_QueryJumpTable(void) {
 
 	// See if we need to intercept
 	if (GetAsyncKeyState(VK_MENU) < 0) {
-		Game_ToolMenuDisable((char*)pCwndMainWindow + 408);
+		Game_ToolMenuDisable((char*)pCWndRootWindow + 408);
 		DialogBox(hSC2KFixModule, MAKEINTRESOURCE(IDD_ADVANCEDQUERY), NULL, AdvancedQueryDialogProc);
-		Game_ToolMenuEnable((char*)pCwndMainWindow + 408);
+		Game_ToolMenuEnable((char*)pCWndRootWindow + 408);
 		__asm popa
 		GAMEJMP(0x43F837)
 	}

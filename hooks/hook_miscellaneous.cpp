@@ -280,7 +280,7 @@ extern "C" BOOL __stdcall Hook_ShowWindow(HWND hWnd, int nCmdShow) {
 	if (mischook_debug & MISCHOOK_DEBUG_WINDOW)
 		ConsoleLog(LOG_DEBUG, "WND:  0x%08X -> ShowWindow(0x%08X, %i)\n", _ReturnAddress(), hWnd, nCmdShow);
 
-	HWND hWndStatusBar = (HWND)((DWORD*)pCwndMainWindow)[68];
+	HWND hWndStatusBar = (HWND)((DWORD*)pCWndRootWindow)[68];
 	if (hWnd == hWndStatusBar && bSettingsUseStatusDialog) {
 		if (hStatusDialog)
 			ShowWindow(hStatusDialog, SW_SHOW);
