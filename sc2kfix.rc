@@ -150,13 +150,13 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,142,247,10
     CONTROL         " *Use rebalanced radioactive decay algorithm (Default: off)",IDC_SETTINGS_CHECK_RADIOACTIVE_DECAY,
                     "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,284,170,247,10
-    GROUPBOX        "sc2kfix Core Settings", IDC_STATIC, 7, 192, 261, 42
+    GROUPBOX        "sc2kfix Core Settings",IDC_STATIC,7,192,261,42
     CONTROL         " Use videos inside game's ""MOVIES"" directory (Default: on)",IDC_SETTINGS_CHECK_LOCAL_MOVIES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,284,78,247,10
     CONTROL         " Play MP3 music instead of MIDI music if present (Default: off)",IDC_SETTINGS_CHECK_MP3_MUSIC,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,171,247,10
-    CONTROL         " Always skip introduction videos (Default: off)", IDC_SETTINGS_CHECK_SKIP_INTRO,
-                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 284, 92, 247, 10
+    CONTROL         " Always skip introduction videos (Default: off)",IDC_SETTINGS_CHECK_SKIP_INTRO,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,284,92,247,10
 END
 
 103 DIALOGEX 0, 0, 72, 195
@@ -271,15 +271,16 @@ BEGIN
     CONTROL         "",336,"Static",SS_BLACKFRAME,109,5,17,24
 END
 
-IDD_SIMULATIONSTATUS DIALOGEX 0, 0, 135, 22
-STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | WS_POPUP | WS_CHILD | WS_VISIBLE | WS_BORDER
+IDD_SIMULATIONSTATUS DIALOGEX 0, 0, 145, 20
+STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | WS_POPUP | WS_VISIBLE
 EXSTYLE WS_EX_TOOLWINDOW
 FONT 10, "MS Sans Serif", 400, 0, 0x0
 BEGIN
-    LTEXT           "",IDC_STATIC_SIMSTAT_BGD,1,1,112,20,NOT WS_GROUP
-    LTEXT           "Selected Tool Name ($123)",IDC_STATIC_SELECTEDTOOL,2,2,104,8,0,WS_EX_TRANSPARENT
-    LTEXT           "Residents Demand Road and Rail",IDC_STATIC_STATUSSTRING,2,12,104,8,0,WS_EX_TRANSPARENT
-    PUSHBUTTON      "",IDC_BUTTON_WEATHERICON,114,1,20,20,BS_BITMAP
+    LTEXT           "",IDC_STATIC_SIMSTAT_BGD,0,0,102,20,NOT WS_GROUP
+    LTEXT           "Selected Tool Name ($123)",IDC_STATIC_SELECTEDTOOL,1,1,99,8,0,WS_EX_TRANSPARENT
+    LTEXT           "Citizens Demand Road and Rail",IDC_STATIC_STATUSSTRING,1,11,97,8,0,WS_EX_TRANSPARENT
+    PUSHBUTTON      "",IDC_BUTTON_WEATHERICON,125,0,20,20,BS_BITMAP
+    CONTROL         "",IDC_STATIC_COMPASS,"Static",SS_BITMAP,103,0,20,20
 END
 
 20104 DIALOG 0, 0, 72, 159
@@ -351,9 +352,8 @@ BEGIN
     IDD_SIMULATIONSTATUS, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 131
+        RIGHTMARGIN, 141
         TOPMARGIN, 7
-        BOTTOMMARGIN, 21
     END
 
     20104, DIALOG
@@ -459,6 +459,14 @@ IDB_WEATHER10           BITMAP                  "blobs\\weather10.bmp"
 IDB_WEATHER11           BITMAP                  "blobs\\weather11.bmp"
 
 IDB_GOTO                BITMAP                  "blobs\\goto.bmp"
+
+IDB_COMPASS0            BITMAP                  "blobs\\compass0.bmp"
+
+IDB_COMPASS1            BITMAP                  "blobs\\compass1.bmp"
+
+IDB_COMPASS2            BITMAP                  "blobs\\compass2.bmp"
+
+IDB_COMPASS3            BITMAP                  "blobs\\compass3.bmp"
 
 
 /////////////////////////////////////////////////////////////////////////////

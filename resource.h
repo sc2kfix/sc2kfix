@@ -44,6 +44,7 @@
 #define IDC_SETTINGS_CHECK_LOCAL_MOVIES 21032
 #define IDC_SETTINGS_CHECK_MP3_MUSIC    21033
 #define IDC_SETTINGS_CHECK_SKIP_INTRO   21034
+#define IDC_STATIC_COMPASS              21035
 #define IDR_WAVE_500                    23001
 #define IDR_WAVE_514                    23002
 #define IDR_WAVE_529                    23003
@@ -62,14 +63,18 @@
 #define IDB_GOTO                        23032
 #define IDD_ADVANCEDQUERY               23033
 #define IDI_TOPSECRET                   23035
+#define IDB_COMPASS0                    23036
+#define IDB_COMPASS1                    23037
+#define IDB_COMPASS2                    23038
+#define IDB_COMPASS3                    23039
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        23036
+#define _APS_NEXT_RESOURCE_VALUE        23040
 #define _APS_NEXT_COMMAND_VALUE         40002
-#define _APS_NEXT_CONTROL_VALUE         21035
+#define _APS_NEXT_CONTROL_VALUE         21036
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

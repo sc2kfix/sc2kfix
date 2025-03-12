@@ -185,6 +185,7 @@ extern std::mt19937 mtMersenneTwister;
 
 extern HWND hStatusDialog;
 extern HANDLE hWeatherBitmaps[13];
+extern HANDLE hCompassBitmaps[4];
 
 extern char szLatestRelease[24];
 extern BOOL bUpdateAvailable;

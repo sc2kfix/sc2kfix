@@ -17,6 +17,7 @@
 
 HWND hStatusDialog = NULL;
 HANDLE hWeatherBitmaps[13];
+HANDLE hCompassBitmaps[4];
 static HCURSOR hDefaultCursor = NULL;
 static HWND hwndDesktop;
 static RECT rcTemp, rcDlg, rcDesktop;
@@ -29,6 +30,9 @@ extern "C" int __stdcall Hook_402793(int iStatic, char* szText, int iMaybeAlways
 	__asm push ecx
 
 	if (hStatusDialog) {
+		SendMessage(GetDlgItem(hStatusDialog, IDC_STATIC_COMPASS), STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hCompassBitmaps[wViewRotation]);
+		InvalidateRect(GetDlgItem(hStatusDialog, IDC_STATIC_COMPASS), NULL, TRUE);
+
 		if (iStatic == 0) {
 			char szCurrentText[200];
 			GetDlgItemText(hStatusDialog, IDC_STATIC_SELECTEDTOOL, szCurrentText, 200);
@@ -161,6 +165,7 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 		SendMessage(hwndDlg, WM_SYSCOMMAND, (SC_MOVE | HTCAPTION), 0);
 		return FALSE;
 	}
+
 	return FALSE;
 }
 

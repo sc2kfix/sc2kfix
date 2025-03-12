@@ -569,6 +569,15 @@ void InstallMiscHooks(void) {
 			ConsoleLog(LOG_ERROR, "MISC: Couldn't load weather bitmap IDB_WEATHER%i: 0x%08X\n", i, GetLastError());
 	}
 
+	// Load compass icons
+	for (int i = 0; i < 4; i++) {
+		HANDLE hBitmap = LoadImage(hSC2KFixModule, MAKEINTRESOURCE(IDB_COMPASS0 + i), IMAGE_BITMAP, 40, 40, NULL);
+		if (hBitmap)
+			hCompassBitmaps[i] = hBitmap;
+		else
+			ConsoleLog(LOG_ERROR, "MISC: Couldn't load compass bitmap IDB_COMPASS%i: 0x%08X\n", i, GetLastError());
+	}
+
 	// Hook status bar updates for the status dialog implementation
 	VirtualProtect((LPVOID)0x402793, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402793, Hook_402793);

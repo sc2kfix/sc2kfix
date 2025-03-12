@@ -101,6 +101,10 @@
     <Media Include="blobs\529.wav" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="blobs\compass0.bmp" />
+    <Image Include="blobs\compass1.bmp" />
+    <Image Include="blobs\compass2.bmp" />
+    <Image Include="blobs\compass3.bmp" />
     <Image Include="blobs\goto.bmp" />
     <Image Include="blobs\topsecret.ico" />
     <Image Include="blobs\weather0.bmp" />
