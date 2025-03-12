@@ -55,9 +55,9 @@ extern "C" int __stdcall Hook_402793(int iStatic, char* szText, int iMaybeAlways
 			}
 		} else if (iStatic == 2) {
 			if (crStatusColor == RGB(255, 0, 0))
-				SendMessage(GetDlgItem(hStatusDialog, IDC_BUTTON_WEATHERICON), BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hWeatherBitmaps[12]);
+				SendMessage(GetDlgItem(hStatusDialog, IDC_BUTTON_WEATHERICON), STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hWeatherBitmaps[12]);
 			else
-				SendMessage(GetDlgItem(hStatusDialog, IDC_BUTTON_WEATHERICON), BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hWeatherBitmaps[bWeatherTrend]);
+				SendMessage(GetDlgItem(hStatusDialog, IDC_BUTTON_WEATHERICON), STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hWeatherBitmaps[bWeatherTrend]);
 			InvalidateRect(GetDlgItem(hStatusDialog, IDC_BUTTON_WEATHERICON), NULL, TRUE);
 		} else
 			InvalidateRect(hStatusDialog, NULL, FALSE);
@@ -143,7 +143,7 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 	case WM_COMMAND:
 		switch (GET_WM_COMMAND_ID(wParam, lParam)) {
 			case IDC_BUTTON_WEATHERICON:
-				if (GET_WM_COMMAND_CMD(wParam, lParam) == BN_CLICKED) {
+				if (GET_WM_COMMAND_CMD(wParam, lParam) == STN_CLICKED) {
 					HWND phWnd = GetParent(hwndDlg);
 					if (phWnd) {
 						HWND dhWnd = GetDlgItem(phWnd, 111);
