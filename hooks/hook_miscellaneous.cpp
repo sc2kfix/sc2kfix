@@ -574,6 +574,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	int(__thiscall *H_SomeThisFunc)(int) = (int(__thiscall *)(int))0x4014F1;
 	int(*H_GetControlKey)() = (int(*)())0x402667;
 	int(*H_GetShiftKey)() = (int(*)())0x4019E2;
+	BOOL(__cdecl *BulldozingFunc)(__int16, __int16) = (BOOL(__cdecl *)(__int16, __int16))0x401E47;
 	int(__thiscall *H_SomeRectFillRefFunc)(void *) = (int(__thiscall *)(void *))0x40226B;
 	int(__cdecl *H_PositionalFunc)(__int16, __int16, WORD *, WORD *) = (int(__cdecl *)(__int16, __int16, WORD *, WORD *))0x40258B;
 	int(__thiscall *H_SetNewPosFunc)(void *, __int16, __int16) = (int(__thiscall *)(void *, __int16, __int16))0x4016D1;
@@ -609,7 +610,29 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 		if (iSomeHigh != iMysteryHigh || iSomeLow != iMysteryLow) {
 			iCenterOut = 0;
 			switch (iCurrToolGroupA) {
-			case 9:
+			case 0: // Unclear
+				BulldozingFunc(iMysteryHigh, iMysteryLow);
+				H_SomeRectFillRefFunc(pThis);
+				break;
+			case 1: // Raise Terrain
+				goto LEAVE_LOOP;
+			case 2: // Lower Terrain
+				goto LEAVE_LOOP;
+			case 3: // Raise/Lower Terrain (Drag vertically)
+				goto LEAVE_LOOP;
+			case 4: // Level Terrain
+				goto LEAVE_LOOP;
+			case 5: // Place Water
+				goto WATER_SOUNDPLAY_JUMP;
+			case 6: // Place Stream
+WATER_SOUNDPLAY_JUMP:
+				Game_SoundPlaySound(pCWinAppThis, 511);
+				break;
+			case 7: // Place Tree
+				break;
+			case 8: // Place Forest
+				break;
+			case 9: // Center Tool
 				H_PositionalFunc(iMysteryHigh, iMysteryLow, &iFetchHigh, &iFetchLow);
 				Game_SoundPlaySound(pCWinAppThis, 505);
 				if (*(DWORD *)((char *)pThis + 322)) {
@@ -627,7 +650,6 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 				}
 				break;
 			default:
-				ConsoleLog(LOG_DEBUG, "MAPT: %i\n", iCurrToolGroupA);
 				break;
 			}
 		}
@@ -646,6 +668,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 			break;
 		}
 	} while (ret);
+LEAVE_LOOP:
 	if (iCurrToolGroupB != iCurrToolGroupA) {
 		ret = iCurrToolGroupB;
 		ret = LOWORD(ret);
