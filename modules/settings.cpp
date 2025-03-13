@@ -4,6 +4,7 @@
 #undef UNICODE
 #include <windows.h>
 #include <windowsx.h>
+#include <psapi.h>
 #include <commctrl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,6 +17,8 @@ static DWORD dwDummy;
 
 char szSettingsMayorName[64];
 char szSettingsCompanyName[64];
+
+char szSettingsMovieDriveLetter[4];
 
 BOOL bSettingsMusicInBackground = TRUE;
 BOOL bSettingsUseSoundReplacements = TRUE;
@@ -35,6 +38,65 @@ BOOL bSettingsAlwaysSkipIntro = FALSE;
 
 BOOL bSettingsMilitaryBaseRevenue = FALSE;	// NYI
 BOOL bSettingsFixOrdinances = FALSE;		// NYI
+
+std::vector<char *> DriveLetters;
+
+static bool SetDefaultDriveLetter(void) {
+	memset(szSettingsMovieDriveLetter, 0, sizeof(szSettingsMovieDriveLetter));
+
+	char szModuleFileName[MAX_PATH];
+	GetModuleFileNameEx(GetCurrentProcess(), NULL, szModuleFileName, MAX_PATH);
+
+	if (!isalpha(szModuleFileName[0]))
+		return false;
+
+	szSettingsMovieDriveLetter[0] = szModuleFileName[0];
+	return true;
+}
+
+bool FillDriveSelectionArray(void) {
+	char szLDrivesBuf[128 + 1];
+
+	memset(szLDrivesBuf, 0, sizeof(szLDrivesBuf));
+
+	DriveLetters.clear();
+
+	// Set a viable default.
+	if (!SetDefaultDriveLetter())
+		return false;
+
+	DWORD dwLDRet = GetLogicalDriveStringsA(sizeof(szLDrivesBuf)-1, szLDrivesBuf);
+	if (dwLDRet > 0 && dwLDRet <= sizeof(szLDrivesBuf)-1) {
+		char *szLDriveEnt = szLDrivesBuf;
+		while (*szLDriveEnt) {
+			char szLDriveBuf[4];
+
+			memset(szLDriveBuf, 0, sizeof(szLDriveBuf));
+
+			if (!isalpha(szLDriveEnt[0]))
+				break;
+
+			szLDriveBuf[0] = szLDriveEnt[0];
+
+			DriveLetters.push_back(_strdup(szLDriveBuf));
+
+			szLDriveEnt += strlen(szLDriveEnt) + 1;
+		}
+	}
+	else {
+		DriveLetters.push_back(_strdup(szSettingsMovieDriveLetter));
+	}
+
+	return true;
+}
+
+void FreeDriveSelectionArray(void) {
+	for (unsigned i = 0; i < DriveLetters.size(); i++)
+		if (DriveLetters[i])
+			free(DriveLetters[i]);
+
+	DriveLetters.clear();
+}
 
 void LoadSettings(void) {
 	HKEY hkeySC2KRegistration;

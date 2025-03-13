@@ -135,14 +135,22 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             }
         }
 
+        // Open a log file. If it fails, we handle that safely elsewhere
+        // AF - Relocated so it will record any messages that occur
+        //      prior to the console itself being enabled.
+        fopen_s(&fdLog, "sc2kfix.log", "w");
+
+        if (!FillDriveSelectionArray()) {
+            MessageBox(GetActiveWindow(), "Could not fetch drive letter list (???)", "sc2kfix error", MB_OK | MB_ICONERROR);
+            return FALSE;
+        }
+
+
         // Load settings
         if (!bSkipLoadSettings)
             LoadSettings();
         else
-            ConsoleLog(LOG_INFO, "CORE: -default passed, skipping LoadSettings().\n");
-
-        // Open a log file. If it fails, we handle that safely elsewhere
-        fopen_s(&fdLog, "sc2kfix.log", "w");
+            ConsoleLog(LOG_INFO, "CORE: -default passed, skipping LoadSettings(). (%s)\n", szSettingsMovieDriveLetter);
 
         // Force the console to be enabled if bSettingsAlwaysConsole is set
         if (bSettingsAlwaysConsole)
@@ -338,6 +346,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
         // Send a closing message and close the log file
         ReleaseSMKFuncs();
+        FreeDriveSelectionArray();
         ConsoleLog(LOG_INFO, "CORE: Closing down at %lld. Goodnight!\n", time(NULL));
         fflush(fdLog);
         fclose(fdLog);

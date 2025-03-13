@@ -14,10 +14,10 @@
 #include <music.h>
 
 // Turning this on enables every debugging option. You have been warned.
-// #define DEBUGALL
+#define DEBUGALL
 
 // Turning this on forces the console to be enabled, as if -console was passed to SIMCITY.EXE.
-// #define CONSOLE_ENABLED
+#define CONSOLE_ENABLED
 
 #define SC2KVERSION_UNKNOWN 0
 #define SC2KVERSION_1995    1
@@ -85,8 +85,11 @@ enum {
 };
 
 // Settings globals
+
 extern char szSettingsMayorName[64];
 extern char szSettingsCompanyName[64];
+
+extern char szSettingsMovieDriveLetter[4];
 
 extern BOOL bSettingsMusicInBackground;
 extern BOOL bSettingsUseSoundReplacements;
@@ -130,6 +133,8 @@ LONG WINAPI CrashHandler(LPEXCEPTION_POINTERS lpExceptions);
 BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 BOOL DoRegistryCheckAndInstall(void);
+bool FillDriveSelectionArray(void);
+void FreeDriveSelectionArray(void);
 void LoadSettings(void);
 void SaveSettings(void);
 void ShowSettingsDialog(void);
