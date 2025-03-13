@@ -570,24 +570,24 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 
 	// Short-circuit for now as we rebuild.
 
-	int(__thiscall *GetCWinAppThisReturn)(void *) = (int(__thiscall *)(void *))0x402699;
-	int(__thiscall *SomeThisFunc)(int) = (int(__thiscall *)(int))0x4014F1;
-	int(*GetControlKey)() = (int(*)())0x402667;
-	int(*GetShiftKey)() = (int(*)())0x4019E2;
-	int(__thiscall *SomeRectFillRefFunc)(void *) = (int(__thiscall *)(void *))0x40226B;
-	int(__cdecl *PositionalFunc)(__int16, __int16, WORD *, WORD *) = (int(__cdecl *)(__int16, __int16, WORD *, WORD *))0x40258B;
-	int(__thiscall *SetNewPosFunc)(void *, __int16, __int16) = (int(__thiscall *)(void *, __int16, __int16))0x4016D1;
-	int(__thiscall *SomeRectColorRefFunc)(void *) = (int(__thiscall *)(void *))0x402810;
-	int(__cdecl *ProcessPointSomething)(int, LPPOINT) = (int(__cdecl *)(int, LPPOINT))0x4029C3;
+	int(__thiscall *H_GetCWinAppThisReturn)(void *) = (int(__thiscall *)(void *))0x402699;
+	int(__thiscall *H_SomeThisFunc)(int) = (int(__thiscall *)(int))0x4014F1;
+	int(*H_GetControlKey)() = (int(*)())0x402667;
+	int(*H_GetShiftKey)() = (int(*)())0x4019E2;
+	int(__thiscall *H_SomeRectFillRefFunc)(void *) = (int(__thiscall *)(void *))0x40226B;
+	int(__cdecl *H_PositionalFunc)(__int16, __int16, WORD *, WORD *) = (int(__cdecl *)(__int16, __int16, WORD *, WORD *))0x40258B;
+	int(__thiscall *H_SetNewPosFunc)(void *, __int16, __int16) = (int(__thiscall *)(void *, __int16, __int16))0x4016D1;
+	int(__thiscall *H_SomeRectColorRefFunc)(void *) = (int(__thiscall *)(void *))0x402810;
+	int(__cdecl *H_ProcessPointSomething)(int, LPPOINT) = (int(__cdecl *)(int, LPPOINT))0x4029C3;
 
-	pThis = (DWORD *)GetCWinAppThisReturn(pCWinAppThis);
+	pThis = (DWORD *)H_GetCWinAppThisReturn(pCWinAppThis);
 	pThis[62] = 0;
-	SomeThisFunc((int)pThis);
+	H_SomeThisFunc((int)pThis);
 	iCurrToolGroupA = wCurrentMapToolGroup;
 	iSomeHigh = 400;
 	iSomeLow = 400;
 	iCurrToolGroupB = wCurrentMapToolGroup;
-	if (GetControlKey()) {
+	if (H_GetControlKey()) {
 		iCurrToolGroupA = 9;
 	}
 	do {
@@ -601,7 +601,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 		if ((unsigned __int16)iMysteryHigh >= 0x80u || iMysteryLow < 0) {
 			break;
 		}
-		ret = GetShiftKey();
+		ret = H_GetShiftKey();
 		if (ret && iCurrToolGroupA != 7 && iCurrToolGroupA != 8) {
 			pThis[62] = 1;
 			break;
@@ -610,13 +610,13 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 			iCenterOut = 0;
 			switch (iCurrToolGroupA) {
 			case 9:
-				PositionalFunc(iMysteryHigh, iMysteryLow, &iFetchHigh, &iFetchLow);
+				H_PositionalFunc(iMysteryHigh, iMysteryLow, &iFetchHigh, &iFetchLow);
 				Game_SoundPlaySound(pCWinAppThis, 505);
 				if (*(DWORD *)((char *)pThis + 322)) {
-					SetNewPosFunc(pThis, *(WORD *)(0x4CAD30) - (iFetchHigh >> 1), *(WORD *)(0x4CAD34) - (iFetchLow >> 1));
+					H_SetNewPosFunc(pThis, *(WORD *)(0x4CAD30) - (iFetchHigh >> 1), *(WORD *)(0x4CAD34) - (iFetchLow >> 1));
 				}
 				else {
-					SetNewPosFunc(pThis, *(WORD *)(0x4CAD30) - iFetchHigh, *(WORD *)(0x4CAD34) - iFetchLow);
+					H_SetNewPosFunc(pThis, *(WORD *)(0x4CAD30) - iFetchHigh, *(WORD *)(0x4CAD34) - iFetchLow);
 				}
 				// Unless either 'Alt' key is pressed down, do not
 				// continuously scroll (This is a "first" case
@@ -632,16 +632,16 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 			}
 		}
 		if (iCurrToolGroupA == 9) {
-			SomeRectColorRefFunc(pThis);
+			H_SomeRectColorRefFunc(pThis);
 		}
 		else {
-			SomeRectFillRefFunc(pThis);
+			H_SomeRectFillRefFunc(pThis);
 		}
 		iSomeHigh = iMysteryHigh;
 		hWnd = (HWND)pThis[7];
 		iSomeLow = iMysteryLow;
 		UpdateWindow(hWnd);
-		ret = ProcessPointSomething((int)pThis, &pt);
+		ret = H_ProcessPointSomething((int)pThis, &pt);
 		if (iCenterOut) {
 			break;
 		}
