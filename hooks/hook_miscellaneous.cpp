@@ -556,6 +556,104 @@ extern "C" __int16 __stdcall Hook_MovePerhaps(WPARAM iMouseKeys, POINT pt) {
 	return iCurrPos;
 }
 
+extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
+	ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> MapToolMenuAction(%i, 0x%08X)\n", _ReturnAddress(), iMouseKeys, pt);
+
+	DWORD *pThis;
+	int ret;
+	__int16 iCurrToolGroupA, iCurrToolGroupB;
+	__int16 iSomeHigh, iSomeLow;
+	__int16 iMysteryHigh, iMysteryLow;
+	int iCenterOut;
+	WORD iFetchHigh, iFetchLow;
+	HWND hWnd;
+
+	// Short-circuit for now as we rebuild.
+
+	int(__thiscall *GetCWinAppThisReturn)(void *) = (int(__thiscall *)(void *))0x402699;
+	int(__thiscall *SomeThisFunc)(int) = (int(__thiscall *)(int))0x4014F1;
+	int(*GetControlKey)() = (int(*)())0x402667;
+	int(*GetShiftKey)() = (int(*)())0x4019E2;
+	int(__thiscall *SomeRectFillRefFunc)(void *) = (int(__thiscall *)(void *))0x40226B;
+	int(__cdecl *PositionalFunc)(__int16, __int16, WORD *, WORD *) = (int(__cdecl *)(__int16, __int16, WORD *, WORD *))0x40258B;
+	int(__thiscall *SetNewPosFunc)(void *, __int16, __int16) = (int(__thiscall *)(void *, __int16, __int16))0x4016D1;
+	int(__thiscall *SomeRectColorRefFunc)(void *) = (int(__thiscall *)(void *))0x402810;
+	int(__cdecl *ProcessPointSomething)(int, LPPOINT) = (int(__cdecl *)(int, LPPOINT))0x4029C3;
+
+	pThis = (DWORD *)GetCWinAppThisReturn(pCWinAppThis);
+	pThis[62] = 0;
+	SomeThisFunc((int)pThis);
+	iCurrToolGroupA = wCurrentMapToolGroup;
+	iSomeHigh = 400;
+	iSomeLow = 400;
+	iCurrToolGroupB = wCurrentMapToolGroup;
+	if (GetControlKey()) {
+		iCurrToolGroupA = 9;
+	}
+	do {
+		ret = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
+		ret = LOWORD(ret);
+		if ((__int16)ret < 0) {
+			break;
+		}
+		iMysteryHigh = ret & 0x7f;
+		iMysteryLow = (__int16)ret >> 8;
+		if ((unsigned __int16)iMysteryHigh >= 0x80u || iMysteryLow < 0) {
+			break;
+		}
+		ret = GetShiftKey();
+		if (ret && iCurrToolGroupA != 7 && iCurrToolGroupA != 8) {
+			pThis[62] = 1;
+			break;
+		}
+		if (iSomeHigh != iMysteryHigh || iSomeLow != iMysteryLow) {
+			iCenterOut = 0;
+			switch (iCurrToolGroupA) {
+			case 9:
+				PositionalFunc(iMysteryHigh, iMysteryLow, &iFetchHigh, &iFetchLow);
+				Game_SoundPlaySound(pCWinAppThis, 505);
+				if (*(DWORD *)((char *)pThis + 322)) {
+					SetNewPosFunc(pThis, *(WORD *)(0x4CAD30) - (iFetchHigh >> 1), *(WORD *)(0x4CAD34) - (iFetchLow >> 1));
+				}
+				else {
+					SetNewPosFunc(pThis, *(WORD *)(0x4CAD30) - iFetchHigh, *(WORD *)(0x4CAD34) - iFetchLow);
+				}
+				// Unless either 'Alt' key is pressed down, do not
+				// continuously scroll (This is a "first" case
+				// attempt at this, the next will likely be to
+				// do away with the do {} while() loop).
+				if (!(GetAsyncKeyState(VK_MENU) & 0x8000)) {
+					iCenterOut = 1;
+				}
+				break;
+			default:
+				ConsoleLog(LOG_DEBUG, "MAPT: %i\n", iCurrToolGroupA);
+				break;
+			}
+		}
+		if (iCurrToolGroupA == 9) {
+			SomeRectColorRefFunc(pThis);
+		}
+		else {
+			SomeRectFillRefFunc(pThis);
+		}
+		iSomeHigh = iMysteryHigh;
+		hWnd = (HWND)pThis[7];
+		iSomeLow = iMysteryLow;
+		UpdateWindow(hWnd);
+		ret = ProcessPointSomething((int)pThis, &pt);
+		if (iCenterOut) {
+			break;
+		}
+	} while (ret);
+	if (iCurrToolGroupB != iCurrToolGroupA) {
+		ret = iCurrToolGroupB;
+		ret = LOWORD(ret);
+		wCurrentCityToolGroup = iCurrToolGroupB;
+	}
+	return ret;
+}
+
 // Placeholder.
 void ShowModSettingsDialog(void) {
 	ConsoleLog(LOG_DEBUG, "FUCK");
@@ -767,6 +865,9 @@ skipmenu:
 
 	VirtualProtect((LPVOID)0x4016EA, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4016EA, Hook_MovePerhaps);
+
+	VirtualProtect((LPVOID)0x402B44, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402B44, Hook_MapToolMenuAction);
 
 	// Add hook to center with the middle mouse button
 	AFX_MSGMAP_ENTRY afxMessageMapEntrySimCityView = {
