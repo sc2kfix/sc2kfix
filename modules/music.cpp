@@ -16,7 +16,7 @@
 #define MUS_DEBUG_THREAD 2
 #define MUS_DEBUG_SEQUENCER 4
 
-#define MUS_DEBUG DEBUG_FLAGS_NONE
+#define MUS_DEBUG MUS_DEBUG_SONGS
 
 #ifdef DEBUGALL
 #undef MUS_DEBUG
@@ -208,6 +208,13 @@ extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void) {
 
 	// This is actually a __thiscall we're overriding, so save "this"
 	__asm mov [pThis], ecx
+
+	// Fix for the wrong song being played after the intro video
+	if (_ReturnAddress() == (void*)0x4061EE || _ReturnAddress() == (void*)0x425444) {
+		if (mus_debug & MUS_DEBUG_SONGS)
+			ConsoleLog(LOG_DEBUG, "MUS:  Forcing song 10001 for call returning to 0x%08X.\n", (DWORD)_ReturnAddress());
+		return Game_MusicPlay(pThis, 10001);
+	}
 
 	iSongToPlay = vectorRandomSongIDs[iCurrentSong++];
 	if (mus_debug & MUS_DEBUG_SONGS)
