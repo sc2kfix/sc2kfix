@@ -7,6 +7,7 @@
 #undef UNICODE
 #include <windows.h>
 #include <psapi.h>
+#include <dbghelp.h>
 #include <commctrl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,6 +24,7 @@
 #pragma intrinsic(_ReturnAddress)
 
 // Global variables that we need to keep handy
+BOOL bGameDead = FALSE;
 HMODULE hRealWinMM = NULL;
 HMODULE hSC2KAppModule = NULL;
 HMODULE hSC2KFixModule = NULL;
@@ -180,6 +182,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             printf("[INFO ] CORE: ");
             ConsoleCmdShowDebug(NULL, NULL);
         }
+
+        // Install our top-level exception handler
+        SetUnhandledExceptionFilter(CrashHandler);
 
         // If we're attached to SCURK, switch over to the SCURK fix code
         char szModuleBaseName[200];
@@ -339,6 +344,66 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         break;
     }
     return TRUE;
+}
+
+// Called on any top-level unhandled exception
+LONG WINAPI CrashHandler(LPEXCEPTION_POINTERS lpExceptions) {
+    HANDLE hFaultingProcess, hFaultingThread;
+    char szProcessName[64];
+    char szModuleName[64];
+    STACKFRAME stStackFrame = { 0 };
+    CONTEXT stContext = { 0 };
+
+    // She's dead, Jim.
+    bGameDead = TRUE;
+
+    hFaultingProcess = GetCurrentProcess();
+    hFaultingThread = GetCurrentThread();
+    GetModuleFileName(NULL, szProcessName, sizeof(szProcessName));
+    GetModuleBaseName(GetCurrentProcess(), (HMODULE)SymGetModuleBase(hFaultingProcess, (DWORD)lpExceptions->ContextRecord->Eip), szModuleName, sizeof(szModuleName));
+
+    ConsoleLog(LOG_EMERGENCY, "CORE:\n");
+    ConsoleLog(LOG_EMERGENCY, "CORE: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+    ConsoleLog(LOG_EMERGENCY, "CORE: !!! TOP-LEVEL EXCEPTION HANDLER CALLED !!!\n");
+    ConsoleLog(LOG_EMERGENCY, "CORE: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+    ConsoleLog(LOG_EMERGENCY, "CORE: \n");
+    ConsoleLog(LOG_EMERGENCY, "CORE: Unhandled exception 0x%08X caught at %i.\n", lpExceptions->ExceptionRecord->ExceptionCode, time(NULL));
+    ConsoleLog(LOG_EMERGENCY, "CORE: Faulting Process: %s\n", szProcessName);
+    ConsoleLog(LOG_EMERGENCY, "CORE: Faulting Module:  %s\n", szModuleName);
+    ConsoleLog(LOG_EMERGENCY, "CORE: Faulting Address: 0x%08X\n", (DWORD)lpExceptions->ContextRecord->Eip);
+    if ((DWORD)lpExceptions->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION) {
+        if ((DWORD)lpExceptions->ContextRecord->Eip == (DWORD)lpExceptions->ExceptionRecord->ExceptionAddress)
+            ConsoleLog(LOG_EMERGENCY, "CORE: Exception Cause:  Execution of address 0x%08X\n", (DWORD)lpExceptions->ContextRecord->Eip);
+        else if ((DWORD)lpExceptions->ExceptionRecord->ExceptionInformation[0])
+            ConsoleLog(LOG_EMERGENCY, "CORE: Exception Cause:  Write of address 0x%08X\n", (DWORD)lpExceptions->ExceptionRecord->ExceptionAddress);
+        else
+            ConsoleLog(LOG_EMERGENCY, "CORE: Exception Cause:  Read of address 0x%08X\n", (DWORD)lpExceptions->ExceptionRecord->ExceptionAddress);
+    }
+
+    ConsoleLog(LOG_EMERGENCY, "CORE: \n");
+    ConsoleLog(LOG_EMERGENCY, "CORE: Stack Trace:\n");
+    ConsoleLog(LOG_EMERGENCY, "CORE:  - EIP        ESP        EBP        \n");
+
+    // Set up the stack frame and contexts
+    stStackFrame.AddrPC.Offset = lpExceptions->ContextRecord->Eip;
+    stStackFrame.AddrPC.Mode = AddrModeFlat;
+    stStackFrame.AddrStack.Offset = lpExceptions->ContextRecord->Esp;
+    stStackFrame.AddrStack.Mode = AddrModeFlat;
+    stStackFrame.AddrFrame.Offset = lpExceptions->ContextRecord->Ebp;
+    stStackFrame.AddrFrame.Mode = AddrModeFlat;
+    stContext.ContextFlags = CONTEXT_FULL;
+    RtlCaptureContext(&stContext);
+
+    // Unwind and dump the stack
+    do {
+        ConsoleLog(LOG_EMERGENCY, "CORE:  - 0x%08X  0x%08X  0x%08X  \n", stStackFrame.AddrPC.Offset, stStackFrame.AddrStack.Offset, stStackFrame.AddrFrame.Offset);
+    } while (StackWalk(IMAGE_FILE_MACHINE_I386, hFaultingProcess, hFaultingThread, &stStackFrame, &stContext, NULL, SymFunctionTableAccess, SymGetModuleBase, NULL));
+
+    ConsoleLog(LOG_EMERGENCY, "CORE:\n");
+    ConsoleLog(LOG_EMERGENCY, "CORE: End of stack trace. Time to die.\n");
+    
+    MessageBox(GameGetRootWindowHandle(), "sc2kfix has detected an unhandled top-level exception in SimCity 2000. If you have the console open, check the console for details. Fault information has been logged to the console and to sc2kfix.log.\n\nClicking the OK button will immediately terminate SimCity 2000. Any unsaved process will be lost.", "She's dead, Jim.", MB_OK | MB_ICONSTOP);
+    return EXCEPTION_EXECUTE_HANDLER;
 }
 
 // Exports for WinMM hook
