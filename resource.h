@@ -41,11 +41,10 @@
 #define IDC_STATIC_TILERENDER           21028
 #define IDC_STATIC_SIMSTAT_BGD          21029
 #define IDC_STATIC_VERSIONINFO          21031
-#define IDC_SETTINGS_CHECK_LOCAL_MOVIES 21032
-#define IDC_SETTINGS_CHECK_MP3_MUSIC    21033
-#define IDC_SETTINGS_CHECK_SKIP_INTRO   21034
-#define IDC_STATIC_COMPASS              21035
-#define IDC_BUTTON_GOTO                 21036
+#define IDC_SETTINGS_CHECK_MP3_MUSIC    21032
+#define IDC_SETTINGS_CHECK_SKIP_INTRO   21033
+#define IDC_STATIC_COMPASS              21034
+#define IDC_BUTTON_GOTO                 21035
 #define IDR_WAVE_500                    23001
 #define IDR_WAVE_514                    23002
 #define IDR_WAVE_529                    23003
@@ -75,7 +74,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        23040
 #define _APS_NEXT_COMMAND_VALUE         40002
-#define _APS_NEXT_CONTROL_VALUE         21037
+#define _APS_NEXT_CONTROL_VALUE         21036
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

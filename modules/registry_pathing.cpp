@@ -146,30 +146,12 @@ static void GetOutDWORD(DWORD dwValue, LPBYTE lpData, LPDWORD lpcbData) {
 	}
 }
 
-static const char *GetSetMoviesPath() {
-	static char szTargetPath[MAX_PATH];
-
-	sprintf_s(szTargetPath, MAX_PATH, "%s\\Movies", szGamePath);
-	return szTargetPath;
-}
-
-static const char AdjustMoviePathDrive() {
-	if (bSettingsUseLocalMovies) {
-		const char *temp = GetSetMoviesPath();
-		if (!temp && !isalpha(temp[0]))
-			return 'A';
-		return temp[0];
-	}
-
-	return szGamePath[0];
-}
-
 // Reference and inspiration for this comes from the separate
 // 'simcity-noinstall' project.
 const char *AdjustSource(char *buf, const char *path) {
 	static char def_data_path[] = "A:\\DATA\\";
 
-	def_data_path[0] = AdjustMoviePathDrive();
+	def_data_path[0] = szGamePath[0];
 
 	int plen = strlen(path);
 	int flen = strlen(def_data_path);
@@ -178,20 +160,14 @@ const char *AdjustSource(char *buf, const char *path) {
 	}
 
 	char temp[MAX_PATH + 1];
-	const char *ptemp = GetSetMoviesPath();
-	if (!ptemp) {
-		return path;
-	}
 
 	memset(temp, 0, sizeof(temp));
 
 	strcpy_s(temp, MAX_PATH, path + (flen - 1));
 
-	strcpy_s(buf, MAX_PATH, ptemp);
+	strcpy_s(buf, MAX_PATH, szGamePath);
+	strcat_s(buf, MAX_PATH, "\\Movies");
 	strcat_s(buf, MAX_PATH, temp);
-
-	if (mischook_debug & MISCHOOK_DEBUG_PATHING)
-		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> Source Adjustment - %s -> %s\n", _ReturnAddress(), path, buf);
 
 	return buf;
 }
@@ -246,15 +222,9 @@ extern "C" LSTATUS __stdcall Hook_RegQueryValueExA(HKEY hKey, LPCSTR lpValueName
 
 		strcpy_s(szTargetPath, MAX_PATH, szGamePath);
 		if (_stricmp(lpValueName, "Goodies") == 0) {
-			if (bSettingsUseLocalMovies) {
-				if (mischook_debug & MISCHOOK_DEBUG_REGISTRY)
-					ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> Query Adjustment - %s -> %s\n", _ReturnAddress(), lpValueName, "MOVIES");
-				GamePathAdjust(szTargetPath, "Movies", lpData, lpcbData);
-			}
-			else {
-				szTargetPath[0] = AdjustMoviePathDrive();
-				GamePathAdjust(szTargetPath, "Goodies", lpData, lpcbData);
-			}
+			if (mischook_debug & MISCHOOK_DEBUG_REGISTRY)
+				ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> Query Adjustment - %s -> %s\n", _ReturnAddress(), lpValueName, "MOVIES");
+			GamePathAdjust(szTargetPath, "Movies", lpData, lpcbData);
 		}
 		else if (_stricmp(lpValueName, "Cities") == 0 ||
 			_stricmp(lpValueName, "SaveGame") == 0) {
@@ -412,20 +382,18 @@ extern "C" HANDLE __stdcall Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDesiredA
 	if (mischook_debug & MISCHOOK_DEBUG_PATHING)
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> CreateFileA(%s, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X)\n", _ReturnAddress(), lpFileName,
 			dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-	if (bSettingsUseLocalMovies) {
-		if (iRegPathHookMode == 0) {
-			if ((DWORD)_ReturnAddress() == 0x4A8A90 ||
-				(DWORD)_ReturnAddress() == 0x48A810) {
-				char buf[MAX_PATH + 1];
+	if (iRegPathHookMode == 0) {
+		if ((DWORD)_ReturnAddress() == 0x4A8A90 ||
+			(DWORD)_ReturnAddress() == 0x48A810) {
+			char buf[MAX_PATH + 1];
 
-				memset(buf, 0, sizeof(buf));
+			memset(buf, 0, sizeof(buf));
 
-				HANDLE hFileHandle = CreateFileA(AdjustSource(buf, lpFileName), dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-				if (mischook_debug & MISCHOOK_DEBUG_PATHING)
-					ConsoleLog(LOG_DEBUG, "MISC: (Modification): 0x%08X -> CreateFileA(%s, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X) (0x%08x)\n", _ReturnAddress(), lpFileName,
-						dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile, hFileHandle);
-				return hFileHandle;
-			}
+			HANDLE hFileHandle = CreateFileA(AdjustSource(buf, lpFileName), dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+			if (mischook_debug & MISCHOOK_DEBUG_PATHING)
+				ConsoleLog(LOG_DEBUG, "MISC: (Modification): 0x%08X -> CreateFileA(%s, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X) (0x%08x)\n", _ReturnAddress(), lpFileName,
+					dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile, hFileHandle);
+			return hFileHandle;
 		}
 	}
 	return CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
@@ -434,19 +402,17 @@ extern "C" HANDLE __stdcall Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDesiredA
 extern "C" HANDLE __stdcall Hook_FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData) {
 	if (mischook_debug & MISCHOOK_DEBUG_PATHING)
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> FindFirstFileA(%s, 0x%08X)\n", _ReturnAddress(), lpFileName, lpFindFileData);
-	if (bSettingsUseLocalMovies) {
-		if (iRegPathHookMode == 0) {
-			if ((DWORD)_ReturnAddress() == 0x4A8A90 ||
-				(DWORD)_ReturnAddress() == 0x48A810) {
-				char buf[MAX_PATH + 1];
+	if (iRegPathHookMode == 0) {
+		if ((DWORD)_ReturnAddress() == 0x4A8A90 ||
+			(DWORD)_ReturnAddress() == 0x48A810) {
+			char buf[MAX_PATH + 1];
 
-				memset(buf, 0, sizeof(buf));
+			memset(buf, 0, sizeof(buf));
 
-				HANDLE hFileHandle = FindFirstFileA(AdjustSource(buf, lpFileName), lpFindFileData);
-				if (mischook_debug & MISCHOOK_DEBUG_PATHING)
-					ConsoleLog(LOG_DEBUG, "MISC: (Modification): 0x%08X -> FindFirstFileA(%s, 0x%08X) (0x%08x)\n", _ReturnAddress(), buf, lpFindFileData, hFileHandle);
-				return hFileHandle;
-			}
+			HANDLE hFileHandle = FindFirstFileA(AdjustSource(buf, lpFileName), lpFindFileData);
+			if (mischook_debug & MISCHOOK_DEBUG_PATHING)
+				ConsoleLog(LOG_DEBUG, "MISC: (Modification): 0x%08X -> FindFirstFileA(%s, 0x%08X) (0x%08x)\n", _ReturnAddress(), buf, lpFindFileData, hFileHandle);
+			return hFileHandle;
 		}
 	}
 	return FindFirstFileA(lpFileName, lpFindFileData);

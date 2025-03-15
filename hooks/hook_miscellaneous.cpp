@@ -201,14 +201,11 @@ extern "C" DWORD __cdecl Hook_SmackOpen(LPCSTR lpFileName, uint32_t uFlags, int3
 			if (!strcmp(strrchr(lpFileName, '\\'), "\\INTROA.SMK") || !strcmp(strrchr(lpFileName, '\\'), "\\INTROB.SMK"))
 				return NULL;
 
-	if (bSettingsUseLocalMovies) {
-		char buf[MAX_PATH + 1];
+	char buf[MAX_PATH + 1];
 
-		memset(buf, 0, sizeof(buf));
+	memset(buf, 0, sizeof(buf));
 
-		return SMKOpenProc(AdjustSource(buf, lpFileName), uFlags, iExBuf);
-	}
-	return SMKOpenProc(lpFileName, uFlags, iExBuf);
+	return SMKOpenProc(AdjustSource(buf, lpFileName), uFlags, iExBuf);
 }
 
 static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
