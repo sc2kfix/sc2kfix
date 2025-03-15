@@ -78,6 +78,7 @@
     <ClCompile Include="hooks\hook_mmtimers.cpp" />
     <ClCompile Include="modules\military.cpp" />
     <ClCompile Include="modules\music.cpp" />
+    <ClCompile Include="modules\registry_pathing.cpp" />
     <ClCompile Include="modules\sc2k_1996.cpp" />
     <ClCompile Include="modules\registry_install.cpp" />
     <ClCompile Include="modules\scurkfix.cpp" />

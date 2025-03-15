@@ -145,3 +145,27 @@ BOOL FileExists(const char* name) {
 	}
 	return FALSE;
 }
+
+BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, const char *ini_name) {
+	char szBuf[128 + 1];
+
+	memset(szBuf, 0, sizeof(szBuf));
+
+	sprintf_s(szBuf, sizeof(szBuf) - 1, "%d", value);
+	return WritePrivateProfileStringA(section, name, szBuf, ini_name);
+}
+
+void MigrateRegStringValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, char *szOutBuf, DWORD dwLen) {
+	DWORD dwOutBufLen = dwLen;
+	RegGetValueA(hKey, lpSubKey, lpValueName, RRF_RT_REG_SZ, NULL, szOutBuf, &dwOutBufLen);
+}
+
+void MigrateRegDWORDValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, DWORD *dwOut, DWORD dwSize) {
+	DWORD dwOutSize = dwSize;
+	RegGetValueA(hKey, lpSubKey, lpValueName, RRF_RT_REG_DWORD, NULL, dwOut, &dwOutSize);
+}
+
+void MigrateRegBOOLValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, BOOL *bOut) {
+	DWORD dwOutSize = sizeof(BOOL);
+	RegGetValueA(hKey, lpSubKey, lpValueName, RRF_RT_REG_DWORD, NULL, bOut, &dwOutSize);
+}

@@ -94,6 +94,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
     switch (reason) {
     case DLL_PROCESS_ATTACH:
+        char szModuleBaseName[200];
         // Save our own module handle
         hSC2KFixModule = hModule;
 
@@ -111,6 +112,14 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         // Retrieve the list of functions we need to hook or pass through to WinMM
         ALLEXPORTS_HOOKED(GETPROC);
         ALLEXPORTS_PASSTHROUGH(GETPROC);
+
+        // Before we do anything, check to see whether we're attaching against a valid binary
+        // (Based on the filename). Otherwise breakout.
+        GetModuleBaseName(GetCurrentProcess(), NULL, szModuleBaseName, 200);
+        if (!(_stricmp(szModuleBaseName, "winscurk.exe") == 0 ||
+        	_stricmp(szModuleBaseName, "simcity.exe") == 0)) {
+            break;
+        }
 
         // Save the SimCity 2000 EXE's module handle
         if (!(hSC2KAppModule = GetModuleHandle(NULL))) {
@@ -135,14 +144,18 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             }
         }
 
+        // Open a log file. If it fails, we handle that safely elsewhere
+        // AF - Relocated so it will record any messages that occur
+        //      prior to the console itself being enabled.
+        fopen_s(&fdLog, "sc2kfix.log", "w");
+
+        SetGamePath();
+
         // Load settings
         if (!bSkipLoadSettings)
             LoadSettings();
         else
-            ConsoleLog(LOG_INFO, "CORE: -default passed, skipping LoadSettings().\n");
-
-        // Open a log file. If it fails, we handle that safely elsewhere
-        fopen_s(&fdLog, "sc2kfix.log", "w");
+            ConsoleLog(LOG_INFO, "CORE: -default passed, skipping LoadSettings()\n");
 
         // Force the console to be enabled if bSettingsAlwaysConsole is set
         if (bSettingsAlwaysConsole)
@@ -187,7 +200,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         SetUnhandledExceptionFilter(CrashHandler);
 
         // If we're attached to SCURK, switch over to the SCURK fix code
-        char szModuleBaseName[200];
         GetModuleBaseName(GetCurrentProcess(), NULL, szModuleBaseName, 200);
         if (!_stricmp(szModuleBaseName, "winscurk.exe")) {
             InjectSCURKFix();
@@ -224,8 +236,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         }
 
         // Registry check
-        if (DoRegistryCheckAndInstall())
-            ConsoleLog(LOG_INFO, "CORE: Registry entries created by faux-installer.");
+        int iInstallCheck;
+
+        iInstallCheck = DoRegistryCheckAndInstall();
+        if (iInstallCheck == 2)
+            ConsoleLog(LOG_INFO, "CORE: Portable entries created by faux-installer.");
+        else if (iInstallCheck == 1)
+            ConsoleLog(LOG_INFO, "CORE: Registry entries migrated by faux-installer.");
 
         // Check for updates
         if (bSettingsCheckForUpdates) {
@@ -315,8 +332,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         ConsoleLog(LOG_INFO, "CORE: Patched 8-bit colour warnings.\n");
 
         // Hooks we only want to inject on the 1996 Special Edition version
+        // and the registry hooks that are for the 1995 CD Collection version.
         if (dwDetectedVersion == SC2KVERSION_1996)
             InstallMiscHooks();
+        else if (dwDetectedVersion == SC2KVERSION_1995)
+            InstallRegistryPathingHooks_SC2K1995();
 
         // Start the console thread.
         if (bConsoleEnabled) {

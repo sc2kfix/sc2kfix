@@ -11,18 +11,6 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
-char szSC2KPath[MAX_PATH];
-char szSC2KGoodiesPath[MAX_PATH];
-char szSC2KMoviesPath[MAX_PATH];
-
-const char *GetGoodiesPath() {
-	return szSC2KGoodiesPath;
-}
-
-const char *GetSetMoviesPath() {
-	return szSC2KMoviesPath;
-}
-
 BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 	case WM_INITDIALOG:
@@ -53,144 +41,186 @@ BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 	return FALSE;
 }
 
-BOOL DoRegistryCheckAndInstall(void) {
-	HKEY hkeySC2KRegistration;
-	LSTATUS lResultRegistration = RegCreateKeyEx(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Registration", NULL, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkeySC2KRegistration, NULL);
+static void InstallSC2KDefaults(void) {
+	const char *ini_file = GetIniPath();
+	const char *section;
+
+	section = "Portable";
+	if (GetPrivateProfileIntA(section, "Installed", 0, ini_file) == 1) {
+		return;
+	}
+
+	WritePrivateProfileIntA(section, "Installed", 1, ini_file);
+
+	// Prompt the user for the mayor and company names
+	DialogBox(hSC2KFixModule, MAKEINTRESOURCE(IDD_INSTALL), NULL, InstallDialogProc);
+
+	// Write version info
+	DWORD dwSC2KVersion = 0x00000100;
+
+	section = "Version";
+	WritePrivateProfileIntA(section, "SCURK", dwSC2KVersion, ini_file);
+	WritePrivateProfileIntA(section, "SimCity 2000", dwSC2KVersion, ini_file);
+
+	// Write language info
+	section = "Localize";
+	WritePrivateProfileStringA(section, "Language", "USA", ini_file);
+
+	// Write default options
+	section = "Options";
+	WritePrivateProfileIntA(section, "Disasters", TRUE, ini_file);
+	WritePrivateProfileIntA(section, "Music", TRUE, ini_file);
+	WritePrivateProfileIntA(section, "Sound", TRUE, ini_file);
+	WritePrivateProfileIntA(section, "AutoGoto", TRUE, ini_file);
+	WritePrivateProfileIntA(section, "AutoBudget", FALSE, ini_file);
+	WritePrivateProfileIntA(section, "AutoSave", FALSE, ini_file);
+	WritePrivateProfileIntA(section, "Speed", 2, ini_file);
+
+	// Write default SCURK options
+	section = "SCURK";
+	WritePrivateProfileIntA(section, "CycleColors", 1, ini_file);
+	WritePrivateProfileIntA(section, "GridHeight", 2, ini_file);
+	WritePrivateProfileIntA(section, "GridWidth", 2, ini_file);
+	WritePrivateProfileIntA(section, "ShowClipRegion", 0, ini_file);
+	WritePrivateProfileIntA(section, "ShowDrawGrid", 0, ini_file);
+	WritePrivateProfileIntA(section, "SnapToGrid", 0, ini_file);
+	WritePrivateProfileIntA(section, "Sound", 1, ini_file);
+
+	SaveSettings(TRUE);
+}
+
+static void MigrateSC2KRegistration(HKEY hKeySC2KReg) {
+	const char *ini_file = GetIniPath();
+	const char *section = "Registration";
+
+	MigrateRegStringValue(hKeySC2KReg, NULL, "Mayor Name", szSettingsMayorName, sizeof(szSettingsMayorName));
+	WritePrivateProfileStringA(section, "Mayor Name", szSettingsMayorName, ini_file);
+
+	MigrateRegStringValue(hKeySC2KReg, NULL, "Company Name", szSettingsCompanyName, sizeof(szSettingsCompanyName));
+	WritePrivateProfileStringA(section, "Company Name", szSettingsCompanyName, ini_file);
+}
+
+static void MigrateSC2KVersion(void) {
+	DWORD dwOut;
+	const char *ini_file = GetIniPath();
+	const char *section = "Version";
+
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Version", "SCURK", &dwOut, sizeof(DWORD));
+	WritePrivateProfileIntA(section, "SCURK", dwOut, ini_file);
+
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Version", "SimCity 2000", &dwOut, sizeof(DWORD));
+	WritePrivateProfileIntA(section, "SimCity 2000", dwOut, ini_file);
+}
+
+static void MigrateSC2KLocalize(void) {
+	const char *ini_file = GetIniPath();
+	const char *section = "Localize";
+
+	char szOutBuf[16];
+	MigrateRegStringValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Localize", "Language", szOutBuf, sizeof(szOutBuf));
+	WritePrivateProfileStringA(section, "Language", szOutBuf, ini_file);
+}
+
+static void MigrateSC2KOptions(void) {
+	DWORD dwOut;
+	const char *ini_file = GetIniPath();
+	const char *section = "Options";
+
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Options", "Disasters", &dwOut, sizeof(BOOL));
+	WritePrivateProfileIntA(section, "Disasters", dwOut, ini_file);
+
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Options", "Music", &dwOut, sizeof(BOOL));
+	WritePrivateProfileIntA(section, "Music", dwOut, ini_file);
+
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Options", "Sound", &dwOut, sizeof(BOOL));
+	WritePrivateProfileIntA(section, "Sound", dwOut, ini_file);
+
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Options", "AutoGoto", &dwOut, sizeof(BOOL));
+	WritePrivateProfileIntA(section, "AutoGoto", dwOut, ini_file);
+
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Options", "AutoBudget", &dwOut, sizeof(BOOL));
+	WritePrivateProfileIntA(section, "AutoBudget", dwOut, ini_file);
+
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Options", "AutoSave", &dwOut, sizeof(BOOL));
+	WritePrivateProfileIntA(section, "AutoSave", dwOut, ini_file);
+
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Options", "Speed", &dwOut, sizeof(BOOL));
+	WritePrivateProfileIntA(section, "Speed", dwOut, ini_file);
+}
+
+static void MigrateSC2KSCURK(void) {
+	DWORD dwOut;
+	const char *ini_file = GetIniPath();
+	const char *section = "SCURK";
+
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\SCURK", "CycleColors", &dwOut, sizeof(DWORD));
+	WritePrivateProfileIntA(section, "CycleColors", dwOut, ini_file);
+
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\SCURK", "GridHeight", &dwOut, sizeof(DWORD));
+	WritePrivateProfileIntA(section, "GridHeight", dwOut, ini_file);
+
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\SCURK", "GridWidth", &dwOut, sizeof(DWORD));
+	WritePrivateProfileIntA(section, "GridWidth", dwOut, ini_file);
+
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\SCURK", "ShowClipRegion", &dwOut, sizeof(DWORD));
+	WritePrivateProfileIntA(section, "ShowClipRegion", dwOut, ini_file);
+
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\SCURK", "ShowDrawGrid", &dwOut, sizeof(DWORD));
+	WritePrivateProfileIntA(section, "ShowDrawGrid", dwOut, ini_file);
+
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\SCURK", "SnapToGrid", &dwOut, sizeof(DWORD));
+	WritePrivateProfileIntA(section, "SnapToGrid", dwOut, ini_file);
+
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\SCURK", "Sound", &dwOut, sizeof(DWORD));
+	WritePrivateProfileIntA(section, "Sound", dwOut, ini_file);
+}
+
+static void MigrateFinalize(void) {
+	const char *ini_file = GetIniPath();
+	const char *section = "Portable";
+
+	WritePrivateProfileIntA(section, "Installed", 1, ini_file);
+}
+
+int DoRegistryCheckAndInstall(void) {
+	int ret;
+	HKEY hKeySC2KRegistration;
+	LSTATUS lResultRegistration = RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Registration", NULL, KEY_ALL_ACCESS, &hKeySC2KRegistration);
 	if (lResultRegistration != ERROR_SUCCESS) {
-		MessageBox(NULL, "Couldn't open registry keys for editing", "sc2kfix error", MB_OK | MB_ICONEXCLAMATION);
-		ConsoleLog(LOG_ERROR, "CORE: Couldn't open registry keys for registry check, error = 0x%08X\n", lResultRegistration);
-		return FALSE;
+		// Let's install.
+		InstallSC2KDefaults();
+		return 0;
 	}
 
-	if (RegQueryValueEx(hkeySC2KRegistration, "Mayor Name", NULL, NULL, NULL, NULL) == ERROR_FILE_NOT_FOUND ||
-		RegQueryValueEx(hkeySC2KRegistration, "Company Name", NULL, NULL, NULL, NULL) == ERROR_FILE_NOT_FOUND) {
+	ret = 0;
+	if (szSettingsMayorName[0] == 0 ||
+		szSettingsCompanyName[0] == 0) {
+		if (RegQueryValueEx(hKeySC2KRegistration, "Mayor Name", NULL, NULL, NULL, NULL) == ERROR_FILE_NOT_FOUND ||
+			RegQueryValueEx(hKeySC2KRegistration, "Company Name", NULL, NULL, NULL, NULL) == ERROR_FILE_NOT_FOUND) {
 
-		// Fake an install.
-		
-		// Prompt the user for the mayor and company names
-		DialogBox(hSC2KFixModule, MAKEINTRESOURCE(IDD_INSTALL), NULL, InstallDialogProc);
+			// Fake an install.
 
-		// Write registration strings
-		RegSetValueEx(hkeySC2KRegistration, "Mayor Name", NULL, REG_SZ, (BYTE*)szSettingsMayorName, strlen(szSettingsMayorName) + 1);
-		RegSetValueEx(hkeySC2KRegistration, "Company Name", NULL, REG_SZ, (BYTE*)szSettingsCompanyName, strlen(szSettingsCompanyName) + 1);
+			InstallSC2KDefaults();
 
-		// Generate paths
-		char szSC2KExePath[MAX_PATH] = { 0 };
-		char szSC2KPaths[10][MAX_PATH];
-		GetModuleFileNameEx(GetCurrentProcess(), NULL, szSC2KExePath, MAX_PATH);
-		PathRemoveFileSpecA(szSC2KExePath);
-		
-		for (int i = 0; i < 10; i++)
-			strcpy_s(szSC2KPaths[i], MAX_PATH, szSC2KExePath);
-
-		strcat_s(szSC2KPaths[0], MAX_PATH, "\\CITIES");
-		strcat_s(szSC2KPaths[1], MAX_PATH, "\\DATA");
-		strcat_s(szSC2KPaths[2], MAX_PATH, "\\GOODIES");
-		strcat_s(szSC2KPaths[3], MAX_PATH, "\\BITMAPS");
-		strcat_s(szSC2KPaths[4], MAX_PATH, "");
-		strcat_s(szSC2KPaths[5], MAX_PATH, "\\SOUNDS");
-		strcat_s(szSC2KPaths[6], MAX_PATH, "\\CITIES");
-		strcat_s(szSC2KPaths[7], MAX_PATH, "\\SCENARIO");
-		strcat_s(szSC2KPaths[8], MAX_PATH, "\\SCURKART");
-		strcat_s(szSC2KPaths[9], MAX_PATH, "\\Movies");
-
-		strcpy_s(szSC2KGoodiesPath, MAX_PATH, szSC2KPaths[2]);
-		strcpy_s(szSC2KMoviesPath, MAX_PATH, szSC2KPaths[9]);
-
-		// Write paths
-		HKEY hkeySC2KPaths;
-		RegCreateKeyEx(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Paths", NULL, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkeySC2KPaths, NULL);
-		RegSetValueEx(hkeySC2KPaths, "Cities", NULL, REG_SZ, (BYTE*)szSC2KPaths[0], strlen(szSC2KPaths[0]) + 1);
-		RegSetValueEx(hkeySC2KPaths, "Data", NULL, REG_SZ, (BYTE*)szSC2KPaths[1], strlen(szSC2KPaths[1]) + 1);
-		RegSetValueEx(hkeySC2KPaths, "Goodies", NULL, REG_SZ, (BYTE*)szSC2KPaths[2], strlen(szSC2KPaths[2]) + 1);
-		RegSetValueEx(hkeySC2KPaths, "Graphics", NULL, REG_SZ, (BYTE*)szSC2KPaths[3], strlen(szSC2KPaths[3]) + 1);
-		RegSetValueEx(hkeySC2KPaths, "Home", NULL, REG_SZ, (BYTE*)szSC2KPaths[4], strlen(szSC2KPaths[4]) + 1);
-		RegSetValueEx(hkeySC2KPaths, "Music", NULL, REG_SZ, (BYTE*)szSC2KPaths[5], strlen(szSC2KPaths[5]) + 1);
-		RegSetValueEx(hkeySC2KPaths, "SaveGame", NULL, REG_SZ, (BYTE*)szSC2KPaths[6], strlen(szSC2KPaths[6]) + 1);
-		RegSetValueEx(hkeySC2KPaths, "Scenarios", NULL, REG_SZ, (BYTE*)szSC2KPaths[7], strlen(szSC2KPaths[7]) + 1);
-		RegSetValueEx(hkeySC2KPaths, "TileSets", NULL, REG_SZ, (BYTE*)szSC2KPaths[8], strlen(szSC2KPaths[8]) + 1);
-		RegSetValueEx(hkeySC2KPaths, "Movies", NULL, REG_SZ, (BYTE*)szSC2KPaths[9], strlen(szSC2KPaths[9]) + 1);
-
-		// Write version info
-		HKEY hkeySC2KVersion;
-		DWORD dwSC2KVersion = 0x00000100;
-		RegCreateKeyEx(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Version", NULL, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkeySC2KVersion, NULL);
-		RegSetValueEx(hkeySC2KVersion, "SCURK", NULL, REG_DWORD, ((BYTE*)&dwSC2KVersion), sizeof(DWORD));
-		RegSetValueEx(hkeySC2KVersion, "SimCity 2000", NULL, REG_DWORD, ((BYTE*)&dwSC2KVersion), sizeof(DWORD));
-
-		// Write language info
-		HKEY hkeySC2KLocalize;
-		RegCreateKeyEx(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Localize", NULL, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkeySC2KLocalize, NULL);
-		RegSetValueEx(hkeySC2KLocalize, "Language", NULL, REG_SZ, ((BYTE*)"USA"), sizeof("USA"));
-
-		// Write default settings
-		HKEY hkeySC2KOptions;
-		DWORD dwTrue = 0x00000001;
-		DWORD dwFalse = 0x00000000;
-		RegCreateKeyEx(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Options", NULL, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkeySC2KOptions, NULL);
-		RegSetValueEx(hkeySC2KOptions, "Disasters", NULL, REG_DWORD, ((BYTE*)&dwTrue), sizeof(DWORD));
-		RegSetValueEx(hkeySC2KOptions, "Music", NULL, REG_DWORD, ((BYTE*)&dwTrue), sizeof(DWORD));
-		RegSetValueEx(hkeySC2KOptions, "Sound", NULL, REG_DWORD, ((BYTE*)&dwTrue), sizeof(DWORD));
-		RegSetValueEx(hkeySC2KOptions, "AutoGoto", NULL, REG_DWORD, ((BYTE*)&dwTrue), sizeof(DWORD));
-		RegSetValueEx(hkeySC2KOptions, "AutoBudget", NULL, REG_DWORD, ((BYTE*)&dwFalse), sizeof(DWORD));
-		RegSetValueEx(hkeySC2KOptions, "AutoSave", NULL, REG_DWORD, ((BYTE*)&dwFalse), sizeof(DWORD));
-		RegSetValueEx(hkeySC2KOptions, "Speed", NULL, REG_DWORD, ((BYTE*)&dwFalse), sizeof(DWORD));
-
-		// Signal that we had to fake an install.
-		return TRUE;
-	} else {
-		LSTATUS retval;
-
-		HKEY hkeySC2KPaths;
-		LRESULT lResultPaths = RegCreateKeyEx(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Paths", NULL, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkeySC2KPaths, NULL);
-		if (lResultPaths != ERROR_SUCCESS) {
-			MessageBox(NULL, "Couldn't open path registry keys for editing", "sc2kfix error", MB_OK | MB_ICONEXCLAMATION);
-			ConsoleLog(LOG_ERROR, "CORE: Couldn't open path registry keys for load, error = 0x%08X\n", lResultPaths);
-			return FALSE;
+			// Signal that we had to fake an install.
+			ret = 2;
 		}
+		else {
 
-		// Generate paths
-		char szSC2KExePath[MAX_PATH] = { 0 };
-		GetModuleFileNameEx(GetCurrentProcess(), NULL, szSC2KExePath, MAX_PATH);
-		PathRemoveFileSpecA(szSC2KExePath);
+			// Migrate from registry to ini.
+			MigrateSC2KRegistration(hKeySC2KRegistration);
 
-		DWORD dwSC2KGoodiesPathSize = MAX_PATH;
-		retval = RegGetValue(hkeySC2KPaths, NULL, "Goodies", RRF_RT_REG_SZ, NULL, szSC2KGoodiesPath, &dwSC2KGoodiesPathSize);
-		switch (retval) {
-		case ERROR_SUCCESS:
-			break;
-		default:
-			// Generate path - This will default to your main game directory.
-			strcpy_s(szSC2KGoodiesPath, szSC2KExePath);
-			strcat_s(szSC2KGoodiesPath, MAX_PATH, "\\GOODIES");
+			MigrateSC2KVersion();
+			MigrateSC2KLocalize();
+			MigrateSC2KOptions();
+			MigrateSC2KSCURK();
+			MigrateFinalize();
 
-			RegSetValueEx(hkeySC2KPaths, "Goodies", NULL, REG_SZ, (BYTE*)szSC2KGoodiesPath, strlen(szSC2KGoodiesPath) + 1);
-
-			char* buf;
-			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, retval, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&buf, 0, NULL);
-			ConsoleLog(LOG_WARNING, "CORE: Error loading 'Goodies' path; resetting to default. Reg: %s", buf); // The lack of the newline is deliberate.
-
-			break;
-		}
-
-		DWORD dwSC2KMoviesPathSize = MAX_PATH;
-		retval = RegGetValue(hkeySC2KPaths, NULL, "Movies", RRF_RT_REG_SZ, NULL, szSC2KMoviesPath, &dwSC2KMoviesPathSize);
-		switch (retval) {
-		case ERROR_SUCCESS:
-			break;
-		default:
-			// Generate path
-			strcpy_s(szSC2KMoviesPath, szSC2KExePath);
-			strcat_s(szSC2KMoviesPath, MAX_PATH, "\\MOVIES");
-
-			RegSetValueEx(hkeySC2KPaths, "Movies", NULL, REG_SZ, (BYTE*)szSC2KMoviesPath, strlen(szSC2KMoviesPath) + 1);
-
-			char* buf;
-			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, retval, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&buf, 0, NULL);
-			ConsoleLog(LOG_WARNING, "CORE: Error loading 'Movies' path; resetting to default. Reg: %s", buf); // The lack of the newline is deliberate.
-
-			break;
+			SaveSettings(TRUE);
+			ret = 1;
 		}
 	}
-	return FALSE;
+
+	RegCloseKey(hKeySC2KRegistration);
+	return ret;
 }

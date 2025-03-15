@@ -45,6 +45,9 @@ BOOL InjectSCURKFix(void) {
 		return TRUE;
 	}
 
+	if (dwSCURKAppVersion == SC2KVERSION_1996)
+		InstallRegistryPathingHooks_SCURK1996();
+
 	// Tell the rest of the plugin we're in SCURK
 	bInSCURK = TRUE;
 	// return TRUE; 

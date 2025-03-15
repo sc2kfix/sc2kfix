@@ -29,7 +29,6 @@
 #define MISCHOOK_DEBUG_MOVIES 64
 #define MISCHOOK_DEBUG_SMACK 128
 #define MISCHOOK_DEBUG_CHEAT 256
-#define MISCHOOK_DEBUG_REGISTRY 512
 
 #define MISCHOOK_DEBUG DEBUG_FLAGS_NONE
 
@@ -47,107 +46,6 @@ DLGPROC lpNewCityAfxProc = NULL;
 char szTempMayorName[24] = { 0 };
 char szCurrentMonthDay[24] = { 0 };
 const char* szMonthNames[12] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
-
-static const char AdjustMoviePathDrive() {
-	// Let's get the drive letter from one of two paths:
-	// a) Movies path if the setting to use local movies is enabled
-	// b) Goodies path if you want to default to the presumed CD location.
-	const char *temp = (bSettingsUseLocalMovies) ? GetSetMoviesPath() : GetGoodiesPath();
-	if (!temp && !isalpha(temp[0]))
-		return 'A';
-	return temp[0];
-}
-
-// Reference and inspiration for this comes from the separate
-// 'simcity-noinstall' project.
-static const char *AdjustSource(char *buf, const char *path) {
-	static char def_data_path[] = "A:\\DATA\\";
-
-	def_data_path[0] = AdjustMoviePathDrive();
-	
-	int plen = strlen(path);
-	int flen = strlen(def_data_path);
-	if (plen <= flen || _strnicmp(def_data_path, path, flen) != 0) {
-		return path;
-	}
-
-	char temp[MAX_PATH+1];
-	const char *ptemp = GetSetMoviesPath();
-	if (!ptemp) {
-		return path;
-	}
-
-	memset(temp, 0, sizeof(temp));
-
-	strcpy_s(temp, MAX_PATH, path + (flen - 1));
-
-	strcpy_s(buf, MAX_PATH, ptemp);
-	strcat_s(buf, MAX_PATH, temp);
-
-	if (mischook_debug & MISCHOOK_DEBUG_OTHER)
-		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> Source Adjustment - %s -> %s\n", _ReturnAddress(), path, buf);
-
-	return buf;
-}
-
-extern "C" LSTATUS __stdcall Hook_RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData) {
-	if (mischook_debug & MISCHOOK_DEBUG_REGISTRY)
-		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> RegQueryValueExA(0x%08x, %s, 0x%08X, 0x%08X, 0x%08X, 0x%08X)\n", _ReturnAddress(), hKey, lpValueName,
-			lpReserved, *lpType, lpData, lpcbData);
-
-	if (_stricmp(lpValueName, "Goodies") == 0) {
-		if (*lpType == REG_SZ) {
-			if (bSettingsUseLocalMovies) {
-				if (mischook_debug & MISCHOOK_DEBUG_REGISTRY)
-					ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> Query Adjustment - %s -> %s\n", _ReturnAddress(), lpValueName, "MOVIES");
-				return RegQueryValueExA(hKey, "MOVIES", lpReserved, lpType, lpData, lpcbData);
-			}
-		}
-	}
-
-	return RegQueryValueExA(hKey, lpValueName, lpReserved, lpType, lpData, lpcbData);
-}
-
-extern "C" HANDLE __stdcall Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
-	LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {
-	if (mischook_debug & MISCHOOK_DEBUG_OTHER)
-		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> CreateFileA(%s, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X)\n", _ReturnAddress(), lpFileName,
-			dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-	if (bSettingsUseLocalMovies) {
-		if ((DWORD)_ReturnAddress() == 0x4A8A90 ||
-			(DWORD)_ReturnAddress() == 0x48A810) {
-			char buf[MAX_PATH + 1];
-
-			memset(buf, 0, sizeof(buf));
-
-			HANDLE hFileHandle = CreateFileA(AdjustSource(buf, lpFileName), dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-			if (mischook_debug & MISCHOOK_DEBUG_OTHER)
-				ConsoleLog(LOG_DEBUG, "MISC: (Modification): 0x%08X -> CreateFileA(%s, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X) (0x%08x)\n", _ReturnAddress(), lpFileName,
-					dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile, hFileHandle);
-			return hFileHandle;
-		}
-	}
-	return CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-}
-
-extern "C" HANDLE __stdcall Hook_FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData) {
-	if (mischook_debug & MISCHOOK_DEBUG_OTHER)
-		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> FindFirstFileA(%s, 0x%08X)\n", _ReturnAddress(), lpFileName, lpFindFileData);
-	if (bSettingsUseLocalMovies) {
-		if ((DWORD)_ReturnAddress() == 0x4A8A90 ||
-			(DWORD)_ReturnAddress() == 0x48A810) {
-			char buf[MAX_PATH + 1];
-
-			memset(buf, 0, sizeof(buf));
-
-			HANDLE hFileHandle = FindFirstFileA(AdjustSource(buf, lpFileName), lpFindFileData);
-			if (mischook_debug & MISCHOOK_DEBUG_OTHER)
-				ConsoleLog(LOG_DEBUG, "MISC: (Modification): 0x%08X -> FindFirstFileA(%s, 0x%08X) (0x%08x)\n", _ReturnAddress(), buf, lpFindFileData, hFileHandle);
-			return hFileHandle;
-		}
-	}
-	return FindFirstFileA(lpFileName, lpFindFileData);
-}
 
 // Override some strings that have egregiously bad grammar/capitalization.
 // Maxis fail English? That's unpossible!
@@ -303,14 +201,11 @@ extern "C" DWORD __cdecl Hook_SmackOpen(LPCSTR lpFileName, uint32_t uFlags, int3
 			if (!strcmp(strrchr(lpFileName, '\\'), "\\INTROA.SMK") || !strcmp(strrchr(lpFileName, '\\'), "\\INTROB.SMK"))
 				return NULL;
 
-	if (bSettingsUseLocalMovies) {
-		char buf[MAX_PATH + 1];
+	char buf[MAX_PATH + 1];
 
-		memset(buf, 0, sizeof(buf));
+	memset(buf, 0, sizeof(buf));
 
-		return SMKOpenProc(AdjustSource(buf, lpFileName), uFlags, iExBuf);
-	}
-	return SMKOpenProc(lpFileName, uFlags, iExBuf);
+	return SMKOpenProc(AdjustSource(buf, lpFileName), uFlags, iExBuf);
 }
 
 static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -469,14 +364,7 @@ extern "C" int __stdcall Hook_CSimcityView_WM_MBUTTONDOWN(WPARAM wMouseKeys, POI
 // Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
 // This should probably have a better name. And maybe be broken out into smaller functions.
 void InstallMiscHooks(void) {
-	// Install RegQueryValueExA
-	*(DWORD*)(0x4EF800) = (DWORD)Hook_RegQueryValueExA;
-
-	// Install CreateFileA hook
-	*(DWORD*)(0x4EFADC) = (DWORD)Hook_CreateFileA;
-
-	// Install FindFirstFileA hook
-	*(DWORD*)(0x4EFB8C) = (DWORD)Hook_FindFirstFileA;
+	InstallRegistryPathingHooks_SC2K1996();
 
 	// Install LoadStringA hook
 	*(DWORD*)(0x4EFBE8) = (DWORD)Hook_LoadStringA;
