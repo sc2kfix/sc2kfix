@@ -74,7 +74,7 @@ static void InstallSC2KDefaults(void) {
 	WritePrivateProfileIntA(section, "AutoGoto", TRUE, ini_file);
 	WritePrivateProfileIntA(section, "AutoBudget", FALSE, ini_file);
 	WritePrivateProfileIntA(section, "AutoSave", FALSE, ini_file);
-	WritePrivateProfileIntA(section, "Speed", FALSE, ini_file);
+	WritePrivateProfileIntA(section, "Speed", 2, ini_file);
 
 	// Write default SCURK options
 	section = "SCURK";

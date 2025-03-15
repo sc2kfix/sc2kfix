@@ -14,10 +14,10 @@
 #include <music.h>
 
 // Turning this on enables every debugging option. You have been warned.
-#define DEBUGALL
+// #define DEBUGALL
 
 // Turning this on forces the console to be enabled, as if -console was passed to SIMCITY.EXE.
-#define CONSOLE_ENABLED
+// #define CONSOLE_ENABLED
 
 // Turning this on will enable the storage and setting of the drive letter, this is specifically
 // for if you want to play the videos from the CD.

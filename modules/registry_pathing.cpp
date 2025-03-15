@@ -36,7 +36,7 @@ enum redirected_keys_t {
 
 static int iRegPathHookMode = -1; // -1 - Unknown, 0 - SC2K1996, 1 - SC2K1995, 2 - SCURK1996 (Special Edition)
 
-static BOOL IsRegKey(HKEY hKey, redirected_keys_t rkVal) {
+static BOOL IsRegKey(HKEY hKey, int rkVal) {
 	if (rkVal < enMaxisKey || 
 		rkVal >= enCountKey) {
 		return FALSE;
@@ -56,6 +56,15 @@ static BOOL IsFakeRegKey(unsigned long ulKey) {
 	}
 
 	return FALSE;
+}
+
+static int GetRedirectKey(HKEY hKey) {
+	for (int i = 0; i < enCountKey; i++) {
+		if (IsRegKey(hKey, i)) {
+			return i;
+		}
+	}
+	return enCountKey;
 }
 
 static BOOL RegLookup(const char *lpSubKey, unsigned long *ulKey) {
@@ -99,6 +108,24 @@ static BOOL RegLookup(const char *lpSubKey, unsigned long *ulKey) {
 		ret = TRUE;
 	}
 	return ret;
+}
+
+static const char *SectionLookup(HKEY hKey) {
+	switch (GetRedirectKey(hKey)) {
+		case enWindowsKey:
+			return "Windows";
+		case enVersionKey:
+			return "Version";
+		case enOptionsKey:
+			return "Options";
+		case enLocalizeKey:
+			return "Localize";
+		case enSCURKKey:
+			return "SCURK";
+		default:
+			break;
+	}
+	return NULL;
 }
 
 static void GetOutString(const char *sString, LPBYTE lpData, LPDWORD lpcbData) {
@@ -186,7 +213,6 @@ static void GamePathAdjust(const char *szBasePath, const char *target, LPBYTE lp
 	char szTarget[MAX_PATH];
 
 	sprintf_s(szTarget, MAX_PATH, "%s\\%s", szBasePath, target);
-	ConsoleLog(LOG_DEBUG, "[%s]\n", szTarget);
 	GetOutString(szTarget, lpData, lpcbData);
 }
 
@@ -205,6 +231,20 @@ static void GetIniOutDWORD(const char *section, const char *key, DWORD dvVal, LP
 }
 
 extern "C" LSTATUS __stdcall Hook_RegSetValueExA(HKEY hKey, LPCSTR lpValueName, DWORD Reserved, DWORD dwType, const BYTE *lpData, DWORD cbData) {
+
+	const char *section;
+
+	section = SectionLookup(hKey);
+	if (section) {
+		const char *ini_file;
+
+		ini_file = GetIniPath();
+		if (dwType == REG_DWORD || (dwType == REG_BINARY && cbData == sizeof(DWORD))) {
+			WritePrivateProfileIntA(section, lpValueName, *(const DWORD*)lpData, ini_file);
+		}
+		return ERROR_SUCCESS;
+	}
+
 	if (mischook_debug & MISCHOOK_DEBUG_REGISTRY)
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> RegSetValueExA(0x%08x, %s, 0x%08X, 0x%08X, 0x%08X, 0x%08X)\n", _ReturnAddress(), hKey, lpValueName,
 			Reserved, dwType, *lpData, cbData);
@@ -214,7 +254,6 @@ extern "C" LSTATUS __stdcall Hook_RegSetValueExA(HKEY hKey, LPCSTR lpValueName, 
 
 extern "C" LSTATUS __stdcall Hook_RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData) {
 	
-
 	if (IsRegKey(hKey, enPathsKey)) {
 		char szTargetPath[MAX_PATH];
 
@@ -241,7 +280,6 @@ extern "C" LSTATUS __stdcall Hook_RegQueryValueExA(HKEY hKey, LPCSTR lpValueName
 			GamePathAdjust(szTargetPath, "Bitmaps", lpData, lpcbData);
 		}
 		else if (_stricmp(lpValueName, "Home") == 0) {
-			ConsoleLog(LOG_DEBUG, "[%s]\n", szTargetPath);
 			GetOutString(szTargetPath, lpData, lpcbData);
 		}
 		else if (_stricmp(lpValueName, "Music") == 0) {
@@ -252,16 +290,6 @@ extern "C" LSTATUS __stdcall Hook_RegQueryValueExA(HKEY hKey, LPCSTR lpValueName
 		}
 		else if (_stricmp(lpValueName, "TileSets") == 0) {
 			GamePathAdjust(szTargetPath, "ScurkArt", lpData, lpcbData);
-		}
-		return ERROR_SUCCESS;
-	}
-
-	if (IsRegKey(hKey, enVersionKey)) {
-		if (_stricmp(lpValueName, "SimCity 2000") == 0) {
-			GetIniOutDWORD("Version", lpValueName, 256, lpData, lpcbData);
-		}
-		else if (_stricmp(lpValueName, "SCURK") == 0) {
-			GetIniOutDWORD("Version", lpValueName, 256, lpData, lpcbData);
 		}
 		return ERROR_SUCCESS;
 	}
@@ -279,12 +307,37 @@ extern "C" LSTATUS __stdcall Hook_RegQueryValueExA(HKEY hKey, LPCSTR lpValueName
 		return ERROR_SUCCESS;
 	}
 
-	if (IsRegKey(hKey, enRegistrationKey)) {
-		if (_stricmp(lpValueName, "Mayor Name") == 0) {
-			GetIniOutString("Registration", lpValueName, szSettingsMayorName, lpData, lpcbData);
+	if (IsRegKey(hKey, enVersionKey)) {
+		if (_stricmp(lpValueName, "SimCity 2000") == 0) {
+			GetIniOutDWORD("Version", lpValueName, 256, lpData, lpcbData);
 		}
-		else if (_stricmp(lpValueName, "Company Name") == 0) {
-			GetIniOutString("Registration", lpValueName, szSettingsCompanyName, lpData, lpcbData);
+		else if (_stricmp(lpValueName, "SCURK") == 0) {
+			GetIniOutDWORD("Version", lpValueName, 256, lpData, lpcbData);
+		}
+		return ERROR_SUCCESS;
+	}
+
+	if (IsRegKey(hKey, enOptionsKey)) {
+		if (_stricmp(lpValueName, "Disasters") == 0) {
+			GetIniOutDWORD("Options", lpValueName, 1, lpData, lpcbData);
+		}
+		else if (_stricmp(lpValueName, "Music") == 0) {
+			GetIniOutDWORD("Options", lpValueName, 1, lpData, lpcbData);
+		}
+		else if (_stricmp(lpValueName, "Sound") == 0) {
+			GetIniOutDWORD("Options", lpValueName, 1, lpData, lpcbData);
+		}
+		else if (_stricmp(lpValueName, "AutoGoto") == 0) {
+			GetIniOutDWORD("Options", lpValueName, 1, lpData, lpcbData);
+		}
+		else if (_stricmp(lpValueName, "AutoBudget") == 0) {
+			GetIniOutDWORD("Options", lpValueName, 0, lpData, lpcbData);
+		}
+		else if (_stricmp(lpValueName, "AutoSave") == 0) {
+			GetIniOutDWORD("Options", lpValueName, 0, lpData, lpcbData);
+		}
+		else if (_stricmp(lpValueName, "Speed") == 0) {
+			GetIniOutDWORD("Options", lpValueName, 2, lpData, lpcbData);
 		}
 		return ERROR_SUCCESS;
 	}
@@ -292,6 +345,16 @@ extern "C" LSTATUS __stdcall Hook_RegQueryValueExA(HKEY hKey, LPCSTR lpValueName
 	if (IsRegKey(hKey, enLocalizeKey)) {
 		if (_stricmp(lpValueName, "Language") == 0) {
 			GetIniOutString("Localize", lpValueName, "USA", lpData, lpcbData);
+		}
+		return ERROR_SUCCESS;
+	}
+
+	if (IsRegKey(hKey, enRegistrationKey)) {
+		if (_stricmp(lpValueName, "Mayor Name") == 0) {
+			GetIniOutString("Registration", lpValueName, szSettingsMayorName, lpData, lpcbData);
+		}
+		else if (_stricmp(lpValueName, "Company Name") == 0) {
+			GetIniOutString("Registration", lpValueName, szSettingsCompanyName, lpData, lpcbData);
 		}
 		return ERROR_SUCCESS;
 	}
