@@ -151,13 +151,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
         SetGamePath();
 
-#if STORE_DRIVE_LETTER
-        if (!FillDriveSelectionArray()) {
-            MessageBox(GetActiveWindow(), "Could not fetch drive letter list", "sc2kfix error", MB_OK | MB_ICONERROR);
-            return FALSE;
-        }
-#endif
-
         // Load settings
         if (!bSkipLoadSettings)
             LoadSettings();
@@ -365,9 +358,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
         // Send a closing message and close the log file
         ReleaseSMKFuncs();
-#if STORE_DRIVE_LETTER
-        FreeDriveSelectionArray();
-#endif
         ConsoleLog(LOG_INFO, "CORE: Closing down at %lld. Goodnight!\n", time(NULL));
         fflush(fdLog);
         fclose(fdLog);

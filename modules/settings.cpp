@@ -21,10 +21,6 @@ char szGamePath[MAX_PATH];
 char szSettingsMayorName[64];
 char szSettingsCompanyName[64];
 
-#if STORE_DRIVE_LETTER
-char szSettingsMovieDriveLetter[4];
-#endif
-
 BOOL bSettingsMusicInBackground = TRUE;
 BOOL bSettingsUseSoundReplacements = TRUE;
 BOOL bSettingsShuffleMusic = FALSE;
@@ -51,59 +47,6 @@ void SetGamePath(void) {
 	PathRemoveFileSpecA(szModulePathName);
 	strcpy_s(szGamePath, MAX_PATH, szModulePathName);
 }
-
-#if STORE_DRIVE_LETTER
-std::vector<char *> DriveLetters;
-
-static bool SetDefaultDriveLetterAndPath(void) {
-	szSettingsMovieDriveLetter[0] = szGamePath[0];
-	return true;
-}
-
-bool FillDriveSelectionArray(void) {
-	char szLDrivesBuf[128 + 1];
-
-	memset(szLDrivesBuf, 0, sizeof(szLDrivesBuf));
-
-	DriveLetters.clear();
-
-	// Set a viable default.
-	if (!SetDefaultDriveLetterAndPath())
-		return false;
-
-	DWORD dwLDRet = GetLogicalDriveStringsA(sizeof(szLDrivesBuf)-1, szLDrivesBuf);
-	if (dwLDRet > 0 && dwLDRet <= sizeof(szLDrivesBuf)-1) {
-		char *szLDriveEnt = szLDrivesBuf;
-		while (*szLDriveEnt) {
-			char szLDriveBuf[4];
-
-			memset(szLDriveBuf, 0, sizeof(szLDriveBuf));
-
-			if (!isalpha(szLDriveEnt[0]))
-				break;
-
-			szLDriveBuf[0] = szLDriveEnt[0];
-
-			DriveLetters.push_back(_strdup(szLDriveBuf));
-
-			szLDriveEnt += strlen(szLDriveEnt) + 1;
-		}
-	}
-	else {
-		DriveLetters.push_back(_strdup(szSettingsMovieDriveLetter));
-	}
-
-	return true;
-}
-
-void FreeDriveSelectionArray(void) {
-	for (unsigned i = 0; i < DriveLetters.size(); i++)
-		if (DriveLetters[i])
-			free(DriveLetters[i]);
-
-	DriveLetters.clear();
-}
-#endif
 
 const char *GetIniPath() {
 	static char szIniPath[MAX_PATH];
@@ -169,15 +112,6 @@ void LoadSettings(void) {
 	bSettingsUseNewStrings = GetPrivateProfileIntA(section, "bSettingsUseNewStrings", bSettingsUseNewStrings, ini_file);
 	bSettingsUseLocalMovies = GetPrivateProfileIntA(section, "bSettingsUseLocalMovies", bSettingsUseLocalMovies, ini_file);
 	bSettingsAlwaysSkipIntro = GetPrivateProfileIntA(section, "bSettingsAlwaysSkipIntro", bSettingsAlwaysSkipIntro, ini_file);
-#if STORE_DRIVE_LETTER
-	char szTempDriveLetter[4];
-
-	memset(szTempDriveLetter, 0, sizeof(szTempDriveLetter));
-
-	szTempDriveLetter[0] = szGamePath[0];
-
-	GetPrivateProfileStringA(section, "szSettingsMovieDriveLetter", szTempDriveLetter, szSettingsMovieDriveLetter, sizeof(szSettingsMovieDriveLetter)-1, ini_file);
-#endif
 
 	// Gameplay modifications
 
@@ -217,9 +151,6 @@ void SaveSettings(BOOL onload) {
 	WritePrivateProfileIntA(section, "bSettingsUseNewStrings", bSettingsUseNewStrings, ini_file);
 	WritePrivateProfileIntA(section, "bSettingsUseLocalMovies", bSettingsUseLocalMovies, ini_file);
 	WritePrivateProfileIntA(section, "bSettingsAlwaysSkipIntro", bSettingsAlwaysSkipIntro, ini_file);
-#if STORE_DRIVE_LETTER
-	WritePrivateProfileStringA(section, "szSettingsMovieDriveLetter", szSettingsMovieDriveLetter, ini_file);
-#endif
 
 	// Gameplay modifications
 

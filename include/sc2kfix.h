@@ -19,10 +19,6 @@
 // Turning this on forces the console to be enabled, as if -console was passed to SIMCITY.EXE.
 // #define CONSOLE_ENABLED
 
-// Turning this on will enable the storage and setting of the drive letter, this is specifically
-// for if you want to play the videos from the CD.
-#define STORE_DRIVE_LETTER  0
-
 #define SC2KVERSION_UNKNOWN 0
 #define SC2KVERSION_1995    1
 #define SC2KVERSION_1996    2
@@ -102,10 +98,6 @@ extern char szGamePath[MAX_PATH];
 extern char szSettingsMayorName[64];
 extern char szSettingsCompanyName[64];
 
-#if STORE_DRIVE_LETTER
-extern char szSettingsMovieDriveLetter[4];
-#endif
-
 extern BOOL bSettingsMusicInBackground;
 extern BOOL bSettingsUseSoundReplacements;
 extern BOOL bSettingsShuffleMusic;
@@ -152,10 +144,6 @@ BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 int DoRegistryCheckAndInstall(void);
 void SetGamePath(void);
-#if STORE_DRIVE_LETTER
-bool FillDriveSelectionArray(void);
-void FreeDriveSelectionArray(void);
-#endif
 const char *GetIniPath();
 void LoadSettings(void);
 void SaveSettings(BOOL onload);

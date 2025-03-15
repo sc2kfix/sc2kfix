@@ -154,9 +154,6 @@ static const char *GetSetMoviesPath() {
 }
 
 static const char AdjustMoviePathDrive() {
-	// Let's get the drive letter from one of two paths:
-	// a) Movies path if the setting to use local movies is enabled
-	// b) See Below **
 	if (bSettingsUseLocalMovies) {
 		const char *temp = GetSetMoviesPath();
 		if (!temp && !isalpha(temp[0]))
@@ -164,17 +161,7 @@ static const char AdjustMoviePathDrive() {
 		return temp[0];
 	}
 
-#if STORE_DRIVE_LETTER
-	// ** Stored drive letter that'll point towards
-	// the drive that contains the 'Goodies' directory
-	// which will then contain 'DATA' at its root.
-	// The purpose of this is so you can manually
-	// target the 'right' drive that would normally
-	// contain your SimCity 2000 CD.
-	return szSettingsMovieDriveLetter[0];
-#else
 	return szGamePath[0];
-#endif
 }
 
 // Reference and inspiration for this comes from the separate
