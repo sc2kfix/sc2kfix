@@ -567,6 +567,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	int iCenterOut;
 	WORD iFetchHigh, iFetchLow;
 	HWND hWnd;
+	DWORD *dwSomeStoredTrigger;
 
 	// Short-circuit for now as we rebuild.
 
@@ -576,10 +577,25 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	int(*H_GetShiftKey)() = (int(*)())0x4019E2;
 	BOOL(__cdecl *BulldozingFunc)(__int16, __int16) = (BOOL(__cdecl *)(__int16, __int16))0x401E47;
 	int(__thiscall *H_SomeRectFillRefFunc)(void *) = (int(__thiscall *)(void *))0x40226B;
+	int(__cdecl *H_MRaiseTerrain)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x401AB4;
+	int(__cdecl *H_MLowerTerrain)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x401EA1;
+	int(__cdecl *H_MRLTerrain)(__int16, __int16, __int16) = (int(__cdecl *)(__int16, __int16, __int16))0x402B2B;
+	int(__cdecl *H_MLevelTerrain)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x402B94;
+	int(__cdecl *H_MPlaceWater)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x401997;
+	int(__thiscall *H_GetSomeStoredTrigger)(void *) = (int(__thiscall *)(void *))0x4011E5;
+	int(__cdecl *H_MPlaceStream)(__int16, __int16, __int16) = (int(__cdecl *)(__int16, __int16, __int16))0x40198D;
+	int(__cdecl *H_MPlaceTree)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x401857;
+	int(__cdecl *H_MPlaceForest)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x402798;
 	int(__cdecl *H_PositionalFunc)(__int16, __int16, WORD *, WORD *) = (int(__cdecl *)(__int16, __int16, WORD *, WORD *))0x40258B;
 	int(__thiscall *H_SetNewPosFunc)(void *, __int16, __int16) = (int(__thiscall *)(void *, __int16, __int16))0x4016D1;
 	int(__thiscall *H_SomeRectColorRefFunc)(void *) = (int(__thiscall *)(void *))0x402810;
 	int(__cdecl *H_ProcessPointSomething)(int, LPPOINT) = (int(__cdecl *)(int, LPPOINT))0x4029C3;
+
+	// H_GetSomeStoredTrigger() - This check is inverted here, reason currently unknown.
+	//                            In the IDA for water/stream if it's true it breaks
+	//                            out of the switch, whereas for the water/stream
+	//                            case if it's false it plays the sound (during the next
+	//                            loop iteration).
 
 	pThis = (DWORD *)H_GetCWinAppThisReturn(pCWinAppThis);
 	pThis[62] = 0;
@@ -591,6 +607,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	if (H_GetControlKey()) {
 		iCurrToolGroupA = 9;
 	}
+	dwSomeStoredTrigger = (DWORD*)0x4C7158;
 	do {
 		ret = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
 		ret = LOWORD(ret);
@@ -615,22 +632,47 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 				H_SomeRectFillRefFunc(pThis);
 				break;
 			case 1: // Raise Terrain
+				ret = H_MRaiseTerrain(iMysteryHigh, iMysteryLow);
+				ret = LOWORD(ret);
 				goto LEAVE_LOOP;
 			case 2: // Lower Terrain
+				ret = H_MLowerTerrain(iMysteryHigh, iMysteryLow);
+				ret = LOWORD(ret);
 				goto LEAVE_LOOP;
 			case 3: // Raise/Lower Terrain (Drag vertically)
+				ret = H_MRLTerrain(iMysteryHigh, iMysteryLow, pt.y);
+				ret = LOWORD(ret);
 				goto LEAVE_LOOP;
 			case 4: // Level Terrain
+				ret = H_MLevelTerrain(iMysteryHigh, iMysteryLow);
+				ret = LOWORD(ret);
 				goto LEAVE_LOOP;
 			case 5: // Place Water
-				goto WATER_SOUNDPLAY_JUMP;
 			case 6: // Place Stream
-WATER_SOUNDPLAY_JUMP:
+				if (iCurrToolGroupA == 5) {
+					if (!H_MPlaceWater(iMysteryHigh, iMysteryLow) || !H_GetSomeStoredTrigger(dwSomeStoredTrigger)) {
+						break;
+					}
+				}
+				else {
+					H_MPlaceStream(iMysteryHigh, iMysteryLow, 100);
+					if (!H_GetSomeStoredTrigger(dwSomeStoredTrigger)) {
+						break;
+					}
+				}
 				Game_SoundPlaySound(pCWinAppThis, 511);
 				break;
 			case 7: // Place Tree
+				if (H_GetSomeStoredTrigger(dwSomeStoredTrigger)) {
+					Game_SoundPlaySound(pCWinAppThis, 503);
+				}
+				H_MPlaceTree(iMysteryHigh, iMysteryLow);
 				break;
 			case 8: // Place Forest
+				if (H_GetSomeStoredTrigger(dwSomeStoredTrigger)) {
+					Game_SoundPlaySound(pCWinAppThis, 503);
+				}
+				H_MPlaceForest(iMysteryHigh, iMysteryLow);
 				break;
 			case 9: // Center Tool
 				H_PositionalFunc(iMysteryHigh, iMysteryLow, &iFetchHigh, &iFetchLow);
