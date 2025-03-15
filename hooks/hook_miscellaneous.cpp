@@ -388,8 +388,16 @@ extern "C" void _declspec(naked) Hook_SimulationProcessTickDaySwitch(void) {
 
 	Game_RefreshTitleBar(pCDocumentMainWindow);
 
-	if (bSettingsFrequentCityRefresh)
+	if (bSettingsFrequentCityRefresh) {
+		POINT pt;
 		Game_CDocument_UpdateAllViews(pCDocumentMainWindow, NULL, 2, NULL);
+		GetCursorPos(&pt);
+		if (wCityMode && wCurrentCityToolGroup != TOOL_GROUP_CENTERINGTOOL && Game_GetTileCoordsFromScreenCoords(pt.x, pt.y) < 0x8000) {
+			Game_DrawSquareHighlight(*(WORD*)0x4CDB68, *(WORD*)0x4CDB70, *(WORD*)0x4CDB6C, *(WORD*)0x4CDB74);
+			*(WORD*)0x4EA7F0 = 1;		// TODO - figure out exactly what this should be called
+			RedrawWindow(GameGetRootWindowHandle(), NULL, NULL, RDW_INVALIDATE | RDW_ALLCHILDREN);
+		}
+	}
 
 __asm {
 		pop edx

@@ -753,6 +753,7 @@ GAMECALL(0x4019EC, int, __cdecl, CenterOnTileCoords, __int16 x, __int16 y)
 GAMECALL(0x401A37, int, __cdecl, MaybeRoadViabilityAlongPath, __int16* x, __int16* y)
 GAMECALL(0x401AF0, int, __cdecl, MaybeCheckViablePlacementPath, __int16 x1, __int16 y1, __int16 x2, __int16 y2)
 GAMECALL(0x401D16, __int16, __cdecl, GetTileCoordsFromScreenCoords, __int16 x, __int16 y)
+GAMECALL(0x40235B, int, __stdcall, DrawSquareHighlight, WORD x, WORD y, WORD, WORD)		// XXX - Not 100% sure what the second pair of arguments is
 GAMECALL(0x4023EC, void, __stdcall, ToolMenuUpdate, void)
 GAMECALL(0x402414, int, __thiscall, MusicPlay, DWORD pThis, int iSongID)
 GAMECALL(0x402937, void, __thiscall, ToolMenuDisable, void* pThis)
