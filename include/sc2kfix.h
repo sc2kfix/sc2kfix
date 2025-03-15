@@ -19,12 +19,21 @@
 // Turning this on forces the console to be enabled, as if -console was passed to SIMCITY.EXE.
 #define CONSOLE_ENABLED
 
+// Turning this on will enable the storage and setting of the drive letter, this is specifically
+// for if you want to play the videos from the CD.
+#define STORE_DRIVE_LETTER  0
+
 #define SC2KVERSION_UNKNOWN 0
 #define SC2KVERSION_1995    1
 #define SC2KVERSION_1996    2
 
 #define SC2KFIX_VERSION		"0.9a"
 #define SC2KFIX_RELEASE_TAG	"r9a"
+
+#define SC2KFIX_INIFILE     "sc2kfix.ini"
+
+#define countof(x) (sizeof(x)/sizeof(*(x)))
+#define lengthof(s) (countof(s)-1)
 
 #define RELATIVE_OFFSET(from, to) *(DWORD*)((DWORD)(from)) = (DWORD)(to) - (DWORD)(from) - 4;
 #define NEWCALL(from, to) *(BYTE*)(from) = 0xE8; RELATIVE_OFFSET((DWORD)(from)+1, to)
@@ -84,12 +93,18 @@ enum {
 	LOG_DEBUG
 };
 
+// Game path global
+
+extern char szGamePath[MAX_PATH];
+
 // Settings globals
 
 extern char szSettingsMayorName[64];
 extern char szSettingsCompanyName[64];
 
+#if STORE_DRIVE_LETTER
 extern char szSettingsMovieDriveLetter[4];
+#endif
 
 extern BOOL bSettingsMusicInBackground;
 extern BOOL bSettingsUseSoundReplacements;
@@ -110,10 +125,9 @@ extern BOOL bSettingsAlwaysSkipIntro;
 extern BOOL bSettingsMilitaryBaseRevenue;
 extern BOOL bSettingsFixOrdinances;
 
-// Path functions (from registry area)
+// Path adjustment (from registry_pathing area)
 
-const char *GetGoodiesPath();
-const char *GetSetMoviesPath();
+const char *AdjustSource(char *buf, const char *path);
 
 // Utility functions
 
@@ -126,17 +140,25 @@ const char* GetZoneName(int iZoneID);
 const char* GetLowHighScale(BYTE bScale);
 BOOL FileExists(const char* name);
 HBITMAP CreateSpriteBitmap(int iSpriteID);
+BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, const char *ini_name);
+void MigrateRegStringValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, char *szOutBuf, DWORD dwLen);
+void MigrateRegDWORDValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, DWORD *dwOut, DWORD dwSize);
+void MigrateRegBOOLValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, BOOL *bOut);
 
 // Globals etc.
 
 LONG WINAPI CrashHandler(LPEXCEPTION_POINTERS lpExceptions);
 BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
-BOOL DoRegistryCheckAndInstall(void);
+int DoRegistryCheckAndInstall(void);
+void SetGamePath(void);
+#if STORE_DRIVE_LETTER
 bool FillDriveSelectionArray(void);
 void FreeDriveSelectionArray(void);
+#endif
+const char *GetIniPath();
 void LoadSettings(void);
-void SaveSettings(void);
+void SaveSettings(BOOL onload);
 void ShowSettingsDialog(void);
 HWND ShowStatusDialog(void);
 void LoadReplacementSounds(void);
@@ -212,6 +234,11 @@ extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void);
 extern "C" int __stdcall Hook_402793(int iStatic, char* szText, int iMaybeAlways1, COLORREF crColor);
 extern "C" int __stdcall Hook_4021A8(HWND iShow);
 extern "C" int __stdcall Hook_40103C(int iShow);
+
+// Registry hooks
+void InstallRegistryPathingHooks_SC2K1996(void);
+void InstallRegistryPathingHooks_SC2K1995(void);
+void InstallRegistryPathingHooks_SCURK1996(void);
 
 // Debugging settings
 
