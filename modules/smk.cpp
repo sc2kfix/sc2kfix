@@ -1,4 +1,4 @@
-// sc2kfix smk.cpp: run-time loading/releasing functions for smk.
+// sc2kfix modules/smk.cpp: run-time loading/releasing functions for smk.
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE

@@ -1,5 +1,5 @@
 // sc2kfix hooks/hook_mmtimers.cpp: hook for winmm timer interfaces
-// (c) 2025 github.com/araxestroy - released under the MIT license
+// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
 #include <windows.h>

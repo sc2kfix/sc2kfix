@@ -1,5 +1,5 @@
-// sc2kfix scurkfix.cpp: fixes for SCURK
-// (c) 2025 github.com/araxestroy - released under the MIT license
+// sc2kfix modules/scurkfix.cpp: fixes for SCURK
+// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
 #include <windows.h>

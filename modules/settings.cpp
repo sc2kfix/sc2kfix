@@ -1,4 +1,4 @@
-// sc2kfix settings.cpp: settings dialog code and configurator
+// sc2kfix modules/settings.cpp: settings dialog code and configurator
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE

@@ -1,4 +1,4 @@
-// sc2kfix status_dialog.cpp: recreation of the DOS/Mac version status dialog
+// sc2kfix modules/status_dialog.cpp: recreation of the DOS/Mac version status dialog
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE

@@ -1,5 +1,5 @@
-// sc2kfix update_notifier.cpp: exactly what it says on the tin
-// (c) 2025 github.com/araxestroy - released under the MIT license
+// sc2kfix modules/update_notifier.cpp: exactly what it says on the tin
+// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
 #define WIN32_LEAN_AND_MEAN

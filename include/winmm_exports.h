@@ -1,5 +1,5 @@
 // sc2kfix winmm_exports.h: list of WinMM exports we need to pass through
-// (c) 2025 github.com/araxestroy - released under the MIT license
+// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #pragma once
 

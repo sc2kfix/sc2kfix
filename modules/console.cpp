@@ -1,4 +1,4 @@
-// sc2kfix console.cpp: sc2kfix console and SX2 interpreter
+// sc2kfix modules/console.cpp: sc2kfix console and SX2 interpreter
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 // Notes: 2025-03-01 (@araxestroy)
