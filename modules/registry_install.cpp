@@ -183,6 +183,7 @@ static void MigrateFinalize(void) {
 }
 
 int DoRegistryCheckAndInstall(void) {
+	int ret;
 	HKEY hKeySC2KRegistration;
 	LSTATUS lResultRegistration = RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Registration", NULL, KEY_ALL_ACCESS, &hKeySC2KRegistration);
 	if (lResultRegistration != ERROR_SUCCESS) {
@@ -191,6 +192,7 @@ int DoRegistryCheckAndInstall(void) {
 		return 0;
 	}
 
+	ret = 0;
 	if (szSettingsMayorName[0] == 0 ||
 		szSettingsCompanyName[0] == 0) {
 		if (RegQueryValueEx(hKeySC2KRegistration, "Mayor Name", NULL, NULL, NULL, NULL) == ERROR_FILE_NOT_FOUND ||
@@ -200,16 +202,13 @@ int DoRegistryCheckAndInstall(void) {
 
 			InstallSC2KDefaults();
 
-			RegCloseKey(hKeySC2KRegistration);
-
 			// Signal that we had to fake an install.
-			return 2;
+			ret = 2;
 		}
 		else {
 
 			// Migrate from registry to ini.
 			MigrateSC2KRegistration(hKeySC2KRegistration);
-			RegCloseKey(hKeySC2KRegistration);
 
 			MigrateSC2KVersion();
 			MigrateSC2KLocalize();
@@ -218,8 +217,10 @@ int DoRegistryCheckAndInstall(void) {
 			MigrateFinalize();
 
 			SaveSettings(TRUE);
-			return 1;
+			ret = 1;
 		}
 	}
-	return 0;
+
+	RegCloseKey(hKeySC2KRegistration);
+	return ret;
 }
