@@ -607,10 +607,10 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 				H_PositionalFunc(iTargetHigh, iTargetLow, &iNewHigh, &iNewLow);
 				Game_SoundPlaySound(pCWinAppThis, 505);
 				if (*(DWORD *)((char *)pThis + 322)) {
-					H_SetNewPosFunc(pThis, *(WORD *)(0x4CAD30) - (iNewHigh >> 1), *(WORD *)(0x4CAD34) - (iNewLow >> 1));
+					H_SetNewPosFunc(pThis, wScreenPointX - (iNewHigh >> 1), wScreenPointY - (iNewLow >> 1));
 				}
 				else {
-					H_SetNewPosFunc(pThis, *(WORD *)(0x4CAD30) - iNewHigh, *(WORD *)(0x4CAD34) - iNewLow);
+					H_SetNewPosFunc(pThis, wScreenPointX - iNewHigh, wScreenPointY - iNewLow);
 				}
 			default:
 				break;

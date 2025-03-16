@@ -807,6 +807,8 @@ GAMEOFF(DWORD,	dwPowerUsedPercentage,		0x4CAA50)
 GAMEOFF(DWORD,	dwCityPopulation,			0x4CAA74)
 GAMEOFF_ARR(DWORD, dwNeighborPopulation,	0x4CAD10)		// DWORD dwNeighborPopulation[4]
 GAMEOFF(BOOL,	bYearEndFlag,				0x4CAD2C)
+GAMEOFF(WORD,   wScreenPointX,              0x4CAD30)
+GAMEOFF(WORD,   wScreenPointY,              0x4CAD34)
 GAMEOFF(BOOL,	bInScenario,				0x4CAD44)
 GAMEOFF_ARR(char, szNeighborNameSouth,		0x4CAD58)		// char[32]
 GAMEOFF_ARR(char, szNeighborNameWest,		0x4CAD78)		// char[32]
