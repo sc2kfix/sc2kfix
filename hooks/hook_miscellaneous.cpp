@@ -387,27 +387,25 @@ extern "C" __int16 __stdcall Hook_GameLeftMouseDown(WPARAM iMouseKeys, POINT pt)
 			H_GetRectInfo(pThis, &Rect);
 			if (PtInRect((const RECT *)(pThis + 88), pt)) {
 				if (PtInRect((const RECT *)(pThis + 120), pt))
-					ret = H_GetPosInfo(pThis, 1, 0, *(DWORD *)(pThis + 76));
+					P_LOWORD(ret) = H_GetPosInfo(pThis, 1, 0, *(DWORD *)(pThis + 76));
 				else if (PtInRect((const RECT *)(pThis + 104), pt))
-					ret = H_GetPosInfo(pThis, 0, 0, *(DWORD *)(pThis + 76));
+					P_LOWORD(ret) = H_GetPosInfo(pThis, 0, 0, *(DWORD *)(pThis + 76));
 				else if (PtInRect((const RECT *)(pThis + 136), pt))
-					ret = H_GetPosInfo(pThis, 5, pt.y, *(DWORD *)(pThis + 76));
+					P_LOWORD(ret) = H_GetPosInfo(pThis, 5, pt.y, *(DWORD *)(pThis + 76));
 				else {
 					iYVar = *(DWORD *)(pThis + 76);
 					if (*(DWORD *)(pThis + 140) >= pt.y)
-						ret = H_GetPosInfo(pThis, 2, 0, iYVar);
+						P_LOWORD(ret) = H_GetPosInfo(pThis, 2, 0, iYVar);
 					else
-						ret = H_GetPosInfo(pThis, 3, 0, iYVar);
+						P_LOWORD(ret) = H_GetPosInfo(pThis, 3, 0, iYVar);
 				}
-				ret = LOWORD(ret);
 			}
 			else {
 				ret = *(DWORD *)(pThis + 252);
 				if (!ret) {
 					hWnd = SetCapture(*(HWND *)(pThis + 28));
 					Game_CWnd_FromHandle(hWnd);
-					ret = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
-					ret = LOWORD(ret);
+					P_LOWORD(ret) = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
 					wCurrentTileCoordinates = ret;
 					if ((__int16)ret >= 0) {
 						*(WORD *)(0x4C7AB0) = (uint8_t)ret;
@@ -419,10 +417,9 @@ extern "C" __int16 __stdcall Hook_GameLeftMouseDown(WPARAM iMouseKeys, POINT pt)
 						*(DWORD *)(pThis + 252) = 1;
 						*(DWORD *)(pThis + 248) = 1;
 						if (wCityMode)
-							ret = H_CityToolMenuAction(iMouseKeys, pt);
+							P_LOWORD(ret) = H_CityToolMenuAction(iMouseKeys, pt);
 						else
-							ret = H_MapToolMenuAction(iMouseKeys, pt);
-						ret = LOWORD(ret);
+							P_LOWORD(ret) = H_MapToolMenuAction(iMouseKeys, pt);
 					}
 				}
 			}
@@ -443,18 +440,15 @@ extern "C" __int16 __stdcall Hook_GameMouseMovement(WPARAM iMouseKeys, POINT pt)
 	int(__cdecl *H_CityToolMenuAction)(char, POINT) = (int(__cdecl *)(char, POINT))0x43F220;
 	__int16(__cdecl *H_MapToolMenuAction)(int, POINT) = (__int16(__cdecl *)(int, POINT))0x402B44;
 
-	iCurrPos = pt.x;
-	iCurrPos = LOWORD(iCurrPos);
+	P_LOWORD(iCurrPos) = pt.x;
 	iThisSomething = *(DWORD *)(pThis + 252);
 	*(struct tagPOINT *)(pThis + 260) = pt; // Placement position.
 	if (iThisSomething) {
-		iCurrPos = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
-		iCurrPos = LOWORD(iCurrPos);
+		P_LOWORD(iCurrPos) = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
 		wCurrentTileCoordinates = iCurrPos;
 		if ((__int16)iCurrPos >= 0) {
 			*(WORD *)(0x4C7AB0) = (unsigned __int8)iCurrPos;
-			iCurrPos = wCurrentTileCoordinates >> 8;
-			iCurrPos = LOWORD(iCurrPos);
+			P_LOWORD(iCurrPos) = wCurrentTileCoordinates >> 8;
 			*(WORD *)(0x4C7AB4) = wCurrentTileCoordinates >> 8;
 			if ( *(WORD *)(0x4E6808) != *(WORD *)(0x4C7AB0) || *(WORD *)(0x4E680C) != (WORD)iCurrPos ) {
 				if ( (int)abs(wGameAreaX - pt.x) > 1 || (iCurrPos = abs(wGameAreaY - pt.y), iCurrPos > 1) ) {
@@ -463,22 +457,19 @@ extern "C" __int16 __stdcall Hook_GameMouseMovement(WPARAM iMouseKeys, POINT pt)
 						if (*(DWORD *)(pThis + 248)) {
 							if (wCityMode) {
 								if ((wCurrentCityToolGroup != 17) || GetAsyncKeyState(VK_MENU) & 0x8000) {
-									iCurrPos = H_CityToolMenuAction(iMouseKeys, pt);
-									iCurrPos = LOWORD(iCurrPos);
+									H_CityToolMenuAction(iMouseKeys, pt);
 								}
 							}
 							else {
 								if ((wCurrentMapToolGroup == 9 && GetAsyncKeyState(VK_MENU) & 0x8000) || // 'Center Tool' selected with either 'Alt' key pressed.
 									(wCurrentMapToolGroup != 9 && (iMouseKeys & MK_CONTROL) == 0) || // Other tool selected with 'ctrl' not pressed.
 									(wCurrentMapToolGroup != 9 && (iMouseKeys & MK_CONTROL) != 0 && GetAsyncKeyState(VK_MENU) & 0x8000)) { // Other tool with 'ctrl' pressed (Center Tool) and 'Alt'.
-									iCurrPos = H_MapToolMenuAction(iMouseKeys, pt);
-									iCurrPos = LOWORD(iCurrPos);
+									H_MapToolMenuAction(iMouseKeys, pt);
 								}
 							}
 						}
 					}
-					iCurrPos = *(WORD *)(0x4C7AB0);
-					iCurrPos = LOWORD(iCurrPos);
+					P_LOWORD(iCurrPos) = *(WORD *)(0x4C7AB0);
 					*(WORD *)(0x4E6808) = *(WORD *)(0x4C7AB0);
 					*(WORD *)(0x4E680C) = *(WORD *)(0x4C7AB4);
 					wGameAreaX = pt.x;
@@ -549,8 +540,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	}
 	dwSomeStoredTrigger = (DWORD*)0x4C7158;
 	do {
-		ret = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
-		ret = LOWORD(ret);
+		P_LOWORD(ret) = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
 		if ((__int16)ret < 0) {
 			break;
 		}
@@ -570,16 +560,16 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 				H_SomeRectFillRefFunc(pThis);
 				break;
 			case 1: // Raise Terrain
-				ret = H_MRaiseTerrain(iTargetHigh, iTargetLow);
+				P_LOWORD(ret) = H_MRaiseTerrain(iTargetHigh, iTargetLow);
 				break;
 			case 2: // Lower Terrain
-				ret = H_MLowerTerrain(iTargetHigh, iTargetLow);
+				P_LOWORD(ret) = H_MLowerTerrain(iTargetHigh, iTargetLow);
 				break;
 			case 3: // Raise/LowerToLevelOut Terrain (Drag vertically)
-				ret = H_MRLTerrain(iTargetHigh, iTargetLow, pt.y);
+				P_LOWORD(ret) = H_MRLTerrain(iTargetHigh, iTargetLow, pt.y);
 				break;
 			case 4: // Level Terrain
-				ret = H_MLevelTerrain(iTargetHigh, iTargetLow);
+				P_LOWORD(ret) = H_MLevelTerrain(iTargetHigh, iTargetLow);
 				break;
 			case 5: // Place Water
 			case 6: // Place Stream
@@ -616,10 +606,8 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 				break;
 			}
 		}
-		if (iCurrToolGroupA >= 1 && iCurrToolGroupA <= 4) {
-			ret = LOWORD(ret);
+		if (iCurrToolGroupA >= 1 && iCurrToolGroupA <= 4)
 			break;
-		}
 		else if (iCurrToolGroupA == 9) {
 			H_SomeRectColorRefFunc(pThis);
 			hWnd = (HWND)pThis[7];
@@ -634,8 +622,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 		ret = H_ProcessPointSomething((int)pThis, &pt);
 	} while (ret);
 	if (iCurrToolGroupB != iCurrToolGroupA) {
-		ret = iCurrToolGroupB;
-		ret = LOWORD(ret);
+		P_LOWORD(ret) = iCurrToolGroupB;
 		wCurrentCityToolGroup = iCurrToolGroupB;
 	}
 	return ret;
