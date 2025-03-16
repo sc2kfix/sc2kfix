@@ -111,14 +111,12 @@ extern BOOL bSettingsUseMP3Music;
 
 extern BOOL bSettingsAlwaysConsole;
 extern BOOL bSettingsCheckForUpdates;
+extern BOOL bSettingsDontLoadMods;
 
 extern BOOL bSettingsUseStatusDialog;
 extern BOOL bSettingsTitleCalendar;
 extern BOOL bSettingsUseNewStrings;
 extern BOOL bSettingsAlwaysSkipIntro;
-
-extern BOOL bSettingsMilitaryBaseRevenue;
-extern BOOL bSettingsFixOrdinances;
 
 // Path adjustment (from registry_pathing area)
 

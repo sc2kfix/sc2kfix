@@ -30,14 +30,12 @@ BOOL bSettingsUseMP3Music = FALSE;
 
 BOOL bSettingsAlwaysConsole = FALSE;
 BOOL bSettingsCheckForUpdates = TRUE;
+BOOL bSettingsDontLoadMods = FALSE;
 
 BOOL bSettingsUseStatusDialog = FALSE;
 BOOL bSettingsTitleCalendar = TRUE;
 BOOL bSettingsUseNewStrings = TRUE;
 BOOL bSettingsAlwaysSkipIntro = FALSE;
-
-BOOL bSettingsMilitaryBaseRevenue = FALSE;	// NYI
-BOOL bSettingsFixOrdinances = FALSE;		// NYI
 
 void SetGamePath(void) {
 	char szModulePathName[MAX_PATH];
@@ -69,9 +67,6 @@ static void MigrateSC2KFixSettings(void) {
 	MigrateRegBOOLValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\sc2kfix", "bSettingsTitleCalendar", &bSettingsTitleCalendar);
 	MigrateRegBOOLValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\sc2kfix", "bSettingsUseNewStrings", &bSettingsUseNewStrings);
 	MigrateRegBOOLValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\sc2kfix", "bSettingsAlwaysSkipIntro", &bSettingsAlwaysSkipIntro);
-
-	MigrateRegBOOLValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\sc2kfix", "bSettingsMilitaryBaseRevenue", &bSettingsMilitaryBaseRevenue);
-	MigrateRegBOOLValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\sc2kfix", "bSettingsFixOrdinances", &bSettingsFixOrdinances);
 }
 
 void LoadSettings(void) {
@@ -90,7 +85,6 @@ void LoadSettings(void) {
 	}
 
 	// QoL/performance settings
-
 	bSettingsMusicInBackground = GetPrivateProfileIntA(section, "bSettingsMusicInBackground", bSettingsMusicInBackground, ini_file);
 	bSettingsUseSoundReplacements = GetPrivateProfileIntA(section, "bSettingsUseSoundReplacements", bSettingsUseSoundReplacements, ini_file);
 	bSettingsShuffleMusic = GetPrivateProfileIntA(section, "bSettingsShuffleMusic", bSettingsShuffleMusic, ini_file);
@@ -99,21 +93,15 @@ void LoadSettings(void) {
 	bSettingsUseMP3Music = GetPrivateProfileIntA(section, "bSettingsUseMP3Music", bSettingsUseMP3Music, ini_file);
 
 	// Internal settings
-
 	bSettingsAlwaysConsole = GetPrivateProfileIntA(section, "bSettingsAlwaysConsole", bSettingsAlwaysConsole, ini_file);
 	bSettingsCheckForUpdates = GetPrivateProfileIntA(section, "bSettingsCheckForUpdates", bSettingsCheckForUpdates, ini_file);
+	bSettingsDontLoadMods = GetPrivateProfileIntA(section, "bSettingsDontLoadMods", bSettingsDontLoadMods, ini_file);
 
 	// Interface settings
-
 	bSettingsUseStatusDialog = GetPrivateProfileIntA(section, "bSettingsUseStatusDialog", bSettingsUseStatusDialog, ini_file);
 	bSettingsTitleCalendar = GetPrivateProfileIntA(section, "bSettingsTitleCalendar", bSettingsTitleCalendar, ini_file);
 	bSettingsUseNewStrings = GetPrivateProfileIntA(section, "bSettingsUseNewStrings", bSettingsUseNewStrings, ini_file);
 	bSettingsAlwaysSkipIntro = GetPrivateProfileIntA(section, "bSettingsAlwaysSkipIntro", bSettingsAlwaysSkipIntro, ini_file);
-
-	// Gameplay modifications
-
-	bSettingsMilitaryBaseRevenue = GetPrivateProfileIntA(section, "bSettingsMilitaryBaseRevenue", bSettingsMilitaryBaseRevenue, ini_file);
-	bSettingsFixOrdinances = GetPrivateProfileIntA(section, "bSettingsFixOrdinances", bSettingsFixOrdinances, ini_file);
 
 	SaveSettings(TRUE);
 }
@@ -128,7 +116,6 @@ void SaveSettings(BOOL onload) {
 	section = "sc2kfix";
 
 	// QoL/performance settings
-
 	WritePrivateProfileIntA(section, "bSettingsMusicInBackground", bSettingsMusicInBackground, ini_file);
 	WritePrivateProfileIntA(section, "bSettingsUseSoundReplacements", bSettingsUseSoundReplacements, ini_file);
 	WritePrivateProfileIntA(section, "bSettingsShuffleMusic", bSettingsShuffleMusic, ini_file);
@@ -137,21 +124,15 @@ void SaveSettings(BOOL onload) {
 	WritePrivateProfileIntA(section, "bSettingsUseMP3Music", bSettingsUseMP3Music, ini_file);
 
 	// Internal settings
-
 	WritePrivateProfileIntA(section, "bSettingsAlwaysConsole", bSettingsAlwaysConsole, ini_file);
 	WritePrivateProfileIntA(section, "bSettingsCheckForUpdates", bSettingsCheckForUpdates, ini_file);
+	WritePrivateProfileIntA(section, "bSettingsDontLoadMods", bSettingsDontLoadMods, ini_file);
 
 	// Interface settings
-
 	WritePrivateProfileIntA(section, "bSettingsUseStatusDialog", bSettingsUseStatusDialog, ini_file);
 	WritePrivateProfileIntA(section, "bSettingsTitleCalendar", bSettingsTitleCalendar, ini_file);
 	WritePrivateProfileIntA(section, "bSettingsUseNewStrings", bSettingsUseNewStrings, ini_file);
 	WritePrivateProfileIntA(section, "bSettingsAlwaysSkipIntro", bSettingsAlwaysSkipIntro, ini_file);
-
-	// Gameplay modifications
-
-	WritePrivateProfileIntA(section, "bSettingsMilitaryBaseRevenue", bSettingsMilitaryBaseRevenue, ini_file);
-	WritePrivateProfileIntA(section, "bSettingsFixOrdinances", bSettingsFixOrdinances, ini_file);
 
 	ConsoleLog(LOG_INFO, "CORE: Saved sc2kfix settings.\n");
 
@@ -172,21 +153,16 @@ static void SetSettingsTabOrdering(HWND hwndDlg) {
 	SetWindowPos(GetDlgItem(hwndDlg, ID_SETTINGS_CANCEL), NULL, 0, 0, 0, 0, uFlags);
 	SetWindowPos(GetDlgItem(hwndDlg, ID_SETTINGS_OK), NULL, 0, 0, 0, 0, uFlags);
 
-	// Gameplay Mod Settings
-	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_RADIOACTIVE_DECAY), NULL, 0, 0, 0, 0, uFlags);
-	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_FIX_ORDINANCES), NULL, 0, 0, 0, 0, uFlags);
-	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_BUILDINGS), NULL, 0, 0, 0, 0, uFlags);
-	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_REVENUE), NULL, 0, 0, 0, 0, uFlags);
+	// sc2kfix Core Settings
+	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DONT_LOAD_MODS), NULL, 0, 0, 0, 0, uFlags);
+	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES), NULL, 0, 0, 0, 0, uFlags);
+	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE), NULL, 0, 0, 0, 0, uFlags);
 
 	// Interface Settings
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SKIP_INTRO), NULL, 0, 0, 0, 0, uFlags);
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS), NULL, 0, 0, 0, 0, uFlags);
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE), NULL, 0, 0, 0, 0, uFlags);
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG), NULL, 0, 0, 0, 0, uFlags);
-
-	// sc2kfix Core Settings
-	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES), NULL, 0, 0, 0, 0, uFlags);
-	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE), NULL, 0, 0, 0, 0, uFlags);
 
 	// Quality of Life / Performance Settings
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MP3_MUSIC), NULL, 0, 0, 0, 0, uFlags);
@@ -249,6 +225,10 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			"Enabling or disabling this setting takes effect after restarting the game.");
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES),
 			"This setting checks to see if there's a newer release of sc2kfix available when the game starts.\n\n");
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DONT_LOAD_MODS),
+			"Enabling this setting forces sc2kfix to skip loading any installed mods on startup.\n\n"
+
+			"Enabling or disabling this setting takes effect after restarting the game.");
 
 		// Interface settings
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG),
@@ -262,38 +242,6 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			"Certain strings in the game have typos, grammatical issues, and/or ambiguous wording. This setting loads corrected strings in memory in place of the affected originals.");
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SKIP_INTRO),
 			"Once enabled the introduction videos will be skipped on startup (This will only apply if the videos have been detected, otherwise the standard warning will be displayed).");
-
-		// Gameplay mod settings
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_REVENUE),
-			"Military bases were originally intended to increase commercial demand and generate city revenue. "
-			"This was never implemented, though the negative aspects of military base ownership were. "
-			"This makes military bases in vanilla SimCity 2000 a rather poor mayoral decision.\n\n"
-
-			"Enabling this mod will allow military bases to generate a population based annual income in the form of a stipend from the federal government, "
-			"as well as increased commercial demand, both of which scale with the size and type of the base, and may fluctuate depending on military needs and "
-			"base redevelopment efforts.\n\n"
-
-			"Enabling or disabling this setting takes effect after restarting the game.");
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_BUILDINGS),
-			"Army bases in vanilla SimCity 2000 only grow military parking lots and 1x1 military warehouses. This mod allows Army bases to grow Top Secret, "
-			"nondescript military buildings and rotated 1x1 military warehouses.\n\n"
-
-			"Enabling or disabling this setting takes effect after restarting the game.");
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_FIX_ORDINANCES),
-			"Certain ordinances were not fully implemented in SimCity 2000. This setting re-implements certain aspects of them based on information from design "
-			"documents, interviews, and implementations in later games in the series.\n\n"
-
-			"When this mod is enabled, the following ordinances gain the following effects:\n"
-			" - Parking Fines: Increases mass transit usage and residential demand slightly.\n"
-			" - Free Clinics: Increases life expectancy and reduces hospital demand slightly.\n"
-			" - Junior Sports: Increases life expectancy and commercial demand slightly.\n"
-
-			"Enabling or disabling this setting takes effect after restarting the game.");
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_RADIOACTIVE_DECAY),
-			"The vanilla SimCity 2000 algorithm for radioactive decay an apparent oversight that results in any given month having a 1/21845 chance of a single radioactive "
-			"tile decaying into a clear tile. This mod reworks radioactive decay by ensuring that at least one radioactivity tile will be given a fair chance to decay per month.\n\n"
-
-			"Enabling or disabling this setting takes effect after restarting the game.");
 
 		// Set the version string.
 		strVersionInfo = "sc2kfix ";
@@ -316,14 +264,12 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE), bSettingsAlwaysConsole ? BST_CHECKED : BST_UNCHECKED);
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES), bSettingsCheckForUpdates ? BST_CHECKED : BST_UNCHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DONT_LOAD_MODS), bSettingsDontLoadMods ? BST_CHECKED : BST_UNCHECKED);
 
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG), bSettingsUseStatusDialog ? BST_CHECKED : BST_UNCHECKED);
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE), bSettingsTitleCalendar ? BST_CHECKED : BST_UNCHECKED);
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS), bSettingsUseNewStrings ? BST_CHECKED : BST_UNCHECKED);
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SKIP_INTRO), bSettingsAlwaysSkipIntro ? BST_CHECKED : BST_UNCHECKED);
-
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_REVENUE), bSettingsMilitaryBaseRevenue ? BST_CHECKED : BST_UNCHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_FIX_ORDINANCES), bSettingsFixOrdinances ? BST_CHECKED : BST_UNCHECKED);
 
 		// Center the dialog box
 		CenterDialogBox(hwndDlg);
@@ -347,14 +293,12 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 
 			bSettingsAlwaysConsole = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE));
 			bSettingsCheckForUpdates = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES));
+			bSettingsDontLoadMods = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DONT_LOAD_MODS));
 
 			bSettingsUseStatusDialog = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG));
 			bSettingsTitleCalendar = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE));
 			bSettingsUseNewStrings = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS));
 			bSettingsAlwaysSkipIntro = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SKIP_INTRO));
-
-			bSettingsMilitaryBaseRevenue = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_REVENUE));
-			bSettingsFixOrdinances = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_FIX_ORDINANCES));
 
 			// Save the settings
 			SaveSettings(FALSE);
@@ -374,14 +318,12 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE), BST_UNCHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES), BST_CHECKED);
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DONT_LOAD_MODS), BST_UNCHECKED);
 
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG), BST_UNCHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE), BST_CHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS), BST_CHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SKIP_INTRO), BST_UNCHECKED);
-
-			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_REVENUE), BST_UNCHECKED);
-			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_FIX_ORDINANCES), BST_UNCHECKED);
 			break;
 		case ID_SETTINGS_VANILLA:
 			// Clear all checkboxes except for the update checker.
@@ -394,14 +336,12 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE), BST_UNCHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES), BST_CHECKED);
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DONT_LOAD_MODS), BST_CHECKED);
 
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG), BST_UNCHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE), BST_UNCHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS), BST_UNCHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SKIP_INTRO), BST_UNCHECKED);
-
-			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MILITARY_REVENUE), BST_UNCHECKED);
-			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_FIX_ORDINANCES), BST_UNCHECKED);
 			break;
 		}
 		return TRUE;
