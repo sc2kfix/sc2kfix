@@ -774,6 +774,7 @@ GAMECALL(0x4B234F, int, __stdcall, AfxMessageBox, unsigned int nIDPrompt, unsign
 GAMEOFF_PTR(void, pCWinAppThis,				0x4C7010)
 GAMEOFF(void*,	pCWndRootWindow,			0x4C702C)
 GAMEOFF(BOOL,	bPriscillaActivated,		0x4C7104)
+GAMEOFF(DWORD*, dwAudioHandle,           0x4C7158)
 GAMEOFF(BOOL,	bOptionsMusicEnabled,		0x4C71F0)
 GAMEOFF(WORD,	wSimulationSpeed,			0x4C7318)
 GAMEOFF(WORD,	wCurrentTileCoordinates,	0x4C7A98)
@@ -849,9 +850,9 @@ GAMEOFF(int,	dwCityBonds,				0x4CC4E8)
 GAMEOFF(DWORD,	dwCityPollution,			0x4CC910)		// Needs reverse engineering. See wiki.
 GAMEOFF(DWORD,	dwLFSRState,				0x4CDB7C)
 GAMEOFF(DWORD,	dwLCGState,					0x4CDB80)
+GAMEOFF(void*,  pCWinApp,                   0x4CE8C0)
 GAMEOFF(WORD,   wPreviousTileCoordinateX,   0x4E6808)
 GAMEOFF(WORD,   wPreviousTileCoordinateY,   0x4E680C)
-GAMEOFF(void*,	pCWinApp,					0x4CE8C0)
 
 // XXX - I think these ones aren't in BSS? I forget why I separated these out.
 // They'll go on the wiki as soon as I remember what the hell they do.

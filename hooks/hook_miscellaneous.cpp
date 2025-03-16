@@ -490,7 +490,6 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	__int16 iTileTargetX, iTileTargetY;
 	WORD wNewScreenPointX, wNetScreenPointY;
 	HWND hWnd;
-	DWORD *dwSomeStoredTrigger;
 
 	int(__thiscall *H_GetCWinAppThisReturn)(void *) = (int(__thiscall *)(void *))0x402699;
 	int(__thiscall *H_HoverHighlight)(int) = (int(__thiscall *)(int))0x4014F1;
@@ -501,7 +500,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	int(__cdecl *H_MRLTerrain)(__int16, __int16, __int16) = (int(__cdecl *)(__int16, __int16, __int16))0x402B2B;
 	int(__cdecl *H_MLevelTerrain)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x402B94;
 	int(__cdecl *H_MPlaceWater)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x401997;
-	int(__thiscall *H_GetSomeStoredTrigger)(void *) = (int(__thiscall *)(void *))0x4011E5;
+	int(__thiscall *H_MapToolSoundTrigger)(void *) = (int(__thiscall *)(void *))0x4011E5;
 	int(__cdecl *H_MPlaceStream)(__int16, __int16, __int16) = (int(__cdecl *)(__int16, __int16, __int16))0x40198D;
 	int(__cdecl *H_MPlaceTree)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x401857;
 	int(__cdecl *H_MPlaceForest)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x402798;
@@ -509,12 +508,6 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	int(__thiscall *H_SetNewPosFunc)(void *, __int16, __int16) = (int(__thiscall *)(void *, __int16, __int16))0x4016D1;
 	int(__thiscall *H_SomeRectColorRefFunc)(void *) = (int(__thiscall *)(void *))0x402810;
 	int(__cdecl *H_ProcessPointSomething)(int, LPPOINT) = (int(__cdecl *)(int, LPPOINT))0x4029C3;
-
-	// H_GetSomeStoredTrigger() - This check is inverted here, reason currently unknown.
-	//                            In the IDA for water/stream if it's true it breaks
-	//                            out of the switch, whereas for the water/stream
-	//                            case if it's false it plays the sound (during the next
-	//                            loop iteration).
 
 	// pThis[62] - When this is set to 0, you remain within the do/while loop until you
 	//             release the left mouse button.
@@ -538,7 +531,6 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	if (iCurrToolGroupA != 9) {
 		pThis[62] = 0;
 	}
-	dwSomeStoredTrigger = (DWORD*)0x4C7158;
 	do {
 		P_LOWORD(ret) = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
 		if ((__int16)ret < 0) {
@@ -574,19 +566,19 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 			case 5: // Place Water
 			case 6: // Place Stream
 				if (iCurrToolGroupA == 5) {
-					if (!H_MPlaceWater(iTileTargetX, iTileTargetY) || !H_GetSomeStoredTrigger(dwSomeStoredTrigger))
+					if (!H_MPlaceWater(iTileTargetX, iTileTargetY) || H_MapToolSoundTrigger(dwAudioHandle))
 						break;
 				}
 				else {
 					H_MPlaceStream(iTileTargetX, iTileTargetY, 100);
-					if (!H_GetSomeStoredTrigger(dwSomeStoredTrigger))
+					if (H_MapToolSoundTrigger(dwAudioHandle))
 						break;
 				}
 				Game_SoundPlaySound(pCWinAppThis, 511);
 				break;
 			case 7: // Place Tree
 			case 8: // Place Forest
-				if (H_GetSomeStoredTrigger(dwSomeStoredTrigger))
+				if (!H_MapToolSoundTrigger(dwAudioHandle))
 					Game_SoundPlaySound(pCWinAppThis, 503);
 				if (iCurrToolGroupA == 7)
 					H_MPlaceTree(iTileTargetX, iTileTargetY);
