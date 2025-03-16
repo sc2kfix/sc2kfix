@@ -841,12 +841,15 @@ void InstallMiscHooks(void) {
 
 skipmenu:
 
+	// Hook for the game area leftmousebuttondown call.
 	VirtualProtect((LPVOID)0x401523, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x401523, Hook_GameLeftMouseDown);
 
+	// Hook for the game area mouse movement (or mouse first) call.
 	VirtualProtect((LPVOID)0x4016EA, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4016EA, Hook_GameMouseMovement);
 
+	// Hook for the MapToolMenuAction call.
 	VirtualProtect((LPVOID)0x402B44, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402B44, Hook_MapToolMenuAction);
 
