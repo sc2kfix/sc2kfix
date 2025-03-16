@@ -30,7 +30,7 @@
 #define MISCHOOK_DEBUG_SMACK 128
 #define MISCHOOK_DEBUG_CHEAT 256
 
-#define MISCHOOK_DEBUG DEBUG_FLAGS_NONE
+#define MISCHOOK_DEBUG MISCHOOK_DEBUG_MENU
 
 #ifdef DEBUGALL
 #undef MISCHOOK_DEBUG
@@ -170,6 +170,8 @@ extern "C" HMENU __stdcall Hook_LoadMenuA(HINSTANCE hInstance, LPCSTR lpMenuName
 extern "C" BOOL __stdcall Hook_EnableMenuItem(HMENU hMenu, UINT uIDEnableItem, UINT uEnable) {
 	// XXX - There's gotta be a better way to do this.
 	if (uIDEnableItem == 5 && uEnable == 0x403)
+		return EnableMenuItem(hMenu, uIDEnableItem, MF_BYPOSITION | MF_ENABLED);
+	if (uIDEnableItem == 6 && uEnable == 0x403)
 		return EnableMenuItem(hMenu, uIDEnableItem, MF_BYPOSITION | MF_ENABLED);
 	return EnableMenuItem(hMenu, uIDEnableItem, uEnable);
 }
@@ -361,6 +363,12 @@ extern "C" int __stdcall Hook_CSimcityView_WM_MBUTTONDOWN(WPARAM wMouseKeys, POI
 	return wTileCoords;
 }
 
+// Placeholder.
+void ShowModSettingsDialog(void) {
+	ConsoleLog(LOG_DEBUG, "FUCK");
+	MessageBox(NULL, "The mod settings dialog has not yet been implemented. Check back later.", "sc2fix", MB_OK);
+}
+
 // Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
 // This should probably have a better name. And maybe be broken out into smaller functions.
 void InstallMiscHooks(void) {
@@ -505,7 +513,7 @@ void InstallMiscHooks(void) {
 	// Add settings buttons to SC2K's menus
 	hGameMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(3));
 	if (hGameMenu) {
-		AFX_MSGMAP_ENTRY afxMessageMapEntry;
+		AFX_MSGMAP_ENTRY afxMessageMapEntry[2];
 		HMENU hOptionsPopup;
 		MENUITEMINFO miiOptionsPopup;
 		miiOptionsPopup.cbSize = sizeof(MENUITEMINFO);
@@ -523,15 +531,29 @@ void InstallMiscHooks(void) {
 			ConsoleLog(LOG_DEBUG, "MISC: AppendMenuA #2 failed, error = 0x%08X.\n", GetLastError());
 			goto skipmenu;
 		}
+		if (!AppendMenu(hOptionsPopup, MF_STRING, 40001, "Mod &Configuration...") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: AppendMenuA #3 failed, error = 0x%08X.\n", GetLastError());
+			goto skipmenu;
+		}
 
-		afxMessageMapEntry = {
+		afxMessageMapEntry[0] = {
 			WM_COMMAND,
 			0,
 			40000,
 			40000,
 			0x0A,
-			ShowSettingsDialog
+			ShowSettingsDialog,
 		};
+
+		afxMessageMapEntry[1] = {
+			WM_COMMAND,
+			0,
+			40001,
+			40001,
+			0x0A,
+			ShowModSettingsDialog
+		};
+
 		VirtualProtect((LPVOID)0x4D45C0, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
 		memcpy_s((LPVOID)0x4D45C0, sizeof(afxMessageMapEntry), &afxMessageMapEntry, sizeof(afxMessageMapEntry));
 
@@ -550,8 +572,8 @@ skipmenu:
 		0x2A,
 		Hook_CSimcityView_WM_MBUTTONDOWN
 	};
-	VirtualProtect((LPVOID)0x4D45D8, sizeof(afxMessageMapEntrySimCityView), PAGE_EXECUTE_READWRITE, &dwDummy);
-	memcpy_s((LPVOID)0x4D45D8, sizeof(afxMessageMapEntrySimCityView), &afxMessageMapEntrySimCityView, sizeof(afxMessageMapEntrySimCityView));
+	VirtualProtect((LPVOID)0x4D45F0, sizeof(afxMessageMapEntrySimCityView), PAGE_EXECUTE_READWRITE, &dwDummy);
+	memcpy_s((LPVOID)0x4D45F0, sizeof(afxMessageMapEntrySimCityView), &afxMessageMapEntrySimCityView, sizeof(afxMessageMapEntrySimCityView));
 
 	// Copy the main menu's message map and update the runtime class to use it
 	VirtualProtect((LPVOID)0x4D513C, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
