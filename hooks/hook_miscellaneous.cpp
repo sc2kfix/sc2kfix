@@ -493,7 +493,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 
 	int(__thiscall *H_GetCWinAppThisReturn)(void *) = (int(__thiscall *)(void *))0x402699;
 	int(__thiscall *H_HoverHighlight)(int) = (int(__thiscall *)(int))0x4014F1;
-	BOOL(__cdecl *BulldozingFunc)(__int16, __int16) = (BOOL(__cdecl *)(__int16, __int16))0x401E47;
+	BOOL(__cdecl *H_BulldozingFunc)(__int16, __int16) = (BOOL(__cdecl *)(__int16, __int16))0x401E47;
 	int(__thiscall *H_SomeRectFillRefFunc)(void *) = (int(__thiscall *)(void *))0x40226B;
 	int(__cdecl *H_MRaiseTerrain)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x401AB4;
 	int(__cdecl *H_MLowerTerrain)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x401EA1;
@@ -504,8 +504,8 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	int(__cdecl *H_MPlaceStream)(__int16, __int16, __int16) = (int(__cdecl *)(__int16, __int16, __int16))0x40198D;
 	int(__cdecl *H_MPlaceTree)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x401857;
 	int(__cdecl *H_MPlaceForest)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x402798;
-	int(__cdecl *H_PositionalFunc)(__int16, __int16, WORD *, WORD *) = (int(__cdecl *)(__int16, __int16, WORD *, WORD *))0x40258B;
-	int(__thiscall *H_SetNewPosFunc)(void *, __int16, __int16) = (int(__thiscall *)(void *, __int16, __int16))0x4016D1;
+	int(__cdecl *H_GetScreenCoordsFromTileCoords)(__int16, __int16, WORD *, WORD *) = (int(__cdecl *)(__int16, __int16, WORD *, WORD *))0x40258B;
+	int(__thiscall *H_GotoNewScreenCoordinates)(void *, __int16, __int16) = (int(__thiscall *)(void *, __int16, __int16))0x4016D1;
 	int(__thiscall *H_SomeRectColorRefFunc)(void *) = (int(__thiscall *)(void *))0x402810;
 	int(__cdecl *H_ProcessPointSomething)(int, LPPOINT) = (int(__cdecl *)(int, LPPOINT))0x4029C3;
 
@@ -548,7 +548,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 		if (iTileStartX != iTileTargetX || iTileStartY != iTileTargetY) {
 			switch (iCurrToolGroupA) {
 			case 0: // Unclear
-				BulldozingFunc(iTileTargetX, iTileTargetY);
+				H_BulldozingFunc(iTileTargetX, iTileTargetY);
 				H_SomeRectFillRefFunc(pThis);
 				break;
 			case 1: // Raise Terrain
@@ -586,13 +586,13 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 					H_MPlaceForest(iTileTargetX, iTileTargetY);
 				break;
 			case 9: // Center Tool
-				H_PositionalFunc(iTileTargetX, iTileTargetY, &wNewScreenPointX, &wNetScreenPointY);
+				H_GetScreenCoordsFromTileCoords(iTileTargetX, iTileTargetY, &wNewScreenPointX, &wNetScreenPointY);
 				Game_SoundPlaySound(pCWinAppThis, 505);
 				if (*(DWORD *)((char *)pThis + 322)) {
-					H_SetNewPosFunc(pThis, wScreenPointX - (wNewScreenPointX >> 1), wScreenPointY - (wNetScreenPointY >> 1));
+					H_GotoNewScreenCoordinates(pThis, wScreenPointX - (wNewScreenPointX >> 1), wScreenPointY - (wNetScreenPointY >> 1));
 				}
 				else {
-					H_SetNewPosFunc(pThis, wScreenPointX - wNewScreenPointX, wScreenPointY - wNetScreenPointY);
+					H_GotoNewScreenCoordinates(pThis, wScreenPointX - wNewScreenPointX, wScreenPointY - wNetScreenPointY);
 				}
 			default:
 				break;
