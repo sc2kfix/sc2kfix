@@ -363,7 +363,7 @@ extern "C" int __stdcall Hook_CSimcityView_WM_MBUTTONDOWN(WPARAM wMouseKeys, POI
 	return wTileCoords;
 }
 
-extern "C" __int16 __stdcall Hook_GameLeftMouseDown(WPARAM iMouseKeys, POINT pt) {
+extern "C" __int16 __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(WPARAM iMouseKeys, POINT pt) {
 	DWORD pThis;
 
 	__asm mov[pThis], ecx
@@ -429,7 +429,7 @@ extern "C" __int16 __stdcall Hook_GameLeftMouseDown(WPARAM iMouseKeys, POINT pt)
 	return ret;
 }
 
-extern "C" __int16 __stdcall Hook_GameMouseMovement(WPARAM iMouseKeys, POINT pt) {
+extern "C" __int16 __stdcall Hook_CSimcityView_WM_MOUSEFIRST(WPARAM iMouseKeys, POINT pt) {
 	DWORD pThis;
 
 	__asm mov[pThis], ecx
@@ -822,11 +822,11 @@ skipmenu:
 
 	// Hook for the game area leftmousebuttondown call.
 	VirtualProtect((LPVOID)0x401523, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x401523, Hook_GameLeftMouseDown);
+	NEWJMP((LPVOID)0x401523, Hook_CSimcityView_WM_LBUTTONDOWN);
 
 	// Hook for the game area mouse movement (or mouse first) call.
 	VirtualProtect((LPVOID)0x4016EA, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4016EA, Hook_GameMouseMovement);
+	NEWJMP((LPVOID)0x4016EA, Hook_CSimcityView_WM_MOUSEFIRST);
 
 	// Hook for the MapToolMenuAction call.
 	VirtualProtect((LPVOID)0x402B44, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
