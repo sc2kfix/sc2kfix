@@ -303,6 +303,24 @@ size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned char* pSrcDat
 
 // end of base64 code
 
+json::JSON json::Array() {
+	return std::move(json::JSON::Make(json::JSON::Class::Array));
+}
+
+json::JSON json::Object() {
+	return std::move(JSON::Make(JSON::Class::Object));
+}
+
+std::ostream& json::operator<<(std::ostream& os, const json::JSON& json) {
+	os << json.dump();
+	return os;
+}
+
+json::JSON json::JSON::Load(const string& str) {
+	size_t offset = 0;
+	return std::move(parse_next(str, offset));
+}
+
 json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBigEndian) {
 	json::JSON jsonArray = json::Array();
 	for (int i = 0; i < iCount; i++) {
