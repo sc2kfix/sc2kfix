@@ -434,24 +434,24 @@ extern "C" __int16 __stdcall Hook_GameMouseMovement(WPARAM iMouseKeys, POINT pt)
 
 	__asm mov[pThis], ecx
 
-	int iCurrPos;
+	int iTileCoords;
 	int iThisSomething;
 
 	int(__cdecl *H_CityToolMenuAction)(char, POINT) = (int(__cdecl *)(char, POINT))0x43F220;
 	__int16(__cdecl *H_MapToolMenuAction)(int, POINT) = (__int16(__cdecl *)(int, POINT))0x402B44;
 
-	P_LOWORD(iCurrPos) = pt.x;
+	P_LOWORD(iTileCoords) = pt.x;
 	iThisSomething = *(DWORD *)(pThis + 252);
 	*(struct tagPOINT *)(pThis + 260) = pt; // Placement position.
 	if (iThisSomething) {
-		P_LOWORD(iCurrPos) = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
-		wCurrentTileCoordinates = iCurrPos;
-		if ((__int16)iCurrPos >= 0) {
-			wTileCoordinateX = (unsigned __int8)iCurrPos;
-			P_LOWORD(iCurrPos) = wCurrentTileCoordinates >> 8;
+		P_LOWORD(iTileCoords) = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
+		wCurrentTileCoordinates = iTileCoords;
+		if ((__int16)iTileCoords >= 0) {
+			wTileCoordinateX = (unsigned __int8)iTileCoords;
+			P_LOWORD(iTileCoords) = wCurrentTileCoordinates >> 8;
 			wTileCoordinateY = wCurrentTileCoordinates >> 8;
-			if ( *(WORD *)(0x4E6808) != wTileCoordinateX || *(WORD *)(0x4E680C) != (WORD)iCurrPos ) {
-				if ( (int)abs(wGameAreaX - pt.x) > 1 || (iCurrPos = abs(wGameAreaY - pt.y), iCurrPos > 1) ) {
+			if ( *(WORD *)(0x4E6808) != wTileCoordinateX || *(WORD *)(0x4E680C) != (WORD)iTileCoords) {
+				if ( (int)abs(wGameAreaX - pt.x) > 1 || (iTileCoords = abs(wGameAreaY - pt.y), iTileCoords > 1) ) {
 					*(DWORD *)(pThis + 256) = 1;
 					if ((iMouseKeys & MK_LBUTTON) != 0) {
 						if (*(DWORD *)(pThis + 248)) {
@@ -469,7 +469,7 @@ extern "C" __int16 __stdcall Hook_GameMouseMovement(WPARAM iMouseKeys, POINT pt)
 							}
 						}
 					}
-					P_LOWORD(iCurrPos) = wTileCoordinateX;
+					P_LOWORD(iTileCoords) = wTileCoordinateX;
 					*(WORD *)(0x4E6808) = wTileCoordinateX;
 					*(WORD *)(0x4E680C) = wTileCoordinateY;
 					wGameAreaX = pt.x;
@@ -479,16 +479,16 @@ extern "C" __int16 __stdcall Hook_GameMouseMovement(WPARAM iMouseKeys, POINT pt)
 		}
 	}
 
-	return iCurrPos;
+	return iTileCoords;
 }
 
 extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	DWORD *pThis;
 	int ret;
 	__int16 iCurrToolGroupA, iCurrToolGroupB;
-	__int16 iStartHigh, iStartLow;
-	__int16 iTargetHigh, iTargetLow;
-	WORD iNewHigh, iNewLow;
+	__int16 iTileStartX, iTileStartY;
+	__int16 iTileTargetX, iTileTargetY;
+	WORD wNewScreenPointX, wNetScreenPointY;
 	HWND hWnd;
 	DWORD *dwSomeStoredTrigger;
 
@@ -529,8 +529,8 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	pThis = (DWORD *)H_GetCWinAppThisReturn(pCWinAppThis);
 	H_HoverHighlight((int)pThis);
 	iCurrToolGroupA = wCurrentMapToolGroup;
-	iStartHigh = 400;
-	iStartLow = 400;
+	iTileStartX = 400;
+	iTileStartY = 400;
 	iCurrToolGroupB = wCurrentMapToolGroup;
 	if ((iMouseKeys & MK_CONTROL) != 0) {
 		iCurrToolGroupA = 9;
@@ -544,41 +544,41 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 		if ((__int16)ret < 0) {
 			break;
 		}
-		iTargetHigh = ret & 0x7f;
-		iTargetLow = (__int16)ret >> 8;
-		if ((unsigned __int16)iTargetHigh >= 0x80u || iTargetLow < 0) {
+		iTileTargetX = ret & 0x7f;
+		iTileTargetY = (__int16)ret >> 8;
+		if ((unsigned __int16)iTileTargetX >= 0x80u || iTileTargetY < 0) {
 			break;
 		}
 		if ((iMouseKeys & MK_SHIFT) != 0 && iCurrToolGroupA != 7 && iCurrToolGroupA != 8) {
 			pThis[62] = 1;
 			break;
 		}
-		if (iStartHigh != iTargetHigh || iStartLow != iTargetLow) {
+		if (iTileStartX != iTileTargetX || iTileStartY != iTileTargetY) {
 			switch (iCurrToolGroupA) {
 			case 0: // Unclear
-				BulldozingFunc(iTargetHigh, iTargetLow);
+				BulldozingFunc(iTileTargetX, iTileTargetY);
 				H_SomeRectFillRefFunc(pThis);
 				break;
 			case 1: // Raise Terrain
-				P_LOWORD(ret) = H_MRaiseTerrain(iTargetHigh, iTargetLow);
+				P_LOWORD(ret) = H_MRaiseTerrain(iTileTargetX, iTileTargetY);
 				break;
 			case 2: // Lower Terrain
-				P_LOWORD(ret) = H_MLowerTerrain(iTargetHigh, iTargetLow);
+				P_LOWORD(ret) = H_MLowerTerrain(iTileTargetX, iTileTargetY);
 				break;
 			case 3: // Raise/LowerToLevelOut Terrain (Drag vertically)
-				P_LOWORD(ret) = H_MRLTerrain(iTargetHigh, iTargetLow, pt.y);
+				P_LOWORD(ret) = H_MRLTerrain(iTileTargetX, iTileTargetY, pt.y);
 				break;
 			case 4: // Level Terrain
-				P_LOWORD(ret) = H_MLevelTerrain(iTargetHigh, iTargetLow);
+				P_LOWORD(ret) = H_MLevelTerrain(iTileTargetX, iTileTargetY);
 				break;
 			case 5: // Place Water
 			case 6: // Place Stream
 				if (iCurrToolGroupA == 5) {
-					if (!H_MPlaceWater(iTargetHigh, iTargetLow) || !H_GetSomeStoredTrigger(dwSomeStoredTrigger))
+					if (!H_MPlaceWater(iTileTargetX, iTileTargetY) || !H_GetSomeStoredTrigger(dwSomeStoredTrigger))
 						break;
 				}
 				else {
-					H_MPlaceStream(iTargetHigh, iTargetLow, 100);
+					H_MPlaceStream(iTileTargetX, iTileTargetY, 100);
 					if (!H_GetSomeStoredTrigger(dwSomeStoredTrigger))
 						break;
 				}
@@ -589,18 +589,18 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 				if (H_GetSomeStoredTrigger(dwSomeStoredTrigger))
 					Game_SoundPlaySound(pCWinAppThis, 503);
 				if (iCurrToolGroupA == 7)
-					H_MPlaceTree(iTargetHigh, iTargetLow);
+					H_MPlaceTree(iTileTargetX, iTileTargetY);
 				else
-					H_MPlaceForest(iTargetHigh, iTargetLow);
+					H_MPlaceForest(iTileTargetX, iTileTargetY);
 				break;
 			case 9: // Center Tool
-				H_PositionalFunc(iTargetHigh, iTargetLow, &iNewHigh, &iNewLow);
+				H_PositionalFunc(iTileTargetX, iTileTargetY, &wNewScreenPointX, &wNetScreenPointY);
 				Game_SoundPlaySound(pCWinAppThis, 505);
 				if (*(DWORD *)((char *)pThis + 322)) {
-					H_SetNewPosFunc(pThis, wScreenPointX - (iNewHigh >> 1), wScreenPointY - (iNewLow >> 1));
+					H_SetNewPosFunc(pThis, wScreenPointX - (wNewScreenPointX >> 1), wScreenPointY - (wNetScreenPointY >> 1));
 				}
 				else {
-					H_SetNewPosFunc(pThis, wScreenPointX - iNewHigh, wScreenPointY - iNewLow);
+					H_SetNewPosFunc(pThis, wScreenPointX - wNewScreenPointX, wScreenPointY - wNetScreenPointY);
 				}
 			default:
 				break;
@@ -615,9 +615,9 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 			break;
 		}
 		H_SomeRectFillRefFunc(pThis);
-		iStartHigh = iTargetHigh;
+		iTileStartX = iTileTargetX;
 		hWnd = (HWND)pThis[7];
-		iStartLow = iTargetLow;
+		iTileStartY = iTileTargetY;
 		UpdateWindow(hWnd);
 		ret = H_ProcessPointSomething((int)pThis, &pt);
 	} while (ret);
