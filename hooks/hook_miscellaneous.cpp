@@ -408,9 +408,9 @@ extern "C" __int16 __stdcall Hook_GameLeftMouseDown(WPARAM iMouseKeys, POINT pt)
 					P_LOWORD(ret) = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
 					wCurrentTileCoordinates = ret;
 					if ((__int16)ret >= 0) {
-						*(WORD *)(0x4C7AB0) = (uint8_t)ret;
+						wTileCoordinateX = (uint8_t)ret;
 						*(WORD *)(0x4E6808) = (uint8_t)ret;
-						*(WORD *)(0x4C7AB4) = wCurrentTileCoordinates >> 8;
+						wTileCoordinateY = wCurrentTileCoordinates >> 8;
 						*(WORD *)(0x4E680C) = wCurrentTileCoordinates >> 8;
 						wGameAreaX = pt.x;
 						wGameAreaY = pt.y;
@@ -447,10 +447,10 @@ extern "C" __int16 __stdcall Hook_GameMouseMovement(WPARAM iMouseKeys, POINT pt)
 		P_LOWORD(iCurrPos) = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
 		wCurrentTileCoordinates = iCurrPos;
 		if ((__int16)iCurrPos >= 0) {
-			*(WORD *)(0x4C7AB0) = (unsigned __int8)iCurrPos;
+			wTileCoordinateX = (unsigned __int8)iCurrPos;
 			P_LOWORD(iCurrPos) = wCurrentTileCoordinates >> 8;
-			*(WORD *)(0x4C7AB4) = wCurrentTileCoordinates >> 8;
-			if ( *(WORD *)(0x4E6808) != *(WORD *)(0x4C7AB0) || *(WORD *)(0x4E680C) != (WORD)iCurrPos ) {
+			wTileCoordinateY = wCurrentTileCoordinates >> 8;
+			if ( *(WORD *)(0x4E6808) != wTileCoordinateX || *(WORD *)(0x4E680C) != (WORD)iCurrPos ) {
 				if ( (int)abs(wGameAreaX - pt.x) > 1 || (iCurrPos = abs(wGameAreaY - pt.y), iCurrPos > 1) ) {
 					*(DWORD *)(pThis + 256) = 1;
 					if ((iMouseKeys & MK_LBUTTON) != 0) {
@@ -469,9 +469,9 @@ extern "C" __int16 __stdcall Hook_GameMouseMovement(WPARAM iMouseKeys, POINT pt)
 							}
 						}
 					}
-					P_LOWORD(iCurrPos) = *(WORD *)(0x4C7AB0);
-					*(WORD *)(0x4E6808) = *(WORD *)(0x4C7AB0);
-					*(WORD *)(0x4E680C) = *(WORD *)(0x4C7AB4);
+					P_LOWORD(iCurrPos) = wTileCoordinateX;
+					*(WORD *)(0x4E6808) = wTileCoordinateX;
+					*(WORD *)(0x4E680C) = wTileCoordinateY;
 					wGameAreaX = pt.x;
 					wGameAreaY = pt.y;
 				}
