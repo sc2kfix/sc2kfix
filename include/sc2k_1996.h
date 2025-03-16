@@ -849,6 +849,8 @@ GAMEOFF(int,	dwCityBonds,				0x4CC4E8)
 GAMEOFF(DWORD,	dwCityPollution,			0x4CC910)		// Needs reverse engineering. See wiki.
 GAMEOFF(DWORD,	dwLFSRState,				0x4CDB7C)
 GAMEOFF(DWORD,	dwLCGState,					0x4CDB80)
+GAMEOFF(WORD,   wPreviousTileCoordinateX,   0x4E6808)
+GAMEOFF(WORD,   wPreviousTileCoordinateY,   0x4E680C)
 GAMEOFF(void*,	pCWinApp,					0x4CE8C0)
 
 // XXX - I think these ones aren't in BSS? I forget why I separated these out.
