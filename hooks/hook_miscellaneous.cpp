@@ -488,7 +488,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	__int16 iCurrToolGroupA, iCurrToolGroupB;
 	__int16 iTileStartX, iTileStartY;
 	__int16 iTileTargetX, iTileTargetY;
-	WORD wNewScreenPointX, wNetScreenPointY;
+	WORD wNewScreenPointX, wNewScreenPointY;
 	HWND hWnd;
 
 	int(__thiscall *H_GetCWinAppThisReturn)(void *) = (int(__thiscall *)(void *))0x402699;
@@ -586,13 +586,13 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 					H_MPlaceForest(iTileTargetX, iTileTargetY);
 				break;
 			case 9: // Center Tool
-				H_GetScreenCoordsFromTileCoords(iTileTargetX, iTileTargetY, &wNewScreenPointX, &wNetScreenPointY);
+				H_GetScreenCoordsFromTileCoords(iTileTargetX, iTileTargetY, &wNewScreenPointX, &wNewScreenPointY);
 				Game_SoundPlaySound(pCWinAppThis, 505);
 				if (*(DWORD *)((char *)pThis + 322)) {
-					H_GotoNewScreenCoordinates(pThis, wScreenPointX - (wNewScreenPointX >> 1), wScreenPointY - (wNetScreenPointY >> 1));
+					H_GotoNewScreenCoordinates(pThis, wScreenPointX - (wNewScreenPointX >> 1), wScreenPointY - (wNewScreenPointY >> 1));
 				}
 				else {
-					H_GotoNewScreenCoordinates(pThis, wScreenPointX - wNewScreenPointX, wScreenPointY - wNetScreenPointY);
+					H_GotoNewScreenCoordinates(pThis, wScreenPointX - wNewScreenPointX, wScreenPointY - wNewScreenPointY);
 				}
 			default:
 				break;
