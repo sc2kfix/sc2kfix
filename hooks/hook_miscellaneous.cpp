@@ -527,7 +527,9 @@ extern "C" __int16 __stdcall Hook_MovePerhaps(WPARAM iMouseKeys, POINT pt) {
 							}
 							else {
 								ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> MovePerhaps() (wCurrentMapToolGroup == %i) (wCityMode == %i)\n", _ReturnAddress(), wCurrentMapToolGroup, wCityMode);
-								if ((wCurrentMapToolGroup != 9) || GetAsyncKeyState(VK_MENU) & 0x8000) {
+								if ((wCurrentMapToolGroup == 9 && GetAsyncKeyState(VK_MENU) & 0x8000) || // 'Center Tool' selected with either 'Alt' key pressed.
+									(wCurrentMapToolGroup != 9 && (iMouseKeys & MK_CONTROL) == 0) || // Other tool selected with 'ctrl' not pressed.
+									(wCurrentMapToolGroup != 9 && (iMouseKeys & MK_CONTROL) != 0 && GetAsyncKeyState(VK_MENU) & 0x8000)) { // Other tool with 'ctrl' pressed (Center Tool) and 'Alt'.
 									iCurrPos = H_MapToolMenuAction(iMouseKeys, pt);
 									iCurrPos = LOWORD(iCurrPos);
 								}
@@ -562,19 +564,14 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	DWORD *pThis;
 	int ret;
 	__int16 iCurrToolGroupA, iCurrToolGroupB;
-	__int16 iSomeHigh, iSomeLow;
-	__int16 iMysteryHigh, iMysteryLow;
-	int iCenterOut;
-	WORD iFetchHigh, iFetchLow;
+	__int16 iStartHigh, iStartLow;
+	__int16 iTargetHigh, iTargetLow;
+	WORD iNewHigh, iNewLow;
 	HWND hWnd;
 	DWORD *dwSomeStoredTrigger;
 
-	// Short-circuit for now as we rebuild.
-
 	int(__thiscall *H_GetCWinAppThisReturn)(void *) = (int(__thiscall *)(void *))0x402699;
-	int(__thiscall *H_SomeThisFunc)(int) = (int(__thiscall *)(int))0x4014F1;
-	int(*H_GetControlKey)() = (int(*)())0x402667;
-	int(*H_GetShiftKey)() = (int(*)())0x4019E2;
+	int(__thiscall *H_HoverHighlight)(int) = (int(__thiscall *)(int))0x4014F1;
 	BOOL(__cdecl *BulldozingFunc)(__int16, __int16) = (BOOL(__cdecl *)(__int16, __int16))0x401E47;
 	int(__thiscall *H_SomeRectFillRefFunc)(void *) = (int(__thiscall *)(void *))0x40226B;
 	int(__cdecl *H_MRaiseTerrain)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x401AB4;
@@ -597,15 +594,27 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	//                            case if it's false it plays the sound (during the next
 	//                            loop iteration).
 
+	// pThis[62] - When this is set to 0, you remain within the do/while loop until you
+	//             release the left mouse button.
+	//             If it is set to 1 while the left mouse button is pressed (Shift key is
+	//             pressed and the iCurrToolGroupA is not 7 or 8 (trees or forest respectively)
+	//             it will break out of the loop and then you end up within the WM_MOUSEFIRST
+	//             call (if mouse movement is taking place).
+	//
+	// The change in this case is to only set pThis[62] to 0 when the iCurrToolGroupA is not
+	// 'Center Tool', this will then allow it to pass-through to the WM_MOUSEFIRST call.
+
 	pThis = (DWORD *)H_GetCWinAppThisReturn(pCWinAppThis);
-	pThis[62] = 0;
-	H_SomeThisFunc((int)pThis);
+	H_HoverHighlight((int)pThis);
 	iCurrToolGroupA = wCurrentMapToolGroup;
-	iSomeHigh = 400;
-	iSomeLow = 400;
+	iStartHigh = 400;
+	iStartLow = 400;
 	iCurrToolGroupB = wCurrentMapToolGroup;
-	if (H_GetControlKey()) {
+	if ((iMouseKeys & MK_CONTROL) != 0) {
 		iCurrToolGroupA = 9;
+	}
+	if (iCurrToolGroupA != 9) {
+		pThis[62] = 0;
 	}
 	dwSomeStoredTrigger = (DWORD*)0x4C7158;
 	do {
@@ -614,103 +623,85 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 		if ((__int16)ret < 0) {
 			break;
 		}
-		iMysteryHigh = ret & 0x7f;
-		iMysteryLow = (__int16)ret >> 8;
-		if ((unsigned __int16)iMysteryHigh >= 0x80u || iMysteryLow < 0) {
+		iTargetHigh = ret & 0x7f;
+		iTargetLow = (__int16)ret >> 8;
+		if ((unsigned __int16)iTargetHigh >= 0x80u || iTargetLow < 0) {
 			break;
 		}
-		ret = H_GetShiftKey();
-		if (ret && iCurrToolGroupA != 7 && iCurrToolGroupA != 8) {
+		if ((iMouseKeys & MK_SHIFT) != 0 && iCurrToolGroupA != 7 && iCurrToolGroupA != 8) {
 			pThis[62] = 1;
 			break;
 		}
-		if (iSomeHigh != iMysteryHigh || iSomeLow != iMysteryLow) {
-			iCenterOut = 0;
+		if (iStartHigh != iTargetHigh || iStartLow != iTargetLow) {
 			switch (iCurrToolGroupA) {
 			case 0: // Unclear
-				BulldozingFunc(iMysteryHigh, iMysteryLow);
+				BulldozingFunc(iTargetHigh, iTargetLow);
 				H_SomeRectFillRefFunc(pThis);
 				break;
 			case 1: // Raise Terrain
-				ret = H_MRaiseTerrain(iMysteryHigh, iMysteryLow);
-				ret = LOWORD(ret);
-				goto LEAVE_LOOP;
+				ret = H_MRaiseTerrain(iTargetHigh, iTargetLow);
+				break;
 			case 2: // Lower Terrain
-				ret = H_MLowerTerrain(iMysteryHigh, iMysteryLow);
-				ret = LOWORD(ret);
-				goto LEAVE_LOOP;
-			case 3: // Raise/Lower Terrain (Drag vertically)
-				ret = H_MRLTerrain(iMysteryHigh, iMysteryLow, pt.y);
-				ret = LOWORD(ret);
-				goto LEAVE_LOOP;
+				ret = H_MLowerTerrain(iTargetHigh, iTargetLow);
+				break;
+			case 3: // Raise/LowerToLevelOut Terrain (Drag vertically)
+				ret = H_MRLTerrain(iTargetHigh, iTargetLow, pt.y);
+				break;
 			case 4: // Level Terrain
-				ret = H_MLevelTerrain(iMysteryHigh, iMysteryLow);
-				ret = LOWORD(ret);
-				goto LEAVE_LOOP;
+				ret = H_MLevelTerrain(iTargetHigh, iTargetLow);
+				break;
 			case 5: // Place Water
 			case 6: // Place Stream
 				if (iCurrToolGroupA == 5) {
-					if (!H_MPlaceWater(iMysteryHigh, iMysteryLow) || !H_GetSomeStoredTrigger(dwSomeStoredTrigger)) {
+					if (!H_MPlaceWater(iTargetHigh, iTargetLow) || !H_GetSomeStoredTrigger(dwSomeStoredTrigger))
 						break;
-					}
 				}
 				else {
-					H_MPlaceStream(iMysteryHigh, iMysteryLow, 100);
-					if (!H_GetSomeStoredTrigger(dwSomeStoredTrigger)) {
+					H_MPlaceStream(iTargetHigh, iTargetLow, 100);
+					if (!H_GetSomeStoredTrigger(dwSomeStoredTrigger))
 						break;
-					}
 				}
 				Game_SoundPlaySound(pCWinAppThis, 511);
 				break;
 			case 7: // Place Tree
-				if (H_GetSomeStoredTrigger(dwSomeStoredTrigger)) {
-					Game_SoundPlaySound(pCWinAppThis, 503);
-				}
-				H_MPlaceTree(iMysteryHigh, iMysteryLow);
-				break;
 			case 8: // Place Forest
-				if (H_GetSomeStoredTrigger(dwSomeStoredTrigger)) {
+				if (H_GetSomeStoredTrigger(dwSomeStoredTrigger))
 					Game_SoundPlaySound(pCWinAppThis, 503);
-				}
-				H_MPlaceForest(iMysteryHigh, iMysteryLow);
+				if (iCurrToolGroupA == 7)
+					H_MPlaceTree(iTargetHigh, iTargetLow);
+				else
+					H_MPlaceForest(iTargetHigh, iTargetLow);
 				break;
 			case 9: // Center Tool
-				H_PositionalFunc(iMysteryHigh, iMysteryLow, &iFetchHigh, &iFetchLow);
+				H_PositionalFunc(iTargetHigh, iTargetLow, &iNewHigh, &iNewLow);
 				Game_SoundPlaySound(pCWinAppThis, 505);
 				if (*(DWORD *)((char *)pThis + 322)) {
-					H_SetNewPosFunc(pThis, *(WORD *)(0x4CAD30) - (iFetchHigh >> 1), *(WORD *)(0x4CAD34) - (iFetchLow >> 1));
+					H_SetNewPosFunc(pThis, *(WORD *)(0x4CAD30) - (iNewHigh >> 1), *(WORD *)(0x4CAD34) - (iNewLow >> 1));
 				}
 				else {
-					H_SetNewPosFunc(pThis, *(WORD *)(0x4CAD30) - iFetchHigh, *(WORD *)(0x4CAD34) - iFetchLow);
+					H_SetNewPosFunc(pThis, *(WORD *)(0x4CAD30) - iNewHigh, *(WORD *)(0x4CAD34) - iNewLow);
 				}
-				// Unless either 'Alt' key is pressed down, do not
-				// continuously scroll (This is a "first" case
-				// attempt at this, the next will likely be to
-				// do away with the do {} while() loop).
-				if (!(GetAsyncKeyState(VK_MENU) & 0x8000)) {
-					iCenterOut = 1;
-				}
-				break;
 			default:
 				break;
 			}
 		}
-		if (iCurrToolGroupA == 9) {
-			H_SomeRectColorRefFunc(pThis);
-		}
-		else {
-			H_SomeRectFillRefFunc(pThis);
-		}
-		iSomeHigh = iMysteryHigh;
-		hWnd = (HWND)pThis[7];
-		iSomeLow = iMysteryLow;
-		UpdateWindow(hWnd);
-		ret = H_ProcessPointSomething((int)pThis, &pt);
-		if (iCenterOut) {
+		if (iCurrToolGroupA >= 1 && iCurrToolGroupA <= 4) {
+			ret = LOWORD(ret);
 			break;
 		}
+		else if (iCurrToolGroupA == 9) {
+			H_SomeRectColorRefFunc(pThis);
+			hWnd = (HWND)pThis[7];
+			UpdateWindow(hWnd);
+			break;
+		}
+		H_SomeRectFillRefFunc(pThis);
+		iStartHigh = iTargetHigh;
+		hWnd = (HWND)pThis[7];
+		iStartLow = iTargetLow;
+		UpdateWindow(hWnd);
+		ret = H_ProcessPointSomething((int)pThis, &pt);
 	} while (ret);
-LEAVE_LOOP:
 	if (iCurrToolGroupB != iCurrToolGroupA) {
 		ret = iCurrToolGroupB;
 		ret = LOWORD(ret);
