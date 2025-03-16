@@ -791,17 +791,23 @@ GAMEOFF(int,	dwCityFunds,				0x4CA444)
 GAMEOFF_ARR(WORD, dwTileCount,				0x4CA4C8)		// WORD dwTileCount[256]
 GAMEOFF(DWORD,	dwCityValue,				0x4CA4D0)
 GAMEOFF(WORD,	wCityStartYear,				0x4CA5F4)
+GAMEOFF_ARR(DWORD, dwNeighborValue,			0x4CA804)		// DWORD dwNeighborValue[4]
 GAMEOFF(short,	wWaterLevel,				0x4CA818)
 GAMEOFF(WORD,	wMonsterXTHGIndex,			0x4CA81C)
 GAMEOFF(DWORD,	dwNationalPopulation,		0x4CA928)
+GAMEOFF_ARR(DWORD, dwNeighborFame,			0x4CA92C)		// DWORD dwNeighborFame[4]
 GAMEOFF(WORD*,	dwMilitaryTiles,			0x4CA934)
 GAMEOFF(WORD,	wMilitaryTiles,				0x4CA938)
 GAMEOFF(DWORD,	dwCityOrdinances,			0x4CAA40)
 GAMEOFF(DWORD,	dwPowerUsedPercentage,		0x4CAA50)
 GAMEOFF(DWORD,	dwCityPopulation,			0x4CAA74)
+GAMEOFF_ARR(DWORD, dwNeighborPopulation,	0x4CAD10)		// DWORD dwNeighborPopulation[4]
 GAMEOFF(BOOL,	bYearEndFlag,				0x4CAD2C)
 GAMEOFF(BOOL,	bInScenario,				0x4CAD44)
-GAMEOFF_ARR(neighbor_city_t, stNeighborCities, 0x4CAD58)	// neighbor_city_t stNeighborCities[4]
+GAMEOFF_ARR(char, szNeighborNameSouth,		0x4CAD58)		// char[32]
+GAMEOFF_ARR(char, szNeighborNameWest,		0x4CAD78)		// char[32]
+GAMEOFF_ARR(char, szNeighborNameNorth,		0x4CAD98)		// char[32]
+GAMEOFF_ARR(char, szNeighborNameEast,		0x4CADB8)		// char[32]
 GAMEOFF(BYTE,	bWeatherHeat,				0x4CADE0)
 GAMEOFF(DWORD,	dwCityDays,					0x4CAE04)
 GAMEOFF(BYTE,	bWeatherWind,				0x4CAE0C)
@@ -825,6 +831,7 @@ GAMEOFF(DWORD,	dwWaterUsedPercentage,		0x4CC4B8)
 GAMEOFF(BOOL,	bNewspaperExtra,			0x4CC4BC)
 GAMEOFF(void*,	dwBudgetArr,				0x4CC4CC)		// Needs reverse engineering. See wiki.
 GAMEOFF(BOOL,	bNoDisasters,				0x4CC4D4)
+GAMEOFF_ARR(WORD, wNeighborNameIdx,			0x4CC4DC)		// WORD wNeighborNameIdx[4]
 GAMEOFF(WORD,	wCityNeighborConnections1000,	0x4CC4D8)
 GAMEOFF(BYTE,	bMilitaryBaseType,			0x4CC4E4)
 GAMEOFF(WORD,	wCityResidentialDemand,		0x4CC8F8)
@@ -873,7 +880,7 @@ GAMEOFF_ARR(map_mini32_t*,	dwMapXROG,	0x4CB028)
 // totally different
 GAMEOFF_ARR(map_XLAB_t*,	dwMapXLAB,	0x4CA198)
 GAMEOFF_ARR(map_XTHG_t*,	dwMapXTHG,	0x4CA434)
-GAMEOFF(void*,				dwMapXGRP,	0x4CC470)
+GAMEOFF_ARR(DWORD,			dwMapXGRP,	0x4CC470)
 
 static inline const char* GetXLABEntry(int iLabelID) {
 	return (*dwMapXLAB + iLabelID)->szLabel;
