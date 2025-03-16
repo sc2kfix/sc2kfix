@@ -774,12 +774,12 @@ GAMECALL(0x4B234F, int, __stdcall, AfxMessageBox, unsigned int nIDPrompt, unsign
 GAMEOFF_PTR(void, pCWinAppThis,				0x4C7010)
 GAMEOFF(void*,	pCWndRootWindow,			0x4C702C)
 GAMEOFF(BOOL,	bPriscillaActivated,		0x4C7104)
-GAMEOFF(DWORD*, dwAudioHandle,           0x4C7158)
+GAMEOFF(DWORD*, dwAudioHandle,				0x4C7158)
 GAMEOFF(BOOL,	bOptionsMusicEnabled,		0x4C71F0)
 GAMEOFF(WORD,	wSimulationSpeed,			0x4C7318)
 GAMEOFF(WORD,	wCurrentTileCoordinates,	0x4C7A98)
-GAMEOFF(WORD,   wTileCoordinateX,           0x4C7AB0)
-GAMEOFF(WORD,   wTileCoordinateY,           0x4C7AB4)
+GAMEOFF(WORD,	wTileCoordinateX,			0x4C7AB0)
+GAMEOFF(WORD,	wTileCoordinateY,			0x4C7AB4)
 GAMEOFF(WORD,	wGameAreaX,					0x4C7AD8)
 GAMEOFF(WORD,	wGameAreaY,					0x4C7ADC)
 GAMEOFF(WORD,	wMaybeActiveToolGroup,		0x4C7D88)
@@ -810,8 +810,8 @@ GAMEOFF(DWORD,	dwPowerUsedPercentage,		0x4CAA50)
 GAMEOFF(DWORD,	dwCityPopulation,			0x4CAA74)
 GAMEOFF_ARR(DWORD, dwNeighborPopulation,	0x4CAD10)		// DWORD dwNeighborPopulation[4]
 GAMEOFF(BOOL,	bYearEndFlag,				0x4CAD2C)
-GAMEOFF(WORD,   wScreenPointX,              0x4CAD30)
-GAMEOFF(WORD,   wScreenPointY,              0x4CAD34)
+GAMEOFF(WORD,	wScreenPointX,				0x4CAD30)
+GAMEOFF(WORD,	wScreenPointY,				0x4CAD34)
 GAMEOFF(BOOL,	bInScenario,				0x4CAD44)
 GAMEOFF_ARR(char, szNeighborNameSouth,		0x4CAD58)		// char[32]
 GAMEOFF_ARR(char, szNeighborNameWest,		0x4CAD78)		// char[32]
@@ -850,9 +850,9 @@ GAMEOFF(int,	dwCityBonds,				0x4CC4E8)
 GAMEOFF(DWORD,	dwCityPollution,			0x4CC910)		// Needs reverse engineering. See wiki.
 GAMEOFF(DWORD,	dwLFSRState,				0x4CDB7C)
 GAMEOFF(DWORD,	dwLCGState,					0x4CDB80)
-GAMEOFF(void*,  pCWinApp,                   0x4CE8C0)
-GAMEOFF(WORD,   wPreviousTileCoordinateX,   0x4E6808)
-GAMEOFF(WORD,   wPreviousTileCoordinateY,   0x4E680C)
+GAMEOFF(void*,	pCWinApp,					0x4CE8C0)
+GAMEOFF(WORD,	wPreviousTileCoordinateX,	0x4E6808)
+GAMEOFF(WORD,	wPreviousTileCoordinateY,	0x4E680C)
 
 // XXX - I think these ones aren't in BSS? I forget why I separated these out.
 // They'll go on the wiki as soon as I remember what the hell they do.
