@@ -363,29 +363,7 @@ extern "C" int __stdcall Hook_CSimcityView_WM_MBUTTONDOWN(WPARAM wMouseKeys, POI
 	return wTileCoords;
 }
 
-extern "C" int __stdcall Hook_PlaySoundPlay(int SndID) {
-	DWORD pThis;
-
-	__asm mov [pThis], ecx
-
-	ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> PlaySoundPlay(%i)\n", _ReturnAddress(), SndID);
-
-	// Thunk -> Main
-	int(__thiscall *PassPlaySoundPlay)(DWORD, int) = (int(__thiscall *)(DWORD, int))0x4251D0;
-
-	return PassPlaySoundPlay(pThis, SndID);
-}
-
-extern "C" int __cdecl Hook_ClickAround(char cPos, POINT pt) {
-	ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> ClickAround(0x%08X, 0x%08X)\n", _ReturnAddress(), cPos, pt);
-
-	// Thunk -> Main
-	int(__cdecl *PassClickAround)(char, POINT) = (int(__cdecl *)(char, POINT))0x43F220;
-
-	return PassClickAround(cPos, pt);
-}
-
-extern "C" __int16 __stdcall Hook_ClickPerhaps(WPARAM iMouseKeys, POINT pt) {
+extern "C" __int16 __stdcall Hook_GameLeftMouseDown(WPARAM iMouseKeys, POINT pt) {
 	DWORD pThis;
 
 	__asm mov[pThis], ecx
@@ -400,55 +378,32 @@ extern "C" __int16 __stdcall Hook_ClickPerhaps(WPARAM iMouseKeys, POINT pt) {
 	int(__cdecl *H_CityToolMenuAction)(char, POINT) = (int(__cdecl *)(char, POINT))0x43F220;
 	__int16(__cdecl *H_MapToolMenuAction)(int, POINT) = (__int16(__cdecl *)(int, POINT))0x402B44;
 
-	ConsoleLog(LOG_DEBUG, "0\n");
 	ret = *(DWORD *)(pThis + 268);
-	if (ret) {
+	if (ret)
 		*(DWORD *)(pThis + 268) = 0;
-		ConsoleLog(LOG_DEBUG, "-1\n");
-	}
 	else {
 		ret = PtInRect((const RECT *)(pThis + 232), pt);
-		ConsoleLog(LOG_DEBUG, "1 (%d)\n", ret);
 		if (!ret) {
-			ConsoleLog(LOG_DEBUG, "1.5\n");
 			H_GetRectInfo(pThis, &Rect);
-			ConsoleLog(LOG_DEBUG, "2\n");
 			if (PtInRect((const RECT *)(pThis + 88), pt)) {
-				if (PtInRect((const RECT *)(pThis + 120), pt)) {
+				if (PtInRect((const RECT *)(pThis + 120), pt))
 					ret = H_GetPosInfo(pThis, 1, 0, *(DWORD *)(pThis + 76));
-					ret = LOWORD(ret);
-					ConsoleLog(LOG_DEBUG, "3\n");
-				}
-				else if (PtInRect((const RECT *)(pThis + 104), pt)) {
+				else if (PtInRect((const RECT *)(pThis + 104), pt))
 					ret = H_GetPosInfo(pThis, 0, 0, *(DWORD *)(pThis + 76));
-					ret = LOWORD(ret);
-					ConsoleLog(LOG_DEBUG, "4\n");
-				}
-				else if (PtInRect((const RECT *)(pThis + 136), pt)) {
+				else if (PtInRect((const RECT *)(pThis + 136), pt))
 					ret = H_GetPosInfo(pThis, 5, pt.y, *(DWORD *)(pThis + 76));
-					ret = LOWORD(ret);
-					ConsoleLog(LOG_DEBUG, "5\n");
-				}
 				else {
 					iYVar = *(DWORD *)(pThis + 76);
-					if (*(DWORD *)(pThis + 140) >= pt.y) {
+					if (*(DWORD *)(pThis + 140) >= pt.y)
 						ret = H_GetPosInfo(pThis, 2, 0, iYVar);
-						ret = LOWORD(ret);
-						ConsoleLog(LOG_DEBUG, "6\n");
-					}
-					else {
+					else
 						ret = H_GetPosInfo(pThis, 3, 0, iYVar);
-						ret = LOWORD(ret);
-						ConsoleLog(LOG_DEBUG, "7\n");
-					}
 				}
-				ConsoleLog(LOG_DEBUG, "8\n");
+				ret = LOWORD(ret);
 			}
 			else {
 				ret = *(DWORD *)(pThis + 252);
-				ConsoleLog(LOG_DEBUG, "9\n");
 				if (!ret) {
-					ConsoleLog(LOG_DEBUG, "9.5\n");
 					hWnd = SetCapture(*(HWND *)(pThis + 28));
 					Game_CWnd_FromHandle(hWnd);
 					ret = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
@@ -463,31 +418,21 @@ extern "C" __int16 __stdcall Hook_ClickPerhaps(WPARAM iMouseKeys, POINT pt) {
 						wGameAreaY = pt.y;
 						*(DWORD *)(pThis + 252) = 1;
 						*(DWORD *)(pThis + 248) = 1;
-						if (wCityMode) {
+						if (wCityMode)
 							ret = H_CityToolMenuAction(iMouseKeys, pt);
-							ret = LOWORD(ret);
-						}
-						else {
+						else
 							ret = H_MapToolMenuAction(iMouseKeys, pt);
-							ret = LOWORD(ret);
-						}
+						ret = LOWORD(ret);
 					}
 				}
 			}
 		}
 	}
 
-	ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> ClickPerhaps(%i, 0x%08X)\n", _ReturnAddress(), iMouseKeys, pt);
-	ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> ClickPerhaps() (wCurrentCityToolGroup == %i) (wCurrentMapToolGroup == %i) (wCityMode == %i)\n", _ReturnAddress(), wCurrentCityToolGroup, wCurrentMapToolGroup, wCityMode);
-
-	// Thunk -> Main
-	//__int16(__thiscall *PassClickPerhaps)(DWORD, int, POINT) = (__int16(__thiscall *)(DWORD, int, POINT))0x4106C0;
-
-	//return PassClickPerhaps(pThis, a2, pt);
 	return ret;
 }
 
-extern "C" __int16 __stdcall Hook_MovePerhaps(WPARAM iMouseKeys, POINT pt) {
+extern "C" __int16 __stdcall Hook_GameMouseMovement(WPARAM iMouseKeys, POINT pt) {
 	DWORD pThis;
 
 	__asm mov[pThis], ecx
@@ -497,8 +442,6 @@ extern "C" __int16 __stdcall Hook_MovePerhaps(WPARAM iMouseKeys, POINT pt) {
 
 	int(__cdecl *H_CityToolMenuAction)(char, POINT) = (int(__cdecl *)(char, POINT))0x43F220;
 	__int16(__cdecl *H_MapToolMenuAction)(int, POINT) = (__int16(__cdecl *)(int, POINT))0x402B44;
-
-	//ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> MovePerhaps(%i, 0x%08X)\n", _ReturnAddress(), iMouseKeys, pt);
 
 	iCurrPos = pt.x;
 	iCurrPos = LOWORD(iCurrPos);
@@ -519,14 +462,12 @@ extern "C" __int16 __stdcall Hook_MovePerhaps(WPARAM iMouseKeys, POINT pt) {
 					if ((iMouseKeys & MK_LBUTTON) != 0) {
 						if (*(DWORD *)(pThis + 248)) {
 							if (wCityMode) {
-								ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> MovePerhaps() (wCurrentCityToolGroup == %i) (wCityMode == %i)\n", _ReturnAddress(), wCurrentCityToolGroup, wCityMode);
 								if ((wCurrentCityToolGroup != 17) || GetAsyncKeyState(VK_MENU) & 0x8000) {
 									iCurrPos = H_CityToolMenuAction(iMouseKeys, pt);
 									iCurrPos = LOWORD(iCurrPos);
 								}
 							}
 							else {
-								ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> MovePerhaps() (wCurrentMapToolGroup == %i) (wCityMode == %i)\n", _ReturnAddress(), wCurrentMapToolGroup, wCityMode);
 								if ((wCurrentMapToolGroup == 9 && GetAsyncKeyState(VK_MENU) & 0x8000) || // 'Center Tool' selected with either 'Alt' key pressed.
 									(wCurrentMapToolGroup != 9 && (iMouseKeys & MK_CONTROL) == 0) || // Other tool selected with 'ctrl' not pressed.
 									(wCurrentMapToolGroup != 9 && (iMouseKeys & MK_CONTROL) != 0 && GetAsyncKeyState(VK_MENU) & 0x8000)) { // Other tool with 'ctrl' pressed (Center Tool) and 'Alt'.
@@ -547,20 +488,10 @@ extern "C" __int16 __stdcall Hook_MovePerhaps(WPARAM iMouseKeys, POINT pt) {
 		}
 	}
 
-	// Message disabled, much spam.
-	// This appears to be for general mouse movement within the game area.
-	// The thought now occurs that what's happening is a two-step process.
-
-	// Thunk -> Main
-	//__int16(__thiscall *PassMovePerhaps)(DWORD, int, POINT) = (__int16(__thiscall *)(DWORD, int, POINT))0x410560;
-
-	//return PassMovePerhaps(pThis, iMouseKeys, pt);
 	return iCurrPos;
 }
 
 extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
-	ConsoleLog(LOG_DEBUG, "TEST: 0x%08X -> MapToolMenuAction(%i, 0x%08X)\n", _ReturnAddress(), iMouseKeys, pt);
-
 	DWORD *pThis;
 	int ret;
 	__int16 iCurrToolGroupA, iCurrToolGroupB;
@@ -910,17 +841,11 @@ void InstallMiscHooks(void) {
 
 skipmenu:
 
-	VirtualProtect((LPVOID)0x401096, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x401096, Hook_PlaySoundPlay);
-
-	VirtualProtect((LPVOID)0x402C25, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x402C25, Hook_ClickAround);
-
 	VirtualProtect((LPVOID)0x401523, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x401523, Hook_ClickPerhaps);
+	NEWJMP((LPVOID)0x401523, Hook_GameLeftMouseDown);
 
 	VirtualProtect((LPVOID)0x4016EA, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4016EA, Hook_MovePerhaps);
+	NEWJMP((LPVOID)0x4016EA, Hook_GameMouseMovement);
 
 	VirtualProtect((LPVOID)0x402B44, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402B44, Hook_MapToolMenuAction);
