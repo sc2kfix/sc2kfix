@@ -169,3 +169,153 @@ void MigrateRegBOOLValue(HKEY hKey, const char *lpSubKey, const char *lpValueNam
 	DWORD dwOutSize = sizeof(BOOL);
 	RegGetValueA(hKey, lpSubKey, lpValueName, RRF_RT_REG_DWORD, NULL, bOut, &dwOutSize);
 }
+
+// start of base64 code
+/*
+* Base64 encoding/decoding (RFC1341)
+* Copyright (c) 2005-2011, Jouni Malinen <j@w1.fi>
+*
+* This software may be distributed under the terms of the BSD license.
+*/
+
+static const unsigned char base64_encodetable[65] =
+"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+static const unsigned char base64_decodetable[256] = {
+	128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+	128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+	128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+	62, 128, 128, 128, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60,
+	61, 128, 128, 128, 0, 128, 128, 128, 0, 1, 2, 3, 4, 5,
+	6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+	20, 21, 22, 23, 24, 25, 128, 128, 128, 128, 128, 128, 26, 27,
+	28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41,
+	42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 128, 128, 128, 128,
+	128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+	128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+	128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+	128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+	128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+	128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+	128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+	128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+	128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+	128, 128, 128
+};
+
+std::string Base64Encode(const unsigned char* pSrcData, size_t iSrcCount) {
+	unsigned char* out, * pos;
+	const unsigned char* end, * in;
+
+	size_t olen;
+
+	olen = 4 * ((iSrcCount + 2) / 3); /* 3-byte blocks to 4-byte */
+
+	if (olen < iSrcCount)
+		return std::string(); /* integer overflow */
+
+	std::string outStr;
+	outStr.resize(olen);
+	out = (unsigned char*)&outStr[0];
+
+	end = pSrcData + iSrcCount;
+	in = pSrcData;
+	pos = out;
+	while (end - in >= 3) {
+		*pos++ = base64_encodetable[in[0] >> 2];
+		*pos++ = base64_encodetable[((in[0] & 0x03) << 4) | (in[1] >> 4)];
+		*pos++ = base64_encodetable[((in[1] & 0x0f) << 2) | (in[2] >> 6)];
+		*pos++ = base64_encodetable[in[2] & 0x3f];
+		in += 3;
+	}
+
+	if (end - in) {
+		*pos++ = base64_encodetable[in[0] >> 2];
+		if (end - in == 1) {
+			*pos++ = base64_encodetable[(in[0] & 0x03) << 4];
+			*pos++ = '=';
+		}
+		else {
+			*pos++ = base64_encodetable[((in[0] & 0x03) << 4) |
+				(in[1] >> 4)];
+			*pos++ = base64_encodetable[(in[1] & 0x0f) << 2];
+		}
+		*pos++ = '=';
+	}
+
+	return outStr;
+}
+
+size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned char* pSrcData, size_t iSrcCount) {
+	unsigned char* pos, block[4], tmp;
+	size_t i, count, olen;
+	int pad = 0;
+
+	count = 0;
+	for (i = 0; i < iSrcCount; i++) {
+		if (base64_decodetable[pSrcData[i]] != 0x80)
+			count++;
+	}
+
+	if (count == 0 || count % 4)
+		return 0;
+
+	olen = count / 4 * 3;
+	if (olen > iBufSize) {
+		return 0;
+	}
+	pos = pBuffer;
+	if (pBuffer == NULL) {
+		return 0;
+	}
+
+	count = 0;
+	for (i = 0; i < iSrcCount; i++) {
+		tmp = base64_decodetable[pSrcData[i]];
+		if (tmp == 0x80)
+			continue;
+
+		if (pSrcData[i] == '=')
+			pad++;
+		block[count] = tmp;
+		count++;
+		if (count == 4) {
+			*pos++ = (block[0] << 2) | (block[1] >> 4);
+			*pos++ = (block[1] << 4) | (block[2] >> 2);
+			*pos++ = (block[2] << 6) | block[3];
+			count = 0;
+			if (pad) {
+				if (pad == 1)
+					pos--;
+				else if (pad == 2)
+					pos -= 2;
+				else {
+					/* Invalid padding */
+					return 0;
+				}
+				break;
+			}
+		}
+	}
+
+	return pos - pBuffer;
+}
+
+// end of base64 code
+
+json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBigEndian) {
+	json::JSON jsonArray = json::Array();
+	for (int i = 0; i < iCount; i++) {
+		if (bBigEndian)
+			jsonArray.append<DWORD>(SwapDWORD(dwArray[i]));
+		else
+			jsonArray.append<DWORD>(dwArray[i]);
+	}
+	return jsonArray;
+}
+
+// Scary function! Overflows abound! Be careful!
+void DecodeDWORDArray(DWORD* dwArray, json::JSON jsonArray, size_t iCount, BOOL bBigEndian) {
+	for (int i = 0; i < iCount; i++)
+		dwArray[i] = (bBigEndian ? SwapDWORD(jsonArray[i].ToInt()) : jsonArray[i].ToInt());
+}

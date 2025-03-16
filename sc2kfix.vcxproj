@@ -61,6 +61,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\json.hpp" />
     <ClInclude Include="include\music.h" />
     <ClInclude Include="include\sc2kfix.h" />
     <ClInclude Include="include\smk.h" />

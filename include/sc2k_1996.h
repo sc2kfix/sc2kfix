@@ -1,4 +1,4 @@
-// sc2kfix sc2k_1996.h: defines specific to the 1996 Special Edition version
+// sc2kfix include/sc2k_1996.h: defines specific to the 1996 Special Edition version
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 // !!! HIC SUNT DRACONES !!!
@@ -906,4 +906,8 @@ static inline HPALETTE GameGetPalette(void) {
 
 static inline HWND GameGetRootWindowHandle(void) {
 	return (HWND)((DWORD*)pCWndRootWindow)[7];
+}
+
+static inline DWORD SwapDWORD(DWORD dwData) {
+	return _byteswap_ulong(dwData);
 }

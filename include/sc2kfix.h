@@ -1,9 +1,10 @@
-// sc2kfix sc2kfix.h: globals that need to be used elsewhere
+// sc2kfix include/sc2kfix.h: globals that need to be used elsewhere
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #pragma once
 
 #include <windows.h>
+#include <string>
 #include <map>
 #include <vector>
 #include <algorithm>
@@ -12,6 +13,7 @@
 #include <smk.h>
 #include <sc2k_1996.h>
 #include <music.h>
+#include <json.hpp>
 
 // Turning this on enables every debugging option. You have been warned.
 // #define DEBUGALL
@@ -23,13 +25,15 @@
 #define SC2KVERSION_1995    1
 #define SC2KVERSION_1996    2
 
-#define SC2KFIX_VERSION		"0.9a"
+#define SC2KFIX_VERSION		"0.10-dev"
 #define SC2KFIX_RELEASE_TAG	"r9a"
 
 #define SC2KFIX_INIFILE     "sc2kfix.ini"
 
 #define countof(x) (sizeof(x)/sizeof(*(x)))
 #define lengthof(s) (countof(s)-1)
+
+#define IFF_HEAD(a, b, c, d) ((DWORD)d << 24 | (DWORD)c << 16 | (DWORD)b << 8 | (DWORD)a)
 
 #define RELATIVE_OFFSET(from, to) *(DWORD*)((DWORD)(from)) = (DWORD)(to) - (DWORD)(from) - 4;
 #define NEWCALL(from, to) *(BYTE*)(from) = 0xE8; RELATIVE_OFFSET((DWORD)(from)+1, to)
@@ -135,6 +139,11 @@ BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, c
 void MigrateRegStringValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, char *szOutBuf, DWORD dwLen);
 void MigrateRegDWORDValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, DWORD *dwOut, DWORD dwSize);
 void MigrateRegBOOLValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, BOOL *bOut);
+int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize);
+std::string Base64Encode(const unsigned char* pSrcData, size_t iSrcCount);
+size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned char* pSrcData, size_t iSrcCount);
+json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBigEndian);
+void DecodeDWORDArray(DWORD* dwArray, json::JSON jsonArray, size_t iCount, BOOL bBigEndian);
 
 // Globals etc.
 
