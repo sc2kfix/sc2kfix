@@ -65,9 +65,6 @@
     <ClCompile Include="modules\console.cpp">
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="modules\registry_install.cpp">
-      <Filter>Source Files\Modules</Filter>
-    </ClCompile>
     <ClCompile Include="modules\scurkfix.cpp">
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
@@ -104,7 +101,7 @@
     <ClCompile Include="modules\military.cpp">
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="modules\registry_pathing.cpp">
+    <ClCompile Include="modules\registry_config.cpp">
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
   </ItemGroup>
