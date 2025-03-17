@@ -412,8 +412,8 @@ extern "C" __int16 __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(WPARAM iMouseKeys,
 						wPreviousTileCoordinateX = (uint8_t)ret;
 						wTileCoordinateY = wCurrentTileCoordinates >> 8;
 						wPreviousTileCoordinateY = wCurrentTileCoordinates >> 8;
-						wGameAreaX = pt.x;
-						wGameAreaY = pt.y;
+						wGameScreenAreaX = pt.x;
+						wGameScreenAreaY = pt.y;
 						*(DWORD *)(pThis + 252) = 1;
 						*(DWORD *)(pThis + 248) = 1;
 						if (wCityMode)
@@ -451,7 +451,7 @@ extern "C" __int16 __stdcall Hook_CSimcityView_WM_MOUSEFIRST(WPARAM iMouseKeys, 
 			P_LOWORD(iTileCoords) = wCurrentTileCoordinates >> 8;
 			wTileCoordinateY = wCurrentTileCoordinates >> 8;
 			if ( wPreviousTileCoordinateX != wTileCoordinateX || wPreviousTileCoordinateY != (WORD)iTileCoords) {
-				if ( (int)abs(wGameAreaX - pt.x) > 1 || (iTileCoords = abs(wGameAreaY - pt.y), iTileCoords > 1) ) {
+				if ( (int)abs(wGameScreenAreaX - pt.x) > 1 || (iTileCoords = abs(wGameScreenAreaY - pt.y), iTileCoords > 1) ) {
 					*(DWORD *)(pThis + 256) = 1;
 					if ((iMouseKeys & MK_LBUTTON) != 0) {
 						if (*(DWORD *)(pThis + 248)) {
@@ -472,8 +472,8 @@ extern "C" __int16 __stdcall Hook_CSimcityView_WM_MOUSEFIRST(WPARAM iMouseKeys, 
 					P_LOWORD(iTileCoords) = wTileCoordinateX;
 					wPreviousTileCoordinateX = wTileCoordinateX;
 					wPreviousTileCoordinateY = wTileCoordinateY;
-					wGameAreaX = pt.x;
-					wGameAreaY = pt.y;
+					wGameScreenAreaX = pt.x;
+					wGameScreenAreaY = pt.y;
 				}
 			}
 		}
