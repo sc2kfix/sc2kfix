@@ -45,7 +45,6 @@ extern "C" int __stdcall Hook_402793(int iStatic, char* szText, int iMaybeAlways
 			char szCurrentText[200];
 			GetDlgItemText(hStatusDialog, IDC_STATIC_STATUSSTRING, szCurrentText, 200);
 
-			// XXX - this is incredibly ugly
 			std::string strText = szText;
 			strText = std::regex_replace(strText, std::regex("&"), "&&");
 			if (crColor != crStatusColor || strcmp(strText.c_str(), szCurrentText)) {

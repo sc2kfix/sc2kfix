@@ -93,7 +93,7 @@ void ConsoleLog(int iLogLevel, const char* fmt, ...) {
 		prefix = "[DEBUG] ";
 		break;
 	case LOG_NONE:
-	default:                            // XXX - can this be a constexpr error?
+	default:
 		prefix = "";
 		break;
 	}
