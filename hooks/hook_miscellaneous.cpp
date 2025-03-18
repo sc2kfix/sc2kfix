@@ -427,7 +427,7 @@ extern "C" __int16 __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(WPARAM iMouseKeys,
 	return ret;
 }
 
-extern "C" __int16 __stdcall Hook_CSimcityView_WM_MOUSEFIRST(WPARAM iMouseKeys, POINT pt) {
+extern "C" __int16 __stdcall Hook_CSimcityView_WM_MOUSEMOVE(WPARAM iMouseKeys, POINT pt) {
 	DWORD pThis;
 
 	__asm mov[pThis], ecx
@@ -492,11 +492,11 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	//             release the left mouse button.
 	//             If it is set to 1 while the left mouse button is pressed (Shift key is
 	//             pressed and the iCurrToolGroupA is not 7 or 8 (trees or forest respectively)
-	//             it will break out of the loop and then you end up within the WM_MOUSEFIRST
+	//             it will break out of the loop and then you end up within the WM_MOUSEMOVE
 	//             call (if mouse movement is taking place).
 	//
 	// The change in this case is to only set pThis[62] to 0 when the iCurrToolGroupA is not
-	// 'Center Tool', this will then allow it to pass-through to the WM_MOUSEFIRST call.
+	// 'Center Tool', this will then allow it to pass-through to the WM_MOUSEMOVE call.
 
 	pThis = (DWORD *)Game_PointerToCSimcityView(pCWinAppThis);
 	H_HoverHighlight((int)pThis);
@@ -584,7 +584,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 		hWnd = (HWND)pThis[7];
 		iTileStartY = iTileTargetY;
 		UpdateWindow(hWnd);
-		ret = Game_CSimcityViewMouseFirstOrLeftClick(pThis, &pt);
+		ret = Game_CSimcityViewMouseMoveOrLeftClick(pThis, &pt);
 	} while (ret);
 	if (iCurrToolGroupB != iCurrToolGroupA) {
 		P_LOWORD(ret) = iCurrToolGroupB;
@@ -797,9 +797,9 @@ skipmenu:
 	VirtualProtect((LPVOID)0x401523, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x401523, Hook_CSimcityView_WM_LBUTTONDOWN);
 
-	// Hook for the game area mouse movement (or mouse first) call.
+	// Hook for the game area mouse movement call.
 	VirtualProtect((LPVOID)0x4016EA, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4016EA, Hook_CSimcityView_WM_MOUSEFIRST);
+	NEWJMP((LPVOID)0x4016EA, Hook_CSimcityView_WM_MOUSEMOVE);
 
 	// Hook for the MapToolMenuAction call.
 	VirtualProtect((LPVOID)0x402B44, 5, PAGE_EXECUTE_READWRITE, &dwDummy);

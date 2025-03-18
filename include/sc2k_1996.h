@@ -768,7 +768,7 @@ GAMECALL(0x40258B, int, __cdecl, GetScreenCoordsFromTileCoords, __int16 iTileTar
 GAMECALL(0x402699, int, __thiscall, PointerToCSimcityView, void* CWinAppThis)
 GAMECALL(0x402798, int, __cdecl, MapToolPlaceForest, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x402937, void, __thiscall, ToolMenuDisable, void* pThis)
-GAMECALL(0x4029C3, int, __cdecl, CSimcityViewMouseFirstOrLeftClick, void* pThis, LPPOINT lpPoint)
+GAMECALL(0x4029C3, int, __cdecl, CSimcityViewMouseMoveOrLeftClick, void* pThis, LPPOINT lpPoint)
 GAMECALL(0x402B2B, int, __cdecl, MapToolVerticalTerrainRaiseOrLevelOut, __int16 iTileTargetX, __int16 iTileTargetY, __int16 iScreenTargetPointY)
 GAMECALL(0x402B44, __int16, __cdecl, MapToolMenuAction, int iMouseKeys, POINT pt)
 GAMECALL(0x402B94, int, __cdecl, MapToolLevelTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
