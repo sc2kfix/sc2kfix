@@ -747,16 +747,32 @@ int PlaceRoadsAlongPath(int x1, int y1, int x2, int y2);
 
 GAMECALL(0x40106E, int, __cdecl, PlaceRoadAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x401096, int, __thiscall, SoundPlaySound, void* pThis, int iSoundID)
+GAMECALL(0x4011E5, int, __thiscall, MapToolSoundTrigger, void* pThis)
 GAMECALL(0x401519, void, __thiscall, ToolMenuEnable, void* pThis)
+GAMECALL(0x4016D1, int, __thiscall, GotoNewScreenCoordinates, void *pThis, __int16 iNewScreenPointX, __int16 iNewScreenPointY)
 GAMECALL(0x40178F, __int16, __cdecl, PlaceTileWithMilitaryCheck, __int16 x, __int16 y, __int16 iTileID)
+GAMECALL(0x401857, int, __cdecl, MapToolPlaceTree, __int16 iTileTargetX, __int16 iTileTargetY)
+GAMECALL(0x40198D, int, __cdecl, MapToolPlaceStream, __int16 iTileTargetX, __int16 iTileTargetY, __int16) // XXX - the last parameter isn't entirely clear, perhaps area or offset?
+GAMECALL(0x401997, int, __cdecl, MapToolPlaceWater, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x4019EC, int, __cdecl, CenterOnTileCoords, __int16 x, __int16 y)
 GAMECALL(0x401A37, int, __cdecl, MaybeRoadViabilityAlongPath, __int16* x, __int16* y)
+GAMECALL(0x401AB4, int, __cdecl, MapToolRaiseTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x401AF0, int, __cdecl, MaybeCheckViablePlacementPath, __int16 x1, __int16 y1, __int16 x2, __int16 y2)
 GAMECALL(0x401D16, __int16, __cdecl, GetTileCoordsFromScreenCoords, __int16 x, __int16 y)
+GAMECALL(0x401E47, BOOL, __cdecl, UseBulldozer, __int16 iTileTargetX, __int16 iTileTargetY)
+GAMECALL(0x401EA1, int, __cdecl, MapToolLowerTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x40235B, int, __stdcall, DrawSquareHighlight, WORD x, WORD y, WORD, WORD)		// XXX - Not 100% sure what the second pair of arguments is
 GAMECALL(0x4023EC, void, __stdcall, ToolMenuUpdate, void)
 GAMECALL(0x402414, int, __thiscall, MusicPlay, DWORD pThis, int iSongID)
+GAMECALL(0x40258B, int, __cdecl, GetScreenCoordsFromTileCoords, __int16 iTileTargetX, __int16 iTileTargetY, WORD *wNewScreenPointX, WORD *wNewScreenPointY)
+GAMECALL(0x402699, int, __thiscall, PointerToCSimcityView, void* CWinAppThis)
+GAMECALL(0x402798, int, __cdecl, MapToolPlaceForest, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x402937, void, __thiscall, ToolMenuDisable, void* pThis)
+GAMECALL(0x4029C3, int, __cdecl, CSimcityViewMouseFirstOrLeftClick, void* pThis, LPPOINT lpPoint)
+GAMECALL(0x402B2B, int, __cdecl, MapToolVerticalTerrainRaiseOrLevelOut, __int16 iTileTargetX, __int16 iTileTargetY, __int16 iScreenTargetPointY)
+GAMECALL(0x402B44, __int16, __cdecl, MapToolMenuAction, int iMouseKeys, POINT pt)
+GAMECALL(0x402B94, int, __cdecl, MapToolLevelTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
+GAMECALL(0x402C25, int, __cdecl, CityToolMenuAction, int iMouseKeys, POINT pt)
 GAMECALL(0x480140, void, __stdcall, LoadSoundBuffer, int iSoundID, void* pBuffer)
 
 

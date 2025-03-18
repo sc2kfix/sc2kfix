@@ -375,8 +375,6 @@ extern "C" __int16 __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(WPARAM iMouseKeys,
 
 	int(__thiscall *H_GetRectInfo)(DWORD, LPRECT) = (int(__thiscall *)(DWORD, LPRECT))0x402F9A;
 	int(__thiscall *H_GetPosInfo)(DWORD, int, __int16, int) = (int(__thiscall *)(DWORD, int, __int16, int))0x4027A7;
-	int(__cdecl *H_CityToolMenuAction)(char, POINT) = (int(__cdecl *)(char, POINT))0x43F220;
-	__int16(__cdecl *H_MapToolMenuAction)(int, POINT) = (__int16(__cdecl *)(int, POINT))0x402B44;
 
 	ret = *(DWORD *)(pThis + 268);
 	if (ret)
@@ -417,9 +415,9 @@ extern "C" __int16 __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(WPARAM iMouseKeys,
 						*(DWORD *)(pThis + 252) = 1;
 						*(DWORD *)(pThis + 248) = 1;
 						if (wCityMode)
-							P_LOWORD(ret) = H_CityToolMenuAction(iMouseKeys, pt);
+							P_LOWORD(ret) = Game_CityToolMenuAction(iMouseKeys, pt);
 						else
-							P_LOWORD(ret) = H_MapToolMenuAction(iMouseKeys, pt);
+							P_LOWORD(ret) = Game_MapToolMenuAction(iMouseKeys, pt);
 					}
 				}
 			}
@@ -437,9 +435,6 @@ extern "C" __int16 __stdcall Hook_CSimcityView_WM_MOUSEFIRST(WPARAM iMouseKeys, 
 	int iTileCoords;
 	int iThisSomething;
 
-	int(__cdecl *H_CityToolMenuAction)(char, POINT) = (int(__cdecl *)(char, POINT))0x43F220;
-	__int16(__cdecl *H_MapToolMenuAction)(int, POINT) = (__int16(__cdecl *)(int, POINT))0x402B44;
-
 	P_LOWORD(iTileCoords) = pt.x;
 	iThisSomething = *(DWORD *)(pThis + 252);
 	*(struct tagPOINT *)(pThis + 260) = pt; // Placement position.
@@ -456,16 +451,14 @@ extern "C" __int16 __stdcall Hook_CSimcityView_WM_MOUSEFIRST(WPARAM iMouseKeys, 
 					if ((iMouseKeys & MK_LBUTTON) != 0) {
 						if (*(DWORD *)(pThis + 248)) {
 							if (wCityMode) {
-								if ((wCurrentCityToolGroup != 17) || GetAsyncKeyState(VK_MENU) & 0x8000) {
-									H_CityToolMenuAction(iMouseKeys, pt);
-								}
+								if ((wCurrentCityToolGroup != 17) || GetAsyncKeyState(VK_MENU) & 0x8000)
+									Game_CityToolMenuAction(iMouseKeys, pt);
 							}
 							else {
 								if ((wCurrentMapToolGroup == 9 && GetAsyncKeyState(VK_MENU) & 0x8000) || // 'Center Tool' selected with either 'Alt' key pressed.
 									(wCurrentMapToolGroup != 9 && (iMouseKeys & MK_CONTROL) == 0) || // Other tool selected with 'ctrl' not pressed.
-									(wCurrentMapToolGroup != 9 && (iMouseKeys & MK_CONTROL) != 0 && GetAsyncKeyState(VK_MENU) & 0x8000)) { // Other tool with 'ctrl' pressed (Center Tool) and 'Alt'.
-									H_MapToolMenuAction(iMouseKeys, pt);
-								}
+									(wCurrentMapToolGroup != 9 && (iMouseKeys & MK_CONTROL) != 0 && GetAsyncKeyState(VK_MENU) & 0x8000)) // Other tool with 'ctrl' pressed (Center Tool) and 'Alt'.
+									Game_MapToolMenuAction(iMouseKeys, pt);
 							}
 						}
 					}
@@ -491,23 +484,9 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	WORD wNewScreenPointX, wNewScreenPointY;
 	HWND hWnd;
 
-	int(__thiscall *H_GetCWinAppThisReturn)(void *) = (int(__thiscall *)(void *))0x402699;
 	int(__thiscall *H_HoverHighlight)(int) = (int(__thiscall *)(int))0x4014F1;
-	BOOL(__cdecl *H_BulldozingFunc)(__int16, __int16) = (BOOL(__cdecl *)(__int16, __int16))0x401E47;
 	int(__thiscall *H_SomeRectFillRefFunc)(void *) = (int(__thiscall *)(void *))0x40226B;
-	int(__cdecl *H_MRaiseTerrain)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x401AB4;
-	int(__cdecl *H_MLowerTerrain)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x401EA1;
-	int(__cdecl *H_MRLTerrain)(__int16, __int16, __int16) = (int(__cdecl *)(__int16, __int16, __int16))0x402B2B;
-	int(__cdecl *H_MLevelTerrain)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x402B94;
-	int(__cdecl *H_MPlaceWater)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x401997;
-	int(__thiscall *H_MapToolSoundTrigger)(void *) = (int(__thiscall *)(void *))0x4011E5;
-	int(__cdecl *H_MPlaceStream)(__int16, __int16, __int16) = (int(__cdecl *)(__int16, __int16, __int16))0x40198D;
-	int(__cdecl *H_MPlaceTree)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x401857;
-	int(__cdecl *H_MPlaceForest)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x402798;
-	int(__cdecl *H_GetScreenCoordsFromTileCoords)(__int16, __int16, WORD *, WORD *) = (int(__cdecl *)(__int16, __int16, WORD *, WORD *))0x40258B;
-	int(__thiscall *H_GotoNewScreenCoordinates)(void *, __int16, __int16) = (int(__thiscall *)(void *, __int16, __int16))0x4016D1;
 	int(__thiscall *H_SomeRectColorRefFunc)(void *) = (int(__thiscall *)(void *))0x402810;
-	int(__cdecl *H_ProcessPointSomething)(int, LPPOINT) = (int(__cdecl *)(int, LPPOINT))0x4029C3;
 
 	// pThis[62] - When this is set to 0, you remain within the do/while loop until you
 	//             release the left mouse button.
@@ -519,28 +498,24 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	// The change in this case is to only set pThis[62] to 0 when the iCurrToolGroupA is not
 	// 'Center Tool', this will then allow it to pass-through to the WM_MOUSEFIRST call.
 
-	pThis = (DWORD *)H_GetCWinAppThisReturn(pCWinAppThis);
+	pThis = (DWORD *)Game_PointerToCSimcityView(pCWinAppThis);
 	H_HoverHighlight((int)pThis);
 	iCurrToolGroupA = wCurrentMapToolGroup;
 	iTileStartX = 400;
 	iTileStartY = 400;
 	iCurrToolGroupB = wCurrentMapToolGroup;
-	if ((iMouseKeys & MK_CONTROL) != 0) {
+	if ((iMouseKeys & MK_CONTROL) != 0)
 		iCurrToolGroupA = 9;
-	}
-	if (iCurrToolGroupA != 9) {
+	if (iCurrToolGroupA != 9)
 		pThis[62] = 0;
-	}
 	do {
 		P_LOWORD(ret) = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
-		if ((__int16)ret < 0) {
+		if ((__int16)ret < 0)
 			break;
-		}
 		iTileTargetX = ret & 0x7f;
 		iTileTargetY = (__int16)ret >> 8;
-		if ((unsigned __int16)iTileTargetX >= 0x80u || iTileTargetY < 0) {
+		if ((unsigned __int16)iTileTargetX >= 0x80u || iTileTargetY < 0)
 			break;
-		}
 		if ((iMouseKeys & MK_SHIFT) != 0 && iCurrToolGroupA != 7 && iCurrToolGroupA != 8) {
 			pThis[62] = 1;
 			break;
@@ -548,52 +523,50 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 		if (iTileStartX != iTileTargetX || iTileStartY != iTileTargetY) {
 			switch (iCurrToolGroupA) {
 			case 0: // Unclear
-				H_BulldozingFunc(iTileTargetX, iTileTargetY);
+				Game_UseBulldozer(iTileTargetX, iTileTargetY);
 				H_SomeRectFillRefFunc(pThis);
 				break;
 			case 1: // Raise Terrain
-				P_LOWORD(ret) = H_MRaiseTerrain(iTileTargetX, iTileTargetY);
+				P_LOWORD(ret) = Game_MapToolRaiseTerrain(iTileTargetX, iTileTargetY);
 				break;
 			case 2: // Lower Terrain
-				P_LOWORD(ret) = H_MLowerTerrain(iTileTargetX, iTileTargetY);
+				P_LOWORD(ret) = Game_MapToolLowerTerrain(iTileTargetX, iTileTargetY);
 				break;
 			case 3: // Raise/LowerToLevelOut Terrain (Drag vertically)
-				P_LOWORD(ret) = H_MRLTerrain(iTileTargetX, iTileTargetY, pt.y);
+				P_LOWORD(ret) = Game_MapToolVerticalTerrainRaiseOrLevelOut(iTileTargetX, iTileTargetY, pt.y);
 				break;
 			case 4: // Level Terrain
-				P_LOWORD(ret) = H_MLevelTerrain(iTileTargetX, iTileTargetY);
+				P_LOWORD(ret) = Game_MapToolLevelTerrain(iTileTargetX, iTileTargetY);
 				break;
 			case 5: // Place Water
 			case 6: // Place Stream
 				if (iCurrToolGroupA == 5) {
-					if (!H_MPlaceWater(iTileTargetX, iTileTargetY) || H_MapToolSoundTrigger(dwAudioHandle))
+					if (!Game_MapToolPlaceWater(iTileTargetX, iTileTargetY) || Game_MapToolSoundTrigger(dwAudioHandle))
 						break;
 				}
 				else {
-					H_MPlaceStream(iTileTargetX, iTileTargetY, 100);
-					if (H_MapToolSoundTrigger(dwAudioHandle))
+					Game_MapToolPlaceStream(iTileTargetX, iTileTargetY, 100);
+					if (Game_MapToolSoundTrigger(dwAudioHandle))
 						break;
 				}
 				Game_SoundPlaySound(pCWinAppThis, 511);
 				break;
 			case 7: // Place Tree
 			case 8: // Place Forest
-				if (!H_MapToolSoundTrigger(dwAudioHandle))
+				if (!Game_MapToolSoundTrigger(dwAudioHandle))
 					Game_SoundPlaySound(pCWinAppThis, 503);
 				if (iCurrToolGroupA == 7)
-					H_MPlaceTree(iTileTargetX, iTileTargetY);
+					Game_MapToolPlaceTree(iTileTargetX, iTileTargetY);
 				else
-					H_MPlaceForest(iTileTargetX, iTileTargetY);
+					Game_MapToolPlaceForest(iTileTargetX, iTileTargetY);
 				break;
 			case 9: // Center Tool
-				H_GetScreenCoordsFromTileCoords(iTileTargetX, iTileTargetY, &wNewScreenPointX, &wNewScreenPointY);
+				Game_GetScreenCoordsFromTileCoords(iTileTargetX, iTileTargetY, &wNewScreenPointX, &wNewScreenPointY);
 				Game_SoundPlaySound(pCWinAppThis, 505);
-				if (*(DWORD *)((char *)pThis + 322)) {
-					H_GotoNewScreenCoordinates(pThis, wScreenPointX - (wNewScreenPointX >> 1), wScreenPointY - (wNewScreenPointY >> 1));
-				}
-				else {
-					H_GotoNewScreenCoordinates(pThis, wScreenPointX - wNewScreenPointX, wScreenPointY - wNewScreenPointY);
-				}
+				if (*(DWORD *)((char *)pThis + 322))
+					Game_GotoNewScreenCoordinates(pThis, wScreenPointX - (wNewScreenPointX >> 1), wScreenPointY - (wNewScreenPointY >> 1));
+				else
+					Game_GotoNewScreenCoordinates(pThis, wScreenPointX - wNewScreenPointX, wScreenPointY - wNewScreenPointY);
 			default:
 				break;
 			}
@@ -611,7 +584,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 		hWnd = (HWND)pThis[7];
 		iTileStartY = iTileTargetY;
 		UpdateWindow(hWnd);
-		ret = H_ProcessPointSomething((int)pThis, &pt);
+		ret = Game_CSimcityViewMouseFirstOrLeftClick(pThis, &pt);
 	} while (ret);
 	if (iCurrToolGroupB != iCurrToolGroupA) {
 		P_LOWORD(ret) = iCurrToolGroupB;
