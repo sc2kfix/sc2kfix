@@ -492,10 +492,6 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	WORD wNewScreenPointX, wNewScreenPointY;
 	HWND hWnd;
 
-	int(__thiscall *H_HoverHighlight)(int) = (int(__thiscall *)(int))0x4014F1;
-	int(__thiscall *H_SomeRectFillRefFunc)(void *) = (int(__thiscall *)(void *))0x40226B;
-	int(__thiscall *H_SomeRectColorRefFunc)(void *) = (int(__thiscall *)(void *))0x402810;
-
 	// pThis[62] - When this is set to 0, you remain within the do/while loop until you
 	//             release the left mouse button.
 	//             If it is set to 1 while the left mouse button is pressed (Shift key is
@@ -507,7 +503,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	// 'Center Tool', this will then allow it to pass-through to the WM_MOUSEMOVE call.
 
 	pThis = (DWORD *)Game_PointerToCSimcityView(pCWinAppThis);
-	H_HoverHighlight((int)pThis);
+	Game_TileHighlightUpdate((int)pThis);
 	iCurrToolGroupA = wCurrentMapToolGroup;
 	iTileStartX = 400;
 	iTileStartY = 400;
@@ -532,7 +528,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 			switch (iCurrToolGroupA) {
 			case 0: // Bulldozing, only relevant in the CityToolMenuAction code it seems.
 				Game_UseBulldozer(iTileTargetX, iTileTargetY);
-				H_SomeRectFillRefFunc(pThis);
+				Game_UpdateAreaPortionFill(pThis);
 				break;
 			case 1: // Raise Terrain
 				P_LOWORD(ret) = Game_MapToolRaiseTerrain(iTileTargetX, iTileTargetY);
@@ -575,6 +571,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 					Game_CenterOnNewScreenCoordinates(pThis, wScreenPointX - (wNewScreenPointX >> 1), wScreenPointY - (wNewScreenPointY >> 1));
 				else
 					Game_CenterOnNewScreenCoordinates(pThis, wScreenPointX - wNewScreenPointX, wScreenPointY - wNewScreenPointY);
+				break;
 			default:
 				break;
 			}
@@ -582,12 +579,12 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 		if (iCurrToolGroupA >= 1 && iCurrToolGroupA <= 4)
 			break;
 		else if (iCurrToolGroupA == 9) {
-			H_SomeRectColorRefFunc(pThis);
+			Game_UpdateAreaCompleteColorFill(pThis);
 			hWnd = (HWND)pThis[7];
 			UpdateWindow(hWnd);
 			break;
 		}
-		H_SomeRectFillRefFunc(pThis);
+		Game_UpdateAreaPortionFill(pThis);
 		iTileStartX = iTileTargetX;
 		hWnd = (HWND)pThis[7];
 		iTileStartY = iTileTargetY;
