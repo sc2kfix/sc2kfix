@@ -37,6 +37,14 @@
 #include "rline.h"
 #endif
 
+#ifndef ENABLE_VIRTUAL_TERMINAL_INPUT
+#define ENABLE_VIRTUAL_TERMINAL_INPUT 0x0200
+#endif
+
+#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
+#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+#endif
+
 static int _isdigit(int c) { if (c > 128) return 0; return isdigit(c); }
 static int _isxdigit(int c) { if (c > 128) return 0; return isxdigit(c); }
 
