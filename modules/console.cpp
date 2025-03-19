@@ -26,6 +26,9 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
+#include <kuroko/kuroko.h>
+#include <kuroko/util.h>
+
 #ifdef CONSOLE_ENABLED
 BOOL bConsoleEnabled = TRUE;
 #else 
@@ -38,6 +41,7 @@ typedef struct {
 } script_variable_t;
 
 HANDLE hConsoleThread;
+DWORD dwConsoleThreadID;
 char szCmdBuf[256] = { 0 };
 BOOL bConsoleUndocumentedMode = FALSE;
 int iConsoleScriptNest = 0;
@@ -77,9 +81,23 @@ BOOL ConsoleCmdLabel(const char* szCommand, const char* szArguments) {
 // COMMAND: run ...
 
 BOOL ConsoleCmdRun(const char* szCommand, const char* szArguments) {
+	MSG msg;
 	std::string strPossibleScriptName;
 	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
-		printf("  run <filename>   Executes a file as a series of console commands\n");
+		printf(
+			"  run kuroko       Enters the Kuroko REPL\n"
+			"  run <filename>   Executes a file as a series of console commands\n");
+		return TRUE;
+	}
+
+	// Start the Kuroko REPL if requested
+	if (!strcmp(szArguments, "kuroko")) {
+		if (bKurokoVMInitialized) {
+			printf("\n");
+			PostThreadMessage(dwKurokoThreadID, WM_KUROKO_REPL, NULL, NULL);
+			GetMessage(&msg, NULL, 0, 0);
+			printf("\nKuroko REPL exited, returning control to console thread.\n");
+		}
 		return TRUE;
 	}
 
@@ -487,13 +505,15 @@ BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments) {
 		szSC2KVersion = "1996 Special Edition";
 	}
 
+	KrkValue kuroko_version;
+	krk_tableGet_fast(&vm.system->fields, S("version"), &kuroko_version);
+
 	printf(
 		"sc2kfix version %s - https://sc2kfix.net\n"
 		"Plugin build info: %s\n"
 		"SimCity 2000 version: %s\n"
 		"Plugin loaded at 0x%08X\n"
-		"City days: %u\n", szSC2KFixVersion, szSC2KFixBuildInfo, szSC2KVersion, (DWORD)hSC2KFixModule, dwCityDays);
-	printf("\n");
+		"Kuroko version: Kuroko %s\n", szSC2KFixVersion, szSC2KFixBuildInfo, szSC2KVersion, (DWORD)hSC2KFixModule, AS_CSTRING(kuroko_version));
 
 	return TRUE;
 }
@@ -589,6 +609,7 @@ BOOL ConsoleCmdSetTile(const char* szCommand, const char* szArguments) {
 // CONSOLE THREAD
 
 DWORD WINAPI ConsoleThread(LPVOID lpParameter) {
+	Sleep(200);
 	SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
 	for (;;) {
 		if (bConsoleUndocumentedMode)

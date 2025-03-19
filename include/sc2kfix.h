@@ -49,6 +49,9 @@
 #define DEBUG_FLAGS_NONE		0
 #define DEBUG_FLAGS_EVERYTHING	0xFFFFFFFF
 
+#define WM_KUROKO_REPL	WM_APP+0x10
+#define WM_CONSOLE_REPL	WM_APP+0x20
+
 typedef struct {
 	UINT nMessage;
 	UINT nCode;
@@ -182,6 +185,8 @@ BOOL ConsoleCmdSet(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdSetDebug(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdSetTile(const char* szCommand, const char* szArguments);
 
+DWORD WINAPI KurokoThread(LPVOID lpParameter);
+
 extern BOOL bGameDead;
 extern HMODULE hRealWinMM;
 extern HMODULE hSC2KAppModule;
@@ -197,6 +202,9 @@ extern const char* szSC2KFixBuildInfo;
 extern BOOL bInSCURK;
 extern BOOL bConsoleEnabled;
 extern BOOL bSkipIntro;
+extern BOOL bKurokoVMInitialized;
+extern DWORD dwConsoleThreadID;
+extern DWORD dwKurokoThreadID;
 
 extern HFONT hFontMSSansSerifRegular8;
 extern HFONT hFontMSSansSerifBold8;

@@ -43,7 +43,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>"include"</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>"include";"kuroko"</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -53,7 +53,7 @@
       <EnableUAC>false</EnableUAC>
       <ModuleDefinitionFile>hooks\exports.def</ModuleDefinitionFile>
       <DataExecutionPrevention>false</DataExecutionPrevention>
-      <AdditionalDependencies>"comctl32.lib";"shlwapi.lib";"winmm.lib";"wininet.lib";"dbghelp.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>"comctl32.lib";"shlwapi.lib";"winmm.lib";"wininet.lib";"dbghelp.lib";"wsock32.lib";"ws2_32.lib";%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>
@@ -67,9 +67,73 @@
     <ClInclude Include="include\smk.h" />
     <ClInclude Include="include\winmm_exports.h" />
     <ClInclude Include="include\sc2k_1996.h" />
+    <ClInclude Include="kuroko\dirent.h" />
+    <ClInclude Include="kuroko\kuroko\chunk.h" />
+    <ClInclude Include="kuroko\kuroko\compiler.h" />
+    <ClInclude Include="kuroko\kuroko\debug.h" />
+    <ClInclude Include="kuroko\kuroko\kuroko.h" />
+    <ClInclude Include="kuroko\kuroko\memory.h" />
+    <ClInclude Include="kuroko\kuroko\object.h" />
+    <ClInclude Include="kuroko\kuroko\scanner.h" />
+    <ClInclude Include="kuroko\kuroko\table.h" />
+    <ClInclude Include="kuroko\kuroko\threads.h" />
+    <ClInclude Include="kuroko\kuroko\util.h" />
+    <ClInclude Include="kuroko\kuroko\value.h" />
+    <ClInclude Include="kuroko\kuroko\vm.h" />
+    <ClInclude Include="kuroko\methods.h" />
+    <ClInclude Include="kuroko\opcodes.h" />
+    <ClInclude Include="kuroko\opcode_enum.h" />
+    <ClInclude Include="kuroko\private.h" />
+    <ClInclude Include="kuroko\pthread.h" />
+    <ClInclude Include="kuroko\unistd.h" />
+    <ClInclude Include="kuroko\vendor\rline.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="kuroko\builtins.c" />
+    <ClCompile Include="kuroko\chunk.c" />
+    <ClCompile Include="kuroko\compiler.c" />
+    <ClCompile Include="kuroko\debug.c" />
+    <ClCompile Include="kuroko\exceptions.c" />
+    <ClCompile Include="kuroko\kuroko.c" />
+    <ClCompile Include="kuroko\memory.c" />
+    <ClCompile Include="kuroko\modules\module_dis.c" />
+    <ClCompile Include="kuroko\modules\module_fileio.c" />
+    <ClCompile Include="kuroko\modules\module_gc.c" />
+    <ClCompile Include="kuroko\modules\module_locale.c" />
+    <ClCompile Include="kuroko\modules\module_math.c" />
+    <ClCompile Include="kuroko\modules\module_os.c" />
+    <ClCompile Include="kuroko\modules\module_random.c" />
+    <ClCompile Include="kuroko\modules\module_socket.c" />
+    <ClCompile Include="kuroko\modules\module_stat.c" />
+    <ClCompile Include="kuroko\modules\module_time.c" />
+    <ClCompile Include="kuroko\modules\module_timeit.c" />
+    <ClCompile Include="kuroko\modules\module_wcwidth.c" />
+    <ClCompile Include="kuroko\modules\module__pheap.c" />
+    <ClCompile Include="kuroko\object.c" />
+    <ClCompile Include="kuroko\obj_base.c" />
+    <ClCompile Include="kuroko\obj_bytes.c" />
+    <ClCompile Include="kuroko\obj_dict.c" />
+    <ClCompile Include="kuroko\obj_function.c" />
+    <ClCompile Include="kuroko\obj_gen.c" />
+    <ClCompile Include="kuroko\obj_list.c" />
+    <ClCompile Include="kuroko\obj_long.c" />
+    <ClCompile Include="kuroko\obj_numeric.c" />
+    <ClCompile Include="kuroko\obj_range.c" />
+    <ClCompile Include="kuroko\obj_set.c" />
+    <ClCompile Include="kuroko\obj_slice.c" />
+    <ClCompile Include="kuroko\obj_str.c" />
+    <ClCompile Include="kuroko\obj_tuple.c" />
+    <ClCompile Include="kuroko\obj_typing.c" />
+    <ClCompile Include="kuroko\parseargs.c" />
+    <ClCompile Include="kuroko\scanner.c" />
+    <ClCompile Include="kuroko\sys.c" />
+    <ClCompile Include="kuroko\table.c" />
+    <ClCompile Include="kuroko\threads.c" />
+    <ClCompile Include="kuroko\value.c" />
+    <ClCompile Include="kuroko\vendor\pthread.cpp" />
+    <ClCompile Include="kuroko\vendor\rline.c" />
+    <ClCompile Include="kuroko\vm.c" />
     <ClCompile Include="modules\console.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="hooks\hook_mciSendCommand.cpp" />
@@ -77,6 +141,7 @@
     <ClCompile Include="hooks\hook_querydialog.cpp" />
     <ClCompile Include="hooks\hook_sndPlaySound.cpp" />
     <ClCompile Include="hooks\hook_mmtimers.cpp" />
+    <ClCompile Include="modules\kuroko_glue.cpp" />
     <ClCompile Include="modules\military.cpp" />
     <ClCompile Include="modules\music.cpp" />
     <ClCompile Include="modules\registry_config.cpp" />
@@ -90,6 +155,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="hooks\exports.def" />
+    <None Include="kuroko\wcwidth._h" />
     <None Include="README.md" />
     <None Include="script.md" />
   </ItemGroup>
