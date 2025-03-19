@@ -1118,6 +1118,16 @@ static int handleException(void) {
 	return 0;
 }
 
+static const char* krkHelpModuleText = \
+"def simple(obj):\n"
+"    try:\n"
+"        print(obj.__doc__)\n"
+"    except:\n"
+"        try:\n"
+"            print(obj.__class__.__doc__)\n"
+"        except:\n"
+"            print('No docstring avaialble for', obj)\n";
+
 /**
  * Load a module.
  *
@@ -1130,6 +1140,35 @@ static int handleException(void) {
 int krk_loadModule(KrkString * path, KrkValue * moduleOut, KrkString * runAs, KrkValue parent) {
 	/* See if the module is already loaded */
 	if (krk_tableGet_fast(&vm.modules, runAs, moduleOut)) {
+		krk_push(*moduleOut);
+		return 1;
+	}
+
+	/* sc2kfix: Use the baked-in "help" module instead of trying to load one from disk. */
+	if (!strcmp(path->chars, "help")) {
+		KrkInstance* enclosing = krk_currentThread.module;
+		krk_startModule(runAs->chars);
+		KrkValue parentName;
+		if (IS_INSTANCE(parent) && krk_tableGet_fast(&AS_INSTANCE(parent)->fields, S("__name__"), &parentName) && IS_STRING(parentName)) {
+			krk_attachNamedValue(&krk_currentThread.module->fields, "__package__", parentName);
+		}
+		else {
+			/* If there is no parent, or the parent doesn't have a string __name__ attribute,
+				* set the __package__ to None, so it at least exists. */
+			krk_attachNamedValue(&krk_currentThread.module->fields, "__package__", NONE_VAL());
+		}
+		krk_interpret(krkHelpModuleText, "<sc2kfix>");
+		*moduleOut = OBJECT_VAL(krk_currentThread.module);
+		krk_currentThread.module = enclosing;
+		if (!IS_OBJECT(*moduleOut) || (krk_currentThread.flags & KRK_THREAD_HAS_EXCEPTION)) {
+			if (!(krk_currentThread.flags & KRK_THREAD_HAS_EXCEPTION)) {
+				krk_runtimeError(vm.exceptions->importError,
+					"Failed to load module '%S' from '%s'", runAs, "<sc2kfix>");
+			}
+			krk_tableDelete(&vm.modules, OBJECT_VAL(runAs));
+			return 0;
+		}
+
 		krk_push(*moduleOut);
 		return 1;
 	}

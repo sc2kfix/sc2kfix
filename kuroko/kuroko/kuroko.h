@@ -41,7 +41,9 @@ typedef int64_t krk_integer_type;
 #endif
 
 #if defined(_MSC_VER) && !defined(__clang__)
+#if __STDC_VERSION__ < 201112L
 #define KRK_NO_DOCUMENTATION 1
+#endif
 #define KRK_NO_GC_TRACING 1
 #pragma warning(disable : 4146) /* unary minus on unsigned */
 #pragma warning(disable : 4996) /* sterror */
