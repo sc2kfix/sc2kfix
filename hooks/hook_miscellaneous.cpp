@@ -30,7 +30,7 @@
 #define MISCHOOK_DEBUG_SMACK 128
 #define MISCHOOK_DEBUG_CHEAT 256
 
-#define MISCHOOK_DEBUG MISCHOOK_DEBUG_MENU
+#define MISCHOOK_DEBUG DEBUG_FLAGS_NONE
 
 #ifdef DEBUGALL
 #undef MISCHOOK_DEBUG
@@ -394,16 +394,16 @@ extern "C" __int16 __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(WPARAM iMouseKeys,
 				//   - 7 - Directly to top (trigger currently unknown)
 				//   - 8 - Release either arrow on the vertical scrollbar (return result from function is 0 - 'default' case hit)
 				if (PtInRect((const RECT *)(pThis + 120), pt))
-					P_LOWORD(ret) = Game_ShiftScreenYPosWithKeyOrVScrollbar(pThis, 1, 0, iYVar);
+					P_LOWORD(ret) = Game_CSimCityView_OnVScroll(pThis, 1, 0, iYVar);
 				else if (PtInRect((const RECT *)(pThis + 104), pt))
-					P_LOWORD(ret) = Game_ShiftScreenYPosWithKeyOrVScrollbar(pThis, 0, 0, iYVar);
+					P_LOWORD(ret) = Game_CSimCityView_OnVScroll(pThis, 0, 0, iYVar);
 				else if (PtInRect((const RECT *)(pThis + 136), pt))
-					P_LOWORD(ret) = Game_ShiftScreenYPosWithKeyOrVScrollbar(pThis, 5, pt.y, iYVar);
+					P_LOWORD(ret) = Game_CSimCityView_OnVScroll(pThis, 5, pt.y, iYVar);
 				else {
 					if (*(DWORD *)(pThis + 140) >= pt.y)
-						P_LOWORD(ret) = Game_ShiftScreenYPosWithKeyOrVScrollbar(pThis, 2, 0, iYVar);
+						P_LOWORD(ret) = Game_CSimCityView_OnVScroll(pThis, 2, 0, iYVar);
 					else
-						P_LOWORD(ret) = Game_ShiftScreenYPosWithKeyOrVScrollbar(pThis, 3, 0, iYVar);
+						P_LOWORD(ret) = Game_CSimCityView_OnVScroll(pThis, 3, 0, iYVar);
 				}
 			}
 			else {
