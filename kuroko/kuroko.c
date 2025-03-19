@@ -1509,3 +1509,40 @@ int EnterKurokoREPL(void) {
 
 	return 0;
 }
+
+int EnterKurokoFile(const char* szFilename) {
+#ifdef _WIN32
+	SetConsoleOutputCP(65001);
+	SetConsoleCP(65001);
+#endif
+
+#ifndef KRK_DISABLE_DEBUG
+	krk_debug_registerCallback(debuggerHook);
+#endif
+
+	/* Bind interrupt signal */
+	bindSignalHandlers();
+
+	KrkValue result = INTEGER_VAL(0);
+
+	/**
+	 * Add general builtins that aren't part of the core VM.
+	 * This is where we provide @c input in particular.
+	 */
+	KRK_DOC(BIND_FUNC(vm.builtins, input), "@brief Read a line of input.\n"
+		"@arguments prompt='',promptwidth=0,syntax=None\n\n"
+		"Read a line of input from @c stdin. If the @c rline library is available, "
+		"it will be used to gather input. Input reading stops on end-of file or when "
+		"a read ends with a line feed, which will be removed from the returned string. "
+		"If a prompt is provided, it will be printed without a line feed before requesting "
+		"input. If @c rline is available, the prompt will be passed to the library as the "
+		"left-hand prompt string. If not provided, @p promptwidth will default to the width "
+		"of @p prompt in codepoints; if you are providing a prompt with escape characters or "
+		"characters with multi-column East-Asian Character Width be sure to pass a value "
+		"for @p promptwidth that reflects the display width of your prompt. "
+		"If provided, @p syntax specifies the name of an @c rline syntax module to "
+		"provide color highlighting of the input line.");
+
+	krk_runfile(szFilename, szFilename);
+	return 0;
+}

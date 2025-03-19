@@ -50,6 +50,7 @@
 #define DEBUG_FLAGS_EVERYTHING	0xFFFFFFFF
 
 #define WM_KUROKO_REPL	WM_APP+0x10
+#define WM_KUROKO_FILE	WM_APP+0x11
 #define WM_CONSOLE_REPL	WM_APP+0x20
 
 typedef struct {

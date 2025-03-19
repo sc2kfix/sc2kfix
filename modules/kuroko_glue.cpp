@@ -25,6 +25,7 @@ KRK_BUNDLE_LIBS
 #endif
 
 extern "C" int EnterKurokoREPL(void);
+extern "C" int EnterKurokoFile(const char* szFilename);
 
 DWORD dwKurokoThreadID;
 
@@ -53,6 +54,16 @@ DWORD WINAPI KurokoThread(LPVOID lpParameter) {
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		if (msg.message == WM_KUROKO_REPL && bConsoleEnabled) {
 			EnterKurokoREPL();
+			PostThreadMessage(dwConsoleThreadID, WM_CONSOLE_REPL, NULL, NULL);
+		} else if (msg.message == WM_KUROKO_FILE && bConsoleEnabled) {
+			// NOTE: wParam *must* be a filename/path allocated with malloc!
+			// Passing anything else will almost certainly cause a crash at some point.
+
+			if (!msg.wParam) {
+				ConsoleLog(LOG_WARNING, "CORE: Kuroko root thread received WM_KUROKO_FILE with wParam == NULL.\n");
+				continue;
+			}
+			EnterKurokoFile((const char*)msg.wParam);
 			PostThreadMessage(dwConsoleThreadID, WM_CONSOLE_REPL, NULL, NULL);
 		}
 		else if (msg.message == WM_QUIT)

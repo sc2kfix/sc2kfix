@@ -56,7 +56,7 @@ console_command_t fpConsoleCommands[] = {
 	{ "echo!", ConsoleCmdEcho, CONSOLE_COMMAND_UNDOCUMENTED, "Print to console without newline" },
 	{ "help", ConsoleCmdHelp, CONSOLE_COMMAND_DOCUMENTED, "Display this help" },
 	//{ "label", ConsoleCmdLabel, CONSOLE_COMMAND_SCRIPTONLY, "Script label" },
-	{ "run", ConsoleCmdRun, CONSOLE_COMMAND_DOCUMENTED, "Run console script" },
+	{ "run", ConsoleCmdRun, CONSOLE_COMMAND_DOCUMENTED, "Run Kuroko code" },
 	{ "set", ConsoleCmdSet, CONSOLE_COMMAND_DOCUMENTED, "Modify game and plugin behaviour" },
 	{ "show", ConsoleCmdShow, CONSOLE_COMMAND_DOCUMENTED, "Display various game and plugin information" },
 	{ "unset", ConsoleCmdSet, CONSOLE_COMMAND_DOCUMENTED, "Modify game and plugin behaviour" },
@@ -86,7 +86,7 @@ BOOL ConsoleCmdRun(const char* szCommand, const char* szArguments) {
 	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
 		printf(
 			"  run kuroko       Enters the Kuroko REPL\n"
-			"  run <filename>   Executes a file as a series of console commands\n");
+			"  run <filename>   Executes a file as a Kuroko module\n");
 		return TRUE;
 	}
 
@@ -104,30 +104,24 @@ BOOL ConsoleCmdRun(const char* szCommand, const char* szArguments) {
 	// Try to find the script we want
 	strPossibleScriptName = szArguments;
 	if (!FileExists(strPossibleScriptName.c_str())) {
-		strPossibleScriptName += ".sx2";
+		strPossibleScriptName += ".krk";
 		if (!FileExists(strPossibleScriptName.c_str())) {
 			ConsoleLog(LOG_ERROR, "CORE: Couldn't find script %s.\n", szArguments);
 			return TRUE;
 		}
 	}
 
-	// Iterate through the script and run lines until they fail
-	std::ifstream fsScriptFile(strPossibleScriptName);
-	std::string strScriptLine;
-	int i = 1;
-	iConsoleScriptNest++;
-	while (std::getline(fsScriptFile, strScriptLine)) {
-		if (!ConsoleEvaluateCommand(strScriptLine.c_str(), FALSE) || !iConsoleScriptNest) {
-			ConsoleLog(LOG_ERROR, "CORE: Script %s aborted on line %d.\n", strPossibleScriptName.c_str(), i);
+	// Execute through Kuroko
+	if (bKurokoVMInitialized) {
+		char* szFilename = (char*)malloc(strPossibleScriptName.length() + 1);
+		if (!szFilename)
 			return TRUE;
-		}
 
-		// We survived!
-		i++;
+		strcpy_s(szFilename, strPossibleScriptName.length() + 1, strPossibleScriptName.c_str());
+		PostThreadMessage(dwKurokoThreadID, WM_KUROKO_FILE, (WPARAM)szFilename, NULL);
+		GetMessage(&msg, NULL, 0, 0);
+		free(szFilename);
 	}
-
-	// Decrement the nesting count and break	
-	iConsoleScriptNest--;
 	return TRUE;
 }
 
