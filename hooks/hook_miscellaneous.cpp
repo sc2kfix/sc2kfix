@@ -363,6 +363,241 @@ extern "C" int __stdcall Hook_CSimcityView_WM_MBUTTONDOWN(WPARAM wMouseKeys, POI
 	return wTileCoords;
 }
 
+extern "C" __int16 __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(WPARAM iMouseKeys, POINT pt) {
+	DWORD pThis;
+
+	__asm mov[pThis], ecx
+
+	int ret;
+	HWND hWnd;
+	int iYVar;
+	tagRECT Rect;
+
+	ret = *(DWORD *)(pThis + 268);
+	if (ret)
+		*(DWORD *)(pThis + 268) = 0;
+	else {
+		ret = PtInRect((const RECT *)(pThis + 232), pt);
+		if (!ret) {
+			Game_GetScreenAreaInfo(pThis, &Rect);
+			if (PtInRect((const RECT *)(pThis + 88), pt)) {
+				iYVar = *(DWORD *)(pThis + 76);
+				// ShiftScreenYPos:
+				// - Second argument:
+				//   - 0 - Up Key or left-click the top arrow on the vertical scrollbar
+				//   - 1 - Down Key or left-click the bottom arrow on the vertical scrollbar
+				//   - 2 - Left-click on the vertical scrollbar above the 'thumb'
+				//   - 3 - Left-click on the vertical scrollbar below the 'thumb'
+				//   - 4 - Release the 'thumb' (new 'thumb' release position reflected on screen)
+				//   - 5 - Left-click on the vertical scrollbar 'thumb' hold and drag (return result from function is 0 - 'default' case hit)
+				//   - 6 - Directly to bottom (trigger currently unknown)
+				//   - 7 - Directly to top (trigger currently unknown)
+				//   - 8 - Release either arrow on the vertical scrollbar (return result from function is 0 - 'default' case hit)
+				if (PtInRect((const RECT *)(pThis + 120), pt))
+					P_LOWORD(ret) = Game_ShiftScreenYPosWithKeyOrVScrollbar(pThis, 1, 0, iYVar);
+				else if (PtInRect((const RECT *)(pThis + 104), pt))
+					P_LOWORD(ret) = Game_ShiftScreenYPosWithKeyOrVScrollbar(pThis, 0, 0, iYVar);
+				else if (PtInRect((const RECT *)(pThis + 136), pt))
+					P_LOWORD(ret) = Game_ShiftScreenYPosWithKeyOrVScrollbar(pThis, 5, pt.y, iYVar);
+				else {
+					if (*(DWORD *)(pThis + 140) >= pt.y)
+						P_LOWORD(ret) = Game_ShiftScreenYPosWithKeyOrVScrollbar(pThis, 2, 0, iYVar);
+					else
+						P_LOWORD(ret) = Game_ShiftScreenYPosWithKeyOrVScrollbar(pThis, 3, 0, iYVar);
+				}
+			}
+			else {
+				ret = *(DWORD *)(pThis + 252);
+				if (!ret) {
+					hWnd = SetCapture(*(HWND *)(pThis + 28));
+					Game_CWnd_FromHandle(hWnd);
+					P_LOWORD(ret) = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
+					wCurrentTileCoordinates = ret;
+					if ((__int16)ret >= 0) {
+						wTileCoordinateX = (uint8_t)ret;
+						wPreviousTileCoordinateX = (uint8_t)ret;
+						wTileCoordinateY = wCurrentTileCoordinates >> 8;
+						wPreviousTileCoordinateY = wCurrentTileCoordinates >> 8;
+						wGameScreenAreaX = pt.x;
+						wGameScreenAreaY = pt.y;
+						*(DWORD *)(pThis + 252) = 1;
+						*(DWORD *)(pThis + 248) = 1;
+						if (wCityMode)
+							P_LOWORD(ret) = Game_CityToolMenuAction(iMouseKeys, pt);
+						else
+							P_LOWORD(ret) = Game_MapToolMenuAction(iMouseKeys, pt);
+					}
+				}
+			}
+		}
+	}
+
+	return ret;
+}
+
+extern "C" __int16 __stdcall Hook_CSimcityView_WM_MOUSEMOVE(WPARAM iMouseKeys, POINT pt) {
+	DWORD pThis;
+
+	__asm mov[pThis], ecx
+
+	int iTileCoords;
+	int iThisSomething;
+
+	P_LOWORD(iTileCoords) = pt.x;
+	iThisSomething = *(DWORD *)(pThis + 252);
+	*(struct tagPOINT *)(pThis + 260) = pt; // Placement position.
+	if (iThisSomething) {
+		P_LOWORD(iTileCoords) = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
+		wCurrentTileCoordinates = iTileCoords;
+		if ((__int16)iTileCoords >= 0) {
+			wTileCoordinateX = (unsigned __int8)iTileCoords;
+			P_LOWORD(iTileCoords) = wCurrentTileCoordinates >> 8;
+			wTileCoordinateY = wCurrentTileCoordinates >> 8;
+			if ( wPreviousTileCoordinateX != wTileCoordinateX || wPreviousTileCoordinateY != (WORD)iTileCoords) {
+				if ( (int)abs(wGameScreenAreaX - pt.x) > 1 || (iTileCoords = abs(wGameScreenAreaY - pt.y), iTileCoords > 1) ) {
+					*(DWORD *)(pThis + 256) = 1;
+					if ((iMouseKeys & MK_LBUTTON) != 0) {
+						if (*(DWORD *)(pThis + 248)) {
+							if (wCityMode) {
+								if ((wCurrentCityToolGroup != 17) || GetAsyncKeyState(VK_MENU) & 0x8000)
+									Game_CityToolMenuAction(iMouseKeys, pt);
+							}
+							else {
+								if ((wCurrentMapToolGroup == 9 && GetAsyncKeyState(VK_MENU) & 0x8000) || // 'Center Tool' selected with either 'Alt' key pressed.
+									(wCurrentMapToolGroup != 9 && (iMouseKeys & MK_CONTROL) == 0) || // Other tool selected with 'ctrl' not pressed.
+									(wCurrentMapToolGroup != 9 && (iMouseKeys & MK_CONTROL) != 0 && GetAsyncKeyState(VK_MENU) & 0x8000)) // Other tool with 'ctrl' pressed (Center Tool) and 'Alt'.
+									Game_MapToolMenuAction(iMouseKeys, pt);
+							}
+						}
+					}
+					P_LOWORD(iTileCoords) = wTileCoordinateX;
+					wPreviousTileCoordinateX = wTileCoordinateX;
+					wPreviousTileCoordinateY = wTileCoordinateY;
+					wGameScreenAreaX = pt.x;
+					wGameScreenAreaY = pt.y;
+				}
+			}
+		}
+	}
+
+	return iTileCoords;
+}
+
+extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
+	DWORD *pThis;
+	int ret;
+	__int16 iCurrToolGroupA, iCurrToolGroupB;
+	__int16 iTileStartX, iTileStartY;
+	__int16 iTileTargetX, iTileTargetY;
+	WORD wNewScreenPointX, wNewScreenPointY;
+	HWND hWnd;
+
+	// pThis[62] - When this is set to 0, you remain within the do/while loop until you
+	//             release the left mouse button.
+	//             If it is set to 1 while the left mouse button is pressed (Shift key is
+	//             pressed and the iCurrToolGroupA is not 7 or 8 (trees or forest respectively)
+	//             it will break out of the loop and then you end up within the WM_MOUSEMOVE
+	//             call (if mouse movement is taking place).
+	//
+	// The change in this case is to only set pThis[62] to 0 when the iCurrToolGroupA is not
+	// 'Center Tool', this will then allow it to pass-through to the WM_MOUSEMOVE call.
+
+	pThis = (DWORD *)Game_PointerToCSimcityView(pCWinAppThis);
+	Game_TileHighlightUpdate((int)pThis);
+	iCurrToolGroupA = wCurrentMapToolGroup;
+	iTileStartX = 400;
+	iTileStartY = 400;
+	iCurrToolGroupB = wCurrentMapToolGroup;
+	if ((iMouseKeys & MK_CONTROL) != 0)
+		iCurrToolGroupA = 9;
+	if (iCurrToolGroupA != 9)
+		pThis[62] = 0;
+	do {
+		P_LOWORD(ret) = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
+		if ((__int16)ret < 0)
+			break;
+		iTileTargetX = ret & 0x7f;
+		iTileTargetY = (__int16)ret >> 8;
+		if ((unsigned __int16)iTileTargetX >= 0x80u || iTileTargetY < 0)
+			break;
+		if ((iMouseKeys & MK_SHIFT) != 0 && iCurrToolGroupA != 7 && iCurrToolGroupA != 8) {
+			pThis[62] = 1;
+			break;
+		}
+		if (iTileStartX != iTileTargetX || iTileStartY != iTileTargetY) {
+			switch (iCurrToolGroupA) {
+			case 0: // Bulldozing, only relevant in the CityToolMenuAction code it seems.
+				Game_UseBulldozer(iTileTargetX, iTileTargetY);
+				Game_UpdateAreaPortionFill(pThis);
+				break;
+			case 1: // Raise Terrain
+				P_LOWORD(ret) = Game_MapToolRaiseTerrain(iTileTargetX, iTileTargetY);
+				break;
+			case 2: // Lower Terrain
+				P_LOWORD(ret) = Game_MapToolLowerTerrain(iTileTargetX, iTileTargetY);
+				break;
+			case 3: // Raise/LowerToLevelOut Terrain (Drag vertically)
+				P_LOWORD(ret) = Game_MapToolVerticalTerrainRaiseOrLevelOut(iTileTargetX, iTileTargetY, pt.y);
+				break;
+			case 4: // Level Terrain
+				P_LOWORD(ret) = Game_MapToolLevelTerrain(iTileTargetX, iTileTargetY);
+				break;
+			case 5: // Place Water
+			case 6: // Place Stream
+				if (iCurrToolGroupA == 5) {
+					if (!Game_MapToolPlaceWater(iTileTargetX, iTileTargetY) || Game_MapToolSoundTrigger(dwAudioHandle))
+						break;
+				}
+				else {
+					Game_MapToolPlaceStream(iTileTargetX, iTileTargetY, 100);
+					if (Game_MapToolSoundTrigger(dwAudioHandle))
+						break;
+				}
+				Game_SoundPlaySound(pCWinAppThis, 511);
+				break;
+			case 7: // Place Tree
+			case 8: // Place Forest
+				if (!Game_MapToolSoundTrigger(dwAudioHandle))
+					Game_SoundPlaySound(pCWinAppThis, 503);
+				if (iCurrToolGroupA == 7)
+					Game_MapToolPlaceTree(iTileTargetX, iTileTargetY);
+				else
+					Game_MapToolPlaceForest(iTileTargetX, iTileTargetY);
+				break;
+			case 9: // Center Tool
+				Game_GetScreenCoordsFromTileCoords(iTileTargetX, iTileTargetY, &wNewScreenPointX, &wNewScreenPointY);
+				Game_SoundPlaySound(pCWinAppThis, 505);
+				if (*(DWORD *)((char *)pThis + 322))
+					Game_CenterOnNewScreenCoordinates(pThis, wScreenPointX - (wNewScreenPointX >> 1), wScreenPointY - (wNewScreenPointY >> 1));
+				else
+					Game_CenterOnNewScreenCoordinates(pThis, wScreenPointX - wNewScreenPointX, wScreenPointY - wNewScreenPointY);
+				break;
+			default:
+				break;
+			}
+		}
+		if (iCurrToolGroupA >= 1 && iCurrToolGroupA <= 4)
+			break;
+		else if (iCurrToolGroupA == 9) {
+			Game_UpdateAreaCompleteColorFill(pThis);
+			hWnd = (HWND)pThis[7];
+			UpdateWindow(hWnd);
+			break;
+		}
+		Game_UpdateAreaPortionFill(pThis);
+		iTileStartX = iTileTargetX;
+		hWnd = (HWND)pThis[7];
+		iTileStartY = iTileTargetY;
+		UpdateWindow(hWnd);
+		ret = Game_CSimcityViewMouseMoveOrLeftClick(pThis, &pt);
+	} while (ret);
+	if (iCurrToolGroupB != iCurrToolGroupA) {
+		P_LOWORD(ret) = iCurrToolGroupB;
+		wCurrentCityToolGroup = iCurrToolGroupB;
+	}
+	return ret;
+}
+
 // Placeholder.
 void ShowModSettingsDialog(void) {
 	ConsoleLog(LOG_DEBUG, "FUCK");
@@ -562,6 +797,18 @@ void InstallMiscHooks(void) {
 	}
 
 skipmenu:
+
+	// Hook for the game area leftmousebuttondown call.
+	VirtualProtect((LPVOID)0x401523, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x401523, Hook_CSimcityView_WM_LBUTTONDOWN);
+
+	// Hook for the game area mouse movement call.
+	VirtualProtect((LPVOID)0x4016EA, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4016EA, Hook_CSimcityView_WM_MOUSEMOVE);
+
+	// Hook for the MapToolMenuAction call.
+	VirtualProtect((LPVOID)0x402B44, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402B44, Hook_MapToolMenuAction);
 
 	// Add hook to center with the middle mouse button
 	AFX_MSGMAP_ENTRY afxMessageMapEntrySimCityView = {

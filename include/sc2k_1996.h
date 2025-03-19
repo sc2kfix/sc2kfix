@@ -747,22 +747,44 @@ int PlaceRoadsAlongPath(int x1, int y1, int x2, int y2);
 
 GAMECALL(0x40106E, int, __cdecl, PlaceRoadAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x401096, int, __thiscall, SoundPlaySound, void* pThis, int iSoundID)
+GAMECALL(0x4011E5, int, __thiscall, MapToolSoundTrigger, void* pThis)
+GAMECALL(0x4014F1, int, __thiscall, TileHighlightUpdate, int pThis)
 GAMECALL(0x401519, void, __thiscall, ToolMenuEnable, void* pThis)
+GAMECALL(0x4016D1, int, __thiscall, CenterOnNewScreenCoordinates, void *pThis, __int16 iNewScreenPointX, __int16 iNewScreenPointY)
 GAMECALL(0x40178F, __int16, __cdecl, PlaceTileWithMilitaryCheck, __int16 x, __int16 y, __int16 iTileID)
+GAMECALL(0x401857, int, __cdecl, MapToolPlaceTree, __int16 iTileTargetX, __int16 iTileTargetY)
+GAMECALL(0x40198D, int, __cdecl, MapToolPlaceStream, __int16 iTileTargetX, __int16 iTileTargetY, __int16) // XXX - the last parameter isn't entirely clear, perhaps area or offset?
+GAMECALL(0x401997, int, __cdecl, MapToolPlaceWater, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x4019EC, int, __cdecl, CenterOnTileCoords, __int16 x, __int16 y)
 GAMECALL(0x401A37, int, __cdecl, MaybeRoadViabilityAlongPath, __int16* x, __int16* y)
+GAMECALL(0x401AB4, int, __cdecl, MapToolRaiseTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x401AF0, int, __cdecl, MaybeCheckViablePlacementPath, __int16 x1, __int16 y1, __int16 x2, __int16 y2)
 GAMECALL(0x401D16, __int16, __cdecl, GetTileCoordsFromScreenCoords, __int16 x, __int16 y)
+GAMECALL(0x401E47, BOOL, __cdecl, UseBulldozer, __int16 iTileTargetX, __int16 iTileTargetY)
+GAMECALL(0x401EA1, int, __cdecl, MapToolLowerTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
+GAMECALL(0x40226B, int, __thiscall, UpdateAreaPortionFill, void *) // This appears to do a partial update of selected/highlighted area while appearing to dispense with immediate color updates.
 GAMECALL(0x40235B, int, __stdcall, DrawSquareHighlight, WORD x, WORD y, WORD, WORD)		// XXX - Not 100% sure what the second pair of arguments is
 GAMECALL(0x4023EC, void, __stdcall, ToolMenuUpdate, void)
 GAMECALL(0x402414, int, __thiscall, MusicPlay, DWORD pThis, int iSongID)
+GAMECALL(0x40258B, int, __cdecl, GetScreenCoordsFromTileCoords, __int16 iTileTargetX, __int16 iTileTargetY, WORD *wNewScreenPointX, WORD *wNewScreenPointY)
+GAMECALL(0x402699, int, __thiscall, PointerToCSimcityView, void* CWinAppThis)
+GAMECALL(0x402798, int, __cdecl, MapToolPlaceForest, __int16 iTileTargetX, __int16 iTileTargetY)
+GAMECALL(0x4027A7, int, __thiscall, ShiftScreenYPosWithKeyOrVScrollbar, DWORD pThis, int iMoveTrigger, __int16 iYPos, int) // Last argument unknown
+GAMECALL(0x402810, int, __thiscall, UpdateAreaCompleteColorFill, void *) // This appears to be a more comprehensive update that'll occur for highlighted/selected area or when you're moving the game area.
 GAMECALL(0x402937, void, __thiscall, ToolMenuDisable, void* pThis)
+GAMECALL(0x4029C3, int, __cdecl, CSimcityViewMouseMoveOrLeftClick, void* pThis, LPPOINT lpPoint)
+GAMECALL(0x402B2B, int, __cdecl, MapToolVerticalTerrainRaiseOrLevelOut, __int16 iTileTargetX, __int16 iTileTargetY, __int16 iScreenTargetPointY)
+GAMECALL(0x402B44, __int16, __cdecl, MapToolMenuAction, int iMouseKeys, POINT pt)
+GAMECALL(0x402B94, int, __cdecl, MapToolLevelTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
+GAMECALL(0x402C25, int, __cdecl, CityToolMenuAction, int iMouseKeys, POINT pt)
+GAMECALL(0x402F9A, int, __thiscall, GetScreenAreaInfo, DWORD pThis, LPRECT lpRect)
 GAMECALL(0x480140, void, __stdcall, LoadSoundBuffer, int iSoundID, void* pBuffer)
 
 
 // MFC function pointers. Use with care.
 GAMECALL(0x4017B2, void, __thiscall, RefreshTitleBar, void* pThis)
 GAMECALL(0x40C3E0, void, __thiscall, CFrameWnd_ShowStatusBar, HWND* pThis, HWND hWnd)
+GAMECALL(0x4A3BDF, struct CWnd *, __stdcall, CWnd_FromHandle, HWND hWnd)
 GAMECALL(0x4AE0BC, void, __thiscall, CDocument_UpdateAllViews, void* pThis, void* pSender, int lHint, void* pHint)
 GAMECALL(0x4B234F, int, __stdcall, AfxMessageBox, unsigned int nIDPrompt, unsigned int nType, unsigned int nIDHelp)
 
@@ -773,8 +795,14 @@ GAMECALL(0x4B234F, int, __stdcall, AfxMessageBox, unsigned int nIDPrompt, unsign
 GAMEOFF_PTR(void, pCWinAppThis,				0x4C7010)
 GAMEOFF(void*,	pCWndRootWindow,			0x4C702C)
 GAMEOFF(BOOL,	bPriscillaActivated,		0x4C7104)
+GAMEOFF(DWORD*, dwAudioHandle,				0x4C7158)		// Various checks have pointed towards audio (sound and/or midi - perhaps stoppage given some context elsewhere)
 GAMEOFF(BOOL,	bOptionsMusicEnabled,		0x4C71F0)
 GAMEOFF(WORD,	wSimulationSpeed,			0x4C7318)
+GAMEOFF(WORD,	wCurrentTileCoordinates,	0x4C7A98)
+GAMEOFF(WORD,	wTileCoordinateX,			0x4C7AB0)
+GAMEOFF(WORD,	wTileCoordinateY,			0x4C7AB4)
+GAMEOFF(WORD,	wGameScreenAreaX,			0x4C7AD8)		// Used here in CSimcityView_WM_LBUTTONDOWN and CSimcityView_WM_MOUSEFIRST
+GAMEOFF(WORD,	wGameScreenAreaY,			0x4C7ADC)		// Used here in CSimcityView_WM_LBUTTONDOWN and CSimcityView_WM_MOUSEFIRST
 GAMEOFF(WORD,	wMaybeActiveToolGroup,		0x4C7D88)
 GAMEOFF(WORD,	wViewRotation,				0x4C942C)
 GAMEOFF(BOOL,	bCityHasOcean,				0x4C94C0)
@@ -803,6 +831,8 @@ GAMEOFF(DWORD,	dwPowerUsedPercentage,		0x4CAA50)
 GAMEOFF(DWORD,	dwCityPopulation,			0x4CAA74)
 GAMEOFF_ARR(DWORD, dwNeighborPopulation,	0x4CAD10)		// DWORD dwNeighborPopulation[4]
 GAMEOFF(BOOL,	bYearEndFlag,				0x4CAD2C)
+GAMEOFF(WORD,	wScreenPointX,				0x4CAD30)		// Used here in MapToolMenuAction
+GAMEOFF(WORD,	wScreenPointY,				0x4CAD34)		// Used here in MapToolMenuAction
 GAMEOFF(BOOL,	bInScenario,				0x4CAD44)
 GAMEOFF_ARR(char, szNeighborNameSouth,		0x4CAD58)		// char[32]
 GAMEOFF_ARR(char, szNeighborNameWest,		0x4CAD78)		// char[32]
@@ -842,6 +872,8 @@ GAMEOFF(DWORD,	dwCityPollution,			0x4CC910)		// Needs reverse engineering. See w
 GAMEOFF(DWORD,	dwLFSRState,				0x4CDB7C)
 GAMEOFF(DWORD,	dwLCGState,					0x4CDB80)
 GAMEOFF(void*,	pCWinApp,					0x4CE8C0)
+GAMEOFF(WORD,	wPreviousTileCoordinateX,	0x4E6808)
+GAMEOFF(WORD,	wPreviousTileCoordinateY,	0x4E680C)
 
 // XXX - I think these ones aren't in BSS? I forget why I separated these out.
 // They'll go on the wiki as soon as I remember what the hell they do.
