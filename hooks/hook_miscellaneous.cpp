@@ -373,29 +373,37 @@ extern "C" __int16 __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(WPARAM iMouseKeys,
 	int iYVar;
 	tagRECT Rect;
 
-	int(__thiscall *H_GetRectInfo)(DWORD, LPRECT) = (int(__thiscall *)(DWORD, LPRECT))0x402F9A;
-	int(__thiscall *H_GetPosInfo)(DWORD, int, __int16, int) = (int(__thiscall *)(DWORD, int, __int16, int))0x4027A7;
-
 	ret = *(DWORD *)(pThis + 268);
 	if (ret)
 		*(DWORD *)(pThis + 268) = 0;
 	else {
 		ret = PtInRect((const RECT *)(pThis + 232), pt);
 		if (!ret) {
-			H_GetRectInfo(pThis, &Rect);
+			Game_GetScreenAreaInfo(pThis, &Rect);
 			if (PtInRect((const RECT *)(pThis + 88), pt)) {
+				iYVar = *(DWORD *)(pThis + 76);
+				// ShiftScreenYPos:
+				// - Second argument:
+				//   - 0 - Up Key or left-click the top arrow on the vertical scrollbar
+				//   - 1 - Down Key or left-click the bottom arrow on the vertical scrollbar
+				//   - 2 - Left-click on the vertical scrollbar above the 'thumb'
+				//   - 3 - Left-click on the vertical scrollbar below the 'thumb'
+				//   - 4 - Release the 'thumb' (new 'thumb' release position reflected on screen)
+				//   - 5 - Left-click on the vertical scrollbar 'thumb' hold and drag (return result from function is 0 - 'default' case hit)
+				//   - 6 - Directly to bottom (trigger currently unknown)
+				//   - 7 - Directly to top (trigger currently unknown)
+				//   - 8 - Release either arrow on the vertical scrollbar (return result from function is 0 - 'default' case hit)
 				if (PtInRect((const RECT *)(pThis + 120), pt))
-					P_LOWORD(ret) = H_GetPosInfo(pThis, 1, 0, *(DWORD *)(pThis + 76));
+					P_LOWORD(ret) = Game_ShiftScreenYPosWithKeyOrVScrollbar(pThis, 1, 0, iYVar);
 				else if (PtInRect((const RECT *)(pThis + 104), pt))
-					P_LOWORD(ret) = H_GetPosInfo(pThis, 0, 0, *(DWORD *)(pThis + 76));
+					P_LOWORD(ret) = Game_ShiftScreenYPosWithKeyOrVScrollbar(pThis, 0, 0, iYVar);
 				else if (PtInRect((const RECT *)(pThis + 136), pt))
-					P_LOWORD(ret) = H_GetPosInfo(pThis, 5, pt.y, *(DWORD *)(pThis + 76));
+					P_LOWORD(ret) = Game_ShiftScreenYPosWithKeyOrVScrollbar(pThis, 5, pt.y, iYVar);
 				else {
-					iYVar = *(DWORD *)(pThis + 76);
 					if (*(DWORD *)(pThis + 140) >= pt.y)
-						P_LOWORD(ret) = H_GetPosInfo(pThis, 2, 0, iYVar);
+						P_LOWORD(ret) = Game_ShiftScreenYPosWithKeyOrVScrollbar(pThis, 2, 0, iYVar);
 					else
-						P_LOWORD(ret) = H_GetPosInfo(pThis, 3, 0, iYVar);
+						P_LOWORD(ret) = Game_ShiftScreenYPosWithKeyOrVScrollbar(pThis, 3, 0, iYVar);
 				}
 			}
 			else {
