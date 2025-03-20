@@ -35,27 +35,19 @@ BOOL bConsoleEnabled = TRUE;
 BOOL bConsoleEnabled = FALSE;
 #endif
 
-typedef struct {
-	int iType;
-	DWORD dwContents;
-} script_variable_t;
-
 HANDLE hConsoleThread;
 DWORD dwConsoleThreadID;
 char szCmdBuf[256] = { 0 };
 BOOL bConsoleUndocumentedMode = FALSE;
-int iConsoleScriptNest = 0;
-std::map<std::string, script_variable_t> mapVariables;
 
 static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments);
 
 console_command_t fpConsoleCommands[] = {
 	{ "?", ConsoleCmdHelp, CONSOLE_COMMAND_ALIAS, "" },
-	{ "clear", ConsoleCmdClear, CONSOLE_COMMAND_DOCUMENTED, "Clear all variables" },
+	{ "clear", ConsoleCmdClear, CONSOLE_COMMAND_DOCUMENTED, "Clear screen" },
 	{ "echo", ConsoleCmdEcho, CONSOLE_COMMAND_DOCUMENTED, "Print to console" },
 	{ "echo!", ConsoleCmdEcho, CONSOLE_COMMAND_UNDOCUMENTED, "Print to console without newline" },
 	{ "help", ConsoleCmdHelp, CONSOLE_COMMAND_DOCUMENTED, "Display this help" },
-	//{ "label", ConsoleCmdLabel, CONSOLE_COMMAND_SCRIPTONLY, "Script label" },
 	{ "run", ConsoleCmdRun, CONSOLE_COMMAND_DOCUMENTED, "Run Kuroko code" },
 	{ "set", ConsoleCmdSet, CONSOLE_COMMAND_DOCUMENTED, "Modify game and plugin behaviour" },
 	{ "show", ConsoleCmdShow, CONSOLE_COMMAND_DOCUMENTED, "Display various game and plugin information" },
@@ -65,17 +57,9 @@ console_command_t fpConsoleCommands[] = {
 
 void ConsoleScriptSleep(DWORD dwMilliseconds) {
 	int i = dwMilliseconds / 100;
-	do {
-		if (!iConsoleScriptNest)
-			return;
+	do
 		Sleep(100);
-		i--;
-	} while (i);
-}
-
-BOOL ConsoleCmdLabel(const char* szCommand, const char* szArguments) {
-	if (!szArguments || !*szArguments)
-		return FALSE;
+	while (--i);
 }
 
 // COMMAND: run ...
@@ -126,9 +110,7 @@ BOOL ConsoleCmdRun(const char* szCommand, const char* szArguments) {
 }
 
 BOOL ConsoleCmdClear(const char* szCommand, const char* szArguments) {
-	mapVariables.clear();
-	if (!iConsoleScriptNest)
-		printf("Variable map cleared.\n");
+	WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), "\x1b[2J\x1b[0;0H", sizeof("\x1b[2J\x1b[0;0H"), NULL, NULL);
 	return TRUE;
 }
 
@@ -139,9 +121,6 @@ BOOL ConsoleCmdEcho(const char* szCommand, const char* szArguments) {
 
 BOOL ConsoleCmdWait(const char* szCommand, const char* szArguments) {
 	int iMilliseconds = 0;
-
-	// Function only valid in script mode
-	if (!iConsoleScriptNest)
 		return FALSE;
 
 	// Sleep for N milliseconds
@@ -620,9 +599,6 @@ DWORD WINAPI ConsoleThread(LPVOID lpParameter) {
 BOOL WINAPI ConsoleCtrlHandler(DWORD fdwCtrlType) {
 	switch (fdwCtrlType) {
 	case CTRL_C_EVENT:
-		if (iConsoleScriptNest)
-			printf("\nScript halted due to Control-C interrupt.\n\n");
-		iConsoleScriptNest = 0;
 		return TRUE;
 	}
 	return FALSE;

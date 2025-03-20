@@ -26,6 +26,7 @@ KRK_BUNDLE_LIBS
 
 #define KRK_GAMEOFF(x) krk_attachNamedValue(&objState->fields, #x, INTEGER_VAL(&x))
 #define KRK_GAMEOFF_PTR(x) krk_attachNamedValue(&objState->fields, #x, INTEGER_VAL(x))
+#define KRK_ENUM_PAIR(x) #x, INTEGER_VAL(x)
 
 extern "C" int EnterKurokoREPL(void);
 extern "C" int EnterKurokoFile(const char* szFilename);
@@ -232,6 +233,19 @@ extern "C" {
 		BIND_FUNC(module, console_log)->doc = "Provides access to the sc2kfix ConsoleLog function.";
 	}
 
+	KRK_Function(GameGetRootWindowHandle) {
+		FUNCTION_TAKES_EXACTLY(0);
+		return INTEGER_VAL(GameGetRootWindowHandle());
+	}
+
+	KRK_Function(SoundPlaySound) {
+		FUNCTION_TAKES_EXACTLY(2);
+		CHECK_ARG(0, int, krk_integer_type, pThis);
+		CHECK_ARG(1, int, krk_integer_type, iSoundID);
+
+		return INTEGER_VAL(Game_SoundPlaySound((void*)pThis, iSoundID));
+	}
+
 	KRK_Module(sc2k) {
 		krk_attachNamedObject(&module->fields, "__doc__", (KrkObj*)S("Functions and classes for interacting with the SimCity 2000 game state."));
 
@@ -241,6 +255,13 @@ extern "C" {
 		BIND_FUNC(module, write_dword)->doc = "Writes a DWORD to a specified address and returns the previous value as an integer.";
 		BIND_FUNC(module, write_word)->doc = "Writes a WORD to a specified address and returns the previous value as an integer.";
 		BIND_FUNC(module, write_byte)->doc = "Writes a BYTE to a specified address and returns the previous value as an integer.";
+
+		KrkInstance* objCalls = krk_newInstance(KRK_BASE_CLASS(object));
+		krk_attachNamedObject(&objCalls->fields, "__doc__", (KrkObj*)S("Functions in the SimCity 2000 engine callable from Kuroko."));
+		krk_attachNamedObject(&module->fields, "calls", (KrkObj*)objCalls);
+
+		BIND_FUNC(objCalls, GameGetRootWindowHandle)->doc = "HWND GameGetRootWindowHandle(void)";
+		BIND_FUNC(objCalls, SoundPlaySound)->doc = "int SoundPlaySound(void* this, int iSoundID)";
 
 		KrkInstance* objState = krk_newInstance(KRK_BASE_CLASS(object));
 		krk_attachNamedObject(&objState->fields, "__doc__", (KrkObj*)S("Pointers to SimCity 2000 game state objects."));
@@ -366,5 +387,63 @@ extern "C" {
 		KRK_GAMEOFF_PTR(dwMapXLAB);
 		KRK_GAMEOFF_PTR(dwMapXTHG);
 		KRK_GAMEOFF_PTR(dwMapXGRP);
+
+		// Sounds enum
+		KrkInstance* objSounds = krk_newInstance(KRK_BASE_CLASS(object));
+		krk_attachNamedObject(&objSounds->fields, "__doc__", (KrkObj*)S("Constants for sound IDs."));
+		krk_attachNamedObject(&module->fields, "sounds", (KrkObj*)objSounds);
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_BUILD));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_ERROR));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_WIND));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_PLOP));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_EXPLODE));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_CLICK));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_POLICE));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_FIRE));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_BULLDOZER));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_FIRETRUCK));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_SIMCOPTER));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_FLOOD));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_BOOS));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_CHEERS));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_ZAP));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_MAYDAY));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_IMHIT));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_SHIP));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_TAKEOFF));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_LAND));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_SIREN));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_HORNS));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_PRISON));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_SCHOOL));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_TRAIN));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_MILITARY));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_ARCO));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_MONSTER));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_BULLDOZER2));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_RETICULATINGSPLINES));
+		krk_attachNamedValue(&objSounds->fields, KRK_ENUM_PAIR(SOUND_SILENT));
+
+		// Things enum
+		KrkInstance* objThings = krk_newInstance(KRK_BASE_CLASS(object));
+		krk_attachNamedObject(&objThings->fields, "__doc__", (KrkObj*)S("Constants for Thing IDs."));
+		krk_attachNamedObject(&module->fields, "things", (KrkObj*)objThings);
+		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_NONE));
+		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_AIRPLANE));
+		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_HELICOPTER));
+		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_CARGO_SHIP));
+		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_BULLDOZER));
+		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_MONSTER));
+		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_EXPLOSION));
+		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_DEPLOY_POLICE));
+		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_DEPLOY_FIRE));
+		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_SAILBOAT));
+		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_TRAIN_ENGINE));
+		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_TRAIN_CAR));
+		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_UNKNOWN_3));
+		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_UNKNOWN_4));
+		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_DEPLOY_MILITARY));
+		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_TORNADO));
+		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_MAXIS_MAN));
 	}
 }

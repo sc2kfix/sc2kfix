@@ -54,6 +54,10 @@ HFONT hSystemRegular12;
 std::random_device rdRandomDevice;
 std::mt19937 mtMersenneTwister(rdRandomDevice());
 
+#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
+#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+#endif
+
 // Statics
 static DWORD dwDummy;
 
@@ -180,6 +184,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			freopen_s(&fdDummy, "CONIN$", "r", stdin);
 			freopen_s(&fdDummy, "CONOUT$", "w", stdout);
 			freopen_s(&fdDummy, "CONOUT$", "w", stderr);
+
+			// Enable VT100 codes
+			DWORD dwConsoleOutMode;
+			GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &dwConsoleOutMode);
+			dwConsoleOutMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+			SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), dwConsoleOutMode);
 
 			// Set the console window icon
 			HWND hConsoleWindow = GetConsoleWindow();
