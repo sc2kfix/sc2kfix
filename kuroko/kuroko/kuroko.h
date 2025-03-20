@@ -16,7 +16,7 @@ extern "C" {
 typedef int64_t krk_integer_type;
 
 //#define KRK_DISABLE_THREADS
-#define KRK_BUNDLE_LIBS BUNDLED(fileio); BUNDLED(math); BUNDLED(os); BUNDLED(random); BUNDLED(time); BUNDLED(sc2kfix);
+#define KRK_BUNDLE_LIBS BUNDLED(fileio); BUNDLED(math); BUNDLED(os); BUNDLED(random); BUNDLED(time); BUNDLED(sc2k); BUNDLED(sc2kfix);
 
 #ifndef _WIN32
 # define KRK_PATH_SEP "/"
