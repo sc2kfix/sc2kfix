@@ -210,6 +210,23 @@ extern "C" DWORD __cdecl Hook_SmackOpen(LPCSTR lpFileName, uint32_t uFlags, int3
 	return SMKOpenProc(AdjustSource(buf, lpFileName), uFlags, iExBuf);
 }
 
+extern "C" int __stdcall Hook_ApparentExit(void) {
+	DWORD pThis;
+
+	__asm mov[pThis], ecx
+
+	// 0x405FCF - GameDoIdleUpKeep() - toolmenu item from prior to the game starting. (This one can be ignored)
+	// 0x4A26D6 - DispatchCmdMsg() (library function) - this one is hit when you use the 'Exit' menu item.
+	// 0x40A6C8 - This one is hit when you press the close gadget or goto close in the "Main Window" top-level menu. (or if you press Alt + F4)
+	// 0x481EC6 - This one is hit when you goto close in the "Game Window" top-level menu.
+
+	ConsoleLog(LOG_DEBUG, "DBG: 0x%08X -> ApparentExit()\n", _ReturnAddress());
+
+	int(__thiscall *ApparentExit)(void *) = (int(__thiscall *)(void *))0x406680;
+
+	return ApparentExit((void *)pThis);
+}
+
 static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 	case WM_INITDIALOG:
@@ -633,6 +650,10 @@ void InstallMiscHooks(void) {
 	*(BYTE*)0x44DC42 = 5;
 	VirtualProtect((LPVOID)0x44DC4F, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
 	*(BYTE*)0x44DC4F = 10;
+
+	// Hook what appears to be the exit function
+	VirtualProtect((LPVOID)0x401753, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x401753, Hook_ApparentExit);
 
 	// Fix power and water grid updates slowing down after the population hits 50,000
 	VirtualProtect((LPVOID)0x440943, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
