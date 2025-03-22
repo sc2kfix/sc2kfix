@@ -299,6 +299,10 @@ void InstallMilitaryHooks(void) {
 	VirtualProtect((LPVOID)0x4146B5, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJNZ((LPVOID)0x4146B5, Hook_AttemptMultipleMilitaryBases);
 
+	// Fix declining military bases crashing after the above hooks are inserted
+	VirtualProtect((LPVOID)0x4142DE, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4142DE, 0x4147BD);
+
 	// Restore the functionality to place naval bases on maps with coastlines
 	VirtualProtect((LPVOID)0x403017, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x403017, Hook_SimulationProposeMilitaryBase);
