@@ -222,41 +222,34 @@ extern "C" void __stdcall Hook_ApparentExit(void) {
 
 	ConsoleLog(LOG_DEBUG, "DBG: 0x%08X -> ApparentExit()\n", _ReturnAddress());
 
-	int ret, ret2;
+	int ret;
 	int iThat;
 	DWORD dwOldVal1, dwOldVal2;
 
 	int(__stdcall *H_ExitRequester)(int) = (int(__stdcall *)(int))0x40150A;
-	int(__thiscall *H_ToolMenuDialogToggle)(void *, int) = (int(__thiscall *)(void *, int))0x40103C;
+	void(__thiscall *H_SaveCity)(void *) = (void(__thiscall *)(void *))0x4015A0;
+	int(__thiscall *H_PreGameMenuDialogToggle)(void *, int) = (int(__thiscall *)(void *, int))0x40103C;
 
 	iThat = *((DWORD *)pThis + 206);
 	dwOldVal1 = *((DWORD *)pThis + 64);
 	dwOldVal2 = *((DWORD *)pThis + 63); // If this is '1' by default this appears to indicate 'Quit' was clicked from the pre-game toolmenu.
-	ConsoleLog(LOG_DEBUG, "DBG: (0x%08X) %d / %d\n", iThat, dwOldVal1, dwOldVal2);
+
 	// One of the two (or both) suspend the simulation.
 	*((DWORD *)pThis + 64) = 1;
 	*((DWORD *)pThis + 63) = 0;
 	ret = H_ExitRequester(iThat);
-	ConsoleLog(LOG_DEBUG, "DBG: ret: %d\n", ret);
-	if (ret == 6) {
-		ret2 = H_ExitRequester(pThis);
-		ConsoleLog(LOG_DEBUG, "DBG: ret2: %d\n", ret2);
-	GOBACK:
-		H_ToolMenuDialogToggle(*((void **)pThis + 7), 0);
+	if (ret != 2) {
+		if (ret == 6) {
+			H_SaveCity((void *)pThis);
+		}
+		H_PreGameMenuDialogToggle(*((void **)pThis + 7), 0);
 		Game_CWinApp_OnAppExit((void *)pThis);
 		return;
 	}
-	if (ret != 2) {
-		goto GOBACK;
-	}
-	else {
-		// This case is hit when you click "Cancel", you then want to restore both old values in order
-		// for the simulation to properly resume (based on current tests).
-		*((DWORD *)pThis + 64) = dwOldVal1;
-		*((DWORD *)pThis + 63) = dwOldVal2;
-		return;
-	}
-	*((DWORD*)pThis + 63) = 0;
+	// This case is hit when you click "Cancel", you then want to restore both old values in order
+	// for the simulation to properly resume (based on current tests).
+	*((DWORD *)pThis + 64) = dwOldVal1;
+	*((DWORD *)pThis + 63) = dwOldVal2;
 }
 
 static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
