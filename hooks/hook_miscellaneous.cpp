@@ -233,9 +233,8 @@ extern "C" void __stdcall Hook_ApparentExit(void) {
 	*((DWORD *)pThis + 63) = 0;
 	iReqRet = Game_ExitRequester((void *)pThis, iSource);
 	if (iReqRet != 2) {
-		if (iReqRet == 6) {
+		if (iReqRet == 6)
 			Game_DoSaveCity((void *)pThis);
-		}
 		Game_PreGameMenuDialogToggle(*((void **)pThis + 7), 0);
 		Game_CWinApp_OnAppExit((void *)pThis);
 		return;
