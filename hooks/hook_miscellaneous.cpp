@@ -220,29 +220,23 @@ extern "C" void __stdcall Hook_ApparentExit(void) {
 	// 0x40A6C8 - This one is hit when you press the close gadget or goto close in the "Main Window" top-level menu. (or if you press Alt + F4)
 	// 0x481EC6 - This one is hit when you goto close in the "Game Window" top-level menu.
 
-	ConsoleLog(LOG_DEBUG, "DBG: 0x%08X -> ApparentExit()\n", _ReturnAddress());
-
-	int ret;
-	int iThat;
+	int iReqRet;
+	int iSource;
 	DWORD dwOldVal1, dwOldVal2;
 
-	int(__stdcall *H_ExitRequester)(int) = (int(__stdcall *)(int))0x40150A;
-	void(__thiscall *H_SaveCity)(void *) = (void(__thiscall *)(void *))0x4015A0;
-	int(__thiscall *H_PreGameMenuDialogToggle)(void *, int) = (int(__thiscall *)(void *, int))0x40103C;
-
-	iThat = *((DWORD *)pThis + 206);
+	iSource = *((DWORD *)pThis + 206);
 	dwOldVal1 = *((DWORD *)pThis + 64);
-	dwOldVal2 = *((DWORD *)pThis + 63); // If this is '1' by default this appears to indicate 'Quit' was clicked from the pre-game toolmenu.
+	dwOldVal2 = *((DWORD *)pThis + 63); // If this is '1' by default this appears to indicate 'Quit' was clicked from the pregame menu dialog.
 
 	// One of the two (or both) suspend the simulation.
 	*((DWORD *)pThis + 64) = 1;
 	*((DWORD *)pThis + 63) = 0;
-	ret = H_ExitRequester(iThat);
-	if (ret != 2) {
-		if (ret == 6) {
-			H_SaveCity((void *)pThis);
+	iReqRet = Game_ExitRequester((void *)pThis, iSource);
+	if (iReqRet != 2) {
+		if (iReqRet == 6) {
+			Game_DoSaveCity((void *)pThis);
 		}
-		H_PreGameMenuDialogToggle(*((void **)pThis + 7), 0);
+		Game_PreGameMenuDialogToggle(*((void **)pThis + 7), 0);
 		Game_CWinApp_OnAppExit((void *)pThis);
 		return;
 	}

@@ -745,10 +745,13 @@ int PlaceRoadsAlongPath(int x1, int y1, int x2, int y2);
 
 // Function pointers
 
+GAMECALL(0x40103C, int, __thiscall, PreGameMenuDialogToggle, void *pThis, int iShow)
 GAMECALL(0x40106E, int, __cdecl, PlaceRoadAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x401096, int, __thiscall, SoundPlaySound, void* pThis, int iSoundID)
 GAMECALL(0x4011E5, int, __thiscall, MapToolSoundTrigger, void* pThis)
 GAMECALL(0x4014F1, int, __thiscall, TileHighlightUpdate, int pThis)
+GAMECALL(0x40150A, int, __thiscall, ExitRequester, void *pThis, int iSource)
+GAMECALL(0x4015A0, void, __thiscall, DoSaveCity, void *pThis)
 GAMECALL(0x401519, void, __thiscall, ToolMenuEnable, void* pThis)
 GAMECALL(0x4016D1, int, __thiscall, CenterOnNewScreenCoordinates, void *pThis, __int16 iNewScreenPointX, __int16 iNewScreenPointY)
 GAMECALL(0x40178F, __int16, __cdecl, PlaceTileWithMilitaryCheck, __int16 x, __int16 y, __int16 iTileID)
