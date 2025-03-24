@@ -210,6 +210,41 @@ extern "C" DWORD __cdecl Hook_SmackOpen(LPCSTR lpFileName, uint32_t uFlags, int3
 	return SMKOpenProc(AdjustSource(buf, lpFileName), uFlags, iExBuf);
 }
 
+extern "C" void __stdcall Hook_ApparentExit(void) {
+	DWORD pThis;
+
+	__asm mov[pThis], ecx
+
+	// 0x405FCF - GameDoIdleUpKeep() - toolmenu item from prior to the game starting. (This one can be ignored)
+	// 0x4A26D6 - DispatchCmdMsg() (library function) - this one is hit when you use the 'Exit' menu item.
+	// 0x40A6C8 - This one is hit when you press the close gadget or goto close in the "Main Window" top-level menu. (or if you press Alt + F4)
+	// 0x481EC6 - This one is hit when you goto close in the "Game Window" top-level menu.
+
+	int iReqRet;
+	int iSource;
+	DWORD dwOldVal1, dwOldVal2;
+
+	iSource = *((DWORD *)pThis + 206);
+	dwOldVal1 = *((DWORD *)pThis + 64);
+	dwOldVal2 = *((DWORD *)pThis + 63); // If this is '1' by default this appears to indicate 'Quit' was clicked from the pregame menu dialog.
+
+	// One of the two (or both) suspend the simulation.
+	*((DWORD *)pThis + 64) = 1;
+	*((DWORD *)pThis + 63) = 0;
+	iReqRet = Game_ExitRequester((void *)pThis, iSource);
+	if (iReqRet != 2) {
+		if (iReqRet == 6)
+			Game_DoSaveCity((void *)pThis);
+		Game_PreGameMenuDialogToggle(*((void **)pThis + 7), 0);
+		Game_CWinApp_OnAppExit((void *)pThis);
+		return;
+	}
+	// This case is hit when you click "Cancel", you then want to restore both old values in order
+	// for the simulation to properly resume (based on current tests).
+	*((DWORD *)pThis + 64) = dwOldVal1;
+	*((DWORD *)pThis + 63) = dwOldVal2;
+}
+
 static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 	case WM_INITDIALOG:
@@ -633,6 +668,10 @@ void InstallMiscHooks(void) {
 	*(BYTE*)0x44DC42 = 5;
 	VirtualProtect((LPVOID)0x44DC4F, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
 	*(BYTE*)0x44DC4F = 10;
+
+	// Hook what appears to be the exit function
+	VirtualProtect((LPVOID)0x401753, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x401753, Hook_ApparentExit);
 
 	// Fix power and water grid updates slowing down after the population hits 50,000
 	VirtualProtect((LPVOID)0x440943, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
