@@ -55,6 +55,10 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	__int16 iDryTileFootprint; // Indicative name, subject to change.
 	int iRandOne;
 	__int16 iRandTwo;
+	unsigned __int16 uArrPos;
+	__int16 iValidTiles;
+	int iPosOffset;
+	__int16 iBaseLevel;
 	DWORD dwSiloPos[12];
 		
 	iResult = Game_AfxMessageBox(240, MB_YESNO, -1);
@@ -65,17 +69,25 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 		if (bCityHasOcean) {
 
 		}
-		else {
-			iIterations = 24;
-			iPosCount = dwSiloPos[0];
-			do {
-				bMaxIteration = iIterations-- == 0;
-				if (bMaxIteration)
-					break;
-				iRandOne = Game_RandomWordLCGMod(119);
-				iRandTwo = Game_RandomWordLCGMod(119);
-			} while (iDryTileFootprint < 40);
-		}
+		iIterations = 24;
+		iPosCount = dwSiloPos[0];
+		do {
+			bMaxIteration = iIterations-- == 0;
+			if (bMaxIteration)
+				break;
+			iRandOne = Game_RandomWordLCGMod(119);
+			iRandTwo = Game_RandomWordLCGMod(119);
+			uArrPos = iRandOne;
+			iValidTiles = 0;
+			iPosCount = 0;
+			iPosOffset = iRandTwo;
+			iBaseLevel = *((WORD*)*(&dwMapALTM + (__int16)iRandOne) + iRandTwo) & 0x1F; // 31 - something
+			for (dwSiloPos[0] = iRandOne + 8; (__int16)uArrPos < dwSiloPos[0]; ++uArrPos) {
+				for (__int16 i = iRandTwo; iRandTwo + 8 > i; ++i) {
+
+				}
+			}
+		} while (iDryTileFootprint < 40);
 	}
 	return iResult;
 #else
