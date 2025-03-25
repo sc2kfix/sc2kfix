@@ -31,6 +31,32 @@ static DWORD dwDummy;
 UINT iMilitaryBaseTries = 0;
 WORD wMilitaryBaseX = 0, wMilitaryBaseY = 0;
 
+extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 a1, int a2, __int16 iTileID, __int16 iTileArea) {
+
+	// a1 - In the calling function it seems that iX (Tile X Coordinate) is set on P_LOWORD(a1)
+	// a2 - iY (Tile Y Coordinate) set on v5 (with at leat one append case occurring) **
+
+	// Observation with 'a2': Every now and then the printed value goes out of range, further investigation needed.
+
+	int(__cdecl *H_ItemPlacementCheck)(unsigned __int16, int, __int16, __int16) = (int(__cdecl *)(unsigned __int16, int, __int16, __int16))0x440C50;
+
+	int ret = H_ItemPlacementCheck(a1, a2, iTileID, iTileArea);
+	ConsoleLog(LOG_DEBUG, "DBG: 0x%08X -> ItemPlacementCheck(a1: %u, a2: 0x%08X, iTileID: %s, iTileArea: %d) == %d\n", _ReturnAddress(), a1, a2, szTileNames[iTileID], iTileArea, ret);
+	return ret;
+}
+
+#if 1
+extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
+	
+	int(__stdcall *SimulationProposeMilitaryBase)(void) = (int(__stdcall *)(void))0x4142C0;
+
+	int ret = SimulationProposeMilitaryBase();
+
+	ConsoleLog(LOG_DEBUG, "DBG: 0x%8X -> SimulationProposeMilitaryBase() - %d\n", _ReturnAddress(), ret);
+
+	return ret;
+}
+#else
 // Fix military bases not growing.
 // XXX - This could use a few extra lines as it's currently possible for a few placeable buildings
 // to overwrite and effectively erase military zoned tiles, and I don't know what that will do to
@@ -287,27 +313,32 @@ extern "C" void _declspec(naked) Hook_41442E(void) {
 
 	GAMEJMP(0x414433)
 }
+#endif
 
 void InstallMilitaryHooks(void) {
+	// Hook into what appears to be one of the item placement checking functions
+	VirtualProtect((LPVOID)0x4027F2, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4027F2, Hook_ItemPlacementCheck);
+	
 	// Fix military bases not growing
-	VirtualProtect((LPVOID)0x440D4F, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJZ((LPVOID)0x440D4F, Hook_FixMilitaryBaseGrowth);
+	//VirtualProtect((LPVOID)0x440D4F, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
+	//NEWJZ((LPVOID)0x440D4F, Hook_FixMilitaryBaseGrowth);
 
 	// Make multiple attempts at building a military base before giving up
-	VirtualProtect((LPVOID)0x4142D8, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJNZ((LPVOID)0x4142D8, Hook_AttemptMultipleMilitaryBases);
-	VirtualProtect((LPVOID)0x4146B5, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJNZ((LPVOID)0x4146B5, Hook_AttemptMultipleMilitaryBases);
+	//VirtualProtect((LPVOID)0x4142D8, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
+	//NEWJNZ((LPVOID)0x4142D8, Hook_AttemptMultipleMilitaryBases);
+	//VirtualProtect((LPVOID)0x4146B5, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
+	//NEWJNZ((LPVOID)0x4146B5, Hook_AttemptMultipleMilitaryBases);
 
 	// Fix declining military bases crashing after the above hooks are inserted
-	VirtualProtect((LPVOID)0x4142DE, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4142DE, 0x4147BD);
+	//VirtualProtect((LPVOID)0x4142DE, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	//NEWJMP((LPVOID)0x4142DE, 0x4147BD);
 
 	// Restore the functionality to place naval bases on maps with coastlines
 	VirtualProtect((LPVOID)0x403017, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x403017, Hook_SimulationProposeMilitaryBase);
 
 	// Store the coordinates of the military base
-	VirtualProtect((LPVOID)0x41442E, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x41442E, Hook_41442E);
+	//VirtualProtect((LPVOID)0x41442E, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	//NEWJMP((LPVOID)0x41442E, Hook_41442E);
 }
