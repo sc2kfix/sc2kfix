@@ -809,6 +809,9 @@ GAMECALL(0x4AA573, void, __thiscall, CWinApp_OnAppExit, void *pThis)
 GAMECALL(0x4AE0BC, void, __thiscall, CDocument_UpdateAllViews, void* pThis, void* pSender, int lHint, void* pHint)
 GAMECALL(0x4B234F, int, __stdcall, AfxMessageBox, unsigned int nIDPrompt, unsigned int nType, unsigned int nIDHelp)
 
+// Random calls.
+GAMECALL(0x40116D, __int16, __cdecl, RandomWordLCGMod, __int16 iSeed)
+
 // Unknown functions that do something we might need them to. Use with extreme care.
 
 // Pointers

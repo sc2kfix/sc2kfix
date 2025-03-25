@@ -48,10 +48,17 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 a1, int a2, __in
 #if 1
 extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 #if 1
-	int result;
+	int iResult;
+	int iIterations;
+	bool bMaxIteration;
+	__int16 iPosCount;   // Indicative name, subject to change.
+	__int16 iDryTileFootprint; // Indicative name, subject to change.
+	int iRandOne;
+	__int16 iRandTwo;
+	DWORD dwSiloPos[12];
 		
-	result = Game_AfxMessageBox(240, MB_YESNO, -1);
-	if (result == IDNO) {
+	iResult = Game_AfxMessageBox(240, MB_YESNO, -1);
+	if (iResult == IDNO) {
 		bMilitaryBaseType = MILITARY_BASE_DECLINED;
 	}
 	else {
@@ -59,10 +66,18 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 
 		}
 		else {
-
+			iIterations = 24;
+			iPosCount = dwSiloPos[0];
+			do {
+				bMaxIteration = iIterations-- == 0;
+				if (bMaxIteration)
+					break;
+				iRandOne = Game_RandomWordLCGMod(119);
+				iRandTwo = Game_RandomWordLCGMod(119);
+			} while (iDryTileFootprint < 40);
 		}
 	}
-	return result;
+	return iResult;
 #else
 	int(__stdcall *SimulationProposeMilitaryBase)(void) = (int(__stdcall *)(void))0x4142C0;
 
