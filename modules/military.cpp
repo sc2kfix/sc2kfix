@@ -52,13 +52,14 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	int iIterations;
 	bool bMaxIteration;
 	__int16 iPosCount;   // Indicative name, subject to change.
-	__int16 iDryTileFootprint; // Indicative name, subject to change.
-	int iRandOne;
-	__int16 iRandTwo;
+	int iRandOne[2];
+	__int16 iRandTwo[2];
 	unsigned __int16 uArrPos;
 	__int16 iValidTiles;
 	int iPosOffset;
 	__int16 iBaseLevel;
+	__int16 i, j;
+	int iPos;
 	DWORD dwSiloPos[12];
 		
 	iResult = Game_AfxMessageBox(240, MB_YESNO, -1);
@@ -75,15 +76,15 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 			bMaxIteration = iIterations-- == 0;
 			if (bMaxIteration)
 				break;
-			iRandOne = Game_RandomWordLCGMod(119);
-			iRandTwo = Game_RandomWordLCGMod(119);
-			uArrPos = iRandOne;
+			iRandOne[0] = Game_RandomWordLCGMod(119);
+			iRandTwo[0] = Game_RandomWordLCGMod(119);
+			uArrPos = iRandOne[0];
 			iValidTiles = 0;
 			iPosCount = 0;
-			iPosOffset = iRandTwo;
-			iBaseLevel = *((WORD*)*(&dwMapALTM + (__int16)iRandOne) + iRandTwo) & 0x1F; // 31 - something
-			for (dwSiloPos[0] = iRandOne + 8; (__int16)uArrPos < dwSiloPos[0]; ++uArrPos) {
-				for (__int16 i = iRandTwo; iRandTwo + 8 > i; ++i) {
+			iPosOffset = iRandTwo[0];
+			iBaseLevel = *((WORD*)*(&dwMapALTM + (__int16)iRandOne[0]) + iRandTwo[0]) & 0x1F; // 31 - something
+			for (dwSiloPos[0] = iRandOne[0] + 8; (__int16)uArrPos < dwSiloPos[0]; ++uArrPos) {
+				for (i = iRandTwo[0]; iRandTwo[0] + 8 > i; ++i) {
 					if (
 						*((BYTE *)*(&dwMapXBLD + (__int16)uArrPos) + i) < TILE_SMALLPARK &&
 						*((BYTE *)*(&dwMapXTER + (__int16)uArrPos) + i) == TERRAIN_00 &&
@@ -94,16 +95,55 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 						)
 						// (The DOS version has an additional dwMapXZON & 0xF check as well)
 					) {
-						++iDryTileFootprint;
+						++iValidTiles;
 						if ((*((WORD *)*(&dwMapALTM + (__int16)uArrPos) + i) & 0x1F) == iBaseLevel)
 							++iPosCount;
 					}
 				}
 			}
-		} while (iDryTileFootprint < 40);
+		} while (iValidTiles < 40);
 		if (iBaseLevel < 40) {
 			if (iValidTiles < 40) {
+				iIterations = 24;
+				iValidTiles = 0;
+				do {
+					bMaxIteration = iIterations-- == 0;
+					if (bMaxIteration)
+						break;
+					iRandOne[1] = Game_RandomWordLCGMod(124);
+					iRandTwo[1] = Game_RandomWordLCGMod(124);
+					uArrPos = iRandOne[1];
+					for (i = 0; (__int16)uArrPos < iRandOne[1] + 3; ++uArrPos) {
+						for ( j = iRandTwo[1]; iRandTwo[1] + 3 > j; ++j ) {
+							if (
+								*((BYTE *)*(&dwMapXBLD + (__int16)uArrPos) + j) < TILE_SMALLPARK &&
+								*((BYTE *)*(&dwMapXTER + (__int16)uArrPos) + j) == TERRAIN_00 &&
+								(
+									uArrPos >= 0x80u ||
+									(unsigned __int16)j >= 0x80u ||
+									(*((BYTE *)*(&dwMapXBIT + (__int16)uArrPos) + j) & 4) == 0
+								) &&
+								(*((WORD *)*(&dwMapALTM + (__int16)uArrPos) + j) & 0x1F) == iBaseLevel &&
+								(*((BYTE *)*(&dwMapXZON + (__int16)uArrPos) + j) & 0xF) != 7 &&
+								!*((BYTE *)*(&dwMapXUND + (__int16)iRandOne[1]) + iRandTwo[1]) 
+							) {
+								++i;
+							}
+						}
+					}
+					if (i == 9) {
+						iPos = iValidTiles++;
+						dwSiloPos[2 * iPos] = iRandOne[1];
+						dwSiloPos[2 * iPos + 1] = iRandTwo[1];
+					}
+				} while (iValidTiles < 6);
+			}
+			if (iValidTiles == 6) {
+				bMilitaryBaseType = MILITARY_BASE_MISSILE_SILOS;
+				for (i = 0; i < 6; i++) {
 
+				}
+				return Game_AfxMessageBox(244, 0, -1);
 			}
 		}
 	}
