@@ -84,10 +84,28 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 			iBaseLevel = *((WORD*)*(&dwMapALTM + (__int16)iRandOne) + iRandTwo) & 0x1F; // 31 - something
 			for (dwSiloPos[0] = iRandOne + 8; (__int16)uArrPos < dwSiloPos[0]; ++uArrPos) {
 				for (__int16 i = iRandTwo; iRandTwo + 8 > i; ++i) {
-
+					if (
+						*((BYTE *)*(&dwMapXBLD + (__int16)uArrPos) + i) < TILE_SMALLPARK &&
+						*((BYTE *)*(&dwMapXTER + (__int16)uArrPos) + i) == TERRAIN_00 &&
+						(
+							uArrPos >= 0x80u || // (Not present in the DOS-equivalent)
+							(unsigned __int16)i >= 0x80u || // (Not present in the DOS-equivalent)
+							(*((BYTE *)*(&dwMapXBIT + (__int16)uArrPos) + i) & 4) == 0
+						)
+						// (The DOS version has an additional dwMapXZON & 0xF check as well)
+					) {
+						++iDryTileFootprint;
+						if ((*((WORD *)*(&dwMapALTM + (__int16)uArrPos) + i) & 0x1F) == iBaseLevel)
+							++iPosCount;
+					}
 				}
 			}
 		} while (iDryTileFootprint < 40);
+		if (iBaseLevel < 40) {
+			if (iValidTiles < 40) {
+
+			}
+		}
 	}
 	return iResult;
 #else
