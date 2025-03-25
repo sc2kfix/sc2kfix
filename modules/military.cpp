@@ -47,7 +47,23 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 a1, int a2, __in
 
 #if 1
 extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
-	
+#if 1
+	int result;
+		
+	result = Game_AfxMessageBox(240, MB_YESNO, -1);
+	if (result == IDNO) {
+		bMilitaryBaseType = MILITARY_BASE_DECLINED;
+	}
+	else {
+		if (bCityHasOcean) {
+
+		}
+		else {
+
+		}
+	}
+	return result;
+#else
 	int(__stdcall *SimulationProposeMilitaryBase)(void) = (int(__stdcall *)(void))0x4142C0;
 
 	int ret = SimulationProposeMilitaryBase();
@@ -55,6 +71,7 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	ConsoleLog(LOG_DEBUG, "DBG: 0x%8X -> SimulationProposeMilitaryBase() - %d\n", _ReturnAddress(), ret);
 
 	return ret;
+#endif
 }
 #else
 // Fix military bases not growing.
