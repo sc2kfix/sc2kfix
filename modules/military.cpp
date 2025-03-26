@@ -59,7 +59,11 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	int iPosOffset;
 	__int16 iBaseLevel;
 	__int16 i, j;
-	int iPos;
+	int iPos[2];
+	int k;
+	unsigned __int16 uPos;
+	int iBuildingArea;
+	BYTE *pZone;
 	DWORD dwSiloPos[12];
 		
 	iResult = Game_AfxMessageBox(240, MB_YESNO, -1);
@@ -82,21 +86,21 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 			iValidTiles = 0;
 			iPosCount = 0;
 			iPosOffset = iRandTwo[0];
-			iBaseLevel = *((WORD*)*(&dwMapALTM + (__int16)iRandOne[0]) + iRandTwo[0]) & 0x1F; // 31 - something
+			iBaseLevel = dwMapALTM[iRandOne[0]]->w[iRandTwo[0]].iLandAltitude;
 			for (dwSiloPos[0] = iRandOne[0] + 8; (__int16)uArrPos < dwSiloPos[0]; ++uArrPos) {
 				for (i = iRandTwo[0]; iRandTwo[0] + 8 > i; ++i) {
 					if (
-						*((BYTE *)*(&dwMapXBLD + (__int16)uArrPos) + i) < TILE_SMALLPARK &&
-						*((BYTE *)*(&dwMapXTER + (__int16)uArrPos) + i) == TERRAIN_00 &&
+						dwMapXBLD[uArrPos]->iTileID[i] < TILE_SMALLPARK &&
+						!dwMapXTER[uArrPos]->iTileID[i] &&
 						(
 							uArrPos >= 0x80u || // (Not present in the DOS-equivalent)
 							(unsigned __int16)i >= 0x80u || // (Not present in the DOS-equivalent)
-							(*((BYTE *)*(&dwMapXBIT + (__int16)uArrPos) + i) & 4) == 0
+							dwMapXBIT[uArrPos]->b[i].iWater == 0
 						)
 						// (The DOS version has an additional dwMapXZON & 0xF check as well)
 					) {
 						++iValidTiles;
-						if ((*((WORD *)*(&dwMapALTM + (__int16)uArrPos) + i) & 0x1F) == iBaseLevel)
+						if (dwMapALTM[uArrPos]->w[i].iLandAltitude == iBaseLevel)
 							++iPosCount;
 					}
 				}
@@ -116,33 +120,46 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 					for (i = 0; (__int16)uArrPos < iRandOne[1] + 3; ++uArrPos) {
 						for ( j = iRandTwo[1]; iRandTwo[1] + 3 > j; ++j ) {
 							if (
-								*((BYTE *)*(&dwMapXBLD + (__int16)uArrPos) + j) < TILE_SMALLPARK &&
-								*((BYTE *)*(&dwMapXTER + (__int16)uArrPos) + j) == TERRAIN_00 &&
+								dwMapXBLD[uArrPos]->iTileID[j] < TILE_SMALLPARK &&
+								!dwMapXTER[uArrPos]->iTileID[i] &&
 								(
 									uArrPos >= 0x80u ||
 									(unsigned __int16)j >= 0x80u ||
-									(*((BYTE *)*(&dwMapXBIT + (__int16)uArrPos) + j) & 4) == 0
+									dwMapXBIT[uArrPos]->b[j].iWater == 0
 								) &&
-								(*((WORD *)*(&dwMapALTM + (__int16)uArrPos) + j) & 0x1F) == iBaseLevel &&
-								(*((BYTE *)*(&dwMapXZON + (__int16)uArrPos) + j) & 0xF) != 7 &&
-								!*((BYTE *)*(&dwMapXUND + (__int16)iRandOne[1]) + iRandTwo[1]) 
+								dwMapALTM[uArrPos]->w[j].iLandAltitude == iBaseLevel &&
+								dwMapXZON[uArrPos]->b[j].iZoneType != ZONE_MILITARY &&
+								!dwMapXUND[iRandOne[1]]->iTileID[iRandTwo[1]]
 							) {
 								++i;
 							}
 						}
 					}
 					if (i == 9) {
-						iPos = iValidTiles++;
-						dwSiloPos[2 * iPos] = iRandOne[1];
-						dwSiloPos[2 * iPos + 1] = iRandTwo[1];
+						iPos[0] = iValidTiles++;
+						dwSiloPos[2 * iPos[0]] = iRandOne[1];
+						dwSiloPos[2 * iPos[0] + 1] = iRandTwo[1];
 					}
 				} while (iValidTiles < 6);
 			}
 			if (iValidTiles == 6) {
 				bMilitaryBaseType = MILITARY_BASE_MISSILE_SILOS;
 				for (i = 0; i < 6; i++) {
-
+					iPos[0] = dwSiloPos[2 * i];
+					iPos[1] = iPos[0];
+					for (k = dwSiloPos[2 * i + 1]; iPos[1] + 3 > (__int16)iPos[0]; P_LOWORD(iPos[0]) = iPos[0] + 1) {
+						for (uPos = k; k + 3 > (__int16)uPos; ++*(WORD *)dwMilitaryTiles) {
+							iBuildingArea = dwMapXBLD[iPos[0]]->iTileID[uPos];
+							--*((WORD *)dwTileCount + iBuildingArea);
+							if ((unsigned __int16)iPos[0] < 0x80u && uPos < 0x80u) {
+								pZone = (BYTE *)&dwMapXZON[iPos[0]]->b[uPos];
+								*pZone = *pZone & 0xF0 | ZONE_MILITARY;
+							}
+							++uPos;
+						}
+					}
 				}
+				Game_CenterOnTileCoords(iPos[1], k);
 				return Game_AfxMessageBox(244, 0, -1);
 			}
 		}
