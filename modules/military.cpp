@@ -96,8 +96,8 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 							uArrPos >= 0x80u || // (Not present in the DOS-equivalent)
 							(unsigned __int16)i >= 0x80u || // (Not present in the DOS-equivalent)
 							dwMapXBIT[uArrPos]->b[i].iWater == 0
-						)
-						// (The DOS version has an additional dwMapXZON & 0xF check as well)
+						) &&
+						dwMapXZON[uArrPos]->b[i].iZoneType == ZONE_NONE // (The DOS version has an additional dwMapXZON & 0xF check as well)
 					) {
 						++iValidTiles;
 						if (dwMapALTM[uArrPos]->w[i].iLandAltitude == iBaseLevel)
@@ -152,8 +152,8 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 							iBuildingArea = dwMapXBLD[iPos[0]]->iTileID[uPos];
 							--*((WORD *)dwTileCount + iBuildingArea);
 							if ((unsigned __int16)iPos[0] < 0x80u && uPos < 0x80u) {
-								pZone = (BYTE *)&dwMapXZON[iPos[0]]->b[uPos];
-								*pZone = *pZone & 0xF0 | ZONE_MILITARY;
+								dwMapXZON[iPos[0]]->b[uPos].iZoneType = ZONE_MILITARY;
+								dwMapXZON[iPos[0]]->b[uPos].iCorners = 0xF0;
 							}
 							++uPos;
 						}
