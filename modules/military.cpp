@@ -45,6 +45,51 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 a1, int a2, __in
 	return ret;
 }
 
+static void FormArmyBaseGrid(int x1, int y1, __int16 x2, __int16 y2) {
+	WORD wOldToolGroup;
+	__int16 iX;
+	__int16 iY;
+	int iNewX;
+	int iNewY;
+
+	// These will be moved to the global section once demystified.
+	char(__cdecl *sub_4019A1)(unsigned __int16, unsigned __int16) = (char(__cdecl *)(unsigned __int16, unsigned __int16))0x4019A1;
+	int(*sub_401CCB)(void) = (int(*)(void))0x401CCB;
+
+	wOldToolGroup = wMaybeActiveToolGroup;
+	iX = x2;
+	iY = y2;
+	wMaybeActiveToolGroup = TOOL_GROUP_ROADS;
+	if (Game_MaybeCheckViablePlacementPath(x1, y1, x2, y2)) {
+		iNewX = x1;
+		iX = x1;
+		iNewY = y1;
+		iY = y1;
+		while (Game_MaybeRoadViabilityAlongPath((__int16 *)&iNewX, (__int16 *)&iNewY)) {
+			sub_4019A1(iX, iY);
+			Game_PlaceRoadAtCoordinates(iX, iY);
+			iX = iNewX;
+			iY = iNewY;
+		}
+		sub_4019A1(iX, iY);
+		Game_PlaceRoadAtCoordinates(iX, iY);
+	}
+	if (GetTileID(x1, y1) == TILE_ROAD_LR || GetTileID(x1, y1) == TILE_ROAD_TB) {
+		dwMapXZON[x1]->b[y1].iZoneType = ZONE_MILITARY;
+		dwMapXZON[x1]->b[y1].iCorners = 0x0F; // In the DOS build this is 0xF0, however that value here results in a blank area.
+		Game_PlaceTileWithMilitaryCheck(x1, y1, TILE_INFRASTRUCTURE_RUNWAYCROSS);
+
+	}
+	if (GetTileID(iX, iY) == TILE_ROAD_LR || GetTileID(iX, iY) == TILE_ROAD_TB) {
+		dwMapXZON[iX]->b[iY].iZoneType = ZONE_MILITARY;
+		dwMapXZON[iX]->b[iY].iCorners = 0x0F; // In the DOS build this is 0xF0, however that value here results in a blank area.
+		Game_PlaceTileWithMilitaryCheck(iX, iY, TILE_INFRASTRUCTURE_RUNWAYCROSS);
+
+	}
+	wMaybeActiveToolGroup = wOldToolGroup;
+	sub_401CCB();
+}
+
 #if 1
 extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 #if 1
@@ -61,16 +106,18 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	__int16 i, j;
 	int iPos[2];
 	int k;
-	unsigned __int16 uPos;
+	unsigned __int16 uPos[2];
 	int iBuildingArea;
-	BYTE *pZone;
 	DWORD dwSiloPos[12];
-		
+	
+	iMilitaryBaseTries = 0;
+
 	iResult = Game_AfxMessageBox(240, MB_YESNO, -1);
 	if (iResult == IDNO) {
 		bMilitaryBaseType = MILITARY_BASE_DECLINED;
 	}
 	else {
+REATTEMPT:
 		if (bCityHasOcean) {
 
 		}
@@ -106,7 +153,7 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 				}
 			}
 		} while (iValidTiles < 40);
-		if (iBaseLevel < 40) {
+		if (iPosCount < 40) {
 			if (iValidTiles < 40) {
 				iIterations = 24;
 				iValidTiles = 0;
@@ -148,20 +195,78 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 					iPos[0] = dwSiloPos[2 * i];
 					iPos[1] = iPos[0];
 					for (k = dwSiloPos[2 * i + 1]; iPos[1] + 3 > (__int16)iPos[0]; P_LOWORD(iPos[0]) = iPos[0] + 1) {
-						for (uPos = k; k + 3 > (__int16)uPos; ++*(WORD *)dwMilitaryTiles) {
-							iBuildingArea = dwMapXBLD[iPos[0]]->iTileID[uPos];
+						for (uPos[0] = k; k + 3 > (__int16)uPos[0]; ++*(WORD *)dwMilitaryTiles) {
+							iBuildingArea = dwMapXBLD[iPos[0]]->iTileID[uPos[0]];
 							--*((WORD *)dwTileCount + iBuildingArea);
-							if ((unsigned __int16)iPos[0] < 0x80u && uPos < 0x80u) {
-								dwMapXZON[iPos[0]]->b[uPos].iZoneType = ZONE_MILITARY;
-								dwMapXZON[iPos[0]]->b[uPos].iCorners = 0xF0;
+							if ((unsigned __int16)iPos[0] < 0x80u && uPos[0] < 0x80u) {
+								dwMapXZON[iPos[0]]->b[uPos[0]].iZoneType = ZONE_MILITARY;
+								dwMapXZON[iPos[0]]->b[uPos[0]].iCorners = 0xF0;
 							}
-							++uPos;
+							++uPos[0];
 						}
 					}
 				}
 				Game_CenterOnTileCoords(iPos[1], k);
 				return Game_AfxMessageBox(244, 0, -1);
 			}
+			else {
+				if (iMilitaryBaseTries < 10) {
+					iMilitaryBaseTries++;
+					goto REATTEMPT;
+				}
+				iResult = Game_AfxMessageBox(411, 0, -1);
+				bMilitaryBaseType = MILITARY_BASE_DECLINED;
+			}
+		}
+		else {
+			if (iValidTiles == iPosCount) {
+				bMilitaryBaseType = MILITARY_BASE_AIR_FORCE;
+				Game_AfxMessageBox(242, 0, -1);
+			}
+			else {
+				bMilitaryBaseType = MILITARY_BASE_ARMY;
+				Game_AfxMessageBox(241, 0, -1);
+			}
+			for (uPos[0] = iRandOne[0]; iRandOne[0] + 8 > (__int16)uPos[0]; ++uPos[0]) {
+				for (uPos[1] = iPosOffset; iPosOffset + 8 > (__int16)uPos[1]; ++uPos[1]) {
+					unsigned __int8 iMilitaryArea = dwMapXBLD[uPos[0]]->iTileID[uPos[1]];
+					if (
+						iMilitaryArea < TILE_SMALLPARK &&
+						!dwMapXTER[uPos[0]]->iTileID[uPos[1]] &&
+						(
+							uPos[0] >= 0x80u ||
+							uPos[1] >= 0x80u ||
+							dwMapXBIT[uPos[0]]->b[uPos[1]].iWater == 0
+						) &&
+						dwMapXZON[uPos[0]]->b[uPos[1]].iZoneType == ZONE_NONE &&
+						!dwMapXUND[iRandOne[0]]->iTileID[iPosOffset]
+					) {
+						--*((WORD *)&dwTileCount + iMilitaryArea);
+						if (uPos[0] < 0x80u && uPos[1] < 0x80u) {
+							dwMapXZON[uPos[0]]->b[uPos[1]].iZoneType = ZONE_MILITARY;
+							dwMapXZON[uPos[0]]->b[uPos[1]].iCorners = 0xF0;
+						}
+						++*(WORD *)dwMilitaryTiles;
+					}
+				}
+			}
+			if (bMilitaryBaseType == MILITARY_BASE_ARMY) {
+				// The '//' spacers below represent where an 'if' check and subsequent call to
+				// 'FormArmyBaseGrid' is performed in the DOS version (clarity still needed).
+				FormArmyBaseGrid(iRandOne[0] + 2, iPosOffset, iRandOne[0] + 2, iPosOffset + 7);
+				//
+				//
+				FormArmyBaseGrid(iRandOne[0] + 5, iPosOffset, iRandOne[0] + 5, iPosOffset + 7);
+				//
+				//
+				FormArmyBaseGrid(iRandOne[0], iPosOffset + 2, iRandOne[0] + 7, iPosOffset + 2);
+				//
+				//
+				FormArmyBaseGrid(iRandOne[0], iPosOffset + 5, iRandOne[0] + 7, iPosOffset + 5);
+				//
+				//
+			}
+			return Game_CenterOnTileCoords(iRandOne[0] + 4, iPosOffset + 4);
 		}
 	}
 	return iResult;
