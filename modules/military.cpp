@@ -28,21 +28,185 @@ UINT military_debug = MILITARY_DEBUG;
 
 static DWORD dwDummy;
 
-UINT iMilitaryBaseTries = 0;
-WORD wMilitaryBaseX = 0, wMilitaryBaseY = 0;
+extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 m_x, int m_y, __int16 iTileID, __int16 iTileArea) {
+#if 1
+	__int16 iArea;
+	__int16 iMarinaCount;
+	__int16 iX[2];
+	__int16 iY[2];
+	__int16 iTile;
+	unsigned __int8 iBuilding;
+	int iItemWidth;
+	int iItemLength;
+	int iItemDepth;
+	__int16 iMapBit;
+	__int16 iSection[3];
+	char cMSimBit;
+	BYTE *pZone;
 
-extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 a1, int a2, __int16 iTileID, __int16 iTileArea) {
+	char(__cdecl *H_SimulationProvisionMicrosim)(__int16, int, __int16) = (char(__cdecl *)(__int16, int, __int16))0x401460;
+	int(__cdecl *H_sub_4012C1)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x4012C1;
 
-	// a1 - In the calling function it seems that iX (Tile X Coordinate) is set on P_LOWORD(a1)
-	// a2 - iY (Tile Y Coordinate) set on v5 (with at leat one append case occurring) **
+	unsigned __int16 x = m_x;
+	int y = P_LOWORD(m_y);
+
+	iArea = iTileArea - 1;
+	if (iArea > 1) {
+		--x;
+		P_LOWORD(y) = y - 1;
+	}
+	ConsoleLog(LOG_DEBUG, "DBG: 0x%08X -> ItemPlacementCheck(x: %u, y: %d, iTileID: %s, iTileArea: %d)\n", _ReturnAddress(), x, y, szTileNames[iTileID], iTileArea);
+	iMarinaCount = 0;
+	iX[0] = x;
+	iItemWidth = (__int16)x + iArea;
+	if (iItemWidth >= (__int16)x) {
+		iTile = iTileID;
+		iItemLength = iArea + (__int16)y;
+		while (1) {
+			iY[0] = y;
+			if (iItemLength >= (__int16)y)
+				break;
+GOBACK:
+			if (++iX[0] > iItemWidth)
+				goto GOFORWARD;
+		}
+		while (1) {
+			if (iArea <= 0) {
+				if ((unsigned __int16)iX[0] >= 0x80u || (unsigned __int16)iY[0] >= 0x80u)
+					return 0;
+			}
+			else if (iX[0] < 1 || iY[0] < 1 || iX[0] > 126 || iY[0] > 126) {
+				return 0;
+			}
+			iBuilding = dwMapXBLD[iX[0]]->iTileID[iY[0]];
+			if (iBuilding >= TILE_ROAD_LR) {
+				return 0;
+			}
+			if (iBuilding == TILE_RADIOACTIVITY) {
+				return 0;
+			}
+			if (iBuilding == TILE_SMALLPARK) {
+				return 0;
+			}
+			//if (dwMapXZON[iX[0]]->b[iY[0]].iZoneType == ZONE_MILITARY) {
+			//	return 0; // This is where it stops during the military zone checking process.
+			//}
+			if (iTileID == TILE_INFRASTRUCTURE_MARINA) {
+				if ((unsigned __int16)iX[0] < 0x80u &&
+					(unsigned __int16)iY[0] < 0x80u &&
+					dwMapXBIT[iX[0]]->b[iY[0]].iWater != 0) {
+					++iMarinaCount;
+					goto GOSKIP;
+				}
+				if (dwMapXTER[iX[0]]->iTileID[iY[0]]) {
+					return 0;
+				}
+			}
+			if (dwMapXTER[iX[0]]->iTileID[iY[0]]) {
+				return 0;
+			}
+			if ((unsigned __int16)iX[0] < 0x80u &&
+				(unsigned __int16)iY[0] < 0x80u &&
+				dwMapXBIT[iX[0]]->b[iY[0]].iWater != 0) {
+				return 0;
+			}
+GOSKIP:
+			if (++iY[0] > iItemLength) {
+				goto GOBACK;
+			}
+		}
+	}
+	iTile = iTileID;
+GOFORWARD:
+	if (iTile == TILE_INFRASTRUCTURE_MARINA && (!iMarinaCount || iMarinaCount == 9)) {
+		Game_AfxMessageBox(107, 0, -1);
+		return 0;
+	}
+	else {
+		if (iTile == TILE_SERVICES_BIGPARK || (iMapBit = -32, iTile == TILE_SMALLPARK)) { // The initial setting of iMapBit to -32 isn't present in the DOS version.
+			iMapBit = 32;
+		}
+		else {
+			iMapBit = 224; // Present in the DOS version.
+		}
+		if (iTile == TILE_SMALLPARK && dwMapXBLD[x]->iTileID[y] > TILE_SMALLPARK) {
+			return 0;
+		}
+		else {
+			iX[1] = x;
+			cMSimBit = H_SimulationProvisionMicrosim(x, y, iTile);
+			if (iItemWidth >= (__int16)x) {
+				iItemDepth = (__int16)y + iArea;
+				do {
+					for (int i = y; i <= iItemDepth; ++i) {
+						if (iX[1] > -1) {
+							if (iX[1] < 128 && (unsigned __int16)i < 0x80u) {
+								*(BYTE *)&dwMapXBIT[iX[1]]->b[i] &= 0x1Fu;
+							}
+							if ((unsigned __int16)iX[1] < 0x80u && (unsigned __int16)i < 0x80u) {
+								*(BYTE *)&dwMapXBIT[iX[1]]->b[i] |= iMapBit;
+							}
+						}
+						Game_PlaceTileWithMilitaryCheck(iX[1], i, iTile);
+						if (iX[1] > -1) {
+							if (iX[1] < 128 && (unsigned __int16)i < 0x80u) {
+								*(BYTE *)&dwMapXZON[iX[1]]->b[i] &= 0xF0u;
+							}
+							if ((unsigned __int16)iX[1] < 0x80u && (unsigned __int16)i < 0x80u) {
+								*(BYTE *)&dwMapXZON[iX[1]]->b[i] &= 0xFu;
+							}
+						}
+						if (cMSimBit) {
+							*(BYTE *)&dwMapXTXT[iX[1]]->bTextOverlay[i] = cMSimBit;
+						}
+					}
+					++iX[1];
+				} while (iX[1] <= iItemWidth);
+			}
+			if (iArea) {
+				if (x < 0x80u && (unsigned __int16)y < 0x80u) {
+					pZone = (BYTE *)&dwMapXZON[x]->b[y];
+					*pZone = LOBYTE(wSomePositionalAngleOne[4 * wViewRotation]) | *pZone & 0xF;
+				}
+				iSection[0] = iArea + x;
+				if ((__int16)(iArea + x) > -1 && iSection[0] < 128 && (unsigned __int16)y < 0x80u) {
+					pZone = (BYTE *)&dwMapXZON[iSection[0]]->b[y];
+					*pZone = LOBYTE(wSomePositionalAngleTwo[4 * wViewRotation]) | *pZone & 0xF;
+				}
+				if ((unsigned __int16)iSection[0] < 0x80u) {
+					iSection[1] = y + iArea;
+					if ((__int16)(y + iArea) > -1 && iSection[1] < 128) {
+						pZone = (BYTE *)&dwMapXZON[iSection[0]]->b[iSection[1]];
+						*pZone = LOBYTE(wSomePositionalAngleThree[4 * wViewRotation]) | *pZone & 0xF;
+					}
+				}
+				if (x < 0x80u) {
+					iSection[2] = iArea + y;
+					if ((__int16)(iArea + y) > -1 && iSection[2] < 128) {
+						pZone = (BYTE *)&dwMapXZON[x]->b[iSection[2]];
+						*pZone = LOBYTE(wSomePositionalAngleFour[4 * wViewRotation]) | *pZone & 0xF;
+					}
+				}
+			}
+			else if (x < 0x80u && (unsigned __int16)y < 0x80u) {
+				*(BYTE *)&dwMapXZON[x]->b[y] |= 0xF0u;
+			}
+			H_sub_4012C1(x, y + iArea);
+			return 1;
+		}
+	}
+#else
+	// x - In the calling function it seems that iX (Tile X Coordinate) is set on P_LOWORD(a1)
+	// y - iY (Tile Y Coordinate) set on v5 (with at leat one append case occurring) **
 
 	// Observation with 'a2': Every now and then the printed value goes out of range, further investigation needed.
 
 	int(__cdecl *H_ItemPlacementCheck)(unsigned __int16, int, __int16, __int16) = (int(__cdecl *)(unsigned __int16, int, __int16, __int16))0x440C50;
 
-	int ret = H_ItemPlacementCheck(a1, a2, iTileID, iTileArea);
-	ConsoleLog(LOG_DEBUG, "DBG: 0x%08X -> ItemPlacementCheck(a1: %u, a2: 0x%08X, iTileID: %s, iTileArea: %d) == %d\n", _ReturnAddress(), a1, a2, szTileNames[iTileID], iTileArea, ret);
+	int ret = H_ItemPlacementCheck(x, y, iTileID, iTileArea);
+	ConsoleLog(LOG_DEBUG, "DBG: 0x%08X -> ItemPlacementCheck(x: %u, y: %d, iTileID: %s, iTileArea: %d) == %d\n", _ReturnAddress(), x, y, szTileNames[iTileID], iTileArea, ret);
 	return ret;
+#endif
 }
 
 static void FormArmyBaseGrid(int x1, int y1, __int16 x2, __int16 y2) {
@@ -92,7 +256,6 @@ static void FormArmyBaseGrid(int x1, int y1, __int16 x2, __int16 y2) {
 
 #if 1
 extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
-#if 1
 	int iResult;
 	int iIterations;
 	bool bMaxIteration;
@@ -110,7 +273,7 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	int iBuildingArea;
 	DWORD dwSiloPos[12];
 	
-	iMilitaryBaseTries = 0;
+	UINT iMilitaryBaseTries = 0;
 
 	iResult = Game_AfxMessageBox(240, MB_YESNO, -1);
 	if (iResult == IDNO) {
@@ -253,6 +416,7 @@ REATTEMPT:
 			if (bMilitaryBaseType == MILITARY_BASE_ARMY) {
 				// The '//' spacers below represent where an 'if' check and subsequent call to
 				// 'FormArmyBaseGrid' is performed in the DOS version (clarity still needed).
+				// Could the 'if' cases represent dimensions of the placed zone plot?
 				FormArmyBaseGrid(iRandOne[0] + 2, iPosOffset, iRandOne[0] + 2, iPosOffset + 7);
 				//
 				//
@@ -270,15 +434,6 @@ REATTEMPT:
 		}
 	}
 	return iResult;
-#else
-	int(__stdcall *SimulationProposeMilitaryBase)(void) = (int(__stdcall *)(void))0x4142C0;
-
-	int ret = SimulationProposeMilitaryBase();
-
-	ConsoleLog(LOG_DEBUG, "DBG: 0x%8X -> SimulationProposeMilitaryBase() - %d\n", _ReturnAddress(), ret);
-
-	return ret;
-#endif
 }
 #else
 // Fix military bases not growing.
@@ -540,6 +695,7 @@ extern "C" void _declspec(naked) Hook_41442E(void) {
 #endif
 
 void InstallMilitaryHooks(void) {
+
 	// Hook into what appears to be one of the item placement checking functions
 	VirtualProtect((LPVOID)0x4027F2, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4027F2, Hook_ItemPlacementCheck);

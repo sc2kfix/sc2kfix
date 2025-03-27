@@ -918,6 +918,12 @@ GAMEOFF_ARR(DWORD, dwZoneNameStringIDs,		0x4E7140)
 GAMEOFF_ARR(DWORD, dwCityNoticeStringIDs,	0x4E98B8)
 GAMEOFF(DWORD,	dwCityRewardsUnlocked,		0x4E9A24)
 
+// Pending classification
+GAMEOFF_ARR(WORD, wSomePositionalAngleOne,	0x4DC4D0)
+GAMEOFF_ARR(WORD, wSomePositionalAngleTwo,	0x4DC4D2)
+GAMEOFF_ARR(WORD, wSomePositionalAngleThree,	0x4DC4D4)
+GAMEOFF_ARR(WORD, wSomePositionalAngleFour,	0x4DC4D6)
+
 // Pointers to map arrays
 
 // 128x128
