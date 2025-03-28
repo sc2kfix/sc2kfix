@@ -7,7 +7,7 @@ name: MSBuild
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "r9_patches" ]
   pull_request:
     branches: [ "main" ]
 
