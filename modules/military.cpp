@@ -209,6 +209,16 @@ GOFORWARD:
 #endif
 }
 
+static WORD *NavalBaseFunc(WORD *a1, __int16 a2, __int16 a3) {
+	WORD *result;
+
+	// Exact use-case not yet clear.
+	result = a1;
+	a1[1] = a2;
+	*a1 = a3;
+	return result;
+}
+
 static void FormArmyBaseGrid(int x1, int y1, __int16 x2, __int16 y2) {
 	WORD wOldToolGroup;
 	__int16 iX;
@@ -272,6 +282,14 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	unsigned __int16 uPos[2];
 	int iBuildingArea;
 	DWORD dwSiloPos[12];
+
+	int iPosX[4];
+	int iPosY[4];
+	int iX, iY;
+	int iRotation;
+	int iRotVal[4];
+	int iOldResult;
+	WORD wPosX[4], wPosY[4];
 	
 	UINT iMilitaryBaseTries = 0;
 
@@ -282,8 +300,218 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	else {
 REATTEMPT:
 		if (bCityHasOcean) {
+			ConsoleLog(LOG_DEBUG, "DBG - 1\n");
+			iResult = rand();
+			if ((iResult & 1) != 0) {
+				ConsoleLog(LOG_DEBUG, "DBG - 2\n");
+#if 1
+				// X and Y pos with viewrotation, though this is likely indicative for now.
+				iX = iPosX[4 * wViewRotation];
+				iY = iPosY[4 * wViewRotation];
+				ConsoleLog(LOG_DEBUG, "DBG - 2 (%d) (%d) (%d)\n", iX, iY, wViewRotation);
+				if (dwMapXBIT[P_SHIWORD(iX)]->b[(__int16)iX].iWater) {
+					ConsoleLog(LOG_DEBUG, "DBG - 3\n");
+					while (1) {
+						if (dwMapXBIT[P_SHIWORD(iX)]->b[(__int16)iX].iWater == 0)
+							break;
+						P_HIWORD(iX) += P_HIWORD(iY);
+						P_LOWORD(iX) = iY + iX;
+					}
+					P_LOWORD(iRotation) = wViewRotation;
+					iRotVal[0] = iRotation;
+					iRotVal[1] = iRotation + 1;
+					P_LOWORD(iRotVal[1]) = iRotVal[1] & 3;
+					iRotVal[2] = iRotVal[1];
+					iResult = iRotVal[0] + 2;
+					P_LOWORD(iResult) = ((BYTE)iRotVal[0] + 2) & 3;
+					iOldResult = iResult;
+					int iOffX = iX;
+					int iFOffX = iX;
+					int iFOffY = 0;
+					int iOffY = 0;
+					while (P_HIWORD(iX) < 0x80u && (unsigned __int16)iX < 0x80u) {
+						if (
+						    dwMapXBLD[P_SHIWORD(iX)]->iTileID[(__int16)iX] >= TILE_SMALLPARK ||
+							dwMapXTER[P_SHIWORD(iX)]->iTileID[(__int16)iX] ||
+							dwMapXBIT[P_SHIWORD(iX)]->b[(__int16)iX].iWater != 0 ||
+							dwMapXUND[P_SHIWORD(iX)]->iTileID[(__int16)iX]
+						) {
+							iFOffX = iX;
+							iOffY = 0;
+						}
+						else if ((__int16)++iOffY > (__int16)iFOffY) {
+							iOffX = iFOffX;
+							iFOffY = iOffY;
+						}
+						NavalBaseFunc((WORD *)&iY, P_SHIWORD(iX) + wPosX[(__int16)iRotVal[2]], (__int16)iX + wPosY[(__int16)iRotVal[2]]);
+						if ((*(BYTE *)(&dwMapXBIT[P_SHIWORD(iY)]->b[(__int16)iY]) & 5) == 5) {
+							do {
+								NavalBaseFunc((WORD *)&iX, P_SHIWORD(iY) + wPosX[(__int16)iRotVal[0]], (__int16)iY + wPosY[(__int16)iRotVal[0]]);
+								iY = iX;
+								P_LOBYTE(iResult) = *(BYTE *)&dwMapXBIT[P_SHIWORD(iX)]->b[(__int16)iX] & 5;
+							} while ((BYTE)iResult != 5);
+						}
+						else {
+							do {
+								iX = iY;
+								NavalBaseFunc((WORD *)&iY, P_SHIWORD(iY) + wPosX[(__int16)iOldResult], (__int16)iY + wPosY[(__int16)iOldResult]);
+								P_LOBYTE(iResult) = *(BYTE *)&dwMapXBIT[P_SHIWORD(iY)]->b[(__int16)iY] & 5;
+							} while ((BYTE)iResult != 5);
+						}
+					}
+					ConsoleLog(LOG_DEBUG, "DBG - 4\n");
+					iX = iOffX;
+					if ((__int16)iFOffY >= 12) {
+						ConsoleLog(LOG_DEBUG, "DBG - 5\n");
+						__int16 iTileDepth = ((__int16)iFOffY - 12) / 2;
+						while (iTileDepth <= (__int16)--iFOffY) {
+							NavalBaseFunc((WORD *)&iY, P_SHIWORD(iX) + wPosX[(__int16)iRotVal[2]], (__int16)iX + wPosY[(__int16)iRotVal[2]]);
+							if ((*(BYTE *)(&dwMapXBIT[P_SHIWORD(iY)]->b[(__int16)iY]) & 5) == 5) {
+								do {
+									NavalBaseFunc((WORD *)&iX, P_SHIWORD(iY) + wPosX[(__int16)iRotVal[0]], (__int16)iY + wPosY[(__int16)iRotVal[0]]);
+									iY = iX;
+								} while ((*(BYTE *)(&dwMapXBIT[P_SHIWORD(iX)]->b[(__int16)iX]) & 5) == 5);
+							}
+							else {
+								do {
+									iX = iY;
+									NavalBaseFunc((WORD *)&iY, P_SHIWORD(iY) + wPosX[(__int16)iOldResult], (__int16)iY + wPosY[(__int16)iOldResult]);
+								} while ((*(BYTE *)(&dwMapXBIT[P_SHIWORD(iY)]->b[(__int16)iY]) & 5) == 5);
+							}
+							if ((__int16)iFOffY < iTileDepth + 10) {
+								iY = iX;
+								for (i = 0; i < 4; ++i) {
+									if (
+										dwMapXBLD[P_SHIWORD(iY)]->iTileID[(__int16)iY] < TILE_SMALLPARK &&
+										!dwMapXTER[P_SHIWORD(iY)]->iTileID[(__int16)iY] &&
+										dwMapXBIT[P_SHIWORD(iY)]->b[(__int16)iY].iWater == 0
+									) {
+										Game_PlaceTileWithMilitaryCheck(P_SHIWORD(iY), iY, 0);
+										dwMapXZON[P_SHIWORD(iY)]->b[(__int16)iY].iZoneType = ZONE_MILITARY;
+										dwMapXZON[P_SHIWORD(iY)]->b[(__int16)iY].iCorners = 0xF0;
+										--*(WORD *)dwTileCount;
+										++*(WORD *)dwMilitaryTiles;
+									}
+									NavalBaseFunc((WORD *)&iY, P_SHIWORD(iY) + wPosX[(__int16)iRotVal[0]], (__int16)iY + wPosY[(__int16)iRotVal[0]]);
+								}
+							}
+							if ((__int16)iFOffY == iTileDepth + 5) {
+								iOffX = iX;
+							}
+						}
+						bMilitaryBaseType = MILITARY_BASE_NAVY;
+						Game_CenterOnTileCoords(P_SHIWORD(iOffX), iOffX);
+						return Game_AfxMessageBox(243, 0, -1);
+					}
+					ConsoleLog(LOG_DEBUG, "DBG - -1\n");
+				}
+				ConsoleLog(LOG_DEBUG, "DBG - -2\n");
+#else
+				int iTileX = 127;
+				int iTileY;
+				int iCoastlineRetries = 0;
 
+				// Make a few attempts to find a coastline that isn't immediately bad.
+				// Could probably use some refining.
+				while (iCoastlineRetries < 10) {
+					iTileY = rand() & 0x7F;
+					while (TRUE) {
+						iTileX--;
+						if (!dwMapXBIT[iTileX]->b[iTileY].iSaltWater || !dwMapXBIT[iTileX]->b[iTileY].iWater)
+							break;
+					}
+
+					if (dwMapXTER[iTileX]->iTileID[iTileY]) {
+						if (military_debug & MILITARY_DEBUG_PLACEMENT)
+							ConsoleLog(LOG_DEBUG, "MIL:  Bad coastline. Trying again.\n");
+						iCoastlineRetries++;
+						continue;
+					}
+					break;
+				}
+
+				if (military_debug & MILITARY_DEBUG_PLACEMENT)
+					ConsoleLog(LOG_DEBUG, "MIL:  Found potential edge of coast at %i, %i. Moving back four tiles.\n", iTileX + 1, iTileY);
+				iTileX -= 3;
+
+				int i = 0, j = 0, iValidTiles = 0;
+				while (TRUE) {
+					if (iTileX + i == 127) {
+						i = 0;
+						j++;
+					}
+					if (j == 12 || i == 0 && iValidTiles >= 48)
+						break;
+
+					if (dwMapXBLD[iTileX + i]->iTileID[iTileY + j] > TILE_TREES7 ||
+						dwMapXBLD[iTileX + i]->iTileID[iTileY + j] == TILE_RADIOACTIVITY ||
+						dwMapXZON[iTileX + i]->b[iTileY + j].iZoneType ||
+						dwMapXBIT[iTileX + i]->b[iTileY + j].iWater ||
+						dwMapXTER[iTileX + i]->iTileID[iTileY + j]) {
+						//printf("Tile at %i, %i no good", iTileX + i, iTileY + j);
+						if (dwMapXBIT[iTileX + i]->b[iTileY + j].iWater && dwMapXBIT[iTileX + i]->b[iTileY + j].iSaltWater) {
+							i = 0;
+							j++;
+							//printf(" (coastline hit)");
+						}
+						//printf(".\n");
+					}
+					else
+						iValidTiles++;
+					i++;
+				}
+
+				// Placement 
+				if (iValidTiles >= 40)
+					if (military_debug & MILITARY_DEBUG_PLACEMENT)
+						ConsoleLog(LOG_DEBUG, "MIL:  Found zone for naval base at %i, %i: %i valid tiles total, %i height.\n", iTileX, iTileY, iValidTiles, j);
+					else {
+						if (military_debug & MILITARY_DEBUG_PLACEMENT)
+							ConsoleLog(LOG_DEBUG, "MIL:  Failed to place naval base at %i, %i: Only found %i valid tiles, height %i.\n", iTileX, iTileY, iValidTiles, j);
+						goto notnavalbase;
+					}
+
+					if (military_debug & MILITARY_DEBUG_PLACEMENT)
+						ConsoleLog(LOG_DEBUG, "MIL:  Setting military base flag to 4 and zoning tiles...");
+					bMilitaryBaseType = MILITARY_BASE_NAVY;
+					i = 0;
+					j = 0;
+					iValidTiles = 0;
+
+					// Zone valid tiles as ZONE_MILITARY
+					while (TRUE) {
+						if (iTileX + i == 127) {
+							i = 0;
+							j++;
+						}
+						if (j == 12 || i == 0 && iValidTiles >= 48)
+							break;
+
+						if (dwMapXBLD[iTileX + i]->iTileID[iTileY + j] > TILE_TREES7 ||
+							dwMapXBLD[iTileX + i]->iTileID[iTileY + j] == TILE_RADIOACTIVITY ||
+							dwMapXZON[iTileX + i]->b[iTileY + j].iZoneType ||
+							dwMapXBIT[iTileX + i]->b[iTileY + j].iWater ||
+							dwMapXTER[iTileX + i]->iTileID[iTileY + j]) {
+							if (dwMapXBIT[iTileX + i]->b[iTileY + j].iWater && dwMapXBIT[iTileX + i]->b[iTileY + j].iSaltWater) {
+								i = 0;
+								j++;
+							}
+						}
+						else {
+							dwMapXZON[iTileX + i]->b[iTileY + j].iZoneType = ZONE_MILITARY;
+							iValidTiles++;
+						}
+						i++;
+					}
+
+					Game_CenterOnTileCoords(iTileX, iTileY);
+					return Game_AfxMessageBox(243, 0, -1);
+#endif
+			}
 		}
+#if 0
+notnavalbase:
+#endif
 		iIterations = 24;
 		iPosCount = dwSiloPos[0];
 		do {
