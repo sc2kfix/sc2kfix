@@ -513,6 +513,7 @@ extern "C" __int16 __stdcall Hook_CSimcityView_WM_MOUSEMOVE(WPARAM iMouseKeys, P
 						}
 					}
 					P_LOWORD(iTileCoords) = wTileCoordinateX;
+					ConsoleLog(LOG_DEBUG, "CLICK_DBG: (%d/%d) (%d)\n", wTileCoordinateX, wTileCoordinateY, wViewRotation);
 					wPreviousTileCoordinateX = wTileCoordinateX;
 					wPreviousTileCoordinateY = wTileCoordinateY;
 					wGameScreenAreaX = pt.x;
