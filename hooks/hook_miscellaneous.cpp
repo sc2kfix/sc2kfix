@@ -572,7 +572,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 				P_LOWORD(ret) = Game_MapToolLowerTerrain(iTileTargetX, iTileTargetY);
 				break;
 			case MAPTOOL_GROUP_STRETCHTERRAIN: // Stretch Terrain (Drag vertically)
-				P_LOWORD(ret) = Game_MapToolVerticalTerrainRaiseOrLevelOut(iTileTargetX, iTileTargetY, pt.y);
+				P_LOWORD(ret) = Game_MapToolStretchTerrain(iTileTargetX, iTileTargetY, pt.y);
 				break;
 			case MAPTOOL_GROUP_LEVELTERRAIN: // Level Terrain
 				P_LOWORD(ret) = Game_MapToolLevelTerrain(iTileTargetX, iTileTargetY);
