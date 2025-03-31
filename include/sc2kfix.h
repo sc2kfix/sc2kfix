@@ -127,6 +127,7 @@ const char *AdjustSource(char *buf, const char *path);
 
 // Utility functions
 
+void InitializeFonts(void);
 void CenterDialogBox(HWND hwndDlg);
 HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText);
 const char* HexPls(UINT uNumber, int width);
@@ -198,6 +199,7 @@ extern BOOL bInSCURK;
 extern BOOL bConsoleEnabled;
 extern BOOL bSkipIntro;
 
+extern BOOL bFontsInitialized;
 extern HFONT hFontMSSansSerifRegular8;
 extern HFONT hFontMSSansSerifBold8;
 extern HFONT hFontMSSansSerifRegular10;

@@ -13,6 +13,31 @@
 #include <sc2kfix.h>
 #include "resource.h"
 
+BOOL bFontsInitialized = FALSE;
+HFONT hFontMSSansSerifRegular8;
+HFONT hFontMSSansSerifBold8;
+HFONT hFontMSSansSerifRegular10;
+HFONT hFontMSSansSerifBold10;
+HFONT hFontArialRegular10;
+HFONT hFontArialBold10;
+HFONT hSystemRegular12;
+
+void InitializeFonts(void) {
+	if (bFontsInitialized)
+		return;
+
+	HDC hDC = GetDC(0);
+	int iDPI = GetDeviceCaps(hDC, LOGPIXELSY);
+	hFontMSSansSerifRegular8 = CreateFont(-MulDiv(8, iDPI, 72), 0, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "MS Sans Serif");
+	hFontMSSansSerifBold8 = CreateFont(-MulDiv(8, iDPI, 72), 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "MS Sans Serif");
+	hFontMSSansSerifRegular10 = CreateFont(-MulDiv(10, iDPI, 72), 0, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "MS Sans Serif");
+	hFontMSSansSerifBold10 = CreateFont(-MulDiv(10, iDPI, 72), 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "MS Sans Serif");
+	hFontArialRegular10 = CreateFont(-MulDiv(10, iDPI, 72), 0, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Arial");
+	hFontArialBold10 = CreateFont(-MulDiv(10, iDPI, 72), 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Arial");
+	hSystemRegular12 = CreateFont(-MulDiv(12, iDPI, 72), 0, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "System");
+	bFontsInitialized = TRUE;
+}
+
 void CenterDialogBox(HWND hwndDlg) {
 	HWND hwndDesktop;
 	RECT rcTemp, rcDlg, rcDesktop;
