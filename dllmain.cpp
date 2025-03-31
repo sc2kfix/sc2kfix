@@ -134,7 +134,15 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 					bSkipIntro = TRUE;
 				if (!lstrcmpiW(argv[i], L"-advquery"))
 					bUseAdvancedQuery = TRUE;
-				// TODO - put some debug options here
+				if (!lstrcmpiW(argv[i], L"-debugall")) {
+					mci_debug = DEBUG_FLAGS_EVERYTHING;
+					military_debug = DEBUG_FLAGS_EVERYTHING;
+					mischook_debug = DEBUG_FLAGS_EVERYTHING;
+					mus_debug = DEBUG_FLAGS_EVERYTHING;
+					snd_debug = DEBUG_FLAGS_EVERYTHING;
+					timer_debug = DEBUG_FLAGS_EVERYTHING;
+					updatenotifier_debug = DEBUG_FLAGS_EVERYTHING;
+				}
 			}
 		}
 
@@ -183,6 +191,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 #endif
 
 		ConsoleLog(LOG_INFO, "CORE: SC2K session started at %lld.\n", time(NULL));
+		ConsoleLog(LOG_INFO, "CORE: Command line: %s\n", GetCommandLine());
 
 		if (bConsoleEnabled) {
 			ConsoleLog(LOG_INFO, "CORE: Spawned console session.\n");
