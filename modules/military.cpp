@@ -287,27 +287,87 @@ static int SetTileCoords(int iPart) {
 	return val;
 }
 
-static int SetMidPointCoords() {
+static int SetRandomPointCoords() {
 	int val;
 	switch (wViewRotation) {
 	case 1:
-		P_HIWORD(val) = 63;
+		P_HIWORD(val) = rand() & 127;
 		P_LOWORD(val) = 0;
 		break;
 	case 2:
 		P_HIWORD(val) = 0;
-		P_LOWORD(val) = 63;
+		P_LOWORD(val) = rand() & 127;
 		break;
 	case 3:
-		P_HIWORD(val) = 63;
+		P_HIWORD(val) = rand() & 127;
 		P_LOWORD(val) = 127;
 		break;
 	default:
 		P_HIWORD(val) = 127;
-		P_LOWORD(val) = 63;
+		P_LOWORD(val) = rand() & 127;
 	}
 
 	return val;
+}
+
+static __int16 GetTileDepth(__int16 iPosA, __int16 iPosB, int iPlus) {
+	__int16 iVal = iPosA;
+	__int16 n = -1;
+	int iBaseLevel = dwMapALTM[iPosA]->w[iPosB].iLandAltitude;
+	while (1) {
+		n++;
+		if (n >= 4)
+			break;
+		if (iPlus) {
+			if (dwMapXTER[iPosA + n]->iTileID[iPosB] || dwMapALTM[iPosA + n]->w[iPosB].iLandAltitude != iBaseLevel) {
+				n = 0;
+				break;
+			}
+		}
+		else {
+			if (dwMapXTER[iPosA - n]->iTileID[iPosB] || dwMapALTM[iPosA - n]->w[iPosB].iLandAltitude != iBaseLevel) {
+				n = 0;
+				break;
+			}
+		}
+		if (iPlus) Game_MapToolPlaceTree(iPosA + n, iPosB);
+		else       Game_MapToolPlaceTree(iPosA - n, iPosB);
+	}
+	if (iPlus)
+		iVal += n;
+	else
+		iVal -= n;
+	return iVal;
+}
+
+static __int16 GetTileLength(__int16 iPosA, __int16 iPosB, int iPlus) {
+	__int16 iVal = iPosB;
+	__int16 n = -1;
+	int iBaseLevel = dwMapALTM[iPosA]->w[iPosB].iLandAltitude;
+	while (1) {
+		n++;
+		if (n >= 12)
+			break;
+		if (iPlus) {
+			if (dwMapXTER[iPosA]->iTileID[iPosB + n] || dwMapALTM[iPosA]->w[iPosB + n].iLandAltitude != iBaseLevel) {
+				n = 0;
+				break;
+			}
+		}
+		else {
+			if (dwMapXTER[iPosA]->iTileID[iPosB - n] || dwMapALTM[iPosA]->w[iPosB - n].iLandAltitude != iBaseLevel) {
+				n = 0;
+				break;
+			}
+		}
+		if (iPlus) Game_MapToolPlaceTree(iPosA, iPosB + n);
+		else       Game_MapToolPlaceTree(iPosA, iPosB - n);
+	}
+	if (iPlus)
+		iVal += n;
+	else
+		iVal -= n;
+	return iVal;
 }
 
 static __int16 GetNearCoord(int iCoords) {
@@ -326,7 +386,7 @@ static uint16_t GetUFarCoord(int iCoords) {
 	return (uint16_t)iCoords;
 }
 
-static __int16 GetRotationOffset(__int16 iCoord) {
+static __int16 GetRotationOffset(__int16 iCoord, int direction) {
 	if (wViewRotation == 2 || wViewRotation == 3) {
 		if (iCoord >= 127)
 			return 127;
@@ -364,6 +424,7 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	int iRotation;
 	int iRotVal[4];
 	int iOldResult;
+	int iNavyLandingAttempts;
 	WORD wPosX[4], wPosY[4];
 	
 	UINT iMilitaryBaseTries = 0;
@@ -374,14 +435,13 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	}
 	else {
 REATTEMPT:
+		iNavyLandingAttempts = 0;
 		if (bCityHasOcean) {
 			ConsoleLog(LOG_DEBUG, "DBG - 1\n");
 			iResult = rand();
-			if ((iResult & 3) != 0) {
+			if ((iResult & 1) != 0) {
 				ConsoleLog(LOG_DEBUG, "DBG - 2\n");
 #if 1
-				//iTileCoords[0] = *(DWORD *)&iPosX[wViewRotation];
-				//iTileCoords[1] = *(DWORD *)&iPosY[wViewRotation];
 				iTileCoords[0] = SetTileCoords(0); // First Corner
 				iTileCoords[1] = SetTileCoords(1); // Second Corner
 				ConsoleLog(LOG_DEBUG, "DBG - 2 (%d/%d) (%d/%d) (%d)\n", GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]), GetNearCoord(iTileCoords[1]), GetFarCoord(iTileCoords[1]), wViewRotation);
@@ -391,10 +451,17 @@ REATTEMPT:
 						ConsoleLog(LOG_DEBUG, "DBG - 3.25\n");
 						// In this area let's think about calculating the mid-point at the relative "back" of the map.
 						// Once that mid-point has been calculated move relative "forward" until you reach dry land.
-						int iTempCoords = SetMidPointCoords();
+REROLLCOASTALSPOT:
+						if (iNavyLandingAttempts >= 20)
+							goto NONAVY;
+						int iTempCoords = SetRandomPointCoords();
 						while (1) {
 							if (dwMapXBIT[GetNearCoord(iTempCoords)]->b[GetFarCoord(iTempCoords)].iWater == 0)
 							{
+								if (dwMapXTER[GetNearCoord(iTempCoords)]->iTileID[GetFarCoord(iTempCoords)]) {
+									iNavyLandingAttempts++;
+									goto REROLLCOASTALSPOT;
+								}
 								iTileCoords[0] = iTempCoords;
 								break;
 							}
@@ -410,22 +477,73 @@ REATTEMPT:
 							else {
 								P_HIWORD(iTempCoords) -= 1;
 							}
-							ConsoleLog(LOG_DEBUG, "DBG - 3.5 (%d/%d)\n", GetNearCoord(iTempCoords), GetFarCoord(iTempCoords));
+							ConsoleLog(LOG_DEBUG, "DBG - 3.5 (%d/%d) (%d) (%d)\n", 
+								GetNearCoord(iTempCoords), 
+								GetFarCoord(iTempCoords), 
+								dwMapXTER[GetNearCoord(iTempCoords)]->iTileID[GetFarCoord(iTempCoords)],
+								dwMapALTM[GetNearCoord(iTempCoords)]->w[GetFarCoord(iTempCoords)].iLandAltitude);
 						}
 					}
 					ConsoleLog(LOG_DEBUG, "DBG - 3.6 (%d/%d)\n", GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]));
 #if 1 // temp
-					Game_PlaceTileWithMilitaryCheck(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]), 0);
-					dwMapXZON[GetNearCoord(iTileCoords[0])]->b[GetFarCoord(iTileCoords[0])].iZoneType = ZONE_MILITARY;
-					dwMapXZON[GetNearCoord(iTileCoords[0])]->b[GetFarCoord(iTileCoords[0])].iCorners = 0xF0;
-					--*(WORD *)dwTileCount;
-					++*(WORD *)dwMilitaryTiles;
+					Game_MapToolPlaceTree(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]));
 
-					bMilitaryBaseType = MILITARY_BASE_NAVY;
+					__int16 iDepthPointA;
+					if (wViewRotation == 1) {
+						iDepthPointA = GetTileDepth(GetFarCoord(iTileCoords[0]), GetNearCoord(iTileCoords[0]), 1);
+					}
+					else if (wViewRotation == 2) {
+						iDepthPointA = GetTileDepth(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]), 1);
+					}
+					else if (wViewRotation == 3) {
+						iDepthPointA = GetTileDepth(GetFarCoord(iTileCoords[0]), GetNearCoord(iTileCoords[0]), 0);
+					}
+					else {
+						iDepthPointA = GetTileDepth(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]), 0);
+					}
+
+					ConsoleLog(LOG_DEBUG, "DBG - 3.65 (%d/%d) (%d)\n", iDepthPointA, GetFarCoord(iTileCoords[0]), wViewRotation);
+
+					__int16 iLengthPointA = 0;
+					__int16 iLengthPointB = 0;
+
+					// Determine relative "left"
+					if (wViewRotation == 1) {
+						iLengthPointA = GetTileLength(iDepthPointA, GetNearCoord(iTileCoords[0]), 1);
+					}
+					else if (wViewRotation == 2) {
+						iLengthPointA = GetTileLength(iDepthPointA, GetFarCoord(iTileCoords[0]), 1);
+					}
+					else if (wViewRotation == 3) {
+						iLengthPointA = GetTileLength(iDepthPointA, GetNearCoord(iTileCoords[0]), 0);
+					}
+					else {
+						iLengthPointA = GetTileLength(iDepthPointA, GetFarCoord(iTileCoords[0]), 0);
+					}
+
+					ConsoleLog(LOG_DEBUG, "DBG - 3.66 (%d) (%d)\n", iLengthPointA, wViewRotation);
+
+					// Determine relative "right"
+					if (wViewRotation == 1) {
+						iLengthPointB = GetTileLength(iDepthPointA, GetNearCoord(iTileCoords[0]), 0);
+					}
+					else if (wViewRotation == 2) {
+						iLengthPointB = GetTileLength(iDepthPointA, GetFarCoord(iTileCoords[0]), 0);
+					}
+					else if (wViewRotation == 3) {
+						iLengthPointB = GetTileLength(iDepthPointA, GetNearCoord(iTileCoords[0]), 1);
+					}
+					else {
+						iLengthPointB = GetTileLength(iDepthPointA, GetFarCoord(iTileCoords[0]), 1);
+					}
+
+					ConsoleLog(LOG_DEBUG, "DBG - 3.67 (%d) (%d)\n", iLengthPointB, wViewRotation);
+
+					//bMilitaryBaseType = MILITARY_BASE_NAVY;
 					Game_CenterOnTileCoords(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]));
 					return Game_AfxMessageBox(243, 0, -1);
-#endif
-					/*while (1) {
+#else
+					while (1) {
 						if (dwMapXBIT[GetNearCoord(iTileCoords[0])]->b[GetFarCoord(iTileCoords[0])].iWater == 0)
 							break;
 						// Near coord
@@ -537,7 +655,8 @@ REATTEMPT:
 						bMilitaryBaseType = MILITARY_BASE_NAVY;
 						Game_CenterOnTileCoords(GetNearCoord(iNearOff), GetFarCoord(iNearOff));
 						return Game_AfxMessageBox(243, 0, -1);
-					}*/
+					}
+#endif
 					ConsoleLog(LOG_DEBUG, "DBG - -1\n");
 				}
 				ConsoleLog(LOG_DEBUG, "DBG - -2\n");
@@ -603,7 +722,7 @@ REATTEMPT:
 					else {
 						if (military_debug & MILITARY_DEBUG_PLACEMENT)
 							ConsoleLog(LOG_DEBUG, "MIL:  Failed to place naval base at %i, %i: Only found %i valid tiles, height %i.\n", iTileX, iTileY, iValidTiles, j);
-						goto notnavalbase;
+						goto NONAVY;
 					}
 
 					if (military_debug & MILITARY_DEBUG_PLACEMENT)
@@ -644,9 +763,7 @@ REATTEMPT:
 #endif
 			}
 		}
-#if 0
-notnavalbase:
-#endif
+NONAVY:
 		iIterations = 24;
 		iPosCount = dwSiloPos[0];
 		do {
