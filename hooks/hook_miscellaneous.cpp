@@ -709,7 +709,8 @@ void InstallMiscHooks(void) {
 	*(BYTE*)0x428FB3 = 0x32;
 	
 	// Install the advanced query hook
-	InstallQueryHooks();
+	if (bUseAdvancedQuery)
+		InstallQueryHooks();
 
 	// Fix the broken cheat
 	UINT uCheatPatch[9] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
