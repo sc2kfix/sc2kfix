@@ -204,6 +204,7 @@ extern const char* szSC2KFixBuildInfo;
 extern BOOL bInSCURK;
 extern BOOL bConsoleEnabled;
 extern BOOL bSkipIntro;
+extern BOOL bUseAdvancedQuery;
 extern BOOL bKurokoVMInitialized;
 extern DWORD dwConsoleThreadID;
 extern DWORD dwKurokoThreadID;
