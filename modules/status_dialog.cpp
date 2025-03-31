@@ -132,6 +132,8 @@ extern "C" int __stdcall Hook_40103C(int iShow) {
 BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 	case WM_INITDIALOG:
+		if (!bFontsInitialized)
+			InitializeFonts();
 		SendMessage(GetDlgItem(hwndDlg, IDC_STATIC_SELECTEDTOOL), WM_SETFONT, (WPARAM)hFontMSSansSerifBold10, TRUE);
 		return TRUE;
 

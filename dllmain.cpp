@@ -42,15 +42,6 @@ FILE* fdLog = NULL;
 BOOL bInSCURK = FALSE;
 BOOL bKurokoVMInitialized = FALSE;
 
-HDC hDC;
-HFONT hFontMSSansSerifRegular8;
-HFONT hFontMSSansSerifBold8;
-HFONT hFontMSSansSerifRegular10;
-HFONT hFontMSSansSerifBold10;
-HFONT hFontArialRegular10;
-HFONT hFontArialBold10;
-HFONT hSystemRegular12;
-
 std::random_device rdRandomDevice;
 std::mt19937 mtMersenneTwister(rdRandomDevice());
 
@@ -272,19 +263,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			CreateThread(NULL, 0, MusicThread, 0, 0, &dwMusicThreadID);
 			ConsoleLog(LOG_INFO, "MUS:  Music thread started.\n");
 		}
-
-		// Initialize the Kuroko VM
-		CreateThread(NULL, 0, KurokoThread, 0, 0, &dwKurokoThreadID);
-
-		// Generate fonts
-		hDC = GetDC(0);
-		hFontMSSansSerifRegular8 = CreateFont(-MulDiv(8, GetDeviceCaps(hDC, LOGPIXELSY), 72), 0, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "MS Sans Serif");
-		hFontMSSansSerifBold8 = CreateFont(-MulDiv(8, GetDeviceCaps(hDC, LOGPIXELSY), 72), 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "MS Sans Serif");
-		hFontMSSansSerifRegular10 = CreateFont(-MulDiv(10, GetDeviceCaps(hDC, LOGPIXELSY), 72), 0, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "MS Sans Serif");
-		hFontMSSansSerifBold10 = CreateFont(-MulDiv(10, GetDeviceCaps(hDC, LOGPIXELSY), 72), 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "MS Sans Serif");
-		hFontArialRegular10 = CreateFont(-MulDiv(10, GetDeviceCaps(hDC, LOGPIXELSY), 72), 0, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Arial");
-		hFontArialBold10 = CreateFont(-MulDiv(10, GetDeviceCaps(hDC, LOGPIXELSY), 72), 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Arial");
-		hSystemRegular12 = CreateFont(-MulDiv(12, GetDeviceCaps(hDC, LOGPIXELSY), 72), 0, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "System");
 
 		// Palette animation fix
 		LPVOID lpAnimationFix;
