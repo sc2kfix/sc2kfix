@@ -374,6 +374,7 @@ LONG WINAPI CrashHandler(LPEXCEPTION_POINTERS lpExceptions) {
 	char szModuleName[64];
 	STACKFRAME stStackFrame = { 0 };
 	CONTEXT stContext = { 0 };
+	BOOL bHaveDebugSyms = FALSE;
 
 	// She's dead, Jim.
 	bGameDead = TRUE;
@@ -383,6 +384,11 @@ LONG WINAPI CrashHandler(LPEXCEPTION_POINTERS lpExceptions) {
 	GetModuleFileName(NULL, szProcessName, sizeof(szProcessName));
 	GetModuleBaseName(GetCurrentProcess(), (HMODULE)SymGetModuleBase(hFaultingProcess, (DWORD)lpExceptions->ContextRecord->Eip), szModuleName, sizeof(szModuleName));
 
+	// Attempt to load symbols if we can
+	if (SymInitialize(hFaultingProcess, NULL, TRUE))
+		bHaveDebugSyms = TRUE;
+
+	// Dump the header
 	ConsoleLog(LOG_EMERGENCY, "CORE:\n");
 	ConsoleLog(LOG_EMERGENCY, "CORE: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 	ConsoleLog(LOG_EMERGENCY, "CORE: !!! TOP-LEVEL EXCEPTION HANDLER CALLED !!!\n");
@@ -403,7 +409,7 @@ LONG WINAPI CrashHandler(LPEXCEPTION_POINTERS lpExceptions) {
 
 	ConsoleLog(LOG_EMERGENCY, "CORE: \n");
 	ConsoleLog(LOG_EMERGENCY, "CORE: Stack Trace:\n");
-	ConsoleLog(LOG_EMERGENCY, "CORE:  - EIP        ESP        EBP        \n");
+	ConsoleLog(LOG_EMERGENCY, "CORE:  - EIP         ESP         EBP         SYM\n");
 
 	// Set up the stack frame and contexts
 	stStackFrame.AddrPC.Offset = lpExceptions->ContextRecord->Eip;
@@ -416,9 +422,28 @@ LONG WINAPI CrashHandler(LPEXCEPTION_POINTERS lpExceptions) {
 	RtlCaptureContext(&stContext);
 
 	// Unwind and dump the stack
-	do {
-		ConsoleLog(LOG_EMERGENCY, "CORE:  - 0x%08X  0x%08X  0x%08X  \n", stStackFrame.AddrPC.Offset, stStackFrame.AddrStack.Offset, stStackFrame.AddrFrame.Offset);
-	} while (StackWalk(IMAGE_FILE_MACHINE_I386, hFaultingProcess, hFaultingThread, &stStackFrame, &stContext, NULL, SymFunctionTableAccess, SymGetModuleBase, NULL));
+	while (StackWalk(IMAGE_FILE_MACHINE_I386, hFaultingProcess, hFaultingThread, &stStackFrame, &stContext, NULL, SymFunctionTableAccess, SymGetModuleBase, NULL)) {
+		std::string strSymbolInfo;
+		DWORD dwDisplacement = 0;
+		char szCurrentModuleName[64];
+
+		GetModuleBaseName(GetCurrentProcess(), (HMODULE)SymGetModuleBase(hFaultingProcess, stStackFrame.AddrPC.Offset), szCurrentModuleName, sizeof(szCurrentModuleName));
+		strSymbolInfo = "<";
+		strSymbolInfo += szCurrentModuleName;
+		strSymbolInfo += ">:";
+
+		char szBuf[sizeof(IMAGEHLP_SYMBOL) + 255];
+		PIMAGEHLP_SYMBOL stSymbol = (PIMAGEHLP_SYMBOL)szBuf;
+		stSymbol->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL) + 255;
+		stSymbol->MaxNameLength = 254;
+		if (SymGetSymFromAddr(hFaultingProcess, stStackFrame.AddrPC.Offset, &dwDisplacement, stSymbol))
+			strSymbolInfo += stSymbol->Name;
+		else
+			strSymbolInfo += "unknown";
+		strSymbolInfo += "()";
+
+		ConsoleLog(LOG_EMERGENCY, "CORE:  - 0x%08X  0x%08X  0x%08X  %s\n", stStackFrame.AddrPC.Offset, stStackFrame.AddrStack.Offset, stStackFrame.AddrFrame.Offset, strSymbolInfo.c_str());
+	}
 
 	ConsoleLog(LOG_EMERGENCY, "CORE:\n");
 	ConsoleLog(LOG_EMERGENCY, "CORE: End of stack trace. Time to die.\n");
