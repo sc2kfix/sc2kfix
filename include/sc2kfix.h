@@ -252,9 +252,12 @@ void InstallRegistryPathingHooks_SCURK1996(void);
 // Debugging settings
 
 extern UINT mci_debug;
+extern UINT military_debug;
+extern UINT mischook_debug;
+extern UINT mus_debug;
 extern UINT snd_debug;
 extern UINT timer_debug;
-extern UINT mischook_debug;
+extern UINT updatenotifier_debug;
 
 // SCURK specific stuff
 
