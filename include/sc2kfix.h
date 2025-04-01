@@ -26,9 +26,12 @@
 #define SC2KVERSION_1996    2
 
 #define SC2KFIX_VERSION		"0.10-dev"
-#define SC2KFIX_RELEASE_TAG	"r9a"
+#define SC2KFIX_RELEASE_TAG	"r9c"
 
-#define SC2KFIX_INIFILE     "sc2kfix.ini"
+#define SC2KFIX_INIFILE		"sc2kfix.ini"
+#define SC2KFIX_MODSFOLDER	"mods"
+
+#define HOOKEXT extern "C" __declspec(dllexport)
 
 #define countof(x) (sizeof(x)/sizeof(*(x)))
 #define lengthof(s) (countof(s)-1)
@@ -133,13 +136,14 @@ const char *AdjustSource(char *buf, const char *path);
 
 void InitializeFonts(void);
 void CenterDialogBox(HWND hwndDlg);
-HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText);
-const char* HexPls(UINT uNumber, int width);
-void ConsoleLog(int iLogLevel, const char* fmt, ...);
+HOOKEXT HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText);
+HOOKEXT const char* HexPls(UINT uNumber, int width);
+HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...);
 int GetTileID(int iTileX, int iTileY);
 const char* GetZoneName(int iZoneID);
 const char* GetLowHighScale(BYTE bScale);
-BOOL FileExists(const char* name);
+HOOKEXT BOOL FileExists(const char* name);
+HOOKEXT const char* GetModsFolderPath(void);
 HBITMAP CreateSpriteBitmap(int iSpriteID);
 BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, const char *ini_name);
 void MigrateRegStringValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, char *szOutBuf, DWORD dwLen);

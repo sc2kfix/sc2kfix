@@ -52,7 +52,7 @@ void CenterDialogBox(HWND hwndDlg) {
 	SetWindowPos(hwndDlg, HWND_TOP, rcDesktop.left + (rcTemp.right / 2), rcDesktop.top + (rcTemp.bottom / 2), 0, 0, SWP_NOSIZE);
 }
 
-HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText) {
+HOOKEXT HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText) {
 	if (!hDlg || !hControl || !szText)
 		return NULL;
 
@@ -78,7 +78,7 @@ HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText) {
 	return hTooltip;
 }
 
-const char* HexPls(UINT uNumber, int width) {
+HOOKEXT const char* HexPls(UINT uNumber, int width) {
 	thread_local char szRet[16] = { 0 };
 	sprintf_s(szRet, 16, "0x%0*X", width, uNumber);
 	return szRet;
@@ -86,7 +86,7 @@ const char* HexPls(UINT uNumber, int width) {
 
 extern FILE* fdLog;
 
-void ConsoleLog(int iLogLevel, const char* fmt, ...) {
+HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...) {
 	va_list args;
 	int len;
 	char* buf;
@@ -162,13 +162,20 @@ const char* GetLowHighScale(BYTE bScale) {
 	return "Very High";
 }
 
-BOOL FileExists(const char* name) {
+HOOKEXT BOOL FileExists(const char* name) {
 	FILE* fdTest;
 	if (!fopen_s(&fdTest, name, "r")) {
 		fclose(fdTest);
 		return TRUE;
 	}
 	return FALSE;
+}
+
+HOOKEXT const char* GetModsFolderPath(void) {
+	static char szModsFolderPath[MAX_PATH];
+
+	sprintf_s(szModsFolderPath, MAX_PATH, "%s\\%s", szGamePath, SC2KFIX_MODSFOLDER);
+	return szModsFolderPath;
 }
 
 BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, const char *ini_name) {

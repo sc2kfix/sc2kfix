@@ -43,6 +43,8 @@ BOOL bInSCURK = FALSE;
 BOOL bKurokoVMInitialized = FALSE;
 BOOL bUseAdvancedQuery = FALSE;
 
+std::map<HMODULE, std::string> mapLoadedNativeMods;
+
 std::random_device rdRandomDevice;
 std::mt19937 mtMersenneTwister(rdRandomDevice());
 
@@ -353,6 +355,36 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			ConsoleLog(LOG_INFO, "CORE: Starting console thread.\n");
 			hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, &dwConsoleThreadID);
 		}
+
+		// Load mods.
+		{
+			// Create the mods folder if it doesn't already exist
+			DWORD dwModsFolderAttribs = GetFileAttributes(GetModsFolderPath());
+			if (dwModsFolderAttribs == INVALID_FILE_ATTRIBUTES)
+				CreateDirectory(GetModsFolderPath(), NULL);
+
+			// Iterate through all the .dll files in the mods folder
+			char szModFilePath[MAX_PATH];
+			WIN32_FIND_DATA ffdModFile;
+			sprintf_s(szModFilePath, MAX_PATH, "%s\\*.dll", GetModsFolderPath());
+			HANDLE hModFile = FindFirstFile(szModFilePath, &ffdModFile);
+			if (hModFile != INVALID_HANDLE_VALUE) {
+				do {
+					// Attempt to load the DLL
+					ConsoleLog(LOG_DEBUG, "MODS: Loader found mod file \"%s\".\n", ffdModFile.cFileName);
+					sprintf_s(szModFilePath, MAX_PATH, "%s\\%s", GetModsFolderPath(), ffdModFile.cFileName);
+					HMODULE hModLoaded = LoadLibrary(szModFilePath);
+					if (!hModLoaded) {
+						ConsoleLog(LOG_ERROR, "MODS: Failed to load mod \"%s\", error 0x%08X.\n", ffdModFile.cFileName, GetLastError());
+						continue;
+					}
+
+					// Add it to the loaded native mods list if successful
+					mapLoadedNativeMods[hModLoaded] = std::string(szModFilePath);
+				} while (FindNextFile(hModFile, &ffdModFile) != NULL);
+			}
+		}
+
 		break;
 
 	// Nothing to do for these two cases
