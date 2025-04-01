@@ -330,8 +330,8 @@ static __int16 GetTileDepth(__int16 iPosA, __int16 iPosB, int iPlus) {
 				break;
 			}
 		}
-		if (iPlus) Game_MapToolPlaceTree(iPosA + n, iPosB);
-		else       Game_MapToolPlaceTree(iPosA - n, iPosB);
+		//if (iPlus) Game_MapToolPlaceTree(iPosA + n, iPosB);
+		//else       Game_MapToolPlaceTree(iPosA - n, iPosB);
 	}
 	if (iPlus)
 		iVal += n;
@@ -360,8 +360,8 @@ static __int16 GetTileLength(__int16 iPosA, __int16 iPosB, int iPlus) {
 				break;
 			}
 		}
-		if (iPlus) Game_MapToolPlaceTree(iPosA, iPosB + n);
-		else       Game_MapToolPlaceTree(iPosA, iPosB - n);
+		//if (iPlus) Game_MapToolPlaceTree(iPosA, iPosB + n);
+		//else       Game_MapToolPlaceTree(iPosA, iPosB - n);
 	}
 	if (iPlus)
 		iVal += n;
@@ -486,58 +486,105 @@ REROLLCOASTALSPOT:
 					}
 					ConsoleLog(LOG_DEBUG, "DBG - 3.6 (%d/%d)\n", GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]));
 #if 1 // temp
-					Game_MapToolPlaceTree(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]));
+					//Game_MapToolPlaceTree(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]));
 
-					__int16 iDepthPointA;
+					__int16 iDepthPointA, iDepthPointB;
 					if (wViewRotation == 1) {
-						iDepthPointA = GetTileDepth(GetFarCoord(iTileCoords[0]), GetNearCoord(iTileCoords[0]), 1);
+						iDepthPointA = GetFarCoord(iTileCoords[0]) - 5;
+						iDepthPointB = GetTileDepth(GetFarCoord(iTileCoords[0]), GetNearCoord(iTileCoords[0]), 1);
 					}
 					else if (wViewRotation == 2) {
-						iDepthPointA = GetTileDepth(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]), 1);
+						iDepthPointA = GetNearCoord(iTileCoords[0]) - 5;
+						iDepthPointB = GetTileDepth(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]), 1);
 					}
 					else if (wViewRotation == 3) {
-						iDepthPointA = GetTileDepth(GetFarCoord(iTileCoords[0]), GetNearCoord(iTileCoords[0]), 0);
+						iDepthPointA = GetFarCoord(iTileCoords[0]) + 5;
+						iDepthPointB = GetTileDepth(GetFarCoord(iTileCoords[0]), GetNearCoord(iTileCoords[0]), 0);
 					}
 					else {
-						iDepthPointA = GetTileDepth(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]), 0);
+						iDepthPointA = GetNearCoord(iTileCoords[0]) + 5;
+						iDepthPointB = GetTileDepth(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]), 0);
 					}
 
-					ConsoleLog(LOG_DEBUG, "DBG - 3.65 (%d/%d) (%d)\n", iDepthPointA, GetFarCoord(iTileCoords[0]), wViewRotation);
+					ConsoleLog(LOG_DEBUG, "DBG - 3.65 (%d/%d) (%d)\n", iDepthPointB, GetFarCoord(iTileCoords[0]), wViewRotation);
 
 					__int16 iLengthPointA = 0;
 					__int16 iLengthPointB = 0;
 
 					// Determine relative "left"
 					if (wViewRotation == 1) {
-						iLengthPointA = GetTileLength(iDepthPointA, GetNearCoord(iTileCoords[0]), 1);
+						iLengthPointA = GetTileLength(iDepthPointB, GetNearCoord(iTileCoords[0]), 1);
 					}
 					else if (wViewRotation == 2) {
-						iLengthPointA = GetTileLength(iDepthPointA, GetFarCoord(iTileCoords[0]), 1);
+						iLengthPointA = GetTileLength(iDepthPointB, GetFarCoord(iTileCoords[0]), 1);
 					}
 					else if (wViewRotation == 3) {
-						iLengthPointA = GetTileLength(iDepthPointA, GetNearCoord(iTileCoords[0]), 0);
+						iLengthPointA = GetTileLength(iDepthPointB, GetNearCoord(iTileCoords[0]), 0);
 					}
 					else {
-						iLengthPointA = GetTileLength(iDepthPointA, GetFarCoord(iTileCoords[0]), 0);
+						iLengthPointA = GetTileLength(iDepthPointB, GetFarCoord(iTileCoords[0]), 0);
 					}
 
 					ConsoleLog(LOG_DEBUG, "DBG - 3.66 (%d) (%d)\n", iLengthPointA, wViewRotation);
 
 					// Determine relative "right"
 					if (wViewRotation == 1) {
-						iLengthPointB = GetTileLength(iDepthPointA, GetNearCoord(iTileCoords[0]), 0);
+						iLengthPointB = GetTileLength(iDepthPointB, GetNearCoord(iTileCoords[0]), 0);
 					}
 					else if (wViewRotation == 2) {
-						iLengthPointB = GetTileLength(iDepthPointA, GetFarCoord(iTileCoords[0]), 0);
+						iLengthPointB = GetTileLength(iDepthPointB, GetFarCoord(iTileCoords[0]), 0);
 					}
 					else if (wViewRotation == 3) {
-						iLengthPointB = GetTileLength(iDepthPointA, GetNearCoord(iTileCoords[0]), 1);
+						iLengthPointB = GetTileLength(iDepthPointB, GetNearCoord(iTileCoords[0]), 1);
 					}
 					else {
-						iLengthPointB = GetTileLength(iDepthPointA, GetFarCoord(iTileCoords[0]), 1);
+						iLengthPointB = GetTileLength(iDepthPointB, GetFarCoord(iTileCoords[0]), 1);
 					}
 
 					ConsoleLog(LOG_DEBUG, "DBG - 3.67 (%d) (%d)\n", iLengthPointB, wViewRotation);
+
+					for (__int16 iLengthWay = iLengthPointA;;) {
+						if (wViewRotation == 1 || wViewRotation == 2) {
+							if (iLengthWay <= iLengthPointB)
+								break;
+						}
+						else {
+							if (iLengthWay >= iLengthPointB)
+								break;
+						}
+
+						ConsoleLog(LOG_DEBUG, "DBG - 3.68 X(%d)(%d)(%d) Y(%d)(%d) [%d]\n", iLengthPointA, iLengthWay, iLengthPointB, iDepthPointB, iDepthPointA, wViewRotation);
+
+						for (__int16 iDepthWay = iDepthPointB;;) {
+							if (wViewRotation == 1 || wViewRotation == 2) {
+								if (iDepthWay <= iDepthPointA)
+									break;
+							}
+							else {
+								if (iDepthWay >= iDepthPointA)
+									break;
+							}
+
+							ConsoleLog(LOG_DEBUG, "DBG - 3.685 X(%d)(%d)(%d) Y(%d)(%d)(%d) [%d]\n", iLengthPointA, iLengthWay, iLengthPointB, iDepthPointB, iDepthWay, iDepthPointA, wViewRotation);
+
+							if (wViewRotation == 1 || wViewRotation == 3)
+								Game_MapToolPlaceTree(iLengthWay, iDepthWay);
+							else
+								Game_MapToolPlaceTree(iDepthWay, iLengthWay);
+
+							if (wViewRotation == 1 || wViewRotation == 2) {
+								--iDepthWay;
+							}
+							else
+								++iDepthWay;
+						}
+
+						if (wViewRotation == 1 || wViewRotation == 2) {
+							--iLengthWay;
+						}
+						else
+							++iLengthWay;
+					}
 
 					//bMilitaryBaseType = MILITARY_BASE_NAVY;
 					Game_CenterOnTileCoords(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]));
