@@ -120,6 +120,9 @@
     <ClInclude Include="kuroko\kuroko\vm.h">
       <Filter>Header Files\Kuroko</Filter>
     </ClInclude>
+    <ClInclude Include="include\hooklists.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="hooks\hook_mciSendCommand.cpp">
@@ -306,6 +309,9 @@
       <Filter>Source Files\Kuroko</Filter>
     </ClCompile>
     <ClCompile Include="modules\kuroko_glue.cpp">
+      <Filter>Source Files\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\mod_loader.cpp">
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
   </ItemGroup>

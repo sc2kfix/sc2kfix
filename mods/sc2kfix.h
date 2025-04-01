@@ -2,6 +2,7 @@
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #pragma once
+#pragma warning(disable : 4200)
 
 #define HOOKEXT	extern "C" __declspec(dllimport)
 #define HOOKCB	extern "C" __declspec(dllexport)
@@ -36,6 +37,16 @@ typedef struct {
 	const char* szModAuthor;			// Optional, but recommended
 	const char* szModDescription;		// Optional, but recommended
 } sc2kfix_mod_info_t;
+
+typedef struct {
+	const char* szHookName;
+	int iHookPriority;
+} sc2kfix_mod_hook_t;
+
+typedef struct {
+	int iHookCount;
+	sc2kfix_mod_hook_t stHooks[];
+} sc2kfix_mod_hooklist_t;
 
 HOOKEXT HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText);
 HOOKEXT const char* HexPls(UINT uNumber, int width);

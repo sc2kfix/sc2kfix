@@ -62,6 +62,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\hooklists.h" />
     <ClInclude Include="include\json.hpp" />
     <ClInclude Include="include\music.h" />
     <ClInclude Include="include\sc2kfix.h" />
@@ -144,6 +145,7 @@
     <ClCompile Include="hooks\hook_mmtimers.cpp" />
     <ClCompile Include="modules\kuroko_glue.cpp" />
     <ClCompile Include="modules\military.cpp" />
+    <ClCompile Include="modules\mod_loader.cpp" />
     <ClCompile Include="modules\music.cpp" />
     <ClCompile Include="modules\registry_config.cpp" />
     <ClCompile Include="modules\sc2k_1996.cpp" />

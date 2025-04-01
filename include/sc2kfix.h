@@ -2,9 +2,11 @@
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #pragma once
+#pragma warning(disable : 4200)
 
 #include <windows.h>
 #include <string>
+#include <list>
 #include <map>
 #include <vector>
 #include <algorithm>
@@ -83,6 +85,23 @@ typedef struct {
 	const char* szModAuthor;			// Optional, but recommended
 	const char* szModDescription;		// Optional, but recommended
 } sc2kfix_mod_info_t;
+
+typedef struct {
+	const char* szHookName;
+	int iHookPriority;
+} sc2kfix_mod_hook_t;
+
+typedef struct {
+	int iHookCount;
+	sc2kfix_mod_hook_t stHooks[];
+} sc2kfix_mod_hooklist_t;
+
+typedef struct {
+	int iPriority;
+	void* pFunction;
+} hook_function_t;
+
+#include <hooklists.h>
 
 typedef BOOL (*console_cmdproc_t)(const char* szCommand, const char* szArguments);
 
@@ -212,6 +231,8 @@ BOOL ConsoleCmdSet(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdSetDebug(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdSetTile(const char* szCommand, const char* szArguments);
 
+void LoadNativeCodeMods(void);
+
 DWORD WINAPI KurokoThread(LPVOID lpParameter);
 
 extern BOOL bGameDead;
@@ -223,6 +244,7 @@ extern HMENU hGameMenu;
 extern FARPROC fpWinMMHookList[180];
 extern DWORD dwDetectedVersion;
 extern DWORD dwSC2KAppTimestamp;
+extern DWORD dwSC2KFixVersion;
 extern const char* szSC2KFixVersion;
 extern const char* szSC2KFixReleaseTag;
 extern const char* szSC2KFixBuildInfo;

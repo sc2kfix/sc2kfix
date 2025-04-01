@@ -45,8 +45,6 @@ BOOL bKurokoVMInitialized = FALSE;
 BOOL bUseAdvancedQuery = FALSE;
 BOOL bSkipLoadingMods = FALSE;
 
-std::map<HMODULE, sc2kfix_mod_info_t> mapLoadedNativeMods;
-
 std::random_device rdRandomDevice;
 std::mt19937 mtMersenneTwister(rdRandomDevice());
 
@@ -362,51 +360,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
 		// Load native code mods.
 		if (!bSkipLoadingMods) {
-			// Create the mods folder if it doesn't already exist
-			DWORD dwModsFolderAttribs = GetFileAttributes(GetModsFolderPath());
-			if (dwModsFolderAttribs == INVALID_FILE_ATTRIBUTES)
-				CreateDirectory(GetModsFolderPath(), NULL);
-
-			// Iterate through all the .dll files in the mods folder
-			char szModFilePath[MAX_PATH];
-			WIN32_FIND_DATA ffdModFile;
-			sprintf_s(szModFilePath, MAX_PATH, "%s\\*.dll", GetModsFolderPath());
-			HANDLE hModFile = FindFirstFile(szModFilePath, &ffdModFile);
-			if (hModFile != INVALID_HANDLE_VALUE) {
-				do {
-					// Attempt to load the DLL
-					ConsoleLog(LOG_DEBUG, "MODS: Loader found native code mod \"%s\".\n", ffdModFile.cFileName);
-					sprintf_s(szModFilePath, MAX_PATH, "%s\\%s", GetModsFolderPath(), ffdModFile.cFileName);
-					HMODULE hModLoaded = LoadLibrary(szModFilePath);
-					if (!hModLoaded) {
-						ConsoleLog(LOG_ERROR, "MODS: Failed to load mod \"%s\", error 0x%08X.\n", ffdModFile.cFileName, GetLastError());
-						continue;
-					}
-
-					// Load the mod's info and parse it if LoadLibrary was successful
-					sc2kfix_mod_info_t* (*HookCb_GetModInfo)(void) = (sc2kfix_mod_info_t* (*)(void))GetProcAddress(hModLoaded, "HookCb_GetModInfo");
-					if (!HookCb_GetModInfo) {
-						ConsoleLog(LOG_ERROR, "MODS: Failed to load mod \"%s\". DLL does not export HookCb_GetModInfo.\n", ffdModFile.cFileName);
-						FreeLibrary(hModLoaded);
-					} else {
-						mapLoadedNativeMods[hModLoaded] = *HookCb_GetModInfo();
-						DWORD dwModMinVersion = mapLoadedNativeMods[hModLoaded].iMinimumVersionMajor << 24 |
-							mapLoadedNativeMods[hModLoaded].iMinimumVersionMinor << 16 |
-							mapLoadedNativeMods[hModLoaded].iMinimumVersionPatch << 8;
-						if (dwSC2KFixVersion < dwModMinVersion) {
-							ConsoleLog(LOG_ERROR, "MODS: Failed to load mod \"%s\". sc2kfix version is lower than the required version (%s).\n", ffdModFile.cFileName,
-								FormatVersion(mapLoadedNativeMods[hModLoaded].iMinimumVersionMajor, mapLoadedNativeMods[hModLoaded].iMinimumVersionMinor, mapLoadedNativeMods[hModLoaded].iMinimumVersionPatch));
-							FreeLibrary(hModLoaded);
-							mapLoadedNativeMods.erase(hModLoaded);
-							continue;
-						}
-					}
-					
-					// Log that we were successful in loading the mod
-					ConsoleLog(LOG_INFO, "MODS: Loaded native code mod \"%s\" (%s) version %s.\n", mapLoadedNativeMods[hModLoaded].szModName, mapLoadedNativeMods[hModLoaded].szModShortName,
-						FormatVersion(mapLoadedNativeMods[hModLoaded].iModVersionMajor, mapLoadedNativeMods[hModLoaded].iModVersionMinor, mapLoadedNativeMods[hModLoaded].iModVersionPatch));
-				} while (FindNextFile(hModFile, &ffdModFile) != NULL);
-			}
+			LoadNativeCodeMods();
 		}
 
 		break;

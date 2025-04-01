@@ -16,6 +16,10 @@
 
 #pragma once
 
+#ifndef HOOKEXT
+#define HOOKEXT extern "C" __declspec(dllexport)
+#endif
+
 #ifdef GAMEOFF_IMPL
 #define GAMEOFF(type, name, address) \
 	type* __ptr__##name = (type*)address; \
@@ -410,7 +414,7 @@ enum {
 	TILE_OTHER_BRAUNLLAMADOME
 };
 
-extern const char* szTileNames[256];
+HOOKEXT const char* szTileNames[256];
 extern const char* szUndergroundNames[36];
 
 #define TILE_IS_MILITARY(iTileID) \

@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <intrin.h>
+#include <list>
 #include <map>
 #include <string>
 
@@ -311,12 +312,18 @@ extern "C" char* __stdcall Hook_40D67D(void) {
 	return szCurrentMonthDay;
 }
 
+std::list<hook_function_t> stHooks_Hook_SimulationProcessTickDaySwitch_Before;
 
 // Window title hook, part 2 and refresh hook
 // TODO: Clean this hook up to be as pure C/C++ as possible. I'm sure we can make it nice and
 // clean, I just need more time to fiddle with it.
 extern "C" void _declspec(naked) Hook_SimulationProcessTickDaySwitch(void) {
 	__asm push edx
+
+	for (auto hook : stHooks_Hook_SimulationProcessTickDaySwitch_Before) {
+		void (*fnHook)(void) = (void(*)(void))hook.pFunction;
+		fnHook();
+	}
 
 	Game_RefreshTitleBar(pCDocumentMainWindow);
 
