@@ -244,15 +244,15 @@ static void FormArmyBaseGrid(int x1, int y1, __int16 x2, __int16 y2) {
 static int SetTileCoords(int iPart) {
 	int val;
 	switch (wViewRotation) {
-		case 1:
+		case VIEWROTATION_EAST:
 			P_HIWORD(val) = (iPart == 0) ? 0 : 127;
 			P_LOWORD(val) = 0;
 			break;
-		case 2:
+		case VIEWROTATION_SOUTH:
 			P_HIWORD(val) = 0;
 			P_LOWORD(val) = (iPart == 0) ? 127 : 0;
 			break;
-		case 3:
+		case VIEWROTATION_WEST:
 			P_HIWORD(val) = (iPart == 0) ? 127 : 0;
 			P_LOWORD(val) = 127;
 			break;
@@ -267,15 +267,15 @@ static int SetTileCoords(int iPart) {
 static int SetRandomPointCoords() {
 	int val;
 	switch (wViewRotation) {
-	case 1:
+	case VIEWROTATION_EAST:
 		P_HIWORD(val) = rand() & 127;
 		P_LOWORD(val) = 0;
 		break;
-	case 2:
+	case VIEWROTATION_SOUTH:
 		P_HIWORD(val) = 0;
 		P_LOWORD(val) = rand() & 127;
 		break;
-	case 3:
+	case VIEWROTATION_WEST:
 		P_HIWORD(val) = rand() & 127;
 		P_LOWORD(val) = 127;
 		break;
@@ -405,13 +405,13 @@ REROLLCOASTALSPOT:
 								iTileCoords[0] = iTempCoords;
 								break;
 							}
-							if (wViewRotation == 1) {
+							if (wViewRotation == VIEWROTATION_EAST) {
 								P_LOWORD(iTempCoords) += 1;
 							}
-							else if (wViewRotation == 2) {
+							else if (wViewRotation == VIEWROTATION_SOUTH) {
 								P_HIWORD(iTempCoords) += 1;
 							}
-							else if (wViewRotation == 3) {
+							else if (wViewRotation == VIEWROTATION_WEST) {
 								P_LOWORD(iTempCoords) -= 1;
 							}
 							else {
@@ -421,17 +421,17 @@ REROLLCOASTALSPOT:
 					}
 
 					__int16 iStartPoint, iDepthPointA, iDepthPointB;
-					if (wViewRotation == 1) {
+					if (wViewRotation == VIEWROTATION_EAST) {
 						iStartPoint = GetNearCoord(iTileCoords[0]);
 						iDepthPointA = GetFarCoord(iTileCoords[1]);
 						iDepthPointB = GetTileDepth(GetFarCoord(iTileCoords[0]), GetNearCoord(iTileCoords[0]), 1);
 					}
-					else if (wViewRotation == 2) {
+					else if (wViewRotation == VIEWROTATION_SOUTH) {
 						iStartPoint = GetFarCoord(iTileCoords[0]);
 						iDepthPointA = GetNearCoord(iTileCoords[1]);
 						iDepthPointB = GetTileDepth(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]), 1);
 					}
-					else if (wViewRotation == 3) {
+					else if (wViewRotation == VIEWROTATION_WEST) {
 						iStartPoint = GetNearCoord(iTileCoords[0]);
 						iDepthPointA = GetFarCoord(iTileCoords[1]);
 						iDepthPointB = GetTileDepth(GetFarCoord(iTileCoords[0]), GetNearCoord(iTileCoords[0]), 0);
@@ -443,15 +443,15 @@ REROLLCOASTALSPOT:
 					}
 
 					// Determine relative "left"
-					__int16 iLengthPointA = GetTileLength(iDepthPointB, iStartPoint, ((wViewRotation == 1 || wViewRotation == 2) ? 1 : 0), 0);
+					__int16 iLengthPointA = GetTileLength(iDepthPointB, iStartPoint, ((wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) ? 1 : 0), 0);
 
 					// Determine relative "right"
-					__int16 iLengthPointB = GetTileLength(iDepthPointB, iStartPoint, ((wViewRotation == 1 || wViewRotation == 2) ? 0 : 1), iLengthPointA);
+					__int16 iLengthPointB = GetTileLength(iDepthPointB, iStartPoint, ((wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) ? 0 : 1), iLengthPointA);
 
 					int iNumTiles = 0;
 					iBaseLevel = dwMapALTM[iStartPoint]->w[iDepthPointB].iLandAltitude;
 					for (__int16 iLengthWay = iLengthPointA;;) {
-						if (wViewRotation == 1 || wViewRotation == 2) {
+						if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) {
 							if (iLengthWay <= iLengthPointB)
 								break;
 						}
@@ -461,7 +461,7 @@ REROLLCOASTALSPOT:
 						}
 
 						for (__int16 iDepthWay = iDepthPointB;;) {
-							if (wViewRotation == 1 || wViewRotation == 2) {
+							if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) {
 								if (iDepthWay <= iDepthPointA)
 									break;
 							}
@@ -471,7 +471,7 @@ REROLLCOASTALSPOT:
 							}
 
 							__int16 iDirectionOne, iDirectionTwo;
-							if (wViewRotation == 1 || wViewRotation == 3) {
+							if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_WEST) {
 								iDirectionOne = iLengthWay;
 								iDirectionTwo = iDepthWay;
 							}
@@ -502,13 +502,13 @@ REROLLCOASTALSPOT:
 								iNumTiles++;
 							}
 
-							if (wViewRotation == 1 || wViewRotation == 2)
+							if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH)
 								--iDepthWay;
 							else
 								++iDepthWay;
 						}
 
-						if (wViewRotation == 1 || wViewRotation == 2)
+						if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH)
 							--iLengthWay;
 						else
 							++iLengthWay;
