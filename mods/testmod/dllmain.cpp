@@ -3,6 +3,14 @@
 
 #include <windows.h>
 #include "../sc2kfix.h"
+#include "../../include/sc2k_1996.h"
+
+sc2kfix_mod_info_t stModInfo = {
+    /* .szModName = */ "Test Native Code Mod",
+    /* .szModShortName = */ "testmod",
+    /* .szModAuthor = */ "sc2kfix Project",
+    /* .szModDescription = */ "A test mod to demonstrate sc2kfix native code mod loading, linking against DLL exports from sc2kfix, and manipulating game data from native code."
+};
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
     switch (reason) {
@@ -19,3 +27,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
     return TRUE;
 }
 
+HOOKCB sc2kfix_mod_info_t* HookCb_GetModInfo(void) {
+    return &stModInfo;
+}

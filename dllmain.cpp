@@ -42,8 +42,9 @@ FILE* fdLog = NULL;
 BOOL bInSCURK = FALSE;
 BOOL bKurokoVMInitialized = FALSE;
 BOOL bUseAdvancedQuery = FALSE;
+BOOL bSkipLoadingMods = FALSE;
 
-std::map<HMODULE, std::string> mapLoadedNativeMods;
+std::map<HMODULE, sc2kfix_mod_info_t> mapLoadedNativeMods;
 
 std::random_device rdRandomDevice;
 std::mt19937 mtMersenneTwister(rdRandomDevice());
@@ -136,14 +137,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 		if (argv) {
 			for (int i = 0; i < argc; i++) {
-				if (!lstrcmpiW(argv[i], L"-console"))
-					bConsoleEnabled = TRUE;
-				if (!lstrcmpiW(argv[i], L"-defaults"))
-					bSkipLoadSettings = TRUE;
-				if (!lstrcmpiW(argv[i], L"-skipintro"))
-					bSkipIntro = TRUE;
 				if (!lstrcmpiW(argv[i], L"-advquery"))
 					bUseAdvancedQuery = TRUE;
+				if (!lstrcmpiW(argv[i], L"-console"))
+					bConsoleEnabled = TRUE;
 				if (!lstrcmpiW(argv[i], L"-debugall")) {
 					mci_debug = DEBUG_FLAGS_EVERYTHING;
 					military_debug = DEBUG_FLAGS_EVERYTHING;
@@ -153,6 +150,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 					timer_debug = DEBUG_FLAGS_EVERYTHING;
 					updatenotifier_debug = DEBUG_FLAGS_EVERYTHING;
 				}
+				if (!lstrcmpiW(argv[i], L"-defaults"))
+					bSkipLoadSettings = TRUE;
+				if (!lstrcmpiW(argv[i], L"-skipintro"))
+					bSkipIntro = TRUE;
+				if (!lstrcmpiW(argv[i], L"-skipmods"))
+					bSkipLoadingMods = TRUE;
 			}
 		}
 
@@ -356,8 +359,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, &dwConsoleThreadID);
 		}
 
-		// Load mods.
-		{
+		// Load native code mods.
+		if (!bSkipLoadingMods) {
 			// Create the mods folder if it doesn't already exist
 			DWORD dwModsFolderAttribs = GetFileAttributes(GetModsFolderPath());
 			if (dwModsFolderAttribs == INVALID_FILE_ATTRIBUTES)
@@ -371,7 +374,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			if (hModFile != INVALID_HANDLE_VALUE) {
 				do {
 					// Attempt to load the DLL
-					ConsoleLog(LOG_DEBUG, "MODS: Loader found mod file \"%s\".\n", ffdModFile.cFileName);
+					ConsoleLog(LOG_DEBUG, "MODS: Loader found native code mod \"%s\".\n", ffdModFile.cFileName);
 					sprintf_s(szModFilePath, MAX_PATH, "%s\\%s", GetModsFolderPath(), ffdModFile.cFileName);
 					HMODULE hModLoaded = LoadLibrary(szModFilePath);
 					if (!hModLoaded) {
@@ -380,7 +383,15 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 					}
 
 					// Add it to the loaded native mods list if successful
-					mapLoadedNativeMods[hModLoaded] = std::string(szModFilePath);
+					sc2kfix_mod_info_t* (*HookCb_GetModInfo)(void) = (sc2kfix_mod_info_t* (*)(void))GetProcAddress(hModLoaded, "HookCb_GetModInfo");
+					if (HookCb_GetModInfo)
+						mapLoadedNativeMods[hModLoaded] = *HookCb_GetModInfo();
+					else {
+						mapLoadedNativeMods[hModLoaded].szModName = strdup(szModFilePath);
+						mapLoadedNativeMods[hModLoaded].szModShortName = strdup(ffdModFile.cFileName);
+					}
+					
+					ConsoleLog(LOG_INFO, "MODS: Loaded native code mod \"%s\" (%s).\n", mapLoadedNativeMods[hModLoaded].szModName, mapLoadedNativeMods[hModLoaded].szModShortName);
 				} while (FindNextFile(hModFile, &ffdModFile) != NULL);
 			}
 		}

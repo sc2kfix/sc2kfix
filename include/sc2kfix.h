@@ -65,6 +65,13 @@ typedef struct {
 	void* pfn;
 } AFX_MSGMAP_ENTRY;
 
+typedef struct {
+	const char* szModName;
+	const char* szModShortName;
+	const char* szModAuthor;
+	const char* szModDescription;
+} sc2kfix_mod_info_t;
+
 typedef BOOL (*console_cmdproc_t)(const char* szCommand, const char* szArguments);
 
 typedef struct {
@@ -183,6 +190,7 @@ BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowDebug(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowMemory(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowMicrosim(const char* szCommand, const char* szArguments);
+BOOL ConsoleCmdShowMods(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowSprite(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments);
@@ -222,6 +230,7 @@ extern HFONT hFontArialRegular10;
 extern HFONT hFontArialBold10;
 extern HFONT hSystemRegular12;
 
+extern std::map<HMODULE, sc2kfix_mod_info_t> mapLoadedNativeMods;
 extern std::map<DWORD, soundbufferinfo_t> mapSoundBuffers;
 extern std::vector<int> vectorRandomSongIDs;
 extern std::random_device rdRandomDevice;

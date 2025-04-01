@@ -159,6 +159,7 @@ BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 			"  show debug          Display enabled debugging options\n"
 			"  show memory ...     Display memory contents\n"
 			"  show microsim ...   Display microsim info\n"
+			"  show mods           Display loaded mods\n"
 			"  show sound          Display sound info\n"
 			"  show tile ...       Display tile info\n"
 			"  show version        Display sc2kfix version info\n");
@@ -173,6 +174,9 @@ BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 
 	if (!strcmp(szArguments, "microsim") || !strncmp(szArguments, "microsim ", 9))
 		return ConsoleCmdShowMicrosim(szCommand, szArguments);
+
+	if (!strcmp(szArguments, "mods"))
+		return ConsoleCmdShowMods(szCommand, szArguments);
 
 	if (!strcmp(szArguments, "sound") || !strncmp(szArguments, "sound ", 6))
 		return ConsoleCmdShowSound(szCommand, szArguments);
@@ -360,6 +364,18 @@ static const char* GetMidiDeviceTechnologyString(WORD wTechnology) {
 	default:
 		return "Unknown";
 	}
+}
+
+BOOL ConsoleCmdShowMods(const char* szCommand, const char* szArguments) {
+	printf("%d native code mods loaded:\n", mapLoadedNativeMods.size());
+	for (auto stNativeMod : mapLoadedNativeMods) {
+		printf(
+			"  %s (0x%08X)\n"
+			"    Mod Name:      %s\n"
+			"    Author:        %s\n"
+			"    Description:   %s\n\n", stNativeMod.second.szModShortName, stNativeMod.first, stNativeMod.second.szModName, stNativeMod.second.szModAuthor, stNativeMod.second.szModDescription);
+	}
+	return TRUE;
 }
 
 BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {

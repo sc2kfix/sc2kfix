@@ -21,6 +21,13 @@ enum {
 	LOG_DEBUG
 };
 
+typedef struct {
+	const char* szModName;
+	const char* szModShortName;
+	const char* szModAuthor;
+	const char* szModDescription;
+} sc2kfix_mod_info_t;
+
 HOOKEXT HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText);
 HOOKEXT const char* HexPls(UINT uNumber, int width);
 HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...);
