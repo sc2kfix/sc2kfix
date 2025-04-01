@@ -319,7 +319,7 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 m_x, int m_y, __
 	BYTE *pZone;
 
 	char(__cdecl *H_SimulationProvisionMicrosim)(__int16, int, __int16) = (char(__cdecl *)(__int16, int, __int16))0x401460;
-	int(__cdecl *H_sub_4012C1)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x4012C1;
+	int(__cdecl *H_SpawnItem)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x4012C1;
 
 	unsigned __int16 x = m_x;
 	int y = P_LOWORD(m_y);
@@ -465,7 +465,7 @@ GOFORWARD:
 			else if (x < 0x80u && (unsigned __int16)y < 0x80u) {
 				*(BYTE *)&dwMapXZON[x]->b[y] |= 0xF0u;
 			}
-			H_sub_4012C1(x, y + iArea);
+			H_SpawnItem(x, y + iArea);
 			return 1;
 		}
 	}
