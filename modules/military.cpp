@@ -155,9 +155,8 @@ static __int16 GetTileDepth(__int16 iPosA, __int16 iPosB, int iPlus) {
 	return iVal;
 }
 
-static __int16 GetTileLength(__int16 iPosA, __int16 iPosB, int iPlus, __int16 iLeftWise) {
+static __int16 GetTileLength(__int16 iPosA, __int16 iPosB, int iPlus) {
 	__int16 iVal = iPosB;
-	__int16 iDiff = (iPlus) ? iPosB - iLeftWise : iPosB + iLeftWise;
 	__int16 n = -1;
 	int iBaseLevel = dwMapALTM[iPosA]->w[iPosB].iLandAltitude;
 	while (1) {
@@ -274,21 +273,20 @@ REROLLCOASTALSPOT:
 						}
 					}
 
-					__int16 iStartPoint = GetStartPoint(iTileCoords[0]); // Lengthway coordinate
+					__int16 iStartLengthPoint = GetStartPoint(iTileCoords[0]); // Lengthway coordinate
 					__int16 iFarthestDepth = GetDepthPoint(iTileCoords[1]); // Edge of the map out at sea.
-					__int16 iNearestDepth = GetDepthPoint(iTileCoords[0]); // Landfall.
 					
 					// Depth of the base from landfall to further in-land.
-					__int16 iDepthPoint = GetTileDepth(iNearestDepth, iStartPoint, ((wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) ? 1 : 0));
+					__int16 iDepthPoint = GetTileDepth(GetDepthPoint(iTileCoords[0]), iStartLengthPoint, ((wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) ? 1 : 0));
 
 					// Determine relative "left"
-					__int16 iLengthPointA = GetTileLength(iDepthPoint, iStartPoint, ((wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) ? 1 : 0), 0);
+					__int16 iLengthPointA = GetTileLength(iDepthPoint, iStartLengthPoint, ((wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) ? 1 : 0));
 
 					// Determine relative "right"
-					__int16 iLengthPointB = GetTileLength(iDepthPoint, iStartPoint, ((wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) ? 0 : 1), iLengthPointA);
+					__int16 iLengthPointB = GetTileLength(iDepthPoint, iStartLengthPoint, ((wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) ? 0 : 1));
 
 					int iNumTiles = 0;
-					iBaseLevel = dwMapALTM[iStartPoint]->w[iDepthPoint].iLandAltitude;
+					iBaseLevel = dwMapALTM[iStartLengthPoint]->w[iDepthPoint].iLandAltitude;
 					for (__int16 iLengthWay = iLengthPointA;;) {
 						if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) {
 							if (iLengthWay <= iLengthPointB)
