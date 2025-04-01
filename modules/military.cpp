@@ -28,174 +28,8 @@ UINT military_debug = MILITARY_DEBUG;
 
 static DWORD dwDummy;
 
-extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 m_x, int m_y, __int16 iTileID, __int16 iTileArea) {
-	__int16 iArea;
-	__int16 iMarinaCount;
-	__int16 iX[2];
-	__int16 iY[2];
-	__int16 iTile;
-	unsigned __int8 iBuilding;
-	int iItemWidth;
-	int iItemLength;
-	int iItemDepth;
-	__int16 iMapBit;
-	__int16 iSection[3];
-	char cMSimBit;
-	BYTE *pZone;
-
-	char(__cdecl *H_SimulationProvisionMicrosim)(__int16, int, __int16) = (char(__cdecl *)(__int16, int, __int16))0x401460;
-	int(__cdecl *H_sub_4012C1)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x4012C1;
-
-	unsigned __int16 x = m_x;
-	int y = P_LOWORD(m_y);
-
-	iArea = iTileArea - 1;
-	if (iArea > 1) {
-		--x;
-		P_LOWORD(y) = y - 1;
-	}
-	//ConsoleLog(LOG_DEBUG, "DBG: 0x%08X -> ItemPlacementCheck(x: %u, y: %d, iTileID: %s, iTileArea: %d)\n", _ReturnAddress(), x, y, szTileNames[iTileID], iTileArea);
-	iMarinaCount = 0;
-	iX[0] = x;
-	iItemWidth = (__int16)x + iArea;
-	if (iItemWidth >= (__int16)x) {
-		iTile = iTileID;
-		iItemLength = iArea + (__int16)y;
-		while (1) {
-			iY[0] = y;
-			if (iItemLength >= (__int16)y)
-				break;
-GOBACK:
-			if (++iX[0] > iItemWidth)
-				goto GOFORWARD;
-		}
-		while (1) {
-			if (iArea <= 0) {
-				if ((unsigned __int16)iX[0] >= 0x80u || (unsigned __int16)iY[0] >= 0x80u)
-					return 0;
-			}
-			else if (iX[0] < 1 || iY[0] < 1 || iX[0] > 126 || iY[0] > 126) {
-				return 0;
-			}
-			iBuilding = dwMapXBLD[iX[0]]->iTileID[iY[0]];
-			if (iBuilding >= TILE_ROAD_LR) {
-				return 0;
-			}
-			if (iBuilding == TILE_RADIOACTIVITY) {
-				return 0;
-			}
-			if (iBuilding == TILE_SMALLPARK) {
-				return 0;
-			}
-			//if (dwMapXZON[iX[0]]->b[iY[0]].iZoneType == ZONE_MILITARY) {
-			//	return 0; // This is where it stops during the military zone checking process.
-			//}
-			if (iTileID == TILE_INFRASTRUCTURE_MARINA) {
-				if ((unsigned __int16)iX[0] < 0x80u &&
-					(unsigned __int16)iY[0] < 0x80u &&
-					dwMapXBIT[iX[0]]->b[iY[0]].iWater != 0) {
-					++iMarinaCount;
-					goto GOSKIP;
-				}
-				if (dwMapXTER[iX[0]]->iTileID[iY[0]]) {
-					return 0;
-				}
-			}
-			if (dwMapXTER[iX[0]]->iTileID[iY[0]]) {
-				return 0;
-			}
-			if ((unsigned __int16)iX[0] < 0x80u &&
-				(unsigned __int16)iY[0] < 0x80u &&
-				dwMapXBIT[iX[0]]->b[iY[0]].iWater != 0) {
-				return 0;
-			}
-GOSKIP:
-			if (++iY[0] > iItemLength) {
-				goto GOBACK;
-			}
-		}
-	}
-	iTile = iTileID;
-GOFORWARD:
-	if (iTile == TILE_INFRASTRUCTURE_MARINA && (!iMarinaCount || iMarinaCount == 9)) {
-		Game_AfxMessageBox(107, 0, -1);
-		return 0;
-	}
-	else {
-		if (iTile == TILE_SERVICES_BIGPARK || (iMapBit = -32, iTile == TILE_SMALLPARK)) { // The initial setting of iMapBit to -32 isn't present in the DOS version.
-			iMapBit = 32;
-		}
-		else {
-			iMapBit = 224; // Present in the DOS version.
-		}
-		if (iTile == TILE_SMALLPARK && dwMapXBLD[x]->iTileID[y] > TILE_SMALLPARK) {
-			return 0;
-		}
-		else {
-			iX[1] = x;
-			cMSimBit = H_SimulationProvisionMicrosim(x, y, iTile);
-			if (iItemWidth >= (__int16)x) {
-				iItemDepth = (__int16)y + iArea;
-				do {
-					for (int i = y; i <= iItemDepth; ++i) {
-						if (iX[1] > -1) {
-							if (iX[1] < 128 && (unsigned __int16)i < 0x80u) {
-								*(BYTE *)&dwMapXBIT[iX[1]]->b[i] &= 0x1Fu;
-							}
-							if ((unsigned __int16)iX[1] < 0x80u && (unsigned __int16)i < 0x80u) {
-								*(BYTE *)&dwMapXBIT[iX[1]]->b[i] |= iMapBit;
-							}
-						}
-						Game_PlaceTileWithMilitaryCheck(iX[1], i, iTile);
-						if (iX[1] > -1) {
-							if (iX[1] < 128 && (unsigned __int16)i < 0x80u) {
-								*(BYTE *)&dwMapXZON[iX[1]]->b[i] &= 0xF0u;
-							}
-							if ((unsigned __int16)iX[1] < 0x80u && (unsigned __int16)i < 0x80u) {
-								*(BYTE *)&dwMapXZON[iX[1]]->b[i] &= 0xFu;
-							}
-						}
-						if (cMSimBit) {
-							*(BYTE *)&dwMapXTXT[iX[1]]->bTextOverlay[i] = cMSimBit;
-						}
-					}
-					++iX[1];
-				} while (iX[1] <= iItemWidth);
-			}
-			if (iArea) {
-				if (x < 0x80u && (unsigned __int16)y < 0x80u) {
-					pZone = (BYTE *)&dwMapXZON[x]->b[y];
-					*pZone = P_LOBYTE(wSomePositionalAngleOne[4 * wViewRotation]) | *pZone & 0xF;
-				}
-				iSection[0] = iArea + x;
-				if ((__int16)(iArea + x) > -1 && iSection[0] < 128 && (unsigned __int16)y < 0x80u) {
-					pZone = (BYTE *)&dwMapXZON[iSection[0]]->b[y];
-					*pZone = P_LOBYTE(wSomePositionalAngleTwo[4 * wViewRotation]) | *pZone & 0xF;
-				}
-				if ((unsigned __int16)iSection[0] < 0x80u) {
-					iSection[1] = y + iArea;
-					if ((__int16)(y + iArea) > -1 && iSection[1] < 128) {
-						pZone = (BYTE *)&dwMapXZON[iSection[0]]->b[iSection[1]];
-						*pZone = P_LOBYTE(wSomePositionalAngleThree[4 * wViewRotation]) | *pZone & 0xF;
-					}
-				}
-				if (x < 0x80u) {
-					iSection[2] = iArea + y;
-					if ((__int16)(iArea + y) > -1 && iSection[2] < 128) {
-						pZone = (BYTE *)&dwMapXZON[x]->b[iSection[2]];
-						*pZone = P_LOBYTE(wSomePositionalAngleFour[4 * wViewRotation]) | *pZone & 0xF;
-					}
-				}
-			}
-			else if (x < 0x80u && (unsigned __int16)y < 0x80u) {
-				*(BYTE *)&dwMapXZON[x]->b[y] |= 0xF0u;
-			}
-			H_sub_4012C1(x, y + iArea);
-			return 1;
-		}
-	}
-}
-
+// This function has been replicated from he equivalent that was found
+// in the DOS version of the game.
 static void FormArmyBaseGrid(int x1, int y1, __int16 x2, __int16 y2) {
 	WORD wOldToolGroup;
 	__int16 iX;
@@ -204,8 +38,8 @@ static void FormArmyBaseGrid(int x1, int y1, __int16 x2, __int16 y2) {
 	int iNewY;
 
 	// These will be moved to the global section once demystified.
-	char(__cdecl *sub_4019A1)(unsigned __int16, unsigned __int16) = (char(__cdecl *)(unsigned __int16, unsigned __int16))0x4019A1;
-	int(*sub_401CCB)(void) = (int(*)(void))0x401CCB;
+	char(__cdecl *H_sub_4019A1)(unsigned __int16, unsigned __int16) = (char(__cdecl *)(unsigned __int16, unsigned __int16))0x4019A1;
+	int(*H_sub_401CCB)(void) = (int(*)(void))0x401CCB;
 
 	wOldToolGroup = wMaybeActiveToolGroup;
 	iX = x2;
@@ -217,28 +51,34 @@ static void FormArmyBaseGrid(int x1, int y1, __int16 x2, __int16 y2) {
 		iNewY = y1;
 		iY = y1;
 		while (Game_MaybeRoadViabilityAlongPath((__int16 *)&iNewX, (__int16 *)&iNewY)) {
-			sub_4019A1(iX, iY);
+			H_sub_4019A1(iX, iY);
 			Game_PlaceRoadAtCoordinates(iX, iY);
 			iX = iNewX;
 			iY = iNewY;
 		}
-		sub_4019A1(iX, iY);
+		H_sub_4019A1(iX, iY);
 		Game_PlaceRoadAtCoordinates(iX, iY);
 	}
 	if (GetTileID(x1, y1) == TILE_ROAD_LR || GetTileID(x1, y1) == TILE_ROAD_TB) {
-		dwMapXZON[x1]->b[y1].iZoneType = ZONE_MILITARY;
-		dwMapXZON[x1]->b[y1].iCorners = 0x0F; // In the DOS build this is 0xF0, however that value here results in a blank area.
-		Game_PlaceTileWithMilitaryCheck(x1, y1, TILE_INFRASTRUCTURE_RUNWAYCROSS);
-
+		// TERRAIN_00 check added here to avoid the runwaycross
+		// being placed into a dip (likely replacing a slope or granite block).
+		if (!dwMapXTER[x1]->iTileID[y1]) {
+			dwMapXZON[x1]->b[y1].iZoneType = ZONE_MILITARY;
+			dwMapXZON[x1]->b[y1].iCorners = 0x0F; // In the DOS build this is 0xF0, however that value here results in a blank area.
+			Game_PlaceTileWithMilitaryCheck(x1, y1, TILE_INFRASTRUCTURE_RUNWAYCROSS);
+		}
 	}
 	if (GetTileID(iX, iY) == TILE_ROAD_LR || GetTileID(iX, iY) == TILE_ROAD_TB) {
-		dwMapXZON[iX]->b[iY].iZoneType = ZONE_MILITARY;
-		dwMapXZON[iX]->b[iY].iCorners = 0x0F; // In the DOS build this is 0xF0, however that value here results in a blank area.
-		Game_PlaceTileWithMilitaryCheck(iX, iY, TILE_INFRASTRUCTURE_RUNWAYCROSS);
-
+		// TERRAIN_00 check added here to avoid the runwaycross
+		// being placed into a dip (likely replacing a slope or granite block).
+		if (!dwMapXTER[iX]->iTileID[iY]) {
+			dwMapXZON[iX]->b[iY].iZoneType = ZONE_MILITARY;
+			dwMapXZON[iX]->b[iY].iCorners = 0x0F; // In the DOS build this is 0xF0, however that value here results in a blank area.
+			Game_PlaceTileWithMilitaryCheck(iX, iY, TILE_INFRASTRUCTURE_RUNWAYCROSS);
+		}
 	}
 	wMaybeActiveToolGroup = wOldToolGroup;
-	sub_401CCB();
+	H_sub_401CCB();
 }
 
 static int SetTileCoords(int iPart) {
@@ -352,6 +192,20 @@ static __int16 GetFarCoord(int iCoords) {
 	return (__int16)iCoords;
 }
 
+static __int16 GetStartPoint(int iCoords) {
+	if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_WEST)
+		return GetNearCoord(iCoords);
+	else
+		return GetFarCoord(iCoords);
+}
+
+static __int16 GetDepthPoint(int iCoords) {
+	if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_WEST)
+		return GetFarCoord(iCoords);
+	else
+		return GetNearCoord(iCoords);
+}
+
 extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	int iResult;
 	int iIterations;
@@ -420,27 +274,12 @@ REROLLCOASTALSPOT:
 						}
 					}
 
-					__int16 iStartPoint, iDepthPointA, iDepthPointB;
-					if (wViewRotation == VIEWROTATION_EAST) {
-						iStartPoint = GetNearCoord(iTileCoords[0]);
-						iDepthPointA = GetFarCoord(iTileCoords[1]);
-						iDepthPointB = GetTileDepth(GetFarCoord(iTileCoords[0]), GetNearCoord(iTileCoords[0]), 1);
-					}
-					else if (wViewRotation == VIEWROTATION_SOUTH) {
-						iStartPoint = GetFarCoord(iTileCoords[0]);
-						iDepthPointA = GetNearCoord(iTileCoords[1]);
-						iDepthPointB = GetTileDepth(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]), 1);
-					}
-					else if (wViewRotation == VIEWROTATION_WEST) {
-						iStartPoint = GetNearCoord(iTileCoords[0]);
-						iDepthPointA = GetFarCoord(iTileCoords[1]);
-						iDepthPointB = GetTileDepth(GetFarCoord(iTileCoords[0]), GetNearCoord(iTileCoords[0]), 0);
-					}
-					else {
-						iStartPoint = GetFarCoord(iTileCoords[0]);
-						iDepthPointA = GetNearCoord(iTileCoords[1]);
-						iDepthPointB = GetTileDepth(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]), 0);
-					}
+					__int16 iStartPoint = GetStartPoint(iTileCoords[0]); // Lengthway coordinate
+					__int16 iFarthestDepth = GetDepthPoint(iTileCoords[1]); // Edge of the map out at sea.
+					__int16 iNearestDepth = GetDepthPoint(iTileCoords[0]); // Landfall.
+					
+					// Depth of the base from landfall to further in-land.
+					__int16 iDepthPointB = GetTileDepth(iNearestDepth, iStartPoint, ((wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) ? 1 : 0));
 
 					// Determine relative "left"
 					__int16 iLengthPointA = GetTileLength(iDepthPointB, iStartPoint, ((wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) ? 1 : 0), 0);
@@ -462,11 +301,11 @@ REROLLCOASTALSPOT:
 
 						for (__int16 iDepthWay = iDepthPointB;;) {
 							if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) {
-								if (iDepthWay <= iDepthPointA)
+								if (iDepthWay <= iFarthestDepth)
 									break;
 							}
 							else {
-								if (iDepthWay >= iDepthPointA)
+								if (iDepthWay >= iFarthestDepth)
 									break;
 							}
 
@@ -655,7 +494,11 @@ NONAVY:
 			if (bMilitaryBaseType == MILITARY_BASE_ARMY) {
 				// The '//' spacers below represent where an 'if' check and subsequent call to
 				// 'FormArmyBaseGrid' is performed in the DOS version (clarity still needed).
-				// Could the 'if' cases represent dimensions of the placed zone plot?
+				// Although it isn't confirmed, a possibility could be that the 'if' checks
+				// were to do with failed runwaycross placements (either down to them ending
+				// up on a slope and/or replacing a granite block).
+				// Another possibility is that the check was to see whether the runwaycross
+				// is present at each opposite end where possible.
 				FormArmyBaseGrid(iRandOne[0] + 2, iPosOffset, iRandOne[0] + 2, iPosOffset + 7);
 				//
 				//
@@ -676,11 +519,6 @@ NONAVY:
 }
 
 void InstallMilitaryHooks(void) {
-
-	// Hook into what appears to be one of the item placement checking functions
-	VirtualProtect((LPVOID)0x4027F2, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4027F2, Hook_ItemPlacementCheck);
-
 	// Restore the functionality to place naval bases on maps with coastlines
 	VirtualProtect((LPVOID)0x403017, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x403017, Hook_SimulationProposeMilitaryBase);

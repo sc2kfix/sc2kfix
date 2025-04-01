@@ -763,10 +763,6 @@ typedef struct {
 	BYTE bPadding;
 } map_XLAB_t;
 
-// Engine helper functions. These call into the game using the below function pointers to do
-// various tasks.
-int PlaceRoadsAlongPath(int x1, int y1, int x2, int y2);
-
 // Function pointers
 
 GAMECALL(0x40103C, int, __thiscall, PreGameMenuDialogToggle, void *pThis, int iShow)
