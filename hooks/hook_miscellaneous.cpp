@@ -312,7 +312,7 @@ extern "C" char* __stdcall Hook_40D67D(void) {
 	return szCurrentMonthDay;
 }
 
-std::list<hook_function_t> stHooks_Hook_SimulationProcessTickDaySwitch_Before;
+std::vector<hook_function_t> stHooks_Hook_SimulationProcessTickDaySwitch_Before;
 
 // Window title hook, part 2 and refresh hook
 // TODO: Clean this hook up to be as pure C/C++ as possible. I'm sure we can make it nice and

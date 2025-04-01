@@ -144,6 +144,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 					mci_debug = DEBUG_FLAGS_EVERYTHING;
 					military_debug = DEBUG_FLAGS_EVERYTHING;
 					mischook_debug = DEBUG_FLAGS_EVERYTHING;
+					modloader_debug = DEBUG_FLAGS_EVERYTHING;
 					mus_debug = DEBUG_FLAGS_EVERYTHING;
 					snd_debug = DEBUG_FLAGS_EVERYTHING;
 					timer_debug = DEBUG_FLAGS_EVERYTHING;

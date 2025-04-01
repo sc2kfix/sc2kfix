@@ -6,4 +6,4 @@
 #include <list>
 #include <sc2kfix.h>
 
-extern std::list<hook_function_t> stHooks_Hook_SimulationProcessTickDaySwitch_Before;
+extern std::vector<hook_function_t> stHooks_Hook_SimulationProcessTickDaySwitch_Before;

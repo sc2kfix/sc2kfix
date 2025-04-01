@@ -302,6 +302,7 @@ void InstallRegistryPathingHooks_SCURK1996(void);
 extern UINT mci_debug;
 extern UINT military_debug;
 extern UINT mischook_debug;
+extern UINT modloader_debug;
 extern UINT mus_debug;
 extern UINT snd_debug;
 extern UINT timer_debug;

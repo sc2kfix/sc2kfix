@@ -10,6 +10,18 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
+#define MODLOADER_DEBUG_MODULES 1
+#define MODLOADER_DEBUG_HOOKS 2
+
+#define MODLOADER_DEBUG DEBUG_FLAGS_EVERYTHING
+
+#ifdef DEBUGALL
+#undef MODLOADER_DEBUG
+#define MODLOADER_DEBUG DEBUG_FLAGS_EVERYTHING
+#endif
+
+UINT modloader_debug = MODLOADER_DEBUG;
+
 std::map<HMODULE, sc2kfix_mod_info_t> mapLoadedNativeMods;
 
 int LoadNativeCodeHooks(HMODULE hModule) {
@@ -33,12 +45,24 @@ int LoadNativeCodeHooks(HMODULE hModule) {
 		if (!strcmp(stHookList->stHooks[i].szHookName, "Hook_SimulationProcessTickDaySwitch_Before"))
 			stHooks_Hook_SimulationProcessTickDaySwitch_Before.push_back(stHookFn);
 
-		ConsoleLog(LOG_DEBUG, "MODS: Loaded hook %s at address 0x%08X (pri %d) from native code mod %s.\n",
-			stHookList->stHooks[i].szHookName, stHookFn.pFunction, stHookFn.iPriority, mapLoadedNativeMods[hModule].szModShortName);
+		if (modloader_debug & MODLOADER_DEBUG_HOOKS)
+			ConsoleLog(LOG_DEBUG, "MODS: Loaded hook %s at address 0x%08X (pri %d) from native code mod %s.\n",
+				stHookList->stHooks[i].szHookName, stHookFn.pFunction, stHookFn.iPriority, mapLoadedNativeMods[hModule].szModShortName);
 		iHooksLoaded++;
 	}
 
 	return iHooksLoaded;
+}
+
+bool operator<(const hook_function_t& a, const hook_function_t& b) {
+	return a.iPriority < b.iPriority;
+}
+
+void SortHookLists(void) {
+	std::sort(stHooks_Hook_SimulationProcessTickDaySwitch_Before.begin(), stHooks_Hook_SimulationProcessTickDaySwitch_Before.end());
+
+	if (modloader_debug & MODLOADER_DEBUG_HOOKS)
+		ConsoleLog(LOG_DEBUG, "MODS: Sorted all hooks.\n");
 }
 
 void LoadNativeCodeMods(void) {
@@ -55,7 +79,8 @@ void LoadNativeCodeMods(void) {
 	if (hModFile != INVALID_HANDLE_VALUE) {
 		do {
 			// Attempt to load the DLL
-			ConsoleLog(LOG_DEBUG, "MODS: Loader found native code mod \"%s\".\n", ffdModFile.cFileName);
+			if (modloader_debug & MODLOADER_DEBUG_MODULES)
+				ConsoleLog(LOG_DEBUG, "MODS: Loader found native code mod \"%s\".\n", ffdModFile.cFileName);
 			sprintf_s(szModFilePath, MAX_PATH, "%s\\%s", GetModsFolderPath(), ffdModFile.cFileName);
 			HMODULE hModLoaded = LoadLibrary(szModFilePath);
 			if (!hModLoaded) {
@@ -94,5 +119,8 @@ void LoadNativeCodeMods(void) {
 			ConsoleLog(LOG_INFO, "MODS: Loaded native code mod \"%s\" (%s) version %s.\n", mapLoadedNativeMods[hModLoaded].szModName, mapLoadedNativeMods[hModLoaded].szModShortName,
 				FormatVersion(mapLoadedNativeMods[hModLoaded].iModVersionMajor, mapLoadedNativeMods[hModLoaded].iModVersionMinor, mapLoadedNativeMods[hModLoaded].iModVersionPatch));
 		} while (FindNextFile(hModFile, &ffdModFile) != NULL);
+
+		// Sort all loaded hooks by priority. Lower priorities get run first.
+		SortHookLists();
 	}
 }
