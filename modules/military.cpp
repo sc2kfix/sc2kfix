@@ -442,36 +442,11 @@ REROLLCOASTALSPOT:
 						iDepthPointB = GetTileDepth(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]), 0);
 					}
 
-					__int16 iLengthPointA = 0;
-					__int16 iLengthPointB = 0;
-
 					// Determine relative "left"
-					if (wViewRotation == 1) {
-						iLengthPointA = GetTileLength(iDepthPointB, GetNearCoord(iTileCoords[0]), 1, 0);
-					}
-					else if (wViewRotation == 2) {
-						iLengthPointA = GetTileLength(iDepthPointB, GetFarCoord(iTileCoords[0]), 1, 0);
-					}
-					else if (wViewRotation == 3) {
-						iLengthPointA = GetTileLength(iDepthPointB, GetNearCoord(iTileCoords[0]), 0, 0);
-					}
-					else {
-						iLengthPointA = GetTileLength(iDepthPointB, GetFarCoord(iTileCoords[0]), 0, 0);
-					}
+					__int16 iLengthPointA = GetTileLength(iDepthPointB, iStartPoint, ((wViewRotation == 1 || wViewRotation == 2) ? 1 : 0), 0);
 
 					// Determine relative "right"
-					if (wViewRotation == 1) {
-						iLengthPointB = GetTileLength(iDepthPointB, GetNearCoord(iTileCoords[0]), 0, iLengthPointA);
-					}
-					else if (wViewRotation == 2) {
-						iLengthPointB = GetTileLength(iDepthPointB, GetFarCoord(iTileCoords[0]), 0, iLengthPointA);
-					}
-					else if (wViewRotation == 3) {
-						iLengthPointB = GetTileLength(iDepthPointB, GetNearCoord(iTileCoords[0]), 1, iLengthPointA);
-					}
-					else {
-						iLengthPointB = GetTileLength(iDepthPointB, GetFarCoord(iTileCoords[0]), 1, iLengthPointA);
-					}
+					__int16 iLengthPointB = GetTileLength(iDepthPointB, iStartPoint, ((wViewRotation == 1 || wViewRotation == 2) ? 0 : 1), iLengthPointA);
 
 					int iNumTiles = 0;
 					iBaseLevel = dwMapALTM[iStartPoint]->w[iDepthPointB].iLandAltitude;
