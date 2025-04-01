@@ -6,6 +6,13 @@
 #include "../../include/sc2k_1996.h"
 
 sc2kfix_mod_info_t stModInfo = {
+    /* .iModInfoVersion = */ 1,
+    /* .iModVersionMajor = */ 0,
+    /* .iModVersionMinor = */ 1,
+    /* .iModVersionPatch = */ 2,
+    /* .iMinimumVersionMajor = */ 0,
+    /* .iMinimumVersionMinor = */ 10,
+    /* .iMinimumVersionPatch = */ 0,
     /* .szModName = */ "Test Native Code Mod",
     /* .szModShortName = */ "testmod",
     /* .szModAuthor = */ "sc2kfix Project",

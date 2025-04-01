@@ -35,6 +35,7 @@ HMENU hGameMenu = NULL;
 FARPROC fpWinMMHookList[180] = { NULL };
 DWORD dwDetectedVersion = SC2KVERSION_UNKNOWN;
 DWORD dwSC2KAppTimestamp = 0;
+DWORD dwSC2KFixVersion = SC2KFIX_VERSION_MAJOR << 24 | SC2KFIX_VERSION_MINOR << 16 | SC2KFIX_VERSION_PATCH << 8;
 const char* szSC2KFixVersion = SC2KFIX_VERSION;
 const char* szSC2KFixReleaseTag = SC2KFIX_RELEASE_TAG;
 const char* szSC2KFixBuildInfo = __DATE__ " " __TIME__;
@@ -382,16 +383,28 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						continue;
 					}
 
-					// Add it to the loaded native mods list if successful
+					// Load the mod's info and parse it if LoadLibrary was successful
 					sc2kfix_mod_info_t* (*HookCb_GetModInfo)(void) = (sc2kfix_mod_info_t* (*)(void))GetProcAddress(hModLoaded, "HookCb_GetModInfo");
-					if (HookCb_GetModInfo)
+					if (!HookCb_GetModInfo) {
+						ConsoleLog(LOG_ERROR, "MODS: Failed to load mod \"%s\". DLL does not export HookCb_GetModInfo.\n", ffdModFile.cFileName);
+						FreeLibrary(hModLoaded);
+					} else {
 						mapLoadedNativeMods[hModLoaded] = *HookCb_GetModInfo();
-					else {
-						mapLoadedNativeMods[hModLoaded].szModName = strdup(szModFilePath);
-						mapLoadedNativeMods[hModLoaded].szModShortName = strdup(ffdModFile.cFileName);
+						DWORD dwModMinVersion = mapLoadedNativeMods[hModLoaded].iMinimumVersionMajor << 24 |
+							mapLoadedNativeMods[hModLoaded].iMinimumVersionMinor << 16 |
+							mapLoadedNativeMods[hModLoaded].iMinimumVersionPatch << 8;
+						if (dwSC2KFixVersion < dwModMinVersion) {
+							ConsoleLog(LOG_ERROR, "MODS: Failed to load mod \"%s\". sc2kfix version is lower than the required version (%s).\n", ffdModFile.cFileName,
+								FormatVersion(mapLoadedNativeMods[hModLoaded].iMinimumVersionMajor, mapLoadedNativeMods[hModLoaded].iMinimumVersionMinor, mapLoadedNativeMods[hModLoaded].iMinimumVersionPatch));
+							FreeLibrary(hModLoaded);
+							mapLoadedNativeMods.erase(hModLoaded);
+							continue;
+						}
 					}
 					
-					ConsoleLog(LOG_INFO, "MODS: Loaded native code mod \"%s\" (%s).\n", mapLoadedNativeMods[hModLoaded].szModName, mapLoadedNativeMods[hModLoaded].szModShortName);
+					// Log that we were successful in loading the mod
+					ConsoleLog(LOG_INFO, "MODS: Loaded native code mod \"%s\" (%s) version %s.\n", mapLoadedNativeMods[hModLoaded].szModName, mapLoadedNativeMods[hModLoaded].szModShortName,
+						FormatVersion(mapLoadedNativeMods[hModLoaded].iModVersionMajor, mapLoadedNativeMods[hModLoaded].iModVersionMinor, mapLoadedNativeMods[hModLoaded].iModVersionPatch));
 				} while (FindNextFile(hModFile, &ffdModFile) != NULL);
 			}
 		}

@@ -25,8 +25,11 @@
 #define SC2KVERSION_1995    1
 #define SC2KVERSION_1996    2
 
-#define SC2KFIX_VERSION		"0.10-dev"
-#define SC2KFIX_RELEASE_TAG	"r9c"
+#define SC2KFIX_VERSION			"0.10-dev"
+#define SC2KFIX_VERSION_MAJOR	0
+#define SC2KFIX_VERSION_MINOR	10
+#define SC2KFIX_VERSION_PATCH	0
+#define SC2KFIX_RELEASE_TAG		"r9c"
 
 #define SC2KFIX_INIFILE		"sc2kfix.ini"
 #define SC2KFIX_MODSFOLDER	"mods"
@@ -66,10 +69,19 @@ typedef struct {
 } AFX_MSGMAP_ENTRY;
 
 typedef struct {
-	const char* szModName;
-	const char* szModShortName;
-	const char* szModAuthor;
-	const char* szModDescription;
+	int iModInfoVersion;				// Mandatory
+
+	int iModVersionMajor;				// Mandatory
+	int iModVersionMinor;				// Mandatory
+	int iModVersionPatch;				// Mandatory
+	int iMinimumVersionMajor;			// Mandatory
+	int iMinimumVersionMinor;			// Mandatory
+	int iMinimumVersionPatch;			// Mandatory
+
+	const char* szModName;				// Mandatory
+	const char* szModShortName;			// Mandatory
+	const char* szModAuthor;			// Optional, but recommended
+	const char* szModDescription;		// Optional, but recommended
 } sc2kfix_mod_info_t;
 
 typedef BOOL (*console_cmdproc_t)(const char* szCommand, const char* szArguments);
@@ -145,6 +157,7 @@ void InitializeFonts(void);
 void CenterDialogBox(HWND hwndDlg);
 HOOKEXT HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText);
 HOOKEXT const char* HexPls(UINT uNumber, int width);
+HOOKEXT const char* FormatVersion(int iMajor, int iMinor, int iPatch);
 HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...);
 int GetTileID(int iTileX, int iTileY);
 const char* GetZoneName(int iZoneID);

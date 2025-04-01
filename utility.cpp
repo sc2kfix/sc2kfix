@@ -84,6 +84,15 @@ HOOKEXT const char* HexPls(UINT uNumber, int width) {
 	return szRet;
 }
 
+HOOKEXT const char* FormatVersion(int iMajor, int iMinor, int iPatch) {
+	static char szRet[16] = { 0 };
+	if (!iPatch)
+		sprintf_s(szRet, 16, "%d.%d", iMajor, iMinor);
+	else
+		sprintf_s(szRet, 16, "%d.%d%c", iMajor, iMinor, iPatch - 1 + 'a');
+	return szRet;
+}
+
 extern FILE* fdLog;
 
 HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...) {

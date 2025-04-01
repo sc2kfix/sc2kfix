@@ -22,10 +22,19 @@ enum {
 };
 
 typedef struct {
-	const char* szModName;
-	const char* szModShortName;
-	const char* szModAuthor;
-	const char* szModDescription;
+	int iModInfoVersion;				// Mandatory
+
+	int iModVersionMajor;				// Mandatory
+	int iModVersionMinor;				// Mandatory
+	int iModVersionPatch;				// Mandatory
+	int iMinimumVersionMajor;			// Mandatory
+	int iMinimumVersionMinor;			// Mandatory
+	int iMinimumVersionPatch;			// Mandatory
+
+	const char* szModName;				// Mandatory
+	const char* szModShortName;			// Mandatory
+	const char* szModAuthor;			// Optional, but recommended
+	const char* szModDescription;		// Optional, but recommended
 } sc2kfix_mod_info_t;
 
 HOOKEXT HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText);

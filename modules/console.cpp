@@ -369,11 +369,19 @@ static const char* GetMidiDeviceTechnologyString(WORD wTechnology) {
 BOOL ConsoleCmdShowMods(const char* szCommand, const char* szArguments) {
 	printf("%d native code mods loaded:\n", mapLoadedNativeMods.size());
 	for (auto stNativeMod : mapLoadedNativeMods) {
+		const char* szModVersion = strdup(FormatVersion(stNativeMod.second.iModVersionMajor, stNativeMod.second.iModVersionMinor, stNativeMod.second.iModVersionPatch));
+		const char* szModMinimumVersion = strdup(FormatVersion(stNativeMod.second.iMinimumVersionMajor, stNativeMod.second.iMinimumVersionMinor, stNativeMod.second.iMinimumVersionPatch));
 		printf(
-			"  %s (0x%08X)\n"
-			"    Mod Name:      %s\n"
-			"    Author:        %s\n"
-			"    Description:   %s\n\n", stNativeMod.second.szModShortName, stNativeMod.first, stNativeMod.second.szModName, stNativeMod.second.szModAuthor, stNativeMod.second.szModDescription);
+			"  %s version %s (0x%08X)\n"
+			"    Mod Name:             %s\n"
+			"    Author:               %s\n"
+			"    Req. sc2kfix version: %s\n"
+			"    Description:          %s\n\n",
+			stNativeMod.second.szModShortName, szModVersion, (INT_PTR)stNativeMod.first,
+			stNativeMod.second.szModName,
+			stNativeMod.second.szModAuthor,
+			szModMinimumVersion,
+			stNativeMod.second.szModDescription);
 	}
 	return TRUE;
 }
