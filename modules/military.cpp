@@ -513,7 +513,8 @@ NONAVY:
 }
 
 void InstallMilitaryHooks(void) {
-	// Restore the functionality to place naval bases on maps with coastlines
+	// Replicate the general functionality provided from the DOS version
+	// to also include the Navy and Army Base spawning.
 	VirtualProtect((LPVOID)0x403017, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x403017, Hook_SimulationProposeMilitaryBase);
 }
