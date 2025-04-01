@@ -279,16 +279,16 @@ REROLLCOASTALSPOT:
 					__int16 iNearestDepth = GetDepthPoint(iTileCoords[0]); // Landfall.
 					
 					// Depth of the base from landfall to further in-land.
-					__int16 iDepthPointB = GetTileDepth(iNearestDepth, iStartPoint, ((wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) ? 1 : 0));
+					__int16 iDepthPoint = GetTileDepth(iNearestDepth, iStartPoint, ((wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) ? 1 : 0));
 
 					// Determine relative "left"
-					__int16 iLengthPointA = GetTileLength(iDepthPointB, iStartPoint, ((wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) ? 1 : 0), 0);
+					__int16 iLengthPointA = GetTileLength(iDepthPoint, iStartPoint, ((wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) ? 1 : 0), 0);
 
 					// Determine relative "right"
-					__int16 iLengthPointB = GetTileLength(iDepthPointB, iStartPoint, ((wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) ? 0 : 1), iLengthPointA);
+					__int16 iLengthPointB = GetTileLength(iDepthPoint, iStartPoint, ((wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) ? 0 : 1), iLengthPointA);
 
 					int iNumTiles = 0;
-					iBaseLevel = dwMapALTM[iStartPoint]->w[iDepthPointB].iLandAltitude;
+					iBaseLevel = dwMapALTM[iStartPoint]->w[iDepthPoint].iLandAltitude;
 					for (__int16 iLengthWay = iLengthPointA;;) {
 						if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) {
 							if (iLengthWay <= iLengthPointB)
@@ -299,7 +299,7 @@ REROLLCOASTALSPOT:
 								break;
 						}
 
-						for (__int16 iDepthWay = iDepthPointB;;) {
+						for (__int16 iDepthWay = iDepthPoint;;) {
 							if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) {
 								if (iDepthWay <= iFarthestDepth)
 									break;
