@@ -360,9 +360,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		}
 
 		// Load native code mods.
-		if (!bSkipLoadingMods) {
+		if (!bSkipLoadingMods && !bSettingsDontLoadMods)
 			LoadNativeCodeMods();
-		}
 
 		break;
 
