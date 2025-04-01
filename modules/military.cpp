@@ -340,13 +340,15 @@ static __int16 GetTileDepth(__int16 iPosA, __int16 iPosB, int iPlus) {
 	return iVal;
 }
 
-static __int16 GetTileLength(__int16 iPosA, __int16 iPosB, int iPlus) {
+static __int16 GetTileLength(__int16 iPosA, __int16 iPosB, int iPlus, __int16 iLeftWise) {
 	__int16 iVal = iPosB;
+	__int16 iDiff = (iPlus) ? iPosB - iLeftWise : iPosB + iLeftWise;
 	__int16 n = -1;
+	ConsoleLog(LOG_DEBUG, "GetTileLength(%d, %d, %d, %d) iDiff(%d)\n", iPosA, iPosB, iPlus, iLeftWise, iDiff);
 	int iBaseLevel = dwMapALTM[iPosA]->w[iPosB].iLandAltitude;
 	while (1) {
 		n++;
-		if (n >= 12)
+		if (n >= 6)
 			break;
 		if (iPlus) {
 			if (dwMapXTER[iPosA]->iTileID[iPosB + n] || dwMapALTM[iPosA]->w[iPosB + n].iLandAltitude != iBaseLevel) {
@@ -441,7 +443,7 @@ REATTEMPT:
 			iResult = rand();
 			if ((iResult & 1) != 0) {
 				ConsoleLog(LOG_DEBUG, "DBG - 2\n");
-#if 1
+
 				iTileCoords[0] = SetTileCoords(0); // First Corner
 				iTileCoords[1] = SetTileCoords(1); // Second Corner
 				ConsoleLog(LOG_DEBUG, "DBG - 2 (%d/%d) (%d/%d) (%d)\n", GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]), GetNearCoord(iTileCoords[1]), GetFarCoord(iTileCoords[1]), wViewRotation);
@@ -485,24 +487,24 @@ REROLLCOASTALSPOT:
 						}
 					}
 					ConsoleLog(LOG_DEBUG, "DBG - 3.6 (%d/%d)\n", GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]));
-#if 1 // temp
+
 					//Game_MapToolPlaceTree(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]));
 
 					__int16 iDepthPointA, iDepthPointB;
 					if (wViewRotation == 1) {
-						iDepthPointA = GetFarCoord(iTileCoords[0]) - 5;
+						iDepthPointA = GetFarCoord(iTileCoords[1]);
 						iDepthPointB = GetTileDepth(GetFarCoord(iTileCoords[0]), GetNearCoord(iTileCoords[0]), 1);
 					}
 					else if (wViewRotation == 2) {
-						iDepthPointA = GetNearCoord(iTileCoords[0]) - 5;
+						iDepthPointA = GetNearCoord(iTileCoords[1]);
 						iDepthPointB = GetTileDepth(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]), 1);
 					}
 					else if (wViewRotation == 3) {
-						iDepthPointA = GetFarCoord(iTileCoords[0]) + 5;
+						iDepthPointA = GetFarCoord(iTileCoords[1]);
 						iDepthPointB = GetTileDepth(GetFarCoord(iTileCoords[0]), GetNearCoord(iTileCoords[0]), 0);
 					}
 					else {
-						iDepthPointA = GetNearCoord(iTileCoords[0]) + 5;
+						iDepthPointA = GetNearCoord(iTileCoords[1]);
 						iDepthPointB = GetTileDepth(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]), 0);
 					}
 
@@ -513,36 +515,37 @@ REROLLCOASTALSPOT:
 
 					// Determine relative "left"
 					if (wViewRotation == 1) {
-						iLengthPointA = GetTileLength(iDepthPointB, GetNearCoord(iTileCoords[0]), 1);
+						iLengthPointA = GetTileLength(iDepthPointB, GetNearCoord(iTileCoords[0]), 1, 0);
 					}
 					else if (wViewRotation == 2) {
-						iLengthPointA = GetTileLength(iDepthPointB, GetFarCoord(iTileCoords[0]), 1);
+						iLengthPointA = GetTileLength(iDepthPointB, GetFarCoord(iTileCoords[0]), 1, 0);
 					}
 					else if (wViewRotation == 3) {
-						iLengthPointA = GetTileLength(iDepthPointB, GetNearCoord(iTileCoords[0]), 0);
+						iLengthPointA = GetTileLength(iDepthPointB, GetNearCoord(iTileCoords[0]), 0, 0);
 					}
 					else {
-						iLengthPointA = GetTileLength(iDepthPointB, GetFarCoord(iTileCoords[0]), 0);
+						iLengthPointA = GetTileLength(iDepthPointB, GetFarCoord(iTileCoords[0]), 0, 0);
 					}
 
 					ConsoleLog(LOG_DEBUG, "DBG - 3.66 (%d) (%d)\n", iLengthPointA, wViewRotation);
 
 					// Determine relative "right"
 					if (wViewRotation == 1) {
-						iLengthPointB = GetTileLength(iDepthPointB, GetNearCoord(iTileCoords[0]), 0);
+						iLengthPointB = GetTileLength(iDepthPointB, GetNearCoord(iTileCoords[0]), 0, iLengthPointA);
 					}
 					else if (wViewRotation == 2) {
-						iLengthPointB = GetTileLength(iDepthPointB, GetFarCoord(iTileCoords[0]), 0);
+						iLengthPointB = GetTileLength(iDepthPointB, GetFarCoord(iTileCoords[0]), 0, iLengthPointA);
 					}
 					else if (wViewRotation == 3) {
-						iLengthPointB = GetTileLength(iDepthPointB, GetNearCoord(iTileCoords[0]), 1);
+						iLengthPointB = GetTileLength(iDepthPointB, GetNearCoord(iTileCoords[0]), 1, iLengthPointA);
 					}
 					else {
-						iLengthPointB = GetTileLength(iDepthPointB, GetFarCoord(iTileCoords[0]), 1);
+						iLengthPointB = GetTileLength(iDepthPointB, GetFarCoord(iTileCoords[0]), 1, iLengthPointA);
 					}
 
 					ConsoleLog(LOG_DEBUG, "DBG - 3.67 (%d) (%d)\n", iLengthPointB, wViewRotation);
 
+					int iNumTiles = 0;
 					for (__int16 iLengthWay = iLengthPointA;;) {
 						if (wViewRotation == 1 || wViewRotation == 2) {
 							if (iLengthWay <= iLengthPointB)
@@ -567,10 +570,31 @@ REROLLCOASTALSPOT:
 
 							ConsoleLog(LOG_DEBUG, "DBG - 3.685 X(%d)(%d)(%d) Y(%d)(%d)(%d) [%d]\n", iLengthPointA, iLengthWay, iLengthPointB, iDepthPointB, iDepthWay, iDepthPointA, wViewRotation);
 
-							if (wViewRotation == 1 || wViewRotation == 3)
-								Game_MapToolPlaceTree(iLengthWay, iDepthWay);
-							else
-								Game_MapToolPlaceTree(iDepthWay, iLengthWay);
+							__int16 iDirectionOne, iDirectionTwo;
+							if (wViewRotation == 1 || wViewRotation == 3) {
+								iDirectionOne = iLengthWay;
+								iDirectionTwo = iDepthWay;
+							}
+							else {
+								
+								iDirectionOne = iDepthWay;
+								iDirectionTwo = iLengthWay;
+							}
+
+							//	Game_MapToolPlaceTree(iDirectionOne, iDirectionTwo);
+
+							if (
+								dwMapXBLD[iDirectionOne]->iTileID[iDirectionTwo] < TILE_SMALLPARK &&
+								!dwMapXTER[iDirectionOne]->iTileID[iDirectionTwo] &&
+								dwMapXBIT[iDirectionOne]->b[iDirectionTwo].iWater == 0
+								) {
+								//Game_PlaceTileWithMilitaryCheck(iDirectionOne, iDirectionTwo, 0);
+								dwMapXZON[iDirectionOne]->b[iDirectionTwo].iZoneType = ZONE_MILITARY;
+								//dwMapXZON[iDirectionOne]->b[iDirectionTwo].iCorners = 0xF0;
+								//--*(WORD *)dwTileCount;
+								//++*(WORD *)dwMilitaryTiles;
+								iNumTiles++;
+							}
 
 							if (wViewRotation == 1 || wViewRotation == 2) {
 								--iDepthWay;
@@ -586,228 +610,14 @@ REROLLCOASTALSPOT:
 							++iLengthWay;
 					}
 
-					//bMilitaryBaseType = MILITARY_BASE_NAVY;
-					Game_CenterOnTileCoords(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]));
-					return Game_AfxMessageBox(243, 0, -1);
-#else
-					while (1) {
-						if (dwMapXBIT[GetNearCoord(iTileCoords[0])]->b[GetFarCoord(iTileCoords[0])].iWater == 0)
-							break;
-						// Near coord
-						//P_HIWORD(iTileCoords[0]) += P_HIWORD(iTileCoords[1]);
-						// Far coord
-						//P_LOWORD(iTileCoords[0]) = iTileCoords[1] + iTileCoords[0];
-						P_HIWORD(iTileCoords[0]) += P_HIWORD(iTileCoords[1]);
-						P_LOWORD(iTileCoords[0]) = iTileCoords[1] + iTileCoords[0];
-						ConsoleLog(LOG_DEBUG, "DBG - 3.5 (%d/%d)\n", GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]));
-					}
-					P_LOWORD(iRotation) = wViewRotation;
-					iRotVal[0] = iRotation;
-					iRotVal[1] = iRotation + 1;
-					P_LOWORD(iRotVal[1]) = iRotVal[1] & 3;
-					iRotVal[2] = iRotVal[1];
-					iResult = iRotVal[0] + 2;
-					P_LOWORD(iResult) = ((BYTE)iRotVal[0] + 2) & 3;
-					iOldResult = iResult;
-					int iNearOff = iTileCoords[0];
-					int iFarOff = iTileCoords[0];
-					int iFOffY = 0;
-					int iOffY = 0;
-					// Thoughts about this area:
-					// a) The while loop here is checking near/far (x/y) coordinates 0-127
-					// b) the internal if/else then does a length/depth check to see how back from the coastline
-					//    one needs to iterate.
-					while (GetUNearCoord(iTileCoords[0]) < 0x80u && GetUFarCoord(iTileCoords[0]) < 0x80u) {
-						if (
-						    dwMapXBLD[GetNearCoord(iTileCoords[0])]->iTileID[GetFarCoord(iTileCoords[0])] >= TILE_SMALLPARK ||
-							dwMapXTER[GetNearCoord(iTileCoords[0])]->iTileID[GetFarCoord(iTileCoords[0])] ||
-							dwMapXBIT[GetNearCoord(iTileCoords[0])]->b[GetFarCoord(iTileCoords[0])].iWater != 0 ||
-							dwMapXUND[GetNearCoord(iTileCoords[0])]->iTileID[GetFarCoord(iTileCoords[0])]
-						) {
-							iFarOff = iTileCoords[0];
-							iOffY = 0;
-						}
-						else if ((__int16)++iOffY > (__int16)iFOffY) {
-							iNearOff = iFarOff;
-							iFOffY = iOffY;
-						}
-						ConsoleLog(LOG_DEBUG, "DBG - 3.60 - B:(%d/%d) (%d/%d)\n", GetNearCoord(iTileCoords[1]), GetFarCoord(iTileCoords[1]), iOffY, iFOffY);
-						NavalBaseFunc((WORD *)&iTileCoords[1], GetRotationOffset(GetNearCoord(iTileCoords[0])), GetRotationOffset(GetFarCoord(iTileCoords[0])));
-						if (GetUNearCoord(iTileCoords[1]) >= 0x80u && GetUFarCoord(iTileCoords[1]) >= 0x80u)
-							break;
-						ConsoleLog(LOG_DEBUG, "DBG - 3.60 - A:(%d/%d)\n", GetNearCoord(iTileCoords[1]), GetFarCoord(iTileCoords[1]));
-						if ((*(BYTE *)(&dwMapXBIT[GetNearCoord(iTileCoords[1])]->b[GetFarCoord(iTileCoords[1])]) & 5) == 5) {
-							do {
-								ConsoleLog(LOG_DEBUG, "DBG - 3.70 - B:(%d/%d)\n", GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]));
-								NavalBaseFunc((WORD *)&iTileCoords[0], GetRotationOffset(GetNearCoord(iTileCoords[1])), GetRotationOffset(GetFarCoord(iTileCoords[1])));
-								if (GetUNearCoord(iTileCoords[0]) >= 0x80u && GetUFarCoord(iTileCoords[0]) >= 0x80u)
-									break;
-								ConsoleLog(LOG_DEBUG, "DBG - 3.70 - A:(%d/%d)\n", GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]));
-								iTileCoords[1] = iTileCoords[0];
-								P_LOBYTE(iResult) = *(BYTE *)&dwMapXBIT[GetNearCoord(iTileCoords[0])]->b[GetFarCoord(iTileCoords[0])] & 5;
-							} while ((BYTE)iResult != 5);
-						}
-						else {
-							do {
-								iTileCoords[0] = iTileCoords[1];
-								ConsoleLog(LOG_DEBUG, "DBG - 3.75 - B:(%d/%d)\n", GetNearCoord(iTileCoords[1]), GetFarCoord(iTileCoords[1]));
-								NavalBaseFunc((WORD *)&iTileCoords[1], GetRotationOffset(GetNearCoord(iTileCoords[1])), GetRotationOffset(GetFarCoord(iTileCoords[1])));
-								if (GetUNearCoord(iTileCoords[1]) >= 0x80u && GetUFarCoord(iTileCoords[1]) >= 0x80u)
-									break;
-								ConsoleLog(LOG_DEBUG, "DBG - 3.75 - A:(%d/%d)\n", GetNearCoord(iTileCoords[1]), GetFarCoord(iTileCoords[1]));
-								P_LOBYTE(iResult) = *(BYTE *)&dwMapXBIT[GetNearCoord(iTileCoords[1])]->b[GetFarCoord(iTileCoords[1])] & 5;
-							} while ((BYTE)iResult != 5);
-						}
-					}
-					ConsoleLog(LOG_DEBUG, "DBG - 4\n");
-					iTileCoords[0] = iNearOff;
-					if ((__int16)iFOffY >= 12) {
-						ConsoleLog(LOG_DEBUG, "DBG - 5\n");
-						__int16 iTileDepth = ((__int16)iFOffY - 12) / 2;
-						while (iTileDepth <= (__int16)--iFOffY) {
-							NavalBaseFunc((WORD *)&iTileCoords[1], GetRotationOffset(GetNearCoord(iTileCoords[0])), GetRotationOffset(GetFarCoord(iTileCoords[0])));
-							if ((*(BYTE *)(&dwMapXBIT[GetNearCoord(iTileCoords[1])]->b[GetFarCoord(iTileCoords[1])]) & 5) == 5) {
-								do {
-									NavalBaseFunc((WORD *)&iTileCoords[0], GetRotationOffset((iTileCoords[1])), GetRotationOffset(GetFarCoord(iTileCoords[1])));
-									iTileCoords[1] = iTileCoords[0];
-								} while ((*(BYTE *)(&dwMapXBIT[GetNearCoord(iTileCoords[0])]->b[GetFarCoord(iTileCoords[0])]) & 5) == 5);
-							}
-							else {
-								do {
-									iTileCoords[0] = iTileCoords[1];
-									NavalBaseFunc((WORD *)&iTileCoords[1], GetRotationOffset(GetNearCoord(iTileCoords[1])), GetRotationOffset(GetFarCoord(iTileCoords[1])));
-								} while ((*(BYTE *)(&dwMapXBIT[GetNearCoord(iTileCoords[1])]->b[GetFarCoord(iTileCoords[1])]) & 5) == 5);
-							}
-							if ((__int16)iFOffY < iTileDepth + 10) {
-								iTileCoords[1] = iTileCoords[0];
-								for (i = 0; i < 4; ++i) {
-									if (
-										dwMapXBLD[GetNearCoord(iTileCoords[1])]->iTileID[GetFarCoord(iTileCoords[1])] < TILE_SMALLPARK &&
-										!dwMapXTER[GetNearCoord(iTileCoords[1])]->iTileID[GetFarCoord(iTileCoords[1])] &&
-										dwMapXBIT[GetNearCoord(iTileCoords[1])]->b[GetFarCoord(iTileCoords[1])].iWater == 0
-									) {
-										Game_PlaceTileWithMilitaryCheck(GetNearCoord(iTileCoords[1]), GetFarCoord(iTileCoords[1]), 0);
-										dwMapXZON[GetNearCoord(iTileCoords[1])]->b[GetFarCoord(iTileCoords[1])].iZoneType = ZONE_MILITARY;
-										dwMapXZON[GetNearCoord(iTileCoords[1])]->b[GetFarCoord(iTileCoords[1])].iCorners = 0xF0;
-										--*(WORD *)dwTileCount;
-										++*(WORD *)dwMilitaryTiles;
-									}
-									NavalBaseFunc((WORD *)&iTileCoords[1], GetRotationOffset(GetNearCoord(iTileCoords[1])), GetRotationOffset(GetFarCoord(iTileCoords[1])));
-								}
-							}
-							if ((__int16)iFOffY == iTileDepth + 5) {
-								iNearOff = iTileCoords[0];
-							}
-						}
+					if (iNumTiles > 0) {
 						bMilitaryBaseType = MILITARY_BASE_NAVY;
-						Game_CenterOnTileCoords(GetNearCoord(iNearOff), GetFarCoord(iNearOff));
+						Game_CenterOnTileCoords(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]));
 						return Game_AfxMessageBox(243, 0, -1);
 					}
-#endif
 					ConsoleLog(LOG_DEBUG, "DBG - -1\n");
 				}
 				ConsoleLog(LOG_DEBUG, "DBG - -2\n");
-#else
-				int iTileX = 127;
-				int iTileY;
-				int iCoastlineRetries = 0;
-
-				// Make a few attempts to find a coastline that isn't immediately bad.
-				// Could probably use some refining.
-				while (iCoastlineRetries < 10) {
-					iTileY = rand() & 0x7F;
-					while (TRUE) {
-						iTileX--;
-						if (!dwMapXBIT[iTileX]->b[iTileY].iSaltWater || !dwMapXBIT[iTileX]->b[iTileY].iWater)
-							break;
-					}
-
-					if (dwMapXTER[iTileX]->iTileID[iTileY]) {
-						if (military_debug & MILITARY_DEBUG_PLACEMENT)
-							ConsoleLog(LOG_DEBUG, "MIL:  Bad coastline. Trying again.\n");
-						iCoastlineRetries++;
-						continue;
-					}
-					break;
-				}
-
-				if (military_debug & MILITARY_DEBUG_PLACEMENT)
-					ConsoleLog(LOG_DEBUG, "MIL:  Found potential edge of coast at %i, %i. Moving back four tiles.\n", iTileX + 1, iTileY);
-				iTileX -= 3;
-
-				int i = 0, j = 0, iValidTiles = 0;
-				while (TRUE) {
-					if (iTileX + i == 127) {
-						i = 0;
-						j++;
-					}
-					if (j == 12 || i == 0 && iValidTiles >= 48)
-						break;
-
-					if (dwMapXBLD[iTileX + i]->iTileID[iTileY + j] > TILE_TREES7 ||
-						dwMapXBLD[iTileX + i]->iTileID[iTileY + j] == TILE_RADIOACTIVITY ||
-						dwMapXZON[iTileX + i]->b[iTileY + j].iZoneType ||
-						dwMapXBIT[iTileX + i]->b[iTileY + j].iWater ||
-						dwMapXTER[iTileX + i]->iTileID[iTileY + j]) {
-						//printf("Tile at %i, %i no good", iTileX + i, iTileY + j);
-						if (dwMapXBIT[iTileX + i]->b[iTileY + j].iWater && dwMapXBIT[iTileX + i]->b[iTileY + j].iSaltWater) {
-							i = 0;
-							j++;
-							//printf(" (coastline hit)");
-						}
-						//printf(".\n");
-					}
-					else
-						iValidTiles++;
-					i++;
-				}
-
-				// Placement 
-				if (iValidTiles >= 40)
-					if (military_debug & MILITARY_DEBUG_PLACEMENT)
-						ConsoleLog(LOG_DEBUG, "MIL:  Found zone for naval base at %i, %i: %i valid tiles total, %i height.\n", iTileX, iTileY, iValidTiles, j);
-					else {
-						if (military_debug & MILITARY_DEBUG_PLACEMENT)
-							ConsoleLog(LOG_DEBUG, "MIL:  Failed to place naval base at %i, %i: Only found %i valid tiles, height %i.\n", iTileX, iTileY, iValidTiles, j);
-						goto NONAVY;
-					}
-
-					if (military_debug & MILITARY_DEBUG_PLACEMENT)
-						ConsoleLog(LOG_DEBUG, "MIL:  Setting military base flag to 4 and zoning tiles...");
-					bMilitaryBaseType = MILITARY_BASE_NAVY;
-					i = 0;
-					j = 0;
-					iValidTiles = 0;
-
-					// Zone valid tiles as ZONE_MILITARY
-					while (TRUE) {
-						if (iTileX + i == 127) {
-							i = 0;
-							j++;
-						}
-						if (j == 12 || i == 0 && iValidTiles >= 48)
-							break;
-
-						if (dwMapXBLD[iTileX + i]->iTileID[iTileY + j] > TILE_TREES7 ||
-							dwMapXBLD[iTileX + i]->iTileID[iTileY + j] == TILE_RADIOACTIVITY ||
-							dwMapXZON[iTileX + i]->b[iTileY + j].iZoneType ||
-							dwMapXBIT[iTileX + i]->b[iTileY + j].iWater ||
-							dwMapXTER[iTileX + i]->iTileID[iTileY + j]) {
-							if (dwMapXBIT[iTileX + i]->b[iTileY + j].iWater && dwMapXBIT[iTileX + i]->b[iTileY + j].iSaltWater) {
-								i = 0;
-								j++;
-							}
-						}
-						else {
-							dwMapXZON[iTileX + i]->b[iTileY + j].iZoneType = ZONE_MILITARY;
-							iValidTiles++;
-						}
-						i++;
-					}
-
-					Game_CenterOnTileCoords(iTileX, iTileY);
-					return Game_AfxMessageBox(243, 0, -1);
-#endif
 			}
 		}
 NONAVY:
@@ -931,7 +741,7 @@ NONAVY:
 						dwMapXZON[uPos[0]]->b[uPos[1]].iZoneType == ZONE_NONE &&
 						!dwMapXUND[iRandOne[0]]->iTileID[iPosOffset]
 					) {
-						--*((WORD *)&dwTileCount + iMilitaryArea);
+						--*((WORD *)dwTileCount + iMilitaryArea);
 						if (uPos[0] < 0x80u && uPos[1] < 0x80u) {
 							dwMapXZON[uPos[0]]->b[uPos[1]].iZoneType = ZONE_MILITARY;
 							dwMapXZON[uPos[0]]->b[uPos[1]].iCorners = 0xF0;
