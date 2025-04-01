@@ -266,6 +266,7 @@ extern HFONT hFontArialBold10;
 extern HFONT hSystemRegular12;
 
 extern std::map<HMODULE, sc2kfix_mod_info_t> mapLoadedNativeMods;
+extern std::map<HMODULE, std::vector<sc2kfix_mod_hook_t>> mapLoadedNativeModHooks;
 extern std::map<DWORD, soundbufferinfo_t> mapSoundBuffers;
 extern std::vector<int> vectorRandomSongIDs;
 extern std::random_device rdRandomDevice;

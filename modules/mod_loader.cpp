@@ -23,9 +23,11 @@
 UINT modloader_debug = MODLOADER_DEBUG;
 
 std::map<HMODULE, sc2kfix_mod_info_t> mapLoadedNativeMods;
+std::map<HMODULE, std::vector<sc2kfix_mod_hook_t>> mapLoadedNativeModHooks;
 
 int LoadNativeCodeHooks(HMODULE hModule) {
 	int iHooksLoaded = 0;
+	std::vector<sc2kfix_mod_hook_t> vecHooksLoaded;
 
 	// Get the mod's HookCb_GetHookList function or return -1 on failure
 	sc2kfix_mod_hooklist_t* (*HookCb_GetHookList)(void) = (sc2kfix_mod_hooklist_t* (*)(void))GetProcAddress(hModule, "HookCb_GetHookList");
@@ -45,12 +47,14 @@ int LoadNativeCodeHooks(HMODULE hModule) {
 		if (!strcmp(stHookList->stHooks[i].szHookName, "Hook_SimulationProcessTickDaySwitch_Before"))
 			stHooks_Hook_SimulationProcessTickDaySwitch_Before.push_back(stHookFn);
 
+		vecHooksLoaded.push_back({ stHookList->stHooks[i].szHookName, stHookFn.iPriority });
 		if (modloader_debug & MODLOADER_DEBUG_HOOKS)
 			ConsoleLog(LOG_DEBUG, "MODS: Loaded hook %s at address 0x%08X (pri %d) from native code mod %s.\n",
 				stHookList->stHooks[i].szHookName, stHookFn.pFunction, stHookFn.iPriority, mapLoadedNativeMods[hModule].szModShortName);
 		iHooksLoaded++;
 	}
 
+	mapLoadedNativeModHooks[hModule] = vecHooksLoaded;
 	return iHooksLoaded;
 }
 

@@ -175,7 +175,7 @@ BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 	if (!strcmp(szArguments, "microsim") || !strncmp(szArguments, "microsim ", 9))
 		return ConsoleCmdShowMicrosim(szCommand, szArguments);
 
-	if (!strcmp(szArguments, "mods"))
+	if (!strcmp(szArguments, "mods") || !strncmp(szArguments, "mods ", 5))
 		return ConsoleCmdShowMods(szCommand, szArguments);
 
 	if (!strcmp(szArguments, "sound") || !strncmp(szArguments, "sound ", 6))
@@ -367,6 +367,19 @@ static const char* GetMidiDeviceTechnologyString(WORD wTechnology) {
 }
 
 BOOL ConsoleCmdShowMods(const char* szCommand, const char* szArguments) {
+	BOOL bDetail = FALSE;
+	if (*(szArguments + 4) == '\0' || *(szArguments + 5) == '\0')
+		bDetail = FALSE;
+	else if (!strcmp(szArguments + 5, "detail"))
+		bDetail = TRUE;
+	else if (!strcmp(szArguments + 5, "?")) {
+		printf(
+			"  show mods          Show native code mod list\n"
+			"  show mods detail   Show native code mod list verbosely\n");
+		return TRUE;
+	} else
+		return FALSE;
+
 	printf("%d native code mods loaded:\n", mapLoadedNativeMods.size());
 	for (auto stNativeMod : mapLoadedNativeMods) {
 		const char* szModVersion = strdup(FormatVersion(stNativeMod.second.iModVersionMajor, stNativeMod.second.iModVersionMinor, stNativeMod.second.iModVersionPatch));
@@ -376,12 +389,18 @@ BOOL ConsoleCmdShowMods(const char* szCommand, const char* szArguments) {
 			"    Mod Name:             %s\n"
 			"    Author:               %s\n"
 			"    Req. sc2kfix version: %s\n"
-			"    Description:          %s\n\n",
+			"    Description:          %s\n",
 			stNativeMod.second.szModShortName, szModVersion, (INT_PTR)stNativeMod.first,
 			stNativeMod.second.szModName,
 			stNativeMod.second.szModAuthor,
 			szModMinimumVersion,
 			stNativeMod.second.szModDescription);
+		if (bDetail) {
+			printf("    Hooks:\n");
+			for (auto stHook : mapLoadedNativeModHooks[stNativeMod.first])
+				printf("      %s (pri %d)\n", stHook.szHookName, stHook.iHookPriority);
+		}
+		printf("\n");
 	}
 	return TRUE;
 }
