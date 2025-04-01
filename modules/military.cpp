@@ -37,10 +37,6 @@ static void FormArmyBaseGrid(int x1, int y1, __int16 x2, __int16 y2) {
 	int iNewX;
 	int iNewY;
 
-	// These will be moved to the global section once demystified.
-	char(__cdecl *H_CheckAndAdjustTransportTerrain)(unsigned __int16, unsigned __int16) = (char(__cdecl *)(unsigned __int16, unsigned __int16))0x4019A1;
-	int(*H_GetLastViewRotation)(void) = (int(*)(void))0x401CCB;
-
 	wOldToolGroup = wMaybeActiveToolGroup;
 	iX = x2;
 	iY = y2;
@@ -51,12 +47,12 @@ static void FormArmyBaseGrid(int x1, int y1, __int16 x2, __int16 y2) {
 		iNewY = y1;
 		iY = y1;
 		while (Game_MaybeRoadViabilityAlongPath((__int16 *)&iNewX, (__int16 *)&iNewY)) {
-			H_CheckAndAdjustTransportTerrain(iX, iY);
+			Game_CheckAndAdjustTransportTerrain(iX, iY);
 			Game_PlaceRoadAtCoordinates(iX, iY);
 			iX = iNewX;
 			iY = iNewY;
 		}
-		H_CheckAndAdjustTransportTerrain(iX, iY);
+		Game_CheckAndAdjustTransportTerrain(iX, iY);
 		Game_PlaceRoadAtCoordinates(iX, iY);
 	}
 	if (GetTileID(x1, y1) == TILE_ROAD_LR || GetTileID(x1, y1) == TILE_ROAD_TB) {
@@ -78,7 +74,7 @@ static void FormArmyBaseGrid(int x1, int y1, __int16 x2, __int16 y2) {
 		}
 	}
 	wMaybeActiveToolGroup = wOldToolGroup;
-	H_GetLastViewRotation();
+	Game_GetLastViewRotation();
 }
 
 static int SetTileCoords(int iPart) {

@@ -36,9 +36,15 @@
 #define GAMECALL(address, type, conv, name, ...) \
 	typedef type (conv *GameFuncPtr_##name)(__VA_ARGS__); \
 	GameFuncPtr_##name Game_##name = (GameFuncPtr_##name)address;
+#define GAMECALL_NOCONV(address, type, name, ...) \
+	typedef type (*GameFuncPtr_##name)(__VA_ARGS__); \
+	GameFuncPtr_##name Game_##name = (GameFuncPtr_##name)address;
 #else
 #define GAMECALL(address, type, conv, name, ...) \
 	typedef type (conv *GameFuncPtr_##name)(__VA_ARGS__);\
+	extern GameFuncPtr_##name Game_##name;
+#define GAMECALL_NOCONV(address, type, name, ...) \
+	typedef type (*GameFuncPtr_##name)(__VA_ARGS__);\
 	extern GameFuncPtr_##name Game_##name;
 #endif
 
@@ -769,6 +775,8 @@ GAMECALL(0x40103C, int, __thiscall, PreGameMenuDialogToggle, void *pThis, int iS
 GAMECALL(0x40106E, int, __cdecl, PlaceRoadAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x401096, int, __thiscall, SoundPlaySound, void* pThis, int iSoundID)
 GAMECALL(0x4011E5, int, __thiscall, MapToolSoundTrigger, void* pThis)
+GAMECALL(0x4012C1, int, __cdecl, SpawnItem, __int16 x, __int16 y)
+GAMECALL(0x401460, char, __cdecl, SimulationProvisionMicrosim, __int16, int, __int16 iTileID) // The first two arguments aren't clear, though they "could" be the X/Y tile coordinates.
 GAMECALL(0x4014F1, int, __thiscall, TileHighlightUpdate, int pThis)
 GAMECALL(0x40150A, int, __thiscall, ExitRequester, void *pThis, int iSource)
 GAMECALL(0x4015A0, void, __thiscall, DoSaveCity, void *pThis)
@@ -778,10 +786,12 @@ GAMECALL(0x40178F, __int16, __cdecl, PlaceTileWithMilitaryCheck, __int16 x, __in
 GAMECALL(0x401857, int, __cdecl, MapToolPlaceTree, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x40198D, int, __cdecl, MapToolPlaceStream, __int16 iTileTargetX, __int16 iTileTargetY, __int16) // XXX - the last parameter isn't entirely clear, perhaps area or offset?
 GAMECALL(0x401997, int, __cdecl, MapToolPlaceWater, __int16 iTileTargetX, __int16 iTileTargetY)
+GAMECALL(0x4019A1, char, __cdecl, CheckAndAdjustTransportTerrain, __int16 x, __int16 y)
 GAMECALL(0x4019EC, int, __cdecl, CenterOnTileCoords, __int16 x, __int16 y)
 GAMECALL(0x401A37, int, __cdecl, MaybeRoadViabilityAlongPath, __int16* x, __int16* y)
 GAMECALL(0x401AB4, int, __cdecl, MapToolRaiseTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x401AF0, int, __cdecl, MaybeCheckViablePlacementPath, __int16 x1, __int16 y1, __int16 x2, __int16 y2)
+GAMECALL_NOCONV(0x401CCB, int, GetLastViewRotation, void)
 GAMECALL(0x401D16, __int16, __cdecl, GetTileCoordsFromScreenCoords, __int16 x, __int16 y)
 GAMECALL(0x401E47, BOOL, __cdecl, UseBulldozer, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x401EA1, int, __cdecl, MapToolLowerTerrain, __int16 iTileTargetX, __int16 iTileTargetY)

@@ -318,9 +318,6 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 m_x, int m_y, __
 	char cMSimBit;
 	BYTE *pZone;
 
-	char(__cdecl *H_SimulationProvisionMicrosim)(__int16, int, __int16) = (char(__cdecl *)(__int16, int, __int16))0x401460;
-	int(__cdecl *H_SpawnItem)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x4012C1;
-
 	unsigned __int16 x = m_x;
 	int y = P_LOWORD(m_y);
 
@@ -329,7 +326,6 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 m_x, int m_y, __
 		--x;
 		P_LOWORD(y) = y - 1;
 	}
-	//ConsoleLog(LOG_DEBUG, "DBG: 0x%08X -> ItemPlacementCheck(x: %u, y: %d, iTileID: %s, iTileArea: %d)\n", _ReturnAddress(), x, y, szTileNames[iTileID], iTileArea);
 	iMarinaCount = 0;
 	iX[0] = x;
 	iItemWidth = (__int16)x + iArea;
@@ -408,7 +404,7 @@ GOFORWARD:
 		}
 		else {
 			iX[1] = x;
-			cMSimBit = H_SimulationProvisionMicrosim(x, y, iTile);
+			cMSimBit = Game_SimulationProvisionMicrosim(x, y, iTile);
 			if (iItemWidth >= (__int16)x) {
 				iItemDepth = (__int16)y + iArea;
 				do {
@@ -465,7 +461,7 @@ GOFORWARD:
 			else if (x < 0x80u && (unsigned __int16)y < 0x80u) {
 				*(BYTE *)&dwMapXZON[x]->b[y] |= 0xF0u;
 			}
-			H_SpawnItem(x, y + iArea);
+			Game_SpawnItem(x, y + iArea);
 			return 1;
 		}
 	}
