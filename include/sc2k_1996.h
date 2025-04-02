@@ -663,6 +663,13 @@ enum {
 	MAPTOOL_GROUP_CENTERINGTOOL
 };
 
+enum {
+	VIEWROTATION_NORTH = 0,
+	VIEWROTATION_EAST,
+	VIEWROTATION_SOUTH,
+	VIEWROTATION_WEST
+};
+
 // Structs
 
 typedef struct {
@@ -752,16 +759,14 @@ typedef struct {
 	BYTE bPadding;
 } map_XLAB_t;
 
-// Engine helper functions. These call into the game using the below function pointers to do
-// various tasks.
-int PlaceRoadsAlongPath(int x1, int y1, int x2, int y2);
-
 // Function pointers
 
 GAMECALL(0x40103C, int, __thiscall, PreGameMenuDialogToggle, void *pThis, int iShow)
 GAMECALL(0x40106E, int, __cdecl, PlaceRoadAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x401096, int, __thiscall, SoundPlaySound, void* pThis, int iSoundID)
 GAMECALL(0x4011E5, int, __thiscall, MapToolSoundTrigger, void* pThis)
+GAMECALL(0x4012C1, int, __cdecl, SpawnItem, __int16 x, __int16 y)
+GAMECALL(0x401460, char, __cdecl, SimulationProvisionMicrosim, __int16, int, __int16 iTileID) // The first two arguments aren't clear, though they "could" be the X/Y tile coordinates.
 GAMECALL(0x4014F1, int, __thiscall, TileHighlightUpdate, int pThis)
 GAMECALL(0x40150A, int, __thiscall, ExitRequester, void *pThis, int iSource)
 GAMECALL(0x4015A0, void, __thiscall, DoSaveCity, void *pThis)
@@ -771,10 +776,12 @@ GAMECALL(0x40178F, __int16, __cdecl, PlaceTileWithMilitaryCheck, __int16 x, __in
 GAMECALL(0x401857, int, __cdecl, MapToolPlaceTree, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x40198D, int, __cdecl, MapToolPlaceStream, __int16 iTileTargetX, __int16 iTileTargetY, __int16) // XXX - the last parameter isn't entirely clear, perhaps area or offset?
 GAMECALL(0x401997, int, __cdecl, MapToolPlaceWater, __int16 iTileTargetX, __int16 iTileTargetY)
+GAMECALL(0x4019A1, char, __cdecl, CheckAndAdjustTransportTerrain, __int16 x, __int16 y)
 GAMECALL(0x4019EC, int, __cdecl, CenterOnTileCoords, __int16 x, __int16 y)
 GAMECALL(0x401A37, int, __cdecl, MaybeRoadViabilityAlongPath, __int16* x, __int16* y)
 GAMECALL(0x401AB4, int, __cdecl, MapToolRaiseTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x401AF0, int, __cdecl, MaybeCheckViablePlacementPath, __int16 x1, __int16 y1, __int16 x2, __int16 y2)
+GAMECALL(0x401CCB, int, __stdcall, GetLastViewRotation, void)
 GAMECALL(0x401D16, __int16, __cdecl, GetTileCoordsFromScreenCoords, __int16 x, __int16 y)
 GAMECALL(0x401E47, BOOL, __cdecl, UseBulldozer, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x401EA1, int, __cdecl, MapToolLowerTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
@@ -804,6 +811,9 @@ GAMECALL(0x4A3BDF, struct CWnd *, __stdcall, CWnd_FromHandle, HWND hWnd)
 GAMECALL(0x4AA573, void, __thiscall, CWinApp_OnAppExit, void *pThis)
 GAMECALL(0x4AE0BC, void, __thiscall, CDocument_UpdateAllViews, void* pThis, void* pSender, int lHint, void* pHint)
 GAMECALL(0x4B234F, int, __stdcall, AfxMessageBox, unsigned int nIDPrompt, unsigned int nType, unsigned int nIDHelp)
+
+// Random calls.
+GAMECALL(0x40116D, __int16, __cdecl, RandomWordLCGMod, __int16 iSeed)
 
 // Unknown functions that do something we might need them to. Use with extreme care.
 
@@ -910,6 +920,12 @@ GAMEOFF(DWORD,	dwNextRefocusSongID,		0x4E6F8C)
 GAMEOFF_ARR(DWORD, dwZoneNameStringIDs,		0x4E7140)
 GAMEOFF_ARR(DWORD, dwCityNoticeStringIDs,	0x4E98B8)
 GAMEOFF(DWORD,	dwCityRewardsUnlocked,		0x4E9A24)
+
+// Pending classification
+GAMEOFF_ARR(WORD, wSomePositionalAngleOne,	0x4DC4D0)
+GAMEOFF_ARR(WORD, wSomePositionalAngleTwo,	0x4DC4D2)
+GAMEOFF_ARR(WORD, wSomePositionalAngleThree,	0x4DC4D4)
+GAMEOFF_ARR(WORD, wSomePositionalAngleFour,	0x4DC4D6)
 
 // Pointers to map arrays
 
