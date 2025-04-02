@@ -36,15 +36,9 @@
 #define GAMECALL(address, type, conv, name, ...) \
 	typedef type (conv *GameFuncPtr_##name)(__VA_ARGS__); \
 	GameFuncPtr_##name Game_##name = (GameFuncPtr_##name)address;
-#define GAMECALL_NOCONV(address, type, name, ...) \
-	typedef type (*GameFuncPtr_##name)(__VA_ARGS__); \
-	GameFuncPtr_##name Game_##name = (GameFuncPtr_##name)address;
 #else
 #define GAMECALL(address, type, conv, name, ...) \
 	typedef type (conv *GameFuncPtr_##name)(__VA_ARGS__);\
-	extern GameFuncPtr_##name Game_##name;
-#define GAMECALL_NOCONV(address, type, name, ...) \
-	typedef type (*GameFuncPtr_##name)(__VA_ARGS__);\
 	extern GameFuncPtr_##name Game_##name;
 #endif
 
@@ -791,7 +785,7 @@ GAMECALL(0x4019EC, int, __cdecl, CenterOnTileCoords, __int16 x, __int16 y)
 GAMECALL(0x401A37, int, __cdecl, MaybeRoadViabilityAlongPath, __int16* x, __int16* y)
 GAMECALL(0x401AB4, int, __cdecl, MapToolRaiseTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x401AF0, int, __cdecl, MaybeCheckViablePlacementPath, __int16 x1, __int16 y1, __int16 x2, __int16 y2)
-GAMECALL_NOCONV(0x401CCB, int, GetLastViewRotation, void)
+GAMECALL(0x401CCB, int, __stdcall, GetLastViewRotation, void)
 GAMECALL(0x401D16, __int16, __cdecl, GetTileCoordsFromScreenCoords, __int16 x, __int16 y)
 GAMECALL(0x401E47, BOOL, __cdecl, UseBulldozer, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x401EA1, int, __cdecl, MapToolLowerTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
