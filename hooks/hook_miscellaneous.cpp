@@ -826,7 +826,6 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 
 // Placeholder.
 void ShowModSettingsDialog(void) {
-	ConsoleLog(LOG_DEBUG, "FUCK");
 	MessageBox(NULL, "The mod settings dialog has not yet been implemented. Check back later.", "sc2fix", MB_OK);
 }
 
