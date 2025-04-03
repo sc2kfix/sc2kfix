@@ -246,6 +246,8 @@ extern "C" void __stdcall Hook_ApparentExit(void) {
 	*((DWORD *)pThis + 63) = dwOldVal2;
 }
 
+std::vector<hook_function_t> stHooks_Hook_OnNewCity_Before;
+
 static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 	case WM_INITDIALOG:
@@ -258,6 +260,12 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 			strcpy_s(szTempMayorName, 24, szSettingsMayorName);
 
 		strcpy_s(dwMapXLAB[0]->szLabel, 24, szTempMayorName);
+
+		// XXX - this should probably be moved to a separate proper hook into the game itself
+		for (auto hook : stHooks_Hook_OnNewCity_Before) {
+			void (*fnHook)(void) = (void(*)(void))hook.pFunction;
+			fnHook();
+		}
 		break;
 	}
 

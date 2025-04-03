@@ -20,7 +20,11 @@
 #define MODLOADER_DEBUG DEBUG_FLAGS_EVERYTHING
 #endif
 
-#define REGISTER_HOOK(name) if (!strcmp(stModInfo->stHooks[i].szHookName, # name)) stHooks_ ## name.push_back(stHookFn);
+#define REGISTER_HOOK(name) \
+	if (!strcmp(stModInfo->stHooks[i].szHookName, # name)) { \
+		stHooks_ ## name.push_back(stHookFn); \
+		bHookRegistered = TRUE; \
+	}
 #define SORT_HOOKS(name) std::sort(stHooks_ ## name.begin(), stHooks_ ## name.end());
 
 UINT modloader_debug = MODLOADER_DEBUG;
@@ -35,6 +39,7 @@ int LoadNativeCodeHooks(HMODULE hModule) {
 	// Read the hook list and iterate through it
 	sc2kfix_mod_info_t* stModInfo = &mapLoadedNativeMods[hModule];
 	for (int i = 0; i < stModInfo->iHookCount; i++) {
+		BOOL bHookRegistered = FALSE;
 		hook_function_t stHookFn;
 		stHookFn.iPriority = stModInfo->stHooks[i].iHookPriority;
 		stHookFn.pFunction = (void*)GetProcAddress(hModule, stModInfo->stHooks[i].szHookName);
@@ -43,8 +48,15 @@ int LoadNativeCodeHooks(HMODULE hModule) {
 			continue;
 		}
 
+		// Compare against each hook that we can register and flag if we register one
+		REGISTER_HOOK(Hook_OnNewCity_Before);
 		REGISTER_HOOK(Hook_SimulationProcessTickDaySwitch_Before);
 		REGISTER_HOOK(Hook_SimulationProcessTickDaySwitch_After);
+
+		if (!bHookRegistered) {
+			ConsoleLog(LOG_WARNING, "MODS: Native code mod %s presented invalid hook %s; skipping.\n", mapLoadedNativeMods[hModule].szModShortName, stModInfo->stHooks[i].szHookName);
+			continue;
+		}
 
 		vecHooksLoaded.push_back({ stModInfo->stHooks[i].szHookName, stHookFn.iPriority });
 		if (modloader_debug & MODLOADER_DEBUG_HOOKS)
@@ -62,6 +74,7 @@ bool operator<(const hook_function_t& a, const hook_function_t& b) {
 }
 
 void SortHookLists(void) {
+	SORT_HOOKS(Hook_OnNewCity_Before);
 	SORT_HOOKS(Hook_SimulationProcessTickDaySwitch_Before);
 	SORT_HOOKS(Hook_SimulationProcessTickDaySwitch_After);
 
