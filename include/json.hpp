@@ -43,8 +43,8 @@ namespace json {
 		}
 	}
 
-	class JSON {
-		union BackingData {
+	class HOOKEXT_CPP JSON {
+		union HOOKEXT_CPP BackingData {
 			BackingData(double d) : Float(d) {}
 			BackingData(long   l) : Int(l) {}
 			BackingData(bool   b) : Bool(b) {}
@@ -60,7 +60,7 @@ namespace json {
 		} Internal;
 
 	public:
-		enum class Class {
+		enum class HOOKEXT_CPP Class {
 			Null,
 			Object,
 			Array,
@@ -182,7 +182,7 @@ namespace json {
 			return ret;
 		}
 
-		static JSON Load(const string&);
+		JSON Load(const std::string&);
 
 		template<typename T> void append(T arg) {
 			SetType(Class::Array);
@@ -371,7 +371,7 @@ namespace json {
 			return "";
 		}
 
-		friend std::ostream& operator<<(std::ostream&, const JSON&);
+		friend HOOKEXT_CPP std::ostream& operator<<(std::ostream&, const JSON&);
 
 	private:
 		void SetType(Class type) {
@@ -417,7 +417,7 @@ namespace json {
 		Class Type = Class::Null;
 	};
 
-	JSON Array();
+	HOOKEXT_CPP JSON Array();
 
 	template<typename... T> JSON Array(T... args) {
 		JSON arr = JSON::Make(JSON::Class::Array);
@@ -425,9 +425,9 @@ namespace json {
 		return std::move(arr);
 	}
 
-	JSON Object();
+	HOOKEXT_CPP JSON Object();
 
-	std::ostream& operator<<(std::ostream& os, const JSON& json);
+	HOOKEXT_CPP std::ostream& operator<<(std::ostream& os, const JSON& json);
 
 	namespace {
 		JSON parse_next(const string&, size_t&);

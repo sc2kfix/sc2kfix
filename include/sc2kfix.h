@@ -15,13 +15,14 @@
 #include <smk.h>
 #include <sc2k_1996.h>
 #include <music.h>
-#include <json.hpp>
 
 // Turning this on enables every debugging option. You have been warned.
 // #define DEBUGALL
 
 // Turning this on forces the console to be enabled, as if -console was passed to SIMCITY.EXE.
 // #define CONSOLE_ENABLED
+
+#define SC2KFIX_CORE
 
 #define SC2KVERSION_UNKNOWN 0
 #define SC2KVERSION_1995    1
@@ -38,6 +39,8 @@
 
 #define HOOKEXT extern "C" __declspec(dllexport)
 #define HOOKEXT_CPP __declspec(dllexport)
+
+#include <json.hpp>
 
 #define countof(x) (sizeof(x)/sizeof(*(x)))
 #define lengthof(s) (countof(s)-1)
@@ -203,8 +206,8 @@ void MigrateRegBOOLValue(HKEY hKey, const char *lpSubKey, const char *lpValueNam
 int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize);
 HOOKEXT_CPP std::string Base64Encode(const unsigned char* pSrcData, size_t iSrcCount);
 HOOKEXT_CPP size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned char* pSrcData, size_t iSrcCount);
-json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBigEndian);
-void DecodeDWORDArray(DWORD* dwArray, json::JSON jsonArray, size_t iCount, BOOL bBigEndian);
+HOOKEXT_CPP json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBigEndian);
+HOOKEXT_CPP void DecodeDWORDArray(DWORD* dwArray, json::JSON jsonArray, size_t iCount, BOOL bBigEndian);
 
 // Globals etc.
 

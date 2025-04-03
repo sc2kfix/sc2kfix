@@ -959,7 +959,7 @@ void InstallMiscHooks(void) {
 	VirtualProtect((LPVOID)0x40103C, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x40103C, Hook_40103C);
 
-	// Window title calendar
+	// Window title calendar and modding hooks for SimulationProcessTick
 	VirtualProtect((LPVOID)0x40D67D, 10, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWCALL((LPVOID)0x40D67D, Hook_40D67D);
 	memset((LPVOID)0x40D682, 0x90, 5);

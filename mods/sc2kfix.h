@@ -7,8 +7,10 @@
 #include <string>
 
 #define HOOKEXT		extern "C" __declspec(dllimport)
-#define HOOKEXT_CPP	extern "C" __declspec(dllimport)
+#define HOOKEXT_CPP	__declspec(dllimport)
 #define HOOKCB		extern "C" __declspec(dllexport)
+
+#include "../include/json.hpp"
 
 #define IFF_HEAD(a, b, c, d) ((DWORD)d << 24 | (DWORD)c << 16 | (DWORD)b << 8 | (DWORD)a)
 
@@ -73,3 +75,5 @@ HOOKEXT BOOL WritePrivateProfileIntA(const char* section, const char* name, int 
 
 HOOKEXT_CPP std::string Base64Encode(const unsigned char* pSrcData, size_t iSrcCount);
 HOOKEXT_CPP size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned char* pSrcData, size_t iSrcCount);
+HOOKEXT_CPP json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBigEndian);
+HOOKEXT_CPP void DecodeDWORDArray(DWORD* dwArray, json::JSON jsonArray, size_t iCount, BOOL bBigEndian);
