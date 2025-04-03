@@ -4,8 +4,11 @@
 #pragma once
 #pragma warning(disable : 4200)
 
-#define HOOKEXT	extern "C" __declspec(dllimport)
-#define HOOKCB	extern "C" __declspec(dllexport)
+#include <string>
+
+#define HOOKEXT		extern "C" __declspec(dllimport)
+#define HOOKEXT_CPP	extern "C" __declspec(dllimport)
+#define HOOKCB		extern "C" __declspec(dllexport)
 
 #define IFF_HEAD(a, b, c, d) ((DWORD)d << 24 | (DWORD)c << 16 | (DWORD)b << 8 | (DWORD)a)
 
@@ -58,6 +61,15 @@ typedef struct {
 	sc2kfix_mod_hook_t stHooks[];
 } sc2kfix_mod_hooklist_t;
 
+HOOKEXT void CenterDialogBox(HWND hwndDlg);
 HOOKEXT HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText);
 HOOKEXT const char* HexPls(UINT uNumber, int width);
+HOOKEXT const char* FormatVersion(int iMajor, int iMinor, int iPatch);
 HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...);
+HOOKEXT const char* GetLowHighScale(BYTE bScale);
+HOOKEXT BOOL FileExists(const char* name);
+HOOKEXT const char* GetModsFolderPath(void);
+HOOKEXT BOOL WritePrivateProfileIntA(const char* section, const char* name, int value, const char* ini_name);
+
+HOOKEXT_CPP std::string Base64Encode(const unsigned char* pSrcData, size_t iSrcCount);
+HOOKEXT_CPP size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned char* pSrcData, size_t iSrcCount);

@@ -959,6 +959,14 @@ GAMEOFF_ARR(map_XLAB_t*,	dwMapXLAB,	0x4CA198)
 GAMEOFF_ARR(map_XTHG_t*,	dwMapXTHG,	0x4CA434)
 GAMEOFF_ARR(DWORD,			dwMapXGRP,	0x4CC470)
 
+
+static inline int GetTileID(int iTileX, int iTileY) {
+	if (iTileX >= 0 && iTileX < 128 && iTileY >= 0 && iTileY < 128)
+		return dwMapXBLD[iTileX]->iTileID[iTileY];
+	else
+		return -1;
+}
+
 static inline const char* GetXLABEntry(int iLabelID) {
 	return (*dwMapXLAB + iLabelID)->szLabel;
 }

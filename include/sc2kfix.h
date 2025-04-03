@@ -37,6 +37,7 @@
 #define SC2KFIX_MODSFOLDER	"mods"
 
 #define HOOKEXT extern "C" __declspec(dllexport)
+#define HOOKEXT_CPP __declspec(dllexport)
 
 #define countof(x) (sizeof(x)/sizeof(*(x)))
 #define lengthof(s) (countof(s)-1)
@@ -186,24 +187,22 @@ const char *AdjustSource(char *buf, const char *path);
 // Utility functions
 
 void InitializeFonts(void);
-void CenterDialogBox(HWND hwndDlg);
+HOOKEXT void CenterDialogBox(HWND hwndDlg);
 HOOKEXT HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText);
 HOOKEXT const char* HexPls(UINT uNumber, int width);
 HOOKEXT const char* FormatVersion(int iMajor, int iMinor, int iPatch);
 HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...);
-int GetTileID(int iTileX, int iTileY);
-const char* GetZoneName(int iZoneID);
-const char* GetLowHighScale(BYTE bScale);
+HOOKEXT const char* GetLowHighScale(BYTE bScale);
 HOOKEXT BOOL FileExists(const char* name);
 HOOKEXT const char* GetModsFolderPath(void);
 HBITMAP CreateSpriteBitmap(int iSpriteID);
-BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, const char *ini_name);
+HOOKEXT BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, const char *ini_name);
 void MigrateRegStringValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, char *szOutBuf, DWORD dwLen);
 void MigrateRegDWORDValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, DWORD *dwOut, DWORD dwSize);
 void MigrateRegBOOLValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, BOOL *bOut);
 int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize);
-std::string Base64Encode(const unsigned char* pSrcData, size_t iSrcCount);
-size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned char* pSrcData, size_t iSrcCount);
+HOOKEXT_CPP std::string Base64Encode(const unsigned char* pSrcData, size_t iSrcCount);
+HOOKEXT_CPP size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned char* pSrcData, size_t iSrcCount);
 json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBigEndian);
 void DecodeDWORDArray(DWORD* dwArray, json::JSON jsonArray, size_t iCount, BOOL bBigEndian);
 

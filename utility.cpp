@@ -38,7 +38,7 @@ void InitializeFonts(void) {
 	bFontsInitialized = TRUE;
 }
 
-void CenterDialogBox(HWND hwndDlg) {
+HOOKEXT void CenterDialogBox(HWND hwndDlg) {
 	HWND hwndDesktop;
 	RECT rcTemp, rcDlg, rcDesktop;
 
@@ -152,14 +152,7 @@ HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...) {
 	va_end(args);
 }
 
-int GetTileID(int iTileX, int iTileY) {
-	if (iTileX >= 0 && iTileX < 128 && iTileY >= 0 && iTileY < 128)
-		return dwMapXBLD[iTileX]->iTileID[iTileY];
-	else
-		return -1;
-}
-
-const char* GetLowHighScale(BYTE bScale) {
+HOOKEXT const char* GetLowHighScale(BYTE bScale) {
 	if (!bScale)
 		return "None";
 	if (bScale < 60)
@@ -187,7 +180,7 @@ HOOKEXT const char* GetModsFolderPath(void) {
 	return szModsFolderPath;
 }
 
-BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, const char *ini_name) {
+HOOKEXT BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, const char *ini_name) {
 	char szBuf[128 + 1];
 
 	memset(szBuf, 0, sizeof(szBuf));
@@ -244,7 +237,7 @@ static const unsigned char base64_decodetable[256] = {
 	128, 128, 128
 };
 
-std::string Base64Encode(const unsigned char* pSrcData, size_t iSrcCount) {
+HOOKEXT_CPP std::string Base64Encode(const unsigned char* pSrcData, size_t iSrcCount) {
 	unsigned char* out, * pos;
 	const unsigned char* end, * in;
 
@@ -287,7 +280,7 @@ std::string Base64Encode(const unsigned char* pSrcData, size_t iSrcCount) {
 	return outStr;
 }
 
-size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned char* pSrcData, size_t iSrcCount) {
+HOOKEXT_CPP size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned char* pSrcData, size_t iSrcCount) {
 	unsigned char* pos, block[4], tmp;
 	size_t i, count, olen;
 	int pad = 0;
