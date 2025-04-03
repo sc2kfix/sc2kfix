@@ -23,9 +23,10 @@ sc2kfix_mod_info_t stModInfo = {
 };
 
 sc2kfix_mod_hooklist_t stModHooks = {
-    1,
+    2,
     {
-        { "Hook_SimulationProcessTickDaySwitch_Before", 0 }
+        { "Hook_SimulationProcessTickDaySwitch_Before", 0 },
+        { "Hook_SimulationProcessTickDaySwitch_After", 0 }
     }
 };
 
@@ -47,6 +48,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 HOOKCB void Hook_SimulationProcessTickDaySwitch_Before(void) {
     if (dwCityDays % 300 == 0)
         ConsoleLog(LOG_NOTICE, ":toot: Happy new year!\n");
+}
+
+HOOKCB void Hook_SimulationProcessTickDaySwitch_After(void) {
+    ConsoleLog(LOG_NOTICE, "Today was day %d in the glorious history of %s.\n", dwCityDays + 1, *pszCityName);
 }
 
 HOOKCB sc2kfix_mod_info_t* HookCb_GetModInfo(void) {
