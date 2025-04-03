@@ -9,50 +9,50 @@
 #include "../../include/sc2k_1996.h"
 
 sc2kfix_mod_hook_t stModHooks[] = {
-        { "Hook_SimulationProcessTickDaySwitch_Before", 0 },
-        { "Hook_SimulationProcessTickDaySwitch_After", 0 }
+	{ "Hook_SimulationProcessTickDaySwitch_Before", 0 },
+	{ "Hook_SimulationProcessTickDaySwitch_After", 0 }
 };
 
 sc2kfix_mod_info_t stModInfo = {
-    /* .iModInfoVersion = */ 1,
-    /* .iModVersionMajor = */ 0,
-    /* .iModVersionMinor = */ 1,
-    /* .iModVersionPatch = */ 2,
-    /* .iMinimumVersionMajor = */ 0,
-    /* .iMinimumVersionMinor = */ 10,
-    /* .iMinimumVersionPatch = */ 0,
-    /* .szModName = */ "Test Native Code Mod",
-    /* .szModShortName = */ "testmod",
-    /* .szModAuthor = */ "sc2kfix Project",
-    /* .szModDescription = */ "A test mod to demonstrate sc2kfix native code mod loading, linking against DLL exports from sc2kfix, and manipulating game data from native code.",
-    /* .iHookCount = */ HOOKS_COUNT(stModHooks),
-    /* .pstHooks = */ stModHooks
+	/* .iModInfoVersion = */ 1,
+	/* .iModVersionMajor = */ 0,
+	/* .iModVersionMinor = */ 1,
+	/* .iModVersionPatch = */ 2,
+	/* .iMinimumVersionMajor = */ 0,
+	/* .iMinimumVersionMinor = */ 10,
+	/* .iMinimumVersionPatch = */ 0,
+	/* .szModName = */ "Test Native Code Mod",
+	/* .szModShortName = */ "testmod",
+	/* .szModAuthor = */ "sc2kfix Project",
+	/* .szModDescription = */ "A test mod to demonstrate sc2kfix native code mod loading, linking against DLL exports from sc2kfix, and manipulating game data from native code.",
+	/* .iHookCount = */ HOOKS_COUNT(stModHooks),
+	/* .pstHooks = */ stModHooks
 };
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
-    switch (reason) {
-    case DLL_PROCESS_ATTACH:
-        ConsoleLog(LOG_INFO, "MODS: testmod says hello!\n");
-        break;
-    case DLL_THREAD_ATTACH:
-    case DLL_THREAD_DETACH:
-        break;
-    case DLL_PROCESS_DETACH:
-        ConsoleLog(LOG_INFO, "MODS: testmod says goodbye!\n");
-        break;
-    }
-    return TRUE;
+	switch (reason) {
+	case DLL_PROCESS_ATTACH:
+		ConsoleLog(LOG_INFO, "MODS: testmod says hello!\n");
+		break;
+	case DLL_THREAD_ATTACH:
+	case DLL_THREAD_DETACH:
+		break;
+	case DLL_PROCESS_DETACH:
+		ConsoleLog(LOG_INFO, "MODS: testmod says goodbye!\n");
+		break;
+	}
+	return TRUE;
 }
 
 HOOKCB void Hook_SimulationProcessTickDaySwitch_Before(void) {
-    if (dwCityDays % 300 == 0)
-        ConsoleLog(LOG_NOTICE, ":toot: Happy new year!\n");
+	if (dwCityDays % 300 == 0)
+		ConsoleLog(LOG_NOTICE, ":toot: Happy new year!\n");
 }
 
 HOOKCB void Hook_SimulationProcessTickDaySwitch_After(void) {
-    ConsoleLog(LOG_NOTICE, "Today was day %d in the glorious history of %s.\n", dwCityDays + 1, *pszCityName);
+	ConsoleLog(LOG_NOTICE, "Today was day %d in the glorious history of %s.\n", dwCityDays + 1, *pszCityName);
 }
 
 HOOKCB sc2kfix_mod_info_t* HookCb_GetModInfo(void) {
-    return &stModInfo;
+	return &stModInfo;
 }
