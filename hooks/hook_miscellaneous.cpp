@@ -797,12 +797,6 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	return ret;
 }
 
-// Placeholder.
-void ShowModSettingsDialog(void) {
-	ConsoleLog(LOG_DEBUG, "FUCK");
-	MessageBox(NULL, "The mod settings dialog has not yet been implemented. Check back later.", "sc2fix", MB_OK);
-}
-
 // Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
 // This should probably have a better name. And maybe be broken out into smaller functions.
 void InstallMiscHooks(void) {
@@ -974,10 +968,6 @@ void InstallMiscHooks(void) {
 			ConsoleLog(LOG_DEBUG, "MISC: AppendMenuA #2 failed, error = 0x%08X.\n", GetLastError());
 			goto skipmenu;
 		}
-		if (!AppendMenu(hOptionsPopup, MF_STRING, 40001, "Mod &Configuration...") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: AppendMenuA #3 failed, error = 0x%08X.\n", GetLastError());
-			goto skipmenu;
-		}
 
 		afxMessageMapEntry[0] = {
 			WM_COMMAND,
@@ -986,15 +976,6 @@ void InstallMiscHooks(void) {
 			40000,
 			0x0A,
 			ShowSettingsDialog,
-		};
-
-		afxMessageMapEntry[1] = {
-			WM_COMMAND,
-			0,
-			40001,
-			40001,
-			0x0A,
-			ShowModSettingsDialog
 		};
 
 		VirtualProtect((LPVOID)0x4D45C0, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
