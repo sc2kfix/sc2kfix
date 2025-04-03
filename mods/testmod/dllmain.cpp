@@ -73,11 +73,29 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 	return TRUE;
 }
 
+// All game hooks exported from mods are declared using the HOOKCB macro, which expands to
+// extern "C" __declspec(dllexport). This makes sure that there's no C++ name mangling and imports
+// on the sc2kfix side are similarly simple.
+//
+// This is a "before" hook, and is called when sc2kfix intercepts a part of SimCity 2000's game
+// engine, and before it lets the engine (or, depending on the hook, a recreation thereof) execute
+// its original code. Many "before" hooks have a corresponding "after" hook that runs after the
+// engine completes its designated task that the hook is related to, but before the calling
+// function in the engine is returned to.
 HOOKCB void Hook_SimulationProcessTickDaySwitch_Before(void) {
+	// dwCityDays is a game engine variable declared and defined as a C++ reference variable.
+	// Using reference variables lets sc2kfix developers and modders operate on SimCity 2000 game
+	// engine state as if their own code is part of the game engine. Since sc2kfix hooks are
+	// called into from the main game engine thread, this is safe to do from native code without
+	// any multithreading-aware locking or mutex mechanism.
 	if (dwCityDays % 300 == 0)
 		ConsoleLog(LOG_NOTICE, ":toot: Happy new year!\n");
 }
 
+// This is an example of an "after" hook. sc2kfix intercepts the end of the game engine's
+// SimulationProcessTick function and calls the Hook_SimulationProcessTickDaySwitch_After exports
+// from each mod before returning to the calling function (in this case, the default case of the
+// GameDoIdleUpkeep function).
 HOOKCB void Hook_SimulationProcessTickDaySwitch_After(void) {
 	ConsoleLog(LOG_NOTICE, "Today was day %d in the glorious history of %s.\n", dwCityDays + 1, *pszCityName);
 }
