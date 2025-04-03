@@ -8,6 +8,11 @@
 #include "../sc2kfix.h"
 #include "../../include/sc2k_1996.h"
 
+sc2kfix_mod_hook_t stModHooks[] = {
+        { "Hook_SimulationProcessTickDaySwitch_Before", 0 },
+        { "Hook_SimulationProcessTickDaySwitch_After", 0 }
+};
+
 sc2kfix_mod_info_t stModInfo = {
     /* .iModInfoVersion = */ 1,
     /* .iModVersionMajor = */ 0,
@@ -19,15 +24,9 @@ sc2kfix_mod_info_t stModInfo = {
     /* .szModName = */ "Test Native Code Mod",
     /* .szModShortName = */ "testmod",
     /* .szModAuthor = */ "sc2kfix Project",
-    /* .szModDescription = */ "A test mod to demonstrate sc2kfix native code mod loading, linking against DLL exports from sc2kfix, and manipulating game data from native code."
-};
-
-sc2kfix_mod_hooklist_t stModHooks = {
-    2,
-    {
-        { "Hook_SimulationProcessTickDaySwitch_Before", 0 },
-        { "Hook_SimulationProcessTickDaySwitch_After", 0 }
-    }
+    /* .szModDescription = */ "A test mod to demonstrate sc2kfix native code mod loading, linking against DLL exports from sc2kfix, and manipulating game data from native code.",
+    /* .iHookCount = */ HOOKS_COUNT(stModHooks),
+    /* .pstHooks = */ stModHooks
 };
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
@@ -56,8 +55,4 @@ HOOKCB void Hook_SimulationProcessTickDaySwitch_After(void) {
 
 HOOKCB sc2kfix_mod_info_t* HookCb_GetModInfo(void) {
     return &stModInfo;
-}
-
-HOOKCB sc2kfix_mod_hooklist_t* HookCb_GetHookList(void) {
-    return &stModHooks;
 }

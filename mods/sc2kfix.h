@@ -38,6 +38,11 @@ enum {
 };
 
 typedef struct {
+	const char* szHookName;
+	int iHookPriority;
+} sc2kfix_mod_hook_t;
+
+typedef struct {
 	int iModInfoVersion;				// Mandatory
 
 	int iModVersionMajor;				// Mandatory
@@ -51,17 +56,13 @@ typedef struct {
 	const char* szModShortName;			// Mandatory
 	const char* szModAuthor;			// Optional, but recommended
 	const char* szModDescription;		// Optional, but recommended
+
+	int iHookCount;						// Mandatory
+	sc2kfix_mod_hook_t* pstHooks;		// Mandatory
 } sc2kfix_mod_info_t;
 
-typedef struct {
-	const char* szHookName;
-	int iHookPriority;
-} sc2kfix_mod_hook_t;
 
-typedef struct {
-	int iHookCount;
-	sc2kfix_mod_hook_t stHooks[];
-} sc2kfix_mod_hooklist_t;
+#define HOOKS_COUNT(st) (sizeof(st) / sizeof(sc2kfix_mod_hook_t))
 
 HOOKEXT void CenterDialogBox(HWND hwndDlg);
 HOOKEXT HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText);

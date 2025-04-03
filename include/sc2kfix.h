@@ -88,6 +88,11 @@ typedef struct {
 } AFX_MSGMAP_ENTRY;
 
 typedef struct {
+	const char* szHookName;
+	int iHookPriority;
+} sc2kfix_mod_hook_t;
+
+typedef struct {
 	int iModInfoVersion;				// Mandatory
 
 	int iModVersionMajor;				// Mandatory
@@ -101,17 +106,10 @@ typedef struct {
 	const char* szModShortName;			// Mandatory
 	const char* szModAuthor;			// Optional, but recommended
 	const char* szModDescription;		// Optional, but recommended
+
+	int iHookCount;						// Mandatory
+	sc2kfix_mod_hook_t* stHooks;		// Mandatory
 } sc2kfix_mod_info_t;
-
-typedef struct {
-	const char* szHookName;
-	int iHookPriority;
-} sc2kfix_mod_hook_t;
-
-typedef struct {
-	int iHookCount;
-	sc2kfix_mod_hook_t stHooks[];
-} sc2kfix_mod_hooklist_t;
 
 typedef struct {
 	int iPriority;

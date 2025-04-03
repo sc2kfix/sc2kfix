@@ -20,7 +20,7 @@
 #define MODLOADER_DEBUG DEBUG_FLAGS_EVERYTHING
 #endif
 
-#define REGISTER_HOOK(name) if (!strcmp(stHookList->stHooks[i].szHookName, # name)) stHooks_ ## name.push_back(stHookFn);
+#define REGISTER_HOOK(name) if (!strcmp(stModInfo->stHooks[i].szHookName, # name)) stHooks_ ## name.push_back(stHookFn);
 #define SORT_HOOKS(name) std::sort(stHooks_ ## name.begin(), stHooks_ ## name.end());
 
 UINT modloader_debug = MODLOADER_DEBUG;
@@ -32,29 +32,24 @@ int LoadNativeCodeHooks(HMODULE hModule) {
 	int iHooksLoaded = 0;
 	std::vector<sc2kfix_mod_hook_t> vecHooksLoaded;
 
-	// Get the mod's HookCb_GetHookList function or return -1 on failure
-	sc2kfix_mod_hooklist_t* (*HookCb_GetHookList)(void) = (sc2kfix_mod_hooklist_t* (*)(void))GetProcAddress(hModule, "HookCb_GetHookList");
-	if (!HookCb_GetHookList)
-		return -1;
-
 	// Read the hook list and iterate through it
-	sc2kfix_mod_hooklist_t* stHookList = HookCb_GetHookList();
-	for (int i = 0; i < stHookList->iHookCount; i++) {
+	sc2kfix_mod_info_t* stModInfo = &mapLoadedNativeMods[hModule];
+	for (int i = 0; i < stModInfo->iHookCount; i++) {
 		hook_function_t stHookFn;
-		stHookFn.iPriority = stHookList->stHooks[i].iHookPriority;
-		stHookFn.pFunction = (void*)GetProcAddress(hModule, stHookList->stHooks[i].szHookName);
+		stHookFn.iPriority = stModInfo->stHooks[i].iHookPriority;
+		stHookFn.pFunction = (void*)GetProcAddress(hModule, stModInfo->stHooks[i].szHookName);
 		if (!stHookFn.pFunction) {
-			ConsoleLog(LOG_WARNING, "MODS: Couldn't load hook %s from native code mod %s.\n", stHookList->stHooks[i].szHookName, mapLoadedNativeMods[hModule].szModShortName);
+			ConsoleLog(LOG_WARNING, "MODS: Couldn't load hook %s from native code mod %s.\n", stModInfo->stHooks[i].szHookName, mapLoadedNativeMods[hModule].szModShortName);
 			continue;
 		}
 
 		REGISTER_HOOK(Hook_SimulationProcessTickDaySwitch_Before);
 		REGISTER_HOOK(Hook_SimulationProcessTickDaySwitch_After);
 
-		vecHooksLoaded.push_back({ stHookList->stHooks[i].szHookName, stHookFn.iPriority });
+		vecHooksLoaded.push_back({ stModInfo->stHooks[i].szHookName, stHookFn.iPriority });
 		if (modloader_debug & MODLOADER_DEBUG_HOOKS)
 			ConsoleLog(LOG_DEBUG, "MODS: Loaded hook %s at address 0x%08X (pri %d) from native code mod %s.\n",
-				stHookList->stHooks[i].szHookName, stHookFn.pFunction, stHookFn.iPriority, mapLoadedNativeMods[hModule].szModShortName);
+				stModInfo->stHooks[i].szHookName, stHookFn.pFunction, stHookFn.iPriority, mapLoadedNativeMods[hModule].szModShortName);
 		iHooksLoaded++;
 	}
 
