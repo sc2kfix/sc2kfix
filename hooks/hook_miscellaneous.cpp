@@ -516,6 +516,26 @@ def:
 	}
 }
 
+std::vector<hook_function_t> stHooks_Hook_SimulationProcessTickDaySwitch_After;
+
+extern "C" void _declspec(naked) Hook_SimulationProcessTickDaySwitch_After(void) {
+	for (auto hook : stHooks_Hook_SimulationProcessTickDaySwitch_After) {
+		void (*fnHook)(void) = (void(*)(void))hook.pFunction;
+		fnHook();
+	}
+
+	// Original cleanup from 0x413ABF
+	__asm {
+		mov eax, [ebp-0x0C]
+		pop esi
+		mov fs:0, eax
+		pop ebx
+		mov esp, ebp
+		pop ebp
+		retn
+	}
+}
+
 extern "C" void _declspec(naked) Hook_SimulationStartDisaster(void) {
 	if (mischook_debug & MISCHOOK_DEBUG_DISASTERS)
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> SimulationStartDisaster(), wDisasterType = %u.\n", _ReturnAddress(), wDisasterType);
@@ -947,6 +967,8 @@ void InstallMiscHooks(void) {
 	VirtualProtect((LPVOID)0x4135D2, 9, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4135D2, Hook_SimulationProcessTickDaySwitch);
 	memset((LPVOID)0x4135D7, 0x90, 4);
+	VirtualProtect((LPVOID)0x413ABF, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x413ABF, Hook_SimulationProcessTickDaySwitch_After);
 
 	// Hook SimulationStartDisaster
 	VirtualProtect((LPVOID)0x402527, 5, PAGE_EXECUTE_READWRITE, &dwDummy);

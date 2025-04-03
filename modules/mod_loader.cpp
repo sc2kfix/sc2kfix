@@ -20,6 +20,9 @@
 #define MODLOADER_DEBUG DEBUG_FLAGS_EVERYTHING
 #endif
 
+#define REGISTER_HOOK(name) if (!strcmp(stHookList->stHooks[i].szHookName, # name)) stHooks_ ## name.push_back(stHookFn);
+#define SORT_HOOKS(name) std::sort(stHooks_ ## name.begin(), stHooks_ ## name.end());
+
 UINT modloader_debug = MODLOADER_DEBUG;
 
 std::map<HMODULE, sc2kfix_mod_info_t> mapLoadedNativeMods;
@@ -44,8 +47,9 @@ int LoadNativeCodeHooks(HMODULE hModule) {
 			ConsoleLog(LOG_WARNING, "MODS: Couldn't load hook %s from native code mod %s.\n", stHookList->stHooks[i].szHookName, mapLoadedNativeMods[hModule].szModShortName);
 			continue;
 		}
-		if (!strcmp(stHookList->stHooks[i].szHookName, "Hook_SimulationProcessTickDaySwitch_Before"))
-			stHooks_Hook_SimulationProcessTickDaySwitch_Before.push_back(stHookFn);
+
+		REGISTER_HOOK(Hook_SimulationProcessTickDaySwitch_Before);
+		REGISTER_HOOK(Hook_SimulationProcessTickDaySwitch_After);
 
 		vecHooksLoaded.push_back({ stHookList->stHooks[i].szHookName, stHookFn.iPriority });
 		if (modloader_debug & MODLOADER_DEBUG_HOOKS)
@@ -63,7 +67,8 @@ bool operator<(const hook_function_t& a, const hook_function_t& b) {
 }
 
 void SortHookLists(void) {
-	std::sort(stHooks_Hook_SimulationProcessTickDaySwitch_Before.begin(), stHooks_Hook_SimulationProcessTickDaySwitch_Before.end());
+	SORT_HOOKS(Hook_SimulationProcessTickDaySwitch_Before);
+	SORT_HOOKS(Hook_SimulationProcessTickDaySwitch_After);
 
 	if (modloader_debug & MODLOADER_DEBUG_HOOKS)
 		ConsoleLog(LOG_DEBUG, "MODS: Sorted all hooks.\n");
