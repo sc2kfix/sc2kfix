@@ -284,8 +284,6 @@ REROLLCOASTALSPOT:
 					// Determine relative "right"
 					__int16 iLengthPointB = GetTileLength(iDepthPoint, iStartLengthPoint, ((wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) ? 0 : 1));
 
-					int iNumLengthWay = 0;
-					int iNumDepthWay = 0;
 					int iNumTiles = 0;
 					iBaseLevel = dwMapALTM[iStartLengthPoint]->w[iDepthPoint].iLandAltitude;
 					for (__int16 iLengthWay = iLengthPointA;;) {
