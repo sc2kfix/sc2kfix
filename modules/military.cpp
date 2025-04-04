@@ -357,7 +357,7 @@ REROLLCOASTALSPOT:
 		}
 NONAVY:
 		iIterations = 24;
-		iPosCount = dwSiloPos[0];
+		iPosCount = (short)dwSiloPos[0];
 		do {
 			bMaxIteration = iIterations-- == 0;
 			if (bMaxIteration)

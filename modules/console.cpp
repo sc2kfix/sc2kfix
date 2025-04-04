@@ -504,7 +504,7 @@ BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments) {
 			"Tile (%i, %i):\n"
 			"  iTileID: %s (%i / 0x%02X)\n"
 			"  Zone:    %s\n"
-			"  XBIT:    0x%02X (%s)\n", iTileX, iTileY, szTileNames[iTileID], iTileID, iTileID, GetZoneName(dwMapXZON[iTileX]->b[iTileY].iZoneType), dwMapXBIT[iTileX]->b[iTileY], szXBITFormatted);
+			"  XBIT:    0x%02X (%s)\n", iTileX, iTileY, szTileNames[iTileID], iTileID, iTileID, GetZoneName(dwMapXZON[iTileX]->b[iTileY].iZoneType), *(BYTE*)&dwMapXBIT[iTileX]->b[iTileY], szXBITFormatted);
 		return TRUE;
 	}
 

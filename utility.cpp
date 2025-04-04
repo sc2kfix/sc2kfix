@@ -357,7 +357,7 @@ HOOKEXT_CPP json::JSON json::JSON::Load(const string& str) {
 
 HOOKEXT_CPP json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBigEndian) {
 	json::JSON jsonArray = json::Array();
-	for (int i = 0; i < iCount; i++) {
+	for (size_t i = 0; i < iCount; i++) {
 		if (bBigEndian)
 			jsonArray.append<DWORD>(SwapDWORD(dwArray[i]));
 		else
@@ -368,6 +368,6 @@ HOOKEXT_CPP json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBig
 
 // Scary function! Overflows abound! Be careful!
 HOOKEXT_CPP void DecodeDWORDArray(DWORD* dwArray, json::JSON jsonArray, size_t iCount, BOOL bBigEndian) {
-	for (int i = 0; i < iCount; i++)
+	for (size_t i = 0; i < iCount; i++)
 		dwArray[i] = (bBigEndian ? SwapDWORD(jsonArray[i].ToInt()) : jsonArray[i].ToInt());
 }
