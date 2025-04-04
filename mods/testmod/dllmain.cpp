@@ -23,7 +23,8 @@
 // before a mod that exports Hook_OnNewCity_After with a priority of 1.
 sc2kfix_mod_hook_t stModHooks[] = {
 	{ "Hook_SimulationProcessTickDaySwitch_Before", 0 },
-	{ "Hook_SimulationProcessTickDaySwitch_After", 0 }
+	{ "Hook_SimulationProcessTickDaySwitch_After", 0 },
+	{ "Hook_GameDoIdleUpkeep_Before", 0 }
 };
 
 // The stModInfo structure tells the sc2kfix mod loader about the mod and how to load it. It
@@ -98,4 +99,15 @@ HOOKCB void Hook_SimulationProcessTickDaySwitch_Before(void) {
 // GameDoIdleUpkeep function).
 HOOKCB void Hook_SimulationProcessTickDaySwitch_After(void) {
 	ConsoleLog(LOG_NOTICE, "Today was day %d in the glorious history of %s.\n", dwCityDays + 1, *pszCityName);
+}
+
+int iLastState = 0;
+
+HOOKCB void Hook_GameDoIdleUpkeep_Before(void* pThis) {
+	int* piThis = (int*)pThis;
+	int iState = piThis[201];
+	if (iState != iLastState) {
+		ConsoleLog(LOG_DEBUG, "MODS: iState changed, %d -> %d\n", iLastState, iState);
+		iLastState = iState;
+	}
 }

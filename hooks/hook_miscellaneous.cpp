@@ -246,6 +246,30 @@ extern "C" void __stdcall Hook_ApparentExit(void) {
 	*((DWORD *)pThis + 63) = dwOldVal2;
 }
 
+std::vector<hook_function_t> stHooks_Hook_GameDoIdleUpkeep_Before;
+std::vector<hook_function_t> stHooks_Hook_GameDoIdleUpkeep_After;
+
+extern "C" DWORD __stdcall Hook_GameDoIdleUpkeep(void) {
+	DWORD pThis;
+	__asm mov [pThis], ecx
+
+	for (auto hook : stHooks_Hook_GameDoIdleUpkeep_Before) {
+		void (*fnHook)(void*) = (void(*)(void*))hook.pFunction;
+		fnHook((void*)pThis);
+	}
+
+	__asm {
+		mov ecx, [pThis]
+		mov edi, 0x405AB0
+		call edi
+	}
+
+	for (auto hook : stHooks_Hook_GameDoIdleUpkeep_After) {
+		void (*fnHook)(void*) = (void(*)(void*))hook.pFunction;
+		fnHook((void*)pThis);
+	}
+}
+
 std::vector<hook_function_t> stHooks_Hook_OnNewCity_Before;
 
 static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -870,6 +894,10 @@ void InstallMiscHooks(void) {
 	// Hook what appears to be the exit function
 	VirtualProtect((LPVOID)0x401753, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x401753, Hook_ApparentExit);
+
+	// Hook GameDoIdleUpkeep
+	VirtualProtect((LPVOID)0x402A3B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402A3B, Hook_GameDoIdleUpkeep);
 
 	// Fix power and water grid updates slowing down after the population hits 50,000
 	VirtualProtect((LPVOID)0x440943, 4, PAGE_EXECUTE_READWRITE, &dwDummy);

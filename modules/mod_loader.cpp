@@ -13,7 +13,7 @@
 #define MODLOADER_DEBUG_MODULES 1
 #define MODLOADER_DEBUG_HOOKS 2
 
-#define MODLOADER_DEBUG DEBUG_FLAGS_EVERYTHING
+#define MODLOADER_DEBUG DEBUG_FLAGS_NONE
 
 #ifdef DEBUGALL
 #undef MODLOADER_DEBUG
@@ -42,6 +42,7 @@ int LoadNativeCodeHooks(HMODULE hModule) {
 		BOOL bHookRegistered = FALSE;
 		hook_function_t stHookFn;
 		stHookFn.iPriority = stModInfo->stHooks[i].iHookPriority;
+		stHookFn.iType = HOOKFN_TYPE_NATIVE;
 		stHookFn.pFunction = (void*)GetProcAddress(hModule, stModInfo->stHooks[i].szHookName);
 		if (!stHookFn.pFunction) {
 			ConsoleLog(LOG_WARNING, "MODS: Couldn't load hook %s from native code mod %s.\n", stModInfo->stHooks[i].szHookName, mapLoadedNativeMods[hModule].szModShortName);
@@ -50,6 +51,8 @@ int LoadNativeCodeHooks(HMODULE hModule) {
 
 		// Compare against each hook that we can register and flag if we register one
 		REGISTER_HOOK(Hook_OnNewCity_Before);
+		REGISTER_HOOK(Hook_GameDoIdleUpkeep_Before);
+		REGISTER_HOOK(Hook_GameDoIdleUpkeep_After);
 		REGISTER_HOOK(Hook_SimulationProcessTickDaySwitch_Before);
 		REGISTER_HOOK(Hook_SimulationProcessTickDaySwitch_After);
 
@@ -75,6 +78,8 @@ bool operator<(const hook_function_t& a, const hook_function_t& b) {
 
 void SortHookLists(void) {
 	SORT_HOOKS(Hook_OnNewCity_Before);
+	SORT_HOOKS(Hook_GameDoIdleUpkeep_Before);
+	SORT_HOOKS(Hook_GameDoIdleUpkeep_After);
 	SORT_HOOKS(Hook_SimulationProcessTickDaySwitch_Before);
 	SORT_HOOKS(Hook_SimulationProcessTickDaySwitch_After);
 

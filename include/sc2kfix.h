@@ -111,8 +111,15 @@ typedef struct {
 	sc2kfix_mod_hook_t* stHooks;		// Mandatory
 } sc2kfix_mod_info_t;
 
+enum {
+	HOOKFN_TYPE_NONE,
+	HOOKFN_TYPE_NATIVE,
+	HOOKFN_TYPE_KUROKO
+};
+
 typedef struct {
 	int iPriority;
+	int iType;
 	void* pFunction;
 } hook_function_t;
 
