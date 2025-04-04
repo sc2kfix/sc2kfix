@@ -252,10 +252,11 @@ std::vector<hook_function_t> stHooks_Hook_GameDoIdleUpkeep_After;
 extern "C" DWORD __stdcall Hook_GameDoIdleUpkeep(void) {
 	DWORD pThis;
 	__asm mov [pThis], ecx
-
 	for (auto hook : stHooks_Hook_GameDoIdleUpkeep_Before) {
-		void (*fnHook)(void*) = (void(*)(void*))hook.pFunction;
-		fnHook((void*)pThis);
+		if (hook.iType == HOOKFN_TYPE_NATIVE) {
+			void (*fnHook)(void*) = (void(*)(void*))hook.pFunction;
+			fnHook((void*)pThis);
+		}
 	}
 
 	__asm {
@@ -265,8 +266,10 @@ extern "C" DWORD __stdcall Hook_GameDoIdleUpkeep(void) {
 	}
 
 	for (auto hook : stHooks_Hook_GameDoIdleUpkeep_After) {
-		void (*fnHook)(void*) = (void(*)(void*))hook.pFunction;
-		fnHook((void*)pThis);
+		if (hook.iType == HOOKFN_TYPE_NATIVE) {
+			void (*fnHook)(void*) = (void(*)(void*))hook.pFunction;
+			fnHook((void*)pThis);
+		}
 	}
 }
 
@@ -297,8 +300,10 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 
 		// XXX - this should probably be moved to a separate proper hook into the game itself
 		for (auto hook : stHooks_Hook_OnNewCity_Before) {
-			void (*fnHook)(void) = (void(*)(void))hook.pFunction;
-			fnHook();
+			if (hook.iType == HOOKFN_TYPE_NATIVE) {
+				void (*fnHook)(void) = (void(*)(void))hook.pFunction;
+				fnHook();
+			}
 		}
 		break;
 	}
@@ -527,8 +532,10 @@ extern "C" void _declspec(naked) Hook_SimulationProcessTickDaySwitch(void) {
 	__asm push edx
 
 	for (auto hook : stHooks_Hook_SimulationProcessTickDaySwitch_Before) {
-		void (*fnHook)(void) = (void(*)(void))hook.pFunction;
-		fnHook();
+		if (hook.iType == HOOKFN_TYPE_NATIVE) {
+			void (*fnHook)(void) = (void(*)(void))hook.pFunction;
+			fnHook();
+		}
 	}
 
 	Game_RefreshTitleBar(pCDocumentMainWindow);
@@ -562,8 +569,10 @@ std::vector<hook_function_t> stHooks_Hook_SimulationProcessTickDaySwitch_After;
 
 extern "C" void _declspec(naked) Hook_SimulationProcessTickDaySwitch_After(void) {
 	for (auto hook : stHooks_Hook_SimulationProcessTickDaySwitch_After) {
-		void (*fnHook)(void) = (void(*)(void))hook.pFunction;
-		fnHook();
+		if (hook.iType == HOOKFN_TYPE_NATIVE) {
+			void (*fnHook)(void) = (void(*)(void))hook.pFunction;
+			fnHook();
+		}
 	}
 
 	// Original cleanup from 0x413ABF
