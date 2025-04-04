@@ -214,7 +214,6 @@ extern "C" DWORD __cdecl Hook_SmackOpen(LPCSTR lpFileName, uint32_t uFlags, int3
 }
 
 extern "C" DWORD __cdecl Hook_MovieCheck(char *sMovStr) {
-
 	if (sMovStr && strncmp(sMovStr, "INTRO", 5) == 0) {
 		if (!smk_enabled || bSkipIntro || bSettingsAlwaysSkipIntro)
 			return 1;
