@@ -249,7 +249,7 @@ REROLLCOASTALSPOT:
 							if (dwMapXBIT[GetNearCoord(iTempCoords)]->b[GetFarCoord(iTempCoords)].iWater == 0)
 							{
 								if (!((iMilitaryArea >= TILE_CLEAR && iMilitaryArea <= TILE_RUBBLE4) ||
-									(iMilitaryArea >= TILE_TREES1 && iMilitaryArea < TILE_SMALLPARK)) && 
+									(iMilitaryArea >= TILE_TREES1 && iMilitaryArea < TILE_SMALLPARK)) || 
 									dwMapXTER[GetNearCoord(iTempCoords)]->iTileID[GetFarCoord(iTempCoords)]) {
 									iNavyLandingAttempts++;
 									goto REROLLCOASTALSPOT;
