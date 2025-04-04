@@ -745,53 +745,51 @@ PIER_GOTOTHREE:
 }
 
 extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 m_x, int m_y, __int16 iTileID, __int16 iTileArea) {
-	__int16 x;
-	__int16 y;
 	__int16 iArea;
 	__int16 iMarinaCount;
-	__int16 iX;
-	__int16 iY;
+	__int16 iX[2];
+	__int16 iY[2];
 	__int16 iTile;
-	BYTE iBuilding;
-	__int16 iItemWidth;
-	__int16 iItemLength;
-	__int16 iItemDepth;
+	unsigned __int8 iBuilding;
+	int iItemWidth;
+	int iItemLength;
+	int iItemDepth;
 	__int16 iMapBit;
 	__int16 iSection[3];
 	char cMSimBit;
 	BYTE *pZone;
 
-	x = (__int16)m_x;
-	y = P_LOWORD(m_y);
+	unsigned __int16 x = m_x;
+	int y = P_LOWORD(m_y);
 
 	iArea = iTileArea - 1;
 	if (iArea > 1) {
 		--x;
-		--y;
+		P_LOWORD(y) = y - 1;
 	}
 	iMarinaCount = 0;
-	iX = x;
-	iItemWidth = x + iArea;
-	if (iItemWidth >= x) {
+	iX[0] = x;
+	iItemWidth = (__int16)x + iArea;
+	if (iItemWidth >= (__int16)x) {
 		iTile = iTileID;
-		iItemLength = iArea + y;
+		iItemLength = iArea + (__int16)y;
 		while (1) {
-			iY = y;
-			if (iItemLength >= y)
+			iY[0] = y;
+			if (iItemLength >= (__int16)y)
 				break;
 		GOBACK:
-			if (++iX > iItemWidth)
+			if (++iX[0] > iItemWidth)
 				goto GOFORWARD;
 		}
 		while (1) {
 			if (iArea <= 0) {
-				if (iX >= 0x80 || iY >= 0x80)
+				if ((unsigned __int16)iX[0] >= 0x80u || (unsigned __int16)iY[0] >= 0x80u)
 					return 0;
 			}
-			else if (iX < 1 || iY < 1 || iX > 126 || iY > 126) {
+			else if (iX[0] < 1 || iY[0] < 1 || iX[0] > 126 || iY[0] > 126) {
 				return 0;
 			}
-			iBuilding = dwMapXBLD[iX]->iTileID[iY];
+			iBuilding = dwMapXBLD[iX[0]]->iTileID[iY[0]];
 			if (iBuilding >= TILE_ROAD_LR) {
 				return 0;
 			}
@@ -801,33 +799,30 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 m_x, int m_y, __
 			if (iBuilding == TILE_SMALLPARK) {
 				return 0;
 			}
-			if (dwMapXZON[iX]->b[iY].iZoneType == ZONE_MILITARY) {
-				if (iBuilding == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
-					iBuilding == TILE_ROAD_LR ||
-					iBuilding == TILE_ROAD_TB)
-					return 0;
-			}
+			//if (dwMapXZON[iX[0]]->b[iY[0]].iZoneType == ZONE_MILITARY) {
+			//	return 0; // This is where it stops during the military zone checking process.
+			//}
 			if (iTileID == TILE_INFRASTRUCTURE_MARINA) {
-				if (iX < 0x80 &&
-					iY < 0x80 &&
-					dwMapXBIT[iX]->b[iY].iWater != 0) {
+				if ((unsigned __int16)iX[0] < 0x80u &&
+					(unsigned __int16)iY[0] < 0x80u &&
+					dwMapXBIT[iX[0]]->b[iY[0]].iWater != 0) {
 					++iMarinaCount;
 					goto GOSKIP;
 				}
-				if (dwMapXTER[iX]->iTileID[iY]) {
+				if (dwMapXTER[iX[0]]->iTileID[iY[0]]) {
 					return 0;
 				}
 			}
-			if (dwMapXTER[iX]->iTileID[iY]) {
+			if (dwMapXTER[iX[0]]->iTileID[iY[0]]) {
 				return 0;
 			}
-			if (iX < 0x80 &&
-				iY < 0x80 &&
-				dwMapXBIT[iX]->b[iY].iWater != 0) {
+			if ((unsigned __int16)iX[0] < 0x80u &&
+				(unsigned __int16)iY[0] < 0x80u &&
+				dwMapXBIT[iX[0]]->b[iY[0]].iWater != 0) {
 				return 0;
 			}
 		GOSKIP:
-			if (++iY > iItemLength) {
+			if (++iY[0] > iItemLength) {
 				goto GOBACK;
 			}
 		}
@@ -849,62 +844,62 @@ GOFORWARD:
 			return 0;
 		}
 		else {
-			__int16 iCurrXPos = x;
-			cMSimBit = Game_SimulationProvisionMicrosim(x, y, iTile); // The 'y' variable is '__int16' whereas that argument is an 'int' (it was previously the latter), noting just in case.
-			if (iItemWidth >= x) {
-				iItemDepth = y + iArea;
+			iX[1] = x;
+			cMSimBit = Game_SimulationProvisionMicrosim(x, y, iTile);
+			if (iItemWidth >= (__int16)x) {
+				iItemDepth = (__int16)y + iArea;
 				do {
-					for (__int16 iCurrYPos = y; iCurrYPos <= iItemDepth; ++iCurrYPos) {
-						if (iCurrXPos > -1) {
-							if (iCurrXPos < 0x80 && iCurrYPos < 0x80) {
-								*(BYTE *)&dwMapXBIT[iCurrXPos]->b[iCurrYPos] &= 0x1Fu;
+					for (int i = y; i <= iItemDepth; ++i) {
+						if (iX[1] > -1) {
+							if (iX[1] < 128 && (unsigned __int16)i < 0x80u) {
+								*(BYTE *)&dwMapXBIT[iX[1]]->b[i] &= 0x1Fu;
 							}
-							if (iCurrXPos < 0x80 && iCurrYPos < 0x80) {
-								*(BYTE *)&dwMapXBIT[iCurrXPos]->b[iCurrYPos] |= iMapBit;
+							if ((unsigned __int16)iX[1] < 0x80u && (unsigned __int16)i < 0x80u) {
+								*(BYTE *)&dwMapXBIT[iX[1]]->b[i] |= iMapBit;
 							}
 						}
-						Game_PlaceTileWithMilitaryCheck(iCurrXPos, iCurrYPos, iTile);
-						if (iCurrXPos > -1) {
-							if (iCurrXPos < 0x80 && iCurrYPos < 0x80) {
-								*(BYTE *)&dwMapXZON[iCurrXPos]->b[iCurrYPos] &= 0xF0u;
+						Game_PlaceTileWithMilitaryCheck(iX[1], i, iTile);
+						if (iX[1] > -1) {
+							if (iX[1] < 128 && (unsigned __int16)i < 0x80u) {
+								*(BYTE *)&dwMapXZON[iX[1]]->b[i] &= 0xF0u;
 							}
-							if (iCurrXPos < 0x80 && iCurrYPos < 0x80) {
-								*(BYTE *)&dwMapXZON[iCurrXPos]->b[iCurrYPos] &= 0xFu;
+							if ((unsigned __int16)iX[1] < 0x80u && (unsigned __int16)i < 0x80u) {
+								*(BYTE *)&dwMapXZON[iX[1]]->b[i] &= 0xFu;
 							}
 						}
 						if (cMSimBit) {
-							*(BYTE *)&dwMapXTXT[iCurrXPos]->bTextOverlay[iCurrYPos] = cMSimBit;
+							*(BYTE *)&dwMapXTXT[iX[1]]->bTextOverlay[i] = cMSimBit;
 						}
 					}
-					++iCurrXPos;
-				} while (iCurrXPos <= iItemWidth);
+					++iX[1];
+				} while (iX[1] <= iItemWidth);
 			}
 			if (iArea) {
-				if (x < 0x80 && y < 0x80) {
+				if (x < 0x80u && (unsigned __int16)y < 0x80u) {
 					pZone = (BYTE *)&dwMapXZON[x]->b[y];
-					*pZone = LOBYTE(wSomePositionalAngleOne[4 * wViewRotation]) | *pZone & 0xF;
+					*pZone = P_LOBYTE(wSomePositionalAngleOne[4 * wViewRotation]) | *pZone & 0xF;
 				}
 				iSection[0] = iArea + x;
-				if ((iArea + x) > -1 && iSection[0] < 0x80 && y < 0x80) {
+				if ((__int16)(iArea + x) > -1 && iSection[0] < 128 && (unsigned __int16)y < 0x80u) {
 					pZone = (BYTE *)&dwMapXZON[iSection[0]]->b[y];
-					*pZone = LOBYTE(wSomePositionalAngleTwo[4 * wViewRotation]) | *pZone & 0xF;
+					*pZone = P_LOBYTE(wSomePositionalAngleTwo[4 * wViewRotation]) | *pZone & 0xF;
 				}
-				if (iSection[0] < 0x80) {
+				if ((unsigned __int16)iSection[0] < 0x80u) {
 					iSection[1] = y + iArea;
-					if ((__int16)(y + iArea) > -1 && iSection[1] < 0x80) {
+					if ((__int16)(y + iArea) > -1 && iSection[1] < 128) {
 						pZone = (BYTE *)&dwMapXZON[iSection[0]]->b[iSection[1]];
-						*pZone = LOBYTE(wSomePositionalAngleThree[4 * wViewRotation]) | *pZone & 0xF;
+						*pZone = P_LOBYTE(wSomePositionalAngleThree[4 * wViewRotation]) | *pZone & 0xF;
 					}
 				}
-				if (x < 0x80) {
+				if (x < 0x80u) {
 					iSection[2] = iArea + y;
-					if ((iArea + y) > -1 && iSection[2] < 0x80) {
+					if ((__int16)(iArea + y) > -1 && iSection[2] < 128) {
 						pZone = (BYTE *)&dwMapXZON[x]->b[iSection[2]];
-						*pZone = LOBYTE(wSomePositionalAngleFour[4 * wViewRotation]) | *pZone & 0xF;
+						*pZone = P_LOBYTE(wSomePositionalAngleFour[4 * wViewRotation]) | *pZone & 0xF;
 					}
 				}
 			}
-			else if (x < 0x80 && y < 0x80) {
+			else if (x < 0x80u && (unsigned __int16)y < 0x80u) {
 				*(BYTE *)&dwMapXZON[x]->b[y] |= 0xF0u;
 			}
 			Game_SpawnItem(x, y + iArea);
@@ -935,7 +930,7 @@ extern "C" void _declspec(naked) Hook_SimulationProcessTickDaySwitch(void) {
 		POINT pt;
 		Game_CDocument_UpdateAllViews(pCDocumentMainWindow, NULL, 2, NULL);
 		GetCursorPos(&pt);
-		if (wCityMode && wCurrentCityToolGroup != TOOL_GROUP_CENTERINGTOOL && Game_GetTileCoordsFromScreenCoords(pt.x, pt.y) < 0x8000) {
+		if (wCityMode && wCurrentCityToolGroup != TOOL_GROUP_CENTERINGTOOL && Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y) < 0x8000) {
 			Game_DrawSquareHighlight(*(WORD*)0x4CDB68, *(WORD*)0x4CDB70, *(WORD*)0x4CDB6C, *(WORD*)0x4CDB74);
 			*(WORD*)0x4EA7F0 = 1;		// TODO - figure out exactly what this should be called
 			RedrawWindow(GameGetRootWindowHandle(), NULL, NULL, RDW_INVALIDATE | RDW_ALLCHILDREN);
@@ -988,7 +983,7 @@ extern "C" int __stdcall Hook_AddAllInventions(void) {
 extern "C" int __stdcall Hook_CSimcityView_WM_MBUTTONDOWN(WPARAM wMouseKeys, POINT pt) {
 	__int16 wTileCoords = 0;
 	BYTE bTileX = 0, bTileY = 0;
-	wTileCoords = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
+	wTileCoords = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
 	bTileX = LOBYTE(wTileCoords);
 	bTileY = HIBYTE(wTileCoords);
 
@@ -1044,9 +1039,9 @@ extern "C" __int16 __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(WPARAM iMouseKeys,
 				else if (PtInRect((const RECT *)(pThis + 104), pt))
 					P_LOWORD(ret) = Game_CSimCityView_OnVScroll(pThis, SB_LINEUP, 0, iYVar);
 				else if (PtInRect((const RECT *)(pThis + 136), pt))
-					P_LOWORD(ret) = Game_CSimCityView_OnVScroll(pThis, SB_THUMBTRACK, pt.y, iYVar);
+					P_LOWORD(ret) = Game_CSimCityView_OnVScroll(pThis, SB_THUMBTRACK, (__int16)pt.y, iYVar);
 				else {
-					if (*(DWORD *)(pThis + 140) >= pt.y)
+					if (*(DWORD *)(pThis + 140) >= (ULONG)pt.y)
 						P_LOWORD(ret) = Game_CSimCityView_OnVScroll(pThis, SB_PAGEUP, 0, iYVar);
 					else
 						P_LOWORD(ret) = Game_CSimCityView_OnVScroll(pThis, SB_PAGEDOWN, 0, iYVar);
@@ -1057,15 +1052,15 @@ extern "C" __int16 __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(WPARAM iMouseKeys,
 				if (!ret) {
 					hWnd = SetCapture(*(HWND *)(pThis + 28));
 					Game_CWnd_FromHandle(hWnd);
-					P_LOWORD(ret) = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
+					P_LOWORD(ret) = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
 					wCurrentTileCoordinates = ret;
 					if ((__int16)ret >= 0) {
 						wTileCoordinateX = (uint8_t)ret;
 						wPreviousTileCoordinateX = (uint8_t)ret;
 						wTileCoordinateY = wCurrentTileCoordinates >> 8;
 						wPreviousTileCoordinateY = wCurrentTileCoordinates >> 8;
-						wGameScreenAreaX = pt.x;
-						wGameScreenAreaY = pt.y;
+						wGameScreenAreaX = (WORD)pt.x;
+						wGameScreenAreaY = (WORD)pt.y;
 						*(DWORD *)(pThis + 252) = 1;
 						*(DWORD *)(pThis + 248) = 1;
 						if (wCityMode)
@@ -1089,11 +1084,11 @@ extern "C" __int16 __stdcall Hook_CSimcityView_WM_MOUSEMOVE(WPARAM iMouseKeys, P
 	int iTileCoords;
 	int iThisSomething;
 
-	P_LOWORD(iTileCoords) = pt.x;
+	P_LOWORD(iTileCoords) = (WORD)pt.x;
 	iThisSomething = *(DWORD *)(pThis + 252);
 	*(struct tagPOINT *)(pThis + 260) = pt; // Placement position.
 	if (iThisSomething) {
-		P_LOWORD(iTileCoords) = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
+		P_LOWORD(iTileCoords) = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
 		wCurrentTileCoordinates = iTileCoords;
 		if ((__int16)iTileCoords >= 0) {
 			wTileCoordinateX = (unsigned __int8)iTileCoords;
@@ -1119,8 +1114,8 @@ extern "C" __int16 __stdcall Hook_CSimcityView_WM_MOUSEMOVE(WPARAM iMouseKeys, P
 					P_LOWORD(iTileCoords) = wTileCoordinateX;
 					wPreviousTileCoordinateX = wTileCoordinateX;
 					wPreviousTileCoordinateY = wTileCoordinateY;
-					wGameScreenAreaX = pt.x;
-					wGameScreenAreaY = pt.y;
+					wGameScreenAreaX = (WORD)pt.x;
+					wGameScreenAreaY = (WORD)pt.y;
 				}
 			}
 		}
@@ -1159,7 +1154,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	if (iCurrToolGroupA != MAPTOOL_GROUP_CENTERINGTOOL)
 		pThis[62] = 0;
 	do {
-		P_LOWORD(ret) = Game_GetTileCoordsFromScreenCoords(pt.x, pt.y);
+		P_LOWORD(ret) = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
 		if ((__int16)ret < 0)
 			break;
 		iTileTargetX = ret & 0x7F;
@@ -1183,7 +1178,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 				P_LOWORD(ret) = Game_MapToolLowerTerrain(iTileTargetX, iTileTargetY);
 				break;
 			case MAPTOOL_GROUP_STRETCHTERRAIN: // Stretch Terrain (Drag vertically)
-				P_LOWORD(ret) = Game_MapToolStretchTerrain(iTileTargetX, iTileTargetY, pt.y);
+				P_LOWORD(ret) = Game_MapToolStretchTerrain(iTileTargetX, iTileTargetY, (__int16)pt.y);
 				break;
 			case MAPTOOL_GROUP_LEVELTERRAIN: // Level Terrain
 				P_LOWORD(ret) = Game_MapToolLevelTerrain(iTileTargetX, iTileTargetY);
@@ -1529,13 +1524,8 @@ void InstallMiscHooks(void) {
 			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #2 failed, error = 0x%08X.\n", GetLastError());
 			goto skipgamemenu;
 		}
-		if (!InsertMenu(hOptionsPopup, -1, MF_BYPOSITION|MF_STRING, IDM_GAME_OPTIONS_MODCONFIG, "Mod &Configuration...") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #3 failed, error = 0x%08X.\n", GetLastError());
-			goto skipgamemenu;
-		}
 
 		EnableMenuItem(hOptionsPopup, 5, MF_BYPOSITION | MF_ENABLED);
-		EnableMenuItem(hOptionsPopup, 6, MF_BYPOSITION | MF_ENABLED);
 
 		afxMessageMapEntry[0] = {
 			WM_COMMAND,

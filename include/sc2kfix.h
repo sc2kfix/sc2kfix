@@ -2,6 +2,8 @@
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #pragma once
+#pragma warning(disable : 4200)
+#pragma warning(disable : 4733)
 
 #include <windows.h>
 #include <string>
@@ -230,6 +232,7 @@ extern HMENU hDebugMenu;
 extern FARPROC fpWinMMHookList[180];
 extern DWORD dwDetectedVersion;
 extern DWORD dwSC2KAppTimestamp;
+extern DWORD dwSC2KFixVersion;
 extern const char* szSC2KFixVersion;
 extern const char* szSC2KFixReleaseTag;
 extern const char* szSC2KFixBuildInfo;
