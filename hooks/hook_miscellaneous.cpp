@@ -245,6 +245,16 @@ extern "C" void __stdcall Hook_ApparentExit(void) {
 	*((DWORD *)pThis + 63) = dwOldVal2;
 }
 
+// Fix up a specific setting of the GameDoIdleUpkeep state
+void __declspec(naked) Hook_4062AD(void) {
+	__asm {
+		mov dword ptr [ecx+0x14C], 1
+		mov dword ptr [edi], 3
+		push 0x4062BD
+		retn
+	}
+}
+
 static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 	case WM_INITDIALOG:
@@ -830,6 +840,14 @@ void InstallMiscHooks(void) {
 	// Hook what appears to be the exit function
 	VirtualProtect((LPVOID)0x401753, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x401753, Hook_ApparentExit);
+
+	// Fix the Maxis Presents logo not being shown
+	VirtualProtect((LPVOID)0x4062B9, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(DWORD*)0x4062B9 = 1;
+	VirtualProtect((LPVOID)0x4062AD, 12, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4062AD, Hook_4062AD);
+	VirtualProtect((LPVOID)0x4E6130, 12, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memcpy_s((LPVOID)0x4E6130, 12, "presnts.bmp", 12);
 
 	// Fix power and water grid updates slowing down after the population hits 50,000
 	VirtualProtect((LPVOID)0x440943, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
