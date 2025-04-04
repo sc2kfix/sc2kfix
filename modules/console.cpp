@@ -239,6 +239,11 @@ BOOL ConsoleCmdShowMemory(const char* szCommand, const char* szArguments) {
 	int iRange = 16;
 	sscanf_s(szArguments + 7, "%X %s %i", &dwAddress, szOperandSize, sizeof(szOperandSize), &iRange);
 
+	if (!dwAddress) {
+		ConsoleLog(LOG_ERROR, "CORE: Segmentation fault caught. Don't do that again.\n");
+		return TRUE;
+	}
+
 	__try {
 		if (!*szOperandSize || !strcmp(szOperandSize, "dword"))
 			printf("0x%08X: (dword) 0x%08X\n", dwAddress, *(DWORD*)dwAddress);

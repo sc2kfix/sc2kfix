@@ -169,6 +169,7 @@ extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR l
 	return LoadStringA(hInstance, uID, lpBuffer, cchBufferMax);
 }
 
+#pragma warning(disable : 6387)
 // Hook LoadMenuA so we can insert our own menu items.
 extern "C" HMENU __stdcall Hook_LoadMenuA(HINSTANCE hInstance, LPCSTR lpMenuName) {
 	if ((DWORD)lpMenuName == 3 && hGameMenu)
@@ -177,6 +178,7 @@ extern "C" HMENU __stdcall Hook_LoadMenuA(HINSTANCE hInstance, LPCSTR lpMenuName
 		return hDebugMenu;
 	return LoadMenuA(hInstance, lpMenuName);
 }
+#pragma warning(default : 6387)
 
 // Make sure our own menu items get enabled instead of disabled
 extern "C" BOOL __stdcall Hook_EnableMenuItem(HMENU hMenu, UINT uIDEnableItem, UINT uEnable) {
@@ -294,6 +296,7 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 	return lpNewCityAfxProc(hwndDlg, message, wParam, lParam);
 }
 
+#pragma warning(disable : 6387)
 // Load our own version of the main menu and the New City dialog when called
 extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam) {
 	switch ((DWORD)lpTemplateName) {
@@ -310,6 +313,7 @@ extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lp
 		return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	}
 }
+#pragma warning(default : 6387)
 
 // Fix rail and highway border connections not loading properly
 extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
