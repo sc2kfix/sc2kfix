@@ -245,9 +245,12 @@ REROLLCOASTALSPOT:
 							goto NONAVY;
 						int iTempCoords = SetRandomPointCoords();
 						while (1) {
+							unsigned __int8 iMilitaryArea = dwMapXBLD[GetNearCoord(iTempCoords)]->iTileID[GetFarCoord(iTempCoords)];
 							if (dwMapXBIT[GetNearCoord(iTempCoords)]->b[GetFarCoord(iTempCoords)].iWater == 0)
 							{
-								if (dwMapXTER[GetNearCoord(iTempCoords)]->iTileID[GetFarCoord(iTempCoords)]) {
+								if (!((iMilitaryArea >= TILE_CLEAR && iMilitaryArea <= TILE_RUBBLE4) ||
+									(iMilitaryArea >= TILE_TREES1 && iMilitaryArea < TILE_SMALLPARK)) && 
+									dwMapXTER[GetNearCoord(iTempCoords)]->iTileID[GetFarCoord(iTempCoords)]) {
 									iNavyLandingAttempts++;
 									goto REROLLCOASTALSPOT;
 								}
@@ -281,6 +284,8 @@ REROLLCOASTALSPOT:
 					// Determine relative "right"
 					__int16 iLengthPointB = GetTileLength(iDepthPoint, iStartLengthPoint, ((wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) ? 0 : 1));
 
+					int iNumLengthWay = 0;
+					int iNumDepthWay = 0;
 					int iNumTiles = 0;
 					iBaseLevel = dwMapALTM[iStartLengthPoint]->w[iDepthPoint].iLandAltitude;
 					for (__int16 iLengthWay = iLengthPointA;;) {
@@ -314,13 +319,10 @@ REROLLCOASTALSPOT:
 								iDirectionTwo = iLengthWay;
 							}
 
+							unsigned __int8 iMilitaryArea = dwMapXBLD[iDirectionOne]->iTileID[iDirectionTwo];
 							if (
-								(
-									dwMapXBLD[iDirectionOne]->iTileID[iDirectionTwo] >= TILE_CLEAR ||
-									dwMapXBLD[iDirectionOne]->iTileID[iDirectionTwo] <= TILE_RUBBLE4 ||
-									dwMapXBLD[iDirectionOne]->iTileID[iDirectionTwo] >= TILE_TREES1 ||
-									dwMapXBLD[iDirectionOne]->iTileID[iDirectionTwo] < TILE_SMALLPARK
-								) &&
+								((iMilitaryArea >= TILE_CLEAR && iMilitaryArea <= TILE_RUBBLE4) ||
+								(iMilitaryArea >= TILE_TREES1 && iMilitaryArea < TILE_SMALLPARK)) &&
 								dwMapXZON[iDirectionOne]->b[iDirectionTwo].iZoneType == ZONE_NONE &&
 								!dwMapXTER[iDirectionOne]->iTileID[iDirectionTwo] &&
 								dwMapXBIT[iDirectionOne]->b[iDirectionTwo].iWater == 0 &&
@@ -330,7 +332,7 @@ REROLLCOASTALSPOT:
 								Game_PlaceTileWithMilitaryCheck(iDirectionOne, iDirectionTwo, 0);
 								dwMapXZON[iDirectionOne]->b[iDirectionTwo].iZoneType = ZONE_MILITARY;
 								dwMapXZON[iDirectionOne]->b[iDirectionTwo].iCorners = 0xF0;
-								--*(WORD *)&dwTileCount;
+								--*((WORD *)&dwTileCount + iMilitaryArea);
 								++*(WORD *)dwMilitaryTiles;
 								iNumTiles++;
 							}
