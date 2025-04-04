@@ -806,6 +806,7 @@ GAMECALL(0x402B94, int, __cdecl, MapToolLevelTerrain, __int16 iTileTargetX, __in
 GAMECALL(0x402C25, int, __cdecl, CityToolMenuAction, int iMouseKeys, POINT pt)
 GAMECALL(0x402F9A, int, __thiscall, GetScreenAreaInfo, DWORD pThis, LPRECT lpRect)
 GAMECALL(0x480140, void, __stdcall, LoadSoundBuffer, int iSoundID, void* pBuffer)
+GAMECALL(0x48A810, DWORD, __cdecl, Direct_MovieCheck, char *sMovStr)
 
 
 // MFC function pointers. Use with care.
