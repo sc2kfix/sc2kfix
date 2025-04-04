@@ -198,7 +198,7 @@ extern "C" DWORD __cdecl Hook_SmackOpen(LPCSTR lpFileName, uint32_t uFlags, int3
 	if (mischook_debug & MISCHOOK_DEBUG_SMACK)
 		ConsoleLog(LOG_DEBUG, "SMK:  0x%08X -> _SmackOpen(%s, %u, %i)\n", _ReturnAddress(), lpFileName, uFlags, iExBuf);
 
-	if (bSkipIntro || bSettingsAlwaysSkipIntro)
+	if (!smk_enabled || bSkipIntro || bSettingsAlwaysSkipIntro)
 		if (strrchr(lpFileName, '\\'))
 			if (!strcmp(strrchr(lpFileName, '\\'), "\\INTROA.SMK") || !strcmp(strrchr(lpFileName, '\\'), "\\INTROB.SMK"))
 				return NULL;
@@ -208,6 +208,15 @@ extern "C" DWORD __cdecl Hook_SmackOpen(LPCSTR lpFileName, uint32_t uFlags, int3
 	memset(buf, 0, sizeof(buf));
 
 	return SMKOpenProc(AdjustSource(buf, lpFileName), uFlags, iExBuf);
+}
+
+extern "C" DWORD __cdecl Hook_MovieCheck(char *sMovStr) {
+	if (sMovStr && strncmp(sMovStr, "INTRO", 5) == 0) {
+		if (!smk_enabled || bSkipIntro || bSettingsAlwaysSkipIntro)
+			return 1;
+	}
+
+	return Game_Direct_MovieCheck(sMovStr);
 }
 
 extern "C" void __stdcall Hook_ApparentExit(void) {
@@ -828,6 +837,10 @@ void InstallMiscHooks(void) {
 		// Install Smacker function hooks
 		*(DWORD*)(0x4EFF00) = (DWORD)Hook_SmackOpen;
 	}
+
+	// Hook into the movie checking function.
+	VirtualProtect((LPVOID)0x402360, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402360, Hook_MovieCheck);
 
 	// Fix the sign fonts
 	VirtualProtect((LPVOID)0x4E7267, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
