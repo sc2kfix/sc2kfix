@@ -256,13 +256,25 @@ REROLLCOASTALSPOT:
 						if (iNavyLandingAttempts >= 20)
 							goto NONAVY;
 						int iTempCoords = SetRandomPointCoords();
+						__int16 iTempNear = GetNearCoord(iTempCoords);
+						__int16 iTempFar = GetFarCoord(iTempCoords);
+						if ((iTempNear < 0 || iTempNear > 127) ||
+							(iTempFar < 0 || iTempFar > 127)) {
+							goto NONAVY;
+						}
 						while (1) {
-							unsigned __int8 iMilitaryArea = dwMapXBLD[GetNearCoord(iTempCoords)]->iTileID[GetFarCoord(iTempCoords)];
-							if (dwMapXBIT[GetNearCoord(iTempCoords)]->b[GetFarCoord(iTempCoords)].iWater == 0)
+							iTempNear = GetNearCoord(iTempCoords);
+							iTempFar = GetFarCoord(iTempCoords);
+							if ((iTempNear < 0 || iTempNear > 127) ||
+								(iTempFar < 0 || iTempFar > 127)) {
+								goto NONAVY;
+							}
+							unsigned __int8 iMilitaryArea = dwMapXBLD[iTempNear]->iTileID[iTempFar];
+							if (dwMapXBIT[iTempNear]->b[iTempFar].iWater == 0)
 							{
 								if (!((iMilitaryArea >= TILE_CLEAR && iMilitaryArea <= TILE_RUBBLE4) ||
 									(iMilitaryArea >= TILE_TREES1 && iMilitaryArea < TILE_SMALLPARK)) || 
-									dwMapXTER[GetNearCoord(iTempCoords)]->iTileID[GetFarCoord(iTempCoords)]) {
+									dwMapXTER[iTempNear]->iTileID[iTempFar]) {
 									iNavyLandingAttempts++;
 									goto REROLLCOASTALSPOT;
 								}
