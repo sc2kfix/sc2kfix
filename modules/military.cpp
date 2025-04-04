@@ -30,7 +30,7 @@ static DWORD dwDummy;
 
 // This function has been replicated from he equivalent that was found
 // in the DOS version of the game.
-static void FormArmyBaseGrid(int x1, int y1, __int16 x2, __int16 y2) {
+static void FormArmyBaseStrip(int x1, int y1, __int16 x2, __int16 y2) {
 	WORD wOldToolGroup;
 	__int16 iX;
 	__int16 iY;
@@ -75,6 +75,18 @@ static void FormArmyBaseGrid(int x1, int y1, __int16 x2, __int16 y2) {
 	}
 	wMaybeActiveToolGroup = wOldToolGroup;
 	Game_GetLastViewRotation();
+}
+
+static bool FindArmyBaseCrossingDepth(__int16 iX, __int16 iYA, __int16 iYB) {
+	if (GetTileID(iX, iYA) == TILE_INFRASTRUCTURE_RUNWAYCROSS && GetTileID(iX, iYB) == TILE_INFRASTRUCTURE_RUNWAYCROSS)
+		return true;
+	return false;
+}
+
+static bool FindArmyBaseCrossingLength(__int16 iY, __int16 iXA, __int16 iXB) {
+	if (GetTileID(iXA, iY) == TILE_INFRASTRUCTURE_RUNWAYCROSS && GetTileID(iXB, iY) == TILE_INFRASTRUCTURE_RUNWAYCROSS)
+		return true;
+	return false;
 }
 
 static int SetTileCoords(int iPart) {
@@ -245,9 +257,12 @@ REROLLCOASTALSPOT:
 							goto NONAVY;
 						int iTempCoords = SetRandomPointCoords();
 						while (1) {
+							unsigned __int8 iMilitaryArea = dwMapXBLD[GetNearCoord(iTempCoords)]->iTileID[GetFarCoord(iTempCoords)];
 							if (dwMapXBIT[GetNearCoord(iTempCoords)]->b[GetFarCoord(iTempCoords)].iWater == 0)
 							{
-								if (dwMapXTER[GetNearCoord(iTempCoords)]->iTileID[GetFarCoord(iTempCoords)]) {
+								if (!((iMilitaryArea >= TILE_CLEAR && iMilitaryArea <= TILE_RUBBLE4) ||
+									(iMilitaryArea >= TILE_TREES1 && iMilitaryArea < TILE_SMALLPARK)) || 
+									dwMapXTER[GetNearCoord(iTempCoords)]->iTileID[GetFarCoord(iTempCoords)]) {
 									iNavyLandingAttempts++;
 									goto REROLLCOASTALSPOT;
 								}
@@ -314,13 +329,10 @@ REROLLCOASTALSPOT:
 								iDirectionTwo = iLengthWay;
 							}
 
+							unsigned __int8 iMilitaryArea = dwMapXBLD[iDirectionOne]->iTileID[iDirectionTwo];
 							if (
-								(
-									dwMapXBLD[iDirectionOne]->iTileID[iDirectionTwo] >= TILE_CLEAR ||
-									dwMapXBLD[iDirectionOne]->iTileID[iDirectionTwo] <= TILE_RUBBLE4 ||
-									dwMapXBLD[iDirectionOne]->iTileID[iDirectionTwo] >= TILE_TREES1 ||
-									dwMapXBLD[iDirectionOne]->iTileID[iDirectionTwo] < TILE_SMALLPARK
-								) &&
+								((iMilitaryArea >= TILE_CLEAR && iMilitaryArea <= TILE_RUBBLE4) ||
+								(iMilitaryArea >= TILE_TREES1 && iMilitaryArea < TILE_SMALLPARK)) &&
 								dwMapXZON[iDirectionOne]->b[iDirectionTwo].iZoneType == ZONE_NONE &&
 								!dwMapXTER[iDirectionOne]->iTileID[iDirectionTwo] &&
 								dwMapXBIT[iDirectionOne]->b[iDirectionTwo].iWater == 0 &&
@@ -330,7 +342,7 @@ REROLLCOASTALSPOT:
 								Game_PlaceTileWithMilitaryCheck(iDirectionOne, iDirectionTwo, 0);
 								dwMapXZON[iDirectionOne]->b[iDirectionTwo].iZoneType = ZONE_MILITARY;
 								dwMapXZON[iDirectionOne]->b[iDirectionTwo].iCorners = 0xF0;
-								--*(WORD *)&dwTileCount;
+								--*((WORD *)&dwTileCount + iMilitaryArea);
 								++*(WORD *)dwMilitaryTiles;
 								iNumTiles++;
 							}
@@ -369,7 +381,7 @@ NONAVY:
 			iPosCount = 0;
 			iPosOffset = iRandTwo[0];
 			iBaseLevel = dwMapALTM[iRandOne[0]]->w[iRandTwo[0]].iLandAltitude;
-			for (dwSiloPos[0] = iRandOne[0] + 8; (__int16)uArrPos < dwSiloPos[0]; ++uArrPos) {
+			for (dwSiloPos[0] = iRandOne[0] + 8; (__int16)uArrPos < (__int16)dwSiloPos[0]; ++uArrPos) {
 				for (i = iRandTwo[0]; iRandTwo[0] + 8 > i; ++i) {
 					if (
 						dwMapXBLD[uArrPos]->iTileID[i] < TILE_SMALLPARK &&
@@ -486,25 +498,25 @@ NONAVY:
 				}
 			}
 			if (bMilitaryBaseType == MILITARY_BASE_ARMY) {
-				// The '//' spacers below represent where an 'if' check and subsequent call to
-				// 'FormArmyBaseGrid' is performed in the DOS version (clarity still needed).
-				// Although it isn't confirmed, a possibility could be that the 'if' checks
-				// were to do with failed runwaycross placements (either down to them ending
-				// up on a slope and/or replacing a granite block).
-				// Another possibility is that the check was to see whether the runwaycross
-				// is present at each opposite end where possible.
-				FormArmyBaseGrid(iRandOne[0] + 2, iPosOffset, iRandOne[0] + 2, iPosOffset + 7);
-				//
-				//
-				FormArmyBaseGrid(iRandOne[0] + 5, iPosOffset, iRandOne[0] + 5, iPosOffset + 7);
-				//
-				//
-				FormArmyBaseGrid(iRandOne[0], iPosOffset + 2, iRandOne[0] + 7, iPosOffset + 2);
-				//
-				//
-				FormArmyBaseGrid(iRandOne[0], iPosOffset + 5, iRandOne[0] + 7, iPosOffset + 5);
-				//
-				//
+				// Explanation:
+				// First it lays down the depth-way roads and runwaycross.
+				// Second it lays down the length-way roads and runwaycross.
+				// If during each attempt it fails at laying down the roadway, it will
+				// check to see whether both runwaycross items are present, if they're
+				// not then it'll attempt to place down the respective crossing once more
+				// but from the opposite direction.
+				FormArmyBaseStrip(iRandOne[0] + 2, iPosOffset, iRandOne[0] + 2, iPosOffset + 7);
+				if (!FindArmyBaseCrossingDepth(iRandOne[0] + 2, iPosOffset, iPosOffset + 7))
+					FormArmyBaseStrip(iRandOne[0] + 2, iPosOffset + 7, iRandOne[0] + 2, iPosOffset);
+				FormArmyBaseStrip(iRandOne[0] + 5, iPosOffset, iRandOne[0] + 5, iPosOffset + 7);
+				if (!FindArmyBaseCrossingDepth(iRandOne[0] + 5, iPosOffset, iPosOffset + 7))
+					FormArmyBaseStrip(iRandOne[0] + 5, iPosOffset + 7, iRandOne[0] + 5, iPosOffset);
+				FormArmyBaseStrip(iRandOne[0], iPosOffset + 2, iRandOne[0] + 7, iPosOffset + 2);
+				if (!FindArmyBaseCrossingLength(iPosOffset + 2, iRandOne[0] + 7, iRandOne[0]))
+					FormArmyBaseStrip(iRandOne[0] + 7, iPosOffset + 2, iRandOne[0], iPosOffset + 2);
+				FormArmyBaseStrip(iRandOne[0], iPosOffset + 5, iRandOne[0] + 7, iPosOffset + 5);
+				if (!FindArmyBaseCrossingLength(iPosOffset + 5, iRandOne[0] + 7, iRandOne[0]))
+					FormArmyBaseStrip(iRandOne[0] + 7, iPosOffset + 5, iRandOne[0], iPosOffset + 5);
 			}
 			return Game_CenterOnTileCoords(iRandOne[0] + 4, iPosOffset + 4);
 		}
