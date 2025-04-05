@@ -147,6 +147,16 @@ extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR l
 				"Launch Arcology"))
 				return strlen(lpBuffer);
 			break;
+		case 4002:
+			if (!strcpy_s(lpBuffer, cchBufferMax,
+				"SimCity 2000 City (*.SC2)|*.SC2|SimCity Classic City (*.CTY)|*.CTY||"))
+				return strlen(lpBuffer);
+			break;
+		case 4004:
+			if (!strcpy_s(lpBuffer, cchBufferMax,
+				"SimCity 2000 Tilesets (*.mif)|*.mif||"))
+				return strlen(lpBuffer);
+			break;
 		case 32921:
 			if (!strcpy_s(lpBuffer, cchBufferMax,
 				"Saves city every 5 years"))
