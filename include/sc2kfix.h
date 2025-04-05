@@ -204,6 +204,7 @@ HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...);
 HOOKEXT const char* GetLowHighScale(BYTE bScale);
 HOOKEXT BOOL FileExists(const char* name);
 HOOKEXT const char* GetModsFolderPath(void);
+HOOKEXT const char* GetOnIdleStateEnumName(int iState);
 //HBITMAP CreateSpriteBitmap(int iSpriteID);
 HOOKEXT BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, const char *ini_name);
 void MigrateRegStringValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, char *szOutBuf, DWORD dwLen);

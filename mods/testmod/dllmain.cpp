@@ -62,13 +62,13 @@ HOOKCB sc2kfix_mod_info_t* HookCb_GetModInfo(void) {
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 	switch (reason) {
 	case DLL_PROCESS_ATTACH:
-		ConsoleLog(LOG_INFO, "MODS: testmod says hello!\n");
+		LOG(LOG_INFO, "testmod says hello!\n");
 		break;
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:
 		break;
 	case DLL_PROCESS_DETACH:
-		ConsoleLog(LOG_INFO, "MODS: testmod says goodbye!\n");
+		LOG(LOG_INFO, "testmod says goodbye!\n");
 		break;
 	}
 	return TRUE;
@@ -98,7 +98,7 @@ HOOKCB void Hook_SimulationProcessTickDaySwitch_Before(void) {
 // from each mod before returning to the calling function (in this case, the default case of the
 // GameDoIdleUpkeep function).
 HOOKCB void Hook_SimulationProcessTickDaySwitch_After(void) {
-	ConsoleLog(LOG_NOTICE, "Today was day %d in the glorious history of %s.\n", dwCityDays + 1, *pszCityName);
+	//ConsoleLog(LOG_NOTICE, "Today was day %d in the glorious history of %s.\n", dwCityDays + 1, *pszCityName);
 }
 
 int iLastState = 0;
@@ -107,7 +107,7 @@ HOOKCB void Hook_GameDoIdleUpkeep_Before(void* pThis) {
 	int* piThis = (int*)pThis;
 	int iState = piThis[201];
 	if (iState != iLastState) {
-		ConsoleLog(LOG_DEBUG, "MODS: iState changed, %d -> %d\n", iLastState, iState);
+		LOG(LOG_DEBUG, "iState changed, %d -> %d (%s)\n", iLastState, iState, GetOnIdleStateEnumName(iState));
 		iLastState = iState;
 	}
 }
