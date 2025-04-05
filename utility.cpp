@@ -180,6 +180,12 @@ BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, c
 	return WritePrivateProfileStringA(section, name, szBuf, ini_name);
 }
 
+const char* GetOnIdleStateEnumName(int iState) {
+	if (iState < -1 || iState > 18)
+		return "(invalid iState)";
+	return szOnIdleStateEnums[iState + 1];
+}
+
 void MigrateRegStringValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, char *szOutBuf, DWORD dwLen) {
 	DWORD dwOutBufLen = dwLen;
 	RegGetValueA(hKey, lpSubKey, lpValueName, RRF_RT_REG_SZ, NULL, szOutBuf, &dwOutBufLen);
