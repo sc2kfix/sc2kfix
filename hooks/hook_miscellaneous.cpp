@@ -979,6 +979,9 @@ void InstallMiscHooks(void) {
 	NEWCALL((LPVOID)0x434BEA, Hook_LoadNeighborConnections1500);
 	*(BYTE*)0x434BEF = 0x90;
 
+	// Install hooks for the SC2X save format
+	InstallSaveHooks();
+
 	// Hook into what appears to be one of the item placement checking functions
 	VirtualProtect((LPVOID)0x4027F2, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4027F2, Hook_ItemPlacementCheck);

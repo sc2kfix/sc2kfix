@@ -307,6 +307,7 @@ void InstallMiscHooks(void);
 void UpdateMiscHooks(void);
 void InstallQueryHooks(void);
 void InstallMilitaryHooks(void);
+void InstallSaveHooks(void);
 extern "C" void __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer);
 extern "C" int __stdcall Hook_MusicPlay(int iSongID);
 extern "C" int __stdcall Hook_MusicStop(void);
