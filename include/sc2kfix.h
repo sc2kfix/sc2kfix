@@ -301,6 +301,8 @@ extern HANDLE hCompassBitmaps[4];
 extern char szLatestRelease[24];
 extern BOOL bUpdateAvailable;
 
+HOOKEXT BOOL bHookStopProcessing;
+
 // Hooks to inject in dllmain.cpp
 
 void InstallMiscHooks(void);

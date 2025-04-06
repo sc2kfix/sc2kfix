@@ -32,6 +32,8 @@ UINT modloader_debug = MODLOADER_DEBUG;
 std::map<HMODULE, sc2kfix_mod_info_t> mapLoadedNativeMods;
 std::map<HMODULE, std::vector<sc2kfix_mod_hook_t>> mapLoadedNativeModHooks;
 
+HOOKEXT BOOL bHookStopProcessing = FALSE;
+
 int LoadNativeCodeHooks(HMODULE hModule) {
 	int iHooksLoaded = 0;
 	std::vector<sc2kfix_mod_hook_t> vecHooksLoaded;

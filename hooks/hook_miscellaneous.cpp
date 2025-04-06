@@ -270,14 +270,17 @@ extern "C" void __stdcall Hook_ApparentExit(void) {
 std::vector<hook_function_t> stHooks_Hook_GameDoIdleUpkeep_Before;
 std::vector<hook_function_t> stHooks_Hook_GameDoIdleUpkeep_After;
 
-extern "C" DWORD __stdcall Hook_GameDoIdleUpkeep(void) {
+extern "C" void __stdcall Hook_GameDoIdleUpkeep(void) {
 	DWORD pThis;
 	__asm mov [pThis], ecx
 	for (const auto& hook : stHooks_Hook_GameDoIdleUpkeep_Before) {
+		bHookStopProcessing = FALSE;
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
 			void (*fnHook)(void*) = (void(*)(void*))hook.pFunction;
 			fnHook((void*)pThis);
 		}
+		if (bHookStopProcessing)
+			goto BAIL;
 	}
 
 	__asm {
@@ -287,11 +290,17 @@ extern "C" DWORD __stdcall Hook_GameDoIdleUpkeep(void) {
 	}
 
 	for (const auto& hook : stHooks_Hook_GameDoIdleUpkeep_After) {
+		bHookStopProcessing = FALSE;
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
 			void (*fnHook)(void*) = (void(*)(void*))hook.pFunction;
 			fnHook((void*)pThis);
 		}
+		if (bHookStopProcessing)
+			goto BAIL;
 	}
+
+BAIL:
+	return;
 }
 
 // Fix up a specific setting of the GameDoIdleUpkeep state
@@ -321,6 +330,7 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 
 		// XXX - this should probably be moved to a separate proper hook into the game itself
 		for (const auto& hook : stHooks_Hook_OnNewCity_Before) {
+			bHookStopProcessing = FALSE;
 			if (hook.iType == HOOKFN_TYPE_NATIVE) {
 				void (*fnHook)(void) = (void(*)(void))hook.pFunction;
 				fnHook();
@@ -555,10 +565,13 @@ extern "C" void _declspec(naked) Hook_SimulationProcessTickDaySwitch(void) {
 	__asm push edx
 
 	for (const auto& hook : stHooks_Hook_SimulationProcessTickDaySwitch_Before) {
+		bHookStopProcessing = FALSE;
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
 			void (*fnHook)(void) = (void(*)(void))hook.pFunction;
 			fnHook();
 		}
+		if (bHookStopProcessing)
+			__asm jmp def;
 	}
 
 	Game_RefreshTitleBar(pCDocumentMainWindow);
@@ -592,12 +605,16 @@ std::vector<hook_function_t> stHooks_Hook_SimulationProcessTickDaySwitch_After;
 
 extern "C" void _declspec(naked) Hook_SimulationProcessTickDaySwitch_After(void) {
 	for (const auto& hook : stHooks_Hook_SimulationProcessTickDaySwitch_After) {
+		bHookStopProcessing = FALSE;
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
 			void (*fnHook)(void) = (void(*)(void))hook.pFunction;
 			fnHook();
 		}
+		if (bHookStopProcessing)
+			goto BAIL;
 	}
 
+BAIL:
 	// Original cleanup from 0x413ABF
 	__asm {
 		mov eax, [ebp-0x0C]

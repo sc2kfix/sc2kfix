@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <intrin.h>
+#include <regex>
 
 #include <sc2kfix.h>
 #include "../resource.h"
