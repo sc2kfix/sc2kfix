@@ -31,6 +31,9 @@ sc2kfix_mod_hook_t stModHooks[] = {
 // contains the version info for the mod itself as well as what version of sc2kfix it requires, as
 // well as some basic textual descriptions of the mod and info about the stModHooks struct so that
 // sc2kfix can load the mod's exported hooks.
+//
+// stModInfo should always be named exactly that; various macros depend on the stModInfo structure
+// and renaming it will cause widespread compilation errors.
 sc2kfix_mod_info_t stModInfo = {
 	/* .iModInfoVersion = */ 1,
 	/* .iModVersionMajor = */ 0,
@@ -90,7 +93,7 @@ HOOKCB void Hook_SimulationProcessTickDaySwitch_Before(void) {
 	// called into from the main game engine thread, this is safe to do from native code without
 	// any multithreading-aware locking or mutex mechanism.
 	if (dwCityDays % 300 == 0)
-		ConsoleLog(LOG_NOTICE, ":toot: Happy new year!\n");
+		LOG(LOG_NOTICE, ":toot: Happy new year!\n");
 }
 
 // This is an example of an "after" hook. sc2kfix intercepts the end of the game engine's
@@ -98,7 +101,10 @@ HOOKCB void Hook_SimulationProcessTickDaySwitch_Before(void) {
 // from each mod before returning to the calling function (in this case, the default case of the
 // GameDoIdleUpkeep function).
 HOOKCB void Hook_SimulationProcessTickDaySwitch_After(void) {
-	//ConsoleLog(LOG_NOTICE, "Today was day %d in the glorious history of %s.\n", dwCityDays + 1, *pszCityName);
+	// LOG() is a macro that prepends the module tag and the stModInfo.szModShortName to the log
+	// message before calling ConsoleLog to output it. You should not directly call ConsoleLog in
+	// mod DLLs; instead use LOG() to ensure that all log messages are properly formed.
+	//LOG(LOG_NOTICE, "Today was day %d in the glorious history of %s.\n", dwCityDays + 1, *pszCityName);
 }
 
 int iLastState = 0;
