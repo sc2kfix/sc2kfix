@@ -92,6 +92,7 @@
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="hooks\hook_animation.cpp" />
     <ClCompile Include="kuroko\builtins.c" />
     <ClCompile Include="kuroko\chunk.c" />
     <ClCompile Include="kuroko\compiler.c" />
