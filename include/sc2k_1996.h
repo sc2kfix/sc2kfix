@@ -814,7 +814,7 @@ GAMECALL(0x401D16, __int16, __cdecl, GetTileCoordsFromScreenCoords, __int16 x, _
 GAMECALL(0x401E47, BOOL, __cdecl, UseBulldozer, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x401EA1, int, __cdecl, MapToolLowerTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x40226B, int, __thiscall, UpdateAreaPortionFill, void *) // This appears to do a partial update of selected/highlighted area while appearing to dispense with immediate color updates.
-GAMECALL(0x40235B, int, __stdcall, DrawSquareHighlight, WORD x, WORD y, WORD, WORD)		// XXX - Not 100% sure what the second pair of arguments is
+GAMECALL(0x40235B, int, __stdcall, DrawSquareHighlight, WORD wX1, WORD wY1, WORD wX2, WORD wY2)
 GAMECALL(0x4023EC, void, __stdcall, ToolMenuUpdate, void)
 GAMECALL(0x402414, int, __thiscall, MusicPlay, DWORD pThis, int iSongID)
 GAMECALL(0x40258B, int, __cdecl, GetScreenCoordsFromTileCoords, __int16 iTileTargetX, __int16 iTileTargetY, WORD *wNewScreenPointX, WORD *wNewScreenPointY)
@@ -936,6 +936,10 @@ GAMEOFF(WORD,	wCityResidentialDemand,		0x4CC8F8)
 GAMEOFF(WORD,	wCityCommericalDemand,		0x4CC8FA)
 GAMEOFF(WORD,	wCityIndustrialDemand,		0x4CC8FC)
 GAMEOFF(DWORD,	dwCityPollution,			0x4CC910)		// Needs reverse engineering. See wiki.
+GAMEOFF(WORD,	wHighlightedTileX1,			0x4CDB68)
+GAMEOFF(WORD,	wHighlightedTileX2,			0x4CDB6C)
+GAMEOFF(WORD,	wHighlightedTileY1,			0x4CDB70)
+GAMEOFF(WORD,	wHighlightedTileY2,			0x4CDB74)
 GAMEOFF(DWORD,	dwLFSRState,				0x4CDB7C)
 GAMEOFF(DWORD,	dwLCGState,					0x4CDB80)
 GAMEOFF(void*,	pCWinApp,					0x4CE8C0)
@@ -949,6 +953,7 @@ GAMEOFF(DWORD,	dwNextRefocusSongID,		0x4E6F8C)
 GAMEOFF_ARR(DWORD, dwZoneNameStringIDs,		0x4E7140)
 GAMEOFF_ARR(DWORD, dwCityNoticeStringIDs,	0x4E98B8)
 GAMEOFF(DWORD,	dwCityRewardsUnlocked,		0x4E9A24)
+GAMEOFF(WORD,	wTileHighlightActive,		0x4EA7F0)
 
 // Pending classification
 GAMEOFF_ARR(WORD, wSomePositionalAngleOne,	0x4DC4D0)
