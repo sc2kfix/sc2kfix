@@ -965,6 +965,7 @@ GAMEOFF(DWORD,	dwNextRefocusSongID,		0x4E6F8C)
 GAMEOFF_ARR(DWORD, dwZoneNameStringIDs,		0x4E7140)
 GAMEOFF_ARR(DWORD, dwCityNoticeStringIDs,	0x4E98B8)
 GAMEOFF(DWORD,	dwCityRewardsUnlocked,		0x4E9A24)
+GAMEOFF(WORD,	wTileHighlightActive,		0x4EA7F0)
 
 // Pending classification
 GAMEOFF_ARR(WORD, wSomePositionalAngleOne,	0x4DC4D0)
