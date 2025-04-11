@@ -70,6 +70,7 @@
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="hooks\hook_animation.cpp" />
     <ClCompile Include="modules\console.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="hooks\hook_mciSendCommand.cpp" />

@@ -48,39 +48,6 @@ std::mt19937 mtMersenneTwister(rdRandomDevice());
 // Statics
 static DWORD dwDummy;
 
-// TODO: Bring this bit of code up to standard with the rest of the project. It's literally the
-// oldest hook in sc2kfix and its the kind of quick-and-dirty thing I'd rather rewrite to be more
-// digestible. We can hook anything in the game, we don't need to jam hand-assembled code into
-// code segments anymore.
-// 
-// This code replaces the original stack cleanup and return after the engine
-// cycles the animation palette.
-// 
-// 6881000000      push dword 0x81              ; flags = RDW_INVALIDATE | RDW_ALLCHILDREN
-// 6A00            push 0                       ; hrgnUpdate = NULL
-// 6A00            push 0                       ; lprcUpdate = NULL
-// 8B0D2C704C00    mov ecx, [pCWndRootWindow]
-// 8B511C          mov edx, [ecx+0x1C]
-// 52              push edx                     ; hWnd
-// FF155CFD4E00    call [RedrawWindow]
-// 5D              pop ebp                      ; Clean up stack and return
-// 5F              pop edi
-// 5E              pop esi
-// 5B              pop ebx
-// C3              retn
-BYTE bAnimationPatch1996[30] = {
-	0x68, 0x81, 0x00, 0x00, 0x00, 0x6A, 0x00, 0x6A, 0x00, 0x8B, 0x0D, 0x2C,
-	0x70, 0x4C, 0x00, 0x8B, 0x51, 0x1C, 0x52, 0xFF, 0x15, 0x5C, 0xFD, 0x4E,
-	0x00, 0x5D, 0x5F, 0x5E, 0x5B, 0xC3
-};
-
-// Same as above, but with the offsets adjusted for the 1995 EXE
-BYTE bAnimationPatch1995[30] = {
-	0x68, 0x81, 0x00, 0x00, 0x00, 0x6A, 0x00, 0x6A, 0x00, 0x8B, 0x0D, 0x2C,
-	0x60, 0x4C, 0x00, 0x8B, 0x51, 0x1C, 0x52, 0xFF, 0x15, 0xE8, 0xEC, 0x4E,
-	0x00, 0x5D, 0x5F, 0x5E, 0x5B, 0xC3
-};
-
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 	int argc = 0;
 	LPWSTR* argv = NULL;
@@ -279,26 +246,18 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		}
 
 		// Palette animation fix
-		LPVOID lpAnimationFix;
-		PBYTE lpAnimationFixSrc;
-		UINT uAnimationFixLength;
-		switch (dwDetectedVersion) {
-		case SC2KVERSION_1995:
-			lpAnimationFix = (LPVOID)0x00456B23;
-			lpAnimationFixSrc = bAnimationPatch1995;
-			uAnimationFixLength = 30;
-			break;
+		BOOL bCanFixAnimation;
 
-		case SC2KVERSION_1996:
-		default:
-			lpAnimationFix = (LPVOID)0x004571D3;
-			lpAnimationFixSrc = bAnimationPatch1996;
-			uAnimationFixLength = 30;
-		}
-		
-		VirtualProtect(lpAnimationFix, uAnimationFixLength, PAGE_EXECUTE_READWRITE, &dwDummy);
-		memcpy(lpAnimationFix, lpAnimationFixSrc, uAnimationFixLength);
-		ConsoleLog(LOG_INFO, "CORE: Patched palette animation fix.\n");
+		bCanFixAnimation = TRUE;
+		if (dwDetectedVersion == SC2KVERSION_1996)
+			InstallAnimationSimCity1996Hooks();
+		else if (dwDetectedVersion == SC2KVERSION_1995)
+			InstallAnimationSimCity1995Hooks();
+		else
+			bCanFixAnimation = FALSE;
+
+		if (bCanFixAnimation)
+			ConsoleLog(LOG_INFO, "CORE: Patched palette animation fix.\n");
 
 		// Dialog crash fix - hat tip to Aleksander Krimsky (@alekasm on GitHub)
 		LPVOID lpDialogFix1;
