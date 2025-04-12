@@ -47,11 +47,13 @@ static void FormArmyBaseStrip(int x1, int y1, __int16 x2, __int16 y2) {
 		iNewY = y1;
 		iY = y1;
 		while (Game_MaybeRoadViabilityAlongPath((__int16 *)&iNewX, (__int16 *)&iNewY)) {
+			dwMapXZON[iX]->b[iY].iZoneType = ZONE_MILITARY;
 			Game_CheckAndAdjustTransportTerrain(iX, iY);
 			Game_PlaceRoadAtCoordinates(iX, iY);
 			iX = iNewX;
 			iY = iNewY;
 		}
+		dwMapXZON[iX]->b[iY].iZoneType = ZONE_MILITARY;
 		Game_CheckAndAdjustTransportTerrain(iX, iY);
 		Game_PlaceRoadAtCoordinates(iX, iY);
 	}
@@ -354,8 +356,8 @@ REROLLCOASTALSPOT:
 								Game_PlaceTileWithMilitaryCheck(iDirectionOne, iDirectionTwo, 0);
 								dwMapXZON[iDirectionOne]->b[iDirectionTwo].iZoneType = ZONE_MILITARY;
 								dwMapXZON[iDirectionOne]->b[iDirectionTwo].iCorners = 0xF0;
-								--*((WORD *)&dwTileCount + iMilitaryArea);
-								++*(WORD *)dwMilitaryTiles;
+								--dwTileCount[iMilitaryArea];
+								++*dwMilitaryTiles;
 								iNumTiles++;
 							}
 
@@ -454,9 +456,9 @@ NONAVY:
 					iPos[0] = dwSiloPos[2 * i];
 					iPos[1] = iPos[0];
 					for (k = dwSiloPos[2 * i + 1]; iPos[1] + 3 > (__int16)iPos[0]; P_LOWORD(iPos[0]) = iPos[0] + 1) {
-						for (uPos[0] = k; k + 3 > (__int16)uPos[0]; ++*(WORD *)dwMilitaryTiles) {
+						for (uPos[0] = k; k + 3 > (__int16)uPos[0]; ++*dwMilitaryTiles) {
 							iBuildingArea = dwMapXBLD[iPos[0]]->iTileID[uPos[0]];
-							--*((WORD *)&dwTileCount + iBuildingArea);
+							--dwTileCount[iBuildingArea];
 							if ((unsigned __int16)iPos[0] < 0x80u && uPos[0] < 0x80u) {
 								dwMapXZON[iPos[0]]->b[uPos[0]].iZoneType = ZONE_MILITARY;
 								dwMapXZON[iPos[0]]->b[uPos[0]].iCorners = 0xF0;
@@ -500,12 +502,12 @@ NONAVY:
 						dwMapXZON[uPos[0]]->b[uPos[1]].iZoneType == ZONE_NONE &&
 						!dwMapXUND[iRandOne[0]]->iTileID[iPosOffset]
 					) {
-						--*((WORD *)&dwTileCount + iMilitaryArea);
+						--dwTileCount[iMilitaryArea];
 						if (uPos[0] < 0x80u && uPos[1] < 0x80u) {
 							dwMapXZON[uPos[0]]->b[uPos[1]].iZoneType = ZONE_MILITARY;
 							dwMapXZON[uPos[0]]->b[uPos[1]].iCorners = 0xF0;
 						}
-						++*(WORD *)dwMilitaryTiles;
+						++*dwMilitaryTiles;
 					}
 				}
 			}

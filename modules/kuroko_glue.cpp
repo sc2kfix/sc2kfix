@@ -302,7 +302,7 @@ extern "C" {
 		KRK_GAMEOFF(wMonsterXTHGIndex);
 		KRK_GAMEOFF(dwNationalPopulation);
 		KRK_GAMEOFF_PTR(dwNeighborFame);
-		KRK_GAMEOFF(dwMilitaryTiles);
+		KRK_GAMEOFF_PTR(dwMilitaryTiles);
 		KRK_GAMEOFF(wNationalTax);
 		KRK_GAMEOFF(wCurrentDisasterID);
 		KRK_GAMEOFF(dwCityOrdinances);
