@@ -28,6 +28,200 @@ UINT military_debug = MILITARY_DEBUG;
 
 static DWORD dwDummy;
 
+extern "C" __int16 __cdecl Hook_PlaceTileWithMilitaryCheck(__int16 x, __int16 y, __int16 iTileID) {
+#if 1
+	int result;
+	BYTE iCurrentBuilding;
+	BYTE *pCurrentBuilding;
+
+	result = iTileID;
+	if ( x < 0x80 && y < 0x80 ) {
+		pCurrentBuilding = &dwMapXBLD[x]->iTileID[y];
+		iCurrentBuilding = *pCurrentBuilding;
+		if ( dwMapXZON[x]->b[y].iZoneType != ZONE_MILITARY ) {
+			--dwTileCount[iCurrentBuilding];
+			++dwTileCount[iTileID];
+			*pCurrentBuilding = (BYTE)iTileID;
+			return result;
+		}
+		if ( iCurrentBuilding < TILE_MILITARY_F15B ) {
+			if ( iCurrentBuilding < TILE_MILITARY_CONTROLTOWER ) {
+				if ( iCurrentBuilding < TILE_INFRASTRUCTURE_RUNWAYCROSS ) {
+					if ( iCurrentBuilding == TILE_INFRASTRUCTURE_RUNWAY ) {
+						--dwMilitaryTiles[1];
+						goto GOCHECKCURRENTTILE;
+					}
+				}
+				else {
+					if ( iCurrentBuilding <= TILE_INFRASTRUCTURE_RUNWAYCROSS ) {
+						--dwMilitaryTiles[2];
+						goto GOCHECKCURRENTTILE;
+					}
+					if ( iCurrentBuilding == TILE_INFRASTRUCTURE_CRANE ) {
+						--dwMilitaryTiles[10];
+						goto GOCHECKCURRENTTILE;
+					}
+				}
+			}
+			else {
+				if ( iCurrentBuilding <= TILE_MILITARY_CONTROLTOWER ) {
+					--dwMilitaryTiles[11];
+					goto GOCHECKCURRENTTILE;
+				}
+				if ( iCurrentBuilding < TILE_INFRASTRUCTURE_BUILDING1 ) {
+					--dwMilitaryTiles[6];
+					goto GOCHECKCURRENTTILE;
+				}
+				if ( iCurrentBuilding <= TILE_INFRASTRUCTURE_BUILDING1 ) {
+					--dwMilitaryTiles[7];
+					goto GOCHECKCURRENTTILE;
+				}
+				if ( iCurrentBuilding == TILE_INFRASTRUCTURE_BUILDING2 ) {
+					--dwMilitaryTiles[8];
+					goto GOCHECKCURRENTTILE;
+				}
+			}
+		}
+		else {
+			if ( iCurrentBuilding <= TILE_MILITARY_F15B ) {
+				--dwMilitaryTiles[12];
+				goto GOCHECKCURRENTTILE;
+			}
+			if ( iCurrentBuilding < TILE_MILITARY_TOPSECRET ) {
+				if ( iCurrentBuilding < TILE_MILITARY_RADAR ) {
+					if ( iCurrentBuilding == TILE_MILITARY_HANGAR1 ) {
+						--dwMilitaryTiles[13];
+						goto GOCHECKCURRENTTILE;
+					}
+				}
+				else {
+					if ( iCurrentBuilding <= TILE_MILITARY_RADAR ) {
+						--dwMilitaryTiles[5];
+						goto GOCHECKCURRENTTILE;
+					}
+					if ( iCurrentBuilding == TILE_MILITARY_PARKINGLOT ) {
+						--dwMilitaryTiles[3];
+						goto GOCHECKCURRENTTILE;
+					}
+				}
+			}
+			else {
+				if ( iCurrentBuilding <= TILE_MILITARY_TOPSECRET ) {
+					--dwMilitaryTiles[9];
+					goto GOCHECKCURRENTTILE;
+				}
+				if ( iCurrentBuilding < TILE_INFRASTRUCTURE_HANGAR2 ) {
+					if ( iCurrentBuilding == TILE_INFRASTRUCTURE_CARGOYARD ) {
+						--dwMilitaryTiles[4];
+						goto GOCHECKCURRENTTILE;
+					}
+				}
+				else {
+					if ( iCurrentBuilding <= TILE_INFRASTRUCTURE_HANGAR2 ) {
+						--dwMilitaryTiles[14];
+						goto GOCHECKCURRENTTILE;
+					}
+					if ( iCurrentBuilding == TILE_MILITARY_MISSILESILO ) {
+						--dwMilitaryTiles[15];
+						goto GOCHECKCURRENTTILE;
+					}
+				}
+			}
+		}
+		// New experimental check to attempt to avoid Army Base spawned roads from
+		// being overwritten by the Runway item if the MilitaryBase type switches
+		// to Airforce.
+		//if ( iTileID == TILE_INFRASTRUCTURE_RUNWAY )
+		//	if ( iCurrentBuilding >= TILE_ROAD_LR && iCurrentBuilding <= TILE_ROAD_LTBR )
+		//		return result;
+		//if ( iCurrentBuilding >= TILE_ROAD_LR && iCurrentBuilding <= TILE_ROAD_LTBR )
+		//	ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> PlaceTileWithMilitaryCheck(%d, %d, %s) iCurrentBuilding(%s)\n", _ReturnAddress(), x, y, szTileNames[iTileID], szTileNames[iCurrentBuilding]);
+		--*dwMilitaryTiles;
+	GOCHECKCURRENTTILE:
+		if ( iTileID < TILE_MILITARY_F15B ) {
+			if ( iTileID < TILE_MILITARY_CONTROLTOWER ) {
+				if ( iTileID < TILE_INFRASTRUCTURE_RUNWAYCROSS ) {
+					if ( iTileID != TILE_INFRASTRUCTURE_RUNWAY ) {
+					GOBACKCHECKTILE:
+						++*dwMilitaryTiles;
+						goto GOFORWARDGETOUT;
+					}
+					++dwMilitaryTiles[1];
+				}
+				else if ( iTileID <= TILE_INFRASTRUCTURE_RUNWAYCROSS ) {
+					++dwMilitaryTiles[2];
+				}
+				else {
+					if ( iTileID != TILE_INFRASTRUCTURE_CRANE )
+						goto GOBACKCHECKTILE;
+					++dwMilitaryTiles[10];
+				}
+			}
+			else if ( iTileID <= TILE_MILITARY_CONTROLTOWER ) {
+				++dwMilitaryTiles[11];
+			}
+			else if ( iTileID < TILE_INFRASTRUCTURE_BUILDING1 ) {
+				++dwMilitaryTiles[6];
+			}
+			else if ( iTileID <= TILE_INFRASTRUCTURE_BUILDING1 ) {
+				++dwMilitaryTiles[7];
+			}
+			else {
+				if ( iTileID != TILE_INFRASTRUCTURE_BUILDING2 )
+					goto GOBACKCHECKTILE;
+				++dwMilitaryTiles[8];
+			}
+		}
+		else if ( iTileID <= TILE_MILITARY_F15B ) {
+			++dwMilitaryTiles[12];
+		}
+		else if ( iTileID < TILE_MILITARY_TOPSECRET ) {
+			if ( iTileID < TILE_MILITARY_RADAR ) {
+				if ( iTileID != TILE_MILITARY_HANGAR1 )
+					goto GOBACKCHECKTILE;
+				++dwMilitaryTiles[13];
+			}
+			else if ( iTileID <= TILE_MILITARY_RADAR ) {
+				++dwMilitaryTiles[5];
+			}
+			else {
+				if ( iTileID != TILE_MILITARY_PARKINGLOT )
+					goto GOBACKCHECKTILE;
+				++dwMilitaryTiles[3];
+			}
+		}
+		else if ( iTileID <= TILE_MILITARY_TOPSECRET ) {
+			++dwMilitaryTiles[9];
+		}
+		else if ( iTileID < TILE_INFRASTRUCTURE_HANGAR2 ) {
+			if ( iTileID != TILE_INFRASTRUCTURE_CARGOYARD )
+				goto GOBACKCHECKTILE;
+			++dwMilitaryTiles[4];
+		}
+		else if ( iTileID <= TILE_INFRASTRUCTURE_HANGAR2 ) {
+			++dwMilitaryTiles[14];
+		}
+		else {
+			if ( iTileID != TILE_MILITARY_MISSILESILO )
+				goto GOBACKCHECKTILE;
+			++dwMilitaryTiles[15];
+		}
+	GOFORWARDGETOUT:
+		*pCurrentBuilding = (BYTE)iTileID;
+	}
+	return result;
+#else
+	__int16(__cdecl *H_PlaceTileWithMilitaryCheck)(__int16, __int16, __int16) = (__int16(__cdecl *)(__int16, __int16, __int16))0x441F00;
+
+	__int16 ret = H_PlaceTileWithMilitaryCheck(x, y, iTileID);
+
+	if (iTileID == TILE_INFRASTRUCTURE_RUNWAY)
+		ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> PlaceTileWithMilitaryCheck(%d, %d, %d) = %d\n", _ReturnAddress(), x, y, iTileID, ret);
+
+	return ret;
+#endif
+}
+
 // This function has been replicated from he equivalent that was found
 // in the DOS version of the game.
 static void FormArmyBaseStrip(int x1, int y1, __int16 x2, __int16 y2) {
@@ -539,6 +733,9 @@ NONAVY:
 }
 
 void InstallMilitaryHooks(void) {
+	VirtualProtect((LPVOID)0x40178F, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x40178F, Hook_PlaceTileWithMilitaryCheck);
+
 	// Replicate the general functionality provided from the DOS version
 	// to also include the Navy and Army Base spawning.
 	VirtualProtect((LPVOID)0x403017, 5, PAGE_EXECUTE_READWRITE, &dwDummy);

@@ -638,8 +638,8 @@ extern "C" void _declspec(naked) Hook_SimulationStartDisaster(void) {
 }
 
 extern "C" int __cdecl Hook_SimulationPrepareDisaster(DWORD* a1, __int16 a2, __int16 a3) {
-	if (mischook_debug & MISCHOOK_DEBUG_DISASTERS)
-		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> SimulationPrepareDisaster(0x%08X, %i, %i).\n", _ReturnAddress(), a1, a2, a3);
+	//if (mischook_debug & MISCHOOK_DEBUG_DISASTERS)
+	//	ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> SimulationPrepareDisaster(0x%08X, %i, %i).\n", _ReturnAddress(), a1, a2, a3);
 
 	a1[0] = a2;
 	a1[1] = a3;
