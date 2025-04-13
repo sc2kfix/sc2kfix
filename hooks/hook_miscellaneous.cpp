@@ -438,9 +438,12 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 m_x, int m_y, __
 			if (iBuilding == TILE_SMALLPARK) {
 				return 0;
 			}
-			//if (dwMapXZON[iX[0]]->b[iY[0]].iZoneType == ZONE_MILITARY) {
-			//	return 0; // This is where it stops during the military zone checking process.
-			//}
+			if (dwMapXZON[iX[0]]->b[iY[0]].iZoneType == ZONE_MILITARY) {
+				if (iBuilding == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
+					iBuilding == TILE_ROAD_LR ||
+					iBuilding == TILE_ROAD_TB)
+					return 0;
+			}
 			if (iTileID == TILE_INFRASTRUCTURE_MARINA) {
 				if ((unsigned __int16)iX[0] < 0x80u &&
 					(unsigned __int16)iY[0] < 0x80u &&
@@ -516,25 +519,25 @@ GOFORWARD:
 			if (iArea) {
 				if (x < 0x80u && (unsigned __int16)y < 0x80u) {
 					pZone = (BYTE *)&dwMapXZON[x]->b[y];
-					*pZone = P_LOBYTE(wSomePositionalAngleOne[4 * wViewRotation]) | *pZone & 0xF;
+					*pZone = LOBYTE(wSomePositionalAngleOne[4 * wViewRotation]) | *pZone & 0xF;
 				}
 				iSection[0] = iArea + x;
 				if ((__int16)(iArea + x) > -1 && iSection[0] < 128 && (unsigned __int16)y < 0x80u) {
 					pZone = (BYTE *)&dwMapXZON[iSection[0]]->b[y];
-					*pZone = P_LOBYTE(wSomePositionalAngleTwo[4 * wViewRotation]) | *pZone & 0xF;
+					*pZone = LOBYTE(wSomePositionalAngleTwo[4 * wViewRotation]) | *pZone & 0xF;
 				}
 				if ((unsigned __int16)iSection[0] < 0x80u) {
 					iSection[1] = y + iArea;
 					if ((__int16)(y + iArea) > -1 && iSection[1] < 128) {
 						pZone = (BYTE *)&dwMapXZON[iSection[0]]->b[iSection[1]];
-						*pZone = P_LOBYTE(wSomePositionalAngleThree[4 * wViewRotation]) | *pZone & 0xF;
+						*pZone = LOBYTE(wSomePositionalAngleThree[4 * wViewRotation]) | *pZone & 0xF;
 					}
 				}
 				if (x < 0x80u) {
 					iSection[2] = iArea + y;
 					if ((__int16)(iArea + y) > -1 && iSection[2] < 128) {
 						pZone = (BYTE *)&dwMapXZON[x]->b[iSection[2]];
-						*pZone = P_LOBYTE(wSomePositionalAngleFour[4 * wViewRotation]) | *pZone & 0xF;
+						*pZone = LOBYTE(wSomePositionalAngleFour[4 * wViewRotation]) | *pZone & 0xF;
 					}
 				}
 			}

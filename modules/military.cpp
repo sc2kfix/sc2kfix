@@ -28,6 +28,189 @@ UINT military_debug = MILITARY_DEBUG;
 
 static DWORD dwDummy;
 
+extern "C" __int16 __cdecl Hook_PlaceTileWithMilitaryCheck(__int16 x, __int16 y, __int16 iTileID) {
+#if 0
+	int result;
+	BYTE iCurrentBuilding;
+	BYTE *pCurrentBuilding;
+
+	result = iTileID;
+	if ( x < 0x80 && y < 0x80 ) {
+		pCurrentBuilding = &dwMapXBLD[x]->iTileID[y];
+		iCurrentBuilding = *pCurrentBuilding;
+		if ( dwMapXZON[x]->b[y].iZoneType != ZONE_MILITARY ) {
+			--dwTileCount[iCurrentBuilding];
+			++dwTileCount[iTileID];
+			*pCurrentBuilding = (BYTE)iTileID;
+			return result;
+		}
+		if ( iCurrentBuilding < TILE_MILITARY_F15B ) {
+			if ( iCurrentBuilding < TILE_MILITARY_CONTROLTOWER ) {
+				if ( iCurrentBuilding < TILE_INFRASTRUCTURE_RUNWAYCROSS ) {
+					if ( iCurrentBuilding == TILE_INFRASTRUCTURE_RUNWAY ) {
+						--dwMilitaryTiles[1];
+						goto GOCHECKCURRENTTILE;
+					}
+				}
+				else {
+					if ( iCurrentBuilding <= TILE_INFRASTRUCTURE_RUNWAYCROSS ) {
+						--dwMilitaryTiles[2];
+						goto GOCHECKCURRENTTILE;
+					}
+					if ( iCurrentBuilding == TILE_INFRASTRUCTURE_CRANE ) {
+						--dwMilitaryTiles[10];
+						goto GOCHECKCURRENTTILE;
+					}
+				}
+			}
+			else {
+				if ( iCurrentBuilding <= TILE_MILITARY_CONTROLTOWER ) {
+					--dwMilitaryTiles[11];
+					goto GOCHECKCURRENTTILE;
+				}
+				if ( iCurrentBuilding < TILE_INFRASTRUCTURE_BUILDING1 ) {
+					--dwMilitaryTiles[6];
+					goto GOCHECKCURRENTTILE;
+				}
+				if ( iCurrentBuilding <= TILE_INFRASTRUCTURE_BUILDING1 ) {
+					--dwMilitaryTiles[7];
+					goto GOCHECKCURRENTTILE;
+				}
+				if ( iCurrentBuilding == TILE_INFRASTRUCTURE_BUILDING2 ) {
+					--dwMilitaryTiles[8];
+					goto GOCHECKCURRENTTILE;
+				}
+			}
+		}
+		else {
+			if ( iCurrentBuilding <= TILE_MILITARY_F15B ) {
+				--dwMilitaryTiles[12];
+				goto GOCHECKCURRENTTILE;
+			}
+			if ( iCurrentBuilding < TILE_MILITARY_TOPSECRET ) {
+				if ( iCurrentBuilding < TILE_MILITARY_RADAR ) {
+					if ( iCurrentBuilding == TILE_MILITARY_HANGAR1 ) {
+						--dwMilitaryTiles[13];
+						goto GOCHECKCURRENTTILE;
+					}
+				}
+				else {
+					if ( iCurrentBuilding <= TILE_MILITARY_RADAR ) {
+						--dwMilitaryTiles[5];
+						goto GOCHECKCURRENTTILE;
+					}
+					if ( iCurrentBuilding == TILE_MILITARY_PARKINGLOT ) {
+						--dwMilitaryTiles[3];
+						goto GOCHECKCURRENTTILE;
+					}
+				}
+			}
+			else {
+				if ( iCurrentBuilding <= TILE_MILITARY_TOPSECRET ) {
+					--dwMilitaryTiles[9];
+					goto GOCHECKCURRENTTILE;
+				}
+				if ( iCurrentBuilding < TILE_INFRASTRUCTURE_HANGAR2 ) {
+					if ( iCurrentBuilding == TILE_INFRASTRUCTURE_CARGOYARD ) {
+						--dwMilitaryTiles[4];
+						goto GOCHECKCURRENTTILE;
+					}
+				}
+				else {
+					if ( iCurrentBuilding <= TILE_INFRASTRUCTURE_HANGAR2 ) {
+						--dwMilitaryTiles[14];
+						goto GOCHECKCURRENTTILE;
+					}
+					if ( iCurrentBuilding == TILE_MILITARY_MISSILESILO ) {
+						--dwMilitaryTiles[15];
+						goto GOCHECKCURRENTTILE;
+					}
+				}
+			}
+		}
+		--*dwMilitaryTiles;
+	GOCHECKCURRENTTILE:
+		if ( iTileID < TILE_MILITARY_F15B ) {
+			if ( iTileID < TILE_MILITARY_CONTROLTOWER ) {
+				if ( iTileID < TILE_INFRASTRUCTURE_RUNWAYCROSS ) {
+					if ( iTileID != TILE_INFRASTRUCTURE_RUNWAY ) {
+					GOBACKCHECKTILE:
+						++*dwMilitaryTiles;
+						goto GOFORWARDGETOUT;
+					}
+					++dwMilitaryTiles[1];
+				}
+				else if ( iTileID <= TILE_INFRASTRUCTURE_RUNWAYCROSS ) {
+					++dwMilitaryTiles[2];
+				}
+				else {
+					if ( iTileID != TILE_INFRASTRUCTURE_CRANE )
+						goto GOBACKCHECKTILE;
+					++dwMilitaryTiles[10];
+				}
+			}
+			else if ( iTileID <= TILE_MILITARY_CONTROLTOWER ) {
+				++dwMilitaryTiles[11];
+			}
+			else if ( iTileID < TILE_INFRASTRUCTURE_BUILDING1 ) {
+				++dwMilitaryTiles[6];
+			}
+			else if ( iTileID <= TILE_INFRASTRUCTURE_BUILDING1 ) {
+				++dwMilitaryTiles[7];
+			}
+			else {
+				if ( iTileID != TILE_INFRASTRUCTURE_BUILDING2 )
+					goto GOBACKCHECKTILE;
+				++dwMilitaryTiles[8];
+			}
+		}
+		else if ( iTileID <= TILE_MILITARY_F15B ) {
+			++dwMilitaryTiles[12];
+		}
+		else if ( iTileID < TILE_MILITARY_TOPSECRET ) {
+			if ( iTileID < TILE_MILITARY_RADAR ) {
+				if ( iTileID != TILE_MILITARY_HANGAR1 )
+					goto GOBACKCHECKTILE;
+				++dwMilitaryTiles[13];
+			}
+			else if ( iTileID <= TILE_MILITARY_RADAR ) {
+				++dwMilitaryTiles[5];
+			}
+			else {
+				if ( iTileID != TILE_MILITARY_PARKINGLOT )
+					goto GOBACKCHECKTILE;
+				++dwMilitaryTiles[3];
+			}
+		}
+		else if ( iTileID <= TILE_MILITARY_TOPSECRET ) {
+			++dwMilitaryTiles[9];
+		}
+		else if ( iTileID < TILE_INFRASTRUCTURE_HANGAR2 ) {
+			if ( iTileID != TILE_INFRASTRUCTURE_CARGOYARD )
+				goto GOBACKCHECKTILE;
+			++dwMilitaryTiles[4];
+		}
+		else if ( iTileID <= TILE_INFRASTRUCTURE_HANGAR2 ) {
+			++dwMilitaryTiles[14];
+		}
+		else {
+			if ( iTileID != TILE_MILITARY_MISSILESILO )
+				goto GOBACKCHECKTILE;
+			++dwMilitaryTiles[15];
+		}
+	GOFORWARDGETOUT:
+		*pCurrentBuilding = (BYTE)iTileID;
+	}
+	return result;
+#else
+	__int16(__cdecl *H_PlaceTileWithMilitaryCheck)(__int16, __int16, __int16) = (__int16(__cdecl *)(__int16, __int16, __int16))0x441F00;
+
+	__int16 ret = H_PlaceTileWithMilitaryCheck(x, y, iTileID);
+
+	return ret;
+#endif
+}
+
 // This function has been replicated from he equivalent that was found
 // in the DOS version of the game.
 static void FormArmyBaseStrip(int x1, int y1, __int16 x2, __int16 y2) {
@@ -47,11 +230,13 @@ static void FormArmyBaseStrip(int x1, int y1, __int16 x2, __int16 y2) {
 		iNewY = y1;
 		iY = y1;
 		while (Game_MaybeRoadViabilityAlongPath((__int16 *)&iNewX, (__int16 *)&iNewY)) {
+			dwMapXZON[iX]->b[iY].iZoneType = ZONE_MILITARY;
 			Game_CheckAndAdjustTransportTerrain(iX, iY);
 			Game_PlaceRoadAtCoordinates(iX, iY);
 			iX = iNewX;
 			iY = iNewY;
 		}
+		dwMapXZON[iX]->b[iY].iZoneType = ZONE_MILITARY;
 		Game_CheckAndAdjustTransportTerrain(iX, iY);
 		Game_PlaceRoadAtCoordinates(iX, iY);
 	}
@@ -59,8 +244,7 @@ static void FormArmyBaseStrip(int x1, int y1, __int16 x2, __int16 y2) {
 		// TERRAIN_00 check added here to avoid the runwaycross
 		// being placed into a dip (likely replacing a slope or granite block).
 		if (!dwMapXTER[x1]->iTileID[y1]) {
-			dwMapXZON[x1]->b[y1].iZoneType = ZONE_MILITARY;
-			dwMapXZON[x1]->b[y1].iCorners = 0x0F; // In the DOS build this is 0xF0, however that value here results in a blank area.
+			dwMapXZON[x1]->b[y1].iCorners = 0xF;
 			Game_PlaceTileWithMilitaryCheck(x1, y1, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 		}
 	}
@@ -68,8 +252,7 @@ static void FormArmyBaseStrip(int x1, int y1, __int16 x2, __int16 y2) {
 		// TERRAIN_00 check added here to avoid the runwaycross
 		// being placed into a dip (likely replacing a slope or granite block).
 		if (!dwMapXTER[iX]->iTileID[iY]) {
-			dwMapXZON[iX]->b[iY].iZoneType = ZONE_MILITARY;
-			dwMapXZON[iX]->b[iY].iCorners = 0x0F; // In the DOS build this is 0xF0, however that value here results in a blank area.
+			dwMapXZON[iX]->b[iY].iCorners = 0xF;
 			Game_PlaceTileWithMilitaryCheck(iX, iY, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 		}
 	}
@@ -354,8 +537,8 @@ REROLLCOASTALSPOT:
 								Game_PlaceTileWithMilitaryCheck(iDirectionOne, iDirectionTwo, 0);
 								dwMapXZON[iDirectionOne]->b[iDirectionTwo].iZoneType = ZONE_MILITARY;
 								dwMapXZON[iDirectionOne]->b[iDirectionTwo].iCorners = 0xF0;
-								--*((WORD *)&dwTileCount + iMilitaryArea);
-								++*(WORD *)dwMilitaryTiles;
+								--dwTileCount[iMilitaryArea];
+								++*dwMilitaryTiles;
 								iNumTiles++;
 							}
 
@@ -454,9 +637,9 @@ NONAVY:
 					iPos[0] = dwSiloPos[2 * i];
 					iPos[1] = iPos[0];
 					for (k = dwSiloPos[2 * i + 1]; iPos[1] + 3 > (__int16)iPos[0]; P_LOWORD(iPos[0]) = iPos[0] + 1) {
-						for (uPos[0] = k; k + 3 > (__int16)uPos[0]; ++*(WORD *)dwMilitaryTiles) {
+						for (uPos[0] = k; k + 3 > (__int16)uPos[0]; ++*dwMilitaryTiles) {
 							iBuildingArea = dwMapXBLD[iPos[0]]->iTileID[uPos[0]];
-							--*((WORD *)&dwTileCount + iBuildingArea);
+							--dwTileCount[iBuildingArea];
 							if ((unsigned __int16)iPos[0] < 0x80u && uPos[0] < 0x80u) {
 								dwMapXZON[iPos[0]]->b[uPos[0]].iZoneType = ZONE_MILITARY;
 								dwMapXZON[iPos[0]]->b[uPos[0]].iCorners = 0xF0;
@@ -500,12 +683,12 @@ NONAVY:
 						dwMapXZON[uPos[0]]->b[uPos[1]].iZoneType == ZONE_NONE &&
 						!dwMapXUND[iRandOne[0]]->iTileID[iPosOffset]
 					) {
-						--*((WORD *)&dwTileCount + iMilitaryArea);
+						--dwTileCount[iMilitaryArea];
 						if (uPos[0] < 0x80u && uPos[1] < 0x80u) {
 							dwMapXZON[uPos[0]]->b[uPos[1]].iZoneType = ZONE_MILITARY;
 							dwMapXZON[uPos[0]]->b[uPos[1]].iCorners = 0xF0;
 						}
-						++*(WORD *)dwMilitaryTiles;
+						++*dwMilitaryTiles;
 					}
 				}
 			}
@@ -537,6 +720,9 @@ NONAVY:
 }
 
 void InstallMilitaryHooks(void) {
+	VirtualProtect((LPVOID)0x40178F, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x40178F, Hook_PlaceTileWithMilitaryCheck);
+
 	// Replicate the general functionality provided from the DOS version
 	// to also include the Navy and Army Base spawning.
 	VirtualProtect((LPVOID)0x403017, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
