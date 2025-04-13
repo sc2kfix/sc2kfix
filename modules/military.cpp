@@ -29,7 +29,7 @@ UINT military_debug = MILITARY_DEBUG;
 static DWORD dwDummy;
 
 extern "C" __int16 __cdecl Hook_PlaceTileWithMilitaryCheck(__int16 x, __int16 y, __int16 iTileID) {
-#if 1
+#if 0
 	int result;
 	BYTE iCurrentBuilding;
 	BYTE *pCurrentBuilding;
@@ -128,14 +128,6 @@ extern "C" __int16 __cdecl Hook_PlaceTileWithMilitaryCheck(__int16 x, __int16 y,
 				}
 			}
 		}
-		// New experimental check to attempt to avoid Army Base spawned roads from
-		// being overwritten by the Runway item if the MilitaryBase type switches
-		// to Airforce.
-		//if ( iTileID == TILE_INFRASTRUCTURE_RUNWAY )
-		//	if ( iCurrentBuilding >= TILE_ROAD_LR && iCurrentBuilding <= TILE_ROAD_LTBR )
-		//		return result;
-		//if ( iCurrentBuilding >= TILE_ROAD_LR && iCurrentBuilding <= TILE_ROAD_LTBR )
-		//	ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> PlaceTileWithMilitaryCheck(%d, %d, %s) iCurrentBuilding(%s)\n", _ReturnAddress(), x, y, szTileNames[iTileID], szTileNames[iCurrentBuilding]);
 		--*dwMilitaryTiles;
 	GOCHECKCURRENTTILE:
 		if ( iTileID < TILE_MILITARY_F15B ) {
@@ -215,9 +207,6 @@ extern "C" __int16 __cdecl Hook_PlaceTileWithMilitaryCheck(__int16 x, __int16 y,
 
 	__int16 ret = H_PlaceTileWithMilitaryCheck(x, y, iTileID);
 
-	if (iTileID == TILE_INFRASTRUCTURE_RUNWAY)
-		ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> PlaceTileWithMilitaryCheck(%d, %d, %d) = %d\n", _ReturnAddress(), x, y, iTileID, ret);
-
 	return ret;
 #endif
 }
@@ -231,6 +220,14 @@ static void FormArmyBaseStrip(int x1, int y1, __int16 x2, __int16 y2) {
 	int iNewX;
 	int iNewY;
 
+	// NOTE: ZoneType 0xF0 "appears" to be for preventing the tiles in
+	// question from being charged back during the budget cycle.
+	// It also seems that if you spam "gilmartin" often enough and get
+	// plenty of Army Base spawns, on a completely empty but military
+	// populated map you'll start to earn a $1 a year bonus that's
+	// applied to the transportation budget (whether this is additive
+	// over time on a populated city is unclear).
+
 	wOldToolGroup = wMaybeActiveToolGroup;
 	iX = x2;
 	iY = y2;
@@ -241,32 +238,32 @@ static void FormArmyBaseStrip(int x1, int y1, __int16 x2, __int16 y2) {
 		iNewY = y1;
 		iY = y1;
 		while (Game_MaybeRoadViabilityAlongPath((__int16 *)&iNewX, (__int16 *)&iNewY)) {
-			dwMapXZON[iX]->b[iY].iZoneType = ZONE_MILITARY;
 			Game_CheckAndAdjustTransportTerrain(iX, iY);
 			Game_PlaceRoadAtCoordinates(iX, iY);
+			dwMapXZON[iX]->b[iY].iZoneType = 0xF0;
 			iX = iNewX;
 			iY = iNewY;
 		}
-		dwMapXZON[iX]->b[iY].iZoneType = ZONE_MILITARY;
 		Game_CheckAndAdjustTransportTerrain(iX, iY);
 		Game_PlaceRoadAtCoordinates(iX, iY);
+		dwMapXZON[iX]->b[iY].iZoneType = 0xF0;
 	}
 	if (GetTileID(x1, y1) == TILE_ROAD_LR || GetTileID(x1, y1) == TILE_ROAD_TB) {
 		// TERRAIN_00 check added here to avoid the runwaycross
 		// being placed into a dip (likely replacing a slope or granite block).
 		if (!dwMapXTER[x1]->iTileID[y1]) {
-			dwMapXZON[x1]->b[y1].iZoneType = ZONE_MILITARY;
-			dwMapXZON[x1]->b[y1].iCorners = 0x0F; // In the DOS build this is 0xF0, however that value here results in a blank area.
 			Game_PlaceTileWithMilitaryCheck(x1, y1, TILE_INFRASTRUCTURE_RUNWAYCROSS);
+			dwMapXZON[x1]->b[y1].iZoneType = 0xF0;
+			dwMapXZON[x1]->b[y1].iCorners = 0xF;
 		}
 	}
 	if (GetTileID(iX, iY) == TILE_ROAD_LR || GetTileID(iX, iY) == TILE_ROAD_TB) {
 		// TERRAIN_00 check added here to avoid the runwaycross
 		// being placed into a dip (likely replacing a slope or granite block).
 		if (!dwMapXTER[iX]->iTileID[iY]) {
-			dwMapXZON[iX]->b[iY].iZoneType = ZONE_MILITARY;
-			dwMapXZON[iX]->b[iY].iCorners = 0x0F; // In the DOS build this is 0xF0, however that value here results in a blank area.
 			Game_PlaceTileWithMilitaryCheck(iX, iY, TILE_INFRASTRUCTURE_RUNWAYCROSS);
+			dwMapXZON[iX]->b[iY].iZoneType = 0xF0;
+			dwMapXZON[iX]->b[iY].iCorners = 0xF;
 		}
 	}
 	wMaybeActiveToolGroup = wOldToolGroup;

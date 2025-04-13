@@ -438,12 +438,9 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 m_x, int m_y, __
 			if (iBuilding == TILE_SMALLPARK) {
 				return 0;
 			}
-			if (dwMapXZON[iX[0]]->b[iY[0]].iZoneType == ZONE_MILITARY) {
-				if (iBuilding == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
-					iBuilding == TILE_ROAD_LR ||
-					iBuilding == TILE_ROAD_TB)
-					return 0;
-			}
+			//if (dwMapXZON[iX[0]]->b[iY[0]].iZoneType == ZONE_MILITARY) {
+			//	return 0;
+			//}
 			if (iTileID == TILE_INFRASTRUCTURE_MARINA) {
 				if ((unsigned __int16)iX[0] < 0x80u &&
 					(unsigned __int16)iY[0] < 0x80u &&
