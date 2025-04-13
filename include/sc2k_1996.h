@@ -845,7 +845,7 @@ GAMEOFF(WORD,	wDisasterType,				0x4CA420)
 GAMEOFF(WORD,	wCityMode,					0x4CA42C)
 GAMEOFF(int,	dwCityLandValue,			0x4CA440)
 GAMEOFF(int,	dwCityFunds,				0x4CA444)
-GAMEOFF_ARR(WORD, dwTileCount,				0x4CA4C8)		// WORD dwTileCount[256]
+GAMEOFF(WORD*, dwTileCount,					0x4CA4C8)		// WORD dwTileCount[256]
 GAMEOFF(DWORD,	dwCityValue,				0x4CA4D0)
 GAMEOFF(DWORD,	dwCityGarbage,				0x4CA5F0)		// Unused in vanilla game (sort of)
 GAMEOFF(WORD,	wCityStartYear,				0x4CA5F4)
