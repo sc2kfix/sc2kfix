@@ -11,7 +11,9 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
-#define UPDATENOTIFIER_DEBUG DEBUG_FLAGS_NONE
+#define UPDATENOTIFIER_NEXTRELEASE "r9d"
+
+#define UPDATENOTIFIER_DEBUG DEBUG_FLAGS_EVERYTHING
 
 #ifdef DEBUGALL
 #undef UPDATENOTIFIER_DEBUG
@@ -20,7 +22,7 @@
 
 UINT updatenotifier_debug = UPDATENOTIFIER_DEBUG;
 
-const char* szGitHubRepoReleases = "https://api.github.com/repos/sc2kfix/sc2kfix/releases?per_page=1";
+const char* szGitHubRepoReleases = "https://api.github.com/repos/sc2kfix/sc2kfix/releases/tags/" UPDATENOTIFIER_NEXTRELEASE;
 const char* szGitHubAPIType[] = { "Accept: application/vnd.github+json", NULL };
 char szLatestRelease[24] = { 0 };
 BOOL bUpdateAvailable = FALSE;
