@@ -396,6 +396,74 @@ static __int16 GetDepthPoint(int iCoords) {
 		return GetNearCoord(iCoords);
 }
 
+static int isValidSiloPos(__int16 m_x, __int16 m_y) {
+	__int16 x;
+	__int16 y;
+	__int16 iArea;
+	__int16 iX;
+	__int16 iY;
+	__int16 iItemWidth;
+	__int16 iItemLength;
+	BYTE iBuilding;
+
+	x = m_x;
+	y = m_y;
+
+	iArea = 2; // For 3x3 zones, 0-based.
+	if (iArea > 1) {
+		--x;
+		y = y - 1;
+	}
+	iX = x;
+	iItemWidth = x + iArea;
+	if (iItemWidth >= x) {
+		iItemLength = iArea + y;
+		while (1) {
+			iY = y;
+			if (iItemLength >= y)
+				break;
+		GOBACK:
+			if (++iX > iItemWidth)
+				goto GOFORWARD;
+		}
+		while (1) {
+			if (iArea <= 0) {
+				if (iX >= 0x80 || iY >= 0x80)
+					return 0;
+			}
+			else if (iX < 1 || iY < 1 || iX > 126 || iY > 126) {
+				return 0;
+			}
+			iBuilding = dwMapXBLD[iX]->iTileID[iY];
+			if (iBuilding >= TILE_ROAD_LR) {
+				return 0;
+			}
+			if (iBuilding == TILE_RADIOACTIVITY) {
+				return 0;
+			}
+			if (iBuilding == TILE_SMALLPARK) {
+				return 0;
+			}
+			if (dwMapXZON[iX]->b[iY].iZoneType != ZONE_NONE) {
+				return 0;
+			}
+			if (dwMapXTER[iX]->iTileID[iY]) {
+				return 0;
+			}
+			if (iX < 0x80 &&
+				iY < 0x80 &&
+				dwMapXBIT[iX]->b[iY].iWater != 0) {
+				return 0;
+			}
+			if (++iY > iItemLength) {
+				goto GOBACK;
+			}
+		}
+	}
+GOFORWARD:
+	return 1;
+}
+
 extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	int iResult;
 	int iIterations;
@@ -586,7 +654,7 @@ NONAVY:
 							(unsigned __int16)i >= 0x80u || // (Not present in the DOS-equivalent)
 							dwMapXBIT[uArrPos]->b[i].iWater == 0
 						) &&
-						dwMapXZON[uArrPos]->b[i].iZoneType == ZONE_NONE // (The DOS version has an additional dwMapXZON & 0xF check as well)
+						dwMapXZON[uArrPos]->b[i].iZoneType == ZONE_NONE
 					) {
 						++iValidTiles;
 						if (dwMapALTM[uArrPos]->w[i].iLandAltitude == iBaseLevel)
@@ -595,9 +663,17 @@ NONAVY:
 				}
 			}
 		} while (iValidTiles < 40);
+		// Short-circuit.
+		if (iPosCount >= 40)
+			iPosCount = 39;
+		// Short-circuit.
 		if (iPosCount < 40) {
+			// Short-circuit.
+			if (iValidTiles >= 40)
+				iValidTiles = 39;
+			// Short-circuit.
 			if (iValidTiles < 40) {
-				iIterations = 24;
+				iIterations = 96; // Was 24, now 96 to increase the chance during the testing phase.
 				iValidTiles = 0;
 				do {
 					bMaxIteration = iIterations-- == 0;
@@ -620,7 +696,12 @@ NONAVY:
 								dwMapXZON[uArrPos]->b[j].iZoneType != ZONE_MILITARY &&
 								!dwMapXUND[iRandOne[1]]->iTileID[iRandTwo[1]]
 							) {
-								++i;
+								if (isValidSiloPos(uArrPos, j)) {
+									if (i >= 9)
+										break;
+									++i;
+									ConsoleLog(LOG_DEBUG, "DBG: isValidSiloPos(%d): (%u, %d)\n", i, uArrPos, j);
+								}
 							}
 						}
 					}
@@ -628,6 +709,7 @@ NONAVY:
 						iPos[0] = iValidTiles++;
 						dwSiloPos[2 * iPos[0]] = iRandOne[1];
 						dwSiloPos[2 * iPos[0] + 1] = iRandTwo[1];
+						ConsoleLog(LOG_DEBUG, "DBG: i==9: (%d) (%u, %d)\n", iPos[0], dwSiloPos[2 * iPos[0]], dwSiloPos[2 * iPos[0] + 1]);
 					}
 				} while (iValidTiles < 6);
 			}

@@ -90,8 +90,8 @@ extern "C" DWORD __stdcall Hook_SaveGame(int* a2) {
 
 void InstallSaveHooks(void) {
 	// Load game hook
-	VirtualProtect((LPVOID)0x4025A4, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4025A4, Hook_LoadGame);
+	//VirtualProtect((LPVOID)0x4025A4, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	//NEWJMP((LPVOID)0x4025A4, Hook_LoadGame);
 
 	// Save game hook
 	VirtualProtect((LPVOID)0x401870, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
