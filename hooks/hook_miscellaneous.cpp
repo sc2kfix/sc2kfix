@@ -438,9 +438,12 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 m_x, int m_y, __
 			if (iBuilding == TILE_SMALLPARK) {
 				return 0;
 			}
-			//if (dwMapXZON[iX[0]]->b[iY[0]].iZoneType == ZONE_MILITARY) {
-			//	return 0;
-			//}
+			if (dwMapXZON[iX[0]]->b[iY[0]].iZoneType == ZONE_MILITARY) {
+				if (iBuilding == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
+					iBuilding == TILE_ROAD_LR ||
+					iBuilding == TILE_ROAD_TB)
+					return 0;
+			}
 			if (iTileID == TILE_INFRASTRUCTURE_MARINA) {
 				if ((unsigned __int16)iX[0] < 0x80u &&
 					(unsigned __int16)iY[0] < 0x80u &&
@@ -635,8 +638,8 @@ extern "C" void _declspec(naked) Hook_SimulationStartDisaster(void) {
 }
 
 extern "C" int __cdecl Hook_SimulationPrepareDisaster(DWORD* a1, __int16 a2, __int16 a3) {
-	//if (mischook_debug & MISCHOOK_DEBUG_DISASTERS)
-	//	ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> SimulationPrepareDisaster(0x%08X, %i, %i).\n", _ReturnAddress(), a1, a2, a3);
+	if (mischook_debug & MISCHOOK_DEBUG_DISASTERS)
+		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> SimulationPrepareDisaster(0x%08X, %i, %i).\n", _ReturnAddress(), a1, a2, a3);
 
 	a1[0] = a2;
 	a1[1] = a3;
