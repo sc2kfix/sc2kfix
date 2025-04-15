@@ -699,26 +699,54 @@ RETRY_CHECK1:
 	return (force) ? 0 : -1;
 }
 
-static int MilitaryBaseDecline(bool bMsgbox_always) {
-	if (!bMsgbox_always) {
-		if (bMilitaryBaseType == MILITARY_BASE_DECLINED) {
-			ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> MilitaryBaseDecline() - IDNO\n", _ReturnAddress());
-			return IDNO;
+static void MilitaryBasePlotPlacement(__int16 iRandXPos, __int16 iRandStoredYPos) {
+	for (__int16 iCurrXPos = iRandXPos; iRandXPos + 8 > iCurrXPos; ++iCurrXPos) {
+		for (__int16 iCurrYPos = iRandStoredYPos; iRandStoredYPos + 8 > iCurrYPos; ++iCurrYPos) {
+			BYTE iMilitaryArea = dwMapXBLD[iCurrXPos]->iTileID[iCurrYPos];
+			if (
+				iMilitaryArea < TILE_SMALLPARK &&
+				!dwMapXTER[iCurrXPos]->iTileID[iCurrYPos] &&
+				(
+					iCurrXPos >= 0x80 ||
+					iCurrYPos >= 0x80 ||
+					dwMapXBIT[iCurrXPos]->b[iCurrYPos].iWater == 0
+					) &&
+				dwMapXZON[iCurrXPos]->b[iCurrYPos].iZoneType == ZONE_NONE &&
+				!dwMapXUND[iRandXPos]->iTileID[iRandStoredYPos]
+				) {
+				--dwTileCount[iMilitaryArea];
+				if (iCurrXPos < 0x80 && iCurrYPos < 0x80) {
+					dwMapXZON[iCurrXPos]->b[iCurrYPos].iZoneType = ZONE_MILITARY;
+					dwMapXZON[iCurrXPos]->b[iCurrYPos].iCorners = 0xF0;
+				}
+				++*dwMilitaryTiles;
+			}
 		}
 	}
+}
 
+static int MilitaryBaseDecline(void) {
 	int iRes = Game_AfxMessageBox(411, 0, -1);
 	bMilitaryBaseType = MILITARY_BASE_DECLINED;
-	ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> MilitaryBaseDecline() - (%d) (%d)\n", _ReturnAddress(), iRes, bMilitaryBaseType);
 	return iRes;
 }
 
 void ProposeMilitaryBaseDecline(void) {
+	if (MessageBoxA(NULL, "Are you sure that you want to stop the development of existing military zones?", "Ominous sounds of danger...", MB_OKCANCEL) != IDOK) {
+		return;
+	}
 	ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> ProposeMilitaryBaseDecline()\n", _ReturnAddress());
-	MilitaryBaseDecline(false);
+	if (bMilitaryBaseType <= MILITARY_BASE_DECLINED) {
+		MessageBoxA(NULL, "Military base development has already been stopped.", "Clonk", MB_OK);
+		return;
+	}
+	MilitaryBaseDecline();
 }
 
 void ProposeMilitaryBaseMissileSilos(void) {
+	if (MessageBoxA(NULL, "Are you sure that you want an attempt to be made to spawn Missile Silos?", "Ominous sounds of danger...", MB_OKCANCEL) != IDOK) {
+		return;
+	}
 	unsigned int iMilitaryBaseTries = 0;
 REATTEMPT:
 	bool bPlacementFailure = false;
@@ -735,7 +763,7 @@ REATTEMPT:
 			iMilitaryBaseTries++;
 			goto REATTEMPT;
 		}
-		MilitaryBaseDecline(true);
+		MilitaryBaseDecline();
 	}
 }
 
@@ -748,8 +776,6 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	__int16 iRandStoredXPos;
 	__int16 iRandStoredYPos;
 	__int16 iBaseLevel;
-	__int16 iCurrXPos;
-	__int16 iCurrYPos;
 
 	int iTileCoords[2];
 	int iNavyLandingAttempts;
@@ -911,7 +937,7 @@ NONAVY:
 					iMilitaryBaseTries++;
 					goto REATTEMPT;
 				}
-				iResult = MilitaryBaseDecline(true);
+				iResult = MilitaryBaseDecline();
 			}
 		}
 		else {
@@ -923,29 +949,9 @@ NONAVY:
 				bMilitaryBaseType = MILITARY_BASE_ARMY;
 				Game_AfxMessageBox(241, 0, -1);
 			}
-			for (iCurrXPos = iRandXPos; iRandXPos + 8 > iCurrXPos; ++iCurrXPos) {
-				for (iCurrYPos = iRandStoredYPos; iRandStoredYPos + 8 > iCurrYPos; ++iCurrYPos) {
-					unsigned __int8 iMilitaryArea = dwMapXBLD[iCurrXPos]->iTileID[iCurrYPos];
-					if (
-						iMilitaryArea < TILE_SMALLPARK &&
-						!dwMapXTER[iCurrXPos]->iTileID[iCurrYPos] &&
-						(
-							iCurrXPos >= 0x80 ||
-							iCurrYPos >= 0x80 ||
-							dwMapXBIT[iCurrXPos]->b[iCurrYPos].iWater == 0
-						) &&
-						dwMapXZON[iCurrXPos]->b[iCurrYPos].iZoneType == ZONE_NONE &&
-						!dwMapXUND[iRandXPos]->iTileID[iRandStoredYPos]
-					) {
-						--dwTileCount[iMilitaryArea];
-						if (iCurrXPos < 0x80 && iCurrYPos < 0x80) {
-							dwMapXZON[iCurrXPos]->b[iCurrYPos].iZoneType = ZONE_MILITARY;
-							dwMapXZON[iCurrXPos]->b[iCurrYPos].iCorners = 0xF0;
-						}
-						++*dwMilitaryTiles;
-					}
-				}
-			}
+
+			MilitaryBasePlotPlacement(iRandXPos, iRandStoredYPos);
+
 			if (bMilitaryBaseType == MILITARY_BASE_ARMY) {
 				// Explanation:
 				// First it lays down the depth-way roads and runwaycross.
