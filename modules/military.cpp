@@ -524,6 +524,56 @@ static int CheckForOverlappingSiloPositions(DWORD *wSiloPos, int iPos, __int16 x
 	return 0;
 }
 
+static void MilitaryBasePlotCheck(__int16 *iVAltitudeTiles, __int16 *iVTiles, int *iRXPos, __int16 *iRYPos, int *iRStoredXPos, int *iRStoredYPos) {
+	__int16 iValidAltitudeTiles;
+	int iRandXPos;
+	__int16 iRandYPos;
+	__int16 iXPosStep;
+	__int16 iValidTiles;
+	int iRandStoredYPos;
+
+	int iIterations = 24;
+	iValidAltitudeTiles = 0;
+	int iRandStoredXPos = 0;
+	do {
+		BOOL bMaxIteration = iIterations-- == 0;
+		if (bMaxIteration)
+			break;
+		iRandXPos = Game_RandomWordLCGMod(119);
+		iRandYPos = Game_RandomWordLCGMod(119);
+		iXPosStep = iRandXPos;
+		iValidTiles = 0;
+		iValidAltitudeTiles = 0;
+		iRandStoredYPos = iRandYPos;
+		__int16 iBaseLevel = dwMapALTM[iRandXPos]->w[iRandYPos].iLandAltitude;
+		for (iRandStoredXPos = iRandXPos + 8; iXPosStep < (__int16)iRandStoredXPos; ++iXPosStep) {
+			for (__int16 i = iRandYPos; iRandYPos + 8 > i; ++i) {
+				if (
+					dwMapXBLD[iXPosStep]->iTileID[i] < TILE_SMALLPARK &&
+					!dwMapXTER[iXPosStep]->iTileID[i] &&
+					(
+						iXPosStep >= 0x80 || // (Not present in the DOS-equivalent)
+						i >= 0x80 || // (Not present in the DOS-equivalent)
+						dwMapXBIT[iXPosStep]->b[i].iWater == 0
+						) &&
+					dwMapXZON[iXPosStep]->b[i].iZoneType == ZONE_NONE
+					) {
+					++iValidTiles;
+					if (dwMapALTM[iXPosStep]->w[i].iLandAltitude == iBaseLevel)
+						++iValidAltitudeTiles;
+				}
+			}
+		}
+	} while (iValidTiles < 40);
+
+	*iVAltitudeTiles = iValidAltitudeTiles;
+	*iVTiles = iValidTiles;
+	*iRXPos = iRandXPos;
+	*iRYPos = iRandYPos;
+	*iRStoredXPos = iRandStoredXPos;
+	*iRStoredYPos = iRandStoredYPos;
+}
+
 static int MilitaryBaseMissileSilos(int iValidAltitudeTiles, int iValidTiles, bool force) {
 	int iRandXPos, iRandYPos;
 	int iSiloIdx;
@@ -676,18 +726,15 @@ void ProposeMilitaryBaseDecline(void) {
 
 extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	int iResult;
-	int iIterations;
-	bool bMaxIteration;
 	__int16 iValidAltitudeTiles;
-	int iRandOne[2];
-	__int16 iRandTwo[2];
-	unsigned __int16 uArrPos;
+	int iRandXPos;
+	__int16 iRandYPos;
 	__int16 iValidTiles;
-	int iPosOffset;
+	int iRandStoredXPos;
+	int iRandStoredYPos;
 	__int16 iBaseLevel;
-	__int16 i;
-	unsigned __int16 uPos[2];
-	DWORD dwSiloPos[12];
+	__int16 iCurrXPos;
+	__int16 iCurrYPos;
 
 	int iTileCoords[2];
 	int iNavyLandingAttempts;
@@ -838,40 +885,9 @@ REROLLCOASTALSPOT:
 			}
 		}
 NONAVY:
-		iIterations = 24;
-		iValidAltitudeTiles = (short)dwSiloPos[0];
-		do {
-			bMaxIteration = iIterations-- == 0;
-			if (bMaxIteration)
-				break;
-			iRandOne[0] = Game_RandomWordLCGMod(119);
-			iRandTwo[0] = Game_RandomWordLCGMod(119);
-			uArrPos = iRandOne[0];
-			iValidTiles = 0;
-			iValidAltitudeTiles = 0;
-			iPosOffset = iRandTwo[0];
-			iBaseLevel = dwMapALTM[iRandOne[0]]->w[iRandTwo[0]].iLandAltitude;
-			for (dwSiloPos[0] = iRandOne[0] + 8; (__int16)uArrPos < (__int16)dwSiloPos[0]; ++uArrPos) {
-				for (i = iRandTwo[0]; iRandTwo[0] + 8 > i; ++i) {
-					if (
-						dwMapXBLD[uArrPos]->iTileID[i] < TILE_SMALLPARK &&
-						!dwMapXTER[uArrPos]->iTileID[i] &&
-						(
-							uArrPos >= 0x80u || // (Not present in the DOS-equivalent)
-							(unsigned __int16)i >= 0x80u || // (Not present in the DOS-equivalent)
-							dwMapXBIT[uArrPos]->b[i].iWater == 0
-						) &&
-						dwMapXZON[uArrPos]->b[i].iZoneType == ZONE_NONE
-					) {
-						++iValidTiles;
-						if (dwMapALTM[uArrPos]->w[i].iLandAltitude == iBaseLevel)
-							++iValidAltitudeTiles;
-					}
-				}
-			}
-		} while (iValidTiles < 40);
+		MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &iRandXPos, &iRandYPos, &iRandStoredXPos, &iRandStoredYPos);
 
-		int iSiloRet = MilitaryBaseMissileSilos(iValidAltitudeTiles, iValidTiles, true); // The 'force' attribute here should be false.
+		int iSiloRet = MilitaryBaseMissileSilos(iValidAltitudeTiles, iValidTiles, false); // The 'force' attribute here should be false.
 		if (iSiloRet >= 0) {
 			if (iSiloRet > 0)
 				return iSiloRet;
@@ -892,24 +908,24 @@ NONAVY:
 				bMilitaryBaseType = MILITARY_BASE_ARMY;
 				Game_AfxMessageBox(241, 0, -1);
 			}
-			for (uPos[0] = iRandOne[0]; iRandOne[0] + 8 > (__int16)uPos[0]; ++uPos[0]) {
-				for (uPos[1] = iPosOffset; iPosOffset + 8 > (__int16)uPos[1]; ++uPos[1]) {
-					unsigned __int8 iMilitaryArea = dwMapXBLD[uPos[0]]->iTileID[uPos[1]];
+			for (iCurrXPos = iRandXPos; iRandXPos + 8 > iCurrXPos; ++iCurrXPos) {
+				for (iCurrYPos = iRandStoredYPos; iRandStoredYPos + 8 > iCurrYPos; ++iCurrYPos) {
+					unsigned __int8 iMilitaryArea = dwMapXBLD[iCurrXPos]->iTileID[iCurrYPos];
 					if (
 						iMilitaryArea < TILE_SMALLPARK &&
-						!dwMapXTER[uPos[0]]->iTileID[uPos[1]] &&
+						!dwMapXTER[iCurrXPos]->iTileID[iCurrYPos] &&
 						(
-							uPos[0] >= 0x80u ||
-							uPos[1] >= 0x80u ||
-							dwMapXBIT[uPos[0]]->b[uPos[1]].iWater == 0
+							iCurrXPos >= 0x80 ||
+							iCurrYPos >= 0x80 ||
+							dwMapXBIT[iCurrXPos]->b[iCurrYPos].iWater == 0
 						) &&
-						dwMapXZON[uPos[0]]->b[uPos[1]].iZoneType == ZONE_NONE &&
-						!dwMapXUND[iRandOne[0]]->iTileID[iPosOffset]
+						dwMapXZON[iCurrXPos]->b[iCurrYPos].iZoneType == ZONE_NONE &&
+						!dwMapXUND[iRandXPos]->iTileID[iRandStoredYPos]
 					) {
 						--dwTileCount[iMilitaryArea];
-						if (uPos[0] < 0x80u && uPos[1] < 0x80u) {
-							dwMapXZON[uPos[0]]->b[uPos[1]].iZoneType = ZONE_MILITARY;
-							dwMapXZON[uPos[0]]->b[uPos[1]].iCorners = 0xF0;
+						if (iCurrXPos < 0x80 && iCurrYPos < 0x80) {
+							dwMapXZON[iCurrXPos]->b[iCurrYPos].iZoneType = ZONE_MILITARY;
+							dwMapXZON[iCurrXPos]->b[iCurrYPos].iCorners = 0xF0;
 						}
 						++*dwMilitaryTiles;
 					}
@@ -923,20 +939,20 @@ NONAVY:
 				// check to see whether both runwaycross items are present, if they're
 				// not then it'll attempt to place down the respective crossing once more
 				// but from the opposite direction.
-				FormArmyBaseStrip(iRandOne[0] + 2, iPosOffset, iRandOne[0] + 2, iPosOffset + 7);
-				if (!FindArmyBaseCrossingDepth(iRandOne[0] + 2, iPosOffset, iPosOffset + 7))
-					FormArmyBaseStrip(iRandOne[0] + 2, iPosOffset + 7, iRandOne[0] + 2, iPosOffset);
-				FormArmyBaseStrip(iRandOne[0] + 5, iPosOffset, iRandOne[0] + 5, iPosOffset + 7);
-				if (!FindArmyBaseCrossingDepth(iRandOne[0] + 5, iPosOffset, iPosOffset + 7))
-					FormArmyBaseStrip(iRandOne[0] + 5, iPosOffset + 7, iRandOne[0] + 5, iPosOffset);
-				FormArmyBaseStrip(iRandOne[0], iPosOffset + 2, iRandOne[0] + 7, iPosOffset + 2);
-				if (!FindArmyBaseCrossingLength(iPosOffset + 2, iRandOne[0] + 7, iRandOne[0]))
-					FormArmyBaseStrip(iRandOne[0] + 7, iPosOffset + 2, iRandOne[0], iPosOffset + 2);
-				FormArmyBaseStrip(iRandOne[0], iPosOffset + 5, iRandOne[0] + 7, iPosOffset + 5);
-				if (!FindArmyBaseCrossingLength(iPosOffset + 5, iRandOne[0] + 7, iRandOne[0]))
-					FormArmyBaseStrip(iRandOne[0] + 7, iPosOffset + 5, iRandOne[0], iPosOffset + 5);
+				FormArmyBaseStrip(iRandXPos + 2, iRandStoredYPos, iRandXPos + 2, iRandStoredYPos + 7);
+				if (!FindArmyBaseCrossingDepth(iRandXPos + 2, iRandStoredYPos, iRandStoredYPos + 7))
+					FormArmyBaseStrip(iRandXPos + 2, iRandStoredYPos + 7, iRandXPos + 2, iRandStoredYPos);
+				FormArmyBaseStrip(iRandXPos + 5, iRandStoredYPos, iRandXPos + 5, iRandStoredYPos + 7);
+				if (!FindArmyBaseCrossingDepth(iRandXPos + 5, iRandStoredYPos, iRandStoredYPos + 7))
+					FormArmyBaseStrip(iRandXPos + 5, iRandStoredYPos + 7, iRandXPos + 5, iRandStoredYPos);
+				FormArmyBaseStrip(iRandXPos, iRandStoredYPos + 2, iRandXPos + 7, iRandStoredYPos + 2);
+				if (!FindArmyBaseCrossingLength(iRandStoredYPos + 2, iRandXPos + 7, iRandXPos))
+					FormArmyBaseStrip(iRandXPos + 7, iRandStoredYPos + 2, iRandXPos, iRandStoredYPos + 2);
+				FormArmyBaseStrip(iRandXPos, iRandStoredYPos + 5, iRandXPos + 7, iRandStoredYPos + 5);
+				if (!FindArmyBaseCrossingLength(iRandStoredYPos + 5, iRandXPos + 7, iRandXPos))
+					FormArmyBaseStrip(iRandXPos + 7, iRandStoredYPos + 5, iRandXPos, iRandStoredYPos + 5);
 			}
-			return Game_CenterOnTileCoords(iRandOne[0] + 4, iPosOffset + 4);
+			return Game_CenterOnTileCoords(iRandXPos + 4, iRandStoredYPos + 4);
 		}
 	}
 	return iResult;
