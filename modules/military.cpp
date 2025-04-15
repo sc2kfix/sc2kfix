@@ -776,7 +776,7 @@ static int MilitaryBaseArmyBase(int iValidTiles, int iValidAltitudeTiles, __int1
 	return -1;
 }
 
-static int MilitaryBaseNavyYard(void) {
+static int MilitaryBaseNavalYard(void) {
 	__int16 iBaseLevel;
 
 	int iTileCoords[2];
@@ -1007,17 +1007,17 @@ REATTEMPT:
 	}
 }
 
-void ProposeMilitaryBaseNavyYard(void) {
+void ProposeMilitaryBaseNavalYard(void) {
 	if (!bCityHasOcean) {
-		MessageBoxA(NULL, "A Navy Yard cannot be placed in a city without a neighbouring ocean.", "Clonk", MB_OK|MB_ICONSTOP);
+		MessageBoxA(NULL, "A Naval Yard cannot be placed in a city without a neighbouring ocean.", "Clonk", MB_OK|MB_ICONSTOP);
 		return;
 	}
-	if (MessageBoxA(NULL, "Are you sure that you want an attempt to be made to spawn a Navy Yard plot?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES) {
+	if (MessageBoxA(NULL, "Are you sure that you want an attempt to be made to spawn a Naval Yard plot?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES) {
 		return;
 	}
 	unsigned int iMilitaryBaseTries = 0;
 REATTEMPT:
-	int iResult = MilitaryBaseNavyYard();
+	int iResult = MilitaryBaseNavalYard();
 	if (iResult < 0) {
 		if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
 			iMilitaryBaseTries++;
@@ -1044,7 +1044,7 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	}
 	else {
 	REATTEMPT:
-		iResult = MilitaryBaseNavyYard();
+		iResult = MilitaryBaseNavalYard();
 		if (iResult >= 0)
 			return iResult;
 

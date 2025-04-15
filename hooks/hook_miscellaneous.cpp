@@ -1193,7 +1193,7 @@ skipgamemenu:
 			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #4 failed, error = 0x%08X.\n", GetLastError());
 			goto skipdebugmenu;
 		}
-		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_NAVYYARD, "Propose Navy Yard") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_NAVALYARD, "Propose Naval Yard") && mischook_debug & MISCHOOK_DEBUG_MENU) {
 			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #5 failed, error = 0x%08X.\n", GetLastError());
 			goto skipdebugmenu;
 		}
@@ -1240,10 +1240,10 @@ skipgamemenu:
 		afxMessageMapEntry[3] = {
 			WM_COMMAND,
 			0,
-			IDM_DEBUG_MILITARY_NAVYYARD,
-			IDM_DEBUG_MILITARY_NAVYYARD,
+			IDM_DEBUG_MILITARY_NAVALYARD,
+			IDM_DEBUG_MILITARY_NAVALYARD,
 			0x0A,
-			ProposeMilitaryBaseNavyYard,
+			ProposeMilitaryBaseNavalYard,
 		};
 
 		afxMessageMapEntry[4] = {
