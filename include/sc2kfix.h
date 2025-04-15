@@ -312,6 +312,8 @@ extern "C" int __stdcall Hook_4021A8(HWND iShow);
 extern "C" int __stdcall Hook_40103C(int iShow);
 void ProposeMilitaryBaseDecline(void);
 void ProposeMilitaryBaseMissileSilos(void);
+void ProposeMilitaryBaseAirForceBase(void);
+void ProposeMilitaryBaseArmyBase(void);
 
 // Registry hooks
 void InstallRegistryPathingHooks_SC2K1996(void);

@@ -731,6 +731,51 @@ static int MilitaryBaseDecline(void) {
 	return iRes;
 }
 
+static int MilitaryBaseAirForce(int iValidTiles, int iValidAltitudeTiles, __int16 iRandXPos, __int16 iRandStoredYPos) {
+	if (iValidTiles == iValidAltitudeTiles) {
+		bMilitaryBaseType = MILITARY_BASE_AIR_FORCE;
+		Game_AfxMessageBox(242, 0, -1);
+
+		MilitaryBasePlotPlacement(iRandXPos, iRandStoredYPos);
+
+		return Game_CenterOnTileCoords(iRandXPos + 4, iRandStoredYPos + 4);
+	}
+
+	return -1;
+}
+
+static int MilitaryBaseArmyBase(int iValidTiles, int iValidAltitudeTiles, __int16 iRandXPos, __int16 iRandStoredYPos) {
+	if (iValidTiles != iValidAltitudeTiles) {
+		bMilitaryBaseType = MILITARY_BASE_ARMY;
+		Game_AfxMessageBox(241, 0, -1);
+
+		MilitaryBasePlotPlacement(iRandXPos, iRandStoredYPos);
+
+		// Explanation:
+		// First it lays down the depth-way roads and runwaycross.
+		// Second it lays down the length-way roads and runwaycross.
+		// If during each attempt it fails at laying down the roadway, it will
+		// check to see whether both runwaycross items are present, if they're
+		// not then it'll attempt to place down the respective crossing once more
+		// but from the opposite direction.
+		FormArmyBaseStrip(iRandXPos + 2, iRandStoredYPos, iRandXPos + 2, iRandStoredYPos + 7);
+		if (!FindArmyBaseCrossingDepth(iRandXPos + 2, iRandStoredYPos, iRandStoredYPos + 7))
+			FormArmyBaseStrip(iRandXPos + 2, iRandStoredYPos + 7, iRandXPos + 2, iRandStoredYPos);
+		FormArmyBaseStrip(iRandXPos + 5, iRandStoredYPos, iRandXPos + 5, iRandStoredYPos + 7);
+		if (!FindArmyBaseCrossingDepth(iRandXPos + 5, iRandStoredYPos, iRandStoredYPos + 7))
+			FormArmyBaseStrip(iRandXPos + 5, iRandStoredYPos + 7, iRandXPos + 5, iRandStoredYPos);
+		FormArmyBaseStrip(iRandXPos, iRandStoredYPos + 2, iRandXPos + 7, iRandStoredYPos + 2);
+		if (!FindArmyBaseCrossingLength(iRandStoredYPos + 2, iRandXPos + 7, iRandXPos))
+			FormArmyBaseStrip(iRandXPos + 7, iRandStoredYPos + 2, iRandXPos, iRandStoredYPos + 2);
+		FormArmyBaseStrip(iRandXPos, iRandStoredYPos + 5, iRandXPos + 7, iRandStoredYPos + 5);
+		if (!FindArmyBaseCrossingLength(iRandStoredYPos + 5, iRandXPos + 7, iRandXPos))
+			FormArmyBaseStrip(iRandXPos + 7, iRandStoredYPos + 5, iRandXPos, iRandStoredYPos + 5);
+		return Game_CenterOnTileCoords(iRandXPos + 4, iRandStoredYPos + 4);
+	}
+
+	return -1;
+}
+
 void ProposeMilitaryBaseDecline(void) {
 	if (MessageBoxA(NULL, "Are you sure that you want to stop the development of existing military zones?", "Ominous sounds of danger...", MB_OKCANCEL) != IDOK) {
 		return;
@@ -759,6 +804,56 @@ REATTEMPT:
 		bPlacementFailure = true;
 
 	if (bPlacementFailure) {
+		if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
+			iMilitaryBaseTries++;
+			goto REATTEMPT;
+		}
+		MilitaryBaseDecline();
+	}
+}
+
+void ProposeMilitaryBaseAirForceBase(void) {
+	__int16 iValidAltitudeTiles;
+	__int16 iRandXPos;
+	__int16 iRandYPos;
+	__int16 iValidTiles;
+	__int16 iRandStoredXPos;
+	__int16 iRandStoredYPos;
+
+	if (MessageBoxA(NULL, "Are you sure that you want an attempt to be made to spawn an Air Force plot?", "Ominous sounds of danger...", MB_OKCANCEL) != IDOK) {
+		return;
+	}
+	unsigned int iMilitaryBaseTries = 0;
+REATTEMPT:
+	MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &iRandXPos, &iRandYPos, &iRandStoredXPos, &iRandStoredYPos);
+
+	int iResult = MilitaryBaseAirForce(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandStoredYPos);
+	if (iResult < 0) {
+		if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
+			iMilitaryBaseTries++;
+			goto REATTEMPT;
+		}
+		MilitaryBaseDecline();
+	}
+}
+
+void ProposeMilitaryBaseArmyBase(void) {
+	__int16 iValidAltitudeTiles;
+	__int16 iRandXPos;
+	__int16 iRandYPos;
+	__int16 iValidTiles;
+	__int16 iRandStoredXPos;
+	__int16 iRandStoredYPos;
+
+	if (MessageBoxA(NULL, "Are you sure that you want an attempt to be made to spawn an Army Base plot?", "Ominous sounds of danger...", MB_OKCANCEL) != IDOK) {
+		return;
+	}
+	unsigned int iMilitaryBaseTries = 0;
+REATTEMPT:
+	MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &iRandXPos, &iRandYPos, &iRandStoredXPos, &iRandStoredYPos);
+
+	int iResult = MilitaryBaseArmyBase(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandStoredYPos);
+	if (iResult < 0) {
 		if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
 			iMilitaryBaseTries++;
 			goto REATTEMPT;
@@ -928,10 +1023,10 @@ REROLLCOASTALSPOT:
 NONAVY:
 		MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &iRandXPos, &iRandYPos, &iRandStoredXPos, &iRandStoredYPos);
 
-		int iSiloRet = MilitaryBaseMissileSilos(iValidAltitudeTiles, iValidTiles, false);
-		if (iSiloRet >= 0) {
-			if (iSiloRet > 0)
-				return iSiloRet;
+		iResult = MilitaryBaseMissileSilos(iValidAltitudeTiles, iValidTiles, false);
+		if (iResult >= 0) {
+			if (iResult > 0)
+				return iResult;
 			else {
 				if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
 					iMilitaryBaseTries++;
@@ -941,39 +1036,9 @@ NONAVY:
 			}
 		}
 		else {
-			if (iValidTiles == iValidAltitudeTiles) {
-				bMilitaryBaseType = MILITARY_BASE_AIR_FORCE;
-				Game_AfxMessageBox(242, 0, -1);
-			}
-			else {
-				bMilitaryBaseType = MILITARY_BASE_ARMY;
-				Game_AfxMessageBox(241, 0, -1);
-			}
-
-			MilitaryBasePlotPlacement(iRandXPos, iRandStoredYPos);
-
-			if (bMilitaryBaseType == MILITARY_BASE_ARMY) {
-				// Explanation:
-				// First it lays down the depth-way roads and runwaycross.
-				// Second it lays down the length-way roads and runwaycross.
-				// If during each attempt it fails at laying down the roadway, it will
-				// check to see whether both runwaycross items are present, if they're
-				// not then it'll attempt to place down the respective crossing once more
-				// but from the opposite direction.
-				FormArmyBaseStrip(iRandXPos + 2, iRandStoredYPos, iRandXPos + 2, iRandStoredYPos + 7);
-				if (!FindArmyBaseCrossingDepth(iRandXPos + 2, iRandStoredYPos, iRandStoredYPos + 7))
-					FormArmyBaseStrip(iRandXPos + 2, iRandStoredYPos + 7, iRandXPos + 2, iRandStoredYPos);
-				FormArmyBaseStrip(iRandXPos + 5, iRandStoredYPos, iRandXPos + 5, iRandStoredYPos + 7);
-				if (!FindArmyBaseCrossingDepth(iRandXPos + 5, iRandStoredYPos, iRandStoredYPos + 7))
-					FormArmyBaseStrip(iRandXPos + 5, iRandStoredYPos + 7, iRandXPos + 5, iRandStoredYPos);
-				FormArmyBaseStrip(iRandXPos, iRandStoredYPos + 2, iRandXPos + 7, iRandStoredYPos + 2);
-				if (!FindArmyBaseCrossingLength(iRandStoredYPos + 2, iRandXPos + 7, iRandXPos))
-					FormArmyBaseStrip(iRandXPos + 7, iRandStoredYPos + 2, iRandXPos, iRandStoredYPos + 2);
-				FormArmyBaseStrip(iRandXPos, iRandStoredYPos + 5, iRandXPos + 7, iRandStoredYPos + 5);
-				if (!FindArmyBaseCrossingLength(iRandStoredYPos + 5, iRandXPos + 7, iRandXPos))
-					FormArmyBaseStrip(iRandXPos + 7, iRandStoredYPos + 5, iRandXPos, iRandStoredYPos + 5);
-			}
-			return Game_CenterOnTileCoords(iRandXPos + 4, iRandStoredYPos + 4);
+			iResult = MilitaryBaseAirForce(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandStoredYPos);
+			if (iResult < 0)
+				iResult = MilitaryBaseArmyBase(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandStoredYPos);
 		}
 	}
 	return iResult;
