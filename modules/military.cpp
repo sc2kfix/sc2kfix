@@ -716,6 +716,27 @@ void ProposeMilitaryBaseDecline(void) {
 	MilitaryBaseDecline(false);
 }
 
+void ProposeMilitaryBaseMissileSilos(void) {
+	unsigned int iMilitaryBaseTries = 0;
+REATTEMPT:
+	bool bPlacementFailure = false;
+	int iSiloRet = MilitaryBaseMissileSilos(0, 0, true); // The 'force' attribute here should be false.
+	if (iSiloRet >= 0) {
+		if (iSiloRet == 0)
+			bPlacementFailure = true;
+	}
+	else
+		bPlacementFailure = true;
+
+	if (bPlacementFailure) {
+		if (iMilitaryBaseTries < 10) {
+			iMilitaryBaseTries++;
+			goto REATTEMPT;
+		}
+		MilitaryBaseDecline(true);
+	}
+}
+
 extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	int iResult;
 	__int16 iValidAltitudeTiles;
@@ -731,7 +752,7 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	int iTileCoords[2];
 	int iNavyLandingAttempts;
 	
-	UINT iMilitaryBaseTries = 0;
+	unsigned int iMilitaryBaseTries = 0;
 
 	iResult = Game_AfxMessageBox(240, MB_YESNO, -1);
 	if (iResult == IDNO) {
@@ -879,7 +900,7 @@ REROLLCOASTALSPOT:
 NONAVY:
 		MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &iRandXPos, &iRandYPos, &iRandStoredXPos, &iRandStoredYPos);
 
-		int iSiloRet = MilitaryBaseMissileSilos(iValidAltitudeTiles, iValidTiles, false); // The 'force' attribute here should be false.
+		int iSiloRet = MilitaryBaseMissileSilos(iValidAltitudeTiles, iValidTiles, false);
 		if (iSiloRet >= 0) {
 			if (iSiloRet > 0)
 				return iSiloRet;

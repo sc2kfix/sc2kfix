@@ -1216,7 +1216,7 @@ skipgamemenu:
 			IDM_DEBUG_MILITARY_DECLINED,
 			IDM_DEBUG_MILITARY_DECLINED,
 			0x0A,
-			ProposeMilitaryBaseDecline, // Decline function call.
+			ProposeMilitaryBaseDecline,
 		};
 
 		afxMessageMapEntry[1] = {
@@ -1252,7 +1252,7 @@ skipgamemenu:
 			IDM_DEBUG_MILITARY_MISSILESILOS,
 			IDM_DEBUG_MILITARY_MISSILESILOS,
 			0x0A,
-			NULL, // Missile Silos function call.
+			ProposeMilitaryBaseMissileSilos,
 		};
 
 		VirtualProtect((LPVOID)0x4D4608, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
