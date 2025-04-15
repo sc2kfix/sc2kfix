@@ -524,6 +524,23 @@ static int CheckForOverlappingSiloPositions(DWORD *wSiloPos, int iPos, __int16 x
 	return 0;
 }
 
+static int MilitaryBaseDecline(void) {
+	if (bMilitaryBaseType == MILITARY_BASE_DECLINED) {
+		ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> MilitaryBaseDecline() - IDNO\n", _ReturnAddress());
+		return IDNO;
+	}
+
+	int iRes = Game_AfxMessageBox(411, 0, -1);
+	bMilitaryBaseType = MILITARY_BASE_DECLINED;
+	ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> MilitaryBaseDecline() - (%d) (%d)\n", _ReturnAddress(), iRes, bMilitaryBaseType);
+	return iRes;
+}
+
+void ProposeMilitaryBaseDecline(void) {
+	ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> ProposeMilitaryBaseDecline()\n", _ReturnAddress());
+	MilitaryBaseDecline();
+}
+
 extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	int iResult;
 	int iIterations;
@@ -841,8 +858,7 @@ RETRY_CHECK1:
 					iMilitaryBaseTries++;
 					goto REATTEMPT;
 				}
-				iResult = Game_AfxMessageBox(411, 0, -1);
-				bMilitaryBaseType = MILITARY_BASE_DECLINED;
+				iResult = MilitaryBaseDecline();
 			}
 		}
 		else {

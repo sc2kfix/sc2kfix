@@ -1210,21 +1210,13 @@ skipgamemenu:
 			goto skipdebugmenu;
 		}
 
-		// The items have been inserted, so we're back to ascending order.
-
-		EnableMenuItem(hDebugPopup, 5, MF_BYPOSITION | MF_ENABLED);
-		EnableMenuItem(hDebugPopup, 6, MF_BYPOSITION | MF_ENABLED);
-		EnableMenuItem(hDebugPopup, 7, MF_BYPOSITION | MF_ENABLED);
-		EnableMenuItem(hDebugPopup, 8, MF_BYPOSITION | MF_ENABLED);
-		EnableMenuItem(hDebugPopup, 9, MF_BYPOSITION | MF_ENABLED);
-
 		afxMessageMapEntry[0] = {
 			WM_COMMAND,
 			0,
 			IDM_DEBUG_MILITARY_DECLINED,
 			IDM_DEBUG_MILITARY_DECLINED,
 			0x0A,
-			NULL, // Decline function call.
+			ProposeMilitaryBaseDecline, // Decline function call.
 		};
 
 		afxMessageMapEntry[1] = {
@@ -1263,8 +1255,8 @@ skipgamemenu:
 			NULL, // Missile Silos function call.
 		};
 
-		VirtualProtect((LPVOID)0x4D45F0, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
-		memcpy_s((LPVOID)0x4D45F0, sizeof(afxMessageMapEntry), &afxMessageMapEntry, sizeof(afxMessageMapEntry));
+		VirtualProtect((LPVOID)0x4D4608, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
+		memcpy_s((LPVOID)0x4D4608, sizeof(afxMessageMapEntry), &afxMessageMapEntry, sizeof(afxMessageMapEntry));
 
 		if (mischook_debug & MISCHOOK_DEBUG_MENU)
 			ConsoleLog(LOG_DEBUG, "MISC: Updated debug menu.\n");
