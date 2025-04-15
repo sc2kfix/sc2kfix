@@ -170,11 +170,18 @@ extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR l
 	return LoadStringA(hInstance, uID, lpBuffer, cchBufferMax);
 }
 
+extern "C" BOOL __stdcall Hook_DestroyMenu(HMENU hMenu) {
+	ConsoleLog(LOG_DEBUG, "MENU: 0x%06X -> DestroyMenu(0x%06X)\n", hMenu);
+	return DestroyMenu(hMenu);
+}
+
 #pragma warning(disable : 6387)
 // Hook LoadMenuA so we can insert our own menu items.
 extern "C" HMENU __stdcall Hook_LoadMenuA(HINSTANCE hInstance, LPCSTR lpMenuName) {
 	if ((DWORD)lpMenuName == 3 && hGameMenu)
 		return hGameMenu;
+	if ((DWORD)lpMenuName == 223 && hDebugMenu)
+		return hDebugMenu;
 	return LoadMenuA(hInstance, lpMenuName);
 }
 #pragma warning(default : 6387)
@@ -932,6 +939,7 @@ void InstallMiscHooks(void) {
 	*(DWORD*)(0x4EFBE8) = (DWORD)Hook_LoadStringA;
 
 	// Install LoadMenuA hook
+	*(DWORD*)(0x4EFBF0) = (DWORD)Hook_DestroyMenu;
 	*(DWORD*)(0x4EFDCC) = (DWORD)Hook_LoadMenuA;
 	*(DWORD*)(0x4EFE58) = (DWORD)Hook_EnableMenuItem;
 	*(DWORD*)(0x4EFC64) = (DWORD)Hook_DialogBoxParamA;
@@ -1103,28 +1111,31 @@ void InstallMiscHooks(void) {
 		miiOptionsPopup.cbSize = sizeof(MENUITEMINFO);
 		miiOptionsPopup.fMask = MIIM_SUBMENU;
 		if (!GetMenuItemInfo(hGameMenu, 2, TRUE, &miiOptionsPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
-			goto skipmenu;
+			ConsoleLog(LOG_DEBUG, "MISC: Game GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
+			goto skipgamemenu;
 		}
 		hOptionsPopup = miiOptionsPopup.hSubMenu;
-		if (!AppendMenu(hOptionsPopup, MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: AppendMenuA #1 failed, error = 0x%08X.\n", GetLastError());
-			goto skipmenu;
+		if (!InsertMenu(hOptionsPopup, -1, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #1 failed, error = 0x%08X.\n", GetLastError());
+			goto skipgamemenu;
 		}
-		if (!AppendMenu(hOptionsPopup, MF_STRING, 40000, "sc2kfix &Settings...") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: AppendMenuA #2 failed, error = 0x%08X.\n", GetLastError());
-			goto skipmenu;
+		if (!InsertMenu(hOptionsPopup, -1, MF_BYPOSITION|MF_STRING,  IDM_GAME_OPTIONS_SC2KFIXSETTINGS, "sc2kfix &Settings...") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #2 failed, error = 0x%08X.\n", GetLastError());
+			goto skipgamemenu;
 		}
-		if (!AppendMenu(hOptionsPopup, MF_STRING, 40001, "Mod &Configuration...") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: AppendMenuA #3 failed, error = 0x%08X.\n", GetLastError());
-			goto skipmenu;
+		if (!InsertMenu(hOptionsPopup, -1, MF_BYPOSITION|MF_STRING, IDM_GAME_OPTIONS_MODCONFIG, "Mod &Configuration...") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #3 failed, error = 0x%08X.\n", GetLastError());
+			goto skipgamemenu;
 		}
+
+		EnableMenuItem(hOptionsPopup, 5, MF_BYPOSITION | MF_ENABLED);
+		EnableMenuItem(hOptionsPopup, 6, MF_BYPOSITION | MF_ENABLED);
 
 		afxMessageMapEntry[0] = {
 			WM_COMMAND,
 			0,
-			40000,
-			40000,
+			IDM_GAME_OPTIONS_SC2KFIXSETTINGS,
+			IDM_GAME_OPTIONS_SC2KFIXSETTINGS,
 			0x0A,
 			ShowSettingsDialog,
 		};
@@ -1132,8 +1143,8 @@ void InstallMiscHooks(void) {
 		afxMessageMapEntry[1] = {
 			WM_COMMAND,
 			0,
-			40001,
-			40001,
+			IDM_GAME_OPTIONS_MODCONFIG,
+			IDM_GAME_OPTIONS_MODCONFIG,
 			0x0A,
 			ShowModSettingsDialog
 		};
@@ -1145,7 +1156,121 @@ void InstallMiscHooks(void) {
 			ConsoleLog(LOG_DEBUG, "MISC: Updated game menu.\n");
 	}
 
-skipmenu:
+skipgamemenu:
+
+	hDebugMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(223));
+	if (hDebugMenu) {
+		AFX_MSGMAP_ENTRY afxMessageMapEntry[5];
+		HMENU hDebugPopup;
+		MENUITEMINFO miiDebugPopup;
+		miiDebugPopup.cbSize = sizeof(MENUITEMINFO);
+		miiDebugPopup.fMask = MIIM_SUBMENU;
+		if (!GetMenuItemInfo(hDebugMenu, 0, TRUE, &miiDebugPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
+			goto skipdebugmenu;
+		}
+		hDebugPopup = miiDebugPopup.hSubMenu;
+
+		// Insert in reverse order.
+		// Separator between the disasters and internal debugging functions.
+		if (!InsertMenu(hDebugPopup, 11, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #1 failed, error = 0x%08X.\n", GetLastError());
+			goto skipdebugmenu;
+		}
+		// Separator between grants and disasters
+		if (!InsertMenu(hDebugPopup, 4, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #2 failed, error = 0x%08X.\n", GetLastError());
+			goto skipdebugmenu;
+		}
+		// Separator between the version option and grants
+		if (!InsertMenu(hDebugPopup, 1, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #3 failed, error = 0x%08X.\n", GetLastError());
+			goto skipdebugmenu;
+		}
+		
+		// Insert in reverse order.
+		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_MISSILESILOS, "Propose Missile Silos") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #4 failed, error = 0x%08X.\n", GetLastError());
+			goto skipdebugmenu;
+		}
+		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_NAVYYARD, "Propose Navy Yard") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #5 failed, error = 0x%08X.\n", GetLastError());
+			goto skipdebugmenu;
+		}
+		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_ARMYBASE, "Propose Army Base") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #6 failed, error = 0x%08X.\n", GetLastError());
+			goto skipdebugmenu;
+		}
+		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_AIRFORCE, "Propose Air Force Base") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #7 failed, error = 0x%08X.\n", GetLastError());
+			goto skipdebugmenu;
+		}
+		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_DECLINED, "Stop Military Spawning") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #8 failed, error = 0x%08X.\n", GetLastError());
+			goto skipdebugmenu;
+		}
+
+		// The items have been inserted, so we're back to ascending order.
+
+		EnableMenuItem(hDebugPopup, 5, MF_BYPOSITION | MF_ENABLED);
+		EnableMenuItem(hDebugPopup, 6, MF_BYPOSITION | MF_ENABLED);
+		EnableMenuItem(hDebugPopup, 7, MF_BYPOSITION | MF_ENABLED);
+		EnableMenuItem(hDebugPopup, 8, MF_BYPOSITION | MF_ENABLED);
+		EnableMenuItem(hDebugPopup, 9, MF_BYPOSITION | MF_ENABLED);
+
+		afxMessageMapEntry[0] = {
+			WM_COMMAND,
+			0,
+			IDM_DEBUG_MILITARY_DECLINED,
+			IDM_DEBUG_MILITARY_DECLINED,
+			0x0A,
+			NULL, // Decline function call.
+		};
+
+		afxMessageMapEntry[1] = {
+			WM_COMMAND,
+			0,
+			IDM_DEBUG_MILITARY_AIRFORCE,
+			IDM_DEBUG_MILITARY_AIRFORCE,
+			0x0A,
+			NULL, // Air Force function call.
+		};
+
+		afxMessageMapEntry[2] = {
+			WM_COMMAND,
+			0,
+			IDM_DEBUG_MILITARY_ARMYBASE,
+			IDM_DEBUG_MILITARY_ARMYBASE,
+			0x0A,
+			NULL, // Army Base function call.
+		};
+
+		afxMessageMapEntry[3] = {
+			WM_COMMAND,
+			0,
+			IDM_DEBUG_MILITARY_NAVYYARD,
+			IDM_DEBUG_MILITARY_NAVYYARD,
+			0x0A,
+			NULL, // Navy Yard function call.
+		};
+
+		afxMessageMapEntry[4] = {
+			WM_COMMAND,
+			0,
+			IDM_DEBUG_MILITARY_MISSILESILOS,
+			IDM_DEBUG_MILITARY_MISSILESILOS,
+			0x0A,
+			NULL, // Missile Silos function call.
+		};
+
+		VirtualProtect((LPVOID)0x4D45F0, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
+		memcpy_s((LPVOID)0x4D45F0, sizeof(afxMessageMapEntry), &afxMessageMapEntry, sizeof(afxMessageMapEntry));
+
+		if (mischook_debug & MISCHOOK_DEBUG_MENU)
+			ConsoleLog(LOG_DEBUG, "MISC: Updated debug menu.\n");
+	}
+
+skipdebugmenu:
 
 	// Hook for the game area leftmousebuttondown call.
 	VirtualProtect((LPVOID)0x401523, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
