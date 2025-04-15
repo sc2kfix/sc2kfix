@@ -600,15 +600,13 @@ RETRY_CHECK1:
 				__int16 iAltPosTwo;
 				iRandXPos = Game_RandomWordLCGMod(124);
 				iRandYPos = Game_RandomWordLCGMod(124);
-				__int16 iDirectionOne = iRandXPos;
-				__int16 iDirectionTwo = iRandYPos;
 				if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_WEST) {
-					iAltPosOne = iDirectionTwo;
-					iAltPosTwo = iDirectionOne;
+					iAltPosOne = iRandYPos;
+					iAltPosTwo = iRandXPos;
 				}
 				else {
-					iAltPosOne = iDirectionOne;
-					iAltPosTwo = iDirectionTwo;
+					iAltPosOne = iRandXPos;
+					iAltPosTwo = iRandYPos;
 				}
 				iArrPos = iAltPosOne;
 				__int16 iBaseLevel = dwMapALTM[iAltPosOne]->w[iAltPosTwo].iLandAltitude;
