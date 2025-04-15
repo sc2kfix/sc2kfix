@@ -19,6 +19,10 @@
 
 #define MILITARY_DEBUG DEBUG_FLAGS_NONE
 
+#define MILITARY_RETRY_SILO_REPOSIT 32
+#define MILITARY_RETRY_SILO_SPOTFIND 20
+#define MILITARY_RETRY_ATTEMPT_MAX 10
+
 #ifdef DEBUGALL
 #undef MILITARY_DEBUG
 #define MILITARY_DEBUG DEBUG_FLAGS_EVERYTHING
@@ -492,13 +496,13 @@ static int CheckOverlappingSiloPosition(__int16 x1, __int16 y1, __int16 x2, __in
 						return 1;
 					if (xPos1 == xPos2 || (xPos1 >= xPos2 - 1 && xPos1 <= xPos2 + 4)) {
 						if (yPos1 == yPos2 || (yPos1 >= yPos2 - 1 && yPos1 <= yPos2 + 4)) {
-							ConsoleLog(LOG_DEBUG, "CheckOverlappingSiloPosition (X-CHECK) (%d, %d, %d, %d) (%d, %d, %d, %d) xPos1(%d), yPos1(%d), xPos2(%d), yPos2(%d)\n", x1, y1, x2, y2, i1, j1, i2, j2, xPos1, yPos1, xPos2, yPos2);
+							//ConsoleLog(LOG_DEBUG, "CheckOverlappingSiloPosition (X-CHECK) (%d, %d, %d, %d) (%d, %d, %d, %d) xPos1(%d), yPos1(%d), xPos2(%d), yPos2(%d)\n", x1, y1, x2, y2, i1, j1, i2, j2, xPos1, yPos1, xPos2, yPos2);
 							return 1;
 						}
 					}
 					if (yPos1 == yPos2 || (yPos1 >= yPos2 - 1 && yPos1 <= yPos2 + 4)) {
 						if (xPos1 == xPos2 || (xPos1 >= xPos2 - 1 && xPos1 <= xPos2 + 4)) {
-							ConsoleLog(LOG_DEBUG, "CheckOverlappingSiloPosition (Y-CHECK) (%d, %d, %d, %d) (%d, %d, %d, %d) xPos1(%d), yPos1(%d), xPos2(%d), yPos2(%d)\n", x1, y1, x2, y2, i1, j1, i2, j2, xPos1, yPos1, xPos2, yPos2);
+							//ConsoleLog(LOG_DEBUG, "CheckOverlappingSiloPosition (Y-CHECK) (%d, %d, %d, %d) (%d, %d, %d, %d) xPos1(%d), yPos1(%d), xPos2(%d), yPos2(%d)\n", x1, y1, x2, y2, i1, j1, i2, j2, xPos1, yPos1, xPos2, yPos2);
 							return 1;
 						}
 					}
@@ -518,9 +522,9 @@ static int CheckForOverlappingSiloPositions(WORD *wSiloPos, int iPos, __int16 x1
 		y2 = wSiloPos[2 * i + 1];
 		if (CheckOverlappingSiloPosition(x1, y1, x2, y2))
 			return 1;
-		ConsoleLog(LOG_DEBUG, "CheckForOverlappingSiloPositions(): (%d/%d) X/Y1(%d,%d), X/Y2(%d,%d)\n", i+1, iPos, x1, y1, x2, y2);
+		//ConsoleLog(LOG_DEBUG, "CheckForOverlappingSiloPositions(): (%d/%d) X/Y1(%d,%d), X/Y2(%d,%d)\n", i+1, iPos, x1, y1, x2, y2);
 	}
-	ConsoleLog(LOG_DEBUG, "CheckForOverlappingSiloPositions(NO OVERLAP): X/Y1(%d,%d)\n", x1, y1);
+	//ConsoleLog(LOG_DEBUG, "CheckForOverlappingSiloPositions(NO OVERLAP): X/Y1(%d,%d)\n", x1, y1);
 	return 0;
 }
 
@@ -633,7 +637,7 @@ RETRY_CHECK1:
 									++iTileArea;
 								}
 								else {
-									if (iRetrySiloPos < 32) {
+									if (iRetrySiloPos < MILITARY_RETRY_SILO_REPOSIT) {
 										iRetrySiloPos++;
 										//ConsoleLog(LOG_DEBUG, "(VT: %d) Overlapping case found, trying again (%d).\n", iVTiles, iRetrySiloPos);
 										goto RETRY_CHECK1;
@@ -641,7 +645,7 @@ RETRY_CHECK1:
 								}
 							}
 							else {
-								if (iRetrySiloPos < 32) {
+								if (iRetrySiloPos < MILITARY_RETRY_SILO_REPOSIT) {
 									iRetrySiloPos++;
 									//ConsoleLog(LOG_DEBUG, "(VT: %d) Invalid case found, trying again (%d).\n", iVTiles, iRetrySiloPos);
 									goto RETRY_CHECK1;
@@ -659,7 +663,7 @@ RETRY_CHECK1:
 			} while (iVTiles < 6);
 		}
 		if (iVTiles != 6) {
-			if (iSiloAttempt < 20) {
+			if (iSiloAttempt < MILITARY_RETRY_SILO_SPOTFIND) {
 				iSiloAttempt++;
 				goto RETRY_CHECK2;
 			}
@@ -727,7 +731,7 @@ REATTEMPT:
 		bPlacementFailure = true;
 
 	if (bPlacementFailure) {
-		if (iMilitaryBaseTries < 10) {
+		if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
 			iMilitaryBaseTries++;
 			goto REATTEMPT;
 		}
@@ -903,7 +907,7 @@ NONAVY:
 			if (iSiloRet > 0)
 				return iSiloRet;
 			else {
-				if (iMilitaryBaseTries < 10) {
+				if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
 					iMilitaryBaseTries++;
 					goto REATTEMPT;
 				}
