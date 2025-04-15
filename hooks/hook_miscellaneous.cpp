@@ -1225,7 +1225,7 @@ skipgamemenu:
 			IDM_DEBUG_MILITARY_AIRFORCE,
 			IDM_DEBUG_MILITARY_AIRFORCE,
 			0x0A,
-			ProposeMilitaryBaseAirForceBase, // Air Force function call.
+			ProposeMilitaryBaseAirForceBase,
 		};
 
 		afxMessageMapEntry[2] = {
@@ -1234,7 +1234,7 @@ skipgamemenu:
 			IDM_DEBUG_MILITARY_ARMYBASE,
 			IDM_DEBUG_MILITARY_ARMYBASE,
 			0x0A,
-			ProposeMilitaryBaseArmyBase, // Army Base function call.
+			ProposeMilitaryBaseArmyBase,
 		};
 
 		afxMessageMapEntry[3] = {
@@ -1243,7 +1243,7 @@ skipgamemenu:
 			IDM_DEBUG_MILITARY_NAVYYARD,
 			IDM_DEBUG_MILITARY_NAVYYARD,
 			0x0A,
-			ProposeMilitaryBaseNavyYard, // Navy Yard function call.
+			ProposeMilitaryBaseNavyYard,
 		};
 
 		afxMessageMapEntry[4] = {

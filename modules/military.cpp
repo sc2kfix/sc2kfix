@@ -927,7 +927,7 @@ void ProposeMilitaryBaseDecline(void) {
 	}
 	ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> ProposeMilitaryBaseDecline()\n", _ReturnAddress());
 	if (bMilitaryBaseType <= MILITARY_BASE_DECLINED) {
-		MessageBoxA(NULL, "Military base development has already been stopped.", "Clonk", MB_OK);
+		MessageBoxA(NULL, "Military base development has already been stopped.", "Clonk", MB_OK|MB_ICONASTERISK);
 		return;
 	}
 	MilitaryBaseDecline();
@@ -1009,7 +1009,7 @@ REATTEMPT:
 
 void ProposeMilitaryBaseNavyYard(void) {
 	if (!bCityHasOcean) {
-		MessageBoxA(NULL, "A Navy Yard cannot be placed in a city without a neighbouring ocean.", "Clonk", MB_OK);
+		MessageBoxA(NULL, "A Navy Yard cannot be placed in a city without a neighbouring ocean.", "Clonk", MB_OK|MB_ICONSTOP);
 		return;
 	}
 	if (MessageBoxA(NULL, "Are you sure that you want an attempt to be made to spawn a Navy Yard plot?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES) {
