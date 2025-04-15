@@ -314,6 +314,7 @@ void ProposeMilitaryBaseDecline(void);
 void ProposeMilitaryBaseMissileSilos(void);
 void ProposeMilitaryBaseAirForceBase(void);
 void ProposeMilitaryBaseArmyBase(void);
+void ProposeMilitaryBaseNavyYard(void);
 
 // Registry hooks
 void InstallRegistryPathingHooks_SC2K1996(void);

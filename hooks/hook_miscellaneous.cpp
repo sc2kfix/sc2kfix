@@ -930,10 +930,6 @@ void ShowModSettingsDialog(void) {
 	MessageBox(NULL, "The mod settings dialog has not yet been implemented. Check back later.", "sc2fix", MB_OK);
 }
 
-static void DummyFunction(void) {
-	// Applied to not-yet-implemented items.
-}
-
 // Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
 // This should probably have a better name. And maybe be broken out into smaller functions.
 void InstallMiscHooks(void) {
@@ -1247,7 +1243,7 @@ skipgamemenu:
 			IDM_DEBUG_MILITARY_NAVYYARD,
 			IDM_DEBUG_MILITARY_NAVYYARD,
 			0x0A,
-			DummyFunction, // Navy Yard function call.
+			ProposeMilitaryBaseNavyYard, // Navy Yard function call.
 		};
 
 		afxMessageMapEntry[4] = {
