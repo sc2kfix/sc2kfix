@@ -524,10 +524,143 @@ static int CheckForOverlappingSiloPositions(DWORD *wSiloPos, int iPos, __int16 x
 	return 0;
 }
 
-static int MilitaryBaseDecline(void) {
-	if (bMilitaryBaseType == MILITARY_BASE_DECLINED) {
-		ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> MilitaryBaseDecline() - IDNO\n", _ReturnAddress());
-		return IDNO;
+static int MilitaryBaseMissileSilos(int iValidAltitudeTiles, int iValidTiles, bool force) {
+	int iRandXPos, iRandYPos;
+	int iSiloIdx;
+	__int16 i, j;
+	WORD uArrPos;
+	DWORD dwSiloPos[12];
+	
+	int iVAltitudeTiles = iValidAltitudeTiles;
+	int iVTiles = iValidTiles;
+	if (force) {
+		if (iVAltitudeTiles >= 40)
+			iVAltitudeTiles = 39;
+		if (iVTiles >= 40)
+			iVTiles = 39;
+	}
+	if (iVAltitudeTiles < 40) {
+		int iSiloAttempt = 0;
+		if (iVTiles < 40) {
+RETRY_CHECK2:
+			int iRetrySiloPos = 0;
+RETRY_CHECK1:
+			int iIterations = 24;
+			if (iSiloAttempt == 0)
+				iVTiles = 0;
+			do {
+				BOOL bMaxIteration = iIterations-- == 0;
+				if (bMaxIteration)
+					break;
+				int iDirectionOne;
+				int iDirectionTwo;
+				WORD uAltPosOne;
+				WORD uAltPosTwo;
+				iRandXPos = Game_RandomWordLCGMod(124);
+				iRandYPos = Game_RandomWordLCGMod(124);
+				iDirectionOne = iRandXPos;
+				iDirectionTwo = iRandYPos;
+				if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_WEST) {
+					uAltPosOne = iDirectionTwo;
+					uAltPosTwo = iDirectionOne;
+				}
+				else {
+					uAltPosOne = iDirectionOne;
+					uAltPosTwo = iDirectionTwo;
+				}
+				uArrPos = uAltPosOne;
+				__int16 iBaseLevel = dwMapALTM[uAltPosOne]->w[uAltPosTwo].iLandAltitude;
+				for (i = 0; (__int16)uArrPos < uAltPosOne + 3; ++uArrPos) {
+					for (j = uAltPosTwo; uAltPosTwo + 3 > j; ++j) {
+						__int16 iLengthWays = (__int16)uArrPos;
+						__int16 iDepthWays = j;
+						if (
+							dwMapXBLD[iLengthWays]->iTileID[iDepthWays] < TILE_SMALLPARK &&
+							!dwMapXTER[iLengthWays]->iTileID[iDepthWays] &&
+							(
+								iLengthWays >= 0x80 ||
+								iDepthWays >= 0x80 ||
+								dwMapXBIT[iLengthWays]->b[iDepthWays].iWater == 0
+								) &&
+							dwMapALTM[iLengthWays]->w[iDepthWays].iLandAltitude == iBaseLevel &&
+							dwMapXZON[iLengthWays]->b[iDepthWays].iZoneType != ZONE_MILITARY &&
+							!dwMapXUND[uAltPosOne]->iTileID[uAltPosTwo]
+							) {
+							if (isValidSiloPos(iLengthWays, iDepthWays, 3)) {
+								if (!CheckForOverlappingSiloPositions(dwSiloPos, iVTiles, iLengthWays, iDepthWays)) {
+									if (i >= 9)
+										break;
+									++i;
+								}
+								else {
+									if ((iRetrySiloPos < 32/* && iVTiles < 5*/)/* || (iRetrySiloPos < 64 && iVTiles == 5)*/) {
+										iRetrySiloPos++;
+										//ConsoleLog(LOG_DEBUG, "(VT: %d) Overlapping case found, trying again (%d).\n", iVTiles, iRetrySiloPos);
+										goto RETRY_CHECK1;
+									}
+								}
+							}
+							else {
+								if ((iRetrySiloPos < 32/* && iVTiles < 5*/)/* || (iRetrySiloPos < 64 && iVTiles == 5)*/) {
+									iRetrySiloPos++;
+									//ConsoleLog(LOG_DEBUG, "(VT: %d) Invalid case found, trying again (%d).\n", iVTiles, iRetrySiloPos);
+									goto RETRY_CHECK1;
+								}
+							}
+						}
+					}
+				}
+				if (i == 9) {
+					iSiloIdx = iVTiles++;
+					dwSiloPos[2 * iSiloIdx] = uAltPosOne;
+					dwSiloPos[2 * iSiloIdx + 1] = uAltPosTwo;
+					//ConsoleLog(LOG_DEBUG, "DBG: i==9: (%d) (%u, %d)\n", iSiloIdx, dwSiloPos[2 * iSiloIdx], dwSiloPos[2 * iSiloIdx + 1]);
+				}
+			} while (iVTiles < 6);
+		}
+		if (iVTiles != 6) {
+			if (iSiloAttempt < 20) {
+				iSiloAttempt++;
+				goto RETRY_CHECK2;
+			}
+		}
+		if (iVTiles == 6) {
+			__int16 iSiloStartXPos = 0;
+			__int16 iSiloStartYPos = 0;
+			bMilitaryBaseType = MILITARY_BASE_MISSILE_SILOS;
+			for (i = 0; i < 6; i++) {
+				__int16 iSiloXPos = LOWORD(dwSiloPos[2 * i]);
+				iSiloStartXPos = iSiloXPos;
+				__int16 iSiloYPos;
+				for (iSiloStartYPos = LOWORD(dwSiloPos[2 * i + 1]); iSiloStartXPos + 3 > iSiloXPos; iSiloXPos = iSiloXPos + 1) {
+					for (iSiloYPos = iSiloStartYPos; iSiloStartYPos + 3 > iSiloYPos; ++*dwMilitaryTiles) {
+						BYTE iBuildingArea = dwMapXBLD[iSiloXPos]->iTileID[iSiloYPos];
+						--dwTileCount[iBuildingArea];
+						if (iSiloXPos < 0x80 && iSiloYPos < 0x80) {
+							dwMapXZON[iSiloXPos]->b[iSiloYPos].iZoneType = ZONE_MILITARY;
+							dwMapXZON[iSiloXPos]->b[iSiloYPos].iCorners = 0xF0;
+						}
+						++iSiloYPos;
+					}
+				}
+			}
+			Game_CenterOnTileCoords(iSiloStartXPos, iSiloStartYPos);
+			return Game_AfxMessageBox(244, 0, -1);
+		}
+		else
+			return 0;
+	}
+	// When 'force' is set to false, this will lead to the normal
+	// Air Force or Army Base cases.
+	return (force) ? 0 : -1;
+}
+
+static int MilitaryBaseDecline(bool bMsgbox_always) {
+	if (!bMsgbox_always) {
+		if (bMilitaryBaseType == MILITARY_BASE_DECLINED) {
+			ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> MilitaryBaseDecline() - IDNO\n", _ReturnAddress());
+			return IDNO;
+		}
 	}
 
 	int iRes = Game_AfxMessageBox(411, 0, -1);
@@ -538,7 +671,7 @@ static int MilitaryBaseDecline(void) {
 
 void ProposeMilitaryBaseDecline(void) {
 	ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> ProposeMilitaryBaseDecline()\n", _ReturnAddress());
-	MilitaryBaseDecline();
+	MilitaryBaseDecline(false);
 }
 
 extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
@@ -552,11 +685,8 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	__int16 iValidTiles;
 	int iPosOffset;
 	__int16 iBaseLevel;
-	__int16 i, j;
-	int iPos[2];
-	int k;
+	__int16 i;
 	unsigned __int16 uPos[2];
-	int iBuildingArea;
 	DWORD dwSiloPos[12];
 
 	int iTileCoords[2];
@@ -740,125 +870,17 @@ NONAVY:
 				}
 			}
 		} while (iValidTiles < 40);
-		// Short-circuit.
-		if (iValidAltitudeTiles >= 40)
-			iValidAltitudeTiles = 39;
-		// Short-circuit.
-		if (iValidAltitudeTiles < 40) {
-			// Short-circuit.
-			if (iValidTiles >= 40)
-				iValidTiles = 39;
-			// Short-circuit.
-			int iSiloAttempt = 0;
-			if (iValidTiles < 40) {
-RETRY_CHECK2:
-				int iRetrySilo = 0;
-RETRY_CHECK1:
-				iIterations = 24;
-				if (iSiloAttempt == 0)
-					iValidTiles = 0;
-				do {
-					bMaxIteration = iIterations-- == 0;
-					if (bMaxIteration)
-						break;
-					int iDirectionOne;
-					int iDirectionTwo;
-					WORD uAltPosOne;
-					WORD uAltPosTwo;
-					iRandOne[1] = Game_RandomWordLCGMod(124);
-					iRandTwo[1] = Game_RandomWordLCGMod(124);
-					iDirectionOne = iRandOne[1];
-					iDirectionTwo = iRandTwo[1];
-					if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_WEST) {
-						uAltPosOne = iDirectionTwo;
-						uAltPosTwo = iDirectionOne;
-					}
-					else {
-						uAltPosOne = iDirectionOne;
-						uAltPosTwo = iDirectionTwo;
-					}
-					uArrPos = uAltPosOne;
-					iBaseLevel = dwMapALTM[uAltPosOne]->w[uAltPosTwo].iLandAltitude;
-					for (i = 0; (__int16)uArrPos < uAltPosOne + 3; ++uArrPos) {
-						for (j = uAltPosTwo; uAltPosTwo + 3 > j; ++j) {
-							__int16 iLengthWays = (__int16)uArrPos;
-							__int16 iDepthWays = j;
-							if (
-								dwMapXBLD[iLengthWays]->iTileID[iDepthWays] < TILE_SMALLPARK &&
-								!dwMapXTER[iLengthWays]->iTileID[iDepthWays] &&
-								(
-									iLengthWays >= 0x80 ||
-									iDepthWays >= 0x80 ||
-									dwMapXBIT[iLengthWays]->b[iDepthWays].iWater == 0
-									) &&
-								dwMapALTM[iLengthWays]->w[iDepthWays].iLandAltitude == iBaseLevel &&
-								dwMapXZON[iLengthWays]->b[iDepthWays].iZoneType != ZONE_MILITARY &&
-								!dwMapXUND[uAltPosOne]->iTileID[uAltPosTwo]
-								) {
-								if (isValidSiloPos(iLengthWays, iDepthWays, 3)) {
-									if (!CheckForOverlappingSiloPositions(dwSiloPos, iValidTiles, iLengthWays, iDepthWays)) {
-										if (i >= 9)
-											break;
-										++i;
-									}
-									else {
-										if ((iRetrySilo < 32 && iValidTiles < 5) || (iRetrySilo < 64 && iValidTiles == 5)) {
-											iRetrySilo++;
-											//ConsoleLog(LOG_DEBUG, "(VT: %d) Overlapping case found, trying again (%d).\n", iValidTiles, iRetrySilo);
-											goto RETRY_CHECK1;
-										}
-									}
-								}
-								else {
-									if ((iRetrySilo < 32 && iValidTiles < 5) || (iRetrySilo < 64 && iValidTiles == 5)) {
-										iRetrySilo++;
-										//ConsoleLog(LOG_DEBUG, "(VT: %d) Invalid case found, trying again (%d).\n", iValidTiles, iRetrySilo);
-										goto RETRY_CHECK1;
-									}
-								}
-							}
-						}
-					}
-					if (i == 9) {
-						iPos[0] = iValidTiles++;
-						dwSiloPos[2 * iPos[0]] = uAltPosOne;
-						dwSiloPos[2 * iPos[0] + 1] = uAltPosTwo;
-						//ConsoleLog(LOG_DEBUG, "DBG: i==9: (%d) (%u, %d)\n", iPos[0], dwSiloPos[2 * iPos[0]], dwSiloPos[2 * iPos[0] + 1]);
-					}
-				} while (iValidTiles < 6);
-			}
-			if (iValidTiles != 6) {
-				if (iSiloAttempt < 20) {
-					iSiloAttempt++;
-					goto RETRY_CHECK2;
-				}
-			}
-			if (iValidTiles == 6) {
-				bMilitaryBaseType = MILITARY_BASE_MISSILE_SILOS;
-				for (i = 0; i < 6; i++) {
-					iPos[0] = dwSiloPos[2 * i];
-					iPos[1] = iPos[0];
-					for (k = dwSiloPos[2 * i + 1]; iPos[1] + 3 > (__int16)iPos[0]; P_LOWORD(iPos[0]) = iPos[0] + 1) {
-						for (uPos[0] = k; k + 3 > (__int16)uPos[0]; ++*dwMilitaryTiles) {
-							iBuildingArea = dwMapXBLD[iPos[0]]->iTileID[uPos[0]];
-							--dwTileCount[iBuildingArea];
-							if ((unsigned __int16)iPos[0] < 0x80u && uPos[0] < 0x80u) {
-								dwMapXZON[iPos[0]]->b[uPos[0]].iZoneType = ZONE_MILITARY;
-								dwMapXZON[iPos[0]]->b[uPos[0]].iCorners = 0xF0;
-							}
-							++uPos[0];
-						}
-					}
-				}
-				Game_CenterOnTileCoords(iPos[1], k);
-				return Game_AfxMessageBox(244, 0, -1);
-			}
+
+		int iSiloRet = MilitaryBaseMissileSilos(iValidAltitudeTiles, iValidTiles, true); // The 'force' attribute here should be false.
+		if (iSiloRet >= 0) {
+			if (iSiloRet > 0)
+				return iSiloRet;
 			else {
 				if (iMilitaryBaseTries < 10) {
 					iMilitaryBaseTries++;
 					goto REATTEMPT;
 				}
-				iResult = MilitaryBaseDecline();
+				iResult = MilitaryBaseDecline(true);
 			}
 		}
 		else {
