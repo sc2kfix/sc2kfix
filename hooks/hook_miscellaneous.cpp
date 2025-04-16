@@ -391,11 +391,30 @@ extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
 }
 
 extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, __int16 iTileID, __int16 iZoneType) {
+#if 0
+	__int16 x, y;
+
+	int(__cdecl *H_401B40)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x401B40;
+
+	x = iX;
+	y = iY;
+	if (iZoneType != ZONE_MILITARY) {
+		if (!H_401B40(iX, iY))
+			return 0;
+	}
+	switch (iTileID) {
+		case TILE_INFRASTRUCTURE_RUNWAY:
+			return 0;
+		default:
+			return 1;
+	}
+#else
 	int(__cdecl *H_SimulationGrowSpecificZone)(__int16, __int16, __int16, __int16) = (int(__cdecl *)(__int16, __int16, __int16, __int16))0x4382B0;
 
 	int ret = H_SimulationGrowSpecificZone(iX, iY, iTileID, iZoneType);
 
 	return ret;
+#endif
 }
 
 extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 m_x, int m_y, __int16 iTileID, __int16 iTileArea) {
