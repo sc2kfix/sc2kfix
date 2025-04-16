@@ -939,16 +939,8 @@ void ProposeMilitaryBaseMissileSilos(void) {
 	}
 	unsigned int iMilitaryBaseTries = 0;
 REATTEMPT:
-	bool bPlacementFailure = false;
 	int iSiloRet = MilitaryBaseMissileSilos(0, 0, true); // The 'force' attribute here should be false.
-	if (iSiloRet >= 0) {
-		if (iSiloRet == 0)
-			bPlacementFailure = true;
-	}
-	else
-		bPlacementFailure = true;
-
-	if (bPlacementFailure) {
+	if (iSiloRet <= 0) {
 		if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
 			iMilitaryBaseTries++;
 			goto REATTEMPT;
@@ -1045,27 +1037,24 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	else {
 	REATTEMPT:
 		iResult = MilitaryBaseNavalYard();
-		if (iResult >= 0)
-			return iResult;
+		if (iResult < 0) {
+			MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &iRandXPos, &iRandYPos, &iRandStoredXPos, &iRandStoredYPos);
 
-		MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &iRandXPos, &iRandYPos, &iRandStoredXPos, &iRandStoredYPos);
-
-		iResult = MilitaryBaseMissileSilos(iValidAltitudeTiles, iValidTiles, false);
-		if (iResult >= 0) {
-			if (iResult > 0)
-				return iResult;
-			else {
-				if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
-					iMilitaryBaseTries++;
-					goto REATTEMPT;
+			iResult = MilitaryBaseMissileSilos(iValidAltitudeTiles, iValidTiles, false);
+			if (iResult >= 0) {
+				if (iResult == 0) {
+					if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
+						iMilitaryBaseTries++;
+						goto REATTEMPT;
+					}
+					iResult = MilitaryBaseDecline();
 				}
-				iResult = MilitaryBaseDecline();
 			}
-		}
-		else {
-			iResult = MilitaryBaseAirForce(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandStoredYPos);
-			if (iResult < 0)
-				iResult = MilitaryBaseArmyBase(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandStoredYPos);
+			else {
+				iResult = MilitaryBaseAirForce(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandStoredYPos);
+				if (iResult < 0)
+					iResult = MilitaryBaseArmyBase(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandStoredYPos);
+			}
 		}
 	}
 	return iResult;
