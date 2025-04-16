@@ -781,6 +781,15 @@ static int MilitaryBaseNavalYard(void) {
 
 	int iTileCoords[2];
 	int iNavyLandingAttempts = 0;
+
+	// For reference, the current Naval Yard placement checks only account
+	// for the coast that's directly adjacent to the neighbouring ocean.
+	//
+	// This likely does NOT match what is done in the DOS version.
+	//
+	// TODO: Do a scan and check concerning other deep-water tiles to see
+	// about whether it's viable to spawn the Naval Yard elsewhere (as long
+	// as said body of water is connected to the ocean).
 	
 	if (bCityHasOcean) {
 		if ((rand() & 1) != 0) {
