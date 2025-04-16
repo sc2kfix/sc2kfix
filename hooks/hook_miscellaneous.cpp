@@ -390,6 +390,14 @@ extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
 		ConsoleLog(LOG_DEBUG, "SAVE: Loaded %d $1500 neighbor connections.\n", *wCityNeighborConnections1500);
 }
 
+extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, __int16 iTileID, __int16 iZoneType) {
+	int(__cdecl *H_SimulationGrowSpecificZone)(__int16, __int16, __int16, __int16) = (int(__cdecl *)(__int16, __int16, __int16, __int16))0x4382B0;
+
+	int ret = H_SimulationGrowSpecificZone(iX, iY, iTileID, iZoneType);
+
+	return ret;
+}
+
 extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 m_x, int m_y, __int16 iTileID, __int16 iTileArea) {
 	__int16 iArea;
 	__int16 iMarinaCount;
@@ -1009,6 +1017,10 @@ void InstallMiscHooks(void) {
 
 	// Install hooks for the SC2X save format
 	InstallSaveHooks();
+
+	// Hook into the SimulationGrowSpecificZone function
+	VirtualProtect((LPVOID)0x4026B2, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4026B2, Hook_SimulationGrowSpecificZone);
 
 	// Hook into what appears to be one of the item placement checking functions
 	VirtualProtect((LPVOID)0x4027F2, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
