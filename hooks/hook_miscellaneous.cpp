@@ -391,8 +391,19 @@ extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
 }
 
 extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, __int16 iTileID, __int16 iZoneType) {
-#if 0
+#if 1
+	// Variable names subject to change
+	// during the demystification process.
 	__int16 x, y;
+	__int16 iCurrX, iCurrY;
+	__int16 iBuildingCountOne;
+	__int16 iBuildingOne;
+	__int16 iMoveX, iMoveY;
+	__int16 iRotationOpposite;
+	__int16 iBuildingCountTwo;
+	__int16 iBuildingTwo;
+	__int16 iTileRotationSouth;
+
 
 	// It looks like this is to do with the given tiles being powered. Though this check
 	// is only hit on non-Military zones.
@@ -406,6 +417,74 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, _
 	}
 	switch (iTileID) {
 		case TILE_INFRASTRUCTURE_RUNWAY:
+			iMoveX = 0;
+			iMoveY = 0;
+			if ((dwTileCount[TILE_INFRASTRUCTURE_RUNWAY] & 1) == 0) {
+				if ((x & 1) != 0) {
+					iMoveX = 1;
+					goto PROCEEDFURTHER;
+				}
+				if ((y & 1) == 0) {
+					return 0;
+				}
+				goto PROCEEDAHEAD;
+			}
+			if ((y & 1) != 0) {
+PROCEEDAHEAD:
+				iMoveY = 1;
+				goto PROCEEDFURTHER;
+			}
+			if ((x & 1) == 0) {
+				return 0;
+			}
+			iMoveX = 1;
+PROCEEDFURTHER:
+			iCurrX = x;
+			iCurrY = y;
+			iBuildingCountOne = 0;
+			while (iCurrX < 0x80 && iCurrY < 0x80) {
+				if (dwMapXZON[iCurrX]->b[iCurrY].iZoneType != iZoneType)
+					return 0;
+				// Positional marker - see whether a given if/check for military-zoned
+				// roads will need to be placed here.
+				iBuildingOne = dwMapXBLD[iCurrX]->iTileID[iCurrY];
+				if (iBuildingOne == TILE_INFRASTRUCTURE_RUNWAY || iBuildingOne == TILE_INFRASTRUCTURE_RUNWAYCROSS)
+					--iBuildingCountOne;
+				iCurrX += iMoveY;
+				++iBuildingCountOne;
+				iCurrY += iMoveX;
+				if (iBuildingCountOne >= 5) {
+					if (!iMoveY) 
+						goto SKIPFIRSTROTATIONCHECK;
+					if ((wViewRotation & 1) != 0) {
+						if (!iMoveY) {
+SKIPFIRSTROTATIONCHECK:
+							if ((wViewRotation & 1) != 0)
+								goto SKIPSECONDROTATIONCHECK;
+						}
+						iRotationOpposite = 0;
+					}
+					else {
+SKIPSECONDROTATIONCHECK:
+						iRotationOpposite = 1;
+					}
+					iBuildingCountTwo = 0;
+					while (2) {
+						iBuildingTwo = dwMapXBLD[x]->iTileID[y];
+						if (iBuildingTwo == TILE_INFRASTRUCTURE_RUNWAY || iBuildingTwo == TILE_INFRASTRUCTURE_RUNWAYCROSS) {
+							--iBuildingCountTwo;
+							if (iBuildingTwo == TILE_INFRASTRUCTURE_RUNWAY) {
+								iTileRotationSouth = x < 0x80 &&
+									y < 0x80 &&
+									dwMapXBIT[x]->b[y].iRotated == VIEWROTATION_SOUTH;
+								if (iTileRotationSouth != iRotationOpposite) {
+
+								}
+							}
+						}
+					}
+				}
+			}
 			return 0;
 		default:
 			return 1;
