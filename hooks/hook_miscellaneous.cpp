@@ -542,51 +542,53 @@ RUNWAY_GETOUT:
 }
 
 extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 m_x, int m_y, __int16 iTileID, __int16 iTileArea) {
+	__int16 x;
+	__int16 y;
 	__int16 iArea;
 	__int16 iMarinaCount;
-	__int16 iX[2];
-	__int16 iY[2];
+	__int16 iX;
+	__int16 iY;
 	__int16 iTile;
-	unsigned __int8 iBuilding;
-	int iItemWidth;
-	int iItemLength;
-	int iItemDepth;
+	BYTE iBuilding;
+	__int16 iItemWidth;
+	__int16 iItemLength;
+	__int16 iItemDepth;
 	__int16 iMapBit;
 	__int16 iSection[3];
 	char cMSimBit;
 	BYTE *pZone;
 
-	__int16 x = (__int16)m_x;
-	int y = P_LOWORD(m_y);
+	x = (__int16)m_x;
+	y = P_LOWORD(m_y);
 
 	iArea = iTileArea - 1;
 	if (iArea > 1) {
 		--x;
-		P_LOWORD(y) = y - 1;
+		--y;
 	}
 	iMarinaCount = 0;
-	iX[0] = x;
+	iX = x;
 	iItemWidth = x + iArea;
 	if (iItemWidth >= x) {
 		iTile = iTileID;
-		iItemLength = iArea + (__int16)y;
+		iItemLength = iArea + y;
 		while (1) {
-			iY[0] = y;
-			if (iItemLength >= (__int16)y)
+			iY = y;
+			if (iItemLength >= y)
 				break;
 		GOBACK:
-			if (++iX[0] > iItemWidth)
+			if (++iX > iItemWidth)
 				goto GOFORWARD;
 		}
 		while (1) {
 			if (iArea <= 0) {
-				if (iX[0] >= 0x80 || iY[0] >= 0x80)
+				if (iX >= 0x80 || iY >= 0x80)
 					return 0;
 			}
-			else if (iX[0] < 1 || iY[0] < 1 || iX[0] > 126 || iY[0] > 126) {
+			else if (iX < 1 || iY < 1 || iX > 126 || iY > 126) {
 				return 0;
 			}
-			iBuilding = dwMapXBLD[iX[0]]->iTileID[iY[0]];
+			iBuilding = dwMapXBLD[iX]->iTileID[iY];
 			if (iBuilding >= TILE_ROAD_LR) {
 				return 0;
 			}
@@ -596,33 +598,33 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 m_x, int m_y, __
 			if (iBuilding == TILE_SMALLPARK) {
 				return 0;
 			}
-			if (dwMapXZON[iX[0]]->b[iY[0]].iZoneType == ZONE_MILITARY) {
+			if (dwMapXZON[iX]->b[iY].iZoneType == ZONE_MILITARY) {
 				if (iBuilding == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
 					iBuilding == TILE_ROAD_LR ||
 					iBuilding == TILE_ROAD_TB)
 					return 0;
 			}
 			if (iTileID == TILE_INFRASTRUCTURE_MARINA) {
-				if (iX[0] < 0x80 &&
-					iY[0] < 0x80 &&
-					dwMapXBIT[iX[0]]->b[iY[0]].iWater != 0) {
+				if (iX < 0x80 &&
+					iY < 0x80 &&
+					dwMapXBIT[iX]->b[iY].iWater != 0) {
 					++iMarinaCount;
 					goto GOSKIP;
 				}
-				if (dwMapXTER[iX[0]]->iTileID[iY[0]]) {
+				if (dwMapXTER[iX]->iTileID[iY]) {
 					return 0;
 				}
 			}
-			if (dwMapXTER[iX[0]]->iTileID[iY[0]]) {
+			if (dwMapXTER[iX]->iTileID[iY]) {
 				return 0;
 			}
-			if ((unsigned __int16)iX[0] < 0x80u &&
-				(unsigned __int16)iY[0] < 0x80u &&
-				dwMapXBIT[iX[0]]->b[iY[0]].iWater != 0) {
+			if (iX < 0x80 &&
+				iY < 0x80 &&
+				dwMapXBIT[iX]->b[iY].iWater != 0) {
 				return 0;
 			}
 		GOSKIP:
-			if (++iY[0] > iItemLength) {
+			if (++iY > iItemLength) {
 				goto GOBACK;
 			}
 		}
@@ -644,43 +646,43 @@ GOFORWARD:
 			return 0;
 		}
 		else {
-			iX[1] = x;
-			cMSimBit = Game_SimulationProvisionMicrosim(x, y, iTile);
+			__int16 iCurrXPos = x;
+			cMSimBit = Game_SimulationProvisionMicrosim(x, y, iTile); // The 'y' variable is '__int16' whereas that argument is an 'int' (it was previously the latter), noting just in case.
 			if (iItemWidth >= x) {
-				iItemDepth = (__int16)y + iArea;
+				iItemDepth = y + iArea;
 				do {
-					for (int i = y; i <= iItemDepth; ++i) {
-						if (iX[1] > -1) {
-							if (iX[1] < 0x80 && (__int16)i < 0x80) {
-								*(BYTE *)&dwMapXBIT[iX[1]]->b[i] &= 0x1Fu;
+					for (__int16 iCurrYPos = y; iCurrYPos <= iItemDepth; ++iCurrYPos) {
+						if (iCurrXPos > -1) {
+							if (iCurrXPos < 0x80 && iCurrYPos < 0x80) {
+								*(BYTE *)&dwMapXBIT[iCurrXPos]->b[iCurrYPos] &= 0x1Fu;
 							}
-							if (iX[1] < 0x80 && (__int16)i < 0x80) {
-								*(BYTE *)&dwMapXBIT[iX[1]]->b[i] |= iMapBit;
+							if (iCurrXPos < 0x80 && iCurrYPos < 0x80) {
+								*(BYTE *)&dwMapXBIT[iCurrXPos]->b[iCurrYPos] |= iMapBit;
 							}
 						}
-						Game_PlaceTileWithMilitaryCheck(iX[1], i, iTile);
-						if (iX[1] > -1) {
-							if (iX[1] < 0x80 && i < 0x80) {
-								*(BYTE *)&dwMapXZON[iX[1]]->b[i] &= 0xF0u;
+						Game_PlaceTileWithMilitaryCheck(iCurrXPos, iCurrYPos, iTile);
+						if (iCurrXPos > -1) {
+							if (iCurrXPos < 0x80 && iCurrYPos < 0x80) {
+								*(BYTE *)&dwMapXZON[iCurrXPos]->b[iCurrYPos] &= 0xF0u;
 							}
-							if (iX[1] < 0x80 && i < 0x80) {
-								*(BYTE *)&dwMapXZON[iX[1]]->b[i] &= 0xFu;
+							if (iCurrXPos < 0x80 && iCurrYPos < 0x80) {
+								*(BYTE *)&dwMapXZON[iCurrXPos]->b[iCurrYPos] &= 0xFu;
 							}
 						}
 						if (cMSimBit) {
-							*(BYTE *)&dwMapXTXT[iX[1]]->bTextOverlay[i] = cMSimBit;
+							*(BYTE *)&dwMapXTXT[iCurrXPos]->bTextOverlay[iCurrYPos] = cMSimBit;
 						}
 					}
-					++iX[1];
-				} while (iX[1] <= iItemWidth);
+					++iCurrXPos;
+				} while (iCurrXPos <= iItemWidth);
 			}
 			if (iArea) {
-				if (x < 0x80 && (__int16)y < 0x80) {
+				if (x < 0x80 && y < 0x80) {
 					pZone = (BYTE *)&dwMapXZON[x]->b[y];
 					*pZone = LOBYTE(wSomePositionalAngleOne[4 * wViewRotation]) | *pZone & 0xF;
 				}
 				iSection[0] = iArea + x;
-				if ((iArea + x) > -1 && iSection[0] < 0x80 && (__int16)y < 0x80) {
+				if ((iArea + x) > -1 && iSection[0] < 0x80 && y < 0x80) {
 					pZone = (BYTE *)&dwMapXZON[iSection[0]]->b[y];
 					*pZone = LOBYTE(wSomePositionalAngleTwo[4 * wViewRotation]) | *pZone & 0xF;
 				}
@@ -693,13 +695,13 @@ GOFORWARD:
 				}
 				if (x < 0x80) {
 					iSection[2] = iArea + y;
-					if ((__int16)(iArea + y) > -1 && iSection[2] < 0x80) {
+					if ((iArea + y) > -1 && iSection[2] < 0x80) {
 						pZone = (BYTE *)&dwMapXZON[x]->b[iSection[2]];
 						*pZone = LOBYTE(wSomePositionalAngleFour[4 * wViewRotation]) | *pZone & 0xF;
 					}
 				}
 			}
-			else if (x < 0x80 && (__int16)y < 0x80) {
+			else if (x < 0x80 && y < 0x80) {
 				*(BYTE *)&dwMapXZON[x]->b[y] |= 0xF0u;
 			}
 			Game_SpawnItem(x, y + iArea);
