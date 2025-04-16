@@ -400,6 +400,202 @@ static __int16 GetDepthPoint(int iCoords) {
 		return GetNearCoord(iCoords);
 }
 
+int isValidSiloSpawn(__int16 m_x, __int16 m_y) {
+	__int16 x;
+	__int16 y;
+	__int16 iArea;
+	__int16 iX;
+	__int16 iY;
+	__int16 iItemWidth;
+	__int16 iItemLength;
+	BYTE iBuilding;
+
+	x = m_x;
+	y = m_y;
+
+	iArea = 2;
+	if (iArea > 1) {
+		--x;
+		--y;
+	}
+	iX = x;
+	iItemWidth = x + iArea;
+	if (iItemWidth >= x) {
+		iItemLength = iArea + y;
+		while (1) {
+			iY = y;
+			if (iItemLength >= y)
+				break;
+		GOBACK:
+			if (++iX > iItemWidth)
+				goto GOFORWARD;
+		}
+		while (1) {
+			if (iArea <= 0) {
+				if (iX >= 0x80 || iY >= 0x80)
+					return 0;
+			}
+			else if (iX < 1 || iY < 1 || iX > 126 || iY > 126) {
+				return 0;
+			}
+			iBuilding = dwMapXBLD[iX]->iTileID[iY];
+			if (!((iBuilding >= TILE_CLEAR && iBuilding < TILE_RADIOACTIVITY) || (iBuilding >= TILE_TREES1 && iBuilding < TILE_SMALLPARK))) {
+				return 0;
+			}
+			if (iBuilding >= TILE_ROAD_LR) {
+				return 0;
+			}
+			if (dwMapXZON[iX]->b[iY].iZoneType != ZONE_MILITARY) {
+				return 0;
+			}
+			if (dwMapXZON[iX]->b[iY].iZoneType == ZONE_MILITARY) {
+				if (TILE_IS_MILITARY(iBuilding))
+					return 0;
+				if (iBuilding == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
+					iBuilding == TILE_ROAD_LR ||
+					iBuilding == TILE_ROAD_TB)
+					return 0;
+			}
+			if (dwMapXTER[iX]->iTileID[iY]) {
+				return 0;
+			}
+			if (dwMapXUND[iX]->iTileID[iY]) {
+				return 0;
+			}
+			if (iX < 0x80 &&
+				iY < 0x80 &&
+				dwMapXBIT[iX]->b[iY].iWater != 0) {
+				return 0;
+			}
+			if (++iY > iItemLength) {
+				goto GOBACK;
+			}
+		}
+	}
+GOFORWARD:
+	return 1;
+}
+
+int PlaceMissileSilo(__int16 m_x, __int16 m_y) {
+	__int16 iArea;
+	__int16 iX;
+	__int16 iY;
+	BYTE iBuilding;
+	__int16 iItemWidth;
+	__int16 iItemLength;
+	__int16 iItemDepth;
+	__int16 iSection[3];
+	BYTE *pZone;
+
+	// This function appears to be for placing the underground portions for a given tile.
+	int(__cdecl *H_PlaceUndergroundTiles)(__int16, __int16, __int16) = (int(__cdecl *)(__int16, __int16, __int16))0x401E38;
+
+	__int16 x = m_x;
+	__int16 y = m_y;
+
+	iArea = 3 - 1;
+	if (iArea > 1) {
+		--x;
+		--y;
+	}
+	iX = x;
+	iItemWidth = x + iArea;
+	if (iItemWidth >= x) {
+		iItemLength = iArea + y;
+		BYTE iCurrentZone = dwMapXZON[x]->b[y].iZoneType;
+		while (1) {
+			iY = y;
+			if (iItemLength >= y)
+				break;
+		GOBACK:
+			if (++iX > iItemWidth)
+				goto GOFORWARD;
+		}
+		while (1) {
+			if (iArea <= 0) {
+				if (iX >= 0x80 || iY >= 0x80)
+					return 0;
+			}
+			else if (iX < 1 || iY < 1 || iX > 126 || iY > 126) {
+				return 0;
+			}
+			iBuilding = dwMapXBLD[iX]->iTileID[iY];
+			if (iBuilding >= TILE_ROAD_LR) {
+				return 0;
+			}
+			if (iBuilding == TILE_RADIOACTIVITY) {
+				return 0;
+			}
+			if (iBuilding == TILE_SMALLPARK) {
+				return 0;
+			}
+			if (dwMapXZON[iX]->b[iY].iZoneType != iCurrentZone) {
+				return 0;
+			}
+			if (dwMapXZON[iX]->b[iY].iZoneType == ZONE_MILITARY) {
+				if (iBuilding == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
+					iBuilding == TILE_ROAD_LR ||
+					iBuilding == TILE_ROAD_TB)
+					return 0;
+			}
+			if (dwMapXTER[iX]->iTileID[iY]) {
+				return 0;
+			}
+			if (iX < 0x80 &&
+				iY < 0x80 &&
+				dwMapXBIT[iX]->b[iY].iWater != 0) {
+				return 0;
+			}
+
+			if (++iY > iItemLength) {
+				goto GOBACK;
+			}
+		}
+	}
+GOFORWARD:
+	iX = x;
+	if (iItemWidth >= x) {
+		iItemDepth = y + iArea;
+		do {
+			for (iY = y; iY <= iItemDepth; ++iY) {
+				Game_PlaceTileWithMilitaryCheck(iX, iY, TILE_MILITARY_MISSILESILO);
+				H_PlaceUndergroundTiles(iX, iY, TILE_ROAD_HLR);
+			}
+			++iX;
+		} while (iX <= iItemWidth);
+	}
+	if (iArea) {
+		if (x < 0x80 && y < 0x80) {
+			pZone = (BYTE *)&dwMapXZON[x]->b[y];
+			*pZone = LOBYTE(wSomePositionalAngleOne[4 * wViewRotation]) | *pZone & 0xF;
+		}
+		iSection[0] = iArea + x;
+		if ((iArea + x) > -1 && iSection[0] < 0x80 && y < 0x80) {
+			pZone = (BYTE *)&dwMapXZON[iSection[0]]->b[y];
+			*pZone = LOBYTE(wSomePositionalAngleTwo[4 * wViewRotation]) | *pZone & 0xF;
+		}
+		if (iSection[0] < 0x80) {
+			iSection[1] = y + iArea;
+			if ((y + iArea) > -1 && iSection[1] < 0x80) {
+				pZone = (BYTE *)&dwMapXZON[iSection[0]]->b[iSection[1]];
+				*pZone = LOBYTE(wSomePositionalAngleThree[4 * wViewRotation]) | *pZone & 0xF;
+			}
+		}
+		if (x < 0x80) {
+			iSection[2] = iArea + y;
+			if ((iArea + y) > -1 && iSection[2] < 0x80) {
+				pZone = (BYTE *)&dwMapXZON[x]->b[iSection[2]];
+				*pZone = LOBYTE(wSomePositionalAngleFour[4 * wViewRotation]) | *pZone & 0xF;
+			}
+		}
+	}
+	else if (x < 0x80 && y < 0x80) {
+		*(BYTE *)&dwMapXZON[x]->b[y] |= 0xF0u;
+	}
+	Game_SpawnItem(x, y + iArea);
+	return 1;
+}
+
 static int isValidSiloPos(__int16 m_x, __int16 m_y, __int16 iTileArea) {
 	__int16 x;
 	__int16 y;

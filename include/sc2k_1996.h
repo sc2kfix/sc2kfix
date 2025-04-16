@@ -125,6 +125,8 @@ enum {
 	MILITARY_BASE_MISSILE_SILOS
 };
 
+#define OVERWRITEABLE_TILES(x) ((x >= TILE_CLEAR && x < TILE_RADIOACTIVITY) || (x >= TILE_TREES1 && x < TILE_SMALLPARK))
+
 // Building (XBLD) tile IDs
 enum {
 	TILE_CLEAR,
@@ -716,18 +718,22 @@ typedef struct {
 } sprite_header_t;
 
 typedef struct {
-	struct {
-		WORD iLandAltitude : 5; // level / altitude
-		WORD iWaterLevel : 5;   // not always accurate (rely on XTER value instead)
-		WORD iTunnelLevels : 6; // how many levels below altitude should we display a grey block for a tunnel?
-	} w[128];
+	WORD iLandAltitude : 5; // level / altitude
+	WORD iWaterLevel : 5;   // not always accurate (rely on XTER value instead)
+	WORD iTunnelLevels : 6; // how many levels below altitude should we display a grey block for a tunnel?
+} map_ALTM_attribs_t;
+
+typedef struct {
+	map_ALTM_attribs_t w[128];
 } map_ALTM_t;
 
 typedef struct {
-	struct {
-		BYTE iZoneType : 4;
-		BYTE iCorners : 4;
-	} b[128];
+	BYTE iZoneType : 4;
+	BYTE iCorners : 4;
+} map_XZON_attribs_t;
+
+typedef struct {
+	map_XZON_attribs_t b[128];
 } map_XZON_t;
 
 typedef struct {
@@ -755,16 +761,18 @@ typedef struct {
 } map_mini32_t;
 
 typedef struct {
-	struct {
-		BYTE iSaltWater : 1;
-		BYTE iRotated : 1;
-		BYTE iWater : 1;
-		BYTE iXVALMask : 1;
-		BYTE iWatered : 1;
-		BYTE iPiped : 1;
-		BYTE iPowered : 1;
-		BYTE iPowerable : 1;
-	} b[128];
+	BYTE iSaltWater : 1;
+	BYTE iRotated : 1;
+	BYTE iWater : 1;
+	BYTE iXVALMask : 1;
+	BYTE iWatered : 1;
+	BYTE iPiped : 1;
+	BYTE iPowered : 1;
+	BYTE iPowerable : 1;
+} map_XBIT_bits_t;
+
+typedef struct {
+	map_XBIT_bits_t b[128];
 } map_XBIT_t;
 
 typedef struct {
@@ -821,6 +829,7 @@ GAMECALL(0x40258B, int, __cdecl, GetScreenCoordsFromTileCoords, __int16 iTileTar
 GAMECALL(0x402699, int, __thiscall, PointerToCSimcityView, void* CWinAppThis)
 GAMECALL(0x402798, int, __cdecl, MapToolPlaceForest, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x4027A7, int, __thiscall, CSimCityView_OnVScroll, DWORD pThis, int nSBCode, __int16 nPos, int pScrollBar)
+GAMECALL(0x4027F2, int, __cdecl, ItemPlacementCheck, __int16 x, int y, __int16 iTileID, __int16 iTileArea)
 GAMECALL(0x402810, int, __thiscall, UpdateAreaCompleteColorFill, void *) // This appears to be a more comprehensive update that'll occur for highlighted/selected area or when you're moving the game area.
 GAMECALL(0x402937, void, __thiscall, ToolMenuDisable, void* pThis)
 GAMECALL(0x4029C3, int, __cdecl, CSimcityViewMouseMoveOrLeftClick, void* pThis, LPPOINT lpPoint)

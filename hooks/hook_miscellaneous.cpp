@@ -399,27 +399,33 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, _
 	__int16 iBuildingCountOne;
 	__int16 iBuildingOne;
 	__int16 iMoveX, iMoveY;
-	__int16 iRotationOpposite;
+	__int16 iOppositeFacing;
 	__int16 iBuildingCountTwo;
 	__int16 iBuildingTwo;
-	__int16 iTileRotationSouth;
-
+	__int16 iTileSouthFacing;
+	map_XBIT_t *mXBIT;
+	BYTE mXBBits;
 
 	// It looks like this is to do with the given tiles being powered. Though this check
 	// is only hit on non-Military zones.
-	int(__cdecl *H_401B40)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x401B40;
+	int(__cdecl *H_IsZonedTilePowered)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x401B40;
+	// This could be a check to make sure certain building types aren't overwritten during zone growth.
+	__int16(__cdecl *H_402603)(__int16, __int16) = (__int16(__cdecl *)(__int16, __int16))0x402603;
 
 	x = iX;
 	y = iY;
 	if (iZoneType != ZONE_MILITARY) {
-		if (!H_401B40(iX, iY))
+		if (!H_IsZonedTilePowered(iX, iY))
 			return 0;
+		//ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> SimulationGrowSpecificZone(%d, %d, %d, %d) (Non-MZ - IsPowered)\n", _ReturnAddress(), iX, iY, iTileID, iZoneType);
 	}
+	//ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> SimulationGrowSpecificZone(%d, %d, %d, %d)\n", _ReturnAddress(), iX, iY, iTileID, iZoneType);
 	switch (iTileID) {
 		case TILE_INFRASTRUCTURE_RUNWAY:
 			iMoveX = 0;
 			iMoveY = 0;
 			if ((dwTileCount[TILE_INFRASTRUCTURE_RUNWAY] & 1) == 0) {
+				ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> SimulationGrowSpecificZone(%d, %d, %d, %d) - dwTileCount[TILE_INTRASTRUCTURE_RUNWAY] = %u\n", _ReturnAddress(), iX, iY, iTileID, iZoneType, dwTileCount[TILE_INFRASTRUCTURE_RUNWAY]);
 				if ((x & 1) != 0) {
 					iMoveX = 1;
 					goto PROCEEDFURTHER;
@@ -462,11 +468,11 @@ SKIPFIRSTROTATIONCHECK:
 							if ((wViewRotation & 1) != 0)
 								goto SKIPSECONDROTATIONCHECK;
 						}
-						iRotationOpposite = 0;
+						iOppositeFacing = 0;
 					}
 					else {
 SKIPSECONDROTATIONCHECK:
-						iRotationOpposite = 1;
+						iOppositeFacing = 1;
 					}
 					iBuildingCountTwo = 0;
 					while (2) {
@@ -474,18 +480,55 @@ SKIPSECONDROTATIONCHECK:
 						if (iBuildingTwo == TILE_INFRASTRUCTURE_RUNWAY || iBuildingTwo == TILE_INFRASTRUCTURE_RUNWAYCROSS) {
 							--iBuildingCountTwo;
 							if (iBuildingTwo == TILE_INFRASTRUCTURE_RUNWAY) {
-								iTileRotationSouth = x < 0x80 &&
+								iTileSouthFacing = x < 0x80 &&
 									y < 0x80 &&
 									dwMapXBIT[x]->b[y].iRotated == VIEWROTATION_SOUTH;
-								if (iTileRotationSouth != iRotationOpposite) {
-
+								if (iTileSouthFacing != iOppositeFacing) {
+									Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_RUNWAYCROSS);
+									if (x < 0x80 && y < 0x80)
+										*(BYTE *)&dwMapXZON[x]->b[y] |= 0xF0u;
+									if (iZoneType != ZONE_MILITARY) {
+										if (x <= -1)
+											goto RUNWAY_GETOUT;
+										if (x < 0x80 && y < 0x80)
+											*(BYTE *)&dwMapXBIT[x]->b[y] |= 0xC0u;
+									}
+									if (x < 0x80 && y < 0x80) {
+										mXBIT = dwMapXBIT[x];
+										mXBBits = (*(BYTE *)&mXBIT->b[y] & 0xFD);
+RUNWAY_GOBACK:
+										*(BYTE *)&mXBIT->b[y] = mXBBits;
+									}
 								}
 							}
 						}
+						else {
+							if (dwMapXBLD[x]->iTileID[y] >= TILE_SMALLPARK)
+								H_402603(x, y);
+							Game_PlaceTileWithMilitaryCheck(x, y, 221);
+							if (x < 0x80 && y < 0x80)
+								*(BYTE *)&dwMapXZON[x]->b[y] |= 0xF0u;
+							if (iZoneType != ZONE_MILITARY && x < 0x80 && y < 0x80)
+								*(BYTE *)&dwMapXBIT[x]->b[y] |= 0xC0u;
+							if (iOppositeFacing && x < 0x80 && y < 0x80) {
+								mXBIT = dwMapXBIT[x];
+								mXBBits = (*(BYTE *)&mXBIT->b[y] | 2);
+								goto RUNWAY_GOBACK;
+							}
+						}
+RUNWAY_GETOUT:
+						x += iMoveY;
+						y += iMoveX;
+						if (++iBuildingCountTwo >= 5)
+							return 1;
+						continue;
 					}
 				}
 			}
 			return 0;
+		case TILE_MILITARY_MISSILESILO:
+			PlaceMissileSilo(x, y);
+			return 1;
 		default:
 			return 1;
 	}
