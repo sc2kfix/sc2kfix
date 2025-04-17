@@ -404,11 +404,14 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, _
 	int i;
 	__int16 iLengthWays;
 	__int16 iDepthWays;
+	__int16 iPierPathTileCount;
+	__int16 iPierLength;
 	map_XBIT_t *mXBIT;
 	BYTE mXBBits;
 	map_XBLD_t *mXBLDOne, *mXBLDTwo;
 	BYTE mXBuilding[4];
 	map_XZON_t *mXZONOne, *mXZONTwo;
+	BYTE *pZone;
 
 	// It looks like this is to do with the given tiles being powered. Though this check
 	// is only hit on non-Military zones.
@@ -543,6 +546,68 @@ RUNWAY_GETOUT:
 			}
 			if (i == 4)
 				return 0;
+			iDepthWays = wSomePierDepthWays[i];
+			if (iDepthWays && (x & 1) != 0)
+				return 0;
+			iLengthWays = wSomePierLengthWays[i];
+			if (iLengthWays && (y & 1) != 0)
+				return 0;
+			iPierPathTileCount = 0;
+			iNextX = x;
+			iNextY = y;
+			do {
+				iNextX += iLengthWays;
+				iNextY += iDepthWays;
+				if (iNextX >= 0x80 || iNextY >= 0x80)
+					return 0;
+				if (iNextX >= 0x80 ||
+					iNextY >= 0x80 ||
+					dwMapXBIT[iNextX]->b[iNextY].iWater == 0)
+					return 0;
+				if (dwMapXBLD[iNextX]->iTileID[iNextY])
+					return 0;
+				++iPierPathTileCount;
+			} while (iPierPathTileCount < 5);
+			if ((*(WORD *)&dwMapALTM[iNextX]->w[iNextY] & 0x3E0) >> 5 < (*(WORD *)&dwMapALTM[iNextX]->w[iNextY] & 0x1F) + 2)
+				return 0;
+			if (dwMapXBLD[x]->iTileID[y] >= TILE_SMALLPARK)
+				H_402603(x, y);
+			Game_ItemPlacementCheck(x, y, TILE_INFRASTRUCTURE_CRANE, 1);
+			if (x < 0x80 && y < 0x80) {
+				pZone = (BYTE *)&dwMapXZON[x]->b[y];
+				*pZone ^= (*pZone ^ iZoneType) & 0xF;
+			}
+			if (iZoneType == ZONE_MILITARY && x < 0x80 && y < 0x80)
+				*(BYTE *)&dwMapXBIT[x]->b[y] &= 0xFu;
+			iLengthWays = wSomePierLengthWays[i];
+			if (!iLengthWays)
+				goto PIER_GOTOONE;
+			if ((wViewRotation & 1) == 0)
+				goto PIER_GOTOTWO;
+			if (iLengthWays)
+				goto PIER_GOTOTHREE;
+PIER_GOTOONE:
+			if ((wViewRotation & 1) != 0) {
+PIER_GOTOTWO:
+				iOppositeFacing = 1;
+			}
+			else {
+PIER_GOTOTHREE:
+				iOppositeFacing = 0;
+			}
+			iPierLength = 4;
+			do {
+				x += wSomePierLengthWays[i];
+				y += wSomePierDepthWays[i];
+				Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_PIER);
+				if (x < 0x80 && y < 0x80)
+					*(BYTE *)&dwMapXZON[x]->b[y] |= 0xF0u;
+				if (iOppositeFacing) {
+					if (x < 0x80 && y < 0x80)
+						*(BYTE *)&dwMapXBIT[x]->b[y] |= 2u;
+				}
+				--iPierLength;
+			} while (iPierLength);
 			return 1;
 		case TILE_INFRASTRUCTURE_CONTROLTOWER_CIV:
 		case TILE_MILITARY_CONTROLTOWER:
