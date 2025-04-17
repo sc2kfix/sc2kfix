@@ -412,15 +412,10 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, _
 	map_XZON_t *mXZONOne, *mXZONTwo;
 	BYTE *pZone;
 
-	// It looks like this is to do with the given tiles being powered. Though this check
-	// is only hit on non-Military zones.
-	int(__cdecl *H_IsZonedTilePowered)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x401B40;
-	__int16(__cdecl *H_ZonedBuildingTileDeletion)(__int16, __int16) = (__int16(__cdecl *)(__int16, __int16))0x402603;
-
 	x = iX;
 	y = iY;
 	if (iZoneType != ZONE_MILITARY) {
-		if (!H_IsZonedTilePowered(iX, iY))
+		if (!Game_IsZonedTilePowered(iX, iY))
 			return 0;
 	}
 	switch (iTileID) {
@@ -508,7 +503,7 @@ RUNWAY_GOBACK:
 							if (dwMapXZON[x]->b[y].iZoneType == ZONE_MILITARY && ((mXBuilding[1] >= TILE_ROAD_LR && mXBuilding[1] <= TILE_ROAD_LTBR) || mXBuilding[1] == TILE_INFRASTRUCTURE_CRANE))
 								return 0;
 							if (dwMapXBLD[x]->iTileID[y] >= TILE_SMALLPARK)
-								H_ZonedBuildingTileDeletion(x, y);
+								Game_ZonedBuildingTileDeletion(x, y);
 							Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_RUNWAY);
 							if (x < 0x80 && y < 0x80)
 								*(BYTE *)&dwMapXZON[x]->b[y] |= 0xF0u;
@@ -566,7 +561,7 @@ RUNWAY_GETOUT:
 			if ((*(WORD *)&dwMapALTM[iNextX]->w[iNextY] & 0x3E0) >> 5 < (*(WORD *)&dwMapALTM[iNextX]->w[iNextY] & 0x1F) + 2)
 				return 0;
 			if (dwMapXBLD[x]->iTileID[y] >= TILE_SMALLPARK)
-				H_ZonedBuildingTileDeletion(x, y);
+				Game_ZonedBuildingTileDeletion(x, y);
 			Game_ItemPlacementCheck(x, y, TILE_INFRASTRUCTURE_CRANE, 1);
 			if (x < 0x80 && y < 0x80) {
 				pZone = (BYTE *)&dwMapXZON[x]->b[y];
@@ -667,13 +662,13 @@ PIER_GOTOTHREE:
 			if (iZoneType == ZONE_MILITARY && mXZONTwo->b[iNextY].iZoneType == ZONE_MILITARY && (mXBuilding[3] >= TILE_ROAD_LR && mXBuilding[3] <= TILE_ROAD_LTBR))
 				return 0;
 			if (mXBuilding[0] >= TILE_SMALLPARK)
-				H_ZonedBuildingTileDeletion(iSX, y);
+				Game_ZonedBuildingTileDeletion(iSX, y);
 			if (dwMapXBLD[iNextX]->iTileID[y] >= TILE_SMALLPARK)
-				H_ZonedBuildingTileDeletion(iNextX, y);
+				Game_ZonedBuildingTileDeletion(iNextX, y);
 			if (dwMapXBLD[iSX]->iTileID[iNextY] >= TILE_SMALLPARK)
-				H_ZonedBuildingTileDeletion(iSX, iNextY);
+				Game_ZonedBuildingTileDeletion(iSX, iNextY);
 			if (dwMapXBLD[iNextX]->iTileID[iNextY] >= TILE_SMALLPARK)
-				H_ZonedBuildingTileDeletion(iNextX, iNextY);
+				Game_ZonedBuildingTileDeletion(iNextX, iNextY);
 			Game_ItemPlacementCheck(iSX, y, iTileID, 2);
 			if (iSX < 0x80 && y < 0x80)
 				*(BYTE *)&dwMapXZON[iSX]->b[y] ^= (*(BYTE *)&dwMapXZON[iSX]->b[y] ^ iZoneType) & 0xF;

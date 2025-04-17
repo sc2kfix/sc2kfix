@@ -495,9 +495,6 @@ void PlaceMissileSilo(__int16 m_x, __int16 m_y) {
 	__int16 iSection[3];
 	BYTE *pZone;
 
-	// This function appears to be for placing the underground portions for a given tile.
-	int(__cdecl *H_PlaceUndergroundTiles)(__int16, __int16, __int16) = (int(__cdecl *)(__int16, __int16, __int16))0x401E38;
-
 	if (!isValidSiloPos(m_x, m_y, false))
 		return;
 
@@ -517,7 +514,7 @@ void PlaceMissileSilo(__int16 m_x, __int16 m_y) {
 		do {
 			for (iY = y; iY <= iItemDepth; ++iY) {
 				Game_PlaceTileWithMilitaryCheck(iX, iY, TILE_MILITARY_MISSILESILO);
-				H_PlaceUndergroundTiles(iX, iY, TILE_ROAD_HLR);
+				Game_PlaceUndergroundTiles(iX, iY, TILE_ROAD_HLR);
 			}
 			++iX;
 		} while (iX <= iItemWidth);
