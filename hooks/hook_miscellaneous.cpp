@@ -505,7 +505,7 @@ RUNWAY_GOBACK:
 						else {
 							if (dwMapXBLD[x]->iTileID[y] >= TILE_SMALLPARK)
 								H_402603(x, y);
-							Game_PlaceTileWithMilitaryCheck(x, y, 221);
+							Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_RUNWAY);
 							if (x < 0x80 && y < 0x80)
 								*(BYTE *)&dwMapXZON[x]->b[y] |= 0xF0u;
 							if (iZoneType != ZONE_MILITARY && x < 0x80 && y < 0x80)
