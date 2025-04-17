@@ -396,20 +396,26 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, _
 	// during the demystification process.
 	__int16 x, y;
 	__int16 iCurrX, iCurrY;
-	__int16 iBuildingCountOne;
-	__int16 iBuildingOne;
+	__int16 iNextX, iNextY;
+	__int16 iBuildingCount[2];
 	__int16 iMoveX, iMoveY;
 	__int16 iOppositeFacing;
-	__int16 iBuildingCountTwo;
-	__int16 iBuildingTwo;
 	__int16 iTileSouthFacing;
+	int i;
+	__int16 iLengthWays;
+	__int16 iDepthWays;
 	map_XBIT_t *mXBIT;
 	BYTE mXBBits;
+	map_XBLD_t *mXBLDOne, *mXBLDTwo;
+	BYTE mXBuilding[4];
+	map_XZON_t *mXZONOne, *mXZONTwo;
 
 	// It looks like this is to do with the given tiles being powered. Though this check
 	// is only hit on non-Military zones.
 	int(__cdecl *H_IsZonedTilePowered)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x401B40;
 	// This could be a check to make sure certain building types aren't overwritten during zone growth.
+	// Haven't yet determined whether it's a path tester of some sort. It's only present during the
+	// runway, pier and 2x2 building cases in SimulationGrowSpecificZone() (no other function).
 	__int16(__cdecl *H_402603)(__int16, __int16) = (__int16(__cdecl *)(__int16, __int16))0x402603;
 
 	x = iX;
@@ -447,19 +453,19 @@ PROCEEDAHEAD:
 PROCEEDFURTHER:
 			iCurrX = x;
 			iCurrY = y;
-			iBuildingCountOne = 0;
+			iBuildingCount[0] = 0;
 			while (iCurrX < 0x80 && iCurrY < 0x80) {
 				if (dwMapXZON[iCurrX]->b[iCurrY].iZoneType != iZoneType)
 					return 0;
 				// Positional marker - see whether a given if/check for military-zoned
 				// roads will need to be placed here.
-				iBuildingOne = dwMapXBLD[iCurrX]->iTileID[iCurrY];
-				if (iBuildingOne == TILE_INFRASTRUCTURE_RUNWAY || iBuildingOne == TILE_INFRASTRUCTURE_RUNWAYCROSS)
-					--iBuildingCountOne;
+				mXBuilding[0] = dwMapXBLD[iCurrX]->iTileID[iCurrY];
+				if (mXBuilding[0] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[0] == TILE_INFRASTRUCTURE_RUNWAYCROSS)
+					--iBuildingCount[0];
 				iCurrX += iMoveY;
-				++iBuildingCountOne;
+				++iBuildingCount[0];
 				iCurrY += iMoveX;
-				if (iBuildingCountOne >= 5) {
+				if (iBuildingCount[0] >= 5) {
 					if (!iMoveY) 
 						goto SKIPFIRSTROTATIONCHECK;
 					if ((wViewRotation & 1) != 0) {
@@ -474,12 +480,12 @@ SKIPFIRSTROTATIONCHECK:
 SKIPSECONDROTATIONCHECK:
 						iOppositeFacing = 1;
 					}
-					iBuildingCountTwo = 0;
+					iBuildingCount[1] = 0;
 					while (2) {
-						iBuildingTwo = dwMapXBLD[x]->iTileID[y];
-						if (iBuildingTwo == TILE_INFRASTRUCTURE_RUNWAY || iBuildingTwo == TILE_INFRASTRUCTURE_RUNWAYCROSS) {
-							--iBuildingCountTwo;
-							if (iBuildingTwo == TILE_INFRASTRUCTURE_RUNWAY) {
+						mXBuilding[1] = dwMapXBLD[x]->iTileID[y];
+						if (mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAYCROSS) {
+							--iBuildingCount[1];
+							if (mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAY) {
 								iTileSouthFacing = x < 0x80 &&
 									y < 0x80 &&
 									dwMapXBIT[x]->b[y].iRotated == VIEWROTATION_SOUTH;
@@ -519,14 +525,24 @@ RUNWAY_GOBACK:
 RUNWAY_GETOUT:
 						x += iMoveY;
 						y += iMoveX;
-						if (++iBuildingCountTwo >= 5)
+						if (++iBuildingCount[1] >= 5)
 							return 1;
 						continue;
 					}
 				}
 			}
-			return 0;
+			return 1;
 		case TILE_INFRASTRUCTURE_CRANE:
+			for (i = 0; i < 4; i++) {
+				iLengthWays = x + wSomePierLengthWays[i];
+				if (iLengthWays < 0x80) {
+					iDepthWays = y + wSomePierDepthWays[i];
+					if (iDepthWays < 0x80 && dwMapXBIT[iLengthWays]->b[iDepthWays].iWater != 0)
+						break;
+				}
+			}
+			if (i == 4)
+				return 0;
 			return 1;
 		case TILE_INFRASTRUCTURE_CONTROLTOWER_CIV:
 		case TILE_MILITARY_CONTROLTOWER:
@@ -551,6 +567,64 @@ RUNWAY_GETOUT:
 		case TILE_MILITARY_TOPSECRET:
 		case TILE_INFRASTRUCTURE_CARGOYARD:
 		case TILE_INFRASTRUCTURE_HANGAR2:
+			signed __int16 iSX;
+			iSX = x & 0xFFFE; // If absent you will get bizarre overlap cases (this could be a part of the 0x402603 function investigation).
+			P_LOBYTE(y) = y & 0xFE; // If absent you will get bizarre overlap cases (this could be a part of the 0x402603 function investigation).
+			iNextX = (__int16)(iSX + 1);
+			iNextY = (__int16)(y + 1);
+			mXBLDOne = dwMapXBLD[iSX];
+			mXBuilding[0] = mXBLDOne->iTileID[y];
+			if (mXBuilding[0] >= TILE_INFRASTRUCTURE_WATERTOWER)
+				return 0;
+			if (mXBuilding[0] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[0] == TILE_INFRASTRUCTURE_RUNWAYCROSS || mXBuilding[0] == TILE_INFRASTRUCTURE_CRANE)
+				return 0;
+			mXBLDTwo = dwMapXBLD[iNextX];
+			mXBuilding[1] = mXBLDTwo->iTileID[y];
+			if (mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAYCROSS || mXBuilding[1] == TILE_INFRASTRUCTURE_CRANE)
+				return 0;
+			mXBuilding[2] = mXBLDOne->iTileID[iNextY];
+			if (mXBuilding[2] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[2] == TILE_INFRASTRUCTURE_RUNWAYCROSS || mXBuilding[2] == TILE_INFRASTRUCTURE_CRANE)
+				return 0;
+			mXBuilding[3] = mXBLDTwo->iTileID[iNextY];
+			if (mXBuilding[3] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[3] == TILE_INFRASTRUCTURE_RUNWAYCROSS || mXBuilding[3] == TILE_INFRASTRUCTURE_CRANE)
+				return 0;
+			mXZONOne = dwMapXZON[iSX];
+			if (mXZONOne->b[y].iZoneType != iZoneType)
+				return 0;
+			mXZONTwo = dwMapXZON[iNextX];
+			if (mXZONTwo->b[y].iZoneType != iZoneType)
+				return 0;
+			if (mXZONOne->b[iNextY].iZoneType != iZoneType)
+				return 0;
+			if (mXZONTwo->b[iNextY].iZoneType != iZoneType)
+				return 0;
+			if (mXBuilding[0] >= TILE_SMALLPARK)
+				H_402603(iSX, y);
+			if (dwMapXBLD[iNextX]->iTileID[y] >= TILE_SMALLPARK)
+				H_402603(iNextX, y);
+			if (dwMapXBLD[iSX]->iTileID[iNextY] >= TILE_SMALLPARK)
+				H_402603(iSX, iNextY);
+			if (dwMapXBLD[iNextX]->iTileID[iNextY] >= TILE_SMALLPARK)
+				H_402603(iNextX, iNextY);
+			Game_ItemPlacementCheck(iSX, y, iTileID, 2);
+			if (iSX < 0x80 && y < 0x80)
+				*(BYTE *)&dwMapXZON[iSX]->b[y] ^= (*(BYTE *)&dwMapXZON[iSX]->b[y] ^ iZoneType) & 0xF;
+			if (iNextX < 0x80 && y < 0x80)
+				*(BYTE *)&dwMapXZON[iNextX]->b[y] ^= (*(BYTE *)&dwMapXZON[iNextX]->b[y] ^ iZoneType) & 0xF;
+			if (iSX < 0x80 && iNextY < 0x80)
+				*(BYTE *)&dwMapXZON[iSX]->b[iNextY] ^= (*(BYTE *)&dwMapXZON[iSX]->b[iNextY] ^ iZoneType) & 0xF;
+			if (iNextX < 0x80 && iNextY < 0x80)
+				*(BYTE *)&dwMapXZON[iNextX]->b[iNextY] ^= (*(BYTE *)&dwMapXZON[iNextX]->b[iNextY] ^ iZoneType) & 0xF;
+			if (iZoneType == ZONE_MILITARY) {
+				if (iSX < 0x80 && y < 0x80)
+					*(BYTE *)&dwMapXBIT[iSX]->b[y] &= 0xFu;
+				if (iNextX < 0x80 && y < 0x80)
+					*(BYTE *)&dwMapXBIT[iNextX]->b[y] &= 0xFu;
+				if (iSX < 0x80 && iNextY < 0x80)
+					*(BYTE *)&dwMapXBIT[iSX]->b[iNextY] &= 0xFu;
+				if (iNextX < 0x80 && iNextY < 0x80)
+					*(BYTE *)&dwMapXBIT[iNextX]->b[iNextY] &= 0xFu;
+			}
 			return 1;
 		case TILE_MILITARY_MISSILESILO:
 			PlaceMissileSilo(x, y);

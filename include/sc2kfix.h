@@ -47,6 +47,16 @@
 #define lengthof(s) (countof(s)-1)
 
 // The nearest equivalent of LOWORD() from IDA.
+#define P_LAST_IND(x,part_type)    (sizeof(x)/sizeof(part_type) - 1)
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN
+#  define P_LOW_IND(x,part_type)   P_LAST_IND(x,part_type)
+#  define P_HIGH_IND(x,part_type)  0
+#else
+#  define P_HIGH_IND(x,part_type)  P_LAST_IND(x,part_type)
+#  define P_LOW_IND(x,part_type)   0
+#endif
+#define P_BYTEn(x, n) (*((BYTE*)&(x)+n))
+#define P_LOBYTE(x) P_BYTEn(x,P_LOW_IND(x,BYTE))
 #define P_LOWORD(x) (*((uint16_t*)&(x)))
 #define P_HIWORD(x) (*((uint16_t*)&(x)+1))
 // Signed
