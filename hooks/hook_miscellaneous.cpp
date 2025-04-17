@@ -665,7 +665,7 @@ PIER_GOTOTHREE:
 					if (mXBuilding[0] >= TILE_ROAD_LR && mXBuilding[0] <= TILE_ROAD_LTBR)
 						return 0;
 				}
-				if (dwMapXUND[x]->iTileID[y])
+				if (dwMapXUND[iSX]->iTileID[y])
 					return 0;
 			}
 			mXZONTwo = dwMapXZON[iNextX];
@@ -686,7 +686,7 @@ PIER_GOTOTHREE:
 					if (mXBuilding[2] >= TILE_ROAD_LR && mXBuilding[2] <= TILE_ROAD_LTBR)
 						return 0;
 				}
-				if (dwMapXUND[x]->iTileID[iNextY])
+				if (dwMapXUND[iSX]->iTileID[iNextY])
 					return 0;
 			}
 			if (mXZONTwo->b[iNextY].iZoneType != iZoneType)
