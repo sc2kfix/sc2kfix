@@ -425,15 +425,12 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, _
 	if (iZoneType != ZONE_MILITARY) {
 		if (!H_IsZonedTilePowered(iX, iY))
 			return 0;
-		//ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> SimulationGrowSpecificZone(%d, %d, %d, %d) (Non-MZ - IsPowered)\n", _ReturnAddress(), iX, iY, iTileID, iZoneType);
 	}
-	//ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> SimulationGrowSpecificZone(%d, %d, %d, %d)\n", _ReturnAddress(), iX, iY, iTileID, iZoneType);
 	switch (iTileID) {
 		case TILE_INFRASTRUCTURE_RUNWAY:
 			iMoveX = 0;
 			iMoveY = 0;
 			if ((dwTileCount[TILE_INFRASTRUCTURE_RUNWAY] & 1) == 0) {
-				ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> SimulationGrowSpecificZone(%d, %d, %d, %d) - dwTileCount[TILE_INTRASTRUCTURE_RUNWAY] = %u\n", _ReturnAddress(), iX, iY, iTileID, iZoneType, dwTileCount[TILE_INFRASTRUCTURE_RUNWAY]);
 				if ((x & 1) != 0) {
 					iMoveX = 1;
 					goto PROCEEDFURTHER;
@@ -459,9 +456,9 @@ PROCEEDFURTHER:
 			while (iCurrX < 0x80 && iCurrY < 0x80) {
 				if (dwMapXZON[iCurrX]->b[iCurrY].iZoneType != iZoneType)
 					return 0;
-				// Positional marker - see whether a given if/check for military-zoned
-				// roads will need to be placed here.
 				mXBuilding[0] = dwMapXBLD[iCurrX]->iTileID[iCurrY];
+				if (dwMapXZON[iCurrX]->b[iCurrY].iZoneType == ZONE_MILITARY && ((mXBuilding[0] >= TILE_ROAD_LR && mXBuilding[0] <= TILE_ROAD_LTBR) || mXBuilding[0] == TILE_INFRASTRUCTURE_CRANE))
+					return 0;
 				if (mXBuilding[0] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[0] == TILE_INFRASTRUCTURE_RUNWAYCROSS)
 					--iBuildingCount[0];
 				iCurrX += iMoveY;
@@ -511,6 +508,8 @@ RUNWAY_GOBACK:
 							}
 						}
 						else {
+							if (dwMapXZON[x]->b[y].iZoneType == ZONE_MILITARY && ((mXBuilding[1] >= TILE_ROAD_LR && mXBuilding[1] <= TILE_ROAD_LTBR) || mXBuilding[1] == TILE_INFRASTRUCTURE_CRANE))
+								return 0;
 							if (dwMapXBLD[x]->iTileID[y] >= TILE_SMALLPARK)
 								H_402603(x, y);
 							Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_RUNWAY);
