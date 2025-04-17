@@ -391,7 +391,6 @@ extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
 }
 
 extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, __int16 iTileID, __int16 iZoneType) {
-#if 1
 	// Variable names subject to change
 	// during the demystification process.
 	__int16 x, y;
@@ -705,13 +704,6 @@ PIER_GOTOTHREE:
 		default:
 			return 1;
 	}
-#else
-	int(__cdecl *H_SimulationGrowSpecificZone)(__int16, __int16, __int16, __int16) = (int(__cdecl *)(__int16, __int16, __int16, __int16))0x4382B0;
-
-	int ret = H_SimulationGrowSpecificZone(iX, iY, iTileID, iZoneType);
-
-	return ret;
-#endif
 }
 
 extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 m_x, int m_y, __int16 iTileID, __int16 iTileArea) {
