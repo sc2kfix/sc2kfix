@@ -449,7 +449,9 @@ PROCEEDFURTHER:
 				if (dwMapXZON[iCurrX]->b[iCurrY].iZoneType != iZoneType)
 					return 0;
 				mXBuilding[0] = dwMapXBLD[iCurrX]->iTileID[iCurrY];
-				if (dwMapXZON[iCurrX]->b[iCurrY].iZoneType == ZONE_MILITARY && ((mXBuilding[0] >= TILE_ROAD_LR && mXBuilding[0] <= TILE_ROAD_LTBR) || mXBuilding[0] == TILE_INFRASTRUCTURE_CRANE))
+				if (dwMapXZON[iCurrX]->b[iCurrY].iZoneType == ZONE_MILITARY && ((mXBuilding[0] >= TILE_ROAD_LR && mXBuilding[0] <= TILE_ROAD_LTBR) || mXBuilding[0] == TILE_INFRASTRUCTURE_CRANE || mXBuilding[0] == TILE_MILITARY_MISSILESILO))
+					return 0;
+				if (dwMapXZON[iCurrX]->b[iCurrY].iZoneType == ZONE_MILITARY && dwMapXUND[iCurrX]->iTileID[iCurrY])
 					return 0;
 				if (mXBuilding[0] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[0] == TILE_INFRASTRUCTURE_RUNWAYCROSS)
 					--iBuildingCount[0];
@@ -500,7 +502,9 @@ RUNWAY_GOBACK:
 							}
 						}
 						else {
-							if (dwMapXZON[x]->b[y].iZoneType == ZONE_MILITARY && ((mXBuilding[1] >= TILE_ROAD_LR && mXBuilding[1] <= TILE_ROAD_LTBR) || mXBuilding[1] == TILE_INFRASTRUCTURE_CRANE))
+							if (dwMapXZON[x]->b[y].iZoneType == ZONE_MILITARY && ((mXBuilding[1] >= TILE_ROAD_LR && mXBuilding[1] <= TILE_ROAD_LTBR) || mXBuilding[1] == TILE_INFRASTRUCTURE_CRANE || mXBuilding[1] == TILE_MILITARY_MISSILESILO))
+								return 0;
+							if (dwMapXZON[x]->b[y].iZoneType == ZONE_MILITARY && dwMapXUND[x]->iTileID[y])
 								return 0;
 							if (dwMapXBLD[x]->iTileID[y] >= TILE_SMALLPARK)
 								Game_ZonedBuildingTileDeletion(x, y);
@@ -631,35 +635,43 @@ PIER_GOTOTHREE:
 			mXBuilding[0] = mXBLDOne->iTileID[y];
 			if (mXBuilding[0] >= TILE_INFRASTRUCTURE_WATERTOWER)
 				return 0;
-			if (mXBuilding[0] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[0] == TILE_INFRASTRUCTURE_RUNWAYCROSS || mXBuilding[0] == TILE_INFRASTRUCTURE_CRANE)
+			if (mXBuilding[0] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[0] == TILE_INFRASTRUCTURE_RUNWAYCROSS || mXBuilding[0] == TILE_INFRASTRUCTURE_CRANE || mXBuilding[0] == TILE_MILITARY_MISSILESILO)
 				return 0;
 			mXBLDTwo = dwMapXBLD[iNextX];
 			mXBuilding[1] = mXBLDTwo->iTileID[y];
-			if (mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAYCROSS || mXBuilding[1] == TILE_INFRASTRUCTURE_CRANE)
+			if (mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAYCROSS || mXBuilding[1] == TILE_INFRASTRUCTURE_CRANE || mXBuilding[1] == TILE_MILITARY_MISSILESILO)
 				return 0;
 			mXBuilding[2] = mXBLDOne->iTileID[iNextY];
-			if (mXBuilding[2] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[2] == TILE_INFRASTRUCTURE_RUNWAYCROSS || mXBuilding[2] == TILE_INFRASTRUCTURE_CRANE)
+			if (mXBuilding[2] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[2] == TILE_INFRASTRUCTURE_RUNWAYCROSS || mXBuilding[2] == TILE_INFRASTRUCTURE_CRANE || mXBuilding[2] == TILE_MILITARY_MISSILESILO)
 				return 0;
 			mXBuilding[3] = mXBLDTwo->iTileID[iNextY];
-			if (mXBuilding[3] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[3] == TILE_INFRASTRUCTURE_RUNWAYCROSS || mXBuilding[3] == TILE_INFRASTRUCTURE_CRANE)
+			if (mXBuilding[3] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[3] == TILE_INFRASTRUCTURE_RUNWAYCROSS || mXBuilding[3] == TILE_INFRASTRUCTURE_CRANE || mXBuilding[3] == TILE_MILITARY_MISSILESILO)
 				return 0;
 			mXZONOne = dwMapXZON[iSX];
 			if (mXZONOne->b[y].iZoneType != iZoneType)
 				return 0;
 			if (iZoneType == ZONE_MILITARY && mXZONOne->b[y].iZoneType == ZONE_MILITARY && (mXBuilding[0] >= TILE_ROAD_LR && mXBuilding[0] <= TILE_ROAD_LTBR))
 				return 0;
+			if (iZoneType == ZONE_MILITARY && dwMapXUND[x]->iTileID[y])
+				return 0;
 			mXZONTwo = dwMapXZON[iNextX];
 			if (mXZONTwo->b[y].iZoneType != iZoneType)
 				return 0;
 			if (iZoneType == ZONE_MILITARY && mXZONTwo->b[y].iZoneType == ZONE_MILITARY && (mXBuilding[1] >= TILE_ROAD_LR && mXBuilding[1] <= TILE_ROAD_LTBR))
 				return 0;
+			if (iZoneType == ZONE_MILITARY && dwMapXUND[iNextX]->iTileID[y])
+				return 0;
 			if (mXZONOne->b[iNextY].iZoneType != iZoneType)
 				return 0;
 			if (iZoneType == ZONE_MILITARY && mXZONOne->b[iNextY].iZoneType == ZONE_MILITARY && (mXBuilding[2] >= TILE_ROAD_LR && mXBuilding[2] <= TILE_ROAD_LTBR))
 				return 0;
+			if (iZoneType == ZONE_MILITARY && dwMapXUND[x]->iTileID[iNextY])
+				return 0;
 			if (mXZONTwo->b[iNextY].iZoneType != iZoneType)
 				return 0;
 			if (iZoneType == ZONE_MILITARY && mXZONTwo->b[iNextY].iZoneType == ZONE_MILITARY && (mXBuilding[3] >= TILE_ROAD_LR && mXBuilding[3] <= TILE_ROAD_LTBR))
+				return 0;
+			if (iZoneType == ZONE_MILITARY && dwMapXUND[iNextX]->iTileID[iNextY])
 				return 0;
 			if (mXBuilding[0] >= TILE_SMALLPARK)
 				Game_ZonedBuildingTileDeletion(iSX, y);
