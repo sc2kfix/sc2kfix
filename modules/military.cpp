@@ -484,7 +484,7 @@ GOFORWARD:
 	return 1;
 }
 
-int PlaceMissileSilo(__int16 m_x, __int16 m_y) {
+void PlaceMissileSilo(__int16 m_x, __int16 m_y) {
 	__int16 x;
 	__int16 y;
 	__int16 iArea;
@@ -499,7 +499,7 @@ int PlaceMissileSilo(__int16 m_x, __int16 m_y) {
 	int(__cdecl *H_PlaceUndergroundTiles)(__int16, __int16, __int16) = (int(__cdecl *)(__int16, __int16, __int16))0x401E38;
 
 	if (!isValidSiloPos(m_x, m_y, false))
-		return 0;
+		return;
 
 	x = m_x;
 	y = m_y;
@@ -551,7 +551,6 @@ int PlaceMissileSilo(__int16 m_x, __int16 m_y) {
 		*(BYTE *)&dwMapXZON[x]->b[y] |= 0xF0u;
 	}
 	Game_SpawnItem(x, y + iArea);
-	return 1;
 }
 
 static int CheckOverlappingSiloPosition(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
