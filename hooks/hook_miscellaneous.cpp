@@ -526,6 +526,32 @@ RUNWAY_GETOUT:
 				}
 			}
 			return 0;
+		case TILE_INFRASTRUCTURE_CRANE:
+			return 1;
+		case TILE_INFRASTRUCTURE_CONTROLTOWER_CIV:
+		case TILE_MILITARY_CONTROLTOWER:
+		case TILE_MILITARY_WAREHOUSE:
+		case TILE_INFRASTRUCTURE_BUILDING1:
+		case TILE_INFRASTRUCTURE_BUILDING2:
+		case TILE_MILITARY_TARMAC:
+		case TILE_MILITARY_F15B:
+		case TILE_MILITARY_HANGAR1:
+		case TILE_MILITARY_RADAR:
+			if (dwMapXBLD[x]->iTileID[y] < TILE_SMALLPARK) {
+				Game_ItemPlacementCheck(x, y, iTileID, 1);
+				if (x < 0x80 && y < 0x80)
+					*(BYTE *)&dwMapXZON[x]->b[y] ^= (*(BYTE *)&dwMapXZON[x]->b[y] ^ iZoneType) & 0xF;
+				if (iZoneType == ZONE_MILITARY && x < 0x80 && y < 0x80)
+					*(BYTE *)&dwMapXBIT[x]->b[y] &= 0xFu;
+			}
+			return 1;
+		case TILE_INFRASTRUCTURE_PARKINGLOT:
+		case TILE_MILITARY_PARKINGLOT:
+		case TILE_MILITARY_LOADINGBAY:
+		case TILE_MILITARY_TOPSECRET:
+		case TILE_INFRASTRUCTURE_CARGOYARD:
+		case TILE_INFRASTRUCTURE_HANGAR2:
+			return 1;
 		case TILE_MILITARY_MISSILESILO:
 			PlaceMissileSilo(x, y);
 			return 1;
