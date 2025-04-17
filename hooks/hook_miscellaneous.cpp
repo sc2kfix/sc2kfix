@@ -656,12 +656,20 @@ PIER_GOTOTHREE:
 			mXZONOne = dwMapXZON[iSX];
 			if (mXZONOne->b[y].iZoneType != iZoneType)
 				return 0;
+			if (iZoneType == ZONE_MILITARY && mXZONOne->b[y].iZoneType == ZONE_MILITARY && (mXBuilding[0] >= TILE_ROAD_LR && mXBuilding[0] <= TILE_ROAD_LTBR))
+				return 0;
 			mXZONTwo = dwMapXZON[iNextX];
 			if (mXZONTwo->b[y].iZoneType != iZoneType)
 				return 0;
+			if (iZoneType == ZONE_MILITARY && mXZONTwo->b[y].iZoneType == ZONE_MILITARY && (mXBuilding[1] >= TILE_ROAD_LR && mXBuilding[1] <= TILE_ROAD_LTBR))
+				return 0;
 			if (mXZONOne->b[iNextY].iZoneType != iZoneType)
 				return 0;
+			if (iZoneType == ZONE_MILITARY && mXZONOne->b[iNextY].iZoneType == ZONE_MILITARY && (mXBuilding[2] >= TILE_ROAD_LR && mXBuilding[2] <= TILE_ROAD_LTBR))
+				return 0;
 			if (mXZONTwo->b[iNextY].iZoneType != iZoneType)
+				return 0;
+			if (iZoneType == ZONE_MILITARY && mXZONTwo->b[iNextY].iZoneType == ZONE_MILITARY && (mXBuilding[3] >= TILE_ROAD_LR && mXBuilding[3] <= TILE_ROAD_LTBR))
 				return 0;
 			if (mXBuilding[0] >= TILE_SMALLPARK)
 				H_402603(iSX, y);
