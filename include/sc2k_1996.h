@@ -972,7 +972,7 @@ GAMEOFF(WORD,	wTileHighlightActive,		0x4EA7F0)
 // Pending classification
 GAMEOFF_ARR(WORD, wSomePositionalAngleOne,	0x4DC4D0)
 GAMEOFF_ARR(WORD, wSomePositionalAngleTwo,	0x4DC4D2)
-GAMEOFF_ARR(WORD, wSomePositionalAngleThree,0x4DC4D4)
+GAMEOFF_ARR(WORD, wSomePositionalAngleThree,	0x4DC4D4)
 GAMEOFF_ARR(WORD, wSomePositionalAngleFour,	0x4DC4D6)
 GAMEOFF_ARR(WORD, wSomePierLengthWays,		0x4E75C0)
 GAMEOFF_ARR(WORD, wSomePierDepthWays,		0x4E75C8)

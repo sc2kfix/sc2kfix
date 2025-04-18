@@ -170,11 +170,6 @@ extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR l
 	return LoadStringA(hInstance, uID, lpBuffer, cchBufferMax);
 }
 
-extern "C" BOOL __stdcall Hook_DestroyMenu(HMENU hMenu) {
-	ConsoleLog(LOG_DEBUG, "MENU: 0x%06X -> DestroyMenu(0x%06X)\n", hMenu);
-	return DestroyMenu(hMenu);
-}
-
 #pragma warning(disable : 6387)
 // Hook LoadMenuA so we can insert our own menu items.
 extern "C" HMENU __stdcall Hook_LoadMenuA(HINSTANCE hInstance, LPCSTR lpMenuName) {
@@ -1290,7 +1285,6 @@ void InstallMiscHooks(void) {
 	*(DWORD*)(0x4EFBE8) = (DWORD)Hook_LoadStringA;
 
 	// Install LoadMenuA hook
-	*(DWORD*)(0x4EFBF0) = (DWORD)Hook_DestroyMenu;
 	*(DWORD*)(0x4EFDCC) = (DWORD)Hook_LoadMenuA;
 	*(DWORD*)(0x4EFE58) = (DWORD)Hook_EnableMenuItem;
 	*(DWORD*)(0x4EFC64) = (DWORD)Hook_DialogBoxParamA;
