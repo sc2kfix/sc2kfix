@@ -398,8 +398,8 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, _
 	__int16 iNextX, iNextY;
 	__int16 iBuildingCount[2];
 	__int16 iMoveX, iMoveY;
-	__int16 iOppositeFacing;
-	__int16 iTileSouthFacing;
+	__int16 iRotate;
+	__int16 iTileRotated;
 	int i;
 	__int16 iLengthWays;
 	__int16 iDepthWays;
@@ -470,11 +470,11 @@ SKIPFIRSTROTATIONCHECK:
 							if ((wViewRotation & 1) != 0)
 								goto SKIPSECONDROTATIONCHECK;
 						}
-						iOppositeFacing = 0;
+						iRotate = 0;
 					}
 					else {
 SKIPSECONDROTATIONCHECK:
-						iOppositeFacing = 1;
+						iRotate = 1;
 					}
 					iBuildingCount[1] = 0;
 					while (2) {
@@ -482,10 +482,10 @@ SKIPSECONDROTATIONCHECK:
 						if (mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAYCROSS) {
 							--iBuildingCount[1];
 							if (mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAY) {
-								iTileSouthFacing = x < 0x80 &&
+								iTileRotated = x < 0x80 &&
 									y < 0x80 &&
 									dwMapXBIT[x]->b[y].iRotated;
-								if (iTileSouthFacing != iOppositeFacing) {
+								if (iTileRotated != iRotate) {
 									Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 									if (x < 0x80 && y < 0x80)
 										*(BYTE *)&dwMapXZON[x]->b[y] |= 0xF0u;
@@ -519,7 +519,7 @@ RUNWAY_GOBACK:
 								*(BYTE *)&dwMapXZON[x]->b[y] |= 0xF0u;
 							if (iZoneType != ZONE_MILITARY && x < 0x80 && y < 0x80)
 								*(BYTE *)&dwMapXBIT[x]->b[y] |= 0xC0u;
-							if (iOppositeFacing && x < 0x80 && y < 0x80) {
+							if (iRotate && x < 0x80 && y < 0x80) {
 								mXBIT = dwMapXBIT[x];
 								mXBBits = (*(BYTE *)&mXBIT->b[y] | 2);
 								goto RUNWAY_GOBACK;
@@ -589,11 +589,11 @@ RUNWAY_GETOUT:
 PIER_GOTOONE:
 			if ((wViewRotation & 1) != 0) {
 PIER_GOTOTWO:
-				iOppositeFacing = 1;
+				iRotate = 1;
 			}
 			else {
 PIER_GOTOTHREE:
-				iOppositeFacing = 0;
+				iRotate = 0;
 			}
 			iPierLength = 4;
 			do {
@@ -602,7 +602,7 @@ PIER_GOTOTHREE:
 				Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_PIER);
 				if (x < 0x80 && y < 0x80)
 					*(BYTE *)&dwMapXZON[x]->b[y] |= 0xF0u;
-				if (iOppositeFacing) {
+				if (iRotate) {
 					if (x < 0x80 && y < 0x80)
 						*(BYTE *)&dwMapXBIT[x]->b[y] |= 2u;
 				}
