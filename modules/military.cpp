@@ -1047,9 +1047,12 @@ void ProposeMilitaryBaseAirForceBase(void) {
 	unsigned int iMilitaryBaseTries = 0;
 REATTEMPT:
 	MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &iRandXPos, &iRandYPos, &iRandStoredXPos, &iRandStoredYPos);
+	if (iValidAltitudeTiles < 40)
+		goto GETOUT;
 
 	int iResult = MilitaryBaseAirForce(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandStoredYPos);
 	if (iResult < 0) {
+GETOUT:
 		if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
 			iMilitaryBaseTries++;
 			goto REATTEMPT;
@@ -1072,9 +1075,12 @@ void ProposeMilitaryBaseArmyBase(void) {
 	unsigned int iMilitaryBaseTries = 0;
 REATTEMPT:
 	MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &iRandXPos, &iRandYPos, &iRandStoredXPos, &iRandStoredYPos);
+	if (iValidAltitudeTiles < 40)
+		goto GETOUT;
 
 	int iResult = MilitaryBaseArmyBase(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandStoredYPos);
 	if (iResult < 0) {
+GETOUT:
 		if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
 			iMilitaryBaseTries++;
 			goto REATTEMPT;
