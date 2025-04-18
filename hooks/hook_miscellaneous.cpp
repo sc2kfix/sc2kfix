@@ -453,6 +453,8 @@ PROCEEDFURTHER:
 					if ((mXBuilding[0] >= TILE_ROAD_LR && mXBuilding[0] <= TILE_ROAD_LTBR) ||
 						mXBuilding[0] == TILE_INFRASTRUCTURE_CRANE || mXBuilding[0] == TILE_MILITARY_MISSILESILO)
 						return 0;
+					if (dwMapXTER[iCurrX]->iTileID[iCurrY])
+						return 0;
 					if (dwMapXUND[iCurrX]->iTileID[iCurrY])
 						return 0;
 				}
@@ -508,6 +510,8 @@ RUNWAY_GOBACK:
 							if (dwMapXZON[x]->b[y].iZoneType == ZONE_MILITARY) {
 								if ((mXBuilding[1] >= TILE_ROAD_LR && mXBuilding[1] <= TILE_ROAD_LTBR) ||
 									mXBuilding[1] == TILE_INFRASTRUCTURE_CRANE || mXBuilding[1] == TILE_MILITARY_MISSILESILO)
+									return 0;
+								if (dwMapXTER[x]->iTileID[y])
 									return 0;
 								if (dwMapXUND[x]->iTileID[y])
 									return 0;
