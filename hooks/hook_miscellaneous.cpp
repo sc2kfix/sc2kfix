@@ -484,7 +484,7 @@ SKIPSECONDROTATIONCHECK:
 							if (mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAY) {
 								iTileSouthFacing = x < 0x80 &&
 									y < 0x80 &&
-									dwMapXBIT[x]->b[y].iRotated == VIEWROTATION_SOUTH;
+									dwMapXBIT[x]->b[y].iRotated;
 								if (iTileSouthFacing != iOppositeFacing) {
 									Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 									if (x < 0x80 && y < 0x80)
