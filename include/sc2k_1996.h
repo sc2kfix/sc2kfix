@@ -125,8 +125,6 @@ enum {
 	MILITARY_BASE_MISSILE_SILOS
 };
 
-#define OVERWRITEABLE_TILES(x) ((x >= TILE_CLEAR && x < TILE_RADIOACTIVITY) || (x >= TILE_TREES1 && x < TILE_SMALLPARK))
-
 // Building (XBLD) tile IDs
 enum {
 	TILE_CLEAR,
