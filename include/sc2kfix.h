@@ -47,6 +47,16 @@
 #define lengthof(s) (countof(s)-1)
 
 // The nearest equivalent of LOWORD() from IDA.
+#define P_LAST_IND(x,part_type)    (sizeof(x)/sizeof(part_type) - 1)
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN
+#  define P_LOW_IND(x,part_type)   P_LAST_IND(x,part_type)
+#  define P_HIGH_IND(x,part_type)  0
+#else
+#  define P_HIGH_IND(x,part_type)  P_LAST_IND(x,part_type)
+#  define P_LOW_IND(x,part_type)   0
+#endif
+#define P_BYTEn(x, n) (*((BYTE*)&(x)+n))
+#define P_LOBYTE(x) P_BYTEn(x,P_LOW_IND(x,BYTE))
 #define P_LOWORD(x) (*((uint16_t*)&(x)))
 #define P_HIWORD(x) (*((uint16_t*)&(x)+1))
 // Signed
@@ -253,6 +263,7 @@ extern HMODULE hSC2KAppModule;
 extern HMODULE hSC2KFixModule;
 extern HANDLE hConsoleThread;
 extern HMENU hGameMenu;
+extern HMENU hDebugMenu;
 extern FARPROC fpWinMMHookList[180];
 extern DWORD dwDetectedVersion;
 extern DWORD dwSC2KAppTimestamp;
@@ -309,6 +320,12 @@ extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void);
 extern "C" int __stdcall Hook_402793(int iStatic, char* szText, int iMaybeAlways1, COLORREF crColor);
 extern "C" int __stdcall Hook_4021A8(HWND iShow);
 extern "C" int __stdcall Hook_40103C(int iShow);
+void PlaceMissileSilo(__int16 m_x, __int16 m_y);
+void ProposeMilitaryBaseDecline(void);
+void ProposeMilitaryBaseMissileSilos(void);
+void ProposeMilitaryBaseAirForceBase(void);
+void ProposeMilitaryBaseArmyBase(void);
+void ProposeMilitaryBaseNavalYard(void);
 
 // Registry hooks
 void InstallRegistryPathingHooks_SC2K1996(void);
