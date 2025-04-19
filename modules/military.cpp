@@ -1034,6 +1034,7 @@ REATTEMPT:
 }
 
 void ProposeMilitaryBaseAirForceBase(void) {
+	int iResult;
 	__int16 iValidAltitudeTiles;
 	__int16 iRandXPos;
 	__int16 iRandYPos;
@@ -1041,6 +1042,7 @@ void ProposeMilitaryBaseAirForceBase(void) {
 	__int16 iRandStoredXPos;
 	__int16 iRandStoredYPos;
 
+	iResult = -1;
 	if (MessageBoxA(NULL, "Are you sure that you want an attempt to be made to spawn an Air Force plot?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES) {
 		return;
 	}
@@ -1050,7 +1052,7 @@ REATTEMPT:
 	if (iValidAltitudeTiles < 40)
 		goto GETOUT;
 
-	int iResult = MilitaryBaseAirForce(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandStoredYPos);
+	iResult = MilitaryBaseAirForce(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandStoredYPos);
 	if (iResult < 0) {
 GETOUT:
 		if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
@@ -1062,6 +1064,7 @@ GETOUT:
 }
 
 void ProposeMilitaryBaseArmyBase(void) {
+	int iResult;
 	__int16 iValidAltitudeTiles;
 	__int16 iRandXPos;
 	__int16 iRandYPos;
@@ -1069,6 +1072,7 @@ void ProposeMilitaryBaseArmyBase(void) {
 	__int16 iRandStoredXPos;
 	__int16 iRandStoredYPos;
 
+	iResult = -1;
 	if (MessageBoxA(NULL, "Are you sure that you want an attempt to be made to spawn an Army Base plot?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES) {
 		return;
 	}
@@ -1078,7 +1082,7 @@ REATTEMPT:
 	if (iValidAltitudeTiles < 40)
 		goto GETOUT;
 
-	int iResult = MilitaryBaseArmyBase(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandStoredYPos);
+	iResult = MilitaryBaseArmyBase(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandStoredYPos);
 	if (iResult < 0) {
 GETOUT:
 		if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
