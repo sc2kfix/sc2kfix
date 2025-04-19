@@ -1539,23 +1539,23 @@ skipgamemenu:
 		
 		// Insert in reverse order.
 		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_MISSILESILOS, "Propose Missile Silos") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #4 failed, error = 0x%08X.\n", GetLastError());
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #4 failed, error = 0x%08X.\n", GetLastError());
 			goto skipdebugmenu;
 		}
 		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_NAVALYARD, "Propose Naval Yard") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #5 failed, error = 0x%08X.\n", GetLastError());
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #5 failed, error = 0x%08X.\n", GetLastError());
 			goto skipdebugmenu;
 		}
 		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_ARMYBASE, "Propose Army Base") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #6 failed, error = 0x%08X.\n", GetLastError());
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #6 failed, error = 0x%08X.\n", GetLastError());
 			goto skipdebugmenu;
 		}
 		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_AIRFORCE, "Propose Air Force Base") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #7 failed, error = 0x%08X.\n", GetLastError());
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #7 failed, error = 0x%08X.\n", GetLastError());
 			goto skipdebugmenu;
 		}
 		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_DECLINED, "Stop Military Spawning") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #8 failed, error = 0x%08X.\n", GetLastError());
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #8 failed, error = 0x%08X.\n", GetLastError());
 			goto skipdebugmenu;
 		}
 
