@@ -462,13 +462,15 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 x, signed __int1
 	map_XZON_attribs_t maXZON;
 	__int16 iCurrZoneType;
 	int iPosAttributes;
+	__int16 iTileID;
+	__int16 iBuildingCount;
 	WORD &word_4C7CF8 = *(WORD *)0x4C7CF8;
 	WORD *word_4DC4C8 = &*(WORD *)0x4DC4C8;
 
 	pThis = (DWORD *)Game_PointerToCSimcityViewClass(pCWinAppThis);
 	iAttributes = dwCityPopulation;
 	iX = x;
-	bPlaceChurch = (unsigned int)2500 * dwTileCount[TILE_INFRASTRUCTURE_CHURCH] < (unsigned int)dwCityPopulation;
+	bPlaceChurch = (unsigned int)2500 * dwTileCount[TILE_INFRASTRUCTURE_CHURCH] < dwCityPopulation;
 	word_4C7CF8 = word_4DC4C8[wViewRotation];
 	iResult = x / 2;
 	iXMM = x / 2;
@@ -488,18 +490,102 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 x, signed __int1
 				if (maXZON.iZoneType > ZONE_DENSE_INDUSTRIAL) {
 					switch (iCurrZoneType) {
 						case ZONE_MILITARY:
+							// (I / N): as far as I can tell for the most part the divisor is the
+							// number of tiles that the given building-type occupies, so it divides
+							// by that to get the actual number of buildings present.
+							//
+							// As far as I can tell when it comes to the 'MILITARYTILE_MHANGAR1' case...
+							// 12 of those type could be classified as a unit, so if iAttributes is greater
+							// than that unit, place more hangars.
+							//
+							// That crops up the most on Army and Naval cases.
 							switch (bMilitaryBaseType) {
 								case MILITARY_BASE_ARMY:
 									if ((rand() & 3) == 0) {
-
+										P_LOWORD(iAttributes) = (__int16)dwMilitaryTiles[MILITARYTILE_MPARKINGLOT] / 4;
+										iTileID = TILE_MILITARY_PARKINGLOT;
+										if ((__int16)iAttributes > (__int16)dwMilitaryTiles[MILITARYTILE_MHANGAR1] / 12)
+											iTileID = TILE_MILITARY_HANGAR1;
+										if (!Game_SimulationGrowSpecificZone(iX, iY, iTileID, ZONE_MILITARY))
+											Game_SimulationGrowSpecificZone(iX, iY, TILE_MILITARY_HANGAR1, ZONE_MILITARY);
 									}
 									break;
+								case MILITARY_BASE_AIR_FORCE:
+									if ((rand() & 3) == 0) {
+										iAttributes = 5;
+										iBuildingCount = ((__int16)dwMilitaryTiles[MILITARYTILE_RUNWAY] + (__int16)dwMilitaryTiles[MILITARYTILE_RUNWAYCROSS]) / 5;
+										if ((__int16)dwMilitaryTiles[MILITARYTILE_MPARKINGLOT] / 4 < iBuildingCount) {
+											if (2 * (__int16)dwMilitaryTiles[MILITARYTILE_MCONTROLTOWER] >= iBuildingCount) {
+												if (2 * (__int16)dwMilitaryTiles[MILITARYTILE_MRADAR] >= iBuildingCount) {
+													if ((__int16)dwMilitaryTiles[MILITARYTILE_F15B] >= iBuildingCount) {
+														if ((__int16)dwMilitaryTiles[MILITARYTILE_BUILDING1] / 2 >= iBuildingCount) {
+															if ((__int16)dwMilitaryTiles[MILITARYTILE_BUILDING2] / 2 >= iBuildingCount) {
+																iTileID = TILE_INFRASTRUCTURE_HANGAR2;
+																if ((__int16)dwMilitaryTiles[MILITARYTILE_HANGAR2] / 4 >= iBuildingCount)
+																	iTileID = TILE_MILITARY_PARKINGLOT;
+															}
+															else
+																iTileID = TILE_INFRASTRUCTURE_BUILDING2;
+														}
+														else
+															iTileID = TILE_INFRASTRUCTURE_BUILDING1;
+													}
+													else
+														iTileID = TILE_MILITARY_F15B;
+												}
+												else
+													iTileID = TILE_MILITARY_RADAR;
+											}
+											else
+												iTileID = TILE_MILITARY_CONTROLTOWER;
+										}
+										else
+											iTileID = TILE_INFRASTRUCTURE_RUNWAY;
+										goto GOSPAWNAIRFIELD;
+									}
+									break;
+								case MILITARY_BASE_NAVY:
+									if ((rand() & 3) == 0) {
+										iBuildingCount = dwMilitaryTiles[MILITARYTILE_CRANE];
+										if ((__int16)dwMilitaryTiles[MILITARYTILE_CARGOYARD] / 4 < iBuildingCount) {
+											if ((__int16)dwMilitaryTiles[MILITARYTILE_TOPSECRET] / 4 < iBuildingCount) {
+												BYTE(iAttributes) = 0;
+												iTileID = TILE_MILITARY_WAREHOUSE;
+												if ((__int16)dwMilitaryTiles[MILITARYTILE_MWAREHOUSE] / 3 >= iBuildingCount)
+													iTileID = TILE_INFRASTRUCTURE_CARGOYARD;
+											}
+											else
+												iTileID = TILE_MILITARY_TOPSECRET;
+										}
+										else
+											iTileID = TILE_INFRASTRUCTURE_CRANE;
+										if (Game_SimulationGrowSpecificZone(iX, iY, iTileID, ZONE_MILITARY))
+											goto GOSPAWNSEAYARD;
+									}
+									break;
+								case MILITARY_BASE_MISSILE_SILOS:
+									if ((BYTE)iPosAttributes != TILE_MILITARY_MISSILESILO)
+										Game_SimulationGrowSpecificZone(iX, iY, TILE_MILITARY_MISSILESILO, ZONE_MILITARY);
+									break;
+								default:
+									goto GOIYINCREASE;
 							}
+							break;
+						case ZONE_SEAPORT:
+							break;
+						case ZONE_AIRPORT:
+							break;
+						default:
 							break;
 					}
 				}
 			}
+GOIYINCREASE:
+			iY += 4;
 		}
+		iX += 4;
+		iResult = iX / 2;
+		iXMM = iX / 2;
 	}
 	rcDst.top = -1000;
 	return iResult;
