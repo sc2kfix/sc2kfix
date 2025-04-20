@@ -1316,9 +1316,6 @@ void InstallMiscHooks(void) {
 	NEWCALL((LPVOID)0x434BEA, Hook_LoadNeighborConnections1500);
 	*(BYTE*)0x434BEF = 0x90;
 
-	// Install hooks for the SC2X save format
-	InstallSaveHooks();
-
 	// Hook into the PlacePowerLines function
 	VirtualProtect((LPVOID)0x402725, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402725, Hook_PlacePowerLinesAtCoordinates);
@@ -1454,16 +1451,6 @@ void InstallMiscHooks(void) {
 			0x0A,
 			ShowSettingsDialog,
 		};
-
-		afxMessageMapEntry[1] = {
-			WM_COMMAND,
-			0,
-			IDM_GAME_OPTIONS_MODCONFIG,
-			IDM_GAME_OPTIONS_MODCONFIG,
-			0x0A,
-			ShowModSettingsDialog
-		};
-
 		VirtualProtect((LPVOID)0x4D45C0, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
 		memcpy_s((LPVOID)0x4D45C0, sizeof(afxMessageMapEntry), &afxMessageMapEntry, sizeof(afxMessageMapEntry));
 
