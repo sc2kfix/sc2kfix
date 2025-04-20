@@ -943,7 +943,7 @@ GOFORWARD:
 				}
 				if (iSection[0] < 0x80) {
 					iSection[1] = y + iArea;
-					if ((__int16)(y + iArea) > -1 && iSection[1] < 0x80) {
+					if ((y + iArea) > -1 && iSection[1] < 0x80) {
 						pZone = (BYTE *)&dwMapXZON[iSection[0]]->b[iSection[1]];
 						*pZone = LOBYTE(wSomePositionalAngleThree[4 * wViewRotation]) | *pZone & 0xF;
 					}
