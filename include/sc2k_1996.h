@@ -716,18 +716,22 @@ typedef struct {
 } sprite_header_t;
 
 typedef struct {
-	struct {
-		WORD iLandAltitude : 5; // level / altitude
-		WORD iWaterLevel : 5;   // not always accurate (rely on XTER value instead)
-		WORD iTunnelLevels : 6; // how many levels below altitude should we display a grey block for a tunnel?
-	} w[128];
+	WORD iLandAltitude : 5; // level / altitude
+	WORD iWaterLevel : 5;   // not always accurate (rely on XTER value instead)
+	WORD iTunnelLevels : 6; // how many levels below altitude should we display a grey block for a tunnel?
+} map_ALTM_attribs_t;
+
+typedef struct {
+	map_ALTM_attribs_t w[128];
 } map_ALTM_t;
 
 typedef struct {
-	struct {
-		BYTE iZoneType : 4;
-		BYTE iCorners : 4;
-	} b[128];
+	BYTE iZoneType : 4;
+	BYTE iCorners : 4;
+} map_XZON_attribs_t;
+
+typedef struct {
+	map_XZON_attribs_t b[128];
 } map_XZON_t;
 
 typedef struct {
@@ -755,16 +759,18 @@ typedef struct {
 } map_mini32_t;
 
 typedef struct {
-	struct {
-		BYTE iSaltWater : 1;
-		BYTE iRotated : 1;
-		BYTE iWater : 1;
-		BYTE iXVALMask : 1;
-		BYTE iWatered : 1;
-		BYTE iPiped : 1;
-		BYTE iPowered : 1;
-		BYTE iPowerable : 1;
-	} b[128];
+	BYTE iSaltWater : 1;
+	BYTE iRotated : 1;
+	BYTE iWater : 1;
+	BYTE iXVALMask : 1;
+	BYTE iWatered : 1;
+	BYTE iPiped : 1;
+	BYTE iPowered : 1;
+	BYTE iPowerable : 1;
+} map_XBIT_bits_t;
+
+typedef struct {
+	map_XBIT_bits_t b[128];
 } map_XBIT_t;
 
 typedef struct {
@@ -804,23 +810,29 @@ GAMECALL(0x40178F, __int16, __cdecl, PlaceTileWithMilitaryCheck, __int16 x, __in
 GAMECALL(0x401857, int, __cdecl, MapToolPlaceTree, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x40198D, int, __cdecl, MapToolPlaceStream, __int16 iTileTargetX, __int16 iTileTargetY, __int16) // XXX - the last parameter isn't entirely clear, perhaps area or offset?
 GAMECALL(0x401997, int, __cdecl, MapToolPlaceWater, __int16 iTileTargetX, __int16 iTileTargetY)
-GAMECALL(0x4019A1, char, __cdecl, CheckAndAdjustTransportTerrain, __int16 x, __int16 y)
+GAMECALL(0x4019A1, char, __cdecl, CheckAndAdjustTraversableTerrain, __int16 x, __int16 y)
 GAMECALL(0x4019EC, int, __cdecl, CenterOnTileCoords, __int16 x, __int16 y)
 GAMECALL(0x401A37, int, __cdecl, MaybeRoadViabilityAlongPath, __int16* x, __int16* y)
 GAMECALL(0x401AB4, int, __cdecl, MapToolRaiseTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x401AF0, int, __cdecl, MaybeCheckViablePlacementPath, __int16 x1, __int16 y1, __int16 x2, __int16 y2)
-GAMECALL(0x401CCB, int, __stdcall, GetLastViewRotation, void)
+GAMECALL(0x401B40, int, __cdecl, IsZonedTilePowered, __int16 x, __int16 y)
+GAMECALL(0x401CCB, int, __stdcall, ResetTileDirection, void)
 GAMECALL(0x401D16, __int16, __cdecl, GetTileCoordsFromScreenCoords, __int16 x, __int16 y)
+GAMECALL(0x401E38, int, __cdecl, PlaceUndergroundTiles, __int16 x, __int16 y, __int16 iTileID)
 GAMECALL(0x401E47, BOOL, __cdecl, UseBulldozer, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x401EA1, int, __cdecl, MapToolLowerTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
+GAMECALL(0x401FA0, int, __cdecl, CheckAdjustTerrainAndPlacePowerLines, __int16 x, __int16 y)
+GAMECALL(0x402725, int, __cdecl, PlacePowerLinesAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x40226B, int, __thiscall, UpdateAreaPortionFill, void *) // This appears to do a partial update of selected/highlighted area while appearing to dispense with immediate color updates.
 GAMECALL(0x40235B, int, __stdcall, DrawSquareHighlight, WORD wX1, WORD wY1, WORD wX2, WORD wY2)
 GAMECALL(0x4023EC, void, __stdcall, ToolMenuUpdate, void)
 GAMECALL(0x402414, int, __thiscall, MusicPlay, DWORD pThis, int iSongID)
 GAMECALL(0x40258B, int, __cdecl, GetScreenCoordsFromTileCoords, __int16 iTileTargetX, __int16 iTileTargetY, WORD *wNewScreenPointX, WORD *wNewScreenPointY)
+GAMECALL(0x402603, __int16, __cdecl, ZonedBuildingTileDeletion, __int16 x, __int16 y)
 GAMECALL(0x402699, int, __thiscall, PointerToCSimcityView, void* CWinAppThis)
 GAMECALL(0x402798, int, __cdecl, MapToolPlaceForest, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x4027A7, int, __thiscall, CSimCityView_OnVScroll, DWORD pThis, int nSBCode, __int16 nPos, int pScrollBar)
+GAMECALL(0x4027F2, int, __cdecl, ItemPlacementCheck, __int16 x, int y, __int16 iTileID, __int16 iTileArea)
 GAMECALL(0x402810, int, __thiscall, UpdateAreaCompleteColorFill, void *) // This appears to be a more comprehensive update that'll occur for highlighted/selected area or when you're moving the game area.
 GAMECALL(0x402937, void, __thiscall, ToolMenuDisable, void* pThis)
 GAMECALL(0x4029C3, int, __cdecl, CSimcityViewMouseMoveOrLeftClick, void* pThis, LPPOINT lpPoint)
@@ -859,6 +871,7 @@ GAMEOFF(WORD,	wTileCoordinateX,			0x4C7AB0)
 GAMEOFF(WORD,	wTileCoordinateY,			0x4C7AB4)
 GAMEOFF(WORD,	wGameScreenAreaX,			0x4C7AD8)		// Used here in CSimcityView_WM_LBUTTONDOWN and CSimcityView_WM_MOUSEFIRST
 GAMEOFF(WORD,	wGameScreenAreaY,			0x4C7ADC)		// Used here in CSimcityView_WM_LBUTTONDOWN and CSimcityView_WM_MOUSEFIRST
+GAMEOFF(WORD,	wTileDirection,				0x4C7D60)
 GAMEOFF(WORD,	wMaybeActiveToolGroup,		0x4C7D88)
 GAMEOFF(WORD,	wViewRotation,				0x4C942C)
 GAMEOFF(BOOL,	bCityHasOcean,				0x4C94C0)
@@ -936,6 +949,7 @@ GAMEOFF(WORD,	wCityResidentialDemand,		0x4CC8F8)
 GAMEOFF(WORD,	wCityCommericalDemand,		0x4CC8FA)
 GAMEOFF(WORD,	wCityIndustrialDemand,		0x4CC8FC)
 GAMEOFF(DWORD,	dwCityPollution,			0x4CC910)		// Needs reverse engineering. See wiki.
+GAMEOFF(WORD,	wSelectedSubtoolPower,		0x4CC956)
 GAMEOFF(WORD,	wHighlightedTileX1,			0x4CDB68)
 GAMEOFF(WORD,	wHighlightedTileX2,			0x4CDB6C)
 GAMEOFF(WORD,	wHighlightedTileY1,			0x4CDB70)
@@ -962,6 +976,8 @@ GAMEOFF_ARR(WORD, wSomePositionalAngleOne,	0x4DC4D0)
 GAMEOFF_ARR(WORD, wSomePositionalAngleTwo,	0x4DC4D2)
 GAMEOFF_ARR(WORD, wSomePositionalAngleThree,	0x4DC4D4)
 GAMEOFF_ARR(WORD, wSomePositionalAngleFour,	0x4DC4D6)
+GAMEOFF_ARR(WORD, wSomePierLengthWays,		0x4E75C0)
+GAMEOFF_ARR(WORD, wSomePierDepthWays,		0x4E75C8)
 
 // Pointers to map arrays
 
