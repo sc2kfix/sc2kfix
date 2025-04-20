@@ -635,7 +635,7 @@ enum {
 };
 
 enum {
-	MILITARYTILE_EMPTY,
+	MILITARYTILE_OTHER, // This one applies for any other item that isn't categorised below.
 	MILITARYTILE_RUNWAY,
 	MILITARYTILE_RUNWAYCROSS,
 	MILITARYTILE_MPARKINGLOT,

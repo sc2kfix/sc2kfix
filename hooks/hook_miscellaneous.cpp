@@ -447,6 +447,15 @@ TOTHISPART:
 	return iResult;
 }
 
+extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 x, signed __int16 y) {
+	int(__cdecl *H_SimulationGrowthTick)(signed __int16, signed __int16) = (int(__cdecl *)(signed __int16, signed __int16))0x4358B0;
+
+	int ret = H_SimulationGrowthTick(x, y);
+	ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> SimulationGrowthTick(%d, %d) = %d\n", _ReturnAddress(), x, y, ret);
+
+	return ret;
+}
+
 extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, __int16 iTileID, __int16 iZoneType) {
 	// Variable names subject to change
 	// during the demystification process.
@@ -1417,13 +1426,17 @@ void InstallMiscHooks(void) {
 	// Install hooks for the SC2X save format
 	InstallSaveHooks();
 
-	// Hook into the PlacePowerLines function
-	VirtualProtect((LPVOID)0x402725, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x402725, Hook_PlacePowerLinesAtCoordinates);
+	// Hook into the SimulationGrowthTick function
+	VirtualProtect((LPVOID)0x4022FC, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4022FC, Hook_SimulationGrowthTick);
 
 	// Hook into the SimulationGrowSpecificZone function
 	VirtualProtect((LPVOID)0x4026B2, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4026B2, Hook_SimulationGrowSpecificZone);
+
+	// Hook into the PlacePowerLines function
+	VirtualProtect((LPVOID)0x402725, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402725, Hook_PlacePowerLinesAtCoordinates);
 
 	// Hook into what appears to be one of the item placement checking functions
 	VirtualProtect((LPVOID)0x4027F2, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
