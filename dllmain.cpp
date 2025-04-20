@@ -29,6 +29,7 @@ HMODULE hRealWinMM = NULL;
 HMODULE hSC2KAppModule = NULL;
 HMODULE hSC2KFixModule = NULL;
 HMENU hGameMenu = NULL;
+HMENU hDebugMenu = NULL;
 FARPROC fpWinMMHookList[180] = { NULL };
 DWORD dwDetectedVersion = SC2KVERSION_UNKNOWN;
 DWORD dwSC2KAppTimestamp = 0;

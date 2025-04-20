@@ -173,6 +173,8 @@ extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR l
 extern "C" HMENU __stdcall Hook_LoadMenuA(HINSTANCE hInstance, LPCSTR lpMenuName) {
 	if ((DWORD)lpMenuName == 3 && hGameMenu)
 		return hGameMenu;
+	if ((DWORD)lpMenuName == 223 && hDebugMenu)
+		return hDebugMenu;
 	return LoadMenuA(hInstance, lpMenuName);
 }
 
@@ -331,52 +333,465 @@ extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
 		ConsoleLog(LOG_DEBUG, "SAVE: Loaded %d $1500 neighbor connections.\n", *wCityNeighborConnections1500);
 }
 
+extern "C" int __cdecl Hook_PlacePowerLinesAtCoordinates(__int16 x, __int16 y) {
+	__int16 iY;
+	int iResult;
+	unsigned int iTileID;
+
+	iY = y;
+	if (x < 0) {
+TOBEGINNING:
+		iTileID = (unsigned int)dwMapXBLD[x]->iTileID;
+		P_LOBYTE(iTileID) = *(BYTE *)(iTileID + iY);
+		iResult = iTileID & 0xFFFF00FF;
+		if ((__int16)iResult < TILE_POWERLINES_LR) {
+			Game_PlaceTileWithMilitaryCheck(x, iY, TILE_POWERLINES_LR);
+TOTHISPART:
+			if (x < 0x80 && iY < 0x80)
+				*(BYTE *)&dwMapXBIT[x]->b[iY] |= 0x80u;
+			iResult = Game_CheckAdjustTerrainAndPlacePowerLines(x, iY);
+			if (x > 0)
+				iResult = Game_CheckAdjustTerrainAndPlacePowerLines(x - 1, iY);
+			if (x < 127)
+				iResult = Game_CheckAdjustTerrainAndPlacePowerLines(x + 1, iY);
+			if (iY > 0)
+				iResult = Game_CheckAdjustTerrainAndPlacePowerLines(x, iY - 1);
+			if (iY < 127)
+				return Game_CheckAdjustTerrainAndPlacePowerLines(x, iY + 1);
+		}
+		else {
+			switch ((__int16)iResult) {
+				case TILE_ROAD_LR:
+					Game_PlaceTileWithMilitaryCheck(x, iY, TILE_CROSSOVER_POWERTB_ROADLR);
+					goto TOTHISPART;
+				case TILE_ROAD_TB:
+					Game_PlaceTileWithMilitaryCheck(x, iY, TILE_CROSSOVER_POWERLR_ROADTB);
+					goto TOTHISPART;
+				case TILE_RAIL_LR:
+					Game_PlaceTileWithMilitaryCheck(x, iY, TILE_CROSSOVER_POWERTB_RAILLR);
+					goto TOTHISPART;
+				case TILE_RAIL_TB:
+					Game_PlaceTileWithMilitaryCheck(x, iY, TILE_CROSSOVER_POWERLR_RAILTB);
+					goto TOTHISPART;
+				case TILE_HIGHWAY_LR:
+					Game_PlaceTileWithMilitaryCheck(x, iY, TILE_CROSSOVER_HIGHWAYLR_POWERTB);
+					goto TOTHISPART;
+				case TILE_HIGHWAY_TB:
+					Game_PlaceTileWithMilitaryCheck(x, iY, TILE_CROSSOVER_HIGHWAYTB_POWERLR);
+					goto TOTHISPART;
+				default:
+					return iResult;
+			}
+		}
+		return iResult;
+	}
+	if (x >= 0x80)
+		goto TOBEGINNING;
+	if (y >= 0x80)
+		goto TOBEGINNING;
+	iResult = x;
+	if (*(BYTE *)&dwMapXBIT[x]->b[y] >= 0)
+		goto TOBEGINNING;
+	return iResult;
+}
+
+extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, __int16 iTileID, __int16 iZoneType) {
+	// Variable names subject to change
+	// during the demystification process.
+	__int16 x, y;
+	__int16 iCurrX, iCurrY;
+	__int16 iNextX, iNextY;
+	__int16 iBuildingCount[2];
+	__int16 iMoveX, iMoveY;
+	__int16 iRotate;
+	__int16 iTileRotated;
+	int i;
+	__int16 iLengthWays;
+	__int16 iDepthWays;
+	__int16 iPierPathTileCount;
+	__int16 iPierLength;
+	map_XBIT_t *mXBIT;
+	BYTE mXBBits;
+	map_XBLD_t *mXBLDOne, *mXBLDTwo;
+	BYTE mXBuilding[4];
+	map_XZON_t *mXZONOne, *mXZONTwo;
+	BYTE *pZone;
+
+	x = iX;
+	y = iY;
+	if (iZoneType != ZONE_MILITARY) {
+		if (!Game_IsZonedTilePowered(iX, iY))
+			return 0;
+	}
+	switch (iTileID) {
+		case TILE_INFRASTRUCTURE_RUNWAY:
+			iMoveX = 0;
+			iMoveY = 0;
+			if ((dwTileCount[TILE_INFRASTRUCTURE_RUNWAY] & 1) == 0) {
+				if ((x & 1) != 0) {
+					iMoveX = 1;
+					goto PROCEEDFURTHER;
+				}
+				if ((y & 1) == 0) {
+					return 0;
+				}
+				goto PROCEEDAHEAD;
+			}
+			if ((y & 1) != 0) {
+PROCEEDAHEAD:
+				iMoveY = 1;
+				goto PROCEEDFURTHER;
+			}
+			if ((x & 1) == 0) {
+				return 0;
+			}
+			iMoveX = 1;
+PROCEEDFURTHER:
+			iCurrX = x;
+			iCurrY = y;
+			iBuildingCount[0] = 0;
+			while (iCurrX < 0x80 && iCurrY < 0x80) {
+				if (dwMapXZON[iCurrX]->b[iCurrY].iZoneType != iZoneType)
+					return 0;
+				mXBuilding[0] = dwMapXBLD[iCurrX]->iTileID[iCurrY];
+				if (iZoneType == ZONE_MILITARY) {
+					if ((mXBuilding[0] >= TILE_ROAD_LR && mXBuilding[0] <= TILE_ROAD_LTBR) ||
+						mXBuilding[0] == TILE_INFRASTRUCTURE_CRANE || mXBuilding[0] == TILE_MILITARY_MISSILESILO)
+						return 0;
+					if (dwMapXTER[iCurrX]->iTileID[iCurrY])
+						return 0;
+					if (dwMapXUND[iCurrX]->iTileID[iCurrY])
+						return 0;
+				}
+				if (mXBuilding[0] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[0] == TILE_INFRASTRUCTURE_RUNWAYCROSS)
+					--iBuildingCount[0];
+				iCurrX += iMoveY;
+				++iBuildingCount[0];
+				iCurrY += iMoveX;
+				if (iBuildingCount[0] >= 5) {
+					if (!iMoveY) 
+						goto SKIPFIRSTROTATIONCHECK;
+					if ((wViewRotation & 1) != 0) {
+						if (!iMoveY) {
+SKIPFIRSTROTATIONCHECK:
+							if ((wViewRotation & 1) != 0)
+								goto SKIPSECONDROTATIONCHECK;
+						}
+						iRotate = 0;
+					}
+					else {
+SKIPSECONDROTATIONCHECK:
+						iRotate = 1;
+					}
+					iBuildingCount[1] = 0;
+					while (2) {
+						mXBuilding[1] = dwMapXBLD[x]->iTileID[y];
+						if (mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAYCROSS) {
+							--iBuildingCount[1];
+							if (mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAY) {
+								iTileRotated = x < 0x80 &&
+									y < 0x80 &&
+									dwMapXBIT[x]->b[y].iRotated;
+								if (iTileRotated != iRotate) {
+									Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_RUNWAYCROSS);
+									if (x < 0x80 && y < 0x80)
+										*(BYTE *)&dwMapXZON[x]->b[y] |= 0xF0u;
+									if (iZoneType != ZONE_MILITARY) {
+										if (x <= -1)
+											goto RUNWAY_GETOUT;
+										if (x < 0x80 && y < 0x80)
+											*(BYTE *)&dwMapXBIT[x]->b[y] |= 0xC0u;
+									}
+									if (x < 0x80 && y < 0x80) {
+										mXBIT = dwMapXBIT[x];
+										mXBBits = (*(BYTE *)&mXBIT->b[y] & 0xFD);
+RUNWAY_GOBACK:
+										*(BYTE *)&mXBIT->b[y] = mXBBits;
+									}
+								}
+							}
+						}
+						else {
+							if (iZoneType == ZONE_MILITARY) {
+								if ((mXBuilding[1] >= TILE_ROAD_LR && mXBuilding[1] <= TILE_ROAD_LTBR) ||
+									mXBuilding[1] == TILE_INFRASTRUCTURE_CRANE || mXBuilding[1] == TILE_MILITARY_MISSILESILO)
+									return 0;
+								if (dwMapXTER[x]->iTileID[y])
+									return 0;
+								if (dwMapXUND[x]->iTileID[y])
+									return 0;
+							}
+							if (dwMapXBLD[x]->iTileID[y] >= TILE_SMALLPARK)
+								Game_ZonedBuildingTileDeletion(x, y);
+							Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_RUNWAY);
+							if (x < 0x80 && y < 0x80)
+								*(BYTE *)&dwMapXZON[x]->b[y] |= 0xF0u;
+							if (iZoneType != ZONE_MILITARY && x < 0x80 && y < 0x80)
+								*(BYTE *)&dwMapXBIT[x]->b[y] |= 0xC0u;
+							if (iRotate && x < 0x80 && y < 0x80) {
+								mXBIT = dwMapXBIT[x];
+								mXBBits = (*(BYTE *)&mXBIT->b[y] | 2);
+								goto RUNWAY_GOBACK;
+							}
+						}
+RUNWAY_GETOUT:
+						x += iMoveY;
+						y += iMoveX;
+						if (++iBuildingCount[1] >= 5)
+							return 1;
+						continue;
+					}
+				}
+			}
+			return 1;
+		case TILE_INFRASTRUCTURE_CRANE:
+			for (i = 0; i < 4; i++) {
+				iLengthWays = x + wSomePierLengthWays[i];
+				if (iLengthWays < 0x80) {
+					iDepthWays = y + wSomePierDepthWays[i];
+					if (iDepthWays < 0x80 && dwMapXBIT[iLengthWays]->b[iDepthWays].iWater != 0)
+						break;
+				}
+			}
+			if (i == 4)
+				return 0;
+			iDepthWays = wSomePierDepthWays[i];
+			if (iDepthWays && (x & 1) != 0)
+				return 0;
+			iLengthWays = wSomePierLengthWays[i];
+			if (iLengthWays && (y & 1) != 0)
+				return 0;
+			iPierPathTileCount = 0;
+			iNextX = x;
+			iNextY = y;
+			do {
+				iNextX += iLengthWays;
+				iNextY += iDepthWays;
+				if (iNextX >= 0x80 || iNextY >= 0x80)
+					return 0;
+				if (iNextX >= 0x80 ||
+					iNextY >= 0x80 ||
+					dwMapXBIT[iNextX]->b[iNextY].iWater == 0)
+					return 0;
+				if (dwMapXBLD[iNextX]->iTileID[iNextY])
+					return 0;
+				++iPierPathTileCount;
+			} while (iPierPathTileCount < 5);
+			if ((*(WORD *)&dwMapALTM[iNextX]->w[iNextY] & 0x3E0) >> 5 < (*(WORD *)&dwMapALTM[iNextX]->w[iNextY] & 0x1F) + 2)
+				return 0;
+			if (dwMapXBLD[x]->iTileID[y] >= TILE_SMALLPARK)
+				Game_ZonedBuildingTileDeletion(x, y);
+			Game_ItemPlacementCheck(x, y, TILE_INFRASTRUCTURE_CRANE, 1);
+			if (x < 0x80 && y < 0x80) {
+				pZone = (BYTE *)&dwMapXZON[x]->b[y];
+				*pZone ^= (*pZone ^ iZoneType) & 0xF;
+			}
+			if (iZoneType == ZONE_MILITARY && x < 0x80 && y < 0x80)
+				*(BYTE *)&dwMapXBIT[x]->b[y] &= 0xFu;
+			iLengthWays = wSomePierLengthWays[i];
+			if (!iLengthWays)
+				goto PIER_GOTOONE;
+			if ((wViewRotation & 1) == 0)
+				goto PIER_GOTOTWO;
+			if (iLengthWays)
+				goto PIER_GOTOTHREE;
+PIER_GOTOONE:
+			if ((wViewRotation & 1) != 0) {
+PIER_GOTOTWO:
+				iRotate = 1;
+			}
+			else {
+PIER_GOTOTHREE:
+				iRotate = 0;
+			}
+			iPierLength = 4;
+			do {
+				x += wSomePierLengthWays[i];
+				y += wSomePierDepthWays[i];
+				Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_PIER);
+				if (x < 0x80 && y < 0x80)
+					*(BYTE *)&dwMapXZON[x]->b[y] |= 0xF0u;
+				if (iRotate) {
+					if (x < 0x80 && y < 0x80)
+						*(BYTE *)&dwMapXBIT[x]->b[y] |= 2u;
+				}
+				--iPierLength;
+			} while (iPierLength);
+			return 1;
+		case TILE_INFRASTRUCTURE_CONTROLTOWER_CIV:
+		case TILE_MILITARY_CONTROLTOWER:
+		case TILE_MILITARY_WAREHOUSE:
+		case TILE_INFRASTRUCTURE_BUILDING1:
+		case TILE_INFRASTRUCTURE_BUILDING2:
+		case TILE_MILITARY_TARMAC:
+		case TILE_MILITARY_F15B:
+		case TILE_MILITARY_HANGAR1:
+		case TILE_MILITARY_RADAR:
+			if (dwMapXBLD[x]->iTileID[y] < TILE_SMALLPARK) {
+				Game_ItemPlacementCheck(x, y, iTileID, 1);
+				if (x < 0x80 && y < 0x80)
+					*(BYTE *)&dwMapXZON[x]->b[y] ^= (*(BYTE *)&dwMapXZON[x]->b[y] ^ iZoneType) & 0xF;
+				if (iZoneType == ZONE_MILITARY && x < 0x80 && y < 0x80)
+					*(BYTE *)&dwMapXBIT[x]->b[y] &= 0xFu;
+			}
+			return 1;
+		case TILE_INFRASTRUCTURE_PARKINGLOT:
+		case TILE_MILITARY_PARKINGLOT:
+		case TILE_MILITARY_LOADINGBAY:
+		case TILE_MILITARY_TOPSECRET:
+		case TILE_INFRASTRUCTURE_CARGOYARD:
+		case TILE_INFRASTRUCTURE_HANGAR2:
+			signed __int16 iSX;
+			iSX = x & 0xFFFE; // If absent you will get bizarre overlap cases (this could be a part of the 0x402603 function investigation).
+			P_LOBYTE(y) = y & 0xFE; // If absent you will get bizarre overlap cases (this could be a part of the 0x402603 function investigation).
+			iNextX = (__int16)(iSX + 1);
+			iNextY = (__int16)(y + 1);
+			mXBLDOne = dwMapXBLD[iSX];
+			mXBuilding[0] = mXBLDOne->iTileID[y];
+			if (mXBuilding[0] >= TILE_INFRASTRUCTURE_WATERTOWER)
+				return 0;
+			if (mXBuilding[0] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[0] == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
+				mXBuilding[0] == TILE_INFRASTRUCTURE_CRANE || mXBuilding[0] == TILE_MILITARY_MISSILESILO)
+				return 0;
+			mXBLDTwo = dwMapXBLD[iNextX];
+			mXBuilding[1] = mXBLDTwo->iTileID[y];
+			if (mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
+				mXBuilding[1] == TILE_INFRASTRUCTURE_CRANE || mXBuilding[1] == TILE_MILITARY_MISSILESILO)
+				return 0;
+			mXBuilding[2] = mXBLDOne->iTileID[iNextY];
+			if (mXBuilding[2] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[2] == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
+				mXBuilding[2] == TILE_INFRASTRUCTURE_CRANE || mXBuilding[2] == TILE_MILITARY_MISSILESILO)
+				return 0;
+			mXBuilding[3] = mXBLDTwo->iTileID[iNextY];
+			if (mXBuilding[3] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[3] == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
+				mXBuilding[3] == TILE_INFRASTRUCTURE_CRANE || mXBuilding[3] == TILE_MILITARY_MISSILESILO)
+				return 0;
+			mXZONOne = dwMapXZON[iSX];
+			if (mXZONOne->b[y].iZoneType != iZoneType)
+				return 0;
+			if (iZoneType == ZONE_MILITARY) {
+				if (mXZONOne->b[y].iZoneType == ZONE_MILITARY) {
+					if (mXBuilding[0] >= TILE_ROAD_LR && mXBuilding[0] <= TILE_ROAD_LTBR)
+						return 0;
+				}
+				if (dwMapXUND[iSX]->iTileID[y])
+					return 0;
+			}
+			mXZONTwo = dwMapXZON[iNextX];
+			if (mXZONTwo->b[y].iZoneType != iZoneType)
+				return 0;
+			if (iZoneType == ZONE_MILITARY) {
+				if (mXZONTwo->b[y].iZoneType == ZONE_MILITARY) {
+					if (mXBuilding[1] >= TILE_ROAD_LR && mXBuilding[1] <= TILE_ROAD_LTBR)
+						return 0;
+				}
+				if (dwMapXUND[iNextX]->iTileID[y])
+					return 0;
+			}
+			if (mXZONOne->b[iNextY].iZoneType != iZoneType)
+				return 0;
+			if (iZoneType == ZONE_MILITARY) {
+				if (mXZONOne->b[iNextY].iZoneType == ZONE_MILITARY) {
+					if (mXBuilding[2] >= TILE_ROAD_LR && mXBuilding[2] <= TILE_ROAD_LTBR)
+						return 0;
+				}
+				if (dwMapXUND[iSX]->iTileID[iNextY])
+					return 0;
+			}
+			if (mXZONTwo->b[iNextY].iZoneType != iZoneType)
+				return 0;
+			if (iZoneType == ZONE_MILITARY) {
+				if (mXZONTwo->b[iNextY].iZoneType == ZONE_MILITARY) {
+					if (mXBuilding[3] >= TILE_ROAD_LR && mXBuilding[3] <= TILE_ROAD_LTBR)
+						return 0;
+				}
+				if (dwMapXUND[iNextX]->iTileID[iNextY])
+					return 0;
+			}
+			if (mXBuilding[0] >= TILE_SMALLPARK)
+				Game_ZonedBuildingTileDeletion(iSX, y);
+			if (dwMapXBLD[iNextX]->iTileID[y] >= TILE_SMALLPARK)
+				Game_ZonedBuildingTileDeletion(iNextX, y);
+			if (dwMapXBLD[iSX]->iTileID[iNextY] >= TILE_SMALLPARK)
+				Game_ZonedBuildingTileDeletion(iSX, iNextY);
+			if (dwMapXBLD[iNextX]->iTileID[iNextY] >= TILE_SMALLPARK)
+				Game_ZonedBuildingTileDeletion(iNextX, iNextY);
+			Game_ItemPlacementCheck(iSX, y, iTileID, 2);
+			if (iSX < 0x80 && y < 0x80)
+				*(BYTE *)&dwMapXZON[iSX]->b[y] ^= (*(BYTE *)&dwMapXZON[iSX]->b[y] ^ iZoneType) & 0xF;
+			if (iNextX < 0x80 && y < 0x80)
+				*(BYTE *)&dwMapXZON[iNextX]->b[y] ^= (*(BYTE *)&dwMapXZON[iNextX]->b[y] ^ iZoneType) & 0xF;
+			if (iSX < 0x80 && iNextY < 0x80)
+				*(BYTE *)&dwMapXZON[iSX]->b[iNextY] ^= (*(BYTE *)&dwMapXZON[iSX]->b[iNextY] ^ iZoneType) & 0xF;
+			if (iNextX < 0x80 && iNextY < 0x80)
+				*(BYTE *)&dwMapXZON[iNextX]->b[iNextY] ^= (*(BYTE *)&dwMapXZON[iNextX]->b[iNextY] ^ iZoneType) & 0xF;
+			if (iZoneType == ZONE_MILITARY) {
+				if (iSX < 0x80 && y < 0x80)
+					*(BYTE *)&dwMapXBIT[iSX]->b[y] &= 0xFu;
+				if (iNextX < 0x80 && y < 0x80)
+					*(BYTE *)&dwMapXBIT[iNextX]->b[y] &= 0xFu;
+				if (iSX < 0x80 && iNextY < 0x80)
+					*(BYTE *)&dwMapXBIT[iSX]->b[iNextY] &= 0xFu;
+				if (iNextX < 0x80 && iNextY < 0x80)
+					*(BYTE *)&dwMapXBIT[iNextX]->b[iNextY] &= 0xFu;
+			}
+			return 1;
+		case TILE_MILITARY_MISSILESILO:
+			PlaceMissileSilo(x, y);
+			return 1;
+		default:
+			return 1;
+	}
+}
+
 extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 m_x, int m_y, __int16 iTileID, __int16 iTileArea) {
+	__int16 x;
+	__int16 y;
 	__int16 iArea;
 	__int16 iMarinaCount;
-	__int16 iX[2];
-	__int16 iY[2];
+	__int16 iX;
+	__int16 iY;
 	__int16 iTile;
-	unsigned __int8 iBuilding;
-	int iItemWidth;
-	int iItemLength;
-	int iItemDepth;
+	BYTE iBuilding;
+	__int16 iItemWidth;
+	__int16 iItemLength;
+	__int16 iItemDepth;
 	__int16 iMapBit;
 	__int16 iSection[3];
 	char cMSimBit;
 	BYTE *pZone;
 
-	unsigned __int16 x = m_x;
-	int y = P_LOWORD(m_y);
+	x = (__int16)m_x;
+	y = P_LOWORD(m_y);
 
 	iArea = iTileArea - 1;
 	if (iArea > 1) {
 		--x;
-		P_LOWORD(y) = y - 1;
+		--y;
 	}
 	iMarinaCount = 0;
-	iX[0] = x;
-	iItemWidth = (__int16)x + iArea;
-	if (iItemWidth >= (__int16)x) {
+	iX = x;
+	iItemWidth = x + iArea;
+	if (iItemWidth >= x) {
 		iTile = iTileID;
-		iItemLength = iArea + (__int16)y;
+		iItemLength = iArea + y;
 		while (1) {
-			iY[0] = y;
-			if (iItemLength >= (__int16)y)
+			iY = y;
+			if (iItemLength >= y)
 				break;
 		GOBACK:
-			if (++iX[0] > iItemWidth)
+			if (++iX > iItemWidth)
 				goto GOFORWARD;
 		}
 		while (1) {
 			if (iArea <= 0) {
-				if ((unsigned __int16)iX[0] >= 0x80u || (unsigned __int16)iY[0] >= 0x80u)
+				if (iX >= 0x80 || iY >= 0x80)
 					return 0;
 			}
-			else if (iX[0] < 1 || iY[0] < 1 || iX[0] > 126 || iY[0] > 126) {
+			else if (iX < 1 || iY < 1 || iX > 126 || iY > 126) {
 				return 0;
 			}
-			iBuilding = dwMapXBLD[iX[0]]->iTileID[iY[0]];
+			iBuilding = dwMapXBLD[iX]->iTileID[iY];
 			if (iBuilding >= TILE_ROAD_LR) {
 				return 0;
 			}
@@ -386,33 +801,33 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 m_x, int m_y, __
 			if (iBuilding == TILE_SMALLPARK) {
 				return 0;
 			}
-			if (dwMapXZON[iX[0]]->b[iY[0]].iZoneType == ZONE_MILITARY) {
+			if (dwMapXZON[iX]->b[iY].iZoneType == ZONE_MILITARY) {
 				if (iBuilding == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
 					iBuilding == TILE_ROAD_LR ||
 					iBuilding == TILE_ROAD_TB)
 					return 0;
 			}
 			if (iTileID == TILE_INFRASTRUCTURE_MARINA) {
-				if ((unsigned __int16)iX[0] < 0x80u &&
-					(unsigned __int16)iY[0] < 0x80u &&
-					dwMapXBIT[iX[0]]->b[iY[0]].iWater != 0) {
+				if (iX < 0x80 &&
+					iY < 0x80 &&
+					dwMapXBIT[iX]->b[iY].iWater != 0) {
 					++iMarinaCount;
 					goto GOSKIP;
 				}
-				if (dwMapXTER[iX[0]]->iTileID[iY[0]]) {
+				if (dwMapXTER[iX]->iTileID[iY]) {
 					return 0;
 				}
 			}
-			if (dwMapXTER[iX[0]]->iTileID[iY[0]]) {
+			if (dwMapXTER[iX]->iTileID[iY]) {
 				return 0;
 			}
-			if ((unsigned __int16)iX[0] < 0x80u &&
-				(unsigned __int16)iY[0] < 0x80u &&
-				dwMapXBIT[iX[0]]->b[iY[0]].iWater != 0) {
+			if (iX < 0x80 &&
+				iY < 0x80 &&
+				dwMapXBIT[iX]->b[iY].iWater != 0) {
 				return 0;
 			}
 		GOSKIP:
-			if (++iY[0] > iItemLength) {
+			if (++iY > iItemLength) {
 				goto GOBACK;
 			}
 		}
@@ -434,62 +849,62 @@ GOFORWARD:
 			return 0;
 		}
 		else {
-			iX[1] = x;
-			cMSimBit = Game_SimulationProvisionMicrosim(x, y, iTile);
-			if (iItemWidth >= (__int16)x) {
-				iItemDepth = (__int16)y + iArea;
+			__int16 iCurrXPos = x;
+			cMSimBit = Game_SimulationProvisionMicrosim(x, y, iTile); // The 'y' variable is '__int16' whereas that argument is an 'int' (it was previously the latter), noting just in case.
+			if (iItemWidth >= x) {
+				iItemDepth = y + iArea;
 				do {
-					for (int i = y; i <= iItemDepth; ++i) {
-						if (iX[1] > -1) {
-							if (iX[1] < 128 && (unsigned __int16)i < 0x80u) {
-								*(BYTE *)&dwMapXBIT[iX[1]]->b[i] &= 0x1Fu;
+					for (__int16 iCurrYPos = y; iCurrYPos <= iItemDepth; ++iCurrYPos) {
+						if (iCurrXPos > -1) {
+							if (iCurrXPos < 0x80 && iCurrYPos < 0x80) {
+								*(BYTE *)&dwMapXBIT[iCurrXPos]->b[iCurrYPos] &= 0x1Fu;
 							}
-							if ((unsigned __int16)iX[1] < 0x80u && (unsigned __int16)i < 0x80u) {
-								*(BYTE *)&dwMapXBIT[iX[1]]->b[i] |= iMapBit;
+							if (iCurrXPos < 0x80 && iCurrYPos < 0x80) {
+								*(BYTE *)&dwMapXBIT[iCurrXPos]->b[iCurrYPos] |= iMapBit;
 							}
 						}
-						Game_PlaceTileWithMilitaryCheck(iX[1], i, iTile);
-						if (iX[1] > -1) {
-							if (iX[1] < 128 && (unsigned __int16)i < 0x80u) {
-								*(BYTE *)&dwMapXZON[iX[1]]->b[i] &= 0xF0u;
+						Game_PlaceTileWithMilitaryCheck(iCurrXPos, iCurrYPos, iTile);
+						if (iCurrXPos > -1) {
+							if (iCurrXPos < 0x80 && iCurrYPos < 0x80) {
+								*(BYTE *)&dwMapXZON[iCurrXPos]->b[iCurrYPos] &= 0xF0u;
 							}
-							if ((unsigned __int16)iX[1] < 0x80u && (unsigned __int16)i < 0x80u) {
-								*(BYTE *)&dwMapXZON[iX[1]]->b[i] &= 0xFu;
+							if (iCurrXPos < 0x80 && iCurrYPos < 0x80) {
+								*(BYTE *)&dwMapXZON[iCurrXPos]->b[iCurrYPos] &= 0xFu;
 							}
 						}
 						if (cMSimBit) {
-							*(BYTE *)&dwMapXTXT[iX[1]]->bTextOverlay[i] = cMSimBit;
+							*(BYTE *)&dwMapXTXT[iCurrXPos]->bTextOverlay[iCurrYPos] = cMSimBit;
 						}
 					}
-					++iX[1];
-				} while (iX[1] <= iItemWidth);
+					++iCurrXPos;
+				} while (iCurrXPos <= iItemWidth);
 			}
 			if (iArea) {
-				if (x < 0x80u && (unsigned __int16)y < 0x80u) {
+				if (x < 0x80 && y < 0x80) {
 					pZone = (BYTE *)&dwMapXZON[x]->b[y];
 					*pZone = LOBYTE(wSomePositionalAngleOne[4 * wViewRotation]) | *pZone & 0xF;
 				}
 				iSection[0] = iArea + x;
-				if ((__int16)(iArea + x) > -1 && iSection[0] < 128 && (unsigned __int16)y < 0x80u) {
+				if ((iArea + x) > -1 && iSection[0] < 0x80 && y < 0x80) {
 					pZone = (BYTE *)&dwMapXZON[iSection[0]]->b[y];
 					*pZone = LOBYTE(wSomePositionalAngleTwo[4 * wViewRotation]) | *pZone & 0xF;
 				}
-				if ((unsigned __int16)iSection[0] < 0x80u) {
+				if (iSection[0] < 0x80) {
 					iSection[1] = y + iArea;
-					if ((__int16)(y + iArea) > -1 && iSection[1] < 128) {
+					if ((__int16)(y + iArea) > -1 && iSection[1] < 0x80) {
 						pZone = (BYTE *)&dwMapXZON[iSection[0]]->b[iSection[1]];
 						*pZone = LOBYTE(wSomePositionalAngleThree[4 * wViewRotation]) | *pZone & 0xF;
 					}
 				}
-				if (x < 0x80u) {
+				if (x < 0x80) {
 					iSection[2] = iArea + y;
-					if ((__int16)(iArea + y) > -1 && iSection[2] < 128) {
+					if ((iArea + y) > -1 && iSection[2] < 0x80) {
 						pZone = (BYTE *)&dwMapXZON[x]->b[iSection[2]];
 						*pZone = LOBYTE(wSomePositionalAngleFour[4 * wViewRotation]) | *pZone & 0xF;
 					}
 				}
 			}
-			else if (x < 0x80u && (unsigned __int16)y < 0x80u) {
+			else if (x < 0x80 && y < 0x80) {
 				*(BYTE *)&dwMapXZON[x]->b[y] |= 0xF0u;
 			}
 			Game_SpawnItem(x, y + iArea);
@@ -901,6 +1316,17 @@ void InstallMiscHooks(void) {
 	NEWCALL((LPVOID)0x434BEA, Hook_LoadNeighborConnections1500);
 	*(BYTE*)0x434BEF = 0x90;
 
+	// Install hooks for the SC2X save format
+	InstallSaveHooks();
+
+	// Hook into the PlacePowerLines function
+	VirtualProtect((LPVOID)0x402725, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402725, Hook_PlacePowerLinesAtCoordinates);
+
+	// Hook into the SimulationGrowSpecificZone function
+	VirtualProtect((LPVOID)0x4026B2, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4026B2, Hook_SimulationGrowSpecificZone);
+
 	// Hook into what appears to be one of the item placement checking functions
 	VirtualProtect((LPVOID)0x4027F2, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4027F2, Hook_ItemPlacementCheck);
@@ -1000,26 +1426,42 @@ void InstallMiscHooks(void) {
 		miiOptionsPopup.cbSize = sizeof(MENUITEMINFO);
 		miiOptionsPopup.fMask = MIIM_SUBMENU;
 		if (!GetMenuItemInfo(hGameMenu, 2, TRUE, &miiOptionsPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
-			goto skipmenu;
+			ConsoleLog(LOG_DEBUG, "MISC: Game GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
+			goto skipgamemenu;
 		}
 		hOptionsPopup = miiOptionsPopup.hSubMenu;
-		if (!AppendMenu(hOptionsPopup, MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: AppendMenuA #1 failed, error = 0x%08X.\n", GetLastError());
-			goto skipmenu;
+		if (!InsertMenu(hOptionsPopup, -1, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #1 failed, error = 0x%08X.\n", GetLastError());
+			goto skipgamemenu;
 		}
-		if (!AppendMenu(hOptionsPopup, MF_STRING, 40000, "sc2kfix &Settings...") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: AppendMenuA #2 failed, error = 0x%08X.\n", GetLastError());
-			goto skipmenu;
+		if (!InsertMenu(hOptionsPopup, -1, MF_BYPOSITION|MF_STRING,  IDM_GAME_OPTIONS_SC2KFIXSETTINGS, "sc2kfix &Settings...") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #2 failed, error = 0x%08X.\n", GetLastError());
+			goto skipgamemenu;
 		}
+		if (!InsertMenu(hOptionsPopup, -1, MF_BYPOSITION|MF_STRING, IDM_GAME_OPTIONS_MODCONFIG, "Mod &Configuration...") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #3 failed, error = 0x%08X.\n", GetLastError());
+			goto skipgamemenu;
+		}
+
+		EnableMenuItem(hOptionsPopup, 5, MF_BYPOSITION | MF_ENABLED);
+		EnableMenuItem(hOptionsPopup, 6, MF_BYPOSITION | MF_ENABLED);
 
 		afxMessageMapEntry[0] = {
 			WM_COMMAND,
 			0,
-			40000,
-			40000,
+			IDM_GAME_OPTIONS_SC2KFIXSETTINGS,
+			IDM_GAME_OPTIONS_SC2KFIXSETTINGS,
 			0x0A,
 			ShowSettingsDialog,
+		};
+
+		afxMessageMapEntry[1] = {
+			WM_COMMAND,
+			0,
+			IDM_GAME_OPTIONS_MODCONFIG,
+			IDM_GAME_OPTIONS_MODCONFIG,
+			0x0A,
+			ShowModSettingsDialog
 		};
 
 		VirtualProtect((LPVOID)0x4D45C0, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -1029,7 +1471,113 @@ void InstallMiscHooks(void) {
 			ConsoleLog(LOG_DEBUG, "MISC: Updated game menu.\n");
 	}
 
-skipmenu:
+skipgamemenu:
+
+	hDebugMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(223));
+	if (hDebugMenu) {
+		AFX_MSGMAP_ENTRY afxMessageMapEntry[5];
+		HMENU hDebugPopup;
+		MENUITEMINFO miiDebugPopup;
+		miiDebugPopup.cbSize = sizeof(MENUITEMINFO);
+		miiDebugPopup.fMask = MIIM_SUBMENU;
+		if (!GetMenuItemInfo(hDebugMenu, 0, TRUE, &miiDebugPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
+			goto skipdebugmenu;
+		}
+		hDebugPopup = miiDebugPopup.hSubMenu;
+
+		// Insert in reverse order.
+		// Separator between the disasters and internal debugging functions.
+		if (!InsertMenu(hDebugPopup, 11, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #1 failed, error = 0x%08X.\n", GetLastError());
+			goto skipdebugmenu;
+		}
+		// Separator between grants and disasters
+		if (!InsertMenu(hDebugPopup, 4, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #2 failed, error = 0x%08X.\n", GetLastError());
+			goto skipdebugmenu;
+		}
+		// Separator between the version option and grants
+		if (!InsertMenu(hDebugPopup, 1, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #3 failed, error = 0x%08X.\n", GetLastError());
+			goto skipdebugmenu;
+		}
+		
+		// Insert in reverse order.
+		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_MISSILESILOS, "Propose Missile Silos") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #4 failed, error = 0x%08X.\n", GetLastError());
+			goto skipdebugmenu;
+		}
+		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_NAVALYARD, "Propose Naval Yard") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #5 failed, error = 0x%08X.\n", GetLastError());
+			goto skipdebugmenu;
+		}
+		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_ARMYBASE, "Propose Army Base") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #6 failed, error = 0x%08X.\n", GetLastError());
+			goto skipdebugmenu;
+		}
+		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_AIRFORCE, "Propose Air Force Base") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #7 failed, error = 0x%08X.\n", GetLastError());
+			goto skipdebugmenu;
+		}
+		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_DECLINED, "Stop Military Spawning") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #8 failed, error = 0x%08X.\n", GetLastError());
+			goto skipdebugmenu;
+		}
+
+		afxMessageMapEntry[0] = {
+			WM_COMMAND,
+			0,
+			IDM_DEBUG_MILITARY_DECLINED,
+			IDM_DEBUG_MILITARY_DECLINED,
+			0x0A,
+			ProposeMilitaryBaseDecline,
+		};
+
+		afxMessageMapEntry[1] = {
+			WM_COMMAND,
+			0,
+			IDM_DEBUG_MILITARY_AIRFORCE,
+			IDM_DEBUG_MILITARY_AIRFORCE,
+			0x0A,
+			ProposeMilitaryBaseAirForceBase,
+		};
+
+		afxMessageMapEntry[2] = {
+			WM_COMMAND,
+			0,
+			IDM_DEBUG_MILITARY_ARMYBASE,
+			IDM_DEBUG_MILITARY_ARMYBASE,
+			0x0A,
+			ProposeMilitaryBaseArmyBase,
+		};
+
+		afxMessageMapEntry[3] = {
+			WM_COMMAND,
+			0,
+			IDM_DEBUG_MILITARY_NAVALYARD,
+			IDM_DEBUG_MILITARY_NAVALYARD,
+			0x0A,
+			ProposeMilitaryBaseNavalYard,
+		};
+
+		afxMessageMapEntry[4] = {
+			WM_COMMAND,
+			0,
+			IDM_DEBUG_MILITARY_MISSILESILOS,
+			IDM_DEBUG_MILITARY_MISSILESILOS,
+			0x0A,
+			ProposeMilitaryBaseMissileSilos,
+		};
+
+		VirtualProtect((LPVOID)0x4D4608, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
+		memcpy_s((LPVOID)0x4D4608, sizeof(afxMessageMapEntry), &afxMessageMapEntry, sizeof(afxMessageMapEntry));
+
+		if (mischook_debug & MISCHOOK_DEBUG_MENU)
+			ConsoleLog(LOG_DEBUG, "MISC: Updated debug menu.\n");
+	}
+
+skipdebugmenu:
 
 	// Hook for the game area leftmousebuttondown call.
 	VirtualProtect((LPVOID)0x401523, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
