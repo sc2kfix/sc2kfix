@@ -448,12 +448,69 @@ TOTHISPART:
 }
 
 extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 x, signed __int16 y) {
+#if 1
+	DWORD *pThis;
+	int iAttributes;
+	int iResult;
+	__int16 iX;
+	__int16 iY;
+	__int16 i;
+	__int16 iXMM;
+	__int16 iYMM;
+	BOOL bPlaceChurch;
+	__int16 iXPos;
+	map_XZON_attribs_t maXZON;
+	__int16 iCurrZoneType;
+	int iPosAttributes;
+	WORD &word_4C7CF8 = *(WORD *)0x4C7CF8;
+	WORD *word_4DC4C8 = &*(WORD *)0x4DC4C8;
+
+	pThis = (DWORD *)Game_PointerToCSimcityViewClass(pCWinAppThis);
+	iAttributes = dwCityPopulation;
+	iX = x;
+	bPlaceChurch = (unsigned int)2500 * dwTileCount[TILE_INFRASTRUCTURE_CHURCH] < (unsigned int)dwCityPopulation;
+	word_4C7CF8 = word_4DC4C8[wViewRotation];
+	iResult = x / 2;
+	iXMM = x / 2;
+	while (iX < 0x80) {
+		iY = y;
+		for (i = y / 2; ; i = iY / 2) {
+			iYMM = i;
+			if (iY >= 0x80)
+				break;
+			iXPos = iX;
+			maXZON = dwMapXZON[iXPos]->b[iY];
+			iCurrZoneType = maXZON.iZoneType;
+			iPosAttributes = iXPos * 4;
+			P_LOBYTE(iPosAttributes) = dwMapXBLD[iXPos]->iTileID[iY];
+			P_LOBYTE(iAttributes) = iPosAttributes;
+			if (maXZON.iZoneType != ZONE_NONE) {
+				if (maXZON.iZoneType > ZONE_DENSE_INDUSTRIAL) {
+					switch (iCurrZoneType) {
+						case ZONE_MILITARY:
+							switch (bMilitaryBaseType) {
+								case MILITARY_BASE_ARMY:
+									if ((rand() & 3) == 0) {
+
+									}
+									break;
+							}
+							break;
+					}
+				}
+			}
+		}
+	}
+	rcDst.top = -1000;
+	return iResult;
+#else
 	int(__cdecl *H_SimulationGrowthTick)(signed __int16, signed __int16) = (int(__cdecl *)(signed __int16, signed __int16))0x4358B0;
 
 	int ret = H_SimulationGrowthTick(x, y);
 	ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> SimulationGrowthTick(%d, %d) = %d\n", _ReturnAddress(), x, y, ret);
 
 	return ret;
+#endif
 }
 
 extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, __int16 iTileID, __int16 iZoneType) {
@@ -1246,7 +1303,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	// The change in this case is to only set pThis[62] to 0 when the iCurrToolGroupA is not
 	// 'Center Tool', this will then allow it to pass-through to the WM_MOUSEMOVE call.
 
-	pThis = (DWORD *)Game_PointerToCSimcityView(pCWinAppThis);	// TODO: is this necessary or can we just dereference pCSimcityView?
+	pThis = (DWORD *)Game_PointerToCSimcityViewClass(pCWinAppThis);	// TODO: is this necessary or can we just dereference pCSimcityView?
 	Game_TileHighlightUpdate((int)pThis);
 	iCurrToolGroupA = wCurrentMapToolGroup;
 	iTileStartX = 400;
