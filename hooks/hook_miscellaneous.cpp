@@ -467,6 +467,8 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 x, signed __int1
 	WORD &word_4C7CF8 = *(WORD *)0x4C7CF8;
 	WORD *word_4DC4C8 = &*(WORD *)0x4DC4C8;
 
+	void(__cdecl *H_SpawnShip)(__int16, __int16) = (void(__cdecl *)(__int16, __int16))0x402829;
+
 	pThis = (DWORD *)Game_PointerToCSimcityViewClass(pCWinAppThis);
 	iAttributes = dwCityPopulation;
 	iX = x;
@@ -559,7 +561,7 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 x, signed __int1
 										}
 										else
 											iTileID = TILE_INFRASTRUCTURE_CRANE;
-										if (Game_SimulationGrowSpecificZone(iX, iY, iTileID, ZONE_MILITARY))
+										if (!Game_SimulationGrowSpecificZone(iX, iY, iTileID, ZONE_MILITARY))
 											goto GOSPAWNSEAYARD;
 									}
 									break;
@@ -572,6 +574,29 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 x, signed __int1
 							}
 							break;
 						case ZONE_SEAPORT:
+							if ((rand() & 3) != 0) {
+								if ((WORD)iAttributes == TILE_INFRASTRUCTURE_CRANE && (rand() & 3) == 0)
+									H_SpawnShip(iX, iY);
+							}
+							else {
+								iBuildingCount = dwTileCount[TILE_INFRASTRUCTURE_CRANE];
+								if ((__int16)dwTileCount[TILE_INFRASTRUCTURE_CARGOYARD] / 4 < iBuildingCount) {
+									if ((__int16)dwTileCount[TILE_MILITARY_LOADINGBAY] / 4 >= iBuildingCount) {
+										BYTE(iAttributes) = 0;
+										iTileID = TILE_MILITARY_WAREHOUSE;
+										if ((__int16)dwTileCount[TILE_MILITARY_WAREHOUSE] / 3 >= iBuildingCount)
+											iTileID = TILE_INFRASTRUCTURE_CARGOYARD;
+									}
+									else
+										iTileID = TILE_MILITARY_LOADINGBAY;
+								}
+								else
+									iTileID = TILE_INFRASTRUCTURE_CRANE;
+								if (!Game_SimulationGrowSpecificZone(iX, iY, iTileID, ZONE_SEAPORT)) {
+GOSPAWNSEAYARD:
+									Game_SimulationGrowSpecificZone(iX, iY, TILE_MILITARY_WAREHOUSE, iCurrZoneType);
+								}
+							}
 							break;
 						case ZONE_AIRPORT:
 							break;
