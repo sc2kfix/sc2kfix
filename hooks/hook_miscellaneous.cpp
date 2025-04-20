@@ -385,6 +385,68 @@ extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
 		ConsoleLog(LOG_DEBUG, "SAVE: Loaded %d $1500 neighbor connections.\n", *wCityNeighborConnections1500);
 }
 
+extern "C" int __cdecl Hook_PlacePowerLinesAtCoordinates(__int16 x, __int16 y) {
+	__int16 iY;
+	int iResult;
+	unsigned int iTileID;
+
+	iY = y;
+	if (x < 0) {
+TOBEGINNING:
+		iTileID = (unsigned int)dwMapXBLD[x]->iTileID;
+		P_LOBYTE(iTileID) = *(BYTE *)(iTileID + iY);
+		iResult = iTileID & 0xFFFF00FF;
+		if ((__int16)iResult < TILE_POWERLINES_LR) {
+			Game_PlaceTileWithMilitaryCheck(x, iY, TILE_POWERLINES_LR);
+TOTHISPART:
+			if (x < 0x80 && iY < 0x80)
+				*(BYTE *)&dwMapXBIT[x]->b[iY] |= 0x80u;
+			iResult = Game_CheckAdjustTerrainAndPlacePowerLines(x, iY);
+			if (x > 0)
+				iResult = Game_CheckAdjustTerrainAndPlacePowerLines(x - 1, iY);
+			if (x < 127)
+				iResult = Game_CheckAdjustTerrainAndPlacePowerLines(x + 1, iY);
+			if (iY > 0)
+				iResult = Game_CheckAdjustTerrainAndPlacePowerLines(x, iY - 1);
+			if (iY < 127)
+				return Game_CheckAdjustTerrainAndPlacePowerLines(x, iY + 1);
+		}
+		else {
+			switch ((__int16)iResult) {
+				case TILE_ROAD_LR:
+					Game_PlaceTileWithMilitaryCheck(x, iY, TILE_CROSSOVER_POWERTB_ROADLR);
+					goto TOTHISPART;
+				case TILE_ROAD_TB:
+					Game_PlaceTileWithMilitaryCheck(x, iY, TILE_CROSSOVER_POWERLR_ROADTB);
+					goto TOTHISPART;
+				case TILE_RAIL_LR:
+					Game_PlaceTileWithMilitaryCheck(x, iY, TILE_CROSSOVER_POWERTB_RAILLR);
+					goto TOTHISPART;
+				case TILE_RAIL_TB:
+					Game_PlaceTileWithMilitaryCheck(x, iY, TILE_CROSSOVER_POWERLR_RAILTB);
+					goto TOTHISPART;
+				case TILE_HIGHWAY_LR:
+					Game_PlaceTileWithMilitaryCheck(x, iY, TILE_CROSSOVER_HIGHWAYLR_POWERTB);
+					goto TOTHISPART;
+				case TILE_HIGHWAY_TB:
+					Game_PlaceTileWithMilitaryCheck(x, iY, TILE_CROSSOVER_HIGHWAYTB_POWERLR);
+					goto TOTHISPART;
+				default:
+					return iResult;
+			}
+		}
+		return iResult;
+	}
+	if (x >= 0x80)
+		goto TOBEGINNING;
+	if (y >= 0x80)
+		goto TOBEGINNING;
+	iResult = x;
+	if (*(BYTE *)&dwMapXBIT[x]->b[y] >= 0)
+		goto TOBEGINNING;
+	return iResult;
+}
+
 extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, __int16 iTileID, __int16 iZoneType) {
 	// Variable names subject to change
 	// during the demystification process.
@@ -1354,6 +1416,10 @@ void InstallMiscHooks(void) {
 
 	// Install hooks for the SC2X save format
 	InstallSaveHooks();
+
+	// Hook into the PlacePowerLines function
+	VirtualProtect((LPVOID)0x402725, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402725, Hook_PlacePowerLinesAtCoordinates);
 
 	// Hook into the SimulationGrowSpecificZone function
 	VirtualProtect((LPVOID)0x4026B2, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
