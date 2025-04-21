@@ -468,6 +468,7 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 x, signed __int1
 	WORD *word_4DC4C8 = &*(WORD *)0x4DC4C8;
 
 	void(__cdecl *H_SpawnShip)(__int16, __int16) = (void(__cdecl *)(__int16, __int16))0x402829;
+	int(__cdecl *H_402478)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x402478;
 
 	pThis = (DWORD *)Game_PointerToCSimcityViewClass(pCWinAppThis);
 	iAttributes = dwCityPopulation;
@@ -504,10 +505,22 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 x, signed __int1
 							switch (bMilitaryBaseType) {
 								case MILITARY_BASE_ARMY:
 									if ((rand() & 3) == 0) {
+#if 0
 										P_LOWORD(iAttributes) = (__int16)dwMilitaryTiles[MILITARYTILE_MPARKINGLOT] / 4;
 										iTileID = TILE_MILITARY_PARKINGLOT;
 										if ((__int16)iAttributes > (__int16)dwMilitaryTiles[MILITARYTILE_MHANGAR1] / 12)
 											iTileID = TILE_MILITARY_HANGAR1;
+#else
+										iAttributes = 5;
+										iBuildingCount = (__int16)dwMilitaryTiles[MILITARYTILE_MPARKINGLOT] / 4;
+										if ((__int16)dwMilitaryTiles[MILITARYTILE_TOPSECRET] / 4 < iBuildingCount) {
+											iTileID = TILE_MILITARY_HANGAR1;
+											if ((__int16)dwMilitaryTiles[MILITARYTILE_MHANGAR1] / 12 >= iBuildingCount)
+												iTileID = TILE_MILITARY_TOPSECRET;
+										}
+										else
+											iTileID = TILE_MILITARY_PARKINGLOT;
+#endif
 										if (!Game_SimulationGrowSpecificZone(iX, iY, iTileID, ZONE_MILITARY))
 											Game_SimulationGrowSpecificZone(iX, iY, TILE_MILITARY_HANGAR1, ZONE_MILITARY);
 									}
@@ -599,6 +612,27 @@ GOSPAWNSEAYARD:
 							}
 							break;
 						case ZONE_AIRPORT:
+							if ((rand() & 3) != 0) {
+								if ((WORD)iAttributes == TILE_INFRASTRUCTURE_RUNWAY &&
+									!(rand() % 30) &&
+									iX < 0x80 &&
+									iY < 0x80) {
+									iAttributes = (int)&dwMapXBIT[iXPos];
+									if (dwMapXBIT[iX]->b[iY].iPowered != 0) {
+										if (rand() % 10 < 4) {
+											H_402478(iX, iY);
+											break;
+										}
+										if ((wViewRotation & 1) != 0) {
+
+										}
+									}
+								}
+							}
+							else {
+GOSPAWNAIRFIELD:
+								Game_SimulationGrowSpecificZone(iX, iY, iTileID, iCurrZoneType);
+							}
 							break;
 						default:
 							break;
