@@ -468,7 +468,10 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 x, signed __int1
 	WORD *word_4DC4C8 = &*(WORD *)0x4DC4C8;
 
 	void(__cdecl *H_SpawnShip)(__int16, __int16) = (void(__cdecl *)(__int16, __int16))0x402829;
+	// Both of these function deal with XTHG, not sure if they're planes or helicopters yet.
 	int(__cdecl *H_402478)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x402478;
+	int(__cdecl *H_4014CE)(__int16, __int16, __int16) = (int(__cdecl *)(__int16, __int16, __int16))0x4014CE;
+	int(__fastcall *H_402B3F)(int) = (int(__fastcall *)(int))0x402B3F;
 
 	pThis = (DWORD *)Game_PointerToCSimcityViewClass(pCWinAppThis);
 	iAttributes = dwCityPopulation;
@@ -493,13 +496,14 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 x, signed __int1
 				if (maXZON.iZoneType > ZONE_DENSE_INDUSTRIAL) {
 					switch (iCurrZoneType) {
 						case ZONE_MILITARY:
-							// (I / N): as far as I can tell for the most part the divisor is the
-							// number of tiles that the given building-type occupies, so it divides
-							// by that to get the actual number of buildings present.
+							// (I / N): For the most part the divisor is the number of tiles that the
+							// given building-type occupies, so it divides by that to get the actual
+							// number of buildings present.
 							//
 							// As far as I can tell when it comes to the 'MILITARYTILE_MHANGAR1' case...
 							// 12 of those type could be classified as a unit, so if iAttributes is greater
 							// than that unit, place more hangars.
+							// (old method - iAttribtues, new method - iBuildingCount)
 							//
 							// That crops up the most on Army and Naval cases.
 							switch (bMilitaryBaseType) {
@@ -624,12 +628,52 @@ GOSPAWNSEAYARD:
 											break;
 										}
 										if ((wViewRotation & 1) != 0) {
-
+											if (iX < 0x80 &&
+												iY < 0x80 &&
+												(*(BYTE *)(*(DWORD *)iAttributes + iY) & 2) != 0)
+												goto AIRFIELDSKIPAHEAD;
 										}
+										else if (iX >= 0x80 ||
+											iY >= 0x80 ||
+											(*(BYTE *)(*(DWORD *)iAttributes + iY) & 2) == 0) {
+AIRFIELDSKIPAHEAD:
+											H_4014CE(iX, iY, 0);
+											break;
+										}
+										H_4014CE(iX, iY, 2);
 									}
 								}
 							}
 							else {
+								iAttributes = 5;
+								iBuildingCount = ((__int16)dwTileCount[TILE_INFRASTRUCTURE_RUNWAY] + (__int16)dwTileCount[TILE_INFRASTRUCTURE_RUNWAYCROSS]) / 5;
+								if ((__int16)dwTileCount[TILE_INFRASTRUCTURE_PARKINGLOT] / 4 < iBuildingCount) {
+									if (2 * (__int16)dwTileCount[TILE_INFRASTRUCTURE_CONTROLTOWER_CIV] >= iBuildingCount) {
+										if (2 * (__int16)dwTileCount[TILE_MILITARY_RADAR] >= iBuildingCount) {
+											if ((__int16)dwTileCount[TILE_MILITARY_TARMAC] >= iBuildingCount) {
+												if ((__int16)dwTileCount[TILE_INFRASTRUCTURE_BUILDING1] / 2 >= iBuildingCount) {
+													if ((__int16)dwTileCount[TILE_INFRASTRUCTURE_BUILDING2] / 2 >= iBuildingCount) {
+														iTileID = TILE_INFRASTRUCTURE_HANGAR2;
+														if ((__int16)dwTileCount[TILE_INFRASTRUCTURE_HANGAR2] / 4 >= iBuildingCount)
+															iTileID = TILE_INFRASTRUCTURE_PARKINGLOT;
+													}
+													else
+														iTileID = TILE_INFRASTRUCTURE_BUILDING2;
+												}
+												else
+													iTileID = TILE_INFRASTRUCTURE_BUILDING1;
+											}
+											else
+												iTileID = TILE_MILITARY_TARMAC;
+										}
+										else
+											iTileID = TILE_MILITARY_RADAR;
+									}
+									else
+										iTileID = TILE_INFRASTRUCTURE_CONTROLTOWER_CIV;
+								}
+								else
+									iTileID = TILE_INFRASTRUCTURE_RUNWAY;
 GOSPAWNAIRFIELD:
 								Game_SimulationGrowSpecificZone(iX, iY, iTileID, iCurrZoneType);
 							}
