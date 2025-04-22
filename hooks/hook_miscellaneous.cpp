@@ -464,6 +464,7 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 x, signed __int1
 	int iPosAttributes;
 	__int16 iTileID;
 	__int16 iBuildingCount;
+	signed __int16 iBudgetItemOne;
 	WORD &word_4C7CF8 = *(WORD *)0x4C7CF8;
 	WORD *word_4DC4C8 = &*(WORD *)0x4DC4C8;
 
@@ -471,6 +472,8 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 x, signed __int1
 	int(__cdecl *H_SpawnHelicopter)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x402478;
 	int(__cdecl *H_SpawnAeroplane)(__int16, __int16, __int16) = (int(__cdecl *)(__int16, __int16, __int16))0x4014CE;
 	int(__fastcall *H_402B3F)(int) = (int(__fastcall *)(int))0x402B3F;
+	unsigned int(__thiscall *H_402211)(DWORD *, int, int, int) = (unsigned int(__thiscall *)(DWORD *, int, int, int))0x402211;
+	int(__cdecl *H_401E38)(__int16, __int16, __int16) = (int(__cdecl *)(__int16, __int16, __int16))0x401E38;
 
 	pThis = (DWORD *)Game_PointerToCSimcityViewClass(pCWinAppThis);
 	iAttributes = dwCityPopulation;
@@ -678,6 +681,24 @@ GOSPAWNAIRFIELD:
 							}
 							break;
 						default:
+							if (!(unsigned __int16)H_402B3F(iPosAttributes)) {
+								P_LOBYTE(iAttributes) = dwMapXUND[iX]->iTileID[iY];
+								iAttributes &= 0xFFFF00FF;
+								if ((__int16)iAttributes >= TILE_RUBBLE1 && (__int16)iAttributes < TILE_POWERLINES_HTB ||
+									(WORD)iAttributes == TILE_ROAD_BR ||
+									(WORD)iAttributes == TILE_ROAD_HTB ||
+									(WORD)iAttributes == TILE_ROAD_LHR ||
+									(WORD)iAttributes == TILE_ROAD_HLR) {
+									iBudgetItemOne = *((WORD *)dwBudgetArr + 834);
+									ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - (WORD)iAttributes(%u),iBudgetItemOne(%d)\n", x, y, (WORD)iAttributes, iBudgetItemOne);
+									if (iBudgetItemOne != 100 && (unsigned __int16)((unsigned __int16)rand() % 100u) >= iBudgetItemOne) {
+										if ((WORD)iAttributes == TILE_ROAD_BR)
+											H_402211(pThis, iX, iY, 0);
+										else
+											H_401E38(iX, iY, 0);
+									}
+								}
+							}
 							break;
 					}
 				}
