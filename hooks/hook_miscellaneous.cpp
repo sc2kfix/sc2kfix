@@ -468,9 +468,8 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 x, signed __int1
 	WORD *word_4DC4C8 = &*(WORD *)0x4DC4C8;
 
 	void(__cdecl *H_SpawnShip)(__int16, __int16) = (void(__cdecl *)(__int16, __int16))0x402829;
-	// Both of these function deal with XTHG, not sure if they're planes or helicopters yet.
-	int(__cdecl *H_402478)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x402478;
-	int(__cdecl *H_4014CE)(__int16, __int16, __int16) = (int(__cdecl *)(__int16, __int16, __int16))0x4014CE;
+	int(__cdecl *H_SpawnHelicopter)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x402478;
+	int(__cdecl *H_SpawnAeroplane)(__int16, __int16, __int16) = (int(__cdecl *)(__int16, __int16, __int16))0x4014CE;
 	int(__fastcall *H_402B3F)(int) = (int(__fastcall *)(int))0x402B3F;
 
 	pThis = (DWORD *)Game_PointerToCSimcityViewClass(pCWinAppThis);
@@ -624,7 +623,7 @@ GOSPAWNSEAYARD:
 									iAttributes = (int)&dwMapXBIT[iXPos];
 									if (dwMapXBIT[iX]->b[iY].iPowered != 0) {
 										if (rand() % 10 < 4) {
-											H_402478(iX, iY);
+											H_SpawnHelicopter(iX, iY);
 											break;
 										}
 										if ((wViewRotation & 1) != 0) {
@@ -637,10 +636,10 @@ GOSPAWNSEAYARD:
 											iY >= 0x80 ||
 											(*(BYTE *)(*(DWORD *)iAttributes + iY) & 2) == 0) {
 AIRFIELDSKIPAHEAD:
-											H_4014CE(iX, iY, 0);
+											H_SpawnAeroplane(iX, iY, 0);
 											break;
 										}
-										H_4014CE(iX, iY, 2);
+										H_SpawnAeroplane(iX, iY, 2);
 									}
 								}
 							}
