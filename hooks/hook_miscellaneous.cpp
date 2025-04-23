@@ -485,15 +485,15 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __
 	void(__cdecl *H_SpawnShip)(__int16, __int16) = (void(__cdecl *)(__int16, __int16))0x402829;
 	int(__cdecl *H_SpawnHelicopter)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x402478;
 	int(__cdecl *H_SpawnAeroplane)(__int16, __int16, __int16) = (int(__cdecl *)(__int16, __int16, __int16))0x4014CE;
-	int(__fastcall *H_402B3F)(int) = (int(__fastcall *)(int))0x402B3F;
+	int(__fastcall *H_GetLFSRRandResultOne)(int) = (int(__fastcall *)(int))0x402B3F;
 	unsigned int(__thiscall *H_DestroyStructure)(DWORD *, __int16, __int16, int) = (unsigned int(__thiscall *)(DWORD *, __int16, __int16, int))0x402211;
-	int(__cdecl *H_4023B0)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x4023B0;
-	int(__cdecl *H_40281F)(__int16, __int16, __int16, __int16, __int16) = (int(__cdecl *)(__int16, __int16, __int16, __int16, __int16))0x40281F;
+	int(__cdecl *H_IsValidTransitItems)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x4023B0;
+	int(__cdecl *H_UpdateDisasterAndTransitStats)(__int16, __int16, __int16, __int16, __int16) = (int(__cdecl *)(__int16, __int16, __int16, __int16, __int16))0x40281F;
 	char(__cdecl *H_PerhapsGeneralZoneBuilding)(__int16, __int16, __int16, int) = (char(__cdecl *)(__int16, __int16, __int16, int))0x4024FA;
 	int(__cdecl *H_PlaceChurch)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x4016F9;
 	char(__cdecl *H_PerhapsGeneralZoneSpawning)(__int16, __int16, __int16, __int16) = (char(__cdecl *)(__int16, __int16, __int16, __int16))0x402289;
 	char(__cdecl *H_PerhapsGeneralZoneAreaBuilding)(signed __int16, signed __int16, __int16, __int16) = (char(__cdecl *)(signed __int16, signed __int16, __int16, __int16))0x401A3C;
-	__int16(__stdcall *H_GetLFSRRandResult)(void) = (__int16(__stdcall *)(void))0x402261;
+	__int16(__fastcall *H_GetLFSRRandResultTwo)(void) = (__int16(__fastcall *)(void))0x402261;
 	__int16(__cdecl *H_SpawnTrain)(__int16, __int16) = (__int16(__cdecl *)(__int16, __int16))0x40209F;
 	int(__cdecl *H_SpawnMarinaBoat)(__int16, __int16) = (int(__cdecl *)(__int16, __int16))0x402978;
 	int(__cdecl *H_TriggerNewsArticle)(__int16, char) = (int(__cdecl *)(__int16, char))0x402900;
@@ -705,7 +705,7 @@ GOSPAWNAIRFIELD:
 							}
 							break;
 						default:
-							if (!(unsigned __int16)H_402B3F(iPosAttributes)) {
+							if (!(unsigned __int16)H_GetLFSRRandResultOne(iPosAttributes)) {
 								P_LOBYTE(iAttributes) = dwMapXUND[iX]->iTileID[iY];
 								iAttributes &= 0xFFFF00FF;
 								if ((__int16)iAttributes >= TILE_RUBBLE1 && (__int16)iAttributes < TILE_POWERLINES_HTB ||
@@ -736,14 +736,14 @@ GOSPAWNAIRFIELD:
 						iSomeValOne = word_4E7458[(__int16)iAttributes];
 					}
 					else {
-						if ((__int16)iAttributes >= TILE_ROAD_LR || !H_4023B0(iX, iY)) {
+						if ((__int16)iAttributes >= TILE_ROAD_LR || !H_IsValidTransitItems(iX, iY)) {
 							goto GOIYINCREASE;
 						}
 						P_LOWORD(iAttributes) = 0;
 						iSomeValOne = 0;
 					}
 					if (Game_IsZonedTilePowered(iX, iY)) {
-						if (H_40281F(iX, iY, iCurrZoneType, iSomeValOne, 100)) {
+						if (H_UpdateDisasterAndTransitStats(iX, iY, iCurrZoneType, iSomeValOne, 100)) {
 							iCalculateResDemand = wCityResidentialDemand[(__int16)((iCurrZoneType - 1) / 2)] + 2000;
 							iRemainderResDemand = 4000 - iCalculateResDemand;
 						}
@@ -801,7 +801,7 @@ GOGENERALZONESPAWNING:
 			else {
 				if ((__int16)iAttributes < TILE_ROAD_LR)
 					goto GOIYINCREASE;
-				if ((unsigned __int16)H_402B3F(iPosAttributes))
+				if ((unsigned __int16)H_GetLFSRRandResultOne(iPosAttributes))
 					goto GOAFTERSETXBIT;
 				if ((__int16)iAttributes >= TILE_ROAD_LR && (__int16)iAttributes < TILE_RAIL_LR ||
 					(__int16)iAttributes >= TILE_TUNNEL_T && (__int16)iAttributes < TILE_CROSSOVER_POWERTB_RAILLR ||
@@ -840,7 +840,7 @@ GOAFTERSETXBIT:
 								iX < 0x80 &&
 								iY < 0x80 &&
 								dwMapXBIT[iX]->b[iY].iPowered != 0 &&
-								!(unsigned __int16)H_GetLFSRRandResult()) {
+								!(unsigned __int16)H_GetLFSRRandResultTwo()) {
 								if ((__int16)dwTileCount[TILE_INFRASTRUCTURE_RAILSTATION] / 4 > word_4E99D8) {
 									ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Train Spawn\n", iX, iY);
 									H_SpawnTrain(iX, iY);
@@ -850,7 +850,7 @@ GOAFTERSETXBIT:
 								iX < 0x80 &&
 								iY < 0x80 &&
 								dwMapXBIT[iX]->b[iY].iPowered != 0 &&
-								!(unsigned __int16)H_GetLFSRRandResult()) {
+								!(unsigned __int16)H_GetLFSRRandResultTwo()) {
 								if ((__int16)dwTileCount[TILE_INFRASTRUCTURE_MARINA] / 9 > word_4E99D0) {
 									ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Marina Boat Spawn\n", iX, iY);
 									H_SpawnMarinaBoat(iX, iY);
