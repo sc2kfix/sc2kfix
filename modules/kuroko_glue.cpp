@@ -344,7 +344,7 @@ extern "C" {
 		KRK_GAMEOFF(dwCityWorkforceEQ);
 		KRK_GAMEOFF(dwWaterUsedPercentage);
 		KRK_GAMEOFF(bNewspaperExtra);
-		KRK_GAMEOFF(dwBudgetArr);
+		KRK_GAMEOFF_PTR(pBudgetArr);
 		KRK_GAMEOFF(bNoDisasters);
 		KRK_GAMEOFF_PTR(wNeighborNameIdx);
 		KRK_GAMEOFF(wCityNeighborConnections1000);

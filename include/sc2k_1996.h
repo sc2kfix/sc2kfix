@@ -612,6 +612,26 @@ enum {
 };
 
 enum {
+	BUDGET_RESFUND,
+	BUDGET_COMFUND,
+	BUDGET_INDFUND,
+	BUDGET_ORDINANCE,
+	BUDGET_BOND,
+	BUDGET_POLICE,
+	BUDGET_FIRE,
+	BUDGET_HEALTH,
+	BUDGET_SCHOOL,
+	BUDGET_COLLEGE,
+	BUDGET_ROAD,
+	BUDGET_HIGHWAY,
+	BUDGET_BRIDGE,
+	BUDGET_RAIL,
+	BUDGET_SUBWAY,
+	BUDGET_TUNNEL,
+	BUDGET_COUNT
+};
+
+enum {
 	ORDINANCE_SALES_TAX = 0,
 	ORDINANCE_INCOME_TAX,
 	ORDINANCE_LEGALIZED_GAMBLING,
@@ -651,6 +671,17 @@ enum {
 	MILITARYTILE_MHANGAR1,
 	MILITARYTILE_HANGAR2,
 	MILITARYTILE_MISSILESILO
+};
+
+enum {
+	ZONEPOP_ALL,
+	ZONEPOP_RESLIGHT,
+	ZONEPOP_RESDENSE,
+	ZONEPOP_COMLIGHT,
+	ZONEPOP_COMDENSE,
+	ZONEPOP_INDLIGHT,
+	ZONEPOP_INDDENSE,
+	ZONEPOP_ABANDONED
 };
 
 enum {
@@ -724,6 +755,15 @@ typedef struct {
 } neighbor_city_t;
 
 typedef struct {
+	int iCountMonth[12];
+	int iFundMonth[12];
+	int iCurrentCosts;
+	int iFundingPercent;
+	int iYearToDateCost;
+	int iEstimatedCost;
+} budget_t;
+
+typedef struct {
 	BYTE bTileID;
 	BYTE bMicrosimData[7];
 } microsim_t;
@@ -741,7 +781,7 @@ typedef struct {
 } map_ALTM_attribs_t;
 
 typedef struct {
-	map_ALTM_attribs_t w[128];
+	map_ALTM_attribs_t w;
 } map_ALTM_t;
 
 typedef struct {
@@ -750,31 +790,31 @@ typedef struct {
 } map_XZON_attribs_t;
 
 typedef struct {
-	map_XZON_attribs_t b[128];
+	map_XZON_attribs_t b;
 } map_XZON_t;
 
 typedef struct {
-	BYTE iTileID[128];
+	BYTE iTileID;
 } map_XBLD_t;
 
 typedef struct {
-	BYTE iTileID[128]; // reference XTER map
+	BYTE iTileID; // reference XTER map
 } map_XTER_t;
 
 typedef struct {
-	BYTE iTileID[128];
+	BYTE iTileID;
 } map_XUND_t;
 
 typedef struct {
-	BYTE bTextOverlay[128];
+	BYTE bTextOverlay;
 } map_XTXT_t;
 
 typedef struct {
-	BYTE bBlock[64];
+	BYTE bBlock;
 } map_mini64_t;
 
 typedef struct {
-	BYTE bBlock[32];
+	BYTE bBlock;
 } map_mini32_t;
 
 typedef struct {
@@ -789,7 +829,7 @@ typedef struct {
 } map_XBIT_bits_t;
 
 typedef struct {
-	map_XBIT_bits_t b[128];
+	map_XBIT_bits_t b;
 } map_XBIT_t;
 
 typedef struct {
@@ -960,7 +1000,7 @@ GAMEOFF(WORD,	wCurrentCityToolGroup,		0x4CB464)
 GAMEOFF(DWORD,	dwCityWorkforceEQ,			0x4CC4B4)
 GAMEOFF(DWORD,	dwWaterUsedPercentage,		0x4CC4B8)
 GAMEOFF(BOOL,	bNewspaperExtra,			0x4CC4BC)
-GAMEOFF(void*,	dwBudgetArr,				0x4CC4CC)		// Needs reverse engineering. See wiki.
+GAMEOFF(budget_t*,	pBudgetArr,				0x4CC4CC)		// Needs reverse engineering. See wiki.
 GAMEOFF(BOOL,	bNoDisasters,				0x4CC4D4)
 GAMEOFF_ARR(WORD, wNeighborNameIdx,			0x4CC4DC)		// WORD wNeighborNameIdx[4]
 GAMEOFF(WORD,	wCityNeighborConnections1000,	0x4CC4D8)
@@ -1032,7 +1072,7 @@ GAMEOFF_ARR(DWORD,			dwMapXGRP,	0x4CC470)
 
 static inline int GetTileID(int iTileX, int iTileY) {
 	if (iTileX >= 0 && iTileX < 128 && iTileY >= 0 && iTileY < 128)
-		return dwMapXBLD[iTileX]->iTileID[iTileY];
+		return dwMapXBLD[iTileX][iTileY].iTileID;
 	else
 		return -1;
 }
