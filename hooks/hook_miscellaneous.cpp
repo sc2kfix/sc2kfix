@@ -393,7 +393,7 @@ extern "C" int __cdecl Hook_PlacePowerLinesAtCoordinates(__int16 x, __int16 y) {
 	iY = y;
 	if (x < 0) {
 TOBEGINNING:
-		iTileID = (unsigned int)dwMapXBLD[x]->iTileID;
+		iTileID = (unsigned int)dwMapXBLD[x];
 		P_LOBYTE(iTileID) = *(BYTE *)(iTileID + iY);
 		iResult = iTileID & 0xFFFF00FF;
 		if ((__int16)iResult < TILE_POWERLINES_LR) {
