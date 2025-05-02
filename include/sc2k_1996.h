@@ -49,6 +49,13 @@
 
 #define MAX_CITY_INVENTION_YEARS 17
 
+#define CORNER_NONE   0x0
+#define CORNER_BLEFT  0x1
+#define CORNER_BRIGHT 0x2
+#define CORNER_TLEFT  0x4
+#define CORNER_TRIGHT 0x8
+#define CORNER_ALL    (CORNER_BLEFT|CORNER_BRIGHT|CORNER_TLEFT|CORNER_TRIGHT)
+
 // Enums
 
 // Disaster IDs
@@ -1034,10 +1041,10 @@ GAMEOFF(DWORD,	dwCityRewardsUnlocked,		0x4E9A24)
 GAMEOFF(WORD,	wTileHighlightActive,		0x4EA7F0)
 
 // Pending classification
-GAMEOFF_ARR(WORD, wSomePositionalAngleOne,	0x4DC4D0)
-GAMEOFF_ARR(WORD, wSomePositionalAngleTwo,	0x4DC4D2)
-GAMEOFF_ARR(WORD, wSomePositionalAngleThree,	0x4DC4D4)
-GAMEOFF_ARR(WORD, wSomePositionalAngleFour,	0x4DC4D6)
+GAMEOFF_ARR(WORD, wTileAreaBottomLeftCorner,	0x4DC4D0)
+GAMEOFF_ARR(WORD, wTileAreaBottomRightCorner,	0x4DC4D2)
+GAMEOFF_ARR(WORD, wTileAreaTopLeftCorner,	0x4DC4D4)
+GAMEOFF_ARR(WORD, wTileAreaTopRightCorner,	0x4DC4D6)
 GAMEOFF_ARR(WORD, wSomePierLengthWays,		0x4E75C0)
 GAMEOFF_ARR(WORD, wSomePierDepthWays,		0x4E75C8)
 

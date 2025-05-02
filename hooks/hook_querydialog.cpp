@@ -81,22 +81,22 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 
 		// Raw XZON data
 		switch (dwMapXZON[iTileX][iTileY].b.iCorners) {
-		case 0:
+		case CORNER_NONE:
 			strTileInfo += "No corners";
 			break;
-		case 1:
+		case CORNER_BLEFT:
 			strTileInfo += "Bottom-left corner";
 			break;
-		case 2:
+		case CORNER_BRIGHT:
 			strTileInfo += "Bottom-right corner";
 			break;
-		case 4:
+		case CORNER_TLEFT:
 			strTileInfo += "Top-left corner";
 			break;
-		case 8:
+		case CORNER_TRIGHT:
 			strTileInfo += "Top-right corner";
 			break;
-		case 15:
+		case CORNER_ALL:
 			strTileInfo += "All four corners";
 			break;
 		}

@@ -317,8 +317,7 @@ void PlaceMissileSilo(__int16 m_x, __int16 m_y) {
 	__int16 iY;
 	__int16 iItemWidth;
 	__int16 iItemDepth;
-	__int16 iSection[3];
-	BYTE *pZone;
+	__int16 iCorner[3];
 
 	if (!isValidSiloPos(m_x, m_y, false))
 		return;
@@ -346,26 +345,22 @@ void PlaceMissileSilo(__int16 m_x, __int16 m_y) {
 	}
 	if (iArea) {
 		if (x < 0x80 && y < 0x80) {
-			pZone = (BYTE *)&dwMapXZON[x][y].b;
-			*pZone = LOBYTE(wSomePositionalAngleOne[4 * wViewRotation]) | *pZone & 0xF;
+			dwMapXZON[x][y].b.iCorners = wTileAreaBottomLeftCorner[4 * wViewRotation] >> 4;
 		}
-		iSection[0] = iArea + x;
-		if ((iArea + x) > -1 && iSection[0] < 0x80 && y < 0x80) {
-			pZone = (BYTE *)&dwMapXZON[iSection[0]][y].b;
-			*pZone = LOBYTE(wSomePositionalAngleTwo[4 * wViewRotation]) | *pZone & 0xF;
+		iCorner[0] = iArea + x;
+		if ((iArea + x) > -1 && iCorner[0] < 0x80 && y < 0x80) {
+			dwMapXZON[iCorner[0]][y].b.iCorners = wTileAreaBottomRightCorner[4 * wViewRotation] >> 4;
 		}
-		if (iSection[0] < 0x80) {
-			iSection[1] = y + iArea;
-			if ((y + iArea) > -1 && iSection[1] < 0x80) {
-				pZone = (BYTE *)&dwMapXZON[iSection[0]][iSection[1]].b;
-				*pZone = LOBYTE(wSomePositionalAngleThree[4 * wViewRotation]) | *pZone & 0xF;
+		if (iCorner[0] < 0x80) {
+			iCorner[1] = y + iArea;
+			if ((y + iArea) > -1 && iCorner[1] < 0x80) {
+				dwMapXZON[iCorner[0]][iCorner[1]].b.iCorners = wTileAreaTopLeftCorner[4 * wViewRotation] >> 4;
 			}
 		}
 		if (x < 0x80) {
-			iSection[2] = iArea + y;
-			if ((iArea + y) > -1 && iSection[2] < 0x80) {
-				pZone = (BYTE *)&dwMapXZON[x][iSection[2]].b;
-				*pZone = LOBYTE(wSomePositionalAngleFour[4 * wViewRotation]) | *pZone & 0xF;
+			iCorner[2] = iArea + y;
+			if ((iArea + y) > -1 && iCorner[2] < 0x80) {
+				dwMapXZON[x][iCorner[2]].b.iCorners = wTileAreaTopRightCorner[4 * wViewRotation] >> 4;
 			}
 		}
 	}
@@ -834,7 +829,7 @@ void ProposeMilitaryBaseDecline(void) {
 	if (MessageBoxA(NULL, "Are you sure that you want to stop the development of existing military zones?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES) {
 		return;
 	}
-	ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> ProposeMilitaryBaseDecline()\n", _ReturnAddress());
+
 	if (bMilitaryBaseType <= MILITARY_BASE_DECLINED) {
 		MessageBoxA(NULL, "Military base development has already been stopped.", "Clonk", MB_OK|MB_ICONASTERISK);
 		return;
