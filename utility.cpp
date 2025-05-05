@@ -143,13 +143,6 @@ void ConsoleLog(int iLogLevel, const char* fmt, ...) {
 	va_end(args);
 }
 
-int GetTileID(int iTileX, int iTileY) {
-	if (iTileX >= 0 && iTileX < 128 && iTileY >= 0 && iTileY < 128)
-		return dwMapXBLD[iTileX]->iTileID[iTileY];
-	else
-		return -1;
-}
-
 const char* GetLowHighScale(BYTE bScale) {
 	if (!bScale)
 		return "None";

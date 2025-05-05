@@ -171,7 +171,6 @@ void CenterDialogBox(HWND hwndDlg);
 HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText);
 const char* HexPls(UINT uNumber, int width);
 void ConsoleLog(int iLogLevel, const char* fmt, ...);
-int GetTileID(int iTileX, int iTileY);
 const char* GetZoneName(int iZoneID);
 const char* GetLowHighScale(BYTE bScale);
 BOOL FileExists(const char* name);
