@@ -59,29 +59,29 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 		iNewY = y1;
 		iY = y1;
 		while (Game_MaybeRoadViabilityAlongPath(&iNewX, &iNewY)) {
-			dwMapXZON[iX]->b[iY].iZoneType = ZONE_MILITARY;
+			dwMapXZON[iX][iY].b.iZoneType = ZONE_MILITARY;
 			Game_CheckAndAdjustTraversableTerrain(iX, iY);
 			Game_PlaceRoadAtCoordinates(iX, iY);
 			iX = iNewX;
 			iY = iNewY;
 		}
-		dwMapXZON[iX]->b[iY].iZoneType = ZONE_MILITARY;
+		dwMapXZON[iX][iY].b.iZoneType = ZONE_MILITARY;
 		Game_CheckAndAdjustTraversableTerrain(iX, iY);
 		Game_PlaceRoadAtCoordinates(iX, iY);
 	}
 	if (GetTileID(x1, y1) == TILE_ROAD_LR || GetTileID(x1, y1) == TILE_ROAD_TB) {
 		// TERRAIN_00 check added here to avoid the runwaycross
 		// being placed into a dip (likely replacing a slope or granite block).
-		if (!dwMapXTER[x1]->iTileID[y1]) {
-			dwMapXZON[x1]->b[y1].iCorners = 0xF;
+		if (!dwMapXTER[x1][y1].iTileID) {
+			dwMapXZON[x1][y1].b.iCorners = 0xF;
 			Game_PlaceTileWithMilitaryCheck(x1, y1, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 		}
 	}
 	if (GetTileID(iX, iY) == TILE_ROAD_LR || GetTileID(iX, iY) == TILE_ROAD_TB) {
 		// TERRAIN_00 check added here to avoid the runwaycross
 		// being placed into a dip (likely replacing a slope or granite block).
-		if (!dwMapXTER[iX]->iTileID[iY]) {
-			dwMapXZON[iX]->b[iY].iCorners = 0xF;
+		if (!dwMapXTER[iX][iY].iTileID) {
+			dwMapXZON[iX][iY].b.iCorners = 0xF;
 			Game_PlaceTileWithMilitaryCheck(iX, iY, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 		}
 	}
@@ -150,19 +150,19 @@ static int SetRandomPointCoords() {
 static __int16 GetTileDepth(__int16 iPosA, __int16 iPosB, int iPlus) {
 	__int16 iVal = iPosA;
 	__int16 n = -1;
-	int iBaseLevel = dwMapALTM[iPosA]->w[iPosB].iLandAltitude;
+	int iBaseLevel = dwMapALTM[iPosA][iPosB].w.iLandAltitude;
 	while (1) {
 		n++;
 		if (n >= 4)
 			break;
 		if (iPlus) {
-			if (dwMapXTER[iPosA + n]->iTileID[iPosB] || dwMapALTM[iPosA + n]->w[iPosB].iLandAltitude != iBaseLevel) {
+			if (dwMapXTER[iPosA + n][iPosB].iTileID || dwMapALTM[iPosA + n][iPosB].w.iLandAltitude != iBaseLevel) {
 				n = 0;
 				break;
 			}
 		}
 		else {
-			if (dwMapXTER[iPosA - n]->iTileID[iPosB] || dwMapALTM[iPosA - n]->w[iPosB].iLandAltitude != iBaseLevel) {
+			if (dwMapXTER[iPosA - n][iPosB].iTileID || dwMapALTM[iPosA - n][iPosB].w.iLandAltitude != iBaseLevel) {
 				n = 0;
 				break;
 			}
@@ -178,19 +178,19 @@ static __int16 GetTileDepth(__int16 iPosA, __int16 iPosB, int iPlus) {
 static __int16 GetTileLength(__int16 iPosA, __int16 iPosB, int iPlus) {
 	__int16 iVal = iPosB;
 	__int16 n = -1;
-	int iBaseLevel = dwMapALTM[iPosA]->w[iPosB].iLandAltitude;
+	int iBaseLevel = dwMapALTM[iPosA][iPosB].w.iLandAltitude;
 	while (1) {
 		n++;
 		if (n >= 6)
 			break;
 		if (iPlus) {
-			if (dwMapXTER[iPosA]->iTileID[iPosB + n] || dwMapALTM[iPosA]->w[iPosB + n].iLandAltitude != iBaseLevel) {
+			if (dwMapXTER[iPosA][iPosB + n].iTileID || dwMapALTM[iPosA][iPosB + n].w.iLandAltitude != iBaseLevel) {
 				n = 0;
 				break;
 			}
 		}
 		else {
-			if (dwMapXTER[iPosA]->iTileID[iPosB - n] || dwMapALTM[iPosA]->w[iPosB - n].iLandAltitude != iBaseLevel) {
+			if (dwMapXTER[iPosA][iPosB - n].iTileID || dwMapALTM[iPosA][iPosB - n].w.iLandAltitude != iBaseLevel) {
 				n = 0;
 				break;
 			}
@@ -263,7 +263,7 @@ static int isValidSiloPos(__int16 m_x, __int16 m_y, bool bPlotCheck) {
 			else if (iX < 1 || iY < 1 || iX > 126 || iY > 126) {
 				return 0;
 			}
-			iBuilding = dwMapXBLD[iX]->iTileID[iY];
+			iBuilding = dwMapXBLD[iX][iY].iTileID;
 			if (iBuilding >= TILE_ROAD_LR) {
 				return 0;
 			}
@@ -274,30 +274,30 @@ static int isValidSiloPos(__int16 m_x, __int16 m_y, bool bPlotCheck) {
 				return 0;
 			}
 			if (bPlotCheck) {
-				if (dwMapXZON[iX]->b[iY].iZoneType != ZONE_NONE) {
+				if (dwMapXZON[iX][iY].b.iZoneType != ZONE_NONE) {
 					return 0;
 				}
 			}
 			else {
-				if (dwMapXZON[iX]->b[iY].iZoneType != ZONE_MILITARY) {
+				if (dwMapXZON[iX][iY].b.iZoneType != ZONE_MILITARY) {
 					return 0;
 				}
-				if (dwMapXZON[iX]->b[iY].iZoneType == ZONE_MILITARY) {
+				if (dwMapXZON[iX][iY].b.iZoneType == ZONE_MILITARY) {
 					if (iBuilding == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
 						iBuilding == TILE_ROAD_LR ||
 						iBuilding == TILE_ROAD_TB)
 						return 0;
 				}
 			}
-			if (dwMapXTER[iX]->iTileID[iY]) {
+			if (dwMapXTER[iX][iY].iTileID) {
 				return 0;
 			}
-			if (dwMapXUND[iX]->iTileID[iY]) {
+			if (dwMapXUND[iX][iY].iTileID) {
 				return 0;
 			}
 			if (iX < 0x80 &&
 				iY < 0x80 &&
-				dwMapXBIT[iX]->b[iY].iWater != 0) {
+				dwMapXBIT[iX][iY].b.iWater != 0) {
 				return 0;
 			}
 			if (++iY > iItemLength) {
@@ -317,8 +317,7 @@ void PlaceMissileSilo(__int16 m_x, __int16 m_y) {
 	__int16 iY;
 	__int16 iItemWidth;
 	__int16 iItemDepth;
-	__int16 iSection[3];
-	BYTE *pZone;
+	__int16 iCorner[3];
 
 	if (!isValidSiloPos(m_x, m_y, false))
 		return;
@@ -346,31 +345,27 @@ void PlaceMissileSilo(__int16 m_x, __int16 m_y) {
 	}
 	if (iArea) {
 		if (x < 0x80 && y < 0x80) {
-			pZone = (BYTE *)&dwMapXZON[x]->b[y];
-			*pZone = LOBYTE(wSomePositionalAngleOne[4 * wViewRotation]) | *pZone & 0xF;
+			dwMapXZON[x][y].b.iCorners = wTileAreaBottomLeftCorner[4 * wViewRotation] >> 4;
 		}
-		iSection[0] = iArea + x;
-		if ((iArea + x) > -1 && iSection[0] < 0x80 && y < 0x80) {
-			pZone = (BYTE *)&dwMapXZON[iSection[0]]->b[y];
-			*pZone = LOBYTE(wSomePositionalAngleTwo[4 * wViewRotation]) | *pZone & 0xF;
+		iCorner[0] = iArea + x;
+		if ((iArea + x) > -1 && iCorner[0] < 0x80 && y < 0x80) {
+			dwMapXZON[iCorner[0]][y].b.iCorners = wTileAreaBottomRightCorner[4 * wViewRotation] >> 4;
 		}
-		if (iSection[0] < 0x80) {
-			iSection[1] = y + iArea;
-			if ((y + iArea) > -1 && iSection[1] < 0x80) {
-				pZone = (BYTE *)&dwMapXZON[iSection[0]]->b[iSection[1]];
-				*pZone = LOBYTE(wSomePositionalAngleThree[4 * wViewRotation]) | *pZone & 0xF;
+		if (iCorner[0] < 0x80) {
+			iCorner[1] = y + iArea;
+			if ((y + iArea) > -1 && iCorner[1] < 0x80) {
+				dwMapXZON[iCorner[0]][iCorner[1]].b.iCorners = wTileAreaTopLeftCorner[4 * wViewRotation] >> 4;
 			}
 		}
 		if (x < 0x80) {
-			iSection[2] = iArea + y;
-			if ((iArea + y) > -1 && iSection[2] < 0x80) {
-				pZone = (BYTE *)&dwMapXZON[x]->b[iSection[2]];
-				*pZone = LOBYTE(wSomePositionalAngleFour[4 * wViewRotation]) | *pZone & 0xF;
+			iCorner[2] = iArea + y;
+			if ((iArea + y) > -1 && iCorner[2] < 0x80) {
+				dwMapXZON[x][iCorner[2]].b.iCorners = wTileAreaTopRightCorner[4 * wViewRotation] >> 4;
 			}
 		}
 	}
 	else if (x < 0x80 && y < 0x80) {
-		*(BYTE *)&dwMapXZON[x]->b[y] |= 0xF0u;
+		*(BYTE *)&dwMapXZON[x][y].b |= 0xF0u;
 	}
 	Game_SpawnItem(x, y + iArea);
 }
@@ -449,21 +444,21 @@ static void MilitaryBasePlotCheck(__int16 *iVAltitudeTiles, __int16 *iVTiles, __
 		iValidTiles = 0;
 		iValidAltitudeTiles = 0;
 		iRandStoredYPos = iRandYPos;
-		__int16 iBaseLevel = dwMapALTM[iRandXPos]->w[iRandYPos].iLandAltitude;
+		__int16 iBaseLevel = dwMapALTM[iRandXPos][iRandYPos].w.iLandAltitude;
 		for (iRandStoredXPos = iRandXPos + 8; iXPosStep < iRandStoredXPos; ++iXPosStep) {
 			for (__int16 iYPosStep = iRandYPos; iRandYPos + 8 > iYPosStep; ++iYPosStep) {
 				if (
-					dwMapXBLD[iXPosStep]->iTileID[iYPosStep] < TILE_SMALLPARK &&
-					!dwMapXTER[iXPosStep]->iTileID[iYPosStep] &&
+					dwMapXBLD[iXPosStep][iYPosStep].iTileID < TILE_SMALLPARK &&
+					!dwMapXTER[iXPosStep][iYPosStep].iTileID &&
 					(
 						iXPosStep >= 0x80 || // (Not present in the DOS-equivalent)
 						iYPosStep >= 0x80 || // (Not present in the DOS-equivalent)
-						dwMapXBIT[iXPosStep]->b[iYPosStep].iWater == 0
+						dwMapXBIT[iXPosStep][iYPosStep].b.iWater == 0
 						) &&
-					dwMapXZON[iXPosStep]->b[iYPosStep].iZoneType == ZONE_NONE
+					dwMapXZON[iXPosStep][iYPosStep].b.iZoneType == ZONE_NONE
 					) {
 					++iValidTiles;
-					if (dwMapALTM[iXPosStep]->w[iYPosStep].iLandAltitude == iBaseLevel)
+					if (dwMapALTM[iXPosStep][iYPosStep].w.iLandAltitude == iBaseLevel)
 						++iValidAltitudeTiles;
 				}
 			}
@@ -513,22 +508,22 @@ RETRY_CHECK1:
 					iAltPosTwo = iRandYPos;
 				}
 				iArrPos = iAltPosOne;
-				__int16 iBaseLevel = dwMapALTM[iAltPosOne]->w[iAltPosTwo].iLandAltitude;
+				__int16 iBaseLevel = dwMapALTM[iAltPosOne][iAltPosTwo].w.iLandAltitude;
 				for (iTileArea = 0; iArrPos < iAltPosOne + 3; ++iArrPos) {
 					for (iCurrPos = iAltPosTwo; iAltPosTwo + 3 > iCurrPos; ++iCurrPos) {
 						__int16 iLengthWays = iArrPos;
 						__int16 iDepthWays = iCurrPos;
 						if (
-							dwMapXBLD[iLengthWays]->iTileID[iDepthWays] < TILE_SMALLPARK &&
-							!dwMapXTER[iLengthWays]->iTileID[iDepthWays] &&
+							dwMapXBLD[iLengthWays][iDepthWays].iTileID < TILE_SMALLPARK &&
+							!dwMapXTER[iLengthWays][iDepthWays].iTileID &&
 							(
 								iLengthWays >= 0x80 ||
 								iDepthWays >= 0x80 ||
-								dwMapXBIT[iLengthWays]->b[iDepthWays].iWater == 0
+								dwMapXBIT[iLengthWays][iDepthWays].b.iWater == 0
 								) &&
-							dwMapALTM[iLengthWays]->w[iDepthWays].iLandAltitude == iBaseLevel &&
-							dwMapXZON[iLengthWays]->b[iDepthWays].iZoneType != ZONE_MILITARY &&
-							!dwMapXUND[iAltPosOne]->iTileID[iAltPosTwo]
+							dwMapALTM[iLengthWays][iDepthWays].w.iLandAltitude == iBaseLevel &&
+							dwMapXZON[iLengthWays][iDepthWays].b.iZoneType != ZONE_MILITARY &&
+							!dwMapXUND[iAltPosOne][iAltPosTwo].iTileID
 							) {
 							if (isValidSiloPos(iLengthWays, iDepthWays, true)) {
 								if (!CheckForOverlappingSiloPositions(wSiloPos, iVTiles, iLengthWays, iDepthWays)) {
@@ -578,11 +573,11 @@ RETRY_CHECK1:
 				__int16 iSiloYPos;
 				for (iSiloStartYPos = wSiloPos[2 * iSiloIdx + 1]; iSiloStartXPos + 3 > iSiloXPos; iSiloXPos = iSiloXPos + 1) {
 					for (iSiloYPos = iSiloStartYPos; iSiloStartYPos + 3 > iSiloYPos; ++*dwMilitaryTiles) {
-						BYTE iBuildingArea = dwMapXBLD[iSiloXPos]->iTileID[iSiloYPos];
+						BYTE iBuildingArea = dwMapXBLD[iSiloXPos][iSiloYPos].iTileID;
 						--dwTileCount[iBuildingArea];
 						if (iSiloXPos < 0x80 && iSiloYPos < 0x80) {
-							dwMapXZON[iSiloXPos]->b[iSiloYPos].iZoneType = ZONE_MILITARY;
-							dwMapXZON[iSiloXPos]->b[iSiloYPos].iCorners = 0xF0;
+							dwMapXZON[iSiloXPos][iSiloYPos].b.iZoneType = ZONE_MILITARY;
+							dwMapXZON[iSiloXPos][iSiloYPos].b.iCorners = 0xF0;
 						}
 						++iSiloYPos;
 					}
@@ -602,22 +597,22 @@ RETRY_CHECK1:
 static void MilitaryBasePlotPlacement(__int16 iRandXPos, __int16 iRandStoredYPos) {
 	for (__int16 iCurrXPos = iRandXPos; iRandXPos + 8 > iCurrXPos; ++iCurrXPos) {
 		for (__int16 iCurrYPos = iRandStoredYPos; iRandStoredYPos + 8 > iCurrYPos; ++iCurrYPos) {
-			BYTE iMilitaryArea = dwMapXBLD[iCurrXPos]->iTileID[iCurrYPos];
+			BYTE iMilitaryArea = dwMapXBLD[iCurrXPos][iCurrYPos].iTileID;
 			if (
 				iMilitaryArea < TILE_SMALLPARK &&
-				!dwMapXTER[iCurrXPos]->iTileID[iCurrYPos] &&
+				!dwMapXTER[iCurrXPos][iCurrYPos].iTileID &&
 				(
 					iCurrXPos >= 0x80 ||
 					iCurrYPos >= 0x80 ||
-					dwMapXBIT[iCurrXPos]->b[iCurrYPos].iWater == 0
+					dwMapXBIT[iCurrXPos][iCurrYPos].b.iWater == 0
 					) &&
-				dwMapXZON[iCurrXPos]->b[iCurrYPos].iZoneType == ZONE_NONE &&
-				!dwMapXUND[iRandXPos]->iTileID[iRandStoredYPos]
+				dwMapXZON[iCurrXPos][iCurrYPos].b.iZoneType == ZONE_NONE &&
+				!dwMapXUND[iRandXPos][iRandStoredYPos].iTileID
 				) {
 				--dwTileCount[iMilitaryArea];
 				if (iCurrXPos < 0x80 && iCurrYPos < 0x80) {
-					dwMapXZON[iCurrXPos]->b[iCurrYPos].iZoneType = ZONE_MILITARY;
-					dwMapXZON[iCurrXPos]->b[iCurrYPos].iCorners = 0xF0;
+					dwMapXZON[iCurrXPos][iCurrYPos].b.iZoneType = ZONE_MILITARY;
+					dwMapXZON[iCurrXPos][iCurrYPos].b.iCorners = 0xF0;
 				}
 				++*dwMilitaryTiles;
 			}
@@ -695,8 +690,8 @@ static int MilitaryBaseNavalYard(void) {
 		if ((rand() & 1) != 0) {
 			iTileCoords[0] = SetTileCoords(0); // First Corner
 			iTileCoords[1] = SetTileCoords(1); // Second Corner
-			if (dwMapXBIT[GetNearCoord(iTileCoords[0])]->b[GetFarCoord(iTileCoords[0])].iSaltWater) { // First Corner
-				if (dwMapXBIT[GetNearCoord(iTileCoords[1])]->b[GetFarCoord(iTileCoords[1])].iSaltWater) { // Second Corner
+			if (dwMapXBIT[GetNearCoord(iTileCoords[0])][GetFarCoord(iTileCoords[0])].b.iSaltWater) { // First Corner
+				if (dwMapXBIT[GetNearCoord(iTileCoords[1])][GetFarCoord(iTileCoords[1])].b.iSaltWater) { // Second Corner
 																										  // Calculate a random point along the coastal area and then use that to plot the path
 																										  // towards dry land, if this fails then retry N number of attempts.
 				REROLLCOASTALSPOT:
@@ -716,12 +711,12 @@ static int MilitaryBaseNavalYard(void) {
 							(iTempFar < 0 || iTempFar > 127)) {
 							goto NONAVY;
 						}
-						unsigned __int8 iMilitaryArea = dwMapXBLD[iTempNear]->iTileID[iTempFar];
-						if (dwMapXBIT[iTempNear]->b[iTempFar].iWater == 0)
+						unsigned __int8 iMilitaryArea = dwMapXBLD[iTempNear][iTempFar].iTileID;
+						if (dwMapXBIT[iTempNear][iTempFar].b.iWater == 0)
 						{
 							if (!((iMilitaryArea >= TILE_CLEAR && iMilitaryArea <= TILE_RUBBLE4) ||
 								(iMilitaryArea >= TILE_TREES1 && iMilitaryArea < TILE_SMALLPARK)) || 
-								dwMapXTER[iTempNear]->iTileID[iTempFar]) {
+								dwMapXTER[iTempNear][iTempFar].iTileID) {
 								iNavyLandingAttempts++;
 								goto REROLLCOASTALSPOT;
 							}
@@ -756,7 +751,7 @@ static int MilitaryBaseNavalYard(void) {
 				__int16 iLengthPointB = GetTileLength(iDepthPoint, iStartLengthPoint, ((wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) ? 0 : 1));
 
 				int iNumTiles = 0;
-				iBaseLevel = dwMapALTM[iStartLengthPoint]->w[iDepthPoint].iLandAltitude;
+				iBaseLevel = dwMapALTM[iStartLengthPoint][iDepthPoint].w.iLandAltitude;
 				for (__int16 iLengthWay = iLengthPointA;;) {
 					if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) {
 						if (iLengthWay <= iLengthPointB)
@@ -788,19 +783,19 @@ static int MilitaryBaseNavalYard(void) {
 							iDirectionTwo = iLengthWay;
 						}
 
-						BYTE iMilitaryArea = dwMapXBLD[iDirectionOne]->iTileID[iDirectionTwo];
+						BYTE iMilitaryArea = dwMapXBLD[iDirectionOne][iDirectionTwo].iTileID;
 						if (
 							((iMilitaryArea >= TILE_CLEAR && iMilitaryArea <= TILE_RUBBLE4) ||
 							(iMilitaryArea >= TILE_TREES1 && iMilitaryArea < TILE_SMALLPARK)) &&
-							dwMapXZON[iDirectionOne]->b[iDirectionTwo].iZoneType == ZONE_NONE &&
-							!dwMapXTER[iDirectionOne]->iTileID[iDirectionTwo] &&
-							dwMapXBIT[iDirectionOne]->b[iDirectionTwo].iWater == 0 &&
-							!dwMapXUND[iDirectionOne]->iTileID[iDirectionTwo] &&
-							dwMapALTM[iDirectionOne]->w[iDirectionTwo].iLandAltitude == iBaseLevel
+							dwMapXZON[iDirectionOne][iDirectionTwo].b.iZoneType == ZONE_NONE &&
+							!dwMapXTER[iDirectionOne][iDirectionTwo].iTileID &&
+							dwMapXBIT[iDirectionOne][iDirectionTwo].b.iWater == 0 &&
+							!dwMapXUND[iDirectionOne][iDirectionTwo].iTileID &&
+							dwMapALTM[iDirectionOne][iDirectionTwo].w.iLandAltitude == iBaseLevel
 							) {
 							Game_PlaceTileWithMilitaryCheck(iDirectionOne, iDirectionTwo, 0);
-							dwMapXZON[iDirectionOne]->b[iDirectionTwo].iZoneType = ZONE_MILITARY;
-							dwMapXZON[iDirectionOne]->b[iDirectionTwo].iCorners = 0xF0;
+							dwMapXZON[iDirectionOne][iDirectionTwo].b.iZoneType = ZONE_MILITARY;
+							dwMapXZON[iDirectionOne][iDirectionTwo].b.iCorners = 0xF0;
 							--dwTileCount[iMilitaryArea];
 							++*dwMilitaryTiles;
 							iNumTiles++;
@@ -834,7 +829,7 @@ void ProposeMilitaryBaseDecline(void) {
 	if (MessageBoxA(NULL, "Are you sure that you want to stop the development of existing military zones?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES) {
 		return;
 	}
-	ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> ProposeMilitaryBaseDecline()\n", _ReturnAddress());
+
 	if (bMilitaryBaseType <= MILITARY_BASE_DECLINED) {
 		MessageBoxA(NULL, "Military base development has already been stopped.", "Clonk", MB_OK|MB_ICONASTERISK);
 		return;
