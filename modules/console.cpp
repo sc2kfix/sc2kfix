@@ -480,7 +480,7 @@ BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments) {
 	int iTileX = -1, iTileY = -1;
 	sscanf_s(szArguments + 5, "%i %i", &iTileX, &iTileY);
 
-	if (iTileX >= 0 && iTileX < 128 && iTileY >= 0 && iTileY < 128) {
+	if (iTileX >= 0 && iTileX < GAME_MAP_SIZE && iTileY >= 0 && iTileY < GAME_MAP_SIZE) {
 		int iTileID = dwMapXBLD[iTileX][iTileY].iTileID;
 
 		char szXBITFormatted[256] = { 0 };
@@ -616,7 +616,7 @@ BOOL ConsoleCmdSetTile(const char* szCommand, const char* szArguments) {
 	int iTileX = -1, iTileY = -1;
 	sscanf_s(szArguments, "%i %i %s", &iTileX, &iTileY, szTileOperation, sizeof(szTileOperation));
 
-	if (iTileX >= 0 && iTileX < 128 && iTileY >= 0 && iTileY < 128) {
+	if (iTileX >= 0 && iTileX < GAME_MAP_SIZE && iTileY >= 0 && iTileY < GAME_MAP_SIZE) {
 		if (!strcmp(szTileOperation, "rotate")) {
 			dwMapXBIT[iTileX][iTileY].b.iRotated = bOperation;
 			return TRUE;

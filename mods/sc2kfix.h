@@ -27,6 +27,8 @@
 
 #define LOG(level, fmt, ...) ConsoleLog(level, "MODS: (%s) " fmt, stModInfo.szModShortName, __VA_ARGS__)
 
+#define GAME_MAP_SIZE 128
+
 enum {
 	LOG_NONE = -1,
 	LOG_EMERGENCY,
