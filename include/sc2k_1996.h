@@ -52,6 +52,8 @@
 #define CORNER_TRIGHT 0x8
 #define CORNER_ALL    (CORNER_BLEFT|CORNER_BRIGHT|CORNER_TLEFT|CORNER_TRIGHT)
 
+#define GAME_MAP_SIZE 128
+
 // Enums
 
 // Disaster IDs
@@ -1140,7 +1142,7 @@ GAMEOFF_ARR(DWORD,			dwMapXGRP,	0x4CC470)
 
 
 static inline int GetTileID(int iTileX, int iTileY) {
-	if (iTileX >= 0 && iTileX < 128 && iTileY >= 0 && iTileY < 128)
+	if (iTileX >= 0 && iTileX < GAME_MAP_SIZE && iTileY >= 0 && iTileY < GAME_MAP_SIZE)
 		return dwMapXBLD[iTileX][iTileY].iTileID;
 	else
 		return -1;

@@ -105,20 +105,20 @@ static int SetTileCoords(int iPart) {
 	int val;
 	switch (wViewRotation) {
 		case VIEWROTATION_EAST:
-			P_HIWORD(val) = (iPart == 0) ? 0 : 127;
+			P_HIWORD(val) = (iPart == 0) ? 0 : (GAME_MAP_SIZE - 1);
 			P_LOWORD(val) = 0;
 			break;
 		case VIEWROTATION_SOUTH:
 			P_HIWORD(val) = 0;
-			P_LOWORD(val) = (iPart == 0) ? 127 : 0;
+			P_LOWORD(val) = (iPart == 0) ? (GAME_MAP_SIZE - 1) : 0;
 			break;
 		case VIEWROTATION_WEST:
-			P_HIWORD(val) = (iPart == 0) ? 127 : 0;
-			P_LOWORD(val) = 127;
+			P_HIWORD(val) = (iPart == 0) ? (GAME_MAP_SIZE - 1) : 0;
+			P_LOWORD(val) = (GAME_MAP_SIZE - 1);
 			break;
 		default:
-			P_HIWORD(val) = 127;
-			P_LOWORD(val) = (iPart == 0) ? 0 : 127;
+			P_HIWORD(val) = (GAME_MAP_SIZE - 1);
+			P_LOWORD(val) = (iPart == 0) ? 0 : (GAME_MAP_SIZE - 1);
 	}
 
 	return val;
@@ -128,20 +128,20 @@ static int SetRandomPointCoords() {
 	int val;
 	switch (wViewRotation) {
 	case VIEWROTATION_EAST:
-		P_HIWORD(val) = rand() & 127;
+		P_HIWORD(val) = rand() & (GAME_MAP_SIZE-1);
 		P_LOWORD(val) = 0;
 		break;
 	case VIEWROTATION_SOUTH:
 		P_HIWORD(val) = 0;
-		P_LOWORD(val) = rand() & 127;
+		P_LOWORD(val) = rand() & (GAME_MAP_SIZE - 1);
 		break;
 	case VIEWROTATION_WEST:
-		P_HIWORD(val) = rand() & 127;
-		P_LOWORD(val) = 127;
+		P_HIWORD(val) = rand() & (GAME_MAP_SIZE - 1);
+		P_LOWORD(val) = (GAME_MAP_SIZE - 1);
 		break;
 	default:
-		P_HIWORD(val) = 127;
-		P_LOWORD(val) = rand() & 127;
+		P_HIWORD(val) = (GAME_MAP_SIZE - 1);
+		P_LOWORD(val) = rand() & (GAME_MAP_SIZE - 1);
 	}
 
 	return val;
@@ -257,10 +257,10 @@ static int isValidSiloPos(__int16 m_x, __int16 m_y, bool bPlotCheck) {
 		}
 		while (1) {
 			if (iArea <= 0) {
-				if (iX >= 0x80 || iY >= 0x80)
+				if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
 					return 0;
 			}
-			else if (iX < 1 || iY < 1 || iX > 126 || iY > 126) {
+			else if (iX < 1 || iY < 1 || iX > GAME_MAP_SIZE-2 || iY > GAME_MAP_SIZE-2) {
 				return 0;
 			}
 			iBuilding = dwMapXBLD[iX][iY].iTileID;
@@ -295,8 +295,8 @@ static int isValidSiloPos(__int16 m_x, __int16 m_y, bool bPlotCheck) {
 			if (dwMapXUND[iX][iY].iTileID) {
 				return 0;
 			}
-			if (iX < 0x80 &&
-				iY < 0x80 &&
+			if (iX < GAME_MAP_SIZE &&
+				iY < GAME_MAP_SIZE &&
 				dwMapXBIT[iX][iY].b.iWater != 0) {
 				return 0;
 			}
@@ -344,27 +344,27 @@ void PlaceMissileSilo(__int16 m_x, __int16 m_y) {
 		} while (iX <= iItemWidth);
 	}
 	if (iArea) {
-		if (x < 0x80 && y < 0x80) {
+		if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE) {
 			dwMapXZON[x][y].b.iCorners = wTileAreaBottomLeftCorner[4 * wViewRotation] >> 4;
 		}
 		iCorner[0] = iArea + x;
-		if ((iArea + x) > -1 && iCorner[0] < 0x80 && y < 0x80) {
+		if ((iArea + x) > -1 && iCorner[0] < GAME_MAP_SIZE && y < GAME_MAP_SIZE) {
 			dwMapXZON[iCorner[0]][y].b.iCorners = wTileAreaBottomRightCorner[4 * wViewRotation] >> 4;
 		}
-		if (iCorner[0] < 0x80) {
+		if (iCorner[0] < GAME_MAP_SIZE) {
 			iCorner[1] = y + iArea;
-			if ((y + iArea) > -1 && iCorner[1] < 0x80) {
+			if ((y + iArea) > -1 && iCorner[1] < GAME_MAP_SIZE) {
 				dwMapXZON[iCorner[0]][iCorner[1]].b.iCorners = wTileAreaTopLeftCorner[4 * wViewRotation] >> 4;
 			}
 		}
-		if (x < 0x80) {
+		if (x < GAME_MAP_SIZE) {
 			iCorner[2] = iArea + y;
-			if ((iArea + y) > -1 && iCorner[2] < 0x80) {
+			if ((iArea + y) > -1 && iCorner[2] < GAME_MAP_SIZE) {
 				dwMapXZON[x][iCorner[2]].b.iCorners = wTileAreaTopRightCorner[4 * wViewRotation] >> 4;
 			}
 		}
 	}
-	else if (x < 0x80 && y < 0x80) {
+	else if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE) {
 		*(BYTE *)&dwMapXZON[x][y].b |= 0xF0u;
 	}
 	Game_SpawnItem(x, y + iArea);
@@ -375,19 +375,19 @@ static int CheckOverlappingSiloPosition(__int16 x1, __int16 y1, __int16 x2, __in
 
 	for (i1 = 0; i1 < 3; i1++) {
 		__int16 xPos1 = x1 + i1;
-		if (xPos1 > 127)
+		if (xPos1 > GAME_MAP_SIZE-1)
 			return 1;
 		for (j1 = 0; j1 < 3; j1++) {
 			__int16 yPos1 = y1 + j1;
-			if (yPos1 > 127)
+			if (yPos1 > GAME_MAP_SIZE-1)
 				return 1;
 			for (i2 = 0; i2 < 3; i2++) {
 				__int16 xPos2 = x2 + i2;
-				if (xPos2 > 127)
+				if (xPos2 > GAME_MAP_SIZE-1)
 					return 1;
 				for (j2 = 0; j2 < 3; j2++) {
 					__int16 yPos2 = y2 + j2;
-					if (yPos2 > 127)
+					if (yPos2 > GAME_MAP_SIZE-1)
 						return 1;
 					if (xPos1 == xPos2 || (xPos1 >= xPos2 - 1 && xPos1 <= xPos2 + 4)) {
 						if (yPos1 == yPos2 || (yPos1 >= yPos2 - 1 && yPos1 <= yPos2 + 4)) {
@@ -451,8 +451,8 @@ static void MilitaryBasePlotCheck(__int16 *iVAltitudeTiles, __int16 *iVTiles, __
 					dwMapXBLD[iXPosStep][iYPosStep].iTileID < TILE_SMALLPARK &&
 					!dwMapXTER[iXPosStep][iYPosStep].iTileID &&
 					(
-						iXPosStep >= 0x80 || // (Not present in the DOS-equivalent)
-						iYPosStep >= 0x80 || // (Not present in the DOS-equivalent)
+						iXPosStep >= GAME_MAP_SIZE || // (Not present in the DOS-equivalent)
+						iYPosStep >= GAME_MAP_SIZE || // (Not present in the DOS-equivalent)
 						dwMapXBIT[iXPosStep][iYPosStep].b.iWater == 0
 						) &&
 					dwMapXZON[iXPosStep][iYPosStep].b.iZoneType == ZONE_NONE
@@ -497,8 +497,8 @@ RETRY_CHECK1:
 					break;
 				__int16 iAltPosOne;
 				__int16 iAltPosTwo;
-				iRandXPos = Game_RandomWordLCGMod(124);
-				iRandYPos = Game_RandomWordLCGMod(124);
+				iRandXPos = Game_RandomWordLCGMod(GAME_MAP_SIZE-4);
+				iRandYPos = Game_RandomWordLCGMod(GAME_MAP_SIZE-4);
 				if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_WEST) {
 					iAltPosOne = iRandYPos;
 					iAltPosTwo = iRandXPos;
@@ -517,8 +517,8 @@ RETRY_CHECK1:
 							dwMapXBLD[iLengthWays][iDepthWays].iTileID < TILE_SMALLPARK &&
 							!dwMapXTER[iLengthWays][iDepthWays].iTileID &&
 							(
-								iLengthWays >= 0x80 ||
-								iDepthWays >= 0x80 ||
+								iLengthWays >= GAME_MAP_SIZE ||
+								iDepthWays >= GAME_MAP_SIZE ||
 								dwMapXBIT[iLengthWays][iDepthWays].b.iWater == 0
 								) &&
 							dwMapALTM[iLengthWays][iDepthWays].w.iLandAltitude == iBaseLevel &&
@@ -575,7 +575,7 @@ RETRY_CHECK1:
 					for (iSiloYPos = iSiloStartYPos; iSiloStartYPos + 3 > iSiloYPos; ++*dwMilitaryTiles) {
 						BYTE iBuildingArea = dwMapXBLD[iSiloXPos][iSiloYPos].iTileID;
 						--dwTileCount[iBuildingArea];
-						if (iSiloXPos < 0x80 && iSiloYPos < 0x80) {
+						if (iSiloXPos < GAME_MAP_SIZE && iSiloYPos < GAME_MAP_SIZE) {
 							dwMapXZON[iSiloXPos][iSiloYPos].b.iZoneType = ZONE_MILITARY;
 							dwMapXZON[iSiloXPos][iSiloYPos].b.iCorners = 0xF0;
 						}
@@ -602,15 +602,15 @@ static void MilitaryBasePlotPlacement(__int16 iRandXPos, __int16 iRandStoredYPos
 				iMilitaryArea < TILE_SMALLPARK &&
 				!dwMapXTER[iCurrXPos][iCurrYPos].iTileID &&
 				(
-					iCurrXPos >= 0x80 ||
-					iCurrYPos >= 0x80 ||
+					iCurrXPos >= GAME_MAP_SIZE ||
+					iCurrYPos >= GAME_MAP_SIZE ||
 					dwMapXBIT[iCurrXPos][iCurrYPos].b.iWater == 0
 					) &&
 				dwMapXZON[iCurrXPos][iCurrYPos].b.iZoneType == ZONE_NONE &&
 				!dwMapXUND[iRandXPos][iRandStoredYPos].iTileID
 				) {
 				--dwTileCount[iMilitaryArea];
-				if (iCurrXPos < 0x80 && iCurrYPos < 0x80) {
+				if (iCurrXPos < GAME_MAP_SIZE && iCurrYPos < GAME_MAP_SIZE) {
 					dwMapXZON[iCurrXPos][iCurrYPos].b.iZoneType = ZONE_MILITARY;
 					dwMapXZON[iCurrXPos][iCurrYPos].b.iCorners = 0xF0;
 				}
@@ -700,15 +700,15 @@ static int MilitaryBaseNavalYard(void) {
 					int iTempCoords = SetRandomPointCoords();
 					__int16 iTempNear = GetNearCoord(iTempCoords);
 					__int16 iTempFar = GetFarCoord(iTempCoords);
-					if ((iTempNear < 0 || iTempNear > 127) ||
-						(iTempFar < 0 || iTempFar > 127)) {
+					if ((iTempNear < 0 || iTempNear > GAME_MAP_SIZE-1) ||
+						(iTempFar < 0 || iTempFar > GAME_MAP_SIZE-1)) {
 						goto NONAVY;
 					}
 					while (1) {
 						iTempNear = GetNearCoord(iTempCoords);
 						iTempFar = GetFarCoord(iTempCoords);
-						if ((iTempNear < 0 || iTempNear > 127) ||
-							(iTempFar < 0 || iTempFar > 127)) {
+						if ((iTempNear < 0 || iTempNear > GAME_MAP_SIZE-1) ||
+							(iTempFar < 0 || iTempFar > GAME_MAP_SIZE-1)) {
 							goto NONAVY;
 						}
 						unsigned __int8 iMilitaryArea = dwMapXBLD[iTempNear][iTempFar].iTileID;
