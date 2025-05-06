@@ -568,7 +568,7 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __
 									if ((rand() & 3) == 0) {
 										iBuildingCount = dwMilitaryTiles[MILITARYTILE_CRANE];
 										if ((__int16)dwMilitaryTiles[MILITARYTILE_CARGOYARD] / 4 < iBuildingCount) {
-											if ((__int16)dwMilitaryTiles[MILITARYTILE_TOPSECRET] / 4 < iBuildingCount) {
+											if ((__int16)dwMilitaryTiles[MILITARYTILE_TOPSECRET] / 4 >= iBuildingCount) {
 												BYTE(iAttributes) = 0;
 												iTileID = TILE_MILITARY_WAREHOUSE;
 												if ((__int16)dwMilitaryTiles[MILITARYTILE_MWAREHOUSE] / 3 >= iBuildingCount)
