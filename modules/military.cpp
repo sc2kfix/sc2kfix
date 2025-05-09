@@ -32,14 +32,6 @@ UINT military_debug = MILITARY_DEBUG;
 
 static DWORD dwDummy;
 
-extern "C" __int16 __cdecl Hook_PlaceTileWithMilitaryCheck(__int16 x, __int16 y, __int16 iTileID) {
-	__int16(__cdecl *H_PlaceTileWithMilitaryCheck)(__int16, __int16, __int16) = (__int16(__cdecl *)(__int16, __int16, __int16))0x441F00;
-
-	__int16 ret = H_PlaceTileWithMilitaryCheck(x, y, iTileID);
-
-	return ret;
-}
-
 // This function has been replicated from he equivalent that was found
 // in the DOS version of the game.
 static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
@@ -449,8 +441,15 @@ static void MilitaryBasePlotCheck(__int16 *iVAltitudeTiles, __int16 *iVTiles, __
 		BOOL bMaxIteration = iIterations-- == 0;
 		if (bMaxIteration)
 			break;
+		// Checks added here so if the X/Y coordinate of the plot ends up being
+		// 0, it'll be set to 1 to avoid legacy building spawning issues (or at
+		// this point the lingering graphical issue).
 		iRandXPos = Game_RandomWordLCGMod(119);
+		if (iRandXPos <= 0)
+			iRandXPos = 1;
 		iRandYPos = Game_RandomWordLCGMod(119);
+		if (iRandYPos <= 0)
+			iRandYPos = 1;
 		iXPosStep = iRandXPos;
 		iValidTiles = 0;
 		iValidAltitudeTiles = 0;
@@ -887,7 +886,7 @@ void ProposeMilitaryBaseMissileSilos(void) {
 	}
 	unsigned int iMilitaryBaseTries = 0;
 REATTEMPT:
-	int iSiloRet = MilitaryBaseMissileSilos(0, 0, true); // The 'force' attribute here should be false.
+	int iSiloRet = MilitaryBaseMissileSilos(0, 0, true);
 	if (iSiloRet <= 0) {
 		if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
 			iMilitaryBaseTries++;
@@ -1019,11 +1018,6 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 }
 
 void InstallMilitaryHooks(void) {
-	VirtualProtect((LPVOID)0x40178F, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x40178F, Hook_PlaceTileWithMilitaryCheck);
-
-	// Replicate the general functionality provided from the DOS version
-	// to also include the Navy and Army Base spawning.
 	VirtualProtect((LPVOID)0x403017, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x403017, Hook_SimulationProposeMilitaryBase);
 }

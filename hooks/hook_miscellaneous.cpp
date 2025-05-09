@@ -1365,7 +1365,16 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 m_x, int m_y, __
 					return 0;
 			}
 			else if (iX < 1 || iY < 1 || iX > GAME_MAP_SIZE-2 || iY > GAME_MAP_SIZE-2) {
-				return 0;
+				// Added this due to legacy military plot drops, this allows > 1x1 type buildings
+				// to develop if the plot is on the edge of the map.
+				if (dwMapXZON[iX][iY].b.iZoneType == ZONE_MILITARY) {
+					if (iX < 0 || iY < 0 || iX > GAME_MAP_SIZE - 1 || iY > GAME_MAP_SIZE - 1) {
+						return 0;
+					}
+				}
+				else {
+					return 0;
+				}
 			}
 			iBuilding = dwMapXBLD[iX][iY].iTileID;
 			if (iBuilding >= TILE_ROAD_LR) {
