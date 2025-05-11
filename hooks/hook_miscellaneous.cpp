@@ -447,6 +447,32 @@ TOTHISPART:
 	return iResult;
 }
 
+extern "C" void __stdcall Hook_ResetGameVars(void) {
+	void(__stdcall *H_ResetGameVars)(void) = (void(__stdcall *)(void))0x4348E0;
+	int(__thiscall *H_RotateAntiClockwise)(DWORD *) = (int(__thiscall *)(DWORD *))0x401A73;
+
+	BOOL bMapEditor, bNewGame;
+
+	bMapEditor = ((DWORD)_ReturnAddress() == 0x42DF13);
+	bNewGame = ((DWORD)_ReturnAddress() == 0x42E482);
+	if (bMapEditor || bNewGame) {
+		DWORD *pThis;
+
+		pThis = (DWORD *)Game_PointerToCSimcityViewClass(pCWndRootWindow);
+
+		if (((__int16)wCityMode < 0 && bNewGame) || bMapEditor) {
+			if (wViewRotation != VIEWROTATION_NORTH) {
+				do
+					H_RotateAntiClockwise(pThis);
+				while (wViewRotation != VIEWROTATION_NORTH);
+				UpdateWindow((HWND)pThis[7]); // This would be pThis->m_hWnd if the structs were present.
+			}
+		}
+	}
+
+	H_ResetGameVars();
+}
+
 extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __int16 iSubStep) {
 #if 1
 	DWORD *pThis;
@@ -1935,6 +1961,10 @@ void InstallMiscHooks(void) {
 
 	// Install hooks for the SC2X save format
 	InstallSaveHooks();
+
+	// Hook into the ResetGameVars function.
+	VirtualProtect((LPVOID)0x401F05, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x401F05, Hook_ResetGameVars);
 
 	// Hook into the SimulationGrowthTick function
 	VirtualProtect((LPVOID)0x4022FC, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
