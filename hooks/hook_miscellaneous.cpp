@@ -447,6 +447,32 @@ TOTHISPART:
 	return iResult;
 }
 
+extern "C" void __stdcall Hook_ResetGameVars(void) {
+	void(__stdcall *H_ResetGameVars)(void) = (void(__stdcall *)(void))0x4348E0;
+	int(__thiscall *H_RotateAntiClockwise)(DWORD *) = (int(__thiscall *)(DWORD *))0x401A73;
+
+	BOOL bMapEditor, bNewGame;
+
+	bMapEditor = ((DWORD)_ReturnAddress() == 0x42DF13);
+	bNewGame = ((DWORD)_ReturnAddress() == 0x42E482);
+	if (bMapEditor || bNewGame) {
+		DWORD *pThis;
+
+		pThis = (DWORD *)Game_PointerToCSimcityViewClass(pCWndRootWindow);
+
+		if (((__int16)wCityMode < 0 && bNewGame) || bMapEditor) {
+			if (wViewRotation != VIEWROTATION_NORTH) {
+				do
+					H_RotateAntiClockwise(pThis);
+				while (wViewRotation != VIEWROTATION_NORTH);
+				UpdateWindow((HWND)pThis[7]); // This would be pThis->m_hWnd if the structs were present.
+			}
+		}
+	}
+
+	H_ResetGameVars();
+}
+
 extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __int16 iSubStep) {
 #if 1
 	DWORD *pThis;
@@ -1365,7 +1391,16 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 m_x, int m_y, __
 					return 0;
 			}
 			else if (iX < 1 || iY < 1 || iX > GAME_MAP_SIZE-2 || iY > GAME_MAP_SIZE-2) {
-				return 0;
+				// Added this due to legacy military plot drops, this allows > 1x1 type buildings
+				// to develop if the plot is on the edge of the map.
+				if (dwMapXZON[iX][iY].b.iZoneType == ZONE_MILITARY) {
+					if (iX < 0 || iY < 0 || iX > GAME_MAP_SIZE - 1 || iY > GAME_MAP_SIZE - 1) {
+						return 0;
+					}
+				}
+				else {
+					return 0;
+				}
 			}
 			iBuilding = dwMapXBLD[iX][iY].iTileID;
 			if (iBuilding >= TILE_ROAD_LR) {
@@ -1926,6 +1961,10 @@ void InstallMiscHooks(void) {
 
 	// Install hooks for the SC2X save format
 	InstallSaveHooks();
+
+	// Hook into the ResetGameVars function.
+	VirtualProtect((LPVOID)0x401F05, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x401F05, Hook_ResetGameVars);
 
 	// Hook into the SimulationGrowthTick function
 	VirtualProtect((LPVOID)0x4022FC, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
