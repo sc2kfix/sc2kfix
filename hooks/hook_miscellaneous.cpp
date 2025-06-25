@@ -1893,6 +1893,80 @@ extern "C" void __stdcall Hook_LoadCursorResources() {
 	H_LoadCursorResources((void *)pThis);
 }
 
+extern "C" int __stdcall Hook_StartupGraphics() {
+	HDC hDC_One, hDC_Two;
+	int iPlanes, iBitsPixel, iBitRate;
+	PALETTEENTRY *p_pEnt;
+	colStruct *pCol;
+	DWORD pvIn;
+	DWORD pvOut;
+	tagLOGPAL plPal;
+
+	HDC &hDC_Global = *(HDC *)0x4EA03C;
+	HPALETTE &hLoColor = *(HPALETTE *)0x4EA044;
+	BOOL &bHiColor = *(BOOL *)0x4EA048;
+	BOOL &bLoColor = *(BOOL *)0x4EA04C;
+	BOOL &bPaletteSet = *(BOOL *)0x4EA050;
+	testColStruct *rgbLoColor = (testColStruct *)0x4EA058;
+	testColStruct *rgbNormalColor = (testColStruct *)0x4EA0B8;
+
+	plPal.wVersion = 0x300;
+	plPal.wNumPalEnts = LOCOLORCNT;
+	memset(plPal.pPalEnts, 0, sizeof(plPal.pPalEnts));
+	hDC_One = 0;
+	if (!hDC_Global) {
+		hDC_One = GetDC(0);
+		hDC_Global = CreateCompatibleDC(hDC_One);
+	}
+
+	hDC_Two = GetDC(0);
+	iPlanes = GetDeviceCaps(hDC_Two, PLANES);
+	iBitsPixel = GetDeviceCaps(hDC_Two, BITSPIXEL);
+	if (iForcedBits > 0)
+		iBitRate = iForcedBits;
+	else
+		iBitRate = iBitsPixel * iPlanes;
+
+	if (iBitRate < 14) {
+		if (iBitRate <= 4) {
+			bLoColor = TRUE;
+			pvIn = 4;
+			if (Escape(hDC_Two, QUERYESCSUPPORT, 4, (LPCSTR)&pvIn, 0)) {
+				p_pEnt = plPal.pPalEnts;
+				pCol = rgbLoColor;
+				do {
+					Escape(hDC_Two, SETCOLORTABLE, 6, (LPCSTR)pCol, &pvOut);
+					p_pEnt[pCol->wPos].peRed = pCol->pe.peRed;
+					p_pEnt[pCol->wPos].peGreen = pCol->pe.peGreen;
+					p_pEnt[pCol->wPos].peBlue = pCol->pe.peBlue;
+					p_pEnt[pCol->wPos].peFlags = 1;
+					pCol++;
+				} while ( pCol->wPos < LOCOLORCNT );
+				bPaletteSet = 1;
+				SendMessageA(HWND_BROADCAST, WM_SYSCOLORCHANGE, 0, 0);
+			}
+			else {
+				p_pEnt = plPal.pPalEnts;
+				pCol = rgbNormalColor;
+				bPaletteSet = 0;
+				do {
+					p_pEnt[pCol->wPos].peRed = pCol->pe.peRed;
+					p_pEnt[pCol->wPos].peGreen = pCol->pe.peGreen;
+					p_pEnt[pCol->wPos].peBlue = pCol->pe.peBlue;
+					p_pEnt[pCol->wPos].peFlags = 1;
+					pCol++;
+				} while ( pCol->wPos < LOCOLORCNT );
+			}
+			hLoColor = CreatePalette((const LOGPALETTE *)&plPal);
+		}
+	}
+	else {
+		bHiColor = TRUE;
+	}
+
+	return ReleaseDC(0, hDC_Two);
+}
+
 // Placeholder.
 void ShowModSettingsDialog(void) {
 	MessageBox(NULL, "The mod settings dialog has not yet been implemented. Check back later.", "sc2fix", MB_OK);
@@ -2258,6 +2332,10 @@ skipdebugmenu:
 	// Hook for CSimcityApp::LoadCursorResources
 	VirtualProtect((LPVOID)0x402234, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402234, Hook_LoadCursorResources);
+
+	// Hook for StartupGraphics
+	VirtualProtect((LPVOID)0x4014DD, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4014DD, Hook_StartupGraphics);
 
 	// Add hook to center with the middle mouse button
 	AFX_MSGMAP_ENTRY afxMessageMapEntrySimCityView = {
