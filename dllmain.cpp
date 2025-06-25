@@ -106,26 +106,51 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 		if (argv) {
 			for (int i = 0; i < argc; i++) {
-				if (!lstrcmpiW(argv[i], L"-advquery"))
-					bUseAdvancedQuery = TRUE;
-				if (!lstrcmpiW(argv[i], L"-console"))
-					bConsoleEnabled = TRUE;
-				if (!lstrcmpiW(argv[i], L"-debugall")) {
-					mci_debug = DEBUG_FLAGS_EVERYTHING;
-					military_debug = DEBUG_FLAGS_EVERYTHING;
-					mischook_debug = DEBUG_FLAGS_EVERYTHING;
-					//modloader_debug = DEBUG_FLAGS_EVERYTHING;
-					mus_debug = DEBUG_FLAGS_EVERYTHING;
-					snd_debug = DEBUG_FLAGS_EVERYTHING;
-					timer_debug = DEBUG_FLAGS_EVERYTHING;
-					updatenotifier_debug = DEBUG_FLAGS_EVERYTHING;
+				if (!bSubArg) {
+					if (!lstrcmpiW(argv[i], L"-advquery"))
+						bUseAdvancedQuery = TRUE;
+					if (!lstrcmpiW(argv[i], L"-console"))
+						bConsoleEnabled = TRUE;
+					if (!lstrcmpiW(argv[i], L"-debugall")) {
+						mci_debug = DEBUG_FLAGS_EVERYTHING;
+						military_debug = DEBUG_FLAGS_EVERYTHING;
+						mischook_debug = DEBUG_FLAGS_EVERYTHING;
+						mus_debug = DEBUG_FLAGS_EVERYTHING;
+						snd_debug = DEBUG_FLAGS_EVERYTHING;
+						timer_debug = DEBUG_FLAGS_EVERYTHING;
+						updatenotifier_debug = DEBUG_FLAGS_EVERYTHING;
+					}
+					if (!lstrcmpiW(argv[i], L"-defaults"))
+						bSkipLoadSettings = TRUE;
+					if (!lstrcmpiW(argv[i], L"-skipintro"))
+						bSkipIntro = TRUE;
+					if (!lstrcmpiW(argv[i], L"-bitmode"))
+					{
+						if (!iSetBitMode) {
+							iForcedBits = 0;
+							iSetBitMode = 2;
+							bSubArg = TRUE;
+							iLastArgPos = i;
+						}
+					}
 				}
-				if (!lstrcmpiW(argv[i], L"-defaults"))
-					bSkipLoadSettings = TRUE;
-				if (!lstrcmpiW(argv[i], L"-skipintro"))
-					bSkipIntro = TRUE;
-				if (!lstrcmpiW(argv[i], L"-skipmods"))
-					bSkipLoadingMods = TRUE;
+				else {
+					if (i == iLastArgPos + 1) {
+						if (wcslen(argv[i]) > 0) {
+							if (iSetBitMode == 2) {
+								iArg = _wtoi(argv[i]);
+								if (iArg != 4 && iArg != 8) {
+									iSetBitMode = 0;
+								}
+								else {
+									iForcedBits = iArg;
+									iSetBitMode = 1; // Finished setting, any duplicate parameters will be ignored.
+								}
+							}
+						}
+					}
+					bSubArg = FALSE; // Unset sub-argument switch, this is limited to only one sub-arg at this time.
+				}
 			}
 		}
 
@@ -223,6 +248,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			MessageBox(GetActiveWindow(), msg, "sc2kfix warning", MB_OK | MB_ICONWARNING);
 			ConsoleLog(LOG_WARNING, "CORE: SC2K version could not be detected (got timestamp 0x%08X). Game will probably crash.\n", dwSC2KAppTimestamp);
 		}
+
 
 		// Registry check
 		int iInstallCheck;
