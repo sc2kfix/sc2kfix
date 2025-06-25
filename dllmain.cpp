@@ -39,6 +39,8 @@ const char* szSC2KFixBuildInfo = __DATE__ " " __TIME__;
 FILE* fdLog = NULL;
 BOOL bInSCURK = FALSE;
 BOOL bUseAdvancedQuery = FALSE;
+BOOL bSkipLoadingMods = FALSE;
+int iForcedBits = 0;
 
 std::random_device rdRandomDevice;
 std::mt19937 mtMersenneTwister(rdRandomDevice());
@@ -124,26 +126,39 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		InitCommonControlsEx(&icc);
 
 		// Get our command line. WARNING: This uses WIDE STRINGS.
+		int iSetBitMode;
+		BOOL bSubArg;
+		int iLastArgPos;
+		int iArg;
+
+		iSetBitMode = 0;
+		bSubArg = FALSE;
+		iLastArgPos = -1;
+		iArg = 0;
+
 		argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 		if (argv) {
 			for (int i = 0; i < argc; i++) {
-				if (!lstrcmpiW(argv[i], L"-console"))
-					bConsoleEnabled = TRUE;
-				if (!lstrcmpiW(argv[i], L"-defaults"))
-					bSkipLoadSettings = TRUE;
-				if (!lstrcmpiW(argv[i], L"-skipintro"))
-					bSkipIntro = TRUE;
 				if (!lstrcmpiW(argv[i], L"-advquery"))
 					bUseAdvancedQuery = TRUE;
+				if (!lstrcmpiW(argv[i], L"-console"))
+					bConsoleEnabled = TRUE;
 				if (!lstrcmpiW(argv[i], L"-debugall")) {
 					mci_debug = DEBUG_FLAGS_EVERYTHING;
 					military_debug = DEBUG_FLAGS_EVERYTHING;
 					mischook_debug = DEBUG_FLAGS_EVERYTHING;
+					modloader_debug = DEBUG_FLAGS_EVERYTHING;
 					mus_debug = DEBUG_FLAGS_EVERYTHING;
 					snd_debug = DEBUG_FLAGS_EVERYTHING;
 					timer_debug = DEBUG_FLAGS_EVERYTHING;
 					updatenotifier_debug = DEBUG_FLAGS_EVERYTHING;
 				}
+				if (!lstrcmpiW(argv[i], L"-defaults"))
+					bSkipLoadSettings = TRUE;
+				if (!lstrcmpiW(argv[i], L"-skipintro"))
+					bSkipIntro = TRUE;
+				if (!lstrcmpiW(argv[i], L"-skipmods"))
+					bSkipLoadingMods = TRUE;
 			}
 		}
 
@@ -163,6 +178,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Force the console to be enabled if bSettingsAlwaysConsole is set
 		if (bSettingsAlwaysConsole)
 			bConsoleEnabled = true;
+
+		if (iForcedBits > 0)
+			ConsoleLog(LOG_INFO, "CORE: -bitmode passed, forcing %d-Bit mode.\n", iForcedBits);
 
 		// Force the console to be enabled if DEBUGALL is defined
 #ifdef DEBUGALL
