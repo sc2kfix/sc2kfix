@@ -964,6 +964,7 @@ GAMECALL(0x402B2B, int, __cdecl, MapToolStretchTerrain, __int16 iTileTargetX, __
 GAMECALL(0x402B44, __int16, __cdecl, MapToolMenuAction, int iMouseKeys, POINT pt)
 GAMECALL(0x402B94, int, __cdecl, MapToolLevelTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x402C25, int, __cdecl, CityToolMenuAction, int iMouseKeys, POINT pt)
+GAMECALL(0x402CF2, BOOL, __thiscall, CSimcityAppSetGameCursor, DWORD pThis, int iNewCursor, BOOL bActive)
 GAMECALL(0x402F9A, int, __thiscall, GetScreenAreaInfo, DWORD pThis, LPRECT lpRect)
 GAMECALL(0x480140, void, __stdcall, LoadSoundBuffer, int iSoundID, void* pBuffer)
 GAMECALL(0x48A810, DWORD, __cdecl, Direct_MovieCheck, char *sMovStr)
@@ -988,6 +989,7 @@ GAMECALL(0x402B3F, __int16, __stdcall, RandomWordLFSRMod128, int seed)
 
 GAMEOFF_PTR(void, pCWinAppThis,				0x4C7010)
 GAMEOFF(void*,	pCWndRootWindow,			0x4C702C)		// CMainFrame
+GAMEOFF(DWORD,	dwCursorGameHit,			0x4C70EC)
 GAMEOFF(BOOL,	bPriscillaActivated,		0x4C7104)
 GAMEOFF(DWORD*, dwAudioHandle,				0x4C7158)		// Various checks have pointed towards audio (sound and/or midi - perhaps stoppage given some context elsewhere)
 GAMEOFF(BOOL,	bOptionsMusicEnabled,		0x4C71F0)
