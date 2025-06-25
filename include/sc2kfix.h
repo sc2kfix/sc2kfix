@@ -231,7 +231,7 @@ extern HMENU hDebugMenu;
 extern FARPROC fpWinMMHookList[180];
 extern DWORD dwDetectedVersion;
 extern DWORD dwSC2KAppTimestamp;
-extern DWORD dwSC2KFixVersion;
+//extern DWORD dwSC2KFixVersion;
 extern const char* szSC2KFixVersion;
 extern const char* szSC2KFixReleaseTag;
 extern const char* szSC2KFixBuildInfo;
