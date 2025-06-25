@@ -172,6 +172,11 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 		// by Windows not the one that's currently active in the game.
 		SendMessage(hwndDlg, WM_SYSCOMMAND, (SC_MOVE | HTCAPTION), 0);
 		return FALSE;
+
+	case WM_SETCURSOR:
+		Game_CSimcityAppSetGameCursor((DWORD)&pCWinAppThis, 0, 0);
+		dwCursorGameHit = 4;
+		return 1;
 	}
 
 	return FALSE;

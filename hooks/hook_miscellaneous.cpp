@@ -1244,6 +1244,26 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	return ret;
 }
 
+extern "C" void __stdcall Hook_LoadCursorResources() {
+	DWORD pThis;
+
+	__asm mov[pThis], ecx
+
+	void(__thiscall *H_LoadCursorResources)(void *) = (void(__thiscall *)(void *))0x4255A0;
+
+	HDC hDC;
+
+	hDC = GetDC(0);
+	((DWORD *)pThis)[57] = GetDeviceCaps(hDC, HORZRES);
+	ReleaseDC(0, hDC);
+	H_LoadCursorResources((void *)pThis);
+}
+
+// Placeholder.
+void ShowModSettingsDialog(void) {
+	MessageBox(NULL, "The mod settings dialog has not yet been implemented. Check back later.", "sc2fix", MB_OK);
+}
+
 // Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
 // This should probably have a better name. And maybe be broken out into smaller functions.
 void InstallMiscHooks(void) {
@@ -1577,6 +1597,10 @@ skipdebugmenu:
 	// Hook for the MapToolMenuAction call.
 	VirtualProtect((LPVOID)0x402B44, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402B44, Hook_MapToolMenuAction);
+
+	// Hook for CSimcityApp::LoadCursorResources
+	VirtualProtect((LPVOID)0x402234, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402234, Hook_LoadCursorResources);
 
 	// Add hook to center with the middle mouse button
 	AFX_MSGMAP_ENTRY afxMessageMapEntrySimCityView = {
