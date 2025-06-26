@@ -239,6 +239,11 @@ BOOL ConsoleCmdShowMemory(const char* szCommand, const char* szArguments) {
 	int iRange = 16;
 	sscanf_s(szArguments + 7, "%X %s %i", &dwAddress, szOperandSize, sizeof(szOperandSize), &iRange);
 
+	if (!dwAddress) {
+		ConsoleLog(LOG_ERROR, "CORE: Segmentation fault caught. Don't do that again.\n");
+		return TRUE;
+	}
+
 	__try {
 		if (!*szOperandSize || !strcmp(szOperandSize, "dword"))
 			printf("0x%08X: (dword) 0x%08X\n", dwAddress, *(DWORD*)dwAddress);
@@ -441,25 +446,25 @@ BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments) {
 	int iTileX = -1, iTileY = -1;
 	sscanf_s(szArguments + 5, "%i %i", &iTileX, &iTileY);
 
-	if (iTileX >= 0 && iTileX < 128 && iTileY >= 0 && iTileY < 128) {
-		int iTileID = dwMapXBLD[iTileX]->iTileID[iTileY];
+	if (iTileX >= 0 && iTileX < GAME_MAP_SIZE && iTileY >= 0 && iTileY < GAME_MAP_SIZE) {
+		int iTileID = dwMapXBLD[iTileX][iTileY].iTileID;
 
 		char szXBITFormatted[256] = { 0 };
-		if (dwMapXBIT[iTileX]->b[iTileY].iPowerable)
+		if (dwMapXBIT[iTileX][iTileY].b.iPowerable)
 			strcat_s(szXBITFormatted, 256, "powerable ");
-		if (dwMapXBIT[iTileX]->b[iTileY].iPowered)
+		if (dwMapXBIT[iTileX][iTileY].b.iPowered)
 			strcat_s(szXBITFormatted, 256, "powered ");
-		if (dwMapXBIT[iTileX]->b[iTileY].iPiped)
+		if (dwMapXBIT[iTileX][iTileY].b.iPiped)
 			strcat_s(szXBITFormatted, 256, "piped ");
-		if (dwMapXBIT[iTileX]->b[iTileY].iWatered)
+		if (dwMapXBIT[iTileX][iTileY].b.iWatered)
 			strcat_s(szXBITFormatted, 256, "watered ");
-		if (dwMapXBIT[iTileX]->b[iTileY].iXVALMask)
+		if (dwMapXBIT[iTileX][iTileY].b.iXVALMask)
 			strcat_s(szXBITFormatted, 256, "xvalmask ");
-		if (dwMapXBIT[iTileX]->b[iTileY].iWater)
+		if (dwMapXBIT[iTileX][iTileY].b.iWater)
 			strcat_s(szXBITFormatted, 256, "water ");
-		if (dwMapXBIT[iTileX]->b[iTileY].iRotated)
+		if (dwMapXBIT[iTileX][iTileY].b.iRotated)
 			strcat_s(szXBITFormatted, 256, "rotated ");
-		if (dwMapXBIT[iTileX]->b[iTileY].iSaltWater)
+		if (dwMapXBIT[iTileX][iTileY].b.iSaltWater)
 			strcat_s(szXBITFormatted, 256, "saltwater ");
 		if (szXBITFormatted[0] == '\0')
 			strcpy_s(szXBITFormatted, 256, "none");
@@ -470,7 +475,7 @@ BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments) {
 			"Tile (%i, %i):\n"
 			"  iTileID: %s (%i / 0x%02X)\n"
 			"  Zone:    %s\n"
-			"  XBIT:    0x%02X (%s)\n", iTileX, iTileY, szTileNames[iTileID], iTileID, iTileID, GetZoneName(dwMapXZON[iTileX]->b[iTileY].iZoneType), dwMapXBIT[iTileX]->b[iTileY], szXBITFormatted);
+			"  XBIT:    0x%02X (%s)\n", iTileX, iTileY, szTileNames[iTileID], iTileID, iTileID, GetZoneName(dwMapXZON[iTileX][iTileY].b.iZoneType), *(BYTE*)&dwMapXBIT[iTileX][iTileY].b, szXBITFormatted);
 		return TRUE;
 	}
 
@@ -575,9 +580,9 @@ BOOL ConsoleCmdSetTile(const char* szCommand, const char* szArguments) {
 	int iTileX = -1, iTileY = -1;
 	sscanf_s(szArguments, "%i %i %s", &iTileX, &iTileY, szTileOperation, sizeof(szTileOperation));
 
-	if (iTileX >= 0 && iTileX < 128 && iTileY >= 0 && iTileY < 128) {
+	if (iTileX >= 0 && iTileX < GAME_MAP_SIZE && iTileY >= 0 && iTileY < GAME_MAP_SIZE) {
 		if (!strcmp(szTileOperation, "rotate")) {
-			dwMapXBIT[iTileX]->b[iTileY].iRotated = bOperation;
+			dwMapXBIT[iTileX][iTileY].b.iRotated = bOperation;
 			return TRUE;
 		}
 	}

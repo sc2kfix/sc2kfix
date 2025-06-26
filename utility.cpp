@@ -143,13 +143,6 @@ void ConsoleLog(int iLogLevel, const char* fmt, ...) {
 	va_end(args);
 }
 
-int GetTileID(int iTileX, int iTileY) {
-	if (iTileX >= 0 && iTileX < 128 && iTileY >= 0 && iTileY < 128)
-		return dwMapXBLD[iTileX]->iTileID[iTileY];
-	else
-		return -1;
-}
-
 const char* GetLowHighScale(BYTE bScale) {
 	if (!bScale)
 		return "None";
@@ -178,6 +171,12 @@ BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, c
 
 	sprintf_s(szBuf, sizeof(szBuf) - 1, "%d", value);
 	return WritePrivateProfileStringA(section, name, szBuf, ini_name);
+}
+
+const char* GetOnIdleStateEnumName(int iState) {
+	if (iState < -1 || iState > 18)
+		return "(invalid iState)";
+	return szOnIdleStateEnums[iState + 1];
 }
 
 void MigrateRegStringValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, char *szOutBuf, DWORD dwLen) {
@@ -348,7 +347,7 @@ json::JSON json::JSON::Load(const string& str) {
 
 json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBigEndian) {
 	json::JSON jsonArray = json::Array();
-	for (int i = 0; i < iCount; i++) {
+	for (size_t i = 0; i < iCount; i++) {
 		if (bBigEndian)
 			jsonArray.append<DWORD>(SwapDWORD(dwArray[i]));
 		else
@@ -359,6 +358,6 @@ json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBigEndian) {
 
 // Scary function! Overflows abound! Be careful!
 void DecodeDWORDArray(DWORD* dwArray, json::JSON jsonArray, size_t iCount, BOOL bBigEndian) {
-	for (int i = 0; i < iCount; i++)
+	for (size_t i = 0; i < iCount; i++)
 		dwArray[i] = (bBigEndian ? SwapDWORD(jsonArray[i].ToInt()) : jsonArray[i].ToInt());
 }

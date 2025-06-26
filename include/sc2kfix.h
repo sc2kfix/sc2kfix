@@ -2,6 +2,8 @@
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #pragma once
+#pragma warning(disable : 4200)
+#pragma warning(disable : 4733)
 
 #include <windows.h>
 #include <string>
@@ -169,16 +171,15 @@ void CenterDialogBox(HWND hwndDlg);
 HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText);
 const char* HexPls(UINT uNumber, int width);
 void ConsoleLog(int iLogLevel, const char* fmt, ...);
-int GetTileID(int iTileX, int iTileY);
 const char* GetZoneName(int iZoneID);
 const char* GetLowHighScale(BYTE bScale);
 BOOL FileExists(const char* name);
-HBITMAP CreateSpriteBitmap(int iSpriteID);
+//HBITMAP CreateSpriteBitmap(int iSpriteID);
 BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, const char *ini_name);
 void MigrateRegStringValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, char *szOutBuf, DWORD dwLen);
 void MigrateRegDWORDValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, DWORD *dwOut, DWORD dwSize);
 void MigrateRegBOOLValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, BOOL *bOut);
-int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize);
+//int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize);
 std::string Base64Encode(const unsigned char* pSrcData, size_t iSrcCount);
 size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned char* pSrcData, size_t iSrcCount);
 json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBigEndian);
@@ -230,6 +231,7 @@ extern HMENU hDebugMenu;
 extern FARPROC fpWinMMHookList[180];
 extern DWORD dwDetectedVersion;
 extern DWORD dwSC2KAppTimestamp;
+//extern DWORD dwSC2KFixVersion;
 extern const char* szSC2KFixVersion;
 extern const char* szSC2KFixReleaseTag;
 extern const char* szSC2KFixBuildInfo;
@@ -261,6 +263,8 @@ extern BOOL bUpdateAvailable;
 
 // Hooks to inject in dllmain.cpp
 
+void InstallAnimationSimCity1996Hooks(void);
+void InstallAnimationSimCity1995Hooks(void);
 void InstallMiscHooks(void);
 void UpdateMiscHooks(void);
 void InstallQueryHooks(void);
