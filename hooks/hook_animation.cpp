@@ -42,7 +42,7 @@ extern "C" void __cdecl Hook_AnimationFunctionSimCity1996(HPALETTE *hP1, int iTo
 			wSimSpeed = ((WORD *)pApp)[388];
 			dwTitleScreenAnimation = pApp[199];
 			iProgramStep = pApp[201];
-			if (wSimSpeed != 1 || dwTitleScreenAnimation || iProgramStep != ONIDLE_STATE_INGAME) {
+			if (wSimSpeed != GAME_SPEED_PAUSED || dwTitleScreenAnimation || iProgramStep != ONIDLE_STATE_INGAME) {
 				if (pMainFrm) {
 					pMapToolBar = (DWORD *)&pMainFrm[233];
 					pCityToolBar = (DWORD *)&pMainFrm[102];
