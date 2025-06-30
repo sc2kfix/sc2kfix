@@ -1927,7 +1927,7 @@ extern "C" int __stdcall Hook_StartupGraphics() {
 	else
 		iBitRate = iBitsPixel * iPlanes;
 
-	if (iBitRate < 14) {
+	if (iBitRate < 16) {
 		if (iBitRate <= 4) {
 			bLoColor = TRUE;
 			pvIn = 4;
