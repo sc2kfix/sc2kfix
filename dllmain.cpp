@@ -18,8 +18,10 @@
 #include <winmm_exports.h>
 #include "resource.h"
 
+#if !NOKUROKO
 #include <kuroko/kuroko.h>
 #include <kuroko/util.h>
+#endif
 
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
@@ -36,13 +38,17 @@ HMENU hDebugMenu = NULL;
 FARPROC fpWinMMHookList[180] = { NULL };
 DWORD dwDetectedVersion = SC2KVERSION_UNKNOWN;
 DWORD dwSC2KAppTimestamp = 0;
+#if !NOKUROKO
 DWORD dwSC2KFixVersion = SC2KFIX_VERSION_MAJOR << 24 | SC2KFIX_VERSION_MINOR << 16 | SC2KFIX_VERSION_PATCH << 8;
+#endif
 const char* szSC2KFixVersion = SC2KFIX_VERSION;
 const char* szSC2KFixReleaseTag = SC2KFIX_RELEASE_TAG;
 const char* szSC2KFixBuildInfo = __DATE__ " " __TIME__;
 FILE* fdLog = NULL;
 BOOL bInSCURK = FALSE;
+#if !NOKUROKO
 BOOL bKurokoVMInitialized = FALSE;
+#endif
 BOOL bUseAdvancedQuery = FALSE;
 BOOL bSkipLoadingMods = FALSE;
 int iForcedBits = 0;
@@ -124,7 +130,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						mci_debug = DEBUG_FLAGS_EVERYTHING;
 						military_debug = DEBUG_FLAGS_EVERYTHING;
 						mischook_debug = DEBUG_FLAGS_EVERYTHING;
+#if !NOKUROKO
 						modloader_debug = DEBUG_FLAGS_EVERYTHING;
+#endif
 						mus_debug = DEBUG_FLAGS_EVERYTHING;
 						snd_debug = DEBUG_FLAGS_EVERYTHING;
 						timer_debug = DEBUG_FLAGS_EVERYTHING;
@@ -358,12 +366,18 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Start the console thread.
 		if (bConsoleEnabled) {
 			ConsoleLog(LOG_INFO, "CORE: Starting console thread.\n");
+#if NOKUROKO
+			hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, NULL);
+#else
 			hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, &dwConsoleThreadID);
+#endif
 		}
 
+#if !NOKUROKO
 		// Load native code mods.
 		if (!bSkipLoadingMods && !bSettingsDontLoadMods)
 			LoadNativeCodeMods();
+#endif
 
 		break;
 
@@ -377,9 +391,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Shut down the music thread
 		PostThreadMessage(dwMusicThreadID, WM_QUIT, NULL, NULL);
 
+#if !NOKUROKO
 		// Shut down the Kuroko thread
 		if (bKurokoVMInitialized)
 			PostThreadMessage(dwKurokoThreadID, WM_QUIT, NULL, NULL);
+#endif
 
 		// Send a closing message and close the log file
 		ReleaseSMKFuncs();

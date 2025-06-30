@@ -11,6 +11,10 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
+#if NOKUROKO
+#define UPDATENOTIFIER_NEXTRELEASE "r9d"
+#endif
+
 #define UPDATENOTIFIER_DEBUG DEBUG_FLAGS_NONE
 
 #ifdef DEBUGALL
@@ -20,7 +24,11 @@
 
 UINT updatenotifier_debug = UPDATENOTIFIER_DEBUG;
 
+#if NOKUROKO
+const char* szGitHubRepoReleases = "https://api.github.com/repos/sc2kfix/sc2kfix/releases/tags/" UPDATENOTIFIER_NEXTRELEASE;
+#else
 const char* szGitHubRepoReleases = "https://api.github.com/repos/sc2kfix/sc2kfix/releases?per_page=1";
+#endif
 const char* szGitHubAPIType[] = { "Accept: application/vnd.github+json", NULL };
 char szLatestRelease[24] = { 0 };
 BOOL bUpdateAvailable = FALSE;
