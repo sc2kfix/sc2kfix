@@ -1,6 +1,7 @@
 // sc2kfix modules/kuroko_glue.cpp: Kuroko VM main thread, glue libraries, and associated functions
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
+#if !NOKUROKO
 #undef UNICODE
 #include <windows.h>
 #include <stdio.h>
@@ -447,3 +448,4 @@ extern "C" {
 		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_MAXIS_MAN));
 	}
 }
+#endif
