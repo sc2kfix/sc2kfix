@@ -31,17 +31,26 @@
 #define SC2KVERSION_1995    2
 #define SC2KVERSION_DEMO    3
 
+#if NOKUROKO
+#define SC2KFIX_VERSION			"0.9c"
+#else
 #define SC2KFIX_VERSION			"0.10-dev"
 #define SC2KFIX_VERSION_MAJOR	0
 #define SC2KFIX_VERSION_MINOR	10
 #define SC2KFIX_VERSION_PATCH	0
+#endif
 #define SC2KFIX_RELEASE_TAG		"r9c"
 
 #define SC2KFIX_INIFILE		"sc2kfix.ini"
+#if NOKUROKO
+#define HOOKEXT extern "C"
+#define HOOKEXT_CPP
+#else
 #define SC2KFIX_MODSFOLDER	"mods"
 
 #define HOOKEXT extern "C" __declspec(dllexport)
 #define HOOKEXT_CPP __declspec(dllexport)
+#endif
 
 #include <json.hpp>
 
@@ -79,9 +88,11 @@
 #define DEBUG_FLAGS_NONE		0
 #define DEBUG_FLAGS_EVERYTHING	0xFFFFFFFF
 
+#if !NOKUROKO
 #define WM_KUROKO_REPL	WM_APP+0x10
 #define WM_KUROKO_FILE	WM_APP+0x11
 #define WM_CONSOLE_REPL	WM_APP+0x20
+#endif
 
 #define HICOLORCNT 256
 #define LOCOLORCNT 16
@@ -130,6 +141,7 @@ public:
 	char *pStr;
 };
 
+#if !NOKUROKO
 // Struct defining an injected hook from a loaded mod and its nested call priority.
 typedef struct {
 	const char* szHookName;
@@ -172,6 +184,7 @@ typedef struct {
 } hook_function_t;
 
 #include <hooklists.h>
+#endif
 
 typedef BOOL (*console_cmdproc_t)(const char* szCommand, const char* szArguments);
 
@@ -260,11 +273,15 @@ void InitializeFonts(void);
 HOOKEXT void CenterDialogBox(HWND hwndDlg);
 HOOKEXT HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText);
 HOOKEXT const char* HexPls(UINT uNumber, int width);
+#if !NOKUROKO
 HOOKEXT const char* FormatVersion(int iMajor, int iMinor, int iPatch);
+#endif
 HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...);
 HOOKEXT const char* GetLowHighScale(BYTE bScale);
 HOOKEXT BOOL FileExists(const char* name);
+#if !NOKUROKO
 HOOKEXT const char* GetModsFolderPath(void);
+#endif
 HOOKEXT const char* GetOnIdleStateEnumName(int iState);
 //HBITMAP CreateSpriteBitmap(int iSpriteID);
 HOOKEXT BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, const char *ini_name);
@@ -301,14 +318,18 @@ DWORD WINAPI ConsoleThread(LPVOID lpParameter);
 BOOL ConsoleEvaluateCommand(const char* szCommandLine, BOOL bInteractive);
 BOOL ConsoleCmdClear(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdEcho(const char* szCommand, const char* szArguments);
+#if !NOKUROKO
 BOOL ConsoleCmdRun(const char* szCommand, const char* szArguments);
+#endif
 BOOL ConsoleCmdWait(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdHelp(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowDebug(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowMemory(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowMicrosim(const char* szCommand, const char* szArguments);
+#if !NOKUROKO
 BOOL ConsoleCmdShowMods(const char* szCommand, const char* szArguments);
+#endif
 BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments);
 //BOOL ConsoleCmdShowSprite(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments);
@@ -317,9 +338,11 @@ BOOL ConsoleCmdSet(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdSetDebug(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdSetTile(const char* szCommand, const char* szArguments);
 
+#if !NOKUROKO
 void LoadNativeCodeMods(void);
 
 DWORD WINAPI KurokoThread(LPVOID lpParameter);
+#endif
 
 extern const char *gamePrimaryKey;
 
@@ -333,7 +356,9 @@ extern HMENU hDebugMenu;
 extern FARPROC fpWinMMHookList[180];
 extern DWORD dwDetectedVersion;
 extern DWORD dwSC2KAppTimestamp;
+#if !NOKUROKO
 extern DWORD dwSC2KFixVersion;
+#endif
 extern const char* szSC2KFixVersion;
 extern const char* szSC2KFixReleaseTag;
 extern const char* szSC2KFixBuildInfo;
@@ -341,9 +366,11 @@ extern BOOL bInSCURK;
 extern BOOL bConsoleEnabled;
 extern BOOL bSkipIntro;
 extern BOOL bUseAdvancedQuery;
+#if !NOKUROKO
 extern BOOL bKurokoVMInitialized;
 extern DWORD dwConsoleThreadID;
 extern DWORD dwKurokoThreadID;
+#endif
 
 extern BOOL bFontsInitialized;
 extern HFONT hFontMSSansSerifRegular8;
@@ -354,8 +381,10 @@ extern HFONT hFontArialRegular10;
 extern HFONT hFontArialBold10;
 extern HFONT hSystemRegular12;
 
+#if !NOKUROKO
 extern std::map<HMODULE, sc2kfix_mod_info_t> mapLoadedNativeMods;
 extern std::map<HMODULE, std::vector<sc2kfix_mod_hook_t>> mapLoadedNativeModHooks;
+#endif
 extern std::map<DWORD, soundbufferinfo_t> mapSoundBuffers;
 extern std::vector<int> vectorRandomSongIDs;
 extern std::random_device rdRandomDevice;
@@ -368,7 +397,9 @@ extern BOOL bStatusDialogMoving;
 extern char szLatestRelease[24];
 extern BOOL bUpdateAvailable;
 
+#if !NOKUROKO
 HOOKEXT BOOL bHookStopProcessing;
+#endif
 
 // Hooks to inject in dllmain.cpp
 
@@ -382,7 +413,9 @@ void InstallStatusHooks_SC2K1996(void);
 void UpdateStatus_SC2K1996(int iShow);
 void InstallQueryHooks(void);
 void InstallMilitaryHooks(void);
+#if !NOKUROKO
 void InstallSaveHooks(void);
+#endif
 extern "C" void __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer);
 extern "C" int __stdcall Hook_MusicPlay(int iSongID);
 extern "C" int __stdcall Hook_MusicStop(void);
@@ -406,7 +439,9 @@ void InstallRegistryPathingHooks_SCURK1996(void);
 extern UINT mci_debug;
 extern UINT military_debug;
 extern UINT mischook_debug;
+#if !NOKUROKO
 extern UINT modloader_debug;
+#endif
 extern UINT mus_debug;
 extern UINT snd_debug;
 extern UINT timer_debug;

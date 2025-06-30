@@ -1,6 +1,7 @@
 // sc2kfix modules/sc2x.cpp: JSON-based extensible save game file format
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
+#if !NOKUROKO
 #undef UNICODE
 #include <windows.h>
 #include <stdio.h>
@@ -815,3 +816,4 @@ void InstallSaveHooks(void) {
 	VirtualProtect((LPVOID)0x401870, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x401870, Hook_SaveGame);
 }
+#endif
