@@ -1,5 +1,6 @@
 #pragma once
 
+#if !NOKUROKO
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -390,4 +391,5 @@ int gettimeofday(struct timeval* tp, struct timezone* tzp);
 
 #ifdef __cplusplus
 }
+#endif
 #endif
