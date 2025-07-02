@@ -104,6 +104,11 @@ typedef struct {
 	void* pfn;
 } AFX_MSGMAP_ENTRY;
 
+class CSimString
+{
+	char *pStr;
+};
+
 typedef struct {
 	const char* szHookName;
 	int iHookPriority;
