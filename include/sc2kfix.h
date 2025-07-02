@@ -93,6 +93,11 @@ typedef struct {
 	void* pfn;
 } AFX_MSGMAP_ENTRY;
 
+class CSimString
+{
+	char *pStr;
+};
+
 typedef BOOL (*console_cmdproc_t)(const char* szCommand, const char* szArguments);
 
 typedef struct {
