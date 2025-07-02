@@ -1934,14 +1934,14 @@ void InstallMiscHooks(void) {
 	memcpy_s((LPVOID)0x4E6130, 12, "presnts.bmp", 12);
 
 	// Fix power and water grid updates slowing down after the population hits 50,000
-	VirtualProtect((LPVOID)0x440943, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(DWORD*)0x440943 = 50000000;
-	VirtualProtect((LPVOID)0x440987, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(DWORD*)0x440987 = 50000000;
-	VirtualProtect((LPVOID)0x43F429, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(DWORD*)0x43F429 = 50000000;
-	VirtualProtect((LPVOID)0x43F3A4, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(DWORD*)0x43F3A4 = 50000000;
+	VirtualProtect((LPVOID)0x440943, 4, PAGE_EXECUTE_READWRITE, &dwDummy); // 0x440170 <- CityToolMenuAction
+	*(DWORD*)0x440943 = 50000000; // Power
+	VirtualProtect((LPVOID)0x440987, 4, PAGE_EXECUTE_READWRITE, &dwDummy); // 0x440170 <- CityToolMenuAction
+	*(DWORD*)0x440987 = 50000000; // Water
+	VirtualProtect((LPVOID)0x43F429, 4, PAGE_EXECUTE_READWRITE, &dwDummy); // CityToolMenuAction
+	*(DWORD*)0x43F429 = 50000000; // Water
+	VirtualProtect((LPVOID)0x43F3A4, 4, PAGE_EXECUTE_READWRITE, &dwDummy); // CityToolMenuAction
+	*(DWORD*)0x43F3A4 = 50000000; // Power
 	
 	// Fix city name being overwritten by filename on save
 	BYTE bFilenamePatch[6] = { 0xB9, 0xA0, 0xA1, 0x4C, 0x00, 0x51 };
