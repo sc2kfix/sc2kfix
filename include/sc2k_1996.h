@@ -54,6 +54,8 @@
 
 #define GAME_MAP_SIZE 128
 
+class CMFC3XString;
+
 // Enums
 
 // Disaster IDs
@@ -1001,8 +1003,9 @@ GAMEOFF(WORD,	wMaybeActiveToolGroup,		0x4C7D88)
 GAMEOFF(WORD,	wViewRotation,				0x4C942C)
 GAMEOFF(BOOL,	bCityHasOcean,				0x4C94C0)
 GAMEOFF(DWORD,	dwArcologyPopulation,		0x4C94C4)
+GAMEOFF(DWORD,	dwDisasterActive,			0x4C9EE8)
 GAMEOFF(DWORD,	dwCityResidentialPopulation,	0x4CA194)
-GAMEOFF_PTR(char*, pszCityName,				0x4CA1A0)
+GAMEOFF(CMFC3XString, pszCityName,				0x4CA1A0)
 GAMEOFF(WORD,	wNationalEconomyTrend,		0x4CA1BC)
 GAMEOFF(WORD,	wCurrentMapToolGroup,		0x4CA1EC)
 GAMEOFF(WORD,	wCityNeighborConnections1500,	0x4CA3F0)
@@ -1085,6 +1088,7 @@ GAMEOFF(DWORD,	dwLFSRState,				0x4CDB7C)
 GAMEOFF(DWORD,	dwLCGState,					0x4CDB80)
 GAMEOFF(void*,	pCWinApp,					0x4CE8C0)
 GAMEOFF_ARR(WORD,	wPositionAngle,			0x4DC4C8)
+GAMEOFF_ARR(DWORD,	dwDisasterStringIndex,	0x4E6010)
 GAMEOFF(DWORD,	dwSimulationSubtickCounter,	0x4E63D8)
 GAMEOFF(void*,	pCDocumentMainWindow,		0x4E66F8)
 GAMEOFF(WORD,	wPreviousTileCoordinateX,	0x4E6808)
