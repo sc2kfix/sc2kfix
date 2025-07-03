@@ -283,7 +283,7 @@ extern "C" {
 		KRK_GAMEOFF(bCityHasOcean);
 		KRK_GAMEOFF(dwArcologyPopulation);
 		KRK_GAMEOFF(dwCityResidentialPopulation);
-		KRK_GAMEOFF_PTR(pszCityName);
+		KRK_GAMEOFF(pszCityName);
 		KRK_GAMEOFF(wNationalEconomyTrend);
 		KRK_GAMEOFF(wCurrentMapToolGroup);
 		KRK_GAMEOFF(wCityNeighborConnections1500);

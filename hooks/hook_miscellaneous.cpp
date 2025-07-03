@@ -1520,14 +1520,100 @@ GOFORWARD:
 	}
 }
 
-// Window title hook, part 1
-extern "C" char* __stdcall Hook_40D67D(void) {
-	if (bSettingsTitleCalendar)
-		sprintf_s(szCurrentMonthDay, 24, "%s %d,", szMonthNames[dwCityDays / 25 % 12], dwCityDays % 25 + 1);
-	else
-		sprintf_s(szCurrentMonthDay, 24, "%s", szMonthNames[dwCityDays / 25 % 12]);
-	return szCurrentMonthDay;
+extern "C" void __stdcall Hook_SimcityDocUpdateDocumentTitle() {
+	DWORD pThis;
+
+	__asm mov [pThis], ecx
+
+	CMFC3XString cStr;
+	int iCityDayMon;
+	int iCityMonth;
+	int iCityYear;
+	const char *pCurrStr;
+	CSimString *pFundStr;
+
+	CSimString *(__thiscall *H_SimStringSetString)(CSimString *, const char *pSrc, int iSize, double idAmount) = (CSimString *(__thiscall *)(CSimString *, const char *pSrc, int iSize, double idAmount))0x4015CD;
+	void(__thiscall *H_SimStringTruncateAtSpace)(CSimString *) = (void(__thiscall *)(CSimString *))0x4019B5;
+	void(__thiscall *H_SimStringDest)(CSimString *) = (void(__thiscall *)(CSimString *))0x40242D;
+	void(__cdecl *H_CStringFormat)(CMFC3XString *, char const *Ptr, ...) = (void(__cdecl *)(CMFC3XString *, char const *Ptr, ...))0x49EBD3;
+	CMFC3XString *(__thiscall *H_CStringCons)(CMFC3XString *) = (CMFC3XString *(__thiscall *)(CMFC3XString *))0x4A2C28;
+	void(__thiscall *H_CStringEmpty)(CMFC3XString *) = (void(__thiscall *)(CMFC3XString *))0x4A2C95;
+	void(__thiscall *H_CStringDest)(CMFC3XString *) = (void(__thiscall *)(CMFC3XString *))0x4A2CB0;
+	BOOL(__thiscall *H_CStringLoadStringA)(CMFC3XString *, unsigned int) = (BOOL(__thiscall *)(CMFC3XString *, unsigned int))0x4A3453;
+	BOOL(__stdcall *H_IsIconic)(HWND hWnd) = (BOOL(__stdcall *)(HWND hWnd))0x49BCF4;
+
+	DWORD &MainFrmDest = *(DWORD *)0x4C7110;
+	CMFC3XString &SCAStringLang = *(CMFC3XString *)0x4C7148;
+	CMFC3XString *SCApCStringArrLongMonths = (CMFC3XString *)0x4C71F8;
+	CMFC3XString *SCApCStringArrShortMonths = (CMFC3XString *)0x4C7288;
+	const char *gameCurrDollar = (const char *)0x4E6168;
+	const char *gameCurrDM = (const char *)0x4E6180;
+	const char *gameLangGerman = (const char *)0x4E6198;
+	const char *gameCurrFF = (const char *)0x4E619C;
+	const char *gameLangFrench = (const char *)0x4E61B4;
+	const char *gameStrHyphen = (const char *)0x4E6804;
+
+	H_CStringCons(&cStr);
+
+	if (!MainFrmDest) {
+		if (!wCityMode) {
+			H_CStringLoadStringA(&cStr, 0x19D); // "Starting SimEngine..."
+			goto GETOUT;
+		}
+		if (!pszCityName.m_nDataLength)
+			goto GETOUT;
+		iCityDayMon = dwCityDays % 25 + 1;
+		iCityMonth = dwCityDays / 25 % 12;
+		iCityYear = wCityStartYear + dwCityDays / 300;
+		if (H_IsIconic(GameGetRootWindowHandle())) {
+			if (dwDisasterActive) {
+				if (wCurrentDisasterID <= DISASTER_HURRICANE)
+					H_CStringLoadStringA(&cStr, dwDisasterStringIndex[wCurrentDisasterID]);
+				else
+					H_CStringEmpty(&cStr);
+			}
+			else
+				H_CStringFormat(&cStr, "%s%s%d", pszCityName.m_pchData, gameStrHyphen, iCityYear);
+			goto GOFORWARD;
+		}
+		H_CStringEmpty(&cStr);
+		if (wcscmp((const wchar_t *)SCAStringLang.m_pchData, (const wchar_t *)gameLangFrench) != 0) {
+			if (wcscmp((const wchar_t *)SCAStringLang.m_pchData, (const wchar_t *)gameLangGerman) != 0)
+				pCurrStr = gameCurrDollar;
+			else
+				pCurrStr = gameCurrDM;
+		}
+		else
+			pCurrStr = gameCurrFF;
+		pFundStr = (CSimString *)new CSimString();
+		if (pFundStr)
+			pFundStr = H_SimStringSetString(pFundStr, pCurrStr, 20, (double)dwCityFunds);
+		else
+			goto GETOUT;
+		H_SimStringTruncateAtSpace(pFundStr);
+		if (bSettingsTitleCalendar)
+			H_CStringFormat(&cStr, "%s %d %4d <%s> %s", SCApCStringArrLongMonths[iCityMonth].m_pchData, iCityDayMon, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
+		else
+			H_CStringFormat(&cStr, "%s %4d <%s> %s", SCApCStringArrShortMonths[iCityMonth].m_pchData, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
+		if (pFundStr) {
+			H_SimStringDest(pFundStr);
+			operator delete(pFundStr);
+		}
+GOFORWARD:
+		Game_CDocument_UpdateAllViews((void *)pThis, 0, 1, &cStr);
+	}
+GETOUT:
+	H_CStringDest(&cStr);
 }
+
+// Window title hook, part 1
+//extern "C" char* __stdcall Hook_40D67D(void) {
+//	if (bSettingsTitleCalendar)
+//		sprintf_s(szCurrentMonthDay, 24, "%s %d,", szMonthNames[dwCityDays / 25 % 12], dwCityDays % 25 + 1);
+//	else
+//		sprintf_s(szCurrentMonthDay, 24, "%s", szMonthNames[dwCityDays / 25 % 12]);
+//	return szCurrentMonthDay;
+//}
 
 std::vector<hook_function_t> stHooks_Hook_SimulationProcessTickDaySwitch_Before;
 
@@ -2138,9 +2224,11 @@ void InstallMiscHooks(void) {
 	NEWJMP((LPVOID)0x40103C, Hook_40103C);
 
 	// Window title calendar and modding hooks for SimulationProcessTick
-	VirtualProtect((LPVOID)0x40D67D, 10, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWCALL((LPVOID)0x40D67D, Hook_40D67D);
-	memset((LPVOID)0x40D682, 0x90, 5);
+	VirtualProtect((LPVOID)0x4017B2, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4017B2, Hook_SimcityDocUpdateDocumentTitle);
+	//VirtualProtect((LPVOID)0x40D67D, 10, PAGE_EXECUTE_READWRITE, &dwDummy);
+	//NEWCALL((LPVOID)0x40D67D, Hook_40D67D);
+	//memset((LPVOID)0x40D682, 0x90, 5);
 	VirtualProtect((LPVOID)0x4135D2, 9, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4135D2, Hook_SimulationProcessTickDaySwitch);
 	memset((LPVOID)0x4135D7, 0x90, 4);
