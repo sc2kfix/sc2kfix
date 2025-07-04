@@ -1535,7 +1535,7 @@ extern "C" void __stdcall Hook_SimcityDocUpdateDocumentTitle() {
 		}
 		else
 			pCurrStr = gameCurrFF;
-		pFundStr = (CSimString *)new CSimString();
+		pFundStr = new CSimString();
 		if (pFundStr)
 			pFundStr = H_SimStringSetString(pFundStr, pCurrStr, 20, (double)dwCityFunds);
 		else
