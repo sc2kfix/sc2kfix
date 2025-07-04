@@ -174,7 +174,7 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 		return FALSE;
 
 	case WM_SETCURSOR:
-		Game_CSimcityAppSetGameCursor(&pCWinAppThis, 0, 0);
+		Game_SimcityAppSetGameCursor(&pCWinAppThis, 0, 0);
 		dwCursorGameHit = 4;
 		return 1;
 	}

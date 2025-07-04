@@ -1656,7 +1656,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 			dwCityProgressionRequirement = dwCityProgressionRequirements[wCityProgression];
 			if (dwCityProgressionRequirement) {
 				if (dwCityProgressionRequirement < dwCityPopulation) {
-					Game_CSimcityAppSetGameCursor(&pCWinAppThis, 24, 0);
+					Game_SimcityAppSetGameCursor(&pCWinAppThis, 24, 0);
 					iPaperVal = wCityProgression++;
 					H_NewspaperStoryGenerator(3, iPaperVal);
 					H_SimcityAppAdjustNewspaperMenu(&pCWinAppThis);
@@ -1670,7 +1670,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 						H_SimulationGrantReward(wCityProgression - 1, 1);
 					H_ToolMenuUpdate();
 					H_SimcityAppAdjustNewspaperMenu(&pCWinAppThis);
-					Game_CSimcityAppSetGameCursor(&pCWinAppThis, 0, 0);
+					Game_SimcityAppSetGameCursor(&pCWinAppThis, 0, 0);
 				}
 			}
 			if (bInScenario) {
@@ -1761,6 +1761,40 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 			H_SimcityViewMaintainCursor(pSCView);
 		}
 	}
+}
+
+extern "C" void __stdcall Hook_SimcityAppUpdateStatus(int iArg) {
+	DWORD pThis;
+
+	__asm mov [pThis], ecx
+
+	DWORD *pApp;
+	DWORD *pMainFrm;
+
+	void(__thiscall *H_SimcityAppUpdateStatus)(void *, int iArg) = (void(__thiscall *)(void *, int iArg))0x406FD0;
+
+	pApp = (DWORD *)pThis;
+	pMainFrm = (DWORD *)pApp[7];
+
+	if (mischook_debug & MISCHOOK_DEBUG_OTHER) {
+		if (!pMainFrm)
+			ConsoleLog(LOG_DEBUG, "MISC: 0x%06X -> SimcityAppUpdateStatus(%d) - (0x%06X, 0x%06X) !!!!\n", _ReturnAddress(), iArg, pApp, pMainFrm);
+	}
+
+	// Make sure the pMainFrm pointer isn't null.
+	// With the in-library implementation of SimulationProcessTick
+	// a crash ends up occurring once it tries to execute Game_SimcityAppSetGameCursor
+	// during city progression/reward checks which then calls SimcityAppUpdateStatus
+	// and then crashes once it hits 'IsIconic(this->m_pMainWnd->m_hWnd)' in that
+	// internal function, m_pMainWnd is null.
+	//
+	// As for "why" this is the case isn't clear, especially since this doesn't occur
+	// with the normal program SimulationProcessTick call.
+	//
+	// Thus far with the addition of this null check it doesn't "look" like there's
+	// anything else strange, however it is a detail to note just in case.
+	if (pMainFrm)
+		H_SimcityAppUpdateStatus(pApp, iArg);
 }
 
 extern "C" void __stdcall Hook_SimulationStartDisaster(void) {
@@ -2303,6 +2337,8 @@ void InstallMiscHooks(void) {
 	NEWJMP((LPVOID)0x4017B2, Hook_SimcityDocUpdateDocumentTitle);
 	VirtualProtect((LPVOID)0x401820, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x401820, Hook_SimulationProcessTick);
+	VirtualProtect((LPVOID)0x4028A1, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4028A1, Hook_SimcityAppUpdateStatus);
 
 	// Hook SimulationStartDisaster
 	VirtualProtect((LPVOID)0x402527, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
