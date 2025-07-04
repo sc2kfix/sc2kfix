@@ -985,7 +985,7 @@ GAMECALL(0x402B3F, __int16, __stdcall, RandomWordLFSRMod128, int seed)
 
 // Pointers
 
-GAMEOFF_PTR(void, pCWinAppThis,				0x4C7010)
+GAMEOFF(DWORD, pCWinAppThis,				0x4C7010)
 GAMEOFF(void*,	pCWndRootWindow,			0x4C702C)		// CMainFrame
 GAMEOFF(DWORD,	dwSCAGameAutoSave,			0x4D70E8)
 GAMEOFF(DWORD,	dwCursorGameHit,			0x4C70EC)

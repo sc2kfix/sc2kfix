@@ -62,7 +62,7 @@ extern "C" void __cdecl Hook_AnimationFunctionSimCity1996(HPALETTE *hP1, int iTo
 						bCityViewAnim = (pCityToolBar && !dwTBToolBarTitleDrag);
 					else
 						bCityViewAnim = (pMapToolBar && !dwTBControlsDisabled);
-					pSCView = (DWORD *)Game_PointerToCSimcityViewClass(pCWinAppThis);
+					pSCView = (DWORD *)Game_PointerToCSimcityViewClass(&pCWinAppThis);
 					if (!pSCView) {
 						// CMainFrame m_hWnd - only call this specific redraw function before CSimcityView has been created.
 						// (ie, before any game has been started - palette animation on the image is disabled once the
