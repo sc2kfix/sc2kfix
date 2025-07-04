@@ -2200,6 +2200,11 @@ void InstallMiscHooks(void) {
 	VirtualProtect((LPVOID)0x42FE99, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
 	memcpy((LPVOID)0x42FE99, bFilenamePatch, 6);
 
+	// Adjust the Save File dialog type criterion
+	VirtualProtect((LPVOID)0x4E7344, 32, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memset((LPVOID)0x4E7344, 0, 32);
+	memcpy_s((LPVOID)0x4E7344, 32, "Simcity files (*.sc2)|*.sc2||", 32);
+
 	// Fix save filenames going wonky 
 	VirtualProtect((LPVOID)0x4321B9, 8, PAGE_EXECUTE_READWRITE, &dwDummy);
 	memset((LPVOID)0x4321B9, 0x90, 8);
