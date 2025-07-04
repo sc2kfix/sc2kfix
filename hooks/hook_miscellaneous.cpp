@@ -450,7 +450,7 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __
 	__int16 iNextX;
 	__int16 iNextY;
 
-	pThis = (DWORD *)Game_PointerToCSimcityViewClass(&pCWinAppThis);
+	pThis = (DWORD *)Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
 	iAttributes = dwCityPopulation;
 	iX = iStep;
 	bPlaceChurch = 2500u * (__int16)dwTileCount[TILE_INFRASTRUCTURE_CHURCH] < (unsigned int)dwCityPopulation;
@@ -1603,7 +1603,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 		!((dwCityDays / 300) % dwSCAGameAutoSave) &&
 		!wCityCurrentMonth &&
 		!(dwCityDays & 25)) {
-		H_SimcityAppCallAutoSave(&pCWinAppThis);
+		H_SimcityAppCallAutoSave(&pCSimcityAppThis);
 	}
 
 	if (bSettingsFrequentCityRefresh) {
@@ -1656,10 +1656,10 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 			dwCityProgressionRequirement = dwCityProgressionRequirements[wCityProgression];
 			if (dwCityProgressionRequirement) {
 				if (dwCityProgressionRequirement < dwCityPopulation) {
-					Game_SimcityAppSetGameCursor(&pCWinAppThis, 24, 0);
+					Game_SimcityAppSetGameCursor(&pCSimcityAppThis, 24, 0);
 					iPaperVal = wCityProgression++;
 					H_NewspaperStoryGenerator(3, iPaperVal);
-					H_SimcityAppAdjustNewspaperMenu(&pCWinAppThis);
+					H_SimcityAppAdjustNewspaperMenu(&pCSimcityAppThis);
 					if (wCityProgression >= 4) {
 						if (wCityProgression == 4)
 							H_SimulationProposeMilitaryBase();
@@ -1669,8 +1669,8 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 					else
 						H_SimulationGrantReward(wCityProgression - 1, 1);
 					H_ToolMenuUpdate();
-					H_SimcityAppAdjustNewspaperMenu(&pCWinAppThis);
-					Game_SimcityAppSetGameCursor(&pCWinAppThis, 0, 0);
+					H_SimcityAppAdjustNewspaperMenu(&pCSimcityAppThis);
+					Game_SimcityAppSetGameCursor(&pCSimcityAppThis, 0, 0);
 				}
 			}
 			if (bInScenario) {
@@ -1742,7 +1742,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 	}
 
 	if (wSimulationSpeed == GAME_SPEED_AFRICAN_SWALLOW || (bSettingsFrequentCityRefresh && wSimulationSpeed != GAME_SPEED_PAUSED)) {
-		pSCView = (DWORD *)Game_PointerToCSimcityViewClass(&pCWinAppThis);
+		pSCView = (DWORD *)Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
 		if (pSCView) {
 			wTileHighlightActive = 0;
 			if (wSimulationSpeed >= GAME_SPEED_CHEETAH) {
@@ -1778,7 +1778,7 @@ extern "C" int __stdcall Hook_AddAllInventions(void) {
 
 	memset(wCityInventionYears, 0, sizeof(WORD)*MAX_CITY_INVENTION_YEARS);
 	Game_ToolMenuUpdate();
-	Game_SoundPlaySound(&pCWinAppThis, SOUND_ZAP);
+	Game_SoundPlaySound(&pCSimcityAppThis, SOUND_ZAP);
 
 	return 0;
 }
@@ -1801,7 +1801,7 @@ extern "C" int __stdcall Hook_CSimcityView_WM_MBUTTONDOWN(WPARAM wMouseKeys, POI
 		else if (GetAsyncKeyState(VK_MENU) < 0) {
 			// useful for tests
 		} else {
-			Game_SoundPlaySound(&pCWinAppThis, SOUND_CLICK);
+			Game_SoundPlaySound(&pCSimcityAppThis, SOUND_CLICK);
 			Game_CenterOnTileCoords(bTileX, bTileY);
 		}
 	}
@@ -1947,7 +1947,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	// The change in this case is to only set pThis[62] to 0 when the iCurrToolGroupA is not
 	// 'Center Tool', this will then allow it to pass-through to the WM_MOUSEMOVE call.
 
-	pThis = (DWORD *)Game_PointerToCSimcityViewClass(&pCWinAppThis);	// TODO: is this necessary or can we just dereference pCSimcityView?
+	pThis = (DWORD *)Game_PointerToCSimcityViewClass(&pCSimcityAppThis);	// TODO: is this necessary or can we just dereference pCSimcityView?
 	Game_TileHighlightUpdate(pThis);
 	iCurrToolGroupA = wCurrentMapToolGroup;
 	iTileStartX = 400;
@@ -1998,12 +1998,12 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 					if (Game_MapToolSoundTrigger(dwAudioHandle))
 						break;
 				}
-				Game_SoundPlaySound(&pCWinAppThis, SOUND_FLOOD);
+				Game_SoundPlaySound(&pCSimcityAppThis, SOUND_FLOOD);
 				break;
 			case MAPTOOL_GROUP_TREES: // Place Tree
 			case MAPTOOL_GROUP_FOREST: // Place Forest
 				if (!Game_MapToolSoundTrigger(dwAudioHandle))
-					Game_SoundPlaySound(&pCWinAppThis, SOUND_PLOP);
+					Game_SoundPlaySound(&pCSimcityAppThis, SOUND_PLOP);
 				if (iCurrToolGroupA == 7)
 					Game_MapToolPlaceTree(iTileTargetX, iTileTargetY);
 				else
@@ -2011,7 +2011,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 				break;
 			case MAPTOOL_GROUP_CENTERINGTOOL: // Center Tool
 				Game_GetScreenCoordsFromTileCoords(iTileTargetX, iTileTargetY, &wNewScreenPointX, &wNewScreenPointY);
-				Game_SoundPlaySound(&pCWinAppThis, SOUND_CLICK);
+				Game_SoundPlaySound(&pCSimcityAppThis, SOUND_CLICK);
 				if (*(DWORD *)((char *)pThis + 322))
 					Game_CenterOnNewScreenCoordinates(pThis, wScreenPointX - (wNewScreenPointX >> 1), wScreenPointY - (wNewScreenPointY >> 1));
 				else
