@@ -949,7 +949,7 @@ GAMECALL(0x402478, int, __cdecl, SpawnHelicopter, __int16 x, __int16 y)
 GAMECALL(0x4024FA, char, __cdecl, PerhapsGeneralZoneChangeBuilding, __int16 x, __int16 y, __int16 iBuldingPopLevel, int iTileID)
 GAMECALL(0x40258B, int, __cdecl, GetScreenCoordsFromTileCoords, __int16 iTileTargetX, __int16 iTileTargetY, WORD *wNewScreenPointX, WORD *wNewScreenPointY)
 GAMECALL(0x402603, __int16, __cdecl, ZonedBuildingTileDeletion, __int16 x, __int16 y)
-GAMECALL(0x402699, int, __thiscall, PointerToCSimcityViewClass, void* CWinAppThis)
+GAMECALL(0x402699, int, __thiscall, PointerToCSimcityViewClass, void* CSimcityAppThis)
 GAMECALL(0x4026B2, int, __cdecl, SimulationGrowSpecificZone, __int16 x, __int16 y, __int16 iTileID, __int16 iZoneType)
 GAMECALL(0x402725, int, __cdecl, PlacePowerLinesAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x402798, int, __cdecl, MapToolPlaceForest, __int16 iTileTargetX, __int16 iTileTargetY)
@@ -989,7 +989,7 @@ GAMECALL(0x402B3F, __int16, __stdcall, RandomWordLFSRMod128, int seed)
 
 // Pointers
 
-GAMEOFF(DWORD, pCWinAppThis,				0x4C7010)
+GAMEOFF(DWORD,	pCSimcityAppThis,			0x4C7010)
 GAMEOFF(void*,	pCWndRootWindow,			0x4C702C)		// CMainFrame
 GAMEOFF(DWORD,	dwSCAGameAutoSave,			0x4D70E8)
 GAMEOFF(DWORD,	dwCursorGameHit,			0x4C70EC)
@@ -1183,14 +1183,14 @@ static inline sprite_header_t* GetSpriteHeader(int iSpriteID) {
 }
 
 static inline HPALETTE GameGetPalette(void) {
-	DWORD* CWinAppThis = &pCWinAppThis;
+	DWORD* CSimcityAppThis = &pCSimcityAppThis;
 	DWORD* CPalette;
 
 	// Exactly what sub_4069B0 does.
-	if (CWinAppThis[59])
-		CPalette = (DWORD*)CWinAppThis[67];
+	if (CSimcityAppThis[59])
+		CPalette = (DWORD*)CSimcityAppThis[67];
 	else
-		CPalette = (DWORD*)CWinAppThis[68];
+		CPalette = (DWORD*)CSimcityAppThis[68];
 
 	// ...and this is what CDC::SelectPalette does.
 	return (HPALETTE)CPalette[1];

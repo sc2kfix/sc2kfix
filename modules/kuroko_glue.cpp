@@ -267,7 +267,7 @@ extern "C" {
 		krk_attachNamedObject(&objState->fields, "__doc__", (KrkObj*)S("Pointers to SimCity 2000 game state objects."));
 		krk_attachNamedObject(&module->fields, "state", (KrkObj*)objState);
 
-		KRK_GAMEOFF_PTR(pCWinAppThis);
+		KRK_GAMEOFF(pCSimcityAppThis);
 		KRK_GAMEOFF(pCWndRootWindow);
 		KRK_GAMEOFF(bPriscillaActivated);
 		KRK_GAMEOFF(dwAudioHandle);
