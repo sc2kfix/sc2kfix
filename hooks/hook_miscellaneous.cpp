@@ -44,8 +44,6 @@ static DWORD dwDummy;
 AFX_MSGMAP_ENTRY afxMessageMapMainMenu[9];
 DLGPROC lpNewCityAfxProc = NULL;
 char szTempMayorName[24] = { 0 };
-char szCurrentMonthDay[24] = { 0 };
-const char* szMonthNames[12] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
 
 // Override some strings that have egregiously bad grammar/capitalization.
 // Maxis fail English? That's unpossible!
@@ -1558,54 +1556,220 @@ GETOUT:
 	H_CStringDest(&cStr);
 }
 
-// Window title hook, part 1
-//extern "C" char* __stdcall Hook_40D67D(void) {
-//	if (bSettingsTitleCalendar)
-//		sprintf_s(szCurrentMonthDay, 24, "%s %d,", szMonthNames[dwCityDays / 25 % 12], dwCityDays % 25 + 1);
-//	else
-//		sprintf_s(szCurrentMonthDay, 24, "%s", szMonthNames[dwCityDays / 25 % 12]);
-//	return szCurrentMonthDay;
-//}
+extern "C" void __stdcall Hook_SimulationProcessTick() {
+	int i;
+	DWORD dwMonDay;
+	DWORD newsDialog[156];
+	__int16 iStep, iSubStep;
+	DWORD dwCityProgressionRequirement;
+	BYTE iPaperVal;
+	BOOL bScenarioSuccess;
+	DWORD *pSCView;
+	POINT pt;
 
+	void(__stdcall *H_UpdateGraphDialog)() = (void(__stdcall *)())0x4010A5;
+	void(__stdcall *H_SimulationPollutionTerrainAndLandValueScan)() = (void(__stdcall *)())0x401154;
+	void(__stdcall *H_SimulationEQ_LE_Processing)() = (void(__stdcall *)())0x401262;
+	void(__cdecl *H_UpdateSimNationDialog)() = (void(__cdecl *)())0x4012FD;
+	void(__stdcall *H_UpdateIndustryDialog)() = (void(__stdcall *)())0x40142E;
+	void(__cdecl *H_SimulationPrepareBudgetDialog)(int) = (void(__cdecl *)(int))0x4015E6;
+	void(__cdecl *H_SimulationGrantReward)(__int16 iReward, int iToggle) = (void(__cdecl *)(__int16 iReward, int iToggle))0x401672;
+	void(__stdcall *H_UpdatePopulationDialog)() = (void(__stdcall *)())0x40169F;
+	void(__thiscall *H_SimcityAppCallAutoSave)(void *) = (void(__thiscall *)(void *))0x4016A9;
+	void(__thiscall *H_SimcityViewMaintainCursor)(void *) = (void(__thiscall *)(void *))0x401A96;
+	void(__stdcall *H_SimulationUpdateWaterConsumption)() = (void(__stdcall *)())0x401CA8;
+	void(__stdcall *H_UpdateWeatherOrDisasterState)() = (void(__stdcall *)())0x401E65;
+	DWORD *(__thiscall *H_NewspaperConstruct)(void *) = (DWORD *(__thiscall *)(void *))0x401F23;
+	void(__stdcall *H_UpdateGraphData)() = (void(__stdcall *)())0x402022;
+	void(__thiscall *H_SimcityAppAdjustNewspaperMenu)(void *) = (void(__thiscall *)(void *))0x40210D;
+	void(__stdcall *H_SimulationRCIDemandUpdates)() = (void(__stdcall *)())0x40217B;
+	int(__thiscall *H_GameDialogDoModal)(void *) = (int(__thiscall *)(void *))0x40219E;
+	void(__cdecl *H_SimulationGrowthTick)(__int16 iStep, __int16 iSubStep) = (void(__cdecl *)(__int16, __int16))0x4022FC;
+	void(__cdecl *H_UpdateCityMap)() = (void(__cdecl *)())0x40239C;
+	void(__stdcall *H_ToolMenuUpdate)() = (void(__stdcall *)())0x4023EC;
+	void(__cdecl *H_EventScenarioNotification)(__int16 iEvent) = (void(__cdecl *)(__int16 iEvent))0x402487;
+	void(__thiscall *H_NewspaperDestruct)(void *) = (void(__thiscall *)(void *))0x4025B3;
+	void(__stdcall *H_SimulationUpdatePowerConsumption)() = (void(__stdcall *)())0x4026F8;
+	void(__stdcall *H_NewspaperStoryGenerator)(__int16 iPaperType, BYTE iPaperVal) = (void(__stdcall *)(__int16 iPaperType, BYTE iPaperVal))0x402900;
+	void(__stdcall *H_UpdateBudgetInformation)() = (void(__stdcall *)())0x402D2E;
+	void(__stdcall *H_SimulationUpdateMonthlyTrafficData)() = (void(__stdcall *)())0x402D51;
+	void(__thiscall *H_MainFrameUpdateCityToolBar)(void *) = (void(__thiscall *)(void *))0x402F18;
+	void(__stdcall *H_SimulationProposeMilitaryBase)() = (void(__stdcall *)())0x403017;
 
-// Window title hook, part 2 and refresh hook
-// TODO: Clean this hook up to be as pure C/C++ as possible. I'm sure we can make it nice and
-// clean, I just need more time to fiddle with it.
-extern "C" void _declspec(naked) Hook_SimulationProcessTickDaySwitch(void) {
-	__asm push edx
-
-	Game_RefreshTitleBar(pCDocumentMainWindow);
-
-	if (bSettingsFrequentCityRefresh) {
-		POINT pt;
-		Game_CDocument_UpdateAllViews(pCDocumentMainWindow, NULL, 2, NULL);
-		GetCursorPos(&pt);
-		if (wCityMode && wCurrentCityToolGroup != TOOL_GROUP_CENTERINGTOOL && Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y) < 0x8000) {
-			Game_DrawSquareHighlight(wHighlightedTileX1, wHighlightedTileY1, wHighlightedTileX2, wHighlightedTileY2);
-			wTileHighlightActive = 1;
-			RedrawWindow(GameGetRootWindowHandle(), NULL, NULL, RDW_INVALIDATE | RDW_ALLCHILDREN);
-		}
+	wCityCurrentMonth = ++dwCityDays / 25 % 12;
+	wCityCurrentSeason = (dwCityDays / 25 % 12 + 1) % 12 / 3;
+	wCityElapsedYears = dwCityDays / 300;
+	if (dwSCAGameAutoSave > 0 &&
+		!((dwCityDays / 300) % dwSCAGameAutoSave) &&
+		!wCityCurrentMonth &&
+		!(dwCityDays & 25)) {
+		H_SimcityAppCallAutoSave(&pCWinAppThis);
 	}
 
-__asm {
-		pop edx
-		cmp edx, 24
-		ja def
+	if (bSettingsFrequentCityRefresh) {
+		Game_RefreshTitleBar(pCDocumentMainWindow);
+		Game_CDocument_UpdateAllViews(pCDocumentMainWindow, NULL, 2, NULL);
+	}
 
-		push 0x4135DB
-		retn
+	dwMonDay = (dwCityDays % 25);
+	switch (dwMonDay) {
+		case 0:
+			if (!bSettingsFrequentCityRefresh)
+				Game_RefreshTitleBar(pCDocumentMainWindow);
+			if (bYearEndFlag)
+				H_SimulationPrepareBudgetDialog(0);
+			H_UpdateBudgetInformation();
+			if (bNewspaperSubscription) {
+				if (wCityCurrentMonth == 3 || wCityCurrentMonth == 7) {
+					H_NewspaperConstruct((void *)&newsDialog);
+					newsDialog[39] = wNewspaperChoice; // CNewspaperDialog -> CGameDialog -> CDialog; struct position 39 - paperchoice dword var.
+					H_GameDialogDoModal(&newsDialog);
+					H_NewspaperDestruct(&newsDialog);
+				}
+			}
+			wCityCurrentMonth = dwCityDays / 25 % 12;
+			wCityCurrentSeason = (dwCityDays / 25 % 12 + 1) % 12 / 3;
+			wCityElapsedYears = dwCityDays / 300;
+			for (i = 0; i < 8; pZonePops[i - 1] = 0)
+				++i;
+			break;
+		case 1:
+			H_SimulationUpdatePowerConsumption();
+			break;
+		case 2:
+			H_SimulationPollutionTerrainAndLandValueScan();
+			break;
+		// Switch cases 3-18 have been moved to 'default' as
+		// if (dwMonDay >= 3 && dwMonDay <= 18).
+		case 19:
+			H_SimulationUpdateMonthlyTrafficData();
+			break;
+		case 20:
+			H_SimulationUpdateWaterConsumption();
+			break;
+		case 21:
+			H_SimulationRCIDemandUpdates();
+			H_SimulationEQ_LE_Processing();
+			H_UpdateGraphData();
+			break;
+		case 22:
+			dwCityProgressionRequirement = dwCityProgressionRequirements[wCityProgression];
+			if (dwCityProgressionRequirement) {
+				if (dwCityProgressionRequirement < dwCityPopulation) {
+					Game_CSimcityAppSetGameCursor(&pCWinAppThis, 24, 0);
+					iPaperVal = wCityProgression++;
+					H_NewspaperStoryGenerator(3, iPaperVal);
+					H_SimcityAppAdjustNewspaperMenu(&pCWinAppThis);
+					if (wCityProgression >= 4) {
+						if (wCityProgression == 4)
+							H_SimulationProposeMilitaryBase();
+						else if (wCityProgression == 5)
+							H_SimulationGrantReward(3, 1);
+					}
+					else
+						H_SimulationGrantReward(wCityProgression - 1, 1);
+					H_ToolMenuUpdate();
+					H_SimcityAppAdjustNewspaperMenu(&pCWinAppThis);
+					Game_CSimcityAppSetGameCursor(&pCWinAppThis, 0, 0);
+				}
+			}
+			if (bInScenario) {
+				bScenarioSuccess = dwScenarioCitySize <= dwCityPopulation;
+				if (pBudgetArr[BUDGET_RESFUND].iCurrentCosts < (int)dwScenarioResPopulation)
+					bScenarioSuccess = FALSE;
+				if (pBudgetArr[BUDGET_COMFUND].iCurrentCosts < (int)dwScenarioComPopulation)
+					bScenarioSuccess = FALSE;
+				if (pBudgetArr[BUDGET_INDFUND].iCurrentCosts < (int)dwScenarioIndPopulation)
+					bScenarioSuccess = FALSE;
+				if (dwCityFunds - dwCityBonds < (int)dwScenarioCashGoal)
+					bScenarioSuccess = FALSE;
+				if (dwCityLandValue < (int)dwScenarioLandValueGoal)
+					bScenarioSuccess = FALSE;
+				if (wScenarioLEGoal > dwCityWorkforceLE)
+					bScenarioSuccess = FALSE;
+				if (wScenarioEQGoal > dwCityWorkforceEQ)
+					bScenarioSuccess = FALSE;
+				if (dwScenarioPollutionLimit > 0 && dwCityPollution > dwScenarioPollutionLimit)
+					bScenarioSuccess = FALSE;
+				if (dwScenarioCrimeLimit > 0 && dwCityCrime > dwScenarioCrimeLimit)
+					bScenarioSuccess = FALSE;
+				if (dwScenarioTrafficLimit > 0 && dwCityTrafficUnknown > dwScenarioTrafficLimit)
+					bScenarioSuccess = FALSE;
+				if (bScenarioBuildingGoal1) {
+					if (dwTileCount[bScenarioBuildingGoal1] < wScenarioBuildingGoal1Count)
+						bScenarioSuccess = FALSE;
+				}
+				if (bScenarioBuildingGoal2) {
+					if (dwTileCount[bScenarioBuildingGoal2] < wScenarioBuildingGoal2Count)
+						bScenarioSuccess = FALSE;
+				}
+				if (bScenarioSuccess)
+					H_EventScenarioNotification(1);
+				else if (!--wScenarioTimeLimitMonths)
+					H_EventScenarioNotification(0);
+			}
+			if (dwCityFunds < -100000)
+				H_EventScenarioNotification(2);
+			break;
+		case 23:
+			if (!bSettingsFrequentCityRefresh)
+				Game_CDocument_UpdateAllViews(pCDocumentMainWindow, NULL, 2, NULL);
+			H_UpdatePopulationDialog();
+			H_UpdateIndustryDialog();
+			H_UpdateGraphDialog();
+			break;
+		case 24:
+			H_MainFrameUpdateCityToolBar(pCWndRootWindow);
+			H_UpdateCityMap();
+			H_UpdateSimNationDialog();
+			H_UpdateWeatherOrDisasterState();
+			break;
+		default:
+			// Moved here rather than the prior list of cases that were
+			// specific to the growth tick function.
+			if (dwMonDay >= 3 && dwMonDay <= 18) {
+				if (dwMonDay == 12) {
+					wCityCurrentMonth = dwCityDays / 25 % 12;
+					wCityCurrentSeason = (dwCityDays / 25 % 12 + 1) % 12 / 3;
+					wCityElapsedYears = dwCityDays / 300;
+				}
+				iStep = ((dwMonDay - 3) / 4 % 4); // Steps 0 - 3 in groups of 4.
+				iSubStep = (dwMonDay + 1) % 4; // SubSteps 0-3 for each group of 4.
+				H_SimulationGrowthTick(iStep, iSubStep);
+				break;
+			}
+			return;
+	}
 
-def:
-		push 0x413ABF
-		retn
+	if (wSimulationSpeed == GAME_SPEED_AFRICAN_SWALLOW || (bSettingsFrequentCityRefresh && wSimulationSpeed != GAME_SPEED_PAUSED)) {
+		pSCView = (DWORD *)Game_PointerToCSimcityViewClass(pCWinAppThis);
+		if (pSCView) {
+			wTileHighlightActive = 0;
+			if (wSimulationSpeed >= GAME_SPEED_CHEETAH) {
+				GetCursorPos(&pt);
+				if (wCityMode && Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y) < 0x8000) {
+					// It should be noted that the highlight will only appear with a valid selected tool.
+					// If you attempt to press Shift or Control (for the bulldozer or query) while an
+					// invalid tool is selected, there'll be no placement highlighted (this matches the
+					// behaviour in the normal game as well).
+					if (wCurrentCityToolGroup != TOOL_GROUP_CENTERINGTOOL)
+						wTileHighlightActive = 1;
+				}
+			}
+			Game_TileHighlightUpdate(pSCView);
+			UpdateWindow((HWND)pSCView[7]);
+			H_SimcityViewMaintainCursor(pSCView);
+		}
 	}
 }
 
-extern "C" void _declspec(naked) Hook_SimulationStartDisaster(void) {
+extern "C" void __stdcall Hook_SimulationStartDisaster(void) {
+	void(__stdcall *H_SimulationStartDisaster)() = (void(__stdcall *)())0x45CF10;
+
 	if (mischook_debug & MISCHOOK_DEBUG_DISASTERS)
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> SimulationStartDisaster(), wDisasterType = %u.\n", _ReturnAddress(), wDisasterType);
 
-	GAMEJMP(0x45CF10)
+	H_SimulationStartDisaster();
 }
 
 extern "C" int __stdcall Hook_AddAllInventions(void) {
@@ -1784,7 +1948,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	// 'Center Tool', this will then allow it to pass-through to the WM_MOUSEMOVE call.
 
 	pThis = (DWORD *)Game_PointerToCSimcityViewClass(pCWinAppThis);	// TODO: is this necessary or can we just dereference pCSimcityView?
-	Game_TileHighlightUpdate((int)pThis);
+	Game_TileHighlightUpdate(pThis);
 	iCurrToolGroupA = wCurrentMapToolGroup;
 	iTileStartX = 400;
 	iTileStartY = 400;
@@ -2131,15 +2295,14 @@ void InstallMiscHooks(void) {
 	VirtualProtect((LPVOID)0x40103C, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x40103C, Hook_40103C);
 
-	// Window title calendar and fine-grained updates for SimulationProcessTick
+	// New hooks for CSimcityDoc::UpdateDocumentTitle and
+	// SimulationProcessTick - these account for:
+	// 1) Including the day of the month in the window title.
+	// 2) The fine-grained simulation updates.
 	VirtualProtect((LPVOID)0x4017B2, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4017B2, Hook_SimcityDocUpdateDocumentTitle);
-	//VirtualProtect((LPVOID)0x40D67D, 10, PAGE_EXECUTE_READWRITE, &dwDummy);
-	//NEWCALL((LPVOID)0x40D67D, Hook_40D67D);
-	//memset((LPVOID)0x40D682, 0x90, 5);
-	VirtualProtect((LPVOID)0x4135D2, 9, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4135D2, Hook_SimulationProcessTickDaySwitch);
-	memset((LPVOID)0x4135D7, 0x90, 4);
+	VirtualProtect((LPVOID)0x401820, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x401820, Hook_SimulationProcessTick);
 
 	// Hook SimulationStartDisaster
 	VirtualProtect((LPVOID)0x402527, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
