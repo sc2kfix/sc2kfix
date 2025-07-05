@@ -369,11 +369,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Hooks we only want to inject on the 1996 Special Edition version
 		// and the registry hooks that are for the 1995 CD Collection version.
 		if (dwDetectedVersion == SC2KVERSION_1996)
-			InstallMiscHooks();
+			InstallMiscHooks_SC2K1996();
 		else if (dwDetectedVersion == SC2KVERSION_1995)
 			InstallRegistryPathingHooks_SC2K1995();
 		else if (dwDetectedVersion == SC2KVERSION_DEMO)
-			InstallRegistryPathingHooks_SC2KDemo();
+			InstallMiscHooks_SC2KDemo();
 
 		// Start the console thread.
 		if (bConsoleEnabled) {

@@ -1,4 +1,4 @@
-// sc2kfix hooks/hook_miscellaneous.cpp: miscellaneous hooks to be injected
+// sc2kfix hooks/hook_sc2k1996_miscellaneous.cpp: miscellaneous hooks to be injected
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 // !!! HIC SUNT DRACONES !!!
@@ -2139,7 +2139,7 @@ void ShowModSettingsDialog(void) {
 
 // Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
 // This should probably have a better name. And maybe be broken out into smaller functions.
-void InstallMiscHooks(void) {
+void InstallMiscHooks_SC2K1996(void) {
 	InstallRegistryPathingHooks_SC2K1996();
 
 	// Install LoadStringA hook
@@ -2515,12 +2515,12 @@ skipdebugmenu:
 	*(BYTE*)0x415044 = 0x90;
 
 	// Part two!
-	UpdateMiscHooks();
+	UpdateMiscHooks_SC2K1996();
 }
 
 // The difference between InstallMiscHooks and UpdateMiscHooks is that UpdateMiscHooks can be run
 // again at runtime because it can patch back in original game code. It's used for small stuff.
-void UpdateMiscHooks(void) {
+void UpdateMiscHooks_SC2K1996(void) {
 	// Music in background
 	VirtualProtect((LPVOID)0x40BFDA, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	if (bSettingsMusicInBackground)
