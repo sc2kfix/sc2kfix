@@ -35,7 +35,7 @@ extern "C" void __cdecl Hook_AnimationFunctionSimCity1996(HPALETTE *hP1, int iTo
 
 	H_AnimationFunction1996(hP1, iToggle);
 
-	pApp = (DWORD *)pCWinAppThis;
+	pApp = &pCWinAppThis;
 	if (pApp) {
 		if (!bLoColor) {
 			pMainFrm = (DWORD *)pApp[7]; // m_pMainWnd
