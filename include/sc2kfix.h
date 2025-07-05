@@ -280,6 +280,7 @@ extern BOOL bUpdateAvailable;
 
 void InstallAnimationSimCity1996Hooks(void);
 void InstallAnimationSimCity1995Hooks(void);
+void InstallAnimationSimCityDemoHooks(void);
 void InstallMiscHooks(void);
 void UpdateMiscHooks(void);
 void InstallQueryHooks(void);
