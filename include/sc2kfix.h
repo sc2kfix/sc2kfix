@@ -15,6 +15,7 @@
 
 #include <smk.h>
 #include <sc2k_1996.h>
+#include <sc2k_demo.h>
 #include <music.h>
 
 // Turning this on enables every debugging option. You have been warned.
@@ -344,8 +345,9 @@ HOOKEXT BOOL bHookStopProcessing;
 void InstallAnimationSimCity1996Hooks(void);
 void InstallAnimationSimCity1995Hooks(void);
 void InstallAnimationSimCityDemoHooks(void);
-void InstallMiscHooks(void);
-void UpdateMiscHooks(void);
+void InstallMiscHooks_SC2K1996(void);
+void UpdateMiscHooks_SC2K1996(void);
+void InstallMiscHooks_SC2KDemo(void);
 void InstallQueryHooks(void);
 void InstallMilitaryHooks(void);
 void InstallSaveHooks(void);
