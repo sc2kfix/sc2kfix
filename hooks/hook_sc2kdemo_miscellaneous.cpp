@@ -20,6 +20,21 @@
 
 static DWORD dwDummy;
 
+extern "C" DWORD *__stdcall Hook_Demo_SimcityAppConstruct() {
+	DWORD pThis;
+
+	__asm mov[pThis], ecx
+
+	DWORD *(__thiscall *H_Demo_SimcityAppConstruct)(void *) = (DWORD *(__thiscall *)(void *))0x475B4C;
+
+	DWORD *ret;
+
+	ret = H_Demo_SimcityAppConstruct((void *)pThis);
+	ret[200] = 1;
+
+	return ret;
+}
+
 void InstallMiscHooks_SC2KDemo(void) {
 	InstallRegistryPathingHooks_SC2KDemo();
 
@@ -31,4 +46,11 @@ void InstallMiscHooks_SC2KDemo(void) {
 	*(BYTE*)0x4403A3 = 5;
 	VirtualProtect((LPVOID)0x4403AE, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
 	*(BYTE*)0x4403AE = 10;
+
+	// Fix the Maxis Presents logo not being shown
+	VirtualProtect((LPVOID)0x402A1D, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402A1D, Hook_Demo_SimcityAppConstruct);
+	VirtualProtect((LPVOID)0x4D2984, 13, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memset((LPVOID)0x4D2984, 0, 13);
+	memcpy_s((LPVOID)0x4D2984, 13, "presnts.bmp", 13);
 }
