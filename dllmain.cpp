@@ -79,7 +79,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// (Based on the filename). Otherwise breakout.
 		GetModuleBaseName(GetCurrentProcess(), NULL, szModuleBaseName, 200);
 		if (!(_stricmp(szModuleBaseName, "winscurk.exe") == 0 ||
-			_stricmp(szModuleBaseName, "simcity.exe") == 0)) {
+			_stricmp(szModuleBaseName, "simcity.exe") == 0 ||
+			_stricmp(szModuleBaseName, "simdemo.exe") == 0)) {
 			break;
 		}
 
@@ -230,14 +231,19 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// HACK: there's probably a better way to do this
 		dwSC2KAppTimestamp = ((PIMAGE_NT_HEADERS)(((PIMAGE_DOS_HEADER)hSC2KAppModule)->e_lfanew + (UINT_PTR)hSC2KAppModule))->FileHeader.TimeDateStamp;
 		switch (dwSC2KAppTimestamp) {
+		case 0x313E706E:
+			dwDetectedVersion = SC2KVERSION_1996;
+			break;
+
 		case 0x302FEA8A:
 			dwDetectedVersion = SC2KVERSION_1995;
 			ConsoleLog(LOG_NOTICE, "CORE: 1995 CD Collection version detected. Most features and gameplay fixes will not be available.\n");
 			ConsoleLog(LOG_NOTICE, "CORE: Please consider using the 1996 Special Edition for the fully restored SimCity 2000 experience.\n");
 			break;
 
-		case 0x313E706E:
-			dwDetectedVersion = SC2KVERSION_1996;
+		case 0x3103B687:
+			dwDetectedVersion = SC2KVERSION_DEMO;
+			ConsoleLog(LOG_NOTICE, "CORE: Interactive Demo version detected. Good luck!\n");
 			break;
 
 		default:
@@ -286,47 +292,72 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			ConsoleLog(LOG_INFO, "CORE: Patched palette animation fix.\n");
 
 		// Dialog crash fix - hat tip to Aleksander Krimsky (@alekasm on GitHub)
+		BOOL bCanFixDialogCrash;
 		LPVOID lpDialogFix1;
 		LPVOID lpDialogFix2;
+
+		lpDialogFix1 = NULL;
+		lpDialogFix2 = NULL;
 		switch (dwDetectedVersion) {
 		case SC2KVERSION_1995:
+			bCanFixDialogCrash = TRUE;
 			lpDialogFix1 = (LPVOID)0x0049EE93;
 			lpDialogFix2 = (LPVOID)0x0049EEF2;
 			break;
 
 		case SC2KVERSION_1996:
-		default:
+			bCanFixDialogCrash = TRUE;
 			lpDialogFix1 = (LPVOID)0x004A04FA;
 			lpDialogFix2 = (LPVOID)0x004A0559;
+			break;
+
+		default:
+			bCanFixDialogCrash = FALSE;
+			break;
 		}
 
-		VirtualProtect(lpDialogFix1, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
-		*(LPBYTE)lpDialogFix1 = 0x20;
-		VirtualProtect(lpDialogFix2, 2, PAGE_EXECUTE_READWRITE, &dwDummy);
-		*(LPBYTE)lpDialogFix2 = 0xEB;
-		*(LPBYTE)((UINT_PTR)lpDialogFix2 + 1) = 0xEB;
-		ConsoleLog(LOG_INFO, "CORE: Patched dialog crash fix.\n");
+		if (bCanFixDialogCrash) {
+			VirtualProtect(lpDialogFix1, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
+			*(LPBYTE)lpDialogFix1 = 0x20;
+			VirtualProtect(lpDialogFix2, 2, PAGE_EXECUTE_READWRITE, &dwDummy);
+			*(LPBYTE)lpDialogFix2 = 0xEB;
+			*(LPBYTE)((UINT_PTR)lpDialogFix2 + 1) = 0xEB;
+			ConsoleLog(LOG_INFO, "CORE: Patched dialog crash fix.\n");
+		}
 
 		// Remove palette warnings
+		BOOL bCanFixPaletteWarnings;
 		LPVOID lpWarningFix1;
 		LPVOID lpWarningFix2;
+
+		lpWarningFix1 = NULL;
+		lpWarningFix2 = NULL;
 		switch (dwDetectedVersion) {
 		case SC2KVERSION_1995:
+			bCanFixPaletteWarnings = TRUE;
 			lpWarningFix1 = (LPVOID)0x00408749;
 			lpWarningFix2 = (LPVOID)0x0040878E;
 			break;
 
 		case SC2KVERSION_1996:
-		default:
+			bCanFixPaletteWarnings = TRUE;
 			lpWarningFix1 = (LPVOID)0x00408A79;
 			lpWarningFix2 = (LPVOID)0x00408ABE;
+			break;
+
+		default:
+			bCanFixPaletteWarnings = FALSE;
+			break;
 		}
-		VirtualProtect(lpWarningFix1, 2, PAGE_EXECUTE_READWRITE, &dwDummy);
-		VirtualProtect(lpWarningFix2, 18, PAGE_EXECUTE_READWRITE, &dwDummy);
-		*(LPBYTE)lpWarningFix1 = 0x90;
-		*(LPBYTE)((UINT_PTR)lpWarningFix1 + 1) = 0x90;
-		memset((LPVOID)lpWarningFix2, 0x90, 18);   // nop nop nop nop nop
-		ConsoleLog(LOG_INFO, "CORE: Patched 8-bit colour warnings.\n");
+
+		if (bCanFixPaletteWarnings) {
+			VirtualProtect(lpWarningFix1, 2, PAGE_EXECUTE_READWRITE, &dwDummy);
+			VirtualProtect(lpWarningFix2, 18, PAGE_EXECUTE_READWRITE, &dwDummy);
+			*(LPBYTE)lpWarningFix1 = 0x90;
+			*(LPBYTE)((UINT_PTR)lpWarningFix1 + 1) = 0x90;
+			memset((LPVOID)lpWarningFix2, 0x90, 18);   // nop nop nop nop nop
+			ConsoleLog(LOG_INFO, "CORE: Patched 8-bit colour warnings.\n");
+		}
 
 		// Hooks we only want to inject on the 1996 Special Edition version
 		// and the registry hooks that are for the 1995 CD Collection version.

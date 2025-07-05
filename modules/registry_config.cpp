@@ -34,7 +34,15 @@ enum redirected_keys_t {
 	enCountKey
 };
 
-static int iRegPathHookMode = -1; // -1 - Unknown, 0 - SC2K1996, 1 - SC2K1995, 2 - SCURK1996 (Special Edition)
+enum regPathVersion {
+	REGPATH_UNKNOWN,
+	REGPATH_SC2K1996,
+	REGPATH_SC2K1995,
+	REGPATH_SC2KDEMO,
+	REGPATH_SCURK1996
+};
+
+static int iRegPathHookMode = REGPATH_UNKNOWN;
 
 BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
@@ -581,7 +589,7 @@ extern "C" HANDLE __stdcall Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDesiredA
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> CreateFileA(%s, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X)\n", _ReturnAddress(), lpFileName,
 			dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 
-	if (iRegPathHookMode == 0) {
+	if (iRegPathHookMode == REGPATH_SC2K1996) {
 		if ((DWORD)_ReturnAddress() == 0x4A8A90 ||
 			(DWORD)_ReturnAddress() == 0x48A810) {
 			char buf[MAX_PATH + 1];
@@ -602,7 +610,7 @@ extern "C" HANDLE __stdcall Hook_FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_
 	if (mischook_debug & MISCHOOK_DEBUG_PATHING)
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> FindFirstFileA(%s, 0x%08X)\n", _ReturnAddress(), lpFileName, lpFindFileData);
 
-	if (iRegPathHookMode == 0) {
+	if (iRegPathHookMode == REGPATH_SC2K1996) {
 		if ((DWORD)_ReturnAddress() == 0x4A8A90 ||
 			(DWORD)_ReturnAddress() == 0x48A810) {
 			char buf[MAX_PATH + 1];
@@ -619,7 +627,7 @@ extern "C" HANDLE __stdcall Hook_FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_
 }
 
 void InstallRegistryPathingHooks_SC2K1996(void) {
-	iRegPathHookMode = 0;
+	iRegPathHookMode = REGPATH_SC2K1996;
 
 	// Install RegSetValueExA hook
 	*(DWORD*)(0X4EF7F8) = (DWORD)Hook_RegSetValueExA;
@@ -641,7 +649,7 @@ void InstallRegistryPathingHooks_SC2K1996(void) {
 }
 
 void InstallRegistryPathingHooks_SC2K1995(void) {
-	iRegPathHookMode = 1;
+	iRegPathHookMode = REGPATH_SC2K1995;
 
 	// Install RegSetValueExA hook
 	*(DWORD*)(0X4EE7A8) = (DWORD)Hook_RegSetValueExA;
@@ -657,7 +665,7 @@ void InstallRegistryPathingHooks_SC2K1995(void) {
 }
 
 void InstallRegistryPathingHooks_SCURK1996(void) {
-	iRegPathHookMode = 2;
+	iRegPathHookMode = REGPATH_SCURK1996;
 
 	// Install RegSetValueExA hook
 	*(DWORD*)(0X4B05F0) = (DWORD)Hook_RegSetValueExA;
