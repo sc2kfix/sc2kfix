@@ -26,6 +26,8 @@
 
 #pragma intrinsic(_ReturnAddress)
 
+extern const char *gamePrimaryKey;
+
 // Global variables that we need to keep handy
 BOOL bGameDead = FALSE;
 HMODULE hRealWinMM = NULL;
@@ -275,6 +277,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			ConsoleLog(LOG_WARNING, "CORE: SC2K version could not be detected (got timestamp 0x%08X). Game will probably crash.\n", dwSC2KAppTimestamp);
 		}
 
+		if (dwDetectedVersion == SC2KVERSION_DEMO)
+			gamePrimaryKey = "SimCity 2000 Win95 Demo";
+
 
 		// Registry check
 		int iInstallCheck;
@@ -385,6 +390,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			InstallMiscHooks();
 		else if (dwDetectedVersion == SC2KVERSION_1995)
 			InstallRegistryPathingHooks_SC2K1995();
+		else if (dwDetectedVersion == SC2KVERSION_DEMO)
+			InstallRegistryPathingHooks_SC2KDemo();
 
 		// Start the console thread.
 		if (bConsoleEnabled) {
