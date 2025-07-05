@@ -456,7 +456,7 @@ extern "C" void __stdcall Hook_ResetGameVars(void) {
 	if (bMapEditor || bNewGame) {
 		DWORD *pThis;
 
-		pThis = (DWORD *)Game_PointerToCSimcityViewClass(pCWndRootWindow);
+		pThis = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
 
 		if (((__int16)wCityMode < 0 && bNewGame) || bMapEditor) {
 			if (wViewRotation != VIEWROTATION_NORTH) {
@@ -498,7 +498,7 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __
 	__int16 iNextX;
 	__int16 iNextY;
 
-	pThis = (DWORD *)Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
+	pThis = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
 	iAttributes = dwCityPopulation;
 	iX = iStep;
 	bPlaceChurch = 2500u * (__int16)dwTileCount[TILE_INFRASTRUCTURE_CHURCH] < (unsigned int)dwCityPopulation;
@@ -1790,7 +1790,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 	}
 
 	if (wSimulationSpeed == GAME_SPEED_AFRICAN_SWALLOW || (bSettingsFrequentCityRefresh && wSimulationSpeed != GAME_SPEED_PAUSED)) {
-		pSCView = (DWORD *)Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
+		pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
 		if (pSCView) {
 			wTileHighlightActive = 0;
 			if (wSimulationSpeed >= GAME_SPEED_CHEETAH) {
@@ -1995,7 +1995,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	// The change in this case is to only set pThis[62] to 0 when the iCurrToolGroupA is not
 	// 'Center Tool', this will then allow it to pass-through to the WM_MOUSEMOVE call.
 
-	pThis = (DWORD *)Game_PointerToCSimcityViewClass(&pCSimcityAppThis);	// TODO: is this necessary or can we just dereference pCSimcityView?
+	pThis = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);	// TODO: is this necessary or can we just dereference pCSimcityView?
 	Game_TileHighlightUpdate(pThis);
 	iCurrToolGroupA = wCurrentMapToolGroup;
 	iTileStartX = 400;
