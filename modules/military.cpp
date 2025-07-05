@@ -976,8 +976,8 @@ REATTEMPT:
 	}
 }
 
-extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
-	int iResult;
+extern "C" void __stdcall Hook_SimulationProposeMilitaryBase(void) {
+	int iSiloResult;
 	__int16 iValidAltitudeTiles;
 	__int16 iRandXPos;
 	__int16 iRandYPos;
@@ -987,34 +987,39 @@ extern "C" int __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	
 	unsigned int iMilitaryBaseTries = 0;
 
-	iResult = Game_AfxMessageBox(240, MB_YESNO, -1);
-	if (iResult == IDNO) {
+	if (Game_AfxMessageBox(240, MB_YESNO, -1) == IDNO) {
 		bMilitaryBaseType = MILITARY_BASE_DECLINED;
 	}
 	else {
 	REATTEMPT:
-		iResult = MilitaryBaseNavalYard(false);
-		if (iResult < 0) {
+		if (MilitaryBaseNavalYard(false) < 0) {
 			MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &iRandXPos, &iRandYPos, &iRandStoredXPos, &iRandStoredYPos);
 
-			iResult = MilitaryBaseMissileSilos(iValidAltitudeTiles, iValidTiles, false);
-			if (iResult >= 0) {
-				if (iResult == 0) {
+			iSiloResult = MilitaryBaseMissileSilos(iValidAltitudeTiles, iValidTiles, false);
+			if (iSiloResult >= 0) {
+				if (iSiloResult == 0) {
+					// During the base-type checking order it goes as follows:
+					// 1) Naval
+					// 2) Silo
+					// 3) Air Force
+					// 4) Army Base
+					//
+					// The Silo case also does a general area check when it comes to
+					// general suitability, hence why the retry and decline cases are
+					// present in this area.
 					if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
 						iMilitaryBaseTries++;
 						goto REATTEMPT;
 					}
-					iResult = MilitaryBaseDecline();
+					MilitaryBaseDecline();
 				}
 			}
 			else {
-				iResult = MilitaryBaseAirForce(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandStoredYPos);
-				if (iResult < 0)
-					iResult = MilitaryBaseArmyBase(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandStoredYPos);
+				if (MilitaryBaseAirForce(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandStoredYPos) < 0)
+					MilitaryBaseArmyBase(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandStoredYPos);
 			}
 		}
 	}
-	return iResult;
 }
 
 void InstallMilitaryHooks(void) {

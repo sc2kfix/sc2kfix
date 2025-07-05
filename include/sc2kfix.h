@@ -93,6 +93,20 @@ typedef struct {
 	void* pfn;
 } AFX_MSGMAP_ENTRY;
 
+class CMFC3XString
+{
+public:
+	LPTSTR m_pchData;
+	int m_nDataLength;
+	int m_nAllocLength;
+};
+
+class CSimString
+{
+public:
+	char *pStr;
+};
+
 typedef BOOL (*console_cmdproc_t)(const char* szCommand, const char* szArguments);
 
 typedef struct {
