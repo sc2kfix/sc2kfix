@@ -301,6 +301,7 @@ void ProposeMilitaryBaseNavalYard(void);
 // Registry hooks
 void InstallRegistryPathingHooks_SC2K1996(void);
 void InstallRegistryPathingHooks_SC2K1995(void);
+void InstallRegistryPathingHooks_SC2KDemo(void);
 void InstallRegistryPathingHooks_SCURK1996(void);
 
 // Debugging settings
