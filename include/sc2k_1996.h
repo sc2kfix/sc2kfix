@@ -1179,7 +1179,7 @@ static inline sprite_header_t* GetSpriteHeader(int iSpriteID) {
 }
 
 static inline HPALETTE GameGetPalette(void) {
-	DWORD* CWinAppThis = (DWORD*)pCWinAppThis;
+	DWORD* CWinAppThis = &pCWinAppThis;
 	DWORD* CPalette;
 
 	// Exactly what sub_4069B0 does.
