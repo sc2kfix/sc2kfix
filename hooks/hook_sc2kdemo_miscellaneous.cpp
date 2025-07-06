@@ -53,4 +53,9 @@ void InstallMiscHooks_SC2KDemo(void) {
 	VirtualProtect((LPVOID)0x4D2984, 13, PAGE_EXECUTE_READWRITE, &dwDummy);
 	memset((LPVOID)0x4D2984, 0, 13);
 	memcpy_s((LPVOID)0x4D2984, 13, "presnts.bmp", 13);
+
+	// Experiment with nullifying the timer during the first load.
+	//VirtualProtect((LPVOID)0x47685E, 10, PAGE_EXECUTE_READWRITE, &dwDummy);
+	//BYTE bTimePatch[10] = { 0xC7, 0x05, 0x68, 0x6A, 0x4B, 0x00, 0xFF, 0xFF, 0x00, 0x00 };
+	//memcpy((LPVOID)0x47685E, bTimePatch, 10);
 }
