@@ -1741,7 +1741,6 @@ extern "C" void __stdcall Hook_MainFrameOnChar(UINT nChar, UINT nRepCnt, UINT nF
 	nLowerChar = tolower(nChar);
 TRYAGAIN:
 	if (iCheatEntry != -1) {
-		ConsoleLog(LOG_DEBUG, "Char: (%u)\n", nLowerChar);
 		strCheatEntry = &cheatStrArray[iCheatEntry]; // Cheat entry
 		nCodeArr = cheatCharPos[iCheatEntry]; // Target character position reference array
 		nCodePos = nCodeArr[iCheatExpectedCharPos];
@@ -1752,11 +1751,8 @@ TRYAGAIN:
 			nCodePos = nCodeArr[nCurrPos];
 			if (nCurrPos != NUM_CHEAT_MAXCHARS && nCodePos != -1) {
 GOBACK:
-				if (iCheatEntry != -1) {
-					ConsoleLog(LOG_DEBUG, "Char: (%u) - GOBACK return;\n", nLowerChar);
+				if (iCheatEntry != -1)
 					return;
-				}
-				ConsoleLog(LOG_DEBUG, "Char: (%u) - GOTOTHEND;\n", nLowerChar);
 				goto GETOUT;
 			}
 		}
@@ -1765,13 +1761,11 @@ GOBACK:
 				if (i == iCheatEntry)
 					continue;
 				j = cheatStrArray[i].iPos;
-				ConsoleLog(LOG_DEBUG, "(%d/%d)\n", i, j);
 				if (j >= 0) {
 					strCheatEntry = &cheatStrArray[j];
 					nCodeArr = cheatCharPos[j];
 					nCodePos = nCodeArr[iCheatExpectedCharPos];
 					nCodeChar = strCheatEntry->pEntry[nCodePos];
-					ConsoleLog(LOG_DEBUG, "(%d/%d) Char: (%u/%c) [%s] [%d] (%u) (%u)\n", i, j, nLowerChar, nCodeChar, strCheatEntry->pEntry, nCodePos, j, iCheatExpectedCharPos);
 					if (nCodeChar == nLowerChar) {
 						iCheatEntry = j;
 						goto TRYAGAIN;
@@ -1785,7 +1779,6 @@ GOBACK:
 			iCheatEntry = -1;
 			goto GOBACK;
 		}
-		ConsoleLog(LOG_DEBUG, "Char: (%d) (%u/%c) [%s] [%d] (%u) (%u)\n", strCheatEntry->iIndex, nLowerChar, nCodeChar, strCheatEntry->pEntry, nCodePos, iCheatEntry, iCheatExpectedCharPos);
 		switch (strCheatEntry->iIndex) {
 			case CHEAT_FUND:
 				H_DoFund(25);
@@ -1877,7 +1870,6 @@ NO:
 			default:
 				break;
 		}
-		ConsoleLog(LOG_DEBUG, "Char: (%u) - Reached.\n", nLowerChar);
 		iCheatEntry = -1;
 		iCheatExpectedCharPos = 0;
 		goto GOBACK;
@@ -1899,10 +1891,8 @@ NO:
 				}
 				else
 					cheatMultipleDetections = TRUE;
-				ConsoleLog(LOG_DEBUG, "Char (%u == %c) [%s] Idx(%d) (%c)\n", nLowerChar, *strCheatEntry->pEntry, strCheatEntry->pEntry, i, (cheatMultipleDetections) ? 'Y' : 'N');
 			}
 		}
-		ConsoleLog(LOG_DEBUG, "- (%d/%d)\n", i, cheatStrArray[i].iPos);
 	}
 
 GETOUT:
