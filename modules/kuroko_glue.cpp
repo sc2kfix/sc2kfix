@@ -288,7 +288,7 @@ extern "C" {
 		KRK_GAMEOFF(wCurrentMapToolGroup);
 		KRK_GAMEOFF(wCityNeighborConnections1500);
 		KRK_GAMEOFF(wSubwayXUNDCount);
-		KRK_GAMEOFF(wDisasterType);
+		KRK_GAMEOFF(wSetTriggerDisasterType);
 		KRK_GAMEOFF(wCityMode);
 		KRK_GAMEOFF(dwCityLandValue);
 		KRK_GAMEOFF(dwCityFunds);

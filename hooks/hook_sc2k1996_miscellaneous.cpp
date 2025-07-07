@@ -46,6 +46,8 @@ AFX_MSGMAP_ENTRY afxMessageMapMainMenu[9];
 DLGPROC lpNewCityAfxProc = NULL;
 char szTempMayorName[24] = { 0 };
 
+static int iChurchVirus = -1;
+
 // Override some strings that have egregiously bad grammar/capitalization.
 // Maxis fail English? That's unpossible!
 extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMax) {
@@ -501,7 +503,10 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __
 	pThis = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
 	iAttributes = dwCityPopulation;
 	iX = iStep;
-	bPlaceChurch = 2500u * (__int16)dwTileCount[TILE_INFRASTRUCTURE_CHURCH] < (unsigned int)dwCityPopulation;
+	if (iChurchVirus > 0)
+		bPlaceChurch = 1;
+	else
+		bPlaceChurch = 2500u * (__int16)dwTileCount[TILE_INFRASTRUCTURE_CHURCH] < (unsigned int)dwCityPopulation;
 	wCurrentAngle = wPositionAngle[wViewRotation];
 	iResult = iStep / 2;
 	iXMM = iStep / 2;
@@ -1518,6 +1523,393 @@ GOFORWARD:
 	}
 }
 
+#define NUM_CHEATS 15
+#define NUM_CHEAT_MAXCHARS 9
+
+typedef struct {
+	int iIndex;          // Cheat index, match multiple cheats to the same index.
+	const char *pEntry;  // Code entry
+	int iPos;            // Position within the array. (Only set when there's a match)
+} cheat_t;
+
+enum {
+	CHEAT_FUND,
+	CHEAT_CASS,
+	CHEAT_THEWORKS,
+	CHEAT_MAJORFLOOD,
+	CHEAT_PARTTHESEA,
+	CHEAT_FIRESTORM,
+	CHEAT_DEBUG,
+	CHEAT_MILITARY,
+	CHEAT_JOKE,
+	CHEAT_WEBB,
+	CHEAT_OOPS,
+	CHEAT_REPENT
+};
+
+// Some the codes here have been randomised once more.
+static cheat_t cheatStrArray[NUM_CHEATS] = {
+	{CHEAT_FUND,       "fund",      -1},
+	{CHEAT_CASS,       "cass",      -1},
+	{CHEAT_THEWORKS,   "ithecama",  -1},
+	{CHEAT_MAJORFLOOD, "nhoa",      -1},
+	{CHEAT_PARTTHESEA, "msseo",     -1},
+	{CHEAT_FIRESTORM,  "nwsueheo",  -1},
+	{CHEAT_FIRESTORM,  "mlayrosre", -1},
+	{CHEAT_DEBUG,      "psiclaril", -1},
+	{CHEAT_MILITARY,   "gnarlimit", -1},
+	{CHEAT_JOKE,       "joke",      -1},
+	{CHEAT_WEBB,       "webb",      -1},    // From the Interactive Demo
+	{CHEAT_OOPS,       "damn",      -1},    // DOS
+	{CHEAT_OOPS,       "darn",      -1},    // DOS
+	{CHEAT_OOPS,       "heck",      -1},    // DOS
+	{CHEAT_REPENT,     "mylrosde",  -1}     // Custom
+};
+
+// In the game itself it uses an array of 72 entries
+// (the original 8 cheat entries * 9 potential characters + current position).
+// For the custom version it has been adjusted to a multi-dimensional array.
+static int cheatCharPos[NUM_CHEATS][NUM_CHEAT_MAXCHARS] = {
+	{0,  1,  2,  3, -1, -1, -1, -1, -1},
+	{0,  1,  2,  3, -1, -1, -1, -1, -1},
+	{0,  6,  5,  4,  2,  3,  7,  1, -1},
+	{0,  2,  3,  1, -1, -1, -1, -1, -1},
+	{0,  4,  2,  3,  1, -1, -1, -1, -1},
+	{0,  4,  1,  5,  7,  3,  2,  6, -1},
+	{0,  4,  6,  5,  1,  8,  2,  7,  3},
+	{0,  6,  2,  1,  3,  7,  4,  8,  5},
+	{0,  7,  4,  6,  2,  3,  8,  5,  1},
+	{0,  1,  2,  3, -1, -1, -1, -1, -1},
+	{0,  1,  2,  3, -1, -1, -1, -1, -1},
+	{0,  1,  2,  3, -1, -1, -1, -1, -1},
+	{0,  1,  2,  3, -1, -1, -1, -1, -1},
+	{0,  1,  2,  3, -1, -1, -1, -1, -1},
+	{0,  3,  5,  6,  4,  1,  2,  7, -1}
+};
+
+// This is set if there are multiple cheats detected matching the first character.
+static BOOL cheatMultipleDetections = FALSE;
+
+static void AdjustDebugMenu(HMENU hDebugMenu) {
+	if (hDebugMenu) {
+		AFX_MSGMAP_ENTRY afxMessageMapEntry[5];
+		HMENU hDebugPopup;
+		MENUITEMINFO miiDebugPopup;
+		miiDebugPopup.cbSize = sizeof(MENUITEMINFO);
+		miiDebugPopup.fMask = MIIM_SUBMENU;
+		if (!GetMenuItemInfo(hDebugMenu, 0, TRUE, &miiDebugPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
+			return;
+		}
+		hDebugPopup = miiDebugPopup.hSubMenu;
+
+		// Insert in reverse order.
+		// Separator between the disasters and internal debugging functions.
+		if (!InsertMenu(hDebugPopup, 11, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #1 failed, error = 0x%08X.\n", GetLastError());
+			return;
+		}
+		// Separator between grants and disasters
+		if (!InsertMenu(hDebugPopup, 4, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #2 failed, error = 0x%08X.\n", GetLastError());
+			return;
+		}
+		// Separator between the version option and grants
+		if (!InsertMenu(hDebugPopup, 1, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #3 failed, error = 0x%08X.\n", GetLastError());
+			return;
+		}
+
+		// Insert in reverse order.
+		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_MISSILESILOS, "Propose Missile Silos") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #4 failed, error = 0x%08X.\n", GetLastError());
+			return;
+		}
+		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_NAVALYARD, "Propose Naval Yard") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #5 failed, error = 0x%08X.\n", GetLastError());
+			return;
+		}
+		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_ARMYBASE, "Propose Army Base") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #6 failed, error = 0x%08X.\n", GetLastError());
+			return;
+		}
+		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_AIRFORCE, "Propose Air Force Base") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #7 failed, error = 0x%08X.\n", GetLastError());
+			return;
+		}
+		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_DECLINED, "Stop Military Spawning") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #8 failed, error = 0x%08X.\n", GetLastError());
+			return;
+		}
+
+		afxMessageMapEntry[0] = {
+			WM_COMMAND,
+			0,
+			IDM_DEBUG_MILITARY_DECLINED,
+			IDM_DEBUG_MILITARY_DECLINED,
+			0x0A,
+			ProposeMilitaryBaseDecline,
+		};
+
+		afxMessageMapEntry[1] = {
+			WM_COMMAND,
+			0,
+			IDM_DEBUG_MILITARY_AIRFORCE,
+			IDM_DEBUG_MILITARY_AIRFORCE,
+			0x0A,
+			ProposeMilitaryBaseAirForceBase,
+		};
+
+		afxMessageMapEntry[2] = {
+			WM_COMMAND,
+			0,
+			IDM_DEBUG_MILITARY_ARMYBASE,
+			IDM_DEBUG_MILITARY_ARMYBASE,
+			0x0A,
+			ProposeMilitaryBaseArmyBase,
+		};
+
+		afxMessageMapEntry[3] = {
+			WM_COMMAND,
+			0,
+			IDM_DEBUG_MILITARY_NAVALYARD,
+			IDM_DEBUG_MILITARY_NAVALYARD,
+			0x0A,
+			ProposeMilitaryBaseNavalYard,
+		};
+
+		afxMessageMapEntry[4] = {
+			WM_COMMAND,
+			0,
+			IDM_DEBUG_MILITARY_MISSILESILOS,
+			IDM_DEBUG_MILITARY_MISSILESILOS,
+			0x0A,
+			ProposeMilitaryBaseMissileSilos,
+		};
+
+		VirtualProtect((LPVOID)0x4D4608, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
+		memcpy_s((LPVOID)0x4D4608, sizeof(afxMessageMapEntry), &afxMessageMapEntry, sizeof(afxMessageMapEntry));
+
+		if (mischook_debug & MISCHOOK_DEBUG_MENU)
+			ConsoleLog(LOG_DEBUG, "MISC: Updated debug menu.\n");
+	}
+}
+
+extern "C" void __stdcall Hook_MainFrameOnChar(UINT nChar, UINT nRepCnt, UINT nFlags) {
+	DWORD pThis;
+
+	__asm mov [pThis], ecx
+
+	char nLowerChar;
+	int i, j;
+	int nCurrPos;
+	int *nCodeArr;
+	int nCodePos;
+	char nCodeChar;
+	cheat_t *strCheatEntry;
+	HWND hWnd;
+	DWORD *pSCView;
+	HMENU hMenu, hDebugMenu;
+	DWORD *pMenu, *pDebugMenu;
+	int iSCMenuPos;
+	DWORD jokeDlg[40]; // 27
+
+	void(__cdecl *H_DoFund)(__int16) = (void(__cdecl *)(__int16))0x40191F;
+	void(__thiscall *H_SimcityViewDebugGrantAllGifts)(DWORD *) = (void(__thiscall *)(DWORD *))0x401C0D;
+	int(__thiscall *H_ADialogDestruct)(void *) = (int(__thiscall *)(void *))0x401D7A;
+	void(__thiscall *H_SimcityAppAdjustNewspaperMenu)(void *) = (void(__thiscall *)(void *))0x40210D;
+	DWORD *(__thiscall *H_JokeDialogConstruct)(void *, void *) = (DWORD *(__thiscall *)(void *, void *))0x4024E6;
+	int(__stdcall *H_GetSimcityViewMenuPos)(int iPos) = (int(__stdcall *)(int))0x402EFA;
+	void(__stdcall *H_SimulationProposeMilitaryBase)() = (void(__stdcall *)())0x403017;
+	INT_PTR(__thiscall *H_DialogDoModal)(void *) = (INT_PTR(__thiscall *)(void *))0x4A7196;
+	DWORD *(__stdcall *H_CMenuFromHandle)(HMENU) = (DWORD *(__stdcall *)(HMENU))0x4A7427;
+	int(__thiscall *H_CMenuAttach)(DWORD *, HMENU) = (int(__thiscall *)(DWORD *, HMENU))0x4A7483;
+
+	HINSTANCE &game_hModule = *(HINSTANCE *)0x4CE8C8;
+	int &iCheatEntry = *(int *)0x4E6520;
+	int &iCheatExpectedCharPos = *(int *)0x4E6524;
+	char *szNewItem = (char *)0x4E66EC;
+
+	hWnd = (HWND)((DWORD *)pThis)[7];
+
+	// "Insert" key - only relevant in the demo but pressing it advances
+	// the timer.
+	if (nChar == 45) {
+		// Does nothing here - could be useful for other test cases.
+	}
+		
+	nLowerChar = tolower(nChar);
+TRYAGAIN:
+	if (iCheatEntry != -1) {
+		ConsoleLog(LOG_DEBUG, "Char: (%u)\n", nLowerChar);
+		strCheatEntry = &cheatStrArray[iCheatEntry]; // Cheat entry
+		nCodeArr = cheatCharPos[iCheatEntry]; // Target character position reference array
+		nCodePos = nCodeArr[iCheatExpectedCharPos];
+		nCodeChar = strCheatEntry->pEntry[nCodePos];
+		if (nCodeChar == nLowerChar) {
+			nCurrPos = iCheatExpectedCharPos + 1;
+			iCheatExpectedCharPos = nCurrPos;
+			nCodePos = nCodeArr[nCurrPos];
+			if (nCurrPos != NUM_CHEAT_MAXCHARS && nCodePos != -1) {
+GOBACK:
+				if (iCheatEntry != -1) {
+					ConsoleLog(LOG_DEBUG, "Char: (%u) - GOBACK return;\n", nLowerChar);
+					return;
+				}
+				ConsoleLog(LOG_DEBUG, "Char: (%u) - GOTOTHEND;\n", nLowerChar);
+				goto GETOUT;
+			}
+		}
+		else if (cheatMultipleDetections) {
+			for (i = 0; i < NUM_CHEATS; ++i) {
+				if (i == iCheatEntry)
+					continue;
+				j = cheatStrArray[i].iPos;
+				ConsoleLog(LOG_DEBUG, "(%d/%d)\n", i, j);
+				if (j >= 0) {
+					strCheatEntry = &cheatStrArray[j];
+					nCodeArr = cheatCharPos[j];
+					nCodePos = nCodeArr[iCheatExpectedCharPos];
+					nCodeChar = strCheatEntry->pEntry[nCodePos];
+					ConsoleLog(LOG_DEBUG, "(%d/%d) Char: (%u/%c) [%s] [%d] (%u) (%u)\n", i, j, nLowerChar, nCodeChar, strCheatEntry->pEntry, nCodePos, j, iCheatExpectedCharPos);
+					if (nCodeChar == nLowerChar) {
+						iCheatEntry = j;
+						goto TRYAGAIN;
+					}
+				}
+			}
+			iCheatEntry = -1;
+			goto GOBACK;
+		}
+		else {
+			iCheatEntry = -1;
+			goto GOBACK;
+		}
+		ConsoleLog(LOG_DEBUG, "Char: (%d) (%u/%c) [%s] [%d] (%u) (%u)\n", strCheatEntry->iIndex, nLowerChar, nCodeChar, strCheatEntry->pEntry, nCodePos, iCheatEntry, iCheatExpectedCharPos);
+		switch (strCheatEntry->iIndex) {
+			case CHEAT_FUND:
+				H_DoFund(25);
+				break;
+			case CHEAT_CASS:
+				if (!Game_RandomWordLFSRMod(16)) {
+					wSetTriggerDisasterType = DISASTER_FIRESTORM;
+					Game_SimulationPrepareDiasterCoordinates(&dwDisasterPoint, wCityCenterX, wCityCenterY);
+				}
+				dwCityFunds += 250;
+				break;
+			case CHEAT_THEWORKS:
+				pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
+				if (pSCView)
+					H_SimcityViewDebugGrantAllGifts(pSCView);
+				break;
+			case CHEAT_MAJORFLOOD:
+				wSetTriggerDisasterType = DISASTER_MASSFLOODS;
+				Game_SimulationPrepareDiasterCoordinates(&dwDisasterPoint, wCityCenterX, wCityCenterY);
+				break;
+			case CHEAT_PARTTHESEA:
+				// An extrapolation of 'moses' from the Windows 3.1 game.
+				// Once the code is activated it takes a moment for the
+				// flood/wind to halt.
+				if (dwDisasterActive) {
+					if (wCurrentDisasterID == DISASTER_FLOOD ||
+						wCurrentDisasterID == DISASTER_HURRICANE ||
+						wCurrentDisasterID == DISASTER_MASSFLOODS) {
+						if (wDisasterFloodArea > 0)
+							wDisasterFloodArea = 0;
+						if (wDisasterWindy > 0)
+							wDisasterWindy = 0;
+					}
+				}
+				break;
+			case CHEAT_FIRESTORM:
+				wSetTriggerDisasterType = DISASTER_FIRESTORM;
+				Game_SimulationPrepareDiasterCoordinates(&dwDisasterPoint, wCityCenterX, wCityCenterY);
+				break;
+			case CHEAT_DEBUG:
+				if (bPriscillaActivated)
+					return;
+				hMenu = GetMenu(hWnd);
+				pMenu = H_CMenuFromHandle(hMenu);
+				pDebugMenu = (DWORD *)operator new(8); // This would be CMenu().
+				if (pDebugMenu)
+					pDebugMenu[1] = 0;
+				hDebugMenu = LoadMenuA(game_hModule, (LPCSTR)223);
+				AdjustDebugMenu(hDebugMenu);
+				H_CMenuAttach(pDebugMenu, hDebugMenu);
+				iSCMenuPos = H_GetSimcityViewMenuPos(6);
+				InsertMenuA((HMENU)pMenu[1], iSCMenuPos + 6, MF_BYPOSITION|MF_POPUP, pDebugMenu[1], szNewItem);
+				H_SimcityAppAdjustNewspaperMenu(&pCSimcityAppThis);
+				DrawMenuBar(hWnd);
+				bPriscillaActivated = 1;
+				break;
+			case CHEAT_MILITARY:
+				H_SimulationProposeMilitaryBase();
+				break;
+			case CHEAT_JOKE:
+				H_JokeDialogConstruct((void *)&jokeDlg, 0);
+				H_DialogDoModal((void *)&jokeDlg);
+				H_ADialogDestruct((void *)&jokeDlg); // Function name references "A" dialog rather than anything specific.
+				break;
+			case CHEAT_WEBB:
+				// Pending
+				break;
+			case CHEAT_OOPS:
+				MessageBoxA(hWnd, "Same to you, buddy!", "Hey!", MB_ICONEXCLAMATION | MB_OK);
+				if (iChurchVirus < 0)
+					iChurchVirus = 0; // Warning
+				else if (iChurchVirus == 0)
+					iChurchVirus = 1; // You asked for it!
+				break;
+			case CHEAT_REPENT:
+				if (iChurchVirus > 0) {
+					if (MessageBoxA(hWnd, "Tea Father?", gamePrimaryKey, MB_ICONINFORMATION | MB_YESNO) == IDYES)
+						iChurchVirus = 0; // Set it back to 0 rather than -1; the next execution of the related cheats will result in immediate action.
+					else
+						goto NO;
+				}
+				else {
+					if (iChurchVirus == 0)
+						iChurchVirus = -1; // Set back to -1 if executed once more.
+NO:
+					MessageBoxA(hWnd, "Oh go on..", gamePrimaryKey, MB_ICONEXCLAMATION | MB_OK);
+				}
+				break;
+			default:
+				break;
+		}
+		ConsoleLog(LOG_DEBUG, "Char: (%u) - Reached.\n", nLowerChar);
+		iCheatEntry = -1;
+		iCheatExpectedCharPos = 0;
+		goto GOBACK;
+	}
+
+	iCheatEntry = -1;
+	iCheatExpectedCharPos = 0;
+
+	cheatMultipleDetections = FALSE;
+	for (i = 0; i < NUM_CHEATS; ++i) {
+		strCheatEntry = &cheatStrArray[i];
+		if (strCheatEntry) {
+			strCheatEntry->iPos = -1;
+			if (*strCheatEntry->pEntry == nLowerChar) {
+				strCheatEntry->iPos = i;
+				if (iCheatEntry < 0) {
+					iCheatExpectedCharPos = 1;
+					iCheatEntry = strCheatEntry->iPos;
+				}
+				else
+					cheatMultipleDetections = TRUE;
+				ConsoleLog(LOG_DEBUG, "Char (%u == %c) [%s] Idx(%d) (%c)\n", nLowerChar, *strCheatEntry->pEntry, strCheatEntry->pEntry, i, (cheatMultipleDetections) ? 'Y' : 'N');
+			}
+		}
+		ConsoleLog(LOG_DEBUG, "- (%d/%d)\n", i, cheatStrArray[i].iPos);
+	}
+
+GETOUT:
+	if (iCheatEntry == -1)
+		iCheatExpectedCharPos = 0;
+}
+
 extern "C" void __stdcall Hook_SimcityDocUpdateDocumentTitle() {
 	DWORD pThis;
 
@@ -1815,7 +2207,7 @@ extern "C" void __stdcall Hook_SimulationStartDisaster(void) {
 	void(__stdcall *H_SimulationStartDisaster)() = (void(__stdcall *)())0x45CF10;
 
 	if (mischook_debug & MISCHOOK_DEBUG_DISASTERS)
-		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> SimulationStartDisaster(), wDisasterType = %u.\n", _ReturnAddress(), wDisasterType);
+		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> SimulationStartDisaster(), wDisasterType = %u.\n", _ReturnAddress(), wSetTriggerDisasterType);
 
 	H_SimulationStartDisaster();
 }
@@ -2303,9 +2695,14 @@ void InstallMiscHooks_SC2K1996(void) {
 		InstallQueryHooks();
 
 	// Fix the broken cheat
+	// *** Only effective when the 'CMainFrame::OnChar' below is disabled. ***
 	UINT uCheatPatch[9] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
 	memcpy_s((LPVOID)0x4E65C8, 10, "mrsoleary", 10);
 	memcpy_s((LPVOID)0x4E6490, sizeof(uCheatPatch), uCheatPatch, sizeof(uCheatPatch));
+
+	// Hook for CMainFrame::OnChar
+	VirtualProtect((LPVOID)0x4029E1, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4029E1, Hook_MainFrameOnChar);
 
 	// Increase sound buffer sizes to 256K each
 	VirtualProtect((LPVOID)0x480C2B, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -2428,111 +2825,10 @@ void InstallMiscHooks_SC2K1996(void) {
 
 skipgamemenu:
 
+	// This case only occurs if the debug menu has been loaded
+	// from the original non-hooked CMainFrame::OnChar function.
 	hDebugMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(223));
-	if (hDebugMenu) {
-		AFX_MSGMAP_ENTRY afxMessageMapEntry[5];
-		HMENU hDebugPopup;
-		MENUITEMINFO miiDebugPopup;
-		miiDebugPopup.cbSize = sizeof(MENUITEMINFO);
-		miiDebugPopup.fMask = MIIM_SUBMENU;
-		if (!GetMenuItemInfo(hDebugMenu, 0, TRUE, &miiDebugPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
-			goto skipdebugmenu;
-		}
-		hDebugPopup = miiDebugPopup.hSubMenu;
-
-		// Insert in reverse order.
-		// Separator between the disasters and internal debugging functions.
-		if (!InsertMenu(hDebugPopup, 11, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #1 failed, error = 0x%08X.\n", GetLastError());
-			goto skipdebugmenu;
-		}
-		// Separator between grants and disasters
-		if (!InsertMenu(hDebugPopup, 4, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #2 failed, error = 0x%08X.\n", GetLastError());
-			goto skipdebugmenu;
-		}
-		// Separator between the version option and grants
-		if (!InsertMenu(hDebugPopup, 1, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #3 failed, error = 0x%08X.\n", GetLastError());
-			goto skipdebugmenu;
-		}
-		
-		// Insert in reverse order.
-		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_MISSILESILOS, "Propose Missile Silos") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #4 failed, error = 0x%08X.\n", GetLastError());
-			goto skipdebugmenu;
-		}
-		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_NAVALYARD, "Propose Naval Yard") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #5 failed, error = 0x%08X.\n", GetLastError());
-			goto skipdebugmenu;
-		}
-		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_ARMYBASE, "Propose Army Base") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #6 failed, error = 0x%08X.\n", GetLastError());
-			goto skipdebugmenu;
-		}
-		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_AIRFORCE, "Propose Air Force Base") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #7 failed, error = 0x%08X.\n", GetLastError());
-			goto skipdebugmenu;
-		}
-		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_DECLINED, "Stop Military Spawning") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #8 failed, error = 0x%08X.\n", GetLastError());
-			goto skipdebugmenu;
-		}
-
-		afxMessageMapEntry[0] = {
-			WM_COMMAND,
-			0,
-			IDM_DEBUG_MILITARY_DECLINED,
-			IDM_DEBUG_MILITARY_DECLINED,
-			0x0A,
-			ProposeMilitaryBaseDecline,
-		};
-
-		afxMessageMapEntry[1] = {
-			WM_COMMAND,
-			0,
-			IDM_DEBUG_MILITARY_AIRFORCE,
-			IDM_DEBUG_MILITARY_AIRFORCE,
-			0x0A,
-			ProposeMilitaryBaseAirForceBase,
-		};
-
-		afxMessageMapEntry[2] = {
-			WM_COMMAND,
-			0,
-			IDM_DEBUG_MILITARY_ARMYBASE,
-			IDM_DEBUG_MILITARY_ARMYBASE,
-			0x0A,
-			ProposeMilitaryBaseArmyBase,
-		};
-
-		afxMessageMapEntry[3] = {
-			WM_COMMAND,
-			0,
-			IDM_DEBUG_MILITARY_NAVALYARD,
-			IDM_DEBUG_MILITARY_NAVALYARD,
-			0x0A,
-			ProposeMilitaryBaseNavalYard,
-		};
-
-		afxMessageMapEntry[4] = {
-			WM_COMMAND,
-			0,
-			IDM_DEBUG_MILITARY_MISSILESILOS,
-			IDM_DEBUG_MILITARY_MISSILESILOS,
-			0x0A,
-			ProposeMilitaryBaseMissileSilos,
-		};
-
-		VirtualProtect((LPVOID)0x4D4608, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
-		memcpy_s((LPVOID)0x4D4608, sizeof(afxMessageMapEntry), &afxMessageMapEntry, sizeof(afxMessageMapEntry));
-
-		if (mischook_debug & MISCHOOK_DEBUG_MENU)
-			ConsoleLog(LOG_DEBUG, "MISC: Updated debug menu.\n");
-	}
-
-skipdebugmenu:
+	AdjustDebugMenu(hDebugMenu);
 
 	// Hook for the game area leftmousebuttondown call.
 	VirtualProtect((LPVOID)0x401523, 5, PAGE_EXECUTE_READWRITE, &dwDummy);

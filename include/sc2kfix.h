@@ -293,6 +293,8 @@ void LoadNativeCodeMods(void);
 
 DWORD WINAPI KurokoThread(LPVOID lpParameter);
 
+extern const char *gamePrimaryKey;
+
 extern BOOL bGameDead;
 extern HMODULE hRealWinMM;
 extern HMODULE hSC2KAppModule;
