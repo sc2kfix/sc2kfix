@@ -237,6 +237,8 @@ BOOL ConsoleCmdSet(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdSetDebug(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdSetTile(const char* szCommand, const char* szArguments);
 
+extern const char *gamePrimaryKey;
+
 extern BOOL bGameDead;
 extern HMODULE hRealWinMM;
 extern HMODULE hSC2KAppModule;

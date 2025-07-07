@@ -23,8 +23,6 @@
 
 #pragma intrinsic(_ReturnAddress)
 
-extern const char *gamePrimaryKey;
-
 // Global variables that we need to keep handy
 BOOL bGameDead = FALSE;
 HMODULE hRealWinMM = NULL;
