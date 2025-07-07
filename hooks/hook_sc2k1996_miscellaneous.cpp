@@ -38,6 +38,8 @@
 #define MISCHOOK_DEBUG DEBUG_FLAGS_EVERYTHING
 #endif
 
+#define MAX_USER_LABELS 51
+
 UINT mischook_debug = MISCHOOK_DEBUG;
 
 static DWORD dwDummy;
@@ -47,6 +49,8 @@ DLGPROC lpNewCityAfxProc = NULL;
 char szTempMayorName[24] = { 0 };
 
 static int iChurchVirus = -1;
+
+static const char *theHouse = "Ilona's House";
 
 // Override some strings that have egregiously bad grammar/capitalization.
 // Maxis fail English? That's unpossible!
@@ -328,7 +332,7 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		if (!GetDlgItemText(hwndDlg, 150, szTempMayorName, 24))
 			strcpy_s(szTempMayorName, 24, szSettingsMayorName);
 
-		strcpy_s(dwMapXLAB[0]->szLabel, 24, szTempMayorName);
+		strcpy_s(dwMapXLAB[0][0].szLabel, 24, szTempMayorName);
 
 		// XXX - this should probably be moved to a separate proper hook into the game itself
 		for (const auto& hook : stHooks_Hook_OnNewCity_Before) {
@@ -788,7 +792,7 @@ GOGENERALZONEITEMPLACE:
 			else {
 				if ((__int16)iAttributes < TILE_ROAD_LR)
 					goto GOUNDCHECKTHENYINCREASE;
-				if ((unsigned __int16)Game_RandomWordLFSRMod128(iPosAttributes))
+				if ((unsigned __int16)Game_RandomWordLFSRMod128())
 					goto GOAFTERSETXBIT;
 				if ((__int16)iAttributes >= TILE_ROAD_LR && (__int16)iAttributes < TILE_RAIL_LR ||
 					(__int16)iAttributes >= TILE_CROSSOVER_POWERTB_ROADLR && (__int16)iAttributes < TILE_CROSSOVER_POWERTB_RAILLR ||
@@ -958,7 +962,7 @@ GOAFTERSETXBIT:
 				}
 			}
 GOUNDCHECKTHENYINCREASE:
-			if (!(unsigned __int16)Game_RandomWordLFSRMod128(iPosAttributes)) {
+			if (!(unsigned __int16)Game_RandomWordLFSRMod128()) {
 				P_LOBYTE(iAttributes) = dwMapXUND[iX][iY].iTileID;
 				iAttributes &= 0xFFFF00FF;
 				if ((__int16)iAttributes >= TILE_RUBBLE1 && (__int16)iAttributes < TILE_POWERLINES_HTB ||
@@ -1695,6 +1699,127 @@ static void AdjustDebugMenu(HMENU hDebugMenu) {
 	}
 }
 
+static int FindTheHouseLabel() {
+	for (int i = 1; i < MAX_USER_LABELS; ++i) {
+		if (dwMapXLAB[0][i].szLabel && _stricmp(dwMapXLAB[0][i].szLabel, theHouse)==0) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+static void SetTheHouseLabel(int xPos, int ySignPos) {
+	__int16 iLabelIdx;
+	WORD iTextLen;
+
+	char(__stdcall *H_PrepareLabel)() = (char(__stdcall *)())0x402D56;
+
+	if (dwMapXTXT[xPos][ySignPos].bTextOverlay) {
+		if (dwMapXTXT[xPos][ySignPos].bTextOverlay >= MAX_USER_LABELS)
+			return;
+	}
+	iLabelIdx = H_PrepareLabel();
+	if (iLabelIdx) {
+		dwMapXTXT[xPos][ySignPos].bTextOverlay = (BYTE)iLabelIdx;
+		iTextLen = (WORD)strlen(theHouse);
+		memcpy(&dwMapXLAB[0][(int)iLabelIdx], theHouse, iTextLen);
+		dwMapXLAB[0][iLabelIdx].szLabel[iTextLen] = 0;
+	}
+}
+
+static BOOL FindTheHouse() {
+	__int16 xPos, yPos, xWindPos, ySignPos;
+	__int16 iLength, iDepth, iLabelIdx;
+
+	void(__cdecl *H_RemoveLabel)(__int16) = (void(__cdecl *)(__int16))0x401DCA;
+
+	xPos = -1;
+	yPos = -1;
+	ySignPos = -1;
+	for (iLength = 0; iLength < GAME_MAP_SIZE; ++iLength) {
+		for (iDepth = 0; iDepth < GAME_MAP_SIZE; ++iDepth) {
+			if (dwMapXBLD[iLength][iDepth].iTileID == TILE_COMMERCIAL_1X1_BEDANDBREAKFAST) {
+				if (dwMapXZON[iLength][iDepth].b.iZoneType == ZONE_NONE) {
+					xPos = iLength;
+					yPos = iDepth;
+					xWindPos = xPos - 1;
+					ySignPos = yPos - 1;
+					break;
+				}
+			}
+		}
+	}
+	iLabelIdx = FindTheHouseLabel();
+	if (xPos != -1 && yPos != -1) {
+		// Set the sign if it is missing.
+		if (iLabelIdx < 0)
+			SetTheHouseLabel(xPos, ySignPos);
+		// Set the Wind PowerPlant if it's not present
+		// (assuming the spot is still available).
+		Game_ItemPlacementCheck(xWindPos, yPos, TILE_POWERPLANT_WIND, 1);
+		Game_CenterOnTileCoords(xPos, yPos);
+		return TRUE;
+	}
+	if (iLabelIdx > 0 && iLabelIdx < MAX_USER_LABELS) {
+		for (iLength = 0; iLength < GAME_MAP_SIZE; ++iLength) {
+			for (iDepth = 0; iDepth < GAME_MAP_SIZE; ++iDepth) {
+				if (dwMapXTXT[iLength][iDepth].bTextOverlay == iLabelIdx) {
+					H_RemoveLabel(iLabelIdx);
+					dwMapXTXT[iLength][iDepth].bTextOverlay = 0;
+					break;
+				}
+			}
+		}
+	}
+	return FALSE;
+}
+
+static BOOL BuildTheHouse() {
+	int iAttempts;
+	__int16 xPos;
+	__int16 yPos;
+	__int16 xWindPos;
+	__int16 ySignPos;
+
+	map_XTER_t **dwMapXTERPrevX = (map_XTER_t **)0x4C9F54;
+
+	iAttempts = 0;
+	while (TRUE) {
+RETRY:
+		xPos = Game_RandomWordLFSRMod128();
+		yPos = Game_RandomWordLFSRMod128();
+		xWindPos = xPos - 1;
+		ySignPos = yPos - 1;
+		if (xWindPos < 0 || ySignPos < 0)
+			goto RETRY;
+		if (dwMapXBLD[xPos][yPos].iTileID < TILE_SMALLPARK) {
+			if (dwMapXBLD[xPos][ySignPos].iTileID < TILE_SMALLPARK &&
+				dwMapXBLD[xWindPos][yPos].iTileID < TILE_SMALLPARK) {
+				if (!dwMapXTER[xPos][yPos].iTileID &&
+					!dwMapXTER[xPos][ySignPos].iTileID &&
+					!dwMapXTERPrevX[xPos][yPos].iTileID &&
+					(xPos < 0 || yPos >= GAME_MAP_SIZE || !dwMapXBIT[xPos][yPos].b.iWater) &&
+					(xPos >= GAME_MAP_SIZE || ySignPos >= GAME_MAP_SIZE || !dwMapXBIT[xPos][ySignPos].b.iWater) &&
+					(xWindPos >= GAME_MAP_SIZE || yPos >= GAME_MAP_SIZE || !dwMapXBIT[xWindPos][yPos].b.iWater)) {
+					if (dwMapALTM[xPos][yPos].w.iLandAltitude == dwMapALTM[xPos][ySignPos].w.iLandAltitude &&
+						dwMapALTM[xPos][yPos].w.iLandAltitude == dwMapALTM[xWindPos][yPos].w.iLandAltitude) {
+						if (Game_ItemPlacementCheck(xPos, yPos, TILE_COMMERCIAL_1X1_BEDANDBREAKFAST, 1)) {
+							SetTheHouseLabel(xPos, ySignPos);
+							Game_ItemPlacementCheck(xWindPos, yPos, TILE_POWERPLANT_WIND, 1);
+							Game_CenterOnTileCoords(xPos, yPos);
+							return TRUE;
+						}
+					}
+				}
+			}
+		}
+
+		if (++iAttempts >= 100)
+			break;
+	}
+	return FALSE;
+}
+
 extern "C" void __stdcall Hook_MainFrameOnChar(UINT nChar, UINT nRepCnt, UINT nFlags) {
 	DWORD pThis;
 
@@ -1712,7 +1837,7 @@ extern "C" void __stdcall Hook_MainFrameOnChar(UINT nChar, UINT nRepCnt, UINT nF
 	HMENU hMenu, hDebugMenu;
 	DWORD *pMenu, *pDebugMenu;
 	int iSCMenuPos;
-	DWORD jokeDlg[40]; // 27
+	DWORD jokeDlg[27];
 
 	void(__cdecl *H_DoFund)(__int16) = (void(__cdecl *)(__int16))0x40191F;
 	void(__thiscall *H_SimcityViewDebugGrantAllGifts)(DWORD *) = (void(__thiscall *)(DWORD *))0x401C0D;
@@ -1844,7 +1969,10 @@ GOBACK:
 				H_ADialogDestruct((void *)&jokeDlg); // Function name references "A" dialog rather than anything specific.
 				break;
 			case CHEAT_WEBB:
-				// Pending
+				if (!FindTheHouse()) {
+					if (!BuildTheHouse())
+						MessageBoxA(hWnd, "Sorry, no room to build Ilona's house!", gamePrimaryKey, MB_ICONINFORMATION | MB_OK);
+				}
 				break;
 			case CHEAT_OOPS:
 				MessageBoxA(hWnd, "Same to you, buddy!", "Hey!", MB_ICONEXCLAMATION | MB_OK);
