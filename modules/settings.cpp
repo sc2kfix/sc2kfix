@@ -138,7 +138,7 @@ void SaveSettings(BOOL onload) {
 
 	if (!onload) {
 		// Update any hooks we need to.
-		if (dwSC2KFixVersion == SC2KVERSION_1996)
+		if (dwDetectedVersion == SC2KVERSION_1996)
 			UpdateMiscHooks_SC2K1996();
 	}
 }
