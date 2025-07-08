@@ -2122,8 +2122,9 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 	DWORD dwCityProgressionRequirement;
 	BYTE iPaperVal;
 	BOOL bScenarioSuccess;
+	BOOL bDoTileHighlightUpdate;
+	DWORD *pSCApp;
 	DWORD *pSCView;
-	POINT pt;
 
 	void(__stdcall *H_UpdateGraphDialog)() = (void(__stdcall *)())0x4010A5;
 	void(__stdcall *H_SimulationPollutionTerrainAndLandValueScan)() = (void(__stdcall *)())0x401154;
@@ -2299,20 +2300,46 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 			return;
 	}
 
-	if (wSimulationSpeed == GAME_SPEED_AFRICAN_SWALLOW || (bSettingsFrequentCityRefresh && wSimulationSpeed != GAME_SPEED_PAUSED)) {
+	// Explanation:
+	// !bSettingsFrequentCityRefresh - It will do the tile highlight update if:
+	// 1) wSimulationSpeed is set to African Swallow
+	// 2) pSCApp[198] is true (AnimationOffCycle) or it is game day 21 - CDocument::UpdateAllViews case.
+	//
+	// bSettingsFrequentCityRefresh - Tile highlight updates only occur if wSimulationSpeed
+	// isn't set to paused.
+
+	bDoTileHighlightUpdate = FALSE;
+	pSCApp = &pCSimcityAppThis;
+	if (!bSettingsFrequentCityRefresh) {
+		if (wSimulationSpeed == GAME_SPEED_AFRICAN_SWALLOW) {
+			if (pSCApp[198] || dwMonDay == 21)
+				bDoTileHighlightUpdate = TRUE;
+		}
+	}
+	else {
+		if (wSimulationSpeed != GAME_SPEED_PAUSED) {
+			bDoTileHighlightUpdate = TRUE;
+		}
+	}
+
+	if (bDoTileHighlightUpdate) {
 		pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
 		if (pSCView) {
-			if (wSimulationSpeed >= GAME_SPEED_CHEETAH) {
-				GetCursorPos(&pt);
-				if (wCityMode && Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y) < 0x8000) {
-					// It should be noted that the highlight will only appear with a valid selected tool.
-					// If you attempt to press Shift or Control (for the bulldozer or query) while an
-					// invalid tool is selected, there'll be no placement highlighted (this matches the
-					// behaviour in the normal game as well).
-					if (wCurrentCityToolGroup != TOOL_GROUP_CENTERINGTOOL) {
+			if (wCityMode) {
+				// It should be noted that the highlight will only appear with a valid selected tool.
+				// If you attempt to press Shift or Control (for the bulldozer or query) while an
+				// invalid tool is selected, there'll be no placement highlighted (this matches the
+				// behaviour in the normal game as well).
+				if (wCurrentCityToolGroup != TOOL_GROUP_CENTERINGTOOL) {
+					if (wTileCoordinateX < 0 || wTileCoordinateX >= GAME_MAP_SIZE ||
+						wTileCoordinateY < 0 || wTileCoordinateY >= GAME_MAP_SIZE) {
+						wTileHighlightActive = 0;
+					}
+					else {
 						wTileHighlightActive = 1;
 						L_TileHighlightUpdate(pSCView);
 					}
+					H_SimcityViewMaintainCursor(pSCView);
 				}
 			}
 		}
