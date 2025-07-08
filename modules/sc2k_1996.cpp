@@ -6,6 +6,137 @@
 
 #include <sc2kfix.h>
 
+const char *getXTERNames(BYTE iVal) {
+	if (iVal == TERRAIN_00)
+		return "TERRAIN_00";
+	else if (iVal == TERRAIN_01)
+		return "TERRAIN_01";
+	else if (iVal == TERRAIN_02)
+		return "TERRAIN_02";
+	else if (iVal == TERRAIN_03)
+		return "TERRAIN_03";
+	else if (iVal == TERRAIN_04)
+		return "TERRAIN_04";
+	else if (iVal == TERRAIN_05)
+		return "TERRAIN_05";
+	else if (iVal == TERRAIN_06)
+		return "TERRAIN_06";
+	else if (iVal == TERRAIN_07)
+		return "TERRAIN_07";
+	else if (iVal == TERRAIN_08)
+		return "TERRAIN_08";
+	else if (iVal == TERRAIN_09)
+		return "TERRAIN_09";
+	else if (iVal == TERRAIN_10)
+		return "TERRAIN_10";
+	else if (iVal == TERRAIN_11)
+		return "TERRAIN_11";
+	else if (iVal == TERRAIN_12)
+		return "TERRAIN_12";
+	else if (iVal == TERRAIN_13)
+		return "TERRAIN_13";
+	else if (iVal == SUBMERGED_00)
+		return "SUBMERGED_00";
+	else if (iVal == SUBMERGED_01)
+		return "SUBMERGED_01";
+	else if (iVal == SUBMERGED_02)
+		return "SUBMERGED_02";
+	else if (iVal == SUBMERGED_03)
+		return "SUBMERGED_03";
+	else if (iVal == SUBMERGED_04)
+		return "SUBMERGED_04";
+	else if (iVal == SUBMERGED_05)
+		return "SUBMERGED_05";
+	else if (iVal == SUBMERGED_06)
+		return "SUBMERGED_06";
+	else if (iVal == SUBMERGED_07)
+		return "SUBMERGED_07";
+	else if (iVal == SUBMERGED_08)
+		return "SUBMERGED_08";
+	else if (iVal == SUBMERGED_09)
+		return "SUBMERGED_09";
+	else if (iVal == SUBMERGED_10)
+		return "SUBMERGED_10";
+	else if (iVal == SUBMERGED_11)
+		return "SUBMERGED_11";
+	else if (iVal == SUBMERGED_12)
+		return "SUBMERGED_12";
+	else if (iVal == SUBMERGED_13)
+		return "SUBMERGED_13";
+	else if (iVal == COAST_00)
+		return "COAST_00";
+	else if (iVal == COAST_01)
+		return "COAST_01";
+	else if (iVal == COAST_02)
+		return "COAST_02";
+	else if (iVal == COAST_03)
+		return "COAST_03";
+	else if (iVal == COAST_04)
+		return "COAST_04";
+	else if (iVal == COAST_05)
+		return "COAST_05";
+	else if (iVal == COAST_06)
+		return "COAST_06";
+	else if (iVal == COAST_07)
+		return "COAST_07";
+	else if (iVal == COAST_08)
+		return "COAST_08";
+	else if (iVal == COAST_09)
+		return "COAST_09";
+	else if (iVal == COAST_10)
+		return "COAST_10";
+	else if (iVal == COAST_11)
+		return "COAST_11";
+	else if (iVal == COAST_12)
+		return "COAST_12";
+	else if (iVal == COAST_13)
+		return "COAST_13";
+	else if (iVal == SURFACE_WATER_00)
+		return "SURFACE_WATER_00";
+	else if (iVal == SURFACE_WATER_01)
+		return "SURFACE_WATER_01";
+	else if (iVal == SURFACE_WATER_02)
+		return "SURFACE_WATER_02";
+	else if (iVal == SURFACE_WATER_03)
+		return "SURFACE_WATER_03";
+	else if (iVal == SURFACE_WATER_04)
+		return "SURFACE_WATER_04";
+	else if (iVal == SURFACE_WATER_05)
+		return "SURFACE_WATER_05";
+	else if (iVal == SURFACE_WATER_06)
+		return "SURFACE_WATER_06";
+	else if (iVal == SURFACE_WATER_07)
+		return "SURFACE_WATER_07";
+	else if (iVal == SURFACE_WATER_08)
+		return "SURFACE_WATER_08";
+	else if (iVal == SURFACE_WATER_09)
+		return "SURFACE_WATER_09";
+	else if (iVal == SURFACE_WATER_10)
+		return "SURFACE_WATER_10";
+	else if (iVal == SURFACE_WATER_11)
+		return "SURFACE_WATER_11";
+	else if (iVal == SURFACE_WATER_12)
+		return "SURFACE_WATER_12";
+	else if (iVal == SURFACE_WATER_13)
+		return "SURFACE_WATER_13";
+	else if (iVal == WATERFALL)
+		return "WATERFALL";
+	else if (iVal == SURFACE_STREAM_00)
+		return "SURFACE_STREAM_00";
+	else if (iVal == SURFACE_STREAM_01)
+		return "SURFACE_STREAM_01";
+	else if (iVal == SURFACE_STREAM_02)
+		return "SURFACE_STREAM_02";
+	else if (iVal == SURFACE_STREAM_03)
+		return "SURFACE_STREAM_03";
+	else if (iVal == SURFACE_STREAM_04)
+		return "SURFACE_STREAM_04";
+	else if (iVal == SURFACE_STREAM_05)
+		return "SURFACE_STREAM_05";
+	else
+		return "<invalid>";
+}
+
 const char* szTileNames[256] = {
 	"Empty",
 	"Rubble 1",

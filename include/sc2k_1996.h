@@ -54,6 +54,8 @@
 
 #define GAME_MAP_SIZE 128
 
+class CMFC3XString;
+
 // Enums
 
 // Disaster IDs
@@ -908,12 +910,13 @@ GAMECALL(0x4011E5, int, __thiscall, MapToolSoundTrigger, void* pThis)
 GAMECALL(0x4012C1, int, __cdecl, SpawnItem, __int16 x, __int16 y)
 GAMECALL(0x401460, char, __cdecl, SimulationProvisionMicrosim, __int16, int, __int16 iTileID) // The first two arguments aren't clear, though they "could" be the X/Y tile coordinates.
 GAMECALL(0x4014CE, int, __cdecl, SpawnAeroplane, __int16 x, __int16 y, __int16 iDirection)
-GAMECALL(0x4014F1, int, __thiscall, TileHighlightUpdate, int pThis)
+GAMECALL(0x4014F1, int, __thiscall, TileHighlightUpdate, void *pThis)
 GAMECALL(0x40150A, int, __thiscall, ExitRequester, void *pThis, int iSource)
 GAMECALL(0x4015A0, void, __thiscall, DoSaveCity, void *pThis)
 GAMECALL(0x401519, void, __thiscall, ToolMenuEnable, void* pThis)
 GAMECALL(0x4016D1, int, __thiscall, CenterOnNewScreenCoordinates, void *pThis, __int16 iNewScreenPointX, __int16 iNewScreenPointY)
 GAMECALL(0x4016F9, int, __cdecl, PlaceChurch, __int16 x, __int16 y)
+GAMECALL(0x40174E, void, __cdecl, SimulationPrepareDiasterCoordinates, POINT *pt, __int16 x, __int16 y)
 GAMECALL(0x40178F, __int16, __cdecl, PlaceTileWithMilitaryCheck, __int16 x, __int16 y, __int16 iTileID)
 GAMECALL(0x401857, int, __cdecl, MapToolPlaceTree, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x40198D, int, __cdecl, MapToolPlaceStream, __int16 iTileTargetX, __int16 iTileTargetY, __int16) // XXX - the last parameter isn't entirely clear, perhaps area or offset?
@@ -935,7 +938,7 @@ GAMECALL(0x40209F, __int16, __cdecl, SpawnTrain, __int16 x, __int16 y)
 GAMECALL(0x402211, unsigned int, __thiscall, DestroyStructure, DWORD *pThis, __int16 x, __int16 y, int iExplosion)
 GAMECALL(0x40226B, int, __thiscall, UpdateAreaPortionFill, void *) // This appears to do a partial update of selected/highlighted area while appearing to dispense with immediate color updates.
 GAMECALL(0x402289, char, __cdecl, PerhapsGeneralZoneChooseAndPlaceBuilding, __int16 x, __int16 y, __int16 iBuildingPopLevel, __int16)
-GAMECALL(0x40235B, int, __stdcall, DrawSquareHighlight, WORD wX1, WORD wY1, WORD wX2, WORD wY2)
+GAMECALL(0x40235B, int, __thiscall, DrawSquareHighlight, DWORD *pThis, WORD wX1, WORD wY1, WORD wX2, WORD wY2)
 GAMECALL(0x4023B0, int, __cdecl, IsValidTransitItems, __int16 x, __int16 y)
 GAMECALL(0x4023EC, void, __stdcall, ToolMenuUpdate, void)
 GAMECALL(0x402414, int, __thiscall, MusicPlay, DWORD pThis, int iSongID)
@@ -943,7 +946,7 @@ GAMECALL(0x402478, int, __cdecl, SpawnHelicopter, __int16 x, __int16 y)
 GAMECALL(0x4024FA, char, __cdecl, PerhapsGeneralZoneChangeBuilding, __int16 x, __int16 y, __int16 iBuldingPopLevel, int iTileID)
 GAMECALL(0x40258B, int, __cdecl, GetScreenCoordsFromTileCoords, __int16 iTileTargetX, __int16 iTileTargetY, WORD *wNewScreenPointX, WORD *wNewScreenPointY)
 GAMECALL(0x402603, __int16, __cdecl, ZonedBuildingTileDeletion, __int16 x, __int16 y)
-GAMECALL(0x402699, int, __thiscall, PointerToCSimcityViewClass, void* CWinAppThis)
+GAMECALL(0x402699, DWORD *, __thiscall, PointerToCSimcityViewClass, void* CSimcityAppThis)
 GAMECALL(0x4026B2, int, __cdecl, SimulationGrowSpecificZone, __int16 x, __int16 y, __int16 iTileID, __int16 iZoneType)
 GAMECALL(0x402725, int, __cdecl, PlacePowerLinesAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x402798, int, __cdecl, MapToolPlaceForest, __int16 iTileTargetX, __int16 iTileTargetY)
@@ -960,7 +963,7 @@ GAMECALL(0x402B2B, int, __cdecl, MapToolStretchTerrain, __int16 iTileTargetX, __
 GAMECALL(0x402B44, __int16, __cdecl, MapToolMenuAction, int iMouseKeys, POINT pt)
 GAMECALL(0x402B94, int, __cdecl, MapToolLevelTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x402C25, int, __cdecl, CityToolMenuAction, int iMouseKeys, POINT pt)
-GAMECALL(0x402CF2, BOOL, __thiscall, CSimcityAppSetGameCursor, DWORD pThis, int iNewCursor, BOOL bActive)
+GAMECALL(0x402CF2, void, __thiscall, SimcityAppSetGameCursor, void *pThis, int iNewCursor, BOOL bActive)
 GAMECALL(0x402F9A, int, __thiscall, GetScreenAreaInfo, DWORD pThis, LPRECT lpRect)
 GAMECALL(0x480140, void, __stdcall, LoadSoundBuffer, int iSoundID, void* pBuffer)
 GAMECALL(0x48A810, DWORD, __cdecl, Direct_MovieCheck, char *sMovStr)
@@ -976,15 +979,17 @@ GAMECALL(0x4B234F, int, __stdcall, AfxMessageBox, unsigned int nIDPrompt, unsign
 
 // Random calls.
 GAMECALL(0x40116D, __int16, __cdecl, RandomWordLCGMod, __int16 iSeed)
+GAMECALL(0x401CAD, __int16, __cdecl, RandomWordLFSRMod, __int16 iSeed)
 GAMECALL(0x402261, __int16, __stdcall, RandomWordLFSRMod4, void)
-GAMECALL(0x402B3F, __int16, __stdcall, RandomWordLFSRMod128, int seed)
+GAMECALL(0x402B3F, __int16, __stdcall, RandomWordLFSRMod128, void)
 
 // Unknown functions that do something we might need them to. Use with extreme care.
 
 // Pointers
 
-GAMEOFF_PTR(void, pCWinAppThis,				0x4C7010)
+GAMEOFF(DWORD,	pCSimcityAppThis,			0x4C7010)
 GAMEOFF(void*,	pCWndRootWindow,			0x4C702C)		// CMainFrame
+GAMEOFF(DWORD,	dwSCAGameAutoSave,			0x4D70E8)
 GAMEOFF(DWORD,	dwCursorGameHit,			0x4C70EC)
 GAMEOFF(BOOL,	bPriscillaActivated,		0x4C7104)
 GAMEOFF(DWORD*, dwAudioHandle,				0x4C7158)		// Various checks have pointed towards audio (sound and/or midi - perhaps stoppage given some context elsewhere)
@@ -998,16 +1003,18 @@ GAMEOFF(WORD,	wGameScreenAreaY,			0x4C7ADC)		// Used here in CSimcityView_WM_LBU
 GAMEOFF(WORD,	wCurrentAngle,				0x4C7CF8)
 GAMEOFF(WORD,	wTileDirection,				0x4C7D60)
 GAMEOFF(WORD,	wMaybeActiveToolGroup,		0x4C7D88)
+GAMEOFF(WORD,	wDisasterFloodArea,			0x4C93A8)
 GAMEOFF(WORD,	wViewRotation,				0x4C942C)
 GAMEOFF(BOOL,	bCityHasOcean,				0x4C94C0)
 GAMEOFF(DWORD,	dwArcologyPopulation,		0x4C94C4)
+GAMEOFF(DWORD,	dwDisasterActive,			0x4C9EE8)
 GAMEOFF(DWORD,	dwCityResidentialPopulation,	0x4CA194)
-GAMEOFF_PTR(char*, pszCityName,				0x4CA1A0)
+GAMEOFF(CMFC3XString, pszCityName,				0x4CA1A0)
 GAMEOFF(WORD,	wNationalEconomyTrend,		0x4CA1BC)
 GAMEOFF(WORD,	wCurrentMapToolGroup,		0x4CA1EC)
 GAMEOFF(WORD,	wCityNeighborConnections1500,	0x4CA3F0)
 GAMEOFF(WORD,	wSubwayXUNDCount,			0x4CA41C)
-GAMEOFF(WORD,	wDisasterType,				0x4CA420)
+GAMEOFF(WORD,	wSetTriggerDisasterType,				0x4CA420)
 GAMEOFF(DWORD *,	pZonePops,					0x4CA428)
 GAMEOFF(WORD,	wCityMode,					0x4CA42C)
 GAMEOFF(int,	dwCityLandValue,			0x4CA440)
@@ -1018,6 +1025,7 @@ GAMEOFF(DWORD,	dwCityGarbage,				0x4CA5F0)		// Unused in vanilla game (sort of)
 GAMEOFF(WORD,	wCityStartYear,				0x4CA5F4)
 GAMEOFF(DWORD,	dwCityUnemployment,			0x4CA5F8)
 GAMEOFF_ARR(DWORD, dwNeighborValue,			0x4CA804)		// DWORD dwNeighborValue[4]
+GAMEOFF(WORD,	wNewspaperChoice,			0x4CA808)
 GAMEOFF(short,	wWaterLevel,				0x4CA818)
 GAMEOFF(WORD,	wMonsterXTHGIndex,			0x4CA81C)
 GAMEOFF(DWORD,	dwNationalPopulation,		0x4CA928)
@@ -1027,6 +1035,7 @@ GAMEOFF(WORD,	wNationalTax,				0x4CA938)
 GAMEOFF(WORD,	wCurrentDisasterID,			0x4CA93C)
 GAMEOFF(DWORD,	dwCityOrdinances,			0x4CAA40)
 GAMEOFF(DWORD,	dwPowerUsedPercentage,		0x4CAA50)
+GAMEOFF(tagPOINT,	dwDisasterPoint,		0x4CAA58)
 GAMEOFF(DWORD,	dwCityPopulation,			0x4CAA74)
 GAMEOFF_ARR(DWORD, dwNeighborPopulation,	0x4CAD10)		// DWORD dwNeighborPopulation[4]
 GAMEOFF(DWORD,	dwCityFame,					0x4CAD28)		// Unused in vanilla game
@@ -1076,7 +1085,23 @@ GAMEOFF_ARR(WORD,	wCityResidentialDemand,		0x4CC8F8)
 GAMEOFF(WORD,	wCityCommericalDemand,		0x4CC8FA)
 GAMEOFF(WORD,	wCityIndustrialDemand,		0x4CC8FC)
 GAMEOFF(DWORD,	dwCityPollution,			0x4CC910)		// Needs reverse engineering. See wiki.
-GAMEOFF(WORD,	wSelectedSubtoolPower,		0x4CC956)
+GAMEOFF(WORD,	wScenarioTimeLimitMonths,	0x4CC91C)
+GAMEOFF(DWORD,	dwScenarioCitySize,			0x4CC91E)
+GAMEOFF(DWORD,	dwScenarioResPopulation,	0x4CC922)
+GAMEOFF(DWORD,	dwScenarioComPopulation,	0x4CC926)
+GAMEOFF(DWORD,	dwScenarioIndPopulation,	0x4CC92A)
+GAMEOFF(DWORD,	dwScenarioCashGoal,			0x4CC92E)
+GAMEOFF(DWORD,	dwScenarioLandValueGoal,	0x4CC932)
+GAMEOFF(WORD,	wScenarioLEGoal,			0x4CC936)
+GAMEOFF(WORD,	wScenarioEQGoal,			0x4CC938)
+GAMEOFF(DWORD,	dwScenarioPollutionLimit,	0x4CC93A)
+GAMEOFF(DWORD,	dwScenarioCrimeLimit,		0x4CC93E)
+GAMEOFF(DWORD,	dwScenarioTrafficLimit,		0x4CC942)
+GAMEOFF(BYTE,	bScenarioBuildingGoal1,		0x4CC946)
+GAMEOFF(BYTE,	bScenarioBuildingGoal2,		0x4CC947)
+GAMEOFF(WORD,	wScenarioBuildingGoal1Count,0x4CC948)
+GAMEOFF(WORD,	wScenarioBuildingGoal2Count,0x4CC94A)
+GAMEOFF_ARR(WORD,	wSelectedSubtool,		0x4CC950)
 GAMEOFF(WORD,	wHighlightedTileX1,			0x4CDB68)
 GAMEOFF(WORD,	wHighlightedTileX2,			0x4CDB6C)
 GAMEOFF(WORD,	wHighlightedTileY1,			0x4CDB70)
@@ -1085,12 +1110,14 @@ GAMEOFF(DWORD,	dwLFSRState,				0x4CDB7C)
 GAMEOFF(DWORD,	dwLCGState,					0x4CDB80)
 GAMEOFF(void*,	pCWinApp,					0x4CE8C0)
 GAMEOFF_ARR(WORD,	wPositionAngle,			0x4DC4C8)
+GAMEOFF_ARR(DWORD,	dwDisasterStringIndex,	0x4E6010)
 GAMEOFF(DWORD,	dwSimulationSubtickCounter,	0x4E63D8)
 GAMEOFF(void*,	pCDocumentMainWindow,		0x4E66F8)
 GAMEOFF(WORD,	wPreviousTileCoordinateX,	0x4E6808)
 GAMEOFF(WORD,	wPreviousTileCoordinateY,	0x4E680C)
 GAMEOFF(void*,	pCSimcityView,				0x4E682C)
 GAMEOFF_ARR(DWORD, dwCityProgressionRequirements, 0x4E6984)
+GAMEOFF(WORD,	wDisasterWindy,				0x4E86B0)
 GAMEOFF(DWORD,	dwNextRefocusSongID,		0x4E6F8C)
 GAMEOFF_ARR(DWORD, dwZoneNameStringIDs,		0x4E7140)
 GAMEOFF_ARR(WORD,	wBuildingPopLevel,		0x4E7458)
@@ -1140,6 +1167,7 @@ GAMEOFF_ARR(map_XLAB_t*,	dwMapXLAB,	0x4CA198)
 GAMEOFF_ARR(map_XTHG_t*,	dwMapXTHG,	0x4CA434)
 GAMEOFF_ARR(DWORD,			dwMapXGRP,	0x4CC470)
 
+extern const char *getXTERNames(BYTE iVal);
 
 static inline int GetTileID(int iTileX, int iTileY) {
 	if (iTileX >= 0 && iTileX < GAME_MAP_SIZE && iTileY >= 0 && iTileY < GAME_MAP_SIZE)
@@ -1149,7 +1177,7 @@ static inline int GetTileID(int iTileX, int iTileY) {
 }
 
 static inline const char* GetXLABEntry(int iLabelID) {
-	return (*dwMapXLAB + iLabelID)->szLabel;
+	return dwMapXLAB[0][iLabelID].szLabel;
 }
 
 static inline sprite_header_t* GetSpriteHeader(int iSpriteID) {
@@ -1157,14 +1185,14 @@ static inline sprite_header_t* GetSpriteHeader(int iSpriteID) {
 }
 
 static inline HPALETTE GameGetPalette(void) {
-	DWORD* CWinAppThis = (DWORD*)pCWinAppThis;
+	DWORD* CSimcityAppThis = &pCSimcityAppThis;
 	DWORD* CPalette;
 
 	// Exactly what sub_4069B0 does.
-	if (CWinAppThis[59])
-		CPalette = (DWORD*)CWinAppThis[67];
+	if (CSimcityAppThis[59])
+		CPalette = (DWORD*)CSimcityAppThis[67];
 	else
-		CPalette = (DWORD*)CWinAppThis[68];
+		CPalette = (DWORD*)CSimcityAppThis[68];
 
 	// ...and this is what CDC::SelectPalette does.
 	return (HPALETTE)CPalette[1];
