@@ -48,6 +48,8 @@ AFX_MSGMAP_ENTRY afxMessageMapMainMenu[9];
 DLGPROC lpNewCityAfxProc = NULL;
 char szTempMayorName[24] = { 0 };
 
+static BOOL bOverrideTickPlacementHighlight = FALSE;
+
 static int iChurchVirus = -1;
 
 static const char *theHouse = "Ilona's House";
@@ -2114,6 +2116,52 @@ GETOUT:
 	H_CStringDest(&cStr);
 }
 
+// Local TileHightlightUpdate function.
+// This is for attempts at mitigating some of
+// the oddities that come with either:
+// 1) African Swallow mode during non-granular updates (batch).
+// 2) Granular updates on all speed levels. (more so for African Swallow and Cheetah)
+static void L_TileHighlightUpdate(DWORD *pThis) {
+	BYTE *vBits;
+	LONG bottom;
+	LONG x;
+	__int16 y;
+
+	int(__cdecl *H_BeginObject)(void *, void *, int, __int16, RECT *) = (int(__cdecl *)(void *, void *, int, __int16, RECT *))0x401226;
+	BOOL(__thiscall *H_SimcityViewMainWindowUpdate)(void *, RECT *, BOOL) = (BOOL(__thiscall *)(void *, RECT *, BOOL))0x40152D;
+	void(__thiscall *H_GraphicsUnlockDIBBits)(void *) = (void(__thiscall *)(void *))0x401BE5;
+	int(__thiscall *H_GraphicsHeight)(void *) = (int(__thiscall *)(void *))0x40216C;
+	LONG(__thiscall *H_GraphicsWidth)(void *) = (LONG(__thiscall *)(void *))0x402419;
+	int(__thiscall *H_SimcityViewCheckOrLoadGraphic)(void *) = (int(__thiscall *)(void *))0x40297D;
+	BOOL(__stdcall *H_FinishObject)() = (BOOL(__stdcall *)())0x402B7B;
+	BYTE *(__thiscall *H_GraphicsLockDIBBits)(void *) = (BYTE *(__thiscall *)(void *))0x402DA1;
+
+	DWORD *pSomeWnd = (DWORD *)0x4CAC18;
+	tagRECT &dRect = *(tagRECT *)0x4CAD48;
+
+	if (wTileHighlightActive) {
+		vBits = H_GraphicsLockDIBBits((void *)pThis[13]);
+		if (vBits || H_SimcityViewCheckOrLoadGraphic(pThis)) {
+			x = H_GraphicsWidth((void *)pThis[13]);
+			y = H_GraphicsHeight((void *)pThis[13]);
+			if (!bOverrideTickPlacementHighlight) {
+				H_BeginObject(pThis, vBits, x, y, (RECT *)pThis + 19);
+				Game_DrawSquareHighlight(pThis, wHighlightedTileX1, wHighlightedTileY1, wHighlightedTileX2, wHighlightedTileY2);
+				H_FinishObject();
+			}
+			H_GraphicsUnlockDIBBits((void *)pThis[13]);
+			bottom = ++dRect.bottom;
+			if (*(DWORD *)((char *)pThis + 322)) {
+				dRect.bottom = bottom + 2;
+				++dRect.right;
+			}
+			H_SimcityViewMainWindowUpdate(pThis, &dRect, 1);
+			if (bOverrideTickPlacementHighlight)
+				wTileHighlightActive = 0;
+		}
+	}
+}
+
 extern "C" void __stdcall Hook_SimulationProcessTick() {
 	int i;
 	DWORD dwMonDay;
@@ -2302,7 +2350,6 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 	if (wSimulationSpeed == GAME_SPEED_AFRICAN_SWALLOW || (bSettingsFrequentCityRefresh && wSimulationSpeed != GAME_SPEED_PAUSED)) {
 		pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
 		if (pSCView) {
-			wTileHighlightActive = 0;
 			if (wSimulationSpeed >= GAME_SPEED_CHEETAH) {
 				GetCursorPos(&pt);
 				if (wCityMode && Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y) < 0x8000) {
@@ -2310,13 +2357,12 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 					// If you attempt to press Shift or Control (for the bulldozer or query) while an
 					// invalid tool is selected, there'll be no placement highlighted (this matches the
 					// behaviour in the normal game as well).
-					if (wCurrentCityToolGroup != TOOL_GROUP_CENTERINGTOOL)
+					if (wCurrentCityToolGroup != TOOL_GROUP_CENTERINGTOOL) {
 						wTileHighlightActive = 1;
+						L_TileHighlightUpdate(pSCView);
+					}
 				}
 			}
-			Game_TileHighlightUpdate(pSCView);
-			UpdateWindow((HWND)pSCView[7]);
-			H_SimcityViewMaintainCursor(pSCView);
 		}
 	}
 }
@@ -2412,6 +2458,7 @@ extern "C" __int16 __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(WPARAM iMouseKeys,
 			else {
 				ret = *(DWORD *)(pThis + 252);
 				if (!ret) {
+					bOverrideTickPlacementHighlight = TRUE;
 					hWnd = SetCapture(*(HWND *)(pThis + 28));
 					Game_CWnd_FromHandle(hWnd);
 					P_LOWORD(ret) = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
@@ -2444,12 +2491,12 @@ extern "C" __int16 __stdcall Hook_CSimcityView_WM_MOUSEMOVE(WPARAM iMouseKeys, P
 	__asm mov [pThis], ecx
 
 	int iTileCoords;
-	int iThisSomething;
+	int iLeftMousDownInGameArea;
 
 	P_LOWORD(iTileCoords) = (WORD)pt.x;
-	iThisSomething = *(DWORD *)(pThis + 252);
+	iLeftMousDownInGameArea = *(DWORD *)(pThis + 252);
 	*(struct tagPOINT *)(pThis + 260) = pt; // Placement position.
-	if (iThisSomething) {
+	if (iLeftMousDownInGameArea) {
 		P_LOWORD(iTileCoords) = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
 		wCurrentTileCoordinates = iTileCoords;
 		if ((__int16)iTileCoords >= 0) {
@@ -2482,6 +2529,8 @@ extern "C" __int16 __stdcall Hook_CSimcityView_WM_MOUSEMOVE(WPARAM iMouseKeys, P
 			}
 		}
 	}
+	else
+		bOverrideTickPlacementHighlight = FALSE;
 
 	return iTileCoords;
 }
