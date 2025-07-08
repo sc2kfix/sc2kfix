@@ -84,18 +84,21 @@
 #define HICOLORCNT 256
 #define LOCOLORCNT 16
 
-typedef struct tagLOGPAL
-{
+typedef struct tagLOGPAL {
 	WORD wVersion;
 	WORD wNumPalEnts;
 	PALETTEENTRY pPalEnts[HICOLORCNT];
 } LOGPAL, *PLOGPAL;
 
-typedef struct testColStruct
-{
+typedef struct testColStruct {
 	WORD wPos;
 	tagPALETTEENTRY pe;
 } colStruct;
+
+typedef struct COLORTABLE_STRUCT {
+	WORD Index;
+	DWORD rgb;
+} colTable;
 
 typedef struct {
 	UINT nMessage;
@@ -106,16 +109,14 @@ typedef struct {
 	void* pfn;
 } AFX_MSGMAP_ENTRY;
 
-class CMFC3XString
-{
+class CMFC3XString {
 public:
 	LPTSTR m_pchData;
 	int m_nDataLength;
 	int m_nAllocLength;
 };
 
-class CSimString
-{
+class CSimString {
 public:
 	char *pStr;
 };

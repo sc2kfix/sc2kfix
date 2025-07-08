@@ -2729,12 +2729,18 @@ extern "C" int __stdcall Hook_StartupGraphics() {
 	if (iBitRate < 16) {
 		if (iBitRate <= 4) {
 			bLoColor = TRUE;
-			pvIn = 4;
+			pvIn = SETCOLORTABLE;
 			if (Escape(hDC_Two, QUERYESCSUPPORT, 4, (LPCSTR)&pvIn, 0)) {
 				p_pEnt = plPal.pPalEnts;
 				pCol = rgbLoColor;
 				do {
-					Escape(hDC_Two, SETCOLORTABLE, 6, (LPCSTR)pCol, &pvOut);
+					colTable cT;
+
+					memset(&cT, 0, sizeof(colTable));
+					cT.Index = pCol->wPos;
+					cT.rgb = RGB(pCol->pe.peRed, pCol->pe.peGreen, pCol->pe.peBlue);
+
+					Escape(hDC_Two, SETCOLORTABLE, 6, (LPCSTR)&cT, &pvOut);
 					p_pEnt[pCol->wPos].peRed = pCol->pe.peRed;
 					p_pEnt[pCol->wPos].peGreen = pCol->pe.peGreen;
 					p_pEnt[pCol->wPos].peBlue = pCol->pe.peBlue;
