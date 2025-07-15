@@ -2973,12 +2973,13 @@ void InstallMiscHooks_SC2K1996(void) {
 	}
 
 	// Hook status bar updates for the status dialog implementation
-	VirtualProtect((LPVOID)0x402793, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x402793, Hook_402793);
-	VirtualProtect((LPVOID)0x4021A8, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4021A8, Hook_4021A8);
-	VirtualProtect((LPVOID)0x40103C, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x40103C, Hook_40103C);
+	//VirtualProtect((LPVOID)0x402793, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	//NEWJMP((LPVOID)0x402793, Hook_402793);
+	//VirtualProtect((LPVOID)0x4021A8, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	//NEWJMP((LPVOID)0x4021A8, Hook_4021A8);
+	//VirtualProtect((LPVOID)0x40103C, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	//NEWJMP((LPVOID)0x40103C, Hook_40103C);
+	InstallStatusHooks_SC2K1996();
 
 	// New hooks for CSimcityDoc::UpdateDocumentTitle and
 	// SimulationProcessTick - these account for:
