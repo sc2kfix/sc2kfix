@@ -15,6 +15,10 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
+#pragma intrinsic(_ReturnAddress)
+
+static DWORD dwDummy;
+
 HWND hStatusDialog = NULL;
 HANDLE hWeatherBitmaps[13];
 HANDLE hCompassBitmaps[4];
@@ -196,4 +200,130 @@ HWND ShowStatusDialog(void) {
 	SetWindowPos(hStatusDialog, HWND_TOP, rcDesktop.left + (rcDesktop.right - rcDesktop.left) / 8 + 128, rcDesktop.top + (rcDesktop.bottom - rcDesktop.top) / 8, 0, 0, SWP_NOSIZE);
 	ShowWindow(hStatusDialog, SW_HIDE);
 	return hStatusDialog;
+}
+
+extern "C" BOOL __stdcall Hook_MainFrameDoStatusControlBarSize_SC2K1996() {
+	DWORD pThis;
+
+	__asm mov[pThis], ecx
+
+	BOOL(__thiscall *H_MainFrameDoStatusControlBarSize)(void *) = (BOOL(__thiscall *)(void *))0x40C670;
+
+	return (bSettingsUseStatusDialog) ? 0 : H_MainFrameDoStatusControlBarSize((void *)pThis);
+}
+
+extern "C" BOOL __stdcall Hook_StatusControlBarOnSize_SC2K1996() {
+	DWORD pThis;
+
+	__asm mov[pThis], ecx
+
+	DWORD *(__stdcall *H_CWndFromHandle)(HWND) = (DWORD *(__stdcall *)(HWND))0x4A3BDF;
+
+	HWND hDlgItem, hWnd, hWndFromHandle;
+	DWORD *pWnd;
+	tagRECT r1;
+	tagRECT r2;
+
+	if (!bSettingsUseStatusDialog) {
+		hWnd = (HWND)((DWORD *)pThis)[7];
+		hDlgItem = GetDlgItem(hWnd, 120); // "GoTo" button.
+		pWnd = H_CWndFromHandle(hDlgItem);
+		hWndFromHandle = (HWND)pWnd[7];
+		GetClientRect(hWnd, &r1);
+		GetWindowRect(hWndFromHandle, &r2);
+		ScreenToClient(hWnd, (LPPOINT)&r2.left);
+		ScreenToClient(hWnd, (LPPOINT)&r2.right);
+		return MoveWindow(hWndFromHandle,
+			r2.left - r2.right + r1.right - 5,
+			r2.top,
+			r2.right - r2.left,
+			r2.bottom - r2.top,
+			TRUE);
+	}
+}
+
+extern "C" void __stdcall Hook_MainFrameToggleStatusControlBar_SC2K1996(BOOL bShow) {
+	DWORD *pThis;
+
+	__asm mov [pThis], ecx
+
+	void(__thiscall *H_CFrameWndShowControlBar)(void *, void *, BOOL, int) = (void(__thiscall *)(void *, void *, BOOL, int))0x4BA3A0;
+
+	DWORD *pStatusBar;
+	HWND hStatusBar;
+
+	pStatusBar = &pThis[61];
+	hStatusBar = (HWND)pStatusBar[7];
+	if (pThis[101] != bShow) {
+		if (bShow) {
+			ShowWindow(hStatusBar, SW_SHOW);
+			pThis[101] = TRUE;
+		}
+		else {
+			ShowWindow(hStatusBar, SW_HIDE);
+			pThis[101] = FALSE;
+		}
+		H_CFrameWndShowControlBar(pThis, pStatusBar, bShow, 0);
+	}
+}
+
+extern "C" SIZE *__stdcall Hook_DialogBarCalcFixedLayout_SC2K1996(SIZE *pSZ, BOOL bStretch, BOOL bHorz) {
+	DWORD *pThis;
+
+	__asm mov [pThis], ecx
+
+	LONG lX;
+	LONG lY;
+	SIZE *pOutSZ;
+
+	if (bStretch) {
+		if (bSettingsUseStatusDialog) {
+			lX = 200;
+			lY = 30;
+		}
+		else {
+			lY = 0x7FFF;
+			if (bHorz) {
+				lY = pThis[27];
+				lX = 0x7FFF;
+			}
+			else {
+				lX = pThis[26];
+			}
+		}
+		pOutSZ = pSZ;
+		pSZ->cx = lX;
+		pSZ->cy = lY;
+	}
+	else {
+		pSZ->cx = pThis[26];
+		pSZ->cy = pThis[27];
+		return pSZ;
+	}
+}
+
+void InstallStatusHooks_SC2K1996(void) {
+	// Hook for CMainFrame::DoStatusControlBarSize
+	VirtualProtect((LPVOID)0x40285B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x40285B, Hook_MainFrameDoStatusControlBarSize_SC2K1996);
+
+	// Hook for CStatusControlBar::OnSize
+	VirtualProtect((LPVOID)0x40126C, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x40126C, Hook_StatusControlBarOnSize_SC2K1996);
+
+	// Hook for CMainFrame::ToggleStatusControlBar
+	VirtualProtect((LPVOID)0x4021A8, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4021A8, Hook_MainFrameToggleStatusControlBar_SC2K1996);
+
+	// Hook for CDialogBar::CalcFixedLayout
+	VirtualProtect((LPVOID)0x4B5973, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4B5973, Hook_DialogBarCalcFixedLayout_SC2K1996);
+}
+
+void UpdateStatus_SC2K1996(void) {
+	//void(__thiscall *H_DialogBarCalcFixedLayout_SC2K1996)(void *, void )
+	if (wCityMode) {
+	//	Hook_MainFrameToggleStatusControlBar_SC2K1996(FALSE);
+	//	Hook_MainFrameToggleStatusControlBar_SC2K1996(TRUE);
+	}
 }
