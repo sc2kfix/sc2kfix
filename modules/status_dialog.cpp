@@ -202,6 +202,35 @@ HWND ShowStatusDialog(void) {
 	return hStatusDialog;
 }
 
+extern "C" BOOL __stdcall Hook_StatusControlBarCreateStatusBar_SC2K1996() {
+	DWORD *pThis;
+
+	__asm mov[pThis], ecx
+
+	int(__thiscall *H_CDialogBarCreate)(void *, void *, LPCTSTR, UINT, UINT) = (int(__thiscall *)(void *, void *, LPCTSTR, UINT, UINT))0x4B5801;
+
+	UINT nFlags;
+	int ret;
+
+	nFlags = (0x8000 | 0x0200);
+
+	ret = H_CDialogBarCreate(pThis, pCWndRootWindow, (LPCSTR)255, nFlags, 0x6F);
+	if (ret) {
+		ConsoleLog(LOG_DEBUG, "Create Status Bar: %d\n", ret);
+		if (bSettingsUseStatusDialog) {
+			SetWindowLongA((HWND)pThis[7], GWL_STYLE, DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | WS_POPUP);
+			SetParent((HWND)pThis[7], NULL);
+			SetWindowPos((HWND)pThis[7], HWND_TOPMOST, 300, 100, 200, 30, 0);
+		}
+		return ret;
+	}
+	else {
+		ConsoleLog(LOG_DEBUG, "Failed to create Status Bar.\n");
+	}
+
+	return 0;
+}
+
 extern "C" BOOL __stdcall Hook_MainFrameDoStatusControlBarSize_SC2K1996() {
 	DWORD pThis;
 
@@ -303,6 +332,10 @@ extern "C" SIZE *__stdcall Hook_DialogBarCalcFixedLayout_SC2K1996(SIZE *pSZ, BOO
 }
 
 void InstallStatusHooks_SC2K1996(void) {
+	// Hook for CStatusControlBar::CreateStatusBar
+	VirtualProtect((LPVOID)0x40173A, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x40173A, Hook_StatusControlBarCreateStatusBar_SC2K1996);
+
 	// Hook for CMainFrame::DoStatusControlBarSize
 	VirtualProtect((LPVOID)0x40285B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x40285B, Hook_MainFrameDoStatusControlBarSize_SC2K1996);
