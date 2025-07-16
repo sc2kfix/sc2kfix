@@ -22,8 +22,8 @@
 // of 0 will be called after a mod that exports Hook_OnNewCity_After with a priority of -1 and
 // before a mod that exports Hook_OnNewCity_After with a priority of 1.
 sc2kfix_mod_hook_t stModHooks[] = {
-	{ "Hook_SimulationProcessTickDaySwitch_Before", 0 },
-	{ "Hook_SimulationProcessTickDaySwitch_After", 0 },
+	//{ "Hook_SimulationProcessTickDaySwitch_Before", 0 },
+	//{ "Hook_SimulationProcessTickDaySwitch_After", 0 },
 	{ "Hook_GameDoIdleUpkeep_Before", 0 }
 };
 
@@ -77,6 +77,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 	return TRUE;
 }
 
+
+// * IMPORTANT *
+// Both the 'Hook_SimulationProcessTickDaySwitch_Before' and
+// 'Hook_SimulationProcessTickDaySwitch_Before' hooks no longer exist, they've been replaced
+// with 'Hook_SimulationProcessTick' which is a library-implementation of the given game function.
+// The equivalent mod hook is not present due to this change.
+
 // All game hooks exported from mods are declared using the HOOKCB macro, which expands to
 // extern "C" __declspec(dllexport). This makes sure that there's no C++ name mangling and imports
 // on the sc2kfix side are similarly simple.
@@ -86,6 +93,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 // its original code. Many "before" hooks have a corresponding "after" hook that runs after the
 // engine completes its designated task that the hook is related to, but before the calling
 // function in the engine is returned to.
+/*
 HOOKCB void Hook_SimulationProcessTickDaySwitch_Before(void) {
 	// dwCityDays is a game engine variable declared and defined as a C++ reference variable.
 	// Using reference variables lets sc2kfix developers and modders operate on SimCity 2000 game
@@ -95,17 +103,20 @@ HOOKCB void Hook_SimulationProcessTickDaySwitch_Before(void) {
 	if (dwCityDays % 300 == 0)
 		LOG(LOG_NOTICE, ":toot: Happy new year!\n");
 }
+*/
 
 // This is an example of an "after" hook. sc2kfix intercepts the end of the game engine's
 // SimulationProcessTick function and calls the Hook_SimulationProcessTickDaySwitch_After exports
 // from each mod before returning to the calling function (in this case, the default case of the
 // GameDoIdleUpkeep function).
+/*
 HOOKCB void Hook_SimulationProcessTickDaySwitch_After(void) {
 	// LOG() is a macro that prepends the module tag and the stModInfo.szModShortName to the log
 	// message before calling ConsoleLog to output it. You should not directly call ConsoleLog in
 	// mod DLLs; instead use LOG() to ensure that all log messages are properly formed.
 	//LOG(LOG_NOTICE, "Today was day %d in the glorious history of %s.\n", dwCityDays + 1, *pszCityName);
 }
+*/
 
 int iLastState = 0;
 

@@ -267,7 +267,7 @@ extern "C" {
 		krk_attachNamedObject(&objState->fields, "__doc__", (KrkObj*)S("Pointers to SimCity 2000 game state objects."));
 		krk_attachNamedObject(&module->fields, "state", (KrkObj*)objState);
 
-		KRK_GAMEOFF_PTR(pCWinAppThis);
+		KRK_GAMEOFF(pCSimcityAppThis);
 		KRK_GAMEOFF(pCWndRootWindow);
 		KRK_GAMEOFF(bPriscillaActivated);
 		KRK_GAMEOFF(dwAudioHandle);
@@ -283,12 +283,12 @@ extern "C" {
 		KRK_GAMEOFF(bCityHasOcean);
 		KRK_GAMEOFF(dwArcologyPopulation);
 		KRK_GAMEOFF(dwCityResidentialPopulation);
-		KRK_GAMEOFF_PTR(pszCityName);
+		KRK_GAMEOFF(pszCityName);
 		KRK_GAMEOFF(wNationalEconomyTrend);
 		KRK_GAMEOFF(wCurrentMapToolGroup);
 		KRK_GAMEOFF(wCityNeighborConnections1500);
 		KRK_GAMEOFF(wSubwayXUNDCount);
-		KRK_GAMEOFF(wDisasterType);
+		KRK_GAMEOFF(wSetTriggerDisasterType);
 		KRK_GAMEOFF(wCityMode);
 		KRK_GAMEOFF(dwCityLandValue);
 		KRK_GAMEOFF(dwCityFunds);

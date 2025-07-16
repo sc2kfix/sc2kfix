@@ -34,7 +34,17 @@ enum redirected_keys_t {
 	enCountKey
 };
 
-static int iRegPathHookMode = -1; // -1 - Unknown, 0 - SC2K1996, 1 - SC2K1995, 2 - SCURK1996 (Special Edition)
+enum regPathVersion {
+	REGPATH_UNKNOWN,
+	REGPATH_SC2K1996,
+	REGPATH_SC2K1995,
+	REGPATH_SC2KDEMO,
+	REGPATH_SCURK1996
+};
+
+static int iRegPathHookMode = REGPATH_UNKNOWN;
+
+const char *gamePrimaryKey = "SimCity 2000";
 
 BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
@@ -129,20 +139,30 @@ static void MigrateSC2KVersion(void) {
 	DWORD dwOut;
 	const char* ini_file = GetIniPath();
 	const char* section = "Version";
+	char szKeyName[128+1];
 
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Version", "SCURK", &dwOut, sizeof(DWORD));
+	memset(szKeyName, 0, sizeof(szKeyName));
+
+	sprintf_s(szKeyName, sizeof(szKeyName)-1, "Software\\Maxis\\%s\\%s", gamePrimaryKey, section);
+
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "SCURK", &dwOut, sizeof(DWORD));
 	WritePrivateProfileIntA(section, "SCURK", dwOut, ini_file);
 
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Version", "SimCity 2000", &dwOut, sizeof(DWORD));
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "SimCity 2000", &dwOut, sizeof(DWORD));
 	WritePrivateProfileIntA(section, "SimCity 2000", dwOut, ini_file);
 }
 
 static void MigrateSC2KLocalize(void) {
 	const char* ini_file = GetIniPath();
 	const char* section = "Localize";
+	char szKeyName[128+1];
+
+	memset(szKeyName, 0, sizeof(szKeyName));
+
+	sprintf_s(szKeyName, sizeof(szKeyName)-1, "Software\\Maxis\\%s\\%s", gamePrimaryKey, section);
 
 	char szOutBuf[16];
-	MigrateRegStringValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Localize", "Language", szOutBuf, sizeof(szOutBuf));
+	MigrateRegStringValue(HKEY_CURRENT_USER, szKeyName, "Language", szOutBuf, sizeof(szOutBuf));
 	WritePrivateProfileStringA(section, "Language", szOutBuf, ini_file);
 }
 
@@ -150,26 +170,31 @@ static void MigrateSC2KOptions(void) {
 	DWORD dwOut;
 	const char* ini_file = GetIniPath();
 	const char* section = "Options";
+	char szKeyName[128+1];
 
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Options", "Disasters", &dwOut, sizeof(BOOL));
+	memset(szKeyName, 0, sizeof(szKeyName));
+
+	sprintf_s(szKeyName, sizeof(szKeyName)-1, "Software\\Maxis\\%s\\%s", gamePrimaryKey, section);
+
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "Disasters", &dwOut, sizeof(BOOL));
 	WritePrivateProfileIntA(section, "Disasters", dwOut, ini_file);
 
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Options", "Music", &dwOut, sizeof(BOOL));
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "Music", &dwOut, sizeof(BOOL));
 	WritePrivateProfileIntA(section, "Music", dwOut, ini_file);
 
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Options", "Sound", &dwOut, sizeof(BOOL));
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "Sound", &dwOut, sizeof(BOOL));
 	WritePrivateProfileIntA(section, "Sound", dwOut, ini_file);
 
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Options", "AutoGoto", &dwOut, sizeof(BOOL));
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "AutoGoto", &dwOut, sizeof(BOOL));
 	WritePrivateProfileIntA(section, "AutoGoto", dwOut, ini_file);
 
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Options", "AutoBudget", &dwOut, sizeof(BOOL));
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "AutoBudget", &dwOut, sizeof(BOOL));
 	WritePrivateProfileIntA(section, "AutoBudget", dwOut, ini_file);
 
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Options", "AutoSave", &dwOut, sizeof(BOOL));
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "AutoSave", &dwOut, sizeof(BOOL));
 	WritePrivateProfileIntA(section, "AutoSave", dwOut, ini_file);
 
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Options", "Speed", &dwOut, sizeof(BOOL));
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "Speed", &dwOut, sizeof(BOOL));
 	WritePrivateProfileIntA(section, "Speed", dwOut, ini_file);
 }
 
@@ -177,26 +202,31 @@ static void MigrateSC2KSCURK(void) {
 	DWORD dwOut;
 	const char* ini_file = GetIniPath();
 	const char* section = "SCURK";
+	char szKeyName[128+1];
 
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\SCURK", "CycleColors", &dwOut, sizeof(DWORD));
+	memset(szKeyName, 0, sizeof(szKeyName));
+
+	sprintf_s(szKeyName, sizeof(szKeyName)-1, "Software\\Maxis\\%s\\%s", gamePrimaryKey, section);
+
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "CycleColors", &dwOut, sizeof(DWORD));
 	WritePrivateProfileIntA(section, "CycleColors", dwOut, ini_file);
 
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\SCURK", "GridHeight", &dwOut, sizeof(DWORD));
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "GridHeight", &dwOut, sizeof(DWORD));
 	WritePrivateProfileIntA(section, "GridHeight", dwOut, ini_file);
 
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\SCURK", "GridWidth", &dwOut, sizeof(DWORD));
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "GridWidth", &dwOut, sizeof(DWORD));
 	WritePrivateProfileIntA(section, "GridWidth", dwOut, ini_file);
 
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\SCURK", "ShowClipRegion", &dwOut, sizeof(DWORD));
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "ShowClipRegion", &dwOut, sizeof(DWORD));
 	WritePrivateProfileIntA(section, "ShowClipRegion", dwOut, ini_file);
 
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\SCURK", "ShowDrawGrid", &dwOut, sizeof(DWORD));
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "ShowDrawGrid", &dwOut, sizeof(DWORD));
 	WritePrivateProfileIntA(section, "ShowDrawGrid", dwOut, ini_file);
 
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\SCURK", "SnapToGrid", &dwOut, sizeof(DWORD));
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "SnapToGrid", &dwOut, sizeof(DWORD));
 	WritePrivateProfileIntA(section, "SnapToGrid", dwOut, ini_file);
 
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\SCURK", "Sound", &dwOut, sizeof(DWORD));
+	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "Sound", &dwOut, sizeof(DWORD));
 	WritePrivateProfileIntA(section, "Sound", dwOut, ini_file);
 }
 
@@ -209,8 +239,14 @@ static void MigrateFinalize(void) {
 
 int DoRegistryCheckAndInstall(void) {
 	int ret;
+	char szKeyName[128+1];
+
+	memset(szKeyName, 0, sizeof(szKeyName));
+
+	sprintf_s(szKeyName, sizeof(szKeyName)-1, "Software\\Maxis\\%s\\%s", gamePrimaryKey, "Registration");
+
 	HKEY hKeySC2KRegistration;
-	LSTATUS lResultRegistration = RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\Registration", NULL, KEY_ALL_ACCESS, &hKeySC2KRegistration);
+	LSTATUS lResultRegistration = RegOpenKeyExA(HKEY_CURRENT_USER, szKeyName, NULL, KEY_ALL_ACCESS, &hKeySC2KRegistration);
 	if (lResultRegistration != ERROR_SUCCESS) {
 		// Let's install.
 		InstallSC2KDefaults();
@@ -283,7 +319,7 @@ static BOOL RegLookup(const char *lpSubKey, unsigned long *ulKey) {
 		*ulKey = enMaxisKey;
 		ret = TRUE;
 	}
-	else if (strcmp(lpSubKey, "SimCity 2000") == 0) {
+	else if (strcmp(lpSubKey, gamePrimaryKey) == 0) {
 		*ulKey = enSC2KKey;
 		ret = TRUE;
 	}
@@ -581,7 +617,7 @@ extern "C" HANDLE __stdcall Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDesiredA
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> CreateFileA(%s, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X)\n", _ReturnAddress(), lpFileName,
 			dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 
-	if (iRegPathHookMode == 0) {
+	if (iRegPathHookMode == REGPATH_SC2K1996) {
 		if ((DWORD)_ReturnAddress() == 0x4A8A90 ||
 			(DWORD)_ReturnAddress() == 0x48A810) {
 			char buf[MAX_PATH + 1];
@@ -602,7 +638,7 @@ extern "C" HANDLE __stdcall Hook_FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_
 	if (mischook_debug & MISCHOOK_DEBUG_PATHING)
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> FindFirstFileA(%s, 0x%08X)\n", _ReturnAddress(), lpFileName, lpFindFileData);
 
-	if (iRegPathHookMode == 0) {
+	if (iRegPathHookMode == REGPATH_SC2K1996) {
 		if ((DWORD)_ReturnAddress() == 0x4A8A90 ||
 			(DWORD)_ReturnAddress() == 0x48A810) {
 			char buf[MAX_PATH + 1];
@@ -619,7 +655,7 @@ extern "C" HANDLE __stdcall Hook_FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_
 }
 
 void InstallRegistryPathingHooks_SC2K1996(void) {
-	iRegPathHookMode = 0;
+	iRegPathHookMode = REGPATH_SC2K1996;
 
 	// Install RegSetValueExA hook
 	*(DWORD*)(0X4EF7F8) = (DWORD)Hook_RegSetValueExA;
@@ -641,7 +677,7 @@ void InstallRegistryPathingHooks_SC2K1996(void) {
 }
 
 void InstallRegistryPathingHooks_SC2K1995(void) {
-	iRegPathHookMode = 1;
+	iRegPathHookMode = REGPATH_SC2K1995;
 
 	// Install RegSetValueExA hook
 	*(DWORD*)(0X4EE7A8) = (DWORD)Hook_RegSetValueExA;
@@ -656,8 +692,24 @@ void InstallRegistryPathingHooks_SC2K1995(void) {
 	*(DWORD*)(0x4EE7AC) = (DWORD)Hook_RegCloseKey;
 }
 
+void InstallRegistryPathingHooks_SC2KDemo(void) {
+	iRegPathHookMode = REGPATH_SC2KDEMO;
+
+	// Install RegSetValueExA hook
+	*(DWORD*)(0X4D7768) = (DWORD)Hook_RegSetValueExA;
+
+	// Install RegQueryValueExA hook
+	*(DWORD*)(0x4D7760) = (DWORD)Hook_RegQueryValueExA;
+
+	// Install RegCreateKeyExA hook
+	*(DWORD*)(0x4D776C) = (DWORD)Hook_RegCreateKeyExA;
+
+	// Install RegCloseKey hook
+	*(DWORD*)(0x4D7770) = (DWORD)Hook_RegCloseKey;
+}
+
 void InstallRegistryPathingHooks_SCURK1996(void) {
-	iRegPathHookMode = 2;
+	iRegPathHookMode = REGPATH_SCURK1996;
 
 	// Install RegSetValueExA hook
 	*(DWORD*)(0X4B05F0) = (DWORD)Hook_RegSetValueExA;

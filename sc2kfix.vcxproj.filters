@@ -123,12 +123,12 @@
     <ClInclude Include="include\hooklists.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\sc2k_demo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="hooks\hook_mciSendCommand.cpp">
-      <Filter>Source Files\Hooks</Filter>
-    </ClCompile>
-    <ClCompile Include="hooks\hook_miscellaneous.cpp">
       <Filter>Source Files\Hooks</Filter>
     </ClCompile>
     <ClCompile Include="hooks\hook_sndPlaySound.cpp">
@@ -318,6 +318,12 @@
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
     <ClCompile Include="hooks\hook_animation.cpp">
+      <Filter>Source Files\Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="hooks\hook_sc2k1996_miscellaneous.cpp">
+      <Filter>Source Files\Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="hooks\hook_sc2kdemo_miscellaneous.cpp">
       <Filter>Source Files\Hooks</Filter>
     </ClCompile>
   </ItemGroup>
