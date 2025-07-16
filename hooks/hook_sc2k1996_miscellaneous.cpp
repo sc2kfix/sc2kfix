@@ -1774,6 +1774,23 @@ RETRY:
 	return FALSE;
 }
 
+static void ChangeChurchZone()
+{
+	__int16 iReplaceTile, iLength, iDepth;
+
+	for (iLength = 0; iLength < GAME_MAP_SIZE; ++iLength) {
+		for (iDepth = 0; iDepth < GAME_MAP_SIZE; ++iDepth) {
+			if (dwMapXBLD[iLength][iDepth].iTileID == TILE_INFRASTRUCTURE_CHURCH) {
+				if (dwMapXZON[iLength][iDepth].b.iZoneType == ZONE_NONE) {
+					iReplaceTile = (rand() & 3) + 1; // Random rubble.
+					Game_PlaceTileWithMilitaryCheck(iLength, iDepth, iReplaceTile); // Replace
+					dwMapXZON[iLength][iDepth].b.iZoneType = ZONE_DENSE_RESIDENTIAL; // Re-zone
+				}
+			}
+		}
+	}
+}
+
 extern "C" void __stdcall Hook_MainFrameOnChar(UINT nChar, UINT nRepCnt, UINT nFlags) {
 	DWORD pThis;
 
@@ -1937,8 +1954,10 @@ GOBACK:
 				break;
 			case CHEAT_REPENT:
 				if (iChurchVirus > 0) {
-					if (MessageBoxA(hWnd, "Tea Father?", gamePrimaryKey, MB_ICONINFORMATION | MB_YESNO) == IDYES)
+					if (MessageBoxA(hWnd, "Tea Father?", gamePrimaryKey, MB_ICONINFORMATION | MB_YESNO) == IDYES) {
 						iChurchVirus = 0; // Set it back to 0 rather than -1; the next execution of the related cheats will result in immediate action.
+						ChangeChurchZone();
+					}
 					else
 						goto NO;
 				}
