@@ -210,12 +210,12 @@ extern "C" BOOL __stdcall Hook_ShowWindow(HWND hWnd, int nCmdShow) {
 	if (mischook_debug & MISCHOOK_DEBUG_WINDOW)
 		ConsoleLog(LOG_DEBUG, "WND:  0x%08X -> ShowWindow(0x%08X, %i)\n", _ReturnAddress(), hWnd, nCmdShow);
 
-	HWND hWndStatusBar = (HWND)((DWORD*)pCWndRootWindow)[68];
-	if (hWnd == hWndStatusBar && bSettingsUseStatusDialog) {
-		if (hStatusDialog)
-			ShowWindow(hStatusDialog, SW_SHOW);
-		return ShowWindow(hWnd, SW_HIDE);
-	}
+	//HWND hWndStatusBar = (HWND)((DWORD*)pCWndRootWindow)[68];
+	//if (hWnd == hWndStatusBar && bSettingsUseStatusDialog) {
+	//	if (hStatusDialog)
+	//		ShowWindow(hStatusDialog, SW_SHOW);
+	//	return ShowWindow(hWnd, SW_HIDE);
+	//}
 
 	// Workaround for the game window not showing if started by a launcher process
 	if (nCmdShow == 11 && (DWORD)_ReturnAddress() == 0x40586C)
@@ -2956,7 +2956,7 @@ void InstallMiscHooks_SC2K1996(void) {
 
 	// Load weather icons
 	for (int i = 0; i < 13; i++) {
-		HANDLE hBitmap = LoadImage(hSC2KFixModule, MAKEINTRESOURCE(IDB_WEATHER0 + i), IMAGE_BITMAP, 40, 40, NULL);
+		HANDLE hBitmap = LoadImage(hSC2KFixModule, MAKEINTRESOURCE(IDB_WEATHER0 + i), IMAGE_BITMAP, 32, 32, NULL);
 		if (hBitmap)
 			hWeatherBitmaps[i] = hBitmap;
 		else
@@ -2965,7 +2965,7 @@ void InstallMiscHooks_SC2K1996(void) {
 
 	// Load compass icons
 	for (int i = 0; i < 4; i++) {
-		HANDLE hBitmap = LoadImage(hSC2KFixModule, MAKEINTRESOURCE(IDB_COMPASS0 + i), IMAGE_BITMAP, 40, 40, NULL);
+		HANDLE hBitmap = LoadImage(hSC2KFixModule, MAKEINTRESOURCE(IDB_COMPASS0 + i), IMAGE_BITMAP, 38, 38, NULL);
 		if (hBitmap)
 			hCompassBitmaps[i] = hBitmap;
 		else
