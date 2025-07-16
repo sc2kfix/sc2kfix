@@ -1,4 +1,4 @@
-// sc2kfix hooks/hook_miscellaneous.cpp: miscellaneous hooks to be injected
+// sc2kfix hooks/hook_sc2k1996_miscellaneous.cpp: miscellaneous hooks to be injected
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 // !!! HIC SUNT DRACONES !!!
@@ -37,6 +37,8 @@
 #define MISCHOOK_DEBUG DEBUG_FLAGS_EVERYTHING
 #endif
 
+#define MAX_USER_LABELS 51
+
 UINT mischook_debug = MISCHOOK_DEBUG;
 
 static DWORD dwDummy;
@@ -44,8 +46,12 @@ static DWORD dwDummy;
 AFX_MSGMAP_ENTRY afxMessageMapMainMenu[9];
 DLGPROC lpNewCityAfxProc = NULL;
 char szTempMayorName[24] = { 0 };
-char szCurrentMonthDay[24] = { 0 };
-const char* szMonthNames[12] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+
+static BOOL bOverrideTickPlacementHighlight = FALSE;
+
+static int iChurchVirus = -1;
+
+static const char *theHouse = "Ilona's House";
 
 // Override some strings that have egregiously bad grammar/capitalization.
 // Maxis fail English? That's unpossible!
@@ -289,7 +295,7 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		if (!GetDlgItemText(hwndDlg, 150, szTempMayorName, 24))
 			strcpy_s(szTempMayorName, 24, szSettingsMayorName);
 
-		strcpy_s(dwMapXLAB[0]->szLabel, 24, szTempMayorName);
+		strcpy_s(dwMapXLAB[0][0].szLabel, 24, szTempMayorName);
 		break;
 	}
 
@@ -410,7 +416,7 @@ extern "C" void __stdcall Hook_ResetGameVars(void) {
 	if (bMapEditor || bNewGame) {
 		DWORD *pThis;
 
-		pThis = (DWORD *)Game_PointerToCSimcityViewClass(pCWndRootWindow);
+		pThis = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
 
 		if (((__int16)wCityMode < 0 && bNewGame) || bMapEditor) {
 			if (wViewRotation != VIEWROTATION_NORTH) {
@@ -452,10 +458,13 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __
 	__int16 iNextX;
 	__int16 iNextY;
 
-	pThis = (DWORD *)Game_PointerToCSimcityViewClass(pCWinAppThis);
+	pThis = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
 	iAttributes = dwCityPopulation;
 	iX = iStep;
-	bPlaceChurch = 2500u * (__int16)dwTileCount[TILE_INFRASTRUCTURE_CHURCH] < (unsigned int)dwCityPopulation;
+	if (iChurchVirus > 0)
+		bPlaceChurch = 1;
+	else
+		bPlaceChurch = 2500u * (__int16)dwTileCount[TILE_INFRASTRUCTURE_CHURCH] < (unsigned int)dwCityPopulation;
 	wCurrentAngle = wPositionAngle[wViewRotation];
 	iResult = iStep / 2;
 	iXMM = iStep / 2;
@@ -737,7 +746,7 @@ GOGENERALZONEITEMPLACE:
 			else {
 				if ((__int16)iAttributes < TILE_ROAD_LR)
 					goto GOUNDCHECKTHENYINCREASE;
-				if ((unsigned __int16)Game_RandomWordLFSRMod128(iPosAttributes))
+				if ((unsigned __int16)Game_RandomWordLFSRMod128())
 					goto GOAFTERSETXBIT;
 				if ((__int16)iAttributes >= TILE_ROAD_LR && (__int16)iAttributes < TILE_RAIL_LR ||
 					(__int16)iAttributes >= TILE_CROSSOVER_POWERTB_ROADLR && (__int16)iAttributes < TILE_CROSSOVER_POWERTB_RAILLR ||
@@ -907,7 +916,7 @@ GOAFTERSETXBIT:
 				}
 			}
 GOUNDCHECKTHENYINCREASE:
-			if (!(unsigned __int16)Game_RandomWordLFSRMod128(iPosAttributes)) {
+			if (!(unsigned __int16)Game_RandomWordLFSRMod128()) {
 				P_LOBYTE(iAttributes) = dwMapXUND[iX][iY].iTileID;
 				iAttributes &= 0xFFFF00FF;
 				if ((__int16)iAttributes >= TILE_RUBBLE1 && (__int16)iAttributes < TILE_POWERLINES_HTB ||
@@ -1472,54 +1481,878 @@ GOFORWARD:
 	}
 }
 
-// Window title hook, part 1
-extern "C" char* __stdcall Hook_40D67D(void) {
-	if (bSettingsTitleCalendar)
-		sprintf_s(szCurrentMonthDay, 24, "%s %d,", szMonthNames[dwCityDays / 25 % 12], dwCityDays % 25 + 1);
-	else
-		sprintf_s(szCurrentMonthDay, 24, "%s", szMonthNames[dwCityDays / 25 % 12]);
-	return szCurrentMonthDay;
+#define NUM_CHEATS 15
+#define NUM_CHEAT_MAXCHARS 9
+
+typedef struct {
+	int iIndex;          // Cheat index, match multiple cheats to the same index.
+	const char *pEntry;  // Code entry
+	int iPos;            // Position within the array. (Only set when there's a match)
+} cheat_t;
+
+enum {
+	CHEAT_FUND,
+	CHEAT_CASS,
+	CHEAT_THEWORKS,
+	CHEAT_MAJORFLOOD,
+	CHEAT_PARTTHESEA,
+	CHEAT_FIRESTORM,
+	CHEAT_DEBUG,
+	CHEAT_MILITARY,
+	CHEAT_JOKE,
+	CHEAT_WEBB,
+	CHEAT_OOPS,
+	CHEAT_REPENT
+};
+
+// Some the codes here have been randomised once more.
+static cheat_t cheatStrArray[NUM_CHEATS] = {
+	{CHEAT_FUND,       "fund",      -1},
+	{CHEAT_CASS,       "cass",      -1},
+	{CHEAT_THEWORKS,   "ithecama",  -1},
+	{CHEAT_MAJORFLOOD, "nhoa",      -1},
+	{CHEAT_PARTTHESEA, "msseo",     -1},
+	{CHEAT_FIRESTORM,  "nwsueheo",  -1},
+	{CHEAT_FIRESTORM,  "mlayrosre", -1},
+	{CHEAT_DEBUG,      "psiclaril", -1},
+	{CHEAT_MILITARY,   "gnarlimit", -1},
+	{CHEAT_JOKE,       "joke",      -1},
+	{CHEAT_WEBB,       "webb",      -1},    // From the Interactive Demo
+	{CHEAT_OOPS,       "damn",      -1},    // DOS
+	{CHEAT_OOPS,       "darn",      -1},    // DOS
+	{CHEAT_OOPS,       "heck",      -1},    // DOS
+	{CHEAT_REPENT,     "mylrosde",  -1}     // Custom
+};
+
+// In the game itself it uses an array of 72 entries
+// (the original 8 cheat entries * 9 potential characters + current position).
+// For the custom version it has been adjusted to a multi-dimensional array.
+static int cheatCharPos[NUM_CHEATS][NUM_CHEAT_MAXCHARS] = {
+	{0,  1,  2,  3, -1, -1, -1, -1, -1},
+	{0,  1,  2,  3, -1, -1, -1, -1, -1},
+	{0,  6,  5,  4,  2,  3,  7,  1, -1},
+	{0,  2,  3,  1, -1, -1, -1, -1, -1},
+	{0,  4,  2,  3,  1, -1, -1, -1, -1},
+	{0,  4,  1,  5,  7,  3,  2,  6, -1},
+	{0,  4,  6,  5,  1,  8,  2,  7,  3},
+	{0,  6,  2,  1,  3,  7,  4,  8,  5},
+	{0,  7,  4,  6,  2,  3,  8,  5,  1},
+	{0,  1,  2,  3, -1, -1, -1, -1, -1},
+	{0,  1,  2,  3, -1, -1, -1, -1, -1},
+	{0,  1,  2,  3, -1, -1, -1, -1, -1},
+	{0,  1,  2,  3, -1, -1, -1, -1, -1},
+	{0,  1,  2,  3, -1, -1, -1, -1, -1},
+	{0,  3,  5,  6,  4,  1,  2,  7, -1}
+};
+
+// This is set if there are multiple cheats detected matching the first character.
+static BOOL cheatMultipleDetections = FALSE;
+
+static void AdjustDebugMenu(HMENU hDebugMenu) {
+	if (hDebugMenu) {
+		AFX_MSGMAP_ENTRY afxMessageMapEntry[5];
+		HMENU hDebugPopup;
+		MENUITEMINFO miiDebugPopup;
+		miiDebugPopup.cbSize = sizeof(MENUITEMINFO);
+		miiDebugPopup.fMask = MIIM_SUBMENU;
+		if (!GetMenuItemInfo(hDebugMenu, 0, TRUE, &miiDebugPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
+			return;
+		}
+		hDebugPopup = miiDebugPopup.hSubMenu;
+
+		// Insert in reverse order.
+		// Separator between the disasters and internal debugging functions.
+		if (!InsertMenu(hDebugPopup, 11, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #1 failed, error = 0x%08X.\n", GetLastError());
+			return;
+		}
+		// Separator between grants and disasters
+		if (!InsertMenu(hDebugPopup, 4, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #2 failed, error = 0x%08X.\n", GetLastError());
+			return;
+		}
+		// Separator between the version option and grants
+		if (!InsertMenu(hDebugPopup, 1, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #3 failed, error = 0x%08X.\n", GetLastError());
+			return;
+		}
+
+		// Insert in reverse order.
+		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_MISSILESILOS, "Propose Missile Silos") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #4 failed, error = 0x%08X.\n", GetLastError());
+			return;
+		}
+		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_NAVALYARD, "Propose Naval Yard") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #5 failed, error = 0x%08X.\n", GetLastError());
+			return;
+		}
+		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_ARMYBASE, "Propose Army Base") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #6 failed, error = 0x%08X.\n", GetLastError());
+			return;
+		}
+		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_AIRFORCE, "Propose Air Force Base") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #7 failed, error = 0x%08X.\n", GetLastError());
+			return;
+		}
+		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_DECLINED, "Stop Military Spawning") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #8 failed, error = 0x%08X.\n", GetLastError());
+			return;
+		}
+
+		afxMessageMapEntry[0] = {
+			WM_COMMAND,
+			0,
+			IDM_DEBUG_MILITARY_DECLINED,
+			IDM_DEBUG_MILITARY_DECLINED,
+			0x0A,
+			ProposeMilitaryBaseDecline,
+		};
+
+		afxMessageMapEntry[1] = {
+			WM_COMMAND,
+			0,
+			IDM_DEBUG_MILITARY_AIRFORCE,
+			IDM_DEBUG_MILITARY_AIRFORCE,
+			0x0A,
+			ProposeMilitaryBaseAirForceBase,
+		};
+
+		afxMessageMapEntry[2] = {
+			WM_COMMAND,
+			0,
+			IDM_DEBUG_MILITARY_ARMYBASE,
+			IDM_DEBUG_MILITARY_ARMYBASE,
+			0x0A,
+			ProposeMilitaryBaseArmyBase,
+		};
+
+		afxMessageMapEntry[3] = {
+			WM_COMMAND,
+			0,
+			IDM_DEBUG_MILITARY_NAVALYARD,
+			IDM_DEBUG_MILITARY_NAVALYARD,
+			0x0A,
+			ProposeMilitaryBaseNavalYard,
+		};
+
+		afxMessageMapEntry[4] = {
+			WM_COMMAND,
+			0,
+			IDM_DEBUG_MILITARY_MISSILESILOS,
+			IDM_DEBUG_MILITARY_MISSILESILOS,
+			0x0A,
+			ProposeMilitaryBaseMissileSilos,
+		};
+
+		VirtualProtect((LPVOID)0x4D4608, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
+		memcpy_s((LPVOID)0x4D4608, sizeof(afxMessageMapEntry), &afxMessageMapEntry, sizeof(afxMessageMapEntry));
+
+		if (mischook_debug & MISCHOOK_DEBUG_MENU)
+			ConsoleLog(LOG_DEBUG, "MISC: Updated debug menu.\n");
+	}
 }
 
+static int FindTheHouseLabel() {
+	for (int i = 1; i < MAX_USER_LABELS; ++i) {
+		if (dwMapXLAB[0][i].szLabel && _stricmp(dwMapXLAB[0][i].szLabel, theHouse)==0) {
+			return i;
+		}
+	}
+	return -1;
+}
 
-// Window title hook, part 2 and refresh hook
-// TODO: Clean this hook up to be as pure C/C++ as possible. I'm sure we can make it nice and
-// clean, I just need more time to fiddle with it.
-extern "C" void _declspec(naked) Hook_SimulationProcessTickDaySwitch(void) {
-	__asm push edx
+static void SetTheHouseLabel(int xPos, int ySignPos) {
+	__int16 iLabelIdx;
+	WORD iTextLen;
 
-	Game_RefreshTitleBar(pCDocumentMainWindow);
+	char(__stdcall *H_PrepareLabel)() = (char(__stdcall *)())0x402D56;
 
-	if (bSettingsFrequentCityRefresh) {
-		POINT pt;
-		Game_CDocument_UpdateAllViews(pCDocumentMainWindow, NULL, 2, NULL);
-		GetCursorPos(&pt);
-		if (wCityMode && wCurrentCityToolGroup != TOOL_GROUP_CENTERINGTOOL && Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y) < 0x8000) {
-			Game_DrawSquareHighlight(wHighlightedTileX1, wHighlightedTileY1, wHighlightedTileX2, wHighlightedTileY2);
-			wTileHighlightActive = 1;
-			RedrawWindow(GameGetRootWindowHandle(), NULL, NULL, RDW_INVALIDATE | RDW_ALLCHILDREN);
+	if (dwMapXTXT[xPos][ySignPos].bTextOverlay) {
+		if (dwMapXTXT[xPos][ySignPos].bTextOverlay >= MAX_USER_LABELS)
+			return;
+	}
+	iLabelIdx = H_PrepareLabel();
+	if (iLabelIdx) {
+		dwMapXTXT[xPos][ySignPos].bTextOverlay = (BYTE)iLabelIdx;
+		iTextLen = (WORD)strlen(theHouse);
+		memcpy(&dwMapXLAB[0][(int)iLabelIdx], theHouse, iTextLen);
+		dwMapXLAB[0][iLabelIdx].szLabel[iTextLen] = 0;
+	}
+}
+
+static BOOL FindTheHouse() {
+	__int16 xPos, yPos, xWindPos, ySignPos;
+	__int16 iLength, iDepth, iLabelIdx;
+
+	void(__cdecl *H_RemoveLabel)(__int16) = (void(__cdecl *)(__int16))0x401DCA;
+
+	xPos = -1;
+	yPos = -1;
+	ySignPos = -1;
+	for (iLength = 0; iLength < GAME_MAP_SIZE; ++iLength) {
+		for (iDepth = 0; iDepth < GAME_MAP_SIZE; ++iDepth) {
+			if (dwMapXBLD[iLength][iDepth].iTileID == TILE_COMMERCIAL_1X1_BEDANDBREAKFAST) {
+				if (dwMapXZON[iLength][iDepth].b.iZoneType == ZONE_NONE) {
+					xPos = iLength;
+					yPos = iDepth;
+					xWindPos = xPos - 1;
+					ySignPos = yPos - 1;
+					break;
+				}
+			}
+		}
+	}
+	iLabelIdx = FindTheHouseLabel();
+	if (xPos != -1 && yPos != -1) {
+		// Set the sign if it is missing.
+		if (iLabelIdx < 0)
+			SetTheHouseLabel(xPos, ySignPos);
+		// Set the Wind PowerPlant if it's not present
+		// (assuming the spot is still available).
+		Game_ItemPlacementCheck(xWindPos, yPos, TILE_POWERPLANT_WIND, 1);
+		Game_CenterOnTileCoords(xPos, yPos);
+		return TRUE;
+	}
+	if (iLabelIdx > 0 && iLabelIdx < MAX_USER_LABELS) {
+		for (iLength = 0; iLength < GAME_MAP_SIZE; ++iLength) {
+			for (iDepth = 0; iDepth < GAME_MAP_SIZE; ++iDepth) {
+				if (dwMapXTXT[iLength][iDepth].bTextOverlay == iLabelIdx) {
+					H_RemoveLabel(iLabelIdx);
+					dwMapXTXT[iLength][iDepth].bTextOverlay = 0;
+					break;
+				}
+			}
+		}
+	}
+	return FALSE;
+}
+
+static BOOL BuildTheHouse() {
+	int iAttempts;
+	__int16 xPos;
+	__int16 yPos;
+	__int16 xWindPos;
+	__int16 ySignPos;
+
+	map_XTER_t **dwMapXTERPrevX = (map_XTER_t **)0x4C9F54;
+
+	iAttempts = 0;
+	while (TRUE) {
+RETRY:
+		xPos = Game_RandomWordLFSRMod128();
+		yPos = Game_RandomWordLFSRMod128();
+		xWindPos = xPos - 1;
+		ySignPos = yPos - 1;
+		if (xWindPos < 0 || ySignPos < 0)
+			goto RETRY;
+		if (dwMapXBLD[xPos][yPos].iTileID < TILE_SMALLPARK) {
+			if (dwMapXBLD[xPos][ySignPos].iTileID < TILE_SMALLPARK &&
+				dwMapXBLD[xWindPos][yPos].iTileID < TILE_SMALLPARK) {
+				if (!dwMapXTER[xPos][yPos].iTileID &&
+					!dwMapXTER[xPos][ySignPos].iTileID &&
+					!dwMapXTERPrevX[xPos][yPos].iTileID &&
+					(xPos < 0 || yPos >= GAME_MAP_SIZE || !dwMapXBIT[xPos][yPos].b.iWater) &&
+					(xPos >= GAME_MAP_SIZE || ySignPos >= GAME_MAP_SIZE || !dwMapXBIT[xPos][ySignPos].b.iWater) &&
+					(xWindPos >= GAME_MAP_SIZE || yPos >= GAME_MAP_SIZE || !dwMapXBIT[xWindPos][yPos].b.iWater)) {
+					if (dwMapALTM[xPos][yPos].w.iLandAltitude == dwMapALTM[xPos][ySignPos].w.iLandAltitude &&
+						dwMapALTM[xPos][yPos].w.iLandAltitude == dwMapALTM[xWindPos][yPos].w.iLandAltitude) {
+						if (Game_ItemPlacementCheck(xPos, yPos, TILE_COMMERCIAL_1X1_BEDANDBREAKFAST, 1)) {
+							SetTheHouseLabel(xPos, ySignPos);
+							Game_ItemPlacementCheck(xWindPos, yPos, TILE_POWERPLANT_WIND, 1);
+							Game_CenterOnTileCoords(xPos, yPos);
+							return TRUE;
+						}
+					}
+				}
+			}
+		}
+
+		if (++iAttempts >= 100)
+			break;
+	}
+	return FALSE;
+}
+
+extern "C" void __stdcall Hook_MainFrameOnChar(UINT nChar, UINT nRepCnt, UINT nFlags) {
+	DWORD pThis;
+
+	__asm mov [pThis], ecx
+
+	char nLowerChar;
+	int i, j;
+	int nCurrPos;
+	int *nCodeArr;
+	int nCodePos;
+	char nCodeChar;
+	cheat_t *strCheatEntry;
+	HWND hWnd;
+	DWORD *pSCView;
+	HMENU hMenu, hDebugMenu;
+	DWORD *pMenu, *pDebugMenu;
+	int iSCMenuPos;
+	DWORD jokeDlg[27];
+
+	void(__cdecl *H_DoFund)(__int16) = (void(__cdecl *)(__int16))0x40191F;
+	void(__thiscall *H_SimcityViewDebugGrantAllGifts)(DWORD *) = (void(__thiscall *)(DWORD *))0x401C0D;
+	int(__thiscall *H_ADialogDestruct)(void *) = (int(__thiscall *)(void *))0x401D7A;
+	void(__thiscall *H_SimcityAppAdjustNewspaperMenu)(void *) = (void(__thiscall *)(void *))0x40210D;
+	DWORD *(__thiscall *H_JokeDialogConstruct)(void *, void *) = (DWORD *(__thiscall *)(void *, void *))0x4024E6;
+	int(__stdcall *H_GetSimcityViewMenuPos)(int iPos) = (int(__stdcall *)(int))0x402EFA;
+	void(__stdcall *H_SimulationProposeMilitaryBase)() = (void(__stdcall *)())0x403017;
+	INT_PTR(__thiscall *H_DialogDoModal)(void *) = (INT_PTR(__thiscall *)(void *))0x4A7196;
+	DWORD *(__stdcall *H_CMenuFromHandle)(HMENU) = (DWORD *(__stdcall *)(HMENU))0x4A7427;
+	int(__thiscall *H_CMenuAttach)(DWORD *, HMENU) = (int(__thiscall *)(DWORD *, HMENU))0x4A7483;
+
+	HINSTANCE &game_hModule = *(HINSTANCE *)0x4CE8C8;
+	int &iCheatEntry = *(int *)0x4E6520;
+	int &iCheatExpectedCharPos = *(int *)0x4E6524;
+	char *szNewItem = (char *)0x4E66EC;
+
+	hWnd = (HWND)((DWORD *)pThis)[7];
+
+	// "Insert" key - only relevant in the demo but pressing it advances
+	// the timer.
+	if (nChar == 45) {
+		// Does nothing here - could be useful for other test cases.
+	}
+		
+	nLowerChar = tolower(nChar);
+TRYAGAIN:
+	if (iCheatEntry != -1) {
+		strCheatEntry = &cheatStrArray[iCheatEntry]; // Cheat entry
+		nCodeArr = cheatCharPos[iCheatEntry]; // Target character position reference array
+		nCodePos = nCodeArr[iCheatExpectedCharPos];
+		nCodeChar = strCheatEntry->pEntry[nCodePos];
+		if (nCodeChar == nLowerChar) {
+			nCurrPos = iCheatExpectedCharPos + 1;
+			iCheatExpectedCharPos = nCurrPos;
+			nCodePos = nCodeArr[nCurrPos];
+			if (nCurrPos != NUM_CHEAT_MAXCHARS && nCodePos != -1) {
+GOBACK:
+				if (iCheatEntry != -1)
+					return;
+				goto GETOUT;
+			}
+		}
+		else if (cheatMultipleDetections) {
+			for (i = 0; i < NUM_CHEATS; ++i) {
+				if (i == iCheatEntry)
+					continue;
+				j = cheatStrArray[i].iPos;
+				if (j >= 0) {
+					strCheatEntry = &cheatStrArray[j];
+					nCodeArr = cheatCharPos[j];
+					nCodePos = nCodeArr[iCheatExpectedCharPos];
+					nCodeChar = strCheatEntry->pEntry[nCodePos];
+					if (nCodeChar == nLowerChar) {
+						iCheatEntry = j;
+						goto TRYAGAIN;
+					}
+				}
+			}
+			iCheatEntry = -1;
+			goto GOBACK;
+		}
+		else {
+			iCheatEntry = -1;
+			goto GOBACK;
+		}
+		switch (strCheatEntry->iIndex) {
+			case CHEAT_FUND:
+				H_DoFund(25);
+				break;
+			case CHEAT_CASS:
+				if (!Game_RandomWordLFSRMod(16)) {
+					wSetTriggerDisasterType = DISASTER_FIRESTORM;
+					Game_SimulationPrepareDiasterCoordinates(&dwDisasterPoint, wCityCenterX, wCityCenterY);
+				}
+				dwCityFunds += 250;
+				break;
+			case CHEAT_THEWORKS:
+				pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
+				if (pSCView)
+					H_SimcityViewDebugGrantAllGifts(pSCView);
+				break;
+			case CHEAT_MAJORFLOOD:
+				wSetTriggerDisasterType = DISASTER_MASSFLOODS;
+				Game_SimulationPrepareDiasterCoordinates(&dwDisasterPoint, wCityCenterX, wCityCenterY);
+				break;
+			case CHEAT_PARTTHESEA:
+				// An extrapolation of 'moses' from the Windows 3.1 game.
+				// Once the code is activated it takes a moment for the
+				// flood/wind to halt.
+				if (dwDisasterActive) {
+					if (wCurrentDisasterID == DISASTER_FLOOD ||
+						wCurrentDisasterID == DISASTER_HURRICANE ||
+						wCurrentDisasterID == DISASTER_MASSFLOODS) {
+						if (wDisasterFloodArea > 0)
+							wDisasterFloodArea = 0;
+						if (wDisasterWindy > 0)
+							wDisasterWindy = 0;
+					}
+				}
+				break;
+			case CHEAT_FIRESTORM:
+				wSetTriggerDisasterType = DISASTER_FIRESTORM;
+				Game_SimulationPrepareDiasterCoordinates(&dwDisasterPoint, wCityCenterX, wCityCenterY);
+				break;
+			case CHEAT_DEBUG:
+				if (bPriscillaActivated)
+					return;
+				hMenu = GetMenu(hWnd);
+				pMenu = H_CMenuFromHandle(hMenu);
+				pDebugMenu = (DWORD *)operator new(8); // This would be CMenu().
+				if (pDebugMenu)
+					pDebugMenu[1] = 0;
+				hDebugMenu = LoadMenuA(game_hModule, (LPCSTR)223);
+				AdjustDebugMenu(hDebugMenu);
+				H_CMenuAttach(pDebugMenu, hDebugMenu);
+				iSCMenuPos = H_GetSimcityViewMenuPos(6);
+				InsertMenuA((HMENU)pMenu[1], iSCMenuPos + 6, MF_BYPOSITION|MF_POPUP, pDebugMenu[1], szNewItem);
+				H_SimcityAppAdjustNewspaperMenu(&pCSimcityAppThis);
+				DrawMenuBar(hWnd);
+				bPriscillaActivated = 1;
+				break;
+			case CHEAT_MILITARY:
+				H_SimulationProposeMilitaryBase();
+				break;
+			case CHEAT_JOKE:
+				H_JokeDialogConstruct((void *)&jokeDlg, 0);
+				H_DialogDoModal((void *)&jokeDlg);
+				H_ADialogDestruct((void *)&jokeDlg); // Function name references "A" dialog rather than anything specific.
+				break;
+			case CHEAT_WEBB:
+				if (!FindTheHouse()) {
+					if (!BuildTheHouse())
+						MessageBoxA(hWnd, "Sorry, no room to build Ilona's house!", gamePrimaryKey, MB_ICONINFORMATION | MB_OK);
+				}
+				break;
+			case CHEAT_OOPS:
+				MessageBoxA(hWnd, "Same to you, buddy!", "Hey!", MB_ICONEXCLAMATION | MB_OK);
+				if (iChurchVirus < 0)
+					iChurchVirus = 0; // Warning
+				else if (iChurchVirus == 0)
+					iChurchVirus = 1; // You asked for it!
+				break;
+			case CHEAT_REPENT:
+				if (iChurchVirus > 0) {
+					if (MessageBoxA(hWnd, "Tea Father?", gamePrimaryKey, MB_ICONINFORMATION | MB_YESNO) == IDYES)
+						iChurchVirus = 0; // Set it back to 0 rather than -1; the next execution of the related cheats will result in immediate action.
+					else
+						goto NO;
+				}
+				else {
+					if (iChurchVirus == 0)
+						iChurchVirus = -1; // Set back to -1 if executed once more.
+NO:
+					MessageBoxA(hWnd, "Oh go on..", gamePrimaryKey, MB_ICONEXCLAMATION | MB_OK);
+				}
+				break;
+			default:
+				break;
+		}
+		iCheatEntry = -1;
+		iCheatExpectedCharPos = 0;
+		goto GOBACK;
+	}
+
+	iCheatEntry = -1;
+	iCheatExpectedCharPos = 0;
+
+	cheatMultipleDetections = FALSE;
+	for (i = 0; i < NUM_CHEATS; ++i) {
+		strCheatEntry = &cheatStrArray[i];
+		if (strCheatEntry) {
+			strCheatEntry->iPos = -1;
+			if (*strCheatEntry->pEntry == nLowerChar) {
+				strCheatEntry->iPos = i;
+				if (iCheatEntry < 0) {
+					iCheatExpectedCharPos = 1;
+					iCheatEntry = strCheatEntry->iPos;
+				}
+				else
+					cheatMultipleDetections = TRUE;
+			}
 		}
 	}
 
-__asm {
-		pop edx
-		cmp edx, 24
-		ja def
+GETOUT:
+	if (iCheatEntry == -1)
+		iCheatExpectedCharPos = 0;
+}
 
-		push 0x4135DB
-		retn
+extern "C" void __stdcall Hook_SimcityDocUpdateDocumentTitle() {
+	DWORD pThis;
 
-def:
-		push 0x413ABF
-		retn
+	__asm mov [pThis], ecx
+
+	CMFC3XString cStr;
+	int iCityDayMon;
+	int iCityMonth;
+	int iCityYear;
+	const char *pCurrStr;
+	CSimString *pFundStr;
+
+	CSimString *(__thiscall *H_SimStringSetString)(CSimString *, const char *pSrc, int iSize, double idAmount) = (CSimString *(__thiscall *)(CSimString *, const char *pSrc, int iSize, double idAmount))0x4015CD;
+	void(__thiscall *H_SimStringTruncateAtSpace)(CSimString *) = (void(__thiscall *)(CSimString *))0x4019B5;
+	void(__thiscall *H_SimStringDest)(CSimString *) = (void(__thiscall *)(CSimString *))0x40242D;
+	void(__cdecl *H_CStringFormat)(CMFC3XString *, char const *Ptr, ...) = (void(__cdecl *)(CMFC3XString *, char const *Ptr, ...))0x49EBD3;
+	CMFC3XString *(__thiscall *H_CStringCons)(CMFC3XString *) = (CMFC3XString *(__thiscall *)(CMFC3XString *))0x4A2C28;
+	void(__thiscall *H_CStringEmpty)(CMFC3XString *) = (void(__thiscall *)(CMFC3XString *))0x4A2C95;
+	void(__thiscall *H_CStringDest)(CMFC3XString *) = (void(__thiscall *)(CMFC3XString *))0x4A2CB0;
+	BOOL(__thiscall *H_CStringLoadStringA)(CMFC3XString *, unsigned int) = (BOOL(__thiscall *)(CMFC3XString *, unsigned int))0x4A3453;
+	BOOL(__stdcall *H_IsIconic)(HWND hWnd) = (BOOL(__stdcall *)(HWND hWnd))0x49BCF4;
+
+	DWORD &MainFrmDest = *(DWORD *)0x4C7110;
+	CMFC3XString &SCAStringLang = *(CMFC3XString *)0x4C7148;
+	CMFC3XString *SCApCStringArrLongMonths = (CMFC3XString *)0x4C71F8;
+	CMFC3XString *SCApCStringArrShortMonths = (CMFC3XString *)0x4C7288;
+	const char *gameCurrDollar = (const char *)0x4E6168;
+	const char *gameCurrDM = (const char *)0x4E6180;
+	const char *gameLangGerman = (const char *)0x4E6198;
+	const char *gameCurrFF = (const char *)0x4E619C;
+	const char *gameLangFrench = (const char *)0x4E61B4;
+	const char *gameStrHyphen = (const char *)0x4E6804;
+
+	H_CStringCons(&cStr);
+
+	if (!MainFrmDest) {
+		if (!wCityMode) {
+			H_CStringLoadStringA(&cStr, 0x19D); // "Starting SimEngine..."
+			goto GETOUT;
+		}
+		if (!pszCityName.m_nDataLength)
+			goto GETOUT;
+		iCityDayMon = dwCityDays % 25 + 1;
+		iCityMonth = dwCityDays / 25 % 12;
+		iCityYear = wCityStartYear + dwCityDays / 300;
+		if (H_IsIconic(GameGetRootWindowHandle())) {
+			if (dwDisasterActive) {
+				if (wCurrentDisasterID <= DISASTER_HURRICANE)
+					H_CStringLoadStringA(&cStr, dwDisasterStringIndex[wCurrentDisasterID]);
+				else
+					H_CStringEmpty(&cStr);
+			}
+			else
+				H_CStringFormat(&cStr, "%s%s%d", pszCityName.m_pchData, gameStrHyphen, iCityYear);
+			goto GOFORWARD;
+		}
+		H_CStringEmpty(&cStr);
+		if (wcscmp((const wchar_t *)SCAStringLang.m_pchData, (const wchar_t *)gameLangFrench) != 0) {
+			if (wcscmp((const wchar_t *)SCAStringLang.m_pchData, (const wchar_t *)gameLangGerman) != 0)
+				pCurrStr = gameCurrDollar;
+			else
+				pCurrStr = gameCurrDM;
+		}
+		else
+			pCurrStr = gameCurrFF;
+		pFundStr = new CSimString();
+		if (pFundStr)
+			pFundStr = H_SimStringSetString(pFundStr, pCurrStr, 20, (double)dwCityFunds);
+		else
+			goto GETOUT;
+		H_SimStringTruncateAtSpace(pFundStr);
+		if (bSettingsTitleCalendar)
+			H_CStringFormat(&cStr, "%s %d %4d <%s> %s", SCApCStringArrLongMonths[iCityMonth].m_pchData, iCityDayMon, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
+		else
+			H_CStringFormat(&cStr, "%s %4d <%s> %s", SCApCStringArrShortMonths[iCityMonth].m_pchData, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
+		if (pFundStr) {
+			H_SimStringDest(pFundStr);
+			operator delete(pFundStr);
+		}
+GOFORWARD:
+		Game_CDocument_UpdateAllViews((void *)pThis, 0, 1, &cStr);
+	}
+GETOUT:
+	H_CStringDest(&cStr);
+}
+
+// Local TileHightlightUpdate function.
+// This is for attempts at mitigating some of
+// the oddities that come with either:
+// 1) African Swallow mode during non-granular updates (batch).
+// 2) Granular updates on all speed levels. (more so for African Swallow and Cheetah)
+static void L_TileHighlightUpdate(DWORD *pThis) {
+	BYTE *vBits;
+	LONG bottom;
+	LONG x;
+	__int16 y;
+
+	int(__cdecl *H_BeginObject)(void *, void *, int, __int16, RECT *) = (int(__cdecl *)(void *, void *, int, __int16, RECT *))0x401226;
+	BOOL(__thiscall *H_SimcityViewMainWindowUpdate)(void *, RECT *, BOOL) = (BOOL(__thiscall *)(void *, RECT *, BOOL))0x40152D;
+	void(__thiscall *H_GraphicsUnlockDIBBits)(void *) = (void(__thiscall *)(void *))0x401BE5;
+	int(__thiscall *H_GraphicsHeight)(void *) = (int(__thiscall *)(void *))0x40216C;
+	LONG(__thiscall *H_GraphicsWidth)(void *) = (LONG(__thiscall *)(void *))0x402419;
+	int(__thiscall *H_SimcityViewCheckOrLoadGraphic)(void *) = (int(__thiscall *)(void *))0x40297D;
+	BOOL(__stdcall *H_FinishObject)() = (BOOL(__stdcall *)())0x402B7B;
+	BYTE *(__thiscall *H_GraphicsLockDIBBits)(void *) = (BYTE *(__thiscall *)(void *))0x402DA1;
+
+	DWORD *pSomeWnd = (DWORD *)0x4CAC18;
+	tagRECT &dRect = *(tagRECT *)0x4CAD48;
+
+	if (wTileHighlightActive) {
+		vBits = H_GraphicsLockDIBBits((void *)pThis[13]);
+		if (vBits || H_SimcityViewCheckOrLoadGraphic(pThis)) {
+			x = H_GraphicsWidth((void *)pThis[13]);
+			y = H_GraphicsHeight((void *)pThis[13]);
+			if (!bOverrideTickPlacementHighlight) {
+				H_BeginObject(pThis, vBits, x, y, (RECT *)pThis + 19);
+				Game_DrawSquareHighlight(pThis, wHighlightedTileX1, wHighlightedTileY1, wHighlightedTileX2, wHighlightedTileY2);
+				H_FinishObject();
+			}
+			H_GraphicsUnlockDIBBits((void *)pThis[13]);
+			bottom = ++dRect.bottom;
+			if (*(DWORD *)((char *)pThis + 322)) {
+				dRect.bottom = bottom + 2;
+				++dRect.right;
+			}
+			H_SimcityViewMainWindowUpdate(pThis, &dRect, 1);
+			if (bOverrideTickPlacementHighlight)
+				wTileHighlightActive = 0;
+		}
 	}
 }
 
-extern "C" void _declspec(naked) Hook_SimulationStartDisaster(void) {
-	if (mischook_debug & MISCHOOK_DEBUG_DISASTERS)
-		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> SimulationStartDisaster(), wDisasterType = %u.\n", _ReturnAddress(), wDisasterType);
+extern "C" void __stdcall Hook_SimulationProcessTick() {
+	int i;
+	DWORD dwMonDay;
+	DWORD newsDialog[156];
+	__int16 iStep, iSubStep;
+	DWORD dwCityProgressionRequirement;
+	BYTE iPaperVal;
+	BOOL bScenarioSuccess;
+	BOOL bDoTileHighlightUpdate;
+	DWORD *pSCApp;
+	DWORD *pSCView;
 
-	GAMEJMP(0x45CF10)
+	void(__stdcall *H_UpdateGraphDialog)() = (void(__stdcall *)())0x4010A5;
+	void(__stdcall *H_SimulationPollutionTerrainAndLandValueScan)() = (void(__stdcall *)())0x401154;
+	void(__stdcall *H_SimulationEQ_LE_Processing)() = (void(__stdcall *)())0x401262;
+	void(__cdecl *H_UpdateSimNationDialog)() = (void(__cdecl *)())0x4012FD;
+	void(__stdcall *H_UpdateIndustryDialog)() = (void(__stdcall *)())0x40142E;
+	void(__cdecl *H_SimulationPrepareBudgetDialog)(int) = (void(__cdecl *)(int))0x4015E6;
+	void(__cdecl *H_SimulationGrantReward)(__int16 iReward, int iToggle) = (void(__cdecl *)(__int16 iReward, int iToggle))0x401672;
+	void(__stdcall *H_UpdatePopulationDialog)() = (void(__stdcall *)())0x40169F;
+	void(__thiscall *H_SimcityAppCallAutoSave)(void *) = (void(__thiscall *)(void *))0x4016A9;
+	void(__thiscall *H_SimcityViewMaintainCursor)(void *) = (void(__thiscall *)(void *))0x401A96;
+	void(__stdcall *H_SimulationUpdateWaterConsumption)() = (void(__stdcall *)())0x401CA8;
+	void(__stdcall *H_UpdateWeatherOrDisasterState)() = (void(__stdcall *)())0x401E65;
+	DWORD *(__thiscall *H_NewspaperConstruct)(void *) = (DWORD *(__thiscall *)(void *))0x401F23;
+	void(__stdcall *H_UpdateGraphData)() = (void(__stdcall *)())0x402022;
+	void(__thiscall *H_SimcityAppAdjustNewspaperMenu)(void *) = (void(__thiscall *)(void *))0x40210D;
+	void(__stdcall *H_SimulationRCIDemandUpdates)() = (void(__stdcall *)())0x40217B;
+	int(__thiscall *H_GameDialogDoModal)(void *) = (int(__thiscall *)(void *))0x40219E;
+	void(__cdecl *H_SimulationGrowthTick)(__int16 iStep, __int16 iSubStep) = (void(__cdecl *)(__int16, __int16))0x4022FC;
+	void(__cdecl *H_UpdateCityMap)() = (void(__cdecl *)())0x40239C;
+	void(__stdcall *H_ToolMenuUpdate)() = (void(__stdcall *)())0x4023EC;
+	void(__cdecl *H_EventScenarioNotification)(__int16 iEvent) = (void(__cdecl *)(__int16 iEvent))0x402487;
+	void(__thiscall *H_NewspaperDestruct)(void *) = (void(__thiscall *)(void *))0x4025B3;
+	void(__stdcall *H_SimulationUpdatePowerConsumption)() = (void(__stdcall *)())0x4026F8;
+	void(__stdcall *H_NewspaperStoryGenerator)(__int16 iPaperType, BYTE iPaperVal) = (void(__stdcall *)(__int16 iPaperType, BYTE iPaperVal))0x402900;
+	void(__stdcall *H_UpdateBudgetInformation)() = (void(__stdcall *)())0x402D2E;
+	void(__stdcall *H_SimulationUpdateMonthlyTrafficData)() = (void(__stdcall *)())0x402D51;
+	void(__thiscall *H_MainFrameUpdateCityToolBar)(void *) = (void(__thiscall *)(void *))0x402F18;
+	void(__stdcall *H_SimulationProposeMilitaryBase)() = (void(__stdcall *)())0x403017;
+
+	wCityCurrentMonth = ++dwCityDays / 25 % 12;
+	wCityCurrentSeason = (dwCityDays / 25 % 12 + 1) % 12 / 3;
+	wCityElapsedYears = dwCityDays / 300;
+	if (dwSCAGameAutoSave > 0 &&
+		!((dwCityDays / 300) % dwSCAGameAutoSave) &&
+		!wCityCurrentMonth &&
+		!(dwCityDays & 25)) {
+		H_SimcityAppCallAutoSave(&pCSimcityAppThis);
+	}
+
+	if (bSettingsFrequentCityRefresh) {
+		Game_RefreshTitleBar(pCDocumentMainWindow);
+		Game_CDocument_UpdateAllViews(pCDocumentMainWindow, NULL, 2, NULL);
+	}
+
+	dwMonDay = (dwCityDays % 25);
+	switch (dwMonDay) {
+		case 0:
+			if (!bSettingsFrequentCityRefresh)
+				Game_RefreshTitleBar(pCDocumentMainWindow);
+			if (bYearEndFlag)
+				H_SimulationPrepareBudgetDialog(0);
+			H_UpdateBudgetInformation();
+			if (bNewspaperSubscription) {
+				if (wCityCurrentMonth == 3 || wCityCurrentMonth == 7) {
+					H_NewspaperConstruct((void *)&newsDialog);
+					newsDialog[39] = wNewspaperChoice; // CNewspaperDialog -> CGameDialog -> CDialog; struct position 39 - paperchoice dword var.
+					H_GameDialogDoModal(&newsDialog);
+					H_NewspaperDestruct(&newsDialog);
+				}
+			}
+			wCityCurrentMonth = dwCityDays / 25 % 12;
+			wCityCurrentSeason = (dwCityDays / 25 % 12 + 1) % 12 / 3;
+			wCityElapsedYears = dwCityDays / 300;
+			for (i = 0; i < 8; pZonePops[i - 1] = 0)
+				++i;
+			break;
+		case 1:
+			H_SimulationUpdatePowerConsumption();
+			break;
+		case 2:
+			H_SimulationPollutionTerrainAndLandValueScan();
+			break;
+		// Switch cases 3-18 have been moved to 'default' as
+		// if (dwMonDay >= 3 && dwMonDay <= 18).
+		case 19:
+			H_SimulationUpdateMonthlyTrafficData();
+			break;
+		case 20:
+			H_SimulationUpdateWaterConsumption();
+			break;
+		case 21:
+			H_SimulationRCIDemandUpdates();
+			H_SimulationEQ_LE_Processing();
+			H_UpdateGraphData();
+			break;
+		case 22:
+			dwCityProgressionRequirement = dwCityProgressionRequirements[wCityProgression];
+			if (dwCityProgressionRequirement) {
+				if (dwCityProgressionRequirement < dwCityPopulation) {
+					Game_SimcityAppSetGameCursor(&pCSimcityAppThis, 24, 0);
+					iPaperVal = wCityProgression++;
+					H_NewspaperStoryGenerator(3, iPaperVal);
+					H_SimcityAppAdjustNewspaperMenu(&pCSimcityAppThis);
+					if (wCityProgression >= 4) {
+						if (wCityProgression == 4)
+							H_SimulationProposeMilitaryBase();
+						else if (wCityProgression == 5)
+							H_SimulationGrantReward(3, 1);
+					}
+					else
+						H_SimulationGrantReward(wCityProgression - 1, 1);
+					H_ToolMenuUpdate();
+					H_SimcityAppAdjustNewspaperMenu(&pCSimcityAppThis);
+					Game_SimcityAppSetGameCursor(&pCSimcityAppThis, 0, 0);
+				}
+			}
+			if (bInScenario) {
+				bScenarioSuccess = dwScenarioCitySize <= dwCityPopulation;
+				if (pBudgetArr[BUDGET_RESFUND].iCurrentCosts < (int)dwScenarioResPopulation)
+					bScenarioSuccess = FALSE;
+				if (pBudgetArr[BUDGET_COMFUND].iCurrentCosts < (int)dwScenarioComPopulation)
+					bScenarioSuccess = FALSE;
+				if (pBudgetArr[BUDGET_INDFUND].iCurrentCosts < (int)dwScenarioIndPopulation)
+					bScenarioSuccess = FALSE;
+				if (dwCityFunds - dwCityBonds < (int)dwScenarioCashGoal)
+					bScenarioSuccess = FALSE;
+				if (dwCityLandValue < (int)dwScenarioLandValueGoal)
+					bScenarioSuccess = FALSE;
+				if (wScenarioLEGoal > dwCityWorkforceLE)
+					bScenarioSuccess = FALSE;
+				if (wScenarioEQGoal > dwCityWorkforceEQ)
+					bScenarioSuccess = FALSE;
+				if (dwScenarioPollutionLimit > 0 && dwCityPollution > dwScenarioPollutionLimit)
+					bScenarioSuccess = FALSE;
+				if (dwScenarioCrimeLimit > 0 && dwCityCrime > dwScenarioCrimeLimit)
+					bScenarioSuccess = FALSE;
+				if (dwScenarioTrafficLimit > 0 && dwCityTrafficUnknown > dwScenarioTrafficLimit)
+					bScenarioSuccess = FALSE;
+				if (bScenarioBuildingGoal1) {
+					if (dwTileCount[bScenarioBuildingGoal1] < wScenarioBuildingGoal1Count)
+						bScenarioSuccess = FALSE;
+				}
+				if (bScenarioBuildingGoal2) {
+					if (dwTileCount[bScenarioBuildingGoal2] < wScenarioBuildingGoal2Count)
+						bScenarioSuccess = FALSE;
+				}
+				if (bScenarioSuccess)
+					H_EventScenarioNotification(1);
+				else if (!--wScenarioTimeLimitMonths)
+					H_EventScenarioNotification(0);
+			}
+			if (dwCityFunds < -100000)
+				H_EventScenarioNotification(2);
+			break;
+		case 23:
+			if (!bSettingsFrequentCityRefresh)
+				Game_CDocument_UpdateAllViews(pCDocumentMainWindow, NULL, 2, NULL);
+			H_UpdatePopulationDialog();
+			H_UpdateIndustryDialog();
+			H_UpdateGraphDialog();
+			break;
+		case 24:
+			H_MainFrameUpdateCityToolBar(pCWndRootWindow);
+			H_UpdateCityMap();
+			H_UpdateSimNationDialog();
+			H_UpdateWeatherOrDisasterState();
+			break;
+		default:
+			// Moved here rather than the prior list of cases that were
+			// specific to the growth tick function.
+			if (dwMonDay >= 3 && dwMonDay <= 18) {
+				if (dwMonDay == 12) {
+					wCityCurrentMonth = dwCityDays / 25 % 12;
+					wCityCurrentSeason = (dwCityDays / 25 % 12 + 1) % 12 / 3;
+					wCityElapsedYears = dwCityDays / 300;
+				}
+				iStep = ((dwMonDay - 3) / 4 % 4); // Steps 0 - 3 in groups of 4.
+				iSubStep = (dwMonDay + 1) % 4; // SubSteps 0-3 for each group of 4.
+				H_SimulationGrowthTick(iStep, iSubStep);
+				break;
+			}
+			return;
+	}
+
+	// Explanation:
+	// !bSettingsFrequentCityRefresh - It will do the tile highlight update if:
+	// 1) wSimulationSpeed is set to African Swallow
+	// 2) pSCApp[198] is true (AnimationOffCycle) or it is game day 21 - CDocument::UpdateAllViews case.
+	//
+	// bSettingsFrequentCityRefresh - Tile highlight updates only occur if wSimulationSpeed
+	// isn't set to paused.
+
+	bDoTileHighlightUpdate = FALSE;
+	pSCApp = &pCSimcityAppThis;
+	if (!bSettingsFrequentCityRefresh) {
+		if (wSimulationSpeed == GAME_SPEED_AFRICAN_SWALLOW) {
+			if (pSCApp[198] || dwMonDay == 21)
+				bDoTileHighlightUpdate = TRUE;
+		}
+	}
+	else {
+		if (wSimulationSpeed != GAME_SPEED_PAUSED) {
+			bDoTileHighlightUpdate = TRUE;
+		}
+	}
+
+	if (bDoTileHighlightUpdate) {
+		pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
+		if (pSCView) {
+			if (wCityMode) {
+				// It should be noted that the highlight will only appear with a valid selected tool.
+				// If you attempt to press Shift or Control (for the bulldozer or query) while an
+				// invalid tool is selected, there'll be no placement highlighted (this matches the
+				// behaviour in the normal game as well).
+				if (wCurrentCityToolGroup != TOOL_GROUP_CENTERINGTOOL) {
+					if (wTileCoordinateX < 0 || wTileCoordinateX >= GAME_MAP_SIZE ||
+						wTileCoordinateY < 0 || wTileCoordinateY >= GAME_MAP_SIZE) {
+						wTileHighlightActive = 0;
+					}
+					else {
+						wTileHighlightActive = 1;
+						L_TileHighlightUpdate(pSCView);
+					}
+					H_SimcityViewMaintainCursor(pSCView);
+				}
+			}
+		}
+	}
+}
+
+extern "C" void __stdcall Hook_SimulationStartDisaster(void) {
+	void(__stdcall *H_SimulationStartDisaster)() = (void(__stdcall *)())0x45CF10;
+
+	if (mischook_debug & MISCHOOK_DEBUG_DISASTERS)
+		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> SimulationStartDisaster(), wDisasterType = %u.\n", _ReturnAddress(), wSetTriggerDisasterType);
+
+	H_SimulationStartDisaster();
 }
 
 extern "C" int __stdcall Hook_AddAllInventions(void) {
@@ -1528,7 +2361,7 @@ extern "C" int __stdcall Hook_AddAllInventions(void) {
 
 	memset(wCityInventionYears, 0, sizeof(WORD)*MAX_CITY_INVENTION_YEARS);
 	Game_ToolMenuUpdate();
-	Game_SoundPlaySound(pCWinAppThis, SOUND_ZAP);
+	Game_SoundPlaySound(&pCSimcityAppThis, SOUND_ZAP);
 
 	return 0;
 }
@@ -1551,7 +2384,7 @@ extern "C" int __stdcall Hook_CSimcityView_WM_MBUTTONDOWN(WPARAM wMouseKeys, POI
 		else if (GetAsyncKeyState(VK_MENU) < 0) {
 			// useful for tests
 		} else {
-			Game_SoundPlaySound(pCWinAppThis, SOUND_CLICK);
+			Game_SoundPlaySound(&pCSimcityAppThis, SOUND_CLICK);
 			Game_CenterOnTileCoords(bTileX, bTileY);
 		}
 	}
@@ -1604,6 +2437,7 @@ extern "C" __int16 __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(WPARAM iMouseKeys,
 			else {
 				ret = *(DWORD *)(pThis + 252);
 				if (!ret) {
+					bOverrideTickPlacementHighlight = TRUE;
 					hWnd = SetCapture(*(HWND *)(pThis + 28));
 					Game_CWnd_FromHandle(hWnd);
 					P_LOWORD(ret) = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
@@ -1636,12 +2470,12 @@ extern "C" __int16 __stdcall Hook_CSimcityView_WM_MOUSEMOVE(WPARAM iMouseKeys, P
 	__asm mov [pThis], ecx
 
 	int iTileCoords;
-	int iThisSomething;
+	int iLeftMousDownInGameArea;
 
 	P_LOWORD(iTileCoords) = (WORD)pt.x;
-	iThisSomething = *(DWORD *)(pThis + 252);
+	iLeftMousDownInGameArea = *(DWORD *)(pThis + 252);
 	*(struct tagPOINT *)(pThis + 260) = pt; // Placement position.
-	if (iThisSomething) {
+	if (iLeftMousDownInGameArea) {
 		P_LOWORD(iTileCoords) = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
 		wCurrentTileCoordinates = iTileCoords;
 		if ((__int16)iTileCoords >= 0) {
@@ -1674,6 +2508,8 @@ extern "C" __int16 __stdcall Hook_CSimcityView_WM_MOUSEMOVE(WPARAM iMouseKeys, P
 			}
 		}
 	}
+	else
+		bOverrideTickPlacementHighlight = FALSE;
 
 	return iTileCoords;
 }
@@ -1697,8 +2533,8 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 	// The change in this case is to only set pThis[62] to 0 when the iCurrToolGroupA is not
 	// 'Center Tool', this will then allow it to pass-through to the WM_MOUSEMOVE call.
 
-	pThis = (DWORD *)Game_PointerToCSimcityViewClass(pCWinAppThis);	// TODO: is this necessary or can we just dereference pCSimcityView?
-	Game_TileHighlightUpdate((int)pThis);
+	pThis = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);	// TODO: is this necessary or can we just dereference pCSimcityView?
+	Game_TileHighlightUpdate(pThis);
 	iCurrToolGroupA = wCurrentMapToolGroup;
 	iTileStartX = 400;
 	iTileStartY = 400;
@@ -1748,12 +2584,12 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 					if (Game_MapToolSoundTrigger(dwAudioHandle))
 						break;
 				}
-				Game_SoundPlaySound(pCWinAppThis, SOUND_FLOOD);
+				Game_SoundPlaySound(&pCSimcityAppThis, SOUND_FLOOD);
 				break;
 			case MAPTOOL_GROUP_TREES: // Place Tree
 			case MAPTOOL_GROUP_FOREST: // Place Forest
 				if (!Game_MapToolSoundTrigger(dwAudioHandle))
-					Game_SoundPlaySound(pCWinAppThis, SOUND_PLOP);
+					Game_SoundPlaySound(&pCSimcityAppThis, SOUND_PLOP);
 				if (iCurrToolGroupA == 7)
 					Game_MapToolPlaceTree(iTileTargetX, iTileTargetY);
 				else
@@ -1761,7 +2597,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 				break;
 			case MAPTOOL_GROUP_CENTERINGTOOL: // Center Tool
 				Game_GetScreenCoordsFromTileCoords(iTileTargetX, iTileTargetY, &wNewScreenPointX, &wNewScreenPointY);
-				Game_SoundPlaySound(pCWinAppThis, SOUND_CLICK);
+				Game_SoundPlaySound(&pCSimcityAppThis, SOUND_CLICK);
 				if (*(DWORD *)((char *)pThis + 322))
 					Game_CenterOnNewScreenCoordinates(pThis, wScreenPointX - (wNewScreenPointX >> 1), wScreenPointY - (wNewScreenPointY >> 1));
 				else
@@ -1845,12 +2681,18 @@ extern "C" int __stdcall Hook_StartupGraphics() {
 	if (iBitRate < 16) {
 		if (iBitRate <= 4) {
 			bLoColor = TRUE;
-			pvIn = 4;
+			pvIn = SETCOLORTABLE;
 			if (Escape(hDC_Two, QUERYESCSUPPORT, 4, (LPCSTR)&pvIn, 0)) {
 				p_pEnt = plPal.pPalEnts;
 				pCol = rgbLoColor;
 				do {
-					Escape(hDC_Two, SETCOLORTABLE, 6, (LPCSTR)pCol, &pvOut);
+					colTable cT;
+
+					memset(&cT, 0, sizeof(colTable));
+					cT.Index = pCol->wPos;
+					cT.rgb = RGB(pCol->pe.peRed, pCol->pe.peGreen, pCol->pe.peBlue);
+
+					Escape(hDC_Two, SETCOLORTABLE, 6, (LPCSTR)&cT, &pvOut);
 					p_pEnt[pCol->wPos].peRed = pCol->pe.peRed;
 					p_pEnt[pCol->wPos].peGreen = pCol->pe.peGreen;
 					p_pEnt[pCol->wPos].peBlue = pCol->pe.peBlue;
@@ -1889,7 +2731,7 @@ void ShowModSettingsDialog(void) {
 
 // Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
 // This should probably have a better name. And maybe be broken out into smaller functions.
-void InstallMiscHooks(void) {
+void InstallMiscHooks_SC2K1996(void) {
 	InstallRegistryPathingHooks_SC2K1996();
 
 	// Install LoadStringA hook
@@ -1934,14 +2776,14 @@ void InstallMiscHooks(void) {
 	memcpy_s((LPVOID)0x4E6130, 12, "presnts.bmp", 12);
 
 	// Fix power and water grid updates slowing down after the population hits 50,000
-	VirtualProtect((LPVOID)0x440943, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(DWORD*)0x440943 = 50000000;
-	VirtualProtect((LPVOID)0x440987, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(DWORD*)0x440987 = 50000000;
-	VirtualProtect((LPVOID)0x43F429, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(DWORD*)0x43F429 = 50000000;
-	VirtualProtect((LPVOID)0x43F3A4, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(DWORD*)0x43F3A4 = 50000000;
+	VirtualProtect((LPVOID)0x440943, 4, PAGE_EXECUTE_READWRITE, &dwDummy); // 0x440170 <- CityToolMenuAction
+	*(DWORD*)0x440943 = 50000000; // Power
+	VirtualProtect((LPVOID)0x440987, 4, PAGE_EXECUTE_READWRITE, &dwDummy); // 0x440170 <- CityToolMenuAction
+	*(DWORD*)0x440987 = 50000000; // Water
+	VirtualProtect((LPVOID)0x43F429, 4, PAGE_EXECUTE_READWRITE, &dwDummy); // CityToolMenuAction
+	*(DWORD*)0x43F429 = 50000000; // Water
+	VirtualProtect((LPVOID)0x43F3A4, 4, PAGE_EXECUTE_READWRITE, &dwDummy); // CityToolMenuAction
+	*(DWORD*)0x43F3A4 = 50000000; // Power
 	
 	// Fix city name being overwritten by filename on save
 	BYTE bFilenamePatch[6] = { 0xB9, 0xA0, 0xA1, 0x4C, 0x00, 0x51 };
@@ -1949,6 +2791,11 @@ void InstallMiscHooks(void) {
 	memcpy((LPVOID)0x42FE62, bFilenamePatch, 6);
 	VirtualProtect((LPVOID)0x42FE99, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
 	memcpy((LPVOID)0x42FE99, bFilenamePatch, 6);
+
+	// Adjust the Save File dialog type criterion
+	VirtualProtect((LPVOID)0x4E7344, 32, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memset((LPVOID)0x4E7344, 0, 32);
+	memcpy_s((LPVOID)0x4E7344, 32, "Simcity files (*.sc2)|*.sc2||", 32);
 
 	// Fix save filenames going wonky 
 	VirtualProtect((LPVOID)0x4321B9, 8, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -1993,9 +2840,14 @@ void InstallMiscHooks(void) {
 		InstallQueryHooks();
 
 	// Fix the broken cheat
+	// *** Only effective when the 'CMainFrame::OnChar' below is disabled. ***
 	UINT uCheatPatch[9] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
 	memcpy_s((LPVOID)0x4E65C8, 10, "mrsoleary", 10);
 	memcpy_s((LPVOID)0x4E6490, sizeof(uCheatPatch), uCheatPatch, sizeof(uCheatPatch));
+
+	// Hook for CMainFrame::OnChar
+	VirtualProtect((LPVOID)0x4029E1, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4029E1, Hook_MainFrameOnChar);
 
 	// Increase sound buffer sizes to 256K each
 	VirtualProtect((LPVOID)0x480C2B, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -2045,13 +2897,14 @@ void InstallMiscHooks(void) {
 	VirtualProtect((LPVOID)0x40103C, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x40103C, Hook_40103C);
 
-	// Window title calendar
-	VirtualProtect((LPVOID)0x40D67D, 10, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWCALL((LPVOID)0x40D67D, Hook_40D67D);
-	memset((LPVOID)0x40D682, 0x90, 5);
-	VirtualProtect((LPVOID)0x4135D2, 9, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4135D2, Hook_SimulationProcessTickDaySwitch);
-	memset((LPVOID)0x4135D7, 0x90, 4);
+	// New hooks for CSimcityDoc::UpdateDocumentTitle and
+	// SimulationProcessTick - these account for:
+	// 1) Including the day of the month in the window title.
+	// 2) The fine-grained simulation updates.
+	VirtualProtect((LPVOID)0x4017B2, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4017B2, Hook_SimcityDocUpdateDocumentTitle);
+	VirtualProtect((LPVOID)0x401820, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x401820, Hook_SimulationProcessTick);
 
 	// Hook SimulationStartDisaster
 	VirtualProtect((LPVOID)0x402527, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -2102,111 +2955,10 @@ void InstallMiscHooks(void) {
 
 skipgamemenu:
 
+	// This case only occurs if the debug menu has been loaded
+	// from the original non-hooked CMainFrame::OnChar function.
 	hDebugMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(223));
-	if (hDebugMenu) {
-		AFX_MSGMAP_ENTRY afxMessageMapEntry[5];
-		HMENU hDebugPopup;
-		MENUITEMINFO miiDebugPopup;
-		miiDebugPopup.cbSize = sizeof(MENUITEMINFO);
-		miiDebugPopup.fMask = MIIM_SUBMENU;
-		if (!GetMenuItemInfo(hDebugMenu, 0, TRUE, &miiDebugPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
-			goto skipdebugmenu;
-		}
-		hDebugPopup = miiDebugPopup.hSubMenu;
-
-		// Insert in reverse order.
-		// Separator between the disasters and internal debugging functions.
-		if (!InsertMenu(hDebugPopup, 11, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #1 failed, error = 0x%08X.\n", GetLastError());
-			goto skipdebugmenu;
-		}
-		// Separator between grants and disasters
-		if (!InsertMenu(hDebugPopup, 4, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #2 failed, error = 0x%08X.\n", GetLastError());
-			goto skipdebugmenu;
-		}
-		// Separator between the version option and grants
-		if (!InsertMenu(hDebugPopup, 1, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #3 failed, error = 0x%08X.\n", GetLastError());
-			goto skipdebugmenu;
-		}
-		
-		// Insert in reverse order.
-		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_MISSILESILOS, "Propose Missile Silos") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #4 failed, error = 0x%08X.\n", GetLastError());
-			goto skipdebugmenu;
-		}
-		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_NAVALYARD, "Propose Naval Yard") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #5 failed, error = 0x%08X.\n", GetLastError());
-			goto skipdebugmenu;
-		}
-		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_ARMYBASE, "Propose Army Base") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #6 failed, error = 0x%08X.\n", GetLastError());
-			goto skipdebugmenu;
-		}
-		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_AIRFORCE, "Propose Air Force Base") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #7 failed, error = 0x%08X.\n", GetLastError());
-			goto skipdebugmenu;
-		}
-		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION|MF_STRING, IDM_DEBUG_MILITARY_DECLINED, "Stop Military Spawning") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #8 failed, error = 0x%08X.\n", GetLastError());
-			goto skipdebugmenu;
-		}
-
-		afxMessageMapEntry[0] = {
-			WM_COMMAND,
-			0,
-			IDM_DEBUG_MILITARY_DECLINED,
-			IDM_DEBUG_MILITARY_DECLINED,
-			0x0A,
-			ProposeMilitaryBaseDecline,
-		};
-
-		afxMessageMapEntry[1] = {
-			WM_COMMAND,
-			0,
-			IDM_DEBUG_MILITARY_AIRFORCE,
-			IDM_DEBUG_MILITARY_AIRFORCE,
-			0x0A,
-			ProposeMilitaryBaseAirForceBase,
-		};
-
-		afxMessageMapEntry[2] = {
-			WM_COMMAND,
-			0,
-			IDM_DEBUG_MILITARY_ARMYBASE,
-			IDM_DEBUG_MILITARY_ARMYBASE,
-			0x0A,
-			ProposeMilitaryBaseArmyBase,
-		};
-
-		afxMessageMapEntry[3] = {
-			WM_COMMAND,
-			0,
-			IDM_DEBUG_MILITARY_NAVALYARD,
-			IDM_DEBUG_MILITARY_NAVALYARD,
-			0x0A,
-			ProposeMilitaryBaseNavalYard,
-		};
-
-		afxMessageMapEntry[4] = {
-			WM_COMMAND,
-			0,
-			IDM_DEBUG_MILITARY_MISSILESILOS,
-			IDM_DEBUG_MILITARY_MISSILESILOS,
-			0x0A,
-			ProposeMilitaryBaseMissileSilos,
-		};
-
-		VirtualProtect((LPVOID)0x4D4608, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
-		memcpy_s((LPVOID)0x4D4608, sizeof(afxMessageMapEntry), &afxMessageMapEntry, sizeof(afxMessageMapEntry));
-
-		if (mischook_debug & MISCHOOK_DEBUG_MENU)
-			ConsoleLog(LOG_DEBUG, "MISC: Updated debug menu.\n");
-	}
-
-skipdebugmenu:
+	AdjustDebugMenu(hDebugMenu);
 
 	// Hook for the game area leftmousebuttondown call.
 	VirtualProtect((LPVOID)0x401523, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -2259,12 +3011,12 @@ skipdebugmenu:
 	*(BYTE*)0x415044 = 0x90;
 
 	// Part two!
-	UpdateMiscHooks();
+	UpdateMiscHooks_SC2K1996();
 }
 
 // The difference between InstallMiscHooks and UpdateMiscHooks is that UpdateMiscHooks can be run
 // again at runtime because it can patch back in original game code. It's used for small stuff.
-void UpdateMiscHooks(void) {
+void UpdateMiscHooks_SC2K1996(void) {
 	// Music in background
 	VirtualProtect((LPVOID)0x40BFDA, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	if (bSettingsMusicInBackground)
