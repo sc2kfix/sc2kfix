@@ -275,6 +275,7 @@ extern "C" void __stdcall Hook_ApparentExit(void) {
 	*((DWORD *)pThis + 63) = dwOldVal2;
 }
 
+#if !NOKUROKO
 std::vector<hook_function_t> stHooks_Hook_GameDoIdleUpkeep_Before;
 std::vector<hook_function_t> stHooks_Hook_GameDoIdleUpkeep_After;
 
@@ -310,6 +311,7 @@ extern "C" void __stdcall Hook_GameDoIdleUpkeep(void) {
 BAIL:
 	return;
 }
+#endif
 
 // Fix up a specific setting of the GameDoIdleUpkeep state
 void __declspec(naked) Hook_4062AD(void) {
@@ -321,7 +323,9 @@ void __declspec(naked) Hook_4062AD(void) {
 	}
 }
 
+#if !NOKUROKO
 std::vector<hook_function_t> stHooks_Hook_OnNewCity_Before;
+#endif
 
 static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
@@ -336,6 +340,7 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 
 		strcpy_s(dwMapXLAB[0][0].szLabel, 24, szTempMayorName);
 
+#if !NOKUROKO
 		// XXX - this should probably be moved to a separate proper hook into the game itself
 		for (const auto& hook : stHooks_Hook_OnNewCity_Before) {
 			bHookStopProcessing = FALSE;
@@ -344,6 +349,7 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 				fnHook();
 			}
 		}
+#endif
 		break;
 	}
 
@@ -2791,10 +2797,12 @@ extern "C" int __stdcall Hook_StartupGraphics() {
 	return ReleaseDC(0, hDC_Two);
 }
 
+#if !NOKUROKO
 // Placeholder.
 void ShowModSettingsDialog(void) {
 	MessageBox(NULL, "The mod settings dialog has not yet been implemented. Check back later.", "sc2fix", MB_OK);
 }
+#endif
 
 // Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
 // This should probably have a better name. And maybe be broken out into smaller functions.
@@ -2834,9 +2842,11 @@ void InstallMiscHooks_SC2K1996(void) {
 	VirtualProtect((LPVOID)0x401753, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x401753, Hook_ApparentExit);
 
+#if !NOKUROKO
 	// Hook GameDoIdleUpkeep
 	VirtualProtect((LPVOID)0x402A3B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402A3B, Hook_GameDoIdleUpkeep);
+#endif
 
 	// Fix the Maxis Presents logo not being shown
 	VirtualProtect((LPVOID)0x4062B9, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -2877,8 +2887,10 @@ void InstallMiscHooks_SC2K1996(void) {
 	NEWCALL((LPVOID)0x434BEA, Hook_LoadNeighborConnections1500);
 	*(BYTE*)0x434BEF = 0x90;
 
+#if !NOKUROKO
 	// Install hooks for the SC2X save format
 	InstallSaveHooks();
+#endif
 
 	// Hook into the ResetGameVars function.
 	VirtualProtect((LPVOID)0x401F05, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -3009,13 +3021,17 @@ void InstallMiscHooks_SC2K1996(void) {
 			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #2 failed, error = 0x%08X.\n", GetLastError());
 			goto skipgamemenu;
 		}
+#if !NOKUROKO
 		if (!InsertMenu(hOptionsPopup, -1, MF_BYPOSITION|MF_STRING, IDM_GAME_OPTIONS_MODCONFIG, "Mod &Configuration...") && mischook_debug & MISCHOOK_DEBUG_MENU) {
 			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #3 failed, error = 0x%08X.\n", GetLastError());
 			goto skipgamemenu;
 		}
+#endif
 
 		EnableMenuItem(hOptionsPopup, 5, MF_BYPOSITION | MF_ENABLED);
+#if !NOKUROKO
 		EnableMenuItem(hOptionsPopup, 6, MF_BYPOSITION | MF_ENABLED);
+#endif
 
 		afxMessageMapEntry[0] = {
 			WM_COMMAND,
@@ -3026,6 +3042,7 @@ void InstallMiscHooks_SC2K1996(void) {
 			ShowSettingsDialog,
 		};
 
+#if !NOKUROKO
 		afxMessageMapEntry[1] = {
 			WM_COMMAND,
 			0,
@@ -3034,6 +3051,7 @@ void InstallMiscHooks_SC2K1996(void) {
 			0x0A,
 			ShowModSettingsDialog
 		};
+#endif
 
 		VirtualProtect((LPVOID)0x4D45C0, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
 		memcpy_s((LPVOID)0x4D45C0, sizeof(afxMessageMapEntry), &afxMessageMapEntry, sizeof(afxMessageMapEntry));

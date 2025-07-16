@@ -17,7 +17,11 @@
 #pragma once
 
 #ifndef HOOKEXT
+#if NOKUROKO
+#define HOOKEXT extern "C"
+#else
 #define HOOKEXT extern "C" __declspec(dllexport)
+#endif
 #endif
 
 #ifdef GAMEOFF_IMPL

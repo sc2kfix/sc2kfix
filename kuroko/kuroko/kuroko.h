@@ -1,5 +1,6 @@
 #pragma once
 
+#if !NOKUROKO
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -58,4 +59,5 @@ typedef int64_t krk_integer_type;
 
 #ifdef __cplusplus
 }
+#endif
 #endif
