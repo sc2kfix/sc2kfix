@@ -210,13 +210,6 @@ extern "C" BOOL __stdcall Hook_ShowWindow(HWND hWnd, int nCmdShow) {
 	if (mischook_debug & MISCHOOK_DEBUG_WINDOW)
 		ConsoleLog(LOG_DEBUG, "WND:  0x%08X -> ShowWindow(0x%08X, %i)\n", _ReturnAddress(), hWnd, nCmdShow);
 
-	//HWND hWndStatusBar = (HWND)((DWORD*)pCWndRootWindow)[68];
-	//if (hWnd == hWndStatusBar && bSettingsUseStatusDialog) {
-	//	if (hStatusDialog)
-	//		ShowWindow(hStatusDialog, SW_SHOW);
-	//	return ShowWindow(hWnd, SW_HIDE);
-	//}
-
 	// Workaround for the game window not showing if started by a launcher process
 	if (nCmdShow == 11 && (DWORD)_ReturnAddress() == 0x40586C)
 		return ShowWindow(hWnd, SW_MAXIMIZE);
@@ -2973,12 +2966,6 @@ void InstallMiscHooks_SC2K1996(void) {
 	}
 
 	// Hook status bar updates for the status dialog implementation
-	//VirtualProtect((LPVOID)0x402793, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	//NEWJMP((LPVOID)0x402793, Hook_402793);
-	//VirtualProtect((LPVOID)0x4021A8, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	//NEWJMP((LPVOID)0x4021A8, Hook_4021A8);
-	//VirtualProtect((LPVOID)0x40103C, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	//NEWJMP((LPVOID)0x40103C, Hook_40103C);
 	InstallStatusHooks_SC2K1996();
 
 	// New hooks for CSimcityDoc::UpdateDocumentTitle and

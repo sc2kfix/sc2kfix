@@ -285,7 +285,6 @@ const char *GetIniPath();
 void LoadSettings(void);
 void SaveSettings(BOOL onload);
 void ShowSettingsDialog(void);
-HWND ShowStatusDialog(void);
 void LoadReplacementSounds(void);
 BOOL UpdaterCheckForUpdates(void);
 DWORD WINAPI UpdaterThread(LPVOID lpParameter);
@@ -355,7 +354,6 @@ extern std::vector<int> vectorRandomSongIDs;
 extern std::random_device rdRandomDevice;
 extern std::mt19937 mtMersenneTwister;
 
-extern HWND hStatusDialog;
 extern HANDLE hWeatherBitmaps[13];
 extern HANDLE hCompassBitmaps[4];
 
@@ -381,9 +379,6 @@ extern "C" void __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer);
 extern "C" int __stdcall Hook_MusicPlay(int iSongID);
 extern "C" int __stdcall Hook_MusicStop(void);
 extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void);
-extern "C" int __stdcall Hook_402793(int iStatic, char* szText, int iMaybeAlways1, COLORREF crColor);
-extern "C" int __stdcall Hook_4021A8(HWND iShow);
-extern "C" int __stdcall Hook_40103C(int iShow);
 void PlaceMissileSilo(__int16 m_x, __int16 m_y);
 void ProposeMilitaryBaseDecline(void);
 void ProposeMilitaryBaseMissileSilos(void);
