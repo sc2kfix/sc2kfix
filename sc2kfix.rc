@@ -125,7 +125,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,116,268,10
     CONTROL         " Shuffle music instead of looping predefined playlist (Default: off)",IDC_SETTINGS_CHECK_SHUFFLE_MUSIC,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,130,268,10
-    CONTROL         " *Use DOS/Mac style floating dialog instead of status bar (Default: off)",IDC_SETTINGS_CHECK_STATUS_DIALOG,
+    CONTROL         " Use DOS/Mac style floating dialog instead of status bar (Default: off)",IDC_SETTINGS_CHECK_STATUS_DIALOG,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,205,268,10
     CONTROL         " *Always start the sc2kfix console on game startup (Default: off)",IDC_SETTINGS_CHECK_CONSOLE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,283,268,10
@@ -262,19 +262,6 @@ BEGIN
     CONTROL         "",336,"Static",SS_BLACKFRAME,109,5,17,24
 END
 
-IDD_SIMULATIONSTATUS DIALOGEX 0, 0, 146, 21
-STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | WS_POPUP | WS_VISIBLE
-EXSTYLE WS_EX_TOOLWINDOW
-FONT 10, "MS Sans Serif", 400, 0, 0x0
-BEGIN
-    LTEXT           "",IDC_STATIC_SIMSTAT_BGD,0,0,102,20,NOT WS_GROUP
-    LTEXT           "Selected Tool Name ($123)",IDC_STATIC_SELECTEDTOOL,1,1,99,8,0,WS_EX_TRANSPARENT
-    LTEXT           "Citizens Demand Road and Rail",IDC_STATIC_STATUSSTRING,1,11,97,8,0,WS_EX_TRANSPARENT
-    PUSHBUTTON      "",IDC_BUTTON_GOTO,125,0,20,20,BS_BITMAP | NOT WS_VISIBLE
-    CONTROL         "",IDC_BUTTON_WEATHERICON,"Static",SS_BITMAP | SS_NOTIFY,125,0,20,20
-    CONTROL         "",IDC_STATIC_COMPASS,"Static",SS_BITMAP,103,0,20,20
-END
-
 20104 DIALOG 0, 0, 72, 159
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE
 FONT 10, "MS Sans Serif"
@@ -341,13 +328,6 @@ BEGIN
         RIGHTMARGIN, 228
     END
 
-    IDD_SIMULATIONSTATUS, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 141
-        TOPMARGIN, 7
-    END
-
     20104, DIALOG
     BEGIN
     END
@@ -389,11 +369,6 @@ BEGIN
 END
 
 102 AFX_DIALOG_LAYOUT
-BEGIN
-    0
-END
-
-IDD_SIMULATIONSTATUS AFX_DIALOG_LAYOUT
 BEGIN
     0
 END
