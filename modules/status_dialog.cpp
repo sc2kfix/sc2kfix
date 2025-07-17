@@ -157,13 +157,11 @@ extern "C" void __stdcall Hook_StatusControlBarOnPaint_SC2K1996() {
 	LONG top;
 	LONG right;
 	LONG bottom;
-	tagRECT cR;
 	tagRECT r;
 	HDC hDC, hDCBits;
 	tagBITMAP bm;
 
 	if (bSettingsUseStatusDialog) {
-		GetClientRect((HWND)pThis[7], &cR);
 		pStringOne = (LPCSTR)pThis[28];
 		pStringTwo = (LPCSTR)pThis[31];
 		crOne = (COLORREF)pThis[37];
@@ -365,9 +363,16 @@ extern "C" void __stdcall Hook_ControlBarDoPaint_SC2K1996(DWORD *pDC) {
 
 	DWORD *pStatusBar = &((DWORD *)pCWndRootWindow)[61];
 	tagRECT r;
+	LONG iHeight;
 
 	GetClientRect((HWND)pThis[7], &r);
 	if (pThis == pStatusBar && bSettingsUseStatusDialog) {
+		iHeight = r.bottom - r.top;
+		if (iHeight > 40) {
+			r.bottom = 40;
+			FrameRect((HDC)pDC[1], &r, (HBRUSH)MainBrushBorder[1]);
+			r.bottom = r.top + iHeight;
+		}
 		FrameRect((HDC)pDC[1], &r, (HBRUSH)MainBrushBorder[1]);
 	}
 	else {
@@ -490,7 +495,7 @@ void UpdateStatus_SC2K1996(int iShow) {
 
 	HINSTANCE &gamehInstance = *(HINSTANCE *)0x4CE8C4;
 
-	bShow = (wCityMode && iShow != 0) ? TRUE : FALSE;
+	bShow = (wCityMode > 0 && iShow != 0) ? TRUE : FALSE;
 	pStatusBar = &((DWORD *)pCWndRootWindow)[61];
 	hwndStatusBar = (HWND)pStatusBar[7];
 	hWndGoto = GetDlgItem(hwndStatusBar, 120);
@@ -498,30 +503,34 @@ void UpdateStatus_SC2K1996(int iShow) {
 	if (bSettingsUseStatusDialog) {
 		wPFlags = SWP_HIDEWINDOW;
 		if (iShow > 0 && bShow)
-			wPFlags = SWP_NOMOVE | SWP_SHOWWINDOW;
-		else if (!iShow || !wCityMode)
-			wPFlags = SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE;
+			wPFlags = SWP_SHOWWINDOW;
+		else if (!iShow || wCityMode <= 0)
+			wPFlags = SWP_NOZORDER | SWP_NOACTIVATE | SWP_HIDEWINDOW;
 		SetWindowLongA(hwndStatusBar, GWL_STYLE, DS_SETFONT | WS_POPUP);
 		SetWindowLongA(hwndStatusBar, GWL_EXSTYLE, WS_EX_TOOLWINDOW);
 		SetParent(hwndStatusBar, NULL);
 		SetWindowPos(hwndStatusBar, HWND_TOPMOST, ptFloat.x, ptFloat.y, szFloat.cx, szFloat.cy, wPFlags);
-		if (hWndGoto) {
-			GetClientRect(hwndStatusBar, &r);
-			DestroyWindow(hWndGoto);
-			butFlags = WS_CHILD | BS_FLAT | BS_BITMAP | WS_VISIBLE;
-			CreateWindowA("Button", "", butFlags, r.right - 40, r.bottom - 40, 40, 40, hwndStatusBar, (HMENU)120, gamehInstance, NULL);
+		if (iShow == -1) {
+			if (hWndGoto) {
+				GetClientRect(hwndStatusBar, &r);
+				DestroyWindow(hWndGoto);
+				butFlags = WS_CHILD | BS_FLAT | BS_BITMAP | WS_VISIBLE;
+				CreateWindowA("Button", "", butFlags, r.right - 40, r.top, 40, 40, hwndStatusBar, (HMENU)120, gamehInstance, NULL);
+			}
 		}
 	}
 	else {
 		SetWindowLongA(hwndStatusBar, GWL_STYLE, DS_SETFONT | WS_CHILD | WS_CLIPSIBLINGS | 0x8000 | 0x0200);
 		SetParent(hwndStatusBar, GameGetRootWindowHandle());
-		if (hWndGoto) {
-			DestroyWindow(hWndGoto);
-			butFlags = WS_CHILD | WS_VISIBLE | WS_DISABLED;
-			if (dwDisasterActive)
-				butFlags &= ~WS_DISABLED;
-			CreateWindowA("Button", "GoTo", butFlags, rGoTo.left, rGoTo.top, rGoTo.right - rGoTo.left, rGoTo.bottom - rGoTo.top, hwndStatusBar, (HMENU)120, gamehInstance, NULL);
-			SendMessageA(hWndGoto, WM_SETFONT, (WPARAM)hFontMSSansSerifRegular8, 1);
+		if (iShow == -1) {
+			if (hWndGoto) {
+				DestroyWindow(hWndGoto);
+				butFlags = WS_CHILD | WS_VISIBLE | WS_DISABLED;
+				if (dwDisasterActive)
+					butFlags &= ~WS_DISABLED;
+				hWndGoto = CreateWindowA("Button", "GoTo", butFlags, rGoTo.left, rGoTo.top, rGoTo.right - rGoTo.left, rGoTo.bottom - rGoTo.top, hwndStatusBar, (HMENU)120, gamehInstance, NULL);
+				SendMessageA(hWndGoto, WM_SETFONT, (WPARAM)hFontMSSansSerifRegular8, 1);
+			}
 		}
 		SetWindowPos(hwndStatusBar, HWND_TOP, 0, 0, 0, 0, wPFlags);
 	}
