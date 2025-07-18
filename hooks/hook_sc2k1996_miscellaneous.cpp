@@ -2460,77 +2460,67 @@ extern "C" int __stdcall Hook_CSimcityView_WM_MBUTTONDOWN(WPARAM wMouseKeys, POI
 	return wTileCoords;
 }
 
-extern "C" __int16 __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(WPARAM iMouseKeys, POINT pt) {
-	DWORD pThis;
+extern "C" void __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(UINT nFlags, POINT pt) {
+	DWORD *pThis;
 
 	__asm mov [pThis], ecx
 
-	int ret;
 	HWND hWnd;
-	int iYVar;
-	tagRECT Rect;
+	tagRECT r;
+	const RECT *SCVScrollPosVertRect;
 
-	ret = *(DWORD *)(pThis + 268);
-	if (ret)
-		*(DWORD *)(pThis + 268) = 0;
-	else {
-		ret = PtInRect((const RECT *)(pThis + 232), pt);
-		if (!ret) {
-			Game_GetScreenAreaInfo(pThis, &Rect);
-			if (PtInRect((const RECT *)(pThis + 88), pt)) {
-				iYVar = *(DWORD *)(pThis + 76);
-				// CWnd::OnVScroll:
-				// - Second argument:
-				//   - 0 - Up Key or left-click the top arrow on the vertical scrollbar
-				//   - 1 - Down Key or left-click the bottom arrow on the vertical scrollbar
-				//   - 2 - Left-click on the vertical scrollbar above the 'thumb'
-				//   - 3 - Left-click on the vertical scrollbar below the 'thumb'
-				//   - 4 - Release the 'thumb' (new 'thumb' release position reflected on screen)
-				//   - 5 - Left-click on the vertical scrollbar 'thumb' hold and drag (return result from function is 0 - 'default' case hit)
-				//   - 6 - Directly to bottom (trigger currently unknown)
-				//   - 7 - Directly to top (trigger currently unknown)
-				//   - 8 - Release either arrow on the vertical scrollbar (return result from function is 0 - 'default' case hit)
-				if (PtInRect((const RECT *)(pThis + 120), pt))
-					P_LOWORD(ret) = Game_CSimCityView_OnVScroll(pThis, SB_LINEDOWN, 0, iYVar);
-				else if (PtInRect((const RECT *)(pThis + 104), pt))
-					P_LOWORD(ret) = Game_CSimCityView_OnVScroll(pThis, SB_LINEUP, 0, iYVar);
-				else if (PtInRect((const RECT *)(pThis + 136), pt))
-					P_LOWORD(ret) = Game_CSimCityView_OnVScroll(pThis, SB_THUMBTRACK, (__int16)pt.y, iYVar);
-				else {
-					if (*(DWORD *)(pThis + 140) >= (ULONG)pt.y)
-						P_LOWORD(ret) = Game_CSimCityView_OnVScroll(pThis, SB_PAGEUP, 0, iYVar);
-					else
-						P_LOWORD(ret) = Game_CSimCityView_OnVScroll(pThis, SB_PAGEDOWN, 0, iYVar);
-				}
-			}
+	// pThis[19] = SCVScrollBarVert
+	// pThis[22] = SCVScrollBarVertRectOne
+	// pThis[26] = SCVScrollBarVertRectTwo
+	// pThis[30] = SCVScrollBarVertRectThree
+	// pThis[34] = SCVScrollPosVertRect
+	// pThis[58] = SCVStaticRect
+	// pThis[62] = dwSCVLeftMouseButtonDown
+	// pThis[63] = dwSCVLeftMouseDownInGameArea
+	// pThis[67] = dwSCVRightClickMenuOpen
+
+	if (pThis[67])
+		pThis[67] = 0;
+	else if (!PtInRect((const RECT *)&pThis[58], pt)) {
+		Game_GetScreenAreaInfo(pThis, &r);
+		if (PtInRect((const RECT *)&pThis[22], pt)) {
+			if (PtInRect((const RECT *)&pThis[30], pt))
+				Game_CSimCityView_OnVScroll(pThis, SB_LINEDOWN, 0, (DWORD *)pThis[19]);
+			else if (PtInRect((const RECT *)&pThis[26], pt))
+				Game_CSimCityView_OnVScroll(pThis, SB_LINEUP, 0, (DWORD *)pThis[19]);
+			else if (PtInRect((const RECT *)&pThis[34], pt))
+				Game_CSimCityView_OnVScroll(pThis, SB_THUMBTRACK, (__int16)pt.y, (DWORD *)pThis[19]);
 			else {
-				ret = *(DWORD *)(pThis + 252);
-				if (!ret) {
-					bOverrideTickPlacementHighlight = TRUE;
-					hWnd = SetCapture(*(HWND *)(pThis + 28));
-					Game_CWnd_FromHandle(hWnd);
-					P_LOWORD(ret) = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
-					wCurrentTileCoordinates = ret;
-					if ((__int16)ret >= 0) {
-						wTileCoordinateX = (uint8_t)ret;
-						wPreviousTileCoordinateX = (uint8_t)ret;
-						wTileCoordinateY = wCurrentTileCoordinates >> 8;
-						wPreviousTileCoordinateY = wCurrentTileCoordinates >> 8;
-						wGameScreenAreaX = (WORD)pt.x;
-						wGameScreenAreaY = (WORD)pt.y;
-						*(DWORD *)(pThis + 252) = 1;
-						*(DWORD *)(pThis + 248) = 1;
-						if (wCityMode)
-							P_LOWORD(ret) = Game_CityToolMenuAction(iMouseKeys, pt);
-						else
-							P_LOWORD(ret) = Game_MapToolMenuAction(iMouseKeys, pt);
-					}
-				}
+				// This part appears to be non-functional, pressing "Page Down" will rotate the map;
+				// "Page Up" doesn't do anything.
+				SCVScrollPosVertRect = (const RECT *)&pThis[34];
+				if (SCVScrollPosVertRect->top >= pt.y)
+					Game_CSimCityView_OnVScroll(pThis, SB_PAGEUP, 0, (DWORD *)pThis[19]);
+				else
+					Game_CSimCityView_OnVScroll(pThis, SB_PAGEDOWN, 0, (DWORD *)pThis[19]);
+			}
+		}
+		else if (!pThis[63]) {
+			bOverrideTickPlacementHighlight = TRUE;
+			hWnd = SetCapture((HWND)pThis[7]);
+			Game_CWnd_FromHandle(hWnd);
+			wCurrentTileCoordinates = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);;
+			if (wCurrentTileCoordinates >= 0) {
+				wTileCoordinateX = (uint8_t)wCurrentTileCoordinates;
+				wPreviousTileCoordinateX = (uint8_t)wCurrentTileCoordinates;
+				wTileCoordinateY = wCurrentTileCoordinates >> 8;
+				wPreviousTileCoordinateY = wCurrentTileCoordinates >> 8;
+				wGameScreenAreaX = (WORD)pt.x;
+				wGameScreenAreaY = (WORD)pt.y;
+				pThis[63] = 1;
+				pThis[62] = 1;
+				if (wCityMode)
+					Game_CityToolMenuAction(nFlags, pt);
+				else
+					Game_MapToolMenuAction(nFlags, pt);
 			}
 		}
 	}
-
-	return ret;
 }
 
 extern "C" __int16 __stdcall Hook_CSimcityView_WM_MOUSEMOVE(WPARAM iMouseKeys, POINT pt) {
