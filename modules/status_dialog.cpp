@@ -268,8 +268,6 @@ extern "C" void __stdcall Hook_MainFrameToggleStatusControlBar_SC2K1996(BOOL bSh
 
 	__asm mov [pThis], ecx
 
-	void(__thiscall *H_CFrameWndShowControlBar)(void *, void *, BOOL, int) = (void(__thiscall *)(void *, void *, BOOL, int))0x4BA3A0;
-
 	DWORD *pStatusBar;
 	HWND hStatusBar;
 
