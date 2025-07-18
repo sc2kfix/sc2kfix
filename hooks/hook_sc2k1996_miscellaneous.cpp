@@ -2688,7 +2688,7 @@ extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, POINT pt) {
 }
 
 extern "C" void __stdcall Hook_LoadCursorResources() {
-	DWORD pThis;
+	DWORD *pThis;
 
 	__asm mov[pThis], ecx
 
@@ -2697,9 +2697,9 @@ extern "C" void __stdcall Hook_LoadCursorResources() {
 	HDC hDC;
 
 	hDC = GetDC(0);
-	((DWORD *)pThis)[57] = GetDeviceCaps(hDC, HORZRES);
+	pThis[57] = GetDeviceCaps(hDC, HORZRES);
 	ReleaseDC(0, hDC);
-	H_LoadCursorResources((void *)pThis);
+	H_LoadCursorResources(pThis);
 }
 
 extern "C" int __stdcall Hook_StartupGraphics() {
