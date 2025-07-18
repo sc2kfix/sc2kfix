@@ -941,13 +941,13 @@ GAMECALL(0x401E47, BOOL, __cdecl, UseBulldozer, __int16 iTileTargetX, __int16 iT
 GAMECALL(0x401EA1, int, __cdecl, MapToolLowerTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x401FA0, int, __cdecl, CheckAdjustTerrainAndPlacePowerLines, __int16 x, __int16 y)
 GAMECALL(0x40209F, __int16, __cdecl, SpawnTrain, __int16 x, __int16 y)
-GAMECALL(0x402211, unsigned int, __thiscall, DestroyStructure, DWORD *pThis, __int16 x, __int16 y, int iExplosion)
+GAMECALL(0x402211, unsigned int, __thiscall, DestroyStructure, void *pThis, __int16 x, __int16 y, int iExplosion)
 GAMECALL(0x40226B, int, __thiscall, UpdateAreaPortionFill, void *) // This appears to do a partial update of selected/highlighted area while appearing to dispense with immediate color updates.
 GAMECALL(0x402289, char, __cdecl, PerhapsGeneralZoneChooseAndPlaceBuilding, __int16 x, __int16 y, __int16 iBuildingPopLevel, __int16)
-GAMECALL(0x40235B, int, __thiscall, DrawSquareHighlight, DWORD *pThis, WORD wX1, WORD wY1, WORD wX2, WORD wY2)
+GAMECALL(0x40235B, int, __thiscall, DrawSquareHighlight, void *pThis, WORD wX1, WORD wY1, WORD wX2, WORD wY2)
 GAMECALL(0x4023B0, int, __cdecl, IsValidTransitItems, __int16 x, __int16 y)
 GAMECALL(0x4023EC, void, __stdcall, ToolMenuUpdate, void)
-GAMECALL(0x402414, int, __thiscall, MusicPlay, DWORD pThis, int iSongID)
+GAMECALL(0x402414, int, __thiscall, MusicPlay, void *pThis, int iSongID)
 GAMECALL(0x402478, int, __cdecl, SpawnHelicopter, __int16 x, __int16 y)
 GAMECALL(0x4024FA, char, __cdecl, PerhapsGeneralZoneChangeBuilding, __int16 x, __int16 y, __int16 iBuldingPopLevel, int iTileID)
 GAMECALL(0x40258B, int, __cdecl, GetScreenCoordsFromTileCoords, __int16 iTileTargetX, __int16 iTileTargetY, WORD *wNewScreenPointX, WORD *wNewScreenPointY)
@@ -956,7 +956,7 @@ GAMECALL(0x402699, DWORD *, __thiscall, PointerToCSimcityViewClass, void* CSimci
 GAMECALL(0x4026B2, int, __cdecl, SimulationGrowSpecificZone, __int16 x, __int16 y, __int16 iTileID, __int16 iZoneType)
 GAMECALL(0x402725, int, __cdecl, PlacePowerLinesAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x402798, int, __cdecl, MapToolPlaceForest, __int16 iTileTargetX, __int16 iTileTargetY)
-GAMECALL(0x4027A7, void, __thiscall, CSimCityView_OnVScroll, DWORD *pThis, int nSBCode, __int16 nPos, DWORD *pScrollBar)
+GAMECALL(0x4027A7, void, __thiscall, CSimCityView_OnVScroll, void *pThis, int nSBCode, __int16 nPos, DWORD *pScrollBar)
 GAMECALL(0x4027F2, int, __cdecl, ItemPlacementCheck, __int16 x, int y, __int16 iTileID, __int16 iTileArea)
 GAMECALL(0x402810, int, __thiscall, UpdateAreaCompleteColorFill, void *) // This appears to be a more comprehensive update that'll occur for highlighted/selected area or when you're moving the game area.
 GAMECALL(0x40281F, int, __cdecl, UpdateDisasterAndTransitStats, __int16 x, __int16 y, __int16 iZoneType, __int16 iBuildingPopLevel, __int16)
@@ -970,14 +970,14 @@ GAMECALL(0x402B44, __int16, __cdecl, MapToolMenuAction, int iMouseKeys, POINT pt
 GAMECALL(0x402B94, int, __cdecl, MapToolLevelTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x402C25, int, __cdecl, CityToolMenuAction, int iMouseKeys, POINT pt)
 GAMECALL(0x402CF2, void, __thiscall, SimcityAppSetGameCursor, void *pThis, int iNewCursor, BOOL bActive)
-GAMECALL(0x402F9A, void, __thiscall, GetScreenAreaInfo, DWORD *pThis, LPRECT lpRect)
+GAMECALL(0x402F9A, void, __thiscall, GetScreenAreaInfo, void *pThis, LPRECT lpRect)
 GAMECALL(0x480140, void, __stdcall, LoadSoundBuffer, int iSoundID, void* pBuffer)
 GAMECALL(0x48A810, DWORD, __cdecl, Direct_MovieCheck, char *sMovStr)
 
 
 // MFC function pointers. Use with care.
 GAMECALL(0x4017B2, void, __thiscall, RefreshTitleBar, void* pThis)
-GAMECALL(0x40C3E0, void, __thiscall, CFrameWnd_ShowStatusBar, HWND* pThis, HWND hWnd)
+GAMECALL(0x40C3E0, void, __thiscall, CFrameWnd_ShowStatusBar, void* pThis, HWND hWnd)
 GAMECALL(0x4A3BDF, DWORD *, __stdcall, CWnd_FromHandle, HWND hWnd)
 GAMECALL(0x4AA573, void, __thiscall, CWinApp_OnAppExit, void *pThis)
 GAMECALL(0x4AE0BC, void, __thiscall, CDocument_UpdateAllViews, void* pThis, void* pSender, int lHint, void* pHint)

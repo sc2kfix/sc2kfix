@@ -158,8 +158,8 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 }
 
 extern "C" int __stdcall Hook_MusicPlay(int iSongID) {
-	UINT uThis;
-	__asm mov [uThis], ecx
+	DWORD *pThis;
+	__asm mov [pThis], ecx
 
 	// Certain songs should interrupt others
 	switch (iSongID) {
@@ -180,14 +180,14 @@ extern "C" int __stdcall Hook_MusicPlay(int iSongID) {
 
 	// Restore "this" and leave
 	__asm {
-		mov ecx, [uThis]
+		mov ecx, [pThis]
 		mov eax, 1
 	}
 }
 
 extern "C" int __stdcall Hook_MusicStop(void) {
-	UINT uThis;
-	__asm mov [uThis], ecx
+	DWORD *pThis;
+	__asm mov [pThis], ecx
 
 	// Post the stop message to the music thread
 	PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
@@ -196,14 +196,14 @@ extern "C" int __stdcall Hook_MusicStop(void) {
 
 	// Restore "this" and leave
 	__asm {
-		mov ecx, [uThis]
+		mov ecx, [pThis]
 		xor eax, eax
 	}
 }
 
 // Replaces the original MusicPlayNextRefocusSong
 extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void) {
-	DWORD pThis;
+	DWORD *pThis;
 	int retval, iSongToPlay;
 
 	// This is actually a __thiscall we're overriding, so save "this"
