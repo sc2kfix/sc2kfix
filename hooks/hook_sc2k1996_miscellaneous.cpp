@@ -2052,7 +2052,7 @@ GETOUT:
 }
 
 extern "C" void __stdcall Hook_SimcityDocUpdateDocumentTitle() {
-	DWORD pThis;
+	DWORD *pThis;
 
 	__asm mov [pThis], ecx
 
@@ -2088,8 +2088,8 @@ extern "C" void __stdcall Hook_SimcityDocUpdateDocumentTitle() {
 
 	if (!MainFrmDest) {
 		if (!wCityMode) {
-			H_CStringLoadStringA(&cStr, 0x19D); // "Starting SimEngine..."
-			goto GETOUT;
+			H_CStringLoadStringA(&cStr, 0x19D); // "Editing Terrain..."
+			goto GOFORWARD;
 		}
 		if (!pszCityName.m_nDataLength)
 			goto GETOUT;
@@ -2131,7 +2131,7 @@ extern "C" void __stdcall Hook_SimcityDocUpdateDocumentTitle() {
 			operator delete(pFundStr);
 		}
 GOFORWARD:
-		Game_CDocument_UpdateAllViews((void *)pThis, 0, 1, &cStr);
+		Game_CDocument_UpdateAllViews(pThis, 0, 1, &cStr);
 	}
 GETOUT:
 	H_CStringDest(&cStr);
