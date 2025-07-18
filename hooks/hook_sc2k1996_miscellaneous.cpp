@@ -281,13 +281,13 @@ std::vector<hook_function_t> stHooks_Hook_GameDoIdleUpkeep_Before;
 std::vector<hook_function_t> stHooks_Hook_GameDoIdleUpkeep_After;
 
 extern "C" void __stdcall Hook_GameDoIdleUpkeep(void) {
-	DWORD pThis;
+	DWORD *pThis;
 	__asm mov [pThis], ecx
 	for (const auto& hook : stHooks_Hook_GameDoIdleUpkeep_Before) {
 		bHookStopProcessing = FALSE;
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
 			void (*fnHook)(void*) = (void(*)(void*))hook.pFunction;
-			fnHook((void*)pThis);
+			fnHook(pThis);
 		}
 		if (bHookStopProcessing)
 			goto BAIL;
@@ -303,7 +303,7 @@ extern "C" void __stdcall Hook_GameDoIdleUpkeep(void) {
 		bHookStopProcessing = FALSE;
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
 			void (*fnHook)(void*) = (void(*)(void*))hook.pFunction;
-			fnHook((void*)pThis);
+			fnHook(pThis);
 		}
 		if (bHookStopProcessing)
 			goto BAIL;
