@@ -1762,8 +1762,7 @@ RETRY:
 	return FALSE;
 }
 
-static void ChangeChurchZone()
-{
+static void ChangeChurchZone() {
 	__int16 iReplaceTile, iLength, iDepth;
 
 	for (iLength = 0; iLength < GAME_MAP_SIZE; ++iLength) {
