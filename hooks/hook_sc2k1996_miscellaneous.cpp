@@ -2436,7 +2436,7 @@ extern "C" int __stdcall Hook_AddAllInventions(void) {
 }
 
 // Hook the middle mouse button as a centering tool shortcut
-extern "C" int __stdcall Hook_CSimcityView_WM_MBUTTONDOWN(WPARAM wMouseKeys, POINT pt) {
+extern "C" int __stdcall Hook_CSimcityView_WM_MBUTTONDOWN(UINT nFlags, POINT pt) {
 	__int16 wTileCoords = 0;
 	BYTE bTileX = 0, bTileY = 0;
 	wTileCoords = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
@@ -2446,9 +2446,9 @@ extern "C" int __stdcall Hook_CSimcityView_WM_MBUTTONDOWN(WPARAM wMouseKeys, POI
 	if (wTileCoords & 0x8000)
 		return wTileCoords;
 	else {
-		if (wMouseKeys & MK_CONTROL)
+		if (nFlags & MK_CONTROL)
 			;
-		else if (wMouseKeys & MK_SHIFT)
+		else if (nFlags & MK_SHIFT)
 			;
 		else if (GetAsyncKeyState(VK_MENU) < 0) {
 			// useful for tests
