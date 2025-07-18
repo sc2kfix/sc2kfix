@@ -2570,14 +2570,18 @@ extern "C" void __stdcall Hook_CSimcityView_WM_MOUSEMOVE(UINT nFlags, POINT pt) 
 		bOverrideTickPlacementHighlight = FALSE;
 }
 
-extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
+extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, POINT pt) {
 	DWORD *pThis;
-	int ret;
-	__int16 iCurrToolGroupA, iCurrToolGroupB;
+	__int16 iTileCoords;
+	__int16 iCurrMapToolGroupWithHotKey, iCurrMapToolGroupNoHotKey;
 	__int16 iTileStartX, iTileStartY;
 	__int16 iTileTargetX, iTileTargetY;
 	WORD wNewScreenPointX, wNewScreenPointY;
+	DWORD dwIsZoomed;
 	HWND hWnd;
+
+	// pThis[62] = dwSCVLeftMouseButtonDown
+	// *(DWORD *)((char *)pThis + 322) = SCVIsZoomed (This is referenced as a DWORD internally - structure alignment between it and the prior WORD at (WORD)pThis[160])
 
 	// pThis[62] - When this is set to 0, you remain within the do/while loop until you
 	//             release the left mouse button.
@@ -2591,47 +2595,47 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 
 	pThis = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);	// TODO: is this necessary or can we just dereference pCSimcityView?
 	Game_TileHighlightUpdate(pThis);
-	iCurrToolGroupA = wCurrentMapToolGroup;
 	iTileStartX = 400;
 	iTileStartY = 400;
-	iCurrToolGroupB = wCurrentMapToolGroup;
-	if ((iMouseKeys & MK_CONTROL) != 0)
-		iCurrToolGroupA = MAPTOOL_GROUP_CENTERINGTOOL;
-	if (iCurrToolGroupA != MAPTOOL_GROUP_CENTERINGTOOL)
+	iCurrMapToolGroupNoHotKey = wCurrentMapToolGroup;
+	iCurrMapToolGroupWithHotKey = iCurrMapToolGroupNoHotKey;
+	if ((nFlags & MK_CONTROL) != 0)
+		iCurrMapToolGroupWithHotKey = MAPTOOL_GROUP_CENTERINGTOOL;
+	if (iCurrMapToolGroupWithHotKey != MAPTOOL_GROUP_CENTERINGTOOL)
 		pThis[62] = 0;
 	do {
-		P_LOWORD(ret) = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
-		if ((__int16)ret < 0)
+		iTileCoords = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
+		if (iTileCoords < 0)
 			break;
-		iTileTargetX = ret & (GAME_MAP_SIZE-1);
-		iTileTargetY = (__int16)ret >> 8;
-		if ((unsigned __int16)iTileTargetX >= GAME_MAP_SIZE || iTileTargetY < 0)
+		iTileTargetX = (uint8_t)iTileCoords;
+		iTileTargetY = iTileCoords >> 8;
+		if (iTileTargetX >= GAME_MAP_SIZE || iTileTargetY < 0)
 			break;
-		if ((iMouseKeys & MK_SHIFT) != 0 && iCurrToolGroupA != MAPTOOL_GROUP_TREES && iCurrToolGroupA != MAPTOOL_GROUP_FOREST) {
+		if ((nFlags & MK_SHIFT) != 0 && iCurrMapToolGroupWithHotKey != MAPTOOL_GROUP_TREES && iCurrMapToolGroupWithHotKey != MAPTOOL_GROUP_FOREST) {
 			pThis[62] = 1;
 			break;
 		}
 		if (iTileStartX != iTileTargetX || iTileStartY != iTileTargetY) {
-			switch (iCurrToolGroupA) {
+			switch (iCurrMapToolGroupWithHotKey) {
 			case MAPTOOL_GROUP_BULLDOZER: // Bulldozing, only relevant in the CityToolMenuAction code it seems.
 				Game_UseBulldozer(iTileTargetX, iTileTargetY);
 				Game_UpdateAreaPortionFill(pThis);
 				break;
 			case MAPTOOL_GROUP_RAISETERRAIN: // Raise Terrain
-				P_LOWORD(ret) = Game_MapToolRaiseTerrain(iTileTargetX, iTileTargetY);
+				Game_MapToolRaiseTerrain(iTileTargetX, iTileTargetY);
 				break;
 			case MAPTOOL_GROUP_LOWERTERRAIN: // Lower Terrain
-				P_LOWORD(ret) = Game_MapToolLowerTerrain(iTileTargetX, iTileTargetY);
+				Game_MapToolLowerTerrain(iTileTargetX, iTileTargetY);
 				break;
 			case MAPTOOL_GROUP_STRETCHTERRAIN: // Stretch Terrain (Drag vertically)
-				P_LOWORD(ret) = Game_MapToolStretchTerrain(iTileTargetX, iTileTargetY, (__int16)pt.y);
+				Game_MapToolStretchTerrain(iTileTargetX, iTileTargetY, (__int16)pt.y);
 				break;
 			case MAPTOOL_GROUP_LEVELTERRAIN: // Level Terrain
-				P_LOWORD(ret) = Game_MapToolLevelTerrain(iTileTargetX, iTileTargetY);
+				Game_MapToolLevelTerrain(iTileTargetX, iTileTargetY);
 				break;
 			case MAPTOOL_GROUP_WATER: // Place Water
 			case MAPTOOL_GROUP_STREAM: // Place Stream
-				if (iCurrToolGroupA == MAPTOOL_GROUP_WATER) {
+				if (iCurrMapToolGroupWithHotKey == MAPTOOL_GROUP_WATER) {
 					if (!Game_MapToolPlaceWater(iTileTargetX, iTileTargetY) || Game_MapToolSoundTrigger(dwAudioHandle))
 						break;
 				}
@@ -2646,7 +2650,7 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 			case MAPTOOL_GROUP_FOREST: // Place Forest
 				if (!Game_MapToolSoundTrigger(dwAudioHandle))
 					Game_SoundPlaySound(&pCSimcityAppThis, SOUND_PLOP);
-				if (iCurrToolGroupA == 7)
+				if (iCurrMapToolGroupWithHotKey == MAPTOOL_GROUP_TREES)
 					Game_MapToolPlaceTree(iTileTargetX, iTileTargetY);
 				else
 					Game_MapToolPlaceForest(iTileTargetX, iTileTargetY);
@@ -2654,7 +2658,8 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 			case MAPTOOL_GROUP_CENTERINGTOOL: // Center Tool
 				Game_GetScreenCoordsFromTileCoords(iTileTargetX, iTileTargetY, &wNewScreenPointX, &wNewScreenPointY);
 				Game_SoundPlaySound(&pCSimcityAppThis, SOUND_CLICK);
-				if (*(DWORD *)((char *)pThis + 322))
+				dwIsZoomed = *(DWORD *)((char *)pThis + 322);
+				if (dwIsZoomed)
 					Game_CenterOnNewScreenCoordinates(pThis, wScreenPointX - (wNewScreenPointX >> 1), wScreenPointY - (wNewScreenPointY >> 1));
 				else
 					Game_CenterOnNewScreenCoordinates(pThis, wScreenPointX - wNewScreenPointX, wScreenPointY - wNewScreenPointY);
@@ -2663,9 +2668,9 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 				break;
 			}
 		}
-		if (iCurrToolGroupA >= MAPTOOL_GROUP_RAISETERRAIN && iCurrToolGroupA <= MAPTOOL_GROUP_LEVELTERRAIN)
+		if (iCurrMapToolGroupWithHotKey >= MAPTOOL_GROUP_RAISETERRAIN && iCurrMapToolGroupWithHotKey <= MAPTOOL_GROUP_LEVELTERRAIN)
 			break;
-		else if (iCurrToolGroupA == MAPTOOL_GROUP_CENTERINGTOOL) {
+		else if (iCurrMapToolGroupWithHotKey == MAPTOOL_GROUP_CENTERINGTOOL) {
 			Game_UpdateAreaCompleteColorFill(pThis);
 			hWnd = (HWND)pThis[7];
 			UpdateWindow(hWnd);
@@ -2673,16 +2678,13 @@ extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
 		}
 		Game_UpdateAreaPortionFill(pThis);
 		iTileStartX = iTileTargetX;
-		hWnd = (HWND)pThis[7];
 		iTileStartY = iTileTargetY;
+		hWnd = (HWND)pThis[7];
 		UpdateWindow(hWnd);
-		ret = Game_CSimcityViewMouseMoveOrLeftClick(pThis, &pt);
-	} while (ret);
-	if (iCurrToolGroupB != iCurrToolGroupA) {
-		P_LOWORD(ret) = iCurrToolGroupB;
-		wCurrentCityToolGroup = iCurrToolGroupB;
+	} while (Game_CSimcityViewMouseMoveOrLeftClick(pThis, &pt));
+	if (iCurrMapToolGroupNoHotKey != iCurrMapToolGroupWithHotKey) {
+		wCurrentCityToolGroup = iCurrMapToolGroupNoHotKey;
 	}
-	return ret;
 }
 
 extern "C" void __stdcall Hook_LoadCursorResources() {
