@@ -950,7 +950,7 @@ GAMECALL(0x402699, DWORD *, __thiscall, PointerToCSimcityViewClass, void* CSimci
 GAMECALL(0x4026B2, int, __cdecl, SimulationGrowSpecificZone, __int16 x, __int16 y, __int16 iTileID, __int16 iZoneType)
 GAMECALL(0x402725, int, __cdecl, PlacePowerLinesAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x402798, int, __cdecl, MapToolPlaceForest, __int16 iTileTargetX, __int16 iTileTargetY)
-GAMECALL(0x4027A7, int, __thiscall, CSimCityView_OnVScroll, DWORD pThis, int nSBCode, __int16 nPos, int pScrollBar)
+GAMECALL(0x4027A7, void, __thiscall, CSimCityView_OnVScroll, DWORD *pThis, int nSBCode, __int16 nPos, DWORD *pScrollBar)
 GAMECALL(0x4027F2, int, __cdecl, ItemPlacementCheck, __int16 x, int y, __int16 iTileID, __int16 iTileArea)
 GAMECALL(0x402810, int, __thiscall, UpdateAreaCompleteColorFill, void *) // This appears to be a more comprehensive update that'll occur for highlighted/selected area or when you're moving the game area.
 GAMECALL(0x40281F, int, __cdecl, UpdateDisasterAndTransitStats, __int16 x, __int16 y, __int16 iZoneType, __int16 iBuildingPopLevel, __int16)
@@ -964,7 +964,7 @@ GAMECALL(0x402B44, __int16, __cdecl, MapToolMenuAction, int iMouseKeys, POINT pt
 GAMECALL(0x402B94, int, __cdecl, MapToolLevelTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x402C25, int, __cdecl, CityToolMenuAction, int iMouseKeys, POINT pt)
 GAMECALL(0x402CF2, void, __thiscall, SimcityAppSetGameCursor, void *pThis, int iNewCursor, BOOL bActive)
-GAMECALL(0x402F9A, int, __thiscall, GetScreenAreaInfo, DWORD pThis, LPRECT lpRect)
+GAMECALL(0x402F9A, void, __thiscall, GetScreenAreaInfo, DWORD *pThis, LPRECT lpRect)
 GAMECALL(0x480140, void, __stdcall, LoadSoundBuffer, int iSoundID, void* pBuffer)
 GAMECALL(0x48A810, DWORD, __cdecl, Direct_MovieCheck, char *sMovStr)
 
