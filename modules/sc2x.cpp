@@ -29,13 +29,13 @@ std::vector<hook_function_t> stHooks_Hook_LoadGame_Before;
 std::vector<hook_function_t> stHooks_Hook_LoadGame_After;
 
 extern "C" DWORD __stdcall Hook_LoadGame(int* a2, char* src) {
-	DWORD pThis;
+	DWORD *pThis;
 	__asm mov [pThis], ecx
 
 	for (const auto& hook : stHooks_Hook_LoadGame_Before) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
 			void (*fnHook)(void*, int*, char*) = (void(*)(void*, int*, char*))hook.pFunction;
-			fnHook((void*)pThis, a2, src);
+			fnHook(pThis, a2, src);
 		}
 	}
 
@@ -50,7 +50,7 @@ extern "C" DWORD __stdcall Hook_LoadGame(int* a2, char* src) {
 	for (const auto& hook : stHooks_Hook_LoadGame_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
 			void (*fnHook)(void*, int*, char*) = (void(*)(void*, int*, char*))hook.pFunction;
-			fnHook((void*)pThis, a2, src);
+			fnHook(pThis, a2, src);
 		}
 	}
 	
@@ -61,13 +61,13 @@ std::vector<hook_function_t> stHooks_Hook_SaveGame_Before;
 std::vector<hook_function_t> stHooks_Hook_SaveGame_After;
 
 extern "C" DWORD __stdcall Hook_SaveGame(int* a2) {
-	DWORD pThis;
+	DWORD *pThis;
 	__asm mov[pThis], ecx
 
 	for (const auto& hook : stHooks_Hook_SaveGame_Before) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
 			void (*fnHook)(void*, int*) = (void(*)(void*, int*))hook.pFunction;
-			fnHook((void*)pThis, a2);
+			fnHook(pThis, a2);
 		}
 	}
 
@@ -81,7 +81,7 @@ extern "C" DWORD __stdcall Hook_SaveGame(int* a2) {
 	for (const auto& hook : stHooks_Hook_SaveGame_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
 			void (*fnHook)(void*, int*) = (void(*)(void*, int*))hook.pFunction;
-			fnHook((void*)pThis, a2);
+			fnHook(pThis, a2);
 		}
 	}
 
