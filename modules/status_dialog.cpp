@@ -26,6 +26,63 @@ static tagPOINT ptFloat;
 static tagSIZE szFloat;
 static tagRECT rGoTo;
 
+static void RemoveGotoButtonFocus(HWND hWnd) {
+	HWND hGotoBut;
+	UINT nStyle;
+
+	hGotoBut = GetDlgItem(hWnd, 120);
+	nStyle = GetWindowLongA(hGotoBut, GWL_STYLE);
+	nStyle &= ~BS_DEFPUSHBUTTON;
+	SetWindowLongA(hGotoBut, GWL_STYLE, nStyle);
+}
+
+static void AdjustGotoButton(HWND hWnd) {
+	HWND hWndGoto;
+	tagRECT r;
+	LONG x, y, cx, cy;
+	UINT nStyle, nExStyle;
+
+	hWndGoto = GetDlgItem(hWnd, 120);
+	if (hWndGoto) {
+		nStyle = GetWindowLongA(hWndGoto, GWL_STYLE);
+		nExStyle = GetWindowLongA(hWndGoto, GWL_EXSTYLE);
+		if (bSettingsUseStatusDialog) {
+			nStyle |= BS_FLAT | BS_BITMAP | BS_NOTIFY;
+			if (nStyle & WS_DISABLED)
+				nStyle &= ~WS_DISABLED;
+			if (nStyle & BS_DEFPUSHBUTTON)
+				nStyle &= ~BS_DEFPUSHBUTTON;
+			nStyle |= WS_VISIBLE;
+			nExStyle |= WS_EX_TOOLWINDOW;
+			GetClientRect(hWnd, &r);
+			x = r.right - 40;
+			y = r.top;
+			cx = cy = 40;
+		}
+		else {
+			if (nStyle & BS_FLAT)
+				nStyle &= ~BS_FLAT;
+			if (nStyle & BS_BITMAP)
+				nStyle &= ~BS_BITMAP;
+			if (dwDisasterActive)
+				nStyle &= ~WS_DISABLED;
+			else
+				nStyle |= WS_DISABLED;
+			nStyle |= BS_DEFPUSHBUTTON;
+			if (nExStyle & WS_EX_TOOLWINDOW)
+				nExStyle &= ~WS_EX_TOOLWINDOW;
+			SendMessage(hWndGoto, BM_SETIMAGE, IMAGE_BITMAP, 0);
+			x = rGoTo.left;
+			y = rGoTo.top;
+			cx = rGoTo.right - rGoTo.left;
+			cy = rGoTo.bottom - rGoTo.top;
+		}
+		SetWindowLongA(hWndGoto, GWL_STYLE, nStyle);
+		SetWindowLongA(hWndGoto, GWL_EXSTYLE, nExStyle);
+		SetWindowPos(hWndGoto, HWND_TOP, x, y, cx, cy, SWP_NOZORDER | SWP_NOACTIVATE);
+	}
+}
+
 extern "C" BOOL __stdcall Hook_StatusControlBarCreateStatusBar_SC2K1996() {
 	DWORD *pThis;
 
@@ -33,14 +90,9 @@ extern "C" BOOL __stdcall Hook_StatusControlBarCreateStatusBar_SC2K1996() {
 
 	int(__thiscall *H_CDialogBarCreate)(void *, void *, LPCTSTR, UINT, UINT) = (int(__thiscall *)(void *, void *, LPCTSTR, UINT, UINT))0x4B5801;
 
-	HINSTANCE &gamehInstance = *(HINSTANCE *)0x4CE8C4;
-
-	UINT nFlags;
 	int ret;
 
-	nFlags = (DS_SETFONT | 0x8000 | 0x0200);
-
-	ret = H_CDialogBarCreate(pThis, pCWndRootWindow, (LPCSTR)255, nFlags, 0x6F);
+	ret = H_CDialogBarCreate(pThis, pCWndRootWindow, (LPCSTR)255, (DS_SETFONT | 0x8000 | 0x0200), 0x6F);
 	if (ret) {
 		if (!bFontsInitialized)
 			InitializeFonts();
@@ -50,8 +102,6 @@ extern "C" BOOL __stdcall Hook_StatusControlBarCreateStatusBar_SC2K1996() {
 		szFloat.cy = 40;
 		// Record the original GoTo button position.
 		GetClientRect(GetDlgItem((HWND)pThis[7], 120), &rGoTo);
-		//ConsoleLog(LOG_DEBUG, "(%d, %d, %d, %d)\n", rGoTo.left, rGoTo.top, rGoTo.right, rGoTo.bottom);
-		ConsoleLog(LOG_DEBUG, "Create Status Bar: %d\n", ret);
 		UpdateStatus_SC2K1996(-1);
 		return ret;
 	}
@@ -77,8 +127,6 @@ extern "C" BOOL __stdcall Hook_StatusControlBarMoveGotoButton_SC2K1996() {
 
 	__asm mov[pThis], ecx
 
-	DWORD *(__stdcall *H_CWndFromHandle)(HWND) = (DWORD *(__stdcall *)(HWND))0x4A3BDF;
-
 	HWND hDlgItem, hWnd, hWndFromHandle;
 	DWORD *pWnd;
 	tagRECT r1;
@@ -87,7 +135,7 @@ extern "C" BOOL __stdcall Hook_StatusControlBarMoveGotoButton_SC2K1996() {
 	if (!bSettingsUseStatusDialog) {
 		hWnd = (HWND)pThis[7];
 		hDlgItem = GetDlgItem(hWnd, 120); // "GoTo" button.
-		pWnd = H_CWndFromHandle(hDlgItem);
+		pWnd = Game_CWnd_FromHandle(hDlgItem);
 		hWndFromHandle = (HWND)pWnd[7];
 		GetClientRect(hWnd, &r1);
 		GetWindowRect(hWndFromHandle, &r2);
@@ -123,9 +171,10 @@ extern "C" BOOL __stdcall Hook_StatusControlBarUpdateStatusBar_SC2K1996(int iEnt
 				else {
 					if (!IsWindowEnabled(GetDlgItem((HWND)pThis[7], 120)))
 						EnableWindow(GetDlgItem((HWND)pThis[7], 120), TRUE);
+					RemoveGotoButtonFocus((HWND)pThis[7]);
 					SendMessage(GetDlgItem((HWND)pThis[7], 120), BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hWeatherBitmaps[bWeatherTrend]);
 				}
-				InvalidateRect(GetDlgItem((HWND)pThis[7], 120), NULL, TRUE);
+				return InvalidateRect(GetDlgItem((HWND)pThis[7], 120), 0, TRUE);
 			}
 		}
 		else {
@@ -166,7 +215,6 @@ extern "C" void __stdcall Hook_StatusControlBarOnPaint_SC2K1996() {
 		pStringTwo = (LPCSTR)pThis[31];
 		crOne = (COLORREF)pThis[37];
 		crTwo = (COLORREF)pThis[38];
-		//ConsoleLog(LOG_DEBUG, "[%s] [%s] (%d, %d, %d, %d) (%d, %d)\n", pStringOne, pStringTwo, cR.left, cR.top, cR.right, cR.bottom, cR.right - cR.left, cR.bottom - cR.top);
 		H_ControlBarOnPaint(pThis);
 
 		left = 0;
@@ -299,57 +347,62 @@ extern "C" LRESULT __stdcall Hook_ControlBarWindowProc_SC2K1996(UINT Msg, WPARAM
 
 	__asm mov [pThis], ecx
 
-	DWORD *(__stdcall *H_CWndFromHandle)(HWND) = (DWORD *(__stdcall *)(HWND))0x4A3BDF;
 	LRESULT(__thiscall *H_CWndWindowProc)(void *, UINT, WPARAM, LPARAM) = (LRESULT(__thiscall *)(void *, UINT, WPARAM, LPARAM))0x4A4B70;
 
 	DWORD *pStatusBar = &((DWORD *)pCWndRootWindow)[61];
+	tagRECT r;
 	HWND m_hWndOwner;
 	DWORD *pWnd;
 
-	if (Msg < WM_DRAWITEM || Msg > WM_CHARTOITEM && Msg != WM_COMPAREITEM && Msg != WM_COMMAND)
+	if (Msg < WM_DRAWITEM || Msg > WM_CHARTOITEM && Msg != WM_COMPAREITEM && Msg != WM_COMMAND) {
+		if (pThis == pStatusBar && bSettingsUseStatusDialog) {
+			if (Msg == WM_SETCURSOR) {
+				if (bSettingsUseStatusDialog) {
+					Game_SimcityAppSetGameCursor(&pCSimcityAppThis, 0, 0);
+					dwCursorGameHit = 4;
+				}
+				return TRUE;
+			}
+			else if (Msg == WM_LBUTTONDOWN) {
+				RemoveGotoButtonFocus((HWND)pThis[7]);
+				SendMessageA((HWND)pThis[7], WM_SYSCOMMAND, (SC_MOVE | HTCAPTION), 0);
+
+				// Record the new position.
+				GetWindowRect((HWND)pThis[7], &r);
+				ptFloat.x = r.left;
+				ptFloat.y = r.top;
+
+				if (!dwDisasterActive)
+					SetFocus(NULL);
+				return TRUE;
+			}
+		}
 		return H_CWndWindowProc(pThis, Msg, wParam, lParam);
+	}
 	if (pThis == pStatusBar && bSettingsUseStatusDialog) {
 		// No parent, the GoTo button goes straight to the CMainFrame.
+		if (Msg == WM_COMMAND) {
+			if (GET_WM_COMMAND_ID(wParam, lParam) == 120) {
+				switch (GET_WM_COMMAND_CMD(wParam, lParam)) {
+				case BN_CLICKED:
+					RemoveGotoButtonFocus((HWND)pThis[7]);
+					if (!dwDisasterActive) {
+						SetFocus(NULL);
+						return TRUE;
+					}
+					break;
+				default:
+					break;
+				}
+			}
+		}
 		return SendMessageA(GameGetRootWindowHandle(), Msg, wParam, lParam);
 	}
 	m_hWndOwner = (HWND)pThis[8];
 	if (!m_hWndOwner)
 		m_hWndOwner = GetParent((HWND)pThis[7]);
-	pWnd = H_CWndFromHandle(m_hWndOwner);
+	pWnd = Game_CWnd_FromHandle(m_hWndOwner);
 	return SendMessageA((HWND)pWnd[7], Msg, wParam, lParam);
-}
-
-extern "C" SIZE *__stdcall Hook_DialogBarCalcFixedLayout_SC2K1996(SIZE *pSZ, BOOL bStretch, BOOL bHorz) {
-	DWORD *pThis;
-
-	__asm mov [pThis], ecx
-
-	LONG lX;
-	LONG lY;
-
-	if (bStretch) {
-		if (bSettingsUseStatusDialog) {
-			lX = szFloat.cx;
-			lY = szFloat.cy;
-		}
-		else {
-			lY = 0x7FFF;
-			if (bHorz) {
-				lY = pThis[27];
-				lX = 0x7FFF;
-			}
-			else {
-				lX = pThis[26];
-			}
-		}
-		pSZ->cx = lX;
-		pSZ->cy = lY;
-	}
-	else {
-		pSZ->cx = pThis[26];
-		pSZ->cy = pThis[27];
-	}
-	return pSZ;
 }
 
 extern "C" void __stdcall Hook_ControlBarDoPaint_SC2K1996(DWORD *pDC) {
@@ -378,46 +431,6 @@ extern "C" void __stdcall Hook_ControlBarDoPaint_SC2K1996(DWORD *pDC) {
 	else {
 		H_ControlBarDrawBorders(pThis, pDC, &r);
 	}
-}
-
-extern "C" void __stdcall Hook_CControlBarOnLButtonDown_SC2K1996(UINT nFlags, tagPOINT pt) {
-	DWORD *pThis;
-
-	__asm mov [pThis], ecx
-
-	long(__thiscall *H_CWndDefault)(void *) = (long(__thiscall *)(void *))0x4A3B2F;
-	void(__thiscall *H_CDockContextStartDrag)(void *, tagPOINT) = (void(__thiscall *)(void *, tagPOINT))0x4B5C25;
-
-	tagRECT r;
-
-	DWORD *pStatusBar = &((DWORD *)pCWndRootWindow)[61];
-	if (pThis == pStatusBar && bSettingsUseStatusDialog) {
-		SendMessageA((HWND)pThis[7], WM_SYSCOMMAND, (SC_MOVE | HTCAPTION), 0);
-		
-		// Record the new position.
-		GetWindowRect((HWND)pThis[7], &r);
-		ptFloat.x = r.left;
-		ptFloat.y = r.top;
-	}
-	else {
-		H_CWndDefault(pThis);
-		if (pThis[24]) {
-			ClientToScreen((HWND)pThis[7], &pt);
-			H_CDockContextStartDrag(&pThis[25], pt);
-		}
-	}
-}
-
-extern "C" BOOL __stdcall Hook_StatusOnSetCursor(UINT nHitTest, UINT Message) {
-	DWORD *pThis;
-
-	__asm mov [pThis], ecx
-
-	if (bSettingsUseStatusDialog) {
-		Game_SimcityAppSetGameCursor(&pCSimcityAppThis, 0, 0);
-		dwCursorGameHit = 4;
-	}
-	return TRUE;
 }
 
 void InstallStatusHooks_SC2K1996(void) {
@@ -450,92 +463,52 @@ void InstallStatusHooks_SC2K1996(void) {
 	NEWJMP((LPVOID)0x40103C, Hook_MainFrameToggleToolBars_SC2K1996);
 
 	// Hook for CControlBar::WindowProc
+	// Added additional checks for the following:
+	// 1) LButtonDown Dragging.
+	// 2) Removing the BS_DEFPUSHBUTTON attribute (and killing focus while
+	//    no disaster is active).
+	// 3) Change to the normal 'Arrow' cursor while the pointer is within
+	//    the dimensions of the status widget.
 	VirtualProtect((LPVOID)0x4B4B46, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4B4B46, Hook_ControlBarWindowProc_SC2K1996);
-
-	// Hook for CDialogBar::CalcFixedLayout
-	VirtualProtect((LPVOID)0x4B5973, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4B5973, Hook_DialogBarCalcFixedLayout_SC2K1996);
 
 	// Hook for CControlBar::DoPaint
 	VirtualProtect((LPVOID)0x4B53B6, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4B53B6, Hook_ControlBarDoPaint_SC2K1996);
-
-	// Hook for CControlBar::OnLButtonDown
-	// Added an additional check in the hook to account
-	// for a match with the StatusControlBar in order to allow for
-	// dragging.
-	VirtualProtect((LPVOID)0x4B4F8A, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4B4F8A, Hook_CControlBarOnLButtonDown_SC2K1996);
-
-	// Only enough space to replace WM_NULL with WM_SETCURSOR.
-	AFX_MSGMAP_ENTRY afxMessageMapEntry;
-
-	afxMessageMapEntry = {
-		WM_SETCURSOR,
-		0,
-		0,
-		0,
-		3,
-		Hook_StatusOnSetCursor,
-	};
-
-	VirtualProtect((LPVOID)0x4DEAF8, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
-	memcpy_s((LPVOID)0x4DEAF8, sizeof(afxMessageMapEntry), &afxMessageMapEntry, sizeof(afxMessageMapEntry));
 }
 
 void UpdateStatus_SC2K1996(int iShow) {
 	void(__thiscall *H_CFrameWndShowControlBar)(void *, void *, BOOL, int) = (void(__thiscall *)(void *, void *, BOOL, int))0x4BA3A0;
 
-	BOOL bShow;
 	DWORD *pStatusBar;
-	HWND hwndStatusBar, hWndGoto;
-	UINT wPFlags, butFlags;
-	tagRECT r;
+	DWORD *pSCView;
+	BOOL bShow;
+	HWND hWndStatusBar;
+	UINT wPFlags;
 
-	HINSTANCE &gamehInstance = *(HINSTANCE *)0x4CE8C4;
-
-	bShow = (wCityMode > 0 && iShow != 0) ? TRUE : FALSE;
 	pStatusBar = &((DWORD *)pCWndRootWindow)[61];
-	hwndStatusBar = (HWND)pStatusBar[7];
-	hWndGoto = GetDlgItem(hwndStatusBar, 120);
-	wPFlags = SWP_NOZORDER | SWP_NOACTIVATE | SWP_SHOWWINDOW;
+	pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
+	bShow = (pSCView && wCityMode > 0 && iShow != 0) ? TRUE : FALSE;
+	hWndStatusBar = (HWND)pStatusBar[7];
+	wPFlags = SWP_NOZORDER | SWP_NOACTIVATE;
+	if (bShow)
+		wPFlags |= SWP_SHOWWINDOW;
 	if (bSettingsUseStatusDialog) {
-		wPFlags = SWP_HIDEWINDOW;
-		if (iShow > 0 && bShow)
-			wPFlags = SWP_SHOWWINDOW;
-		else if (!iShow || wCityMode <= 0)
-			wPFlags = SWP_NOZORDER | SWP_NOACTIVATE | SWP_HIDEWINDOW;
-		SetWindowLongA(hwndStatusBar, GWL_STYLE, DS_SETFONT | WS_POPUP);
-		SetWindowLongA(hwndStatusBar, GWL_EXSTYLE, WS_EX_TOOLWINDOW);
-		SetParent(hwndStatusBar, NULL);
-		SetWindowPos(hwndStatusBar, HWND_TOPMOST, ptFloat.x, ptFloat.y, szFloat.cx, szFloat.cy, wPFlags);
-		if (iShow == -1) {
-			if (hWndGoto) {
-				GetClientRect(hwndStatusBar, &r);
-				DestroyWindow(hWndGoto);
-				butFlags = WS_CHILD | BS_FLAT | BS_BITMAP | WS_VISIBLE;
-				CreateWindowA("Button", "", butFlags, r.right - 40, r.top, 40, 40, hwndStatusBar, (HMENU)120, gamehInstance, NULL);
-			}
-		}
+		wPFlags &= ~SWP_NOZORDER;
+		SetWindowLongA(hWndStatusBar, GWL_STYLE, DS_SETFONT | WS_POPUP);
+		SetWindowLongA(hWndStatusBar, GWL_EXSTYLE, WS_EX_TOOLWINDOW);
+		SetParent(hWndStatusBar, NULL);
+		SetWindowPos(hWndStatusBar, HWND_TOPMOST, ptFloat.x, ptFloat.y, szFloat.cx, szFloat.cy, wPFlags);
+		if (bShow)
+			AdjustGotoButton(hWndStatusBar);
 	}
 	else {
-		SetWindowLongA(hwndStatusBar, GWL_STYLE, DS_SETFONT | WS_CHILD | WS_CLIPSIBLINGS | 0x8000 | 0x0200);
-		SetParent(hwndStatusBar, GameGetRootWindowHandle());
-		if (iShow == -1) {
-			if (hWndGoto) {
-				DestroyWindow(hWndGoto);
-				butFlags = WS_CHILD | WS_VISIBLE | WS_DISABLED;
-				if (dwDisasterActive)
-					butFlags &= ~WS_DISABLED;
-				hWndGoto = CreateWindowA("Button", "GoTo", butFlags, rGoTo.left, rGoTo.top, rGoTo.right - rGoTo.left, rGoTo.bottom - rGoTo.top, hwndStatusBar, (HMENU)120, gamehInstance, NULL);
-				SendMessageA(hWndGoto, WM_SETFONT, (WPARAM)hFontMSSansSerifRegular8, 1);
-			}
-		}
-		SetWindowPos(hwndStatusBar, HWND_TOP, 0, 0, 0, 0, wPFlags);
+		SetWindowLongA(hWndStatusBar, GWL_STYLE, DS_SETFONT | WS_CHILD | WS_CLIPSIBLINGS | 0x8000 | 0x0200);
+		SetParent(hWndStatusBar, GameGetRootWindowHandle());
+		if (bShow)
+			AdjustGotoButton(hWndStatusBar);
+		SetWindowPos(hWndStatusBar, HWND_TOP, 0, 0, 0, 0, wPFlags);
 	}
-	if (pCWndRootWindow && pStatusBar) {
-		H_CFrameWndShowControlBar(pCWndRootWindow, pStatusBar, 0, 0);
+	if (pSCView && pCWndRootWindow && pStatusBar)
 		H_CFrameWndShowControlBar(pCWndRootWindow, pStatusBar, bShow, 0);
-	}
 }
