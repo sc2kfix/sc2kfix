@@ -162,7 +162,7 @@ extern "C" BOOL __stdcall Hook_StatusControlBarUpdateStatusBar_SC2K1996(int iEnt
 		if (iEntry) {
 			if (iEntry == 1) {
 				H_CStringOperatorSet((CMFC3XString *)&pThis[31], szText);
-				(COLORREF)pThis[38] = newColor;
+				pThis[38] = (DWORD)newColor;
 			}
 			else if (iEntry == 2) {
 				if (dwDisasterActive) {
@@ -179,7 +179,7 @@ extern "C" BOOL __stdcall Hook_StatusControlBarUpdateStatusBar_SC2K1996(int iEnt
 		}
 		else {
 			H_CStringOperatorSet((CMFC3XString *)&pThis[28], szText);
-			(COLORREF)pThis[37] = newColor;
+			pThis[37] = (DWORD)newColor;
 		}
 		return InvalidateRect((HWND)pThis[7], 0, TRUE);
 	}
