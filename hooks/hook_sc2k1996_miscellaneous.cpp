@@ -1842,7 +1842,7 @@ static void ChangeChurchZone()
 }
 
 extern "C" void __stdcall Hook_MainFrameOnChar(UINT nChar, UINT nRepCnt, UINT nFlags) {
-	DWORD pThis;
+	DWORD *pThis;
 
 	__asm mov [pThis], ecx
 
@@ -1876,7 +1876,7 @@ extern "C" void __stdcall Hook_MainFrameOnChar(UINT nChar, UINT nRepCnt, UINT nF
 	int &iCheatExpectedCharPos = *(int *)0x4E6524;
 	char *szNewItem = (char *)0x4E66EC;
 
-	hWnd = (HWND)((DWORD *)pThis)[7];
+	hWnd = (HWND)pThis[7];
 
 	// "Insert" key - only relevant in the demo but pressing it advances
 	// the timer.
