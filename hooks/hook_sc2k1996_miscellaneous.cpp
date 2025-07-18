@@ -2523,42 +2523,41 @@ extern "C" void __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(UINT nFlags, POINT pt
 	}
 }
 
-extern "C" __int16 __stdcall Hook_CSimcityView_WM_MOUSEMOVE(WPARAM iMouseKeys, POINT pt) {
-	DWORD pThis;
+extern "C" void __stdcall Hook_CSimcityView_WM_MOUSEMOVE(UINT nFlags, POINT pt) {
+	DWORD *pThis;
 
 	__asm mov [pThis], ecx
 
-	int iTileCoords;
-	int iLeftMousDownInGameArea;
+	// pThis[62] = dwSCVLeftMouseButtonDown
+	// pThis[63] = dwSCVLeftMouseDownInGameArea
+	// pThis[64] = dwSCVCursorInGameArea
+	// pThis[65] = SCVMousePoint
 
-	P_LOWORD(iTileCoords) = (WORD)pt.x;
-	iLeftMousDownInGameArea = *(DWORD *)(pThis + 252);
-	*(struct tagPOINT *)(pThis + 260) = pt; // Placement position.
-	if (iLeftMousDownInGameArea) {
-		P_LOWORD(iTileCoords) = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
-		wCurrentTileCoordinates = iTileCoords;
-		if ((__int16)iTileCoords >= 0) {
-			wTileCoordinateX = (unsigned __int8)iTileCoords;
-			P_LOWORD(iTileCoords) = wCurrentTileCoordinates >> 8;
+	*(POINT *)&pThis[65] = pt;
+	if (pThis[63]) {
+		wCurrentTileCoordinates = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
+		if (wCurrentTileCoordinates >= 0) {
+			wTileCoordinateX = (uint8_t)wCurrentTileCoordinates;
 			wTileCoordinateY = wCurrentTileCoordinates >> 8;
-			if ( wPreviousTileCoordinateX != wTileCoordinateX || wPreviousTileCoordinateY != (WORD)iTileCoords) {
-				if ( (int)abs(wGameScreenAreaX - pt.x) > 1 || (iTileCoords = abs(wGameScreenAreaY - pt.y), iTileCoords > 1) ) {
-					*(DWORD *)(pThis + 256) = 1;
-					if ((iMouseKeys & MK_LBUTTON) != 0) {
-						if (*(DWORD *)(pThis + 248)) {
+			if (wPreviousTileCoordinateX != wTileCoordinateX ||
+				wPreviousTileCoordinateY != wTileCoordinateY) {
+				if ((int)abs(wGameScreenAreaX - pt.x) > 1 ||
+					((int)abs(wGameScreenAreaY - pt.y) > 1)) {
+					pThis[64] = 1;
+					if ((nFlags & MK_LBUTTON) != 0) {
+						if (pThis[62]) {
 							if (wCityMode) {
-								if ((wCurrentCityToolGroup != 17) || GetAsyncKeyState(VK_MENU) & 0x8000)
-									Game_CityToolMenuAction(iMouseKeys, pt);
+								if ((wCurrentCityToolGroup != TOOL_GROUP_CENTERINGTOOL) || GetAsyncKeyState(VK_MENU) & 0x8000)
+									Game_CityToolMenuAction(nFlags, pt);
 							}
 							else {
-								if ((wCurrentMapToolGroup == 9 && GetAsyncKeyState(VK_MENU) & 0x8000) || // 'Center Tool' selected with either 'Alt' key pressed.
-									(wCurrentMapToolGroup != 9 && (iMouseKeys & MK_CONTROL) == 0) || // Other tool selected with 'ctrl' not pressed.
-									(wCurrentMapToolGroup != 9 && (iMouseKeys & MK_CONTROL) != 0 && GetAsyncKeyState(VK_MENU) & 0x8000)) // Other tool with 'ctrl' pressed (Center Tool) and 'Alt'.
-									Game_MapToolMenuAction(iMouseKeys, pt);
+								if ((wCurrentMapToolGroup == MAPTOOL_GROUP_CENTERINGTOOL && GetAsyncKeyState(VK_MENU) & 0x8000) || // 'Center Tool' selected with either 'Alt' key pressed.
+									(wCurrentMapToolGroup != MAPTOOL_GROUP_CENTERINGTOOL && (nFlags & MK_CONTROL) == 0) || // Other tool selected with 'ctrl' not pressed.
+									(wCurrentMapToolGroup != MAPTOOL_GROUP_CENTERINGTOOL && (nFlags & MK_CONTROL) != 0 && GetAsyncKeyState(VK_MENU) & 0x8000)) // Other tool with 'ctrl' pressed (Center Tool) and 'Alt'.
+									Game_MapToolMenuAction(nFlags, pt);
 							}
 						}
 					}
-					P_LOWORD(iTileCoords) = wTileCoordinateX;
 					wPreviousTileCoordinateX = wTileCoordinateX;
 					wPreviousTileCoordinateY = wTileCoordinateY;
 					wGameScreenAreaX = (WORD)pt.x;
@@ -2569,8 +2568,6 @@ extern "C" __int16 __stdcall Hook_CSimcityView_WM_MOUSEMOVE(WPARAM iMouseKeys, P
 	}
 	else
 		bOverrideTickPlacementHighlight = FALSE;
-
-	return iTileCoords;
 }
 
 extern "C" __int16 __cdecl Hook_MapToolMenuAction(int iMouseKeys, POINT pt) {
