@@ -174,14 +174,14 @@ extern "C" BOOL __stdcall Hook_StatusControlBarUpdateStatusBar_SC2K1996(int iEnt
 					RemoveGotoButtonFocus((HWND)pThis[7]);
 					SendMessage(GetDlgItem((HWND)pThis[7], 120), BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hWeatherBitmaps[bWeatherTrend]);
 				}
-				return InvalidateRect(GetDlgItem((HWND)pThis[7], 120), 0, TRUE);
+				return TRUE;
 			}
 		}
 		else {
 			H_CStringOperatorSet((CMFC3XString *)&pThis[28], szText);
 			pThis[37] = (DWORD)newColor;
 		}
-		return InvalidateRect((HWND)pThis[7], 0, TRUE);
+		return InvalidateRect((HWND)pThis[7], 0, FALSE);
 	}
 	else
 		return H_CStatusControlBarUpdateStatusBar(pThis, iEntry, szText, iArgUnknown, newColor);
