@@ -138,8 +138,10 @@ void SaveSettings(BOOL onload) {
 
 	if (!onload) {
 		// Update any hooks we need to.
-		if (dwDetectedVersion == SC2KVERSION_1996)
+		if (dwDetectedVersion == SC2KVERSION_1996) {
 			UpdateMiscHooks_SC2K1996();
+			UpdateStatus_SC2K1996(-1);
+		}
 	}
 }
 
@@ -234,9 +236,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 		// Interface settings
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG),
 			"The DOS and Mac versions of SimCity 2000 used a movable floating dialog to show the current tool, status line, and weather instead of a fixed bar at the bottom of the game window. "
-			"Enabling this setting will use the floating status dialog instead of the bottom status bar.\n\n"
-			
-			"Enabling or disabling this setting takes effect after restarting the game.");
+			"Enabling this setting will use the floating status dialog instead of the bottom status bar.");
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE),
 			"By default the title bar only displays the month and year. Enabling this setting will display the full in-game date instead.");
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS),

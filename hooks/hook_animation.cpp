@@ -12,7 +12,7 @@
 
 static DWORD dwDummy;
 
-extern "C" void __cdecl Hook_AnimationFunctionSimCity1996(HPALETTE *hP1, int iToggle) {
+extern "C" void __cdecl Hook_AnimationFunctionSimCity1996(void *pPalette, int iToggle) {
 	DWORD *pApp;
 	DWORD *pMainFrm;
 	DWORD *pSCView;
@@ -27,14 +27,14 @@ extern "C" void __cdecl Hook_AnimationFunctionSimCity1996(HPALETTE *hP1, int iTo
 
 	BOOL &bLoColor = *(BOOL *)0x4EA04C;
 
-	void(__cdecl *H_AnimationFunction1996)(HPALETTE *, int) = (void(__cdecl *)(HPALETTE *, int))0x457110;
+	void(__cdecl *H_AnimationFunction1996)(void *, int) = (void(__cdecl *)(void *, int))0x457110;
 
 	// Only redraw the relevant windows during:
 	// 1) Titlescreen image animation.
 	// 2) While the CSimcityView window is active and the toolbars aren't being dragged.
 	// 3) None of the additional redraw calls in LoColor mode.
 
-	H_AnimationFunction1996(hP1, iToggle);
+	H_AnimationFunction1996(pPalette, iToggle);
 
 	pApp = &pCSimcityAppThis;
 	if (pApp) {
@@ -79,7 +79,7 @@ extern "C" void __cdecl Hook_AnimationFunctionSimCity1996(HPALETTE *hP1, int iTo
 	}
 }
 
-extern "C" void __cdecl Hook_AnimationFunctionSimCity1995(HPALETTE *hP1, int iToggle) {
+extern "C" void __cdecl Hook_AnimationFunctionSimCity1995(void *pPalette, int iToggle) {
 	DWORD *pApp;
 	DWORD *pMainFrm;
 	DWORD *pSCView;
@@ -97,9 +97,9 @@ extern "C" void __cdecl Hook_AnimationFunctionSimCity1995(HPALETTE *hP1, int iTo
 	BOOL &bLoColor1995 = *(BOOL *)0x4E903C;
 
 	DWORD *(__thiscall *H_PointerToCSimcityViewClass1995)(void *) = (DWORD *(__thiscall *)(void *))0x4026D0;
-	void(__cdecl *H_AnimationFunction1995)(HPALETTE *, int) = (void(__cdecl *)(HPALETTE *, int))0x456A60;
+	void(__cdecl *H_AnimationFunction1995)(void *, int) = (void(__cdecl *)(void *, int))0x456A60;
 
-	H_AnimationFunction1995(hP1, iToggle);
+	H_AnimationFunction1995(pPalette, iToggle);
 	
 	pApp = &pCSimcityAppThis1995;
 	if (pApp) {
@@ -144,7 +144,7 @@ extern "C" void __cdecl Hook_AnimationFunctionSimCity1995(HPALETTE *hP1, int iTo
 	}
 }
 
-extern "C" void __cdecl Hook_AnimationFunctionSimCityDemo(HPALETTE *hP1, int iToggle) {
+extern "C" void __cdecl Hook_AnimationFunctionSimCityDemo(void *pPalette, int iToggle) {
 	DWORD *pApp;
 	DWORD *pMainFrm;
 	DWORD *pSCView;
@@ -162,9 +162,9 @@ extern "C" void __cdecl Hook_AnimationFunctionSimCityDemo(HPALETTE *hP1, int iTo
 	BOOL &bLoColorDemo = *(BOOL *)0x4D1EDC;
 
 	DWORD *(__thiscall *H_PointerToCSimcityViewClassDemo)(void *) = (DWORD *(__thiscall *)(void *))0x402725;
-	void(__cdecl *H_AnimationFunctionDemo)(HPALETTE *, int) = (void(__cdecl *)(HPALETTE *, int))0x44890F;
+	void(__cdecl *H_AnimationFunctionDemo)(void *, int) = (void(__cdecl *)(void *, int))0x44890F;
 
-	H_AnimationFunctionDemo(hP1, iToggle);
+	H_AnimationFunctionDemo(pPalette, iToggle);
 
 	pApp = &pCSimcityAppThisDemo;
 	if (pApp) {
