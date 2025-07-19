@@ -509,6 +509,8 @@ void UpdateStatus_SC2K1996(int iShow) {
 			AdjustGotoButton(hWndStatusBar);
 		SetWindowPos(hWndStatusBar, HWND_TOP, 0, 0, 0, 0, wPFlags);
 	}
-	if (pSCView && pCWndRootWindow && pStatusBar)
+	if (pSCView && pCWndRootWindow && pStatusBar) {
 		H_CFrameWndShowControlBar(pCWndRootWindow, pStatusBar, bShow, 0);
+		SetFocus((HWND)pSCView[7]);
+	}
 }
