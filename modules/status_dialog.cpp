@@ -68,7 +68,8 @@ static void AdjustGotoButton(HWND hWnd) {
 				nStyle &= ~WS_DISABLED;
 			else
 				nStyle |= WS_DISABLED;
-			nStyle |= BS_DEFPUSHBUTTON;
+			if (nStyle & BS_DEFPUSHBUTTON)
+				nStyle &= ~BS_DEFPUSHBUTTON;
 			if (nExStyle & WS_EX_TOOLWINDOW)
 				nExStyle &= ~WS_EX_TOOLWINDOW;
 			SendMessage(hWndGoto, BM_SETIMAGE, IMAGE_BITMAP, 0);
@@ -355,23 +356,24 @@ extern "C" LRESULT __stdcall Hook_ControlBarWindowProc_SC2K1996(UINT Msg, WPARAM
 
 	pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
 	if (Msg < WM_DRAWITEM || Msg > WM_CHARTOITEM && Msg != WM_COMPAREITEM && Msg != WM_COMMAND) {
-		if (pThis == pStatusBar && bSettingsUseStatusDialog) {
+		if (pThis == pStatusBar) {
 			if (Msg == WM_SETCURSOR) {
 				if (bSettingsUseStatusDialog) {
 					Game_SimcityAppSetGameCursor(&pCSimcityAppThis, 0, 0);
 					dwCursorGameHit = 4;
+					return TRUE;
 				}
-				return TRUE;
 			}
 			else if (Msg == WM_LBUTTONDOWN) {
-				RemoveGotoButtonFocus((HWND)pThis[7]);
-				SendMessageA((HWND)pThis[7], WM_SYSCOMMAND, (SC_MOVE | HTCAPTION), 0);
+				if (bSettingsUseStatusDialog) {
+					RemoveGotoButtonFocus((HWND)pThis[7]);
+					SendMessageA((HWND)pThis[7], WM_SYSCOMMAND, (SC_MOVE | HTCAPTION), 0);
 
-				// Record the new position.
-				GetWindowRect((HWND)pThis[7], &r);
-				ptFloat.x = r.left;
-				ptFloat.y = r.top;
-
+					// Record the new position.
+					GetWindowRect((HWND)pThis[7], &r);
+					ptFloat.x = r.left;
+					ptFloat.y = r.top;
+				}
 				if (pSCView)
 					SetFocus((HWND)pSCView[7]);
 				return TRUE;
@@ -379,8 +381,7 @@ extern "C" LRESULT __stdcall Hook_ControlBarWindowProc_SC2K1996(UINT Msg, WPARAM
 		}
 		return H_CWndWindowProc(pThis, Msg, wParam, lParam);
 	}
-	if (pThis == pStatusBar && bSettingsUseStatusDialog) {
-		// No parent, the GoTo button goes straight to the CMainFrame.
+	if (pThis == pStatusBar) {
 		if (Msg == WM_COMMAND) {
 			if (GET_WM_COMMAND_ID(wParam, lParam) == 120) {
 				switch (GET_WM_COMMAND_CMD(wParam, lParam)) {
@@ -396,9 +397,8 @@ extern "C" LRESULT __stdcall Hook_ControlBarWindowProc_SC2K1996(UINT Msg, WPARAM
 				}
 			}
 		}
-		return SendMessageA(GameGetRootWindowHandle(), Msg, wParam, lParam);
 	}
-	m_hWndOwner = (HWND)pThis[8];
+	m_hWndOwner = (pThis == pStatusBar && bSettingsUseStatusDialog) ? GameGetRootWindowHandle() : (HWND)pThis[8];
 	if (!m_hWndOwner)
 		m_hWndOwner = GetParent((HWND)pThis[7]);
 	pWnd = Game_CWnd_FromHandle(m_hWndOwner);
