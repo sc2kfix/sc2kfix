@@ -348,10 +348,12 @@ extern "C" LRESULT __stdcall Hook_ControlBarWindowProc_SC2K1996(UINT Msg, WPARAM
 	LRESULT(__thiscall *H_CWndWindowProc)(void *, UINT, WPARAM, LPARAM) = (LRESULT(__thiscall *)(void *, UINT, WPARAM, LPARAM))0x4A4B70;
 
 	DWORD *pStatusBar = &((DWORD *)pCWndRootWindow)[61];
+	DWORD *pSCView;
 	tagRECT r;
 	HWND m_hWndOwner;
 	DWORD *pWnd;
 
+	pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
 	if (Msg < WM_DRAWITEM || Msg > WM_CHARTOITEM && Msg != WM_COMPAREITEM && Msg != WM_COMMAND) {
 		if (pThis == pStatusBar && bSettingsUseStatusDialog) {
 			if (Msg == WM_SETCURSOR) {
@@ -370,8 +372,8 @@ extern "C" LRESULT __stdcall Hook_ControlBarWindowProc_SC2K1996(UINT Msg, WPARAM
 				ptFloat.x = r.left;
 				ptFloat.y = r.top;
 
-				if (!dwDisasterActive)
-					SetFocus(NULL);
+				if (pSCView)
+					SetFocus((HWND)pSCView[7]);
 				return TRUE;
 			}
 		}
@@ -384,10 +386,10 @@ extern "C" LRESULT __stdcall Hook_ControlBarWindowProc_SC2K1996(UINT Msg, WPARAM
 				switch (GET_WM_COMMAND_CMD(wParam, lParam)) {
 				case BN_CLICKED:
 					RemoveGotoButtonFocus((HWND)pThis[7]);
-					if (!dwDisasterActive) {
-						SetFocus(NULL);
+					if (pSCView)
+						SetFocus((HWND)pSCView[7]);
+					if (!dwDisasterActive)
 						return TRUE;
-					}
 					break;
 				default:
 					break;
