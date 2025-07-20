@@ -2800,6 +2800,7 @@ extern "C" void __stdcall Hook_CityToolBarToolMenuDisable() {
 		SetParent((HWND)pStatusBar[7], (HWND)pSCWnd[7]);
 		SetWindowPos((HWND)pStatusBar[7], HWND_TOP, r.left, r.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 		SendMessageA((HWND)pStatusBar[7], WM_SETREDRAW, TRUE, 0);
+		InvalidateRect((HWND)pStatusBar[7], 0, TRUE);
 	}
 
 	H_CityToolBarToolMenuDisable(pThis);
@@ -2829,6 +2830,7 @@ extern "C" void __stdcall Hook_CityToolBarToolMenuEnable() {
 		SetParent((HWND)pStatusBar[7], NULL);
 		SetWindowPos((HWND)pStatusBar[7], HWND_TOP, r.left, r.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 		SendMessageA((HWND)pStatusBar[7], WM_SETREDRAW, TRUE, 0);
+		InvalidateRect((HWND)pStatusBar[7], 0, TRUE);
 		if (pSCView)
 			SetFocus((HWND)pSCView[7]);
 	}
