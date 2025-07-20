@@ -60,6 +60,7 @@ static void AdjustGotoButton(HWND hWnd) {
 			cx = cy = 40;
 		}
 		else {
+			nStyle |= BS_NOTIFY;
 			if (nStyle & BS_FLAT)
 				nStyle &= ~BS_FLAT;
 			if (nStyle & BS_BITMAP)

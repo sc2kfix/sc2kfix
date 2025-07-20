@@ -2719,6 +2719,99 @@ extern "C" int __stdcall Hook_StartupGraphics() {
 	return ReleaseDC(0, hDC_Two);
 }
 
+extern "C" void __stdcall Hook_CityToolBarToolMenuDisable() {
+	DWORD *pThis;
+
+	__asm mov[pThis], ecx
+
+	void(__thiscall *H_CityToolBarToolMenuDisable)(void *) = (void(__thiscall *)(void *))0x4237F0;
+
+	DWORD *pSCWnd;
+	DWORD *pStatusBar;
+	tagRECT r;
+
+	// Temporarily change the status bar's parent.
+	// This also prevents the visible anomaly of the floating
+	// status bar being moved vertically as a result of the
+	// parental change.
+	pSCWnd = &((DWORD *)pCWndRootWindow)[291];
+	pStatusBar = &((DWORD *)pCWndRootWindow)[61];
+	if (bSettingsUseStatusDialog && IsWindowVisible((HWND)pStatusBar[7])) {
+		SendMessageA((HWND)pStatusBar[7], WM_SETREDRAW, FALSE, 0);
+		GetWindowRect((HWND)pStatusBar[7], &r);
+		ScreenToClient(GameGetRootWindowHandle(), (LPPOINT)&r.left);
+		SetParent((HWND)pStatusBar[7], (HWND)pSCWnd[7]);
+		SetWindowPos((HWND)pStatusBar[7], HWND_TOP, r.left, r.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+		SendMessageA((HWND)pStatusBar[7], WM_SETREDRAW, TRUE, 0);
+	}
+
+	H_CityToolBarToolMenuDisable(pThis);
+}
+
+extern "C" void __stdcall Hook_CityToolBarToolMenuEnable() {
+	DWORD *pThis;
+
+	__asm mov[pThis], ecx
+
+	void(__thiscall *H_CityToolBarToolMenuEnable)(void *) = (void(__thiscall *)(void *))0x423860;
+
+	DWORD *pSCView;
+	DWORD *pStatusBar;
+	tagRECT r;
+
+	// Revert the change of status bar's parent.
+	// This also prevents the visible anomaly of the floating
+	// status bar being moved vertically as a result of the
+	// parental change.
+	pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
+	pStatusBar = &((DWORD *)pCWndRootWindow)[61];
+	if (bSettingsUseStatusDialog && IsWindowVisible((HWND)pStatusBar[7])) {
+		SendMessageA((HWND)pStatusBar[7], WM_SETREDRAW, FALSE, 0);
+		GetWindowRect((HWND)pStatusBar[7], &r);
+		ScreenToClient(NULL, (LPPOINT)&r.left);
+		SetParent((HWND)pStatusBar[7], NULL);
+		SetWindowPos((HWND)pStatusBar[7], HWND_TOP, r.left, r.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+		SendMessageA((HWND)pStatusBar[7], WM_SETREDRAW, TRUE, 0);
+		if (pSCView)
+			SetFocus((HWND)pSCView[7]);
+	}
+
+	H_CityToolBarToolMenuEnable(pThis);
+}
+
+extern "C" void __stdcall Hook_ShowViewControls() {
+	void(__thiscall *H_MainFrameToggleStatusControlBar)(void *, BOOL) = (void(__thiscall *)(void *, BOOL))0x4021A8;
+	void(__thiscall *H_CFrameWndRecalcLayout)(void *, int) = (void(__thiscall *)(void *, int))0x4BB23A;
+
+	int &iSCAProgramStep = *(int *)0x4C7334;
+	BOOL &bRedraw = *(BOOL *)0x4E62B4;
+
+	DWORD *pMainFrm;
+	DWORD *pSCView;
+	DWORD *pSCVScrollBarHorz;
+	DWORD *pSCVScrollBarVert;
+	DWORD *pSCVStatic;
+
+	pMainFrm = (DWORD *)pCWndRootWindow;
+	pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
+	pSCVScrollBarHorz = (DWORD *)pSCView[20];
+	pSCVScrollBarVert = (DWORD *)pSCView[19];
+	pSCVStatic = (DWORD *)pSCView[21];
+	if (!bRedraw) {
+		bRedraw = TRUE;
+		if (iSCAProgramStep == ONIDLE_STATE_RETURN_12 || !wCityMode)
+			H_MainFrameToggleStatusControlBar(pMainFrm, FALSE);
+		else {
+			if (!bSettingsUseStatusDialog)
+				H_MainFrameToggleStatusControlBar(pMainFrm, TRUE);
+		}
+		H_CFrameWndRecalcLayout(pMainFrm, TRUE);
+		ShowWindow((HWND)pSCVScrollBarHorz[7], SW_SHOWNORMAL);
+		ShowWindow((HWND)pSCVScrollBarVert[7], SW_SHOWNORMAL);
+		ShowWindow((HWND)pSCVStatic[7], SW_SHOWNORMAL);
+	}
+}
+
 // Placeholder.
 void ShowModSettingsDialog(void) {
 	MessageBox(NULL, "The mod settings dialog has not yet been implemented. Check back later.", "sc2fix", MB_OK);
@@ -2886,6 +2979,19 @@ void InstallMiscHooks_SC2K1996(void) {
 
 	// Hook status bar updates for the status dialog implementation
 	InstallStatusHooks_SC2K1996();
+
+	// Hooks for CCityToolBar::ToolMenuDisable and CCityToolBar::ToolMenuEnable
+	// Both of which are called when a modal CGameDialog is opened.
+	// The purpose in this case will be to temporarily alter the parent
+	// of the status widget (if it is in floating mode) so interaction is disabled.
+	VirtualProtect((LPVOID)0x402937, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402937, Hook_CityToolBarToolMenuDisable);
+	VirtualProtect((LPVOID)0x401519, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x401519, Hook_CityToolBarToolMenuEnable);
+
+	// Hook for ShowViewControls
+	VirtualProtect((LPVOID)0x4021D5, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4021D5, Hook_ShowViewControls);
 
 	// New hooks for CSimcityDoc::UpdateDocumentTitle and
 	// SimulationProcessTick - these account for:
