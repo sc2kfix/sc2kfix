@@ -2787,6 +2787,7 @@ extern "C" void __stdcall Hook_CityToolBarToolMenuDisable() {
 	DWORD *pSCView;
 	DWORD *pStatusBar;
 	tagRECT r;
+	tagSIZE eSZ;
 
 	// Temporarily change the status bar's parent.
 	// This also prevents the visible anomaly of the floating
@@ -2799,10 +2800,13 @@ extern "C" void __stdcall Hook_CityToolBarToolMenuDisable() {
 		SendMessageA((HWND)pStatusBar[7], WM_SETREDRAW, FALSE, 0);
 		GetWindowRect((HWND)pStatusBar[7], &r);
 		ScreenToClient(GameGetRootWindowHandle(), (LPPOINT)&r.left);
+		// Retrieve the 3D border-edge width/height in pixels.
+		eSZ.cx = GetSystemMetrics(SM_CXEDGE);
+		eSZ.cy = GetSystemMetrics(SM_CYEDGE);
 		if (pSCView) {
 			if (!IsZoomed(GetParent((HWND)pSCView[7]))) {
-				r.left -= 2;
-				r.top -= 2;
+				r.left -= eSZ.cx;
+				r.top -= eSZ.cy;
 			}
 		}
 		SetParent((HWND)pStatusBar[7], (HWND)pSCWnd[7]);
