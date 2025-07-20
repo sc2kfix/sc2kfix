@@ -2757,7 +2757,7 @@ extern "C" void __stdcall Hook_CityToolBarToolMenuDisable() {
 		SendMessageA((HWND)pStatusBar[7], WM_SETREDRAW, TRUE, 0);
 		InvalidateRect((HWND)pStatusBar[7], 0, TRUE);
 		InvalidateRect((HWND)pThis[7], 0, TRUE);
-		InvalidateRect(GameGetRootWindowHandle(), 0, TRUE);
+		RedrawWindow(GameGetRootWindowHandle(), NULL, NULL, RDW_INVALIDATE | RDW_ALLCHILDREN);
 	}
 
 	H_CityToolBarToolMenuDisable(pThis);
@@ -2787,7 +2787,7 @@ extern "C" void __stdcall Hook_CityToolBarToolMenuEnable() {
 		SetParent((HWND)pStatusBar[7], NULL);
 		SetWindowPos((HWND)pStatusBar[7], HWND_TOP, r.left, r.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 		SendMessageA((HWND)pStatusBar[7], WM_SETREDRAW, TRUE, 0);
-		InvalidateRect(GameGetRootWindowHandle(), 0, TRUE);
+		RedrawWindow(GameGetRootWindowHandle(), NULL, NULL, RDW_INVALIDATE | RDW_ALLCHILDREN);
 		InvalidateRect((HWND)pThis[7], 0, TRUE);
 		InvalidateRect((HWND)pStatusBar[7], 0, TRUE);
 		if (pSCView)
