@@ -2784,6 +2784,7 @@ extern "C" void __stdcall Hook_CityToolBarToolMenuDisable() {
 	void(__thiscall *H_CityToolBarToolMenuDisable)(void *) = (void(__thiscall *)(void *))0x4237F0;
 
 	DWORD *pSCWnd;
+	DWORD *pSCView;
 	DWORD *pStatusBar;
 	tagRECT r;
 
@@ -2792,15 +2793,24 @@ extern "C" void __stdcall Hook_CityToolBarToolMenuDisable() {
 	// status bar being moved vertically as a result of the
 	// parental change.
 	pSCWnd = &((DWORD *)pCWndRootWindow)[291];
+	pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
 	pStatusBar = &((DWORD *)pCWndRootWindow)[61];
 	if (bSettingsUseStatusDialog && IsWindowVisible((HWND)pStatusBar[7])) {
 		SendMessageA((HWND)pStatusBar[7], WM_SETREDRAW, FALSE, 0);
 		GetWindowRect((HWND)pStatusBar[7], &r);
 		ScreenToClient(GameGetRootWindowHandle(), (LPPOINT)&r.left);
+		if (pSCView) {
+			if (!IsZoomed(GetParent((HWND)pSCView[7]))) {
+				r.left -= 2;
+				r.top -= 2;
+			}
+		}
 		SetParent((HWND)pStatusBar[7], (HWND)pSCWnd[7]);
 		SetWindowPos((HWND)pStatusBar[7], HWND_TOP, r.left, r.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 		SendMessageA((HWND)pStatusBar[7], WM_SETREDRAW, TRUE, 0);
 		InvalidateRect((HWND)pStatusBar[7], 0, TRUE);
+		InvalidateRect((HWND)pThis[7], 0, TRUE);
+		InvalidateRect(GameGetRootWindowHandle(), 0, TRUE);
 	}
 
 	H_CityToolBarToolMenuDisable(pThis);
@@ -2830,6 +2840,8 @@ extern "C" void __stdcall Hook_CityToolBarToolMenuEnable() {
 		SetParent((HWND)pStatusBar[7], NULL);
 		SetWindowPos((HWND)pStatusBar[7], HWND_TOP, r.left, r.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 		SendMessageA((HWND)pStatusBar[7], WM_SETREDRAW, TRUE, 0);
+		InvalidateRect(GameGetRootWindowHandle(), 0, TRUE);
+		InvalidateRect((HWND)pThis[7], 0, TRUE);
 		InvalidateRect((HWND)pStatusBar[7], 0, TRUE);
 		if (pSCView)
 			SetFocus((HWND)pSCView[7]);
