@@ -31,6 +31,7 @@ std::vector<int> vectorRandomSongIDs = { 10001, 10004, 10008, 10012, 10018, 1000
 int iCurrentSong = 0;
 DWORD dwMusicThreadID;
 MCIDEVICEID mciDevice = NULL;
+BOOL bMultithreadedMusicEnabled = FALSE;
 
 void MusicShufflePlaylist(int iLastSongPlayed) {
 	if (bSettingsShuffleMusic) {
@@ -135,7 +136,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 				}
 			}
 			else if (bOptionsMusicEnabled) {
-				if (mus_debug & MUS_DEBUG_THREAD)
+				if (mus_debug & MUS_DEBUG_THREAD && msg.lParam != 1)
 					ConsoleLog(LOG_DEBUG, "MUS:  WM_MUSIC_PLAY message received but MCI is still active; discarding message.\n");
 				goto next;
 			}
@@ -157,26 +158,33 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 	return EXIT_SUCCESS;
 }
 
+void DoMusicPlay(int iSongID, BOOL bInterrupt) {
+	if (bInterrupt) {
+		// Certain songs should interrupt others
+		switch (iSongID) {
+		case 10002:
+		case 10005:
+		case 10010:
+		case 10012:
+		case 10016:
+			PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
+			if (mus_debug & MUS_DEBUG_THREAD)
+				ConsoleLog(LOG_DEBUG, "MUS:  Hook_MusicPlay posted WM_MUSIC_STOP.\n");
+			break;
+		}
+	}
+
+	// Post the play message to the music thread
+	PostThreadMessage(dwMusicThreadID, WM_MUSIC_PLAY, iSongID, (bInterrupt) ? NULL : 1);
+	if (mus_debug & MUS_DEBUG_THREAD && bInterrupt)
+		ConsoleLog(LOG_DEBUG, "MUS:  Hook_MusicPlay posted WM_MUSIC_PLAY for iSongID = %u.\n", iSongID);
+}
+
 extern "C" int __stdcall Hook_MusicPlay(int iSongID) {
 	DWORD *pThis;
 	__asm mov [pThis], ecx
 
-	// Certain songs should interrupt others
-	switch (iSongID) {
-	case 10002:
-	case 10005:
-	case 10010:
-	case 10012:
-		PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
-		if (mus_debug & MUS_DEBUG_THREAD)
-			ConsoleLog(LOG_DEBUG, "MUS:  Hook_MusicPlay posted WM_MUSIC_STOP.\n");
-		break;
-	}
-
-	// Post the play message to the music thread
-	PostThreadMessage(dwMusicThreadID, WM_MUSIC_PLAY, iSongID, NULL);
-	if (mus_debug & MUS_DEBUG_THREAD)
-		ConsoleLog(LOG_DEBUG, "MUS:  Hook_MusicPlay posted WM_MUSIC_PLAY for iSongID = %u.\n", iSongID);
+	DoMusicPlay(iSongID, TRUE);
 
 	// Restore "this" and leave
 	__asm {
@@ -233,10 +241,56 @@ extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void) {
 	__asm mov eax, [retval]
 }
 
+BOOL bAlwaysGoNext = FALSE;
+
+static void Local_MusicPlay(void *pThis, int iSongID) {
+	if (bMultithreadedMusicEnabled)
+		DoMusicPlay(iSongID, FALSE);
+	else
+		Game_MusicPlay(pThis, iSongID);
+}
+
+extern "C" void __stdcall Hook_SimcityAppMusicPlayNext(BOOL bNext) {
+	DWORD *pThis;
+
+	__asm mov [pThis], ecx
+
+	DWORD(__thiscall *H_SoundGetMCIResult)(void *) = (DWORD(__thiscall *)(void *))0x40148D;
+	int(__thiscall *H_SimcityAppMusicPlayNextRefocusSong)(void *) = (int(__thiscall *)(void *))0x401A9B;
+	int(__thiscall *H_SimcityAppMusicPlay)(void *, int) = (int(__thiscall *)(void *, int))0x402414;
+
+#if 1
+	int nSpeed;
+	int iRandMusic;
+	int iSongID;
+
+	nSpeed = ((__int16 *)pThis)[388];
+	if (nSpeed == GAME_SPEED_PAUSED)
+		nSpeed = GAME_SPEED_TURTLE;
+	if (!H_SoundGetMCIResult((void *)pThis[82])) {
+		if (bNext)
+			H_SimcityAppMusicPlayNextRefocusSong(pThis);
+		else if ((!(rand() % (8 * (3 * nSpeed - 3)))) || bAlwaysGoNext) {
+			iRandMusic = rand();
+			iSongID = 10000 + (iRandMusic % 19);
+			Local_MusicPlay(pThis, iSongID);
+		}
+	}
+#else
+	void(__thiscall *H_SimcityAppMusicPlayNext)(void *, BOOL) = (void(__thiscall *)(void *, BOOL))0x425150;
+
+	H_SimcityAppMusicPlayNext(pThis, bNext);
+#endif
+}
+
 void InstallMusicEngineHooks(void) {
 	// Restore additional music
 	VirtualProtect((LPVOID)0x401A9B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x401A9B, Hook_MusicPlayNextRefocusSong);
+
+	// Hook for CSimcityApp::MusicPlayNext
+	VirtualProtect((LPVOID)0x402AEF, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402AEF, Hook_SimcityAppMusicPlayNext);
 
 	// Shuffle music if the shuffle setting is enabled
 	MusicShufflePlaylist(0);
@@ -249,5 +303,7 @@ void InstallMusicEngineHooks(void) {
 		NEWJMP((LPVOID)0x402BE4, Hook_MusicStop);
 		VirtualProtect((LPVOID)0x4D2BFC, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
 		*(DWORD*)0x4D2BFC = (DWORD)MusicMCINotifyCallback;
+
+		bMultithreadedMusicEnabled = TRUE;
 	}
 }
