@@ -38,6 +38,7 @@
 #define IDC_STATIC_VERSIONINFO          21031
 #define IDC_SETTINGS_CHECK_MP3_MUSIC    21032
 #define IDC_SETTINGS_CHECK_SKIP_INTRO   21033
+#define IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC    21034
 #define IDR_WAVE_500                    23001
 #define IDR_WAVE_514                    23002
 #define IDR_WAVE_529                    23003

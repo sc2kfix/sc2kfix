@@ -184,7 +184,8 @@ extern "C" int __stdcall Hook_MusicPlay(int iSongID) {
 	DWORD *pThis;
 	__asm mov [pThis], ecx
 
-	DoMusicPlay(iSongID, TRUE);
+	if (bOptionsMusicEnabled)
+		DoMusicPlay(iSongID, TRUE);
 
 	// Restore "this" and leave
 	__asm {
@@ -241,8 +242,6 @@ extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void) {
 	__asm mov eax, [retval]
 }
 
-BOOL bAlwaysGoNext = FALSE;
-
 static void Local_MusicPlay(void *pThis, int iSongID) {
 	if (bMultithreadedMusicEnabled)
 		DoMusicPlay(iSongID, FALSE);
@@ -259,28 +258,24 @@ extern "C" void __stdcall Hook_SimcityAppMusicPlayNext(BOOL bNext) {
 	int(__thiscall *H_SimcityAppMusicPlayNextRefocusSong)(void *) = (int(__thiscall *)(void *))0x401A9B;
 	int(__thiscall *H_SimcityAppMusicPlay)(void *, int) = (int(__thiscall *)(void *, int))0x402414;
 
-#if 1
 	int nSpeed;
 	int iRandMusic;
 	int iSongID;
 
+	if (!bOptionsMusicEnabled)
+		return;
 	nSpeed = ((__int16 *)pThis)[388];
 	if (nSpeed == GAME_SPEED_PAUSED)
 		nSpeed = GAME_SPEED_TURTLE;
 	if (!H_SoundGetMCIResult((void *)pThis[82])) {
 		if (bNext)
 			H_SimcityAppMusicPlayNextRefocusSong(pThis);
-		else if ((!(rand() % (8 * (3 * nSpeed - 3)))) || bAlwaysGoNext) {
+		else if ((!(rand() % (8 * (3 * nSpeed - 3)))) || bSettingsUeAlwaysPlayMusic) {
 			iRandMusic = rand();
 			iSongID = 10000 + (iRandMusic % 19);
 			Local_MusicPlay(pThis, iSongID);
 		}
 	}
-#else
-	void(__thiscall *H_SimcityAppMusicPlayNext)(void *, BOOL) = (void(__thiscall *)(void *, BOOL))0x425150;
-
-	H_SimcityAppMusicPlayNext(pThis, bNext);
-#endif
 }
 
 void InstallMusicEngineHooks(void) {
