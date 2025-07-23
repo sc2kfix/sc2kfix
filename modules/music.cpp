@@ -242,7 +242,7 @@ extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void) {
 	__asm mov eax, [retval]
 }
 
-static void Local_MusicPlay(void *pThis, int iSongID) {
+static void L_MusicPlay(void *pThis, int iSongID) {
 	if (bMultithreadedMusicEnabled)
 		DoMusicPlay(iSongID, FALSE);
 	else
@@ -256,7 +256,6 @@ extern "C" void __stdcall Hook_SimcityAppMusicPlayNext(BOOL bNext) {
 
 	DWORD(__thiscall *H_SoundGetMCIResult)(void *) = (DWORD(__thiscall *)(void *))0x40148D;
 	int(__thiscall *H_SimcityAppMusicPlayNextRefocusSong)(void *) = (int(__thiscall *)(void *))0x401A9B;
-	int(__thiscall *H_SimcityAppMusicPlay)(void *, int) = (int(__thiscall *)(void *, int))0x402414;
 
 	int nSpeed;
 	int iRandMusic;
@@ -273,7 +272,7 @@ extern "C" void __stdcall Hook_SimcityAppMusicPlayNext(BOOL bNext) {
 		else if ((!(rand() % (8 * (3 * nSpeed - 3)))) || bSettingsUeAlwaysPlayMusic) {
 			iRandMusic = rand();
 			iSongID = 10000 + (iRandMusic % 19);
-			Local_MusicPlay(pThis, iSongID);
+			L_MusicPlay(pThis, iSongID);
 		}
 	}
 }
