@@ -102,52 +102,54 @@ BEGIN
     CTEXT           "Organization Name",IDC_STATIC,56,69,150,8
 END
 
-IDD_SETTINGS DIALOGEX 0, 0, 299, 362
+IDD_SETTINGS DIALOGEX 0, 0, 299, 376
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOPMOST
 CAPTION "sc2kfix Settings"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",ID_SETTINGS_OK,17,337,50,14
+    DEFPUSHBUTTON   "OK",ID_SETTINGS_OK,17,350,50,14
     EDITTEXT        IDC_SETTINGS_MAYOR,114,39,165,14,ES_CENTER | ES_AUTOHSCROLL
     EDITTEXT        IDC_SETTINGS_COMPANY,114,58,165,14,ES_CENTER | ES_AUTOHSCROLL
     CTEXT           "Default Mayor Name",IDC_STATIC,19,42,82,8
     CTEXT           "Organization Name",IDC_STATIC,19,61,82,8
-    PUSHBUTTON      "Cancel",ID_SETTINGS_CANCEL,79,337,50,14
+    PUSHBUTTON      "Cancel",ID_SETTINGS_CANCEL,79,350,50,14
     GROUPBOX        "Game Settings",IDC_STATIC,7,25,286,58
-    GROUPBOX        "Quality of Life / Performance Settings",IDC_STATIC,7,89,286,98
+    GROUPBOX        "Quality of Life / Performance Settings",IDC_STATIC,7,89,286,112
     CTEXT           "Settings with an asterisk next to them take effect on next game start.\nHover over a setting or button for more details.",IDC_SETTINGS_HEADER,18,5,264,16
     CONTROL         " Continue to play music when the game is in the background (Default: on)",IDC_SETTINGS_CHECK_BKGDMUSIC,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,102,268,10
     CONTROL         " Use grammar-corrected and disambiguated dialog strings (Default: on)",IDC_SETTINGS_CHECK_NEW_STRINGS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,234,268,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,248,268,10
     CONTROL         " Use higher quality sounds (Default: on)",IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,116,268,10
     CONTROL         " Shuffle music instead of looping predefined playlist (Default: off)",IDC_SETTINGS_CHECK_SHUFFLE_MUSIC,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,130,268,10
     CONTROL         " Use DOS/Mac style floating dialog instead of status bar (Default: off)",IDC_SETTINGS_CHECK_STATUS_DIALOG,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,205,268,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,219,268,10
     CONTROL         " *Always start the sc2kfix console on game startup (Default: off)",IDC_SETTINGS_CHECK_CONSOLE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,283,268,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,296,268,10
     CONTROL         " *Check for sc2kfix updates on game startup (Default: on)",IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,297,268,10
-    PUSHBUTTON      "Defaults",ID_SETTINGS_DEFAULTS,170,337,50,14
-    PUSHBUTTON      "Vanilla",ID_SETTINGS_VANILLA,232,337,50,14
-    RTEXT           "sc2kfix version 0.0-dev (tag)",IDC_STATIC_VERSIONINFO,172,353,126,8,WS_DISABLED
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,310,268,10
+    PUSHBUTTON      "Defaults",ID_SETTINGS_DEFAULTS,170,350,50,14
+    PUSHBUTTON      "Vanilla",ID_SETTINGS_VANILLA,232,350,50,14
+    RTEXT           "sc2kfix version 0.0-dev (tag)",IDC_STATIC_VERSIONINFO,172,366,126,8,WS_DISABLED
     CONTROL         " *Use multithreaded music engine (Default: on)",IDC_SETTINGS_CHECK_MULTITHREADED_MUSIC,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,144,268,10
-    GROUPBOX        "Interface Settings",IDC_STATIC,7,193,286,71
+    GROUPBOX        "Interface Settings",IDC_STATIC,7,207,286,71
     CONTROL         " Display full SimCalendar date in title bar (Default: on)",IDC_SETTINGS_CHECK_TITLE_DATE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,219,268,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,233,268,10
     CONTROL         " Display city growth in real-time instead of in batches (Default: on)",IDC_SETTINGS_CHECK_REFRESH_RATE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,158,268,10
-    GROUPBOX        "sc2kfix Core Settings",IDC_STATIC,7,270,286,57
+    GROUPBOX        "sc2kfix Core Settings",IDC_STATIC,7,283,286,57
     CONTROL         " Play MP3 music instead of MIDI music if present (Default: off)",IDC_SETTINGS_CHECK_MP3_MUSIC,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,172,268,10
     CONTROL         " Always skip introduction videos (Default: off)",IDC_SETTINGS_CHECK_SKIP_INTRO,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,248,268,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,262,268,10
     CONTROL         " *Skip loading any installed mods on startup (Default: off)",IDC_SETTINGS_CHECK_DONT_LOAD_MODS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,311,268,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,324,268,10
+    CONTROL         " Play next random selection after current music ends (Default: off)",IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,186,268,10
 END
 
 103 DIALOGEX 0, 0, 72, 195
@@ -311,7 +313,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 292
         TOPMARGIN, 7
-        BOTTOMMARGIN, 355
+        BOTTOMMARGIN, 368
     END
 
     103, DIALOG
