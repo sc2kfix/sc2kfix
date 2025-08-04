@@ -2151,7 +2151,7 @@ static void L_TileHighlightUpdate(DWORD *pThis) {
 	BOOL(__stdcall *H_FinishObject)() = (BOOL(__stdcall *)())0x402B7B;
 	BYTE *(__thiscall *H_GraphicsLockDIBBits)(void *) = (BYTE *(__thiscall *)(void *))0x402DA1;
 
-	DWORD *pSomeWnd = (DWORD *)0x4CAC18;
+	DWORD *pSomeWnd = (DWORD *)0x4CAC18; // Perhaps this is the active view window? (unclear - but this is referenced in the native TileHighlightUpdate function)
 	tagRECT &dRect = *(tagRECT *)0x4CAD48;
 
 	if (wTileHighlightActive) {
@@ -2170,7 +2170,13 @@ static void L_TileHighlightUpdate(DWORD *pThis) {
 				dRect.bottom = bottom + 2;
 				++dRect.right;
 			}
-			H_SimcityViewMainWindowUpdate(pThis, &dRect, 1);
+			// As it turns out this if case is necessary here.. otherwise it results in breakage when
+			// it comes to the pollution clouds (entire view window update rather than just the
+			// "dirty" area).
+			if (pThis == pSomeWnd)
+				H_SimcityViewMainWindowUpdate(pThis, 0, 1);
+			else
+				H_SimcityViewMainWindowUpdate(pThis, &dRect, 1);
 			if (bOverrideTickPlacementHighlight)
 				wTileHighlightActive = 0;
 		}
