@@ -869,9 +869,8 @@ NONAVY:
 }
 
 void ProposeMilitaryBaseDecline(void) {
-	if (MessageBoxA(NULL, "Are you sure that you want to stop the development of existing military zones?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES) {
+	if (MessageBoxA(NULL, "Are you sure that you want to stop the development of existing military zones?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES)
 		return;
-	}
 
 	if (bMilitaryBaseType <= MILITARY_BASE_DECLINED) {
 		MessageBoxA(NULL, "Military base development has already been stopped.", "Clonk", MB_OK|MB_ICONASTERISK);
@@ -881,10 +880,11 @@ void ProposeMilitaryBaseDecline(void) {
 }
 
 void ProposeMilitaryBaseMissileSilos(void) {
-	if (MessageBoxA(NULL, "Are you sure that you want an attempt to be made to spawn Missile Silos?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES) {
+	if (MessageBoxA(NULL, "Are you sure that you want an attempt to be made to spawn Missile Silos?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES)
 		return;
-	}
+
 	unsigned int iMilitaryBaseTries = 0;
+
 REATTEMPT:
 	int iSiloRet = MilitaryBaseMissileSilos(0, 0, true);
 	if (iSiloRet <= 0) {
@@ -906,10 +906,11 @@ void ProposeMilitaryBaseAirForceBase(void) {
 	__int16 iRandStoredYPos;
 
 	iResult = -1;
-	if (MessageBoxA(NULL, "Are you sure that you want an attempt to be made to spawn an Air Force plot?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES) {
+	if (MessageBoxA(NULL, "Are you sure that you want an attempt to be made to spawn an Air Force plot?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES)
 		return;
-	}
+	
 	unsigned int iMilitaryBaseTries = 0;
+
 REATTEMPT:
 	MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &iRandXPos, &iRandYPos, &iRandStoredXPos, &iRandStoredYPos);
 	if (iValidAltitudeTiles < 40)
@@ -936,9 +937,9 @@ void ProposeMilitaryBaseArmyBase(void) {
 	__int16 iRandStoredYPos;
 
 	iResult = -1;
-	if (MessageBoxA(NULL, "Are you sure that you want an attempt to be made to spawn an Army Base plot?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES) {
+	if (MessageBoxA(NULL, "Are you sure that you want an attempt to be made to spawn an Army Base plot?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES)
 		return;
-	}
+	
 	unsigned int iMilitaryBaseTries = 0;
 REATTEMPT:
 	MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &iRandXPos, &iRandYPos, &iRandStoredXPos, &iRandStoredYPos);
@@ -961,9 +962,10 @@ void ProposeMilitaryBaseNavalYard(void) {
 		MessageBoxA(NULL, "A Naval Yard cannot be placed in a city without a neighbouring ocean.", "Clonk", MB_OK|MB_ICONSTOP);
 		return;
 	}
-	if (MessageBoxA(NULL, "Are you sure that you want an attempt to be made to spawn a Naval Yard plot?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES) {
+
+	if (MessageBoxA(NULL, "Are you sure that you want an attempt to be made to spawn a Naval Yard plot?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES) 
 		return;
-	}
+	
 	unsigned int iMilitaryBaseTries = 0;
 REATTEMPT:
 	int iResult = MilitaryBaseNavalYard(true);
@@ -987,9 +989,8 @@ extern "C" void __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	
 	unsigned int iMilitaryBaseTries = 0;
 
-	if (Game_AfxMessageBox(240, MB_YESNO, -1) == IDNO) {
+	if (Game_AfxMessageBox(240, MB_YESNO, -1) == IDNO)
 		bMilitaryBaseType = MILITARY_BASE_DECLINED;
-	}
 	else {
 	REATTEMPT:
 		if (MilitaryBaseNavalYard(false) < 0) {

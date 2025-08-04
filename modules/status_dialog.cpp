@@ -92,12 +92,11 @@ extern "C" int __stdcall Hook_4021A8(HWND iShow) {
 	if (hStatusDialog) {
 		int iCmdShow;
 
-		if (!wCityMode) {
+		if (!wCityMode)
 			iCmdShow = SW_HIDE;
-		}
-		else {
+		else
 			iCmdShow = (iShow) ? SW_SHOW : SW_HIDE;
-		}
+
 		ShowWindow(hStatusDialog, iCmdShow);
 	}
 	else if (bSettingsUseStatusDialog)
@@ -112,12 +111,11 @@ extern "C" int __stdcall Hook_40103C(int iShow) {
 	if (hStatusDialog) {
 		int iCmdShow;
 		
-		if (!wCityMode) {
+		if (!wCityMode)
 			iCmdShow = SW_HIDE;
-		}
-		else {
+		else
 			iCmdShow = (iShow) ? SW_SHOW : SW_HIDE;
-		}
+
 		ShowWindow(hStatusDialog, iCmdShow);
 	}
 
@@ -155,9 +153,8 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 					HWND phWnd = GetParent(hwndDlg);
 					if (phWnd) {
 						HWND dhWnd = GetDlgItem(phWnd, 111);
-						if (dhWnd) {
+						if (dhWnd)
 							SendMessage(GetDlgItem(dhWnd, 120), BM_CLICK, 0, 0);
-						}
 					}
 					return FALSE;
 				}
