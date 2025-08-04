@@ -28,64 +28,59 @@ static DWORD dwDummy;
 std::vector<hook_function_t> stHooks_Hook_LoadGame_Before;
 std::vector<hook_function_t> stHooks_Hook_LoadGame_After;
 
-extern "C" DWORD __stdcall Hook_LoadGame(int* a2, char* src) {
-	DWORD pThis;
+extern "C" DWORD __stdcall Hook_LoadGame(void* pFile, char* src) {
+	DWORD(__thiscall * H_SimcityAppDoLoadGame)(void*, void*, char*) = (DWORD(__thiscall*)(void*, void*, char*))0x4302E0;
+	DWORD* pThis;
+	DWORD ret;
+
 	__asm mov [pThis], ecx
 
 	for (const auto& hook : stHooks_Hook_LoadGame_Before) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
-			void (*fnHook)(void*, int*, char*) = (void(*)(void*, int*, char*))hook.pFunction;
-			fnHook((void*)pThis, a2, src);
+			void (*fnHook)(void*, void*, char*) = (void(*)(void*, void*, char*))hook.pFunction;
+			fnHook(pThis, pFile, src);
 		}
 	}
 
-	__asm {
-		push src
-		push a2
-		mov ecx, [pThis]
-		mov edi, 0x4302E0
-		call edi
-	}
+	ret = H_SimcityAppDoLoadGame(pThis, pFile, src);
 
 	for (const auto& hook : stHooks_Hook_LoadGame_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
-			void (*fnHook)(void*, int*, char*) = (void(*)(void*, int*, char*))hook.pFunction;
-			fnHook((void*)pThis, a2, src);
+			void (*fnHook)(void*, void*, char*) = (void(*)(void*, void*, char*))hook.pFunction;
+			fnHook(pThis, pFile, src);
 		}
 	}
-	
-	__asm mov ecx, [pThis]
+
+	return ret;
 }
 
 std::vector<hook_function_t> stHooks_Hook_SaveGame_Before;
 std::vector<hook_function_t> stHooks_Hook_SaveGame_After;
 
-extern "C" DWORD __stdcall Hook_SaveGame(int* a2) {
-	DWORD pThis;
-	__asm mov[pThis], ecx
+extern "C" DWORD __stdcall Hook_SaveGame(CMFC3XString* lpFileName) {
+	DWORD(__thiscall * H_SimcityAppDoSaveGame)(void*, CMFC3XString*) = (DWORD(__thiscall*)(void*, CMFC3XString*))0x432180;
+	DWORD* pThis;
+	DWORD ret;
+
+	__asm mov [pThis], ecx
 
 	for (const auto& hook : stHooks_Hook_SaveGame_Before) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
-			void (*fnHook)(void*, int*) = (void(*)(void*, int*))hook.pFunction;
-			fnHook((void*)pThis, a2);
+			void (*fnHook)(void*, CMFC3XString*) = (void(*)(void*, CMFC3XString*))hook.pFunction;
+			fnHook(pThis, lpFileName);
 		}
 	}
 
-	__asm {
-		push a2
-		mov ecx, [pThis]
-		mov edi, 0x432180
-		call edi
-	}
+	ret = H_SimcityAppDoSaveGame(pThis, lpFileName);
 
 	for (const auto& hook : stHooks_Hook_SaveGame_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
-			void (*fnHook)(void*, int*) = (void(*)(void*, int*))hook.pFunction;
-			fnHook((void*)pThis, a2);
+			void (*fnHook)(void*, CMFC3XString*) = (void(*)(void*, CMFC3XString*))hook.pFunction;
+			fnHook(pThis, lpFileName);
 		}
 	}
 
-	__asm mov ecx, [pThis]
+	return ret;
 }
 
 void InstallSaveHooks(void) {
