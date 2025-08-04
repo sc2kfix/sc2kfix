@@ -276,6 +276,11 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 		CenterDialogBox(hwndDlg);
 		return TRUE;
 
+	// Close without saving if the dialog is closed via the menu bar close button or Alt+F4
+	case WM_CLOSE:
+		EndDialog(hwndDlg, wParam);
+		break;
+
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case ID_SETTINGS_OK:
