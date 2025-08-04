@@ -82,6 +82,10 @@ bool operator<(const hook_function_t& a, const hook_function_t& b) {
 
 void SortHookLists(void) {
 	SORT_HOOKS(Hook_OnNewCity_Before);
+	SORT_HOOKS(Hook_LoadGame_Before);
+	SORT_HOOKS(Hook_LoadGame_After);
+	SORT_HOOKS(Hook_SaveGame_Before);
+	SORT_HOOKS(Hook_SaveGame_After);
 	SORT_HOOKS(Hook_GameDoIdleUpkeep_Before);
 	SORT_HOOKS(Hook_GameDoIdleUpkeep_After);
 
