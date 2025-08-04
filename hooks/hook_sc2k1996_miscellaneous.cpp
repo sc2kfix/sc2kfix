@@ -1043,10 +1043,10 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, _
 			iMoveX = 0;
 			iMoveY = 0;
 			if ((dwTileCount[TILE_INFRASTRUCTURE_RUNWAY] & 1) == 0) {
-				if ((x & 1) != 0)
+				if ((x & 1) != 0) {
 					iMoveX = 1;
 					goto PROCEEDFURTHER;
-
+				}
 				if ((y & 1) == 0)
 					return 0;
 
