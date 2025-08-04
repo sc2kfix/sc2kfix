@@ -395,9 +395,8 @@ const char *AdjustSource(char *buf, const char *path) {
 
 	int plen = strlen(path);
 	int flen = strlen(def_data_path);
-	if (plen <= flen || _strnicmp(def_data_path, path, flen) != 0) {
+	if (plen <= flen || _strnicmp(def_data_path, path, flen) != 0)
 		return path;
-	}
 
 	char temp[MAX_PATH + 1];
 
@@ -440,9 +439,9 @@ extern "C" LSTATUS __stdcall Hook_RegSetValueExA(HKEY hKey, LPCSTR lpValueName, 
 		const char *ini_file;
 
 		ini_file = GetIniPath();
-		if (dwType == REG_DWORD || (dwType == REG_BINARY && cbData == sizeof(DWORD))) {
+		if (dwType == REG_DWORD || (dwType == REG_BINARY && cbData == sizeof(DWORD)))
 			WritePrivateProfileIntA(section, lpValueName, *(const DWORD*)lpData, ini_file);
-		}
+
 		return ERROR_SUCCESS;
 	}
 
@@ -467,114 +466,114 @@ extern "C" LSTATUS __stdcall Hook_RegQueryValueExA(HKEY hKey, LPCSTR lpValueName
 			_stricmp(lpValueName, "SaveGame") == 0) {
 			GamePathAdjust(szTargetPath, "Cities", lpData, lpcbData);
 		}
-		else if (_stricmp(lpValueName, "Data") == 0) {
+		else if (_stricmp(lpValueName, "Data") == 0)
 			GamePathAdjust(szTargetPath, "Data", lpData, lpcbData);
-		}
-		else if (_stricmp(lpValueName, "Graphics") == 0) {
+
+		else if (_stricmp(lpValueName, "Graphics") == 0)
 			GamePathAdjust(szTargetPath, "Bitmaps", lpData, lpcbData);
-		}
-		else if (_stricmp(lpValueName, "Home") == 0) {
+		
+		else if (_stricmp(lpValueName, "Home") == 0)
 			GetOutString(szTargetPath, lpData, lpcbData);
-		}
-		else if (_stricmp(lpValueName, "Music") == 0) {
+		
+		else if (_stricmp(lpValueName, "Music") == 0)
 			GamePathAdjust(szTargetPath, "Sounds", lpData, lpcbData);
-		}
-		else if (_stricmp(lpValueName, "Scenarios") == 0) {
+		
+		else if (_stricmp(lpValueName, "Scenarios") == 0)
 			GamePathAdjust(szTargetPath, "Scenario", lpData, lpcbData);
-		}
-		else if (_stricmp(lpValueName, "TileSets") == 0) {
+		
+		else if (_stricmp(lpValueName, "TileSets") == 0)
 			GamePathAdjust(szTargetPath, "ScurkArt", lpData, lpcbData);
-		}
+		
 		return ERROR_SUCCESS;
 	}
 
 	if (IsRegKey(hKey, enWindowsKey)) {
-		if (_stricmp(lpValueName, "Display") == 0) {
+		if (_stricmp(lpValueName, "Display") == 0)
 			GetIniOutString("Windows", lpValueName, "8 1", lpData, lpcbData);
-		}
-		else if (_stricmp(lpValueName, "Color Check") == 0) {
+		
+		else if (_stricmp(lpValueName, "Color Check") == 0)
 			GetIniOutDWORD("Windows", lpValueName, 0, lpData, lpcbData);
-		}
-		else if (_stricmp(lpValueName, "Last Color Depth") == 0) {
+		
+		else if (_stricmp(lpValueName, "Last Color Depth") == 0)
 			GetIniOutDWORD("Windows", lpValueName, 20, lpData, lpcbData);
-		}
+		
 		return ERROR_SUCCESS;
 	}
 
 	if (IsRegKey(hKey, enVersionKey)) {
-		if (_stricmp(lpValueName, "SimCity 2000") == 0) {
+		if (_stricmp(lpValueName, "SimCity 2000") == 0)
 			GetIniOutDWORD("Version", lpValueName, 256, lpData, lpcbData);
-		}
-		else if (_stricmp(lpValueName, "SCURK") == 0) {
+		
+		else if (_stricmp(lpValueName, "SCURK") == 0)
 			GetIniOutDWORD("Version", lpValueName, 256, lpData, lpcbData);
-		}
+		
 		return ERROR_SUCCESS;
 	}
 
 	if (IsRegKey(hKey, enOptionsKey)) {
-		if (_stricmp(lpValueName, "Disasters") == 0) {
+		if (_stricmp(lpValueName, "Disasters") == 0)
 			GetIniOutDWORD("Options", lpValueName, 1, lpData, lpcbData);
-		}
-		else if (_stricmp(lpValueName, "Music") == 0) {
+		
+		else if (_stricmp(lpValueName, "Music") == 0)
 			GetIniOutDWORD("Options", lpValueName, 1, lpData, lpcbData);
-		}
-		else if (_stricmp(lpValueName, "Sound") == 0) {
+		
+		else if (_stricmp(lpValueName, "Sound") == 0)
 			GetIniOutDWORD("Options", lpValueName, 1, lpData, lpcbData);
-		}
-		else if (_stricmp(lpValueName, "AutoGoto") == 0) {
+		
+		else if (_stricmp(lpValueName, "AutoGoto") == 0)
 			GetIniOutDWORD("Options", lpValueName, 1, lpData, lpcbData);
-		}
-		else if (_stricmp(lpValueName, "AutoBudget") == 0) {
+		
+		else if (_stricmp(lpValueName, "AutoBudget") == 0)
 			GetIniOutDWORD("Options", lpValueName, 0, lpData, lpcbData);
-		}
-		else if (_stricmp(lpValueName, "AutoSave") == 0) {
+		
+		else if (_stricmp(lpValueName, "AutoSave") == 0)
 			GetIniOutDWORD("Options", lpValueName, 0, lpData, lpcbData);
-		}
-		else if (_stricmp(lpValueName, "Speed") == 0) {
+		
+		else if (_stricmp(lpValueName, "Speed") == 0)
 			GetIniOutDWORD("Options", lpValueName, 2, lpData, lpcbData);
-		}
+		
 		return ERROR_SUCCESS;
 	}
 
 	if (IsRegKey(hKey, enLocalizeKey)) {
-		if (_stricmp(lpValueName, "Language") == 0) {
+		if (_stricmp(lpValueName, "Language") == 0)
 			GetIniOutString("Localize", lpValueName, "USA", lpData, lpcbData);
-		}
+		
 		return ERROR_SUCCESS;
 	}
 
 	if (IsRegKey(hKey, enRegistrationKey)) {
-		if (_stricmp(lpValueName, "Mayor Name") == 0) {
+		if (_stricmp(lpValueName, "Mayor Name") == 0)
 			GetIniOutString("Registration", lpValueName, szSettingsMayorName, lpData, lpcbData);
-		}
-		else if (_stricmp(lpValueName, "Company Name") == 0) {
+		
+		else if (_stricmp(lpValueName, "Company Name") == 0)
 			GetIniOutString("Registration", lpValueName, szSettingsCompanyName, lpData, lpcbData);
-		}
+		
 		return ERROR_SUCCESS;
 	}
 
 	if (IsRegKey(hKey, enSCURKKey)) {
-		if (_stricmp(lpValueName, "CycleColors") == 0) {
+		if (_stricmp(lpValueName, "CycleColors") == 0)
 			GetIniOutDWORD("SCURK", lpValueName, 1, lpData, lpcbData);
-		}
-		else if (_stricmp(lpValueName, "GridHeight") == 0) {
+		
+		else if (_stricmp(lpValueName, "GridHeight") == 0)
 			GetIniOutDWORD("SCURK", lpValueName, 2, lpData, lpcbData);
-		}
-		else if (_stricmp(lpValueName, "GridWidth") == 0) {
+		
+		else if (_stricmp(lpValueName, "GridWidth") == 0)
 			GetIniOutDWORD("SCURK", lpValueName, 2, lpData, lpcbData);
-		}
-		else if (_stricmp(lpValueName, "ShowClipRegion") == 0) {
+		
+		else if (_stricmp(lpValueName, "ShowClipRegion") == 0)
 			GetIniOutDWORD("SCURK", lpValueName, 0, lpData, lpcbData);
-		}
-		else if (_stricmp(lpValueName, "ShowDrawGrid") == 0) {
+		
+		else if (_stricmp(lpValueName, "ShowDrawGrid") == 0)
 			GetIniOutDWORD("SCURK", lpValueName, 0, lpData, lpcbData);
-		}
-		else if (_stricmp(lpValueName, "SnapToGrid") == 0) {
+		
+		else if (_stricmp(lpValueName, "SnapToGrid") == 0)
 			GetIniOutDWORD("SCURK", lpValueName, 0, lpData, lpcbData);
-		}
-		else if (_stricmp(lpValueName, "Sound") == 0) {
+		
+		else if (_stricmp(lpValueName, "Sound") == 0)
 			GetIniOutDWORD("SCURK", lpValueName, 1, lpData, lpcbData);
-		}
+		
 		return ERROR_SUCCESS;
 	}
 

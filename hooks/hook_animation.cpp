@@ -47,10 +47,12 @@ extern "C" void __cdecl Hook_AnimationFunctionSimCity1996(HPALETTE *hP1, int iTo
 				if (pMainFrm) {
 					pMapToolBar = (DWORD *)&pMainFrm[233];
 					pCityToolBar = (DWORD *)&pMainFrm[102];
+
 					// For the toolbars, they're using vars from the parent MyToolBar class
 					// 46 and 47 are dwMyTBControlsDisabled and dwMyTBToolBarTitleDrag respectively.
 					dwTBControlsDisabled = pMapToolBar[46];
 					dwTBToolBarTitleDrag = pCityToolBar[47];
+
 					// With this check, the redraw calls won't be made if either toolbar is being dragged.
 					// This avoids any bleeding that may occur as a result of the blitted border that will
 					// appear during this time.
@@ -63,16 +65,15 @@ extern "C" void __cdecl Hook_AnimationFunctionSimCity1996(HPALETTE *hP1, int iTo
 						bCityViewAnim = (pCityToolBar && !dwTBToolBarTitleDrag);
 					else
 						bCityViewAnim = (pMapToolBar && !dwTBControlsDisabled);
+
+					// CMainFrame m_hWnd - only call this specific redraw function before CSimcityView has been created.
+					// (ie, before any game has been started - palette animation on the image is disabled once the
+					// game window has been created)
 					pSCView = Game_PointerToCSimcityViewClass(pApp);
-					if (!pSCView) {
-						// CMainFrame m_hWnd - only call this specific redraw function before CSimcityView has been created.
-						// (ie, before any game has been started - palette animation on the image is disabled once the
-						// game window has been created)
+					if (!pSCView)
 						RedrawWindow((HWND)pMainFrm[7], NULL, NULL, RDW_INVALIDATE);
-					}
-					else if (pSCView && bCityViewAnim) {
+					else if (pSCView && bCityViewAnim)
 						RedrawWindow((HWND)pSCView[7], NULL, NULL, RDW_INVALIDATE);
-					}
 				}
 			}
 		}
@@ -112,10 +113,12 @@ extern "C" void __cdecl Hook_AnimationFunctionSimCity1995(HPALETTE *hP1, int iTo
 				if (pMainFrm) {
 					pMapToolBar = (DWORD *)&pMainFrm[233];
 					pCityToolBar = (DWORD *)&pMainFrm[102];
+
 					// For the toolbars, they're using vars from the parent MyToolBar class
 					// 46 and 47 are dwMyTBControlsDisabled and dwMyTBToolBarTitleDrag respectively.
 					dwTBControlsDisabled = pMapToolBar[46];
 					dwTBToolBarTitleDrag = pCityToolBar[47];
+
 					// With this check, the redraw calls won't be made if either toolbar is being dragged.
 					// This avoids any bleeding that may occur as a result of the blitted border that will
 					// appear during this time.
@@ -128,16 +131,15 @@ extern "C" void __cdecl Hook_AnimationFunctionSimCity1995(HPALETTE *hP1, int iTo
 						bCityViewAnim = (pCityToolBar && !dwTBToolBarTitleDrag);
 					else
 						bCityViewAnim = (pMapToolBar && !dwTBControlsDisabled);
+
+					// CMainFrame m_hWnd - only call this specific redraw function before CSimcityView has been created.
+					// (ie, before any game has been started - palette animation on the image is disabled once the
+					// game window has been created)
 					pSCView = H_PointerToCSimcityViewClass1995(pApp);
-					if (!pSCView) {
-						// CMainFrame m_hWnd - only call this specific redraw function before CSimcityView has been created.
-						// (ie, before any game has been started - palette animation on the image is disabled once the
-						// game window has been created)
+					if (!pSCView)
 						RedrawWindow((HWND)pMainFrm[7], NULL, NULL, RDW_INVALIDATE);
-					}
-					else if (pSCView && bCityViewAnim) {
+					else if (pSCView && bCityViewAnim)
 						RedrawWindow((HWND)pSCView[7], NULL, NULL, RDW_INVALIDATE);
-					}
 				}
 			}
 		}
@@ -177,10 +179,12 @@ extern "C" void __cdecl Hook_AnimationFunctionSimCityDemo(HPALETTE *hP1, int iTo
 				if (pMainFrm) {
 					pMapToolBar = (DWORD *)&pMainFrm[233];
 					pCityToolBar = (DWORD *)&pMainFrm[102];
+
 					// For the toolbars, they're using vars from the parent MyToolBar class
 					// 46 and 47 are dwMyTBControlsDisabled and dwMyTBToolBarTitleDrag respectively.
 					dwTBControlsDisabled = pMapToolBar[46];
 					dwTBToolBarTitleDrag = pCityToolBar[47];
+
 					// With this check, the redraw calls won't be made if either toolbar is being dragged.
 					// This avoids any bleeding that may occur as a result of the blitted border that will
 					// appear during this time.
@@ -193,16 +197,15 @@ extern "C" void __cdecl Hook_AnimationFunctionSimCityDemo(HPALETTE *hP1, int iTo
 						bCityViewAnim = (pCityToolBar && !dwTBToolBarTitleDrag);
 					else
 						bCityViewAnim = (pMapToolBar && !dwTBControlsDisabled);
+
+					// CMainFrame m_hWnd - only call this specific redraw function before CSimcityView has been created.
+					// (ie, before any game has been started - palette animation on the image is disabled once the
+					// game window has been created)
 					pSCView = H_PointerToCSimcityViewClassDemo(pApp);
-					if (!pSCView) {
-						// CMainFrame m_hWnd - only call this specific redraw function before CSimcityView has been created.
-						// (ie, before any game has been started - palette animation on the image is disabled once the
-						// game window has been created)
+					if (!pSCView)
 						RedrawWindow((HWND)pMainFrm[7], NULL, NULL, RDW_INVALIDATE);
-					}
-					else if (pSCView && bCityViewAnim) {
+					else if (pSCView && bCityViewAnim)
 						RedrawWindow((HWND)pSCView[7], NULL, NULL, RDW_INVALIDATE);
-					}
 				}
 			}
 		}

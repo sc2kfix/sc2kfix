@@ -6,6 +6,15 @@
 // game engine based on decompiling things in IDA and following the code paths. As a result,
 // there's a lot of experimental stuff in here. Comments will probably be unhelpful. Godspeed.
 
+// !!! HIC SUNT EVEN MORE DRACONES !!!
+// 2025-08-04 (araxestroy): oh MAN this file sucks. I need to go through it all and do a full
+// rework to match the KNF-esque style I usually use when writing code for this project. It also
+// has a dearth of comments because a lot of it is reimplemented from decompilation, so even after
+// writing and/or approving a lot of the code here I don't know what half of the code in this
+// fucking file does.
+//
+// I am not a religious man, but if anyone reading this is, please pray for me.
+
 #undef UNICODE
 #include <windows.h>
 #include <psapi.h>
@@ -772,9 +781,8 @@ GOGENERALZONEITEMPLACE:
 						// Abandoned buildings.
 						iAttributes = iBuildingPopLevel;
 						pZonePops[ZONEPOP_ABANDONED] += wBuildingPopulation[iBuildingPopLevel];
-						if ((unsigned __int16)rand() >= 15 * iCalculateResDemand / iBuildingPopLevel) {
+						if ((unsigned __int16)rand() >= 15 * iCalculateResDemand / iBuildingPopLevel)
 							goto GOUNDCHECKTHENYINCREASE;
-						}
 						goto GOGENERALZONEITEMPLACE;
 					}
 					// This block is where construction will start.
@@ -785,9 +793,8 @@ GOGENERALZONEITEMPLACE:
 							(iBuildingPopLevel != 2 || dwMapXVAL[iXMM][iYMM].bBlock >= 0x60u) &&
 							(iBuildingPopLevel != 3 || dwMapXVAL[iXMM][iYMM].bBlock >= 0xC0u))) {
 						iAttributes = 3 * iCalculateResDemand / (iBuildingPopLevel + 1);
-						if (iAttributes > (unsigned __int16)rand()) {
+						if (iAttributes > (unsigned __int16)rand())
 							Game_PerhapsGeneralZoneStartBuilding(iX, iY, iBuildingPopLevel, iCurrZoneType);
-						}
 					}
 				}
 			}
@@ -806,9 +813,8 @@ GOGENERALZONEITEMPLACE:
 					if (iFundingPercent != 100 && (unsigned __int16)((unsigned __int16)rand() % 100u) >= iFundingPercent) {
 						iRandSelectOne = (rand() & 3) + 1;
 						Game_PlaceTileWithMilitaryCheck(iX, iY, iRandSelectOne);
-						if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE) {
+						if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
 							goto GOAFTERSETXBIT;
-						}
 						goto GOBEFORESETXBIT;
 					}
 				}
@@ -822,9 +828,8 @@ GOGENERALZONEITEMPLACE:
 					if (iFundingPercent != 100 && (unsigned __int16)((unsigned __int16)rand() % 100u) >= iFundingPercent) {
 						iRandSelectOne = (rand() & 3) + 1;
 						Game_PlaceTileWithMilitaryCheck(iX, iY, iRandSelectOne);
-						if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE) {
+						if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
 							goto GOAFTERSETXBIT;
-						}
 GOBEFORESETXBIT:
 						*(BYTE *)&dwMapXBIT[iX][iY].b &= ~0x80u;
 GOAFTERSETXBIT:
@@ -834,18 +839,16 @@ GOAFTERSETXBIT:
 								iY < GAME_MAP_SIZE &&
 								dwMapXBIT[iX][iY].b.iPowered != 0 &&
 								!(unsigned __int16)Game_RandomWordLFSRMod4()) {
-								if ((__int16)dwTileCount[TILE_INFRASTRUCTURE_RAILSTATION] / 4 > wActiveTrains) {
+								if ((__int16)dwTileCount[TILE_INFRASTRUCTURE_RAILSTATION] / 4 > wActiveTrains)
 									Game_SpawnTrain(iX, iY);
-								}
 							}
 							else if ((WORD)iAttributes == TILE_INFRASTRUCTURE_MARINA &&
 								iX < GAME_MAP_SIZE &&
 								iY < GAME_MAP_SIZE &&
 								dwMapXBIT[iX][iY].b.iPowered != 0 &&
 								!(unsigned __int16)Game_RandomWordLFSRMod4()) {
-								if ((__int16)dwTileCount[TILE_INFRASTRUCTURE_MARINA] / 9 > wSailingBoats) {
+								if ((__int16)dwTileCount[TILE_INFRASTRUCTURE_MARINA] / 9 > wSailingBoats)
 									Game_SpawnSailBoat(iX, iY);
-								}
 							}
 							else if ((__int16)iAttributes >= TILE_ARCOLOGY_PLYMOUTH &&
 								(__int16)iAttributes <= TILE_ARCOLOGY_LAUNCH &&
@@ -1031,22 +1034,22 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, _
 
 	x = iX;
 	y = iY;
-	if (iZoneType != ZONE_MILITARY) {
+	if (iZoneType != ZONE_MILITARY)
 		if (!Game_IsZonedTilePowered(iX, iY))
 			return 0;
-	}
+	
 	switch (iTileID) {
 		case TILE_INFRASTRUCTURE_RUNWAY:
 			iMoveX = 0;
 			iMoveY = 0;
 			if ((dwTileCount[TILE_INFRASTRUCTURE_RUNWAY] & 1) == 0) {
-				if ((x & 1) != 0) {
+				if ((x & 1) != 0)
 					iMoveX = 1;
 					goto PROCEEDFURTHER;
-				}
-				if ((y & 1) == 0) {
+
+				if ((y & 1) == 0)
 					return 0;
-				}
+
 				goto PROCEEDAHEAD;
 			}
 			if ((y & 1) != 0) {
@@ -1054,9 +1057,9 @@ PROCEEDAHEAD:
 				iMoveY = 1;
 				goto PROCEEDFURTHER;
 			}
-			if ((x & 1) == 0) {
+			if ((x & 1) == 0)
 				return 0;
-			}
+			
 			iMoveX = 1;
 PROCEEDFURTHER:
 			iCurrX = x;
@@ -1411,22 +1414,24 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 m_x, int m_y, __
 					return 0;
 				}
 			}
+
 			iBuilding = dwMapXBLD[iX][iY].iTileID;
-			if (iBuilding >= TILE_ROAD_LR) {
+			if (iBuilding >= TILE_ROAD_LR)
 				return 0;
-			}
-			if (iBuilding == TILE_RADIOACTIVITY) {
+			
+			if (iBuilding == TILE_RADIOACTIVITY)
 				return 0;
-			}
-			if (iBuilding == TILE_SMALLPARK) {
+			
+			if (iBuilding == TILE_SMALLPARK)
 				return 0;
-			}
+			
 			if (dwMapXZON[iX][iY].b.iZoneType == ZONE_MILITARY) {
 				if (iBuilding == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
 					iBuilding == TILE_ROAD_LR ||
 					iBuilding == TILE_ROAD_TB)
 					return 0;
 			}
+
 			if (iTileID == TILE_INFRASTRUCTURE_MARINA) {
 				if (iX < GAME_MAP_SIZE &&
 					iY < GAME_MAP_SIZE &&
@@ -1438,21 +1443,25 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 m_x, int m_y, __
 					return 0;
 				}
 			}
-			if (dwMapXTER[iX][iY].iTileID) {
+
+			if (dwMapXTER[iX][iY].iTileID)
 				return 0;
-			}
+			
 			if (iX < GAME_MAP_SIZE &&
 				iY < GAME_MAP_SIZE &&
 				dwMapXBIT[iX][iY].b.iWater != 0) {
 				return 0;
 			}
+
 		GOSKIP:
-			if (++iY > iItemLength) {
+			if (++iY > iItemLength)
 				goto GOBACK;
-			}
+			
 		}
 	}
+
 	iTile = iTileID;
+
 GOFORWARD:
 	if (iTile == TILE_INFRASTRUCTURE_MARINA && (!iMarinaCount || iMarinaCount == 9)) {
 		Game_AfxMessageBox(107, 0, -1);

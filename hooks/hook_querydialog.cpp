@@ -1,6 +1,14 @@
 // sc2kfix hooks/hook_querydialog.cpp: hook for new query dialog features
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
+// XXX: This code is Not Good and has done some bad stuff on certain versions of Windows 10. I'm
+// not entirely sure which versions are afflicted with Problems exacerbated by it but there are at
+// least two different reports of machines (out of a few hundred users as of writing) where the
+// game crashes immediately on launch with a nonsensical stack trace if the advanced query dialog
+// is enabled. Rewriting it is extremely low priority though since it's mostly for save file/map
+// debugging, and it works on my machine, so it's been changed as of Release 9c to be an opt-in
+// hook via the `-advquery` command-line option.
+
 #undef UNICODE
 #include <windows.h>
 #include <psapi.h>
