@@ -2894,6 +2894,142 @@ extern "C" void __stdcall Hook_ShowViewControls() {
 	}
 }
 
+extern "C" void __stdcall Hook_MainFrameUpdateSections() {
+	DWORD *pThis;
+
+	__asm mov[pThis], ecx
+
+	void(__thiscall *H_CCityToolBar_RefreshToolBar)(void *) = (void(__thiscall *)(void *))0x401000;
+	void(__thiscall *H_CMapToolBarResetControls)(void *) = (void(__thiscall *)(void *))0x401140;
+	UINT(__thiscall *H_CMyToolBarGetButtonStyle)(void *, int) = (UINT(__thiscall *)(void *, int))0x401235;
+	void(__thiscall *H_CMainFrameDisableCityToolBarButton)(void *, int) = (void(__thiscall *)(void *, int))0x4016DB;
+	void(__thiscall *H_CMyToolBarSetButtonStyle)(void *, int nIndex, UINT nStyle) = (void(__thiscall *)(void *, int, UINT))0x402306;
+	void(__thiscall *H_CMyToolBarInvalidateButton)(void *, int) = (void(__thiscall *)(void *, int))0x4029C8;
+	void(__thiscall *H_CCityToolBarUpdateControls)(void *, BOOL) = (void(__thiscall *)(void *, BOOL))0x402A68;
+	CMFC3XString *(__thiscall *H_CStringOperatorSet)(CMFC3XString *, char *) = (CMFC3XString *(__thiscall *)(CMFC3XString *, char *))0x4A2E6A;
+	DWORD *(__stdcall *H_CWndFromHandle)(HWND) = (DWORD *(__stdcall *)(HWND))0x4A3BDF;
+	DWORD *(__stdcall *H_CMenuFromHandle)(HMENU) = (DWORD *(__stdcall *)(HMENU))0x4A7427;
+	int(__thiscall *H_CMenuAttach)(void *, HMENU) = (int(__thiscall *)(void *, HMENU))0x4A7483;
+	BOOL(__thiscall *H_CMenuDestroyMenu)(void *) = (BOOL(__thiscall *)(void *))0x4A74FB;
+
+	CMFC3XString *cityToolGroupStrings = (CMFC3XString *)0x4C94C8;
+	HINSTANCE &hGameModule = *(HINSTANCE *)0x4CE8C8;
+	int *dwGrantedItems = (int *)0x4E9A10;
+	DWORD *DisplayLayer = (DWORD *)0x4E9E48;
+
+	HWND hDlgItem;
+	DWORD *pGotoButton;
+	DWORD *pMapToolBar;
+	DWORD *pCityToolBar;
+	int iCityToolBarButton;
+	UINT ButtonStyle;
+	int nLayer;
+	UINT nStyle;
+	int nIndex;
+	DWORD *pMenu;
+	HMENU hMenu;
+	int nPos;
+	HMENU hSubMenu;
+	DWORD *pSubMenu;
+	int nMenuItemCount;
+	int nSubMenuItemCount;
+	char szString[960];
+	char *pString;
+	char *pTargString;
+	DWORD uIDs[12];
+	DWORD *pUID;
+	int nGranted;
+	int nReward;
+	CMFC3XString *cityToolString;
+	CMFC3XString *pTargMFCString;
+
+	hDlgItem = GetDlgItem((HWND)pThis[68], 120); // Status - GoTo button.
+	pGotoButton = H_CWndFromHandle(hDlgItem);
+	pMapToolBar = &pThis[233];
+	if (!wCityMode)
+		H_CMapToolBarResetControls(pMapToolBar);
+	pCityToolBar = &pThis[102];
+	H_CCityToolBarUpdateControls(pCityToolBar, FALSE);
+	EnableWindow((HWND)pGotoButton[7], 0);
+	if (wCityMode == 1) {
+		if (wCurrentCityToolGroup == TOOL_GROUP_DISPATCH) {
+			wCurrentCityToolGroup = TOOL_GROUP_CENTERINGTOOL;
+			H_CCityToolBarUpdateControls(pCityToolBar, TRUE);
+		}
+		H_CMainFrameDisableCityToolBarButton(pThis, 2);
+		H_CMyToolBarInvalidateButton(pCityToolBar, 2);
+	}
+	else if (wCityMode != 2) {
+		goto REFRESHMENUGRANTS;
+	}
+	if (wCityMode == 2)
+		EnableWindow((HWND)pGotoButton[7], 1);
+	if (!dwGrantedItems[5]) {
+		H_CMainFrameDisableCityToolBarButton(pThis, 5);
+		H_CMyToolBarInvalidateButton(pCityToolBar, 5);
+	}
+	iCityToolBarButton = wCurrentCityToolGroup;
+	if (wCurrentCityToolGroup > 15)
+		iCityToolBarButton = wCurrentCityToolGroup + 4;
+	ButtonStyle = H_CMyToolBarGetButtonStyle(pCityToolBar, iCityToolBarButton);
+	H_CMyToolBarSetButtonStyle(pCityToolBar, iCityToolBarButton, ButtonStyle | 0x100);
+	for (nLayer = 0; nLayer < 5; ++nLayer) {
+		if (DisplayLayer[nLayer])
+			nStyle = 0x102;
+		else
+			nStyle = 2;
+		nIndex = 0x20 - nLayer;
+		H_CMyToolBarSetButtonStyle(pCityToolBar, nIndex, nStyle);
+	}
+REFRESHMENUGRANTS:
+	pMenu = &pThis[159];
+	H_CMenuDestroyMenu(pMenu);
+	hMenu = LoadMenuA(hGameModule, (LPCSTR)136);
+	H_CMenuAttach(pMenu, hMenu);
+	for (nPos = 0; nPos < 15; ++nPos) {
+		if (dwGrantedItems[nPos]) {
+			hSubMenu = GetSubMenu((HMENU)pMenu[1], nPos);
+			pSubMenu = H_CMenuFromHandle(hSubMenu);
+			nMenuItemCount = GetMenuItemCount((HMENU)pSubMenu[1]);
+			nSubMenuItemCount = nMenuItemCount;
+			if (nMenuItemCount > 0) {
+				pString = szString;
+				pUID = uIDs;
+				do {
+					*pUID++ = GetMenuItemID((HMENU)pSubMenu[1], 0);
+					pTargString = pString;
+					pString += 80;
+					GetMenuStringA((HMENU)pSubMenu[1], 0, pTargString, 80, MF_BYPOSITION);
+					DeleteMenu((HMENU)pSubMenu[1], 0, MF_BYPOSITION);
+					--nSubMenuItemCount;
+				} while (nSubMenuItemCount);
+			}
+			nGranted = 0;
+			nReward = 0;
+			if (nMenuItemCount > 0) {
+				pUID = uIDs;
+				pString = szString;
+				cityToolString = &cityToolGroupStrings[TOOL_GROUP_REWARDS*12]; // calculation here is citytoolbuttongroup * subtools (12 per group), this sets it to TOOL_GROUP_REWARDS.
+				do {
+					if (((1 << nReward) & dwGrantedItems[nPos]) != 0) {
+						if (nPos == TOOL_GROUP_REWARDS && !nGranted) {
+							pThis[220] = nReward;
+							nGranted = 1;
+							pTargMFCString = (CMFC3XString *)&pCityToolBar[74];
+							H_CStringOperatorSet(pTargMFCString, cityToolString[nReward].m_pchData);
+						}
+						AppendMenuA((HMENU)pSubMenu[1], 0, *pUID, pString);
+					}
+					++pUID;
+					pString += 80;
+					++nReward;
+				} while (nMenuItemCount > nReward);
+			}
+		}
+	}
+	H_CCityToolBar_RefreshToolBar(pCityToolBar);
+}
+
 // Placeholder.
 void ShowModSettingsDialog(void) {
 	MessageBox(NULL, "The mod settings dialog has not yet been implemented. Check back later.", "sc2fix", MB_OK);
@@ -3081,6 +3217,10 @@ void InstallMiscHooks_SC2K1996(void) {
 	// Hook for ShowViewControls
 	VirtualProtect((LPVOID)0x4021D5, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4021D5, Hook_ShowViewControls);
+
+	// Hook for CMainFrame::UpdateSections
+	VirtualProtect((LPVOID)0x40131B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x40131B, Hook_MainFrameUpdateSections);
 
 	// New hooks for CSimcityDoc::UpdateDocumentTitle and
 	// SimulationProcessTick - these account for:
