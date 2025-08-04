@@ -53,6 +53,10 @@ int LoadNativeCodeHooks(HMODULE hModule) {
 
 		// Compare against each hook that we can register and flag if we register one
 		REGISTER_HOOK(Hook_OnNewCity_Before);
+		REGISTER_HOOK(Hook_LoadGame_Before);
+		REGISTER_HOOK(Hook_LoadGame_After);
+		REGISTER_HOOK(Hook_SaveGame_Before);
+		REGISTER_HOOK(Hook_SaveGame_After);
 		REGISTER_HOOK(Hook_GameDoIdleUpkeep_Before);
 		REGISTER_HOOK(Hook_GameDoIdleUpkeep_After);
 

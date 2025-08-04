@@ -7,5 +7,9 @@
 #include <sc2kfix.h>
 
 extern std::vector<hook_function_t> stHooks_Hook_OnNewCity_Before;
+extern std::vector<hook_function_t> stHooks_Hook_LoadGame_Before;
+extern std::vector<hook_function_t> stHooks_Hook_LoadGame_After;
+extern std::vector<hook_function_t> stHooks_Hook_SaveGame_Before;
+extern std::vector<hook_function_t> stHooks_Hook_SaveGame_After;
 extern std::vector<hook_function_t> stHooks_Hook_GameDoIdleUpkeep_Before;
 extern std::vector<hook_function_t> stHooks_Hook_GameDoIdleUpkeep_After;
