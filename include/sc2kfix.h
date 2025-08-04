@@ -84,22 +84,26 @@
 #define HICOLORCNT 256
 #define LOCOLORCNT 16
 
+// TODO: inline documentation
 typedef struct tagLOGPAL {
 	WORD wVersion;
 	WORD wNumPalEnts;
 	PALETTEENTRY pPalEnts[HICOLORCNT];
 } LOGPAL, *PLOGPAL;
 
+// TODO: inline documentation
 typedef struct testColStruct {
 	WORD wPos;
 	tagPALETTEENTRY pe;
 } colStruct;
 
+// TODO: inline documentation
 typedef struct COLORTABLE_STRUCT {
 	WORD Index;
 	DWORD rgb;
 } colTable;
 
+// Reimplementation of the MFC 3.x message map entry structure.
 typedef struct {
 	UINT nMessage;
 	UINT nCode;
@@ -109,6 +113,7 @@ typedef struct {
 	void* pfn;
 } AFX_MSGMAP_ENTRY;
 
+// Reimplementation of the CString class from MFC 3.x.
 class CMFC3XString {
 public:
 	LPTSTR m_pchData;
@@ -116,16 +121,21 @@ public:
 	int m_nAllocLength;
 };
 
+// Reimplementation of an abstracted C string (not to be confused with the MFC CString) used in
+// the original SimCity 2000 code.
 class CSimString {
 public:
 	char *pStr;
 };
 
+// Struct defining an injected hook from a loaded mod and its nested call priority.
 typedef struct {
 	const char* szHookName;
 	int iHookPriority;
 } sc2kfix_mod_hook_t;
 
+// Struct defining a mod in its entirety, including its version info, sc2kfix/OC2K version
+// requirements, basic descriptions, and what hooks it injects code into.
 typedef struct {
 	int iModInfoVersion;				// Mandatory
 
@@ -145,12 +155,14 @@ typedef struct {
 	sc2kfix_mod_hook_t* stHooks;		// Mandatory
 } sc2kfix_mod_info_t;
 
+// Enum for mod hook types
 enum {
 	HOOKFN_TYPE_NONE,
 	HOOKFN_TYPE_NATIVE,
 	HOOKFN_TYPE_KUROKO
 };
 
+// Function pointers (native and otherwise) for hooks
 typedef struct {
 	int iPriority;
 	int iType;
@@ -161,6 +173,7 @@ typedef struct {
 
 typedef BOOL (*console_cmdproc_t)(const char* szCommand, const char* szArguments);
 
+// Struct defining a core console command.
 typedef struct {
 	const char* szCommand;
 	console_cmdproc_t fpProc;
@@ -168,16 +181,23 @@ typedef struct {
 	const char* szDescription;
 } console_command_t;
 
+// Struct defining debugging information for sound buffers.
 typedef struct {
 	int iSoundID;
 	int iReloadCount;
 } soundbufferinfo_t;
 
+// Struct defining a sound to be replaced in hook_sndPlaySound.cpp. I genuinely don't have any
+// better way to describe this one.
 typedef struct {
 	BYTE* bBuffer;
 	DWORD nBufSize;
 } sound_replacement_t;
 
+// Enum for console command visibility in inline help. Documented commands always appear in inline
+// help, undocumented commands only appear if `set undocumented` has been activated. Commands
+// tagged as aliases never appear. Commands tagged as script-only return an error in interactive
+// mode but function in script mode.
 enum {
 	CONSOLE_COMMAND_DOCUMENTED = 0,
 	CONSOLE_COMMAND_UNDOCUMENTED,
@@ -185,6 +205,7 @@ enum {
 	CONSOLE_COMMAND_SCRIPTONLY
 };
 
+// Enum for logging functionality. Roughly equates to syslog levels (see RFC 5424).
 enum {
 	LOG_NONE = -1,
 	LOG_EMERGENCY,

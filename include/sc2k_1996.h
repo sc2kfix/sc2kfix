@@ -885,6 +885,7 @@ typedef struct {
 	map_XBIT_bits_t b;
 } map_XBIT_t;
 
+// Struct defining an SC2K XTHG (Thing) entity.
 typedef struct {
 	BYTE iId; // use xthg types enum to determine
 	BYTE iDirection; // use xthg directions enum; for types airplane, helicopter, cargo ship, monster, etc; not sure how this is used for "deployment" types like fire, police, etc
@@ -900,6 +901,7 @@ typedef struct {
 	BYTE iDunno7;
 } map_XTHG_t;
 
+// Struct defining an SC2K XLAB (Label) entity.
 typedef struct {
 	char szLabel[24];
 	BYTE bPadding;
@@ -1173,6 +1175,7 @@ GAMEOFF_ARR(DWORD,			dwMapXGRP,	0x4CC470)
 
 extern const char *getXTERNames(BYTE iVal);
 
+// Returns the tile ID from a given set of coordinates.
 static inline int GetTileID(int iTileX, int iTileY) {
 	if (iTileX >= 0 && iTileX < GAME_MAP_SIZE && iTileY >= 0 && iTileY < GAME_MAP_SIZE)
 		return dwMapXBLD[iTileX][iTileY].iTileID;
@@ -1180,14 +1183,18 @@ static inline int GetTileID(int iTileX, int iTileY) {
 		return -1;
 }
 
+// Returns the XLAB entry from a given Label ID.
 static inline const char* GetXLABEntry(int iLabelID) {
 	return dwMapXLAB[0][iLabelID].szLabel;
 }
 
+// Returns the sprite header for a given sprite ID.
 static inline sprite_header_t* GetSpriteHeader(int iSpriteID) {
 	return (*pArrSpriteHeaders + iSpriteID);
 }
 
+// Returns the current game palette. RE'd from the game decomp.
+// TODO: document a bit more about what the hell this actually does
 static inline HPALETTE GameGetPalette(void) {
 	DWORD* CSimcityAppThis = &pCSimcityAppThis;
 	DWORD* CPalette;
@@ -1202,10 +1209,13 @@ static inline HPALETTE GameGetPalette(void) {
 	return (HPALETTE)CPalette[1];
 }
 
+// Returns the HWND of the game's root window.
 static inline HWND GameGetRootWindowHandle(void) {
 	return (HWND)((DWORD*)pCWndRootWindow)[7];
 }
 
+// Returns a raw byte-swapped DWORD (BE->LE and vice versa).
+// XXX: should we be using something like htnol here?
 static inline DWORD SwapDWORD(DWORD dwData) {
 	return _byteswap_ulong(dwData);
 }
