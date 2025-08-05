@@ -27,7 +27,7 @@ BOOL bSettingsShuffleMusic = FALSE;
 BOOL bSettingsUseMultithreadedMusic = TRUE;
 BOOL bSettingsFrequentCityRefresh = TRUE;
 BOOL bSettingsUseMP3Music = FALSE;
-BOOL bSettingsUeAlwaysPlayMusic = FALSE;
+BOOL bSettingsAlwaysPlayMusic = FALSE;
 
 BOOL bSettingsAlwaysConsole = FALSE;
 BOOL bSettingsCheckForUpdates = TRUE;
@@ -92,7 +92,7 @@ void LoadSettings(void) {
 	bSettingsUseMultithreadedMusic = GetPrivateProfileIntA(section, "bSettingsUseMultithreadedMusic", bSettingsUseMultithreadedMusic, ini_file);
 	bSettingsFrequentCityRefresh = GetPrivateProfileIntA(section, "bSettingsFrequentCityRefresh", bSettingsFrequentCityRefresh, ini_file);
 	bSettingsUseMP3Music = GetPrivateProfileIntA(section, "bSettingsUseMP3Music", bSettingsUseMP3Music, ini_file);
-	bSettingsUeAlwaysPlayMusic = GetPrivateProfileIntA(section, "bSettingsUeAlwaysPlayMusic", bSettingsUeAlwaysPlayMusic, ini_file);
+	bSettingsAlwaysPlayMusic = GetPrivateProfileIntA(section, "bSettingsAlwaysPlayMusic", bSettingsAlwaysPlayMusic, ini_file);
 
 	// Internal settings
 	bSettingsAlwaysConsole = GetPrivateProfileIntA(section, "bSettingsAlwaysConsole", bSettingsAlwaysConsole, ini_file);
@@ -124,7 +124,7 @@ void SaveSettings(BOOL onload) {
 	WritePrivateProfileIntA(section, "bSettingsUseMultithreadedMusic", bSettingsUseMultithreadedMusic, ini_file);
 	WritePrivateProfileIntA(section, "bSettingsFrequentCityRefresh", bSettingsFrequentCityRefresh, ini_file);
 	WritePrivateProfileIntA(section, "bSettingsUseMP3Music", bSettingsUseMP3Music, ini_file);
-	WritePrivateProfileIntA(section, "bSettingsUeAlwaysPlayMusic", bSettingsUeAlwaysPlayMusic, ini_file);
+	WritePrivateProfileIntA(section, "bSettingsAlwaysPlayMusic", bSettingsAlwaysPlayMusic, ini_file);
 
 	// Internal settings
 	WritePrivateProfileIntA(section, "bSettingsAlwaysConsole", bSettingsAlwaysConsole, ini_file);
@@ -269,7 +269,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MULTITHREADED_MUSIC), bSettingsUseMultithreadedMusic ? BST_CHECKED : BST_UNCHECKED);
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_REFRESH_RATE), bSettingsFrequentCityRefresh ? BST_CHECKED : BST_UNCHECKED);
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MP3_MUSIC), bSettingsUseMP3Music ? BST_CHECKED : BST_UNCHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC), bSettingsUeAlwaysPlayMusic ? BST_CHECKED : BST_UNCHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC), bSettingsAlwaysPlayMusic ? BST_CHECKED : BST_UNCHECKED);
 
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE), bSettingsAlwaysConsole ? BST_CHECKED : BST_UNCHECKED);
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES), bSettingsCheckForUpdates ? BST_CHECKED : BST_UNCHECKED);
@@ -304,7 +304,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			bSettingsUseMultithreadedMusic = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MULTITHREADED_MUSIC));
 			bSettingsFrequentCityRefresh = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_REFRESH_RATE));
 			bSettingsUseMP3Music = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MP3_MUSIC));
-			bSettingsUeAlwaysPlayMusic = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC));
+			bSettingsAlwaysPlayMusic = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC));
 
 			bSettingsAlwaysConsole = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE));
 			bSettingsCheckForUpdates = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES));
