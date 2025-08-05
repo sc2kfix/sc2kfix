@@ -163,7 +163,7 @@ extern BOOL bSettingsShuffleMusic;
 extern BOOL bSettingsUseMultithreadedMusic;
 extern BOOL bSettingsFrequentCityRefresh;
 extern BOOL bSettingsUseMP3Music;
-extern BOOL bSettingsUeAlwaysPlayMusic;
+extern BOOL bSettingsAlwaysPlayMusic;
 
 extern BOOL bSettingsAlwaysConsole;
 extern BOOL bSettingsCheckForUpdates;

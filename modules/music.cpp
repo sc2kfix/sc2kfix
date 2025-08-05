@@ -269,7 +269,7 @@ extern "C" void __stdcall Hook_SimcityAppMusicPlayNext(BOOL bNext) {
 	if (!H_SoundGetMCIResult((void *)pThis[82])) {
 		if (bNext)
 			H_SimcityAppMusicPlayNextRefocusSong(pThis);
-		else if ((!(rand() % (8 * (3 * nSpeed - 3)))) || bSettingsUeAlwaysPlayMusic) {
+		else if ((!(rand() % (8 * (3 * nSpeed - 3)))) || bSettingsAlwaysPlayMusic) {
 			iRandMusic = rand();
 			iSongID = 10000 + (iRandMusic % 19);
 			L_MusicPlay(pThis, iSongID);
