@@ -2951,7 +2951,7 @@ extern "C" void __stdcall Hook_MainFrameUpdateSections() {
 	pCityToolBar = &pThis[102];
 	H_CCityToolBarUpdateControls(pCityToolBar, FALSE);
 	EnableWindow((HWND)pGotoButton[7], 0);
-	if (wCityMode == 1) {
+	if (wCityMode == GAME_MODE_CITY) {
 		if (wCurrentCityToolGroup == TOOL_GROUP_DISPATCH) {
 			wCurrentCityToolGroup = TOOL_GROUP_CENTERINGTOOL;
 			H_CCityToolBarUpdateControls(pCityToolBar, TRUE);
@@ -2959,21 +2959,21 @@ extern "C" void __stdcall Hook_MainFrameUpdateSections() {
 		H_CMainFrameDisableCityToolBarButton(pThis, 2);
 		H_CMyToolBarInvalidateButton(pCityToolBar, 2);
 	}
-	else if (wCityMode != 2) {
+	else if (wCityMode != GAME_MODE_DISASTER) {
 		goto REFRESHMENUGRANTS;
 	}
-	if (wCityMode == 2)
+	if (wCityMode == GAME_MODE_DISASTER)
 		EnableWindow((HWND)pGotoButton[7], 1);
 	if (!dwGrantedItems[5]) {
 		H_CMainFrameDisableCityToolBarButton(pThis, 5);
 		H_CMyToolBarInvalidateButton(pCityToolBar, 5);
 	}
 	iCityToolBarButton = wCurrentCityToolGroup;
-	if (wCurrentCityToolGroup > 15)
+	if (wCurrentCityToolGroup > TOOL_GROUP_SIGNS)
 		iCityToolBarButton = wCurrentCityToolGroup + 4;
 	ButtonStyle = H_CMyToolBarGetButtonStyle(pCityToolBar, iCityToolBarButton);
 	H_CMyToolBarSetButtonStyle(pCityToolBar, iCityToolBarButton, ButtonStyle | 0x100);
-	for (nLayer = 0; nLayer < 5; ++nLayer) {
+	for (nLayer = LAYER_UNDERGROUND; nLayer < LAYER_COUNT; ++nLayer) {
 		if (DisplayLayer[nLayer])
 			nStyle = 0x102;
 		else
@@ -2986,7 +2986,7 @@ REFRESHMENUGRANTS:
 	H_CMenuDestroyMenu(pMenu);
 	hMenu = LoadMenuA(hGameModule, (LPCSTR)136);
 	H_CMenuAttach(pMenu, hMenu);
-	for (nPos = 0; nPos < 15; ++nPos) {
+	for (nPos = TOOL_GROUP_BULLDOZER; nPos < TOOL_GROUP_SIGNS; ++nPos) {
 		if (dwGrantedItems[nPos]) {
 			hSubMenu = GetSubMenu((HMENU)pMenu[1], nPos);
 			pSubMenu = H_CMenuFromHandle(hSubMenu);
@@ -3009,7 +3009,7 @@ REFRESHMENUGRANTS:
 			if (nMenuItemCount > 0) {
 				pUID = uIDs;
 				pString = szString;
-				cityToolString = &cityToolGroupStrings[TOOL_GROUP_REWARDS*12]; // calculation here is citytoolbuttongroup * subtools (12 per group), this sets it to TOOL_GROUP_REWARDS.
+				cityToolString = &cityToolGroupStrings[TOOL_GROUP_REWARDS*MAX_CITY_SUBTOOLS]; // calculation here is citytoolbuttongroup * maxsubtools (12 per group), this sets it to TOOL_GROUP_REWARDS.
 				do {
 					if (((1 << nReward) & dwGrantedItems[nPos]) != 0) {
 						if (nPos == TOOL_GROUP_REWARDS && !nGranted) {
