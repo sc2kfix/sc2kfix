@@ -2401,7 +2401,8 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 				// behaviour in the normal game as well).
 				if (wCurrentCityToolGroup != TOOL_GROUP_CENTERINGTOOL) {
 					if (wTileCoordinateX < 0 || wTileCoordinateX >= GAME_MAP_SIZE ||
-						wTileCoordinateY < 0 || wTileCoordinateY >= GAME_MAP_SIZE) {
+						wTileCoordinateY < 0 || wTileCoordinateY >= GAME_MAP_SIZE ||
+						(wCurrentCityToolGroup == TOOL_GROUP_REWARDS && wSelectedSubtool[wCurrentCityToolGroup] == REWARDS_ARCOLOGIES_WAITING)) {
 						wTileHighlightActive = 0;
 					}
 					else {
