@@ -223,6 +223,96 @@ extern "C" DWORD __cdecl Hook_SmackOpen(LPCSTR lpFileName, uint32_t uFlags, int3
 	return SMKOpenProc(AdjustSource(buf, lpFileName), uFlags, iExBuf);
 }
 
+int L_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
+	int ret;
+
+	ToggleFloatingStatusDialog(FALSE);
+
+	ret = MessageBoxA(hWnd, lpText, lpCaption, uType);
+
+	ToggleFloatingStatusDialog(TRUE);
+
+	return ret;
+}
+
+extern "C" int __stdcall Hook_AfxMessageBoxStr(LPCTSTR lpszPrompt, UINT nType, UINT nIDHelp) {
+	int(__thiscall *H_CWinAppDoMessageBox)(void *, LPCTSTR, UINT, UINT) = (int(__thiscall *)(void *, LPCTSTR, UINT, UINT))0x4B2206;
+
+	DWORD &game_AfxCoreState = *(DWORD *)0x4CE8C0;
+
+	int ret;
+
+	ToggleFloatingStatusDialog(FALSE);
+
+	ret = H_CWinAppDoMessageBox((DWORD *)game_AfxCoreState, lpszPrompt, nType, nIDHelp);
+
+	ToggleFloatingStatusDialog(TRUE);
+
+	return ret;
+}
+
+extern "C" int __stdcall Hook_AfxMessageBoxID(UINT nIDPrompt, UINT nType, UINT nIDHelp) {
+	CMFC3XString *(__thiscall *H_CStringCons)(CMFC3XString *) = (CMFC3XString *(__thiscall *)(CMFC3XString *))0x4A2C28;
+	void(__thiscall *H_CStringDest)(CMFC3XString *) = (void(__thiscall *)(CMFC3XString *))0x4A2CB0;
+	BOOL(__thiscall *H_CStringLoadStringA)(CMFC3XString *, unsigned int) = (BOOL(__thiscall *)(CMFC3XString *, unsigned int))0x4A3453;
+	int(__thiscall *H_CWinAppDoMessageBox)(void *, LPCTSTR, UINT, UINT) = (int(__thiscall *)(void *, LPCTSTR, UINT, UINT))0x4B2206;
+
+	DWORD &game_AfxCoreState = *(DWORD *)0x4CE8C0;
+
+	CMFC3XString cStr;
+	UINT nID;
+	int ret;
+
+	H_CStringCons(&cStr);
+	H_CStringLoadStringA(&cStr, nIDPrompt);
+	nID = nIDHelp;
+	if (nIDHelp == -1)
+		nID = nIDPrompt;
+
+	ToggleFloatingStatusDialog(FALSE);
+
+	ret = H_CWinAppDoMessageBox((DWORD *)game_AfxCoreState, cStr.m_pchData, nType, nIDHelp);
+
+	ToggleFloatingStatusDialog(TRUE);
+
+	H_CStringDest(&cStr);
+	return ret;
+}
+
+extern "C" int __stdcall Hook_FileDialogDoModal() {
+	DWORD *pThis;
+
+	__asm mov [pThis], ecx
+
+	HWND(__thiscall *H_DialogPreModal)(void *) = (HWND(__thiscall *)(void *))0x4A710B;
+	BOOL(__stdcall *H_GetLoadFileNameA)(LPOPENFILENAMEA) = (BOOL(__stdcall *)(LPOPENFILENAMEA))0x49C35A;
+	BOOL(__stdcall *H_GetSaveFileNameA)(LPOPENFILENAMEA) = (BOOL(__stdcall *)(LPOPENFILENAMEA))0x49C354;
+	void(__thiscall *H_DialogPostModal)(void *) = (void(__thiscall *)(void *))0x4A7154;
+
+	HWND hWndOwner;
+	bool bIsReserved;
+	int iRet;
+	tagOFNA *pOfn;
+
+	ToggleFloatingStatusDialog(FALSE);
+
+	hWndOwner = H_DialogPreModal(pThis);
+	bIsReserved = pThis[36] == 0;
+	pThis[18] = (DWORD)hWndOwner;
+	pOfn = (tagOFNA *)(pThis + 17);
+	if (bIsReserved)
+		iRet = H_GetSaveFileNameA(pOfn);
+	else
+		iRet = H_GetLoadFileNameA(pOfn);
+	H_DialogPostModal(pThis);
+	if (!iRet)
+		iRet = 2;
+
+	ToggleFloatingStatusDialog(TRUE);
+
+	return iRet;
+}
+
 extern "C" DWORD __cdecl Hook_MovieCheck(char *sMovStr) {
 	if (sMovStr && strncmp(sMovStr, "INTRO", 5) == 0) {
 		if (!smk_enabled || bSkipIntro || bSettingsAlwaysSkipIntro)
@@ -1395,7 +1485,7 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(unsigned __int16 m_x, int m_y, __
 	iTile = iTileID;
 GOFORWARD:
 	if (iTile == TILE_INFRASTRUCTURE_MARINA && (!iMarinaCount || iMarinaCount == 9)) {
-		Game_AfxMessageBox(107, 0, -1);
+		Game_AfxMessageBoxID(107, 0, -1);
 		return 0;
 	}
 	else {
@@ -1929,11 +2019,11 @@ GOBACK:
 			case CHEAT_WEBB:
 				if (!FindTheHouse()) {
 					if (!BuildTheHouse())
-						MessageBoxA(hWnd, "Sorry, no room to build Ilona's house!", gamePrimaryKey, MB_ICONINFORMATION | MB_OK);
+						L_MessageBoxA(hWnd, "Sorry, no room to build Ilona's house!", gamePrimaryKey, MB_ICONINFORMATION | MB_OK);
 				}
 				break;
 			case CHEAT_OOPS:
-				MessageBoxA(hWnd, "Same to you, buddy!", "Hey!", MB_ICONEXCLAMATION | MB_OK);
+				L_MessageBoxA(hWnd, "Same to you, buddy!", "Hey!", MB_ICONEXCLAMATION | MB_OK);
 				if (iChurchVirus < 0)
 					iChurchVirus = 0; // Warning
 				else if (iChurchVirus == 0)
@@ -1941,7 +2031,7 @@ GOBACK:
 				break;
 			case CHEAT_REPENT:
 				if (iChurchVirus > 0) {
-					if (MessageBoxA(hWnd, "Tea Father?", gamePrimaryKey, MB_ICONINFORMATION | MB_YESNO) == IDYES) {
+					if (L_MessageBoxA(hWnd, "Tea Father?", gamePrimaryKey, MB_ICONINFORMATION | MB_YESNO) == IDYES) {
 						iChurchVirus = 0; // Set it back to 0 rather than -1; the next execution of the related cheats will result in immediate action.
 						ChangeChurchZone();
 					}
@@ -1952,7 +2042,7 @@ GOBACK:
 					if (iChurchVirus == 0)
 						iChurchVirus = -1; // Set back to -1 if executed once more.
 NO:
-					MessageBoxA(hWnd, "Oh go on..", gamePrimaryKey, MB_ICONEXCLAMATION | MB_OK);
+					L_MessageBoxA(hWnd, "Oh go on..", gamePrimaryKey, MB_ICONEXCLAMATION | MB_OK);
 				}
 				break;
 			default:
@@ -2094,7 +2184,7 @@ static void L_TileHighlightUpdate(DWORD *pThis) {
 	BOOL(__stdcall *H_FinishObject)() = (BOOL(__stdcall *)())0x402B7B;
 	BYTE *(__thiscall *H_GraphicsLockDIBBits)(void *) = (BYTE *(__thiscall *)(void *))0x402DA1;
 
-	DWORD *pSomeWnd = (DWORD *)0x4CAC18; // Perhaps this is the active view window? (unclear - but this is referenced in the native TileHighlightUpdate function)
+	DWORD &pSomeWnd = *(DWORD *)0x4CAC18; // Perhaps this is the active view window? (unclear - but this is referenced in the native TileHighlightUpdate function)
 	tagRECT &dRect = *(tagRECT *)0x4CAD48;
 
 	if (wTileHighlightActive) {
@@ -2116,7 +2206,10 @@ static void L_TileHighlightUpdate(DWORD *pThis) {
 			// As it turns out this if case is necessary here.. otherwise it results in breakage when
 			// it comes to the pollution clouds (entire view window update rather than just the
 			// "dirty" area).
-			if (pThis == pSomeWnd)
+			// ^ Unclear - the pollution case still expresses itself even with this case implemented.
+			// Tests performed in the 'Interactive Demo' (of which don't have any of these hooks) have
+			// also resulted in similar intermittent encounters.
+			if (pThis == &pSomeWnd)
 				H_SimcityViewMainWindowUpdate(pThis, 0, 1);
 			else
 				H_SimcityViewMainWindowUpdate(pThis, &dRect, 1);
@@ -2124,6 +2217,14 @@ static void L_TileHighlightUpdate(DWORD *pThis) {
 				wTileHighlightActive = 0;
 		}
 	}
+}
+
+static void UpdateCityDateAndSeason(BOOL bIncrement) {
+	if (bIncrement)
+		++dwCityDays;
+	wCityCurrentMonth = dwCityDays / 25 % 12;
+	wCityCurrentSeason = (dwCityDays / 25 % 12 + 1) % 12 / 3;
+	wCityElapsedYears = dwCityDays / 300;
 }
 
 extern "C" void __stdcall Hook_SimulationProcessTick() {
@@ -2167,13 +2268,12 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 	void(__thiscall *H_MainFrameUpdateCityToolBar)(void *) = (void(__thiscall *)(void *))0x402F18;
 	void(__stdcall *H_SimulationProposeMilitaryBase)() = (void(__stdcall *)())0x403017;
 
-	wCityCurrentMonth = ++dwCityDays / 25 % 12;
-	wCityCurrentSeason = (dwCityDays / 25 % 12 + 1) % 12 / 3;
-	wCityElapsedYears = dwCityDays / 300;
+	UpdateCityDateAndSeason(TRUE);
+	dwMonDay = (dwCityDays % 25);
 	if (dwSCAGameAutoSave > 0 &&
 		!((dwCityDays / 300) % dwSCAGameAutoSave) &&
 		!wCityCurrentMonth &&
-		!(dwCityDays & 25)) {
+		!dwMonDay) {
 		H_SimcityAppCallAutoSave(&pCSimcityAppThis);
 	}
 
@@ -2182,7 +2282,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 		Game_CDocument_UpdateAllViews(pCDocumentMainWindow, NULL, 2, NULL);
 	}
 
-	dwMonDay = (dwCityDays % 25);
+	
 	switch (dwMonDay) {
 		case 0:
 			if (!bSettingsFrequentCityRefresh)
@@ -2198,9 +2298,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 					H_NewspaperDestruct(&newsDialog);
 				}
 			}
-			wCityCurrentMonth = dwCityDays / 25 % 12;
-			wCityCurrentSeason = (dwCityDays / 25 % 12 + 1) % 12 / 3;
-			wCityElapsedYears = dwCityDays / 300;
+			UpdateCityDateAndSeason(FALSE);
 			for (i = 0; i < 8; pZonePops[i - 1] = 0)
 				++i;
 			break;
@@ -2299,11 +2397,8 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 			// Moved here rather than the prior list of cases that were
 			// specific to the growth tick function.
 			if (dwMonDay >= 3 && dwMonDay <= 18) {
-				if (dwMonDay == 12) {
-					wCityCurrentMonth = dwCityDays / 25 % 12;
-					wCityCurrentSeason = (dwCityDays / 25 % 12 + 1) % 12 / 3;
-					wCityElapsedYears = dwCityDays / 300;
-				}
+				if (dwMonDay == 12)
+					UpdateCityDateAndSeason(FALSE);
 				iStep = ((dwMonDay - 3) / 4 % 4); // Steps 0 - 3 in groups of 4.
 				iSubStep = (dwMonDay + 1) % 4; // SubSteps 0-3 for each group of 4.
 				H_SimulationGrowthTick(iStep, iSubStep);
@@ -2733,39 +2828,7 @@ extern "C" void __stdcall Hook_CityToolBarToolMenuDisable() {
 
 	void(__thiscall *H_CityToolBarToolMenuDisable)(void *) = (void(__thiscall *)(void *))0x4237F0;
 
-	DWORD *pSCWnd;
-	DWORD *pSCView;
-	DWORD *pStatusBar;
-	tagRECT r;
-	tagSIZE eSZ;
-
-	// Temporarily change the status bar's parent.
-	// This also prevents the visible anomaly of the floating
-	// status bar being moved vertically as a result of the
-	// parental change.
-	pSCWnd = &((DWORD *)pCWndRootWindow)[291];
-	pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
-	pStatusBar = &((DWORD *)pCWndRootWindow)[61];
-	if (bSettingsUseStatusDialog && IsWindowVisible((HWND)pStatusBar[7])) {
-		SendMessageA((HWND)pStatusBar[7], WM_SETREDRAW, FALSE, 0);
-		GetWindowRect((HWND)pStatusBar[7], &r);
-		ScreenToClient(GameGetRootWindowHandle(), (LPPOINT)&r.left);
-		// Retrieve the 3D border-edge width/height in pixels.
-		eSZ.cx = GetSystemMetrics(SM_CXEDGE);
-		eSZ.cy = GetSystemMetrics(SM_CYEDGE);
-		if (pSCView) {
-			if (!IsZoomed(GetParent((HWND)pSCView[7]))) {
-				r.left -= eSZ.cx;
-				r.top -= eSZ.cy;
-			}
-		}
-		SetParent((HWND)pStatusBar[7], (HWND)pSCWnd[7]);
-		SetWindowPos((HWND)pStatusBar[7], HWND_TOP, r.left, r.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
-		SendMessageA((HWND)pStatusBar[7], WM_SETREDRAW, TRUE, 0);
-		InvalidateRect((HWND)pStatusBar[7], 0, TRUE);
-		InvalidateRect((HWND)pThis[7], 0, TRUE);
-		RedrawWindow(GameGetRootWindowHandle(), NULL, NULL, RDW_INVALIDATE | RDW_ALLCHILDREN);
-	}
+	ToggleFloatingStatusDialog(FALSE);
 
 	H_CityToolBarToolMenuDisable(pThis);
 }
@@ -2777,29 +2840,7 @@ extern "C" void __stdcall Hook_CityToolBarToolMenuEnable() {
 
 	void(__thiscall *H_CityToolBarToolMenuEnable)(void *) = (void(__thiscall *)(void *))0x423860;
 
-	DWORD *pSCView;
-	DWORD *pStatusBar;
-	tagRECT r;
-
-	// Revert the change of status bar's parent.
-	// This also prevents the visible anomaly of the floating
-	// status bar being moved vertically as a result of the
-	// parental change.
-	pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
-	pStatusBar = &((DWORD *)pCWndRootWindow)[61];
-	if (bSettingsUseStatusDialog && IsWindowVisible((HWND)pStatusBar[7])) {
-		SendMessageA((HWND)pStatusBar[7], WM_SETREDRAW, FALSE, 0);
-		GetWindowRect((HWND)pStatusBar[7], &r);
-		ScreenToClient(NULL, (LPPOINT)&r.left);
-		SetParent((HWND)pStatusBar[7], NULL);
-		SetWindowPos((HWND)pStatusBar[7], HWND_TOP, r.left, r.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
-		SendMessageA((HWND)pStatusBar[7], WM_SETREDRAW, TRUE, 0);
-		RedrawWindow(GameGetRootWindowHandle(), NULL, NULL, RDW_INVALIDATE | RDW_ALLCHILDREN);
-		InvalidateRect((HWND)pThis[7], 0, TRUE);
-		InvalidateRect((HWND)pStatusBar[7], 0, TRUE);
-		if (pSCView)
-			SetFocus((HWND)pSCView[7]);
-	}
+	ToggleFloatingStatusDialog(TRUE);
 
 	H_CityToolBarToolMenuEnable(pThis);
 }
@@ -2827,7 +2868,7 @@ extern "C" void __stdcall Hook_ShowViewControls() {
 		if (iSCAProgramStep == ONIDLE_STATE_RETURN_12 || !wCityMode)
 			H_MainFrameToggleStatusControlBar(pMainFrm, FALSE);
 		else {
-			if (!bSettingsUseStatusDialog)
+			if (!CanUseFloatingStatusDialog())
 				H_MainFrameToggleStatusControlBar(pMainFrm, TRUE);
 		}
 		H_CFrameWndRecalcLayout(pMainFrm, TRUE);
@@ -2850,7 +2891,6 @@ extern "C" void __stdcall Hook_MainFrameUpdateSections() {
 	void(__thiscall *H_CMyToolBarInvalidateButton)(void *, int) = (void(__thiscall *)(void *, int))0x4029C8;
 	void(__thiscall *H_CCityToolBarUpdateControls)(void *, BOOL) = (void(__thiscall *)(void *, BOOL))0x402A68;
 	CMFC3XString *(__thiscall *H_CStringOperatorSet)(CMFC3XString *, char *) = (CMFC3XString *(__thiscall *)(CMFC3XString *, char *))0x4A2E6A;
-	DWORD *(__stdcall *H_CWndFromHandle)(HWND) = (DWORD *(__stdcall *)(HWND))0x4A3BDF;
 	DWORD *(__stdcall *H_CMenuFromHandle)(HMENU) = (DWORD *(__stdcall *)(HMENU))0x4A7427;
 	int(__thiscall *H_CMenuAttach)(void *, HMENU) = (int(__thiscall *)(void *, HMENU))0x4A7483;
 	BOOL(__thiscall *H_CMenuDestroyMenu)(void *) = (BOOL(__thiscall *)(void *))0x4A74FB;
@@ -2861,7 +2901,6 @@ extern "C" void __stdcall Hook_MainFrameUpdateSections() {
 	DWORD *DisplayLayer = (DWORD *)0x4E9E48;
 
 	HWND hDlgItem;
-	DWORD *pGotoButton;
 	DWORD *pMapToolBar;
 	DWORD *pCityToolBar;
 	int iCityToolBarButton;
@@ -2883,17 +2922,17 @@ extern "C" void __stdcall Hook_MainFrameUpdateSections() {
 	DWORD *pUID;
 	int nGranted;
 	int nReward;
+	unsigned nRewardBit;
 	CMFC3XString *cityToolString;
 	CMFC3XString *pTargMFCString;
 
 	hDlgItem = GetDlgItem((HWND)pThis[68], 120); // Status - GoTo button.
-	pGotoButton = H_CWndFromHandle(hDlgItem);
 	pMapToolBar = &pThis[233];
 	if (!wCityMode)
 		H_CMapToolBarResetControls(pMapToolBar);
 	pCityToolBar = &pThis[102];
 	H_CCityToolBarUpdateControls(pCityToolBar, FALSE);
-	EnableWindow((HWND)pGotoButton[7], 0);
+	ToggleGotoButton(hDlgItem, FALSE);
 	if (wCityMode == GAME_MODE_CITY) {
 		if (wCurrentCityToolGroup == TOOL_GROUP_DISPATCH) {
 			wCurrentCityToolGroup = TOOL_GROUP_CENTERINGTOOL;
@@ -2902,11 +2941,10 @@ extern "C" void __stdcall Hook_MainFrameUpdateSections() {
 		H_CMainFrameDisableCityToolBarButton(pThis, 2);
 		H_CMyToolBarInvalidateButton(pCityToolBar, 2);
 	}
-	else if (wCityMode != GAME_MODE_DISASTER) {
+	else if (wCityMode != GAME_MODE_DISASTER)
 		goto REFRESHMENUGRANTS;
-	}
 	if (wCityMode == GAME_MODE_DISASTER)
-		EnableWindow((HWND)pGotoButton[7], 1);
+		ToggleGotoButton(hDlgItem, TRUE);
 	if (!dwGrantedItems[5]) {
 		H_CMainFrameDisableCityToolBarButton(pThis, 5);
 		H_CMyToolBarInvalidateButton(pCityToolBar, 5);
@@ -2952,9 +2990,12 @@ REFRESHMENUGRANTS:
 			if (nMenuItemCount > 0) {
 				pUID = uIDs;
 				pString = szString;
-				cityToolString = &cityToolGroupStrings[TOOL_GROUP_REWARDS*MAX_CITY_SUBTOOLS]; // calculation here is citytoolbuttongroup * maxsubtools (12 per group), this sets it to TOOL_GROUP_REWARDS.
+				// calculation here is citytoolbuttongroup * maxsubtools (12 per group), this sets it to TOOL_GROUP_REWARDS.
+				cityToolString = &cityToolGroupStrings[TOOL_GROUP_REWARDS*MAX_CITY_SUBTOOLS];
 				do {
-					if (((1 << nReward) & dwGrantedItems[nPos]) != 0) {
+					// (1 << nReward) bit-shifted result of the nReward count.
+					nRewardBit = (1 << nReward);
+					if ((nRewardBit & dwGrantedItems[nPos]) != 0) {
 						if (nPos == TOOL_GROUP_REWARDS && !nGranted) {
 							pThis[220] = nReward;
 							nGranted = 1;
@@ -2975,7 +3016,7 @@ REFRESHMENUGRANTS:
 
 // Placeholder.
 void ShowModSettingsDialog(void) {
-	MessageBox(NULL, "The mod settings dialog has not yet been implemented. Check back later.", "sc2fix", MB_OK);
+	L_MessageBoxA(GameGetRootWindowHandle(), "The mod settings dialog has not yet been implemented. Check back later.", "sc2fix", MB_OK);
 }
 
 // Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
@@ -2999,6 +3040,16 @@ void InstallMiscHooks_SC2K1996(void) {
 		// Install Smacker function hooks
 		*(DWORD*)(0x4EFF00) = (DWORD)Hook_SmackOpen;
 	}
+
+	// Hook into both AfxMessageBox functions
+	VirtualProtect((LPVOID)0x4B232F, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4B232F, Hook_AfxMessageBoxStr);
+	VirtualProtect((LPVOID)0x4B234F, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4B234F, Hook_AfxMessageBoxID);
+
+	// Hook into the CFileDialog::DoModal function
+	VirtualProtect((LPVOID)0x49FE18, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x49FE18, Hook_FileDialogDoModal);
 
 	// Hook into the movie checking function.
 	VirtualProtect((LPVOID)0x402360, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
