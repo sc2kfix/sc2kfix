@@ -4,6 +4,7 @@
 //
 #define IDD_INSTALL                     20101
 #define IDD_SETTINGS                    20102
+#define IDD_SIMULATIONSTATUS            20103
 #define ID_INSTALL_OK                   21001
 #define IDC_EDIT_MAYOR                  21002
 #define IDC_EDIT_COMPANY                21003
@@ -39,6 +40,7 @@
 #define IDC_SETTINGS_CHECK_MP3_MUSIC    21032
 #define IDC_SETTINGS_CHECK_SKIP_INTRO   21033
 #define IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC    21034
+#define IDC_BUTTON_GOTO                 21035
 #define IDR_WAVE_500                    23001
 #define IDR_WAVE_514                    23002
 #define IDR_WAVE_529                    23003
@@ -62,12 +64,12 @@
 #define IDB_COMPASS2                    23038
 #define IDB_COMPASS3                    23039
 #define IDM_GAME_OPTIONS_SC2KFIXSETTINGS 40000
-#define IDM_GAME_OPTIONS_MODCONFIG      40001
-#define IDM_DEBUG_MILITARY_DECLINED     40002
-#define IDM_DEBUG_MILITARY_AIRFORCE     40003
-#define IDM_DEBUG_MILITARY_ARMYBASE     40004
-#define IDM_DEBUG_MILITARY_NAVALYARD    40005
-#define IDM_DEBUG_MILITARY_MISSILESILOS 40006
+#define IDM_GAME_OPTIONS_MODCONFIG       40001
+#define IDM_DEBUG_MILITARY_DECLINED      40002
+#define IDM_DEBUG_MILITARY_AIRFORCE      40003
+#define IDM_DEBUG_MILITARY_ARMYBASE      40004
+#define IDM_DEBUG_MILITARY_NAVALYARD     40005
+#define IDM_DEBUG_MILITARY_MISSILESILOS  40006
 
 // Next default values for new objects
 // 

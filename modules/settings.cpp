@@ -367,5 +367,9 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 }
 
 void ShowSettingsDialog(void) {
-	DialogBox(hSC2KFixModule, MAKEINTRESOURCE(IDD_SETTINGS), NULL, SettingsDialogProc);
+	ToggleFloatingStatusDialog(FALSE);
+
+	DialogBox(hSC2KFixModule, MAKEINTRESOURCE(IDD_SETTINGS), GameGetRootWindowHandle(), SettingsDialogProc);
+
+	ToggleFloatingStatusDialog(TRUE);
 }
