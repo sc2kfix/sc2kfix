@@ -61,10 +61,16 @@ extern "C" void __cdecl Hook_AnimationFunctionSimCity1996(void *pPalette, int iT
 					//       occur; this won't have any effect on the simulation itself since that is temporarily
 					//       suspended during city toolbar dragging (and it doesn't matter during the map toolbar
 					//       dragging case).
-					if (wCityMode)
-						bCityViewAnim = (pCityToolBar && !dwTBToolBarTitleDrag);
-					else
-						bCityViewAnim = (pMapToolBar && !dwTBControlsDisabled);
+					bCityViewAnim = TRUE;
+
+					if (pCityToolBar && dwTBToolBarTitleDrag)
+						bCityViewAnim = FALSE;
+					
+					if (pMapToolBar && dwTBControlsDisabled)
+						bCityViewAnim = FALSE;
+
+					if (CanUseFloatingStatusDialog() && bStatusDialogMoving)
+						bCityViewAnim = FALSE;
 
 					// CMainFrame m_hWnd - only call this specific redraw function before CSimcityView has been created.
 					// (ie, before any game has been started - palette animation on the image is disabled once the
@@ -94,7 +100,6 @@ extern "C" void __cdecl Hook_AnimationFunctionSimCity1995(void *pPalette, int iT
 	BOOL bCityViewAnim;
 
 	DWORD &pCSimcityAppThis1995 = *(DWORD *)0x4C6010;
-	WORD &wCityMode1995 = *(WORD *)0x4C9444;
 	BOOL &bLoColor1995 = *(BOOL *)0x4E903C;
 
 	DWORD *(__thiscall *H_PointerToCSimcityViewClass1995)(void *) = (DWORD *(__thiscall *)(void *))0x4026D0;
@@ -127,10 +132,13 @@ extern "C" void __cdecl Hook_AnimationFunctionSimCity1995(void *pPalette, int iT
 					//       occur; this won't have any effect on the simulation itself since that is temporarily
 					//       suspended during city toolbar dragging (and it doesn't matter during the map toolbar
 					//       dragging case).
-					if (wCityMode1995)
-						bCityViewAnim = (pCityToolBar && !dwTBToolBarTitleDrag);
-					else
-						bCityViewAnim = (pMapToolBar && !dwTBControlsDisabled);
+					bCityViewAnim = TRUE;
+
+					if (pCityToolBar && dwTBToolBarTitleDrag)
+						bCityViewAnim = FALSE;
+
+					if (pMapToolBar && dwTBControlsDisabled)
+						bCityViewAnim = FALSE;
 
 					// CMainFrame m_hWnd - only call this specific redraw function before CSimcityView has been created.
 					// (ie, before any game has been started - palette animation on the image is disabled once the
@@ -160,7 +168,6 @@ extern "C" void __cdecl Hook_AnimationFunctionSimCityDemo(void *pPalette, int iT
 	BOOL bCityViewAnim;
 
 	DWORD &pCSimcityAppThisDemo = *(DWORD *)0x4B6A70;
-	WORD &wCityModeDemo = *(WORD *)0x4B302C;
 	BOOL &bLoColorDemo = *(BOOL *)0x4D1EDC;
 
 	DWORD *(__thiscall *H_PointerToCSimcityViewClassDemo)(void *) = (DWORD *(__thiscall *)(void *))0x402725;
@@ -193,10 +200,13 @@ extern "C" void __cdecl Hook_AnimationFunctionSimCityDemo(void *pPalette, int iT
 					//       occur; this won't have any effect on the simulation itself since that is temporarily
 					//       suspended during city toolbar dragging (and it doesn't matter during the map toolbar
 					//       dragging case).
-					if (wCityModeDemo)
-						bCityViewAnim = (pCityToolBar && !dwTBToolBarTitleDrag);
-					else
-						bCityViewAnim = (pMapToolBar && !dwTBControlsDisabled);
+					bCityViewAnim = TRUE;
+
+					if (pCityToolBar && dwTBToolBarTitleDrag)
+						bCityViewAnim = FALSE;
+
+					if (pMapToolBar && dwTBControlsDisabled)
+						bCityViewAnim = FALSE;
 
 					// CMainFrame m_hWnd - only call this specific redraw function before CSimcityView has been created.
 					// (ie, before any game has been started - palette animation on the image is disabled once the

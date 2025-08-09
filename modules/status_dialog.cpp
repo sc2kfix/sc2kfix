@@ -29,11 +29,14 @@ static DWORD dwDummy;
 
 HANDLE hWeatherBitmaps[13];
 HANDLE hCompassBitmaps[4];
+BOOL bStatusDialogMoving = FALSE;
 
 static HWND hStatusDialog = NULL;
 static HWND hGotoButton = NULL;
 static int iGotoButtonType = GOTO_BTN_TEXT;
 static int iGotoButtonStyle = GOTO_STYLE_3D;
+static tagPOINT ptFloatNew;
+static tagPOINT ptFloatMoving;
 static tagPOINT ptFloat;
 static tagSIZE szFloat;
 static WNDPROC OldGotoButtonWndProc;
@@ -290,13 +293,38 @@ static void OnPaintFloatingStatusBar(HWND hWnd, HDC hDC) {
 	}
 }
 
+void MoveAndBlitStatusWidget(HWND hWnd, int x, int y) {
+	HDC hDC;
+	tagRECT r;
+
+	GetWindowRect(hWnd, &r);
+	hDC = GetDC(0);
+	PatBlt(hDC, x - ptFloatNew.x, y - ptFloatNew.y, r.right - r.left, 2, PATINVERT);
+	PatBlt(hDC, 
+		x + r.right - ptFloatNew.x - r.left,
+		y - ptFloatNew.y,
+		2,
+		r.bottom - r.top,
+		PATINVERT);
+	PatBlt(hDC,
+		x - ptFloatNew.x,
+		y + r.bottom - ptFloatNew.y - r.top,
+		r.right - r.left + 2,
+		2,
+		PATINVERT);
+	PatBlt(hDC, x - ptFloatNew.x, y - ptFloatNew.y + 2, 2, r.bottom - r.top - 2, PATINVERT);
+	ReleaseDC(0, hDC);
+}
+
 BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	LPDRAWITEMSTRUCT lpDIS;
-	tagRECT r;
 	tagPAINTSTRUCT ps;
 	HDC hDC, hDCMem;
 	HANDLE hOld;
 	HBITMAP hBitmapMem;
+	tagPOINT pt;
+
+	DWORD &dwSCADragSuspendSim = *(DWORD *)0x4C7108;
 
 	switch (message) {
 		case WM_INITDIALOG:
@@ -314,9 +342,6 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 				OnDrawGotoButton(lpDIS);
 			return FALSE;
 
-		case WM_ERASEBKGND:
-			return TRUE;
-
 		case WM_PAINT:
 			hDC = BeginPaint(hwndDlg, &ps);
 			hDCMem = CreateCompatibleDC(hDC);
@@ -330,20 +355,33 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 			EndPaint(hwndDlg, &ps);
 			return FALSE;
 
-		case WM_MOVE:
-			// Record the new position.
-			GetWindowRect(hwndDlg, &r);
-			ptFloat.x = r.left;
-			ptFloat.y = r.top;
-			return FALSE;
-
 		case WM_LBUTTONDOWN:
-			// With the following you'll be able to click the client area
-			// of the dialogue and drag it around.
-			// The only detail is that the pointer reverts to the one set
-			// by Windows not the one that's currently active in the game.
-			SendMessage(hwndDlg, WM_SYSCOMMAND, (SC_MOVE | HTCAPTION), 0);
-			return TRUE;
+			pt.x = GET_X_LPARAM(lParam);
+			pt.y = GET_Y_LPARAM(lParam);
+
+			dwSCADragSuspendSim = 1;
+			bStatusDialogMoving = TRUE;
+			ptFloatNew.x = pt.x;
+			ptFloatNew.y = pt.y;
+			SetCapture(hwndDlg);
+			ClientToScreen(hwndDlg, &pt);
+			MoveAndBlitStatusWidget(hwndDlg, pt.x, pt.y);
+			ptFloatMoving.x = pt.x;
+			ptFloatMoving.y = pt.y;
+			break;
+
+		case WM_MOUSEMOVE:
+			if (bStatusDialogMoving) {
+				pt.x = GET_X_LPARAM(lParam);
+				pt.y = GET_Y_LPARAM(lParam);
+
+				ClientToScreen(hwndDlg, &pt);
+				MoveAndBlitStatusWidget(hwndDlg, ptFloatMoving.x, ptFloatMoving.y);
+				ptFloatMoving.x = pt.x;
+				ptFloatMoving.y = pt.y;
+				MoveAndBlitStatusWidget(hwndDlg, pt.x, pt.y);
+			}
+			break;
 
 		// Onbutton/key release set the focus back to the main game
 		// window.
@@ -351,8 +389,25 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 		case WM_MBUTTONUP:
 		case WM_RBUTTONUP:
 		case WM_KEYUP:
+			if (message == WM_LBUTTONUP) {
+				if (bStatusDialogMoving) {
+					pt.x = GET_X_LPARAM(lParam);
+					pt.y = GET_Y_LPARAM(lParam);
+
+					bStatusDialogMoving = FALSE;
+					ReleaseCapture();
+					MoveAndBlitStatusWidget(hwndDlg, ptFloatMoving.x, ptFloatMoving.y);
+					ClientToScreen(hwndDlg, &pt);
+					SetWindowPos(hwndDlg, HWND_TOP, pt.x - ptFloatNew.x, pt.y - ptFloatNew.y, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_SHOWWINDOW);
+
+					// Record the new position.
+					ptFloat.x = pt.x - ptFloatNew.x;
+					ptFloat.y = pt.y - ptFloatNew.y;
+					dwSCADragSuspendSim = 0;
+				}
+			}
 			SetFocus(GameGetRootWindowHandle());
-			return TRUE;
+			break;
 
 		// This will allow for cheat execution if the status widget
 		// has keyboard focus at the time.
@@ -449,7 +504,7 @@ extern "C" void __stdcall Hook_StatusControlBarUpdateStatusBar_SC2K1996(int iEnt
 			H_CStringOperatorSet((CMFC3XString *)&pThis[28], szText);
 			pThis[37] = (DWORD)newColor;
 		}
-		RedrawWindow(hStatusDialog, 0, 0, RDW_INVALIDATE | RDW_NOERASE);
+		RedrawWindow(hStatusDialog, 0, 0, RDW_INVALIDATE);
 	}
 	else
 		H_CStatusControlBarUpdateStatusBar(pThis, iEntry, szText, iArgUnknown, newColor);
