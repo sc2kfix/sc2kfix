@@ -36,7 +36,6 @@ sc2kfix adds the following quality of life and optional gameplay features to Sim
 * Multiple cheat codes from other ports of the game have been restored.
 
 ### Additional enhancements
-
 sc2kfix implements multiple hooks and a work-in-progress framework for detouring and injecting new code into the game. These are documented in the hooks/hooks.md file. These are currently being used to assist in reverse engineering various components of the game's code, but attaching them to eg. a scripting language of some sorts in the future is not entirely unlikely. A framework to enable loading gameplay mods written in C/C++ (or any language that can produce Win32 DLLs, though currently only C/C++ are supported) is being implemented in this development branch, with intent to support various levels of code hooking and gameplay updates for Release 10.
 
 There is also a debugging console that can be enabled by passing "-console" to SimCity 2000 or by enabling the console manually in the in-game "sc2kfix Settings" dialog. While the debugging console generally tries to stop you from doing anything too dangerous, it will happily let you probe any valid memory in the game's address space, which could have adverse effect on any loaded cities. Please be careful when writing to arbitrary memory addresses.
