@@ -216,11 +216,15 @@ extern "C" void _declspec(naked) Hook_QueryJumpTable(void) {
 		mov [iGlobalTileY], bp
 	}
 
+	DWORD *pCityToolBar;
+
+	pCityToolBar = &((DWORD *)pCWndRootWindow)[102];
+
 	// See if we need to intercept
 	if (GetAsyncKeyState(VK_MENU) < 0) {
-		Game_ToolMenuDisable((char*)pCWndRootWindow + 408);
-		DialogBox(hSC2KFixModule, MAKEINTRESOURCE(IDD_ADVANCEDQUERY), NULL, AdvancedQueryDialogProc);
-		Game_ToolMenuEnable((char*)pCWndRootWindow + 408);
+		Game_ToolMenuDisable(pCityToolBar);
+		DialogBox(hSC2KFixModule, MAKEINTRESOURCE(IDD_ADVANCEDQUERY), GameGetRootWindowHandle(), AdvancedQueryDialogProc);
+		Game_ToolMenuEnable(pCityToolBar);
 		__asm popa
 		GAMEJMP(0x43F837)
 	}
