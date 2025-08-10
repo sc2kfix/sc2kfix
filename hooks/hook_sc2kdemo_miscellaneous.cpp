@@ -21,7 +21,7 @@
 static DWORD dwDummy;
 
 extern "C" DWORD *__stdcall Hook_Demo_SimcityAppConstruct() {
-	DWORD pThis;
+	DWORD *pThis;
 
 	__asm mov[pThis], ecx
 
@@ -29,7 +29,7 @@ extern "C" DWORD *__stdcall Hook_Demo_SimcityAppConstruct() {
 
 	DWORD *ret;
 
-	ret = H_Demo_SimcityAppConstruct((void *)pThis);
+	ret = H_Demo_SimcityAppConstruct(pThis);
 	ret[200] = 1;
 
 	return ret;

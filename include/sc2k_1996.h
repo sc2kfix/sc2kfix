@@ -49,6 +49,8 @@
 
 #define MAX_CITY_INVENTION_YEARS 17
 
+#define MAX_CITY_SUBTOOLS 12
+
 #define CORNER_NONE   0x0
 #define CORNER_BLEFT  0x1
 #define CORNER_BRIGHT 0x2
@@ -727,6 +729,16 @@ enum {
 };
 
 enum {
+	LAYER_UNDERGROUND,
+	LAYER_ZONES,
+	LAYER_INFRANATURE,
+	LAYER_SIGNS,
+	LAYER_BUILDINGS,
+
+	LAYER_COUNT
+};
+
+enum {
 	ZONEPOP_ALL,
 	ZONEPOP_RESLIGHT,
 	ZONEPOP_RESDENSE,
@@ -757,6 +769,132 @@ enum {
 	TOOL_GROUP_QUERY,
 	TOOL_GROUP_CENTERINGTOOL
 };
+
+// -- City Subtool enums --
+
+enum {
+	BULLDOZER_DEMOLISH,
+	BULLDOZER_LEVEL,
+	BULLDOZER_RAISE,
+	BULLDOZER_LOWER,
+	BULLDOZER_DEZONE,
+
+	BULLDOZER_COUNT
+};
+
+enum {
+	NATURE_TREES,
+	NATURE_WATER,
+
+	NATURE_COUNT
+};
+
+enum {
+	DISPATCH_POLICE,
+	DISPATCH_FIRE,
+	DISPATCH_MILITARY,
+
+	DISPATCH_COUNT
+};
+
+enum {
+	POWER_WIRES,
+	POWER_PLANTS,
+
+	POWER_COUNT
+};
+
+enum {
+	WATER_PIPES,
+	WATER_PUMP,
+	WATER_TOWER,
+	WATER_TREATMENT,
+	WATER_DESALINIZATION,
+
+	WATER_COUNT
+};
+
+// When 'REWARDS_ARCOLOGIES_WAITING' is selected
+// with wCurrentCityToolGroup == TOOL_GROUP_REWARDS,
+// the tile highlighting is always off.
+enum {
+	REWARDS_MAYORSHOUSE,
+	REWARDS_CITYHALL,
+	REWARDS_STATUE,
+	REWARDS_BRAUNLLAMADOME,
+	REWARDS_ARCOLOGIES_WAITING,
+	REWARDS_ARCOLOGIES_P,
+	REWARDS_ARCOLOGIES_F,
+	REWARDS_ARCOLOGIES_D,
+	REWARDS_ARCOLOGIES_L,
+
+	REWARDS_COUNT
+};
+
+enum {
+	ROADS_ROAD,
+	ROADS_HIGHWAY,
+	ROADS_TUNNEL,
+	ROADS_ONRAMP,
+	ROADS_BUSSTATION,
+
+	ROADS_COUNT
+};
+
+enum {
+	RAILS_RAIL,
+	RAILS_SUBWAY,
+	RAILS_DEPOT,
+	RAILS_SUBSTATION,
+	RAILS_SUBTORAIL,
+
+	RAILS_COUNT
+};
+
+enum {
+	PORTS_SEAPORT,
+	PORTS_AIRPORT,
+
+	PORTS_COUNT
+};
+
+// Residential, Commercial and Industrial
+enum {
+	ZONES_LOW,
+	ZONES_HIGH,
+
+	ZONES_COUNT
+};
+
+enum {
+	EDUCATION_SCHOOL,
+	EDUCATION_COLLEGE,
+	EDUCATION_LIBRARY,
+	EDUCATION_MUSEUM,
+
+	EDUCATION_COUNT
+};
+
+enum {
+	SERVICES_POLICE,
+	SERVICES_FIRESTATION,
+	SERVICES_HOSPITAL,
+	SERVICES_PRISON,
+
+	SERVICES_COUNT
+};
+
+enum {
+	PARKS_SMALLPARK,
+	PARKS_BIGPARK,
+	PARKS_ZOO,
+	PARKS_STADIUM,
+	PARKS_MARINA,
+
+	PARKS_COUNT
+};
+
+// -- City Subtool enums --
 
 enum {
 	MAPTOOL_GROUP_BULLDOZER = 0,
@@ -941,13 +1079,13 @@ GAMECALL(0x401E47, BOOL, __cdecl, UseBulldozer, __int16 iTileTargetX, __int16 iT
 GAMECALL(0x401EA1, int, __cdecl, MapToolLowerTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x401FA0, int, __cdecl, CheckAdjustTerrainAndPlacePowerLines, __int16 x, __int16 y)
 GAMECALL(0x40209F, __int16, __cdecl, SpawnTrain, __int16 x, __int16 y)
-GAMECALL(0x402211, unsigned int, __thiscall, DestroyStructure, DWORD *pThis, __int16 x, __int16 y, int iExplosion)
+GAMECALL(0x402211, unsigned int, __thiscall, DestroyStructure, void *pThis, __int16 x, __int16 y, int iExplosion)
 GAMECALL(0x40226B, int, __thiscall, UpdateAreaPortionFill, void *) // This appears to do a partial update of selected/highlighted area while appearing to dispense with immediate color updates.
 GAMECALL(0x402289, char, __cdecl, PerhapsGeneralZoneChooseAndPlaceBuilding, __int16 x, __int16 y, __int16 iBuildingPopLevel, __int16)
-GAMECALL(0x40235B, int, __thiscall, DrawSquareHighlight, DWORD *pThis, WORD wX1, WORD wY1, WORD wX2, WORD wY2)
+GAMECALL(0x40235B, int, __thiscall, DrawSquareHighlight, void *pThis, WORD wX1, WORD wY1, WORD wX2, WORD wY2)
 GAMECALL(0x4023B0, int, __cdecl, IsValidTransitItems, __int16 x, __int16 y)
 GAMECALL(0x4023EC, void, __stdcall, ToolMenuUpdate, void)
-GAMECALL(0x402414, int, __thiscall, MusicPlay, DWORD pThis, int iSongID)
+GAMECALL(0x402414, int, __thiscall, MusicPlay, void *pThis, int iSongID)
 GAMECALL(0x402478, int, __cdecl, SpawnHelicopter, __int16 x, __int16 y)
 GAMECALL(0x4024FA, char, __cdecl, PerhapsGeneralZoneChangeBuilding, __int16 x, __int16 y, __int16 iBuldingPopLevel, int iTileID)
 GAMECALL(0x40258B, int, __cdecl, GetScreenCoordsFromTileCoords, __int16 iTileTargetX, __int16 iTileTargetY, WORD *wNewScreenPointX, WORD *wNewScreenPointY)
@@ -956,7 +1094,7 @@ GAMECALL(0x402699, DWORD *, __thiscall, PointerToCSimcityViewClass, void* CSimci
 GAMECALL(0x4026B2, int, __cdecl, SimulationGrowSpecificZone, __int16 x, __int16 y, __int16 iTileID, __int16 iZoneType)
 GAMECALL(0x402725, int, __cdecl, PlacePowerLinesAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x402798, int, __cdecl, MapToolPlaceForest, __int16 iTileTargetX, __int16 iTileTargetY)
-GAMECALL(0x4027A7, int, __thiscall, CSimCityView_OnVScroll, DWORD pThis, int nSBCode, __int16 nPos, int pScrollBar)
+GAMECALL(0x4027A7, void, __thiscall, CSimCityView_OnVScroll, void *pThis, int nSBCode, __int16 nPos, DWORD *pScrollBar)
 GAMECALL(0x4027F2, int, __cdecl, ItemPlacementCheck, __int16 x, int y, __int16 iTileID, __int16 iTileArea)
 GAMECALL(0x402810, int, __thiscall, UpdateAreaCompleteColorFill, void *) // This appears to be a more comprehensive update that'll occur for highlighted/selected area or when you're moving the game area.
 GAMECALL(0x40281F, int, __cdecl, UpdateDisasterAndTransitStats, __int16 x, __int16 y, __int16 iZoneType, __int16 iBuildingPopLevel, __int16)
@@ -970,18 +1108,18 @@ GAMECALL(0x402B44, __int16, __cdecl, MapToolMenuAction, int iMouseKeys, POINT pt
 GAMECALL(0x402B94, int, __cdecl, MapToolLevelTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x402C25, int, __cdecl, CityToolMenuAction, int iMouseKeys, POINT pt)
 GAMECALL(0x402CF2, void, __thiscall, SimcityAppSetGameCursor, void *pThis, int iNewCursor, BOOL bActive)
-GAMECALL(0x402F9A, int, __thiscall, GetScreenAreaInfo, DWORD pThis, LPRECT lpRect)
+GAMECALL(0x402F9A, void, __thiscall, GetScreenAreaInfo, void *pThis, LPRECT lpRect)
 GAMECALL(0x480140, void, __stdcall, LoadSoundBuffer, int iSoundID, void* pBuffer)
 GAMECALL(0x48A810, DWORD, __cdecl, Direct_MovieCheck, char *sMovStr)
 
 
 // MFC function pointers. Use with care.
 GAMECALL(0x4017B2, void, __thiscall, RefreshTitleBar, void* pThis)
-GAMECALL(0x40C3E0, void, __thiscall, CFrameWnd_ShowStatusBar, HWND* pThis, HWND hWnd)
-GAMECALL(0x4A3BDF, struct CWnd *, __stdcall, CWnd_FromHandle, HWND hWnd)
+GAMECALL(0x4A3BDF, DWORD *, __stdcall, CWnd_FromHandle, HWND hWnd)
 GAMECALL(0x4AA573, void, __thiscall, CWinApp_OnAppExit, void *pThis)
 GAMECALL(0x4AE0BC, void, __thiscall, CDocument_UpdateAllViews, void* pThis, void* pSender, int lHint, void* pHint)
-GAMECALL(0x4B234F, int, __stdcall, AfxMessageBox, unsigned int nIDPrompt, unsigned int nType, unsigned int nIDHelp)
+GAMECALL(0x4B232F, int, __stdcall, AfxMessageBoxStr, LPCTSTR lpszPrompt, UINT nType, UINT nIDHelp)
+GAMECALL(0x4B234F, int, __stdcall, AfxMessageBoxID, UINT nIDPrompt, UINT nType, UINT nIDHelp)
 
 // Random calls.
 GAMECALL(0x40116D, __int16, __cdecl, RandomWordLCGMod, __int16 iSeed)
