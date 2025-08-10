@@ -302,14 +302,14 @@ extern "C" int __stdcall Hook_FileDialogDoModal() {
 	HWND hWndOwner;
 	bool bIsReserved;
 	int iRet;
-	tagOFNA *pOfn;
+	OPENFILENAMEA* pOfn;
 
 	ToggleFloatingStatusDialog(FALSE);
 
 	hWndOwner = H_DialogPreModal(pThis);
 	bIsReserved = pThis[36] == 0;
 	pThis[18] = (DWORD)hWndOwner;
-	pOfn = (tagOFNA *)(pThis + 17);
+	pOfn = (OPENFILENAMEA*)(pThis + 17);
 	if (bIsReserved)
 		iRet = H_GetSaveFileNameA(pOfn);
 	else
@@ -2242,7 +2242,7 @@ static void L_TileHighlightUpdate(DWORD *pThis) {
 	BYTE *(__thiscall *H_GraphicsLockDIBBits)(void *) = (BYTE *(__thiscall *)(void *))0x402DA1;
 
 	DWORD &pSomeWnd = *(DWORD *)0x4CAC18; // Perhaps this is the active view window? (unclear - but this is referenced in the native TileHighlightUpdate function)
-	tagRECT &dRect = *(tagRECT *)0x4CAD48;
+	RECT &dRect = *(RECT *)0x4CAD48;
 
 	if (wTileHighlightActive) {
 		vBits = H_GraphicsLockDIBBits((void *)pThis[13]);
@@ -2562,7 +2562,7 @@ extern "C" void __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(UINT nFlags, POINT pt
 	__asm mov [pThis], ecx
 
 	HWND hWnd;
-	tagRECT r;
+	RECT r;
 	const RECT *SCVScrollPosVertRect;
 
 	// pThis[19] = SCVScrollBarVert
@@ -2805,7 +2805,7 @@ extern "C" int __stdcall Hook_StartupGraphics() {
 	colStruct *pCol;
 	DWORD pvIn;
 	DWORD pvOut;
-	tagLOGPAL plPal;
+	LOGPAL plPal;
 
 	HDC &hDC_Global = *(HDC *)0x4EA03C;
 	HPALETTE &hLoColor = *(HPALETTE *)0x4EA044;

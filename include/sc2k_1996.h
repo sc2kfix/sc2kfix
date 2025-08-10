@@ -1179,7 +1179,7 @@ GAMEOFF(WORD,	wNationalTax,				0x4CA938)
 GAMEOFF(WORD,	wCurrentDisasterID,			0x4CA93C)
 GAMEOFF(DWORD,	dwCityOrdinances,			0x4CAA40)
 GAMEOFF(DWORD,	dwPowerUsedPercentage,		0x4CAA50)
-GAMEOFF(tagPOINT,	dwDisasterPoint,		0x4CAA58)
+GAMEOFF(POINT,	dwDisasterPoint,			0x4CAA58)
 GAMEOFF(DWORD,	dwCityPopulation,			0x4CAA74)
 GAMEOFF_ARR(DWORD, dwNeighborPopulation,	0x4CAD10)		// DWORD dwNeighborPopulation[4]
 GAMEOFF(DWORD,	dwCityFame,					0x4CAD28)		// Unused in vanilla game
