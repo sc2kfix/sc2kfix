@@ -399,9 +399,15 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, &dwConsoleThreadID);
 		}
 
-		// Load native code mods.
-		if (!bSkipLoadingMods && !bSettingsDontLoadMods)
-			LoadNativeCodeMods();
+		// Set up the modding infrastructure for the 1996 Special Edition version.
+		if (dwDetectedVersion == SC2KVERSION_1996) {
+			// Initialize the Kuroko VM
+			CreateThread(NULL, 0, KurokoThread, 0, 0, &dwKurokoThreadID);
+
+			// Load native code mods.
+			if (!bSkipLoadingMods && !bSettingsDontLoadMods)
+				LoadNativeCodeMods();
+		}
 
 		break;
 
