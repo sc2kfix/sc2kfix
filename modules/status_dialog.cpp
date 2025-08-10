@@ -35,10 +35,10 @@ static HWND hStatusDialog = NULL;
 static HWND hGotoButton = NULL;
 static int iGotoButtonType = GOTO_BTN_TEXT;
 static int iGotoButtonStyle = GOTO_STYLE_3D;
-static tagPOINT ptFloatNew;
-static tagPOINT ptFloatMoving;
-static tagPOINT ptFloat;
-static tagSIZE szFloat;
+static POINT ptFloatNew;
+static POINT ptFloatMoving;
+static POINT ptFloat;
+static SIZE szFloat;
 static WNDPROC OldGotoButtonWndProc;
 
 BOOL CanUseFloatingStatusDialog() {
@@ -60,13 +60,13 @@ static void OnDrawGotoButton(LPDRAWITEMSTRUCT lpDIS) {
 	HDC hDC, hDCMem;
 	HBITMAP hBitmap, hBitmapMem;
 	HANDLE hOld;
-	tagRECT r;
+	RECT r;
 	UINT nState;
 	HWND hWndItem;
 	LONG iWidth, iHeight;
 	COLORREF colBtnShadow, colBtnFace, colBtnHighlight, colWinFrame;
 	HBRUSH hBrush;
-	tagBITMAP bm;
+	BITMAP bm;
 	char szBuf[128 + 1];
 
 	memset(szBuf, 0, sizeof(szBuf));
@@ -194,7 +194,7 @@ LRESULT CALLBACK NewGotoButtonWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 }
 
 static void SetGotoButtonAttributes(HWND hWnd) {
-	tagRECT wndRect;
+	RECT wndRect;
 
 	if (hGotoButton)
 		return;
@@ -220,9 +220,9 @@ static void OnPaintFloatingStatusBar(HWND hWnd, HDC hDC) {
 	LONG top;
 	LONG right;
 	LONG bottom;
-	tagRECT r;
+	RECT r;
 	HDC hDCBits;
-	tagBITMAP bm;
+	BITMAP bm;
 	DWORD *pStatusBar;
 
 	// We're using the brushes and colours from the main program.
@@ -295,7 +295,7 @@ static void OnPaintFloatingStatusBar(HWND hWnd, HDC hDC) {
 
 void MoveAndBlitStatusWidget(HWND hWnd, int x, int y) {
 	HDC hDC;
-	tagRECT r;
+	RECT r;
 
 	GetWindowRect(hWnd, &r);
 	hDC = GetDC(0);
@@ -318,11 +318,11 @@ void MoveAndBlitStatusWidget(HWND hWnd, int x, int y) {
 
 BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	LPDRAWITEMSTRUCT lpDIS;
-	tagPAINTSTRUCT ps;
+	PAINTSTRUCT ps;
 	HDC hDC, hDCMem;
 	HANDLE hOld;
 	HBITMAP hBitmapMem;
-	tagPOINT pt;
+	POINT pt;
 
 	DWORD &dwSCADragSuspendSim = *(DWORD *)0x4C7108;
 

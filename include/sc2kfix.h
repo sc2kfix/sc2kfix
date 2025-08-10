@@ -81,7 +81,7 @@ typedef struct tagLOGPAL {
 
 typedef struct testColStruct {
 	WORD wPos;
-	tagPALETTEENTRY pe;
+	PALETTEENTRY pe;
 } colStruct;
 
 typedef struct COLORTABLE_STRUCT {
