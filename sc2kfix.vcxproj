@@ -89,6 +89,7 @@
     <ClCompile Include="modules\status_dialog.cpp" />
     <ClCompile Include="modules\update_notifier.cpp" />
     <ClCompile Include="modules\smk.cpp" />
+    <ClCompile Include="saveload.cpp" />
     <ClCompile Include="utility.cpp" />
   </ItemGroup>
   <ItemGroup>

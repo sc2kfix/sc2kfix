@@ -3106,6 +3106,10 @@ void InstallMiscHooks_SC2K1996(void) {
 	NEWCALL((LPVOID)0x434BEA, Hook_LoadNeighborConnections1500);
 	*(BYTE*)0x434BEF = 0x90;
 
+	// Install save/load hooks
+	extern void InstallSaveHooks(void);
+	InstallSaveHooks();
+
 	// Hook into the ResetGameVars function.
 	VirtualProtect((LPVOID)0x401F05, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x401F05, Hook_ResetGameVars);
