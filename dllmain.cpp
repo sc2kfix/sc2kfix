@@ -409,6 +409,7 @@ LONG WINAPI CrashHandler(LPEXCEPTION_POINTERS lpExceptions) {
 	STACKFRAME stStackFrame = { 0 };
 	CONTEXT stContext = { 0 };
 	BOOL bHaveDebugSyms = FALSE;
+	int iStackFrameLimit = 20;
 
 	// She's dead, Jim.
 	bGameDead = TRUE;
@@ -433,12 +434,12 @@ LONG WINAPI CrashHandler(LPEXCEPTION_POINTERS lpExceptions) {
 	ConsoleLog(LOG_EMERGENCY, "CORE: Faulting Module:  %s\n", szModuleName);
 	ConsoleLog(LOG_EMERGENCY, "CORE: Faulting Address: 0x%08X\n", (DWORD)lpExceptions->ContextRecord->Eip);
 	if ((DWORD)lpExceptions->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION) {
-		if ((DWORD)lpExceptions->ContextRecord->Eip == (DWORD)lpExceptions->ExceptionRecord->ExceptionAddress)
+		if ((DWORD)lpExceptions->ContextRecord->Eip == (DWORD)lpExceptions->ExceptionRecord->ExceptionInformation[1])
 			ConsoleLog(LOG_EMERGENCY, "CORE: Exception Cause:  Execution of address 0x%08X\n", (DWORD)lpExceptions->ContextRecord->Eip);
 		else if ((DWORD)lpExceptions->ExceptionRecord->ExceptionInformation[0])
-			ConsoleLog(LOG_EMERGENCY, "CORE: Exception Cause:  Write of address 0x%08X\n", (DWORD)lpExceptions->ExceptionRecord->ExceptionAddress);
+			ConsoleLog(LOG_EMERGENCY, "CORE: Exception Cause:  Write of address 0x%08X\n", (DWORD)lpExceptions->ExceptionRecord->ExceptionInformation[1]);
 		else
-			ConsoleLog(LOG_EMERGENCY, "CORE: Exception Cause:  Read of address 0x%08X\n", (DWORD)lpExceptions->ExceptionRecord->ExceptionAddress);
+			ConsoleLog(LOG_EMERGENCY, "CORE: Exception Cause:  Read of address 0x%08X\n", (DWORD)lpExceptions->ExceptionRecord->ExceptionInformation[1]);
 	}
 
 	ConsoleLog(LOG_EMERGENCY, "CORE: \n");
@@ -456,7 +457,7 @@ LONG WINAPI CrashHandler(LPEXCEPTION_POINTERS lpExceptions) {
 	RtlCaptureContext(&stContext);
 
 	// Unwind and dump the stack
-	while (StackWalk(IMAGE_FILE_MACHINE_I386, hFaultingProcess, hFaultingThread, &stStackFrame, &stContext, NULL, SymFunctionTableAccess, SymGetModuleBase, NULL)) {
+	while (StackWalk(IMAGE_FILE_MACHINE_I386, hFaultingProcess, hFaultingThread, &stStackFrame, lpExceptions->ContextRecord, NULL, SymFunctionTableAccess, SymGetModuleBase, NULL)) {
 		std::string strSymbolInfo;
 		DWORD dwDisplacement = 0;
 		char szCurrentModuleName[64];
@@ -477,12 +478,29 @@ LONG WINAPI CrashHandler(LPEXCEPTION_POINTERS lpExceptions) {
 		strSymbolInfo += "()";
 
 		ConsoleLog(LOG_EMERGENCY, "CORE:  - 0x%08X  0x%08X  0x%08X  %s\n", stStackFrame.AddrPC.Offset, stStackFrame.AddrStack.Offset, stStackFrame.AddrFrame.Offset, strSymbolInfo.c_str());
+		if (!--iStackFrameLimit) {
+			ConsoleLog(LOG_EMERGENCY, "CORE: !!!WARNING!!! Reached stack frame unwind limit; stack corruption VERY LIKELY!\n");
+			break;
+		}
 	}
 
 	ConsoleLog(LOG_EMERGENCY, "CORE:\n");
 	ConsoleLog(LOG_EMERGENCY, "CORE: End of stack trace. Time to die.\n");
 	
-	MessageBox(GameGetRootWindowHandle(), "sc2kfix has detected an unhandled top-level exception in SimCity 2000. If you have the console open, check the console for details. Fault information has been logged to the console and to sc2kfix.log.\n\nClicking the OK button will immediately terminate SimCity 2000. Any unsaved process will be lost.", "She's dead, Jim.", MB_OK | MB_ICONSTOP);
+	MessageBox(GetActiveWindow(),
+		"sc2kfix has detected an unhandled top-level exception in SimCity 2000. If you have the "
+		"console open, check the console for details. Fault information has been logged to the "
+		"console and to sc2kfix.log.\n\n"
+
+		"Please submit a crash report to the sc2kfix developers either via the sc2kfix GitHub "
+		"issues page (https://github.com/sc2kfix/sc2kfix/issues -- preferred) or via the sc2kfix "
+		"Discord server (https://sc2kfix.net/discord). In order for us to best assist with the "
+		"crash, please make a copy of the sc2kfix.log file after closing this dialog and before "
+		"you re-open SimCity 2000. Submit this copy of the log file along with your crash report, "
+		"and we will do our best to investigate.\n\n"
+		
+		"Clicking the OK button will immediately terminate SimCity 2000. Any unsaved progress "
+		"will be lost.", "sc2kfix fatal error", MB_OK | MB_ICONSTOP);
 	return EXCEPTION_EXECUTE_HANDLER;
 }
 
