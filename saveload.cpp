@@ -24,7 +24,7 @@
 #define SC2X_DEBUG_JSON_LOAD 16
 #define SC2X_DEBUG_JSON_SAVE 32
 
-#define SC2X_DEBUG DEBUG_FLAGS_EVERYTHING
+#define SC2X_DEBUG DEBUG_FLAGS_NONE
 
 #ifdef DEBUGALL
 #undef SC2X_DEBUG
@@ -123,7 +123,7 @@ void __declspec(naked) Hook_431212(void) {
 		MessageBox(GetActiveWindow(),
 			"sc2kfix has detected a corrupted save file but was unable to recover enough information to "
 			"attempt to fix it. Your game is likely to crash after closing this dialog box. Please file"
-			"a save corruption report on the sc2kfix GitHub issues page (https://github.com/sc2kfix/issues).\n\n"
+			"a save corruption report on the sc2kfix GitHub issues page (https://github.com/sc2kfix/sc2kfix/issues).\n\n"
 
 			"Developer info:\n"
 			"Save header corrupted (FORM header chunk size 0)\n"
@@ -143,7 +143,7 @@ void __declspec(naked) Hook_431212(void) {
 		"SimCity 2000, and load the new save.\n\n"
 
 		"If the game crashes after closing this dialog box or after reloading the new save file, "
-		"please file a report on the sc2kfix GitHub issues page (https://github.com/sc2kfix/issues).\n\n"
+		"please file a report on the sc2kfix GitHub issues page (https://github.com/sc2kfix/sc2kfix/issues).\n\n"
 
 		"Developer info:\n"
 		"Save header corrupted (FORM header chunk size 0)", "sc2kfix warning", MB_OK | MB_ICONWARNING);
