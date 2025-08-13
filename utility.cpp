@@ -2,7 +2,6 @@
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
@@ -343,6 +342,29 @@ HOOKEXT_CPP size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned c
 
 // end of base64 code
 
+int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize) {
+	int i = 0, j = 0;
+
+	for (; i < iCompressedSize && j < iBufSize;) {
+		if (pCompressedData[i] < 128) {
+			memcpy(pBuffer + j, pCompressedData + i + 1, pCompressedData[i]);
+			j += pCompressedData[i];
+			i += pCompressedData[i] + 1;
+		}
+		else if (pCompressedData[i] > 128) {
+			memset(pBuffer + j, pCompressedData[i + 1], pCompressedData[i] - 127);
+			j += pCompressedData[i] - 127;
+			i += 2;
+		}
+		else
+			ConsoleLog(LOG_WARNING, "LOAD: Unexpected 0x80 in MaxisDecompress. This should never happen.\n");
+	}
+	extern UINT sc2x_debug;
+	if (sc2x_debug & 4)
+		ConsoleLog(LOG_DEBUG, "LOAD: Uncompressed %d bytes into %d bytes.\n", i, j);
+	return j;
+}
+
 HOOKEXT_CPP json::JSON json::Array() {
 	return std::move(json::JSON::Make(json::JSON::Class::Array));
 }
@@ -370,6 +392,25 @@ HOOKEXT_CPP json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBig
 			jsonArray.append<DWORD>(dwArray[i]);
 	}
 	return jsonArray;
+}
+
+HOOKEXT_CPP json::JSON EncodeBudgetArray(DWORD* dwBudgetArray, BOOL bBigEndian) {
+	json::JSON jsonObject = json::Object();
+	jsonObject["iCurrentCosts"] = DWORD_NTOHL_CHECK(dwBudgetArray[0]);
+	jsonObject["iFundingPercent"] = DWORD_NTOHL_CHECK(dwBudgetArray[1]);
+	jsonObject["iYearToDateCost"] = DWORD_NTOHL_CHECK(dwBudgetArray[2]);
+
+	jsonObject["iCountMonth"] = json::Array<DWORD>(
+		DWORD_NTOHL_CHECK(dwBudgetArray[3]), DWORD_NTOHL_CHECK(dwBudgetArray[5]), DWORD_NTOHL_CHECK(dwBudgetArray[7]),
+		DWORD_NTOHL_CHECK(dwBudgetArray[9]), DWORD_NTOHL_CHECK(dwBudgetArray[11]), DWORD_NTOHL_CHECK(dwBudgetArray[13]),
+		DWORD_NTOHL_CHECK(dwBudgetArray[15]), DWORD_NTOHL_CHECK(dwBudgetArray[17]), DWORD_NTOHL_CHECK(dwBudgetArray[19]),
+		DWORD_NTOHL_CHECK(dwBudgetArray[21]), DWORD_NTOHL_CHECK(dwBudgetArray[23]), DWORD_NTOHL_CHECK(dwBudgetArray[25]));
+	jsonObject["iFundMonth"] = json::Array<DWORD>(
+		DWORD_NTOHL_CHECK(dwBudgetArray[4]), DWORD_NTOHL_CHECK(dwBudgetArray[6]), DWORD_NTOHL_CHECK(dwBudgetArray[8]),
+		DWORD_NTOHL_CHECK(dwBudgetArray[10]), DWORD_NTOHL_CHECK(dwBudgetArray[12]), DWORD_NTOHL_CHECK(dwBudgetArray[14]),
+		DWORD_NTOHL_CHECK(dwBudgetArray[16]), DWORD_NTOHL_CHECK(dwBudgetArray[18]), DWORD_NTOHL_CHECK(dwBudgetArray[20]),
+		DWORD_NTOHL_CHECK(dwBudgetArray[22]), DWORD_NTOHL_CHECK(dwBudgetArray[24]), DWORD_NTOHL_CHECK(dwBudgetArray[26]));
+	return jsonObject;
 }
 
 // Scary function! Overflows abound! Be careful!
