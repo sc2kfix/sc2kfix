@@ -460,7 +460,23 @@ BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
 	return TRUE;
 }
 
+static void test1(void) {
+	__asm {
+		xor eax, eax
+		xor ebx, ebx
+		xor edx, edx
+		idiv ebx
+	}
+}
+static void test2(void) {
+	test1();
+}
+static void test3(void) {
+	test2();
+}
+
 static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments) {
+	test3();
 	return TRUE;
 }
 
