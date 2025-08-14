@@ -71,11 +71,15 @@ typedef struct {
 HOOKEXT void CenterDialogBox(HWND hwndDlg);
 HOOKEXT HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText);
 HOOKEXT const char* HexPls(UINT uNumber, int width);
+#if !NOKUROKO
 HOOKEXT const char* FormatVersion(int iMajor, int iMinor, int iPatch);
+#endif
 HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...);
 HOOKEXT const char* GetLowHighScale(BYTE bScale);
 HOOKEXT BOOL FileExists(const char* name);
+#if !NOKUROKO
 HOOKEXT const char* GetModsFolderPath(void);
+#endif
 HOOKEXT const char* GetOnIdleStateEnumName(int iState);
 HOOKEXT BOOL WritePrivateProfileIntA(const char* section, const char* name, int value, const char* ini_name);
 

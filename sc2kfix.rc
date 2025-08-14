@@ -51,8 +51,13 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
+#if NOKUROKO
+ FILEVERSION 0,9,4,0
+ PRODUCTVERSION 0,9,4,0
+#else
  FILEVERSION 0,10,0,0
  PRODUCTVERSION 0,10,0,0
+#endif
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -69,12 +74,20 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "sc2kfix Project"
             VALUE "FileDescription", "Bugfix and modding DLL for SimCity 2000: Special Edition"
+#if NOKUROKO
+            VALUE "FileVersion", "0.9.4.0"
+#else
             VALUE "FileVersion", "0.10.0.0"
+#endif
             VALUE "InternalName", "sc2kfix.dll"
             VALUE "LegalCopyright", "Copyright (C) 2025 sc2kfix Project"
             VALUE "OriginalFilename", "sc2kfix.dll"
             VALUE "ProductName", "sc2kfix"
+#if NOKUROKO
+            VALUE "ProductVersion", "0.9.4.0"
+#else
             VALUE "ProductVersion", "0.10.0.0"
+#endif
         END
     END
     BLOCK "VarFileInfo"

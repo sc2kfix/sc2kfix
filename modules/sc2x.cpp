@@ -1,5 +1,7 @@
 // sc2kfix modules/sc2x.cpp: JSON-based extensible save game file format
+//                           and hooks for fixing save/load bugs
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+
 
 #undef UNICODE
 #include <windows.h>
@@ -30,10 +32,17 @@
 #define SC2X_DEBUG DEBUG_FLAGS_EVERYTHING
 #endif
 
+#if NOKUROKO
+#define BAILOUT(s, ...) do { \
+	ConsoleLog(LOG_ERROR, "SAVE: " s, __VA_ARGS__); \
+	return 0; \
+} while (0)
+#else
 #define BAILOUT(s, ...) do { \
 	ConsoleLog(LOG_ERROR, "SC2X: " s, __VA_ARGS__); \
 	return 0; \
 } while (0)
+#endif
 
 UINT sc2x_debug = SC2X_DEBUG;
 
@@ -645,8 +654,10 @@ BOOL SC2XLoadVanillaGame(DWORD* pThis, const char* szFileName) {
 }
 #endif
 
+#if !NOKUROKO
 std::vector<hook_function_t> stHooks_Hook_LoadGame_Before;
 std::vector<hook_function_t> stHooks_Hook_LoadGame_After;
+#endif
 
 extern "C" DWORD __stdcall Hook_LoadGame(void* pFile, char* src) {
 	DWORD(__thiscall * H_SimcityAppDoLoadGame)(void*, void*, char*) = (DWORD(__thiscall*)(void*, void*, char*))0x4302E0;
@@ -657,32 +668,52 @@ extern "C" DWORD __stdcall Hook_LoadGame(void* pFile, char* src) {
 
 	szLoadFileName = src;
 	if (sc2x_debug & SC2X_DEBUG_LOAD)
+#if NOKUROKO
+		ConsoleLog(LOG_DEBUG, "LOAD: Loading saved game \"%s\".\n", szLoadFileName);
+#else
 		ConsoleLog(LOG_DEBUG, "SC2X: Loading saved game \"%s\".\n", szLoadFileName);
+#endif
 
 	std::ifstream infile(szLoadFileName, std::ios::binary | std::ios::ate);
 	if (infile.is_open()) {
 		iCorruptedFixupSize = infile.tellg();
 		iCorruptedFixupSize -= 8;
 		if (sc2x_debug & SC2X_DEBUG_LOAD)
+#if NOKUROKO
+			ConsoleLog(LOG_DEBUG, "LOAD: Saved game iCorruptedFixupSize is %d bytes.\n", iCorruptedFixupSize);
+#else
 			ConsoleLog(LOG_DEBUG, "SC2X: Saved game iCorruptedFixupSize is %d bytes.\n", iCorruptedFixupSize);
+#endif
 		infile.close();
-	} else {
+	}
+	else {
+#if NOKUROKO
+		ConsoleLog(LOG_WARNING, "LOAD: Couldn't open saved game \"%s\" to determine iCorruptedFixupSize.\n", szLoadFileName);
+		ConsoleLog(LOG_WARNING, "LOAD: If this save is corrupted, sc2kfix will not be able to attempt to fix it.\n");
+#else
 		ConsoleLog(LOG_WARNING, "SC2X: Couldn't open saved game \"%s\" to determine iCorruptedFixupSize.\n", szLoadFileName);
 		ConsoleLog(LOG_WARNING, "SC2X: If this save is corrupted, sc2kfix will not be able to attempt to fix it.\n");
+#endif
 		iCorruptedFixupSize = 0;
 	}
 
+#if !NOKUROKO
 	for (const auto& hook : stHooks_Hook_LoadGame_Before) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
 			void (*fnHook)(void*, void*, char*) = (void(*)(void*, void*, char*))hook.pFunction;
 			fnHook(pThis, pFile, src);
 		}
 	}
+#endif
 
 	// Make sure it's an .sc2 file and attempt to load if so.
 	if (std::regex_search(szLoadFileName, std::regex("\\.[Ss][Cc]2$"))) {
 		if (sc2x_debug & SC2X_DEBUG_LOAD)
+#if NOKUROKO
+			ConsoleLog(LOG_DEBUG, "LOAD: Saved game is a vanilla SC2 file. Passing control to SC2K.\n");
+#else
 			ConsoleLog(LOG_DEBUG, "SC2X: Saved game is a vanilla SC2 file.\n");
+#endif
 
 #ifdef SC2X_USE_VANILLA_LOAD_REPLACEMENT
 		ret = SC2XLoadVanillaGame(pThis, szLoadFileName);
@@ -691,30 +722,44 @@ extern "C" DWORD __stdcall Hook_LoadGame(void* pFile, char* src) {
 			ConsoleLog(LOG_DEBUG, "SC2X: Passing control to SC2K for load.\n");
 		ret = H_SimcityAppDoLoadGame(pThis, pFile, src);
 #endif
-	} else if (std::regex_search(szLoadFileName, std::regex("\\.[Ss][Cc][Nn]$"))) {
+	}
+	else if (std::regex_search(szLoadFileName, std::regex("\\.[Ss][Cc][Nn]$"))) {
 		if (sc2x_debug & SC2X_DEBUG_LOAD)
+#if NOKUROKO
+			ConsoleLog(LOG_DEBUG, "LOAD: Saved game is a vanilla SCN file. Passing control to SC2K.\n");
+#else
 			ConsoleLog(LOG_DEBUG, "SC2X: Saved game is a vanilla SCN file. Passing control to SC2K.\n");
+#endif
 
 		ret = H_SimcityAppDoLoadGame(pThis, pFile, src);
-	} else if (std::regex_search(szLoadFileName, std::regex("\\.[Cc][Tt][Yy]$"))) {
+	}
+	else if (std::regex_search(szLoadFileName, std::regex("\\.[Cc][Tt][Yy]$"))) {
 		if (sc2x_debug & SC2X_DEBUG_LOAD)
+#if NOKUROKO
+			ConsoleLog(LOG_DEBUG, "LOAD: Saved game is a SimCity Classic file. Passing control to SC2K.\n");
+#else
 			ConsoleLog(LOG_DEBUG, "SC2X: Saved game is a SimCity Classic file. Passing control to SC2K.\n");
+#endif
 
 		ret = H_SimcityAppDoLoadGame(pThis, pFile, src);
 	}
 
+#if !NOKUROKO
 	for (const auto& hook : stHooks_Hook_LoadGame_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
 			void (*fnHook)(void*, void*, char*) = (void(*)(void*, void*, char*))hook.pFunction;
 			fnHook(pThis, pFile, src);
 		}
 	}
+#endif
 
 	return ret;
 }
 
+#if !NOKUROKO
 std::vector<hook_function_t> stHooks_Hook_SaveGame_Before;
 std::vector<hook_function_t> stHooks_Hook_SaveGame_After;
+#endif
 
 extern "C" DWORD __stdcall Hook_SaveGame(CMFC3XString* lpFileName) {
 	DWORD(__thiscall * H_SimcityAppDoSaveGame)(void*, CMFC3XString*) = (DWORD(__thiscall*)(void*, CMFC3XString*))0x432180;
@@ -723,21 +768,25 @@ extern "C" DWORD __stdcall Hook_SaveGame(CMFC3XString* lpFileName) {
 
 	__asm mov [pThis], ecx
 
+#if !NOKUROKO
 	for (const auto& hook : stHooks_Hook_SaveGame_Before) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
 			void (*fnHook)(void*, CMFC3XString*) = (void(*)(void*, CMFC3XString*))hook.pFunction;
 			fnHook(pThis, lpFileName);
 		}
 	}
+#endif
 
 	ret = H_SimcityAppDoSaveGame(pThis, lpFileName);
 
+#if !NOKUROKO
 	for (const auto& hook : stHooks_Hook_SaveGame_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
 			void (*fnHook)(void*, CMFC3XString*) = (void(*)(void*, CMFC3XString*))hook.pFunction;
 			fnHook(pThis, lpFileName);
 		}
 	}
+#endif
 
 	return ret;
 }
@@ -763,7 +812,7 @@ void __declspec(naked) Hook_431212(void) {
 		MessageBox(GetActiveWindow(),
 			"sc2kfix has detected a corrupted save file but was unable to recover enough information to "
 			"attempt to fix it. Your game is likely to crash after closing this dialog box. Please file"
-			"a save corruption report on the sc2kfix GitHub issues page (https://github.com/sc2kfix/issues).\n\n"
+			"a save corruption report on the sc2kfix GitHub issues page (https://github.com/sc2kfix/sc2kfix/issues).\n\n"
 
 			"Developer info:\n"
 			"Save header corrupted (FORM header chunk size 0)\n"
@@ -773,8 +822,13 @@ void __declspec(naked) Hook_431212(void) {
 	}
 
 	// Log that we're attempting a fixup
+#if NOKUROKO
+	ConsoleLog(LOG_NOTICE, "LOAD: Detected possible corrupted save \"%s\".\n", szLoadFileName);
+	ConsoleLog(LOG_NOTICE, "LOAD: Attempting to fix up corrupted save header, new size = %d.\n", iCorruptedFixupSize);
+#else
 	ConsoleLog(LOG_NOTICE, "SC2X: Detected possible corrupted save \"%s\".\n", szLoadFileName);
 	ConsoleLog(LOG_NOTICE, "SC2X: Attempting to fix up corrupted save header, new size = %d.\n", iCorruptedFixupSize);
+#endif
 
 	// Inform the user about what's going on
 	MessageBox(GetActiveWindow(),
@@ -783,7 +837,7 @@ void __declspec(naked) Hook_431212(void) {
 		"SimCity 2000, and load the new save.\n\n"
 
 		"If the game crashes after closing this dialog box or after reloading the new save file, "
-		"please file a report on the sc2kfix GitHub issues page (https://github.com/sc2kfix/issues).\n\n"
+		"please file a report on the sc2kfix GitHub issues page (https://github.com/sc2kfix/sc2kfix/issues).\n\n"
 
 		"Developer info:\n"
 		"Save header corrupted (FORM header chunk size 0)", "sc2kfix warning", MB_OK | MB_ICONWARNING);
@@ -802,7 +856,7 @@ void InstallSaveHooks(void) {
 	// Load game hook
 	VirtualProtect((LPVOID)0x4025A4, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4025A4, Hook_LoadGame);
-	
+
 	// Patch to stop CFile::CFile() from being called in exclusive mode when loading a game
 	VirtualProtect((LPVOID)0x430118, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	*(DWORD*)0x430118 = 0x8040;

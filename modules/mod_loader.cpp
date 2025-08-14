@@ -1,6 +1,7 @@
 // sc2kfix modules/mod_loader.cpp: native code mod loader
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
+#if !NOKUROKO
 #undef UNICODE
 #include <windows.h>
 #include <stdio.h>
@@ -152,3 +153,4 @@ void LoadNativeCodeMods(void) {
 		SortHookLists();
 	}
 }
+#endif

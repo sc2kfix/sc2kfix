@@ -83,6 +83,7 @@ HOOKEXT const char* HexPls(UINT uNumber, int width) {
 	return szRet;
 }
 
+#if !NOKUROKO
 HOOKEXT const char* FormatVersion(int iMajor, int iMinor, int iPatch) {
 	static char szRet[16] = { 0 };
 	if (!iPatch)
@@ -91,6 +92,7 @@ HOOKEXT const char* FormatVersion(int iMajor, int iMinor, int iPatch) {
 		sprintf_s(szRet, 16, "%d.%d%c", iMajor, iMinor, iPatch - 1 + 'a');
 	return szRet;
 }
+#endif
 
 extern FILE* fdLog;
 
@@ -172,12 +174,14 @@ HOOKEXT BOOL FileExists(const char* name) {
 	return FALSE;
 }
 
+#if !NOKUROKO
 HOOKEXT const char* GetModsFolderPath(void) {
 	static char szModsFolderPath[MAX_PATH];
 
 	sprintf_s(szModsFolderPath, MAX_PATH, "%s\\%s", szGamePath, SC2KFIX_MODSFOLDER);
 	return szModsFolderPath;
 }
+#endif
 
 HOOKEXT BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, const char *ini_name) {
 	char szBuf[128 + 1];
