@@ -32,14 +32,14 @@
 #define SC2KVERSION_DEMO    3
 
 #if NOKUROKO
-#define SC2KFIX_VERSION			"0.9c"
+#define SC2KFIX_VERSION			"0.9d"
 #else
 #define SC2KFIX_VERSION			"0.10-dev"
 #define SC2KFIX_VERSION_MAJOR	0
 #define SC2KFIX_VERSION_MINOR	10
 #define SC2KFIX_VERSION_PATCH	0
 #endif
-#define SC2KFIX_RELEASE_TAG		"r9c"
+#define SC2KFIX_RELEASE_TAG		"r9d"
 
 #define SC2KFIX_INIFILE		"sc2kfix.ini"
 #if NOKUROKO
@@ -413,9 +413,7 @@ void InstallStatusHooks_SC2K1996(void);
 void UpdateStatus_SC2K1996(int iShow);
 void InstallQueryHooks(void);
 void InstallMilitaryHooks(void);
-#if !NOKUROKO
 void InstallSaveHooks(void);
-#endif
 extern "C" void __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer);
 extern "C" int __stdcall Hook_MusicPlay(int iSongID);
 extern "C" int __stdcall Hook_MusicStop(void);

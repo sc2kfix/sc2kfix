@@ -12,7 +12,7 @@
 #include "../resource.h"
 
 #if NOKUROKO
-#define UPDATENOTIFIER_NEXTRELEASE "r9d"
+#define UPDATENOTIFIER_NEXTRELEASE "r9e"
 #endif
 
 #define UPDATENOTIFIER_DEBUG DEBUG_FLAGS_NONE

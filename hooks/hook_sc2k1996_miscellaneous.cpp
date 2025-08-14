@@ -3172,10 +3172,8 @@ void InstallMiscHooks_SC2K1996(void) {
 	NEWCALL((LPVOID)0x434BEA, Hook_LoadNeighborConnections1500);
 	*(BYTE*)0x434BEF = 0x90;
 
-#if !NOKUROKO
 	// Install hooks for the SC2X save format
 	InstallSaveHooks();
-#endif
 
 	// Hook into the ResetGameVars function.
 	VirtualProtect((LPVOID)0x401F05, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
