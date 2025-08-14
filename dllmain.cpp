@@ -258,7 +258,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		if (dwDetectedVersion == SC2KVERSION_DEMO)
 			gamePrimaryKey = "SimCity 2000 Win95 Demo";
 
-
 		// Registry check
 		int iInstallCheck;
 
@@ -267,6 +266,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			ConsoleLog(LOG_INFO, "CORE: Portable entries created by faux-installer.");
 		else if (iInstallCheck == 1)
 			ConsoleLog(LOG_INFO, "CORE: Registry entries migrated by faux-installer.");
+
+		if (dwDetectedVersion == SC2KVERSION_1996) {
+			ConsoleLog(LOG_INFO, "CORE: Loading last stored load/save city and load tileset paths.");
+			LoadStoredPaths();
+		}
 
 		// Check for updates
 		if (bSettingsCheckForUpdates) {
@@ -390,6 +394,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 	case DLL_PROCESS_DETACH:
 		// Shut down the music thread
 		PostThreadMessage(dwMusicThreadID, WM_QUIT, NULL, NULL);
+
+		// Only save the stored paths during a graceful exit. (SC2K1996 only for now)
+		if (!bGameDead)
+			if (dwDetectedVersion == SC2KVERSION_1996)
+				SaveStoredPaths();
 
 		// Send a closing message and close the log file
 		ReleaseSMKFuncs();

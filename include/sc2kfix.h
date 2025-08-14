@@ -180,6 +180,7 @@ extern int iForcedBits;
 
 // Path adjustment (from registry_pathing area)
 
+BOOL L_IsPathValid(const char *pStr);
 const char *AdjustSource(char *buf, const char *path);
 
 // Utility functions
@@ -208,6 +209,8 @@ void DecodeDWORDArray(DWORD* dwArray, json::JSON jsonArray, size_t iCount, BOOL 
 LONG WINAPI CrashHandler(LPEXCEPTION_POINTERS lpExceptions);
 BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
+void LoadStoredPaths();
+void SaveStoredPaths();
 int DoRegistryCheckAndInstall(void);
 void SetGamePath(void);
 const char *GetIniPath();
@@ -242,6 +245,9 @@ BOOL ConsoleCmdSetDebug(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdSetTile(const char* szCommand, const char* szArguments);
 
 extern const char *gamePrimaryKey;
+
+extern char szLastStoredCityPath[MAX_PATH + 1];
+extern char szLastStoredTileSetPath[MAX_PATH + 1];
 
 extern BOOL bGameDead;
 extern HMODULE hRealWinMM;
