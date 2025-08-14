@@ -1,4 +1,4 @@
-# sc2kfix
+# sc2kfix Release 9d
 ![A GIF of SimCity 2000's palette animations in action, with the sc2kfix logo overlaid on top of it.](https://i.imgur.com/lWEMFiT.gif)
 
 ## What does this do?
@@ -9,7 +9,7 @@ sc2kfix is a plugin that patches the Special Edition release of SimCity 2000 for
 ### Bugs fixed
 The following game bugs are patched by this DLL:
 * The old, non-functional installer is no longer needed as sc2kfix will prompt for a default mayor and company name on first launch.
-* Multiple crash bugs related to the load and save dialogs have been fixed.
+* Multiple crash and visual bugs related to the load and save dialogs have been fixed.
 * Palette cycling based animations have been fixed to work on truecolour displays and are no longer frozen.
 * SimCity 2000 now properly launches when started from Steam or other game launchers.
 * Music that was included in the game but was never added to the random playlist has been restored.
@@ -19,6 +19,8 @@ The following game bugs are patched by this DLL:
 * Sign rendering has been fixed to use the originally intended font.
 * City and mayor names are now properly preserved when saving and loading cities.
 * The "Add All Inventions" option in the game's hidden debug menu has been fixed.
+* The "Maxis Presents" logo screen has been restored.
+* SimCity 2000 will now properly load higher-resolution cursors on large displays.
 
 ### New features
 sc2kfix adds the following quality of life and optional gameplay features to SimCity 2000 Special Edition:
@@ -29,10 +31,13 @@ sc2kfix adds the following quality of life and optional gameplay features to Sim
 * The full in-game date is now shown in the title bar.
 * The floating status widget from the Macintosh and DOS versions of the game has been reimplemented and can be enabled in the settings dialog.
 * The game's music engine has been rewritten with multithreading that can run in the background and can play MP3 versions of the soundtrack if present.
+* Several parts of the simulation engine have been reimplemented to resolve bugs in the growth algorithm.
+* Certain types of save file corruption can be detected and sc2kfix can automatically attempt to recover corrupted save files on load.
 * The middle mouse button now acts as a shortcut for the centering tool, similar to how the right mouse button works in the DOS version of the game.
 * A number of message box strings have had grammatical fixes and/or better wording added to them.
 * An update checker has been added to gently inform the player on the game's main menu if a new version of sc2kfix has been released.
 * A debugging console has been added for experiments and advanced troubleshooting, as well as an `sc2kfix.log` file for informational and error logging.
+* Game crashes are handled with a custom stack unwinding top-level exception filter to help investigate bugs in the game engine.
 
 sc2kfix implements multiple hooks and a work-in-progress framework for detouring and injecting new code into the game. These are documented in the hooks/hooks.md file. These are currently being used to assist in reverse engineering various components of the game's code, but attaching them to eg. a scripting language of some sorts in the future is not entirely unlikely. There is also a debugging console that can be enabled by passing "-console" to SimCity 2000. While the debugging console generally tries to stop you from doing anything too dangerous, it will happily let you probe any valid memory in the game's address space, which could have adverse effect on any loaded cities. Please be careful when writing to arbitrary memory addresses.
 

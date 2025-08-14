@@ -29,8 +29,8 @@
 #define SC2KVERSION_1995    2
 #define SC2KVERSION_DEMO    3
 
-#define SC2KFIX_VERSION		"0.9c"
-#define SC2KFIX_RELEASE_TAG	"r9c"
+#define SC2KFIX_VERSION		"0.9d"
+#define SC2KFIX_RELEASE_TAG	"r9d"
 
 #define SC2KFIX_INIFILE     "sc2kfix.ini"
 

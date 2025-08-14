@@ -11,7 +11,7 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
-#define UPDATENOTIFIER_NEXTRELEASE "r9d"
+#define UPDATENOTIFIER_NEXTRELEASE "r9e"
 
 #define UPDATENOTIFIER_DEBUG DEBUG_FLAGS_NONE
 

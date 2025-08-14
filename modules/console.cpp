@@ -442,7 +442,7 @@ static void test3(void) {
 }
 
 static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments) {
-	test3();
+	//test3();
 	return TRUE;
 }
 
