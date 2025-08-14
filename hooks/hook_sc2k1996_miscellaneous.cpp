@@ -53,9 +53,12 @@ UINT mischook_debug = MISCHOOK_DEBUG;
 
 static DWORD dwDummy;
 
+HMENU hMenuWindowsPopup = NULL;
 AFX_MSGMAP_ENTRY afxMessageMapMainMenu[9];
 DLGPROC lpNewCityAfxProc = NULL;
 char szTempMayorName[24] = { 0 };
+
+AFX_MSGMAP_ENTRY* pafxMessageMapCSimcityViewEnd = (AFX_MSGMAP_ENTRY*)0x4D45C0;
 
 static BOOL bOverrideTickPlacementHighlight = FALSE;
 
@@ -199,9 +202,11 @@ extern "C" HMENU __stdcall Hook_LoadMenuA(HINSTANCE hInstance, LPCSTR lpMenuName
 // Make sure our own menu items get enabled instead of disabled
 extern "C" BOOL __stdcall Hook_EnableMenuItem(HMENU hMenu, UINT uIDEnableItem, UINT uEnable) {
 	// XXX - There's gotta be a better way to do this.
-	if (uIDEnableItem == 5 && uEnable == 0x403)
+	if (uIDEnableItem == 5 && uEnable == 0x403)			// Options -> sc2kfix Settings...
 		return EnableMenuItem(hMenu, uIDEnableItem, MF_BYPOSITION | MF_ENABLED);
-	if (uIDEnableItem == 6 && uEnable == 0x403)
+	if (uIDEnableItem == 6 && uEnable == 0x403)			// Options -> Mod Configuration...
+		return EnableMenuItem(hMenu, uIDEnableItem, MF_BYPOSITION | MF_ENABLED);
+	if (uIDEnableItem == 8 && uEnable == 0x403 && bInScenario)	// Windows -> Show Scenario Goals...
 		return EnableMenuItem(hMenu, uIDEnableItem, MF_BYPOSITION | MF_ENABLED);
 	return EnableMenuItem(hMenu, uIDEnableItem, uEnable);
 }
@@ -360,6 +365,25 @@ extern "C" void __stdcall Hook_SimcityAppOnQuit(void) {
 	}
 	pThis[64] = 0;
 	pThis[63] = 0;
+}
+
+// Hook CCmdUI::Enable so we can programmatically enable and disable menu items reliably
+__declspec(naked) void Hook_CCmdUI_Enable(void) {
+	// Ensure the main config menu options are always enabled
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_GAME_OPTIONS_SC2KFIXSETTINGS, MF_BYCOMMAND | MF_ENABLED);
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_GAME_OPTIONS_MODCONFIG, MF_BYCOMMAND | MF_ENABLED);
+
+	// Only enable the Scenario Goals option if we need it
+	if (bInScenario)
+		EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_GAME_WINDOWS_SCENARIOGOALS, MF_BYCOMMAND | MF_ENABLED);
+	else
+		EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_GAME_WINDOWS_SCENARIOGOALS, MF_BYCOMMAND | MF_GRAYED);
+
+	__asm {
+		pop esi
+		pop ebx
+		retn 4
+	}
 }
 
 std::vector<hook_function_t> stHooks_Hook_GameDoIdleUpkeep_Before;
@@ -3071,6 +3095,19 @@ REFRESHMENUGRANTS:
 	H_CCityToolBar_RefreshToolBar(pCityToolBar);
 }
 
+const char* szCurrentScenarioDescription = NULL;
+DWORD dwScenarioStartDays = 0;
+
+// Hook for the scenario description popup
+__declspec(naked) void Hook_402B4E(const char* szDescription, int a2, void* cWnd) {
+	__asm push ecx
+	if (szDescription && strlen(szDescription))
+		szCurrentScenarioDescription = szDescription;
+	dwScenarioStartDays = dwCityDays;
+	__asm pop ecx
+	GAMEJMP(0x42DC20);
+}
+
 // Placeholder.
 void ShowModSettingsDialog(void) {
 	L_MessageBoxA(GameGetRootWindowHandle(), "The mod settings dialog has not yet been implemented. Check back later.", "sc2fix", MB_OK);
@@ -3086,7 +3123,7 @@ void InstallMiscHooks_SC2K1996(void) {
 
 	// Install LoadMenuA hook
 	*(DWORD*)(0x4EFDCC) = (DWORD)Hook_LoadMenuA;
-	*(DWORD*)(0x4EFE58) = (DWORD)Hook_EnableMenuItem;
+	//*(DWORD*)(0x4EFE58) = (DWORD)Hook_EnableMenuItem;
 	*(DWORD*)(0x4EFC64) = (DWORD)Hook_DialogBoxParamA;
 
 	// Install ShowWindow hook
@@ -3290,10 +3327,13 @@ void InstallMiscHooks_SC2K1996(void) {
 	VirtualProtect((LPVOID)0x402388, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402388, Hook_AddAllInventions);
 
-	// Add settings buttons to SC2K's menus
+	// Add more buttons to SC2K's menus
+	// TODO: write a much cleaner and more programmatic way of doing this
 	hGameMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(3));
 	if (hGameMenu) {
-		AFX_MSGMAP_ENTRY afxMessageMapEntry[2];
+		AFX_MSGMAP_ENTRY afxMessageMapEntry[3];
+
+		// Options menu -> add sc2kfix Settings... and Mod Configuration...
 		HMENU hOptionsPopup;
 		MENUITEMINFO miiOptionsPopup;
 		miiOptionsPopup.cbSize = sizeof(MENUITEMINFO);
@@ -3316,8 +3356,23 @@ void InstallMiscHooks_SC2K1996(void) {
 			goto skipgamemenu;
 		}
 
-		EnableMenuItem(hOptionsPopup, 5, MF_BYPOSITION | MF_ENABLED);
-		EnableMenuItem(hOptionsPopup, 6, MF_BYPOSITION | MF_ENABLED);
+		// Windows menu -> add Show Scenario Goals...
+		MENUITEMINFO miiWindowsPopup;
+		miiWindowsPopup.cbSize = sizeof(MENUITEMINFO);
+		miiWindowsPopup.fMask = MIIM_SUBMENU;
+		if (!GetMenuItemInfo(hGameMenu, 4, TRUE, &miiWindowsPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
+			goto skipgamemenu;
+		}
+		hMenuWindowsPopup = miiWindowsPopup.hSubMenu;
+		if (!InsertMenu(hMenuWindowsPopup, -1, MF_BYPOSITION | MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #1 failed, error = 0x%08X.\n", GetLastError());
+			goto skipgamemenu;
+		}
+		if (!InsertMenu(hMenuWindowsPopup, -1, MF_BYPOSITION | MF_STRING, IDM_GAME_WINDOWS_SCENARIOGOALS, "Show &Scenario Goals...") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #2 failed, error = 0x%08X.\n", GetLastError());
+			goto skipgamemenu;
+		}
 
 		afxMessageMapEntry[0] = {
 			WM_COMMAND,
@@ -3337,8 +3392,19 @@ void InstallMiscHooks_SC2K1996(void) {
 			ShowModSettingsDialog
 		};
 
-		VirtualProtect((LPVOID)0x4D45C0, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
-		memcpy_s((LPVOID)0x4D45C0, sizeof(afxMessageMapEntry), &afxMessageMapEntry, sizeof(afxMessageMapEntry));
+		afxMessageMapEntry[2] = {
+			WM_COMMAND,
+			0,
+			IDM_GAME_WINDOWS_SCENARIOGOALS,
+			IDM_GAME_WINDOWS_SCENARIOGOALS,
+			0x0A,
+			ShowScenarioStatusDialog
+		};
+
+		VirtualProtect((LPVOID)pafxMessageMapCSimcityViewEnd, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
+		memcpy_s((LPVOID)pafxMessageMapCSimcityViewEnd, sizeof(afxMessageMapEntry), &afxMessageMapEntry, sizeof(afxMessageMapEntry));
+
+		pafxMessageMapCSimcityViewEnd += 3;
 
 		if (mischook_debug & MISCHOOK_DEBUG_MENU)
 			ConsoleLog(LOG_DEBUG, "MISC: Updated game menu.\n");
@@ -3371,6 +3437,14 @@ skipgamemenu:
 	VirtualProtect((LPVOID)0x4014DD, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4014DD, Hook_StartupGraphics);
 
+	// Hook for CCmdUI::Enable
+	VirtualProtect((LPVOID)0x4A29F6, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4A29F6, Hook_CCmdUI_Enable);
+
+	// Hook the scenario start dialog so we can save the description
+	VirtualProtect((LPVOID)0x402B4E, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402B4E, Hook_402B4E);
+
 	// Add hook to center with the middle mouse button
 	AFX_MSGMAP_ENTRY afxMessageMapEntrySimCityView = {
 		WM_MBUTTONDOWN,
@@ -3380,8 +3454,10 @@ skipgamemenu:
 		0x2A,
 		Hook_CSimcityView_WM_MBUTTONDOWN
 	};
-	VirtualProtect((LPVOID)0x4D45F0, sizeof(afxMessageMapEntrySimCityView), PAGE_EXECUTE_READWRITE, &dwDummy);
-	memcpy_s((LPVOID)0x4D45F0, sizeof(afxMessageMapEntrySimCityView), &afxMessageMapEntrySimCityView, sizeof(afxMessageMapEntrySimCityView));
+
+	VirtualProtect((LPVOID)pafxMessageMapCSimcityViewEnd, sizeof(afxMessageMapEntrySimCityView), PAGE_EXECUTE_READWRITE, &dwDummy);
+	memcpy_s((LPVOID)pafxMessageMapCSimcityViewEnd, sizeof(afxMessageMapEntrySimCityView), &afxMessageMapEntrySimCityView, sizeof(afxMessageMapEntrySimCityView));
+	pafxMessageMapCSimcityViewEnd++;
 
 	// Copy the main menu's message map and update the runtime class to use it
 	VirtualProtect((LPVOID)0x4D513C, 4, PAGE_EXECUTE_READWRITE, &dwDummy);

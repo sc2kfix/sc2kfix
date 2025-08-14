@@ -35,7 +35,7 @@
 #define SC2KFIX_VERSION_MAJOR	0
 #define SC2KFIX_VERSION_MINOR	10
 #define SC2KFIX_VERSION_PATCH	0
-#define SC2KFIX_RELEASE_TAG		"r9c"
+#define SC2KFIX_RELEASE_TAG		"r9d"
 
 #define SC2KFIX_INIFILE		"sc2kfix.ini"
 #define SC2KFIX_MODSFOLDER	"mods"
@@ -289,6 +289,7 @@ const char *GetIniPath();
 void LoadSettings(void);
 void SaveSettings(BOOL onload);
 void ShowSettingsDialog(void);
+void ShowScenarioStatusDialog(void);
 BOOL CanUseFloatingStatusDialog();
 void ToggleFloatingStatusDialog(BOOL bEnable);
 void ToggleGotoButton(HWND hWndBut, BOOL bEnable);
@@ -352,6 +353,7 @@ extern HFONT hFontMSSansSerifRegular10;
 extern HFONT hFontMSSansSerifBold10;
 extern HFONT hFontArialRegular10;
 extern HFONT hFontArialBold10;
+extern HFONT hFontArialBold16;
 extern HFONT hSystemRegular12;
 
 extern std::map<HMODULE, sc2kfix_mod_info_t> mapLoadedNativeMods;

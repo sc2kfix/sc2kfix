@@ -1248,6 +1248,7 @@ GAMEOFF_ARR(WORD,	wCityResidentialDemand,		0x4CC8F8)
 GAMEOFF(WORD,	wCityCommericalDemand,		0x4CC8FA)
 GAMEOFF(WORD,	wCityIndustrialDemand,		0x4CC8FC)
 GAMEOFF(DWORD,	dwCityPollution,			0x4CC910)		// Needs reverse engineering. See wiki.
+GAMEOFF(WORD,	wScenarioDisasterID,		0x4CC918)
 GAMEOFF(WORD,	wScenarioTimeLimitMonths,	0x4CC91C)
 GAMEOFF(DWORD,	dwScenarioCitySize,			0x4CC91E)
 GAMEOFF(DWORD,	dwScenarioResPopulation,	0x4CC922)
