@@ -307,7 +307,11 @@ extern "C" int __stdcall Hook_FileDialogDoModal() {
 	HWND hWndOwner;
 	bool bIsReserved;
 	int iRet;
+	int nPathLen, nFileLen, nNewLen;
+	char szPath[MAX_PATH + 1];
 	OPENFILENAMEA* pOfn;
+
+	memset(szPath, 0, sizeof(szPath));
 
 	ToggleFloatingStatusDialog(FALSE);
 
@@ -315,13 +319,32 @@ extern "C" int __stdcall Hook_FileDialogDoModal() {
 	bIsReserved = pThis[36] == 0;
 	pThis[18] = (DWORD)hWndOwner;
 	pOfn = (OPENFILENAMEA*)(pThis + 17);
+
 	if (bIsReserved)
 		iRet = H_GetSaveFileNameA(pOfn);
 	else
 		iRet = H_GetLoadFileNameA(pOfn);
 	H_DialogPostModal(pThis);
 	if (!iRet)
-		iRet = 2;
+		iRet = IDCANCEL;
+
+	if (iRet != IDCANCEL) {
+		nPathLen = strlen(pOfn->lpstrFile);
+		nFileLen = strlen(pOfn->lpstrFileTitle);
+		if (nPathLen > 0 && nFileLen > 0) {
+			nNewLen = nPathLen - nFileLen;
+			if (nNewLen > 0) {
+				strncpy_s(szPath, sizeof(szPath)-1, pOfn->lpstrFile, nNewLen);
+				if (L_IsPathValid(szPath)) {
+					if ((DWORD)_ReturnAddress() == 0x42EB82 ||
+						(DWORD)_ReturnAddress() == 0x42FDCE) // From 'LoadCity' or 'SaveCityAs'
+						strcpy_s(szLastStoredCityPath, sizeof(szLastStoredCityPath) - 1, szPath);
+					else if ((DWORD)_ReturnAddress() == 0x42F312) // From 'LoadTileSet'
+						strcpy_s(szLastStoredTileSetPath, sizeof(szLastStoredTileSetPath) - 1, szPath);
+				}
+			}
+		}
+	}
 
 	ToggleFloatingStatusDialog(TRUE);
 
