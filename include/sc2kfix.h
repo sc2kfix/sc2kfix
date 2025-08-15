@@ -278,6 +278,8 @@ HOOKEXT_CPP size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned c
 HOOKEXT_CPP json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBigEndian);
 HOOKEXT_CPP json::JSON EncodeBudgetArray(DWORD* dwBudgetArray, BOOL bBigEndian);
 HOOKEXT_CPP void DecodeDWORDArray(DWORD* dwArray, json::JSON jsonArray, size_t iCount, BOOL bBigEndian);
+void AddNewSCVMessageMapEntry(UINT nMessage, UINT nCode, UINT nID, UINT nLastID, UINT_PTR nSig, void* pfn);
+void PorntipsGuzzardo(void);
 
 // Globals etc.
 

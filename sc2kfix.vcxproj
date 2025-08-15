@@ -95,6 +95,7 @@
   <ItemGroup>
     <ClCompile Include="hooks\hook_animation.cpp" />
     <ClCompile Include="hooks\hook_sc2kdemo_miscellaneous.cpp" />
+    <ClCompile Include="hooks\hook_guzzardo.cpp" />
     <ClCompile Include="kuroko\builtins.c" />
     <ClCompile Include="kuroko\chunk.c" />
     <ClCompile Include="kuroko\compiler.c" />
@@ -158,7 +159,7 @@
     <ClCompile Include="modules\status_dialog.cpp" />
     <ClCompile Include="modules\update_notifier.cpp" />
     <ClCompile Include="modules\smk.cpp" />
-    <ClCompile Include="scenario_status.cpp" />
+    <ClCompile Include="modules\scenario_status.cpp" />
     <ClCompile Include="utility.cpp" />
   </ItemGroup>
   <ItemGroup>

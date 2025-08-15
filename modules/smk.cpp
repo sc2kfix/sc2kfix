@@ -24,8 +24,6 @@
 #define SMACKER_DEBUG DEBUG_FLAGS_EVERYTHING
 #endif
 
-#define MAX_USER_LABELS 51
-
 UINT smk_debug = SMACKER_DEBUG;
 
 static DWORD dwDummy;
