@@ -818,7 +818,50 @@ void __declspec(naked) Hook_431212(void) {
 	}
 }
 
+// Fix rail and highway border connections not loading properly
+extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
+	short* wCityNeighborConnections1500 = (short*)0x4CA3F0;
+	*wCityNeighborConnections1500 = 0;
+	*(DWORD*)0x4C85A0 = 0;
+
+	for (int x = 0; x < GAME_MAP_SIZE; x++) {
+		for (int y = 0; y < GAME_MAP_SIZE; y++) {
+			if (dwMapXTXT[x][y].bTextOverlay == 0xFA) {
+				BYTE iTileID = dwMapXBLD[x][y].iTileID;
+				if (iTileID >= TILE_RAIL_LR && iTileID < TILE_TUNNEL_T
+					|| iTileID >= TILE_CROSSOVER_ROADLR_RAILTB && iTileID < TILE_SUSPENSION_BRIDGE_START_B
+					|| iTileID >= TILE_HIGHWAY_HTB && iTileID < TILE_REINFORCED_BRIDGE_PYLON)
+					++*wCityNeighborConnections1500;
+			}
+		}
+	}
+
+	if (sc2x_debug & SC2X_DEBUG_LOAD)
+		ConsoleLog(LOG_DEBUG, "SC2X: Loaded %d $1500 neighbor connections.\n", *wCityNeighborConnections1500);
+}
+
 void InstallSaveHooks(void) {
+	// Fix city name being overwritten by filename on save
+	BYTE bFilenamePatch[6] = { 0xB9, 0xA0, 0xA1, 0x4C, 0x00, 0x51 };
+	VirtualProtect((LPVOID)0x42FE62, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memcpy((LPVOID)0x42FE62, bFilenamePatch, 6);
+	VirtualProtect((LPVOID)0x42FE99, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memcpy((LPVOID)0x42FE99, bFilenamePatch, 6);
+
+	// Adjust the Save File dialog type criterion
+	VirtualProtect((LPVOID)0x4E7344, 32, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memset((LPVOID)0x4E7344, 0, 32);
+	memcpy_s((LPVOID)0x4E7344, 32, "SimCity Files (*.sc2)|*.sc2||", 30);
+
+	// Fix save filenames going wonky 
+	VirtualProtect((LPVOID)0x4321B9, 8, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memset((LPVOID)0x4321B9, 0x90, 8);
+
+	// Fix $1500 neighbor connections on game load
+	VirtualProtect((LPVOID)0x434BEA, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWCALL((LPVOID)0x434BEA, Hook_LoadNeighborConnections1500);
+	*(BYTE*)0x434BEF = 0x90;
+
 	// Load game hook
 	VirtualProtect((LPVOID)0x4025A4, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4025A4, Hook_LoadGame);

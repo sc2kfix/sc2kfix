@@ -552,28 +552,6 @@ extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lp
 }
 #pragma warning(default : 6387)
 
-// Fix rail and highway border connections not loading properly
-extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
-	short* wCityNeighborConnections1500 = (short*)0x4CA3F0;
-	*wCityNeighborConnections1500 = 0;
-	*(DWORD*)0x4C85A0 = 0;
-
-	for (int x = 0; x < GAME_MAP_SIZE; x++) {
-		for (int y = 0; y < GAME_MAP_SIZE; y++) {
-			if (dwMapXTXT[x][y].bTextOverlay == 0xFA) {
-				BYTE iTileID = dwMapXBLD[x][y].iTileID;
-				if (iTileID >= TILE_RAIL_LR && iTileID < TILE_TUNNEL_T
-					|| iTileID >= TILE_CROSSOVER_ROADLR_RAILTB && iTileID < TILE_SUSPENSION_BRIDGE_START_B
-					|| iTileID >= TILE_HIGHWAY_HTB && iTileID < TILE_REINFORCED_BRIDGE_PYLON)
-					++*wCityNeighborConnections1500;
-			}
-		}
-	}
-
-	if (mischook_debug & MISCHOOK_DEBUG_SAVES)
-		ConsoleLog(LOG_DEBUG, "SAVE: Loaded %d $1500 neighbor connections.\n", *wCityNeighborConnections1500);
-}
-
 extern "C" int __cdecl Hook_PlacePowerLinesAtCoordinates(__int16 x, __int16 y) {
 	__int16 iY;
 	int iResult;
@@ -2724,6 +2702,8 @@ void ShowModSettingsDialog(void) {
 
 // Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
 // This should probably have a better name. And maybe be broken out into smaller functions.
+//
+// UPDATE 2025-08-15 (araxestroy): Working on breaking this out nicely. It's not going well.
 void InstallMiscHooks_SC2K1996(void) {
 	InstallRegistryPathingHooks_SC2K1996();
 
@@ -2788,29 +2768,8 @@ void InstallMiscHooks_SC2K1996(void) {
 	*(DWORD*)0x43F429 = 50000000; // Water
 	VirtualProtect((LPVOID)0x43F3A4, 4, PAGE_EXECUTE_READWRITE, &dwDummy); // CityToolMenuAction
 	*(DWORD*)0x43F3A4 = 50000000; // Power
-	
-	// Fix city name being overwritten by filename on save
-	BYTE bFilenamePatch[6] = { 0xB9, 0xA0, 0xA1, 0x4C, 0x00, 0x51 };
-	VirtualProtect((LPVOID)0x42FE62, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
-	memcpy((LPVOID)0x42FE62, bFilenamePatch, 6);
-	VirtualProtect((LPVOID)0x42FE99, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
-	memcpy((LPVOID)0x42FE99, bFilenamePatch, 6);
 
-	// Adjust the Save File dialog type criterion
-	VirtualProtect((LPVOID)0x4E7344, 32, PAGE_EXECUTE_READWRITE, &dwDummy);
-	memset((LPVOID)0x4E7344, 0, 32);
-	memcpy_s((LPVOID)0x4E7344, 32, "Simcity files (*.sc2)|*.sc2||", 32);
-
-	// Fix save filenames going wonky 
-	VirtualProtect((LPVOID)0x4321B9, 8, PAGE_EXECUTE_READWRITE, &dwDummy);
-	memset((LPVOID)0x4321B9, 0x90, 8);
-
-	// Fix $1500 neighbor connections on game load
-	VirtualProtect((LPVOID)0x434BEA, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWCALL((LPVOID)0x434BEA, Hook_LoadNeighborConnections1500);
-	*(BYTE*)0x434BEF = 0x90;
-
-	// Install hooks for the SC2X save format
+	// Install hooks for saving and loading
 	InstallSaveHooks();
 
 	// Hook into the ResetGameVars function.
@@ -2845,12 +2804,6 @@ void InstallMiscHooks_SC2K1996(void) {
 	// Install the advanced query hook
 	if (bUseAdvancedQuery)
 		InstallQueryHooks();
-
-	// Fix the broken cheat
-	// *** Only effective when the 'CMainFrame::OnChar' below is disabled. ***
-	UINT uCheatPatch[9] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
-	memcpy_s((LPVOID)0x4E65C8, 10, "mrsoleary", 10);
-	memcpy_s((LPVOID)0x4E6490, sizeof(uCheatPatch), uCheatPatch, sizeof(uCheatPatch));
 
 	// Increase sound buffer sizes to 256K each
 	VirtualProtect((LPVOID)0x480C2B, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
