@@ -4,6 +4,7 @@
 #undef UNICODE
 #include <windows.h>
 #include <psapi.h>
+#include <shlwapi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <intrin.h>
@@ -45,6 +46,9 @@ enum regPathVersion {
 static int iRegPathHookMode = REGPATH_UNKNOWN;
 
 const char *gamePrimaryKey = "SimCity 2000";
+
+char szLastStoredCityPath[MAX_PATH + 1];
+char szLastStoredTileSetPath[MAX_PATH + 1];
 
 BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
@@ -286,6 +290,22 @@ int DoRegistryCheckAndInstall(void) {
 	return ret;
 }
 
+void LoadStoredPaths() {
+	const char *ini_file = GetIniPath();
+	const char *section = "LastAccessedPaths";
+
+	GetPrivateProfileStringA(section, "szLastStoredCityPath", "", szLastStoredCityPath, sizeof(szLastStoredCityPath) - 1, ini_file);
+	GetPrivateProfileStringA(section, "szLastStoredTileSetPath", "", szLastStoredTileSetPath, sizeof(szLastStoredTileSetPath) - 1, ini_file);
+}
+
+void SaveStoredPaths() {
+	const char *ini_file = GetIniPath();
+	const char *section = "LastAccessedPaths";
+
+	WritePrivateProfileStringA(section, "szLastStoredCityPath", szLastStoredCityPath, ini_file);
+	WritePrivateProfileStringA(section, "szLastStoredTileSetPath", szLastStoredTileSetPath, ini_file);
+}
+
 static BOOL IsRegKey(HKEY hKey, int rkVal) {
 	if (rkVal < enMaxisKey || rkVal >= enCountKey)
 		return FALSE;
@@ -370,6 +390,10 @@ static const char *SectionLookup(HKEY hKey) {
 			break;
 	}
 	return NULL;
+}
+
+BOOL L_IsPathValid(const char *pStr) {
+	return (pStr && PathFileExistsA(pStr) && PathIsDirectoryA(pStr)) ? TRUE : FALSE;
 }
 
 static void GetOutString(const char *sString, LPBYTE lpData, LPDWORD lpcbData) {
@@ -464,8 +488,12 @@ extern "C" LSTATUS __stdcall Hook_RegQueryValueExA(HKEY hKey, LPCSTR lpValueName
 		}
 		else if (_stricmp(lpValueName, "Cities") == 0 ||
 			_stricmp(lpValueName, "SaveGame") == 0) {
-			GamePathAdjust(szTargetPath, "Cities", lpData, lpcbData);
+			if (L_IsPathValid(szLastStoredCityPath))
+				GetOutString(szLastStoredCityPath, lpData, lpcbData);
+			else
+				GamePathAdjust(szTargetPath, "Cities", lpData, lpcbData);
 		}
+
 		else if (_stricmp(lpValueName, "Data") == 0)
 			GamePathAdjust(szTargetPath, "Data", lpData, lpcbData);
 
@@ -481,8 +509,12 @@ extern "C" LSTATUS __stdcall Hook_RegQueryValueExA(HKEY hKey, LPCSTR lpValueName
 		else if (_stricmp(lpValueName, "Scenarios") == 0)
 			GamePathAdjust(szTargetPath, "Scenario", lpData, lpcbData);
 		
-		else if (_stricmp(lpValueName, "TileSets") == 0)
-			GamePathAdjust(szTargetPath, "ScurkArt", lpData, lpcbData);
+		else if (_stricmp(lpValueName, "TileSets") == 0) {
+			if (L_IsPathValid(szLastStoredTileSetPath))
+				GetOutString(szLastStoredTileSetPath, lpData, lpcbData);
+			else
+				GamePathAdjust(szTargetPath, "ScurkArt", lpData, lpcbData);
+		}
 		
 		return ERROR_SUCCESS;
 	}
