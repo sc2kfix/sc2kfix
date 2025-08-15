@@ -645,7 +645,18 @@ BOOL SC2XLoadVanillaGame(DWORD* pThis, const char* szFileName) {
 }
 #endif
 
+// Function prototype: HOOKCB void Hook_LoadGame_Before(void)
+// Cannot be ignored.
+// SPECIAL NOTE: When the SC2X save format is implemented, this will be where mods will have a
+//   chance to pre-load any information and optionally manipulate the save file before it's parsed
+//   by sc2kfix and loaded into the SimCity 2000 engine.
 std::vector<hook_function_t> stHooks_Hook_LoadGame_Before;
+
+// Function prototype: HOOKCB void Hook_LoadGame_After(void)
+// Cannot be ignored.
+// SPECIAL NOTE: When the SC2X save format is implemented, this will be where mods will be fed a
+//   pointer to a JSON object wherein they can load their data and version information or a NULL
+//   or similar object to inform them that they have no known state to load.
 std::vector<hook_function_t> stHooks_Hook_LoadGame_After;
 
 extern "C" DWORD __stdcall Hook_LoadGame(void* pFile, char* src) {
@@ -713,7 +724,16 @@ extern "C" DWORD __stdcall Hook_LoadGame(void* pFile, char* src) {
 	return ret;
 }
 
+// Function prototype: HOOKCB void Hook_SaveGame_Before(void)
+// Cannot be ignored.
+// SPECIAL NOTE: When the SC2X save format is implemented, this will be where mods will be fed a
+//   pointer to a JSON object wherein they can save their data and version information.
 std::vector<hook_function_t> stHooks_Hook_SaveGame_Before;
+
+// Function prototype: HOOKCB void Hook_SaveGame_After(void)
+// Cannot be ignored.
+// SPECIAL NOTE: Functionally useless. Likely to end up either being removed before the modding
+//   API is finalized or for its argument to be BOOL bSaveSuccessful.
 std::vector<hook_function_t> stHooks_Hook_SaveGame_After;
 
 extern "C" DWORD __stdcall Hook_SaveGame(CMFC3XString* lpFileName) {

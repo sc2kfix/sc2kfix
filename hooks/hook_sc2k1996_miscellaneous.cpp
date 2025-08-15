@@ -386,7 +386,14 @@ __declspec(naked) void Hook_CCmdUI_Enable(void) {
 	}
 }
 
+// Function prototype: HOOKCB void Hook_GameDoIdleUpkeep_Before(void)
+// Ignored if bHookStopProcessing == TRUE.
+// SPECIAL NOTE: Ignoring this hook on callback results in the game effectively hanging. You have
+//   been warned!
 std::vector<hook_function_t> stHooks_Hook_GameDoIdleUpkeep_Before;
+
+// Function prototype: HOOKCB void Hook_GameDoIdleUpkeep_After(void)
+// Ignored if bHookStopProcessing == TRUE.
 std::vector<hook_function_t> stHooks_Hook_GameDoIdleUpkeep_After;
 
 extern "C" void __stdcall Hook_GameDoIdleUpkeep(void) {
@@ -432,6 +439,10 @@ void __declspec(naked) Hook_4062AD(void) {
 	}
 }
 
+// Function prototype: HOOKCB void Hook_OnNewCity_Before(void)
+// Cannot be ignored.
+// SPECIAL NOTE: I cannot for the life of me remember why I added this. It will almost certainly
+//   be replaced within the next three months (comment added 2025-08-15).
 std::vector<hook_function_t> stHooks_Hook_OnNewCity_Before;
 
 static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
