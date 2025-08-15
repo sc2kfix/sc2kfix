@@ -37,7 +37,7 @@
 #define MISCHOOK_DEBUG_WINDOW 16
 #define MISCHOOK_DEBUG_DISASTERS 32
 #define MISCHOOK_DEBUG_MOVIES 64
-#define MISCHOOK_DEBUG_SMACK 128
+// #define MISCHOOK_DEBUG_SMACK 128	// reusable
 #define MISCHOOK_DEBUG_CHEAT 256
 
 #define MISCHOOK_DEBUG DEBUG_FLAGS_NONE
@@ -65,6 +65,22 @@ static BOOL bOverrideTickPlacementHighlight = FALSE;
 static int iChurchVirus = -1;
 
 static const char *theHouse = "Ilona's House";
+
+// Add a new AFX_MSGMAP_ENTRY to the main message map for the game
+void AddNewSCVMessageMapEntry(UINT nMessage, UINT nCode, UINT nID, UINT nLastID, UINT_PTR nSig, void* pfn) {
+	AFX_MSGMAP_ENTRY __msgmap = { nMessage, nCode, nID, nLastID, nSig, pfn };
+	VirtualProtect((LPVOID)pafxMessageMapCSimcityViewEnd, sizeof(AFX_MSGMAP_ENTRY), PAGE_EXECUTE_READWRITE, &dwDummy);
+	memcpy_s((LPVOID)pafxMessageMapCSimcityViewEnd, sizeof(AFX_MSGMAP_ENTRY), &__msgmap, sizeof(AFX_MSGMAP_ENTRY));
+	pafxMessageMapCSimcityViewEnd++;
+	ConsoleLog(LOG_DEBUG, "CSV MSGMAP updated 0x%08X -> 0x%08X\n", pafxMessageMapCSimcityViewEnd-1, pafxMessageMapCSimcityViewEnd);
+
+	// Crash if we overflow the message map.
+	// TODO - we need a better way to handle this
+	if ((DWORD)pafxMessageMapCSimcityViewEnd >= 0x4D4788) {
+		ConsoleLog(LOG_EMERGENCY, "CORE: CSimcityView MFC message map overflow detected!\n");
+		__asm push 0; retn;
+	}
+}
 
 // Override some strings that have egregiously bad grammar/capitalization.
 // Maxis fail English? That's unpossible!
@@ -210,29 +226,11 @@ extern "C" BOOL __stdcall Hook_ShowWindow(HWND hWnd, int nCmdShow) {
 	return ShowWindow(hWnd, nCmdShow);
 }
 
-extern "C" DWORD __cdecl Hook_SmackOpen(LPCSTR lpFileName, uint32_t uFlags, int32_t iExBuf) {
-	if (mischook_debug & MISCHOOK_DEBUG_SMACK)
-		ConsoleLog(LOG_DEBUG, "SMK:  0x%08X -> _SmackOpen(%s, %u, %i)\n", _ReturnAddress(), lpFileName, uFlags, iExBuf);
-
-	if (!smk_enabled || bSkipIntro || bSettingsAlwaysSkipIntro)
-		if (strrchr(lpFileName, '\\'))
-			if (!strcmp(strrchr(lpFileName, '\\'), "\\INTROA.SMK") || !strcmp(strrchr(lpFileName, '\\'), "\\INTROB.SMK"))
-				return NULL;
-
-	char buf[MAX_PATH + 1];
-
-	memset(buf, 0, sizeof(buf));
-
-	return SMKOpenProc(AdjustSource(buf, lpFileName), uFlags, iExBuf);
-}
-
 int L_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
 	int ret;
 
 	ToggleFloatingStatusDialog(FALSE);
-
 	ret = MessageBoxA(hWnd, lpText, lpCaption, uType);
-
 	ToggleFloatingStatusDialog(TRUE);
 
 	return ret;
@@ -246,9 +244,7 @@ extern "C" int __stdcall Hook_AfxMessageBoxStr(LPCTSTR lpszPrompt, UINT nType, U
 	int ret;
 
 	ToggleFloatingStatusDialog(FALSE);
-
 	ret = H_CWinAppDoMessageBox((DWORD *)game_AfxCoreState, lpszPrompt, nType, nIDHelp);
-
 	ToggleFloatingStatusDialog(TRUE);
 
 	return ret;
@@ -273,9 +269,7 @@ extern "C" int __stdcall Hook_AfxMessageBoxID(UINT nIDPrompt, UINT nType, UINT n
 		nID = nIDPrompt;
 
 	ToggleFloatingStatusDialog(FALSE);
-
 	ret = H_CWinAppDoMessageBox((DWORD *)game_AfxCoreState, cStr.m_pchData, nType, nIDHelp);
-
 	ToggleFloatingStatusDialog(TRUE);
 
 	H_CStringDest(&cStr);
@@ -431,7 +425,7 @@ BAIL:
 	return;
 }
 
-// Fix up a specific setting of the GameDoIdleUpkeep state
+// Fix the missing "Maxis Presents" slide
 void __declspec(naked) Hook_4062AD(void) {
 	__asm {
 		mov dword ptr [ecx+0x14C], 1
@@ -1733,7 +1727,7 @@ typedef struct {
 	int iPos;            // Position within the array. (Only set when there's a match)
 } cheat_t;
 
-enum {
+static enum {
 	CHEAT_FUND,
 	CHEAT_CASS,
 	CHEAT_THEWORKS,
@@ -1843,53 +1837,11 @@ static void AdjustDebugMenu(HMENU hDebugMenu) {
 			return;
 		}
 
-		afxMessageMapEntry[0] = {
-			WM_COMMAND,
-			0,
-			IDM_DEBUG_MILITARY_DECLINED,
-			IDM_DEBUG_MILITARY_DECLINED,
-			0x0A,
-			ProposeMilitaryBaseDecline,
-		};
-
-		afxMessageMapEntry[1] = {
-			WM_COMMAND,
-			0,
-			IDM_DEBUG_MILITARY_AIRFORCE,
-			IDM_DEBUG_MILITARY_AIRFORCE,
-			0x0A,
-			ProposeMilitaryBaseAirForceBase,
-		};
-
-		afxMessageMapEntry[2] = {
-			WM_COMMAND,
-			0,
-			IDM_DEBUG_MILITARY_ARMYBASE,
-			IDM_DEBUG_MILITARY_ARMYBASE,
-			0x0A,
-			ProposeMilitaryBaseArmyBase,
-		};
-
-		afxMessageMapEntry[3] = {
-			WM_COMMAND,
-			0,
-			IDM_DEBUG_MILITARY_NAVALYARD,
-			IDM_DEBUG_MILITARY_NAVALYARD,
-			0x0A,
-			ProposeMilitaryBaseNavalYard,
-		};
-
-		afxMessageMapEntry[4] = {
-			WM_COMMAND,
-			0,
-			IDM_DEBUG_MILITARY_MISSILESILOS,
-			IDM_DEBUG_MILITARY_MISSILESILOS,
-			0x0A,
-			ProposeMilitaryBaseMissileSilos,
-		};
-
-		VirtualProtect((LPVOID)0x4D4608, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
-		memcpy_s((LPVOID)0x4D4608, sizeof(afxMessageMapEntry), &afxMessageMapEntry, sizeof(afxMessageMapEntry));
+		AddNewSCVMessageMapEntry(WM_COMMAND, 0, IDM_DEBUG_MILITARY_DECLINED, IDM_DEBUG_MILITARY_DECLINED, 0x0A, ProposeMilitaryBaseDecline);
+		AddNewSCVMessageMapEntry(WM_COMMAND, 0, IDM_DEBUG_MILITARY_AIRFORCE, IDM_DEBUG_MILITARY_AIRFORCE, 0x0A, ProposeMilitaryBaseMissileSilos);
+		AddNewSCVMessageMapEntry(WM_COMMAND, 0, IDM_DEBUG_MILITARY_ARMYBASE, IDM_DEBUG_MILITARY_ARMYBASE, 0x0A, ProposeMilitaryBaseAirForceBase);
+		AddNewSCVMessageMapEntry(WM_COMMAND, 0, IDM_DEBUG_MILITARY_NAVALYARD, IDM_DEBUG_MILITARY_NAVALYARD, 0x0A, ProposeMilitaryBaseNavalYard);
+		AddNewSCVMessageMapEntry(WM_COMMAND, 0, IDM_DEBUG_MILITARY_MISSILESILOS, IDM_DEBUG_MILITARY_MISSILESILOS, 0x0A, ProposeMilitaryBaseMissileSilos);
 
 		if (mischook_debug & MISCHOOK_DEBUG_MENU)
 			ConsoleLog(LOG_DEBUG, "MISC: Updated debug menu.\n");
@@ -3267,10 +3219,8 @@ void InstallMiscHooks_SC2K1996(void) {
 	*(DWORD*)(0x4EFE70) = (DWORD)Hook_ShowWindow;
 
 	// Only install this hook if SMK is enabled.
-	if (smk_enabled) {
-		// Install Smacker function hooks
+	if (smk_enabled)
 		*(DWORD*)(0x4EFF00) = (DWORD)Hook_SmackOpen;
-	}
 
 	// Hook into both AfxMessageBox functions
 	VirtualProtect((LPVOID)0x4B232F, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -3511,37 +3461,9 @@ void InstallMiscHooks_SC2K1996(void) {
 			goto skipgamemenu;
 		}
 
-		afxMessageMapEntry[0] = {
-			WM_COMMAND,
-			0,
-			IDM_GAME_OPTIONS_SC2KFIXSETTINGS,
-			IDM_GAME_OPTIONS_SC2KFIXSETTINGS,
-			0x0A,
-			ShowSettingsDialog,
-		};
-
-		afxMessageMapEntry[1] = {
-			WM_COMMAND,
-			0,
-			IDM_GAME_OPTIONS_MODCONFIG,
-			IDM_GAME_OPTIONS_MODCONFIG,
-			0x0A,
-			ShowModSettingsDialog
-		};
-
-		afxMessageMapEntry[2] = {
-			WM_COMMAND,
-			0,
-			IDM_GAME_WINDOWS_SCENARIOGOALS,
-			IDM_GAME_WINDOWS_SCENARIOGOALS,
-			0x0A,
-			ShowScenarioStatusDialog
-		};
-
-		VirtualProtect((LPVOID)pafxMessageMapCSimcityViewEnd, sizeof(afxMessageMapEntry), PAGE_EXECUTE_READWRITE, &dwDummy);
-		memcpy_s((LPVOID)pafxMessageMapCSimcityViewEnd, sizeof(afxMessageMapEntry), &afxMessageMapEntry, sizeof(afxMessageMapEntry));
-
-		pafxMessageMapCSimcityViewEnd += 3;
+		AddNewSCVMessageMapEntry(WM_COMMAND, 0, IDM_GAME_OPTIONS_SC2KFIXSETTINGS, IDM_GAME_OPTIONS_SC2KFIXSETTINGS, 0x0A, ShowSettingsDialog);
+		AddNewSCVMessageMapEntry(WM_COMMAND, 0, IDM_GAME_OPTIONS_MODCONFIG, IDM_GAME_OPTIONS_MODCONFIG, 0x0A, ShowModSettingsDialog);
+		AddNewSCVMessageMapEntry(WM_COMMAND, 0, IDM_GAME_WINDOWS_SCENARIOGOALS, IDM_GAME_WINDOWS_SCENARIOGOALS, 0x0A, ShowScenarioStatusDialog);
 
 		if (mischook_debug & MISCHOOK_DEBUG_MENU)
 			ConsoleLog(LOG_DEBUG, "MISC: Updated game menu.\n");
@@ -3582,19 +3504,7 @@ skipgamemenu:
 	VirtualProtect((LPVOID)0x402B4E, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402B4E, Hook_402B4E);
 
-	// Add hook to center with the middle mouse button
-	AFX_MSGMAP_ENTRY afxMessageMapEntrySimCityView = {
-		WM_MBUTTONDOWN,
-		0,
-		0,
-		0,
-		0x2A,
-		Hook_CSimcityView_WM_MBUTTONDOWN
-	};
-
-	VirtualProtect((LPVOID)pafxMessageMapCSimcityViewEnd, sizeof(afxMessageMapEntrySimCityView), PAGE_EXECUTE_READWRITE, &dwDummy);
-	memcpy_s((LPVOID)pafxMessageMapCSimcityViewEnd, sizeof(afxMessageMapEntrySimCityView), &afxMessageMapEntrySimCityView, sizeof(afxMessageMapEntrySimCityView));
-	pafxMessageMapCSimcityViewEnd++;
+	AddNewSCVMessageMapEntry(WM_MBUTTONDOWN, 0, 0, 0, 0x2A, Hook_CSimcityView_WM_MBUTTONDOWN);
 
 	// Copy the main menu's message map and update the runtime class to use it
 	VirtualProtect((LPVOID)0x4D513C, 4, PAGE_EXECUTE_READWRITE, &dwDummy);

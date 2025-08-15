@@ -14,11 +14,25 @@
 
 #include <sc2kfix.h>
 
-SMKOpenPtr SMKOpenProc;
+#define SMACKER_DEBUG_BASE 1
+#define SMACKER_DEBUG_CALLS 2
 
+#define SMACKER_DEBUG DEBUG_FLAGS_NONE
+
+#ifdef DEBUGALL
+#undef SMACKER_DEBUG
+#define SMACKER_DEBUG DEBUG_FLAGS_EVERYTHING
+#endif
+
+#define MAX_USER_LABELS 51
+
+UINT smk_debug = SMACKER_DEBUG;
+
+static DWORD dwDummy;
+
+SMKOpenPtr SMKOpenProc;
 BOOL smk_enabled = FALSE;
 BOOL bSkipIntro = FALSE;
-
 static HMODULE hMod_SMK = 0;
 
 void GetSMKFuncs() {
@@ -44,12 +58,14 @@ void GetSMKFuncs() {
 	}
 
 	smk_enabled = TRUE;
-	ConsoleLog(LOG_INFO, "SMK:  Loaded smacker functions.\n");
+	if (smk_debug & SMACKER_DEBUG_BASE)
+		ConsoleLog(LOG_INFO, "SMK:  Loaded Smacker functions.\n");
 }
 
 void ReleaseSMKFuncs() {
 	if (hMod_SMK) {
-		ConsoleLog(LOG_INFO, "SMK:  Releasing smacker functions.\n");
+		if (smk_debug & SMACKER_DEBUG_BASE)
+		ConsoleLog(LOG_INFO, "SMK:  Releasing Smacker functions.\n");
 
 		FreeLibrary(hMod_SMK);
 		hMod_SMK = 0;
@@ -62,4 +78,20 @@ extern "C" DWORD __cdecl Hook_MovieCheck(char* sMovStr) {
 			return 1;
 
 	return Game_Direct_MovieCheck(sMovStr);
+}
+
+extern "C" DWORD __cdecl Hook_SmackOpen(LPCSTR lpFileName, uint32_t uFlags, int32_t iExBuf) {
+	if (smk_debug & SMACKER_DEBUG_CALLS)
+		ConsoleLog(LOG_DEBUG, "SMK:  0x%08X -> _SmackOpen(%s, %u, %i)\n", _ReturnAddress(), lpFileName, uFlags, iExBuf);
+
+	if (!smk_enabled || bSkipIntro || bSettingsAlwaysSkipIntro)
+		if (strrchr(lpFileName, '\\'))
+			if (!strcmp(strrchr(lpFileName, '\\'), "\\INTROA.SMK") || !strcmp(strrchr(lpFileName, '\\'), "\\INTROB.SMK"))
+				return NULL;
+
+	char buf[MAX_PATH + 1];
+
+	memset(buf, 0, sizeof(buf));
+
+	return SMKOpenProc(AdjustSource(buf, lpFileName), uFlags, iExBuf);
 }
