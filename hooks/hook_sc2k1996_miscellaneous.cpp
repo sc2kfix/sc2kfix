@@ -448,6 +448,77 @@ std::vector<hook_function_t> stHooks_Hook_OnNewCity_Before;
 static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 	case WM_INITDIALOG:
+		// Difficulty selection tooltips
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, 109),
+			"Start a game on Easy difficulty.\n"
+			"Modifiers:\n"
+			" - $20,000 starting cash\n"
+			" - Slightly increased industrial demand\n"
+			" - Four months before disasters can occur");
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, 1001),
+			"Start a game on Easy difficulty.\n"
+			"Modifiers:\n"
+			" - $20,000 starting cash\n"
+			" - Slightly increased industrial demand\n"
+			" - Four months before disasters can occur");
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, 110),
+			"Start a game on Medium difficulty.\n"
+			"Modifiers:\n"
+			" - $10,000 starting cash\n"
+			" - Baseline industrial demand\n"
+			" - Two months before disasters can occur");
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, 1002),
+			"Start a game on Medium difficulty.\n"
+			"Modifiers:\n"
+			" - $10,000 starting cash\n"
+			" - Baseline industrial demand\n"
+			" - Two months before disasters can occur");
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, 111),
+			"Start a game on Hard difficulty.\n"
+			"Modifiers:\n"
+			" - $10,000 bond at 3% APR\n"
+			" - Slightly decreased industrial demand\n"
+			" - One month before disasters can occur");
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, 1003),
+			"Start a game on Hard difficulty.\n"
+			"Modifiers:\n"
+			" - $10,000 bond at 3% APR\n"
+			" - Slightly decreased industrial demand\n"
+			" - One month before disasters can occur");
+
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, 1010),
+			"Hover over a date to see the difference between starting years.");
+
+		// Year selection tooltips
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, 104),
+			"Start the game in 1900.\n"
+			"Modifiers:\n"
+			" - No forced unlocks.");
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, 105),
+			"Start the game in 1950.\n"
+			"Modifiers:\n"
+			" - Subways, buses, highways, and airports unlocked.\n"
+			" - Water treatment plants unlocked.\n"
+			" - 50% chance of natural gas power plants being unlocked.\n"
+			" - 5% chance of nuclear power plants being unlocked.");
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, 106),
+			"Start the game in 2000.\n"
+			"Modifiers:\n"
+			" - Subways, buses, highways, and airports unlocked.\n"
+			" - Water treatment and desalination plants unlocked.\n"
+			" - Natural gas, nuclear, wind, and solar power plants unlocked.\n"
+			" - 50% chance of Plymouth arcologies being unlocked.");
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, 107),
+			"Start the game in 2050.\n"
+			"Modifiers:\n"
+			" - Subways, buses, highways, and airports unlocked.\n"
+			" - Water treatment and desalination plants unlocked.\n"
+			" - Natural gas, nuclear, wind, solar, and micorwave power plants unlocked.\n"
+			" - 5% chance of fusion power plants being unlocked.\n"
+			" - Plymouth arcologies unlocked.\n"
+			" - 50% chance of Forest arcologies being unlocked.");
+
+		// Set the default mayor name.
 		SetDlgItemText(hwndDlg, 150, szSettingsMayorName);
 		break;
 	case WM_DESTROY:

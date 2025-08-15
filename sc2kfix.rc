@@ -176,17 +176,17 @@ BEGIN
     CONTROL         "Easy",109,"Button",BS_AUTORADIOBUTTON | WS_GROUP,14,48,36,10
     CONTROL         "Medium",110,"Button",BS_AUTORADIOBUTTON,14,59,36,10
     CONTROL         "Hard",111,"Button",BS_AUTORADIOBUTTON,14,70,36,10
-    LTEXT           "$20,000",-1,54,49,41,8
-    LTEXT           "$10,000",-1,54,60,41,8
-    LTEXT           "$10K Bond",-1,54,71,41,8
-    CONTROL         "1900",104,"Button",BS_AUTORADIOBUTTON | WS_GROUP,110,59,26,10
-    CONTROL         "1950",105,"Button",BS_AUTORADIOBUTTON,140,59,26,10
-    CONTROL         "2000",106,"Button",BS_AUTORADIOBUTTON,110,72,26,10
-    CONTROL         "2050",107,"Button",BS_AUTORADIOBUTTON,140,72,26,10
+    LTEXT           "$10K Bond",1003,54,71,41,8,SS_NOTIFY
+    CONTROL         "1900",104,"Button",BS_AUTORADIOBUTTON | WS_GROUP,110,58,26,10
+    CONTROL         "1950",105,"Button",BS_AUTORADIOBUTTON,140,58,26,10
+    CONTROL         "2000",106,"Button",BS_AUTORADIOBUTTON,110,71,26,10
+    CONTROL         "2050",107,"Button",BS_AUTORADIOBUTTON,140,71,26,10
     DEFPUSHBUTTON   "Done",1,80,90,21,14
     CTEXT           "City Name",-1,8,7,41,8
     CTEXT           "Mayor Name",-1,8,24,41,8
-    CTEXT           "Starting Year",-1,110,48,54,8
+    CTEXT           "Starting Year",1010,110,47,54,8,SS_NOTIFY
+    LTEXT           "$10,000",1002,54,60,41,8,SS_NOTIFY
+    LTEXT           "$20,000",1001,54,49,41,8,SS_NOTIFY
 END
 
 102 DIALOGEX 0, 0, 255, 250
