@@ -240,9 +240,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			InjectSCURKFix();
 			break;
 		}
-
-		// SMK..
-		GetSMKFuncs();
 		
 		// Seed the libc RNG -- we'll need this later
 		srand((unsigned int)time(NULL));
