@@ -2705,21 +2705,14 @@ void ShowModSettingsDialog(void) {
 //
 // UPDATE 2025-08-15 (araxestroy): Working on breaking this out nicely. It's not going well.
 void InstallMiscHooks_SC2K1996(void) {
-	InstallRegistryPathingHooks_SC2K1996();
-
-	// Install LoadStringA hook
+	// Install critical Windows API hooks
 	*(DWORD*)(0x4EFBE8) = (DWORD)Hook_LoadStringA;
-
-	// Install LoadMenuA hook
 	*(DWORD*)(0x4EFDCC) = (DWORD)Hook_LoadMenuA;
 	*(DWORD*)(0x4EFC64) = (DWORD)Hook_DialogBoxParamA;
-
-	// Install ShowWindow hook
 	*(DWORD*)(0x4EFE70) = (DWORD)Hook_ShowWindow;
 
-	// Only install this hook if SMK is enabled.
-	if (smk_enabled)
-		*(DWORD*)(0x4EFF00) = (DWORD)Hook_SmackOpen;
+	// Install registry pathing hooks
+	InstallRegistryPathingHooks_SC2K1996();
 
 	// Hook into both AfxMessageBox functions
 	VirtualProtect((LPVOID)0x4B232F, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -2730,10 +2723,6 @@ void InstallMiscHooks_SC2K1996(void) {
 	// Hook into the CFileDialog::DoModal function
 	VirtualProtect((LPVOID)0x49FE18, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x49FE18, Hook_FileDialogDoModal);
-
-	// Hook into the movie checking function.
-	VirtualProtect((LPVOID)0x402360, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x402360, Hook_MovieCheck);
 
 	// Fix the sign fonts
 	VirtualProtect((LPVOID)0x4E7267, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -2805,45 +2794,11 @@ void InstallMiscHooks_SC2K1996(void) {
 	if (bUseAdvancedQuery)
 		InstallQueryHooks();
 
-	// Increase sound buffer sizes to 256K each
-	VirtualProtect((LPVOID)0x480C2B, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(DWORD*)0x480C2B = 262144;
-	VirtualProtect((LPVOID)0x480C4B, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(DWORD*)0x480C4B = 262144;
-	VirtualProtect((LPVOID)0x480C5B, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(DWORD*)0x480C5B = 262144;
-	VirtualProtect((LPVOID)0x480C6B, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(DWORD*)0x480C6B = 262144;
-	VirtualProtect((LPVOID)0x480C7B, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(DWORD*)0x480C7B = 262144;
-
-	// Load higher quality sounds from DLL resources
+	// Expand sound buffers and load higher quality sounds from DLL resources
 	LoadReplacementSounds();
-
-	// Hook sound buffer loading
-	VirtualProtect((LPVOID)0x401F9B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x401F9B, Hook_LoadSoundBuffer);
 
 	// Install music engine hooks
 	InstallMusicEngineHooks();
-
-	// Load weather icons
-	for (int i = 0; i < 13; i++) {
-		HANDLE hBitmap = LoadImage(hSC2KFixModule, MAKEINTRESOURCE(IDB_WEATHER0 + i), IMAGE_BITMAP, 32, 32, NULL);
-		if (hBitmap)
-			hWeatherBitmaps[i] = hBitmap;
-		else
-			ConsoleLog(LOG_ERROR, "MISC: Couldn't load weather bitmap IDB_WEATHER%i: 0x%08X\n", i, GetLastError());
-	}
-
-	// Load compass icons
-	for (int i = 0; i < 4; i++) {
-		HANDLE hBitmap = LoadImage(hSC2KFixModule, MAKEINTRESOURCE(IDB_COMPASS0 + i), IMAGE_BITMAP, 38, 38, NULL);
-		if (hBitmap)
-			hCompassBitmaps[i] = hBitmap;
-		else
-			ConsoleLog(LOG_ERROR, "MISC: Couldn't load compass bitmap IDB_COMPASS%i: 0x%08X\n", i, GetLastError());
-	}
 
 	// Hook status bar updates for the status dialog implementation
 	InstallStatusHooks_SC2K1996();

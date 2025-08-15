@@ -55,7 +55,14 @@ void GetSMKFuncs() {
 		return;
 	}
 
+	// Hook the Smacker library
 	smk_enabled = TRUE;
+	*(DWORD*)(0x4EFF00) = (DWORD)Hook_SmackOpen;
+
+	// Hook into the movie checking function.
+	VirtualProtect((LPVOID)0x402360, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402360, Hook_MovieCheck);
+
 	if (smk_debug & SMACKER_DEBUG_BASE)
 		ConsoleLog(LOG_INFO, "SMK:  Loaded Smacker functions.\n");
 }

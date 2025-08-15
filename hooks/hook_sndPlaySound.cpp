@@ -30,6 +30,8 @@ UINT snd_debug = SND_DEBUG;
 std::map<DWORD, soundbufferinfo_t> mapSoundBuffers;
 std::map<int, sound_replacement_t> mapReplacementSounds;
 
+static DWORD dwDummy;
+
 extern "C" void __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer) {
     if (snd_debug & SND_DEBUG_PLAYS)
         ConsoleLog(LOG_DEBUG, "SND:  Loading %d.wav into buffer <0x%08X>.\n", iSoundID, lpBuffer);
@@ -89,6 +91,23 @@ void LoadReplacementSounds(void) {
     HRSRC hResFind;
     HGLOBAL hWaveResource;
 
+    // Increase sound buffer sizes to 256K each
+    VirtualProtect((LPVOID)0x480C2B, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+    *(DWORD*)0x480C2B = 262144;
+    VirtualProtect((LPVOID)0x480C4B, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+    *(DWORD*)0x480C4B = 262144;
+    VirtualProtect((LPVOID)0x480C5B, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+    *(DWORD*)0x480C5B = 262144;
+    VirtualProtect((LPVOID)0x480C6B, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+    *(DWORD*)0x480C6B = 262144;
+    VirtualProtect((LPVOID)0x480C7B, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+    *(DWORD*)0x480C7B = 262144;
+
+    // Hook sound buffer loading
+    VirtualProtect((LPVOID)0x401F9B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+    NEWJMP((LPVOID)0x401F9B, Hook_LoadSoundBuffer);
+
+    // Load the replacement sound resources
     hResFind = FindResourceA(hSC2KFixModule, MAKEINTRESOURCE(IDR_WAVE_500), "WAVE");
     if (hResFind) {
         hWaveResource = LoadResource(hSC2KFixModule, hResFind);

@@ -579,6 +579,24 @@ extern "C" void __stdcall Hook_MainFrameToggleToolBars_SC2K1996(BOOL bShow) {
 }
 
 void InstallStatusHooks_SC2K1996(void) {
+	// Load weather icons
+	for (int i = 0; i < 13; i++) {
+		HANDLE hBitmap = LoadImage(hSC2KFixModule, MAKEINTRESOURCE(IDB_WEATHER0 + i), IMAGE_BITMAP, 32, 32, NULL);
+		if (hBitmap)
+			hWeatherBitmaps[i] = hBitmap;
+		else
+			ConsoleLog(LOG_ERROR, "MISC: Couldn't load weather bitmap IDB_WEATHER%i: 0x%08X\n", i, GetLastError());
+	}
+
+	// Load compass icons
+	for (int i = 0; i < 4; i++) {
+		HANDLE hBitmap = LoadImage(hSC2KFixModule, MAKEINTRESOURCE(IDB_COMPASS0 + i), IMAGE_BITMAP, 38, 38, NULL);
+		if (hBitmap)
+			hCompassBitmaps[i] = hBitmap;
+		else
+			ConsoleLog(LOG_ERROR, "MISC: Couldn't load compass bitmap IDB_COMPASS%i: 0x%08X\n", i, GetLastError());
+	}
+
 	// Hook for CStatusControlBar::CreateStatusBar
 	VirtualProtect((LPVOID)0x40173A, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x40173A, Hook_StatusControlBarCreateStatusBar_SC2K1996);
