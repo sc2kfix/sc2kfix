@@ -2308,9 +2308,19 @@ static void UpdateCityDateAndSeason(BOOL bIncrement) {
 	wCityElapsedYears = dwCityDays / 300;
 }
 
+
+// Function prototype: HOOKCB void Hook_SimCalendarAdvance_Before(void)
+// Called before the vanilla SimCalendar day simulation. Cannot be ignored.
+std::vector<hook_function_t> stHooks_Hook_SimCalendarAdvance_Before;
+
 // Function prototype: HOOKCB BOOL Hook_ScenarioSuccessCheck(void)
+// Cannot be ignored.
 // Return value: TRUE if the mod's scenario requirements have been met, FALSE if not.
 std::vector<hook_function_t> stHooks_Hook_ScenarioSuccessCheck;
+
+// Function prototype: HOOKCB void Hook_SimCalendarAdvance_After(void)
+// Called after the vanilla SimCalendar day simulation. Cannot be ignored.
+std::vector<hook_function_t> stHooks_Hook_SimCalendarAdvance_After;
 
 extern "C" void __stdcall Hook_SimulationProcessTick() {
 	int i;
@@ -2367,7 +2377,17 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 		Game_CDocument_UpdateAllViews(pCDocumentMainWindow, NULL, 2, NULL);
 	}
 
-	
+	// Call mods for daily processing tasks - before update
+	// XXX - should mods be able to entirely override SimCalendar days? Perhaps this is more a
+	// theological discussion to be held...
+	for (const auto& hook : stHooks_Hook_SimCalendarAdvance_Before) {
+		if (hook.iType == HOOKFN_TYPE_NATIVE) {
+			BOOL(*fnHook)() = (BOOL(*)())hook.pFunction;
+			fnHook();
+		}
+	}
+
+	// Advance the simulation for the current SimCalendar day
 	switch (dwMonDay) {
 		case 0:
 			if (!bSettingsFrequentCityRefresh)
@@ -2512,6 +2532,14 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 				break;
 			}
 			return;
+	}
+
+	// Call mods for daily processing tasks - after update
+	for (const auto& hook : stHooks_Hook_SimCalendarAdvance_After) {
+		if (hook.iType == HOOKFN_TYPE_NATIVE) {
+			BOOL(*fnHook)() = (BOOL(*)())hook.pFunction;
+			fnHook();
+		}
 	}
 
 	// Explanation:

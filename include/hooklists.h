@@ -13,4 +13,6 @@ extern std::vector<hook_function_t> stHooks_Hook_SaveGame_Before;
 extern std::vector<hook_function_t> stHooks_Hook_SaveGame_After;
 extern std::vector<hook_function_t> stHooks_Hook_GameDoIdleUpkeep_Before;
 extern std::vector<hook_function_t> stHooks_Hook_GameDoIdleUpkeep_After;
+extern std::vector<hook_function_t> stHooks_Hook_SimCalendarAdvance_Before;
 extern std::vector<hook_function_t> stHooks_Hook_ScenarioSuccessCheck;
+extern std::vector<hook_function_t> stHooks_Hook_SimCalendarAdvance_After;
