@@ -1,23 +1,8 @@
-// sc2kfix hooks/hook_sc2k1996_miscellaneous.cpp: miscellaneous hooks to be injected
+// sc2kfix hooks/hook_sc2k1996_guzzardo.cpp: cheat handler replacement
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
-
-// !!! HIC SUNT DRACONES !!!
-// This is where I test a bunch of stuff live to cross reference what I think is going on in the
-// game engine based on decompiling things in IDA and following the code paths. As a result,
-// there's a lot of experimental stuff in here. Comments will probably be unhelpful. Godspeed.
-
-// !!! HIC SUNT EVEN MORE DRACONES !!!
-// 2025-08-04 (araxestroy): oh MAN this file sucks. I need to go through it all and do a full
-// rework to match the KNF-esque style I usually use when writing code for this project. It also
-// has a dearth of comments because a lot of it is reimplemented from decompilation, so even after
-// writing and/or approving a lot of the code here I don't know what half of the code in this
-// fucking file does.
-//
-// I am not a religious man, but if anyone reading this is, please pray for me.
 
 #undef UNICODE
 #include <windows.h>
-#include <psapi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <intrin.h>
