@@ -10,3 +10,4 @@ extern SMKOpenPtr SMKOpenProc;
 
 void GetSMKFuncs();
 void ReleaseSMKFuncs();
+extern "C" DWORD __cdecl Hook_MovieCheck(char* sMovStr);

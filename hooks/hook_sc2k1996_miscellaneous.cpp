@@ -199,18 +199,6 @@ extern "C" HMENU __stdcall Hook_LoadMenuA(HINSTANCE hInstance, LPCSTR lpMenuName
 }
 #pragma warning(default : 6387)
 
-// Make sure our own menu items get enabled instead of disabled
-extern "C" BOOL __stdcall Hook_EnableMenuItem(HMENU hMenu, UINT uIDEnableItem, UINT uEnable) {
-	// XXX - There's gotta be a better way to do this.
-	if (uIDEnableItem == 5 && uEnable == 0x403)			// Options -> sc2kfix Settings...
-		return EnableMenuItem(hMenu, uIDEnableItem, MF_BYPOSITION | MF_ENABLED);
-	if (uIDEnableItem == 6 && uEnable == 0x403)			// Options -> Mod Configuration...
-		return EnableMenuItem(hMenu, uIDEnableItem, MF_BYPOSITION | MF_ENABLED);
-	if (uIDEnableItem == 8 && uEnable == 0x403 && bInScenario)	// Windows -> Show Scenario Goals...
-		return EnableMenuItem(hMenu, uIDEnableItem, MF_BYPOSITION | MF_ENABLED);
-	return EnableMenuItem(hMenu, uIDEnableItem, uEnable);
-}
-
 extern "C" BOOL __stdcall Hook_ShowWindow(HWND hWnd, int nCmdShow) {
 	if (mischook_debug & MISCHOOK_DEBUG_WINDOW)
 		ConsoleLog(LOG_DEBUG, "WND:  0x%08X -> ShowWindow(0x%08X, %i)\n", _ReturnAddress(), hWnd, nCmdShow);
@@ -326,15 +314,6 @@ extern "C" int __stdcall Hook_FileDialogDoModal() {
 	ToggleFloatingStatusDialog(TRUE);
 
 	return iRet;
-}
-
-extern "C" DWORD __cdecl Hook_MovieCheck(char *sMovStr) {
-	if (sMovStr && strncmp(sMovStr, "INTRO", 5) == 0) {
-		if (!smk_enabled || bSkipIntro || bSettingsAlwaysSkipIntro)
-			return 1;
-	}
-
-	return Game_Direct_MovieCheck(sMovStr);
 }
 
 extern "C" void __stdcall Hook_SimcityAppOnQuit(void) {
@@ -3259,7 +3238,6 @@ void InstallMiscHooks_SC2K1996(void) {
 
 	// Install LoadMenuA hook
 	*(DWORD*)(0x4EFDCC) = (DWORD)Hook_LoadMenuA;
-	//*(DWORD*)(0x4EFE58) = (DWORD)Hook_EnableMenuItem;
 	*(DWORD*)(0x4EFC64) = (DWORD)Hook_DialogBoxParamA;
 
 	// Install ShowWindow hook

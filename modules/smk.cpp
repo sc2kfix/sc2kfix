@@ -55,3 +55,11 @@ void ReleaseSMKFuncs() {
 		hMod_SMK = 0;
 	}
 }
+
+extern "C" DWORD __cdecl Hook_MovieCheck(char* sMovStr) {
+	if (sMovStr && strncmp(sMovStr, "INTRO", 5) == 0)
+		if (!smk_enabled || bSkipIntro || bSettingsAlwaysSkipIntro)
+			return 1;
+
+	return Game_Direct_MovieCheck(sMovStr);
+}
