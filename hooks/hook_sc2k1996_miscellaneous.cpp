@@ -2308,6 +2308,10 @@ static void UpdateCityDateAndSeason(BOOL bIncrement) {
 	wCityElapsedYears = dwCityDays / 300;
 }
 
+// Function prototype: HOOKCB BOOL Hook_ScenarioSuccessCheck(void)
+// Return value: TRUE if the mod's scenario requirements have been met, FALSE if not.
+std::vector<hook_function_t> stHooks_Hook_ScenarioSuccessCheck;
+
 extern "C" void __stdcall Hook_SimulationProcessTick() {
 	int i;
 	DWORD dwMonDay;
@@ -2403,6 +2407,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 			H_UpdateGraphData();
 			break;
 		case 22:
+			// Check against city milestone progression requirements and grant new milestones
 			dwCityProgressionRequirement = dwCityProgressionRequirements[wCityProgression];
 			if (dwCityProgressionRequirement) {
 				if (dwCityProgressionRequirement < dwCityPopulation) {
@@ -2423,8 +2428,15 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 					Game_SimcityAppSetGameCursor(&pCSimcityAppThis, 0, 0);
 				}
 			}
+
 			if (bInScenario) {
-				bScenarioSuccess = dwScenarioCitySize <= dwCityPopulation;
+				// Set our default scenario success state to true; we'll be picking off individual
+				// success/fail requirements from here and marking as false if they're not met
+				bScenarioSuccess = TRUE;
+
+				// Iterate through possible the vanilla scenario requirements
+				if (dwScenarioCitySize > dwCityPopulation && dwScenarioCitySize)
+					bScenarioSuccess = FALSE;
 				if (pBudgetArr[BUDGET_RESFUND].iCurrentCosts < (int)dwScenarioResPopulation)
 					bScenarioSuccess = FALSE;
 				if (pBudgetArr[BUDGET_COMFUND].iCurrentCosts < (int)dwScenarioComPopulation)
@@ -2453,13 +2465,27 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 					if (dwTileCount[bScenarioBuildingGoal2] < wScenarioBuildingGoal2Count)
 						bScenarioSuccess = FALSE;
 				}
+
+				// Iterate through mod-based scenario goals
+				for (const auto& hook : stHooks_Hook_ScenarioSuccessCheck) {
+					if (hook.iType == HOOKFN_TYPE_NATIVE) {
+						BOOL(*fnHook)() = (BOOL(*)())hook.pFunction;
+						if (!fnHook())
+							bScenarioSuccess = FALSE;
+					}
+				}
+
+				// Declare victory if the player has met the requirements, or tick down towards
+				// failure if they haven't
 				if (bScenarioSuccess)
-					H_EventScenarioNotification(1);
+					H_EventScenarioNotification(GAMEOVER_SCENARIO_VICTORY);
 				else if (!--wScenarioTimeLimitMonths)
-					H_EventScenarioNotification(0);
+					H_EventScenarioNotification(GAMEOVER_SCENARIO_FAILURE);
 			}
+
+			// Check if the city is bankrupt and impeach the mayor if so
 			if (dwCityFunds < -100000)
-				H_EventScenarioNotification(2);
+				H_EventScenarioNotification(GAMEOVER_BANKRUPT);
 			break;
 		case 23:
 			if (!bSettingsFrequentCityRefresh)

@@ -59,6 +59,7 @@ int LoadNativeCodeHooks(HMODULE hModule) {
 		REGISTER_HOOK(Hook_SaveGame_After);
 		REGISTER_HOOK(Hook_GameDoIdleUpkeep_Before);
 		REGISTER_HOOK(Hook_GameDoIdleUpkeep_After);
+		REGISTER_HOOK(Hook_ScenarioSuccessCheck);
 
 		if (!bHookRegistered) {
 			ConsoleLog(LOG_WARNING, "MODS: Native code mod %s presented invalid hook %s; skipping.\n", mapLoadedNativeMods[hModule].szModShortName, stModInfo->stHooks[i].szHookName);
@@ -88,6 +89,7 @@ void SortHookLists(void) {
 	SORT_HOOKS(Hook_SaveGame_After);
 	SORT_HOOKS(Hook_GameDoIdleUpkeep_Before);
 	SORT_HOOKS(Hook_GameDoIdleUpkeep_After);
+	SORT_HOOKS(Hook_ScenarioSuccessCheck);
 
 	if (modloader_debug & MODLOADER_DEBUG_HOOKS)
 		ConsoleLog(LOG_DEBUG, "MODS: Sorted all hooks.\n");

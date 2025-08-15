@@ -939,6 +939,12 @@ enum {
 	ONIDLE_STATE_UNKNOWN_18
 };
 
+enum {
+	GAMEOVER_SCENARIO_FAILURE,
+	GAMEOVER_SCENARIO_VICTORY,
+	GAMEOVER_BANKRUPT
+};
+
 // Structs
 
 typedef struct {
