@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <intrin.h>
 #include <time.h>
+#include <VersionHelpers.h>
 
 #include <sc2kfix.h>
 #include <winmm_exports.h>
@@ -188,6 +189,22 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		ConsoleLog(LOG_INFO, "CORE: SC2K session started at %lld.\n", time(NULL));
 		ConsoleLog(LOG_INFO, "CORE: Command line: %s\n", GetCommandLine());
 
+		// Dump some OS version information for bug reports
+		{
+			BOOL (WINAPI *RtlGetVersion)(LPOSVERSIONINFOW*) = (BOOL (WINAPI *)(LPOSVERSIONINFOW*))GetProcAddress(LoadLibrary("ntdll.dll"), "RtlGetVersion");
+			OSVERSIONINFOEXW stOSVersionInfoEx = { 0 };
+			stOSVersionInfoEx.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXW);
+			RtlGetVersion((LPOSVERSIONINFOW*)&stOSVersionInfoEx);
+			BOOL bX64 = FALSE;
+			IsWow64Process(GetCurrentProcess(), &bX64);
+
+			ConsoleLog(LOG_INFO, "CORE: OS is Windows%s %d.%d Build %d (%s)\n",
+				stOSVersionInfoEx.wProductType == VER_NT_WORKSTATION ? "" : " Server",
+				stOSVersionInfoEx.dwMajorVersion, stOSVersionInfoEx.dwMinorVersion, stOSVersionInfoEx.dwBuildNumber,
+				bX64 ? "x64" : "x86");
+		}
+
+		// Dump some console opening info
 		if (bConsoleEnabled) {
 			ConsoleLog(LOG_INFO, "CORE: Spawned console session.\n");
 			printf("[INFO ] CORE: ");
