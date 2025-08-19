@@ -160,29 +160,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		//      prior to the console itself being enabled.
 		fopen_s(&fdLog, "sc2kfix.log", "w");
 
-		SetGamePath();
-
-		// Load settings
-		if (!bSkipLoadSettings)
-			LoadSettings();
-		else
-			ConsoleLog(LOG_INFO, "CORE: -default passed, skipping LoadSettings()\n");
-
-		// Force the console to be enabled if bSettingsAlwaysConsole is set
-		if (bSettingsAlwaysConsole)
-			bConsoleEnabled = true;
-
-		if (iForcedBits > 0)
-			ConsoleLog(LOG_INFO, "CORE: -bitmode passed, forcing %d-Bit mode.\n", iForcedBits);
-
-		// Force the console to be enabled if DEBUGALL is defined
-#ifdef DEBUGALL
-		bConsoleEnabled = true;
-#endif
-
-		// Allocate ourselves a console and redirect libc stdio to it
-		if (bConsoleEnabled) {
+		// Allocate a console and immediately hide it. We will later send a ShowWindow to make it
+		// visible if the console is to be made user-facing.
+		{
 			AllocConsole();
+			ShowWindow(GetConsoleWindow(), SW_HIDE);
+			SetConsoleOutputCP(65001);
+			SetConsoleCP(65001);
 			SetConsoleTitle("sc2kfix console");
 			FILE* fdDummy = NULL;
 			freopen_s(&fdDummy, "CONIN$", "r", stdin);
@@ -190,9 +174,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			freopen_s(&fdDummy, "CONOUT$", "w", stderr);
 
 			// Set the console window icon
-			HWND hConsoleWindow = GetConsoleWindow();
-			SendMessage(hConsoleWindow, WM_SETICON, ICON_BIG, (LPARAM)LoadIcon(hSC2KFixModule, MAKEINTRESOURCE(IDI_TOPSECRET)));
-			SendMessage(hConsoleWindow, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(hSC2KFixModule, MAKEINTRESOURCE(IDI_TOPSECRET)));
+			SendMessage(GetConsoleWindow(), WM_SETICON, ICON_BIG, (LPARAM)LoadIcon(hSC2KFixModule, MAKEINTRESOURCE(IDI_TOPSECRET)));
+			SendMessage(GetConsoleWindow(), WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(hSC2KFixModule, MAKEINTRESOURCE(IDI_TOPSECRET)));
 		}
 
 		// Print the version banner
@@ -210,6 +193,32 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			printf("[INFO ] CORE: ");
 			ConsoleCmdShowDebug(NULL, NULL);
 		}
+
+		// Update the game path in memory
+		SetGamePath();
+
+		// Load settings
+		if (!bSkipLoadSettings)
+			LoadSettings();
+		else
+			ConsoleLog(LOG_INFO, "CORE: -default passed, skipping LoadSettings()\n");
+
+		// Force the console to be visible if bSettingsAlwaysConsole is set
+		if (bSettingsAlwaysConsole)
+			bConsoleEnabled = true;
+
+		// Foce n-bit mode if requested
+		if (iForcedBits > 0)
+			ConsoleLog(LOG_INFO, "CORE: -bitmode passed, forcing %d-bit mode.\n", iForcedBits);
+
+		// Force the console to be visible if DEBUGALL is defined
+#ifdef DEBUGALL
+		bConsoleEnabled = true;
+#endif
+
+		// Enable the console window if requested
+		if (bConsoleEnabled)
+			ShowWindow(GetConsoleWindow(), SW_NORMAL);
 
 		// Install our top-level exception handler
 		SetUnhandledExceptionFilter(CrashHandler);
