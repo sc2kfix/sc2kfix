@@ -653,7 +653,6 @@ BOOL SC2XLoadVanillaGame(DWORD* pThis, const char* szFileName) {
 }
 #endif
 
-#if !NOKUROKO
 // Function prototype: HOOKCB void Hook_LoadGame_Before(void)
 // Cannot be ignored.
 // SPECIAL NOTE: When the SC2X save format is implemented, this will be where mods will have a
@@ -667,7 +666,6 @@ std::vector<hook_function_t> stHooks_Hook_LoadGame_Before;
 //   pointer to a JSON object wherein they can load their data and version information or a NULL
 //   or similar object to inform them that they have no known state to load.
 std::vector<hook_function_t> stHooks_Hook_LoadGame_After;
-#endif
 
 extern "C" DWORD __stdcall Hook_LoadGame(void* pFile, char* src) {
 	DWORD(__thiscall * H_SimcityAppDoLoadGame)(void*, void*, char*) = (DWORD(__thiscall*)(void*, void*, char*))0x4302E0;
@@ -694,14 +692,12 @@ extern "C" DWORD __stdcall Hook_LoadGame(void* pFile, char* src) {
 		iCorruptedFixupSize = 0;
 	}
 
-#if !NOKUROKO
 	for (const auto& hook : stHooks_Hook_LoadGame_Before) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
 			void (*fnHook)(void*, void*, char*) = (void(*)(void*, void*, char*))hook.pFunction;
 			fnHook(pThis, pFile, src);
 		}
 	}
-#endif
 
 	// Make sure it's an .sc2 file and attempt to load if so.
 	if (std::regex_search(szLoadFileName, std::regex("\\.[Ss][Cc]2$"))) {
@@ -727,19 +723,16 @@ extern "C" DWORD __stdcall Hook_LoadGame(void* pFile, char* src) {
 		ret = H_SimcityAppDoLoadGame(pThis, pFile, src);
 	}
 
-#if !NOKUROKO
 	for (const auto& hook : stHooks_Hook_LoadGame_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
 			void (*fnHook)(void*, void*, char*) = (void(*)(void*, void*, char*))hook.pFunction;
 			fnHook(pThis, pFile, src);
 		}
 	}
-#endif
 
 	return ret;
 }
 
-#if !NOKUROKO
 // Function prototype: HOOKCB void Hook_SaveGame_Before(void)
 // Cannot be ignored.
 // SPECIAL NOTE: When the SC2X save format is implemented, this will be where mods will be fed a
@@ -751,7 +744,6 @@ std::vector<hook_function_t> stHooks_Hook_SaveGame_Before;
 // SPECIAL NOTE: Functionally useless. Likely to end up either being removed before the modding
 //   API is finalized or for its argument to be BOOL bSaveSuccessful.
 std::vector<hook_function_t> stHooks_Hook_SaveGame_After;
-#endif
 
 extern "C" DWORD __stdcall Hook_SaveGame(CMFC3XString* lpFileName) {
 	DWORD(__thiscall * H_SimcityAppDoSaveGame)(void*, CMFC3XString*) = (DWORD(__thiscall*)(void*, CMFC3XString*))0x432180;
@@ -760,25 +752,21 @@ extern "C" DWORD __stdcall Hook_SaveGame(CMFC3XString* lpFileName) {
 
 	__asm mov [pThis], ecx
 
-#if !NOKUROKO
 	for (const auto& hook : stHooks_Hook_SaveGame_Before) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
 			void (*fnHook)(void*, CMFC3XString*) = (void(*)(void*, CMFC3XString*))hook.pFunction;
 			fnHook(pThis, lpFileName);
 		}
 	}
-#endif
 
 	ret = H_SimcityAppDoSaveGame(pThis, lpFileName);
 
-#if !NOKUROKO
 	for (const auto& hook : stHooks_Hook_SaveGame_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
 			void (*fnHook)(void*, CMFC3XString*) = (void(*)(void*, CMFC3XString*))hook.pFunction;
 			fnHook(pThis, lpFileName);
 		}
 	}
-#endif
 
 	return ret;
 }

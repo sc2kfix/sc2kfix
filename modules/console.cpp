@@ -167,9 +167,7 @@ BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 			"  show debug          Display enabled debugging options\n"
 			"  show memory ...     Display memory contents\n"
 			"  show microsim ...   Display microsim info\n"
-#if !NOKUROKO
 			"  show mods           Display loaded mods\n"
-#endif
 			"  show sound          Display sound info\n"
 			"  show tile ...       Display tile info\n"
 			"  show version        Display sc2kfix version info\n");
@@ -185,10 +183,8 @@ BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 	if (!strcmp(szArguments, "microsim") || !strncmp(szArguments, "microsim ", 9))
 		return ConsoleCmdShowMicrosim(szCommand, szArguments);
 
-#if !NOKUROKO
 	if (!strcmp(szArguments, "mods") || !strncmp(szArguments, "mods ", 5))
 		return ConsoleCmdShowMods(szCommand, szArguments);
-#endif
 
 	if (!strcmp(szArguments, "sound") || !strncmp(szArguments, "sound ", 6))
 		return ConsoleCmdShowSound(szCommand, szArguments);
@@ -383,7 +379,6 @@ static const char* GetMidiDeviceTechnologyString(WORD wTechnology) {
 	}
 }
 
-#if !NOKUROKO
 BOOL ConsoleCmdShowMods(const char* szCommand, const char* szArguments) {
 	BOOL bDetail = FALSE;
 	if (*(szArguments + 4) == '\0' || *(szArguments + 5) == '\0')
@@ -400,8 +395,8 @@ BOOL ConsoleCmdShowMods(const char* szCommand, const char* szArguments) {
 
 	printf("%d native code mods loaded:\n", mapLoadedNativeMods.size());
 	for (auto stNativeMod : mapLoadedNativeMods) {
-		const char* szModVersion = strdup(FormatVersion(stNativeMod.second.iModVersionMajor, stNativeMod.second.iModVersionMinor, stNativeMod.second.iModVersionPatch));
-		const char* szModMinimumVersion = strdup(FormatVersion(stNativeMod.second.iMinimumVersionMajor, stNativeMod.second.iMinimumVersionMinor, stNativeMod.second.iMinimumVersionPatch));
+		const char* szModVersion = _strdup(FormatVersion(stNativeMod.second.iModVersionMajor, stNativeMod.second.iModVersionMinor, stNativeMod.second.iModVersionPatch));
+		const char* szModMinimumVersion = _strdup(FormatVersion(stNativeMod.second.iMinimumVersionMajor, stNativeMod.second.iMinimumVersionMinor, stNativeMod.second.iMinimumVersionPatch));
 		printf(
 			"  %s version %s (0x%08X)\n"
 			"    Mod Name:             %s\n"
@@ -422,7 +417,6 @@ BOOL ConsoleCmdShowMods(const char* szCommand, const char* szArguments) {
 	}
 	return TRUE;
 }
-#endif
 
 BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
 	if (dwDetectedVersion != SC2KVERSION_1996) {

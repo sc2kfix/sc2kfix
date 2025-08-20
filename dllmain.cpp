@@ -131,9 +131,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						mci_debug = DEBUG_FLAGS_EVERYTHING;
 						military_debug = DEBUG_FLAGS_EVERYTHING;
 						mischook_debug = DEBUG_FLAGS_EVERYTHING;
-#if !NOKUROKO
 						modloader_debug = DEBUG_FLAGS_EVERYTHING;
-#endif
 						mus_debug = DEBUG_FLAGS_EVERYTHING;
 						registry_debug = DEBUG_FLAGS_EVERYTHING;
 						sc2x_debug = DEBUG_FLAGS_EVERYTHING;
@@ -438,17 +436,17 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 #endif
 		}
 
-#if !NOKUROKO
 		// Set up the modding infrastructure for the 1996 Special Edition version.
 		if (dwDetectedVersion == SC2KVERSION_1996) {
+#if !NOKUROKO
 			// Initialize the Kuroko VM
 			CreateThread(NULL, 0, KurokoThread, 0, 0, &dwKurokoThreadID);
+#endif
 
 			// Load native code mods.
 			if (!bSkipLoadingMods && !bSettingsDontLoadMods)
 				LoadNativeCodeMods();
 		}
-#endif
 
 		break;
 

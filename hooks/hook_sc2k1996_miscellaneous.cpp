@@ -377,9 +377,7 @@ extern "C" void __stdcall Hook_CCmdUI_Enable(BOOL bOn) {
 
 	// Ensure the main config menu options are always enabled
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_GAME_OPTIONS_SC2KFIXSETTINGS, MF_BYCOMMAND | MF_ENABLED);
-#if !NOKUROKO
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_GAME_OPTIONS_MODCONFIG, MF_BYCOMMAND | MF_ENABLED);
-#endif
 
 	// Only enable the Scenario Goals option if we need it
 	if (bInScenario)
@@ -395,7 +393,6 @@ extern "C" void __stdcall Hook_CCmdUI_Enable(BOOL bOn) {
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_MISSILESILOS, MF_BYCOMMAND | MF_ENABLED);
 }
 
-#if !NOKUROKO
 // Function prototype: HOOKCB void Hook_GameDoIdleUpkeep_Before(void)
 // Ignored if bHookStopProcessing == TRUE.
 // SPECIAL NOTE: Ignoring this hook on callback results in the game effectively hanging. You have
@@ -438,7 +435,6 @@ extern "C" void __stdcall Hook_GameDoIdleUpkeep(void) {
 BAIL:
 	return;
 }
-#endif
 
 // Fix the missing "Maxis Presents" slide
 void __declspec(naked) Hook_4062AD(void) {
@@ -450,13 +446,11 @@ void __declspec(naked) Hook_4062AD(void) {
 	}
 }
 
-#if !NOKUROKO
 // Function prototype: HOOKCB void Hook_OnNewCity_Before(void)
 // Cannot be ignored.
 // SPECIAL NOTE: I cannot for the life of me remember why I added this. It will almost certainly
 //   be replaced within the next three months (comment added 2025-08-15).
 std::vector<hook_function_t> stHooks_Hook_OnNewCity_Before;
-#endif
 
 static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
@@ -542,7 +536,6 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 
 		strcpy_s(dwMapXLAB[0][0].szLabel, 24, szTempMayorName);
 
-#if !NOKUROKO
 		// XXX - this should probably be moved to a separate proper hook into the game itself
 		for (const auto& hook : stHooks_Hook_OnNewCity_Before) {
 			bHookStopProcessing = FALSE;
@@ -551,7 +544,7 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 				fnHook();
 			}
 		}
-#endif
+
 		break;
 	}
 
@@ -1907,7 +1900,6 @@ static void UpdateCityDateAndSeason(BOOL bIncrement) {
 	wCityElapsedYears = dwCityDays / 300;
 }
 
-#if !NOKUROKO
 // Function prototype: HOOKCB void Hook_SimCalendarAdvance_Before(void)
 // Called before the vanilla SimCalendar day simulation. Cannot be ignored.
 std::vector<hook_function_t> stHooks_Hook_SimCalendarAdvance_Before;
@@ -1920,7 +1912,6 @@ std::vector<hook_function_t> stHooks_Hook_ScenarioSuccessCheck;
 // Function prototype: HOOKCB void Hook_SimCalendarAdvance_After(void)
 // Called after the vanilla SimCalendar day simulation. Cannot be ignored.
 std::vector<hook_function_t> stHooks_Hook_SimCalendarAdvance_After;
-#endif
 
 extern "C" void __stdcall Hook_SimulationProcessTick() {
 	int i;
@@ -1977,7 +1968,6 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 		Game_CDocument_UpdateAllViews(pCDocumentMainWindow, NULL, 2, NULL);
 	}
 
-#if !NOKUROKO
 	// Call mods for daily processing tasks - before update
 	// XXX - should mods be able to entirely override SimCalendar days? Perhaps this is more a
 	// theological discussion to be held...
@@ -1987,7 +1977,6 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 			fnHook();
 		}
 	}
-#endif
 
 	// Advance the simulation for the current SimCalendar day
 	switch (dwMonDay) {
@@ -2088,7 +2077,6 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 						bScenarioSuccess = FALSE;
 				}
 
-#if !NOKUROKO
 				// Iterate through mod-based scenario goals
 				for (const auto& hook : stHooks_Hook_ScenarioSuccessCheck) {
 					if (hook.iType == HOOKFN_TYPE_NATIVE) {
@@ -2097,7 +2085,6 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 							bScenarioSuccess = FALSE;
 					}
 				}
-#endif
 
 				// Declare victory if the player has met the requirements, or tick down towards
 				// failure if they haven't
@@ -2138,7 +2125,6 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 			return;
 	}
 
-#if !NOKUROKO
 	// Call mods for daily processing tasks - after update
 	for (const auto& hook : stHooks_Hook_SimCalendarAdvance_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
@@ -2146,7 +2132,6 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 			fnHook();
 		}
 	}
-#endif
 
 	// Explanation:
 	// !bSettingsFrequentCityRefresh - It will do the tile highlight update if:
@@ -2777,11 +2762,9 @@ static BOOL L_OnCmdMsg(void *pThis, UINT nID, int nCode, void *pExtra, void *pHa
 				ShowSettingsDialog();
 				return TRUE;
 
-#if !NOKUROKO
 			case IDM_GAME_OPTIONS_MODCONFIG:
 				ShowModSettingsDialog();
 				return TRUE;
-#endif
 
 			case IDM_DEBUG_MILITARY_DECLINED:
 				ProposeMilitaryBaseDecline();
@@ -2881,12 +2864,10 @@ extern "C" BOOL __stdcall Hook_WndOnCommand(WPARAM wParam, LPARAM lParam) {
 	return L_OnCmdMsg(pThis, nID, nCode, 0, 0, _ReturnAddress());
 }
 
-#if !NOKUROKO
 // Placeholder.
 void ShowModSettingsDialog(void) {
 	L_MessageBoxA(GameGetRootWindowHandle(), "The mod settings dialog has not yet been implemented. Check back later.", "sc2fix", MB_OK);
 }
-#endif
 
 // Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
 // This should probably have a better name. And maybe be broken out into smaller functions.
@@ -2929,11 +2910,9 @@ void InstallMiscHooks_SC2K1996(void) {
 
 	InstallSpriteAndTileSetSimCity1996Hooks();
 
-#if !NOKUROKO
 	// Hook GameDoIdleUpkeep
 	VirtualProtect((LPVOID)0x402A3B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402A3B, Hook_GameDoIdleUpkeep);
-#endif
 
 	// Fix the Maxis Presents logo not being shown
 	VirtualProtect((LPVOID)0x4062B9, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -3073,12 +3052,10 @@ void InstallMiscHooks_SC2K1996(void) {
 			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #2 failed, error = 0x%08X.\n", GetLastError());
 			goto skipgamemenu;
 		}
-#if !NOKUROKO
 		if (!InsertMenu(hOptionsPopup, -1, MF_BYPOSITION|MF_STRING, IDM_GAME_OPTIONS_MODCONFIG, "Mod &Configuration...") && mischook_debug & MISCHOOK_DEBUG_MENU) {
 			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #3 failed, error = 0x%08X.\n", GetLastError());
 			goto skipgamemenu;
 		}
-#endif
 
 		// Windows menu -> add Show Scenario Goals...
 		HMENU hMenuWindowsPopup;

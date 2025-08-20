@@ -30,11 +30,12 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{FB5DC66B-A2B0-4566-B243-453D58388A0D}.Release|x86.ActiveCfg = Release|Win32
 		{FB5DC66B-A2B0-4566-B243-453D58388A0D}.Release|x86.Build.0 = Release|Win32
-		{FB5DC66B-A2B0-4566-B243-453D58388A0D}.ReleaseNoKuroko|x86.ActiveCfg = Release|Win32
-		{FB5DC66B-A2B0-4566-B243-453D58388A0D}.ReleaseNoKuroko|x86.Build.0 = Release|Win32
+		{FB5DC66B-A2B0-4566-B243-453D58388A0D}.ReleaseNoKuroko|x86.ActiveCfg = ReleaseNoKuroko|Win32
+		{FB5DC66B-A2B0-4566-B243-453D58388A0D}.ReleaseNoKuroko|x86.Build.0 = ReleaseNoKuroko|Win32
 		{D12CCD5D-5BFD-4FF0-9D42-AEED8585E538}.Release|x86.ActiveCfg = Release|Win32
 		{D12CCD5D-5BFD-4FF0-9D42-AEED8585E538}.Release|x86.Build.0 = Release|Win32
 		{D12CCD5D-5BFD-4FF0-9D42-AEED8585E538}.ReleaseNoKuroko|x86.ActiveCfg = Release|Win32
+		{D12CCD5D-5BFD-4FF0-9D42-AEED8585E538}.ReleaseNoKuroko|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
