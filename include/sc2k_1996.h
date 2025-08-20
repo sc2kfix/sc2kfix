@@ -19,7 +19,11 @@
 #include <vector>
 
 #ifndef HOOKEXT
+#if !NOKUROKO
 #define HOOKEXT extern "C" __declspec(dllexport)
+#else
+#define HOOKEXT extern "C"
+#endif
 #endif
 
 #ifdef GAMEOFF_IMPL

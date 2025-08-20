@@ -1,4 +1,5 @@
 // sc2kfix modules/sc2x.cpp: JSON-based extensible save game file format
+//                           and hooks for fixing save/load bugs.
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
@@ -30,10 +31,17 @@
 #define SC2X_DEBUG DEBUG_FLAGS_EVERYTHING
 #endif
 
+#if !NOKUROKO
 #define BAILOUT(s, ...) do { \
 	ConsoleLog(LOG_ERROR, "SC2X: " s, __VA_ARGS__); \
 	return 0; \
 } while (0)
+#else
+#define BAILOUT(s, ...) do { \
+	ConsoleLog(LOG_ERROR, "SAVE: " s, __VA_ARGS__); \
+	return 0; \
+} while (0)
+#endif
 
 UINT sc2x_debug = SC2X_DEBUG;
 
@@ -645,6 +653,7 @@ BOOL SC2XLoadVanillaGame(DWORD* pThis, const char* szFileName) {
 }
 #endif
 
+#if !NOKUROKO
 // Function prototype: HOOKCB void Hook_LoadGame_Before(void)
 // Cannot be ignored.
 // SPECIAL NOTE: When the SC2X save format is implemented, this will be where mods will have a
@@ -658,6 +667,7 @@ std::vector<hook_function_t> stHooks_Hook_LoadGame_Before;
 //   pointer to a JSON object wherein they can load their data and version information or a NULL
 //   or similar object to inform them that they have no known state to load.
 std::vector<hook_function_t> stHooks_Hook_LoadGame_After;
+#endif
 
 extern "C" DWORD __stdcall Hook_LoadGame(void* pFile, char* src) {
 	DWORD(__thiscall * H_SimcityAppDoLoadGame)(void*, void*, char*) = (DWORD(__thiscall*)(void*, void*, char*))0x4302E0;
@@ -677,18 +687,21 @@ extern "C" DWORD __stdcall Hook_LoadGame(void* pFile, char* src) {
 		if (sc2x_debug & SC2X_DEBUG_LOAD)
 			ConsoleLog(LOG_DEBUG, "SC2X: Saved game iCorruptedFixupSize is %d bytes.\n", iCorruptedFixupSize);
 		infile.close();
-	} else {
+	}
+	else {
 		ConsoleLog(LOG_WARNING, "SC2X: Couldn't open saved game \"%s\" to determine iCorruptedFixupSize.\n", szLoadFileName);
 		ConsoleLog(LOG_WARNING, "SC2X: If this save is corrupted, sc2kfix will not be able to attempt to fix it.\n");
 		iCorruptedFixupSize = 0;
 	}
 
+#if !NOKUROKO
 	for (const auto& hook : stHooks_Hook_LoadGame_Before) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
 			void (*fnHook)(void*, void*, char*) = (void(*)(void*, void*, char*))hook.pFunction;
 			fnHook(pThis, pFile, src);
 		}
 	}
+#endif
 
 	// Make sure it's an .sc2 file and attempt to load if so.
 	if (std::regex_search(szLoadFileName, std::regex("\\.[Ss][Cc]2$"))) {
@@ -714,16 +727,19 @@ extern "C" DWORD __stdcall Hook_LoadGame(void* pFile, char* src) {
 		ret = H_SimcityAppDoLoadGame(pThis, pFile, src);
 	}
 
+#if !NOKUROKO
 	for (const auto& hook : stHooks_Hook_LoadGame_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
 			void (*fnHook)(void*, void*, char*) = (void(*)(void*, void*, char*))hook.pFunction;
 			fnHook(pThis, pFile, src);
 		}
 	}
+#endif
 
 	return ret;
 }
 
+#if !NOKUROKO
 // Function prototype: HOOKCB void Hook_SaveGame_Before(void)
 // Cannot be ignored.
 // SPECIAL NOTE: When the SC2X save format is implemented, this will be where mods will be fed a
@@ -735,6 +751,7 @@ std::vector<hook_function_t> stHooks_Hook_SaveGame_Before;
 // SPECIAL NOTE: Functionally useless. Likely to end up either being removed before the modding
 //   API is finalized or for its argument to be BOOL bSaveSuccessful.
 std::vector<hook_function_t> stHooks_Hook_SaveGame_After;
+#endif
 
 extern "C" DWORD __stdcall Hook_SaveGame(CMFC3XString* lpFileName) {
 	DWORD(__thiscall * H_SimcityAppDoSaveGame)(void*, CMFC3XString*) = (DWORD(__thiscall*)(void*, CMFC3XString*))0x432180;
@@ -743,21 +760,25 @@ extern "C" DWORD __stdcall Hook_SaveGame(CMFC3XString* lpFileName) {
 
 	__asm mov [pThis], ecx
 
+#if !NOKUROKO
 	for (const auto& hook : stHooks_Hook_SaveGame_Before) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
 			void (*fnHook)(void*, CMFC3XString*) = (void(*)(void*, CMFC3XString*))hook.pFunction;
 			fnHook(pThis, lpFileName);
 		}
 	}
+#endif
 
 	ret = H_SimcityAppDoSaveGame(pThis, lpFileName);
 
+#if !NOKUROKO
 	for (const auto& hook : stHooks_Hook_SaveGame_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE) {
 			void (*fnHook)(void*, CMFC3XString*) = (void(*)(void*, CMFC3XString*))hook.pFunction;
 			fnHook(pThis, lpFileName);
 		}
 	}
+#endif
 
 	return ret;
 }
@@ -783,7 +804,7 @@ void __declspec(naked) Hook_431212(void) {
 		MessageBox(GetActiveWindow(),
 			"sc2kfix has detected a corrupted save file but was unable to recover enough information to "
 			"attempt to fix it. Your game is likely to crash after closing this dialog box. Please file"
-			"a save corruption report on the sc2kfix GitHub issues page (https://github.com/sc2kfix/issues).\n\n"
+			"a save corruption report on the sc2kfix GitHub issues page (https://github.com/sc2kfix/sc2kfix/issues).\n\n"
 
 			"Developer info:\n"
 			"Save header corrupted (FORM header chunk size 0)\n"
@@ -803,7 +824,7 @@ void __declspec(naked) Hook_431212(void) {
 		"SimCity 2000, and load the new save.\n\n"
 
 		"If the game crashes after closing this dialog box or after reloading the new save file, "
-		"please file a report on the sc2kfix GitHub issues page (https://github.com/sc2kfix/issues).\n\n"
+		"please file a report on the sc2kfix GitHub issues page (https://github.com/sc2kfix/sc2kfix/issues).\n\n"
 
 		"Developer info:\n"
 		"Save header corrupted (FORM header chunk size 0)", "sc2kfix warning", MB_OK | MB_ICONWARNING);
