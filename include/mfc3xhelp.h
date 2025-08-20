@@ -46,14 +46,60 @@
 //		class CMFC3XCmdTarget;
 //			class CMFC3XWnd; 
 //				class CMFC3XDialog;
+//					class CAboutDialog;
+//					class CMovieDialog;
 //					class CGameDialog;
+//						class CBridgeSelectDIalog;
+//						class CBudgetDialog;
+//						class CBudgetAdvisorDialog;
+//						class CBudgetEducationDialog;
+//						class CBudgetFireDialog;
+//						class CBudgetFundDialog;
+//						class CBudgetHealthDialog;
+//						class CBudgetInformationDialog;
+//						class CBudgetOrdinanceDialog;
+//						class CBudgetPoliceDialog;
+//						class CBudgetTransportDialog;
+//						class CBudgetZoneTaxSubDialog;
+//						class CCityIndustryDialog;
+//						class CCityMapDialog;
+//						class CEventDialog;
+//						class CGeneralInfoDialog;
+//						class CInflightDialog;
+//						class CInitialDialog;
+//						class CNeighbourDialog;
+//						class CNewGameDialog;
+//						class CNewspaperDialog;
+//						class COwnerInfoDialog;
+//						class CPopulationDialog;
+//						class CPowerPlantDialog;
+//						class CQueryGeneralDialog;
+//						class CQuerySpecificDialog;
+//						class CScenarioDialog;
+//						class CSelectArcologyDialog;
+//						class CSimGraphDialog;
 //
 //				class CMFC3XStatic;
 //				class CMFC3XButton;
 //				class CMFC3XListBox;
 //				class CMFC3XComboBox;
 //				class CMFC3XEdit;
+//					class CSimcityEdit;
+//						class CSimcityEditOne;
+//						class CSimcityEditTwo;
 //				class CMFC3XScrollBar;
+//
+//				class CMFC3XButton
+//					class CMFC3XBitmapButton;
+//
+//				class CMFC3XControlBar;
+//					class CMFC3XStatusBar;
+//					class CMFC3XToolBar;
+//					class CMFC3XDialogBar;
+//						class CStatusControlBar;
+//					class CMyToolBar;
+//						class CCityToolBar;
+//						class CMapToolBar;
 //
 //				class CMFC3XFrameWnd;
 //					class CMFC3XMDIFrameWnd;
@@ -62,7 +108,6 @@
 //					class CMFC3XMDIChildWnd;
 //						class CMyMDIChildWnd;
 //					class CMFC3XMiniFrameWnd;
-// 
 // 
 //				class CMFC3XView;
 //					class CMFC3XScrollView;
@@ -82,6 +127,7 @@
 //		class CMFC3XDocument;
 //			class CSimcityDoc;
 //			class CEngine;
+//			class CSimGraphData;
 // 
 // 
 // 
