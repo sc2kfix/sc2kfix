@@ -3104,9 +3104,9 @@ static BOOL L_OnCmdMsg(void *pThis, UINT nID, int nCode, void *pExtra, void *pHa
 			}
 		}
 		else if (nCode == _CN_COMMAND_UI) {
-			ConsoleLog(LOG_DEBUG, "CFrameWnd::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - _CN_COMMAND_UI\n", pThis, nID, nCode, pExtra, pHandler);
+			// As far as potential handling here goes - tread carefully;
+			//ConsoleLog(LOG_DEBUG, "CFrameWnd::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - _CN_COMMAND_UI\n", pThis, nID, nCode, pExtra, pHandler);
 		}
-		ConsoleLog(LOG_DEBUG, "CFrameWnd::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X)\n", pThis, nID, nCode, pExtra, pHandler);
 		return H_CFrameWndOnCmdMsg(pThis, nID, nCode, pExtra, pHandler);
 	}
 	if ((DWORD)dwRetAddr == 0x4A4BB2) {
@@ -3119,8 +3119,12 @@ static BOOL L_OnCmdMsg(void *pThis, UINT nID, int nCode, void *pExtra, void *pHa
 			}
 		}
 	}
-	else
+	else {
+		// Leaving this particular debug notice enabled without any flags.
+		// It is particularly important that this is picked up if any
+		// strange cases appear. Thus far it hasn't.. but you never know.
 		ConsoleLog(LOG_DEBUG, "?::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, pExtra, pHandler, dwRetAddr);
+	}
 
 	return H_CCmdTargetOnCmdMsg(pThis, nID, nCode, pExtra, pHandler);
 }
