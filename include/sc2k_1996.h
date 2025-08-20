@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <vector>
+
 #ifndef HOOKEXT
 #define HOOKEXT extern "C" __declspec(dllexport)
 #endif
@@ -750,24 +752,62 @@ enum {
 };
 
 enum {
-	TOOL_GROUP_BULLDOZER = 0,
-	TOOL_GROUP_NATURE,					// I don't have a better name for this one.
-	TOOL_GROUP_DISPATCH,
-	TOOL_GROUP_POWER,
-	TOOL_GROUP_WATER,
-	TOOL_GROUP_REWARDS,
-	TOOL_GROUP_ROADS,
-	TOOL_GROUP_RAIL,
-	TOOL_GROUP_PORTS,
-	TOOL_GROUP_RESIDENTIAL,
-	TOOL_GROUP_COMMERCIAL,
-	TOOL_GROUP_INDUSTRIAL,
-	TOOL_GROUP_EDUCATION,
-	TOOL_GROUP_SERVICES,
-	TOOL_GROUP_PARKS,
-	TOOL_GROUP_SIGNS,
-	TOOL_GROUP_QUERY,
-	TOOL_GROUP_CENTERINGTOOL
+	CITYTOOL_GROUP_BULLDOZER = 0,
+	CITYTOOL_GROUP_NATURE,					// I don't have a better name for this one.
+	CITYTOOL_GROUP_DISPATCH,
+	CITYTOOL_GROUP_POWER,
+	CITYTOOL_GROUP_WATER,
+	CITYTOOL_GROUP_REWARDS,
+	CITYTOOL_GROUP_ROADS,
+	CITYTOOL_GROUP_RAIL,
+	CITYTOOL_GROUP_PORTS,
+	CITYTOOL_GROUP_RESIDENTIAL,
+	CITYTOOL_GROUP_COMMERCIAL,
+	CITYTOOL_GROUP_INDUSTRIAL,
+	CITYTOOL_GROUP_EDUCATION,
+	CITYTOOL_GROUP_SERVICES,
+	CITYTOOL_GROUP_PARKS,
+	CITYTOOL_GROUP_SIGNS,
+	CITYTOOL_GROUP_QUERY,
+	CITYTOOL_GROUP_CENTERINGTOOL
+};
+
+enum
+{
+	CITYTOOL_BUTTON_BULLDOZER,
+	CITYTOOL_BUTTON_NATURE,
+	CITYTOOL_BUTTON_DISPATCH,
+	CITYTOOL_BUTTON_POWER,
+	CITYTOOL_BUTTON_WATER,
+	CITYTOOL_BUTTON_REWARDS,
+	CITYTOOL_BUTTON_ROAD,
+	CITYTOOL_BUTTON_RAIL,
+	CITYTOOL_BUTTON_PORTS,
+	CITYTOOL_BUTTON_RESIDENTIAL,
+	CITYTOOL_BUTTON_COMMERCIAL,
+	CITYTOOL_BUTTON_INDUSTRIAL,
+	CITYTOOL_BUTTON_EDUCATION,
+	CITYTOOL_BUTTON_SERVICES,
+	CITYTOOL_BUTTON_PARKS,
+	CITYTOOL_BUTTON_SIGNS,
+	CITYTOOL_BUTTON_QUERY,
+	CITYTOOL_BUTTON_ROTATEANTICLOCKWISE,
+	CITYTOOL_BUTTON_ROTATECLOCKWISE,
+	CITYTOOL_BUTTON_ZOOMOUT,
+	CITYTOOL_BUTTON_ZOOMIN,
+	CITYTOOL_BUTTON_CENTERINGTOOL,
+	CITYTOOL_BUTTON_CITYMAP,
+	CITYTOOL_BUTTON_CITYPOPULATION,
+	CITYTOOL_BUTTON_CITYNEIGHBOURS,
+	CITYTOOL_BUTTON_CITYGRAPHS,
+	CITYTOOL_BUTTON_CITYINDUSTRY,
+	CITYTOOL_BUTTON_BUDGET,
+	CITYTOOL_BUTTON_DISPLAYBUILDINGS,
+	CITYTOOL_BUTTON_DISPLAYSIGNS,
+	CITYTOOL_BUTTON_DISPLAYINFRA,
+	CITYTOOL_BUTTON_DISPLAYZONES,
+	CITYTOOL_BUTTON_DISPLAYUNDERGROUND,
+	CITYTOOL_BUTTON_HELP
 };
 
 // -- City Subtool enums --
@@ -940,6 +980,12 @@ enum {
 };
 
 enum {
+	TILEDAT_DEFS_LARGE,
+	TILEDAT_DEFS_SMALLMED,
+	TILEDAT_DEFS_SPECIAL
+};
+
+enum {
 	GAMEOVER_SCENARIO_FAILURE,
 	GAMEOVER_SCENARIO_VICTORY,
 	GAMEOVER_BANKRUPT
@@ -970,6 +1016,24 @@ typedef struct {
 	WORD wHeight;
 	WORD wWidth;
 } sprite_header_t;
+
+#pragma pack(push, 1)
+typedef struct {
+	WORD nID;
+	sprite_header_t sprHeader;
+} sprite_file_header_t;
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+typedef struct {
+	WORD nFileCnt;
+	sprite_file_header_t pData[1];
+} sprite_archive_t;
+#pragma pack(pop)
+
+typedef struct {
+	sprite_archive_t *pData;
+} sprite_archive_stored_t;
 
 typedef struct {
 	WORD iLandAltitude : 5; // level / altitude
@@ -1220,7 +1284,7 @@ GAMEOFF(DWORD,	dwNationalValue,			0x4CB014)
 GAMEOFF(DWORD,	dwCityAdvertising,			0x4CB018)		// Unused in vanilla game
 GAMEOFF(WORD,	wCityCurrentMonth,			0x4CB01C)
 GAMEOFF(WORD,	wCityElapsedYears,			0x4CB020)
-GAMEOFF_ARR(sprite_header_t*, pArrSpriteHeaders, 0x4CB1B8)
+GAMEOFF(sprite_header_t*, pArrSpriteHeaders, 0x4CB1B8)
 GAMEOFF(BOOL,	bNewspaperSubscription,		0x4CB3D0)
 GAMEOFF(BYTE,	bWeatherHumidity,			0x4CB3D4)
 GAMEOFF(WORD,	wSewerBonus,				0x4CB3DC)
@@ -1354,7 +1418,7 @@ static inline const char* GetXLABEntry(int iLabelID) {
 
 // Returns the sprite header for a given sprite ID.
 static inline sprite_header_t* GetSpriteHeader(int iSpriteID) {
-	return (*pArrSpriteHeaders + iSpriteID);
+	return &pArrSpriteHeaders[iSpriteID];
 }
 
 // Returns the current game palette. RE'd from the game decomp.
@@ -1383,3 +1447,16 @@ static inline HWND GameGetRootWindowHandle(void) {
 static inline DWORD SwapDWORD(DWORD dwData) {
 	return _byteswap_ulong(dwData);
 }
+
+typedef struct {
+	WORD nArcID;
+	WORD nID;
+	DWORD dwOffset;
+	DWORD dwSize;
+	WORD wHeight;
+	WORD wWidth;
+	WORD nSkipHit;
+	BOOL bMultiple;
+} sprite_ids_t;
+
+extern std::vector<sprite_ids_t> spriteIDs;

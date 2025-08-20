@@ -1,4 +1,4 @@
-// sc2kfix hooks/hook_sc2k1996_guzzardo.cpp: cheat handler replacement
+// sc2kfix hooks/hook_guzzardo.cpp: cheat handler replacement
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
@@ -39,7 +39,7 @@ typedef struct {
 	int iPos;            // Position within the array. (Only set when there's a match)
 } cheat_t;
 
-static enum {
+enum {
 	CHEAT_FUND,
 	CHEAT_CASS,
 	CHEAT_THEWORKS,
@@ -149,13 +149,6 @@ static void AdjustDebugMenu(HMENU hDebugMenu) {
 			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #8 failed, error = 0x%08X.\n", GetLastError());
 			return;
 		}
-
-		// Add the message map entries
-		AddNewSCVMessageMapEntry(WM_COMMAND, 0, IDM_DEBUG_MILITARY_DECLINED, IDM_DEBUG_MILITARY_DECLINED, 0x0A, ProposeMilitaryBaseDecline);
-		AddNewSCVMessageMapEntry(WM_COMMAND, 0, IDM_DEBUG_MILITARY_AIRFORCE, IDM_DEBUG_MILITARY_AIRFORCE, 0x0A, ProposeMilitaryBaseMissileSilos);
-		AddNewSCVMessageMapEntry(WM_COMMAND, 0, IDM_DEBUG_MILITARY_ARMYBASE, IDM_DEBUG_MILITARY_ARMYBASE, 0x0A, ProposeMilitaryBaseAirForceBase);
-		AddNewSCVMessageMapEntry(WM_COMMAND, 0, IDM_DEBUG_MILITARY_NAVALYARD, IDM_DEBUG_MILITARY_NAVALYARD, 0x0A, ProposeMilitaryBaseNavalYard);
-		AddNewSCVMessageMapEntry(WM_COMMAND, 0, IDM_DEBUG_MILITARY_MISSILESILOS, IDM_DEBUG_MILITARY_MISSILESILOS, 0x0A, ProposeMilitaryBaseMissileSilos);
 
 		if (guzzardo_debug & GUZZARDO_DEBUG_MENU)
 			ConsoleLog(LOG_DEBUG, "MISC: Updated debug menu.\n");
@@ -314,7 +307,7 @@ extern "C" void __stdcall Hook_MainFrameOnChar(UINT nChar, UINT nRepCnt, UINT nF
 	HWND hWnd;
 	DWORD* pSCView;
 	HMENU hMenu, hDebugMenu;
-	DWORD* pMenu, * pDebugMenu;
+	CMFC3XMenu *pMenu, *pDebugMenu;
 	int iSCMenuPos;
 	DWORD jokeDlg[27];
 
@@ -326,8 +319,8 @@ extern "C" void __stdcall Hook_MainFrameOnChar(UINT nChar, UINT nRepCnt, UINT nF
 	int(__stdcall * H_GetSimcityViewMenuPos)(int iPos) = (int(__stdcall*)(int))0x402EFA;
 	void(__stdcall * H_SimulationProposeMilitaryBase)() = (void(__stdcall*)())0x403017;
 	INT_PTR(__thiscall * H_DialogDoModal)(void*) = (INT_PTR(__thiscall*)(void*))0x4A7196;
-	DWORD* (__stdcall * H_CMenuFromHandle)(HMENU) = (DWORD * (__stdcall*)(HMENU))0x4A7427;
-	int(__thiscall * H_CMenuAttach)(DWORD*, HMENU) = (int(__thiscall*)(DWORD*, HMENU))0x4A7483;
+	CMFC3XMenu* (__stdcall * H_CMenuFromHandle)(HMENU) = (CMFC3XMenu * (__stdcall*)(HMENU))0x4A7427;
+	int(__thiscall * H_CMenuAttach)(CMFC3XMenu*, HMENU) = (int(__thiscall*)(CMFC3XMenu*, HMENU))0x4A7483;
 
 	HINSTANCE& game_hModule = *(HINSTANCE*)0x4CE8C8;
 	int& iCheatEntry = *(int*)0x4E6520;
@@ -427,14 +420,14 @@ TRYAGAIN:
 				return;
 			hMenu = GetMenu(hWnd);
 			pMenu = H_CMenuFromHandle(hMenu);
-			pDebugMenu = (DWORD*)operator new(8); // This would be CMenu().
+			pDebugMenu = (CMFC3XMenu*)operator new(sizeof(CMFC3XMenu)); // This would be CMenu().
 			if (pDebugMenu)
-				pDebugMenu[1] = 0;
+				pDebugMenu->m_hMenu = 0;
 			hDebugMenu = LoadMenuA(game_hModule, (LPCSTR)223);
 			AdjustDebugMenu(hDebugMenu);
 			H_CMenuAttach(pDebugMenu, hDebugMenu);
 			iSCMenuPos = H_GetSimcityViewMenuPos(6);
-			InsertMenuA((HMENU)pMenu[1], iSCMenuPos + 6, MF_BYPOSITION | MF_POPUP, pDebugMenu[1], szNewItem);
+			InsertMenuA(pMenu->m_hMenu, iSCMenuPos + 6, MF_BYPOSITION | MF_POPUP, (UINT_PTR)pDebugMenu->m_hMenu, szNewItem);
 			H_SimcityAppAdjustNewspaperMenu(&pCSimcityAppThis);
 			DrawMenuBar(hWnd);
 			bPriscillaActivated = 1;

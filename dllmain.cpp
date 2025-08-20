@@ -123,12 +123,16 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 					if (!lstrcmpiW(argv[i], L"-console"))
 						bConsoleEnabled = TRUE;
 					if (!lstrcmpiW(argv[i], L"-debugall")) {
+						guzzardo_debug = DEBUG_FLAGS_EVERYTHING;
 						mci_debug = DEBUG_FLAGS_EVERYTHING;
 						military_debug = DEBUG_FLAGS_EVERYTHING;
 						mischook_debug = DEBUG_FLAGS_EVERYTHING;
 						modloader_debug = DEBUG_FLAGS_EVERYTHING;
 						mus_debug = DEBUG_FLAGS_EVERYTHING;
+						registry_debug = DEBUG_FLAGS_EVERYTHING;
+						sc2x_debug = DEBUG_FLAGS_EVERYTHING;
 						snd_debug = DEBUG_FLAGS_EVERYTHING;
+						sprite_debug = DEBUG_FLAGS_EVERYTHING;
 						timer_debug = DEBUG_FLAGS_EVERYTHING;
 						updatenotifier_debug = DEBUG_FLAGS_EVERYTHING;
 					}
@@ -304,12 +308,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
 		iInstallCheck = DoRegistryCheckAndInstall();
 		if (iInstallCheck == 2)
-			ConsoleLog(LOG_INFO, "CORE: Portable entries created by faux-installer.");
+			ConsoleLog(LOG_INFO, "CORE: Portable entries created by faux-installer.\n");
 		else if (iInstallCheck == 1)
-			ConsoleLog(LOG_INFO, "CORE: Registry entries migrated by faux-installer.");
+			ConsoleLog(LOG_INFO, "CORE: Registry entries migrated by faux-installer.\n");
 
 		if (dwDetectedVersion == SC2KVERSION_1996) {
-			ConsoleLog(LOG_INFO, "CORE: Loading last stored load/save city and load tileset paths.");
+			ConsoleLog(LOG_INFO, "CORE: Loading last stored load/save city and load tileset paths.\n");
 			LoadStoredPaths();
 		}
 
@@ -454,6 +458,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		if (!bGameDead)
 			if (dwDetectedVersion == SC2KVERSION_1996)
 				SaveStoredPaths();
+
+		// Clear out the stored sprite IDs (no allocated data are contained).
+		spriteIDs.clear();
 
 		// Send a closing message and close the log file
 		ReleaseSMKFuncs();

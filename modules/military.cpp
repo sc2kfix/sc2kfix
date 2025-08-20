@@ -14,7 +14,7 @@
 
 #pragma intrinsic(_ReturnAddress)
 
-#define MILITARY_DEBUG_PLACEMENT 1
+#define MILITARY_DEBUG_PLACEMENT_OTHER 1
 #define MILITARY_DEBUG_PLACEMENT_NAVAL 2
 
 #define MILITARY_DEBUG DEBUG_FLAGS_NONE
@@ -44,7 +44,7 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 	wOldToolGroup = wMaybeActiveToolGroup;
 	iX = x2;
 	iY = y2;
-	wMaybeActiveToolGroup = TOOL_GROUP_ROADS;
+	wMaybeActiveToolGroup = CITYTOOL_GROUP_ROADS;
 	if (Game_MaybeCheckViablePlacementPath(x1, y1, x2, y2)) {
 		iNewX = x1;
 		iX = x1;
@@ -869,6 +869,9 @@ NONAVY:
 }
 
 void ProposeMilitaryBaseDecline(void) {
+	if (!Game_PointerToCSimcityViewClass(&pCSimcityAppThis) || !wCityMode)
+		return;
+
 	if (L_MessageBoxA(GameGetRootWindowHandle(), "Are you sure that you want to stop the development of existing military zones?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES)
 		return;
 
@@ -880,6 +883,9 @@ void ProposeMilitaryBaseDecline(void) {
 }
 
 void ProposeMilitaryBaseMissileSilos(void) {
+	if (!Game_PointerToCSimcityViewClass(&pCSimcityAppThis) || !wCityMode)
+		return;
+
 	if (L_MessageBoxA(GameGetRootWindowHandle(), "Are you sure that you want an attempt to be made to spawn Missile Silos?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES)
 		return;
 
@@ -904,6 +910,9 @@ void ProposeMilitaryBaseAirForceBase(void) {
 	__int16 iValidTiles;
 	__int16 iRandStoredXPos;
 	__int16 iRandStoredYPos;
+
+	if (!Game_PointerToCSimcityViewClass(&pCSimcityAppThis) || !wCityMode)
+		return;
 
 	iResult = -1;
 	if (L_MessageBoxA(GameGetRootWindowHandle(), "Are you sure that you want an attempt to be made to spawn an Air Force plot?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES)
@@ -936,6 +945,9 @@ void ProposeMilitaryBaseArmyBase(void) {
 	__int16 iRandStoredXPos;
 	__int16 iRandStoredYPos;
 
+	if (!Game_PointerToCSimcityViewClass(&pCSimcityAppThis) || !wCityMode)
+		return;
+
 	iResult = -1;
 	if (L_MessageBoxA(GameGetRootWindowHandle(), "Are you sure that you want an attempt to be made to spawn an Army Base plot?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES)
 		return;
@@ -958,6 +970,9 @@ GETOUT:
 }
 
 void ProposeMilitaryBaseNavalYard(void) {
+	if (!Game_PointerToCSimcityViewClass(&pCSimcityAppThis) || !wCityMode)
+		return;
+
 	if (!bCityHasOcean) {
 		L_MessageBoxA(GameGetRootWindowHandle(), "A Naval Yard cannot be placed in a city without a neighbouring ocean.", "Clonk", MB_OK|MB_ICONSTOP);
 		return;

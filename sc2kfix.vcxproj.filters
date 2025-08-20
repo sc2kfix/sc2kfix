@@ -126,6 +126,9 @@
     <ClInclude Include="include\sc2k_demo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\mfc3xhelp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="hooks\hook_mciSendCommand.cpp">
@@ -330,6 +333,9 @@
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
     <ClCompile Include="hooks\hook_guzzardo.cpp">
+      <Filter>Source Files\Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="hooks\hook_spritesandtilesets.cpp">
       <Filter>Source Files\Hooks</Filter>
     </ClCompile>
   </ItemGroup>

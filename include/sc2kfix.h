@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <random>
 
+#include <mfc3xhelp.h>
 #include <smk.h>
 #include <sc2k_1996.h>
 #include <sc2k_demo.h>
@@ -104,24 +105,6 @@ typedef struct COLORTABLE_STRUCT {
 	WORD Index;
 	DWORD rgb;
 } colTable;
-
-// Reimplementation of the MFC 3.x message map entry structure.
-typedef struct {
-	UINT nMessage;
-	UINT nCode;
-	UINT nID;
-	UINT nLastID;
-	UINT_PTR nSig;
-	void* pfn;
-} AFX_MSGMAP_ENTRY;
-
-// Reimplementation of the CString class from MFC 3.x.
-class CMFC3XString {
-public:
-	LPTSTR m_pchData;
-	int m_nDataLength;
-	int m_nAllocLength;
-};
 
 // Reimplementation of an abstracted C string (not to be confused with the MFC CString) used in
 // the original SimCity 2000 code.
@@ -278,7 +261,6 @@ HOOKEXT_CPP size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned c
 HOOKEXT_CPP json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBigEndian);
 HOOKEXT_CPP json::JSON EncodeBudgetArray(DWORD* dwBudgetArray, BOOL bBigEndian);
 HOOKEXT_CPP void DecodeDWORDArray(DWORD* dwArray, json::JSON jsonArray, size_t iCount, BOOL bBigEndian);
-void AddNewSCVMessageMapEntry(UINT nMessage, UINT nCode, UINT nID, UINT nLastID, UINT_PTR nSig, void* pfn);
 void PorntipsGuzzardo(void);
 
 // Globals etc.
@@ -294,6 +276,7 @@ const char *GetIniPath();
 void LoadSettings(void);
 void SaveSettings(BOOL onload);
 void ShowSettingsDialog(void);
+void ShowModSettingsDialog(void);
 void ShowScenarioStatusDialog(void);
 BOOL CanUseFloatingStatusDialog();
 void ToggleFloatingStatusDialog(BOOL bEnable);
@@ -385,6 +368,7 @@ HOOKEXT BOOL bHookStopProcessing;
 void InstallAnimationSimCity1996Hooks(void);
 void InstallAnimationSimCity1995Hooks(void);
 void InstallAnimationSimCityDemoHooks(void);
+void InstallSpriteAndTileSetSimCity1996Hooks(void);
 void InstallMiscHooks_SC2K1996(void);
 void UpdateMiscHooks_SC2K1996(void);
 void InstallMiscHooks_SC2KDemo(void);
@@ -398,6 +382,7 @@ extern "C" int __stdcall Hook_MusicPlay(int iSongID);
 extern "C" int __stdcall Hook_MusicStop(void);
 extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void);
 int L_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
+void ReloadDefaultTileSet1996();
 void PlaceMissileSilo(__int16 m_x, __int16 m_y);
 void ProposeMilitaryBaseDecline(void);
 void ProposeMilitaryBaseMissileSilos(void);
@@ -413,12 +398,16 @@ void InstallRegistryPathingHooks_SCURK1996(void);
 
 // Debugging settings
 
+extern UINT guzzardo_debug;
 extern UINT mci_debug;
 extern UINT military_debug;
 extern UINT mischook_debug;
 extern UINT modloader_debug;
 extern UINT mus_debug;
+extern UINT registry_debug;
+extern UINT sc2x_debug;
 extern UINT snd_debug;
+extern UINT sprite_debug;
 extern UINT timer_debug;
 extern UINT updatenotifier_debug;
 

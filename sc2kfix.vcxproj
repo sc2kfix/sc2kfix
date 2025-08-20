@@ -64,6 +64,7 @@
   <ItemGroup>
     <ClInclude Include="include\hooklists.h" />
     <ClInclude Include="include\json.hpp" />
+    <ClInclude Include="include\mfc3xhelp.h" />
     <ClInclude Include="include\music.h" />
     <ClInclude Include="include\sc2kfix.h" />
     <ClInclude Include="include\sc2k_demo.h" />
@@ -96,6 +97,7 @@
     <ClCompile Include="hooks\hook_animation.cpp" />
     <ClCompile Include="hooks\hook_sc2kdemo_miscellaneous.cpp" />
     <ClCompile Include="hooks\hook_guzzardo.cpp" />
+    <ClCompile Include="hooks\hook_spritesandtilesets.cpp" />
     <ClCompile Include="kuroko\builtins.c" />
     <ClCompile Include="kuroko\chunk.c" />
     <ClCompile Include="kuroko\compiler.c" />

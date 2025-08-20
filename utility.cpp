@@ -361,7 +361,7 @@ int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int i
 		else
 			ConsoleLog(LOG_WARNING, "LOAD: Unexpected 0x80 in MaxisDecompress. This should never happen.\n");
 	}
-	extern UINT sc2x_debug;
+
 	if (sc2x_debug & 4)
 		ConsoleLog(LOG_DEBUG, "LOAD: Uncompressed %d bytes into %d bytes.\n", i, j);
 	return j;

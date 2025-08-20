@@ -16,8 +16,18 @@
 
 #pragma intrinsic(_ReturnAddress)
 
-#define MISCHOOK_DEBUG_REGISTRY 32768
-#define MISCHOOK_DEBUG_PATHING 65536
+#define REGISTRY_DEBUG_OTHER 1
+#define REGISTRY_DEBUG_REGISTRY 2
+#define REGISTRY_DEBUG_PATHING 4
+
+#define REGISTRY_DEBUG DEBUG_FLAGS_NONE
+
+#ifdef DEBUGALL
+#undef REGISTRY_DEBUG
+#define REGISTRY_DEBUG DEBUG_FLAGS_EVERYTHING
+#endif
+
+UINT registry_debug = REGISTRY_DEBUG;
 
 #define REG_KEY_BASE 0x80000040UL
 
@@ -469,7 +479,7 @@ extern "C" LSTATUS __stdcall Hook_RegSetValueExA(HKEY hKey, LPCSTR lpValueName, 
 		return ERROR_SUCCESS;
 	}
 
-	if (mischook_debug & MISCHOOK_DEBUG_REGISTRY)
+	if (registry_debug & REGISTRY_DEBUG_REGISTRY)
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> RegSetValueExA(0x%08x, %s, 0x%08X, 0x%08X, 0x%08X, 0x%08X)\n", _ReturnAddress(), hKey, lpValueName,
 			dwReserved, dwType, *lpData, cbData);
 
@@ -482,7 +492,7 @@ extern "C" LSTATUS __stdcall Hook_RegQueryValueExA(HKEY hKey, LPCSTR lpValueName
 
 		strcpy_s(szTargetPath, MAX_PATH, szGamePath);
 		if (_stricmp(lpValueName, "Goodies") == 0) {
-			if (mischook_debug & MISCHOOK_DEBUG_REGISTRY)
+			if (registry_debug & REGISTRY_DEBUG_REGISTRY)
 				ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> Query Adjustment - %s -> %s\n", _ReturnAddress(), lpValueName, "MOVIES");
 			GamePathAdjust(szTargetPath, "Movies", lpData, lpcbData);
 		}
@@ -609,7 +619,7 @@ extern "C" LSTATUS __stdcall Hook_RegQueryValueExA(HKEY hKey, LPCSTR lpValueName
 		return ERROR_SUCCESS;
 	}
 
-	if (mischook_debug & MISCHOOK_DEBUG_REGISTRY)
+	if (registry_debug & REGISTRY_DEBUG_REGISTRY)
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> RegQueryValueExA(0x%08x, %s, 0x%08X, 0x%08X, 0x%08X, 0x%08X)\n", _ReturnAddress(), hKey, lpValueName,
 			lpReserved, *lpType, lpData, lpcbData);
 
@@ -626,7 +636,7 @@ extern "C" LSTATUS __stdcall Hook_RegCreateKeyExA(HKEY hKey, LPCSTR lpSubKey, DW
 		return ERROR_SUCCESS;
 	}
 
-	if (mischook_debug & MISCHOOK_DEBUG_REGISTRY)
+	if (registry_debug & REGISTRY_DEBUG_REGISTRY)
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> RegCreateKeyExA(0x%08x, %s, ...)\n", _ReturnAddress(), hKey, lpSubKey);
 
 	return RegCreateKeyExA(hKey, lpSubKey, dwReserved, lpClass, dwOptions, samDesired, lpSecurityAttributes, phkResult, lpdwDisposition);
@@ -636,7 +646,7 @@ extern "C" LSTATUS __stdcall Hook_RegCloseKey(HKEY hKey) {
 	if (IsFakeRegKey((unsigned long)hKey))
 		return ERROR_SUCCESS;
 
-	if (mischook_debug & MISCHOOK_DEBUG_REGISTRY)
+	if (registry_debug & REGISTRY_DEBUG_REGISTRY)
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> RegCloseKey(0x%08x)\n", _ReturnAddress(), hKey);
 
 	return RegCloseKey(hKey);
@@ -644,7 +654,7 @@ extern "C" LSTATUS __stdcall Hook_RegCloseKey(HKEY hKey) {
 
 extern "C" HANDLE __stdcall Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
 	LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {
-	if (mischook_debug & MISCHOOK_DEBUG_PATHING)
+	if (registry_debug & REGISTRY_DEBUG_PATHING)
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> CreateFileA(%s, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X)\n", _ReturnAddress(), lpFileName,
 			dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 
@@ -656,7 +666,7 @@ extern "C" HANDLE __stdcall Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDesiredA
 			memset(buf, 0, sizeof(buf));
 
 			HANDLE hFileHandle = CreateFileA(AdjustSource(buf, lpFileName), dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-			if (mischook_debug & MISCHOOK_DEBUG_PATHING)
+			if (registry_debug & REGISTRY_DEBUG_PATHING)
 				ConsoleLog(LOG_DEBUG, "MISC: (Modification): 0x%08X -> CreateFileA(%s, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X) (0x%08x)\n", _ReturnAddress(), lpFileName,
 					dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile, hFileHandle);
 			return hFileHandle;
@@ -666,7 +676,7 @@ extern "C" HANDLE __stdcall Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDesiredA
 }
 
 extern "C" HANDLE __stdcall Hook_FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData) {
-	if (mischook_debug & MISCHOOK_DEBUG_PATHING)
+	if (registry_debug & REGISTRY_DEBUG_PATHING)
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> FindFirstFileA(%s, 0x%08X)\n", _ReturnAddress(), lpFileName, lpFindFileData);
 
 	if (iRegPathHookMode == REGPATH_SC2K1996) {
@@ -677,7 +687,7 @@ extern "C" HANDLE __stdcall Hook_FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_
 			memset(buf, 0, sizeof(buf));
 
 			HANDLE hFileHandle = FindFirstFileA(AdjustSource(buf, lpFileName), lpFindFileData);
-			if (mischook_debug & MISCHOOK_DEBUG_PATHING)
+			if (registry_debug & REGISTRY_DEBUG_PATHING)
 				ConsoleLog(LOG_DEBUG, "MISC: (Modification): 0x%08X -> FindFirstFileA(%s, 0x%08X) (0x%08x)\n", _ReturnAddress(), buf, lpFindFileData, hFileHandle);
 			return hFileHandle;
 		}
