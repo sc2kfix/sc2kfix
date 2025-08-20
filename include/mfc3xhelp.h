@@ -188,6 +188,12 @@ public:
 	int m_bCloseOnDelete;
 };
 
+class CMFC3XMenu : public CMFC3XObject
+{
+public:
+	HMENU m_hMenu;
+};
+
 // Reimplementation of the CString class from MFC 3.x.
 class CMFC3XString {
 public:
@@ -204,8 +210,8 @@ public:
 
 	unsigned int m_nIndex;
 
-	DWORD *m_pMenu;
-	DWORD *m_pSubMenu;
+	CMFC3XMenu *m_pMenu;
+	CMFC3XMenu *m_pSubMenu;
 
 	DWORD *m_pOther;
 
@@ -213,7 +219,7 @@ public:
 	int m_bContinueRouting;
 	unsigned int m_nIndexMax;
 
-	DWORD *m_pParentMenu;
+	CMFC3XMenu *m_pParentMenu;
 };
 
 class CMFC3XTestCmdUI : public CMFC3XCmdUI {

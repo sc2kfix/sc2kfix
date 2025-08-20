@@ -339,7 +339,39 @@ extern "C" void __stdcall Hook_SimcityAppOnQuit(void) {
 }
 
 // Hook CCmdUI::Enable so we can programmatically enable and disable menu items reliably
-__declspec(naked) void Hook_CCmdUI_Enable(void) {
+extern "C" void __stdcall Hook_CCmdUI_Enable(BOOL bOn) {
+	CMFC3XCmdUI *pThis;
+	__asm mov [pThis], ecx
+
+	HWND hWndParent;
+	DWORD *pWndParent;
+	HWND hNextDlgTabItem;
+	DWORD *pNextDlgTabItem;
+	HWND hWndFocus;
+
+	if (pThis->m_pMenu != NULL) {
+		if (pThis->m_pSubMenu != NULL)
+			return;
+
+		EnableMenuItem(pThis->m_pMenu->m_hMenu, pThis->m_nIndex, MF_BYPOSITION |
+			(bOn ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
+	}
+	else {
+		if (!bOn && (GetFocus() == (HWND)pThis->m_pOther[7])) {
+			hWndParent = GetParent((HWND)pThis->m_pOther[7]);
+			pWndParent = Game_CWnd_FromHandle(hWndParent);
+			hNextDlgTabItem = GetNextDlgTabItem((HWND)pWndParent[7], (HWND)pThis->m_pOther[7], 0);
+			pNextDlgTabItem = Game_CWnd_FromHandle(hNextDlgTabItem);
+			hWndFocus = SetFocus((HWND)pNextDlgTabItem[7]);
+			Game_CWnd_FromHandle(hWndFocus);
+		}
+		EnableWindow((HWND)pThis->m_pOther[7], bOn);
+	}
+	pThis->m_bEnableChanged = TRUE;
+
+	// This section has been added to account for menu items that aren't handled
+	// natively (yet).
+
 	// Ensure that the new 'Reload Default Tile Set' item is always enabled.
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_GAME_FILE_RELOADDEFAULTTILESET, MF_BYCOMMAND | MF_ENABLED);
 
@@ -359,12 +391,6 @@ __declspec(naked) void Hook_CCmdUI_Enable(void) {
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_ARMYBASE, MF_BYCOMMAND | MF_ENABLED);
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_NAVALYARD, MF_BYCOMMAND | MF_ENABLED);
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_MISSILESILOS, MF_BYCOMMAND | MF_ENABLED);
-
-	__asm {
-		pop esi
-		pop ebx
-		retn 4
-	}
 }
 
 // Function prototype: HOOKCB void Hook_GameDoIdleUpkeep_Before(void)
@@ -3381,8 +3407,8 @@ skipgamemenu:
 	NEWJMP((LPVOID)0x4014DD, Hook_StartupGraphics);
 
 	// Hook for CCmdUI::Enable
-	VirtualProtect((LPVOID)0x4A29F6, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4A29F6, Hook_CCmdUI_Enable);
+	VirtualProtect((LPVOID)0x4A296A, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4A296A, Hook_CCmdUI_Enable);
 
 	// Hook the scenario start dialog so we can save the description
 	VirtualProtect((LPVOID)0x402B4E, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
