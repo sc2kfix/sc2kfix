@@ -308,12 +308,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
 		iInstallCheck = DoRegistryCheckAndInstall();
 		if (iInstallCheck == 2)
-			ConsoleLog(LOG_INFO, "CORE: Portable entries created by faux-installer.");
+			ConsoleLog(LOG_INFO, "CORE: Portable entries created by faux-installer.\n");
 		else if (iInstallCheck == 1)
-			ConsoleLog(LOG_INFO, "CORE: Registry entries migrated by faux-installer.");
+			ConsoleLog(LOG_INFO, "CORE: Registry entries migrated by faux-installer.\n");
 
 		if (dwDetectedVersion == SC2KVERSION_1996) {
-			ConsoleLog(LOG_INFO, "CORE: Loading last stored load/save city and load tileset paths.");
+			ConsoleLog(LOG_INFO, "CORE: Loading last stored load/save city and load tileset paths.\n");
 			LoadStoredPaths();
 		}
 
