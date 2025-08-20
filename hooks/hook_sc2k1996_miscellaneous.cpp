@@ -2592,9 +2592,9 @@ extern "C" void __stdcall Hook_MainFrameUpdateSections() {
 	void(__thiscall *H_CMyToolBarInvalidateButton)(void *, int) = (void(__thiscall *)(void *, int))0x4029C8;
 	void(__thiscall *H_CCityToolBarUpdateControls)(void *, BOOL) = (void(__thiscall *)(void *, BOOL))0x402A68;
 	CMFC3XString *(__thiscall *H_CStringOperatorSet)(CMFC3XString *, char *) = (CMFC3XString *(__thiscall *)(CMFC3XString *, char *))0x4A2E6A;
-	DWORD *(__stdcall *H_CMenuFromHandle)(HMENU) = (DWORD *(__stdcall *)(HMENU))0x4A7427;
-	int(__thiscall *H_CMenuAttach)(void *, HMENU) = (int(__thiscall *)(void *, HMENU))0x4A7483;
-	BOOL(__thiscall *H_CMenuDestroyMenu)(void *) = (BOOL(__thiscall *)(void *))0x4A74FB;
+	CMFC3XMenu *(__stdcall *H_CMenuFromHandle)(HMENU) = (CMFC3XMenu *(__stdcall *)(HMENU))0x4A7427;
+	int(__thiscall *H_CMenuAttach)(CMFC3XMenu *, HMENU) = (int(__thiscall *)(CMFC3XMenu *, HMENU))0x4A7483;
+	BOOL(__thiscall *H_CMenuDestroyMenu)(CMFC3XMenu *) = (BOOL(__thiscall *)(CMFC3XMenu *))0x4A74FB;
 
 	CMFC3XString *cityToolGroupStrings = (CMFC3XString *)0x4C94C8;
 	HINSTANCE &hGameModule = *(HINSTANCE *)0x4CE8C8;
@@ -2609,11 +2609,11 @@ extern "C" void __stdcall Hook_MainFrameUpdateSections() {
 	int nLayer;
 	UINT nStyle;
 	int nIndex;
-	DWORD *pMenu;
 	HMENU hMenu;
+	CMFC3XMenu *pMenu;
 	int nPos;
 	HMENU hSubMenu;
-	DWORD *pSubMenu;
+	CMFC3XMenu *pSubMenu;
 	int nMenuItemCount;
 	int nSubMenuItemCount;
 	char szString[960];
@@ -2652,14 +2652,15 @@ extern "C" void __stdcall Hook_MainFrameUpdateSections() {
 	}
 	iCityToolBarButton = wCurrentCityToolGroup;
 	// Adjust here; this used to check to see whether
-	// iCityToolBarButton is greater than CITYTOOL_BUTTON_SIGNS
+	// wCurrentCityToolGroup is greater than CITYTOOL_GROUP_SIGNS
 	// however during disaster cases.. if the query button was selected
 	// and the disaster ended, it would end up highlighting the zoom in button.
 	// 
 	// This behaviour has been confirmed in the base game and interactive demo
 	// in order to confirm the apparent buggy nature (unless one wanted to
-	// highlight the zoom in button for whatever reason).
-	if (iCityToolBarButton > CITYTOOL_BUTTON_QUERY)
+	// highlight the zoom in button for whatever reason without changing the
+	// underlying tool).
+	if (wCurrentCityToolGroup > CITYTOOL_GROUP_QUERY)
 		iCityToolBarButton = wCurrentCityToolGroup + 4;
 	ButtonStyle = H_CMyToolBarGetButtonStyle(pCityToolBar, iCityToolBarButton);
 	H_CMyToolBarSetButtonStyle(pCityToolBar, iCityToolBarButton, ButtonStyle | 0x100);
@@ -2672,25 +2673,25 @@ extern "C" void __stdcall Hook_MainFrameUpdateSections() {
 		H_CMyToolBarSetButtonStyle(pCityToolBar, nIndex, nStyle);
 	}
 REFRESHMENUGRANTS:
-	pMenu = &pThis[159];
+	pMenu = (CMFC3XMenu *)&pCityToolBar[57];
 	H_CMenuDestroyMenu(pMenu);
 	hMenu = LoadMenuA(hGameModule, (LPCSTR)136);
 	H_CMenuAttach(pMenu, hMenu);
 	for (nPos = CITYTOOL_BUTTON_BULLDOZER; nPos < CITYTOOL_BUTTON_SIGNS; ++nPos) {
 		if (dwGrantedItems[nPos]) {
-			hSubMenu = GetSubMenu((HMENU)pMenu[1], nPos);
+			hSubMenu = GetSubMenu(pMenu->m_hMenu, nPos);
 			pSubMenu = H_CMenuFromHandle(hSubMenu);
-			nMenuItemCount = GetMenuItemCount((HMENU)pSubMenu[1]);
+			nMenuItemCount = GetMenuItemCount(pSubMenu->m_hMenu);
 			nSubMenuItemCount = nMenuItemCount;
 			if (nMenuItemCount > 0) {
 				pString = szString;
 				pUID = uIDs;
 				do {
-					*pUID++ = GetMenuItemID((HMENU)pSubMenu[1], 0);
+					*pUID++ = GetMenuItemID(pSubMenu->m_hMenu, 0);
 					pTargString = pString;
 					pString += 80;
-					GetMenuStringA((HMENU)pSubMenu[1], 0, pTargString, 80, MF_BYPOSITION);
-					DeleteMenu((HMENU)pSubMenu[1], 0, MF_BYPOSITION);
+					GetMenuStringA(pSubMenu->m_hMenu, 0, pTargString, 80, MF_BYPOSITION);
+					DeleteMenu(pSubMenu->m_hMenu, 0, MF_BYPOSITION);
 					--nSubMenuItemCount;
 				} while (nSubMenuItemCount);
 			}
@@ -2711,7 +2712,7 @@ REFRESHMENUGRANTS:
 							pTargMFCString = (CMFC3XString *)&pCityToolBar[74];
 							H_CStringOperatorSet(pTargMFCString, cityToolString[nReward].m_pchData);
 						}
-						AppendMenuA((HMENU)pSubMenu[1], 0, *pUID, pString);
+						AppendMenuA(pSubMenu->m_hMenu, 0, *pUID, pString);
 					}
 					++pUID;
 					pString += 80;
