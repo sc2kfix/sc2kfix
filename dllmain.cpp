@@ -19,8 +19,10 @@
 #include <winmm_exports.h>
 #include "resource.h"
 
+#if !NOKUROKO
 #include <kuroko/kuroko.h>
 #include <kuroko/util.h>
+#endif
 
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
@@ -43,7 +45,9 @@ const char* szSC2KFixReleaseTag = SC2KFIX_RELEASE_TAG;
 const char* szSC2KFixBuildInfo = __DATE__ " " __TIME__;
 FILE* fdLog = NULL;
 BOOL bInSCURK = FALSE;
+#if !NOKUROKO
 BOOL bKurokoVMInitialized = FALSE;
+#endif
 BOOL bUseAdvancedQuery = FALSE;
 BOOL bSkipLoadingMods = FALSE;
 int iForcedBits = 0;
@@ -127,7 +131,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						mci_debug = DEBUG_FLAGS_EVERYTHING;
 						military_debug = DEBUG_FLAGS_EVERYTHING;
 						mischook_debug = DEBUG_FLAGS_EVERYTHING;
+#if !NOKUROKO
 						modloader_debug = DEBUG_FLAGS_EVERYTHING;
+#endif
 						mus_debug = DEBUG_FLAGS_EVERYTHING;
 						registry_debug = DEBUG_FLAGS_EVERYTHING;
 						sc2x_debug = DEBUG_FLAGS_EVERYTHING;
@@ -425,9 +431,14 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Start the console thread.
 		if (bConsoleEnabled) {
 			ConsoleLog(LOG_INFO, "CORE: Starting console thread.\n");
+#if !NOKUROKO
 			hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, &dwConsoleThreadID);
+#else
+			hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, NULL);
+#endif
 		}
 
+#if !NOKUROKO
 		// Set up the modding infrastructure for the 1996 Special Edition version.
 		if (dwDetectedVersion == SC2KVERSION_1996) {
 			// Initialize the Kuroko VM
@@ -437,6 +448,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			if (!bSkipLoadingMods && !bSettingsDontLoadMods)
 				LoadNativeCodeMods();
 		}
+#endif
 
 		break;
 
@@ -450,9 +462,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Shut down the music thread
 		PostThreadMessage(dwMusicThreadID, WM_QUIT, NULL, NULL);
 
+#if !NOKUROKO
 		// Shut down the Kuroko thread
 		if (bKurokoVMInitialized)
 			PostThreadMessage(dwKurokoThreadID, WM_QUIT, NULL, NULL);
+#endif
 
 		// Only save the stored paths during a graceful exit. (SC2K1996 only for now)
 		if (!bGameDead)

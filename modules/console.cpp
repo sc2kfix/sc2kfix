@@ -26,8 +26,10 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
+#if !NOKUROKO
 #include <kuroko/kuroko.h>
 #include <kuroko/util.h>
+#endif
 
 #ifdef CONSOLE_ENABLED
 BOOL bConsoleEnabled = TRUE;
@@ -36,7 +38,9 @@ BOOL bConsoleEnabled = FALSE;
 #endif
 
 HANDLE hConsoleThread;
+#if !NOKUROKO
 DWORD dwConsoleThreadID;
+#endif
 char szCmdBuf[256] = { 0 };
 BOOL bConsoleUndocumentedMode = FALSE;
 
@@ -48,7 +52,9 @@ console_command_t fpConsoleCommands[] = {
 	{ "echo", ConsoleCmdEcho, CONSOLE_COMMAND_DOCUMENTED, "Print to console" },
 	{ "echo!", ConsoleCmdEcho, CONSOLE_COMMAND_UNDOCUMENTED, "Print to console without newline" },
 	{ "help", ConsoleCmdHelp, CONSOLE_COMMAND_DOCUMENTED, "Display this help" },
+#if !NOKUROKO
 	{ "run", ConsoleCmdRun, CONSOLE_COMMAND_DOCUMENTED, "Run Kuroko code" },
+#endif
 	{ "set", ConsoleCmdSet, CONSOLE_COMMAND_DOCUMENTED, "Modify game and plugin behaviour" },
 	{ "show", ConsoleCmdShow, CONSOLE_COMMAND_DOCUMENTED, "Display various game and plugin information" },
 	{ "unset", ConsoleCmdSet, CONSOLE_COMMAND_DOCUMENTED, "Modify game and plugin behaviour" },
@@ -64,6 +70,7 @@ void ConsoleScriptSleep(DWORD dwMilliseconds) {
 
 // COMMAND: run ...
 
+#if !NOKUROKO
 BOOL ConsoleCmdRun(const char* szCommand, const char* szArguments) {
 	MSG msg;
 	std::string strPossibleScriptName;
@@ -108,6 +115,7 @@ BOOL ConsoleCmdRun(const char* szCommand, const char* szArguments) {
 	}
 	return TRUE;
 }
+#endif
 
 BOOL ConsoleCmdClear(const char* szCommand, const char* szArguments) {
 	WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), "\x1b[2J\x1b[0;0H", sizeof("\x1b[2J\x1b[0;0H"), NULL, NULL);
@@ -159,7 +167,9 @@ BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 			"  show debug          Display enabled debugging options\n"
 			"  show memory ...     Display memory contents\n"
 			"  show microsim ...   Display microsim info\n"
+#if !NOKUROKO
 			"  show mods           Display loaded mods\n"
+#endif
 			"  show sound          Display sound info\n"
 			"  show tile ...       Display tile info\n"
 			"  show version        Display sc2kfix version info\n");
@@ -175,8 +185,10 @@ BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 	if (!strcmp(szArguments, "microsim") || !strncmp(szArguments, "microsim ", 9))
 		return ConsoleCmdShowMicrosim(szCommand, szArguments);
 
+#if !NOKUROKO
 	if (!strcmp(szArguments, "mods") || !strncmp(szArguments, "mods ", 5))
 		return ConsoleCmdShowMods(szCommand, szArguments);
+#endif
 
 	if (!strcmp(szArguments, "sound") || !strncmp(szArguments, "sound ", 6))
 		return ConsoleCmdShowSound(szCommand, szArguments);
@@ -371,6 +383,7 @@ static const char* GetMidiDeviceTechnologyString(WORD wTechnology) {
 	}
 }
 
+#if !NOKUROKO
 BOOL ConsoleCmdShowMods(const char* szCommand, const char* szArguments) {
 	BOOL bDetail = FALSE;
 	if (*(szArguments + 4) == '\0' || *(szArguments + 5) == '\0')
@@ -409,6 +422,7 @@ BOOL ConsoleCmdShowMods(const char* szCommand, const char* szArguments) {
 	}
 	return TRUE;
 }
+#endif
 
 BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
 	if (dwDetectedVersion != SC2KVERSION_1996) {
@@ -541,15 +555,30 @@ BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments) {
 		szSC2KVersion = "1996 Special Edition";
 	}
 
+#if !NOKUROKO
 	KrkValue kuroko_version;
 	krk_tableGet_fast(&vm.system->fields, S("version"), &kuroko_version);
+#endif
 
+	// AF - the separation comma positioning in this case is deliberate
+	// in order to be a bit more "friendly" concerning missing or varied
+	// end-arguments depending on the build.
 	printf(
 		"sc2kfix version %s - https://sc2kfix.net\n"
 		"Plugin build info: %s\n"
 		"SimCity 2000 version: %s\n"
 		"Plugin loaded at 0x%08X\n"
-		"Kuroko version: Kuroko %s\n", szSC2KFixVersion, szSC2KFixBuildInfo, szSC2KVersion, (DWORD)hSC2KFixModule, AS_CSTRING(kuroko_version));
+#if !NOKUROKO
+		"Kuroko version: Kuroko %s\n" 
+#endif
+		,szSC2KFixVersion 
+		,szSC2KFixBuildInfo
+		,szSC2KVersion
+		,(DWORD)hSC2KFixModule 
+#if !NOKUROKO
+		,AS_CSTRING(kuroko_version)
+#endif
+	);
 
 	return TRUE;
 }
