@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <vector>
+
 #ifndef HOOKEXT
 #define HOOKEXT extern "C" __declspec(dllexport)
 #endif
