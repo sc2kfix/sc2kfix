@@ -1,4 +1,4 @@
-// sc2kfix hooks/hook_sc2k1996_guzzardo.cpp: cheat handler replacement
+// sc2kfix hooks/hook_guzzardo.cpp: cheat handler replacement
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE

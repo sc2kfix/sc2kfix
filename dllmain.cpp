@@ -123,12 +123,16 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 					if (!lstrcmpiW(argv[i], L"-console"))
 						bConsoleEnabled = TRUE;
 					if (!lstrcmpiW(argv[i], L"-debugall")) {
+						guzzardo_debug = DEBUG_FLAGS_EVERYTHING;
 						mci_debug = DEBUG_FLAGS_EVERYTHING;
 						military_debug = DEBUG_FLAGS_EVERYTHING;
 						mischook_debug = DEBUG_FLAGS_EVERYTHING;
 						modloader_debug = DEBUG_FLAGS_EVERYTHING;
 						mus_debug = DEBUG_FLAGS_EVERYTHING;
+						registry_debug = DEBUG_FLAGS_EVERYTHING;
+						sc2x_debug = DEBUG_FLAGS_EVERYTHING;
 						snd_debug = DEBUG_FLAGS_EVERYTHING;
+						sprite_debug = DEBUG_FLAGS_EVERYTHING;
 						timer_debug = DEBUG_FLAGS_EVERYTHING;
 						updatenotifier_debug = DEBUG_FLAGS_EVERYTHING;
 					}

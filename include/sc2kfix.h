@@ -368,6 +368,7 @@ HOOKEXT BOOL bHookStopProcessing;
 void InstallAnimationSimCity1996Hooks(void);
 void InstallAnimationSimCity1995Hooks(void);
 void InstallAnimationSimCityDemoHooks(void);
+void InstallSpriteAndTileSetSimCity1996Hooks(void);
 void InstallMiscHooks_SC2K1996(void);
 void UpdateMiscHooks_SC2K1996(void);
 void InstallMiscHooks_SC2KDemo(void);
@@ -381,6 +382,7 @@ extern "C" int __stdcall Hook_MusicPlay(int iSongID);
 extern "C" int __stdcall Hook_MusicStop(void);
 extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void);
 int L_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
+void ReloadDefaultTileSet1996();
 void PlaceMissileSilo(__int16 m_x, __int16 m_y);
 void ProposeMilitaryBaseDecline(void);
 void ProposeMilitaryBaseMissileSilos(void);
@@ -396,12 +398,16 @@ void InstallRegistryPathingHooks_SCURK1996(void);
 
 // Debugging settings
 
+extern UINT guzzardo_debug;
 extern UINT mci_debug;
 extern UINT military_debug;
 extern UINT mischook_debug;
 extern UINT modloader_debug;
 extern UINT mus_debug;
+extern UINT registry_debug;
+extern UINT sc2x_debug;
 extern UINT snd_debug;
+extern UINT sprite_debug;
 extern UINT timer_debug;
 extern UINT updatenotifier_debug;
 
