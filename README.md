@@ -40,6 +40,7 @@ sc2kfix implements multiple hooks and a work-in-progress framework for detouring
 
 There is also a debugging console that can be enabled by passing "-console" to SimCity 2000 or by enabling the console manually in the in-game "sc2kfix Settings" dialog. While the debugging console generally tries to stop you from doing anything too dangerous, it will happily let you probe any valid memory in the game's address space, which could have adverse effect on any loaded cities. Please be careful when writing to arbitrary memory addresses.
 
+### Third-party components
 sc2kfix includes the Kuroko programming language (https://github.com/kuroko-lang/kuroko) for modding and scripting purposes, which is available as a REPL in the sc2kfix console. Kuroko is an embeddable, bytecode-compiled dialect of Python that is released under the terms of the MIT license (copyright (c) 2020-2024 K. Lange <klange@toaruos.org>). Documentation on the language including an online REPL with a tutorial can be found at https://kuroko-lang.github.io.
 
 ## How do I use it?

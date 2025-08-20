@@ -28,13 +28,19 @@
     <Filter Include="Source Files\Modules">
       <UniqueIdentifier>{c8504672-9bae-4b70-85e6-898f6fa37a00}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Kuroko">
-      <UniqueIdentifier>{7ff8ed32-ec45-4d84-ae7d-92dfa560cf5a}</UniqueIdentifier>
+    <Filter Include="Header Files\Third-Party">
+      <UniqueIdentifier>{0aed928c-e0ee-4d9c-97d8-269114f09a66}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Kuroko">
+    <Filter Include="Header Files\Third-Party\Kuroko">
       <UniqueIdentifier>{087b8c68-668a-44e7-8c01-d192657ac320}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Kuroko\Modules">
+    <Filter Include="Source Files\Third-Party">
+      <UniqueIdentifier>{abd745e0-4d42-4a17-93cd-ea1b28215e30}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Third-Party\Kuroko">
+      <UniqueIdentifier>{7ff8ed32-ec45-4d84-ae7d-92dfa560cf5a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Third-Party\Kuroko\Modules">
       <UniqueIdentifier>{da293871-1f84-4121-af73-5026b14465d2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -60,66 +66,6 @@
     <ClInclude Include="include\json.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="kuroko\kuroko\chunk.h">
-      <Filter>Header Files\Kuroko</Filter>
-    </ClInclude>
-    <ClInclude Include="kuroko\kuroko\compiler.h">
-      <Filter>Header Files\Kuroko</Filter>
-    </ClInclude>
-    <ClInclude Include="kuroko\dirent.h">
-      <Filter>Header Files\Kuroko</Filter>
-    </ClInclude>
-    <ClInclude Include="kuroko\kuroko\debug.h">
-      <Filter>Header Files\Kuroko</Filter>
-    </ClInclude>
-    <ClInclude Include="kuroko\kuroko\kuroko.h">
-      <Filter>Header Files\Kuroko</Filter>
-    </ClInclude>
-    <ClInclude Include="kuroko\methods.h">
-      <Filter>Header Files\Kuroko</Filter>
-    </ClInclude>
-    <ClInclude Include="kuroko\kuroko\memory.h">
-      <Filter>Header Files\Kuroko</Filter>
-    </ClInclude>
-    <ClInclude Include="kuroko\kuroko\object.h">
-      <Filter>Header Files\Kuroko</Filter>
-    </ClInclude>
-    <ClInclude Include="kuroko\opcode_enum.h">
-      <Filter>Header Files\Kuroko</Filter>
-    </ClInclude>
-    <ClInclude Include="kuroko\opcodes.h">
-      <Filter>Header Files\Kuroko</Filter>
-    </ClInclude>
-    <ClInclude Include="kuroko\private.h">
-      <Filter>Header Files\Kuroko</Filter>
-    </ClInclude>
-    <ClInclude Include="kuroko\pthread.h">
-      <Filter>Header Files\Kuroko</Filter>
-    </ClInclude>
-    <ClInclude Include="kuroko\vendor\rline.h">
-      <Filter>Header Files\Kuroko</Filter>
-    </ClInclude>
-    <ClInclude Include="kuroko\kuroko\scanner.h">
-      <Filter>Header Files\Kuroko</Filter>
-    </ClInclude>
-    <ClInclude Include="kuroko\kuroko\table.h">
-      <Filter>Header Files\Kuroko</Filter>
-    </ClInclude>
-    <ClInclude Include="kuroko\kuroko\threads.h">
-      <Filter>Header Files\Kuroko</Filter>
-    </ClInclude>
-    <ClInclude Include="kuroko\unistd.h">
-      <Filter>Header Files\Kuroko</Filter>
-    </ClInclude>
-    <ClInclude Include="kuroko\kuroko\util.h">
-      <Filter>Header Files\Kuroko</Filter>
-    </ClInclude>
-    <ClInclude Include="kuroko\kuroko\value.h">
-      <Filter>Header Files\Kuroko</Filter>
-    </ClInclude>
-    <ClInclude Include="kuroko\kuroko\vm.h">
-      <Filter>Header Files\Kuroko</Filter>
-    </ClInclude>
     <ClInclude Include="include\hooklists.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -128,6 +74,30 @@
     </ClInclude>
     <ClInclude Include="include\mfc3xhelp.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\kuroko\dirent.h">
+      <Filter>Header Files\Third-Party\Kuroko</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\kuroko\methods.h">
+      <Filter>Header Files\Third-Party\Kuroko</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\kuroko\opcode_enum.h">
+      <Filter>Header Files\Third-Party\Kuroko</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\kuroko\opcodes.h">
+      <Filter>Header Files\Third-Party\Kuroko</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\kuroko\private.h">
+      <Filter>Header Files\Third-Party\Kuroko</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\kuroko\pthread.h">
+      <Filter>Header Files\Third-Party\Kuroko</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\kuroko\unistd.h">
+      <Filter>Header Files\Third-Party\Kuroko</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\kuroko\vendor\rline.h">
+      <Filter>Header Files\Third-Party\Kuroko</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -179,138 +149,6 @@
     <ClCompile Include="modules\registry_config.cpp">
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="kuroko\vendor\rline.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\builtins.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\chunk.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\compiler.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\debug.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\exceptions.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\kuroko.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\memory.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\obj_base.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\obj_bytes.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\obj_dict.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\obj_function.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\obj_gen.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\obj_list.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\obj_long.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\obj_numeric.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\obj_range.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\obj_set.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\obj_slice.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\obj_str.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\obj_tuple.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\obj_typing.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\object.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\parseargs.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\scanner.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\sys.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\table.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\threads.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\value.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\vm.c">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\modules\module_wcwidth.c">
-      <Filter>Source Files\Kuroko\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\modules\module__pheap.c">
-      <Filter>Source Files\Kuroko\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\modules\module_dis.c">
-      <Filter>Source Files\Kuroko\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\modules\module_fileio.c">
-      <Filter>Source Files\Kuroko\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\modules\module_gc.c">
-      <Filter>Source Files\Kuroko\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\modules\module_locale.c">
-      <Filter>Source Files\Kuroko\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\modules\module_math.c">
-      <Filter>Source Files\Kuroko\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\modules\module_os.c">
-      <Filter>Source Files\Kuroko\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\modules\module_random.c">
-      <Filter>Source Files\Kuroko\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\modules\module_socket.c">
-      <Filter>Source Files\Kuroko\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\modules\module_stat.c">
-      <Filter>Source Files\Kuroko\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\modules\module_time.c">
-      <Filter>Source Files\Kuroko\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\modules\module_timeit.c">
-      <Filter>Source Files\Kuroko\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="kuroko\vendor\pthread.cpp">
-      <Filter>Source Files\Kuroko</Filter>
-    </ClCompile>
     <ClCompile Include="modules\kuroko_glue.cpp">
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
@@ -338,6 +176,138 @@
     <ClCompile Include="hooks\hook_spritesandtilesets.cpp">
       <Filter>Source Files\Hooks</Filter>
     </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\modules\module__pheap.c">
+      <Filter>Source Files\Third-Party\Kuroko\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\modules\module_dis.c">
+      <Filter>Source Files\Third-Party\Kuroko\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\modules\module_fileio.c">
+      <Filter>Source Files\Third-Party\Kuroko\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\modules\module_gc.c">
+      <Filter>Source Files\Third-Party\Kuroko\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\modules\module_locale.c">
+      <Filter>Source Files\Third-Party\Kuroko\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\modules\module_math.c">
+      <Filter>Source Files\Third-Party\Kuroko\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\modules\module_os.c">
+      <Filter>Source Files\Third-Party\Kuroko\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\modules\module_random.c">
+      <Filter>Source Files\Third-Party\Kuroko\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\modules\module_socket.c">
+      <Filter>Source Files\Third-Party\Kuroko\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\modules\module_stat.c">
+      <Filter>Source Files\Third-Party\Kuroko\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\modules\module_time.c">
+      <Filter>Source Files\Third-Party\Kuroko\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\modules\module_timeit.c">
+      <Filter>Source Files\Third-Party\Kuroko\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\modules\module_wcwidth.c">
+      <Filter>Source Files\Third-Party\Kuroko\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\builtins.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\chunk.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\compiler.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\debug.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\exceptions.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\kuroko.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\memory.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\obj_base.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\obj_bytes.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\obj_dict.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\obj_function.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\obj_gen.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\obj_list.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\obj_long.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\obj_numeric.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\obj_range.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\obj_set.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\obj_slice.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\obj_str.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\obj_tuple.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\obj_typing.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\object.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\parseargs.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\scanner.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\sys.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\table.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\threads.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\value.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\vm.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\vendor\pthread.cpp">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\kuroko\vendor\rline.c">
+      <Filter>Source Files\Third-Party\Kuroko</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="sc2kfix.rc">
@@ -354,8 +324,8 @@
     <None Include="script.md">
       <Filter>Documentation</Filter>
     </None>
-    <None Include="kuroko\wcwidth._h">
-      <Filter>Source Files\Kuroko</Filter>
+    <None Include="thirdparty\kuroko\wcwidth._h">
+      <Filter>Header Files\Third-Party\Kuroko</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
