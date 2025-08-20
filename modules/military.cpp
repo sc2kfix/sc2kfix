@@ -44,7 +44,7 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 	wOldToolGroup = wMaybeActiveToolGroup;
 	iX = x2;
 	iY = y2;
-	wMaybeActiveToolGroup = TOOL_GROUP_ROADS;
+	wMaybeActiveToolGroup = CITYTOOL_GROUP_ROADS;
 	if (Game_MaybeCheckViablePlacementPath(x1, y1, x2, y2)) {
 		iNewX = x1;
 		iX = x1;

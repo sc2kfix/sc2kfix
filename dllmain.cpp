@@ -455,6 +455,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			if (dwDetectedVersion == SC2KVERSION_1996)
 				SaveStoredPaths();
 
+		// Clear out the stored sprite IDs (no allocated data are contained).
+		spriteIDs.clear();
+
 		// Send a closing message and close the log file
 		ReleaseSMKFuncs();
 		ConsoleLog(LOG_INFO, "CORE: Closing down at %lld. Goodnight!\n", time(NULL));

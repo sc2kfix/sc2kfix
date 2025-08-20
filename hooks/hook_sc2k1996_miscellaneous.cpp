@@ -2137,10 +2137,10 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 				// If you attempt to press Shift or Control (for the bulldozer or query) while an
 				// invalid tool is selected, there'll be no placement highlighted (this matches the
 				// behaviour in the normal game as well).
-				if (wCurrentCityToolGroup != TOOL_GROUP_CENTERINGTOOL) {
+				if (wCurrentCityToolGroup != CITYTOOL_GROUP_CENTERINGTOOL) {
 					if (wTileCoordinateX < 0 || wTileCoordinateX >= GAME_MAP_SIZE ||
 						wTileCoordinateY < 0 || wTileCoordinateY >= GAME_MAP_SIZE ||
-						(wCurrentCityToolGroup == TOOL_GROUP_REWARDS && wSelectedSubtool[wCurrentCityToolGroup] == REWARDS_ARCOLOGIES_WAITING)) {
+						(wCurrentCityToolGroup == CITYTOOL_GROUP_REWARDS && wSelectedSubtool[wCurrentCityToolGroup] == REWARDS_ARCOLOGIES_WAITING)) {
 						wTileHighlightActive = 0;
 					}
 					else {
@@ -2261,7 +2261,7 @@ extern "C" void __stdcall Hook_CSimcityView_WM_MOUSEMOVE(UINT nFlags, POINT pt) 
 					if ((nFlags & MK_LBUTTON) != 0) {
 						if (pThis[62]) {
 							if (wCityMode) {
-								if ((wCurrentCityToolGroup != TOOL_GROUP_CENTERINGTOOL) || GetAsyncKeyState(VK_MENU) & 0x8000)
+								if ((wCurrentCityToolGroup != CITYTOOL_GROUP_CENTERINGTOOL) || GetAsyncKeyState(VK_MENU) & 0x8000)
 									Game_CityToolMenuAction(nFlags, pt);
 							}
 							else {
@@ -2609,23 +2609,31 @@ extern "C" void __stdcall Hook_MainFrameUpdateSections() {
 	H_CCityToolBarUpdateControls(pCityToolBar, FALSE);
 	ToggleGotoButton(hDlgItem, FALSE);
 	if (wCityMode == GAME_MODE_CITY) {
-		if (wCurrentCityToolGroup == TOOL_GROUP_DISPATCH) {
-			wCurrentCityToolGroup = TOOL_GROUP_CENTERINGTOOL;
-			H_CCityToolBarUpdateControls(pCityToolBar, TRUE);
+		if (wCurrentCityToolGroup == CITYTOOL_GROUP_DISPATCH) {
+			wCurrentCityToolGroup = CITYTOOL_GROUP_CENTERINGTOOL;
+			H_CCityToolBarUpdateControls(pCityToolBar, FALSE);
 		}
-		H_CMainFrameDisableCityToolBarButton(pThis, 2);
-		H_CMyToolBarInvalidateButton(pCityToolBar, 2);
+		H_CMainFrameDisableCityToolBarButton(pThis, CITYTOOL_BUTTON_DISPATCH);
+		H_CMyToolBarInvalidateButton(pCityToolBar, CITYTOOL_BUTTON_DISPATCH);
 	}
 	else if (wCityMode != GAME_MODE_DISASTER)
 		goto REFRESHMENUGRANTS;
 	if (wCityMode == GAME_MODE_DISASTER)
 		ToggleGotoButton(hDlgItem, TRUE);
-	if (!dwGrantedItems[5]) {
-		H_CMainFrameDisableCityToolBarButton(pThis, 5);
-		H_CMyToolBarInvalidateButton(pCityToolBar, 5);
+	if (!dwGrantedItems[CITYTOOL_GROUP_REWARDS]) {
+		H_CMainFrameDisableCityToolBarButton(pThis, CITYTOOL_BUTTON_REWARDS);
+		H_CMyToolBarInvalidateButton(pCityToolBar, CITYTOOL_BUTTON_REWARDS);
 	}
 	iCityToolBarButton = wCurrentCityToolGroup;
-	if (wCurrentCityToolGroup > TOOL_GROUP_SIGNS)
+	// Adjust here; this used to check to see whether
+	// iCityToolBarButton is greater than CITYTOOL_BUTTON_SIGNS
+	// however during disaster cases.. if the query button was selected
+	// and the disaster ended, it would end up highlighting the zoom in button.
+	// 
+	// This behaviour has been confirmed in the base game and interactive demo
+	// in order to confirm the apparent buggy nature (unless one wanted to
+	// highlight the zoom in button for whatever reason).
+	if (iCityToolBarButton > CITYTOOL_BUTTON_QUERY)
 		iCityToolBarButton = wCurrentCityToolGroup + 4;
 	ButtonStyle = H_CMyToolBarGetButtonStyle(pCityToolBar, iCityToolBarButton);
 	H_CMyToolBarSetButtonStyle(pCityToolBar, iCityToolBarButton, ButtonStyle | 0x100);
@@ -2634,7 +2642,7 @@ extern "C" void __stdcall Hook_MainFrameUpdateSections() {
 			nStyle = 0x102;
 		else
 			nStyle = 2;
-		nIndex = 0x20 - nLayer;
+		nIndex = CITYTOOL_BUTTON_DISPLAYUNDERGROUND - nLayer;
 		H_CMyToolBarSetButtonStyle(pCityToolBar, nIndex, nStyle);
 	}
 REFRESHMENUGRANTS:
@@ -2642,7 +2650,7 @@ REFRESHMENUGRANTS:
 	H_CMenuDestroyMenu(pMenu);
 	hMenu = LoadMenuA(hGameModule, (LPCSTR)136);
 	H_CMenuAttach(pMenu, hMenu);
-	for (nPos = TOOL_GROUP_BULLDOZER; nPos < TOOL_GROUP_SIGNS; ++nPos) {
+	for (nPos = CITYTOOL_BUTTON_BULLDOZER; nPos < CITYTOOL_BUTTON_SIGNS; ++nPos) {
 		if (dwGrantedItems[nPos]) {
 			hSubMenu = GetSubMenu((HMENU)pMenu[1], nPos);
 			pSubMenu = H_CMenuFromHandle(hSubMenu);
@@ -2666,12 +2674,12 @@ REFRESHMENUGRANTS:
 				pUID = uIDs;
 				pString = szString;
 				// calculation here is citytoolbuttongroup * maxsubtools (12 per group), this sets it to TOOL_GROUP_REWARDS.
-				cityToolString = &cityToolGroupStrings[TOOL_GROUP_REWARDS*MAX_CITY_SUBTOOLS];
+				cityToolString = &cityToolGroupStrings[CITYTOOL_GROUP_REWARDS*MAX_CITY_SUBTOOLS];
 				do {
 					// (1 << nReward) bit-shifted result of the nReward count.
 					nRewardBit = (1 << nReward);
 					if ((nRewardBit & dwGrantedItems[nPos]) != 0) {
-						if (nPos == TOOL_GROUP_REWARDS && !nGranted) {
+						if (nPos == CITYTOOL_BUTTON_REWARDS && !nGranted) {
 							pThis[220] = nReward;
 							nGranted = 1;
 							pTargMFCString = (CMFC3XString *)&pCityToolBar[74];
@@ -2701,17 +2709,6 @@ __declspec(naked) void Hook_402B4E(const char* szDescription, int a2, void* cWnd
 	__asm pop ecx
 	GAMEJMP(0x42DC20);
 }
-
-typedef struct {
-	WORD nArcID;
-	WORD nID;
-	DWORD dwOffset;
-	DWORD dwSize;
-	WORD wHeight;
-	WORD wWidth;
-	WORD nSkipHit;
-	BOOL bMultiple;
-} sprite_ids_t;
 
 std::vector<sprite_ids_t> spriteIDs;
 

@@ -290,7 +290,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 		break;
 
 	case WM_COMMAND:
-		switch (LOWORD(wParam)) {
+		switch (GET_WM_COMMAND_ID(wParam, lParam)) {
 		case ID_SETTINGS_OK:
 			// Grab settings from the dialog controls
 			if (!GetDlgItemText(hwndDlg, IDC_SETTINGS_MAYOR, szSettingsMayorName, 63))

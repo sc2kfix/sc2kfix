@@ -11,6 +11,7 @@
 
 #undef UNICODE
 #include <windows.h>
+#include <windowsx.h>
 #include <psapi.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,19 +23,27 @@
 
 static DWORD dwDummy;
 
-static WORD iGlobalTileX, iGlobalTileY;
+typedef struct {
+	WORD iTileX;
+	WORD iTileY;
+} query_coords_info;
 
 BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
-	WORD iTileX = iGlobalTileX;
-	WORD iTileY = iGlobalTileY;
+	query_coords_info *qci;
+	WORD iTileX, iTileY;
 	std::string strTileHeader;
 	std::string strTileInfo;
 	int iTileID;
 
 	switch (message) {
 	case WM_INITDIALOG:
+		SetWindowLong(hwndDlg, GWL_USERDATA, lParam);
+		qci = (query_coords_info *)lParam;
+
+		iTileX = qci->iTileX;
+		iTileY = qci->iTileY;
 		// Build the header string
-		iTileID = GetTileID(iGlobalTileX, iGlobalTileY);
+		iTileID = GetTileID(iTileX, iTileY);
 		if (iTileID == 0) {
 			if (dwMapXBIT[iTileX][iTileY].b.iWater && dwMapXBIT[iTileX][iTileY].b.iSaltWater)
 				strTileHeader = "Salt water";
@@ -198,44 +207,59 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		return TRUE;
 
 	case WM_COMMAND:
-		switch (LOWORD(wParam)) {
+		switch (GET_WM_COMMAND_ID(wParam, lParam)) {
 		case IDOK:
-			EndDialog(hwndDlg, wParam);
+			EndDialog(hwndDlg, 1);
+			return TRUE;
+		case IDCANCEL:
+			EndDialog(hwndDlg, 0);
 			return TRUE;
 		}
 	}
 	return FALSE;
 }
 
-// Inserted into jump table at 0x43F924 in place of `dd offset loc_43F80C`
-extern "C" void _declspec(naked) Hook_QueryJumpTable(void) {
-	__asm {
-		// Save all registers because this is one of those "hic sunt dracones" moments
-		pusha
-		mov [iGlobalTileX], bx
-		mov [iGlobalTileY], bp
-	}
-
+static BOOL DoAdvancedQuery(__int16 x, __int16 y) {
 	DWORD *pCityToolBar;
+	query_coords_info qci;
 
 	pCityToolBar = &((DWORD *)pCWndRootWindow)[102];
 
-	// See if we need to intercept
-	if (GetAsyncKeyState(VK_MENU) < 0) {
-		Game_ToolMenuDisable(pCityToolBar);
-		DialogBox(hSC2KFixModule, MAKEINTRESOURCE(IDD_ADVANCEDQUERY), GameGetRootWindowHandle(), AdvancedQueryDialogProc);
-		Game_ToolMenuEnable(pCityToolBar);
-		__asm popa
-		GAMEJMP(0x43F837)
-	}
+	if (bUseAdvancedQuery) {
+		if (GetAsyncKeyState(VK_MENU) < 0) {
+			memset(&qci, 0, sizeof(qci));
+			qci.iTileX = x;
+			qci.iTileY = y;
 
-	// Go onto the regular call otherwise
-	__asm popa
-	GAMEJMP(0x43F80C)
+			Game_ToolMenuDisable(pCityToolBar);
+			DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_ADVANCEDQUERY), GameGetRootWindowHandle(), AdvancedQueryDialogProc, (LPARAM)&qci);
+			Game_ToolMenuEnable(pCityToolBar);
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+extern "C" void __cdecl Hook_QuerySpecificItem(__int16 x, __int16 y) {
+	void(__cdecl *H_QuerySpecificItem)(__int16, __int16) = (void(__cdecl *)(__int16, __int16))0x44D1B0;
+
+	if (!DoAdvancedQuery(x, y))
+		H_QuerySpecificItem(x, y);
+}
+
+extern "C" void __cdecl Hook_QueryGeneralItem(__int16 x, __int16 y) {
+	void(__cdecl *H_QueryGeneralItem)(__int16, __int16) = (void(__cdecl *)(__int16, __int16))0x4719A0;
+
+	if (!DoAdvancedQuery(x, y))
+		H_QueryGeneralItem(x, y);
 }
 
 void InstallQueryHooks(void) {
-	// Install the query hook into the jump table
-	VirtualProtect((LPVOID)0x43F924, 4, PAGE_READWRITE, &dwDummy);
-	*(DWORD*)0x43F924 = (DWORD)Hook_QueryJumpTable;
+	ConsoleLog(LOG_DEBUG, "MISC: Installing Query Hooks\n");
+
+	VirtualProtect((LPVOID)0x401CFD, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x401CFD, Hook_QuerySpecificItem);
+
+	VirtualProtect((LPVOID)0x402E19, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402E19, Hook_QueryGeneralItem);
 }
