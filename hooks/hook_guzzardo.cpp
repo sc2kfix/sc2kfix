@@ -150,13 +150,6 @@ static void AdjustDebugMenu(HMENU hDebugMenu) {
 			return;
 		}
 
-		// Add the message map entries
-		AddNewSCVMessageMapEntry(WM_COMMAND, 0, IDM_DEBUG_MILITARY_DECLINED, IDM_DEBUG_MILITARY_DECLINED, 0x0A, ProposeMilitaryBaseDecline);
-		AddNewSCVMessageMapEntry(WM_COMMAND, 0, IDM_DEBUG_MILITARY_AIRFORCE, IDM_DEBUG_MILITARY_AIRFORCE, 0x0A, ProposeMilitaryBaseMissileSilos);
-		AddNewSCVMessageMapEntry(WM_COMMAND, 0, IDM_DEBUG_MILITARY_ARMYBASE, IDM_DEBUG_MILITARY_ARMYBASE, 0x0A, ProposeMilitaryBaseAirForceBase);
-		AddNewSCVMessageMapEntry(WM_COMMAND, 0, IDM_DEBUG_MILITARY_NAVALYARD, IDM_DEBUG_MILITARY_NAVALYARD, 0x0A, ProposeMilitaryBaseNavalYard);
-		AddNewSCVMessageMapEntry(WM_COMMAND, 0, IDM_DEBUG_MILITARY_MISSILESILOS, IDM_DEBUG_MILITARY_MISSILESILOS, 0x0A, ProposeMilitaryBaseMissileSilos);
-
 		if (guzzardo_debug & GUZZARDO_DEBUG_MENU)
 			ConsoleLog(LOG_DEBUG, "MISC: Updated debug menu.\n");
 	}

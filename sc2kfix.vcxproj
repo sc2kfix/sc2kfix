@@ -64,6 +64,7 @@
   <ItemGroup>
     <ClInclude Include="include\hooklists.h" />
     <ClInclude Include="include\json.hpp" />
+    <ClInclude Include="include\mfc3xhelp.h" />
     <ClInclude Include="include\music.h" />
     <ClInclude Include="include\sc2kfix.h" />
     <ClInclude Include="include\sc2k_demo.h" />

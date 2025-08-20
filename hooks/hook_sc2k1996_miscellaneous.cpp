@@ -17,6 +17,7 @@
 
 #undef UNICODE
 #include <windows.h>
+#include <windowsx.h>
 #include <psapi.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,30 +52,10 @@ UINT mischook_debug = MISCHOOK_DEBUG;
 
 static DWORD dwDummy;
 
-HMENU hMenuWindowsPopup = NULL;
-AFX_MSGMAP_ENTRY afxMessageMapMainMenu[9];
 DLGPROC lpNewCityAfxProc = NULL;
 char szTempMayorName[24] = { 0 };
 
-AFX_MSGMAP_ENTRY* pafxMessageMapCSimcityViewEnd = (AFX_MSGMAP_ENTRY*)0x4D45C0;
-
 static BOOL bOverrideTickPlacementHighlight = FALSE;
-
-// Add a new AFX_MSGMAP_ENTRY to the main message map for the game
-void AddNewSCVMessageMapEntry(UINT nMessage, UINT nCode, UINT nID, UINT nLastID, UINT_PTR nSig, void* pfn) {
-	AFX_MSGMAP_ENTRY __msgmap = { nMessage, nCode, nID, nLastID, nSig, pfn };
-	VirtualProtect((LPVOID)pafxMessageMapCSimcityViewEnd, sizeof(AFX_MSGMAP_ENTRY), PAGE_EXECUTE_READWRITE, &dwDummy);
-	memcpy_s((LPVOID)pafxMessageMapCSimcityViewEnd, sizeof(AFX_MSGMAP_ENTRY), &__msgmap, sizeof(AFX_MSGMAP_ENTRY));
-	pafxMessageMapCSimcityViewEnd++;
-	ConsoleLog(LOG_DEBUG, "CSV MSGMAP updated 0x%08X -> 0x%08X\n", pafxMessageMapCSimcityViewEnd-1, pafxMessageMapCSimcityViewEnd);
-
-	// Crash if we overflow the message map.
-	// TODO - we need a better way to handle this
-	if ((DWORD)pafxMessageMapCSimcityViewEnd >= 0x4D4788) {
-		ConsoleLog(LOG_EMERGENCY, "CORE: CSimcityView MFC message map overflow detected!\n");
-		__asm push 0; retn;
-	}
-}
 
 // Override some strings that have egregiously bad grammar/capitalization.
 // Maxis fail English? That's unpossible!
@@ -359,6 +340,9 @@ extern "C" void __stdcall Hook_SimcityAppOnQuit(void) {
 
 // Hook CCmdUI::Enable so we can programmatically enable and disable menu items reliably
 __declspec(naked) void Hook_CCmdUI_Enable(void) {
+	// Ensure that the new 'Reload Default Tile Set' item is always enabled.
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_GAME_FILE_RELOADDEFAULTTILESET, MF_BYCOMMAND | MF_ENABLED);
+
 	// Ensure the main config menu options are always enabled
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_GAME_OPTIONS_SC2KFIXSETTINGS, MF_BYCOMMAND | MF_ENABLED);
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_GAME_OPTIONS_MODCONFIG, MF_BYCOMMAND | MF_ENABLED);
@@ -368,6 +352,13 @@ __declspec(naked) void Hook_CCmdUI_Enable(void) {
 		EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_GAME_WINDOWS_SCENARIOGOALS, MF_BYCOMMAND | MF_ENABLED);
 	else
 		EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_GAME_WINDOWS_SCENARIOGOALS, MF_BYCOMMAND | MF_GRAYED);
+
+	// Ensure that the debug military options are always enabled.
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_DECLINED, MF_BYCOMMAND | MF_ENABLED);
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_AIRFORCE, MF_BYCOMMAND | MF_ENABLED);
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_ARMYBASE, MF_BYCOMMAND | MF_ENABLED);
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_NAVALYARD, MF_BYCOMMAND | MF_ENABLED);
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_MISSILESILOS, MF_BYCOMMAND | MF_ENABLED);
 
 	__asm {
 		pop esi
@@ -551,6 +542,47 @@ extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lp
 	}
 }
 #pragma warning(default : 6387)
+
+// CSimcityView Middle Mouse Button Down handler.
+static void SimcityViewOnMButtonDown(UINT nFlags, POINT pt) {
+	__int16 wTileCoords = 0;
+	BYTE bTileX = 0, bTileY = 0;
+	wTileCoords = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
+	bTileX = LOBYTE(wTileCoords);
+	bTileY = HIBYTE(wTileCoords);
+
+	if (wTileCoords & 0x8000)
+		return;
+	else {
+		if (nFlags & MK_CONTROL)
+			;
+		else if (nFlags & MK_SHIFT)
+			;
+		else if (GetAsyncKeyState(VK_MENU) < 0) {
+			// useful for tests
+		} else {
+			Game_SoundPlaySound(&pCSimcityAppThis, SOUND_CLICK);
+			Game_CenterOnTileCoords(bTileX, bTileY);
+		}
+	}
+}
+
+extern "C" LRESULT __stdcall Hook_DefWindowProcA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
+	DWORD *pSCView;
+
+	pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
+	if (Msg == WM_MBUTTONDOWN) {
+		if (pSCView && hWnd == (HWND)pSCView[7]) {
+			POINT pt;
+
+			pt.x = GET_X_LPARAM(lParam);
+			pt.y = GET_Y_LPARAM(lParam);
+			SimcityViewOnMButtonDown((UINT)wParam, pt);
+			return TRUE;
+		}
+	}
+	return DefWindowProcA(hWnd, Msg, wParam, lParam);
+}
 
 extern "C" int __cdecl Hook_PlacePowerLinesAtCoordinates(__int16 x, __int16 y) {
 	__int16 iY;
@@ -2142,31 +2174,6 @@ extern "C" int __stdcall Hook_AddAllInventions(void) {
 	return 0;
 }
 
-// Hook the middle mouse button as a centering tool shortcut
-extern "C" int __stdcall Hook_CSimcityView_WM_MBUTTONDOWN(UINT nFlags, POINT pt) {
-	__int16 wTileCoords = 0;
-	BYTE bTileX = 0, bTileY = 0;
-	wTileCoords = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
-	bTileX = LOBYTE(wTileCoords);
-	bTileY = HIBYTE(wTileCoords);
-
-	if (wTileCoords & 0x8000)
-		return wTileCoords;
-	else {
-		if (nFlags & MK_CONTROL)
-			;
-		else if (nFlags & MK_SHIFT)
-			;
-		else if (GetAsyncKeyState(VK_MENU) < 0) {
-			// useful for tests
-		} else {
-			Game_SoundPlaySound(&pCSimcityAppThis, SOUND_CLICK);
-			Game_CenterOnTileCoords(bTileX, bTileY);
-		}
-	}
-	return wTileCoords;
-}
-
 extern "C" void __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(UINT nFlags, POINT pt) {
 	DWORD *pThis;
 
@@ -2695,6 +2702,128 @@ __declspec(naked) void Hook_402B4E(const char* szDescription, int a2, void* cWnd
 	GAMEJMP(0x42DC20);
 }
 
+static BOOL L_OnCmdMsg(void *pThis, UINT nID, int nCode, void *pExtra, void *pHandler, void *dwRetAddr) {
+	BOOL(__thiscall *H_CCmdTargetOnCmdMsg)(void *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(void *, UINT, int, void *, void *))0x4A280C;
+	BOOL(__thiscall *H_CDialogOnCmdMsg)(void *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(void *, UINT, int, void *, void *))0x4A6C8E;
+	BOOL(__thiscall *H_CDocumentOnCmdMsg)(void *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(void *, UINT, int, void *, void *))0x4AE16C;
+	BOOL(__thiscall *H_CViewOnCmdMsg)(void *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(void *, UINT, int, void *, void *))0x4AE83A;
+	BOOL(__thiscall *H_CMDIFrameWndOnCmdMsg)(void *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(void *, UINT, int, void *, void *))0x4B780A;
+	BOOL(__thiscall *H_CFrameWndOnCmdMsg)(void *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(void *, UINT, int, void *, void *))0x4B9C9A;
+
+	// Normally internally there'd be the class hierarchy regarding inheritence
+	// (which isn't present here).
+	//
+	// 0x4B9080 - with CFrameWnd - use CFrameWnd::OnCmdMsg
+	//
+	// All other flagged address references have thus far gracefully
+	// gone to CCmdTarget::OnCmdMsg (which is the non-overridden virtual call).
+	//
+	// If others also require specific handling, checkout the returned address
+	// and see where it specifically happens to originate.
+	if ((DWORD)dwRetAddr == 0x4B9080) {
+		if (nCode == _CN_COMMAND) {
+			switch (nID) {
+			case IDM_GAME_OPTIONS_SC2KFIXSETTINGS:
+				ShowSettingsDialog();
+				return TRUE;
+
+			case IDM_GAME_OPTIONS_MODCONFIG:
+				ShowModSettingsDialog();
+				return TRUE;
+
+			case IDM_DEBUG_MILITARY_DECLINED:
+				ProposeMilitaryBaseDecline();
+				return TRUE;
+
+			case IDM_DEBUG_MILITARY_AIRFORCE:
+				ProposeMilitaryBaseAirForceBase();
+				return TRUE;
+
+			case IDM_DEBUG_MILITARY_ARMYBASE:
+				ProposeMilitaryBaseArmyBase();
+				return TRUE;
+
+			case IDM_DEBUG_MILITARY_NAVALYARD:
+				ProposeMilitaryBaseNavalYard();
+				return TRUE;
+
+			case IDM_DEBUG_MILITARY_MISSILESILOS:
+				ProposeMilitaryBaseMissileSilos();
+				return TRUE;
+
+			case IDM_GAME_WINDOWS_SCENARIOGOALS:
+				ShowScenarioStatusDialog();
+				return TRUE;
+
+			case IDM_GAME_FILE_RELOADDEFAULTTILESET:
+				return TRUE;
+			}
+		}
+		else if (nCode == _CN_COMMAND_UI) {
+			ConsoleLog(LOG_DEBUG, "CFrameWnd::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - _CN_COMMAND_UI\n", pThis, nID, nCode, pExtra, pHandler);
+		}
+		ConsoleLog(LOG_DEBUG, "CFrameWnd::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X)\n", pThis, nID, nCode, pExtra, pHandler);
+		return H_CFrameWndOnCmdMsg(pThis, nID, nCode, pExtra, pHandler);
+	}
+	if ((DWORD)dwRetAddr == 0x4A4BB2) {
+		if (nCode == _CN_COMMAND) {
+			switch (nID) {
+				// This is the 'sc2kfix Settings' entry in the main dialog.
+			case IDC_GAME_MAIN_SC2KFIXSETTINGS:
+				ShowSettingsDialog();
+				return TRUE;
+			}
+		}
+	}
+	else
+		ConsoleLog(LOG_DEBUG, "?::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, pExtra, pHandler, dwRetAddr);
+
+	return H_CCmdTargetOnCmdMsg(pThis, nID, nCode, pExtra, pHandler);
+}
+
+extern "C" BOOL __stdcall Hook_WndOnCommand(WPARAM wParam, LPARAM lParam) {
+	DWORD *pThis;
+
+	__asm mov[pThis], ecx
+
+	DWORD *(__stdcall *H_CWndFromHandlePermanent)(HWND) = (DWORD *(__stdcall *)(HWND))0x4A3BFD;
+	CMFC3XTestCmdUI *(__thiscall *H_CTestCmdUIConstruct)(void *) = (CMFC3XTestCmdUI *(__thiscall *)(void *))0x4A5315;
+	BOOL(__thiscall *H_CWndSendChildNotifyLastMsg)(void *, LRESULT *) = (BOOL(__thiscall *)(void *, LRESULT *))0x4A6091;
+	DWORD *(__stdcall *H_AfxGetThreadState)() = (DWORD *(__stdcall *)())0x4C0730;
+
+	DWORD *pWndHandle;
+	CMFC3XTestCmdUI testCmd;
+
+	// AFX_THREAD_STATE -> DWORD:
+	// var[40] -> m_hLockoutNotifyWindow
+
+	UINT nID = LOWORD(wParam);
+	HWND hWndCtrl = (HWND)lParam;
+	int nCode = HIWORD(wParam);
+
+	if (nID == 0)
+		return FALSE;
+
+	if (hWndCtrl == NULL) {
+		H_CTestCmdUIConstruct(&testCmd);
+		testCmd.m_nID = nID;
+		L_OnCmdMsg(pThis, nID, _CN_COMMAND_UI, &testCmd, 0, _ReturnAddress());
+		if (!testCmd.m_bEnabled)
+			return TRUE;
+		nCode = _CN_COMMAND;
+	}
+	else {
+		if ((HWND)H_AfxGetThreadState()[40] == (HWND)pThis[7])
+			return TRUE;
+
+		pWndHandle = H_CWndFromHandlePermanent(hWndCtrl);
+		if (pWndHandle != NULL && H_CWndSendChildNotifyLastMsg(pWndHandle, 0))
+			return TRUE;
+	}
+
+	return L_OnCmdMsg(pThis, nID, nCode, 0, 0, _ReturnAddress());
+}
+
 // Placeholder.
 void ShowModSettingsDialog(void) {
 	L_MessageBoxA(GameGetRootWindowHandle(), "The mod settings dialog has not yet been implemented. Check back later.", "sc2fix", MB_OK);
@@ -2840,11 +2969,28 @@ void InstallMiscHooks_SC2K1996(void) {
 	VirtualProtect((LPVOID)0x402388, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402388, Hook_AddAllInventions);
 
+	// Hook CWnd::OnCommand
+	VirtualProtect((LPVOID)0x4A5352, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4A5352, Hook_WndOnCommand);
+
 	// Add more buttons to SC2K's menus
 	// TODO: write a much cleaner and more programmatic way of doing this
 	hGameMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(3));
 	if (hGameMenu) {
-		AFX_MSGMAP_ENTRY afxMessageMapEntry[3];
+		// File menu -> Reload Default Tileset
+		HMENU hFilePopup;
+		MENUITEMINFO miiFilePopup;
+		miiFilePopup.cbSize = sizeof(MENUITEMINFO);
+		miiFilePopup.fMask = MIIM_SUBMENU;
+		if (!GetMenuItemInfo(hGameMenu, 0, TRUE, &miiFilePopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
+			goto skipgamemenu;
+		}
+		hFilePopup = miiFilePopup.hSubMenu;
+		if (!InsertMenu(hFilePopup, 6, MF_BYPOSITION|MF_STRING, IDM_GAME_FILE_RELOADDEFAULTTILESET, "Reload &Default Tile Set") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #1 failed, error = 0x%08X.\n", GetLastError());
+			goto skipgamemenu;
+		}
 
 		// Options menu -> add sc2kfix Settings... and Mod Configuration...
 		HMENU hOptionsPopup;
@@ -2870,6 +3016,7 @@ void InstallMiscHooks_SC2K1996(void) {
 		}
 
 		// Windows menu -> add Show Scenario Goals...
+		HMENU hMenuWindowsPopup;
 		MENUITEMINFO miiWindowsPopup;
 		miiWindowsPopup.cbSize = sizeof(MENUITEMINFO);
 		miiWindowsPopup.fMask = MIIM_SUBMENU;
@@ -2886,10 +3033,6 @@ void InstallMiscHooks_SC2K1996(void) {
 			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #2 failed, error = 0x%08X.\n", GetLastError());
 			goto skipgamemenu;
 		}
-
-		AddNewSCVMessageMapEntry(WM_COMMAND, 0, IDM_GAME_OPTIONS_SC2KFIXSETTINGS, IDM_GAME_OPTIONS_SC2KFIXSETTINGS, 0x0A, ShowSettingsDialog);
-		AddNewSCVMessageMapEntry(WM_COMMAND, 0, IDM_GAME_OPTIONS_MODCONFIG, IDM_GAME_OPTIONS_MODCONFIG, 0x0A, ShowModSettingsDialog);
-		AddNewSCVMessageMapEntry(WM_COMMAND, 0, IDM_GAME_WINDOWS_SCENARIOGOALS, IDM_GAME_WINDOWS_SCENARIOGOALS, 0x0A, ShowScenarioStatusDialog);
 
 		if (mischook_debug & MISCHOOK_DEBUG_MENU)
 			ConsoleLog(LOG_DEBUG, "MISC: Updated game menu.\n");
@@ -2923,15 +3066,6 @@ skipgamemenu:
 	// Hook the scenario start dialog so we can save the description
 	VirtualProtect((LPVOID)0x402B4E, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402B4E, Hook_402B4E);
-
-	AddNewSCVMessageMapEntry(WM_MBUTTONDOWN, 0, 0, 0, 0x2A, Hook_CSimcityView_WM_MBUTTONDOWN);
-
-	// Copy the main menu's message map and update the runtime class to use it
-	VirtualProtect((LPVOID)0x4D513C, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
-	memcpy_s(afxMessageMapMainMenu, sizeof(afxMessageMapMainMenu), (LPVOID)0x4D5140, sizeof(AFX_MSGMAP_ENTRY) * 8);
-	afxMessageMapMainMenu[7] = { WM_COMMAND, 0, 118, 118, 0x0A, ShowSettingsDialog };
-	afxMessageMapMainMenu[8] = { 0 };
-	*(DWORD*)0x4D513C = (DWORD)afxMessageMapMainMenu;
 
 	// Skip over the strange bit of code that re-arranges the original main menu.
 	// 

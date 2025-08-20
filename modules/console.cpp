@@ -476,8 +476,6 @@ static void test3(void) {
 }
 
 static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments) {
-	extern AFX_MSGMAP_ENTRY* pafxMessageMapCSimcityViewEnd;
-	printf("pafxMessageMapCSimcityViewEnd = 0x%08X\n", (DWORD)pafxMessageMapCSimcityViewEnd);
 	return TRUE;
 }
 

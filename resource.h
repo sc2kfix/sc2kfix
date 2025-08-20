@@ -47,6 +47,7 @@
 #define IDC_STATIC_SCENDUEDATE          21040
 #define IDC_STATIC_FORFEIT              21042
 #define IDC_STATIC_SCENGOALSHEADER      21043
+#define IDC_GAME_MAIN_SC2KFIXSETTINGS   21044
 #define IDR_WAVE_500                    23001
 #define IDR_WAVE_514                    23002
 #define IDR_WAVE_529                    23003
@@ -78,14 +79,15 @@
 #define IDM_DEBUG_MILITARY_NAVALYARD    40005
 #define IDM_DEBUG_MILITARY_MISSILESILOS 40006
 #define IDM_GAME_WINDOWS_SCENARIOGOALS  40007
+#define IDM_GAME_FILE_RELOADDEFAULTTILESET 40008
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        23042
-#define _APS_NEXT_COMMAND_VALUE         40006
-#define _APS_NEXT_CONTROL_VALUE         21044
+#define _APS_NEXT_COMMAND_VALUE         40009
+#define _APS_NEXT_CONTROL_VALUE         21045
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

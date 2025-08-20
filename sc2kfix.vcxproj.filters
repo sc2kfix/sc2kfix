@@ -126,6 +126,9 @@
     <ClInclude Include="include\sc2k_demo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\mfc3xhelp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="hooks\hook_mciSendCommand.cpp">
