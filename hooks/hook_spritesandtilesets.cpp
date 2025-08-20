@@ -40,7 +40,7 @@ static BOOL CheckForExistingID(WORD nID) {
 	for (int i = 0; i < (int)spriteIDs.size(); i++) {
 		pSprEnt = &spriteIDs[i];
 		if (pSprEnt && pSprEnt->nID == nID) {
-			if (mischook_debug & SPRITE_DEBUG_SPRITES)
+			if (sprite_debug & SPRITE_DEBUG_SPRITES)
 				ConsoleLog(LOG_DEBUG, "CheckForExistingID(%u): (%u, %u, 0x%06X, %u) ID already exists.\n", nID, pSprEnt->nArcID, pSprEnt->nID, pSprEnt->dwOffset, pSprEnt->dwSize);
 			pSprEnt->bMultiple = TRUE;
 			nSkipHit = ++pSprEnt->nSkipHit;
