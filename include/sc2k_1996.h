@@ -940,6 +940,12 @@ enum {
 };
 
 enum {
+	TILEDAT_DEFS_LARGE,
+	TILEDAT_DEFS_SMALLMED,
+	TILEDAT_DEFS_SPECIAL
+};
+
+enum {
 	GAMEOVER_SCENARIO_FAILURE,
 	GAMEOVER_SCENARIO_VICTORY,
 	GAMEOVER_BANKRUPT
@@ -970,6 +976,24 @@ typedef struct {
 	WORD wHeight;
 	WORD wWidth;
 } sprite_header_t;
+
+#pragma pack(push, 1)
+typedef struct {
+	WORD nID;
+	sprite_header_t sprHeader;
+} sprite_file_header_t;
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+typedef struct {
+	WORD nFileCnt;
+	sprite_file_header_t pData[1];
+} sprite_archive_t;
+#pragma pack(pop)
+
+typedef struct {
+	sprite_archive_t *pData;
+} sprite_archive_stored_t;
 
 typedef struct {
 	WORD iLandAltitude : 5; // level / altitude
@@ -1220,7 +1244,7 @@ GAMEOFF(DWORD,	dwNationalValue,			0x4CB014)
 GAMEOFF(DWORD,	dwCityAdvertising,			0x4CB018)		// Unused in vanilla game
 GAMEOFF(WORD,	wCityCurrentMonth,			0x4CB01C)
 GAMEOFF(WORD,	wCityElapsedYears,			0x4CB020)
-GAMEOFF_ARR(sprite_header_t*, pArrSpriteHeaders, 0x4CB1B8)
+GAMEOFF(sprite_header_t*, pArrSpriteHeaders, 0x4CB1B8)
 GAMEOFF(BOOL,	bNewspaperSubscription,		0x4CB3D0)
 GAMEOFF(BYTE,	bWeatherHumidity,			0x4CB3D4)
 GAMEOFF(WORD,	wSewerBonus,				0x4CB3DC)
@@ -1354,7 +1378,7 @@ static inline const char* GetXLABEntry(int iLabelID) {
 
 // Returns the sprite header for a given sprite ID.
 static inline sprite_header_t* GetSpriteHeader(int iSpriteID) {
-	return (*pArrSpriteHeaders + iSpriteID);
+	return &pArrSpriteHeaders[iSpriteID];
 }
 
 // Returns the current game palette. RE'd from the game decomp.

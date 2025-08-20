@@ -39,7 +39,7 @@ typedef struct {
 	int iPos;            // Position within the array. (Only set when there's a match)
 } cheat_t;
 
-static enum {
+enum {
 	CHEAT_FUND,
 	CHEAT_CASS,
 	CHEAT_THEWORKS,
