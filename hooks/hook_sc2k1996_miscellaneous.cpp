@@ -2709,51 +2709,74 @@ typedef struct {
 	DWORD dwSize;
 	WORD wHeight;
 	WORD wWidth;
-	BOOL bOverride;
+	WORD nSkipHit;
+	BOOL bMultiple;
 } sprite_ids_t;
 
 std::vector<sprite_ids_t> spriteIDs;
 
 static BOOL CheckForExistingID(WORD nID) {
-	for (int i = 0; i < (int)spriteIDs.size(); i++) {
-		if (spriteIDs[i].nID == nID) {
-			if (mischook_debug & MISCHOOK_DEBUG_SPRITE)
-				ConsoleLog(LOG_DEBUG, "CheckForExistingID(%u): already exists.\n", nID, spriteIDs[i].nArcID, spriteIDs[i].nID);
-			return TRUE;
-		}
-	}
-	return FALSE;
-}
-
-static sprite_ids_t *CheckForStoredID(WORD nID, DWORD dwOffset, BOOL bCheckOverride = TRUE) {
+	WORD nSkipHit;
 	sprite_ids_t *pSprEnt;
 
+	nSkipHit = 0;
 	for (int i = 0; i < (int)spriteIDs.size(); i++) {
 		pSprEnt = &spriteIDs[i];
-		if (pSprEnt) {
-			if (pSprEnt->nID == nID && pSprEnt->dwOffset == dwOffset) {
-				if (bCheckOverride) {
-					if (pSprEnt->bOverride) {
-						if (mischook_debug & MISCHOOK_DEBUG_SPRITE)
-							ConsoleLog(LOG_DEBUG, "CheckForStoredID(%u, 0x%06X, %d): multiple sprite entries found with the same ID, using the last detected entry - this one.\n", nID, dwOffset, bCheckOverride);
-						return pSprEnt;
+		if (pSprEnt && pSprEnt->nID == nID) {
+			if (mischook_debug & MISCHOOK_DEBUG_SPRITE)
+				ConsoleLog(LOG_DEBUG, "CheckForExistingID(%u): (%u, %u, 0x%06X, %u) ID already exists.\n", nID, pSprEnt->nArcID, pSprEnt->nID, pSprEnt->dwOffset, pSprEnt->dwSize);
+			pSprEnt->bMultiple = TRUE;
+			nSkipHit = ++pSprEnt->nSkipHit;
+		}
+	}
+	return (nSkipHit) ? TRUE : FALSE;
+}
+
+static void AllocateAndLoadSprites(CMFC3XFile *pFile, sprite_archive_t *lpBuf, WORD nSpriteSet) {
+	void(__cdecl *H_OpDelete)(void *) = (void(__cdecl *)(void *))0x401C99;
+	void *(__cdecl *H_AllocateDataEntry)(size_t iSz) = (void *(__cdecl *)(size_t))0x402045;
+	UINT(__thiscall *H_CFileRead)(CMFC3XFile *, void *, DWORD) = (UINT(__thiscall *)(CMFC3XFile *, void *, DWORD))0x4A8313;
+	LONG(__thiscall *H_CFileSeek)(CMFC3XFile *, LONG, UINT) = (LONG(__thiscall *)(CMFC3XFile *, LONG, UINT))0x4A83B8;
+
+	WORD nPos, nID;
+	sprite_ids_t *pSprEnt;
+	void *pSpriteData;
+
+	H_CFileSeek(pFile, lpBuf->pData[0].sprHeader.dwAddress, 0);
+	for (nPos = 0; nPos < spriteIDs.size(); ++nPos) {
+		pSprEnt = &spriteIDs[nPos];
+		if (pSprEnt && pSprEnt->nArcID == nSpriteSet) {
+			nID = pSprEnt->nID;
+			if (pSprEnt->bMultiple)
+				if (mischook_debug & MISCHOOK_DEBUG_SPRITE)
+					ConsoleLog(LOG_DEBUG, "AllocateAndLoadSprites(%u): Multiple sprites with the same ID Detected (%u, 0x%06X, %u) (%u)\n", nSpriteSet, nID, pSprEnt->dwOffset, pSprEnt->dwSize, pSprEnt->nSkipHit);
+			if (pSprEnt->dwSize > 0) {
+				pSpriteData = H_AllocateDataEntry(pSprEnt->dwSize);
+				if (pSpriteData) {
+					if (H_CFileRead(pFile, pSpriteData, pSprEnt->dwSize) == pSprEnt->dwSize) {
+						if (pSprEnt->bMultiple && pSprEnt->nSkipHit > 0) {
+							if (mischook_debug & MISCHOOK_DEBUG_SPRITE)
+								ConsoleLog(LOG_DEBUG, "AllocateAndLoadSprites(%u): discarding skipped sprite with ID (%u, 0x%06X, %u).\n", nSpriteSet, nID, pSprEnt->dwOffset, pSprEnt->dwSize);
+							H_OpDelete(pSpriteData);
+							continue;
+						}
+						if (pArrSpriteHeaders[nID].dwAddress) {
+							H_OpDelete((void *)pArrSpriteHeaders[nID].dwAddress);
+							pArrSpriteHeaders[nID].dwAddress = 0;
+						}
+						pArrSpriteHeaders[nID].dwAddress = (DWORD)pSpriteData;
+						pArrSpriteHeaders[nID].wHeight = pSprEnt->wHeight;
+						pArrSpriteHeaders[nID].wWidth = pSprEnt->wWidth;
 					}
-				}
-				else {
-					if (!pSprEnt->bOverride)
-						return pSprEnt;
 				}
 			}
 		}
 	}
-	return (bCheckOverride) ? CheckForStoredID(nID, dwOffset, FALSE) : NULL;
 }
 
-extern "C" void __cdecl Hook_LoadSpriteDataArchive(__int16 nSpriteSet) {
+extern "C" void __cdecl Hook_LoadSpriteDataArchive(WORD nSpriteSet) {
 	int(__cdecl *H_SwLong)(int) = (int(__cdecl *)(int))0x401429;
 	__int16(__cdecl *H_SwShort)(__int16) = (__int16(__cdecl *)(__int16))0x401861;
-	void(__cdecl *H_OpDelete)(void *) = (void(__cdecl *)(void *))0x401C99;
-	void *(__cdecl *H_AllocateDataEntry)(size_t iSz) = (void *(__cdecl *)(size_t))0x402045;
 	void(__cdecl *H_FailRadio)(UINT) = (void(__cdecl *)(UINT))0x402A40;
 	void(__thiscall *H_SimcityAppGetValueStringA)(void *, CMFC3XString *, const char *, const char *) = (void(__thiscall *)(void *, CMFC3XString *, const char *, const char *))0x402F4F;
 	void(__cdecl *H_CStringFormat)(CMFC3XString *, char const *Ptr, ...) = (void(__cdecl *)(CMFC3XString *, char const *Ptr, ...))0x49EBD3;
@@ -2763,7 +2786,6 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive(__int16 nSpriteSet) {
 	void(__thiscall *H_CFileDest)(CMFC3XFile *) = (void(__thiscall *)(CMFC3XFile *))0x4A8072;
 	BOOL(__thiscall *H_CFileOpen)(CMFC3XFile *, LPCTSTR, UINT, void *) = (BOOL(__thiscall *)(CMFC3XFile *, LPCTSTR, UINT, void *))0x4A8190;
 	UINT(__thiscall *H_CFileRead)(CMFC3XFile *, void *, DWORD) = (UINT(__thiscall *)(CMFC3XFile *, void *, DWORD))0x4A8313;
-	LONG(__thiscall *H_CFileSeek)(CMFC3XFile *, LONG, UINT) = (LONG(__thiscall *)(CMFC3XFile *, LONG, UINT))0x4A83B8;
 	void(__thiscall *H_CFileClose)(CMFC3XFile *) = (void(__thiscall *)(CMFC3XFile *))0x4A8448;
 	DWORD(__thiscall *H_CFileGetLength)(CMFC3XFile *) = (DWORD(__thiscall *)(CMFC3XFile *))0x4A854E;
 
@@ -2786,9 +2808,9 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive(__int16 nSpriteSet) {
 	sprite_archive_t *lpBuf;
 	sprite_archive_stored_t *lpMainBuf;
 	sprite_header_t *pSprtHead;
+	DWORD dwNextAddress;
 	sprite_ids_t spriteEnt;
 	int nSize;
-	void *pSpriteData;
 
 	H_CFileCons(&datArchive);
 	H_CStringCons(&retString);
@@ -2798,7 +2820,7 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive(__int16 nSpriteSet) {
 
 	if (dwBaseSpriteLoading[nSpriteSet].pData) {
 		if (mischook_debug & MISCHOOK_DEBUG_SPRITE)
-			ConsoleLog(LOG_DEBUG, "SPRT: 0x%06X -> LoadSpriteDataArchive(%d): Already loading (0x%06X)\n", _ReturnAddress(), nSpriteSet, dwBaseSpriteLoading[nSpriteSet].pData);
+			ConsoleLog(LOG_DEBUG, "SPRT: 0x%06X -> LoadSpriteDataArchive(%u): Already loading (0x%06X)\n", _ReturnAddress(), nSpriteSet, dwBaseSpriteLoading[nSpriteSet].pData);
 		goto GETOUT;
 	}
 
@@ -2836,45 +2858,33 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive(__int16 nSpriteSet) {
 					pArrSpriteHeaders[nID].dwAddress = 0;
 					pArrSpriteHeaders[nID].wHeight = H_SwShort(pArrSpriteHeaders[nID].wHeight);
 					pArrSpriteHeaders[nID].wWidth = H_SwShort(pArrSpriteHeaders[nID].wWidth);
-				}
 
-				nID = lpBuf->pData[0].nID;
-				H_CFileSeek(&datArchive, lpBuf->pData[0].sprHeader.dwAddress, 0);
-
-				for (nPos = 0; nPos < nArcFileCnt; ++nPos) {
 					nNextPos = (nPos >= nArcFileCnt - 1) ? -1 : nPos + 1;
-					nNextID = (nNextPos >=0) ? lpBuf->pData[nNextPos].nID : -1;
+					nNextID = (nNextPos >=0) ? nID : -1;
 
-					if (nNextPos >= 0)
-						nSize = (lpBuf->pData[nNextPos].sprHeader.dwAddress - lpBuf->pData[nPos].sprHeader.dwAddress);
+					if (nNextPos >= 0) {
+						// The next position hasn't yet been processed, do so here so
+						// we can get the file size.
+						dwNextAddress = H_SwLong(lpBuf->pData[nNextPos].sprHeader.dwAddress);
+						nSize = (dwNextAddress - pSprtHead->dwAddress);
+					}
 					else
-						nSize = (nFlen - lpBuf->pData[nPos].sprHeader.dwAddress);
+						nSize = (nFlen - pSprtHead->dwAddress);
 
 					if (nSize > 0) {
 						spriteEnt.nArcID = nSpriteSet;
 						spriteEnt.nID = nID;
-						spriteEnt.dwOffset = lpBuf->pData[nPos].sprHeader.dwAddress;
+						spriteEnt.dwOffset = pSprtHead->dwAddress;
 						spriteEnt.dwSize = nSize;
 						spriteEnt.wHeight = pArrSpriteHeaders[nID].wHeight;
 						spriteEnt.wWidth = pArrSpriteHeaders[nID].wWidth;
-						spriteEnt.bOverride = CheckForExistingID(nID) ? TRUE : FALSE;
+						spriteEnt.nSkipHit = 0;
+						spriteEnt.bMultiple = (CheckForExistingID(nID)) ? TRUE : FALSE;
 						spriteIDs.push_back(spriteEnt);
-
-						pSpriteData = H_AllocateDataEntry(nSize);
-						if (pSpriteData) {
-							if (H_CFileRead(&datArchive, pSpriteData, nSize) == nSize) {
-								if (pArrSpriteHeaders[nID].dwAddress) {
-									H_OpDelete((void *)pArrSpriteHeaders[nID].dwAddress);
-									pArrSpriteHeaders[nID].dwAddress = 0;
-								}
-								pArrSpriteHeaders[nID].dwAddress = (DWORD)pSpriteData;
-								nID = nNextID;
-							}
-						}
 					}
-					if (nID < 0)
-						break;
 				}
+
+				AllocateAndLoadSprites(&datArchive, lpBuf, nSpriteSet);
 				free(lpMainBuf->pData);
 				lpMainBuf->pData = 0;
 			}
@@ -2894,11 +2904,9 @@ GETOUT:
 	H_CFileDest(&datArchive);
 }
 
-static void ReloadSpriteDataArchive(__int16 nSpriteSet) {
+static void ReloadSpriteDataArchive(WORD nSpriteSet) {
 	int(__cdecl *H_SwLong)(int) = (int(__cdecl *)(int))0x401429;
 	__int16(__cdecl *H_SwShort)(__int16) = (__int16(__cdecl *)(__int16))0x401861;
-	void(__cdecl *H_OpDelete)(void *) = (void(__cdecl *)(void *))0x401C99;
-	void *(__cdecl *H_AllocateDataEntry)(size_t iSz) = (void *(__cdecl *)(size_t))0x402045;
 	void(__cdecl *H_FailRadio)(UINT) = (void(__cdecl *)(UINT))0x402A40;
 	void(__thiscall *H_SimcityAppGetValueStringA)(void *, CMFC3XString *, const char *, const char *) = (void(__thiscall *)(void *, CMFC3XString *, const char *, const char *))0x402F4F;
 	void(__cdecl *H_CStringFormat)(CMFC3XString *, char const *Ptr, ...) = (void(__cdecl *)(CMFC3XString *, char const *Ptr, ...))0x49EBD3;
@@ -2908,7 +2916,6 @@ static void ReloadSpriteDataArchive(__int16 nSpriteSet) {
 	void(__thiscall *H_CFileDest)(CMFC3XFile *) = (void(__thiscall *)(CMFC3XFile *))0x4A8072;
 	BOOL(__thiscall *H_CFileOpen)(CMFC3XFile *, LPCTSTR, UINT, void *) = (BOOL(__thiscall *)(CMFC3XFile *, LPCTSTR, UINT, void *))0x4A8190;
 	UINT(__thiscall *H_CFileRead)(CMFC3XFile *, void *, DWORD) = (UINT(__thiscall *)(CMFC3XFile *, void *, DWORD))0x4A8313;
-	LONG(__thiscall *H_CFileSeek)(CMFC3XFile *, LONG, UINT) = (LONG(__thiscall *)(CMFC3XFile *, LONG, UINT))0x4A83B8;
 	void(__thiscall *H_CFileClose)(CMFC3XFile *) = (void(__thiscall *)(CMFC3XFile *))0x4A8448;
 	DWORD(__thiscall *H_CFileGetLength)(CMFC3XFile *) = (DWORD(__thiscall *)(CMFC3XFile *))0x4A854E;
 
@@ -2922,24 +2929,25 @@ static void ReloadSpriteDataArchive(__int16 nSpriteSet) {
 	CMFC3XString retString;
 	CMFC3XString retStrPath;
 	CMFC3XString *pString;
+	UINT uFailMsg;
 	int nFlen;
 	__int16 nArcFileCnt;
-	__int16 nPos;
+	WORD nPos;
 	WORD nID;
 	int nBufSize;
 	sprite_archive_t *lpBuf;
 	sprite_archive_stored_t *lpMainBuf;
 	sprite_header_t *pSprtHead;
-	sprite_ids_t *pSprEnt;
-	void *pSpriteData;
 
 	H_CFileCons(&datArchive);
 	H_CStringCons(&retString);
 	H_CStringCons(&retStrPath);
 
+	uFailMsg = 0;
+
 	if (dwBaseSpriteLoading[nSpriteSet].pData) {
 		if (mischook_debug & MISCHOOK_DEBUG_SPRITE)
-			ConsoleLog(LOG_DEBUG, "SPRT: 0x%06X -> ReloadSpriteDataArchive(%d): Already loading (0x%06X)\n", _ReturnAddress(), nSpriteSet, dwBaseSpriteLoading[nSpriteSet].pData);
+			ConsoleLog(LOG_DEBUG, "SPRT: 0x%06X -> ReloadSpriteDataArchive(%u): Already loading (0x%06X)\n", _ReturnAddress(), nSpriteSet, dwBaseSpriteLoading[nSpriteSet].pData);
 		goto GETOUT;
 	}
 
@@ -2952,6 +2960,9 @@ static void ReloadSpriteDataArchive(__int16 nSpriteSet) {
 	H_CStringFormat(&retStrPath, "%s%s%s", retString.m_pchData, cBackslash, pString->m_pchData);
 
 	if (H_CFileOpen(&datArchive, retStrPath.m_pchData, 0, 0)) {
+		// Set the uFailMsg by default here - then unset it once
+		// the main read begins.
+		uFailMsg = 48;
 		nFlen = H_CFileGetLength(&datArchive);
 		H_CFileRead(&datArchive, &nArcFileCnt, 2);
 		nArcFileCnt = H_SwShort(nArcFileCnt);
@@ -2962,6 +2973,7 @@ static void ReloadSpriteDataArchive(__int16 nSpriteSet) {
 		lpBuf->nFileCnt = nArcFileCnt;
 		if (lpBuf) {
 			if (H_CFileRead(&datArchive, &lpBuf->pData, nBufSize) == nBufSize) {
+				uFailMsg = 0;
 				for (nPos = 0; nPos < nArcFileCnt; ++nPos) {
 					nID = H_SwShort(lpBuf->pData[nPos].nID);
 					lpBuf->pData[nPos].nID = nID;
@@ -2971,35 +2983,19 @@ static void ReloadSpriteDataArchive(__int16 nSpriteSet) {
 					pSprtHead->wWidth = H_SwShort(pSprtHead->wWidth);
 				}
 
-				nID = lpBuf->pData[0].nID;
-				H_CFileSeek(&datArchive, lpBuf->pData[0].sprHeader.dwAddress, 0);
-
-				for (nPos = 0; nPos < nArcFileCnt; ++nPos) {
-					pSprEnt = CheckForStoredID(lpBuf->pData[nPos].nID, lpBuf->pData[nPos].sprHeader.dwAddress);
-					if (pSprEnt) {
-						nID = pSprEnt->nID;
-						if (pSprEnt->dwSize > 0) {
-							pSpriteData = H_AllocateDataEntry(pSprEnt->dwSize);
-							if (pSpriteData) {
-								if (H_CFileRead(&datArchive, pSpriteData, pSprEnt->dwSize) == pSprEnt->dwSize) {
-									if (pArrSpriteHeaders[nID].dwAddress) {
-										H_OpDelete((void *)pArrSpriteHeaders[nID].dwAddress);
-										pArrSpriteHeaders[nID].dwAddress = 0;
-									}
-									pArrSpriteHeaders[nID].dwAddress = (DWORD)pSpriteData;
-									pArrSpriteHeaders[nID].wHeight = pSprEnt->wHeight;
-									pArrSpriteHeaders[nID].wWidth = pSprEnt->wWidth;
-								}
-							}
-						}
-					}
-				}
+				AllocateAndLoadSprites(&datArchive, lpBuf, nSpriteSet);
 				free(lpMainBuf->pData);
 				lpMainBuf->pData = 0;
 			}
 		}
 		H_CFileClose(&datArchive);
 	}
+	else {
+		uFailMsg = 47;
+	}
+
+	if (uFailMsg)
+		H_FailRadio(uFailMsg);
 
 GETOUT:
 	H_CStringDest(&retStrPath);
