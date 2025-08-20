@@ -1,4 +1,4 @@
-// sc2kfix music.h: new music engine and associated defines
+// sc2kfix include/music.h: new music engine and associated defines
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #pragma once

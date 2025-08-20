@@ -1,4 +1,4 @@
-// sc2kfix winmm_exports.h: list of WinMM exports we need to pass through
+// sc2kfix include/winmm_exports.h: list of WinMM exports we need to pass through
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #pragma once

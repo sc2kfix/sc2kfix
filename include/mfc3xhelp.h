@@ -1,3 +1,6 @@
+// sc2kfix include/mfc3xhelp.h: helper classes/structs/macros/functions for manipulating MFC 3.x state
+// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+
 #pragma once
 
 #define _CN_COMMAND 0

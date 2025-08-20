@@ -1,4 +1,4 @@
-// sc2kfix smk.h: run-time linking globals for smk.
+// sc2kfix include/smk.h: run-time linking globals for smk.
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #pragma once
