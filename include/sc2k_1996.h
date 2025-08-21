@@ -1115,12 +1115,37 @@ typedef struct {
 	BYTE bPadding;
 } map_XLAB_t;
 
+// The sound/midi class; placed here for now.
+#pragma pack(push, 1)
+class CSound {
+public:
+	HWND *dwSNDhWnd;
+	BOOL bSNDPlaySound;
+	int iSNDCurrSoundID;
+	CMFC3XString dwSNDSoundString;
+	void *dwSNDBufferTool;
+	int iSNDToolSoundID;
+	void *dwSNDBufferActionThing;
+	BOOL bSNDWasPlaying;
+	int iSNDActionThingSoundID;
+	void *dwSNDBufferClick;
+	void *dwSNDBufferDestruction;
+	void *dwSNDBufferGeneral;
+	int iSNDGeneralSoundID;
+	DWORD dwSNDUnknownOne;
+	WORD wSNDMCIDevID;
+	DWORD dwSNDMCIError;
+	DWORD dwSNDUnknownTwo;
+	CMFC3XString dwSNDMusicString;
+};
+#pragma pack(pop)
+
 // Function pointers
 
 GAMECALL(0x40103C, int, __thiscall, PreGameMenuDialogToggle, void *pThis, int iShow)
 GAMECALL(0x40106E, int, __cdecl, PlaceRoadAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x401096, int, __thiscall, SoundPlaySound, void* pThis, int iSoundID)
-GAMECALL(0x4011E5, int, __thiscall, MapToolSoundTrigger, void* pThis)
+GAMECALL(0x4011E5, BOOL, __thiscall, CSoundMapToolSoundTrigger, CSound* pThis)
 GAMECALL(0x4012C1, int, __cdecl, SpawnItem, __int16 x, __int16 y)
 GAMECALL(0x401460, char, __cdecl, SimulationProvisionMicrosim, __int16, int, __int16 iTileID) // The first two arguments aren't clear, though they "could" be the X/Y tile coordinates.
 GAMECALL(0x4014CE, int, __cdecl, SpawnAeroplane, __int16 x, __int16 y, __int16 iDirection)
@@ -1207,7 +1232,7 @@ GAMEOFF(void*,	pCWndRootWindow,			0x4C702C)		// CMainFrame
 GAMEOFF(DWORD,	dwSCAGameAutoSave,			0x4D70E8)
 GAMEOFF(DWORD,	dwCursorGameHit,			0x4C70EC)
 GAMEOFF(BOOL,	bPriscillaActivated,		0x4C7104)
-GAMEOFF(DWORD*, dwAudioHandle,				0x4C7158)		// Various checks have pointed towards audio (sound and/or midi - perhaps stoppage given some context elsewhere)
+GAMEOFF(CSound*, pSCASoundLayer,			0x4C7158)
 GAMEOFF(BOOL,	bOptionsMusicEnabled,		0x4C71F0)
 GAMEOFF(WORD,	wSimulationSpeed,			0x4C7318)
 GAMEOFF(WORD,	wCurrentTileCoordinates,	0x4C7A98)

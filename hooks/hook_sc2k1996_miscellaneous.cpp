@@ -2362,19 +2362,19 @@ extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, POINT pt) {
 			case MAPTOOL_GROUP_WATER: // Place Water
 			case MAPTOOL_GROUP_STREAM: // Place Stream
 				if (iCurrMapToolGroupWithHotKey == MAPTOOL_GROUP_WATER) {
-					if (!Game_MapToolPlaceWater(iTileTargetX, iTileTargetY) || Game_MapToolSoundTrigger(dwAudioHandle))
+					if (!Game_MapToolPlaceWater(iTileTargetX, iTileTargetY) || Game_CSoundMapToolSoundTrigger(pSCASoundLayer))
 						break;
 				}
 				else {
 					Game_MapToolPlaceStream(iTileTargetX, iTileTargetY, 100);
-					if (Game_MapToolSoundTrigger(dwAudioHandle))
+					if (Game_CSoundMapToolSoundTrigger(pSCASoundLayer))
 						break;
 				}
 				Game_SoundPlaySound(&pCSimcityAppThis, SOUND_FLOOD);
 				break;
 			case MAPTOOL_GROUP_TREES: // Place Tree
 			case MAPTOOL_GROUP_FOREST: // Place Forest
-				if (!Game_MapToolSoundTrigger(dwAudioHandle))
+				if (!Game_CSoundMapToolSoundTrigger(pSCASoundLayer))
 					Game_SoundPlaySound(&pCSimcityAppThis, SOUND_PLOP);
 				if (iCurrMapToolGroupWithHotKey == MAPTOOL_GROUP_TREES)
 					Game_MapToolPlaceTree(iTileTargetX, iTileTargetY);
