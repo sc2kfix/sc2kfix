@@ -611,66 +611,52 @@ extern "C" LRESULT __stdcall Hook_DefWindowProcA(HWND hWnd, UINT Msg, WPARAM wPa
 	return DefWindowProcA(hWnd, Msg, wParam, lParam);
 }
 
-extern "C" int __cdecl Hook_PlacePowerLinesAtCoordinates(__int16 x, __int16 y) {
-	__int16 iY;
-	int iResult;
-	unsigned int iTileID;
-
-	iY = y;
+extern "C" void __cdecl Hook_PlacePowerLinesAtCoordinates(__int16 x, __int16 y) {
 	if (x < 0) {
 TOBEGINNING:
-		iTileID = (unsigned int)dwMapXBLD[x];
-		P_LOBYTE(iTileID) = ((map_XBLD_t *)(iTileID))[iY].iTileID;
-		iResult = iTileID & 0xFFFF00FF;
-		if ((__int16)iResult < TILE_POWERLINES_LR) {
-			Game_PlaceTileWithMilitaryCheck(x, iY, TILE_POWERLINES_LR);
+		if (dwMapXBLD[x][y].iTileID < TILE_POWERLINES_LR) {
+			Game_PlaceTileWithMilitaryCheck(x, y, TILE_POWERLINES_LR);
 TOTHISPART:
-			if (x < GAME_MAP_SIZE && iY < GAME_MAP_SIZE)
-				dwMapXBIT[x][iY].b.iPowerable = 1;
-			iResult = Game_CheckAdjustTerrainAndPlacePowerLines(x, iY);
+			if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
+				dwMapXBIT[x][y].b.iPowerable = 1;
+			Game_CheckAdjustTerrainAndPlacePowerLines(x, y);
 			if (x > 0)
-				iResult = Game_CheckAdjustTerrainAndPlacePowerLines(x - 1, iY);
+				Game_CheckAdjustTerrainAndPlacePowerLines(x - 1, y);
 			if (x < GAME_MAP_SIZE-1)
-				iResult = Game_CheckAdjustTerrainAndPlacePowerLines(x + 1, iY);
-			if (iY > 0)
-				iResult = Game_CheckAdjustTerrainAndPlacePowerLines(x, iY - 1);
-			if (iY < GAME_MAP_SIZE-1)
-				return Game_CheckAdjustTerrainAndPlacePowerLines(x, iY + 1);
+				Game_CheckAdjustTerrainAndPlacePowerLines(x + 1, y);
+			if (y > 0)
+				Game_CheckAdjustTerrainAndPlacePowerLines(x, y - 1);
+			if (y < GAME_MAP_SIZE-1)
+				Game_CheckAdjustTerrainAndPlacePowerLines(x, y + 1);
 		}
 		else {
-			switch ((__int16)iResult) {
+			switch (dwMapXBLD[x][y].iTileID) {
 				case TILE_ROAD_LR:
-					Game_PlaceTileWithMilitaryCheck(x, iY, TILE_CROSSOVER_POWERTB_ROADLR);
+					Game_PlaceTileWithMilitaryCheck(x, y, TILE_CROSSOVER_POWERTB_ROADLR);
 					goto TOTHISPART;
 				case TILE_ROAD_TB:
-					Game_PlaceTileWithMilitaryCheck(x, iY, TILE_CROSSOVER_POWERLR_ROADTB);
+					Game_PlaceTileWithMilitaryCheck(x, y, TILE_CROSSOVER_POWERLR_ROADTB);
 					goto TOTHISPART;
 				case TILE_RAIL_LR:
-					Game_PlaceTileWithMilitaryCheck(x, iY, TILE_CROSSOVER_POWERTB_RAILLR);
+					Game_PlaceTileWithMilitaryCheck(x, y, TILE_CROSSOVER_POWERTB_RAILLR);
 					goto TOTHISPART;
 				case TILE_RAIL_TB:
-					Game_PlaceTileWithMilitaryCheck(x, iY, TILE_CROSSOVER_POWERLR_RAILTB);
+					Game_PlaceTileWithMilitaryCheck(x, y, TILE_CROSSOVER_POWERLR_RAILTB);
 					goto TOTHISPART;
 				case TILE_HIGHWAY_LR:
-					Game_PlaceTileWithMilitaryCheck(x, iY, TILE_CROSSOVER_HIGHWAYLR_POWERTB);
+					Game_PlaceTileWithMilitaryCheck(x, y, TILE_CROSSOVER_HIGHWAYLR_POWERTB);
 					goto TOTHISPART;
 				case TILE_HIGHWAY_TB:
-					Game_PlaceTileWithMilitaryCheck(x, iY, TILE_CROSSOVER_HIGHWAYTB_POWERLR);
+					Game_PlaceTileWithMilitaryCheck(x, y, TILE_CROSSOVER_HIGHWAYTB_POWERLR);
 					goto TOTHISPART;
 				default:
-					return iResult;
+					return;
 			}
 		}
-		return iResult;
+		return;
 	}
-	if (x >= GAME_MAP_SIZE)
+	if (x >= GAME_MAP_SIZE || y >= GAME_MAP_SIZE || *(BYTE *)&dwMapXBIT[x][y].b >= 0)
 		goto TOBEGINNING;
-	if (y >= GAME_MAP_SIZE)
-		goto TOBEGINNING;
-	iResult = x;
-	if (*(BYTE *)&dwMapXBIT[x][y].b >= 0)
-		goto TOBEGINNING;
-	return iResult;
 }
 
 extern "C" void __stdcall Hook_ResetGameVars(void) {
