@@ -204,18 +204,32 @@ BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 
 BOOL ConsoleCmdShowDebug(const char* szCommand, const char* szArguments) {
 	printf("Debugging labels enabled: ");
-	if (mci_debug) {
+
+	if (guzzardo_debug)
+		printf("GUZZ=0x%08X ", guzzardo_debug);
+	if (mci_debug)
 		printf("MCI=0x%08X ", mci_debug);
-	}
-	if (snd_debug) {
-		printf("SND=0x%08X ", snd_debug);
-	}
-	if (timer_debug) {
-		printf("TIMER=0x%08X ", timer_debug);
-	}
-	if (mischook_debug) {
+	if (military_debug)
+		printf("MIL=0x%08X ", military_debug);
+	if (mischook_debug)
 		printf("MISC=0x%08X ", mischook_debug);
-	}
+	if (modloader_debug)
+		printf("MODS=0x%08X ", modloader_debug);
+	if (mus_debug)
+		printf("MUS=0x%08X ", mus_debug);
+	if (registry_debug)
+		printf("REG=0x%08X ", registry_debug);
+	if (sc2x_debug)
+		printf("SC2X=0x%08X ", sc2x_debug);
+	if (snd_debug)
+		printf("SND=0x%08X ", snd_debug);
+	if (sprite_debug)
+		printf("SPR=0x%08X ", sprite_debug);
+	if (timer_debug)
+		printf("TIMER=0x%08X ", timer_debug);
+	if (updatenotifier_debug)
+		printf("UPD=0x%08X ", updatenotifier_debug);
+
 	printf("\n");
 
 	return TRUE;
@@ -606,13 +620,27 @@ BOOL ConsoleCmdSet(const char* szCommand, const char* szArguments) {
 	return TRUE;
 }
 
+#define SETDEBUGOP(keyword, var, description) \
+	if (!strcmp(szArguments, keyword)) { \
+		var ## _debug = bOperation; \
+		printf("%sabled " description " debugging.\n", (bOperation ? "En" : "Dis")); \
+	}
+
 BOOL ConsoleCmdSetDebug(const char* szCommand, const char* szArguments) {
 	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
 		printf(
-			"  [un]set debug misc    Enable miscellaneous hook debugging\n"
-			"  [un]set debug mci     Enable MCI debugging\n"
-			"  [un]set debug snd     Enable WAV debugging\n"
-			"  [un]set debug timer   Enable timer debugging\n");
+			"  [un]set debug guzzardo    Enable cousin Vinnie debugging\n"
+			"  [un]set debug mci         Enable MCI debugging\n"
+			"  [un]set debug military    Enable military base algorithm debugging\n"
+			"  [un]set debug mischook    Enable miscellaneous debugging\n"
+			"  [un]set debug modloader   Enable native code mod loader debugging\n"
+			"  [un]set debug mus         Enable new music engine debugging\n"
+			"  [un]set debug registry    Enable registry override hooks debugging\n"
+			"  [un]set debug sc2x        Enable SC2X format and load/save debugging\n"
+			"  [un]set debug snd         Enable sound hook debugging\n"
+			"  [un]set debug sprite      Enable sprite and tileset hook debugging\n"
+			"  [un]set debug timer       Enable timer hook debugging\n"
+			"  [un]set debug update      Enable update notifier debugging\n");
 		return TRUE;
 	}
 
@@ -620,22 +648,22 @@ BOOL ConsoleCmdSetDebug(const char* szCommand, const char* szArguments) {
 	DWORD bOperation = DEBUG_FLAGS_EVERYTHING;
 	if (!strcmp(szCommand, "unset"))
 		bOperation = FALSE;
-	
-	if (!strcmp(szArguments, "mci")) {
-		mci_debug = bOperation;
-		printf("%sabled MCI debugging.\n", (bOperation ? "En" : "Dis"));
-	} else if (!strcmp(szArguments, "snd")) {
-		snd_debug = bOperation;
-		printf("%sabled WAV debugging.\n", (bOperation ? "En" : "Dis"));
-	} else if (!strcmp(szArguments, "timer")) {
-		timer_debug = bOperation;
-		printf("%sabled timer debugging.\n", (bOperation ? "En" : "Dis"));
-	} else if (!strcmp(szArguments, "misc")) {
-		mischook_debug = bOperation;
-		printf("%sabled misc hook debugging.\n", (bOperation ? "En" : "Dis"));
-	} else {
+
+	SETDEBUGOP("guzzardo", guzzardo, "cousin Vinnie")
+	else SETDEBUGOP("mci", mci, "MCI")
+	else SETDEBUGOP("military", military, "military base algorithm")
+	else SETDEBUGOP("mischook", mischook, "miscellaneous")
+	else SETDEBUGOP("modloader", modloader, "native code mod loader")
+	else SETDEBUGOP("mus", mus, "new music engine")
+	else SETDEBUGOP("registry", registry, "registry override hooks")
+	else SETDEBUGOP("sc2x", sc2x, "SC2X format and load/save")
+	else SETDEBUGOP("snd", snd, "sound hook")
+	else SETDEBUGOP("sprite", sprite, "sprite and tileset hook")
+	else SETDEBUGOP("timer", timer, "timer hook")
+	else SETDEBUGOP("update", updatenotifier, "update notifier")
+	else
 		printf("Invalid argument.\n");
-	}
+
 	return TRUE;
 }
 
