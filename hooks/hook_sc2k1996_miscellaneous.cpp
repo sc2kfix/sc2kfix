@@ -687,11 +687,9 @@ extern "C" void __stdcall Hook_ResetGameVars(void) {
 
 extern int iChurchVirus;
 
-extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __int16 iSubStep) {
-#if 1
+extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __int16 iSubStep) {
 	DWORD *pThis;
 	int iAttributes;
-	int iResult;
 	__int16 iX;
 	__int16 iY;
 	__int16 i;
@@ -703,7 +701,7 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __
 	__int16 iCurrZoneType;
 	int iPosAttributes;
 	__int16 iTileID;
-	__int16 iBuildingCount;
+	WORD wBuildingCount;
 	signed __int16 iFundingPercent;
 	__int16 iBuildingPopLevel;
 	char iRandSelectOne;
@@ -722,7 +720,6 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __
 	else
 		bPlaceChurch = 2500u * (__int16)dwTileCount[TILE_INFRASTRUCTURE_CHURCH] < (unsigned int)dwCityPopulation;
 	wCurrentAngle = wPositionAngle[wViewRotation];
-	iResult = iStep / 2;
 	iXMM = iStep / 2;
 	while (iX < GAME_MAP_SIZE) {
 		iY = iSubStep;
@@ -748,7 +745,7 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __
 							// As far as I can tell when it comes to the 'MILITARYTILE_MHANGAR1' case...
 							// 12 of those type could be classified as a unit, so if iAttributes is greater
 							// than that unit, place more hangars.
-							// (old method - iAttribtues, new method - iBuildingCount)
+							// (old method - iAttribtues, new method - wBuildingCount)
 							//
 							// That crops up the most on Army and Naval cases.
 							switch (bMilitaryBaseType) {
@@ -760,10 +757,10 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __
 										if ((__int16)iAttributes > (__int16)dwMilitaryTiles[MILITARYTILE_MHANGAR1] / 12)
 											iTileID = TILE_MILITARY_HANGAR1;
 #else
-										iBuildingCount = (__int16)dwMilitaryTiles[MILITARYTILE_MPARKINGLOT] / 4;
-										if ((__int16)dwMilitaryTiles[MILITARYTILE_TOPSECRET] / 4 < iBuildingCount) {
+										wBuildingCount = dwMilitaryTiles[MILITARYTILE_MPARKINGLOT] / 4;
+										if (dwMilitaryTiles[MILITARYTILE_TOPSECRET] / 4 < wBuildingCount) {
 											iTileID = TILE_MILITARY_HANGAR1;
-											if ((__int16)dwMilitaryTiles[MILITARYTILE_MHANGAR1] / 12 >= iBuildingCount)
+											if (dwMilitaryTiles[MILITARYTILE_MHANGAR1] / 12 >= wBuildingCount)
 												iTileID = TILE_MILITARY_TOPSECRET;
 										}
 										else
@@ -776,15 +773,15 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __
 								case MILITARY_BASE_AIR_FORCE:
 									if ((rand() & 3) == 0) {
 										iAttributes = 5;
-										iBuildingCount = ((__int16)dwMilitaryTiles[MILITARYTILE_RUNWAY] + (__int16)dwMilitaryTiles[MILITARYTILE_RUNWAYCROSS]) / 5;
-										if ((__int16)dwMilitaryTiles[MILITARYTILE_MPARKINGLOT] / 4 < iBuildingCount) {
-											if (2 * (__int16)dwMilitaryTiles[MILITARYTILE_MCONTROLTOWER] >= iBuildingCount) {
-												if (2 * (__int16)dwMilitaryTiles[MILITARYTILE_MRADAR] >= iBuildingCount) {
-													if ((__int16)dwMilitaryTiles[MILITARYTILE_F15B] >= iBuildingCount) {
-														if ((__int16)dwMilitaryTiles[MILITARYTILE_BUILDING1] / 2 >= iBuildingCount) {
-															if ((__int16)dwMilitaryTiles[MILITARYTILE_BUILDING2] / 2 >= iBuildingCount) {
+										wBuildingCount = (dwMilitaryTiles[MILITARYTILE_RUNWAY] + dwMilitaryTiles[MILITARYTILE_RUNWAYCROSS]) / 5;
+										if (dwMilitaryTiles[MILITARYTILE_MPARKINGLOT] / 4 < wBuildingCount) {
+											if (2 * dwMilitaryTiles[MILITARYTILE_MCONTROLTOWER] >= wBuildingCount) {
+												if (2 * dwMilitaryTiles[MILITARYTILE_MRADAR] >= wBuildingCount) {
+													if (dwMilitaryTiles[MILITARYTILE_F15B] >= wBuildingCount) {
+														if (dwMilitaryTiles[MILITARYTILE_BUILDING1] / 2 >= wBuildingCount) {
+															if (dwMilitaryTiles[MILITARYTILE_BUILDING2] / 2 >= wBuildingCount) {
 																iTileID = TILE_INFRASTRUCTURE_HANGAR2;
-																if ((__int16)dwMilitaryTiles[MILITARYTILE_HANGAR2] / 4 >= iBuildingCount)
+																if (dwMilitaryTiles[MILITARYTILE_HANGAR2] / 4 >= wBuildingCount)
 																	iTileID = TILE_MILITARY_PARKINGLOT;
 															}
 															else
@@ -809,12 +806,12 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __
 									break;
 								case MILITARY_BASE_NAVY:
 									if ((rand() & 3) == 0) {
-										iBuildingCount = dwMilitaryTiles[MILITARYTILE_CRANE];
-										if ((__int16)dwMilitaryTiles[MILITARYTILE_CARGOYARD] / 4 < iBuildingCount) {
-											if ((__int16)dwMilitaryTiles[MILITARYTILE_TOPSECRET] / 4 >= iBuildingCount) {
+										wBuildingCount = dwMilitaryTiles[MILITARYTILE_CRANE];
+										if (dwMilitaryTiles[MILITARYTILE_CARGOYARD] / 4 < wBuildingCount) {
+											if (dwMilitaryTiles[MILITARYTILE_TOPSECRET] / 4 >= wBuildingCount) {
 												BYTE(iAttributes) = 0;
 												iTileID = TILE_MILITARY_WAREHOUSE;
-												if ((__int16)dwMilitaryTiles[MILITARYTILE_MWAREHOUSE] / 3 >= iBuildingCount)
+												if (dwMilitaryTiles[MILITARYTILE_MWAREHOUSE] / 3 >= wBuildingCount)
 													iTileID = TILE_INFRASTRUCTURE_CARGOYARD;
 											}
 											else
@@ -840,12 +837,12 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __
 									Game_SpawnShip(iX, iY);
 							}
 							else {
-								iBuildingCount = dwTileCount[TILE_INFRASTRUCTURE_CRANE];
-								if ((__int16)dwTileCount[TILE_INFRASTRUCTURE_CARGOYARD] / 4 < iBuildingCount) {
-									if ((__int16)dwTileCount[TILE_MILITARY_LOADINGBAY] / 4 >= iBuildingCount) {
+								wBuildingCount = dwTileCount[TILE_INFRASTRUCTURE_CRANE];
+								if (dwTileCount[TILE_INFRASTRUCTURE_CARGOYARD] / 4 < wBuildingCount) {
+									if (dwTileCount[TILE_MILITARY_LOADINGBAY] / 4 >= wBuildingCount) {
 										BYTE(iAttributes) = 0;
 										iTileID = TILE_MILITARY_WAREHOUSE;
-										if ((__int16)dwTileCount[TILE_MILITARY_WAREHOUSE] / 3 >= iBuildingCount)
+										if (dwTileCount[TILE_MILITARY_WAREHOUSE] / 3 >= wBuildingCount)
 											iTileID = TILE_INFRASTRUCTURE_CARGOYARD;
 									}
 									else
@@ -890,15 +887,15 @@ AIRFIELDSKIPAHEAD:
 							}
 							else {
 								iAttributes = 5;
-								iBuildingCount = ((__int16)dwTileCount[TILE_INFRASTRUCTURE_RUNWAY] + (__int16)dwTileCount[TILE_INFRASTRUCTURE_RUNWAYCROSS]) / 5;
-								if ((__int16)dwTileCount[TILE_INFRASTRUCTURE_PARKINGLOT] / 4 < iBuildingCount) {
-									if (2 * (__int16)dwTileCount[TILE_INFRASTRUCTURE_CONTROLTOWER_CIV] >= iBuildingCount) {
-										if (2 * (__int16)dwTileCount[TILE_MILITARY_RADAR] >= iBuildingCount) {
-											if ((__int16)dwTileCount[TILE_MILITARY_TARMAC] >= iBuildingCount) {
-												if ((__int16)dwTileCount[TILE_INFRASTRUCTURE_BUILDING1] / 2 >= iBuildingCount) {
-													if ((__int16)dwTileCount[TILE_INFRASTRUCTURE_BUILDING2] / 2 >= iBuildingCount) {
+								wBuildingCount = (dwTileCount[TILE_INFRASTRUCTURE_RUNWAY] + dwTileCount[TILE_INFRASTRUCTURE_RUNWAYCROSS]) / 5;
+								if (dwTileCount[TILE_INFRASTRUCTURE_PARKINGLOT] / 4 < wBuildingCount) {
+									if (2 * dwTileCount[TILE_INFRASTRUCTURE_CONTROLTOWER_CIV] >= wBuildingCount) {
+										if (2 * dwTileCount[TILE_MILITARY_RADAR] >= wBuildingCount) {
+											if (dwTileCount[TILE_MILITARY_TARMAC] >= wBuildingCount) {
+												if (dwTileCount[TILE_INFRASTRUCTURE_BUILDING1] / 2 >= wBuildingCount) {
+													if (dwTileCount[TILE_INFRASTRUCTURE_BUILDING2] / 2 >= wBuildingCount) {
 														iTileID = TILE_INFRASTRUCTURE_HANGAR2;
-														if ((__int16)dwTileCount[TILE_INFRASTRUCTURE_HANGAR2] / 4 >= iBuildingCount)
+														if (dwTileCount[TILE_INFRASTRUCTURE_HANGAR2] / 4 >= wBuildingCount)
 															iTileID = TILE_INFRASTRUCTURE_PARKINGLOT;
 													}
 													else
@@ -1194,19 +1191,9 @@ GOUNDCHECKTHENYINCREASE:
 			iY += 4;
 		}
 		iX += 4;
-		iResult = iX / 2;
 		iXMM = iX / 2;
 	}
 	rcDst.top = -1000;
-	return iResult;
-#else
-	int(__cdecl *H_SimulationGrowthTick)(signed __int16, signed __int16) = (int(__cdecl *)(signed __int16, signed __int16))0x4358B0;
-
-	int ret = H_SimulationGrowthTick(iStep, iSubStep);
-	//ConsoleLog(LOG_DEBUG, "DBG: 0x%06X -> SimulationGrowthTick(%d, %d) = %d\n", _ReturnAddress(), iStep, iSubStep, ret);
-
-	return ret;
-#endif
 }
 
 extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, __int16 iTileID, __int16 iZoneType) {
