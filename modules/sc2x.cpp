@@ -693,7 +693,7 @@ extern "C" DWORD __stdcall Hook_LoadGame(void* pFile, char* src) {
 	}
 
 	for (const auto& hook : stHooks_Hook_LoadGame_Before) {
-		if (hook.iType == HOOKFN_TYPE_NATIVE) {
+		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
 			void (*fnHook)(void*, void*, char*) = (void(*)(void*, void*, char*))hook.pFunction;
 			fnHook(pThis, pFile, src);
 		}
@@ -724,7 +724,7 @@ extern "C" DWORD __stdcall Hook_LoadGame(void* pFile, char* src) {
 	}
 
 	for (const auto& hook : stHooks_Hook_LoadGame_After) {
-		if (hook.iType == HOOKFN_TYPE_NATIVE) {
+		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
 			void (*fnHook)(void*, void*, char*) = (void(*)(void*, void*, char*))hook.pFunction;
 			fnHook(pThis, pFile, src);
 		}
@@ -753,7 +753,7 @@ extern "C" DWORD __stdcall Hook_SaveGame(CMFC3XString* lpFileName) {
 	__asm mov [pThis], ecx
 
 	for (const auto& hook : stHooks_Hook_SaveGame_Before) {
-		if (hook.iType == HOOKFN_TYPE_NATIVE) {
+		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
 			void (*fnHook)(void*, CMFC3XString*) = (void(*)(void*, CMFC3XString*))hook.pFunction;
 			fnHook(pThis, lpFileName);
 		}
@@ -762,7 +762,7 @@ extern "C" DWORD __stdcall Hook_SaveGame(CMFC3XString* lpFileName) {
 	ret = H_SimcityAppDoSaveGame(pThis, lpFileName);
 
 	for (const auto& hook : stHooks_Hook_SaveGame_After) {
-		if (hook.iType == HOOKFN_TYPE_NATIVE) {
+		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
 			void (*fnHook)(void*, CMFC3XString*) = (void(*)(void*, CMFC3XString*))hook.pFunction;
 			fnHook(pThis, lpFileName);
 		}

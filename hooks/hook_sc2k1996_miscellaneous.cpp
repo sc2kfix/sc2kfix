@@ -408,7 +408,7 @@ extern "C" void __stdcall Hook_GameDoIdleUpkeep(void) {
 	__asm mov [pThis], ecx
 	for (const auto& hook : stHooks_Hook_GameDoIdleUpkeep_Before) {
 		bHookStopProcessing = FALSE;
-		if (hook.iType == HOOKFN_TYPE_NATIVE) {
+		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
 			void (*fnHook)(void*) = (void(*)(void*))hook.pFunction;
 			fnHook(pThis);
 		}
@@ -424,7 +424,7 @@ extern "C" void __stdcall Hook_GameDoIdleUpkeep(void) {
 
 	for (const auto& hook : stHooks_Hook_GameDoIdleUpkeep_After) {
 		bHookStopProcessing = FALSE;
-		if (hook.iType == HOOKFN_TYPE_NATIVE) {
+		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
 			void (*fnHook)(void*) = (void(*)(void*))hook.pFunction;
 			fnHook(pThis);
 		}
@@ -539,7 +539,7 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		// XXX - this should probably be moved to a separate proper hook into the game itself
 		for (const auto& hook : stHooks_Hook_OnNewCity_Before) {
 			bHookStopProcessing = FALSE;
-			if (hook.iType == HOOKFN_TYPE_NATIVE) {
+			if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
 				void (*fnHook)(void) = (void(*)(void))hook.pFunction;
 				fnHook();
 			}
@@ -1972,7 +1972,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 	// XXX - should mods be able to entirely override SimCalendar days? Perhaps this is more a
 	// theological discussion to be held...
 	for (const auto& hook : stHooks_Hook_SimCalendarAdvance_Before) {
-		if (hook.iType == HOOKFN_TYPE_NATIVE) {
+		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
 			BOOL(*fnHook)() = (BOOL(*)())hook.pFunction;
 			fnHook();
 		}
@@ -2079,7 +2079,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 
 				// Iterate through mod-based scenario goals
 				for (const auto& hook : stHooks_Hook_ScenarioSuccessCheck) {
-					if (hook.iType == HOOKFN_TYPE_NATIVE) {
+					if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
 						BOOL(*fnHook)() = (BOOL(*)())hook.pFunction;
 						if (!fnHook())
 							bScenarioSuccess = FALSE;
@@ -2127,7 +2127,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 
 	// Call mods for daily processing tasks - after update
 	for (const auto& hook : stHooks_Hook_SimCalendarAdvance_After) {
-		if (hook.iType == HOOKFN_TYPE_NATIVE) {
+		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
 			BOOL(*fnHook)() = (BOOL(*)())hook.pFunction;
 			fnHook();
 		}

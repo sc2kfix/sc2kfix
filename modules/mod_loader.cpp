@@ -46,6 +46,7 @@ int LoadNativeCodeHooks(HMODULE hModule) {
 		stHookFn.iPriority = stModInfo->stHooks[i].iHookPriority;
 		stHookFn.iType = HOOKFN_TYPE_NATIVE;
 		stHookFn.pFunction = (void*)GetProcAddress(hModule, stModInfo->stHooks[i].szHookName);
+		stHookFn.bEnabled = TRUE;
 		if (!stHookFn.pFunction) {
 			ConsoleLog(LOG_WARNING, "MODS: Couldn't load hook %s from native code mod %s.\n", stModInfo->stHooks[i].szHookName, mapLoadedNativeMods[hModule].szModShortName);
 			continue;

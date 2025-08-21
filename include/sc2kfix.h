@@ -154,6 +154,7 @@ typedef struct {
 	int iPriority;
 	int iType;
 	void* pFunction;
+	BOOL bEnabled;
 } hook_function_t;
 
 #include <hooklists.h>
