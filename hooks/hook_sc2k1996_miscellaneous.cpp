@@ -696,7 +696,6 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 	__int16 iXMM;
 	__int16 iYMM;
 	BOOL bPlaceChurch;
-	int iXPos;
 	map_XZON_attribs_t maXZON;
 	__int16 iCurrZoneType;
 	BYTE iCurrentTileID;
@@ -727,10 +726,9 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 			iYMM = i;
 			if (iY >= GAME_MAP_SIZE)
 				break;
-			iXPos = iX;
-			maXZON = dwMapXZON[iXPos][iY].b;
+			maXZON = dwMapXZON[iX][iY].b;
 			iCurrZoneType = maXZON.iZoneType;
-			iCurrentTileID = dwMapXBLD[iXPos][iY].iTileID;
+			iCurrentTileID = dwMapXBLD[iX][iY].iTileID;
 			P_LOBYTE(iAttributes) = iCurrentTileID;
 			iAttributes &= 0xFFFF00FF;
 			if (maXZON.iZoneType != ZONE_NONE) {
@@ -861,7 +859,7 @@ GOSPAWNSEAYARD:
 									!(rand() % 30) &&
 									iX < GAME_MAP_SIZE &&
 									iY < GAME_MAP_SIZE) {
-									iAttributes = (int)&dwMapXBIT[iXPos];
+									iAttributes = (int)&dwMapXBIT[iX];
 									if (dwMapXBIT[iX][iY].b.iPowered != 0) {
 										if (rand() % 10 < 4) {
 											Game_SpawnHelicopter(iX, iY);
