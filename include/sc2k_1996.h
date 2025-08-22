@@ -993,9 +993,11 @@ enum {
 
 // Structs
 
+#pragma pack(push, 1)
 typedef struct {
 	BYTE bDunno[32];
 } neighbor_city_t;
+#pragma pack(pop)
 
 typedef struct {
 	int iCountMonth[12];
@@ -1006,10 +1008,12 @@ typedef struct {
 	int iEstimatedCost;
 } budget_t;
 
+#pragma pack(push, 1)
 typedef struct {
 	BYTE bTileID;
 	BYTE bMicrosimData[7];
 } microsim_t;
+#pragma pack(pop)
 
 typedef struct {
 	DWORD dwAddress;
@@ -1035,49 +1039,70 @@ typedef struct {
 	sprite_archive_t *pData;
 } sprite_archive_stored_t;
 
+#pragma pack(push, 1)
 typedef struct {
 	WORD iLandAltitude : 5; // level / altitude
 	WORD iWaterLevel : 5;   // not always accurate (rely on XTER value instead)
 	WORD iTunnelLevels : 6; // how many levels below altitude should we display a grey block for a tunnel?
 } map_ALTM_attribs_t;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	map_ALTM_attribs_t w;
 } map_ALTM_t;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	BYTE iZoneType : 4;
 	BYTE iCorners : 4;
 } map_XZON_attribs_t;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	map_XZON_attribs_t b;
 } map_XZON_t;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	BYTE iTileID;
 } map_XBLD_t;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	BYTE iTileID; // reference XTER map
 } map_XTER_t;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	BYTE iTileID;
 } map_XUND_t;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	BYTE bTextOverlay;
 } map_XTXT_t;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	BYTE bBlock;
 } map_mini64_t;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	BYTE bBlock;
 } map_mini32_t;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	BYTE iSaltWater : 1;
 	BYTE iRotated : 1;
@@ -1088,12 +1113,16 @@ typedef struct {
 	BYTE iPowered : 1;
 	BYTE iPowerable : 1;
 } map_XBIT_bits_t;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	map_XBIT_bits_t b;
 } map_XBIT_t;
+#pragma pack(pop)
 
 // Struct defining an SC2K XTHG (Thing) entity.
+#pragma pack(push, 1)
 typedef struct {
 	BYTE iId; // use xthg types enum to determine
 	BYTE iDirection; // use xthg directions enum; for types airplane, helicopter, cargo ship, monster, etc; not sure how this is used for "deployment" types like fire, police, etc
@@ -1108,12 +1137,15 @@ typedef struct {
 	BYTE iDunno6;
 	BYTE iDunno7;
 } map_XTHG_t;
+#pragma pack(pop)
 
 // Struct defining an SC2K XLAB (Label) entity.
+#pragma pack(push, 1)
 typedef struct {
 	char szLabel[24];
 	BYTE bPadding;
 } map_XLAB_t;
+#pragma pack(pop)
 
 // The sound/midi class; placed here for now.
 #pragma pack(push, 1)
@@ -1340,9 +1372,7 @@ GAMEOFF(WORD,	wSportsTeams,				0x4CC4E0)
 GAMEOFF(BYTE,	bMilitaryBaseType,			0x4CC4E4)
 GAMEOFF(int,	dwCityBonds,				0x4CC4E8)
 GAMEOFF(DWORD,	dwCityTrafficUnknown,		0x4CC6F4)
-GAMEOFF_ARR(WORD,	wCityDemand,		0x4CC8F8)
-GAMEOFF(WORD,	wCityCommericalDemand,		0x4CC8FA)
-GAMEOFF(WORD,	wCityIndustrialDemand,		0x4CC8FC)
+GAMEOFF_ARR(WORD,	wCityDemand,			0x4CC8F8)
 GAMEOFF(DWORD,	dwCityPollution,			0x4CC910)		// Needs reverse engineering. See wiki.
 GAMEOFF(WORD,	wScenarioDisasterID,		0x4CC918)
 GAMEOFF(WORD,	wScenarioTimeLimitMonths,	0x4CC91C)
