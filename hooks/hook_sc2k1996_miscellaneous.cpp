@@ -702,7 +702,6 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 	int iBuildingCommitThreshold;
 	signed __int16 iFundingPercent;
 	WORD iBuildingPopLevel;
-	BYTE iRandSelectOne;
 	WORD iPopulatedAreaTile;
 	__int16 iCurrentDemand;
 	__int16 iRemainderDemand;
@@ -710,7 +709,7 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 	BYTE iMicrosimIdx;
 	BYTE iMicrosimDataOne;
 	BYTE iCurrentUndergroundTileID;
-	__int16 iReplaceTile;
+	BYTE iReplaceTile;
 	__int16 iNextX;
 	__int16 iNextY;
 
@@ -962,9 +961,9 @@ GOSPAWNAIRFIELD:
 					iTileAreaState = bAreaState[iPopulatedAreaTile];
 					if (iBuildingPopLevel > 0 && !iTileAreaState) {
 						pZonePops[iCurrZoneType] += wBuildingPopulation[iBuildingPopLevel]; // Values appear to be: 1[1], 8[2], 12[3], 36[4] (wBuildingPopulation[iBuildingPopLevel] format.
-						if ((unsigned __int16)rand() < (__int16)(iRemainderDemand / iBuildingPopLevel)) {
-							iRandSelectOne = rand() & 1;
-							Game_PerhapsGeneralZoneChangeBuilding(iX, iY, iBuildingPopLevel, iRandSelectOne);
+						if ((unsigned __int16)rand() < (iRemainderDemand / iBuildingPopLevel)) {
+							iReplaceTile = rand() & 1;
+							Game_PerhapsGeneralZoneChangeBuilding(iX, iY, iBuildingPopLevel, iReplaceTile);
 							goto GOUNDCHECKTHENYINCREASE;
 						}
 					}
@@ -1011,9 +1010,9 @@ GOGENERALZONEITEMPLACE:
 					iCurrentTileID >= TILE_ONRAMP_TL && iCurrentTileID < TILE_HIGHWAY_HTB) {
 					// Transportation budget, roads - if below 100% related tiles will be replaced with rubble.
 					iFundingPercent = pBudgetArr[BUDGET_ROAD].iFundingPercent;
-					if (iFundingPercent != 100 && (unsigned __int16)((unsigned __int16)rand() % 100u) >= iFundingPercent) {
-						iRandSelectOne = (rand() & 3) + 1;
-						Game_PlaceTileWithMilitaryCheck(iX, iY, iRandSelectOne);
+					if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
+						iReplaceTile = (rand() & 3) + 1;
+						Game_PlaceTileWithMilitaryCheck(iX, iY, iReplaceTile);
 						if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
 							goto GOAFTERSETXBIT;
 						goto GOBEFORESETXBIT;
@@ -1026,9 +1025,9 @@ GOGENERALZONEITEMPLACE:
 					iCurrentTileID == TILE_CROSSOVER_HIGHWAYTB_RAILLR) {
 					// Transportation budget, rails - if below 100% related tiles will be replaced with rubble.
 					iFundingPercent = pBudgetArr[BUDGET_RAIL].iFundingPercent;
-					if (iFundingPercent != 100 && (unsigned __int16)((unsigned __int16)rand() % 100u) >= iFundingPercent) {
-						iRandSelectOne = (rand() & 3) + 1;
-						Game_PlaceTileWithMilitaryCheck(iX, iY, iRandSelectOne);
+					if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
+						iReplaceTile = (rand() & 3) + 1;
+						Game_PlaceTileWithMilitaryCheck(iX, iY, iReplaceTile);
 						if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
 							goto GOAFTERSETXBIT;
 GOBEFORESETXBIT:
@@ -1116,41 +1115,41 @@ GOAFTERSETXBIT:
 								Game_PlaceTileWithMilitaryCheck(iX, iY, iReplaceTile);
 							}
 							iNextX = iX + 1;
-							if ((iX + 1) >= 0 &&
+							if (iNextX >= 0 &&
 								iNextX < GAME_MAP_SIZE &&
 								iY < GAME_MAP_SIZE &&
 								dwMapXBIT[iNextX][iY].b.iWater != 0) {
 								//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Transit #2. Item(%s)\n", iStep, iSubStep, szTileNames[(__int16)iAttributes]);
-								Game_PlaceTileWithMilitaryCheck(iX + 1, iY, 0);
+								Game_PlaceTileWithMilitaryCheck(iNextX, iY, 0);
 							}
 							else {
 								iReplaceTile = (rand() & 3) + 1;
 								//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Transit #2 (else). iRandSelect(%d). Item(%s)\n", iStep, iSubStep, iRandSelect, szTileNames[(__int16)iAttributes]);
-								Game_PlaceTileWithMilitaryCheck(iX + 1, iY, iReplaceTile);
+								Game_PlaceTileWithMilitaryCheck(iNextX, iY, iReplaceTile);
 							}
 							iNextY = iY + 1;
 							if (iX < GAME_MAP_SIZE &&
-								(iY + 1) >= 0 &&
+								iNextY >= 0 &&
 								iNextY < GAME_MAP_SIZE &&
 								dwMapXBIT[iX][iNextY].b.iWater != 0) {
 								//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Transit #3. Item(%s)\n", iStep, iSubStep, szTileNames[(__int16)iAttributes]);
-								Game_PlaceTileWithMilitaryCheck(iX, iY + 1, 0);
+								Game_PlaceTileWithMilitaryCheck(iX, iNextY, 0);
 							}
 							else {
 								iReplaceTile = (rand() & 3) + 1;
 								//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Transit #3 (else). iRandSelect(%d). Item(%s)\n", iStep, iSubStep, iRandSelect, szTileNames[(__int16)iAttributes]);
-								Game_PlaceTileWithMilitaryCheck(iX, iY + 1, iReplaceTile);
+								Game_PlaceTileWithMilitaryCheck(iX, iNextY, iReplaceTile);
 							}
-							if ((iX + 1) < GAME_MAP_SIZE &&
-								(iY + 1) < GAME_MAP_SIZE &&
-								dwMapXBIT[(iX + 1)][(iY + 1)].b.iWater != 0) {
+							if (iNextX < GAME_MAP_SIZE &&
+								iNextY < GAME_MAP_SIZE &&
+								dwMapXBIT[iNextX][iNextY].b.iWater != 0) {
 								//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Transit #4. Item(%s)\n", iStep, iSubStep, szTileNames[(__int16)iAttributes]);
-								Game_PlaceTileWithMilitaryCheck(iX + 1, iY + 1, 0);
+								Game_PlaceTileWithMilitaryCheck(iNextX, iNextY, 0);
 							}
 							else {
 								iReplaceTile = (rand() & 3) + 1;
 								//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Transit #4 (else). iRandSelect(%d). Item(%s)\n", iStep, iSubStep, iRandSelect, szTileNames[(__int16)iAttributes]);
-								Game_PlaceTileWithMilitaryCheck(iX + 1, iY + 1, iReplaceTile);
+								Game_PlaceTileWithMilitaryCheck(iNextX, iNextY, iReplaceTile);
 							}
 							goto GOAFTERSETXBIT;
 						}
