@@ -31,7 +31,6 @@ static DWORD dwDummy;
 
 #define NUM_CHEATS 15
 #define NUM_CHEAT_MAXCHARS 9
-#define MAX_USER_LABELS 51
 
 typedef struct {
 	int iIndex;          // Cheat index, match multiple cheats to the same index.

@@ -99,6 +99,8 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define HICOLORCNT 256
 #define LOCOLORCNT 16
 
+#define MAX_USER_LABELS 51
+
 // TODO: inline documentation
 typedef struct tagLOGPAL {
 	WORD wVersion;
