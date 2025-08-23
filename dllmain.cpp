@@ -140,6 +140,20 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						timer_debug = DEBUG_FLAGS_EVERYTHING;
 						updatenotifier_debug = DEBUG_FLAGS_EVERYTHING;
 					}
+					if (!lstrcmpiW(argv[i], L"-undebugall")) {
+						guzzardo_debug = DEBUG_FLAGS_NONE;
+						mci_debug = DEBUG_FLAGS_NONE;
+						military_debug = DEBUG_FLAGS_NONE;
+						mischook_debug = DEBUG_FLAGS_NONE;
+						modloader_debug = DEBUG_FLAGS_NONE;
+						mus_debug = DEBUG_FLAGS_NONE;
+						registry_debug = DEBUG_FLAGS_NONE;
+						sc2x_debug = DEBUG_FLAGS_NONE;
+						snd_debug = DEBUG_FLAGS_NONE;
+						sprite_debug = DEBUG_FLAGS_NONE;
+						timer_debug = DEBUG_FLAGS_NONE;
+						updatenotifier_debug = DEBUG_FLAGS_NONE;
+					}
 					if (!lstrcmpiW(argv[i], L"-defaults"))
 						bSkipLoadSettings = TRUE;
 					if (!lstrcmpiW(argv[i], L"-skipintro"))
