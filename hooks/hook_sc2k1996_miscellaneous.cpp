@@ -1033,7 +1033,7 @@ GOGENERALZONEITEMPLACE:
 						if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
 							goto GOAFTERSETXBIT;
 GOBEFORESETXBIT:
-						*(BYTE *)&dwMapXBIT[iX][iY].b &= ~0x80u;
+						dwMapXBIT[iX][iY].b.iPowerable = 0;
 GOAFTERSETXBIT:
 						if (iCurrentTileID >= TILE_INFRASTRUCTURE_RAILSTATION) {
 							if (iCurrentTileID == TILE_INFRASTRUCTURE_RAILSTATION &&
