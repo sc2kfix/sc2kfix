@@ -19,7 +19,7 @@
 #define MCI_DEBUG_SONGS 4
 #define MCI_DEBUG_THREAD 8
 
-#define MCI_DEBUG DEBUG_FLAGS_NONE
+#define MCI_DEBUG DEBUG_FLAGS_EVERYTHING
 
 #ifdef DEBUGALL
 #undef MCI_DEBUG
@@ -68,7 +68,7 @@ extern "C" BOOL __stdcall Hook_mciSendCommandA(void* pReturnAddress, MCIERROR* r
 				"    lpstrElementName = %s,\n"
 				"    lpstrAlias       = %s\n"
 				"}\n\n", pMCIOpenParms->dwCallback, pMCIOpenParms->wDeviceID,
-				((UINT)(pMCIOpenParms->lpstrDeviceType) > 4096 ? pMCIOpenParms->lpstrDeviceType : HexPls((UINT)(pMCIOpenParms->lpstrDeviceType), 8)),
+				((UINT)(pMCIOpenParms->lpstrDeviceType) > 4096 && (INT)(pMCIOpenParms->lpstrDeviceType) != MCI_ALL_DEVICE_ID ? pMCIOpenParms->lpstrDeviceType : HexPls((UINT)(pMCIOpenParms->lpstrDeviceType), 8)),
 				pMCIOpenParms->lpstrElementName,
 				((UINT)(pMCIOpenParms->lpstrAlias) == 0 ? pMCIOpenParms->lpstrAlias : "NULL"));
         }

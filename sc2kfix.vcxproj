@@ -60,7 +60,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>"include";"thirdparty/kuroko"</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>"include";"thirdparty/kuroko";"thirdparty/fluidsynth"</AdditionalIncludeDirectories>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
@@ -118,6 +118,24 @@
     <ClInclude Include="include\winmm_exports.h" />
     <ClInclude Include="include\sc2k_1996.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth.h" />
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\audio.h" />
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\event.h" />
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\gen.h" />
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\ladspa.h" />
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\log.h" />
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\midi.h" />
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\misc.h" />
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\mod.h" />
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\seq.h" />
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\seqbind.h" />
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\settings.h" />
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\sfont.h" />
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\shell.h" />
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\synth.h" />
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\types.h" />
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\version.h" />
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\voice.h" />
     <ClInclude Include="thirdparty\kuroko\dirent.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseNoKuroko|Win32'">true</ExcludedFromBuild>
     </ClInclude>

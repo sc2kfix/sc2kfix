@@ -11,12 +11,14 @@
 #include <string>
 
 #include <sc2kfix.h>
+#include <fluidsynth.h>
 
 #define MUS_DEBUG_SONGS 1
 #define MUS_DEBUG_THREAD 2
 #define MUS_DEBUG_SEQUENCER 4
+#define MUS_DEBUG_FLUIDSYNTH 8
 
-#define MUS_DEBUG DEBUG_FLAGS_NONE
+#define MUS_DEBUG DEBUG_FLAGS_EVERYTHING
 
 #ifdef DEBUGALL
 #undef MUS_DEBUG
@@ -32,6 +34,49 @@ int iCurrentSong = 0;
 DWORD dwMusicThreadID;
 MCIDEVICEID mciDevice = NULL;
 BOOL bMultithreadedMusicEnabled = FALSE;
+BOOL bMusicFluidSynthEnabled = FALSE;
+BOOL bUseFluidSynth = FALSE;
+char szMusicFluidSynthSoundfontPath[MAX_PATH + 1] = { 0 };
+
+HMODULE hmodFluidSynth = NULL;
+fluid_settings_t* pFluidSynthSettings = NULL;
+fluid_synth_t* pFluidSynthSynth = NULL;
+fluid_player_t* pFluidSynthPlayer = NULL;
+fluid_audio_driver_t* pFluidSynthDriver = NULL;
+BOOL bFluidSynthPlaying = FALSE;
+
+// FluidSynth imports -- note that because we don't actually link against libfluidsynth-3.lib we
+// can't use the functions in the FluidSynth headers.
+
+fluid_settings_t* (*FS_new_fluid_settings)(void) = NULL;
+fluid_synth_t* (*FS_new_fluid_synth)(fluid_settings_t* settings) = NULL;
+fluid_player_t* (*FS_new_fluid_player)(fluid_synth_t* synth) = NULL;
+fluid_audio_driver_t* (*FS_new_fluid_audio_driver)(fluid_settings_t* settings, fluid_synth_t* synth) = NULL;
+fluid_midi_router_t* (*FS_new_fluid_midi_router)(fluid_settings_t* settings, handle_midi_event_func_t handler, void* event_handler_data) = NULL;
+int (*FS_fluid_synth_handle_midi_event)(void* data, fluid_midi_event_t* event) = NULL;
+int (*FS_fluid_is_soundfont)(const char* filename) = NULL;
+int (*FS_fluid_synth_sfload)(fluid_synth_t* synth, const char* filename, int reset_presets) = NULL;
+int (*FS_fluid_player_add)(fluid_player_t* player, const char* midifile) = NULL;
+int (*FS_fluid_player_play)(fluid_player_t* player) = NULL;
+int (*FS_fluid_player_stop)(fluid_player_t* player) = NULL;
+int (*FS_fluid_player_join)(fluid_player_t* player) = NULL;
+int (*FS_fluid_player_get_status)(fluid_player_t* player) = NULL;
+fluid_midi_router_rule_t* (*FS_new_fluid_midi_router_rule)(void) = NULL;
+int (*FS_fluid_midi_router_clear_rules)(fluid_midi_router_t* router) = NULL;
+void (*FS_fluid_midi_router_rule_set_chan)(fluid_midi_router_rule_t* rule, int min, int max, float mul, int add) = NULL;
+void (*FS_fluid_midi_router_rule_set_param1)(fluid_midi_router_rule_t* rule, int min, int max, float mul, int add) = NULL;
+void (*FS_fluid_midi_router_rule_set_param2)(fluid_midi_router_rule_t* rule, int min, int max, float mul, int add) = NULL;
+int (*FS_fluid_midi_router_add_rule)(fluid_midi_router_t* router, fluid_midi_router_rule_t* rule, int type) = NULL;
+void (*FS_delete_fluid_midi_router)(fluid_midi_router_t* router) = NULL;
+void (*FS_delete_fluid_audio_driver)(fluid_audio_driver_t* driver) = NULL;
+void (*FS_delete_fluid_player)(fluid_player_t* player) = NULL;
+void (*FS_delete_fluid_synth)(fluid_synth_t* synth) = NULL;
+void (*FS_delete_fluid_settings)(fluid_settings_t* settings) = NULL;
+int (*FS_fluid_midi_event_get_type)(fluid_midi_event_t* event) = NULL;
+int (*FS_fluid_midi_event_get_channel)(fluid_midi_event_t* event) = NULL;
+int (*FS_fluid_player_set_playback_callback)(fluid_player_t* player, handle_midi_event_func_t handler, void* handler_data) = NULL;
+int (*FS_fluid_synth_all_sounds_off)(fluid_synth_t* synth, int chan) = NULL;
+fluid_log_function_t (*FS_fluid_set_log_function)(int level, fluid_log_function_t fun, void* data);
 
 void MusicShufflePlaylist(int iLastSongPlayed) {
 	if (bSettingsShuffleMusic) {
@@ -53,34 +98,188 @@ DWORD WINAPI MusicMCINotifyCallback(WPARAM wFlags, LPARAM lDevID) {
 	return 0;
 }
 
+int MusicFluidSynthMidiEventHandler(void* data, fluid_midi_event_t* event) {
+	fluid_synth_t* synth = (fluid_synth_t*)data;
+	int type = FS_fluid_midi_event_get_type(event);
+	int channel = FS_fluid_midi_event_get_channel(event);
+
+	// Ignore all notes on channel 15; pass other notes. This works around the fact that the MIDI
+	// files have the drum track duplicated on channel 15, which FluidSynth defaults to being a
+	// full volume Acoustic Grand Piano track (plink plonk plink plonk i'm a drum machine!)
+	if (type == 0x90 && channel == 15)
+		return FLUID_OK;
+	return FS_fluid_synth_handle_midi_event(data, event);
+}
+
+void MusicFluidSynthLoggerError(int level, const char* message, void* data) {
+	ConsoleLog(LOG_ERROR, "MUS:  FluidSynth: %s\n", message);
+}
+
+void MusicFluidSynthLoggerWarning(int level, const char* message, void* data) {
+	ConsoleLog(LOG_WARNING, "MUS:  FluidSynth: %s\n", message);
+}
+
+void MusicFluidSynthLoggerNull(int level, const char* message, void* data) {
+	return;
+}
+
+BOOL MusicLoadFluidSynth(void) {
+	if (mus_debug & MUS_DEBUG_FLUIDSYNTH)
+		ConsoleLog(LOG_DEBUG, "MUS:  FluidSynth enabled, probing for valid FluidSynth library.\n");
+
+	// Attempt to load the FluidSynth library.
+	hmodFluidSynth = LoadLibrary("libfluidsynth-3.dll");
+	if (!hmodFluidSynth) {
+		ConsoleLog(LOG_ERROR, "MUS:  FluidSynth could not be loaded (error 0x%08X). Disabling FluidSynth.\n", GetLastError());
+		return FALSE;
+	}
+
+	if (mus_debug & MUS_DEBUG_FLUIDSYNTH)
+		ConsoleLog(LOG_DEBUG, "MUS:  FluidSynth loaded at address 0x%08X.\n", hmodFluidSynth);
+
+	// Signal our intent to use FluidSynth and start locating function addresses.
+	bUseFluidSynth = TRUE;
+	if ((FS_new_fluid_settings = (decltype(FS_new_fluid_settings))GetProcAddress(hmodFluidSynth, "new_fluid_settings")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_new_fluid_synth = (decltype(FS_new_fluid_synth))GetProcAddress(hmodFluidSynth, "new_fluid_synth")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_new_fluid_player = (decltype(FS_new_fluid_player))GetProcAddress(hmodFluidSynth, "new_fluid_player")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_new_fluid_audio_driver = (decltype(FS_new_fluid_audio_driver))GetProcAddress(hmodFluidSynth, "new_fluid_audio_driver")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_new_fluid_midi_router = (decltype(FS_new_fluid_midi_router))GetProcAddress(hmodFluidSynth, "new_fluid_midi_router")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_fluid_synth_handle_midi_event = (decltype(FS_fluid_synth_handle_midi_event))GetProcAddress(hmodFluidSynth, "fluid_synth_handle_midi_event")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_fluid_is_soundfont = (decltype(FS_fluid_is_soundfont))GetProcAddress(hmodFluidSynth, "fluid_is_soundfont")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_fluid_synth_sfload = (decltype(FS_fluid_synth_sfload))GetProcAddress(hmodFluidSynth, "fluid_synth_sfload")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_fluid_player_add = (decltype(FS_fluid_player_add))GetProcAddress(hmodFluidSynth, "fluid_player_add")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_fluid_player_play = (decltype(FS_fluid_player_play))GetProcAddress(hmodFluidSynth, "fluid_player_play")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_fluid_player_stop = (decltype(FS_fluid_player_stop))GetProcAddress(hmodFluidSynth, "fluid_player_stop")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_fluid_player_join = (decltype(FS_fluid_player_join))GetProcAddress(hmodFluidSynth, "fluid_player_join")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_fluid_player_get_status = (decltype(FS_fluid_player_get_status))GetProcAddress(hmodFluidSynth, "fluid_player_get_status")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_new_fluid_midi_router_rule = (decltype(FS_new_fluid_midi_router_rule))GetProcAddress(hmodFluidSynth, "new_fluid_midi_router_rule")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_fluid_midi_router_clear_rules = (decltype(FS_fluid_midi_router_clear_rules))GetProcAddress(hmodFluidSynth, "fluid_midi_router_clear_rules")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_fluid_midi_router_rule_set_chan = (decltype(FS_fluid_midi_router_rule_set_chan))GetProcAddress(hmodFluidSynth, "fluid_midi_router_rule_set_chan")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_fluid_midi_router_rule_set_param1 = (decltype(FS_fluid_midi_router_rule_set_param1))GetProcAddress(hmodFluidSynth, "fluid_midi_router_rule_set_param1")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_fluid_midi_router_rule_set_param2 = (decltype(FS_fluid_midi_router_rule_set_param2))GetProcAddress(hmodFluidSynth, "fluid_midi_router_rule_set_param2")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_fluid_midi_router_add_rule = (decltype(FS_fluid_midi_router_add_rule))GetProcAddress(hmodFluidSynth, "fluid_midi_router_add_rule")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_delete_fluid_midi_router = (decltype(FS_delete_fluid_midi_router))GetProcAddress(hmodFluidSynth, "delete_fluid_midi_router")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_delete_fluid_audio_driver = (decltype(FS_delete_fluid_audio_driver))GetProcAddress(hmodFluidSynth, "delete_fluid_audio_driver")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_delete_fluid_player = (decltype(FS_delete_fluid_player))GetProcAddress(hmodFluidSynth, "delete_fluid_player")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_delete_fluid_synth = (decltype(FS_delete_fluid_synth))GetProcAddress(hmodFluidSynth, "delete_fluid_synth")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_delete_fluid_settings = (decltype(FS_delete_fluid_settings))GetProcAddress(hmodFluidSynth, "delete_fluid_settings")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_fluid_midi_event_get_type = (decltype(FS_fluid_midi_event_get_type))GetProcAddress(hmodFluidSynth, "fluid_midi_event_get_type")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_fluid_midi_event_get_channel = (decltype(FS_fluid_midi_event_get_channel))GetProcAddress(hmodFluidSynth, "fluid_midi_event_get_channel")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_fluid_player_set_playback_callback = (decltype(FS_fluid_player_set_playback_callback))GetProcAddress(hmodFluidSynth, "fluid_player_set_playback_callback")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_fluid_synth_all_sounds_off = (decltype(FS_fluid_synth_all_sounds_off))GetProcAddress(hmodFluidSynth, "fluid_synth_all_sounds_off")) == NULL)
+		bUseFluidSynth = FALSE;
+	if ((FS_fluid_set_log_function = (decltype(FS_fluid_set_log_function))GetProcAddress(hmodFluidSynth, "fluid_set_log_function")) == NULL)
+		bUseFluidSynth = FALSE;
+
+	// If any of our loads failed, release the FluidSynth library, throw an error, and fall 
+	// back to using MCI.
+	if (!bUseFluidSynth) {
+		ConsoleLog(LOG_ERROR, "MUS:  One or more FluidSynth functions could not be loaded. Disabling FluidSynth.\n");
+		FreeLibrary(hmodFluidSynth);
+		return FALSE;
+	}
+
+	if (mus_debug & MUS_DEBUG_FLUIDSYNTH)
+		ConsoleLog(LOG_DEBUG, "MUS:  Loaded all 27 FluidSynth function pointers.\n");
+
+	// Create initial FluidSynth data
+	pFluidSynthSettings = FS_new_fluid_settings();
+	pFluidSynthSynth = FS_new_fluid_synth(pFluidSynthSettings);
+	FS_fluid_set_log_function(FLUID_PANIC, MusicFluidSynthLoggerError, NULL);
+	FS_fluid_set_log_function(FLUID_ERR, MusicFluidSynthLoggerError, NULL);
+	FS_fluid_set_log_function(FLUID_WARN, MusicFluidSynthLoggerWarning, NULL);
+	FS_fluid_set_log_function(FLUID_INFO, MusicFluidSynthLoggerNull, NULL);
+
+	return TRUE;
+}
+
+DWORD WINAPI FluidSynthWatchdogThread(LPVOID lpParameter) {
+	const char* szSongPath = (const char*)lpParameter;
+
+	if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
+		ConsoleLog(LOG_DEBUG, "MUS:  Starting new FluidSynth watchdog thread.\n");
+	
+	// Stop and delete the existing player-driver combo if it exists
+	if (pFluidSynthPlayer) {
+		FS_fluid_player_stop(pFluidSynthPlayer);
+		for (int i = 0; i < 16; i++)
+			FS_fluid_synth_all_sounds_off(pFluidSynthSynth, i);
+		FS_delete_fluid_audio_driver(pFluidSynthDriver);
+		FS_delete_fluid_player(pFluidSynthPlayer);
+	}
+
+	// Spin up a new player-driver combo
+	pFluidSynthPlayer = FS_new_fluid_player(pFluidSynthSynth);
+	if (FS_fluid_is_soundfont(szMusicFluidSynthSoundfontPath))
+		FS_fluid_synth_sfload(pFluidSynthSynth, szMusicFluidSynthSoundfontPath, 1);
+	FS_fluid_player_set_playback_callback(pFluidSynthPlayer, MusicFluidSynthMidiEventHandler, pFluidSynthSynth);
+	FS_fluid_player_add(pFluidSynthPlayer, szSongPath);
+	pFluidSynthDriver = FS_new_fluid_audio_driver(pFluidSynthSettings, pFluidSynthSynth);
+	FS_fluid_player_play(pFluidSynthPlayer);
+	bFluidSynthPlaying = TRUE;
+	
+	// Wait until the FluidSynth player thread exits
+	FS_fluid_player_join(pFluidSynthPlayer);
+
+	// Mark our setup as dead
+	bFluidSynthPlaying = FALSE;
+
+	if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
+		ConsoleLog(LOG_DEBUG, "MUS:  Exiting FluidSynth watchdog thread.\n");
+
+	// Sleep for 250ms to ensure we don't overlap reverb with a new song
+	Sleep(250);
+
+	// Avoid memory leaks -- free the string we were passed
+	free(lpParameter);
+	return 0;
+}
+
 DWORD WINAPI MusicThread(LPVOID lpParameter) {
 	MSG msg;
 	MCIERROR dwMCIError = NULL;
 
-	MCIDEVICEID mciDeviceList[19] = { 0 };
-	// test to see how many of these things we can load at once
-	/*ConsoleLog(LOG_INFO, "MUS:  Starting MCI load test.\n");
-	DWORD dwStartTicks = GetTickCount();
-	for (int i = 0; i < 19; i++) {
-		std::string strSongPath = "sounds\\";      // szSoundsPath
-		strSongPath += std::to_string(i + 10000);
-		strSongPath += ".mp3";
-
-		MCI_OPEN_PARMS mciOpenParms = { NULL, NULL, "mpegvideo", strSongPath.c_str(), NULL};
-		dwMCIError = mciSendCommand(NULL, MCI_OPEN, MCI_OPEN_TYPE | MCI_OPEN_ELEMENT, (DWORD_PTR)&mciOpenParms);
-		if (dwMCIError) {
-			char szErrorBuf[MAXERRORLENGTH];
-			mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
-			ConsoleLog(LOG_ERROR, "MUS:  Test MCI_OPEN of %i.mp3 failed, 0x%08X (%s)\n", i + 10000, dwMCIError, szErrorBuf);
-			continue;
-		}
-		mciDeviceList[i] = mciOpenParms.wDeviceID;
-		ConsoleLog(LOG_INFO, "MUS:  Test %i.mp3 loaded into device ID %i.\n", i + 10000, mciOpenParms.wDeviceID);
-	}
-	ConsoleLog(LOG_INFO, "MUS:  MCI load test took %i milliseconds.\n", GetTickCount() - dwStartTicks);*/
-
+	// Load the FluidSynth library if we need it
+	if (bMusicFluidSynthEnabled)
+		MusicLoadFluidSynth();
+	
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		if (msg.message == WM_MUSIC_STOP) {
+			if (!bSettingsUseMP3Music && bUseFluidSynth) {
+				FS_fluid_player_stop(pFluidSynthPlayer);
+				bFluidSynthPlaying = FALSE;
+				if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
+					ConsoleLog(LOG_DEBUG, "MUS:  Thread stopped FluidSynth player due to WM_MUSIC_STOP message.\n");
+				goto next;
+			}
+
 			if (!mciDevice)
 				goto next;
 
@@ -92,7 +291,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 			if (dwMCIError) {
 				char szErrorBuf[MAXERRORLENGTH];
 				mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
-				if (dwMCIError == 0x101 && mus_debug & MUS_DEBUG_THREAD)
+				if (dwMCIError == MCIERR_INVALID_DEVICE_ID && mus_debug & MUS_DEBUG_THREAD)
 					ConsoleLog(LOG_DEBUG, "MUS:  MCI_CLOSE failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
 				else
 					ConsoleLog(LOG_ERROR, "MUS:  MCI_CLOSE failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
@@ -101,6 +300,18 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 			mciDevice = NULL;
 		}
 		else if (msg.message == WM_MUSIC_PLAY) {
+			if (bOptionsMusicEnabled && !bSettingsUseMP3Music && bUseFluidSynth) {
+				if (msg.wParam >= 10000 && msg.wParam <= 10018) {
+					std::string strSongPath = (char*)0x4CDB88;      // szSoundsPath
+					strSongPath += std::to_string(msg.wParam);
+					strSongPath += ".mid";
+					char* szSongPath = _strdup(strSongPath.c_str());
+
+					CreateThread(NULL, 0, FluidSynthWatchdogThread, szSongPath, 0, NULL);
+					goto next;
+				}
+			}
+
 			if (bOptionsMusicEnabled && !mciDevice) {
 				if (msg.wParam >= 10000 && msg.wParam <= 10018) {
 					std::string strSongPath = (char*)0x4CDB88;      // szSoundsPath
@@ -126,8 +337,8 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 					MCI_PLAY_PARMS mciPlayParms = { (DWORD_PTR)GameGetRootWindowHandle(), NULL, NULL};
 					dwMCIError = mciSendCommand(mciDevice, MCI_PLAY, MCI_NOTIFY, (DWORD_PTR)&mciPlayParms);
 					// SC2K sometimes tries to run over its own sequencer device. We ignore the
-					// error that causes (0x151) just like the game itself does.
-					if (dwMCIError && dwMCIError != 0x151) {
+					// error that causes (0x151, MCIERR_SEQ_PORT_INUSE) just like the game itself does.
+					if (dwMCIError && dwMCIError != MCIERR_SEQ_PORT_INUSE) {
 						char szErrorBuf[MAXERRORLENGTH];
 						mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
 						ConsoleLog(LOG_ERROR, "MUS:  MCI_PLAY failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);

@@ -38,6 +38,9 @@ BOOL bSettingsTitleCalendar = TRUE;
 BOOL bSettingsUseNewStrings = TRUE;
 BOOL bSettingsAlwaysSkipIntro = FALSE;
 
+extern BOOL bMusicFluidSynthEnabled;
+extern char szMusicFluidSynthSoundfontPath[MAX_PATH + 1];
+
 void SetGamePath(void) {
 	char szModulePathName[MAX_PATH];
 	GetModuleFileNameEx(GetCurrentProcess(), NULL, szModulePathName, MAX_PATH);
@@ -104,6 +107,19 @@ void LoadSettings(void) {
 	bSettingsTitleCalendar = GetPrivateProfileIntA(section, "bSettingsTitleCalendar", bSettingsTitleCalendar, ini_file);
 	bSettingsUseNewStrings = GetPrivateProfileIntA(section, "bSettingsUseNewStrings", bSettingsUseNewStrings, ini_file);
 	bSettingsAlwaysSkipIntro = GetPrivateProfileIntA(section, "bSettingsAlwaysSkipIntro", bSettingsAlwaysSkipIntro, ini_file);
+
+	// FluidSynth settings (experimental -- not exposed to GUI yet)
+	if (GetPrivateProfileSectionA("sc2kfix.fluidsynth", szSectionBuf, sizeof(szSectionBuf) - 1, ini_file)) {
+		ConsoleLog(LOG_INFO, "CORE: FluidSynth settings detected.\n");
+		bMusicFluidSynthEnabled = GetPrivateProfileIntA("sc2kfix.fluidsynth", "bMusicFluidSynthEnabled", FALSE, ini_file);
+		GetPrivateProfileStringA("sc2kfix.fluidsynth", "szMusicFluidSynthSoundfontPath", "", szMusicFluidSynthSoundfontPath, MAX_PATH, ini_file);
+
+		if (!strcmp(szMusicFluidSynthSoundfontPath, "") || !FileExists(szMusicFluidSynthSoundfontPath)) {
+			ConsoleLog(LOG_ERROR, "CORE: FluidSynth soundfont not specified or does not exist; disabling FluidSynth support.\n");
+			bMusicFluidSynthEnabled = FALSE;
+		} else
+			ConsoleLog(LOG_INFO, "CORE: Using \"%s\" as FluidSynth soundfont.\n", szMusicFluidSynthSoundfontPath);
+	}
 
 	SaveSettings(TRUE);
 }

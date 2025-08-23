@@ -43,6 +43,12 @@
     <Filter Include="Source Files\Third-Party\Kuroko\Modules">
       <UniqueIdentifier>{da293871-1f84-4121-af73-5026b14465d2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Third-Party\FluidSynth">
+      <UniqueIdentifier>{ad3671c0-defd-4a04-acf1-48765e217431}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Third-Party\FluidSynth">
+      <UniqueIdentifier>{04f88fc4-5fd6-400e-bb81-044b6785a05c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\sc2kfix.h">
@@ -98,6 +104,60 @@
     </ClInclude>
     <ClInclude Include="thirdparty\kuroko\vendor\rline.h">
       <Filter>Header Files\Third-Party\Kuroko</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\audio.h">
+      <Filter>Header Files\Third-Party\FluidSynth</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\event.h">
+      <Filter>Header Files\Third-Party\FluidSynth</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\gen.h">
+      <Filter>Header Files\Third-Party\FluidSynth</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\ladspa.h">
+      <Filter>Header Files\Third-Party\FluidSynth</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\log.h">
+      <Filter>Header Files\Third-Party\FluidSynth</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\midi.h">
+      <Filter>Header Files\Third-Party\FluidSynth</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\misc.h">
+      <Filter>Header Files\Third-Party\FluidSynth</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\mod.h">
+      <Filter>Header Files\Third-Party\FluidSynth</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\seq.h">
+      <Filter>Header Files\Third-Party\FluidSynth</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\seqbind.h">
+      <Filter>Header Files\Third-Party\FluidSynth</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\settings.h">
+      <Filter>Header Files\Third-Party\FluidSynth</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\sfont.h">
+      <Filter>Header Files\Third-Party\FluidSynth</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\shell.h">
+      <Filter>Header Files\Third-Party\FluidSynth</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\synth.h">
+      <Filter>Header Files\Third-Party\FluidSynth</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\types.h">
+      <Filter>Header Files\Third-Party\FluidSynth</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\version.h">
+      <Filter>Header Files\Third-Party\FluidSynth</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth\voice.h">
+      <Filter>Header Files\Third-Party\FluidSynth</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\fluidsynth\fluidsynth.h">
+      <Filter>Header Files\Third-Party\FluidSynth</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
