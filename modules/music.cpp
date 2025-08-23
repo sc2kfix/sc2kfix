@@ -77,6 +77,7 @@ int (*FS_fluid_midi_event_get_channel)(fluid_midi_event_t* event) = NULL;
 int (*FS_fluid_player_set_playback_callback)(fluid_player_t* player, handle_midi_event_func_t handler, void* handler_data) = NULL;
 int (*FS_fluid_synth_all_sounds_off)(fluid_synth_t* synth, int chan) = NULL;
 fluid_log_function_t (*FS_fluid_set_log_function)(int level, fluid_log_function_t fun, void* data);
+int (*FS_fluid_settings_setint)(fluid_settings_t* settings, const char* name, int val);
 
 void MusicShufflePlaylist(int iLastSongPlayed) {
 	if (bSettingsShuffleMusic) {
@@ -113,10 +114,6 @@ int MusicFluidSynthMidiEventHandler(void* data, fluid_midi_event_t* event) {
 
 void MusicFluidSynthLoggerError(int level, const char* message, void* data) {
 	ConsoleLog(LOG_ERROR, "MUS:  FluidSynth: %s\n", message);
-}
-
-void MusicFluidSynthLoggerWarning(int level, const char* message, void* data) {
-	ConsoleLog(LOG_WARNING, "MUS:  FluidSynth: %s\n", message);
 }
 
 void MusicFluidSynthLoggerNull(int level, const char* message, void* data) {
@@ -197,6 +194,8 @@ BOOL MusicLoadFluidSynth(void) {
 		bUseFluidSynth = FALSE;
 	if ((FS_fluid_set_log_function = (decltype(FS_fluid_set_log_function))GetProcAddress(hmodFluidSynth, "fluid_set_log_function")) == NULL)
 		bUseFluidSynth = FALSE;
+	if ((FS_fluid_settings_setint = (decltype(FS_fluid_settings_setint))GetProcAddress(hmodFluidSynth, "fluid_settings_setint")) == NULL)
+		bUseFluidSynth = FALSE;
 
 	// If any of our loads failed, release the FluidSynth library, throw an error, and fall 
 	// back to using MCI.
@@ -214,7 +213,7 @@ BOOL MusicLoadFluidSynth(void) {
 	pFluidSynthSynth = FS_new_fluid_synth(pFluidSynthSettings);
 	FS_fluid_set_log_function(FLUID_PANIC, MusicFluidSynthLoggerError, NULL);
 	FS_fluid_set_log_function(FLUID_ERR, MusicFluidSynthLoggerError, NULL);
-	FS_fluid_set_log_function(FLUID_WARN, MusicFluidSynthLoggerWarning, NULL);
+	FS_fluid_set_log_function(FLUID_WARN, MusicFluidSynthLoggerNull, NULL);
 	FS_fluid_set_log_function(FLUID_INFO, MusicFluidSynthLoggerNull, NULL);
 
 	return TRUE;
@@ -242,6 +241,11 @@ DWORD WINAPI FluidSynthWatchdogThread(LPVOID lpParameter) {
 	FS_fluid_player_set_playback_callback(pFluidSynthPlayer, MusicFluidSynthMidiEventHandler, pFluidSynthSynth);
 	FS_fluid_player_add(pFluidSynthPlayer, szSongPath);
 	pFluidSynthDriver = FS_new_fluid_audio_driver(pFluidSynthSettings, pFluidSynthSynth);
+
+	// Disable chorus
+	FS_fluid_settings_setint(pFluidSynthSettings, "synth.chorus.active", 0);
+
+	// Play track
 	FS_fluid_player_play(pFluidSynthPlayer);
 	bFluidSynthPlaying = TRUE;
 	
