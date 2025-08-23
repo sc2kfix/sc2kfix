@@ -116,8 +116,10 @@ void MusicFluidSynthLoggerError(int level, const char* message, void* data) {
 	ConsoleLog(LOG_ERROR, "MUS:  FluidSynth: %s\n", message);
 }
 
-void MusicFluidSynthLoggerNull(int level, const char* message, void* data) {
-	return;
+void MusicFluidSynthLoggerWarning(int level, const char* message, void* data) {
+	if (message && !strncmp(message, "SDL", 3))
+		return;
+	ConsoleLog(LOG_WARNING, "MUS:  FluidSynth: %s\n", message);
 }
 
 BOOL MusicLoadFluidSynth(void) {
@@ -206,15 +208,18 @@ BOOL MusicLoadFluidSynth(void) {
 	}
 
 	if (mus_debug & MUS_DEBUG_FLUIDSYNTH)
-		ConsoleLog(LOG_DEBUG, "MUS:  Loaded all 27 FluidSynth function pointers.\n");
+		ConsoleLog(LOG_DEBUG, "MUS:  Loaded FluidSynth function pointers.\n");
+
+	// Set FluidSynth's log functions
+	FS_fluid_set_log_function(FLUID_PANIC, MusicFluidSynthLoggerError, NULL);
+	FS_fluid_set_log_function(FLUID_ERR, MusicFluidSynthLoggerError, NULL);
+	FS_fluid_set_log_function(FLUID_WARN, MusicFluidSynthLoggerWarning, NULL);
+	FS_fluid_set_log_function(FLUID_INFO, NULL, NULL);
+	FS_fluid_set_log_function(FLUID_DBG, NULL, NULL);
 
 	// Create initial FluidSynth data
 	pFluidSynthSettings = FS_new_fluid_settings();
 	pFluidSynthSynth = FS_new_fluid_synth(pFluidSynthSettings);
-	FS_fluid_set_log_function(FLUID_PANIC, MusicFluidSynthLoggerError, NULL);
-	FS_fluid_set_log_function(FLUID_ERR, MusicFluidSynthLoggerError, NULL);
-	FS_fluid_set_log_function(FLUID_WARN, MusicFluidSynthLoggerNull, NULL);
-	FS_fluid_set_log_function(FLUID_INFO, MusicFluidSynthLoggerNull, NULL);
 
 	return TRUE;
 }
@@ -271,7 +276,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 	MCIERROR dwMCIError = NULL;
 
 	// Load the FluidSynth library if we need it
-	if (bMusicFluidSynthEnabled)
+	if (bMusicFluidSynthEnabled && !bSettingsUseMP3Music)
 		MusicLoadFluidSynth();
 	
 	while (GetMessage(&msg, NULL, 0, 0)) {
