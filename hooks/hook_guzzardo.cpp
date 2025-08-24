@@ -211,7 +211,7 @@ static BOOL FindTheHouse() {
 			SetTheHouseLabel(xPos, ySignPos);
 		// Set the Wind PowerPlant if it's not present
 		// (assuming the spot is still available).
-		Game_ItemPlacementCheck(xWindPos, yPos, TILE_POWERPLANT_WIND, 1);
+		Game_ItemPlacementCheck(xWindPos, yPos, TILE_POWERPLANT_WIND, AREA_1x1);
 		Game_CenterOnTileCoords(xPos, yPos);
 		return TRUE;
 	}
@@ -258,9 +258,9 @@ static BOOL BuildTheHouse() {
 					(xWindPos >= GAME_MAP_SIZE || yPos >= GAME_MAP_SIZE || !dwMapXBIT[xWindPos][yPos].b.iWater)) {
 					if (dwMapALTM[xPos][yPos].w.iLandAltitude == dwMapALTM[xPos][ySignPos].w.iLandAltitude &&
 						dwMapALTM[xPos][yPos].w.iLandAltitude == dwMapALTM[xWindPos][yPos].w.iLandAltitude) {
-						if (Game_ItemPlacementCheck(xPos, yPos, TILE_COMMERCIAL_1X1_BEDANDBREAKFAST, 1)) {
+						if (Game_ItemPlacementCheck(xPos, yPos, TILE_COMMERCIAL_1X1_BEDANDBREAKFAST, AREA_1x1)) {
 							SetTheHouseLabel(xPos, ySignPos);
-							Game_ItemPlacementCheck(xWindPos, yPos, TILE_POWERPLANT_WIND, 1);
+							Game_ItemPlacementCheck(xWindPos, yPos, TILE_POWERPLANT_WIND, AREA_1x1);
 							Game_CenterOnTileCoords(xPos, yPos);
 							return TRUE;
 						}
@@ -285,6 +285,9 @@ static void ChangeChurchZone() {
 					iReplaceTile = (rand() & 3) + 1; // Random rubble.
 					Game_PlaceTileWithMilitaryCheck(iLength, iDepth, iReplaceTile); // Replace
 					dwMapXZON[iLength][iDepth].b.iZoneType = ZONE_DENSE_RESIDENTIAL; // Re-zone
+					// It should be noted here that we're 'not' unsetting the powered/powerable
+					// bits so consequently once the tiles are replaced and re-zoned they will
+					// immediately grow.
 				}
 			}
 		}

@@ -97,7 +97,7 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		strTileInfo += ")\n\n";
 
 		// Raw XZON data
-		switch (dwMapXZON[iTileX][iTileY].b.iCorners) {
+		switch (XZONReturnShiftedCornerMask(iTileX, iTileY)) {
 		case CORNER_NONE:
 			strTileInfo += "No corners";
 			break;

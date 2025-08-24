@@ -53,12 +53,26 @@
 
 #define MAX_CITY_SUBTOOLS 12
 
+#define AREA_1x1 1
+#define AREA_2x2 2
+#define AREA_3x3 3
+#define AREA_4x4 4
+
 #define CORNER_NONE   0x0
-#define CORNER_BLEFT  0x1
-#define CORNER_BRIGHT 0x2
-#define CORNER_TLEFT  0x4
-#define CORNER_TRIGHT 0x8
+#define CORNER_BLEFT  0x10
+#define CORNER_BRIGHT 0x20
+#define CORNER_TLEFT  0x40
+#define CORNER_TRIGHT 0x80
 #define CORNER_ALL    (CORNER_BLEFT|CORNER_BRIGHT|CORNER_TLEFT|CORNER_TRIGHT)
+
+#define XBIT_SALTWATER 0x1
+#define XBIT_ROTATED   0x2
+#define XBIT_WATER     0x4
+#define XBIT_XVALMASK  0x8
+#define XBIT_WATERED   0x10
+#define XBIT_PIPED     0x20
+#define XBIT_POWERED   0x40
+#define XBIT_POWERABLE 0x80
 
 #define GAME_MAP_SIZE 128
 
@@ -1179,7 +1193,7 @@ GAMECALL(0x40106E, int, __cdecl, PlaceRoadAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x401096, int, __thiscall, SoundPlaySound, void* pThis, int iSoundID)
 GAMECALL(0x4011E5, BOOL, __thiscall, CSoundMapToolSoundTrigger, CSound* pThis)
 GAMECALL(0x4012C1, int, __cdecl, SpawnItem, __int16 x, __int16 y)
-GAMECALL(0x401460, char, __cdecl, SimulationProvisionMicrosim, __int16, int, __int16 iTileID) // The first two arguments aren't clear, though they "could" be the X/Y tile coordinates.
+GAMECALL(0x401460, BYTE, __cdecl, SimulationProvisionMicrosim, __int16, __int16, __int16 iTileID) // The first two arguments aren't clear, though they "could" be the X/Y tile coordinates.
 GAMECALL(0x4014CE, int, __cdecl, SpawnAeroplane, __int16 x, __int16 y, __int16 iDirection)
 GAMECALL(0x4014F1, int, __thiscall, TileHighlightUpdate, void *pThis)
 GAMECALL(0x40150A, int, __thiscall, ExitRequester, void *pThis, int iSource)
@@ -1222,7 +1236,7 @@ GAMECALL(0x4026B2, int, __cdecl, SimulationGrowSpecificZone, __int16 x, __int16 
 GAMECALL(0x402725, int, __cdecl, PlacePowerLinesAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x402798, int, __cdecl, MapToolPlaceForest, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x4027A7, void, __thiscall, CSimCityView_OnVScroll, void *pThis, int nSBCode, __int16 nPos, DWORD *pScrollBar)
-GAMECALL(0x4027F2, int, __cdecl, ItemPlacementCheck, __int16 x, int y, __int16 iTileID, __int16 iTileArea)
+GAMECALL(0x4027F2, int, __cdecl, ItemPlacementCheck, __int16 x, __int16 y, BYTE iTileID, __int16 iTileArea)
 GAMECALL(0x402810, int, __thiscall, UpdateAreaCompleteColorFill, void *) // This appears to be a more comprehensive update that'll occur for highlighted/selected area or when you're moving the game area.
 GAMECALL(0x40281F, int, __cdecl, RunTripGenerator, __int16 x, __int16 y, __int16 iZoneType, __int16 iBuildingPopLevel, __int16 iTripMaxSteps)
 GAMECALL(0x402829, void, __cdecl, SpawnShip, __int16 x, __int16 y)
@@ -1421,13 +1435,30 @@ GAMEOFF(WORD,	wSailingBoats,				0x4E99D0)
 GAMEOFF(DWORD,	dwCityRewardsUnlocked,		0x4E9A24)
 GAMEOFF(WORD,	wTileHighlightActive,		0x4EA7F0)
 
-// Pending classification
+// Specific tile corner, length and depth cases.
+//
+// If need be these can be added to the main list.
+//
+// The commented out 'wTileStart' remote vars were previously
+// used instead of 'wTileArea', the primary difference is that
+// the 'wTileStart' cases were looking at subsequent values
+// outside of their immediate arrays (4 * wViewRotation) - looking
+// for the equivalent next value in subsequent arrays, whereas the
+// new 'wTileArea' arrays just use wViewRotation which will find the
+// next direct value which is otherwise identical to what you would
+// have got originally.
+//GAMEOFF_ARR(WORD, wTileStartBottomLeftCorner,	0x4DC4D0)
+//GAMEOFF_ARR(WORD, wTileStartBottomRightCorner,	0x4DC4D2)
+//GAMEOFF_ARR(WORD, wTileStartTopLeftCorner,	0x4DC4D4)
+//GAMEOFF_ARR(WORD, wTileStartTopRightCorner,	0x4DC4D6)
 GAMEOFF_ARR(WORD, wTileAreaBottomLeftCorner,	0x4DC4D0)
-GAMEOFF_ARR(WORD, wTileAreaBottomRightCorner,	0x4DC4D2)
-GAMEOFF_ARR(WORD, wTileAreaTopLeftCorner,	0x4DC4D4)
-GAMEOFF_ARR(WORD, wTileAreaTopRightCorner,	0x4DC4D6)
-GAMEOFF_ARR(WORD, wSomePierLengthWays,		0x4E75C0)
-GAMEOFF_ARR(WORD, wSomePierDepthWays,		0x4E75C8)
+GAMEOFF_ARR(WORD, wTileAreaBottomRightCorner,	0x4DC4D8)
+GAMEOFF_ARR(WORD, wTileAreaTopLeftCorner,	0x4DC4E0)
+GAMEOFF_ARR(WORD, wTileAreaTopRightCorner,	0x4DC4E8)
+GAMEOFF_ARR(WORD, wTilePierLengthWays,		0x4E75C0)
+GAMEOFF_ARR(WORD, wTilePierDepthWays,		0x4E75C8)
+
+// Pending classification
 
 // Pointers to map arrays
 
@@ -1502,6 +1533,49 @@ static inline HWND GameGetRootWindowHandle(void) {
 // XXX: should we be using something like htnol here?
 static inline DWORD SwapDWORD(DWORD dwData) {
 	return _byteswap_ulong(dwData);
+}
+
+
+static inline BOOL IsEvenAxis(__int16 iAxis) {
+	return (iAxis % 2) == 0 ? TRUE : FALSE;
+}
+// These four functions will perform either an absolute comparison or that the
+// passed mask/angle is present within the current XZON coordinate corner mask.
+// The passed mask/angle is shifted to the right by 4.
+static inline BOOL XZONCornerAbsoluteCheckMask(__int16 x, __int16 y, BYTE cornerMask) {
+	return (dwMapXZON[x][y].b.iCorners == (cornerMask >> 4));
+}
+
+static inline BOOL XZONCornerAbsoluteCheck(__int16 x, __int16 y, WORD wAngle) {
+	return (dwMapXZON[x][y].b.iCorners == (wAngle >> 4));
+}
+
+static inline BOOL XZONCornerCheckMask(__int16 x, __int16 y, BYTE cornerMask) {
+	return (dwMapXZON[x][y].b.iCorners & (cornerMask >> 4));
+}
+
+static inline BOOL XZONCornerCheck(__int16 x, __int16 y, WORD wAngle) {
+	return (dwMapXZON[x][y].b.iCorners & (wAngle >> 4));
+}
+
+// Return the XZON coordinate corner mask left-shifted by 4.
+// This will then match the 'CORNER_' macro bits.
+static inline BYTE XZONReturnShiftedCornerMask(__int16 x, __int16 y) {
+	return dwMapXZON[x][y].b.iCorners << 4;
+}
+
+// These functions will right-shift the mask/angle by 4 and set it as the
+// XZON coordinate mask.
+static inline void XZONSetCornerAbsoluteMask(__int16 x, __int16 y, BYTE cornerMask) {
+	dwMapXZON[x][y].b.iCorners = cornerMask >> 4;
+}
+
+static inline void XZONSetCornerAbsolute(__int16 x, __int16 y, WORD wAngle) {
+	dwMapXZON[x][y].b.iCorners = wAngle >> 4;
+}
+
+static inline void XZONSetCornerMask(__int16 x, __int16 y, BYTE cornerMask) {
+	dwMapXZON[x][y].b.iCorners |= cornerMask >> 4;
 }
 
 typedef struct {

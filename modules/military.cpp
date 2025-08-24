@@ -65,7 +65,8 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 		// TERRAIN_00 check added here to avoid the runwaycross
 		// being placed into a dip (likely replacing a slope or granite block).
 		if (!dwMapXTER[x1][y1].iTileID) {
-			dwMapXZON[x1][y1].b.iCorners = 0xF;
+			ConsoleLog(LOG_DEBUG, "SCM: (%d, %d) (%u >> %u) (%u)\n", x1, y1, CORNER_ALL, CORNER_ALL >> 4, 0xF);
+			XZONSetCornerAbsoluteMask(x1, y1, CORNER_ALL);
 			Game_PlaceTileWithMilitaryCheck(x1, y1, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 		}
 	}
@@ -73,7 +74,8 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 		// TERRAIN_00 check added here to avoid the runwaycross
 		// being placed into a dip (likely replacing a slope or granite block).
 		if (!dwMapXTER[iX][iY].iTileID) {
-			dwMapXZON[iX][iY].b.iCorners = 0xF;
+			ConsoleLog(LOG_DEBUG, "SCM: (%d, %d) (%u >> %u) (%u)\n", x1, y1, CORNER_ALL, CORNER_ALL >> 4, 0xF);
+			XZONSetCornerAbsoluteMask(iX, iY, CORNER_ALL);
 			Game_PlaceTileWithMilitaryCheck(iX, iY, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 		}
 	}
@@ -334,41 +336,38 @@ void PlaceMissileSilo(__int16 m_x, __int16 m_y) {
 		--y;
 	}
 
-	iX = x;
 	iItemWidth = x + iArea;
 	if (iItemWidth >= x) {
 		iItemDepth = y + iArea;
-		do {
-			for (iY = y; iY <= iItemDepth; ++iY) {
-				Game_PlaceTileWithMilitaryCheck(iX, iY, TILE_MILITARY_MISSILESILO);
-				Game_PlaceUndergroundTiles(iX, iY, TILE_ROAD_HLR);
+		if (iItemDepth >= y) {
+			for (iX = x; iX <= iItemWidth; ++iX) {
+				for (iY = y; iY <= iItemDepth; ++iY) {
+					Game_PlaceTileWithMilitaryCheck(iX, iY, TILE_MILITARY_MISSILESILO);
+					Game_PlaceUndergroundTiles(iX, iY, TILE_ROAD_HLR);
+				}
 			}
-			++iX;
-		} while (iX <= iItemWidth);
+		}
 	}
 	if (iArea) {
-		if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE) {
-			dwMapXZON[x][y].b.iCorners = wTileAreaBottomLeftCorner[4 * wViewRotation] >> 4;
-		}
+		if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
+			XZONSetCornerAbsolute(x, y, wTileAreaBottomLeftCorner[wViewRotation]);
 		iCorner[0] = iArea + x;
-		if ((iArea + x) > -1 && iCorner[0] < GAME_MAP_SIZE && y < GAME_MAP_SIZE) {
-			dwMapXZON[iCorner[0]][y].b.iCorners = wTileAreaBottomRightCorner[4 * wViewRotation] >> 4;
-		}
+		if (iCorner[0] >= 0 && iCorner[0] < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
+			XZONSetCornerAbsolute(iCorner[0], y, wTileAreaBottomRightCorner[wViewRotation]);
 		if (iCorner[0] < GAME_MAP_SIZE) {
 			iCorner[1] = y + iArea;
-			if ((y + iArea) > -1 && iCorner[1] < GAME_MAP_SIZE) {
-				dwMapXZON[iCorner[0]][iCorner[1]].b.iCorners = wTileAreaTopLeftCorner[4 * wViewRotation] >> 4;
-			}
+			if (iCorner[1] >= 0 && iCorner[1] < GAME_MAP_SIZE)
+				XZONSetCornerAbsolute(iCorner[0], iCorner[1], wTileAreaTopLeftCorner[wViewRotation]);
 		}
 		if (x < GAME_MAP_SIZE) {
 			iCorner[2] = iArea + y;
-			if ((iArea + y) > -1 && iCorner[2] < GAME_MAP_SIZE) {
-				dwMapXZON[x][iCorner[2]].b.iCorners = wTileAreaTopRightCorner[4 * wViewRotation] >> 4;
-			}
+			if (iCorner[2] >= 0 && iCorner[2] < GAME_MAP_SIZE)
+				XZONSetCornerAbsolute(x, iCorner[2], wTileAreaTopRightCorner[wViewRotation]);
 		}
 	}
 	else if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE) {
-		*(BYTE *)&dwMapXZON[x][y].b |= 0xF0u;
+		// Set the 1x1 XZON tile coordinate iCorner mask to all corners.
+		XZONSetCornerMask(x, y, CORNER_ALL);
 	}
 	Game_SpawnItem(x, y + iArea);
 }
