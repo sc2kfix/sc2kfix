@@ -2932,6 +2932,10 @@ void InstallMiscHooks_SC2K1996(void) {
 	VirtualProtect((LPVOID)0x43F3A4, 4, PAGE_EXECUTE_READWRITE, &dwDummy); // CityToolMenuAction
 	*(DWORD*)0x43F3A4 = 50000000; // Power
 
+	// Fix the pipe tool not refreshing properly at max zoom
+	VirtualProtect((LPVOID)0x43F447, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWCALL((LPVOID)0x43F447, 0x402810);		// CSimcityView::UpdateAreaCompleteColorFill
+
 	// Install hooks for saving and loading
 	InstallSaveHooks();
 
