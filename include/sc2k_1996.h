@@ -1574,9 +1574,20 @@ static inline void XZONSetCornerAbsolute(__int16 x, __int16 y, WORD wAngle) {
 	dwMapXZON[x][y].b.iCorners = wAngle >> 4;
 }
 
-static inline void XZONSetCornerMask(__int16 x, __int16 y, BYTE cornerMask) {
-	dwMapXZON[x][y].b.iCorners |= cornerMask >> 4;
-}
+// This coordinate structure is used for the missile silo
+// case (potentially for any modifications to the naval yard
+// case as well).
+typedef struct {
+	__int16 x;
+	__int16 y;
+} coords_w_t;
+
+// This coordinate structure was used natively in the Win95
+// game, putting this here for now though currently unused.
+typedef struct {
+	int x;
+	int y;
+} coords_dw_t;
 
 typedef struct {
 	WORD nArcID;

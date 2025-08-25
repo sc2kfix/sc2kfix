@@ -1299,7 +1299,7 @@ SKIPSECONDROTATIONCHECK:
 									Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 									if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE) {
 										// This sets the given 1x1 runwaycross XZON tile coordinate iCorner mask to all corners.
-										XZONSetCornerMask(x, y, CORNER_ALL);
+										XZONSetCornerAbsoluteMask(x, y, CORNER_ALL);
 									}
 									if (iZoneType != ZONE_MILITARY) {
 										if (x <= -1)
@@ -1331,7 +1331,7 @@ RUNWAY_GOBACK:
 							Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_RUNWAY);
 							if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE) {
 								// This sets the given 1x1 runway XZON tile coordinate iCorner mask to all corners.
-								XZONSetCornerMask(x, y, CORNER_ALL);
+								XZONSetCornerAbsoluteMask(x, y, CORNER_ALL);
 							}
 							if (iZoneType != ZONE_MILITARY && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 								*(BYTE *)&dwMapXBIT[x][y].b |= 0xC0u;
@@ -1416,7 +1416,7 @@ PIER_GOTOTHREE:
 				Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_PIER);
 				if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE) {
 					// This sets the given 1x1 pier XZON tile coordinate iCorner mask to all corners.
-					XZONSetCornerMask(x, y, CORNER_ALL);
+					XZONSetCornerAbsoluteMask(x, y, CORNER_ALL);
 				}
 				if (iToRotate) {
 					if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
@@ -1733,7 +1733,7 @@ GOFORWARD:
 			}
 			else if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE) {
 				// Set the 1x1 XZON tile coordinate iCorner mask to all corners.
-				XZONSetCornerMask(x, y, CORNER_ALL);
+				XZONSetCornerAbsoluteMask(x, y, CORNER_ALL);
 			}
 			Game_SpawnItem(x, y + iArea);
 			return 1;

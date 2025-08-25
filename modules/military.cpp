@@ -367,7 +367,7 @@ void PlaceMissileSilo(__int16 m_x, __int16 m_y) {
 	}
 	else if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE) {
 		// Set the 1x1 XZON tile coordinate iCorner mask to all corners.
-		XZONSetCornerMask(x, y, CORNER_ALL);
+		XZONSetCornerAbsoluteMask(x, y, CORNER_ALL);
 	}
 	Game_SpawnItem(x, y + iArea);
 }
@@ -410,13 +410,13 @@ static int CheckOverlappingSiloPosition(__int16 x1, __int16 y1, __int16 x2, __in
 	return 0;
 }
 
-static int CheckForOverlappingSiloPositions(WORD *wSiloPos, int iPos, __int16 x1, __int16 y1) {
+static int CheckForOverlappingSiloPositions(coords_w_t *wSiloPos, int iPos, __int16 x1, __int16 y1) {
 	int i;
 	__int16 x2, y2;
 
 	for (i = 0; i < iPos; i++) {
-		x2 = wSiloPos[2 * i];
-		y2 = wSiloPos[2 * i + 1];
+		x2 = wSiloPos[i].x;
+		y2 = wSiloPos[i].y;
 		if (CheckOverlappingSiloPosition(x1, y1, x2, y2))
 			return 1;
 		//ConsoleLog(LOG_DEBUG, "CheckForOverlappingSiloPositions(): (%d/%d) X/Y1(%d,%d), X/Y2(%d,%d)\n", i+1, iPos, x1, y1, x2, y2);
@@ -487,7 +487,7 @@ static int MilitaryBaseMissileSilos(int iValidAltitudeTiles, int iValidTiles, bo
 	int iSiloIdx;
 	__int16 iCurrPos;
 	__int16 iArrPos;
-	WORD wSiloPos[12];
+	coords_w_t wSiloPos[6];
 	
 	int iVTiles = iValidTiles;
 	if (iValidAltitudeTiles < 40 || force) {
@@ -560,9 +560,9 @@ RETRY_CHECK1:
 				}
 				if (iTileArea == 9) {
 					iSiloIdx = iVTiles++;
-					wSiloPos[2 * iSiloIdx] = iAltPosOne;
-					wSiloPos[2 * iSiloIdx + 1] = iAltPosTwo;
-					//ConsoleLog(LOG_DEBUG, "DBG: iTileArea == 9: (%d) (%u, %d)\n", iSiloIdx, wSiloPos[2 * iSiloIdx], wSiloPos[2 * iSiloIdx + 1]);
+					wSiloPos[iSiloIdx].x = iAltPosOne;
+					wSiloPos[iSiloIdx].y = iAltPosTwo;
+					//ConsoleLog(LOG_DEBUG, "DBG: iTileArea == 9: (%d) (%u, %d)\n", iSiloIdx, wSiloPos[iSiloIdx].x, wSiloPos[iSiloIdx].y);
 				}
 			} while (iVTiles < 6);
 		}
@@ -577,10 +577,10 @@ RETRY_CHECK1:
 			__int16 iSiloStartYPos = 0;
 			bMilitaryBaseType = MILITARY_BASE_MISSILE_SILOS;
 			for (iSiloIdx = 0; iSiloIdx < 6; iSiloIdx++) {
-				__int16 iSiloXPos = wSiloPos[2 * iSiloIdx];
+				__int16 iSiloXPos = wSiloPos[iSiloIdx].x;
 				iSiloStartXPos = iSiloXPos;
 				__int16 iSiloYPos;
-				for (iSiloStartYPos = wSiloPos[2 * iSiloIdx + 1]; iSiloStartXPos + 3 > iSiloXPos; iSiloXPos = iSiloXPos + 1) {
+				for (iSiloStartYPos = wSiloPos[iSiloIdx].y; iSiloStartXPos + 3 > iSiloXPos; iSiloXPos = iSiloXPos + 1) {
 					for (iSiloYPos = iSiloStartYPos; iSiloStartYPos + 3 > iSiloYPos; ++*dwMilitaryTiles) {
 						BYTE iBuildingArea = dwMapXBLD[iSiloXPos][iSiloYPos].iTileID;
 						--dwTileCount[iBuildingArea];
