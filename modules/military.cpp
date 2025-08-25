@@ -51,13 +51,13 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 		iNewY = y1;
 		iY = y1;
 		while (Game_MaybeRoadViabilityAlongPath(&iNewX, &iNewY)) {
-			dwMapXZON[iX][iY].b.iZoneType = ZONE_MILITARY;
+			XZONSetNewZone(iX, iY, ZONE_MILITARY);
 			Game_CheckAndAdjustTraversableTerrain(iX, iY);
 			Game_PlaceRoadAtCoordinates(iX, iY);
 			iX = iNewX;
 			iY = iNewY;
 		}
-		dwMapXZON[iX][iY].b.iZoneType = ZONE_MILITARY;
+		XZONSetNewZone(iX, iY, ZONE_MILITARY);
 		Game_CheckAndAdjustTraversableTerrain(iX, iY);
 		Game_PlaceRoadAtCoordinates(iX, iY);
 	}
@@ -66,7 +66,7 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 		// being placed into a dip (likely replacing a slope or granite block).
 		if (!dwMapXTER[x1][y1].iTileID) {
 			ConsoleLog(LOG_DEBUG, "SCM: (%d, %d) (%u >> %u) (%u)\n", x1, y1, CORNER_ALL, CORNER_ALL >> 4, 0xF);
-			XZONSetCornerAbsoluteMask(x1, y1, CORNER_ALL);
+			XZONSetCornerMask(x1, y1, CORNER_ALL);
 			Game_PlaceTileWithMilitaryCheck(x1, y1, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 		}
 	}
@@ -75,7 +75,7 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 		// being placed into a dip (likely replacing a slope or granite block).
 		if (!dwMapXTER[iX][iY].iTileID) {
 			ConsoleLog(LOG_DEBUG, "SCM: (%d, %d) (%u >> %u) (%u)\n", x1, y1, CORNER_ALL, CORNER_ALL >> 4, 0xF);
-			XZONSetCornerAbsoluteMask(iX, iY, CORNER_ALL);
+			XZONSetCornerMask(iX, iY, CORNER_ALL);
 			Game_PlaceTileWithMilitaryCheck(iX, iY, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 		}
 	}
@@ -279,15 +279,15 @@ static int isValidSiloPos(__int16 m_x, __int16 m_y, bool bPlotCheck) {
 				return 0;
 			}
 			if (bPlotCheck) {
-				if (dwMapXZON[iX][iY].b.iZoneType != ZONE_NONE) {
+				if (XZONReturnZone(iX, iY) != ZONE_NONE) {
 					return 0;
 				}
 			}
 			else {
-				if (dwMapXZON[iX][iY].b.iZoneType != ZONE_MILITARY) {
+				if (XZONReturnZone(iX, iY) != ZONE_MILITARY) {
 					return 0;
 				}
-				if (dwMapXZON[iX][iY].b.iZoneType == ZONE_MILITARY) {
+				if (XZONReturnZone(iX, iY) == ZONE_MILITARY) {
 					if (iBuilding == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
 						iBuilding == TILE_ROAD_LR ||
 						iBuilding == TILE_ROAD_TB)
@@ -343,31 +343,45 @@ void PlaceMissileSilo(__int16 m_x, __int16 m_y) {
 			for (iX = x; iX <= iItemWidth; ++iX) {
 				for (iY = y; iY <= iItemDepth; ++iY) {
 					Game_PlaceTileWithMilitaryCheck(iX, iY, TILE_MILITARY_MISSILESILO);
-					Game_PlaceUndergroundTiles(iX, iY, TILE_ROAD_HLR);
+					Game_PlaceUndergroundTiles(iX, iY, UNDER_TILE_MISSILESILO);
+					// When this block is uncommented it sets both the corner and zone
+					// to none (based on current observed behaviour).
+					/*if (iX >= 0) {
+						if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE) {
+							ConsoleLog(LOG_DEBUG, "MS: 0 - Corners: [%s] (%d, %d) (%u) (%u)\n", szTileNames[TILE_MILITARY_MISSILESILO], iX, iY, *(BYTE *)&dwMapXZON[iX][iY].b & CORNER_BOUNDARY, dwMapXZON[iX][iY].b.iCorners);
+							XZONCheckCornerActiveBitsAgainstBoundary(iX, iY);
+							ConsoleLog(LOG_DEBUG, "MS: 1 - Corners: [%s] (%d, %d) (%u) (%u)\n", szTileNames[TILE_MILITARY_MISSILESILO], iX, iY, *(BYTE *)&dwMapXZON[iX][iY].b & CORNER_BOUNDARY, dwMapXZON[iX][iY].b.iCorners);
+						}
+						if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE) {
+							ConsoleLog(LOG_DEBUG, "MS: 0 - Zones: [%s] (%d, %d) (%u) (%u)\n", szTileNames[TILE_MILITARY_MISSILESILO], iX, iY, *(BYTE *)&dwMapXZON[iX][iY].b & ZONE_BOUNDARY, dwMapXZON[iX][iY].b.iZoneType);
+							XZONCheckZoneActiveBitsAgainstBoundary(iX, iY);
+							ConsoleLog(LOG_DEBUG, "MS: 1 - Zones: [%s] (%d, %d) (%u) (%u)\n", szTileNames[TILE_MILITARY_MISSILESILO], iX, iY, *(BYTE *)&dwMapXZON[iX][iY].b & ZONE_BOUNDARY, dwMapXZON[iX][iY].b.iZoneType);
+						}
+					}*/
 				}
 			}
 		}
 	}
 	if (iArea) {
 		if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-			XZONSetCornerAbsolute(x, y, wTileAreaBottomLeftCorner[wViewRotation]);
+			XZONSetCornerAngle(x, y, wTileAreaBottomLeftCorner[wViewRotation]);
 		iCorner[0] = iArea + x;
 		if (iCorner[0] >= 0 && iCorner[0] < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-			XZONSetCornerAbsolute(iCorner[0], y, wTileAreaBottomRightCorner[wViewRotation]);
+			XZONSetCornerAngle(iCorner[0], y, wTileAreaBottomRightCorner[wViewRotation]);
 		if (iCorner[0] < GAME_MAP_SIZE) {
 			iCorner[1] = y + iArea;
 			if (iCorner[1] >= 0 && iCorner[1] < GAME_MAP_SIZE)
-				XZONSetCornerAbsolute(iCorner[0], iCorner[1], wTileAreaTopLeftCorner[wViewRotation]);
+				XZONSetCornerAngle(iCorner[0], iCorner[1], wTileAreaTopLeftCorner[wViewRotation]);
 		}
 		if (x < GAME_MAP_SIZE) {
 			iCorner[2] = iArea + y;
 			if (iCorner[2] >= 0 && iCorner[2] < GAME_MAP_SIZE)
-				XZONSetCornerAbsolute(x, iCorner[2], wTileAreaTopRightCorner[wViewRotation]);
+				XZONSetCornerAngle(x, iCorner[2], wTileAreaTopRightCorner[wViewRotation]);
 		}
 	}
 	else if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE) {
 		// Set the 1x1 XZON tile coordinate iCorner mask to all corners.
-		XZONSetCornerAbsoluteMask(x, y, CORNER_ALL);
+		XZONSetCornerMask(x, y, CORNER_ALL);
 	}
 	Game_SpawnItem(x, y + iArea);
 }
@@ -464,7 +478,7 @@ static void MilitaryBasePlotCheck(__int16 *iVAltitudeTiles, __int16 *iVTiles, __
 						iYPosStep >= GAME_MAP_SIZE || // (Not present in the DOS-equivalent)
 						dwMapXBIT[iXPosStep][iYPosStep].b.iWater == 0
 						) &&
-					dwMapXZON[iXPosStep][iYPosStep].b.iZoneType == ZONE_NONE
+					XZONReturnZone(iXPosStep, iYPosStep) == ZONE_NONE
 					) {
 					++iValidTiles;
 					if (dwMapALTM[iXPosStep][iYPosStep].w.iLandAltitude == iBaseLevel)
@@ -531,7 +545,7 @@ RETRY_CHECK1:
 								dwMapXBIT[iLengthWays][iDepthWays].b.iWater == 0
 								) &&
 							dwMapALTM[iLengthWays][iDepthWays].w.iLandAltitude == iBaseLevel &&
-							dwMapXZON[iLengthWays][iDepthWays].b.iZoneType != ZONE_MILITARY &&
+							XZONReturnZone(iLengthWays, iDepthWays) != ZONE_MILITARY &&
 							!dwMapXUND[iAltPosOne][iAltPosTwo].iTileID
 							) {
 							if (isValidSiloPos(iLengthWays, iDepthWays, true)) {
@@ -584,9 +598,8 @@ RETRY_CHECK1:
 					for (iSiloYPos = iSiloStartYPos; iSiloStartYPos + 3 > iSiloYPos; ++*dwMilitaryTiles) {
 						BYTE iBuildingArea = dwMapXBLD[iSiloXPos][iSiloYPos].iTileID;
 						--dwTileCount[iBuildingArea];
-						if (iSiloXPos < GAME_MAP_SIZE && iSiloYPos < GAME_MAP_SIZE) {
-							dwMapXZON[iSiloXPos][iSiloYPos].b.iZoneType = ZONE_MILITARY;
-						}
+						if (iSiloXPos < GAME_MAP_SIZE && iSiloYPos < GAME_MAP_SIZE)
+							XZONSetNewZone(iSiloXPos, iSiloYPos, ZONE_MILITARY);
 						++iSiloYPos;
 					}
 				}
@@ -614,13 +627,12 @@ static void MilitaryBasePlotPlacement(__int16 iRandXPos, __int16 iRandStoredYPos
 					iCurrYPos >= GAME_MAP_SIZE ||
 					dwMapXBIT[iCurrXPos][iCurrYPos].b.iWater == 0
 					) &&
-				dwMapXZON[iCurrXPos][iCurrYPos].b.iZoneType == ZONE_NONE &&
+				XZONReturnZone(iCurrXPos, iCurrYPos) == ZONE_NONE &&
 				!dwMapXUND[iRandXPos][iRandStoredYPos].iTileID
 				) {
 				--dwTileCount[iMilitaryArea];
-				if (iCurrXPos < GAME_MAP_SIZE && iCurrYPos < GAME_MAP_SIZE) {
-					dwMapXZON[iCurrXPos][iCurrYPos].b.iZoneType = ZONE_MILITARY;
-				}
+				if (iCurrXPos < GAME_MAP_SIZE && iCurrYPos < GAME_MAP_SIZE)
+					XZONSetNewZone(iCurrXPos, iCurrYPos, ZONE_MILITARY);
 				++*dwMilitaryTiles;
 			}
 		}
@@ -806,7 +818,7 @@ PLACENAVAL:
 							if (
 								((iMilitaryArea >= TILE_CLEAR && iMilitaryArea <= TILE_RUBBLE4) ||
 								(iMilitaryArea >= TILE_TREES1 && iMilitaryArea < TILE_SMALLPARK)) &&
-								dwMapXZON[iDirectionOne][iDirectionTwo].b.iZoneType == ZONE_NONE &&
+								XZONReturnZone(iDirectionOne, iDirectionTwo) == ZONE_NONE &&
 								!dwMapXTER[iDirectionOne][iDirectionTwo].iTileID &&
 								!isValidWaterBody(iDirectionOne, iDirectionTwo) &&
 								!dwMapXUND[iDirectionOne][iDirectionTwo].iTileID &&
@@ -815,7 +827,7 @@ PLACENAVAL:
 								if (!iNonContiguousDepth) {
 									if (iPass) {
 										Game_PlaceTileWithMilitaryCheck(iDirectionOne, iDirectionTwo, 0);
-										dwMapXZON[iDirectionOne][iDirectionTwo].b.iZoneType = ZONE_MILITARY;
+										XZONSetNewZone(iDirectionOne, iDirectionTwo, ZONE_MILITARY);
 										--dwTileCount[iMilitaryArea];
 										++*dwMilitaryTiles;
 									}

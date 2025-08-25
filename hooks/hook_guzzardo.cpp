@@ -194,7 +194,7 @@ static BOOL FindTheHouse() {
 	for (iLength = 0; iLength < GAME_MAP_SIZE; ++iLength) {
 		for (iDepth = 0; iDepth < GAME_MAP_SIZE; ++iDepth) {
 			if (dwMapXBLD[iLength][iDepth].iTileID == TILE_COMMERCIAL_1X1_BEDANDBREAKFAST) {
-				if (dwMapXZON[iLength][iDepth].b.iZoneType == ZONE_NONE) {
+				if (XZONReturnZone(iLength, iDepth) == ZONE_NONE) {
 					xPos = iLength;
 					yPos = iDepth;
 					xWindPos = xPos - 1;
@@ -281,10 +281,10 @@ static void ChangeChurchZone() {
 	for (iLength = 0; iLength < GAME_MAP_SIZE; ++iLength) {
 		for (iDepth = 0; iDepth < GAME_MAP_SIZE; ++iDepth) {
 			if (dwMapXBLD[iLength][iDepth].iTileID == TILE_INFRASTRUCTURE_CHURCH) {
-				if (dwMapXZON[iLength][iDepth].b.iZoneType == ZONE_NONE) {
+				if (XZONReturnZone(iLength, iDepth) == ZONE_NONE) {
 					iReplaceTile = (rand() & 3) + 1; // Random rubble.
 					Game_PlaceTileWithMilitaryCheck(iLength, iDepth, iReplaceTile); // Replace
-					dwMapXZON[iLength][iDepth].b.iZoneType = ZONE_DENSE_RESIDENTIAL; // Re-zone
+					XZONSetNewZone(iLength, iDepth, ZONE_DENSE_RESIDENTIAL); // Re-zone
 					// It should be noted here that we're 'not' unsetting the powered/powerable
 					// bits so consequently once the tiles are replaced and re-zoned they will
 					// immediately grow.

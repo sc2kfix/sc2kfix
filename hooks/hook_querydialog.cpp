@@ -62,7 +62,7 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		strTileHeader += std::to_string(iTileY);
 
 		// Build the data string
-		strTileInfo =  GetZoneName(dwMapXZON[iTileX][iTileY].b.iZoneType);
+		strTileInfo =  GetZoneName(XZONReturnZone(iTileX, iTileY));
 		strTileInfo += "\n";
 		
 		// Altitude/depth
@@ -97,7 +97,7 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		strTileInfo += ")\n\n";
 
 		// Raw XZON data
-		switch (XZONReturnShiftedCornerMask(iTileX, iTileY)) {
+		switch (XZONReturnCornerMask(iTileX, iTileY)) {
 		case CORNER_NONE:
 			strTileInfo += "No corners";
 			break;
@@ -118,7 +118,7 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 			break;
 		}
 		strTileInfo += ", iZoneID ";
-		strTileInfo += HexPls(dwMapXZON[iTileX][iTileY].b.iZoneType, 1);
+		strTileInfo += HexPls(XZONReturnZone(iTileX, iTileY), 1);
 		strTileInfo += "\n";
 
 		// XBIT
