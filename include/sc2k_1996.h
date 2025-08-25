@@ -1167,7 +1167,7 @@ GAMECALL(0x402798, int, __cdecl, MapToolPlaceForest, __int16 iTileTargetX, __int
 GAMECALL(0x4027A7, void, __thiscall, CSimCityView_OnVScroll, void *pThis, int nSBCode, __int16 nPos, DWORD *pScrollBar)
 GAMECALL(0x4027F2, int, __cdecl, ItemPlacementCheck, __int16 x, int y, __int16 iTileID, __int16 iTileArea)
 GAMECALL(0x402810, int, __thiscall, UpdateAreaCompleteColorFill, void *) // This appears to be a more comprehensive update that'll occur for highlighted/selected area or when you're moving the game area.
-GAMECALL(0x40281F, int, __cdecl, UpdateDisasterAndTransitStats, __int16 x, __int16 y, __int16 iZoneType, __int16 iBuildingPopLevel, __int16)
+GAMECALL(0x40281F, int, __cdecl, RunTripGenerator, __int16 x, __int16 y, __int16 iZoneType, __int16 iBuildingPopLevel, __int16 iTripMaxSteps)
 GAMECALL(0x402829, void, __cdecl, SpawnShip, __int16 x, __int16 y)
 GAMECALL(0x402900, int, __cdecl, NewspaperStoryGenerator, __int16 iType, char iValue)
 GAMECALL(0x402937, void, __thiscall, ToolMenuDisable, void* pThis)
@@ -1314,7 +1314,7 @@ GAMEOFF(WORD,	wSportsTeams,				0x4CC4E0)
 GAMEOFF(BYTE,	bMilitaryBaseType,			0x4CC4E4)
 GAMEOFF(int,	dwCityBonds,				0x4CC4E8)
 GAMEOFF(DWORD,	dwCityTrafficUnknown,		0x4CC6F4)
-GAMEOFF_ARR(WORD,	wCityResidentialDemand,		0x4CC8F8)
+GAMEOFF_ARR(WORD,	wCityDemand,		0x4CC8F8)
 GAMEOFF(WORD,	wCityCommericalDemand,		0x4CC8FA)
 GAMEOFF(WORD,	wCityIndustrialDemand,		0x4CC8FC)
 GAMEOFF(DWORD,	dwCityPollution,			0x4CC910)		// Needs reverse engineering. See wiki.

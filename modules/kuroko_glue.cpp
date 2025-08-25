@@ -351,7 +351,7 @@ extern "C" {
 		KRK_GAMEOFF(bMilitaryBaseType);
 		KRK_GAMEOFF(dwCityBonds);
 		KRK_GAMEOFF(dwCityTrafficUnknown);
-		KRK_GAMEOFF(wCityResidentialDemand);
+		KRK_GAMEOFF(wCityDemand);
 		KRK_GAMEOFF(wCityCommericalDemand);
 		KRK_GAMEOFF(wCityIndustrialDemand);
 		KRK_GAMEOFF(dwCityPollution);

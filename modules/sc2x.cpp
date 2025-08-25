@@ -245,7 +245,7 @@ BOOL SC2XLoadVanillaGame(DWORD* pThis, const char* szFileName) {
 				}
 
 				for (int i = 0; i < 8; i++)
-					wCityResidentialDemand[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
+					wCityDemand[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
 				i += 4 * 8;
 
 				for (int i = 0; i < 17; i++)

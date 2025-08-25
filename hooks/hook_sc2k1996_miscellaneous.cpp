@@ -721,8 +721,8 @@ extern "C" int __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __
 	signed __int16 iFundingPercent;
 	__int16 iBuildingPopLevel;
 	char iRandSelectOne;
-	__int16 iCalculateResDemand;
-	__int16 iRemainderResDemand;
+	__int16 iCurrentDemand;
+	__int16 iRemainderDemand;
 	__int16 iMapValPerhaps;
 	__int16 iReplaceTile;
 	__int16 iNextX;
@@ -957,24 +957,24 @@ GOSPAWNAIRFIELD:
 						iBuildingPopLevel = 0;
 					}
 					if (Game_IsZonedTilePowered(iX, iY)) {
-						if (Game_UpdateDisasterAndTransitStats(iX, iY, iCurrZoneType, iBuildingPopLevel, 100)) {
-							iCalculateResDemand = wCityResidentialDemand[(__int16)((iCurrZoneType - 1) / 2)] + 2000;
-							iRemainderResDemand = 4000 - iCalculateResDemand;
+						if (Game_RunTripGenerator(iX, iY, iCurrZoneType, iBuildingPopLevel, 100)) {
+							iCurrentDemand = wCityDemand[(__int16)((iCurrZoneType - 1) / 2)] + 2000;
+							iRemainderDemand = 4000 - iCurrentDemand;
 						}
 						else {
-							iCalculateResDemand = 0;
-							iRemainderResDemand = 4000;
+							iCurrentDemand = 0;
+							iRemainderDemand = 4000;
 						}
 					}
 					else {
-						iCalculateResDemand = 0;
-						iRemainderResDemand = 4000;
+						iCurrentDemand = 0;
+						iRemainderDemand = 4000;
 					}
 					// This block is encountered when a given area is not "under construction" and not "abandonded".
 					// A building is then randomly selected in 
 					if (iBuildingPopLevel > 0 && !bAreaState[(__int16)iAttributes]) {
 						pZonePops[iCurrZoneType] += wBuildingPopulation[iBuildingPopLevel]; // Values appear to be: 1[1], 8[2], 12[3], 36[4] (wBuildingPopulation[iBuildingPopLevel] format.
-						if ((unsigned __int16)rand() < (__int16)(iRemainderResDemand / iBuildingPopLevel)) {
+						if ((unsigned __int16)rand() < (__int16)(iRemainderDemand / iBuildingPopLevel)) {
 							iRandSelectOne = rand() & 1;
 							Game_PerhapsGeneralZoneChangeBuilding(iX, iY, iBuildingPopLevel, iRandSelectOne);
 							goto GOUNDCHECKTHENYINCREASE;
@@ -994,7 +994,7 @@ GOGENERALZONEITEMPLACE:
 						// Abandoned buildings.
 						iAttributes = iBuildingPopLevel;
 						pZonePops[ZONEPOP_ABANDONED] += wBuildingPopulation[iBuildingPopLevel];
-						if ((unsigned __int16)rand() >= 15 * iCalculateResDemand / iBuildingPopLevel)
+						if ((unsigned __int16)rand() >= 15 * iCurrentDemand / iBuildingPopLevel)
 							goto GOUNDCHECKTHENYINCREASE;
 						goto GOGENERALZONEITEMPLACE;
 					}
@@ -1005,7 +1005,7 @@ GOGENERALZONEITEMPLACE:
 						(iBuildingPopLevel != 1 || dwMapXVAL[iXMM][iYMM].bBlock >= 0x20u) &&
 							(iBuildingPopLevel != 2 || dwMapXVAL[iXMM][iYMM].bBlock >= 0x60u) &&
 							(iBuildingPopLevel != 3 || dwMapXVAL[iXMM][iYMM].bBlock >= 0xC0u))) {
-						iAttributes = 3 * iCalculateResDemand / (iBuildingPopLevel + 1);
+						iAttributes = 3 * iCurrentDemand / (iBuildingPopLevel + 1);
 						if (iAttributes > (unsigned __int16)rand())
 							Game_PerhapsGeneralZoneStartBuilding(iX, iY, iBuildingPopLevel, iCurrZoneType);
 					}
