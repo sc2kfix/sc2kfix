@@ -1543,58 +1543,104 @@ static inline BOOL IsEvenAxis(__int16 iAxis) {
 	return (iAxis % 2) == 0 ? TRUE : FALSE;
 }
 
+#define USE_OLD_XZON_HANDLING 0
+
 // These four functions will perform either an absolute comparison or that the
 // passed mask/angle is present within the current XZON coordinate corner mask.
 static inline BOOL XZONCornerAbsoluteCheckMask(__int16 x, __int16 y, BYTE cornerMask) {
+#if USE_OLD_XZON_HANDLING
 	return (*(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY) == cornerMask;
+#else
+	return dwMapXZON[x][y].b.iCorners == (cornerMask >> 4);
+#endif
 }
 
 static inline BOOL XZONCornerAbsoluteCheck(__int16 x, __int16 y, WORD wAngle) {
+#if USE_OLD_XZON_HANDLING
 	return (*(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY) == LOBYTE(wAngle);
+#else
+	return dwMapXZON[x][y].b.iCorners == (LOBYTE(wAngle) >> 4);
+#endif
 }
 
 static inline BOOL XZONCornerCheckMask(__int16 x, __int16 y, BYTE cornerMask) {
+#if USE_OLD_XZON_HANDLING
 	return (*(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY) & cornerMask;
+#else
+	return dwMapXZON[x][y].b.iCorners & (cornerMask >> 4);
+#endif
 }
 
 static inline BOOL XZONCornerCheck(__int16 x, __int16 y, WORD wAngle) {
+#if USE_OLD_XZON_HANDLING
 	return (*(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY) & LOBYTE(wAngle);
+#else
+	return dwMapXZON[x][y].b.iCorners & (LOBYTE(wAngle) >> 4);
+#endif
 }
 
 // These functions will right-shift the mask/angle by 4 and set it as the
 // XZON coordinate mask.
 static inline void XZONSetCornerMask(__int16 x, __int16 y, BYTE cornerMask) {
 	// This sets the cornerMask while retaining any zone bits.
+#if USE_OLD_XZON_HANDLING
 	*(BYTE *)&dwMapXZON[x][y].b |= cornerMask;
+#else
+	dwMapXZON[x][y].b.iCorners = (cornerMask >> 4);
+#endif
 }
 
 static inline void XZONSetCornerAngle(__int16 x, __int16 y, WORD wAngle) {
 	// This sets the LOBYTE of wAngle while retaining any zone bits.
+#if USE_OLD_XZON_HANDLING
 	*(BYTE *)&dwMapXZON[x][y].b |= LOBYTE(wAngle);
+#else
+	dwMapXZON[x][y].b.iCorners = (LOBYTE(wAngle) >> 4);
+#endif
 }
 
-static inline void XZONCheckCornerActiveBitsAgainstBoundary(__int16 x, __int16 y) {
+static inline void XZONClearCorners(__int16 x, __int16 y) {
 	// This "appears" to be for setting the corner on the given
 	// tile to none.
+#if USE_OLD_XZON_HANDLING
 	*(BYTE *)&dwMapXZON[x][y].b &= CORNER_BOUNDARY;
+#else
+	dwMapXZON[x][y].b.iCorners = CORNER_NONE;
+#endif
 }
 
 static inline BYTE XZONReturnCornerMask(__int16 x, __int16 y) {
+#if USE_OLD_XZON_HANDLING
 	return *(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY;
+#else
+	return dwMapXZON[x][y].b.iCorners << 4;
+#endif
 }
 
-static inline void XZONCheckZoneActiveBitsAgainstBoundary(__int16 x, __int16 y) {
+static inline void XZONClearZone(__int16 x, __int16 y) {
 	// This "appears" to be for setting the zone in the given
 	// tile to none.
+#if USE_OLD_XZON_HANDLING
 	*(BYTE *)&dwMapXZON[x][y].b &= ZONE_BOUNDARY;
+#else
+	dwMapXZON[x][y].b.iZoneType = ZONE_NONE;
+#endif
 }
 
 static inline BYTE XZONReturnZone(__int16 x, __int16 y) {
+#if USE_OLD_XZON_HANDLING
 	return *(BYTE *)&dwMapXZON[x][y].b & ZONE_BOUNDARY;
+#else
+	return dwMapXZON[x][y].b.iZoneType;
+#endif
 }
 
 static inline void XZONSetNewZone(__int16 x, __int16 y, __int16 iNewZone) {
+#if USE_OLD_XZON_HANDLING
 	*(BYTE *)&dwMapXZON[x][y].b ^= (*(BYTE *)&dwMapXZON[x][y].b ^ iNewZone) & ZONE_BOUNDARY;
+#else
+	dwMapXZON[x][y].b.iZoneType = iNewZone;
+#endif
 }
 
 // This coordinate structure is used for the missile silo
