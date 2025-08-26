@@ -145,19 +145,19 @@ static int SetRandomPointCoords() {
 static __int16 GetTileDepth(__int16 iPosA, __int16 iPosB, int iPlus) {
 	__int16 iVal = iPosA;
 	__int16 n = -1;
-	int iBaseLevel = dwMapALTM[iPosA][iPosB].w.iLandAltitude;
+	__int16 iBaseLevel = ALTMReturnLandAltitude(iPosA, iPosB);
 	while (1) {
 		n++;
 		if (n >= 5)
 			break;
 		if (iPlus) {
-			if (dwMapXTER[iPosA + n][iPosB].iTileID || dwMapALTM[iPosA + n][iPosB].w.iLandAltitude > iBaseLevel) {
+			if (dwMapXTER[iPosA + n][iPosB].iTileID || ALTMReturnLandAltitude(iPosA + n, iPosB) > iBaseLevel) {
 				n = 0;
 				break;
 			}
 		}
 		else {
-			if (dwMapXTER[iPosA - n][iPosB].iTileID || dwMapALTM[iPosA - n][iPosB].w.iLandAltitude > iBaseLevel) {
+			if (dwMapXTER[iPosA - n][iPosB].iTileID || ALTMReturnLandAltitude(iPosA - n, iPosB) > iBaseLevel) {
 				n = 0;
 				break;
 			}
@@ -176,19 +176,19 @@ static __int16 GetTileLength(__int16 iPosA, __int16 iPosB, int iPlus) {
 	int iRandMaxLength = rand() & 6;
 	if (iRandMaxLength < 3)
 		iRandMaxLength = 3;
-	int iBaseLevel = dwMapALTM[iPosA][iPosB].w.iLandAltitude;
+	__int16 iBaseLevel = ALTMReturnLandAltitude(iPosA, iPosB);
 	while (1) {
 		n++;
 		if (n >= iRandMaxLength)
 			break;
 		if (iPlus) {
-			if (dwMapXTER[iPosA][iPosB + n].iTileID || dwMapALTM[iPosA][iPosB + n].w.iLandAltitude > iBaseLevel) {
+			if (dwMapXTER[iPosA][iPosB + n].iTileID || ALTMReturnLandAltitude(iPosA, iPosB + n) > iBaseLevel) {
 				n = 0;
 				break;
 			}
 		}
 		else {
-			if (dwMapXTER[iPosA][iPosB - n].iTileID || dwMapALTM[iPosA][iPosB - n].w.iLandAltitude > iBaseLevel) {
+			if (dwMapXTER[iPosA][iPosB - n].iTileID || ALTMReturnLandAltitude(iPosA, iPosB - n) > iBaseLevel) {
 				n = 0;
 				break;
 			}
@@ -467,7 +467,7 @@ static void MilitaryBasePlotCheck(__int16 *iVAltitudeTiles, __int16 *iVTiles, __
 		iValidTiles = 0;
 		iValidAltitudeTiles = 0;
 		iRandStoredYPos = iRandYPos;
-		__int16 iBaseLevel = dwMapALTM[iRandXPos][iRandYPos].w.iLandAltitude;
+		__int16 iBaseLevel = ALTMReturnLandAltitude(iRandXPos, iRandYPos);
 		for (iRandStoredXPos = iRandXPos + 8; iXPosStep < iRandStoredXPos; ++iXPosStep) {
 			for (__int16 iYPosStep = iRandYPos; iRandYPos + 8 > iYPosStep; ++iYPosStep) {
 				if (
@@ -481,7 +481,7 @@ static void MilitaryBasePlotCheck(__int16 *iVAltitudeTiles, __int16 *iVTiles, __
 					XZONReturnZone(iXPosStep, iYPosStep) == ZONE_NONE
 					) {
 					++iValidTiles;
-					if (dwMapALTM[iXPosStep][iYPosStep].w.iLandAltitude == iBaseLevel)
+					if (ALTMReturnLandAltitude(iXPosStep, iYPosStep) == iBaseLevel)
 						++iValidAltitudeTiles;
 				}
 			}
@@ -531,7 +531,7 @@ RETRY_CHECK1:
 					iAltPosTwo = iRandYPos;
 				}
 				iArrPos = iAltPosOne;
-				__int16 iBaseLevel = dwMapALTM[iAltPosOne][iAltPosTwo].w.iLandAltitude;
+				__int16 iBaseLevel = ALTMReturnLandAltitude(iAltPosOne, iAltPosTwo);
 				for (iTileArea = 0; iArrPos < iAltPosOne + 3; ++iArrPos) {
 					for (iCurrPos = iAltPosTwo; iAltPosTwo + 3 > iCurrPos; ++iCurrPos) {
 						__int16 iLengthWays = iArrPos;
@@ -544,7 +544,7 @@ RETRY_CHECK1:
 								iDepthWays >= GAME_MAP_SIZE ||
 								dwMapXBIT[iLengthWays][iDepthWays].b.iWater == 0
 								) &&
-							dwMapALTM[iLengthWays][iDepthWays].w.iLandAltitude == iBaseLevel &&
+							ALTMReturnLandAltitude(iLengthWays, iDepthWays) == iBaseLevel &&
 							XZONReturnZone(iLengthWays, iDepthWays) != ZONE_MILITARY &&
 							!dwMapXUND[iAltPosOne][iAltPosTwo].iTileID
 							) {
@@ -598,8 +598,15 @@ RETRY_CHECK1:
 					for (iSiloYPos = iSiloStartYPos; iSiloStartYPos + 3 > iSiloYPos; ++*dwMilitaryTiles) {
 						BYTE iBuildingArea = dwMapXBLD[iSiloXPos][iSiloYPos].iTileID;
 						--dwTileCount[iBuildingArea];
-						if (iSiloXPos < GAME_MAP_SIZE && iSiloYPos < GAME_MAP_SIZE)
+						if (iSiloXPos < GAME_MAP_SIZE && iSiloYPos < GAME_MAP_SIZE) {
 							XZONSetNewZone(iSiloXPos, iSiloYPos, ZONE_MILITARY);
+							// Altitude check debugging.
+							/*
+							ConsoleLog(LOG_DEBUG, "[%s] (%u, %u, %u) (%u, %u, %u)\n", szTileNames[TILE_MILITARY_MISSILESILO], 
+								ALTMReturnLandAltitude(iSiloXPos, iSiloYPos), ALTMReturnWaterLevel(iSiloXPos, iSiloYPos), ALTMReturnTunnelLevels(iSiloXPos, iSiloYPos),
+								dwMapALTM[iSiloXPos][iSiloYPos].w.iLandAltitude, dwMapALTM[iSiloXPos][iSiloYPos].w.iWaterLevel, dwMapALTM[iSiloXPos][iSiloYPos].w.iTunnelLevels);
+							*/
+						}
 						++iSiloYPos;
 					}
 				}
@@ -781,7 +788,7 @@ BACKTOSPOTREROLL:
 PLACENAVAL:
 				// Let's avoid bases that are too small.
 				if (!iPass || iNumTiles >= 50) {
-					iBaseLevel = dwMapALTM[iStartLengthPoint][iStartDepthPoint].w.iLandAltitude;
+					iBaseLevel = ALTMReturnLandAltitude(iStartLengthPoint, iStartDepthPoint);
 					for (__int16 iLengthWay = iLengthPointA;;) {
 						if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) {
 							if (iLengthWay <= iLengthPointB)
@@ -822,7 +829,7 @@ PLACENAVAL:
 								!dwMapXTER[iDirectionOne][iDirectionTwo].iTileID &&
 								!isValidWaterBody(iDirectionOne, iDirectionTwo) &&
 								!dwMapXUND[iDirectionOne][iDirectionTwo].iTileID &&
-								dwMapALTM[iDirectionOne][iDirectionTwo].w.iLandAltitude == iBaseLevel
+								ALTMReturnLandAltitude(iDirectionOne, iDirectionTwo) == iBaseLevel
 								) {
 								if (!iNonContiguousDepth) {
 									if (iPass) {
@@ -842,7 +849,7 @@ PLACENAVAL:
 									dwMapXTER[iDirectionOne][iDirectionTwo].iTileID < SUBMERGED_00 ||
 									dwMapXTER[iDirectionOne][iDirectionTwo].iTileID > COAST_13 ||
 									dwMapXUND[iDirectionOne][iDirectionTwo].iTileID ||
-									dwMapALTM[iDirectionOne][iDirectionTwo].w.iLandAltitude > iBaseLevel) {
+									ALTMReturnLandAltitude(iDirectionOne, iDirectionTwo) > iBaseLevel) {
 									iNonContiguousDepth = 1;
 								}
 							}

@@ -1379,7 +1379,7 @@ RUNWAY_GETOUT:
 					return 0;
 				++iPierPathTileCount;
 			} while (iPierPathTileCount < 5);
-			if ((*(WORD *)&dwMapALTM[iNextX][iNextY].w & 0x3E0) >> 5 < (*(WORD *)&dwMapALTM[iNextX][iNextY].w & 0x1F) + 2)
+			if (ALTMReturnWaterLevel(iNextX, iNextY) < ALTMReturnLandAltitude(iNextX, iNextY) + 2)
 				return 0;
 			if (dwMapXBLD[x][y].iTileID >= TILE_SMALLPARK)
 				Game_ZonedBuildingTileDeletion(x, y);

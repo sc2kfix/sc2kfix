@@ -66,17 +66,17 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		strTileInfo += "\n";
 		
 		// Altitude/depth
-		if (dwMapXBIT[iTileX][iTileY].b.iWater && dwMapALTM[iTileX][iTileY].w.iLandAltitude < wWaterLevel)
-			strTileInfo += std::to_string(100 * (wWaterLevel - dwMapALTM[iTileX][iTileY].w.iLandAltitude) - 50);
+		if (dwMapXBIT[iTileX][iTileY].b.iWater && ALTMReturnLandAltitude(iTileX, iTileY) < wWaterLevel)
+			strTileInfo += std::to_string(100 * (wWaterLevel - ALTMReturnLandAltitude(iTileX, iTileY)) - 50);
 		else if (dwMapXTER[iTileX][iTileY].iTileID && dwMapXTER[iTileX][iTileY].iTileID < 0x10)
-			strTileInfo += std::to_string(25 * (4 * (dwMapALTM[iTileX][iTileY].w.iLandAltitude - wWaterLevel) + 4));
+			strTileInfo += std::to_string(25 * (4 * (ALTMReturnLandAltitude(iTileX, iTileY) - wWaterLevel) + 4));
 		else
-			strTileInfo += std::to_string(100 * (dwMapALTM[iTileX][iTileY].w.iLandAltitude - wWaterLevel) + 50);
+			strTileInfo += std::to_string(100 * (ALTMReturnLandAltitude(iTileX, iTileY) - wWaterLevel) + 50);
 		strTileInfo += " feet ";
-		if (dwMapXBIT[iTileX][iTileY].b.iWater && dwMapALTM[iTileX][iTileY].w.iLandAltitude < wWaterLevel)
+		if (dwMapXBIT[iTileX][iTileY].b.iWater && ALTMReturnLandAltitude(iTileX, iTileY) < wWaterLevel)
 			strTileInfo += "deep ";
 		strTileInfo += "(ALTM: ";
-		strTileInfo += HexPls(*(WORD*)(&dwMapALTM[iTileX][iTileY].w), 4);
+		strTileInfo += HexPls(ALTMReturnMask(iTileX, iTileY), 4);
 		strTileInfo += ")\n";
 
 		// Land value

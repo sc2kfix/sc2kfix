@@ -256,8 +256,8 @@ static BOOL BuildTheHouse() {
 					(xPos < 0 || yPos >= GAME_MAP_SIZE || !dwMapXBIT[xPos][yPos].b.iWater) &&
 					(xPos >= GAME_MAP_SIZE || ySignPos >= GAME_MAP_SIZE || !dwMapXBIT[xPos][ySignPos].b.iWater) &&
 					(xWindPos >= GAME_MAP_SIZE || yPos >= GAME_MAP_SIZE || !dwMapXBIT[xWindPos][yPos].b.iWater)) {
-					if (dwMapALTM[xPos][yPos].w.iLandAltitude == dwMapALTM[xPos][ySignPos].w.iLandAltitude &&
-						dwMapALTM[xPos][yPos].w.iLandAltitude == dwMapALTM[xWindPos][yPos].w.iLandAltitude) {
+					if (ALTMReturnLandAltitude(xPos, yPos) == ALTMReturnLandAltitude(xPos, ySignPos) &&
+						ALTMReturnLandAltitude(xPos, yPos) == ALTMReturnLandAltitude(xWindPos, yPos)) {
 						if (Game_ItemPlacementCheck(xPos, yPos, TILE_COMMERCIAL_1X1_BEDANDBREAKFAST, AREA_1x1)) {
 							SetTheHouseLabel(xPos, ySignPos);
 							Game_ItemPlacementCheck(xWindPos, yPos, TILE_POWERPLANT_WIND, AREA_1x1);

@@ -58,6 +58,10 @@
 #define AREA_3x3 3
 #define AREA_4x4 4
 
+#define ALTM_LANDALT_BOUNDARY 0x1F
+#define ALTM_WATERLVL_BOUNDARY 0x3E0
+#define ALTM_TUNNELLVLS_BOUNDARY 0x7C00
+
 #define CORNER_NONE   0x0
 #define CORNER_BLEFT  0x10
 #define CORNER_BRIGHT 0x20
@@ -1538,9 +1542,39 @@ static inline DWORD SwapDWORD(DWORD dwData) {
 	return _byteswap_ulong(dwData);
 }
 
-
 static inline BOOL IsEven(__int16 iAxis) {
 	return (iAxis % 2) == 0 ? TRUE : FALSE;
+}
+
+#define USE_OLD_ALTM_HANDLING 0
+
+static inline WORD ALTMReturnLandAltitude(__int16 x, __int16 y) {
+#if USE_OLD_ALTM_HANDLING
+	return *(WORD *)&dwMapALTM[x][y].w & ALTM_LANDALT_BOUNDARY;
+
+#else
+	return dwMapALTM[x][y].w.iLandAltitude;
+#endif
+}
+
+static inline WORD ALTMReturnWaterLevel(__int16 x, __int16 y) {
+#if USE_OLD_ALTM_HANDLING
+	return (*(WORD *)&dwMapALTM[x][y].w & ALTM_WATERLVL_BOUNDARY) >> 5;
+#else
+	return dwMapALTM[x][y].w.iWaterLevel;
+#endif
+}
+
+static inline WORD ALTMReturnTunnelLevels(__int16 x, __int16 y) {
+#if USE_OLD_ALTM_HANDLING
+	return (*(WORD *)&dwMapALTM[x][y].w & ALTM_TUNNELLVLS_BOUNDARY) >> 10;
+#else
+	return dwMapALTM[x][y].w.iTunnelLevels;
+#endif
+}
+
+static inline WORD ALTMReturnMask(__int16 x, __int16 y) {
+	return *(WORD *)&dwMapALTM[x][y].w;
 }
 
 #define USE_OLD_XZON_HANDLING 0
