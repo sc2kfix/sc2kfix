@@ -68,7 +68,7 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		// Altitude/depth
 		if (dwMapXBIT[iTileX][iTileY].b.iWater && ALTMReturnLandAltitude(iTileX, iTileY) < wWaterLevel)
 			strTileInfo += std::to_string(100 * (wWaterLevel - ALTMReturnLandAltitude(iTileX, iTileY)) - 50);
-		else if (dwMapXTER[iTileX][iTileY].iTileID && dwMapXTER[iTileX][iTileY].iTileID < 0x10)
+		else if (dwMapXTER[iTileX][iTileY].iTileID && dwMapXTER[iTileX][iTileY].iTileID < SUBMERGED_00)
 			strTileInfo += std::to_string(25 * (4 * (ALTMReturnLandAltitude(iTileX, iTileY) - wWaterLevel) + 4));
 		else
 			strTileInfo += std::to_string(100 * (ALTMReturnLandAltitude(iTileX, iTileY) - wWaterLevel) + 50);
@@ -178,7 +178,7 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		}
 
 		// XUND
-		if (dwMapXUND[iTileX][iTileY].iTileID > 35)
+		if (dwMapXUND[iTileX][iTileY].iTileID > UNDER_TILE_SUBWAYENTRANCE)
 			strTileInfo += "Unknown";
 		else
 			strTileInfo += szUndergroundNames[dwMapXUND[iTileX][iTileY].iTileID];
