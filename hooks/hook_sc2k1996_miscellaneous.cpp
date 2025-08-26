@@ -871,7 +871,7 @@ GOSPAWNSEAYARD:
 											Game_SpawnHelicopter(iX, iY);
 											break;
 										}
-										if ((wViewRotation & 1) != 0) {
+										if (!IsEven(wViewRotation)) {
 											if (iX < GAME_MAP_SIZE &&
 												iY < GAME_MAP_SIZE &&
 												dwMapXBIT[iX][iY].b.iRotated != 0)
@@ -989,7 +989,7 @@ GOGENERALZONEITEMPLACE:
 					}
 					// This block is where construction will start.
 					if (iBuildingPopLevel != 4 &&
-						((iCurrZoneType & 1) == 0 || iBuildingPopLevel <= 0) &&
+						(IsEven(iCurrZoneType) || iBuildingPopLevel <= 0) &&
 						(iCurrZoneType >= 5 ||
 						(iBuildingPopLevel != 1 || dwMapXVAL[iXMM][iYMM].bBlock >= 0x20u) &&
 							(iBuildingPopLevel != 2 || dwMapXVAL[iXMM][iYMM].bBlock >= 0x60u) &&
@@ -1102,7 +1102,7 @@ GOAFTERSETXBIT:
 					if ((iCurrentTileID < TILE_HIGHWAY_HTB || iCurrentTileID >= TILE_SUBTORAIL_T) &&
 						(iCurrentTileID < TILE_HIGHWAY_LR || iCurrentTileID >= TILE_SUSPENSION_BRIDGE_START_B))
 						goto GOAFTERSETXBIT;
-					if ((iX & 1) == 0 && (iY & 1) == 0) {
+					if (IsEven(iX) && IsEven(iY)) {
 						iFundingPercent = pBudgetArr[BUDGET_HIGHWAY].iFundingPercent;
 						if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
 							if (iX < GAME_MAP_SIZE &&
@@ -1229,22 +1229,22 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 		case TILE_INFRASTRUCTURE_RUNWAY:
 			iMoveX = 0;
 			iMoveY = 0;
-			if ((dwTileCount[TILE_INFRASTRUCTURE_RUNWAY] & 1) == 0) {
-				if ((x & 1) != 0) {
+			if (IsEven(dwTileCount[TILE_INFRASTRUCTURE_RUNWAY])) {
+				if (!IsEven(x)) {
 					iMoveX = 1;
 					goto PROCEEDFURTHER;
 				}
-				if ((y & 1) == 0)
+				if (IsEven(y))
 					return 0;
 
 				goto PROCEEDAHEAD;
 			}
-			if ((y & 1) != 0) {
+			if (!IsEven(y)) {
 PROCEEDAHEAD:
 				iMoveY = 1;
 				goto PROCEEDFURTHER;
 			}
-			if ((x & 1) == 0)
+			if (IsEven(x))
 				return 0;
 			
 			iMoveX = 1;
@@ -1273,10 +1273,10 @@ PROCEEDFURTHER:
 				if (iBuildingCount[0] >= 5) {
 					if (!iMoveY) 
 						goto SKIPFIRSTROTATIONCHECK;
-					if ((wViewRotation & 1) != 0) {
+					if (!IsEven(wViewRotation)) {
 						if (!iMoveY) {
 SKIPFIRSTROTATIONCHECK:
-							if ((wViewRotation & 1) != 0)
+							if (!IsEven(wViewRotation))
 								goto SKIPSECONDROTATIONCHECK;
 						}
 						iToRotate = 0;
@@ -1358,10 +1358,10 @@ RUNWAY_GETOUT:
 			if (i == 4)
 				return 0;
 			iDepthWays = wTilePierDepthWays[i];
-			if (iDepthWays && (x & 1) != 0)
+			if (iDepthWays && !IsEven(x))
 				return 0;
 			iLengthWays = wTilePierLengthWays[i];
-			if (iLengthWays && (y & 1) != 0)
+			if (iLengthWays && !IsEven(y))
 				return 0;
 			iPierPathTileCount = 0;
 			iNextX = x;
@@ -1391,12 +1391,12 @@ RUNWAY_GETOUT:
 			iLengthWays = wTilePierLengthWays[i];
 			if (!iLengthWays)
 				goto PIER_GOTOONE;
-			if ((wViewRotation & 1) == 0)
+			if (IsEven(wViewRotation))
 				goto PIER_GOTOTWO;
 			if (iLengthWays)
 				goto PIER_GOTOTHREE;
 PIER_GOTOONE:
-			if ((wViewRotation & 1) != 0) {
+			if (!IsEven(wViewRotation)) {
 PIER_GOTOTWO:
 				iToRotate = 1;
 			}
@@ -1446,8 +1446,8 @@ PIER_GOTOTHREE:
 			// Odd numbered x/y coordinates are subtracted by 1.
 			// If this isn't done then buildings of this nature
 			// will end up overlapping.
-			iEvenX = (IsEvenAxis(x)) ? x : x - 1;
-			iEvenY = (IsEvenAxis(y)) ? y : y - 1;
+			iEvenX = (IsEven(x)) ? x : x - 1;
+			iEvenY = (IsEven(y)) ? y : y - 1;
 
 			// Old method, kept here for comparison cases as a precaution.
 			// iSX == iEvenX

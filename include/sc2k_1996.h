@@ -1539,7 +1539,7 @@ static inline DWORD SwapDWORD(DWORD dwData) {
 }
 
 
-static inline BOOL IsEvenAxis(__int16 iAxis) {
+static inline BOOL IsEven(__int16 iAxis) {
 	return (iAxis % 2) == 0 ? TRUE : FALSE;
 }
 
