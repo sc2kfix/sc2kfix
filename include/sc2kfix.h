@@ -99,7 +99,12 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define HICOLORCNT 256
 #define LOCOLORCNT 16
 
-#define MAX_USER_LABELS 51
+#define MAX_USER_TEXT_ENTRIES 51
+#define MIN_SIM_TEXT_ENTRIES MAX_USER_TEXT_ENTRIES
+#define MAX_SIM_TEXT_ENTRIES 200
+
+#define MICROSIMID_MIN 0
+#define MICROSIMID_MAX MAX_SIM_TEXT_ENTRIES - MIN_SIM_TEXT_ENTRIES
 
 // TODO: inline documentation
 typedef struct tagLOGPAL {

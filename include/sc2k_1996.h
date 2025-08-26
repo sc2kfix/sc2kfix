@@ -1032,7 +1032,10 @@ typedef struct {
 #pragma pack(push, 1)
 typedef struct {
 	BYTE bTileID;
-	BYTE bMicrosimData[7];
+	BYTE bMicrosimDataStat0;
+	WORD iMicrosimDataStat1;
+	WORD iMicrosimDataStat2;
+	WORD iMicrosimDataStat3;
 } microsim_t;
 #pragma pack(pop)
 

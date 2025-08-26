@@ -155,7 +155,7 @@ static void AdjustDebugMenu(HMENU hDebugMenu) {
 }
 
 static int FindTheHouseLabel() {
-	for (int i = 1; i < MAX_USER_LABELS; ++i) {
+	for (int i = 1; i < MAX_USER_TEXT_ENTRIES; ++i) {
 		if (dwMapXLAB[0][i].szLabel && _stricmp(dwMapXLAB[0][i].szLabel, theHouse) == 0) {
 			return i;
 		}
@@ -164,20 +164,20 @@ static int FindTheHouseLabel() {
 }
 
 static void SetTheHouseLabel(int xPos, int ySignPos) {
-	__int16 iLabelIdx;
+	BYTE iLabelIdx;
 	WORD iTextLen;
 
-	char(__stdcall * H_PrepareLabel)() = (char(__stdcall*)())0x402D56;
+	BYTE(__stdcall * H_PrepareLabel)() = (BYTE(__stdcall*)())0x402D56;
 
 	if (dwMapXTXT[xPos][ySignPos].bTextOverlay) {
-		if (dwMapXTXT[xPos][ySignPos].bTextOverlay >= MAX_USER_LABELS)
+		if (dwMapXTXT[xPos][ySignPos].bTextOverlay >= MAX_USER_TEXT_ENTRIES)
 			return;
 	}
 	iLabelIdx = H_PrepareLabel();
 	if (iLabelIdx) {
-		dwMapXTXT[xPos][ySignPos].bTextOverlay = (BYTE)iLabelIdx;
+		dwMapXTXT[xPos][ySignPos].bTextOverlay = iLabelIdx;
 		iTextLen = (WORD)strlen(theHouse);
-		memcpy(&dwMapXLAB[0][(int)iLabelIdx], theHouse, iTextLen);
+		memcpy(&dwMapXLAB[0][iLabelIdx], theHouse, iTextLen);
 		dwMapXLAB[0][iLabelIdx].szLabel[iTextLen] = 0;
 	}
 }
@@ -215,7 +215,7 @@ static BOOL FindTheHouse() {
 		Game_CenterOnTileCoords(xPos, yPos);
 		return TRUE;
 	}
-	if (iLabelIdx > 0 && iLabelIdx < MAX_USER_LABELS) {
+	if (iLabelIdx > 0 && iLabelIdx < MAX_USER_TEXT_ENTRIES) {
 		for (iLength = 0; iLength < GAME_MAP_SIZE; ++iLength) {
 			for (iDepth = 0; iDepth < GAME_MAP_SIZE; ++iDepth) {
 				if (dwMapXTXT[iLength][iDepth].bTextOverlay == iLabelIdx) {

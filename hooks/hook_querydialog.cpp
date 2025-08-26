@@ -187,16 +187,17 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		strTileInfo += ")\n";
 
 		// Microsim info
-		if (dwMapXTXT[iTileX][iTileY].bTextOverlay < 0x34 || dwMapXTXT[iTileX][iTileY].bTextOverlay > 0xC8)
+		if (dwMapXTXT[iTileX][iTileY].bTextOverlay <= MIN_SIM_TEXT_ENTRIES || dwMapXTXT[iTileX][iTileY].bTextOverlay > MAX_SIM_TEXT_ENTRIES)
 			strTileInfo += "None\nN/A\nN/A\nN/A\nN/A";
 		else {
-			int iMicrosimID = dwMapXTXT[iTileX][iTileY].bTextOverlay - 0x33;
-			strTileInfo += GetXLABEntry(iMicrosimID + 0x33);
+			BYTE bTextOverlay = dwMapXTXT[iTileX][iTileY].bTextOverlay; // Entries > 51 aren't user-modifiable label/text entries.
+			BYTE iMicrosimID = bTextOverlay - MIN_SIM_TEXT_ENTRIES; // The MicrosimID being calculated from entry 52 and beyond but subtracted by the non-user modifiable starting value.
+			strTileInfo += GetXLABEntry(bTextOverlay);
 			strTileInfo += " (iMicrosimID " + std::to_string(iMicrosimID) + " / " + HexPls(iMicrosimID, 2) + ")\n";
-			strTileInfo += std::to_string(pMicrosimArr[iMicrosimID].bMicrosimData[0]) + " / " + HexPls(pMicrosimArr[iMicrosimID].bMicrosimData[0], 2) + "\n";
-			strTileInfo += std::to_string(*(WORD*)(&pMicrosimArr[iMicrosimID].bMicrosimData[1])) + " / " + HexPls(*(WORD*)(&pMicrosimArr[iMicrosimID].bMicrosimData[1]), 2) + "\n";
-			strTileInfo += std::to_string(*(WORD*)(&pMicrosimArr[iMicrosimID].bMicrosimData[3])) + " / " + HexPls(*(WORD*)(&pMicrosimArr[iMicrosimID].bMicrosimData[3]), 2) + "\n";
-			strTileInfo += std::to_string(*(WORD*)(&pMicrosimArr[iMicrosimID].bMicrosimData[5])) + " / " + HexPls(*(WORD*)(&pMicrosimArr[iMicrosimID].bMicrosimData[5]), 2);
+			strTileInfo += std::to_string(pMicrosimArr[iMicrosimID].bMicrosimDataStat0) + " / " + HexPls(pMicrosimArr[iMicrosimID].bMicrosimDataStat0, 2) + "\n";
+			strTileInfo += std::to_string(pMicrosimArr[iMicrosimID].iMicrosimDataStat1) + " / " + HexPls(pMicrosimArr[iMicrosimID].iMicrosimDataStat1, 2) + "\n";
+			strTileInfo += std::to_string(pMicrosimArr[iMicrosimID].iMicrosimDataStat2) + " / " + HexPls(pMicrosimArr[iMicrosimID].iMicrosimDataStat2, 2) + "\n";
+			strTileInfo += std::to_string(pMicrosimArr[iMicrosimID].iMicrosimDataStat3) + " / " + HexPls(pMicrosimArr[iMicrosimID].iMicrosimDataStat3, 2);
 		}
 
 		SetDlgItemText(hwndDlg, IDC_STATIC_TILENAME, strTileHeader.c_str());

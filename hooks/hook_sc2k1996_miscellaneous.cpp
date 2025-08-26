@@ -710,7 +710,7 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 	__int16 iRemainderDemand;
 	BYTE iTextOverlay;
 	BYTE iMicrosimIdx;
-	BYTE iMicrosimDataOne;
+	BYTE iMicrosimDataStat0;
 	BYTE iCurrentUndergroundTileID;
 	BYTE iReplaceTile;
 	__int16 iNextX;
@@ -1056,30 +1056,30 @@ GOAFTERSETXBIT:
 								iCurrentTileID <= TILE_ARCOLOGY_LAUNCH &&
 								XZONCornerAbsoluteCheckMask(iX, iY, CORNER_TRIGHT)) {
 								iTextOverlay = dwMapXTXT[iX][iY].bTextOverlay;
-								iMicrosimIdx = iTextOverlay - MAX_USER_LABELS;
+								iMicrosimIdx = iTextOverlay - MAX_USER_TEXT_ENTRIES;
 								//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - iTextOverlay(%u), iMicrosimIdx(%u), Item(%s)\n", iStep, iSubStep, iTextOverlay, iMicrosimIdx, szTileNames[iCurrentTileID]);
-								if (iTextOverlay >= MAX_USER_LABELS &&
+								if (iTextOverlay >= MAX_USER_TEXT_ENTRIES &&
 									iTextOverlay < 201 &&
 									pMicrosimArr[iMicrosimIdx].bTileID >= TILE_ARCOLOGY_PLYMOUTH &&
 									pMicrosimArr[iMicrosimIdx].bTileID <= TILE_ARCOLOGY_LAUNCH) {
-									iMicrosimDataOne = (dwMapXVAL[iXMM][iYMM].bBlock >> 5)
+									iMicrosimDataStat0 = (dwMapXVAL[iXMM][iYMM].bBlock >> 5)
 										- (dwMapXCRM[iXMM][iYMM].bBlock >> 5)
 										- (dwMapXPLT[iXMM][iYMM].bBlock >> 5)
 										+ 12;
 									if (iX >= GAME_MAP_SIZE ||
 										iY >= GAME_MAP_SIZE ||
 										dwMapXBIT[iX][iY].b.iPowered == 0)
-										iMicrosimDataOne /= 2;
+										iMicrosimDataStat0 /= 2;
 									if (iX >= GAME_MAP_SIZE ||
 										iY >= GAME_MAP_SIZE ||
 										dwMapXBIT[iX][iY].b.iWatered == 0)
-										iMicrosimDataOne /= 2;
-									if (iMicrosimDataOne < 0)
-										iMicrosimDataOne = 0;
-									if (iMicrosimDataOne > 12)
-										iMicrosimDataOne = 12;
-									//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - iTextOverlay(%u), iMicrosimIdx(%u), iMicrosimDataOne(%u), Item(%s) (%u, %u, %u, %d - %d)\n", iStep, iSubStep, iTextOverlay, iMicrosimIdx, iMicrosimDataOne, szTileNames[iCurrentTileID], *(BYTE *)&dwMapXZON[iX][iY].b & 0xF0, 0x80, dwMapXZON[iX][iY].b.iCorners, CORNER_TRIGHT, (CORNER_TRIGHT << 4));
-									pMicrosimArr[iMicrosimIdx].bMicrosimData[0] = iMicrosimDataOne;
+										iMicrosimDataStat0 /= 2;
+									if (iMicrosimDataStat0 < 0)
+										iMicrosimDataStat0 = 0;
+									if (iMicrosimDataStat0 > 12)
+										iMicrosimDataStat0 = 12;
+									//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - iTextOverlay(%u), iMicrosimIdx(%u), iMicrosimDataStat0(%u), Item(%s) (%u, %u, %u, %d - %d)\n", iStep, iSubStep, iTextOverlay, iMicrosimIdx, iMicrosimDataStat0, szTileNames[iCurrentTileID], *(BYTE *)&dwMapXZON[iX][iY].b & 0xF0, 0x80, dwMapXZON[iX][iY].b.iCorners, CORNER_TRIGHT, (CORNER_TRIGHT << 4));
+									pMicrosimArr[iMicrosimIdx].bMicrosimDataStat0 = iMicrosimDataStat0;
 								}
 							}
 						}

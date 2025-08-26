@@ -307,7 +307,7 @@ BOOL ConsoleCmdShowMicrosim(const char* szCommand, const char* szArguments) {
 
 	if (!strcmp(szArguments + 9, "list")) {
 		printf("Provisioned microsims:\n");
-		for (int i = 0; i < 150; i++)
+		for (int i = 0; i <= MICROSIMID_MAX; i++)
 			if (pMicrosimArr[i].bTileID != TILE_CLEAR)
 				printf("  %i: bTileID = %u\n", i, pMicrosimArr[i].bTileID);
 		printf("\n");
@@ -353,17 +353,17 @@ BOOL ConsoleCmdShowMicrosim(const char* szCommand, const char* szArguments) {
 	}
 
 	if (sscanf_s(szArguments + 9, "%i", &iMicrosimID)) {
-		if (iMicrosimID >= 0 && iMicrosimID < 150) {
+		if (iMicrosimID >= MICROSIMID_MIN && iMicrosimID <= MICROSIMID_MAX) {
 skipscanf:
-			int iTileID = pMicrosimArr[iMicrosimID].bTileID;
+			BYTE iTileID = pMicrosimArr[iMicrosimID].bTileID;
 			printf(
 				"Microsim %i:\n"
-				"  Tile/Building: %s (%i / 0x%02X)\n"
-				"  Data (Byte):   %i\n"
-				"  Data (Word 1): %i\n"
-				"  Data (Word 2): %i\n"
-				"  Data (Word 3): %i\n", iMicrosimID, szTileNames[iTileID], iTileID, iTileID, pMicrosimArr[iMicrosimID].bMicrosimData[0],
-				*(WORD*)(&pMicrosimArr[iMicrosimID].bMicrosimData[1]), *(WORD*)(&pMicrosimArr[iMicrosimID].bMicrosimData[3]), *(WORD*)(&pMicrosimArr[iMicrosimID].bMicrosimData[5]));
+				"  Tile/Building: %s (%u / 0x%02X)\n"
+				"  Data Stat0 (Byte):   %u\n"
+				"  Data Stat1 (Word 1): %u\n"
+				"  Data Stat2 (Word 2): %u\n"
+				"  Data Stat3 (Word 3): %u\n", iMicrosimID, szTileNames[iTileID], iTileID, iTileID, pMicrosimArr[iMicrosimID].bMicrosimDataStat0,
+				pMicrosimArr[iMicrosimID].iMicrosimDataStat1, pMicrosimArr[iMicrosimID].iMicrosimDataStat2, pMicrosimArr[iMicrosimID].iMicrosimDataStat3);
 			return TRUE;
 		}
 	}
