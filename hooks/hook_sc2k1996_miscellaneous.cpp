@@ -1302,11 +1302,11 @@ SKIPSECONDROTATIONCHECK:
 										if (x <= -1)
 											goto RUNWAY_GETOUT;
 										if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-											*(BYTE *)&dwMapXBIT[x][y].b |= 0xC0u;
+											*(BYTE *)&dwMapXBIT[x][y].b |= XBIT_POWERED|XBIT_POWERABLE;
 									}
 									if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE) {
 										mXBIT = dwMapXBIT[x];
-										mXBBits = (*(BYTE *)&mXBIT[y].b & 0xFD);
+										mXBBits = (*(BYTE *)&mXBIT[y].b & (XBIT_SALTWATER|XBIT_WATER|XBIT_XVALMASK|XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE));
 RUNWAY_GOBACK:
 										*(BYTE *)&mXBIT[y].b = mXBBits;
 									}
@@ -1329,10 +1329,10 @@ RUNWAY_GOBACK:
 							if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 								XZONSetCornerMask(x, y, CORNER_ALL);
 							if (iZoneType != ZONE_MILITARY && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-								*(BYTE *)&dwMapXBIT[x][y].b |= 0xC0u;
+								*(BYTE *)&dwMapXBIT[x][y].b |= XBIT_POWERED|XBIT_POWERABLE;
 							if (iToRotate && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE) {
 								mXBIT = dwMapXBIT[x];
-								mXBBits = (*(BYTE *)&mXBIT[y].b | 2);
+								mXBBits = (*(BYTE *)&mXBIT[y].b | XBIT_ROTATED);
 								goto RUNWAY_GOBACK;
 							}
 						}
@@ -1387,7 +1387,7 @@ RUNWAY_GETOUT:
 			if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 				XZONSetNewZone(x, y, iZoneType);
 			if (iZoneType == ZONE_MILITARY && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-				*(BYTE *)&dwMapXBIT[x][y].b &= 0xFu;
+				*(BYTE *)&dwMapXBIT[x][y].b &= XBIT_SALTWATER|XBIT_ROTATED|XBIT_WATER|XBIT_XVALMASK;
 			iLengthWays = wTilePierLengthWays[i];
 			if (!iLengthWays)
 				goto PIER_GOTOONE;
@@ -1413,7 +1413,7 @@ PIER_GOTOTHREE:
 					XZONSetCornerMask(x, y, CORNER_ALL);
 				if (iToRotate) {
 					if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-						*(BYTE *)&dwMapXBIT[x][y].b |= 2u;
+						*(BYTE *)&dwMapXBIT[x][y].b |= XBIT_ROTATED;
 				}
 				--iPierLength;
 			} while (iPierLength);
@@ -1432,7 +1432,7 @@ PIER_GOTOTHREE:
 				if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 					XZONSetNewZone(x, y, iZoneType);
 				if (iZoneType == ZONE_MILITARY && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-					*(BYTE *)&dwMapXBIT[x][y].b &= 0xFu;
+					*(BYTE *)&dwMapXBIT[x][y].b &= XBIT_SALTWATER|XBIT_ROTATED|XBIT_WATER|XBIT_XVALMASK;
 			}
 			return 1;
 		case TILE_INFRASTRUCTURE_PARKINGLOT:
@@ -1539,13 +1539,13 @@ PIER_GOTOTHREE:
 				XZONSetNewZone(iNextX, iNextY, iZoneType);
 			if (iZoneType == ZONE_MILITARY) {
 				if (iEvenX < GAME_MAP_SIZE && iEvenY < GAME_MAP_SIZE)
-					*(BYTE *)&dwMapXBIT[iEvenX][iEvenY].b &= 0xFu;
+					*(BYTE *)&dwMapXBIT[iEvenX][iEvenY].b &= XBIT_SALTWATER|XBIT_ROTATED|XBIT_WATER|XBIT_XVALMASK;
 				if (iNextX < GAME_MAP_SIZE && iEvenY < GAME_MAP_SIZE)
-					*(BYTE *)&dwMapXBIT[iNextX][iEvenY].b &= 0xFu;
+					*(BYTE *)&dwMapXBIT[iNextX][iEvenY].b &= XBIT_SALTWATER|XBIT_ROTATED|XBIT_WATER|XBIT_XVALMASK;
 				if (iEvenX < GAME_MAP_SIZE && iNextY < GAME_MAP_SIZE)
-					*(BYTE *)&dwMapXBIT[iEvenX][iNextY].b &= 0xFu;
+					*(BYTE *)&dwMapXBIT[iEvenX][iNextY].b &= XBIT_SALTWATER|XBIT_ROTATED|XBIT_WATER|XBIT_XVALMASK;
 				if (iNextX < GAME_MAP_SIZE && iNextY < GAME_MAP_SIZE)
-					*(BYTE *)&dwMapXBIT[iNextX][iNextY].b &= 0xFu;
+					*(BYTE *)&dwMapXBIT[iNextX][iNextY].b &= XBIT_SALTWATER|XBIT_ROTATED|XBIT_WATER|XBIT_XVALMASK;
 			}
 			return 1;
 		case TILE_MILITARY_MISSILESILO:
