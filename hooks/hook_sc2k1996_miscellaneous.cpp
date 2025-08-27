@@ -2879,6 +2879,7 @@ void InstallMiscHooks_SC2K1996(void) {
 	*(DWORD*)(0x4EFDCC) = (DWORD)Hook_LoadMenuA;
 	*(DWORD*)(0x4EFC64) = (DWORD)Hook_DialogBoxParamA;
 	*(DWORD*)(0x4EFE70) = (DWORD)Hook_ShowWindow;
+	*(DWORD*)(0x4EFCE8) = (DWORD)Hook_DefWindowProcA;
 
 	// Install Smacker hooks
 	GetSMKFuncs();
