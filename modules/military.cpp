@@ -318,11 +318,10 @@ void PlaceMissileSilo(__int16 m_x, __int16 m_y) {
 	__int16 x;
 	__int16 y;
 	__int16 iArea;
-	__int16 iX;
-	__int16 iY;
-	__int16 iItemWidth;
-	__int16 iItemDepth;
-	__int16 iCorner[3];
+	__int16 iFarX;
+	__int16 iFarY;
+	__int16 iCurX;
+	__int16 iCurY;
 
 	if (!isValidSiloPos(m_x, m_y, false))
 		return;
@@ -336,30 +335,29 @@ void PlaceMissileSilo(__int16 m_x, __int16 m_y) {
 		--y;
 	}
 
-	iItemWidth = x + iArea;
-	if (iItemWidth >= x) {
-		iItemDepth = y + iArea;
-		if (iItemDepth >= y) {
-			for (iX = x; iX <= iItemWidth; ++iX) {
-				for (iY = y; iY <= iItemDepth; ++iY) {
-					if (iX >= 0) {
-						if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE)
-							*(BYTE *)&dwMapXBIT[iX][iY].b &= ~(XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
-					}
-					Game_PlaceTileWithMilitaryCheck(iX, iY, TILE_MILITARY_MISSILESILO);
-					Game_PlaceUndergroundTiles(iX, iY, UNDER_TILE_MISSILESILO);
+	iFarX = iArea + x;
+	iFarY = iArea + y;
+
+	if (iFarX >= x) {
+		if (iFarY >= y) {
+			for (iCurX = x; iCurX <= iFarX; ++iCurX) {
+				for (iCurY = y; iCurY <= iFarY; ++iCurY) {
+					if (iCurX >= 0 && iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE)
+						*(BYTE *)&dwMapXBIT[iCurX][iCurY].b &= ~(XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
+					Game_PlaceTileWithMilitaryCheck(iCurX, iCurY, TILE_MILITARY_MISSILESILO);
+					Game_PlaceUndergroundTiles(iCurX, iCurY, UNDER_TILE_MISSILESILO);
 					// When this block is uncommented it sets both the corner and zone
 					// to none (based on current observed behaviour).
-					/*if (iX >= 0) {
-						if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE) {
-							ConsoleLog(LOG_DEBUG, "MS: 0 - Corners: [%s] (%d, %d) (%u) (%u)\n", szTileNames[TILE_MILITARY_MISSILESILO], iX, iY, *(BYTE *)&dwMapXZON[iX][iY].b & CORNER_BOUNDARY, dwMapXZON[iX][iY].b.iCorners);
-							XZONClearZone(iX, iY);
-							ConsoleLog(LOG_DEBUG, "MS: 1 - Corners: [%s] (%d, %d) (%u) (%u)\n", szTileNames[TILE_MILITARY_MISSILESILO], iX, iY, *(BYTE *)&dwMapXZON[iX][iY].b & CORNER_BOUNDARY, dwMapXZON[iX][iY].b.iCorners);
+					/*if (iCurX >= 0) {
+						if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE) {
+							ConsoleLog(LOG_DEBUG, "MS: 0 - Corners: [%s] (%d, %d) (%u) (%u)\n", szTileNames[TILE_MILITARY_MISSILESILO], iCurX, iCurY, *(BYTE *)&dwMapXZON[iCurX][iCurY].b & CORNER_BOUNDARY, dwMapXZON[iCurX][iCurY].b.iCorners);
+							XZONClearZone(iCurX, iCurY);
+							ConsoleLog(LOG_DEBUG, "MS: 1 - Corners: [%s] (%d, %d) (%u) (%u)\n", szTileNames[TILE_MILITARY_MISSILESILO], iCurX, iCurY, *(BYTE *)&dwMapXZON[iCurX][iCurY].b & CORNER_BOUNDARY, dwMapXZON[iCurX][iCurY].b.iCorners);
 						}
-						if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE) {
-							ConsoleLog(LOG_DEBUG, "MS: 0 - Zones: [%s] (%d, %d) (%u) (%u)\n", szTileNames[TILE_MILITARY_MISSILESILO], iX, iY, *(BYTE *)&dwMapXZON[iX][iY].b & ZONE_BOUNDARY, dwMapXZON[iX][iY].b.iZoneType);
-							XZONClearCorners(iX, iY);
-							ConsoleLog(LOG_DEBUG, "MS: 1 - Zones: [%s] (%d, %d) (%u) (%u)\n", szTileNames[TILE_MILITARY_MISSILESILO], iX, iY, *(BYTE *)&dwMapXZON[iX][iY].b & ZONE_BOUNDARY, dwMapXZON[iX][iY].b.iZoneType);
+						if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE) {
+							ConsoleLog(LOG_DEBUG, "MS: 0 - Zones: [%s] (%d, %d) (%u) (%u)\n", szTileNames[TILE_MILITARY_MISSILESILO], iCurX, iCurY, *(BYTE *)&dwMapXZON[iCurX][iCurY].b & ZONE_BOUNDARY, dwMapXZON[iCurX][iCurY].b.iZoneType);
+							XZONClearCorners(iCurX, iCurY);
+							ConsoleLog(LOG_DEBUG, "MS: 1 - Zones: [%s] (%d, %d) (%u) (%u)\n", szTileNames[TILE_MILITARY_MISSILESILO], iCurX, iCurY, *(BYTE *)&dwMapXZON[iCurX][iCurY].b & ZONE_BOUNDARY, dwMapXZON[iCurX][iCurY].b.iZoneType);
 						}
 					}*/
 				}
@@ -369,25 +367,16 @@ void PlaceMissileSilo(__int16 m_x, __int16 m_y) {
 	if (iArea) {
 		if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 			XZONSetCornerAngle(x, y, wTileAreaBottomLeftCorner[wViewRotation]);
-		iCorner[0] = iArea + x;
-		if (iCorner[0] >= 0 && iCorner[0] < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-			XZONSetCornerAngle(iCorner[0], y, wTileAreaBottomRightCorner[wViewRotation]);
-		if (iCorner[0] < GAME_MAP_SIZE) {
-			iCorner[1] = y + iArea;
-			if (iCorner[1] >= 0 && iCorner[1] < GAME_MAP_SIZE)
-				XZONSetCornerAngle(iCorner[0], iCorner[1], wTileAreaTopLeftCorner[wViewRotation]);
-		}
-		if (x < GAME_MAP_SIZE) {
-			iCorner[2] = iArea + y;
-			if (iCorner[2] >= 0 && iCorner[2] < GAME_MAP_SIZE)
-				XZONSetCornerAngle(x, iCorner[2], wTileAreaTopRightCorner[wViewRotation]);
-		}
+		if (iFarX >= 0 && iFarX < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
+			XZONSetCornerAngle(iFarX, y, wTileAreaBottomRightCorner[wViewRotation]);
+		if (iFarX < GAME_MAP_SIZE && iFarY >= 0 && iFarY < GAME_MAP_SIZE)
+			XZONSetCornerAngle(iFarX, iFarY, wTileAreaTopLeftCorner[wViewRotation]);
+		if (x < GAME_MAP_SIZE && iFarY >= 0 && iFarY < GAME_MAP_SIZE)
+			XZONSetCornerAngle(x, iFarY, wTileAreaTopRightCorner[wViewRotation]);
 	}
-	else if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE) {
-		// Set the 1x1 XZON tile coordinate iCorner mask to all corners.
+	else if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 		XZONSetCornerMask(x, y, CORNER_ALL);
-	}
-	Game_SpawnItem(x, y + iArea);
+	Game_SpawnItem(x, iFarY);
 }
 
 static int CheckOverlappingSiloPosition(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {

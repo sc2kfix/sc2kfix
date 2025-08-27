@@ -1205,11 +1205,11 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 	__int16 x, y;
 	__int16 iCurrX, iCurrY;
 	__int16 iNextX, iNextY;
-	__int16 iBuildingCount[2];
+	__int16 iRunwayTileCount[2];
 	__int16 iMoveX, iMoveY;
 	__int16 iToFlip;
 	__int16 iTileFlipped;
-	int i;
+	__int16 iPierTileCount;
 	__int16 iLengthWays;
 	__int16 iDepthWays;
 	__int16 iPierPathTileCount;
@@ -1248,7 +1248,7 @@ PROCEEDAHEAD:
 PROCEEDFURTHER:
 			iCurrX = x;
 			iCurrY = y;
-			iBuildingCount[0] = 0;
+			iRunwayTileCount[0] = 0;
 			while (iCurrX < GAME_MAP_SIZE && iCurrY < GAME_MAP_SIZE) {
 				if (XZONReturnZone(iCurrX, iCurrY) != iZoneType)
 					return 0;
@@ -1263,11 +1263,11 @@ PROCEEDFURTHER:
 						return 0;
 				}
 				if (mXBuilding[0] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[0] == TILE_INFRASTRUCTURE_RUNWAYCROSS)
-					--iBuildingCount[0];
+					--iRunwayTileCount[0];
 				iCurrX += iMoveY;
-				++iBuildingCount[0];
+				++iRunwayTileCount[0];
 				iCurrY += iMoveX;
-				if (iBuildingCount[0] >= RUNWAYSTRIP_MAXTILES) {
+				if (iRunwayTileCount[0] >= RUNWAYSTRIP_MAXTILES) {
 					if (!iMoveY) 
 						goto SKIPFIRSTROTATIONCHECK;
 					if (!IsEven(wViewRotation)) {
@@ -1282,11 +1282,11 @@ SKIPFIRSTROTATIONCHECK:
 SKIPSECONDROTATIONCHECK:
 						iToFlip = 1;
 					}
-					iBuildingCount[1] = 0;
+					iRunwayTileCount[1] = 0;
 					while (2) {
 						mXBuilding[1] = dwMapXBLD[x][y].iTileID;
 						if (mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAYCROSS) {
-							--iBuildingCount[1];
+							--iRunwayTileCount[1];
 							if (mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAY) {
 								iTileFlipped = x < GAME_MAP_SIZE &&
 									y < GAME_MAP_SIZE &&
@@ -1329,7 +1329,7 @@ SKIPSECONDROTATIONCHECK:
 RUNWAY_GETOUT:
 						x += iMoveY;
 						y += iMoveX;
-						if (++iBuildingCount[1] >= RUNWAYSTRIP_MAXTILES)
+						if (++iRunwayTileCount[1] >= RUNWAYSTRIP_MAXTILES)
 							return 1;
 						continue;
 					}
@@ -1337,20 +1337,20 @@ RUNWAY_GETOUT:
 			}
 			return 1;
 		case TILE_INFRASTRUCTURE_CRANE:
-			for (i = 0; i < PIER_MAXTILES; i++) {
-				iLengthWays = x + wTilePierLengthWays[i];
+			for (iPierTileCount = 0; iPierTileCount < PIER_MAXTILES; iPierTileCount++) {
+				iLengthWays = x + wTilePierLengthWays[iPierTileCount];
 				if (iLengthWays < GAME_MAP_SIZE) {
-					iDepthWays = y + wTilePierDepthWays[i];
+					iDepthWays = y + wTilePierDepthWays[iPierTileCount];
 					if (iDepthWays < GAME_MAP_SIZE && dwMapXBIT[iLengthWays][iDepthWays].b.iWater != 0)
 						break;
 				}
 			}
-			if (i == PIER_MAXTILES)
+			if (iPierTileCount == PIER_MAXTILES)
 				return 0;
-			iDepthWays = wTilePierDepthWays[i];
+			iDepthWays = wTilePierDepthWays[iPierTileCount];
 			if (iDepthWays && !IsEven(x))
 				return 0;
-			iLengthWays = wTilePierLengthWays[i];
+			iLengthWays = wTilePierLengthWays[iPierTileCount];
 			if (iLengthWays && !IsEven(y))
 				return 0;
 			iPierPathTileCount = 0;
@@ -1378,7 +1378,7 @@ RUNWAY_GETOUT:
 				XZONSetNewZone(x, y, iZoneType);
 			if (iZoneType == ZONE_MILITARY && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 				*(BYTE *)&dwMapXBIT[x][y].b &= ~(XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
-			iLengthWays = wTilePierLengthWays[i];
+			iLengthWays = wTilePierLengthWays[iPierTileCount];
 			if (!iLengthWays)
 				goto PIER_GOTOONE;
 			if (IsEven(wViewRotation))
@@ -1396,8 +1396,8 @@ PIER_GOTOTHREE:
 			}
 			iPierLength = PIER_MAXTILES;
 			do {
-				x += wTilePierLengthWays[i];
-				y += wTilePierDepthWays[i];
+				x += wTilePierLengthWays[iPierTileCount];
+				y += wTilePierDepthWays[iPierTileCount];
 				Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_PIER);
 				if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 					XZONSetCornerMask(x, y, CORNER_ALL);
@@ -1549,14 +1549,12 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iT
 	__int16 y;
 	__int16 iArea;
 	__int16 iMarinaCount;
-	__int16 iX;
-	__int16 iY;
+	__int16 iFarX;
+	__int16 iFarY;
+	__int16 iCurX;
+	__int16 iCurY;
 	BYTE iBuilding;
-	__int16 iItemWidth;
-	__int16 iItemLength;
-	__int16 iItemDepth;
 	BYTE iTileBitMask;
-	__int16 iCorner[3];
 	BYTE bTextOverlay;
 
 	x = m_x;
@@ -1568,35 +1566,37 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iT
 		--y;
 	}
 	iMarinaCount = 0;
-	iX = x;
-	iItemWidth = x + iArea;
-	if (iItemWidth >= x) {
-		iItemLength = iArea + y;
+
+	iFarX = iArea + x;
+	iFarY = iArea + y;
+
+	iCurX = x;
+	if (iFarX >= x) {
 		while (1) {
-			iY = y;
-			if (iItemLength >= y)
+			iCurY = y;
+			if (iFarY >= y)
 				break;
 		GOBACK:
-			if (++iX > iItemWidth)
+			if (++iCurX > iFarX)
 				goto GOFORWARD;
 		}
 		while (1) {
 			if (iArea <= 0) {
-				if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
+				if (iCurX >= GAME_MAP_SIZE || iCurY >= GAME_MAP_SIZE)
 					return 0;
 			}
-			else if (iX < 1 || iY < 1 || iX > GAME_MAP_SIZE-2 || iY > GAME_MAP_SIZE-2) {
+			else if (iCurX < 1 || iCurY < 1 || iCurX > GAME_MAP_SIZE - 2 || iCurY > GAME_MAP_SIZE - 2) {
 				// Added this due to legacy military plot drops, this allows > 1x1 type buildings
 				// to develop if the plot is on the edge of the map.
-				if (XZONReturnZone(iX, iY) == ZONE_MILITARY) {
-					if (iX < 0 || iY < 0 || iX > GAME_MAP_SIZE - 1 || iY > GAME_MAP_SIZE - 1)
+				if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY) {
+					if (iCurX < 0 || iCurY < 0 || iCurX > GAME_MAP_SIZE - 1 || iCurY > GAME_MAP_SIZE - 1)
 						return 0;
 				}
 				else
 					return 0;
 			}
 
-			iBuilding = dwMapXBLD[iX][iY].iTileID;
+			iBuilding = dwMapXBLD[iCurX][iCurY].iTileID;
 			if (iBuilding >= TILE_ROAD_LR)
 				return 0;
 			
@@ -1606,7 +1606,7 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iT
 			if (iBuilding == TILE_SMALLPARK)
 				return 0;
 			
-			if (XZONReturnZone(iX, iY) == ZONE_MILITARY) {
+			if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY) {
 				if (iBuilding == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
 					iBuilding == TILE_ROAD_LR ||
 					iBuilding == TILE_ROAD_TB)
@@ -1614,33 +1614,33 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iT
 			}
 
 			if (iTileID == TILE_INFRASTRUCTURE_MARINA) {
-				if (iX < GAME_MAP_SIZE &&
-					iY < GAME_MAP_SIZE &&
-					dwMapXBIT[iX][iY].b.iWater != 0) {
+				if (iCurX < GAME_MAP_SIZE &&
+					iCurY < GAME_MAP_SIZE &&
+					dwMapXBIT[iCurX][iCurY].b.iWater != 0) {
 					++iMarinaCount;
 					goto GOSKIP;
 				}
-				if (dwMapXTER[iX][iY].iTileID)
+				if (dwMapXTER[iCurX][iCurY].iTileID)
 					return 0;
 			}
 
-			if (dwMapXTER[iX][iY].iTileID)
+			if (dwMapXTER[iCurX][iCurY].iTileID)
 				return 0;
 			
-			if (iX < GAME_MAP_SIZE &&
-				iY < GAME_MAP_SIZE &&
-				dwMapXBIT[iX][iY].b.iWater != 0)
+			if (iCurX < GAME_MAP_SIZE &&
+				iCurY < GAME_MAP_SIZE &&
+				dwMapXBIT[iCurX][iCurY].b.iWater != 0)
 				return 0;
 
 		GOSKIP:
-			if (++iY > iItemLength)
+			if (++iCurY > iFarY)
 				goto GOBACK;
 			
 		}
 	}
 
 GOFORWARD:
-	if (iTileID == TILE_INFRASTRUCTURE_MARINA && (!iMarinaCount || iMarinaCount == 9)) {
+	if (iTileID == TILE_INFRASTRUCTURE_MARINA && (iMarinaCount == 0 || iMarinaCount == 9)) {
 		Game_AfxMessageBoxID(107, 0, -1);
 		return 0;
 	}
@@ -1653,48 +1653,40 @@ GOFORWARD:
 			return 0;
 		else {
 			bTextOverlay = Game_SimulationProvisionMicrosim(x, y, iTileID);
-			if (iItemWidth >= x) {
-				iItemDepth = y + iArea;
-				for (__int16 iCurrXPos = x; iCurrXPos <= iItemWidth; ++iCurrXPos) {
-					for (__int16 iCurrYPos = y; iCurrYPos <= iItemDepth; ++iCurrYPos) {
-						if (iCurrXPos >= 0) {
-							if (iCurrXPos < GAME_MAP_SIZE && iCurrYPos < GAME_MAP_SIZE)
-								*(BYTE *)&dwMapXBIT[iCurrXPos][iCurrYPos].b &= ~(XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
-							if (iCurrXPos < GAME_MAP_SIZE && iCurrYPos < GAME_MAP_SIZE)
-								*(BYTE *)&dwMapXBIT[iCurrXPos][iCurrYPos].b |= iTileBitMask;
+			if (iFarX >= x) {
+				for (iCurX = x; iCurX <= iFarX; ++iCurX) {
+					for (iCurY = y; iCurY <= iFarY; ++iCurY) {
+						if (iCurX >= 0) {
+							if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE)
+								*(BYTE *)&dwMapXBIT[iCurX][iCurY].b &= ~(XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
+							if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE)
+								*(BYTE *)&dwMapXBIT[iCurX][iCurY].b |= iTileBitMask;
 						}
-						Game_PlaceTileWithMilitaryCheck(iCurrXPos, iCurrYPos, iTileID);
-						if (iCurrXPos >= 0) {
-							if (iCurrXPos < GAME_MAP_SIZE && iCurrYPos < GAME_MAP_SIZE)
-								XZONClearZone(iCurrXPos, iCurrYPos);
-							if (iCurrXPos < GAME_MAP_SIZE && iCurrYPos < GAME_MAP_SIZE)
-								XZONClearCorners(iCurrXPos, iCurrYPos);
+						Game_PlaceTileWithMilitaryCheck(iCurX, iCurY, iTileID);
+						if (iCurX >= 0) {
+							if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE)
+								XZONClearZone(iCurX, iCurY);
+							if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE)
+								XZONClearCorners(iCurX, iCurY);
 						}
 						if (bTextOverlay)
-							dwMapXTXT[iCurrXPos][iCurrYPos].bTextOverlay = bTextOverlay;
+							dwMapXTXT[iCurX][iCurY].bTextOverlay = bTextOverlay;
 					}
 				}
 			}
 			if (iArea) {
 				if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 					XZONSetCornerAngle(x, y, wTileAreaBottomLeftCorner[wViewRotation]);
-				iCorner[0] = iArea + x;
-				if (iCorner[0] >= 0 && iCorner[0] < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-					XZONSetCornerAngle(iCorner[0], y, wTileAreaBottomRightCorner[wViewRotation]);
-				if (iCorner[0] < GAME_MAP_SIZE) {
-					iCorner[1] = y + iArea;
-					if (iCorner[1] >= 0 && iCorner[1] < GAME_MAP_SIZE)
-						XZONSetCornerAngle(iCorner[0], iCorner[1], wTileAreaTopLeftCorner[wViewRotation]);
-				}
-				if (x < GAME_MAP_SIZE) {
-					iCorner[2] = iArea + y;
-					if (iCorner[2] >= 0 && iCorner[2] < GAME_MAP_SIZE)
-						XZONSetCornerAngle(x, iCorner[2], wTileAreaTopRightCorner[wViewRotation]);
-				}
+				if (iFarX >= 0 && iFarX < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
+					XZONSetCornerAngle(iFarX, y, wTileAreaBottomRightCorner[wViewRotation]);
+				if (iFarX < GAME_MAP_SIZE && iFarY >= 0 && iFarY < GAME_MAP_SIZE)
+					XZONSetCornerAngle(iFarX, iFarY, wTileAreaTopLeftCorner[wViewRotation]);
+				if (x < GAME_MAP_SIZE && iFarY >= 0 && iFarY < GAME_MAP_SIZE)
+					XZONSetCornerAngle(x, iFarY, wTileAreaTopRightCorner[wViewRotation]);
 			}
 			else if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 				XZONSetCornerMask(x, y, CORNER_ALL);
-			Game_SpawnItem(x, y + iArea);
+			Game_SpawnItem(x, iFarY);
 			return 1;
 		}
 	}
