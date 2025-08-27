@@ -349,12 +349,12 @@ void PlaceMissileSilo(__int16 m_x, __int16 m_y) {
 					/*if (iX >= 0) {
 						if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE) {
 							ConsoleLog(LOG_DEBUG, "MS: 0 - Corners: [%s] (%d, %d) (%u) (%u)\n", szTileNames[TILE_MILITARY_MISSILESILO], iX, iY, *(BYTE *)&dwMapXZON[iX][iY].b & CORNER_BOUNDARY, dwMapXZON[iX][iY].b.iCorners);
-							XZONClearCorners(iX, iY);
+							XZONClearZone(iX, iY);
 							ConsoleLog(LOG_DEBUG, "MS: 1 - Corners: [%s] (%d, %d) (%u) (%u)\n", szTileNames[TILE_MILITARY_MISSILESILO], iX, iY, *(BYTE *)&dwMapXZON[iX][iY].b & CORNER_BOUNDARY, dwMapXZON[iX][iY].b.iCorners);
 						}
 						if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE) {
 							ConsoleLog(LOG_DEBUG, "MS: 0 - Zones: [%s] (%d, %d) (%u) (%u)\n", szTileNames[TILE_MILITARY_MISSILESILO], iX, iY, *(BYTE *)&dwMapXZON[iX][iY].b & ZONE_BOUNDARY, dwMapXZON[iX][iY].b.iZoneType);
-							XZONClearZone(iX, iY);
+							XZONClearCorners(iX, iY);
 							ConsoleLog(LOG_DEBUG, "MS: 1 - Zones: [%s] (%d, %d) (%u) (%u)\n", szTileNames[TILE_MILITARY_MISSILESILO], iX, iY, *(BYTE *)&dwMapXZON[iX][iY].b & ZONE_BOUNDARY, dwMapXZON[iX][iY].b.iZoneType);
 						}
 					}*/

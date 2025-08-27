@@ -81,8 +81,6 @@
 
 #define GAME_MAP_SIZE 128
 
-class CMFC3XString;
-
 // Enums
 
 // Disaster IDs
@@ -1584,6 +1582,8 @@ static inline BOOL IsEven(__int16 iAxis) {
 	return (iAxis % 2) == 0 ? TRUE : FALSE;
 }
 
+//HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...);
+
 #define USE_OLD_ALTM_HANDLING 0
 
 static inline WORD ALTMReturnLandAltitude(__int16 x, __int16 y) {
@@ -1672,10 +1672,10 @@ static inline void XZONSetCornerAngle(__int16 x, __int16 y, WORD wAngle) {
 }
 
 static inline void XZONClearCorners(__int16 x, __int16 y) {
-	// This "appears" to be for setting the corner on the given
-	// tile to none.
 #if USE_OLD_XZON_HANDLING
-	*(BYTE *)&dwMapXZON[x][y].b &= CORNER_BOUNDARY;
+	//ConsoleLog(7, "XZONClearCorners(%d, %d) Before: [%s] (%u) (%u) (%u)\n", x, y, szTileNames[dwMapXBLD[x][y].iTileID], *(BYTE *)&dwMapXZON[x][y].b, *(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY, dwMapXZON[x][y].b.iCorners);
+	*(BYTE *)&dwMapXZON[x][y].b &= ~CORNER_BOUNDARY;
+	//ConsoleLog(7, "XZONClearCorners(%d, %d) After: [%s] (%u) (%u) (%u)\n", x, y, szTileNames[dwMapXBLD[x][y].iTileID], *(BYTE *)&dwMapXZON[x][y].b, *(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY, dwMapXZON[x][y].b.iCorners);
 #else
 	dwMapXZON[x][y].b.iCorners = CORNER_NONE;
 #endif
@@ -1690,10 +1690,10 @@ static inline BYTE XZONReturnCornerMask(__int16 x, __int16 y) {
 }
 
 static inline void XZONClearZone(__int16 x, __int16 y) {
-	// This "appears" to be for setting the zone in the given
-	// tile to none.
 #if USE_OLD_XZON_HANDLING
-	*(BYTE *)&dwMapXZON[x][y].b &= ZONE_BOUNDARY;
+	//ConsoleLog(7, "XZONClearZone(%d, %d) Before: [%s] (%u) (%u) (%u)\n", x, y, szTileNames[dwMapXBLD[x][y].iTileID], *(BYTE *)&dwMapXZON[x][y].b, *(BYTE *)&dwMapXZON[x][y].b & ZONE_BOUNDARY, dwMapXZON[x][y].b.iZoneType);
+	*(BYTE *)&dwMapXZON[x][y].b &= ~ZONE_BOUNDARY;
+	//ConsoleLog(7, "XZONClearZone(%d, %d) After:  [%s] (%u) (%u) (%u)\n", x, y, szTileNames[dwMapXBLD[x][y].iTileID], *(BYTE *)&dwMapXZON[x][y].b, *(BYTE *)&dwMapXZON[x][y].b & ZONE_BOUNDARY, dwMapXZON[x][y].b.iZoneType);
 #else
 	dwMapXZON[x][y].b.iZoneType = ZONE_NONE;
 #endif

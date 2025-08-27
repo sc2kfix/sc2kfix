@@ -1678,9 +1678,9 @@ GOFORWARD:
 						Game_PlaceTileWithMilitaryCheck(iCurrXPos, iCurrYPos, iTileID);
 						if (iCurrXPos >= 0) {
 							if (iCurrXPos < GAME_MAP_SIZE && iCurrYPos < GAME_MAP_SIZE)
-								XZONClearCorners(iCurrXPos, iCurrYPos);
-							if (iCurrXPos < GAME_MAP_SIZE && iCurrYPos < GAME_MAP_SIZE)
 								XZONClearZone(iCurrXPos, iCurrYPos);
+							if (iCurrXPos < GAME_MAP_SIZE && iCurrYPos < GAME_MAP_SIZE)
+								XZONClearCorners(iCurrXPos, iCurrYPos);
 						}
 						if (bTextOverlay)
 							dwMapXTXT[iCurrXPos][iCurrYPos].bTextOverlay = bTextOverlay;
