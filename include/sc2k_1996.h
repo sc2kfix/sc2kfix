@@ -1621,7 +1621,7 @@ static inline WORD ALTMReturnMask(__int16 x, __int16 y) {
 // passed mask/angle is present within the current XZON coordinate corner mask.
 static inline BOOL XZONCornerAbsoluteCheckMask(__int16 x, __int16 y, BYTE cornerMask) {
 #if USE_OLD_XZON_HANDLING
-	return (*(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY) == cornerMask;
+	return (*(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY) == (cornerMask);
 #else
 	return dwMapXZON[x][y].b.iCorners == (cornerMask >> 4);
 #endif
@@ -1629,7 +1629,7 @@ static inline BOOL XZONCornerAbsoluteCheckMask(__int16 x, __int16 y, BYTE corner
 
 static inline BOOL XZONCornerAbsoluteCheck(__int16 x, __int16 y, WORD wAngle) {
 #if USE_OLD_XZON_HANDLING
-	return (*(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY) == LOBYTE(wAngle);
+	return (*(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY) == (LOBYTE(wAngle));
 #else
 	return dwMapXZON[x][y].b.iCorners == (LOBYTE(wAngle) >> 4);
 #endif
@@ -1637,7 +1637,7 @@ static inline BOOL XZONCornerAbsoluteCheck(__int16 x, __int16 y, WORD wAngle) {
 
 static inline BOOL XZONCornerCheckMask(__int16 x, __int16 y, BYTE cornerMask) {
 #if USE_OLD_XZON_HANDLING
-	return (*(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY) & cornerMask;
+	return (*(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY) & (cornerMask);
 #else
 	return dwMapXZON[x][y].b.iCorners & (cornerMask >> 4);
 #endif
@@ -1645,7 +1645,7 @@ static inline BOOL XZONCornerCheckMask(__int16 x, __int16 y, BYTE cornerMask) {
 
 static inline BOOL XZONCornerCheck(__int16 x, __int16 y, WORD wAngle) {
 #if USE_OLD_XZON_HANDLING
-	return (*(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY) & LOBYTE(wAngle);
+	return (*(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY) & (LOBYTE(wAngle));
 #else
 	return dwMapXZON[x][y].b.iCorners & (LOBYTE(wAngle) >> 4);
 #endif
@@ -1656,7 +1656,7 @@ static inline BOOL XZONCornerCheck(__int16 x, __int16 y, WORD wAngle) {
 static inline void XZONSetCornerMask(__int16 x, __int16 y, BYTE cornerMask) {
 	// This sets the cornerMask while retaining any zone bits.
 #if USE_OLD_XZON_HANDLING
-	*(BYTE *)&dwMapXZON[x][y].b |= cornerMask;
+	*(BYTE *)&dwMapXZON[x][y].b |= (cornerMask);
 #else
 	dwMapXZON[x][y].b.iCorners = (cornerMask >> 4);
 #endif
@@ -1665,7 +1665,7 @@ static inline void XZONSetCornerMask(__int16 x, __int16 y, BYTE cornerMask) {
 static inline void XZONSetCornerAngle(__int16 x, __int16 y, WORD wAngle) {
 	// This sets the LOBYTE of wAngle while retaining any zone bits.
 #if USE_OLD_XZON_HANDLING
-	*(BYTE *)&dwMapXZON[x][y].b |= LOBYTE(wAngle);
+	*(BYTE *)&dwMapXZON[x][y].b |= (LOBYTE(wAngle));
 #else
 	dwMapXZON[x][y].b.iCorners = (LOBYTE(wAngle) >> 4);
 #endif
@@ -1674,7 +1674,7 @@ static inline void XZONSetCornerAngle(__int16 x, __int16 y, WORD wAngle) {
 static inline void XZONClearCorners(__int16 x, __int16 y) {
 #if USE_OLD_XZON_HANDLING
 	//ConsoleLog(7, "XZONClearCorners(%d, %d) Before: [%s] (%u) (%u) (%u)\n", x, y, szTileNames[dwMapXBLD[x][y].iTileID], *(BYTE *)&dwMapXZON[x][y].b, *(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY, dwMapXZON[x][y].b.iCorners);
-	*(BYTE *)&dwMapXZON[x][y].b &= ~CORNER_BOUNDARY;
+	*(BYTE *)&dwMapXZON[x][y].b &= ~(CORNER_BOUNDARY);
 	//ConsoleLog(7, "XZONClearCorners(%d, %d) After: [%s] (%u) (%u) (%u)\n", x, y, szTileNames[dwMapXBLD[x][y].iTileID], *(BYTE *)&dwMapXZON[x][y].b, *(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY, dwMapXZON[x][y].b.iCorners);
 #else
 	dwMapXZON[x][y].b.iCorners = CORNER_NONE;
@@ -1692,7 +1692,7 @@ static inline BYTE XZONReturnCornerMask(__int16 x, __int16 y) {
 static inline void XZONClearZone(__int16 x, __int16 y) {
 #if USE_OLD_XZON_HANDLING
 	//ConsoleLog(7, "XZONClearZone(%d, %d) Before: [%s] (%u) (%u) (%u)\n", x, y, szTileNames[dwMapXBLD[x][y].iTileID], *(BYTE *)&dwMapXZON[x][y].b, *(BYTE *)&dwMapXZON[x][y].b & ZONE_BOUNDARY, dwMapXZON[x][y].b.iZoneType);
-	*(BYTE *)&dwMapXZON[x][y].b &= ~ZONE_BOUNDARY;
+	*(BYTE *)&dwMapXZON[x][y].b &= ~(ZONE_BOUNDARY);
 	//ConsoleLog(7, "XZONClearZone(%d, %d) After:  [%s] (%u) (%u) (%u)\n", x, y, szTileNames[dwMapXBLD[x][y].iTileID], *(BYTE *)&dwMapXZON[x][y].b, *(BYTE *)&dwMapXZON[x][y].b & ZONE_BOUNDARY, dwMapXZON[x][y].b.iZoneType);
 #else
 	dwMapXZON[x][y].b.iZoneType = ZONE_NONE;

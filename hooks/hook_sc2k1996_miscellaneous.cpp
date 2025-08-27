@@ -1387,7 +1387,7 @@ RUNWAY_GETOUT:
 			if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 				XZONSetNewZone(x, y, iZoneType);
 			if (iZoneType == ZONE_MILITARY && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-				*(BYTE *)&dwMapXBIT[x][y].b &= XBIT_SALTWATER|XBIT_ROTATED|XBIT_WATER|XBIT_MARK;
+				*(BYTE *)&dwMapXBIT[x][y].b &= ~(XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
 			iLengthWays = wTilePierLengthWays[i];
 			if (!iLengthWays)
 				goto PIER_GOTOONE;
@@ -1432,7 +1432,7 @@ PIER_GOTOTHREE:
 				if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 					XZONSetNewZone(x, y, iZoneType);
 				if (iZoneType == ZONE_MILITARY && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-					*(BYTE *)&dwMapXBIT[x][y].b &= XBIT_SALTWATER|XBIT_ROTATED|XBIT_WATER|XBIT_MARK;
+					*(BYTE *)&dwMapXBIT[x][y].b &= ~(XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
 			}
 			return 1;
 		case TILE_INFRASTRUCTURE_PARKINGLOT:
@@ -1539,13 +1539,13 @@ PIER_GOTOTHREE:
 				XZONSetNewZone(iNextX, iNextY, iZoneType);
 			if (iZoneType == ZONE_MILITARY) {
 				if (iEvenX < GAME_MAP_SIZE && iEvenY < GAME_MAP_SIZE)
-					*(BYTE *)&dwMapXBIT[iEvenX][iEvenY].b &= XBIT_SALTWATER|XBIT_ROTATED|XBIT_WATER|XBIT_MARK;
+					*(BYTE *)&dwMapXBIT[iEvenX][iEvenY].b &= ~(XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
 				if (iNextX < GAME_MAP_SIZE && iEvenY < GAME_MAP_SIZE)
-					*(BYTE *)&dwMapXBIT[iNextX][iEvenY].b &= XBIT_SALTWATER|XBIT_ROTATED|XBIT_WATER|XBIT_MARK;
+					*(BYTE *)&dwMapXBIT[iNextX][iEvenY].b &= ~(XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
 				if (iEvenX < GAME_MAP_SIZE && iNextY < GAME_MAP_SIZE)
-					*(BYTE *)&dwMapXBIT[iEvenX][iNextY].b &= XBIT_SALTWATER|XBIT_ROTATED|XBIT_WATER|XBIT_MARK;
+					*(BYTE *)&dwMapXBIT[iEvenX][iNextY].b &= ~(XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
 				if (iNextX < GAME_MAP_SIZE && iNextY < GAME_MAP_SIZE)
-					*(BYTE *)&dwMapXBIT[iNextX][iNextY].b &= XBIT_SALTWATER|XBIT_ROTATED|XBIT_WATER|XBIT_MARK;
+					*(BYTE *)&dwMapXBIT[iNextX][iNextY].b &= ~(XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
 			}
 			return 1;
 		case TILE_MILITARY_MISSILESILO:
@@ -1658,9 +1658,9 @@ GOFORWARD:
 	}
 	else {
 		if (iTileID == TILE_SERVICES_BIGPARK || iTileID == TILE_SMALLPARK)
-			iTileBitMask = XBIT_PIPED;
+			iTileBitMask = (XBIT_PIPED);
 		else
-			iTileBitMask = XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE;
+			iTileBitMask = (XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
 		if (iTileID == TILE_SMALLPARK && dwMapXBLD[x][y].iTileID >= TILE_SMALLPARK)
 			return 0;
 		else {
@@ -1671,7 +1671,7 @@ GOFORWARD:
 					for (__int16 iCurrYPos = y; iCurrYPos <= iItemDepth; ++iCurrYPos) {
 						if (iCurrXPos >= 0) {
 							if (iCurrXPos < GAME_MAP_SIZE && iCurrYPos < GAME_MAP_SIZE)
-								*(BYTE *)&dwMapXBIT[iCurrXPos][iCurrYPos].b &= XBIT_SALTWATER|XBIT_ROTATED|XBIT_WATER|XBIT_MARK;
+								*(BYTE *)&dwMapXBIT[iCurrXPos][iCurrYPos].b &= ~(XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
 							if (iCurrXPos < GAME_MAP_SIZE && iCurrYPos < GAME_MAP_SIZE)
 								*(BYTE *)&dwMapXBIT[iCurrXPos][iCurrYPos].b |= iTileBitMask;
 						}

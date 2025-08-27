@@ -342,6 +342,10 @@ void PlaceMissileSilo(__int16 m_x, __int16 m_y) {
 		if (iItemDepth >= y) {
 			for (iX = x; iX <= iItemWidth; ++iX) {
 				for (iY = y; iY <= iItemDepth; ++iY) {
+					if (iX >= 0) {
+						if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE)
+							*(BYTE *)&dwMapXBIT[iX][iY].b &= ~(XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
+					}
 					Game_PlaceTileWithMilitaryCheck(iX, iY, TILE_MILITARY_MISSILESILO);
 					Game_PlaceUndergroundTiles(iX, iY, UNDER_TILE_MISSILESILO);
 					// When this block is uncommented it sets both the corner and zone
