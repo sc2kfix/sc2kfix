@@ -761,6 +761,18 @@ enum {
 	LAYER_COUNT
 };
 
+// aggregate light/dense counts for each referenced zone from the 'ZONEPOP' case.
+// 'zonePopsBase[ZONEPOPAGR_ENTRYHERE] = pZonePops[idx + 2] + pZonePops[idx + 1];'
+// 'idx' in this context starts from 0 and is incremented by 2 to account for the
+// light/dense indices from 'ZONEPOP_ENTRYHERE'.
+enum {
+	ZONEPOPAGR_RESIDENTIAL,
+	ZONEPOPAGR_COMMERCIAL,
+	ZONEPOPAGR_INDUSTRIAL,
+
+	ZONEPOPAGR_COUNT
+};
+
 enum {
 	ZONEPOP_ALL,
 	ZONEPOP_RESLIGHT,
@@ -769,7 +781,9 @@ enum {
 	ZONEPOP_COMDENSE,
 	ZONEPOP_INDLIGHT,
 	ZONEPOP_INDDENSE,
-	ZONEPOP_ABANDONED
+	ZONEPOP_ABANDONED,
+
+	ZONEPOP_COUNT
 };
 
 enum {
