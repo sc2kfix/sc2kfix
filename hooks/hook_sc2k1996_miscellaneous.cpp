@@ -1267,7 +1267,7 @@ PROCEEDFURTHER:
 				iCurrX += iMoveY;
 				++iBuildingCount[0];
 				iCurrY += iMoveX;
-				if (iBuildingCount[0] >= 5) {
+				if (iBuildingCount[0] >= RUNWAYSTRIP_MAXTILES) {
 					if (!iMoveY) 
 						goto SKIPFIRSTROTATIONCHECK;
 					if (!IsEven(wViewRotation)) {
@@ -1329,7 +1329,7 @@ SKIPSECONDROTATIONCHECK:
 RUNWAY_GETOUT:
 						x += iMoveY;
 						y += iMoveX;
-						if (++iBuildingCount[1] >= 5)
+						if (++iBuildingCount[1] >= RUNWAYSTRIP_MAXTILES)
 							return 1;
 						continue;
 					}
@@ -1337,7 +1337,7 @@ RUNWAY_GETOUT:
 			}
 			return 1;
 		case TILE_INFRASTRUCTURE_CRANE:
-			for (i = 0; i < 4; i++) {
+			for (i = 0; i < PIER_MAXTILES; i++) {
 				iLengthWays = x + wTilePierLengthWays[i];
 				if (iLengthWays < GAME_MAP_SIZE) {
 					iDepthWays = y + wTilePierDepthWays[i];
@@ -1345,7 +1345,7 @@ RUNWAY_GETOUT:
 						break;
 				}
 			}
-			if (i == 4)
+			if (i == PIER_MAXTILES)
 				return 0;
 			iDepthWays = wTilePierDepthWays[i];
 			if (iDepthWays && !IsEven(x))
@@ -1368,7 +1368,7 @@ RUNWAY_GETOUT:
 				if (dwMapXBLD[iNextX][iNextY].iTileID)
 					return 0;
 				++iPierPathTileCount;
-			} while (iPierPathTileCount < 5);
+			} while (iPierPathTileCount <= PIER_MAXTILES);
 			if (ALTMReturnWaterLevel(iNextX, iNextY) < ALTMReturnLandAltitude(iNextX, iNextY) + 2)
 				return 0;
 			if (dwMapXBLD[x][y].iTileID >= TILE_SMALLPARK)
@@ -1394,7 +1394,7 @@ PIER_GOTOTWO:
 PIER_GOTOTHREE:
 				iToFlip = 0;
 			}
-			iPierLength = 4;
+			iPierLength = PIER_MAXTILES;
 			do {
 				x += wTilePierLengthWays[i];
 				y += wTilePierDepthWays[i];

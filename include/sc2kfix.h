@@ -106,6 +106,9 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define MICROSIMID_MIN 0
 #define MICROSIMID_MAX MAX_SIM_TEXT_ENTRIES - MIN_SIM_TEXT_ENTRIES
 
+#define PIER_MAXTILES 4
+#define RUNWAYSTRIP_MAXTILES 5
+
 // TODO: inline documentation
 typedef struct tagLOGPAL {
 	WORD wVersion;
