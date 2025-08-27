@@ -773,6 +773,27 @@ enum {
 };
 
 enum {
+	GRP_CITYSIZE,
+	GRP_RESPOP,
+	GRP_COMPOP,
+	GRP_INDPOP,
+	GRP_TRAFFIC,
+	GRP_POLLUTION,
+	GRP_CITYVALUE,
+	GRP_CITYCRIME,
+	GRP_POWERPERCENT,
+	GRP_WATERPERCENT,
+	GRP_HEALTH,
+	GRP_EDUCATION,
+	GRP_UNEMPLOYMENTRATE,
+	GRP_GNP,
+	GRP_NATIONALPOP,
+	GRP_FEDRATE,
+	GRP_GRPCATCOUNT
+};
+
+
+enum {
 	CITYTOOL_GROUP_BULLDOZER = 0,
 	CITYTOOL_GROUP_NATURE,					// I don't have a better name for this one.
 	CITYTOOL_GROUP_DISPATCH,
@@ -1148,18 +1169,18 @@ typedef struct {
 // Struct defining an SC2K XTHG (Thing) entity.
 #pragma pack(push, 1)
 typedef struct {
-	BYTE iId; // use xthg types enum to determine
+	BYTE iType; // use xthg types enum to determine
 	BYTE iDirection; // use xthg directions enum; for types airplane, helicopter, cargo ship, monster, etc; not sure how this is used for "deployment" types like fire, police, etc
-	BYTE iDunno1; // identifier? sequence number? type?
-	BYTE iPositionX;
-	BYTE iPositionY;
-	BYTE iPositionZ;
-	BYTE iDunno2;
-	BYTE iDunno3;
-	BYTE iDunno4;
-	BYTE iDunno5;
-	BYTE iDunno6;
-	BYTE iDunno7;
+	BYTE iState; // identifier? sequence number? type?
+	BYTE iX;
+	BYTE iY;
+	BYTE iZ;
+	BYTE iPX;    // object width?
+	BYTE iPY;    // object length?
+	BYTE iDX;    // horizontal movement speed?
+	BYTE iDY;    // vertical movement speed?
+	BYTE bLabel;
+	BYTE iGoal;
 } map_XTHG_t;
 #pragma pack(pop)
 
