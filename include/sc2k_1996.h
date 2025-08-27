@@ -73,7 +73,7 @@
 #define XBIT_SALTWATER 0x1
 #define XBIT_ROTATED   0x2
 #define XBIT_WATER     0x4
-#define XBIT_XVALMASK  0x8
+#define XBIT_MARK      0x8
 #define XBIT_WATERED   0x10
 #define XBIT_PIPED     0x20
 #define XBIT_POWERED   0x40
@@ -1166,7 +1166,7 @@ typedef struct {
 	BYTE iSaltWater : 1;
 	BYTE iRotated : 1;
 	BYTE iWater : 1;
-	BYTE iXVALMask : 1;
+	BYTE iMark : 1;
 	BYTE iWatered : 1;
 	BYTE iPiped : 1;
 	BYTE iPowered : 1;

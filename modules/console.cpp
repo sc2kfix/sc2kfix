@@ -529,8 +529,8 @@ BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments) {
 			strcat_s(szXBITFormatted, 256, "piped ");
 		if (dwMapXBIT[iTileX][iTileY].b.iWatered)
 			strcat_s(szXBITFormatted, 256, "watered ");
-		if (dwMapXBIT[iTileX][iTileY].b.iXVALMask)
-			strcat_s(szXBITFormatted, 256, "xvalmask ");
+		if (dwMapXBIT[iTileX][iTileY].b.iMark)
+			strcat_s(szXBITFormatted, 256, "mark ");
 		if (dwMapXBIT[iTileX][iTileY].b.iWater)
 			strcat_s(szXBITFormatted, 256, "water ");
 		if (dwMapXBIT[iTileX][iTileY].b.iRotated)

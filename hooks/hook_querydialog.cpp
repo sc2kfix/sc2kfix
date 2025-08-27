@@ -146,9 +146,9 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 				if (i == 5)
 					strTileInfo += "\n";
 			}
-			if (dwMapXBIT[iTileX][iTileY].b.iXVALMask) {
+			if (dwMapXBIT[iTileX][iTileY].b.iMark) {
 				i++;
-				strTileInfo += "xvalmask ";
+				strTileInfo += "mark ";
 				if (i == 5)
 					strTileInfo += "\n";
 			}
