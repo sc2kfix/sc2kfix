@@ -158,9 +158,9 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 				if (i == 5)
 					strTileInfo += "\n";
 			}
-			if (dwMapXBIT[iTileX][iTileY].b.iRotated) {
+			if (dwMapXBIT[iTileX][iTileY].b.iFlipped) {
 				i++;
-				strTileInfo += "rotated ";
+				strTileInfo += "flipped ";
 				if (i == 5)
 					strTileInfo += "\n";
 			}

@@ -533,8 +533,8 @@ BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments) {
 			strcat_s(szXBITFormatted, 256, "mark ");
 		if (dwMapXBIT[iTileX][iTileY].b.iWater)
 			strcat_s(szXBITFormatted, 256, "water ");
-		if (dwMapXBIT[iTileX][iTileY].b.iRotated)
-			strcat_s(szXBITFormatted, 256, "rotated ");
+		if (dwMapXBIT[iTileX][iTileY].b.iFlipped)
+			strcat_s(szXBITFormatted, 256, "flipped ");
 		if (dwMapXBIT[iTileX][iTileY].b.iSaltWater)
 			strcat_s(szXBITFormatted, 256, "saltwater ");
 		if (szXBITFormatted[0] == '\0')
@@ -670,7 +670,7 @@ BOOL ConsoleCmdSetDebug(const char* szCommand, const char* szArguments) {
 BOOL ConsoleCmdSetTile(const char* szCommand, const char* szArguments) {
 	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
 		printf(
-			"  [un]set tile <x> <y> rotate    Enable rotate flag on tile\n");
+			"  [un]set tile <x> <y> flip    Enable flip flag on tile\n");
 		return TRUE;
 	}
 
@@ -683,8 +683,8 @@ BOOL ConsoleCmdSetTile(const char* szCommand, const char* szArguments) {
 	sscanf_s(szArguments, "%i %i %s", &iTileX, &iTileY, szTileOperation, sizeof(szTileOperation));
 
 	if (iTileX >= 0 && iTileX < GAME_MAP_SIZE && iTileY >= 0 && iTileY < GAME_MAP_SIZE) {
-		if (!strcmp(szTileOperation, "rotate")) {
-			dwMapXBIT[iTileX][iTileY].b.iRotated = bOperation;
+		if (!strcmp(szTileOperation, "flip")) {
+			dwMapXBIT[iTileX][iTileY].b.iFlipped = bOperation;
 			return TRUE;
 		}
 	}

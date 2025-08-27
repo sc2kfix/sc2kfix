@@ -71,7 +71,7 @@
 #define CORNER_BOUNDARY CORNER_ALL // 0xF0 iCorner mask boundary.
 
 #define XBIT_SALTWATER 0x1
-#define XBIT_ROTATED   0x2
+#define XBIT_FLIPPED   0x2
 #define XBIT_WATER     0x4
 #define XBIT_MARK      0x8
 #define XBIT_WATERED   0x10
@@ -1162,7 +1162,7 @@ typedef struct {
 #pragma pack(push, 1)
 typedef struct {
 	BYTE iSaltWater : 1;
-	BYTE iRotated : 1;
+	BYTE iFlipped : 1;
 	BYTE iWater : 1;
 	BYTE iMark : 1;
 	BYTE iWatered : 1;

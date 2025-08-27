@@ -874,12 +874,12 @@ GOSPAWNSEAYARD:
 										if (!IsEven(wViewRotation)) {
 											if (iX < GAME_MAP_SIZE &&
 												iY < GAME_MAP_SIZE &&
-												dwMapXBIT[iX][iY].b.iRotated != 0)
+												dwMapXBIT[iX][iY].b.iFlipped != 0)
 												goto AIRFIELDSKIPAHEAD;
 										}
 										else if (iX >= GAME_MAP_SIZE ||
 											iY >= GAME_MAP_SIZE ||
-											dwMapXBIT[iX][iY].b.iRotated == 0) {
+											dwMapXBIT[iX][iY].b.iFlipped == 0) {
 AIRFIELDSKIPAHEAD:
 											Game_SpawnAeroplane(iX, iY, 0);
 											break;
@@ -1207,16 +1207,13 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 	__int16 iNextX, iNextY;
 	__int16 iBuildingCount[2];
 	__int16 iMoveX, iMoveY;
-	__int16 iToRotate;
-	__int16 iTileRotated;
+	__int16 iToFlip;
+	__int16 iTileFlipped;
 	int i;
 	__int16 iLengthWays;
 	__int16 iDepthWays;
 	__int16 iPierPathTileCount;
 	__int16 iPierLength;
-	map_XBIT_t *mXBIT;
-	BYTE mXBBits;
-	map_XBLD_t *mXBLDOne, *mXBLDTwo;
 	BYTE mXBuilding[4];
 
 	x = iX;
@@ -1279,11 +1276,11 @@ SKIPFIRSTROTATIONCHECK:
 							if (!IsEven(wViewRotation))
 								goto SKIPSECONDROTATIONCHECK;
 						}
-						iToRotate = 0;
+						iToFlip = 0;
 					}
 					else {
 SKIPSECONDROTATIONCHECK:
-						iToRotate = 1;
+						iToFlip = 1;
 					}
 					iBuildingCount[1] = 0;
 					while (2) {
@@ -1291,25 +1288,21 @@ SKIPSECONDROTATIONCHECK:
 						if (mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAYCROSS) {
 							--iBuildingCount[1];
 							if (mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAY) {
-								iTileRotated = x < GAME_MAP_SIZE &&
+								iTileFlipped = x < GAME_MAP_SIZE &&
 									y < GAME_MAP_SIZE &&
-									dwMapXBIT[x][y].b.iRotated;
-								if (iTileRotated != iToRotate) {
+									dwMapXBIT[x][y].b.iFlipped;
+								if (iTileFlipped != iToFlip) {
 									Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 									if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 										XZONSetCornerMask(x, y, CORNER_ALL);
 									if (iZoneType != ZONE_MILITARY) {
-										if (x <= -1)
+										if (x < 0)
 											goto RUNWAY_GETOUT;
 										if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 											*(BYTE *)&dwMapXBIT[x][y].b |= XBIT_POWERED|XBIT_POWERABLE;
 									}
-									if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE) {
-										mXBIT = dwMapXBIT[x];
-										mXBBits = (*(BYTE *)&mXBIT[y].b & (XBIT_SALTWATER|XBIT_WATER|XBIT_MARK|XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE));
-RUNWAY_GOBACK:
-										*(BYTE *)&mXBIT[y].b = mXBBits;
-									}
+									if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
+										*(BYTE *)&dwMapXBIT[x][y].b &= ~(XBIT_FLIPPED);
 								}
 							}
 						}
@@ -1330,11 +1323,8 @@ RUNWAY_GOBACK:
 								XZONSetCornerMask(x, y, CORNER_ALL);
 							if (iZoneType != ZONE_MILITARY && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 								*(BYTE *)&dwMapXBIT[x][y].b |= XBIT_POWERED|XBIT_POWERABLE;
-							if (iToRotate && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE) {
-								mXBIT = dwMapXBIT[x];
-								mXBBits = (*(BYTE *)&mXBIT[y].b | XBIT_ROTATED);
-								goto RUNWAY_GOBACK;
-							}
+							if (iToFlip && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
+								*(BYTE *)&dwMapXBIT[x][y].b |= (XBIT_FLIPPED);
 						}
 RUNWAY_GETOUT:
 						x += iMoveY;
@@ -1398,11 +1388,11 @@ RUNWAY_GETOUT:
 PIER_GOTOONE:
 			if (!IsEven(wViewRotation)) {
 PIER_GOTOTWO:
-				iToRotate = 1;
+				iToFlip = 1;
 			}
 			else {
 PIER_GOTOTHREE:
-				iToRotate = 0;
+				iToFlip = 0;
 			}
 			iPierLength = 4;
 			do {
@@ -1411,9 +1401,9 @@ PIER_GOTOTHREE:
 				Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_PIER);
 				if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 					XZONSetCornerMask(x, y, CORNER_ALL);
-				if (iToRotate) {
+				if (iToFlip) {
 					if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-						*(BYTE *)&dwMapXBIT[x][y].b |= XBIT_ROTATED;
+						*(BYTE *)&dwMapXBIT[x][y].b |= XBIT_FLIPPED;
 				}
 				--iPierLength;
 			} while (iPierLength);
@@ -1460,23 +1450,21 @@ PIER_GOTOTHREE:
 			
 			iNextX = iEvenX + 1;
 			iNextY = iEvenY + 1;
-			mXBLDOne = dwMapXBLD[iEvenX];
-			mXBuilding[0] = mXBLDOne[iEvenY].iTileID;
+			mXBuilding[0] = dwMapXBLD[iEvenX][iEvenY].iTileID;
 			if (mXBuilding[0] >= TILE_INFRASTRUCTURE_WATERTOWER)
 				return 0;
 			if (mXBuilding[0] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[0] == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
 				mXBuilding[0] == TILE_INFRASTRUCTURE_CRANE || mXBuilding[0] == TILE_MILITARY_MISSILESILO)
 				return 0;
-			mXBLDTwo = dwMapXBLD[iNextX];
-			mXBuilding[1] = mXBLDTwo[iEvenY].iTileID;
+			mXBuilding[1] = dwMapXBLD[iNextX][iEvenY].iTileID;
 			if (mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[1] == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
 				mXBuilding[1] == TILE_INFRASTRUCTURE_CRANE || mXBuilding[1] == TILE_MILITARY_MISSILESILO)
 				return 0;
-			mXBuilding[2] = mXBLDOne[iNextY].iTileID;
+			mXBuilding[2] = dwMapXBLD[iEvenX][iNextY].iTileID;
 			if (mXBuilding[2] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[2] == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
 				mXBuilding[2] == TILE_INFRASTRUCTURE_CRANE || mXBuilding[2] == TILE_MILITARY_MISSILESILO)
 				return 0;
-			mXBuilding[3] = mXBLDTwo[iNextY].iTileID;
+			mXBuilding[3] = dwMapXBLD[iNextX][iNextY].iTileID;
 			if (mXBuilding[3] == TILE_INFRASTRUCTURE_RUNWAY || mXBuilding[3] == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
 				mXBuilding[3] == TILE_INFRASTRUCTURE_CRANE || mXBuilding[3] == TILE_MILITARY_MISSILESILO)
 				return 0;
