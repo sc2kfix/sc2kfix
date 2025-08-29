@@ -1553,6 +1553,7 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iT
 	__int16 iMarinaWaterTileCount;
 	__int16 iCurX;
 	__int16 iCurY;
+	BOOL bCanBeMarinaTile;
 	BYTE iCurTile;
 	BYTE iTileBitMask;
 	BYTE bTextOverlay;
@@ -1570,11 +1571,10 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iT
 	iFarY = iArea + y;
 
 	iMarinaWaterTileCount = 0;
-#if 1
-	BOOL bCanBeMarinaTile;
-
 	for (iCurX = x; iCurX <= iFarX; ++iCurX) {
 		for (iCurY = y; iCurY <= iFarY; ++iCurY) {
+			// if the extended iArea is zero (or below..) and the current X or Y
+			// tiles are equal to or exceed GAME_MAP_SIZE.. definitely abort.
 			if (iArea <= 0 && (iCurX >= GAME_MAP_SIZE || iCurY >= GAME_MAP_SIZE))
 				return 0;
 			else if (iCurX < 1 || iCurY < 1 || iCurX > GAME_MAP_SIZE - 2 || iCurY > GAME_MAP_SIZE - 2) {
@@ -1652,73 +1652,7 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iT
 			}
 		}
 	}
-#else
-	iCurX = x;
-	if (iFarX >= x) {
-		while (1) {
-			iCurY = y;
-			if (iFarY >= y)
-				break;
-		GOBACK:
-			if (++iCurX > iFarX)
-				goto GOFORWARD;
-		}
-		while (1) {
-			if (iArea <= 0 && (iCurX >= GAME_MAP_SIZE || iCurY >= GAME_MAP_SIZE))
-					return 0;
-			else if (iCurX < 1 || iCurY < 1 || iCurX > GAME_MAP_SIZE - 2 || iCurY > GAME_MAP_SIZE - 2) {
-				// Added this due to legacy military plot drops, this allows > 1x1 type buildings
-				// to develop if the plot is on the edge of the map.
-				if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY && (iCurX < 0 || iCurY < 0 || iCurX > GAME_MAP_SIZE - 1 || iCurY > GAME_MAP_SIZE - 1))
-						return 0;
-				else
-					return 0;
-			}
 
-			iCurTile = dwMapXBLD[iCurX][iCurY].iTileID;
-			if (iCurTile >= TILE_ROAD_LR)
-				return 0;
-			
-			if (iCurTile == TILE_RADIOACTIVITY)
-				return 0;
-			
-			if (iCurTile == TILE_SMALLPARK)
-				return 0;
-			
-			if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY &&
-				(iCurTile == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
-				iCurTile == TILE_ROAD_LR ||
-				iCurTile == TILE_ROAD_TB))
-				return 0;
-
-			if (iTileID == TILE_INFRASTRUCTURE_MARINA) {
-				if (iCurX < GAME_MAP_SIZE &&
-					iCurY < GAME_MAP_SIZE &&
-					dwMapXBIT[iCurX][iCurY].b.iWater != 0) {
-					++iMarinaWaterTileCount;
-					goto GOSKIP;
-				}
-				if (dwMapXTER[iCurX][iCurY].iTileID)
-					return 0;
-			}
-
-			if (dwMapXTER[iCurX][iCurY].iTileID)
-				return 0;
-			
-			if (iCurX < GAME_MAP_SIZE &&
-				iCurY < GAME_MAP_SIZE &&
-				dwMapXBIT[iCurX][iCurY].b.iWater != 0)
-				return 0;
-
-		GOSKIP:
-			if (++iCurY > iFarY)
-				goto GOBACK;
-			
-		}
-	}
-
-GOFORWARD:
-#endif
 	if (iTileID == TILE_INFRASTRUCTURE_MARINA && (iMarinaWaterTileCount == MARINA_TILES_ALLDRY || iMarinaWaterTileCount == MARINA_TILES_ALLWET)) {
 		Game_AfxMessageBoxID(107, 0, -1);
 		return 0;
