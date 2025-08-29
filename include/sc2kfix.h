@@ -109,6 +109,9 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define PIER_MAXTILES 4
 #define RUNWAYSTRIP_MAXTILES 5
 
+#define MARINA_TILES_ALLDRY 0
+#define MARINA_TILES_ALLWET 9
+
 // TODO: inline documentation
 typedef struct tagLOGPAL {
 	WORD wVersion;

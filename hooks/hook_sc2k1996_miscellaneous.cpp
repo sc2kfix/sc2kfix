@@ -1548,12 +1548,12 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iT
 	__int16 x;
 	__int16 y;
 	__int16 iArea;
-	__int16 iMarinaCount;
 	__int16 iFarX;
 	__int16 iFarY;
+	__int16 iMarinaWaterTileCount;
 	__int16 iCurX;
 	__int16 iCurY;
-	BYTE iBuilding;
+	BYTE iCurTile;
 	BYTE iTileBitMask;
 	BYTE bTextOverlay;
 
@@ -1565,11 +1565,94 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iT
 		--x;
 		--y;
 	}
-	iMarinaCount = 0;
 
 	iFarX = iArea + x;
 	iFarY = iArea + y;
 
+	iMarinaWaterTileCount = 0;
+#if 1
+	BOOL bCanBeMarinaTile;
+
+	for (iCurX = x; iCurX <= iFarX; ++iCurX) {
+		for (iCurY = y; iCurY <= iFarY; ++iCurY) {
+			if (iArea <= 0 && (iCurX >= GAME_MAP_SIZE || iCurY >= GAME_MAP_SIZE))
+				return 0;
+			else if (iCurX < 1 || iCurY < 1 || iCurX > GAME_MAP_SIZE - 2 || iCurY > GAME_MAP_SIZE - 2) {
+				// Added this due to legacy military plot drops,
+				// this allows > 1x1 type buildings to develop
+				// if the plot is on the edge of the map.
+				if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY && (iCurX < 0 || iCurY < 0 || iCurX > GAME_MAP_SIZE - 1 || iCurY > GAME_MAP_SIZE - 1))
+					return 0;
+				else
+					return 0;
+			}
+
+			// If the current tile has the referenced
+			// item.
+			iCurTile = dwMapXBLD[iCurX][iCurY].iTileID;
+			if (iCurTile >= TILE_ROAD_LR)
+				return 0;
+
+			if (iCurTile == TILE_RADIOACTIVITY)
+				return 0;
+
+			if (iCurTile == TILE_SMALLPARK)
+				return 0;
+
+			// Originally in the Win95 version this check
+			// only did a comparison regarding the current
+			// tile zone being ZONE_MILITARY, as a result
+			// it would return 0 and military bases wouldn't
+			// grow; now it checks to see whether the current
+			// tile zone is ZONE_MILITARY, and whether the
+			// tile item is a runwaycross, or certain road tiles -
+			// this then prevents either:
+			// a) erroneous growth attempts if said tiles are
+			//    destroyed (particularly on Army Base plots)
+			// b) blank sections being left on Army Base plots
+			//    as a result of the presence of said tiles -
+			//    particular the road tiles - you'd then see
+			//    the 'Hanger' (nice typing error there..)
+			//    constantly spawn and despawn resulting
+			//    in many unnecessary calls.
+			if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY &&
+				(iCurTile == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
+				iCurTile == TILE_ROAD_LR ||
+				iCurTile == TILE_ROAD_TB))
+				return 0;
+
+			// Marina being an exception, this 'if' block
+			// checks to see whether the prospective area
+			// is suitable for placement.
+			if (iTileID == TILE_INFRASTRUCTURE_MARINA) {
+				bCanBeMarinaTile = FALSE;
+				if (iCurX < GAME_MAP_SIZE &&
+					iCurY < GAME_MAP_SIZE &&
+					dwMapXBIT[iCurX][iCurY].b.iWater != 0) {
+					++iMarinaWaterTileCount;
+					bCanBeMarinaTile = TRUE;
+				}
+				if (!bCanBeMarinaTile && dwMapXTER[iCurX][iCurY].iTileID)
+					return 0;
+			}
+
+			// This check shouldn't occur if 'bCanBeMarinaTile'
+			// is true, since the Marina needs to be placed
+			// across shorelines, and a block to prevent
+			// placement on shores or water bearing tiles
+			// would negate that entirely.
+			if (!bCanBeMarinaTile) {
+				if (dwMapXTER[iCurX][iCurY].iTileID)
+					return 0;
+
+				if (iCurX < GAME_MAP_SIZE &&
+					iCurY < GAME_MAP_SIZE &&
+					dwMapXBIT[iCurX][iCurY].b.iWater != 0)
+					return 0;
+			}
+		}
+	}
+#else
 	iCurX = x;
 	if (iFarX >= x) {
 		while (1) {
@@ -1581,43 +1664,38 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iT
 				goto GOFORWARD;
 		}
 		while (1) {
-			if (iArea <= 0) {
-				if (iCurX >= GAME_MAP_SIZE || iCurY >= GAME_MAP_SIZE)
+			if (iArea <= 0 && (iCurX >= GAME_MAP_SIZE || iCurY >= GAME_MAP_SIZE))
 					return 0;
-			}
 			else if (iCurX < 1 || iCurY < 1 || iCurX > GAME_MAP_SIZE - 2 || iCurY > GAME_MAP_SIZE - 2) {
 				// Added this due to legacy military plot drops, this allows > 1x1 type buildings
 				// to develop if the plot is on the edge of the map.
-				if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY) {
-					if (iCurX < 0 || iCurY < 0 || iCurX > GAME_MAP_SIZE - 1 || iCurY > GAME_MAP_SIZE - 1)
+				if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY && (iCurX < 0 || iCurY < 0 || iCurX > GAME_MAP_SIZE - 1 || iCurY > GAME_MAP_SIZE - 1))
 						return 0;
-				}
 				else
 					return 0;
 			}
 
-			iBuilding = dwMapXBLD[iCurX][iCurY].iTileID;
-			if (iBuilding >= TILE_ROAD_LR)
+			iCurTile = dwMapXBLD[iCurX][iCurY].iTileID;
+			if (iCurTile >= TILE_ROAD_LR)
 				return 0;
 			
-			if (iBuilding == TILE_RADIOACTIVITY)
+			if (iCurTile == TILE_RADIOACTIVITY)
 				return 0;
 			
-			if (iBuilding == TILE_SMALLPARK)
+			if (iCurTile == TILE_SMALLPARK)
 				return 0;
 			
-			if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY) {
-				if (iBuilding == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
-					iBuilding == TILE_ROAD_LR ||
-					iBuilding == TILE_ROAD_TB)
-					return 0;
-			}
+			if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY &&
+				(iCurTile == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
+				iCurTile == TILE_ROAD_LR ||
+				iCurTile == TILE_ROAD_TB))
+				return 0;
 
 			if (iTileID == TILE_INFRASTRUCTURE_MARINA) {
 				if (iCurX < GAME_MAP_SIZE &&
 					iCurY < GAME_MAP_SIZE &&
 					dwMapXBIT[iCurX][iCurY].b.iWater != 0) {
-					++iMarinaCount;
+					++iMarinaWaterTileCount;
 					goto GOSKIP;
 				}
 				if (dwMapXTER[iCurX][iCurY].iTileID)
@@ -1640,15 +1718,15 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iT
 	}
 
 GOFORWARD:
-	if (iTileID == TILE_INFRASTRUCTURE_MARINA && (iMarinaCount == 0 || iMarinaCount == 9)) {
+#endif
+	if (iTileID == TILE_INFRASTRUCTURE_MARINA && (iMarinaWaterTileCount == MARINA_TILES_ALLDRY || iMarinaWaterTileCount == MARINA_TILES_ALLWET)) {
 		Game_AfxMessageBoxID(107, 0, -1);
 		return 0;
 	}
 	else {
+		iTileBitMask = (XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
 		if (iTileID == TILE_SERVICES_BIGPARK || iTileID == TILE_SMALLPARK)
 			iTileBitMask = (XBIT_PIPED);
-		else
-			iTileBitMask = (XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
 		if (iTileID == TILE_SMALLPARK && dwMapXBLD[x][y].iTileID >= TILE_SMALLPARK)
 			return 0;
 		else {
