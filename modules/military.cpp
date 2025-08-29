@@ -1049,7 +1049,7 @@ extern "C" void __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	}
 }
 
-void InstallMilitaryHooks(void) {
+void InstallMilitaryHooksSimCity1996(void) {
 	VirtualProtect((LPVOID)0x403017, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x403017, Hook_SimulationProposeMilitaryBase);
 }

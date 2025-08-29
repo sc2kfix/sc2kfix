@@ -368,6 +368,9 @@
     <ClCompile Include="thirdparty\kuroko\vendor\rline.c">
       <Filter>Source Files\Third-Party\Kuroko</Filter>
     </ClCompile>
+    <ClCompile Include="hooks\hook_tilegrowthorplacement.cpp">
+      <Filter>Source Files\Hooks</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="sc2kfix.rc">
