@@ -26,8 +26,12 @@ UINT scenstat_debug = SCENSTAT_DEBUG;
 
 static DWORD dwDummy;
 
-extern const char* szCurrentScenarioDescription;
-extern DWORD dwScenarioStartDays;
+// Scenario locals; read on scenario load
+const char* scScenarioDescription = NULL;
+DWORD dwScenarioStartDays = 0;
+DWORD dwScenarioStartPopulation = 0;
+WORD wScenarioStartXVALTiles = 0;
+DWORD dwScenarioStartTrafficDivisor = 0;
 
 BOOL CALLBACK ScenarioStatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	CMFC3XString* SCApCStringArrLongMonths = (CMFC3XString*)0x4C71F8;
@@ -85,6 +89,7 @@ BOOL CALLBACK ScenarioStatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam
 			strScenarioCurrent += "$" + std::to_string(dwCityFunds - dwCityBonds) + "\n\n";
 		}
 
+		// BUG: does not work
 		if (dwScenarioLandValueGoal) {
 			strScenarioGoals += "Have at least $" + std::to_string(dwScenarioLandValueGoal) + "000 total city land value.\n\n";
 			strScenarioCurrent += "$" + std::to_string(dwCityLandValue) + "000\n\n";
@@ -101,18 +106,19 @@ BOOL CALLBACK ScenarioStatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam
 		}
 
 		if (dwScenarioPollutionLimit) {
-			strScenarioGoals += "Maintain a pollution rating of " + std::to_string(dwScenarioPollutionLimit) + "% or lower.\n\n";
-			strScenarioCurrent += std::to_string(dwCityPollution) + "%\n\n";
+			strScenarioGoals += "Maintain a pollution rating of " + to_string_precision((float)(dwScenarioPollutionLimit) / (float)(wScenarioStartXVALTiles / 4 + 1), 0) + "% or lower.\n\n";
+			strScenarioCurrent += to_string_precision((float)(dwCityPollution) / (float)(wScenarioStartXVALTiles / 4 + 1), 0) + "%\n\n";
 		}
 
 		if (dwScenarioCrimeLimit) {
-			strScenarioGoals += "Maintain a crime rate of " + std::to_string(dwScenarioCrimeLimit) + "% or lower.\n\n";
-			strScenarioCurrent += std::to_string(dwCityCrime) + "%\n\n";
+			strScenarioGoals += "Maintain a crime rate of " + to_string_precision((float)(dwScenarioCrimeLimit) / (float)(wScenarioStartXVALTiles / 4 + 1), 0) + "% or lower.\n\n";
+			strScenarioCurrent += to_string_precision((float)(dwCityCrime) / (float)(wScenarioStartXVALTiles / 4 + 1), 0) + "%\n\n";
 		}
 
+		// BUG: Needs work
 		if (dwScenarioTrafficLimit) {
-			strScenarioGoals += "Maintain a traffic rating of " + std::to_string(dwScenarioTrafficLimit) + "% or lower.\n\n";
-			strScenarioCurrent += std::to_string(dwCityTrafficUnknown) + "%\n\n";
+			strScenarioGoals += "Maintain a traffic rating of " + to_string_precision(dwScenarioTrafficLimit, 0) + "% or lower.\n\n";
+			strScenarioCurrent += to_string_precision(dwCityTrafficUnknown, 0) + "%\n\n";
 		}
 
 		// TODO: Building goals

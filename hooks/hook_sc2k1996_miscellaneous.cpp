@@ -2724,15 +2724,17 @@ REFRESHMENUGRANTS:
 	H_CCityToolBar_RefreshToolBar(pCityToolBar);
 }
 
-const char* szCurrentScenarioDescription = NULL;
-DWORD dwScenarioStartDays = 0;
-
 // Hook for the scenario description popup
 __declspec(naked) void Hook_402B4E(const char* szDescription, int a2, void* cWnd) {
 	__asm push ecx
+
 	if (szDescription && strlen(szDescription))
-		szCurrentScenarioDescription = szDescription;
+		scScenarioDescription = szDescription;
 	dwScenarioStartDays = dwCityDays;
+	dwScenarioStartPopulation = dwCityPopulation;
+	wScenarioStartXVALTiles = *(WORD*)0x4C93B4;		// XXX - needs variable declaration in sc2k_1996.h
+	dwScenarioStartTrafficDivisor = pBudgetArr[10].iCurrentCosts + pBudgetArr[11].iCurrentCosts + pBudgetArr[12].iCurrentCosts + 1;		// XXX - this should be a descriptive macro
+
 	__asm pop ecx
 	GAMEJMP(0x42DC20);
 }

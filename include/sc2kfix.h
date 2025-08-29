@@ -46,6 +46,16 @@
 
 #include <json.hpp>
 
+#ifdef __cplusplus
+#include <sstream>
+template <typename T> std::string to_string_precision(const T value, const int prec) {
+	std::ostringstream out;
+	out.precision(prec);
+	out << std::fixed << value;
+	return std::move(out).str();
+}
+#endif
+
 #define countof(x) (sizeof(x)/sizeof(*(x)))
 #define lengthof(s) (countof(s)-1)
 
@@ -231,6 +241,14 @@ extern BOOL bSettingsUseStatusDialog;
 extern BOOL bSettingsTitleCalendar;
 extern BOOL bSettingsUseNewStrings;
 extern BOOL bSettingsAlwaysSkipIntro;
+
+// Scenario state on-load information
+
+extern const char* scScenarioDescription;
+extern DWORD dwScenarioStartDays;
+extern DWORD dwScenarioStartPopulation;
+extern WORD wScenarioStartXVALTiles;
+extern DWORD dwScenarioStartTrafficDivisor;
 
 // Command line globals
 
