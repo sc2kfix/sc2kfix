@@ -352,11 +352,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
 		bCanFixAnimation = TRUE;
 		if (dwDetectedVersion == SC2KVERSION_1996)
-			InstallAnimationSimCity1996Hooks();
+			InstallAnimationHooks_SC2K1996();
 		else if (dwDetectedVersion == SC2KVERSION_1995)
-			InstallAnimationSimCity1995Hooks();
+			InstallAnimationHooks_SC2K1995();
 		else if (dwDetectedVersion == SC2KVERSION_DEMO)
-			InstallAnimationSimCityDemoHooks();
+			InstallAnimationHooks_SC2KDemo();
 		else
 			bCanFixAnimation = FALSE;
 

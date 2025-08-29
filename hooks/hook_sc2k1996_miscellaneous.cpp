@@ -1797,7 +1797,7 @@ void InstallMiscHooks_SC2K1996(void) {
 	VirtualProtect((LPVOID)0x401753, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x401753, Hook_SimcityAppOnQuit);
 
-	InstallSpriteAndTileSetSimCity1996Hooks();
+	InstallSpriteAndTileSetHooks_SC2K1996();
 
 	// Hook GameDoIdleUpkeep
 	VirtualProtect((LPVOID)0x402A3B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -1826,13 +1826,13 @@ void InstallMiscHooks_SC2K1996(void) {
 	NEWCALL((LPVOID)0x43F447, 0x402810);		// CSimcityView::UpdateAreaCompleteColorFill
 
 	// Install hooks for saving and loading
-	InstallSaveHooks();
+	InstallSaveHooks_SC2K1996();
 
 	// Hook into the ResetGameVars function.
 	VirtualProtect((LPVOID)0x401F05, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x401F05, Hook_ResetGameVars);
 
-	InstallTileGrowthOrPlacementHandlingSimCity1996();
+	InstallTileGrowthOrPlacementHandlingHooks_SC2K1996();
 
 	// Move the alt+query bottom text to not be blocked by the OK button
 	VirtualProtect((LPVOID)0x428FB1, 3, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -1842,7 +1842,7 @@ void InstallMiscHooks_SC2K1996(void) {
 	
 	// Install the advanced query hook
 	if (bUseAdvancedQuery)
-		InstallQueryHooks();
+		InstallQueryHooks_SC2K1996();
 
 	// Expand sound buffers and load higher quality sounds from DLL resources
 	LoadReplacementSounds();

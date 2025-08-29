@@ -338,7 +338,7 @@ void ReloadDefaultTileSet1996() {
 	H_CCmdTargetEndWaitCursor(pApp);
 }
 
-void InstallSpriteAndTileSetSimCity1996Hooks(void) {
+void InstallSpriteAndTileSetHooks_SC2K1996(void) {
 	// Hook LoadSpriteDataArchive
 	VirtualProtect((LPVOID)0x4029B4, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4029B4, Hook_LoadSpriteDataArchive1996);

@@ -1098,7 +1098,7 @@ extern "C" int __cdecl Hook_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iT
 	}
 }
 
-void InstallTileGrowthOrPlacementHandlingSimCity1996(void) {
+void InstallTileGrowthOrPlacementHandlingHooks_SC2K1996(void) {
 	// Hook into the SimulationGrowthTick function
 	VirtualProtect((LPVOID)0x4022FC, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4022FC, Hook_SimulationGrowthTick);
@@ -1116,5 +1116,5 @@ void InstallTileGrowthOrPlacementHandlingSimCity1996(void) {
 	NEWJMP((LPVOID)0x4027F2, Hook_ItemPlacementCheck);
 
 	// Military base hooks
-	InstallMilitaryHooksSimCity1996();
+	InstallMilitaryHooks_SC2K1996();
 }

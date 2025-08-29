@@ -255,7 +255,7 @@ extern "C" void __cdecl Hook_QueryGeneralItem(__int16 x, __int16 y) {
 		H_QueryGeneralItem(x, y);
 }
 
-void InstallQueryHooks(void) {
+void InstallQueryHooks_SC2K1996(void) {
 	ConsoleLog(LOG_DEBUG, "MISC: Installing Query Hooks\n");
 
 	VirtualProtect((LPVOID)0x401CFD, 5, PAGE_EXECUTE_READWRITE, &dwDummy);

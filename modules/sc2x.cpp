@@ -849,7 +849,7 @@ extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
 		ConsoleLog(LOG_DEBUG, "SC2X: Loaded %d $1500 neighbor connections.\n", *wCityNeighborConnections1500);
 }
 
-void InstallSaveHooks(void) {
+void InstallSaveHooks_SC2K1996(void) {
 	// Fix city name being overwritten by filename on save
 	BYTE bFilenamePatch[6] = { 0xB9, 0xA0, 0xA1, 0x4C, 0x00, 0x51 };
 	VirtualProtect((LPVOID)0x42FE62, 6, PAGE_EXECUTE_READWRITE, &dwDummy);

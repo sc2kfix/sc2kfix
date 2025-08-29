@@ -405,19 +405,19 @@ HOOKEXT BOOL bHookStopProcessing;
 
 // Hooks to inject in dllmain.cpp
 
-void InstallAnimationSimCity1996Hooks(void);
-void InstallAnimationSimCity1995Hooks(void);
-void InstallAnimationSimCityDemoHooks(void);
-void InstallSpriteAndTileSetSimCity1996Hooks(void);
-void InstallTileGrowthOrPlacementHandlingSimCity1996(void);
+void InstallAnimationHooks_SC2K1996(void);
+void InstallAnimationHooks_SC2K1995(void);
+void InstallAnimationHooks_SC2KDemo(void);
+void InstallSpriteAndTileSetHooks_SC2K1996(void);
+void InstallTileGrowthOrPlacementHandlingHooks_SC2K1996(void);
 void InstallMiscHooks_SC2K1996(void);
 void UpdateMiscHooks_SC2K1996(void);
 void InstallMiscHooks_SC2KDemo(void);
 void InstallStatusHooks_SC2K1996(void);
 void UpdateStatus_SC2K1996(int iShow);
-void InstallQueryHooks(void);
-void InstallMilitaryHooksSimCity1996(void);
-void InstallSaveHooks(void);
+void InstallQueryHooks_SC2K1996(void);
+void InstallMilitaryHooks_SC2K1996(void);
+void InstallSaveHooks_SC2K1996(void);
 extern "C" void __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer);
 extern "C" int __stdcall Hook_MusicPlay(int iSongID);
 extern "C" int __stdcall Hook_MusicStop(void);
