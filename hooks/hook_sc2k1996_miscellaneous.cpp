@@ -2732,7 +2732,7 @@ __declspec(naked) void Hook_402B4E(const char* szDescription, int a2, void* cWnd
 		scScenarioDescription = szDescription;
 	dwScenarioStartDays = dwCityDays;
 	dwScenarioStartPopulation = dwCityPopulation;
-	wScenarioStartXVALTiles = *(WORD*)0x4C93B4;		// XXX - needs variable declaration in sc2k_1996.h
+	wScenarioStartXVALTiles = wCityDevelopedTiles;
 	dwScenarioStartTrafficDivisor = pBudgetArr[10].iCurrentCosts + pBudgetArr[11].iCurrentCosts + pBudgetArr[12].iCurrentCosts + 1;		// XXX - this should be a descriptive macro
 
 	__asm pop ecx
