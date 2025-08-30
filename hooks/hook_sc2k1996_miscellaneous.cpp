@@ -1679,7 +1679,7 @@ static BOOL L_OnCmdMsg(void *pThis, UINT nID, int nCode, void *pExtra, void *pHa
 				return TRUE;
 
 			case IDM_GAME_FILE_RELOADDEFAULTTILESET:
-				ReloadDefaultTileSet1996();
+				ReloadDefaultTileSet_SC2K1996();
 				return TRUE;
 			}
 		}

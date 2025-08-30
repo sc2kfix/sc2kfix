@@ -65,7 +65,6 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 		// TERRAIN_00 check added here to avoid the runwaycross
 		// being placed into a dip (likely replacing a slope or granite block).
 		if (!dwMapXTER[x1][y1].iTileID) {
-			ConsoleLog(LOG_DEBUG, "SCM: (%d, %d) (%u >> %u) (%u)\n", x1, y1, CORNER_ALL, CORNER_ALL >> 4, 0xF);
 			XZONSetCornerMask(x1, y1, CORNER_ALL);
 			Game_PlaceTileWithMilitaryCheck(x1, y1, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 		}
@@ -74,7 +73,6 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 		// TERRAIN_00 check added here to avoid the runwaycross
 		// being placed into a dip (likely replacing a slope or granite block).
 		if (!dwMapXTER[iX][iY].iTileID) {
-			ConsoleLog(LOG_DEBUG, "SCM: (%d, %d) (%u >> %u) (%u)\n", x1, y1, CORNER_ALL, CORNER_ALL >> 4, 0xF);
 			XZONSetCornerMask(iX, iY, CORNER_ALL);
 			Game_PlaceTileWithMilitaryCheck(iX, iY, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 		}

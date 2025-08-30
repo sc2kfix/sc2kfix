@@ -320,7 +320,7 @@ GETOUT:
 	H_CFileDest(&datArchive);
 }
 
-void ReloadDefaultTileSet1996() {
+void ReloadDefaultTileSet_SC2K1996() {
 	void(__thiscall *H_CCmdTargetBeginWaitCursor)(void *) = (void(__thiscall *)(void *))0x4A28BB;
 	void(__thiscall *H_CCmdTargetEndWaitCursor)(void *) = (void(__thiscall *)(void *))0x4A28D2;
 
