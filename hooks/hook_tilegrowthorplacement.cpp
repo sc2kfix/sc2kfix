@@ -52,71 +52,7 @@ static void GetItemPlacementAreaAndFarPosition(__int16 m_x, __int16 m_y, __int16
 	*outArea = iArea;
 }
 
-static int IsValidSiloPosPlacement(__int16 x, __int16 y, __int16 iFarX, __int16 iFarY, __int16 iArea, BOOL bPlotCheck) {
-	__int16 iCurX;
-	__int16 iCurY;
-	BYTE iCurTile;
-
-	for (iCurX = x; iCurX <= iFarX; ++iCurX) {
-		for (iCurY = y; iCurY <= iFarY; ++iCurY) {
-			if (iArea <= 0 && (iCurX >= GAME_MAP_SIZE || iCurY >= GAME_MAP_SIZE))
-				return 0;
-			else if (iCurX < 1 || iCurY < 1 || iCurX > GAME_MAP_SIZE - 2 || iCurY > GAME_MAP_SIZE - 2)
-				return 0;
-
-			iCurTile = dwMapXBLD[iCurX][iCurY].iTileID;
-			if (iCurTile >= TILE_ROAD_LR)
-				return 0;
-
-			if (iCurTile == TILE_RADIOACTIVITY)
-				return 0;
-
-			if (iCurTile == TILE_SMALLPARK)
-				return 0;
-
-			if (bPlotCheck) {
-				if (XZONReturnZone(iCurX, iCurY) != ZONE_NONE)
-					return 0;
-			}
-			else {
-				if (XZONReturnZone(iCurX, iCurY) != ZONE_MILITARY)
-					return 0;
-				if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY && 
-					(iCurTile == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
-						iCurTile == TILE_ROAD_LR ||
-						iCurTile == TILE_ROAD_TB ||
-						iCurTile == TILE_MILITARY_MISSILESILO))
-					return 0;
-			}
-
-			if (dwMapXTER[iCurX][iCurY].iTileID)
-				return 0;
-
-			if (dwMapXUND[iCurX][iCurY].iTileID)
-				return 0;
-
-			if (iCurX < GAME_MAP_SIZE &&
-				iCurY < GAME_MAP_SIZE &&
-				dwMapXBIT[iCurX][iCurY].b.iWater != 0)
-				return 0;
-		}
-	}
-	return 1;
-}
-
-int IsValidSiloPosCheck(__int16 m_x, __int16 m_y) {
-	__int16 x;
-	__int16 y;
-	__int16 iArea;
-	__int16 iFarX;
-	__int16 iFarY;
-
-	GetItemPlacementAreaAndFarPosition(m_x, m_y, AREA_3x3, &x, &y, &iFarX, &iFarY, &iArea);
-
-	return IsValidSiloPosPlacement(x, y, iFarX, iFarY, iArea, TRUE);
-}
-
-static int IsValidGeneralPosPlacement(__int16 x, __int16 y, __int16 iFarX, __int16 iFarY, __int16 iArea, BYTE iTileID, __int16 *outMarinaWaterTileCount) {
+static int IsValidGeneralPosPlacementMain(__int16 x, __int16 y, __int16 iFarX, __int16 iFarY, __int16 iArea, BYTE iTileID, BOOL bDoSilo, BOOL bSiloPlotCheck, __int16 *outMarinaWaterTileCount) {
 	__int16 iCurX;
 	__int16 iCurY;
 	__int16 iMarinaWaterTileCount;
@@ -134,8 +70,12 @@ static int IsValidGeneralPosPlacement(__int16 x, __int16 y, __int16 iFarX, __int
 				// Added this due to legacy military plot drops,
 				// this allows > 1x1 type buildings to develop
 				// if the plot is on the edge of the map.
-				if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY && (iCurX < 0 || iCurY < 0 || iCurX > GAME_MAP_SIZE - 1 || iCurY > GAME_MAP_SIZE - 1))
-					return 0;
+				if (!bDoSilo) {
+					if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY && (iCurX < 0 || iCurY < 0 || iCurX > GAME_MAP_SIZE - 1 || iCurY > GAME_MAP_SIZE - 1))
+						return 0;
+					else
+						return 0;
+				}
 				else
 					return 0;
 			}
@@ -152,6 +92,7 @@ static int IsValidGeneralPosPlacement(__int16 x, __int16 y, __int16 iFarX, __int
 			if (iCurTile == TILE_SMALLPARK)
 				return 0;
 
+			// !bDoSilo case:
 			// Originally in the Win95 version this check
 			// only did a comparison regarding the current
 			// tile zone being ZONE_MILITARY, as a result
@@ -168,17 +109,35 @@ static int IsValidGeneralPosPlacement(__int16 x, __int16 y, __int16 iFarX, __int
 			//    the 'Hanger' (nice typing error there..)
 			//    constantly spawn and despawn resulting
 			//    in many unnecessary calls.
-			if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY &&
-				(iCurTile == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
-					iCurTile == TILE_ROAD_LR ||
-					iCurTile == TILE_ROAD_TB))
-				return 0;
+			if (!bDoSilo) {
+				if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY &&
+					(iCurTile == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
+						iCurTile == TILE_ROAD_LR ||
+						iCurTile == TILE_ROAD_TB))
+					return 0;
+			}
+			else {
+				if (bSiloPlotCheck) {
+					if (XZONReturnZone(iCurX, iCurY) != ZONE_NONE)
+						return 0;
+				}
+				else {
+					if (XZONReturnZone(iCurX, iCurY) != ZONE_MILITARY)
+						return 0;
+					if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY && 
+						(iCurTile == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
+							iCurTile == TILE_ROAD_LR ||
+							iCurTile == TILE_ROAD_TB ||
+							iCurTile == TILE_MILITARY_MISSILESILO))
+						return 0;
+				}
+			}
 
 			// Marina being an exception, this 'if' block
 			// checks to see whether the prospective area
 			// is suitable for placement.
+			bCanBeMarinaTile = FALSE;
 			if (iTileID == TILE_INFRASTRUCTURE_MARINA) {
-				bCanBeMarinaTile = FALSE;
 				if (iCurX < GAME_MAP_SIZE &&
 					iCurY < GAME_MAP_SIZE &&
 					dwMapXBIT[iCurX][iCurY].b.iWater != 0) {
@@ -198,6 +157,11 @@ static int IsValidGeneralPosPlacement(__int16 x, __int16 y, __int16 iFarX, __int
 				if (dwMapXTER[iCurX][iCurY].iTileID)
 					return 0;
 
+				if (bDoSilo) {
+					if (dwMapXUND[iCurX][iCurY].iTileID)
+						return 0;
+				}
+
 				if (iCurX < GAME_MAP_SIZE &&
 					iCurY < GAME_MAP_SIZE &&
 					dwMapXBIT[iCurX][iCurY].b.iWater != 0)
@@ -210,6 +174,23 @@ static int IsValidGeneralPosPlacement(__int16 x, __int16 y, __int16 iFarX, __int
 	return 1;
 }
 
+int IsValidSiloPosCheck(__int16 m_x, __int16 m_y) {
+	__int16 x;
+	__int16 y;
+	__int16 iArea;
+	__int16 iFarX;
+	__int16 iFarY;
+	__int16 iDummy;
+
+	GetItemPlacementAreaAndFarPosition(m_x, m_y, AREA_3x3, &x, &y, &iFarX, &iFarY, &iArea);
+
+	return IsValidGeneralPosPlacementMain(x, y, iFarX, iFarY, iArea, TILE_MILITARY_MISSILESILO, TRUE, TRUE, &iDummy);
+}
+
+static int IsValidGeneralPosPlacement(__int16 x, __int16 y, __int16 iFarX, __int16 iFarY, __int16 iArea, BYTE iTileID, BOOL bDoSilo, __int16 *outMarinaWaterTileCount) {
+	return IsValidGeneralPosPlacementMain(x, y, iFarX, iFarY, iArea, iTileID, bDoSilo, FALSE, outMarinaWaterTileCount);
+}
+
 static int L_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iTileID, __int16 iTileArea, BOOL bDoSilo) {
 	__int16 x;
 	__int16 y;
@@ -219,21 +200,14 @@ static int L_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iTileID, __int16 
 	__int16 iMarinaWaterTileCount;
 	__int16 iCurX;
 	__int16 iCurY;
-	BYTE iCurTile;
 	BYTE iTileBitMask;
 	BYTE bTextOverlay;
 
 	GetItemPlacementAreaAndFarPosition(m_x, m_y, iTileArea, &x, &y, &iFarX, &iFarY, &iArea);
 
 	iMarinaWaterTileCount = 0;
-	if (bDoSilo) {
-		if (!IsValidSiloPosPlacement(x, y, iFarX, iFarY, iArea, FALSE))
-			return 0;
-	}
-	else {
-		if (!IsValidGeneralPosPlacement(x, y, iFarX, iFarY, iArea, iTileID, &iMarinaWaterTileCount))
-			return 0;
-	}
+	if (!IsValidGeneralPosPlacement(x, y, iFarX, iFarY, iArea, iTileID, bDoSilo, &iMarinaWaterTileCount))
+		return 0;
 
 	if (iTileID == TILE_INFRASTRUCTURE_MARINA && (iMarinaWaterTileCount == MARINA_TILES_ALLDRY || iMarinaWaterTileCount == MARINA_TILES_ALLWET)) {
 		Game_AfxMessageBoxID(107, 0, -1);
