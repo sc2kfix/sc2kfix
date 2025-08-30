@@ -906,52 +906,46 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 	}
 }
 
+static void PlacePowerLineTile(__int16 x, __int16 y, BYTE iTileID) {
+	Game_PlaceTileWithMilitaryCheck(x, y, iTileID);
+	if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
+		dwMapXBIT[x][y].b.iPowerable = 1;
+	Game_CheckAdjustTerrainAndPlacePowerLines(x, y);
+	if (x > 0)
+		Game_CheckAdjustTerrainAndPlacePowerLines(x - 1, y);
+	if (x < GAME_MAP_SIZE-1)
+		Game_CheckAdjustTerrainAndPlacePowerLines(x + 1, y);
+	if (y > 0)
+		Game_CheckAdjustTerrainAndPlacePowerLines(x, y - 1);
+	if (y < GAME_MAP_SIZE-1)
+		Game_CheckAdjustTerrainAndPlacePowerLines(x, y + 1);
+}
+
 extern "C" void __cdecl Hook_PlacePowerLinesAtCoordinates(__int16 x, __int16 y) {
-	if (x < 0) {
-	TOBEGINNING:
-		if (dwMapXBLD[x][y].iTileID < TILE_POWERLINES_LR) {
-			Game_PlaceTileWithMilitaryCheck(x, y, TILE_POWERLINES_LR);
-		TOTHISPART:
-			if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-				dwMapXBIT[x][y].b.iPowerable = 1;
-			Game_CheckAdjustTerrainAndPlacePowerLines(x, y);
-			if (x > 0)
-				Game_CheckAdjustTerrainAndPlacePowerLines(x - 1, y);
-			if (x < GAME_MAP_SIZE-1)
-				Game_CheckAdjustTerrainAndPlacePowerLines(x + 1, y);
-			if (y > 0)
-				Game_CheckAdjustTerrainAndPlacePowerLines(x, y - 1);
-			if (y < GAME_MAP_SIZE-1)
-				Game_CheckAdjustTerrainAndPlacePowerLines(x, y + 1);
-		}
-		else {
-			switch (dwMapXBLD[x][y].iTileID) {
-			case TILE_ROAD_LR:
-				Game_PlaceTileWithMilitaryCheck(x, y, TILE_CROSSOVER_POWERTB_ROADLR);
-				goto TOTHISPART;
-			case TILE_ROAD_TB:
-				Game_PlaceTileWithMilitaryCheck(x, y, TILE_CROSSOVER_POWERLR_ROADTB);
-				goto TOTHISPART;
-			case TILE_RAIL_LR:
-				Game_PlaceTileWithMilitaryCheck(x, y, TILE_CROSSOVER_POWERTB_RAILLR);
-				goto TOTHISPART;
-			case TILE_RAIL_TB:
-				Game_PlaceTileWithMilitaryCheck(x, y, TILE_CROSSOVER_POWERLR_RAILTB);
-				goto TOTHISPART;
-			case TILE_HIGHWAY_LR:
-				Game_PlaceTileWithMilitaryCheck(x, y, TILE_CROSSOVER_HIGHWAYLR_POWERTB);
-				goto TOTHISPART;
-			case TILE_HIGHWAY_TB:
-				Game_PlaceTileWithMilitaryCheck(x, y, TILE_CROSSOVER_HIGHWAYTB_POWERLR);
-				goto TOTHISPART;
-			default:
-				return;
-			}
-		}
-		return;
+	BYTE iTileID;
+	BYTE iBuildTileID;
+
+	if ((x >= 0 || x < GAME_MAP_SIZE) && (y >= 0 || y < GAME_MAP_SIZE) && *(BYTE *)&dwMapXBIT[x][y].b >= 0) {
+		iTileID = dwMapXBLD[x][y].iTileID;
+		if (iTileID < TILE_POWERLINES_LR)
+			iBuildTileID = TILE_POWERLINES_LR;
+		else if (iTileID == TILE_ROAD_LR)
+			iBuildTileID = TILE_CROSSOVER_POWERTB_ROADLR;
+		else if (iTileID == TILE_ROAD_TB)
+			iBuildTileID = TILE_CROSSOVER_POWERLR_ROADTB;
+		else if (iTileID == TILE_RAIL_LR)
+			iBuildTileID = TILE_CROSSOVER_POWERTB_RAILLR;
+		else if (iTileID == TILE_RAIL_TB)
+			iBuildTileID = TILE_CROSSOVER_POWERLR_RAILTB;
+		else if (iTileID == TILE_HIGHWAY_LR)
+			iBuildTileID = TILE_CROSSOVER_HIGHWAYLR_POWERTB;
+		else if (iTileID == TILE_HIGHWAY_TB)
+			iBuildTileID = TILE_CROSSOVER_HIGHWAYTB_POWERLR;
+		else
+			return;
+
+		PlacePowerLineTile(x, y, iBuildTileID);
 	}
-	if (x >= GAME_MAP_SIZE || y >= GAME_MAP_SIZE || *(BYTE *)&dwMapXBIT[x][y].b >= 0)
-		goto TOBEGINNING;
 }
 
 extern "C" int __cdecl Hook_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iTileID, __int16 iTileArea) {
