@@ -557,131 +557,24 @@ static BOOL SetMoveRunwayTileAxis(__int16 primaryAxis, __int16 secondaryAxis, BO
 	return TRUE;
 }
 
-#define RUNWAY_POS_METHOD 0
-
 static BOOL GetRunwayTilePositionalOffset(__int16 x, __int16 y, __int16 *iMoveX, __int16 *iMoveY) {
-#if RUNWAY_POS_METHOD == 0 || RUNWAY_POS_METHOD == 2
 	BOOL bMoveXAxis;
 	BOOL bMoveYAxis;
 
 	bMoveXAxis = FALSE;
 	bMoveYAxis = FALSE;
 	if (IsEven(dwTileCount[TILE_INFRASTRUCTURE_RUNWAY])) {
-#if RUNWAY_POS_METHOD == 2
-		if (!IsEven(x))
-			bMoveXAxis = TRUE;
-		if (!bMoveXAxis) {
-			if (IsEven(y))
-				return FALSE;
-
-			bMoveYAxis = TRUE;
-		}
-#else
 		if (!SetMoveRunwayTileAxis(x, y, &bMoveXAxis, &bMoveYAxis))
 			return FALSE;
-#endif
 	}
 	else {
-#if RUNWAY_POS_METHOD == 2
-		if (!IsEven(y))
-			bMoveYAxis = TRUE;
-		if (!bMoveYAxis) {
-			if (IsEven(x))
-				return FALSE;
-
-			bMoveXAxis = TRUE;
-		}
-#else
 		if (!SetMoveRunwayTileAxis(y, x, &bMoveYAxis, &bMoveXAxis))
 			return FALSE;
-#endif
 	}
 
 	*iMoveX = (bMoveXAxis) ? 1 : 0;
 	*iMoveY = (bMoveYAxis) ? 1 : 0;
 	return TRUE;
-#elif RUNWAY_POS_METHOD == 3
-	*iMoveX = 0;
-	*iMoveY = 0;
-	if (IsEven(dwTileCount[TILE_INFRASTRUCTURE_RUNWAY])) {
-		if (!IsEven(x)) {
-			*iMoveX = 1;
-			return TRUE;
-		}
-		if (IsEven(y))
-			return FALSE;
-
-		*iMoveY = 1;
-		return TRUE;
-	}
-	else {
-		if (!IsEven(y)) {
-			*iMoveY = 1;
-			return TRUE;
-		}
-		if (IsEven(x))
-			return FALSE;
-
-		*iMoveX = 1;
-		return TRUE;
-	}
-#else
-	// Tracing pattern key:
-	// 0 - Before 'if (IsEven(dwTileCount[TILE_INFRASTRUCTURE_RUNWAY]))'
-	// 1 - Inside 'if (IsEven(dwTileCount[TILE_INFRASTRUCTURE_RUNWAY]))', before 'if (!IsEven(x))'
-	// 2 - Inside 'if (IsEven(dwTileCount[TILE_INFRASTRUCTURE_RUNWAY]))', inside 'if (!IsEven(x))' where iMoveX = 1, prior to 'goto PROCEEDFURTHER'
-	// 3 - Inside 'if (IsEven(dwTileCount[TILE_INFRASTRUCTURE_RUNWAY]))', after 'if (!isEven(x))', before 'if (IsEven(y))'
-	// 4 - Inside 'if (IsEven(dwTileCount[TILE_INFRASTRUCTURE_RUNWAY]))', after 'if (IsEven(y))', prior to 'goto PROCEEDAHEAD'
-	// 5 - Inside 'else', before 'if (!IsEven(y))'
-	// 6 - Inside 'else', inside 'if (!IsEven(y))', prior to 'PROCEEDAHEAD' goto destination
-	// 7 - Inside 'else', inside 'if (!IsEven(y))', where iMoveY = 1, after 'PROCEEDAHEAD' goto destination, prior to 'goto PROCEEDFURTHER'
-	// 8 - Inside 'else', before 'if (IsEven(x))'
-	// 9 - Inside 'else', after 'if (IsEven(x))', where iMoveX = 1
-	// 10 - Inside 'else, after iMoveX = 1, destination of the 'PROCEEDFURTHER' goto statement.
-
-	*iMoveX = 0;
-	*iMoveY = 0;
-	// Trace position 0
-	if (IsEven(dwTileCount[TILE_INFRASTRUCTURE_RUNWAY])) {
-		// Trace position 1
-		if (!IsEven(x)) {
-			*iMoveX = 1;
-			// Trace position 2
-			// 0, 1, 2, 10
-			goto PROCEEDFURTHER;
-		}
-		// 0, 1, 3
-		// Trace position 3
-		if (IsEven(y))
-			return FALSE;
-
-		// 0, 1, 3, 4, 7, 10
-		// Trace position 4
-		goto PROCEEDAHEAD;
-	}
-	else {
-		// Trace position 5
-		if (!IsEven(y)) {
-			// Trace position 6
-			// 0, 5, 6, 7, 10
-PROCEEDAHEAD:
-			*iMoveY = 1;
-			// Trace position 7
-			goto PROCEEDFURTHER;
-		}
-		// 0, 5, 8
-		// Trace position 8
-		if (IsEven(x))
-			return FALSE;
-
-		// 0, 5, 8, 9, 10
-		// Trace position 9
-		*iMoveX = 1;
-PROCEEDFURTHER:
-		// Trace position 10
-		return TRUE;
-	}
-#endif
 }
 
 extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, BYTE iTileID, __int16 iZoneType) {
@@ -704,13 +597,14 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 	x = iX;
 	y = iY;
 	if (iZoneType != ZONE_MILITARY)
-		if (!Game_IsZonedTilePowered(iX, iY))
+		if (!Game_IsZonedTilePowered(x, y))
 			return 0;
 
 	switch (iTileID) {
 	case TILE_INFRASTRUCTURE_RUNWAY:
 		iMoveX = 0;
 		iMoveY = 0;
+
 		if (!GetRunwayTilePositionalOffset(x, y, &iMoveX, &iMoveY))
 			return 0;
 
