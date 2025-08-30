@@ -424,7 +424,7 @@ extern "C" int __stdcall Hook_MusicStop(void);
 extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void);
 int L_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
 void ReloadDefaultTileSet1996();
-void PlaceMissileSilo(__int16 m_x, __int16 m_y);
+int IsValidSiloPosCheck(__int16 m_x, __int16 m_y);
 void ProposeMilitaryBaseDecline(void);
 void ProposeMilitaryBaseMissileSilos(void);
 void ProposeMilitaryBaseAirForceBase(void);

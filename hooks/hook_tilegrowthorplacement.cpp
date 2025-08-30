@@ -29,7 +29,276 @@
 
 UINT tilebuild_debug = TILEBUILD_DEBUG;
 
-static DWORD dwDummy; 
+static DWORD dwDummy;
+
+static void GetItemPlacementAreaAndFarPosition(__int16 m_x, __int16 m_y, __int16 iTileArea, __int16 *outX, __int16 *outY, __int16 *outFarX, __int16 *outFarY, __int16 *outArea) {
+	__int16 x;
+	__int16 y;
+	__int16 iArea;
+
+	x = m_x;
+	y = m_y;
+
+	iArea = iTileArea - 1;
+	if (iArea > 1) {
+		--x;
+		--y;
+	}
+
+	*outX = x;
+	*outY = y;
+	*outFarX = iArea + x;
+	*outFarY = iArea + y;
+	*outArea = iArea;
+}
+
+static int IsValidSiloPosPlacement(__int16 x, __int16 y, __int16 iFarX, __int16 iFarY, __int16 iArea, BOOL bPlotCheck) {
+	__int16 iCurX;
+	__int16 iCurY;
+	BYTE iCurTile;
+
+	for (iCurX = x; iCurX <= iFarX; ++iCurX) {
+		for (iCurY = y; iCurY <= iFarY; ++iCurY) {
+			if (iArea <= 0 && (iCurX >= GAME_MAP_SIZE || iCurY >= GAME_MAP_SIZE))
+				return 0;
+			else if (iCurX < 1 || iCurY < 1 || iCurX > GAME_MAP_SIZE - 2 || iCurY > GAME_MAP_SIZE - 2)
+				return 0;
+
+			iCurTile = dwMapXBLD[iCurX][iCurY].iTileID;
+			if (iCurTile >= TILE_ROAD_LR)
+				return 0;
+
+			if (iCurTile == TILE_RADIOACTIVITY)
+				return 0;
+
+			if (iCurTile == TILE_SMALLPARK)
+				return 0;
+
+			if (bPlotCheck) {
+				if (XZONReturnZone(iCurX, iCurY) != ZONE_NONE)
+					return 0;
+			}
+			else {
+				if (XZONReturnZone(iCurX, iCurY) != ZONE_MILITARY)
+					return 0;
+				if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY && 
+					(iCurTile == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
+						iCurTile == TILE_ROAD_LR ||
+						iCurTile == TILE_ROAD_TB ||
+						iCurTile == TILE_MILITARY_MISSILESILO))
+					return 0;
+			}
+
+			if (dwMapXTER[iCurX][iCurY].iTileID)
+				return 0;
+
+			if (dwMapXUND[iCurX][iCurY].iTileID)
+				return 0;
+
+			if (iCurX < GAME_MAP_SIZE &&
+				iCurY < GAME_MAP_SIZE &&
+				dwMapXBIT[iCurX][iCurY].b.iWater != 0)
+				return 0;
+		}
+	}
+	return 1;
+}
+
+int IsValidSiloPosCheck(__int16 m_x, __int16 m_y) {
+	__int16 x;
+	__int16 y;
+	__int16 iArea;
+	__int16 iFarX;
+	__int16 iFarY;
+
+	GetItemPlacementAreaAndFarPosition(m_x, m_y, AREA_3x3, &x, &y, &iFarX, &iFarY, &iArea);
+
+	return IsValidSiloPosPlacement(x, y, iFarX, iFarY, iArea, TRUE);
+}
+
+static int IsValidGeneralPosPlacement(__int16 x, __int16 y, __int16 iFarX, __int16 iFarY, __int16 iArea, BYTE iTileID, __int16 *outMarinaWaterTileCount) {
+	__int16 iCurX;
+	__int16 iCurY;
+	__int16 iMarinaWaterTileCount;
+	BOOL bCanBeMarinaTile;
+	BYTE iCurTile;
+
+	iMarinaWaterTileCount = 0;
+	for (iCurX = x; iCurX <= iFarX; ++iCurX) {
+		for (iCurY = y; iCurY <= iFarY; ++iCurY) {
+			// if the extended iArea is zero (or below..) and the current X or Y
+			// tiles are equal to or exceed GAME_MAP_SIZE.. definitely abort.
+			if (iArea <= 0 && (iCurX >= GAME_MAP_SIZE || iCurY >= GAME_MAP_SIZE))
+				return 0;
+			else if (iCurX < 1 || iCurY < 1 || iCurX > GAME_MAP_SIZE - 2 || iCurY > GAME_MAP_SIZE - 2) {
+				// Added this due to legacy military plot drops,
+				// this allows > 1x1 type buildings to develop
+				// if the plot is on the edge of the map.
+				if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY && (iCurX < 0 || iCurY < 0 || iCurX > GAME_MAP_SIZE - 1 || iCurY > GAME_MAP_SIZE - 1))
+					return 0;
+				else
+					return 0;
+			}
+
+			// If the current tile has the referenced
+			// item.
+			iCurTile = dwMapXBLD[iCurX][iCurY].iTileID;
+			if (iCurTile >= TILE_ROAD_LR)
+				return 0;
+
+			if (iCurTile == TILE_RADIOACTIVITY)
+				return 0;
+
+			if (iCurTile == TILE_SMALLPARK)
+				return 0;
+
+			// Originally in the Win95 version this check
+			// only did a comparison regarding the current
+			// tile zone being ZONE_MILITARY, as a result
+			// it would return 0 and military bases wouldn't
+			// grow; now it checks to see whether the current
+			// tile zone is ZONE_MILITARY, and whether the
+			// tile item is a runwaycross, or certain road tiles -
+			// this then prevents either:
+			// a) erroneous growth attempts if said tiles are
+			//    destroyed (particularly on Army Base plots)
+			// b) blank sections being left on Army Base plots
+			//    as a result of the presence of said tiles -
+			//    particular the road tiles - you'd then see
+			//    the 'Hanger' (nice typing error there..)
+			//    constantly spawn and despawn resulting
+			//    in many unnecessary calls.
+			if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY &&
+				(iCurTile == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
+					iCurTile == TILE_ROAD_LR ||
+					iCurTile == TILE_ROAD_TB))
+				return 0;
+
+			// Marina being an exception, this 'if' block
+			// checks to see whether the prospective area
+			// is suitable for placement.
+			if (iTileID == TILE_INFRASTRUCTURE_MARINA) {
+				bCanBeMarinaTile = FALSE;
+				if (iCurX < GAME_MAP_SIZE &&
+					iCurY < GAME_MAP_SIZE &&
+					dwMapXBIT[iCurX][iCurY].b.iWater != 0) {
+					++iMarinaWaterTileCount;
+					bCanBeMarinaTile = TRUE;
+				}
+				if (!bCanBeMarinaTile && dwMapXTER[iCurX][iCurY].iTileID)
+					return 0;
+			}
+
+			// This check shouldn't occur if 'bCanBeMarinaTile'
+			// is true, since the Marina needs to be placed
+			// across shorelines, and a block to prevent
+			// placement on shores or water bearing tiles
+			// would negate that entirely.
+			if (!bCanBeMarinaTile) {
+				if (dwMapXTER[iCurX][iCurY].iTileID)
+					return 0;
+
+				if (iCurX < GAME_MAP_SIZE &&
+					iCurY < GAME_MAP_SIZE &&
+					dwMapXBIT[iCurX][iCurY].b.iWater != 0)
+					return 0;
+			}
+		}
+	}
+
+	*outMarinaWaterTileCount = iMarinaWaterTileCount;
+	return 1;
+}
+
+static int L_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iTileID, __int16 iTileArea, BOOL bDoSilo) {
+	__int16 x;
+	__int16 y;
+	__int16 iArea;
+	__int16 iFarX;
+	__int16 iFarY;
+	__int16 iMarinaWaterTileCount;
+	__int16 iCurX;
+	__int16 iCurY;
+	BYTE iCurTile;
+	BYTE iTileBitMask;
+	BYTE bTextOverlay;
+
+	GetItemPlacementAreaAndFarPosition(m_x, m_y, iTileArea, &x, &y, &iFarX, &iFarY, &iArea);
+
+	iMarinaWaterTileCount = 0;
+	if (bDoSilo) {
+		if (!IsValidSiloPosPlacement(x, y, iFarX, iFarY, iArea, FALSE))
+			return 0;
+	}
+	else {
+		if (!IsValidGeneralPosPlacement(x, y, iFarX, iFarY, iArea, iTileID, &iMarinaWaterTileCount))
+			return 0;
+	}
+
+	if (iTileID == TILE_INFRASTRUCTURE_MARINA && (iMarinaWaterTileCount == MARINA_TILES_ALLDRY || iMarinaWaterTileCount == MARINA_TILES_ALLWET)) {
+		Game_AfxMessageBoxID(107, 0, -1);
+		return 0;
+	}
+	else {
+		iTileBitMask = 0;
+		if (!bDoSilo) {
+			iTileBitMask = (XBIT_PIPED | XBIT_POWERED | XBIT_POWERABLE);
+			if (iTileID == TILE_SERVICES_BIGPARK || iTileID == TILE_SMALLPARK)
+				iTileBitMask = (XBIT_PIPED);
+		}
+		if (iTileID == TILE_SMALLPARK && dwMapXBLD[x][y].iTileID >= TILE_SMALLPARK)
+			return 0;
+		else {
+			if (!bDoSilo)
+				bTextOverlay = Game_SimulationProvisionMicrosim(x, y, iTileID);
+			if (iFarX >= x) {
+				for (iCurX = x; iCurX <= iFarX; ++iCurX) {
+					for (iCurY = y; iCurY <= iFarY; ++iCurY) {
+						if (iCurX >= 0) {
+							if (bDoSilo) {
+								if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE)
+									*(BYTE *)&dwMapXBIT[iCurX][iCurY].b &= ~(XBIT_WATERED | XBIT_PIPED | XBIT_POWERED | XBIT_POWERABLE);
+							}
+							else {
+								if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE)
+									*(BYTE *)&dwMapXBIT[iCurX][iCurY].b &= ~(XBIT_PIPED | XBIT_POWERED | XBIT_POWERABLE);
+								if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE)
+									*(BYTE *)&dwMapXBIT[iCurX][iCurY].b |= iTileBitMask;
+							}
+						}
+						Game_PlaceTileWithMilitaryCheck(iCurX, iCurY, iTileID);
+						if (bDoSilo)
+							Game_PlaceUndergroundTiles(iCurX, iCurY, UNDER_TILE_MISSILESILO);
+						else {
+							if (iCurX >= 0) {
+								if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE)
+									XZONClearZone(iCurX, iCurY);
+								if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE)
+									XZONClearCorners(iCurX, iCurY);
+							}
+							if (bTextOverlay)
+								dwMapXTXT[iCurX][iCurY].bTextOverlay = bTextOverlay;
+						}
+					}
+				}
+			}
+			if (iArea) {
+				if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
+					XZONSetCornerAngle(x, y, wTileAreaBottomLeftCorner[wViewRotation]);
+				if (iFarX >= 0 && iFarX < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
+					XZONSetCornerAngle(iFarX, y, wTileAreaBottomRightCorner[wViewRotation]);
+				if (iFarX < GAME_MAP_SIZE && iFarY >= 0 && iFarY < GAME_MAP_SIZE)
+					XZONSetCornerAngle(iFarX, iFarY, wTileAreaTopLeftCorner[wViewRotation]);
+				if (x < GAME_MAP_SIZE && iFarY >= 0 && iFarY < GAME_MAP_SIZE)
+					XZONSetCornerAngle(x, iFarY, wTileAreaTopRightCorner[wViewRotation]);
+			}
+			else if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
+				XZONSetCornerMask(x, y, CORNER_ALL);
+			Game_SpawnItem(x, iFarY);
+			return 1;
+		}
+	}
+}
 
 extern int iChurchVirus;
 
@@ -899,7 +1168,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 		}
 		return 1;
 	case TILE_MILITARY_MISSILESILO:
-		PlaceMissileSilo(x, y);
+		L_ItemPlacementCheck(x, y, TILE_MILITARY_MISSILESILO, AREA_3x3, TRUE);
 		return 1;
 	default:
 		return 1;
@@ -949,163 +1218,7 @@ extern "C" void __cdecl Hook_PlacePowerLinesAtCoordinates(__int16 x, __int16 y) 
 }
 
 extern "C" int __cdecl Hook_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iTileID, __int16 iTileArea) {
-	__int16 x;
-	__int16 y;
-	__int16 iArea;
-	__int16 iFarX;
-	__int16 iFarY;
-	__int16 iMarinaWaterTileCount;
-	__int16 iCurX;
-	__int16 iCurY;
-	BOOL bCanBeMarinaTile;
-	BYTE iCurTile;
-	BYTE iTileBitMask;
-	BYTE bTextOverlay;
-
-	x = m_x;
-	y = m_y;
-
-	iArea = iTileArea - 1;
-	if (iArea > 1) {
-		--x;
-		--y;
-	}
-
-	iFarX = iArea + x;
-	iFarY = iArea + y;
-
-	iMarinaWaterTileCount = 0;
-	for (iCurX = x; iCurX <= iFarX; ++iCurX) {
-		for (iCurY = y; iCurY <= iFarY; ++iCurY) {
-			// if the extended iArea is zero (or below..) and the current X or Y
-			// tiles are equal to or exceed GAME_MAP_SIZE.. definitely abort.
-			if (iArea <= 0 && (iCurX >= GAME_MAP_SIZE || iCurY >= GAME_MAP_SIZE))
-				return 0;
-			else if (iCurX < 1 || iCurY < 1 || iCurX > GAME_MAP_SIZE - 2 || iCurY > GAME_MAP_SIZE - 2) {
-				// Added this due to legacy military plot drops,
-				// this allows > 1x1 type buildings to develop
-				// if the plot is on the edge of the map.
-				if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY && (iCurX < 0 || iCurY < 0 || iCurX > GAME_MAP_SIZE - 1 || iCurY > GAME_MAP_SIZE - 1))
-					return 0;
-				else
-					return 0;
-			}
-
-			// If the current tile has the referenced
-			// item.
-			iCurTile = dwMapXBLD[iCurX][iCurY].iTileID;
-			if (iCurTile >= TILE_ROAD_LR)
-				return 0;
-
-			if (iCurTile == TILE_RADIOACTIVITY)
-				return 0;
-
-			if (iCurTile == TILE_SMALLPARK)
-				return 0;
-
-			// Originally in the Win95 version this check
-			// only did a comparison regarding the current
-			// tile zone being ZONE_MILITARY, as a result
-			// it would return 0 and military bases wouldn't
-			// grow; now it checks to see whether the current
-			// tile zone is ZONE_MILITARY, and whether the
-			// tile item is a runwaycross, or certain road tiles -
-			// this then prevents either:
-			// a) erroneous growth attempts if said tiles are
-			//    destroyed (particularly on Army Base plots)
-			// b) blank sections being left on Army Base plots
-			//    as a result of the presence of said tiles -
-			//    particular the road tiles - you'd then see
-			//    the 'Hanger' (nice typing error there..)
-			//    constantly spawn and despawn resulting
-			//    in many unnecessary calls.
-			if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY &&
-				(iCurTile == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
-					iCurTile == TILE_ROAD_LR ||
-					iCurTile == TILE_ROAD_TB))
-				return 0;
-
-			// Marina being an exception, this 'if' block
-			// checks to see whether the prospective area
-			// is suitable for placement.
-			if (iTileID == TILE_INFRASTRUCTURE_MARINA) {
-				bCanBeMarinaTile = FALSE;
-				if (iCurX < GAME_MAP_SIZE &&
-					iCurY < GAME_MAP_SIZE &&
-					dwMapXBIT[iCurX][iCurY].b.iWater != 0) {
-					++iMarinaWaterTileCount;
-					bCanBeMarinaTile = TRUE;
-				}
-				if (!bCanBeMarinaTile && dwMapXTER[iCurX][iCurY].iTileID)
-					return 0;
-			}
-
-			// This check shouldn't occur if 'bCanBeMarinaTile'
-			// is true, since the Marina needs to be placed
-			// across shorelines, and a block to prevent
-			// placement on shores or water bearing tiles
-			// would negate that entirely.
-			if (!bCanBeMarinaTile) {
-				if (dwMapXTER[iCurX][iCurY].iTileID)
-					return 0;
-
-				if (iCurX < GAME_MAP_SIZE &&
-					iCurY < GAME_MAP_SIZE &&
-					dwMapXBIT[iCurX][iCurY].b.iWater != 0)
-					return 0;
-			}
-		}
-	}
-
-	if (iTileID == TILE_INFRASTRUCTURE_MARINA && (iMarinaWaterTileCount == MARINA_TILES_ALLDRY || iMarinaWaterTileCount == MARINA_TILES_ALLWET)) {
-		Game_AfxMessageBoxID(107, 0, -1);
-		return 0;
-	}
-	else {
-		iTileBitMask = (XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
-		if (iTileID == TILE_SERVICES_BIGPARK || iTileID == TILE_SMALLPARK)
-			iTileBitMask = (XBIT_PIPED);
-		if (iTileID == TILE_SMALLPARK && dwMapXBLD[x][y].iTileID >= TILE_SMALLPARK)
-			return 0;
-		else {
-			bTextOverlay = Game_SimulationProvisionMicrosim(x, y, iTileID);
-			if (iFarX >= x) {
-				for (iCurX = x; iCurX <= iFarX; ++iCurX) {
-					for (iCurY = y; iCurY <= iFarY; ++iCurY) {
-						if (iCurX >= 0) {
-							if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE)
-								*(BYTE *)&dwMapXBIT[iCurX][iCurY].b &= ~(XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
-							if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE)
-								*(BYTE *)&dwMapXBIT[iCurX][iCurY].b |= iTileBitMask;
-						}
-						Game_PlaceTileWithMilitaryCheck(iCurX, iCurY, iTileID);
-						if (iCurX >= 0) {
-							if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE)
-								XZONClearZone(iCurX, iCurY);
-							if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE)
-								XZONClearCorners(iCurX, iCurY);
-						}
-						if (bTextOverlay)
-							dwMapXTXT[iCurX][iCurY].bTextOverlay = bTextOverlay;
-					}
-				}
-			}
-			if (iArea) {
-				if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-					XZONSetCornerAngle(x, y, wTileAreaBottomLeftCorner[wViewRotation]);
-				if (iFarX >= 0 && iFarX < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-					XZONSetCornerAngle(iFarX, y, wTileAreaBottomRightCorner[wViewRotation]);
-				if (iFarX < GAME_MAP_SIZE && iFarY >= 0 && iFarY < GAME_MAP_SIZE)
-					XZONSetCornerAngle(iFarX, iFarY, wTileAreaTopLeftCorner[wViewRotation]);
-				if (x < GAME_MAP_SIZE && iFarY >= 0 && iFarY < GAME_MAP_SIZE)
-					XZONSetCornerAngle(x, iFarY, wTileAreaTopRightCorner[wViewRotation]);
-			}
-			else if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-				XZONSetCornerMask(x, y, CORNER_ALL);
-			Game_SpawnItem(x, iFarY);
-			return 1;
-		}
-	}
+	return L_ItemPlacementCheck(m_x, m_y, iTileID, iTileArea, FALSE);
 }
 
 void InstallTileGrowthOrPlacementHandlingHooks_SC2K1996(void) {
