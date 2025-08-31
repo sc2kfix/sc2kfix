@@ -1587,6 +1587,42 @@ static inline sprite_header_t* GetSpriteHeader(int iSpriteID) {
 	return &pArrSpriteHeaders[iSpriteID];
 }
 
+static inline BYTE GetMicroSimulatorTileID(BYTE iMicrosimID) {
+	return pMicrosimArr[iMicrosimID].bTileID;
+}
+
+static inline BYTE GetMicroSimulatorStat0(BYTE iMicrosimID) {
+	return pMicrosimArr[iMicrosimID].bMicrosimDataStat0;
+}
+
+static inline WORD GetMicroSimulatorStat1(BYTE iMicrosimID) {
+	return pMicrosimArr[iMicrosimID].iMicrosimDataStat1;
+}
+
+static inline WORD GetMicroSimulatorStat2(BYTE iMicrosimID) {
+	return pMicrosimArr[iMicrosimID].iMicrosimDataStat2;
+}
+
+static inline WORD GetMicroSimulatorStat3(BYTE iMicrosimID) {
+	return pMicrosimArr[iMicrosimID].iMicrosimDataStat3;
+}
+
+static inline void SetMicroSimulatorStat0(BYTE iMicrosimID, BYTE bNewStat) {
+	pMicrosimArr[iMicrosimID].bMicrosimDataStat0 = bNewStat;
+}
+
+static inline void SetMicroSimulatorStat1(BYTE iMicrosimID, WORD iNewStat) {
+	pMicrosimArr[iMicrosimID].iMicrosimDataStat1 = iNewStat;
+}
+
+static inline void SetMicroSimulatorStat2(BYTE iMicrosimID, WORD iNewStat) {
+	pMicrosimArr[iMicrosimID].iMicrosimDataStat2 = iNewStat;
+}
+
+static inline void SetMicroSimulatorStat3(BYTE iMicrosimID, WORD iNewStat) {
+	pMicrosimArr[iMicrosimID].iMicrosimDataStat3 = iNewStat;
+}
+
 // Returns the current game palette. RE'd from the game decomp.
 // TODO: document a bit more about what the hell this actually does
 static inline HPALETTE GameGetPalette(void) {

@@ -647,8 +647,8 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 								//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - iTextOverlay(%u), iMicrosimIdx(%u), Item(%s)\n", iStep, iSubStep, iTextOverlay, iMicrosimIdx, szTileNames[iCurrentTileID]);
 								if (iTextOverlay >= MAX_USER_TEXT_ENTRIES &&
 									iTextOverlay < 201 &&
-									pMicrosimArr[iMicrosimIdx].bTileID >= TILE_ARCOLOGY_PLYMOUTH &&
-									pMicrosimArr[iMicrosimIdx].bTileID <= TILE_ARCOLOGY_LAUNCH) {
+									GetMicroSimulatorTileID(iMicrosimIdx) >= TILE_ARCOLOGY_PLYMOUTH &&
+									GetMicroSimulatorTileID(iMicrosimIdx) <= TILE_ARCOLOGY_LAUNCH) {
 									iMicrosimDataStat0 = (dwMapXVAL[iXMM][iYMM].bBlock >> 5)
 										- (dwMapXCRM[iXMM][iYMM].bBlock >> 5)
 										- (dwMapXPLT[iXMM][iYMM].bBlock >> 5)
@@ -666,7 +666,7 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 									if (iMicrosimDataStat0 > 12)
 										iMicrosimDataStat0 = 12;
 									//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - iTextOverlay(%u), iMicrosimIdx(%u), iMicrosimDataStat0(%u), Item(%s) (%u, %u, %u, %d - %d)\n", iStep, iSubStep, iTextOverlay, iMicrosimIdx, iMicrosimDataStat0, szTileNames[iCurrentTileID], *(BYTE *)&dwMapXZON[iX][iY].b & 0xF0, 0x80, dwMapXZON[iX][iY].b.iCorners, CORNER_TRIGHT, (CORNER_TRIGHT << 4));
-									pMicrosimArr[iMicrosimIdx].bMicrosimDataStat0 = iMicrosimDataStat0;
+									SetMicroSimulatorStat0(iMicrosimIdx, iMicrosimDataStat0);
 								}
 							}
 						}

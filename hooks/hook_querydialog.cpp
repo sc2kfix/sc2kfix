@@ -196,10 +196,10 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 			BYTE iMicrosimID = bTextOverlay - MIN_SIM_TEXT_ENTRIES; // The MicrosimID being calculated from entry 52 and beyond but subtracted by the non-user modifiable starting value.
 			strTileInfo += GetXLABEntry(bTextOverlay);
 			strTileInfo += " (iMicrosimID " + std::to_string(iMicrosimID) + " / " + HexPls(iMicrosimID, 2) + ")\n";
-			strTileInfo += std::to_string(pMicrosimArr[iMicrosimID].bMicrosimDataStat0) + " / " + HexPls(pMicrosimArr[iMicrosimID].bMicrosimDataStat0, 2) + "\n";
-			strTileInfo += std::to_string(pMicrosimArr[iMicrosimID].iMicrosimDataStat1) + " / " + HexPls(pMicrosimArr[iMicrosimID].iMicrosimDataStat1, 2) + "\n";
-			strTileInfo += std::to_string(pMicrosimArr[iMicrosimID].iMicrosimDataStat2) + " / " + HexPls(pMicrosimArr[iMicrosimID].iMicrosimDataStat2, 2) + "\n";
-			strTileInfo += std::to_string(pMicrosimArr[iMicrosimID].iMicrosimDataStat3) + " / " + HexPls(pMicrosimArr[iMicrosimID].iMicrosimDataStat3, 2);
+			strTileInfo += std::to_string(GetMicroSimulatorStat0(iMicrosimID)) + " / " + HexPls(GetMicroSimulatorStat0(iMicrosimID), 2) + "\n";
+			strTileInfo += std::to_string(GetMicroSimulatorStat1(iMicrosimID)) + " / " + HexPls(GetMicroSimulatorStat1(iMicrosimID), 2) + "\n";
+			strTileInfo += std::to_string(GetMicroSimulatorStat2(iMicrosimID)) + " / " + HexPls(GetMicroSimulatorStat2(iMicrosimID), 2) + "\n";
+			strTileInfo += std::to_string(GetMicroSimulatorStat3(iMicrosimID)) + " / " + HexPls(GetMicroSimulatorStat3(iMicrosimID), 2);
 		}
 
 		SetDlgItemText(hwndDlg, IDC_STATIC_TILENAME, strTileHeader.c_str());
