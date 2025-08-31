@@ -443,9 +443,8 @@ RETRY_CHECK1:
 							XZONSetNewZone(iSiloXPos, iSiloYPos, ZONE_MILITARY);
 							// Altitude check debugging.
 							/*
-							ConsoleLog(LOG_DEBUG, "[%s] (%u, %u, %u) (%u, %u, %u)\n", szTileNames[TILE_MILITARY_MISSILESILO], 
-								ALTMReturnLandAltitude(iSiloXPos, iSiloYPos), ALTMReturnWaterLevel(iSiloXPos, iSiloYPos), ALTMReturnTunnelLevels(iSiloXPos, iSiloYPos),
-								dwMapALTM[iSiloXPos][iSiloYPos].w.iLandAltitude, dwMapALTM[iSiloXPos][iSiloYPos].w.iWaterLevel, dwMapALTM[iSiloXPos][iSiloYPos].w.iTunnelLevels);
+							ConsoleLog(LOG_DEBUG, "[%s] (%u, %u, %u)\n", szTileNames[TILE_MILITARY_MISSILESILO], 
+								ALTMReturnLandAltitude(iSiloXPos, iSiloYPos), ALTMReturnWaterLevel(iSiloXPos, iSiloYPos), ALTMReturnTunnelLevels(iSiloXPos, iSiloYPos));
 							*/
 						}
 						++iSiloYPos;

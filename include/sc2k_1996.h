@@ -1569,6 +1569,9 @@ static inline void SetXLABEntry(BYTE iLabelID, const char *pStr) {
 		nLen = (WORD)strlen(pStr);
 		if (nLen > 24)
 			nLen = 24;
+		// A combination of memcpy and setting the end null here.
+		// Attempts at using strcpy_s with 'dwMapXLAB[0][iLabelID].szLabel'
+		// here resulted in a program crash.
 		memcpy(&dwMapXLAB[0][iLabelID], pStr, nLen);
 		dwMapXLAB[0][iLabelID].szLabel[nLen] = 0;
 	}
