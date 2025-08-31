@@ -800,13 +800,16 @@ static BOOL SetMoveRunwayTileAxis(__int16 primaryAxis, __int16 secondaryAxis, BO
 	return TRUE;
 }
 
-static BOOL GetRunwayTilePositionalOffset(__int16 x, __int16 y, __int16 *iMoveX, __int16 *iMoveY) {
+static BOOL GetRunwayTilePositionalOffset(__int16 x, __int16 y, __int16 iZoneType, __int16 *iMoveX, __int16 *iMoveY) {
 	BOOL bMoveXAxis;
 	BOOL bMoveYAxis;
+	WORD wTileCountType;
 
 	bMoveXAxis = FALSE;
 	bMoveYAxis = FALSE;
-	if (IsEven(dwTileCount[TILE_INFRASTRUCTURE_RUNWAY])) {
+	// Slight change here: distinguish between military and standard runway tiles.
+	wTileCountType = (iZoneType == ZONE_MILITARY) ? dwMilitaryTiles[MILITARYTILE_RUNWAY] : dwTileCount[TILE_INFRASTRUCTURE_RUNWAY];
+	if (IsEven(wTileCountType)) {
 		if (!SetMoveRunwayTileAxis(x, y, &bMoveXAxis, &bMoveYAxis))
 			return FALSE;
 	}
@@ -884,7 +887,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 		iMoveX = 0;
 		iMoveY = 0;
 
-		if (!GetRunwayTilePositionalOffset(x, y, &iMoveX, &iMoveY))
+		if (!GetRunwayTilePositionalOffset(x, y, iZoneType, &iMoveX, &iMoveY))
 			return 0;
 
 		iCurrX = x;
