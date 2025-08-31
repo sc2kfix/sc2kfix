@@ -144,8 +144,6 @@ static int IsValidGeneralPosPlacementMain(__int16 x, __int16 y, __int16 iFarX, _
 					++iMarinaWaterTileCount;
 					bCanBeMarinaTile = TRUE;
 				}
-				if (!bCanBeMarinaTile && GetTerrainTileID(iCurX, iCurY))
-					return 0;
 			}
 
 			// This check shouldn't occur if 'bCanBeMarinaTile'
