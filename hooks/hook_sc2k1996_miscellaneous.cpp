@@ -781,9 +781,9 @@ static void L_TileHighlightUpdate(DWORD *pThis) {
 static void UpdateCityDateAndSeason(BOOL bIncrement) {
 	if (bIncrement)
 		++dwCityDays;
-	wCityCurrentMonth = dwCityDays / 25 % 12;
-	wCityCurrentSeason = (dwCityDays / 25 % 12 + 1) % 12 / 3;
-	wCityElapsedYears = dwCityDays / 300;
+	wCityCurrentMonth = (dwCityDays / 25) % 12;
+	wCityCurrentSeason = (wCityCurrentMonth + 1) % 12 / 3;
+	wCityElapsedYears = (dwCityDays / 300);
 }
 
 // Function prototype: HOOKCB void Hook_SimCalendarAdvance_Before(void)
@@ -881,8 +881,8 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 				}
 			}
 			UpdateCityDateAndSeason(FALSE);
-			for (i = 0; i < 8; pZonePops[i - 1] = 0)
-				++i;
+			for (i = 0; i < ZONEPOP_COUNT; ++i)
+				pZonePops[i] = 0;
 			break;
 		case 1:
 			H_SimulationUpdatePowerConsumption();
@@ -909,7 +909,8 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 			if (dwCityProgressionRequirement) {
 				if (dwCityProgressionRequirement < dwCityPopulation) {
 					Game_SimcityAppSetGameCursor(&pCSimcityAppThis, 24, 0);
-					iPaperVal = wCityProgression++;
+					// There are only 7 (0-6) progression levels, cast the warning away.
+					iPaperVal = (BYTE)wCityProgression++;
 					H_NewspaperStoryGenerator(3, iPaperVal);
 					H_SimcityAppAdjustNewspaperMenu(&pCSimcityAppThis);
 					if (wCityProgression >= 4) {
