@@ -907,7 +907,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 				iToFlip = ShouldRunwayTileFlip(iMoveY);
 
 				iBranchingRunwayStripTileCount = 0;
-				while (2) {
+				while (1) {
 					if (x >= 0) {
 						// With this check if true and there's a hit on
 						// an existing runway tile then the branching strip
