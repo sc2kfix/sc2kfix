@@ -387,7 +387,7 @@ RETRY_CHECK1:
 								) &&
 							ALTMReturnLandAltitude(iLengthWays, iDepthWays) == iBaseLevel &&
 							XZONReturnZone(iLengthWays, iDepthWays) != ZONE_MILITARY &&
-							!dwMapXUND[iAltPosOne][iAltPosTwo].iTileID
+							!GetUndergroundTileID(iAltPosOne, iAltPosTwo)
 							) {
 							if (IsValidSiloPosCheck(iLengthWays, iDepthWays)) {
 								if (!CheckForOverlappingSiloPositions(wSiloPos, iVTiles, iLengthWays, iDepthWays)) {
@@ -476,7 +476,7 @@ static void MilitaryBasePlotPlacement(__int16 iRandXPos, __int16 iRandStoredYPos
 					!XBITReturnIsWater(iCurrXPos, iCurrYPos)
 					) &&
 				XZONReturnZone(iCurrXPos, iCurrYPos) == ZONE_NONE &&
-				!dwMapXUND[iRandXPos][iRandStoredYPos].iTileID
+				!GetUndergroundTileID(iRandXPos, iRandStoredYPos)
 				) {
 				--dwTileCount[iMilitaryArea];
 				if (iCurrXPos < GAME_MAP_SIZE && iCurrYPos < GAME_MAP_SIZE)
@@ -669,7 +669,7 @@ PLACENAVAL:
 								XZONReturnZone(iDirectionOne, iDirectionTwo) == ZONE_NONE &&
 								!dwMapXTER[iDirectionOne][iDirectionTwo].iTileID &&
 								!isValidWaterBody(iDirectionOne, iDirectionTwo) &&
-								!dwMapXUND[iDirectionOne][iDirectionTwo].iTileID &&
+								!GetUndergroundTileID(iDirectionOne, iDirectionTwo) &&
 								ALTMReturnLandAltitude(iDirectionOne, iDirectionTwo) == iBaseLevel
 								) {
 								if (!iNonContiguousDepth) {
@@ -689,7 +689,7 @@ PLACENAVAL:
 									(iMilitaryArea >= TILE_TREES1 && iMilitaryArea < TILE_SMALLPARK)) ||
 									dwMapXTER[iDirectionOne][iDirectionTwo].iTileID < SUBMERGED_00 ||
 									dwMapXTER[iDirectionOne][iDirectionTwo].iTileID > COAST_13 ||
-									dwMapXUND[iDirectionOne][iDirectionTwo].iTileID ||
+									GetUndergroundTileID(iDirectionOne, iDirectionTwo) ||
 									ALTMReturnLandAltitude(iDirectionOne, iDirectionTwo) > iBaseLevel) {
 									iNonContiguousDepth = 1;
 								}

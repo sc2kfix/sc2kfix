@@ -158,7 +158,7 @@ static int IsValidGeneralPosPlacementMain(__int16 x, __int16 y, __int16 iFarX, _
 					return 0;
 
 				if (bDoSilo) {
-					if (dwMapXUND[iCurX][iCurY].iTileID)
+					if (GetUndergroundTileID(iCurX, iCurY))
 						return 0;
 				}
 
@@ -758,7 +758,7 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 			}
 		GOUNDCHECKTHENYINCREASE:
 			if (!Game_RandomWordLFSRMod128()) {
-				iCurrentUndergroundTileID = dwMapXUND[iX][iY].iTileID;
+				iCurrentUndergroundTileID = GetUndergroundTileID(iX, iY);
 				if (iCurrentUndergroundTileID >= UNDER_TILE_SUBWAY_LR && iCurrentUndergroundTileID < UNDER_TILE_PIPES_LR ||
 					iCurrentUndergroundTileID == UNDER_TILE_SUBWAYENTRANCE ||
 					iCurrentUndergroundTileID == UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR ||
@@ -846,7 +846,7 @@ static BOOL RunwayTileMilitaryCheck(__int16 x, __int16 y, __int16 iZoneType) {
 			return FALSE;
 		if (dwMapXTER[x][y].iTileID)
 			return FALSE;
-		if (dwMapXUND[x][y].iTileID)
+		if (GetUndergroundTileID(x, y))
 			return FALSE;
 	}
 	return TRUE;
@@ -1093,7 +1093,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 				if (GetTileID(iEvenX, iEvenY) >= TILE_ROAD_LR && GetTileID(iEvenX, iEvenY) <= TILE_ROAD_LTBR)
 					return 0;
 			}
-			if (dwMapXUND[iEvenX][iEvenY].iTileID)
+			if (GetUndergroundTileID(iEvenX, iEvenY))
 				return 0;
 		}
 		if (XZONReturnZone(iNextX, iEvenY) != iZoneType)
@@ -1103,7 +1103,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 				if (GetTileID(iNextX, iEvenY) >= TILE_ROAD_LR && GetTileID(iNextX, iEvenY) <= TILE_ROAD_LTBR)
 					return 0;
 			}
-			if (dwMapXUND[iNextX][iEvenY].iTileID)
+			if (GetUndergroundTileID(iNextX, iEvenY))
 				return 0;
 		}
 		if (XZONReturnZone(iEvenX, iNextY) != iZoneType)
@@ -1113,7 +1113,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 				if (GetTileID(iEvenX, iNextY) >= TILE_ROAD_LR && GetTileID(iEvenX, iNextY) <= TILE_ROAD_LTBR)
 					return 0;
 			}
-			if (dwMapXUND[iEvenX][iNextY].iTileID)
+			if (GetUndergroundTileID(iEvenX, iNextY))
 				return 0;
 		}
 		if (XZONReturnZone(iNextX, iNextY) != iZoneType)
@@ -1123,7 +1123,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 				if (GetTileID(iNextX, iNextY) >= TILE_ROAD_LR && GetTileID(iNextX, iNextY) <= TILE_ROAD_LTBR)
 					return 0;
 			}
-			if (dwMapXUND[iNextX][iNextY].iTileID)
+			if (GetUndergroundTileID(iNextX, iNextY))
 				return 0;
 		}
 		if (GetTileID(iEvenX, iEvenY) >= TILE_SMALLPARK)

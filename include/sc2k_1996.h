@@ -1538,6 +1538,10 @@ static inline BYTE GetTileID(__int16 iTileX, __int16 iTileY) {
 	return dwMapXBLD[iTileX][iTileY].iTileID;
 }
 
+static inline BYTE GetUndergroundTileID(__int16 iTileX, __int16 iTileY) {
+	return dwMapXUND[iTileX][iTileY].iTileID;
+}
+
 // Returns the XLAB entry from a given Label ID.
 static inline const char* GetXLABEntry(BYTE iLabelID) {
 	return dwMapXLAB[0][iLabelID].szLabel;

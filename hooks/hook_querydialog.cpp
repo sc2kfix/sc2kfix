@@ -123,7 +123,7 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 
 		// XBIT
 		if (!XBITReturnMask(iTileX, iTileY))
-			strTileInfo += "none (XBIT: 0x00)\n";
+			strTileInfo += "none (XBIT: 0x00)\n\n";
 		else {
 			// XXX - this code sucks, more so than the rest of this function
 			int i = 0;
@@ -178,12 +178,12 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		}
 
 		// XUND
-		if (dwMapXUND[iTileX][iTileY].iTileID > UNDER_TILE_SUBWAYENTRANCE)
+		if (GetUndergroundTileID(iTileX, iTileY) > UNDER_TILE_SUBWAYENTRANCE)
 			strTileInfo += "Unknown";
 		else
-			strTileInfo += szUndergroundNames[dwMapXUND[iTileX][iTileY].iTileID];
+			strTileInfo += szUndergroundNames[GetUndergroundTileID(iTileX, iTileY)];
 		strTileInfo += " (XUND: ";
-		strTileInfo += HexPls(dwMapXUND[iTileX][iTileY].iTileID, 2);
+		strTileInfo += HexPls(GetUndergroundTileID(iTileX, iTileY), 2);
 		strTileInfo += ")\n";
 
 		// Microsim info
