@@ -1718,39 +1718,117 @@ static inline void XZONSetNewZone(__int16 x, __int16 y, __int16 iNewZone) {
 #define USE_OLD_XBIT_HANDLING 1
 
 static inline BOOL XBITReturnIsSaltWater(__int16 x, __int16 y) {
+#if USE_OLD_XBIT_HANDLING
 	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_SALTWATER);
+#else
+	return (dwMapXBIT[x][y].b.iSaltWater);
+#endif
 }
 
 static inline BOOL XBITReturnIsFlipped(__int16 x, __int16 y) {
+#if USE_OLD_XBIT_HANDLING
 	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_FLIPPED);
+#else
+	return (dwMapXBIT[x][y].b.iFlipped);
+#endif
 }
 
 static inline BOOL XBITReturnIsWater(__int16 x, __int16 y) {
+#if USE_OLD_XBIT_HANDLING
 	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_WATER);
+#else
+	return (dwMapXBIT[x][y].b.iWater);
+#endif
 }
 
 static inline BOOL XBITReturnIsMark(__int16 x, __int16 y) {
+#if USE_OLD_XBIT_HANDLING
 	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_MARK);
+#else
+	return (dwMapXBIT[x][y].b.iMark);
+#endif
 }
 
 static inline BOOL XBITReturnIsWatered(__int16 x, __int16 y) {
+#if USE_OLD_XBIT_HANDLING
 	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_WATERED);
+#else
+	return (dwMapXBIT[x][y].b.iWatered);
+#endif
 }
 
 static inline BOOL XBITReturnIsPiped(__int16 x, __int16 y) {
+#if USE_OLD_XBIT_HANDLING
 	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_PIPED);
+#else
+	return (dwMapXBIT[x][y].b.iPiped);
+#endif
 }
 
 static inline BOOL XBITReturnIsPowered(__int16 x, __int16 y) {
+#if USE_OLD_XBIT_HANDLING
 	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_POWERED);
+#else
+	return (dwMapXBIT[x][y].b.iPowered);
+#endif
 }
 
 static inline BOOL XBITReturnIsPowerable(__int16 x, __int16 y) {
+#if USE_OLD_XBIT_HANDLING
 	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_POWERABLE);
+#else
+	return (dwMapXBIT[x][y].b.iPowerable);
+#endif
 }
 
 static inline BYTE XBITReturnMask(__int16 x, __int16 y) {
 	return *(BYTE *)&dwMapXBIT[x][y].b;
+}
+
+static inline void XBITClearBits(__int16 x, __int16 y, BYTE bitMask) {
+#if USE_OLD_XBIT_HANDLING
+	*(BYTE *)&dwMapXBIT[x][y].b &= ~(bitMask);
+#else
+	if (bitMask & XBIT_SALTWATER)
+		dwMapXBIT[x][y].b.iSaltWater = 0;
+	if (bitMask & XBIT_FLIPPED)
+		dwMapXBIT[x][y].b.iFlipped = 0;
+	if (bitMask & XBIT_WATER)
+		dwMapXBIT[x][y].b.iWater = 0;
+	if (bitMask & XBIT_MARK)
+		dwMapXBIT[x][y].b.iMark = 0;
+	if (bitMask & XBIT_WATERED)
+		dwMapXBIT[x][y].b.iWatered = 0;
+	if (bitMask & XBIT_PIPED)
+		dwMapXBIT[x][y].b.iPiped = 0;
+	if (bitMask & XBIT_POWERED)
+		dwMapXBIT[x][y].b.iPowered = 0;
+	if (bitMask & XBIT_POWERABLE)
+		dwMapXBIT[x][y].b.iPowerable = 0;
+#endif
+}
+
+static inline void XBITSetBits(__int16 x, __int16 y, BYTE bitMask) {
+#if USE_OLD_XBIT_HANDLING
+	*(BYTE *)&dwMapXBIT[x][y].b |= (bitMask);
+#else
+	if (bitMask & XBIT_SALTWATER)
+		dwMapXBIT[x][y].b.iSaltWater = 1;
+	if (bitMask & XBIT_FLIPPED)
+		dwMapXBIT[x][y].b.iFlipped = 1;
+	if (bitMask & XBIT_WATER)
+		dwMapXBIT[x][y].b.iWater = 1;
+	if (bitMask & XBIT_MARK)
+		dwMapXBIT[x][y].b.iMark = 1;
+	if (bitMask & XBIT_WATERED)
+		dwMapXBIT[x][y].b.iWatered = 1;
+	if (bitMask & XBIT_PIPED)
+		dwMapXBIT[x][y].b.iPiped = 1;
+	if (bitMask & XBIT_POWERED)
+		dwMapXBIT[x][y].b.iPowered = 1;
+	if (bitMask & XBIT_POWERABLE)
+		dwMapXBIT[x][y].b.iPowerable = 1;
+#endif
 }
 
 // This coordinate structure is used for the missile silo

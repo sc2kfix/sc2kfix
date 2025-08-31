@@ -684,7 +684,10 @@ BOOL ConsoleCmdSetTile(const char* szCommand, const char* szArguments) {
 
 	if (iTileX >= 0 && iTileX < GAME_MAP_SIZE && iTileY >= 0 && iTileY < GAME_MAP_SIZE) {
 		if (!strcmp(szTileOperation, "flip")) {
-			dwMapXBIT[iTileX][iTileY].b.iFlipped = bOperation;
+			if (bOperation)
+				XBITSetBits(iTileX, iTileY, XBIT_FLIPPED);
+			else
+				XBITClearBits(iTileX, iTileY, XBIT_FLIPPED);
 			return TRUE;
 		}
 	}

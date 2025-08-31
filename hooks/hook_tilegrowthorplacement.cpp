@@ -231,13 +231,13 @@ static int L_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iTileID, __int16 
 						if (iCurX >= 0) {
 							if (bDoSilo) {
 								if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE)
-									*(BYTE *)&dwMapXBIT[iCurX][iCurY].b &= ~(XBIT_WATERED | XBIT_PIPED | XBIT_POWERED | XBIT_POWERABLE);
+									XBITClearBits(iCurX, iCurY, XBIT_WATERED | XBIT_PIPED | XBIT_POWERED | XBIT_POWERABLE);
 							}
 							else {
 								if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE)
-									*(BYTE *)&dwMapXBIT[iCurX][iCurY].b &= ~(XBIT_PIPED | XBIT_POWERED | XBIT_POWERABLE);
+									XBITClearBits(iCurX, iCurY, XBIT_PIPED | XBIT_POWERED | XBIT_POWERABLE);
 								if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE)
-									*(BYTE *)&dwMapXBIT[iCurX][iCurY].b |= iTileBitMask;
+									XBITSetBits(iCurX, iCurY, iTileBitMask);
 							}
 						}
 						Game_PlaceTileWithMilitaryCheck(iCurX, iCurY, iTileID);
@@ -622,7 +622,7 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 						if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
 							goto GOAFTERSETXBIT;
 					GOBEFORESETXBIT:
-						dwMapXBIT[iX][iY].b.iPowerable = 0;
+						XBITClearBits(iX, iY, XBIT_POWERABLE);
 					GOAFTERSETXBIT:
 						if (iCurrentTileID >= TILE_INFRASTRUCTURE_RAILSTATION) {
 							if (iCurrentTileID == TILE_INFRASTRUCTURE_RAILSTATION &&
@@ -928,9 +928,9 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 									if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 										XZONSetCornerMask(x, y, CORNER_ALL);
 									if (iZoneType != ZONE_MILITARY && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-										*(BYTE *)&dwMapXBIT[x][y].b |= XBIT_POWERED | XBIT_POWERABLE;
+										XBITSetBits(x, y, XBIT_POWERED | XBIT_POWERABLE);
 									if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-										*(BYTE *)&dwMapXBIT[x][y].b &= ~(XBIT_FLIPPED);
+										XBITClearBits(x, y, XBIT_FLIPPED);
 								}
 							}
 						}
@@ -943,9 +943,9 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 							if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 								XZONSetCornerMask(x, y, CORNER_ALL);
 							if (iZoneType != ZONE_MILITARY && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-								*(BYTE *)&dwMapXBIT[x][y].b |= XBIT_POWERED | XBIT_POWERABLE;
+								XBITSetBits(x, y, XBIT_POWERED | XBIT_POWERABLE);
 							if (iToFlip && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-								*(BYTE *)&dwMapXBIT[x][y].b |= (XBIT_FLIPPED);
+								XBITSetBits(x, y, XBIT_FLIPPED);
 						}
 					}
 					x += iMoveY;
@@ -999,7 +999,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 		if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 			XZONSetNewZone(x, y, iZoneType);
 		if (iZoneType == ZONE_MILITARY && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-			*(BYTE *)&dwMapXBIT[x][y].b &= ~(XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
+			XBITClearBits(x, y, XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
 		iLengthWays = wTilePierLengthWays[iPierTileCount];
 		if (!iLengthWays)
 			goto PIER_GOTOONE;
@@ -1025,7 +1025,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 				XZONSetCornerMask(x, y, CORNER_ALL);
 			if (iToFlip) {
 				if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-					*(BYTE *)&dwMapXBIT[x][y].b |= XBIT_FLIPPED;
+					XBITSetBits(x, y, XBIT_FLIPPED);
 			}
 			--iPierLength;
 		} while (iPierLength);
@@ -1044,7 +1044,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 			if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 				XZONSetNewZone(x, y, iZoneType);
 			if (iZoneType == ZONE_MILITARY && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-				*(BYTE *)&dwMapXBIT[x][y].b &= ~(XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
+				XBITClearBits(x, y, XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
 		}
 		return 1;
 	case TILE_INFRASTRUCTURE_PARKINGLOT:
@@ -1145,13 +1145,13 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 			XZONSetNewZone(iNextX, iNextY, iZoneType);
 		if (iZoneType == ZONE_MILITARY) {
 			if (iEvenX < GAME_MAP_SIZE && iEvenY < GAME_MAP_SIZE)
-				*(BYTE *)&dwMapXBIT[iEvenX][iEvenY].b &= ~(XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
+				XBITClearBits(iEvenX, iEvenY, XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
 			if (iNextX < GAME_MAP_SIZE && iEvenY < GAME_MAP_SIZE)
-				*(BYTE *)&dwMapXBIT[iNextX][iEvenY].b &= ~(XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
+				XBITClearBits(iNextX, iEvenY, XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
 			if (iEvenX < GAME_MAP_SIZE && iNextY < GAME_MAP_SIZE)
-				*(BYTE *)&dwMapXBIT[iEvenX][iNextY].b &= ~(XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
+				XBITClearBits(iEvenX, iNextY, XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
 			if (iNextX < GAME_MAP_SIZE && iNextY < GAME_MAP_SIZE)
-				*(BYTE *)&dwMapXBIT[iNextX][iNextY].b &= ~(XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
+				XBITClearBits(iNextX, iNextY, XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
 		}
 		return 1;
 	case TILE_MILITARY_MISSILESILO:
@@ -1165,7 +1165,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 static void PlacePowerLineTile(__int16 x, __int16 y, BYTE iTileID) {
 	Game_PlaceTileWithMilitaryCheck(x, y, iTileID);
 	if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-		dwMapXBIT[x][y].b.iPowerable = 1;
+		XBITSetBits(x, y, XBIT_POWERABLE);
 	Game_CheckAdjustTerrainAndPlacePowerLines(x, y);
 	if (x > 0)
 		Game_CheckAdjustTerrainAndPlacePowerLines(x - 1, y);
