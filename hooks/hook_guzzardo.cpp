@@ -247,9 +247,9 @@ static BOOL BuildTheHouse() {
 		if (GetTileID(xPos, yPos) < TILE_SMALLPARK) {
 			if (GetTileID(xPos, ySignPos) < TILE_SMALLPARK &&
 				GetTileID(xWindPos, yPos) < TILE_SMALLPARK) {
-				if (!dwMapXTER[xPos][yPos].iTileID &&
-					!dwMapXTER[xPos][ySignPos].iTileID &&
-					!dwMapXTER[xWindPos][yPos].iTileID &&
+				if (!GetTerrainTileID(xPos, yPos) &&
+					!GetTerrainTileID(xPos, ySignPos) &&
+					!GetTerrainTileID(xWindPos, yPos) &&
 					(xPos < 0 || yPos >= GAME_MAP_SIZE || !XBITReturnIsWater(xPos, yPos)) &&
 					(xPos >= GAME_MAP_SIZE || ySignPos >= GAME_MAP_SIZE || !XBITReturnIsWater(xPos, ySignPos)) &&
 					(xWindPos >= GAME_MAP_SIZE || yPos >= GAME_MAP_SIZE || !XBITReturnIsWater(xWindPos, yPos))) {

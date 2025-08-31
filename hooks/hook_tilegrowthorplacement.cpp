@@ -144,7 +144,7 @@ static int IsValidGeneralPosPlacementMain(__int16 x, __int16 y, __int16 iFarX, _
 					++iMarinaWaterTileCount;
 					bCanBeMarinaTile = TRUE;
 				}
-				if (!bCanBeMarinaTile && dwMapXTER[iCurX][iCurY].iTileID)
+				if (!bCanBeMarinaTile && GetTerrainTileID(iCurX, iCurY))
 					return 0;
 			}
 
@@ -154,7 +154,7 @@ static int IsValidGeneralPosPlacementMain(__int16 x, __int16 y, __int16 iFarX, _
 			// placement on shores or water bearing tiles
 			// would negate that entirely.
 			if (!bCanBeMarinaTile) {
-				if (dwMapXTER[iCurX][iCurY].iTileID)
+				if (GetTerrainTileID(iCurX, iCurY))
 					return 0;
 
 				if (bDoSilo) {
@@ -844,7 +844,7 @@ static BOOL RunwayTileMilitaryCheck(__int16 x, __int16 y, __int16 iZoneType) {
 		if ((GetTileID(x, y) >= TILE_ROAD_LR && GetTileID(x, y) <= TILE_ROAD_LTBR) ||
 			GetTileID(x, y) == TILE_INFRASTRUCTURE_CRANE || GetTileID(x, y) == TILE_MILITARY_MISSILESILO)
 			return FALSE;
-		if (dwMapXTER[x][y].iTileID)
+		if (GetTerrainTileID(x, y))
 			return FALSE;
 		if (GetUndergroundTileID(x, y))
 			return FALSE;

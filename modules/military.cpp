@@ -64,7 +64,7 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 	if (GetTileID(x1, y1) == TILE_ROAD_LR || GetTileID(x1, y1) == TILE_ROAD_TB) {
 		// TERRAIN_00 check added here to avoid the runwaycross
 		// being placed into a dip (likely replacing a slope or granite block).
-		if (!dwMapXTER[x1][y1].iTileID) {
+		if (!GetTerrainTileID(x1, y1)) {
 			XZONSetCornerMask(x1, y1, CORNER_ALL);
 			Game_PlaceTileWithMilitaryCheck(x1, y1, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 		}
@@ -72,7 +72,7 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 	if (GetTileID(iX, iY) == TILE_ROAD_LR || GetTileID(iX, iY) == TILE_ROAD_TB) {
 		// TERRAIN_00 check added here to avoid the runwaycross
 		// being placed into a dip (likely replacing a slope or granite block).
-		if (!dwMapXTER[iX][iY].iTileID) {
+		if (!GetTerrainTileID(iX, iY)) {
 			XZONSetCornerMask(iX, iY, CORNER_ALL);
 			Game_PlaceTileWithMilitaryCheck(iX, iY, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 		}
@@ -149,13 +149,13 @@ static __int16 GetTileDepth(__int16 iPosA, __int16 iPosB, int iPlus) {
 		if (n >= 5)
 			break;
 		if (iPlus) {
-			if (dwMapXTER[iPosA + n][iPosB].iTileID || ALTMReturnLandAltitude(iPosA + n, iPosB) > iBaseLevel) {
+			if (GetTerrainTileID(iPosA + n, iPosB) || ALTMReturnLandAltitude(iPosA + n, iPosB) > iBaseLevel) {
 				n = 0;
 				break;
 			}
 		}
 		else {
-			if (dwMapXTER[iPosA - n][iPosB].iTileID || ALTMReturnLandAltitude(iPosA - n, iPosB) > iBaseLevel) {
+			if (GetTerrainTileID(iPosA - n, iPosB) || ALTMReturnLandAltitude(iPosA - n, iPosB) > iBaseLevel) {
 				n = 0;
 				break;
 			}
@@ -180,13 +180,13 @@ static __int16 GetTileLength(__int16 iPosA, __int16 iPosB, int iPlus) {
 		if (n >= iRandMaxLength)
 			break;
 		if (iPlus) {
-			if (dwMapXTER[iPosA][iPosB + n].iTileID || ALTMReturnLandAltitude(iPosA, iPosB + n) > iBaseLevel) {
+			if (GetTerrainTileID(iPosA, iPosB + n) || ALTMReturnLandAltitude(iPosA, iPosB + n) > iBaseLevel) {
 				n = 0;
 				break;
 			}
 		}
 		else {
-			if (dwMapXTER[iPosA][iPosB - n].iTileID || ALTMReturnLandAltitude(iPosA, iPosB - n) > iBaseLevel) {
+			if (GetTerrainTileID(iPosA, iPosB - n) || ALTMReturnLandAltitude(iPosA, iPosB - n) > iBaseLevel) {
 				n = 0;
 				break;
 			}
@@ -313,7 +313,7 @@ static void MilitaryBasePlotCheck(__int16 *iVAltitudeTiles, __int16 *iVTiles, __
 			for (__int16 iYPosStep = iRandYPos; iRandYPos + 8 > iYPosStep; ++iYPosStep) {
 				if (
 					GetTileID(iXPosStep, iYPosStep) < TILE_SMALLPARK &&
-					!dwMapXTER[iXPosStep][iYPosStep].iTileID &&
+					!GetTerrainTileID(iXPosStep, iYPosStep) &&
 					(
 						iXPosStep >= GAME_MAP_SIZE || // (Not present in the DOS-equivalent)
 						iYPosStep >= GAME_MAP_SIZE || // (Not present in the DOS-equivalent)
@@ -379,7 +379,7 @@ RETRY_CHECK1:
 						__int16 iDepthWays = iCurrPos;
 						if (
 							GetTileID(iLengthWays, iDepthWays) < TILE_SMALLPARK &&
-							!dwMapXTER[iLengthWays][iDepthWays].iTileID &&
+							!GetTerrainTileID(iLengthWays, iDepthWays) &&
 							(
 								iLengthWays >= GAME_MAP_SIZE ||
 								iDepthWays >= GAME_MAP_SIZE ||
@@ -469,7 +469,7 @@ static void MilitaryBasePlotPlacement(__int16 iRandXPos, __int16 iRandStoredYPos
 			BYTE iMilitaryArea = GetTileID(iCurrXPos, iCurrYPos);
 			if (
 				iMilitaryArea < TILE_SMALLPARK &&
-				!dwMapXTER[iCurrXPos][iCurrYPos].iTileID &&
+				!GetTerrainTileID(iCurrXPos, iCurrYPos) &&
 				(
 					iCurrXPos >= GAME_MAP_SIZE ||
 					iCurrYPos >= GAME_MAP_SIZE ||
@@ -584,7 +584,7 @@ BACKTOSPOTREROLL:
 						{
 							if (!((iMilitaryArea >= TILE_CLEAR && iMilitaryArea <= TILE_RUBBLE4) ||
 								(iMilitaryArea >= TILE_TREES1 && iMilitaryArea < TILE_SMALLPARK)) || 
-								dwMapXTER[iTempNear][iTempFar].iTileID) {
+								GetTerrainTileID(iTempNear, iTempFar)) {
 								iNavyLandingAttempts++;
 								goto REROLLCOASTALSPOT;
 							}
@@ -667,7 +667,7 @@ PLACENAVAL:
 								((iMilitaryArea >= TILE_CLEAR && iMilitaryArea <= TILE_RUBBLE4) ||
 								(iMilitaryArea >= TILE_TREES1 && iMilitaryArea < TILE_SMALLPARK)) &&
 								XZONReturnZone(iDirectionOne, iDirectionTwo) == ZONE_NONE &&
-								!dwMapXTER[iDirectionOne][iDirectionTwo].iTileID &&
+								!GetTerrainTileID(iDirectionOne, iDirectionTwo) &&
 								!isValidWaterBody(iDirectionOne, iDirectionTwo) &&
 								!GetUndergroundTileID(iDirectionOne, iDirectionTwo) &&
 								ALTMReturnLandAltitude(iDirectionOne, iDirectionTwo) == iBaseLevel
@@ -687,8 +687,8 @@ PLACENAVAL:
 							else {
 								if (!((iMilitaryArea >= TILE_CLEAR && iMilitaryArea <= TILE_RUBBLE4) ||
 									(iMilitaryArea >= TILE_TREES1 && iMilitaryArea < TILE_SMALLPARK)) ||
-									dwMapXTER[iDirectionOne][iDirectionTwo].iTileID < SUBMERGED_00 ||
-									dwMapXTER[iDirectionOne][iDirectionTwo].iTileID > COAST_13 ||
+									GetTerrainTileID(iDirectionOne, iDirectionTwo) < SUBMERGED_00 ||
+									GetTerrainTileID(iDirectionOne, iDirectionTwo) > COAST_13 ||
 									GetUndergroundTileID(iDirectionOne, iDirectionTwo) ||
 									ALTMReturnLandAltitude(iDirectionOne, iDirectionTwo) > iBaseLevel) {
 									iNonContiguousDepth = 1;
