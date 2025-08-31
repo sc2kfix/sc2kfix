@@ -534,7 +534,7 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		if (!GetDlgItemText(hwndDlg, 150, szTempMayorName, 24))
 			strcpy_s(szTempMayorName, 24, szSettingsMayorName);
 
-		strcpy_s(dwMapXLAB[0][0].szLabel, 24, szTempMayorName);
+		SetXLABEntry(0, szTempMayorName);
 
 		// XXX - this should probably be moved to a separate proper hook into the game itself
 		for (const auto& hook : stHooks_Hook_OnNewCity_Before) {

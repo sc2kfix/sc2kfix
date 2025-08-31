@@ -1542,8 +1542,20 @@ static inline int GetTileID(int iTileX, int iTileY) {
 }
 
 // Returns the XLAB entry from a given Label ID.
-static inline const char* GetXLABEntry(int iLabelID) {
+static inline const char* GetXLABEntry(BYTE iLabelID) {
 	return dwMapXLAB[0][iLabelID].szLabel;
+}
+
+static inline void SetXLABEntry(BYTE iLabelID, const char *pStr) {
+	WORD nLen;
+
+	if (pStr) {
+		nLen = (WORD)strlen(pStr);
+		if (nLen > 24)
+			nLen = 24;
+		memcpy(&dwMapXLAB[0][iLabelID], pStr, nLen);
+		dwMapXLAB[0][iLabelID].szLabel[nLen] = 0;
+	}
 }
 
 // Returns the sprite header for a given sprite ID.

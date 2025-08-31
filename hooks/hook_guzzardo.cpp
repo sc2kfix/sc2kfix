@@ -155,8 +155,10 @@ static void AdjustDebugMenu(HMENU hDebugMenu) {
 }
 
 static int FindTheHouseLabel() {
+	const char *pLabel;
 	for (int i = 1; i < MAX_USER_TEXT_ENTRIES; ++i) {
-		if (dwMapXLAB[0][i].szLabel && _stricmp(dwMapXLAB[0][i].szLabel, theHouse) == 0) {
+		pLabel = GetXLABEntry(i);
+		if (pLabel && _stricmp(pLabel, theHouse) == 0) {
 			return i;
 		}
 	}
@@ -165,7 +167,6 @@ static int FindTheHouseLabel() {
 
 static void SetTheHouseLabel(int xPos, int ySignPos) {
 	BYTE iLabelIdx;
-	WORD iTextLen;
 
 	BYTE(__stdcall * H_PrepareLabel)() = (BYTE(__stdcall*)())0x402D56;
 
@@ -176,9 +177,7 @@ static void SetTheHouseLabel(int xPos, int ySignPos) {
 	iLabelIdx = H_PrepareLabel();
 	if (iLabelIdx) {
 		dwMapXTXT[xPos][ySignPos].bTextOverlay = iLabelIdx;
-		iTextLen = (WORD)strlen(theHouse);
-		memcpy(&dwMapXLAB[0][iLabelIdx], theHouse, iTextLen);
-		dwMapXLAB[0][iLabelIdx].szLabel[iTextLen] = 0;
+		SetXLABEntry(iLabelIdx, theHouse);
 	}
 }
 
