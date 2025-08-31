@@ -187,10 +187,12 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		strTileInfo += ")\n";
 
 		// Microsim info
-		if (dwMapXTXT[iTileX][iTileY].bTextOverlay <= MIN_SIM_TEXT_ENTRIES || dwMapXTXT[iTileX][iTileY].bTextOverlay > MAX_SIM_TEXT_ENTRIES)
+		BYTE bTextOverlay;
+		
+		bTextOverlay = XTXTGetTextOverlayID(iTileX, iTileY); // Entries > 51 aren't user-modifiable label/text entries.
+		if (bTextOverlay <= MIN_SIM_TEXT_ENTRIES || bTextOverlay > MAX_SIM_TEXT_ENTRIES)
 			strTileInfo += "None\nN/A\nN/A\nN/A\nN/A";
 		else {
-			BYTE bTextOverlay = dwMapXTXT[iTileX][iTileY].bTextOverlay; // Entries > 51 aren't user-modifiable label/text entries.
 			BYTE iMicrosimID = bTextOverlay - MIN_SIM_TEXT_ENTRIES; // The MicrosimID being calculated from entry 52 and beyond but subtracted by the non-user modifiable starting value.
 			strTileInfo += GetXLABEntry(bTextOverlay);
 			strTileInfo += " (iMicrosimID " + std::to_string(iMicrosimID) + " / " + HexPls(iMicrosimID, 2) + ")\n";

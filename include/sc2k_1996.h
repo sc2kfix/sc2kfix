@@ -1574,6 +1574,14 @@ static inline void SetXLABEntry(BYTE iLabelID, const char *pStr) {
 	}
 }
 
+static inline BYTE XTXTGetTextOverlayID(__int16 iTileX, __int16 iTileY) {
+	return dwMapXTXT[iTileX][iTileY].bTextOverlay;
+}
+
+static inline void XTXTSetTextOverlayID(__int16 iTileX, __int16 iTileY, BYTE bNewTextOverlayID) {
+	dwMapXTXT[iTileX][iTileY].bTextOverlay = bNewTextOverlayID;
+}
+
 // Returns the sprite header for a given sprite ID.
 static inline sprite_header_t* GetSpriteHeader(int iSpriteID) {
 	return &pArrSpriteHeaders[iSpriteID];

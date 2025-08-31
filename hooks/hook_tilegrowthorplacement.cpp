@@ -249,7 +249,7 @@ static int L_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iTileID, __int16 
 									XZONClearCorners(iCurX, iCurY);
 							}
 							if (bTextOverlay)
-								dwMapXTXT[iCurX][iCurY].bTextOverlay = bTextOverlay;
+								XTXTSetTextOverlayID(iCurX, iCurY, bTextOverlay);
 						}
 					}
 				}
@@ -642,7 +642,7 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 							else if (iCurrentTileID >= TILE_ARCOLOGY_PLYMOUTH &&
 								iCurrentTileID <= TILE_ARCOLOGY_LAUNCH &&
 								XZONCornerAbsoluteCheckMask(iX, iY, CORNER_TRIGHT)) {
-								iTextOverlay = dwMapXTXT[iX][iY].bTextOverlay;
+								iTextOverlay = XTXTGetTextOverlayID(iX, iY);
 								iMicrosimIdx = iTextOverlay - MAX_USER_TEXT_ENTRIES;
 								//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - iTextOverlay(%u), iMicrosimIdx(%u), Item(%s)\n", iStep, iSubStep, iTextOverlay, iMicrosimIdx, szTileNames[iCurrentTileID]);
 								if (iTextOverlay >= MAX_USER_TEXT_ENTRIES &&

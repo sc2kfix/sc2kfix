@@ -835,7 +835,7 @@ extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
 
 	for (int x = 0; x < GAME_MAP_SIZE; x++) {
 		for (int y = 0; y < GAME_MAP_SIZE; y++) {
-			if (dwMapXTXT[x][y].bTextOverlay == 0xFA) {
+			if (XTXTGetTextOverlayID(x, y) == 0xFA) {
 				BYTE iTileID = GetTileID(x, y);
 				if (iTileID >= TILE_RAIL_LR && iTileID < TILE_TUNNEL_T
 					|| iTileID >= TILE_CROSSOVER_ROADLR_RAILTB && iTileID < TILE_SUSPENSION_BRIDGE_START_B
