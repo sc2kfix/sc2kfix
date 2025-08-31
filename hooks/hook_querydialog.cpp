@@ -45,9 +45,9 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		// Build the header string
 		iTileID = GetTileID(iTileX, iTileY);
 		if (iTileID == 0) {
-			if (dwMapXBIT[iTileX][iTileY].b.iWater && dwMapXBIT[iTileX][iTileY].b.iSaltWater)
+			if (XBITReturnIsWater(iTileX, iTileY) && XBITReturnIsSaltWater(iTileX ,iTileY))
 				strTileHeader = "Salt water";
-			else if (dwMapXBIT[iTileX][iTileY].b.iWater)
+			else if (XBITReturnIsWater(iTileX, iTileY))
 				strTileHeader = "Fresh water";
 		} else
 			strTileHeader = szTileNames[iTileID];
@@ -66,14 +66,14 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		strTileInfo += "\n";
 		
 		// Altitude/depth
-		if (dwMapXBIT[iTileX][iTileY].b.iWater && ALTMReturnLandAltitude(iTileX, iTileY) < wWaterLevel)
+		if (XBITReturnIsWater(iTileX, iTileY) && ALTMReturnLandAltitude(iTileX, iTileY) < wWaterLevel)
 			strTileInfo += std::to_string(100 * (wWaterLevel - ALTMReturnLandAltitude(iTileX, iTileY)) - 50);
 		else if (dwMapXTER[iTileX][iTileY].iTileID && dwMapXTER[iTileX][iTileY].iTileID < SUBMERGED_00)
 			strTileInfo += std::to_string(25 * (4 * (ALTMReturnLandAltitude(iTileX, iTileY) - wWaterLevel) + 4));
 		else
 			strTileInfo += std::to_string(100 * (ALTMReturnLandAltitude(iTileX, iTileY) - wWaterLevel) + 50);
 		strTileInfo += " feet ";
-		if (dwMapXBIT[iTileX][iTileY].b.iWater && ALTMReturnLandAltitude(iTileX, iTileY) < wWaterLevel)
+		if (XBITReturnIsWater(iTileX, iTileY) && ALTMReturnLandAltitude(iTileX, iTileY) < wWaterLevel)
 			strTileInfo += "deep ";
 		strTileInfo += "(ALTM: ";
 		strTileInfo += HexPls(ALTMReturnMask(iTileX, iTileY), 4);
@@ -122,56 +122,56 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		strTileInfo += "\n";
 
 		// XBIT
-		if (!*(BYTE*)(&dwMapXBIT[iTileX][iTileY].b))
+		if (!XBITReturnMask(iTileX, iTileY))
 			strTileInfo += "none (XBIT: 0x00)\n";
 		else {
 			// XXX - this code sucks, more so than the rest of this function
 			int i = 0;
 
-			if (dwMapXBIT[iTileX][iTileY].b.iPowerable) {
+			if (XBITReturnIsPowerable(iTileX, iTileY)) {
 				i++;
 				strTileInfo += "powerable ";
 			}
-			if (dwMapXBIT[iTileX][iTileY].b.iPowered) {
+			if (XBITReturnIsPowered(iTileX, iTileY)) {
 				i++;
 				strTileInfo += "powered ";
 			}
-			if (dwMapXBIT[iTileX][iTileY].b.iPiped) {
+			if (XBITReturnIsPiped(iTileX, iTileY)) {
 				i++;
 				strTileInfo += "piped ";
 			}
-			if (dwMapXBIT[iTileX][iTileY].b.iWatered) {
+			if (XBITReturnIsWatered(iTileX, iTileY)) {
 				i++;
 				strTileInfo += "watered ";
 				if (i == 5)
 					strTileInfo += "\n";
 			}
-			if (dwMapXBIT[iTileX][iTileY].b.iMark) {
+			if (XBITReturnIsMark(iTileX, iTileY)) {
 				i++;
 				strTileInfo += "mark ";
 				if (i == 5)
 					strTileInfo += "\n";
 			}
-			if (dwMapXBIT[iTileX][iTileY].b.iWater) {
+			if (XBITReturnIsWater(iTileX, iTileY)) {
 				i++;
 				strTileInfo += "water ";
 				if (i == 5)
 					strTileInfo += "\n";
 			}
-			if (dwMapXBIT[iTileX][iTileY].b.iFlipped) {
+			if (XBITReturnIsFlipped(iTileX, iTileY)) {
 				i++;
 				strTileInfo += "flipped ";
 				if (i == 5)
 					strTileInfo += "\n";
 			}
-			if (dwMapXBIT[iTileX][iTileY].b.iSaltWater) {
+			if (XBITReturnIsSaltWater(iTileX, iTileY)) {
 				i++;
 				strTileInfo += "saltwater ";
 				if (i == 5)
 					strTileInfo += "\n";
 			}
 			strTileInfo += "(XBIT: ";
-			strTileInfo += HexPls(*(BYTE*)(&dwMapXBIT[iTileX][iTileY].b), 1);
+			strTileInfo += HexPls(XBITReturnMask(iTileX, iTileY), 1);
 			strTileInfo += ")\n";
 			if (i < 5)
 				strTileInfo += "\n";

@@ -224,8 +224,7 @@ static __int16 GetDepthPoint(int iCoords) {
 }
 
 static int isValidWaterBody(__int16 x, __int16 y) {
-	return (dwMapXBIT[x][y].b.iSaltWater == 1 &&
-		dwMapXBIT[x][y].b.iWater == 1) ? 1 : 0;
+	return (XBITReturnIsSaltWater(x, y) && XBITReturnIsWater(x, y)) ? 1 : 0;
 }
 
 static int CheckOverlappingSiloPosition(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
@@ -318,7 +317,7 @@ static void MilitaryBasePlotCheck(__int16 *iVAltitudeTiles, __int16 *iVTiles, __
 					(
 						iXPosStep >= GAME_MAP_SIZE || // (Not present in the DOS-equivalent)
 						iYPosStep >= GAME_MAP_SIZE || // (Not present in the DOS-equivalent)
-						dwMapXBIT[iXPosStep][iYPosStep].b.iWater == 0
+						!XBITReturnIsWater(iXPosStep, iYPosStep)
 						) &&
 					XZONReturnZone(iXPosStep, iYPosStep) == ZONE_NONE
 					) {
@@ -384,7 +383,7 @@ RETRY_CHECK1:
 							(
 								iLengthWays >= GAME_MAP_SIZE ||
 								iDepthWays >= GAME_MAP_SIZE ||
-								dwMapXBIT[iLengthWays][iDepthWays].b.iWater == 0
+								!XBITReturnIsWater(iLengthWays, iDepthWays)
 								) &&
 							ALTMReturnLandAltitude(iLengthWays, iDepthWays) == iBaseLevel &&
 							XZONReturnZone(iLengthWays, iDepthWays) != ZONE_MILITARY &&
@@ -474,7 +473,7 @@ static void MilitaryBasePlotPlacement(__int16 iRandXPos, __int16 iRandStoredYPos
 				(
 					iCurrXPos >= GAME_MAP_SIZE ||
 					iCurrYPos >= GAME_MAP_SIZE ||
-					dwMapXBIT[iCurrXPos][iCurrYPos].b.iWater == 0
+					!XBITReturnIsWater(iCurrXPos, iCurrYPos)
 					) &&
 				XZONReturnZone(iCurrXPos, iCurrYPos) == ZONE_NONE &&
 				!dwMapXUND[iRandXPos][iRandStoredYPos].iTileID
@@ -559,8 +558,8 @@ static int MilitaryBaseNavalYard(bool force) {
 BACKTOSPOTREROLL:
 			iTileCoords[0] = SetTileCoords(0); // First Corner
 			iTileCoords[1] = SetTileCoords(1); // Second Corner
-			if (dwMapXBIT[GetNearCoord(iTileCoords[0])][GetFarCoord(iTileCoords[0])].b.iWater) { // First Corner
-				if (dwMapXBIT[GetNearCoord(iTileCoords[1])][GetFarCoord(iTileCoords[1])].b.iWater) { // Second Corner
+			if (XBITReturnIsWater(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]))) { // First Corner
+				if (XBITReturnIsWater(GetNearCoord(iTileCoords[1]), GetFarCoord(iTileCoords[1]))) { // Second Corner
 																										 // Calculate a random point along the coastal area and then use that to plot the path
 																										 // towards dry land, if this fails then retry N number of attempts.
 				REROLLCOASTALSPOT:
@@ -581,7 +580,7 @@ BACKTOSPOTREROLL:
 							goto NONAVY;
 						}
 						unsigned __int8 iMilitaryArea = dwMapXBLD[iTempNear][iTempFar].iTileID;
-						if (dwMapXBIT[iTempNear][iTempFar].b.iWater == 0)
+						if (!XBITReturnIsWater(iTempNear, iTempFar))
 						{
 							if (!((iMilitaryArea >= TILE_CLEAR && iMilitaryArea <= TILE_RUBBLE4) ||
 								(iMilitaryArea >= TILE_TREES1 && iMilitaryArea < TILE_SMALLPARK)) || 

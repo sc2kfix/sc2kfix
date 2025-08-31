@@ -521,21 +521,21 @@ BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments) {
 		int iTileID = dwMapXBLD[iTileX][iTileY].iTileID;
 
 		char szXBITFormatted[256] = { 0 };
-		if (dwMapXBIT[iTileX][iTileY].b.iPowerable)
+		if (XBITReturnIsPowerable(iTileX, iTileY))
 			strcat_s(szXBITFormatted, 256, "powerable ");
-		if (dwMapXBIT[iTileX][iTileY].b.iPowered)
+		if (XBITReturnIsPowered(iTileX, iTileY))
 			strcat_s(szXBITFormatted, 256, "powered ");
-		if (dwMapXBIT[iTileX][iTileY].b.iPiped)
+		if (XBITReturnIsPiped(iTileX, iTileY))
 			strcat_s(szXBITFormatted, 256, "piped ");
-		if (dwMapXBIT[iTileX][iTileY].b.iWatered)
+		if (XBITReturnIsWatered(iTileX, iTileY))
 			strcat_s(szXBITFormatted, 256, "watered ");
-		if (dwMapXBIT[iTileX][iTileY].b.iMark)
+		if (XBITReturnIsMark(iTileX, iTileY))
 			strcat_s(szXBITFormatted, 256, "mark ");
-		if (dwMapXBIT[iTileX][iTileY].b.iWater)
+		if (XBITReturnIsWater(iTileX, iTileY))
 			strcat_s(szXBITFormatted, 256, "water ");
-		if (dwMapXBIT[iTileX][iTileY].b.iFlipped)
+		if (XBITReturnIsFlipped(iTileX, iTileY))
 			strcat_s(szXBITFormatted, 256, "flipped ");
-		if (dwMapXBIT[iTileX][iTileY].b.iSaltWater)
+		if (XBITReturnIsSaltWater(iTileX, iTileY))
 			strcat_s(szXBITFormatted, 256, "saltwater ");
 		if (szXBITFormatted[0] == '\0')
 			strcpy_s(szXBITFormatted, 256, "none");
@@ -546,7 +546,7 @@ BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments) {
 			"Tile (%i, %i):\n"
 			"  iTileID: %s (%i / 0x%02X)\n"
 			"  Zone:    %s\n"
-			"  XBIT:    0x%02X (%s)\n", iTileX, iTileY, szTileNames[iTileID], iTileID, iTileID, GetZoneName(XZONReturnZone(iTileX, iTileY)), *(BYTE*)&dwMapXBIT[iTileX][iTileY].b, szXBITFormatted);
+			"  XBIT:    0x%02X (%s)\n", iTileX, iTileY, szTileNames[iTileID], iTileID, iTileID, GetZoneName(XZONReturnZone(iTileX, iTileY)), XBITReturnMask(iTileX, iTileY), szXBITFormatted);
 		return TRUE;
 	}
 

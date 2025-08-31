@@ -253,9 +253,9 @@ static BOOL BuildTheHouse() {
 				if (!dwMapXTER[xPos][yPos].iTileID &&
 					!dwMapXTER[xPos][ySignPos].iTileID &&
 					!dwMapXTERPrevX[xPos][yPos].iTileID &&
-					(xPos < 0 || yPos >= GAME_MAP_SIZE || !dwMapXBIT[xPos][yPos].b.iWater) &&
-					(xPos >= GAME_MAP_SIZE || ySignPos >= GAME_MAP_SIZE || !dwMapXBIT[xPos][ySignPos].b.iWater) &&
-					(xWindPos >= GAME_MAP_SIZE || yPos >= GAME_MAP_SIZE || !dwMapXBIT[xWindPos][yPos].b.iWater)) {
+					(xPos < 0 || yPos >= GAME_MAP_SIZE || !XBITReturnIsWater(xPos, yPos)) &&
+					(xPos >= GAME_MAP_SIZE || ySignPos >= GAME_MAP_SIZE || !XBITReturnIsWater(xPos, ySignPos)) &&
+					(xWindPos >= GAME_MAP_SIZE || yPos >= GAME_MAP_SIZE || !XBITReturnIsWater(xWindPos, yPos))) {
 					if (ALTMReturnLandAltitude(xPos, yPos) == ALTMReturnLandAltitude(xPos, ySignPos) &&
 						ALTMReturnLandAltitude(xPos, yPos) == ALTMReturnLandAltitude(xWindPos, yPos)) {
 						if (Game_ItemPlacementCheck(xPos, yPos, TILE_COMMERCIAL_1X1_BEDANDBREAKFAST, AREA_1x1)) {

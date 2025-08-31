@@ -1715,6 +1715,44 @@ static inline void XZONSetNewZone(__int16 x, __int16 y, __int16 iNewZone) {
 #endif
 }
 
+#define USE_OLD_XBIT_HANDLING 1
+
+static inline BOOL XBITReturnIsSaltWater(__int16 x, __int16 y) {
+	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_SALTWATER);
+}
+
+static inline BOOL XBITReturnIsFlipped(__int16 x, __int16 y) {
+	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_FLIPPED);
+}
+
+static inline BOOL XBITReturnIsWater(__int16 x, __int16 y) {
+	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_WATER);
+}
+
+static inline BOOL XBITReturnIsMark(__int16 x, __int16 y) {
+	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_MARK);
+}
+
+static inline BOOL XBITReturnIsWatered(__int16 x, __int16 y) {
+	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_WATERED);
+}
+
+static inline BOOL XBITReturnIsPiped(__int16 x, __int16 y) {
+	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_PIPED);
+}
+
+static inline BOOL XBITReturnIsPowered(__int16 x, __int16 y) {
+	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_POWERED);
+}
+
+static inline BOOL XBITReturnIsPowerable(__int16 x, __int16 y) {
+	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_POWERABLE);
+}
+
+static inline BYTE XBITReturnMask(__int16 x, __int16 y) {
+	return *(BYTE *)&dwMapXBIT[x][y].b;
+}
+
 // This coordinate structure is used for the missile silo
 // case (potentially for any modifications to the naval yard
 // case as well).
