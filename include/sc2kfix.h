@@ -99,6 +99,10 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define HICOLORCNT 256
 #define LOCOLORCNT 16
 
+// It should be noted that with these values
+// they're referencing the min/max for the
+// user and sim label entries but NOT the total
+// maximum for all which is 256 (0 - 255).
 #define MAX_USER_TEXT_ENTRIES 51
 #define MIN_SIM_TEXT_ENTRIES MAX_USER_TEXT_ENTRIES
 #define MAX_SIM_TEXT_ENTRIES 200
