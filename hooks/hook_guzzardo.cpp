@@ -235,8 +235,6 @@ static BOOL BuildTheHouse() {
 	__int16 xWindPos;
 	__int16 ySignPos;
 
-	map_XTER_t** dwMapXTERPrevX = (map_XTER_t**)0x4C9F54;
-
 	iAttempts = 0;
 	while (TRUE) {
 	RETRY:
@@ -251,7 +249,7 @@ static BOOL BuildTheHouse() {
 				GetTileID(xWindPos, yPos) < TILE_SMALLPARK) {
 				if (!dwMapXTER[xPos][yPos].iTileID &&
 					!dwMapXTER[xPos][ySignPos].iTileID &&
-					!dwMapXTERPrevX[xPos][yPos].iTileID &&
+					!dwMapXTER[xWindPos][yPos].iTileID &&
 					(xPos < 0 || yPos >= GAME_MAP_SIZE || !XBITReturnIsWater(xPos, yPos)) &&
 					(xPos >= GAME_MAP_SIZE || ySignPos >= GAME_MAP_SIZE || !XBITReturnIsWater(xPos, ySignPos)) &&
 					(xWindPos >= GAME_MAP_SIZE || yPos >= GAME_MAP_SIZE || !XBITReturnIsWater(xWindPos, yPos))) {

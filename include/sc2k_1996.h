@@ -1505,8 +1505,19 @@ GAMEOFF_ARR(WORD, wTilePierDepthWays,		0x4E75C8)
 
 // Pointers to map arrays
 
+// dwMapXTERPrevX and dwMapXTERNextX, both represent
+// the previous and next tiles respectively on the
+// X axis - see 0x44AED0 for this reference.
+//
+// It doesn't look like there's an equivalent when it
+// comes to the Y axis, instead inside 0x44AED0 either
+// subtracts or adds by one to the Y axis in the main
+// dwMapXTER struct array (second dimension).
+
 // 128x128
+GAMEOFF_ARR(map_XTER_t*,	dwMapXTERPrevX,	0x4C9F54)
 GAMEOFF_ARR(map_XTER_t*,	dwMapXTER,	0x4C9F58)
+GAMEOFF_ARR(map_XTER_t*,	dwMapXTERNextX,	0x4C9F5C)
 GAMEOFF_ARR(map_XZON_t*,	dwMapXZON,	0x4CA1F0)
 GAMEOFF_ARR(map_XTXT_t*,	dwMapXTXT,	0x4CA600)
 GAMEOFF_ARR(map_XBIT_t*,	dwMapXBIT,	0x4CAB10)
@@ -1536,6 +1547,10 @@ extern const char *getXTERNames(BYTE iVal);
 // Returns the tile ID from a given set of coordinates.
 static inline BYTE GetTileID(__int16 iTileX, __int16 iTileY) {
 	return dwMapXBLD[iTileX][iTileY].iTileID;
+}
+
+static inline BYTE GetTerrainTileID(__int16 iTileX, __int16 iTileY) {
+	return dwMapXTER[iTileX][iTileY].iTileID;
 }
 
 static inline BYTE GetUndergroundTileID(__int16 iTileX, __int16 iTileY) {
