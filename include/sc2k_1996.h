@@ -1715,7 +1715,7 @@ static inline void XZONSetNewZone(__int16 x, __int16 y, __int16 iNewZone) {
 #endif
 }
 
-#define USE_OLD_XBIT_HANDLING 1
+#define USE_OLD_XBIT_HANDLING 0
 
 static inline BOOL XBITReturnIsSaltWater(__int16 x, __int16 y) {
 #if USE_OLD_XBIT_HANDLING
