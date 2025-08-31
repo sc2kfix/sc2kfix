@@ -836,13 +836,34 @@ static int ShouldRunwayTileFlip(__int16 iMoveY) {
 	return iToFlip;
 }
 
+static BOOL RunwayTileMilitaryCheck(__int16 x, __int16 y, __int16 iZoneType) {
+	if (iZoneType == ZONE_MILITARY) {
+		if ((dwMapXBLD[x][y].iTileID >= TILE_ROAD_LR && dwMapXBLD[x][y].iTileID <= TILE_ROAD_LTBR) ||
+			dwMapXBLD[x][y].iTileID == TILE_INFRASTRUCTURE_CRANE || dwMapXBLD[x][y].iTileID == TILE_MILITARY_MISSILESILO)
+			return FALSE;
+		if (dwMapXTER[x][y].iTileID)
+			return FALSE;
+		if (dwMapXUND[x][y].iTileID)
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL RunwayStripLengthCheck(__int16 iRunwayStripTileCount) {
+	// Does the runway strip equal or exceed the defined number of max tiles?
+	return (iRunwayStripTileCount >= RUNWAYSTRIP_MAXTILES) ? TRUE : FALSE;
+}
+
+static BOOL IsRunwayTypeTile(__int16 x, __int16 y) {
+	return (dwMapXBLD[x][y].iTileID == TILE_INFRASTRUCTURE_RUNWAY || dwMapXBLD[x][y].iTileID == TILE_INFRASTRUCTURE_RUNWAYCROSS) ? TRUE : FALSE;
+}
+
 extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, BYTE iTileID, __int16 iZoneType) {
-	// Variable names subject to change
-	// during the demystification process.
 	__int16 x, y;
 	__int16 iCurrX, iCurrY;
 	__int16 iNextX, iNextY;
-	__int16 iRunwayTileCount[2];
+	__int16 iInitialRunwayStripTileCount;
+	__int16 iBranchingRunwayStripTileCount;
 	__int16 iMoveX, iMoveY;
 	__int16 iToFlip;
 	__int16 iTileFlipped;
@@ -868,57 +889,51 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 
 		iCurrX = x;
 		iCurrY = y;
-		iRunwayTileCount[0] = 0;
+		iInitialRunwayStripTileCount = 0;
 		while (iCurrX < GAME_MAP_SIZE && iCurrY < GAME_MAP_SIZE) {
 			if (XZONReturnZone(iCurrX, iCurrY) != iZoneType)
 				return 0;
-			if (iZoneType == ZONE_MILITARY) {
-				if ((dwMapXBLD[iCurrX][iCurrY].iTileID >= TILE_ROAD_LR && dwMapXBLD[iCurrX][iCurrY].iTileID <= TILE_ROAD_LTBR) ||
-					dwMapXBLD[iCurrX][iCurrY].iTileID == TILE_INFRASTRUCTURE_CRANE || dwMapXBLD[iCurrX][iCurrY].iTileID == TILE_MILITARY_MISSILESILO)
-					return 0;
-				if (dwMapXTER[iCurrX][iCurrY].iTileID)
-					return 0;
-				if (dwMapXUND[iCurrX][iCurrY].iTileID)
-					return 0;
-			}
-			if (dwMapXBLD[iCurrX][iCurrY].iTileID == TILE_INFRASTRUCTURE_RUNWAY || dwMapXBLD[iCurrX][iCurrY].iTileID == TILE_INFRASTRUCTURE_RUNWAYCROSS)
-				--iRunwayTileCount[0];
+			if (!RunwayTileMilitaryCheck(iCurrX, iCurrY, iZoneType))
+				return 0;
+			// With this check if there's a hit on an existing runway
+			// tile then we want to decrease the count until it reaches
+			// the first vacant tile.
+			if (IsRunwayTypeTile(iCurrX, iCurrY))
+				--iInitialRunwayStripTileCount;
 			iCurrX += iMoveY;
-			++iRunwayTileCount[0];
 			iCurrY += iMoveX;
-			if (iRunwayTileCount[0] >= RUNWAYSTRIP_MAXTILES) {
+			++iInitialRunwayStripTileCount;
+			if (RunwayStripLengthCheck(iInitialRunwayStripTileCount)) {
 				iToFlip = ShouldRunwayTileFlip(iMoveY);
 
-				iRunwayTileCount[1] = 0;
+				iBranchingRunwayStripTileCount = 0;
 				while (2) {
 					if (x >= 0) {
-						if (dwMapXBLD[x][y].iTileID == TILE_INFRASTRUCTURE_RUNWAY || dwMapXBLD[x][y].iTileID == TILE_INFRASTRUCTURE_RUNWAYCROSS) {
-							--iRunwayTileCount[1];
+						// With this check if true and there's a hit on
+						// an existing runway tile then the branching strip
+						// counter is decreased, if the tile is specifically
+						// the standard runway-type (not cross) do a tile-flip
+						// check, if the result is not equivalent to iToFlip
+						// then replace the tile in question with the
+						// runwaycross type and unset the flipped bit at the end.
+						if (IsRunwayTypeTile(x, y)) {
+							--iBranchingRunwayStripTileCount;
 							if (dwMapXBLD[x][y].iTileID == TILE_INFRASTRUCTURE_RUNWAY) {
 								iTileFlipped = (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE && dwMapXBIT[x][y].b.iFlipped);
 								if (iTileFlipped != iToFlip) {
 									Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 									if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 										XZONSetCornerMask(x, y, CORNER_ALL);
-									if (iZoneType != ZONE_MILITARY) {
-										if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-											*(BYTE *)&dwMapXBIT[x][y].b |= XBIT_POWERED | XBIT_POWERABLE;
-									}
+									if (iZoneType != ZONE_MILITARY && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
+										*(BYTE *)&dwMapXBIT[x][y].b |= XBIT_POWERED | XBIT_POWERABLE;
 									if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 										*(BYTE *)&dwMapXBIT[x][y].b &= ~(XBIT_FLIPPED);
 								}
 							}
 						}
 						else {
-							if (iZoneType == ZONE_MILITARY) {
-								if ((dwMapXBLD[x][y].iTileID >= TILE_ROAD_LR && dwMapXBLD[x][y].iTileID <= TILE_ROAD_LTBR) ||
-									dwMapXBLD[x][y].iTileID == TILE_INFRASTRUCTURE_CRANE || dwMapXBLD[x][y].iTileID == TILE_MILITARY_MISSILESILO)
-									return 0;
-								if (dwMapXTER[x][y].iTileID)
-									return 0;
-								if (dwMapXUND[x][y].iTileID)
-									return 0;
-							}
+							if (!RunwayTileMilitaryCheck(x, y, iZoneType))
+								return 0;
 							if (dwMapXBLD[x][y].iTileID >= TILE_SMALLPARK)
 								Game_ZonedBuildingTileDeletion(x, y);
 							Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_RUNWAY);
@@ -932,7 +947,8 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 					}
 					x += iMoveY;
 					y += iMoveX;
-					if (++iRunwayTileCount[1] >= RUNWAYSTRIP_MAXTILES)
+					++iBranchingRunwayStripTileCount;
+					if (RunwayStripLengthCheck(iBranchingRunwayStripTileCount))
 						return 1;
 					continue;
 				}
@@ -1198,11 +1214,11 @@ void InstallTileGrowthOrPlacementHandlingHooks_SC2K1996(void) {
 	VirtualProtect((LPVOID)0x4026B2, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4026B2, Hook_SimulationGrowSpecificZone);
 
-	// Hook into the PlacePowerLines function
+	// Hook into the PlacePowerLinesAtCoordinates function
 	VirtualProtect((LPVOID)0x402725, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402725, Hook_PlacePowerLinesAtCoordinates);
 
-	// Hook into what appears to be one of the item placement checking functions
+	// Hook into the ItemPlacementCheck function
 	VirtualProtect((LPVOID)0x4027F2, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4027F2, Hook_ItemPlacementCheck);
 
