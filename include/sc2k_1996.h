@@ -1557,6 +1557,13 @@ static inline HPALETTE GameGetPalette(void) {
 	DWORD* CSimcityAppThis = &pCSimcityAppThis;
 	DWORD* CPalette;
 
+	// CSimcityAppThis[59] = dwSCABForceBkgd (use background palette)
+	// CSimcityAppThis[67] = pSCAPaletteFore (Main identity palette - application in foreground)
+	// CSimcityAppThis[68] = pSCAPaletteBkgd (Background palette - application not activated - in background)
+	//
+	// If Windows is running in 8-bit mode and the program is in the background or not activated, the background
+	// palette appears akin to what you'd get in 4-bit mode (and palette animation is disabled).
+
 	// Exactly what sub_4069B0 does.
 	if (CSimcityAppThis[59])
 		CPalette = (DWORD*)CSimcityAppThis[67];
