@@ -278,8 +278,6 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 	DWORD *pSCView;
 	__int16 iX;
 	__int16 iY;
-	__int16 iXMM;
-	__int16 iYMM;
 	BOOL bPlaceChurch;
 	__int16 iCurrZoneType;
 	BYTE iCurrentTileID;
@@ -304,18 +302,18 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 	__int16 iNextY;
 
 	// Key:
-	// iStep: iX and iXMM (iX minimap = iX / 2)
-	// iSubStep: iY and iYMM (iY minimap = iY / 2)
+	// iStep: iX += 4 with evert loop until >= GAME_MAP_SIZE is reached.
+	// iSubStep: iY += 4 with each loop until >= GAME_MAP_SIZE is reached.
 
 	pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
 	bPlaceChurch = (iChurchVirus > 0) ? 1 : (2500u * dwTileCount[TILE_INFRASTRUCTURE_CHURCH] < dwCityPopulation);
 	wCurrentAngle = wPositionAngle[wViewRotation];
 	iX = iStep;
-	for (iXMM = iX / 2; ; iXMM = iX / 2) {
+	for (;;) {
 		if (iX >= GAME_MAP_SIZE)
 			break;
 		iY = iSubStep;
-		for (iYMM = iY / 2; ; iYMM = iY / 2) {
+		for (;;) {
 			if (iY >= GAME_MAP_SIZE)
 				break;
 			iCurrZoneType = XZONReturnZone(iX, iY);
@@ -578,9 +576,9 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 					if (iBuildingPopLevel != 4 &&
 						(IsEven(iCurrZoneType) || iBuildingPopLevel <= 0) &&
 						(iCurrZoneType >= 5 ||
-						(iBuildingPopLevel != 1 || dwMapXVAL[iXMM][iYMM].bBlock >= 0x20u) &&
-							(iBuildingPopLevel != 2 || dwMapXVAL[iXMM][iYMM].bBlock >= 0x60u) &&
-							(iBuildingPopLevel != 3 || dwMapXVAL[iXMM][iYMM].bBlock >= 0xC0u))) {
+						(iBuildingPopLevel != 1 || GetXVALByteDataWithNormalCoordinates(iX, iY) >= 0x20u) &&
+							(iBuildingPopLevel != 2 || GetXVALByteDataWithNormalCoordinates(iX, iY) >= 0x60u) &&
+							(iBuildingPopLevel != 3 || GetXVALByteDataWithNormalCoordinates(iX, iY) >= 0xC0u))) {
 						iBuildingCommitThreshold = 3 * iCurrentDemand / (iBuildingPopLevel + 1);
 						if (iBuildingCommitThreshold > (unsigned __int16)rand())
 							Game_PerhapsGeneralZoneStartBuilding(iX, iY, iBuildingPopLevel, iCurrZoneType);
@@ -649,9 +647,9 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 									iTextOverlay < 201 &&
 									GetMicroSimulatorTileID(iMicrosimIdx) >= TILE_ARCOLOGY_PLYMOUTH &&
 									GetMicroSimulatorTileID(iMicrosimIdx) <= TILE_ARCOLOGY_LAUNCH) {
-									iMicrosimDataStat0 = (dwMapXVAL[iXMM][iYMM].bBlock >> 5)
-										- (dwMapXCRM[iXMM][iYMM].bBlock >> 5)
-										- (dwMapXPLT[iXMM][iYMM].bBlock >> 5)
+									iMicrosimDataStat0 = (GetXVALByteDataWithNormalCoordinates(iX, iY) >> 5)
+										- (GetXCRMByteDataWithNormalCoordinates(iX,iY) >> 5)
+										- (GetXPLTByteDataWithNormalCoordinates(iX,iY) >> 5)
 										+ 12;
 									if (iX >= GAME_MAP_SIZE ||
 										iY >= GAME_MAP_SIZE ||

@@ -1909,6 +1909,136 @@ static inline void XBITSetBits(__int16 x, __int16 y, BYTE bitMask) {
 #endif
 }
 
+// Helper functions for the 'map_mini64_t'
+// and 'map_mini32_t' struct array cases.
+//
+// 'NormalCoordinates' - the usual coordinates are passed
+//                       to the function and then shifted accordingly
+//                       before being used.
+//
+// 'ShiftedCoordinates' - bitshifted coordinates are passed directly
+//                        to the function and used.
+
+// Coordinate shifting functions.
+
+static inline void GetShifted64x64Coords(__int16 x, __int16 y, __int16 *outX, __int16 *outY) {
+	*outX = x >> 1;
+	*outY = y >> 1;
+}
+
+static inline void GetShifted32x32Coords(__int16 x, __int16 y, __int16 *outX, __int16 *outY) {
+	*outX = x >> 2;
+	*outY = y >> 2;
+}
+
+// 64x64
+
+static inline BYTE GetXCRMByteDataWithNormalCoordinates(__int16 x, __int16 y) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShifted64x64Coords(x, y, &iX, &iY);
+
+	return dwMapXCRM[iX][iY].bBlock;
+}
+
+static inline BYTE GetXCRMByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXCRM[x][y].bBlock;
+}
+
+static inline BYTE GetXPLTByteDataWithNormalCoordinates(__int16 x, __int16 y) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShifted64x64Coords(x, y, &iX, &iY);
+
+	return dwMapXPLT[iX][iY].bBlock;
+}
+
+static inline BYTE GetXPLTByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXPLT[x][y].bBlock;
+}
+
+static inline BYTE GetXTRFByteDataWithNormalCoordinates(__int16 x, __int16 y) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShifted64x64Coords(x, y, &iX, &iY);
+
+	return dwMapXTRF[iX][iY].bBlock;
+}
+
+static inline BYTE GetXTRFByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXTRF[x][y].bBlock;
+}
+
+static inline BYTE GetXVALByteDataWithNormalCoordinates(__int16 x, __int16 y) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShifted64x64Coords(x, y, &iX, &iY);
+
+	return dwMapXVAL[iX][iY].bBlock;
+}
+
+static inline BYTE GetXVALByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXVAL[x][y].bBlock;
+}
+
+// 32x32
+
+static inline BYTE GetXPLCByteDataWithNormalCoordinates(__int16 x, __int16 y) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShifted32x32Coords(x, y, &iX, &iY);
+
+	return dwMapXPLC[iX][iY].bBlock;
+}
+
+static inline BYTE GetXPLCByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXPLC[x][y].bBlock;
+}
+
+static inline BYTE GetXPOPByteDataWithNormalCoordinates(__int16 x, __int16 y) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShifted32x32Coords(x, y, &iX, &iY);
+
+	return dwMapXPOP[iX][iY].bBlock;
+}
+
+static inline BYTE GetXPOPByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXPOP[x][y].bBlock;
+}
+
+static inline BYTE GetXFIRByteDataWithNormalCoordinates(__int16 x, __int16 y) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShifted32x32Coords(x, y, &iX, &iY);
+
+	return dwMapXFIR[iX][iY].bBlock;
+}
+
+static inline BYTE GetXFIRByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXFIR[x][y].bBlock;
+}
+
+static inline BYTE GetXROGByteDataWithNormalCoordinates(__int16 x, __int16 y) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShifted32x32Coords(x, y, &iX, &iY);
+
+	return dwMapXROG[iX][iY].bBlock;
+}
+
+static inline BYTE GetXROGByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXROG[x][y].bBlock;
+}
+
 // This coordinate structure is used for the missile silo
 // case (potentially for any modifications to the naval yard
 // case as well).

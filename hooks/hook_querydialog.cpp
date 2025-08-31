@@ -81,19 +81,19 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 
 		// Land value
 		strTileInfo += "$";
-		strTileInfo += std::to_string(dwMapXVAL[iTileX >> 1][iTileY >> 1].bBlock + 1);
+		strTileInfo += std::to_string(GetXVALByteDataWithNormalCoordinates(iTileX, iTileY) + 1);
 		strTileInfo += ",000/acre\n";
 
 		// Crime
-		strTileInfo += GetLowHighScale(dwMapXCRM[iTileX >> 1][iTileY >> 1].bBlock);
+		strTileInfo += GetLowHighScale(GetXCRMByteDataWithNormalCoordinates(iTileX, iTileY));
 		strTileInfo += " (XCRM: ";
-		strTileInfo += std::to_string(dwMapXCRM[iTileX >> 1][iTileY >> 1].bBlock);
+		strTileInfo += std::to_string(GetXCRMByteDataWithNormalCoordinates(iTileX, iTileY));
 		strTileInfo += ")\n";
 
 		// Pollution
-		strTileInfo += GetLowHighScale(dwMapXPLT[iTileX >> 1][iTileY >> 1].bBlock);
+		strTileInfo += GetLowHighScale(GetXPLTByteDataWithNormalCoordinates(iTileX, iTileY));
 		strTileInfo += " (XPLT: ";
-		strTileInfo += std::to_string(dwMapXPLT[iTileX >> 1][iTileY >> 1].bBlock);
+		strTileInfo += std::to_string(GetXPLTByteDataWithNormalCoordinates(iTileX, iTileY));
 		strTileInfo += ")\n\n";
 
 		// Raw XZON data
