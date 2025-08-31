@@ -977,8 +977,6 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 		do {
 			iNextX += iLengthWays;
 			iNextY += iDepthWays;
-			if (iNextX >= GAME_MAP_SIZE || iNextY >= GAME_MAP_SIZE)
-				return 0;
 			if (iNextX >= GAME_MAP_SIZE ||
 				iNextY >= GAME_MAP_SIZE ||
 				!XBITReturnIsWater(iNextX, iNextY))
