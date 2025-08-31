@@ -514,11 +514,11 @@ BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments) {
 		return TRUE;
 	}
 
-	int iTileX = -1, iTileY = -1;
-	sscanf_s(szArguments + 5, "%i %i", &iTileX, &iTileY);
+	__int16 iTileX = -1, iTileY = -1;
+	sscanf_s(szArguments + 5, "%hi %hi", &iTileX, &iTileY);
 
 	if (iTileX >= 0 && iTileX < GAME_MAP_SIZE && iTileY >= 0 && iTileY < GAME_MAP_SIZE) {
-		int iTileID = dwMapXBLD[iTileX][iTileY].iTileID;
+		BYTE iTileID = GetTileID(iTileX, iTileY);
 
 		char szXBITFormatted[256] = { 0 };
 		if (XBITReturnIsPowerable(iTileX, iTileY))
@@ -679,8 +679,8 @@ BOOL ConsoleCmdSetTile(const char* szCommand, const char* szArguments) {
 		bOperation = FALSE;
 
 	char szTileOperation[12] = { 0 };
-	int iTileX = -1, iTileY = -1;
-	sscanf_s(szArguments, "%i %i %s", &iTileX, &iTileY, szTileOperation, sizeof(szTileOperation));
+	__int16 iTileX = -1, iTileY = -1;
+	sscanf_s(szArguments, "%hi %hi %s", &iTileX, &iTileY, szTileOperation, sizeof(szTileOperation));
 
 	if (iTileX >= 0 && iTileX < GAME_MAP_SIZE && iTileY >= 0 && iTileY < GAME_MAP_SIZE) {
 		if (!strcmp(szTileOperation, "flip")) {

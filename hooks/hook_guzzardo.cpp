@@ -192,7 +192,7 @@ static BOOL FindTheHouse() {
 	ySignPos = -1;
 	for (iLength = 0; iLength < GAME_MAP_SIZE; ++iLength) {
 		for (iDepth = 0; iDepth < GAME_MAP_SIZE; ++iDepth) {
-			if (dwMapXBLD[iLength][iDepth].iTileID == TILE_COMMERCIAL_1X1_BEDANDBREAKFAST) {
+			if (GetTileID(iLength, iDepth) == TILE_COMMERCIAL_1X1_BEDANDBREAKFAST) {
 				if (XZONReturnZone(iLength, iDepth) == ZONE_NONE) {
 					xPos = iLength;
 					yPos = iDepth;
@@ -246,9 +246,9 @@ static BOOL BuildTheHouse() {
 		ySignPos = yPos - 1;
 		if (xWindPos < 0 || ySignPos < 0)
 			goto RETRY;
-		if (dwMapXBLD[xPos][yPos].iTileID < TILE_SMALLPARK) {
-			if (dwMapXBLD[xPos][ySignPos].iTileID < TILE_SMALLPARK &&
-				dwMapXBLD[xWindPos][yPos].iTileID < TILE_SMALLPARK) {
+		if (GetTileID(xPos, yPos) < TILE_SMALLPARK) {
+			if (GetTileID(xPos, ySignPos) < TILE_SMALLPARK &&
+				GetTileID(xWindPos, yPos) < TILE_SMALLPARK) {
 				if (!dwMapXTER[xPos][yPos].iTileID &&
 					!dwMapXTER[xPos][ySignPos].iTileID &&
 					!dwMapXTERPrevX[xPos][yPos].iTileID &&
@@ -279,7 +279,7 @@ static void ChangeChurchZone() {
 
 	for (iLength = 0; iLength < GAME_MAP_SIZE; ++iLength) {
 		for (iDepth = 0; iDepth < GAME_MAP_SIZE; ++iDepth) {
-			if (dwMapXBLD[iLength][iDepth].iTileID == TILE_INFRASTRUCTURE_CHURCH) {
+			if (GetTileID(iLength, iDepth) == TILE_INFRASTRUCTURE_CHURCH) {
 				if (XZONReturnZone(iLength, iDepth) == ZONE_NONE) {
 					iReplaceTile = (rand() & 3) + 1; // Random rubble.
 					Game_PlaceTileWithMilitaryCheck(iLength, iDepth, iReplaceTile); // Replace

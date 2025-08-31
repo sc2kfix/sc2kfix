@@ -33,7 +33,7 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 	WORD iTileX, iTileY;
 	std::string strTileHeader;
 	std::string strTileInfo;
-	int iTileID;
+	BYTE iTileID;
 
 	switch (message) {
 	case WM_INITDIALOG:
@@ -44,7 +44,7 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		iTileY = qci->iTileY;
 		// Build the header string
 		iTileID = GetTileID(iTileX, iTileY);
-		if (iTileID == 0) {
+		if (iTileID == TILE_CLEAR) {
 			if (XBITReturnIsWater(iTileX, iTileY) && XBITReturnIsSaltWater(iTileX ,iTileY))
 				strTileHeader = "Salt water";
 			else if (XBITReturnIsWater(iTileX, iTileY))

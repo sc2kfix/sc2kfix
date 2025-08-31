@@ -1534,11 +1534,8 @@ GAMEOFF_ARR(DWORD,			dwMapXGRP,	0x4CC470)
 extern const char *getXTERNames(BYTE iVal);
 
 // Returns the tile ID from a given set of coordinates.
-static inline int GetTileID(int iTileX, int iTileY) {
-	if (iTileX >= 0 && iTileX < GAME_MAP_SIZE && iTileY >= 0 && iTileY < GAME_MAP_SIZE)
-		return dwMapXBLD[iTileX][iTileY].iTileID;
-	else
-		return -1;
+static inline BYTE GetTileID(__int16 iTileX, __int16 iTileY) {
+	return dwMapXBLD[iTileX][iTileY].iTileID;
 }
 
 // Returns the XLAB entry from a given Label ID.
@@ -1692,9 +1689,7 @@ static inline void XZONSetCornerAngle(__int16 x, __int16 y, WORD wAngle) {
 
 static inline void XZONClearCorners(__int16 x, __int16 y) {
 #if USE_OLD_XZON_HANDLING
-	//ConsoleLog(7, "XZONClearCorners(%d, %d) Before: [%s] (%u) (%u) (%u)\n", x, y, szTileNames[dwMapXBLD[x][y].iTileID], *(BYTE *)&dwMapXZON[x][y].b, *(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY, dwMapXZON[x][y].b.iCorners);
 	*(BYTE *)&dwMapXZON[x][y].b &= ~(CORNER_BOUNDARY);
-	//ConsoleLog(7, "XZONClearCorners(%d, %d) After: [%s] (%u) (%u) (%u)\n", x, y, szTileNames[dwMapXBLD[x][y].iTileID], *(BYTE *)&dwMapXZON[x][y].b, *(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY, dwMapXZON[x][y].b.iCorners);
 #else
 	dwMapXZON[x][y].b.iCorners = CORNER_NONE;
 #endif
@@ -1710,9 +1705,7 @@ static inline BYTE XZONReturnCornerMask(__int16 x, __int16 y) {
 
 static inline void XZONClearZone(__int16 x, __int16 y) {
 #if USE_OLD_XZON_HANDLING
-	//ConsoleLog(7, "XZONClearZone(%d, %d) Before: [%s] (%u) (%u) (%u)\n", x, y, szTileNames[dwMapXBLD[x][y].iTileID], *(BYTE *)&dwMapXZON[x][y].b, *(BYTE *)&dwMapXZON[x][y].b & ZONE_BOUNDARY, dwMapXZON[x][y].b.iZoneType);
 	*(BYTE *)&dwMapXZON[x][y].b &= ~(ZONE_BOUNDARY);
-	//ConsoleLog(7, "XZONClearZone(%d, %d) After:  [%s] (%u) (%u) (%u)\n", x, y, szTileNames[dwMapXBLD[x][y].iTileID], *(BYTE *)&dwMapXZON[x][y].b, *(BYTE *)&dwMapXZON[x][y].b & ZONE_BOUNDARY, dwMapXZON[x][y].b.iZoneType);
 #else
 	dwMapXZON[x][y].b.iZoneType = ZONE_NONE;
 #endif
