@@ -174,6 +174,18 @@ HOOKEXT BOOL FileExists(const char* name) {
 	return FALSE;
 }
 
+HOOKEXT const char* GetFileBaseName(const char* szPath) {
+	char szName[MAX_PATH] = { 0 };
+	char szExt[MAX_PATH] = { 0 };
+	char* szBaseName = (char*)malloc(MAX_PATH);
+	if (!szBaseName)
+		return NULL;
+
+	_splitpath_s(szPath, NULL, 0, NULL, 0, szName, MAX_PATH, szExt, MAX_PATH);
+	sprintf_s(szBaseName, MAX_PATH, "%s%s", szName, szExt);
+	return szBaseName;
+}
+
 HOOKEXT const char* GetModsFolderPath(void) {
 	static char szModsFolderPath[MAX_PATH];
 

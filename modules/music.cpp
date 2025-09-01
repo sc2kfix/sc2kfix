@@ -31,12 +31,12 @@ static DWORD dwDummy;
 
 std::vector<int> vectorRandomSongIDs = { 10001, 10004, 10008, 10012, 10018, 10003, 10007, 10011, 10013 };
 int iCurrentSong = 0;
+int iPlayingSongID = 0;
 DWORD dwMusicThreadID;
 MCIDEVICEID mciDevice = NULL;
 BOOL bMultithreadedMusicEnabled = FALSE;
-BOOL bMusicFluidSynthEnabled = FALSE;
 BOOL bUseFluidSynth = FALSE;
-char szMusicFluidSynthSoundfontPath[MAX_PATH + 1] = { 0 };
+extern char szSettingsFluidSynthSoundfont[MAX_PATH + 1];
 
 HMODULE hmodFluidSynth = NULL;
 fluid_settings_t* pFluidSynthSettings = NULL;
@@ -78,6 +78,7 @@ int (*FS_fluid_player_set_playback_callback)(fluid_player_t* player, handle_midi
 int (*FS_fluid_synth_all_sounds_off)(fluid_synth_t* synth, int chan) = NULL;
 fluid_log_function_t (*FS_fluid_set_log_function)(int level, fluid_log_function_t fun, void* data);
 int (*FS_fluid_settings_setint)(fluid_settings_t* settings, const char* name, int val);
+int (*FS_fluid_settings_setnum)(fluid_settings_t* settings, const char* name, double val);
 
 void MusicShufflePlaylist(int iLastSongPlayed) {
 	if (bSettingsShuffleMusic) {
@@ -125,6 +126,14 @@ void MusicFluidSynthLoggerWarning(int level, const char* message, void* data) {
 BOOL MusicLoadFluidSynth(void) {
 	if (mus_debug & MUS_DEBUG_FLUIDSYNTH)
 		ConsoleLog(LOG_DEBUG, "MUS:  FluidSynth enabled, probing for valid FluidSynth library.\n");
+
+	// Disable FluidSynth support if the library doesn't exist.
+	if (!FileExists("libfluidsynth-3.dll")) {
+		if (mus_debug & MUS_DEBUG_FLUIDSYNTH)
+			ConsoleLog(LOG_DEBUG, "MUS:  FluidSynth library doesn't exist; disabling support.\n");
+		hmodFluidSynth = FALSE;
+		return FALSE;
+	}
 
 	// Attempt to load the FluidSynth library.
 	hmodFluidSynth = LoadLibrary("libfluidsynth-3.dll");
@@ -198,6 +207,8 @@ BOOL MusicLoadFluidSynth(void) {
 		bUseFluidSynth = FALSE;
 	if ((FS_fluid_settings_setint = (decltype(FS_fluid_settings_setint))GetProcAddress(hmodFluidSynth, "fluid_settings_setint")) == NULL)
 		bUseFluidSynth = FALSE;
+	if ((FS_fluid_settings_setnum = (decltype(FS_fluid_settings_setnum))GetProcAddress(hmodFluidSynth, "fluid_settings_setnum")) == NULL)
+		bUseFluidSynth = FALSE;
 
 	// If any of our loads failed, release the FluidSynth library, throw an error, and fall 
 	// back to using MCI.
@@ -241,14 +252,16 @@ DWORD WINAPI FluidSynthWatchdogThread(LPVOID lpParameter) {
 
 	// Spin up a new player-driver combo
 	pFluidSynthPlayer = FS_new_fluid_player(pFluidSynthSynth);
-	if (FS_fluid_is_soundfont(szMusicFluidSynthSoundfontPath))
-		FS_fluid_synth_sfload(pFluidSynthSynth, szMusicFluidSynthSoundfontPath, 1);
+	if (FS_fluid_is_soundfont(szSettingsFluidSynthSoundfont))
+		FS_fluid_synth_sfload(pFluidSynthSynth, szSettingsFluidSynthSoundfont, 1);
 	FS_fluid_player_set_playback_callback(pFluidSynthPlayer, MusicFluidSynthMidiEventHandler, pFluidSynthSynth);
 	FS_fluid_player_add(pFluidSynthPlayer, szSongPath);
 	pFluidSynthDriver = FS_new_fluid_audio_driver(pFluidSynthSettings, pFluidSynthSynth);
 
-	// Disable chorus
+	// Disable chorus and set reverb and gain to the default level used by Roland synthesizers
 	FS_fluid_settings_setint(pFluidSynthSettings, "synth.chorus.active", 0);
+	FS_fluid_settings_setnum(pFluidSynthSettings, "synth.reverb.level", 0.3);
+	FS_fluid_settings_setnum(pFluidSynthSettings, "synth.gain", 0.5);
 
 	// Play track
 	FS_fluid_player_play(pFluidSynthPlayer);
@@ -259,6 +272,7 @@ DWORD WINAPI FluidSynthWatchdogThread(LPVOID lpParameter) {
 
 	// Mark our setup as dead
 	bFluidSynthPlaying = FALSE;
+	iPlayingSongID = 0;
 
 	if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
 		ConsoleLog(LOG_DEBUG, "MUS:  Exiting FluidSynth watchdog thread.\n");
@@ -271,17 +285,24 @@ DWORD WINAPI FluidSynthWatchdogThread(LPVOID lpParameter) {
 	return 0;
 }
 
+const char* SettingsSaveMusicEngine(UINT iMusicEngine);
+
 DWORD WINAPI MusicThread(LPVOID lpParameter) {
 	MSG msg;
 	MCIERROR dwMCIError = NULL;
 
-	// Load the FluidSynth library if we need it
-	if (bMusicFluidSynthEnabled && !bSettingsUseMP3Music)
-		MusicLoadFluidSynth();
+	if (mus_debug & MUS_DEBUG_THREAD)
+		ConsoleLog(LOG_DEBUG, "MUS:  Starting music engine! Initial engine set to \"%s\".\n", SettingsSaveMusicEngine(iSettingsMusicEngineOutput));
 	
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		if (msg.message == WM_MUSIC_STOP) {
-			if (!bSettingsUseMP3Music && bUseFluidSynth) {
+			// Log a debug message at best if the music engine is set to none
+			if (iSettingsMusicEngineOutput == MUSIC_ENGINE_NONE)
+				if (mus_debug & MUS_DEBUG_THREAD)
+					ConsoleLog(LOG_DEBUG, "MUS:  Music engine set to None; ignoring WM_MUSIC_STOP message.\n");
+
+			// Stop the FluidSynth thread if it's active
+			if (iSettingsMusicEngineOutput == MUSIC_ENGINE_FLUIDSYNTH && hmodFluidSynth) {
 				FS_fluid_player_stop(pFluidSynthPlayer);
 				bFluidSynthPlaying = FALSE;
 				if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
@@ -289,10 +310,12 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 				goto next;
 			}
 
+			// Failing the above, run what we need to through the MCI interface
 			if (!mciDevice)
 				goto next;
 
 			dwMCIError = mciSendCommand(mciDevice, MCI_CLOSE, MCI_WAIT, NULL);
+			iPlayingSongID = 0;
 
 			if (mus_debug & MUS_DEBUG_THREAD)
 				ConsoleLog(LOG_DEBUG, "MUS:  Sent MCI_CLOSE to mciDevice 0x%08X.\n", mciDevice);
@@ -309,8 +332,16 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 			mciDevice = NULL;
 		}
 		else if (msg.message == WM_MUSIC_PLAY) {
-			if (bOptionsMusicEnabled && !bSettingsUseMP3Music && bUseFluidSynth) {
+			// Log a debug message at best if the music engine is set to none
+			if (iSettingsMusicEngineOutput == MUSIC_ENGINE_NONE)
+				if (mus_debug & MUS_DEBUG_THREAD)
+					ConsoleLog(LOG_DEBUG, "MUS:  Music engine set to None; ignoring WM_MUSIC_PLAY message.\n");
+
+			// If we're using FluidSynth, set up a watchdog thread that runs the FluidSynth engine
+			// and waits for it to exit
+			if (bOptionsMusicEnabled && iSettingsMusicEngineOutput == MUSIC_ENGINE_FLUIDSYNTH && hmodFluidSynth) {
 				if (msg.wParam >= 10000 && msg.wParam <= 10018) {
+					iPlayingSongID = msg.wParam;
 					std::string strSongPath = (char*)0x4CDB88;      // szSoundsPath
 					strSongPath += std::to_string(msg.wParam);
 					strSongPath += ".mid";
@@ -321,21 +352,32 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 				}
 			}
 
+			// Failing all of the above, use MCI to handle MIDI and MP3 playback
 			if (bOptionsMusicEnabled && !mciDevice) {
 				if (msg.wParam >= 10000 && msg.wParam <= 10018) {
+					iPlayingSongID = msg.wParam;
 					std::string strSongPath = (char*)0x4CDB88;      // szSoundsPath
+					BOOL bUseMP3 = FALSE;
 					strSongPath += std::to_string(msg.wParam);
-					if (bSettingsUseMP3Music)
-						strSongPath += ".mp3";
-					else
+					if (iSettingsMusicEngineOutput == MUSIC_ENGINE_MP3) {
+						if (FileExists((strSongPath + ".mp3").c_str())) {
+							strSongPath += ".mp3";
+							bUseMP3 = TRUE;
+						} else {
+							ConsoleLog(LOG_ERROR, "MUS:  Could not find music file %s.mp3; failing back to MIDI sequencer.\n", strSongPath);
+							strSongPath += ".mid";
+							bUseMP3 = FALSE;
+						}
+					} else
 						strSongPath += ".mid";
 
-					MCI_OPEN_PARMS mciOpenParms = { NULL, NULL, (bSettingsUseMP3Music ? "mpegvideo" : "sequencer"), strSongPath.c_str(), NULL };
+					MCI_OPEN_PARMS mciOpenParms = { NULL, NULL, (bUseMP3 ? "mpegvideo" : "sequencer"), strSongPath.c_str(), NULL };
 					dwMCIError = mciSendCommand(NULL, MCI_OPEN, MCI_OPEN_TYPE | MCI_OPEN_ELEMENT, (DWORD_PTR)&mciOpenParms);
 					if (dwMCIError) {
 						char szErrorBuf[MAXERRORLENGTH];
 						mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
 						ConsoleLog(LOG_ERROR, "MUS:  MCI_OPEN failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
+						iPlayingSongID = 0;
 						goto next;
 					}
 
@@ -351,6 +393,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 						char szErrorBuf[MAXERRORLENGTH];
 						mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
 						ConsoleLog(LOG_ERROR, "MUS:  MCI_PLAY failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
+						iPlayingSongID = 0;
 						goto next;
 					}
 				}
@@ -361,8 +404,26 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 				goto next;
 			}
 		}
-		else if (msg.message == WM_APP + 3) {
-			ConsoleLog(LOG_DEBUG, "MUS:  Hello from the music thread!\n");
+		else if (msg.message == WM_MUSIC_RESET) {
+			// Attempt to hard stop all music engines, since our music engine has probably changed
+			if (bFluidSynthPlaying && hmodFluidSynth) {
+				FS_fluid_player_stop(pFluidSynthPlayer);
+				bFluidSynthPlaying = FALSE;
+				if (mus_debug & MUS_DEBUG_THREAD)
+					ConsoleLog(LOG_DEBUG, "MUS:  Thread stopped FluidSynth player due to WM_MUSIC_RESET message.\n");
+			}
+			if (mciDevice) {
+				dwMCIError = mciSendCommand(mciDevice, MCI_CLOSE, MCI_WAIT, NULL);
+				if (mus_debug & MUS_DEBUG_THREAD)
+					ConsoleLog(LOG_DEBUG, "MUS:  Thread stopped mciDevice 0x%08X due to WM_MUSIC_RESET message.\n", mciDevice);
+				mciDevice = NULL;
+			}
+
+			// Restart the active song if there is one
+			if (iPlayingSongID)
+				DoMusicPlay(iPlayingSongID, FALSE);
+
+			goto next;
 		}
 		else if (msg.message == WM_QUIT)
 			break;
@@ -518,6 +579,8 @@ void InstallMusicEngineHooks(void) {
 		VirtualProtect((LPVOID)0x4D2BFC, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
 		*(DWORD*)0x4D2BFC = (DWORD)MusicMCINotifyCallback;
 
+		// XXX - effectively always TRUE because the opt-in setting is now always TRUE as of
+		// r10-dev 2025-08-31. maybe this needs to go away?
 		bMultithreadedMusicEnabled = TRUE;
 	}
 }

@@ -91,9 +91,9 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define DEBUG_FLAGS_EVERYTHING	0xFFFFFFFF
 
 #if !NOKUROKO
-#define WM_KUROKO_REPL	WM_APP+0x10
-#define WM_KUROKO_FILE	WM_APP+0x11
-#define WM_CONSOLE_REPL	WM_APP+0x20
+#define WM_KUROKO_REPL	WM_APP+0x100
+#define WM_KUROKO_FILE	WM_APP+0x101
+#define WM_CONSOLE_REPL	WM_APP+0x200
 #endif
 
 #define HICOLORCNT 256
@@ -244,6 +244,7 @@ extern char szGamePath[MAX_PATH];
 extern char szSettingsMayorName[64];
 extern char szSettingsCompanyName[64];
 
+extern UINT iSettingsMusicEngineOutput;
 extern BOOL bSettingsMusicInBackground;
 extern BOOL bSettingsUseSoundReplacements;
 extern BOOL bSettingsShuffleMusic;
@@ -288,6 +289,7 @@ HOOKEXT const char* FormatVersion(int iMajor, int iMinor, int iPatch);
 HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...);
 HOOKEXT const char* GetLowHighScale(BYTE bScale);
 HOOKEXT BOOL FileExists(const char* name);
+HOOKEXT const char* GetFileBaseName(const char* szPath);
 HOOKEXT const char* GetModsFolderPath(void);
 HOOKEXT const char* GetOnIdleStateEnumName(int iState);
 //HBITMAP CreateSpriteBitmap(int iSpriteID);
@@ -324,6 +326,8 @@ void ToggleGotoButton(HWND hWndBut, BOOL bEnable);
 void LoadReplacementSounds(void);
 BOOL UpdaterCheckForUpdates(void);
 DWORD WINAPI UpdaterThread(LPVOID lpParameter);
+BOOL MusicLoadFluidSynth(void);
+void DoMusicPlay(int iSongID, BOOL bInterrupt);
 
 BOOL WINAPI ConsoleCtrlHandler(DWORD fdwCtrlType);
 DWORD WINAPI ConsoleThread(LPVOID lpParameter);
@@ -363,6 +367,7 @@ extern BOOL bGameDead;
 extern HMODULE hRealWinMM;
 extern HMODULE hSC2KAppModule;
 extern HMODULE hSC2KFixModule;
+extern HMODULE hmodFluidSynth;
 extern HANDLE hConsoleThread;
 extern HMENU hGameMenu;
 extern HMENU hDebugMenu;

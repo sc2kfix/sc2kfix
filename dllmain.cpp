@@ -254,6 +254,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Update the game path in memory
 		SetGamePath();
 
+		// Load the FluidSynth library in case we need it
+		MusicLoadFluidSynth();
+
 		// Load settings
 		if (!bSkipLoadSettings)
 			LoadSettings();
