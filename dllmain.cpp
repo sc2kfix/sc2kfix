@@ -48,7 +48,7 @@ BOOL bInSCURK = FALSE;
 #if !NOKUROKO
 BOOL bKurokoVMInitialized = FALSE;
 #endif
-BOOL bUseAdvancedQuery = FALSE;
+BOOL bUseAdvancedQuery = TRUE;
 BOOL bSkipLoadingMods = FALSE;
 int iForcedBits = 0;
 
@@ -122,8 +122,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		if (argv) {
 			for (int i = 0; i < argc; i++) {
 				if (!bSubArg) {
-					if (!lstrcmpiW(argv[i], L"-advquery"))
-						bUseAdvancedQuery = TRUE;
+					if (!lstrcmpiW(argv[i], L"-noadvquery"))
+						bUseAdvancedQuery = FALSE;
 					if (!lstrcmpiW(argv[i], L"-console"))
 						bConsoleEnabled = TRUE;
 					if (!lstrcmpiW(argv[i], L"-debugall")) {
