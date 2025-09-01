@@ -857,6 +857,22 @@ static BOOL IsRunwayTypeTile(__int16 x, __int16 y) {
 	return (GetTileID(x, y) == TILE_INFRASTRUCTURE_RUNWAY || GetTileID(x, y) == TILE_INFRASTRUCTURE_RUNWAYCROSS) ? TRUE : FALSE;
 }
 
+static int ShouldPierTileFlip(__int16 iMoveX) {
+	__int16 iToFlip;
+
+	iToFlip = 0;
+	if (!iMoveX) {
+		if (!IsEven(wViewRotation))
+			iToFlip = 1;
+	}
+	else {
+		if (IsEven(wViewRotation))
+			iToFlip = 1;
+	}
+
+	return iToFlip;
+}
+
 extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, BYTE iTileID, __int16 iZoneType) {
 	__int16 x, y;
 	__int16 iCurrX, iCurrY;
@@ -867,8 +883,6 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 	__int16 iToFlip;
 	__int16 iTileFlipped;
 	__int16 iPierTileCount;
-	__int16 iLengthWays;
-	__int16 iDepthWays;
 	__int16 iPierPathTileCount;
 	__int16 iPierLength;
 
@@ -962,27 +976,27 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 		if ((x <= 0 || x >= GAME_MAP_SIZE - 1) || (y <= 0 || y >= GAME_MAP_SIZE - 1))
 			return 0;
 		for (iPierTileCount = 0; iPierTileCount < PIER_MAXTILES; iPierTileCount++) {
-			iLengthWays = x + wTilePierLengthWays[iPierTileCount];
-			if (iLengthWays < GAME_MAP_SIZE) {
-				iDepthWays = y + wTilePierDepthWays[iPierTileCount];
-				if (iDepthWays < GAME_MAP_SIZE && XBITReturnIsWater(iLengthWays, iDepthWays))
+			iMoveX = x + wTilePierLengthWays[iPierTileCount];
+			if (iMoveX < GAME_MAP_SIZE) {
+				iMoveY = y + wTilePierDepthWays[iPierTileCount];
+				if (iMoveY < GAME_MAP_SIZE && XBITReturnIsWater(iMoveX, iMoveY))
 					break;
 			}
 		}
 		if (iPierTileCount == PIER_MAXTILES)
 			return 0;
-		iDepthWays = wTilePierDepthWays[iPierTileCount];
-		if (iDepthWays && !IsEven(x))
+		iMoveY = wTilePierDepthWays[iPierTileCount];
+		if (iMoveY && !IsEven(x))
 			return 0;
-		iLengthWays = wTilePierLengthWays[iPierTileCount];
-		if (iLengthWays && !IsEven(y))
+		iMoveX = wTilePierLengthWays[iPierTileCount];
+		if (iMoveX && !IsEven(y))
 			return 0;
 		iPierPathTileCount = 0;
 		iNextX = x;
 		iNextY = y;
 		do {
-			iNextX += iLengthWays;
-			iNextY += iDepthWays;
+			iNextX += iMoveX;
+			iNextY += iMoveY;
 			if (iNextX >= GAME_MAP_SIZE ||
 				iNextY >= GAME_MAP_SIZE ||
 				!XBITReturnIsWater(iNextX, iNextY))
@@ -1000,21 +1014,9 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 			XZONSetNewZone(x, y, iZoneType);
 		if (iZoneType == ZONE_MILITARY && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 			XBITClearBits(x, y, XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
-		if (!iLengthWays)
-			goto PIER_GOTOONE;
-		if (IsEven(wViewRotation))
-			goto PIER_GOTOTWO;
-		if (iLengthWays)
-			goto PIER_GOTOTHREE;
-	PIER_GOTOONE:
-		if (!IsEven(wViewRotation)) {
-		PIER_GOTOTWO:
-			iToFlip = 1;
-		}
-		else {
-		PIER_GOTOTHREE:
-			iToFlip = 0;
-		}
+
+		iToFlip = ShouldPierTileFlip(iMoveX);
+
 		iPierLength = PIER_MAXTILES;
 		do {
 			x += wTilePierLengthWays[iPierTileCount];
@@ -1022,10 +1024,8 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 			Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_PIER);
 			if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 				XZONSetCornerMask(x, y, CORNER_ALL);
-			if (iToFlip) {
-				if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-					XBITSetBits(x, y, XBIT_FLIPPED);
-			}
+			if (iToFlip && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
+				XBITSetBits(x, y, XBIT_FLIPPED);
 			--iPierLength;
 		} while (iPierLength);
 		return 1;
