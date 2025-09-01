@@ -156,7 +156,7 @@ static void AdjustDebugMenu(HMENU hDebugMenu) {
 
 static int FindTheHouseLabel() {
 	const char *pLabel;
-	for (int i = 1; i < MAX_USER_TEXT_ENTRIES; ++i) {
+	for (int i = MIN_USER_TEXT_ENTRIES; i < MAX_USER_TEXT_ENTRIES; ++i) {
 		pLabel = GetXLABEntry(i);
 		if (pLabel && _stricmp(pLabel, theHouse) == 0) {
 			return i;
