@@ -784,6 +784,23 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 	rcDst.top = -1000;
 }
 
+static void DeleteTilePortion(__int16 x, __int16 y) {
+	if (GetTileID(x, y) >= TILE_SMALLPARK)
+		Game_ZonedBuildingTileDeletion(x, y);
+}
+
+static void SetNewZoneOnTilePortion(__int16 x, __int16 y, __int16 iZoneType) {
+	if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
+		XZONSetNewZone(x, y, iZoneType);
+}
+
+static void MilitaryUnsetBitsOnTilePortion(__int16 x, __int16 y, __int16 iZoneType) {
+	if (iZoneType == ZONE_MILITARY) {
+		if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
+			XBITClearBits(x, y, XBIT_WATERED | XBIT_PIPED | XBIT_POWERED | XBIT_POWERABLE);
+	}
+}
+
 static BOOL SetMoveRunwayTileAxis(__int16 primaryAxis, __int16 secondaryAxis, BOOL *bMovePrimaryAxis, BOOL *bMoveSecondaryAxis) {
 	if (!IsEven(primaryAxis))
 		*bMovePrimaryAxis = TRUE;
@@ -873,6 +890,28 @@ static int ShouldPierTileFlip(__int16 iMoveX) {
 	return iToFlip;
 }
 
+static BOOL TwoByTwoGeneralBlockTileCheck(__int16 x, __int16 y) {
+	BYTE iTileID;
+
+	iTileID = GetTileID(x, y);
+	return (iTileID == TILE_INFRASTRUCTURE_RUNWAY || iTileID == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
+		iTileID == TILE_INFRASTRUCTURE_CRANE || iTileID == TILE_MILITARY_MISSILESILO) ? TRUE : FALSE;
+}
+
+static BOOL TwoByTwoMismatchAndMilitaryBlockTileCheck(__int16 x, __int16 y, __int16 iZoneType) {
+	if (XZONReturnZone(x, y) != iZoneType)
+		return TRUE;
+	if (iZoneType == ZONE_MILITARY) {
+		if (XZONReturnZone(x, y) == ZONE_MILITARY) {
+			if (GetTileID(x, y) >= TILE_ROAD_LR && GetTileID(x, y) <= TILE_ROAD_LTBR)
+				return TRUE;
+		}
+		if (GetUndergroundTileID(x, y))
+			return TRUE;
+	}
+	return FALSE;
+}
+
 extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, BYTE iTileID, __int16 iZoneType) {
 	__int16 x, y;
 	__int16 iMoveX, iMoveY;
@@ -947,8 +986,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 						else {
 							if (!RunwayTileMilitaryCheck(x, y, iZoneType))
 								return 0;
-							if (GetTileID(x, y) >= TILE_SMALLPARK)
-								Game_ZonedBuildingTileDeletion(x, y);
+							DeleteTilePortion(x, y);
 							Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_RUNWAY);
 							if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 								XZONSetCornerMask(x, y, CORNER_ALL);
@@ -1007,13 +1045,10 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 		} while (iPierPathTileCount <= PIER_MAXTILES);
 		if (ALTMReturnWaterLevel(iCurrX, iCurrY) < ALTMReturnLandAltitude(iCurrX, iCurrY) + 2)
 			return 0;
-		if (GetTileID(x, y) >= TILE_SMALLPARK)
-			Game_ZonedBuildingTileDeletion(x, y);
+		DeleteTilePortion(x, y);
 		Game_ItemPlacementCheck(x, y, TILE_INFRASTRUCTURE_CRANE, AREA_1x1);
-		if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-			XZONSetNewZone(x, y, iZoneType);
-		if (iZoneType == ZONE_MILITARY && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-			XBITClearBits(x, y, XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
+		SetNewZoneOnTilePortion(x, y, iZoneType);
+		MilitaryUnsetBitsOnTilePortion(x, y, iZoneType);
 
 		iToFlip = ShouldPierTileFlip(iMoveX);
 
@@ -1040,10 +1075,8 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 	case TILE_MILITARY_RADAR:
 		if (GetTileID(x, y) < TILE_SMALLPARK) {
 			Game_ItemPlacementCheck(x, y, iTileID, AREA_1x1);
-			if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-				XZONSetNewZone(x, y, iZoneType);
-			if (iZoneType == ZONE_MILITARY && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-				XBITClearBits(x, y, XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
+			SetNewZoneOnTilePortion(x, y, iZoneType);
+			MilitaryUnsetBitsOnTilePortion(x, y, iZoneType);
 		}
 		return 1;
 	case TILE_INFRASTRUCTURE_PARKINGLOT:
@@ -1072,85 +1105,29 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 		iNextY = iCurrY + 1;
 		if (GetTileID(iCurrX, iCurrY) >= TILE_INFRASTRUCTURE_WATERTOWER)
 			return 0;
-		if (GetTileID(iCurrX, iCurrY) == TILE_INFRASTRUCTURE_RUNWAY || GetTileID(iCurrX, iCurrY) == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
-			GetTileID(iCurrX, iCurrY) == TILE_INFRASTRUCTURE_CRANE || GetTileID(iCurrX, iCurrY) == TILE_MILITARY_MISSILESILO)
+		if (TwoByTwoGeneralBlockTileCheck(iCurrX, iCurrY) ||
+			TwoByTwoGeneralBlockTileCheck(iNextX, iCurrY) ||
+			TwoByTwoGeneralBlockTileCheck(iCurrX, iNextY) ||
+			TwoByTwoGeneralBlockTileCheck(iNextX, iNextY))
 			return 0;
-		if (GetTileID(iNextX, iCurrY) == TILE_INFRASTRUCTURE_RUNWAY || GetTileID(iNextX, iCurrY) == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
-			GetTileID(iNextX, iCurrY) == TILE_INFRASTRUCTURE_CRANE || GetTileID(iNextX, iCurrY) == TILE_MILITARY_MISSILESILO)
+		if (TwoByTwoMismatchAndMilitaryBlockTileCheck(iCurrX, iCurrY, iZoneType) ||
+			TwoByTwoMismatchAndMilitaryBlockTileCheck(iNextX, iCurrY, iZoneType) ||
+			TwoByTwoMismatchAndMilitaryBlockTileCheck(iCurrX, iNextY, iZoneType) ||
+			TwoByTwoMismatchAndMilitaryBlockTileCheck(iNextX, iNextY, iZoneType))
 			return 0;
-		if (GetTileID(iCurrX, iNextY) == TILE_INFRASTRUCTURE_RUNWAY || GetTileID(iCurrX, iNextY) == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
-			GetTileID(iCurrX, iNextY) == TILE_INFRASTRUCTURE_CRANE || GetTileID(iCurrX, iNextY) == TILE_MILITARY_MISSILESILO)
-			return 0;
-		if (GetTileID(iNextX, iNextY) == TILE_INFRASTRUCTURE_RUNWAY || GetTileID(iNextX, iNextY) == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
-			GetTileID(iNextX, iNextY) == TILE_INFRASTRUCTURE_CRANE || GetTileID(iNextX, iNextY) == TILE_MILITARY_MISSILESILO)
-			return 0;
-		if (XZONReturnZone(iCurrX, iCurrY) != iZoneType)
-			return 0;
-		if (iZoneType == ZONE_MILITARY) {
-			if (XZONReturnZone(iCurrX, iCurrY) == ZONE_MILITARY) {
-				if (GetTileID(iCurrX, iCurrY) >= TILE_ROAD_LR && GetTileID(iCurrX, iCurrY) <= TILE_ROAD_LTBR)
-					return 0;
-			}
-			if (GetUndergroundTileID(iCurrX, iCurrY))
-				return 0;
-		}
-		if (XZONReturnZone(iNextX, iCurrY) != iZoneType)
-			return 0;
-		if (iZoneType == ZONE_MILITARY) {
-			if (XZONReturnZone(iNextX, iCurrY) == ZONE_MILITARY) {
-				if (GetTileID(iNextX, iCurrY) >= TILE_ROAD_LR && GetTileID(iNextX, iCurrY) <= TILE_ROAD_LTBR)
-					return 0;
-			}
-			if (GetUndergroundTileID(iNextX, iCurrY))
-				return 0;
-		}
-		if (XZONReturnZone(iCurrX, iNextY) != iZoneType)
-			return 0;
-		if (iZoneType == ZONE_MILITARY) {
-			if (XZONReturnZone(iCurrX, iNextY) == ZONE_MILITARY) {
-				if (GetTileID(iCurrX, iNextY) >= TILE_ROAD_LR && GetTileID(iCurrX, iNextY) <= TILE_ROAD_LTBR)
-					return 0;
-			}
-			if (GetUndergroundTileID(iCurrX, iNextY))
-				return 0;
-		}
-		if (XZONReturnZone(iNextX, iNextY) != iZoneType)
-			return 0;
-		if (iZoneType == ZONE_MILITARY) {
-			if (XZONReturnZone(iNextX, iNextY) == ZONE_MILITARY) {
-				if (GetTileID(iNextX, iNextY) >= TILE_ROAD_LR && GetTileID(iNextX, iNextY) <= TILE_ROAD_LTBR)
-					return 0;
-			}
-			if (GetUndergroundTileID(iNextX, iNextY))
-				return 0;
-		}
-		if (GetTileID(iCurrX, iCurrY) >= TILE_SMALLPARK)
-			Game_ZonedBuildingTileDeletion(iCurrX, iCurrY);
-		if (GetTileID(iNextX, iCurrY) >= TILE_SMALLPARK)
-			Game_ZonedBuildingTileDeletion(iNextX, iCurrY);
-		if (GetTileID(iCurrX, iNextY) >= TILE_SMALLPARK)
-			Game_ZonedBuildingTileDeletion(iCurrX, iNextY);
-		if (GetTileID(iNextX, iNextY) >= TILE_SMALLPARK)
-			Game_ZonedBuildingTileDeletion(iNextX, iNextY);
+		DeleteTilePortion(iCurrX, iCurrY);
+		DeleteTilePortion(iNextX, iCurrY);
+		DeleteTilePortion(iCurrX, iNextY);
+		DeleteTilePortion(iNextX, iNextY);
 		Game_ItemPlacementCheck(iCurrX, iCurrY, iTileID, AREA_2x2);
-		if (iCurrX < GAME_MAP_SIZE && iCurrY < GAME_MAP_SIZE)
-			XZONSetNewZone(iCurrX, iCurrY, iZoneType);
-		if (iNextX < GAME_MAP_SIZE && iCurrY < GAME_MAP_SIZE)
-			XZONSetNewZone(iNextX, iCurrY, iZoneType);
-		if (iCurrX < GAME_MAP_SIZE && iNextY < GAME_MAP_SIZE)
-			XZONSetNewZone(iCurrX, iNextY, iZoneType);
-		if (iNextX < GAME_MAP_SIZE && iNextY < GAME_MAP_SIZE)
-			XZONSetNewZone(iNextX, iNextY, iZoneType);
-		if (iZoneType == ZONE_MILITARY) {
-			if (iCurrX < GAME_MAP_SIZE && iCurrY < GAME_MAP_SIZE)
-				XBITClearBits(iCurrX, iCurrY, XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
-			if (iNextX < GAME_MAP_SIZE && iCurrY < GAME_MAP_SIZE)
-				XBITClearBits(iNextX, iCurrY, XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
-			if (iCurrX < GAME_MAP_SIZE && iNextY < GAME_MAP_SIZE)
-				XBITClearBits(iCurrX, iNextY, XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
-			if (iNextX < GAME_MAP_SIZE && iNextY < GAME_MAP_SIZE)
-				XBITClearBits(iNextX, iNextY, XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
-		}
+		SetNewZoneOnTilePortion(iCurrX, iCurrY, iZoneType);
+		SetNewZoneOnTilePortion(iNextX, iCurrY, iZoneType);
+		SetNewZoneOnTilePortion(iCurrX, iNextY, iZoneType);
+		SetNewZoneOnTilePortion(iNextX, iNextY, iZoneType);
+		MilitaryUnsetBitsOnTilePortion(iCurrX, iCurrY, iZoneType);
+		MilitaryUnsetBitsOnTilePortion(iNextX, iCurrY, iZoneType);
+		MilitaryUnsetBitsOnTilePortion(iCurrX, iNextY, iZoneType);
+		MilitaryUnsetBitsOnTilePortion(iNextX, iNextY, iZoneType);
 		return 1;
 	case TILE_MILITARY_MISSILESILO:
 		L_ItemPlacementCheck(x, y, TILE_MILITARY_MISSILESILO, AREA_3x3, TRUE);
