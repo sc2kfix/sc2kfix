@@ -27,14 +27,14 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Add MSBuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.2
+      uses: microsoft/setup-msbuild@v2
 
     - name: Build Release
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: msbuild /m /p:Configuration=Release ${{env.SOLUTION_FILE_PATH}}
 
     - name: Upload Release Artifact
-      uses: actions/upload-artifact@v4.6.1
+      uses: actions/upload-artifact@v4
       with:
         name: sc2kfix-dev
         path: |
@@ -46,7 +46,7 @@ jobs:
       run: msbuild /m /p:Configuration=ReleaseNoKuroko /t:Rebuild ${{env.SOLUTION_FILE_PATH}}
 
     - name: Upload ReleaseNoKuroko Artifact
-      uses: actions/upload-artifact@v4.6.1
+      uses: actions/upload-artifact@v4
       with:
         name: sc2kfix-dev-nokuroko
         path: |
