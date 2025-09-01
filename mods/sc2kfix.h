@@ -11,6 +11,8 @@
 #define HOOKCB		extern "C" __declspec(dllexport)
 
 #include "../include/json.hpp"
+#include "../include/mfc3xhelp.h"
+#include "../include/sc2k_1996.h"
 
 #define IFF_HEAD(a, b, c, d) ((DWORD)d << 24 | (DWORD)c << 16 | (DWORD)b << 8 | (DWORD)a)
 
