@@ -166,6 +166,7 @@
     <ClCompile Include="hooks\hook_sc2kdemo_miscellaneous.cpp" />
     <ClCompile Include="hooks\hook_guzzardo.cpp" />
     <ClCompile Include="hooks\hook_spritesandtilesets.cpp" />
+    <ClCompile Include="hooks\hook_tilegrowthorplacement.cpp" />
     <ClCompile Include="modules\console.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="hooks\hook_mciSendCommand.cpp" />

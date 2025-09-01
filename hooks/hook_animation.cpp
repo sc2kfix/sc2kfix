@@ -12,7 +12,7 @@
 
 static DWORD dwDummy;
 
-extern "C" void __cdecl Hook_AnimationFunctionSimCity1996(void *pPalette, int iToggle) {
+extern "C" void __cdecl Hook_AnimationFunction_SC2K1996(void *pPalette, int iToggle) {
 	DWORD *pApp;
 	DWORD *pMainFrm;
 	DWORD *pSCView;
@@ -86,7 +86,7 @@ extern "C" void __cdecl Hook_AnimationFunctionSimCity1996(void *pPalette, int iT
 	}
 }
 
-extern "C" void __cdecl Hook_AnimationFunctionSimCity1995(void *pPalette, int iToggle) {
+extern "C" void __cdecl Hook_AnimationFunction_SC2K1995(void *pPalette, int iToggle) {
 	DWORD *pApp;
 	DWORD *pMainFrm;
 	DWORD *pSCView;
@@ -154,7 +154,7 @@ extern "C" void __cdecl Hook_AnimationFunctionSimCity1995(void *pPalette, int iT
 	}
 }
 
-extern "C" void __cdecl Hook_AnimationFunctionSimCityDemo(void *pPalette, int iToggle) {
+extern "C" void __cdecl Hook_AnimationFunction_SC2KDemo(void *pPalette, int iToggle) {
 	DWORD *pApp;
 	DWORD *pMainFrm;
 	DWORD *pSCView;
@@ -222,17 +222,17 @@ extern "C" void __cdecl Hook_AnimationFunctionSimCityDemo(void *pPalette, int iT
 	}
 }
 
-void InstallAnimationSimCity1996Hooks(void) {
+void InstallAnimationHooks_SC2K1996(void) {
 	VirtualProtect((LPVOID)0x4023D3, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4023D3, Hook_AnimationFunctionSimCity1996);
+	NEWJMP((LPVOID)0x4023D3, Hook_AnimationFunction_SC2K1996);
 }
 
-void InstallAnimationSimCity1995Hooks(void) {
+void InstallAnimationHooks_SC2K1995(void) {
 	VirtualProtect((LPVOID)0x402405, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x402405, Hook_AnimationFunctionSimCity1995);
+	NEWJMP((LPVOID)0x402405, Hook_AnimationFunction_SC2K1995);
 }
 
-void InstallAnimationSimCityDemoHooks(void) {
+void InstallAnimationHooks_SC2KDemo(void) {
 	VirtualProtect((LPVOID)0x402473, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x402473, Hook_AnimationFunctionSimCityDemo);
+	NEWJMP((LPVOID)0x402473, Hook_AnimationFunction_SC2KDemo);
 }

@@ -14,6 +14,7 @@
 // header files first, then any bracketed C++ header files, and then quoted header files.
 #include <windows.h>
 #include "../sc2kfix.h"
+#include "../../include/mfc3xhelp.h"
 #include "../../include/sc2k_1996.h"
 
 // The stModHooks array of structs define each hook that the mod exports. Each hook is defined

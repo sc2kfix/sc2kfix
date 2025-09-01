@@ -31,7 +31,6 @@ static DWORD dwDummy;
 
 #define NUM_CHEATS 15
 #define NUM_CHEAT_MAXCHARS 9
-#define MAX_USER_LABELS 51
 
 typedef struct {
 	int iIndex;          // Cheat index, match multiple cheats to the same index.
@@ -156,8 +155,10 @@ static void AdjustDebugMenu(HMENU hDebugMenu) {
 }
 
 static int FindTheHouseLabel() {
-	for (int i = 1; i < MAX_USER_LABELS; ++i) {
-		if (dwMapXLAB[0][i].szLabel && _stricmp(dwMapXLAB[0][i].szLabel, theHouse) == 0) {
+	const char *pLabel;
+	for (int i = MIN_USER_TEXT_ENTRIES; i < MAX_USER_TEXT_ENTRIES; ++i) {
+		pLabel = GetXLABEntry(i);
+		if (pLabel && _stricmp(pLabel, theHouse) == 0) {
 			return i;
 		}
 	}
@@ -165,21 +166,18 @@ static int FindTheHouseLabel() {
 }
 
 static void SetTheHouseLabel(int xPos, int ySignPos) {
-	__int16 iLabelIdx;
-	WORD iTextLen;
+	BYTE iLabelIdx;
 
-	char(__stdcall * H_PrepareLabel)() = (char(__stdcall*)())0x402D56;
+	BYTE(__stdcall * H_PrepareLabel)() = (BYTE(__stdcall*)())0x402D56;
 
-	if (dwMapXTXT[xPos][ySignPos].bTextOverlay) {
-		if (dwMapXTXT[xPos][ySignPos].bTextOverlay >= MAX_USER_LABELS)
+	if (XTXTGetTextOverlayID(xPos, ySignPos)) {
+		if (XTXTGetTextOverlayID(xPos, ySignPos) >= MAX_USER_TEXT_ENTRIES)
 			return;
 	}
 	iLabelIdx = H_PrepareLabel();
 	if (iLabelIdx) {
-		dwMapXTXT[xPos][ySignPos].bTextOverlay = (BYTE)iLabelIdx;
-		iTextLen = (WORD)strlen(theHouse);
-		memcpy(&dwMapXLAB[0][(int)iLabelIdx], theHouse, iTextLen);
-		dwMapXLAB[0][iLabelIdx].szLabel[iTextLen] = 0;
+		XTXTSetTextOverlayID(xPos, ySignPos, iLabelIdx);
+		SetXLABEntry(iLabelIdx, theHouse);
 	}
 }
 
@@ -194,8 +192,8 @@ static BOOL FindTheHouse() {
 	ySignPos = -1;
 	for (iLength = 0; iLength < GAME_MAP_SIZE; ++iLength) {
 		for (iDepth = 0; iDepth < GAME_MAP_SIZE; ++iDepth) {
-			if (dwMapXBLD[iLength][iDepth].iTileID == TILE_COMMERCIAL_1X1_BEDANDBREAKFAST) {
-				if (dwMapXZON[iLength][iDepth].b.iZoneType == ZONE_NONE) {
+			if (GetTileID(iLength, iDepth) == TILE_COMMERCIAL_1X1_BEDANDBREAKFAST) {
+				if (XZONReturnZone(iLength, iDepth) == ZONE_NONE) {
 					xPos = iLength;
 					yPos = iDepth;
 					xWindPos = xPos - 1;
@@ -212,16 +210,16 @@ static BOOL FindTheHouse() {
 			SetTheHouseLabel(xPos, ySignPos);
 		// Set the Wind PowerPlant if it's not present
 		// (assuming the spot is still available).
-		Game_ItemPlacementCheck(xWindPos, yPos, TILE_POWERPLANT_WIND, 1);
+		Game_ItemPlacementCheck(xWindPos, yPos, TILE_POWERPLANT_WIND, AREA_1x1);
 		Game_CenterOnTileCoords(xPos, yPos);
 		return TRUE;
 	}
-	if (iLabelIdx > 0 && iLabelIdx < MAX_USER_LABELS) {
+	if (iLabelIdx > 0 && iLabelIdx < MAX_USER_TEXT_ENTRIES) {
 		for (iLength = 0; iLength < GAME_MAP_SIZE; ++iLength) {
 			for (iDepth = 0; iDepth < GAME_MAP_SIZE; ++iDepth) {
-				if (dwMapXTXT[iLength][iDepth].bTextOverlay == iLabelIdx) {
+				if (XTXTGetTextOverlayID(iLength, iDepth) == iLabelIdx) {
 					H_RemoveLabel(iLabelIdx);
-					dwMapXTXT[iLength][iDepth].bTextOverlay = 0;
+					XTXTSetTextOverlayID(iLength, iDepth, 0);
 					break;
 				}
 			}
@@ -237,8 +235,6 @@ static BOOL BuildTheHouse() {
 	__int16 xWindPos;
 	__int16 ySignPos;
 
-	map_XTER_t** dwMapXTERPrevX = (map_XTER_t**)0x4C9F54;
-
 	iAttempts = 0;
 	while (TRUE) {
 	RETRY:
@@ -248,20 +244,20 @@ static BOOL BuildTheHouse() {
 		ySignPos = yPos - 1;
 		if (xWindPos < 0 || ySignPos < 0)
 			goto RETRY;
-		if (dwMapXBLD[xPos][yPos].iTileID < TILE_SMALLPARK) {
-			if (dwMapXBLD[xPos][ySignPos].iTileID < TILE_SMALLPARK &&
-				dwMapXBLD[xWindPos][yPos].iTileID < TILE_SMALLPARK) {
-				if (!dwMapXTER[xPos][yPos].iTileID &&
-					!dwMapXTER[xPos][ySignPos].iTileID &&
-					!dwMapXTERPrevX[xPos][yPos].iTileID &&
-					(xPos < 0 || yPos >= GAME_MAP_SIZE || !dwMapXBIT[xPos][yPos].b.iWater) &&
-					(xPos >= GAME_MAP_SIZE || ySignPos >= GAME_MAP_SIZE || !dwMapXBIT[xPos][ySignPos].b.iWater) &&
-					(xWindPos >= GAME_MAP_SIZE || yPos >= GAME_MAP_SIZE || !dwMapXBIT[xWindPos][yPos].b.iWater)) {
-					if (dwMapALTM[xPos][yPos].w.iLandAltitude == dwMapALTM[xPos][ySignPos].w.iLandAltitude &&
-						dwMapALTM[xPos][yPos].w.iLandAltitude == dwMapALTM[xWindPos][yPos].w.iLandAltitude) {
-						if (Game_ItemPlacementCheck(xPos, yPos, TILE_COMMERCIAL_1X1_BEDANDBREAKFAST, 1)) {
+		if (GetTileID(xPos, yPos) < TILE_SMALLPARK) {
+			if (GetTileID(xPos, ySignPos) < TILE_SMALLPARK &&
+				GetTileID(xWindPos, yPos) < TILE_SMALLPARK) {
+				if (!GetTerrainTileID(xPos, yPos) &&
+					!GetTerrainTileID(xPos, ySignPos) &&
+					!GetTerrainTileID(xWindPos, yPos) &&
+					(xPos < 0 || yPos >= GAME_MAP_SIZE || !XBITReturnIsWater(xPos, yPos)) &&
+					(xPos >= GAME_MAP_SIZE || ySignPos >= GAME_MAP_SIZE || !XBITReturnIsWater(xPos, ySignPos)) &&
+					(xWindPos >= GAME_MAP_SIZE || yPos >= GAME_MAP_SIZE || !XBITReturnIsWater(xWindPos, yPos))) {
+					if (ALTMReturnLandAltitude(xPos, yPos) == ALTMReturnLandAltitude(xPos, ySignPos) &&
+						ALTMReturnLandAltitude(xPos, yPos) == ALTMReturnLandAltitude(xWindPos, yPos)) {
+						if (Game_ItemPlacementCheck(xPos, yPos, TILE_COMMERCIAL_1X1_BEDANDBREAKFAST, AREA_1x1)) {
 							SetTheHouseLabel(xPos, ySignPos);
-							Game_ItemPlacementCheck(xWindPos, yPos, TILE_POWERPLANT_WIND, 1);
+							Game_ItemPlacementCheck(xWindPos, yPos, TILE_POWERPLANT_WIND, AREA_1x1);
 							Game_CenterOnTileCoords(xPos, yPos);
 							return TRUE;
 						}
@@ -281,11 +277,14 @@ static void ChangeChurchZone() {
 
 	for (iLength = 0; iLength < GAME_MAP_SIZE; ++iLength) {
 		for (iDepth = 0; iDepth < GAME_MAP_SIZE; ++iDepth) {
-			if (dwMapXBLD[iLength][iDepth].iTileID == TILE_INFRASTRUCTURE_CHURCH) {
-				if (dwMapXZON[iLength][iDepth].b.iZoneType == ZONE_NONE) {
+			if (GetTileID(iLength, iDepth) == TILE_INFRASTRUCTURE_CHURCH) {
+				if (XZONReturnZone(iLength, iDepth) == ZONE_NONE) {
 					iReplaceTile = (rand() & 3) + 1; // Random rubble.
 					Game_PlaceTileWithMilitaryCheck(iLength, iDepth, iReplaceTile); // Replace
-					dwMapXZON[iLength][iDepth].b.iZoneType = ZONE_DENSE_RESIDENTIAL; // Re-zone
+					XZONSetNewZone(iLength, iDepth, ZONE_DENSE_RESIDENTIAL); // Re-zone
+					// It should be noted here that we're 'not' unsetting the powered/powerable
+					// bits so consequently once the tiles are replaced and re-zoned they will
+					// immediately grow.
 				}
 			}
 		}

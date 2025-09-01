@@ -53,16 +53,33 @@
 
 #define MAX_CITY_SUBTOOLS 12
 
+#define AREA_1x1 1
+#define AREA_2x2 2
+#define AREA_3x3 3
+#define AREA_4x4 4
+
+#define ALTM_LANDALT_BOUNDARY 0x1F
+#define ALTM_WATERLVL_BOUNDARY 0x3E0
+#define ALTM_TUNNELLVLS_BOUNDARY 0x7C00
+
 #define CORNER_NONE   0x0
-#define CORNER_BLEFT  0x1
-#define CORNER_BRIGHT 0x2
-#define CORNER_TLEFT  0x4
-#define CORNER_TRIGHT 0x8
+#define CORNER_BLEFT  0x10
+#define CORNER_BRIGHT 0x20
+#define CORNER_TLEFT  0x40
+#define CORNER_TRIGHT 0x80
 #define CORNER_ALL    (CORNER_BLEFT|CORNER_BRIGHT|CORNER_TLEFT|CORNER_TRIGHT)
+#define CORNER_BOUNDARY CORNER_ALL // 0xF0 iCorner mask boundary.
+
+#define XBIT_SALTWATER 0x1
+#define XBIT_FLIPPED   0x2
+#define XBIT_WATER     0x4
+#define XBIT_MARK      0x8
+#define XBIT_WATERED   0x10
+#define XBIT_PIPED     0x20
+#define XBIT_POWERED   0x40
+#define XBIT_POWERABLE 0x80
 
 #define GAME_MAP_SIZE 128
-
-class CMFC3XString;
 
 // Enums
 
@@ -100,7 +117,9 @@ enum {
 	ZONE_DENSE_INDUSTRIAL,
 	ZONE_MILITARY,
 	ZONE_AIRPORT,
-	ZONE_SEAPORT
+	ZONE_SEAPORT,
+
+	ZONE_BOUNDARY = 15 // 0xF iZoneType mask boundary
 };
 
 static inline const char* GetZoneName(int iZoneID) {
@@ -740,6 +759,18 @@ enum {
 	LAYER_COUNT
 };
 
+// aggregate light/dense counts for each referenced zone from the 'ZONEPOP' case.
+// 'zonePopsBase[ZONEPOPAGR_ENTRYHERE] = pZonePops[idx + 2] + pZonePops[idx + 1];'
+// 'idx' in this context starts from 0 and is incremented by 2 to account for the
+// light/dense indices from 'ZONEPOP_ENTRYHERE'.
+enum {
+	ZONEPOPAGR_RESIDENTIAL,
+	ZONEPOPAGR_COMMERCIAL,
+	ZONEPOPAGR_INDUSTRIAL,
+
+	ZONEPOPAGR_COUNT
+};
+
 enum {
 	ZONEPOP_ALL,
 	ZONEPOP_RESLIGHT,
@@ -748,8 +779,31 @@ enum {
 	ZONEPOP_COMDENSE,
 	ZONEPOP_INDLIGHT,
 	ZONEPOP_INDDENSE,
-	ZONEPOP_ABANDONED
+	ZONEPOP_ABANDONED,
+
+	ZONEPOP_COUNT
 };
+
+enum {
+	GRP_CITYSIZE,
+	GRP_RESPOP,
+	GRP_COMPOP,
+	GRP_INDPOP,
+	GRP_TRAFFIC,
+	GRP_POLLUTION,
+	GRP_CITYVALUE,
+	GRP_CITYCRIME,
+	GRP_POWERPERCENT,
+	GRP_WATERPERCENT,
+	GRP_HEALTH,
+	GRP_EDUCATION,
+	GRP_UNEMPLOYMENTRATE,
+	GRP_GNP,
+	GRP_NATIONALPOP,
+	GRP_FEDRATE,
+	GRP_GRPCATCOUNT
+};
+
 
 enum {
 	CITYTOOL_GROUP_BULLDOZER = 0,
@@ -993,9 +1047,11 @@ enum {
 
 // Structs
 
+#pragma pack(push, 1)
 typedef struct {
 	BYTE bDunno[32];
 } neighbor_city_t;
+#pragma pack(pop)
 
 typedef struct {
 	int iCountMonth[12];
@@ -1006,10 +1062,15 @@ typedef struct {
 	int iEstimatedCost;
 } budget_t;
 
+#pragma pack(push, 1)
 typedef struct {
 	BYTE bTileID;
-	BYTE bMicrosimData[7];
+	BYTE bMicrosimDataStat0;
+	WORD iMicrosimDataStat1;
+	WORD iMicrosimDataStat2;
+	WORD iMicrosimDataStat3;
 } microsim_t;
+#pragma pack(pop)
 
 typedef struct {
 	DWORD dwAddress;
@@ -1035,94 +1096,147 @@ typedef struct {
 	sprite_archive_t *pData;
 } sprite_archive_stored_t;
 
+#pragma pack(push, 1)
 typedef struct {
 	WORD iLandAltitude : 5; // level / altitude
 	WORD iWaterLevel : 5;   // not always accurate (rely on XTER value instead)
 	WORD iTunnelLevels : 6; // how many levels below altitude should we display a grey block for a tunnel?
 } map_ALTM_attribs_t;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	map_ALTM_attribs_t w;
 } map_ALTM_t;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	BYTE iZoneType : 4;
 	BYTE iCorners : 4;
 } map_XZON_attribs_t;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	map_XZON_attribs_t b;
 } map_XZON_t;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	BYTE iTileID;
 } map_XBLD_t;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	BYTE iTileID; // reference XTER map
 } map_XTER_t;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	BYTE iTileID;
 } map_XUND_t;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	BYTE bTextOverlay;
 } map_XTXT_t;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	BYTE bBlock;
 } map_mini64_t;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	BYTE bBlock;
 } map_mini32_t;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	BYTE iSaltWater : 1;
-	BYTE iRotated : 1;
+	BYTE iFlipped : 1;
 	BYTE iWater : 1;
-	BYTE iXVALMask : 1;
+	BYTE iMark : 1;
 	BYTE iWatered : 1;
 	BYTE iPiped : 1;
 	BYTE iPowered : 1;
 	BYTE iPowerable : 1;
 } map_XBIT_bits_t;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	map_XBIT_bits_t b;
 } map_XBIT_t;
+#pragma pack(pop)
 
 // Struct defining an SC2K XTHG (Thing) entity.
+#pragma pack(push, 1)
 typedef struct {
-	BYTE iId; // use xthg types enum to determine
+	BYTE iType; // use xthg types enum to determine
 	BYTE iDirection; // use xthg directions enum; for types airplane, helicopter, cargo ship, monster, etc; not sure how this is used for "deployment" types like fire, police, etc
-	BYTE iDunno1; // identifier? sequence number? type?
-	BYTE iPositionX;
-	BYTE iPositionY;
-	BYTE iPositionZ;
-	BYTE iDunno2;
-	BYTE iDunno3;
-	BYTE iDunno4;
-	BYTE iDunno5;
-	BYTE iDunno6;
-	BYTE iDunno7;
+	BYTE iState; // identifier? sequence number? type?
+	BYTE iX;
+	BYTE iY;
+	BYTE iZ;
+	BYTE iPX;    // object width?
+	BYTE iPY;    // object length?
+	BYTE iDX;    // horizontal movement speed?
+	BYTE iDY;    // vertical movement speed?
+	BYTE bLabel;
+	BYTE iGoal;
 } map_XTHG_t;
+#pragma pack(pop)
 
 // Struct defining an SC2K XLAB (Label) entity.
+#pragma pack(push, 1)
 typedef struct {
 	char szLabel[24];
 	BYTE bPadding;
 } map_XLAB_t;
+#pragma pack(pop)
+
+// The sound/midi class; placed here for now.
+#pragma pack(push, 1)
+class CSound {
+public:
+	HWND *dwSNDhWnd;
+	BOOL bSNDPlaySound;
+	int iSNDCurrSoundID;
+	CMFC3XString dwSNDSoundString;
+	void *dwSNDBufferTool;
+	int iSNDToolSoundID;
+	void *dwSNDBufferActionThing;
+	BOOL bSNDWasPlaying;
+	int iSNDActionThingSoundID;
+	void *dwSNDBufferClick;
+	void *dwSNDBufferDestruction;
+	void *dwSNDBufferGeneral;
+	int iSNDGeneralSoundID;
+	DWORD dwSNDUnknownOne;
+	WORD wSNDMCIDevID;
+	DWORD dwSNDMCIError;
+	DWORD dwSNDUnknownTwo;
+	CMFC3XString dwSNDMusicString;
+};
+#pragma pack(pop)
 
 // Function pointers
 
 GAMECALL(0x40103C, int, __thiscall, PreGameMenuDialogToggle, void *pThis, int iShow)
 GAMECALL(0x40106E, int, __cdecl, PlaceRoadAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x401096, int, __thiscall, SoundPlaySound, void* pThis, int iSoundID)
-GAMECALL(0x4011E5, int, __thiscall, MapToolSoundTrigger, void* pThis)
+GAMECALL(0x4011E5, BOOL, __thiscall, CSoundMapToolSoundTrigger, CSound* pThis)
 GAMECALL(0x4012C1, int, __cdecl, SpawnItem, __int16 x, __int16 y)
-GAMECALL(0x401460, char, __cdecl, SimulationProvisionMicrosim, __int16, int, __int16 iTileID) // The first two arguments aren't clear, though they "could" be the X/Y tile coordinates.
+GAMECALL(0x401460, BYTE, __cdecl, SimulationProvisionMicrosim, __int16, __int16, __int16 iTileID) // The first two arguments aren't clear, though they "could" be the X/Y tile coordinates.
 GAMECALL(0x4014CE, int, __cdecl, SpawnAeroplane, __int16 x, __int16 y, __int16 iDirection)
 GAMECALL(0x4014F1, int, __thiscall, TileHighlightUpdate, void *pThis)
 GAMECALL(0x40150A, int, __thiscall, ExitRequester, void *pThis, int iSource)
@@ -1149,7 +1263,7 @@ GAMECALL(0x401E47, BOOL, __cdecl, UseBulldozer, __int16 iTileTargetX, __int16 iT
 GAMECALL(0x401EA1, int, __cdecl, MapToolLowerTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x401FA0, int, __cdecl, CheckAdjustTerrainAndPlacePowerLines, __int16 x, __int16 y)
 GAMECALL(0x40209F, __int16, __cdecl, SpawnTrain, __int16 x, __int16 y)
-GAMECALL(0x402211, unsigned int, __thiscall, DestroyStructure, void *pThis, __int16 x, __int16 y, int iExplosion)
+GAMECALL(0x402211, void, __thiscall, SimcityViewDestroyStructure, void *pThis, __int16 x, __int16 y, int iExplosion)
 GAMECALL(0x40226B, int, __thiscall, UpdateAreaPortionFill, void *) // This appears to do a partial update of selected/highlighted area while appearing to dispense with immediate color updates.
 GAMECALL(0x402289, char, __cdecl, PerhapsGeneralZoneChooseAndPlaceBuilding, __int16 x, __int16 y, __int16 iBuildingPopLevel, __int16)
 GAMECALL(0x40235B, int, __thiscall, DrawSquareHighlight, void *pThis, WORD wX1, WORD wY1, WORD wX2, WORD wY2)
@@ -1165,7 +1279,7 @@ GAMECALL(0x4026B2, int, __cdecl, SimulationGrowSpecificZone, __int16 x, __int16 
 GAMECALL(0x402725, int, __cdecl, PlacePowerLinesAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x402798, int, __cdecl, MapToolPlaceForest, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x4027A7, void, __thiscall, CSimCityView_OnVScroll, void *pThis, int nSBCode, __int16 nPos, DWORD *pScrollBar)
-GAMECALL(0x4027F2, int, __cdecl, ItemPlacementCheck, __int16 x, int y, __int16 iTileID, __int16 iTileArea)
+GAMECALL(0x4027F2, int, __cdecl, ItemPlacementCheck, __int16 x, __int16 y, BYTE iTileID, __int16 iTileArea)
 GAMECALL(0x402810, int, __thiscall, UpdateAreaCompleteColorFill, void *) // This appears to be a more comprehensive update that'll occur for highlighted/selected area or when you're moving the game area.
 GAMECALL(0x40281F, int, __cdecl, RunTripGenerator, __int16 x, __int16 y, __int16 iZoneType, __int16 iBuildingPopLevel, __int16 iTripMaxSteps)
 GAMECALL(0x402829, void, __cdecl, SpawnShip, __int16 x, __int16 y)
@@ -1207,7 +1321,7 @@ GAMEOFF(void*,	pCWndRootWindow,			0x4C702C)		// CMainFrame
 GAMEOFF(DWORD,	dwSCAGameAutoSave,			0x4D70E8)
 GAMEOFF(DWORD,	dwCursorGameHit,			0x4C70EC)
 GAMEOFF(BOOL,	bPriscillaActivated,		0x4C7104)
-GAMEOFF(DWORD*, dwAudioHandle,				0x4C7158)		// Various checks have pointed towards audio (sound and/or midi - perhaps stoppage given some context elsewhere)
+GAMEOFF(CSound*, pSCASoundLayer,			0x4C7158)
 GAMEOFF(BOOL,	bOptionsMusicEnabled,		0x4C71F0)
 GAMEOFF(WORD,	wSimulationSpeed,			0x4C7318)
 GAMEOFF(WORD,	wCurrentTileCoordinates,	0x4C7A98)
@@ -1315,9 +1429,7 @@ GAMEOFF(WORD,	wSportsTeams,				0x4CC4E0)
 GAMEOFF(BYTE,	bMilitaryBaseType,			0x4CC4E4)
 GAMEOFF(int,	dwCityBonds,				0x4CC4E8)
 GAMEOFF(DWORD,	dwCityTrafficUnknown,		0x4CC6F4)
-GAMEOFF_ARR(WORD,	wCityDemand,		0x4CC8F8)
-GAMEOFF(WORD,	wCityCommericalDemand,		0x4CC8FA)
-GAMEOFF(WORD,	wCityIndustrialDemand,		0x4CC8FC)
+GAMEOFF_ARR(WORD,	wCityDemand,			0x4CC8F8)
 GAMEOFF(DWORD,	dwCityPollution,			0x4CC910)		// Needs reverse engineering. See wiki.
 GAMEOFF(WORD,	wScenarioDisasterID,		0x4CC918)
 GAMEOFF(WORD,	wScenarioTimeLimitMonths,	0x4CC91C)
@@ -1366,18 +1478,46 @@ GAMEOFF(WORD,	wSailingBoats,				0x4E99D0)
 GAMEOFF(DWORD,	dwCityRewardsUnlocked,		0x4E9A24)
 GAMEOFF(WORD,	wTileHighlightActive,		0x4EA7F0)
 
-// Pending classification
+// Specific tile corner, length and depth cases.
+//
+// If need be these can be added to the main list.
+//
+// The commented out 'wTileStart' remote vars were previously
+// used instead of 'wTileArea', the primary difference is that
+// the 'wTileStart' cases were looking at subsequent values
+// outside of their immediate arrays (4 * wViewRotation) - looking
+// for the equivalent next value in subsequent arrays, whereas the
+// new 'wTileArea' arrays just use wViewRotation which will find the
+// next direct value which is otherwise identical to what you would
+// have got originally.
+//GAMEOFF_ARR(WORD, wTileStartBottomLeftCorner,	0x4DC4D0)
+//GAMEOFF_ARR(WORD, wTileStartBottomRightCorner,	0x4DC4D2)
+//GAMEOFF_ARR(WORD, wTileStartTopLeftCorner,	0x4DC4D4)
+//GAMEOFF_ARR(WORD, wTileStartTopRightCorner,	0x4DC4D6)
 GAMEOFF_ARR(WORD, wTileAreaBottomLeftCorner,	0x4DC4D0)
-GAMEOFF_ARR(WORD, wTileAreaBottomRightCorner,	0x4DC4D2)
-GAMEOFF_ARR(WORD, wTileAreaTopLeftCorner,	0x4DC4D4)
-GAMEOFF_ARR(WORD, wTileAreaTopRightCorner,	0x4DC4D6)
-GAMEOFF_ARR(WORD, wSomePierLengthWays,		0x4E75C0)
-GAMEOFF_ARR(WORD, wSomePierDepthWays,		0x4E75C8)
+GAMEOFF_ARR(WORD, wTileAreaBottomRightCorner,	0x4DC4D8)
+GAMEOFF_ARR(WORD, wTileAreaTopLeftCorner,	0x4DC4E0)
+GAMEOFF_ARR(WORD, wTileAreaTopRightCorner,	0x4DC4E8)
+GAMEOFF_ARR(WORD, wTilePierLengthWays,		0x4E75C0)
+GAMEOFF_ARR(WORD, wTilePierDepthWays,		0x4E75C8)
+
+// Pending classification
 
 // Pointers to map arrays
 
+// dwMapXTERPrevX and dwMapXTERNextX, both represent
+// the previous and next tiles respectively on the
+// X axis - see 0x44AED0 for this reference.
+//
+// It doesn't look like there's an equivalent when it
+// comes to the Y axis, instead inside 0x44AED0 either
+// subtracts or adds by one to the Y axis in the main
+// dwMapXTER struct array (second dimension).
+
 // 128x128
+GAMEOFF_ARR(map_XTER_t*,	dwMapXTERPrevX,	0x4C9F54)
 GAMEOFF_ARR(map_XTER_t*,	dwMapXTER,	0x4C9F58)
+GAMEOFF_ARR(map_XTER_t*,	dwMapXTERNextX,	0x4C9F5C)
 GAMEOFF_ARR(map_XZON_t*,	dwMapXZON,	0x4CA1F0)
 GAMEOFF_ARR(map_XTXT_t*,	dwMapXTXT,	0x4CA600)
 GAMEOFF_ARR(map_XBIT_t*,	dwMapXBIT,	0x4CAB10)
@@ -1405,16 +1545,44 @@ GAMEOFF_ARR(DWORD,			dwMapXGRP,	0x4CC470)
 extern const char *getXTERNames(BYTE iVal);
 
 // Returns the tile ID from a given set of coordinates.
-static inline int GetTileID(int iTileX, int iTileY) {
-	if (iTileX >= 0 && iTileX < GAME_MAP_SIZE && iTileY >= 0 && iTileY < GAME_MAP_SIZE)
-		return dwMapXBLD[iTileX][iTileY].iTileID;
-	else
-		return -1;
+static inline BYTE GetTileID(__int16 iTileX, __int16 iTileY) {
+	return dwMapXBLD[iTileX][iTileY].iTileID;
+}
+
+static inline BYTE GetTerrainTileID(__int16 iTileX, __int16 iTileY) {
+	return dwMapXTER[iTileX][iTileY].iTileID;
+}
+
+static inline BYTE GetUndergroundTileID(__int16 iTileX, __int16 iTileY) {
+	return dwMapXUND[iTileX][iTileY].iTileID;
 }
 
 // Returns the XLAB entry from a given Label ID.
-static inline const char* GetXLABEntry(int iLabelID) {
+static inline const char* GetXLABEntry(BYTE iLabelID) {
 	return dwMapXLAB[0][iLabelID].szLabel;
+}
+
+static inline void SetXLABEntry(BYTE iLabelID, const char *pStr) {
+	WORD nLen;
+
+	if (pStr) {
+		nLen = (WORD)strlen(pStr);
+		if (nLen > 24)
+			nLen = 24;
+		// A combination of memcpy and setting the end null here.
+		// Attempts at using strcpy_s with 'dwMapXLAB[0][iLabelID].szLabel'
+		// here resulted in a program crash.
+		memcpy(&dwMapXLAB[0][iLabelID], pStr, nLen);
+		dwMapXLAB[0][iLabelID].szLabel[nLen] = 0;
+	}
+}
+
+static inline BYTE XTXTGetTextOverlayID(__int16 iTileX, __int16 iTileY) {
+	return dwMapXTXT[iTileX][iTileY].bTextOverlay;
+}
+
+static inline void XTXTSetTextOverlayID(__int16 iTileX, __int16 iTileY, BYTE bNewTextOverlayID) {
+	dwMapXTXT[iTileX][iTileY].bTextOverlay = bNewTextOverlayID;
 }
 
 // Returns the sprite header for a given sprite ID.
@@ -1422,11 +1590,54 @@ static inline sprite_header_t* GetSpriteHeader(int iSpriteID) {
 	return &pArrSpriteHeaders[iSpriteID];
 }
 
+static inline BYTE GetMicroSimulatorTileID(BYTE iMicrosimID) {
+	return pMicrosimArr[iMicrosimID].bTileID;
+}
+
+static inline BYTE GetMicroSimulatorStat0(BYTE iMicrosimID) {
+	return pMicrosimArr[iMicrosimID].bMicrosimDataStat0;
+}
+
+static inline WORD GetMicroSimulatorStat1(BYTE iMicrosimID) {
+	return pMicrosimArr[iMicrosimID].iMicrosimDataStat1;
+}
+
+static inline WORD GetMicroSimulatorStat2(BYTE iMicrosimID) {
+	return pMicrosimArr[iMicrosimID].iMicrosimDataStat2;
+}
+
+static inline WORD GetMicroSimulatorStat3(BYTE iMicrosimID) {
+	return pMicrosimArr[iMicrosimID].iMicrosimDataStat3;
+}
+
+static inline void SetMicroSimulatorStat0(BYTE iMicrosimID, BYTE bNewStat) {
+	pMicrosimArr[iMicrosimID].bMicrosimDataStat0 = bNewStat;
+}
+
+static inline void SetMicroSimulatorStat1(BYTE iMicrosimID, WORD iNewStat) {
+	pMicrosimArr[iMicrosimID].iMicrosimDataStat1 = iNewStat;
+}
+
+static inline void SetMicroSimulatorStat2(BYTE iMicrosimID, WORD iNewStat) {
+	pMicrosimArr[iMicrosimID].iMicrosimDataStat2 = iNewStat;
+}
+
+static inline void SetMicroSimulatorStat3(BYTE iMicrosimID, WORD iNewStat) {
+	pMicrosimArr[iMicrosimID].iMicrosimDataStat3 = iNewStat;
+}
+
 // Returns the current game palette. RE'd from the game decomp.
 // TODO: document a bit more about what the hell this actually does
 static inline HPALETTE GameGetPalette(void) {
 	DWORD* CSimcityAppThis = &pCSimcityAppThis;
 	DWORD* CPalette;
+
+	// CSimcityAppThis[59] = dwSCABForceBkgd (use background palette)
+	// CSimcityAppThis[67] = pSCAPaletteFore (Main identity palette - application in foreground)
+	// CSimcityAppThis[68] = pSCAPaletteBkgd (Background palette - application not activated - in background)
+	//
+	// If Windows is running in 8-bit mode and the program is in the background or not activated, the background
+	// palette appears akin to what you'd get in 4-bit mode (and palette animation is disabled).
 
 	// Exactly what sub_4069B0 does.
 	if (CSimcityAppThis[59])
@@ -1448,6 +1659,400 @@ static inline HWND GameGetRootWindowHandle(void) {
 static inline DWORD SwapDWORD(DWORD dwData) {
 	return _byteswap_ulong(dwData);
 }
+
+static inline BOOL IsEven(__int16 iAxis) {
+	return (iAxis % 2) == 0 ? TRUE : FALSE;
+}
+
+//HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...);
+
+#define USE_OLD_ALTM_HANDLING 0
+
+static inline WORD ALTMReturnLandAltitude(__int16 x, __int16 y) {
+#if USE_OLD_ALTM_HANDLING
+	return *(WORD *)&dwMapALTM[x][y].w & ALTM_LANDALT_BOUNDARY;
+
+#else
+	return dwMapALTM[x][y].w.iLandAltitude;
+#endif
+}
+
+static inline WORD ALTMReturnWaterLevel(__int16 x, __int16 y) {
+#if USE_OLD_ALTM_HANDLING
+	return (*(WORD *)&dwMapALTM[x][y].w & ALTM_WATERLVL_BOUNDARY) >> 5;
+#else
+	return dwMapALTM[x][y].w.iWaterLevel;
+#endif
+}
+
+static inline WORD ALTMReturnTunnelLevels(__int16 x, __int16 y) {
+#if USE_OLD_ALTM_HANDLING
+	return (*(WORD *)&dwMapALTM[x][y].w & ALTM_TUNNELLVLS_BOUNDARY) >> 10;
+#else
+	return dwMapALTM[x][y].w.iTunnelLevels;
+#endif
+}
+
+static inline WORD ALTMReturnMask(__int16 x, __int16 y) {
+	return *(WORD *)&dwMapALTM[x][y].w;
+}
+
+#define USE_OLD_XZON_HANDLING 0
+
+// These four functions will perform either an absolute comparison or that the
+// passed mask/angle is present within the current XZON coordinate corner mask.
+static inline BOOL XZONCornerAbsoluteCheckMask(__int16 x, __int16 y, BYTE cornerMask) {
+#if USE_OLD_XZON_HANDLING
+	return (*(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY) == (cornerMask);
+#else
+	return dwMapXZON[x][y].b.iCorners == (cornerMask >> 4);
+#endif
+}
+
+static inline BOOL XZONCornerAbsoluteCheck(__int16 x, __int16 y, WORD wAngle) {
+#if USE_OLD_XZON_HANDLING
+	return (*(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY) == (LOBYTE(wAngle));
+#else
+	return dwMapXZON[x][y].b.iCorners == (LOBYTE(wAngle) >> 4);
+#endif
+}
+
+static inline BOOL XZONCornerCheckMask(__int16 x, __int16 y, BYTE cornerMask) {
+#if USE_OLD_XZON_HANDLING
+	return (*(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY) & (cornerMask);
+#else
+	return dwMapXZON[x][y].b.iCorners & (cornerMask >> 4);
+#endif
+}
+
+static inline BOOL XZONCornerCheck(__int16 x, __int16 y, WORD wAngle) {
+#if USE_OLD_XZON_HANDLING
+	return (*(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY) & (LOBYTE(wAngle));
+#else
+	return dwMapXZON[x][y].b.iCorners & (LOBYTE(wAngle) >> 4);
+#endif
+}
+
+// These functions will right-shift the mask/angle by 4 and set it as the
+// XZON coordinate mask.
+static inline void XZONSetCornerMask(__int16 x, __int16 y, BYTE cornerMask) {
+	// This sets the cornerMask while retaining any zone bits.
+#if USE_OLD_XZON_HANDLING
+	*(BYTE *)&dwMapXZON[x][y].b |= (cornerMask);
+#else
+	dwMapXZON[x][y].b.iCorners = (cornerMask >> 4);
+#endif
+}
+
+static inline void XZONSetCornerAngle(__int16 x, __int16 y, WORD wAngle) {
+	// This sets the LOBYTE of wAngle while retaining any zone bits.
+#if USE_OLD_XZON_HANDLING
+	*(BYTE *)&dwMapXZON[x][y].b |= (LOBYTE(wAngle));
+#else
+	dwMapXZON[x][y].b.iCorners = (LOBYTE(wAngle) >> 4);
+#endif
+}
+
+static inline void XZONClearCorners(__int16 x, __int16 y) {
+#if USE_OLD_XZON_HANDLING
+	*(BYTE *)&dwMapXZON[x][y].b &= ~(CORNER_BOUNDARY);
+#else
+	dwMapXZON[x][y].b.iCorners = CORNER_NONE;
+#endif
+}
+
+static inline BYTE XZONReturnCornerMask(__int16 x, __int16 y) {
+#if USE_OLD_XZON_HANDLING
+	return *(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY;
+#else
+	return dwMapXZON[x][y].b.iCorners << 4;
+#endif
+}
+
+static inline void XZONClearZone(__int16 x, __int16 y) {
+#if USE_OLD_XZON_HANDLING
+	*(BYTE *)&dwMapXZON[x][y].b &= ~(ZONE_BOUNDARY);
+#else
+	dwMapXZON[x][y].b.iZoneType = ZONE_NONE;
+#endif
+}
+
+static inline BYTE XZONReturnZone(__int16 x, __int16 y) {
+#if USE_OLD_XZON_HANDLING
+	return *(BYTE *)&dwMapXZON[x][y].b & ZONE_BOUNDARY;
+#else
+	return dwMapXZON[x][y].b.iZoneType;
+#endif
+}
+
+static inline void XZONSetNewZone(__int16 x, __int16 y, __int16 iNewZone) {
+#if USE_OLD_XZON_HANDLING
+	*(BYTE *)&dwMapXZON[x][y].b ^= (*(BYTE *)&dwMapXZON[x][y].b ^ iNewZone) & ZONE_BOUNDARY;
+#else
+	dwMapXZON[x][y].b.iZoneType = iNewZone;
+#endif
+}
+
+#define USE_OLD_XBIT_HANDLING 0
+
+static inline BOOL XBITReturnIsSaltWater(__int16 x, __int16 y) {
+#if USE_OLD_XBIT_HANDLING
+	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_SALTWATER);
+#else
+	return (dwMapXBIT[x][y].b.iSaltWater);
+#endif
+}
+
+static inline BOOL XBITReturnIsFlipped(__int16 x, __int16 y) {
+#if USE_OLD_XBIT_HANDLING
+	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_FLIPPED);
+#else
+	return (dwMapXBIT[x][y].b.iFlipped);
+#endif
+}
+
+static inline BOOL XBITReturnIsWater(__int16 x, __int16 y) {
+#if USE_OLD_XBIT_HANDLING
+	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_WATER);
+#else
+	return (dwMapXBIT[x][y].b.iWater);
+#endif
+}
+
+static inline BOOL XBITReturnIsMark(__int16 x, __int16 y) {
+#if USE_OLD_XBIT_HANDLING
+	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_MARK);
+#else
+	return (dwMapXBIT[x][y].b.iMark);
+#endif
+}
+
+static inline BOOL XBITReturnIsWatered(__int16 x, __int16 y) {
+#if USE_OLD_XBIT_HANDLING
+	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_WATERED);
+#else
+	return (dwMapXBIT[x][y].b.iWatered);
+#endif
+}
+
+static inline BOOL XBITReturnIsPiped(__int16 x, __int16 y) {
+#if USE_OLD_XBIT_HANDLING
+	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_PIPED);
+#else
+	return (dwMapXBIT[x][y].b.iPiped);
+#endif
+}
+
+static inline BOOL XBITReturnIsPowered(__int16 x, __int16 y) {
+#if USE_OLD_XBIT_HANDLING
+	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_POWERED);
+#else
+	return (dwMapXBIT[x][y].b.iPowered);
+#endif
+}
+
+static inline BOOL XBITReturnIsPowerable(__int16 x, __int16 y) {
+#if USE_OLD_XBIT_HANDLING
+	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_POWERABLE);
+#else
+	return (dwMapXBIT[x][y].b.iPowerable);
+#endif
+}
+
+static inline BYTE XBITReturnMask(__int16 x, __int16 y) {
+	return *(BYTE *)&dwMapXBIT[x][y].b;
+}
+
+static inline void XBITClearBits(__int16 x, __int16 y, BYTE bitMask) {
+#if USE_OLD_XBIT_HANDLING
+	*(BYTE *)&dwMapXBIT[x][y].b &= ~(bitMask);
+#else
+	if (bitMask & XBIT_SALTWATER)
+		dwMapXBIT[x][y].b.iSaltWater = 0;
+	if (bitMask & XBIT_FLIPPED)
+		dwMapXBIT[x][y].b.iFlipped = 0;
+	if (bitMask & XBIT_WATER)
+		dwMapXBIT[x][y].b.iWater = 0;
+	if (bitMask & XBIT_MARK)
+		dwMapXBIT[x][y].b.iMark = 0;
+	if (bitMask & XBIT_WATERED)
+		dwMapXBIT[x][y].b.iWatered = 0;
+	if (bitMask & XBIT_PIPED)
+		dwMapXBIT[x][y].b.iPiped = 0;
+	if (bitMask & XBIT_POWERED)
+		dwMapXBIT[x][y].b.iPowered = 0;
+	if (bitMask & XBIT_POWERABLE)
+		dwMapXBIT[x][y].b.iPowerable = 0;
+#endif
+}
+
+static inline void XBITSetBits(__int16 x, __int16 y, BYTE bitMask) {
+#if USE_OLD_XBIT_HANDLING
+	*(BYTE *)&dwMapXBIT[x][y].b |= (bitMask);
+#else
+	if (bitMask & XBIT_SALTWATER)
+		dwMapXBIT[x][y].b.iSaltWater = 1;
+	if (bitMask & XBIT_FLIPPED)
+		dwMapXBIT[x][y].b.iFlipped = 1;
+	if (bitMask & XBIT_WATER)
+		dwMapXBIT[x][y].b.iWater = 1;
+	if (bitMask & XBIT_MARK)
+		dwMapXBIT[x][y].b.iMark = 1;
+	if (bitMask & XBIT_WATERED)
+		dwMapXBIT[x][y].b.iWatered = 1;
+	if (bitMask & XBIT_PIPED)
+		dwMapXBIT[x][y].b.iPiped = 1;
+	if (bitMask & XBIT_POWERED)
+		dwMapXBIT[x][y].b.iPowered = 1;
+	if (bitMask & XBIT_POWERABLE)
+		dwMapXBIT[x][y].b.iPowerable = 1;
+#endif
+}
+
+// Helper functions for the 'map_mini64_t'
+// and 'map_mini32_t' struct array cases.
+//
+// 'NormalCoordinates' - the usual coordinates are passed
+//                       to the function and then shifted accordingly
+//                       before being used.
+//
+// 'ShiftedCoordinates' - bitshifted coordinates are passed directly
+//                        to the function and used.
+
+// Coordinate shifting functions.
+
+static inline void GetShifted64x64Coords(__int16 x, __int16 y, __int16 *outX, __int16 *outY) {
+	*outX = x >> 1;
+	*outY = y >> 1;
+}
+
+static inline void GetShifted32x32Coords(__int16 x, __int16 y, __int16 *outX, __int16 *outY) {
+	*outX = x >> 2;
+	*outY = y >> 2;
+}
+
+// 64x64
+
+static inline BYTE GetXCRMByteDataWithNormalCoordinates(__int16 x, __int16 y) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShifted64x64Coords(x, y, &iX, &iY);
+
+	return dwMapXCRM[iX][iY].bBlock;
+}
+
+static inline BYTE GetXCRMByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXCRM[x][y].bBlock;
+}
+
+static inline BYTE GetXPLTByteDataWithNormalCoordinates(__int16 x, __int16 y) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShifted64x64Coords(x, y, &iX, &iY);
+
+	return dwMapXPLT[iX][iY].bBlock;
+}
+
+static inline BYTE GetXPLTByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXPLT[x][y].bBlock;
+}
+
+static inline BYTE GetXTRFByteDataWithNormalCoordinates(__int16 x, __int16 y) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShifted64x64Coords(x, y, &iX, &iY);
+
+	return dwMapXTRF[iX][iY].bBlock;
+}
+
+static inline BYTE GetXTRFByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXTRF[x][y].bBlock;
+}
+
+static inline BYTE GetXVALByteDataWithNormalCoordinates(__int16 x, __int16 y) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShifted64x64Coords(x, y, &iX, &iY);
+
+	return dwMapXVAL[iX][iY].bBlock;
+}
+
+static inline BYTE GetXVALByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXVAL[x][y].bBlock;
+}
+
+// 32x32
+
+static inline BYTE GetXPLCByteDataWithNormalCoordinates(__int16 x, __int16 y) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShifted32x32Coords(x, y, &iX, &iY);
+
+	return dwMapXPLC[iX][iY].bBlock;
+}
+
+static inline BYTE GetXPLCByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXPLC[x][y].bBlock;
+}
+
+static inline BYTE GetXPOPByteDataWithNormalCoordinates(__int16 x, __int16 y) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShifted32x32Coords(x, y, &iX, &iY);
+
+	return dwMapXPOP[iX][iY].bBlock;
+}
+
+static inline BYTE GetXPOPByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXPOP[x][y].bBlock;
+}
+
+static inline BYTE GetXFIRByteDataWithNormalCoordinates(__int16 x, __int16 y) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShifted32x32Coords(x, y, &iX, &iY);
+
+	return dwMapXFIR[iX][iY].bBlock;
+}
+
+static inline BYTE GetXFIRByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXFIR[x][y].bBlock;
+}
+
+static inline BYTE GetXROGByteDataWithNormalCoordinates(__int16 x, __int16 y) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShifted32x32Coords(x, y, &iX, &iY);
+
+	return dwMapXROG[iX][iY].bBlock;
+}
+
+static inline BYTE GetXROGByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXROG[x][y].bBlock;
+}
+
+// This coordinate structure is used for the missile silo
+// case (potentially for any modifications to the naval yard
+// case as well).
+typedef struct {
+	__int16 x;
+	__int16 y;
+} coords_w_t;
+
+// This coordinate structure was used natively in the Win95
+// game, putting this here for now though currently unused.
+typedef struct {
+	int x;
+	int y;
+} coords_dw_t;
 
 typedef struct {
 	WORD nArcID;

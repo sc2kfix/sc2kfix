@@ -99,6 +99,25 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define HICOLORCNT 256
 #define LOCOLORCNT 16
 
+// It should be noted that with these values
+// they're referencing the min/max for the
+// user and sim label entries but NOT the total
+// maximum for all which is 256 (0 - 255).
+// Index 0 is used for the city-base mayor name.
+#define MIN_USER_TEXT_ENTRIES 1
+#define MAX_USER_TEXT_ENTRIES 51
+#define MIN_SIM_TEXT_ENTRIES MAX_USER_TEXT_ENTRIES
+#define MAX_SIM_TEXT_ENTRIES 200
+
+#define MICROSIMID_MIN 0
+#define MICROSIMID_MAX MAX_SIM_TEXT_ENTRIES - MIN_SIM_TEXT_ENTRIES
+
+#define PIER_MAXTILES 4
+#define RUNWAYSTRIP_MAXTILES 5
+
+#define MARINA_TILES_ALLDRY 0
+#define MARINA_TILES_ALLWET 9
+
 // TODO: inline documentation
 typedef struct tagLOGPAL {
 	WORD wVersion;
@@ -392,25 +411,26 @@ HOOKEXT BOOL bHookStopProcessing;
 
 // Hooks to inject in dllmain.cpp
 
-void InstallAnimationSimCity1996Hooks(void);
-void InstallAnimationSimCity1995Hooks(void);
-void InstallAnimationSimCityDemoHooks(void);
-void InstallSpriteAndTileSetSimCity1996Hooks(void);
+void InstallAnimationHooks_SC2K1996(void);
+void InstallAnimationHooks_SC2K1995(void);
+void InstallAnimationHooks_SC2KDemo(void);
+void InstallSpriteAndTileSetHooks_SC2K1996(void);
+void InstallTileGrowthOrPlacementHandlingHooks_SC2K1996(void);
 void InstallMiscHooks_SC2K1996(void);
 void UpdateMiscHooks_SC2K1996(void);
 void InstallMiscHooks_SC2KDemo(void);
 void InstallStatusHooks_SC2K1996(void);
 void UpdateStatus_SC2K1996(int iShow);
-void InstallQueryHooks(void);
-void InstallMilitaryHooks(void);
-void InstallSaveHooks(void);
+void InstallQueryHooks_SC2K1996(void);
+void InstallMilitaryHooks_SC2K1996(void);
+void InstallSaveHooks_SC2K1996(void);
 extern "C" void __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer);
 extern "C" int __stdcall Hook_MusicPlay(int iSongID);
 extern "C" int __stdcall Hook_MusicStop(void);
 extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void);
 int L_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
-void ReloadDefaultTileSet1996();
-void PlaceMissileSilo(__int16 m_x, __int16 m_y);
+void ReloadDefaultTileSet_SC2K1996();
+int IsValidSiloPosCheck(__int16 m_x, __int16 m_y);
 void ProposeMilitaryBaseDecline(void);
 void ProposeMilitaryBaseMissileSilos(void);
 void ProposeMilitaryBaseAirForceBase(void);

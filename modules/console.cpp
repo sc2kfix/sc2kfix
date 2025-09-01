@@ -307,9 +307,9 @@ BOOL ConsoleCmdShowMicrosim(const char* szCommand, const char* szArguments) {
 
 	if (!strcmp(szArguments + 9, "list")) {
 		printf("Provisioned microsims:\n");
-		for (int i = 0; i < 150; i++)
-			if (pMicrosimArr[i].bTileID != TILE_CLEAR)
-				printf("  %i: bTileID = %u\n", i, pMicrosimArr[i].bTileID);
+		for (int i = 0; i <= MICROSIMID_MAX; i++)
+			if (GetMicroSimulatorTileID(i) != TILE_CLEAR)
+				printf("  %i: bTileID = %u\n", i, GetMicroSimulatorTileID(i));
 		printf("\n");
 		return TRUE;
 	}
@@ -353,17 +353,17 @@ BOOL ConsoleCmdShowMicrosim(const char* szCommand, const char* szArguments) {
 	}
 
 	if (sscanf_s(szArguments + 9, "%i", &iMicrosimID)) {
-		if (iMicrosimID >= 0 && iMicrosimID < 150) {
+		if (iMicrosimID >= MICROSIMID_MIN && iMicrosimID <= MICROSIMID_MAX) {
 skipscanf:
-			int iTileID = pMicrosimArr[iMicrosimID].bTileID;
+			BYTE iTileID = GetMicroSimulatorTileID(iMicrosimID);
 			printf(
 				"Microsim %i:\n"
-				"  Tile/Building: %s (%i / 0x%02X)\n"
-				"  Data (Byte):   %i\n"
-				"  Data (Word 1): %i\n"
-				"  Data (Word 2): %i\n"
-				"  Data (Word 3): %i\n", iMicrosimID, szTileNames[iTileID], iTileID, iTileID, pMicrosimArr[iMicrosimID].bMicrosimData[0],
-				*(WORD*)(&pMicrosimArr[iMicrosimID].bMicrosimData[1]), *(WORD*)(&pMicrosimArr[iMicrosimID].bMicrosimData[3]), *(WORD*)(&pMicrosimArr[iMicrosimID].bMicrosimData[5]));
+				"  Tile/Building: %s (%u / 0x%02X)\n"
+				"  Data Stat0 (Byte):   %u\n"
+				"  Data Stat1 (Word 1): %u\n"
+				"  Data Stat2 (Word 2): %u\n"
+				"  Data Stat3 (Word 3): %u\n", iMicrosimID, szTileNames[iTileID], iTileID, iTileID, GetMicroSimulatorStat0(iMicrosimID),
+				GetMicroSimulatorStat1(iMicrosimID), GetMicroSimulatorStat2(iMicrosimID), GetMicroSimulatorStat3(iMicrosimID));
 			return TRUE;
 		}
 	}
@@ -514,28 +514,28 @@ BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments) {
 		return TRUE;
 	}
 
-	int iTileX = -1, iTileY = -1;
-	sscanf_s(szArguments + 5, "%i %i", &iTileX, &iTileY);
+	__int16 iTileX = -1, iTileY = -1;
+	sscanf_s(szArguments + 5, "%hi %hi", &iTileX, &iTileY);
 
 	if (iTileX >= 0 && iTileX < GAME_MAP_SIZE && iTileY >= 0 && iTileY < GAME_MAP_SIZE) {
-		int iTileID = dwMapXBLD[iTileX][iTileY].iTileID;
+		BYTE iTileID = GetTileID(iTileX, iTileY);
 
 		char szXBITFormatted[256] = { 0 };
-		if (dwMapXBIT[iTileX][iTileY].b.iPowerable)
+		if (XBITReturnIsPowerable(iTileX, iTileY))
 			strcat_s(szXBITFormatted, 256, "powerable ");
-		if (dwMapXBIT[iTileX][iTileY].b.iPowered)
+		if (XBITReturnIsPowered(iTileX, iTileY))
 			strcat_s(szXBITFormatted, 256, "powered ");
-		if (dwMapXBIT[iTileX][iTileY].b.iPiped)
+		if (XBITReturnIsPiped(iTileX, iTileY))
 			strcat_s(szXBITFormatted, 256, "piped ");
-		if (dwMapXBIT[iTileX][iTileY].b.iWatered)
+		if (XBITReturnIsWatered(iTileX, iTileY))
 			strcat_s(szXBITFormatted, 256, "watered ");
-		if (dwMapXBIT[iTileX][iTileY].b.iXVALMask)
-			strcat_s(szXBITFormatted, 256, "xvalmask ");
-		if (dwMapXBIT[iTileX][iTileY].b.iWater)
+		if (XBITReturnIsMark(iTileX, iTileY))
+			strcat_s(szXBITFormatted, 256, "mark ");
+		if (XBITReturnIsWater(iTileX, iTileY))
 			strcat_s(szXBITFormatted, 256, "water ");
-		if (dwMapXBIT[iTileX][iTileY].b.iRotated)
-			strcat_s(szXBITFormatted, 256, "rotated ");
-		if (dwMapXBIT[iTileX][iTileY].b.iSaltWater)
+		if (XBITReturnIsFlipped(iTileX, iTileY))
+			strcat_s(szXBITFormatted, 256, "flipped ");
+		if (XBITReturnIsSaltWater(iTileX, iTileY))
 			strcat_s(szXBITFormatted, 256, "saltwater ");
 		if (szXBITFormatted[0] == '\0')
 			strcpy_s(szXBITFormatted, 256, "none");
@@ -546,7 +546,7 @@ BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments) {
 			"Tile (%i, %i):\n"
 			"  iTileID: %s (%i / 0x%02X)\n"
 			"  Zone:    %s\n"
-			"  XBIT:    0x%02X (%s)\n", iTileX, iTileY, szTileNames[iTileID], iTileID, iTileID, GetZoneName(dwMapXZON[iTileX][iTileY].b.iZoneType), *(BYTE*)&dwMapXBIT[iTileX][iTileY].b, szXBITFormatted);
+			"  XBIT:    0x%02X (%s)\n", iTileX, iTileY, szTileNames[iTileID], iTileID, iTileID, GetZoneName(XZONReturnZone(iTileX, iTileY)), XBITReturnMask(iTileX, iTileY), szXBITFormatted);
 		return TRUE;
 	}
 
@@ -670,7 +670,7 @@ BOOL ConsoleCmdSetDebug(const char* szCommand, const char* szArguments) {
 BOOL ConsoleCmdSetTile(const char* szCommand, const char* szArguments) {
 	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
 		printf(
-			"  [un]set tile <x> <y> rotate    Enable rotate flag on tile\n");
+			"  [un]set tile <x> <y> flip    Enable flip flag on tile\n");
 		return TRUE;
 	}
 
@@ -679,12 +679,15 @@ BOOL ConsoleCmdSetTile(const char* szCommand, const char* szArguments) {
 		bOperation = FALSE;
 
 	char szTileOperation[12] = { 0 };
-	int iTileX = -1, iTileY = -1;
-	sscanf_s(szArguments, "%i %i %s", &iTileX, &iTileY, szTileOperation, sizeof(szTileOperation));
+	__int16 iTileX = -1, iTileY = -1;
+	sscanf_s(szArguments, "%hi %hi %s", &iTileX, &iTileY, szTileOperation, sizeof(szTileOperation));
 
 	if (iTileX >= 0 && iTileX < GAME_MAP_SIZE && iTileY >= 0 && iTileY < GAME_MAP_SIZE) {
-		if (!strcmp(szTileOperation, "rotate")) {
-			dwMapXBIT[iTileX][iTileY].b.iRotated = bOperation;
+		if (!strcmp(szTileOperation, "flip")) {
+			if (bOperation)
+				XBITSetBits(iTileX, iTileY, XBIT_FLIPPED);
+			else
+				XBITClearBits(iTileX, iTileY, XBIT_FLIPPED);
 			return TRUE;
 		}
 	}

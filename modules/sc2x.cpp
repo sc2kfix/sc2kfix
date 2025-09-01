@@ -835,8 +835,8 @@ extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
 
 	for (int x = 0; x < GAME_MAP_SIZE; x++) {
 		for (int y = 0; y < GAME_MAP_SIZE; y++) {
-			if (dwMapXTXT[x][y].bTextOverlay == 0xFA) {
-				BYTE iTileID = dwMapXBLD[x][y].iTileID;
+			if (XTXTGetTextOverlayID(x, y) == 0xFA) {
+				BYTE iTileID = GetTileID(x, y);
 				if (iTileID >= TILE_RAIL_LR && iTileID < TILE_TUNNEL_T
 					|| iTileID >= TILE_CROSSOVER_ROADLR_RAILTB && iTileID < TILE_SUSPENSION_BRIDGE_START_B
 					|| iTileID >= TILE_HIGHWAY_HTB && iTileID < TILE_REINFORCED_BRIDGE_PYLON)
@@ -849,7 +849,7 @@ extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
 		ConsoleLog(LOG_DEBUG, "SC2X: Loaded %d $1500 neighbor connections.\n", *wCityNeighborConnections1500);
 }
 
-void InstallSaveHooks(void) {
+void InstallSaveHooks_SC2K1996(void) {
 	// Fix city name being overwritten by filename on save
 	BYTE bFilenamePatch[6] = { 0xB9, 0xA0, 0xA1, 0x4C, 0x00, 0x51 };
 	VirtualProtect((LPVOID)0x42FE62, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
