@@ -20,9 +20,6 @@ permissions:
 
 jobs:
   build:
-    strategy:
-      matrix:
-        configuration: [ Release, ReleaseNoKuroko ]
     
     runs-on: windows-latest
 
@@ -44,7 +41,7 @@ jobs:
           Release/winmm.dll
           Release/mods/*.dll
 
-    - name: Build Release
+    - name: Build ReleaseNoKuroko
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: msbuild /m /p:Configuration=ReleaseNoKuroko /t:Rebuild ${{env.SOLUTION_FILE_PATH}}
 
@@ -53,5 +50,5 @@ jobs:
       with:
         name: sc2kfix-dev-nokuroko
         path: |
-          Release/winmm.dll
-          Release/mods/*.dll
+          ReleaseNoKuroko/winmm.dll
+          ReleaseNoKuroko/mods/*.dll
