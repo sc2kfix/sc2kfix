@@ -955,6 +955,12 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 		}
 		return 1;
 	case TILE_INFRASTRUCTURE_CRANE:
+		// This check has been added to prevent a condition whereas the crane fails
+		// to be placed as a result of it being on the edge of the map but the pier
+		// itself is still spawned (REVISIT if the various literal edge-cases end
+		// up being overcome!).
+		if ((x <= 0 || x >= GAME_MAP_SIZE - 1) || (y <= 0 || y >= GAME_MAP_SIZE - 1))
+			return 0;
 		for (iPierTileCount = 0; iPierTileCount < PIER_MAXTILES; iPierTileCount++) {
 			iLengthWays = x + wTilePierLengthWays[iPierTileCount];
 			if (iLengthWays < GAME_MAP_SIZE) {
@@ -994,7 +1000,6 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 			XZONSetNewZone(x, y, iZoneType);
 		if (iZoneType == ZONE_MILITARY && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 			XBITClearBits(x, y, XBIT_WATERED|XBIT_PIPED|XBIT_POWERED|XBIT_POWERABLE);
-		iLengthWays = wTilePierLengthWays[iPierTileCount];
 		if (!iLengthWays)
 			goto PIER_GOTOONE;
 		if (IsEven(wViewRotation))
