@@ -44,6 +44,9 @@ BOOL bSettingsAlwaysSkipIntro = FALSE;
 UINT iSettingsMusicEngineOutput = MUSIC_ENGINE_SEQUENCER;
 char szSettingsFluidSynthSoundfont[MAX_PATH + 1];
 
+char szSettingsMIDITrackPath[MUSIC_TRACKS][MAX_PATH + 1];
+char szSettingsMP3TrackPath[MUSIC_TRACKS][MAX_PATH + 1];
+
 void SetGamePath(void) {
 	char szModulePathName[MAX_PATH];
 	GetModuleFileNameEx(GetCurrentProcess(), NULL, szModulePathName, MAX_PATH);
@@ -140,6 +143,9 @@ void LoadSettings(void) {
 	section = "sc2kfix";
 	char szSectionBuf[32];
 
+	memset(szSettingsMIDITrackPath, 0, sizeof(szSettingsMIDITrackPath));
+	memset(szSettingsMP3TrackPath, 0, sizeof(szSettingsMP3TrackPath));
+
 	// Check for the section presence.
 	if (!GetPrivateProfileSectionA(section, szSectionBuf, sizeof(szSectionBuf) - 1, ini_file)) {
 		// Check to see whether the values existed in the registry so they can be migrated.
@@ -185,6 +191,20 @@ void LoadSettings(void) {
 			ConsoleLog(LOG_INFO, "CORE: Using \"%s\" as FluidSynth soundfont.\n", szSettingsFluidSynthSoundfont);
 	}
 
+	char szKeyBuf[32];
+
+	section = "sc2kfix.music.MIDI";
+	for (int i = 0; i < MUSIC_TRACKS; i++) {
+		sprintf_s(szKeyBuf, sizeof(szKeyBuf), "100%02d", i);
+		GetPrivateProfileStringA(section, szKeyBuf, "", szSettingsMIDITrackPath[i], sizeof(szSettingsMIDITrackPath[i]) - 1, ini_file);
+	}
+
+	section = "sc2kfix.music.MP3";
+	for (int i = 0; i < MUSIC_TRACKS; i++) {
+		sprintf_s(szKeyBuf, sizeof(szKeyBuf), "100%02d", i);
+		GetPrivateProfileStringA(section, szKeyBuf, "", szSettingsMP3TrackPath[i], sizeof(szSettingsMP3TrackPath[i]) - 1, ini_file);
+	}
+
 	SaveSettings(TRUE);
 }
 
@@ -219,6 +239,20 @@ void SaveSettings(BOOL onload) {
 	WritePrivateProfileIntA(section, "bSettingsAlwaysSkipIntro", bSettingsAlwaysSkipIntro, ini_file);
 
 	ConsoleLog(LOG_INFO, "CORE: Saved sc2kfix settings.\n");
+
+	char szKeyBuf[32];
+
+	section = "sc2kfix.music.MIDI";
+	for (int i = 0; i < MUSIC_TRACKS; i++) {
+		sprintf_s(szKeyBuf, sizeof(szKeyBuf), "100%02d", i);
+		WritePrivateProfileStringA(section, szKeyBuf, szSettingsMIDITrackPath[i], ini_file);
+	}
+
+	section = "sc2kfix.music.MP3";
+	for (int i = 0; i < MUSIC_TRACKS; i++) {
+		sprintf_s(szKeyBuf, sizeof(szKeyBuf), "100%02d", i);
+		WritePrivateProfileStringA(section, szKeyBuf, szSettingsMP3TrackPath[i], ini_file);
+	}
 
 	if (!onload) {
 		// Update any hooks we need to.

@@ -96,6 +96,8 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define WM_CONSOLE_REPL	WM_APP+0x200
 #endif
 
+#define MUSIC_TRACKS 19
+
 #define HICOLORCNT 256
 #define LOCOLORCNT 16
 
@@ -264,6 +266,11 @@ extern BOOL bSettingsUseStatusDialog;
 extern BOOL bSettingsTitleCalendar;
 extern BOOL bSettingsUseNewStrings;
 extern BOOL bSettingsAlwaysSkipIntro;
+
+// Music track aliases
+
+extern char szSettingsMIDITrackPath[MUSIC_TRACKS][MAX_PATH + 1];
+extern char szSettingsMP3TrackPath[MUSIC_TRACKS][MAX_PATH + 1];
 
 // Scenario state on-load information
 

@@ -287,6 +287,61 @@ DWORD WINAPI FluidSynthWatchdogThread(LPVOID lpParameter) {
 
 const char* SettingsSaveMusicEngine(UINT iMusicEngine);
 
+static int GetAliasIndexFromSongID(int iSongID) {
+	if (iSongID < 10000 || iSongID > 10018)
+		return -1;
+
+	return iSongID - 10000;
+}
+
+const char *GetGameSoundPath(int iSongID, BOOL bDoMP3) {
+	static std::string strSongPath;
+	BOOL bUseAliasedSong;
+	int iAliasIdx;
+
+	strSongPath = szSoundPath;      // szSoundsPath
+	bUseAliasedSong = FALSE;
+	iAliasIdx = GetAliasIndexFromSongID(iSongID);
+	if (iAliasIdx >= 0 && iAliasIdx <= MUSIC_TRACKS) {
+		unsigned nLen;
+		if (bDoMP3) {
+			if (szSettingsMP3TrackPath[iAliasIdx]) {
+				nLen = strlen(szSettingsMP3TrackPath[iAliasIdx]);
+				if (nLen > 4) {
+					if (_strnicmp(szSettingsMP3TrackPath[iAliasIdx] + nLen - 4, ".mp3", 4) == 0) {
+						strSongPath += szSettingsMP3TrackPath[iAliasIdx];
+						if (FileExists(strSongPath.c_str()))
+							bUseAliasedSong = TRUE;
+					}
+				}
+			}
+		}
+		else {
+			if (szSettingsMIDITrackPath[iAliasIdx]) {
+				nLen = strlen(szSettingsMIDITrackPath[iAliasIdx]);
+				if (nLen > 4) {
+					if (_strnicmp(szSettingsMIDITrackPath[iAliasIdx] + nLen - 4, ".mid", 4) == 0) {
+						strSongPath += szSettingsMIDITrackPath[iAliasIdx];
+						if (FileExists(strSongPath.c_str()))
+							bUseAliasedSong = TRUE;
+					}
+				}
+			}
+		}
+	}
+
+	if (!bUseAliasedSong) {
+		strSongPath = szSoundPath;      // szSoundsPath
+		strSongPath += std::to_string(iSongID);
+		if (bDoMP3)
+			strSongPath += ".mp3";
+		else
+			strSongPath += ".mid";
+	}
+
+	return strSongPath.c_str();
+}
+
 DWORD WINAPI MusicThread(LPVOID lpParameter) {
 	MSG msg;
 	MCIERROR dwMCIError = NULL;
@@ -339,66 +394,68 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 
 			// If we're using FluidSynth, set up a watchdog thread that runs the FluidSynth engine
 			// and waits for it to exit
-			if (bOptionsMusicEnabled && iSettingsMusicEngineOutput == MUSIC_ENGINE_FLUIDSYNTH && hmodFluidSynth) {
-				if (msg.wParam >= 10000 && msg.wParam <= 10018) {
-					iPlayingSongID = msg.wParam;
-					std::string strSongPath = (char*)0x4CDB88;      // szSoundsPath
-					strSongPath += std::to_string(msg.wParam);
-					strSongPath += ".mid";
-					char* szSongPath = _strdup(strSongPath.c_str());
+			if (bOptionsMusicEnabled) {
+				if (iSettingsMusicEngineOutput == MUSIC_ENGINE_FLUIDSYNTH && hmodFluidSynth) {
+					if (msg.wParam >= 10000 && msg.wParam <= 10018) {
+						iPlayingSongID = msg.wParam;
+						const char* szSongPath = GetGameSoundPath(iPlayingSongID, FALSE);
 
-					CreateThread(NULL, 0, FluidSynthWatchdogThread, szSongPath, 0, NULL);
-					goto next;
+						if (szSongPath)
+							CreateThread(NULL, 0, FluidSynthWatchdogThread, (LPVOID)szSongPath, 0, NULL);
+						goto next;
+					}
 				}
-			}
 
-			// Failing all of the above, use MCI to handle MIDI and MP3 playback
-			if (bOptionsMusicEnabled && !mciDevice) {
-				if (msg.wParam >= 10000 && msg.wParam <= 10018) {
-					iPlayingSongID = msg.wParam;
-					std::string strSongPath = (char*)0x4CDB88;      // szSoundsPath
-					BOOL bUseMP3 = FALSE;
-					strSongPath += std::to_string(msg.wParam);
-					if (iSettingsMusicEngineOutput == MUSIC_ENGINE_MP3) {
-						if (FileExists((strSongPath + ".mp3").c_str())) {
-							strSongPath += ".mp3";
-							bUseMP3 = TRUE;
-						} else {
-							ConsoleLog(LOG_ERROR, "MUS:  Could not find music file %s.mp3; failing back to MIDI sequencer.\n", strSongPath);
-							strSongPath += ".mid";
-							bUseMP3 = FALSE;
+				// Failing all of the above, use MCI to handle MIDI and MP3 playback
+				if (!mciDevice) {
+					if (msg.wParam >= 10000 && msg.wParam <= 10018) {
+						iPlayingSongID = msg.wParam;
+						const char* szSongPath = "";
+						BOOL bUseMP3 = FALSE;
+						if (iSettingsMusicEngineOutput == MUSIC_ENGINE_MP3) {
+							szSongPath = GetGameSoundPath(iPlayingSongID, TRUE);
+							if (FileExists(szSongPath))
+								bUseMP3 = TRUE;
+							else {
+								ConsoleLog(LOG_ERROR, "MUS:  Could not find music file %s; failing back to MIDI sequencer.\n", szSongPath);
+								bUseMP3 = FALSE;
+							}
 						}
-					} else
-						strSongPath += ".mid";
 
-					MCI_OPEN_PARMS mciOpenParms = { NULL, NULL, (bUseMP3 ? "mpegvideo" : "sequencer"), strSongPath.c_str(), NULL };
-					dwMCIError = mciSendCommand(NULL, MCI_OPEN, MCI_OPEN_TYPE | MCI_OPEN_ELEMENT, (DWORD_PTR)&mciOpenParms);
-					if (dwMCIError) {
-						char szErrorBuf[MAXERRORLENGTH];
-						mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
-						ConsoleLog(LOG_ERROR, "MUS:  MCI_OPEN failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
-						iPlayingSongID = 0;
-						goto next;
-					}
+						if (!bUseMP3) {
+							szSongPath = GetGameSoundPath(iPlayingSongID, FALSE);
+						}
+						
+						if (!szSongPath)
+							goto next;
 
-					if (mus_debug & MUS_DEBUG_THREAD)
-						ConsoleLog(LOG_DEBUG, "MUS:  Received mciDevice 0x%08X from MCI_OPEN.\n", mciDevice);
+						MCI_OPEN_PARMS mciOpenParms = { NULL, NULL, (bUseMP3 ? "mpegvideo" : "sequencer"), szSongPath, NULL };
+						dwMCIError = mciSendCommand(NULL, MCI_OPEN, MCI_OPEN_TYPE | MCI_OPEN_ELEMENT, (DWORD_PTR)&mciOpenParms);
+						if (dwMCIError) {
+							char szErrorBuf[MAXERRORLENGTH];
+							mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
+							ConsoleLog(LOG_ERROR, "MUS:  MCI_OPEN failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
+							iPlayingSongID = 0;
+							goto next;
+						}
 
-					mciDevice = mciOpenParms.wDeviceID;
-					MCI_PLAY_PARMS mciPlayParms = { (DWORD_PTR)GameGetRootWindowHandle(), NULL, NULL};
-					dwMCIError = mciSendCommand(mciDevice, MCI_PLAY, MCI_NOTIFY, (DWORD_PTR)&mciPlayParms);
-					// SC2K sometimes tries to run over its own sequencer device. We ignore the
-					// error that causes (0x151, MCIERR_SEQ_PORT_INUSE) just like the game itself does.
-					if (dwMCIError && dwMCIError != MCIERR_SEQ_PORT_INUSE) {
-						char szErrorBuf[MAXERRORLENGTH];
-						mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
-						ConsoleLog(LOG_ERROR, "MUS:  MCI_PLAY failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
-						iPlayingSongID = 0;
-						goto next;
+						if (mus_debug & MUS_DEBUG_THREAD)
+							ConsoleLog(LOG_DEBUG, "MUS:  Received mciDevice 0x%08X from MCI_OPEN.\n", mciDevice);
+
+						mciDevice = mciOpenParms.wDeviceID;
+						MCI_PLAY_PARMS mciPlayParms = { (DWORD_PTR)GameGetRootWindowHandle(), NULL, NULL};
+						dwMCIError = mciSendCommand(mciDevice, MCI_PLAY, MCI_NOTIFY, (DWORD_PTR)&mciPlayParms);
+						// SC2K sometimes tries to run over its own sequencer device. We ignore the
+						// error that causes (0x151, MCIERR_SEQ_PORT_INUSE) just like the game itself does.
+						if (dwMCIError && dwMCIError != MCIERR_SEQ_PORT_INUSE) {
+							char szErrorBuf[MAXERRORLENGTH];
+							mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
+							ConsoleLog(LOG_ERROR, "MUS:  MCI_PLAY failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
+							iPlayingSongID = 0;
+							goto next;
+						}
 					}
 				}
-			}
-			else if (bOptionsMusicEnabled) {
 				if (mus_debug & MUS_DEBUG_THREAD && msg.lParam != 1)
 					ConsoleLog(LOG_DEBUG, "MUS:  WM_MUSIC_PLAY message received but MCI is still active; discarding message.\n");
 				goto next;
