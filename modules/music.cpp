@@ -475,9 +475,11 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 						}
 					}
 				}
-				if (mus_debug & MUS_DEBUG_THREAD && msg.lParam != 1)
-					ConsoleLog(LOG_DEBUG, "MUS:  WM_MUSIC_PLAY message received but MCI is still active; discarding message.\n");
-				goto next;
+				else {
+					if (mus_debug & MUS_DEBUG_THREAD && msg.lParam != 1)
+						ConsoleLog(LOG_DEBUG, "MUS:  WM_MUSIC_PLAY message received but MCI is still active; discarding message.\n");
+					goto next;
+				}
 			}
 		}
 		else if (msg.message == WM_MUSIC_RESET) {
