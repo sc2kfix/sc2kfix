@@ -197,12 +197,14 @@ void LoadSettings(void) {
 	for (int i = 0; i < MUSIC_TRACKS; i++) {
 		sprintf_s(szKeyBuf, sizeof(szKeyBuf), "100%02d", i);
 		GetPrivateProfileStringA(section, szKeyBuf, "", szSettingsMIDITrackPath[i], sizeof(szSettingsMIDITrackPath[i]) - 1, ini_file);
+		StrTrimA(szSettingsMIDITrackPath[i], " \t\r\n");
 	}
 
 	section = "sc2kfix.music.MP3";
 	for (int i = 0; i < MUSIC_TRACKS; i++) {
 		sprintf_s(szKeyBuf, sizeof(szKeyBuf), "100%02d", i);
 		GetPrivateProfileStringA(section, szKeyBuf, "", szSettingsMP3TrackPath[i], sizeof(szSettingsMP3TrackPath[i]) - 1, ini_file);
+		StrTrimA(szSettingsMP3TrackPath[i], " \t\r\n");
 	}
 
 	SaveSettings(TRUE);
@@ -245,12 +247,14 @@ void SaveSettings(BOOL onload) {
 	section = "sc2kfix.music.MIDI";
 	for (int i = 0; i < MUSIC_TRACKS; i++) {
 		sprintf_s(szKeyBuf, sizeof(szKeyBuf), "100%02d", i);
+		StrTrimA(szSettingsMIDITrackPath[i], " \t\r\n");
 		WritePrivateProfileStringA(section, szKeyBuf, szSettingsMIDITrackPath[i], ini_file);
 	}
 
 	section = "sc2kfix.music.MP3";
 	for (int i = 0; i < MUSIC_TRACKS; i++) {
 		sprintf_s(szKeyBuf, sizeof(szKeyBuf), "100%02d", i);
+		StrTrimA(szSettingsMP3TrackPath[i], " \t\r\n");
 		WritePrivateProfileStringA(section, szKeyBuf, szSettingsMP3TrackPath[i], ini_file);
 	}
 

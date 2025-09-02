@@ -294,49 +294,68 @@ static int GetAliasIndexFromSongID(int iSongID) {
 	return iSongID - 10000;
 }
 
-const char *GetGameSoundPath(int iSongID, BOOL bDoMP3) {
+static BOOL ValidateFilename(const char *pName, const char *pExt) {
+	unsigned nNameLen, nExtLen;
+
+	if (!pName)
+		return FALSE;
+
+	if (!pExt)
+		return FALSE;
+
+	// No going up a level, or just referencing the current level.
+	if (strstr(pName, "..") || _stricmp(pName, "..") == 0 || _stricmp(pName, ".") == 0)
+		return FALSE;
+
+	// No path level or drive letter separation characters.
+	if (strchr(pName, '\\') || strchr(pName, '/') || strchr(pName, ':'))
+		return FALSE;
+
+	// No
+	nExtLen = strlen(pExt);
+	if (nExtLen <= 1)
+		return FALSE;
+
+	// The first extension character must be '.'
+	if (pExt[0] != '.')
+		return FALSE;
+
+	// Name length must be greater than the extension length.
+	nNameLen = strlen(pName);
+	if (nNameLen > nExtLen) {
+		nNameLen -= nExtLen;
+		if (_strnicmp(pName + nNameLen, pExt, nExtLen) == 0) {
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+static const char *GetGameSoundPath(int iSongID, BOOL bDoMP3) {
+	const char *pExt;
 	static std::string strSongPath;
 	BOOL bUseAliasedSong;
 	int iAliasIdx;
 
-	strSongPath = szSoundPath;      // szSoundsPath
+	pExt = (bDoMP3) ? ".mp3" : ".mid";
+	strSongPath = szSoundPath;
 	bUseAliasedSong = FALSE;
 	iAliasIdx = GetAliasIndexFromSongID(iSongID);
 	if (iAliasIdx >= 0 && iAliasIdx <= MUSIC_TRACKS) {
-		unsigned nLen;
-		if (bDoMP3) {
-			if (szSettingsMP3TrackPath[iAliasIdx]) {
-				nLen = strlen(szSettingsMP3TrackPath[iAliasIdx]);
-				if (nLen > 4) {
-					if (_strnicmp(szSettingsMP3TrackPath[iAliasIdx] + nLen - 4, ".mp3", 4) == 0) {
-						strSongPath += szSettingsMP3TrackPath[iAliasIdx];
-						if (FileExists(strSongPath.c_str()))
-							bUseAliasedSong = TRUE;
-					}
-				}
-			}
-		}
-		else {
-			if (szSettingsMIDITrackPath[iAliasIdx]) {
-				nLen = strlen(szSettingsMIDITrackPath[iAliasIdx]);
-				if (nLen > 4) {
-					if (_strnicmp(szSettingsMIDITrackPath[iAliasIdx] + nLen - 4, ".mid", 4) == 0) {
-						strSongPath += szSettingsMIDITrackPath[iAliasIdx];
-						if (FileExists(strSongPath.c_str()))
-							bUseAliasedSong = TRUE;
-					}
-				}
-			}
+		const char *pName = (bDoMP3) ? szSettingsMP3TrackPath[iAliasIdx] : szSettingsMIDITrackPath[iAliasIdx];
+		if (ValidateFilename(pName, pExt)) {
+			strSongPath += pName;
+			if (FileExists(strSongPath.c_str()))
+				bUseAliasedSong = TRUE;
 		}
 	}
 
 	if (!bUseAliasedSong) {
-		strSongPath = szSoundPath;      // szSoundsPath
+		// Set back to szSoundPath before appending.
+		strSongPath = szSoundPath;
 		strSongPath += std::to_string(iSongID);
-		if (bDoMP3)
-			strSongPath += ".mp3";
-		else
-			strSongPath += ".mid";
+		strSongPath += pExt;
 	}
 
 	return strSongPath.c_str();
