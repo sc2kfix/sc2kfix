@@ -16,6 +16,9 @@
 
 static DWORD dwDummy;
 
+json::JSON jsonSettingsCore;
+json::JSON jsonSettingsMods;
+
 char szGamePath[MAX_PATH];
 
 char szSettingsMayorName[64];
@@ -54,6 +57,35 @@ const char *GetIniPath() {
 
 	sprintf_s(szIniPath, MAX_PATH, "%s\\%s", szGamePath, SC2KFIX_INIFILE);
 	return szIniPath;
+}
+
+void InitializeSettings(void) {
+	// Initialize JSON objects
+	jsonSettingsCore = json::Object();
+	jsonSettingsMods = json::Object();
+
+	// Set up original SC2K settings
+	jsonSettingsCore["SimCity2000"]["Version"]["SCURK"] = 256;
+	jsonSettingsCore["SimCity2000"]["Version"]["SimCity 2000"] = 256;
+	jsonSettingsCore["SimCity2000"]["Localize"]["Language"] = "USA";
+
+	jsonSettingsCore["SimCity2000"]["Options"]["Disasters"] = 1;
+	jsonSettingsCore["SimCity2000"]["Options"]["Music"] = 1;
+	jsonSettingsCore["SimCity2000"]["Options"]["Sound"] = 1;
+	jsonSettingsCore["SimCity2000"]["Options"]["AutoGoto"] = 1;
+	jsonSettingsCore["SimCity2000"]["Options"]["AutoBudget"] = 0;
+	jsonSettingsCore["SimCity2000"]["Options"]["AutoSave"] = 0;
+	jsonSettingsCore["SimCity2000"]["Options"]["Speed"] = 0;
+
+	jsonSettingsCore["SimCity2000"]["SCURK"]["CycleColors"] = 0;
+	jsonSettingsCore["SimCity2000"]["SCURK"]["GridHeight"] = 0;
+	jsonSettingsCore["SimCity2000"]["SCURK"]["GridWidth"] = 0;
+	jsonSettingsCore["SimCity2000"]["SCURK"]["ShowClipRegion"] = 0;
+	jsonSettingsCore["SimCity2000"]["SCURK"]["ShowDrawGrid"] = 0;
+	jsonSettingsCore["SimCity2000"]["SCURK"]["SnapToGrid"] = 0;
+	jsonSettingsCore["SimCity2000"]["SCURK"]["Sound"] = 0;
+
+	jsonSettingsCore["SimCity2000"]["Windows"]["Last Color Depth"] = 32;
 }
 
 static void MigrateSC2KFixSettings(void) {

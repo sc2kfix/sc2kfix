@@ -241,6 +241,9 @@ extern char szGamePath[MAX_PATH];
 
 // Settings globals
 
+extern json::JSON jsonSettingsCore;
+extern json::JSON jsonSettingsMods;
+
 extern char szSettingsMayorName[64];
 extern char szSettingsCompanyName[64];
 
@@ -310,11 +313,12 @@ void PorntipsGuzzardo(void);
 LONG WINAPI CrashHandler(LPEXCEPTION_POINTERS lpExceptions);
 BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
-void LoadStoredPaths();
-void SaveStoredPaths();
+void LoadStoredPaths(void);
+void SaveStoredPaths(void);
 int DoRegistryCheckAndInstall(void);
 void SetGamePath(void);
-const char *GetIniPath();
+const char *GetIniPath(void);
+void InitializeSettings(void);
 void LoadSettings(void);
 void SaveSettings(BOOL onload);
 void ShowSettingsDialog(void);

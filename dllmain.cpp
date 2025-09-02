@@ -257,6 +257,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Load the FluidSynth library in case we need it
 		MusicLoadFluidSynth();
 
+		// Initialize settings
+		InitializeSettings();
+
 		// Load settings
 		if (!bSkipLoadSettings)
 			LoadSettings();
