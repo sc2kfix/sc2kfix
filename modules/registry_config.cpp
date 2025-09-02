@@ -90,13 +90,34 @@ BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 	return FALSE;
 }
 
-static void InstallSC2KDefaults(void) {
+static BOOL InstallSC2KDefaults(void) {
 	const char* ini_file = GetIniPath();
 	const char* section;
+	char szTemp[63 + 1];
+	int nRegEnts = 0;
 
+	section = "Registration";
+
+	memset(szTemp, 0, sizeof(szTemp));
+	if (GetPrivateProfileStringA(section, "Mayor Name", "", szTemp, sizeof(szTemp) - 1, ini_file) > 0) {
+		if (szTemp[0] && strlen(szTemp) > 0)
+			nRegEnts++;
+	}
+
+	memset(szTemp, 0, sizeof(szTemp));
+	if (GetPrivateProfileStringA(section, "Company Name", "", szTemp, sizeof(szTemp) - 1, ini_file) > 0) {
+		if (szTemp[0] && strlen(szTemp) > 0)
+			nRegEnts++;
+	}
+
+	// If 'Installed' returns 1 and both the mayor/company entries are defined
+	// return false (nothing needs to be done), otherwise in either case proceed
+	// with the installation process and reset the referenced settings below
+	// to their defaults.
 	section = "Portable";
 	if (GetPrivateProfileIntA(section, "Installed", 0, ini_file) == 1) {
-		return;
+		if (nRegEnts == 2)
+			return FALSE;
 	}
 
 	WritePrivateProfileIntA(section, "Installed", 1, ini_file);
@@ -123,7 +144,7 @@ static void InstallSC2KDefaults(void) {
 	WritePrivateProfileIntA(section, "AutoGoto", TRUE, ini_file);
 	WritePrivateProfileIntA(section, "AutoBudget", FALSE, ini_file);
 	WritePrivateProfileIntA(section, "AutoSave", FALSE, ini_file);
-	WritePrivateProfileIntA(section, "Speed", 2, ini_file);
+	WritePrivateProfileIntA(section, "Speed", GAME_SPEED_TURTLE, ini_file);
 
 	// Write default SCURK options
 	section = "SCURK";
@@ -136,168 +157,11 @@ static void InstallSC2KDefaults(void) {
 	WritePrivateProfileIntA(section, "Sound", 1, ini_file);
 
 	SaveSettings(TRUE);
+	return TRUE;
 }
 
-static void MigrateSC2KRegistration(HKEY hKeySC2KReg) {
-	const char* ini_file = GetIniPath();
-	const char* section = "Registration";
-
-	MigrateRegStringValue(hKeySC2KReg, NULL, "Mayor Name", szSettingsMayorName, sizeof(szSettingsMayorName));
-	WritePrivateProfileStringA(section, "Mayor Name", szSettingsMayorName, ini_file);
-
-	MigrateRegStringValue(hKeySC2KReg, NULL, "Company Name", szSettingsCompanyName, sizeof(szSettingsCompanyName));
-	WritePrivateProfileStringA(section, "Company Name", szSettingsCompanyName, ini_file);
-}
-
-static void MigrateSC2KVersion(void) {
-	DWORD dwOut;
-	const char* ini_file = GetIniPath();
-	const char* section = "Version";
-	char szKeyName[128+1];
-
-	memset(szKeyName, 0, sizeof(szKeyName));
-
-	sprintf_s(szKeyName, sizeof(szKeyName)-1, "Software\\Maxis\\%s\\%s", gamePrimaryKey, section);
-
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "SCURK", &dwOut, sizeof(DWORD));
-	WritePrivateProfileIntA(section, "SCURK", dwOut, ini_file);
-
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "SimCity 2000", &dwOut, sizeof(DWORD));
-	WritePrivateProfileIntA(section, "SimCity 2000", dwOut, ini_file);
-}
-
-static void MigrateSC2KLocalize(void) {
-	const char* ini_file = GetIniPath();
-	const char* section = "Localize";
-	char szKeyName[128+1];
-
-	memset(szKeyName, 0, sizeof(szKeyName));
-
-	sprintf_s(szKeyName, sizeof(szKeyName)-1, "Software\\Maxis\\%s\\%s", gamePrimaryKey, section);
-
-	char szOutBuf[16];
-	MigrateRegStringValue(HKEY_CURRENT_USER, szKeyName, "Language", szOutBuf, sizeof(szOutBuf));
-	WritePrivateProfileStringA(section, "Language", szOutBuf, ini_file);
-}
-
-static void MigrateSC2KOptions(void) {
-	DWORD dwOut;
-	const char* ini_file = GetIniPath();
-	const char* section = "Options";
-	char szKeyName[128+1];
-
-	memset(szKeyName, 0, sizeof(szKeyName));
-
-	sprintf_s(szKeyName, sizeof(szKeyName)-1, "Software\\Maxis\\%s\\%s", gamePrimaryKey, section);
-
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "Disasters", &dwOut, sizeof(BOOL));
-	WritePrivateProfileIntA(section, "Disasters", dwOut, ini_file);
-
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "Music", &dwOut, sizeof(BOOL));
-	WritePrivateProfileIntA(section, "Music", dwOut, ini_file);
-
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "Sound", &dwOut, sizeof(BOOL));
-	WritePrivateProfileIntA(section, "Sound", dwOut, ini_file);
-
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "AutoGoto", &dwOut, sizeof(BOOL));
-	WritePrivateProfileIntA(section, "AutoGoto", dwOut, ini_file);
-
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "AutoBudget", &dwOut, sizeof(BOOL));
-	WritePrivateProfileIntA(section, "AutoBudget", dwOut, ini_file);
-
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "AutoSave", &dwOut, sizeof(BOOL));
-	WritePrivateProfileIntA(section, "AutoSave", dwOut, ini_file);
-
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "Speed", &dwOut, sizeof(BOOL));
-	WritePrivateProfileIntA(section, "Speed", dwOut, ini_file);
-}
-
-static void MigrateSC2KSCURK(void) {
-	DWORD dwOut;
-	const char* ini_file = GetIniPath();
-	const char* section = "SCURK";
-	char szKeyName[128+1];
-
-	memset(szKeyName, 0, sizeof(szKeyName));
-
-	sprintf_s(szKeyName, sizeof(szKeyName)-1, "Software\\Maxis\\%s\\%s", gamePrimaryKey, section);
-
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "CycleColors", &dwOut, sizeof(DWORD));
-	WritePrivateProfileIntA(section, "CycleColors", dwOut, ini_file);
-
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "GridHeight", &dwOut, sizeof(DWORD));
-	WritePrivateProfileIntA(section, "GridHeight", dwOut, ini_file);
-
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "GridWidth", &dwOut, sizeof(DWORD));
-	WritePrivateProfileIntA(section, "GridWidth", dwOut, ini_file);
-
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "ShowClipRegion", &dwOut, sizeof(DWORD));
-	WritePrivateProfileIntA(section, "ShowClipRegion", dwOut, ini_file);
-
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "ShowDrawGrid", &dwOut, sizeof(DWORD));
-	WritePrivateProfileIntA(section, "ShowDrawGrid", dwOut, ini_file);
-
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "SnapToGrid", &dwOut, sizeof(DWORD));
-	WritePrivateProfileIntA(section, "SnapToGrid", dwOut, ini_file);
-
-	MigrateRegDWORDValue(HKEY_CURRENT_USER, szKeyName, "Sound", &dwOut, sizeof(DWORD));
-	WritePrivateProfileIntA(section, "Sound", dwOut, ini_file);
-}
-
-static void MigrateFinalize(void) {
-	const char* ini_file = GetIniPath();
-	const char* section = "Portable";
-
-	WritePrivateProfileIntA(section, "Installed", 1, ini_file);
-}
-
-int DoRegistryCheckAndInstall(void) {
-	int ret;
-	char szKeyName[128+1];
-
-	memset(szKeyName, 0, sizeof(szKeyName));
-
-	sprintf_s(szKeyName, sizeof(szKeyName)-1, "Software\\Maxis\\%s\\%s", gamePrimaryKey, "Registration");
-
-	HKEY hKeySC2KRegistration;
-	LSTATUS lResultRegistration = RegOpenKeyExA(HKEY_CURRENT_USER, szKeyName, NULL, KEY_ALL_ACCESS, &hKeySC2KRegistration);
-	if (lResultRegistration != ERROR_SUCCESS) {
-		// Let's install.
-		InstallSC2KDefaults();
-		return 0;
-	}
-
-	ret = 0;
-	if (szSettingsMayorName[0] == 0 ||
-		szSettingsCompanyName[0] == 0) {
-		if (RegQueryValueEx(hKeySC2KRegistration, "Mayor Name", NULL, NULL, NULL, NULL) == ERROR_FILE_NOT_FOUND ||
-			RegQueryValueEx(hKeySC2KRegistration, "Company Name", NULL, NULL, NULL, NULL) == ERROR_FILE_NOT_FOUND) {
-
-			// Fake an install.
-
-			InstallSC2KDefaults();
-
-			// Signal that we had to fake an install.
-			ret = 2;
-		}
-		else {
-
-			// Migrate from registry to ini.
-			MigrateSC2KRegistration(hKeySC2KRegistration);
-
-			MigrateSC2KVersion();
-			MigrateSC2KLocalize();
-			MigrateSC2KOptions();
-			MigrateSC2KSCURK();
-			MigrateFinalize();
-
-			SaveSettings(TRUE);
-			ret = 1;
-		}
-	}
-
-	RegCloseKey(hKeySC2KRegistration);
-	return ret;
+int DoCheckAndInstall(void) {
+	return InstallSC2KDefaults();
 }
 
 void LoadStoredPaths() {
