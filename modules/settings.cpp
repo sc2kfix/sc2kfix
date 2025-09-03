@@ -304,10 +304,6 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 
 		// Set the tab order for the dialog controls
 		SetSettingsTabOrdering(hwndDlg);
-		
-		// Save some of the music engine settings for later
-		iOriginalSettingsMusicEngineOutput = iSettingsMusicEngineOutput;
-		szOriginalSettingsFluidSynthSoundfont = _strdup(szSettingsFluidSynthSoundfont);
 
 		// Inject the music engine crap
 		ComboBox_AddString(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT), "None");			// MUSIC_ENGINE_NONE
@@ -420,8 +416,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 
 	// Close without saving if the dialog is closed via the menu bar close button or Alt+F4
 	case WM_CLOSE:
-		free(szOriginalSettingsFluidSynthSoundfont);
-		EndDialog(hwndDlg, wParam);
+		EndDialog(hwndDlg, FALSE);
 		break;
 
 	case WM_COMMAND:
@@ -450,20 +445,10 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			bSettingsUseNewStrings = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS));
 			bSettingsAlwaysSkipIntro = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SKIP_INTRO));
 
-			// Save the settings
-			SaveSettings(FALSE);
-
-			// See if we need to reset the music engine.
-			if (dwMusicThreadID && (iSettingsMusicEngineOutput != iOriginalSettingsMusicEngineOutput ||
-				strcmp(szOriginalSettingsFluidSynthSoundfont, szSettingsFluidSynthSoundfont)))
-				PostThreadMessage(dwMusicThreadID, WM_MUSIC_RESET, NULL, NULL);
-
-			free(szOriginalSettingsFluidSynthSoundfont);
-			EndDialog(hwndDlg, wParam);
+			EndDialog(hwndDlg, TRUE);
 			break;
 		case ID_SETTINGS_CANCEL:
-			free(szOriginalSettingsFluidSynthSoundfont);
-			EndDialog(hwndDlg, wParam);
+			EndDialog(hwndDlg, FALSE);
 			break;
 		case ID_SETTINGS_DEFAULTS:
 			// Set all the checkboxes to the defaults.
@@ -516,6 +501,10 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 				}
 			}
 			break;
+		case IDC_SETTINGS_BUTTON_CONFMIDTRACKS:
+			return DoConfigureMusicTracks(hwndDlg, FALSE);
+		case IDC_SETTINGS_BUTTON_CONFMP3TRACKS:
+			return DoConfigureMusicTracks(hwndDlg, TRUE);
 		}
 		return TRUE;
 	}
@@ -525,7 +514,21 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 void ShowSettingsDialog(void) {
 	ToggleFloatingStatusDialog(FALSE);
 
-	DialogBox(hSC2KFixModule, MAKEINTRESOURCE(IDD_SETTINGS), GameGetRootWindowHandle(), SettingsDialogProc);
+	// Save some of the music engine settings for later
+	iOriginalSettingsMusicEngineOutput = iSettingsMusicEngineOutput;
+	szOriginalSettingsFluidSynthSoundfont = _strdup(szSettingsFluidSynthSoundfont);
+
+	if (DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_SETTINGS), GameGetRootWindowHandle(), SettingsDialogProc, (LPARAM)dwDummy) == TRUE) {
+		// Save the settings
+		SaveSettings(FALSE);
+
+		// See if we need to reset the music engine.
+		if (dwMusicThreadID && (iSettingsMusicEngineOutput != iOriginalSettingsMusicEngineOutput ||
+			strcmp(szOriginalSettingsFluidSynthSoundfont, szSettingsFluidSynthSoundfont)))
+			PostThreadMessage(dwMusicThreadID, WM_MUSIC_RESET, NULL, NULL);
+	}
+
+	free(szOriginalSettingsFluidSynthSoundfont);
 
 	ToggleFloatingStatusDialog(TRUE);
 }

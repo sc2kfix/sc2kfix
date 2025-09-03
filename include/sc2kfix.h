@@ -336,6 +336,7 @@ BOOL UpdaterCheckForUpdates(void);
 DWORD WINAPI UpdaterThread(LPVOID lpParameter);
 BOOL MusicLoadFluidSynth(void);
 void DoMusicPlay(int iSongID, BOOL bInterrupt);
+BOOL DoConfigureMusicTracks(HWND hDlg, BOOL bMP3);
 
 BOOL WINAPI ConsoleCtrlHandler(DWORD fdwCtrlType);
 DWORD WINAPI ConsoleThread(LPVOID lpParameter);
