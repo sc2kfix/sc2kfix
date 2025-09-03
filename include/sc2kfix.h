@@ -334,6 +334,8 @@ void ToggleGotoButton(HWND hWndBut, BOOL bEnable);
 void LoadReplacementSounds(void);
 BOOL UpdaterCheckForUpdates(void);
 DWORD WINAPI UpdaterThread(LPVOID lpParameter);
+const char *GetGameSoundPath();
+int GetCurrentActiveSongID();
 BOOL MusicLoadFluidSynth(void);
 void DoMusicPlay(int iSongID, BOOL bInterrupt);
 BOOL DoConfigureMusicTracks(HWND hDlg, BOOL bMP3);

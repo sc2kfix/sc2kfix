@@ -80,6 +80,14 @@ fluid_log_function_t (*FS_fluid_set_log_function)(int level, fluid_log_function_
 int (*FS_fluid_settings_setint)(fluid_settings_t* settings, const char* name, int val);
 int (*FS_fluid_settings_setnum)(fluid_settings_t* settings, const char* name, double val);
 
+const char *GetGameSoundPath() {
+	return szSoundPath;
+}
+
+int GetCurrentActiveSongID() {
+	return iPlayingSongID;
+}
+
 void MusicShufflePlaylist(int iLastSongPlayed) {
 	if (bSettingsShuffleMusic) {
 		do {
