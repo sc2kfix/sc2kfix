@@ -32,6 +32,7 @@ UINT registry_debug = REGISTRY_DEBUG;
 #define REG_KEY_BASE 0x80000040UL
 
 enum redirected_keys_t {
+	enSoftwareKey,
 	enMaxisKey,
 	enSC2KKey,
 	enPathsKey,
@@ -181,7 +182,7 @@ void SaveStoredPaths() {
 }
 
 static BOOL IsRegKey(HKEY hKey, int rkVal) {
-	if (rkVal < enMaxisKey || rkVal >= enCountKey)
+	if (rkVal < enSoftwareKey || rkVal >= enCountKey)
 		return FALSE;
 
 	if (hKey == (HKEY)(REG_KEY_BASE + (rkVal)))
@@ -191,7 +192,7 @@ static BOOL IsRegKey(HKEY hKey, int rkVal) {
 }
 
 static BOOL IsFakeRegKey(unsigned long ulKey) {
-	if ((ulKey) >= (REG_KEY_BASE + enMaxisKey) && (ulKey) < (REG_KEY_BASE + enCountKey))
+	if ((ulKey) >= (REG_KEY_BASE + enSoftwareKey) && (ulKey) < (REG_KEY_BASE + enCountKey))
 		return TRUE;
 
 	return FALSE;
@@ -209,11 +210,15 @@ static BOOL RegLookup(const char *lpSubKey, unsigned long *ulKey) {
 	BOOL ret;
 
 	ret = FALSE;
-	if (strcmp(lpSubKey, "Maxis") == 0) {
+	if (_stricmp(lpSubKey, "Software") == 0) {
+		*ulKey = enSoftwareKey;
+		ret = TRUE;
+	}
+	else if (_stricmp(lpSubKey, "Maxis") == 0) {
 		*ulKey = enMaxisKey;
 		ret = TRUE;
 	}
-	else if (strcmp(lpSubKey, gamePrimaryKey) == 0) {
+	else if (_stricmp(lpSubKey, gamePrimaryKey) == 0) {
 		*ulKey = enSC2KKey;
 		ret = TRUE;
 	}
@@ -506,6 +511,21 @@ extern "C" LSTATUS __stdcall Hook_RegCreateKeyExA(HKEY hKey, LPCSTR lpSubKey, DW
 	return RegCreateKeyExA(hKey, lpSubKey, dwReserved, lpClass, dwOptions, samDesired, lpSecurityAttributes, phkResult, lpdwDisposition);
 }
 
+extern "C" LSTATUS __stdcall Hook_RegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {
+	unsigned long ulKey;
+	
+	ulKey = 0;
+	if (RegLookup(lpSubKey, &ulKey)) {
+		*phkResult = (HKEY)(REG_KEY_BASE + ulKey);
+		return ERROR_SUCCESS;
+	}
+
+	if (registry_debug & REGISTRY_DEBUG_REGISTRY)
+		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> RegOpenKeyExA(0x%08x, %s, ...)\n", _ReturnAddress(), hKey, lpSubKey);
+
+	return RegOpenKeyExA(hKey, lpSubKey, ulOptions, samDesired, phkResult);
+}
+
 extern "C" LSTATUS __stdcall Hook_RegCloseKey(HKEY hKey) {
 	if (IsFakeRegKey((unsigned long)hKey))
 		return ERROR_SUCCESS;
@@ -574,6 +594,9 @@ void InstallRegistryPathingHooks_SC2K1996(void) {
 	// Install RegCloseKey hook
 	*(DWORD*)(0x4EF810) = (DWORD)Hook_RegCloseKey;
 
+	// Install RegOpenKeyExA
+	*(DWORD*)(0x4EF818) = (DWORD)Hook_RegOpenKeyExA;
+
 	// Install CreateFileA hook
 	*(DWORD*)(0x4EFADC) = (DWORD)Hook_CreateFileA;
 
@@ -584,11 +607,14 @@ void InstallRegistryPathingHooks_SC2K1996(void) {
 void InstallRegistryPathingHooks_SC2K1995(void) {
 	iRegPathHookMode = REGPATH_SC2K1995;
 
-	// Install RegSetValueExA hook
-	*(DWORD*)(0X4EE7A8) = (DWORD)Hook_RegSetValueExA;
+	// Install RegOpenKeyExA
+	*(DWORD*)(0x4EE79C) = (DWORD)Hook_RegOpenKeyExA;
 
 	// Install RegQueryValueExA hook
 	*(DWORD*)(0x4EE7A4) = (DWORD)Hook_RegQueryValueExA;
+
+	// Install RegSetValueExA hook
+	*(DWORD*)(0X4EE7A8) = (DWORD)Hook_RegSetValueExA;
 
 	// Install RegCreateKeyExA hook
 	*(DWORD*)(0x4EE7A0) = (DWORD)Hook_RegCreateKeyExA;
@@ -600,11 +626,14 @@ void InstallRegistryPathingHooks_SC2K1995(void) {
 void InstallRegistryPathingHooks_SC2KDemo(void) {
 	iRegPathHookMode = REGPATH_SC2KDEMO;
 
-	// Install RegSetValueExA hook
-	*(DWORD*)(0X4D7768) = (DWORD)Hook_RegSetValueExA;
-
 	// Install RegQueryValueExA hook
 	*(DWORD*)(0x4D7760) = (DWORD)Hook_RegQueryValueExA;
+
+	// Install RegOpenKeyExA
+	*(DWORD*)(0x4D7764) = (DWORD)Hook_RegOpenKeyExA;
+
+	// Install RegSetValueExA hook
+	*(DWORD*)(0X4D7768) = (DWORD)Hook_RegSetValueExA;
 
 	// Install RegCreateKeyExA hook
 	*(DWORD*)(0x4D776C) = (DWORD)Hook_RegCreateKeyExA;
