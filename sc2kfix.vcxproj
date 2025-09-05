@@ -186,6 +186,7 @@
     <ClCompile Include="modules\scurkfix.cpp" />
     <ClCompile Include="modules\settings.cpp" />
     <ClCompile Include="modules\status_dialog.cpp" />
+    <ClCompile Include="modules\track_config.cpp" />
     <ClCompile Include="modules\update_notifier.cpp" />
     <ClCompile Include="modules\smk.cpp" />
     <ClCompile Include="modules\scenario_status.cpp" />

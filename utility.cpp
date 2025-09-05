@@ -208,21 +208,6 @@ HOOKEXT const char* GetOnIdleStateEnumName(int iState) {
 	return szOnIdleStateEnums[iState + 1];
 }
 
-void MigrateRegStringValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, char *szOutBuf, DWORD dwLen) {
-	DWORD dwOutBufLen = dwLen;
-	RegGetValueA(hKey, lpSubKey, lpValueName, RRF_RT_REG_SZ, NULL, szOutBuf, &dwOutBufLen);
-}
-
-void MigrateRegDWORDValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, DWORD *dwOut, DWORD dwSize) {
-	DWORD dwOutSize = dwSize;
-	RegGetValueA(hKey, lpSubKey, lpValueName, RRF_RT_REG_DWORD, NULL, dwOut, &dwOutSize);
-}
-
-void MigrateRegBOOLValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, BOOL *bOut) {
-	DWORD dwOutSize = sizeof(BOOL);
-	RegGetValueA(hKey, lpSubKey, lpValueName, RRF_RT_REG_DWORD, NULL, bOut, &dwOutSize);
-}
-
 // start of base64 code
 /*
 * Base64 encoding/decoding (RFC1341)
