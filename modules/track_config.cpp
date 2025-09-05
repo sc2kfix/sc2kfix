@@ -23,7 +23,7 @@
   _macro_lvi.mask = (tmask);\
   _macro_lvi.iItem = (i);\
   _macro_lvi.iSubItem = 0;\
-  _macro_lvi.pszText = "";\
+  _macro_lvi.pszText = (char *)"";\
   SNDMSG((hwndLV), LVM_INSERTITEM, (WPARAM)(i), (LPARAM)(LV_ITEM *)&_macro_lvi);\
 }
 
@@ -34,7 +34,7 @@
   _macro_lvc.mask = (tmask);\
   _macro_lvc.fmt = (cfmt);\
   _macro_lvc.iSubItem = (i);\
-  _macro_lvc.pszText = (text);\
+  _macro_lvc.pszText = (char *)(text);\
   _macro_lvc.cx = (width);\
   (int)SNDMSG((hwndLV), LVM_INSERTCOLUMN, (WPARAM)(i), (LPARAM)(LV_COLUMN *)&_macro_lvc);\
 }
