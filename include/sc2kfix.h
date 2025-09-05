@@ -226,7 +226,6 @@ typedef struct {
 	BOOL bSettingsMusicInBackground;
 	BOOL bSettingsUseSoundReplacements;
 	BOOL bSettingsShuffleMusic;
-	BOOL bSettingsUseMultithreadedMusic;
 	BOOL bSettingsFrequentCityRefresh;
 	BOOL bSettingsUseMP3Music;
 	BOOL bSettingsAlwaysPlayMusic;

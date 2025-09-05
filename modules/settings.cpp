@@ -521,7 +521,6 @@ void ShowSettingsDialog(void) {
 	st.bSettingsMusicInBackground = bSettingsMusicInBackground;
 	st.bSettingsUseSoundReplacements = bSettingsUseSoundReplacements;
 	st.bSettingsShuffleMusic = bSettingsShuffleMusic;
-	st.bSettingsUseMultithreadedMusic = bSettingsUseMultithreadedMusic;
 	st.bSettingsFrequentCityRefresh = bSettingsFrequentCityRefresh;
 	st.bSettingsUseMP3Music = bSettingsUseMP3Music;
 	st.bSettingsAlwaysPlayMusic = bSettingsAlwaysPlayMusic;
@@ -554,7 +553,6 @@ void ShowSettingsDialog(void) {
 		bSettingsMusicInBackground = st.bSettingsMusicInBackground;
 		bSettingsUseSoundReplacements = st.bSettingsUseSoundReplacements;
 		bSettingsShuffleMusic = st.bSettingsShuffleMusic;
-		bSettingsUseMultithreadedMusic = st.bSettingsUseMultithreadedMusic;
 		bSettingsFrequentCityRefresh = st.bSettingsFrequentCityRefresh;
 		bSettingsUseMP3Music = st.bSettingsUseMP3Music;
 		bSettingsAlwaysPlayMusic = st.bSettingsAlwaysPlayMusic;
