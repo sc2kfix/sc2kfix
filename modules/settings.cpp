@@ -267,13 +267,18 @@ static void SetSettingsTabOrdering(HWND hwndDlg) {
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG), NULL, 0, 0, 0, 0, uFlags);
 
 	// Quality of Life / Performance Settings
-	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC), NULL, 0, 0, 0, 0, uFlags);
-	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MP3_MUSIC), NULL, 0, 0, 0, 0, uFlags);
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_REFRESH_RATE), NULL, 0, 0, 0, 0, uFlags);
-	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MULTITHREADED_MUSIC), NULL, 0, 0, 0, 0, uFlags);
-	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SHUFFLE_MUSIC), NULL, 0, 0, 0, 0, uFlags);
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS), NULL, 0, 0, 0, 0, uFlags);
+	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SHUFFLE_MUSIC), NULL, 0, 0, 0, 0, uFlags);
+	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC), NULL, 0, 0, 0, 0, uFlags);
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_BKGDMUSIC), NULL, 0, 0, 0, 0, uFlags);
+
+	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_CONFMP3TRACKS), NULL, 0, 0, 0, 0, uFlags);
+	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_CONFMIDTRACKS), NULL, 0, 0, 0, 0, uFlags);
+
+	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_SOUNDFONTBROWSE), NULL, 0, 0, 0, 0, uFlags);
+	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_FLUIDSYNTH_SOUNDFONT), NULL, 0, 0, 0, 0, uFlags);
+	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT), NULL, 0, 0, 0, 0, uFlags);
 
 	// Game Settings
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_COMPANY), NULL, 0, 0, 0, 0, uFlags);
