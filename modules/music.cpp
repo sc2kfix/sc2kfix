@@ -378,7 +378,10 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 	
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		if (msg.message == WM_MUSIC_STOP) {
-			// Log a debug message at best if the music engine is set to none
+			// Log a debug message at best if the music engine is set to none.
+			// In this case even with the engine set to MUSIC_ENGINE_NONE it
+			// will still continue, however once mciDevice is NULL it'll then
+			// getout.
 			if (iSettingsMusicEngineOutput == MUSIC_ENGINE_NONE)
 				if (mus_debug & MUS_DEBUG_THREAD)
 					ConsoleLog(LOG_DEBUG, "MUS:  Music engine set to None; ignoring WM_MUSIC_STOP message.\n");
@@ -415,9 +418,11 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 		}
 		else if (msg.message == WM_MUSIC_PLAY) {
 			// Log a debug message at best if the music engine is set to none
-			if (iSettingsMusicEngineOutput == MUSIC_ENGINE_NONE)
+			if (iSettingsMusicEngineOutput == MUSIC_ENGINE_NONE) {
 				if (mus_debug & MUS_DEBUG_THREAD)
 					ConsoleLog(LOG_DEBUG, "MUS:  Music engine set to None; ignoring WM_MUSIC_PLAY message.\n");
+				goto next;
+			}
 
 			// If we're using FluidSynth, set up a watchdog thread that runs the FluidSynth engine
 			// and waits for it to exit
@@ -505,9 +510,12 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 				mciDevice = NULL;
 			}
 
-			// Restart the active song if there is one
-			if (iPlayingSongID)
-				DoMusicPlay(iPlayingSongID, FALSE);
+			// Only restart if the engine is not set to MUSIC_ENGINE_NONE
+			if (iSettingsMusicEngineOutput != MUSIC_ENGINE_NONE) {
+				// Restart the active song if there is one
+				if (iPlayingSongID)
+					DoMusicPlay(iPlayingSongID, FALSE);
+			}
 
 			goto next;
 		}

@@ -47,6 +47,8 @@ typedef struct {
 
 typedef struct {
 	BOOL bMP3;
+	BOOL bActiveTrackTouched;
+	int iActiveTrack;
 	char szMusicTracks[MUSIC_TRACKS][MAX_PATH + 1];
 } conftracks_t;
 
@@ -139,9 +141,15 @@ static void DoEditMusicTrack(conftracks_t *cft, HWND hwndDlg, HWND hDlgListView,
 	strcpy_s(te.szTrackEntry, sizeof(te.szTrackEntry), cft->szMusicTracks[iItem]);
 
 	if (DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_EDITMUSICTRACK), hwndDlg, EditMusicTrackDialogProc, (LPARAM)&te) == TRUE) {
+		if (_stricmp(cft->szMusicTracks[iItem], te.szTrackEntry) != 0) {
+			strcpy_s(cft->szMusicTracks[iItem], sizeof(cft->szMusicTracks[iItem]), te.szTrackEntry);
+			ListView_SetItemText(hDlgListView, iItem, 1, cft->szMusicTracks[iItem]);
 
-		strcpy_s(cft->szMusicTracks[iItem], sizeof(cft->szMusicTracks[iItem]), te.szTrackEntry);
-		ListView_SetItemText(hDlgListView, iItem, 1, cft->szMusicTracks[iItem]);
+			if (!cft->bActiveTrackTouched) {
+				if (te.iSongID == cft->iActiveTrack)
+					cft->bActiveTrackTouched = TRUE;
+			}
+		}
 	}
 }
 
@@ -218,9 +226,11 @@ BOOL CALLBACK ConfMusicTracksDialogProc(HWND hwndDlg, UINT message, WPARAM wPara
 
 			EditMusicTrack(cft, hwndDlg, hDlgListView, iRow);
 			break;
+
 		case IDOK:
 			EndDialog(hwndDlg, TRUE);
 			break;
+
 		case IDCANCEL:
 			EndDialog(hwndDlg, FALSE);
 			break;
@@ -245,23 +255,44 @@ BOOL CALLBACK ConfMusicTracksDialogProc(HWND hwndDlg, UINT message, WPARAM wPara
 	return FALSE;
 }
 
-BOOL DoConfigureMusicTracks(HWND hwndDlg, BOOL bMP3) {
+BOOL DoConfigureMusicTracks(settings_t *st, HWND hwndDlg, BOOL bMP3) {
 	conftracks_t cft;
 	BOOL bRet;
 	char *pMusicTrack;
 
 	memset(&cft, 0, sizeof(conftracks_t));
 	cft.bMP3 = bMP3;
+	cft.bActiveTrackTouched = FALSE;
+	cft.iActiveTrack = GetCurrentActiveSongID();
 	for (int i = 0; i < MUSIC_TRACKS; i++) {
-		pMusicTrack = (bMP3) ? szSettingsMP3TrackPath[i] : szSettingsMIDITrackPath[i];
+		pMusicTrack = (bMP3) ? st->szSettingsMP3TrackPath[i] : st->szSettingsMIDITrackPath[i];
 		strcpy_s(cft.szMusicTracks[i], MAX_PATH, pMusicTrack);
 	}
 
 	bRet = DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_CONFMUSICTRACKS), hwndDlg, ConfMusicTracksDialogProc, (LPARAM)&cft);
 	if (bRet == TRUE) {
 		for (int i = 0; i < MUSIC_TRACKS; i++) {
-			pMusicTrack = (bMP3) ? szSettingsMP3TrackPath[i] : szSettingsMIDITrackPath[i];
+			pMusicTrack = (bMP3) ? st->szSettingsMP3TrackPath[i] : st->szSettingsMIDITrackPath[i];
 			strcpy_s(pMusicTrack, MAX_PATH, cft.szMusicTracks[i]);
+		}
+
+		if (!st->bActiveTrackChanged) {
+			if (cft.bActiveTrackTouched)
+				st->bActiveTrackChanged = TRUE;
+		}
+
+		if (!st->bActiveMusicEngineTouched) {
+			if (st->iCurrentMusicEngineOutput != MUSIC_ENGINE_NONE) {
+				if (bMP3) {
+					if (st->iCurrentMusicEngineOutput == MUSIC_ENGINE_MP3)
+						st->bActiveMusicEngineTouched = TRUE;
+				}
+				else {
+					if (st->iCurrentMusicEngineOutput == MUSIC_ENGINE_SEQUENCER ||
+						st->iCurrentMusicEngineOutput == MUSIC_ENGINE_FLUIDSYNTH)
+						st->bActiveMusicEngineTouched = TRUE;
+				}
+			}
 		}
 	}
 

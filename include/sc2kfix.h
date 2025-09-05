@@ -213,6 +213,45 @@ typedef struct {
 	DWORD nBufSize;
 } sound_replacement_t;
 
+// This structure is explicitly used in the settings dialogue.
+// Once EndDialog is called (with TRUE set is the result)
+// have it apply the variables back to their equivalent
+// globals and save. If the EndDialog passed result is FALSE
+// it insulates the primary globals from being modified.
+typedef struct {
+	// These are the primary settings.
+	char szSettingsMayorName[64];
+	char szSettingsCompanyName[64];
+
+	BOOL bSettingsMusicInBackground;
+	BOOL bSettingsUseSoundReplacements;
+	BOOL bSettingsShuffleMusic;
+	BOOL bSettingsUseMultithreadedMusic;
+	BOOL bSettingsFrequentCityRefresh;
+	BOOL bSettingsUseMP3Music;
+	BOOL bSettingsAlwaysPlayMusic;
+	BOOL bSettingsAlwaysConsole;
+	BOOL bSettingsCheckForUpdates;
+	BOOL bSettingsDontLoadMods;
+	BOOL bSettingsUseStatusDialog;
+	BOOL bSettingsTitleCalendar;
+	BOOL bSettingsUseNewStrings;
+	BOOL bSettingsAlwaysSkipIntro;
+
+	UINT iSettingsMusicEngineOutput;
+	char szSettingsFluidSynthSoundfont[MAX_PATH + 1];
+
+	char szSettingsMIDITrackPath[MUSIC_TRACKS][MAX_PATH + 1];
+	char szSettingsMP3TrackPath[MUSIC_TRACKS][MAX_PATH + 1];
+
+	// Attributes that the settings dialogue needs to know before and after.
+	BOOL bActiveTrackChanged;
+	BOOL bActiveMusicEngineTouched;
+
+	UINT iCurrentMusicEngineOutput;
+	char szCurrentFluidSynthSoundfont[MAX_PATH + 1];
+} settings_t;
+
 // Enum for console command visibility in inline help. Documented commands always appear in inline
 // help, undocumented commands only appear if `set undocumented` has been activated. Commands
 // tagged as aliases never appear. Commands tagged as script-only return an error in interactive
@@ -338,7 +377,7 @@ const char *GetGameSoundPath();
 int GetCurrentActiveSongID();
 BOOL MusicLoadFluidSynth(void);
 void DoMusicPlay(int iSongID, BOOL bInterrupt);
-BOOL DoConfigureMusicTracks(HWND hDlg, BOOL bMP3);
+BOOL DoConfigureMusicTracks(settings_t *st, HWND hDlg, BOOL bMP3);
 
 BOOL WINAPI ConsoleCtrlHandler(DWORD fdwCtrlType);
 DWORD WINAPI ConsoleThread(LPVOID lpParameter);
