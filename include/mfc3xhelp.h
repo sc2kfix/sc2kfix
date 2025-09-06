@@ -191,6 +191,23 @@ public:
 	int m_bCloseOnDelete;
 };
 
+class CMFC3XGdiObject : public CMFC3XObject
+{
+	HGDIOBJ m_hObject;
+};
+
+class CMFC3XPalette : public CMFC3XGdiObject
+{
+	
+};
+
+class CMFC3XCDC : public CMFC3XObject
+{
+	HDC m_hDC;
+	HDC m_hAttribDC;
+	BOOL m_bPrinting;
+};
+
 class CMFC3XMenu : public CMFC3XObject
 {
 public:

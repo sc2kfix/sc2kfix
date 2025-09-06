@@ -1629,9 +1629,9 @@ static inline void SetMicroSimulatorStat3(BYTE iMicrosimID, WORD iNewStat) {
 
 // Returns the current game palette. RE'd from the game decomp.
 // TODO: document a bit more about what the hell this actually does
-static inline HPALETTE GameGetPalette(void) {
+static inline CMFC3XPalette *GameGetPalette(void) {
 	DWORD* CSimcityAppThis = &pCSimcityAppThis;
-	DWORD* CPalette;
+	CMFC3XPalette* pPalette;
 
 	// CSimcityAppThis[59] = dwSCABForceBkgd (use background palette)
 	// CSimcityAppThis[67] = pSCAPaletteFore (Main identity palette - application in foreground)
@@ -1642,12 +1642,12 @@ static inline HPALETTE GameGetPalette(void) {
 
 	// Exactly what sub_4069B0 does.
 	if (CSimcityAppThis[59])
-		CPalette = (DWORD*)CSimcityAppThis[67];
+		pPalette = (CMFC3XPalette*)CSimcityAppThis[67];
 	else
-		CPalette = (DWORD*)CSimcityAppThis[68];
+		pPalette = (CMFC3XPalette*)CSimcityAppThis[68];
 
 	// ...and this is what CDC::SelectPalette does.
-	return (HPALETTE)CPalette[1];
+	return pPalette;
 }
 
 // Returns the HWND of the game's root window.

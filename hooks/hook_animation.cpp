@@ -12,7 +12,7 @@
 
 static DWORD dwDummy;
 
-extern "C" void __cdecl Hook_AnimationFunction_SC2K1996(void *pPalette, int iToggle) {
+extern "C" void __cdecl Hook_AnimationFunction_SC2K1996(CMFC3XPalette *pPalette, int iToggle) {
 	DWORD *pApp;
 	DWORD *pMainFrm;
 	DWORD *pSCView;
@@ -27,7 +27,7 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2K1996(void *pPalette, int iTog
 
 	BOOL &bLoColor = *(BOOL *)0x4EA04C;
 
-	void(__cdecl *H_AnimationFunction1996)(void *, int) = (void(__cdecl *)(void *, int))0x457110;
+	void(__cdecl *H_AnimationFunction1996)(CMFC3XPalette *, int) = (void(__cdecl *)(CMFC3XPalette *, int))0x457110;
 
 	// Only redraw the relevant windows during:
 	// 1) Titlescreen image animation.
@@ -86,7 +86,7 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2K1996(void *pPalette, int iTog
 	}
 }
 
-extern "C" void __cdecl Hook_AnimationFunction_SC2K1995(void *pPalette, int iToggle) {
+extern "C" void __cdecl Hook_AnimationFunction_SC2K1995(CMFC3XPalette *pPalette, int iToggle) {
 	DWORD *pApp;
 	DWORD *pMainFrm;
 	DWORD *pSCView;
@@ -103,7 +103,7 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2K1995(void *pPalette, int iTog
 	BOOL &bLoColor1995 = *(BOOL *)0x4E903C;
 
 	DWORD *(__thiscall *H_PointerToCSimcityViewClass1995)(void *) = (DWORD *(__thiscall *)(void *))0x4026D0;
-	void(__cdecl *H_AnimationFunction1995)(void *, int) = (void(__cdecl *)(void *, int))0x456A60;
+	void(__cdecl *H_AnimationFunction1995)(CMFC3XPalette *, int) = (void(__cdecl *)(CMFC3XPalette *, int))0x456A60;
 
 	H_AnimationFunction1995(pPalette, iToggle);
 	
@@ -154,7 +154,7 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2K1995(void *pPalette, int iTog
 	}
 }
 
-extern "C" void __cdecl Hook_AnimationFunction_SC2KDemo(void *pPalette, int iToggle) {
+extern "C" void __cdecl Hook_AnimationFunction_SC2KDemo(CMFC3XPalette *pPalette, int iToggle) {
 	DWORD *pApp;
 	DWORD *pMainFrm;
 	DWORD *pSCView;
@@ -171,7 +171,7 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2KDemo(void *pPalette, int iTog
 	BOOL &bLoColorDemo = *(BOOL *)0x4D1EDC;
 
 	DWORD *(__thiscall *H_PointerToCSimcityViewClassDemo)(void *) = (DWORD *(__thiscall *)(void *))0x402725;
-	void(__cdecl *H_AnimationFunctionDemo)(void *, int) = (void(__cdecl *)(void *, int))0x44890F;
+	void(__cdecl *H_AnimationFunctionDemo)(CMFC3XPalette *, int) = (void(__cdecl *)(CMFC3XPalette *, int))0x44890F;
 
 	H_AnimationFunctionDemo(pPalette, iToggle);
 
