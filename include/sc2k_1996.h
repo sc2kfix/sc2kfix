@@ -1229,6 +1229,25 @@ public:
 };
 #pragma pack(pop)
 
+// The graphics class; placed here for now.
+#pragma pack(push, 1)
+class CGraphics
+{
+public:
+	HBITMAP GRBitmap;
+	HBITMAP GRBitmapLoColor;
+	int GRlastPalUpdate;
+	CMFC3XPalette *GRpAppPalette;
+	int GRwidth;
+	int GRheight;
+	int GRorient;
+	int GRIsLockCnt;
+	BYTE *GRpBits;
+	BYTE *GRpBitsLoColor;
+	BITMAPINFO *GRpBitmapInfo;
+};
+#pragma pack(pop)
+
 // Function pointers
 
 GAMECALL(0x40103C, int, __thiscall, PreGameMenuDialogToggle, void *pThis, int iShow)

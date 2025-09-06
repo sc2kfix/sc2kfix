@@ -736,27 +736,27 @@ static void L_TileHighlightUpdate(DWORD *pThis) {
 
 	int(__cdecl *H_BeginObject)(void *, void *, int, __int16, RECT *) = (int(__cdecl *)(void *, void *, int, __int16, RECT *))0x401226;
 	BOOL(__thiscall *H_SimcityViewMainWindowUpdate)(void *, RECT *, BOOL) = (BOOL(__thiscall *)(void *, RECT *, BOOL))0x40152D;
-	void(__thiscall *H_GraphicsUnlockDIBBits)(void *) = (void(__thiscall *)(void *))0x401BE5;
-	int(__thiscall *H_GraphicsHeight)(void *) = (int(__thiscall *)(void *))0x40216C;
-	LONG(__thiscall *H_GraphicsWidth)(void *) = (LONG(__thiscall *)(void *))0x402419;
+	void(__thiscall *H_GraphicsUnlockDIBBits)(CGraphics *) = (void(__thiscall *)(CGraphics *))0x401BE5;
+	int(__thiscall *H_GraphicsHeight)(CGraphics *) = (int(__thiscall *)(CGraphics *))0x40216C;
+	LONG(__thiscall *H_GraphicsWidth)(CGraphics *) = (LONG(__thiscall *)(CGraphics *))0x402419;
 	int(__thiscall *H_SimcityViewCheckOrLoadGraphic)(void *) = (int(__thiscall *)(void *))0x40297D;
 	BOOL(__stdcall *H_FinishObject)() = (BOOL(__stdcall *)())0x402B7B;
-	BYTE *(__thiscall *H_GraphicsLockDIBBits)(void *) = (BYTE *(__thiscall *)(void *))0x402DA1;
+	BYTE *(__thiscall *H_GraphicsLockDIBBits)(CGraphics *) = (BYTE *(__thiscall *)(CGraphics *))0x402DA1;
 
 	DWORD &pSomeWnd = *(DWORD *)0x4CAC18; // Perhaps this is the active view window? (unclear - but this is referenced in the native TileHighlightUpdate function)
 	RECT &dRect = *(RECT *)0x4CAD48;
 
 	if (wTileHighlightActive) {
-		vBits = H_GraphicsLockDIBBits((void *)pThis[13]);
+		vBits = H_GraphicsLockDIBBits((CGraphics *)pThis[13]);
 		if (vBits || H_SimcityViewCheckOrLoadGraphic(pThis)) {
-			x = H_GraphicsWidth((void *)pThis[13]);
-			y = H_GraphicsHeight((void *)pThis[13]);
+			x = H_GraphicsWidth((CGraphics *)pThis[13]);
+			y = H_GraphicsHeight((CGraphics *)pThis[13]);
 			if (!bOverrideTickPlacementHighlight) {
 				H_BeginObject(pThis, vBits, x, y, (RECT *)pThis + 19);
 				Game_DrawSquareHighlight(pThis, wHighlightedTileX1, wHighlightedTileY1, wHighlightedTileX2, wHighlightedTileY2);
 				H_FinishObject();
 			}
-			H_GraphicsUnlockDIBBits((void *)pThis[13]);
+			H_GraphicsUnlockDIBBits((CGraphics *)pThis[13]);
 			bottom = ++dRect.bottom;
 			if (*(DWORD *)((char *)pThis + 322)) {
 				dRect.bottom = bottom + 2;
