@@ -2,8 +2,8 @@
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <windowsx.h>
 #include <psapi.h>
 #include <commctrl.h>
 #include <shlwapi.h>

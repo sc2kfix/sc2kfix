@@ -317,7 +317,7 @@ extern "C" void __stdcall Hook_MainFrameOnChar(UINT nChar, UINT nRepCnt, UINT nF
 	DWORD* (__thiscall * H_JokeDialogConstruct)(void*, void*) = (DWORD * (__thiscall*)(void*, void*))0x4024E6;
 	int(__stdcall * H_GetSimcityViewMenuPos)(int iPos) = (int(__stdcall*)(int))0x402EFA;
 	void(__stdcall * H_SimulationProposeMilitaryBase)() = (void(__stdcall*)())0x403017;
-	INT_PTR(__thiscall * H_DialogDoModal)(void*) = (INT_PTR(__thiscall*)(void*))0x4A7196;
+	INT_PTR(__thiscall * H_DialogDoModal)(CMFC3XDialog*) = (INT_PTR(__thiscall*)(CMFC3XDialog*))0x4A7196;
 	CMFC3XMenu* (__stdcall * H_CMenuFromHandle)(HMENU) = (CMFC3XMenu * (__stdcall*)(HMENU))0x4A7427;
 	int(__thiscall * H_CMenuAttach)(CMFC3XMenu*, HMENU) = (int(__thiscall*)(CMFC3XMenu*, HMENU))0x4A7483;
 
@@ -436,7 +436,7 @@ TRYAGAIN:
 			break;
 		case CHEAT_JOKE:
 			H_JokeDialogConstruct((void*)&jokeDlg, 0);
-			H_DialogDoModal((void*)&jokeDlg);
+			H_DialogDoModal((CMFC3XDialog*)&jokeDlg);
 			H_ADialogDestruct((void*)&jokeDlg); // Function name references "A" dialog rather than anything specific.
 			break;
 		case CHEAT_WEBB:

@@ -2,7 +2,6 @@
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <windowsx.h>
 #include <psapi.h>
@@ -452,13 +451,13 @@ extern "C" BOOL __stdcall Hook_StatusControlBarCreateStatusBar_SC2K1996() {
 
 	__asm mov[pThis], ecx
 
-	int(__thiscall *H_CDialogBarCreate)(void *, void *, LPCTSTR, UINT, UINT) = (int(__thiscall *)(void *, void *, LPCTSTR, UINT, UINT))0x4B5801;
+	int(__thiscall *H_CDialogBarCreate)(CMFC3XDialogBar *, CMFC3XWnd *, LPCTSTR, UINT, UINT) = (int(__thiscall *)(CMFC3XDialogBar *, CMFC3XWnd *, LPCTSTR, UINT, UINT))0x4B5801;
 
 	int ret;
 
 	// It's necessary to call CDialogBar::Create directly rather than
 	// the CStatusControlBar::CreateStatusBar call in order to avoid a crash.
-	ret = H_CDialogBarCreate(pThis, pCWndRootWindow, (LPCSTR)255, (0x8000 | 0x0200), 111);
+	ret = H_CDialogBarCreate((CMFC3XDialogBar *)pThis, (CMFC3XWnd *)pCWndRootWindow, (LPCSTR)255, (0x8000 | 0x0200), 111);
 	if (ret) {
 		ptFloat.x = 360;
 		ptFloat.y = 160;
@@ -531,7 +530,7 @@ extern "C" void __stdcall Hook_MainFrameToggleToolBars_SC2K1996(BOOL bShow) {
 
 	__asm mov [pThis], ecx
 
-	void(__thiscall *H_CFrameWndRecalcLayout)(void *, int) = (void(__thiscall *)(void *, int))0x4BB23A;
+	void(__thiscall *H_CFrameWndRecalcLayout)(CMFC3XFrameWnd *, int) = (void(__thiscall *)(CMFC3XFrameWnd *, int))0x4BB23A;
 
 	BOOL bToolBarsCreated;
 	DWORD *pCityToolBar;
@@ -571,7 +570,7 @@ extern "C" void __stdcall Hook_MainFrameToggleToolBars_SC2K1996(BOOL bShow) {
 		if (!bShow) {
 			if (CanUseFloatingStatusDialog())
 				ShowWindow(hStatusDialog, SW_HIDE);
-			H_CFrameWndRecalcLayout(pThis, 1);
+			H_CFrameWndRecalcLayout((CMFC3XFrameWnd *)pThis, 1);
 			InvalidateRect((HWND)pThis[7], 0, 1);
 			UpdateWindow((HWND)pThis[7]);
 		}
@@ -619,7 +618,7 @@ void InstallStatusHooks_SC2K1996(void) {
 }
 
 void UpdateStatus_SC2K1996(int iShow) {
-	void(__thiscall *H_CFrameWndShowControlBar)(void *, void *, BOOL, int) = (void(__thiscall *)(void *, void *, BOOL, int))0x4BA3A0;
+	void(__thiscall *H_CFrameWndShowControlBar)(CMFC3XFrameWnd *, CMFC3XControlBar *, BOOL, int) = (void(__thiscall *)(CMFC3XFrameWnd *, CMFC3XControlBar *, BOOL, int))0x4BA3A0;
 
 	DWORD *pStatusBar;
 	DWORD *pSCView;
@@ -643,6 +642,6 @@ void UpdateStatus_SC2K1996(int iShow) {
 		SetWindowPos(hStatusDialog, HWND_TOP, ptFloat.x, ptFloat.y, szFloat.cx, szFloat.cy, wPFlags);
 	if (pCWndRootWindow && pStatusBar) {
 		ShowWindow((HWND)pStatusBar[7], (bShow && !CanUseFloatingStatusDialog()) ? SW_SHOW : SW_HIDE);
-		H_CFrameWndShowControlBar(pCWndRootWindow, pStatusBar, ((CanUseFloatingStatusDialog()) ? 0 : bShow), 0);
+		H_CFrameWndShowControlBar((CMFC3XFrameWnd *)pCWndRootWindow, (CMFC3XControlBar *)pStatusBar, ((CanUseFloatingStatusDialog()) ? 0 : bShow), 0);
 	}
 }

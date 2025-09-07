@@ -321,8 +321,8 @@ GETOUT:
 }
 
 void ReloadDefaultTileSet_SC2K1996() {
-	void(__thiscall *H_CCmdTargetBeginWaitCursor)(void *) = (void(__thiscall *)(void *))0x4A28BB;
-	void(__thiscall *H_CCmdTargetEndWaitCursor)(void *) = (void(__thiscall *)(void *))0x4A28D2;
+	void(__thiscall *H_CCmdTargetBeginWaitCursor)(CMFC3XCmdTarget *) = (void(__thiscall *)(CMFC3XCmdTarget *))0x4A28BB;
+	void(__thiscall *H_CCmdTargetEndWaitCursor)(CMFC3XCmdTarget *) = (void(__thiscall *)(CMFC3XCmdTarget *))0x4A28D2;
 
 	DWORD *pApp;
 
@@ -331,11 +331,11 @@ void ReloadDefaultTileSet_SC2K1996() {
 	if (L_MessageBoxA(GameGetRootWindowHandle(), "Are you sure that you want to reload the base game tile set?", gamePrimaryKey, MB_YESNO | MB_DEFBUTTON2 | MB_ICONEXCLAMATION) != IDYES)
 		return;
 
-	H_CCmdTargetBeginWaitCursor(pApp);
+	H_CCmdTargetBeginWaitCursor((CMFC3XCmdTarget *)pApp);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_SPECIAL);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_LARGE);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_SMALLMED);
-	H_CCmdTargetEndWaitCursor(pApp);
+	H_CCmdTargetEndWaitCursor((CMFC3XCmdTarget *)pApp);
 }
 
 void InstallSpriteAndTileSetHooks_SC2K1996(void) {

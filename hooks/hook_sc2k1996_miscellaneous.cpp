@@ -212,14 +212,14 @@ int L_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
 }
 
 extern "C" int __stdcall Hook_AfxMessageBoxStr(LPCTSTR lpszPrompt, UINT nType, UINT nIDHelp) {
-	int(__thiscall *H_CWinAppDoMessageBox)(void *, LPCTSTR, UINT, UINT) = (int(__thiscall *)(void *, LPCTSTR, UINT, UINT))0x4B2206;
+	int(__thiscall *H_CWinAppDoMessageBox)(CMFC3XWinApp *, LPCTSTR, UINT, UINT) = (int(__thiscall *)(CMFC3XWinApp *, LPCTSTR, UINT, UINT))0x4B2206;
 
 	DWORD &game_AfxCoreState = *(DWORD *)0x4CE8C0;
 
 	int ret;
 
 	ToggleFloatingStatusDialog(FALSE);
-	ret = H_CWinAppDoMessageBox((DWORD *)game_AfxCoreState, lpszPrompt, nType, nIDHelp);
+	ret = H_CWinAppDoMessageBox((CMFC3XWinApp *)game_AfxCoreState, lpszPrompt, nType, nIDHelp);
 	ToggleFloatingStatusDialog(TRUE);
 
 	return ret;
@@ -229,7 +229,7 @@ extern "C" int __stdcall Hook_AfxMessageBoxID(UINT nIDPrompt, UINT nType, UINT n
 	CMFC3XString *(__thiscall *H_CStringCons)(CMFC3XString *) = (CMFC3XString *(__thiscall *)(CMFC3XString *))0x4A2C28;
 	void(__thiscall *H_CStringDest)(CMFC3XString *) = (void(__thiscall *)(CMFC3XString *))0x4A2CB0;
 	BOOL(__thiscall *H_CStringLoadStringA)(CMFC3XString *, unsigned int) = (BOOL(__thiscall *)(CMFC3XString *, unsigned int))0x4A3453;
-	int(__thiscall *H_CWinAppDoMessageBox)(void *, LPCTSTR, UINT, UINT) = (int(__thiscall *)(void *, LPCTSTR, UINT, UINT))0x4B2206;
+	int(__thiscall *H_CWinAppDoMessageBox)(CMFC3XWinApp *, LPCTSTR, UINT, UINT) = (int(__thiscall *)(CMFC3XWinApp *, LPCTSTR, UINT, UINT))0x4B2206;
 
 	DWORD &game_AfxCoreState = *(DWORD *)0x4CE8C0;
 
@@ -244,7 +244,7 @@ extern "C" int __stdcall Hook_AfxMessageBoxID(UINT nIDPrompt, UINT nType, UINT n
 		nID = nIDPrompt;
 
 	ToggleFloatingStatusDialog(FALSE);
-	ret = H_CWinAppDoMessageBox((DWORD *)game_AfxCoreState, cStr.m_pchData, nType, nIDHelp);
+	ret = H_CWinAppDoMessageBox((CMFC3XWinApp *)game_AfxCoreState, cStr.m_pchData, nType, nIDHelp);
 	ToggleFloatingStatusDialog(TRUE);
 
 	H_CStringDest(&cStr);
@@ -252,14 +252,14 @@ extern "C" int __stdcall Hook_AfxMessageBoxID(UINT nIDPrompt, UINT nType, UINT n
 }
 
 extern "C" int __stdcall Hook_FileDialogDoModal() {
-	DWORD *pThis;
+	CMFC3XFileDialog *pThis;
 
 	__asm mov [pThis], ecx
 
-	HWND(__thiscall *H_DialogPreModal)(void *) = (HWND(__thiscall *)(void *))0x4A710B;
+	HWND(__thiscall *H_DialogPreModal)(CMFC3XDialog *) = (HWND(__thiscall *)(CMFC3XDialog *))0x4A710B;
 	BOOL(__stdcall *H_GetLoadFileNameA)(LPOPENFILENAMEA) = (BOOL(__stdcall *)(LPOPENFILENAMEA))0x49C35A;
 	BOOL(__stdcall *H_GetSaveFileNameA)(LPOPENFILENAMEA) = (BOOL(__stdcall *)(LPOPENFILENAMEA))0x49C354;
-	void(__thiscall *H_DialogPostModal)(void *) = (void(__thiscall *)(void *))0x4A7154;
+	void(__thiscall *H_DialogPostModal)(CMFC3XDialog *) = (void(__thiscall *)(CMFC3XDialog *))0x4A7154;
 
 	HWND hWndOwner;
 	bool bIsReserved;
@@ -273,9 +273,9 @@ extern "C" int __stdcall Hook_FileDialogDoModal() {
 	ToggleFloatingStatusDialog(FALSE);
 
 	hWndOwner = H_DialogPreModal(pThis);
-	bIsReserved = pThis[36] == 0;
-	pThis[18] = (DWORD)hWndOwner;
-	pOfn = (OPENFILENAMEA*)(pThis + 17);
+	bIsReserved = pThis->m_ofn.pvReserved == 0;
+	pThis->m_ofn.hwndOwner = hWndOwner;
+	pOfn = &pThis->m_ofn;
 
 	if (bIsReserved)
 		iRet = H_GetSaveFileNameA(pOfn);
@@ -331,7 +331,7 @@ extern "C" void __stdcall Hook_SimcityAppOnQuit(void) {
 		if (iReqRet == IDYES)
 			Game_DoSaveCity(pThis);
 		Game_PreGameMenuDialogToggle((void *)pThis[7], 0);
-		Game_CWinApp_OnAppExit(pThis);
+		Game_CWinApp_OnAppExit((CMFC3XWinApp *)pThis);
 		return;
 	}
 	pThis[64] = 0;
@@ -344,9 +344,9 @@ extern "C" void __stdcall Hook_CCmdUI_Enable(BOOL bOn) {
 	__asm mov [pThis], ecx
 
 	HWND hWndParent;
-	DWORD *pWndParent;
+	CMFC3XWnd *pWndParent;
 	HWND hNextDlgTabItem;
-	DWORD *pNextDlgTabItem;
+	CMFC3XWnd *pNextDlgTabItem;
 	HWND hWndFocus;
 
 	if (pThis->m_pMenu != NULL) {
@@ -357,15 +357,15 @@ extern "C" void __stdcall Hook_CCmdUI_Enable(BOOL bOn) {
 			(bOn ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
 	}
 	else {
-		if (!bOn && (GetFocus() == (HWND)pThis->m_pOther[7])) {
-			hWndParent = GetParent((HWND)pThis->m_pOther[7]);
+		if (!bOn && (GetFocus() == pThis->m_pOther->m_hWnd)) {
+			hWndParent = GetParent(pThis->m_pOther->m_hWnd);
 			pWndParent = Game_CWnd_FromHandle(hWndParent);
-			hNextDlgTabItem = GetNextDlgTabItem((HWND)pWndParent[7], (HWND)pThis->m_pOther[7], 0);
+			hNextDlgTabItem = GetNextDlgTabItem(pWndParent->m_hWnd, pThis->m_pOther->m_hWnd, 0);
 			pNextDlgTabItem = Game_CWnd_FromHandle(hNextDlgTabItem);
-			hWndFocus = SetFocus((HWND)pNextDlgTabItem[7]);
+			hWndFocus = SetFocus(pNextDlgTabItem->m_hWnd);
 			Game_CWnd_FromHandle(hWndFocus);
 		}
-		EnableWindow((HWND)pThis->m_pOther[7], bOn);
+		EnableWindow(pThis->m_pOther->m_hWnd, bOn);
 	}
 	pThis->m_bEnableChanged = TRUE;
 
@@ -717,7 +717,7 @@ extern "C" void __stdcall Hook_SimcityDocUpdateDocumentTitle() {
 			operator delete(pFundStr);
 		}
 GOFORWARD:
-		Game_CDocument_UpdateAllViews(pThis, 0, 1, &cStr);
+		Game_CDocument_UpdateAllViews((CMFC3XDocument *)pThis, 0, 1, (CMFC3XObject *)&cStr);
 	}
 GETOUT:
 	H_CStringDest(&cStr);
@@ -850,7 +850,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 	}
 
 	if (bSettingsFrequentCityRefresh) {
-		Game_RefreshTitleBar(pCDocumentMainWindow);
+		Game_SimcityDocUpdateDocumentTitle(pCDocumentMainWindow);
 		Game_CDocument_UpdateAllViews(pCDocumentMainWindow, NULL, 2, NULL);
 	}
 
@@ -868,7 +868,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 	switch (dwMonDay) {
 		case 0:
 			if (!bSettingsFrequentCityRefresh)
-				Game_RefreshTitleBar(pCDocumentMainWindow);
+				Game_SimcityDocUpdateDocumentTitle(pCDocumentMainWindow);
 			if (bYearEndFlag)
 				H_SimulationPrepareBudgetDialog(0);
 			H_UpdateBudgetInformation();
@@ -1435,22 +1435,22 @@ extern "C" void __stdcall Hook_CityToolBarToolMenuEnable() {
 
 extern "C" void __stdcall Hook_ShowViewControls() {
 	void(__thiscall *H_MainFrameToggleStatusControlBar)(void *, BOOL) = (void(__thiscall *)(void *, BOOL))0x4021A8;
-	void(__thiscall *H_CFrameWndRecalcLayout)(void *, int) = (void(__thiscall *)(void *, int))0x4BB23A;
+	void(__thiscall *H_CFrameWndRecalcLayout)(CMFC3XFrameWnd *, int) = (void(__thiscall *)(CMFC3XFrameWnd *, int))0x4BB23A;
 
 	int &iSCAProgramStep = *(int *)0x4C7334;
 	BOOL &bRedraw = *(BOOL *)0x4E62B4;
 
 	DWORD *pMainFrm;
 	DWORD *pSCView;
-	DWORD *pSCVScrollBarHorz;
-	DWORD *pSCVScrollBarVert;
-	DWORD *pSCVStatic;
+	CMFC3XScrollBar *pSCVScrollBarHorz;
+	CMFC3XScrollBar *pSCVScrollBarVert;
+	CMFC3XStatic *pSCVStatic;
 
 	pMainFrm = (DWORD *)pCWndRootWindow;
 	pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
-	pSCVScrollBarHorz = (DWORD *)pSCView[20];
-	pSCVScrollBarVert = (DWORD *)pSCView[19];
-	pSCVStatic = (DWORD *)pSCView[21];
+	pSCVScrollBarHorz = (CMFC3XScrollBar *)pSCView[20];
+	pSCVScrollBarVert = (CMFC3XScrollBar *)pSCView[19];
+	pSCVStatic = (CMFC3XStatic *)pSCView[21];
 	if (!bRedraw) {
 		bRedraw = TRUE;
 		if (iSCAProgramStep == ONIDLE_STATE_RETURN_12 || !wCityMode)
@@ -1459,10 +1459,10 @@ extern "C" void __stdcall Hook_ShowViewControls() {
 			if (!CanUseFloatingStatusDialog())
 				H_MainFrameToggleStatusControlBar(pMainFrm, TRUE);
 		}
-		H_CFrameWndRecalcLayout(pMainFrm, TRUE);
-		ShowWindow((HWND)pSCVScrollBarHorz[7], SW_SHOWNORMAL);
-		ShowWindow((HWND)pSCVScrollBarVert[7], SW_SHOWNORMAL);
-		ShowWindow((HWND)pSCVStatic[7], SW_SHOWNORMAL);
+		H_CFrameWndRecalcLayout((CMFC3XFrameWnd *)pMainFrm, TRUE);
+		ShowWindow(pSCVScrollBarHorz->m_hWnd, SW_SHOWNORMAL);
+		ShowWindow(pSCVScrollBarVert->m_hWnd, SW_SHOWNORMAL);
+		ShowWindow(pSCVStatic->m_hWnd, SW_SHOWNORMAL);
 	}
 }
 
@@ -1626,13 +1626,13 @@ __declspec(naked) void Hook_402B4E(const char* szDescription, int a2, void* cWnd
 	GAMEJMP(0x42DC20);
 }
 
-static BOOL L_OnCmdMsg(void *pThis, UINT nID, int nCode, void *pExtra, void *pHandler, void *dwRetAddr) {
-	BOOL(__thiscall *H_CCmdTargetOnCmdMsg)(void *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(void *, UINT, int, void *, void *))0x4A280C;
+static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void *pHandler, void *dwRetAddr) {
+	BOOL(__thiscall *H_CCmdTargetOnCmdMsg)(CMFC3XCmdTarget *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(CMFC3XCmdTarget *, UINT, int, void *, void *))0x4A280C;
 	BOOL(__thiscall *H_CDialogOnCmdMsg)(void *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(void *, UINT, int, void *, void *))0x4A6C8E;
-	BOOL(__thiscall *H_CDocumentOnCmdMsg)(void *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(void *, UINT, int, void *, void *))0x4AE16C;
-	BOOL(__thiscall *H_CViewOnCmdMsg)(void *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(void *, UINT, int, void *, void *))0x4AE83A;
+	BOOL(__thiscall *H_CDocumentOnCmdMsg)(CMFC3XDocument *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(CMFC3XDocument *, UINT, int, void *, void *))0x4AE16C;
+	BOOL(__thiscall *H_CViewOnCmdMsg)(CMFC3XView *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(CMFC3XView *, UINT, int, void *, void *))0x4AE83A;
 	BOOL(__thiscall *H_CMDIFrameWndOnCmdMsg)(void *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(void *, UINT, int, void *, void *))0x4B780A;
-	BOOL(__thiscall *H_CFrameWndOnCmdMsg)(void *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(void *, UINT, int, void *, void *))0x4B9C9A;
+	BOOL(__thiscall *H_CFrameWndOnCmdMsg)(CMFC3XFrameWnd *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(CMFC3XFrameWnd *, UINT, int, void *, void *))0x4B9C9A;
 
 	// Normally internally there'd be the class hierarchy regarding inheritence
 	// (which isn't present here).
@@ -1688,7 +1688,7 @@ static BOOL L_OnCmdMsg(void *pThis, UINT nID, int nCode, void *pExtra, void *pHa
 			// As far as potential handling here goes - tread carefully;
 			//ConsoleLog(LOG_DEBUG, "CFrameWnd::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - _CN_COMMAND_UI\n", pThis, nID, nCode, pExtra, pHandler);
 		}
-		return H_CFrameWndOnCmdMsg(pThis, nID, nCode, pExtra, pHandler);
+		return H_CFrameWndOnCmdMsg((CMFC3XFrameWnd *)pThis, nID, nCode, pExtra, pHandler);
 	}
 	if ((DWORD)dwRetAddr == 0x4A4BB2) {
 		if (nCode == _CN_COMMAND) {
@@ -1711,16 +1711,16 @@ static BOOL L_OnCmdMsg(void *pThis, UINT nID, int nCode, void *pExtra, void *pHa
 }
 
 extern "C" BOOL __stdcall Hook_WndOnCommand(WPARAM wParam, LPARAM lParam) {
-	DWORD *pThis;
+	CMFC3XWnd *pThis;
 
 	__asm mov[pThis], ecx
 
-	DWORD *(__stdcall *H_CWndFromHandlePermanent)(HWND) = (DWORD *(__stdcall *)(HWND))0x4A3BFD;
-	CMFC3XTestCmdUI *(__thiscall *H_CTestCmdUIConstruct)(void *) = (CMFC3XTestCmdUI *(__thiscall *)(void *))0x4A5315;
-	BOOL(__thiscall *H_CWndSendChildNotifyLastMsg)(void *, LRESULT *) = (BOOL(__thiscall *)(void *, LRESULT *))0x4A6091;
+	CMFC3XWnd *(__stdcall *H_CWndFromHandlePermanent)(HWND) = (CMFC3XWnd *(__stdcall *)(HWND))0x4A3BFD;
+	CMFC3XTestCmdUI *(__thiscall *H_CTestCmdUIConstruct)(CMFC3XTestCmdUI *) = (CMFC3XTestCmdUI *(__thiscall *)(CMFC3XTestCmdUI *))0x4A5315;
+	BOOL(__thiscall *H_CWndSendChildNotifyLastMsg)(CMFC3XWnd *, LRESULT *) = (BOOL(__thiscall *)(CMFC3XWnd *, LRESULT *))0x4A6091;
 	DWORD *(__stdcall *H_AfxGetThreadState)() = (DWORD *(__stdcall *)())0x4C0730;
 
-	DWORD *pWndHandle;
+	CMFC3XWnd *pWndHandle;
 	CMFC3XTestCmdUI testCmd;
 
 	// AFX_THREAD_STATE -> DWORD:
@@ -1742,7 +1742,7 @@ extern "C" BOOL __stdcall Hook_WndOnCommand(WPARAM wParam, LPARAM lParam) {
 		nCode = _CN_COMMAND;
 	}
 	else {
-		if ((HWND)H_AfxGetThreadState()[40] == (HWND)pThis[7])
+		if ((HWND)H_AfxGetThreadState()[40] == pThis->m_hWnd)
 			return TRUE;
 
 		pWndHandle = H_CWndFromHandlePermanent(hWndCtrl);
