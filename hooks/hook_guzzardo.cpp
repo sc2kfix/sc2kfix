@@ -292,7 +292,7 @@ static void ChangeChurchZone() {
 }
 
 extern "C" void __stdcall Hook_MainFrameOnChar(UINT nChar, UINT nRepCnt, UINT nFlags) {
-	DWORD* pThis;
+	CMainFrame* pThis;
 
 	__asm mov[pThis], ecx
 
@@ -314,7 +314,7 @@ extern "C" void __stdcall Hook_MainFrameOnChar(UINT nChar, UINT nRepCnt, UINT nF
 	void(__cdecl * H_DoFund)(__int16) = (void(__cdecl*)(__int16))0x40191F;
 	void(__thiscall * H_SimcityViewDebugGrantAllGifts)(DWORD*) = (void(__thiscall*)(DWORD*))0x401C0D;
 	int(__thiscall * H_ADialogDestruct)(void*) = (int(__thiscall*)(void*))0x401D7A;
-	void(__thiscall * H_SimcityAppAdjustNewspaperMenu)(void*) = (void(__thiscall*)(void*))0x40210D;
+	void(__thiscall * H_SimcityAppAdjustNewspaperMenu)(CSimcityAppPrimary*) = (void(__thiscall*)(CSimcityAppPrimary*))0x40210D;
 	DWORD* (__thiscall * H_JokeDialogConstruct)(void*, void*) = (DWORD * (__thiscall*)(void*, void*))0x4024E6;
 	int(__stdcall * H_GetSimcityViewMenuPos)(int iPos) = (int(__stdcall*)(int))0x402EFA;
 	void(__stdcall * H_SimulationProposeMilitaryBase)() = (void(__stdcall*)())0x403017;
@@ -329,7 +329,7 @@ extern "C" void __stdcall Hook_MainFrameOnChar(UINT nChar, UINT nRepCnt, UINT nF
 
 	pSCApp = Game_GetSimcityAppClassPointer();
 
-	hWnd = (HWND)pThis[7];
+	hWnd = pThis->m_hWnd;
 
 	// "Insert" key - only relevant in the demo but pressing it advances
 	// the timer.

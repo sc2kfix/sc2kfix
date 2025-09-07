@@ -37,6 +37,7 @@ BOOL CALLBACK ScenarioStatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam
 	CMFC3XString* SCApCStringArrLongMonths = (CMFC3XString*)0x4C71F8;
 	void(__cdecl * H_CStringFormat)(CMFC3XString*, char const* Ptr, ...) = (void(__cdecl*)(CMFC3XString*, char const* Ptr, ...))0x49EBD3;
 	CMFC3XString* (__thiscall * H_CStringCons)(CMFC3XString*) = (CMFC3XString * (__thiscall*)(CMFC3XString*))0x4A2C28;
+	void(__thiscall *H_CStringDest)(CMFC3XString *) = (void(__thiscall *)(CMFC3XString *))0x4A2CB0;
 
 	DWORD dwCityDueDate = wScenarioTimeLimitMonths * 25 + dwCityDays;
 	dwCityDueDate = dwCityDueDate / 25 * 25 + 22;
@@ -143,6 +144,7 @@ BOOL CALLBACK ScenarioStatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam
 		if (bScenarioGoalsMet)
 			Game_SoundPlaySound(&pCSimcityAppThis, SOUND_CHEERS);
 
+		H_CStringCons(&cDueDateString);
 		return TRUE;
 
 	// Set the color of the due date

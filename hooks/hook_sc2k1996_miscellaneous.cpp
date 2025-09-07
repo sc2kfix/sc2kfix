@@ -843,7 +843,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 	void(__stdcall *H_NewspaperStoryGenerator)(__int16 iPaperType, BYTE iPaperVal) = (void(__stdcall *)(__int16 iPaperType, BYTE iPaperVal))0x402900;
 	void(__stdcall *H_UpdateBudgetInformation)() = (void(__stdcall *)())0x402D2E;
 	void(__stdcall *H_SimulationUpdateMonthlyTrafficData)() = (void(__stdcall *)())0x402D51;
-	void(__thiscall *H_MainFrameUpdateCityToolBar)(void *) = (void(__thiscall *)(void *))0x402F18;
+	void(__thiscall *H_MainFrameUpdateCityToolBar)(CMainFrame *) = (void(__thiscall *)(CMainFrame *))0x402F18;
 	void(__stdcall *H_SimulationProposeMilitaryBase)() = (void(__stdcall *)())0x403017;
 
 	pSCApp = Game_GetSimcityAppClassPointer();
@@ -1000,7 +1000,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 			H_UpdateGraphDialog();
 			break;
 		case 24:
-			H_MainFrameUpdateCityToolBar(pCWndRootWindow);
+			H_MainFrameUpdateCityToolBar((CMainFrame *)pSCApp->m_pMainWnd);
 			H_UpdateCityMap();
 			H_UpdateSimNationDialog();
 			H_UpdateWeatherOrDisasterState();
@@ -1032,7 +1032,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 	// 1) pSCApp->wSCAGameSpeedLOW is set to African Swallow
 	// 2) pSCApp[198] is true (AnimationOffCycle) or it is game day 21 - CDocument::UpdateAllViews case.
 	//
-	// bSettingsFrequentCityRefresh - Tile highlight updates only occur if wSimulationSpeed
+	// bSettingsFrequentCityRefresh - Tile highlight updates only occur if pSCApp->wSCAGameSpeedLOW
 	// isn't set to paused.
 
 	bDoTileHighlightUpdate = FALSE;
@@ -1326,16 +1326,16 @@ extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, POINT pt) {
 }
 
 extern "C" void __stdcall Hook_LoadCursorResources() {
-	DWORD *pThis;
+	CSimcityAppPrimary *pThis;
 
 	__asm mov[pThis], ecx
 
-	void(__thiscall *H_LoadCursorResources)(void *) = (void(__thiscall *)(void *))0x4255A0;
+	void(__thiscall *H_LoadCursorResources)(CSimcityAppPrimary *) = (void(__thiscall *)(CSimcityAppPrimary *))0x4255A0;
 
 	HDC hDC;
 
 	hDC = GetDC(0);
-	pThis[57] = GetDeviceCaps(hDC, HORZRES);
+	pThis->iSCAGDCHorzRes = GetDeviceCaps(hDC, HORZRES);
 	ReleaseDC(0, hDC);
 	H_LoadCursorResources(pThis);
 }
@@ -1421,11 +1421,11 @@ extern "C" int __stdcall Hook_StartupGraphics() {
 }
 
 extern "C" void __stdcall Hook_CityToolBarToolMenuDisable() {
-	DWORD *pThis;
+	CCityToolBar *pThis;
 
 	__asm mov[pThis], ecx
 
-	void(__thiscall *H_CityToolBarToolMenuDisable)(void *) = (void(__thiscall *)(void *))0x4237F0;
+	void(__thiscall *H_CityToolBarToolMenuDisable)(CCityToolBar *) = (void(__thiscall *)(CCityToolBar *))0x4237F0;
 
 	ToggleFloatingStatusDialog(FALSE);
 
@@ -1433,11 +1433,11 @@ extern "C" void __stdcall Hook_CityToolBarToolMenuDisable() {
 }
 
 extern "C" void __stdcall Hook_CityToolBarToolMenuEnable() {
-	DWORD *pThis;
+	CCityToolBar *pThis;
 
 	__asm mov[pThis], ecx
 
-	void(__thiscall *H_CityToolBarToolMenuEnable)(void *) = (void(__thiscall *)(void *))0x423860;
+	void(__thiscall *H_CityToolBarToolMenuEnable)(CCityToolBar *) = (void(__thiscall *)(CCityToolBar *))0x423860;
 
 	ToggleFloatingStatusDialog(TRUE);
 
@@ -1445,20 +1445,20 @@ extern "C" void __stdcall Hook_CityToolBarToolMenuEnable() {
 }
 
 extern "C" void __stdcall Hook_ShowViewControls() {
-	void(__thiscall *H_MainFrameToggleStatusControlBar)(void *, BOOL) = (void(__thiscall *)(void *, BOOL))0x4021A8;
+	void(__thiscall *H_MainFrameToggleStatusControlBar)(CMainFrame *, BOOL) = (void(__thiscall *)(CMainFrame *, BOOL))0x4021A8;
 	void(__thiscall *H_CFrameWndRecalcLayout)(CMFC3XFrameWnd *, int) = (void(__thiscall *)(CMFC3XFrameWnd *, int))0x4BB23A;
 
 	BOOL &bRedraw = *(BOOL *)0x4E62B4;
 
 	CSimcityAppPrimary *pSCApp;
-	DWORD *pMainFrm;
+	CMainFrame *pMainFrm;
 	DWORD *pSCView;
 	CMFC3XScrollBar *pSCVScrollBarHorz;
 	CMFC3XScrollBar *pSCVScrollBarVert;
 	CMFC3XStatic *pSCVStatic;
 
 	pSCApp = Game_GetSimcityAppClassPointer();
-	pMainFrm = (DWORD *)pSCApp->m_pMainWnd;
+	pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 	pSCView = Game_PointerToCSimcityViewClass(pSCApp);
 	pSCVScrollBarHorz = (CMFC3XScrollBar *)pSCView[20];
 	pSCVScrollBarVert = (CMFC3XScrollBar *)pSCView[19];
@@ -1471,7 +1471,7 @@ extern "C" void __stdcall Hook_ShowViewControls() {
 			if (!CanUseFloatingStatusDialog())
 				H_MainFrameToggleStatusControlBar(pMainFrm, TRUE);
 		}
-		H_CFrameWndRecalcLayout((CMFC3XFrameWnd *)pMainFrm, TRUE);
+		H_CFrameWndRecalcLayout(pMainFrm, TRUE);
 		ShowWindow(pSCVScrollBarHorz->m_hWnd, SW_SHOWNORMAL);
 		ShowWindow(pSCVScrollBarVert->m_hWnd, SW_SHOWNORMAL);
 		ShowWindow(pSCVStatic->m_hWnd, SW_SHOWNORMAL);
@@ -1479,17 +1479,17 @@ extern "C" void __stdcall Hook_ShowViewControls() {
 }
 
 extern "C" void __stdcall Hook_MainFrameUpdateSections() {
-	DWORD *pThis;
+	CMainFrame *pThis;
 
 	__asm mov[pThis], ecx
 
-	void(__thiscall *H_CCityToolBar_RefreshToolBar)(void *) = (void(__thiscall *)(void *))0x401000;
-	void(__thiscall *H_CMapToolBarResetControls)(void *) = (void(__thiscall *)(void *))0x401140;
-	UINT(__thiscall *H_CMyToolBarGetButtonStyle)(void *, int) = (UINT(__thiscall *)(void *, int))0x401235;
-	void(__thiscall *H_CMainFrameDisableCityToolBarButton)(void *, int) = (void(__thiscall *)(void *, int))0x4016DB;
-	void(__thiscall *H_CMyToolBarSetButtonStyle)(void *, int nIndex, UINT nStyle) = (void(__thiscall *)(void *, int, UINT))0x402306;
-	void(__thiscall *H_CMyToolBarInvalidateButton)(void *, int) = (void(__thiscall *)(void *, int))0x4029C8;
-	void(__thiscall *H_CCityToolBarUpdateControls)(void *, BOOL) = (void(__thiscall *)(void *, BOOL))0x402A68;
+	void(__thiscall *H_CCityToolBar_RefreshToolBar)(CCityToolBar *) = (void(__thiscall *)(CCityToolBar *))0x401000;
+	void(__thiscall *H_CMapToolBarResetControls)(CMapToolBar *) = (void(__thiscall *)(CMapToolBar *))0x401140;
+	UINT(__thiscall *H_CMyToolBarGetButtonStyle)(CMyToolBar *, int) = (UINT(__thiscall *)(CMyToolBar *, int))0x401235;
+	void(__thiscall *H_CMainFrameDisableCityToolBarButton)(CMainFrame *, int) = (void(__thiscall *)(CMainFrame *, int))0x4016DB;
+	void(__thiscall *H_CMyToolBarSetButtonStyle)(CMyToolBar *, int nIndex, UINT nStyle) = (void(__thiscall *)(CMyToolBar *, int, UINT))0x402306;
+	void(__thiscall *H_CMyToolBarInvalidateButton)(CMyToolBar *, int) = (void(__thiscall *)(CMyToolBar *, int))0x4029C8;
+	void(__thiscall *H_CCityToolBarUpdateControls)(CCityToolBar *, BOOL) = (void(__thiscall *)(CCityToolBar *, BOOL))0x402A68;
 	CMFC3XString *(__thiscall *H_CStringOperatorSet)(CMFC3XString *, char *) = (CMFC3XString *(__thiscall *)(CMFC3XString *, char *))0x4A2E6A;
 	CMFC3XMenu *(__stdcall *H_CMenuFromHandle)(HMENU) = (CMFC3XMenu *(__stdcall *)(HMENU))0x4A7427;
 	int(__thiscall *H_CMenuAttach)(CMFC3XMenu *, HMENU) = (int(__thiscall *)(CMFC3XMenu *, HMENU))0x4A7483;
@@ -1501,8 +1501,8 @@ extern "C" void __stdcall Hook_MainFrameUpdateSections() {
 	DWORD *DisplayLayer = (DWORD *)0x4E9E48;
 
 	HWND hDlgItem;
-	DWORD *pMapToolBar;
-	DWORD *pCityToolBar;
+	CMapToolBar *pMapToolBar;
+	CCityToolBar *pCityToolBar;
 	int iCityToolBarButton;
 	UINT ButtonStyle;
 	int nLayer;
@@ -1526,11 +1526,11 @@ extern "C" void __stdcall Hook_MainFrameUpdateSections() {
 	CMFC3XString *cityToolString;
 	CMFC3XString *pTargMFCString;
 
-	hDlgItem = GetDlgItem((HWND)pThis[68], 120); // Status - GoTo button.
-	pMapToolBar = &pThis[233];
+	hDlgItem = GetDlgItem(pThis->dwMFStatusControlBar.m_hWnd, 120); // Status - GoTo button.
+	pMapToolBar = &pThis->dwMFMapToolBar;
 	if (!wCityMode)
 		H_CMapToolBarResetControls(pMapToolBar);
-	pCityToolBar = &pThis[102];
+	pCityToolBar = &pThis->dwMFCityToolBar;
 	H_CCityToolBarUpdateControls(pCityToolBar, FALSE);
 	ToggleGotoButton(hDlgItem, FALSE);
 	if (wCityMode == GAME_MODE_CITY) {
@@ -1572,7 +1572,7 @@ extern "C" void __stdcall Hook_MainFrameUpdateSections() {
 		H_CMyToolBarSetButtonStyle(pCityToolBar, nIndex, nStyle);
 	}
 REFRESHMENUGRANTS:
-	pMenu = (CMFC3XMenu *)&pCityToolBar[57];
+	pMenu = &pCityToolBar->dwCTBMenuOne;
 	H_CMenuDestroyMenu(pMenu);
 	hMenu = LoadMenuA(hGameModule, (LPCSTR)136);
 	H_CMenuAttach(pMenu, hMenu);
@@ -1606,9 +1606,9 @@ REFRESHMENUGRANTS:
 					nRewardBit = (1 << nReward);
 					if ((nRewardBit & dwGrantedItems[nPos]) != 0) {
 						if (nPos == CITYTOOL_BUTTON_REWARDS && !nGranted) {
-							pThis[220] = nReward;
+							pCityToolBar->dwCTToolSelection[CITYTOOL_GROUP_REWARDS] = nReward;
 							nGranted = 1;
-							pTargMFCString = (CMFC3XString *)&pCityToolBar[74];
+							pTargMFCString = &pCityToolBar->dwCTBString[CITYTOOL_GROUP_REWARDS];
 							H_CStringOperatorSet(pTargMFCString, cityToolString[nReward].m_pchData);
 						}
 						AppendMenuA(pSubMenu->m_hMenu, 0, *pUID, pString);
@@ -1640,10 +1640,10 @@ __declspec(naked) void Hook_402B4E(const char* szDescription, int a2, void* cWnd
 
 static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void *pHandler, void *dwRetAddr) {
 	BOOL(__thiscall *H_CCmdTargetOnCmdMsg)(CMFC3XCmdTarget *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(CMFC3XCmdTarget *, UINT, int, void *, void *))0x4A280C;
-	BOOL(__thiscall *H_CDialogOnCmdMsg)(void *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(void *, UINT, int, void *, void *))0x4A6C8E;
+	BOOL(__thiscall *H_CDialogOnCmdMsg)(CMFC3XDialog *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(CMFC3XDialog *, UINT, int, void *, void *))0x4A6C8E;
 	BOOL(__thiscall *H_CDocumentOnCmdMsg)(CMFC3XDocument *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(CMFC3XDocument *, UINT, int, void *, void *))0x4AE16C;
 	BOOL(__thiscall *H_CViewOnCmdMsg)(CMFC3XView *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(CMFC3XView *, UINT, int, void *, void *))0x4AE83A;
-	BOOL(__thiscall *H_CMDIFrameWndOnCmdMsg)(void *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(void *, UINT, int, void *, void *))0x4B780A;
+	BOOL(__thiscall *H_CMDIFrameWndOnCmdMsg)(CMFC3XMDIFrameWnd *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(CMFC3XMDIFrameWnd *, UINT, int, void *, void *))0x4B780A;
 	BOOL(__thiscall *H_CFrameWndOnCmdMsg)(CMFC3XFrameWnd *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(CMFC3XFrameWnd *, UINT, int, void *, void *))0x4B9C9A;
 
 	// Normally internally there'd be the class hierarchy regarding inheritence

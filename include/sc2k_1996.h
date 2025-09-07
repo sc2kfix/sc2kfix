@@ -1245,7 +1245,7 @@ GAMECALL(0x402289, char, __cdecl, PerhapsGeneralZoneChooseAndPlaceBuilding, __in
 GAMECALL(0x40235B, int, __thiscall, DrawSquareHighlight, void *pThis, WORD wX1, WORD wY1, WORD wX2, WORD wY2)
 GAMECALL(0x4023B0, int, __cdecl, IsValidTransitItems, __int16 x, __int16 y)
 GAMECALL(0x4023EC, void, __stdcall, ToolMenuUpdate, void)
-GAMECALL(0x402414, int, __thiscall, MusicPlay, void *pThis, int iSongID)
+GAMECALL(0x402414, int, __thiscall, MusicPlay, CSimcityAppPrimary *pThis, int iSongID)
 GAMECALL(0x402478, int, __cdecl, SpawnHelicopter, __int16 x, __int16 y)
 GAMECALL(0x4024DC, CSimcityAppPrimary *, __thiscall, GetSimcityAppClassPointer, void)
 GAMECALL(0x4024FA, char, __cdecl, PerhapsGeneralZoneChangeBuilding, __int16 x, __int16 y, __int16 iBuldingPopLevel, int iTileID)
@@ -1294,8 +1294,6 @@ GAMECALL(0x402B3F, __int16, __stdcall, RandomWordLFSRMod128, void)
 
 GAMEOFF(CSimcityAppPrimary,	pCSimcityAppThis,			0x4C7010)
 GAMEOFF(void*,	pCWndRootWindow,			0x4C702C)		// CMainFrame
-GAMEOFF(DWORD,	dwCursorGameHit,			0x4C70EC)
-GAMEOFF(WORD,	wSimulationSpeed,			0x4C7318)
 GAMEOFF(WORD,	wCurrentTileCoordinates,	0x4C7A98)
 GAMEOFF(WORD,	wTileCoordinateX,			0x4C7AB0)
 GAMEOFF(WORD,	wTileCoordinateY,			0x4C7AB4)

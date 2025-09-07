@@ -1,7 +1,20 @@
 #pragma once
 
+/*
+ * ****** NOTE: The classes referenced here allow for a reasonably
+ *              method of accessing certain class variables.
+ *
+ *              Not all defined variables in the classes are accessible.
+ *              Those that are reasonably generic such as 'SeventyOne'
+ *              for instance are for padding purposes in order to
+ *              ensure alignment.
+ */
+
 #define HICOLORCNT 256
 #define LOCOLORCNT 16
+
+// Forward declaration
+class CMainFrame;
 
 // This specifical structure is the equivalent
 // of the LOGPALETTE struct from the WinAPI
@@ -302,3 +315,103 @@ public:
 	WORD wSCAInitDialogFinishLastProgramStep;
 };
 #pragma pack(pop)
+
+class CMyToolBar : public CMFC3XControlBar {
+public:
+	int iMyTBMenuButtonPos;
+	int iMyTBLastButtonPos;
+	CMFC3XPoint dwMyTBPointFour;
+	DWORD dwMyTBButtonMenu;
+	CGraphics *cGMyTBCGraphicsNormal;
+	CGraphics *cGMyTBCGraphicsDisabled;
+	CGraphics *cGMyTBCGraphicsPressed;
+	DWORD dwMyTBButtonPressed;
+	DWORD dwMyTBten;
+	DWORD dwMyTBeleven;
+	DWORD dwMyTBButtonFace;
+	DWORD dwMyTBButtonShadow;
+	DWORD dwMyTBButtonHighlighted;
+	DWORD dwMyTBButtonText;
+	DWORD dwMyTBWindowFrame;
+	DWORD dwMyTBseventeen;
+	DWORD dwMyTBeighteen;
+	CMFC3XPoint dwMyTBPointThree;
+	DWORD dwMyTBControlsDisabled;
+	DWORD dwMyTBToolBarTitleDrag;
+	tagPOINT dwMyTBPointOne;
+	tagPOINT dwMyTBPointTwo;
+};
+
+class CCityToolBar : public CMyToolBar {
+public:
+	tagPOINT dwCTBPointThree;
+	CMainFrame *dwCTBMainFrame;
+	DWORD dwCTBcxRightBorder;
+	DWORD dwCTBthirtyone;
+	CMFC3XMenu dwCTBMenuOne;
+	CMFC3XString dwCTBString[15];
+	DWORD dwCTBseventysix;
+	DWORD dwCTBseventyseven;
+	DWORD dwCTBseventyeight;
+	DWORD dwCTBseventynine;
+	DWORD dwCTBeighty;
+	DWORD dwCTBeightyone;
+	DWORD dwCTBeightytwo;
+	DWORD dwCTBeightythree;
+	DWORD dwCTBeightyfour;
+	DWORD dwCTToolSelection[15];
+};
+
+class CMapToolBar : public CMyToolBar {
+public:
+	DWORD dwMTBTwentyNine;
+	CMainFrame *dwMTBMainFrame;
+	DWORD dwMTBcxRightBorder;
+};
+
+class CStatusControlBar : public CMFC3XDialogBar {
+public:
+	CMFC3XString dwSCBCStringCtrlSelection;
+	CMFC3XString dwSCBCStringNotification;
+	CMFC3XString dwSCBCStringWeather;
+	COLORREF dwSCBColorCtrlSelection;
+	COLORREF dwSCBColorNotification;
+	COLORREF dwSCBColorWeather;
+};
+
+class CSimcityWnd : public CMFC3XWnd {
+public:
+	CGraphics *m_pSCWGraphics;
+	CMFC3XSize SCWSize;
+};
+
+class CMainFrame : public CMFC3XMDIFrameWnd {
+public:
+	DWORD *dwMFSimGraphDialog; // CSimGraphDialog
+	DWORD *dwMFPopulationDialog; // CPopulationDialog
+	DWORD *dwMFCityMapDialog; // CCityMapDialog
+	DWORD *dwMFNeighbourDialog; // CNeighbourDialog
+	DWORD *dwMFCityIndustryDialog; // CCityIndustryDialog
+	CMFC3XPalette *dwMFEight;
+	CGraphics *dwMFCGraphicsOne;
+	CMFC3XPalette *dwMFnine;
+	DWORD dwMFTimerActive;
+	UINT_PTR dwMFuIDEvent;
+	UINT dwMFuDelay;
+	UINT dwMFuPeriod;
+	CStatusControlBar dwMFStatusControlBar;
+	BOOL bMFShowStatusBar;
+	CCityToolBar dwMFCityToolBar;
+	DWORD dwMFOneHundredEightyFour;
+	DWORD dwMFOneHundredEightyFive;
+	DWORD dwMFOneHundredEightySix;
+	CMapToolBar dwMFMapToolBar;
+	DWORD dwMFTwoHundredFortyTwo;
+	DWORD dwMFToolBarsCreated;
+	DWORD dwMFTwoHundredFortyFour;
+	CSimcityWnd dwMFCSimcityWnd;
+	LONG iMFbiWidth;
+	LONG iMFbiHeight;
+	CMFC3XSize dwMFCSize;
+	tagPOINT dwMFPointOne;
+};

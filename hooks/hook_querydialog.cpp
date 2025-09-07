@@ -223,10 +223,14 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 }
 
 static BOOL DoAdvancedQuery(__int16 x, __int16 y) {
-	DWORD *pCityToolBar;
+	CSimcityAppPrimary *pSCApp;
+	CMainFrame *pMainFrm;
+	CCityToolBar *pCityToolBar;
 	query_coords_info qci;
 
-	pCityToolBar = &((DWORD *)pCWndRootWindow)[102];
+	pSCApp = Game_GetSimcityAppClassPointer();
+	pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
+	pCityToolBar = &pMainFrm->dwMFCityToolBar;
 
 	if (bUseAdvancedQuery) {
 		if (GetAsyncKeyState(VK_MENU) < 0) {

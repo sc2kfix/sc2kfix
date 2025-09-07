@@ -269,7 +269,6 @@ extern "C" {
 
 		KRK_GAMEOFF(pCSimcityAppThis);
 		KRK_GAMEOFF(pCWndRootWindow);
-		KRK_GAMEOFF(wSimulationSpeed);
 		KRK_GAMEOFF(wCurrentTileCoordinates);
 		KRK_GAMEOFF(wTileCoordinateX);
 		KRK_GAMEOFF(wTileCoordinateY);
