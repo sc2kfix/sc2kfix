@@ -303,6 +303,7 @@ extern "C" void __stdcall Hook_MainFrameOnChar(UINT nChar, UINT nRepCnt, UINT nF
 	int nCodePos;
 	char nCodeChar;
 	cheat_t* strCheatEntry;
+	CSimcityAppPrimary *pSCApp;
 	HWND hWnd;
 	DWORD* pSCView;
 	HMENU hMenu, hDebugMenu;
@@ -325,6 +326,8 @@ extern "C" void __stdcall Hook_MainFrameOnChar(UINT nChar, UINT nRepCnt, UINT nF
 	int& iCheatEntry = *(int*)0x4E6520;
 	int& iCheatExpectedCharPos = *(int*)0x4E6524;
 	char* szNewItem = (char*)0x4E66EC;
+
+	pSCApp = Game_GetSimcityAppClassPointer();
 
 	hWnd = (HWND)pThis[7];
 
@@ -387,7 +390,7 @@ TRYAGAIN:
 			dwCityFunds += 250;
 			break;
 		case CHEAT_THEWORKS:
-			pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
+			pSCView = Game_PointerToCSimcityViewClass(pSCApp);
 			if (pSCView)
 				H_SimcityViewDebugGrantAllGifts(pSCView);
 			break;
@@ -415,7 +418,7 @@ TRYAGAIN:
 			Game_SimulationPrepareDiasterCoordinates(&dwDisasterPoint, wCityCenterX, wCityCenterY);
 			break;
 		case CHEAT_DEBUG:
-			if (bPriscillaActivated)
+			if (pSCApp->bSCAPriscillaActivated)
 				return;
 			hMenu = GetMenu(hWnd);
 			pMenu = H_CMenuFromHandle(hMenu);
@@ -427,9 +430,9 @@ TRYAGAIN:
 			H_CMenuAttach(pDebugMenu, hDebugMenu);
 			iSCMenuPos = H_GetSimcityViewMenuPos(6);
 			InsertMenuA(pMenu->m_hMenu, iSCMenuPos + 6, MF_BYPOSITION | MF_POPUP, (UINT_PTR)pDebugMenu->m_hMenu, szNewItem);
-			H_SimcityAppAdjustNewspaperMenu(&pCSimcityAppThis);
+			H_SimcityAppAdjustNewspaperMenu(pSCApp);
 			DrawMenuBar(hWnd);
-			bPriscillaActivated = 1;
+			pSCApp->bSCAPriscillaActivated = 1;
 			break;
 		case CHEAT_MILITARY:
 			H_SimulationProposeMilitaryBase();

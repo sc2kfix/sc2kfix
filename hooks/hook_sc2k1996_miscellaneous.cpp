@@ -572,12 +572,14 @@ extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lp
 
 // CSimcityView Middle Mouse Button Down handler.
 static void SimcityViewOnMButtonDown(UINT nFlags, POINT pt) {
+	CSimcityAppPrimary *pSCApp;
 	__int16 wTileCoords = 0;
 	BYTE bTileX = 0, bTileY = 0;
 	wTileCoords = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
 	bTileX = LOBYTE(wTileCoords);
 	bTileY = HIBYTE(wTileCoords);
 
+	pSCApp = Game_GetSimcityAppClassPointer();
 	if (wTileCoords & 0x8000)
 		return;
 	else {
@@ -588,16 +590,18 @@ static void SimcityViewOnMButtonDown(UINT nFlags, POINT pt) {
 		else if (GetAsyncKeyState(VK_MENU) < 0) {
 			// useful for tests
 		} else {
-			Game_SoundPlaySound(&pCSimcityAppThis, SOUND_CLICK);
+			Game_SoundPlaySound(pSCApp, SOUND_CLICK);
 			Game_CenterOnTileCoords(bTileX, bTileY);
 		}
 	}
 }
 
 extern "C" LRESULT __stdcall Hook_DefWindowProcA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
+	CSimcityAppPrimary *pSCApp;
 	DWORD *pSCView;
 
-	pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
+	pSCApp = Game_GetSimcityAppClassPointer();
+	pSCView = Game_PointerToCSimcityViewClass(pSCApp);
 	if (Msg == WM_MBUTTONDOWN) {
 		if (pSCView && hWnd == (HWND)pSCView[7]) {
 			POINT pt;
@@ -620,9 +624,11 @@ extern "C" void __stdcall Hook_ResetGameVars(void) {
 	bMapEditor = ((DWORD)_ReturnAddress() == 0x42DF13);
 	bNewGame = ((DWORD)_ReturnAddress() == 0x42E482);
 	if (bMapEditor || bNewGame) {
+		CSimcityAppPrimary *pSCApp;
 		DWORD *pThis;
 
-		pThis = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
+		pSCApp = Game_GetSimcityAppClassPointer();
+		pThis = Game_PointerToCSimcityViewClass(pSCApp);
 
 		if (((__int16)wCityMode < 0 && bNewGame) || bMapEditor) {
 			if (wViewRotation != VIEWROTATION_NORTH) {
@@ -825,7 +831,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 	void(__stdcall *H_UpdateWeatherOrDisasterState)() = (void(__stdcall *)())0x401E65;
 	DWORD *(__thiscall *H_NewspaperConstruct)(void *) = (DWORD *(__thiscall *)(void *))0x401F23;
 	void(__stdcall *H_UpdateGraphData)() = (void(__stdcall *)())0x402022;
-	void(__thiscall *H_SimcityAppAdjustNewspaperMenu)(void *) = (void(__thiscall *)(void *))0x40210D;
+	void(__thiscall *H_SimcityAppAdjustNewspaperMenu)(CSimcityAppPrimary *) = (void(__thiscall *)(CSimcityAppPrimary *))0x40210D;
 	void(__stdcall *H_SimulationRCIDemandUpdates)() = (void(__stdcall *)())0x40217B;
 	int(__thiscall *H_GameDialogDoModal)(void *) = (int(__thiscall *)(void *))0x40219E;
 	void(__cdecl *H_SimulationGrowthTick)(__int16 iStep, __int16 iSubStep) = (void(__cdecl *)(__int16, __int16))0x4022FC;
@@ -840,13 +846,14 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 	void(__thiscall *H_MainFrameUpdateCityToolBar)(void *) = (void(__thiscall *)(void *))0x402F18;
 	void(__stdcall *H_SimulationProposeMilitaryBase)() = (void(__stdcall *)())0x403017;
 
+	pSCApp = Game_GetSimcityAppClassPointer();
 	UpdateCityDateAndSeason(TRUE);
 	dwMonDay = (dwCityDays % 25);
-	if (dwSCAGameAutoSave > 0 &&
-		!((dwCityDays / 300) % dwSCAGameAutoSave) &&
+	if (pSCApp->dwSCAGameAutoSave > 0 &&
+		!((dwCityDays / 300) % pSCApp->dwSCAGameAutoSave) &&
 		!wCityCurrentMonth &&
 		!dwMonDay) {
-		H_SimcityAppCallAutoSave(&pCSimcityAppThis);
+		H_SimcityAppCallAutoSave(pSCApp);
 	}
 
 	if (bSettingsFrequentCityRefresh) {
@@ -908,11 +915,11 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 			dwCityProgressionRequirement = dwCityProgressionRequirements[wCityProgression];
 			if (dwCityProgressionRequirement) {
 				if (dwCityProgressionRequirement < dwCityPopulation) {
-					Game_SimcityAppSetGameCursor(&pCSimcityAppThis, 24, 0);
+					Game_SimcityAppSetGameCursor(pSCApp, 24, 0);
 					// There are only 7 (0-6) progression levels, cast the warning away.
 					iPaperVal = (BYTE)wCityProgression++;
 					H_NewspaperStoryGenerator(3, iPaperVal);
-					H_SimcityAppAdjustNewspaperMenu(&pCSimcityAppThis);
+					H_SimcityAppAdjustNewspaperMenu(pSCApp);
 					if (wCityProgression >= 4) {
 						if (wCityProgression == 4)
 							H_SimulationProposeMilitaryBase();
@@ -922,8 +929,8 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 					else
 						H_SimulationGrantReward(wCityProgression - 1, 1);
 					H_ToolMenuUpdate();
-					H_SimcityAppAdjustNewspaperMenu(&pCSimcityAppThis);
-					Game_SimcityAppSetGameCursor(&pCSimcityAppThis, 0, 0);
+					H_SimcityAppAdjustNewspaperMenu(pSCApp);
+					Game_SimcityAppSetGameCursor(pSCApp, 0, 0);
 				}
 			}
 
@@ -1022,28 +1029,27 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 
 	// Explanation:
 	// !bSettingsFrequentCityRefresh - It will do the tile highlight update if:
-	// 1) wSimulationSpeed is set to African Swallow
+	// 1) pSCApp->wSCAGameSpeedLOW is set to African Swallow
 	// 2) pSCApp[198] is true (AnimationOffCycle) or it is game day 21 - CDocument::UpdateAllViews case.
 	//
 	// bSettingsFrequentCityRefresh - Tile highlight updates only occur if wSimulationSpeed
 	// isn't set to paused.
 
 	bDoTileHighlightUpdate = FALSE;
-	pSCApp = Game_GetSimcityAppClassPointer();
 	if (!bSettingsFrequentCityRefresh) {
-		if (wSimulationSpeed == GAME_SPEED_AFRICAN_SWALLOW) {
+		if (pSCApp->wSCAGameSpeedLOW == GAME_SPEED_AFRICAN_SWALLOW) {
 			if (pSCApp->dwSCAAnimationOffCycle || dwMonDay == 21)
 				bDoTileHighlightUpdate = TRUE;
 		}
 	}
 	else {
-		if (wSimulationSpeed != GAME_SPEED_PAUSED) {
+		if (pSCApp->wSCAGameSpeedLOW != GAME_SPEED_PAUSED) {
 			bDoTileHighlightUpdate = TRUE;
 		}
 	}
 
 	if (bDoTileHighlightUpdate) {
-		pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
+		pSCView = Game_PointerToCSimcityViewClass(pSCApp);
 		if (pSCView) {
 			if (wCityMode) {
 				// It should be noted that the highlight will only appear with a valid selected tool.
@@ -1077,12 +1083,15 @@ extern "C" void __stdcall Hook_SimulationStartDisaster(void) {
 }
 
 extern "C" int __stdcall Hook_AddAllInventions(void) {
+	CSimcityAppPrimary *pSCApp;
+
+	pSCApp = Game_GetSimcityAppClassPointer();
 	if (mischook_debug & MISCHOOK_DEBUG_CHEAT)
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> AddAllInventions()\n", _ReturnAddress());
 
 	memset(wCityInventionYears, 0, sizeof(WORD)*MAX_CITY_INVENTION_YEARS);
 	Game_ToolMenuUpdate();
-	Game_SoundPlaySound(&pCSimcityAppThis, SOUND_ZAP);
+	Game_SoundPlaySound(pSCApp, SOUND_ZAP);
 
 	return 0;
 }
@@ -1198,6 +1207,7 @@ extern "C" void __stdcall Hook_CSimcityView_WM_MOUSEMOVE(UINT nFlags, POINT pt) 
 }
 
 extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, POINT pt) {
+	CSimcityAppPrimary *pSCApp;
 	DWORD *pThis;
 	__int16 iTileCoords;
 	__int16 iCurrMapToolGroupWithHotKey, iCurrMapToolGroupNoHotKey;
@@ -1220,7 +1230,8 @@ extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, POINT pt) {
 	// The change in this case is to only set pThis[62] to 0 when the iCurrToolGroupA is not
 	// 'Center Tool', this will then allow it to pass-through to the WM_MOUSEMOVE call.
 
-	pThis = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);	// TODO: is this necessary or can we just dereference pCSimcityView?
+	pSCApp = Game_GetSimcityAppClassPointer();
+	pThis = Game_PointerToCSimcityViewClass(pSCApp);	// TODO: is this necessary or can we just dereference pCSimcityView?
 	Game_TileHighlightUpdate(pThis);
 	iTileStartX = 400;
 	iTileStartY = 400;
@@ -1263,20 +1274,20 @@ extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, POINT pt) {
 			case MAPTOOL_GROUP_WATER: // Place Water
 			case MAPTOOL_GROUP_STREAM: // Place Stream
 				if (iCurrMapToolGroupWithHotKey == MAPTOOL_GROUP_WATER) {
-					if (!Game_MapToolPlaceWater(iTileTargetX, iTileTargetY) || Game_CSoundMapToolSoundTrigger(pSCASoundLayer))
+					if (!Game_MapToolPlaceWater(iTileTargetX, iTileTargetY) || Game_CSoundMapToolSoundTrigger(pSCApp->SCASNDLayer))
 						break;
 				}
 				else {
 					Game_MapToolPlaceStream(iTileTargetX, iTileTargetY, 100);
-					if (Game_CSoundMapToolSoundTrigger(pSCASoundLayer))
+					if (Game_CSoundMapToolSoundTrigger(pSCApp->SCASNDLayer))
 						break;
 				}
-				Game_SoundPlaySound(&pCSimcityAppThis, SOUND_FLOOD);
+				Game_SoundPlaySound(pSCApp, SOUND_FLOOD);
 				break;
 			case MAPTOOL_GROUP_TREES: // Place Tree
 			case MAPTOOL_GROUP_FOREST: // Place Forest
-				if (!Game_CSoundMapToolSoundTrigger(pSCASoundLayer))
-					Game_SoundPlaySound(&pCSimcityAppThis, SOUND_PLOP);
+				if (!Game_CSoundMapToolSoundTrigger(pSCApp->SCASNDLayer))
+					Game_SoundPlaySound(pSCApp, SOUND_PLOP);
 				if (iCurrMapToolGroupWithHotKey == MAPTOOL_GROUP_TREES)
 					Game_MapToolPlaceTree(iTileTargetX, iTileTargetY);
 				else
@@ -1284,7 +1295,7 @@ extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, POINT pt) {
 				break;
 			case MAPTOOL_GROUP_CENTERINGTOOL: // Center Tool
 				Game_GetScreenCoordsFromTileCoords(iTileTargetX, iTileTargetY, &wNewScreenPointX, &wNewScreenPointY);
-				Game_SoundPlaySound(&pCSimcityAppThis, SOUND_CLICK);
+				Game_SoundPlaySound(pSCApp, SOUND_CLICK);
 				dwIsZoomed = *(DWORD *)((char *)pThis + 322);
 				if (dwIsZoomed)
 					Game_CenterOnNewScreenCoordinates(pThis, wScreenPointX - (wNewScreenPointX >> 1), wScreenPointY - (wNewScreenPointY >> 1));
@@ -1437,23 +1448,24 @@ extern "C" void __stdcall Hook_ShowViewControls() {
 	void(__thiscall *H_MainFrameToggleStatusControlBar)(void *, BOOL) = (void(__thiscall *)(void *, BOOL))0x4021A8;
 	void(__thiscall *H_CFrameWndRecalcLayout)(CMFC3XFrameWnd *, int) = (void(__thiscall *)(CMFC3XFrameWnd *, int))0x4BB23A;
 
-	int &iSCAProgramStep = *(int *)0x4C7334;
 	BOOL &bRedraw = *(BOOL *)0x4E62B4;
 
+	CSimcityAppPrimary *pSCApp;
 	DWORD *pMainFrm;
 	DWORD *pSCView;
 	CMFC3XScrollBar *pSCVScrollBarHorz;
 	CMFC3XScrollBar *pSCVScrollBarVert;
 	CMFC3XStatic *pSCVStatic;
 
-	pMainFrm = (DWORD *)pCWndRootWindow;
-	pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
+	pSCApp = Game_GetSimcityAppClassPointer();
+	pMainFrm = (DWORD *)pSCApp->m_pMainWnd;
+	pSCView = Game_PointerToCSimcityViewClass(pSCApp);
 	pSCVScrollBarHorz = (CMFC3XScrollBar *)pSCView[20];
 	pSCVScrollBarVert = (CMFC3XScrollBar *)pSCView[19];
 	pSCVStatic = (CMFC3XStatic *)pSCView[21];
 	if (!bRedraw) {
 		bRedraw = TRUE;
-		if (iSCAProgramStep == ONIDLE_STATE_RETURN_12 || !wCityMode)
+		if (pSCApp->iSCAProgramStep == ONIDLE_STATE_RETURN_12 || !wCityMode)
 			H_MainFrameToggleStatusControlBar(pMainFrm, FALSE);
 		else {
 			if (!CanUseFloatingStatusDialog())

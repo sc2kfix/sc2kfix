@@ -370,6 +370,7 @@ static const char *GetGameSoundPath(int iSongID, BOOL bDoMP3) {
 }
 
 DWORD WINAPI MusicThread(LPVOID lpParameter) {
+	CSimcityAppPrimary *pSCApp;
 	MSG msg;
 	MCIERROR dwMCIError = NULL;
 
@@ -377,6 +378,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 		ConsoleLog(LOG_DEBUG, "MUS:  Starting music engine! Initial engine set to \"%s\".\n", SettingsSaveMusicEngine(iSettingsMusicEngineOutput));
 	
 	while (GetMessage(&msg, NULL, 0, 0)) {
+		pSCApp = Game_GetSimcityAppClassPointer();
 		if (msg.message == WM_MUSIC_STOP) {
 			// Log a debug message at best if the music engine is set to none.
 			// In this case even with the engine set to MUSIC_ENGINE_NONE it
@@ -426,7 +428,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 
 			// If we're using FluidSynth, set up a watchdog thread that runs the FluidSynth engine
 			// and waits for it to exit
-			if (bOptionsMusicEnabled) {
+			if (pSCApp->dwSCAGameMusic) {
 				if (iSettingsMusicEngineOutput == MUSIC_ENGINE_FLUIDSYNTH && hmodFluidSynth) {
 					if (msg.wParam >= 10000 && msg.wParam <= 10018) {
 						iPlayingSongID = msg.wParam;
@@ -559,7 +561,7 @@ extern "C" int __stdcall Hook_MusicPlay(int iSongID) {
 	CSimcityAppPrimary *pThis;
 	__asm mov [pThis], ecx
 
-	if (bOptionsMusicEnabled)
+	if (pThis->dwSCAGameMusic)
 		DoMusicPlay(iSongID, TRUE);
 
 	// Restore "this" and leave
@@ -636,7 +638,7 @@ extern "C" void __stdcall Hook_SimcityAppMusicPlayNext(BOOL bNext) {
 	int iRandMusic;
 	int iSongID;
 
-	if (!bOptionsMusicEnabled)
+	if (!pThis->dwSCAGameMusic)
 		return;
 	nSpeed = pThis->wSCAGameSpeedLOW;
 	if (nSpeed == GAME_SPEED_PAUSED)

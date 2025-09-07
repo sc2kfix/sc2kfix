@@ -269,9 +269,6 @@ extern "C" {
 
 		KRK_GAMEOFF(pCSimcityAppThis);
 		KRK_GAMEOFF(pCWndRootWindow);
-		KRK_GAMEOFF(bPriscillaActivated);
-		KRK_GAMEOFF(pSCASoundLayer);
-		KRK_GAMEOFF(bOptionsMusicEnabled);
 		KRK_GAMEOFF(wSimulationSpeed);
 		KRK_GAMEOFF(wCurrentTileCoordinates);
 		KRK_GAMEOFF(wTileCoordinateX);

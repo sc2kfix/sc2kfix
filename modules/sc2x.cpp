@@ -64,7 +64,7 @@ void LoadInterleavedBudgetVanilla(budget_t* pTarget, DWORD* pSource) {
 #ifdef SC2X_USE_VANILLA_LOAD_REPLACEMENT
 // WIP replacement for CSimcityApp::DoLoadGame for vanilla save game files.
 // This is incredibly ugly and should probably be rewritten at some point.
-BOOL SC2XLoadVanillaGame(DWORD* pThis, const char* szFileName) {
+BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 	if (!szFileName)
 		return FALSE;
 
@@ -348,7 +348,8 @@ BOOL SC2XLoadVanillaGame(DWORD* pThis, const char* szFileName) {
 				wSubwayXUNDCount = ntohl(*(DWORD*)&pChunkMISC[i]);
 				i += 4;
 
-				wSimulationSpeed = ntohl(*(DWORD*)&pChunkMISC[i]);		// XXX - CHECK IF THIS NEEDS TO BE THISCASTED
+				pThis->wSCAGameSpeedLOW = ntohl(*(DWORD*)&pChunkMISC[i]);		// XXX - CHECK IF THIS NEEDS TO BE THISCASTED
+				pThis->wSCAGameSpeedHIGH = pThis->wSCAGameSpeedLOW;
 				i += 4;
 
 				bOptionsAutoBudget = ntohl(*(DWORD*)&pChunkMISC[i]);
@@ -357,12 +358,11 @@ BOOL SC2XLoadVanillaGame(DWORD* pThis, const char* szFileName) {
 				bOptionsAutoGoto = ntohl(*(DWORD*)&pChunkMISC[i]);
 				i += 4;
 
-				pThis[121] = ntohl(*(DWORD*)&pChunkMISC[i]);	// XXX - needs a good name
+				pThis->dwSCAGameSound = ntohl(*(DWORD*)&pChunkMISC[i]);	// XXX - needs a good name
 				i += 4;
 
-				bOptionsMusicEnabled = ntohl(*(DWORD*)&pChunkMISC[i]);
-				pThis[120] = bOptionsMusicEnabled;				// XXX - is this the same?
-				if (!bOptionsMusicEnabled) {
+				pThis->dwSCAGameMusic = ntohl(*(DWORD*)&pChunkMISC[i]);
+				if (!pThis->dwSCAGameMusic) {
 					// Stop music
 					__asm {
 						push ecx

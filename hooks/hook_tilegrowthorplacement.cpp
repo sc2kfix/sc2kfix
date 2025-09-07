@@ -275,6 +275,7 @@ static int L_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iTileID, __int16 
 extern int iChurchVirus;
 
 extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __int16 iSubStep) {
+	CSimcityAppPrimary *pSCApp;
 	DWORD *pSCView;
 	__int16 iX;
 	__int16 iY;
@@ -305,7 +306,8 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 	// iStep: iX += 4 with evert loop until >= GAME_MAP_SIZE is reached.
 	// iSubStep: iY += 4 with each loop until >= GAME_MAP_SIZE is reached.
 
-	pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
+	pSCApp = Game_GetSimcityAppClassPointer();
+	pSCView = Game_PointerToCSimcityViewClass(pSCApp);
 	bPlaceChurch = (iChurchVirus > 0) ? 1 : (2500u * dwTileCount[TILE_INFRASTRUCTURE_CHURCH] < dwCityPopulation);
 	wCurrentAngle = wPositionAngle[wViewRotation];
 	iX = iStep;
