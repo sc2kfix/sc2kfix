@@ -14,6 +14,7 @@
 #include <random>
 
 #include <mfc3xhelp.h>
+#include <sc2kclasses.h>
 #include <smk.h>
 #include <sc2k_1996.h>
 #include <sc2k_demo.h>
@@ -98,9 +99,6 @@ template <typename T> std::string to_string_precision(const T value, const int p
 
 #define MUSIC_TRACKS 19
 
-#define HICOLORCNT 256
-#define LOCOLORCNT 16
-
 // It should be noted that with these values
 // they're referencing the min/max for the
 // user and sim label entries but NOT the total
@@ -119,32 +117,6 @@ template <typename T> std::string to_string_precision(const T value, const int p
 
 #define MARINA_TILES_ALLDRY 0
 #define MARINA_TILES_ALLWET 9
-
-// TODO: inline documentation
-typedef struct tagLOGPAL {
-	WORD wVersion;
-	WORD wNumPalEnts;
-	PALETTEENTRY pPalEnts[HICOLORCNT];
-} LOGPAL, *PLOGPAL;
-
-// TODO: inline documentation
-typedef struct testColStruct {
-	WORD wPos;
-	PALETTEENTRY pe;
-} colStruct;
-
-// TODO: inline documentation
-typedef struct COLORTABLE_STRUCT {
-	WORD Index;
-	DWORD rgb;
-} colTable;
-
-// Reimplementation of an abstracted C string (not to be confused with the MFC CString) used in
-// the original SimCity 2000 code.
-class CSimString {
-public:
-	char *pStr;
-};
 
 // Struct defining an injected hook from a loaded mod and its nested call priority.
 typedef struct {

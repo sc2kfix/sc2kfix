@@ -1204,50 +1204,6 @@ typedef struct {
 } map_XLAB_t;
 #pragma pack(pop)
 
-// The sound/midi class; placed here for now.
-#pragma pack(push, 1)
-class CSound {
-public:
-	HWND *dwSNDhWnd;
-	BOOL bSNDPlaySound;
-	int iSNDCurrSoundID;
-	CMFC3XString dwSNDSoundString;
-	void *dwSNDBufferTool;
-	int iSNDToolSoundID;
-	void *dwSNDBufferActionThing;
-	BOOL bSNDWasPlaying;
-	int iSNDActionThingSoundID;
-	void *dwSNDBufferClick;
-	void *dwSNDBufferDestruction;
-	void *dwSNDBufferGeneral;
-	int iSNDGeneralSoundID;
-	DWORD dwSNDUnknownOne;
-	WORD wSNDMCIDevID;
-	DWORD dwSNDMCIError;
-	DWORD dwSNDUnknownTwo;
-	CMFC3XString dwSNDMusicString;
-};
-#pragma pack(pop)
-
-// The graphics class; placed here for now.
-#pragma pack(push, 1)
-class CGraphics
-{
-public:
-	HBITMAP GRBitmap;
-	HBITMAP GRBitmapLoColor;
-	int GRlastPalUpdate;
-	CMFC3XPalette *GRpAppPalette;
-	int GRwidth;
-	int GRheight;
-	int GRorient;
-	int GRIsLockCnt;
-	BYTE *GRpBits;
-	BYTE *GRpBitsLoColor;
-	BITMAPINFO *GRpBitmapInfo;
-};
-#pragma pack(pop)
-
 // Function pointers
 
 GAMECALL(0x40103C, int, __thiscall, PreGameMenuDialogToggle, void *pThis, int iShow)

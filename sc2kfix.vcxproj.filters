@@ -159,6 +159,9 @@
     <ClInclude Include="thirdparty\fluidsynth\fluidsynth.h">
       <Filter>Header Files\Third-Party\FluidSynth</Filter>
     </ClInclude>
+    <ClInclude Include="include\sc2kclasses.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="hooks\hook_mciSendCommand.cpp">
