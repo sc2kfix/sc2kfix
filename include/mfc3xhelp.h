@@ -315,6 +315,13 @@ public:
 	CMFC3XString m_strDocStrings;
 };
 
+class CMFC3XMultiDocTemplate : CMFC3XDocTemplate {
+	HMENU m_hMenuShared;
+	HACCEL m_hAccelTable;
+	CMFC3XPtrList m_docList;
+	unsigned int m_nUntitledCount;
+};
+
 class CMFC3XDocument : public CMFC3XCmdTarget {
 public:
 	CMFC3XString m_strTitle;

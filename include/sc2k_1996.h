@@ -1208,13 +1208,13 @@ typedef struct {
 
 GAMECALL(0x40103C, int, __thiscall, PreGameMenuDialogToggle, void *pThis, int iShow)
 GAMECALL(0x40106E, int, __cdecl, PlaceRoadAtCoordinates, __int16 x, __int16 y)
-GAMECALL(0x401096, int, __thiscall, SoundPlaySound, void* pThis, int iSoundID)
+GAMECALL(0x401096, int, __thiscall, SoundPlaySound, CSimcityAppPrimary* pThis, int iSoundID)
 GAMECALL(0x4011E5, BOOL, __thiscall, CSoundMapToolSoundTrigger, CSound* pThis)
 GAMECALL(0x4012C1, int, __cdecl, SpawnItem, __int16 x, __int16 y)
 GAMECALL(0x401460, BYTE, __cdecl, SimulationProvisionMicrosim, __int16, __int16, __int16 iTileID) // The first two arguments aren't clear, though they "could" be the X/Y tile coordinates.
 GAMECALL(0x4014CE, int, __cdecl, SpawnAeroplane, __int16 x, __int16 y, __int16 iDirection)
 GAMECALL(0x4014F1, int, __thiscall, TileHighlightUpdate, void *pThis)
-GAMECALL(0x40150A, int, __thiscall, ExitRequester, void *pThis, int iSource)
+GAMECALL(0x40150A, int, __thiscall, SimcityAppExitRequester, CSimcityAppPrimary *pThis, int iSource)
 GAMECALL(0x4015A0, void, __thiscall, DoSaveCity, void *pThis)
 GAMECALL(0x401519, void, __thiscall, ToolMenuEnable, void* pThis)
 GAMECALL(0x4016D1, int, __thiscall, CenterOnNewScreenCoordinates, void *pThis, __int16 iNewScreenPointX, __int16 iNewScreenPointY)
@@ -1247,10 +1247,11 @@ GAMECALL(0x4023B0, int, __cdecl, IsValidTransitItems, __int16 x, __int16 y)
 GAMECALL(0x4023EC, void, __stdcall, ToolMenuUpdate, void)
 GAMECALL(0x402414, int, __thiscall, MusicPlay, void *pThis, int iSongID)
 GAMECALL(0x402478, int, __cdecl, SpawnHelicopter, __int16 x, __int16 y)
+GAMECALL(0x4024DC, CSimcityAppPrimary *, __thiscall, GetSimcityAppClassPointer, void)
 GAMECALL(0x4024FA, char, __cdecl, PerhapsGeneralZoneChangeBuilding, __int16 x, __int16 y, __int16 iBuldingPopLevel, int iTileID)
 GAMECALL(0x40258B, int, __cdecl, GetScreenCoordsFromTileCoords, __int16 iTileTargetX, __int16 iTileTargetY, WORD *wNewScreenPointX, WORD *wNewScreenPointY)
 GAMECALL(0x402603, __int16, __cdecl, ZonedBuildingTileDeletion, __int16 x, __int16 y)
-GAMECALL(0x402699, DWORD *, __thiscall, PointerToCSimcityViewClass, void* CSimcityAppThis)
+GAMECALL(0x402699, DWORD *, __thiscall, PointerToCSimcityViewClass, CSimcityAppPrimary* CSimcityAppThis)
 GAMECALL(0x4026B2, int, __cdecl, SimulationGrowSpecificZone, __int16 x, __int16 y, __int16 iTileID, __int16 iZoneType)
 GAMECALL(0x402725, int, __cdecl, PlacePowerLinesAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x402798, int, __cdecl, MapToolPlaceForest, __int16 iTileTargetX, __int16 iTileTargetY)
@@ -1267,7 +1268,7 @@ GAMECALL(0x402B2B, int, __cdecl, MapToolStretchTerrain, __int16 iTileTargetX, __
 GAMECALL(0x402B44, __int16, __cdecl, MapToolMenuAction, int iMouseKeys, POINT pt)
 GAMECALL(0x402B94, int, __cdecl, MapToolLevelTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x402C25, int, __cdecl, CityToolMenuAction, int iMouseKeys, POINT pt)
-GAMECALL(0x402CF2, void, __thiscall, SimcityAppSetGameCursor, void *pThis, int iNewCursor, BOOL bActive)
+GAMECALL(0x402CF2, void, __thiscall, SimcityAppSetGameCursor, CSimcityAppPrimary *pThis, int iNewCursor, BOOL bActive)
 GAMECALL(0x402F9A, void, __thiscall, GetScreenAreaInfo, void *pThis, LPRECT lpRect)
 GAMECALL(0x402FF9, int, __cdecl, FlipDWORDArrayEndianness, void* pArray, int iSizeBytes)
 GAMECALL(0x480140, void, __stdcall, LoadSoundBuffer, int iSoundID, void* pBuffer)
@@ -1291,7 +1292,7 @@ GAMECALL(0x402B3F, __int16, __stdcall, RandomWordLFSRMod128, void)
 
 // Pointers
 
-GAMEOFF(DWORD,	pCSimcityAppThis,			0x4C7010)
+GAMEOFF(CSimcityAppPrimary,	pCSimcityAppThis,			0x4C7010)
 GAMEOFF(void*,	pCWndRootWindow,			0x4C702C)		// CMainFrame
 GAMEOFF(DWORD,	dwSCAGameAutoSave,			0x4D70E8)
 GAMEOFF(DWORD,	dwCursorGameHit,			0x4C70EC)
@@ -1605,10 +1606,9 @@ static inline void SetMicroSimulatorStat3(BYTE iMicrosimID, WORD iNewStat) {
 // Returns the current game palette. RE'd from the game decomp.
 // TODO: document a bit more about what the hell this actually does
 static inline CMFC3XPalette *GameGetPalette(void) {
-	DWORD* CSimcityAppThis = &pCSimcityAppThis;
 	CMFC3XPalette* pPalette;
 
-	// CSimcityAppThis[59] = dwSCABForceBkgd (use background palette)
+	// CSimcityAppThis[59] = dwSCAbForceBkgd (use background palette)
 	// CSimcityAppThis[67] = pSCAPaletteFore (Main identity palette - application in foreground)
 	// CSimcityAppThis[68] = pSCAPaletteBkgd (Background palette - application not activated - in background)
 	//
@@ -1616,10 +1616,10 @@ static inline CMFC3XPalette *GameGetPalette(void) {
 	// palette appears akin to what you'd get in 4-bit mode (and palette animation is disabled).
 
 	// Exactly what sub_4069B0 does.
-	if (CSimcityAppThis[59])
-		pPalette = (CMFC3XPalette*)CSimcityAppThis[67];
+	if (pCSimcityAppThis.dwSCAbForceBkgd)
+		pPalette = pCSimcityAppThis.dwSCAMainPaletteFore;
 	else
-		pPalette = (CMFC3XPalette*)CSimcityAppThis[68];
+		pPalette = pCSimcityAppThis.dwSCAMainPaletteFore;
 
 	// ...and this is what CDC::SelectPalette does.
 	return pPalette;
@@ -1627,7 +1627,7 @@ static inline CMFC3XPalette *GameGetPalette(void) {
 
 // Returns the HWND of the game's root window.
 static inline HWND GameGetRootWindowHandle(void) {
-	return (HWND)((DWORD*)pCWndRootWindow)[7];
+	return pCSimcityAppThis.m_pMainWnd->m_hWnd;
 }
 
 // Returns a raw byte-swapped DWORD (BE->LE and vice versa).

@@ -243,7 +243,7 @@ extern "C" {
 		CHECK_ARG(0, int, krk_integer_type, pThis);
 		CHECK_ARG(1, int, krk_integer_type, iSoundID);
 
-		return INTEGER_VAL(Game_SoundPlaySound((void*)pThis, iSoundID));
+		return INTEGER_VAL(Game_SoundPlaySound((CSimcityAppPrimary*)pThis, iSoundID));
 	}
 
 	KRK_Module(sc2k) {

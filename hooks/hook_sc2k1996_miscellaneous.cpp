@@ -309,7 +309,7 @@ extern "C" int __stdcall Hook_FileDialogDoModal() {
 }
 
 extern "C" void __stdcall Hook_SimcityAppOnQuit(void) {
-	DWORD *pThis;
+	CSimcityAppPrimary *pThis;
 
 	__asm mov [pThis], ecx
 
@@ -324,18 +324,18 @@ extern "C" void __stdcall Hook_SimcityAppOnQuit(void) {
 
 	int iReqRet;
 
-	pThis[64] = 1;
-	pThis[63] = 0;
-	iReqRet = Game_ExitRequester((void *)pThis, pThis[206]);
+	pThis->dwSCAMainFrameDestroyVar = 1;
+	pThis->dwSCAOnQuitSuspendSim = 0;
+	iReqRet = Game_SimcityAppExitRequester(pThis, pThis->dwSCASysCmdOnQuitVar);
 	if (iReqRet != IDCANCEL) {
 		if (iReqRet == IDYES)
 			Game_DoSaveCity(pThis);
-		Game_PreGameMenuDialogToggle((void *)pThis[7], 0);
-		Game_CWinApp_OnAppExit((CMFC3XWinApp *)pThis);
+		Game_PreGameMenuDialogToggle(pThis->m_pMainWnd, 0);
+		Game_CWinApp_OnAppExit(pThis);
 		return;
 	}
-	pThis[64] = 0;
-	pThis[63] = 0;
+	pThis->dwSCAMainFrameDestroyVar = 0;
+	pThis->dwSCAOnQuitSuspendSim = 0;
 }
 
 // Hook CCmdUI::Enable so we can programmatically enable and disable menu items reliably
@@ -808,7 +808,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 	BYTE iPaperVal;
 	BOOL bScenarioSuccess;
 	BOOL bDoTileHighlightUpdate;
-	DWORD *pSCApp;
+	CSimcityAppPrimary *pSCApp;
 	DWORD *pSCView;
 
 	void(__stdcall *H_UpdateGraphDialog)() = (void(__stdcall *)())0x4010A5;
@@ -819,7 +819,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 	void(__cdecl *H_SimulationPrepareBudgetDialog)(int) = (void(__cdecl *)(int))0x4015E6;
 	void(__cdecl *H_SimulationGrantReward)(__int16 iReward, int iToggle) = (void(__cdecl *)(__int16 iReward, int iToggle))0x401672;
 	void(__stdcall *H_UpdatePopulationDialog)() = (void(__stdcall *)())0x40169F;
-	void(__thiscall *H_SimcityAppCallAutoSave)(void *) = (void(__thiscall *)(void *))0x4016A9;
+	void(__thiscall *H_SimcityAppCallAutoSave)(CSimcityAppPrimary *) = (void(__thiscall *)(CSimcityAppPrimary *))0x4016A9;
 	void(__thiscall *H_SimcityViewMaintainCursor)(void *) = (void(__thiscall *)(void *))0x401A96;
 	void(__stdcall *H_SimulationUpdateWaterConsumption)() = (void(__stdcall *)())0x401CA8;
 	void(__stdcall *H_UpdateWeatherOrDisasterState)() = (void(__stdcall *)())0x401E65;
@@ -1029,10 +1029,10 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 	// isn't set to paused.
 
 	bDoTileHighlightUpdate = FALSE;
-	pSCApp = &pCSimcityAppThis;
+	pSCApp = Game_GetSimcityAppClassPointer();
 	if (!bSettingsFrequentCityRefresh) {
 		if (wSimulationSpeed == GAME_SPEED_AFRICAN_SWALLOW) {
-			if (pSCApp[198] || dwMonDay == 21)
+			if (pSCApp->dwSCAAnimationOffCycle || dwMonDay == 21)
 				bDoTileHighlightUpdate = TRUE;
 		}
 	}

@@ -95,7 +95,7 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
 	int(__cdecl *H_SwLong)(int) = (int(__cdecl *)(int))0x401429;
 	__int16(__cdecl *H_SwShort)(__int16) = (__int16(__cdecl *)(__int16))0x401861;
 	void(__cdecl *H_FailRadio)(UINT) = (void(__cdecl *)(UINT))0x402A40;
-	void(__thiscall *H_SimcityAppGetValueStringA)(void *, CMFC3XString *, const char *, const char *) = (void(__thiscall *)(void *, CMFC3XString *, const char *, const char *))0x402F4F;
+	void(__thiscall *H_SimcityAppGetValueStringA)(CSimcityAppPrimary *, CMFC3XString *, const char *, const char *) = (void(__thiscall *)(CSimcityAppPrimary *, CMFC3XString *, const char *, const char *))0x402F4F;
 	void(__cdecl *H_CStringFormat)(CMFC3XString *, char const *Ptr, ...) = (void(__cdecl *)(CMFC3XString *, char const *Ptr, ...))0x49EBD3;
 	CMFC3XString *(__thiscall *H_CStringCons)(CMFC3XString *) = (CMFC3XString *(__thiscall *)(CMFC3XString *))0x4A2C28;
 	void(__thiscall *H_CStringDest)(CMFC3XString *) = (void(__thiscall *)(CMFC3XString *))0x4A2CB0;
@@ -225,7 +225,7 @@ static void ReloadSpriteDataArchive1996(WORD nSpriteSet) {
 	int(__cdecl *H_SwLong)(int) = (int(__cdecl *)(int))0x401429;
 	__int16(__cdecl *H_SwShort)(__int16) = (__int16(__cdecl *)(__int16))0x401861;
 	void(__cdecl *H_FailRadio)(UINT) = (void(__cdecl *)(UINT))0x402A40;
-	void(__thiscall *H_SimcityAppGetValueStringA)(void *, CMFC3XString *, const char *, const char *) = (void(__thiscall *)(void *, CMFC3XString *, const char *, const char *))0x402F4F;
+	void(__thiscall *H_SimcityAppGetValueStringA)(CSimcityAppPrimary *, CMFC3XString *, const char *, const char *) = (void(__thiscall *)(CSimcityAppPrimary *, CMFC3XString *, const char *, const char *))0x402F4F;
 	void(__cdecl *H_CStringFormat)(CMFC3XString *, char const *Ptr, ...) = (void(__cdecl *)(CMFC3XString *, char const *Ptr, ...))0x49EBD3;
 	CMFC3XString *(__thiscall *H_CStringCons)(CMFC3XString *) = (CMFC3XString *(__thiscall *)(CMFC3XString *))0x4A2C28;
 	void(__thiscall *H_CStringDest)(CMFC3XString *) = (void(__thiscall *)(CMFC3XString *))0x4A2CB0;
@@ -324,18 +324,18 @@ void ReloadDefaultTileSet_SC2K1996() {
 	void(__thiscall *H_CCmdTargetBeginWaitCursor)(CMFC3XCmdTarget *) = (void(__thiscall *)(CMFC3XCmdTarget *))0x4A28BB;
 	void(__thiscall *H_CCmdTargetEndWaitCursor)(CMFC3XCmdTarget *) = (void(__thiscall *)(CMFC3XCmdTarget *))0x4A28D2;
 
-	DWORD *pApp;
+	CSimcityAppPrimary *pSCApp;
 
-	pApp = &pCSimcityAppThis;
+	pSCApp = Game_GetSimcityAppClassPointer();
 
 	if (L_MessageBoxA(GameGetRootWindowHandle(), "Are you sure that you want to reload the base game tile set?", gamePrimaryKey, MB_YESNO | MB_DEFBUTTON2 | MB_ICONEXCLAMATION) != IDYES)
 		return;
 
-	H_CCmdTargetBeginWaitCursor((CMFC3XCmdTarget *)pApp);
+	H_CCmdTargetBeginWaitCursor(pSCApp);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_SPECIAL);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_LARGE);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_SMALLMED);
-	H_CCmdTargetEndWaitCursor((CMFC3XCmdTarget *)pApp);
+	H_CCmdTargetEndWaitCursor(pSCApp);
 }
 
 void InstallSpriteAndTileSetHooks_SC2K1996(void) {

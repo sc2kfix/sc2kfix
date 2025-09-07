@@ -556,7 +556,7 @@ void DoMusicPlay(int iSongID, BOOL bInterrupt) {
 }
 
 extern "C" int __stdcall Hook_MusicPlay(int iSongID) {
-	DWORD *pThis;
+	CSimcityAppPrimary *pThis;
 	__asm mov [pThis], ecx
 
 	if (bOptionsMusicEnabled)
@@ -570,7 +570,7 @@ extern "C" int __stdcall Hook_MusicPlay(int iSongID) {
 }
 
 extern "C" int __stdcall Hook_MusicStop(void) {
-	DWORD *pThis;
+	CSound *pThis;
 	__asm mov [pThis], ecx
 
 	// Post the stop message to the music thread
@@ -587,7 +587,7 @@ extern "C" int __stdcall Hook_MusicStop(void) {
 
 // Replaces the original MusicPlayNextRefocusSong
 extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void) {
-	DWORD *pThis;
+	CSimcityAppPrimary *pThis;
 	int retval, iSongToPlay;
 
 	// This is actually a __thiscall we're overriding, so save "this"
@@ -617,7 +617,7 @@ extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void) {
 	__asm mov eax, [retval]
 }
 
-static void L_MusicPlay(void *pThis, int iSongID) {
+static void L_MusicPlay(CSimcityAppPrimary *pThis, int iSongID) {
 	if (bMultithreadedMusicEnabled)
 		DoMusicPlay(iSongID, FALSE);
 	else
@@ -625,12 +625,12 @@ static void L_MusicPlay(void *pThis, int iSongID) {
 }
 
 extern "C" void __stdcall Hook_SimcityAppMusicPlayNext(BOOL bNext) {
-	DWORD *pThis;
+	CSimcityAppPrimary *pThis;
 
 	__asm mov [pThis], ecx
 
-	DWORD(__thiscall *H_SoundGetMCIResult)(void *) = (DWORD(__thiscall *)(void *))0x40148D;
-	int(__thiscall *H_SimcityAppMusicPlayNextRefocusSong)(void *) = (int(__thiscall *)(void *))0x401A9B;
+	DWORD(__thiscall *H_SoundGetMCIResult)(CSound *) = (DWORD(__thiscall *)(CSound *))0x40148D;
+	int(__thiscall *H_SimcityAppMusicPlayNextRefocusSong)(CSimcityAppPrimary *) = (int(__thiscall *)(CSimcityAppPrimary *))0x401A9B;
 
 	int nSpeed;
 	int iRandMusic;
@@ -638,10 +638,10 @@ extern "C" void __stdcall Hook_SimcityAppMusicPlayNext(BOOL bNext) {
 
 	if (!bOptionsMusicEnabled)
 		return;
-	nSpeed = ((__int16 *)pThis)[388];
+	nSpeed = pThis->wSCAGameSpeedLOW;
 	if (nSpeed == GAME_SPEED_PAUSED)
 		nSpeed = GAME_SPEED_TURTLE;
-	if (!H_SoundGetMCIResult((void *)pThis[82])) {
+	if (!H_SoundGetMCIResult(pThis->SCASNDLayer)) {
 		if (bNext)
 			H_SimcityAppMusicPlayNextRefocusSong(pThis);
 		else if ((!(rand() % (8 * (3 * nSpeed - 3)))) || bSettingsAlwaysPlayMusic) {

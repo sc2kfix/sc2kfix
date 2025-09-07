@@ -667,9 +667,9 @@ std::vector<hook_function_t> stHooks_Hook_LoadGame_Before;
 //   or similar object to inform them that they have no known state to load.
 std::vector<hook_function_t> stHooks_Hook_LoadGame_After;
 
-extern "C" DWORD __stdcall Hook_LoadGame(void* pFile, char* src) {
-	DWORD(__thiscall * H_SimcityAppDoLoadGame)(void*, void*, char*) = (DWORD(__thiscall*)(void*, void*, char*))0x4302E0;
-	DWORD* pThis;
+extern "C" DWORD __stdcall Hook_LoadGame(CMFC3XFile* pFile, char* src) {
+	DWORD(__thiscall * H_SimcityAppDoLoadGame)(CSimcityAppPrimary*, CMFC3XFile*, char*) = (DWORD(__thiscall*)(CSimcityAppPrimary*, CMFC3XFile*, char*))0x4302E0;
+	CSimcityAppPrimary* pThis;
 	DWORD ret;
 
 	__asm mov [pThis], ecx
@@ -694,7 +694,7 @@ extern "C" DWORD __stdcall Hook_LoadGame(void* pFile, char* src) {
 
 	for (const auto& hook : stHooks_Hook_LoadGame_Before) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
-			void (*fnHook)(void*, void*, char*) = (void(*)(void*, void*, char*))hook.pFunction;
+			void (*fnHook)(CSimcityAppPrimary*, CMFC3XFile*, char*) = (void(*)(CSimcityAppPrimary*, CMFC3XFile*, char*))hook.pFunction;
 			fnHook(pThis, pFile, src);
 		}
 	}
@@ -725,7 +725,7 @@ extern "C" DWORD __stdcall Hook_LoadGame(void* pFile, char* src) {
 
 	for (const auto& hook : stHooks_Hook_LoadGame_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
-			void (*fnHook)(void*, void*, char*) = (void(*)(void*, void*, char*))hook.pFunction;
+			void (*fnHook)(CSimcityAppPrimary*, CMFC3XFile*, char*) = (void(*)(CSimcityAppPrimary*, CMFC3XFile*, char*))hook.pFunction;
 			fnHook(pThis, pFile, src);
 		}
 	}
@@ -746,15 +746,15 @@ std::vector<hook_function_t> stHooks_Hook_SaveGame_Before;
 std::vector<hook_function_t> stHooks_Hook_SaveGame_After;
 
 extern "C" DWORD __stdcall Hook_SaveGame(CMFC3XString* lpFileName) {
-	DWORD(__thiscall * H_SimcityAppDoSaveGame)(void*, CMFC3XString*) = (DWORD(__thiscall*)(void*, CMFC3XString*))0x432180;
-	DWORD* pThis;
+	DWORD(__thiscall * H_SimcityAppDoSaveGame)(CSimcityAppPrimary*, CMFC3XString*) = (DWORD(__thiscall*)(CSimcityAppPrimary*, CMFC3XString*))0x432180;
+	CSimcityAppPrimary* pThis;
 	DWORD ret;
 
 	__asm mov [pThis], ecx
 
 	for (const auto& hook : stHooks_Hook_SaveGame_Before) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
-			void (*fnHook)(void*, CMFC3XString*) = (void(*)(void*, CMFC3XString*))hook.pFunction;
+			void (*fnHook)(CSimcityAppPrimary*, CMFC3XString*) = (void(*)(CSimcityAppPrimary*, CMFC3XString*))hook.pFunction;
 			fnHook(pThis, lpFileName);
 		}
 	}
@@ -763,7 +763,7 @@ extern "C" DWORD __stdcall Hook_SaveGame(CMFC3XString* lpFileName) {
 
 	for (const auto& hook : stHooks_Hook_SaveGame_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
-			void (*fnHook)(void*, CMFC3XString*) = (void(*)(void*, CMFC3XString*))hook.pFunction;
+			void (*fnHook)(CSimcityAppPrimary*, CMFC3XString*) = (void(*)(CSimcityAppPrimary*, CMFC3XString*))hook.pFunction;
 			fnHook(pThis, lpFileName);
 		}
 	}

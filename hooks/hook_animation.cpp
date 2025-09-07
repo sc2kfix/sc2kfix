@@ -13,7 +13,7 @@
 static DWORD dwDummy;
 
 extern "C" void __cdecl Hook_AnimationFunction_SC2K1996(CMFC3XPalette *pPalette, int iToggle) {
-	DWORD *pApp;
+	CSimcityAppPrimary *pApp;
 	DWORD *pMainFrm;
 	DWORD *pSCView;
 	DWORD *pMapToolBar;
@@ -36,13 +36,13 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2K1996(CMFC3XPalette *pPalette,
 
 	H_AnimationFunction1996(pPalette, iToggle);
 
-	pApp = &pCSimcityAppThis;
+	pApp = Game_GetSimcityAppClassPointer();
 	if (pApp) {
 		if (!bLoColor) {
-			pMainFrm = (DWORD *)pApp[7]; // m_pMainWnd
-			wSimSpeed = ((WORD *)pApp)[388];
-			dwTitleScreenAnimation = pApp[199];
-			iProgramStep = pApp[201];
+			pMainFrm = (DWORD *)pApp->m_pMainWnd;
+			wSimSpeed = pApp->wSCAGameSpeedLOW;
+			dwTitleScreenAnimation = pApp->dwSCAToggleTitleScreenAnimation;
+			iProgramStep = pApp->iSCAProgramStep;
 			if (wSimSpeed != GAME_SPEED_PAUSED || dwTitleScreenAnimation || iProgramStep != ONIDLE_STATE_INGAME) {
 				if (pMainFrm) {
 					pMapToolBar = (DWORD *)&pMainFrm[233];
@@ -87,7 +87,7 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2K1996(CMFC3XPalette *pPalette,
 }
 
 extern "C" void __cdecl Hook_AnimationFunction_SC2K1995(CMFC3XPalette *pPalette, int iToggle) {
-	DWORD *pApp;
+	CSimcityAppPrimary *pApp;
 	DWORD *pMainFrm;
 	DWORD *pSCView;
 	DWORD *pMapToolBar;
@@ -99,10 +99,10 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2K1995(CMFC3XPalette *pPalette,
 	DWORD dwTBToolBarTitleDrag;
 	BOOL bCityViewAnim;
 
-	DWORD &pCSimcityAppThis1995 = *(DWORD *)0x4C6010;
+	CSimcityAppPrimary &pCSimcityAppThis1995 = *(CSimcityAppPrimary *)0x4C6010;
 	BOOL &bLoColor1995 = *(BOOL *)0x4E903C;
 
-	DWORD *(__thiscall *H_PointerToCSimcityViewClass1995)(void *) = (DWORD *(__thiscall *)(void *))0x4026D0;
+	DWORD *(__thiscall *H_PointerToCSimcityViewClass1995)(CSimcityAppPrimary *) = (DWORD *(__thiscall *)(CSimcityAppPrimary *))0x4026D0;
 	void(__cdecl *H_AnimationFunction1995)(CMFC3XPalette *, int) = (void(__cdecl *)(CMFC3XPalette *, int))0x456A60;
 
 	H_AnimationFunction1995(pPalette, iToggle);
@@ -110,10 +110,10 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2K1995(CMFC3XPalette *pPalette,
 	pApp = &pCSimcityAppThis1995;
 	if (pApp) {
 		if (!bLoColor1995) {
-			pMainFrm = (DWORD *)pApp[7]; // m_pMainWnd
-			wSimSpeed = ((WORD *)pApp)[388];
-			dwTitleScreenAnimation = pApp[199];
-			iProgramStep = pApp[201];
+			pMainFrm = (DWORD *)pApp->m_pMainWnd; // m_pMainWnd
+			wSimSpeed = pApp->wSCAGameSpeedLOW;
+			dwTitleScreenAnimation = pApp->dwSCAToggleTitleScreenAnimation;
+			iProgramStep = pApp->iSCAProgramStep;
 			if (wSimSpeed != GAME_SPEED_PAUSED || dwTitleScreenAnimation || iProgramStep != ONIDLE_STATE_INGAME) {
 				if (pMainFrm) {
 					pMapToolBar = (DWORD *)&pMainFrm[233];
@@ -155,7 +155,7 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2K1995(CMFC3XPalette *pPalette,
 }
 
 extern "C" void __cdecl Hook_AnimationFunction_SC2KDemo(CMFC3XPalette *pPalette, int iToggle) {
-	DWORD *pApp;
+	CSimcityAppDemo *pApp;
 	DWORD *pMainFrm;
 	DWORD *pSCView;
 	DWORD *pMapToolBar;
@@ -167,10 +167,10 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2KDemo(CMFC3XPalette *pPalette,
 	DWORD dwTBToolBarTitleDrag;
 	BOOL bCityViewAnim;
 
-	DWORD &pCSimcityAppThisDemo = *(DWORD *)0x4B6A70;
+	CSimcityAppDemo &pCSimcityAppThisDemo = *(CSimcityAppDemo *)0x4B6A70;
 	BOOL &bLoColorDemo = *(BOOL *)0x4D1EDC;
 
-	DWORD *(__thiscall *H_PointerToCSimcityViewClassDemo)(void *) = (DWORD *(__thiscall *)(void *))0x402725;
+	DWORD *(__thiscall *H_PointerToCSimcityViewClassDemo)(CSimcityAppDemo *) = (DWORD *(__thiscall *)(CSimcityAppDemo *))0x402725;
 	void(__cdecl *H_AnimationFunctionDemo)(CMFC3XPalette *, int) = (void(__cdecl *)(CMFC3XPalette *, int))0x44890F;
 
 	H_AnimationFunctionDemo(pPalette, iToggle);
@@ -178,10 +178,10 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2KDemo(CMFC3XPalette *pPalette,
 	pApp = &pCSimcityAppThisDemo;
 	if (pApp) {
 		if (!bLoColorDemo) {
-			pMainFrm = (DWORD *)pApp[7]; // m_pMainWnd
-			wSimSpeed = ((WORD *)pApp)[386];
-			dwTitleScreenAnimation = pApp[198];
-			iProgramStep = pApp[200];
+			pMainFrm = (DWORD *)pApp->m_pMainWnd; // m_pMainWnd
+			wSimSpeed = pApp->wSCAGameSpeedLOW;
+			dwTitleScreenAnimation = pApp->dwSCAToggleTitleScreenAnimation;
+			iProgramStep = pApp->iSCAProgramStep;
 			if (wSimSpeed != GAME_SPEED_PAUSED || dwTitleScreenAnimation || iProgramStep != ONIDLE_STATE_INGAME) {
 				if (pMainFrm) {
 					pMapToolBar = (DWORD *)&pMainFrm[233];
