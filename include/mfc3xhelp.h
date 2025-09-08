@@ -242,8 +242,24 @@ public:
 	HGDIOBJ m_hObject;
 };
 
+class CMFC3XBitmap : public CMFC3XGdiObject {
+
+};
+
+class CMFC3XBrush : public CMFC3XGdiObject {
+
+};
+
+class CMFC3XFont : public CMFC3XGdiObject {
+
+};
+
 class CMFC3XPalette : public CMFC3XGdiObject {
 	
+};
+
+class CMFC3XPen : public CMFC3XGdiObject {
+
 };
 
 class CMFC3XDC : public CMFC3XObject {

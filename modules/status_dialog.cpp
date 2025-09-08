@@ -227,16 +227,16 @@ static void OnPaintFloatingStatusBar(HWND hWnd, HDC hDC) {
 	CStatusControlBar *pStatusBar;
 
 	// We're using the brushes and colours from the main program.
-	DWORD *MainBrushFace = (DWORD *)0x4CAA48;
-	DWORD *MainBrushBorder = (DWORD *)0x4CB1B0;
+	CMFC3XBrush *MainBrushFace = (CMFC3XBrush *)0x4CAA48;
+	CMFC3XBrush *MainBrushBorder = (CMFC3XBrush *)0x4CB1B0;
 	COLORREF &colBtnFace = *(COLORREF *)0x4CB3FC;
 
 	if (hWnd && IsWindowVisible(hWnd)) {
 
 		GetClientRect(hWnd, &r);
 
-		FillRect(hDC, &r, (HBRUSH)MainBrushFace[1]);
-		FrameRect(hDC, &r, (HBRUSH)MainBrushBorder[1]);
+		FillRect(hDC, &r, (HBRUSH)MainBrushFace->m_hObject);
+		FrameRect(hDC, &r, (HBRUSH)MainBrushBorder->m_hObject);
 
 		pSCApp = Game_GetSimcityAppClassPointer();
 		pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
@@ -256,7 +256,7 @@ static void OnPaintFloatingStatusBar(HWND hWnd, HDC hDC) {
 			SelectFont(hDC, hFontMSSansSerifBold8);
 			SetRect(&r, left, top, right, bottom);
 			OffsetRect(&r, 5, 2);
-			FillRect(hDC, &r, (HBRUSH)MainBrushFace[1]);
+			FillRect(hDC, &r, (HBRUSH)MainBrushFace->m_hObject);
 			SetTextAlign(hDC, 8);
 			SetBkColor(hDC, colBtnFace);
 			SetTextColor(hDC, crCtrl);
@@ -269,7 +269,7 @@ static void OnPaintFloatingStatusBar(HWND hWnd, HDC hDC) {
 			SelectFont(hDC, hFontMSSansSerifRegular8);
 			SetRect(&r, left, top, right, bottom);
 			OffsetRect(&r, 5, 2);
-			FillRect(hDC, &r, (HBRUSH)MainBrushFace[1]);
+			FillRect(hDC, &r, (HBRUSH)MainBrushFace->m_hObject);
 			SetTextAlign(hDC, 8);
 			SetBkColor(hDC, colBtnFace);
 			SetTextColor(hDC, crNotif);
@@ -286,7 +286,7 @@ static void OnPaintFloatingStatusBar(HWND hWnd, HDC hDC) {
 
 			// Compass image.
 			SetRect(&r, left, top, right, bottom);
-			FillRect(hDC, &r, (HBRUSH)MainBrushFace[1]);
+			FillRect(hDC, &r, (HBRUSH)MainBrushFace->m_hObject);
 			hDCBits = CreateCompatibleDC(hDC);
 			GetObject(hCompassBitmaps[wViewRotation], sizeof(tagBITMAP), &bm);
 			SelectObject(hDCBits, hCompassBitmaps[wViewRotation]);
