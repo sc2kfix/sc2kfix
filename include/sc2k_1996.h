@@ -1221,7 +1221,7 @@ GAMECALL(0x4016D1, int, __thiscall, CenterOnNewScreenCoordinates, void *pThis, _
 GAMECALL(0x4016F9, int, __cdecl, PlaceChurch, __int16 x, __int16 y)
 GAMECALL(0x40174E, void, __cdecl, SimulationPrepareDiasterCoordinates, POINT *pt, __int16 x, __int16 y)
 GAMECALL(0x40178F, __int16, __cdecl, PlaceTileWithMilitaryCheck, __int16 x, __int16 y, __int16 iTileID)
-GAMECALL(0x4017B2, void, __thiscall, SimcityDocUpdateDocumentTitle, void* pThis)
+GAMECALL(0x4017B2, void, __thiscall, SimcityDocUpdateDocumentTitle, CSimcityDoc* pThis)
 GAMECALL(0x401857, int, __cdecl, MapToolPlaceTree, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x40198D, int, __cdecl, MapToolPlaceStream, __int16 iTileTargetX, __int16 iTileTargetY, __int16) // XXX - the last parameter isn't entirely clear, perhaps area or offset?
 GAMECALL(0x401997, int, __cdecl, MapToolPlaceWater, __int16 iTileTargetX, __int16 iTileTargetY)
@@ -1257,7 +1257,7 @@ GAMECALL(0x402725, int, __cdecl, PlacePowerLinesAtCoordinates, __int16 x, __int1
 GAMECALL(0x402798, int, __cdecl, MapToolPlaceForest, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x4027A7, void, __thiscall, CSimCityView_OnVScroll, CSimcityView *pThis, int nSBCode, __int16 nPos, CMFC3XScrollBar *pScrollBar)
 GAMECALL(0x4027F2, int, __cdecl, ItemPlacementCheck, __int16 x, __int16 y, BYTE iTileID, __int16 iTileArea)
-GAMECALL(0x402810, int, __thiscall, UpdateAreaCompleteColorFill, void *) // This appears to be a more comprehensive update that'll occur for highlighted/selected area or when you're moving the game area.
+GAMECALL(0x402810, int, __thiscall, UpdateAreaCompleteColorFill, CSimcityView *) // This appears to be a more comprehensive update that'll occur for highlighted/selected area or when you're moving the game area.
 GAMECALL(0x40281F, int, __cdecl, RunTripGenerator, __int16 x, __int16 y, __int16 iZoneType, __int16 iBuildingPopLevel, __int16 iTripMaxSteps)
 GAMECALL(0x402829, void, __cdecl, SpawnShip, __int16 x, __int16 y)
 GAMECALL(0x402900, int, __cdecl, NewspaperStoryGenerator, __int16 iType, char iValue)
@@ -1429,7 +1429,7 @@ GAMEOFF(CMFC3XWinApp*,	pCWinApp,			0x4CE8C0)
 GAMEOFF_ARR(WORD,	wPositionAngle,			0x4DC4C8)
 GAMEOFF_ARR(DWORD,	dwDisasterStringIndex,	0x4E6010)
 GAMEOFF(DWORD,	dwSimulationSubtickCounter,	0x4E63D8)
-GAMEOFF(CMFC3XDocument*,	pCDocumentMainWindow,		0x4E66F8)
+GAMEOFF(CSimcityDoc*,	pCDocumentMainWindow,		0x4E66F8)
 GAMEOFF(WORD,	wPreviousTileCoordinateX,	0x4E6808)
 GAMEOFF(WORD,	wPreviousTileCoordinateY,	0x4E680C)
 GAMEOFF(CSimcityView*,	pCSimcityView,				0x4E682C)

@@ -644,7 +644,7 @@ extern "C" void __stdcall Hook_ResetGameVars(void) {
 }
 
 extern "C" void __stdcall Hook_SimcityDocUpdateDocumentTitle() {
-	DWORD *pThis;
+	CSimcityDoc *pThis;
 
 	__asm mov [pThis], ecx
 
@@ -721,7 +721,7 @@ extern "C" void __stdcall Hook_SimcityDocUpdateDocumentTitle() {
 			operator delete(pFundStr);
 		}
 GOFORWARD:
-		Game_CDocument_UpdateAllViews((CMFC3XDocument *)pThis, 0, 1, (CMFC3XObject *)&cStr);
+		Game_CDocument_UpdateAllViews(pThis, 0, 1, (CMFC3XObject *)&cStr);
 	}
 GETOUT:
 	H_CStringDest(&cStr);

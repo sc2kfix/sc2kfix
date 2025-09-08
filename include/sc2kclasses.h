@@ -346,3 +346,22 @@ public:
 	DWORD dwSCVIsZoomed;
 };
 #pragma pack(pop)
+
+// NOTE: Variable use-case here is not know.
+//       Perhaps it was for internal debugging at the time.
+//       However it allows for alignment at present.
+
+class CEngine : public CMFC3XDocument {
+public:
+	DWORD dwEngineOne;
+	DWORD dwEngineTwo;
+	DWORD dwEngineThree;
+	DWORD dwEngineFour;
+	WORD wEngineOne;
+	WORD wEngineTwo;
+};
+
+class CSimcityDoc : public CMFC3XDocument {
+public:
+	CEngine *pSimEngine;
+};
