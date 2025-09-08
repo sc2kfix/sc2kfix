@@ -326,7 +326,7 @@ void ReloadDefaultTileSet_SC2K1996() {
 
 	CSimcityAppPrimary *pSCApp;
 
-	pSCApp = Game_GetSimcityAppClassPointer();
+	pSCApp = &pCSimcityAppThis;
 
 	if (L_MessageBoxA(GameGetRootWindowHandle(), "Are you sure that you want to reload the base game tile set?", gamePrimaryKey, MB_YESNO | MB_DEFBUTTON2 | MB_ICONEXCLAMATION) != IDYES)
 		return;

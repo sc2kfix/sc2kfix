@@ -82,7 +82,7 @@ extern "C" DWORD __cdecl Hook_MovieCheck(char* sMovStr) {
 		if (!smk_enabled || bSkipIntro || bSettingsAlwaysSkipIntro)
 			return 1;
 
-	return Game_Direct_MovieCheck(sMovStr);
+	return GameMain_MovieCheck(sMovStr);
 }
 
 extern "C" DWORD __cdecl Hook_SmackOpen(LPCSTR lpFileName, uint32_t uFlags, int32_t iExBuf) {

@@ -308,7 +308,7 @@ extern "C" int __stdcall Hook_FileDialogDoModal() {
 	return iRet;
 }
 
-extern "C" void __stdcall Hook_SimcityAppOnQuit(void) {
+extern "C" void __stdcall Hook_SimcityApp_OnQuit(void) {
 	CSimcityAppPrimary *pThis;
 
 	__asm mov [pThis], ecx
@@ -326,12 +326,12 @@ extern "C" void __stdcall Hook_SimcityAppOnQuit(void) {
 
 	pThis->dwSCAMainFrameDestroyVar = 1;
 	pThis->dwSCAOnQuitSuspendSim = 0;
-	iReqRet = Game_SimcityAppExitRequester(pThis, pThis->dwSCASysCmdOnQuitVar);
+	iReqRet = Game_SimcityApp_ExitRequester(pThis, pThis->dwSCASysCmdOnQuitVar);
 	if (iReqRet != IDCANCEL) {
 		if (iReqRet == IDYES)
-			Game_DoSaveCity(pThis);
-		Game_PreGameMenuDialogToggle(pThis->m_pMainWnd, 0);
-		Game_CWinApp_OnAppExit(pThis);
+			Game_SimcityApp_SaveCity(pThis);
+		Game_MainFrame_ToggleToolBars((CMainFrame *)pThis->m_pMainWnd, 0);
+		GameMain_WinApp_OnAppExit(pThis);
 		return;
 	}
 	pThis->dwSCAMainFrameDestroyVar = 0;
@@ -339,7 +339,7 @@ extern "C" void __stdcall Hook_SimcityAppOnQuit(void) {
 }
 
 // Hook CCmdUI::Enable so we can programmatically enable and disable menu items reliably
-extern "C" void __stdcall Hook_CCmdUI_Enable(BOOL bOn) {
+extern "C" void __stdcall Hook_CmdUI_Enable(BOOL bOn) {
 	CMFC3XCmdUI *pThis;
 	__asm mov [pThis], ecx
 
@@ -359,11 +359,11 @@ extern "C" void __stdcall Hook_CCmdUI_Enable(BOOL bOn) {
 	else {
 		if (!bOn && (GetFocus() == pThis->m_pOther->m_hWnd)) {
 			hWndParent = GetParent(pThis->m_pOther->m_hWnd);
-			pWndParent = Game_CWnd_FromHandle(hWndParent);
+			pWndParent = GameMain_Wnd_FromHandle(hWndParent);
 			hNextDlgTabItem = GetNextDlgTabItem(pWndParent->m_hWnd, pThis->m_pOther->m_hWnd, 0);
-			pNextDlgTabItem = Game_CWnd_FromHandle(hNextDlgTabItem);
+			pNextDlgTabItem = GameMain_Wnd_FromHandle(hNextDlgTabItem);
 			hWndFocus = SetFocus(pNextDlgTabItem->m_hWnd);
-			Game_CWnd_FromHandle(hWndFocus);
+			GameMain_Wnd_FromHandle(hWndFocus);
 		}
 		EnableWindow(pThis->m_pOther->m_hWnd, bOn);
 	}
@@ -579,7 +579,7 @@ static void SimcityViewOnMButtonDown(UINT nFlags, POINT pt) {
 	bTileX = LOBYTE(wTileCoords);
 	bTileY = HIBYTE(wTileCoords);
 
-	pSCApp = Game_GetSimcityAppClassPointer();
+	pSCApp = &pCSimcityAppThis;
 	if (wTileCoords & 0x8000)
 		return;
 	else {
@@ -590,7 +590,7 @@ static void SimcityViewOnMButtonDown(UINT nFlags, POINT pt) {
 		else if (GetAsyncKeyState(VK_MENU) < 0) {
 			// useful for tests
 		} else {
-			Game_SoundPlaySound(pSCApp, SOUND_CLICK);
+			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
 			Game_CenterOnTileCoords(bTileX, bTileY);
 		}
 	}
@@ -600,8 +600,8 @@ extern "C" LRESULT __stdcall Hook_DefWindowProcA(HWND hWnd, UINT Msg, WPARAM wPa
 	CSimcityAppPrimary *pSCApp;
 	CSimcityView *pSCView;
 
-	pSCApp = Game_GetSimcityAppClassPointer();
-	pSCView = Game_PointerToCSimcityViewClass(pSCApp);
+	pSCApp = &pCSimcityAppThis;
+	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 	if (Msg == WM_MBUTTONDOWN) {
 		if (pSCView && hWnd == pSCView->m_hWnd) {
 			POINT pt;
@@ -627,8 +627,8 @@ extern "C" void __stdcall Hook_ResetGameVars(void) {
 		CSimcityAppPrimary *pSCApp;
 		CSimcityView *pThis;
 
-		pSCApp = Game_GetSimcityAppClassPointer();
-		pThis = Game_PointerToCSimcityViewClass(pSCApp);
+		pSCApp = &pCSimcityAppThis;
+		pThis = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 
 		if (((__int16)wCityMode < 0 && bNewGame) || bMapEditor) {
 			if (wViewRotation != VIEWROTATION_NORTH) {
@@ -643,7 +643,7 @@ extern "C" void __stdcall Hook_ResetGameVars(void) {
 	H_ResetGameVars();
 }
 
-extern "C" void __stdcall Hook_SimcityDocUpdateDocumentTitle() {
+extern "C" void __stdcall Hook_SimcityDoc_UpdateDocumentTitle() {
 	CSimcityDoc *pThis;
 
 	__asm mov [pThis], ecx
@@ -675,7 +675,7 @@ extern "C" void __stdcall Hook_SimcityDocUpdateDocumentTitle() {
 
 	H_CStringCons(&cStr);
 
-	pSCApp = Game_GetSimcityAppClassPointer();
+	pSCApp = &pCSimcityAppThis;
 	if (!pSCApp->dwSCAMainFrameDestroyVar) {
 		if (!wCityMode) {
 			H_CStringLoadStringA(&cStr, 0x19D); // "Editing Terrain..."
@@ -721,7 +721,7 @@ extern "C" void __stdcall Hook_SimcityDocUpdateDocumentTitle() {
 			operator delete(pFundStr);
 		}
 GOFORWARD:
-		Game_CDocument_UpdateAllViews(pThis, 0, 1, (CMFC3XObject *)&cStr);
+		GameMain_Document_UpdateAllViews(pThis, 0, 1, (CMFC3XObject *)&cStr);
 	}
 GETOUT:
 	H_CStringDest(&cStr);
@@ -757,7 +757,7 @@ static void L_TileHighlightUpdate(CSimcityView *pThis) {
 			y = H_GraphicsHeight(pThis->dwSCVCGraphics);
 			if (!bOverrideTickPlacementHighlight) {
 				H_BeginObject(pThis, vBits, x, y, &pThis->dwSCVRECTOne);
-				Game_DrawSquareHighlight(pThis, wHighlightedTileX1, wHighlightedTileY1, wHighlightedTileX2, wHighlightedTileY2);
+				Game_SimcityView_DrawSquareHighlight(pThis, wHighlightedTileX1, wHighlightedTileY1, wHighlightedTileX2, wHighlightedTileY2);
 				H_FinishObject();
 			}
 			H_GraphicsUnlockDIBBits(pThis->dwSCVCGraphics);
@@ -803,7 +803,7 @@ std::vector<hook_function_t> stHooks_Hook_ScenarioSuccessCheck;
 // Called after the vanilla SimCalendar day simulation. Cannot be ignored.
 std::vector<hook_function_t> stHooks_Hook_SimCalendarAdvance_After;
 
-extern "C" void __stdcall Hook_SimulationProcessTick() {
+extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	int i;
 	DWORD dwMonDay;
 	DWORD newsDialog[156];
@@ -844,7 +844,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 	void(__thiscall *H_MainFrameUpdateCityToolBar)(CMainFrame *) = (void(__thiscall *)(CMainFrame *))0x402F18;
 	void(__stdcall *H_SimulationProposeMilitaryBase)() = (void(__stdcall *)())0x403017;
 
-	pSCApp = Game_GetSimcityAppClassPointer();
+	pSCApp = &pCSimcityAppThis;
 	UpdateCityDateAndSeason(TRUE);
 	dwMonDay = (dwCityDays % 25);
 	if (pSCApp->dwSCAGameAutoSave > 0 &&
@@ -855,8 +855,8 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 	}
 
 	if (bSettingsFrequentCityRefresh) {
-		Game_SimcityDocUpdateDocumentTitle(pCDocumentMainWindow);
-		Game_CDocument_UpdateAllViews(pCDocumentMainWindow, NULL, 2, NULL);
+		Game_SimcityDoc_UpdateDocumentTitle(pCDocumentMainWindow);
+		GameMain_Document_UpdateAllViews(pCDocumentMainWindow, NULL, 2, NULL);
 	}
 
 	// Call mods for daily processing tasks - before update
@@ -873,7 +873,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 	switch (dwMonDay) {
 		case 0:
 			if (!bSettingsFrequentCityRefresh)
-				Game_SimcityDocUpdateDocumentTitle(pCDocumentMainWindow);
+				Game_SimcityDoc_UpdateDocumentTitle(pCDocumentMainWindow);
 			if (bYearEndFlag)
 				H_SimulationPrepareBudgetDialog(0);
 			H_UpdateBudgetInformation();
@@ -913,7 +913,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 			dwCityProgressionRequirement = dwCityProgressionRequirements[wCityProgression];
 			if (dwCityProgressionRequirement) {
 				if (dwCityProgressionRequirement < dwCityPopulation) {
-					Game_SimcityAppSetGameCursor(pSCApp, 24, 0);
+					Game_SimcityApp_SetGameCursor(pSCApp, 24, 0);
 					// There are only 7 (0-6) progression levels, cast the warning away.
 					iPaperVal = (BYTE)wCityProgression++;
 					H_NewspaperStoryGenerator(3, iPaperVal);
@@ -928,7 +928,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 						H_SimulationGrantReward(wCityProgression - 1, 1);
 					H_ToolMenuUpdate();
 					H_SimcityAppAdjustNewspaperMenu(pSCApp);
-					Game_SimcityAppSetGameCursor(pSCApp, 0, 0);
+					Game_SimcityApp_SetGameCursor(pSCApp, 0, 0);
 				}
 			}
 
@@ -992,7 +992,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 			break;
 		case 23:
 			if (!bSettingsFrequentCityRefresh)
-				Game_CDocument_UpdateAllViews(pCDocumentMainWindow, NULL, 2, NULL);
+				GameMain_Document_UpdateAllViews(pCDocumentMainWindow, NULL, 2, NULL);
 			H_UpdatePopulationDialog();
 			H_UpdateIndustryDialog();
 			H_UpdateGraphDialog();
@@ -1047,7 +1047,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 	}
 
 	if (bDoTileHighlightUpdate) {
-		pSCView = Game_PointerToCSimcityViewClass(pSCApp);
+		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 		if (pSCView) {
 			if (wCityMode) {
 				// It should be noted that the highlight will only appear with a valid selected tool.
@@ -1083,18 +1083,18 @@ extern "C" void __stdcall Hook_SimulationStartDisaster(void) {
 extern "C" int __stdcall Hook_AddAllInventions(void) {
 	CSimcityAppPrimary *pSCApp;
 
-	pSCApp = Game_GetSimcityAppClassPointer();
+	pSCApp = &pCSimcityAppThis;
 	if (mischook_debug & MISCHOOK_DEBUG_CHEAT)
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> AddAllInventions()\n", _ReturnAddress());
 
 	memset(wCityInventionYears, 0, sizeof(WORD)*MAX_CITY_INVENTION_YEARS);
 	Game_ToolMenuUpdate();
-	Game_SoundPlaySound(pSCApp, SOUND_ZAP);
+	Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_ZAP);
 
 	return 0;
 }
 
-extern "C" void __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(UINT nFlags, POINT pt) {
+extern "C" void __stdcall Hook_SimcityView_OnLButtonDown(UINT nFlags, POINT pt) {
 	CSimcityView *pThis;
 
 	__asm mov [pThis], ecx
@@ -1115,27 +1115,27 @@ extern "C" void __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(UINT nFlags, POINT pt
 	if (pThis->dwSCVRightClickMenuOpen)
 		pThis->dwSCVRightClickMenuOpen = 0;
 	else if (!PtInRect(&pThis->dwSCVStaticRect, pt)) {
-		Game_GetScreenAreaInfo(pThis, &r);
+		Game_SimcityView_GetScreenAreaInfo(pThis, &r);
 		if (PtInRect(&pThis->dwSCVScrollBarVertRectOne, pt)) {
 			if (PtInRect(&pThis->dwSCVScrollBarVertRectThree, pt))
-				Game_CSimCityView_OnVScroll(pThis, SB_LINEDOWN, 0, pThis->dwSCVScrollBarVert);
+				Game_SimCityView_OnVScroll(pThis, SB_LINEDOWN, 0, pThis->dwSCVScrollBarVert);
 			else if (PtInRect(&pThis->dwSCVScrollBarVertRectTwo, pt))
-				Game_CSimCityView_OnVScroll(pThis, SB_LINEUP, 0, pThis->dwSCVScrollBarVert);
+				Game_SimCityView_OnVScroll(pThis, SB_LINEUP, 0, pThis->dwSCVScrollBarVert);
 			else if (PtInRect(&pThis->dwSCVScrollPosVertRect, pt))
-				Game_CSimCityView_OnVScroll(pThis, SB_THUMBTRACK, (__int16)pt.y, pThis->dwSCVScrollBarVert);
+				Game_SimCityView_OnVScroll(pThis, SB_THUMBTRACK, (__int16)pt.y, pThis->dwSCVScrollBarVert);
 			else {
 				// This part appears to be non-functional, pressing "Page Down" will rotate the map;
 				// "Page Up" doesn't do anything.
 				if (pThis->dwSCVScrollPosVertRect.top >= pt.y)
-					Game_CSimCityView_OnVScroll(pThis, SB_PAGEUP, 0, pThis->dwSCVScrollBarVert);
+					Game_SimCityView_OnVScroll(pThis, SB_PAGEUP, 0, pThis->dwSCVScrollBarVert);
 				else
-					Game_CSimCityView_OnVScroll(pThis, SB_PAGEDOWN, 0, pThis->dwSCVScrollBarVert);
+					Game_SimCityView_OnVScroll(pThis, SB_PAGEDOWN, 0, pThis->dwSCVScrollBarVert);
 			}
 		}
 		else if (!pThis->dwSCVLeftMouseDownInGameArea) {
 			bOverrideTickPlacementHighlight = TRUE;
 			hWnd = SetCapture(pThis->m_hWnd);
-			Game_CWnd_FromHandle(hWnd);
+			GameMain_Wnd_FromHandle(hWnd);
 			wCurrentTileCoordinates = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);;
 			if (wCurrentTileCoordinates >= 0) {
 				wTileCoordinateX = (uint8_t)wCurrentTileCoordinates;
@@ -1155,7 +1155,7 @@ extern "C" void __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(UINT nFlags, POINT pt
 	}
 }
 
-extern "C" void __stdcall Hook_CSimcityView_WM_MOUSEMOVE(UINT nFlags, CMFC3XPoint pt) {
+extern "C" void __stdcall Hook_SimcityView_OnMouseMove(UINT nFlags, CMFC3XPoint pt) {
 	CSimcityView *pThis;
 
 	__asm mov [pThis], ecx
@@ -1226,9 +1226,9 @@ extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, POINT pt) {
 	// The change in this case is to only set pThis[62] to 0 when the iCurrToolGroupA is not
 	// 'Center Tool', this will then allow it to pass-through to the WM_MOUSEMOVE call.
 
-	pSCApp = Game_GetSimcityAppClassPointer();
-	pThis = Game_PointerToCSimcityViewClass(pSCApp);	// TODO: is this necessary or can we just dereference pCSimcityView?
-	Game_TileHighlightUpdate(pThis);
+	pSCApp = &pCSimcityAppThis;
+	pThis = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);	// TODO: is this necessary or can we just dereference pCSimcityView?
+	Game_SimcityView_TileHighlightUpdate(pThis);
 	iTileStartX = 400;
 	iTileStartY = 400;
 	iCurrMapToolGroupNoHotKey = wCurrentMapToolGroup;
@@ -1253,7 +1253,7 @@ extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, POINT pt) {
 			switch (iCurrMapToolGroupWithHotKey) {
 			case MAPTOOL_GROUP_BULLDOZER: // Bulldozing, only relevant in the CityToolMenuAction code it seems.
 				Game_UseBulldozer(iTileTargetX, iTileTargetY);
-				Game_UpdateAreaPortionFill(pThis);
+				Game_SimcityView_UpdateAreaPortionFill(pThis);
 				break;
 			case MAPTOOL_GROUP_RAISETERRAIN: // Raise Terrain
 				Game_MapToolRaiseTerrain(iTileTargetX, iTileTargetY);
@@ -1270,20 +1270,20 @@ extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, POINT pt) {
 			case MAPTOOL_GROUP_WATER: // Place Water
 			case MAPTOOL_GROUP_STREAM: // Place Stream
 				if (iCurrMapToolGroupWithHotKey == MAPTOOL_GROUP_WATER) {
-					if (!Game_MapToolPlaceWater(iTileTargetX, iTileTargetY) || Game_CSoundMapToolSoundTrigger(pSCApp->SCASNDLayer))
+					if (!Game_MapToolPlaceWater(iTileTargetX, iTileTargetY) || Game_Sound_MapToolSoundTrigger(pSCApp->SCASNDLayer))
 						break;
 				}
 				else {
 					Game_MapToolPlaceStream(iTileTargetX, iTileTargetY, 100);
-					if (Game_CSoundMapToolSoundTrigger(pSCApp->SCASNDLayer))
+					if (Game_Sound_MapToolSoundTrigger(pSCApp->SCASNDLayer))
 						break;
 				}
-				Game_SoundPlaySound(pSCApp, SOUND_FLOOD);
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_FLOOD);
 				break;
 			case MAPTOOL_GROUP_TREES: // Place Tree
 			case MAPTOOL_GROUP_FOREST: // Place Forest
-				if (!Game_CSoundMapToolSoundTrigger(pSCApp->SCASNDLayer))
-					Game_SoundPlaySound(pSCApp, SOUND_PLOP);
+				if (!Game_Sound_MapToolSoundTrigger(pSCApp->SCASNDLayer))
+					Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_PLOP);
 				if (iCurrMapToolGroupWithHotKey == MAPTOOL_GROUP_TREES)
 					Game_MapToolPlaceTree(iTileTargetX, iTileTargetY);
 				else
@@ -1291,12 +1291,12 @@ extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, POINT pt) {
 				break;
 			case MAPTOOL_GROUP_CENTERINGTOOL: // Center Tool
 				Game_GetScreenCoordsFromTileCoords(iTileTargetX, iTileTargetY, &wNewScreenPointX, &wNewScreenPointY);
-				Game_SoundPlaySound(pSCApp, SOUND_CLICK);
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
 				dwIsZoomed = pThis->dwSCVIsZoomed;
 				if (dwIsZoomed)
-					Game_CenterOnNewScreenCoordinates(pThis, wScreenPointX - (wNewScreenPointX >> 1), wScreenPointY - (wNewScreenPointY >> 1));
+					Game_SimcityView_CenterOnNewScreenCoordinates(pThis, wScreenPointX - (wNewScreenPointX >> 1), wScreenPointY - (wNewScreenPointY >> 1));
 				else
-					Game_CenterOnNewScreenCoordinates(pThis, wScreenPointX - wNewScreenPointX, wScreenPointY - wNewScreenPointY);
+					Game_SimcityView_CenterOnNewScreenCoordinates(pThis, wScreenPointX - wNewScreenPointX, wScreenPointY - wNewScreenPointY);
 				break;
 			default:
 				break;
@@ -1305,22 +1305,22 @@ extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, POINT pt) {
 		if (iCurrMapToolGroupWithHotKey >= MAPTOOL_GROUP_RAISETERRAIN && iCurrMapToolGroupWithHotKey <= MAPTOOL_GROUP_LEVELTERRAIN)
 			break;
 		else if (iCurrMapToolGroupWithHotKey == MAPTOOL_GROUP_CENTERINGTOOL) {
-			Game_UpdateAreaCompleteColorFill(pThis);
+			Game_SimcityView_UpdateAreaCompleteColorFill(pThis);
 			hWnd = pThis->m_hWnd;
 			UpdateWindow(hWnd);
 			break;
 		}
-		Game_UpdateAreaPortionFill(pThis);
+		Game_SimcityView_UpdateAreaPortionFill(pThis);
 		iTileStartX = iTileTargetX;
 		iTileStartY = iTileTargetY;
 		hWnd = pThis->m_hWnd;
 		UpdateWindow(hWnd);
-	} while (Game_CSimcityViewMouseMoveOrLeftClick(pThis, &pt));
+	} while (Game_GetGameAreaMouseActivity(pThis, &pt));
 	if (iCurrMapToolGroupNoHotKey != iCurrMapToolGroupWithHotKey)
 		wCurrentCityToolGroup = iCurrMapToolGroupNoHotKey;
 }
 
-extern "C" void __stdcall Hook_LoadCursorResources() {
+extern "C" void __stdcall Hook_SimcityApp_LoadCursorResources() {
 	CSimcityAppPrimary *pThis;
 
 	__asm mov[pThis], ecx
@@ -1415,28 +1415,24 @@ extern "C" int __stdcall Hook_StartupGraphics() {
 	return ReleaseDC(0, hDC_Two);
 }
 
-extern "C" void __stdcall Hook_CityToolBarToolMenuDisable() {
+extern "C" void __stdcall Hook_CityToolBar_ToolMenuDisable() {
 	CCityToolBar *pThis;
 
 	__asm mov[pThis], ecx
-
-	void(__thiscall *H_CityToolBarToolMenuDisable)(CCityToolBar *) = (void(__thiscall *)(CCityToolBar *))0x4237F0;
 
 	ToggleFloatingStatusDialog(FALSE);
 
-	H_CityToolBarToolMenuDisable(pThis);
+	GameMain_CityToolBar_ToolMenuDisable(pThis);
 }
 
-extern "C" void __stdcall Hook_CityToolBarToolMenuEnable() {
+extern "C" void __stdcall Hook_CityToolBar_ToolMenuEnable() {
 	CCityToolBar *pThis;
 
 	__asm mov[pThis], ecx
 
-	void(__thiscall *H_CityToolBarToolMenuEnable)(CCityToolBar *) = (void(__thiscall *)(CCityToolBar *))0x423860;
-
 	ToggleFloatingStatusDialog(TRUE);
 
-	H_CityToolBarToolMenuEnable(pThis);
+	GameMain_CityToolBar_ToolMenuEnable(pThis);
 }
 
 extern "C" void __stdcall Hook_ShowViewControls() {
@@ -1452,9 +1448,9 @@ extern "C" void __stdcall Hook_ShowViewControls() {
 	CMFC3XScrollBar *pSCVScrollBarVert;
 	CMFC3XStatic *pSCVStatic;
 
-	pSCApp = Game_GetSimcityAppClassPointer();
+	pSCApp = &pCSimcityAppThis;
 	pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
-	pSCView = Game_PointerToCSimcityViewClass(pSCApp);
+	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 	pSCVScrollBarHorz = pSCView->dwSCVScrollBarHorz;
 	pSCVScrollBarVert = pSCView->dwSCVScrollBarVert;
 	pSCVStatic = pSCView->dwSCVStaticOne;
@@ -1473,7 +1469,7 @@ extern "C" void __stdcall Hook_ShowViewControls() {
 	}
 }
 
-extern "C" void __stdcall Hook_MainFrameUpdateSections() {
+extern "C" void __stdcall Hook_MainFrame_UpdateSections() {
 	CMainFrame *pThis;
 
 	__asm mov[pThis], ecx
@@ -1717,7 +1713,7 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 	return H_CCmdTargetOnCmdMsg(pThis, nID, nCode, pExtra, pHandler);
 }
 
-extern "C" BOOL __stdcall Hook_WndOnCommand(WPARAM wParam, LPARAM lParam) {
+extern "C" BOOL __stdcall Hook_Wnd_OnCommand(WPARAM wParam, LPARAM lParam) {
 	CMFC3XWnd *pThis;
 
 	__asm mov[pThis], ecx
@@ -1803,7 +1799,7 @@ void InstallMiscHooks_SC2K1996(void) {
 
 	// Hook CSimcityApp::OnQuit
 	VirtualProtect((LPVOID)0x401753, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x401753, Hook_SimcityAppOnQuit);
+	NEWJMP((LPVOID)0x401753, Hook_SimcityApp_OnQuit);
 
 	InstallSpriteAndTileSetHooks_SC2K1996();
 
@@ -1866,9 +1862,9 @@ void InstallMiscHooks_SC2K1996(void) {
 	// The purpose in this case will be to temporarily alter the parent
 	// of the status widget (if it is in floating mode) so interaction is disabled.
 	VirtualProtect((LPVOID)0x402937, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x402937, Hook_CityToolBarToolMenuDisable);
+	NEWJMP((LPVOID)0x402937, Hook_CityToolBar_ToolMenuDisable);
 	VirtualProtect((LPVOID)0x401519, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x401519, Hook_CityToolBarToolMenuEnable);
+	NEWJMP((LPVOID)0x401519, Hook_CityToolBar_ToolMenuEnable);
 
 	// Hook for ShowViewControls
 	VirtualProtect((LPVOID)0x4021D5, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -1876,16 +1872,16 @@ void InstallMiscHooks_SC2K1996(void) {
 
 	// Hook for CMainFrame::UpdateSections
 	VirtualProtect((LPVOID)0x40131B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x40131B, Hook_MainFrameUpdateSections);
+	NEWJMP((LPVOID)0x40131B, Hook_MainFrame_UpdateSections);
 
 	// New hooks for CSimcityDoc::UpdateDocumentTitle and
 	// SimulationProcessTick - these account for:
 	// 1) Including the day of the month in the window title.
 	// 2) The fine-grained simulation updates.
 	VirtualProtect((LPVOID)0x4017B2, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4017B2, Hook_SimcityDocUpdateDocumentTitle);
+	NEWJMP((LPVOID)0x4017B2, Hook_SimcityDoc_UpdateDocumentTitle);
 	VirtualProtect((LPVOID)0x401820, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x401820, Hook_SimulationProcessTick);
+	NEWJMP((LPVOID)0x401820, Hook_Engine_SimulationProcessTick);
 
 	// Hook SimulationStartDisaster
 	VirtualProtect((LPVOID)0x402527, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -1897,7 +1893,7 @@ void InstallMiscHooks_SC2K1996(void) {
 
 	// Hook CWnd::OnCommand
 	VirtualProtect((LPVOID)0x4A5352, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4A5352, Hook_WndOnCommand);
+	NEWJMP((LPVOID)0x4A5352, Hook_Wnd_OnCommand);
 
 	// Add more buttons to SC2K's menus
 	// TODO: write a much cleaner and more programmatic way of doing this
@@ -1967,11 +1963,11 @@ void InstallMiscHooks_SC2K1996(void) {
 skipgamemenu:
 	// Hook for the game area leftmousebuttondown call.
 	VirtualProtect((LPVOID)0x401523, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x401523, Hook_CSimcityView_WM_LBUTTONDOWN);
+	NEWJMP((LPVOID)0x401523, Hook_SimcityView_OnLButtonDown);
 
 	// Hook for the game area mouse movement call.
 	VirtualProtect((LPVOID)0x4016EA, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4016EA, Hook_CSimcityView_WM_MOUSEMOVE);
+	NEWJMP((LPVOID)0x4016EA, Hook_SimcityView_OnMouseMove);
 
 	// Hook for the MapToolMenuAction call.
 	VirtualProtect((LPVOID)0x402B44, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -1979,7 +1975,7 @@ skipgamemenu:
 
 	// Hook for CSimcityApp::LoadCursorResources
 	VirtualProtect((LPVOID)0x402234, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x402234, Hook_LoadCursorResources);
+	NEWJMP((LPVOID)0x402234, Hook_SimcityApp_LoadCursorResources);
 
 	// Hook for StartupGraphics
 	VirtualProtect((LPVOID)0x4014DD, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -1987,7 +1983,7 @@ skipgamemenu:
 
 	// Hook for CCmdUI::Enable
 	VirtualProtect((LPVOID)0x4A296A, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4A296A, Hook_CCmdUI_Enable);
+	NEWJMP((LPVOID)0x4A296A, Hook_CmdUI_Enable);
 
 	// Hook the scenario start dialog so we can save the description
 	VirtualProtect((LPVOID)0x402B4E, 5, PAGE_EXECUTE_READWRITE, &dwDummy);

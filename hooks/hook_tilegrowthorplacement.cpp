@@ -208,7 +208,7 @@ static int L_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iTileID, __int16 
 		return 0;
 
 	if (iTileID == TILE_INFRASTRUCTURE_MARINA && (iMarinaWaterTileCount == MARINA_TILES_ALLDRY || iMarinaWaterTileCount == MARINA_TILES_ALLWET)) {
-		Game_AfxMessageBoxID(107, 0, -1);
+		GameMain_AfxMessageBoxID(107, 0, -1);
 		return 0;
 	}
 	else {
@@ -306,8 +306,8 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 	// iStep: iX += 4 with evert loop until >= GAME_MAP_SIZE is reached.
 	// iSubStep: iY += 4 with each loop until >= GAME_MAP_SIZE is reached.
 
-	pSCApp = Game_GetSimcityAppClassPointer();
-	pSCView = Game_PointerToCSimcityViewClass(pSCApp);
+	pSCApp = &pCSimcityAppThis;
+	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 	bPlaceChurch = (iChurchVirus > 0) ? 1 : (2500u * dwTileCount[TILE_INFRASTRUCTURE_CHURCH] < dwCityPopulation);
 	wCurrentAngle = wPositionAngle[wViewRotation];
 	iX = iStep;
@@ -680,7 +680,7 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 					if (iFundingPercent != 100 && (int)(bWeatherWind + (unsigned __int16)rand() % 50) >= iFundingPercent) {
 						//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Bridge. Weather Vulnerable\n", iStep, iSubStep);
 						Game_CenterOnTileCoords(iX, iY);
-						Game_SimcityViewDestroyStructure(pSCView, iX, iY, 1);
+						Game_SimcityView_DestroyStructure(pSCView, iX, iY, 1);
 						Game_NewspaperStoryGenerator(39, 0);
 						goto GOAFTERSETXBIT;
 					}
@@ -749,7 +749,7 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 					if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
 						//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Tunnel. Item(%s)\n", iStep, iSubStep, szTileNames[iCurrentTileID]);
 						Game_CenterOnTileCoords(iX, iY);
-						Game_SimcityViewDestroyStructure(pSCView, iX, iY, 1);
+						Game_SimcityView_DestroyStructure(pSCView, iX, iY, 1);
 						goto GOAFTERSETXBIT;
 					}
 				}
@@ -765,7 +765,7 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 					if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
 						//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Subway. Item(%s) / Underground Item(%s)\n", iStep, iSubStep, szTileNames[iCurrentTileID], (iCurrentUndergroundTileID > UNDER_TILE_SUBWAYENTRANCE) ? "** Unknown **" : szUndergroundNames[iCurrentUndergroundTileID]);
 						if (iCurrentUndergroundTileID == UNDER_TILE_SUBWAYENTRANCE)
-							Game_SimcityViewDestroyStructure(pSCView, iX, iY, 0);
+							Game_SimcityView_DestroyStructure(pSCView, iX, iY, 0);
 						else {
 							if (iCurrentUndergroundTileID == UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR)
 								iReplaceTile = UNDER_TILE_PIPES_TB;

@@ -238,7 +238,7 @@ static void OnPaintFloatingStatusBar(HWND hWnd, HDC hDC) {
 		FillRect(hDC, &r, (HBRUSH)MainBrushFace->m_hObject);
 		FrameRect(hDC, &r, (HBRUSH)MainBrushBorder->m_hObject);
 
-		pSCApp = Game_GetSimcityAppClassPointer();
+		pSCApp = &pCSimcityAppThis;
 		pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 		pStatusBar = &pMainFrm->dwMFStatusControlBar;
 		if (pStatusBar) {
@@ -328,6 +328,7 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 	HBITMAP hBitmapMem;
 	POINT pt;
 
+	pSCApp = &pCSimcityAppThis;
 	switch (message) {
 		case WM_INITDIALOG:
 			if (!bFontsInitialized)
@@ -360,8 +361,6 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 		case WM_LBUTTONDOWN:
 			pt.x = GET_X_LPARAM(lParam);
 			pt.y = GET_Y_LPARAM(lParam);
-
-			pSCApp = Game_GetSimcityAppClassPointer();
 
 			pSCApp->dwSCADragSuspendSim = 1;
 			bStatusDialogMoving = TRUE;
@@ -398,8 +397,6 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 					pt.x = GET_X_LPARAM(lParam);
 					pt.y = GET_Y_LPARAM(lParam);
 
-					pSCApp = Game_GetSimcityAppClassPointer();
-
 					bStatusDialogMoving = FALSE;
 					ReleaseCapture();
 					MoveAndBlitStatusWidget(hwndDlg, ptFloatMoving.x, ptFloatMoving.y);
@@ -424,8 +421,7 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 		// This will reset the pointer to the default arrow while
 		// while the cursor hovers over the status bar.
 		case WM_SETCURSOR:
-			pSCApp = Game_GetSimcityAppClassPointer();
-			Game_SimcityAppSetGameCursor(pSCApp, 0, 0);
+			Game_SimcityApp_SetGameCursor(pSCApp, 0, 0);
 			pSCApp->dwSCACursorGameHit = 4;
 			return TRUE;
 	}
@@ -454,7 +450,7 @@ static void DestroyFloatingStatusDialog(void) {
 	DestroyWindow(hStatusDialog);
 }
 
-extern "C" BOOL __stdcall Hook_StatusControlBarCreateStatusBar_SC2K1996() {
+extern "C" BOOL __stdcall Hook_StatusControlBar_CreateStatusBar_SC2K1996() {
 	CSimcityAppPrimary *pSCApp;
 	CStatusControlBar *pThis;
 
@@ -466,7 +462,7 @@ extern "C" BOOL __stdcall Hook_StatusControlBarCreateStatusBar_SC2K1996() {
 
 	// It's necessary to call CDialogBar::Create directly rather than
 	// the CStatusControlBar::CreateStatusBar call in order to avoid a crash.
-	pSCApp = Game_GetSimcityAppClassPointer();
+	pSCApp = &pCSimcityAppThis;
 	ret = H_CDialogBarCreate(pThis, pSCApp->m_pMainWnd, (LPCSTR)255, (0x8000 | 0x0200), 111);
 	if (ret) {
 		ptFloat.x = 360;
@@ -479,7 +475,7 @@ extern "C" BOOL __stdcall Hook_StatusControlBarCreateStatusBar_SC2K1996() {
 	return ret;
 }
 
-extern "C" void __stdcall Hook_StatusControlBarDestructStatusBar_SC2K1996() {
+extern "C" void __stdcall Hook_StatusControlBar_DestructStatusBar_SC2K1996() {
 	CStatusControlBar *pThis;
 
 	__asm mov[pThis], ecx
@@ -491,7 +487,7 @@ extern "C" void __stdcall Hook_StatusControlBarDestructStatusBar_SC2K1996() {
 	H_StatusControlBarDestructStatusBar(pThis);
 }
 
-extern "C" void __stdcall Hook_StatusControlBarUpdateStatusBar_SC2K1996(int iEntry, char *szText, int iArgUnknown, COLORREF newColor) {
+extern "C" void __stdcall Hook_StatusControlBar_UpdateStatusBar_SC2K1996(int iEntry, char *szText, int iArgUnknown, COLORREF newColor) {
 	CStatusControlBar *pThis;
 
 	__asm mov [pThis], ecx
@@ -519,7 +515,7 @@ extern "C" void __stdcall Hook_StatusControlBarUpdateStatusBar_SC2K1996(int iEnt
 		H_CStatusControlBarUpdateStatusBar(pThis, iEntry, szText, iArgUnknown, newColor);
 }
 
-extern "C" void __stdcall Hook_MainFrameToggleStatusControlBar_SC2K1996(BOOL bShow) {
+extern "C" void __stdcall Hook_MainFrame_ToggleStatusControlBar_SC2K1996(BOOL bShow) {
 	CMainFrame *pThis;
 
 	__asm mov [pThis], ecx
@@ -535,7 +531,7 @@ extern "C" void __stdcall Hook_MainFrameToggleStatusControlBar_SC2K1996(BOOL bSh
 	}
 }
 
-extern "C" void __stdcall Hook_MainFrameToggleToolBars_SC2K1996(BOOL bShow) {
+extern "C" void __stdcall Hook_MainFrame_ToggleToolBars_SC2K1996(BOOL bShow) {
 	CMainFrame *pThis;
 
 	__asm mov [pThis], ecx
@@ -551,7 +547,7 @@ extern "C" void __stdcall Hook_MainFrameToggleToolBars_SC2K1996(BOOL bShow) {
 	bToolBarsCreated = pThis->dwMFToolBarsCreated;
 	pCityToolBar = &pThis->dwMFCityToolBar;
 	pMapToolBar = &pThis->dwMFMapToolBar;
-	if (bToolBarsCreated && Game_PointerToCSimcityViewClass(&pCSimcityAppThis)) {
+	if (bToolBarsCreated && Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)) {
 		if (bShow) {
 			if (bMainFrameInactive)
 				return;
@@ -608,23 +604,23 @@ void InstallStatusHooks_SC2K1996(void) {
 
 	// Hook for CStatusControlBar::CreateStatusBar
 	VirtualProtect((LPVOID)0x40173A, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x40173A, Hook_StatusControlBarCreateStatusBar_SC2K1996);
+	NEWJMP((LPVOID)0x40173A, Hook_StatusControlBar_CreateStatusBar_SC2K1996);
 
 	// Hook for CStatusControlBar::~CStatusControlBar
 	VirtualProtect((LPVOID)0x40240F, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x40240F, Hook_StatusControlBarDestructStatusBar_SC2K1996);
+	NEWJMP((LPVOID)0x40240F, Hook_StatusControlBar_DestructStatusBar_SC2K1996);
 
 	// Hook for CStatusControlBar::UpdateStatusBar
 	VirtualProtect((LPVOID)0x40204F, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x40204F, Hook_StatusControlBarUpdateStatusBar_SC2K1996);
+	NEWJMP((LPVOID)0x40204F, Hook_StatusControlBar_UpdateStatusBar_SC2K1996);
 
 	// Hook for CMainFrame::ToggleStatusControlBar
 	VirtualProtect((LPVOID)0x4021A8, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4021A8, Hook_MainFrameToggleStatusControlBar_SC2K1996);
+	NEWJMP((LPVOID)0x4021A8, Hook_MainFrame_ToggleStatusControlBar_SC2K1996);
 
 	// Hook for CMainFrame::ToggleToolBars
 	VirtualProtect((LPVOID)0x40103C, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x40103C, Hook_MainFrameToggleToolBars_SC2K1996);
+	NEWJMP((LPVOID)0x40103C, Hook_MainFrame_ToggleToolBars_SC2K1996);
 }
 
 void UpdateStatus_SC2K1996(int iShow) {
@@ -637,10 +633,10 @@ void UpdateStatus_SC2K1996(int iShow) {
 	BOOL bShow;
 	UINT wPFlags;
 
-	pSCApp = Game_GetSimcityAppClassPointer();
+	pSCApp = &pCSimcityAppThis;
 	pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 	pStatusBar = &pMainFrm->dwMFStatusControlBar;
-	pSCView = Game_PointerToCSimcityViewClass(pSCApp);
+	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 	bShow = (pSCView && wCityMode > 0 && iShow != 0) ? TRUE : FALSE;
 	wPFlags = 0;
 	if (CanUseFloatingStatusDialog()) {

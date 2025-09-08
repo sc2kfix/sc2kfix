@@ -291,7 +291,7 @@ static void ChangeChurchZone() {
 	}
 }
 
-extern "C" void __stdcall Hook_MainFrameOnChar(UINT nChar, UINT nRepCnt, UINT nFlags) {
+extern "C" void __stdcall Hook_MainFrame_OnChar(UINT nChar, UINT nRepCnt, UINT nFlags) {
 	CMainFrame* pThis;
 
 	__asm mov[pThis], ecx
@@ -327,7 +327,7 @@ extern "C" void __stdcall Hook_MainFrameOnChar(UINT nChar, UINT nRepCnt, UINT nF
 	int& iCheatExpectedCharPos = *(int*)0x4E6524;
 	char* szNewItem = (char*)0x4E66EC;
 
-	pSCApp = Game_GetSimcityAppClassPointer();
+	pSCApp = &pCSimcityAppThis;
 
 	hWnd = pThis->m_hWnd;
 
@@ -390,7 +390,7 @@ TRYAGAIN:
 			dwCityFunds += 250;
 			break;
 		case CHEAT_THEWORKS:
-			pSCView = Game_PointerToCSimcityViewClass(pSCApp);
+			pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 			if (pSCView)
 				H_SimcityViewDebugGrantAllGifts(pSCView);
 			break;
@@ -513,5 +513,5 @@ void PorntipsGuzzardo(void) {
 
 	// Hook for CMainFrame::OnChar
 	VirtualProtect((LPVOID)0x4029E1, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4029E1, Hook_MainFrameOnChar);
+	NEWJMP((LPVOID)0x4029E1, Hook_MainFrame_OnChar);
 }

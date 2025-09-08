@@ -228,7 +228,7 @@ static BOOL DoAdvancedQuery(__int16 x, __int16 y) {
 	CCityToolBar *pCityToolBar;
 	query_coords_info qci;
 
-	pSCApp = Game_GetSimcityAppClassPointer();
+	pSCApp = &pCSimcityAppThis;
 	pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 	pCityToolBar = &pMainFrm->dwMFCityToolBar;
 
@@ -238,9 +238,9 @@ static BOOL DoAdvancedQuery(__int16 x, __int16 y) {
 			qci.iTileX = x;
 			qci.iTileY = y;
 
-			Game_ToolMenuDisable(pCityToolBar);
+			Game_CityToolBar_ToolMenuDisable(pCityToolBar);
 			DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_ADVANCEDQUERY), GameGetRootWindowHandle(), AdvancedQueryDialogProc, (LPARAM)&qci);
-			Game_ToolMenuEnable(pCityToolBar);
+			Game_CityToolBar_ToolMenuEnable(pCityToolBar);
 			return TRUE;
 		}
 	}

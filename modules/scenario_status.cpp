@@ -38,7 +38,7 @@ BOOL CALLBACK ScenarioStatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam
 	CMFC3XString* (__thiscall * H_CStringCons)(CMFC3XString*) = (CMFC3XString * (__thiscall*)(CMFC3XString*))0x4A2C28;
 	void(__thiscall *H_CStringDest)(CMFC3XString *) = (void(__thiscall *)(CMFC3XString *))0x4A2CB0;
 
-	CSimcityAppPrimary *pSCApp = Game_GetSimcityAppClassPointer();
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
 	DWORD dwCityDueDate = wScenarioTimeLimitMonths * 25 + dwCityDays;
 	dwCityDueDate = dwCityDueDate / 25 * 25 + 22;
 	int iDueDateDay = dwCityDueDate % 25 + 1;
@@ -142,7 +142,7 @@ BOOL CALLBACK ScenarioStatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam
 
 		// Cheer if the goals are met
 		if (bScenarioGoalsMet)
-			Game_SoundPlaySound(&pCSimcityAppThis, SOUND_CHEERS);
+			Game_SimcityApp_SoundPlaySound(&pCSimcityAppThis, SOUND_CHEERS);
 
 		H_CStringCons(&cDueDateString);
 		return TRUE;
