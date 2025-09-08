@@ -276,7 +276,7 @@ extern int iChurchVirus;
 
 extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __int16 iSubStep) {
 	CSimcityAppPrimary *pSCApp;
-	DWORD *pSCView;
+	CSimcityView *pSCView;
 	__int16 iX;
 	__int16 iY;
 	BOOL bPlaceChurch;

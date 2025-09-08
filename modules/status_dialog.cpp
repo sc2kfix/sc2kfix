@@ -633,7 +633,7 @@ void UpdateStatus_SC2K1996(int iShow) {
 	CSimcityAppPrimary *pSCApp;
 	CMainFrame *pMainFrm;
 	CStatusControlBar *pStatusBar;
-	DWORD *pSCView;
+	CSimcityView *pSCView;
 	BOOL bShow;
 	UINT wPFlags;
 
@@ -654,7 +654,7 @@ void UpdateStatus_SC2K1996(int iShow) {
 		wPFlags |= SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_HIDEWINDOW;
 	if (hStatusDialog)
 		SetWindowPos(hStatusDialog, HWND_TOP, ptFloat.x, ptFloat.y, szFloat.cx, szFloat.cy, wPFlags);
-	if (pCWndRootWindow && pStatusBar) {
+	if (pMainFrm && pStatusBar) {
 		ShowWindow(pStatusBar->m_hWnd, (bShow && !CanUseFloatingStatusDialog()) ? SW_SHOW : SW_HIDE);
 		H_CFrameWndShowControlBar(pMainFrm, pStatusBar, ((CanUseFloatingStatusDialog()) ? 0 : bShow), 0);
 	}

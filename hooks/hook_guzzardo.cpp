@@ -305,14 +305,14 @@ extern "C" void __stdcall Hook_MainFrameOnChar(UINT nChar, UINT nRepCnt, UINT nF
 	cheat_t* strCheatEntry;
 	CSimcityAppPrimary *pSCApp;
 	HWND hWnd;
-	DWORD* pSCView;
+	CSimcityView* pSCView;
 	HMENU hMenu, hDebugMenu;
 	CMFC3XMenu *pMenu, *pDebugMenu;
 	int iSCMenuPos;
 	DWORD jokeDlg[27];
 
 	void(__cdecl * H_DoFund)(__int16) = (void(__cdecl*)(__int16))0x40191F;
-	void(__thiscall * H_SimcityViewDebugGrantAllGifts)(DWORD*) = (void(__thiscall*)(DWORD*))0x401C0D;
+	void(__thiscall * H_SimcityViewDebugGrantAllGifts)(CSimcityView*) = (void(__thiscall*)(CSimcityView*))0x401C0D;
 	int(__thiscall * H_ADialogDestruct)(void*) = (int(__thiscall*)(void*))0x401D7A;
 	void(__thiscall * H_SimcityAppAdjustNewspaperMenu)(CSimcityAppPrimary*) = (void(__thiscall*)(CSimcityAppPrimary*))0x40210D;
 	DWORD* (__thiscall * H_JokeDialogConstruct)(void*, void*) = (DWORD * (__thiscall*)(void*, void*))0x4024E6;

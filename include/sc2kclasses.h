@@ -5,7 +5,7 @@
  *              method of accessing certain class variables.
  *
  *              Not all defined variables in the classes are accessible.
- *              Those that are reasonably generic such as 'SeventyOne'
+ *              Those that are reasonably generic such as 'ThirtyFour'
  *              for instance are for padding purposes in order to
  *              ensure alignment.
  */
@@ -122,7 +122,7 @@ public:
 	CMFC3XString dwSCACStringOne;
 	CMFC3XString dwSCACStringTwo;
 	CMFC3XString dwSCACStringThree;
-	CMFC3XString dwSCACStringFour;
+	CMFC3XString dwSCACStringLang;
 	DWORD dwSCASCURK;
 	CSound *SCASNDLayer;
 	DWORD dwSCASetNextStep;
@@ -135,44 +135,8 @@ public:
 	int iSCAActiveCursor;
 	DWORD dwSCAGameMusic;
 	DWORD dwSCAGameSound;
-	CMFC3XString *dwSCApCStringArrOne;
-	DWORD dwSCASeventyOne;
-	DWORD dwSCASeventyTwo;
-	DWORD dwSCASeventyThree;
-	DWORD dwSCASeventyFour;
-	DWORD dwSCASeventyFive;
-	DWORD dwSCASeventySix;
-	DWORD dwSCASeventySeven;
-	DWORD dwSCASeventyEight;
-	DWORD dwSCASeventyNine;
-	DWORD dwSCAEighty;
-	DWORD dwSCAEightyOne;
-	DWORD dwSCAEightyTwo;
-	DWORD dwSCAEightyThree;
-	DWORD dwSCAEightyFour;
-	DWORD dwSCAEightyFive;
-	DWORD dwSCAEightySix;
-	DWORD dwSCAEightySeven;
-	DWORD dwSCAEightyEight;
-	DWORD dwSCAEightyNine;
-	DWORD dwSCANinety;
-	DWORD dwSCANinetyOne;
-	DWORD dwSCANinetyTwo;
-	DWORD dwSCANinetyThree;
-	DWORD dwSCANinetyFour;
-	DWORD dwSCANinetyFive;
-	DWORD dwSCANinetySix;
-	DWORD dwSCANinetySeven;
-	DWORD dwSCANinetyEight;
-	DWORD dwSCANinetyNine;
-	DWORD dwSCAOneHundred;
-	DWORD dwSCAOneHundredOne;
-	DWORD dwSCAOneHundredTwo;
-	DWORD dwSCAOneHundredThree;
-	DWORD dwSCAOneHundredFour;
-	DWORD dwSCAOneHundredFive;
-	CMFC3XString *dwSCApCStringArrTwo;
-	DWORD dwSCAStoredStringLengths[35];
+	CMFC3XString dwSCApCStringLongMonths[12];
+	CMFC3XString dwSCApCStringShortMonths[12];
 	WORD wSCAGameSpeedLOW;
 	WORD wSCAGameSpeedHIGH;
 	DWORD dwSCASimulationTicking;
@@ -212,7 +176,7 @@ public:
 	CMFC3XString dwSCACStringOne;
 	CMFC3XString dwSCACStringTwo;
 	CMFC3XString dwSCACStringThree;
-	CMFC3XString dwSCACStringFour;
+	CMFC3XString dwSCACStringLang;
 	HMODULE dwSCASCURK;
 	CSound *SCASNDLayer;
 	DWORD dwSCASetNextStep;
@@ -225,78 +189,8 @@ public:
 	int iSCAActiveCursor;
 	DWORD dwSCAGameMusic;
 	DWORD dwSCAGameSound;
-	CMFC3XString *dwSCApCStringArrOne;
-	DWORD dwSCASeventyOne;
-	DWORD dwSCASeventyTwo;
-	DWORD dwSCASeventyThree;
-	DWORD dwSCASeventyFour;
-	DWORD dwSCASeventyFive;
-	DWORD dwSCASeventySix;
-	DWORD dwSCASeventySeven;
-	DWORD dwSCASeventyEight;
-	DWORD dwSCASeventyNine;
-	DWORD dwSCAEighty;
-	DWORD dwSCAEightyOne;
-	DWORD dwSCAEightyTwo;
-	DWORD dwSCAEightyThree;
-	DWORD dwSCAEightyFour;
-	DWORD dwSCAEightyFive;
-	DWORD dwSCAEightySix;
-	DWORD dwSCAEightySeven;
-	DWORD dwSCAEightyEight;
-	DWORD dwSCAEightyNine;
-	DWORD dwSCANinety;
-	DWORD dwSCANinetyOne;
-	DWORD dwSCANinetyTwo;
-	DWORD dwSCANinetyThree;
-	DWORD dwSCANinetyFour;
-	DWORD dwSCANinetyFive;
-	DWORD dwSCANinetySix;
-	DWORD dwSCANinetySeven;
-	DWORD dwSCANinetyEight;
-	DWORD dwSCANinetyNine;
-	DWORD dwSCAOneHundred;
-	DWORD dwSCAOneHundredOne;
-	DWORD dwSCAOneHundredTwo;
-	DWORD dwSCAOneHundredThree;
-	DWORD dwSCAOneHundredFour;
-	DWORD dwSCAOneHundredFive;
-	CMFC3XString *dwSCApCStringArrTwo;
-	DWORD dwSCAStoredStringLengths;
-	DWORD dwSCAOneHundredEight;
-	DWORD dwSCAOneHundredNine;
-	DWORD dwSCAOneHundredTen;
-	DWORD dwSCAOneHundredEleven;
-	DWORD dwSCAOneHundredTwelve;
-	DWORD dwSCAOneHundredThirteen;
-	DWORD dwSCAOneHundredFourteen;
-	DWORD dwSCAOneHundredFifteen;
-	DWORD dwSCAOneHundredSixteen;
-	DWORD dwSCAOneHundredSeventeen;
-	DWORD dwSCAOneHundredEighteen;
-	DWORD dwSCAOneHundredNineteen;
-	DWORD dwSCAOneHundredTwenty;
-	DWORD dwSCAOneHundredTwentyOne;
-	DWORD dwSCAOneHundredTwentyTwo;
-	DWORD dwSCAOneHundredTwentyThree;
-	DWORD dwSCAOneHundredTwentyFour;
-	DWORD dwSCAOneHundredTwentyFive;
-	DWORD dwSCAOneHundredTwentySix;
-	DWORD dwSCAOneHundredTwentySeven;
-	DWORD dwSCAOneHundredTwentyEight;
-	DWORD dwSCAOneHundredTwentyNine;
-	DWORD dwSCAOneHundredThirty;
-	DWORD dwSCAOneHundredThirtyOne;
-	DWORD dwSCAOneHundredThirtyTwo;
-	DWORD dwSCAOneHundredThirtyThree;
-	DWORD dwSCAOneHundredThirtyFour;
-	DWORD dwSCAOneHundredThirtyFive;
-	DWORD dwSCAOneHundredThirtySix;
-	DWORD dwSCAOneHundredThirtySeven;
-	DWORD dwSCAOneHundredThirtyEight;
-	DWORD dwSCAOneHundredThirtyNine;
-	DWORD dwSCAOneHundredForty;
-	DWORD dwSCAOneHundredFortyOne;
+	CMFC3XString dwSCApCStringLongMonths[12];
+	CMFC3XString dwSCApCStringShortMonths[12];
 	WORD wSCAGameSpeedLOW;
 	WORD wSCAGameSpeedHIGH;
 	DWORD dwSCASimulationTicking;
@@ -415,3 +309,40 @@ public:
 	CMFC3XSize dwMFCSize;
 	tagPOINT dwMFPointOne;
 };
+
+#pragma pack(push, 1)
+class CSimcityView : public CMFC3XView {
+public:
+	CGraphics *dwSCVCGraphics;
+	DWORD bSCVViewActive;
+	DWORD dwSCVThree;
+	void *dwSCVLockDIBRes;
+	LONG dwSCVWidth;
+	LONG dwSCVHeight;
+	CMFC3XScrollBar *dwSCVScrollBarVert;
+	CMFC3XScrollBar *dwSCVScrollBarHorz;
+	CMFC3XStatic *dwSCVStaticOne;
+	CMFC3XRect dwSCVScrollBarVertRectOne;
+	CMFC3XRect dwSCVScrollBarVertRectTwo;
+	CMFC3XRect dwSCVScrollBarVertRectThree;
+	CMFC3XRect dwSCVScrollPosVertRect;
+	CMFC3XRect dwSCVScrollBarHorzRectOne;
+	CMFC3XRect dwSCVScrollBarHorzRectTwo;
+	CMFC3XRect dwSCVScrollBarHorzRectThree;
+	CMFC3XRect dwSCVScrollPosHorzRect;
+	CMFC3XRect dwSCVScrollPosRect;
+	CMFC3XRect dwSCVStaticRect;
+	DWORD dwSCVLeftMouseButtonDown;
+	DWORD dwSCVLeftMouseDownInGameArea;
+	DWORD dwSCVCursorInGameArea;
+	CMFC3XPoint dwSCVMousePoint;
+	DWORD dwSCVRightClickMenuOpen;
+	CMFC3XPoint dwSCVRealPoint;
+	DWORD dwSCVSixtyOne[3];
+	CMFC3XRect dwSCVRECTOne;
+	int iSCVYCoord;
+	CMFC3XPoint dwSCVAdjustedPoint;
+	WORD wSCVZoomLevel;
+	DWORD dwSCVIsZoomed;
+};
+#pragma pack(pop)

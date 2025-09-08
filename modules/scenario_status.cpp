@@ -34,11 +34,11 @@ WORD wScenarioStartXVALTiles = 0;
 DWORD dwScenarioStartTrafficDivisor = 0;
 
 BOOL CALLBACK ScenarioStatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
-	CMFC3XString* SCApCStringArrLongMonths = (CMFC3XString*)0x4C71F8;
 	void(__cdecl * H_CStringFormat)(CMFC3XString*, char const* Ptr, ...) = (void(__cdecl*)(CMFC3XString*, char const* Ptr, ...))0x49EBD3;
 	CMFC3XString* (__thiscall * H_CStringCons)(CMFC3XString*) = (CMFC3XString * (__thiscall*)(CMFC3XString*))0x4A2C28;
 	void(__thiscall *H_CStringDest)(CMFC3XString *) = (void(__thiscall *)(CMFC3XString *))0x4A2CB0;
 
+	CSimcityAppPrimary *pSCApp = Game_GetSimcityAppClassPointer();
 	DWORD dwCityDueDate = wScenarioTimeLimitMonths * 25 + dwCityDays;
 	dwCityDueDate = dwCityDueDate / 25 * 25 + 22;
 	int iDueDateDay = dwCityDueDate % 25 + 1;
@@ -126,7 +126,7 @@ BOOL CALLBACK ScenarioStatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam
 		// TODO: Modding hooks
 
 		H_CStringCons(&cDueDateString);
-		H_CStringFormat(&cDueDateString, "%s %d %4d", SCApCStringArrLongMonths[iDueDateMonth].m_pchData, iDueDateDay, iDueDateYear);
+		H_CStringFormat(&cDueDateString, "%s %d %4d", pSCApp->dwSCApCStringLongMonths[iDueDateMonth].m_pchData, iDueDateDay, iDueDateYear);
 
 		// Load the compiled strings into the dialog
 		SetDlgItemText(hwndDlg, IDC_STATIC_SCENGOALSHEADER, strScenarioGoalsHeader.c_str());

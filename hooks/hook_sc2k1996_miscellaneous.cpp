@@ -598,12 +598,12 @@ static void SimcityViewOnMButtonDown(UINT nFlags, POINT pt) {
 
 extern "C" LRESULT __stdcall Hook_DefWindowProcA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
 	CSimcityAppPrimary *pSCApp;
-	DWORD *pSCView;
+	CSimcityView *pSCView;
 
 	pSCApp = Game_GetSimcityAppClassPointer();
 	pSCView = Game_PointerToCSimcityViewClass(pSCApp);
 	if (Msg == WM_MBUTTONDOWN) {
-		if (pSCView && hWnd == (HWND)pSCView[7]) {
+		if (pSCView && hWnd == pSCView->m_hWnd) {
 			POINT pt;
 
 			pt.x = GET_X_LPARAM(lParam);
@@ -617,7 +617,7 @@ extern "C" LRESULT __stdcall Hook_DefWindowProcA(HWND hWnd, UINT Msg, WPARAM wPa
 
 extern "C" void __stdcall Hook_ResetGameVars(void) {
 	void(__stdcall *H_ResetGameVars)(void) = (void(__stdcall *)(void))0x4348E0;
-	int(__thiscall *H_RotateAntiClockwise)(DWORD *) = (int(__thiscall *)(DWORD *))0x401A73;
+	int(__thiscall *H_SimcityViewRotateAntiClockwise)(CSimcityView *) = (int(__thiscall *)(CSimcityView *))0x401A73;
 
 	BOOL bMapEditor, bNewGame;
 
@@ -625,7 +625,7 @@ extern "C" void __stdcall Hook_ResetGameVars(void) {
 	bNewGame = ((DWORD)_ReturnAddress() == 0x42E482);
 	if (bMapEditor || bNewGame) {
 		CSimcityAppPrimary *pSCApp;
-		DWORD *pThis;
+		CSimcityView *pThis;
 
 		pSCApp = Game_GetSimcityAppClassPointer();
 		pThis = Game_PointerToCSimcityViewClass(pSCApp);
@@ -633,9 +633,9 @@ extern "C" void __stdcall Hook_ResetGameVars(void) {
 		if (((__int16)wCityMode < 0 && bNewGame) || bMapEditor) {
 			if (wViewRotation != VIEWROTATION_NORTH) {
 				do
-					H_RotateAntiClockwise(pThis);
+					H_SimcityViewRotateAntiClockwise(pThis);
 				while (wViewRotation != VIEWROTATION_NORTH);
-				UpdateWindow((HWND)pThis[7]); // This would be pThis->m_hWnd if the structs were present.
+				UpdateWindow(pThis->m_hWnd); // This would be pThis->m_hWnd if the structs were present.
 			}
 		}
 	}
@@ -649,6 +649,7 @@ extern "C" void __stdcall Hook_SimcityDocUpdateDocumentTitle() {
 	__asm mov [pThis], ecx
 
 	CMFC3XString cStr;
+	CSimcityAppPrimary *pSCApp;
 	int iCityDayMon;
 	int iCityMonth;
 	int iCityYear;
@@ -665,10 +666,6 @@ extern "C" void __stdcall Hook_SimcityDocUpdateDocumentTitle() {
 	BOOL(__thiscall *H_CStringLoadStringA)(CMFC3XString *, unsigned int) = (BOOL(__thiscall *)(CMFC3XString *, unsigned int))0x4A3453;
 	BOOL(__stdcall *H_IsIconic)(HWND hWnd) = (BOOL(__stdcall *)(HWND hWnd))0x49BCF4;
 
-	DWORD &MainFrmDest = *(DWORD *)0x4C7110;
-	CMFC3XString &SCAStringLang = *(CMFC3XString *)0x4C7148;
-	CMFC3XString *SCApCStringArrLongMonths = (CMFC3XString *)0x4C71F8;
-	CMFC3XString *SCApCStringArrShortMonths = (CMFC3XString *)0x4C7288;
 	const char *gameCurrDollar = (const char *)0x4E6168;
 	const char *gameCurrDM = (const char *)0x4E6180;
 	const char *gameLangGerman = (const char *)0x4E6198;
@@ -678,7 +675,8 @@ extern "C" void __stdcall Hook_SimcityDocUpdateDocumentTitle() {
 
 	H_CStringCons(&cStr);
 
-	if (!MainFrmDest) {
+	pSCApp = Game_GetSimcityAppClassPointer();
+	if (!pSCApp->dwSCAMainFrameDestroyVar) {
 		if (!wCityMode) {
 			H_CStringLoadStringA(&cStr, 0x19D); // "Editing Terrain..."
 			goto GOFORWARD;
@@ -700,8 +698,8 @@ extern "C" void __stdcall Hook_SimcityDocUpdateDocumentTitle() {
 			goto GOFORWARD;
 		}
 		H_CStringEmpty(&cStr);
-		if (wcscmp((const wchar_t *)SCAStringLang.m_pchData, (const wchar_t *)gameLangFrench) != 0) {
-			if (wcscmp((const wchar_t *)SCAStringLang.m_pchData, (const wchar_t *)gameLangGerman) != 0)
+		if (wcscmp((const wchar_t *)pSCApp->dwSCACStringLang.m_pchData, (const wchar_t *)gameLangFrench) != 0) {
+			if (wcscmp((const wchar_t *)pSCApp->dwSCACStringLang.m_pchData, (const wchar_t *)gameLangGerman) != 0)
 				pCurrStr = gameCurrDollar;
 			else
 				pCurrStr = gameCurrDM;
@@ -715,9 +713,9 @@ extern "C" void __stdcall Hook_SimcityDocUpdateDocumentTitle() {
 			goto GETOUT;
 		H_SimStringTruncateAtSpace(pFundStr);
 		if (bSettingsTitleCalendar)
-			H_CStringFormat(&cStr, "%s %d %4d <%s> %s", SCApCStringArrLongMonths[iCityMonth].m_pchData, iCityDayMon, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
+			H_CStringFormat(&cStr, "%s %d %4d <%s> %s", pSCApp->dwSCApCStringLongMonths[iCityMonth].m_pchData, iCityDayMon, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
 		else
-			H_CStringFormat(&cStr, "%s %4d <%s> %s", SCApCStringArrShortMonths[iCityMonth].m_pchData, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
+			H_CStringFormat(&cStr, "%s %4d <%s> %s", pSCApp->dwSCApCStringShortMonths[iCityMonth].m_pchData, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
 		if (pFundStr) {
 			H_SimStringDest(pFundStr);
 			operator delete(pFundStr);
@@ -734,18 +732,18 @@ GETOUT:
 // the oddities that come with either:
 // 1) African Swallow mode during non-granular updates (batch).
 // 2) Granular updates on all speed levels. (more so for African Swallow and Cheetah)
-static void L_TileHighlightUpdate(DWORD *pThis) {
+static void L_TileHighlightUpdate(CSimcityView *pThis) {
 	BYTE *vBits;
 	LONG bottom;
 	LONG x;
 	__int16 y;
 
 	int(__cdecl *H_BeginObject)(void *, void *, int, __int16, RECT *) = (int(__cdecl *)(void *, void *, int, __int16, RECT *))0x401226;
-	BOOL(__thiscall *H_SimcityViewMainWindowUpdate)(void *, RECT *, BOOL) = (BOOL(__thiscall *)(void *, RECT *, BOOL))0x40152D;
+	BOOL(__thiscall *H_SimcityViewMainWindowUpdate)(CSimcityView *, RECT *, BOOL) = (BOOL(__thiscall *)(CSimcityView *, RECT *, BOOL))0x40152D;
 	void(__thiscall *H_GraphicsUnlockDIBBits)(CGraphics *) = (void(__thiscall *)(CGraphics *))0x401BE5;
 	int(__thiscall *H_GraphicsHeight)(CGraphics *) = (int(__thiscall *)(CGraphics *))0x40216C;
 	LONG(__thiscall *H_GraphicsWidth)(CGraphics *) = (LONG(__thiscall *)(CGraphics *))0x402419;
-	int(__thiscall *H_SimcityViewCheckOrLoadGraphic)(void *) = (int(__thiscall *)(void *))0x40297D;
+	int(__thiscall *H_SimcityViewCheckOrLoadGraphic)(CSimcityView *) = (int(__thiscall *)(CSimcityView *))0x40297D;
 	BOOL(__stdcall *H_FinishObject)() = (BOOL(__stdcall *)())0x402B7B;
 	BYTE *(__thiscall *H_GraphicsLockDIBBits)(CGraphics *) = (BYTE *(__thiscall *)(CGraphics *))0x402DA1;
 
@@ -753,18 +751,18 @@ static void L_TileHighlightUpdate(DWORD *pThis) {
 	RECT &dRect = *(RECT *)0x4CAD48;
 
 	if (wTileHighlightActive) {
-		vBits = H_GraphicsLockDIBBits((CGraphics *)pThis[13]);
+		vBits = H_GraphicsLockDIBBits(pThis->dwSCVCGraphics);
 		if (vBits || H_SimcityViewCheckOrLoadGraphic(pThis)) {
-			x = H_GraphicsWidth((CGraphics *)pThis[13]);
-			y = H_GraphicsHeight((CGraphics *)pThis[13]);
+			x = H_GraphicsWidth(pThis->dwSCVCGraphics);
+			y = H_GraphicsHeight(pThis->dwSCVCGraphics);
 			if (!bOverrideTickPlacementHighlight) {
-				H_BeginObject(pThis, vBits, x, y, (RECT *)pThis + 19);
+				H_BeginObject(pThis, vBits, x, y, &pThis->dwSCVRECTOne);
 				Game_DrawSquareHighlight(pThis, wHighlightedTileX1, wHighlightedTileY1, wHighlightedTileX2, wHighlightedTileY2);
 				H_FinishObject();
 			}
-			H_GraphicsUnlockDIBBits((CGraphics *)pThis[13]);
+			H_GraphicsUnlockDIBBits(pThis->dwSCVCGraphics);
 			bottom = ++dRect.bottom;
-			if (*(DWORD *)((char *)pThis + 322)) {
+			if (pThis->dwSCVIsZoomed) {
 				dRect.bottom = bottom + 2;
 				++dRect.right;
 			}
@@ -774,7 +772,7 @@ static void L_TileHighlightUpdate(DWORD *pThis) {
 			// ^ Unclear - the pollution case still expresses itself even with this case implemented.
 			// Tests performed in the 'Interactive Demo' (of which don't have any of these hooks) have
 			// also resulted in similar intermittent encounters.
-			if (pThis == &pSomeWnd)
+			if (pThis == (CSimcityView *)&pSomeWnd)
 				H_SimcityViewMainWindowUpdate(pThis, 0, 1);
 			else
 				H_SimcityViewMainWindowUpdate(pThis, &dRect, 1);
@@ -815,7 +813,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 	BOOL bScenarioSuccess;
 	BOOL bDoTileHighlightUpdate;
 	CSimcityAppPrimary *pSCApp;
-	DWORD *pSCView;
+	CSimcityView *pSCView;
 
 	void(__stdcall *H_UpdateGraphDialog)() = (void(__stdcall *)())0x4010A5;
 	void(__stdcall *H_SimulationPollutionTerrainAndLandValueScan)() = (void(__stdcall *)())0x401154;
@@ -826,7 +824,7 @@ extern "C" void __stdcall Hook_SimulationProcessTick() {
 	void(__cdecl *H_SimulationGrantReward)(__int16 iReward, int iToggle) = (void(__cdecl *)(__int16 iReward, int iToggle))0x401672;
 	void(__stdcall *H_UpdatePopulationDialog)() = (void(__stdcall *)())0x40169F;
 	void(__thiscall *H_SimcityAppCallAutoSave)(CSimcityAppPrimary *) = (void(__thiscall *)(CSimcityAppPrimary *))0x4016A9;
-	void(__thiscall *H_SimcityViewMaintainCursor)(void *) = (void(__thiscall *)(void *))0x401A96;
+	void(__thiscall *H_SimcityViewMaintainCursor)(CSimcityView *) = (void(__thiscall *)(CSimcityView *))0x401A96;
 	void(__stdcall *H_SimulationUpdateWaterConsumption)() = (void(__stdcall *)())0x401CA8;
 	void(__stdcall *H_UpdateWeatherOrDisasterState)() = (void(__stdcall *)())0x401E65;
 	DWORD *(__thiscall *H_NewspaperConstruct)(void *) = (DWORD *(__thiscall *)(void *))0x401F23;
@@ -1097,13 +1095,12 @@ extern "C" int __stdcall Hook_AddAllInventions(void) {
 }
 
 extern "C" void __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(UINT nFlags, POINT pt) {
-	DWORD *pThis;
+	CSimcityView *pThis;
 
 	__asm mov [pThis], ecx
 
 	HWND hWnd;
 	RECT r;
-	const RECT *SCVScrollPosVertRect;
 
 	// pThis[19] = SCVScrollBarVert
 	// pThis[22] = SCVScrollBarVertRectOne
@@ -1115,30 +1112,29 @@ extern "C" void __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(UINT nFlags, POINT pt
 	// pThis[63] = dwSCVLeftMouseDownInGameArea
 	// pThis[67] = dwSCVRightClickMenuOpen
 
-	if (pThis[67])
-		pThis[67] = 0;
-	else if (!PtInRect((const RECT *)&pThis[58], pt)) {
+	if (pThis->dwSCVRightClickMenuOpen)
+		pThis->dwSCVRightClickMenuOpen = 0;
+	else if (!PtInRect(&pThis->dwSCVStaticRect, pt)) {
 		Game_GetScreenAreaInfo(pThis, &r);
-		if (PtInRect((const RECT *)&pThis[22], pt)) {
-			if (PtInRect((const RECT *)&pThis[30], pt))
-				Game_CSimCityView_OnVScroll(pThis, SB_LINEDOWN, 0, (DWORD *)pThis[19]);
-			else if (PtInRect((const RECT *)&pThis[26], pt))
-				Game_CSimCityView_OnVScroll(pThis, SB_LINEUP, 0, (DWORD *)pThis[19]);
-			else if (PtInRect((const RECT *)&pThis[34], pt))
-				Game_CSimCityView_OnVScroll(pThis, SB_THUMBTRACK, (__int16)pt.y, (DWORD *)pThis[19]);
+		if (PtInRect(&pThis->dwSCVScrollBarVertRectOne, pt)) {
+			if (PtInRect(&pThis->dwSCVScrollBarVertRectThree, pt))
+				Game_CSimCityView_OnVScroll(pThis, SB_LINEDOWN, 0, pThis->dwSCVScrollBarVert);
+			else if (PtInRect(&pThis->dwSCVScrollBarVertRectTwo, pt))
+				Game_CSimCityView_OnVScroll(pThis, SB_LINEUP, 0, pThis->dwSCVScrollBarVert);
+			else if (PtInRect(&pThis->dwSCVScrollPosVertRect, pt))
+				Game_CSimCityView_OnVScroll(pThis, SB_THUMBTRACK, (__int16)pt.y, pThis->dwSCVScrollBarVert);
 			else {
 				// This part appears to be non-functional, pressing "Page Down" will rotate the map;
 				// "Page Up" doesn't do anything.
-				SCVScrollPosVertRect = (const RECT *)&pThis[34];
-				if (SCVScrollPosVertRect->top >= pt.y)
-					Game_CSimCityView_OnVScroll(pThis, SB_PAGEUP, 0, (DWORD *)pThis[19]);
+				if (pThis->dwSCVScrollPosVertRect.top >= pt.y)
+					Game_CSimCityView_OnVScroll(pThis, SB_PAGEUP, 0, pThis->dwSCVScrollBarVert);
 				else
-					Game_CSimCityView_OnVScroll(pThis, SB_PAGEDOWN, 0, (DWORD *)pThis[19]);
+					Game_CSimCityView_OnVScroll(pThis, SB_PAGEDOWN, 0, pThis->dwSCVScrollBarVert);
 			}
 		}
-		else if (!pThis[63]) {
+		else if (!pThis->dwSCVLeftMouseDownInGameArea) {
 			bOverrideTickPlacementHighlight = TRUE;
-			hWnd = SetCapture((HWND)pThis[7]);
+			hWnd = SetCapture(pThis->m_hWnd);
 			Game_CWnd_FromHandle(hWnd);
 			wCurrentTileCoordinates = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);;
 			if (wCurrentTileCoordinates >= 0) {
@@ -1148,8 +1144,8 @@ extern "C" void __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(UINT nFlags, POINT pt
 				wPreviousTileCoordinateY = wCurrentTileCoordinates >> 8;
 				wGameScreenAreaX = (WORD)pt.x;
 				wGameScreenAreaY = (WORD)pt.y;
-				pThis[63] = 1;
-				pThis[62] = 1;
+				pThis->dwSCVLeftMouseDownInGameArea = 1;
+				pThis->dwSCVLeftMouseButtonDown = 1;
 				if (wCityMode)
 					Game_CityToolMenuAction(nFlags, pt);
 				else
@@ -1159,8 +1155,8 @@ extern "C" void __stdcall Hook_CSimcityView_WM_LBUTTONDOWN(UINT nFlags, POINT pt
 	}
 }
 
-extern "C" void __stdcall Hook_CSimcityView_WM_MOUSEMOVE(UINT nFlags, POINT pt) {
-	DWORD *pThis;
+extern "C" void __stdcall Hook_CSimcityView_WM_MOUSEMOVE(UINT nFlags, CMFC3XPoint pt) {
+	CSimcityView *pThis;
 
 	__asm mov [pThis], ecx
 
@@ -1169,8 +1165,8 @@ extern "C" void __stdcall Hook_CSimcityView_WM_MOUSEMOVE(UINT nFlags, POINT pt) 
 	// pThis[64] = dwSCVCursorInGameArea
 	// pThis[65] = SCVMousePoint
 
-	*(POINT *)&pThis[65] = pt;
-	if (pThis[63]) {
+	pThis->dwSCVMousePoint = pt;
+	if (pThis->dwSCVLeftMouseDownInGameArea) {
 		wCurrentTileCoordinates = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
 		if (wCurrentTileCoordinates >= 0) {
 			wTileCoordinateX = (uint8_t)wCurrentTileCoordinates;
@@ -1179,9 +1175,9 @@ extern "C" void __stdcall Hook_CSimcityView_WM_MOUSEMOVE(UINT nFlags, POINT pt) 
 				wPreviousTileCoordinateY != wTileCoordinateY) {
 				if ((int)abs(wGameScreenAreaX - pt.x) > 1 ||
 					((int)abs(wGameScreenAreaY - pt.y) > 1)) {
-					pThis[64] = 1;
+					pThis->dwSCVCursorInGameArea = 1;
 					if ((nFlags & MK_LBUTTON) != 0) {
-						if (pThis[62]) {
+						if (pThis->dwSCVLeftMouseButtonDown) {
 							if (wCityMode) {
 								if ((wCurrentCityToolGroup != CITYTOOL_GROUP_CENTERINGTOOL) || GetAsyncKeyState(VK_MENU) & 0x8000)
 									Game_CityToolMenuAction(nFlags, pt);
@@ -1208,7 +1204,7 @@ extern "C" void __stdcall Hook_CSimcityView_WM_MOUSEMOVE(UINT nFlags, POINT pt) 
 
 extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, POINT pt) {
 	CSimcityAppPrimary *pSCApp;
-	DWORD *pThis;
+	CSimcityView *pThis;
 	__int16 iTileCoords;
 	__int16 iCurrMapToolGroupWithHotKey, iCurrMapToolGroupNoHotKey;
 	__int16 iTileStartX, iTileStartY;
@@ -1240,7 +1236,7 @@ extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, POINT pt) {
 	if ((nFlags & MK_CONTROL) != 0)
 		iCurrMapToolGroupWithHotKey = MAPTOOL_GROUP_CENTERINGTOOL;
 	if (iCurrMapToolGroupWithHotKey != MAPTOOL_GROUP_CENTERINGTOOL)
-		pThis[62] = 0;
+		pThis->dwSCVLeftMouseButtonDown = 0;
 	do {
 		iTileCoords = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
 		if (iTileCoords < 0)
@@ -1250,7 +1246,7 @@ extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, POINT pt) {
 		if (iTileTargetX >= GAME_MAP_SIZE || iTileTargetY < 0)
 			break;
 		if ((nFlags & MK_SHIFT) != 0 && iCurrMapToolGroupWithHotKey != MAPTOOL_GROUP_TREES && iCurrMapToolGroupWithHotKey != MAPTOOL_GROUP_FOREST) {
-			pThis[62] = 1;
+			pThis->dwSCVLeftMouseButtonDown = 1;
 			break;
 		}
 		if (iTileStartX != iTileTargetX || iTileStartY != iTileTargetY) {
@@ -1296,7 +1292,7 @@ extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, POINT pt) {
 			case MAPTOOL_GROUP_CENTERINGTOOL: // Center Tool
 				Game_GetScreenCoordsFromTileCoords(iTileTargetX, iTileTargetY, &wNewScreenPointX, &wNewScreenPointY);
 				Game_SoundPlaySound(pSCApp, SOUND_CLICK);
-				dwIsZoomed = *(DWORD *)((char *)pThis + 322);
+				dwIsZoomed = pThis->dwSCVIsZoomed;
 				if (dwIsZoomed)
 					Game_CenterOnNewScreenCoordinates(pThis, wScreenPointX - (wNewScreenPointX >> 1), wScreenPointY - (wNewScreenPointY >> 1));
 				else
@@ -1310,19 +1306,18 @@ extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, POINT pt) {
 			break;
 		else if (iCurrMapToolGroupWithHotKey == MAPTOOL_GROUP_CENTERINGTOOL) {
 			Game_UpdateAreaCompleteColorFill(pThis);
-			hWnd = (HWND)pThis[7];
+			hWnd = pThis->m_hWnd;
 			UpdateWindow(hWnd);
 			break;
 		}
 		Game_UpdateAreaPortionFill(pThis);
 		iTileStartX = iTileTargetX;
 		iTileStartY = iTileTargetY;
-		hWnd = (HWND)pThis[7];
+		hWnd = pThis->m_hWnd;
 		UpdateWindow(hWnd);
 	} while (Game_CSimcityViewMouseMoveOrLeftClick(pThis, &pt));
-	if (iCurrMapToolGroupNoHotKey != iCurrMapToolGroupWithHotKey) {
+	if (iCurrMapToolGroupNoHotKey != iCurrMapToolGroupWithHotKey)
 		wCurrentCityToolGroup = iCurrMapToolGroupNoHotKey;
-	}
 }
 
 extern "C" void __stdcall Hook_LoadCursorResources() {
@@ -1452,7 +1447,7 @@ extern "C" void __stdcall Hook_ShowViewControls() {
 
 	CSimcityAppPrimary *pSCApp;
 	CMainFrame *pMainFrm;
-	DWORD *pSCView;
+	CSimcityView *pSCView;
 	CMFC3XScrollBar *pSCVScrollBarHorz;
 	CMFC3XScrollBar *pSCVScrollBarVert;
 	CMFC3XStatic *pSCVStatic;
@@ -1460,9 +1455,9 @@ extern "C" void __stdcall Hook_ShowViewControls() {
 	pSCApp = Game_GetSimcityAppClassPointer();
 	pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 	pSCView = Game_PointerToCSimcityViewClass(pSCApp);
-	pSCVScrollBarHorz = (CMFC3XScrollBar *)pSCView[20];
-	pSCVScrollBarVert = (CMFC3XScrollBar *)pSCView[19];
-	pSCVStatic = (CMFC3XStatic *)pSCView[21];
+	pSCVScrollBarHorz = pSCView->dwSCVScrollBarHorz;
+	pSCVScrollBarVert = pSCView->dwSCVScrollBarVert;
+	pSCVStatic = pSCView->dwSCVStaticOne;
 	if (!bRedraw) {
 		bRedraw = TRUE;
 		if (pSCApp->iSCAProgramStep == ONIDLE_STATE_RETURN_12 || !wCityMode)

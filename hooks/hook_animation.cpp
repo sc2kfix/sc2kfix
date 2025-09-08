@@ -15,7 +15,7 @@ static DWORD dwDummy;
 extern "C" void __cdecl Hook_AnimationFunction_SC2K1996(CMFC3XPalette *pPalette, int iToggle) {
 	CSimcityAppPrimary *pApp;
 	CMainFrame *pMainFrm;
-	DWORD *pSCView;
+	CSimcityView *pSCView;
 	CMapToolBar *pMapToolBar;
 	CCityToolBar *pCityToolBar;
 	WORD wSimSpeed;
@@ -79,7 +79,7 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2K1996(CMFC3XPalette *pPalette,
 					if (!pSCView)
 						RedrawWindow(pMainFrm->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 					else if (pSCView && bCityViewAnim)
-						RedrawWindow((HWND)pSCView[7], NULL, NULL, RDW_INVALIDATE);
+						RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 				}
 			}
 		}
@@ -89,7 +89,7 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2K1996(CMFC3XPalette *pPalette,
 extern "C" void __cdecl Hook_AnimationFunction_SC2K1995(CMFC3XPalette *pPalette, int iToggle) {
 	CSimcityAppPrimary *pApp;
 	CMainFrame *pMainFrm;
-	DWORD *pSCView;
+	CSimcityView *pSCView;
 	CMapToolBar *pMapToolBar;
 	CCityToolBar *pCityToolBar;
 	WORD wSimSpeed;
@@ -102,7 +102,7 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2K1995(CMFC3XPalette *pPalette,
 	CSimcityAppPrimary &pCSimcityAppThis1995 = *(CSimcityAppPrimary *)0x4C6010;
 	BOOL &bLoColor1995 = *(BOOL *)0x4E903C;
 
-	DWORD *(__thiscall *H_PointerToCSimcityViewClass1995)(CSimcityAppPrimary *) = (DWORD *(__thiscall *)(CSimcityAppPrimary *))0x4026D0;
+	CSimcityView *(__thiscall *H_PointerToCSimcityViewClass1995)(CSimcityAppPrimary *) = (CSimcityView *(__thiscall *)(CSimcityAppPrimary *))0x4026D0;
 	void(__cdecl *H_AnimationFunction1995)(CMFC3XPalette *, int) = (void(__cdecl *)(CMFC3XPalette *, int))0x456A60;
 
 	H_AnimationFunction1995(pPalette, iToggle);
@@ -147,7 +147,7 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2K1995(CMFC3XPalette *pPalette,
 					if (!pSCView)
 						RedrawWindow(pMainFrm->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 					else if (pSCView && bCityViewAnim)
-						RedrawWindow((HWND)pSCView[7], NULL, NULL, RDW_INVALIDATE);
+						RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 				}
 			}
 		}
@@ -157,7 +157,7 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2K1995(CMFC3XPalette *pPalette,
 extern "C" void __cdecl Hook_AnimationFunction_SC2KDemo(CMFC3XPalette *pPalette, int iToggle) {
 	CSimcityAppDemo *pApp;
 	CMainFrame *pMainFrm;
-	DWORD *pSCView;
+	CSimcityView *pSCView;
 	CMapToolBar *pMapToolBar;
 	CCityToolBar *pCityToolBar;
 	WORD wSimSpeed;
@@ -170,7 +170,7 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2KDemo(CMFC3XPalette *pPalette,
 	CSimcityAppDemo &pCSimcityAppThisDemo = *(CSimcityAppDemo *)0x4B6A70;
 	BOOL &bLoColorDemo = *(BOOL *)0x4D1EDC;
 
-	DWORD *(__thiscall *H_PointerToCSimcityViewClassDemo)(CSimcityAppDemo *) = (DWORD *(__thiscall *)(CSimcityAppDemo *))0x402725;
+	CSimcityView *(__thiscall *H_PointerToCSimcityViewClassDemo)(CSimcityAppDemo *) = (CSimcityView *(__thiscall *)(CSimcityAppDemo *))0x402725;
 	void(__cdecl *H_AnimationFunctionDemo)(CMFC3XPalette *, int) = (void(__cdecl *)(CMFC3XPalette *, int))0x44890F;
 
 	H_AnimationFunctionDemo(pPalette, iToggle);
@@ -215,7 +215,7 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2KDemo(CMFC3XPalette *pPalette,
 					if (!pSCView)
 						RedrawWindow(pMainFrm->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 					else if (pSCView && bCityViewAnim)
-						RedrawWindow((HWND)pSCView[7], NULL, NULL, RDW_INVALIDATE);
+						RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 				}
 			}
 		}
