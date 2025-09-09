@@ -212,20 +212,16 @@ int L_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
 }
 
 int __stdcall Hook_AfxMessageBoxStr(LPCTSTR lpszPrompt, UINT nType, UINT nIDHelp) {
-	DWORD &game_AfxCoreState = *(DWORD *)0x4CE8C0;
-
 	int ret;
 
 	ToggleFloatingStatusDialog(FALSE);
-	ret = GameMain_WinApp_DoMessageBox((CMFC3XWinApp *)game_AfxCoreState, lpszPrompt, nType, nIDHelp);
+	ret = GameMain_WinApp_DoMessageBox(game_AfxCoreState.m_pCurrentWinApp, lpszPrompt, nType, nIDHelp);
 	ToggleFloatingStatusDialog(TRUE);
 
 	return ret;
 }
 
 int __stdcall Hook_AfxMessageBoxID(UINT nIDPrompt, UINT nType, UINT nIDHelp) {
-	DWORD &game_AfxCoreState = *(DWORD *)0x4CE8C0;
-
 	CMFC3XString cStr;
 	UINT nID;
 	int ret;
@@ -237,7 +233,7 @@ int __stdcall Hook_AfxMessageBoxID(UINT nIDPrompt, UINT nType, UINT nIDHelp) {
 		nID = nIDPrompt;
 
 	ToggleFloatingStatusDialog(FALSE);
-	ret = GameMain_WinApp_DoMessageBox((CMFC3XWinApp *)game_AfxCoreState, cStr.m_pchData, nType, nIDHelp);
+	ret = GameMain_WinApp_DoMessageBox(game_AfxCoreState.m_pCurrentWinApp, cStr.m_pchData, nType, nIDHelp);
 	ToggleFloatingStatusDialog(TRUE);
 
 	GameMain_String_Dest(&cStr);

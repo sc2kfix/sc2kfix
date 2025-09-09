@@ -142,6 +142,8 @@
 
 // Placeholders and forward-declarations
 
+struct CMFC3XRuntimeClass;
+class CMFC3XWinApp;
 class CMFC3XControlBar;
 class CMFC3XDialogBar;
 class CMFC3XDockBar;
@@ -162,6 +164,16 @@ typedef struct {
 	UINT nSig;
 	void *pfn;
 } MFC3X_AFX_MSGMAP_ENTRY;
+
+typedef struct {
+	CMFC3XWinApp *m_pCurrentWinApp;
+	HINSTANCE m_hCurrentInstanceHandle;
+	HINSTANCE m_hCurrentResourceHandle;
+	LPCTSTR m_lpszCurrentAppName;
+	CMFC3XRuntimeClass *m_pFirstClass;
+	void (__stdcall *m_pfnTerminate)();
+} MFC3X_AFX_CORE_STATE;
+
 
 #pragma pack(push, 1)
 struct CMFC3XPlex {

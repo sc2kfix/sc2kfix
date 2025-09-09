@@ -350,7 +350,7 @@ extern "C" {
 		KRK_GAMEOFF(dwCityPollution);
 		KRK_GAMEOFF(dwLFSRState);
 		KRK_GAMEOFF(dwLCGState);
-		KRK_GAMEOFF(pCWinApp);
+		KRK_GAMEOFF(game_AfxCoreState);
 		KRK_GAMEOFF(dwSimulationSubtickCounter);
 		KRK_GAMEOFF(pCDocumentMainWindow);
 		KRK_GAMEOFF(wPreviousTileCoordinateX);
