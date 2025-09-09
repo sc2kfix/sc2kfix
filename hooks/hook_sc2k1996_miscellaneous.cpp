@@ -756,7 +756,7 @@ std::vector<hook_function_t> stHooks_Hook_SimCalendarAdvance_After;
 extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	int i;
 	DWORD dwMonDay;
-	DWORD newsDialog[156];
+	CNewspaperDialog newsDialog;
 	__int16 iStep, iSubStep;
 	DWORD dwCityProgressionRequirement;
 	BYTE iPaperVal;
@@ -800,10 +800,10 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 			Game_UpdateBudgetInformation();
 			if (bNewspaperSubscription) {
 				if (wCityCurrentMonth == 3 || wCityCurrentMonth == 7) {
-					Game_Newspaper_Construct((void *)&newsDialog);
-					newsDialog[39] = wNewspaperChoice; // CNewspaperDialog -> CGameDialog -> CDialog; struct position 39 - paperchoice dword var.
+					Game_NewspaperDialog_Construct(&newsDialog);
+					newsDialog.dwNDPaperChoice = wNewspaperChoice; // CNewspaperDialog -> CGameDialog -> CDialog; struct position 39 - paperchoice dword var.
 					Game_GameDialog_DoModal(&newsDialog);
-					Game_Newspaper_Destruct(&newsDialog);
+					Game_NewspaperDialog_Destruct(&newsDialog);
 				}
 			}
 			UpdateCityDateAndSeason(FALSE);

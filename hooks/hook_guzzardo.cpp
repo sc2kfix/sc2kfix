@@ -305,7 +305,7 @@ extern "C" void __stdcall Hook_MainFrame_OnChar(UINT nChar, UINT nRepCnt, UINT n
 	HMENU hMenu, hDebugMenu;
 	CMFC3XMenu *pMenu, *pDebugMenu;
 	int iSCMenuPos;
-	DWORD jokeDlg[27];
+	CJokeDialog jokeDlg;
 
 	pSCApp = &pCSimcityAppThis;
 
@@ -418,9 +418,11 @@ TRYAGAIN:
 			Game_SimulationProposeMilitaryBase();
 			break;
 		case CHEAT_JOKE:
-			Game_JokeDialog_Construct((void*)&jokeDlg, 0);
-			GameMain_Dialog_DoModal((CMFC3XDialog*)&jokeDlg);
-			Game_ADialog_Destruct((void*)&jokeDlg); // Function name references "A" dialog rather than anything specific.
+			Game_JokeDialog_Construct(&jokeDlg, 0);
+			ToggleFloatingStatusDialog(FALSE);
+			GameMain_Dialog_DoModal(&jokeDlg);
+			ToggleFloatingStatusDialog(TRUE);
+			Game_JokeDialog_Destruct(&jokeDlg); // Function name references "A" dialog rather than anything specific.
 			break;
 		case CHEAT_WEBB:
 			if (!FindTheHouse()) {

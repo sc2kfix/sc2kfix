@@ -538,6 +538,18 @@ class CMFC3XScrollBar : public CMFC3XWnd {
 
 };
 
+class CMFC3XButton : public CMFC3XWnd {
+
+};
+
+class CMFC3XBitmapButton : public CMFC3XButton {
+public:
+	CMFC3XBitmap m_bitmap;
+	CMFC3XBitmap m_bitmapSel;
+	CMFC3XBitmap m_bitmapFocus;
+	CMFC3XBitmap m_bitmapDisabled;
+};
+
 class CMFC3XWinThread : public CMFC3XCmdTarget {
 public:
 	CMFC3XWnd *m_pMainWnd;

@@ -273,6 +273,31 @@ public:
 	COLORREF dwSCBColorWeather;
 };
 
+class CGameDialog : public CMFC3XDialog {
+public:
+	DWORD dwGDOne;
+};
+
+class CNewspaperDialog : public CGameDialog {
+public:
+	CGraphics *dwNDCGraphicsOne;
+	CMFC3XBitmapButton dwNDCBitmapButton;
+	DWORD dwNDPaperChoice;
+	DWORD dwNDPaperSectionOpen;
+	CMFC3XFont *dwNDCFonts;
+};
+
+class CJokeDialog : public CMFC3XDialog {
+public:
+	CGraphics *dwJDGraphics;
+	CMFC3XRect dwJDRECTOne;
+	DWORD dwJDsix;
+	DWORD dwJDseven;
+	DWORD dwJDeight;
+	DWORD dwJDnine;
+	DWORD dwJDPrepare;
+};
+
 class CSimcityWnd : public CMFC3XWnd {
 public:
 	CGraphics *m_pSCWGraphics;
