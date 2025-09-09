@@ -667,7 +667,6 @@ std::vector<hook_function_t> stHooks_Hook_LoadGame_Before;
 std::vector<hook_function_t> stHooks_Hook_LoadGame_After;
 
 extern "C" DWORD __stdcall Hook_LoadGame(CMFC3XFile* pFile, char* src) {
-	DWORD(__thiscall * H_SimcityAppDoLoadGame)(CSimcityAppPrimary*, CMFC3XFile*, char*) = (DWORD(__thiscall*)(CSimcityAppPrimary*, CMFC3XFile*, char*))0x4302E0;
 	CSimcityAppPrimary* pThis;
 	DWORD ret;
 
@@ -708,18 +707,18 @@ extern "C" DWORD __stdcall Hook_LoadGame(CMFC3XFile* pFile, char* src) {
 #else
 		if (sc2x_debug & SC2X_DEBUG_LOAD)
 			ConsoleLog(LOG_DEBUG, "SC2X: Passing control to SC2K for load.\n");
-		ret = H_SimcityAppDoLoadGame(pThis, pFile, src);
+		ret = GameMain_SimcityApp_DoLoadGame(pThis, pFile, src);
 #endif
 	} else if (std::regex_search(szLoadFileName, std::regex("\\.[Ss][Cc][Nn]$"))) {
 		if (sc2x_debug & SC2X_DEBUG_LOAD)
 			ConsoleLog(LOG_DEBUG, "SC2X: Saved game is a vanilla SCN file. Passing control to SC2K.\n");
 
-		ret = H_SimcityAppDoLoadGame(pThis, pFile, src);
+		ret = GameMain_SimcityApp_DoLoadGame(pThis, pFile, src);
 	} else if (std::regex_search(szLoadFileName, std::regex("\\.[Cc][Tt][Yy]$"))) {
 		if (sc2x_debug & SC2X_DEBUG_LOAD)
 			ConsoleLog(LOG_DEBUG, "SC2X: Saved game is a SimCity Classic file. Passing control to SC2K.\n");
 
-		ret = H_SimcityAppDoLoadGame(pThis, pFile, src);
+		ret = GameMain_SimcityApp_DoLoadGame(pThis, pFile, src);
 	}
 
 	for (const auto& hook : stHooks_Hook_LoadGame_After) {
@@ -745,7 +744,6 @@ std::vector<hook_function_t> stHooks_Hook_SaveGame_Before;
 std::vector<hook_function_t> stHooks_Hook_SaveGame_After;
 
 extern "C" DWORD __stdcall Hook_SaveGame(CMFC3XString* lpFileName) {
-	DWORD(__thiscall * H_SimcityAppDoSaveGame)(CSimcityAppPrimary*, CMFC3XString*) = (DWORD(__thiscall*)(CSimcityAppPrimary*, CMFC3XString*))0x432180;
 	CSimcityAppPrimary* pThis;
 	DWORD ret;
 
@@ -758,7 +756,7 @@ extern "C" DWORD __stdcall Hook_SaveGame(CMFC3XString* lpFileName) {
 		}
 	}
 
-	ret = H_SimcityAppDoSaveGame(pThis, lpFileName);
+	ret = GameMain_SimcityApp_DoSaveGame(pThis, lpFileName);
 
 	for (const auto& hook : stHooks_Hook_SaveGame_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
