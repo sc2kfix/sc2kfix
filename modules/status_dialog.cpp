@@ -227,9 +227,6 @@ static void OnPaintFloatingStatusBar(HWND hWnd, HDC hDC) {
 	CStatusControlBar *pStatusBar;
 
 	// We're using the brushes and colours from the main program.
-	CMFC3XBrush *MainBrushFace = (CMFC3XBrush *)0x4CAA48;
-	CMFC3XBrush *MainBrushBorder = (CMFC3XBrush *)0x4CB1B0;
-	COLORREF &colBtnFace = *(COLORREF *)0x4CB3FC;
 
 	if (hWnd && IsWindowVisible(hWnd)) {
 		GetClientRect(hWnd, &r);
@@ -531,8 +528,6 @@ extern "C" void __stdcall Hook_MainFrame_ToggleToolBars_SC2K1996(BOOL bShow) {
 	BOOL bToolBarsCreated;
 	CCityToolBar *pCityToolBar;
 	CMapToolBar *pMapToolBar;
-
-	BOOL &bMainFrameInactive = *(BOOL *)0x4CAD14;
 
 	bToolBarsCreated = pThis->dwMFToolBarsCreated;
 	pCityToolBar = &pThis->dwMFCityToolBar;

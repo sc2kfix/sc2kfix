@@ -240,7 +240,7 @@ int __stdcall Hook_AfxMessageBoxID(UINT nIDPrompt, UINT nType, UINT nIDHelp) {
 	return ret;
 }
 
-extern "C" int __stdcall Hook_FileDialogDoModal() {
+extern "C" int __stdcall Hook_FileDialog_DoModal() {
 	CMFC3XFileDialog *pThis;
 
 	__asm mov [pThis], ecx
@@ -635,13 +635,6 @@ extern "C" void __stdcall Hook_SimcityDoc_UpdateDocumentTitle() {
 	const char *pCurrStr;
 	CSimString *pFundStr;
 
-	const char *gameCurrDollar = (const char *)0x4E6168;
-	const char *gameCurrDM = (const char *)0x4E6180;
-	const char *gameLangGerman = (const char *)0x4E6198;
-	const char *gameCurrFF = (const char *)0x4E619C;
-	const char *gameLangFrench = (const char *)0x4E61B4;
-	const char *gameStrHyphen = (const char *)0x4E6804;
-
 	GameMain_String_Cons(&cStr);
 
 	pSCApp = &pCSimcityAppThis;
@@ -707,9 +700,6 @@ static void L_TileHighlightUpdate(CSimcityView *pThis) {
 	LONG x;
 	__int16 y;
 
-	DWORD &pSomeWnd = *(DWORD *)0x4CAC18; // Perhaps this is the active view window? (unclear - but this is referenced in the native TileHighlightUpdate function)
-	RECT &dRect = *(RECT *)0x4CAD48;
-
 	if (wTileHighlightActive) {
 		vBits = Game_Graphics_LockDIBBits(pThis->dwSCVCGraphics);
 		if (vBits || Game_SimcityView_CheckOrLoadGraphic(pThis)) {
@@ -721,10 +711,10 @@ static void L_TileHighlightUpdate(CSimcityView *pThis) {
 				Game_FinishProcessObjects();
 			}
 			Game_Graphics_UnlockDIBBits(pThis->dwSCVCGraphics);
-			bottom = ++dRect.bottom;
+			bottom = ++rcDst.bottom;
 			if (pThis->dwSCVIsZoomed) {
-				dRect.bottom = bottom + 2;
-				++dRect.right;
+				rcDst.bottom = bottom + 2;
+				++rcDst.right;
 			}
 			// As it turns out this if case is necessary here.. otherwise it results in breakage when
 			// it comes to the pollution clouds (entire view window update rather than just the
@@ -735,7 +725,7 @@ static void L_TileHighlightUpdate(CSimcityView *pThis) {
 			if (pThis == (CSimcityView *)&pSomeWnd)
 				Game_SimcityView_MainWindowUpdate(pThis, 0, 1);
 			else
-				Game_SimcityView_MainWindowUpdate(pThis, &dRect, 1);
+				Game_SimcityView_MainWindowUpdate(pThis, &rcDst, 1);
 			if (bOverrideTickPlacementHighlight)
 				wTileHighlightActive = 0;
 		}
@@ -1271,14 +1261,6 @@ extern "C" int __stdcall Hook_StartupGraphics() {
 	DWORD pvOut;
 	LOGPAL plPal;
 
-	HDC &hDC_Global = *(HDC *)0x4EA03C;
-	HPALETTE &hLoColor = *(HPALETTE *)0x4EA044;
-	BOOL &bHiColor = *(BOOL *)0x4EA048;
-	BOOL &bLoColor = *(BOOL *)0x4EA04C;
-	BOOL &bPaletteSet = *(BOOL *)0x4EA050;
-	testColStruct *rgbLoColor = (testColStruct *)0x4EA058;
-	testColStruct *rgbNormalColor = (testColStruct *)0x4EA0B8;
-
 	plPal.wVersion = 0x300;
 	plPal.wNumPalEnts = LOCOLORCNT;
 	memset(plPal.pPalEnts, 0, sizeof(plPal.pPalEnts));
@@ -1363,8 +1345,6 @@ extern "C" void __stdcall Hook_CityToolBar_ToolMenuEnable() {
 }
 
 extern "C" void __stdcall Hook_ShowViewControls() {
-	BOOL &bRedraw = *(BOOL *)0x4E62B4;
-
 	CSimcityAppPrimary *pSCApp;
 	CMainFrame *pMainFrm;
 	CSimcityView *pSCView;
@@ -1397,11 +1377,6 @@ extern "C" void __stdcall Hook_MainFrame_UpdateSections() {
 	CMainFrame *pThis;
 
 	__asm mov[pThis], ecx
-
-	CMFC3XString *cityToolGroupStrings = (CMFC3XString *)0x4C94C8;
-	HINSTANCE &hGameModule = *(HINSTANCE *)0x4CE8C8;
-	int *dwGrantedItems = (int *)0x4E9A10;
-	DWORD *DisplayLayer = (DWORD *)0x4E9E48;
 
 	HWND hDlgItem;
 	CMapToolBar *pMapToolBar;
@@ -1645,7 +1620,7 @@ extern "C" BOOL __stdcall Hook_Wnd_OnCommand(WPARAM wParam, LPARAM lParam) {
 		nCode = _CN_COMMAND;
 	}
 	else {
-		if ((HWND)GameMain_AfxGetThreadState()[40] == pThis->m_hWnd)
+		if (GameMain_AfxGetThreadState()->m_hLockoutNotifyWindow == pThis->m_hWnd)
 			return TRUE;
 
 		pWndHandle = GameMain_Wnd_FromHandlePermanent(hWndCtrl);
@@ -1687,7 +1662,7 @@ void InstallMiscHooks_SC2K1996(void) {
 
 	// Hook into the CFileDialog::DoModal function
 	VirtualProtect((LPVOID)0x49FE18, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x49FE18, Hook_FileDialogDoModal);
+	NEWJMP((LPVOID)0x49FE18, Hook_FileDialog_DoModal);
 
 	// Fix the sign fonts
 	VirtualProtect((LPVOID)0x4E7267, 1, PAGE_EXECUTE_READWRITE, &dwDummy);

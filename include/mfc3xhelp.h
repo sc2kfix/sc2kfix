@@ -143,17 +143,26 @@
 // Placeholders and forward-declarations
 
 struct CMFC3XRuntimeClass;
-class CMFC3XWinApp;
+
 class CMFC3XControlBar;
 class CMFC3XDialogBar;
 class CMFC3XDockBar;
 class CMFC3XDockContext;
+class CMFC3XException;
+class CMFC3XFrameWnd;
 class CMFC3XObject;
 class CMFC3XOleDropTarget;
 class CMFC3XOleFrameHook;
 class CMFC3XOleMessageFilter;
 class CMFC3XRecentFileList;
+class CMFC3XView;
+class CMFC3XWinApp;
+class CMFC3XWinThread;
 class CMFC3XWnd;
+
+class CMFC3XPtrList;
+class CMFC3XMapPtrToPtr;
+struct CMFC3XHandleMap;
 
 // Reimplementation of the MFC 3.x message map entry structure.
 typedef struct {
@@ -174,6 +183,15 @@ typedef struct {
 	void (__stdcall *m_pfnTerminate)();
 } MFC3X_AFX_CORE_STATE;
 
+class MFC3X_AFX_EXCEPTION_LINK {
+public:
+	MFC3X_AFX_EXCEPTION_LINK *m_pLinkPrev;
+	CMFC3XException *m_pException;
+};
+
+typedef struct {
+	MFC3X_AFX_EXCEPTION_LINK *m_pLinkTop;
+} MFC3X_AFX_EXCEPTION_CONTEXT;
 
 #pragma pack(push, 1)
 struct CMFC3XPlex {
@@ -252,6 +270,28 @@ public:
 	int m_bCloseOnDelete;
 };
 
+class CMFC3XException : public CMFC3XObject {
+public:
+	int m_bAutoDelete;
+};
+
+struct CMFC3XAssoc {
+	CMFC3XAssoc* pNext;
+	UINT nHashValue;
+	void* key;
+	void* value;
+};
+
+class CMFC3XMapPtrToPtr : public CMFC3XObject {
+public:
+	CMFC3XAssoc** m_pHashTable;
+	UINT m_nHashTableSize;
+	int m_nCount;
+	CMFC3XAssoc* m_pFreeList;
+	CMFC3XPlex* m_pBlocks;
+	int m_nBlockSize;
+};
+
 class CMFC3XGdiObject : public CMFC3XObject {
 public:
 	HGDIOBJ m_hObject;
@@ -297,15 +337,14 @@ public:
 	int m_nGrowBy;
 };
 
+struct CMFC3XNode {
+	CMFC3XNode* pNext;
+	CMFC3XNode* pPrev;
+	void* data;
+};
 
 class CMFC3XPtrList : public CMFC3XObject {
 public:
-	struct CMFC3XNode
-	{
-		CMFC3XNode* pNext;
-		CMFC3XNode* pPrev;
-		void* data;
-	};
 	CMFC3XNode* m_pNodeHead;
 	CMFC3XNode* m_pNodeTail;
 	int m_nCount;
@@ -572,4 +611,43 @@ public:
 	CMFC3XWnd *m_pDlgWnd;
 	HWND m_hWndLastControl;
 	BOOL m_bEditLastControl;
+};
+
+class MFC3X_AFX_THREAD_STATE {
+public:
+	CMFC3XWinThread *m_pCurrentWinThread;
+	BOOL m_bInMsgFilter;
+	CMFC3XFrameWnd *m_pFirstFrameWnd;
+	void *m_pSafetyPoolBuffer;
+	MFC3X_AFX_EXCEPTION_CONTEXT m_exceptionContext;
+	DWORD m_nTempMapLock;
+	CMFC3XHandleMap *m_pmapHWND;
+	CMFC3XHandleMap *m_pmapHMENU;
+	CMFC3XHandleMap *m_pmapHDC;
+	CMFC3XHandleMap *m_pmapHGDIOBJ;
+	CMFC3XWnd *m_pWndInit;
+	HWND m_hWndInit;
+	BOOL m_bDlgCreate;
+	HHOOK m_hHookOldSendMsg;
+	HHOOK m_hHookOldCbtFilter;
+	MSG m_lastSentMsg;
+	HWND m_hTrackingWindow;
+	HMENU m_hTrackingMenu;
+	TCHAR m_szTempClassName[64];
+	HWND m_hLockoutNotifyWindow;
+	CMFC3XView *m_pRoutingView;
+	BOOL m_bWaitForDataSource;
+	HWND m_hSocketWindow;
+	CMFC3XMapPtrToPtr m_mapSocketHandle;
+	CMFC3XMapPtrToPtr m_mapDeadSockets;
+	CMFC3XPtrList m_listSocketNotifications;
+	CMFC3XHandleMap *m_pmapHIMAGELIST;
+};
+
+struct CMFC3XHandleMap {
+	CMFC3XMapPtrToPtr m_permanentMap;
+	CMFC3XMapPtrToPtr m_temporaryMap;
+	CMFC3XRuntimeClass *m_pClass;
+	size_t m_nOffset;
+	int m_nHandles;
 };

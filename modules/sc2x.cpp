@@ -828,9 +828,8 @@ void __declspec(naked) Hook_431212(void) {
 
 // Fix rail and highway border connections not loading properly
 extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
-	short* wCityNeighborConnections1500 = (short*)0x4CA3F0;
-	*wCityNeighborConnections1500 = 0;
-	*(DWORD*)0x4C85A0 = 0;
+	wCityNeighborConnections1500 = 0;
+	dwBusPassengers = 0;
 
 	for (int x = 0; x < GAME_MAP_SIZE; x++) {
 		for (int y = 0; y < GAME_MAP_SIZE; y++) {
@@ -839,13 +838,13 @@ extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
 				if (iTileID >= TILE_RAIL_LR && iTileID < TILE_TUNNEL_T
 					|| iTileID >= TILE_CROSSOVER_ROADLR_RAILTB && iTileID < TILE_SUSPENSION_BRIDGE_START_B
 					|| iTileID >= TILE_HIGHWAY_HTB && iTileID < TILE_REINFORCED_BRIDGE_PYLON)
-					++*wCityNeighborConnections1500;
+					++wCityNeighborConnections1500;
 			}
 		}
 	}
 
 	if (sc2x_debug & SC2X_DEBUG_LOAD)
-		ConsoleLog(LOG_DEBUG, "SC2X: Loaded %d $1500 neighbor connections.\n", *wCityNeighborConnections1500);
+		ConsoleLog(LOG_DEBUG, "SC2X: Loaded %d $1500 neighbor connections.\n", wCityNeighborConnections1500);
 }
 
 void InstallSaveHooks_SC2K1996(void) {

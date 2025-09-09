@@ -25,8 +25,6 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 	DWORD dwTBToolBarTitleDrag;
 	BOOL bCityViewAnim;
 
-	BOOL &bLoColor = *(BOOL *)0x4EA04C;
-
 	// Only redraw the relevant windows during:
 	// 1) Titlescreen image animation.
 	// 2) While the CSimcityView window is active and the toolbars aren't being dragged.

@@ -322,11 +322,6 @@ extern "C" void __stdcall Hook_MainFrame_OnChar(UINT nChar, UINT nRepCnt, UINT n
 	CMFC3XMenu* (__stdcall * H_CMenuFromHandle)(HMENU) = (CMFC3XMenu * (__stdcall*)(HMENU))0x4A7427;
 	int(__thiscall * H_CMenuAttach)(CMFC3XMenu*, HMENU) = (int(__thiscall*)(CMFC3XMenu*, HMENU))0x4A7483;
 
-	HINSTANCE& game_hModule = *(HINSTANCE*)0x4CE8C8;
-	int& iCheatEntry = *(int*)0x4E6520;
-	int& iCheatExpectedCharPos = *(int*)0x4E6524;
-	char* szNewItem = (char*)0x4E66EC;
-
 	pSCApp = &pCSimcityAppThis;
 
 	hWnd = pThis->m_hWnd;
@@ -425,7 +420,7 @@ TRYAGAIN:
 			pDebugMenu = (CMFC3XMenu*)operator new(sizeof(CMFC3XMenu)); // This would be CMenu().
 			if (pDebugMenu)
 				pDebugMenu->m_hMenu = 0;
-			hDebugMenu = LoadMenuA(game_hModule, (LPCSTR)223);
+			hDebugMenu = LoadMenuA(hGameModule, (LPCSTR)223);
 			AdjustDebugMenu(hDebugMenu);
 			H_CMenuAttach(pDebugMenu, hDebugMenu);
 			iSCMenuPos = H_GetSimcityViewMenuPos(6);

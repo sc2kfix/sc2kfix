@@ -88,12 +88,6 @@ static void AllocateAndLoadSprites1996(CMFC3XFile *pFile, sprite_archive_t *lpBu
 }
 
 extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
-	CMFC3XString *cStrDataArchiveNames = (CMFC3XString *)0x4CA160;
-	const char *aPaths = (const char *)0x4E61D0;
-	const char *cBackslash = (const char *)0x4E6278;
-	const char *aData = (const char *)0x4E728C;
-	sprite_archive_stored_t *dwBaseSpriteLoading = (sprite_archive_stored_t *)0x4E7448;
-
 	CMFC3XFile datArchive;
 	CMFC3XString retString;
 	CMFC3XString retStrPath;
@@ -204,12 +198,6 @@ GETOUT:
 }
 
 static void ReloadSpriteDataArchive1996(WORD nSpriteSet) {
-	CMFC3XString *cStrDataArchiveNames = (CMFC3XString *)0x4CA160;
-	const char *aPaths = (const char *)0x4E61D0;
-	const char *cBackslash = (const char *)0x4E6278;
-	const char *aData = (const char *)0x4E728C;
-	sprite_archive_stored_t *dwBaseSpriteLoading = (sprite_archive_stored_t *)0x4E7448;
-
 	CMFC3XFile datArchive;
 	CMFC3XString retString;
 	CMFC3XString retStrPath;
