@@ -248,17 +248,15 @@ static BOOL DoAdvancedQuery(__int16 x, __int16 y) {
 }
 
 extern "C" void __cdecl Hook_QuerySpecificItem(__int16 x, __int16 y) {
-	void(__cdecl *H_QuerySpecificItem)(__int16, __int16) = (void(__cdecl *)(__int16, __int16))0x44D1B0;
 
 	if (!DoAdvancedQuery(x, y))
-		H_QuerySpecificItem(x, y);
+		GameMain_QuerySpecificItem(x, y);
 }
 
 extern "C" void __cdecl Hook_QueryGeneralItem(__int16 x, __int16 y) {
-	void(__cdecl *H_QueryGeneralItem)(__int16, __int16) = (void(__cdecl *)(__int16, __int16))0x4719A0;
 
 	if (!DoAdvancedQuery(x, y))
-		H_QueryGeneralItem(x, y);
+		GameMain_QueryGeneralItem(x, y);
 }
 
 void InstallQueryHooks_SC2K1996(void) {

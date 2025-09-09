@@ -96,9 +96,8 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 
 		for (int i = 0; i < iChunkSize; ) {
 			if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('C', 'N', 'A', 'M')) {
-				CMFC3XString* (__thiscall * H_CStringOperatorSet)(CMFC3XString*, const char*) = (CMFC3XString * (__thiscall*)(CMFC3XString*, const char*))0x4A2E6A;
 				std::string strCityName((char*)&sc2file[iChunkStart + 9]);
-				H_CStringOperatorSet(&pszCityName, strCityName.c_str());
+				GameMain_String_OperatorSet(&pszCityName, (char *)strCityName.c_str());
 				i += iChunkSize;
 				iConvertedChunks++;
 			}

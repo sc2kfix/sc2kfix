@@ -6,6 +6,7 @@
 #pragma warning(disable : 4733)
 
 #include <windows.h>
+#include <windowsx.h>
 #include <string>
 #include <list>
 #include <map>

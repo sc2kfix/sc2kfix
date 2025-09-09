@@ -12,7 +12,7 @@
 
 static DWORD dwDummy;
 
-extern "C" void __cdecl Hook_AnimationFunction_SC2K1996(CMFC3XPalette *pPalette, int iToggle) {
+extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette, int iToggle) {
 	CSimcityAppPrimary *pApp;
 	CMainFrame *pMainFrm;
 	CSimcityView *pSCView;
@@ -27,14 +27,12 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2K1996(CMFC3XPalette *pPalette,
 
 	BOOL &bLoColor = *(BOOL *)0x4EA04C;
 
-	void(__cdecl *H_AnimationFunction1996)(CMFC3XPalette *, int) = (void(__cdecl *)(CMFC3XPalette *, int))0x457110;
-
 	// Only redraw the relevant windows during:
 	// 1) Titlescreen image animation.
 	// 2) While the CSimcityView window is active and the toolbars aren't being dragged.
 	// 3) None of the additional redraw calls in LoColor mode.
 
-	H_AnimationFunction1996(pPalette, iToggle);
+	GameMain_ToggleColorCycling(pPalette, iToggle);
 
 	pApp = &pCSimcityAppThis;
 	if (pApp) {
@@ -86,7 +84,7 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2K1996(CMFC3XPalette *pPalette,
 	}
 }
 
-extern "C" void __cdecl Hook_AnimationFunction_SC2K1995(CMFC3XPalette *pPalette, int iToggle) {
+extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1995(CMFC3XPalette *pPalette, int iToggle) {
 	CSimcityAppPrimary *pApp;
 	CMainFrame *pMainFrm;
 	CSimcityView *pSCView;
@@ -103,9 +101,9 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2K1995(CMFC3XPalette *pPalette,
 	BOOL &bLoColor1995 = *(BOOL *)0x4E903C;
 
 	CSimcityView *(__thiscall *H_SimcityApp_PointerToCSimcityViewClass1995)(CSimcityAppPrimary *) = (CSimcityView *(__thiscall *)(CSimcityAppPrimary *))0x4026D0;
-	void(__cdecl *H_AnimationFunction1995)(CMFC3XPalette *, int) = (void(__cdecl *)(CMFC3XPalette *, int))0x456A60;
+	void(__cdecl *H_ToggleColorCycling1995)(CMFC3XPalette *, int) = (void(__cdecl *)(CMFC3XPalette *, int))0x456A60;
 
-	H_AnimationFunction1995(pPalette, iToggle);
+	H_ToggleColorCycling1995(pPalette, iToggle);
 	
 	pApp = &pCSimcityAppThis1995;
 	if (pApp) {
@@ -154,7 +152,7 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2K1995(CMFC3XPalette *pPalette,
 	}
 }
 
-extern "C" void __cdecl Hook_AnimationFunction_SC2KDemo(CMFC3XPalette *pPalette, int iToggle) {
+extern "C" void __cdecl Hook_ToggleColorCycling_SC2KDemo(CMFC3XPalette *pPalette, int iToggle) {
 	CSimcityAppDemo *pApp;
 	CMainFrame *pMainFrm;
 	CSimcityView *pSCView;
@@ -171,9 +169,9 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2KDemo(CMFC3XPalette *pPalette,
 	BOOL &bLoColorDemo = *(BOOL *)0x4D1EDC;
 
 	CSimcityView *(__thiscall *H_SimcityApp_PointerToCSimcityViewClassDemo)(CSimcityAppDemo *) = (CSimcityView *(__thiscall *)(CSimcityAppDemo *))0x402725;
-	void(__cdecl *H_AnimationFunctionDemo)(CMFC3XPalette *, int) = (void(__cdecl *)(CMFC3XPalette *, int))0x44890F;
+	void(__cdecl *H_ToggleColorCyclingDemo)(CMFC3XPalette *, int) = (void(__cdecl *)(CMFC3XPalette *, int))0x44890F;
 
-	H_AnimationFunctionDemo(pPalette, iToggle);
+	H_ToggleColorCyclingDemo(pPalette, iToggle);
 
 	pApp = &pCSimcityAppThisDemo;
 	if (pApp) {
@@ -224,15 +222,15 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2KDemo(CMFC3XPalette *pPalette,
 
 void InstallAnimationHooks_SC2K1996(void) {
 	VirtualProtect((LPVOID)0x4023D3, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4023D3, Hook_AnimationFunction_SC2K1996);
+	NEWJMP((LPVOID)0x4023D3, Hook_ToggleColorCycling_SC2K1996);
 }
 
 void InstallAnimationHooks_SC2K1995(void) {
 	VirtualProtect((LPVOID)0x402405, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x402405, Hook_AnimationFunction_SC2K1995);
+	NEWJMP((LPVOID)0x402405, Hook_ToggleColorCycling_SC2K1995);
 }
 
 void InstallAnimationHooks_SC2KDemo(void) {
 	VirtualProtect((LPVOID)0x402473, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x402473, Hook_AnimationFunction_SC2KDemo);
+	NEWJMP((LPVOID)0x402473, Hook_ToggleColorCycling_SC2KDemo);
 }

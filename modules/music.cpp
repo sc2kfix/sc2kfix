@@ -631,9 +631,6 @@ extern "C" void __stdcall Hook_SimcityApp_MusicPlayNext(BOOL bNext) {
 
 	__asm mov [pThis], ecx
 
-	DWORD(__thiscall *H_SoundGetMCIResult)(CSound *) = (DWORD(__thiscall *)(CSound *))0x40148D;
-	int(__thiscall *H_SimcityAppMusicPlayNextRefocusSong)(CSimcityAppPrimary *) = (int(__thiscall *)(CSimcityAppPrimary *))0x401A9B;
-
 	int nSpeed;
 	int iRandMusic;
 	int iSongID;
@@ -643,9 +640,9 @@ extern "C" void __stdcall Hook_SimcityApp_MusicPlayNext(BOOL bNext) {
 	nSpeed = pThis->wSCAGameSpeedLOW;
 	if (nSpeed == GAME_SPEED_PAUSED)
 		nSpeed = GAME_SPEED_TURTLE;
-	if (!H_SoundGetMCIResult(pThis->SCASNDLayer)) {
+	if (!Game_Sound_GetMCIResult(pThis->SCASNDLayer)) {
 		if (bNext)
-			H_SimcityAppMusicPlayNextRefocusSong(pThis);
+			Game_SimcityApp_MusicPlayNextRefocusSong(pThis);
 		else if ((!(rand() % (8 * (3 * nSpeed - 3)))) || bSettingsAlwaysPlayMusic) {
 			iRandMusic = rand();
 			iSongID = 10000 + (iRandMusic % 19);

@@ -143,12 +143,15 @@
 // Placeholders and forward-declarations
 
 class CMFC3XControlBar;
+class CMFC3XDialogBar;
 class CMFC3XDockBar;
 class CMFC3XDockContext;
+class CMFC3XObject;
 class CMFC3XOleDropTarget;
 class CMFC3XOleFrameHook;
 class CMFC3XOleMessageFilter;
 class CMFC3XRecentFileList;
+class CMFC3XWnd;
 
 // Reimplementation of the MFC 3.x message map entry structure.
 typedef struct {

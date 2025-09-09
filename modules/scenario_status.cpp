@@ -34,10 +34,6 @@ WORD wScenarioStartXVALTiles = 0;
 DWORD dwScenarioStartTrafficDivisor = 0;
 
 BOOL CALLBACK ScenarioStatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
-	void(__cdecl * H_CStringFormat)(CMFC3XString*, char const* Ptr, ...) = (void(__cdecl*)(CMFC3XString*, char const* Ptr, ...))0x49EBD3;
-	CMFC3XString* (__thiscall * H_CStringCons)(CMFC3XString*) = (CMFC3XString * (__thiscall*)(CMFC3XString*))0x4A2C28;
-	void(__thiscall *H_CStringDest)(CMFC3XString *) = (void(__thiscall *)(CMFC3XString *))0x4A2CB0;
-
 	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
 	DWORD dwCityDueDate = wScenarioTimeLimitMonths * 25 + dwCityDays;
 	dwCityDueDate = dwCityDueDate / 25 * 25 + 22;
@@ -125,8 +121,8 @@ BOOL CALLBACK ScenarioStatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam
 		// TODO: Building goals
 		// TODO: Modding hooks
 
-		H_CStringCons(&cDueDateString);
-		H_CStringFormat(&cDueDateString, "%s %d %4d", pSCApp->dwSCApCStringLongMonths[iDueDateMonth].m_pchData, iDueDateDay, iDueDateYear);
+		GameMain_String_Cons(&cDueDateString);
+		GameMain_String_Format(&cDueDateString, "%s %d %4d", pSCApp->dwSCApCStringLongMonths[iDueDateMonth].m_pchData, iDueDateDay, iDueDateYear);
 
 		// Load the compiled strings into the dialog
 		SetDlgItemText(hwndDlg, IDC_STATIC_SCENGOALSHEADER, strScenarioGoalsHeader.c_str());
@@ -144,7 +140,7 @@ BOOL CALLBACK ScenarioStatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam
 		if (bScenarioGoalsMet)
 			Game_SimcityApp_SoundPlaySound(&pCSimcityAppThis, SOUND_CHEERS);
 
-		H_CStringCons(&cDueDateString);
+		GameMain_String_Dest(&cDueDateString);
 		return TRUE;
 
 	// Set the color of the due date

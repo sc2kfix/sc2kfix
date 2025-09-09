@@ -3,6 +3,7 @@
 
 #undef UNICODE
 #include <windows.h>
+#include <windowsx.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <intrin.h>
@@ -50,16 +51,11 @@ static BOOL CheckForExistingID(WORD nID) {
 }
 
 static void AllocateAndLoadSprites1996(CMFC3XFile *pFile, sprite_archive_t *lpBuf, WORD nSpriteSet) {
-	void(__cdecl *H_OpDelete)(void *) = (void(__cdecl *)(void *))0x401C99;
-	void *(__cdecl *H_AllocateDataEntry)(size_t iSz) = (void *(__cdecl *)(size_t))0x402045;
-	UINT(__thiscall *H_CFileRead)(CMFC3XFile *, void *, DWORD) = (UINT(__thiscall *)(CMFC3XFile *, void *, DWORD))0x4A8313;
-	LONG(__thiscall *H_CFileSeek)(CMFC3XFile *, LONG, UINT) = (LONG(__thiscall *)(CMFC3XFile *, LONG, UINT))0x4A83B8;
-
 	WORD nPos, nID;
 	sprite_ids_t *pSprEnt;
 	void *pSpriteData;
 
-	H_CFileSeek(pFile, lpBuf->pData[0].sprHeader.dwAddress, 0);
+	GameMain_File_Seek(pFile, lpBuf->pData[0].sprHeader.dwAddress, 0);
 	for (nPos = 0; nPos < spriteIDs.size(); ++nPos) {
 		pSprEnt = &spriteIDs[nPos];
 		if (pSprEnt && pSprEnt->nArcID == nSpriteSet) {
@@ -68,17 +64,17 @@ static void AllocateAndLoadSprites1996(CMFC3XFile *pFile, sprite_archive_t *lpBu
 				if (sprite_debug & SPRITE_DEBUG_SPRITES)
 					ConsoleLog(LOG_DEBUG, "AllocateAndLoadSprites(%u): Multiple sprites with the same ID Detected (%u, 0x%06X, %u) (%u)\n", nSpriteSet, nID, pSprEnt->dwOffset, pSprEnt->dwSize, pSprEnt->nSkipHit);
 			if (pSprEnt->dwSize > 0) {
-				pSpriteData = H_AllocateDataEntry(pSprEnt->dwSize);
+				pSpriteData = Game_AllocateDataEntry(pSprEnt->dwSize);
 				if (pSpriteData) {
-					if (H_CFileRead(pFile, pSpriteData, pSprEnt->dwSize) == pSprEnt->dwSize) {
+					if (GameMain_File_Read(pFile, pSpriteData, pSprEnt->dwSize) == pSprEnt->dwSize) {
 						if (pSprEnt->bMultiple && pSprEnt->nSkipHit > 0) {
 							if (sprite_debug & SPRITE_DEBUG_SPRITES)
 								ConsoleLog(LOG_DEBUG, "AllocateAndLoadSprites(%u): discarding skipped sprite with ID (%u, 0x%06X, %u).\n", nSpriteSet, nID, pSprEnt->dwOffset, pSprEnt->dwSize);
-							H_OpDelete(pSpriteData);
+							Game_OpDelete(pSpriteData);
 							continue;
 						}
 						if (pArrSpriteHeaders[nID].dwAddress) {
-							H_OpDelete((void *)pArrSpriteHeaders[nID].dwAddress);
+							Game_OpDelete((void *)pArrSpriteHeaders[nID].dwAddress);
 							pArrSpriteHeaders[nID].dwAddress = 0;
 						}
 						pArrSpriteHeaders[nID].dwAddress = (DWORD)pSpriteData;
@@ -92,20 +88,6 @@ static void AllocateAndLoadSprites1996(CMFC3XFile *pFile, sprite_archive_t *lpBu
 }
 
 extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
-	int(__cdecl *H_SwLong)(int) = (int(__cdecl *)(int))0x401429;
-	__int16(__cdecl *H_SwShort)(__int16) = (__int16(__cdecl *)(__int16))0x401861;
-	void(__cdecl *H_FailRadio)(UINT) = (void(__cdecl *)(UINT))0x402A40;
-	void(__thiscall *H_SimcityAppGetValueStringA)(CSimcityAppPrimary *, CMFC3XString *, const char *, const char *) = (void(__thiscall *)(CSimcityAppPrimary *, CMFC3XString *, const char *, const char *))0x402F4F;
-	void(__cdecl *H_CStringFormat)(CMFC3XString *, char const *Ptr, ...) = (void(__cdecl *)(CMFC3XString *, char const *Ptr, ...))0x49EBD3;
-	CMFC3XString *(__thiscall *H_CStringCons)(CMFC3XString *) = (CMFC3XString *(__thiscall *)(CMFC3XString *))0x4A2C28;
-	void(__thiscall *H_CStringDest)(CMFC3XString *) = (void(__thiscall *)(CMFC3XString *))0x4A2CB0;
-	CMFC3XFile *(__thiscall *H_CFileCons)(CMFC3XFile *) = (CMFC3XFile *(__thiscall *)(CMFC3XFile *))0x4A7E82;
-	void(__thiscall *H_CFileDest)(CMFC3XFile *) = (void(__thiscall *)(CMFC3XFile *))0x4A8072;
-	BOOL(__thiscall *H_CFileOpen)(CMFC3XFile *, LPCTSTR, UINT, void *) = (BOOL(__thiscall *)(CMFC3XFile *, LPCTSTR, UINT, void *))0x4A8190;
-	UINT(__thiscall *H_CFileRead)(CMFC3XFile *, void *, DWORD) = (UINT(__thiscall *)(CMFC3XFile *, void *, DWORD))0x4A8313;
-	void(__thiscall *H_CFileClose)(CMFC3XFile *) = (void(__thiscall *)(CMFC3XFile *))0x4A8448;
-	DWORD(__thiscall *H_CFileGetLength)(CMFC3XFile *) = (DWORD(__thiscall *)(CMFC3XFile *))0x4A854E;
-
 	CMFC3XString *cStrDataArchiveNames = (CMFC3XString *)0x4CA160;
 	const char *aPaths = (const char *)0x4E61D0;
 	const char *cBackslash = (const char *)0x4E6278;
@@ -129,9 +111,9 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
 	sprite_ids_t spriteEnt;
 	int nSize;
 
-	H_CFileCons(&datArchive);
-	H_CStringCons(&retString);
-	H_CStringCons(&retStrPath);
+	GameMain_File_Cons(&datArchive);
+	GameMain_String_Cons(&retString);
+	GameMain_String_Cons(&retStrPath);
 
 	uFailMsg = 0;
 
@@ -141,40 +123,40 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
 		goto GETOUT;
 	}
 
-	H_SimcityAppGetValueStringA(&pCSimcityAppThis, &retString, aPaths, aData);
+	Game_SimcityApp_GetValueStringA(&pCSimcityAppThis, &retString, aPaths, aData);
 
 	pString = &cStrDataArchiveNames[nSpriteSet];
 	if (!pString)
 		goto GETOUT;
 
-	H_CStringFormat(&retStrPath, "%s%s%s", retString.m_pchData, cBackslash, pString->m_pchData);
+	GameMain_String_Format(&retStrPath, "%s%s%s", retString.m_pchData, cBackslash, pString->m_pchData);
 
-	if (H_CFileOpen(&datArchive, retStrPath.m_pchData, 0, 0)) {
+	if (GameMain_File_Open(&datArchive, retStrPath.m_pchData, 0, 0)) {
 		// Set the uFailMsg by default here - then unset it once
 		// the main read begins.
 		uFailMsg = 48;
-		nFlen = H_CFileGetLength(&datArchive);
-		H_CFileRead(&datArchive, &nArcFileCnt, 2);
-		nArcFileCnt = H_SwShort(nArcFileCnt);
+		nFlen = GameMain_File_GetLength(&datArchive);
+		GameMain_File_Read(&datArchive, &nArcFileCnt, 2);
+		nArcFileCnt = Game_FlipShortBytes(nArcFileCnt);
 		lpMainBuf = &dwBaseSpriteLoading[nSpriteSet];
 		nBufSize = 10 * nArcFileCnt;
 		lpBuf = (sprite_archive_t *)malloc(nBufSize + 2);
 		lpMainBuf->pData = lpBuf;
 		lpBuf->nFileCnt = nArcFileCnt;
 		if (lpBuf) {
-			if (H_CFileRead(&datArchive, &lpBuf->pData, nBufSize) == nBufSize) {
+			if (GameMain_File_Read(&datArchive, &lpBuf->pData, nBufSize) == nBufSize) {
 				uFailMsg = 0;
 				for (nPos = 0; nPos < nArcFileCnt; ++nPos) {
-					nID = H_SwShort(lpBuf->pData[nPos].nID);
+					nID = Game_FlipShortBytes(lpBuf->pData[nPos].nID);
 					lpBuf->pData[nPos].nID = nID;
 
 					pSprtHead = &lpBuf->pData[nPos].sprHeader;
-					pSprtHead->dwAddress = H_SwLong(pSprtHead->dwAddress);
+					pSprtHead->dwAddress = Game_FlipLongBytePortions(pSprtHead->dwAddress);
 
 					pArrSpriteHeaders[nID] = *pSprtHead;
 					pArrSpriteHeaders[nID].dwAddress = 0;
-					pArrSpriteHeaders[nID].wHeight = H_SwShort(pArrSpriteHeaders[nID].wHeight);
-					pArrSpriteHeaders[nID].wWidth = H_SwShort(pArrSpriteHeaders[nID].wWidth);
+					pArrSpriteHeaders[nID].wHeight = Game_FlipShortBytes(pArrSpriteHeaders[nID].wHeight);
+					pArrSpriteHeaders[nID].wWidth = Game_FlipShortBytes(pArrSpriteHeaders[nID].wWidth);
 
 					nNextPos = (nPos >= nArcFileCnt - 1) ? -1 : nPos + 1;
 					nNextID = (nNextPos >=0) ? nID : -1;
@@ -182,7 +164,7 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
 					if (nNextPos >= 0) {
 						// The next position hasn't yet been processed, do so here so
 						// we can get the file size.
-						dwNextAddress = H_SwLong(lpBuf->pData[nNextPos].sprHeader.dwAddress);
+						dwNextAddress = Game_FlipLongBytePortions(lpBuf->pData[nNextPos].sprHeader.dwAddress);
 						nSize = (dwNextAddress - pSprtHead->dwAddress);
 					}
 					else
@@ -206,36 +188,22 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
 				lpMainBuf->pData = 0;
 			}
 		}
-		H_CFileClose(&datArchive);
+		GameMain_File_Close(&datArchive);
 	}
 	else {
 		uFailMsg = 47;
 	}
 
 	if (uFailMsg)
-		H_FailRadio(uFailMsg);
+		Game_FailRadio(uFailMsg);
 
 GETOUT:
-	H_CStringDest(&retStrPath);
-	H_CStringDest(&retString);
-	H_CFileDest(&datArchive);
+	GameMain_String_Dest(&retStrPath);
+	GameMain_String_Dest(&retString);
+	GameMain_File_Dest(&datArchive);
 }
 
 static void ReloadSpriteDataArchive1996(WORD nSpriteSet) {
-	int(__cdecl *H_SwLong)(int) = (int(__cdecl *)(int))0x401429;
-	__int16(__cdecl *H_SwShort)(__int16) = (__int16(__cdecl *)(__int16))0x401861;
-	void(__cdecl *H_FailRadio)(UINT) = (void(__cdecl *)(UINT))0x402A40;
-	void(__thiscall *H_SimcityAppGetValueStringA)(CSimcityAppPrimary *, CMFC3XString *, const char *, const char *) = (void(__thiscall *)(CSimcityAppPrimary *, CMFC3XString *, const char *, const char *))0x402F4F;
-	void(__cdecl *H_CStringFormat)(CMFC3XString *, char const *Ptr, ...) = (void(__cdecl *)(CMFC3XString *, char const *Ptr, ...))0x49EBD3;
-	CMFC3XString *(__thiscall *H_CStringCons)(CMFC3XString *) = (CMFC3XString *(__thiscall *)(CMFC3XString *))0x4A2C28;
-	void(__thiscall *H_CStringDest)(CMFC3XString *) = (void(__thiscall *)(CMFC3XString *))0x4A2CB0;
-	CMFC3XFile *(__thiscall *H_CFileCons)(CMFC3XFile *) = (CMFC3XFile *(__thiscall *)(CMFC3XFile *))0x4A7E82;
-	void(__thiscall *H_CFileDest)(CMFC3XFile *) = (void(__thiscall *)(CMFC3XFile *))0x4A8072;
-	BOOL(__thiscall *H_CFileOpen)(CMFC3XFile *, LPCTSTR, UINT, void *) = (BOOL(__thiscall *)(CMFC3XFile *, LPCTSTR, UINT, void *))0x4A8190;
-	UINT(__thiscall *H_CFileRead)(CMFC3XFile *, void *, DWORD) = (UINT(__thiscall *)(CMFC3XFile *, void *, DWORD))0x4A8313;
-	void(__thiscall *H_CFileClose)(CMFC3XFile *) = (void(__thiscall *)(CMFC3XFile *))0x4A8448;
-	DWORD(__thiscall *H_CFileGetLength)(CMFC3XFile *) = (DWORD(__thiscall *)(CMFC3XFile *))0x4A854E;
-
 	CMFC3XString *cStrDataArchiveNames = (CMFC3XString *)0x4CA160;
 	const char *aPaths = (const char *)0x4E61D0;
 	const char *cBackslash = (const char *)0x4E6278;
@@ -256,9 +224,9 @@ static void ReloadSpriteDataArchive1996(WORD nSpriteSet) {
 	sprite_archive_stored_t *lpMainBuf;
 	sprite_header_t *pSprtHead;
 
-	H_CFileCons(&datArchive);
-	H_CStringCons(&retString);
-	H_CStringCons(&retStrPath);
+	GameMain_File_Cons(&datArchive);
+	GameMain_String_Cons(&retString);
+	GameMain_String_Cons(&retStrPath);
 
 	uFailMsg = 0;
 
@@ -268,36 +236,36 @@ static void ReloadSpriteDataArchive1996(WORD nSpriteSet) {
 		goto GETOUT;
 	}
 
-	H_SimcityAppGetValueStringA(&pCSimcityAppThis, &retString, aPaths, aData);
+	Game_SimcityApp_GetValueStringA(&pCSimcityAppThis, &retString, aPaths, aData);
 
 	pString = &cStrDataArchiveNames[nSpriteSet];
 	if (!pString)
 		goto GETOUT;
 
-	H_CStringFormat(&retStrPath, "%s%s%s", retString.m_pchData, cBackslash, pString->m_pchData);
+	GameMain_String_Format(&retStrPath, "%s%s%s", retString.m_pchData, cBackslash, pString->m_pchData);
 
-	if (H_CFileOpen(&datArchive, retStrPath.m_pchData, 0, 0)) {
+	if (GameMain_File_Open(&datArchive, retStrPath.m_pchData, 0, 0)) {
 		// Set the uFailMsg by default here - then unset it once
 		// the main read begins.
 		uFailMsg = 48;
-		nFlen = H_CFileGetLength(&datArchive);
-		H_CFileRead(&datArchive, &nArcFileCnt, 2);
-		nArcFileCnt = H_SwShort(nArcFileCnt);
+		nFlen = GameMain_File_GetLength(&datArchive);
+		GameMain_File_Read(&datArchive, &nArcFileCnt, 2);
+		nArcFileCnt = Game_FlipShortBytes(nArcFileCnt);
 		lpMainBuf = &dwBaseSpriteLoading[nSpriteSet];
 		nBufSize = 10 * nArcFileCnt;
 		lpBuf = (sprite_archive_t *)malloc(nBufSize + 2);
 		lpMainBuf->pData = lpBuf;
 		lpBuf->nFileCnt = nArcFileCnt;
 		if (lpBuf) {
-			if (H_CFileRead(&datArchive, &lpBuf->pData, nBufSize) == nBufSize) {
+			if (GameMain_File_Read(&datArchive, &lpBuf->pData, nBufSize) == nBufSize) {
 				uFailMsg = 0;
 				for (nPos = 0; nPos < nArcFileCnt; ++nPos) {
-					nID = H_SwShort(lpBuf->pData[nPos].nID);
+					nID = Game_FlipShortBytes(lpBuf->pData[nPos].nID);
 					lpBuf->pData[nPos].nID = nID;
 					pSprtHead = (sprite_header_t *)&lpBuf->pData[nPos].sprHeader;
-					pSprtHead->dwAddress = H_SwLong(pSprtHead->dwAddress);
-					pSprtHead->wHeight = H_SwShort(pSprtHead->wHeight);
-					pSprtHead->wWidth = H_SwShort(pSprtHead->wWidth);
+					pSprtHead->dwAddress = Game_FlipLongBytePortions(pSprtHead->dwAddress);
+					pSprtHead->wHeight = Game_FlipShortBytes(pSprtHead->wHeight);
+					pSprtHead->wWidth = Game_FlipShortBytes(pSprtHead->wWidth);
 				}
 
 				AllocateAndLoadSprites1996(&datArchive, lpBuf, nSpriteSet);
@@ -305,25 +273,22 @@ static void ReloadSpriteDataArchive1996(WORD nSpriteSet) {
 				lpMainBuf->pData = 0;
 			}
 		}
-		H_CFileClose(&datArchive);
+		GameMain_File_Close(&datArchive);
 	}
 	else {
 		uFailMsg = 47;
 	}
 
 	if (uFailMsg)
-		H_FailRadio(uFailMsg);
+		Game_FailRadio(uFailMsg);
 
 GETOUT:
-	H_CStringDest(&retStrPath);
-	H_CStringDest(&retString);
-	H_CFileDest(&datArchive);
+	GameMain_String_Dest(&retStrPath);
+	GameMain_String_Dest(&retString);
+	GameMain_File_Dest(&datArchive);
 }
 
 void ReloadDefaultTileSet_SC2K1996() {
-	void(__thiscall *H_CCmdTargetBeginWaitCursor)(CMFC3XCmdTarget *) = (void(__thiscall *)(CMFC3XCmdTarget *))0x4A28BB;
-	void(__thiscall *H_CCmdTargetEndWaitCursor)(CMFC3XCmdTarget *) = (void(__thiscall *)(CMFC3XCmdTarget *))0x4A28D2;
-
 	CSimcityAppPrimary *pSCApp;
 
 	pSCApp = &pCSimcityAppThis;
@@ -331,11 +296,11 @@ void ReloadDefaultTileSet_SC2K1996() {
 	if (L_MessageBoxA(GameGetRootWindowHandle(), "Are you sure that you want to reload the base game tile set?", gamePrimaryKey, MB_YESNO | MB_DEFBUTTON2 | MB_ICONEXCLAMATION) != IDYES)
 		return;
 
-	H_CCmdTargetBeginWaitCursor(pSCApp);
+	GameMain_CmdTarget_BeginWaitCursor(pSCApp);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_SPECIAL);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_LARGE);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_SMALLMED);
-	H_CCmdTargetEndWaitCursor(pSCApp);
+	GameMain_CmdTarget_EndWaitCursor(pSCApp);
 }
 
 void InstallSpriteAndTileSetHooks_SC2K1996(void) {

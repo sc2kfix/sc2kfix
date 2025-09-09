@@ -232,7 +232,6 @@ static void OnPaintFloatingStatusBar(HWND hWnd, HDC hDC) {
 	COLORREF &colBtnFace = *(COLORREF *)0x4CB3FC;
 
 	if (hWnd && IsWindowVisible(hWnd)) {
-
 		GetClientRect(hWnd, &r);
 
 		FillRect(hDC, &r, (HBRUSH)MainBrushFace->m_hObject);
@@ -456,14 +455,12 @@ extern "C" BOOL __stdcall Hook_StatusControlBar_CreateStatusBar_SC2K1996() {
 
 	__asm mov[pThis], ecx
 
-	int(__thiscall *H_CDialogBarCreate)(CMFC3XDialogBar *, CMFC3XWnd *, LPCTSTR, UINT, UINT) = (int(__thiscall *)(CMFC3XDialogBar *, CMFC3XWnd *, LPCTSTR, UINT, UINT))0x4B5801;
-
 	int ret;
 
 	// It's necessary to call CDialogBar::Create directly rather than
 	// the CStatusControlBar::CreateStatusBar call in order to avoid a crash.
 	pSCApp = &pCSimcityAppThis;
-	ret = H_CDialogBarCreate(pThis, pSCApp->m_pMainWnd, (LPCSTR)255, (0x8000 | 0x0200), 111);
+	ret = GameMain_DialogBar_Create(pThis, pSCApp->m_pMainWnd, (LPCSTR)255, (0x8000 | 0x0200), 111);
 	if (ret) {
 		ptFloat.x = 360;
 		ptFloat.y = 160;
@@ -480,11 +477,9 @@ extern "C" void __stdcall Hook_StatusControlBar_DestructStatusBar_SC2K1996() {
 
 	__asm mov[pThis], ecx
 
-	void(__thiscall *H_StatusControlBarDestructStatusBar)(CStatusControlBar *) = (void(__thiscall *)(CStatusControlBar *))0x489C80;
-
 	DestroyFloatingStatusDialog();
 
-	H_StatusControlBarDestructStatusBar(pThis);
+	GameMain_StatusControlBar_DestructStatusBar(pThis);
 }
 
 extern "C" void __stdcall Hook_StatusControlBar_UpdateStatusBar_SC2K1996(int iEntry, char *szText, int iArgUnknown, COLORREF newColor) {
@@ -492,13 +487,10 @@ extern "C" void __stdcall Hook_StatusControlBar_UpdateStatusBar_SC2K1996(int iEn
 
 	__asm mov [pThis], ecx
 
-	void(__thiscall *H_CStatusControlBarUpdateStatusBar)(CStatusControlBar *, int, char *, int, COLORREF) = (void(__thiscall *)(CStatusControlBar *, int, char *, int, COLORREF))0x489D50;
-	CMFC3XString *(__thiscall *H_CStringOperatorSet)(CMFC3XString *, char *) = (CMFC3XString *(__thiscall *)(CMFC3XString *, char *))0x4A2E6A;
-
 	if (CanUseFloatingStatusDialog()) {
 		if (iEntry) {
 			if (iEntry == 1) {
-				H_CStringOperatorSet(&pThis->dwSCBCStringNotification, szText);
+				GameMain_String_OperatorSet(&pThis->dwSCBCStringNotification, szText);
 				pThis->dwSCBColorNotification = newColor;
 			}
 			/*
@@ -506,13 +498,13 @@ extern "C" void __stdcall Hook_StatusControlBar_UpdateStatusBar_SC2K1996(int iEn
 			 */
 		}
 		else {
-			H_CStringOperatorSet(&pThis->dwSCBCStringCtrlSelection, szText);
+			GameMain_String_OperatorSet(&pThis->dwSCBCStringCtrlSelection, szText);
 			pThis->dwSCBColorCtrlSelection = newColor;
 		}
 		RedrawWindow(hStatusDialog, 0, 0, RDW_INVALIDATE);
 	}
 	else
-		H_CStatusControlBarUpdateStatusBar(pThis, iEntry, szText, iArgUnknown, newColor);
+		GameMain_StatusControlBar_UpdateStatusBar(pThis, iEntry, szText, iArgUnknown, newColor);
 }
 
 extern "C" void __stdcall Hook_MainFrame_ToggleStatusControlBar_SC2K1996(BOOL bShow) {
@@ -535,8 +527,6 @@ extern "C" void __stdcall Hook_MainFrame_ToggleToolBars_SC2K1996(BOOL bShow) {
 	CMainFrame *pThis;
 
 	__asm mov [pThis], ecx
-
-	void(__thiscall *H_CFrameWndRecalcLayout)(CMFC3XFrameWnd *, int) = (void(__thiscall *)(CMFC3XFrameWnd *, int))0x4BB23A;
 
 	BOOL bToolBarsCreated;
 	CCityToolBar *pCityToolBar;
@@ -576,7 +566,7 @@ extern "C" void __stdcall Hook_MainFrame_ToggleToolBars_SC2K1996(BOOL bShow) {
 		if (!bShow) {
 			if (CanUseFloatingStatusDialog())
 				ShowWindow(hStatusDialog, SW_HIDE);
-			H_CFrameWndRecalcLayout(pThis, 1);
+			GameMain_FrameWnd_RecalcLayout(pThis, 1);
 			InvalidateRect(pThis->m_hWnd, 0, 1);
 			UpdateWindow(pThis->m_hWnd);
 		}
@@ -624,8 +614,6 @@ void InstallStatusHooks_SC2K1996(void) {
 }
 
 void UpdateStatus_SC2K1996(int iShow) {
-	void(__thiscall *H_CFrameWndShowControlBar)(CMFC3XFrameWnd *, CMFC3XControlBar *, BOOL, int) = (void(__thiscall *)(CMFC3XFrameWnd *, CMFC3XControlBar *, BOOL, int))0x4BA3A0;
-
 	CSimcityAppPrimary *pSCApp;
 	CMainFrame *pMainFrm;
 	CStatusControlBar *pStatusBar;
@@ -652,6 +640,6 @@ void UpdateStatus_SC2K1996(int iShow) {
 		SetWindowPos(hStatusDialog, HWND_TOP, ptFloat.x, ptFloat.y, szFloat.cx, szFloat.cy, wPFlags);
 	if (pMainFrm && pStatusBar) {
 		ShowWindow(pStatusBar->m_hWnd, (bShow && !CanUseFloatingStatusDialog()) ? SW_SHOW : SW_HIDE);
-		H_CFrameWndShowControlBar(pMainFrm, pStatusBar, ((CanUseFloatingStatusDialog()) ? 0 : bShow), 0);
+		GameMain_FrameWnd_ShowControlBar(pMainFrm, pStatusBar, ((CanUseFloatingStatusDialog()) ? 0 : bShow), 0);
 	}
 }

@@ -211,43 +211,36 @@ int L_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
 	return ret;
 }
 
-extern "C" int __stdcall Hook_AfxMessageBoxStr(LPCTSTR lpszPrompt, UINT nType, UINT nIDHelp) {
-	int(__thiscall *H_CWinAppDoMessageBox)(CMFC3XWinApp *, LPCTSTR, UINT, UINT) = (int(__thiscall *)(CMFC3XWinApp *, LPCTSTR, UINT, UINT))0x4B2206;
-
+int __stdcall Hook_AfxMessageBoxStr(LPCTSTR lpszPrompt, UINT nType, UINT nIDHelp) {
 	DWORD &game_AfxCoreState = *(DWORD *)0x4CE8C0;
 
 	int ret;
 
 	ToggleFloatingStatusDialog(FALSE);
-	ret = H_CWinAppDoMessageBox((CMFC3XWinApp *)game_AfxCoreState, lpszPrompt, nType, nIDHelp);
+	ret = GameMain_WinApp_DoMessageBox((CMFC3XWinApp *)game_AfxCoreState, lpszPrompt, nType, nIDHelp);
 	ToggleFloatingStatusDialog(TRUE);
 
 	return ret;
 }
 
-extern "C" int __stdcall Hook_AfxMessageBoxID(UINT nIDPrompt, UINT nType, UINT nIDHelp) {
-	CMFC3XString *(__thiscall *H_CStringCons)(CMFC3XString *) = (CMFC3XString *(__thiscall *)(CMFC3XString *))0x4A2C28;
-	void(__thiscall *H_CStringDest)(CMFC3XString *) = (void(__thiscall *)(CMFC3XString *))0x4A2CB0;
-	BOOL(__thiscall *H_CStringLoadStringA)(CMFC3XString *, unsigned int) = (BOOL(__thiscall *)(CMFC3XString *, unsigned int))0x4A3453;
-	int(__thiscall *H_CWinAppDoMessageBox)(CMFC3XWinApp *, LPCTSTR, UINT, UINT) = (int(__thiscall *)(CMFC3XWinApp *, LPCTSTR, UINT, UINT))0x4B2206;
-
+int __stdcall Hook_AfxMessageBoxID(UINT nIDPrompt, UINT nType, UINT nIDHelp) {
 	DWORD &game_AfxCoreState = *(DWORD *)0x4CE8C0;
 
 	CMFC3XString cStr;
 	UINT nID;
 	int ret;
 
-	H_CStringCons(&cStr);
-	H_CStringLoadStringA(&cStr, nIDPrompt);
+	GameMain_String_Cons(&cStr);
+	GameMain_String_LoadStringA(&cStr, nIDPrompt);
 	nID = nIDHelp;
 	if (nIDHelp == -1)
 		nID = nIDPrompt;
 
 	ToggleFloatingStatusDialog(FALSE);
-	ret = H_CWinAppDoMessageBox((CMFC3XWinApp *)game_AfxCoreState, cStr.m_pchData, nType, nIDHelp);
+	ret = GameMain_WinApp_DoMessageBox((CMFC3XWinApp *)game_AfxCoreState, cStr.m_pchData, nType, nIDHelp);
 	ToggleFloatingStatusDialog(TRUE);
 
-	H_CStringDest(&cStr);
+	GameMain_String_Dest(&cStr);
 	return ret;
 }
 
@@ -255,11 +248,6 @@ extern "C" int __stdcall Hook_FileDialogDoModal() {
 	CMFC3XFileDialog *pThis;
 
 	__asm mov [pThis], ecx
-
-	HWND(__thiscall *H_DialogPreModal)(CMFC3XDialog *) = (HWND(__thiscall *)(CMFC3XDialog *))0x4A710B;
-	BOOL(__stdcall *H_GetLoadFileNameA)(LPOPENFILENAMEA) = (BOOL(__stdcall *)(LPOPENFILENAMEA))0x49C35A;
-	BOOL(__stdcall *H_GetSaveFileNameA)(LPOPENFILENAMEA) = (BOOL(__stdcall *)(LPOPENFILENAMEA))0x49C354;
-	void(__thiscall *H_DialogPostModal)(CMFC3XDialog *) = (void(__thiscall *)(CMFC3XDialog *))0x4A7154;
 
 	HWND hWndOwner;
 	bool bIsReserved;
@@ -272,16 +260,16 @@ extern "C" int __stdcall Hook_FileDialogDoModal() {
 
 	ToggleFloatingStatusDialog(FALSE);
 
-	hWndOwner = H_DialogPreModal(pThis);
+	hWndOwner = GameMain_Dialog_PreModal(pThis);
 	bIsReserved = pThis->m_ofn.pvReserved == 0;
 	pThis->m_ofn.hwndOwner = hWndOwner;
 	pOfn = &pThis->m_ofn;
 
 	if (bIsReserved)
-		iRet = H_GetSaveFileNameA(pOfn);
+		iRet = GameMain_GetSaveFileNameA(pOfn);
 	else
-		iRet = H_GetLoadFileNameA(pOfn);
-	H_DialogPostModal(pThis);
+		iRet = GameMain_GetLoadFileNameA(pOfn);
+	GameMain_Dialog_PostModal(pThis);
 	if (!iRet)
 		iRet = IDCANCEL;
 
@@ -570,16 +558,14 @@ extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lp
 }
 #pragma warning(default : 6387)
 
-// CSimcityView Middle Mouse Button Down handler.
-static void SimcityViewOnMButtonDown(UINT nFlags, POINT pt) {
-	CSimcityAppPrimary *pSCApp;
+// Game area Middle Mouse Button Down handler.
+static void DoOnMButtonDown(CSimcityAppPrimary *pSCApp, UINT nFlags, POINT pt) {
 	__int16 wTileCoords = 0;
 	BYTE bTileX = 0, bTileY = 0;
 	wTileCoords = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
 	bTileX = LOBYTE(wTileCoords);
 	bTileY = HIBYTE(wTileCoords);
 
-	pSCApp = &pCSimcityAppThis;
 	if (wTileCoords & 0x8000)
 		return;
 	else {
@@ -608,17 +594,14 @@ extern "C" LRESULT __stdcall Hook_DefWindowProcA(HWND hWnd, UINT Msg, WPARAM wPa
 
 			pt.x = GET_X_LPARAM(lParam);
 			pt.y = GET_Y_LPARAM(lParam);
-			SimcityViewOnMButtonDown((UINT)wParam, pt);
+			DoOnMButtonDown(pSCApp, (UINT)wParam, pt);
 			return TRUE;
 		}
 	}
 	return DefWindowProcA(hWnd, Msg, wParam, lParam);
 }
 
-extern "C" void __stdcall Hook_ResetGameVars(void) {
-	void(__stdcall *H_ResetGameVars)(void) = (void(__stdcall *)(void))0x4348E0;
-	int(__thiscall *H_SimcityViewRotateAntiClockwise)(CSimcityView *) = (int(__thiscall *)(CSimcityView *))0x401A73;
-
+extern "C" void __stdcall Hook_StartCleanGame(void) {
 	BOOL bMapEditor, bNewGame;
 
 	bMapEditor = ((DWORD)_ReturnAddress() == 0x42DF13);
@@ -633,14 +616,14 @@ extern "C" void __stdcall Hook_ResetGameVars(void) {
 		if (((__int16)wCityMode < 0 && bNewGame) || bMapEditor) {
 			if (wViewRotation != VIEWROTATION_NORTH) {
 				do
-					H_SimcityViewRotateAntiClockwise(pThis);
+					Game_SimcityView_RotateAntiClockwise(pThis);
 				while (wViewRotation != VIEWROTATION_NORTH);
 				UpdateWindow(pThis->m_hWnd); // This would be pThis->m_hWnd if the structs were present.
 			}
 		}
 	}
 
-	H_ResetGameVars();
+	GameMain_StartCleanGame();
 }
 
 extern "C" void __stdcall Hook_SimcityDoc_UpdateDocumentTitle() {
@@ -656,16 +639,6 @@ extern "C" void __stdcall Hook_SimcityDoc_UpdateDocumentTitle() {
 	const char *pCurrStr;
 	CSimString *pFundStr;
 
-	CSimString *(__thiscall *H_SimStringSetString)(CSimString *, const char *pSrc, int iSize, double idAmount) = (CSimString *(__thiscall *)(CSimString *, const char *pSrc, int iSize, double idAmount))0x4015CD;
-	void(__thiscall *H_SimStringTruncateAtSpace)(CSimString *) = (void(__thiscall *)(CSimString *))0x4019B5;
-	void(__thiscall *H_SimStringDest)(CSimString *) = (void(__thiscall *)(CSimString *))0x40242D;
-	void(__cdecl *H_CStringFormat)(CMFC3XString *, char const *Ptr, ...) = (void(__cdecl *)(CMFC3XString *, char const *Ptr, ...))0x49EBD3;
-	CMFC3XString *(__thiscall *H_CStringCons)(CMFC3XString *) = (CMFC3XString *(__thiscall *)(CMFC3XString *))0x4A2C28;
-	void(__thiscall *H_CStringEmpty)(CMFC3XString *) = (void(__thiscall *)(CMFC3XString *))0x4A2C95;
-	void(__thiscall *H_CStringDest)(CMFC3XString *) = (void(__thiscall *)(CMFC3XString *))0x4A2CB0;
-	BOOL(__thiscall *H_CStringLoadStringA)(CMFC3XString *, unsigned int) = (BOOL(__thiscall *)(CMFC3XString *, unsigned int))0x4A3453;
-	BOOL(__stdcall *H_IsIconic)(HWND hWnd) = (BOOL(__stdcall *)(HWND hWnd))0x49BCF4;
-
 	const char *gameCurrDollar = (const char *)0x4E6168;
 	const char *gameCurrDM = (const char *)0x4E6180;
 	const char *gameLangGerman = (const char *)0x4E6198;
@@ -673,12 +646,12 @@ extern "C" void __stdcall Hook_SimcityDoc_UpdateDocumentTitle() {
 	const char *gameLangFrench = (const char *)0x4E61B4;
 	const char *gameStrHyphen = (const char *)0x4E6804;
 
-	H_CStringCons(&cStr);
+	GameMain_String_Cons(&cStr);
 
 	pSCApp = &pCSimcityAppThis;
 	if (!pSCApp->dwSCAMainFrameDestroyVar) {
 		if (!wCityMode) {
-			H_CStringLoadStringA(&cStr, 0x19D); // "Editing Terrain..."
+			GameMain_String_LoadStringA(&cStr, 0x19D); // "Editing Terrain..."
 			goto GOFORWARD;
 		}
 		if (!pszCityName.m_nDataLength)
@@ -686,18 +659,18 @@ extern "C" void __stdcall Hook_SimcityDoc_UpdateDocumentTitle() {
 		iCityDayMon = dwCityDays % 25 + 1;
 		iCityMonth = dwCityDays / 25 % 12;
 		iCityYear = wCityStartYear + dwCityDays / 300;
-		if (H_IsIconic(GameGetRootWindowHandle())) {
+		if (GameMain_IsIconic(GameGetRootWindowHandle())) {
 			if (dwDisasterActive) {
 				if (wCurrentDisasterID <= DISASTER_HURRICANE)
-					H_CStringLoadStringA(&cStr, dwDisasterStringIndex[wCurrentDisasterID]);
+					GameMain_String_LoadStringA(&cStr, dwDisasterStringIndex[wCurrentDisasterID]);
 				else
-					H_CStringEmpty(&cStr);
+					GameMain_String_Empty(&cStr);
 			}
 			else
-				H_CStringFormat(&cStr, "%s%s%d", pszCityName.m_pchData, gameStrHyphen, iCityYear);
+				GameMain_String_Format(&cStr, "%s%s%d", pszCityName.m_pchData, gameStrHyphen, iCityYear);
 			goto GOFORWARD;
 		}
-		H_CStringEmpty(&cStr);
+		GameMain_String_Empty(&cStr);
 		if (wcscmp((const wchar_t *)pSCApp->dwSCACStringLang.m_pchData, (const wchar_t *)gameLangFrench) != 0) {
 			if (wcscmp((const wchar_t *)pSCApp->dwSCACStringLang.m_pchData, (const wchar_t *)gameLangGerman) != 0)
 				pCurrStr = gameCurrDollar;
@@ -708,23 +681,23 @@ extern "C" void __stdcall Hook_SimcityDoc_UpdateDocumentTitle() {
 			pCurrStr = gameCurrFF;
 		pFundStr = new CSimString();
 		if (pFundStr)
-			pFundStr = H_SimStringSetString(pFundStr, pCurrStr, 20, (double)dwCityFunds);
+			pFundStr = Game_SimString_SetString(pFundStr, pCurrStr, 20, (double)dwCityFunds);
 		else
 			goto GETOUT;
-		H_SimStringTruncateAtSpace(pFundStr);
+		Game_SimString_TruncateAtSpace(pFundStr);
 		if (bSettingsTitleCalendar)
-			H_CStringFormat(&cStr, "%s %d %4d <%s> %s", pSCApp->dwSCApCStringLongMonths[iCityMonth].m_pchData, iCityDayMon, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
+			GameMain_String_Format(&cStr, "%s %d %4d <%s> %s", pSCApp->dwSCApCStringLongMonths[iCityMonth].m_pchData, iCityDayMon, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
 		else
-			H_CStringFormat(&cStr, "%s %4d <%s> %s", pSCApp->dwSCApCStringShortMonths[iCityMonth].m_pchData, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
+			GameMain_String_Format(&cStr, "%s %4d <%s> %s", pSCApp->dwSCApCStringShortMonths[iCityMonth].m_pchData, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
 		if (pFundStr) {
-			H_SimStringDest(pFundStr);
+			Game_SimString_Dest(pFundStr);
 			operator delete(pFundStr);
 		}
 GOFORWARD:
 		GameMain_Document_UpdateAllViews(pThis, 0, 1, (CMFC3XObject *)&cStr);
 	}
 GETOUT:
-	H_CStringDest(&cStr);
+	GameMain_String_Dest(&cStr);
 }
 
 // Local TileHightlightUpdate function.
@@ -738,29 +711,20 @@ static void L_TileHighlightUpdate(CSimcityView *pThis) {
 	LONG x;
 	__int16 y;
 
-	int(__cdecl *H_BeginObject)(void *, void *, int, __int16, RECT *) = (int(__cdecl *)(void *, void *, int, __int16, RECT *))0x401226;
-	BOOL(__thiscall *H_SimcityViewMainWindowUpdate)(CSimcityView *, RECT *, BOOL) = (BOOL(__thiscall *)(CSimcityView *, RECT *, BOOL))0x40152D;
-	void(__thiscall *H_GraphicsUnlockDIBBits)(CGraphics *) = (void(__thiscall *)(CGraphics *))0x401BE5;
-	int(__thiscall *H_GraphicsHeight)(CGraphics *) = (int(__thiscall *)(CGraphics *))0x40216C;
-	LONG(__thiscall *H_GraphicsWidth)(CGraphics *) = (LONG(__thiscall *)(CGraphics *))0x402419;
-	int(__thiscall *H_SimcityViewCheckOrLoadGraphic)(CSimcityView *) = (int(__thiscall *)(CSimcityView *))0x40297D;
-	BOOL(__stdcall *H_FinishObject)() = (BOOL(__stdcall *)())0x402B7B;
-	BYTE *(__thiscall *H_GraphicsLockDIBBits)(CGraphics *) = (BYTE *(__thiscall *)(CGraphics *))0x402DA1;
-
 	DWORD &pSomeWnd = *(DWORD *)0x4CAC18; // Perhaps this is the active view window? (unclear - but this is referenced in the native TileHighlightUpdate function)
 	RECT &dRect = *(RECT *)0x4CAD48;
 
 	if (wTileHighlightActive) {
-		vBits = H_GraphicsLockDIBBits(pThis->dwSCVCGraphics);
-		if (vBits || H_SimcityViewCheckOrLoadGraphic(pThis)) {
-			x = H_GraphicsWidth(pThis->dwSCVCGraphics);
-			y = H_GraphicsHeight(pThis->dwSCVCGraphics);
+		vBits = Game_Graphics_LockDIBBits(pThis->dwSCVCGraphics);
+		if (vBits || Game_SimcityView_CheckOrLoadGraphic(pThis)) {
+			x = Game_Graphics_Width(pThis->dwSCVCGraphics);
+			y = Game_Graphics_Height(pThis->dwSCVCGraphics);
 			if (!bOverrideTickPlacementHighlight) {
-				H_BeginObject(pThis, vBits, x, y, &pThis->dwSCVRECTOne);
+				Game_BeginProcessObjects(pThis, vBits, x, y, &pThis->dwSCVRECTOne);
 				Game_SimcityView_DrawSquareHighlight(pThis, wHighlightedTileX1, wHighlightedTileY1, wHighlightedTileX2, wHighlightedTileY2);
-				H_FinishObject();
+				Game_FinishProcessObjects();
 			}
-			H_GraphicsUnlockDIBBits(pThis->dwSCVCGraphics);
+			Game_Graphics_UnlockDIBBits(pThis->dwSCVCGraphics);
 			bottom = ++dRect.bottom;
 			if (pThis->dwSCVIsZoomed) {
 				dRect.bottom = bottom + 2;
@@ -773,9 +737,9 @@ static void L_TileHighlightUpdate(CSimcityView *pThis) {
 			// Tests performed in the 'Interactive Demo' (of which don't have any of these hooks) have
 			// also resulted in similar intermittent encounters.
 			if (pThis == (CSimcityView *)&pSomeWnd)
-				H_SimcityViewMainWindowUpdate(pThis, 0, 1);
+				Game_SimcityView_MainWindowUpdate(pThis, 0, 1);
 			else
-				H_SimcityViewMainWindowUpdate(pThis, &dRect, 1);
+				Game_SimcityView_MainWindowUpdate(pThis, &dRect, 1);
 			if (bOverrideTickPlacementHighlight)
 				wTileHighlightActive = 0;
 		}
@@ -815,35 +779,6 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	CSimcityAppPrimary *pSCApp;
 	CSimcityView *pSCView;
 
-	void(__stdcall *H_UpdateGraphDialog)() = (void(__stdcall *)())0x4010A5;
-	void(__stdcall *H_SimulationPollutionTerrainAndLandValueScan)() = (void(__stdcall *)())0x401154;
-	void(__stdcall *H_SimulationEQ_LE_Processing)() = (void(__stdcall *)())0x401262;
-	void(__cdecl *H_UpdateSimNationDialog)() = (void(__cdecl *)())0x4012FD;
-	void(__stdcall *H_UpdateIndustryDialog)() = (void(__stdcall *)())0x40142E;
-	void(__cdecl *H_SimulationPrepareBudgetDialog)(int) = (void(__cdecl *)(int))0x4015E6;
-	void(__cdecl *H_SimulationGrantReward)(__int16 iReward, int iToggle) = (void(__cdecl *)(__int16 iReward, int iToggle))0x401672;
-	void(__stdcall *H_UpdatePopulationDialog)() = (void(__stdcall *)())0x40169F;
-	void(__thiscall *H_SimcityAppCallAutoSave)(CSimcityAppPrimary *) = (void(__thiscall *)(CSimcityAppPrimary *))0x4016A9;
-	void(__thiscall *H_SimcityViewMaintainCursor)(CSimcityView *) = (void(__thiscall *)(CSimcityView *))0x401A96;
-	void(__stdcall *H_SimulationUpdateWaterConsumption)() = (void(__stdcall *)())0x401CA8;
-	void(__stdcall *H_UpdateWeatherOrDisasterState)() = (void(__stdcall *)())0x401E65;
-	DWORD *(__thiscall *H_NewspaperConstruct)(void *) = (DWORD *(__thiscall *)(void *))0x401F23;
-	void(__stdcall *H_UpdateGraphData)() = (void(__stdcall *)())0x402022;
-	void(__thiscall *H_SimcityAppAdjustNewspaperMenu)(CSimcityAppPrimary *) = (void(__thiscall *)(CSimcityAppPrimary *))0x40210D;
-	void(__stdcall *H_SimulationRCIDemandUpdates)() = (void(__stdcall *)())0x40217B;
-	int(__thiscall *H_GameDialogDoModal)(void *) = (int(__thiscall *)(void *))0x40219E;
-	void(__cdecl *H_SimulationGrowthTick)(__int16 iStep, __int16 iSubStep) = (void(__cdecl *)(__int16, __int16))0x4022FC;
-	void(__cdecl *H_UpdateCityMap)() = (void(__cdecl *)())0x40239C;
-	void(__stdcall *H_ToolMenuUpdate)() = (void(__stdcall *)())0x4023EC;
-	void(__cdecl *H_EventScenarioNotification)(__int16 iEvent) = (void(__cdecl *)(__int16 iEvent))0x402487;
-	void(__thiscall *H_NewspaperDestruct)(void *) = (void(__thiscall *)(void *))0x4025B3;
-	void(__stdcall *H_SimulationUpdatePowerConsumption)() = (void(__stdcall *)())0x4026F8;
-	void(__stdcall *H_NewspaperStoryGenerator)(__int16 iPaperType, BYTE iPaperVal) = (void(__stdcall *)(__int16 iPaperType, BYTE iPaperVal))0x402900;
-	void(__stdcall *H_UpdateBudgetInformation)() = (void(__stdcall *)())0x402D2E;
-	void(__stdcall *H_SimulationUpdateMonthlyTrafficData)() = (void(__stdcall *)())0x402D51;
-	void(__thiscall *H_MainFrameUpdateCityToolBar)(CMainFrame *) = (void(__thiscall *)(CMainFrame *))0x402F18;
-	void(__stdcall *H_SimulationProposeMilitaryBase)() = (void(__stdcall *)())0x403017;
-
 	pSCApp = &pCSimcityAppThis;
 	UpdateCityDateAndSeason(TRUE);
 	dwMonDay = (dwCityDays % 25);
@@ -851,7 +786,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 		!((dwCityDays / 300) % pSCApp->dwSCAGameAutoSave) &&
 		!wCityCurrentMonth &&
 		!dwMonDay) {
-		H_SimcityAppCallAutoSave(pSCApp);
+		Game_SimcityApp_CallAutoSave(pSCApp);
 	}
 
 	if (bSettingsFrequentCityRefresh) {
@@ -875,14 +810,14 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 			if (!bSettingsFrequentCityRefresh)
 				Game_SimcityDoc_UpdateDocumentTitle(pCDocumentMainWindow);
 			if (bYearEndFlag)
-				H_SimulationPrepareBudgetDialog(0);
-			H_UpdateBudgetInformation();
+				Game_SimulationPrepareBudgetDialog(0);
+			Game_UpdateBudgetInformation();
 			if (bNewspaperSubscription) {
 				if (wCityCurrentMonth == 3 || wCityCurrentMonth == 7) {
-					H_NewspaperConstruct((void *)&newsDialog);
+					Game_Newspaper_Construct((void *)&newsDialog);
 					newsDialog[39] = wNewspaperChoice; // CNewspaperDialog -> CGameDialog -> CDialog; struct position 39 - paperchoice dword var.
-					H_GameDialogDoModal(&newsDialog);
-					H_NewspaperDestruct(&newsDialog);
+					Game_GameDialog_DoModal(&newsDialog);
+					Game_Newspaper_Destruct(&newsDialog);
 				}
 			}
 			UpdateCityDateAndSeason(FALSE);
@@ -890,23 +825,23 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 				pZonePops[i] = 0;
 			break;
 		case 1:
-			H_SimulationUpdatePowerConsumption();
+			Game_SimulationUpdatePowerConsumption();
 			break;
 		case 2:
-			H_SimulationPollutionTerrainAndLandValueScan();
+			Game_SimulationPollutionTerrainAndLandValueScan();
 			break;
 		// Switch cases 3-18 have been moved to 'default' as
 		// if (dwMonDay >= 3 && dwMonDay <= 18).
 		case 19:
-			H_SimulationUpdateMonthlyTrafficData();
+			Game_SimulationUpdateMonthlyTrafficData();
 			break;
 		case 20:
-			H_SimulationUpdateWaterConsumption();
+			Game_SimulationUpdateWaterConsumption();
 			break;
 		case 21:
-			H_SimulationRCIDemandUpdates();
-			H_SimulationEQ_LE_Processing();
-			H_UpdateGraphData();
+			Game_SimulationRCIDemandUpdates();
+			Game_SimulationEQ_LE_Processing();
+			Game_UpdateGraphData();
 			break;
 		case 22:
 			// Check against city milestone progression requirements and grant new milestones
@@ -916,18 +851,18 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 					Game_SimcityApp_SetGameCursor(pSCApp, 24, 0);
 					// There are only 7 (0-6) progression levels, cast the warning away.
 					iPaperVal = (BYTE)wCityProgression++;
-					H_NewspaperStoryGenerator(3, iPaperVal);
-					H_SimcityAppAdjustNewspaperMenu(pSCApp);
+					Game_NewspaperStoryGenerator(3, iPaperVal);
+					Game_SimcityApp_AdjustNewspaperMenu(pSCApp);
 					if (wCityProgression >= 4) {
 						if (wCityProgression == 4)
-							H_SimulationProposeMilitaryBase();
+							Game_SimulationProposeMilitaryBase();
 						else if (wCityProgression == 5)
-							H_SimulationGrantReward(3, 1);
+							Game_SimulationGrantReward(3, 1);
 					}
 					else
-						H_SimulationGrantReward(wCityProgression - 1, 1);
-					H_ToolMenuUpdate();
-					H_SimcityAppAdjustNewspaperMenu(pSCApp);
+						Game_SimulationGrantReward(wCityProgression - 1, 1);
+					Game_ToolMenuUpdate();
+					Game_SimcityApp_AdjustNewspaperMenu(pSCApp);
 					Game_SimcityApp_SetGameCursor(pSCApp, 0, 0);
 				}
 			}
@@ -981,27 +916,27 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 				// Declare victory if the player has met the requirements, or tick down towards
 				// failure if they haven't
 				if (bScenarioSuccess)
-					H_EventScenarioNotification(GAMEOVER_SCENARIO_VICTORY);
+					Game_EventScenarioNotification(GAMEOVER_SCENARIO_VICTORY);
 				else if (!--wScenarioTimeLimitMonths)
-					H_EventScenarioNotification(GAMEOVER_SCENARIO_FAILURE);
+					Game_EventScenarioNotification(GAMEOVER_SCENARIO_FAILURE);
 			}
 
 			// Check if the city is bankrupt and impeach the mayor if so
 			if (dwCityFunds < -100000)
-				H_EventScenarioNotification(GAMEOVER_BANKRUPT);
+				Game_EventScenarioNotification(GAMEOVER_BANKRUPT);
 			break;
 		case 23:
 			if (!bSettingsFrequentCityRefresh)
 				GameMain_Document_UpdateAllViews(pCDocumentMainWindow, NULL, 2, NULL);
-			H_UpdatePopulationDialog();
-			H_UpdateIndustryDialog();
-			H_UpdateGraphDialog();
+			Game_UpdatePopulationDialog();
+			Game_UpdateIndustryDialog();
+			Game_UpdateGraphDialog();
 			break;
 		case 24:
-			H_MainFrameUpdateCityToolBar((CMainFrame *)pSCApp->m_pMainWnd);
-			H_UpdateCityMap();
-			H_UpdateSimNationDialog();
-			H_UpdateWeatherOrDisasterState();
+			Game_MainFrame_UpdateCityToolBar((CMainFrame *)pSCApp->m_pMainWnd);
+			Game_UpdateCityMap();
+			Game_UpdateSimNationDialog();
+			Game_UpdateWeatherOrDisasterState();
 			break;
 		default:
 			// Moved here rather than the prior list of cases that were
@@ -1011,7 +946,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 					UpdateCityDateAndSeason(FALSE);
 				iStep = ((dwMonDay - 3) / 4 % 4); // Steps 0 - 3 in groups of 4.
 				iSubStep = (dwMonDay + 1) % 4; // SubSteps 0-3 for each group of 4.
-				H_SimulationGrowthTick(iStep, iSubStep);
+				Game_SimulationGrowthTick(iStep, iSubStep);
 				break;
 			}
 			return;
@@ -1064,7 +999,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 						wTileHighlightActive = 1;
 						L_TileHighlightUpdate(pSCView);
 					}
-					H_SimcityViewMaintainCursor(pSCView);
+					Game_SimcityView_MaintainCursor(pSCView);
 				}
 			}
 		}
@@ -1072,12 +1007,10 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 }
 
 extern "C" void __stdcall Hook_SimulationStartDisaster(void) {
-	void(__stdcall *H_SimulationStartDisaster)() = (void(__stdcall *)())0x45CF10;
-
 	if (mischook_debug & MISCHOOK_DEBUG_DISASTERS)
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> SimulationStartDisaster(), wDisasterType = %u.\n", _ReturnAddress(), wSetTriggerDisasterType);
 
-	H_SimulationStartDisaster();
+	GameMain_SimulationStartDisaster();
 }
 
 extern "C" int __stdcall Hook_AddAllInventions(void) {
@@ -1325,14 +1258,12 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCursorResources() {
 
 	__asm mov[pThis], ecx
 
-	void(__thiscall *H_LoadCursorResources)(CSimcityAppPrimary *) = (void(__thiscall *)(CSimcityAppPrimary *))0x4255A0;
-
 	HDC hDC;
 
 	hDC = GetDC(0);
 	pThis->iSCAGDCHorzRes = GetDeviceCaps(hDC, HORZRES);
 	ReleaseDC(0, hDC);
-	H_LoadCursorResources(pThis);
+	GameMain_SimcityApp_LoadCursorResources(pThis);
 }
 
 extern "C" int __stdcall Hook_StartupGraphics() {
@@ -1436,9 +1367,6 @@ extern "C" void __stdcall Hook_CityToolBar_ToolMenuEnable() {
 }
 
 extern "C" void __stdcall Hook_ShowViewControls() {
-	void(__thiscall *H_MainFrameToggleStatusControlBar)(CMainFrame *, BOOL) = (void(__thiscall *)(CMainFrame *, BOOL))0x4021A8;
-	void(__thiscall *H_CFrameWndRecalcLayout)(CMFC3XFrameWnd *, int) = (void(__thiscall *)(CMFC3XFrameWnd *, int))0x4BB23A;
-
 	BOOL &bRedraw = *(BOOL *)0x4E62B4;
 
 	CSimcityAppPrimary *pSCApp;
@@ -1457,12 +1385,12 @@ extern "C" void __stdcall Hook_ShowViewControls() {
 	if (!bRedraw) {
 		bRedraw = TRUE;
 		if (pSCApp->iSCAProgramStep == ONIDLE_STATE_RETURN_12 || !wCityMode)
-			H_MainFrameToggleStatusControlBar(pMainFrm, FALSE);
+			Game_MainFrame_ToggleStatusControlBar(pMainFrm, FALSE);
 		else {
 			if (!CanUseFloatingStatusDialog())
-				H_MainFrameToggleStatusControlBar(pMainFrm, TRUE);
+				Game_MainFrame_ToggleStatusControlBar(pMainFrm, TRUE);
 		}
-		H_CFrameWndRecalcLayout(pMainFrm, TRUE);
+		GameMain_FrameWnd_RecalcLayout(pMainFrm, TRUE);
 		ShowWindow(pSCVScrollBarHorz->m_hWnd, SW_SHOWNORMAL);
 		ShowWindow(pSCVScrollBarVert->m_hWnd, SW_SHOWNORMAL);
 		ShowWindow(pSCVStatic->m_hWnd, SW_SHOWNORMAL);
@@ -1473,18 +1401,6 @@ extern "C" void __stdcall Hook_MainFrame_UpdateSections() {
 	CMainFrame *pThis;
 
 	__asm mov[pThis], ecx
-
-	void(__thiscall *H_CCityToolBar_RefreshToolBar)(CCityToolBar *) = (void(__thiscall *)(CCityToolBar *))0x401000;
-	void(__thiscall *H_CMapToolBarResetControls)(CMapToolBar *) = (void(__thiscall *)(CMapToolBar *))0x401140;
-	UINT(__thiscall *H_CMyToolBarGetButtonStyle)(CMyToolBar *, int) = (UINT(__thiscall *)(CMyToolBar *, int))0x401235;
-	void(__thiscall *H_CMainFrameDisableCityToolBarButton)(CMainFrame *, int) = (void(__thiscall *)(CMainFrame *, int))0x4016DB;
-	void(__thiscall *H_CMyToolBarSetButtonStyle)(CMyToolBar *, int nIndex, UINT nStyle) = (void(__thiscall *)(CMyToolBar *, int, UINT))0x402306;
-	void(__thiscall *H_CMyToolBarInvalidateButton)(CMyToolBar *, int) = (void(__thiscall *)(CMyToolBar *, int))0x4029C8;
-	void(__thiscall *H_CCityToolBarUpdateControls)(CCityToolBar *, BOOL) = (void(__thiscall *)(CCityToolBar *, BOOL))0x402A68;
-	CMFC3XString *(__thiscall *H_CStringOperatorSet)(CMFC3XString *, char *) = (CMFC3XString *(__thiscall *)(CMFC3XString *, char *))0x4A2E6A;
-	CMFC3XMenu *(__stdcall *H_CMenuFromHandle)(HMENU) = (CMFC3XMenu *(__stdcall *)(HMENU))0x4A7427;
-	int(__thiscall *H_CMenuAttach)(CMFC3XMenu *, HMENU) = (int(__thiscall *)(CMFC3XMenu *, HMENU))0x4A7483;
-	BOOL(__thiscall *H_CMenuDestroyMenu)(CMFC3XMenu *) = (BOOL(__thiscall *)(CMFC3XMenu *))0x4A74FB;
 
 	CMFC3XString *cityToolGroupStrings = (CMFC3XString *)0x4C94C8;
 	HINSTANCE &hGameModule = *(HINSTANCE *)0x4CE8C8;
@@ -1520,25 +1436,25 @@ extern "C" void __stdcall Hook_MainFrame_UpdateSections() {
 	hDlgItem = GetDlgItem(pThis->dwMFStatusControlBar.m_hWnd, 120); // Status - GoTo button.
 	pMapToolBar = &pThis->dwMFMapToolBar;
 	if (!wCityMode)
-		H_CMapToolBarResetControls(pMapToolBar);
+		Game_MapToolBar_ResetControls(pMapToolBar);
 	pCityToolBar = &pThis->dwMFCityToolBar;
-	H_CCityToolBarUpdateControls(pCityToolBar, FALSE);
+	Game_CityToolBar_UpdateControls(pCityToolBar, FALSE);
 	ToggleGotoButton(hDlgItem, FALSE);
 	if (wCityMode == GAME_MODE_CITY) {
 		if (wCurrentCityToolGroup == CITYTOOL_GROUP_DISPATCH) {
 			wCurrentCityToolGroup = CITYTOOL_GROUP_CENTERINGTOOL;
-			H_CCityToolBarUpdateControls(pCityToolBar, FALSE);
+			Game_CityToolBar_UpdateControls(pCityToolBar, FALSE);
 		}
-		H_CMainFrameDisableCityToolBarButton(pThis, CITYTOOL_BUTTON_DISPATCH);
-		H_CMyToolBarInvalidateButton(pCityToolBar, CITYTOOL_BUTTON_DISPATCH);
+		Game_MainFrame_DisableCityToolBarButton(pThis, CITYTOOL_BUTTON_DISPATCH);
+		Game_MyToolBar_InvalidateButton(pCityToolBar, CITYTOOL_BUTTON_DISPATCH);
 	}
 	else if (wCityMode != GAME_MODE_DISASTER)
 		goto REFRESHMENUGRANTS;
 	if (wCityMode == GAME_MODE_DISASTER)
 		ToggleGotoButton(hDlgItem, TRUE);
 	if (!dwGrantedItems[CITYTOOL_GROUP_REWARDS]) {
-		H_CMainFrameDisableCityToolBarButton(pThis, CITYTOOL_BUTTON_REWARDS);
-		H_CMyToolBarInvalidateButton(pCityToolBar, CITYTOOL_BUTTON_REWARDS);
+		Game_MainFrame_DisableCityToolBarButton(pThis, CITYTOOL_BUTTON_REWARDS);
+		Game_MyToolBar_InvalidateButton(pCityToolBar, CITYTOOL_BUTTON_REWARDS);
 	}
 	iCityToolBarButton = wCurrentCityToolGroup;
 	// Adjust here; this used to check to see whether
@@ -1552,25 +1468,25 @@ extern "C" void __stdcall Hook_MainFrame_UpdateSections() {
 	// underlying tool).
 	if (wCurrentCityToolGroup > CITYTOOL_GROUP_QUERY)
 		iCityToolBarButton = wCurrentCityToolGroup + 4;
-	ButtonStyle = H_CMyToolBarGetButtonStyle(pCityToolBar, iCityToolBarButton);
-	H_CMyToolBarSetButtonStyle(pCityToolBar, iCityToolBarButton, ButtonStyle | 0x100);
+	ButtonStyle = Game_MyToolBar_GetButtonStyle(pCityToolBar, iCityToolBarButton);
+	Game_MyToolBar_SetButtonStyle(pCityToolBar, iCityToolBarButton, ButtonStyle | 0x100);
 	for (nLayer = LAYER_UNDERGROUND; nLayer < LAYER_COUNT; ++nLayer) {
 		if (DisplayLayer[nLayer])
 			nStyle = 0x102;
 		else
 			nStyle = 2;
 		nIndex = CITYTOOL_BUTTON_DISPLAYUNDERGROUND - nLayer;
-		H_CMyToolBarSetButtonStyle(pCityToolBar, nIndex, nStyle);
+		Game_MyToolBar_SetButtonStyle(pCityToolBar, nIndex, nStyle);
 	}
 REFRESHMENUGRANTS:
 	pMenu = &pCityToolBar->dwCTBMenuOne;
-	H_CMenuDestroyMenu(pMenu);
+	GameMain_Menu_DestroyMenu(pMenu);
 	hMenu = LoadMenuA(hGameModule, (LPCSTR)136);
-	H_CMenuAttach(pMenu, hMenu);
+	GameMain_Menu_Attach(pMenu, hMenu);
 	for (nPos = CITYTOOL_BUTTON_BULLDOZER; nPos < CITYTOOL_BUTTON_SIGNS; ++nPos) {
 		if (dwGrantedItems[nPos]) {
 			hSubMenu = GetSubMenu(pMenu->m_hMenu, nPos);
-			pSubMenu = H_CMenuFromHandle(hSubMenu);
+			pSubMenu = GameMain_Menu_FromHandle(hSubMenu);
 			nMenuItemCount = GetMenuItemCount(pSubMenu->m_hMenu);
 			nSubMenuItemCount = nMenuItemCount;
 			if (nMenuItemCount > 0) {
@@ -1600,7 +1516,7 @@ REFRESHMENUGRANTS:
 							pCityToolBar->dwCTToolSelection[CITYTOOL_GROUP_REWARDS] = nReward;
 							nGranted = 1;
 							pTargMFCString = &pCityToolBar->dwCTBString[CITYTOOL_GROUP_REWARDS];
-							H_CStringOperatorSet(pTargMFCString, cityToolString[nReward].m_pchData);
+							GameMain_String_OperatorSet(pTargMFCString, cityToolString[nReward].m_pchData);
 						}
 						AppendMenuA(pSubMenu->m_hMenu, 0, *pUID, pString);
 					}
@@ -1611,7 +1527,7 @@ REFRESHMENUGRANTS:
 			}
 		}
 	}
-	H_CCityToolBar_RefreshToolBar(pCityToolBar);
+	Game_CityToolBar_RefreshToolBar(pCityToolBar);
 }
 
 // Hook for the scenario description popup
@@ -1630,13 +1546,6 @@ __declspec(naked) void Hook_402B4E(const char* szDescription, int a2, void* cWnd
 }
 
 static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void *pHandler, void *dwRetAddr) {
-	BOOL(__thiscall *H_CCmdTargetOnCmdMsg)(CMFC3XCmdTarget *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(CMFC3XCmdTarget *, UINT, int, void *, void *))0x4A280C;
-	BOOL(__thiscall *H_CDialogOnCmdMsg)(CMFC3XDialog *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(CMFC3XDialog *, UINT, int, void *, void *))0x4A6C8E;
-	BOOL(__thiscall *H_CDocumentOnCmdMsg)(CMFC3XDocument *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(CMFC3XDocument *, UINT, int, void *, void *))0x4AE16C;
-	BOOL(__thiscall *H_CViewOnCmdMsg)(CMFC3XView *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(CMFC3XView *, UINT, int, void *, void *))0x4AE83A;
-	BOOL(__thiscall *H_CMDIFrameWndOnCmdMsg)(CMFC3XMDIFrameWnd *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(CMFC3XMDIFrameWnd *, UINT, int, void *, void *))0x4B780A;
-	BOOL(__thiscall *H_CFrameWndOnCmdMsg)(CMFC3XFrameWnd *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo) = (BOOL(__thiscall *)(CMFC3XFrameWnd *, UINT, int, void *, void *))0x4B9C9A;
-
 	// Normally internally there'd be the class hierarchy regarding inheritence
 	// (which isn't present here).
 	//
@@ -1691,7 +1600,7 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 			// As far as potential handling here goes - tread carefully;
 			//ConsoleLog(LOG_DEBUG, "CFrameWnd::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - _CN_COMMAND_UI\n", pThis, nID, nCode, pExtra, pHandler);
 		}
-		return H_CFrameWndOnCmdMsg((CMFC3XFrameWnd *)pThis, nID, nCode, pExtra, pHandler);
+		return GameMain_FrameWnd_OnCmdMsg((CMFC3XFrameWnd *)pThis, nID, nCode, pExtra, pHandler);
 	}
 	if ((DWORD)dwRetAddr == 0x4A4BB2) {
 		if (nCode == _CN_COMMAND) {
@@ -1710,18 +1619,13 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 		ConsoleLog(LOG_DEBUG, "?::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, pExtra, pHandler, dwRetAddr);
 	}
 
-	return H_CCmdTargetOnCmdMsg(pThis, nID, nCode, pExtra, pHandler);
+	return GameMain_CmdTarget_OnCmdMsg(pThis, nID, nCode, pExtra, pHandler);
 }
 
 extern "C" BOOL __stdcall Hook_Wnd_OnCommand(WPARAM wParam, LPARAM lParam) {
 	CMFC3XWnd *pThis;
 
 	__asm mov[pThis], ecx
-
-	CMFC3XWnd *(__stdcall *H_CWndFromHandlePermanent)(HWND) = (CMFC3XWnd *(__stdcall *)(HWND))0x4A3BFD;
-	CMFC3XTestCmdUI *(__thiscall *H_CTestCmdUIConstruct)(CMFC3XTestCmdUI *) = (CMFC3XTestCmdUI *(__thiscall *)(CMFC3XTestCmdUI *))0x4A5315;
-	BOOL(__thiscall *H_CWndSendChildNotifyLastMsg)(CMFC3XWnd *, LRESULT *) = (BOOL(__thiscall *)(CMFC3XWnd *, LRESULT *))0x4A6091;
-	DWORD *(__stdcall *H_AfxGetThreadState)() = (DWORD *(__stdcall *)())0x4C0730;
 
 	CMFC3XWnd *pWndHandle;
 	CMFC3XTestCmdUI testCmd;
@@ -1737,7 +1641,7 @@ extern "C" BOOL __stdcall Hook_Wnd_OnCommand(WPARAM wParam, LPARAM lParam) {
 		return FALSE;
 
 	if (hWndCtrl == NULL) {
-		H_CTestCmdUIConstruct(&testCmd);
+		GameMain_TestCmdUI_Construct(&testCmd);
 		testCmd.m_nID = nID;
 		L_OnCmdMsg(pThis, nID, _CN_COMMAND_UI, &testCmd, 0, _ReturnAddress());
 		if (!testCmd.m_bEnabled)
@@ -1745,11 +1649,11 @@ extern "C" BOOL __stdcall Hook_Wnd_OnCommand(WPARAM wParam, LPARAM lParam) {
 		nCode = _CN_COMMAND;
 	}
 	else {
-		if ((HWND)H_AfxGetThreadState()[40] == pThis->m_hWnd)
+		if ((HWND)GameMain_AfxGetThreadState()[40] == pThis->m_hWnd)
 			return TRUE;
 
-		pWndHandle = H_CWndFromHandlePermanent(hWndCtrl);
-		if (pWndHandle != NULL && H_CWndSendChildNotifyLastMsg(pWndHandle, 0))
+		pWndHandle = GameMain_Wnd_FromHandlePermanent(hWndCtrl);
+		if (pWndHandle != NULL && GameMain_Wnd_SendChildNotifyLastMsg(pWndHandle, 0))
 			return TRUE;
 	}
 
@@ -1832,9 +1736,9 @@ void InstallMiscHooks_SC2K1996(void) {
 	// Install hooks for saving and loading
 	InstallSaveHooks_SC2K1996();
 
-	// Hook into the ResetGameVars function.
+	// Hook into the StartCleanGame function.
 	VirtualProtect((LPVOID)0x401F05, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x401F05, Hook_ResetGameVars);
+	NEWJMP((LPVOID)0x401F05, Hook_StartCleanGame);
 
 	InstallTileGrowthOrPlacementHandlingHooks_SC2K1996();
 
