@@ -2192,3 +2192,5 @@ typedef struct {
 } sprite_ids_t;
 
 extern std::vector<sprite_ids_t> spriteIDs;
+
+extern HWND hwndMainDialog_SC2K1996;

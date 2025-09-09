@@ -55,6 +55,10 @@ static DWORD dwDummy;
 DLGPROC lpNewCityAfxProc = NULL;
 char szTempMayorName[24] = { 0 };
 
+DLGPROC lpMainDialogAfxProc = NULL;
+HWND hwndMainDialog_SC2K1996 = NULL;
+BOOL bMainDialogUpdateState = FALSE;
+
 static BOOL bOverrideTickPlacementHighlight = FALSE;
 
 // Override some strings that have egregiously bad grammar/capitalization.
@@ -535,6 +539,45 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 	return lpNewCityAfxProc(hwndDlg, message, wParam, lParam);
 }
 
+static BOOL CALLBACK Hook_MainDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
+	std::string strInfo;
+
+	switch (message) {
+	case WM_INITDIALOG:
+		hwndMainDialog_SC2K1996 = hwndDlg;
+
+		if (bUpdateAvailable) {
+			strInfo = UPDATE_STRING;
+			bMainDialogUpdateState = TRUE;
+		}
+		else {
+			// Set the version string.
+			strInfo = "Running\nsc2kfix\nVersion\n";
+			strInfo += szSC2KFixVersion;
+			strInfo += " (";
+			strInfo += szSC2KFixReleaseTag;
+			strInfo += ")";
+		}
+
+		SetDlgItemText(hwndDlg, IDC_STATIC_UPDATENOTICE, strInfo.c_str());
+		break;
+	case WM_SC2KFIX_UPDATE:
+		if (!bMainDialogUpdateState) {
+			if (lParam == 1) {
+				strInfo = UPDATE_STRING;
+				bMainDialogUpdateState = TRUE;
+
+				SetDlgItemText(hwndDlg, IDC_STATIC_UPDATENOTICE, strInfo.c_str());
+			}
+		}
+		break;
+	case WM_DESTROY:
+		hwndMainDialog_SC2K1996 = NULL;
+		break;
+	}
+	return lpMainDialogAfxProc(hwndDlg, message, wParam, lParam);
+}
+
 #pragma warning(disable : 6387)
 // Load our own version of the main menu and the New City dialog when called
 extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam) {
@@ -545,9 +588,8 @@ extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lp
 	case 102:
 		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	case 103:
-		if (bUpdateAvailable)
-			return DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(103), hWndParent, lpDialogFunc, dwInitParam);
-		return DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(20104), hWndParent, lpDialogFunc, dwInitParam);
+		lpMainDialogAfxProc = lpDialogFunc;
+		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_MainDialogProc, dwInitParam);
 	default:
 		return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	}

@@ -46,6 +46,10 @@
 #define HOOKEXT extern "C" __declspec(dllexport)
 #define HOOKEXT_CPP __declspec(dllexport)
 
+#define WM_SC2KFIX_UPDATE 37241
+
+#define UPDATE_STRING "A new version of sc2kfix is available for download from the GitHub releases page."
+
 #include <json.hpp>
 
 #ifdef __cplusplus
