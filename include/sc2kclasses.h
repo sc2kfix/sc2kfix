@@ -160,7 +160,7 @@ class CSimcityAppDemo : public CMFC3XWinApp {
 public:
 	DWORD dwSCAGameAutoSave;
 	DWORD dwSCACursorGameHit;
-	DWORD dwSCACityMode;
+	DWORD dwSCALoadCityMode;
 	int iSCAGDCHorzRes;
 	int iSCAGDCVertRes;
 	DWORD dwSCAbForceBkgd;
@@ -177,7 +177,7 @@ public:
 	CMFC3XString dwSCACStringTwo;
 	CMFC3XString dwSCACStringThree;
 	CMFC3XString dwSCACStringLang;
-	HMODULE dwSCASCURK;
+	DWORD dwSCASCURK;
 	CSound *SCASNDLayer;
 	DWORD dwSCASetNextStep;
 	CMFC3XMultiDocTemplate *dwSCAMultiDocOne;
@@ -206,7 +206,7 @@ public:
 	DWORD dwSCAReturnToMenu;
 	DWORD dwSCAOnInitToggleToolBar;
 	DWORD dwSCASysCmdOnQuitVar;
-	WORD wSCAInitDialogFinishLastProgramStep;
+	__int16 wSCAInitDialogFinishLastProgramStep;
 };
 #pragma pack(pop)
 
