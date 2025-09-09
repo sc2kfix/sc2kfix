@@ -786,8 +786,8 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	}
 
 	if (bSettingsFrequentCityRefresh) {
-		Game_SimcityDoc_UpdateDocumentTitle(pCDocumentMainWindow);
-		GameMain_Document_UpdateAllViews(pCDocumentMainWindow, NULL, 2, NULL);
+		Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
+		GameMain_Document_UpdateAllViews(pCSimcityDoc, NULL, 2, NULL);
 	}
 
 	// Call mods for daily processing tasks - before update
@@ -804,7 +804,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	switch (dwMonDay) {
 		case 0:
 			if (!bSettingsFrequentCityRefresh)
-				Game_SimcityDoc_UpdateDocumentTitle(pCDocumentMainWindow);
+				Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
 			if (bYearEndFlag)
 				Game_SimulationPrepareBudgetDialog(0);
 			Game_UpdateBudgetInformation();
@@ -923,7 +923,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 			break;
 		case 23:
 			if (!bSettingsFrequentCityRefresh)
-				GameMain_Document_UpdateAllViews(pCDocumentMainWindow, NULL, 2, NULL);
+				GameMain_Document_UpdateAllViews(pCSimcityDoc, NULL, 2, NULL);
 			Game_UpdatePopulationDialog();
 			Game_UpdateIndustryDialog();
 			Game_UpdateGraphDialog();

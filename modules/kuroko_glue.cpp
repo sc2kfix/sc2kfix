@@ -352,7 +352,7 @@ extern "C" {
 		KRK_GAMEOFF(dwLCGState);
 		KRK_GAMEOFF(game_AfxCoreState);
 		KRK_GAMEOFF(dwSimulationSubtickCounter);
-		KRK_GAMEOFF(pCDocumentMainWindow);
+		KRK_GAMEOFF(pCSimcityDoc);
 		KRK_GAMEOFF(wPreviousTileCoordinateX);
 		KRK_GAMEOFF(wPreviousTileCoordinateY);
 		KRK_GAMEOFF(pCSimcityView);
