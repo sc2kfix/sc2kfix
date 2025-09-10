@@ -1014,6 +1014,33 @@ enum {
 };
 
 enum {
+	MAPTOOL_BUTTON_RAISETERRAIN,
+	MAPTOOL_BUTTON_LOWERTERRAIN,
+	MAPTOOL_BUTTON_STRETCHTERRAIN,
+	MAPTOOL_BUTTON_LEVELTERRAIN,
+	MAPTOOL_BUTTON_INCREASEWATERLEVEL,
+	MAPTOOL_BUTTON_DECREASEWATERLEVEL,
+	MAPTOOL_BUTTON_WATER,
+	MAPTOOL_BUTTON_STREAM,
+	MAPTOOL_BUTTON_TREES,
+	MAPTOOL_BUTTON_FOREST,
+	MAPTOOL_BUTTON_CENTERINGTOOL,
+	MAPTOOL_BUTTON_ZOOMOUT,
+	MAPTOOL_BUTTON_ZOOMIN,
+	MAPTOOL_BUTTON_ROTATEANTICLOCKWISE,
+	MAPTOOL_BUTTON_ROTATECLOCKWISE,
+	MAPTOOL_BUTTON_HELP,
+	MAPTOOL_BUTTON_TERRAINHILLS,
+	MAPTOOL_BUTTON_TERRAINWATER,
+	MAPTOOL_BUTTON_TERRAINTREES,
+	MAPTOOL_BUTTON_TOGGLEOCEAN,
+	MAPTOOL_BUTTON_TOGGLERIVER,
+	MAPTOOL_BUTTON_MAKE,
+	MAPTOOL_BUTTON_DONE,
+	MAPTOOL_BUTTON_COUNT
+};
+
+enum {
 	GAMECURSOR_ARROW,
 	GAMECURSOR_WAIT,
 	GAMECURSOR_BULLDOZER,
@@ -1264,11 +1291,13 @@ GAMECALL(0x401235, UINT, __thiscall, MyToolBar_GetButtonStyle, CMyToolBar *, int
 GAMECALL(0x401262, void, __stdcall, SimulationEQ_LE_Processing, void)
 GAMECALL(0x4012B2, int, __thiscall, CityToolBar_PressButton, CCityToolBar *, int)
 GAMECALL(0x4012C1, int, __cdecl, SpawnItem, __int16 x, __int16 y)
+GAMECALL(0x4012DF, void, __stdcall, DecreaseWaterLevel, void)
 GAMECALL(0x4012FD, void, __cdecl, UpdateSimNationDialog, void)
 GAMECALL(0x4013B1, void, __thiscall, SimcityView_ScaleOut, CSimcityView *pThis)
 GAMECALL(0x40140B, void, __thiscall, SimcityView_ScaleIn, CSimcityView *pThis)
 GAMECALL(0x401429, int, __cdecl, FlipLongBytePortions, int)
 GAMECALL(0x40142E, void, __stdcall, UpdateIndustryDialog, void)
+GAMECALL(0x40144C, void, __thiscall, SimcityApp_NewCity, CSimcityAppPrimary *)
 GAMECALL(0x401460, BYTE, __cdecl, SimulationProvisionMicrosim, __int16, __int16, __int16 iTileID) // The first two arguments aren't clear, though they "could" be the X/Y tile coordinates.
 GAMECALL(0x40148D, DWORD, __thiscall, Sound_GetMCIResult, CSound *)
 GAMECALL(0x4014CE, int, __cdecl, SpawnAeroplane, __int16 x, __int16 y, __int16 iDirection)
@@ -1303,6 +1332,7 @@ GAMECALL(0x401A73, void, __thiscall, SimcityView_RotateAntiClockwise, CSimcityVi
 GAMECALL(0x401A96, void, __thiscall, SimcityView_MaintainCursor, CSimcityView *)
 GAMECALL(0x401A9B, int, __thiscall, SimcityApp_MusicPlayNextRefocusSong, CSimcityAppPrimary *)
 GAMECALL(0x401AB4, int, __cdecl, MapToolRaiseTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
+GAMECALL(0x401AC8, void, __thiscall, MapToolBar_AdjustSlider, CMapToolBar *, UINT, CMFC3XPoint *)
 GAMECALL(0x401AF0, int, __cdecl, MaybeCheckViablePlacementPath, __int16 x1, __int16 y1, __int16 x2, __int16 y2)
 GAMECALL(0x401B40, int, __cdecl, IsZonedTilePowered, __int16 x, __int16 y)
 GAMECALL(0x401BE5, void, __thiscall, Graphics_UnlockDIBBits, CGraphics *)
@@ -1322,6 +1352,7 @@ GAMECALL(0x401FA0, int, __cdecl, CheckAdjustTerrainAndPlacePowerLines, __int16 x
 GAMECALL(0x402022, void, __stdcall, UpdateGraphData, void)
 GAMECALL(0x402045, void *, __cdecl, AllocateDataEntry, size_t iSz)
 GAMECALL(0x40209F, __int16, __cdecl, SpawnTrain, __int16 x, __int16 y)
+GAMECALL(0x4020B8, void, __thiscall, SimcityView_MakeTerrain, CSimcityView *, int, int, __int16, __int16, __int16)
 GAMECALL(0x40210D, void, __thiscall, SimcityApp_AdjustNewspaperMenu, CSimcityAppPrimary *)
 GAMECALL(0x402121, void, __thiscall, CityToolBar_MoveAndBlitToolBar, CCityToolBar *, int, int)
 GAMECALL(0x40216C, int, __thiscall, Graphics_Height, CGraphics *)
@@ -1343,6 +1374,7 @@ GAMECALL(0x40242D, void, __thiscall, SimString_Dest, CSimString *)
 GAMECALL(0x402478, int, __cdecl, SpawnHelicopter, __int16 x, __int16 y)
 GAMECALL(0x402487, void, __cdecl, EventScenarioNotification, __int16 iEvent)
 GAMECALL(0x4024E6, DWORD *, __thiscall, JokeDialog_Construct, CJokeDialog *, CMainFrame *)
+GAMECALL(0x402559, void, __stdcall, IncreaseWaterLevel, void)
 GAMECALL(0x40282E, void, __thiscall, SimcityView_RotateClockwise, CSimcityView *pThis)
 GAMECALL(0x4028A1, void, __thiscall, SimcityApp_UpdateStatus, CSimcityAppPrimary *, BOOL)
 GAMECALL(0x4028BA, void, __thiscall, CityToolBar_OnCancelMode, CCityToolBar *)
@@ -1360,6 +1392,7 @@ GAMECALL(0x402699, CSimcityView *, __thiscall, SimcityApp_PointerToCSimcityViewC
 GAMECALL(0x4026B2, int, __cdecl, SimulationGrowSpecificZone, __int16 x, __int16 y, __int16 iTileID, __int16 iZoneType)
 GAMECALL(0x4026F8, void, __stdcall, SimulationUpdatePowerConsumption, void)
 GAMECALL(0x402725, int, __cdecl, PlacePowerLinesAtCoordinates, __int16 x, __int16 y)
+GAMECALL(0x402752, void, __thiscall, MapToolBar_PressButton, CMapToolBar *, int)
 GAMECALL(0x402798, int, __cdecl, MapToolPlaceForest, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x4027A7, void, __thiscall, SimCityView_OnVScroll, CSimcityView *pThis, int nSBCode, __int16 nPos, CMFC3XScrollBar *pScrollBar)
 GAMECALL(0x4027F2, int, __cdecl, ItemPlacementCheck, __int16 x, __int16 y, BYTE iTileID, __int16 iTileArea)
@@ -1496,6 +1529,7 @@ GAMEOFF(CMFC3XString, pszCityName,				0x4CA1A0)
 GAMEOFF(WORD,	wNationalEconomyTrend,		0x4CA1BC)
 GAMEOFF(BYTE*,	bArrNewspaperTable2,		0x4CA1C0)
 GAMEOFF(WORD,	wPrisonBonus,				0x4CA1DC)
+GAMEOFF(WORD,	wCityTerrainSliderHills,	0x4CA1E0)
 GAMEOFF(WORD,	wIndustrialMixBonus,		0x4CA1E8)
 GAMEOFF(WORD,	wCurrentMapToolGroup,		0x4CA1EC)
 GAMEOFF(WORD,	wCityNeighborConnections1500,	0x4CA3F0)
@@ -1527,6 +1561,7 @@ GAMEOFF_ARR(CMFC3XBrush,	MainBrushFace,	0x4CAA48)
 GAMEOFF(DWORD,	dwPowerUsedPercentage,		0x4CAA50)
 GAMEOFF(POINT,	dwDisasterPoint,			0x4CAA58)
 GAMEOFF(DWORD,	dwCityPopulation,			0x4CAA74)
+GAMEOFF(WORD,	wCityTerrainSliderWater,	0x4CAAF8)
 GAMEOFF(DWORD,	pSomeWnd,					0x4CAC18)		// Perhaps this is the active view window? (unclear - but this is referenced in the native TileHighlightUpdate function)
 GAMEOFF(DWORD*, dwNeighborPopulation,		0x4CAD10)		// DWORD dwNeighborPopulation[4]
 GAMEOFF(BOOL,	bMainFrameInactive,			0x4CAD14)
@@ -1540,6 +1575,7 @@ GAMEOFF_ARR(char, szNeighborNameSouth,		0x4CAD58)		// char[32]
 GAMEOFF_ARR(char, szNeighborNameWest,		0x4CAD78)		// char[32]
 GAMEOFF_ARR(char, szNeighborNameNorth,		0x4CAD98)		// char[32]
 GAMEOFF_ARR(char, szNeighborNameEast,		0x4CADB8)		// char[32]
+GAMEOFF(WORD,	wCityTerrainSliderTrees,	0x4CADD8)
 GAMEOFF(BYTE,	bWeatherHeat,				0x4CADE0)
 GAMEOFF(RECT,	rcDst,						0x4CAD48)
 GAMEOFF_ARR(BYTE, stNeighborCities,			0x4CAD58)

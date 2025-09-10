@@ -379,6 +379,146 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 	}
 }
 
+extern "C" void __stdcall Hook_MapToolBar_SetSelection(UINT nIndex, UINT nSubIndex, CMFC3XPoint *pt) {
+	CMapToolBar *pThis;
+
+	__asm mov[pThis], ecx
+
+	CSimcityAppPrimary *pSCApp;
+	CSimcityView *pSCView;
+
+	pSCApp = &pCSimcityAppThis;
+	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+	switch (nIndex) {
+		case MAPTOOL_BUTTON_RAISETERRAIN:
+			pSCApp->iSCAActiveCursor = GAMECURSOR_RAISETERRAIN;
+			wCurrentMapToolGroup = MAPTOOL_GROUP_RAISETERRAIN;
+			break;
+		case MAPTOOL_BUTTON_LOWERTERRAIN:
+			pSCApp->iSCAActiveCursor = GAMECURSOR_LOWERTERRAIN;
+			wCurrentMapToolGroup = MAPTOOL_GROUP_LOWERTERRAIN;
+			break;
+		case MAPTOOL_BUTTON_STRETCHTERRAIN:
+			pSCApp->iSCAActiveCursor = GAMECURSOR_STRETCHTERRAIN;
+			wCurrentMapToolGroup = MAPTOOL_GROUP_STRETCHTERRAIN;
+			break;
+		case MAPTOOL_BUTTON_LEVELTERRAIN:
+			pSCApp->iSCAActiveCursor = GAMECURSOR_LEVELTERRAIN;
+			wCurrentMapToolGroup = MAPTOOL_GROUP_LEVELTERRAIN;
+			break;
+		case MAPTOOL_BUTTON_INCREASEWATERLEVEL:
+			Game_IncreaseWaterLevel();
+			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_FLOOD);
+			Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_INCREASEWATERLEVEL, 0);
+			break;
+		case MAPTOOL_BUTTON_DECREASEWATERLEVEL:
+			Game_DecreaseWaterLevel();
+			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_FLOOD);
+			Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_DECREASEWATERLEVEL, 0);
+			break;
+		case MAPTOOL_BUTTON_WATER:
+			pSCApp->iSCAActiveCursor = GAMECURSOR_POND;
+			wCurrentMapToolGroup = MAPTOOL_GROUP_WATER;
+			break;
+		case MAPTOOL_BUTTON_STREAM:
+			pSCApp->iSCAActiveCursor = GAMECURSOR_STREAM;
+			wCurrentMapToolGroup = MAPTOOL_GROUP_STREAM;
+			break;
+		case MAPTOOL_BUTTON_TREES:
+			pSCApp->iSCAActiveCursor = GAMECURSOR_TREE;
+			wCurrentMapToolGroup = MAPTOOL_GROUP_TREES;
+			break;
+		case MAPTOOL_BUTTON_FOREST:
+			pSCApp->iSCAActiveCursor = GAMECURSOR_FOREST;
+			wCurrentMapToolGroup = MAPTOOL_GROUP_FOREST;
+			break;
+		case MAPTOOL_BUTTON_CENTERINGTOOL:
+			pSCApp->iSCAActiveCursor = GAMECURSOR_CENTER;
+			wCurrentMapToolGroup = MAPTOOL_GROUP_CENTERINGTOOL;
+			break;
+		case MAPTOOL_BUTTON_ZOOMOUT:
+			Game_SimcityView_ScaleOut(pSCView);
+			UpdateWindow(pSCView->m_hWnd);
+			if (pSCView->wSCVZoomLevel) {
+				Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_ZOOMOUT, 0);
+				if (pSCView->wSCVZoomLevel == 2 && !pSCView->dwSCVIsZoomed)
+					Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_ZOOMIN, 0);
+			}
+			else
+				Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_ZOOMOUT, TBBS_DISABLED);
+			break;
+		case MAPTOOL_BUTTON_ZOOMIN:
+			Game_SimcityView_ScaleIn(pSCView);
+			UpdateWindow(pSCView->m_hWnd);
+			if (pSCView->dwSCVIsZoomed)
+				Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_ZOOMIN, TBBS_DISABLED);
+			else {
+				Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_ZOOMIN, 0);
+				if (pSCView->wSCVZoomLevel == 1)
+					Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_ZOOMOUT, 0);
+			}
+			break;
+		case MAPTOOL_BUTTON_ROTATEANTICLOCKWISE:
+			Game_SimcityView_RotateAntiClockwise(pSCView);
+			UpdateWindow(pSCView->m_hWnd);
+			Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_ROTATEANTICLOCKWISE, 0);
+			break;
+		case MAPTOOL_BUTTON_ROTATECLOCKWISE:
+			Game_SimcityView_RotateClockwise(pSCView);
+			UpdateWindow(pSCView->m_hWnd);
+			Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_ROTATECLOCKWISE, 0);
+			break;
+		case MAPTOOL_BUTTON_HELP:
+			if (pSCView)
+				L_MessageBoxA(pSCView->m_hWnd, "Insert help message here", gamePrimaryKey, MB_ICONINFORMATION|MB_TOPMOST);
+			Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_HELP, 0);
+			break;
+		case MAPTOOL_BUTTON_TERRAINHILLS:
+		case MAPTOOL_BUTTON_TERRAINWATER:
+		case MAPTOOL_BUTTON_TERRAINTREES:
+			Game_MapToolBar_AdjustSlider(pThis, nIndex, pt);
+			break;
+		case MAPTOOL_BUTTON_TOGGLEOCEAN:
+			if (bCityHasOcean) {
+				bCityHasOcean = 0;
+				Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_TOGGLEOCEAN, (TBBS_CHECKED|TBBS_CHECKBOX));
+			}
+			else {
+				bCityHasOcean = 1;
+				Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_TOGGLEOCEAN, TBBS_CHECKBOX);
+			}
+			break;
+		case MAPTOOL_BUTTON_TOGGLERIVER:
+			if (bCityHasRiver) {
+				bCityHasRiver = 0;
+				Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_TOGGLERIVER, (TBBS_CHECKED|TBBS_CHECKBOX));
+			}
+			else {
+				bCityHasRiver = 1;
+				Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_TOGGLERIVER, TBBS_CHECKBOX);
+			}
+			break;
+		case MAPTOOL_BUTTON_MAKE:
+			Game_SimcityView_MakeTerrain(
+				pSCView,
+				bCityHasOcean,
+				bCityHasRiver,
+				wCityTerrainSliderHills,
+				wCityTerrainSliderWater,
+				wCityTerrainSliderTrees);
+			Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_MAKE, 0);
+			Game_MapToolBar_PressButton(pThis, MAPTOOL_BUTTON_CENTERINGTOOL);
+			break;
+		case MAPTOOL_BUTTON_DONE:
+			Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_DONE, 0);
+			Game_SimcityApp_NewCity(pSCApp);
+			break;
+		default:
+			break;
+	}
+	Game_SimcityApp_GetToolSound(pSCApp);
+}
+
 void InstallToolBarHelpHooks_SC2K1996(void) {
 	// Hook CCityToolBar::OnLButtonDown
 	VirtualProtect((LPVOID)0x4026AD, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -387,4 +527,8 @@ void InstallToolBarHelpHooks_SC2K1996(void) {
 	// Hook CCityToolBar::SetSelection
 	VirtualProtect((LPVOID)0x402A1D, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402A1D, Hook_CityToolBar_SetSelection);
+
+	// Hook CMapToolBar::SetSelection
+	VirtualProtect((LPVOID)0x402A5E, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402A5E, Hook_MapToolBar_SetSelection);
 }
