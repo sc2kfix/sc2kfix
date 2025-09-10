@@ -29,6 +29,145 @@ UINT toolbarhelp_debug = TOOLBARHELP_DEBUG;
 
 static DWORD dwDummy;
 
+extern "C" void __stdcall Hook_CityToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoint pt) {
+	CCityToolBar *pThis;
+
+	__asm mov[pThis], ecx
+
+	CSimcityAppPrimary *pSCApp;
+	CSimcityView *pSCView;
+	int iStoredMenuButtonPos;
+	int iHitMenuButton;
+	HMENU hSubMenu;
+	CMFC3XMenu *pSubMenu;
+	int iCursorMoving;
+	DWORD nTargetTicks;
+	MSG Msg;
+	UINT uMenuItem;
+	UINT uItemCount;
+	CMFC3XString cStr;
+	CHAR *pBuffer;
+	int iTrackedMenu;
+	HWND mainhWnd;
+
+	pSCApp = &pCSimcityAppThis;
+	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+	dwCityToolBarArcologyDialogCancel = 0;
+	iStoredMenuButtonPos = pThis->iMyTBMenuButtonPos;
+	if (pThis->m_cyTopBorder < pt.y) {
+		iHitMenuButton = Game_CityToolBar_HitTestFromPoint(pThis, pt);
+		pThis->iMyTBMenuButtonPos = iHitMenuButton;
+		if (iHitMenuButton < 0)
+			return;
+		// Added - 'Shift + Click' help messages that replaces the now non-functional
+		// help file in Windows.
+		if (iHitMenuButton != CITYTOOL_BUTTON_HELP && (nFlags & MK_SHIFT)) {
+			char temp[64+1];
+
+			sprintf_s(temp, sizeof(temp)-1, "Tool Help (%d)\n", iHitMenuButton);
+			if (pSCView)
+				L_MessageBoxA(pSCView->m_hWnd, temp, gamePrimaryKey, MB_ICONINFORMATION|MB_TOPMOST);
+			return;
+		}
+		if (!Game_CityToolBar_PressButton(pThis, iHitMenuButton)) {
+			pThis->iMyTBMenuButtonPos = iStoredMenuButtonPos;
+			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_ERROR);
+			return;
+		}
+		Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+		hSubMenu = GetSubMenu(pThis->dwCTBMenuOne.m_hMenu, pThis->iMyTBMenuButtonPos);
+		pSubMenu = GameMain_Menu_FromHandle(hSubMenu);
+		if (pSubMenu) {
+			iCursorMoving = 1;
+			nTargetTicks = GetTickCount() + 500;
+			pThis->dwMyTBButtonMenu = 1;
+			while (TRUE) {
+				if (GetTickCount() < nTargetTicks) {
+					if (PeekMessageA(&Msg, pThis->m_hWnd, 0, 0, WM_MOVE)) {
+						if (!Game_SimcityApp_PreTranslateMessage(pSCApp, &Msg)) {
+							TranslateMessage(&Msg);
+							DispatchMessage(&Msg);
+						}
+					}
+				}
+				else
+					iCursorMoving = 0;
+				if (Msg.message == WM_LBUTTONUP)
+					break;
+				if (iCursorMoving != 1) {
+					ClientToScreen(pThis->m_hWnd, &pt);
+					uMenuItem = 0;
+					if (GetMenuItemCount(pSubMenu->m_hMenu)) {
+						do {
+							GameMain_String_Cons(&cStr);
+							pBuffer = GameMain_String_GetBuffer(&cStr, 32);
+							GetMenuStringA(pSubMenu->m_hMenu, uMenuItem, pBuffer, 32, MF_BYPOSITION);
+							GameMain_String_ReleaseBuffer(&cStr, -1);
+							if (strcmp(pThis->dwCTBString[iHitMenuButton].m_pchData, cStr.m_pchData) == 0)
+								CheckMenuItem(pSubMenu->m_hMenu, uMenuItem, MF_BYPOSITION|MF_CHECKED);
+							else
+								CheckMenuItem(pSubMenu->m_hMenu, uMenuItem, MF_BYPOSITION);
+							GameMain_String_Dest(&cStr);
+							++uMenuItem;
+							uItemCount = GetMenuItemCount(pSubMenu->m_hMenu);
+						} while (uItemCount > uMenuItem);
+					}
+					iTrackedMenu = GameMain_Menu_TrackPopupMenu(pSubMenu, TPM_RETURNCMD, pt.x + 3, pt.y + 3, pThis, 0);
+					if (iTrackedMenu > 0)
+						PostMessageA(pThis->m_hWnd, WM_COMMAND, iTrackedMenu, 0);
+					else
+						Game_CityToolBar_SetSelection(pThis, iHitMenuButton, pThis->dwCTToolSelection[iHitMenuButton]);
+					if (dwCityToolBarArcologyDialogCancel) {
+						Game_MyToolBar_SetButtonStyle(pThis, CITYTOOL_BUTTON_REWARDS, TBBS_CHECKBOX);
+						iHitMenuButton = CITYTOOL_BUTTON_CENTERINGTOOL;
+					}
+					Game_MyToolBar_SetButtonStyle(pThis, iHitMenuButton, (TBBS_CHECKED|TBBS_CHECKBOX));
+					Game_MyToolBar_InvalidateButton(pThis, iHitMenuButton);
+					Game_CityToolBar_OnCancelMode(pThis);
+					goto MENUOUT;
+				}
+			}
+			if (iHitMenuButton < CITYTOOL_BUTTON_RESIDENTIAL ||
+				iHitMenuButton > CITYTOOL_BUTTON_INDUSTRIAL) {
+				if (!iHitMenuButton || iHitMenuButton == CITYTOOL_BUTTON_POWER)
+					Game_CityToolBar_SetSelection(pThis, iHitMenuButton, 0);
+				else if (iHitMenuButton == CITYTOOL_BUTTON_REWARDS) {
+					Game_MyToolBar_SetButtonStyle(pThis, iHitMenuButton, (TBBS_CHECKED|TBBS_CHECKBOX));
+					Game_CityToolBar_SetSelection(pThis, iHitMenuButton, pThis->dwCTToolSelection[iHitMenuButton]);
+				}
+				else
+					Game_CityToolBar_SetSelection(pThis, iHitMenuButton, wSelectedSubtool[iHitMenuButton]);
+			}
+			else
+				Game_CityToolBar_SetSelection(pThis, iHitMenuButton, CITYTOOL_BUTTON_NATURE);
+			MENUOUT:
+			pThis->dwMyTBButtonMenu = 0;
+		}
+		else {
+			Game_CityToolBar_SetSelection(pThis, iHitMenuButton, 0);
+			if (iHitMenuButton < CITYTOOL_BUTTON_ROTATEANTICLOCKWISE || iHitMenuButton == CITYTOOL_BUTTON_CENTERINGTOOL) {
+				Game_MyToolBar_SetButtonStyle(pThis, iHitMenuButton, (TBBS_CHECKED|TBBS_CHECKBOX));
+				Game_MyToolBar_InvalidateButton(pThis, iHitMenuButton);
+				Game_CityToolBar_OnCancelMode(pThis);
+			}
+		}
+	}
+	else {
+		// Yes.. it is unfortunately like this.. alignment headaches.
+		pSCApp->dwSCADragSuspendSim = 1;
+		pThis->dwMyTBToolBarTitleDrag = 1;
+		pThis->dwMyTBPointOne.y = pt.x;
+		pThis->dwMyTBPointTwo.x = pt.y;
+		mainhWnd = SetCapture(pThis->m_hWnd);
+		GameMain_Wnd_FromHandle(mainhWnd);
+		ClientToScreen(pThis->m_hWnd, &pt);
+		Game_CityToolBar_MoveAndBlitToolBar(pThis, pt.x, pt.y);
+		pThis->dwMyTBPointTwo.y = pt.x;
+		pThis->dwCTBPointThree.x = pt.y;
+	}
+	dwCityToolBarArcologyDialogCancel = 0;
+}
+
 extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSubIndex) {
 	CCityToolBar *pThis;
 
@@ -37,6 +176,7 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 	CSimcityAppPrimary *pSCApp;
 	CSimcityView *pSCView;
 	DWORD nSubTool;
+	CMFC3XString *citySubToolStrings;
 	BOOL bCurrentBudgetSetting;
 	int iLayer;
 
@@ -46,7 +186,8 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 		nSubTool = nSubIndex;
 		if (nIndex == CITYTOOL_BUTTON_REWARDS && nSubIndex > REWARDS_ARCOLOGIES_WAITING)
 			nSubTool = REWARDS_ARCOLOGIES_WAITING;
-		GameMain_String_OperatorSet(&pThis->dwCTBString[nIndex], cityToolGroupStrings[nIndex*nSubTool].m_pchData);
+		citySubToolStrings = &cityToolGroupStrings[nIndex*MAX_CITY_MENUTOOLS];
+		GameMain_String_OperatorCopy(&pThis->dwCTBString[nIndex], &citySubToolStrings[nSubTool]);
 		pThis->dwCTToolSelection[nIndex] = nSubTool;
 	}
 	switch (nIndex) {
@@ -81,7 +222,7 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 			wSelectedSubtool[CITYTOOL_GROUP_REWARDS] = (WORD)nSubIndex;
 			pSCApp->iSCAActiveCursor = GAMECURSOR_REWARDS;
 			wCurrentCityToolGroup = CITYTOOL_GROUP_REWARDS;
-			Game_MyToolBar_SetButtonStyle(pThis, CITYTOOL_BUTTON_CENTERINGTOOL, 2u);
+			Game_MyToolBar_SetButtonStyle(pThis, CITYTOOL_BUTTON_CENTERINGTOOL, TBBS_CHECKBOX);
 			break;
 		case CITYTOOL_BUTTON_ROAD:
 			pSCApp->iSCAActiveCursor = GAMECURSOR_ROAD;
@@ -149,28 +290,22 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 		case CITYTOOL_BUTTON_ZOOMOUT:
 			Game_SimcityView_ScaleOut(pSCView);
 			UpdateWindow(pSCView->m_hWnd);
-			if ( pSCView->wSCVZoomLevel )
-			{
+			if (pSCView->wSCVZoomLevel) {
 				Game_MyToolBar_SetButtonStyle(pThis, CITYTOOL_BUTTON_ZOOMOUT, 0);
-				if ( pSCView->wSCVZoomLevel == 2 && !pSCView->dwSCVIsZoomed )
+				if (pSCView->wSCVZoomLevel == 2 && !pSCView->dwSCVIsZoomed)
 					Game_MyToolBar_SetButtonStyle(pThis, CITYTOOL_BUTTON_ZOOMIN, 0);
 			}
 			else
-			{
-				Game_MyToolBar_SetButtonStyle(pThis, CITYTOOL_BUTTON_ZOOMOUT, 0x400u);
-			}
+				Game_MyToolBar_SetButtonStyle(pThis, CITYTOOL_BUTTON_ZOOMOUT, TBBS_DISABLED);
 			break;
 		case CITYTOOL_BUTTON_ZOOMIN:
 			Game_SimcityView_ScaleIn(pSCView);
 			UpdateWindow(pSCView->m_hWnd);
-			if ( pSCView->dwSCVIsZoomed )
-			{
-				Game_MyToolBar_SetButtonStyle(pThis, CITYTOOL_BUTTON_ZOOMIN, 0x400u);
-			}
-			else
-			{
+			if (pSCView->dwSCVIsZoomed)
+				Game_MyToolBar_SetButtonStyle(pThis, CITYTOOL_BUTTON_ZOOMIN, TBBS_DISABLED);
+			else {
 				Game_MyToolBar_SetButtonStyle(pThis, CITYTOOL_BUTTON_ZOOMIN, 0);
-				if ( pSCView->wSCVZoomLevel == 1 )
+				if (pSCView->wSCVZoomLevel == 1)
 					Game_MyToolBar_SetButtonStyle(pThis, CITYTOOL_BUTTON_ZOOMOUT, 0);
 			}
 			break;
@@ -207,7 +342,7 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 		case CITYTOOL_BUTTON_DISPLAYUNDERGROUND:
 			iLayer = LAYER_BUILDINGS - (nIndex - CITYTOOL_BUTTON_DISPLAYBUILDINGS);
 			DisplayLayer[iLayer] = !DisplayLayer[iLayer];
-			if ( nIndex == CITYTOOL_BUTTON_DISPLAYUNDERGROUND )
+			if (nIndex == CITYTOOL_BUTTON_DISPLAYUNDERGROUND)
 				Game_CityToolBar_AdjustLayers(pThis, 0);
 			Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
 			break;
@@ -219,13 +354,12 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 		default:
 			return;
 	}
-	ConsoleLog(LOG_DEBUG, "CityToolBar_SetSelection(%u, %u): wCurrentCityToolGroup(%u), wSelectedSubtool(%u)\n", nIndex, nSubIndex, wCurrentCityToolGroup, wSelectedSubtool[wCurrentCityToolGroup]);
 	Game_SimcityApp_UpdateStatus(pSCApp, FALSE);
 	Game_SimcityApp_GetToolSound(pSCApp);
 	if (nIndex < CITYTOOL_BUTTON_SIGNS) {
 		nSubTool = wSelectedSubtool[nIndex];
-		if (nIndex == CITYTOOL_BUTTON_WATER && !wSelectedSubtool[CITYTOOL_GROUP_WATER]
-			|| nIndex == CITYTOOL_BUTTON_RAIL && nSubTool == RAILS_SUBWAY) {
+		if (nIndex == CITYTOOL_BUTTON_WATER && !wSelectedSubtool[CITYTOOL_GROUP_WATER] ||
+			nIndex == CITYTOOL_BUTTON_RAIL && nSubTool == RAILS_SUBWAY) {
 			if (!DisplayLayer[0]) {
 				DisplayLayer[0] = 1;
 				Game_CityToolBar_AdjustLayers(pThis, 1);
@@ -233,8 +367,8 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 			}
 		}
 		else if (nIndex) {
-			if ((nIndex != CITYTOOL_BUTTON_RAIL || nSubTool != RAILS_SUBSTATION && nSubTool != RAILS_SUBTORAIL)
-				&& (nIndex != CITYTOOL_BUTTON_WATER || nSubTool != WATER_PUMP)) {
+			if ((nIndex != CITYTOOL_BUTTON_RAIL || nSubTool != RAILS_SUBSTATION && nSubTool != RAILS_SUBTORAIL) &&
+				(nIndex != CITYTOOL_BUTTON_WATER || nSubTool != WATER_PUMP)) {
 				if (DisplayLayer[0]) {
 					DisplayLayer[0] = 0;
 					Game_CityToolBar_AdjustLayers(pThis, 1);
@@ -246,6 +380,10 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 }
 
 void InstallToolBarHelpHooks_SC2K1996(void) {
+	// Hook CCityToolBar::OnLButtonDown
+	VirtualProtect((LPVOID)0x4026AD, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4026AD, Hook_CityToolBar_OnLButtonDown);
+
 	// Hook CCityToolBar::SetSelection
 	VirtualProtect((LPVOID)0x402A1D, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402A1D, Hook_CityToolBar_SetSelection);

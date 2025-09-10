@@ -702,8 +702,8 @@ extern "C" void __stdcall Hook_SimcityDoc_UpdateDocumentTitle() {
 			goto GOFORWARD;
 		}
 		GameMain_String_Empty(&cStr);
-		if (wcscmp((const wchar_t *)pSCApp->dwSCACStringLang.m_pchData, (const wchar_t *)gameLangFrench) != 0) {
-			if (wcscmp((const wchar_t *)pSCApp->dwSCACStringLang.m_pchData, (const wchar_t *)gameLangGerman) != 0)
+		if (strcmp(pSCApp->dwSCACStringLang.m_pchData, gameLangFrench) != 0) {
+			if (strcmp(pSCApp->dwSCACStringLang.m_pchData, gameLangGerman) != 0)
 				pCurrStr = gameCurrDollar;
 			else
 				pCurrStr = gameCurrDM;
@@ -1443,8 +1443,7 @@ extern "C" void __stdcall Hook_MainFrame_UpdateSections() {
 	int nGranted;
 	int nReward;
 	unsigned nRewardBit;
-	CMFC3XString *cityToolString;
-	CMFC3XString *pTargMFCString;
+	CMFC3XString *citySubToolStrings;
 
 	hDlgItem = GetDlgItem(pThis->dwMFStatusControlBar.m_hWnd, 120); // Status - GoTo button.
 	pMapToolBar = &pThis->dwMFMapToolBar;
@@ -1482,12 +1481,12 @@ extern "C" void __stdcall Hook_MainFrame_UpdateSections() {
 	if (wCurrentCityToolGroup > CITYTOOL_GROUP_QUERY)
 		iCityToolBarButton = wCurrentCityToolGroup + 4;
 	ButtonStyle = Game_MyToolBar_GetButtonStyle(pCityToolBar, iCityToolBarButton);
-	Game_MyToolBar_SetButtonStyle(pCityToolBar, iCityToolBarButton, ButtonStyle | 0x100);
+	Game_MyToolBar_SetButtonStyle(pCityToolBar, iCityToolBarButton, ButtonStyle | TBBS_CHECKED);
 	for (nLayer = LAYER_UNDERGROUND; nLayer < LAYER_COUNT; ++nLayer) {
 		if (DisplayLayer[nLayer])
-			nStyle = 0x102;
+			nStyle = (TBBS_CHECKED|TBBS_CHECKBOX);
 		else
-			nStyle = 2;
+			nStyle = TBBS_CHECKBOX;
 		nIndex = CITYTOOL_BUTTON_DISPLAYUNDERGROUND - nLayer;
 		Game_MyToolBar_SetButtonStyle(pCityToolBar, nIndex, nStyle);
 	}
@@ -1519,8 +1518,8 @@ REFRESHMENUGRANTS:
 			if (nMenuItemCount > 0) {
 				pUID = uIDs;
 				pString = szString;
-				// calculation here is citytoolbuttongroup * maxsubtools (12 per group), this sets it to TOOL_GROUP_REWARDS.
-				cityToolString = &cityToolGroupStrings[CITYTOOL_GROUP_REWARDS*MAX_CITY_SUBTOOLS];
+				// calculation here is citytoolbuttongroup * maxmenutools, this sets it to CITYTOOL_GROUP_REWARDS.
+				citySubToolStrings = &cityToolGroupStrings[CITYTOOL_GROUP_REWARDS*MAX_CITY_MENUTOOLS];
 				do {
 					// (1 << nReward) bit-shifted result of the nReward count.
 					nRewardBit = (1 << nReward);
@@ -1528,8 +1527,7 @@ REFRESHMENUGRANTS:
 						if (nPos == CITYTOOL_BUTTON_REWARDS && !nGranted) {
 							pCityToolBar->dwCTToolSelection[CITYTOOL_GROUP_REWARDS] = nReward;
 							nGranted = 1;
-							pTargMFCString = &pCityToolBar->dwCTBString[CITYTOOL_GROUP_REWARDS];
-							GameMain_String_OperatorSet(pTargMFCString, cityToolString[nReward].m_pchData);
+							GameMain_String_OperatorCopy(&pCityToolBar->dwCTBString[CITYTOOL_GROUP_REWARDS], &citySubToolStrings[nReward]);
 						}
 						AppendMenuA(pSubMenu->m_hMenu, 0, *pUID, pString);
 					}

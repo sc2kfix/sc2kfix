@@ -6,6 +6,17 @@
 #define _CN_COMMAND 0
 #define _CN_COMMAND_UI -1
 
+// Styles for toolbar buttons
+#define TBBS_BUTTON     0x00    // this entry is button
+#define TBBS_SEPARATOR  0x01    // this entry is a separator
+#define TBBS_CHECKBOX   0x02    // this is an auto check/radio button
+
+// styles for display states
+#define TBBS_CHECKED        0x0100  // button is checked/down
+#define TBBS_INDETERMINATE  0x0200  // third state
+#define TBBS_DISABLED       0x0400  // element is disabled
+#define TBBS_PRESSED        0x0800  // button is being depressed - mouse down
+
 // Hierarchy for reference:
 //
 // NOTE: Any classes that don't contain the 'MFC3X' term
