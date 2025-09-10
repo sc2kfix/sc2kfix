@@ -197,9 +197,7 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 			wSelectedSubtool[CITYTOOL_GROUP_BULLDOZER] = (WORD)nSubIndex;
 			break;
 		case CITYTOOL_BUTTON_NATURE:
-			pSCApp->iSCAActiveCursor = GAMECURSOR_TREE;
-			if (nSubIndex)
-				pSCApp->iSCAActiveCursor = GAMECURSOR_POND;
+			pSCApp->iSCAActiveCursor = (nSubIndex) ? GAMECURSOR_POND : GAMECURSOR_TREE;
 			wCurrentCityToolGroup = CITYTOOL_GROUP_NATURE;
 			wSelectedSubtool[CITYTOOL_GROUP_NATURE] = (WORD)nSubIndex;
 			break;
@@ -360,8 +358,8 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 		nSubTool = wSelectedSubtool[nIndex];
 		if (nIndex == CITYTOOL_BUTTON_WATER && !wSelectedSubtool[CITYTOOL_GROUP_WATER] ||
 			nIndex == CITYTOOL_BUTTON_RAIL && nSubTool == RAILS_SUBWAY) {
-			if (!DisplayLayer[0]) {
-				DisplayLayer[0] = 1;
+			if (!DisplayLayer[LAYER_UNDERGROUND]) {
+				DisplayLayer[LAYER_UNDERGROUND] = 1;
 				Game_CityToolBar_AdjustLayers(pThis, 1);
 				Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
 			}
@@ -369,13 +367,57 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 		else if (nIndex) {
 			if ((nIndex != CITYTOOL_BUTTON_RAIL || nSubTool != RAILS_SUBSTATION && nSubTool != RAILS_SUBTORAIL) &&
 				(nIndex != CITYTOOL_BUTTON_WATER || nSubTool != WATER_PUMP)) {
-				if (DisplayLayer[0]) {
-					DisplayLayer[0] = 0;
+				if (DisplayLayer[LAYER_UNDERGROUND]) {
+					DisplayLayer[LAYER_UNDERGROUND] = 0;
 					Game_CityToolBar_AdjustLayers(pThis, 1);
 					Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
 				}
 			}
 		}
+	}
+}
+
+extern "C" void __stdcall Hook_MapToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoint pt) {
+	CMapToolBar *pThis;
+
+	__asm mov[pThis], ecx
+
+	CSimcityAppPrimary *pSCApp;
+	CSimcityView *pSCView;
+	int iHitMenuButton;
+	HWND mainhWnd;
+
+	pSCApp = &pCSimcityAppThis;
+	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+	if (pThis->m_cyTopBorder < pt.y) {
+		iHitMenuButton = Game_MapToolBar_HitTestFromPoint(pThis, pt);
+		pThis->iMyTBMenuButtonPos = iHitMenuButton;
+		if (iHitMenuButton >= 0) {
+			// Added - 'Shift + Click' help messages that replaces the now non-functional
+			// help file in Windows.
+			if (iHitMenuButton != MAPTOOL_BUTTON_HELP && (nFlags & MK_SHIFT)) {
+				char temp[64+1];
+
+				sprintf_s(temp, sizeof(temp)-1, "Tool Help (%d)\n", iHitMenuButton);
+				if (pSCView)
+					L_MessageBoxA(pSCView->m_hWnd, temp, gamePrimaryKey, MB_ICONINFORMATION|MB_TOPMOST);
+				return;
+			}
+			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+			Game_MapToolBar_PressButton(pThis, iHitMenuButton);
+			Game_MapToolBar_SetSelection(pThis, iHitMenuButton, 0, &pt);
+		}
+	}
+	else {
+		pThis->dwMyTBControlsDisabled = 1;
+		pThis->dwMyTBPointOne.x = pt.x;
+		pThis->dwMyTBPointOne.y = pt.y;
+		mainhWnd = SetCapture(pThis->m_hWnd);
+		GameMain_Wnd_FromHandle(mainhWnd);
+		ClientToScreen(pThis->m_hWnd, &pt);
+		Game_MapToolBar_MoveAndBlitToolBar(pThis, pt.x, pt.y);
+		pThis->dwMyTBPointTwo.x = pt.x;
+		pThis->dwMyTBPointTwo.y = pt.y;
 	}
 }
 
@@ -527,6 +569,10 @@ void InstallToolBarHelpHooks_SC2K1996(void) {
 	// Hook CCityToolBar::SetSelection
 	VirtualProtect((LPVOID)0x402A1D, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402A1D, Hook_CityToolBar_SetSelection);
+
+	// Hook CMapToolBar::OnLButtonDown
+	VirtualProtect((LPVOID)0x401406, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x401406, Hook_MapToolBar_OnLButtonDown);
 
 	// Hook CMapToolBar::SetSelection
 	VirtualProtect((LPVOID)0x402A5E, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
