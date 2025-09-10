@@ -1014,6 +1014,39 @@ enum {
 };
 
 enum {
+	GAMECURSOR_ARROW,
+	GAMECURSOR_WAIT,
+	GAMECURSOR_BULLDOZER,
+	GAMECURSOR_TREE,
+	GAMECURSOR_RESIDENTIAL,
+	GAMECURSOR_COMMERCIAL,
+	GAMECURSOR_INDUSTRIAL,
+	GAMECURSOR_EDUCATION,
+	GAMECURSOR_POWER,
+	GAMECURSOR_UNKNOWNONE,
+	GAMECURSOR_UNKNOWNTWO,
+	GAMECURSOR_CENTER,
+	GAMECURSOR_RAISETERRAIN,
+	GAMECURSOR_LOWERTERRAIN,
+	GAMECURSOR_STRETCHTERRAIN,
+	GAMECURSOR_LEVELTERRAIN,
+	GAMECURSOR_POND,           // Nature - Water
+	GAMECURSOR_STREAM,
+	GAMECURSOR_FOREST,
+	GAMECURSOR_WATER,          // Water - Plumbing
+	GAMECURSOR_SERVICES,       // Services - Police, Fire, Hospital, Prison
+	GAMECURSOR_ROAD,
+	GAMECURSOR_RAIL,
+	GAMECURSOR_QUERY,
+	GAMECURSOR_REWARDS,
+	GAMECURSOR_PORTS,
+	GAMECURSOR_PARKS,
+	GAMECURSOR_SIGNS,
+	GAMECURSOR_DISPATCH,
+	GAMECURSOR_HELP
+};
+
+enum {
 	VIEWROTATION_NORTH = 0,
 	VIEWROTATION_EAST,
 	VIEWROTATION_SOUTH,
@@ -1230,6 +1263,8 @@ GAMECALL(0x401235, UINT, __thiscall, MyToolBar_GetButtonStyle, CMyToolBar *, int
 GAMECALL(0x401262, void, __stdcall, SimulationEQ_LE_Processing, void)
 GAMECALL(0x4012C1, int, __cdecl, SpawnItem, __int16 x, __int16 y)
 GAMECALL(0x4012FD, void, __cdecl, UpdateSimNationDialog, void)
+GAMECALL(0x4013B1, void, __thiscall, SimcityView_ScaleOut, CSimcityView *pThis)
+GAMECALL(0x40140B, void, __thiscall, SimcityView_ScaleIn, CSimcityView *pThis)
 GAMECALL(0x401429, int, __cdecl, FlipLongBytePortions, int)
 GAMECALL(0x40142E, void, __stdcall, UpdateIndustryDialog, void)
 GAMECALL(0x401460, BYTE, __cdecl, SimulationProvisionMicrosim, __int16, __int16, __int16 iTileID) // The first two arguments aren't clear, though they "could" be the X/Y tile coordinates.
@@ -1240,6 +1275,7 @@ GAMECALL(0x40150A, int, __thiscall, SimcityApp_ExitRequester, CSimcityAppPrimary
 GAMECALL(0x401519, void, __thiscall, CityToolBar_ToolMenuEnable, CCityToolBar* pThis)
 GAMECALL(0x40152D, BOOL, __thiscall, SimcityView_MainWindowUpdate, CSimcityView *, RECT *, BOOL)
 GAMECALL(0x4015A0, void, __thiscall, SimcityApp_SaveCity, CSimcityAppPrimary *pThis)
+GAMECALL(0x4015C8, void, __thiscall, CityToolBar_AdjustLayers, CCityToolBar *, BOOL)
 GAMECALL(0x4015CD, CSimString *, __thiscall, SimString_SetString, CSimString *, const char *pSrc, int iSize, double idAmount)
 GAMECALL(0x4015E6, void, __cdecl, SimulationPrepareBudgetDialog, int)
 GAMECALL(0x401672, void, __cdecl, SimulationGrantReward, __int16 iReward, int iToggle)
@@ -1261,7 +1297,7 @@ GAMECALL(0x4019B5, void, __thiscall, SimString_TruncateAtSpace, CSimString *)
 GAMECALL(0x4019EC, int, __cdecl, CenterOnTileCoords, __int16 x, __int16 y)
 GAMECALL(0x401A37, int, __cdecl, MaybeRoadViabilityAlongPath, __int16* x, __int16* y)
 GAMECALL(0x401A3C, char, __cdecl, PerhapsGeneralZoneStartBuilding, signed __int16 x, signed __int16 y, __int16 iBuildingPopLevel, __int16 iZoneType)
-GAMECALL(0x401A73, int, __thiscall, SimcityView_RotateAntiClockwise, CSimcityView *pThis)
+GAMECALL(0x401A73, void, __thiscall, SimcityView_RotateAntiClockwise, CSimcityView *pThis)
 GAMECALL(0x401A96, void, __thiscall, SimcityView_MaintainCursor, CSimcityView *)
 GAMECALL(0x401A9B, int, __thiscall, SimcityApp_MusicPlayNextRefocusSong, CSimcityAppPrimary *)
 GAMECALL(0x401AB4, int, __cdecl, MapToolRaiseTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
@@ -1304,7 +1340,11 @@ GAMECALL(0x40242D, void, __thiscall, SimString_Dest, CSimString *)
 GAMECALL(0x402478, int, __cdecl, SpawnHelicopter, __int16 x, __int16 y)
 GAMECALL(0x402487, void, __cdecl, EventScenarioNotification, __int16 iEvent)
 GAMECALL(0x4024E6, DWORD *, __thiscall, JokeDialog_Construct, CJokeDialog *, CMainFrame *)
+GAMECALL(0x40282E, void, __thiscall, SimcityView_RotateClockwise, CSimcityView *pThis)
+GAMECALL(0x4028A1, void, __thiscall, SimcityApp_UpdateStatus, CSimcityAppPrimary *, BOOL)
+GAMECALL(0x402C0C, int, __thiscall, MainFrame_ToggleNonModalDialog, CMainFrame *pThis, UINT)
 GAMECALL(0x402D56, BYTE, __stdcall, PrepareLabel, void)
+GAMECALL(0x402E96, void, __thiscall, SimcityApp_GetToolSound, CSimcityAppPrimary *)
 GAMECALL(0x402EFA, int, __stdcall, GetSimcityViewMenuPos, int iPos)
 GAMECALL(0x4024FA, char, __cdecl, PerhapsGeneralZoneChangeBuilding, __int16 x, __int16 y, __int16 iBuldingPopLevel, int iTileID)
 GAMECALL(0x40258B, int, __cdecl, GetScreenCoordsFromTileCoords, __int16 iTileTargetX, __int16 iTileTargetY, WORD *wNewScreenPointX, WORD *wNewScreenPointY)
