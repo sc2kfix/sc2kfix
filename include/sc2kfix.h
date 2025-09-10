@@ -447,6 +447,7 @@ void InstallAnimationHooks_SC2K1995(void);
 void InstallAnimationHooks_SC2KDemo(void);
 void InstallSpriteAndTileSetHooks_SC2K1996(void);
 void InstallTileGrowthOrPlacementHandlingHooks_SC2K1996(void);
+void InstallToolBarHelpHooks_SC2K1996(void);
 void InstallMiscHooks_SC2K1996(void);
 void UpdateMiscHooks_SC2K1996(void);
 void InstallMiscHooks_SC2KDemo(void);

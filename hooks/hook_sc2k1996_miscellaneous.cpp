@@ -1791,6 +1791,8 @@ void InstallMiscHooks_SC2K1996(void) {
 	VirtualProtect((LPVOID)0x40131B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x40131B, Hook_MainFrame_UpdateSections);
 
+	InstallToolBarHelpHooks_SC2K1996();
+
 	// New hooks for CSimcityDoc::UpdateDocumentTitle and
 	// SimulationProcessTick - these account for:
 	// 1) Including the day of the month in the window title.
