@@ -162,7 +162,7 @@ extern "C" void __stdcall Hook_CityToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoin
 					Game_CityToolBar_SetSelection(pThis, iHitMenuButton, wSelectedSubtool[iHitMenuButton]);
 			}
 			else
-				Game_CityToolBar_SetSelection(pThis, iHitMenuButton, CITYTOOL_BUTTON_NATURE);
+				Game_CityToolBar_SetSelection(pThis, iHitMenuButton, ZONES_HIGH);
 			MENUOUT:
 			pThis->dwMyTBButtonMenu = 0;
 		}
