@@ -1,5 +1,4 @@
-// sc2kfix hooks/hook_toolbarhelp.cpp: help-replacement handling for both the city
-//                                     and map toolbars.
+// sc2kfix hooks/hook_toolbars.cpp: toolbar handling.
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
@@ -16,18 +15,40 @@
 
 #pragma intrinsic(_ReturnAddress)
 
-#define TOOLBARHELP_DEBUG_OTHER 1
+#define USE_NEW_HELP_HANDLING 0
 
-#define TOOLBARHELP_DEBUG DEBUG_FLAGS_NONE
+#define TOOLBAR_DEBUG_OTHER 1
+
+#define TOOLBAR_DEBUG DEBUG_FLAGS_NONE
 
 #ifdef DEBUGALL
-#undef TOOLBARHELP_DEBUG
-#define TOOLBARHELP_DEBUG DEBUG_FLAGS_EVERYTHING
+#undef TOOLBAR_DEBUG
+#define TOOLBAR_DEBUG DEBUG_FLAGS_EVERYTHING
 #endif
 
-UINT toolbarhelp_debug = TOOLBARHELP_DEBUG;
+UINT toolbar_debug = TOOLBAR_DEBUG;
 
 static DWORD dwDummy;
+
+extern "C" void __stdcall Hook_CityToolBar_ToolMenuDisable() {
+	CCityToolBar *pThis;
+
+	__asm mov[pThis], ecx
+
+	ToggleFloatingStatusDialog(FALSE);
+
+	GameMain_CityToolBar_ToolMenuDisable(pThis);
+}
+
+extern "C" void __stdcall Hook_CityToolBar_ToolMenuEnable() {
+	CCityToolBar *pThis;
+
+	__asm mov[pThis], ecx
+
+	ToggleFloatingStatusDialog(TRUE);
+
+	GameMain_CityToolBar_ToolMenuEnable(pThis);
+}
 
 extern "C" void __stdcall Hook_CityToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoint pt) {
 	CCityToolBar *pThis;
@@ -59,6 +80,7 @@ extern "C" void __stdcall Hook_CityToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoin
 		pThis->iMyTBMenuButtonPos = iHitMenuButton;
 		if (iHitMenuButton < 0)
 			return;
+#if USE_NEW_HELP_HANDLING
 		// Added - 'Shift + Click' help messages that replaces the now non-functional
 		// help file in Windows.
 		if (iHitMenuButton != CITYTOOL_BUTTON_HELP && (nFlags & MK_SHIFT)) {
@@ -69,6 +91,7 @@ extern "C" void __stdcall Hook_CityToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoin
 				L_MessageBoxA(pSCView->m_hWnd, temp, gamePrimaryKey, MB_ICONINFORMATION|MB_TOPMOST);
 			return;
 		}
+#endif
 		if (!Game_CityToolBar_PressButton(pThis, iHitMenuButton)) {
 			pThis->iMyTBMenuButtonPos = iStoredMenuButtonPos;
 			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_ERROR);
@@ -345,8 +368,12 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 			Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
 			break;
 		case CITYTOOL_BUTTON_HELP:
+#if USE_NEW_HELP_HANDLING
 			if (pSCView)
 				L_MessageBoxA(pSCView->m_hWnd, "Insert help message here", gamePrimaryKey, MB_ICONINFORMATION|MB_TOPMOST);
+#else
+			GameMain_WinApp_WinHelpA(game_AfxCoreState.m_pCurrentWinApp, 0, 11);
+#endif
 			Game_MyToolBar_SetButtonStyle(pThis, CITYTOOL_BUTTON_HELP, 0);
 			break;
 		default:
@@ -393,6 +420,7 @@ extern "C" void __stdcall Hook_MapToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoint
 		iHitMenuButton = Game_MapToolBar_HitTestFromPoint(pThis, pt);
 		pThis->iMyTBMenuButtonPos = iHitMenuButton;
 		if (iHitMenuButton >= 0) {
+#if USE_NEW_HELP_HANDLING
 			// Added - 'Shift + Click' help messages that replaces the now non-functional
 			// help file in Windows.
 			if (iHitMenuButton != MAPTOOL_BUTTON_HELP && (nFlags & MK_SHIFT)) {
@@ -403,6 +431,7 @@ extern "C" void __stdcall Hook_MapToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoint
 					L_MessageBoxA(pSCView->m_hWnd, temp, gamePrimaryKey, MB_ICONINFORMATION|MB_TOPMOST);
 				return;
 			}
+#endif
 			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
 			Game_MapToolBar_PressButton(pThis, iHitMenuButton);
 			Game_MapToolBar_SetSelection(pThis, iHitMenuButton, 0, &pt);
@@ -511,8 +540,12 @@ extern "C" void __stdcall Hook_MapToolBar_SetSelection(UINT nIndex, UINT nSubInd
 			Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_ROTATECLOCKWISE, 0);
 			break;
 		case MAPTOOL_BUTTON_HELP:
+#if USE_NEW_HELP_HANDLING
 			if (pSCView)
 				L_MessageBoxA(pSCView->m_hWnd, "Insert help message here", gamePrimaryKey, MB_ICONINFORMATION|MB_TOPMOST);
+#else
+			GameMain_WinApp_WinHelpA(game_AfxCoreState.m_pCurrentWinApp, 0, 11);
+#endif
 			Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_HELP, 0);
 			break;
 		case MAPTOOL_BUTTON_TERRAINHILLS:
@@ -561,7 +594,16 @@ extern "C" void __stdcall Hook_MapToolBar_SetSelection(UINT nIndex, UINT nSubInd
 	Game_SimcityApp_GetToolSound(pSCApp);
 }
 
-void InstallToolBarHelpHooks_SC2K1996(void) {
+void InstallToolBarHooks_SC2K1996(void) {
+	// Hooks for CCityToolBar::ToolMenuDisable and CCityToolBar::ToolMenuEnable
+	// Both of which are called when a modal CGameDialog is opened.
+	// The purpose in this case will be to temporarily alter the parent
+	// of the status widget (if it is in floating mode) so interaction is disabled.
+	VirtualProtect((LPVOID)0x402937, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402937, Hook_CityToolBar_ToolMenuDisable);
+	VirtualProtect((LPVOID)0x401519, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x401519, Hook_CityToolBar_ToolMenuEnable);
+
 	// Hook CCityToolBar::OnLButtonDown
 	VirtualProtect((LPVOID)0x4026AD, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4026AD, Hook_CityToolBar_OnLButtonDown);

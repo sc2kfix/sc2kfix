@@ -377,7 +377,7 @@
     <ClCompile Include="modules\track_config.cpp">
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="hooks\hook_toolbarhelp.cpp">
+    <ClCompile Include="hooks\hook_toolbars.cpp">
       <Filter>Source Files\Hooks</Filter>
     </ClCompile>
   </ItemGroup>

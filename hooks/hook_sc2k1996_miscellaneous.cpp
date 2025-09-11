@@ -1366,26 +1366,6 @@ extern "C" int __stdcall Hook_StartupGraphics() {
 	return ReleaseDC(0, hDC_Two);
 }
 
-extern "C" void __stdcall Hook_CityToolBar_ToolMenuDisable() {
-	CCityToolBar *pThis;
-
-	__asm mov[pThis], ecx
-
-	ToggleFloatingStatusDialog(FALSE);
-
-	GameMain_CityToolBar_ToolMenuDisable(pThis);
-}
-
-extern "C" void __stdcall Hook_CityToolBar_ToolMenuEnable() {
-	CCityToolBar *pThis;
-
-	__asm mov[pThis], ecx
-
-	ToggleFloatingStatusDialog(TRUE);
-
-	GameMain_CityToolBar_ToolMenuEnable(pThis);
-}
-
 extern "C" void __stdcall Hook_ShowViewControls() {
 	CSimcityAppPrimary *pSCApp;
 	CMainFrame *pMainFrm;
@@ -1772,15 +1752,6 @@ void InstallMiscHooks_SC2K1996(void) {
 	// Hook status bar updates for the status dialog implementation
 	InstallStatusHooks_SC2K1996();
 
-	// Hooks for CCityToolBar::ToolMenuDisable and CCityToolBar::ToolMenuEnable
-	// Both of which are called when a modal CGameDialog is opened.
-	// The purpose in this case will be to temporarily alter the parent
-	// of the status widget (if it is in floating mode) so interaction is disabled.
-	VirtualProtect((LPVOID)0x402937, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x402937, Hook_CityToolBar_ToolMenuDisable);
-	VirtualProtect((LPVOID)0x401519, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x401519, Hook_CityToolBar_ToolMenuEnable);
-
 	// Hook for ShowViewControls
 	VirtualProtect((LPVOID)0x4021D5, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4021D5, Hook_ShowViewControls);
@@ -1789,7 +1760,7 @@ void InstallMiscHooks_SC2K1996(void) {
 	VirtualProtect((LPVOID)0x40131B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x40131B, Hook_MainFrame_UpdateSections);
 
-	InstallToolBarHelpHooks_SC2K1996();
+	InstallToolBarHooks_SC2K1996();
 
 	// New hooks for CSimcityDoc::UpdateDocumentTitle and
 	// SimulationProcessTick - these account for:
