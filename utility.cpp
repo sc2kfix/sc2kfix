@@ -208,6 +208,31 @@ HOOKEXT const char* GetOnIdleStateEnumName(int iState) {
 	return szOnIdleStateEnums[iState + 1];
 }
 
+static BOOL IsBadFileCharacter(char c) {
+	// Note: This takes out the most common
+	// invalid filename character cases.
+	if (c >= 0x00 && c <= 0x1F)
+		return TRUE;
+	if (c == '<' || c == '>' ||
+		c == ':' || c == '"' ||
+		c == '/' || c == '\\' ||
+		c == '|' || c == '?' ||
+		c == '*' || c == 0x7F)
+		return TRUE;
+	return FALSE;
+}
+
+HOOKEXT BOOL IsFileNameValid(const char *pName) {
+	if (!pName)
+		return FALSE;
+
+	const char *pTemp = pName;
+	for (; *pTemp; pTemp++)
+		if (IsBadFileCharacter(*pTemp))
+			return FALSE;
+	return TRUE;
+}
+
 // start of base64 code
 /*
 * Base64 encoding/decoding (RFC1341)

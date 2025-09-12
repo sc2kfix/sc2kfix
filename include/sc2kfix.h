@@ -318,6 +318,7 @@ HOOKEXT const char* GetFileBaseName(const char* szPath);
 HOOKEXT const char* GetModsFolderPath(void);
 HOOKEXT const char* GetOnIdleStateEnumName(int iState);
 //HBITMAP CreateSpriteBitmap(int iSpriteID);
+HOOKEXT BOOL IsFileNameValid(const char *pName);
 HOOKEXT BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, const char *ini_name);
 int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize);
 HOOKEXT_CPP std::string Base64Encode(const unsigned char* pSrcData, size_t iSrcCount);

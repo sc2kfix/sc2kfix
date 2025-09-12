@@ -319,6 +319,10 @@ static BOOL ValidateFilename(const char *pName, const char *pExt) {
 	if (strchr(pName, '\\') || strchr(pName, '/') || strchr(pName, ':'))
 		return FALSE;
 
+	// Further validation
+	if (!IsFileNameValid(pName))
+		return FALSE;
+
 	// No
 	nExtLen = strlen(pExt);
 	if (nExtLen <= 1)

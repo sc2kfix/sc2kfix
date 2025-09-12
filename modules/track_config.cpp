@@ -87,9 +87,10 @@ BOOL CALLBACK EditMusicTrackDialogProc(HWND hwndDlg, UINT message, WPARAM wParam
 			sprintf_s(szTemp, sizeof(szTemp), "%s%s", pTrackDirectory, (te->bMP3) ? "*.mp3" : "*.mid");
 			bfdHandle = _findfirst(szTemp, &fdi);
 			if (bfdHandle != -1L) {
-				do
-					ComboBox_AddString(hDlgCombo, fdi.name);
-				while (_findnext(bfdHandle, &fdi) != -1);
+				do  {
+					if (IsFileNameValid(fdi.name))
+						ComboBox_AddString(hDlgCombo, fdi.name);
+				}  while (_findnext(bfdHandle, &fdi) != -1);
 				_findclose(bfdHandle);
 			}
 		}
