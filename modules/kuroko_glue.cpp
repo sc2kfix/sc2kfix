@@ -243,7 +243,7 @@ extern "C" {
 		CHECK_ARG(0, int, krk_integer_type, pThis);
 		CHECK_ARG(1, int, krk_integer_type, iSoundID);
 
-		return INTEGER_VAL(Game_SoundPlaySound((void*)pThis, iSoundID));
+		return INTEGER_VAL(Game_SimcityApp_SoundPlaySound((CSimcityAppPrimary*)pThis, iSoundID));
 	}
 
 	KRK_Module(sc2k) {
@@ -268,11 +268,6 @@ extern "C" {
 		krk_attachNamedObject(&module->fields, "state", (KrkObj*)objState);
 
 		KRK_GAMEOFF(pCSimcityAppThis);
-		KRK_GAMEOFF(pCWndRootWindow);
-		KRK_GAMEOFF(bPriscillaActivated);
-		KRK_GAMEOFF(pSCASoundLayer);
-		KRK_GAMEOFF(bOptionsMusicEnabled);
-		KRK_GAMEOFF(wSimulationSpeed);
 		KRK_GAMEOFF(wCurrentTileCoordinates);
 		KRK_GAMEOFF(wTileCoordinateX);
 		KRK_GAMEOFF(wTileCoordinateY);
@@ -355,9 +350,9 @@ extern "C" {
 		KRK_GAMEOFF(dwCityPollution);
 		KRK_GAMEOFF(dwLFSRState);
 		KRK_GAMEOFF(dwLCGState);
-		KRK_GAMEOFF(pCWinApp);
+		KRK_GAMEOFF(game_AfxCoreState);
 		KRK_GAMEOFF(dwSimulationSubtickCounter);
-		KRK_GAMEOFF(pCDocumentMainWindow);
+		KRK_GAMEOFF(pCSimcityDoc);
 		KRK_GAMEOFF(wPreviousTileCoordinateX);
 		KRK_GAMEOFF(wPreviousTileCoordinateY);
 		KRK_GAMEOFF(pCSimcityView);

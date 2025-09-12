@@ -50,7 +50,7 @@ extern "C" void __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer) {
         return;
     }
 
-    Game_LoadSoundBuffer(iSoundID, lpBuffer);
+    GameMain_LoadSoundBuffer(iSoundID, lpBuffer);
 }
 
 extern "C" BOOL __stdcall Hook_sndPlaySoundA(void* pReturnAddress, BOOL* retval, LPCTSTR lpszSound, UINT fuSound) {

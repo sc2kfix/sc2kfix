@@ -20,17 +20,17 @@
 
 static DWORD dwDummy;
 
-extern "C" DWORD *__stdcall Hook_Demo_SimcityAppConstruct() {
-	DWORD *pThis;
+extern "C" CSimcityAppDemo *__stdcall Hook_Demo_SimcityAppConstruct() {
+	CSimcityAppDemo *pThis;
 
 	__asm mov[pThis], ecx
 
-	DWORD *(__thiscall *H_Demo_SimcityAppConstruct)(void *) = (DWORD *(__thiscall *)(void *))0x475B4C;
+	CSimcityAppDemo *(__thiscall *H_Demo_SimcityAppConstruct)(void *) = (CSimcityAppDemo *(__thiscall *)(void *))0x475B4C;
 
-	DWORD *ret;
+	CSimcityAppDemo *ret;
 
 	ret = H_Demo_SimcityAppConstruct(pThis);
-	ret[200] = 1;
+	ret->iSCAProgramStep = 1;
 
 	return ret;
 }

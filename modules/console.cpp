@@ -498,7 +498,7 @@ static void test3(void) {
 }
 
 static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments) {
-	printf("%s\n", jsonSettingsCore.dump());
+	printf("%s\n", jsonSettingsCore.dump().c_str());
 	return TRUE;
 }
 

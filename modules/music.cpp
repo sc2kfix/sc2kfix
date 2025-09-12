@@ -80,6 +80,14 @@ fluid_log_function_t (*FS_fluid_set_log_function)(int level, fluid_log_function_
 int (*FS_fluid_settings_setint)(fluid_settings_t* settings, const char* name, int val);
 int (*FS_fluid_settings_setnum)(fluid_settings_t* settings, const char* name, double val);
 
+const char *GetGameSoundPath() {
+	return szSoundPath;
+}
+
+int GetCurrentActiveSongID() {
+	return iPlayingSongID;
+}
+
 void MusicShufflePlaylist(int iLastSongPlayed) {
 	if (bSettingsShuffleMusic) {
 		do {
@@ -287,7 +295,86 @@ DWORD WINAPI FluidSynthWatchdogThread(LPVOID lpParameter) {
 
 const char* SettingsSaveMusicEngine(UINT iMusicEngine);
 
+static int GetAliasIndexFromSongID(int iSongID) {
+	if (iSongID < 10000 || iSongID > 10018)
+		return -1;
+
+	return iSongID - 10000;
+}
+
+static BOOL ValidateFilename(const char *pName, const char *pExt) {
+	unsigned nNameLen, nExtLen;
+
+	if (!pName)
+		return FALSE;
+
+	if (!pExt)
+		return FALSE;
+
+	// No going up a level, or just referencing the current level.
+	if (strstr(pName, "..") || _stricmp(pName, "..") == 0 || _stricmp(pName, ".") == 0)
+		return FALSE;
+
+	// No path level or drive letter separation characters.
+	if (strchr(pName, '\\') || strchr(pName, '/') || strchr(pName, ':'))
+		return FALSE;
+
+	// Further validation
+	if (!IsFileNameValid(pName))
+		return FALSE;
+
+	// No
+	nExtLen = strlen(pExt);
+	if (nExtLen <= 1)
+		return FALSE;
+
+	// The first extension character must be '.'
+	if (pExt[0] != '.')
+		return FALSE;
+
+	// Name length must be greater than the extension length.
+	nNameLen = strlen(pName);
+	if (nNameLen > nExtLen) {
+		nNameLen -= nExtLen;
+		if (_strnicmp(pName + nNameLen, pExt, nExtLen) == 0) {
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+static const char *GetGameSoundPath(int iSongID, BOOL bDoMP3) {
+	const char *pExt;
+	static std::string strSongPath;
+	BOOL bUseAliasedSong;
+	int iAliasIdx;
+
+	pExt = (bDoMP3) ? ".mp3" : ".mid";
+	strSongPath = szSoundPath;
+	bUseAliasedSong = FALSE;
+	iAliasIdx = GetAliasIndexFromSongID(iSongID);
+	if (iAliasIdx >= 0 && iAliasIdx <= MUSIC_TRACKS) {
+		const char *pName = (bDoMP3) ? szSettingsMP3TrackPath[iAliasIdx] : szSettingsMIDITrackPath[iAliasIdx];
+		if (ValidateFilename(pName, pExt)) {
+			strSongPath += pName;
+			if (FileExists(strSongPath.c_str()))
+				bUseAliasedSong = TRUE;
+		}
+	}
+
+	if (!bUseAliasedSong) {
+		// Set back to szSoundPath before appending.
+		strSongPath = szSoundPath;
+		strSongPath += std::to_string(iSongID);
+		strSongPath += pExt;
+	}
+
+	return strSongPath.c_str();
+}
+
 DWORD WINAPI MusicThread(LPVOID lpParameter) {
+	CSimcityAppPrimary *pSCApp;
 	MSG msg;
 	MCIERROR dwMCIError = NULL;
 
@@ -295,8 +382,12 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 		ConsoleLog(LOG_DEBUG, "MUS:  Starting music engine! Initial engine set to \"%s\".\n", SettingsSaveMusicEngine(iSettingsMusicEngineOutput));
 	
 	while (GetMessage(&msg, NULL, 0, 0)) {
+		pSCApp = &pCSimcityAppThis;
 		if (msg.message == WM_MUSIC_STOP) {
-			// Log a debug message at best if the music engine is set to none
+			// Log a debug message at best if the music engine is set to none.
+			// In this case even with the engine set to MUSIC_ENGINE_NONE it
+			// will still continue, however once mciDevice is NULL it'll then
+			// getout.
 			if (iSettingsMusicEngineOutput == MUSIC_ENGINE_NONE)
 				if (mus_debug & MUS_DEBUG_THREAD)
 					ConsoleLog(LOG_DEBUG, "MUS:  Music engine set to None; ignoring WM_MUSIC_STOP message.\n");
@@ -333,75 +424,81 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 		}
 		else if (msg.message == WM_MUSIC_PLAY) {
 			// Log a debug message at best if the music engine is set to none
-			if (iSettingsMusicEngineOutput == MUSIC_ENGINE_NONE)
+			if (iSettingsMusicEngineOutput == MUSIC_ENGINE_NONE) {
 				if (mus_debug & MUS_DEBUG_THREAD)
 					ConsoleLog(LOG_DEBUG, "MUS:  Music engine set to None; ignoring WM_MUSIC_PLAY message.\n");
+				goto next;
+			}
 
 			// If we're using FluidSynth, set up a watchdog thread that runs the FluidSynth engine
 			// and waits for it to exit
-			if (bOptionsMusicEnabled && iSettingsMusicEngineOutput == MUSIC_ENGINE_FLUIDSYNTH && hmodFluidSynth) {
-				if (msg.wParam >= 10000 && msg.wParam <= 10018) {
-					iPlayingSongID = msg.wParam;
-					std::string strSongPath = (char*)0x4CDB88;      // szSoundsPath
-					strSongPath += std::to_string(msg.wParam);
-					strSongPath += ".mid";
-					char* szSongPath = _strdup(strSongPath.c_str());
+			if (pSCApp->dwSCAGameMusic) {
+				if (iSettingsMusicEngineOutput == MUSIC_ENGINE_FLUIDSYNTH && hmodFluidSynth) {
+					if (msg.wParam >= 10000 && msg.wParam <= 10018) {
+						iPlayingSongID = msg.wParam;
+						const char* szSongPath = GetGameSoundPath(iPlayingSongID, FALSE);
 
-					CreateThread(NULL, 0, FluidSynthWatchdogThread, szSongPath, 0, NULL);
+						if (szSongPath)
+							CreateThread(NULL, 0, FluidSynthWatchdogThread, (LPVOID)szSongPath, 0, NULL);
+						goto next;
+					}
+				}
+
+				// Failing all of the above, use MCI to handle MIDI and MP3 playback
+				if (!mciDevice) {
+					if (msg.wParam >= 10000 && msg.wParam <= 10018) {
+						iPlayingSongID = msg.wParam;
+						const char* szSongPath = "";
+						BOOL bUseMP3 = FALSE;
+						if (iSettingsMusicEngineOutput == MUSIC_ENGINE_MP3) {
+							szSongPath = GetGameSoundPath(iPlayingSongID, TRUE);
+							if (FileExists(szSongPath))
+								bUseMP3 = TRUE;
+							else {
+								ConsoleLog(LOG_ERROR, "MUS:  Could not find music file %s; failing back to MIDI sequencer.\n", szSongPath);
+								bUseMP3 = FALSE;
+							}
+						}
+
+						if (!bUseMP3) {
+							szSongPath = GetGameSoundPath(iPlayingSongID, FALSE);
+						}
+						
+						if (!szSongPath)
+							goto next;
+
+						MCI_OPEN_PARMS mciOpenParms = { NULL, NULL, (bUseMP3 ? "mpegvideo" : "sequencer"), szSongPath, NULL };
+						dwMCIError = mciSendCommand(NULL, MCI_OPEN, MCI_OPEN_TYPE | MCI_OPEN_ELEMENT, (DWORD_PTR)&mciOpenParms);
+						if (dwMCIError) {
+							char szErrorBuf[MAXERRORLENGTH];
+							mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
+							ConsoleLog(LOG_ERROR, "MUS:  MCI_OPEN failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
+							iPlayingSongID = 0;
+							goto next;
+						}
+
+						if (mus_debug & MUS_DEBUG_THREAD)
+							ConsoleLog(LOG_DEBUG, "MUS:  Received mciDevice 0x%08X from MCI_OPEN.\n", mciDevice);
+
+						mciDevice = mciOpenParms.wDeviceID;
+						MCI_PLAY_PARMS mciPlayParms = { (DWORD_PTR)GameGetRootWindowHandle(), NULL, NULL};
+						dwMCIError = mciSendCommand(mciDevice, MCI_PLAY, MCI_NOTIFY, (DWORD_PTR)&mciPlayParms);
+						// SC2K sometimes tries to run over its own sequencer device. We ignore the
+						// error that causes (0x151, MCIERR_SEQ_PORT_INUSE) just like the game itself does.
+						if (dwMCIError && dwMCIError != MCIERR_SEQ_PORT_INUSE) {
+							char szErrorBuf[MAXERRORLENGTH];
+							mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
+							ConsoleLog(LOG_ERROR, "MUS:  MCI_PLAY failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
+							iPlayingSongID = 0;
+							goto next;
+						}
+					}
+				}
+				else {
+					if (mus_debug & MUS_DEBUG_THREAD && msg.lParam != 1)
+						ConsoleLog(LOG_DEBUG, "MUS:  WM_MUSIC_PLAY message received but MCI is still active; discarding message.\n");
 					goto next;
 				}
-			}
-
-			// Failing all of the above, use MCI to handle MIDI and MP3 playback
-			if (bOptionsMusicEnabled && !mciDevice) {
-				if (msg.wParam >= 10000 && msg.wParam <= 10018) {
-					iPlayingSongID = msg.wParam;
-					std::string strSongPath = (char*)0x4CDB88;      // szSoundsPath
-					BOOL bUseMP3 = FALSE;
-					strSongPath += std::to_string(msg.wParam);
-					if (iSettingsMusicEngineOutput == MUSIC_ENGINE_MP3) {
-						if (FileExists((strSongPath + ".mp3").c_str())) {
-							strSongPath += ".mp3";
-							bUseMP3 = TRUE;
-						} else {
-							ConsoleLog(LOG_ERROR, "MUS:  Could not find music file %s.mp3; failing back to MIDI sequencer.\n", strSongPath);
-							strSongPath += ".mid";
-							bUseMP3 = FALSE;
-						}
-					} else
-						strSongPath += ".mid";
-
-					MCI_OPEN_PARMS mciOpenParms = { NULL, NULL, (bUseMP3 ? "mpegvideo" : "sequencer"), strSongPath.c_str(), NULL };
-					dwMCIError = mciSendCommand(NULL, MCI_OPEN, MCI_OPEN_TYPE | MCI_OPEN_ELEMENT, (DWORD_PTR)&mciOpenParms);
-					if (dwMCIError) {
-						char szErrorBuf[MAXERRORLENGTH];
-						mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
-						ConsoleLog(LOG_ERROR, "MUS:  MCI_OPEN failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
-						iPlayingSongID = 0;
-						goto next;
-					}
-
-					if (mus_debug & MUS_DEBUG_THREAD)
-						ConsoleLog(LOG_DEBUG, "MUS:  Received mciDevice 0x%08X from MCI_OPEN.\n", mciDevice);
-
-					mciDevice = mciOpenParms.wDeviceID;
-					MCI_PLAY_PARMS mciPlayParms = { (DWORD_PTR)GameGetRootWindowHandle(), NULL, NULL};
-					dwMCIError = mciSendCommand(mciDevice, MCI_PLAY, MCI_NOTIFY, (DWORD_PTR)&mciPlayParms);
-					// SC2K sometimes tries to run over its own sequencer device. We ignore the
-					// error that causes (0x151, MCIERR_SEQ_PORT_INUSE) just like the game itself does.
-					if (dwMCIError && dwMCIError != MCIERR_SEQ_PORT_INUSE) {
-						char szErrorBuf[MAXERRORLENGTH];
-						mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
-						ConsoleLog(LOG_ERROR, "MUS:  MCI_PLAY failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
-						iPlayingSongID = 0;
-						goto next;
-					}
-				}
-			}
-			else if (bOptionsMusicEnabled) {
-				if (mus_debug & MUS_DEBUG_THREAD && msg.lParam != 1)
-					ConsoleLog(LOG_DEBUG, "MUS:  WM_MUSIC_PLAY message received but MCI is still active; discarding message.\n");
-				goto next;
 			}
 		}
 		else if (msg.message == WM_MUSIC_RESET) {
@@ -419,9 +516,12 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 				mciDevice = NULL;
 			}
 
-			// Restart the active song if there is one
-			if (iPlayingSongID)
-				DoMusicPlay(iPlayingSongID, FALSE);
+			// Only restart if the engine is not set to MUSIC_ENGINE_NONE
+			if (iSettingsMusicEngineOutput != MUSIC_ENGINE_NONE) {
+				// Restart the active song if there is one
+				if (iPlayingSongID)
+					DoMusicPlay(iPlayingSongID, FALSE);
+			}
 
 			goto next;
 		}
@@ -450,7 +550,7 @@ void DoMusicPlay(int iSongID, BOOL bInterrupt) {
 		case 10016:
 			PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
 			if (mus_debug & MUS_DEBUG_THREAD)
-				ConsoleLog(LOG_DEBUG, "MUS:  Hook_MusicPlay posted WM_MUSIC_STOP.\n");
+				ConsoleLog(LOG_DEBUG, "MUS:  Hook_SimcityApp_MusicPlay posted WM_MUSIC_STOP.\n");
 			break;
 		}
 	}
@@ -458,14 +558,14 @@ void DoMusicPlay(int iSongID, BOOL bInterrupt) {
 	// Post the play message to the music thread
 	PostThreadMessage(dwMusicThreadID, WM_MUSIC_PLAY, iSongID, (bInterrupt) ? NULL : 1);
 	if (mus_debug & MUS_DEBUG_THREAD && bInterrupt)
-		ConsoleLog(LOG_DEBUG, "MUS:  Hook_MusicPlay posted WM_MUSIC_PLAY for iSongID = %u.\n", iSongID);
+		ConsoleLog(LOG_DEBUG, "MUS:  Hook_SimcityApp_MusicPlay posted WM_MUSIC_PLAY for iSongID = %u.\n", iSongID);
 }
 
-extern "C" int __stdcall Hook_MusicPlay(int iSongID) {
-	DWORD *pThis;
+extern "C" int __stdcall Hook_SimcityApp_MusicPlay(int iSongID) {
+	CSimcityAppPrimary *pThis;
 	__asm mov [pThis], ecx
 
-	if (bOptionsMusicEnabled)
+	if (pThis->dwSCAGameMusic)
 		DoMusicPlay(iSongID, TRUE);
 
 	// Restore "this" and leave
@@ -475,14 +575,14 @@ extern "C" int __stdcall Hook_MusicPlay(int iSongID) {
 	}
 }
 
-extern "C" int __stdcall Hook_MusicStop(void) {
-	DWORD *pThis;
+extern "C" int __stdcall Hook_Sound_MusicStop(void) {
+	CSound *pThis;
 	__asm mov [pThis], ecx
 
 	// Post the stop message to the music thread
 	PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
 	if (mus_debug & MUS_DEBUG_THREAD)
-		ConsoleLog(LOG_DEBUG, "MUS:  Hook_MusicStop posted WM_MUSIC_STOP.\n");
+		ConsoleLog(LOG_DEBUG, "MUS:  Hook_Sound_MusicStop posted WM_MUSIC_STOP.\n");
 
 	// Restore "this" and leave
 	__asm {
@@ -492,8 +592,8 @@ extern "C" int __stdcall Hook_MusicStop(void) {
 }
 
 // Replaces the original MusicPlayNextRefocusSong
-extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void) {
-	DWORD *pThis;
+extern "C" int __stdcall Hook_SimcityApp_MusicPlayNextRefocusSong(void) {
+	CSimcityAppPrimary *pThis;
 	int retval, iSongToPlay;
 
 	// This is actually a __thiscall we're overriding, so save "this"
@@ -503,14 +603,14 @@ extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void) {
 	if (_ReturnAddress() == (void*)0x4061EE || _ReturnAddress() == (void*)0x425444) {
 		if (mus_debug & MUS_DEBUG_SONGS)
 			ConsoleLog(LOG_DEBUG, "MUS:  Forcing song 10001 for call returning to 0x%08X.\n", (DWORD)_ReturnAddress());
-		return Game_MusicPlay(pThis, 10001);
+		return Game_SimcityApp_MusicPlay(pThis, 10001);
 	}
 
 	iSongToPlay = vectorRandomSongIDs[iCurrentSong++];
 	if (mus_debug & MUS_DEBUG_SONGS)
 		ConsoleLog(LOG_DEBUG, "MUS:  Playing song %i (next iCurrentSong will be %i).\n", iSongToPlay, (iCurrentSong > 8 ? 0 : iCurrentSong));
 
-	retval = Game_MusicPlay(pThis, iSongToPlay);
+	retval = Game_SimcityApp_MusicPlay(pThis, iSongToPlay);
 
 	// Loop and/or shuffle.
 	if (iCurrentSong > 8) {
@@ -523,33 +623,30 @@ extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void) {
 	__asm mov eax, [retval]
 }
 
-static void L_MusicPlay(void *pThis, int iSongID) {
+static void L_MusicPlay(CSimcityAppPrimary *pThis, int iSongID) {
 	if (bMultithreadedMusicEnabled)
 		DoMusicPlay(iSongID, FALSE);
 	else
-		Game_MusicPlay(pThis, iSongID);
+		Game_SimcityApp_MusicPlay(pThis, iSongID);
 }
 
-extern "C" void __stdcall Hook_SimcityAppMusicPlayNext(BOOL bNext) {
-	DWORD *pThis;
+extern "C" void __stdcall Hook_SimcityApp_MusicPlayNext(BOOL bNext) {
+	CSimcityAppPrimary *pThis;
 
 	__asm mov [pThis], ecx
-
-	DWORD(__thiscall *H_SoundGetMCIResult)(void *) = (DWORD(__thiscall *)(void *))0x40148D;
-	int(__thiscall *H_SimcityAppMusicPlayNextRefocusSong)(void *) = (int(__thiscall *)(void *))0x401A9B;
 
 	int nSpeed;
 	int iRandMusic;
 	int iSongID;
 
-	if (!bOptionsMusicEnabled)
+	if (!pThis->dwSCAGameMusic)
 		return;
-	nSpeed = ((__int16 *)pThis)[388];
+	nSpeed = pThis->wSCAGameSpeedLOW;
 	if (nSpeed == GAME_SPEED_PAUSED)
 		nSpeed = GAME_SPEED_TURTLE;
-	if (!H_SoundGetMCIResult((void *)pThis[82])) {
+	if (!Game_Sound_GetMCIResult(pThis->SCASNDLayer)) {
 		if (bNext)
-			H_SimcityAppMusicPlayNextRefocusSong(pThis);
+			Game_SimcityApp_MusicPlayNextRefocusSong(pThis);
 		else if ((!(rand() % (8 * (3 * nSpeed - 3)))) || bSettingsAlwaysPlayMusic) {
 			iRandMusic = rand();
 			iSongID = 10000 + (iRandMusic % 19);
@@ -561,11 +658,11 @@ extern "C" void __stdcall Hook_SimcityAppMusicPlayNext(BOOL bNext) {
 void InstallMusicEngineHooks(void) {
 	// Restore additional music
 	VirtualProtect((LPVOID)0x401A9B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x401A9B, Hook_MusicPlayNextRefocusSong);
+	NEWJMP((LPVOID)0x401A9B, Hook_SimcityApp_MusicPlayNextRefocusSong);
 
 	// Hook for CSimcityApp::MusicPlayNext
 	VirtualProtect((LPVOID)0x402AEF, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x402AEF, Hook_SimcityAppMusicPlayNext);
+	NEWJMP((LPVOID)0x402AEF, Hook_SimcityApp_MusicPlayNext);
 
 	// Shuffle music if the shuffle setting is enabled
 	MusicShufflePlaylist(0);
@@ -573,9 +670,9 @@ void InstallMusicEngineHooks(void) {
 	// Replace music functions with ones to post messages to the music thread
 	if (bSettingsUseMultithreadedMusic) {
 		VirtualProtect((LPVOID)0x402414, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-		NEWJMP((LPVOID)0x402414, Hook_MusicPlay);
+		NEWJMP((LPVOID)0x402414, Hook_SimcityApp_MusicPlay);
 		VirtualProtect((LPVOID)0x402BE4, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-		NEWJMP((LPVOID)0x402BE4, Hook_MusicStop);
+		NEWJMP((LPVOID)0x402BE4, Hook_Sound_MusicStop);
 		VirtualProtect((LPVOID)0x4D2BFC, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
 		*(DWORD*)0x4D2BFC = (DWORD)MusicMCINotifyCallback;
 

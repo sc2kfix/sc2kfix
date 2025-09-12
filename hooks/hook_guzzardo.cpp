@@ -168,13 +168,11 @@ static int FindTheHouseLabel() {
 static void SetTheHouseLabel(int xPos, int ySignPos) {
 	BYTE iLabelIdx;
 
-	BYTE(__stdcall * H_PrepareLabel)() = (BYTE(__stdcall*)())0x402D56;
-
 	if (XTXTGetTextOverlayID(xPos, ySignPos)) {
 		if (XTXTGetTextOverlayID(xPos, ySignPos) >= MAX_USER_TEXT_ENTRIES)
 			return;
 	}
-	iLabelIdx = H_PrepareLabel();
+	iLabelIdx = Game_PrepareLabel();
 	if (iLabelIdx) {
 		XTXTSetTextOverlayID(xPos, ySignPos, iLabelIdx);
 		SetXLABEntry(iLabelIdx, theHouse);
@@ -184,8 +182,6 @@ static void SetTheHouseLabel(int xPos, int ySignPos) {
 static BOOL FindTheHouse() {
 	__int16 xPos, yPos, xWindPos, ySignPos;
 	__int16 iLength, iDepth, iLabelIdx;
-
-	void(__cdecl * H_RemoveLabel)(__int16) = (void(__cdecl*)(__int16))0x401DCA;
 
 	xPos = -1;
 	yPos = -1;
@@ -218,7 +214,7 @@ static BOOL FindTheHouse() {
 		for (iLength = 0; iLength < GAME_MAP_SIZE; ++iLength) {
 			for (iDepth = 0; iDepth < GAME_MAP_SIZE; ++iDepth) {
 				if (XTXTGetTextOverlayID(iLength, iDepth) == iLabelIdx) {
-					H_RemoveLabel(iLabelIdx);
+					Game_RemoveLabel(iLabelIdx);
 					XTXTSetTextOverlayID(iLength, iDepth, 0);
 					break;
 				}
@@ -291,8 +287,8 @@ static void ChangeChurchZone() {
 	}
 }
 
-extern "C" void __stdcall Hook_MainFrameOnChar(UINT nChar, UINT nRepCnt, UINT nFlags) {
-	DWORD* pThis;
+extern "C" void __stdcall Hook_MainFrame_OnChar(UINT nChar, UINT nRepCnt, UINT nFlags) {
+	CMainFrame* pThis;
 
 	__asm mov[pThis], ecx
 
@@ -303,30 +299,17 @@ extern "C" void __stdcall Hook_MainFrameOnChar(UINT nChar, UINT nRepCnt, UINT nF
 	int nCodePos;
 	char nCodeChar;
 	cheat_t* strCheatEntry;
+	CSimcityAppPrimary *pSCApp;
 	HWND hWnd;
-	DWORD* pSCView;
+	CSimcityView* pSCView;
 	HMENU hMenu, hDebugMenu;
 	CMFC3XMenu *pMenu, *pDebugMenu;
 	int iSCMenuPos;
-	DWORD jokeDlg[27];
+	CJokeDialog jokeDlg;
 
-	void(__cdecl * H_DoFund)(__int16) = (void(__cdecl*)(__int16))0x40191F;
-	void(__thiscall * H_SimcityViewDebugGrantAllGifts)(DWORD*) = (void(__thiscall*)(DWORD*))0x401C0D;
-	int(__thiscall * H_ADialogDestruct)(void*) = (int(__thiscall*)(void*))0x401D7A;
-	void(__thiscall * H_SimcityAppAdjustNewspaperMenu)(void*) = (void(__thiscall*)(void*))0x40210D;
-	DWORD* (__thiscall * H_JokeDialogConstruct)(void*, void*) = (DWORD * (__thiscall*)(void*, void*))0x4024E6;
-	int(__stdcall * H_GetSimcityViewMenuPos)(int iPos) = (int(__stdcall*)(int))0x402EFA;
-	void(__stdcall * H_SimulationProposeMilitaryBase)() = (void(__stdcall*)())0x403017;
-	INT_PTR(__thiscall * H_DialogDoModal)(void*) = (INT_PTR(__thiscall*)(void*))0x4A7196;
-	CMFC3XMenu* (__stdcall * H_CMenuFromHandle)(HMENU) = (CMFC3XMenu * (__stdcall*)(HMENU))0x4A7427;
-	int(__thiscall * H_CMenuAttach)(CMFC3XMenu*, HMENU) = (int(__thiscall*)(CMFC3XMenu*, HMENU))0x4A7483;
+	pSCApp = &pCSimcityAppThis;
 
-	HINSTANCE& game_hModule = *(HINSTANCE*)0x4CE8C8;
-	int& iCheatEntry = *(int*)0x4E6520;
-	int& iCheatExpectedCharPos = *(int*)0x4E6524;
-	char* szNewItem = (char*)0x4E66EC;
-
-	hWnd = (HWND)pThis[7];
+	hWnd = pThis->m_hWnd;
 
 	// "Insert" key - only relevant in the demo but pressing it advances
 	// the timer.
@@ -377,7 +360,7 @@ TRYAGAIN:
 		}
 		switch (strCheatEntry->iIndex) {
 		case CHEAT_FUND:
-			H_DoFund(25);
+			Game_DoFund(25);
 			break;
 		case CHEAT_CASS:
 			if (!Game_RandomWordLFSRMod(16)) {
@@ -387,9 +370,9 @@ TRYAGAIN:
 			dwCityFunds += 250;
 			break;
 		case CHEAT_THEWORKS:
-			pSCView = Game_PointerToCSimcityViewClass(&pCSimcityAppThis);
+			pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 			if (pSCView)
-				H_SimcityViewDebugGrantAllGifts(pSCView);
+				Game_SimcityView_DebugGrantAllGifts(pSCView);
 			break;
 		case CHEAT_MAJORFLOOD:
 			wSetTriggerDisasterType = DISASTER_MASSFLOODS;
@@ -415,29 +398,31 @@ TRYAGAIN:
 			Game_SimulationPrepareDiasterCoordinates(&dwDisasterPoint, wCityCenterX, wCityCenterY);
 			break;
 		case CHEAT_DEBUG:
-			if (bPriscillaActivated)
+			if (pSCApp->bSCAPriscillaActivated)
 				return;
 			hMenu = GetMenu(hWnd);
-			pMenu = H_CMenuFromHandle(hMenu);
+			pMenu = GameMain_Menu_FromHandle(hMenu);
 			pDebugMenu = (CMFC3XMenu*)operator new(sizeof(CMFC3XMenu)); // This would be CMenu().
 			if (pDebugMenu)
 				pDebugMenu->m_hMenu = 0;
-			hDebugMenu = LoadMenuA(game_hModule, (LPCSTR)223);
+			hDebugMenu = LoadMenuA(hGameModule, (LPCSTR)223);
 			AdjustDebugMenu(hDebugMenu);
-			H_CMenuAttach(pDebugMenu, hDebugMenu);
-			iSCMenuPos = H_GetSimcityViewMenuPos(6);
+			GameMain_Menu_Attach(pDebugMenu, hDebugMenu);
+			iSCMenuPos = Game_GetSimcityViewMenuPos(6);
 			InsertMenuA(pMenu->m_hMenu, iSCMenuPos + 6, MF_BYPOSITION | MF_POPUP, (UINT_PTR)pDebugMenu->m_hMenu, szNewItem);
-			H_SimcityAppAdjustNewspaperMenu(&pCSimcityAppThis);
+			Game_SimcityApp_AdjustNewspaperMenu(pSCApp);
 			DrawMenuBar(hWnd);
-			bPriscillaActivated = 1;
+			pSCApp->bSCAPriscillaActivated = 1;
 			break;
 		case CHEAT_MILITARY:
-			H_SimulationProposeMilitaryBase();
+			Game_SimulationProposeMilitaryBase();
 			break;
 		case CHEAT_JOKE:
-			H_JokeDialogConstruct((void*)&jokeDlg, 0);
-			H_DialogDoModal((void*)&jokeDlg);
-			H_ADialogDestruct((void*)&jokeDlg); // Function name references "A" dialog rather than anything specific.
+			Game_JokeDialog_Construct(&jokeDlg, 0);
+			ToggleFloatingStatusDialog(FALSE);
+			GameMain_Dialog_DoModal(&jokeDlg);
+			ToggleFloatingStatusDialog(TRUE);
+			Game_JokeDialog_Destruct(&jokeDlg); // Function name references "A" dialog rather than anything specific.
 			break;
 		case CHEAT_WEBB:
 			if (!FindTheHouse()) {
@@ -510,5 +495,5 @@ void PorntipsGuzzardo(void) {
 
 	// Hook for CMainFrame::OnChar
 	VirtualProtect((LPVOID)0x4029E1, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4029E1, Hook_MainFrameOnChar);
+	NEWJMP((LPVOID)0x4029E1, Hook_MainFrame_OnChar);
 }

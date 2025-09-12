@@ -6,6 +6,17 @@
 #define _CN_COMMAND 0
 #define _CN_COMMAND_UI -1
 
+// Styles for toolbar buttons
+#define TBBS_BUTTON     0x00    // this entry is button
+#define TBBS_SEPARATOR  0x01    // this entry is a separator
+#define TBBS_CHECKBOX   0x02    // this is an auto check/radio button
+
+// styles for display states
+#define TBBS_CHECKED        0x0100  // button is checked/down
+#define TBBS_INDETERMINATE  0x0200  // third state
+#define TBBS_DISABLED       0x0400  // element is disabled
+#define TBBS_PRESSED        0x0800  // button is being depressed - mouse down
+
 // Hierarchy for reference:
 //
 // NOTE: Any classes that don't contain the 'MFC3X' term
@@ -83,7 +94,6 @@
 //						class CSimGraphDialog;
 //
 //				class CMFC3XStatic;
-//				class CMFC3XButton;
 //				class CMFC3XListBox;
 //				class CMFC3XComboBox;
 //				class CMFC3XEdit;
@@ -141,6 +151,30 @@
 //
 // class CMFC3XString;
 
+// Placeholders and forward-declarations
+
+struct CMFC3XRuntimeClass;
+
+class CMFC3XControlBar;
+class CMFC3XDialogBar;
+class CMFC3XDockBar;
+class CMFC3XDockContext;
+class CMFC3XException;
+class CMFC3XFrameWnd;
+class CMFC3XObject;
+class CMFC3XOleDropTarget;
+class CMFC3XOleFrameHook;
+class CMFC3XOleMessageFilter;
+class CMFC3XRecentFileList;
+class CMFC3XView;
+class CMFC3XWinApp;
+class CMFC3XWinThread;
+class CMFC3XWnd;
+
+class CMFC3XPtrList;
+class CMFC3XMapPtrToPtr;
+struct CMFC3XHandleMap;
+
 // Reimplementation of the MFC 3.x message map entry structure.
 typedef struct {
 	UINT nMessage;
@@ -151,8 +185,64 @@ typedef struct {
 	void *pfn;
 } MFC3X_AFX_MSGMAP_ENTRY;
 
+typedef struct {
+	CMFC3XWinApp *m_pCurrentWinApp;
+	HINSTANCE m_hCurrentInstanceHandle;
+	HINSTANCE m_hCurrentResourceHandle;
+	LPCTSTR m_lpszCurrentAppName;
+	CMFC3XRuntimeClass *m_pFirstClass;
+	void (__stdcall *m_pfnTerminate)();
+} MFC3X_AFX_CORE_STATE;
+
+class MFC3X_AFX_EXCEPTION_LINK {
+public:
+	MFC3X_AFX_EXCEPTION_LINK *m_pLinkPrev;
+	CMFC3XException *m_pException;
+};
+
+typedef struct {
+	MFC3X_AFX_EXCEPTION_LINK *m_pLinkTop;
+} MFC3X_AFX_EXCEPTION_CONTEXT;
+
+#pragma pack(push, 1)
+struct CMFC3XPlex {
+	CMFC3XPlex* pNext;
+	UINT nMax;
+	UINT nCur;
+};
+#pragma pack(pop)
+
+class CMFC3XPoint : public tagPOINT {
+
+};
+
+class CMFC3XRect : public tagRECT {
+
+};
+
+class CMFC3XSize : public tagSIZE {
+
+};
+
 class CMFC3XObject {
 	DWORD *__vftable;
+};
+
+struct CMFC3XRuntimeClass {
+	const char *m_lpszClassName;
+	int m_nObjectSize;
+	unsigned int m_wSchema;
+	CMFC3XObject *(__stdcall *m_pfnCreateObject)();
+	CMFC3XRuntimeClass *m_pBaseClass;
+	CMFC3XRuntimeClass *m_pNextClass;
+};
+
+// Reimplementation of the CString class from MFC 3.x.
+class CMFC3XString {
+public:
+	LPTSTR m_pchData;
+	int m_nDataLength;
+	int m_nAllocLength;
 };
 
 class CMFC3XFile : public CMFC3XObject {
@@ -191,18 +281,326 @@ public:
 	int m_bCloseOnDelete;
 };
 
-class CMFC3XMenu : public CMFC3XObject
-{
+class CMFC3XException : public CMFC3XObject {
+public:
+	int m_bAutoDelete;
+};
+
+struct CMFC3XAssoc {
+	CMFC3XAssoc* pNext;
+	UINT nHashValue;
+	void* key;
+	void* value;
+};
+
+class CMFC3XMapPtrToPtr : public CMFC3XObject {
+public:
+	CMFC3XAssoc** m_pHashTable;
+	UINT m_nHashTableSize;
+	int m_nCount;
+	CMFC3XAssoc* m_pFreeList;
+	CMFC3XPlex* m_pBlocks;
+	int m_nBlockSize;
+};
+
+class CMFC3XGdiObject : public CMFC3XObject {
+public:
+	HGDIOBJ m_hObject;
+};
+
+class CMFC3XBitmap : public CMFC3XGdiObject {
+
+};
+
+class CMFC3XBrush : public CMFC3XGdiObject {
+
+};
+
+class CMFC3XFont : public CMFC3XGdiObject {
+
+};
+
+class CMFC3XPalette : public CMFC3XGdiObject {
+	
+};
+
+class CMFC3XPen : public CMFC3XGdiObject {
+
+};
+
+class CMFC3XDC : public CMFC3XObject {
+public:
+	HDC m_hDC;
+	HDC m_hAttribDC;
+	BOOL m_bPrinting;
+};
+
+class CMFC3XMenu : public CMFC3XObject {
 public:
 	HMENU m_hMenu;
 };
 
-// Reimplementation of the CString class from MFC 3.x.
-class CMFC3XString {
+class CMFC3XPtrArray : public CMFC3XObject {
 public:
-	LPTSTR m_pchData;
-	int m_nDataLength;
-	int m_nAllocLength;
+	void **m_pData;
+	int m_nSize;
+	int m_nMaxSize;
+	int m_nGrowBy;
+};
+
+struct CMFC3XNode {
+	CMFC3XNode* pNext;
+	CMFC3XNode* pPrev;
+	void* data;
+};
+
+class CMFC3XPtrList : public CMFC3XObject {
+public:
+	CMFC3XNode* m_pNodeHead;
+	CMFC3XNode* m_pNodeTail;
+	int m_nCount;
+	CMFC3XNode* m_pNodeFree;
+	struct CMFC3XPlex* m_pBlocks;
+	int m_nBlockSize;
+};
+
+class CMFC3XCmdTarget : public CMFC3XObject {
+public:
+	DWORD m_dwRef;
+	IUnknown *m_pOuterUnknown;
+	DWORD m_xInnerUnknown;
+	struct XDispatch
+	{
+		DWORD m_vtbl;
+		size_t m_nOffset;
+	} m_xDispatch;
+	BOOL m_bResultExpected;
+};
+
+class CMFC3XDocTemplate : public CMFC3XCmdTarget {
+public:
+	CMFC3XObject *m_pAttachedFactory;
+	HMENU m_hMenuInPlace;
+	HACCEL m_hAccelInPlace;
+	HMENU m_hMenuEmbedding;
+	HACCEL m_hAccelEmbedding;
+	HMENU m_hMenuInPlaceServer;
+	HACCEL m_hAccelInPlaceServer;
+	unsigned int m_nIDResource;
+	unsigned int m_nIDServerResource;
+	CMFC3XRuntimeClass *m_pDocClass;
+	CMFC3XRuntimeClass *m_pFrameClass;
+	CMFC3XRuntimeClass *m_pViewClass;
+	CMFC3XRuntimeClass *m_pOleFrameClass;
+	CMFC3XRuntimeClass *m_pOleViewClass;
+	CMFC3XString m_strDocStrings;
+};
+
+class CMFC3XMultiDocTemplate : CMFC3XDocTemplate {
+	HMENU m_hMenuShared;
+	HACCEL m_hAccelTable;
+	CMFC3XPtrList m_docList;
+	unsigned int m_nUntitledCount;
+};
+
+class CMFC3XDocument : public CMFC3XCmdTarget {
+public:
+	CMFC3XString m_strTitle;
+	CMFC3XString m_strPathName;
+	CMFC3XDocTemplate *m_pDocTemplate;
+	CMFC3XPtrList m_viewList;
+	int m_bModified;
+	int m_bAutoDelete;
+	int m_bEmbedded;
+};
+
+class CMFC3XWnd : public CMFC3XCmdTarget {
+public:
+	HWND m_hWnd;
+	enum AdjustType { adjustBorder = 0, adjustOutside = 1 };
+	enum RepositionFlags
+	{ reposDefault = 0, reposQuery = 1, reposExtra = 2 };
+	HWND m_hWndOwner;
+	WNDPROC m_pfnSuper;
+	BOOL m_bTempHidden;
+	CMFC3XOleDropTarget *m_pDropTarget;
+};
+
+class CMFC3XView : public CMFC3XWnd {
+public:
+	CMFC3XDocument *m_pDocument;
+};
+
+#pragma pack(push, 1)
+class CMFC3XFrameWnd : public CMFC3XWnd {
+public:
+	int m_bAutoMenuEnable;
+	int m_nWindow;
+	HMENU m_hMenuDefault;
+	HACCEL m_hAccelTable;
+	unsigned int m_dwPromptContext;
+	BOOL m_bHelpMode;
+	BOOL m_bStayActive;
+	CMFC3XFrameWnd *m_pNextFrameWnd;
+	CMFC3XRect m_rectBorder;
+	CMFC3XOleFrameHook *m_pNotifyHook;
+	CMFC3XPtrList m_listControlBars;
+	BOOL m_bModalDisable;
+	int m_nShowDelay;
+	unsigned int m_nIDHelp;
+	unsigned int m_nIDTracking;
+	unsigned int m_nIDLastMessage;
+	CMFC3XView *m_pViewActive;
+	int (__stdcall *m_lpfnCloseProc)(CMFC3XFrameWnd *);
+	unsigned int m_cModalStack;
+	HWND__ **m_phWndDisable;
+	HMENU__ *m_hMenuAlt;
+	CMFC3XString m_strTitle;
+	int m_bInRecalcLayout;
+	CMFC3XRuntimeClass *m_pFloatingFrameClass;
+	unsigned int m_nIdleFlags;
+};
+#pragma pack(pop)
+
+class CMFC3XDockContext {
+public:
+	DWORD *__vftable /*VFT*/;
+	CMFC3XPoint m_ptLast;
+	CMFC3XRect m_rectLast;
+	CMFC3XSize m_sizeLast;
+	int m_bDitherLast;
+	CMFC3XRect m_rectDragHorz;
+	CMFC3XRect m_rectDragVert;
+	CMFC3XRect m_rectFrameDragHorz;
+	CMFC3XRect m_rectFrameDragVert;
+	CMFC3XControlBar *m_pBar;
+	CMFC3XFrameWnd *m_pDockSite;
+	unsigned int m_dwDockStyle;
+	unsigned int m_dwOverDockStyle;
+	unsigned int m_dwStyle;
+	int m_bFlip;
+	int m_bForceFrame;
+	CMFC3XDC *m_pDC;
+	int m_bDragging;
+};
+
+class CMFC3XControlBar : public CMFC3XWnd {
+public:
+	int m_bAutoDelete;
+	int m_cxLeftBorder;
+	int m_cxRightBorder;
+	int m_cyTopBorder;
+	int m_cyBottomBorder;
+	int m_cxDefaultGap;
+	int m_nCount;
+	void *m_pData;
+	unsigned int m_nStateFlags;
+	unsigned int m_dwStyle;
+	unsigned int m_dwDockStyle;
+	CMFC3XFrameWnd *m_pDockSite;
+	CMFC3XDockBar *m_pDockBar;
+	CMFC3XDockContext *m_pDockContext;
+};
+
+class CMFC3XDialogBar : public CMFC3XControlBar {
+public:
+	CMFC3XSize m_sizeDefault;
+};
+
+class CMFC3XDockBar : public CMFC3XControlBar {
+public:
+	BOOL m_bFloating;
+	CMFC3XPtrArray m_arrBars;
+	BOOL m_bLayoutQuery;
+};
+
+class CMFC3XMDIFrameWnd : public CMFC3XFrameWnd {
+public:
+	HWND m_hWndMDIClient;
+};
+
+class CMFC3XDialog : public CMFC3XWnd {
+public:
+	unsigned int m_nIDHelp;
+	void *m_hDialogTemplate;
+	const DLGTEMPLATE *m_lpDialogTemplate;
+	CMFC3XWnd *m_pParentWnd;
+	HWND m_hWndTop;
+};
+
+class CMFC3XCommonDialog : public CMFC3XDialog {
+
+};
+
+class CMFC3XFileDialog : public CMFC3XCommonDialog {
+public:
+	OPENFILENAME m_ofn;
+	int m_bOpenFileDialog;
+	CMFC3XString m_strFilter;
+	char m_szFileTitle[64];
+	char m_szFileName[260];
+};
+
+class CMFC3XStatic : public CMFC3XWnd {
+
+};
+
+class CMFC3XScrollBar : public CMFC3XWnd {
+
+};
+
+class CMFC3XButton : public CMFC3XWnd {
+
+};
+
+class CMFC3XBitmapButton : public CMFC3XButton {
+public:
+	CMFC3XBitmap m_bitmap;
+	CMFC3XBitmap m_bitmapSel;
+	CMFC3XBitmap m_bitmapFocus;
+	CMFC3XBitmap m_bitmapDisabled;
+};
+
+class CMFC3XWinThread : public CMFC3XCmdTarget {
+public:
+	CMFC3XWnd *m_pMainWnd;
+	CMFC3XWnd *m_pActiveWnd;
+	BOOL m_bAutoDelete;
+	HANDLE m_hThread;
+	DWORD m_nThreadID;
+	MSG m_msgCur;
+	LPVOID m_pThreadParams;
+	UINT (__cdecl *m_pfnThreadProc)(void *);
+	CMFC3XPoint m_ptCursorLast;
+	UINT m_nMsgLast;
+};
+
+class CMFC3XWinApp : public CMFC3XWinThread {
+public:
+	HINSTANCE m_hInstance;
+	HINSTANCE m_hPrevInstance;
+	LPTSTR m_lpCmdLine;
+	int m_nCmdShow;
+	LPCTSTR m_pszAppName;
+	LPCTSTR m_pszRegistryKey;
+	BOOL m_bHelpMode;
+	LPCTSTR m_pszExeName;
+	LPCTSTR m_pszHelpFilePath;
+	LPCTSTR m_pszProfileName;
+	HGLOBAL m_hDevMode;
+	HGLOBAL m_hDevNames;
+	DWORD m_dwPromptContext;
+	int m_nWaitCursorCount;
+	HICON m_hcurWaitCursorRestore;
+	CMFC3XRecentFileList *m_pRecentFileList;
+	CMFC3XPtrList m_templateList;
+	unsigned __int16 m_atomApp;
+	unsigned __int16 m_atomSystemTopic;
+	unsigned int m_nNumPreviewPages;
+	unsigned int m_nSafetyPoolSize;
+	void (CALLBACK* m_lpfnOleFreeLibraries)();
+	void (CALLBACK* m_lpfnOleTerm)(BOOL);
+	CMFC3XOleMessageFilter *m_pMessageFilter;
 };
 
 class CMFC3XCmdUI {
@@ -216,7 +614,7 @@ public:
 	CMFC3XMenu *m_pMenu;
 	CMFC3XMenu *m_pSubMenu;
 
-	DWORD *m_pOther;
+	CMFC3XWnd *m_pOther;
 
 	int m_bEnableChanged;
 	int m_bContinueRouting;
@@ -233,7 +631,46 @@ public:
 class CMFC3XDataExchange {
 public:
 	BOOL m_bSaveAndValidate;
-	DWORD *m_pDlgWnd;
+	CMFC3XWnd *m_pDlgWnd;
 	HWND m_hWndLastControl;
 	BOOL m_bEditLastControl;
+};
+
+class MFC3X_AFX_THREAD_STATE {
+public:
+	CMFC3XWinThread *m_pCurrentWinThread;
+	BOOL m_bInMsgFilter;
+	CMFC3XFrameWnd *m_pFirstFrameWnd;
+	void *m_pSafetyPoolBuffer;
+	MFC3X_AFX_EXCEPTION_CONTEXT m_exceptionContext;
+	DWORD m_nTempMapLock;
+	CMFC3XHandleMap *m_pmapHWND;
+	CMFC3XHandleMap *m_pmapHMENU;
+	CMFC3XHandleMap *m_pmapHDC;
+	CMFC3XHandleMap *m_pmapHGDIOBJ;
+	CMFC3XWnd *m_pWndInit;
+	HWND m_hWndInit;
+	BOOL m_bDlgCreate;
+	HHOOK m_hHookOldSendMsg;
+	HHOOK m_hHookOldCbtFilter;
+	MSG m_lastSentMsg;
+	HWND m_hTrackingWindow;
+	HMENU m_hTrackingMenu;
+	TCHAR m_szTempClassName[64];
+	HWND m_hLockoutNotifyWindow;
+	CMFC3XView *m_pRoutingView;
+	BOOL m_bWaitForDataSource;
+	HWND m_hSocketWindow;
+	CMFC3XMapPtrToPtr m_mapSocketHandle;
+	CMFC3XMapPtrToPtr m_mapDeadSockets;
+	CMFC3XPtrList m_listSocketNotifications;
+	CMFC3XHandleMap *m_pmapHIMAGELIST;
+};
+
+struct CMFC3XHandleMap {
+	CMFC3XMapPtrToPtr m_permanentMap;
+	CMFC3XMapPtrToPtr m_temporaryMap;
+	CMFC3XRuntimeClass *m_pClass;
+	size_t m_nOffset;
+	int m_nHandles;
 };

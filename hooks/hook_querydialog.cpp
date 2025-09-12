@@ -223,10 +223,14 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 }
 
 static BOOL DoAdvancedQuery(__int16 x, __int16 y) {
-	DWORD *pCityToolBar;
+	CSimcityAppPrimary *pSCApp;
+	CMainFrame *pMainFrm;
+	CCityToolBar *pCityToolBar;
 	query_coords_info qci;
 
-	pCityToolBar = &((DWORD *)pCWndRootWindow)[102];
+	pSCApp = &pCSimcityAppThis;
+	pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
+	pCityToolBar = &pMainFrm->dwMFCityToolBar;
 
 	if (bUseAdvancedQuery) {
 		if (GetAsyncKeyState(VK_MENU) < 0) {
@@ -234,9 +238,9 @@ static BOOL DoAdvancedQuery(__int16 x, __int16 y) {
 			qci.iTileX = x;
 			qci.iTileY = y;
 
-			Game_ToolMenuDisable(pCityToolBar);
+			Game_CityToolBar_ToolMenuDisable(pCityToolBar);
 			DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_ADVANCEDQUERY), GameGetRootWindowHandle(), AdvancedQueryDialogProc, (LPARAM)&qci);
-			Game_ToolMenuEnable(pCityToolBar);
+			Game_CityToolBar_ToolMenuEnable(pCityToolBar);
 			return TRUE;
 		}
 	}
@@ -244,17 +248,15 @@ static BOOL DoAdvancedQuery(__int16 x, __int16 y) {
 }
 
 extern "C" void __cdecl Hook_QuerySpecificItem(__int16 x, __int16 y) {
-	void(__cdecl *H_QuerySpecificItem)(__int16, __int16) = (void(__cdecl *)(__int16, __int16))0x44D1B0;
 
 	if (!DoAdvancedQuery(x, y))
-		H_QuerySpecificItem(x, y);
+		GameMain_QuerySpecificItem(x, y);
 }
 
 extern "C" void __cdecl Hook_QueryGeneralItem(__int16 x, __int16 y) {
-	void(__cdecl *H_QueryGeneralItem)(__int16, __int16) = (void(__cdecl *)(__int16, __int16))0x4719A0;
 
 	if (!DoAdvancedQuery(x, y))
-		H_QueryGeneralItem(x, y);
+		GameMain_QueryGeneralItem(x, y);
 }
 
 void InstallQueryHooks_SC2K1996(void) {

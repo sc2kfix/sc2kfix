@@ -452,7 +452,7 @@ RETRY_CHECK1:
 				}
 			}
 			Game_CenterOnTileCoords(iSiloStartXPos, iSiloStartYPos);
-			return Game_AfxMessageBoxID(244, 0, -1);
+			return GameMain_AfxMessageBoxID(244, 0, -1);
 		}
 		else
 			return 0;
@@ -487,7 +487,7 @@ static void MilitaryBasePlotPlacement(__int16 iRandXPos, __int16 iRandStoredYPos
 }
 
 static int MilitaryBaseDecline(void) {
-	int iRes = Game_AfxMessageBoxID(411, 0, -1);
+	int iRes = GameMain_AfxMessageBoxID(411, 0, -1);
 	bMilitaryBaseType = MILITARY_BASE_DECLINED;
 	return iRes;
 }
@@ -495,7 +495,7 @@ static int MilitaryBaseDecline(void) {
 static int MilitaryBaseAirForce(int iValidTiles, int iValidAltitudeTiles, __int16 iRandXPos, __int16 iRandStoredYPos) {
 	if (iValidTiles == iValidAltitudeTiles) {
 		bMilitaryBaseType = MILITARY_BASE_AIR_FORCE;
-		Game_AfxMessageBoxID(242, 0, -1);
+		GameMain_AfxMessageBoxID(242, 0, -1);
 
 		MilitaryBasePlotPlacement(iRandXPos, iRandStoredYPos);
 
@@ -508,7 +508,7 @@ static int MilitaryBaseAirForce(int iValidTiles, int iValidAltitudeTiles, __int1
 static int MilitaryBaseArmyBase(int iValidTiles, int iValidAltitudeTiles, __int16 iRandXPos, __int16 iRandStoredYPos) {
 	if (iValidTiles != iValidAltitudeTiles) {
 		bMilitaryBaseType = MILITARY_BASE_ARMY;
-		Game_AfxMessageBoxID(241, 0, -1);
+		GameMain_AfxMessageBoxID(241, 0, -1);
 
 		MilitaryBasePlotPlacement(iRandXPos, iRandStoredYPos);
 
@@ -709,7 +709,7 @@ PLACENAVAL:
 					if (iPass) {
 						bMilitaryBaseType = MILITARY_BASE_NAVY;
 						Game_CenterOnTileCoords(GetNearCoord(iTileCoords[0]), GetFarCoord(iTileCoords[0]));
-						return Game_AfxMessageBoxID(243, 0, -1);
+						return GameMain_AfxMessageBoxID(243, 0, -1);
 					}
 					else {
 						iPass = 1;
@@ -727,7 +727,7 @@ NONAVY:
 }
 
 void ProposeMilitaryBaseDecline(void) {
-	if (!Game_PointerToCSimcityViewClass(&pCSimcityAppThis) || !wCityMode)
+	if (!Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis) || !wCityMode)
 		return;
 
 	if (L_MessageBoxA(GameGetRootWindowHandle(), "Are you sure that you want to stop the development of existing military zones?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES)
@@ -741,7 +741,7 @@ void ProposeMilitaryBaseDecline(void) {
 }
 
 void ProposeMilitaryBaseMissileSilos(void) {
-	if (!Game_PointerToCSimcityViewClass(&pCSimcityAppThis) || !wCityMode)
+	if (!Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis) || !wCityMode)
 		return;
 
 	if (L_MessageBoxA(GameGetRootWindowHandle(), "Are you sure that you want an attempt to be made to spawn Missile Silos?", "Ominous sounds of danger...", MB_YESNO|MB_DEFBUTTON2|MB_ICONEXCLAMATION) != IDYES)
@@ -769,7 +769,7 @@ void ProposeMilitaryBaseAirForceBase(void) {
 	__int16 iRandStoredXPos;
 	__int16 iRandStoredYPos;
 
-	if (!Game_PointerToCSimcityViewClass(&pCSimcityAppThis) || !wCityMode)
+	if (!Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis) || !wCityMode)
 		return;
 
 	iResult = -1;
@@ -803,7 +803,7 @@ void ProposeMilitaryBaseArmyBase(void) {
 	__int16 iRandStoredXPos;
 	__int16 iRandStoredYPos;
 
-	if (!Game_PointerToCSimcityViewClass(&pCSimcityAppThis) || !wCityMode)
+	if (!Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis) || !wCityMode)
 		return;
 
 	iResult = -1;
@@ -828,7 +828,7 @@ GETOUT:
 }
 
 void ProposeMilitaryBaseNavalYard(void) {
-	if (!Game_PointerToCSimcityViewClass(&pCSimcityAppThis) || !wCityMode)
+	if (!Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis) || !wCityMode)
 		return;
 
 	if (!bCityHasOcean) {
@@ -862,7 +862,7 @@ extern "C" void __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	
 	unsigned int iMilitaryBaseTries = 0;
 
-	if (Game_AfxMessageBoxID(240, MB_YESNO, -1) == IDNO)
+	if (GameMain_AfxMessageBoxID(240, MB_YESNO, -1) == IDNO)
 		bMilitaryBaseType = MILITARY_BASE_DECLINED;
 	else {
 	REATTEMPT:
