@@ -1740,8 +1740,7 @@ void InstallMiscHooks_SC2K1996(void) {
 	*(BYTE*)0x428FB3 = 0x32;
 	
 	// Install the advanced query hook
-	if (bUseAdvancedQuery)
-		InstallQueryHooks_SC2K1996();
+	InstallQueryHooks_SC2K1996();
 
 	// Expand sound buffers and load higher quality sounds from DLL resources
 	LoadReplacementSounds();

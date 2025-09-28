@@ -1,4 +1,4 @@
-// sc2kfix include/sc2k_demo.h: defines specific to the 1996 Special Edition version
+// sc2kfix include/sc2k_demo.h: defines specific to the Interactive Demo version
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 // Header for the Interactive Demo... AAAA!!
