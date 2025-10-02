@@ -2,7 +2,6 @@
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <wininet.h>
 #include <shlwapi.h>
@@ -122,6 +121,8 @@ BOOL UpdaterCheckForUpdates(void) {
 
 	if (strcmp(szSC2KFixReleaseTag, szLatestRelease)) {
 		ConsoleLog(LOG_INFO, "UPD:  New release available: %s (currently running %s)\n", szLatestRelease, szSC2KFixReleaseTag);
+		if (dwDetectedVersion == SC2KVERSION_1996)
+			PostMessage(hwndMainDialog_SC2K1996, WM_SC2KFIX_UPDATE, 0, 1);
 		return TRUE;
 	}
 

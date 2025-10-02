@@ -44,6 +44,9 @@ BOOL bSettingsAlwaysSkipIntro = FALSE;
 UINT iSettingsMusicEngineOutput = MUSIC_ENGINE_SEQUENCER;
 char szSettingsFluidSynthSoundfont[MAX_PATH + 1];
 
+char szSettingsMIDITrackPath[MUSIC_TRACKS][MAX_PATH + 1];
+char szSettingsMP3TrackPath[MUSIC_TRACKS][MAX_PATH + 1];
+
 void SetGamePath(void) {
 	char szModulePathName[MAX_PATH];
 	GetModuleFileNameEx(GetCurrentProcess(), NULL, szModulePathName, MAX_PATH);
@@ -88,22 +91,6 @@ void InitializeSettings(void) {
 	jsonSettingsCore["SimCity2000"]["Windows"]["Last Color Depth"] = 32;
 }
 
-static void MigrateSC2KFixSettings(void) {
-	MigrateRegBOOLValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\sc2kfix", "bSettingsMusicInBackground", &bSettingsMusicInBackground);
-	MigrateRegBOOLValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\sc2kfix", "bSettingsUseSoundReplacements", &bSettingsUseSoundReplacements);
-	MigrateRegBOOLValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\sc2kfix", "bSettingsShuffleMusic", &bSettingsShuffleMusic);
-	MigrateRegBOOLValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\sc2kfix", "bSettingsFrequentCityRefresh", &bSettingsFrequentCityRefresh);
-	MigrateRegBOOLValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\sc2kfix", "bSettingsUseMP3Music", &bSettingsUseMP3Music);
-
-	MigrateRegBOOLValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\sc2kfix", "bSettingsAlwaysConsole", &bSettingsAlwaysConsole);
-	MigrateRegBOOLValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\sc2kfix", "bSettingsCheckForUpdates", &bSettingsCheckForUpdates);
-
-	MigrateRegBOOLValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\sc2kfix", "bSettingsUseStatusDialog", &bSettingsUseStatusDialog);
-	MigrateRegBOOLValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\sc2kfix", "bSettingsTitleCalendar", &bSettingsTitleCalendar);
-	MigrateRegBOOLValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\sc2kfix", "bSettingsUseNewStrings", &bSettingsUseNewStrings);
-	MigrateRegBOOLValue(HKEY_CURRENT_USER, "Software\\Maxis\\SimCity 2000\\sc2kfix", "bSettingsAlwaysSkipIntro", &bSettingsAlwaysSkipIntro);
-}
-
 const char* SettingsSaveMusicEngine(UINT iMusicEngine) {
 	switch (iMusicEngine) {
 	case MUSIC_ENGINE_NONE:
@@ -138,13 +125,9 @@ void LoadSettings(void) {
 	GetPrivateProfileStringA(section, "Company Name", "", szSettingsCompanyName, sizeof(szSettingsCompanyName)-1, ini_file);
 
 	section = "sc2kfix";
-	char szSectionBuf[32];
 
-	// Check for the section presence.
-	if (!GetPrivateProfileSectionA(section, szSectionBuf, sizeof(szSectionBuf) - 1, ini_file)) {
-		// Check to see whether the values existed in the registry so they can be migrated.
-		MigrateSC2KFixSettings();
-	}
+	memset(szSettingsMIDITrackPath, 0, sizeof(szSettingsMIDITrackPath));
+	memset(szSettingsMP3TrackPath, 0, sizeof(szSettingsMP3TrackPath));
 
 	// QoL/performance settings
 	char szSettingsMusicEngineOutput[32];
@@ -185,6 +168,22 @@ void LoadSettings(void) {
 			ConsoleLog(LOG_INFO, "CORE: Using \"%s\" as FluidSynth soundfont.\n", szSettingsFluidSynthSoundfont);
 	}
 
+	char szKeyBuf[32];
+
+	section = "sc2kfix.music.MIDI";
+	for (int i = 0; i < MUSIC_TRACKS; i++) {
+		sprintf_s(szKeyBuf, sizeof(szKeyBuf), "100%02d", i);
+		GetPrivateProfileStringA(section, szKeyBuf, "", szSettingsMIDITrackPath[i], sizeof(szSettingsMIDITrackPath[i]) - 1, ini_file);
+		StrTrimA(szSettingsMIDITrackPath[i], " \t\r\n");
+	}
+
+	section = "sc2kfix.music.MP3";
+	for (int i = 0; i < MUSIC_TRACKS; i++) {
+		sprintf_s(szKeyBuf, sizeof(szKeyBuf), "100%02d", i);
+		GetPrivateProfileStringA(section, szKeyBuf, "", szSettingsMP3TrackPath[i], sizeof(szSettingsMP3TrackPath[i]) - 1, ini_file);
+		StrTrimA(szSettingsMP3TrackPath[i], " \t\r\n");
+	}
+
 	SaveSettings(TRUE);
 }
 
@@ -220,6 +219,22 @@ void SaveSettings(BOOL onload) {
 
 	ConsoleLog(LOG_INFO, "CORE: Saved sc2kfix settings.\n");
 
+	char szKeyBuf[32];
+
+	section = "sc2kfix.music.MIDI";
+	for (int i = 0; i < MUSIC_TRACKS; i++) {
+		sprintf_s(szKeyBuf, sizeof(szKeyBuf), "100%02d", i);
+		StrTrimA(szSettingsMIDITrackPath[i], " \t\r\n");
+		WritePrivateProfileStringA(section, szKeyBuf, szSettingsMIDITrackPath[i], ini_file);
+	}
+
+	section = "sc2kfix.music.MP3";
+	for (int i = 0; i < MUSIC_TRACKS; i++) {
+		sprintf_s(szKeyBuf, sizeof(szKeyBuf), "100%02d", i);
+		StrTrimA(szSettingsMP3TrackPath[i], " \t\r\n");
+		WritePrivateProfileStringA(section, szKeyBuf, szSettingsMP3TrackPath[i], ini_file);
+	}
+
 	if (!onload) {
 		// Update any hooks we need to.
 		if (dwDetectedVersion == SC2KVERSION_1996) {
@@ -252,24 +267,27 @@ static void SetSettingsTabOrdering(HWND hwndDlg) {
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG), NULL, 0, 0, 0, 0, uFlags);
 
 	// Quality of Life / Performance Settings
-	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC), NULL, 0, 0, 0, 0, uFlags);
-	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MP3_MUSIC), NULL, 0, 0, 0, 0, uFlags);
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_REFRESH_RATE), NULL, 0, 0, 0, 0, uFlags);
-	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_MULTITHREADED_MUSIC), NULL, 0, 0, 0, 0, uFlags);
-	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SHUFFLE_MUSIC), NULL, 0, 0, 0, 0, uFlags);
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS), NULL, 0, 0, 0, 0, uFlags);
+	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SHUFFLE_MUSIC), NULL, 0, 0, 0, 0, uFlags);
+	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC), NULL, 0, 0, 0, 0, uFlags);
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_BKGDMUSIC), NULL, 0, 0, 0, 0, uFlags);
+
+	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_CONFMP3TRACKS), NULL, 0, 0, 0, 0, uFlags);
+	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_CONFMIDTRACKS), NULL, 0, 0, 0, 0, uFlags);
+
+	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_SOUNDFONTBROWSE), NULL, 0, 0, 0, 0, uFlags);
+	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_FLUIDSYNTH_SOUNDFONT), NULL, 0, 0, 0, 0, uFlags);
+	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT), NULL, 0, 0, 0, 0, uFlags);
 
 	// Game Settings
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_COMPANY), NULL, 0, 0, 0, 0, uFlags);
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_MAYOR), NULL, 0, 0, 0, 0, uFlags);
 }
 
-int iOriginalSettingsMusicEngineOutput;
-char* szOriginalSettingsFluidSynthSoundfont;
-
 BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	std::string strVersionInfo;
+	settings_t *st;
 
 	char szFluidSynthSettingPath[MAX_PATH] = { 0 };
 	OPENFILENAMEA stOFNFluidSynth = {
@@ -283,16 +301,14 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 
 	switch (message) {
 	case WM_INITDIALOG:
+		SetWindowLong(hwndDlg, GWL_USERDATA, lParam);
+		st = (settings_t *)lParam;
 		// Set the dialog box icon
 		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)LoadIcon(hSC2KFixModule, MAKEINTRESOURCE(IDI_TOPSECRET)));
 		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(hSC2KFixModule, MAKEINTRESOURCE(IDI_TOPSECRET)));
 
 		// Set the tab order for the dialog controls
 		SetSettingsTabOrdering(hwndDlg);
-		
-		// Save some of the music engine settings for later
-		iOriginalSettingsMusicEngineOutput = iSettingsMusicEngineOutput;
-		szOriginalSettingsFluidSynthSoundfont = _strdup(szSettingsFluidSynthSoundfont);
 
 		// Inject the music engine crap
 		ComboBox_AddString(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT), "None");			// MUSIC_ENGINE_NONE
@@ -373,31 +389,31 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 		SetDlgItemText(hwndDlg, IDC_STATIC_VERSIONINFO, strVersionInfo.c_str());
 
 		// Load the existing settings into the dialog
-		SetDlgItemText(hwndDlg, IDC_SETTINGS_MAYOR, szSettingsMayorName);
-		SetDlgItemText(hwndDlg, IDC_SETTINGS_COMPANY, szSettingsCompanyName);
+		SetDlgItemText(hwndDlg, IDC_SETTINGS_MAYOR, st->szSettingsMayorName);
+		SetDlgItemText(hwndDlg, IDC_SETTINGS_COMPANY, st->szSettingsCompanyName);
 
-		ComboBox_SetCurSel(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT), iSettingsMusicEngineOutput);
+		ComboBox_SetCurSel(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT), st->iSettingsMusicEngineOutput);
 
 		{
-			const char* szSoundFontBaseName = GetFileBaseName(szSettingsFluidSynthSoundfont);
+			const char* szSoundFontBaseName = GetFileBaseName(st->szSettingsFluidSynthSoundfont);
 			SetDlgItemText(hwndDlg, IDC_SETTINGS_FLUIDSYNTH_SOUNDFONT, szSoundFontBaseName);
 			free((void*)szSoundFontBaseName);
 		}
 
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_BKGDMUSIC), bSettingsMusicInBackground ? BST_CHECKED : BST_UNCHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS), bSettingsUseSoundReplacements ? BST_CHECKED : BST_UNCHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SHUFFLE_MUSIC), bSettingsShuffleMusic ? BST_CHECKED : BST_UNCHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_REFRESH_RATE), bSettingsFrequentCityRefresh ? BST_CHECKED : BST_UNCHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC), bSettingsAlwaysPlayMusic ? BST_CHECKED : BST_UNCHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_BKGDMUSIC), st->bSettingsMusicInBackground ? BST_CHECKED : BST_UNCHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS), st->bSettingsUseSoundReplacements ? BST_CHECKED : BST_UNCHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SHUFFLE_MUSIC), st->bSettingsShuffleMusic ? BST_CHECKED : BST_UNCHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_REFRESH_RATE), st->bSettingsFrequentCityRefresh ? BST_CHECKED : BST_UNCHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC), st->bSettingsAlwaysPlayMusic ? BST_CHECKED : BST_UNCHECKED);
 
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE), bSettingsAlwaysConsole ? BST_CHECKED : BST_UNCHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES), bSettingsCheckForUpdates ? BST_CHECKED : BST_UNCHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DONT_LOAD_MODS), bSettingsDontLoadMods ? BST_CHECKED : BST_UNCHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE), st->bSettingsAlwaysConsole ? BST_CHECKED : BST_UNCHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES), st->bSettingsCheckForUpdates ? BST_CHECKED : BST_UNCHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DONT_LOAD_MODS), st->bSettingsDontLoadMods ? BST_CHECKED : BST_UNCHECKED);
 
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG), bSettingsUseStatusDialog ? BST_CHECKED : BST_UNCHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE), bSettingsTitleCalendar ? BST_CHECKED : BST_UNCHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS), bSettingsUseNewStrings ? BST_CHECKED : BST_UNCHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SKIP_INTRO), bSettingsAlwaysSkipIntro ? BST_CHECKED : BST_UNCHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG), st->bSettingsUseStatusDialog ? BST_CHECKED : BST_UNCHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE), st->bSettingsTitleCalendar ? BST_CHECKED : BST_UNCHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS), st->bSettingsUseNewStrings ? BST_CHECKED : BST_UNCHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SKIP_INTRO), st->bSettingsAlwaysSkipIntro ? BST_CHECKED : BST_UNCHECKED);
 
 		// Center the dialog box
 		CenterDialogBox(hwndDlg);
@@ -405,50 +421,40 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 
 	// Close without saving if the dialog is closed via the menu bar close button or Alt+F4
 	case WM_CLOSE:
-		free(szOriginalSettingsFluidSynthSoundfont);
-		EndDialog(hwndDlg, wParam);
+		EndDialog(hwndDlg, FALSE);
 		break;
 
 	case WM_COMMAND:
+		st = (settings_t *)GetWindowLong(hwndDlg, GWL_USERDATA);
 		switch (GET_WM_COMMAND_ID(wParam, lParam)) {
 		case ID_SETTINGS_OK:
 			// Grab settings from the dialog controls
-			if (!GetDlgItemText(hwndDlg, IDC_SETTINGS_MAYOR, szSettingsMayorName, 63))
-				strcpy_s(szSettingsMayorName, 64, "Marvin Maxis");
-			if (!GetDlgItemText(hwndDlg, IDC_SETTINGS_COMPANY, szSettingsCompanyName, 63))
-				strcpy_s(szSettingsCompanyName, 64, "Q37 Space Modulator Mfg.");
+			if (!GetDlgItemText(hwndDlg, IDC_SETTINGS_MAYOR, st->szSettingsMayorName, 63))
+				strcpy_s(st->szSettingsMayorName, 64, "Marvin Maxis");
+			if (!GetDlgItemText(hwndDlg, IDC_SETTINGS_COMPANY, st->szSettingsCompanyName, 63))
+				strcpy_s(st->szSettingsCompanyName, 64, "Q37 Space Modulator Mfg.");
 
-			iSettingsMusicEngineOutput = ComboBox_GetCurSel(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT));
+			st->iSettingsMusicEngineOutput = ComboBox_GetCurSel(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT));
 
-			bSettingsMusicInBackground = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_BKGDMUSIC));
-			bSettingsUseSoundReplacements = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS));
-			bSettingsShuffleMusic = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SHUFFLE_MUSIC));
-			bSettingsFrequentCityRefresh = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_REFRESH_RATE));
-			bSettingsAlwaysPlayMusic = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC));
+			st->bSettingsMusicInBackground = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_BKGDMUSIC));
+			st->bSettingsUseSoundReplacements = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS));
+			st->bSettingsShuffleMusic = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SHUFFLE_MUSIC));
+			st->bSettingsFrequentCityRefresh = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_REFRESH_RATE));
+			st->bSettingsAlwaysPlayMusic = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC));
 
-			bSettingsAlwaysConsole = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE));
-			bSettingsCheckForUpdates = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES));
-			bSettingsDontLoadMods = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DONT_LOAD_MODS));
+			st->bSettingsAlwaysConsole = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE));
+			st->bSettingsCheckForUpdates = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES));
+			st->bSettingsDontLoadMods = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DONT_LOAD_MODS));
 
-			bSettingsUseStatusDialog = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG));
-			bSettingsTitleCalendar = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE));
-			bSettingsUseNewStrings = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS));
-			bSettingsAlwaysSkipIntro = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SKIP_INTRO));
+			st->bSettingsUseStatusDialog = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG));
+			st->bSettingsTitleCalendar = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE));
+			st->bSettingsUseNewStrings = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS));
+			st->bSettingsAlwaysSkipIntro = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SKIP_INTRO));
 
-			// Save the settings
-			SaveSettings(FALSE);
-
-			// See if we need to reset the music engine.
-			if (dwMusicThreadID && (iSettingsMusicEngineOutput != iOriginalSettingsMusicEngineOutput ||
-				strcmp(szOriginalSettingsFluidSynthSoundfont, szSettingsFluidSynthSoundfont)))
-				PostThreadMessage(dwMusicThreadID, WM_MUSIC_RESET, NULL, NULL);
-
-			free(szOriginalSettingsFluidSynthSoundfont);
-			EndDialog(hwndDlg, wParam);
+			EndDialog(hwndDlg, TRUE);
 			break;
 		case ID_SETTINGS_CANCEL:
-			free(szOriginalSettingsFluidSynthSoundfont);
-			EndDialog(hwndDlg, wParam);
+			EndDialog(hwndDlg, FALSE);
 			break;
 		case ID_SETTINGS_DEFAULTS:
 			// Set all the checkboxes to the defaults.
@@ -492,15 +498,19 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			if (GetOpenFileName(&stOFNFluidSynth)) {
 				if (mus_debug & 8)
 					ConsoleLog(LOG_DEBUG, "CORE: SoundFont setting changed; new soundfont is %s\n", szFluidSynthSettingPath);
-				strncpy_s(szSettingsFluidSynthSoundfont, 261, szFluidSynthSettingPath, 260);
+				strncpy_s(st->szSettingsFluidSynthSoundfont, 261, szFluidSynthSettingPath, 260);
 
 				{
-					const char* szSoundFontBaseName = GetFileBaseName(szSettingsFluidSynthSoundfont);
+					const char* szSoundFontBaseName = GetFileBaseName(st->szSettingsFluidSynthSoundfont);
 					SetDlgItemText(hwndDlg, IDC_SETTINGS_FLUIDSYNTH_SOUNDFONT, szSoundFontBaseName);
 					free((void*)szSoundFontBaseName);
 				}
 			}
 			break;
+		case IDC_SETTINGS_BUTTON_CONFMIDTRACKS:
+			return DoConfigureMusicTracks(st, hwndDlg, FALSE);
+		case IDC_SETTINGS_BUTTON_CONFMP3TRACKS:
+			return DoConfigureMusicTracks(st, hwndDlg, TRUE);
 		}
 		return TRUE;
 	}
@@ -508,9 +518,72 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 }
 
 void ShowSettingsDialog(void) {
+	settings_t st;
+
+	memset(&st, 0, sizeof(st));
+	strcpy_s(st.szSettingsMayorName, sizeof(st.szSettingsMayorName), szSettingsMayorName);
+	strcpy_s(st.szSettingsCompanyName, sizeof(st.szSettingsCompanyName), szSettingsCompanyName);
+	st.bSettingsMusicInBackground = bSettingsMusicInBackground;
+	st.bSettingsUseSoundReplacements = bSettingsUseSoundReplacements;
+	st.bSettingsShuffleMusic = bSettingsShuffleMusic;
+	st.bSettingsFrequentCityRefresh = bSettingsFrequentCityRefresh;
+	st.bSettingsUseMP3Music = bSettingsUseMP3Music;
+	st.bSettingsAlwaysPlayMusic = bSettingsAlwaysPlayMusic;
+	st.bSettingsAlwaysConsole = bSettingsAlwaysConsole;
+	st.bSettingsCheckForUpdates = bSettingsCheckForUpdates;
+	st.bSettingsDontLoadMods = bSettingsDontLoadMods;
+	st.bSettingsUseStatusDialog = bSettingsUseStatusDialog;
+	st.bSettingsTitleCalendar = bSettingsTitleCalendar;
+	st.bSettingsUseNewStrings = bSettingsUseNewStrings;
+	st.bSettingsAlwaysSkipIntro = bSettingsAlwaysSkipIntro;
+	st.iSettingsMusicEngineOutput = iSettingsMusicEngineOutput;
+	strcpy_s(st.szSettingsFluidSynthSoundfont, sizeof(st.szSettingsFluidSynthSoundfont), szSettingsFluidSynthSoundfont);
+	for (int i = 0; i < MUSIC_TRACKS; i++) {
+		strcpy_s(st.szSettingsMIDITrackPath[i], sizeof(st.szSettingsMIDITrackPath[i]), szSettingsMIDITrackPath[i]);
+		strcpy_s(st.szSettingsMP3TrackPath[i], sizeof(st.szSettingsMP3TrackPath[i]), szSettingsMP3TrackPath[i]);
+	}
+
+	st.bActiveTrackChanged = FALSE;
+	st.bActiveMusicEngineTouched = FALSE;
+
+	// Save the original settings here just prior to saving.
+	st.iCurrentMusicEngineOutput = st.iSettingsMusicEngineOutput;
+	strcpy_s(st.szCurrentFluidSynthSoundfont, sizeof(st.szCurrentFluidSynthSoundfont), st.szSettingsFluidSynthSoundfont);
+
 	ToggleFloatingStatusDialog(FALSE);
 
-	DialogBox(hSC2KFixModule, MAKEINTRESOURCE(IDD_SETTINGS), GameGetRootWindowHandle(), SettingsDialogProc);
+	if (DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_SETTINGS), GameGetRootWindowHandle(), SettingsDialogProc, (LPARAM)&st) == TRUE) {
+		strcpy_s(szSettingsMayorName, sizeof(szSettingsMayorName), st.szSettingsMayorName);
+		strcpy_s(szSettingsCompanyName, sizeof(szSettingsCompanyName), st.szSettingsCompanyName);
+		bSettingsMusicInBackground = st.bSettingsMusicInBackground;
+		bSettingsUseSoundReplacements = st.bSettingsUseSoundReplacements;
+		bSettingsShuffleMusic = st.bSettingsShuffleMusic;
+		bSettingsFrequentCityRefresh = st.bSettingsFrequentCityRefresh;
+		bSettingsUseMP3Music = st.bSettingsUseMP3Music;
+		bSettingsAlwaysPlayMusic = st.bSettingsAlwaysPlayMusic;
+		bSettingsAlwaysConsole = st.bSettingsAlwaysConsole;
+		bSettingsCheckForUpdates = st.bSettingsCheckForUpdates;
+		bSettingsDontLoadMods = st.bSettingsDontLoadMods;
+		bSettingsUseStatusDialog = st.bSettingsUseStatusDialog;
+		bSettingsTitleCalendar = st.bSettingsTitleCalendar;
+		bSettingsUseNewStrings = st.bSettingsUseNewStrings;
+		bSettingsAlwaysSkipIntro = st.bSettingsAlwaysSkipIntro;
+		iSettingsMusicEngineOutput = st.iSettingsMusicEngineOutput;
+		strcpy_s(szSettingsFluidSynthSoundfont, sizeof(szSettingsFluidSynthSoundfont), st.szSettingsFluidSynthSoundfont);
+		for (int i = 0; i < MUSIC_TRACKS; i++) {
+			strcpy_s(szSettingsMIDITrackPath[i], sizeof(szSettingsMIDITrackPath[i]), st.szSettingsMIDITrackPath[i]);
+			strcpy_s(szSettingsMP3TrackPath[i], sizeof(szSettingsMP3TrackPath[i]), st.szSettingsMP3TrackPath[i]);
+		}
+
+		// Save the settings
+		SaveSettings(FALSE);
+
+		// See if we need to reset the music engine.
+		if (dwMusicThreadID && (iSettingsMusicEngineOutput != st.iCurrentMusicEngineOutput ||
+			strcmp(st.szCurrentFluidSynthSoundfont, szSettingsFluidSynthSoundfont) != 0) ||
+			(st.bActiveMusicEngineTouched && st.bActiveTrackChanged))
+			PostThreadMessage(dwMusicThreadID, WM_MUSIC_RESET, NULL, NULL);
+	}
 
 	ToggleFloatingStatusDialog(TRUE);
 }

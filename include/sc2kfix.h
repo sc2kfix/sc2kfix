@@ -6,6 +6,7 @@
 #pragma warning(disable : 4733)
 
 #include <windows.h>
+#include <windowsx.h>
 #include <string>
 #include <list>
 #include <map>
@@ -14,6 +15,7 @@
 #include <random>
 
 #include <mfc3xhelp.h>
+#include <sc2kclasses.h>
 #include <smk.h>
 #include <sc2k_1996.h>
 #include <sc2k_demo.h>
@@ -43,6 +45,10 @@
 
 #define HOOKEXT extern "C" __declspec(dllexport)
 #define HOOKEXT_CPP __declspec(dllexport)
+
+#define WM_SC2KFIX_UPDATE 37241
+
+#define UPDATE_STRING "A new version of sc2kfix is available for download from the GitHub releases page."
 
 #include <json.hpp>
 
@@ -96,8 +102,7 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define WM_CONSOLE_REPL	WM_APP+0x200
 #endif
 
-#define HICOLORCNT 256
-#define LOCOLORCNT 16
+#define MUSIC_TRACKS 19
 
 // It should be noted that with these values
 // they're referencing the min/max for the
@@ -117,32 +122,6 @@ template <typename T> std::string to_string_precision(const T value, const int p
 
 #define MARINA_TILES_ALLDRY 0
 #define MARINA_TILES_ALLWET 9
-
-// TODO: inline documentation
-typedef struct tagLOGPAL {
-	WORD wVersion;
-	WORD wNumPalEnts;
-	PALETTEENTRY pPalEnts[HICOLORCNT];
-} LOGPAL, *PLOGPAL;
-
-// TODO: inline documentation
-typedef struct testColStruct {
-	WORD wPos;
-	PALETTEENTRY pe;
-} colStruct;
-
-// TODO: inline documentation
-typedef struct COLORTABLE_STRUCT {
-	WORD Index;
-	DWORD rgb;
-} colTable;
-
-// Reimplementation of an abstracted C string (not to be confused with the MFC CString) used in
-// the original SimCity 2000 code.
-class CSimString {
-public:
-	char *pStr;
-};
 
 // Struct defining an injected hook from a loaded mod and its nested call priority.
 typedef struct {
@@ -211,6 +190,44 @@ typedef struct {
 	DWORD nBufSize;
 } sound_replacement_t;
 
+// This structure is explicitly used in the settings dialogue.
+// Once EndDialog is called (with TRUE set is the result)
+// have it apply the variables back to their equivalent
+// globals and save. If the EndDialog passed result is FALSE
+// it insulates the primary globals from being modified.
+typedef struct {
+	// These are the primary settings.
+	char szSettingsMayorName[64];
+	char szSettingsCompanyName[64];
+
+	BOOL bSettingsMusicInBackground;
+	BOOL bSettingsUseSoundReplacements;
+	BOOL bSettingsShuffleMusic;
+	BOOL bSettingsFrequentCityRefresh;
+	BOOL bSettingsUseMP3Music;
+	BOOL bSettingsAlwaysPlayMusic;
+	BOOL bSettingsAlwaysConsole;
+	BOOL bSettingsCheckForUpdates;
+	BOOL bSettingsDontLoadMods;
+	BOOL bSettingsUseStatusDialog;
+	BOOL bSettingsTitleCalendar;
+	BOOL bSettingsUseNewStrings;
+	BOOL bSettingsAlwaysSkipIntro;
+
+	UINT iSettingsMusicEngineOutput;
+	char szSettingsFluidSynthSoundfont[MAX_PATH + 1];
+
+	char szSettingsMIDITrackPath[MUSIC_TRACKS][MAX_PATH + 1];
+	char szSettingsMP3TrackPath[MUSIC_TRACKS][MAX_PATH + 1];
+
+	// Attributes that the settings dialogue needs to know before and after.
+	BOOL bActiveTrackChanged;
+	BOOL bActiveMusicEngineTouched;
+
+	UINT iCurrentMusicEngineOutput;
+	char szCurrentFluidSynthSoundfont[MAX_PATH + 1];
+} settings_t;
+
 // Enum for console command visibility in inline help. Documented commands always appear in inline
 // help, undocumented commands only appear if `set undocumented` has been activated. Commands
 // tagged as aliases never appear. Commands tagged as script-only return an error in interactive
@@ -265,6 +282,11 @@ extern BOOL bSettingsTitleCalendar;
 extern BOOL bSettingsUseNewStrings;
 extern BOOL bSettingsAlwaysSkipIntro;
 
+// Music track aliases
+
+extern char szSettingsMIDITrackPath[MUSIC_TRACKS][MAX_PATH + 1];
+extern char szSettingsMP3TrackPath[MUSIC_TRACKS][MAX_PATH + 1];
+
 // Scenario state on-load information
 
 extern const char* scScenarioDescription;
@@ -296,10 +318,8 @@ HOOKEXT const char* GetFileBaseName(const char* szPath);
 HOOKEXT const char* GetModsFolderPath(void);
 HOOKEXT const char* GetOnIdleStateEnumName(int iState);
 //HBITMAP CreateSpriteBitmap(int iSpriteID);
+HOOKEXT BOOL IsFileNameValid(const char *pName);
 HOOKEXT BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, const char *ini_name);
-void MigrateRegStringValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, char *szOutBuf, DWORD dwLen);
-void MigrateRegDWORDValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, DWORD *dwOut, DWORD dwSize);
-void MigrateRegBOOLValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, BOOL *bOut);
 int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize);
 HOOKEXT_CPP std::string Base64Encode(const unsigned char* pSrcData, size_t iSrcCount);
 HOOKEXT_CPP size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned char* pSrcData, size_t iSrcCount);
@@ -315,7 +335,7 @@ BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 void LoadStoredPaths(void);
 void SaveStoredPaths(void);
-int DoRegistryCheckAndInstall(void);
+int DoCheckAndInstall(void);
 void SetGamePath(void);
 const char *GetIniPath(void);
 void InitializeSettings(void);
@@ -330,8 +350,11 @@ void ToggleGotoButton(HWND hWndBut, BOOL bEnable);
 void LoadReplacementSounds(void);
 BOOL UpdaterCheckForUpdates(void);
 DWORD WINAPI UpdaterThread(LPVOID lpParameter);
+const char *GetGameSoundPath();
+int GetCurrentActiveSongID();
 BOOL MusicLoadFluidSynth(void);
 void DoMusicPlay(int iSongID, BOOL bInterrupt);
+BOOL DoConfigureMusicTracks(settings_t *st, HWND hDlg, BOOL bMP3);
 
 BOOL WINAPI ConsoleCtrlHandler(DWORD fdwCtrlType);
 DWORD WINAPI ConsoleThread(LPVOID lpParameter);
@@ -425,6 +448,7 @@ void InstallAnimationHooks_SC2K1995(void);
 void InstallAnimationHooks_SC2KDemo(void);
 void InstallSpriteAndTileSetHooks_SC2K1996(void);
 void InstallTileGrowthOrPlacementHandlingHooks_SC2K1996(void);
+void InstallToolBarHooks_SC2K1996(void);
 void InstallMiscHooks_SC2K1996(void);
 void UpdateMiscHooks_SC2K1996(void);
 void InstallMiscHooks_SC2KDemo(void);

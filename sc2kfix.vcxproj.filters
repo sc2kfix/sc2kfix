@@ -159,6 +159,9 @@
     <ClInclude Include="thirdparty\fluidsynth\fluidsynth.h">
       <Filter>Header Files\Third-Party\FluidSynth</Filter>
     </ClInclude>
+    <ClInclude Include="include\sc2kclasses.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="hooks\hook_mciSendCommand.cpp">
@@ -369,6 +372,12 @@
       <Filter>Source Files\Third-Party\Kuroko</Filter>
     </ClCompile>
     <ClCompile Include="hooks\hook_tilegrowthorplacement.cpp">
+      <Filter>Source Files\Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\track_config.cpp">
+      <Filter>Source Files\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="hooks\hook_toolbars.cpp">
       <Filter>Source Files\Hooks</Filter>
     </ClCompile>
   </ItemGroup>

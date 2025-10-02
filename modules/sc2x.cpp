@@ -64,7 +64,7 @@ void LoadInterleavedBudgetVanilla(budget_t* pTarget, DWORD* pSource) {
 #ifdef SC2X_USE_VANILLA_LOAD_REPLACEMENT
 // WIP replacement for CSimcityApp::DoLoadGame for vanilla save game files.
 // This is incredibly ugly and should probably be rewritten at some point.
-BOOL SC2XLoadVanillaGame(DWORD* pThis, const char* szFileName) {
+BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 	if (!szFileName)
 		return FALSE;
 
@@ -96,9 +96,8 @@ BOOL SC2XLoadVanillaGame(DWORD* pThis, const char* szFileName) {
 
 		for (int i = 0; i < iChunkSize; ) {
 			if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('C', 'N', 'A', 'M')) {
-				CMFC3XString* (__thiscall * H_CStringOperatorSet)(CMFC3XString*, const char*) = (CMFC3XString * (__thiscall*)(CMFC3XString*, const char*))0x4A2E6A;
 				std::string strCityName((char*)&sc2file[iChunkStart + 9]);
-				H_CStringOperatorSet(&pszCityName, strCityName.c_str());
+				GameMain_String_OperatorSet(&pszCityName, (char *)strCityName.c_str());
 				i += iChunkSize;
 				iConvertedChunks++;
 			}
@@ -348,7 +347,8 @@ BOOL SC2XLoadVanillaGame(DWORD* pThis, const char* szFileName) {
 				wSubwayXUNDCount = ntohl(*(DWORD*)&pChunkMISC[i]);
 				i += 4;
 
-				wSimulationSpeed = ntohl(*(DWORD*)&pChunkMISC[i]);		// XXX - CHECK IF THIS NEEDS TO BE THISCASTED
+				pThis->wSCAGameSpeedLOW = ntohl(*(DWORD*)&pChunkMISC[i]);		// XXX - CHECK IF THIS NEEDS TO BE THISCASTED
+				pThis->wSCAGameSpeedHIGH = pThis->wSCAGameSpeedLOW;
 				i += 4;
 
 				bOptionsAutoBudget = ntohl(*(DWORD*)&pChunkMISC[i]);
@@ -357,12 +357,11 @@ BOOL SC2XLoadVanillaGame(DWORD* pThis, const char* szFileName) {
 				bOptionsAutoGoto = ntohl(*(DWORD*)&pChunkMISC[i]);
 				i += 4;
 
-				pThis[121] = ntohl(*(DWORD*)&pChunkMISC[i]);	// XXX - needs a good name
+				pThis->dwSCAGameSound = ntohl(*(DWORD*)&pChunkMISC[i]);	// XXX - needs a good name
 				i += 4;
 
-				bOptionsMusicEnabled = ntohl(*(DWORD*)&pChunkMISC[i]);
-				pThis[120] = bOptionsMusicEnabled;				// XXX - is this the same?
-				if (!bOptionsMusicEnabled) {
+				pThis->dwSCAGameMusic = ntohl(*(DWORD*)&pChunkMISC[i]);
+				if (!pThis->dwSCAGameMusic) {
 					// Stop music
 					__asm {
 						push ecx
@@ -667,9 +666,8 @@ std::vector<hook_function_t> stHooks_Hook_LoadGame_Before;
 //   or similar object to inform them that they have no known state to load.
 std::vector<hook_function_t> stHooks_Hook_LoadGame_After;
 
-extern "C" DWORD __stdcall Hook_LoadGame(void* pFile, char* src) {
-	DWORD(__thiscall * H_SimcityAppDoLoadGame)(void*, void*, char*) = (DWORD(__thiscall*)(void*, void*, char*))0x4302E0;
-	DWORD* pThis;
+extern "C" DWORD __stdcall Hook_LoadGame(CMFC3XFile* pFile, char* src) {
+	CSimcityAppPrimary* pThis;
 	DWORD ret;
 
 	__asm mov [pThis], ecx
@@ -694,7 +692,7 @@ extern "C" DWORD __stdcall Hook_LoadGame(void* pFile, char* src) {
 
 	for (const auto& hook : stHooks_Hook_LoadGame_Before) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
-			void (*fnHook)(void*, void*, char*) = (void(*)(void*, void*, char*))hook.pFunction;
+			void (*fnHook)(CSimcityAppPrimary*, CMFC3XFile*, char*) = (void(*)(CSimcityAppPrimary*, CMFC3XFile*, char*))hook.pFunction;
 			fnHook(pThis, pFile, src);
 		}
 	}
@@ -709,23 +707,23 @@ extern "C" DWORD __stdcall Hook_LoadGame(void* pFile, char* src) {
 #else
 		if (sc2x_debug & SC2X_DEBUG_LOAD)
 			ConsoleLog(LOG_DEBUG, "SC2X: Passing control to SC2K for load.\n");
-		ret = H_SimcityAppDoLoadGame(pThis, pFile, src);
+		ret = GameMain_SimcityApp_DoLoadGame(pThis, pFile, src);
 #endif
 	} else if (std::regex_search(szLoadFileName, std::regex("\\.[Ss][Cc][Nn]$"))) {
 		if (sc2x_debug & SC2X_DEBUG_LOAD)
 			ConsoleLog(LOG_DEBUG, "SC2X: Saved game is a vanilla SCN file. Passing control to SC2K.\n");
 
-		ret = H_SimcityAppDoLoadGame(pThis, pFile, src);
+		ret = GameMain_SimcityApp_DoLoadGame(pThis, pFile, src);
 	} else if (std::regex_search(szLoadFileName, std::regex("\\.[Cc][Tt][Yy]$"))) {
 		if (sc2x_debug & SC2X_DEBUG_LOAD)
 			ConsoleLog(LOG_DEBUG, "SC2X: Saved game is a SimCity Classic file. Passing control to SC2K.\n");
 
-		ret = H_SimcityAppDoLoadGame(pThis, pFile, src);
+		ret = GameMain_SimcityApp_DoLoadGame(pThis, pFile, src);
 	}
 
 	for (const auto& hook : stHooks_Hook_LoadGame_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
-			void (*fnHook)(void*, void*, char*) = (void(*)(void*, void*, char*))hook.pFunction;
+			void (*fnHook)(CSimcityAppPrimary*, CMFC3XFile*, char*) = (void(*)(CSimcityAppPrimary*, CMFC3XFile*, char*))hook.pFunction;
 			fnHook(pThis, pFile, src);
 		}
 	}
@@ -746,24 +744,23 @@ std::vector<hook_function_t> stHooks_Hook_SaveGame_Before;
 std::vector<hook_function_t> stHooks_Hook_SaveGame_After;
 
 extern "C" DWORD __stdcall Hook_SaveGame(CMFC3XString* lpFileName) {
-	DWORD(__thiscall * H_SimcityAppDoSaveGame)(void*, CMFC3XString*) = (DWORD(__thiscall*)(void*, CMFC3XString*))0x432180;
-	DWORD* pThis;
+	CSimcityAppPrimary* pThis;
 	DWORD ret;
 
 	__asm mov [pThis], ecx
 
 	for (const auto& hook : stHooks_Hook_SaveGame_Before) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
-			void (*fnHook)(void*, CMFC3XString*) = (void(*)(void*, CMFC3XString*))hook.pFunction;
+			void (*fnHook)(CSimcityAppPrimary*, CMFC3XString*) = (void(*)(CSimcityAppPrimary*, CMFC3XString*))hook.pFunction;
 			fnHook(pThis, lpFileName);
 		}
 	}
 
-	ret = H_SimcityAppDoSaveGame(pThis, lpFileName);
+	ret = GameMain_SimcityApp_DoSaveGame(pThis, lpFileName);
 
 	for (const auto& hook : stHooks_Hook_SaveGame_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
-			void (*fnHook)(void*, CMFC3XString*) = (void(*)(void*, CMFC3XString*))hook.pFunction;
+			void (*fnHook)(CSimcityAppPrimary*, CMFC3XString*) = (void(*)(CSimcityAppPrimary*, CMFC3XString*))hook.pFunction;
 			fnHook(pThis, lpFileName);
 		}
 	}
@@ -829,9 +826,8 @@ void __declspec(naked) Hook_431212(void) {
 
 // Fix rail and highway border connections not loading properly
 extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
-	short* wCityNeighborConnections1500 = (short*)0x4CA3F0;
-	*wCityNeighborConnections1500 = 0;
-	*(DWORD*)0x4C85A0 = 0;
+	wCityNeighborConnections1500 = 0;
+	dwBusPassengers = 0;
 
 	for (int x = 0; x < GAME_MAP_SIZE; x++) {
 		for (int y = 0; y < GAME_MAP_SIZE; y++) {
@@ -840,13 +836,13 @@ extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
 				if (iTileID >= TILE_RAIL_LR && iTileID < TILE_TUNNEL_T
 					|| iTileID >= TILE_CROSSOVER_ROADLR_RAILTB && iTileID < TILE_SUSPENSION_BRIDGE_START_B
 					|| iTileID >= TILE_HIGHWAY_HTB && iTileID < TILE_REINFORCED_BRIDGE_PYLON)
-					++*wCityNeighborConnections1500;
+					++wCityNeighborConnections1500;
 			}
 		}
 	}
 
 	if (sc2x_debug & SC2X_DEBUG_LOAD)
-		ConsoleLog(LOG_DEBUG, "SC2X: Loaded %d $1500 neighbor connections.\n", *wCityNeighborConnections1500);
+		ConsoleLog(LOG_DEBUG, "SC2X: Loaded %d $1500 neighbor connections.\n", wCityNeighborConnections1500);
 }
 
 void InstallSaveHooks_SC2K1996(void) {

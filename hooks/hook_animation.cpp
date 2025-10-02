@@ -12,12 +12,12 @@
 
 static DWORD dwDummy;
 
-extern "C" void __cdecl Hook_AnimationFunction_SC2K1996(void *pPalette, int iToggle) {
-	DWORD *pApp;
-	DWORD *pMainFrm;
-	DWORD *pSCView;
-	DWORD *pMapToolBar;
-	DWORD *pCityToolBar;
+extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette, int iToggle) {
+	CSimcityAppPrimary *pApp;
+	CMainFrame *pMainFrm;
+	CSimcityView *pSCView;
+	CMapToolBar *pMapToolBar;
+	CCityToolBar *pCityToolBar;
 	WORD wSimSpeed;
 	DWORD dwTitleScreenAnimation;
 	int iProgramStep;
@@ -25,33 +25,29 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2K1996(void *pPalette, int iTog
 	DWORD dwTBToolBarTitleDrag;
 	BOOL bCityViewAnim;
 
-	BOOL &bLoColor = *(BOOL *)0x4EA04C;
-
-	void(__cdecl *H_AnimationFunction1996)(void *, int) = (void(__cdecl *)(void *, int))0x457110;
-
 	// Only redraw the relevant windows during:
 	// 1) Titlescreen image animation.
 	// 2) While the CSimcityView window is active and the toolbars aren't being dragged.
 	// 3) None of the additional redraw calls in LoColor mode.
 
-	H_AnimationFunction1996(pPalette, iToggle);
+	GameMain_ToggleColorCycling(pPalette, iToggle);
 
 	pApp = &pCSimcityAppThis;
 	if (pApp) {
 		if (!bLoColor) {
-			pMainFrm = (DWORD *)pApp[7]; // m_pMainWnd
-			wSimSpeed = ((WORD *)pApp)[388];
-			dwTitleScreenAnimation = pApp[199];
-			iProgramStep = pApp[201];
+			pMainFrm = (CMainFrame *)pApp->m_pMainWnd;
+			wSimSpeed = pApp->wSCAGameSpeedLOW;
+			dwTitleScreenAnimation = pApp->dwSCAToggleTitleScreenAnimation;
+			iProgramStep = pApp->iSCAProgramStep;
 			if (wSimSpeed != GAME_SPEED_PAUSED || dwTitleScreenAnimation || iProgramStep != ONIDLE_STATE_INGAME) {
 				if (pMainFrm) {
-					pMapToolBar = (DWORD *)&pMainFrm[233];
-					pCityToolBar = (DWORD *)&pMainFrm[102];
+					pMapToolBar = &pMainFrm->dwMFMapToolBar;
+					pCityToolBar = &pMainFrm->dwMFCityToolBar;
 
 					// For the toolbars, they're using vars from the parent MyToolBar class
 					// 46 and 47 are dwMyTBControlsDisabled and dwMyTBToolBarTitleDrag respectively.
-					dwTBControlsDisabled = pMapToolBar[46];
-					dwTBToolBarTitleDrag = pCityToolBar[47];
+					dwTBControlsDisabled = pMapToolBar->dwMyTBControlsDisabled;
+					dwTBToolBarTitleDrag = pCityToolBar->dwMyTBToolBarTitleDrag;
 
 					// With this check, the redraw calls won't be made if either toolbar is being dragged.
 					// This avoids any bleeding that may occur as a result of the blitted border that will
@@ -75,23 +71,23 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2K1996(void *pPalette, int iTog
 					// CMainFrame m_hWnd - only call this specific redraw function before CSimcityView has been created.
 					// (ie, before any game has been started - palette animation on the image is disabled once the
 					// game window has been created)
-					pSCView = Game_PointerToCSimcityViewClass(pApp);
+					pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pApp);
 					if (!pSCView)
-						RedrawWindow((HWND)pMainFrm[7], NULL, NULL, RDW_INVALIDATE);
+						RedrawWindow(pMainFrm->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 					else if (pSCView && bCityViewAnim)
-						RedrawWindow((HWND)pSCView[7], NULL, NULL, RDW_INVALIDATE);
+						RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 				}
 			}
 		}
 	}
 }
 
-extern "C" void __cdecl Hook_AnimationFunction_SC2K1995(void *pPalette, int iToggle) {
-	DWORD *pApp;
-	DWORD *pMainFrm;
-	DWORD *pSCView;
-	DWORD *pMapToolBar;
-	DWORD *pCityToolBar;
+extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1995(CMFC3XPalette *pPalette, int iToggle) {
+	CSimcityAppPrimary *pApp;
+	CMainFrame *pMainFrm;
+	CSimcityView *pSCView;
+	CMapToolBar *pMapToolBar;
+	CCityToolBar *pCityToolBar;
 	WORD wSimSpeed;
 	DWORD dwTitleScreenAnimation;
 	int iProgramStep;
@@ -99,30 +95,30 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2K1995(void *pPalette, int iTog
 	DWORD dwTBToolBarTitleDrag;
 	BOOL bCityViewAnim;
 
-	DWORD &pCSimcityAppThis1995 = *(DWORD *)0x4C6010;
+	CSimcityAppPrimary &pCSimcityAppThis1995 = *(CSimcityAppPrimary *)0x4C6010;
 	BOOL &bLoColor1995 = *(BOOL *)0x4E903C;
 
-	DWORD *(__thiscall *H_PointerToCSimcityViewClass1995)(void *) = (DWORD *(__thiscall *)(void *))0x4026D0;
-	void(__cdecl *H_AnimationFunction1995)(void *, int) = (void(__cdecl *)(void *, int))0x456A60;
+	CSimcityView *(__thiscall *H_SimcityApp_PointerToCSimcityViewClass1995)(CSimcityAppPrimary *) = (CSimcityView *(__thiscall *)(CSimcityAppPrimary *))0x4026D0;
+	void(__cdecl *H_ToggleColorCycling1995)(CMFC3XPalette *, int) = (void(__cdecl *)(CMFC3XPalette *, int))0x456A60;
 
-	H_AnimationFunction1995(pPalette, iToggle);
+	H_ToggleColorCycling1995(pPalette, iToggle);
 	
 	pApp = &pCSimcityAppThis1995;
 	if (pApp) {
 		if (!bLoColor1995) {
-			pMainFrm = (DWORD *)pApp[7]; // m_pMainWnd
-			wSimSpeed = ((WORD *)pApp)[388];
-			dwTitleScreenAnimation = pApp[199];
-			iProgramStep = pApp[201];
+			pMainFrm = (CMainFrame *)pApp->m_pMainWnd; // m_pMainWnd
+			wSimSpeed = pApp->wSCAGameSpeedLOW;
+			dwTitleScreenAnimation = pApp->dwSCAToggleTitleScreenAnimation;
+			iProgramStep = pApp->iSCAProgramStep;
 			if (wSimSpeed != GAME_SPEED_PAUSED || dwTitleScreenAnimation || iProgramStep != ONIDLE_STATE_INGAME) {
 				if (pMainFrm) {
-					pMapToolBar = (DWORD *)&pMainFrm[233];
-					pCityToolBar = (DWORD *)&pMainFrm[102];
+					pMapToolBar = &pMainFrm->dwMFMapToolBar;
+					pCityToolBar = &pMainFrm->dwMFCityToolBar;
 
 					// For the toolbars, they're using vars from the parent MyToolBar class
 					// 46 and 47 are dwMyTBControlsDisabled and dwMyTBToolBarTitleDrag respectively.
-					dwTBControlsDisabled = pMapToolBar[46];
-					dwTBToolBarTitleDrag = pCityToolBar[47];
+					dwTBControlsDisabled = pMapToolBar->dwMyTBControlsDisabled;
+					dwTBToolBarTitleDrag = pCityToolBar->dwMyTBToolBarTitleDrag;
 
 					// With this check, the redraw calls won't be made if either toolbar is being dragged.
 					// This avoids any bleeding that may occur as a result of the blitted border that will
@@ -143,23 +139,23 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2K1995(void *pPalette, int iTog
 					// CMainFrame m_hWnd - only call this specific redraw function before CSimcityView has been created.
 					// (ie, before any game has been started - palette animation on the image is disabled once the
 					// game window has been created)
-					pSCView = H_PointerToCSimcityViewClass1995(pApp);
+					pSCView = H_SimcityApp_PointerToCSimcityViewClass1995(pApp);
 					if (!pSCView)
-						RedrawWindow((HWND)pMainFrm[7], NULL, NULL, RDW_INVALIDATE);
+						RedrawWindow(pMainFrm->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 					else if (pSCView && bCityViewAnim)
-						RedrawWindow((HWND)pSCView[7], NULL, NULL, RDW_INVALIDATE);
+						RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 				}
 			}
 		}
 	}
 }
 
-extern "C" void __cdecl Hook_AnimationFunction_SC2KDemo(void *pPalette, int iToggle) {
-	DWORD *pApp;
-	DWORD *pMainFrm;
-	DWORD *pSCView;
-	DWORD *pMapToolBar;
-	DWORD *pCityToolBar;
+extern "C" void __cdecl Hook_ToggleColorCycling_SC2KDemo(CMFC3XPalette *pPalette, int iToggle) {
+	CSimcityAppDemo *pApp;
+	CMainFrame *pMainFrm;
+	CSimcityView *pSCView;
+	CMapToolBar *pMapToolBar;
+	CCityToolBar *pCityToolBar;
 	WORD wSimSpeed;
 	DWORD dwTitleScreenAnimation;
 	int iProgramStep;
@@ -167,30 +163,30 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2KDemo(void *pPalette, int iTog
 	DWORD dwTBToolBarTitleDrag;
 	BOOL bCityViewAnim;
 
-	DWORD &pCSimcityAppThisDemo = *(DWORD *)0x4B6A70;
+	CSimcityAppDemo &pCSimcityAppThisDemo = *(CSimcityAppDemo *)0x4B6A70;
 	BOOL &bLoColorDemo = *(BOOL *)0x4D1EDC;
 
-	DWORD *(__thiscall *H_PointerToCSimcityViewClassDemo)(void *) = (DWORD *(__thiscall *)(void *))0x402725;
-	void(__cdecl *H_AnimationFunctionDemo)(void *, int) = (void(__cdecl *)(void *, int))0x44890F;
+	CSimcityView *(__thiscall *H_SimcityApp_PointerToCSimcityViewClassDemo)(CSimcityAppDemo *) = (CSimcityView *(__thiscall *)(CSimcityAppDemo *))0x402725;
+	void(__cdecl *H_ToggleColorCyclingDemo)(CMFC3XPalette *, int) = (void(__cdecl *)(CMFC3XPalette *, int))0x44890F;
 
-	H_AnimationFunctionDemo(pPalette, iToggle);
+	H_ToggleColorCyclingDemo(pPalette, iToggle);
 
 	pApp = &pCSimcityAppThisDemo;
 	if (pApp) {
 		if (!bLoColorDemo) {
-			pMainFrm = (DWORD *)pApp[7]; // m_pMainWnd
-			wSimSpeed = ((WORD *)pApp)[386];
-			dwTitleScreenAnimation = pApp[198];
-			iProgramStep = pApp[200];
+			pMainFrm = (CMainFrame *)pApp->m_pMainWnd; // m_pMainWnd
+			wSimSpeed = pApp->wSCAGameSpeedLOW;
+			dwTitleScreenAnimation = pApp->dwSCAToggleTitleScreenAnimation;
+			iProgramStep = pApp->iSCAProgramStep;
 			if (wSimSpeed != GAME_SPEED_PAUSED || dwTitleScreenAnimation || iProgramStep != ONIDLE_STATE_INGAME) {
 				if (pMainFrm) {
-					pMapToolBar = (DWORD *)&pMainFrm[233];
-					pCityToolBar = (DWORD *)&pMainFrm[102];
+					pMapToolBar = &pMainFrm->dwMFMapToolBar;
+					pCityToolBar = &pMainFrm->dwMFCityToolBar;
 
 					// For the toolbars, they're using vars from the parent MyToolBar class
 					// 46 and 47 are dwMyTBControlsDisabled and dwMyTBToolBarTitleDrag respectively.
-					dwTBControlsDisabled = pMapToolBar[46];
-					dwTBToolBarTitleDrag = pCityToolBar[47];
+					dwTBControlsDisabled = pMapToolBar->dwMyTBControlsDisabled;
+					dwTBToolBarTitleDrag = pCityToolBar->dwMyTBToolBarTitleDrag;
 
 					// With this check, the redraw calls won't be made if either toolbar is being dragged.
 					// This avoids any bleeding that may occur as a result of the blitted border that will
@@ -211,11 +207,11 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2KDemo(void *pPalette, int iTog
 					// CMainFrame m_hWnd - only call this specific redraw function before CSimcityView has been created.
 					// (ie, before any game has been started - palette animation on the image is disabled once the
 					// game window has been created)
-					pSCView = H_PointerToCSimcityViewClassDemo(pApp);
+					pSCView = H_SimcityApp_PointerToCSimcityViewClassDemo(pApp);
 					if (!pSCView)
-						RedrawWindow((HWND)pMainFrm[7], NULL, NULL, RDW_INVALIDATE);
+						RedrawWindow(pMainFrm->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 					else if (pSCView && bCityViewAnim)
-						RedrawWindow((HWND)pSCView[7], NULL, NULL, RDW_INVALIDATE);
+						RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 				}
 			}
 		}
@@ -224,15 +220,15 @@ extern "C" void __cdecl Hook_AnimationFunction_SC2KDemo(void *pPalette, int iTog
 
 void InstallAnimationHooks_SC2K1996(void) {
 	VirtualProtect((LPVOID)0x4023D3, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4023D3, Hook_AnimationFunction_SC2K1996);
+	NEWJMP((LPVOID)0x4023D3, Hook_ToggleColorCycling_SC2K1996);
 }
 
 void InstallAnimationHooks_SC2K1995(void) {
 	VirtualProtect((LPVOID)0x402405, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x402405, Hook_AnimationFunction_SC2K1995);
+	NEWJMP((LPVOID)0x402405, Hook_ToggleColorCycling_SC2K1995);
 }
 
 void InstallAnimationHooks_SC2KDemo(void) {
 	VirtualProtect((LPVOID)0x402473, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x402473, Hook_AnimationFunction_SC2KDemo);
+	NEWJMP((LPVOID)0x402473, Hook_ToggleColorCycling_SC2KDemo);
 }

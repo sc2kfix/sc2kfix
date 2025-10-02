@@ -2,8 +2,8 @@
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <windowsx.h>
 #include <psapi.h>
 #include <commctrl.h>
 #include <shlwapi.h>
@@ -82,7 +82,7 @@ extern "C" DWORD __cdecl Hook_MovieCheck(char* sMovStr) {
 		if (!smk_enabled || bSkipIntro || bSettingsAlwaysSkipIntro)
 			return 1;
 
-	return Game_Direct_MovieCheck(sMovStr);
+	return GameMain_MovieCheck(sMovStr);
 }
 
 extern "C" DWORD __cdecl Hook_SmackOpen(LPCSTR lpFileName, uint32_t uFlags, int32_t iExBuf) {

@@ -208,19 +208,29 @@ HOOKEXT const char* GetOnIdleStateEnumName(int iState) {
 	return szOnIdleStateEnums[iState + 1];
 }
 
-void MigrateRegStringValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, char *szOutBuf, DWORD dwLen) {
-	DWORD dwOutBufLen = dwLen;
-	RegGetValueA(hKey, lpSubKey, lpValueName, RRF_RT_REG_SZ, NULL, szOutBuf, &dwOutBufLen);
+static BOOL IsBadFileCharacter(char c) {
+	// Note: This takes out the most common
+	// invalid filename character cases.
+	if (c >= 0x00 && c <= 0x1F)
+		return TRUE;
+	if (c == '<' || c == '>' ||
+		c == ':' || c == '"' ||
+		c == '/' || c == '\\' ||
+		c == '|' || c == '?' ||
+		c == '*' || c == 0x7F)
+		return TRUE;
+	return FALSE;
 }
 
-void MigrateRegDWORDValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, DWORD *dwOut, DWORD dwSize) {
-	DWORD dwOutSize = dwSize;
-	RegGetValueA(hKey, lpSubKey, lpValueName, RRF_RT_REG_DWORD, NULL, dwOut, &dwOutSize);
-}
+HOOKEXT BOOL IsFileNameValid(const char *pName) {
+	if (!pName)
+		return FALSE;
 
-void MigrateRegBOOLValue(HKEY hKey, const char *lpSubKey, const char *lpValueName, BOOL *bOut) {
-	DWORD dwOutSize = sizeof(BOOL);
-	RegGetValueA(hKey, lpSubKey, lpValueName, RRF_RT_REG_DWORD, NULL, bOut, &dwOutSize);
+	const char *pTemp = pName;
+	for (; *pTemp; pTemp++)
+		if (IsBadFileCharacter(*pTemp))
+			return FALSE;
+	return TRUE;
 }
 
 // start of base64 code

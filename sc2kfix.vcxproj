@@ -71,7 +71,7 @@
       <EnableUAC>false</EnableUAC>
       <ModuleDefinitionFile>hooks\exports.def</ModuleDefinitionFile>
       <DataExecutionPrevention>false</DataExecutionPrevention>
-      <AdditionalDependencies>"comctl32.lib";"shlwapi.lib";"winmm.lib";"wininet.lib";"dbghelp.lib";"wsock32.lib";"ws2_32.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>"comctl32.lib";"psapi.lib";"shlwapi.lib";"winmm.lib";"wininet.lib";"dbghelp.lib";"wsock32.lib";"ws2_32.lib";%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>
@@ -99,7 +99,7 @@
       <EnableUAC>false</EnableUAC>
       <ModuleDefinitionFile>hooks\exports.def</ModuleDefinitionFile>
       <DataExecutionPrevention>false</DataExecutionPrevention>
-      <AdditionalDependencies>"comctl32.lib";"shlwapi.lib";"winmm.lib";"wininet.lib";"dbghelp.lib";"wsock32.lib";"ws2_32.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>"comctl32.lib";"psapi.lib";"shlwapi.lib";"winmm.lib";"wininet.lib";"dbghelp.lib";"wsock32.lib";"ws2_32.lib";%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>
@@ -112,6 +112,7 @@
     <ClInclude Include="include\json.hpp" />
     <ClInclude Include="include\mfc3xhelp.h" />
     <ClInclude Include="include\music.h" />
+    <ClInclude Include="include\sc2kclasses.h" />
     <ClInclude Include="include\sc2kfix.h" />
     <ClInclude Include="include\sc2k_demo.h" />
     <ClInclude Include="include\smk.h" />
@@ -167,6 +168,7 @@
     <ClCompile Include="hooks\hook_guzzardo.cpp" />
     <ClCompile Include="hooks\hook_spritesandtilesets.cpp" />
     <ClCompile Include="hooks\hook_tilegrowthorplacement.cpp" />
+    <ClCompile Include="hooks\hook_toolbars.cpp" />
     <ClCompile Include="modules\console.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="hooks\hook_mciSendCommand.cpp" />
@@ -186,6 +188,7 @@
     <ClCompile Include="modules\scurkfix.cpp" />
     <ClCompile Include="modules\settings.cpp" />
     <ClCompile Include="modules\status_dialog.cpp" />
+    <ClCompile Include="modules\track_config.cpp" />
     <ClCompile Include="modules\update_notifier.cpp" />
     <ClCompile Include="modules\smk.cpp" />
     <ClCompile Include="modules\scenario_status.cpp" />
