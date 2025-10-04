@@ -4,6 +4,7 @@
 
 #undef UNICODE
 #include <windows.h>
+#include <shlwapi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <intrin.h>
@@ -824,6 +825,36 @@ void __declspec(naked) Hook_431212(void) {
 	}
 }
 
+extern "C" void __cdecl Hook_CheckAndAppendCityExtension(CMFC3XString *lpFileName, char *pSC2) {
+	char szTempFile[MAX_PATH + 1], szTempExt[16 + 1], szTempPath[MAX_PATH + 1];
+	int nLen;
+
+	strcpy_s(szTempFile, sizeof(szTempFile), lpFileName->m_pchData);
+	strcpy_s(szTempExt, sizeof(szTempExt), pSC2);
+	PathStripPathA(szTempFile);
+	_strlwr_s(szTempFile);
+	_strlwr_s(szTempExt);
+	nLen = strlen(szTempFile);
+	// Above 4 in this case since we want to make sure the path-stripped file
+	// is more than just the file extension.
+	if (nLen > 4) {
+		// file + (nLen - 3) so you just get the end extension and compare against that.
+		if (_stricmp(szTempFile + (nLen - 3), szTempExt) != 0) {
+			// Check for a valid last stored city path, otherwise use the default
+			// derived from the game path.
+			if (L_IsPathValid(szLastStoredCityPath))
+				strcpy_s(szTempPath, sizeof(szTempPath), szLastStoredCityPath);
+			else
+				sprintf_s(szTempPath, sizeof(szTempPath), "%s\\Cities\\", szGamePath);
+
+			// Empty the filename string and rebuild it.
+			GameMain_String_Empty(lpFileName);
+			GameMain_String_Format(lpFileName, "%s%s.%s", szTempPath, szTempFile, szTempExt);
+		}
+	}
+	return;
+}
+
 // Fix rail and highway border connections not loading properly
 extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
 	wCityNeighborConnections1500 = 0;
@@ -858,9 +889,9 @@ void InstallSaveHooks_SC2K1996(void) {
 	memset((LPVOID)0x4E7344, 0, 32);
 	memcpy_s((LPVOID)0x4E7344, 32, "SimCity Files (*.sc2)|*.sc2||", 30);
 
-	// Fix save filenames going wonky 
-	VirtualProtect((LPVOID)0x4321B9, 8, PAGE_EXECUTE_READWRITE, &dwDummy);
-	memset((LPVOID)0x4321B9, 0x90, 8);
+	// Fix save filenames going wonky
+	VirtualProtect((LPVOID)0x432870, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x432870, Hook_CheckAndAppendCityExtension);
 
 	// Fix $1500 neighbor connections on game load
 	VirtualProtect((LPVOID)0x434BEA, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
