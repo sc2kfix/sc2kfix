@@ -1295,7 +1295,7 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCursorResources() {
 }
 
 extern "C" int __stdcall Hook_StartupGraphics() {
-	HDC hDC_One, hDC_Two;
+	HDC hDC;
 	int iPlanes, iBitsPixel, iBitRate;
 	PALETTEENTRY *p_pEnt;
 	colStruct *pCol;
@@ -1306,25 +1306,22 @@ extern "C" int __stdcall Hook_StartupGraphics() {
 	plPal.wVersion = 0x300;
 	plPal.wNumPalEnts = LOCOLORCNT;
 	memset(plPal.pPalEnts, 0, sizeof(plPal.pPalEnts));
-	hDC_One = 0;
+	hDC = GetDC(0);
 	if (!hDC_Global) {
-		hDC_One = GetDC(0);
-		hDC_Global = CreateCompatibleDC(hDC_One);
+		hDC_Global = CreateCompatibleDC(hDC);
 	}
 
-	hDC_Two = GetDC(0);
-	iPlanes = GetDeviceCaps(hDC_Two, PLANES);
-	iBitsPixel = GetDeviceCaps(hDC_Two, BITSPIXEL);
-	if (iForcedBits > 0)
-		iBitRate = iForcedBits;
-	else
-		iBitRate = iBitsPixel * iPlanes;
+	iPlanes = GetDeviceCaps(hDC, PLANES);
+	iBitsPixel = GetDeviceCaps(hDC, BITSPIXEL);
+	iBitRate = (iForcedBits > 0) ? iForcedBits : iBitsPixel * iPlanes;
 
+	bHiColor = TRUE;
 	if (iBitRate < 16) {
+		bHiColor = FALSE;
 		if (iBitRate <= 4) {
 			bLoColor = TRUE;
 			pvIn = SETCOLORTABLE;
-			if (Escape(hDC_Two, QUERYESCSUPPORT, 4, (LPCSTR)&pvIn, 0)) {
+			if (Escape(hDC, QUERYESCSUPPORT, 4, (LPCSTR)&pvIn, 0)) {
 				p_pEnt = plPal.pPalEnts;
 				pCol = rgbLoColor;
 				do {
@@ -1334,20 +1331,19 @@ extern "C" int __stdcall Hook_StartupGraphics() {
 					cT.Index = pCol->wPos;
 					cT.rgb = RGB(pCol->pe.peRed, pCol->pe.peGreen, pCol->pe.peBlue);
 
-					Escape(hDC_Two, SETCOLORTABLE, 6, (LPCSTR)&cT, &pvOut);
+					Escape(hDC, SETCOLORTABLE, 6, (LPCSTR)&cT, &pvOut);
 					p_pEnt[pCol->wPos].peRed = pCol->pe.peRed;
 					p_pEnt[pCol->wPos].peGreen = pCol->pe.peGreen;
 					p_pEnt[pCol->wPos].peBlue = pCol->pe.peBlue;
 					p_pEnt[pCol->wPos].peFlags = 1;
 					pCol++;
 				} while ( pCol->wPos < LOCOLORCNT );
-				bPaletteSet = 1;
+				bPaletteSet = TRUE;
 				SendMessageA(HWND_BROADCAST, WM_SYSCOLORCHANGE, 0, 0);
 			}
 			else {
 				p_pEnt = plPal.pPalEnts;
 				pCol = rgbNormalColor;
-				bPaletteSet = 0;
 				do {
 					p_pEnt[pCol->wPos].peRed = pCol->pe.peRed;
 					p_pEnt[pCol->wPos].peGreen = pCol->pe.peGreen;
@@ -1355,15 +1351,13 @@ extern "C" int __stdcall Hook_StartupGraphics() {
 					p_pEnt[pCol->wPos].peFlags = 1;
 					pCol++;
 				} while ( pCol->wPos < LOCOLORCNT );
+				bPaletteSet = FALSE;
 			}
 			hLoColor = CreatePalette((const LOGPALETTE *)&plPal);
 		}
 	}
-	else {
-		bHiColor = TRUE;
-	}
 
-	return ReleaseDC(0, hDC_Two);
+	return ReleaseDC(0, hDC);
 }
 
 extern "C" void __stdcall Hook_ShowViewControls() {
