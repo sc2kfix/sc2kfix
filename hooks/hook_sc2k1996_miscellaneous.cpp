@@ -748,7 +748,7 @@ static void L_TileHighlightUpdate(CSimcityView *pThis) {
 			x = Game_Graphics_Width(pThis->dwSCVCGraphics);
 			y = Game_Graphics_Height(pThis->dwSCVCGraphics);
 			if (!bOverrideTickPlacementHighlight) {
-				Game_BeginProcessObjects(pThis, vBits, x, y, (RECT *)&pThis->iSCVXCoord);
+				Game_BeginProcessObjects(pThis, vBits, x, y, (RECT *)&pThis->iSCVAreaViewWidth);
 				Game_SimcityView_DrawSquareHighlight(pThis, wHighlightedTileX1, wHighlightedTileY1, wHighlightedTileX2, wHighlightedTileY2);
 				Game_FinishProcessObjects();
 			}

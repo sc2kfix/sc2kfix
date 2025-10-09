@@ -364,8 +364,8 @@ public:
 	DWORD dwSCVRightClickMenuOpen;
 	CMFC3XPoint dwSCVRealPoint;
 	DWORD dwSCVSixtyOne[6];
-	int iSCVXCoord;
-	int iSCVYCoord;
+	int iSCVAreaViewWidth;
+	int iSCVAreaViewHeight;
 	CMFC3XPoint dwSCVAdjustedPoint;
 	WORD wSCVZoomLevel;
 	DWORD dwSCVIsZoomed;
