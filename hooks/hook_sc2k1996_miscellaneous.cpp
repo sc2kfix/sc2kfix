@@ -1376,7 +1376,7 @@ extern "C" void __stdcall Hook_ShowViewControls() {
 	pSCVStatic = pSCView->dwSCVStaticOne;
 	if (!bRedraw) {
 		bRedraw = TRUE;
-		if (pSCApp->iSCAProgramStep == ONIDLE_STATE_RETURN_12 || !wCityMode)
+		if (pSCApp->iSCAProgramStep == ONIDLE_STATE_EDITNEWMAP_RETURN || !wCityMode)
 			Game_MainFrame_ToggleStatusControlBar(pMainFrm, FALSE);
 		else {
 			if (!CanUseFloatingStatusDialog())
