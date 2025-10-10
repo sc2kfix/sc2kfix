@@ -340,7 +340,7 @@ class CSimcityView : public CMFC3XView {
 public:
 	CGraphics *dwSCVCGraphics;
 	DWORD bSCVViewActive;
-	DWORD dwSCVThree;
+	void *dwSCVThree;
 	void *dwSCVLockDIBRes;
 	LONG dwSCVWidth;
 	LONG dwSCVHeight;

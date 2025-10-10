@@ -1115,6 +1115,14 @@ enum {
 	GAMEOVER_BANKRUPT
 };
 
+enum {
+	DEMAND_RES,
+	DEMAND_COM,
+	DEMAND_IND,
+
+	DEMAND_COUNT
+};
+
 // Structs
 
 #pragma pack(push, 1)
@@ -1432,6 +1440,7 @@ GAMECALL(0x402261, __int16, __stdcall, RandomWordLFSRMod4, void)
 GAMECALL(0x402B3F, __int16, __stdcall, RandomWordLFSRMod128, void)
 
 /* Main */
+GAMECALL_MAIN(0x422EA0, void, __stdcall, CityToolBarSetBgdAndText, HDC, LONG, LONG, int, int, COLORREF)
 GAMECALL_MAIN(0x4237F0, void, __thiscall, CityToolBar_ToolMenuDisable, CCityToolBar* pThis)
 GAMECALL_MAIN(0x423860, void, __thiscall, CityToolBar_ToolMenuEnable, CCityToolBar* pThis)
 GAMECALL_MAIN(0x4255A0, void, __thiscall, SimcityApp_LoadCursorResources, CSimcityAppPrimary *)
@@ -1449,6 +1458,8 @@ GAMECALL_MAIN(0x48A810, DWORD, __cdecl, MovieCheck, char *sMovStr)
 
 
 // MFC function pointers. Use with care.
+GAMECALL_MAIN(0x48B9E6, BOOL, __thiscall, DC_TextOutA, CMFC3XDC *, int, int, const char *, int)
+GAMECALL_MAIN(0x48BA0A, BOOL, __thiscall, DC_ExtTextOutA, CMFC3XDC *, int, int, unsigned int, RECT *, const char *, unsigned int, int *)
 GAMECALL_MAIN(0x49BCF4, BOOL, __stdcall, IsIconic, HWND hWnd)
 GAMECALL_MAIN(0x49C354, BOOL, __stdcall, GetSaveFileNameA, LPOPENFILENAMEA)
 GAMECALL_MAIN(0x49C35A, BOOL, __stdcall, GetLoadFileNameA, LPOPENFILENAMEA)
@@ -1485,6 +1496,11 @@ GAMECALL_MAIN(0x4A83B8, LONG, __thiscall, File_Seek, CMFC3XFile *, LONG, UINT)
 GAMECALL_MAIN(0x4A8448, void, __thiscall, File_Close, CMFC3XFile *)
 GAMECALL_MAIN(0x4A854E, DWORD, __thiscall, File_GetLength, CMFC3XFile *)
 GAMECALL_MAIN(0x4AA573, void, __thiscall, WinApp_OnAppExit, CMFC3XWinApp *pThis)
+GAMECALL_MAIN(0x4AB0D0, CMFC3XGdiObject *, __thiscall, DC_SelectObjectFont, CMFC3XDC *, CMFC3XFont *pFont)
+GAMECALL_MAIN(0x4AB1E2, COLORREF, __thiscall, DC_SetBkColor, CMFC3XDC *, COLORREF)
+GAMECALL_MAIN(0x4AB22F, int, __thiscall, DC_SetBkMode, CMFC3XDC *, int)
+GAMECALL_MAIN(0x4AB363, COLORREF, __thiscall, DC_SetTextColor, CMFC3XDC *, COLORREF)
+GAMECALL_MAIN(0x4ABAF0, UINT, __thiscall, DC_SetTextAlign, CMFC3XDC *, UINT)
 GAMECALL_MAIN(0x4AE0BC, void, __thiscall, Document_UpdateAllViews, CMFC3XDocument *pThis, CMFC3XView *pSender, LPARAM lHint, CMFC3XObject *pHint)
 GAMECALL_MAIN(0x4AE16C, BOOL, __thiscall, Document_OnCmdMsg, CMFC3XDocument *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo)
 GAMECALL_MAIN(0x4AE83A, BOOL, __thiscall, View_OnCmdMsg, CMFC3XView *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo)
@@ -1509,6 +1525,7 @@ GAMEOFF(WORD,	wTileCoordinateY,			0x4C7AB4)
 GAMEOFF(WORD,	wGameScreenAreaX,			0x4C7AD8)		// Used here in CSimcityView_WM_LBUTTONDOWN and CSimcityView_WM_MOUSEFIRST
 GAMEOFF(WORD,	wGameScreenAreaY,			0x4C7ADC)		// Used here in CSimcityView_WM_LBUTTONDOWN and CSimcityView_WM_MOUSEFIRST
 GAMEOFF(DWORD,	dwCityToolBarArcologyDialogCancel,	0x4C7B98)
+GAMEOFF_ARR(CMFC3XFont *,	MainFontsArl,		0x4C7C88)
 GAMEOFF(WORD,	wViewInitialCoordX,			0x4C7CB0)
 GAMEOFF(WORD,	wViewInitialCoordY,			0x4C7CB4)
 GAMEOFF(WORD,	wViewInitialZoom,			0x4C7CB8)
@@ -1622,7 +1639,7 @@ GAMEOFF(WORD,	wSportsTeams,				0x4CC4E0)
 GAMEOFF(BYTE,	bMilitaryBaseType,			0x4CC4E4)
 GAMEOFF(int,	dwCityBonds,				0x4CC4E8)
 GAMEOFF(DWORD,	dwCityTrafficUnknown,		0x4CC6F4)
-GAMEOFF_ARR(WORD,	wCityDemand,			0x4CC8F8)
+GAMEOFF_ARR(__int16,	wCityDemand,			0x4CC8F8)
 GAMEOFF(DWORD,	dwCityPollution,			0x4CC910)		// Needs reverse engineering. See wiki.
 GAMEOFF(WORD,	wScenarioDisasterID,		0x4CC918)
 GAMEOFF(WORD,	wScenarioTimeLimitMonths,	0x4CC91C)
@@ -1671,6 +1688,7 @@ GAMEOFF_ARR(const char,	gameStrHyphen,		0x4E6804)
 GAMEOFF(WORD,	wPreviousTileCoordinateY,	0x4E680C)
 GAMEOFF(CSimcityView*,	pCSimcityView,				0x4E682C)
 GAMEOFF_ARR(DWORD, dwCityProgressionRequirements, 0x4E6984)
+GAMEOFF_ARR(COLORREF,	colRCI,				0x4E6F28)
 GAMEOFF(DWORD,	dwNextRefocusSongID,		0x4E6F8C)
 GAMEOFF_ARR(DWORD, dwZoneNameStringIDs,		0x4E7140)
 GAMEOFF_ARR(const char,	aData,				0x4E728C)

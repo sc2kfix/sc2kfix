@@ -1729,12 +1729,6 @@ void InstallMiscHooks_SC2K1996(void) {
 	NEWJMP((LPVOID)0x401F05, Hook_StartCleanGame);
 
 	InstallTileGrowthOrPlacementHandlingHooks_SC2K1996();
-
-	// Move the alt+query bottom text to not be blocked by the OK button
-	VirtualProtect((LPVOID)0x428FB1, 3, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(BYTE*)0x428FB1 = 0x83;
-	*(BYTE*)0x428FB2 = 0xE8;
-	*(BYTE*)0x428FB3 = 0x32;
 	
 	// Install the advanced query hook
 	InstallQueryHooks_SC2K1996();
