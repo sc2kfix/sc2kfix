@@ -639,6 +639,8 @@ extern "C" LRESULT __stdcall Hook_DefWindowProcA(HWND hWnd, UINT Msg, WPARAM wPa
 	return DefWindowProcA(hWnd, Msg, wParam, lParam);
 }
 
+extern int iChurchVirus;
+
 extern "C" void __stdcall Hook_StartCleanGame(void) {
 	BOOL bMapEditor, bNewGame;
 
@@ -661,6 +663,7 @@ extern "C" void __stdcall Hook_StartCleanGame(void) {
 		}
 	}
 
+	iChurchVirus = -1;
 	GameMain_StartCleanGame();
 }
 
