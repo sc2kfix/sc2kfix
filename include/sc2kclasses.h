@@ -54,7 +54,7 @@ typedef struct COLORTABLE_STRUCT {
 #pragma pack(push, 1)
 class CSound {
 public:
-	HWND *dwSNDhWnd;
+	HWND hMainWnd;
 	BOOL bSNDPlaySound;
 	int iSNDCurrSoundID;
 	CMFC3XString dwSNDSoundString;
