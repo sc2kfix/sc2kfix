@@ -377,7 +377,7 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 			Game_MyToolBar_SetButtonStyle(pThis, CITYTOOL_BUTTON_HELP, 0);
 			break;
 		default:
-			return;
+			break;
 	}
 	Game_SimcityApp_UpdateStatus(pSCApp, FALSE);
 	Game_SimcityApp_GetToolSound(pSCApp);

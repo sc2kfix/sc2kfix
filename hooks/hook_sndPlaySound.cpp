@@ -32,7 +32,7 @@ std::map<int, sound_replacement_t> mapReplacementSounds;
 
 static DWORD dwDummy;
 
-extern "C" void __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer) {
+extern "C" int __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer) {
     if (snd_debug & SND_DEBUG_PLAYS)
         ConsoleLog(LOG_DEBUG, "SND:  Loading %d.wav into buffer <0x%08X>.\n", iSoundID, lpBuffer);
 
@@ -47,10 +47,10 @@ extern "C" void __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer) {
         memcpy_s(lpBuffer, mapReplacementSounds[iSoundID].nBufSize, mapReplacementSounds[iSoundID].bBuffer, mapReplacementSounds[iSoundID].nBufSize);
         if (snd_debug & SND_DEBUG_PLAYS)
             ConsoleLog(LOG_DEBUG, "SND:  Detour! Copied replacement %d.wav into buffer <0x%08X>.\n", iSoundID, lpBuffer);
-        return;
+        return 1;
     }
 
-    GameMain_LoadSoundBuffer(iSoundID, lpBuffer);
+    return GameMain_LoadSoundBuffer(iSoundID, lpBuffer);
 }
 
 extern "C" BOOL __stdcall Hook_sndPlaySoundA(void* pReturnAddress, BOOL* retval, LPCTSTR lpszSound, UINT fuSound) {
