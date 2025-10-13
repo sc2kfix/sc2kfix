@@ -457,7 +457,7 @@ void UpdateStatus_SC2K1996(int iShow);
 void InstallQueryHooks_SC2K1996(void);
 void InstallMilitaryHooks_SC2K1996(void);
 void InstallSaveHooks_SC2K1996(void);
-extern "C" void __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer);
+extern "C" int __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer);
 extern "C" int __stdcall Hook_MusicPlay(int iSongID);
 extern "C" int __stdcall Hook_MusicStop(void);
 extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void);

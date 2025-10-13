@@ -267,4 +267,10 @@ void InstallQueryHooks_SC2K1996(void) {
 
 	VirtualProtect((LPVOID)0x402E19, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402E19, Hook_QueryGeneralItem);
+
+	// Move the alt+query bottom text to not be blocked by the OK button
+	VirtualProtect((LPVOID)0x428FB1, 3, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(BYTE*)0x428FB1 = 0x83;
+	*(BYTE*)0x428FB2 = 0xE8;
+	*(BYTE*)0x428FB3 = 0x32;
 }

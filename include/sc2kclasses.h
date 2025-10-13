@@ -54,7 +54,7 @@ typedef struct COLORTABLE_STRUCT {
 #pragma pack(push, 1)
 class CSound {
 public:
-	HWND *dwSNDhWnd;
+	HWND hMainWnd;
 	BOOL bSNDPlaySound;
 	int iSNDCurrSoundID;
 	CMFC3XString dwSNDSoundString;
@@ -340,7 +340,7 @@ class CSimcityView : public CMFC3XView {
 public:
 	CGraphics *dwSCVCGraphics;
 	DWORD bSCVViewActive;
-	DWORD dwSCVThree;
+	void *dwSCVThree;
 	void *dwSCVLockDIBRes;
 	LONG dwSCVWidth;
 	LONG dwSCVHeight;
@@ -363,9 +363,9 @@ public:
 	CMFC3XPoint dwSCVMousePoint;
 	DWORD dwSCVRightClickMenuOpen;
 	CMFC3XPoint dwSCVRealPoint;
-	DWORD dwSCVSixtyOne[3];
-	CMFC3XRect dwSCVRECTOne;
-	int iSCVYCoord;
+	DWORD dwSCVSixtyOne[6];
+	int iSCVAreaViewWidth;
+	int iSCVAreaViewHeight;
 	CMFC3XPoint dwSCVAdjustedPoint;
 	WORD wSCVZoomLevel;
 	DWORD dwSCVIsZoomed;

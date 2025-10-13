@@ -377,7 +377,7 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 			Game_MyToolBar_SetButtonStyle(pThis, CITYTOOL_BUTTON_HELP, 0);
 			break;
 		default:
-			return;
+			break;
 	}
 	Game_SimcityApp_UpdateStatus(pSCApp, FALSE);
 	Game_SimcityApp_GetToolSound(pSCApp);
@@ -594,6 +594,128 @@ extern "C" void __stdcall Hook_MapToolBar_SetSelection(UINT nIndex, UINT nSubInd
 	Game_SimcityApp_GetToolSound(pSCApp);
 }
 
+// This call is used for getting the 'top' of the bottom extent
+// for the demand graph rectangle, and is also used for determining
+// the top of the 'RCI' widget badge rectangle.
+static int getSurplusTopExtent(int nExtent, int nTop, int nOffset) {
+	return nExtent + nTop + nOffset;
+}
+
+extern "C" void __stdcall Hook_CityToolBar_DrawRCIIndicator(CMFC3XDC *pDC) {
+	CCityToolBar *pThis;
+
+	__asm mov[pThis], ecx
+
+	CMFC3XRect RCIRect, RCIWidgRect, r;
+	COLORREF BkColor;
+	int defLeft, defRight, defRCITop, left, top, cx, cy;
+	int nRCI, nColDemand, nColSepSpace, nColPos, defWidgOffset, defWidgHeight;
+	RECT *pRectClear;
+	CMFC3XFont *RCIFont;
+	const char *RCIStr;
+	
+	defLeft = 66;
+	defRight = 92;
+
+	// The "RCI" Indicator criteria.
+	defRCITop = 21;
+
+	// If 'defRCITop' is adjusted, the following
+	// offset may also need a tweak in order to keep
+	// the 'RCI' badge widget centred between the
+	// demand and surplus graph bars.
+	defWidgOffset = 2;
+
+	// The height of the 'RCI' widget badge.
+	defWidgHeight = 16;
+
+	RCIRect.left = defLeft;
+	RCIRect.top = 257; // Maximum top extent for when there's demand.
+	RCIRect.right = defRight;
+	RCIRect.bottom = getSurplusTopExtent(defRCITop, RCIRect.top, defWidgOffset) + defWidgHeight + 2 + defRCITop; // Maximum bottom extent for when there's a surplus.
+
+	BkColor = GetBkColor(pDC->m_hAttribDC);
+
+	// Annoying case here, if the painted graph
+	// area goes beyond a total height (top to bottom)
+	// of 64px, it'll leave bleed artifacts behind depending
+	// on whether the top or bottom exceeded that given
+	// height measurement.
+	nColSepSpace = 2;
+	for (nRCI = 0; nRCI < DEMAND_COUNT; ++nRCI) {
+		nColDemand = defRCITop * wCityDemand[nRCI] / 2000;
+		if (nColDemand) {
+			nColPos = (nRCI + 1) * (defRight - defLeft) / 4;
+			if (nRCI == DEMAND_IND)
+				nColPos++;
+
+			r.left = defLeft + nColPos - nColSepSpace;
+			r.right = defLeft + nColSepSpace + nColPos;
+
+			pRectClear = &RCIRect;
+
+			if (nColDemand <= 0) {
+				r.top = pRectClear->bottom - defRCITop;
+				r.bottom = pRectClear->bottom - defRCITop - nColDemand;
+			}
+			else {
+				r.bottom = pRectClear->top + defRCITop;
+				r.top = pRectClear->top + defRCITop - nColDemand;
+			}
+
+			pRectClear->left = r.left;
+			pRectClear->right = r.right;
+
+			// Clear the entire column.
+			InflateRect(pRectClear, 1, 1);
+			GameMain_DC_SetBkColor(pDC, pThis->dwMyTBButtonFace);
+			GameMain_DC_ExtTextOutA(pDC, pRectClear->left, pRectClear->top, ETO_OPAQUE, pRectClear, 0, 0, 0);
+			InflateRect(pRectClear, -1, -1);
+
+			// Border
+			InflateRect(&r, 1, 1);
+			GameMain_DC_SetBkColor(pDC, PALETTEINDEX(164));
+			GameMain_DC_ExtTextOutA(pDC, r.left, r.top, ETO_OPAQUE, &r, 0, 0, 0);
+
+			// Graph bar
+			InflateRect(&r, -1, -1);
+			GameMain_DC_SetBkColor(pDC, colRCI[nRCI]);
+			GameMain_DC_ExtTextOutA(pDC, r.left, r.top, ETO_OPAQUE, &r, 0, 0, 0);
+		}
+	}
+
+	// The "RCI" middle widget.
+	RCIWidgRect.left = defLeft;
+	RCIWidgRect.top = RCIRect.top;
+	RCIWidgRect.right = defRight;
+	RCIWidgRect.bottom = RCIRect.bottom;
+
+	left = RCIWidgRect.left;
+	top = getSurplusTopExtent(defRCITop, RCIWidgRect.top, defWidgOffset);
+	cx = RCIWidgRect.right - left;
+	cy = defWidgHeight;
+
+	RCIFont = (CMFC3XFont *)GameMain_DC_SelectObjectFont(pDC, MainFontsArl[0]);
+	GameMain_DC_SetBkColor(pDC, pThis->dwMyTBButtonFace);
+	GameMain_DC_SetTextColor(pDC, pThis->dwMyTBButtonText);
+	GameMain_DC_SetTextAlign(pDC, TA_CENTER);
+	GameMain_DC_SetBkMode(pDC, TRANSPARENT);
+
+	RCIStr = "RCI";
+	RCIWidgRect.top = top;
+	RCIWidgRect.bottom = top + cy;
+	GameMain_DC_TextOutA(pDC, (cx / 2 + left) - 1, top + 2, RCIStr, strlen(RCIStr));
+
+	GameMain_DC_SelectObjectFont(pDC, RCIFont);
+	GameMain_CityToolBarSetBgdAndText(pDC->m_hDC, left, top, 1, cy - 1, pThis->dwMyTBButtonHighlighted);
+	GameMain_CityToolBarSetBgdAndText(pDC->m_hDC, left, top, cx - 1, 1, pThis->dwMyTBButtonHighlighted);
+	GameMain_CityToolBarSetBgdAndText(pDC->m_hDC, left + cx - 1, top, 1, cy, pThis->dwMyTBButtonShadow);
+	GameMain_CityToolBarSetBgdAndText(pDC->m_hDC, left, top + cy - 1, cx, 1, pThis->dwMyTBButtonShadow);
+	GameMain_CityToolBarSetBgdAndText(pDC->m_hDC, left + cx - 2, top + 1, 1, cy - 2, pThis->dwMyTBButtonShadow);
+	GameMain_CityToolBarSetBgdAndText(pDC->m_hDC, left + 1, top + cy - 2, cx - 2, 1, pThis->dwMyTBButtonShadow);
+	GameMain_DC_SetBkColor(pDC, BkColor);
+}
+
 void InstallToolBarHooks_SC2K1996(void) {
 	// Hooks for CCityToolBar::ToolMenuDisable and CCityToolBar::ToolMenuEnable
 	// Both of which are called when a modal CGameDialog is opened.
@@ -619,4 +741,8 @@ void InstallToolBarHooks_SC2K1996(void) {
 	// Hook CMapToolBar::SetSelection
 	VirtualProtect((LPVOID)0x402A5E, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402A5E, Hook_MapToolBar_SetSelection);
+
+	// Hook for CCityToolBar::DrawRCIIndicator
+	VirtualProtect((LPVOID)0x402EAF, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402EAF, Hook_CityToolBar_DrawRCIIndicator);
 }
