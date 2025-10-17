@@ -746,16 +746,16 @@ static void L_TileHighlightUpdate(CSimcityView *pThis) {
 	__int16 y;
 
 	if (wTileHighlightActive) {
-		vBits = Game_Graphics_LockDIBBits(pThis->dwSCVCGraphics);
+		vBits = Game_Graphics_LockDIBBits(pThis->SCVGraphics);
 		if (vBits || Game_SimcityView_CheckOrLoadGraphic(pThis)) {
-			x = Game_Graphics_Width(pThis->dwSCVCGraphics);
-			y = Game_Graphics_Height(pThis->dwSCVCGraphics);
+			x = Game_Graphics_Width(pThis->SCVGraphics);
+			y = Game_Graphics_Height(pThis->SCVGraphics);
 			if (!bOverrideTickPlacementHighlight) {
-				Game_BeginProcessObjects(pThis, vBits, x, y, (RECT *)&pThis->iSCVAreaViewWidth);
+				Game_BeginProcessObjects(pThis, vBits, x, y, &pThis->SCVAreaView);
 				Game_SimcityView_DrawSquareHighlight(pThis, wHighlightedTileX1, wHighlightedTileY1, wHighlightedTileX2, wHighlightedTileY2);
 				Game_FinishProcessObjects();
 			}
-			Game_Graphics_UnlockDIBBits(pThis->dwSCVCGraphics);
+			Game_Graphics_UnlockDIBBits(pThis->SCVGraphics);
 			bottom = ++rcDst.bottom;
 			if (pThis->dwSCVIsZoomed) {
 				rcDst.bottom = bottom + 2;
@@ -1078,22 +1078,22 @@ extern "C" void __stdcall Hook_SimcityView_OnLButtonDown(UINT nFlags, POINT pt) 
 
 	if (pThis->dwSCVRightClickMenuOpen)
 		pThis->dwSCVRightClickMenuOpen = 0;
-	else if (!PtInRect(&pThis->dwSCVStaticRect, pt)) {
+	else if (!PtInRect(&pThis->SCVStaticRect, pt)) {
 		Game_SimcityView_GetScreenAreaInfo(pThis, &r);
-		if (PtInRect(&pThis->dwSCVScrollBarVertRectOne, pt)) {
-			if (PtInRect(&pThis->dwSCVScrollBarVertRectThree, pt))
-				Game_SimCityView_OnVScroll(pThis, SB_LINEDOWN, 0, pThis->dwSCVScrollBarVert);
-			else if (PtInRect(&pThis->dwSCVScrollBarVertRectTwo, pt))
-				Game_SimCityView_OnVScroll(pThis, SB_LINEUP, 0, pThis->dwSCVScrollBarVert);
-			else if (PtInRect(&pThis->dwSCVScrollPosVertRect, pt))
-				Game_SimCityView_OnVScroll(pThis, SB_THUMBTRACK, (__int16)pt.y, pThis->dwSCVScrollBarVert);
+		if (PtInRect(&pThis->SCVScrollBarVertRectOne, pt)) {
+			if (PtInRect(&pThis->SCVScrollBarVertRectThree, pt))
+				Game_SimCityView_OnVScroll(pThis, SB_LINEDOWN, 0, pThis->SCVScrollBarVert);
+			else if (PtInRect(&pThis->SCVScrollBarVertRectTwo, pt))
+				Game_SimCityView_OnVScroll(pThis, SB_LINEUP, 0, pThis->SCVScrollBarVert);
+			else if (PtInRect(&pThis->SCVScrollPosVertRect, pt))
+				Game_SimCityView_OnVScroll(pThis, SB_THUMBTRACK, (__int16)pt.y, pThis->SCVScrollBarVert);
 			else {
 				// This part appears to be non-functional, pressing "Page Down" will rotate the map;
 				// "Page Up" doesn't do anything.
-				if (pThis->dwSCVScrollPosVertRect.top >= pt.y)
-					Game_SimCityView_OnVScroll(pThis, SB_PAGEUP, 0, pThis->dwSCVScrollBarVert);
+				if (pThis->SCVScrollPosVertRect.top >= pt.y)
+					Game_SimCityView_OnVScroll(pThis, SB_PAGEUP, 0, pThis->SCVScrollBarVert);
 				else
-					Game_SimCityView_OnVScroll(pThis, SB_PAGEDOWN, 0, pThis->dwSCVScrollBarVert);
+					Game_SimCityView_OnVScroll(pThis, SB_PAGEDOWN, 0, pThis->SCVScrollBarVert);
 			}
 		}
 		else if (!pThis->dwSCVLeftMouseDownInGameArea) {
@@ -1103,9 +1103,9 @@ extern "C" void __stdcall Hook_SimcityView_OnLButtonDown(UINT nFlags, POINT pt) 
 			wCurrentTileCoordinates = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);;
 			if (wCurrentTileCoordinates >= 0) {
 				wTileCoordinateX = (uint8_t)wCurrentTileCoordinates;
-				wPreviousTileCoordinateX = (uint8_t)wCurrentTileCoordinates;
+				wPreviousTileCoordinateX = wTileCoordinateX;
 				wTileCoordinateY = wCurrentTileCoordinates >> 8;
-				wPreviousTileCoordinateY = wCurrentTileCoordinates >> 8;
+				wPreviousTileCoordinateY = wTileCoordinateY;
 				wGameScreenAreaX = (WORD)pt.x;
 				wGameScreenAreaY = (WORD)pt.y;
 				pThis->dwSCVLeftMouseDownInGameArea = 1;
@@ -1129,7 +1129,7 @@ extern "C" void __stdcall Hook_SimcityView_OnMouseMove(UINT nFlags, CMFC3XPoint 
 	// pThis[64] = dwSCVCursorInGameArea
 	// pThis[65] = SCVMousePoint
 
-	pThis->dwSCVMousePoint = pt;
+	pThis->SCVMousePoint = pt;
 	if (pThis->dwSCVLeftMouseDownInGameArea) {
 		wCurrentTileCoordinates = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
 		if (wCurrentTileCoordinates >= 0) {
@@ -1374,9 +1374,9 @@ extern "C" void __stdcall Hook_ShowViewControls() {
 	pSCApp = &pCSimcityAppThis;
 	pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
-	pSCVScrollBarHorz = pSCView->dwSCVScrollBarHorz;
-	pSCVScrollBarVert = pSCView->dwSCVScrollBarVert;
-	pSCVStatic = pSCView->dwSCVStaticOne;
+	pSCVScrollBarHorz = pSCView->SCVScrollBarHorz;
+	pSCVScrollBarVert = pSCView->SCVScrollBarVert;
+	pSCVStatic = pSCView->SCVStaticOne;
 	if (!bRedraw) {
 		bRedraw = TRUE;
 		if (pSCApp->iSCAProgramStep == ONIDLE_STATE_EDITNEWMAP_RETURN || !wCityMode)

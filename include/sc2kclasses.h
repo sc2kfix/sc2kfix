@@ -214,7 +214,7 @@ class CMyToolBar : public CMFC3XControlBar {
 public:
 	int iMyTBMenuButtonPos;
 	int iMyTBLastButtonPos;
-	CMFC3XPoint dwMyTBPointFour;
+	CMFC3XPoint MyTBMaxButtonHitPoint;
 	DWORD dwMyTBButtonMenu;
 	CGraphics *cGMyTBCGraphicsNormal;
 	CGraphics *cGMyTBCGraphicsDisabled;
@@ -229,17 +229,18 @@ public:
 	DWORD dwMyTBWindowFrame;
 	DWORD dwMyTBseventeen;
 	DWORD dwMyTBeighteen;
-	CMFC3XPoint dwMyTBPointThree;
-	DWORD dwMyTBControlsDisabled;
-	DWORD dwMyTBToolBarTitleDrag;
-	tagPOINT dwMyTBPointOne;
-	tagPOINT dwMyTBPointTwo;
+	CMFC3XPoint MyTBToolBarShapePt;
 };
 
 class CCityToolBar : public CMyToolBar {
 public:
-	tagPOINT dwCTBPointThree;
-	CMainFrame *dwCTBMainFrame;
+	DWORD dwCTBControlsDisabled;
+	DWORD dwCTBToolBarTitleDrag;
+	DWORD dwCTBOne;
+	CMFC3XPoint CTBGrabPoint;
+	CMFC3XPoint CTBBorderPoint;
+	DWORD dwCTBTwo;
+	CMainFrame *pCTBMainFrame;
 	DWORD dwCTBcxRightBorder;
 	DWORD dwCTBthirtyone;
 	CMFC3XMenu dwCTBMenuOne;
@@ -258,8 +259,12 @@ public:
 
 class CMapToolBar : public CMyToolBar {
 public:
+	DWORD dwMTBToolBarTitleDrag;
+	DWORD dwMTBControlsDisabled;
+	CMFC3XPoint MTBGrabPoint;
+	CMFC3XPoint MTBBorderPoint;
 	DWORD dwMTBTwentyNine;
-	CMainFrame *dwMTBMainFrame;
+	CMainFrame *pMTBMainFrame;
 	DWORD dwMTBcxRightBorder;
 };
 
@@ -338,35 +343,33 @@ public:
 #pragma pack(push, 1)
 class CSimcityView : public CMFC3XView {
 public:
-	CGraphics *dwSCVCGraphics;
+	CGraphics *SCVGraphics;
 	DWORD bSCVViewActive;
 	void *dwSCVThree;
-	void *dwSCVLockDIBRes;
-	LONG dwSCVWidth;
-	LONG dwSCVHeight;
-	CMFC3XScrollBar *dwSCVScrollBarVert;
-	CMFC3XScrollBar *dwSCVScrollBarHorz;
-	CMFC3XStatic *dwSCVStaticOne;
-	CMFC3XRect dwSCVScrollBarVertRectOne;
-	CMFC3XRect dwSCVScrollBarVertRectTwo;
-	CMFC3XRect dwSCVScrollBarVertRectThree;
-	CMFC3XRect dwSCVScrollPosVertRect;
-	CMFC3XRect dwSCVScrollBarHorzRectOne;
-	CMFC3XRect dwSCVScrollBarHorzRectTwo;
-	CMFC3XRect dwSCVScrollBarHorzRectThree;
-	CMFC3XRect dwSCVScrollPosHorzRect;
-	CMFC3XRect dwSCVScrollPosRect;
-	CMFC3XRect dwSCVStaticRect;
+	void *pSCVGraphicLockDIBRes;
+	LONG dwSCVGraphicWidth;
+	LONG dwSCVGraphicHeight;
+	CMFC3XScrollBar *SCVScrollBarVert;
+	CMFC3XScrollBar *SCVScrollBarHorz;
+	CMFC3XStatic *SCVStaticOne;
+	CMFC3XRect SCVScrollBarVertRectOne;
+	CMFC3XRect SCVScrollBarVertRectTwo;
+	CMFC3XRect SCVScrollBarVertRectThree;
+	CMFC3XRect SCVScrollPosVertRect;
+	CMFC3XRect SCVScrollBarHorzRectOne;
+	CMFC3XRect SCVScrollBarHorzRectTwo;
+	CMFC3XRect SCVScrollBarHorzRectThree;
+	CMFC3XRect SCVScrollPosHorzRect;
+	CMFC3XRect SCVScrollPosRect;
+	CMFC3XRect SCVStaticRect;
 	DWORD dwSCVLeftMouseButtonDown;
 	DWORD dwSCVLeftMouseDownInGameArea;
 	DWORD dwSCVCursorInGameArea;
-	CMFC3XPoint dwSCVMousePoint;
+	CMFC3XPoint SCVMousePoint;
 	DWORD dwSCVRightClickMenuOpen;
-	CMFC3XPoint dwSCVRealPoint;
+	CMFC3XPoint SCVRealPoint;
 	DWORD dwSCVSixtyOne[6];
-	int iSCVAreaViewWidth;
-	int iSCVAreaViewHeight;
-	CMFC3XPoint dwSCVAdjustedPoint;
+	CMFC3XRect SCVAreaView;
 	WORD wSCVZoomLevel;
 	DWORD dwSCVIsZoomed;
 };

@@ -21,8 +21,6 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 	WORD wSimSpeed;
 	DWORD dwTitleScreenAnimation;
 	int iProgramStep;
-	DWORD dwTBControlsDisabled;
-	DWORD dwTBToolBarTitleDrag;
 	BOOL bCityViewAnim;
 
 	// Only redraw the relevant windows during:
@@ -44,11 +42,6 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 					pMapToolBar = &pMainFrm->dwMFMapToolBar;
 					pCityToolBar = &pMainFrm->dwMFCityToolBar;
 
-					// For the toolbars, they're using vars from the parent MyToolBar class
-					// 46 and 47 are dwMyTBControlsDisabled and dwMyTBToolBarTitleDrag respectively.
-					dwTBControlsDisabled = pMapToolBar->dwMyTBControlsDisabled;
-					dwTBToolBarTitleDrag = pCityToolBar->dwMyTBToolBarTitleDrag;
-
 					// With this check, the redraw calls won't be made if either toolbar is being dragged.
 					// This avoids any bleeding that may occur as a result of the blitted border that will
 					// appear during this time.
@@ -59,10 +52,10 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 					//       dragging case).
 					bCityViewAnim = TRUE;
 
-					if (pCityToolBar && dwTBToolBarTitleDrag)
+					if (pCityToolBar && pCityToolBar->dwCTBToolBarTitleDrag)
 						bCityViewAnim = FALSE;
 					
-					if (pMapToolBar && dwTBControlsDisabled)
+					if (pMapToolBar && pMapToolBar->dwMTBToolBarTitleDrag)
 						bCityViewAnim = FALSE;
 
 					if (CanUseFloatingStatusDialog() && bStatusDialogMoving)
@@ -91,8 +84,6 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1995(CMFC3XPalette *pPalette
 	WORD wSimSpeed;
 	DWORD dwTitleScreenAnimation;
 	int iProgramStep;
-	DWORD dwTBControlsDisabled;
-	DWORD dwTBToolBarTitleDrag;
 	BOOL bCityViewAnim;
 
 	CSimcityAppPrimary &pCSimcityAppThis1995 = *(CSimcityAppPrimary *)0x4C6010;
@@ -115,11 +106,6 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1995(CMFC3XPalette *pPalette
 					pMapToolBar = &pMainFrm->dwMFMapToolBar;
 					pCityToolBar = &pMainFrm->dwMFCityToolBar;
 
-					// For the toolbars, they're using vars from the parent MyToolBar class
-					// 46 and 47 are dwMyTBControlsDisabled and dwMyTBToolBarTitleDrag respectively.
-					dwTBControlsDisabled = pMapToolBar->dwMyTBControlsDisabled;
-					dwTBToolBarTitleDrag = pCityToolBar->dwMyTBToolBarTitleDrag;
-
 					// With this check, the redraw calls won't be made if either toolbar is being dragged.
 					// This avoids any bleeding that may occur as a result of the blitted border that will
 					// appear during this time.
@@ -130,10 +116,10 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1995(CMFC3XPalette *pPalette
 					//       dragging case).
 					bCityViewAnim = TRUE;
 
-					if (pCityToolBar && dwTBToolBarTitleDrag)
+					if (pCityToolBar && pCityToolBar->dwCTBToolBarTitleDrag)
 						bCityViewAnim = FALSE;
 
-					if (pMapToolBar && dwTBControlsDisabled)
+					if (pMapToolBar && pMapToolBar->dwMTBToolBarTitleDrag)
 						bCityViewAnim = FALSE;
 
 					// CMainFrame m_hWnd - only call this specific redraw function before CSimcityView has been created.
@@ -159,8 +145,6 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2KDemo(CMFC3XPalette *pPalette
 	WORD wSimSpeed;
 	DWORD dwTitleScreenAnimation;
 	int iProgramStep;
-	DWORD dwTBControlsDisabled;
-	DWORD dwTBToolBarTitleDrag;
 	BOOL bCityViewAnim;
 
 	CSimcityAppDemo &pCSimcityAppThisDemo = *(CSimcityAppDemo *)0x4B6A70;
@@ -183,11 +167,6 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2KDemo(CMFC3XPalette *pPalette
 					pMapToolBar = &pMainFrm->dwMFMapToolBar;
 					pCityToolBar = &pMainFrm->dwMFCityToolBar;
 
-					// For the toolbars, they're using vars from the parent MyToolBar class
-					// 46 and 47 are dwMyTBControlsDisabled and dwMyTBToolBarTitleDrag respectively.
-					dwTBControlsDisabled = pMapToolBar->dwMyTBControlsDisabled;
-					dwTBToolBarTitleDrag = pCityToolBar->dwMyTBToolBarTitleDrag;
-
 					// With this check, the redraw calls won't be made if either toolbar is being dragged.
 					// This avoids any bleeding that may occur as a result of the blitted border that will
 					// appear during this time.
@@ -198,10 +177,10 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2KDemo(CMFC3XPalette *pPalette
 					//       dragging case).
 					bCityViewAnim = TRUE;
 
-					if (pCityToolBar && dwTBToolBarTitleDrag)
+					if (pCityToolBar && pCityToolBar->dwCTBToolBarTitleDrag)
 						bCityViewAnim = FALSE;
 
-					if (pMapToolBar && dwTBControlsDisabled)
+					if (pMapToolBar && pMapToolBar->dwMTBToolBarTitleDrag)
 						bCityViewAnim = FALSE;
 
 					// CMainFrame m_hWnd - only call this specific redraw function before CSimcityView has been created.
