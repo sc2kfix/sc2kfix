@@ -176,17 +176,16 @@ extern "C" void __stdcall Hook_CityToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoin
 		}
 	}
 	else {
-		// Yes.. it is unfortunately like this.. alignment headaches.
 		pSCApp->dwSCADragSuspendSim = 1;
-		pThis->dwMyTBToolBarTitleDrag = 1;
-		pThis->dwMyTBPointOne.y = pt.x;
-		pThis->dwMyTBPointTwo.x = pt.y;
+		pThis->dwCTBToolBarTitleDrag = 1;
+		pThis->CTBGrabPoint.x = pt.x;
+		pThis->CTBGrabPoint.y = pt.y;
 		mainhWnd = SetCapture(pThis->m_hWnd);
 		GameMain_Wnd_FromHandle(mainhWnd);
 		ClientToScreen(pThis->m_hWnd, &pt);
 		Game_CityToolBar_MoveAndBlitToolBar(pThis, pt.x, pt.y);
-		pThis->dwMyTBPointTwo.y = pt.x;
-		pThis->dwCTBPointThree.x = pt.y;
+		pThis->CTBBorderPoint.x = pt.x;
+		pThis->CTBBorderPoint.y = pt.y;
 	}
 	dwCityToolBarArcologyDialogCancel = 0;
 }
@@ -438,15 +437,15 @@ extern "C" void __stdcall Hook_MapToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoint
 		}
 	}
 	else {
-		pThis->dwMyTBControlsDisabled = 1;
-		pThis->dwMyTBPointOne.x = pt.x;
-		pThis->dwMyTBPointOne.y = pt.y;
+		pThis->dwMTBToolBarTitleDrag = 1;
+		pThis->MTBGrabPoint.x = pt.x;
+		pThis->MTBGrabPoint.y = pt.y;
 		mainhWnd = SetCapture(pThis->m_hWnd);
 		GameMain_Wnd_FromHandle(mainhWnd);
 		ClientToScreen(pThis->m_hWnd, &pt);
 		Game_MapToolBar_MoveAndBlitToolBar(pThis, pt.x, pt.y);
-		pThis->dwMyTBPointTwo.x = pt.x;
-		pThis->dwMyTBPointTwo.y = pt.y;
+		pThis->MTBBorderPoint.x = pt.x;
+		pThis->MTBBorderPoint.y = pt.y;
 	}
 }
 
