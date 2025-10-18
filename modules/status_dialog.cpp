@@ -34,6 +34,8 @@ static HWND hStatusDialog = NULL;
 static HWND hGotoButton = NULL;
 static int iGotoButtonType = GOTO_BTN_TEXT;
 static int iGotoButtonStyle = GOTO_STYLE_3D;
+static BYTE uCurrentGotoImg = GOTO_IMG_POS;
+static __int16 iCurrentCompass = -1;
 static POINT ptFloatNew;
 static POINT ptFloatMoving;
 static POINT ptFloat;
@@ -147,7 +149,8 @@ static void OnDrawGotoButton(LPDRAWITEMSTRUCT lpDIS) {
 		HDC memDC;
 
 		memDC = CreateCompatibleDC(hDCMem);
-		hBitmap = (HBITMAP)hWeatherBitmaps[(dwDisasterActive) ? GOTO_IMG_POS : bWeatherTrend];
+		uCurrentGotoImg = (dwDisasterActive) ? GOTO_IMG_POS : bWeatherTrend;
+		hBitmap = (HBITMAP)hWeatherBitmaps[uCurrentGotoImg];
 		GetObject(hBitmap, sizeof(tagBITMAP), &bm);
 		SelectObject(memDC, hBitmap);
 
@@ -284,8 +287,9 @@ static void OnPaintFloatingStatusBar(HWND hWnd, HDC hDC) {
 			SetRect(&r, left, top, right, bottom);
 			FillRect(hDC, &r, (HBRUSH)MainBrushFace->m_hObject);
 			hDCBits = CreateCompatibleDC(hDC);
-			GetObject(hCompassBitmaps[wViewRotation], sizeof(tagBITMAP), &bm);
-			SelectObject(hDCBits, hCompassBitmaps[wViewRotation]);
+			iCurrentCompass = wViewRotation;
+			GetObject(hCompassBitmaps[iCurrentCompass], sizeof(tagBITMAP), &bm);
+			SelectObject(hDCBits, hCompassBitmaps[iCurrentCompass]);
 			BitBlt(hDC, r.left, r.top, bm.bmWidth, bm.bmHeight, hDCBits, 0, 0, SRCCOPY);
 			DeleteDC(hDCBits);
 		}
@@ -299,18 +303,8 @@ void MoveAndBlitStatusWidget(HWND hWnd, int x, int y) {
 	GetWindowRect(hWnd, &r);
 	hDC = GetDC(0);
 	PatBlt(hDC, x - ptFloatNew.x, y - ptFloatNew.y, r.right - r.left, 2, PATINVERT);
-	PatBlt(hDC, 
-		x + r.right - ptFloatNew.x - r.left,
-		y - ptFloatNew.y,
-		2,
-		r.bottom - r.top,
-		PATINVERT);
-	PatBlt(hDC,
-		x - ptFloatNew.x,
-		y + r.bottom - ptFloatNew.y - r.top,
-		r.right - r.left + 2,
-		2,
-		PATINVERT);
+	PatBlt(hDC, x + r.right - ptFloatNew.x - r.left, y - ptFloatNew.y, 2, r.bottom - r.top, PATINVERT);
+	PatBlt(hDC, x - ptFloatNew.x, y + r.bottom - ptFloatNew.y - r.top, r.right - r.left + 2, 2, PATINVERT);
 	PatBlt(hDC, x - ptFloatNew.x, y - ptFloatNew.y + 2, 2, r.bottom - r.top - 2, PATINVERT);
 	ReleaseDC(0, hDC);
 }
@@ -337,7 +331,7 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 
 		case WM_DRAWITEM:
 			lpDIS = (LPDRAWITEMSTRUCT)lParam;
-			if (lpDIS->hwndItem == hGotoButton)
+			if (lpDIS && lpDIS->hwndItem == hGotoButton)
 				OnDrawGotoButton(lpDIS);
 			return FALSE;
 
@@ -484,21 +478,43 @@ extern "C" void __stdcall Hook_StatusControlBar_UpdateStatusBar_SC2K1996(int iEn
 
 	__asm mov [pThis], ecx
 
+	BOOL bShouldUpdate = FALSE;
 	if (CanUseFloatingStatusDialog()) {
 		if (iEntry) {
 			if (iEntry == 1) {
+				if (strcmp(pThis->dwSCBCStringNotification.m_pchData, szText) != 0)
+					bShouldUpdate = TRUE;
+
 				GameMain_String_OperatorSet(&pThis->dwSCBCStringNotification, szText);
 				pThis->dwSCBColorNotification = newColor;
 			}
-			/*
-			 * 'iEntry == 2' is excluded in this case since the 'GoTo' button image changing is handled elsewhere.
-			 */
+			else if (iEntry == 2) {
+				if (dwDisasterActive) {
+					if (uCurrentGotoImg != GOTO_IMG_POS)
+						bShouldUpdate = TRUE;
+				}
+				else {
+					if (uCurrentGotoImg != bWeatherTrend)
+						bShouldUpdate = TRUE;
+				}
+			}
 		}
 		else {
+			if (strcmp(pThis->dwSCBCStringCtrlSelection.m_pchData, szText) != 0)
+				bShouldUpdate = TRUE;
+
 			GameMain_String_OperatorSet(&pThis->dwSCBCStringCtrlSelection, szText);
 			pThis->dwSCBColorCtrlSelection = newColor;
 		}
-		RedrawWindow(hStatusDialog, 0, 0, RDW_INVALIDATE);
+
+		// An explicit check is needed here since
+		// the original status bar code wouldn't
+		// be transmitting this change.
+		if (iCurrentCompass != wViewRotation)
+			bShouldUpdate = TRUE;
+
+		if (bShouldUpdate)
+			RedrawWindow(hStatusDialog, 0, 0, RDW_INVALIDATE);
 	}
 	else
 		GameMain_StatusControlBar_UpdateStatusBar(pThis, iEntry, szText, iArgUnknown, newColor);
