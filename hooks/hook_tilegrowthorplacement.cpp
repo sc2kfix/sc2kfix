@@ -340,7 +340,7 @@ static void DoArmyBaseGrowth(__int16 iX, __int16 iY, __int16 iCurrZoneType) {
 	WORD wFlaggedTileCount;
 
 	if ((rand() & 3) == 0) {
-		wFlaggedTileCount = GetFlaggedTileCount(TILE_MILITARY_PARKINGLOT, TRUE) / 4;
+		wFlaggedTileCount = GetFlaggedTileCount(TILE_MILITARY_PARKINGLOT, TRUE) / GetTileArea(AREA_2x2);
 		iSelectedTileID = TILE_MILITARY_PARKINGLOT;
 		iFirstCheckedTileID = TILE_MILITARY_TOPSECRET;
 		if (IsTileDividedThresholdReached(iFirstCheckedTileID, wFlaggedTileCount, TRUE, CMP_LESSTHAN, GetTileArea(AREA_2x2))) {

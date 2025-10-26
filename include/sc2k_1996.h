@@ -1700,8 +1700,8 @@ GAMEOFF_ARR(WORD, wXTERToSpriteIDMap,		0x4E7628)
 GAMEOFF_ARR(WORD, wXTERToXUNDSpriteIDMap,	0x4E76B8)
 GAMEOFF(WORD,	wDisasterWindy,				0x4E86B0)
 GAMEOFF_ARR(DWORD, dwCityNoticeStringIDs,	0x4E98B8)
-GAMEOFF(WORD,	wActiveTrains,				0x4E99D8)
 GAMEOFF(WORD,	wSailingBoats,				0x4E99D0)
+GAMEOFF(WORD,	wActiveTrains,				0x4E99D8)
 GAMEOFF_ARR(int,	dwGrantedItems,			0x4E9A10)
 GAMEOFF(DWORD,	dwCityRewardsUnlocked,		0x4E9A24)
 GAMEOFF_ARR(DWORD,	DisplayLayer,			0x4E9E48)
@@ -1901,7 +1901,7 @@ static inline BOOL IsEven(__int16 iAxis) {
 
 //HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...);
 
-static inline DWORD GetTileArea(DWORD iTileArea) {
+static inline WORD GetTileArea(WORD iTileArea) {
 	if (iTileArea < AREA_1x1)
 		iTileArea = AREA_1x1;
 	else if (iTileArea > AREA_4x4)
