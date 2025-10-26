@@ -354,7 +354,7 @@ static void DoArmyBaseGrowth(__int16 iX, __int16 iY, __int16 iCurrZoneType) {
 }
 
 static void DoAirPortGrowth(__int16 iX, __int16 iY, BYTE iCurrentTileID, __int16 iCurrZoneType) {
-	BOOL bMilitary;
+	BOOL bMilitary, bAeroplaneLiftOff;
 	BYTE iFirstCheckedTileID, iSelectedTileID;
 	WORD wFlaggedTileCount;
 
@@ -373,20 +373,16 @@ static void DoAirPortGrowth(__int16 iX, __int16 iY, BYTE iCurrentTileID, __int16
 						Game_SpawnHelicopter(iX, iY);
 						return;
 					}
+					bAeroplaneLiftOff = FALSE;
 					if (!IsEven(wViewRotation)) {
-						if (iX < GAME_MAP_SIZE &&
-							iY < GAME_MAP_SIZE &&
-							XBITReturnIsFlipped(iX, iY))
-							goto AIRFIELDSKIPAHEAD;
+						if (XBITReturnIsFlipped(iX, iY))
+							bAeroplaneLiftOff = TRUE;
 					}
-					else if (iX >= GAME_MAP_SIZE ||
-						iY >= GAME_MAP_SIZE ||
-						!XBITReturnIsFlipped(iX, iY)) {
-					AIRFIELDSKIPAHEAD:
-						Game_SpawnAeroplane(iX, iY, 0);
-						return;
+					else {
+						if (!XBITReturnIsFlipped(iX, iY))
+							bAeroplaneLiftOff = TRUE;
 					}
-					Game_SpawnAeroplane(iX, iY, 2);
+					Game_SpawnAeroplane(iX, iY, (bAeroplaneLiftOff) ? 0 : 2);
 				}
 			}
 		}
