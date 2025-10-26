@@ -272,6 +272,69 @@ static int L_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iTileID, __int16 
 	}
 }
 
+#define CMP_LESSTHAN 0
+#define CMP_GREATERTHAN 1
+#define CMP_GREATEROREQUAL 2
+#define CMP_LESSOREQUAL 3
+
+static bool IsTileThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, unsigned uComparator, DWORD nDiv, DWORD nMult) {
+	WORD wTileIDCount;
+	DWORD nCount;
+
+	// Key:
+	//
+	// wTileIDCount: This is the returned number of 1x1 tiles covered by iTileID (the bMilitary flag when true
+	//               will get you the count of military-specific tiles for the target iTileID).
+	//
+	// nDiv: This factor you divide against dwTileIDCount in order to get the number of groups of dwTileIDCount.
+	//
+	// nMult: This factor you multiply against (wTileIDCount / nDiv) in order to get the expected
+	//                   multiplied returned count.
+	//
+	// uComparator: Specify whether you want to compare nCount against nTarget as greater than,
+	//              greater or equal, less or equal, or less than.
+
+	wTileIDCount = GetFlaggedTileCount(iTileID, bMilitary);
+
+	if (nDiv < 1)
+		nDiv = 1;
+
+	if (nMult < 1)
+		nMult = 1;
+
+	nCount = (wTileIDCount / nDiv) * nMult;
+	if (uComparator == CMP_GREATERTHAN)
+		return (nCount > nTarget);
+	else if (uComparator == CMP_GREATEROREQUAL)
+		return (nCount >= nTarget);
+	else if (uComparator == CMP_LESSOREQUAL)
+		return (nCount <= nTarget);
+	else
+		return (nCount < nTarget);
+}
+
+// Use case:
+//
+// IsTileMultipliedThresholdReached() - Use this one if you want N iTileIDs to be multiplied in order to get a higher expected count
+//                                      prior to comparing against the target.
+//
+// IsTileDividedThresholdReached() - Use this one if you want to divide the returned iTileID count (usually for grouping purposes)
+//                                   before then comparing against the target.
+//
+// IsTileNormalThresholdReached() - Use this one to check the direct iTileID count against the target.
+
+static bool IsTileMultipliedThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, unsigned uComparator, DWORD nMult) {
+	return IsTileThresholdReached(iTileID, nTarget, bMilitary, uComparator, 1, nMult);
+}
+
+static bool IsTileDividedThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, unsigned uComparator, DWORD nDiv) {
+	return IsTileThresholdReached(iTileID, nTarget, bMilitary, uComparator, nDiv, 1);
+}
+
+static bool IsTileNormalThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, unsigned uComparator) {
+	return IsTileThresholdReached(iTileID, nTarget, bMilitary, uComparator, 1, 1);
+}
+
 extern int iChurchVirus;
 
 extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __int16 iSubStep) {
@@ -283,7 +346,7 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 	__int16 iCurrZoneType;
 	BYTE iCurrentTileID;
 	BYTE iSelectedTileID;
-	WORD wBuildingCount;
+	WORD wFlaggedTileCount;
 	BYTE iTileAreaState;
 	// 'iBuildingCommitThreshold' must be 'int' (or a 32-bit integer at the very least),
 	// otherwise building growth will not correctly occur and you'll end up with a very
@@ -308,7 +371,10 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 
 	pSCApp = &pCSimcityAppThis;
 	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
-	bPlaceChurch = (iChurchVirus > 0) ? 1 : (2500u * dwTileCount[TILE_INFRASTRUCTURE_CHURCH] < dwCityPopulation);
+	// The calculation here is otherwise 2500 population multiplied by
+	// number of church tiles is less than the city population, in which
+	// case build a church (when the Church virus isn't active...).
+	bPlaceChurch = (iChurchVirus > 0) ? 1 : IsTileMultipliedThresholdReached(TILE_INFRASTRUCTURE_CHURCH, dwCityPopulation, FALSE, CMP_LESSTHAN, 2500);
 	wCurrentAngle = wPositionAngle[wViewRotation];
 	iX = iStep;
 	for (;;) {
@@ -329,92 +395,84 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 						// number of buildings present.
 						//
 						// As far as I can tell when it comes to the 'MILITARYTILE_MHANGAR1' case...
-						// 12 of those type could be classified as a unit, so if wBuildingCount is greater
+						// 12 of those type could be classified as a unit, so if wFlaggedTileCount is greater
 						// than that unit, place more hangars.
 						//
 						// That crops up the most on Army and Naval cases.
 						switch (bMilitaryBaseType) {
 						case MILITARY_BASE_ARMY:
 							if ((rand() & 3) == 0) {
-#if 0
-								wBuildingCount = dwMilitaryTiles[MILITARYTILE_MPARKINGLOT] / 4;
+								wFlaggedTileCount = GetFlaggedTileCount(TILE_MILITARY_PARKINGLOT, TRUE) / 4;
 								iSelectedTileID = TILE_MILITARY_PARKINGLOT;
-								if (wBuildingCount > dwMilitaryTiles[MILITARYTILE_MHANGAR1] / 12)
+#if 0
+								if (IsTileDividedThresholdReached(TILE_MILITARY_HANGAR1, wFlaggedTileCount, TRUE, CMP_LESSTHAN, 12))
 									iSelectedTileID = TILE_MILITARY_HANGAR1;
 #else
-								wBuildingCount = dwMilitaryTiles[MILITARYTILE_MPARKINGLOT] / 4;
-								if (dwMilitaryTiles[MILITARYTILE_TOPSECRET] / 4 < wBuildingCount) {
+								// With the calculation here..
+								// wFlaggedTileCount = the number of military parking lots
+								// (divided by 4 since you want each individual lot, not
+								// each tile that the lot occupies).
+								// By default the military parking lot is selected.
+								// If the number of 'top secret' buildings is less than
+								// the number of military parking lots, select the hangar.
+								// If the number of hangar units (12 classified as such)
+								// is greater or equal to 12, select the 'top secret' building.
+								if (IsTileDividedThresholdReached(TILE_MILITARY_TOPSECRET, wFlaggedTileCount, TRUE, CMP_LESSTHAN, GetTileArea(AREA_2x2))) {
 									iSelectedTileID = TILE_MILITARY_HANGAR1;
-									if (dwMilitaryTiles[MILITARYTILE_MHANGAR1] / 12 >= wBuildingCount)
+									if (IsTileDividedThresholdReached(TILE_MILITARY_HANGAR1, wFlaggedTileCount, TRUE, CMP_GREATEROREQUAL, GetTileArea(AREA_2x2) * 3))
 										iSelectedTileID = TILE_MILITARY_TOPSECRET;
 								}
-								else
-									iSelectedTileID = TILE_MILITARY_PARKINGLOT;
 #endif
-								if (!Game_SimulationGrowSpecificZone(iX, iY, iSelectedTileID, ZONE_MILITARY))
-									Game_SimulationGrowSpecificZone(iX, iY, TILE_MILITARY_HANGAR1, ZONE_MILITARY);
+								if (!Game_SimulationGrowSpecificZone(iX, iY, iSelectedTileID, iCurrZoneType))
+									Game_SimulationGrowSpecificZone(iX, iY, TILE_MILITARY_HANGAR1, iCurrZoneType);
 							}
 							break;
 						case MILITARY_BASE_AIR_FORCE:
 							if ((rand() & 3) == 0) {
-								// This integer was previously present, initially it was set to iCurrentTileID
-								// before being stripped out, however its purpose is unknown.
-								//iAttributes = 5;
-								wBuildingCount = (dwMilitaryTiles[MILITARYTILE_RUNWAY] + dwMilitaryTiles[MILITARYTILE_RUNWAYCROSS]) / 5;
-								if (dwMilitaryTiles[MILITARYTILE_MPARKINGLOT] / 4 < wBuildingCount) {
-									if (2 * dwMilitaryTiles[MILITARYTILE_MCONTROLTOWER] >= wBuildingCount) {
-										if (2 * dwMilitaryTiles[MILITARYTILE_MRADAR] >= wBuildingCount) {
-											if (dwMilitaryTiles[MILITARYTILE_F15B] >= wBuildingCount) {
-												if (dwMilitaryTiles[MILITARYTILE_BUILDING1] / 2 >= wBuildingCount) {
-													if (dwMilitaryTiles[MILITARYTILE_BUILDING2] / 2 >= wBuildingCount) {
+								wFlaggedTileCount = (GetFlaggedTileCount(TILE_INFRASTRUCTURE_RUNWAY, TRUE) + GetFlaggedTileCount(TILE_INFRASTRUCTURE_RUNWAYCROSS, TRUE)) / 5;
+								iSelectedTileID = TILE_INFRASTRUCTURE_RUNWAY;
+								if (IsTileDividedThresholdReached(TILE_MILITARY_PARKINGLOT, wFlaggedTileCount, TRUE, CMP_LESSTHAN, GetTileArea(AREA_2x2))) {
+									iSelectedTileID = TILE_MILITARY_CONTROLTOWER;
+									if (IsTileMultipliedThresholdReached(TILE_MILITARY_CONTROLTOWER, wFlaggedTileCount, TRUE, CMP_GREATEROREQUAL, 2)) {
+										iSelectedTileID = TILE_MILITARY_RADAR;
+										if (IsTileMultipliedThresholdReached(TILE_MILITARY_RADAR, wFlaggedTileCount, TRUE, CMP_GREATEROREQUAL, 2)) {
+											iSelectedTileID = TILE_MILITARY_F15B;
+											if (IsTileNormalThresholdReached(TILE_MILITARY_F15B, wFlaggedTileCount, TRUE, CMP_GREATEROREQUAL)) {
+												iSelectedTileID = TILE_INFRASTRUCTURE_BUILDING1;
+												if (IsTileDividedThresholdReached(TILE_INFRASTRUCTURE_BUILDING1, wFlaggedTileCount, TRUE, CMP_GREATEROREQUAL, 2)) {
+													iSelectedTileID = TILE_INFRASTRUCTURE_BUILDING2;
+													if (IsTileDividedThresholdReached(TILE_INFRASTRUCTURE_BUILDING2, wFlaggedTileCount, TRUE, CMP_GREATEROREQUAL, 2)) {
 														iSelectedTileID = TILE_INFRASTRUCTURE_HANGAR2;
-														if (dwMilitaryTiles[MILITARYTILE_HANGAR2] / 4 >= wBuildingCount)
+														if (IsTileDividedThresholdReached(TILE_INFRASTRUCTURE_HANGAR2, wFlaggedTileCount, TRUE, CMP_GREATEROREQUAL, GetTileArea(AREA_2x2)))
 															iSelectedTileID = TILE_MILITARY_PARKINGLOT;
 													}
-													else
-														iSelectedTileID = TILE_INFRASTRUCTURE_BUILDING2;
 												}
-												else
-													iSelectedTileID = TILE_INFRASTRUCTURE_BUILDING1;
-											}
-											else
-												iSelectedTileID = TILE_MILITARY_F15B;
-										}
-										else
-											iSelectedTileID = TILE_MILITARY_RADAR;
+											}	
+										}	
 									}
-									else
-										iSelectedTileID = TILE_MILITARY_CONTROLTOWER;
 								}
-								else
-									iSelectedTileID = TILE_INFRASTRUCTURE_RUNWAY;
-								goto GOSPAWNAIRFIELD;
+								Game_SimulationGrowSpecificZone(iX, iY, iSelectedTileID, iCurrZoneType);
 							}
 							break;
 						case MILITARY_BASE_NAVY:
 							if ((rand() & 3) == 0) {
-								wBuildingCount = dwMilitaryTiles[MILITARYTILE_CRANE];
-								if (dwMilitaryTiles[MILITARYTILE_CARGOYARD] / 4 < wBuildingCount) {
-									if (dwMilitaryTiles[MILITARYTILE_TOPSECRET] / 4 >= wBuildingCount) {
-										// This integer was previously present, initially it was set to iCurrentTileID
-										// before being stripped out, however its purpose is unknown.
-										//BYTE(iAttributes) = 0;
+								wFlaggedTileCount = GetFlaggedTileCount(TILE_INFRASTRUCTURE_CRANE, TRUE);
+								iSelectedTileID = TILE_INFRASTRUCTURE_CRANE;
+								if (IsTileDividedThresholdReached(TILE_INFRASTRUCTURE_CARGOYARD, wFlaggedTileCount, TRUE, CMP_LESSTHAN, GetTileArea(AREA_2x2))) {
+									iSelectedTileID = TILE_MILITARY_TOPSECRET;
+									if (IsTileDividedThresholdReached(TILE_MILITARY_TOPSECRET, wFlaggedTileCount, TRUE, CMP_GREATEROREQUAL, GetTileArea(AREA_2x2))) {
 										iSelectedTileID = TILE_MILITARY_WAREHOUSE;
-										if (dwMilitaryTiles[MILITARYTILE_MWAREHOUSE] / 3 >= wBuildingCount)
+										if (IsTileDividedThresholdReached(TILE_MILITARY_WAREHOUSE, wFlaggedTileCount, TRUE, CMP_GREATEROREQUAL, 3))
 											iSelectedTileID = TILE_INFRASTRUCTURE_CARGOYARD;
 									}
-									else
-										iSelectedTileID = TILE_MILITARY_TOPSECRET;
 								}
-								else
-									iSelectedTileID = TILE_INFRASTRUCTURE_CRANE;
-								if (!Game_SimulationGrowSpecificZone(iX, iY, iSelectedTileID, ZONE_MILITARY))
-									goto GOSPAWNSEAYARD;
+								if (!Game_SimulationGrowSpecificZone(iX, iY, iSelectedTileID, iCurrZoneType))
+									Game_SimulationGrowSpecificZone(iX, iY, TILE_MILITARY_WAREHOUSE, iCurrZoneType);
 							}
 							break;
 						case MILITARY_BASE_MISSILE_SILOS:
 							if (iCurrentTileID != TILE_MILITARY_MISSILESILO)
-								Game_SimulationGrowSpecificZone(iX, iY, TILE_MILITARY_MISSILESILO, ZONE_MILITARY);
+								Game_SimulationGrowSpecificZone(iX, iY, TILE_MILITARY_MISSILESILO, iCurrZoneType);
 							break;
 						default:
 							goto GOUNDCHECKTHENYINCREASE;
@@ -426,25 +484,18 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 								Game_SpawnShip(iX, iY);
 						}
 						else {
-							wBuildingCount = dwTileCount[TILE_INFRASTRUCTURE_CRANE];
-							if (dwTileCount[TILE_INFRASTRUCTURE_CARGOYARD] / 4 < wBuildingCount) {
-								if (dwTileCount[TILE_MILITARY_LOADINGBAY] / 4 >= wBuildingCount) {
-									// This integer was previously present, initially it was set to iCurrentTileID
-									// before being stripped out, however its purpose is unknown.
-									//BYTE(iAttributes) = 0;
+							wFlaggedTileCount = GetFlaggedTileCount(TILE_INFRASTRUCTURE_CRANE, FALSE);
+							iSelectedTileID = TILE_INFRASTRUCTURE_CRANE;
+							if (IsTileDividedThresholdReached(TILE_INFRASTRUCTURE_CARGOYARD, wFlaggedTileCount, FALSE, CMP_LESSTHAN, GetTileArea(AREA_2x2))) {
+								iSelectedTileID = TILE_MILITARY_LOADINGBAY;
+								if (IsTileDividedThresholdReached(TILE_MILITARY_LOADINGBAY, wFlaggedTileCount, FALSE, CMP_GREATEROREQUAL, GetTileArea(AREA_2x2))) {
 									iSelectedTileID = TILE_MILITARY_WAREHOUSE;
-									if (dwTileCount[TILE_MILITARY_WAREHOUSE] / 3 >= wBuildingCount)
+									if (IsTileDividedThresholdReached(TILE_MILITARY_WAREHOUSE, wFlaggedTileCount, FALSE, CMP_GREATEROREQUAL, 3))
 										iSelectedTileID = TILE_INFRASTRUCTURE_CARGOYARD;
 								}
-								else
-									iSelectedTileID = TILE_MILITARY_LOADINGBAY;
 							}
-							else
-								iSelectedTileID = TILE_INFRASTRUCTURE_CRANE;
-							if (!Game_SimulationGrowSpecificZone(iX, iY, iSelectedTileID, ZONE_SEAPORT)) {
-							GOSPAWNSEAYARD:
+							if (!Game_SimulationGrowSpecificZone(iX, iY, iSelectedTileID, iCurrZoneType))
 								Game_SimulationGrowSpecificZone(iX, iY, TILE_MILITARY_WAREHOUSE, iCurrZoneType);
-							}
 						}
 						break;
 					case ZONE_AIRPORT:
@@ -476,38 +527,28 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 							}
 						}
 						else {
-							// This integer was previously present, initially it was set to iCurrentTileID
-							// before being stripped out, however its purpose is unknown.
-							//iAttributes = 5;
-							wBuildingCount = (dwTileCount[TILE_INFRASTRUCTURE_RUNWAY] + dwTileCount[TILE_INFRASTRUCTURE_RUNWAYCROSS]) / 5;
-							if (dwTileCount[TILE_INFRASTRUCTURE_PARKINGLOT] / 4 < wBuildingCount) {
-								if (2 * dwTileCount[TILE_INFRASTRUCTURE_CONTROLTOWER_CIV] >= wBuildingCount) {
-									if (2 * dwTileCount[TILE_MILITARY_RADAR] >= wBuildingCount) {
-										if (dwTileCount[TILE_MILITARY_TARMAC] >= wBuildingCount) {
-											if (dwTileCount[TILE_INFRASTRUCTURE_BUILDING1] / 2 >= wBuildingCount) {
-												if (dwTileCount[TILE_INFRASTRUCTURE_BUILDING2] / 2 >= wBuildingCount) {
+							wFlaggedTileCount = (GetFlaggedTileCount(TILE_INFRASTRUCTURE_RUNWAY, FALSE) + GetFlaggedTileCount(TILE_INFRASTRUCTURE_RUNWAYCROSS, FALSE)) / 5;
+							iSelectedTileID = TILE_INFRASTRUCTURE_RUNWAY;
+							if (IsTileDividedThresholdReached(TILE_INFRASTRUCTURE_PARKINGLOT, wFlaggedTileCount, FALSE, CMP_LESSTHAN, GetTileArea(AREA_2x2))) {
+								iSelectedTileID = TILE_INFRASTRUCTURE_CONTROLTOWER_CIV;
+								if (IsTileMultipliedThresholdReached(TILE_INFRASTRUCTURE_CONTROLTOWER_CIV, wFlaggedTileCount, FALSE, CMP_GREATEROREQUAL, 2)) {
+									iSelectedTileID = TILE_MILITARY_RADAR;
+									if (IsTileMultipliedThresholdReached(TILE_MILITARY_RADAR, wFlaggedTileCount, FALSE, CMP_GREATEROREQUAL, 2)) {
+										iSelectedTileID = TILE_MILITARY_TARMAC;
+										if (IsTileNormalThresholdReached(TILE_MILITARY_TARMAC, wFlaggedTileCount, FALSE, CMP_GREATEROREQUAL)) {
+											iSelectedTileID = TILE_INFRASTRUCTURE_BUILDING1;
+											if (IsTileDividedThresholdReached(TILE_INFRASTRUCTURE_BUILDING1, wFlaggedTileCount, FALSE, CMP_GREATEROREQUAL, 2)) {
+												iSelectedTileID = TILE_INFRASTRUCTURE_BUILDING2;
+												if (IsTileDividedThresholdReached(TILE_INFRASTRUCTURE_BUILDING2, wFlaggedTileCount, FALSE, CMP_GREATEROREQUAL, 2)) {
 													iSelectedTileID = TILE_INFRASTRUCTURE_HANGAR2;
-													if (dwTileCount[TILE_INFRASTRUCTURE_HANGAR2] / 4 >= wBuildingCount)
+													if (IsTileDividedThresholdReached(TILE_INFRASTRUCTURE_HANGAR2, wFlaggedTileCount, FALSE, CMP_GREATEROREQUAL, GetTileArea(AREA_2x2)))
 														iSelectedTileID = TILE_INFRASTRUCTURE_PARKINGLOT;
-												}
-												else
-													iSelectedTileID = TILE_INFRASTRUCTURE_BUILDING2;
+												}	
 											}
-											else
-												iSelectedTileID = TILE_INFRASTRUCTURE_BUILDING1;
 										}
-										else
-											iSelectedTileID = TILE_MILITARY_TARMAC;
-									}
-									else
-										iSelectedTileID = TILE_MILITARY_RADAR;
+									}	
 								}
-								else
-									iSelectedTileID = TILE_INFRASTRUCTURE_CONTROLTOWER_CIV;
 							}
-							else
-								iSelectedTileID = TILE_INFRASTRUCTURE_RUNWAY;
-						GOSPAWNAIRFIELD:
 							Game_SimulationGrowSpecificZone(iX, iY, iSelectedTileID, iCurrZoneType);
 						}
 						break;

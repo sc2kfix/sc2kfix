@@ -1901,6 +1901,76 @@ static inline BOOL IsEven(__int16 iAxis) {
 
 //HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...);
 
+static inline DWORD GetTileArea(DWORD iTileArea) {
+	if (iTileArea < AREA_1x1)
+		iTileArea = AREA_1x1;
+	else if (iTileArea > AREA_4x4)
+		iTileArea = AREA_4x4;
+
+	return iTileArea * iTileArea;
+}
+
+static inline BYTE GetMilitaryFromNormalTile(BYTE iTileID) {
+	BYTE iMilitaryTileID;
+
+	switch (iTileID) {
+		case TILE_INFRASTRUCTURE_RUNWAY:
+			iMilitaryTileID = MILITARYTILE_RUNWAY;
+			break;
+		case TILE_INFRASTRUCTURE_RUNWAYCROSS:
+			iMilitaryTileID = MILITARYTILE_RUNWAYCROSS;
+			break;
+		case TILE_INFRASTRUCTURE_CRANE:
+			iMilitaryTileID = MILITARYTILE_CRANE;
+			break;
+		case TILE_MILITARY_CONTROLTOWER:
+			iMilitaryTileID = MILITARYTILE_MCONTROLTOWER;
+			break;
+		case TILE_MILITARY_WAREHOUSE:
+			iMilitaryTileID = MILITARYTILE_MWAREHOUSE;
+			break;
+		case TILE_INFRASTRUCTURE_BUILDING1:
+			iMilitaryTileID = MILITARYTILE_BUILDING1;
+			break;
+		case TILE_INFRASTRUCTURE_BUILDING2:
+			iMilitaryTileID = MILITARYTILE_BUILDING2;
+			break;
+		case TILE_MILITARY_F15B:
+			iMilitaryTileID = MILITARYTILE_F15B;
+			break;
+		case TILE_MILITARY_HANGAR1:
+			iMilitaryTileID = MILITARYTILE_MHANGAR1;
+			break;
+		case TILE_MILITARY_RADAR:
+			iMilitaryTileID = MILITARYTILE_MRADAR;
+			break;
+		case TILE_MILITARY_PARKINGLOT:
+			iMilitaryTileID = MILITARYTILE_MPARKINGLOT;
+			break;
+		case TILE_MILITARY_TOPSECRET:
+			iMilitaryTileID = MILITARYTILE_TOPSECRET;
+			break;
+		case TILE_INFRASTRUCTURE_CARGOYARD:
+			iMilitaryTileID = MILITARYTILE_CARGOYARD;
+			break;
+		case TILE_INFRASTRUCTURE_HANGAR2:
+			iMilitaryTileID = MILITARYTILE_HANGAR2;
+			break;
+		case TILE_MILITARY_MISSILESILO:
+			iMilitaryTileID = MILITARYTILE_MISSILESILO;
+			break;
+		default:
+			iMilitaryTileID = MILITARYTILE_OTHER;
+			break;
+	}
+	return iMilitaryTileID;
+}
+
+static inline WORD GetFlaggedTileCount(BYTE iTileID, BOOL bMilitary) {
+	BYTE iMilitaryTileID = GetMilitaryFromNormalTile(iTileID);
+	return (bMilitary) ? dwMilitaryTiles[iMilitaryTileID] : dwTileCount[iTileID];
+}
+
 #define USE_OLD_ALTM_HANDLING 0
 
 static inline WORD ALTMReturnLandAltitude(__int16 x, __int16 y) {
