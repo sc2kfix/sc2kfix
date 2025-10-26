@@ -449,6 +449,41 @@ static void DoSiloGrowth(__int16 iX, __int16 iY, BYTE iCurrentTileID, __int16 iC
 		Game_SimulationGrowSpecificZone(iX, iY, TILE_MILITARY_MISSILESILO, iCurrZoneType);
 }
 
+static void DoBudgetSubwayCheck(CSimcityView *pSCView, __int16 iX, __int16 iY) {
+	BOOL bRemoveUndergroundTile;
+	BYTE iCurrentUndergroundTileID;
+	BYTE iReplaceTile;
+	signed __int16 iFundingPercent;
+
+	if (!Game_RandomWordLFSRMod128()) {
+		iCurrentUndergroundTileID = GetUndergroundTileID(iX, iY);
+		if (iCurrentUndergroundTileID >= UNDER_TILE_SUBWAY_LR && iCurrentUndergroundTileID < UNDER_TILE_PIPES_LR ||
+			iCurrentUndergroundTileID == UNDER_TILE_SUBWAYENTRANCE ||
+			iCurrentUndergroundTileID == UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR ||
+			iCurrentUndergroundTileID == UNDER_TILE_CROSSOVER_PIPESLR_SUBWAYTB) {
+			iFundingPercent = pBudgetArr[BUDGET_SUBWAY].iFundingPercent;
+			if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
+				//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Subway. Item(%s) / Underground Item(%s)\n", iStep, iSubStep, szTileNames[iCurrentTileID], (iCurrentUndergroundTileID > UNDER_TILE_SUBWAYENTRANCE) ? "** Unknown **" : szUndergroundNames[iCurrentUndergroundTileID]);
+				bRemoveUndergroundTile = FALSE;
+				iReplaceTile = UNDER_TILE_CLEAR;
+				if (iCurrentUndergroundTileID == UNDER_TILE_SUBWAYENTRANCE) {
+					Game_SimcityView_DestroyStructure(pSCView, iX, iY, 0);
+					bRemoveUndergroundTile = TRUE;
+				}
+				else {
+					if (iCurrentUndergroundTileID == UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR)
+						iReplaceTile = UNDER_TILE_PIPES_TB;
+					else if (iCurrentUndergroundTileID == UNDER_TILE_CROSSOVER_PIPESLR_SUBWAYTB)
+						iReplaceTile = UNDER_TILE_PIPES_LR;
+					bRemoveUndergroundTile = TRUE;
+				}
+				if (bRemoveUndergroundTile)
+					Game_PlaceUndergroundTiles(iX, iY, iReplaceTile);
+			}
+		}
+	}
+}
+
 extern int iChurchVirus;
 
 extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __int16 iSubStep) {
@@ -472,7 +507,6 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 	BYTE iTextOverlay;
 	BYTE iMicrosimIdx;
 	BYTE iMicrosimDataStat0;
-	BYTE iCurrentUndergroundTileID;
 	BYTE iReplaceTile;
 	__int16 iNextX;
 	__int16 iNextY;
@@ -516,7 +550,7 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 							DoSiloGrowth(iX, iY, iCurrentTileID, iCurrZoneType);
 							break;
 						default:
-							goto GOUNDCHECKTHENYINCREASE;
+							goto GOTOEND;
 						}
 						break;
 					case ZONE_SEAPORT:
@@ -533,31 +567,25 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 					if (iCurrentTileID >= TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1) {
 						if (!XZONCornerCheck(iX, iY, wCurrentAngle)) {
 							// This case appears to be hit with >= 2x2 zoned items.
-							goto GOUNDCHECKTHENYINCREASE;
+							goto GOTOEND;
 						}
 						iPopulatedAreaTile = iCurrentTileID - TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1;
 						iBuildingPopLevel = wBuildingPopLevel[iPopulatedAreaTile];
 					}
 					else {
 						if (iCurrentTileID >= TILE_ROAD_LR || !Game_IsValidTransitItems(iX, iY)) {
-							goto GOUNDCHECKTHENYINCREASE;
+							goto GOTOEND;
 						}
 						iPopulatedAreaTile = 0;
 						iBuildingPopLevel = 0;
 					}
+					iCurrentDemand = 0;
+					iRemainderDemand = 4000;
 					if (Game_IsZonedTilePowered(iX, iY)) {
 						if (Game_RunTripGenerator(iX, iY, iCurrZoneType, iBuildingPopLevel, 100)) {
 							iCurrentDemand = wCityDemand[((iCurrZoneType - 1) / 2)] + 2000;
 							iRemainderDemand = 4000 - iCurrentDemand;
 						}
-						else {
-							iCurrentDemand = 0;
-							iRemainderDemand = 4000;
-						}
-					}
-					else {
-						iCurrentDemand = 0;
-						iRemainderDemand = 4000;
 					}
 					// This block is encountered when a given area is not "under construction" and not "abandonded".
 					// A building is then randomly selected in subsequent calls.
@@ -567,31 +595,31 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 						if ((unsigned __int16)rand() < (iRemainderDemand / iBuildingPopLevel)) {
 							iReplaceTile = rand() & 1;
 							Game_PerhapsGeneralZoneChangeBuilding(iX, iY, iBuildingPopLevel, iReplaceTile);
-							goto GOUNDCHECKTHENYINCREASE;
+							goto GOTOEND;
 						}
 					}
 					//ConsoleLog(LOG_DEBUG, "[%s] iCurrentTileID[%u] iCurrZoneType[%d](%d) iPopulatedAreaTile(%u) Coords(%d/%d) iBuildingPopLevel[%u] iCurrentDemand[%d] iRemainderDemand[%d] bAreaState(%u/%u)\n", szTileNames[iCurrentTileID], iCurrentTileID, iCurrZoneType, ((iCurrZoneType - 1) / 2), iPopulatedAreaTile, iX, iY, iBuildingPopLevel, iCurrentDemand, iRemainderDemand, iTileAreaState, bAreaState[iPopulatedAreaTile]);
 					if (iTileAreaState == 1 && (unsigned __int16)rand() < 0x4000 / iBuildingPopLevel) {
 						if (bPlaceChurch && (iBuildingPopLevel & 2) != 0 && iCurrZoneType < ZONE_LIGHT_COMMERCIAL) {
 							Game_PlaceChurch(iX, iY);
-							goto GOUNDCHECKTHENYINCREASE;
+							goto GOTOEND;
 						}
 					GOGENERALZONEITEMPLACE:
 						Game_PerhapsGeneralZoneChooseAndPlaceBuilding(iX, iY, iBuildingPopLevel, (iCurrZoneType - 1) / 2);
-						goto GOUNDCHECKTHENYINCREASE;
+						goto GOTOEND;
 					}
 					if (iTileAreaState == 2) {
 						// Abandoned buildings.
 						pZonePops[ZONEPOP_ABANDONED] += wBuildingPopulation[iBuildingPopLevel];
 						iBuildingCommitThreshold = 15 * iCurrentDemand / iBuildingPopLevel;
 						if ((unsigned __int16)rand() >= iBuildingCommitThreshold)
-							goto GOUNDCHECKTHENYINCREASE;
+							goto GOTOEND;
 						goto GOGENERALZONEITEMPLACE;
 					}
 					// This block is where construction will start.
 					if (iBuildingPopLevel != 4 &&
 						(IsEven(iCurrZoneType) || iBuildingPopLevel <= 0) &&
-						(iCurrZoneType >= 5 ||
+						(iCurrZoneType >= ZONE_LIGHT_INDUSTRIAL ||
 						(iBuildingPopLevel != 1 || GetXVALByteDataWithNormalCoordinates(iX, iY) >= 0x20u) &&
 							(iBuildingPopLevel != 2 || GetXVALByteDataWithNormalCoordinates(iX, iY) >= 0x60u) &&
 							(iBuildingPopLevel != 3 || GetXVALByteDataWithNormalCoordinates(iX, iY) >= 0xC0u))) {
@@ -603,7 +631,7 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 			}
 			else {
 				if (iCurrentTileID < TILE_ROAD_LR)
-					goto GOUNDCHECKTHENYINCREASE;
+					goto GOTOEND;
 				if (Game_RandomWordLFSRMod128())
 					goto GOAFTERSETXBIT;
 				if (iCurrentTileID >= TILE_ROAD_LR && iCurrentTileID < TILE_RAIL_LR ||
@@ -768,31 +796,8 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 					}
 				}
 			}
-		GOUNDCHECKTHENYINCREASE:
-			if (!Game_RandomWordLFSRMod128()) {
-				iCurrentUndergroundTileID = GetUndergroundTileID(iX, iY);
-				if (iCurrentUndergroundTileID >= UNDER_TILE_SUBWAY_LR && iCurrentUndergroundTileID < UNDER_TILE_PIPES_LR ||
-					iCurrentUndergroundTileID == UNDER_TILE_SUBWAYENTRANCE ||
-					iCurrentUndergroundTileID == UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR ||
-					iCurrentUndergroundTileID == UNDER_TILE_CROSSOVER_PIPESLR_SUBWAYTB) {
-					iFundingPercent = pBudgetArr[BUDGET_SUBWAY].iFundingPercent;
-					if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
-						//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Subway. Item(%s) / Underground Item(%s)\n", iStep, iSubStep, szTileNames[iCurrentTileID], (iCurrentUndergroundTileID > UNDER_TILE_SUBWAYENTRANCE) ? "** Unknown **" : szUndergroundNames[iCurrentUndergroundTileID]);
-						if (iCurrentUndergroundTileID == UNDER_TILE_SUBWAYENTRANCE)
-							Game_SimcityView_DestroyStructure(pSCView, iX, iY, 0);
-						else {
-							if (iCurrentUndergroundTileID == UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR)
-								iReplaceTile = UNDER_TILE_PIPES_TB;
-							else if (iCurrentUndergroundTileID == UNDER_TILE_CROSSOVER_PIPESLR_SUBWAYTB)
-								iReplaceTile = UNDER_TILE_PIPES_LR;
-							else
-								iReplaceTile = UNDER_TILE_CLEAR;
-							Game_PlaceUndergroundTiles(iX, iY, iReplaceTile);
-						}
-						// There's no 'goto' in this case.
-					}
-				}
-			}
+		GOTOEND:
+			DoBudgetSubwayCheck(pSCView, iX, iY);
 			iY += 4;
 		}
 		iX += 4;
