@@ -342,18 +342,12 @@ static void DoArmyBaseGrowth(__int16 iX, __int16 iY, __int16 iCurrZoneType) {
 	if ((rand() & 3) == 0) {
 		wFlaggedTileCount = GetFlaggedTileCount(TILE_MILITARY_PARKINGLOT, TRUE) / 4;
 		iSelectedTileID = TILE_MILITARY_PARKINGLOT;
-#if 0
-		iFirstCheckedTileID = TILE_MILITARY_HANGAR1;
-		if (IsTileDividedThresholdReached(iFirstCheckedTileID, wFlaggedTileCount, TRUE, CMP_LESSTHAN, GetTileArea(AREA_2x2) * 3))
-			iSelectedTileID = iFirstCheckedTileID;
-#else
 		iFirstCheckedTileID = TILE_MILITARY_TOPSECRET;
 		if (IsTileDividedThresholdReached(iFirstCheckedTileID, wFlaggedTileCount, TRUE, CMP_LESSTHAN, GetTileArea(AREA_2x2))) {
 			iSelectedTileID = TILE_MILITARY_HANGAR1;
-			if (IsTileDividedThresholdReached(iSelectedTileID, wFlaggedTileCount, TRUE, CMP_GREATEROREQUAL, GetTileArea(AREA_2x2) * 3))
+			if (IsTileDividedThresholdReached(iSelectedTileID, wFlaggedTileCount, TRUE, CMP_GREATERTHAN, 8))
 				iSelectedTileID = iFirstCheckedTileID;
 		}
-#endif
 		if (!Game_SimulationGrowSpecificZone(iX, iY, iSelectedTileID, iCurrZoneType))
 			Game_SimulationGrowSpecificZone(iX, iY, TILE_MILITARY_HANGAR1, iCurrZoneType);
 	}
