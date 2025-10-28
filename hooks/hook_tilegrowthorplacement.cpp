@@ -280,7 +280,7 @@ static int L_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iTileID, __int16 
 	}
 }
 
-static bool IsTileThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, unsigned uComparator, DWORD nDiv, DWORD nMult) {
+static BOOL IsTileThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, unsigned uComparator, DWORD nDiv, DWORD nMult) {
 	WORD wTileIDCount;
 	DWORD nCount;
 
@@ -328,15 +328,15 @@ static bool IsTileThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, 
 //
 // IsTileNormalThresholdReached() - Use this one to check the direct iTileID count against the target.
 
-static bool IsTileMultipliedThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, unsigned uComparator, DWORD nMult) {
+static BOOL IsTileMultipliedThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, unsigned uComparator, DWORD nMult) {
 	return IsTileThresholdReached(iTileID, nTarget, bMilitary, uComparator, 1, nMult);
 }
 
-static bool IsTileDividedThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, unsigned uComparator, DWORD nDiv) {
+static BOOL IsTileDividedThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, unsigned uComparator, DWORD nDiv) {
 	return IsTileThresholdReached(iTileID, nTarget, bMilitary, uComparator, nDiv, 1);
 }
 
-static bool IsTileNormalThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, unsigned uComparator) {
+static BOOL IsTileNormalThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, unsigned uComparator) {
 	return IsTileThresholdReached(iTileID, nTarget, bMilitary, uComparator, 1, 1);
 }
 
@@ -701,7 +701,7 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 	// The calculation here is otherwise 2500 population multiplied by
 	// number of church tiles is less than the city population, in which
 	// case build a church (when the Church virus isn't active...).
-	bPlaceChurch = (iChurchVirus > 0) ? 1 : IsTileMultipliedThresholdReached(TILE_INFRASTRUCTURE_CHURCH, dwCityPopulation, FALSE, CMP_LESSTHAN, 2500);
+	bPlaceChurch = (iChurchVirus > 0) ? TRUE : IsTileMultipliedThresholdReached(TILE_INFRASTRUCTURE_CHURCH, dwCityPopulation, FALSE, CMP_LESSTHAN, 2500);
 	wCurrentAngle = wPositionAngle[wViewRotation];
 	for (iX = iStep; iX < GAME_MAP_SIZE; iX += 4) {
 		for (iY = iSubStep; iY < GAME_MAP_SIZE; iY += 4) {
