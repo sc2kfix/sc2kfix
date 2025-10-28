@@ -146,9 +146,7 @@ static int IsValidGeneralPosPlacementMain(__int16 x, __int16 y, __int16 iFarX, _
 			// is suitable for placement.
 			bCanBeMarinaTile = FALSE;
 			if (iTileID == TILE_INFRASTRUCTURE_MARINA) {
-				if (iCurX < GAME_MAP_SIZE &&
-					iCurY < GAME_MAP_SIZE &&
-					XBITReturnIsWater(iCurX, iCurY)) {
+				if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE && XBITReturnIsWater(iCurX, iCurY)) {
 					++iMarinaWaterTileCount;
 					bCanBeMarinaTile = TRUE;
 				}
@@ -168,9 +166,7 @@ static int IsValidGeneralPosPlacementMain(__int16 x, __int16 y, __int16 iFarX, _
 						return 0;
 				}
 
-				if (iCurX < GAME_MAP_SIZE &&
-					iCurY < GAME_MAP_SIZE &&
-					XBITReturnIsWater(iCurX, iCurY))
+				if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE && XBITReturnIsWater(iCurX, iCurY))
 					return 0;
 			}
 		}
@@ -1050,9 +1046,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 		do {
 			iCurrX += iMoveX;
 			iCurrY += iMoveY;
-			if (iCurrX >= GAME_MAP_SIZE ||
-				iCurrY >= GAME_MAP_SIZE ||
-				!XBITReturnIsWater(iCurrX, iCurrY))
+			if (iCurrX >= GAME_MAP_SIZE || iCurrY >= GAME_MAP_SIZE || !XBITReturnIsWater(iCurrX, iCurrY))
 				return 0;
 			if (GetTileID(iCurrX, iCurrY))
 				return 0;
@@ -1100,21 +1094,11 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 	case TILE_MILITARY_TOPSECRET:
 	case TILE_INFRASTRUCTURE_CARGOYARD:
 	case TILE_INFRASTRUCTURE_HANGAR2:
-		//__int16 iSX, iSY;
 		// Odd numbered x/y coordinates are subtracted by 1.
 		// If this isn't done then buildings of this nature
 		// will end up overlapping.
 		iCurrX = (IsEven(x)) ? x : x - 1;
 		iCurrY = (IsEven(y)) ? y : y - 1;
-
-		// Old method, kept here for comparison cases as a precaution.
-		// iSX == iCurrX
-		// iSY == iCurrY
-		//iSX = x;
-		//P_LOBYTE(iSX) = x & 0xFE;
-		//iSY = y;
-		//P_LOBYTE(iSY) = y & 0xFE;
-		//ConsoleLog(LOG_DEBUG, "0: [%s] (%d, (%d, %d))==%c (%d, (%d, %d))==%c\n", szTileNames[iTileID], x, iCurrX, iSX, ((iCurrX==iSX) ? 'Y' : 'N'), y, iCurrY, iSY, ((iCurrY==iSY) ? 'Y' : 'N'));
 
 		iNextX = iCurrX + 1;
 		iNextY = iCurrY + 1;
