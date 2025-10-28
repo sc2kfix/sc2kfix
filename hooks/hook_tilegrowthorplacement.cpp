@@ -275,7 +275,8 @@ static int L_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iTileID, __int16 
 #define CMP_LESSTHAN 0
 #define CMP_GREATERTHAN 1
 #define CMP_GREATEROREQUAL 2
-#define CMP_LESSOREQUAL 3
+#define CMP_EQUAL 3
+#define CMP_LESSOREQUAL 4
 
 static bool IsTileThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, unsigned uComparator, DWORD nDiv, DWORD nMult) {
 	WORD wTileIDCount;
@@ -292,7 +293,7 @@ static bool IsTileThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, 
 	//                   multiplied returned count.
 	//
 	// uComparator: Specify whether you want to compare nCount against nTarget as greater than,
-	//              greater or equal, less or equal, or less than.
+	//              greater or equal, equal, less or equal, or less than.
 
 	wTileIDCount = GetFlaggedTileCount(iTileID, bMilitary);
 
@@ -307,6 +308,8 @@ static bool IsTileThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, 
 		return (nCount > nTarget);
 	else if (uComparator == CMP_GREATEROREQUAL)
 		return (nCount >= nTarget);
+	else if (uComparator == CMP_EQUAL)
+		return (nCount == nTarget);
 	else if (uComparator == CMP_LESSOREQUAL)
 		return (nCount <= nTarget);
 	else
