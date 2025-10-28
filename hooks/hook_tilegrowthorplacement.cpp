@@ -31,6 +31,14 @@ UINT tilebuild_debug = TILEBUILD_DEBUG;
 
 static DWORD dwDummy;
 
+enum {
+	CMP_LESSTHAN,
+	CMP_GREATERTHAN,
+	CMP_GREATEROREQUAL,
+	CMP_EQUAL,
+	CMP_LESSOREQUAL
+};
+
 static void GetItemPlacementAreaAndFarPosition(__int16 m_x, __int16 m_y, __int16 iTileArea, __int16 *outX, __int16 *outY, __int16 *outFarX, __int16 *outFarY, __int16 *outArea) {
 	__int16 x;
 	__int16 y;
@@ -271,12 +279,6 @@ static int L_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iTileID, __int16 
 		}
 	}
 }
-
-#define CMP_LESSTHAN 0
-#define CMP_GREATERTHAN 1
-#define CMP_GREATEROREQUAL 2
-#define CMP_EQUAL 3
-#define CMP_LESSOREQUAL 4
 
 static bool IsTileThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, unsigned uComparator, DWORD nDiv, DWORD nMult) {
 	WORD wTileIDCount;
