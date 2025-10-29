@@ -118,7 +118,7 @@ static coords_w_t SetTileCoords(int iPart) {
 
 static coords_w_t SetRandomPointCoords() {
 	coords_w_t val;
-	__int16 iRandPos = (__int16)rand() & (GAME_MAP_SIZE - 1);
+	__int16 iRandPos = Game_RandomWordLCGMod(GAME_MAP_SIZE - 1);
 	switch (wViewRotation) {
 	case VIEWROTATION_EAST:
 		val.x = iRandPos;
@@ -171,7 +171,7 @@ static __int16 GetTileDepth(__int16 iPosA, __int16 iPosB, int iPlus) {
 static __int16 GetTileLength(__int16 iPosA, __int16 iPosB, int iPlus) {
 	__int16 iVal = iPosB;
 	__int16 n = -1;
-	int iRandMaxLength = rand() & 6;
+	__int16 iRandMaxLength = Game_RandomWordLCGMod(6);
 	if (iRandMaxLength < 3)
 		iRandMaxLength = 3;
 	__int16 iBaseLevel = ALTMReturnLandAltitude(iPosA, iPosB);
@@ -220,33 +220,33 @@ static int isValidWaterBody(__int16 x, __int16 y) {
 }
 
 static int CheckOverlappingSiloPosition(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
-	int i1, j1, i2, j2;
+	__int16 iCurrXOne, iCurrYOne, iCurrXTwo, iCurrYTwo;
 
-	for (i1 = 0; i1 < 3; i1++) {
-		__int16 xPos1 = x1 + i1;
+	for (iCurrXOne = 0; iCurrXOne < 3; iCurrXOne++) {
+		__int16 xPos1 = x1 + iCurrXOne;
 		if (xPos1 > GAME_MAP_SIZE-1)
 			return 1;
-		for (j1 = 0; j1 < 3; j1++) {
-			__int16 yPos1 = y1 + j1;
+		for (iCurrYOne = 0; iCurrYOne < 3; iCurrYOne++) {
+			__int16 yPos1 = y1 + iCurrYOne;
 			if (yPos1 > GAME_MAP_SIZE-1)
 				return 1;
-			for (i2 = 0; i2 < 3; i2++) {
-				__int16 xPos2 = x2 + i2;
+			for (iCurrXTwo = 0; iCurrXTwo < 3; iCurrXTwo++) {
+				__int16 xPos2 = x2 + iCurrXTwo;
 				if (xPos2 > GAME_MAP_SIZE-1)
 					return 1;
-				for (j2 = 0; j2 < 3; j2++) {
-					__int16 yPos2 = y2 + j2;
+				for (iCurrYTwo = 0; iCurrYTwo < 3; iCurrYTwo++) {
+					__int16 yPos2 = y2 + iCurrYTwo;
 					if (yPos2 > GAME_MAP_SIZE-1)
 						return 1;
 					if (xPos1 == xPos2 || (xPos1 >= xPos2 - 1 && xPos1 <= xPos2 + 4)) {
 						if (yPos1 == yPos2 || (yPos1 >= yPos2 - 1 && yPos1 <= yPos2 + 4)) {
-							//ConsoleLog(LOG_DEBUG, "CheckOverlappingSiloPosition (X-CHECK) (%d, %d, %d, %d) (%d, %d, %d, %d) xPos1(%d), yPos1(%d), xPos2(%d), yPos2(%d)\n", x1, y1, x2, y2, i1, j1, i2, j2, xPos1, yPos1, xPos2, yPos2);
+							//ConsoleLog(LOG_DEBUG, "CheckOverlappingSiloPosition (X-CHECK) (%d, %d, %d, %d) (%d, %d, %d, %d) xPos1(%d), yPos1(%d), xPos2(%d), yPos2(%d)\n", x1, y1, x2, y2, iCurrXOne, iCurrYOne, iCurrXTwo, iCurrYTwo, xPos1, yPos1, xPos2, yPos2);
 							return 1;
 						}
 					}
 					if (yPos1 == yPos2 || (yPos1 >= yPos2 - 1 && yPos1 <= yPos2 + 4)) {
 						if (xPos1 == xPos2 || (xPos1 >= xPos2 - 1 && xPos1 <= xPos2 + 4)) {
-							//ConsoleLog(LOG_DEBUG, "CheckOverlappingSiloPosition (Y-CHECK) (%d, %d, %d, %d) (%d, %d, %d, %d) xPos1(%d), yPos1(%d), xPos2(%d), yPos2(%d)\n", x1, y1, x2, y2, i1, j1, i2, j2, xPos1, yPos1, xPos2, yPos2);
+							//ConsoleLog(LOG_DEBUG, "CheckOverlappingSiloPosition (Y-CHECK) (%d, %d, %d, %d) (%d, %d, %d, %d) xPos1(%d), yPos1(%d), xPos2(%d), yPos2(%d)\n", x1, y1, x2, y2, iCurrXOne, iCurrYOne, iCurrXTwo, iCurrYTwo, xPos1, yPos1, xPos2, yPos2);
 							return 1;
 						}
 					}
@@ -272,17 +272,15 @@ static int CheckForOverlappingSiloPositions(coords_w_t *wSiloPos, int iPos, __in
 	return 0;
 }
 
-static void MilitaryBasePlotCheck(__int16 *iVAltitudeTiles, __int16 *iVTiles, __int16 *iRXPos, __int16 *iRYPos, __int16 *iRStoredXPos, __int16 *iRStoredYPos) {
+static void MilitaryBasePlotCheck(__int16 *iVAltitudeTiles, __int16 *iVTiles, __int16 *iRXPos, __int16 *iRYPos) {
 	__int16 iValidAltitudeTiles;
+	__int16 iValidTiles;
 	__int16 iRandXPos;
 	__int16 iRandYPos;
-	__int16 iXPosStep;
-	__int16 iValidTiles;
-	__int16 iRandStoredYPos;
 
 	int iIterations = 24;
 	iValidAltitudeTiles = 0;
-	__int16 iRandStoredXPos = 0;
+	iValidTiles = 0;
 	do {
 		BOOL bMaxIteration = iIterations-- == 0;
 		if (bMaxIteration)
@@ -296,25 +294,17 @@ static void MilitaryBasePlotCheck(__int16 *iVAltitudeTiles, __int16 *iVTiles, __
 		iRandYPos = Game_RandomWordLCGMod(119);
 		if (iRandYPos <= 0)
 			iRandYPos = 1;
-		iXPosStep = iRandXPos;
-		iValidTiles = 0;
 		iValidAltitudeTiles = 0;
-		iRandStoredYPos = iRandYPos;
+		iValidTiles = 0;
 		__int16 iBaseLevel = ALTMReturnLandAltitude(iRandXPos, iRandYPos);
-		for (iRandStoredXPos = iRandXPos + 8; iXPosStep < iRandStoredXPos; ++iXPosStep) {
-			for (__int16 iYPosStep = iRandYPos; iRandYPos + 8 > iYPosStep; ++iYPosStep) {
-				if (
-					GetTileID(iXPosStep, iYPosStep) < TILE_SMALLPARK &&
-					!GetTerrainTileID(iXPosStep, iYPosStep) &&
-					(
-						iXPosStep >= GAME_MAP_SIZE || // (Not present in the DOS-equivalent)
-						iYPosStep >= GAME_MAP_SIZE || // (Not present in the DOS-equivalent)
-						!XBITReturnIsWater(iXPosStep, iYPosStep)
-						) &&
-					XZONReturnZone(iXPosStep, iYPosStep) == ZONE_NONE
-					) {
+		for (__int16 iCurrXPos = iRandXPos; iCurrXPos < iRandXPos + 8; ++iCurrXPos) {
+			for (__int16 iCurrYPos = iRandYPos; iCurrYPos < iRandYPos + 8; ++iCurrYPos) {
+				if (GetTileID(iCurrXPos, iCurrYPos) < TILE_SMALLPARK &&
+					!GetTerrainTileID(iCurrXPos, iCurrYPos) &&
+					(iCurrXPos >= GAME_MAP_SIZE || iCurrYPos >= GAME_MAP_SIZE || !XBITReturnIsWater(iCurrXPos, iCurrYPos)) &&
+					XZONReturnZone(iCurrXPos, iCurrYPos) == ZONE_NONE) {
 					++iValidTiles;
-					if (ALTMReturnLandAltitude(iXPosStep, iYPosStep) == iBaseLevel)
+					if (ALTMReturnLandAltitude(iCurrXPos, iCurrYPos) == iBaseLevel)
 						++iValidAltitudeTiles;
 				}
 			}
@@ -325,64 +315,52 @@ static void MilitaryBasePlotCheck(__int16 *iVAltitudeTiles, __int16 *iVTiles, __
 	*iVTiles = iValidTiles;
 	*iRXPos = iRandXPos;
 	*iRYPos = iRandYPos;
-	*iRStoredXPos = iRandStoredXPos;
-	*iRStoredYPos = iRandStoredYPos;
 }
 
 static int MilitaryBaseMissileSilos(int iValidAltitudeTiles, int iValidTiles, bool force) {
 	__int16 iRandXPos, iRandYPos;
+	__int16 iLengthWays, iDepthWays;
 	int iSiloIdx;
-	__int16 iCurrPos;
-	__int16 iArrPos;
+	__int16 iCurrLengthPos;
+	__int16 iCurrDepthPos;
 	coords_w_t wSiloPos[6];
 	
-	int iVTiles = iValidTiles;
 	if (iValidAltitudeTiles < 40 || force) {
 		int iSiloAttempt = 0;
-		if (iVTiles < 40 || force) {
-RETRY_CHECK2:
+		int iValidPositions = 0;
+		if (iValidTiles < 40 || force) {
+RETRYFROMBEGINNING:
 			int iRetrySiloPos = 0;
-RETRY_CHECK1:
+RETRYFROMCURRENT:
 			int iIterations = 24;
 			if (iSiloAttempt == 0)
-				iVTiles = 0;
+				iValidPositions = 0;
 			do {
-				__int16 iTileArea = 0;
 				BOOL bMaxIteration = iIterations-- == 0;
 				if (bMaxIteration)
 					break;
-				__int16 iAltPosOne;
-				__int16 iAltPosTwo;
 				iRandXPos = Game_RandomWordLCGMod(GAME_MAP_SIZE-4);
 				iRandYPos = Game_RandomWordLCGMod(GAME_MAP_SIZE-4);
 				if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_WEST) {
-					iAltPosOne = iRandYPos;
-					iAltPosTwo = iRandXPos;
+					iLengthWays = iRandYPos;
+					iDepthWays = iRandXPos;
 				}
 				else {
-					iAltPosOne = iRandXPos;
-					iAltPosTwo = iRandYPos;
+					iLengthWays = iRandXPos;
+					iDepthWays = iRandYPos;
 				}
-				iArrPos = iAltPosOne;
-				__int16 iBaseLevel = ALTMReturnLandAltitude(iAltPosOne, iAltPosTwo);
-				for (iTileArea = 0; iArrPos < iAltPosOne + 3; ++iArrPos) {
-					for (iCurrPos = iAltPosTwo; iAltPosTwo + 3 > iCurrPos; ++iCurrPos) {
-						__int16 iLengthWays = iArrPos;
-						__int16 iDepthWays = iCurrPos;
-						if (
-							GetTileID(iLengthWays, iDepthWays) < TILE_SMALLPARK &&
-							!GetTerrainTileID(iLengthWays, iDepthWays) &&
-							(
-								iLengthWays >= GAME_MAP_SIZE ||
-								iDepthWays >= GAME_MAP_SIZE ||
-								!XBITReturnIsWater(iLengthWays, iDepthWays)
-								) &&
-							ALTMReturnLandAltitude(iLengthWays, iDepthWays) == iBaseLevel &&
-							XZONReturnZone(iLengthWays, iDepthWays) != ZONE_MILITARY &&
-							!GetUndergroundTileID(iAltPosOne, iAltPosTwo)
-							) {
-							if (IsValidSiloPosCheck(iLengthWays, iDepthWays)) {
-								if (!CheckForOverlappingSiloPositions(wSiloPos, iVTiles, iLengthWays, iDepthWays)) {
+				__int16 iBaseLevel = ALTMReturnLandAltitude(iLengthWays, iDepthWays);
+				__int16 iTileArea = 0;
+				for (iCurrLengthPos = iLengthWays; iCurrLengthPos < iLengthWays + 3; ++iCurrLengthPos) {
+					for (iCurrDepthPos = iDepthWays; iCurrDepthPos < iDepthWays + 3; ++iCurrDepthPos) {
+						if (GetTileID(iCurrLengthPos, iCurrDepthPos) < TILE_SMALLPARK &&
+							!GetTerrainTileID(iCurrLengthPos, iCurrDepthPos) &&
+							(iCurrLengthPos >= GAME_MAP_SIZE || iCurrDepthPos >= GAME_MAP_SIZE || !XBITReturnIsWater(iCurrLengthPos, iCurrDepthPos)) &&
+							ALTMReturnLandAltitude(iCurrLengthPos, iCurrDepthPos) == iBaseLevel &&
+							XZONReturnZone(iCurrLengthPos, iCurrDepthPos) != ZONE_MILITARY &&
+							!GetUndergroundTileID(iCurrLengthPos, iCurrDepthPos)) {
+							if (IsValidSiloPosCheck(iCurrLengthPos, iCurrDepthPos)) {
+								if (!CheckForOverlappingSiloPositions(wSiloPos, iValidPositions, iCurrLengthPos, iCurrDepthPos)) {
 									if (iTileArea >= 9)
 										break;
 									++iTileArea;
@@ -390,56 +368,49 @@ RETRY_CHECK1:
 								else {
 									if (iRetrySiloPos < MILITARY_RETRY_SILO_REPOSIT) {
 										iRetrySiloPos++;
-										//ConsoleLog(LOG_DEBUG, "(VT: %d) Overlapping case found, trying again (%d).\n", iVTiles, iRetrySiloPos);
-										goto RETRY_CHECK1;
+										//ConsoleLog(LOG_DEBUG, "(VT: %d) Overlapping case found, trying again (%d).\n", iValidPositions, iRetrySiloPos);
+										goto RETRYFROMCURRENT;
 									}
 								}
 							}
 							else {
 								if (iRetrySiloPos < MILITARY_RETRY_SILO_REPOSIT) {
 									iRetrySiloPos++;
-									//ConsoleLog(LOG_DEBUG, "(VT: %d) Invalid case found, trying again (%d).\n", iVTiles, iRetrySiloPos);
-									goto RETRY_CHECK1;
+									//ConsoleLog(LOG_DEBUG, "(VT: %d) Invalid case found, trying again (%d).\n", iValidPositions, iRetrySiloPos);
+									goto RETRYFROMCURRENT;
 								}
 							}
 						}
 					}
 				}
 				if (iTileArea == 9) {
-					iSiloIdx = iVTiles++;
-					wSiloPos[iSiloIdx].x = iAltPosOne;
-					wSiloPos[iSiloIdx].y = iAltPosTwo;
+					iSiloIdx = iValidPositions++;
+					wSiloPos[iSiloIdx].x = iLengthWays;
+					wSiloPos[iSiloIdx].y = iDepthWays;
 					//ConsoleLog(LOG_DEBUG, "DBG: iTileArea == 9: (%d) (%u, %d)\n", iSiloIdx, wSiloPos[iSiloIdx].x, wSiloPos[iSiloIdx].y);
 				}
-			} while (iVTiles < 6);
+			} while (iValidPositions < 6);
 		}
-		if (iVTiles != 6) {
+		if (iValidPositions != 6) {
 			if (iSiloAttempt < MILITARY_RETRY_SILO_SPOTFIND) {
 				iSiloAttempt++;
-				goto RETRY_CHECK2;
+				goto RETRYFROMBEGINNING;
 			}
 		}
-		if (iVTiles == 6) {
+		if (iValidPositions == 6) {
 			__int16 iSiloStartXPos = 0;
 			__int16 iSiloStartYPos = 0;
 			bMilitaryBaseType = MILITARY_BASE_MISSILE_SILOS;
 			for (iSiloIdx = 0; iSiloIdx < 6; iSiloIdx++) {
-				__int16 iSiloXPos = wSiloPos[iSiloIdx].x;
-				iSiloStartXPos = iSiloXPos;
-				__int16 iSiloYPos;
-				for (iSiloStartYPos = wSiloPos[iSiloIdx].y; iSiloStartXPos + 3 > iSiloXPos; iSiloXPos = iSiloXPos + 1) {
-					for (iSiloYPos = iSiloStartYPos; iSiloStartYPos + 3 > iSiloYPos; ++*dwMilitaryTiles) {
-						BYTE iBuildingArea = GetTileID(iSiloXPos, iSiloYPos);
-						--dwTileCount[iBuildingArea];
-						if (iSiloXPos < GAME_MAP_SIZE && iSiloYPos < GAME_MAP_SIZE) {
+				iSiloStartXPos = wSiloPos[iSiloIdx].x;
+				iSiloStartYPos = wSiloPos[iSiloIdx].y;
+				for (__int16 iSiloXPos = iSiloStartXPos; iSiloXPos < iSiloStartXPos + 3; ++iSiloXPos) {
+					for (__int16 iSiloYPos = iSiloStartYPos; iSiloYPos < iSiloStartYPos + 3; ++iSiloYPos) {
+						BYTE iTileID = GetTileID(iSiloXPos, iSiloYPos);
+						--dwTileCount[iTileID];
+						if (iSiloXPos < GAME_MAP_SIZE && iSiloYPos < GAME_MAP_SIZE)
 							XZONSetNewZone(iSiloXPos, iSiloYPos, ZONE_MILITARY);
-							// Altitude check debugging.
-							/*
-							ConsoleLog(LOG_DEBUG, "[%s] (%u, %u, %u)\n", szTileNames[TILE_MILITARY_MISSILESILO], 
-								ALTMReturnLandAltitude(iSiloXPos, iSiloYPos), ALTMReturnWaterLevel(iSiloXPos, iSiloYPos), ALTMReturnTunnelLevels(iSiloXPos, iSiloYPos));
-							*/
-						}
-						++iSiloYPos;
+						++dwMilitaryTiles[MILITARYTILE_OTHER];
 					}
 				}
 			}
@@ -454,25 +425,19 @@ RETRY_CHECK1:
 	return (force) ? 0 : -1;
 }
 
-static void MilitaryBasePlotPlacement(__int16 iRandXPos, __int16 iRandStoredYPos) {
-	for (__int16 iCurrXPos = iRandXPos; iRandXPos + 8 > iCurrXPos; ++iCurrXPos) {
-		for (__int16 iCurrYPos = iRandStoredYPos; iRandStoredYPos + 8 > iCurrYPos; ++iCurrYPos) {
-			BYTE iMilitaryArea = GetTileID(iCurrXPos, iCurrYPos);
-			if (
-				iMilitaryArea < TILE_SMALLPARK &&
+static void MilitaryBasePlotPlacement(__int16 iRandXPos, __int16 iRandYPos) {
+	for (__int16 iCurrXPos = iRandXPos; iCurrXPos < iRandXPos + 8; ++iCurrXPos) {
+		for (__int16 iCurrYPos = iRandYPos; iCurrYPos < iRandYPos + 8; ++iCurrYPos) {
+			BYTE iTileID = GetTileID(iCurrXPos, iCurrYPos);
+			if (iTileID < TILE_SMALLPARK &&
 				!GetTerrainTileID(iCurrXPos, iCurrYPos) &&
-				(
-					iCurrXPos >= GAME_MAP_SIZE ||
-					iCurrYPos >= GAME_MAP_SIZE ||
-					!XBITReturnIsWater(iCurrXPos, iCurrYPos)
-					) &&
+				(iCurrXPos >= GAME_MAP_SIZE || iCurrYPos >= GAME_MAP_SIZE || !XBITReturnIsWater(iCurrXPos, iCurrYPos)) &&
 				XZONReturnZone(iCurrXPos, iCurrYPos) == ZONE_NONE &&
-				!GetUndergroundTileID(iRandXPos, iRandStoredYPos)
-				) {
-				--dwTileCount[iMilitaryArea];
+				!GetUndergroundTileID(iCurrXPos, iCurrYPos)) {
+				--dwTileCount[iTileID];
 				if (iCurrXPos < GAME_MAP_SIZE && iCurrYPos < GAME_MAP_SIZE)
 					XZONSetNewZone(iCurrXPos, iCurrYPos, ZONE_MILITARY);
-				++*dwMilitaryTiles;
+				++dwMilitaryTiles[MILITARYTILE_OTHER];
 			}
 		}
 	}
@@ -484,25 +449,25 @@ static int MilitaryBaseDecline(void) {
 	return iRes;
 }
 
-static int MilitaryBaseAirForce(int iValidTiles, int iValidAltitudeTiles, __int16 iRandXPos, __int16 iRandStoredYPos) {
+static int MilitaryBaseAirForce(int iValidTiles, int iValidAltitudeTiles, __int16 iRandXPos, __int16 iRandYPos) {
 	if (iValidTiles == iValidAltitudeTiles) {
 		bMilitaryBaseType = MILITARY_BASE_AIR_FORCE;
 		GameMain_AfxMessageBoxID(242, 0, -1);
 
-		MilitaryBasePlotPlacement(iRandXPos, iRandStoredYPos);
+		MilitaryBasePlotPlacement(iRandXPos, iRandYPos);
 
-		return Game_CenterOnTileCoords(iRandXPos + 4, iRandStoredYPos + 4);
+		return Game_CenterOnTileCoords(iRandXPos + 4, iRandYPos + 4);
 	}
 
 	return -1;
 }
 
-static int MilitaryBaseArmyBase(int iValidTiles, int iValidAltitudeTiles, __int16 iRandXPos, __int16 iRandStoredYPos) {
+static int MilitaryBaseArmyBase(int iValidTiles, int iValidAltitudeTiles, __int16 iRandXPos, __int16 iRandYPos) {
 	if (iValidTiles != iValidAltitudeTiles) {
 		bMilitaryBaseType = MILITARY_BASE_ARMY;
 		GameMain_AfxMessageBoxID(241, 0, -1);
 
-		MilitaryBasePlotPlacement(iRandXPos, iRandStoredYPos);
+		MilitaryBasePlotPlacement(iRandXPos, iRandYPos);
 
 		// Explanation:
 		// First it lays down the depth-way roads and runwaycross.
@@ -511,19 +476,19 @@ static int MilitaryBaseArmyBase(int iValidTiles, int iValidAltitudeTiles, __int1
 		// check to see whether both runwaycross items are present, if they're
 		// not then it'll attempt to place down the respective crossing once more
 		// but from the opposite direction.
-		FormArmyBaseStrip(iRandXPos + 2, iRandStoredYPos, iRandXPos + 2, iRandStoredYPos + 7);
-		if (!FindArmyBaseCrossingDepth(iRandXPos + 2, iRandStoredYPos, iRandStoredYPos + 7))
-			FormArmyBaseStrip(iRandXPos + 2, iRandStoredYPos + 7, iRandXPos + 2, iRandStoredYPos);
-		FormArmyBaseStrip(iRandXPos + 5, iRandStoredYPos, iRandXPos + 5, iRandStoredYPos + 7);
-		if (!FindArmyBaseCrossingDepth(iRandXPos + 5, iRandStoredYPos, iRandStoredYPos + 7))
-			FormArmyBaseStrip(iRandXPos + 5, iRandStoredYPos + 7, iRandXPos + 5, iRandStoredYPos);
-		FormArmyBaseStrip(iRandXPos, iRandStoredYPos + 2, iRandXPos + 7, iRandStoredYPos + 2);
-		if (!FindArmyBaseCrossingLength(iRandStoredYPos + 2, iRandXPos + 7, iRandXPos))
-			FormArmyBaseStrip(iRandXPos + 7, iRandStoredYPos + 2, iRandXPos, iRandStoredYPos + 2);
-		FormArmyBaseStrip(iRandXPos, iRandStoredYPos + 5, iRandXPos + 7, iRandStoredYPos + 5);
-		if (!FindArmyBaseCrossingLength(iRandStoredYPos + 5, iRandXPos + 7, iRandXPos))
-			FormArmyBaseStrip(iRandXPos + 7, iRandStoredYPos + 5, iRandXPos, iRandStoredYPos + 5);
-		return Game_CenterOnTileCoords(iRandXPos + 4, iRandStoredYPos + 4);
+		FormArmyBaseStrip(iRandXPos + 2, iRandYPos, iRandXPos + 2, iRandYPos + 7);
+		if (!FindArmyBaseCrossingDepth(iRandXPos + 2, iRandYPos, iRandYPos + 7))
+			FormArmyBaseStrip(iRandXPos + 2, iRandYPos + 7, iRandXPos + 2, iRandYPos);
+		FormArmyBaseStrip(iRandXPos + 5, iRandYPos, iRandXPos + 5, iRandYPos + 7);
+		if (!FindArmyBaseCrossingDepth(iRandXPos + 5, iRandYPos, iRandYPos + 7))
+			FormArmyBaseStrip(iRandXPos + 5, iRandYPos + 7, iRandXPos + 5, iRandYPos);
+		FormArmyBaseStrip(iRandXPos, iRandYPos + 2, iRandXPos + 7, iRandYPos + 2);
+		if (!FindArmyBaseCrossingLength(iRandYPos + 2, iRandXPos + 7, iRandXPos))
+			FormArmyBaseStrip(iRandXPos + 7, iRandYPos + 2, iRandXPos, iRandYPos + 2);
+		FormArmyBaseStrip(iRandXPos, iRandYPos + 5, iRandXPos + 7, iRandYPos + 5);
+		if (!FindArmyBaseCrossingLength(iRandYPos + 5, iRandXPos + 7, iRandXPos))
+			FormArmyBaseStrip(iRandXPos + 7, iRandYPos + 5, iRandXPos, iRandYPos + 5);
+		return Game_CenterOnTileCoords(iRandXPos + 4, iRandYPos + 4);
 	}
 
 	return -1;
@@ -566,11 +531,10 @@ BACKTOSPOTREROLL:
 							(iTempCoords.y < 0 || iTempCoords.y > GAME_MAP_SIZE-1)) {
 							goto NONAVY;
 						}
-						BYTE iMilitaryArea = GetTileID(iTempCoords.x, iTempCoords.y);
+						BYTE iTileID = GetTileID(iTempCoords.x, iTempCoords.y);
 						if (!XBITReturnIsWater(iTempCoords.x, iTempCoords.y))
 						{
-							if (!((iMilitaryArea >= TILE_CLEAR && iMilitaryArea <= TILE_RUBBLE4) ||
-								(iMilitaryArea >= TILE_TREES1 && iMilitaryArea < TILE_SMALLPARK)) || 
+							if (iTileID >= TILE_SMALLPARK || 
 								GetTerrainTileID(iTempCoords.x, iTempCoords.y)) {
 								iNavyLandingAttempts++;
 								goto REROLLCOASTALSPOT;
@@ -645,22 +609,19 @@ PLACENAVAL:
 								iDirectionTwo = iLengthWay;
 							}
 
-							BYTE iMilitaryArea = GetTileID(iDirectionOne, iDirectionTwo);
-							if (
-								((iMilitaryArea >= TILE_CLEAR && iMilitaryArea <= TILE_RUBBLE4) ||
-								(iMilitaryArea >= TILE_TREES1 && iMilitaryArea < TILE_SMALLPARK)) &&
+							BYTE iTileID = GetTileID(iDirectionOne, iDirectionTwo);
+							if (iTileID < TILE_SMALLPARK &&
 								XZONReturnZone(iDirectionOne, iDirectionTwo) == ZONE_NONE &&
 								!GetTerrainTileID(iDirectionOne, iDirectionTwo) &&
 								!isValidWaterBody(iDirectionOne, iDirectionTwo) &&
 								!GetUndergroundTileID(iDirectionOne, iDirectionTwo) &&
-								ALTMReturnLandAltitude(iDirectionOne, iDirectionTwo) == iBaseLevel
-								) {
+								ALTMReturnLandAltitude(iDirectionOne, iDirectionTwo) == iBaseLevel) {
 								if (!iNonContiguousDepth) {
 									if (iPass) {
 										Game_PlaceTileWithMilitaryCheck(iDirectionOne, iDirectionTwo, 0);
 										XZONSetNewZone(iDirectionOne, iDirectionTwo, ZONE_MILITARY);
-										--dwTileCount[iMilitaryArea];
-										++*dwMilitaryTiles;
+										--dwTileCount[iTileID];
+										++dwMilitaryTiles[MILITARYTILE_OTHER];
 									}
 									else {
 										iNumTiles++;
@@ -668,8 +629,7 @@ PLACENAVAL:
 								}
 							}
 							else {
-								if (!((iMilitaryArea >= TILE_CLEAR && iMilitaryArea <= TILE_RUBBLE4) ||
-									(iMilitaryArea >= TILE_TREES1 && iMilitaryArea < TILE_SMALLPARK)) ||
+								if (iTileID >= TILE_SMALLPARK ||
 									GetTerrainTileID(iDirectionOne, iDirectionTwo) < SUBMERGED_00 ||
 									GetTerrainTileID(iDirectionOne, iDirectionTwo) > COAST_13 ||
 									GetUndergroundTileID(iDirectionOne, iDirectionTwo) ||
@@ -747,11 +707,9 @@ REATTEMPT:
 void ProposeMilitaryBaseAirForceBase(void) {
 	int iResult;
 	__int16 iValidAltitudeTiles;
+	__int16 iValidTiles;
 	__int16 iRandXPos;
 	__int16 iRandYPos;
-	__int16 iValidTiles;
-	__int16 iRandStoredXPos;
-	__int16 iRandStoredYPos;
 
 	if (!Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis) || !wCityMode)
 		return;
@@ -763,11 +721,11 @@ void ProposeMilitaryBaseAirForceBase(void) {
 	unsigned int iMilitaryBaseTries = 0;
 
 REATTEMPT:
-	MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &iRandXPos, &iRandYPos, &iRandStoredXPos, &iRandStoredYPos);
+	MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &iRandXPos, &iRandYPos);
 	if (iValidAltitudeTiles < 40)
 		goto GETOUT;
 
-	iResult = MilitaryBaseAirForce(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandStoredYPos);
+	iResult = MilitaryBaseAirForce(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandYPos);
 	if (iResult < 0) {
 GETOUT:
 		if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
@@ -781,11 +739,9 @@ GETOUT:
 void ProposeMilitaryBaseArmyBase(void) {
 	int iResult;
 	__int16 iValidAltitudeTiles;
+	__int16 iValidTiles;
 	__int16 iRandXPos;
 	__int16 iRandYPos;
-	__int16 iValidTiles;
-	__int16 iRandStoredXPos;
-	__int16 iRandStoredYPos;
 
 	if (!Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis) || !wCityMode)
 		return;
@@ -796,11 +752,11 @@ void ProposeMilitaryBaseArmyBase(void) {
 	
 	unsigned int iMilitaryBaseTries = 0;
 REATTEMPT:
-	MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &iRandXPos, &iRandYPos, &iRandStoredXPos, &iRandStoredYPos);
+	MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &iRandXPos, &iRandYPos);
 	if (iValidAltitudeTiles < 40)
 		goto GETOUT;
 
-	iResult = MilitaryBaseArmyBase(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandStoredYPos);
+	iResult = MilitaryBaseArmyBase(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandYPos);
 	if (iResult < 0) {
 GETOUT:
 		if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
@@ -838,11 +794,9 @@ REATTEMPT:
 extern "C" void __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	int iSiloResult;
 	__int16 iValidAltitudeTiles;
+	__int16 iValidTiles;
 	__int16 iRandXPos;
 	__int16 iRandYPos;
-	__int16 iValidTiles;
-	__int16 iRandStoredXPos;
-	__int16 iRandStoredYPos;
 	
 	unsigned int iMilitaryBaseTries = 0;
 
@@ -851,7 +805,7 @@ extern "C" void __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	else {
 	REATTEMPT:
 		if (MilitaryBaseNavalYard(false) < 0) {
-			MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &iRandXPos, &iRandYPos, &iRandStoredXPos, &iRandStoredYPos);
+			MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &iRandXPos, &iRandYPos);
 
 			iSiloResult = MilitaryBaseMissileSilos(iValidAltitudeTiles, iValidTiles, false);
 			if (iSiloResult >= 0) {
@@ -873,8 +827,8 @@ extern "C" void __stdcall Hook_SimulationProposeMilitaryBase(void) {
 				}
 			}
 			else {
-				if (MilitaryBaseAirForce(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandStoredYPos) < 0)
-					MilitaryBaseArmyBase(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandStoredYPos);
+				if (MilitaryBaseAirForce(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandYPos) < 0)
+					MilitaryBaseArmyBase(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandYPos);
 			}
 		}
 	}
