@@ -31,50 +31,6 @@ UINT tilebuild_debug = TILEBUILD_DEBUG;
 
 static DWORD dwDummy;
 
-enum {
-	CMP_LESSTHAN,
-	CMP_GREATERTHAN,
-	CMP_GREATEROREQUAL,
-	CMP_EQUAL,
-	CMP_LESSOREQUAL
-};
-
-enum {
-	BUILD_START,
-	BUILD_THINK,
-	BUILD_ABANDON
-};
-
-enum {
-	GROWTH_START,
-	GROWTH_CONSIDERCHANGE,
-	GROWTH_CHANGE,
-	GROWTH_CONSIDERCONSTRUCTION,
-	GROWTH_COMPLETECONSTRUCTION,
-	GROWTH_CONSIDERABANDON,
-	GROWTH_ABANDON,
-	GROWTH_CONSIDERCOMMIT,
-	GROWTH_COMMIT
-};
-
-enum {
-	TILEPOPLEVEL_NONE,
-	TILEPOPLEVEL_LOW,
-	TILEPOPLEVEL_MEDIUM,
-	TILEPOPLEVEL_HIGH,
-	TILEPOPLEVEL_VERYHIGH
-};
-
-#define XVALPOPLEVEL_LOW 32
-#define XVALPOPLEVEL_MEDIUM (XVALPOPLEVEL_LOW * 3)
-#define XVALPOPLEVEL_HIGH (XVALPOPLEVEL_MEDIUM * 2)
-
-#define GROWTH_TILE_MAX_TRIP_STEPS 100
-
-// This will get the general RCI zone that's passed
-// without distinguishing between light/dense.
-#define GET_GENERAL_RCI_ZONE(x) ((x - 1) / 2)
-
 static void GetItemPlacementAreaAndFarPosition(__int16 m_x, __int16 m_y, __int16 iTileArea, __int16 *outX, __int16 *outY, __int16 *outFarX, __int16 *outFarY, __int16 *outArea) {
 	__int16 x;
 	__int16 y;
