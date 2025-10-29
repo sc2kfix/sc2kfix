@@ -39,6 +39,42 @@ enum {
 	CMP_LESSOREQUAL
 };
 
+enum {
+	BUILD_START,
+	BUILD_THINK,
+	BUILD_ABANDON
+};
+
+enum {
+	GROWTH_START,
+	GROWTH_CONSIDERCHANGE,
+	GROWTH_CHANGE,
+	GROWTH_CONSIDERCONSTRUCTION,
+	GROWTH_COMPLETECONSTRUCTION,
+	GROWTH_CONSIDERABANDON,
+	GROWTH_ABANDON,
+	GROWTH_CONSIDERCOMMIT,
+	GROWTH_COMMIT
+};
+
+enum {
+	TILEPOPLEVEL_NONE,
+	TILEPOPLEVEL_LOW,
+	TILEPOPLEVEL_MEDIUM,
+	TILEPOPLEVEL_HIGH,
+	TILEPOPLEVEL_VERYHIGH
+};
+
+#define XVALPOPLEVEL_LOW 32
+#define XVALPOPLEVEL_MEDIUM (XVALPOPLEVEL_LOW * 3)
+#define XVALPOPLEVEL_HIGH (XVALPOPLEVEL_MEDIUM * 2)
+
+#define GROWTH_TILE_MAX_TRIP_STEPS 100
+
+// This will get the general RCI zone that's passed
+// without distinguishing between light/dense.
+#define GET_GENERAL_RCI_ZONE(x) ((x - 1) / 2)
+
 static void GetItemPlacementAreaAndFarPosition(__int16 m_x, __int16 m_y, __int16 iTileArea, __int16 *outX, __int16 *outY, __int16 *outFarX, __int16 *outFarY, __int16 *outArea) {
 	__int16 x;
 	__int16 y;
@@ -667,6 +703,31 @@ static void DoBudgetSubwayCheck(CSimcityView *pSCView, __int16 iX, __int16 iY) {
 	}
 }
 
+static BOOL GetPopulatedTileAndLevel(__int16 iX, __int16 iY, BYTE iCurrentTileID, WORD *p_iPopulatedTile, WORD *p_iTilePopLevel) {
+	WORD iPopulatedTile = 0;
+	WORD iTilePopLevel = 0;
+
+	if (iCurrentTileID >= TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1) {
+		// The !XZONCornerCheck() case is only hit when
+		// a 2x2 >= building is being handled and the
+		// otherr parts of it DON'T contain the wCurrentAngle
+		// bit (In order for those other tiles to not be
+		// included as part of the populated tile / populated level).
+		if (!XZONCornerCheck(iX, iY, wCurrentAngle))
+			return FALSE;
+		iPopulatedTile = iCurrentTileID - TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1;
+		iTilePopLevel = wBuildingPopLevel[iPopulatedTile];
+	}
+	else {
+		if (iCurrentTileID >= TILE_ROAD_LR || !Game_IsValidTransitItems(iX, iY))
+			return FALSE;
+	}
+
+	*p_iPopulatedTile = iPopulatedTile;
+	*p_iTilePopLevel = iTilePopLevel;
+	return TRUE;
+}
+
 extern int iChurchVirus;
 
 extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __int16 iSubStep) {
@@ -677,13 +738,14 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 	BOOL bPlaceChurch;
 	__int16 iCurrZoneType;
 	BYTE iCurrentTileID;
-	BYTE iTileAreaState;
-	// 'iBuildingCommitThreshold' must be 'int' (or a 32-bit integer at the very least),
+	BYTE iTileState;
+	int iGrowthState, iPrevGrowthState;
+	// 'iDemandThreshold' must be 'int' (or a 32-bit integer at the very least),
 	// otherwise building growth will not correctly occur and you'll end up with a very
 	// high number of 1x1 abandonded buildings.
-	int iBuildingCommitThreshold;
-	WORD iBuildingPopLevel;
-	WORD iPopulatedAreaTile;
+	int iDemandThreshold;
+	WORD iTilePopLevel;
+	WORD iPopulatedTile;
 	__int16 iCurrentDemand;
 	__int16 iRemainderDemand;
 	BYTE iReplaceTile;
@@ -723,72 +785,100 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 						DoSeaPortGrowth(iX, iY, iCurrentTileID, iCurrZoneType);
 				}
 				else {
-					iPopulatedAreaTile = 0;
-					iBuildingPopLevel = 0;
-					if (iCurrentTileID >= TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1) {
-						if (!XZONCornerCheck(iX, iY, wCurrentAngle)) {
-							// This case appears to be hit with >= 2x2 zoned items.
-							goto GOTOEND;
+					iPopulatedTile = 0;
+					iTilePopLevel = TILEPOPLEVEL_NONE;
+					if (GetPopulatedTileAndLevel(iX, iY, iCurrentTileID, &iPopulatedTile, &iTilePopLevel)) {
+						iCurrentDemand = 0;
+						iRemainderDemand = 4000;
+						if (Game_IsZonedTilePowered(iX, iY)) {
+							if (Game_RunTripGenerator(iX, iY, iCurrZoneType, iTilePopLevel, GROWTH_TILE_MAX_TRIP_STEPS)) {
+								iCurrentDemand = wCityDemand[GET_GENERAL_RCI_ZONE(iCurrZoneType)] + 2000;
+								iRemainderDemand = 4000 - iCurrentDemand;
+							}
 						}
-						iPopulatedAreaTile = iCurrentTileID - TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1;
-						iBuildingPopLevel = wBuildingPopLevel[iPopulatedAreaTile];
-					}
-					else {
-						if (iCurrentTileID >= TILE_ROAD_LR || !Game_IsValidTransitItems(iX, iY)) {
-							goto GOTOEND;
+
+						// The general apparent chain of events:
+						// 0) GROWTH_START - initial priming before any of the subsequent 'if' blocks are hit
+						// 1) GROWTH_CONSIDERCHANGE - a building has already been placed (with an 'TilePopLevel' above 0).
+						// 2) GROWTH_CHANGE - change current building due to 'iDemandThreshold' not being exceeded.
+						// 3) GROWTH_CONSIDERCONSTRUCTION - consider whether construction is to be completed.
+						// 4) GROWTH_COMPLETECONSTRUCTION - complete building/church construction based on the 'iDemandThreshold' not being exceeded.
+						// 5) GROWTH_CONSIDERABANDON - consider changing the current building to the abandoned type (or just updating the figure until the next round)
+						// 6) GROWTH_ABANDON - change building to the abandoned type based on 'iDemandThreshold' not being exceeded.
+						// 7) GROWTH_CONSIDERCOMMIT - this is the final potential fall-through before committing to "starting"
+						// 8) GROWTH_COMMIT - 'iDemandThreshold' exceeds the returned random number, we commit to "starting". (likely for construction sites, area changes 1x1 <-> 2x2 <-> 3x3)
+
+						iTileState = bTileState[iPopulatedTile];
+						iGrowthState = GROWTH_START;
+						if (iTilePopLevel > TILEPOPLEVEL_NONE && iTileState == BUILD_START) {
+							iGrowthState = GROWTH_CONSIDERCHANGE;
+							//ConsoleLog(LOG_DEBUG, "BUILD_START(%u) - (%d, %d) [%s] bTileState[%u], wBuildingPopLevel[%u], iTilePopLevel(%u)\n", iTileState, iX, iY, szTileNames[iCurrentTileID], iPopulatedTile, iPopulatedTile, iTilePopLevel);
+							pZonePops[iCurrZoneType] += wBuildingPopulation[iTilePopLevel]; // Values appear to be: 1[1], 8[2], 12[3], 36[4] (wBuildingPopulation[iTilePopLevel] format.
+							iDemandThreshold = (iRemainderDemand / iTilePopLevel);
+							if ((unsigned __int16)rand() < iDemandThreshold) {
+								iGrowthState = GROWTH_CHANGE;
+								iReplaceTile = rand() & 1;
+								Game_PerhapsGeneralZoneChangeBuilding(iX, iY, iTilePopLevel, iReplaceTile);
+							}
 						}
-					}
-					iCurrentDemand = 0;
-					iRemainderDemand = 4000;
-					if (Game_IsZonedTilePowered(iX, iY)) {
-						if (Game_RunTripGenerator(iX, iY, iCurrZoneType, iBuildingPopLevel, 100)) {
-							iCurrentDemand = wCityDemand[((iCurrZoneType - 1) / 2)] + 2000;
-							iRemainderDemand = 4000 - iCurrentDemand;
+
+						// Continue if iGrowthStart <= GROWTH_CONSIDERCHANGE, otherwise fallthrough.
+						if (iGrowthState <= GROWTH_CONSIDERCHANGE) {
+							if (iTileState == BUILD_THINK) {
+								iGrowthState = GROWTH_CONSIDERCONSTRUCTION;
+								iDemandThreshold = 16384 / iTilePopLevel;
+								if ((unsigned __int16)rand() < iDemandThreshold) {
+									iGrowthState = GROWTH_COMPLETECONSTRUCTION;
+									//ConsoleLog(LOG_DEBUG, "BUILD_THINK(%u) - (%d, %d) [%s] bTileState[%u], wBuildingPopLevel[%u], (%u)wBuildingPopulation[%u], iTilePopLevel(%u)\n", iTileState, iX, iY, szTileNames[iCurrentTileID], iPopulatedTile, iPopulatedTile, wBuildingPopulation[iTilePopLevel], iTilePopLevel, iTilePopLevel);
+									if (bPlaceChurch && (iTilePopLevel & 2) != 0 && iCurrZoneType < ZONE_LIGHT_COMMERCIAL) {
+										//ConsoleLog(LOG_DEBUG, "BUILD_THINK(%u) - CHURCH (%d, %d) [%s] bTileState[%u], wBuildingPopLevel[%u], (%u)wBuildingPopulation[%u], iTilePopLevel(%u)\n", iTileState, iX, iY, szTileNames[iCurrentTileID], iPopulatedTile, iPopulatedTile, wBuildingPopulation[iTilePopLevel], iTilePopLevel, iTilePopLevel);
+										Game_PlaceChurch(iX, iY);
+									}
+									else
+										Game_PerhapsGeneralZoneChooseAndPlaceBuilding(iX, iY, iTilePopLevel, GET_GENERAL_RCI_ZONE(iCurrZoneType));
+								}
+							}
+
+							// Continue if iGrowthStart <= GROWTH_CONSIDERCONSTRUCTION, otherwise fallthrough.
+							if (iGrowthState <= GROWTH_CONSIDERCONSTRUCTION) {
+								if (iTileState == BUILD_ABANDON) {
+									iGrowthState = GROWTH_CONSIDERABANDON;
+									//ConsoleLog(LOG_DEBUG, "BUILD_ABANDON(%u) - (%d, %d) [%s] bTileState[%u], wBuildingPopLevel[%u], (%u)wBuildingPopulation[%u], iTilePopLevel(%u)\n", iTileState, iX, iY, szTileNames[iCurrentTileID], iPopulatedTile, iPopulatedTile, wBuildingPopulation[iTilePopLevel], iTilePopLevel, iTilePopLevel);
+									pZonePops[ZONEPOP_ABANDONED] += wBuildingPopulation[iTilePopLevel];
+									iDemandThreshold = 15 * iCurrentDemand / iTilePopLevel;
+									if ((unsigned __int16)rand() < iDemandThreshold) {
+										iGrowthState = GROWTH_ABANDON;
+										Game_PerhapsGeneralZoneChooseAndPlaceBuilding(iX, iY, iTilePopLevel, GET_GENERAL_RCI_ZONE(iCurrZoneType));
+									}
+								}
+
+								// Continue if iGrowthStart <= GROWTH_CONSIDERCONSTRUCTION (this is unchanged), otherwise fallthrough.
+								if (iGrowthState <= GROWTH_CONSIDERCONSTRUCTION) {
+									if (iTilePopLevel != TILEPOPLEVEL_VERYHIGH &&
+										(IsEven(iCurrZoneType) || iTilePopLevel <= TILEPOPLEVEL_NONE) &&
+										(iCurrZoneType >= ZONE_LIGHT_INDUSTRIAL ||
+										(iTilePopLevel != TILEPOPLEVEL_LOW || GetXVALByteDataWithNormalCoordinates(iX, iY) >= XVALPOPLEVEL_LOW) &&
+										(iTilePopLevel != TILEPOPLEVEL_MEDIUM || GetXVALByteDataWithNormalCoordinates(iX, iY) >= XVALPOPLEVEL_MEDIUM) &&
+										(iTilePopLevel != TILEPOPLEVEL_HIGH || GetXVALByteDataWithNormalCoordinates(iX, iY) >= XVALPOPLEVEL_HIGH))) {
+										iPrevGrowthState = iGrowthState;
+										// Let's cut down on the noise a bit during initial thinking for GROWTH_START alone.
+										//if (iPrevGrowthState)
+										//	ConsoleLog(LOG_DEBUG, "THINKING -(%u/%d) - (%d, %d) [%s] bTileState[%u], wBuildingPopLevel[%u], (%u)wBuildingPopulation[%u], iTilePopLevel(%u)\n", iTileState, iGrowthState, iX, iY, szTileNames[iCurrentTileID], iPopulatedTile, iPopulatedTile, wBuildingPopulation[iTilePopLevel], iTilePopLevel, iTilePopLevel);
+										iGrowthState = GROWTH_CONSIDERCOMMIT;
+										iDemandThreshold = 3 * iCurrentDemand / (iTilePopLevel + 1);
+										if (iDemandThreshold > (unsigned __int16)rand()) {
+											//ConsoleLog(LOG_DEBUG, "CONSIDERCOMMIT -> COMMIT -(%u) iGrowthState(%d), iPrevGrowthState(%d) - (%d, %d) [%s] bTileState[%u], wBuildingPopLevel[%u], (%u)wBuildingPopulation[%u], iTilePopLevel(%u)\n", iTileState, iGrowthState, iPrevGrowthState, iX, iY, szTileNames[iCurrentTileID], iPopulatedTile, iPopulatedTile, wBuildingPopulation[iTilePopLevel], iTilePopLevel, iTilePopLevel);
+											iGrowthState = GROWTH_COMMIT;
+										}
+										if (iGrowthState == GROWTH_COMMIT)
+											Game_PerhapsGeneralZoneStartBuilding(iX, iY, iTilePopLevel, iCurrZoneType);
+									}
+								}
+							}
 						}
-					}
-					// This block is encountered when a given area is not "under construction" and not "abandonded".
-					// A building is then randomly selected in subsequent calls.
-					iTileAreaState = bAreaState[iPopulatedAreaTile];
-					//ConsoleLog(LOG_DEBUG, "(%d, %d) [%s] (%u) bAreaState[%u], wBuildingPopLevel[%u], iBuildingPopLevel(%u)\n", iX, iY, szTileNames[iCurrentTileID], iTileAreaState, iPopulatedAreaTile, iPopulatedAreaTile, iBuildingPopLevel);
-					if (iBuildingPopLevel > 0 && !iTileAreaState) {
-						pZonePops[iCurrZoneType] += wBuildingPopulation[iBuildingPopLevel]; // Values appear to be: 1[1], 8[2], 12[3], 36[4] (wBuildingPopulation[iBuildingPopLevel] format.
-						if ((unsigned __int16)rand() < (iRemainderDemand / iBuildingPopLevel)) {
-							iReplaceTile = rand() & 1;
-							Game_PerhapsGeneralZoneChangeBuilding(iX, iY, iBuildingPopLevel, iReplaceTile);
-							goto GOTOEND;
-						}
-					}
-					if (iTileAreaState == 1 && (unsigned __int16)rand() < 0x4000 / iBuildingPopLevel) {
-						if (bPlaceChurch && (iBuildingPopLevel & 2) != 0 && iCurrZoneType < ZONE_LIGHT_COMMERCIAL) {
-							Game_PlaceChurch(iX, iY);
-							goto GOTOEND;
-						}
-						Game_PerhapsGeneralZoneChooseAndPlaceBuilding(iX, iY, iBuildingPopLevel, (iCurrZoneType - 1) / 2);
-						goto GOTOEND;
-					}
-					if (iTileAreaState == 2) {
-						// Abandoned buildings.
-						pZonePops[ZONEPOP_ABANDONED] += wBuildingPopulation[iBuildingPopLevel];
-						iBuildingCommitThreshold = 15 * iCurrentDemand / iBuildingPopLevel;
-						if ((unsigned __int16)rand() >= iBuildingCommitThreshold)
-							goto GOTOEND;
-						Game_PerhapsGeneralZoneChooseAndPlaceBuilding(iX, iY, iBuildingPopLevel, (iCurrZoneType - 1) / 2);
-						goto GOTOEND;
-					}
-					// This block is where construction will start.
-					if (iBuildingPopLevel != 4 &&
-						(IsEven(iCurrZoneType) || iBuildingPopLevel <= 0) &&
-						(iCurrZoneType >= ZONE_LIGHT_INDUSTRIAL ||
-						(iBuildingPopLevel != 1 || GetXVALByteDataWithNormalCoordinates(iX, iY) >= 0x20u) &&
-							(iBuildingPopLevel != 2 || GetXVALByteDataWithNormalCoordinates(iX, iY) >= 0x60u) &&
-							(iBuildingPopLevel != 3 || GetXVALByteDataWithNormalCoordinates(iX, iY) >= 0xC0u))) {
-						iBuildingCommitThreshold = 3 * iCurrentDemand / (iBuildingPopLevel + 1);
-						if (iBuildingCommitThreshold > (unsigned __int16)rand())
-							Game_PerhapsGeneralZoneStartBuilding(iX, iY, iBuildingPopLevel, iCurrZoneType);
 					}
 				}
 			}
-		GOTOEND:
 			DoBudgetSubwayCheck(pSCView, iX, iY);
 		}
 	}
