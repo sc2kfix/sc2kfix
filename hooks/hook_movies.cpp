@@ -28,7 +28,6 @@ UINT mov_debug = MOVIE_DEBUG;
 static DWORD dwDummy;
 
 BOOL bSkipIntro = FALSE;
-static HMODULE hMod_SMK = 0;
 
 extern "C" BOOL __cdecl Hook_MovieOpen(char* sMovStr) {
 	CMFC3XString movStr;
