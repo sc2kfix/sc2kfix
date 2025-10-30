@@ -1448,6 +1448,7 @@ GAMECALL(0x402725, int, __cdecl, PlacePowerLinesAtCoordinates, __int16 x, __int1
 GAMECALL(0x402752, void, __thiscall, MapToolBar_PressButton, CMapToolBar *, int)
 GAMECALL(0x402798, int, __cdecl, MapToolPlaceForest, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x4027A7, void, __thiscall, SimCityView_OnVScroll, CSimcityView *pThis, int nSBCode, __int16 nPos, CMFC3XScrollBar *pScrollBar)
+GAMECALL(0x4027E3, BOOL, __cdecl, MoviePlay, HWND)
 GAMECALL(0x4027F2, int, __cdecl, ItemPlacementCheck, __int16 x, __int16 y, BYTE iTileID, __int16 iTileArea)
 GAMECALL(0x402810, int, __thiscall, SimcityView_UpdateAreaCompleteColorFill, CSimcityView *) // This appears to be a more comprehensive update that'll occur for highlighted/selected area or when you're moving the game area.
 GAMECALL(0x40281F, int, __cdecl, RunTripGenerator, __int16 x, __int16 y, __int16 iZoneType, __int16 iBuildingPopLevel, __int16 iTripMaxSteps)
@@ -1499,6 +1500,13 @@ GAMECALL_MAIN(0x480140, int, __stdcall, LoadSoundBuffer, int iSoundID, void* pBu
 GAMECALL_MAIN(0x489C80, void, __thiscall, StatusControlBar_DestructStatusBar, CStatusControlBar *)
 GAMECALL_MAIN(0x489D50, void, __thiscall, StatusControlBar_UpdateStatusBar, CStatusControlBar *, int, char *, int, COLORREF)
 
+GAMECALL_MAIN(0x48B976, int, __cdecl, SmackClose, DWORD *)
+GAMECALL_MAIN(0x48B97C, int, __cdecl, SmackBufferClose, DWORD *)
+GAMECALL_MAIN(0x48B982, int, __cdecl, SmackWait, DWORD *)
+GAMECALL_MAIN(0x48B988, int, __cdecl, SmackToBuffer, DWORD *, int, int, int, int, void *, BYTE)
+GAMECALL_MAIN(0x48B98E, int, __cdecl, SmackBufferOpen, HWND, int, int, int, int, int)
+GAMECALL_MAIN(0x48B994, int, __cdecl, SmackOpen, const char *, int, int)
+GAMECALL_MAIN(0x48B99A, int, __cdecl, SmackSoundUseDirectSound, HWND)
 
 // MFC function pointers. Use with care.
 GAMECALL_MAIN(0x48B9E6, BOOL, __thiscall, DC_TextOutA, CMFC3XDC *, int, int, const char *, int)
@@ -1710,6 +1718,8 @@ GAMEOFF(WORD,	wHighlightedTileY2,			0x4CDB74)
 GAMEOFF(DWORD,	dwLFSRState,				0x4CDB7C)
 GAMEOFF(DWORD,	dwLCGState,					0x4CDB80)
 GAMEOFF_ARR(char,	szSoundPath,			0x4CDB88)
+GAMEOFF(HWND,	hWndMovieCap,				0x4CE7E8)
+GAMEOFF(HWND,	hWndMovie,					0x4CE7EC)
 GAMEOFF(MFC3X_AFX_CORE_STATE,	game_AfxCoreState,			0x4CE8C0)
 GAMEOFF(HINSTANCE,	hGameModule,			0x4CE8C8)
 GAMEOFF_ARR(WORD,	wPositionAngle,			0x4DC4C8)
@@ -1757,6 +1767,10 @@ GAMEOFF(BOOL,	bPaletteSet,				0x4EA050)
 GAMEOFF_ARR(testColStruct,	rgbLoColor,		0x4EA058)
 GAMEOFF_ARR(testColStruct,	rgbNormalColor,	0x4EA0B8)
 GAMEOFF(WORD,	wTileHighlightActive,		0x4EA7F0)
+GAMEOFF(DWORD *,	smkBufOpenRet,			0x4EAA54)
+GAMEOFF(DWORD *,	smkOpenRet,				0x4EAA58)
+GAMEOFF(BOOL,	MovieWndInitFinish,			0x4EAA5C)
+GAMEOFF(BOOL,	MovieWndExit,				0x4EAA60)
 
 // Specific tile corner, length and depth cases.
 //

@@ -115,7 +115,6 @@
     <ClInclude Include="include\sc2kclasses.h" />
     <ClInclude Include="include\sc2kfix.h" />
     <ClInclude Include="include\sc2k_demo.h" />
-    <ClInclude Include="include\smk.h" />
     <ClInclude Include="include\winmm_exports.h" />
     <ClInclude Include="include\sc2k_1996.h" />
     <ClInclude Include="resource.h" />
@@ -190,7 +189,7 @@
     <ClCompile Include="modules\status_dialog.cpp" />
     <ClCompile Include="modules\track_config.cpp" />
     <ClCompile Include="modules\update_notifier.cpp" />
-    <ClCompile Include="modules\smk.cpp" />
+    <ClCompile Include="hooks\hook_movies.cpp" />
     <ClCompile Include="modules\scenario_status.cpp" />
     <ClCompile Include="thirdparty\kuroko\builtins.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseNoKuroko|Win32'">true</ExcludedFromBuild>

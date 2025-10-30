@@ -16,7 +16,6 @@
 
 #include <mfc3xhelp.h>
 #include <sc2kclasses.h>
-#include <smk.h>
 #include <sc2k_1996.h>
 #include <sc2k_demo.h>
 #include <music.h>
@@ -302,7 +301,6 @@ extern int iForcedBits;
 // Path adjustment (from registry_pathing area)
 
 BOOL L_IsPathValid(const char *pStr);
-const char *AdjustSource(char *buf, const char *path);
 
 // Utility functions
 
@@ -476,6 +474,9 @@ void InstallRegistryPathingHooks_SC2K1995(void);
 void InstallRegistryPathingHooks_SC2KDemo(void);
 void InstallRegistryPathingHooks_SCURK1996(void);
 
+// Movie hook
+void InstallMovieHooks(void);
+
 // Debugging settings
 
 extern UINT guzzardo_debug;
@@ -483,6 +484,7 @@ extern UINT mci_debug;
 extern UINT military_debug;
 extern UINT mischook_debug;
 extern UINT modloader_debug;
+extern UINT mov_debug;
 extern UINT mus_debug;
 extern UINT registry_debug;
 extern UINT sc2x_debug;

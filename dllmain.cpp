@@ -132,6 +132,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						military_debug = DEBUG_FLAGS_EVERYTHING;
 						mischook_debug = DEBUG_FLAGS_EVERYTHING;
 						modloader_debug = DEBUG_FLAGS_EVERYTHING;
+						mov_debug = DEBUG_FLAGS_EVERYTHING;
 						mus_debug = DEBUG_FLAGS_EVERYTHING;
 						registry_debug = DEBUG_FLAGS_EVERYTHING;
 						sc2x_debug = DEBUG_FLAGS_EVERYTHING;
@@ -146,6 +147,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						military_debug = DEBUG_FLAGS_NONE;
 						mischook_debug = DEBUG_FLAGS_NONE;
 						modloader_debug = DEBUG_FLAGS_NONE;
+						mov_debug = DEBUG_FLAGS_NONE;
 						mus_debug = DEBUG_FLAGS_NONE;
 						registry_debug = DEBUG_FLAGS_NONE;
 						sc2x_debug = DEBUG_FLAGS_NONE;
@@ -493,7 +495,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		spriteIDs.clear();
 
 		// Send a closing message and close the log file
-		ReleaseSMKFuncs();
 		ConsoleLog(LOG_INFO, "CORE: Closing down at %lld. Goodnight!\n", time(NULL));
 		fflush(fdLog);
 		fclose(fdLog);

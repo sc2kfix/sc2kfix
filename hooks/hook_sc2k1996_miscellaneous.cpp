@@ -1665,11 +1665,11 @@ void InstallMiscHooks_SC2K1996(void) {
 	*(DWORD*)(0x4EFE70) = (DWORD)Hook_ShowWindow;
 	*(DWORD*)(0x4EFCE8) = (DWORD)Hook_DefWindowProcA;
 
-	// Install Smacker hooks
-	GetSMKFuncs();
-
 	// Install registry pathing hooks
 	InstallRegistryPathingHooks_SC2K1996();
+
+	// Install Movie hooks
+	InstallMovieHooks();
 
 	// Hook into both AfxMessageBox functions
 	VirtualProtect((LPVOID)0x4B232F, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
