@@ -33,6 +33,28 @@ BOOL smk_enabled = FALSE;
 BOOL bSkipIntro = FALSE;
 static HMODULE hMod_SMK = 0;
 
+extern "C" BOOL __cdecl Hook_MovieCheck(char* sMovStr) {
+	CMFC3XString movStr;
+	CMFC3XFileStatus fileStat;
+	BOOL bRet;
+
+	bRet = FALSE;
+	if (sMovStr && strncmp(sMovStr, "INTRO", 5) == 0)
+		if (!smk_enabled || bSkipIntro || bSettingsAlwaysSkipIntro)
+			return TRUE;
+
+	GameMain_String_Cons(&movStr);
+	GameMain_String_Format(&movStr, "%s\\Movies\\%s", szGamePath, sMovStr);
+	
+	if (smk_debug & SMACKER_DEBUG_CALLS)
+		ConsoleLog(LOG_DEBUG, "0x%06X -> MovieCheck(%s): (%s)\n", _ReturnAddress(), sMovStr, movStr.m_pchData);
+	
+	bRet = GameMain_File_GetStatusWithString(movStr.m_pchData, &fileStat);
+	GameMain_String_Dest(&movStr);
+
+	return bRet;
+}
+
 void GetSMKFuncs() {
 	char szSMKLibPath[MAX_PATH] = { 0 };
 
@@ -75,14 +97,6 @@ void ReleaseSMKFuncs() {
 		FreeLibrary(hMod_SMK);
 		hMod_SMK = 0;
 	}
-}
-
-extern "C" DWORD __cdecl Hook_MovieCheck(char* sMovStr) {
-	if (sMovStr && strncmp(sMovStr, "INTRO", 5) == 0)
-		if (!smk_enabled || bSkipIntro || bSettingsAlwaysSkipIntro)
-			return 1;
-
-	return GameMain_MovieCheck(sMovStr);
 }
 
 extern "C" DWORD __cdecl Hook_SmackOpen(LPCSTR lpFileName, uint32_t uFlags, int32_t iExBuf) {

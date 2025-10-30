@@ -1498,7 +1498,6 @@ GAMECALL_MAIN(0x4719A0, void, __cdecl, QueryGeneralItem, __int16, __int16)
 GAMECALL_MAIN(0x480140, int, __stdcall, LoadSoundBuffer, int iSoundID, void* pBuffer)
 GAMECALL_MAIN(0x489C80, void, __thiscall, StatusControlBar_DestructStatusBar, CStatusControlBar *)
 GAMECALL_MAIN(0x489D50, void, __thiscall, StatusControlBar_UpdateStatusBar, CStatusControlBar *, int, char *, int, COLORREF)
-GAMECALL_MAIN(0x48A810, DWORD, __cdecl, MovieCheck, char *sMovStr)
 
 
 // MFC function pointers. Use with care.
@@ -1540,6 +1539,7 @@ GAMECALL_MAIN(0x4A83B8, LONG, __thiscall, File_Seek, CMFC3XFile *, LONG, UINT)
 GAMECALL_MAIN(0x4A8448, void, __thiscall, File_Close, CMFC3XFile *)
 GAMECALL_MAIN(0x4A854E, DWORD, __thiscall, File_GetLength, CMFC3XFile *)
 GAMECALL_MAIN(0x4AA573, void, __thiscall, WinApp_OnAppExit, CMFC3XWinApp *pThis)
+GAMECALL_MAIN(0x4A8A58, BOOL, __stdcall, File_GetStatusWithString, const char *, CMFC3XFileStatus *)
 GAMECALL_MAIN(0x4AB0D0, CMFC3XGdiObject *, __thiscall, DC_SelectObjectFont, CMFC3XDC *, CMFC3XFont *pFont)
 GAMECALL_MAIN(0x4AB1E2, COLORREF, __thiscall, DC_SetBkColor, CMFC3XDC *, COLORREF)
 GAMECALL_MAIN(0x4AB22F, int, __thiscall, DC_SetBkMode, CMFC3XDC *, int)
