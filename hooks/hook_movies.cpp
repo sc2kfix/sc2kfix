@@ -36,7 +36,7 @@ extern "C" BOOL __cdecl Hook_MovieOpen(char* sMovStr) {
 	void *pMovBuf;
 	BYTE iRev;
 	MSG Msg;
-	BOOL bBreakout;
+	BOOL bLoaded, bBreakout;
 
 	if (sMovStr && strncmp(sMovStr, "INTRO", 5) == 0)
 		if (bSkipIntro || bSettingsAlwaysSkipIntro)
@@ -52,8 +52,10 @@ extern "C" BOOL __cdecl Hook_MovieOpen(char* sMovStr) {
 	if (mov_debug & MOVIE_DEBUG_CALLS)
 		ConsoleLog(LOG_DEBUG, "0x%06X -> MovieOpen(%s): [%s]\n", _ReturnAddress(), sMovStr, movStr.m_pchData);
 
+	bLoaded = FALSE;
 	smkOpenRet = (DWORD *)GameMain_SmackOpen(movStr.m_pchData, 0xFE000, -1);
 	if (smkOpenRet) {
+		bLoaded = TRUE;
 		hWndMovieCap = SetCapture(hWndMovie);
 		nWidth = smkOpenRet[1];
 		nHeight = smkOpenRet[2];
@@ -89,13 +91,10 @@ extern "C" BOOL __cdecl Hook_MovieOpen(char* sMovStr) {
 		if (hWndMovieCap)
 			SetCapture(hWndMovieCap);
 		smkBufOpenRet = 0;
-		GameMain_String_Dest(&movStr);
-		return MovieWndExit;
 	}
-	else {
-		GameMain_String_Dest(&movStr);
-		return FALSE;
-	}
+
+	GameMain_String_Dest(&movStr);
+	return (bLoaded) ? MovieWndExit : FALSE;
 }
 
 extern "C" BOOL __cdecl Hook_MovieCheck(char* sMovStr) {
