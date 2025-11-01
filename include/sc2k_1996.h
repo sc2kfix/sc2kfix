@@ -1959,6 +1959,10 @@ static inline BOOL IsEven(__int16 iAxis) {
 
 //HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...);
 
+static inline BYTE GetRubbleTileID() {
+	return (rand() & 3) + 1;
+}
+
 static inline WORD GetTileArea(WORD iTileArea) {
 	if (iTileArea < AREA_1x1)
 		iTileArea = AREA_1x1;

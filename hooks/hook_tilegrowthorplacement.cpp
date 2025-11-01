@@ -480,7 +480,7 @@ static void DoUpdateMicrosimGrowthTick(__int16 iX, __int16 iY, BYTE iCurrentTile
 	}
 }
 
-static BOOL DoBudgetRoadCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID, BYTE iRubbleTileID) {
+static BOOL DoBudgetRoadCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID) {
 	signed __int16 iFundingPercent;
 
 	if (iCurrentTileID >= TILE_ROAD_LR && iCurrentTileID < TILE_RAIL_LR ||
@@ -491,7 +491,7 @@ static BOOL DoBudgetRoadCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID, BYTE 
 		// Transportation budget, roads - if below 100% related tiles will be replaced with rubble.
 		iFundingPercent = pBudgetArr[BUDGET_ROAD].iFundingPercent;
 		if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
-			Game_PlaceTileWithMilitaryCheck(iX, iY, iRubbleTileID);
+			Game_PlaceTileWithMilitaryCheck(iX, iY, GetRubbleTileID());
 			XBITClearBits(iX, iY, XBIT_POWERABLE);
 			DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
 		}
@@ -500,7 +500,7 @@ static BOOL DoBudgetRoadCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID, BYTE 
 	return FALSE;
 }
 
-static BOOL DoBudgetRailCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID, BYTE iRubbleTileID) {
+static BOOL DoBudgetRailCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID) {
 	signed __int16 iFundingPercent;
 
 	if (iCurrentTileID >= TILE_RAIL_LR && iCurrentTileID < TILE_TUNNEL_T ||
@@ -511,7 +511,7 @@ static BOOL DoBudgetRailCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID, BYTE 
 		// Transportation budget, rails - if below 100% related tiles will be replaced with rubble.
 		iFundingPercent = pBudgetArr[BUDGET_RAIL].iFundingPercent;
 		if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
-			Game_PlaceTileWithMilitaryCheck(iX, iY, iRubbleTileID);
+			Game_PlaceTileWithMilitaryCheck(iX, iY, GetRubbleTileID());
 			XBITClearBits(iX, iY, XBIT_POWERABLE);
 			DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
 		}
@@ -520,7 +520,7 @@ static BOOL DoBudgetRailCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID, BYTE 
 	return FALSE;
 }
 
-static BOOL DoBudgetBridgeCheck(CSimcityView *pSCView, __int16 iX, __int16 iY, BYTE iCurrentTileID, BYTE iRubbleTileID) {
+static BOOL DoBudgetBridgeCheck(CSimcityView *pSCView, __int16 iX, __int16 iY, BYTE iCurrentTileID) {
 	signed __int16 iFundingPercent;
 
 	if (iCurrentTileID >= TILE_SUSPENSION_BRIDGE_START_B && iCurrentTileID < TILE_ONRAMP_TL ||
@@ -540,7 +540,7 @@ static BOOL DoBudgetBridgeCheck(CSimcityView *pSCView, __int16 iX, __int16 iY, B
 	return FALSE;
 }
 
-static BOOL DoBudgetHighwayCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID, BYTE iRubbleTileID) {
+static BOOL DoBudgetHighwayCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID) {
 	__int16 iNextX;
 	__int16 iNextY;
 	signed __int16 iFundingPercent;
@@ -560,22 +560,22 @@ static BOOL DoBudgetHighwayCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID, BY
 					if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE && XBITReturnIsWater(iX, iY))
 						Game_PlaceTileWithMilitaryCheck(iX, iY, 0);
 					else
-						Game_PlaceTileWithMilitaryCheck(iX, iY, iRubbleTileID);
+						Game_PlaceTileWithMilitaryCheck(iX, iY, GetRubbleTileID());
 
 					if (iNextX >= 0 && iNextX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE &&  XBITReturnIsWater(iNextX, iY))
 						Game_PlaceTileWithMilitaryCheck(iNextX, iY, 0);
 					else
-						Game_PlaceTileWithMilitaryCheck(iNextX, iY, iRubbleTileID);
+						Game_PlaceTileWithMilitaryCheck(iNextX, iY, GetRubbleTileID());
 
 					if (iX < GAME_MAP_SIZE && iNextY >= 0 && iNextY < GAME_MAP_SIZE && XBITReturnIsWater(iX, iNextY))
 						Game_PlaceTileWithMilitaryCheck(iX, iNextY, 0);
 					else
-						Game_PlaceTileWithMilitaryCheck(iX, iNextY, iRubbleTileID);
+						Game_PlaceTileWithMilitaryCheck(iX, iNextY, GetRubbleTileID());
 
 					if (iNextX < GAME_MAP_SIZE && iNextY < GAME_MAP_SIZE && XBITReturnIsWater(iNextX, iNextY))
 						Game_PlaceTileWithMilitaryCheck(iNextX, iNextY, 0);
 					else
-						Game_PlaceTileWithMilitaryCheck(iNextX, iNextY, iRubbleTileID);
+						Game_PlaceTileWithMilitaryCheck(iNextX, iNextY, GetRubbleTileID());
 
 					DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
 				}
@@ -586,7 +586,7 @@ static BOOL DoBudgetHighwayCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID, BY
 	return FALSE;
 }
 
-static BOOL DoBudgetTunnelCheck(CSimcityView *pSCView, __int16 iX, __int16 iY, BYTE iCurrentTileID, BYTE iRubbleTileID) {
+static BOOL DoBudgetTunnelCheck(CSimcityView *pSCView, __int16 iX, __int16 iY, BYTE iCurrentTileID) {
 	signed __int16 iFundingPercent;
 
 	if (iCurrentTileID >= TILE_TUNNEL_T && iCurrentTileID <= TILE_TUNNEL_L) {
@@ -603,20 +603,17 @@ static BOOL DoBudgetTunnelCheck(CSimcityView *pSCView, __int16 iX, __int16 iY, B
 }
 
 static void DoBudgetOvergroundTransportCheck(CSimcityView *pSCView, __int16 iX, __int16 iY, BYTE iCurrentTileID) {
-	BYTE iRubbleTileID;
-
-	iRubbleTileID = (rand() & 3) + 1;
 	if (iCurrentTileID >= TILE_ROAD_LR) {
 		if (!Game_RandomWordLFSRMod128()) {
-			if (DoBudgetRoadCheck(iX, iY, iCurrentTileID, iRubbleTileID))
+			if (DoBudgetRoadCheck(iX, iY, iCurrentTileID))
 				return;
-			else if (DoBudgetRailCheck(iX, iY, iCurrentTileID, iRubbleTileID))
+			else if (DoBudgetRailCheck(iX, iY, iCurrentTileID))
 				return;
-			else if (DoBudgetBridgeCheck(pSCView, iX, iY, iCurrentTileID, iRubbleTileID))
+			else if (DoBudgetBridgeCheck(pSCView, iX, iY, iCurrentTileID))
 				return;
-			else if (DoBudgetHighwayCheck(iX, iY, iCurrentTileID, iRubbleTileID))
+			else if (DoBudgetHighwayCheck(iX, iY, iCurrentTileID))
 				return;
-			else if (DoBudgetTunnelCheck(pSCView, iX, iY, iCurrentTileID, iRubbleTileID))
+			else if (DoBudgetTunnelCheck(pSCView, iX, iY, iCurrentTileID))
 				return;
 		}
 		else
