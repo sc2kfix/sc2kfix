@@ -1389,7 +1389,7 @@ GAMECALL(0x401AF0, int, __cdecl, MaybeCheckViablePlacementPath, __int16 x1, __in
 GAMECALL(0x401B40, int, __cdecl, IsZonedTilePowered, __int16 x, __int16 y)
 GAMECALL(0x401BE5, void, __thiscall, Graphics_UnlockDIBBits, CGraphics *)
 GAMECALL(0x401C0D, void, __thiscall, SimcityView_DebugGrantAllGifts, CSimcityView*)
-GAMECALL(0x401C99, void, __cdecl, OpDelete, void *)
+GAMECALL(0x401C99, void, __cdecl, FreeDataEntry, void *)
 GAMECALL(0x401CA8, void, __stdcall, SimulationUpdateWaterConsumption, void)
 GAMECALL(0x401CCB, int, __stdcall, ResetTileDirection, void)
 GAMECALL(0x401D16, __int16, __cdecl, GetTileCoordsFromScreenCoords, __int16 x, __int16 y)

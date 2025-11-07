@@ -72,11 +72,11 @@ static void AllocateAndLoadSprites1996(CMFC3XFile *pFile, sprite_archive_t *lpBu
 						if (pSprEnt->bMultiple && pSprEnt->nSkipHit > 0) {
 							if (sprite_debug & SPRITE_DEBUG_SPRITES)
 								ConsoleLog(LOG_DEBUG, "AllocateAndLoadSprites(%u): discarding skipped sprite with ID (%u, 0x%06X, %u).\n", nSpriteSet, nID, pSprEnt->dwOffset, pSprEnt->dwSize);
-							Game_OpDelete(pSpriteData);
+							Game_FreeDataEntry(pSpriteData);
 							continue;
 						}
 						if (pArrSpriteHeaders[nID].dwAddress) {
-							Game_OpDelete((void *)pArrSpriteHeaders[nID].dwAddress);
+							Game_FreeDataEntry((void *)pArrSpriteHeaders[nID].dwAddress);
 							pArrSpriteHeaders[nID].dwAddress = 0;
 						}
 						pArrSpriteHeaders[nID].dwAddress = (DWORD)pSpriteData;
@@ -202,7 +202,7 @@ GETOUT:
 static void ResetCustomTileNames() {
 	for (int i = 0; i < CUSTOM_TILENAME_MAXNUM; ++i) {
 		if (pTileNames[i])
-			Game_OpDelete(pTileNames[i]);
+			Game_FreeDataEntry(pTileNames[i]);
 		pTileNames[i] = 0;
 	}
 }
