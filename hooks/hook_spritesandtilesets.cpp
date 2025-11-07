@@ -31,6 +31,8 @@ UINT sprite_debug = SPRITE_DEBUG;
 
 static DWORD dwDummy; 
 
+#define CUSTOM_TILENAME_MAXNUM 500
+
 std::vector<sprite_ids_t> spriteIDs;
 
 static BOOL CheckForExistingID(WORD nID) {
@@ -197,6 +199,14 @@ GETOUT:
 	GameMain_File_Dest(&datArchive);
 }
 
+static void ResetCustomTileNames() {
+	for (int i = 0; i < CUSTOM_TILENAME_MAXNUM; ++i) {
+		if (pTileNames[i])
+			Game_OpDelete(pTileNames[i]);
+		pTileNames[i] = 0;
+	}
+}
+
 static void ReloadSpriteDataArchive1996(WORD nSpriteSet) {
 	CMFC3XFile datArchive;
 	CMFC3XString retString;
@@ -285,6 +295,7 @@ void ReloadDefaultTileSet_SC2K1996() {
 		return;
 
 	GameMain_CmdTarget_BeginWaitCursor(pSCApp);
+	ResetCustomTileNames();
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_SPECIAL);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_LARGE);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_SMALLMED);

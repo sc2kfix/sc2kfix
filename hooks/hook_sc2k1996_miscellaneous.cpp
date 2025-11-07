@@ -194,6 +194,10 @@ extern "C" HMENU __stdcall Hook_LoadMenuA(HINSTANCE hInstance, LPCSTR lpMenuName
 }
 #pragma warning(default : 6387)
 
+extern "C" int __stdcall Hook_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
+	return L_MessageBoxA(hWnd, lpText, lpCaption, uType);
+}
+
 extern "C" BOOL __stdcall Hook_ShowWindow(HWND hWnd, int nCmdShow) {
 	if (mischook_debug & MISCHOOK_DEBUG_WINDOW)
 		ConsoleLog(LOG_DEBUG, "WND:  0x%08X -> ShowWindow(0x%08X, %i)\n", _ReturnAddress(), hWnd, nCmdShow);
@@ -206,41 +210,18 @@ extern "C" BOOL __stdcall Hook_ShowWindow(HWND hWnd, int nCmdShow) {
 }
 
 int L_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
+	HWND MBhWnd;
 	int ret;
 
+	// This has been added so if a '0' parameter was passed for hWnd it'll
+	// be set for the active window, otherwise the message box could end up
+	// behind the window and re-focusing would become a bit of a pain.
+	MBhWnd = (hWnd) ? hWnd : GetActiveWindow();
+	
 	ToggleFloatingStatusDialog(FALSE);
-	ret = MessageBoxA(hWnd, lpText, lpCaption, uType);
+	ret = MessageBoxA(MBhWnd, lpText, lpCaption, uType);
 	ToggleFloatingStatusDialog(TRUE);
 
-	return ret;
-}
-
-int __stdcall Hook_AfxMessageBoxStr(LPCTSTR lpszPrompt, UINT nType, UINT nIDHelp) {
-	int ret;
-
-	ToggleFloatingStatusDialog(FALSE);
-	ret = GameMain_WinApp_DoMessageBox(game_AfxCoreState.m_pCurrentWinApp, lpszPrompt, nType, nIDHelp);
-	ToggleFloatingStatusDialog(TRUE);
-
-	return ret;
-}
-
-int __stdcall Hook_AfxMessageBoxID(UINT nIDPrompt, UINT nType, UINT nIDHelp) {
-	CMFC3XString cStr;
-	UINT nID;
-	int ret;
-
-	GameMain_String_Cons(&cStr);
-	GameMain_String_LoadStringA(&cStr, nIDPrompt);
-	nID = nIDHelp;
-	if (nIDHelp == -1)
-		nID = nIDPrompt;
-
-	ToggleFloatingStatusDialog(FALSE);
-	ret = GameMain_WinApp_DoMessageBox(game_AfxCoreState.m_pCurrentWinApp, cStr.m_pchData, nType, nIDHelp);
-	ToggleFloatingStatusDialog(TRUE);
-
-	GameMain_String_Dest(&cStr);
 	return ret;
 }
 
@@ -1661,6 +1642,7 @@ void InstallMiscHooks_SC2K1996(void) {
 	// Install critical Windows API hooks
 	*(DWORD*)(0x4EFBE8) = (DWORD)Hook_LoadStringA;
 	*(DWORD*)(0x4EFDCC) = (DWORD)Hook_LoadMenuA;
+	*(DWORD*)(0x4EFDE4) = (DWORD)Hook_MessageBoxA;
 	*(DWORD*)(0x4EFC64) = (DWORD)Hook_DialogBoxParamA;
 	*(DWORD*)(0x4EFE70) = (DWORD)Hook_ShowWindow;
 	*(DWORD*)(0x4EFCE8) = (DWORD)Hook_DefWindowProcA;
@@ -1670,12 +1652,6 @@ void InstallMiscHooks_SC2K1996(void) {
 
 	// Install Movie hooks
 	InstallMovieHooks();
-
-	// Hook into both AfxMessageBox functions
-	VirtualProtect((LPVOID)0x4B232F, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4B232F, Hook_AfxMessageBoxStr);
-	VirtualProtect((LPVOID)0x4B234F, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4B234F, Hook_AfxMessageBoxID);
 
 	// Hook into the CFileDialog::DoModal function
 	VirtualProtect((LPVOID)0x49FE18, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
