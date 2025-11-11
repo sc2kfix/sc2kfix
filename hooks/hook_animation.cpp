@@ -147,17 +147,11 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2KDemo(CMFC3XPalette *pPalette
 	int iProgramStep;
 	BOOL bCityViewAnim;
 
-	CSimcityAppDemo &pCSimcityAppThisDemo = *(CSimcityAppDemo *)0x4B6A70;
-	BOOL &bLoColorDemo = *(BOOL *)0x4D1EDC;
+	GameMain_ToggleColorCycling_Demo(pPalette, bToggle);
 
-	CSimcityView *(__thiscall *H_SimcityApp_PointerToCSimcityViewClassDemo)(CSimcityAppDemo *) = (CSimcityView *(__thiscall *)(CSimcityAppDemo *))0x402725;
-	void(__cdecl *H_ToggleColorCyclingDemo)(CMFC3XPalette *, BOOL) = (void(__cdecl *)(CMFC3XPalette *, BOOL))0x44890F;
-
-	H_ToggleColorCyclingDemo(pPalette, bToggle);
-
-	pApp = &pCSimcityAppThisDemo;
+	pApp = &pCSimcityAppThis_Demo;
 	if (pApp) {
-		if (!bLoColorDemo) {
+		if (!bLoColor_Demo) {
 			pMainFrm = (CMainFrame *)pApp->m_pMainWnd; // m_pMainWnd
 			wSimSpeed = pApp->wSCAGameSpeedLOW;
 			dwTitleScreenAnimation = pApp->dwSCAToggleTitleScreenAnimation;
@@ -186,7 +180,7 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2KDemo(CMFC3XPalette *pPalette
 					// CMainFrame m_hWnd - only call this specific redraw function before CSimcityView has been created.
 					// (ie, before any game has been started - palette animation on the image is disabled once the
 					// game window has been created)
-					pSCView = H_SimcityApp_PointerToCSimcityViewClassDemo(pApp);
+					pSCView = Game_SimcityApp_PointerToCSimcityViewClass_Demo(pApp);
 					if (!pSCView)
 						RedrawWindow(pMainFrm->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 					else if (pSCView && bCityViewAnim)

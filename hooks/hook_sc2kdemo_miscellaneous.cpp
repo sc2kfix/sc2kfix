@@ -20,16 +20,14 @@
 
 static DWORD dwDummy;
 
-extern "C" CSimcityAppDemo *__stdcall Hook_Demo_SimcityAppConstruct() {
+extern "C" CSimcityAppDemo *__stdcall Hook_Demo_SimcityApp_Construct() {
 	CSimcityAppDemo *pThis;
 
 	__asm mov[pThis], ecx
 
-	CSimcityAppDemo *(__thiscall *H_Demo_SimcityAppConstruct)(void *) = (CSimcityAppDemo *(__thiscall *)(void *))0x475B4C;
-
 	CSimcityAppDemo *ret;
 
-	ret = H_Demo_SimcityAppConstruct(pThis);
+	ret = GameMain_SimcityApp_Cons_Demo(pThis);
 	ret->iSCAProgramStep = 1;
 
 	return ret;
@@ -49,7 +47,7 @@ void InstallMiscHooks_SC2KDemo(void) {
 
 	// Fix the Maxis Presents logo not being shown
 	VirtualProtect((LPVOID)0x402A1D, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x402A1D, Hook_Demo_SimcityAppConstruct);
+	NEWJMP((LPVOID)0x402A1D, Hook_Demo_SimcityApp_Construct);
 	VirtualProtect((LPVOID)0x4D2984, 13, PAGE_EXECUTE_READWRITE, &dwDummy);
 	memset((LPVOID)0x4D2984, 0, 13);
 	memcpy_s((LPVOID)0x4D2984, 13, "presnts.bmp", 13);
