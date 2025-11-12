@@ -338,6 +338,8 @@ BOOL MusicLoadFluidSynth(void);
 void DoMusicPlay(int iSongID, BOOL bInterrupt);
 BOOL DoConfigureMusicTracks(settings_t *st, HWND hDlg, BOOL bMP3);
 
+BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc);
+
 BOOL WINAPI ConsoleCtrlHandler(DWORD fdwCtrlType);
 DWORD WINAPI ConsoleThread(LPVOID lpParameter);
 BOOL ConsoleEvaluateCommand(const char* szCommandLine, BOOL bInteractive);
