@@ -350,6 +350,12 @@ public:
 	BOOL m_bPrinting;
 };
 
+class CMFC3XPaintDC : public CMFC3XDC{
+public:
+	HWND m_hWnd;
+	PAINTSTRUCT m_ps;
+};
+
 class CMFC3XMenu : public CMFC3XObject {
 public:
 	HMENU m_hMenu;
@@ -557,6 +563,10 @@ public:
 };
 
 class CMFC3XStatic : public CMFC3XWnd {
+
+};
+
+class CMFC3XEdit : public CMFC3XWnd {
 
 };
 

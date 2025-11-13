@@ -28,20 +28,180 @@ typedef struct {
 	WORD iTileY;
 } query_coords_info;
 
+static CGraphics *pQueriedTileImage = NULL;
+static int nSpriteID = -1;
+
+static int GetQueriedSpriteIDFromCoords(WORD x, WORD y) {
+	__int16 iTileID, iTextOverlay;
+	int iSpriteID = -1;
+	
+	iTileID = GetTileID(x, y);
+	if (!iTileID) {
+		iTileID = GetTerrainTileID(x, y);
+		iTileID = wXTERToSpriteIDMap[iTileID];
+	}
+	else {
+		if (iTileID >= TILE_ARCOLOGY_PLYMOUTH) {
+			// Positioning falls into the "special" range.
+			iSpriteID = iTileID + 500;
+		}
+	}	
+
+	if (iSpriteID < 0) {
+		// Positioning falls into the "large" range.
+		iSpriteID = iTileID + 1000;
+	}
+
+	iTextOverlay = XTXTGetTextOverlayID(x, y);
+	if (iTextOverlay) {
+		if (iTextOverlay >= 201 &&
+			iTextOverlay < 241 &&
+			XTHGGetType(iTextOverlay - 201) == XTHG_SAILBOAT)
+			iSpriteID = 1380;
+	}
+
+	return iSpriteID;
+}
+
+static BYTE GetPertinentRsrcIDOffset(WORD x, WORD y) {
+	BYTE iRsrcOffset, iTextOverlay;
+
+	// Initially iRsrcOffset is the XBLD TileID.
+	// Based on the initial building (or not) it will
+	// then calculate the Resource ID offset that is
+	// then passed passed to LoadNamedEntryFromRsrcOffset().
+
+	iRsrcOffset = GetTileID(x, y);
+	if (iRsrcOffset >= TILE_COMMERCIAL_1X1_GASSTATION1)
+		iRsrcOffset -= 102;
+	else {
+		BOOL bNoUpdate = FALSE;
+		BYTE nInfraTile = 0;
+		while (bInfraTile[nInfraTile] <= iRsrcOffset) {
+			if (++nInfraTile >= 22) {
+				bNoUpdate = TRUE;
+				break;
+			}
+		}
+		if (!bNoUpdate)
+			iRsrcOffset = nInfraTile;
+	}
+
+	if (!iRsrcOffset) {
+		iRsrcOffset = 158;
+		if (x < GAME_MAP_SIZE &&
+			y < GAME_MAP_SIZE &&
+			XBITReturnIsWater(x, y)) {
+			iRsrcOffset = 160;
+			if (!XBITReturnIsSaltWater(x, y))
+				iRsrcOffset = 159;
+			iTextOverlay = XTXTGetTextOverlayID(x, y);
+			if (iTextOverlay) {
+				if (iTextOverlay >= 201 &&
+					iTextOverlay < 241 &&
+					XTHGGetType(iTextOverlay - 201) == XTHG_SAILBOAT)
+					iRsrcOffset = 161;
+			}
+		}	
+	}
+	return iRsrcOffset;
+}
+
+static BOOL __cdecl L_BeingProcessObjectOnHwnd(HWND hWnd, void *vBits, int x, int y, RECT *r) {
+	CMFC3XRect clRect;
+
+	GetClientRect(hWnd, &clRect);
+	if (IsRectEmpty(r))
+		currWndClientRect = clRect;
+	else if (!IntersectRect(&currWndClientRect, r, &clRect))
+		return FALSE;
+	if (currWndClientRect.top > 1)
+		--currWndClientRect.top;
+	Game_SetSpriteForDrawing(vBits, pArrSpriteHeaders, x, (__int16)y, &currWndClientRect);
+	return TRUE;
+}
+
 BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	query_coords_info *qci;
 	WORD iTileX, iTileY;
 	std::string strTileHeader;
 	std::string strTileInfo;
-	BYTE iTileID;
+	BYTE iTextOverlay, iRsrcOffset, iTileID;
+	CMFC3XRect dlgRect, sprRect;
+	void *pSprBits;
+	CMFC3XDC *pDC;
+	PAINTSTRUCT ps;
+	sprite_header_t *pSprHead;
+	CMFC3XPoint sprPt;
+	const char *pSrc;
+	char szBuf[80 + 1];
+	int x, y;
 
 	switch (message) {
 	case WM_INITDIALOG:
 		SetWindowLong(hwndDlg, GWL_USERDATA, lParam);
 		qci = (query_coords_info *)lParam;
 
+		GetWindowRect(hwndDlg, &dlgRect);
+		ScreenToClient(hwndDlg, (LPPOINT)&dlgRect);
+		ScreenToClient(hwndDlg, (LPPOINT)&dlgRect.right);
+
 		iTileX = qci->iTileX;
 		iTileY = qci->iTileY;
+
+		iTextOverlay = XTXTGetTextOverlayID(iTileX, iTileY);
+		if (iTextOverlay == 111)
+			Game_RecalculateMayorsHouseStats();
+
+		memset(szBuf, 0, sizeof(szBuf));
+
+		nSpriteID = GetQueriedSpriteIDFromCoords(iTileX, iTileY);
+		if (nSpriteID >= 0) {
+			iRsrcOffset = GetPertinentRsrcIDOffset(iTileX, iTileY);
+			pSrc = pCustomTileNamesFromSpriteID[nSpriteID];
+			if (pSrc)
+				strcpy_s(szBuf, sizeof(szBuf) - 1, pSrc);
+			else
+				Game_LoadNamedEntryFromRsrcOffset(szBuf, 2000, iRsrcOffset);
+			pSprHead = &pArrSpriteHeaders[nSpriteID];
+			if (pSprHead) {
+				sprPt.x = (pSprHead->wWidth + 7) & ~7;
+				sprPt.y = (pSprHead->wHeight + 8) & ~7;
+
+				pQueriedTileImage = new CGraphics();
+				if (pQueriedTileImage) {
+					pQueriedTileImage = Game_Graphics_Cons(pQueriedTileImage);
+					if (pQueriedTileImage) {
+
+						sprRect.left = 0;
+						sprRect.top = 0;
+						sprRect.right = sprPt.x;
+						sprRect.bottom = sprPt.y;
+
+						Game_Graphics_CreateWithPalette(pQueriedTileImage, sprPt.x, sprPt.y);
+						pSprBits = Game_Graphics_LockDIBBits(pQueriedTileImage);
+						pDC = Game_Graphics_GetDC(pQueriedTileImage);
+
+						FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
+						Game_Graphics_ReleaseDC(pQueriedTileImage, pDC);
+						L_BeingProcessObjectOnHwnd(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
+						Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
+						Game_FinishProcessObjects();
+						Game_Graphics_UnlockDIBBits(pQueriedTileImage);
+					}
+				}
+			}
+		}
+
+		if (iTextOverlay >= MAX_USER_TEXT_ENTRIES) {
+			iTileID = GetMicroSimulatorTileID(iTextOverlay - MAX_USER_TEXT_ENTRIES);
+			if (iTileID) {
+				pSrc = GetXLABEntry(iTextOverlay);
+				if (pSrc)
+					strcpy_s(szBuf, sizeof(szBuf) - 1, pSrc);
+			}
+		}
+
 		// Build the header string
 		iTileID = GetTileID(iTileX, iTileY);
 		if (iTileID == TILE_CLEAR) {
@@ -51,12 +211,23 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 				strTileHeader = "Fresh water";
 		} else
 			strTileHeader = szTileNames[iTileID];
-		
+
 		strTileHeader += "  (iTileID ";
 		strTileHeader += std::to_string(iTileID);
 		strTileHeader += " / ";
 		strTileHeader += HexPls(iTileID, 2);
-		strTileHeader += ")\nCoordinates:   X=";
+		strTileHeader += " )\n";
+
+		if (szBuf[0] != 0) {
+			strTileHeader += szBuf;
+			strTileHeader += "  ";
+		}
+			
+		strTileHeader += "(nSpriteID ";
+		strTileHeader += std::to_string(nSpriteID);
+		strTileHeader += " / ";
+		strTileHeader += HexPls(nSpriteID, 4);
+		strTileHeader += " )\nCoordinates:   X=";
 		strTileHeader += std::to_string(iTileX);
 		strTileHeader += "  Y=";
 		strTileHeader += std::to_string(iTileY);
@@ -209,6 +380,26 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		CenterDialogBox(hwndDlg);
 		return TRUE;
 
+	case WM_PAINT:
+		BeginPaint(hwndDlg, &ps);
+		GetClientRect(hwndDlg, &dlgRect);
+
+		if (nSpriteID >= 0) {
+			pSprHead = &pArrSpriteHeaders[nSpriteID];
+			if (pSprHead) {
+				x = dlgRect.right - pSprHead->wWidth - 20;
+				y = (dlgRect.bottom - pSprHead->wHeight) / 2;
+
+				if (pQueriedTileImage) {
+					Game_Graphics_SetColorTableFromApplicationPalette(pQueriedTileImage);
+					Game_Graphics_Paint(pQueriedTileImage, ps.hdc, x, y);
+				}
+			}
+		}
+
+		EndPaint(hwndDlg, &ps);
+		return FALSE;
+
 	case WM_COMMAND:
 		switch (GET_WM_COMMAND_ID(wParam, lParam)) {
 		case IDOK:
@@ -218,6 +409,15 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 			EndDialog(hwndDlg, 0);
 			return TRUE;
 		}
+
+	case WM_DESTROY:
+		if (pQueriedTileImage) {
+			Game_Graphics_DeleteStored(pQueriedTileImage);
+			delete pQueriedTileImage;
+			pQueriedTileImage = NULL;
+		}
+		nSpriteID = -1;
+		break;
 	}
 	return FALSE;
 }
