@@ -273,4 +273,14 @@ void InstallQueryHooks_SC2K1996(void) {
 	*(BYTE*)0x428FB1 = 0x83;
 	*(BYTE*)0x428FB2 = 0xE8;
 	*(BYTE*)0x428FB3 = 0x32;
+
+	// Patch the maximum so it's reduced from GAME_MAP_SIZE to GAME_MAP_SIZE - 1
+	// otherwise a failure was occurring as it was attempting to fetch the XTRF
+	// values which halted all subsequent painting.
+	// Even though this issue only cropped up when the X coordinate was 127
+	// it has been adjusted for both X and Y cases.
+	VirtualProtect((LPVOID)0x4284F3, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(BYTE*)0x4284F3 = GAME_MAP_SIZE - 1;
+	VirtualProtect((LPVOID)0x42851D, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(BYTE*)0x42851D = GAME_MAP_SIZE - 1;
 }
