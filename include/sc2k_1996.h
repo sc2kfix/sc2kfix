@@ -1955,7 +1955,7 @@ static inline CMFC3XPalette *GameGetPalette(void) {
 	if (pCSimcityAppThis.dwSCAbForceBkgd)
 		pPalette = pCSimcityAppThis.dwSCAMainPaletteFore;
 	else
-		pPalette = pCSimcityAppThis.dwSCAMainPaletteFore;
+		pPalette = pCSimcityAppThis.dwSCAMainPaletteBkgd;
 
 	// ...and this is what CDC::SelectPalette does.
 	return pPalette;
