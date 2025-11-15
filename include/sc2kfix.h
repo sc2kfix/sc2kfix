@@ -16,7 +16,6 @@
 
 #include <mfc3xhelp.h>
 #include <sc2kclasses.h>
-#include <smk.h>
 #include <sc2k_1996.h>
 #include <sc2k_demo.h>
 #include <music.h>
@@ -64,22 +63,6 @@ template <typename T> std::string to_string_precision(const T value, const int p
 
 #define countof(x) (sizeof(x)/sizeof(*(x)))
 #define lengthof(s) (countof(s)-1)
-
-// The nearest equivalent of LOWORD() from IDA.
-#define P_LAST_IND(x,part_type)    (sizeof(x)/sizeof(part_type) - 1)
-#if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN
-#  define P_LOW_IND(x,part_type)   P_LAST_IND(x,part_type)
-#  define P_HIGH_IND(x,part_type)  0
-#else
-#  define P_HIGH_IND(x,part_type)  P_LAST_IND(x,part_type)
-#  define P_LOW_IND(x,part_type)   0
-#endif
-#define P_BYTEn(x, n) (*((BYTE*)&(x)+n))
-#define P_LOBYTE(x) P_BYTEn(x,P_LOW_IND(x,BYTE))
-#define P_LOWORD(x) (*((uint16_t*)&(x)))
-#define P_HIWORD(x) (*((uint16_t*)&(x)+1))
-// Signed
-#define P_SHIWORD(x) (*((int16_t*)&(x)+1))
 
 #define IFF_HEAD(a, b, c, d) ((DWORD)d << 24 | (DWORD)c << 16 | (DWORD)b << 8 | (DWORD)a)
 #define DWORD_NTOHL_CHECK(x) (bBigEndian ? ntohl(x) : x)
@@ -302,7 +285,6 @@ extern int iForcedBits;
 // Path adjustment (from registry_pathing area)
 
 BOOL L_IsPathValid(const char *pStr);
-const char *AdjustSource(char *buf, const char *path);
 
 // Utility functions
 
@@ -355,6 +337,8 @@ int GetCurrentActiveSongID();
 BOOL MusicLoadFluidSynth(void);
 void DoMusicPlay(int iSongID, BOOL bInterrupt);
 BOOL DoConfigureMusicTracks(settings_t *st, HWND hDlg, BOOL bMP3);
+
+BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc);
 
 BOOL WINAPI ConsoleCtrlHandler(DWORD fdwCtrlType);
 DWORD WINAPI ConsoleThread(LPVOID lpParameter);
@@ -476,6 +460,9 @@ void InstallRegistryPathingHooks_SC2K1995(void);
 void InstallRegistryPathingHooks_SC2KDemo(void);
 void InstallRegistryPathingHooks_SCURK1996(void);
 
+// Movie hook
+void InstallMovieHooks(void);
+
 // Debugging settings
 
 extern UINT guzzardo_debug;
@@ -483,6 +470,7 @@ extern UINT mci_debug;
 extern UINT military_debug;
 extern UINT mischook_debug;
 extern UINT modloader_debug;
+extern UINT mov_debug;
 extern UINT mus_debug;
 extern UINT registry_debug;
 extern UINT sc2x_debug;

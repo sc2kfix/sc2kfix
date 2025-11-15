@@ -215,6 +215,8 @@ BOOL ConsoleCmdShowDebug(const char* szCommand, const char* szArguments) {
 		printf("MISC=0x%08X ", mischook_debug);
 	if (modloader_debug)
 		printf("MODS=0x%08X ", modloader_debug);
+	if (mov_debug)
+		printf("MOV=0x%08X ", mov_debug);
 	if (mus_debug)
 		printf("MUS=0x%08X ", mus_debug);
 	if (registry_debug)

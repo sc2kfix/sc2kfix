@@ -275,17 +275,15 @@ BEGIN
     CONTROL         "GoTo",IDC_BUTTON_GOTO,"Button",BS_OWNERDRAW | WS_TABSTOP,125,0,20,20
 END
 
-IDD_ADVANCEDQUERY DIALOGEX 0, 0, 306, 186
+IDD_ADVANCEDQUERY DIALOGEX 0, 0, 306, 204
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
-EXSTYLE WS_EX_TOPMOST
 FONT 10, "System", 700, 0, 0x0
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,128,168,50,14
-    CTEXT           "Industrial Thingamajig (iTileID 190 / 0xBE)\nCoordinates:   X=1  Y=109",IDC_STATIC_TILENAME,18,12,228,18
+    DEFPUSHBUTTON   "OK",IDOK,128,184,50,14
+    CTEXT           "Industrial Thingamajig (iTileID 190 / 0xBE)\n(nSpriteID 1307)\nCoordinates:   X=1  Y=109",IDC_STATIC_TILENAME,18,12,228,30
     CONTROL         "High-Density Industrial\n250 feet (ALTM: 0x1234)\n$65,000/acre\nLow\nMedium\n\nTop-left corner, iZoneID 6\n0xF1: powerable powered piped watered saltwater\n\nCrossover (PIPETB_SUBWAYLR) (XUND 31 / 0x1F)\nNone",IDC_STATIC_TILEDATA,
-                    "Static",SS_LEFTNOWORDWRAP | SS_NOPREFIX | WS_GROUP,54,36,174,126
-    RTEXT           "Zone:\nAltitude:\nLand Value:\nCrime:\nPollution:\n\nXZON:\nXBIT:\n\nUnderground:\niMicrosimID:\nData 0:\nData 1:\nData 2:\nData 3:",IDC_STATIC,0,36,48,126
-    CONTROL         "",IDC_STATIC_TILERENDER,"Static",SS_BITMAP | SS_REALSIZEIMAGE,230,30,64,120
+                    "Static",SS_LEFTNOWORDWRAP | SS_NOPREFIX | WS_GROUP,54,48,174,126
+    RTEXT           "Zone:\nAltitude:\nLand Value:\nCrime:\nPollution:\n\nXZON:\nXBIT:\n\nUnderground:\niMicrosimID:\nData 0:\nData 1:\nData 2:\nData 3:",IDC_STATIC,0,48,48,126
 END
 
 IDD_SCENARIOSTATUS DIALOGEX 0, 0, 275, 196
@@ -377,7 +375,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 299
         TOPMARGIN, 7
-        BOTTOMMARGIN, 179
+        BOTTOMMARGIN, 197
     END
 
     IDD_SCENARIOSTATUS, DIALOG

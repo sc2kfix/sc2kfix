@@ -138,9 +138,7 @@ static int IsValidGeneralPosPlacementMain(__int16 x, __int16 y, __int16 iFarX, _
 			// is suitable for placement.
 			bCanBeMarinaTile = FALSE;
 			if (iTileID == TILE_INFRASTRUCTURE_MARINA) {
-				if (iCurX < GAME_MAP_SIZE &&
-					iCurY < GAME_MAP_SIZE &&
-					XBITReturnIsWater(iCurX, iCurY)) {
+				if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE && XBITReturnIsWater(iCurX, iCurY)) {
 					++iMarinaWaterTileCount;
 					bCanBeMarinaTile = TRUE;
 				}
@@ -160,9 +158,7 @@ static int IsValidGeneralPosPlacementMain(__int16 x, __int16 y, __int16 iFarX, _
 						return 0;
 				}
 
-				if (iCurX < GAME_MAP_SIZE &&
-					iCurY < GAME_MAP_SIZE &&
-					XBITReturnIsWater(iCurX, iCurY))
+				if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE && XBITReturnIsWater(iCurX, iCurY))
 					return 0;
 			}
 		}
@@ -272,6 +268,419 @@ static int L_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iTileID, __int16 
 	}
 }
 
+static BOOL IsTileThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, unsigned uComparator, DWORD nDiv, DWORD nMult) {
+	WORD wTileIDCount;
+	DWORD nCount;
+
+	// Key:
+	//
+	// wTileIDCount: This is the returned number of 1x1 tiles covered by iTileID (the bMilitary flag when true
+	//               will get you the count of military-specific tiles for the target iTileID).
+	//
+	// nDiv: This factor you divide against dwTileIDCount in order to get the number of groups of dwTileIDCount.
+	//
+	// nMult: This factor you multiply against (wTileIDCount / nDiv) in order to get the expected
+	//                   multiplied returned count.
+	//
+	// uComparator: Specify whether you want to compare nCount against nTarget as greater than,
+	//              greater or equal, equal, less or equal, or less than.
+
+	wTileIDCount = GetFlaggedTileCount(iTileID, bMilitary);
+
+	if (nDiv < 1)
+		nDiv = 1;
+
+	if (nMult < 1)
+		nMult = 1;
+
+	nCount = (wTileIDCount / nDiv) * nMult;
+	if (uComparator == CMP_GREATERTHAN)
+		return (nCount > nTarget);
+	else if (uComparator == CMP_GREATEROREQUAL)
+		return (nCount >= nTarget);
+	else if (uComparator == CMP_EQUAL)
+		return (nCount == nTarget);
+	else if (uComparator == CMP_LESSOREQUAL)
+		return (nCount <= nTarget);
+	else
+		return (nCount < nTarget);
+}
+
+// Use case:
+//
+// IsTileMultipliedThresholdReached() - Use this one if you want N iTileIDs to be multiplied in order to get a higher expected count
+//                                      prior to comparing against the target.
+//
+// IsTileDividedThresholdReached() - Use this one if you want to divide the returned iTileID count (usually for grouping purposes)
+//                                   before then comparing against the target.
+//
+// IsTileNormalThresholdReached() - Use this one to check the direct iTileID count against the target.
+
+static BOOL IsTileMultipliedThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, unsigned uComparator, DWORD nMult) {
+	return IsTileThresholdReached(iTileID, nTarget, bMilitary, uComparator, 1, nMult);
+}
+
+static BOOL IsTileDividedThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, unsigned uComparator, DWORD nDiv) {
+	return IsTileThresholdReached(iTileID, nTarget, bMilitary, uComparator, nDiv, 1);
+}
+
+static BOOL IsTileNormalThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, unsigned uComparator) {
+	return IsTileThresholdReached(iTileID, nTarget, bMilitary, uComparator, 1, 1);
+}
+
+static void DoArmyBaseGrowth(__int16 iX, __int16 iY, __int16 iCurrZoneType) {
+	BYTE iFirstCheckedTileID, iSelectedTileID;
+	WORD wFlaggedTileCount;
+
+	if ((rand() & 3) == 0) {
+		wFlaggedTileCount = GetFlaggedTileCount(TILE_MILITARY_PARKINGLOT, TRUE) / GetTileArea(AREA_2x2);
+		iSelectedTileID = TILE_MILITARY_PARKINGLOT;
+		iFirstCheckedTileID = TILE_MILITARY_TOPSECRET;
+		if (IsTileDividedThresholdReached(iFirstCheckedTileID, wFlaggedTileCount, TRUE, CMP_LESSTHAN, GetTileArea(AREA_2x2))) {
+			iSelectedTileID = TILE_MILITARY_HANGAR1;
+			if (IsTileDividedThresholdReached(iSelectedTileID, wFlaggedTileCount, TRUE, CMP_GREATERTHAN, 8))
+				iSelectedTileID = iFirstCheckedTileID;
+		}
+		if (!Game_SimulationGrowSpecificZone(iX, iY, iSelectedTileID, iCurrZoneType))
+			Game_SimulationGrowSpecificZone(iX, iY, TILE_MILITARY_HANGAR1, iCurrZoneType);
+	}
+}
+
+static void DoAirPortGrowth(__int16 iX, __int16 iY, BYTE iCurrentTileID, __int16 iCurrZoneType) {
+	BOOL bMilitary, bAeroplaneLiftOff;
+	BYTE iFirstCheckedTileID, iSelectedTileID;
+	WORD wFlaggedTileCount;
+
+	bMilitary = (iCurrZoneType == ZONE_MILITARY) ? TRUE : FALSE;
+
+	if ((rand() & 3) != 0) {
+		// This section is for handling the spawning of aeroplanes and helicopters.
+		// Only executed for civilian airports.
+		if (!bMilitary) {
+			if (iCurrentTileID == TILE_INFRASTRUCTURE_RUNWAY && (rand() % 30) == 0) {
+				if (XBITReturnIsPowered(iX, iY)) {
+					if (rand() % 10 < 4) {
+						Game_SpawnHelicopter(iX, iY);
+						return;
+					}
+					bAeroplaneLiftOff = FALSE;
+					if (!IsEven(wViewRotation)) {
+						if (XBITReturnIsFlipped(iX, iY))
+							bAeroplaneLiftOff = TRUE;
+					}
+					else {
+						if (!XBITReturnIsFlipped(iX, iY))
+							bAeroplaneLiftOff = TRUE;
+					}
+					Game_SpawnAeroplane(iX, iY, (bAeroplaneLiftOff) ? 0 : 2);
+				}
+			}
+		}
+	}
+	else {
+		// Aside from certain selected building substitions, the tile selection criteria are the same.
+		wFlaggedTileCount = (GetFlaggedTileCount(TILE_INFRASTRUCTURE_RUNWAY, bMilitary) + GetFlaggedTileCount(TILE_INFRASTRUCTURE_RUNWAYCROSS, bMilitary)) / 5;
+		iSelectedTileID = TILE_INFRASTRUCTURE_RUNWAY;
+		iFirstCheckedTileID = (bMilitary) ? TILE_MILITARY_PARKINGLOT : TILE_INFRASTRUCTURE_PARKINGLOT;
+		if (IsTileDividedThresholdReached(iFirstCheckedTileID, wFlaggedTileCount, bMilitary, CMP_LESSTHAN, GetTileArea(AREA_2x2))) {
+			iSelectedTileID = (bMilitary) ? TILE_MILITARY_CONTROLTOWER : TILE_INFRASTRUCTURE_CONTROLTOWER_CIV;
+			if (IsTileMultipliedThresholdReached(iSelectedTileID, wFlaggedTileCount, bMilitary, CMP_GREATEROREQUAL, 2)) {
+				iSelectedTileID = TILE_MILITARY_RADAR;
+				if (IsTileMultipliedThresholdReached(iSelectedTileID, wFlaggedTileCount, bMilitary, CMP_GREATEROREQUAL, 2)) {
+					iSelectedTileID = (bMilitary) ? TILE_MILITARY_F15B : TILE_MILITARY_TARMAC;
+					if (IsTileNormalThresholdReached(iSelectedTileID, wFlaggedTileCount, bMilitary, CMP_GREATEROREQUAL)) {
+						iSelectedTileID = TILE_INFRASTRUCTURE_BUILDING1;
+						if (IsTileDividedThresholdReached(iSelectedTileID, wFlaggedTileCount, bMilitary, CMP_GREATEROREQUAL, 2)) {
+							iSelectedTileID = TILE_INFRASTRUCTURE_BUILDING2;
+							if (IsTileDividedThresholdReached(iSelectedTileID, wFlaggedTileCount, bMilitary, CMP_GREATEROREQUAL, 2)) {
+								iSelectedTileID = TILE_INFRASTRUCTURE_HANGAR2;
+								if (IsTileDividedThresholdReached(iSelectedTileID, wFlaggedTileCount, bMilitary, CMP_GREATEROREQUAL, GetTileArea(AREA_2x2)))
+									iSelectedTileID = iFirstCheckedTileID;
+							}
+						}
+					}	
+				}	
+			}
+		}
+		Game_SimulationGrowSpecificZone(iX, iY, iSelectedTileID, iCurrZoneType);
+	}
+}
+
+static void DoSeaPortGrowth(__int16 iX, __int16 iY, BYTE iCurrentTileID, __int16 iCurrZoneType) {
+	BOOL bMilitary;
+	BYTE iFirstCheckedTileID, iSelectedTileID;
+	WORD wFlaggedTileCount;
+
+	bMilitary = (iCurrZoneType == ZONE_MILITARY) ? TRUE : FALSE;
+
+	if ((rand() & 3) != 0) {
+		// This section is for handling the spawning of ships.
+		// Only executed for civilian seaports.
+		if (!bMilitary) {
+			if (iCurrentTileID == TILE_INFRASTRUCTURE_CRANE && (rand() & 3) == 0)
+				Game_SpawnShip(iX, iY);
+		}
+	}
+	else {
+		wFlaggedTileCount = GetFlaggedTileCount(TILE_INFRASTRUCTURE_CRANE, bMilitary);
+		iSelectedTileID = TILE_INFRASTRUCTURE_CRANE;
+		iFirstCheckedTileID = TILE_INFRASTRUCTURE_CARGOYARD;
+		if (IsTileDividedThresholdReached(iFirstCheckedTileID, wFlaggedTileCount, bMilitary, CMP_LESSTHAN, GetTileArea(AREA_2x2))) {
+			iSelectedTileID = (bMilitary) ? TILE_MILITARY_TOPSECRET : TILE_MILITARY_LOADINGBAY;
+			if (IsTileDividedThresholdReached(iSelectedTileID, wFlaggedTileCount, bMilitary, CMP_GREATEROREQUAL, GetTileArea(AREA_2x2))) {
+				iSelectedTileID = TILE_MILITARY_WAREHOUSE;
+				if (IsTileDividedThresholdReached(iSelectedTileID, wFlaggedTileCount, bMilitary, CMP_GREATEROREQUAL, 3))
+					iSelectedTileID = iFirstCheckedTileID;
+			}
+		}
+		if (!Game_SimulationGrowSpecificZone(iX, iY, iSelectedTileID, iCurrZoneType))
+			Game_SimulationGrowSpecificZone(iX, iY, TILE_MILITARY_WAREHOUSE, iCurrZoneType);
+	}
+}
+
+static void DoSiloGrowth(__int16 iX, __int16 iY, BYTE iCurrentTileID, __int16 iCurrZoneType) {
+	if (iCurrentTileID != TILE_MILITARY_MISSILESILO)
+		Game_SimulationGrowSpecificZone(iX, iY, TILE_MILITARY_MISSILESILO, iCurrZoneType);
+}
+
+static void DoUpdateMicrosimGrowthTick(__int16 iX, __int16 iY, BYTE iCurrentTileID) {
+	BYTE iTextOverlay;
+	BYTE iMicrosimIdx;
+	BYTE iMicrosimDataStat0;
+
+	if (iCurrentTileID >= TILE_INFRASTRUCTURE_RAILSTATION) {
+		if (iCurrentTileID == TILE_INFRASTRUCTURE_RAILSTATION && XBITReturnIsPowered(iX, iY) && !Game_RandomWordLFSRMod4()) {
+			if (IsTileDividedThresholdReached(TILE_INFRASTRUCTURE_RAILSTATION, wActiveTrains, FALSE, CMP_GREATERTHAN, 4))
+				Game_SpawnTrain(iX, iY);
+		}
+		else if (iCurrentTileID == TILE_INFRASTRUCTURE_MARINA && XBITReturnIsPowered(iX, iY) && !Game_RandomWordLFSRMod4()) {
+			if (IsTileDividedThresholdReached(TILE_INFRASTRUCTURE_MARINA, wSailingBoats, FALSE, CMP_GREATERTHAN, 9))
+				Game_SpawnSailBoat(iX, iY);
+		}
+		else if (iCurrentTileID >= TILE_ARCOLOGY_PLYMOUTH && iCurrentTileID <= TILE_ARCOLOGY_LAUNCH && XZONCornerAbsoluteCheckMask(iX, iY, CORNER_TRIGHT)) {
+			iTextOverlay = XTXTGetTextOverlayID(iX, iY);
+			iMicrosimIdx = iTextOverlay - MAX_USER_TEXT_ENTRIES;
+			if (iTextOverlay >= MAX_USER_TEXT_ENTRIES && iTextOverlay < 201 &&
+				GetMicroSimulatorTileID(iMicrosimIdx) >= TILE_ARCOLOGY_PLYMOUTH && GetMicroSimulatorTileID(iMicrosimIdx) <= TILE_ARCOLOGY_LAUNCH) {
+				iMicrosimDataStat0 = (GetXVALByteDataWithNormalCoordinates(iX, iY) >> 5)
+					- (GetXCRMByteDataWithNormalCoordinates(iX,iY) >> 5)
+					- (GetXPLTByteDataWithNormalCoordinates(iX,iY) >> 5)
+					+ 12;
+				if (!XBITReturnIsPowered(iX, iY))
+					iMicrosimDataStat0 /= 2;
+				if (!XBITReturnIsWatered(iX, iY))
+					iMicrosimDataStat0 /= 2;
+				if (iMicrosimDataStat0 < 0)
+					iMicrosimDataStat0 = 0;
+				if (iMicrosimDataStat0 > 12)
+					iMicrosimDataStat0 = 12;
+				SetMicroSimulatorStat0(iMicrosimIdx, iMicrosimDataStat0);
+			}
+		}
+	}
+}
+
+static BOOL DoBudgetRoadCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID) {
+	signed __int16 iFundingPercent;
+
+	if (iCurrentTileID >= TILE_ROAD_LR && iCurrentTileID < TILE_RAIL_LR ||
+		iCurrentTileID >= TILE_CROSSOVER_POWERTB_ROADLR && iCurrentTileID < TILE_CROSSOVER_POWERTB_RAILLR ||
+		iCurrentTileID == TILE_CROSSOVER_HIGHWAYLR_ROADTB ||
+		iCurrentTileID == TILE_CROSSOVER_HIGHWAYTB_ROADLR ||
+		iCurrentTileID >= TILE_ONRAMP_TL && iCurrentTileID < TILE_HIGHWAY_HTB) {
+		// Transportation budget, roads - if below 100% related tiles will be replaced with rubble.
+		iFundingPercent = pBudgetArr[BUDGET_ROAD].iFundingPercent;
+		if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
+			Game_PlaceTileWithMilitaryCheck(iX, iY, GetRubbleTileID());
+			XBITClearBits(iX, iY, XBIT_POWERABLE);
+			DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
+		}
+		return TRUE;
+	}
+	return FALSE;
+}
+
+static BOOL DoBudgetRailCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID) {
+	signed __int16 iFundingPercent;
+
+	if (iCurrentTileID >= TILE_RAIL_LR && iCurrentTileID < TILE_TUNNEL_T ||
+		iCurrentTileID >= TILE_CROSSOVER_ROADLR_RAILTB && iCurrentTileID < TILE_HIGHWAY_LR ||
+		iCurrentTileID >= TILE_SUBTORAIL_T && iCurrentTileID < TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1 ||
+		iCurrentTileID == TILE_CROSSOVER_HIGHWAYLR_RAILTB ||
+		iCurrentTileID == TILE_CROSSOVER_HIGHWAYTB_RAILLR) {
+		// Transportation budget, rails - if below 100% related tiles will be replaced with rubble.
+		iFundingPercent = pBudgetArr[BUDGET_RAIL].iFundingPercent;
+		if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
+			Game_PlaceTileWithMilitaryCheck(iX, iY, GetRubbleTileID());
+			XBITClearBits(iX, iY, XBIT_POWERABLE);
+			DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
+		}
+		return TRUE;
+	}
+	return FALSE;
+}
+
+static BOOL DoBudgetBridgeCheck(CSimcityView *pSCView, __int16 iX, __int16 iY, BYTE iCurrentTileID) {
+	signed __int16 iFundingPercent;
+
+	if (iCurrentTileID >= TILE_SUSPENSION_BRIDGE_START_B && iCurrentTileID < TILE_ONRAMP_TL ||
+		iCurrentTileID == TILE_REINFORCED_BRIDGE_PYLON ||
+		iCurrentTileID == TILE_REINFORCED_BRIDGE) {
+		iFundingPercent = pBudgetArr[BUDGET_BRIDGE].iFundingPercent;
+		// Transportation budget, bridges - if below 100% and the weather isn't favourable, there's a chance of destruction.
+		if (iFundingPercent != 100 && (int)(bWeatherWind + (unsigned __int16)rand() % 50) >= iFundingPercent) {
+			//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Bridge. Weather Vulnerable\n", iStep, iSubStep);
+			Game_CenterOnTileCoords(iX, iY);
+			Game_SimcityView_DestroyStructure(pSCView, iX, iY, 1);
+			Game_NewspaperStoryGenerator(39, 0);
+			DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
+		}
+		return TRUE;
+	}
+	return FALSE;
+}
+
+static BOOL DoBudgetHighwayCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID) {
+	__int16 iNextX;
+	__int16 iNextY;
+	signed __int16 iFundingPercent;
+
+	if (iCurrentTileID < TILE_TUNNEL_T || iCurrentTileID >= TILE_CROSSOVER_POWERTB_ROADLR) {
+		if ((iCurrentTileID < TILE_HIGHWAY_HTB || iCurrentTileID >= TILE_SUBTORAIL_T) &&
+			(iCurrentTileID < TILE_HIGHWAY_LR || iCurrentTileID >= TILE_SUSPENSION_BRIDGE_START_B))
+			DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
+		else {
+			if (IsEven(iX) && IsEven(iY)) {
+				iFundingPercent = pBudgetArr[BUDGET_HIGHWAY].iFundingPercent;
+				if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
+					iNextX = iX + 1;
+					iNextY = iY + 1;
+
+					// each individual highway tile within the 2x2 block.
+					if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE && XBITReturnIsWater(iX, iY))
+						Game_PlaceTileWithMilitaryCheck(iX, iY, 0);
+					else
+						Game_PlaceTileWithMilitaryCheck(iX, iY, GetRubbleTileID());
+
+					if (iNextX >= 0 && iNextX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE &&  XBITReturnIsWater(iNextX, iY))
+						Game_PlaceTileWithMilitaryCheck(iNextX, iY, 0);
+					else
+						Game_PlaceTileWithMilitaryCheck(iNextX, iY, GetRubbleTileID());
+
+					if (iX < GAME_MAP_SIZE && iNextY >= 0 && iNextY < GAME_MAP_SIZE && XBITReturnIsWater(iX, iNextY))
+						Game_PlaceTileWithMilitaryCheck(iX, iNextY, 0);
+					else
+						Game_PlaceTileWithMilitaryCheck(iX, iNextY, GetRubbleTileID());
+
+					if (iNextX < GAME_MAP_SIZE && iNextY < GAME_MAP_SIZE && XBITReturnIsWater(iNextX, iNextY))
+						Game_PlaceTileWithMilitaryCheck(iNextX, iNextY, 0);
+					else
+						Game_PlaceTileWithMilitaryCheck(iNextX, iNextY, GetRubbleTileID());
+
+					DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
+				}
+			}
+		}
+		return TRUE;
+	}
+	return FALSE;
+}
+
+static BOOL DoBudgetTunnelCheck(CSimcityView *pSCView, __int16 iX, __int16 iY, BYTE iCurrentTileID) {
+	signed __int16 iFundingPercent;
+
+	if (iCurrentTileID >= TILE_TUNNEL_T && iCurrentTileID <= TILE_TUNNEL_L) {
+		iFundingPercent = pBudgetArr[BUDGET_TUNNEL].iFundingPercent;
+		if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
+			//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Tunnel. Item(%s)\n", iStep, iSubStep, szTileNames[iCurrentTileID]);
+			Game_CenterOnTileCoords(iX, iY);
+			Game_SimcityView_DestroyStructure(pSCView, iX, iY, 1);
+			DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
+		}
+		return TRUE;
+	}
+	return FALSE;
+}
+
+static void DoBudgetOvergroundTransportCheck(CSimcityView *pSCView, __int16 iX, __int16 iY, BYTE iCurrentTileID) {
+	if (iCurrentTileID >= TILE_ROAD_LR) {
+		if (!Game_RandomWordLFSRMod128()) {
+			if (DoBudgetRoadCheck(iX, iY, iCurrentTileID))
+				return;
+			else if (DoBudgetRailCheck(iX, iY, iCurrentTileID))
+				return;
+			else if (DoBudgetBridgeCheck(pSCView, iX, iY, iCurrentTileID))
+				return;
+			else if (DoBudgetHighwayCheck(iX, iY, iCurrentTileID))
+				return;
+			else if (DoBudgetTunnelCheck(pSCView, iX, iY, iCurrentTileID))
+				return;
+		}
+		else
+			DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
+	}
+}
+
+static void DoBudgetSubwayCheck(CSimcityView *pSCView, __int16 iX, __int16 iY) {
+	BOOL bRemoveUndergroundTile;
+	BYTE iCurrentUndergroundTileID;
+	BYTE iReplaceUndergroundTile;
+	signed __int16 iFundingPercent;
+
+	if (!Game_RandomWordLFSRMod128()) {
+		iCurrentUndergroundTileID = GetUndergroundTileID(iX, iY);
+		if (iCurrentUndergroundTileID >= UNDER_TILE_SUBWAY_LR && iCurrentUndergroundTileID < UNDER_TILE_PIPES_LR ||
+			iCurrentUndergroundTileID == UNDER_TILE_SUBWAYENTRANCE ||
+			iCurrentUndergroundTileID == UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR ||
+			iCurrentUndergroundTileID == UNDER_TILE_CROSSOVER_PIPESLR_SUBWAYTB) {
+			iFundingPercent = pBudgetArr[BUDGET_SUBWAY].iFundingPercent;
+			if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
+				//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Subway. Item(%s) / Underground Item(%s)\n", iStep, iSubStep, szTileNames[iCurrentTileID], (iCurrentUndergroundTileID > UNDER_TILE_SUBWAYENTRANCE) ? "** Unknown **" : szUndergroundNames[iCurrentUndergroundTileID]);
+				bRemoveUndergroundTile = FALSE;
+				iReplaceUndergroundTile = UNDER_TILE_CLEAR;
+				if (iCurrentUndergroundTileID == UNDER_TILE_SUBWAYENTRANCE) {
+					Game_SimcityView_DestroyStructure(pSCView, iX, iY, 0);
+					bRemoveUndergroundTile = TRUE;
+				}
+				else {
+					if (iCurrentUndergroundTileID == UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR)
+						iReplaceUndergroundTile = UNDER_TILE_PIPES_TB;
+					else if (iCurrentUndergroundTileID == UNDER_TILE_CROSSOVER_PIPESLR_SUBWAYTB)
+						iReplaceUndergroundTile = UNDER_TILE_PIPES_LR;
+					bRemoveUndergroundTile = TRUE;
+				}
+				if (bRemoveUndergroundTile)
+					Game_PlaceUndergroundTiles(iX, iY, iReplaceUndergroundTile);
+			}
+		}
+	}
+}
+
+static BOOL GetPopulatedTileAndLevel(__int16 iX, __int16 iY, BYTE iCurrentTileID, WORD *p_iPopulatedTile, WORD *p_iTilePopLevel) {
+	WORD iPopulatedTile = 0;
+	WORD iTilePopLevel = 0;
+
+	if (iCurrentTileID >= TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1) {
+		// The !XZONCornerCheck() case is only hit when
+		// a 2x2 >= building is being handled and the
+		// otherr parts of it DON'T contain the wCurrentAngle
+		// bit (In order for those other tiles to not be
+		// included as part of the populated tile / populated level).
+		if (!XZONCornerCheck(iX, iY, wCurrentAngle))
+			return FALSE;
+		iPopulatedTile = iCurrentTileID - TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1;
+		iTilePopLevel = wBuildingPopLevel[iPopulatedTile];
+	}
+	else {
+		if (iCurrentTileID >= TILE_ROAD_LR || !Game_IsValidTransitItems(iX, iY))
+			return FALSE;
+	}
+
+	*p_iPopulatedTile = iPopulatedTile;
+	*p_iTilePopLevel = iTilePopLevel;
+	return TRUE;
+}
+
 extern int iChurchVirus;
 
 extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __int16 iSubStep) {
@@ -282,506 +691,149 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 	BOOL bPlaceChurch;
 	__int16 iCurrZoneType;
 	BYTE iCurrentTileID;
-	BYTE iSelectedTileID;
-	WORD wBuildingCount;
-	BYTE iTileAreaState;
-	// 'iBuildingCommitThreshold' must be 'int' (or a 32-bit integer at the very least),
+	BYTE iTileState;
+	int iGrowthState, iPrevGrowthState;
+	// 'iDemandThreshold' must be 'int' (or a 32-bit integer at the very least),
 	// otherwise building growth will not correctly occur and you'll end up with a very
 	// high number of 1x1 abandonded buildings.
-	int iBuildingCommitThreshold;
-	signed __int16 iFundingPercent;
-	WORD iBuildingPopLevel;
-	WORD iPopulatedAreaTile;
+	int iDemandThreshold;
+	WORD iTilePopLevel;
+	WORD iPopulatedTile;
 	__int16 iCurrentDemand;
 	__int16 iRemainderDemand;
-	BYTE iTextOverlay;
-	BYTE iMicrosimIdx;
-	BYTE iMicrosimDataStat0;
-	BYTE iCurrentUndergroundTileID;
 	BYTE iReplaceTile;
-	__int16 iNextX;
-	__int16 iNextY;
 
 	// Key:
-	// iStep: iX += 4 with evert loop until >= GAME_MAP_SIZE is reached.
-	// iSubStep: iY += 4 with each loop until >= GAME_MAP_SIZE is reached.
+	// iStep: iX += 4 with each loop as long as it is < GAME_MAP_SIZE.
+	// iSubStep: iY += 4 with each loop as long as it is < GAME_MAP_SIZE.
 
 	pSCApp = &pCSimcityAppThis;
 	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
-	bPlaceChurch = (iChurchVirus > 0) ? 1 : (2500u * dwTileCount[TILE_INFRASTRUCTURE_CHURCH] < dwCityPopulation);
+	// The calculation here is otherwise 2500 population multiplied by
+	// number of church tiles is less than the city population, in which
+	// case build a church (when the Church virus isn't active...).
+	bPlaceChurch = (iChurchVirus > 0) ? TRUE : IsTileMultipliedThresholdReached(TILE_INFRASTRUCTURE_CHURCH, dwCityPopulation, FALSE, CMP_LESSTHAN, 2500);
 	wCurrentAngle = wPositionAngle[wViewRotation];
-	iX = iStep;
-	for (;;) {
-		if (iX >= GAME_MAP_SIZE)
-			break;
-		iY = iSubStep;
-		for (;;) {
-			if (iY >= GAME_MAP_SIZE)
-				break;
+	for (iX = iStep; iX < GAME_MAP_SIZE; iX += 4) {
+		for (iY = iSubStep; iY < GAME_MAP_SIZE; iY += 4) {
 			iCurrZoneType = XZONReturnZone(iX, iY);
 			iCurrentTileID = GetTileID(iX, iY);
-			if (iCurrZoneType != ZONE_NONE) {
+			if (iCurrZoneType == ZONE_NONE)
+				DoBudgetOvergroundTransportCheck(pSCView, iX, iY, iCurrentTileID);
+			else {
 				if (iCurrZoneType > ZONE_DENSE_INDUSTRIAL) {
-					switch (iCurrZoneType) {
-					case ZONE_MILITARY:
-						// (I / N): For the most part the divisor is the number of tiles that the
-						// given building-type occupies, so it divides by that to get the actual
-						// number of buildings present.
-						//
-						// As far as I can tell when it comes to the 'MILITARYTILE_MHANGAR1' case...
-						// 12 of those type could be classified as a unit, so if wBuildingCount is greater
-						// than that unit, place more hangars.
-						//
-						// That crops up the most on Army and Naval cases.
-						switch (bMilitaryBaseType) {
-						case MILITARY_BASE_ARMY:
-							if ((rand() & 3) == 0) {
-#if 0
-								wBuildingCount = dwMilitaryTiles[MILITARYTILE_MPARKINGLOT] / 4;
-								iSelectedTileID = TILE_MILITARY_PARKINGLOT;
-								if (wBuildingCount > dwMilitaryTiles[MILITARYTILE_MHANGAR1] / 12)
-									iSelectedTileID = TILE_MILITARY_HANGAR1;
-#else
-								wBuildingCount = dwMilitaryTiles[MILITARYTILE_MPARKINGLOT] / 4;
-								if (dwMilitaryTiles[MILITARYTILE_TOPSECRET] / 4 < wBuildingCount) {
-									iSelectedTileID = TILE_MILITARY_HANGAR1;
-									if (dwMilitaryTiles[MILITARYTILE_MHANGAR1] / 12 >= wBuildingCount)
-										iSelectedTileID = TILE_MILITARY_TOPSECRET;
-								}
-								else
-									iSelectedTileID = TILE_MILITARY_PARKINGLOT;
-#endif
-								if (!Game_SimulationGrowSpecificZone(iX, iY, iSelectedTileID, ZONE_MILITARY))
-									Game_SimulationGrowSpecificZone(iX, iY, TILE_MILITARY_HANGAR1, ZONE_MILITARY);
-							}
-							break;
-						case MILITARY_BASE_AIR_FORCE:
-							if ((rand() & 3) == 0) {
-								// This integer was previously present, initially it was set to iCurrentTileID
-								// before being stripped out, however its purpose is unknown.
-								//iAttributes = 5;
-								wBuildingCount = (dwMilitaryTiles[MILITARYTILE_RUNWAY] + dwMilitaryTiles[MILITARYTILE_RUNWAYCROSS]) / 5;
-								if (dwMilitaryTiles[MILITARYTILE_MPARKINGLOT] / 4 < wBuildingCount) {
-									if (2 * dwMilitaryTiles[MILITARYTILE_MCONTROLTOWER] >= wBuildingCount) {
-										if (2 * dwMilitaryTiles[MILITARYTILE_MRADAR] >= wBuildingCount) {
-											if (dwMilitaryTiles[MILITARYTILE_F15B] >= wBuildingCount) {
-												if (dwMilitaryTiles[MILITARYTILE_BUILDING1] / 2 >= wBuildingCount) {
-													if (dwMilitaryTiles[MILITARYTILE_BUILDING2] / 2 >= wBuildingCount) {
-														iSelectedTileID = TILE_INFRASTRUCTURE_HANGAR2;
-														if (dwMilitaryTiles[MILITARYTILE_HANGAR2] / 4 >= wBuildingCount)
-															iSelectedTileID = TILE_MILITARY_PARKINGLOT;
-													}
-													else
-														iSelectedTileID = TILE_INFRASTRUCTURE_BUILDING2;
-												}
-												else
-													iSelectedTileID = TILE_INFRASTRUCTURE_BUILDING1;
-											}
-											else
-												iSelectedTileID = TILE_MILITARY_F15B;
-										}
-										else
-											iSelectedTileID = TILE_MILITARY_RADAR;
-									}
-									else
-										iSelectedTileID = TILE_MILITARY_CONTROLTOWER;
-								}
-								else
-									iSelectedTileID = TILE_INFRASTRUCTURE_RUNWAY;
-								goto GOSPAWNAIRFIELD;
-							}
-							break;
-						case MILITARY_BASE_NAVY:
-							if ((rand() & 3) == 0) {
-								wBuildingCount = dwMilitaryTiles[MILITARYTILE_CRANE];
-								if (dwMilitaryTiles[MILITARYTILE_CARGOYARD] / 4 < wBuildingCount) {
-									if (dwMilitaryTiles[MILITARYTILE_TOPSECRET] / 4 >= wBuildingCount) {
-										// This integer was previously present, initially it was set to iCurrentTileID
-										// before being stripped out, however its purpose is unknown.
-										//BYTE(iAttributes) = 0;
-										iSelectedTileID = TILE_MILITARY_WAREHOUSE;
-										if (dwMilitaryTiles[MILITARYTILE_MWAREHOUSE] / 3 >= wBuildingCount)
-											iSelectedTileID = TILE_INFRASTRUCTURE_CARGOYARD;
-									}
-									else
-										iSelectedTileID = TILE_MILITARY_TOPSECRET;
-								}
-								else
-									iSelectedTileID = TILE_INFRASTRUCTURE_CRANE;
-								if (!Game_SimulationGrowSpecificZone(iX, iY, iSelectedTileID, ZONE_MILITARY))
-									goto GOSPAWNSEAYARD;
-							}
-							break;
-						case MILITARY_BASE_MISSILE_SILOS:
-							if (iCurrentTileID != TILE_MILITARY_MISSILESILO)
-								Game_SimulationGrowSpecificZone(iX, iY, TILE_MILITARY_MISSILESILO, ZONE_MILITARY);
-							break;
-						default:
-							goto GOUNDCHECKTHENYINCREASE;
-						}
-						break;
-					case ZONE_SEAPORT:
-						if ((rand() & 3) != 0) {
-							if (iCurrentTileID == TILE_INFRASTRUCTURE_CRANE && (rand() & 3) == 0)
-								Game_SpawnShip(iX, iY);
-						}
-						else {
-							wBuildingCount = dwTileCount[TILE_INFRASTRUCTURE_CRANE];
-							if (dwTileCount[TILE_INFRASTRUCTURE_CARGOYARD] / 4 < wBuildingCount) {
-								if (dwTileCount[TILE_MILITARY_LOADINGBAY] / 4 >= wBuildingCount) {
-									// This integer was previously present, initially it was set to iCurrentTileID
-									// before being stripped out, however its purpose is unknown.
-									//BYTE(iAttributes) = 0;
-									iSelectedTileID = TILE_MILITARY_WAREHOUSE;
-									if (dwTileCount[TILE_MILITARY_WAREHOUSE] / 3 >= wBuildingCount)
-										iSelectedTileID = TILE_INFRASTRUCTURE_CARGOYARD;
-								}
-								else
-									iSelectedTileID = TILE_MILITARY_LOADINGBAY;
-							}
-							else
-								iSelectedTileID = TILE_INFRASTRUCTURE_CRANE;
-							if (!Game_SimulationGrowSpecificZone(iX, iY, iSelectedTileID, ZONE_SEAPORT)) {
-							GOSPAWNSEAYARD:
-								Game_SimulationGrowSpecificZone(iX, iY, TILE_MILITARY_WAREHOUSE, iCurrZoneType);
-							}
-						}
-						break;
-					case ZONE_AIRPORT:
-						if ((rand() & 3) != 0) {
-							if (iCurrentTileID == TILE_INFRASTRUCTURE_RUNWAY &&
-								!(rand() % 30) &&
-								iX < GAME_MAP_SIZE &&
-								iY < GAME_MAP_SIZE) {
-								if (XBITReturnIsPowered(iX, iY)) {
-									if (rand() % 10 < 4) {
-										Game_SpawnHelicopter(iX, iY);
-										break;
-									}
-									if (!IsEven(wViewRotation)) {
-										if (iX < GAME_MAP_SIZE &&
-											iY < GAME_MAP_SIZE &&
-											XBITReturnIsFlipped(iX, iY))
-											goto AIRFIELDSKIPAHEAD;
-									}
-									else if (iX >= GAME_MAP_SIZE ||
-										iY >= GAME_MAP_SIZE ||
-										!XBITReturnIsFlipped(iX, iY)) {
-									AIRFIELDSKIPAHEAD:
-										Game_SpawnAeroplane(iX, iY, 0);
-										break;
-									}
-									Game_SpawnAeroplane(iX, iY, 2);
-								}
-							}
-						}
-						else {
-							// This integer was previously present, initially it was set to iCurrentTileID
-							// before being stripped out, however its purpose is unknown.
-							//iAttributes = 5;
-							wBuildingCount = (dwTileCount[TILE_INFRASTRUCTURE_RUNWAY] + dwTileCount[TILE_INFRASTRUCTURE_RUNWAYCROSS]) / 5;
-							if (dwTileCount[TILE_INFRASTRUCTURE_PARKINGLOT] / 4 < wBuildingCount) {
-								if (2 * dwTileCount[TILE_INFRASTRUCTURE_CONTROLTOWER_CIV] >= wBuildingCount) {
-									if (2 * dwTileCount[TILE_MILITARY_RADAR] >= wBuildingCount) {
-										if (dwTileCount[TILE_MILITARY_TARMAC] >= wBuildingCount) {
-											if (dwTileCount[TILE_INFRASTRUCTURE_BUILDING1] / 2 >= wBuildingCount) {
-												if (dwTileCount[TILE_INFRASTRUCTURE_BUILDING2] / 2 >= wBuildingCount) {
-													iSelectedTileID = TILE_INFRASTRUCTURE_HANGAR2;
-													if (dwTileCount[TILE_INFRASTRUCTURE_HANGAR2] / 4 >= wBuildingCount)
-														iSelectedTileID = TILE_INFRASTRUCTURE_PARKINGLOT;
-												}
-												else
-													iSelectedTileID = TILE_INFRASTRUCTURE_BUILDING2;
-											}
-											else
-												iSelectedTileID = TILE_INFRASTRUCTURE_BUILDING1;
-										}
-										else
-											iSelectedTileID = TILE_MILITARY_TARMAC;
-									}
-									else
-										iSelectedTileID = TILE_MILITARY_RADAR;
-								}
-								else
-									iSelectedTileID = TILE_INFRASTRUCTURE_CONTROLTOWER_CIV;
-							}
-							else
-								iSelectedTileID = TILE_INFRASTRUCTURE_RUNWAY;
-						GOSPAWNAIRFIELD:
-							Game_SimulationGrowSpecificZone(iX, iY, iSelectedTileID, iCurrZoneType);
-						}
-						break;
-					default:
-						break;
+					if (iCurrZoneType == ZONE_MILITARY) {
+						if (bMilitaryBaseType == MILITARY_BASE_ARMY)
+							DoArmyBaseGrowth(iX, iY, iCurrZoneType);
+						else if (bMilitaryBaseType == MILITARY_BASE_AIR_FORCE)
+							DoAirPortGrowth(iX, iY, iCurrentTileID, iCurrZoneType);
+						else if (bMilitaryBaseType == MILITARY_BASE_NAVY)
+							DoSeaPortGrowth(iX, iY, iCurrentTileID, iCurrZoneType);
+						else if (bMilitaryBaseType == MILITARY_BASE_MISSILE_SILOS)
+							DoSiloGrowth(iX, iY, iCurrentTileID, iCurrZoneType);
 					}
+					else if (iCurrZoneType == ZONE_AIRPORT)
+						DoAirPortGrowth(iX, iY, iCurrentTileID, iCurrZoneType);
+					else if (iCurrZoneType == ZONE_SEAPORT)
+						DoSeaPortGrowth(iX, iY, iCurrentTileID, iCurrZoneType);
 				}
 				else {
-					if (iCurrentTileID >= TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1) {
-						if (!XZONCornerCheck(iX, iY, wCurrentAngle)) {
-							// This case appears to be hit with >= 2x2 zoned items.
-							goto GOUNDCHECKTHENYINCREASE;
-						}
-						iPopulatedAreaTile = iCurrentTileID - TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1;
-						iBuildingPopLevel = wBuildingPopLevel[iPopulatedAreaTile];
-					}
-					else {
-						if (iCurrentTileID >= TILE_ROAD_LR || !Game_IsValidTransitItems(iX, iY)) {
-							goto GOUNDCHECKTHENYINCREASE;
-						}
-						iPopulatedAreaTile = 0;
-						iBuildingPopLevel = 0;
-					}
-					if (Game_IsZonedTilePowered(iX, iY)) {
-						if (Game_RunTripGenerator(iX, iY, iCurrZoneType, iBuildingPopLevel, 100)) {
-							iCurrentDemand = wCityDemand[((iCurrZoneType - 1) / 2)] + 2000;
-							iRemainderDemand = 4000 - iCurrentDemand;
-						}
-						else {
-							iCurrentDemand = 0;
-							iRemainderDemand = 4000;
-						}
-					}
-					else {
+					iPopulatedTile = 0;
+					iTilePopLevel = TILEPOPLEVEL_NONE;
+					if (GetPopulatedTileAndLevel(iX, iY, iCurrentTileID, &iPopulatedTile, &iTilePopLevel)) {
 						iCurrentDemand = 0;
 						iRemainderDemand = 4000;
-					}
-					// This block is encountered when a given area is not "under construction" and not "abandonded".
-					// A building is then randomly selected in subsequent calls.
-					iTileAreaState = bAreaState[iPopulatedAreaTile];
-					if (iBuildingPopLevel > 0 && !iTileAreaState) {
-						pZonePops[iCurrZoneType] += wBuildingPopulation[iBuildingPopLevel]; // Values appear to be: 1[1], 8[2], 12[3], 36[4] (wBuildingPopulation[iBuildingPopLevel] format.
-						if ((unsigned __int16)rand() < (iRemainderDemand / iBuildingPopLevel)) {
-							iReplaceTile = rand() & 1;
-							Game_PerhapsGeneralZoneChangeBuilding(iX, iY, iBuildingPopLevel, iReplaceTile);
-							goto GOUNDCHECKTHENYINCREASE;
-						}
-					}
-					//ConsoleLog(LOG_DEBUG, "[%s] iCurrentTileID[%u] iCurrZoneType[%d](%d) iPopulatedAreaTile(%u) Coords(%d/%d) iBuildingPopLevel[%u] iCurrentDemand[%d] iRemainderDemand[%d] bAreaState(%u/%u)\n", szTileNames[iCurrentTileID], iCurrentTileID, iCurrZoneType, ((iCurrZoneType - 1) / 2), iPopulatedAreaTile, iX, iY, iBuildingPopLevel, iCurrentDemand, iRemainderDemand, iTileAreaState, bAreaState[iPopulatedAreaTile]);
-					if (iTileAreaState == 1 && (unsigned __int16)rand() < 0x4000 / iBuildingPopLevel) {
-						if (bPlaceChurch && (iBuildingPopLevel & 2) != 0 && iCurrZoneType < ZONE_LIGHT_COMMERCIAL) {
-							Game_PlaceChurch(iX, iY);
-							goto GOUNDCHECKTHENYINCREASE;
-						}
-					GOGENERALZONEITEMPLACE:
-						Game_PerhapsGeneralZoneChooseAndPlaceBuilding(iX, iY, iBuildingPopLevel, (iCurrZoneType - 1) / 2);
-						goto GOUNDCHECKTHENYINCREASE;
-					}
-					if (iTileAreaState == 2) {
-						// Abandoned buildings.
-						pZonePops[ZONEPOP_ABANDONED] += wBuildingPopulation[iBuildingPopLevel];
-						iBuildingCommitThreshold = 15 * iCurrentDemand / iBuildingPopLevel;
-						if ((unsigned __int16)rand() >= iBuildingCommitThreshold)
-							goto GOUNDCHECKTHENYINCREASE;
-						goto GOGENERALZONEITEMPLACE;
-					}
-					// This block is where construction will start.
-					if (iBuildingPopLevel != 4 &&
-						(IsEven(iCurrZoneType) || iBuildingPopLevel <= 0) &&
-						(iCurrZoneType >= 5 ||
-						(iBuildingPopLevel != 1 || GetXVALByteDataWithNormalCoordinates(iX, iY) >= 0x20u) &&
-							(iBuildingPopLevel != 2 || GetXVALByteDataWithNormalCoordinates(iX, iY) >= 0x60u) &&
-							(iBuildingPopLevel != 3 || GetXVALByteDataWithNormalCoordinates(iX, iY) >= 0xC0u))) {
-						iBuildingCommitThreshold = 3 * iCurrentDemand / (iBuildingPopLevel + 1);
-						if (iBuildingCommitThreshold > (unsigned __int16)rand())
-							Game_PerhapsGeneralZoneStartBuilding(iX, iY, iBuildingPopLevel, iCurrZoneType);
-					}
-				}
-			}
-			else {
-				if (iCurrentTileID < TILE_ROAD_LR)
-					goto GOUNDCHECKTHENYINCREASE;
-				if (Game_RandomWordLFSRMod128())
-					goto GOAFTERSETXBIT;
-				if (iCurrentTileID >= TILE_ROAD_LR && iCurrentTileID < TILE_RAIL_LR ||
-					iCurrentTileID >= TILE_CROSSOVER_POWERTB_ROADLR && iCurrentTileID < TILE_CROSSOVER_POWERTB_RAILLR ||
-					iCurrentTileID == TILE_CROSSOVER_HIGHWAYLR_ROADTB ||
-					iCurrentTileID == TILE_CROSSOVER_HIGHWAYTB_ROADLR ||
-					iCurrentTileID >= TILE_ONRAMP_TL && iCurrentTileID < TILE_HIGHWAY_HTB) {
-					// Transportation budget, roads - if below 100% related tiles will be replaced with rubble.
-					iFundingPercent = pBudgetArr[BUDGET_ROAD].iFundingPercent;
-					if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
-						iReplaceTile = (rand() & 3) + 1;
-						Game_PlaceTileWithMilitaryCheck(iX, iY, iReplaceTile);
-						if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
-							goto GOAFTERSETXBIT;
-						goto GOBEFORESETXBIT;
-					}
-				}
-				else if (iCurrentTileID >= TILE_RAIL_LR && iCurrentTileID < TILE_TUNNEL_T ||
-					iCurrentTileID >= TILE_CROSSOVER_ROADLR_RAILTB && iCurrentTileID < TILE_HIGHWAY_LR ||
-					iCurrentTileID >= TILE_SUBTORAIL_T && iCurrentTileID < TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1 ||
-					iCurrentTileID == TILE_CROSSOVER_HIGHWAYLR_RAILTB ||
-					iCurrentTileID == TILE_CROSSOVER_HIGHWAYTB_RAILLR) {
-					// Transportation budget, rails - if below 100% related tiles will be replaced with rubble.
-					iFundingPercent = pBudgetArr[BUDGET_RAIL].iFundingPercent;
-					if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
-						iReplaceTile = (rand() & 3) + 1;
-						Game_PlaceTileWithMilitaryCheck(iX, iY, iReplaceTile);
-						if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
-							goto GOAFTERSETXBIT;
-					GOBEFORESETXBIT:
-						XBITClearBits(iX, iY, XBIT_POWERABLE);
-					GOAFTERSETXBIT:
-						if (iCurrentTileID >= TILE_INFRASTRUCTURE_RAILSTATION) {
-							if (iCurrentTileID == TILE_INFRASTRUCTURE_RAILSTATION &&
-								iX < GAME_MAP_SIZE &&
-								iY < GAME_MAP_SIZE &&
-								XBITReturnIsPowered(iX, iY) &&
-								!Game_RandomWordLFSRMod4()) {
-								if (dwTileCount[TILE_INFRASTRUCTURE_RAILSTATION] / 4 > wActiveTrains)
-									Game_SpawnTrain(iX, iY);
+						if (Game_IsZonedTilePowered(iX, iY)) {
+							if (Game_RunTripGenerator(iX, iY, iCurrZoneType, iTilePopLevel, GROWTH_TILE_MAX_TRIP_STEPS)) {
+								iCurrentDemand = wCityDemand[GET_GENERAL_RCI_ZONE(iCurrZoneType)] + 2000;
+								iRemainderDemand = 4000 - iCurrentDemand;
 							}
-							else if (iCurrentTileID == TILE_INFRASTRUCTURE_MARINA &&
-								iX < GAME_MAP_SIZE &&
-								iY < GAME_MAP_SIZE &&
-								XBITReturnIsPowered(iX, iY) &&
-								!Game_RandomWordLFSRMod4()) {
-								if (dwTileCount[TILE_INFRASTRUCTURE_MARINA] / 9 > wSailingBoats)
-									Game_SpawnSailBoat(iX, iY);
+						}
+
+						// The general apparent chain of events:
+						// 0) GROWTH_START - initial priming before any of the subsequent 'if' blocks are hit
+						// 1) GROWTH_CONSIDERCHANGE - a building has already been placed (with an 'TilePopLevel' above 0).
+						// 2) GROWTH_CHANGE - change current building due to 'iDemandThreshold' not being exceeded.
+						// 3) GROWTH_CONSIDERCONSTRUCTION - consider whether construction is to be completed.
+						// 4) GROWTH_COMPLETECONSTRUCTION - complete building/church construction based on the 'iDemandThreshold' not being exceeded.
+						// 5) GROWTH_CONSIDERABANDON - consider changing the current building to the abandoned type (or just updating the figure until the next round)
+						// 6) GROWTH_ABANDON - change building to the abandoned type based on 'iDemandThreshold' not being exceeded.
+						// 7) GROWTH_CONSIDERCOMMIT - this is the final potential fall-through before committing to "starting"
+						// 8) GROWTH_COMMIT - 'iDemandThreshold' exceeds the returned random number, we commit to "starting". (likely for construction sites, area changes 1x1 <-> 2x2 <-> 3x3)
+
+						iTileState = bTileState[iPopulatedTile];
+						iGrowthState = GROWTH_START;
+						if (iTilePopLevel > TILEPOPLEVEL_NONE && iTileState == BUILD_START) {
+							iGrowthState = GROWTH_CONSIDERCHANGE;
+							//ConsoleLog(LOG_DEBUG, "BUILD_START(%u) - (%d, %d) [%s] bTileState[%u], wBuildingPopLevel[%u], iTilePopLevel(%u)\n", iTileState, iX, iY, szTileNames[iCurrentTileID], iPopulatedTile, iPopulatedTile, iTilePopLevel);
+							pZonePops[iCurrZoneType] += wBuildingPopulation[iTilePopLevel]; // Values appear to be: 1[1], 8[2], 12[3], 36[4] (wBuildingPopulation[iTilePopLevel] format.
+							iDemandThreshold = (iRemainderDemand / iTilePopLevel);
+							if ((unsigned __int16)rand() < iDemandThreshold) {
+								iGrowthState = GROWTH_CHANGE;
+								iReplaceTile = rand() & 1;
+								Game_PerhapsGeneralZoneChangeBuilding(iX, iY, iTilePopLevel, iReplaceTile);
 							}
-							else if (iCurrentTileID >= TILE_ARCOLOGY_PLYMOUTH &&
-								iCurrentTileID <= TILE_ARCOLOGY_LAUNCH &&
-								XZONCornerAbsoluteCheckMask(iX, iY, CORNER_TRIGHT)) {
-								iTextOverlay = XTXTGetTextOverlayID(iX, iY);
-								iMicrosimIdx = iTextOverlay - MAX_USER_TEXT_ENTRIES;
-								//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - iTextOverlay(%u), iMicrosimIdx(%u), Item(%s)\n", iStep, iSubStep, iTextOverlay, iMicrosimIdx, szTileNames[iCurrentTileID]);
-								if (iTextOverlay >= MAX_USER_TEXT_ENTRIES &&
-									iTextOverlay < 201 &&
-									GetMicroSimulatorTileID(iMicrosimIdx) >= TILE_ARCOLOGY_PLYMOUTH &&
-									GetMicroSimulatorTileID(iMicrosimIdx) <= TILE_ARCOLOGY_LAUNCH) {
-									iMicrosimDataStat0 = (GetXVALByteDataWithNormalCoordinates(iX, iY) >> 5)
-										- (GetXCRMByteDataWithNormalCoordinates(iX,iY) >> 5)
-										- (GetXPLTByteDataWithNormalCoordinates(iX,iY) >> 5)
-										+ 12;
-									if (iX >= GAME_MAP_SIZE ||
-										iY >= GAME_MAP_SIZE ||
-										!XBITReturnIsPowered(iX, iY))
-										iMicrosimDataStat0 /= 2;
-									if (iX >= GAME_MAP_SIZE ||
-										iY >= GAME_MAP_SIZE ||
-										!XBITReturnIsWatered(iX, iY))
-										iMicrosimDataStat0 /= 2;
-									if (iMicrosimDataStat0 < 0)
-										iMicrosimDataStat0 = 0;
-									if (iMicrosimDataStat0 > 12)
-										iMicrosimDataStat0 = 12;
-									//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - iTextOverlay(%u), iMicrosimIdx(%u), iMicrosimDataStat0(%u), Item(%s) (%u, %u, %u, %d - %d)\n", iStep, iSubStep, iTextOverlay, iMicrosimIdx, iMicrosimDataStat0, szTileNames[iCurrentTileID], *(BYTE *)&dwMapXZON[iX][iY].b & 0xF0, 0x80, dwMapXZON[iX][iY].b.iCorners, CORNER_TRIGHT, (CORNER_TRIGHT << 4));
-									SetMicroSimulatorStat0(iMicrosimIdx, iMicrosimDataStat0);
+						}
+
+						// Continue if iGrowthStart <= GROWTH_CONSIDERCHANGE, otherwise fallthrough.
+						if (iGrowthState <= GROWTH_CONSIDERCHANGE) {
+							if (iTileState == BUILD_THINK) {
+								iGrowthState = GROWTH_CONSIDERCONSTRUCTION;
+								iDemandThreshold = 16384 / iTilePopLevel;
+								if ((unsigned __int16)rand() < iDemandThreshold) {
+									iGrowthState = GROWTH_COMPLETECONSTRUCTION;
+									//ConsoleLog(LOG_DEBUG, "BUILD_THINK(%u) - (%d, %d) [%s] bTileState[%u], wBuildingPopLevel[%u], (%u)wBuildingPopulation[%u], iTilePopLevel(%u)\n", iTileState, iX, iY, szTileNames[iCurrentTileID], iPopulatedTile, iPopulatedTile, wBuildingPopulation[iTilePopLevel], iTilePopLevel, iTilePopLevel);
+									if (bPlaceChurch && (iTilePopLevel & 2) != 0 && iCurrZoneType < ZONE_LIGHT_COMMERCIAL) {
+										//ConsoleLog(LOG_DEBUG, "BUILD_THINK(%u) - CHURCH (%d, %d) [%s] bTileState[%u], wBuildingPopLevel[%u], (%u)wBuildingPopulation[%u], iTilePopLevel(%u)\n", iTileState, iX, iY, szTileNames[iCurrentTileID], iPopulatedTile, iPopulatedTile, wBuildingPopulation[iTilePopLevel], iTilePopLevel, iTilePopLevel);
+										Game_PlaceChurch(iX, iY);
+									}
+									else
+										Game_PerhapsGeneralZoneChooseAndPlaceBuilding(iX, iY, iTilePopLevel, GET_GENERAL_RCI_ZONE(iCurrZoneType));
+								}
+							}
+
+							// Continue if iGrowthStart <= GROWTH_CONSIDERCONSTRUCTION, otherwise fallthrough.
+							if (iGrowthState <= GROWTH_CONSIDERCONSTRUCTION) {
+								if (iTileState == BUILD_ABANDON) {
+									iGrowthState = GROWTH_CONSIDERABANDON;
+									//ConsoleLog(LOG_DEBUG, "BUILD_ABANDON(%u) - (%d, %d) [%s] bTileState[%u], wBuildingPopLevel[%u], (%u)wBuildingPopulation[%u], iTilePopLevel(%u)\n", iTileState, iX, iY, szTileNames[iCurrentTileID], iPopulatedTile, iPopulatedTile, wBuildingPopulation[iTilePopLevel], iTilePopLevel, iTilePopLevel);
+									pZonePops[ZONEPOP_ABANDONED] += wBuildingPopulation[iTilePopLevel];
+									iDemandThreshold = 15 * iCurrentDemand / iTilePopLevel;
+									if ((unsigned __int16)rand() < iDemandThreshold) {
+										iGrowthState = GROWTH_ABANDON;
+										Game_PerhapsGeneralZoneChooseAndPlaceBuilding(iX, iY, iTilePopLevel, GET_GENERAL_RCI_ZONE(iCurrZoneType));
+									}
+								}
+
+								// Continue if iGrowthStart <= GROWTH_CONSIDERCONSTRUCTION (this is unchanged), otherwise fallthrough.
+								if (iGrowthState <= GROWTH_CONSIDERCONSTRUCTION) {
+									if (iTilePopLevel != TILEPOPLEVEL_VERYHIGH &&
+										(IsEven(iCurrZoneType) || iTilePopLevel <= TILEPOPLEVEL_NONE) &&
+										(iCurrZoneType >= ZONE_LIGHT_INDUSTRIAL ||
+										(iTilePopLevel != TILEPOPLEVEL_LOW || GetXVALByteDataWithNormalCoordinates(iX, iY) >= XVALPOPLEVEL_LOW) &&
+										(iTilePopLevel != TILEPOPLEVEL_MEDIUM || GetXVALByteDataWithNormalCoordinates(iX, iY) >= XVALPOPLEVEL_MEDIUM) &&
+										(iTilePopLevel != TILEPOPLEVEL_HIGH || GetXVALByteDataWithNormalCoordinates(iX, iY) >= XVALPOPLEVEL_HIGH))) {
+										iPrevGrowthState = iGrowthState;
+										// Let's cut down on the noise a bit during initial thinking for GROWTH_START alone.
+										//if (iPrevGrowthState)
+										//	ConsoleLog(LOG_DEBUG, "THINKING -(%u/%d) - (%d, %d) [%s] bTileState[%u], wBuildingPopLevel[%u], (%u)wBuildingPopulation[%u], iTilePopLevel(%u)\n", iTileState, iGrowthState, iX, iY, szTileNames[iCurrentTileID], iPopulatedTile, iPopulatedTile, wBuildingPopulation[iTilePopLevel], iTilePopLevel, iTilePopLevel);
+										iGrowthState = GROWTH_CONSIDERCOMMIT;
+										iDemandThreshold = 3 * iCurrentDemand / (iTilePopLevel + 1);
+										if (iDemandThreshold > (unsigned __int16)rand()) {
+											//ConsoleLog(LOG_DEBUG, "CONSIDERCOMMIT -> COMMIT -(%u) iGrowthState(%d), iPrevGrowthState(%d) - (%d, %d) [%s] bTileState[%u], wBuildingPopLevel[%u], (%u)wBuildingPopulation[%u], iTilePopLevel(%u)\n", iTileState, iGrowthState, iPrevGrowthState, iX, iY, szTileNames[iCurrentTileID], iPopulatedTile, iPopulatedTile, wBuildingPopulation[iTilePopLevel], iTilePopLevel, iTilePopLevel);
+											iGrowthState = GROWTH_COMMIT;
+										}
+										if (iGrowthState == GROWTH_COMMIT)
+											Game_PerhapsGeneralZoneStartBuilding(iX, iY, iTilePopLevel, iCurrZoneType);
+									}
 								}
 							}
 						}
 					}
 				}
-				else if (iCurrentTileID >= TILE_SUSPENSION_BRIDGE_START_B && iCurrentTileID < TILE_ONRAMP_TL ||
-					iCurrentTileID == TILE_REINFORCED_BRIDGE_PYLON ||
-					iCurrentTileID == TILE_REINFORCED_BRIDGE) {
-					iFundingPercent = pBudgetArr[BUDGET_BRIDGE].iFundingPercent;
-					// Transportation budget, bridges - if below 100% and the weather isn't favourable, there's a chance of destruction.
-					if (iFundingPercent != 100 && (int)(bWeatherWind + (unsigned __int16)rand() % 50) >= iFundingPercent) {
-						//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Bridge. Weather Vulnerable\n", iStep, iSubStep);
-						Game_CenterOnTileCoords(iX, iY);
-						Game_SimcityView_DestroyStructure(pSCView, iX, iY, 1);
-						Game_NewspaperStoryGenerator(39, 0);
-						goto GOAFTERSETXBIT;
-					}
-				}
-				else if (iCurrentTileID < TILE_TUNNEL_T || iCurrentTileID >= TILE_CROSSOVER_POWERTB_ROADLR) {
-					if ((iCurrentTileID < TILE_HIGHWAY_HTB || iCurrentTileID >= TILE_SUBTORAIL_T) &&
-						(iCurrentTileID < TILE_HIGHWAY_LR || iCurrentTileID >= TILE_SUSPENSION_BRIDGE_START_B))
-						goto GOAFTERSETXBIT;
-					if (IsEven(iX) && IsEven(iY)) {
-						iFundingPercent = pBudgetArr[BUDGET_HIGHWAY].iFundingPercent;
-						if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
-							if (iX < GAME_MAP_SIZE &&
-								iY < GAME_MAP_SIZE &&
-								XBITReturnIsWater(iX, iY)) {
-								//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Transit #1. Item(%s)\n", iStep, iSubStep, szTileNames[iCurrentTileID]);
-								Game_PlaceTileWithMilitaryCheck(iX, iY, 0);
-							}
-							else {
-								iReplaceTile = (rand() & 3) + 1;
-								//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Transit #1 (else). iRandSelect(%d). Item(%s)\n", iStep, iSubStep, iReplaceTile, szTileNames[iCurrentTileID]);
-								Game_PlaceTileWithMilitaryCheck(iX, iY, iReplaceTile);
-							}
-							iNextX = iX + 1;
-							if (iNextX >= 0 &&
-								iNextX < GAME_MAP_SIZE &&
-								iY < GAME_MAP_SIZE &&
-								XBITReturnIsWater(iNextX, iY)) {
-								//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Transit #2. Item(%s)\n", iStep, iSubStep, szTileNames[iCurrentTileID]);
-								Game_PlaceTileWithMilitaryCheck(iNextX, iY, 0);
-							}
-							else {
-								iReplaceTile = (rand() & 3) + 1;
-								//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Transit #2 (else). iRandSelect(%d). Item(%s)\n", iStep, iSubStep, iReplaceTile, szTileNames[iCurrentTileID]);
-								Game_PlaceTileWithMilitaryCheck(iNextX, iY, iReplaceTile);
-							}
-							iNextY = iY + 1;
-							if (iX < GAME_MAP_SIZE &&
-								iNextY >= 0 &&
-								iNextY < GAME_MAP_SIZE &&
-								XBITReturnIsWater(iX, iNextY)) {
-								//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Transit #3. Item(%s)\n", iStep, iSubStep, szTileNames[iCurrentTileID]);
-								Game_PlaceTileWithMilitaryCheck(iX, iNextY, 0);
-							}
-							else {
-								iReplaceTile = (rand() & 3) + 1;
-								//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Transit #3 (else). iRandSelect(%d). Item(%s)\n", iStep, iSubStep, iReplaceTile, szTileNames[iCurrentTileID]);
-								Game_PlaceTileWithMilitaryCheck(iX, iNextY, iReplaceTile);
-							}
-							if (iNextX < GAME_MAP_SIZE &&
-								iNextY < GAME_MAP_SIZE &&
-								XBITReturnIsWater(iNextX, iNextY)) {
-								//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Transit #4. Item(%s)\n", iStep, iSubStep, szTileNames[iCurrentTileID]);
-								Game_PlaceTileWithMilitaryCheck(iNextX, iNextY, 0);
-							}
-							else {
-								iReplaceTile = (rand() & 3) + 1;
-								//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Transit #4 (else). iRandSelect(%d). Item(%s)\n", iStep, iSubStep, iReplaceTile, szTileNames[iCurrentTileID]);
-								Game_PlaceTileWithMilitaryCheck(iNextX, iNextY, iReplaceTile);
-							}
-							goto GOAFTERSETXBIT;
-						}
-					}
-				}
-				else if (iCurrentTileID >= TILE_TUNNEL_T && iCurrentTileID <= TILE_TUNNEL_L) {
-					iFundingPercent = pBudgetArr[BUDGET_TUNNEL].iFundingPercent;
-					if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
-						//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Tunnel. Item(%s)\n", iStep, iSubStep, szTileNames[iCurrentTileID]);
-						Game_CenterOnTileCoords(iX, iY);
-						Game_SimcityView_DestroyStructure(pSCView, iX, iY, 1);
-						goto GOAFTERSETXBIT;
-					}
-				}
 			}
-		GOUNDCHECKTHENYINCREASE:
-			if (!Game_RandomWordLFSRMod128()) {
-				iCurrentUndergroundTileID = GetUndergroundTileID(iX, iY);
-				if (iCurrentUndergroundTileID >= UNDER_TILE_SUBWAY_LR && iCurrentUndergroundTileID < UNDER_TILE_PIPES_LR ||
-					iCurrentUndergroundTileID == UNDER_TILE_SUBWAYENTRANCE ||
-					iCurrentUndergroundTileID == UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR ||
-					iCurrentUndergroundTileID == UNDER_TILE_CROSSOVER_PIPESLR_SUBWAYTB) {
-					iFundingPercent = pBudgetArr[BUDGET_SUBWAY].iFundingPercent;
-					if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
-						//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Subway. Item(%s) / Underground Item(%s)\n", iStep, iSubStep, szTileNames[iCurrentTileID], (iCurrentUndergroundTileID > UNDER_TILE_SUBWAYENTRANCE) ? "** Unknown **" : szUndergroundNames[iCurrentUndergroundTileID]);
-						if (iCurrentUndergroundTileID == UNDER_TILE_SUBWAYENTRANCE)
-							Game_SimcityView_DestroyStructure(pSCView, iX, iY, 0);
-						else {
-							if (iCurrentUndergroundTileID == UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR)
-								iReplaceTile = UNDER_TILE_PIPES_TB;
-							else if (iCurrentUndergroundTileID == UNDER_TILE_CROSSOVER_PIPESLR_SUBWAYTB)
-								iReplaceTile = UNDER_TILE_PIPES_LR;
-							else
-								iReplaceTile = UNDER_TILE_CLEAR;
-							Game_PlaceUndergroundTiles(iX, iY, iReplaceTile);
-						}
-						// There's no 'goto' in this case.
-					}
-				}
-			}
-			iY += 4;
+			DoBudgetSubwayCheck(pSCView, iX, iY);
 		}
-		iX += 4;
 	}
 	rcDst.top = -1000;
 }
@@ -1037,9 +1089,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 		do {
 			iCurrX += iMoveX;
 			iCurrY += iMoveY;
-			if (iCurrX >= GAME_MAP_SIZE ||
-				iCurrY >= GAME_MAP_SIZE ||
-				!XBITReturnIsWater(iCurrX, iCurrY))
+			if (iCurrX >= GAME_MAP_SIZE || iCurrY >= GAME_MAP_SIZE || !XBITReturnIsWater(iCurrX, iCurrY))
 				return 0;
 			if (GetTileID(iCurrX, iCurrY))
 				return 0;
@@ -1087,21 +1137,11 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 	case TILE_MILITARY_TOPSECRET:
 	case TILE_INFRASTRUCTURE_CARGOYARD:
 	case TILE_INFRASTRUCTURE_HANGAR2:
-		//__int16 iSX, iSY;
 		// Odd numbered x/y coordinates are subtracted by 1.
 		// If this isn't done then buildings of this nature
 		// will end up overlapping.
 		iCurrX = (IsEven(x)) ? x : x - 1;
 		iCurrY = (IsEven(y)) ? y : y - 1;
-
-		// Old method, kept here for comparison cases as a precaution.
-		// iSX == iCurrX
-		// iSY == iCurrY
-		//iSX = x;
-		//P_LOBYTE(iSX) = x & 0xFE;
-		//iSY = y;
-		//P_LOBYTE(iSY) = y & 0xFE;
-		//ConsoleLog(LOG_DEBUG, "0: [%s] (%d, (%d, %d))==%c (%d, (%d, %d))==%c\n", szTileNames[iTileID], x, iCurrX, iSX, ((iCurrX==iSX) ? 'Y' : 'N'), y, iCurrY, iSY, ((iCurrY==iSY) ? 'Y' : 'N'));
 
 		iNextX = iCurrX + 1;
 		iNextY = iCurrY + 1;

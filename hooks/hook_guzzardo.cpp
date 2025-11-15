@@ -269,14 +269,13 @@ static BOOL BuildTheHouse() {
 }
 
 static void ChangeChurchZone() {
-	__int16 iReplaceTile, iLength, iDepth;
+	__int16 iLength, iDepth;
 
 	for (iLength = 0; iLength < GAME_MAP_SIZE; ++iLength) {
 		for (iDepth = 0; iDepth < GAME_MAP_SIZE; ++iDepth) {
 			if (GetTileID(iLength, iDepth) == TILE_INFRASTRUCTURE_CHURCH) {
 				if (XZONReturnZone(iLength, iDepth) == ZONE_NONE) {
-					iReplaceTile = (rand() & 3) + 1; // Random rubble.
-					Game_PlaceTileWithMilitaryCheck(iLength, iDepth, iReplaceTile); // Replace
+					Game_PlaceTileWithMilitaryCheck(iLength, iDepth, GetRubbleTileID()); // Replace
 					XZONSetNewZone(iLength, iDepth, ZONE_DENSE_RESIDENTIAL); // Re-zone
 					// It should be noted here that we're 'not' unsetting the powered/powerable
 					// bits so consequently once the tiles are replaced and re-zoned they will

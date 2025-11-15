@@ -289,31 +289,6 @@ static void GetOutDWORD(DWORD dwValue, LPBYTE lpData, LPDWORD lpcbData) {
 		memcpy(lpData, &dwValue, sizeof(DWORD));
 }
 
-// Reference and inspiration for this comes from the separate
-// 'simcity-noinstall' project.
-const char *AdjustSource(char *buf, const char *path) {
-	static char def_data_path[] = "A:\\DATA\\";
-
-	def_data_path[0] = szGamePath[0];
-
-	int plen = strlen(path);
-	int flen = strlen(def_data_path);
-	if (plen <= flen || _strnicmp(def_data_path, path, flen) != 0)
-		return path;
-
-	char temp[MAX_PATH + 1];
-
-	memset(temp, 0, sizeof(temp));
-
-	strcpy_s(temp, MAX_PATH, path + (flen - 1));
-
-	strcpy_s(buf, MAX_PATH, szGamePath);
-	strcat_s(buf, MAX_PATH, "\\Movies");
-	strcat_s(buf, MAX_PATH, temp);
-
-	return buf;
-}
-
 static void GamePathAdjust(const char *szBasePath, const char *target, LPBYTE lpData, LPDWORD lpcbData) {
 	char szTarget[MAX_PATH];
 
@@ -536,49 +511,6 @@ extern "C" LSTATUS __stdcall Hook_RegCloseKey(HKEY hKey) {
 	return RegCloseKey(hKey);
 }
 
-extern "C" HANDLE __stdcall Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
-	LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {
-	if (registry_debug & REGISTRY_DEBUG_PATHING)
-		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> CreateFileA(%s, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X)\n", _ReturnAddress(), lpFileName,
-			dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-
-	if (iRegPathHookMode == REGPATH_SC2K1996) {
-		if ((DWORD)_ReturnAddress() == 0x4A8A90 ||
-			(DWORD)_ReturnAddress() == 0x48A810) {
-			char buf[MAX_PATH + 1];
-
-			memset(buf, 0, sizeof(buf));
-
-			HANDLE hFileHandle = CreateFileA(AdjustSource(buf, lpFileName), dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-			if (registry_debug & REGISTRY_DEBUG_PATHING)
-				ConsoleLog(LOG_DEBUG, "MISC: (Modification): 0x%08X -> CreateFileA(%s, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X) (0x%08x)\n", _ReturnAddress(), lpFileName,
-					dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile, hFileHandle);
-			return hFileHandle;
-		}
-	}
-	return CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-}
-
-extern "C" HANDLE __stdcall Hook_FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData) {
-	if (registry_debug & REGISTRY_DEBUG_PATHING)
-		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> FindFirstFileA(%s, 0x%08X)\n", _ReturnAddress(), lpFileName, lpFindFileData);
-
-	if (iRegPathHookMode == REGPATH_SC2K1996) {
-		if ((DWORD)_ReturnAddress() == 0x4A8A90 ||
-			(DWORD)_ReturnAddress() == 0x48A810) {
-			char buf[MAX_PATH + 1];
-
-			memset(buf, 0, sizeof(buf));
-
-			HANDLE hFileHandle = FindFirstFileA(AdjustSource(buf, lpFileName), lpFindFileData);
-			if (registry_debug & REGISTRY_DEBUG_PATHING)
-				ConsoleLog(LOG_DEBUG, "MISC: (Modification): 0x%08X -> FindFirstFileA(%s, 0x%08X) (0x%08x)\n", _ReturnAddress(), buf, lpFindFileData, hFileHandle);
-			return hFileHandle;
-		}
-	}
-	return FindFirstFileA(lpFileName, lpFindFileData);
-}
-
 void InstallRegistryPathingHooks_SC2K1996(void) {
 	iRegPathHookMode = REGPATH_SC2K1996;
 
@@ -596,12 +528,6 @@ void InstallRegistryPathingHooks_SC2K1996(void) {
 
 	// Install RegOpenKeyExA
 	*(DWORD*)(0x4EF818) = (DWORD)Hook_RegOpenKeyExA;
-
-	// Install CreateFileA hook
-	*(DWORD*)(0x4EFADC) = (DWORD)Hook_CreateFileA;
-
-	// Install FindFirstFileA hook
-	*(DWORD*)(0x4EFB8C) = (DWORD)Hook_FindFirstFileA;
 }
 
 void InstallRegistryPathingHooks_SC2K1995(void) {

@@ -64,100 +64,100 @@ static BOOL bOverrideTickPlacementHighlight = FALSE;
 // Override some strings that have egregiously bad grammar/capitalization.
 // Maxis fail English? That's unpossible!
 extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMax) {
-	if (hInstance == hSC2KAppModule && bSettingsUseNewStrings) {
+	if (hInstance == hSC2KAppModule) {
 		switch (uID) {
 		case 97:
-			if (!strcpy_s(lpBuffer, cchBufferMax,
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Hydroelectric Dam"))
 				return strlen(lpBuffer);
 			break;
 		case 108:
-			if (!strcpy_s(lpBuffer, cchBufferMax,
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Hydroelectric dams can only be placed on waterfall tiles."))
 				return strlen(lpBuffer);
 			break;
 		case 111:
-			if (!strcpy_s(lpBuffer, cchBufferMax,
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Tunnel cannot be built as it would intersect an existing tunnel."))
 				return strlen(lpBuffer);
 			break;
 		case 112:
-			if (!strcpy_s(lpBuffer, cchBufferMax,
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Tunnel cannot be built as it would leave the city limits."))
 				return strlen(lpBuffer);
 			break;
 		case 113:
-			if (!strcpy_s(lpBuffer, cchBufferMax,
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Tunnel cannot be built as it would be too deep in the terrain."))
 				return strlen(lpBuffer);
 			break;
 		case 114:
-			if (!strcpy_s(lpBuffer, cchBufferMax,
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Tunnel cannot be built as the exit terrain is unstable."))
 				return strlen(lpBuffer);
 			break;
 		case 115:
-			if (!strcpy_s(lpBuffer, cchBufferMax,
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"An existing subway or sewer line is blocking construction."))
 				return strlen(lpBuffer);
 			break;
 		case 116:
-			if (!strcpy_s(lpBuffer, cchBufferMax,
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Tunnel entrances must be placed on a hillside."))
 				return strlen(lpBuffer);
 			break;
 		case 129:
-			if (!strcpy_s(lpBuffer, cchBufferMax,
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Nuclear Power"))
 				return strlen(lpBuffer);
 			break;
 		case 132:
-			if (!strcpy_s(lpBuffer, cchBufferMax,
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Microwave Power"))
 				return strlen(lpBuffer);
 			break;
 		case 133:
-			if (!strcpy_s(lpBuffer, cchBufferMax,
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Fusion Power"))
 				return strlen(lpBuffer);
 			break;
 		case 240:
-			if (!strcpy_s(lpBuffer, cchBufferMax,
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Your nation's military is interested in building a base on your city's soil. "
 				"This could mean extra revenue. It could also raise new problems. "
 				"Do you wish to grant land to the military?"))
 				return strlen(lpBuffer);
 			break;
 		case 289:
-			if (!strcpy_s(lpBuffer, cchBufferMax,
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Current rates are %d%%.\r\n"
 				"Do you wish to issue the bond?"))
 				return strlen(lpBuffer);
 			break;
 		case 290:
-			if (!strcpy_s(lpBuffer, cchBufferMax,
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"You need $10,000 in cash to repay an outstanding bond."))
 				return strlen(lpBuffer);
 			break;
 		case 291:
-			if (!strcpy_s(lpBuffer, cchBufferMax,
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"The oldest outstanding bond rate is %d%%.\r\n"
 				"Do you wish to repay this bond?"))
 				return strlen(lpBuffer);
 			break;
 		case 346:
-			if (!strcpy_s(lpBuffer, cchBufferMax,
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Engineers report that tunnel construction costs will be %s.\r\n"
 				"Do you wish to construct the tunnel?"))
 				return strlen(lpBuffer);
 			break;
 		case 640:
-			if (!strcpy_s(lpBuffer, cchBufferMax,
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Grocery store"))
 				return strlen(lpBuffer);
 			break;
 		case 745:
-			if (!strcpy_s(lpBuffer, cchBufferMax,
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Launch Arcology"))
 				return strlen(lpBuffer);
 			break;
@@ -172,12 +172,12 @@ extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR l
 				return strlen(lpBuffer);
 			break;
 		case 32921:
-			if (!strcpy_s(lpBuffer, cchBufferMax,
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Saves city every 5 years"))
 				return strlen(lpBuffer);
 			break;
 		default:
-			return LoadStringA(hInstance, uID, lpBuffer, cchBufferMax);
+			break;
 		}
 	}
 	return LoadStringA(hInstance, uID, lpBuffer, cchBufferMax);
@@ -194,6 +194,10 @@ extern "C" HMENU __stdcall Hook_LoadMenuA(HINSTANCE hInstance, LPCSTR lpMenuName
 }
 #pragma warning(default : 6387)
 
+extern "C" int __stdcall Hook_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
+	return L_MessageBoxA(hWnd, lpText, lpCaption, uType);
+}
+
 extern "C" BOOL __stdcall Hook_ShowWindow(HWND hWnd, int nCmdShow) {
 	if (mischook_debug & MISCHOOK_DEBUG_WINDOW)
 		ConsoleLog(LOG_DEBUG, "WND:  0x%08X -> ShowWindow(0x%08X, %i)\n", _ReturnAddress(), hWnd, nCmdShow);
@@ -206,41 +210,18 @@ extern "C" BOOL __stdcall Hook_ShowWindow(HWND hWnd, int nCmdShow) {
 }
 
 int L_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
+	HWND MBhWnd;
 	int ret;
 
+	// This has been added so if a '0' parameter was passed for hWnd it'll
+	// be set for the active window, otherwise the message box could end up
+	// behind the window and re-focusing would become a bit of a pain.
+	MBhWnd = (hWnd) ? hWnd : GetActiveWindow();
+	
 	ToggleFloatingStatusDialog(FALSE);
-	ret = MessageBoxA(hWnd, lpText, lpCaption, uType);
+	ret = MessageBoxA(MBhWnd, lpText, lpCaption, uType);
 	ToggleFloatingStatusDialog(TRUE);
 
-	return ret;
-}
-
-int __stdcall Hook_AfxMessageBoxStr(LPCTSTR lpszPrompt, UINT nType, UINT nIDHelp) {
-	int ret;
-
-	ToggleFloatingStatusDialog(FALSE);
-	ret = GameMain_WinApp_DoMessageBox(game_AfxCoreState.m_pCurrentWinApp, lpszPrompt, nType, nIDHelp);
-	ToggleFloatingStatusDialog(TRUE);
-
-	return ret;
-}
-
-int __stdcall Hook_AfxMessageBoxID(UINT nIDPrompt, UINT nType, UINT nIDHelp) {
-	CMFC3XString cStr;
-	UINT nID;
-	int ret;
-
-	GameMain_String_Cons(&cStr);
-	GameMain_String_LoadStringA(&cStr, nIDPrompt);
-	nID = nIDHelp;
-	if (nIDHelp == -1)
-		nID = nIDPrompt;
-
-	ToggleFloatingStatusDialog(FALSE);
-	ret = GameMain_WinApp_DoMessageBox(game_AfxCoreState.m_pCurrentWinApp, cStr.m_pchData, nType, nIDHelp);
-	ToggleFloatingStatusDialog(TRUE);
-
-	GameMain_String_Dest(&cStr);
 	return ret;
 }
 
@@ -1590,7 +1571,7 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 		}
 		return GameMain_FrameWnd_OnCmdMsg((CMFC3XFrameWnd *)pThis, nID, nCode, pExtra, pHandler);
 	}
-	if ((DWORD)dwRetAddr == 0x4A4BB2) {
+	else if ((DWORD)dwRetAddr == 0x4A4BB2) {
 		if (nCode == _CN_COMMAND) {
 			switch (nID) {
 				// This is the 'sc2kfix Settings' entry in the main dialog.
@@ -1661,21 +1642,16 @@ void InstallMiscHooks_SC2K1996(void) {
 	// Install critical Windows API hooks
 	*(DWORD*)(0x4EFBE8) = (DWORD)Hook_LoadStringA;
 	*(DWORD*)(0x4EFDCC) = (DWORD)Hook_LoadMenuA;
+	*(DWORD*)(0x4EFDE4) = (DWORD)Hook_MessageBoxA;
 	*(DWORD*)(0x4EFC64) = (DWORD)Hook_DialogBoxParamA;
 	*(DWORD*)(0x4EFE70) = (DWORD)Hook_ShowWindow;
 	*(DWORD*)(0x4EFCE8) = (DWORD)Hook_DefWindowProcA;
 
-	// Install Smacker hooks
-	GetSMKFuncs();
-
 	// Install registry pathing hooks
 	InstallRegistryPathingHooks_SC2K1996();
 
-	// Hook into both AfxMessageBox functions
-	VirtualProtect((LPVOID)0x4B232F, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4B232F, Hook_AfxMessageBoxStr);
-	VirtualProtect((LPVOID)0x4B234F, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4B234F, Hook_AfxMessageBoxID);
+	// Install Movie hooks
+	InstallMovieHooks();
 
 	// Hook into the CFileDialog::DoModal function
 	VirtualProtect((LPVOID)0x49FE18, 5, PAGE_EXECUTE_READWRITE, &dwDummy);

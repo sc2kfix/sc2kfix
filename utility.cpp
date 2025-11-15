@@ -233,6 +233,12 @@ HOOKEXT BOOL IsFileNameValid(const char *pName) {
 	return TRUE;
 }
 
+BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc) {
+	if (!strcpy_s(pDest, SizeInBytes, pSrc) && bSettingsUseNewStrings)
+		return TRUE;
+	return FALSE;
+}
+
 // start of base64 code
 /*
 * Base64 encoding/decoding (RFC1341)

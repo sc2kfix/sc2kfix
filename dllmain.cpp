@@ -132,6 +132,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						military_debug = DEBUG_FLAGS_EVERYTHING;
 						mischook_debug = DEBUG_FLAGS_EVERYTHING;
 						modloader_debug = DEBUG_FLAGS_EVERYTHING;
+						mov_debug = DEBUG_FLAGS_EVERYTHING;
 						mus_debug = DEBUG_FLAGS_EVERYTHING;
 						registry_debug = DEBUG_FLAGS_EVERYTHING;
 						sc2x_debug = DEBUG_FLAGS_EVERYTHING;
@@ -146,6 +147,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						military_debug = DEBUG_FLAGS_NONE;
 						mischook_debug = DEBUG_FLAGS_NONE;
 						modloader_debug = DEBUG_FLAGS_NONE;
+						mov_debug = DEBUG_FLAGS_NONE;
 						mus_debug = DEBUG_FLAGS_NONE;
 						registry_debug = DEBUG_FLAGS_NONE;
 						sc2x_debug = DEBUG_FLAGS_NONE;
@@ -375,16 +377,22 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		lpDialogFix1 = NULL;
 		lpDialogFix2 = NULL;
 		switch (dwDetectedVersion) {
+		case SC2KVERSION_DEMO:
+			bCanFixDialogCrash = TRUE;
+			lpDialogFix1 = (LPVOID)0x48A2EB;
+			lpDialogFix2 = (LPVOID)0x48A34A;
+			break;
+
 		case SC2KVERSION_1995:
 			bCanFixDialogCrash = TRUE;
-			lpDialogFix1 = (LPVOID)0x0049EE93;
-			lpDialogFix2 = (LPVOID)0x0049EEF2;
+			lpDialogFix1 = (LPVOID)0x49EE93;
+			lpDialogFix2 = (LPVOID)0x49EEF2;
 			break;
 
 		case SC2KVERSION_1996:
 			bCanFixDialogCrash = TRUE;
-			lpDialogFix1 = (LPVOID)0x004A04FA;
-			lpDialogFix2 = (LPVOID)0x004A0559;
+			lpDialogFix1 = (LPVOID)0x4A04FA;
+			lpDialogFix2 = (LPVOID)0x4A0559;
 			break;
 
 		default:
@@ -409,16 +417,22 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		lpWarningFix1 = NULL;
 		lpWarningFix2 = NULL;
 		switch (dwDetectedVersion) {
+		case SC2KVERSION_DEMO:
+			bCanFixPaletteWarnings = TRUE;
+			lpWarningFix1 = (LPVOID)0x478CFB;
+			lpWarningFix2 = (LPVOID)0x478D40;
+			break;
+
 		case SC2KVERSION_1995:
 			bCanFixPaletteWarnings = TRUE;
-			lpWarningFix1 = (LPVOID)0x00408749;
-			lpWarningFix2 = (LPVOID)0x0040878E;
+			lpWarningFix1 = (LPVOID)0x408749;
+			lpWarningFix2 = (LPVOID)0x40878E;
 			break;
 
 		case SC2KVERSION_1996:
 			bCanFixPaletteWarnings = TRUE;
-			lpWarningFix1 = (LPVOID)0x00408A79;
-			lpWarningFix2 = (LPVOID)0x00408ABE;
+			lpWarningFix1 = (LPVOID)0x408A79;
+			lpWarningFix2 = (LPVOID)0x408ABE;
 			break;
 
 		default:
@@ -493,7 +507,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		spriteIDs.clear();
 
 		// Send a closing message and close the log file
-		ReleaseSMKFuncs();
 		ConsoleLog(LOG_INFO, "CORE: Closing down at %lld. Goodnight!\n", time(NULL));
 		fflush(fdLog);
 		fclose(fdLog);

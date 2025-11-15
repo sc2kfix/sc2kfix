@@ -281,6 +281,21 @@ public:
 	int m_bCloseOnDelete;
 };
 
+class CMFC3XTime {
+public:
+	time_t m_time;
+};
+
+struct CMFC3XFileStatus {
+	CMFC3XTime m_ctime;          // creation date/time of file
+	CMFC3XTime m_mtime;          // last modification date/time of file
+	CMFC3XTime m_atime;          // last access date/time of file
+	LONG m_size;            // logical size of file in bytes
+	BYTE m_attribute;       // logical OR of CFile::Attribute enum values
+	BYTE _m_padding;        // pad the structure to a WORD
+	TCHAR m_szFullName[_MAX_PATH]; // absolute path name
+};
+
 class CMFC3XException : public CMFC3XObject {
 public:
 	int m_bAutoDelete;
@@ -333,6 +348,12 @@ public:
 	HDC m_hDC;
 	HDC m_hAttribDC;
 	BOOL m_bPrinting;
+};
+
+class CMFC3XPaintDC : public CMFC3XDC{
+public:
+	HWND m_hWnd;
+	PAINTSTRUCT m_ps;
 };
 
 class CMFC3XMenu : public CMFC3XObject {
@@ -542,6 +563,10 @@ public:
 };
 
 class CMFC3XStatic : public CMFC3XWnd {
+
+};
+
+class CMFC3XEdit : public CMFC3XWnd {
 
 };
 

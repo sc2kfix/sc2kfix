@@ -393,3 +393,24 @@ class CSimcityDoc : public CMFC3XDocument {
 public:
 	CEngine *pSimEngine;
 };
+
+class CQuerySpecificDialog : public CGameDialog {
+public:
+	DWORD dwQSDTileID;
+	DWORD dwQSDMapX;
+	DWORD dwQSDMapY;
+	CGraphics *dwQSDCGraphicsOne;
+	CMFC3XPoint dwQSDPointOne;
+	CMFC3XEdit dwQSDCEdit;
+	CMFC3XButton dwQSDCButton;
+	CMFC3XString dwQSDCStringOne;
+};
+
+class CQueryGeneralDialog : public CGameDialog {
+public:
+	CMFC3XPoint dwQGPointOne;
+	DWORD QGDthree;
+	DWORD QGDfour;
+	CGraphics *pQGDGraphic;
+	CMFC3XDC QGDDC;
+};
