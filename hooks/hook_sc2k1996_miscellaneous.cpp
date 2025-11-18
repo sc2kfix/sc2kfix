@@ -362,39 +362,36 @@ extern "C" void __stdcall Hook_CmdUI_Enable(BOOL bOn) {
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_MISSILESILOS, MF_BYCOMMAND | MF_ENABLED);
 }
 
-// Function prototype: HOOKCB void Hook_GameDoIdleUpkeep_Before(void)
+// Function prototype: HOOKCB void Hook_SimcityApp_BuildSubFrames_Before(void)
 // Ignored if bHookStopProcessing == TRUE.
 // SPECIAL NOTE: Ignoring this hook on callback results in the game effectively hanging. You have
 //   been warned!
-std::vector<hook_function_t> stHooks_Hook_GameDoIdleUpkeep_Before;
+std::vector<hook_function_t> stHooks_Hook_SimcityApp_BuildSubFrames_Before;
 
-// Function prototype: HOOKCB void Hook_GameDoIdleUpkeep_After(void)
+// Function prototype: HOOKCB void Hook_SimcityApp_BuildSubFrames_After(void)
 // Ignored if bHookStopProcessing == TRUE.
-std::vector<hook_function_t> stHooks_Hook_GameDoIdleUpkeep_After;
+std::vector<hook_function_t> stHooks_Hook_SimcityApp_BuildSubFrames_After;
 
-extern "C" void __stdcall Hook_GameDoIdleUpkeep(void) {
-	DWORD *pThis;
+extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
+	CSimcityAppPrimary *pThis;
 	__asm mov [pThis], ecx
-	for (const auto& hook : stHooks_Hook_GameDoIdleUpkeep_Before) {
+
+	for (const auto& hook : stHooks_Hook_SimcityApp_BuildSubFrames_Before) {
 		bHookStopProcessing = FALSE;
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
-			void (*fnHook)(void*) = (void(*)(void*))hook.pFunction;
+			void (*fnHook)(CSimcityAppPrimary*) = (void(*)(CSimcityAppPrimary*))hook.pFunction;
 			fnHook(pThis);
 		}
 		if (bHookStopProcessing)
 			goto BAIL;
 	}
 
-	__asm {
-		mov ecx, [pThis]
-		mov edi, 0x405AB0
-		call edi
-	}
+	GameMain_SimcityApp_BuildSubFrames(pThis);
 
-	for (const auto& hook : stHooks_Hook_GameDoIdleUpkeep_After) {
+	for (const auto& hook : stHooks_Hook_SimcityApp_BuildSubFrames_After) {
 		bHookStopProcessing = FALSE;
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
-			void (*fnHook)(void*) = (void(*)(void*))hook.pFunction;
+			void (*fnHook)(CSimcityAppPrimary*) = (void(*)(CSimcityAppPrimary*))hook.pFunction;
 			fnHook(pThis);
 		}
 		if (bHookStopProcessing)
@@ -406,13 +403,16 @@ BAIL:
 }
 
 // Fix the missing "Maxis Presents" slide
-void __declspec(naked) Hook_4062AD(void) {
-	__asm {
-		mov dword ptr [ecx+0x14C], 1
-		mov dword ptr [edi], 3
-		push 0x4062BD
-		retn
-	}
+void __declspec(naked) Hook_SimcityApp_BuildSubFrames_CloseInflight(void) {
+	CSimcityAppPrimary *pThis;
+
+	__asm mov [pThis], ecx
+
+	pThis->iSCAProgramStep = ONIDLE_STATE_DISPLAYTITLE;
+	pThis->dwSCASetNextStep = TRUE;
+
+	_asm mov ecx, [pThis]
+	GAMEJMP(0x4062BD)
 }
 
 // Function prototype: HOOKCB void Hook_OnNewCity_Before(void)
@@ -1671,15 +1671,15 @@ void InstallMiscHooks_SC2K1996(void) {
 
 	InstallSpriteAndTileSetHooks_SC2K1996();
 
-	// Hook GameDoIdleUpkeep
+	// Hook CSimcityApp::BuildSubFrames
 	VirtualProtect((LPVOID)0x402A3B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x402A3B, Hook_GameDoIdleUpkeep);
+	NEWJMP((LPVOID)0x402A3B, Hook_SimcityApp_BuildSubFrames);
 
 	// Fix the Maxis Presents logo not being shown
-	VirtualProtect((LPVOID)0x4062B9, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(DWORD*)0x4062B9 = 1;
+	VirtualProtect((LPVOID)0x4062B9, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(BYTE*)0x4062B9 = ONIDLE_STATE_DISPLAYMAXIS;
 	VirtualProtect((LPVOID)0x4062AD, 12, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4062AD, Hook_4062AD);
+	NEWJMP((LPVOID)0x4062AD, Hook_SimcityApp_BuildSubFrames_CloseInflight);
 	VirtualProtect((LPVOID)0x4E6130, 12, PAGE_EXECUTE_READWRITE, &dwDummy);
 	memcpy_s((LPVOID)0x4E6130, 12, "presnts.bmp", 12);
 
