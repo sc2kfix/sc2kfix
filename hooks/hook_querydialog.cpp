@@ -42,7 +42,7 @@ static int GetQueriedSpriteIDFromCoords(WORD x, WORD y) {
 	}
 	else {
 		if (iTileID >= TILE_ARCOLOGY_PLYMOUTH) {
-			// Positioning falls into the "special" range.
+			// Positioning falls into the "medium" range.
 			iSpriteID = iTileID + 500;
 		}
 	}	

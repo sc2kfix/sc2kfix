@@ -446,6 +446,7 @@ static void DoSiloGrowth(__int16 iX, __int16 iY, BYTE iCurrentTileID, __int16 iC
 static void DoUpdateMicrosimGrowthTick(__int16 iX, __int16 iY, BYTE iCurrentTileID) {
 	BYTE iTextOverlay;
 	BYTE iMicrosimIdx;
+	BYTE iTileID;
 	BYTE iMicrosimDataStat0;
 
 	if (iCurrentTileID >= TILE_INFRASTRUCTURE_RAILSTATION) {
@@ -459,22 +460,24 @@ static void DoUpdateMicrosimGrowthTick(__int16 iX, __int16 iY, BYTE iCurrentTile
 		}
 		else if (iCurrentTileID >= TILE_ARCOLOGY_PLYMOUTH && iCurrentTileID <= TILE_ARCOLOGY_LAUNCH && XZONCornerAbsoluteCheckMask(iX, iY, CORNER_TRIGHT)) {
 			iTextOverlay = XTXTGetTextOverlayID(iX, iY);
-			iMicrosimIdx = MICROSIMID_ENTRY(iTextOverlay);
-			if (iTextOverlay >= MIN_SIM_TEXT_ENTRIES && iTextOverlay <= MAX_SIM_TEXT_ENTRIES &&
-				GetMicroSimulatorTileID(iMicrosimIdx) >= TILE_ARCOLOGY_PLYMOUTH && GetMicroSimulatorTileID(iMicrosimIdx) <= TILE_ARCOLOGY_LAUNCH) {
-				iMicrosimDataStat0 = (GetXVALByteDataWithNormalCoordinates(iX, iY) >> 5)
-					- (GetXCRMByteDataWithNormalCoordinates(iX,iY) >> 5)
-					- (GetXPLTByteDataWithNormalCoordinates(iX,iY) >> 5)
-					+ 12;
-				if (!XBITReturnIsPowered(iX, iY))
-					iMicrosimDataStat0 /= 2;
-				if (!XBITReturnIsWatered(iX, iY))
-					iMicrosimDataStat0 /= 2;
-				if (iMicrosimDataStat0 < 0)
-					iMicrosimDataStat0 = 0;
-				if (iMicrosimDataStat0 > 12)
-					iMicrosimDataStat0 = 12;
-				SetMicroSimulatorStat0(iMicrosimIdx, iMicrosimDataStat0);
+			if (iTextOverlay >= MIN_SIM_TEXT_ENTRIES && iTextOverlay <= MAX_SIM_TEXT_ENTRIES) {
+				iMicrosimIdx = MICROSIMID_ENTRY(iTextOverlay);
+				iTileID = GetMicroSimulatorTileID(iMicrosimIdx);
+				if (iTileID >= TILE_ARCOLOGY_PLYMOUTH && iTileID <= TILE_ARCOLOGY_LAUNCH) {
+					iMicrosimDataStat0 = (GetXVALByteDataWithNormalCoordinates(iX, iY) >> 5)
+						- (GetXCRMByteDataWithNormalCoordinates(iX, iY) >> 5)
+						- (GetXPLTByteDataWithNormalCoordinates(iX, iY) >> 5)
+						+ 12;
+					if (!XBITReturnIsPowered(iX, iY))
+						iMicrosimDataStat0 /= 2;
+					if (!XBITReturnIsWatered(iX, iY))
+						iMicrosimDataStat0 /= 2;
+					if (iMicrosimDataStat0 < 0)
+						iMicrosimDataStat0 = 0;
+					if (iMicrosimDataStat0 > 12)
+						iMicrosimDataStat0 = 12;
+					SetMicroSimulatorStat0(iMicrosimIdx, iMicrosimDataStat0);
+				}
 			}
 		}
 	}
