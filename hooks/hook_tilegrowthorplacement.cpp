@@ -459,8 +459,8 @@ static void DoUpdateMicrosimGrowthTick(__int16 iX, __int16 iY, BYTE iCurrentTile
 		}
 		else if (iCurrentTileID >= TILE_ARCOLOGY_PLYMOUTH && iCurrentTileID <= TILE_ARCOLOGY_LAUNCH && XZONCornerAbsoluteCheckMask(iX, iY, CORNER_TRIGHT)) {
 			iTextOverlay = XTXTGetTextOverlayID(iX, iY);
-			iMicrosimIdx = iTextOverlay - MAX_USER_TEXT_ENTRIES;
-			if (iTextOverlay >= MAX_USER_TEXT_ENTRIES && iTextOverlay < 201 &&
+			iMicrosimIdx = MICROSIMID_ENTRY(iTextOverlay);
+			if (iTextOverlay >= MIN_SIM_TEXT_ENTRIES && iTextOverlay <= MAX_SIM_TEXT_ENTRIES &&
 				GetMicroSimulatorTileID(iMicrosimIdx) >= TILE_ARCOLOGY_PLYMOUTH && GetMicroSimulatorTileID(iMicrosimIdx) <= TILE_ARCOLOGY_LAUNCH) {
 				iMicrosimDataStat0 = (GetXVALByteDataWithNormalCoordinates(iX, iY) >> 5)
 					- (GetXCRMByteDataWithNormalCoordinates(iX,iY) >> 5)

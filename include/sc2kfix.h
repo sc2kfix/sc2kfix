@@ -93,12 +93,19 @@ template <typename T> std::string to_string_precision(const T value, const int p
 // maximum for all which is 256 (0 - 255).
 // Index 0 is used for the city-base mayor name.
 #define MIN_USER_TEXT_ENTRIES 1
-#define MAX_USER_TEXT_ENTRIES 51
-#define MIN_SIM_TEXT_ENTRIES MAX_USER_TEXT_ENTRIES
+#define MAX_USER_TEXT_ENTRIES 50
+#define MIN_SIM_TEXT_ENTRIES (MAX_USER_TEXT_ENTRIES + 1)
 #define MAX_SIM_TEXT_ENTRIES 200
 
 #define MICROSIMID_MIN 0
-#define MICROSIMID_MAX MAX_SIM_TEXT_ENTRIES - MIN_SIM_TEXT_ENTRIES
+#define MICROSIMID_MAX (MAX_SIM_TEXT_ENTRIES - MIN_SIM_TEXT_ENTRIES)
+#define MICROSIMID_ENTRY(x) (x - MIN_SIM_TEXT_ENTRIES)
+
+// These "appear" to be related to XTHG cases
+// based on the named sailboat case.
+#define MIN_XTHG_TEXT_ENTRIES (MAX_SIM_TEXT_ENTRIES + 1)
+#define MAX_XTHG_TEXT_ENTRIES 240
+#define XTHGID_ENTRY(x) (x - MIN_XTHG_TEXT_ENTRIES)
 
 #define PIER_MAXTILES 4
 #define RUNWAYSTRIP_MAXTILES 5
