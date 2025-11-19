@@ -106,7 +106,7 @@ public:
 	HMODULE dwSCAhModule;
 	DWORD dwSCAGameAutoSave;
 	DWORD dwSCACursorGameHit;
-	DWORD dwSCALoadCityMode;
+	DWORD dwSCACMDLineLoadMode;
 	int iSCAGDCHorzRes;
 	int iSCAGDCVertRes;
 	DWORD dwSCAbForceBkgd;
@@ -119,15 +119,15 @@ public:
 	DWORD dwSCANoNewspapers;
 	CMFC3XPalette *dwSCAMainPaletteFore;
 	CMFC3XPalette *dwSCAMainPaletteBkgd;
-	CMFC3XString dwSCACStringOne;
-	CMFC3XString dwSCACStringTwo;
-	CMFC3XString dwSCACStringThree;
+	CMFC3XString dwSCACStringDriveCurrentWorkingDirectory;
+	CMFC3XString dwSCACStringHomeDirectory;
+	CMFC3XString dwSCACStringTargetTypePath;
 	CMFC3XString dwSCACStringLang;
 	DWORD dwSCASCURK;
 	CSound *SCASNDLayer;
 	DWORD dwSCASetNextStep;
-	CMFC3XMultiDocTemplate *dwSCAMultiDocOne;
-	CMFC3XMultiDocTemplate *dwSCAMultiDocTwo;
+	CMFC3XMultiDocTemplate *dwSCAMultiDocSC2;
+	CMFC3XMultiDocTemplate *dwSCAMultiDocSCN;
 	DWORD dwSCAThirtyFour;
 	DWORD dwSCAThirtyFive;
 	HCURSOR dwSCACursors[30];
@@ -147,7 +147,7 @@ public:
 	DWORD dwSCALastTick;
 	int iSCAProgramStep;
 	DWORD dwSCADoStepSkip;
-	DWORD dwSCAMenuDialogStep;
+	int iSCAMenuDialogStep;
 	DWORD dwSCAMapModeVarCheck;
 	DWORD dwSCAOnInitToggleToolBar;
 	DWORD dwSCASysCmdOnQuitVar;
@@ -160,7 +160,7 @@ class CSimcityAppDemo : public CMFC3XWinApp {
 public:
 	DWORD dwSCAGameAutoSave;
 	DWORD dwSCACursorGameHit;
-	DWORD dwSCALoadCityMode;
+	DWORD dwSCACMDLineLoadMode;
 	int iSCAGDCHorzRes;
 	int iSCAGDCVertRes;
 	DWORD dwSCAbForceBkgd;
@@ -173,15 +173,15 @@ public:
 	DWORD dwSCANoNewspapers;
 	CMFC3XPalette *dwSCAMainPaletteFore;
 	CMFC3XPalette *dwSCAMainPaletteBkgd;
-	CMFC3XString dwSCACStringOne;
-	CMFC3XString dwSCACStringTwo;
-	CMFC3XString dwSCACStringThree;
+	CMFC3XString dwSCACStringDriveCurrentWorkingDirectory;
+	CMFC3XString dwSCACStringHomeDirectory;
+	CMFC3XString dwSCACStringTargetTypePath;
 	CMFC3XString dwSCACStringLang;
 	DWORD dwSCASCURK;
 	CSound *SCASNDLayer;
 	DWORD dwSCASetNextStep;
-	CMFC3XMultiDocTemplate *dwSCAMultiDocOne;
-	CMFC3XMultiDocTemplate *dwSCAMultiDocTwo;
+	CMFC3XMultiDocTemplate *dwSCAMultiDocSC2;
+	CMFC3XMultiDocTemplate *dwSCAMultiDocSCN;
 	DWORD dwSCAThirtyFour;
 	DWORD dwSCAThirtyFive;
 	HCURSOR dwSCACursors[30];
@@ -201,7 +201,7 @@ public:
 	DWORD dwSCALastTick;
 	int iSCAProgramStep;
 	DWORD dwSCADoStepSkip;
-	DWORD dwSCAMenuDialogStep;
+	int iSCAMenuDialogStep;
 	DWORD dwSCAMapModeVarCheck;
 	DWORD dwSCAReturnToMenu;
 	DWORD dwSCAOnInitToggleToolBar;
@@ -413,4 +413,18 @@ public:
 	DWORD QGDfour;
 	CGraphics *pQGDGraphic;
 	CMFC3XDC QGDDC;
+};
+
+// !!! At the moment the CMovieDialog class is structured
+// to achieve alignment, it is heavily subject to change.
+
+class CMovieDialog : public CMFC3XDialog {
+public:
+	HICON hMovIcon;
+	BITMAPINFO *pOWMainBitmapInfo;
+	CMFC3XRect MovRECT[5];
+	BITMAPINFO *pOWButtonBitmapInfo[10];
+	CMFC3XPalette MovPalette;
+	int iButtonOne;
+	int iButtonTwo;
 };

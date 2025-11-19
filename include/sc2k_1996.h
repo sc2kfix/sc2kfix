@@ -547,6 +547,7 @@ enum {
 HOOKEXT const char* szTileNames[256];
 HOOKEXT const char* szUndergroundNames[36];
 HOOKEXT const char* szOnIdleStateEnums[20];
+HOOKEXT const char* szOnIdleInitialDialogEnums[8];
 
 #define TILE_IS_MILITARY(iTileID) \
 	((iTileID == 0xDD) || (iTileID == 0xDE) || (iTileID == 0xEF) || (iTileID == 0xF2) || (iTileID == 0xEA) || (iTileID == 0xE3) \
@@ -1141,10 +1142,21 @@ enum {
 	ONIDLE_STATE_EDITNEWMAP_RETURN,
 	ONIDLE_STATE_LOADSCENARIO_RETURN,
 	ONIDLE_STATE_MENUDIALOG,
-	ONIDLE_STATE_LOADDIALOG,
+	ONIDLE_STATE_FROMCMDLINE,
 	ONIDLE_STATE_INTROVIDEO,
 	ONIDLE_STATE_DISPLAYINFLIGHT,
 	ONIDLE_STATE_CLOSEINFLIGHT
+};
+
+enum {
+	ONIDLE_INITIALDIALOG_NONE,
+	ONIDLE_INITIALDIALOG_LOADCITY,
+	ONIDLE_INITIALDIALOG_NEWCITY,
+	ONIDLE_INITIALDIALOG_EDITNEWMAP,
+	ONIDLE_INITIALDIALOG_LOADSCENARIO,
+	ONIDLE_INITIALDIALOG_ONQUIT,
+	ONIDLE_INITIALDIALOG_LOADTILESET,
+	ONIDLE_INITIALDIALOG_MOVIES,
 };
 
 enum {
@@ -1334,9 +1346,12 @@ GAMECALL(0x40103C, int, __thiscall, MainFrame_ToggleToolBars, CMainFrame *pThis,
 GAMECALL(0x40106E, int, __cdecl, PlaceRoadAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x401096, int, __thiscall, SimcityApp_SoundPlaySound, CSimcityAppPrimary* pThis, int iSoundID)
 GAMECALL(0x4010A5, void, __stdcall, UpdateGraphDialog, void)
+GAMECALL(0x4010DC, void, __thiscall, SimcityApp_MusicTrigger, CSimcityAppPrimary *)
+GAMECALL(0x401104, int, __cdecl, MovieOpen, char *)
 GAMECALL(0x401140, void, __thiscall, MapToolBar_ResetControls, CMapToolBar *)
 GAMECALL(0x401145, int, __thiscall, SimcityApp_PreTranslateMessage, CSimcityAppPrimary *, MSG *)
 GAMECALL(0x4011E5, BOOL, __thiscall, Sound_MapToolSoundTrigger, CSound* pThis)
+GAMECALL(0x4011EA, CMovieDialog *, __thiscall, MovieDialog_Cons, CMovieDialog *, CMFC3XWnd *)
 GAMECALL(0x401154, void, __stdcall, SimulationPollutionTerrainAndLandValueScan, void)
 GAMECALL(0x401226, int, __cdecl, BeginProcessObjects, CMFC3XWnd *pTargetWnd, void *, int, __int16, RECT *)
 GAMECALL(0x401235, UINT, __thiscall, MyToolBar_GetButtonStyle, CMyToolBar *, int)
@@ -1347,6 +1362,7 @@ GAMECALL(0x4012DF, void, __stdcall, DecreaseWaterLevel, void)
 GAMECALL(0x4012FD, void, __cdecl, UpdateSimNationDialog, void)
 GAMECALL(0x401393, int, __cdecl, DrawProcessObject, __int16, __int16, __int16, __int16, __int16)
 GAMECALL(0x4013B1, void, __thiscall, SimcityView_ScaleOut, CSimcityView *pThis)
+GAMECALL(0x4013F7, CMFC3XPalette *, __thiscall, SimcityApp_GetActivePalette, CSimcityAppPrimary *)
 GAMECALL(0x40140B, void, __thiscall, SimcityView_ScaleIn, CSimcityView *pThis)
 GAMECALL(0x401429, int, __cdecl, FlipLongBytePortions, int)
 GAMECALL(0x40142E, void, __stdcall, UpdateIndustryDialog, void)
@@ -1371,8 +1387,10 @@ GAMECALL(0x4016D1, int, __thiscall, SimcityView_CenterOnNewScreenCoordinates, CS
 GAMECALL(0x4016DB, void, __thiscall, MainFrame_DisableCityToolBarButton, CMainFrame *, int)
 GAMECALL(0x4016F9, int, __cdecl, PlaceChurch, __int16 x, __int16 y)
 GAMECALL(0x40174E, void, __cdecl, SimulationPrepareDiasterCoordinates, POINT *pt, __int16 x, __int16 y)
+GAMECALL(0x401753, void, __thiscall, SimcityApp_OnQuit, CSimcityAppPrimary *)
 GAMECALL(0x40178F, __int16, __cdecl, PlaceTileWithMilitaryCheck, __int16 x, __int16 y, __int16 iTileID)
 GAMECALL(0x4017B2, void, __thiscall, SimcityDoc_UpdateDocumentTitle, CSimcityDoc* pThis)
+GAMECALL(0x401820, void, __thiscall, Engine_SimulationProcessTick, CEngine *)
 GAMECALL(0x401857, int, __cdecl, MapToolPlaceTree, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x401861, __int16, __cdecl, FlipShortBytes, __int16)
 GAMECALL(0x40191F, void, __cdecl, DoFund, __int16)
@@ -1386,19 +1404,26 @@ GAMECALL(0x401A37, int, __cdecl, MaybeRoadViabilityAlongPath, __int16* x, __int1
 GAMECALL(0x401A3C, char, __cdecl, PerhapsGeneralZoneStartBuilding, signed __int16 x, signed __int16 y, __int16 iBuildingPopLevel, __int16 iZoneType)
 GAMECALL(0x401A73, void, __thiscall, SimcityView_RotateAntiClockwise, CSimcityView *pThis)
 GAMECALL(0x401A96, void, __thiscall, SimcityView_MaintainCursor, CSimcityView *)
-GAMECALL(0x401A9B, int, __thiscall, SimcityApp_MusicPlayNextRefocusSong, CSimcityAppPrimary *)
+GAMECALL(0x401A9B, void, __thiscall, SimcityApp_MusicPlayNextRefocusSong, CSimcityAppPrimary *)
 GAMECALL(0x401AB4, int, __cdecl, MapToolRaiseTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x401AC8, void, __thiscall, MapToolBar_AdjustSlider, CMapToolBar *, UINT, CMFC3XPoint *)
 GAMECALL(0x401AF0, int, __cdecl, MaybeCheckViablePlacementPath, __int16 x1, __int16 y1, __int16 x2, __int16 y2)
 GAMECALL(0x401B40, int, __cdecl, IsZonedTilePowered, __int16 x, __int16 y)
+GAMECALL(0x401B4F, BOOL, __stdcall, MovieCreateWindow)
+GAMECALL(0x401BAE, void, __thiscall, SimcityApp_EditNewMap, CSimcityAppPrimary *)
 GAMECALL(0x401BE5, void, __thiscall, Graphics_UnlockDIBBits, CGraphics *)
 GAMECALL(0x401C0D, void, __thiscall, SimcityView_DebugGrantAllGifts, CSimcityView*)
 GAMECALL(0x401C99, void, __cdecl, FreeDataEntry, void *)
 GAMECALL(0x401CA8, void, __stdcall, SimulationUpdateWaterConsumption, void)
 GAMECALL(0x401CCB, int, __stdcall, ResetTileDirection, void)
 GAMECALL(0x401D16, __int16, __cdecl, GetTileCoordsFromScreenCoords, __int16 x, __int16 y)
+GAMECALL(0x401D3E, int, __thiscall, MainFrame_CloseInflightDialog, CMainFrame *)
 GAMECALL(0x401D7A, int, __thiscall, JokeDialog_Destruct, CJokeDialog *)
+GAMECALL(0x401DBB, void, __thiscall, SimcityApp_UpdateTick, CSimcityAppPrimary *)
 GAMECALL(0x401DCA, void, __cdecl, RemoveLabel, __int16)
+GAMECALL(0x401E1A, void, __stdcall, MovieDestroyWindow)
+GAMECALL(0x401E1F, void, __thiscall, SimcityApp_LoadCity, CSimcityAppPrimary *)
+GAMECALL(0x401E29, void, __thiscall, SimcityApp_LoadTileset, CSimcityAppPrimary *)
 GAMECALL(0x401E38, int, __cdecl, PlaceUndergroundTiles, __int16 x, __int16 y, __int16 iUndergroundTileID)
 GAMECALL(0x401E47, BOOL, __cdecl, UseBulldozer, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x401E65, void, __stdcall, UpdateWeatherOrDisasterState, void)
@@ -1416,6 +1441,8 @@ GAMECALL(0x40217B, void, __stdcall, SimulationRCIDemandUpdates, void)
 GAMECALL(0x40219E, int, __thiscall, GameDialog_DoModal, CGameDialog *)
 GAMECALL(0x4021A8, void, __thiscall, MainFrame_ToggleStatusControlBar, CMainFrame *, BOOL)
 GAMECALL(0x402211, void, __thiscall, SimcityView_DestroyStructure, CSimcityView *pThis, __int16 x, __int16 y, int iExplosion)
+GAMECALL(0x402225, int, __thiscall, MainFrame_LoadOwnerInformation, CMainFrame *)
+GAMECALL(0x402252, int, __thiscall, MainFrame_DoInitialDialog, CMainFrame *)
 GAMECALL(0x402266, LONG, __cdecl, SetSpriteForDrawing, void *, sprite_header_t *, int, __int16, RECT *)
 GAMECALL(0x40226B, int, __thiscall, SimcityView_UpdateAreaPortionFill, CSimcityView *) // This appears to do a partial update of selected/highlighted area while appearing to dispense with immediate color updates.
 GAMECALL(0x402289, char, __cdecl, PerhapsGeneralZoneChooseAndPlaceBuilding, __int16 x, __int16 y, __int16 iBuildingPopLevel, __int16)
@@ -1423,9 +1450,13 @@ GAMECALL(0x4022FC, void, __cdecl, SimulationGrowthTick, __int16 iStep, __int16 i
 GAMECALL(0x402306, void, __thiscall, MyToolBar_SetButtonStyle, CMyToolBar *, int nIndex, UINT nStyle)
 GAMECALL(0x40232E, void, __thiscall, MapToolBar_MoveAndBlitToolBar, CMapToolBar *, int, int)
 GAMECALL(0x40235B, int, __thiscall, SimcityView_DrawSquareHighlight, CSimcityView *pThis, WORD wX1, WORD wY1, WORD wX2, WORD wY2)
+GAMECALL(0x402360, BOOL, __cdecl, MovieCheck, char *)
 GAMECALL(0x40239C, void, __cdecl, UpdateCityMap, void)
 GAMECALL(0x4023B0, int, __cdecl, IsValidTransitItems, __int16 x, __int16 y)
+GAMECALL(0x4023D3, void, __cdecl, ToggleColorCycling, CMFC3XPalette *, BOOL)
+GAMECALL(0x4023D8, void, __thiscall, SimcityApp_LoadScenario, CSimcityAppPrimary *)
 GAMECALL(0x4023EC, void, __stdcall, ToolMenuUpdate, void)
+GAMECALL(0x4023F1, int, __thiscall, MainFrame_DoInflightDialog, CMainFrame *)
 GAMECALL(0x402414, int, __thiscall, SimcityApp_MusicPlay, CSimcityAppPrimary *pThis, int iSongID)
 GAMECALL(0x402419, LONG, __thiscall, Graphics_Width, CGraphics *)
 GAMECALL(0x40242D, void, __thiscall, SimString_Dest, CSimString *)
@@ -1436,6 +1467,7 @@ GAMECALL(0x402487, void, __cdecl, EventScenarioNotification, __int16 iEvent)
 GAMECALL(0x4024C3, void, __thiscall, Graphics_ReleaseDC, CGraphics *, CMFC3XDC *)
 GAMECALL(0x4024E6, DWORD *, __thiscall, JokeDialog_Construct, CJokeDialog *, CMainFrame *)
 GAMECALL(0x4024FA, char, __cdecl, PerhapsGeneralZoneChangeBuilding, __int16 x, __int16 y, __int16 iBuldingPopLevel, int iTileID)
+GAMECALL(0x402527, void, __stdcall, SimulationStartDisaster)
 GAMECALL(0x402559, void, __stdcall, IncreaseWaterLevel, void)
 GAMECALL(0x40258B, int, __cdecl, GetScreenCoordsFromTileCoords, __int16 iTileTargetX, __int16 iTileTargetY, WORD *wNewScreenPointX, WORD *wNewScreenPointY)
 GAMECALL(0x4025B3, void, __thiscall, NewspaperDialog_Destruct, CNewspaperDialog *)
@@ -1446,6 +1478,7 @@ GAMECALL(0x4026B2, int, __cdecl, SimulationGrowSpecificZone, __int16 x, __int16 
 GAMECALL(0x4026F8, void, __stdcall, SimulationUpdatePowerConsumption, void)
 GAMECALL(0x402725, int, __cdecl, PlacePowerLinesAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x402752, void, __thiscall, MapToolBar_PressButton, CMapToolBar *, int)
+GAMECALL(0x402757, void, __thiscall, SimcityApp_LoadCityFromCMDLine, CSimcityAppPrimary *, CMFC3XString)
 GAMECALL(0x402798, int, __cdecl, MapToolPlaceForest, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x4027A7, void, __thiscall, SimCityView_OnVScroll, CSimcityView *pThis, int nSBCode, __int16 nPos, CMFC3XScrollBar *pScrollBar)
 GAMECALL(0x4027E3, BOOL, __cdecl, MoviePlay, HWND)
@@ -1458,6 +1491,7 @@ GAMECALL(0x4028A1, void, __thiscall, SimcityApp_UpdateStatus, CSimcityAppPrimary
 GAMECALL(0x4028BA, void, __thiscall, CityToolBar_OnCancelMode, CCityToolBar *)
 GAMECALL(0x402900, int, __cdecl, NewspaperStoryGenerator, __int16 iType, BYTE iValue)
 GAMECALL(0x402937, void, __thiscall, CityToolBar_ToolMenuDisable, CCityToolBar* pThis)
+GAMECALL(0x402964, void, __thiscall, SimcityApp_LoadScenarioFromCMDLine, CSimcityAppPrimary *, CMFC3XString)
 GAMECALL(0x402978, int, __cdecl, SpawnSailBoat, __int16 x, __int16 y)
 GAMECALL(0x40297D, int, __thiscall, SimcityView_CheckOrLoadGraphic, CSimcityView *)
 GAMECALL(0x4029C3, int, __cdecl, GetGameAreaMouseActivity, CSimcityView* pSCView, LPPOINT lpPoint)
@@ -1471,9 +1505,11 @@ GAMECALL(0x402B44, __int16, __cdecl, MapToolMenuAction, int iMouseKeys, POINT pt
 GAMECALL(0x402B7B, BOOL, __stdcall, FinishProcessObjects, void)
 GAMECALL(0x402B94, int, __cdecl, MapToolLevelTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x402BC6, int, __thiscall, MapToolBar_HitTestFromPoint, CMapToolBar *, CMFC3XPoint)
+GAMECALL(0x402C02, int, __thiscall, MainFrame_CloseOwnerInformation, CMainFrame *)
 GAMECALL(0x402C0C, int, __thiscall, MainFrame_ToggleNonModalDialog, CMainFrame *pThis, UINT)
 GAMECALL(0x402C11, CGraphics *, __thiscall, Graphics_Cons, CGraphics *)
 GAMECALL(0x402C25, int, __cdecl, CityToolMenuAction, int iMouseKeys, POINT pt)
+GAMECALL(0x402C34, BOOL, __thiscall, MainFrame_LoadGraphic, CMainFrame *, const char *)
 GAMECALL(0x402C3E, int, __thiscall, CityToolBar_HitTestFromPoint, CCityToolBar *, CMFC3XPoint)
 GAMECALL(0x402CF2, void, __thiscall, SimcityApp_SetGameCursor, CSimcityAppPrimary *pThis, int iNewCursor, BOOL bActive)
 GAMECALL(0x402D2E, void, __stdcall, UpdateBudgetInformation, void)
@@ -1486,6 +1522,7 @@ GAMECALL(0x402EFA, int, __stdcall, GetSimcityViewMenuPos, int iPos)
 GAMECALL(0x402F18, void, __thiscall, MainFrame_UpdateCityToolBar, CMainFrame *)
 GAMECALL(0x402F4F, void, __thiscall, SimcityApp_GetValueStringA, CSimcityAppPrimary *, CMFC3XString *, const char *, const char *)
 GAMECALL(0x402F9A, void, __thiscall, SimcityView_GetScreenAreaInfo, CSimcityView *pThis, LPRECT lpRect)
+GAMECALL(0x402FAE, BOOL, __thiscall, MainFrame_DeleteGraphic, CMainFrame *, BOOL)
 GAMECALL(0x402FF9, int, __cdecl, FlipDWORDArrayEndianness, void* pArray, int iSizeBytes)
 GAMECALL(0x403017, void, __stdcall, SimulationProposeMilitaryBase, void)
 
@@ -1496,7 +1533,6 @@ GAMECALL(0x402261, __int16, __stdcall, RandomWordLFSRMod4, void)
 GAMECALL(0x402B3F, __int16, __stdcall, RandomWordLFSRMod128, void)
 
 /* Main */
-GAMECALL_MAIN(0x405AB0, void, __thiscall, SimcityApp_BuildSubFrames, CSimcityAppPrimary *)
 GAMECALL_MAIN(0x422EA0, void, __stdcall, CityToolBarSetBgdAndText, HDC, LONG, LONG, int, int, COLORREF)
 GAMECALL_MAIN(0x4237F0, void, __thiscall, CityToolBar_ToolMenuDisable, CCityToolBar* pThis)
 GAMECALL_MAIN(0x423860, void, __thiscall, CityToolBar_ToolMenuEnable, CCityToolBar* pThis)
@@ -1505,7 +1541,7 @@ GAMECALL_MAIN(0x4302E0, DWORD, __thiscall, SimcityApp_DoLoadGame, CSimcityAppPri
 GAMECALL_MAIN(0x432180, DWORD, __thiscall, SimcityApp_DoSaveGame, CSimcityAppPrimary *, CMFC3XString *)
 GAMECALL_MAIN(0x4348E0, void, __stdcall, StartCleanGame, void)
 GAMECALL_MAIN(0x44D1B0, void, __cdecl, QuerySpecificItem, __int16, __int16)
-GAMECALL_MAIN(0x457110, void, __cdecl, ToggleColorCycling, CMFC3XPalette *, int)
+GAMECALL_MAIN(0x457110, void, __cdecl, ToggleColorCycling, CMFC3XPalette *, BOOL)
 GAMECALL_MAIN(0x45CF10, void, __stdcall, SimulationStartDisaster, void)
 GAMECALL_MAIN(0x4719A0, void, __cdecl, QueryGeneralItem, __int16, __int16)
 GAMECALL_MAIN(0x480140, int, __stdcall, LoadSoundBuffer, int iSoundID, void* pBuffer)
@@ -1526,6 +1562,7 @@ GAMECALL_MAIN(0x48BA0A, BOOL, __thiscall, DC_ExtTextOutA, CMFC3XDC *, int, int, 
 GAMECALL_MAIN(0x49BCF4, BOOL, __stdcall, IsIconic, HWND hWnd)
 GAMECALL_MAIN(0x49C354, BOOL, __stdcall, GetSaveFileNameA, LPOPENFILENAMEA)
 GAMECALL_MAIN(0x49C35A, BOOL, __stdcall, GetLoadFileNameA, LPOPENFILENAMEA)
+GAMECALL_MAIN(0x49E59F, void, __stdcall, AfxAbort)
 GAMECALL_MAIN(0x49EBD3, void, __cdecl, String_Format, CMFC3XString *pThis, char const *Ptr, ...)
 GAMECALL_MAIN(0x4A194E, void, __thiscall, WinApp_WinHelpA, CMFC3XWinApp *, int, unsigned int)
 GAMECALL_MAIN(0x4A280C, BOOL, __thiscall, CmdTarget_OnCmdMsg, CMFC3XCmdTarget *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo)
@@ -1573,8 +1610,11 @@ GAMECALL_MAIN(0x4B232F, int, __stdcall, AfxMessageBoxStr, LPCTSTR lpszPrompt, UI
 GAMECALL_MAIN(0x4B234F, int, __stdcall, AfxMessageBoxID, UINT nIDPrompt, UINT nType, UINT nIDHelp)
 GAMECALL_MAIN(0x4B5801, int, __thiscall, DialogBar_Create, CMFC3XDialogBar *pThis, CMFC3XWnd *pParentWnd, const char *lpszTemplateName, UINT nStyle, UINT nID)
 GAMECALL_MAIN(0x4B780A, BOOL, __thiscall, MDIFrameWnd_OnCmdMsg, CMFC3XMDIFrameWnd *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo)
+GAMECALL_MAIN(0x4B7C8A, CMFC3XMDIChildWnd *, __thiscall, MDIFrameWnd_MDIGetActive, CMFC3XMDIFrameWnd *, BOOL *)
 GAMECALL_MAIN(0x4B9C9A, BOOL, __thiscall, FrameWnd_OnCmdMsg, CMFC3XFrameWnd *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo)
+GAMECALL_MAIN(0x4BA2E5, CMFC3XView *, __thiscall, FrameWnd_GetActiveView, CMFC3XFrameWnd *)
 GAMECALL_MAIN(0x4BA3A0, void, __thiscall, FrameWnd_ShowControlBar, CMFC3XFrameWnd *pThis, CMFC3XControlBar *pBar, BOOL, int)
+GAMECALL_MAIN(0x4BA38B, CMFC3XDocument *, __thiscall, FrameWnd_GetActiveDocument, CMFC3XFrameWnd *)
 GAMECALL_MAIN(0x4BB23A, void, __thiscall, FrameWnd_RecalcLayout, CMFC3XFrameWnd *pThis, int)
 GAMECALL_MAIN(0x4C0730, MFC3X_AFX_THREAD_STATE *, __stdcall, AfxGetThreadState, void)
 
@@ -1738,7 +1778,15 @@ GAMEOFF(HWND,	hWndMovie,					0x4CE7EC)
 GAMEOFF(MFC3X_AFX_CORE_STATE,	game_AfxCoreState,			0x4CE8C0)
 GAMEOFF(HINSTANCE,	hGameModule,			0x4CE8C8)
 GAMEOFF_ARR(WORD,	wPositionAngle,			0x4DC4C8)
+GAMEOFF(BOOL,	bCSAMainFrameDirectReleaseCapture,	0x4E6000)
+GAMEOFF(DWORD,	dwMovieClassRegistered,		0x4E6004)
+GAMEOFF(WORD,	wIdleCount,					0x4E6008)
 GAMEOFF_ARR(DWORD,	dwDisasterStringIndex,	0x4E6010)
+GAMEOFF(BOOL,	bKeepPalette,				0x4E60B8)
+GAMEOFF_ARR(const char,	aTitlescrBmp,		0x4E6120)
+GAMEOFF_ARR(const char,	aPresentsBmp,		0x4E6130)
+GAMEOFF_ARR(char,	aIntroBSmk,				0x4E6140)
+GAMEOFF_ARR(char,	aIntroASmk,				0x4E6150)
 GAMEOFF_ARR(const char,	gameCurrDollar,		0x4E6168)
 GAMEOFF_ARR(const char,	gameCurrDM,			0x4E6180)
 GAMEOFF_ARR(const char,	gameLangGerman,		0x4E6198)

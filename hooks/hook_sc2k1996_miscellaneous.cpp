@@ -38,7 +38,7 @@
 #define MISCHOOK_DEBUG_WINDOW 16
 #define MISCHOOK_DEBUG_DISASTERS 32
 //#define MISCHOOK_DEBUG_MOVIES 64 // can be re-used
-//#define MISCHOOK_DEBUG_SPRITE 128 // can be re-used
+#define MISCHOOK_DEBUG_BUILDSUBFRAMES 128
 #define MISCHOOK_DEBUG_CHEAT 256
 
 #define MISCHOOK_DEBUG DEBUG_FLAGS_NONE
@@ -386,7 +386,346 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 			goto BAIL;
 	}
 
-	GameMain_SimcityApp_BuildSubFrames(pThis);
+	// Main Code
+	
+	CMainFrame *pMainFrm, *pMDIFrm;
+	CSimcityView *pSCView;
+	CSimcityDoc *pSCDoc;
+	BOOL bOffCycle;
+	CMFC3XPalette *pActivePal;
+	CMovieDialog movDlg;
+	CMFC3XString strCMDLinePath;
+
+	pMainFrm = (CMainFrame *)pThis->m_pMainWnd;
+	pMDIFrm = (CMainFrame *)GameMain_MDIFrameWnd_MDIGetActive(pMainFrm, 0);
+	pSCView = NULL;
+	pSCDoc = NULL;
+	if (pMDIFrm) {
+		pSCView = (CSimcityView *)GameMain_FrameWnd_GetActiveView(pMDIFrm);
+		pSCDoc = (CSimcityDoc *)GameMain_FrameWnd_GetActiveDocument(pMDIFrm);
+	}
+
+	bOffCycle = FALSE;
+	if (pThis->dwSCAAnimationOffCycle) {
+		pActivePal = Game_SimcityApp_GetActivePalette(pThis);
+		Game_ToggleColorCycling(pActivePal, FALSE);
+		pThis->dwSCAAnimationOffCycle = FALSE;
+		bOffCycle = TRUE;
+	}
+	if (pThis->dwSCAAnimationOnCycle) {
+		pActivePal = Game_SimcityApp_GetActivePalette(pThis);
+		Game_ToggleColorCycling(pActivePal, TRUE);
+		pThis->dwSCAAnimationOnCycle = FALSE;
+	}
+
+	switch (pThis->iSCAProgramStep) {
+		case ONIDLE_STATE_MAPMODE:
+			if (pSCView)
+				Game_SimcityView_MaintainCursor(pSCView);
+			break;
+		case ONIDLE_STATE_DISPLAYMAXIS:
+			if (pThis->dwSCASetNextStep) {
+				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+					ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_DISPLAYMAXIS\n");
+				pThis->dwSCASetNextStep = FALSE;
+				pThis->dwSCADoStepSkip = FALSE;
+				if (!Game_MainFrame_LoadGraphic(pMainFrm, aPresentsBmp))
+					GameMain_AfxAbort();
+				pThis->dwSCALastTick = GetTickCount();
+			}
+			if (pThis->dwSCADoStepSkip || (GetTickCount() - pThis->dwSCALastTick) > 5000) {
+				pThis->iSCAProgramStep = ONIDLE_STATE_WAITMAXIS;
+				pThis->dwSCASetNextStep = TRUE;
+			}
+			break;
+		case ONIDLE_STATE_WAITMAXIS:
+			if (!Game_MainFrame_DeleteGraphic(pMainFrm, FALSE))
+				GameMain_AfxAbort();
+			if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+				ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_WAITMAXIS\n");
+			pThis->iSCAProgramStep = ONIDLE_STATE_DISPLAYTITLE;
+			pThis->dwSCASetNextStep = TRUE;
+			break;
+		case ONIDLE_STATE_DISPLAYTITLE:
+			if (pThis->dwSCASetNextStep) {
+				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+					ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_DISPLAYTITLE\n");
+				pThis->dwSCASetNextStep = FALSE;
+				pThis->dwSCADoStepSkip = FALSE;
+				Game_MainFrame_DeleteGraphic(pMainFrm, FALSE);
+				if (!Game_MainFrame_LoadGraphic(pMainFrm, aTitlescrBmp))
+					GameMain_AfxAbort();
+				bCSAMainFrameDirectReleaseCapture = FALSE;
+				Game_SimcityApp_SetGameCursor(pThis, 0, FALSE);
+				pThis->dwSCALastTick = GetTickCount();
+			}
+			if (pThis->dwSCADoStepSkip || (GetTickCount() - pThis->dwSCALastTick) > 5000) {
+				pThis->iSCAProgramStep = ONIDLE_STATE_DISPLAYREGISTRATION;
+				pThis->dwSCASetNextStep = TRUE;
+			}
+			if (pMainFrm->dwMFCGraphicsOne)
+				Game_SimcityApp_GetActivePalette(pThis);
+			break;
+		case ONIDLE_STATE_DIALOGFINISH:
+			if (!Game_MainFrame_DeleteGraphic(pMainFrm, TRUE))
+				GameMain_AfxAbort();
+			if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+				ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_DIALOGFINISH: [%s]\n", szOnIdleStateEnums[pThis->wSCAInitDialogFinishLastProgramStep + 1]);
+			// If the program step at the time was ONIDLE_STATE_MENUDIALOG
+			// and the variable to suspend the simulation on quit is set to false
+			// set the next step back to ONIDLE_STATE_PENDINGACTION.
+			if (pThis->wSCAInitDialogFinishLastProgramStep == ONIDLE_STATE_MENUDIALOG && !pThis->dwSCAOnQuitSuspendSim)
+				pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
+			else
+				pThis->iSCAProgramStep = pThis->wSCAInitDialogFinishLastProgramStep;
+			pThis->dwSCASetNextStep = TRUE;
+			break;
+		case ONIDLE_STATE_DISPLAYREGISTRATION:
+			if (pThis->dwSCASetNextStep) {
+				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+					ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_DISPLAYREGISTRATION: [%s]\n", szOnIdleStateEnums[pThis->wSCAInitDialogFinishLastProgramStep + 1]);
+				pThis->dwSCASetNextStep = FALSE;
+				pThis->dwSCADoStepSkip = FALSE;
+				if (!Game_MainFrame_LoadOwnerInformation(pMainFrm))
+					GameMain_AfxAbort();
+				pThis->dwSCALastTick = GetTickCount();
+			}
+			if (pThis->dwSCADoStepSkip || (GetTickCount() - pThis->dwSCALastTick) > 5000) {
+				pThis->iSCAProgramStep = ONIDLE_STATE_CLOSEREGISTRATION;
+				pThis->dwSCASetNextStep = TRUE;
+			}
+			if (pMainFrm->dwMFCGraphicsOne)
+				Game_SimcityApp_GetActivePalette(pThis);
+			break;
+		case ONIDLE_STATE_CLOSEREGISTRATION:
+			if (!Game_MainFrame_CloseOwnerInformation(pMainFrm))
+				GameMain_AfxAbort();
+			if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+				ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_CLOSEREGISTRATION\n");
+			pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
+			pThis->dwSCASetNextStep = TRUE;
+			break;
+		case ONIDLE_STATE_PENDINGACTION:
+			if (pThis->dwSCASetNextStep) {
+				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+					ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_PENDINGACTION\n");
+				if (pThis->dwSCACMDLineLoadMode) {
+					if (pThis->dwSCACMDLineLoadMode == GAME_MODE_CITY || pThis->dwSCACMDLineLoadMode == GAME_MODE_DISASTER) {
+						pThis->iSCAProgramStep = ONIDLE_STATE_FROMCMDLINE;
+						if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+							ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_PENDINGACTION: dwSCACMDLineLoadMode(%u)\n", pThis->dwSCACMDLineLoadMode);
+					}
+				}
+				else {
+					if (!pMainFrm->dwMFCGraphicsOne && !Game_MainFrame_LoadGraphic(pMainFrm, aTitlescrBmp))
+						GameMain_AfxAbort();
+					pThis->iSCAMenuDialogStep = Game_MainFrame_DoInitialDialog(pMainFrm);
+					pThis->iSCAProgramStep = ONIDLE_STATE_MENUDIALOG;
+				}
+			}
+			pThis->dwSCASetNextStep = TRUE;
+			break;
+		case ONIDLE_STATE_LOADCITY_RETURN:
+		case ONIDLE_STATE_NEWCITY_RETURN:
+		case ONIDLE_STATE_EDITNEWMAP_RETURN:
+		case ONIDLE_STATE_LOADSCENARIO_RETURN:
+			if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+				ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_ - : [%s]\n", szOnIdleStateEnums[pThis->iSCAProgramStep + 1]);
+			break;
+		case ONIDLE_STATE_MENUDIALOG:
+			if (pThis->dwSCASetNextStep) {
+				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES) {
+					int iDlgStep;
+
+					iDlgStep = (pThis->iSCAMenuDialogStep < ONIDLE_INITIALDIALOG_NONE || pThis->iSCAMenuDialogStep > ONIDLE_INITIALDIALOG_MOVIES) ? ONIDLE_INITIALDIALOG_NONE : pThis->iSCAMenuDialogStep;
+					ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_MENUDIALOG: [%s]\n", szOnIdleInitialDialogEnums[iDlgStep]);
+				}
+				pThis->dwSCASetNextStep = FALSE;
+				switch (pThis->iSCAMenuDialogStep) {
+					case ONIDLE_INITIALDIALOG_LOADCITY:
+						pThis->dwSCAOnInitToggleToolBar = FALSE;
+						pThis->iSCAProgramStep = ONIDLE_STATE_LOADCITY_RETURN;
+						Game_SimcityApp_LoadCity(pThis);
+						break;
+					case ONIDLE_INITIALDIALOG_NEWCITY:
+						pThis->iSCAProgramStep = ONIDLE_STATE_NEWCITY_RETURN;
+						Game_SimcityApp_NewCity(pThis);
+						break;
+					case ONIDLE_INITIALDIALOG_EDITNEWMAP:
+						pThis->iSCAProgramStep = ONIDLE_STATE_EDITNEWMAP_RETURN;
+						Game_SimcityApp_EditNewMap(pThis);
+						pThis->iSCAProgramStep = ONIDLE_STATE_INGAME;
+						break;
+					case ONIDLE_INITIALDIALOG_LOADSCENARIO:
+						pThis->dwSCAOnInitToggleToolBar = FALSE;
+						pThis->iSCAProgramStep = ONIDLE_STATE_LOADSCENARIO_RETURN;
+						Game_SimcityApp_LoadScenario(pThis);
+						break;
+					case ONIDLE_INITIALDIALOG_ONQUIT:
+						pThis->dwSCAOnQuitSuspendSim = TRUE;
+						Game_SimcityApp_OnQuit(pThis);
+						break;
+					case ONIDLE_INITIALDIALOG_LOADTILESET:
+						Game_SimcityApp_LoadTileset(pThis);
+						pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
+						break;
+					case ONIDLE_INITIALDIALOG_MOVIES:
+						if (dwMovieClassRegistered) {
+							bKeepPalette = TRUE;
+							Game_MovieDialog_Cons(&movDlg, 0);
+							GameMain_Dialog_DoModal(&movDlg);
+							bKeepPalette = FALSE;
+						}
+						pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
+						break;
+					default:
+						break;
+				}
+				if (pThis->iSCAProgramStep != ONIDLE_STATE_PENDINGACTION) {
+					pThis->wSCAInitDialogFinishLastProgramStep = pThis->iSCAProgramStep;
+					pThis->iSCAProgramStep = ONIDLE_STATE_DIALOGFINISH;
+				}
+				else
+					pThis->dwSCASetNextStep = TRUE;
+			}
+			break;
+		case ONIDLE_STATE_FROMCMDLINE:
+			if (pThis->dwSCASetNextStep) {
+				wchar_t szWStr[MAX_PATH + 1];
+				char szStr[MAX_PATH + 1];
+				int iArgc;
+				LPWSTR *pArgv = NULL;
+
+				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+					ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_FROMCMDLINE: dwSCACMDLineLoadMode(%u)\n", pThis->dwSCACMDLineLoadMode);
+				pThis->dwSCASetNextStep = FALSE;
+				bCSAMainFrameDirectReleaseCapture = FALSE;
+				Game_SimcityApp_SetGameCursor(pThis, pThis->iSCAActiveCursor, TRUE);
+
+				SetCapture(pMainFrm->m_hWnd);
+				ReleaseCapture();
+
+				// Since new command line parameters are being passed for the sc2kfix
+				// if you then attempt to specify a city or scenario on the command line
+				// it'll fail (since the original game didn't pass anything else - at least
+				// as far as we know when it comes to the released builds).
+				//
+				// Due to this, take the last argument (the city/scenario is always at the end
+				// in this case - it has to be otherwise this state is never hit to begin with)
+				// and re-set pThis->dwSCACStringTargetTypePath - before copying it to strCMDLinePath.
+
+				memset(szWStr, 0, sizeof(szWStr));
+				memset(szStr, 0, sizeof(szStr));
+
+				MultiByteToWideChar(CP_ACP, 0, pThis->dwSCACStringTargetTypePath.m_pchData, -1, szWStr, MAX_PATH);
+
+				pArgv = CommandLineToArgvW(szWStr, &iArgc);
+				if (pArgv) {
+					WideCharToMultiByte(CP_UTF8, 0, pArgv[iArgc - 1], -1, szStr, MAX_PATH, NULL, NULL);
+
+					GameMain_String_Empty(&pThis->dwSCACStringTargetTypePath);
+					GameMain_String_OperatorSet(&pThis->dwSCACStringTargetTypePath, szStr);
+				}
+
+				pThis->dwSCAOnInitToggleToolBar = FALSE;
+				GameMain_String_Cons(&strCMDLinePath);
+				GameMain_String_OperatorCopy(&strCMDLinePath, &pThis->dwSCACStringTargetTypePath);
+				if (pThis->dwSCACMDLineLoadMode == GAME_MODE_CITY) {
+					pThis->iSCAProgramStep = ONIDLE_STATE_LOADCITY_RETURN;
+					Game_SimcityApp_LoadCityFromCMDLine(pThis, strCMDLinePath);
+				}
+				else {
+					pThis->iSCAProgramStep = ONIDLE_STATE_LOADSCENARIO_RETURN;
+					Game_SimcityApp_LoadScenarioFromCMDLine(pThis, strCMDLinePath);
+				}
+				GameMain_String_Dest(&strCMDLinePath);
+			}
+			break;
+		case ONIDLE_STATE_INTROVIDEO:
+			if (pThis->dwSCASetNextStep) {
+				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+					ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_INTROVIDEO\n");
+				pThis->dwSCASetNextStep = FALSE;
+				pThis->dwSCADoStepSkip = FALSE;
+				pThis->dwSCALastTick = GetTickCount();
+				pThis->iSCAProgramStep = ONIDLE_STATE_DISPLAYMAXIS;
+				if (!bSkipIntro && !bSettingsAlwaysSkipIntro) {
+					if (Game_MovieCheck(aIntroASmk) && Game_MovieCheck(aIntroBSmk)) {
+						Game_SimcityApp_MusicTrigger(pThis);
+						if (Game_MovieCreateWindow()) {
+							if (!Game_MovieOpen(aIntroASmk))
+								Game_MovieOpen(aIntroBSmk);
+							Game_MovieDestroyWindow();
+						}
+						Game_SimcityApp_MusicPlayNextRefocusSong(pThis);
+					}
+					else
+						pThis->iSCAProgramStep = ONIDLE_STATE_DISPLAYINFLIGHT;
+				}
+				pThis->dwSCASetNextStep = TRUE;
+			}
+			break;
+		case ONIDLE_STATE_DISPLAYINFLIGHT:
+			if (pThis->dwSCASetNextStep) {
+				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+					ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_DISPLAYINFLIGHT\n");
+				pThis->dwSCASetNextStep = FALSE;
+				pThis->dwSCADoStepSkip = FALSE;
+				if (!Game_MainFrame_DoInflightDialog(pMainFrm))
+					GameMain_AfxAbort();
+				pThis->dwSCALastTick = GetTickCount();
+			}
+			if (pThis->dwSCADoStepSkip || (GetTickCount() - pThis->dwSCALastTick) > 5000) {
+				pThis->iSCAProgramStep = ONIDLE_STATE_CLOSEINFLIGHT;
+				pThis->dwSCASetNextStep = TRUE;
+			}
+			if (pMainFrm->dwMFCGraphicsOne)
+				Game_SimcityApp_GetActivePalette(pThis);
+			break;
+		case ONIDLE_STATE_CLOSEINFLIGHT:
+			if (!Game_MainFrame_CloseInflightDialog(pMainFrm))
+				GameMain_AfxAbort();
+			if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+				ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_CLOSEINFLIGHT\n");
+			pThis->iSCAProgramStep = ONIDLE_STATE_DISPLAYMAXIS;
+			pThis->dwSCASetNextStep = TRUE;
+			break;
+		default:
+			if (pThis->dwSCADragSuspendSim)
+				break;
+			if (pSCView) {
+				if (bOffCycle)
+					Game_SimcityApp_UpdateTick(pThis);
+				if (wCityMode == GAME_MODE_CITY) {
+					if (pThis->wSCAGameSpeedLOW != GAME_SPEED_PAUSED) {
+						if (pMDIFrm) {
+							if (pThis->dwSCASimulationTicking) {
+								if (pSCDoc && pSCDoc->pSimEngine)
+									Game_Engine_SimulationProcessTick(pSCDoc->pSimEngine);
+								if (wSetTriggerDisasterType)
+									Game_SimulationStartDisaster();
+								if (pThis->wSCAGameSpeedLOW != GAME_SPEED_AFRICAN_SWALLOW)
+									pThis->dwSCASimulationTicking = FALSE;
+							}
+						}
+					}
+				}
+				else if (wCityMode == GAME_MODE_DISASTER) {
+					if (pThis->wSCAGameSpeedLOW != GAME_SPEED_PAUSED) {
+						if (pThis->dwSCASimulationTicking) {
+							Game_SimulationStartDisaster();
+							++wIdleCount;
+							if (pThis->wSCAGameSpeedLOW != GAME_SPEED_AFRICAN_SWALLOW)
+								pThis->dwSCASimulationTicking = FALSE;
+						}
+					}
+				}
+				UpdateWindow(pSCView->m_hWnd);
+			}
+			break;
+	}
+
+	// Main Code
 
 	for (const auto& hook : stHooks_Hook_SimcityApp_BuildSubFrames_After) {
 		bHookStopProcessing = FALSE;
@@ -400,19 +739,6 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 
 BAIL:
 	return;
-}
-
-// Fix the missing "Maxis Presents" slide
-void __declspec(naked) Hook_SimcityApp_BuildSubFrames_CloseInflight(void) {
-	CSimcityAppPrimary *pThis;
-
-	__asm mov [pThis], ecx
-
-	pThis->iSCAProgramStep = ONIDLE_STATE_DISPLAYTITLE;
-	pThis->dwSCASetNextStep = TRUE;
-
-	_asm mov ecx, [pThis]
-	GAMEJMP(0x4062BD)
 }
 
 // Function prototype: HOOKCB void Hook_OnNewCity_Before(void)
@@ -1676,12 +2002,9 @@ void InstallMiscHooks_SC2K1996(void) {
 	NEWJMP((LPVOID)0x402A3B, Hook_SimcityApp_BuildSubFrames);
 
 	// Fix the Maxis Presents logo not being shown
-	VirtualProtect((LPVOID)0x4062B9, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(BYTE*)0x4062B9 = ONIDLE_STATE_DISPLAYMAXIS;
-	VirtualProtect((LPVOID)0x4062AD, 12, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4062AD, Hook_SimcityApp_BuildSubFrames_CloseInflight);
-	VirtualProtect((LPVOID)0x4E6130, 12, PAGE_EXECUTE_READWRITE, &dwDummy);
-	memcpy_s((LPVOID)0x4E6130, 12, "presnts.bmp", 12);
+	VirtualProtect((LPVOID)0x4E6130, 13, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memset((LPVOID)0x4E6130, 0, 13);
+	memcpy_s((LPVOID)0x4E6130, 13, "presnts.bmp", 13);
 
 	// Fix power and water grid updates slowing down after the population hits 50,000
 	VirtualProtect((LPVOID)0x440943, 4, PAGE_EXECUTE_READWRITE, &dwDummy); // 0x440170 <- CityToolMenuAction

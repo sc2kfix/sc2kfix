@@ -38,10 +38,6 @@ extern "C" BOOL __cdecl Hook_MovieOpen(char* sMovStr) {
 	MSG Msg;
 	BOOL bLoaded, bBreakout;
 
-	if (sMovStr && strncmp(sMovStr, "INTRO", 5) == 0)
-		if (bSkipIntro || bSettingsAlwaysSkipIntro)
-			return TRUE;
-
 	MovieWndInitFinish = FALSE;
 	MovieWndExit = FALSE;
 	GameMain_SmackSoundUseDirectSound(hWndMovie);
@@ -103,10 +99,7 @@ extern "C" BOOL __cdecl Hook_MovieCheck(char* sMovStr) {
 	BOOL bRet;
 
 	bRet = FALSE;
-	if (sMovStr && strncmp(sMovStr, "INTRO", 5) == 0)
-		if (bSkipIntro || bSettingsAlwaysSkipIntro)
-			return TRUE;
-
+	
 	GameMain_String_Cons(&movStr);
 	GameMain_String_Format(&movStr, "%s\\Movies\\%s", szGamePath, sMovStr);
 	
