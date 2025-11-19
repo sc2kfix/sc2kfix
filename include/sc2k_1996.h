@@ -1500,6 +1500,7 @@ GAMECALL(0x402A1D, void, __thiscall, CityToolBar_SetSelection, CCityToolBar *, D
 GAMECALL(0x402A40, void, __cdecl, FailRadio, UINT)
 GAMECALL(0x402A5E, void, __thiscall, MapToolBar_SetSelection, CMapToolBar *, UINT, UINT, CMFC3XPoint *)
 GAMECALL(0x402A68, void, __thiscall, CityToolBar_UpdateControls, CCityToolBar *, BOOL)
+GAMECALL(0x402ADB, void, __thiscall, MovieDialog_Dest, CMovieDialog *)
 GAMECALL(0x402B2B, int, __cdecl, MapToolStretchTerrain, __int16 iTileTargetX, __int16 iTileTargetY, __int16 iScreenTargetPointY)
 GAMECALL(0x402B44, __int16, __cdecl, MapToolMenuAction, int iMouseKeys, POINT pt)
 GAMECALL(0x402B7B, BOOL, __stdcall, FinishProcessObjects, void)

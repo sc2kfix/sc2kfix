@@ -575,6 +575,7 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 							Game_MovieDialog_Cons(&movDlg, 0);
 							GameMain_Dialog_DoModal(&movDlg);
 							bKeepPalette = FALSE;
+							Game_MovieDialog_Dest(&movDlg);
 						}
 						pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
 						break;
