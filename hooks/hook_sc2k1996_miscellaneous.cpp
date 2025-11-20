@@ -579,6 +579,10 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 						}
 						pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
 						break;
+					case ONIDLE_INITIALDIALOG_SC2KFIXSETTINGS:
+						ShowSettingsDialog();
+						pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
+						break;
 					default:
 						break;
 				}
@@ -1901,10 +1905,10 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 	else if ((DWORD)dwRetAddr == 0x4A4BB2) {
 		if (nCode == _CN_COMMAND) {
 			switch (nID) {
-				// This is the 'sc2kfix Settings' entry in the main dialog.
+			// This is the 'sc2kfix Settings' enddialog return code for the main dialog to
+			// execution from the BuildSubFrames section.
 			case IDC_GAME_MAIN_SC2KFIXSETTINGS:
-				ShowSettingsDialog();
-				return TRUE;
+				return EndDialog(pThis->m_hWnd, ONIDLE_INITIALDIALOG_SC2KFIXSETTINGS);
 			}
 		}
 	}

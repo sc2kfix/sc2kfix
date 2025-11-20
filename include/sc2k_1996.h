@@ -547,7 +547,7 @@ enum {
 HOOKEXT const char* szTileNames[256];
 HOOKEXT const char* szUndergroundNames[36];
 HOOKEXT const char* szOnIdleStateEnums[20];
-HOOKEXT const char* szOnIdleInitialDialogEnums[8];
+HOOKEXT const char* szOnIdleInitialDialogEnums[9];
 
 #define TILE_IS_MILITARY(iTileID) \
 	((iTileID == 0xDD) || (iTileID == 0xDE) || (iTileID == 0xEF) || (iTileID == 0xF2) || (iTileID == 0xEA) || (iTileID == 0xE3) \
@@ -1157,6 +1157,7 @@ enum {
 	ONIDLE_INITIALDIALOG_ONQUIT,
 	ONIDLE_INITIALDIALOG_LOADTILESET,
 	ONIDLE_INITIALDIALOG_MOVIES,
+	ONIDLE_INITIALDIALOG_SC2KFIXSETTINGS
 };
 
 enum {
