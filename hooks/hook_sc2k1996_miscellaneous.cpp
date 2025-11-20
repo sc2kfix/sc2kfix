@@ -382,7 +382,7 @@ static void OpenMainDialog_SC2K1996() {
 				// Adjust the program step so it will re-launch the main dialogue.
 				pSCApp->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
 				pSCApp->wSCAInitDialogFinishLastProgramStep = ONIDLE_STATE_MAPMODE; // Value of 0 - reset it.
-				pSCApp->dwSCASetNextStep;
+				pSCApp->dwSCASetNextStep = TRUE;
 			}
 		}
 	}
