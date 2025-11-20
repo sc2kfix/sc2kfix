@@ -106,7 +106,7 @@ HOOKCB void Hook_SimCalendarAdvance_After(void) {
 	//LOG(LOG_NOTICE, "Today was day %d in the glorious history of %s.\n", dwCityDays + 1, *pszCityName);
 }
 
-int iLastState = 0;
+/*int iLastState = 0;
 
 HOOKCB void Hook_SimcityApp_BuildSubFrames_Before(CSimcityAppPrimary* pThis) {
 	int iState = pThis->iSCAProgramStep;
@@ -114,4 +114,4 @@ HOOKCB void Hook_SimcityApp_BuildSubFrames_Before(CSimcityAppPrimary* pThis) {
 		LOG(LOG_DEBUG, "iState changed, %d -> %d (%s)\n", iLastState, iState, GetOnIdleStateEnumName(iState));
 		iLastState = iState;
 	}
-}
+}*/
