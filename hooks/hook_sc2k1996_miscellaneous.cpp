@@ -395,6 +395,9 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 	CMFC3XPalette *pActivePal;
 	CMovieDialog movDlg;
 	CMFC3XString strCMDLinePath;
+	BOOL bValidInitialDialogStep;
+	static int iReportLimit = 0;
+	static BOOL bDialogLooping = FALSE;
 
 	pMainFrm = (CMainFrame *)pThis->m_pMainWnd;
 	pMDIFrm = (CMainFrame *)GameMain_MDIFrameWnd_MDIGetActive(pMainFrm, 0);
@@ -418,6 +421,7 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 		pThis->dwSCAAnimationOnCycle = FALSE;
 	}
 
+	bValidInitialDialogStep = (pThis->iSCAMenuDialogStep != ONIDLE_INITIALDIALOG_NONE && pThis->iSCAMenuDialogStep != ONIDLE_INITIALDIALOG_COUNT) ? TRUE : FALSE;
 	switch (pThis->iSCAProgramStep) {
 		case ONIDLE_STATE_MAPMODE:
 			if (pSCView)
@@ -470,20 +474,15 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 			if (!Game_MainFrame_DeleteGraphic(pMainFrm, TRUE))
 				GameMain_AfxAbort();
 			if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
-				ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_DIALOGFINISH: [%s]\n", szOnIdleStateEnums[pThis->wSCAInitDialogFinishLastProgramStep + 1]);
-			// If the program step at the time was ONIDLE_STATE_MENUDIALOG
-			// and the variable to suspend the simulation on quit is set to false
-			// set the next step back to ONIDLE_STATE_PENDINGACTION.
-			if (pThis->wSCAInitDialogFinishLastProgramStep == ONIDLE_STATE_MENUDIALOG && !pThis->dwSCAOnQuitSuspendSim)
-				pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
-			else
-				pThis->iSCAProgramStep = pThis->wSCAInitDialogFinishLastProgramStep;
+				ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_DIALOGFINISH: wSCAInitDialogFinishLastProgramStep[%s]\n", GetOnIdleStateEnumName(pThis->wSCAInitDialogFinishLastProgramStep));
+			pThis->iSCAProgramStep = pThis->wSCAInitDialogFinishLastProgramStep;
+			pThis->wSCAInitDialogFinishLastProgramStep = ONIDLE_STATE_MAPMODE; // Value of 0 - reset it.
 			pThis->dwSCASetNextStep = TRUE;
 			break;
 		case ONIDLE_STATE_DISPLAYREGISTRATION:
 			if (pThis->dwSCASetNextStep) {
 				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
-					ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_DISPLAYREGISTRATION: [%s]\n", szOnIdleStateEnums[pThis->wSCAInitDialogFinishLastProgramStep + 1]);
+					ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_DISPLAYREGISTRATION: wSCAInitDialogFinishLastProgramStep[%s]\n", GetOnIdleStateEnumName(pThis->wSCAInitDialogFinishLastProgramStep));
 				pThis->dwSCASetNextStep = FALSE;
 				pThis->dwSCADoStepSkip = FALSE;
 				if (!Game_MainFrame_LoadOwnerInformation(pMainFrm))
@@ -507,8 +506,10 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 			break;
 		case ONIDLE_STATE_PENDINGACTION:
 			if (pThis->dwSCASetNextStep) {
-				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
-					ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_PENDINGACTION\n");
+				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES) {
+					if (iReportLimit <= 1 || bValidInitialDialogStep)
+						ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_PENDINGACTION: bDialogLooping(%c)\n", (bDialogLooping && !bValidInitialDialogStep) ? 'Y' : 'N');
+				}
 				if (pThis->dwSCACMDLineLoadMode) {
 					if (pThis->dwSCACMDLineLoadMode == GAME_MODE_CITY || pThis->dwSCACMDLineLoadMode == GAME_MODE_DISASTER) {
 						pThis->iSCAProgramStep = ONIDLE_STATE_FROMCMDLINE;
@@ -517,8 +518,11 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 					}
 				}
 				else {
-					if (!pMainFrm->dwMFCGraphicsOne && !Game_MainFrame_LoadGraphic(pMainFrm, aTitlescrBmp))
-						GameMain_AfxAbort();
+					// Let's avoid trying to reload the same graphic if it gets stuck in a loop.
+					if (pThis->wSCAInitDialogFinishLastProgramStep != ONIDLE_STATE_PENDINGACTION) {
+						if (!pMainFrm->dwMFCGraphicsOne && !Game_MainFrame_LoadGraphic(pMainFrm, aTitlescrBmp))
+							GameMain_AfxAbort();
+					}
 					pThis->iSCAMenuDialogStep = Game_MainFrame_DoInitialDialog(pMainFrm);
 					pThis->iSCAProgramStep = ONIDLE_STATE_MENUDIALOG;
 				}
@@ -530,16 +534,15 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 		case ONIDLE_STATE_EDITNEWMAP_RETURN:
 		case ONIDLE_STATE_LOADSCENARIO_RETURN:
 			if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
-				ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_ - : [%s]\n", szOnIdleStateEnums[pThis->iSCAProgramStep + 1]);
+				ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_ - : iSCAProgramStep[%s]\n", GetOnIdleStateEnumName(pThis->iSCAProgramStep));
 			break;
 		case ONIDLE_STATE_MENUDIALOG:
 			if (pThis->dwSCASetNextStep) {
 				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES) {
-					int iDlgStep;
-
-					iDlgStep = (pThis->iSCAMenuDialogStep < ONIDLE_INITIALDIALOG_NONE || pThis->iSCAMenuDialogStep > ONIDLE_INITIALDIALOG_MOVIES) ? ONIDLE_INITIALDIALOG_NONE : pThis->iSCAMenuDialogStep;
-					ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_MENUDIALOG: [%s]\n", szOnIdleInitialDialogEnums[iDlgStep]);
+					if (iReportLimit <= 1 || bValidInitialDialogStep)
+						ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_MENUDIALOG: [%s] bDialogLooping(%c)\n", GetOnIdleInitialDialogEnumName(pThis->iSCAMenuDialogStep), (bDialogLooping && !bValidInitialDialogStep) ? 'Y' : 'N');
 				}
+				bDialogLooping = FALSE;
 				pThis->dwSCASetNextStep = FALSE;
 				switch (pThis->iSCAMenuDialogStep) {
 					case ONIDLE_INITIALDIALOG_LOADCITY:
@@ -584,14 +587,29 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 						pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
 						break;
 					default:
+						// Under this circumstance we want to open the dialogue
+						// again, otherwise it will hit ONIDLE_STATE_DIALOGFINISH
+						// and then that's it until the program's restarted.
+						bDialogLooping = TRUE;
+						pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
 						break;
 				}
-				if (pThis->iSCAProgramStep != ONIDLE_STATE_PENDINGACTION) {
-					pThis->wSCAInitDialogFinishLastProgramStep = pThis->iSCAProgramStep;
+				pThis->wSCAInitDialogFinishLastProgramStep = pThis->iSCAProgramStep;
+				if (pThis->iSCAProgramStep != ONIDLE_STATE_PENDINGACTION)
 					pThis->iSCAProgramStep = ONIDLE_STATE_DIALOGFINISH;
-				}
 				else
 					pThis->dwSCASetNextStep = TRUE;
+
+				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES) {
+					if (bDialogLooping) {
+						if (iReportLimit <= 1)
+							iReportLimit++;
+					}
+					else {
+						if (iReportLimit > 0)
+							iReportLimit = 0;
+					}
+				}
 			}
 			break;
 		case ONIDLE_STATE_FROMCMDLINE:

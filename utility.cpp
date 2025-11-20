@@ -203,9 +203,15 @@ HOOKEXT BOOL WritePrivateProfileIntA(const char *section, const char *name, int 
 }
 
 HOOKEXT const char* GetOnIdleStateEnumName(int iState) {
-	if (iState < -1 || iState > 18)
+	if (iState < ONIDLE_STATE_INGAME || iState >= ONIDLE_STATE_COUNT)
 		return "(invalid iState)";
 	return szOnIdleStateEnums[iState + 1];
+}
+
+HOOKEXT const char* GetOnIdleInitialDialogEnumName(int iInitialDialogState) {
+	if (iInitialDialogState < ONIDLE_INITIALDIALOG_NONE || iInitialDialogState >= ONIDLE_INITIALDIALOG_COUNT)
+		return "(invalid iInitialDialogState)";
+	return szOnIdleInitialDialogEnums[iInitialDialogState];
 }
 
 static BOOL IsBadFileCharacter(char c) {

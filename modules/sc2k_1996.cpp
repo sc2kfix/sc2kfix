@@ -467,7 +467,7 @@ const char* szUndergroundNames[36] = {
 	"Subway Entrance"
 };
 
-const char* szOnIdleStateEnums[20] = {
+const char* szOnIdleStateEnums[ONIDLE_STATE_MAX] = {
 	"ONIDLE_STATE_INGAME",
 	"ONIDLE_STATE_MAPMODE",
 	"ONIDLE_STATE_DISPLAYMAXIS",
@@ -490,7 +490,7 @@ const char* szOnIdleStateEnums[20] = {
 	"ONIDLE_STATE_CLOSEINFLIGHT"
 };
 
-const char* szOnIdleInitialDialogEnums[9] {
+const char* szOnIdleInitialDialogEnums[ONIDLE_INITIALDIALOG_MAX] {
 	"ONIDLE_INITIALDIALOG_NONE",
 	"ONIDLE_INITIALDIALOG_LOADCITY",
 	"ONIDLE_INITIALDIALOG_NEWCITY",

@@ -306,6 +306,7 @@ HOOKEXT BOOL FileExists(const char* name);
 HOOKEXT const char* GetFileBaseName(const char* szPath);
 HOOKEXT const char* GetModsFolderPath(void);
 HOOKEXT const char* GetOnIdleStateEnumName(int iState);
+HOOKEXT const char* GetOnIdleInitialDialogEnumName(int iInitialDialogState);
 //HBITMAP CreateSpriteBitmap(int iSpriteID);
 HOOKEXT BOOL IsFileNameValid(const char *pName);
 HOOKEXT BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, const char *ini_name);
