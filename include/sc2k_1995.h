@@ -5,3 +5,52 @@
 // interface-breaking conditions.
 
 #pragma once
+
+#ifndef HOOKEXT
+#define HOOKEXT extern "C" __declspec(dllexport)
+#endif
+
+#ifdef GAMEOFF_IMPL
+#define CC1995_GAMEOFF(type, name, address) \
+	type* __ptr__##name##_1995 = (type*)address; \
+	type& ##name##_1995 = *__ptr__##name##_1995;
+#define CC1995_GAMEOFF_ARR(type, name, address) type* ##name##_1995 = (type*)address;
+#else
+#define CC1995_GAMEOFF(type, name, address) extern type& ##name##_1995;
+#define CC1995_GAMEOFF_ARR(type, name, address) extern type* ##name##_1995;
+#endif
+
+#define CC1995_GAMEOFF_PTR CC1995_GAMEOFF_ARR
+
+#ifdef GAMEOFF_IMPL
+#define CC1995_GAMECALL(address, type, conv, name, ...) \
+	typedef type (conv *GameFuncPtr_##name##_1995)(__VA_ARGS__); \
+	GameFuncPtr_##name##_1995 Game_##name##_1995 = (GameFuncPtr_##name##_1995)address;
+#else
+#define CC1995_GAMECALL(address, type, conv, name, ...) \
+	typedef type (conv *GameFuncPtr_##name##_1995)(__VA_ARGS__);\
+	extern GameFuncPtr_##name##_1995 Game_##name##_1995;
+#endif
+
+#ifdef GAMEOFF_IMPL
+#define CC1995_GAMECALL_MAIN(address, type, conv, name, ...) \
+	typedef type (conv *GameMainFuncPtr_##name##_1995)(__VA_ARGS__); \
+	GameMainFuncPtr_##name##_1995 GameMain_##name##_1995 = (GameMainFuncPtr_##name##_1995)address;
+#else
+#define CC1995_GAMECALL_MAIN(address, type, conv, name, ...) \
+	typedef type (conv *GameMainFuncPtr_##name##_1995)(__VA_ARGS__);\
+	extern GameMainFuncPtr_##name##_1995 GameMain_##name##_1995;
+#endif
+
+// Thunk
+CC1995_GAMECALL(0x4026D0, CSimcityView *, __thiscall, SimcityApp_PointerToCSimcityViewClass, CSimcityAppPrimary *)
+
+// Main
+CC1995_GAMECALL_MAIN(0x456A60, void, __cdecl, ToggleColorCycling, CMFC3XPalette *, BOOL)
+
+// MFC and WinAPI
+
+// Vars
+
+CC1995_GAMEOFF(CSimcityAppPrimary,	pCSimcityAppThis,	0x4C6010)
+CC1995_GAMEOFF(BOOL,	bLoColor,						0x4E903C)
