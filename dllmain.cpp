@@ -34,6 +34,7 @@ BOOL bGameDead = FALSE;
 HMODULE hRealWinMM = NULL;
 HMODULE hSC2KAppModule = NULL;
 HMODULE hSC2KFixModule = NULL;
+HMENU hMainMenu = NULL;
 HMENU hGameMenu = NULL;
 HMENU hDebugMenu = NULL;
 FARPROC fpWinMMHookList[180] = { NULL };

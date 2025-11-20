@@ -388,6 +388,7 @@ extern HMODULE hSC2KAppModule;
 extern HMODULE hSC2KFixModule;
 extern HMODULE hmodFluidSynth;
 extern HANDLE hConsoleThread;
+extern HMENU hMainMenu;
 extern HMENU hGameMenu;
 extern HMENU hDebugMenu;
 extern FARPROC fpWinMMHookList[180];

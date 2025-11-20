@@ -186,6 +186,8 @@ extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR l
 #pragma warning(disable : 6387)
 // Hook LoadMenuA so we can insert our own menu items.
 extern "C" HMENU __stdcall Hook_LoadMenuA(HINSTANCE hInstance, LPCSTR lpMenuName) {
+	if ((DWORD)lpMenuName == 2 && hMainMenu)
+		return hMainMenu;
 	if ((DWORD)lpMenuName == 3 && hGameMenu)
 		return hGameMenu;
 	if ((DWORD)lpMenuName == 223 && hDebugMenu)
@@ -341,6 +343,9 @@ extern "C" void __stdcall Hook_CmdUI_Enable(BOOL bOn) {
 	// This section has been added to account for menu items that aren't handled
 	// natively (yet).
 
+	// Ensure that the "Open Main Dialog" item is always enabled.
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_MAIN_FILE_OPENMAINDIALOG, MF_BYCOMMAND | MF_ENABLED);
+
 	// Ensure that the new 'Reload Default Tile Set' item is always enabled.
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_GAME_FILE_RELOADDEFAULTTILESET, MF_BYCOMMAND | MF_ENABLED);
 
@@ -360,6 +365,27 @@ extern "C" void __stdcall Hook_CmdUI_Enable(BOOL bOn) {
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_ARMYBASE, MF_BYCOMMAND | MF_ENABLED);
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_NAVALYARD, MF_BYCOMMAND | MF_ENABLED);
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_MISSILESILOS, MF_BYCOMMAND | MF_ENABLED);
+}
+
+static void OpenMainDialog_SC2K1996() {
+	CSimcityAppPrimary *pSCApp;
+	CMainFrame *pMainFrm;
+	CSimcityView *pSCView;
+
+	pSCApp = &pCSimcityAppThis;
+	if (pSCApp) {
+		pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
+		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+		// Let's not allow this or any trickery if the main view window is valid.
+		if (!pSCView) {
+			if (pMainFrm) {
+				// Adjust the program step so it will re-launch the main dialogue.
+				pSCApp->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
+				pSCApp->wSCAInitDialogFinishLastProgramStep = ONIDLE_STATE_MAPMODE; // Value of 0 - reset it.
+				pSCApp->dwSCASetNextStep;
+			}
+		}
+	}
 }
 
 // Function prototype: HOOKCB void Hook_SimcityApp_BuildSubFrames_Before(void)
@@ -473,8 +499,10 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 		case ONIDLE_STATE_DIALOGFINISH:
 			if (!Game_MainFrame_DeleteGraphic(pMainFrm, TRUE))
 				GameMain_AfxAbort();
-			if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
-				ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_DIALOGFINISH: wSCAInitDialogFinishLastProgramStep[%s]\n", GetOnIdleStateEnumName(pThis->wSCAInitDialogFinishLastProgramStep));
+			if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES) {
+				if (iReportLimit <= 1 || pThis->wSCAInitDialogFinishLastProgramStep != ONIDLE_STATE_MENUDIALOG)
+					ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_DIALOGFINISH: wSCAInitDialogFinishLastProgramStep[%s] bDialogLooping(%c)\n", GetOnIdleStateEnumName(pThis->wSCAInitDialogFinishLastProgramStep), (bDialogLooping && !bValidInitialDialogStep) ? 'Y' : 'N');
+			}
 			pThis->iSCAProgramStep = pThis->wSCAInitDialogFinishLastProgramStep;
 			pThis->wSCAInitDialogFinishLastProgramStep = ONIDLE_STATE_MAPMODE; // Value of 0 - reset it.
 			pThis->dwSCASetNextStep = TRUE;
@@ -1912,7 +1940,12 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 			case IDM_GAME_FILE_RELOADDEFAULTTILESET:
 				ReloadDefaultTileSet_SC2K1996();
 				return TRUE;
+
+			case IDM_MAIN_FILE_OPENMAINDIALOG:
+				OpenMainDialog_SC2K1996();
+				return TRUE;
 			}
+			//ConsoleLog(LOG_DEBUG, "CFrameWnd::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, pExtra, pHandler, dwRetAddr);
 		}
 		else if (nCode == _CN_COMMAND_UI) {
 			// As far as potential handling here goes - tread carefully;
@@ -1928,6 +1961,7 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 			case IDC_GAME_MAIN_SC2KFIXSETTINGS:
 				return EndDialog(pThis->m_hWnd, ONIDLE_INITIALDIALOG_SC2KFIXSETTINGS);
 			}
+			//ConsoleLog(LOG_DEBUG, "::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, pExtra, pHandler, dwRetAddr);
 		}
 	}
 	else {
@@ -2096,6 +2130,33 @@ void InstallMiscHooks_SC2K1996(void) {
 	NEWJMP((LPVOID)0x4A5352, Hook_Wnd_OnCommand);
 
 	// Add more buttons to SC2K's menus
+	hMainMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(2));
+	if (hMainMenu) {
+		// File menu -> Open Main Dialog
+		HMENU hFilePopup;
+		MENUITEMINFO miiFilePopup;
+		miiFilePopup.cbSize = sizeof(MENUITEMINFO);
+		miiFilePopup.fMask = MIIM_SUBMENU;
+		if (!GetMenuItemInfo(hMainMenu, 0, TRUE, &miiFilePopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Main GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
+			goto skipmainmenu;
+		}
+		hFilePopup = miiFilePopup.hSubMenu;
+		if (!InsertMenu(hFilePopup, 0, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Main InsertMenuA #1 failed, error = 0x%08X.\n", GetLastError());
+			goto skipmainmenu;
+		}
+		if (!InsertMenu(hFilePopup, 0, MF_BYPOSITION|MF_STRING, IDM_MAIN_FILE_OPENMAINDIALOG, "&Open Main Dialog") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Main InsertMenuA #1 failed, error = 0x%08X.\n", GetLastError());
+			goto skipmainmenu;
+		}
+
+		if (mischook_debug & MISCHOOK_DEBUG_MENU)
+			ConsoleLog(LOG_DEBUG, "MISC: Updated main menu.\n");
+	}
+
+	skipmainmenu:
+
 	// TODO: write a much cleaner and more programmatic way of doing this
 	hGameMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(3));
 	if (hGameMenu) {
