@@ -45,10 +45,16 @@
 DEMO_GAMECALL(0x402725, CSimcityView *, __thiscall, SimcityApp_PointerToCSimcityViewClass, CSimcityAppDemo *)
 
 // Main
-DEMO_GAMECALL_MAIN(0x44890F, void, __cdecl, ToggleColorCycling, CMFC3XPalette *, int)
-DEMO_GAMECALL_MAIN(0x4A87AF, UINT, __thiscall, WinApp_GetProfileIntA, CMFC3XWinApp *, LPCSTR, LPCSTR, INT)
-DEMO_GAMECALL_MAIN(0x475B4C, CSimcityAppDemo *, __thiscall , SimcityApp_Cons, CSimcityAppDemo *)
-DEMO_GAMECALL_MAIN(0x4785A5, void, __thiscall , SimcityApp_LoadGameRegistrySettings, CSimcityAppDemo *)
+DEMO_GAMECALL_MAIN(0x44890F, void, __cdecl, ToggleColorCycling, CMFC3XPalette *, BOOL)
+
+// MFC and WinAPI
+DEMO_GAMECALL_MAIN(0x48BF14, CMFC3XWnd *, __stdcall, Wnd_FromHandle, HWND hWnd)
+DEMO_GAMECALL_MAIN(0x48BF32, CMFC3XWnd *, __stdcall, Wnd_FromHandlePermanent, HWND)
+DEMO_GAMECALL_MAIN(0x48D64A, CMFC3XTestCmdUI *, __thiscall, TestCmdUI_Construct, CMFC3XTestCmdUI *)
+DEMO_GAMECALL_MAIN(0x48E3C6, BOOL, __thiscall, Wnd_SendChildNotifyLastMsg, CMFC3XWnd *, LRESULT *)
+DEMO_GAMECALL_MAIN(0x48F069, BOOL, __thiscall, CmdTarget_OnCmdMsg, CMFC3XCmdTarget *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo)
+DEMO_GAMECALL_MAIN(0x4A2207, BOOL, __thiscall, FrameWnd_OnCmdMsg, CMFC3XFrameWnd *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo)
+DEMO_GAMECALL_MAIN(0x4AA2B1, MFC3X_AFX_THREAD_STATE *, __stdcall, AfxGetThreadState, void)
 
 // Vars
 
