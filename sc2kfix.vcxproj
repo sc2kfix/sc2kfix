@@ -114,6 +114,7 @@
     <ClInclude Include="include\music.h" />
     <ClInclude Include="include\sc2kclasses.h" />
     <ClInclude Include="include\sc2kfix.h" />
+    <ClInclude Include="include\sc2k_1995.h" />
     <ClInclude Include="include\sc2k_demo.h" />
     <ClInclude Include="include\winmm_exports.h" />
     <ClInclude Include="include\sc2k_1996.h" />
@@ -163,6 +164,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="hooks\hook_animation.cpp" />
+    <ClCompile Include="hooks\hook_sc2k1995_miscellaneous.cpp" />
     <ClCompile Include="hooks\hook_sc2kdemo_miscellaneous.cpp" />
     <ClCompile Include="hooks\hook_guzzardo.cpp" />
     <ClCompile Include="hooks\hook_spritesandtilesets.cpp" />

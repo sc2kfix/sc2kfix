@@ -16,6 +16,7 @@
 
 #include <mfc3xhelp.h>
 #include <sc2kclasses.h>
+#include <sc2k_1995.h>
 #include <sc2k_1996.h>
 #include <sc2k_demo.h>
 #include <music.h>
