@@ -159,6 +159,9 @@
     <ClInclude Include="include\sc2kclasses.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\sc2k_1995.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="hooks\hook_mciSendCommand.cpp">
@@ -375,6 +378,9 @@
       <Filter>Source Files\Hooks</Filter>
     </ClCompile>
     <ClCompile Include="hooks\hook_movies.cpp">
+      <Filter>Source Files\Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="hooks\hook_sc2k1995_miscellaneous.cpp">
       <Filter>Source Files\Hooks</Filter>
     </ClCompile>
   </ItemGroup>

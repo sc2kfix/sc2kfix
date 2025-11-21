@@ -80,6 +80,7 @@ HOOKEXT const char* GetLowHighScale(BYTE bScale);
 HOOKEXT BOOL FileExists(const char* name);
 HOOKEXT const char* GetModsFolderPath(void);
 HOOKEXT const char* GetOnIdleStateEnumName(int iState);
+HOOKEXT const char* GetOnIdleInitialDialogEnumName(int iInitialDialogState);
 HOOKEXT BOOL WritePrivateProfileIntA(const char* section, const char* name, int value, const char* ini_name);
 
 HOOKEXT_CPP std::string Base64Encode(const unsigned char* pSrcData, size_t iSrcCount);
