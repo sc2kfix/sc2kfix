@@ -51,7 +51,6 @@ CC1995_GAMECALL(0x4026D0, CSimcityView *, __thiscall, SimcityApp_PointerToCSimci
 
 // Main
 CC1995_GAMECALL_MAIN(0x456A60, void, __cdecl, ToggleColorCycling, CMFC3XPalette *, BOOL)
-CC1995_GAMECALL_MAIN(0x4A9467, void, __thiscall, WinApp_OnAppExit, CMFC3XWinApp *)
 
 // MFC and WinAPI
 CC1995_GAMECALL_MAIN(0x4A1700, BOOL, __thiscall, CmdTarget_OnCmdMsg, CMFC3XCmdTarget *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo)
@@ -59,6 +58,7 @@ CC1995_GAMECALL_MAIN(0x4A2AD3, CMFC3XWnd *, __stdcall, Wnd_FromHandle, HWND hWnd
 CC1995_GAMECALL_MAIN(0x4A2AF1, CMFC3XWnd *, __stdcall, Wnd_FromHandlePermanent, HWND)
 CC1995_GAMECALL_MAIN(0x4A4209, CMFC3XTestCmdUI *, __thiscall, TestCmdUI_Construct, CMFC3XTestCmdUI *)
 CC1995_GAMECALL_MAIN(0x4A4F85, BOOL, __thiscall, Wnd_SendChildNotifyLastMsg, CMFC3XWnd *, LRESULT *)
+CC1995_GAMECALL_MAIN(0x4A9467, void, __thiscall, WinApp_OnAppExit, CMFC3XWinApp *)
 CC1995_GAMECALL_MAIN(0x4B8B8E, BOOL, __thiscall, FrameWnd_OnCmdMsg, CMFC3XFrameWnd *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo)
 CC1995_GAMECALL_MAIN(0x4BF624, MFC3X_AFX_THREAD_STATE *, __stdcall, AfxGetThreadState, void)
 
