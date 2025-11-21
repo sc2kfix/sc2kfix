@@ -43,10 +43,14 @@
 #endif
 
 // Thunk
+CC1995_GAMECALL(0x40103C, void, __thiscall, MainFrame_ToggleToolBars, CMainFrame *, BOOL)
+CC1995_GAMECALL(0x4014F1, int, __thiscall, SimcityApp_ExitRequester, CSimcityAppPrimary *, int)
+CC1995_GAMECALL(0x401587, void, __thiscall, SimcityApp_SaveCity, CSimcityAppPrimary *)
 CC1995_GAMECALL(0x4026D0, CSimcityView *, __thiscall, SimcityApp_PointerToCSimcityViewClass, CSimcityAppPrimary *)
 
 // Main
 CC1995_GAMECALL_MAIN(0x456A60, void, __cdecl, ToggleColorCycling, CMFC3XPalette *, BOOL)
+CC1995_GAMECALL_MAIN(0x4A9467, void, __thiscall, WinApp_OnAppExit, CMFC3XWinApp *)
 
 // MFC and WinAPI
 
