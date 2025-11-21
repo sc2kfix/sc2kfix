@@ -445,6 +445,7 @@ void InstallTileGrowthOrPlacementHandlingHooks_SC2K1996(void);
 void InstallToolBarHooks_SC2K1996(void);
 void InstallMiscHooks_SC2K1996(void);
 void UpdateMiscHooks_SC2K1996(void);
+void InstallMiscHooks_SC2K1995(void);
 void InstallMiscHooks_SC2KDemo(void);
 void InstallStatusHooks_SC2K1996(void);
 void UpdateStatus_SC2K1996(int iShow);
