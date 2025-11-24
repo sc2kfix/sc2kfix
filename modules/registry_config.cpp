@@ -342,7 +342,7 @@ extern "C" LSTATUS __stdcall Hook_RegQueryValueExA(HKEY hKey, LPCSTR lpValueName
 		}
 		else if (_stricmp(lpValueName, "Cities") == 0 ||
 			_stricmp(lpValueName, "SaveGame") == 0) {
-			if (L_IsPathValid(szLastStoredCityPath))
+			if (L_IsPathValid(szLastStoredCityPath) && dwDetectedVersion == SC2KVERSION_1996)
 				GetOutString(szLastStoredCityPath, lpData, lpcbData);
 			else
 				GamePathAdjust(szTargetPath, "Cities", lpData, lpcbData);
@@ -364,7 +364,7 @@ extern "C" LSTATUS __stdcall Hook_RegQueryValueExA(HKEY hKey, LPCSTR lpValueName
 			GamePathAdjust(szTargetPath, "Scenario", lpData, lpcbData);
 		
 		else if (_stricmp(lpValueName, "TileSets") == 0) {
-			if (L_IsPathValid(szLastStoredTileSetPath))
+			if (L_IsPathValid(szLastStoredTileSetPath) && dwDetectedVersion == SC2KVERSION_1996)
 				GetOutString(szLastStoredTileSetPath, lpData, lpcbData);
 			else
 				GamePathAdjust(szTargetPath, "ScurkArt", lpData, lpcbData);
