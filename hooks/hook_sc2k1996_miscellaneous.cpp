@@ -200,17 +200,6 @@ extern "C" int __stdcall Hook_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCap
 	return L_MessageBoxA(hWnd, lpText, lpCaption, uType);
 }
 
-extern "C" BOOL __stdcall Hook_ShowWindow(HWND hWnd, int nCmdShow) {
-	if (mischook_debug & MISCHOOK_DEBUG_WINDOW)
-		ConsoleLog(LOG_DEBUG, "WND:  0x%08X -> ShowWindow(0x%08X, %i)\n", _ReturnAddress(), hWnd, nCmdShow);
-
-	// Workaround for the game window not showing if started by a launcher process
-	if (nCmdShow == 11 && (DWORD)_ReturnAddress() == 0x40586C)
-		return ShowWindow(hWnd, SW_MAXIMIZE);
-
-	return ShowWindow(hWnd, nCmdShow);
-}
-
 int L_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
 	HWND MBhWnd;
 	int ret;
@@ -263,7 +252,7 @@ extern "C" int __stdcall Hook_FileDialog_DoModal() {
 			nNewLen = nPathLen - nFileLen;
 			if (nNewLen > 0) {
 				strncpy_s(szPath, sizeof(szPath)-1, pOfn->lpstrFile, nNewLen);
-				if (L_IsPathValid(szPath)) {
+				if (L_IsDirectoryPathValid(szPath)) {
 					if ((DWORD)_ReturnAddress() == 0x42EB82 ||
 						(DWORD)_ReturnAddress() == 0x42FDCE) // From 'LoadCity' or 'SaveCityAs'
 						strcpy_s(szLastStoredCityPath, sizeof(szLastStoredCityPath) - 1, szPath);
@@ -277,6 +266,84 @@ extern "C" int __stdcall Hook_FileDialog_DoModal() {
 	ToggleFloatingStatusDialog(TRUE);
 
 	return iRet;
+}
+
+static void L_ProcessCmdLine_1996(CSimcityAppPrimary *pSCApp) {
+	char szFileArg[MAX_PATH + 1], szFileExt[16 + 1];
+	std::string str;
+	int iArgc;
+	LPWSTR *pArgv;
+
+	memset(szFileArg, 0, sizeof(szFileArg));
+	memset(szFileExt, 0, sizeof(szFileExt));
+
+	str = pSCApp->m_lpCmdLine;
+	std::wstring wStr(str.begin(), str.end());
+
+	pArgv = CommandLineToArgvW(wStr.c_str(), &iArgc);
+	if (pArgv) {
+		// When a drag-and-drop occurs (over the main program or a shortcut), the file argument
+		// is always at the very end; the processing will only accept that detail as well.
+		WideCharToMultiByte(CP_UTF8, 0, pArgv[iArgc - 1], -1, szFileArg, MAX_PATH, NULL, NULL);
+		_strlwr(szFileArg);
+
+		free(pArgv);
+	}
+
+	if (strlen(szFileArg) > 0) {
+		if (L_IsPathValid(szFileArg)) {
+			// We only need the file extension in this case.
+			_splitpath_s(szFileArg, NULL, 0, NULL, 0, NULL, 0, szFileExt, sizeof(szFileExt) - 1);
+
+			if (strlen(szFileExt) > 0) {
+				if (_stricmp(szFileExt, ".sc2") == 0) {
+					pSCApp->dwSCACMDLineLoadMode = GAME_MODE_CITY;
+					GameMain_String_OperatorSet(&pSCApp->dwSCACStringTargetTypePath, szFileArg);
+				}
+				if (_stricmp(szFileExt, ".scn") == 0) {
+					pSCApp->dwSCACMDLineLoadMode = GAME_MODE_DISASTER;
+					GameMain_String_OperatorSet(&pSCApp->dwSCACStringTargetTypePath, szFileArg);
+				}
+			}
+		}
+	}
+}
+
+void __declspec(naked) Hook_SimcityApp_InitInstanceFix() {
+	CSimcityAppPrimary *pThis;
+
+	__asm {
+		mov ecx, ebx
+		mov [pThis], ecx
+	}
+
+	// Originally 'SW_MAXIMIZE' was (pThis->m_nCmdShow | SW_MAXIMIZE)
+	// resulting in a value of 11.
+	// m_nCmdShow by default appeared to have been set to
+	// SW_SHOWNA (8).
+
+	pThis->m_nCmdShow = SW_MAXIMIZE;
+	ShowWindow(pThis->m_pMainWnd->m_hWnd, pThis->m_nCmdShow);
+	UpdateWindow(pThis->m_pMainWnd->m_hWnd);
+	DragAcceptFiles(pThis->m_pMainWnd->m_hWnd, TRUE);
+	GameMain_WinApp_EnableShellOpen(pThis);
+
+	// The exact purposes of these are unclear.
+	// It seems as if they're only used here
+	// and/or during a case of "documents" being
+	// freed (whether these were for debugging
+	// or leftover cases aren't clear).
+	dwUnknownInitVarOne = 0;
+	bCSimcityDocSC2InUse = FALSE;
+	bCSimcityDocSCNInUse = FALSE;
+
+	L_ProcessCmdLine_1996(pThis);
+
+	__asm {
+		mov ecx, [pThis]
+		mov ebx, ecx
+	}
+	GAMEJMP(0x405996)
 }
 
 extern "C" void __stdcall Hook_SimcityApp_OnQuit(void) {
@@ -420,7 +487,6 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 	BOOL bOffCycle;
 	CMFC3XPalette *pActivePal;
 	CMovieDialog movDlg;
-	CMFC3XString strCMDLinePath;
 	BOOL bValidInitialDialogStep;
 	static int iReportLimit = 0;
 	static BOOL bDialogLooping = FALSE;
@@ -642,11 +708,6 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 			break;
 		case ONIDLE_STATE_FROMCMDLINE:
 			if (pThis->dwSCASetNextStep) {
-				wchar_t szWStr[MAX_PATH + 1];
-				char szStr[MAX_PATH + 1];
-				int iArgc;
-				LPWSTR *pArgv = NULL;
-
 				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
 					ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_FROMCMDLINE: dwSCACMDLineLoadMode(%u)\n", pThis->dwSCACMDLineLoadMode);
 				pThis->dwSCASetNextStep = FALSE;
@@ -656,40 +717,15 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 				SetCapture(pMainFrm->m_hWnd);
 				ReleaseCapture();
 
-				// Since new command line parameters are being passed for the sc2kfix
-				// if you then attempt to specify a city or scenario on the command line
-				// it'll fail (since the original game didn't pass anything else - at least
-				// as far as we know when it comes to the released builds).
-				//
-				// Due to this, take the last argument (the city/scenario is always at the end
-				// in this case - it has to be otherwise this state is never hit to begin with)
-				// and re-set pThis->dwSCACStringTargetTypePath - before copying it to strCMDLinePath.
-
-				memset(szWStr, 0, sizeof(szWStr));
-				memset(szStr, 0, sizeof(szStr));
-
-				MultiByteToWideChar(CP_ACP, 0, pThis->dwSCACStringTargetTypePath.m_pchData, -1, szWStr, MAX_PATH);
-
-				pArgv = CommandLineToArgvW(szWStr, &iArgc);
-				if (pArgv) {
-					WideCharToMultiByte(CP_UTF8, 0, pArgv[iArgc - 1], -1, szStr, MAX_PATH, NULL, NULL);
-
-					GameMain_String_Empty(&pThis->dwSCACStringTargetTypePath);
-					GameMain_String_OperatorSet(&pThis->dwSCACStringTargetTypePath, szStr);
-				}
-
 				pThis->dwSCAOnInitToggleToolBar = FALSE;
-				GameMain_String_Cons(&strCMDLinePath);
-				GameMain_String_OperatorCopy(&strCMDLinePath, &pThis->dwSCACStringTargetTypePath);
 				if (pThis->dwSCACMDLineLoadMode == GAME_MODE_CITY) {
 					pThis->iSCAProgramStep = ONIDLE_STATE_LOADCITY_RETURN;
-					Game_SimcityApp_LoadCityFromCMDLine(pThis, strCMDLinePath);
+					Game_SimcityApp_LoadCityFromCMDLine(pThis, pThis->dwSCACStringTargetTypePath);
 				}
 				else {
 					pThis->iSCAProgramStep = ONIDLE_STATE_LOADSCENARIO_RETURN;
-					Game_SimcityApp_LoadScenarioFromCMDLine(pThis, strCMDLinePath);
+					Game_SimcityApp_LoadScenarioFromCMDLine(pThis, pThis->dwSCACStringTargetTypePath);
 				}
-				GameMain_String_Dest(&strCMDLinePath);
 			}
 			break;
 		case ONIDLE_STATE_INTROVIDEO:
@@ -2027,7 +2063,6 @@ void InstallMiscHooks_SC2K1996(void) {
 	*(DWORD*)(0x4EFDCC) = (DWORD)Hook_LoadMenuA;
 	*(DWORD*)(0x4EFDE4) = (DWORD)Hook_MessageBoxA;
 	*(DWORD*)(0x4EFC64) = (DWORD)Hook_DialogBoxParamA;
-	*(DWORD*)(0x4EFE70) = (DWORD)Hook_ShowWindow;
 	*(DWORD*)(0x4EFCE8) = (DWORD)Hook_DefWindowProcA;
 
 	// Install registry pathing hooks
@@ -2047,6 +2082,19 @@ void InstallMiscHooks_SC2K1996(void) {
 	*(BYTE*)0x44DC42 = 5;
 	VirtualProtect((LPVOID)0x44DC4F, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
 	*(BYTE*)0x44DC4F = 10;
+
+	// Hook for CSimcityApp::InitInstance to bypass and fix:
+	// a) Set m_nCmdShow to 'SW_MAXIMIZE' by default rather than
+	//    'SW_SHOWNA' - while adding the 'SW_MAXIMIZE' bit during
+	//     the ShowWindow() call - this resolves the lack of a main
+	//     window when the program was executed via a launcher or
+	//     the command line.
+	// b) The command line processing
+	//    (Win9x ShellOpen path conversion to DOS-type, of which didn't
+	//    occur from NT 5.0 and beyond).
+	// (This also accounts for the initial ShowWindow case)
+	VirtualProtect((LPVOID)0x405859, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x405859, Hook_SimcityApp_InitInstanceFix);
 
 	// Hook CSimcityApp::OnQuit
 	VirtualProtect((LPVOID)0x401753, 5, PAGE_EXECUTE_READWRITE, &dwDummy);

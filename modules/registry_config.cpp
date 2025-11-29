@@ -272,7 +272,11 @@ static const char *SectionLookup(HKEY hKey) {
 }
 
 BOOL L_IsPathValid(const char *pStr) {
-	return (pStr && PathFileExistsA(pStr) && PathIsDirectoryA(pStr)) ? TRUE : FALSE;
+	return (pStr && PathFileExistsA(pStr)) ? TRUE : FALSE;
+}
+
+BOOL L_IsDirectoryPathValid(const char *pStr) {
+	return (L_IsPathValid(pStr) && PathIsDirectoryA(pStr)) ? TRUE : FALSE;
 }
 
 static void GetOutString(const char *sString, LPBYTE lpData, LPDWORD lpcbData) {
@@ -342,7 +346,7 @@ extern "C" LSTATUS __stdcall Hook_RegQueryValueExA(HKEY hKey, LPCSTR lpValueName
 		}
 		else if (_stricmp(lpValueName, "Cities") == 0 ||
 			_stricmp(lpValueName, "SaveGame") == 0) {
-			if (L_IsPathValid(szLastStoredCityPath) && dwDetectedVersion == SC2KVERSION_1996)
+			if (L_IsDirectoryPathValid(szLastStoredCityPath) && dwDetectedVersion == SC2KVERSION_1996)
 				GetOutString(szLastStoredCityPath, lpData, lpcbData);
 			else
 				GamePathAdjust(szTargetPath, "Cities", lpData, lpcbData);
@@ -364,7 +368,7 @@ extern "C" LSTATUS __stdcall Hook_RegQueryValueExA(HKEY hKey, LPCSTR lpValueName
 			GamePathAdjust(szTargetPath, "Scenario", lpData, lpcbData);
 		
 		else if (_stricmp(lpValueName, "TileSets") == 0) {
-			if (L_IsPathValid(szLastStoredTileSetPath) && dwDetectedVersion == SC2KVERSION_1996)
+			if (L_IsDirectoryPathValid(szLastStoredTileSetPath) && dwDetectedVersion == SC2KVERSION_1996)
 				GetOutString(szLastStoredTileSetPath, lpData, lpcbData);
 			else
 				GamePathAdjust(szTargetPath, "ScurkArt", lpData, lpcbData);

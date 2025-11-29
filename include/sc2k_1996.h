@@ -1583,6 +1583,7 @@ GAMECALL_MAIN(0x4BA2E5, CMFC3XView *, __thiscall, FrameWnd_GetActiveView, CMFC3X
 GAMECALL_MAIN(0x4BA3A0, void, __thiscall, FrameWnd_ShowControlBar, CMFC3XFrameWnd *pThis, CMFC3XControlBar *pBar, BOOL, int)
 GAMECALL_MAIN(0x4BA38B, CMFC3XDocument *, __thiscall, FrameWnd_GetActiveDocument, CMFC3XFrameWnd *)
 GAMECALL_MAIN(0x4BB23A, void, __thiscall, FrameWnd_RecalcLayout, CMFC3XFrameWnd *pThis, int)
+GAMECALL_MAIN(0x4BE7F7, void, __thiscall, WinApp_EnableShellOpen, CMFC3XWinApp *)
 GAMECALL_MAIN(0x4C0730, MFC3X_AFX_THREAD_STATE *, __stdcall, AfxGetThreadState, void)
 
 // Unknown functions that do something we might need them to. Use with extreme care.
@@ -1784,6 +1785,9 @@ GAMEOFF_ARR(WORD,	wBuildingPopulation,	0x4E75B0)
 GAMEOFF_ARR(WORD, wXTERToSpriteIDMap,		0x4E7628)
 GAMEOFF_ARR(WORD, wXTERToXUNDSpriteIDMap,	0x4E76B8)
 GAMEOFF(WORD,	wDisasterWindy,				0x4E86B0)
+GAMEOFF(BOOL,	bCSimcityDocSC2InUse,		0x4E9744)
+GAMEOFF(BOOL,	bCSimcityDocSCNInUse,		0x4E9748)
+GAMEOFF(DWORD,	dwUnknownInitVarOne,		0x4E974C)
 GAMEOFF_ARR(DWORD, dwCityNoticeStringIDs,	0x4E98B8)
 GAMEOFF(WORD,	wSailingBoats,				0x4E99D0)
 GAMEOFF(WORD,	wActiveTrains,				0x4E99D8)

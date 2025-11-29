@@ -293,6 +293,7 @@ extern int iForcedBits;
 // Path adjustment (from registry_pathing area)
 
 BOOL L_IsPathValid(const char *pStr);
+BOOL L_IsDirectoryPathValid(const char *pStr);
 
 // Utility functions
 
