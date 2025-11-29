@@ -41,6 +41,38 @@ extern "C" HMENU __stdcall Hook_Demo_LoadMenuA(HINSTANCE hInstance, LPCSTR lpMen
 }
 #pragma warning(default : 6387)
 
+void __declspec(naked) Hook_Demo_SimcityApp_InitInstanceFix() {
+	CSimcityAppDemo *pThis;
+
+	__asm mov [pThis], ecx
+
+	// Originally 'SW_MAXIMIZE' was (pThis->m_nCmdShow | SW_MAXIMIZE)
+	// resulting in a value of 11.
+	// m_nCmdShow by default appeared to have been set to
+	// SW_SHOWNA (8).
+
+	pThis->m_nCmdShow = SW_MAXIMIZE;
+	ShowWindow(pThis->m_pMainWnd->m_hWnd, pThis->m_nCmdShow);
+	UpdateWindow(pThis->m_pMainWnd->m_hWnd);
+	DragAcceptFiles(pThis->m_pMainWnd->m_hWnd, TRUE);
+	GameMain_WinApp_EnableShellOpen_Demo(pThis);
+
+	// The exact purposes of these are unclear.
+	// It seems as if they're only used here
+	// and/or during a case of "documents" being
+	// freed (whether these were for debugging
+	// or leftover cases aren't clear).
+	dwUnknownInitVarOne_Demo = 0;
+	bCSimcityDocSC2InUse_Demo = FALSE;
+	bCSimcityDocSCNInUse_Demo = FALSE;
+
+	// In the full version the equivalent hooks
+	// would have the command line processing here.
+
+	__asm mov ecx, [pThis]
+	GAMEJMP(0x4762E2)
+}
+
 static void OpenMainDialog_SC2KDemo() {
 	CSimcityAppDemo *pSCApp;
 	CMainFrame *pMainFrm;
@@ -208,6 +240,16 @@ void InstallMiscHooks_SC2KDemo(void) {
 	*(BYTE*)0x4403A3 = 5;
 	VirtualProtect((LPVOID)0x4403AE, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
 	*(BYTE*)0x4403AE = 10;
+
+	// Hook for CSimcityApp::InitInstance to bypass and fix:
+	// - Set m_nCmdShow to 'SW_MAXIMIZE' by default rather than
+	//    'SW_SHOWNA' - while adding the 'SW_MAXIMIZE' bit during
+	//     the ShowWindow() call - this resolves the lack of a main
+	//     window when the program was executed via a launcher or
+	//     the command line.
+	// (This also accounts for the initial ShowWindow case)
+	VirtualProtect((LPVOID)0x476256, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x476256, Hook_Demo_SimcityApp_InitInstanceFix);
 
 	// Set the initial program state to DEMO_ONIDLE_STATE_DISPLAYMAXIS
 	VirtualProtect((LPVOID)0x475C18, 1, PAGE_EXECUTE_READWRITE, &dwDummy);

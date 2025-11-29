@@ -54,9 +54,13 @@ DEMO_GAMECALL_MAIN(0x48D64A, CMFC3XTestCmdUI *, __thiscall, TestCmdUI_Construct,
 DEMO_GAMECALL_MAIN(0x48E3C6, BOOL, __thiscall, Wnd_SendChildNotifyLastMsg, CMFC3XWnd *, LRESULT *)
 DEMO_GAMECALL_MAIN(0x48F069, BOOL, __thiscall, CmdTarget_OnCmdMsg, CMFC3XCmdTarget *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo)
 DEMO_GAMECALL_MAIN(0x4A2207, BOOL, __thiscall, FrameWnd_OnCmdMsg, CMFC3XFrameWnd *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo)
+DEMO_GAMECALL_MAIN(0x4A9858, void, __thiscall, WinApp_EnableShellOpen, CMFC3XWinApp *)
 DEMO_GAMECALL_MAIN(0x4AA2B1, MFC3X_AFX_THREAD_STATE *, __stdcall, AfxGetThreadState, void)
 
 // Vars
 
 DEMO_GAMEOFF(CSimcityAppDemo,	pCSimcityAppThis,			0x4B6A70)
+DEMO_GAMEOFF(BOOL,	bCSimcityDocSC2InUse,		0x4D15D4)
+DEMO_GAMEOFF(BOOL,	bCSimcityDocSCNInUse,		0x4D15D8)
+DEMO_GAMEOFF(DWORD,	dwUnknownInitVarOne,		0x4D15DC)
 DEMO_GAMEOFF(BOOL,	bLoColor,			0x4D1EDC)
