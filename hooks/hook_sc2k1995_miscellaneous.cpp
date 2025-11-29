@@ -78,6 +78,84 @@ void __declspec(naked) Hook_1995_LoadCityCancelFix(void) {
 	GAMEJMP(0x42E73C)
 }
 
+static void L_ProcessCmdLine_1995(CSimcityAppPrimary *pSCApp) {
+	char szFileArg[MAX_PATH + 1], szFileExt[16 + 1];
+	std::string str;
+	int iArgc;
+	LPWSTR *pArgv;
+
+	memset(szFileArg, 0, sizeof(szFileArg));
+	memset(szFileExt, 0, sizeof(szFileExt));
+
+	str = pSCApp->m_lpCmdLine;
+	std::wstring wStr(str.begin(), str.end());
+
+	pArgv = CommandLineToArgvW(wStr.c_str(), &iArgc);
+	if (pArgv) {
+		// When a drag-and-drop occurs (over the main program or a shortcut), the file argument
+		// is always at the very end; the processing will only accept that detail as well.
+		WideCharToMultiByte(CP_UTF8, 0, pArgv[iArgc - 1], -1, szFileArg, MAX_PATH, NULL, NULL);
+		_strlwr(szFileArg);
+
+		free(pArgv);
+	}
+
+	if (strlen(szFileArg) > 0) {
+		if (L_IsPathValid(szFileArg)) {
+			// We only need the file extension in this case.
+			_splitpath_s(szFileArg, NULL, 0, NULL, 0, NULL, 0, szFileExt, sizeof(szFileExt) - 1);
+
+			if (strlen(szFileExt) > 0) {
+				if (_stricmp(szFileExt, ".sc2") == 0) {
+					pSCApp->dwSCACMDLineLoadMode = GAME_MODE_CITY;
+					GameMain_String_OperatorSet_1995(&pSCApp->dwSCACStringTargetTypePath, szFileArg);
+				}
+				if (_stricmp(szFileExt, ".scn") == 0) {
+					pSCApp->dwSCACMDLineLoadMode = GAME_MODE_DISASTER;
+					GameMain_String_OperatorSet_1995(&pSCApp->dwSCACStringTargetTypePath, szFileArg);
+				}
+			}
+		}
+	}
+}
+
+void __declspec(naked) Hook_1995_SimcityApp_InitInstanceFix() {
+	CSimcityAppPrimary *pThis;
+
+	__asm {
+		mov ecx, ebx
+		mov [pThis], ecx
+	}
+
+	// Originally 'SW_MAXIMIZE' was (pThis->m_nCmdShow | SW_MAXIMIZE)
+	// resulting in a value of 11.
+	// m_nCmdShow by default appeared to have been set to
+	// SW_SHOWNA (8).
+
+	pThis->m_nCmdShow = SW_MAXIMIZE;
+	ShowWindow(pThis->m_pMainWnd->m_hWnd, pThis->m_nCmdShow);
+	UpdateWindow(pThis->m_pMainWnd->m_hWnd);
+	DragAcceptFiles(pThis->m_pMainWnd->m_hWnd, TRUE);
+	GameMain_WinApp_EnableShellOpen_1995(pThis);
+
+	// The exact purposes of these are unclear.
+	// It seems as if they're only used here
+	// and/or during a case of "documents" being
+	// freed (whether these were for debugging
+	// or leftover cases aren't clear).
+	dwUnknownInitVarOne_1995 = 0;
+	bCSimcityDocSC2InUse_1995 = FALSE;
+	bCSimcityDocSCNInUse_1995 = FALSE;
+
+	L_ProcessCmdLine_1995(pThis);
+
+	__asm {
+		mov ecx, [pThis]
+		mov ebx, ecx
+	}
+	GAMEJMP(0x405965)
+}
+
 extern "C" void __stdcall Hook_1995_SimcityApp_OnQuit(void) {
 	CSimcityAppPrimary *pThis;
 
@@ -291,6 +369,19 @@ void InstallMiscHooks_SC2K1995(void) {
 	*(BYTE*)0x44D5C2 = 5;
 	VirtualProtect((LPVOID)0x44D5CF, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
 	*(BYTE*)0x44D5CF = 10;
+
+	// Hook for CSimcityApp::InitInstance to bypass and fix:
+	// a) Set m_nCmdShow to 'SW_MAXIMIZE' by default rather than
+	//    'SW_SHOWNA' - while adding the 'SW_MAXIMIZE' bit during
+	//     the ShowWindow() call - this resolves the lack of a main
+	//     window when the program was executed via a launcher or
+	//     the command line.
+	// b) The command line processing
+	//    (Win9x ShellOpen path conversion to DOS-type, of which didn't
+	//    occur from NT 5.0 and beyond).
+	// (This also accounts for the initial ShowWindow case)
+	VirtualProtect((LPVOID)0x405813, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x405813, Hook_1995_SimcityApp_InitInstanceFix);
 
 	// Hook CSimcityApp::OnQuit
 	VirtualProtect((LPVOID)0x401749, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
