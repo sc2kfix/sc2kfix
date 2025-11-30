@@ -156,7 +156,7 @@ static void AdjustDebugMenu(HMENU hDebugMenu) {
 
 static int FindTheHouseLabel() {
 	const char *pLabel;
-	for (int i = MIN_USER_TEXT_ENTRIES; i < MAX_USER_TEXT_ENTRIES; ++i) {
+	for (int i = MIN_USER_TEXT_ENTRIES; i <= MAX_USER_TEXT_ENTRIES; ++i) {
 		pLabel = GetXLABEntry(i);
 		if (pLabel && _stricmp(pLabel, theHouse) == 0) {
 			return i;
@@ -169,7 +169,7 @@ static void SetTheHouseLabel(int xPos, int ySignPos) {
 	BYTE iLabelIdx;
 
 	if (XTXTGetTextOverlayID(xPos, ySignPos)) {
-		if (XTXTGetTextOverlayID(xPos, ySignPos) >= MAX_USER_TEXT_ENTRIES)
+		if (XTXTGetTextOverlayID(xPos, ySignPos) > MAX_USER_TEXT_ENTRIES)
 			return;
 	}
 	iLabelIdx = Game_PrepareLabel();
@@ -210,7 +210,7 @@ static BOOL FindTheHouse() {
 		Game_CenterOnTileCoords(xPos, yPos);
 		return TRUE;
 	}
-	if (iLabelIdx > 0 && iLabelIdx < MAX_USER_TEXT_ENTRIES) {
+	if (iLabelIdx >= MIN_USER_TEXT_ENTRIES && iLabelIdx <= MAX_USER_TEXT_ENTRIES) {
 		for (iLength = 0; iLength < GAME_MAP_SIZE; ++iLength) {
 			for (iDepth = 0; iDepth < GAME_MAP_SIZE; ++iDepth) {
 				if (XTXTGetTextOverlayID(iLength, iDepth) == iLabelIdx) {

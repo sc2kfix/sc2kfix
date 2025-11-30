@@ -842,7 +842,7 @@ extern "C" void __cdecl Hook_CheckAndAppendCityExtension(CMFC3XString *lpFileNam
 		if (_stricmp(szTempFile + (nLen - 3), szTempExt) != 0) {
 			// Check for a valid last stored city path, otherwise use the default
 			// derived from the game path.
-			if (L_IsPathValid(szLastStoredCityPath))
+			if (L_IsDirectoryPathValid(szLastStoredCityPath))
 				strcpy_s(szTempPath, sizeof(szTempPath), szLastStoredCityPath);
 			else
 				sprintf_s(szTempPath, sizeof(szTempPath), "%s\\Cities\\", szGamePath);

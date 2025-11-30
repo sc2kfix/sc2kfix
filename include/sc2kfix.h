@@ -16,6 +16,7 @@
 
 #include <mfc3xhelp.h>
 #include <sc2kclasses.h>
+#include <sc2k_1995.h>
 #include <sc2k_1996.h>
 #include <sc2k_demo.h>
 #include <music.h>
@@ -93,12 +94,19 @@ template <typename T> std::string to_string_precision(const T value, const int p
 // maximum for all which is 256 (0 - 255).
 // Index 0 is used for the city-base mayor name.
 #define MIN_USER_TEXT_ENTRIES 1
-#define MAX_USER_TEXT_ENTRIES 51
-#define MIN_SIM_TEXT_ENTRIES MAX_USER_TEXT_ENTRIES
+#define MAX_USER_TEXT_ENTRIES 50
+#define MIN_SIM_TEXT_ENTRIES (MAX_USER_TEXT_ENTRIES + 1)
 #define MAX_SIM_TEXT_ENTRIES 200
 
 #define MICROSIMID_MIN 0
-#define MICROSIMID_MAX MAX_SIM_TEXT_ENTRIES - MIN_SIM_TEXT_ENTRIES
+#define MICROSIMID_MAX (MAX_SIM_TEXT_ENTRIES - MIN_SIM_TEXT_ENTRIES)
+#define MICROSIMID_ENTRY(x) (x - MIN_SIM_TEXT_ENTRIES)
+
+// These "appear" to be related to XTHG cases
+// based on the named sailboat case.
+#define MIN_XTHG_TEXT_ENTRIES (MAX_SIM_TEXT_ENTRIES + 1)
+#define MAX_XTHG_TEXT_ENTRIES 240
+#define XTHGID_ENTRY(x) (x - MIN_XTHG_TEXT_ENTRIES)
 
 #define PIER_MAXTILES 4
 #define RUNWAYSTRIP_MAXTILES 5
@@ -285,6 +293,7 @@ extern int iForcedBits;
 // Path adjustment (from registry_pathing area)
 
 BOOL L_IsPathValid(const char *pStr);
+BOOL L_IsDirectoryPathValid(const char *pStr);
 
 // Utility functions
 
@@ -299,6 +308,7 @@ HOOKEXT BOOL FileExists(const char* name);
 HOOKEXT const char* GetFileBaseName(const char* szPath);
 HOOKEXT const char* GetModsFolderPath(void);
 HOOKEXT const char* GetOnIdleStateEnumName(int iState);
+HOOKEXT const char* GetOnIdleInitialDialogEnumName(int iInitialDialogState);
 //HBITMAP CreateSpriteBitmap(int iSpriteID);
 HOOKEXT BOOL IsFileNameValid(const char *pName);
 HOOKEXT BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, const char *ini_name);
@@ -380,6 +390,7 @@ extern HMODULE hSC2KAppModule;
 extern HMODULE hSC2KFixModule;
 extern HMODULE hmodFluidSynth;
 extern HANDLE hConsoleThread;
+extern HMENU hMainMenu;
 extern HMENU hGameMenu;
 extern HMENU hDebugMenu;
 extern FARPROC fpWinMMHookList[180];
@@ -435,6 +446,7 @@ void InstallTileGrowthOrPlacementHandlingHooks_SC2K1996(void);
 void InstallToolBarHooks_SC2K1996(void);
 void InstallMiscHooks_SC2K1996(void);
 void UpdateMiscHooks_SC2K1996(void);
+void InstallMiscHooks_SC2K1995(void);
 void InstallMiscHooks_SC2KDemo(void);
 void InstallStatusHooks_SC2K1996(void);
 void UpdateStatus_SC2K1996(int iShow);
@@ -442,9 +454,6 @@ void InstallQueryHooks_SC2K1996(void);
 void InstallMilitaryHooks_SC2K1996(void);
 void InstallSaveHooks_SC2K1996(void);
 extern "C" int __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer);
-extern "C" int __stdcall Hook_MusicPlay(int iSongID);
-extern "C" int __stdcall Hook_MusicStop(void);
-extern "C" int __stdcall Hook_MusicPlayNextRefocusSong(void);
 int L_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
 void ReloadDefaultTileSet_SC2K1996();
 int IsValidSiloPosCheck(__int16 m_x, __int16 m_y);

@@ -38,7 +38,7 @@
 #define MISCHOOK_DEBUG_WINDOW 16
 #define MISCHOOK_DEBUG_DISASTERS 32
 //#define MISCHOOK_DEBUG_MOVIES 64 // can be re-used
-//#define MISCHOOK_DEBUG_SPRITE 128 // can be re-used
+#define MISCHOOK_DEBUG_BUILDSUBFRAMES 128
 #define MISCHOOK_DEBUG_CHEAT 256
 
 #define MISCHOOK_DEBUG DEBUG_FLAGS_NONE
@@ -186,6 +186,8 @@ extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR l
 #pragma warning(disable : 6387)
 // Hook LoadMenuA so we can insert our own menu items.
 extern "C" HMENU __stdcall Hook_LoadMenuA(HINSTANCE hInstance, LPCSTR lpMenuName) {
+	if ((DWORD)lpMenuName == 2 && hMainMenu)
+		return hMainMenu;
 	if ((DWORD)lpMenuName == 3 && hGameMenu)
 		return hGameMenu;
 	if ((DWORD)lpMenuName == 223 && hDebugMenu)
@@ -196,17 +198,6 @@ extern "C" HMENU __stdcall Hook_LoadMenuA(HINSTANCE hInstance, LPCSTR lpMenuName
 
 extern "C" int __stdcall Hook_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
 	return L_MessageBoxA(hWnd, lpText, lpCaption, uType);
-}
-
-extern "C" BOOL __stdcall Hook_ShowWindow(HWND hWnd, int nCmdShow) {
-	if (mischook_debug & MISCHOOK_DEBUG_WINDOW)
-		ConsoleLog(LOG_DEBUG, "WND:  0x%08X -> ShowWindow(0x%08X, %i)\n", _ReturnAddress(), hWnd, nCmdShow);
-
-	// Workaround for the game window not showing if started by a launcher process
-	if (nCmdShow == 11 && (DWORD)_ReturnAddress() == 0x40586C)
-		return ShowWindow(hWnd, SW_MAXIMIZE);
-
-	return ShowWindow(hWnd, nCmdShow);
 }
 
 int L_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
@@ -261,7 +252,7 @@ extern "C" int __stdcall Hook_FileDialog_DoModal() {
 			nNewLen = nPathLen - nFileLen;
 			if (nNewLen > 0) {
 				strncpy_s(szPath, sizeof(szPath)-1, pOfn->lpstrFile, nNewLen);
-				if (L_IsPathValid(szPath)) {
+				if (L_IsDirectoryPathValid(szPath)) {
 					if ((DWORD)_ReturnAddress() == 0x42EB82 ||
 						(DWORD)_ReturnAddress() == 0x42FDCE) // From 'LoadCity' or 'SaveCityAs'
 						strcpy_s(szLastStoredCityPath, sizeof(szLastStoredCityPath) - 1, szPath);
@@ -275,6 +266,84 @@ extern "C" int __stdcall Hook_FileDialog_DoModal() {
 	ToggleFloatingStatusDialog(TRUE);
 
 	return iRet;
+}
+
+static void L_ProcessCmdLine_1996(CSimcityAppPrimary *pSCApp) {
+	char szFileArg[MAX_PATH + 1], szFileExt[16 + 1];
+	std::string str;
+	int iArgc;
+	LPWSTR *pArgv;
+
+	memset(szFileArg, 0, sizeof(szFileArg));
+	memset(szFileExt, 0, sizeof(szFileExt));
+
+	str = pSCApp->m_lpCmdLine;
+	std::wstring wStr(str.begin(), str.end());
+
+	pArgv = CommandLineToArgvW(wStr.c_str(), &iArgc);
+	if (pArgv) {
+		// When a drag-and-drop occurs (over the main program or a shortcut), the file argument
+		// is always at the very end; the processing will only accept that detail as well.
+		WideCharToMultiByte(CP_UTF8, 0, pArgv[iArgc - 1], -1, szFileArg, MAX_PATH, NULL, NULL);
+		_strlwr_s(szFileArg, sizeof(szFileArg) - 1);
+
+		free(pArgv);
+	}
+
+	if (strlen(szFileArg) > 0) {
+		if (L_IsPathValid(szFileArg)) {
+			// We only need the file extension in this case.
+			_splitpath_s(szFileArg, NULL, 0, NULL, 0, NULL, 0, szFileExt, sizeof(szFileExt) - 1);
+
+			if (strlen(szFileExt) > 0) {
+				if (_stricmp(szFileExt, ".sc2") == 0) {
+					pSCApp->dwSCACMDLineLoadMode = GAME_MODE_CITY;
+					GameMain_String_OperatorSet(&pSCApp->dwSCACStringTargetTypePath, szFileArg);
+				}
+				if (_stricmp(szFileExt, ".scn") == 0) {
+					pSCApp->dwSCACMDLineLoadMode = GAME_MODE_DISASTER;
+					GameMain_String_OperatorSet(&pSCApp->dwSCACStringTargetTypePath, szFileArg);
+				}
+			}
+		}
+	}
+}
+
+void __declspec(naked) Hook_SimcityApp_InitInstanceFix() {
+	CSimcityAppPrimary *pThis;
+
+	__asm {
+		mov ecx, ebx
+		mov [pThis], ecx
+	}
+
+	// Originally 'SW_MAXIMIZE' was (pThis->m_nCmdShow | SW_MAXIMIZE)
+	// resulting in a value of 11.
+	// m_nCmdShow by default appeared to have been set to
+	// SW_SHOWNA (8).
+
+	pThis->m_nCmdShow = SW_MAXIMIZE;
+	ShowWindow(pThis->m_pMainWnd->m_hWnd, pThis->m_nCmdShow);
+	UpdateWindow(pThis->m_pMainWnd->m_hWnd);
+	DragAcceptFiles(pThis->m_pMainWnd->m_hWnd, TRUE);
+	GameMain_WinApp_EnableShellOpen(pThis);
+
+	// The exact purposes of these are unclear.
+	// It seems as if they're only used here
+	// and/or during a case of "documents" being
+	// freed (whether these were for debugging
+	// or leftover cases aren't clear).
+	dwUnknownInitVarOne = 0;
+	bCSimcityDocSC2InUse = FALSE;
+	bCSimcityDocSCNInUse = FALSE;
+
+	L_ProcessCmdLine_1996(pThis);
+
+	__asm {
+		mov ecx, [pThis]
+		mov ebx, ecx
+	}
+	GAMEJMP(0x405996)
 }
 
 extern "C" void __stdcall Hook_SimcityApp_OnQuit(void) {
@@ -341,6 +410,9 @@ extern "C" void __stdcall Hook_CmdUI_Enable(BOOL bOn) {
 	// This section has been added to account for menu items that aren't handled
 	// natively (yet).
 
+	// Ensure that the "Open Main Dialog" item is always enabled.
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_MAIN_FILE_OPENMAINDIALOG, MF_BYCOMMAND | MF_ENABLED);
+
 	// Ensure that the new 'Reload Default Tile Set' item is always enabled.
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_GAME_FILE_RELOADDEFAULTTILESET, MF_BYCOMMAND | MF_ENABLED);
 
@@ -362,39 +434,390 @@ extern "C" void __stdcall Hook_CmdUI_Enable(BOOL bOn) {
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_MISSILESILOS, MF_BYCOMMAND | MF_ENABLED);
 }
 
-// Function prototype: HOOKCB void Hook_GameDoIdleUpkeep_Before(void)
+static void OpenMainDialog_SC2K1996() {
+	CSimcityAppPrimary *pSCApp;
+	CMainFrame *pMainFrm;
+	CSimcityView *pSCView;
+
+	pSCApp = &pCSimcityAppThis;
+	if (pSCApp) {
+		pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
+		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+		// Let's not allow this or any trickery if the main view window is valid.
+		if (!pSCView) {
+			if (pMainFrm) {
+				// Adjust the program step so it will re-launch the main dialogue.
+				pSCApp->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
+				pSCApp->wSCAInitDialogFinishLastProgramStep = ONIDLE_STATE_MAPMODE; // Value of 0 - reset it.
+				pSCApp->dwSCASetNextStep = TRUE;
+			}
+		}
+	}
+}
+
+// Function prototype: HOOKCB void Hook_SimcityApp_BuildSubFrames_Before(void)
 // Ignored if bHookStopProcessing == TRUE.
 // SPECIAL NOTE: Ignoring this hook on callback results in the game effectively hanging. You have
 //   been warned!
-std::vector<hook_function_t> stHooks_Hook_GameDoIdleUpkeep_Before;
+std::vector<hook_function_t> stHooks_Hook_SimcityApp_BuildSubFrames_Before;
 
-// Function prototype: HOOKCB void Hook_GameDoIdleUpkeep_After(void)
+// Function prototype: HOOKCB void Hook_SimcityApp_BuildSubFrames_After(void)
 // Ignored if bHookStopProcessing == TRUE.
-std::vector<hook_function_t> stHooks_Hook_GameDoIdleUpkeep_After;
+std::vector<hook_function_t> stHooks_Hook_SimcityApp_BuildSubFrames_After;
 
-extern "C" void __stdcall Hook_GameDoIdleUpkeep(void) {
-	DWORD *pThis;
+extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
+	CSimcityAppPrimary *pThis;
 	__asm mov [pThis], ecx
-	for (const auto& hook : stHooks_Hook_GameDoIdleUpkeep_Before) {
+
+	for (const auto& hook : stHooks_Hook_SimcityApp_BuildSubFrames_Before) {
 		bHookStopProcessing = FALSE;
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
-			void (*fnHook)(void*) = (void(*)(void*))hook.pFunction;
+			void (*fnHook)(CSimcityAppPrimary*) = (void(*)(CSimcityAppPrimary*))hook.pFunction;
 			fnHook(pThis);
 		}
 		if (bHookStopProcessing)
 			goto BAIL;
 	}
 
-	__asm {
-		mov ecx, [pThis]
-		mov edi, 0x405AB0
-		call edi
+	// Main Code
+	
+	CMainFrame *pMainFrm, *pMDIFrm;
+	CSimcityView *pSCView;
+	CSimcityDoc *pSCDoc;
+	BOOL bOffCycle;
+	CMFC3XPalette *pActivePal;
+	CMovieDialog movDlg;
+	BOOL bValidInitialDialogStep;
+	static int iReportLimit = 0;
+	static BOOL bDialogLooping = FALSE;
+
+	pMainFrm = (CMainFrame *)pThis->m_pMainWnd;
+	pMDIFrm = (CMainFrame *)GameMain_MDIFrameWnd_MDIGetActive(pMainFrm, 0);
+	pSCView = NULL;
+	pSCDoc = NULL;
+	if (pMDIFrm) {
+		pSCView = (CSimcityView *)GameMain_FrameWnd_GetActiveView(pMDIFrm);
+		pSCDoc = (CSimcityDoc *)GameMain_FrameWnd_GetActiveDocument(pMDIFrm);
 	}
 
-	for (const auto& hook : stHooks_Hook_GameDoIdleUpkeep_After) {
+	bOffCycle = FALSE;
+	if (pThis->dwSCAAnimationOffCycle) {
+		pActivePal = Game_SimcityApp_GetActivePalette(pThis);
+		Game_ToggleColorCycling(pActivePal, FALSE);
+		pThis->dwSCAAnimationOffCycle = FALSE;
+		bOffCycle = TRUE;
+	}
+	if (pThis->dwSCAAnimationOnCycle) {
+		pActivePal = Game_SimcityApp_GetActivePalette(pThis);
+		Game_ToggleColorCycling(pActivePal, TRUE);
+		pThis->dwSCAAnimationOnCycle = FALSE;
+	}
+
+	bValidInitialDialogStep = (pThis->iSCAMenuDialogStep != ONIDLE_INITIALDIALOG_NONE && pThis->iSCAMenuDialogStep != ONIDLE_INITIALDIALOG_COUNT) ? TRUE : FALSE;
+	switch (pThis->iSCAProgramStep) {
+		case ONIDLE_STATE_MAPMODE:
+			if (pSCView)
+				Game_SimcityView_MaintainCursor(pSCView);
+			break;
+		case ONIDLE_STATE_DISPLAYMAXIS:
+			if (pThis->dwSCASetNextStep) {
+				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+					ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_DISPLAYMAXIS\n");
+				pThis->dwSCASetNextStep = FALSE;
+				pThis->dwSCADoStepSkip = FALSE;
+				if (!Game_MainFrame_LoadGraphic(pMainFrm, aPresentsBmp))
+					GameMain_AfxAbort();
+				pThis->dwSCALastTick = GetTickCount();
+			}
+			if (pThis->dwSCADoStepSkip || (GetTickCount() - pThis->dwSCALastTick) > 5000) {
+				pThis->iSCAProgramStep = ONIDLE_STATE_WAITMAXIS;
+				pThis->dwSCASetNextStep = TRUE;
+			}
+			break;
+		case ONIDLE_STATE_WAITMAXIS:
+			if (!Game_MainFrame_DeleteGraphic(pMainFrm, FALSE))
+				GameMain_AfxAbort();
+			if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+				ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_WAITMAXIS\n");
+			pThis->iSCAProgramStep = ONIDLE_STATE_DISPLAYTITLE;
+			pThis->dwSCASetNextStep = TRUE;
+			break;
+		case ONIDLE_STATE_DISPLAYTITLE:
+			if (pThis->dwSCASetNextStep) {
+				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+					ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_DISPLAYTITLE\n");
+				pThis->dwSCASetNextStep = FALSE;
+				pThis->dwSCADoStepSkip = FALSE;
+				Game_MainFrame_DeleteGraphic(pMainFrm, FALSE);
+				if (!Game_MainFrame_LoadGraphic(pMainFrm, aTitlescrBmp))
+					GameMain_AfxAbort();
+				bCSAMainFrameDirectReleaseCapture = FALSE;
+				Game_SimcityApp_SetGameCursor(pThis, 0, FALSE);
+				pThis->dwSCALastTick = GetTickCount();
+			}
+			if (pThis->dwSCADoStepSkip || (GetTickCount() - pThis->dwSCALastTick) > 5000) {
+				pThis->iSCAProgramStep = ONIDLE_STATE_DISPLAYREGISTRATION;
+				pThis->dwSCASetNextStep = TRUE;
+			}
+			if (pMainFrm->dwMFCGraphicsOne)
+				Game_SimcityApp_GetActivePalette(pThis);
+			break;
+		case ONIDLE_STATE_DIALOGFINISH:
+			if (!Game_MainFrame_DeleteGraphic(pMainFrm, TRUE))
+				GameMain_AfxAbort();
+			if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES) {
+				if (iReportLimit <= 1 || pThis->wSCAInitDialogFinishLastProgramStep != ONIDLE_STATE_MENUDIALOG)
+					ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_DIALOGFINISH: wSCAInitDialogFinishLastProgramStep[%s] bDialogLooping(%c)\n", GetOnIdleStateEnumName(pThis->wSCAInitDialogFinishLastProgramStep), (bDialogLooping && !bValidInitialDialogStep) ? 'Y' : 'N');
+			}
+			pThis->iSCAProgramStep = pThis->wSCAInitDialogFinishLastProgramStep;
+			pThis->wSCAInitDialogFinishLastProgramStep = ONIDLE_STATE_MAPMODE; // Value of 0 - reset it.
+			pThis->dwSCASetNextStep = TRUE;
+			break;
+		case ONIDLE_STATE_DISPLAYREGISTRATION:
+			if (pThis->dwSCASetNextStep) {
+				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+					ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_DISPLAYREGISTRATION: wSCAInitDialogFinishLastProgramStep[%s]\n", GetOnIdleStateEnumName(pThis->wSCAInitDialogFinishLastProgramStep));
+				pThis->dwSCASetNextStep = FALSE;
+				pThis->dwSCADoStepSkip = FALSE;
+				if (!Game_MainFrame_LoadOwnerInformation(pMainFrm))
+					GameMain_AfxAbort();
+				pThis->dwSCALastTick = GetTickCount();
+			}
+			if (pThis->dwSCADoStepSkip || (GetTickCount() - pThis->dwSCALastTick) > 5000) {
+				pThis->iSCAProgramStep = ONIDLE_STATE_CLOSEREGISTRATION;
+				pThis->dwSCASetNextStep = TRUE;
+			}
+			if (pMainFrm->dwMFCGraphicsOne)
+				Game_SimcityApp_GetActivePalette(pThis);
+			break;
+		case ONIDLE_STATE_CLOSEREGISTRATION:
+			if (!Game_MainFrame_CloseOwnerInformation(pMainFrm))
+				GameMain_AfxAbort();
+			if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+				ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_CLOSEREGISTRATION\n");
+			pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
+			pThis->dwSCASetNextStep = TRUE;
+			break;
+		case ONIDLE_STATE_PENDINGACTION:
+			if (pThis->dwSCASetNextStep) {
+				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES) {
+					if (iReportLimit <= 1 || bValidInitialDialogStep)
+						ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_PENDINGACTION: bDialogLooping(%c)\n", (bDialogLooping && !bValidInitialDialogStep) ? 'Y' : 'N');
+				}
+				if (pThis->dwSCACMDLineLoadMode) {
+					if (pThis->dwSCACMDLineLoadMode == GAME_MODE_CITY || pThis->dwSCACMDLineLoadMode == GAME_MODE_DISASTER) {
+						pThis->iSCAProgramStep = ONIDLE_STATE_FROMCMDLINE;
+						if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+							ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_PENDINGACTION: dwSCACMDLineLoadMode(%u)\n", pThis->dwSCACMDLineLoadMode);
+					}
+				}
+				else {
+					// Let's avoid trying to reload the same graphic if it gets stuck in a loop.
+					if (pThis->wSCAInitDialogFinishLastProgramStep != ONIDLE_STATE_PENDINGACTION) {
+						if (!pMainFrm->dwMFCGraphicsOne && !Game_MainFrame_LoadGraphic(pMainFrm, aTitlescrBmp))
+							GameMain_AfxAbort();
+					}
+					pThis->iSCAMenuDialogStep = Game_MainFrame_DoInitialDialog(pMainFrm);
+					pThis->iSCAProgramStep = ONIDLE_STATE_MENUDIALOG;
+				}
+			}
+			pThis->dwSCASetNextStep = TRUE;
+			break;
+		case ONIDLE_STATE_LOADCITY_RETURN:
+		case ONIDLE_STATE_NEWCITY_RETURN:
+		case ONIDLE_STATE_EDITNEWMAP_RETURN:
+		case ONIDLE_STATE_LOADSCENARIO_RETURN:
+			if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+				ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_ - : iSCAProgramStep[%s]\n", GetOnIdleStateEnumName(pThis->iSCAProgramStep));
+			break;
+		case ONIDLE_STATE_MENUDIALOG:
+			if (pThis->dwSCASetNextStep) {
+				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES) {
+					if (iReportLimit <= 1 || bValidInitialDialogStep)
+						ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_MENUDIALOG: [%s] bDialogLooping(%c)\n", GetOnIdleInitialDialogEnumName(pThis->iSCAMenuDialogStep), (bDialogLooping && !bValidInitialDialogStep) ? 'Y' : 'N');
+				}
+				bDialogLooping = FALSE;
+				pThis->dwSCASetNextStep = FALSE;
+				switch (pThis->iSCAMenuDialogStep) {
+					case ONIDLE_INITIALDIALOG_LOADCITY:
+						pThis->dwSCAOnInitToggleToolBar = FALSE;
+						pThis->iSCAProgramStep = ONIDLE_STATE_LOADCITY_RETURN;
+						Game_SimcityApp_LoadCity(pThis);
+						break;
+					case ONIDLE_INITIALDIALOG_NEWCITY:
+						pThis->iSCAProgramStep = ONIDLE_STATE_NEWCITY_RETURN;
+						Game_SimcityApp_NewCity(pThis);
+						break;
+					case ONIDLE_INITIALDIALOG_EDITNEWMAP:
+						pThis->iSCAProgramStep = ONIDLE_STATE_EDITNEWMAP_RETURN;
+						Game_SimcityApp_EditNewMap(pThis);
+						pThis->iSCAProgramStep = ONIDLE_STATE_INGAME;
+						break;
+					case ONIDLE_INITIALDIALOG_LOADSCENARIO:
+						pThis->dwSCAOnInitToggleToolBar = FALSE;
+						pThis->iSCAProgramStep = ONIDLE_STATE_LOADSCENARIO_RETURN;
+						Game_SimcityApp_LoadScenario(pThis);
+						break;
+					case ONIDLE_INITIALDIALOG_ONQUIT:
+						pThis->dwSCAOnQuitSuspendSim = TRUE;
+						Game_SimcityApp_OnQuit(pThis);
+						break;
+					case ONIDLE_INITIALDIALOG_LOADTILESET:
+						Game_SimcityApp_LoadTileset(pThis);
+						pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
+						break;
+					case ONIDLE_INITIALDIALOG_MOVIES:
+						if (dwMovieClassRegistered) {
+							bKeepPalette = TRUE;
+							Game_MovieDialog_Cons(&movDlg, 0);
+							GameMain_Dialog_DoModal(&movDlg);
+							bKeepPalette = FALSE;
+							Game_MovieDialog_Dest(&movDlg);
+						}
+						pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
+						break;
+					case ONIDLE_INITIALDIALOG_SC2KFIXSETTINGS:
+						ShowSettingsDialog();
+						pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
+						break;
+					default:
+						// Under this circumstance we want to open the dialogue
+						// again, otherwise it will hit ONIDLE_STATE_DIALOGFINISH
+						// and then that's it until the program's restarted.
+						bDialogLooping = TRUE;
+						pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
+						break;
+				}
+				pThis->wSCAInitDialogFinishLastProgramStep = pThis->iSCAProgramStep;
+				if (pThis->iSCAProgramStep != ONIDLE_STATE_PENDINGACTION)
+					pThis->iSCAProgramStep = ONIDLE_STATE_DIALOGFINISH;
+				else
+					pThis->dwSCASetNextStep = TRUE;
+
+				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES) {
+					if (bDialogLooping) {
+						if (iReportLimit <= 1)
+							iReportLimit++;
+					}
+					else {
+						if (iReportLimit > 0)
+							iReportLimit = 0;
+					}
+				}
+			}
+			break;
+		case ONIDLE_STATE_FROMCMDLINE:
+			if (pThis->dwSCASetNextStep) {
+				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+					ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_FROMCMDLINE: dwSCACMDLineLoadMode(%u)\n", pThis->dwSCACMDLineLoadMode);
+				pThis->dwSCASetNextStep = FALSE;
+				bCSAMainFrameDirectReleaseCapture = FALSE;
+				Game_SimcityApp_SetGameCursor(pThis, pThis->iSCAActiveCursor, TRUE);
+
+				SetCapture(pMainFrm->m_hWnd);
+				ReleaseCapture();
+
+				pThis->dwSCAOnInitToggleToolBar = FALSE;
+				if (pThis->dwSCACMDLineLoadMode == GAME_MODE_CITY) {
+					pThis->iSCAProgramStep = ONIDLE_STATE_LOADCITY_RETURN;
+					Game_SimcityApp_LoadCityFromCMDLine(pThis, pThis->dwSCACStringTargetTypePath);
+				}
+				else {
+					pThis->iSCAProgramStep = ONIDLE_STATE_LOADSCENARIO_RETURN;
+					Game_SimcityApp_LoadScenarioFromCMDLine(pThis, pThis->dwSCACStringTargetTypePath);
+				}
+			}
+			break;
+		case ONIDLE_STATE_INTROVIDEO:
+			if (pThis->dwSCASetNextStep) {
+				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+					ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_INTROVIDEO\n");
+				pThis->dwSCASetNextStep = FALSE;
+				pThis->dwSCADoStepSkip = FALSE;
+				pThis->dwSCALastTick = GetTickCount();
+				pThis->iSCAProgramStep = ONIDLE_STATE_DISPLAYMAXIS;
+				if (!bSkipIntro && !bSettingsAlwaysSkipIntro) {
+					if (Game_MovieCheck(aIntroASmk) && Game_MovieCheck(aIntroBSmk)) {
+						Game_SimcityApp_MusicTrigger(pThis);
+						if (Game_MovieCreateWindow()) {
+							if (!Game_MovieOpen(aIntroASmk))
+								Game_MovieOpen(aIntroBSmk);
+							Game_MovieDestroyWindow();
+						}
+						Game_SimcityApp_MusicPlayNextRefocusSong(pThis);
+					}
+					else
+						pThis->iSCAProgramStep = ONIDLE_STATE_DISPLAYINFLIGHT;
+				}
+				pThis->dwSCASetNextStep = TRUE;
+			}
+			break;
+		case ONIDLE_STATE_DISPLAYINFLIGHT:
+			if (pThis->dwSCASetNextStep) {
+				if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+					ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_DISPLAYINFLIGHT\n");
+				pThis->dwSCASetNextStep = FALSE;
+				pThis->dwSCADoStepSkip = FALSE;
+				if (!Game_MainFrame_DoInflightDialog(pMainFrm))
+					GameMain_AfxAbort();
+				pThis->dwSCALastTick = GetTickCount();
+			}
+			if (pThis->dwSCADoStepSkip || (GetTickCount() - pThis->dwSCALastTick) > 5000) {
+				pThis->iSCAProgramStep = ONIDLE_STATE_CLOSEINFLIGHT;
+				pThis->dwSCASetNextStep = TRUE;
+			}
+			if (pMainFrm->dwMFCGraphicsOne)
+				Game_SimcityApp_GetActivePalette(pThis);
+			break;
+		case ONIDLE_STATE_CLOSEINFLIGHT:
+			if (!Game_MainFrame_CloseInflightDialog(pMainFrm))
+				GameMain_AfxAbort();
+			if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
+				ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_CLOSEINFLIGHT\n");
+			pThis->iSCAProgramStep = ONIDLE_STATE_DISPLAYMAXIS;
+			pThis->dwSCASetNextStep = TRUE;
+			break;
+		default:
+			if (pThis->dwSCADragSuspendSim)
+				break;
+			if (pSCView) {
+				if (bOffCycle)
+					Game_SimcityApp_UpdateTick(pThis);
+				if (wCityMode == GAME_MODE_CITY) {
+					if (pThis->wSCAGameSpeedLOW != GAME_SPEED_PAUSED) {
+						if (pMDIFrm) {
+							if (pThis->dwSCASimulationTicking) {
+								if (pSCDoc && pSCDoc->pSimEngine)
+									Game_Engine_SimulationProcessTick(pSCDoc->pSimEngine);
+								if (wSetTriggerDisasterType)
+									Game_SimulationStartDisaster();
+								if (pThis->wSCAGameSpeedLOW != GAME_SPEED_AFRICAN_SWALLOW)
+									pThis->dwSCASimulationTicking = FALSE;
+							}
+						}
+					}
+				}
+				else if (wCityMode == GAME_MODE_DISASTER) {
+					if (pThis->wSCAGameSpeedLOW != GAME_SPEED_PAUSED) {
+						if (pThis->dwSCASimulationTicking) {
+							Game_SimulationStartDisaster();
+							++wIdleCount;
+							if (pThis->wSCAGameSpeedLOW != GAME_SPEED_AFRICAN_SWALLOW)
+								pThis->dwSCASimulationTicking = FALSE;
+						}
+					}
+				}
+				UpdateWindow(pSCView->m_hWnd);
+			}
+			break;
+	}
+
+	// Main Code
+
+	for (const auto& hook : stHooks_Hook_SimcityApp_BuildSubFrames_After) {
 		bHookStopProcessing = FALSE;
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
-			void (*fnHook)(void*) = (void(*)(void*))hook.pFunction;
+			void (*fnHook)(CSimcityAppPrimary*) = (void(*)(CSimcityAppPrimary*))hook.pFunction;
 			fnHook(pThis);
 		}
 		if (bHookStopProcessing)
@@ -403,16 +826,6 @@ extern "C" void __stdcall Hook_GameDoIdleUpkeep(void) {
 
 BAIL:
 	return;
-}
-
-// Fix the missing "Maxis Presents" slide
-void __declspec(naked) Hook_4062AD(void) {
-	__asm {
-		mov dword ptr [ecx+0x14C], 1
-		mov dword ptr [edi], 3
-		push 0x4062BD
-		retn
-	}
 }
 
 // Function prototype: HOOKCB void Hook_OnNewCity_Before(void)
@@ -1563,7 +1976,12 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 			case IDM_GAME_FILE_RELOADDEFAULTTILESET:
 				ReloadDefaultTileSet_SC2K1996();
 				return TRUE;
+
+			case IDM_MAIN_FILE_OPENMAINDIALOG:
+				OpenMainDialog_SC2K1996();
+				return TRUE;
 			}
+			//ConsoleLog(LOG_DEBUG, "CFrameWnd::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, pExtra, pHandler, dwRetAddr);
 		}
 		else if (nCode == _CN_COMMAND_UI) {
 			// As far as potential handling here goes - tread carefully;
@@ -1574,11 +1992,12 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 	else if ((DWORD)dwRetAddr == 0x4A4BB2) {
 		if (nCode == _CN_COMMAND) {
 			switch (nID) {
-				// This is the 'sc2kfix Settings' entry in the main dialog.
+			// This is the 'sc2kfix Settings' enddialog return code for the main dialog to
+			// execution from the BuildSubFrames section.
 			case IDC_GAME_MAIN_SC2KFIXSETTINGS:
-				ShowSettingsDialog();
-				return TRUE;
+				return EndDialog(pThis->m_hWnd, ONIDLE_INITIALDIALOG_SC2KFIXSETTINGS);
 			}
+			//ConsoleLog(LOG_DEBUG, "::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, pExtra, pHandler, dwRetAddr);
 		}
 	}
 	else {
@@ -1644,7 +2063,6 @@ void InstallMiscHooks_SC2K1996(void) {
 	*(DWORD*)(0x4EFDCC) = (DWORD)Hook_LoadMenuA;
 	*(DWORD*)(0x4EFDE4) = (DWORD)Hook_MessageBoxA;
 	*(DWORD*)(0x4EFC64) = (DWORD)Hook_DialogBoxParamA;
-	*(DWORD*)(0x4EFE70) = (DWORD)Hook_ShowWindow;
 	*(DWORD*)(0x4EFCE8) = (DWORD)Hook_DefWindowProcA;
 
 	// Install registry pathing hooks
@@ -1665,23 +2083,33 @@ void InstallMiscHooks_SC2K1996(void) {
 	VirtualProtect((LPVOID)0x44DC4F, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
 	*(BYTE*)0x44DC4F = 10;
 
+	// Hook for CSimcityApp::InitInstance to bypass and fix:
+	// a) Set m_nCmdShow to 'SW_MAXIMIZE' by default rather than
+	//    'SW_SHOWNA' - while adding the 'SW_MAXIMIZE' bit during
+	//     the ShowWindow() call - this resolves the lack of a main
+	//     window when the program was executed via a launcher or
+	//     the command line.
+	// b) The command line processing
+	//    (Win9x ShellOpen path conversion to DOS-type, of which didn't
+	//    occur from NT 5.0 and beyond).
+	// (This also accounts for the initial ShowWindow case)
+	VirtualProtect((LPVOID)0x405859, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x405859, Hook_SimcityApp_InitInstanceFix);
+
 	// Hook CSimcityApp::OnQuit
 	VirtualProtect((LPVOID)0x401753, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x401753, Hook_SimcityApp_OnQuit);
 
 	InstallSpriteAndTileSetHooks_SC2K1996();
 
-	// Hook GameDoIdleUpkeep
+	// Hook CSimcityApp::BuildSubFrames
 	VirtualProtect((LPVOID)0x402A3B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x402A3B, Hook_GameDoIdleUpkeep);
+	NEWJMP((LPVOID)0x402A3B, Hook_SimcityApp_BuildSubFrames);
 
 	// Fix the Maxis Presents logo not being shown
-	VirtualProtect((LPVOID)0x4062B9, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(DWORD*)0x4062B9 = 1;
-	VirtualProtect((LPVOID)0x4062AD, 12, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4062AD, Hook_4062AD);
-	VirtualProtect((LPVOID)0x4E6130, 12, PAGE_EXECUTE_READWRITE, &dwDummy);
-	memcpy_s((LPVOID)0x4E6130, 12, "presnts.bmp", 12);
+	VirtualProtect((LPVOID)0x4E6130, 13, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memset((LPVOID)0x4E6130, 0, 13);
+	memcpy_s((LPVOID)0x4E6130, 13, "presnts.bmp", 13);
 
 	// Fix power and water grid updates slowing down after the population hits 50,000
 	VirtualProtect((LPVOID)0x440943, 4, PAGE_EXECUTE_READWRITE, &dwDummy); // 0x440170 <- CityToolMenuAction
@@ -1750,6 +2178,33 @@ void InstallMiscHooks_SC2K1996(void) {
 	NEWJMP((LPVOID)0x4A5352, Hook_Wnd_OnCommand);
 
 	// Add more buttons to SC2K's menus
+	hMainMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(2));
+	if (hMainMenu) {
+		// File menu -> Open Main Dialog
+		HMENU hFilePopup;
+		MENUITEMINFO miiFilePopup;
+		miiFilePopup.cbSize = sizeof(MENUITEMINFO);
+		miiFilePopup.fMask = MIIM_SUBMENU;
+		if (!GetMenuItemInfo(hMainMenu, 0, TRUE, &miiFilePopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Main GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
+			goto skipmainmenu;
+		}
+		hFilePopup = miiFilePopup.hSubMenu;
+		if (!InsertMenu(hFilePopup, 0, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Main InsertMenuA #1 failed, error = 0x%08X.\n", GetLastError());
+			goto skipmainmenu;
+		}
+		if (!InsertMenu(hFilePopup, 0, MF_BYPOSITION|MF_STRING, IDM_MAIN_FILE_OPENMAINDIALOG, "&Open Main Dialog") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Main InsertMenuA #1 failed, error = 0x%08X.\n", GetLastError());
+			goto skipmainmenu;
+		}
+
+		if (mischook_debug & MISCHOOK_DEBUG_MENU)
+			ConsoleLog(LOG_DEBUG, "MISC: Updated main menu.\n");
+	}
+
+	skipmainmenu:
+
 	// TODO: write a much cleaner and more programmatic way of doing this
 	hGameMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(3));
 	if (hGameMenu) {
