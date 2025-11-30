@@ -95,7 +95,7 @@ static void L_ProcessCmdLine_1995(CSimcityAppPrimary *pSCApp) {
 		// When a drag-and-drop occurs (over the main program or a shortcut), the file argument
 		// is always at the very end; the processing will only accept that detail as well.
 		WideCharToMultiByte(CP_UTF8, 0, pArgv[iArgc - 1], -1, szFileArg, MAX_PATH, NULL, NULL);
-		_strlwr(szFileArg);
+		_strlwr_s(szFileArg, sizeof(szFileArg) - 1);
 
 		free(pArgv);
 	}
