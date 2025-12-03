@@ -23,7 +23,7 @@
 sc2kfix_mod_hook_t stModHooks[] = {
 	{ "Hook_SimCalendarAdvance_Before", 0 },
 	{ "Hook_SimCalendarAdvance_After", 0 },
-	//{ "Hook_GameDoIdleUpkeep_Before", 0 }
+	//{ "Hook_SimcityApp_BuildSubFrames_Before", 0 }
 };
 
 // The stModInfo structure tells the sc2kfix mod loader about the mod and how to load it. It
@@ -98,7 +98,7 @@ HOOKCB void Hook_SimCalendarAdvance_Before(void) {
 // This is an example of an "after" hook. sc2kfix intercepts the end of the game engine's
 // SimulationProcessTick function and calls the Hook_SimulationProcessTickDaySwitch_After exports
 // from each mod before returning to the calling function (in this case, the default case of the
-// GameDoIdleUpkeep function).
+// SimcityApp_BuildSubFrames function).
 HOOKCB void Hook_SimCalendarAdvance_After(void) {
 	// LOG() is a macro that prepends the module tag and the stModInfo.szModShortName to the log
 	// message before calling ConsoleLog to output it. You should not directly call ConsoleLog in
@@ -108,9 +108,8 @@ HOOKCB void Hook_SimCalendarAdvance_After(void) {
 
 /*int iLastState = 0;
 
-HOOKCB void Hook_GameDoIdleUpkeep_Before(void* pThis) {
-	int* piThis = (int*)pThis;
-	int iState = piThis[201];
+HOOKCB void Hook_SimcityApp_BuildSubFrames_Before(CSimcityAppPrimary* pThis) {
+	int iState = pThis->iSCAProgramStep;
 	if (iState != iLastState) {
 		LOG(LOG_DEBUG, "iState changed, %d -> %d (%s)\n", iLastState, iState, GetOnIdleStateEnumName(iState));
 		iLastState = iState;

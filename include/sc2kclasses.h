@@ -16,6 +16,72 @@
 // Forward declaration
 class CMainFrame;
 
+// enums
+
+enum {
+	DEMO_ONIDLE_STATE_INGAME = -1,
+	DEMO_ONIDLE_STATE_MAPMODE,
+	DEMO_ONIDLE_STATE_DISPLAYMAXIS,
+	DEMO_ONIDLE_STATE_WAITMAXIS,
+	DEMO_ONIDLE_STATE_DISPLAYTITLE,
+	DEMO_ONIDLE_STATE_DIALOGFINISH,
+	DEMO_ONIDLE_STATE_DISPLAYREGISTRATION,
+	DEMO_ONIDLE_STATE_CLOSEREGISTRATION,
+	DEMO_ONIDLE_STATE_PENDINGACTION,
+	DEMO_ONIDLE_STATE_NONE_8,
+	DEMO_ONIDLE_STATE_NONE_9,
+	DEMO_ONIDLE_STATE_LOADCITY_RETURN,
+	DEMO_ONIDLE_STATE_NEWCITY_RETURN,
+	DEMO_ONIDLE_STATE_EDITNEWMAP_RETURN,
+	DEMO_ONIDLE_STATE_LOADSCENARIO_RETURN,
+	DEMO_ONIDLE_STATE_MENUDIALOG,
+	DEMO_ONIDLE_STATE_FROMCMDLINE,
+	DEMO_ONIDLE_STATE_RETURNTOSTART
+};
+
+enum {
+	ONIDLE_STATE_INGAME = -1,
+	ONIDLE_STATE_MAPMODE,
+	ONIDLE_STATE_DISPLAYMAXIS,
+	ONIDLE_STATE_WAITMAXIS,
+	ONIDLE_STATE_DISPLAYTITLE,
+	ONIDLE_STATE_DIALOGFINISH,
+	ONIDLE_STATE_DISPLAYREGISTRATION,
+	ONIDLE_STATE_CLOSEREGISTRATION,
+	ONIDLE_STATE_PENDINGACTION,
+	ONIDLE_STATE_NONE_8,
+	ONIDLE_STATE_NONE_9,
+	ONIDLE_STATE_LOADCITY_RETURN,
+	ONIDLE_STATE_NEWCITY_RETURN,
+	ONIDLE_STATE_EDITNEWMAP_RETURN,
+	ONIDLE_STATE_LOADSCENARIO_RETURN,
+	ONIDLE_STATE_MENUDIALOG,
+	ONIDLE_STATE_FROMCMDLINE,
+	ONIDLE_STATE_INTROVIDEO,
+	ONIDLE_STATE_DISPLAYINFLIGHT,
+	ONIDLE_STATE_CLOSEINFLIGHT,
+
+	ONIDLE_STATE_COUNT
+};
+
+#define ONIDLE_STATE_MAX (ONIDLE_STATE_COUNT + 1)
+
+enum {
+	ONIDLE_INITIALDIALOG_NONE,
+	ONIDLE_INITIALDIALOG_LOADCITY,
+	ONIDLE_INITIALDIALOG_NEWCITY,
+	ONIDLE_INITIALDIALOG_EDITNEWMAP,
+	ONIDLE_INITIALDIALOG_LOADSCENARIO,
+	ONIDLE_INITIALDIALOG_ONQUIT,
+	ONIDLE_INITIALDIALOG_LOADTILESET,
+	ONIDLE_INITIALDIALOG_MOVIES,
+	ONIDLE_INITIALDIALOG_SC2KFIXSETTINGS,
+
+	ONIDLE_INITIALDIALOG_COUNT
+};
+
+#define ONIDLE_INITIALDIALOG_MAX (ONIDLE_INITIALDIALOG_COUNT)
+
 // This specifical structure is the equivalent
 // of the LOGPALETTE struct from the WinAPI
 // except the pPalEnts array is preset to
@@ -106,7 +172,7 @@ public:
 	HMODULE dwSCAhModule;
 	DWORD dwSCAGameAutoSave;
 	DWORD dwSCACursorGameHit;
-	DWORD dwSCALoadCityMode;
+	DWORD dwSCACMDLineLoadMode;
 	int iSCAGDCHorzRes;
 	int iSCAGDCVertRes;
 	DWORD dwSCAbForceBkgd;
@@ -119,15 +185,15 @@ public:
 	DWORD dwSCANoNewspapers;
 	CMFC3XPalette *dwSCAMainPaletteFore;
 	CMFC3XPalette *dwSCAMainPaletteBkgd;
-	CMFC3XString dwSCACStringOne;
-	CMFC3XString dwSCACStringTwo;
-	CMFC3XString dwSCACStringThree;
+	CMFC3XString dwSCACStringDriveCurrentWorkingDirectory;
+	CMFC3XString dwSCACStringHomeDirectory;
+	CMFC3XString dwSCACStringTargetTypePath;
 	CMFC3XString dwSCACStringLang;
 	DWORD dwSCASCURK;
 	CSound *SCASNDLayer;
 	DWORD dwSCASetNextStep;
-	CMFC3XMultiDocTemplate *dwSCAMultiDocOne;
-	CMFC3XMultiDocTemplate *dwSCAMultiDocTwo;
+	CMFC3XMultiDocTemplate *dwSCAMultiDocSC2;
+	CMFC3XMultiDocTemplate *dwSCAMultiDocSCN;
 	DWORD dwSCAThirtyFour;
 	DWORD dwSCAThirtyFive;
 	HCURSOR dwSCACursors[30];
@@ -147,7 +213,7 @@ public:
 	DWORD dwSCALastTick;
 	int iSCAProgramStep;
 	DWORD dwSCADoStepSkip;
-	DWORD dwSCAMenuDialogStep;
+	int iSCAMenuDialogStep;
 	DWORD dwSCAMapModeVarCheck;
 	DWORD dwSCAOnInitToggleToolBar;
 	DWORD dwSCASysCmdOnQuitVar;
@@ -160,7 +226,7 @@ class CSimcityAppDemo : public CMFC3XWinApp {
 public:
 	DWORD dwSCAGameAutoSave;
 	DWORD dwSCACursorGameHit;
-	DWORD dwSCALoadCityMode;
+	DWORD dwSCACMDLineLoadMode;
 	int iSCAGDCHorzRes;
 	int iSCAGDCVertRes;
 	DWORD dwSCAbForceBkgd;
@@ -173,15 +239,15 @@ public:
 	DWORD dwSCANoNewspapers;
 	CMFC3XPalette *dwSCAMainPaletteFore;
 	CMFC3XPalette *dwSCAMainPaletteBkgd;
-	CMFC3XString dwSCACStringOne;
-	CMFC3XString dwSCACStringTwo;
-	CMFC3XString dwSCACStringThree;
+	CMFC3XString dwSCACStringDriveCurrentWorkingDirectory;
+	CMFC3XString dwSCACStringHomeDirectory;
+	CMFC3XString dwSCACStringTargetTypePath;
 	CMFC3XString dwSCACStringLang;
 	DWORD dwSCASCURK;
 	CSound *SCASNDLayer;
 	DWORD dwSCASetNextStep;
-	CMFC3XMultiDocTemplate *dwSCAMultiDocOne;
-	CMFC3XMultiDocTemplate *dwSCAMultiDocTwo;
+	CMFC3XMultiDocTemplate *dwSCAMultiDocSC2;
+	CMFC3XMultiDocTemplate *dwSCAMultiDocSCN;
 	DWORD dwSCAThirtyFour;
 	DWORD dwSCAThirtyFive;
 	HCURSOR dwSCACursors[30];
@@ -201,7 +267,7 @@ public:
 	DWORD dwSCALastTick;
 	int iSCAProgramStep;
 	DWORD dwSCADoStepSkip;
-	DWORD dwSCAMenuDialogStep;
+	int iSCAMenuDialogStep;
 	DWORD dwSCAMapModeVarCheck;
 	DWORD dwSCAReturnToMenu;
 	DWORD dwSCAOnInitToggleToolBar;
@@ -413,4 +479,18 @@ public:
 	DWORD QGDfour;
 	CGraphics *pQGDGraphic;
 	CMFC3XDC QGDDC;
+};
+
+// !!! At the moment the CMovieDialog class is structured
+// to achieve alignment, it is heavily subject to change.
+
+class CMovieDialog : public CMFC3XDialog {
+public:
+	HICON hMovIcon;
+	BITMAPINFO *pOWMainBitmapInfo;
+	CMFC3XRect MovRECT[5];
+	BITMAPINFO *pOWButtonBitmapInfo[10];
+	CMFC3XPalette MovPalette;
+	int iButtonOne;
+	int iButtonTwo;
 };

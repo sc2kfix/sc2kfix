@@ -540,6 +540,12 @@ public:
 	HWND m_hWndMDIClient;
 };
 
+class CMFC3XMDIChildWnd : public CMFC3XFrameWnd {
+public:
+	HMENU m_hMenuShared;
+	BOOL m_bPseudoInactive;
+};
+
 class CMFC3XDialog : public CMFC3XWnd {
 public:
 	unsigned int m_nIDHelp;

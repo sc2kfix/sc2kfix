@@ -42,7 +42,7 @@ static int GetQueriedSpriteIDFromCoords(WORD x, WORD y) {
 	}
 	else {
 		if (iTileID >= TILE_ARCOLOGY_PLYMOUTH) {
-			// Positioning falls into the "special" range.
+			// Positioning falls into the "medium" range.
 			iSpriteID = iTileID + 500;
 		}
 	}	
@@ -54,9 +54,9 @@ static int GetQueriedSpriteIDFromCoords(WORD x, WORD y) {
 
 	iTextOverlay = XTXTGetTextOverlayID(x, y);
 	if (iTextOverlay) {
-		if (iTextOverlay >= 201 &&
-			iTextOverlay < 241 &&
-			XTHGGetType(iTextOverlay - 201) == XTHG_SAILBOAT)
+		if (iTextOverlay >= MIN_XTHG_TEXT_ENTRIES &&
+			iTextOverlay <= MAX_XTHG_TEXT_ENTRIES &&
+			XTHGGetType(XTHGID_ENTRY(iTextOverlay)) == XTHG_SAILBOAT)
 			iSpriteID = 1380;
 	}
 
@@ -97,12 +97,12 @@ static BYTE GetPertinentRsrcIDOffset(WORD x, WORD y) {
 				iRsrcOffset = 159;
 			iTextOverlay = XTXTGetTextOverlayID(x, y);
 			if (iTextOverlay) {
-				if (iTextOverlay >= 201 &&
-					iTextOverlay < 241 &&
-					XTHGGetType(iTextOverlay - 201) == XTHG_SAILBOAT)
+				if (iTextOverlay >= MIN_XTHG_TEXT_ENTRIES &&
+					iTextOverlay <= MAX_XTHG_TEXT_ENTRIES &&
+					XTHGGetType(XTHGID_ENTRY(iTextOverlay)) == XTHG_SAILBOAT)
 					iRsrcOffset = 161;
 			}
-		}	
+		}
 	}
 	return iRsrcOffset;
 }
@@ -193,8 +193,8 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 			}
 		}
 
-		if (iTextOverlay >= MAX_USER_TEXT_ENTRIES) {
-			iTileID = GetMicroSimulatorTileID(iTextOverlay - MAX_USER_TEXT_ENTRIES);
+		if (iTextOverlay >= MIN_SIM_TEXT_ENTRIES && iTextOverlay <= MAX_SIM_TEXT_ENTRIES) {
+			iTileID = GetMicroSimulatorTileID(MICROSIMID_ENTRY(iTextOverlay));
 			if (iTileID) {
 				pSrc = GetXLABEntry(iTextOverlay);
 				if (pSrc)
@@ -360,11 +360,9 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		// Microsim info
 		BYTE bTextOverlay;
 		
-		bTextOverlay = XTXTGetTextOverlayID(iTileX, iTileY); // Entries > 51 aren't user-modifiable label/text entries.
-		if (bTextOverlay <= MIN_SIM_TEXT_ENTRIES || bTextOverlay > MAX_SIM_TEXT_ENTRIES)
-			strTileInfo += "None\nN/A\nN/A\nN/A\nN/A";
-		else {
-			BYTE iMicrosimID = bTextOverlay - MIN_SIM_TEXT_ENTRIES; // The MicrosimID being calculated from entry 52 and beyond but subtracted by the non-user modifiable starting value.
+		bTextOverlay = XTXTGetTextOverlayID(iTileX, iTileY); // Entries >= MIN_SIM_TEXT_ENTRIES aren't user-modifiable label/text entries.
+		if (bTextOverlay >= MIN_SIM_TEXT_ENTRIES && bTextOverlay <= MAX_SIM_TEXT_ENTRIES) {
+			BYTE iMicrosimID = MICROSIMID_ENTRY(bTextOverlay); // The MicrosimID being calculated from entry MIN_SIM_TEXT_ENTRIES and beyond but subtracted by the non-user modifiable starting value.
 			strTileInfo += GetXLABEntry(bTextOverlay);
 			strTileInfo += " (iMicrosimID " + std::to_string(iMicrosimID) + " / " + HexPls(iMicrosimID, 2) + ")\n";
 			strTileInfo += std::to_string(GetMicroSimulatorStat0(iMicrosimID)) + " / " + HexPls(GetMicroSimulatorStat0(iMicrosimID), 2) + "\n";
@@ -372,6 +370,8 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 			strTileInfo += std::to_string(GetMicroSimulatorStat2(iMicrosimID)) + " / " + HexPls(GetMicroSimulatorStat2(iMicrosimID), 2) + "\n";
 			strTileInfo += std::to_string(GetMicroSimulatorStat3(iMicrosimID)) + " / " + HexPls(GetMicroSimulatorStat3(iMicrosimID), 2);
 		}
+		else
+			strTileInfo += "None\nN/A\nN/A\nN/A\nN/A";
 
 		SetDlgItemText(hwndDlg, IDC_STATIC_TILENAME, strTileHeader.c_str());
 		SetDlgItemText(hwndDlg, IDC_STATIC_TILEDATA, strTileInfo.c_str());

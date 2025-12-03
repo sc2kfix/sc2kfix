@@ -34,6 +34,7 @@ BOOL bGameDead = FALSE;
 HMODULE hRealWinMM = NULL;
 HMODULE hSC2KAppModule = NULL;
 HMODULE hSC2KFixModule = NULL;
+HMENU hMainMenu = NULL;
 HMENU hGameMenu = NULL;
 HMENU hDebugMenu = NULL;
 FARPROC fpWinMMHookList[180] = { NULL };
@@ -454,7 +455,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		if (dwDetectedVersion == SC2KVERSION_1996)
 			InstallMiscHooks_SC2K1996();
 		else if (dwDetectedVersion == SC2KVERSION_1995)
-			InstallRegistryPathingHooks_SC2K1995();
+			InstallMiscHooks_SC2K1995();
 		else if (dwDetectedVersion == SC2KVERSION_DEMO)
 			InstallMiscHooks_SC2KDemo();
 

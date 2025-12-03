@@ -219,25 +219,25 @@ void SaveSettings(BOOL onload) {
 
 	ConsoleLog(LOG_INFO, "CORE: Saved sc2kfix settings.\n");
 
-	char szKeyBuf[32];
-
-	section = "sc2kfix.music.MIDI";
-	for (int i = 0; i < MUSIC_TRACKS; i++) {
-		sprintf_s(szKeyBuf, sizeof(szKeyBuf), "100%02d", i);
-		StrTrimA(szSettingsMIDITrackPath[i], " \t\r\n");
-		WritePrivateProfileStringA(section, szKeyBuf, szSettingsMIDITrackPath[i], ini_file);
-	}
-
-	section = "sc2kfix.music.MP3";
-	for (int i = 0; i < MUSIC_TRACKS; i++) {
-		sprintf_s(szKeyBuf, sizeof(szKeyBuf), "100%02d", i);
-		StrTrimA(szSettingsMP3TrackPath[i], " \t\r\n");
-		WritePrivateProfileStringA(section, szKeyBuf, szSettingsMP3TrackPath[i], ini_file);
-	}
-
 	if (!onload) {
-		// Update any hooks we need to.
 		if (dwDetectedVersion == SC2KVERSION_1996) {
+			char szKeyBuf[32];
+
+			section = "sc2kfix.music.MIDI";
+			for (int i = 0; i < MUSIC_TRACKS; i++) {
+				sprintf_s(szKeyBuf, sizeof(szKeyBuf), "100%02d", i);
+				StrTrimA(szSettingsMIDITrackPath[i], " \t\r\n");
+				WritePrivateProfileStringA(section, szKeyBuf, szSettingsMIDITrackPath[i], ini_file);
+			}
+
+			section = "sc2kfix.music.MP3";
+			for (int i = 0; i < MUSIC_TRACKS; i++) {
+				sprintf_s(szKeyBuf, sizeof(szKeyBuf), "100%02d", i);
+				StrTrimA(szSettingsMP3TrackPath[i], " \t\r\n");
+				WritePrivateProfileStringA(section, szKeyBuf, szSettingsMP3TrackPath[i], ini_file);
+			}
+	
+			// Update any hooks we need to.
 			UpdateMiscHooks_SC2K1996();
 			UpdateStatus_SC2K1996(-1);
 		}
