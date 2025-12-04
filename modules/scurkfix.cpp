@@ -10,6 +10,18 @@
 #include <sc2kfix.h>
 
 static DWORD dwDummy;
+
+#define MISCHOOK_SCURK1996_DEBUG_OTHER 1
+
+#define MISCHOOK_SCURK1996_DEBUG DEBUG_FLAGS_NONE
+
+#ifdef DEBUGALL
+#undef MISCHOOK_SCURK1996_DEBUG
+#define MISCHOOK_SCURK1996_DEBUG DEBUG_FLAGS_EVERYTHING
+#endif
+
+UINT mischook_scurk1996_debug = MISCHOOK_SCURK1996_DEBUG;
+
 DWORD dwSCURKAppTimestamp = 0;
 DWORD dwSCURKAppVersion = SC2KVERSION_UNKNOWN;
 HMODULE hSCURKAppModule = NULL;
@@ -31,7 +43,32 @@ extern "C" __declspec(naked) void __cdecl Hook_SCURK1996AnimationFix(void) {
 	}
 }
 
+extern "C" void __cdecl Hook_SCURK1996DebugOut(char const *fmt, ...) {
+	va_list args;
+	int len;
+	char* buf;
+
+	if ((mischook_scurk1996_debug & MISCHOOK_SCURK1996_DEBUG_OTHER) == 0)
+		return;
+
+	va_start(args, fmt);
+	len = _vscprintf(fmt, args) + 1;
+	buf = (char*)malloc(len);
+	if (buf) {
+		vsprintf_s(buf, len, fmt, args);
+
+		ConsoleLog(LOG_DEBUG, "0x%06X -> g_DebugOut(): %s", _ReturnAddress(), buf);
+
+		free(buf);
+	}
+
+	va_end(args);
+}
+
 BOOL InjectSCURKFix(void) {
+	if (mischook_debug == DEBUG_FLAGS_EVERYTHING)
+		mischook_scurk1996_debug = DEBUG_FLAGS_EVERYTHING;
+
 	ConsoleLog(LOG_INFO, "CORE: Injecting SCURK fixes...\n");
 	hSCURKAppModule = GetModuleHandle(NULL);
 	dwSCURKAppTimestamp = ((PIMAGE_NT_HEADERS)(((PIMAGE_DOS_HEADER)hSCURKAppModule)->e_lfanew + (UINT_PTR)hSCURKAppModule))->FileHeader.TimeDateStamp;
@@ -56,5 +93,9 @@ BOOL InjectSCURKFix(void) {
 	VirtualProtect((LPVOID)0x4497F5, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4497F5, Hook_SCURK1996AnimationFix);
 	ConsoleLog(LOG_INFO, "CORE: Patched palette animation fix for SCURK.\n");
+
+	VirtualProtect((LPVOID)0x4132EC, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4132EC, Hook_SCURK1996DebugOut);
+	
 	return TRUE;
 }
