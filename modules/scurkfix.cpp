@@ -78,7 +78,7 @@ BOOL InjectSCURKFix(void) {
 		ConsoleLog(LOG_DEBUG, "CORE: SCURK version 1996 detected.\n");
 		break;
 	default:
-		ConsoleLog(LOG_ERROR, "CORE: Could not detect SCURK version. Not injecting animation fix.\n");
+		ConsoleLog(LOG_ERROR, "CORE: Could not detect SCURK version (got timestamp 0x%08X). Not injecting animation fix.\n", dwSCURKAppTimestamp);
 		return TRUE;
 	}
 

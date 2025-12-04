@@ -324,7 +324,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		default:
 			dwDetectedVersion = SC2KVERSION_UNKNOWN;
 			char msg[300];
-			sprintf_s(msg, 300, "Could not detect SC2K version (got timestamp %08Xd). Your game will probably crash.\r\n\r\n"
+			sprintf_s(msg, 300, "Could not detect SC2K version (got timestamp 0x%08X). Your game will probably crash.\r\n\r\n"
 				"Please let us know in a GitHub issue what version of the game you're running so we can look into this.", dwSC2KAppTimestamp);
 			MessageBox(GetActiveWindow(), msg, "sc2kfix warning", MB_OK | MB_ICONWARNING);
 			ConsoleLog(LOG_WARNING, "CORE: SC2K version could not be detected (got timestamp 0x%08X). Game will probably crash.\n", dwSC2KAppTimestamp);
