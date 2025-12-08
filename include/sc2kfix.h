@@ -19,6 +19,8 @@
 #include <sc2k_1995.h>
 #include <sc2k_1996.h>
 #include <sc2k_demo.h>
+#include <bc45xhelp.h>
+#include <scurk_1996se.h>
 #include <music.h>
 
 // Turning this on enables every debugging option. You have been warned.
@@ -64,6 +66,12 @@ template <typename T> std::string to_string_precision(const T value, const int p
 
 #define countof(x) (sizeof(x)/sizeof(*(x)))
 #define lengthof(s) (countof(s)-1)
+
+#define SIZE_OFFSETOF(sz, ty, el) ((sz)&(((ty *)0)->el))
+
+#define DWORD_OFFSETOF(ty, el) SIZE_OFFSETOF(DWORD, ty, el)
+#define WORD_OFFSETOF(ty, el)  SIZE_OFFSETOF(WORD, ty, el)
+#define BYTE_OFFSETOF(ty, el)  SIZE_OFFSETOF(BYTE, ty, el)
 
 #define IFF_HEAD(a, b, c, d) ((DWORD)d << 24 | (DWORD)c << 16 | (DWORD)b << 8 | (DWORD)a)
 #define DWORD_NTOHL_CHECK(x) (bBigEndian ? ntohl(x) : x)
@@ -469,7 +477,7 @@ void ProposeMilitaryBaseNavalYard(void);
 void InstallRegistryPathingHooks_SC2K1996(void);
 void InstallRegistryPathingHooks_SC2K1995(void);
 void InstallRegistryPathingHooks_SC2KDemo(void);
-void InstallRegistryPathingHooks_SCURK1996(void);
+void InstallRegistryPathingHooks_SCURK1996SE(void);
 
 // Movie hook
 void InstallMovieHooks(void);

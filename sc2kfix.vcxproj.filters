@@ -162,6 +162,12 @@
     <ClInclude Include="include\sc2k_1995.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\scurk_1996se.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\bc45xhelp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="hooks\hook_mciSendCommand.cpp">

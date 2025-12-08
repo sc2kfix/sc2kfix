@@ -47,16 +47,6 @@ enum redirected_keys_t {
 	enCountKey
 };
 
-enum regPathVersion {
-	REGPATH_UNKNOWN,
-	REGPATH_SC2K1996,
-	REGPATH_SC2K1995,
-	REGPATH_SC2KDEMO,
-	REGPATH_SCURK1996
-};
-
-static int iRegPathHookMode = REGPATH_UNKNOWN;
-
 const char *gamePrimaryKey = "SimCity 2000";
 
 char szLastStoredCityPath[MAX_PATH + 1];
@@ -597,8 +587,6 @@ extern "C" LSTATUS __stdcall Hook_RegCloseKey(HKEY hKey) {
 }
 
 void InstallRegistryPathingHooks_SC2K1996(void) {
-	iRegPathHookMode = REGPATH_SC2K1996;
-
 	// Install RegSetValueExA hook
 	*(DWORD*)(0X4EF7F8) = (DWORD)Hook_RegSetValueExA;
 
@@ -616,8 +604,6 @@ void InstallRegistryPathingHooks_SC2K1996(void) {
 }
 
 void InstallRegistryPathingHooks_SC2K1995(void) {
-	iRegPathHookMode = REGPATH_SC2K1995;
-
 	// Install RegOpenKeyExA
 	*(DWORD*)(0x4EE79C) = (DWORD)Hook_RegOpenKeyExA;
 
@@ -635,8 +621,6 @@ void InstallRegistryPathingHooks_SC2K1995(void) {
 }
 
 void InstallRegistryPathingHooks_SC2KDemo(void) {
-	iRegPathHookMode = REGPATH_SC2KDEMO;
-
 	// Install RegQueryValueExA hook
 	*(DWORD*)(0x4D7760) = (DWORD)Hook_RegQueryValueExA;
 
@@ -653,9 +637,7 @@ void InstallRegistryPathingHooks_SC2KDemo(void) {
 	*(DWORD*)(0x4D7770) = (DWORD)Hook_RegCloseKey;
 }
 
-void InstallRegistryPathingHooks_SCURK1996(void) {
-	iRegPathHookMode = REGPATH_SCURK1996;
-
+void InstallRegistryPathingHooks_SCURK1996SE(void) {
 	// Install RegSetValueExA hook
 	*(DWORD*)(0X4B05F0) = (DWORD)Hook_RegSetValueExA;
 
