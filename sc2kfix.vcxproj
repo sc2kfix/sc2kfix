@@ -108,6 +108,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\bc45xhelp.h" />
     <ClInclude Include="include\hooklists.h" />
     <ClInclude Include="include\json.hpp" />
     <ClInclude Include="include\mfc3xhelp.h" />
@@ -116,6 +117,7 @@
     <ClInclude Include="include\sc2kfix.h" />
     <ClInclude Include="include\sc2k_1995.h" />
     <ClInclude Include="include\sc2k_demo.h" />
+    <ClInclude Include="include\scurk_1996se.h" />
     <ClInclude Include="include\winmm_exports.h" />
     <ClInclude Include="include\sc2k_1996.h" />
     <ClInclude Include="resource.h" />
