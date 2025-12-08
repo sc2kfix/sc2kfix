@@ -125,7 +125,7 @@ extern "C" void __cdecl Hook_SCURKPrimary_PlaceTileListDlg_SetupWindow(DWORD *pT
 	}
 }
 
-extern "C" void __cdecl Hook_SCURKPrimary_PlaceTileListDlg_EvLButtonDblClk(DWORD *pThis, unsigned int nFlags, TBC45XPoint *pt) {
+extern "C" void __cdecl Hook_SCURKPrimary_PlaceTileListDlg_EvLButtonDblClk(DWORD *pThis) {
 	int nCurSel;
 	int nPosOne, nPosTwo;
 	char szBuf[80 + 1];
@@ -133,7 +133,7 @@ extern "C" void __cdecl Hook_SCURKPrimary_PlaceTileListDlg_EvLButtonDblClk(DWORD
 	TBC45XRect lbRect;
 
 	if ((mischook_scurkprimary_debug & MISCHOOK_SCURKPRIMARY_DEBUG_OTHER) != 0)
-		ConsoleLog(LOG_DEBUG, "0x%06X -> PlaceTileListDlg_EvLButtonDblClk(0x%06X, %u, %d/%d)\n", _ReturnAddress(), pThis, nFlags, pt->x, pt->y);
+		ConsoleLog(LOG_DEBUG, "0x%06X -> PlaceTileListDlg_EvLButtonDblClk(0x%06X)\n", _ReturnAddress(), pThis);
 
 	nCurSel = GameMain_BCListBox_GetSelIndex_SCURKPrimary((DWORD *)pThis[10]);
 	if ((mischook_scurkprimary_debug & MISCHOOK_SCURKPRIMARY_DEBUG_OTHER) != 0)
