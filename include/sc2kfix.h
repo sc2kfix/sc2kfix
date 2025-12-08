@@ -20,7 +20,7 @@
 #include <sc2k_1996.h>
 #include <sc2k_demo.h>
 #include <bc45xhelp.h>
-#include <scurk_1996se.h>
+#include <scurk_primary.h>
 #include <music.h>
 
 // Turning this on enables every debugging option. You have been warned.
