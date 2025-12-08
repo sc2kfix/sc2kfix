@@ -162,10 +162,10 @@
     <ClInclude Include="include\sc2k_1995.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\scurk_1996se.h">
+    <ClInclude Include="include\bc45xhelp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\bc45xhelp.h">
+    <ClInclude Include="include\scurk_primary.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -386,7 +386,7 @@
     <ClCompile Include="hooks\hook_sc2k1995_miscellaneous.cpp">
       <Filter>Source Files\Hooks</Filter>
     </ClCompile>
-    <ClCompile Include="modules\scurkfix_1996se.cpp">
+    <ClCompile Include="modules\scurkfix_primary.cpp">
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
   </ItemGroup>
