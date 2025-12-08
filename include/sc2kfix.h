@@ -31,10 +31,16 @@
 
 #define SC2KFIX_CORE
 
-#define SC2KVERSION_UNKNOWN 0
-#define SC2KVERSION_1996    1
-#define SC2KVERSION_1995    2
-#define SC2KVERSION_DEMO    3
+#define VERSION_PROG_UNKNOWN 0
+#define VERSION_SC2K_1996    1
+#define VERSION_SC2K_1995    2
+#define VERSION_SC2K_DEMO    3
+#define VERSION_SCURK_1996SE 4
+
+#define SC2KFIX_MODE_UNKNOWN  0
+#define SC2KFIX_MODE_SC2K     1
+#define SC2KFIX_MODE_SC2KDEMO 2
+#define SC2KFIX_MODE_SCURK    3
 
 #define SC2KFIX_VERSION			"0.10-dev"
 #define SC2KFIX_VERSION_MAJOR	0
@@ -405,12 +411,12 @@ extern HMENU hGameMenu;
 extern HMENU hDebugMenu;
 extern FARPROC fpWinMMHookList[180];
 extern DWORD dwDetectedVersion;
-extern DWORD dwSC2KAppTimestamp;
+extern DWORD dwSC2kFixMode;
+extern DWORD dwDetectedAppTimestamp;
 extern DWORD dwSC2KFixVersion;
 extern const char* szSC2KFixVersion;
 extern const char* szSC2KFixReleaseTag;
 extern const char* szSC2KFixBuildInfo;
-extern BOOL bInSCURK;
 extern BOOL bConsoleEnabled;
 extern BOOL bSkipIntro;
 extern BOOL bUseAdvancedQuery;
@@ -500,4 +506,4 @@ extern UINT updatenotifier_debug;
 
 // SCURK specific stuff
 
-BOOL InjectSCURKFix(void);
+void InstallFixes_SCURK1996SE(void);

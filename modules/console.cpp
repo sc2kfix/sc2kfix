@@ -238,7 +238,7 @@ BOOL ConsoleCmdShowDebug(const char* szCommand, const char* szArguments) {
 }
 
 BOOL ConsoleCmdShowMemory(const char* szCommand, const char* szArguments) {
-	if (dwDetectedVersion != SC2KVERSION_1996) {
+	if (dwDetectedVersion != VERSION_SC2K_1996) {
 		printf("Command only available when attached to 1996 Special Edition.\n");
 		return TRUE;
 	}
@@ -295,7 +295,7 @@ BOOL ConsoleCmdShowMemory(const char* szCommand, const char* szArguments) {
 }
 
 BOOL ConsoleCmdShowMicrosim(const char* szCommand, const char* szArguments) {
-	if (dwDetectedVersion != SC2KVERSION_1996) {
+	if (dwDetectedVersion != VERSION_SC2K_1996) {
 		printf("Command only available when attached to 1996 Special Edition.\n");
 		return TRUE;
 	}
@@ -440,7 +440,7 @@ BOOL ConsoleCmdShowMods(const char* szCommand, const char* szArguments) {
 }
 
 BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
-	if (dwDetectedVersion != SC2KVERSION_1996) {
+	if (dwDetectedVersion != VERSION_SC2K_1996) {
 		printf("Command only available when attached to 1996 Special Edition.\n");
 		return TRUE;
 	}
@@ -495,7 +495,7 @@ static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments) {
 }
 
 BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments) {
-	if (dwDetectedVersion != SC2KVERSION_1996) {
+	if (dwDetectedVersion != VERSION_SC2K_1996) {
 		printf("Command only available when attached to 1996 Special Edition.\n");
 		return TRUE;
 	}
@@ -548,13 +548,32 @@ BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments) {
 }
 
 BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments) {
-	const char* szSC2KVersion = "unknown";
-	switch (dwDetectedVersion) {
-	case SC2KVERSION_1995:
-		szSC2KVersion = "1995 CD Collection";
-	case SC2KVERSION_1996:
-		szSC2KVersion = "1996 Special Edition";
+	const char* szProgramName = "SimCity 2000";
+	const char* szProgramVersion = "unknown";
+	if (dwSC2kFixMode == SC2KFIX_MODE_SC2K) {
+		switch (dwDetectedVersion) {
+		case VERSION_SC2K_1995:
+			szProgramVersion = "1995 CD Collection";
+			break;
+		case VERSION_SC2K_1996:
+			szProgramVersion = "1996 Special Edition";
+			break;
+		}
 	}
+	else if (dwSC2kFixMode == SC2KFIX_MODE_SC2KDEMO) {
+		if (dwDetectedVersion == VERSION_SC2K_DEMO)
+			szProgramVersion = "Interactive Demo";
+	}
+	else if (dwSC2kFixMode == SC2KFIX_MODE_SCURK) {
+		szProgramName = "SCURK";
+		switch (dwDetectedVersion) {
+		case VERSION_SCURK_1996SE:
+			szProgramVersion = "1996 Special Edition";
+			break;
+		}
+	}
+	else
+		szProgramName = "Unknown";
 
 #if !NOKUROKO
 	KrkValue kuroko_version;
@@ -567,14 +586,15 @@ BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments) {
 	printf(
 		"sc2kfix version %s - https://sc2kfix.net\n"
 		"Plugin build info: %s\n"
-		"SimCity 2000 version: %s\n"
+		"%s version: %s\n"
 		"Plugin loaded at 0x%08X\n"
 #if !NOKUROKO
 		"Kuroko version: Kuroko %s\n" 
 #endif
 		,szSC2KFixVersion 
 		,szSC2KFixBuildInfo
-		,szSC2KVersion
+		,szProgramName
+		,szProgramVersion
 		,(DWORD)hSC2KFixModule 
 #if !NOKUROKO
 		,AS_CSTRING(kuroko_version)

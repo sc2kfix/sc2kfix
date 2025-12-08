@@ -186,7 +186,8 @@ HOOKEXT const char* GetLowHighScale(BYTE bScale) {
 
 HOOKEXT BOOL FileExists(const char* name) {
 	FILE* fdTest;
-	if (!fopen_s(&fdTest, name, "r")) {
+	fdTest = fopen(name, "r");
+	if (fdTest) {
 		fclose(fdTest);
 		return TRUE;
 	}
