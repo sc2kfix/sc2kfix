@@ -637,7 +637,7 @@ void InstallRegistryPathingHooks_SC2KDemo(void) {
 	*(DWORD*)(0x4D7770) = (DWORD)Hook_RegCloseKey;
 }
 
-void InstallRegistryPathingHooks_SCURK1996SE(void) {
+void InstallRegistryPathingHooks_SCURKPrimary(void) {
 	// Install RegSetValueExA hook
 	*(DWORD*)(0X4B05F0) = (DWORD)Hook_RegSetValueExA;
 

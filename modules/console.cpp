@@ -567,8 +567,8 @@ BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments) {
 	else if (dwSC2kFixMode == SC2KFIX_MODE_SCURK) {
 		szProgramName = "SCURK";
 		switch (dwDetectedVersion) {
-		case VERSION_SCURK_1996SE:
-			szProgramVersion = "1996 Special Edition";
+		case VERSION_SCURK_PRIMARY:
+			szProgramVersion = "1995 (Primary version)";
 			break;
 		}
 	}

@@ -31,11 +31,11 @@
 
 #define SC2KFIX_CORE
 
-#define VERSION_PROG_UNKNOWN 0
-#define VERSION_SC2K_1996    1
-#define VERSION_SC2K_1995    2
-#define VERSION_SC2K_DEMO    3
-#define VERSION_SCURK_1996SE 4
+#define VERSION_PROG_UNKNOWN  0
+#define VERSION_SC2K_1996     1
+#define VERSION_SC2K_1995     2
+#define VERSION_SC2K_DEMO     3
+#define VERSION_SCURK_PRIMARY 4
 
 #define SC2KFIX_MODE_UNKNOWN  0
 #define SC2KFIX_MODE_SC2K     1
@@ -483,7 +483,7 @@ void ProposeMilitaryBaseNavalYard(void);
 void InstallRegistryPathingHooks_SC2K1996(void);
 void InstallRegistryPathingHooks_SC2K1995(void);
 void InstallRegistryPathingHooks_SC2KDemo(void);
-void InstallRegistryPathingHooks_SCURK1996SE(void);
+void InstallRegistryPathingHooks_SCURKPrimary(void);
 
 // Movie hook
 void InstallMovieHooks(void);
@@ -506,4 +506,4 @@ extern UINT updatenotifier_debug;
 
 // SCURK specific stuff
 
-void InstallFixes_SCURK1996SE(void);
+void InstallFixes_SCURKPrimary(void);
