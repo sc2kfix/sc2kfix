@@ -356,7 +356,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		default:
 			dwDetectedVersion = VERSION_PROG_UNKNOWN;
 			char msg[512 + 1];
-			sprintf_s(msg, 300, "Could not detect %s version (got timestamp 0x%08X). Fixes and features will not be loaded.\r\n\r\n"
+			sprintf_s(msg, sizeof(msg) - 1, "Could not detect %s version (got timestamp 0x%08X). Fixes and features will not be loaded.\r\n\r\n"
 				"Please let us know in a GitHub issue what version of the game you're running so we can look into this.", logSuffix, dwDetectedAppTimestamp);
 			MessageBox(GetActiveWindow(), msg, "sc2kfix warning", MB_OK | MB_ICONWARNING);
 			ConsoleLog(LOG_WARNING, "CORE: %s version could not be detected (got timestamp 0x%08X). Fixes and features will not be loaded.\n", logSuffix, dwDetectedAppTimestamp);
