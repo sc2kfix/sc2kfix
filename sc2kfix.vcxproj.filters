@@ -179,9 +179,6 @@
     <ClCompile Include="modules\console.cpp">
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="modules\scurkfix.cpp">
-      <Filter>Source Files\Modules</Filter>
-    </ClCompile>
     <ClCompile Include="hooks\hook_mmtimers.cpp">
       <Filter>Source Files\Hooks</Filter>
     </ClCompile>
@@ -388,6 +385,9 @@
     </ClCompile>
     <ClCompile Include="hooks\hook_sc2k1995_miscellaneous.cpp">
       <Filter>Source Files\Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\scurkfix_1996se.cpp">
+      <Filter>Source Files\Modules</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

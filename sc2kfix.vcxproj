@@ -188,7 +188,7 @@
     <ClCompile Include="modules\registry_config.cpp" />
     <ClCompile Include="modules\sc2k_1996.cpp" />
     <ClCompile Include="modules\sc2x.cpp" />
-    <ClCompile Include="modules\scurkfix.cpp" />
+    <ClCompile Include="modules\scurkfix_1996se.cpp" />
     <ClCompile Include="modules\settings.cpp" />
     <ClCompile Include="modules\status_dialog.cpp" />
     <ClCompile Include="modules\track_config.cpp" />
