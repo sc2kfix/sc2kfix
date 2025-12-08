@@ -1,4 +1,4 @@
-// sc2kfix modules/scurkfix.cpp: fixes for SCURK
+// sc2kfix modules/scurkfix_1996se.cpp: fixes for SCURK - 1996SE version
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
