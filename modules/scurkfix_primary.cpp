@@ -23,8 +23,6 @@ static DWORD dwDummy;
 
 UINT mischook_scurkprimary_debug = MISCHOOK_SCURKPRIMARY_DEBUG;
 
-DWORD *pPlaceTileDlgThis = NULL;
-
 /*
 static void SCURK_VTable_Check(DWORD *pThis, const char *s) {
 ConsoleLog(LOG_DEBUG, "SCURK_VTable_Check[class path - %s] - 0x%06X - TListBox::SetSelIndex\n", s, (*(DWORD *)(pThis[10] + 8) + 196)); // TListBox::SetSelIndex
@@ -81,8 +79,6 @@ extern "C" void __cdecl Hook_SCURKPrimary_PlaceTileListDlg_SetupWindow(DWORD *pT
 	int nIdx;
 	int iCXHScroll, imainRight, imainBottom, ilbCX, ilbCY;
 	TBC45XRect mainRect, lbRect;
-
-	pPlaceTileDlgThis = pThis;
 
 	if ((mischook_scurkprimary_debug & MISCHOOK_SCURKPRIMARY_DEBUG_OTHER) != 0)
 		ConsoleLog(LOG_DEBUG, "0x%06X -> PlaceTileListDlg_SetupWindow(0x%06X)\n", _ReturnAddress(), pThis);
@@ -213,10 +209,16 @@ extern "C" void __cdecl Hook_SCURKPrimary_PlaceTileListDlg_EvLBNSelChange(DWORD 
 }
 
 extern "C" void __cdecl Hook_SCURKPrimary_BCDialog_CmCancel(DWORD *pThis) {
+	DWORD *pWindow, *pPlaceTileListDlg;
+
 	// We really don't want to close the Place&Pick object selection
 	// dialogue by pressing escape...
-	if (pPlaceTileDlgThis && pPlaceTileDlgThis == pThis)
-		return;
+	pWindow = GameMain_winscurkApp_GetPlaceWindow_SCURKPrimary(gScurkApplication_SCURKPrimary);
+	if (pWindow) {
+		pPlaceTileListDlg = (DWORD *)pWindow[22];
+		if (pPlaceTileListDlg && pPlaceTileListDlg == pThis)
+			return;
+	}
 	GameMain_BCDialog_EvClose_SCURKPrimary(pThis);
 }
 
