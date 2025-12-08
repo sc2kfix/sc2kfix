@@ -23,10 +23,6 @@ static DWORD dwDummy;
 
 UINT mischook_scurk1996_debug = MISCHOOK_SCURK1996_DEBUG;
 
-DWORD dwSCURKAppTimestamp = 0;
-DWORD dwSCURKAppVersion = SC2KVERSION_UNKNOWN;
-HMODULE hSCURKAppModule = NULL;
-
 DWORD *pPlaceTileDlgThis = NULL;
 
 /*
@@ -224,29 +220,14 @@ extern "C" void __cdecl Hook_SCURK1996SE_BCDialog_CmCancel(DWORD *pThis) {
 	GameMain_BCDialog_EvClose_SCURK1996SE(pThis);
 }
 
-BOOL InjectSCURKFix(void) {
+void InstallFixes_SCURK1996SE(void) {
 	if (mischook_debug == DEBUG_FLAGS_EVERYTHING)
 		mischook_scurk1996_debug = DEBUG_FLAGS_EVERYTHING;
 
-	ConsoleLog(LOG_INFO, "CORE: Injecting SCURK fixes...\n");
-	hSCURKAppModule = GetModuleHandle(NULL);
-	dwSCURKAppTimestamp = ((PIMAGE_NT_HEADERS)(((PIMAGE_DOS_HEADER)hSCURKAppModule)->e_lfanew + (UINT_PTR)hSCURKAppModule))->FileHeader.TimeDateStamp;
-	switch (dwSCURKAppTimestamp) {
-	case 0xBC7B1F0E:							// Yes, for some reason the timestamp is set to 2070.
-		dwSCURKAppVersion = SC2KVERSION_1996;
-		ConsoleLog(LOG_DEBUG, "CORE: SCURK version 1996SE detected.\n");
-		break;
-	default:
-		ConsoleLog(LOG_ERROR, "CORE: Could not detect SCURK version (got timestamp 0x%08X). Not injecting fixes.\n", dwSCURKAppTimestamp);
-		return TRUE;
-	}
+	ConsoleLog(LOG_DEBUG, "CORE: SCURK version 1996SE detected. Installing SCURK fixes...\n");
+	
+	InstallRegistryPathingHooks_SCURK1996SE();
 
-	if (dwSCURKAppVersion == SC2KVERSION_1996)
-		InstallRegistryPathingHooks_SCURK1996SE();
-
-	// Tell the rest of the plugin we're in SCURK
-	bInSCURK = TRUE;
-	// return TRUE; 
 	// Hook for palette animation fix
 	// Intercept call to 0x480140 at 0x48A683
 	VirtualProtect((LPVOID)0x4497F5, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -274,6 +255,4 @@ BOOL InjectSCURKFix(void) {
 	// the cancel (esc) action.
 	VirtualProtect((LPVOID)0x46FB26, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x46FB26, Hook_SCURK1996SE_BCDialog_CmCancel);
-	
-	return TRUE;
 }
