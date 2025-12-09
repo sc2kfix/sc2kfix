@@ -20,6 +20,7 @@
 #include <sc2k_1996.h>
 #include <sc2k_demo.h>
 #include <bc45xhelp.h>
+#include <scurkclasses.h>
 #include <scurk_primary.h>
 #include <music.h>
 
