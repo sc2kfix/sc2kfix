@@ -117,6 +117,7 @@
     <ClInclude Include="include\sc2kfix.h" />
     <ClInclude Include="include\sc2k_1995.h" />
     <ClInclude Include="include\sc2k_demo.h" />
+    <ClInclude Include="include\scurkclasses.h" />
     <ClInclude Include="include\scurk_primary.h" />
     <ClInclude Include="include\winmm_exports.h" />
     <ClInclude Include="include\sc2k_1996.h" />
