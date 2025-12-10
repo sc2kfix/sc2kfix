@@ -19,6 +19,9 @@
 #include <sc2k_1995.h>
 #include <sc2k_1996.h>
 #include <sc2k_demo.h>
+#include <bc45xhelp.h>
+#include <scurkclasses.h>
+#include <scurk_primary.h>
 #include <music.h>
 
 // Turning this on enables every debugging option. You have been warned.
@@ -29,10 +32,16 @@
 
 #define SC2KFIX_CORE
 
-#define SC2KVERSION_UNKNOWN 0
-#define SC2KVERSION_1996    1
-#define SC2KVERSION_1995    2
-#define SC2KVERSION_DEMO    3
+#define VERSION_PROG_UNKNOWN  0
+#define VERSION_SC2K_1996     1
+#define VERSION_SC2K_1995     2
+#define VERSION_SC2K_DEMO     3
+#define VERSION_SCURK_PRIMARY 4
+
+#define SC2KFIX_MODE_UNKNOWN  0
+#define SC2KFIX_MODE_SC2K     1
+#define SC2KFIX_MODE_SC2KDEMO 2
+#define SC2KFIX_MODE_SCURK    3
 
 #define SC2KFIX_VERSION			"0.10-dev"
 #define SC2KFIX_VERSION_MAJOR	0
@@ -64,6 +73,12 @@ template <typename T> std::string to_string_precision(const T value, const int p
 
 #define countof(x) (sizeof(x)/sizeof(*(x)))
 #define lengthof(s) (countof(s)-1)
+
+#define SIZE_OFFSETOF(sz, ty, el) ((sz)&(((ty *)0)->el))
+
+#define DWORD_OFFSETOF(ty, el) SIZE_OFFSETOF(DWORD, ty, el)
+#define WORD_OFFSETOF(ty, el)  SIZE_OFFSETOF(WORD, ty, el)
+#define BYTE_OFFSETOF(ty, el)  SIZE_OFFSETOF(BYTE, ty, el)
 
 #define IFF_HEAD(a, b, c, d) ((DWORD)d << 24 | (DWORD)c << 16 | (DWORD)b << 8 | (DWORD)a)
 #define DWORD_NTOHL_CHECK(x) (bBigEndian ? ntohl(x) : x)
@@ -350,6 +365,8 @@ BOOL DoConfigureMusicTracks(settings_t *st, HWND hDlg, BOOL bMP3);
 
 BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc);
 
+FILE *old_fopen(const char *fname, const char *mode);
+
 BOOL WINAPI ConsoleCtrlHandler(DWORD fdwCtrlType);
 DWORD WINAPI ConsoleThread(LPVOID lpParameter);
 BOOL ConsoleEvaluateCommand(const char* szCommandLine, BOOL bInteractive);
@@ -395,12 +412,12 @@ extern HMENU hGameMenu;
 extern HMENU hDebugMenu;
 extern FARPROC fpWinMMHookList[180];
 extern DWORD dwDetectedVersion;
-extern DWORD dwSC2KAppTimestamp;
+extern DWORD dwSC2kFixMode;
+extern DWORD dwDetectedAppTimestamp;
 extern DWORD dwSC2KFixVersion;
 extern const char* szSC2KFixVersion;
 extern const char* szSC2KFixReleaseTag;
 extern const char* szSC2KFixBuildInfo;
-extern BOOL bInSCURK;
 extern BOOL bConsoleEnabled;
 extern BOOL bSkipIntro;
 extern BOOL bUseAdvancedQuery;
@@ -467,7 +484,7 @@ void ProposeMilitaryBaseNavalYard(void);
 void InstallRegistryPathingHooks_SC2K1996(void);
 void InstallRegistryPathingHooks_SC2K1995(void);
 void InstallRegistryPathingHooks_SC2KDemo(void);
-void InstallRegistryPathingHooks_SCURK1996(void);
+void InstallRegistryPathingHooks_SCURKPrimary(void);
 
 // Movie hook
 void InstallMovieHooks(void);
@@ -490,4 +507,4 @@ extern UINT updatenotifier_debug;
 
 // SCURK specific stuff
 
-BOOL InjectSCURKFix(void);
+void InstallFixes_SCURKPrimary(void);
