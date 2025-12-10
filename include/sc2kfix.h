@@ -367,6 +367,8 @@ BOOL DoConfigureMusicTracks(settings_t *st, HWND hDlg, BOOL bMP3);
 
 BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc);
 
+FILE *old_fopen(const char *fname, const char *mode);
+
 BOOL WINAPI ConsoleCtrlHandler(DWORD fdwCtrlType);
 DWORD WINAPI ConsoleThread(LPVOID lpParameter);
 BOOL ConsoleEvaluateCommand(const char* szCommandLine, BOOL bInteractive);

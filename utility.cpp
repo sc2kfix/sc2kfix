@@ -186,7 +186,7 @@ HOOKEXT const char* GetLowHighScale(BYTE bScale) {
 
 HOOKEXT BOOL FileExists(const char* name) {
 	FILE* fdTest;
-	fdTest = fopen(name, "r");
+	fdTest = old_fopen(name, "r");
 	if (fdTest) {
 		fclose(fdTest);
 		return TRUE;
@@ -263,6 +263,12 @@ BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc) {
 	if (!strcpy_s(pDest, SizeInBytes, pSrc) && bSettingsUseNewStrings)
 		return TRUE;
 	return FALSE;
+}
+
+#pragma warning(disable:4996)
+FILE *old_fopen(const char *fname, const char *mode) {
+	return fopen(fname, mode);
+	#pragma warning(default:4996)
 }
 
 // start of base64 code

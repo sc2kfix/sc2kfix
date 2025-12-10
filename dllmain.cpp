@@ -224,7 +224,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Open a log file. If it fails, we handle that safely elsewhere
 		// AF - Relocated so it will record any messages that occur
 		//      prior to the console itself being enabled.
-		fdLog = fopen(szLogName, "w");
+		fdLog = old_fopen(szLogName, "w");
 		if (!fdLog)
 			ConsoleLog(LOG_ERROR, "Failed to open file handle for '%s'. Logs won't be recorded.\n", szLogName);
 
