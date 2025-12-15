@@ -208,18 +208,6 @@ extern "C" void __cdecl Hook_SCURKPrimary_PlaceTileListDlg_EvLBNSelChange(TPlace
 	}
 }
 
-extern "C" void __cdecl Hook_SCURKPrimary_ShowTileWindow_mDoDIBs(cShowTileWindow *pThis) {
-	int nStart, nMax, nPos;
-
-	if ((mischook_scurkprimary_debug & MISCHOOK_SCURKPRIMARY_DEBUG_PLACEANDCOPY) != 0)
-		ConsoleLog(LOG_DEBUG, "0x%06X -> ShowTileWindow::mDoDibs(0x%06X)\n", _ReturnAddress(), pThis);
-
-	nStart = wTileObjects_SCURKPrimary[3 * pThis->mNumTiles];
-	nMax = nStart + wTileObjects_SCURKPrimary[3 * pThis->mNumTiles + 1];
-	for (nPos = nStart + pThis->nSomethingTwo[1]; nPos < pThis->nSomethingTwo[0] + nStart + pThis->nSomethingTwo[1] && nPos < nMax; ++nPos)
-		GameMain_EditableTileSet_RenderShapeToTile_SCURKPrimary(pThis->mTileSet, pThis->mDibs[nPos - (nStart + pThis->nSomethingTwo[1])], nPos);
-}
-
 extern "C" void __declspec(naked) Hook_SCURKPrimary_MoverWindow_DisableMaximizeBox(void) {
 	TBC45XWindow *pWnd;
 
@@ -313,10 +301,6 @@ void InstallFixes_SCURKPrimary(void) {
 	NEWJMP((LPVOID)0x410D94, Hook_SCURKPrimary_PlaceTileListDlg_EvLButtonDblClk);
 	VirtualProtect((LPVOID)0x410ED0, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x410ED0, Hook_SCURKPrimary_PlaceTileListDlg_EvLBNSelChange);
-
-	// Investigating Place&Copy instability.
-	VirtualProtect((LPVOID)0x44CAA0, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x44CAA0, Hook_SCURKPrimary_ShowTileWindow_mDoDIBs);
 
 	// Temporarily remove the TFrameWindow::EvSize call.
 	// This avoids some redrawing strangeness that otherwise occurs
