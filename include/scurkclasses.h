@@ -1,6 +1,16 @@
 #pragma once
 
-struct tShapeDetail {
+/*
+* ****** NOTE: The classes referenced here allow for a reasonable
+*              method of accessing certain class variables.
+*
+*              Not all defined variables in the classes are accessible.
+*              Those that are reasonably generic such as 'ThirtyFour'
+*              for instance are for padding purposes in order to
+*              ensure alignment.
+*/
+
+struct shapedetail_t {
 	union uShapeOffset {
 		BYTE *shapePtr;
 		int32_t shapeLong;
@@ -12,15 +22,15 @@ struct tShapeDetail {
 };
 
 #pragma pack(push, 1)
-struct tShapeInfo {
+struct shapeinfo_t {
 	int16_t shapeNum;
-	tShapeDetail shapeInfo;
+	shapedetail_t shapeDetail;
 };
 #pragma pack(pop)
 
-struct tSetHeader {
+struct tilesetheader_t {
 	int16_t numShapes;
-	tShapeInfo theShapes;
+	shapeinfo_t infoShapes;
 };
 
 class cEditableTileSet {
@@ -28,7 +38,7 @@ public:
 	uint8_t *mTiles[1510];
 	char *mTileNames[184];
 	int32_t *mTileIsRenamed[184];
-	tSetHeader *mTileSet;
+	tilesetheader_t *mTileSet;
 	char *mFileName;
 	int32_t *mDBIndexFromShapeNum;
 	int32_t *mShapeNumFromEditableNum;
@@ -44,7 +54,7 @@ public:
 	int32_t mHeight;
 };
 
-#pragma pack(push, 2)
+#pragma pack(push, 1)
 class cShowTileWindow : public TBC45XParWindow {
 public:
 	TBC45XRect *mRect[150];

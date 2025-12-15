@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * ****** NOTE: The classes referenced here allow for a reasonably
+ * ****** NOTE: The classes referenced here allow for a reasonable
  *              method of accessing certain class variables.
  *
  *              Not all defined variables in the classes are accessible.

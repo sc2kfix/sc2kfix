@@ -3,6 +3,11 @@
 
 // Header for the primary (1995) version of WinSCURK - highly experimental.
 // Any corrections for WinSCURK are very much "best effort" - good luck.
+//
+// This version has been confirmed to have been used with the following games:
+// 1) 1995 CD Collection
+// 2) 1996 Special Edition
+// 3) Streets of SimCity
 
 #pragma once
 
@@ -57,6 +62,7 @@ SCURKPRIMARY_GAMECALL_MAIN(0x459CA0, DWORD *, __cdecl, winscurkApp_GetPlaceWindo
 SCURKPRIMARY_GAMECALL_MAIN(0x45F691, TBC45XDC *, __cdecl, BCDC_Cons, TBC45XDC *, HDC)
 SCURKPRIMARY_GAMECALL_MAIN(0x45F718, void, __cdecl, BCDC_Dest, TBC45XDC *, char)
 SCURKPRIMARY_GAMECALL_MAIN(0x45F80F, void, __cdecl, BCDC_SelectObjectPalette, TBC45XDC *, TBC45XPalette *, int)
+SCURKPRIMARY_GAMECALL_MAIN(0x4695CA, unsigned int, __cdecl, BCWindow_DefaultProcessing, TBC45XWindow *)
 SCURKPRIMARY_GAMECALL_MAIN(0x469C64, LRESULT, __cdecl, BCWindow_HandleMessage, TBC45XParWindow *, unsigned int msg, WPARAM wParam, LPARAM lParam)
 SCURKPRIMARY_GAMECALL_MAIN(0x46B108, void, __cdecl, BCWindow_SetCursor, TBC45XParWindow *, TBC45XModule *, const char *)
 SCURKPRIMARY_GAMECALL_MAIN(0x46F9DB, void, __cdecl, BCDialog_SetupWindow, TBC45XParDialog *)

@@ -220,6 +220,32 @@ extern "C" void __cdecl Hook_SCURKPrimary_ShowTileWindow_mDoDIBs(cShowTileWindow
 		GameMain_EditableTileSet_RenderShapeToTile_SCURKPrimary(pThis->mTileSet, pThis->mDibs[nPos - (nStart + pThis->nSomethingTwo[1])], nPos);
 }
 
+extern "C" void __cdecl Hook_SCURKPrimary_MoverWindow_EvGetMinMaxInfo(DWORD *pThis, MINMAXINFO *pMmi) {
+	LONG nCXScreen, x, y;
+
+	GameMain_BCWindow_DefaultProcessing_SCURKPrimary((TBC45XWindow *)pThis[1]);
+	nCXScreen = GetSystemMetrics(SM_CXSCREEN);
+	if (nCXScreen <= 640) {
+		x = 512;
+		y = 256;
+	}
+	else {
+		x = 640;
+		y = 480;
+	}
+
+	pMmi->ptMinTrackSize.x = x;
+	pMmi->ptMinTrackSize.y = y;
+
+	pMmi->ptMaxPosition.x = 0;
+	pMmi->ptMaxPosition.y = 0;
+	pMmi->ptMaxSize.x = x;
+	pMmi->ptMaxSize.y = y;
+
+	pMmi->ptMaxTrackSize.x = x;
+	pMmi->ptMaxTrackSize.y = y;
+}
+
 extern "C" void __cdecl Hook_SCURKPrimary_BCDialog_CmCancel(TBC45XDialog *pThis) {
 	DWORD *pWindow;
 	TPlaceTileListDlg *pPlaceTileListDlg;
@@ -268,6 +294,11 @@ void InstallFixes_SCURKPrimary(void) {
 	// Investigating Place&Copy instability.
 	VirtualProtect((LPVOID)0x44CAA0, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x44CAA0, Hook_SCURKPrimary_ShowTileWindow_mDoDIBs);
+
+	// Temporarily lock the Min/Max size of the Pick&Copy window
+	// to avoid rendering the area non-functional.
+	VirtualProtect((LPVOID)0x450080, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x450080, Hook_SCURKPrimary_MoverWindow_EvGetMinMaxInfo);
 
 	// This hook is to prevent the Place&Pick selection dialogue
 	// from being unintentionally closed; it catches and ignores
