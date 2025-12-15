@@ -17,6 +17,10 @@ class TBC45XRect : public tagRECT {
 
 };
 
+class TBC45XSize : public tagSIZE {
+
+};
+
 class TBC45XReference {
 public:
 	unsigned __int16 Refs;

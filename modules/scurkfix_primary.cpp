@@ -220,6 +220,29 @@ extern "C" void __cdecl Hook_SCURKPrimary_ShowTileWindow_mDoDIBs(cShowTileWindow
 		GameMain_EditableTileSet_RenderShapeToTile_SCURKPrimary(pThis->mTileSet, pThis->mDibs[nPos - (nStart + pThis->nSomethingTwo[1])], nPos);
 }
 
+extern "C" void __declspec(naked) Hook_SCURKPrimary_MoverWindow_DisableMaximizeBox(void) {
+	TBC45XWindow *pWnd;
+
+	__asm {
+		mov eax, [ebx + 0x4]
+		mov [pWnd], eax
+	}
+
+	if ((mischook_scurkprimary_debug & MISCHOOK_SCURKPRIMARY_DEBUG_PLACEANDCOPY) != 0)
+		ConsoleLog(LOG_DEBUG, "0x%06X -> DisableMaximizeBox()\n", _ReturnAddress());
+
+	if (GetSystemMetrics(SM_CXSCREEN) > 700)
+		pWnd->Attr.Style &= ~WS_MAXIMIZEBOX;
+	else
+		pWnd->Attr.Style |= WS_MAXIMIZE;
+
+	__asm {
+		mov eax, pWnd
+		mov [ebx + 0x4], eax
+	}
+	GAMEJMP(0x44E2EF);
+}
+
 extern "C" void __cdecl Hook_SCURKPrimary_MoverWindow_EvGetMinMaxInfo(DWORD *pThis, MINMAXINFO *pMmi) {
 	LONG nCXScreen, x, y;
 
@@ -294,6 +317,18 @@ void InstallFixes_SCURKPrimary(void) {
 	// Investigating Place&Copy instability.
 	VirtualProtect((LPVOID)0x44CAA0, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x44CAA0, Hook_SCURKPrimary_ShowTileWindow_mDoDIBs);
+
+	// Temporarily remove the TFrameWindow::EvSize call.
+	// This avoids some redrawing strangeness that otherwise occurs
+	// if the Pick&Copy window is in-focus and you then restore
+	// the Place&Pick window to its non-maximized state.
+	VirtualProtect((LPVOID)0x44FE19, 13, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memset((LPVOID)0x44FE19, 0x90, 13);
+
+	// Temporarily disable the maximizebox style if SM_CXSCREEN is above 700.
+	VirtualProtect((LPVOID)0x44E2D7, 24, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memset((LPVOID)0x44E2D7, 0x90, 24);
+	NEWJMP((LPVOID)0x44E2D7, Hook_SCURKPrimary_MoverWindow_DisableMaximizeBox);
 
 	// Temporarily lock the Min/Max size of the Pick&Copy window
 	// to avoid rendering the area non-functional.
