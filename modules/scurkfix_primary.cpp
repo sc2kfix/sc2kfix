@@ -91,7 +91,7 @@ extern "C" void __cdecl Hook_SCURKPrimary_PlaceTileListDlg_SetupWindow(TPlaceTil
 		ConsoleLog(LOG_DEBUG, "0x%06X -> PlaceTileListDlg_SetupWindow(0x%06X)\n", _ReturnAddress(), pThis);
 
 	strcpy_s(szTileStr, sizeof(szTileStr) - 1, "Tile");
-	GameMain_BCDialog_SetupWindow_SCURKPrimary((TBC45XDialog *)pThis);
+	GameMain_BCDialog_SetupWindow_SCURKPrimary(pThis);
 
 	iCXHScroll = GetSystemMetrics(SM_CXHSCROLL);
 
@@ -114,7 +114,7 @@ extern "C" void __cdecl Hook_SCURKPrimary_PlaceTileListDlg_SetupWindow(TPlaceTil
 	ilbCY = (mainRect.bottom - mainRect.top) - 8;
 	SetWindowPos(pThis->pListBox->HWindow, HWND_TOP, lbRect.left, lbRect.top, ilbCX + 2, ilbCY + 2, SWP_NOZORDER | SWP_NOMOVE);
 
-	GameMain_BCWindow_HandleMessage_SCURKPrimary((TBC45XWindow *)pThis->pListBox, LB_SETCOLUMNWIDTH, pThis->nMaxHitArea, 0);
+	GameMain_BCWindow_HandleMessage_SCURKPrimary(pThis->pListBox, LB_SETCOLUMNWIDTH, pThis->nMaxHitArea, 0);
 
 	nMax = wTileObjects_SCURKPrimary[3 * pThis->mNumTiles] + wTileObjects_SCURKPrimary[3 * pThis->mNumTiles + 1] - 1;
 	if ((mischook_scurkprimary_debug & MISCHOOK_SCURKPRIMARY_DEBUG_PICKANDPLACE) != 0)
@@ -203,7 +203,7 @@ extern "C" void __cdecl Hook_SCURKPrimary_PlaceTileListDlg_EvLBNSelChange(TPlace
 		pThis->nCurPos = nValTwo;
 		pThis->nSelected = 1;
 		pLongTileName = GameMain_EditableTileSet_GetLongName_SCURKPrimary(gScurkApplication_SCURKPrimary->mWorkingTiles, pThis->nCurPos);
-		GameMain_BCDialog_SetCaption_SCURKPrimary((TBC45XDialog *)pThis, pLongTileName);
+		GameMain_BCDialog_SetCaption_SCURKPrimary(pThis, pLongTileName);
 		wtoolValue_SCURKPrimary = 8;
 		*(&wtoolNum_SCURKPrimary + 8) = pThis->nCurPos;
 		InvalidateRect(pThis->pWnd->HWindow, 0, 0);
