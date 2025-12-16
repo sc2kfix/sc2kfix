@@ -109,14 +109,17 @@ public:
 	TBC45XDerivedFrameWindowFoot __frameWndFoot;
 };
 
+class winscurkPlaceWindow;
+class winscurkMoverWindow;
+
 class winscurkMDIClient : public TBC45XParMDIClient {
 public:
 	int ChildCount;
 	TBC45XOpenSaveDialog::TData FileData;
 	TBC45XDecoratedMDIFrame *mParent;
 	int mNewCity;
-	DWORD *mPlaceWindow;
-	DWORD *mMoverWindow;
+	winscurkPlaceWindow *mPlaceWindow;
+	winscurkMoverWindow *mMoverWindow;
 	DWORD *mEditWindow;
 	PALETTEENTRY mSlowColors[16];
 	PALETTEENTRY mFastColors[49];

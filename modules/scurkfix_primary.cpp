@@ -24,6 +24,8 @@ static DWORD dwDummy;
 
 UINT mischook_scurkprimary_debug = MISCHOOK_SCURKPRIMARY_DEBUG;
 
+// Commented out but retained, just in case any manual VTable entry
+// confirmation checks are needed.
 /*
 static void SCURK_VTable_Check(DWORD *pThis, const char *s) {
 ConsoleLog(LOG_DEBUG, "SCURK_VTable_Check[class path - %s] - 0x%06X - TListBox::SetSelIndex\n", s, (*(DWORD *)(pThis[10] + 8) + 196)); // TListBox::SetSelIndex
@@ -35,27 +37,50 @@ ConsoleLog(LOG_DEBUG, "SCURK_VTable_Check[class path - %s] - 0x%06X - TListBox::
 }
 */
 
-/*
-extern "C" __declspec(naked) void __cdecl Hook_SCURKPrimary_AnimationFix(void) {
-	__asm {
-		push 0x81
-		push 0
-		push 0
-		mov eax, [ebx]					// this
-		mov eax, [eax + 0x10]
-		push eax						// hWnd
-		call [RedrawWindow]
-		pop esi
-		pop ebx
-		mov esp, ebp
-		pop ebp
-		retn
-	}
-}
-*/
-
 extern "C" void Hook_winscurkMDIClient_CycleColors(winscurkMDIClient *pThis) {
+	TBC45XPalette *pPal;
+	TBC45XClientDC clDC;
+	TBC45XMDIChild *pMDIChild;
+	HWND hWndChild;
 
+	if (!IsIconic(pThis->pWnd->HWindow)) {
+		pPal = GameMain_winscurkApp_GetPalette_SCURKPrimary(gScurkApplication_SCURKPrimary);
+		GameMain_BCClientDC_Construct_SCURKPrimary(&clDC, pThis->pWnd->HWindow);
+		GameMain_BCDC_SelectObjectPalette_SCURKPrimary(&clDC, pPal, 0);
+		if (wColFastCnt_SCURKPrimary == 5) {
+			GameMain_winscurkMDIClient_RotateColors_SCURKPrimary(pThis, 1);
+			AnimatePalette((HPALETTE)pPal->Handle, 0xAB, 0x31, pThis->mFastColors);
+			wColFastCnt_SCURKPrimary = 0;
+		}
+		if (wColSlowCnt_SCURKPrimary == 30) {
+			GameMain_winscurkMDIClient_RotateColors_SCURKPrimary(pThis, 0);
+			AnimatePalette((HPALETTE)pPal->Handle, 0xE0, 0x10, pThis->mSlowColors);
+			wColSlowCnt_SCURKPrimary = 0;
+		}
+		++wColFastCnt_SCURKPrimary;
+		++wColSlowCnt_SCURKPrimary;
+		GameMain_BCWindowDC_Destruct_SCURKPrimary(&clDC, 0);
+
+		// Only call redraw if the given MDIChild is active, rather than
+		// refreshing all windows from pThis->pWnd->HWindow downwards.
+		//
+		// This reduces "a bit" of the flickering that was otherwise occurring
+		// across all windows; at this stage it is only limited to the active
+		// MDI Child.
+		pMDIChild = GameMain_BCMDIClient_GetActiveMDIChild_SCURKPrimary(pThis);
+		if (pMDIChild) {
+			hWndChild = 0;
+			if (pMDIChild == (TBC45XMDIChild *)pThis->mPlaceWindow)
+				hWndChild = pThis->mPlaceWindow->__wndHead.pWnd->HWindow;
+			else if (pMDIChild == (TBC45XMDIChild *)pThis->mMoverWindow)
+				hWndChild = pThis->mMoverWindow->__wndHead.pWnd->HWindow;
+			else if (pMDIChild == (TBC45XMDIChild *)pThis->mEditWindow)
+				hWndChild = ((winscurkParMDIChild *)pThis->mEditWindow)->__wndHead.pWnd->HWindow;
+
+			if (hWndChild)
+				RedrawWindow(hWndChild, 0, 0, RDW_ALLCHILDREN | RDW_INVALIDATE);
+		}
+	}
 }
 
 extern "C" void __cdecl Hook_SCURKPrimary_DebugOut(char const *fmt, ...) {
@@ -285,8 +310,6 @@ void InstallFixes_SCURKPrimary(void) {
 
 	// Hook for palette animation fix
 	// Intercept call to 0x480140 at 0x48A683
-	//VirtualProtect((LPVOID)0x4497F5, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	//NEWJMP((LPVOID)0x4497F5, Hook_SCURKPrimary_AnimationFix);
 	VirtualProtect((LPVOID)0x4496D4, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4496D4, Hook_winscurkMDIClient_CycleColors);
 	ConsoleLog(LOG_INFO, "CORE: Patched palette animation fix for SCURK.\n");
