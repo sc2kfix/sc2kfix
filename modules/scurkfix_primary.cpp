@@ -42,7 +42,9 @@ extern "C" void Hook_winscurkMDIClient_CycleColors(winscurkMDIClient *pThis) {
 	TBC45XClientDC clDC;
 	TBC45XMDIChild *pMDIChild;
 	HWND hWndChild, hWndObjSelect;
+	BOOL bRedraw;
 
+	bRedraw = FALSE;
 	if (!IsIconic(pThis->pWnd->HWindow)) {
 		pPal = GameMain_winscurkApp_GetPalette_SCURKPrimary(gScurkApplication_SCURKPrimary);
 		GameMain_BCClientDC_Construct_SCURKPrimary(&clDC, pThis->pWnd->HWindow);
@@ -51,11 +53,13 @@ extern "C" void Hook_winscurkMDIClient_CycleColors(winscurkMDIClient *pThis) {
 			GameMain_winscurkMDIClient_RotateColors_SCURKPrimary(pThis, 1);
 			AnimatePalette((HPALETTE)pPal->Handle, 0xAB, 0x31, pThis->mFastColors);
 			wColFastCnt_SCURKPrimary = 0;
+			bRedraw = TRUE;
 		}
 		if (wColSlowCnt_SCURKPrimary == 30) {
 			GameMain_winscurkMDIClient_RotateColors_SCURKPrimary(pThis, 0);
 			AnimatePalette((HPALETTE)pPal->Handle, 0xE0, 0x10, pThis->mSlowColors);
 			wColSlowCnt_SCURKPrimary = 0;
+			bRedraw = TRUE;
 		}
 		++wColFastCnt_SCURKPrimary;
 		++wColSlowCnt_SCURKPrimary;
@@ -67,23 +71,25 @@ extern "C" void Hook_winscurkMDIClient_CycleColors(winscurkMDIClient *pThis) {
 		// This reduces "a bit" of the flickering that was otherwise occurring
 		// across all windows; at this stage it is only limited to the active
 		// MDI Child.
-		pMDIChild = GameMain_BCMDIClient_GetActiveMDIChild_SCURKPrimary(pThis);
-		if (pMDIChild) {
-			hWndChild = 0;
-			hWndObjSelect = 0;
-			if (pMDIChild == (TBC45XMDIChild *)pThis->mPlaceWindow) {
-				hWndChild = pThis->mPlaceWindow->__wndHead.pWnd->HWindow;
-				hWndObjSelect = pThis->mPlaceWindow->pPlaceTileListDlg->pWnd->HWindow;
-			}
-			else if (pMDIChild == (TBC45XMDIChild *)pThis->mMoverWindow)
-				hWndChild = pThis->mMoverWindow->__wndHead.pWnd->HWindow;
-			else if (pMDIChild == (TBC45XMDIChild *)pThis->mEditWindow)
-				hWndChild = ((winscurkParMDIChild *)pThis->mEditWindow)->__wndHead.pWnd->HWindow;
+		if (bRedraw) {
+			pMDIChild = GameMain_BCMDIClient_GetActiveMDIChild_SCURKPrimary(pThis);
+			if (pMDIChild) {
+				hWndChild = 0;
+				hWndObjSelect = 0;
+				if (pMDIChild == (TBC45XMDIChild *)pThis->mPlaceWindow) {
+					hWndChild = pThis->mPlaceWindow->__wndHead.pWnd->HWindow;
+					hWndObjSelect = pThis->mPlaceWindow->pPlaceTileListDlg->pWnd->HWindow;
+				}
+				else if (pMDIChild == (TBC45XMDIChild *)pThis->mMoverWindow)
+					hWndChild = pThis->mMoverWindow->__wndHead.pWnd->HWindow;
+				else if (pMDIChild == (TBC45XMDIChild *)pThis->mEditWindow)
+					hWndChild = ((winscurkParMDIChild *)pThis->mEditWindow)->__wndHead.pWnd->HWindow;
 
-			if (hWndChild)
-				RedrawWindow(hWndChild, 0, 0, RDW_ALLCHILDREN | RDW_INVALIDATE);
-			if (hWndObjSelect)
-				RedrawWindow(hWndObjSelect, 0, 0, RDW_ALLCHILDREN | RDW_INVALIDATE);
+				if (hWndChild)
+					RedrawWindow(hWndChild, 0, 0, RDW_ALLCHILDREN | RDW_INVALIDATE);
+				if (hWndObjSelect)
+					RedrawWindow(hWndObjSelect, 0, 0, RDW_ALLCHILDREN | RDW_INVALIDATE);
+			}
 		}
 	}
 }
