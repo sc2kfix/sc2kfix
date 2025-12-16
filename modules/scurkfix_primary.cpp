@@ -308,8 +308,6 @@ extern "C" void __cdecl Hook_SCURKPrimary_BCDialog_CmCancel(TBC45XDialog *pThis)
 void InstallFixes_SCURKPrimary(void) {
 	if (mischook_debug == DEBUG_FLAGS_EVERYTHING)
 		mischook_scurkprimary_debug = DEBUG_FLAGS_EVERYTHING;
-
-	ConsoleLog(LOG_DEBUG, "CORE: SCURK version primary (1995) detected. Installing SCURK fixes...\n");
 	
 	InstallRegistryPathingHooks_SCURKPrimary();
 

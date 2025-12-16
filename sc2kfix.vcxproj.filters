@@ -171,6 +171,9 @@
     <ClInclude Include="include\scurkclasses.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\scurk_1996.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="hooks\hook_mciSendCommand.cpp">
@@ -390,6 +393,9 @@
       <Filter>Source Files\Hooks</Filter>
     </ClCompile>
     <ClCompile Include="modules\scurkfix_primary.cpp">
+      <Filter>Source Files\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\scurkfix_1996.cpp">
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
   </ItemGroup>

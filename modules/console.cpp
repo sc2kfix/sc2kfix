@@ -570,6 +570,9 @@ BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments) {
 		case VERSION_SCURK_PRIMARY:
 			szProgramVersion = "1995 (Primary version)";
 			break;
+		case VERSION_SCURK_1996:
+			szProgramVersion = "1996 Network Edition";
+			break;
 		}
 	}
 	else

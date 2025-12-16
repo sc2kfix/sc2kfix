@@ -21,6 +21,7 @@
 #include <sc2k_demo.h>
 #include <bc45xhelp.h>
 #include <scurkclasses.h>
+#include <scurk_1996.h>
 #include <scurk_primary.h>
 #include <music.h>
 
@@ -37,6 +38,7 @@
 #define VERSION_SC2K_1995     2
 #define VERSION_SC2K_DEMO     3
 #define VERSION_SCURK_PRIMARY 4
+#define VERSION_SCURK_1996    5
 
 #define SC2KFIX_MODE_UNKNOWN  0
 #define SC2KFIX_MODE_SC2K     1
@@ -487,6 +489,7 @@ void InstallRegistryPathingHooks_SC2K1996(void);
 void InstallRegistryPathingHooks_SC2K1995(void);
 void InstallRegistryPathingHooks_SC2KDemo(void);
 void InstallRegistryPathingHooks_SCURKPrimary(void);
+void InstallRegistryPathingHooks_SCURK1996(void);
 
 // Movie hook
 void InstallMovieHooks(void);
@@ -510,3 +513,4 @@ extern UINT updatenotifier_debug;
 // SCURK specific stuff
 
 void InstallFixes_SCURKPrimary(void);
+void InstallFixes_SCURK1996(void);

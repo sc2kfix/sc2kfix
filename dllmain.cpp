@@ -350,6 +350,14 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		case 0xBC7B1F0E: // Yes, for some reason the timestamp is set to 2070.
 			if (dwSC2kFixMode == SC2KFIX_MODE_SCURK) {
 				dwDetectedVersion = VERSION_SCURK_PRIMARY;
+				ConsoleLog(LOG_NOTICE, "CORE: SCURK version primary (1995) detected.\n");
+				break;
+			}
+
+		case 0x6C261F75:
+			if (dwSC2kFixMode == SC2KFIX_MODE_SCURK) {
+				dwDetectedVersion = VERSION_SCURK_1996;
+				ConsoleLog(LOG_NOTICE, "CORE: SCURK version Network Edition (1996) detected.\n");
 				break;
 			}
 
@@ -371,6 +379,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		if (dwSC2kFixMode == SC2KFIX_MODE_SCURK) {
 			if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
 				InstallFixes_SCURKPrimary();
+			else if (dwDetectedVersion == VERSION_SCURK_1996)
+				InstallFixes_SCURK1996();
 			break;
 		}
 
