@@ -41,7 +41,7 @@ extern "C" void Hook_winscurkMDIClient_CycleColors(winscurkMDIClient *pThis) {
 	TBC45XPalette *pPal;
 	TBC45XClientDC clDC;
 	TBC45XMDIChild *pMDIChild;
-	HWND hWndChild;
+	HWND hWndChild, hWndObjSelect;
 
 	if (!IsIconic(pThis->pWnd->HWindow)) {
 		pPal = GameMain_winscurkApp_GetPalette_SCURKPrimary(gScurkApplication_SCURKPrimary);
@@ -70,8 +70,11 @@ extern "C" void Hook_winscurkMDIClient_CycleColors(winscurkMDIClient *pThis) {
 		pMDIChild = GameMain_BCMDIClient_GetActiveMDIChild_SCURKPrimary(pThis);
 		if (pMDIChild) {
 			hWndChild = 0;
-			if (pMDIChild == (TBC45XMDIChild *)pThis->mPlaceWindow)
+			hWndObjSelect = 0;
+			if (pMDIChild == (TBC45XMDIChild *)pThis->mPlaceWindow) {
 				hWndChild = pThis->mPlaceWindow->__wndHead.pWnd->HWindow;
+				hWndObjSelect = pThis->mPlaceWindow->pPlaceTileListDlg->pWnd->HWindow;
+			}
 			else if (pMDIChild == (TBC45XMDIChild *)pThis->mMoverWindow)
 				hWndChild = pThis->mMoverWindow->__wndHead.pWnd->HWindow;
 			else if (pMDIChild == (TBC45XMDIChild *)pThis->mEditWindow)
@@ -79,6 +82,8 @@ extern "C" void Hook_winscurkMDIClient_CycleColors(winscurkMDIClient *pThis) {
 
 			if (hWndChild)
 				RedrawWindow(hWndChild, 0, 0, RDW_ALLCHILDREN | RDW_INVALIDATE);
+			if (hWndObjSelect)
+				RedrawWindow(hWndObjSelect, 0, 0, RDW_ALLCHILDREN | RDW_INVALIDATE);
 		}
 	}
 }
