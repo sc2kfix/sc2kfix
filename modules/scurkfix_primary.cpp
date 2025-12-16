@@ -35,6 +35,7 @@ ConsoleLog(LOG_DEBUG, "SCURK_VTable_Check[class path - %s] - 0x%06X - TListBox::
 }
 */
 
+/*
 extern "C" __declspec(naked) void __cdecl Hook_SCURKPrimary_AnimationFix(void) {
 	__asm {
 		push 0x81
@@ -50,6 +51,11 @@ extern "C" __declspec(naked) void __cdecl Hook_SCURKPrimary_AnimationFix(void) {
 		pop ebp
 		retn
 	}
+}
+*/
+
+extern "C" void Hook_winscurkMDIClient_CycleColors(winscurkMDIClient *pThis) {
+
 }
 
 extern "C" void __cdecl Hook_SCURKPrimary_DebugOut(char const *fmt, ...) {
@@ -85,7 +91,7 @@ extern "C" void __cdecl Hook_SCURKPrimary_PlaceTileListDlg_SetupWindow(TPlaceTil
 		ConsoleLog(LOG_DEBUG, "0x%06X -> PlaceTileListDlg_SetupWindow(0x%06X)\n", _ReturnAddress(), pThis);
 
 	strcpy_s(szTileStr, sizeof(szTileStr) - 1, "Tile");
-	GameMain_BCDialog_SetupWindow_SCURKPrimary(pThis);
+	GameMain_BCDialog_SetupWindow_SCURKPrimary((TBC45XDialog *)pThis);
 
 	iCXHScroll = GetSystemMetrics(SM_CXHSCROLL);
 
@@ -108,7 +114,7 @@ extern "C" void __cdecl Hook_SCURKPrimary_PlaceTileListDlg_SetupWindow(TPlaceTil
 	ilbCY = (mainRect.bottom - mainRect.top) - 8;
 	SetWindowPos(pThis->pListBox->HWindow, HWND_TOP, lbRect.left, lbRect.top, ilbCX + 2, ilbCY + 2, SWP_NOZORDER | SWP_NOMOVE);
 
-	GameMain_BCWindow_HandleMessage_SCURKPrimary(pThis->pListBox, LB_SETCOLUMNWIDTH, pThis->nMaxHitArea, 0);
+	GameMain_BCWindow_HandleMessage_SCURKPrimary((TBC45XWindow *)pThis->pListBox, LB_SETCOLUMNWIDTH, pThis->nMaxHitArea, 0);
 
 	nMax = wTileObjects_SCURKPrimary[3 * pThis->mNumTiles] + wTileObjects_SCURKPrimary[3 * pThis->mNumTiles + 1] - 1;
 	if ((mischook_scurkprimary_debug & MISCHOOK_SCURKPRIMARY_DEBUG_PICKANDPLACE) != 0)
@@ -160,7 +166,7 @@ extern "C" void __cdecl Hook_SCURKPrimary_PlaceTileListDlg_EvLBNSelChange(TPlace
 	int nValOne, nValTwo;
 	char szBuf[80 + 1];
 	char *pLongTileName;
-	DWORD *pWindow;
+	winscurkPlaceWindow *pWindow;
 	TBC45XPoint curPt;
 	TBC45XRect lbRect;
 
@@ -196,14 +202,14 @@ extern "C" void __cdecl Hook_SCURKPrimary_PlaceTileListDlg_EvLBNSelChange(TPlace
 		pThis->nXPos = nValOne;
 		pThis->nCurPos = nValTwo;
 		pThis->nSelected = 1;
-		pLongTileName = GameMain_EditableTileSet_GetLongName_SCURKPrimary((cEditableTileSet *)gScurkApplication_SCURKPrimary[32], pThis->nCurPos);
-		GameMain_BCDialog_SetCaption_SCURKPrimary(pThis, pLongTileName);
+		pLongTileName = GameMain_EditableTileSet_GetLongName_SCURKPrimary(gScurkApplication_SCURKPrimary->mWorkingTiles, pThis->nCurPos);
+		GameMain_BCDialog_SetCaption_SCURKPrimary((TBC45XDialog *)pThis, pLongTileName);
 		wtoolValue_SCURKPrimary = 8;
 		*(&wtoolNum_SCURKPrimary + 8) = pThis->nCurPos;
 		InvalidateRect(pThis->pWnd->HWindow, 0, 0);
 		pWindow = GameMain_winscurkApp_GetPlaceWindow_SCURKPrimary(gScurkApplication_SCURKPrimary);
 		GameMain_winscurkPlaceWindow_ClearCurrentTool_SCURKPrimary(pWindow);
-		GameMain_BCWindow_SetCursor_SCURKPrimary((TBC45XParWindow *)pWindow[1], pThis->pWnd->Module, (const char *)30006);
+		GameMain_BCWindow_SetCursor_SCURKPrimary(pWindow->__wndHead.pWnd, pThis->pWnd->Module, (const char *)30006);
 		GameMain_winscurkApp_ScurkSound_SCURKPrimary(gScurkApplication_SCURKPrimary, 1);
 	}
 }
@@ -231,10 +237,10 @@ extern "C" void __declspec(naked) Hook_SCURKPrimary_MoverWindow_DisableMaximizeB
 	GAMEJMP(0x44E2EF);
 }
 
-extern "C" void __cdecl Hook_SCURKPrimary_MoverWindow_EvGetMinMaxInfo(DWORD *pThis, MINMAXINFO *pMmi) {
+extern "C" void __cdecl Hook_SCURKPrimary_MoverWindow_EvGetMinMaxInfo(winscurkMoverWindow *pThis, MINMAXINFO *pMmi) {
 	LONG nCXScreen, x, y;
 
-	GameMain_BCWindow_DefaultProcessing_SCURKPrimary((TBC45XWindow *)pThis[1]);
+	GameMain_BCWindow_DefaultProcessing_SCURKPrimary(pThis->__wndHead.pWnd);
 	nCXScreen = GetSystemMetrics(SM_CXSCREEN);
 	if (nCXScreen <= 640) {
 		x = 512;
@@ -258,17 +264,14 @@ extern "C" void __cdecl Hook_SCURKPrimary_MoverWindow_EvGetMinMaxInfo(DWORD *pTh
 }
 
 extern "C" void __cdecl Hook_SCURKPrimary_BCDialog_CmCancel(TBC45XDialog *pThis) {
-	DWORD *pWindow;
-	TPlaceTileListDlg *pPlaceTileListDlg;
+	winscurkPlaceWindow *pWindow;
 
 	// We really don't want to close the Place&Pick object selection
 	// dialogue by pressing escape...
 	pWindow = GameMain_winscurkApp_GetPlaceWindow_SCURKPrimary(gScurkApplication_SCURKPrimary);
-	if (pWindow) {
-		pPlaceTileListDlg = (TPlaceTileListDlg *)pWindow[22];
-		if (pPlaceTileListDlg && pPlaceTileListDlg == (TPlaceTileListDlg *)pThis)
-			return;
-	}
+	if (pWindow && pWindow->pPlaceTileListDlg && pWindow->pPlaceTileListDlg == (TPlaceTileListDlg *)pThis)
+		return;
+
 	GameMain_BCDialog_EvClose_SCURKPrimary(pThis);
 }
 
@@ -282,8 +285,10 @@ void InstallFixes_SCURKPrimary(void) {
 
 	// Hook for palette animation fix
 	// Intercept call to 0x480140 at 0x48A683
-	VirtualProtect((LPVOID)0x4497F5, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4497F5, Hook_SCURKPrimary_AnimationFix);
+	//VirtualProtect((LPVOID)0x4497F5, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	//NEWJMP((LPVOID)0x4497F5, Hook_SCURKPrimary_AnimationFix);
+	VirtualProtect((LPVOID)0x4496D4, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4496D4, Hook_winscurkMDIClient_CycleColors);
 	ConsoleLog(LOG_INFO, "CORE: Patched palette animation fix for SCURK.\n");
 
 	// Add back the internal debug notices for tracing purposes.

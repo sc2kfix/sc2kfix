@@ -10,6 +10,11 @@
 *              ensure alignment.
 */
 
+#pragma pack(push, 1)
+class CWinGBitmap : public CGraphics {
+	WORD wGRDIBUsage;
+};
+
 struct shapedetail_t {
 	union uShapeOffset {
 		BYTE *shapePtr;
@@ -21,12 +26,10 @@ struct shapedetail_t {
 	uint16_t shapeWidth;
 };
 
-#pragma pack(push, 1)
 struct shapeinfo_t {
 	int16_t shapeNum;
 	shapedetail_t shapeDetail;
 };
-#pragma pack(pop)
 
 struct tilesetheader_t {
 	int16_t numShapes;
@@ -54,7 +57,12 @@ public:
 	int32_t mHeight;
 };
 
-#pragma pack(push, 1)
+class cScurkToolBox : TBC45XParToolBox {
+public:
+	char *mOldHint;
+	TBC45XDerivedWindowFoot __clFoot;
+};
+
 class cShowTileWindow : public TBC45XParWindow {
 public:
 	TBC45XRect *mRect[150];
@@ -68,7 +76,7 @@ public:
 	DWORD dwSomethingOne[7];
 	DWORD dwPosition;
 	int nSomethingTwo[2];
-	TBC45XDerivedWindowFoot wndFoot;
+	TBC45XDerivedWindowFoot __clFoot;
 };
 
 class TPlaceTileListDlg : public TBC45XParDialog {
@@ -87,9 +95,136 @@ public:
 	int nChldHndlorX;
 	int nChldIDorY;
 	int nSelected;
-	TBC45XDerivedWindowFoot wndFoot;
-	DWORD dwUnknownTwo;
-	TBC45XParWindow newWnd;
-	DWORD dwEndBoundary;
+	TBC45XDerivedWindowFootNewWnd __wndFoot;
+	DWORD dwUnknownThree;
+};
+
+class winscurkParMDIChild : public TBC45XParMDIChild {
+public:
+	DWORD mSelectedSet;
+};
+
+class winscurkMDIChild : public winscurkParMDIChild {
+public:
+	TBC45XDerivedFrameWindowFoot __frameWndFoot;
+};
+
+class winscurkMDIClient : public TBC45XParMDIClient {
+public:
+	int ChildCount;
+	TBC45XOpenSaveDialog::TData FileData;
+	TBC45XDecoratedMDIFrame *mParent;
+	int mNewCity;
+	DWORD *mPlaceWindow;
+	DWORD *mMoverWindow;
+	DWORD *mEditWindow;
+	PALETTEENTRY mSlowColors[16];
+	PALETTEENTRY mFastColors[49];
+	int mCyclingColors;
+	TBC45XDerivedWindowFootNewWnd __wndFoot;
+};
+
+class winscurkMDIFrame : public TBC45XDecoratedMDIFrame {
+
+};
+
+class TButtonPalette : public TBC45XParFloatingFrame {
+public:
+	cScurkToolBox *pScurkToolBox;
+	TBC45XResId MenuResID;
+	DWORD dwColumns;
+	DWORD dwRows;
+	DWORD dwTempOne;
+	TBC45XWindow *pParentWnd;
+	HMENU hToolMenu;
+	TBC45XDerivedWindowFootNewWnd __wndFoot;
+};
+
+class winscurkMoverWindow : public winscurkParMDIChild {
+public:
+	DWORD dwTempOne[187];
+	TBC45XToolBox *pTileSourceToolBox;
+	TBC45XToolBox *pTileWorkingToolBox;
+	DWORD dwTempTwo[6];
+	cShowTileWindow *pTileSourceWindow;
+	cShowTileWindow *pTileWorkingWindow;
+	DWORD dwTempThree;
+	TBC45XDib *mDibsOne;
+	TBC45XDib *mDibsTwo;
+	TBC45XDib *mDibsThree;
+	TBC45XDib *mDibsFour;
+	TBC45XDib *mDibsFive;
+	TBC45XDib *mDibsSix;
+	CWinGBitmap *pGraphicsOne;
+	TBC45XPoint labelPt;
+	CWinGBitmap *pGraphicsFour;
+	DWORD dwTempFive;
+	winscurkMDIClient *pScurkMDIParent;
+	TBC45XDerivedFrameWindowFoot __frameWndFoot;
+};
+
+class winscurkPlaceWindow : public winscurkParMDIChild {
+public:
+	DWORD dwTempOne[16];
+	TPlaceTileListDlg *pPlaceTileListDlg;
+	winscurkMDIClient *pScurkMDIParent;
+	char *pToolText;
+	TButtonPalette *pToolBar;
+	DWORD dwMapModeVarCheck;
+	DWORD dwTempTwoTwo;
+	DWORD dwGameStarted;
+	DWORD dwIsZoomed;
+	DWORD dwLeftMouseDownInGameArea;
+	DWORD dwTempThreeOne;
+	DWORD dwLeftMouseButtonDown;
+	DWORD dwTempThreeThree;
+	DWORD dwTempThreeFour;
+	TBC45XRect scrollRect;
+	char *pCityName;
+	char *pCityFileName;
+	char *pBufThree;
+	DWORD dwTempFourOne;
+	DWORD mWorkingSet;
+	CWinGBitmap *pGraphics;
+	TBC45XSize GraphicSize;
+	int nInWidth;
+	int nInHeight;
+	BYTE *pGraphicBits;
+	TBC45XRect AreaView;
+	DWORD dwZoomLevel;
+	TBC45XPoint tileCoordPt;
+	TBC45XPoint mousePt;
+	TBC45XPoint LastTileCoordPt;
+	DWORD dwDragSuspendSim;
+	TBC45XDerivedFrameWindowFoot __frameWndFoot;
+};
+
+class winscurkApp : public TBC45XApplication {
+public:
+	cEditableTileSet *mSourceTiles;
+	cEditableTileSet *mWorkingTiles;
+	TBC45XDib *mPaletteDIB;
+	DWORD mClosing;
+	DWORD mSoundOn;
+	char *mExePath;
+	TBC45XPalette *mScurkPalette;
+	TBC45XPalette *mDeadPalette;
+	DWORD mScurkRegistrationKey;
+	HKEY mRegKey[5];
+	BOOL mUseIniFile;
+	char *m_currDir;
+	char *mDefaultCityFile;
+	char *mWavePath;
+	char *mMayorsName;
+	char *mCommandLineFileName;
+	DWORD mGotCommandLineFile;
+	char *mMiffPath;
+	char *mCityPath;
+	char *mHelpFile;
+	DWORD mLocalDLL;
+	DWORD mLocalModule;
+	winscurkMDIClient *mdiClient;
+	DWORD *Printer;
+	DWORD Printing;
 };
 #pragma pack(pop)
