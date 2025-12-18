@@ -29,7 +29,7 @@ UINT mus_debug = MUS_DEBUG;
 
 static DWORD dwDummy;
 
-std::vector<int> vectorRandomSongIDs = { 10001, 10004, 10008, 10012, 10018, 10003, 10007, 10011, 10013 };
+std::vector<int> vectorRandomSongIDs = { 10001, 10004, 10008, 10012, 10018, 10003, 10007, 10011, 10013, 10017 };
 int iCurrentSong = 0;
 int iPlayingSongID = 0;
 DWORD dwMusicThreadID;
@@ -608,12 +608,12 @@ extern "C" int __stdcall Hook_SimcityApp_MusicPlayNextRefocusSong(void) {
 
 	iSongToPlay = vectorRandomSongIDs[iCurrentSong++];
 	if (mus_debug & MUS_DEBUG_SONGS)
-		ConsoleLog(LOG_DEBUG, "MUS:  Playing song %i (next iCurrentSong will be %i).\n", iSongToPlay, (iCurrentSong > 8 ? 0 : iCurrentSong));
+		ConsoleLog(LOG_DEBUG, "MUS:  Playing song %i (next iCurrentSong will be %i).\n", iSongToPlay, (iCurrentSong > 9 ? 0 : iCurrentSong));
 
 	retval = Game_SimcityApp_MusicPlay(pThis, iSongToPlay);
 
 	// Loop and/or shuffle.
-	if (iCurrentSong > 8) {
+	if (iCurrentSong > 9) {
 		iCurrentSong = 0;
 
 		// Shuffle the songs, making sure we don't get the same one twice in a row
