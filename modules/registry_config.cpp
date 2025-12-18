@@ -653,14 +653,14 @@ void InstallRegistryPathingHooks_SCURKPrimary(void) {
 
 void InstallRegistryPathingHooks_SCURK1996(void) {
 	// Install RegSetValueExA hook
-	//*(DWORD*)(0X4B05F0) = (DWORD)Hook_RegSetValueExA;
+	*(DWORD*)(0X4B05F4) = (DWORD)Hook_RegSetValueExA;
 
 	// Install RegQueryValueExA hook
-	//*(DWORD*)(0x4B05E4) = (DWORD)Hook_RegQueryValueExA;
+	*(DWORD*)(0x4B05E8) = (DWORD)Hook_RegQueryValueExA;
 
 	// Install RegCreateKeyExA hook
-	//*(DWORD*)(0x4B05E8) = (DWORD)Hook_RegCreateKeyExA;
+	*(DWORD*)(0x4B05EC) = (DWORD)Hook_RegCreateKeyExA;
 
 	// Install RegCloseKey hook
-	//*(DWORD*)(0x4B05EC) = (DWORD)Hook_RegCloseKey;
+	*(DWORD*)(0x4B05F0) = (DWORD)Hook_RegCloseKey;
 }
