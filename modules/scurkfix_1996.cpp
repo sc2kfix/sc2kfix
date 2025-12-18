@@ -103,6 +103,55 @@ extern "C" void __cdecl Hook_SCURK1996_DebugOut(char const *fmt, ...) {
 	va_end(args);
 }
 
+extern "C" void __declspec(naked) Hook_SCURK1996_MoverWindow_DisableMaximizeBox(void) {
+	TBC45XWindow *pWnd;
+
+	__asm {
+		mov eax, [ebx + 0x4]
+		mov [pWnd], eax
+	}
+
+	if ((mischook_scurk1996_debug & MISCHOOK_SCURK1996_DEBUG_PLACEANDCOPY) != 0)
+		ConsoleLog(LOG_DEBUG, "0x%06X -> DisableMaximizeBox()\n", _ReturnAddress());
+
+	if (GetSystemMetrics(SM_CXSCREEN) > 700)
+		pWnd->Attr.Style &= ~WS_MAXIMIZEBOX;
+	else
+		pWnd->Attr.Style |= WS_MAXIMIZE;
+
+	__asm {
+		mov eax, pWnd
+		mov [ebx + 0x4], eax
+	}
+	GAMEJMP(0x44E55A);
+}
+
+extern "C" void __cdecl Hook_SCURK1996_MoverWindow_EvGetMinMaxInfo(winscurkMoverWindow *pThis, MINMAXINFO *pMmi) {
+	LONG nCXScreen, x, y;
+
+	GameMain_BCWindow_DefaultProcessing_SCURK1996(pThis->__wndHead.pWnd);
+	nCXScreen = GetSystemMetrics(SM_CXSCREEN);
+	if (nCXScreen <= 640) {
+		x = 512;
+		y = 256;
+	}
+	else {
+		x = 640;
+		y = 480;
+	}
+
+	pMmi->ptMinTrackSize.x = x;
+	pMmi->ptMinTrackSize.y = y;
+
+	pMmi->ptMaxPosition.x = 0;
+	pMmi->ptMaxPosition.y = 0;
+	pMmi->ptMaxSize.x = x;
+	pMmi->ptMaxSize.y = y;
+
+	pMmi->ptMaxTrackSize.x = x;
+	pMmi->ptMaxTrackSize.y = y;
+}
+
 extern "C" void __cdecl Hook_SCURK1996_BCDialog_CmCancel(TBC45XDialog *pThis) {
 	winscurkPlaceWindow *pWindow;
 
@@ -129,6 +178,24 @@ void InstallFixes_SCURK1996(void) {
 	// Add back the internal debug notices for tracing purposes.
 	VirtualProtect((LPVOID)0x4132E8, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4132E8, Hook_SCURK1996_DebugOut);
+
+	// winscurkMoverWindow::EvSize():
+	// Temporarily remove the TFrameWindow::EvSize call.
+	// This avoids some redrawing strangeness that otherwise occurs
+	// if the Pick&Copy window is in-focus and you then restore
+	// the Place&Pick window to its non-maximized state.
+	VirtualProtect((LPVOID)0x450095, 13, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memset((LPVOID)0x450095, 0x90, 13);
+
+	// Temporarily disable the maximizebox style if SM_CXSCREEN is above 700.
+	VirtualProtect((LPVOID)0x44E553, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memset((LPVOID)0x44E553, 0x90, 6);
+	NEWJMP((LPVOID)0x44E553, Hook_SCURK1996_MoverWindow_DisableMaximizeBox);
+
+	// Temporarily lock the Min/Max size of the Pick&Copy window
+	// to avoid rendering the area non-functional.
+	VirtualProtect((LPVOID)0x4502E8, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4502E8, Hook_SCURK1996_MoverWindow_EvGetMinMaxInfo);
 
 	// This hook is to prevent the Place&Pick selection dialogue
 	// from being unintentionally closed; it catches and ignores

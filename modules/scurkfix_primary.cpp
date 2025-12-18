@@ -338,6 +338,7 @@ void InstallFixes_SCURKPrimary(void) {
 	VirtualProtect((LPVOID)0x410ED0, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x410ED0, Hook_SCURKPrimary_PlaceTileListDlg_EvLBNSelChange);
 
+	// winscurkMoverWindow::EvSize():
 	// Temporarily remove the TFrameWindow::EvSize call.
 	// This avoids some redrawing strangeness that otherwise occurs
 	// if the Pick&Copy window is in-focus and you then restore
