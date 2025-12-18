@@ -48,11 +48,13 @@
 // Program funcs
 SCURK1996_GAMECALL_MAIN(0x4496E8, void, __cdecl, winscurkMDIClient_RotateColors, winscurkMDIClient *, int)
 SCURK1996_GAMECALL_MAIN(0x458150, TBC45XPalette *, __cdecl, winscurkApp_GetPalette, winscurkApp *)
+SCURK1996_GAMECALL_MAIN(0x45A2F0, winscurkPlaceWindow *, __cdecl, winscurkApp_GetPlaceWindow, winscurkApp *)
 
 // BC and WinAPI
 SCURK1996_GAMECALL_MAIN(0x45FF8F, void, __cdecl, BCDC_SelectObjectPalette, TBC45XDC *, TBC45XPalette *, int)
 SCURK1996_GAMECALL_MAIN(0x46BF48, void, __cdecl, BCWindowDC_Destruct, TBC45XWindowDC *, char)
 SCURK1996_GAMECALL_MAIN(0x46BFE5, TBC45XClientDC *, __cdecl, BCClientDC_Construct, TBC45XClientDC *, HWND)
+SCURK1996_GAMECALL_MAIN(0x4702B5, void, __cdecl, BCDialog_EvClose, TBC45XParDialog *)
 SCURK1996_GAMECALL_MAIN(0x476BF5, int, __cdecl, BCListBox_GetSelIndex, TBC45XParListBox *)
 SCURK1996_GAMECALL_MAIN(0x4781E2, LRESULT, __cdecl, BCListBox_GetString, TBC45XParListBox *, char *, int)
 SCURK1996_GAMECALL_MAIN(0x47821B, int, __cdecl, BCListBox_SetItemData, TBC45XParListBox *, int, unsigned int)

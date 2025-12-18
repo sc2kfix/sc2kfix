@@ -103,6 +103,18 @@ extern "C" void __cdecl Hook_SCURK1996_DebugOut(char const *fmt, ...) {
 	va_end(args);
 }
 
+extern "C" void __cdecl Hook_SCURK1996_BCDialog_CmCancel(TBC45XDialog *pThis) {
+	winscurkPlaceWindow *pWindow;
+
+	// We really don't want to close the Place&Pick object selection
+	// dialogue by pressing escape...
+	pWindow = GameMain_winscurkApp_GetPlaceWindow_SCURK1996(gScurkApplication_SCURK1996);
+	if (pWindow && pWindow->pPlaceTileListDlg && pWindow->pPlaceTileListDlg == (TPlaceTileListDlg *)pThis)
+		return;
+
+	GameMain_BCDialog_EvClose_SCURK1996(pThis);
+}
+
 void InstallFixes_SCURK1996(void) {
 	if (mischook_debug == DEBUG_FLAGS_EVERYTHING)
 		mischook_scurk1996_debug = DEBUG_FLAGS_EVERYTHING;
@@ -117,4 +129,10 @@ void InstallFixes_SCURK1996(void) {
 	// Add back the internal debug notices for tracing purposes.
 	VirtualProtect((LPVOID)0x4132E8, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4132E8, Hook_SCURK1996_DebugOut);
+
+	// This hook is to prevent the Place&Pick selection dialogue
+	// from being unintentionally closed; it catches and ignores
+	// the cancel (esc) action.
+	VirtualProtect((LPVOID)0x4702A6, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4702A6, Hook_SCURK1996_BCDialog_CmCancel);
 }
