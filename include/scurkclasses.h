@@ -11,7 +11,17 @@
 */
 
 #pragma pack(push, 1)
-class CWinGBitmap : public CGraphics {
+class CWinGBitmap {
+	HBITMAP GRBitmap;
+	HBITMAP GRBitmapLoColor;
+	int GRlastPalUpdate;
+	TBC45XPalette *GRpAppPalette;
+	int GRwidth;
+	int GRheight;
+	int GRorient;
+	int GRIsLockCnt;
+	BYTE *GRpBits;
+	BYTE *GRpBitsLoColor;
 	WORD wGRDIBUsage;
 };
 
@@ -50,14 +60,14 @@ public:
 	int32_t mNumTiles;
 };
 
-class TEncodeDib : TBC45XDib {
+class TEncodeDib : public TBC45XDib {
 public:
 	uint8_t *mShapeBuf;
 	DWORD mLength;
 	int32_t mHeight;
 };
 
-class cScurkToolBox : TBC45XParToolBox {
+class cScurkToolBox : public TBC45XParToolBox {
 public:
 	char *mOldHint;
 	TBC45XDerivedWindowFoot __clFoot;

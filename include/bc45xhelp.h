@@ -163,11 +163,11 @@ public:
 	TBC45XStreamableBase *object;
 };
 
-class TBC45XOldStreamer : public TBC45XStreamer{
+class TBC45XOldStreamer : public TBC45XStreamer {
 
 };
 
-class TBC45XNewStreamer : public TBC45XStreamer{
+class TBC45XNewStreamer : public TBC45XStreamer {
 
 };
 
