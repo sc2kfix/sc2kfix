@@ -108,7 +108,7 @@ extern "C" void __cdecl Hook_SCURK1996_PlaceTileListDlg_SetupWindow(TPlaceTileLi
 	int nItem, nMax;
 	int nIdx;
 	int iCXHScroll, imainRight, imainBottom, ilbCX, ilbCY;
-	TBC45XRect mainRect, lbRect;
+	TBC45XRect mainRect;
 
 	if ((mischook_scurk1996_debug & MISCHOOK_SCURK1996_DEBUG_PICKANDPLACE) != 0)
 		ConsoleLog(LOG_DEBUG, "0x%06X -> PlaceTileListDlg_SetupWindow(0x%06X)\n", _ReturnAddress(), pThis);
@@ -132,16 +132,16 @@ extern "C" void __cdecl Hook_SCURK1996_PlaceTileListDlg_SetupWindow(TPlaceTileLi
 	// on Windows 11 24H2+.
 	// Adjust the width and height slightly as well...
 	// otherwise it will still fail "hard".
-	GetWindowRect(pThis->pListBox->HWindow, &lbRect);
 	ilbCX = (mainRect.right - mainRect.left) - 8;
 	ilbCY = (mainRect.bottom - mainRect.top) - 8;
-	SetWindowPos(pThis->pListBox->HWindow, HWND_TOP, lbRect.left, lbRect.top, ilbCX + 2, ilbCY + 2, SWP_NOZORDER | SWP_NOMOVE);
+	GetClientRect(pThis->pWnd->HWindow, &mainRect);
+	SetWindowPos(pThis->pListBox->HWindow, HWND_TOP, mainRect.left + 3, mainRect.top + 3, ilbCX - 4, ilbCY + 2, SWP_NOZORDER);
 
 	GameMain_BCWindow_HandleMessage_SCURK1996(pThis->pListBox, LB_SETCOLUMNWIDTH, pThis->nMaxHitArea, 0);
 
 	nMax = wTileObjects_SCURK1996[3 * pThis->mNumTiles] + wTileObjects_SCURK1996[3 * pThis->mNumTiles + 1] - 1;
 	if ((mischook_scurk1996_debug & MISCHOOK_SCURK1996_DEBUG_PICKANDPLACE) != 0)
-		ConsoleLog(LOG_DEBUG, "pThis->mNumTiles(%d), nMax(%d), pThis->nTileRow(%d)\n", pThis[17], nMax, pThis->nTileRow);
+		ConsoleLog(LOG_DEBUG, "pThis->mNumTiles(%d), nMax(%d), pThis->nTileRow(%d)\n", pThis->mNumTiles, nMax, pThis->nTileRow);
 	for (nItem = wTileObjects_SCURK1996[3 * pThis->mNumTiles]; nMax > nItem; nItem += pThis->nTileRow) {
 		sprintf_s(szTileStr, sizeof(szTileStr) - 1, "Tile%04d%04d", nItem, nItem + pThis->nTileRow - 1);
 		nIdx = GameMain_BCListBox_AddString_SCURK1996(pThis->pListBox, szTileStr);
