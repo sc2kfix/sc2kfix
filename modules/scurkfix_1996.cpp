@@ -81,6 +81,28 @@ extern "C" void Hook_SCURK1996_winscurkMDIClient_CycleColors(winscurkMDIClient *
 	}
 }
 
+extern "C" void __cdecl Hook_SCURK1996_DebugOut(char const *fmt, ...) {
+	va_list args;
+	int len;
+	char* buf;
+
+	if ((mischook_scurk1996_debug & MISCHOOK_SCURK1996_DEBUG_INTERNAL) == 0)
+		return;
+
+	va_start(args, fmt);
+	len = _vscprintf(fmt, args) + 1;
+	buf = (char*)malloc(len);
+	if (buf) {
+		vsprintf_s(buf, len, fmt, args);
+
+		ConsoleLog(LOG_DEBUG, "0x%06X -> gDebugOut(): %s", _ReturnAddress(), buf);
+
+		free(buf);
+	}
+
+	va_end(args);
+}
+
 void InstallFixes_SCURK1996(void) {
 	if (mischook_debug == DEBUG_FLAGS_EVERYTHING)
 		mischook_scurk1996_debug = DEBUG_FLAGS_EVERYTHING;
@@ -91,4 +113,8 @@ void InstallFixes_SCURK1996(void) {
 	VirtualProtect((LPVOID)0x449800, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x449800, Hook_SCURK1996_winscurkMDIClient_CycleColors);
 	ConsoleLog(LOG_INFO, "CORE: Patched palette animation fix for SCURK.\n");
+
+	// Add back the internal debug notices for tracing purposes.
+	VirtualProtect((LPVOID)0x4132E8, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4132E8, Hook_SCURK1996_DebugOut);
 }
