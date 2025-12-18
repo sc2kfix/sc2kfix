@@ -37,7 +37,7 @@ ConsoleLog(LOG_DEBUG, "SCURK_VTable_Check[class path - %s] - 0x%06X - TListBox::
 }
 */
 
-extern "C" void Hook_winscurkMDIClient_CycleColors(winscurkMDIClient *pThis) {
+extern "C" void Hook_SCURKPrimary_winscurkMDIClient_CycleColors(winscurkMDIClient *pThis) {
 	TBC45XPalette *pPal;
 	TBC45XClientDC clDC;
 	TBC45XMDIChild *pMDIChild;
@@ -318,9 +318,8 @@ void InstallFixes_SCURKPrimary(void) {
 	InstallRegistryPathingHooks_SCURKPrimary();
 
 	// Hook for palette animation fix
-	// Intercept call to 0x480140 at 0x48A683
 	VirtualProtect((LPVOID)0x4496D4, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4496D4, Hook_winscurkMDIClient_CycleColors);
+	NEWJMP((LPVOID)0x4496D4, Hook_SCURKPrimary_winscurkMDIClient_CycleColors);
 	ConsoleLog(LOG_INFO, "CORE: Patched palette animation fix for SCURK.\n");
 
 	// Add back the internal debug notices for tracing purposes.
