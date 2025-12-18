@@ -46,15 +46,22 @@
 #endif
 
 // Program funcs
+SCURK1996_GAMECALL_MAIN(0x414D98, char *, __cdecl, EditableTileSet_GetLongName, cEditableTileSet *, int)
+SCURK1996_GAMECALL_MAIN(0x440FEC, void, __cdecl, winscurkPlaceWindow_ClearCurrentTool, winscurkPlaceWindow *)
 SCURK1996_GAMECALL_MAIN(0x4496E8, void, __cdecl, winscurkMDIClient_RotateColors, winscurkMDIClient *, int)
 SCURK1996_GAMECALL_MAIN(0x458150, TBC45XPalette *, __cdecl, winscurkApp_GetPalette, winscurkApp *)
+SCURK1996_GAMECALL_MAIN(0x459C54, void, __cdecl, winscurkApp_ScurkSound, winscurkApp *, int)
 SCURK1996_GAMECALL_MAIN(0x45A2F0, winscurkPlaceWindow *, __cdecl, winscurkApp_GetPlaceWindow, winscurkApp *)
 
 // BC and WinAPI
 SCURK1996_GAMECALL_MAIN(0x45FF8F, void, __cdecl, BCDC_SelectObjectPalette, TBC45XDC *, TBC45XPalette *, int)
 SCURK1996_GAMECALL_MAIN(0x469D4A, unsigned int, __cdecl, BCWindow_DefaultProcessing, TBC45XParWindow *)
+SCURK1996_GAMECALL_MAIN(0x46A3E4, LRESULT, __cdecl, BCWindow_HandleMessage, TBC45XParWindow *, unsigned int msg, WPARAM wParam, LPARAM lParam)
+SCURK1996_GAMECALL_MAIN(0x46B888, void, __cdecl, BCWindow_SetCursor, TBC45XParWindow *, TBC45XModule *, const char *)
 SCURK1996_GAMECALL_MAIN(0x46BF48, void, __cdecl, BCWindowDC_Destruct, TBC45XWindowDC *, char)
 SCURK1996_GAMECALL_MAIN(0x46BFE5, TBC45XClientDC *, __cdecl, BCClientDC_Construct, TBC45XClientDC *, HWND)
+SCURK1996_GAMECALL_MAIN(0x47015B, void, __cdecl, BCDialog_SetupWindow, TBC45XParDialog *)
+SCURK1996_GAMECALL_MAIN(0x47023D, void, __cdecl, BCDialog_SetCaption, TBC45XParDialog *, char *)
 SCURK1996_GAMECALL_MAIN(0x4702B5, void, __cdecl, BCDialog_EvClose, TBC45XParDialog *)
 SCURK1996_GAMECALL_MAIN(0x476BF5, int, __cdecl, BCListBox_GetSelIndex, TBC45XParListBox *)
 SCURK1996_GAMECALL_MAIN(0x4781E2, LRESULT, __cdecl, BCListBox_GetString, TBC45XParListBox *, char *, int)
@@ -63,6 +70,9 @@ SCURK1996_GAMECALL_MAIN(0x4782A6, int, __cdecl, BCListBox_AddString, TBC45XParLi
 SCURK1996_GAMECALL_MAIN(0x478CCE, TBC45XMDIChild *, __cdecl, BCMDIClient_GetActiveMDIChild, TBC45XParMDIClient *)
 
 // Vars
+SCURK1996_GAMEOFF_PTR(__int16,	wTileObjects,		0x491BAE)
 SCURK1996_GAMEOFF(WORD,			wColFastCnt,		0x498232)
 SCURK1996_GAMEOFF(WORD,			wColSlowCnt,		0x498234)
+SCURK1996_GAMEOFF(__int16,		wtoolNum,			0x4A4892)
+SCURK1996_GAMEOFF(__int16,	wtoolValue,				0x4A48CA)
 SCURK1996_GAMEOFF(winscurkApp *,	gScurkApplication,	0x4A6DEC)
