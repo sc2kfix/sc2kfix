@@ -108,6 +108,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\bc45xhelp.h" />
     <ClInclude Include="include\hooklists.h" />
     <ClInclude Include="include\json.hpp" />
     <ClInclude Include="include\mfc3xhelp.h" />
@@ -116,6 +117,9 @@
     <ClInclude Include="include\sc2kfix.h" />
     <ClInclude Include="include\sc2k_1995.h" />
     <ClInclude Include="include\sc2k_demo.h" />
+    <ClInclude Include="include\scurkclasses.h" />
+    <ClInclude Include="include\scurk_1996.h" />
+    <ClInclude Include="include\scurk_primary.h" />
     <ClInclude Include="include\winmm_exports.h" />
     <ClInclude Include="include\sc2k_1996.h" />
     <ClInclude Include="resource.h" />
@@ -186,7 +190,8 @@
     <ClCompile Include="modules\registry_config.cpp" />
     <ClCompile Include="modules\sc2k_1996.cpp" />
     <ClCompile Include="modules\sc2x.cpp" />
-    <ClCompile Include="modules\scurkfix.cpp" />
+    <ClCompile Include="modules\scurkfix_1996.cpp" />
+    <ClCompile Include="modules\scurkfix_primary.cpp" />
     <ClCompile Include="modules\settings.cpp" />
     <ClCompile Include="modules\status_dialog.cpp" />
     <ClCompile Include="modules\track_config.cpp" />

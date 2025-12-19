@@ -38,14 +38,14 @@ HMENU hMainMenu = NULL;
 HMENU hGameMenu = NULL;
 HMENU hDebugMenu = NULL;
 FARPROC fpWinMMHookList[180] = { NULL };
-DWORD dwDetectedVersion = SC2KVERSION_UNKNOWN;
-DWORD dwSC2KAppTimestamp = 0;
+DWORD dwDetectedVersion = VERSION_PROG_UNKNOWN;
+DWORD dwSC2kFixMode = SC2KFIX_MODE_UNKNOWN;
+DWORD dwDetectedAppTimestamp = 0;
 DWORD dwSC2KFixVersion = SC2KFIX_VERSION_MAJOR << 24 | SC2KFIX_VERSION_MINOR << 16 | SC2KFIX_VERSION_PATCH << 8;
 const char* szSC2KFixVersion = SC2KFIX_VERSION;
 const char* szSC2KFixReleaseTag = SC2KFIX_RELEASE_TAG;
 const char* szSC2KFixBuildInfo = __DATE__ " " __TIME__;
 FILE* fdLog = NULL;
-BOOL bInSCURK = FALSE;
 #if !NOKUROKO
 BOOL bKurokoVMInitialized = FALSE;
 #endif
@@ -64,6 +64,28 @@ std::mt19937 mtMersenneTwister(rdRandomDevice());
 // Statics
 static DWORD dwDummy;
 
+static DWORD GetSC2kFixModeFromModule(char *szModuleName) {
+	if (_stricmp(szModuleName, "simcity.exe") == 0)
+		return SC2KFIX_MODE_SC2K;
+	else if (_stricmp(szModuleName, "simdemo.exe") == 0)
+		return SC2KFIX_MODE_SC2KDEMO;
+	else if (_stricmp(szModuleName, "winscurk.exe") == 0)
+		return SC2KFIX_MODE_SCURK;
+
+	return SC2KFIX_MODE_UNKNOWN;
+}
+
+static const char *GetLogSuffixFromSC2kFixMode() {
+	if (dwSC2kFixMode == SC2KFIX_MODE_SC2K)
+		return "SC2K";
+	else if (dwSC2kFixMode == SC2KFIX_MODE_SC2KDEMO)
+		return "SC2KDemo";
+	else if (dwSC2kFixMode == SC2KFIX_MODE_SCURK)
+		return "SCURK";
+	
+	return "Unknown";
+}
+
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 	int argc = 0;
 	LPWSTR* argv = NULL;
@@ -72,7 +94,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
 	switch (reason) {
 	case DLL_PROCESS_ATTACH:
-		char szModuleBaseName[200];
+		char szModuleBaseName[MAX_PATH + 1], szLogName[MAX_PATH + 1];
+		const char *logSuffix;
 		// Save our own module handle
 		hSC2KFixModule = hModule;
 
@@ -93,18 +116,20 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
 		// Before we do anything, check to see whether we're attaching against a valid binary
 		// (Based on the filename). Otherwise breakout.
-		GetModuleBaseName(GetCurrentProcess(), NULL, szModuleBaseName, 200);
-		if (!(_stricmp(szModuleBaseName, "winscurk.exe") == 0 ||
-			_stricmp(szModuleBaseName, "simcity.exe") == 0 ||
-			_stricmp(szModuleBaseName, "simdemo.exe") == 0)) {
+		GetModuleBaseName(GetCurrentProcess(), NULL, szModuleBaseName, MAX_PATH);
+		dwSC2kFixMode = GetSC2kFixModeFromModule(szModuleBaseName);
+		if (dwSC2kFixMode == SC2KFIX_MODE_UNKNOWN)
 			break;
-		}
 
 		// Save the SimCity 2000 EXE's module handle
 		if (!(hSC2KAppModule = GetModuleHandle(NULL))) {
 			MessageBox(GetActiveWindow(), "Could not GetModuleHandle(NULL) (???)", "sc2kfix error", MB_OK | MB_ICONERROR);
 			return FALSE;
 		}
+
+		logSuffix = GetLogSuffixFromSC2kFixMode();
+
+		sprintf_s(szLogName, sizeof(szLogName) - 1, "sc2kfix_%s.log", logSuffix);
 
 		// Ensure that the common controls library is loaded
 		InitCommonControlsEx(&icc);
@@ -199,7 +224,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Open a log file. If it fails, we handle that safely elsewhere
 		// AF - Relocated so it will record any messages that occur
 		//      prior to the console itself being enabled.
-		fopen_s(&fdLog, "sc2kfix.log", "w");
+		fdLog = old_fopen(szLogName, "w");
+		if (!fdLog)
+			ConsoleLog(LOG_ERROR, "Failed to open file handle for '%s'. Logs won't be recorded.\n", szLogName);
 
 		// Allocate a console and immediately hide it. We will later send a ShowWindow to make it
 		// visible if the console is to be made user-facing.
@@ -232,7 +259,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		ConsoleLog(LOG_DEBUG, "CORE: sc2kfix built with DEBUGALL. Strap in.\n");
 #endif
 
-		ConsoleLog(LOG_INFO, "CORE: SC2K session started at %lld.\n", time(NULL));
+		ConsoleLog(LOG_INFO, "CORE: %s session started at %lld.\n", logSuffix, time(NULL));
 		ConsoleLog(LOG_INFO, "CORE: Command line: %s\n", GetCommandLine());
 
 		// Dump some OS version information for bug reports
@@ -291,46 +318,73 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
 		// Install our top-level exception handler
 		SetUnhandledExceptionFilter(CrashHandler);
-
-		// If we're attached to SCURK, switch over to the SCURK fix code
-		GetModuleBaseName(GetCurrentProcess(), NULL, szModuleBaseName, 200);
-		if (!_stricmp(szModuleBaseName, "winscurk.exe")) {
-			InjectSCURKFix();
-			break;
-		}
 		
 		// Seed the libc RNG -- we'll need this later
 		srand((unsigned int)time(NULL));
 
 		// Determine what version of SC2K this is
 		// HACK: there's probably a better way to do this
-		dwSC2KAppTimestamp = ((PIMAGE_NT_HEADERS)(((PIMAGE_DOS_HEADER)hSC2KAppModule)->e_lfanew + (UINT_PTR)hSC2KAppModule))->FileHeader.TimeDateStamp;
-		switch (dwSC2KAppTimestamp) {
+		dwDetectedAppTimestamp = ((PIMAGE_NT_HEADERS)(((PIMAGE_DOS_HEADER)hSC2KAppModule)->e_lfanew + (UINT_PTR)hSC2KAppModule))->FileHeader.TimeDateStamp;
+		switch (dwDetectedAppTimestamp) {
 		case 0x313E706E:
-			dwDetectedVersion = SC2KVERSION_1996;
-			break;
+			if (dwSC2kFixMode == SC2KFIX_MODE_SC2K) {
+				dwDetectedVersion = VERSION_SC2K_1996;
+				break;
+			}
 
 		case 0x302FEA8A:
-			dwDetectedVersion = SC2KVERSION_1995;
-			ConsoleLog(LOG_NOTICE, "CORE: 1995 CD Collection version detected. Most features and gameplay fixes will not be available.\n");
-			ConsoleLog(LOG_NOTICE, "CORE: Please consider using the 1996 Special Edition for the fully restored SimCity 2000 experience.\n");
-			break;
+			if (dwSC2kFixMode == SC2KFIX_MODE_SC2K) {
+				dwDetectedVersion = VERSION_SC2K_1995;
+				ConsoleLog(LOG_NOTICE, "CORE: 1995 CD Collection version detected. Most features and gameplay fixes will not be available.\n");
+				ConsoleLog(LOG_NOTICE, "CORE: Please consider using the 1996 Special Edition for the fully restored SimCity 2000 experience.\n");
+				break;
+			}
 
 		case 0x3103B687:
-			dwDetectedVersion = SC2KVERSION_DEMO;
-			ConsoleLog(LOG_NOTICE, "CORE: Interactive Demo version detected. Good luck!\n");
-			break;
+			if (dwSC2kFixMode == SC2KFIX_MODE_SC2KDEMO) {
+				dwDetectedVersion = VERSION_SC2K_DEMO;
+				ConsoleLog(LOG_NOTICE, "CORE: Interactive Demo version detected. Good luck!\n");
+				break;
+			}
+
+		case 0xBC7B1F0E: // Yes, for some reason the timestamp is set to 2070.
+			if (dwSC2kFixMode == SC2KFIX_MODE_SCURK) {
+				dwDetectedVersion = VERSION_SCURK_PRIMARY;
+				ConsoleLog(LOG_NOTICE, "CORE: SCURK version primary (1995) detected.\n");
+				break;
+			}
+
+		case 0x6C261F75:
+			if (dwSC2kFixMode == SC2KFIX_MODE_SCURK) {
+				dwDetectedVersion = VERSION_SCURK_1996;
+				ConsoleLog(LOG_NOTICE, "CORE: SCURK version Network Edition (1996) detected.\n");
+				break;
+			}
 
 		default:
-			dwDetectedVersion = SC2KVERSION_UNKNOWN;
-			char msg[300];
-			sprintf_s(msg, 300, "Could not detect SC2K version (got timestamp %08Xd). Your game will probably crash.\r\n\r\n"
-				"Please let us know in a GitHub issue what version of the game you're running so we can look into this.", dwSC2KAppTimestamp);
+			dwDetectedVersion = VERSION_PROG_UNKNOWN;
+			char msg[512 + 1];
+			sprintf_s(msg, sizeof(msg) - 1, "Could not detect %s version (got timestamp 0x%08X). Fixes and features will not be loaded.\r\n\r\n"
+				"Please let us know in a GitHub issue what version of the game you're running so we can look into this.", logSuffix, dwDetectedAppTimestamp);
 			MessageBox(GetActiveWindow(), msg, "sc2kfix warning", MB_OK | MB_ICONWARNING);
-			ConsoleLog(LOG_WARNING, "CORE: SC2K version could not be detected (got timestamp 0x%08X). Game will probably crash.\n", dwSC2KAppTimestamp);
+			ConsoleLog(LOG_WARNING, "CORE: %s version could not be detected (got timestamp 0x%08X). Fixes and features will not be loaded.\n", logSuffix, dwDetectedAppTimestamp);
 		}
 
-		if (dwDetectedVersion == SC2KVERSION_DEMO)
+		// Let's break out instead if this case is hit.
+		// Better to avoid anomalous behaviour.
+		if (dwDetectedVersion == VERSION_PROG_UNKNOWN)
+			break;
+
+		// If we're attached to SCURK, switch over to the SCURK fix code
+		if (dwSC2kFixMode == SC2KFIX_MODE_SCURK) {
+			if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+				InstallFixes_SCURKPrimary();
+			else if (dwDetectedVersion == VERSION_SCURK_1996)
+				InstallFixes_SCURK1996();
+			break;
+		}
+
+		if (dwDetectedVersion == VERSION_SC2K_DEMO)
 			gamePrimaryKey = "SimCity 2000 Win95 Demo";
 
 		// Registry check
@@ -340,7 +394,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		if (iInstallCheck)
 			ConsoleLog(LOG_INFO, "CORE: Portable entries created by faux-installer.\n");
 
-		if (dwDetectedVersion == SC2KVERSION_1996) {
+		if (dwDetectedVersion == VERSION_SC2K_1996) {
 			ConsoleLog(LOG_INFO, "CORE: Loading last stored load/save city and load tileset paths.\n");
 			LoadStoredPaths();
 		}
@@ -361,11 +415,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		BOOL bCanFixAnimation;
 
 		bCanFixAnimation = TRUE;
-		if (dwDetectedVersion == SC2KVERSION_1996)
+		if (dwDetectedVersion == VERSION_SC2K_1996)
 			InstallAnimationHooks_SC2K1996();
-		else if (dwDetectedVersion == SC2KVERSION_1995)
+		else if (dwDetectedVersion == VERSION_SC2K_1995)
 			InstallAnimationHooks_SC2K1995();
-		else if (dwDetectedVersion == SC2KVERSION_DEMO)
+		else if (dwDetectedVersion == VERSION_SC2K_DEMO)
 			InstallAnimationHooks_SC2KDemo();
 		else
 			bCanFixAnimation = FALSE;
@@ -381,19 +435,19 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		lpDialogFix1 = NULL;
 		lpDialogFix2 = NULL;
 		switch (dwDetectedVersion) {
-		case SC2KVERSION_DEMO:
+		case VERSION_SC2K_DEMO:
 			bCanFixDialogCrash = TRUE;
 			lpDialogFix1 = (LPVOID)0x48A2EB;
 			lpDialogFix2 = (LPVOID)0x48A34A;
 			break;
 
-		case SC2KVERSION_1995:
+		case VERSION_SC2K_1995:
 			bCanFixDialogCrash = TRUE;
 			lpDialogFix1 = (LPVOID)0x49EE93;
 			lpDialogFix2 = (LPVOID)0x49EEF2;
 			break;
 
-		case SC2KVERSION_1996:
+		case VERSION_SC2K_1996:
 			bCanFixDialogCrash = TRUE;
 			lpDialogFix1 = (LPVOID)0x4A04FA;
 			lpDialogFix2 = (LPVOID)0x4A0559;
@@ -421,19 +475,19 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		lpWarningFix1 = NULL;
 		lpWarningFix2 = NULL;
 		switch (dwDetectedVersion) {
-		case SC2KVERSION_DEMO:
+		case VERSION_SC2K_DEMO:
 			bCanFixPaletteWarnings = TRUE;
 			lpWarningFix1 = (LPVOID)0x478CFB;
 			lpWarningFix2 = (LPVOID)0x478D40;
 			break;
 
-		case SC2KVERSION_1995:
+		case VERSION_SC2K_1995:
 			bCanFixPaletteWarnings = TRUE;
 			lpWarningFix1 = (LPVOID)0x408749;
 			lpWarningFix2 = (LPVOID)0x40878E;
 			break;
 
-		case SC2KVERSION_1996:
+		case VERSION_SC2K_1996:
 			bCanFixPaletteWarnings = TRUE;
 			lpWarningFix1 = (LPVOID)0x408A79;
 			lpWarningFix2 = (LPVOID)0x408ABE;
@@ -455,11 +509,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
 		// Hooks we only want to inject on the 1996 Special Edition version
 		// and the registry hooks that are for the 1995 CD Collection version.
-		if (dwDetectedVersion == SC2KVERSION_1996)
+		if (dwDetectedVersion == VERSION_SC2K_1996)
 			InstallMiscHooks_SC2K1996();
-		else if (dwDetectedVersion == SC2KVERSION_1995)
+		else if (dwDetectedVersion == VERSION_SC2K_1995)
 			InstallMiscHooks_SC2K1995();
-		else if (dwDetectedVersion == SC2KVERSION_DEMO)
+		else if (dwDetectedVersion == VERSION_SC2K_DEMO)
 			InstallMiscHooks_SC2KDemo();
 
 		// Start the console thread.
@@ -473,7 +527,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		}
 
 		// Set up the modding infrastructure for the 1996 Special Edition version.
-		if (dwDetectedVersion == SC2KVERSION_1996) {
+		if (dwDetectedVersion == VERSION_SC2K_1996) {
 #if !NOKUROKO
 			// Initialize the Kuroko VM
 			CreateThread(NULL, 0, KurokoThread, 0, 0, &dwKurokoThreadID);
@@ -504,7 +558,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
 		// Only save the stored paths during a graceful exit. (SC2K1996 only for now)
 		if (!bGameDead)
-			if (dwDetectedVersion == SC2KVERSION_1996)
+			if (dwDetectedVersion == VERSION_SC2K_1996)
 				SaveStoredPaths();
 
 		// Clear out the stored sprite IDs (no allocated data are contained).
@@ -512,8 +566,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
 		// Send a closing message and close the log file
 		ConsoleLog(LOG_INFO, "CORE: Closing down at %lld. Goodnight!\n", time(NULL));
-		fflush(fdLog);
-		fclose(fdLog);
+		if (fdLog) {
+			fflush(fdLog);
+			fclose(fdLog);
+		}
 		break;
 	}
 	return TRUE;

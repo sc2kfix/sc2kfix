@@ -220,7 +220,7 @@ void SaveSettings(BOOL onload) {
 	ConsoleLog(LOG_INFO, "CORE: Saved sc2kfix settings.\n");
 
 	if (!onload) {
-		if (dwDetectedVersion == SC2KVERSION_1996) {
+		if (dwDetectedVersion == VERSION_SC2K_1996) {
 			char szKeyBuf[32];
 
 			section = "sc2kfix.music.MIDI";

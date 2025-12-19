@@ -1,0 +1,370 @@
+// sc2kfix modules/scurkfix_1996.cpp: fixes for SCURK - Network Edition (1996) version
+// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+
+#undef UNICODE
+#include <windows.h>
+#include <psapi.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <sc2kfix.h>
+
+static DWORD dwDummy;
+
+#define MISCHOOK_SCURK1996_DEBUG_INTERNAL 1
+#define MISCHOOK_SCURK1996_DEBUG_PICKANDPLACE 2
+#define MISCHOOK_SCURK1996_DEBUG_PLACEANDCOPY 4
+
+#define MISCHOOK_SCURK1996_DEBUG DEBUG_FLAGS_NONE
+
+#ifdef DEBUGALL
+#undef MISCHOOK_SCURK1996_DEBUG
+#define MISCHOOK_SCURK1996_DEBUG DEBUG_FLAGS_EVERYTHING
+#endif
+
+UINT mischook_scurk1996_debug = MISCHOOK_SCURK1996_DEBUG;
+
+extern "C" void Hook_SCURK1996_winscurkMDIClient_CycleColors(winscurkMDIClient *pThis) {
+	TBC45XPalette *pPal;
+	TBC45XClientDC clDC;
+	TBC45XMDIChild *pMDIChild;
+	HWND hWndTargetOne, hWndTargetTwo, hWndTargetThree;
+	unsigned uFlags;
+	BOOL bRedraw, bNoChildren;
+
+	bRedraw = FALSE;
+	if (!IsIconic(pThis->pWnd->HWindow)) {
+		pPal = GameMain_winscurkApp_GetPalette_SCURK1996(gScurkApplication_SCURK1996);
+		GameMain_BCClientDC_Construct_SCURK1996(&clDC, pThis->pWnd->HWindow);
+		GameMain_BCDC_SelectObjectPalette_SCURK1996(&clDC, pPal, 0);
+		if (wColFastCnt_SCURK1996 == 5) {
+			GameMain_winscurkMDIClient_RotateColors_SCURK1996(pThis, 1);
+			AnimatePalette((HPALETTE)pPal->Handle, 0xAB, 0x31, pThis->mFastColors);
+			wColFastCnt_SCURK1996 = 0;
+			bRedraw = TRUE;
+		}
+		if (wColSlowCnt_SCURK1996 == 30) {
+			GameMain_winscurkMDIClient_RotateColors_SCURK1996(pThis, 0);
+			AnimatePalette((HPALETTE)pPal->Handle, 0xE0, 0x10, pThis->mSlowColors);
+			wColSlowCnt_SCURK1996 = 0;
+			bRedraw = TRUE;
+		}
+		++wColFastCnt_SCURK1996;
+		++wColSlowCnt_SCURK1996;
+		GameMain_BCWindowDC_Destruct_SCURK1996(&clDC, 0);
+
+		// Only call redraw if the given MDIChild is active, rather than
+		// refreshing all windows from pThis->pWnd->HWindow downwards.
+		//
+		// This reduces "a bit" of the flickering that was otherwise occurring
+		// across all windows; at this stage it is only limited to the active
+		// MDI Child.
+		if (bRedraw) {
+			pMDIChild = GameMain_BCMDIClient_GetActiveMDIChild_SCURK1996(pThis);
+			if (pMDIChild) {
+				bNoChildren = FALSE;
+				hWndTargetOne = 0;
+				hWndTargetTwo = 0;
+				hWndTargetThree = 0;
+				if (pMDIChild == (TBC45XMDIChild *)pThis->mPlaceWindow) {
+					hWndTargetOne = pThis->mPlaceWindow->__wndHead.pWnd->HWindow;
+					if (pThis->mPlaceWindow->pPlaceTileListDlg && pThis->mPlaceWindow->pPlaceTileListDlg->pListBox)
+						hWndTargetTwo = pThis->mPlaceWindow->pPlaceTileListDlg->pListBox->HWindow;
+				}
+				else if (pMDIChild == (TBC45XMDIChild *)pThis->mMoverWindow) {
+					if (pThis->mMoverWindow->pTileSourceWindow)
+						hWndTargetOne = pThis->mMoverWindow->pTileSourceWindow->HWindow;
+					if (pThis->mMoverWindow->pTileWorkingWindow)
+						hWndTargetTwo = pThis->mMoverWindow->pTileWorkingWindow->HWindow;
+				}
+				else if (pMDIChild == (TBC45XMDIChild *)pThis->mEditWindow) {
+					bNoChildren = TRUE;
+					hWndTargetOne = pThis->mEditWindow->__wndHead.pWnd->HWindow;
+					if (pThis->mEditWindow->pPaintWindow)
+						hWndTargetTwo = pThis->mEditWindow->pPaintWindow->HWindow;
+					if (pThis->mEditWindow->pPaletteWindow)
+						hWndTargetThree = pThis->mEditWindow->pPaletteWindow->HWindow;
+				}
+
+				uFlags = RDW_INVALIDATE;
+				if (!bNoChildren)
+					uFlags |= RDW_ALLCHILDREN;
+				if (hWndTargetOne)
+					RedrawWindow(hWndTargetOne, 0, 0, uFlags);
+				if (hWndTargetTwo)
+					RedrawWindow(hWndTargetTwo, 0, 0, RDW_ALLCHILDREN | RDW_INVALIDATE);
+				if (hWndTargetThree)
+					RedrawWindow(hWndTargetThree, 0, 0, RDW_ALLCHILDREN | RDW_INVALIDATE);
+			}
+		}
+	}
+}
+
+extern "C" void __cdecl Hook_SCURK1996_DebugOut(char const *fmt, ...) {
+	va_list args;
+	int len;
+	char* buf;
+
+	if ((mischook_scurk1996_debug & MISCHOOK_SCURK1996_DEBUG_INTERNAL) == 0)
+		return;
+
+	va_start(args, fmt);
+	len = _vscprintf(fmt, args) + 1;
+	buf = (char*)malloc(len);
+	if (buf) {
+		vsprintf_s(buf, len, fmt, args);
+
+		ConsoleLog(LOG_DEBUG, "0x%06X -> gDebugOut(): %s", _ReturnAddress(), buf);
+
+		free(buf);
+	}
+
+	va_end(args);
+}
+
+extern "C" void __cdecl Hook_SCURK1996_PlaceTileListDlg_SetupWindow(TPlaceTileListDlg *pThis) {
+	char szTileStr[80 + 1];
+	int nItem, nMax;
+	int nIdx;
+	int iCXHScroll, imainRight, imainBottom, ilbCX, ilbCY;
+	TBC45XRect mainRect;
+
+	if ((mischook_scurk1996_debug & MISCHOOK_SCURK1996_DEBUG_PICKANDPLACE) != 0)
+		ConsoleLog(LOG_DEBUG, "0x%06X -> PlaceTileListDlg_SetupWindow(0x%06X)\n", _ReturnAddress(), pThis);
+
+	strcpy_s(szTileStr, sizeof(szTileStr) - 1, "Tile");
+	GameMain_BCDialog_SetupWindow_SCURK1996(pThis);
+
+	iCXHScroll = GetSystemMetrics(SM_CXHSCROLL);
+
+	// First resize the dialogue.
+	GetClientRect(pThis->pWnd->HWindow, &mainRect);
+	imainRight = pThis->nMaxHitArea + iCXHScroll - mainRect.right;
+	imainBottom = pThis->nLBButtonWidth - mainRect.bottom;
+	GetWindowRect(pThis->pWnd->HWindow, &mainRect);
+	mainRect.right += imainRight + 8;
+	mainRect.bottom += imainBottom + 8;
+	SetWindowPos(pThis->pWnd->HWindow, HWND_TOP, mainRect.left, mainRect.top, mainRect.right - mainRect.left, mainRect.bottom - mainRect.top, SWP_NOZORDER | SWP_NOMOVE);
+
+	// Then resize the listbox control.
+	// If it is done in the wrong order it will fail "hard"
+	// on Windows 11 24H2+.
+	// Adjust the width and height slightly as well...
+	// otherwise it will still fail "hard".
+	ilbCX = (mainRect.right - mainRect.left) - 8;
+	ilbCY = (mainRect.bottom - mainRect.top) - 8;
+	GetClientRect(pThis->pWnd->HWindow, &mainRect);
+	SetWindowPos(pThis->pListBox->HWindow, HWND_TOP, mainRect.left + 3, mainRect.top + 3, ilbCX - 4, ilbCY + 2, SWP_NOZORDER);
+
+	GameMain_BCWindow_HandleMessage_SCURK1996(pThis->pListBox, LB_SETCOLUMNWIDTH, pThis->nMaxHitArea, 0);
+
+	nMax = wTileObjects_SCURK1996[3 * pThis->mNumTiles] + wTileObjects_SCURK1996[3 * pThis->mNumTiles + 1] - 1;
+	if ((mischook_scurk1996_debug & MISCHOOK_SCURK1996_DEBUG_PICKANDPLACE) != 0)
+		ConsoleLog(LOG_DEBUG, "pThis->mNumTiles(%d), nMax(%d), pThis->nTileRow(%d)\n", pThis->mNumTiles, nMax, pThis->nTileRow);
+	for (nItem = wTileObjects_SCURK1996[3 * pThis->mNumTiles]; nMax > nItem; nItem += pThis->nTileRow) {
+		sprintf_s(szTileStr, sizeof(szTileStr) - 1, "Tile%04d%04d", nItem, nItem + pThis->nTileRow - 1);
+		nIdx = GameMain_BCListBox_AddString_SCURK1996(pThis->pListBox, szTileStr);
+		if ((mischook_scurk1996_debug & MISCHOOK_SCURK1996_DEBUG_PICKANDPLACE) != 0)
+			ConsoleLog(LOG_DEBUG, "nItem(%d), szTileStr[%s], nIdx(%d)\n", nItem, szTileStr, nIdx);
+		GameMain_BCListBox_SetItemData_SCURK1996(pThis->pListBox, nIdx, nItem);
+	}
+}
+
+extern "C" void __cdecl Hook_SCURK1996_PlaceTileListDlg_EvLButtonDblClk(TPlaceTileListDlg *pThis) {
+	int nCurSelRowIdx;
+	int nPosOne, nPosTwo;
+	char szBuf[80 + 1];
+	TBC45XPoint curPt;
+	TBC45XRect lbRect;
+
+	if ((mischook_scurk1996_debug & MISCHOOK_SCURK1996_DEBUG_PICKANDPLACE) != 0)
+		ConsoleLog(LOG_DEBUG, "0x%06X -> PlaceTileListDlg_EvLButtonDblClk(0x%06X)\n", _ReturnAddress(), pThis);
+
+	nCurSelRowIdx = GameMain_BCListBox_GetSelIndex_SCURK1996(pThis->pListBox);
+	if ((mischook_scurk1996_debug & MISCHOOK_SCURK1996_DEBUG_PICKANDPLACE) != 0)
+		ConsoleLog(LOG_DEBUG, "nCurSelRowIdx(%d)\n", nCurSelRowIdx);
+
+	GetCursorPos(&curPt);
+	GetWindowRect(pThis->pListBox->HWindow, &lbRect);
+	pThis->nXPos = (curPt.x - lbRect.left) / pThis->nPosWidth;
+	if ((mischook_scurk1996_debug & MISCHOOK_SCURK1996_DEBUG_PICKANDPLACE) != 0)
+		ConsoleLog(LOG_DEBUG, "pThis->nXPos(%d)\n", pThis->nXPos);
+
+	GameMain_BCListBox_GetString_SCURK1996(pThis->pListBox, szBuf, nCurSelRowIdx);
+	if ((mischook_scurk1996_debug & MISCHOOK_SCURK1996_DEBUG_PICKANDPLACE) != 0)
+		ConsoleLog(LOG_DEBUG, "szBuf(%s)\n", szBuf);
+
+	sscanf_s(szBuf, "Tile%04d%04d", &nPosOne, &nPosTwo);
+	if ((mischook_scurk1996_debug & MISCHOOK_SCURK1996_DEBUG_PICKANDPLACE) != 0)
+		ConsoleLog(LOG_DEBUG, "nPosOne(%d), nPosTwo(%d)\n", nPosOne, nPosTwo);
+	pThis->nCurPos = pThis->nXPos + nPosOne;
+	if ((mischook_scurk1996_debug & MISCHOOK_SCURK1996_DEBUG_PICKANDPLACE) != 0)
+		ConsoleLog(LOG_DEBUG, "pThis->nCurPos(%d)\n", pThis->nCurPos);
+}
+
+extern "C" void __cdecl Hook_SCURK1996_PlaceTileListDlg_EvLBNSelChange(TPlaceTileListDlg *pThis) {
+	int nCurSelRowIdx;
+	int nPosOne, nPosTwo;
+	int nValOne, nValTwo;
+	char szBuf[80 + 1];
+	char *pLongTileName;
+	winscurkPlaceWindow *pWindow;
+	TBC45XPoint curPt;
+	TBC45XRect lbRect;
+
+	if ((mischook_scurk1996_debug & MISCHOOK_SCURK1996_DEBUG_PICKANDPLACE) != 0)
+		ConsoleLog(LOG_DEBUG, "0x%06X -> PlaceTileListDlg_EvLBNSelChange(0x%06X)\n", _ReturnAddress(), pThis);
+
+	nCurSelRowIdx = GameMain_BCListBox_GetSelIndex_SCURK1996(pThis->pListBox);
+	if ((mischook_scurk1996_debug & MISCHOOK_SCURK1996_DEBUG_PICKANDPLACE) != 0)
+		ConsoleLog(LOG_DEBUG, "nCurSelRowIdx(%d)\n", nCurSelRowIdx);
+
+	GameMain_BCListBox_GetString_SCURK1996(pThis->pListBox, szBuf, nCurSelRowIdx);
+	if ((mischook_scurk1996_debug & MISCHOOK_SCURK1996_DEBUG_PICKANDPLACE) != 0)
+		ConsoleLog(LOG_DEBUG, "szBuf(%s)\n", szBuf);
+
+	// These 3 lines have been added since in Windows 11 24H2-onwards
+	// it seems as if pThis[18] is not being set correctly.
+	// The following code is partially from the EvLButtonDblClk() call.
+	GetCursorPos(&curPt);
+	GetWindowRect(pThis->pListBox->HWindow, &lbRect);
+	pThis->nChldHndlorX = (curPt.x - lbRect.left);
+
+	nValOne = pThis->nChldHndlorX / pThis->nPosWidth;
+	sscanf_s(szBuf, "Tile%04d%04d", &nPosOne, &nPosTwo);
+	nValTwo = nValOne + nPosOne;
+	if ((mischook_scurk1996_debug & MISCHOOK_SCURK1996_DEBUG_PICKANDPLACE) != 0)
+		ConsoleLog(LOG_DEBUG, "nPosOne(%d), nPosTwo(%d), nValOne(%d), nValTwo(%d)\n", nPosOne, nPosTwo, nValOne, nValTwo);
+
+	if (nValTwo >= wTileObjects_SCURK1996[3 * pThis->mNumTiles + 1] + wTileObjects_SCURK1996[3 * pThis->mNumTiles]) {
+		GameMain_winscurkApp_ScurkSound_SCURK1996(gScurkApplication_SCURK1996, 3);
+		pThis->nSelected = 0;
+	}
+	else {
+		pThis->nXPos = nValOne;
+		pThis->nCurPos = nValTwo;
+		pThis->nSelected = 1;
+		pLongTileName = GameMain_EditableTileSet_GetLongName_SCURK1996(gScurkApplication_SCURK1996->mWorkingTiles, pThis->nCurPos);
+		GameMain_BCDialog_SetCaption_SCURK1996(pThis, pLongTileName);
+		wtoolValue_SCURK1996 = 8;
+		*(&wtoolNum_SCURK1996 + 8) = pThis->nCurPos;
+		InvalidateRect(pThis->pWnd->HWindow, 0, 0);
+		pWindow = GameMain_winscurkApp_GetPlaceWindow_SCURK1996(gScurkApplication_SCURK1996);
+		GameMain_winscurkPlaceWindow_ClearCurrentTool_SCURK1996(pWindow);
+		GameMain_BCWindow_SetCursor_SCURK1996(pWindow->__wndHead.pWnd, pThis->pWnd->Module, (const char *)30006);
+		GameMain_winscurkApp_ScurkSound_SCURK1996(gScurkApplication_SCURK1996, 1);
+	}
+}
+
+extern "C" void __declspec(naked) Hook_SCURK1996_MoverWindow_DisableMaximizeBox(void) {
+	TBC45XWindow *pWnd;
+
+	__asm {
+		mov eax, [ebx + 0x4]
+		mov [pWnd], eax
+	}
+
+	if ((mischook_scurk1996_debug & MISCHOOK_SCURK1996_DEBUG_PLACEANDCOPY) != 0)
+		ConsoleLog(LOG_DEBUG, "0x%06X -> DisableMaximizeBox()\n", _ReturnAddress());
+
+	if (GetSystemMetrics(SM_CXSCREEN) > 700)
+		pWnd->Attr.Style &= ~WS_MAXIMIZEBOX;
+	else
+		pWnd->Attr.Style |= WS_MAXIMIZE;
+
+	__asm {
+		mov eax, pWnd
+		mov [ebx + 0x4], eax
+	}
+	GAMEJMP(0x44E55A);
+}
+
+extern "C" void __cdecl Hook_SCURK1996_MoverWindow_EvGetMinMaxInfo(winscurkMoverWindow *pThis, MINMAXINFO *pMmi) {
+	LONG nCXScreen, x, y;
+
+	GameMain_BCWindow_DefaultProcessing_SCURK1996(pThis->__wndHead.pWnd);
+	nCXScreen = GetSystemMetrics(SM_CXSCREEN);
+	if (nCXScreen <= 640) {
+		x = 512;
+		y = 256;
+	}
+	else {
+		x = 640;
+		y = 480;
+	}
+
+	pMmi->ptMinTrackSize.x = x;
+	pMmi->ptMinTrackSize.y = y;
+
+	pMmi->ptMaxPosition.x = 0;
+	pMmi->ptMaxPosition.y = 0;
+	pMmi->ptMaxSize.x = x;
+	pMmi->ptMaxSize.y = y;
+
+	pMmi->ptMaxTrackSize.x = x;
+	pMmi->ptMaxTrackSize.y = y;
+}
+
+extern "C" void __cdecl Hook_SCURK1996_BCDialog_CmCancel(TBC45XDialog *pThis) {
+	winscurkPlaceWindow *pWindow;
+
+	// We really don't want to close the Place&Pick object selection
+	// dialogue by pressing escape...
+	pWindow = GameMain_winscurkApp_GetPlaceWindow_SCURK1996(gScurkApplication_SCURK1996);
+	if (pWindow && pWindow->pPlaceTileListDlg && pWindow->pPlaceTileListDlg == (TPlaceTileListDlg *)pThis)
+		return;
+
+	GameMain_BCDialog_EvClose_SCURK1996(pThis);
+}
+
+void InstallFixes_SCURK1996(void) {
+	if (mischook_debug == DEBUG_FLAGS_EVERYTHING)
+		mischook_scurk1996_debug = DEBUG_FLAGS_EVERYTHING;
+
+	InstallRegistryPathingHooks_SCURK1996();
+
+	// Hook for palette animation fix
+	VirtualProtect((LPVOID)0x449800, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x449800, Hook_SCURK1996_winscurkMDIClient_CycleColors);
+	ConsoleLog(LOG_INFO, "CORE: Patched palette animation fix for SCURK.\n");
+
+	// Add back the internal debug notices for tracing purposes.
+	VirtualProtect((LPVOID)0x4132E8, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4132E8, Hook_SCURK1996_DebugOut);
+
+	// These hooks are to account for the Place&Pick selection dialogue
+	// malfunctions that were occurring under Win11 24H2+:
+	// 1) The Listbox was no longer displayed
+	// 2) Mouse selection was no longer recognised - or rather
+	//    the stored point within the window wasn't recorded.
+	VirtualProtect((LPVOID)0x4104B8, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4104B8, Hook_SCURK1996_PlaceTileListDlg_SetupWindow);
+	VirtualProtect((LPVOID)0x410D94, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x410D94, Hook_SCURK1996_PlaceTileListDlg_EvLButtonDblClk);
+	VirtualProtect((LPVOID)0x410ED0, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x410ED0, Hook_SCURK1996_PlaceTileListDlg_EvLBNSelChange);
+
+	// winscurkMoverWindow::EvSize():
+	// Temporarily remove the TFrameWindow::EvSize call.
+	// This avoids some redrawing strangeness that otherwise occurs
+	// if the Pick&Copy window is in-focus and you then restore
+	// the Place&Pick window to its non-maximized state.
+	VirtualProtect((LPVOID)0x450095, 13, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memset((LPVOID)0x450095, 0x90, 13);
+
+	// Temporarily disable the maximizebox style if SM_CXSCREEN is above 700.
+	VirtualProtect((LPVOID)0x44E553, 6, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memset((LPVOID)0x44E553, 0x90, 6);
+	NEWJMP((LPVOID)0x44E553, Hook_SCURK1996_MoverWindow_DisableMaximizeBox);
+
+	// Temporarily lock the Min/Max size of the Pick&Copy window
+	// to avoid rendering the area non-functional.
+	VirtualProtect((LPVOID)0x4502E8, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4502E8, Hook_SCURK1996_MoverWindow_EvGetMinMaxInfo);
+
+	// This hook is to prevent the Place&Pick selection dialogue
+	// from being unintentionally closed; it catches and ignores
+	// the cancel (esc) action.
+	VirtualProtect((LPVOID)0x4702A6, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4702A6, Hook_SCURK1996_BCDialog_CmCancel);
+}
