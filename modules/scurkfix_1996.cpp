@@ -28,8 +28,9 @@ extern "C" void Hook_SCURK1996_winscurkMDIClient_CycleColors(winscurkMDIClient *
 	TBC45XPalette *pPal;
 	TBC45XClientDC clDC;
 	TBC45XMDIChild *pMDIChild;
-	HWND hWndChild, hWndObjSelect;
-	BOOL bRedraw;
+	HWND hWndTargetOne, hWndTargetTwo, hWndTargetThree;
+	unsigned uFlags;
+	BOOL bRedraw, bNoChildren;
 
 	bRedraw = FALSE;
 	if (!IsIconic(pThis->pWnd->HWindow)) {
@@ -61,21 +62,39 @@ extern "C" void Hook_SCURK1996_winscurkMDIClient_CycleColors(winscurkMDIClient *
 		if (bRedraw) {
 			pMDIChild = GameMain_BCMDIClient_GetActiveMDIChild_SCURK1996(pThis);
 			if (pMDIChild) {
-				hWndChild = 0;
-				hWndObjSelect = 0;
+				bNoChildren = FALSE;
+				hWndTargetOne = 0;
+				hWndTargetTwo = 0;
+				hWndTargetThree = 0;
 				if (pMDIChild == (TBC45XMDIChild *)pThis->mPlaceWindow) {
-					hWndChild = pThis->mPlaceWindow->__wndHead.pWnd->HWindow;
-					hWndObjSelect = pThis->mPlaceWindow->pPlaceTileListDlg->pWnd->HWindow;
+					hWndTargetOne = pThis->mPlaceWindow->__wndHead.pWnd->HWindow;
+					if (pThis->mPlaceWindow->pPlaceTileListDlg && pThis->mPlaceWindow->pPlaceTileListDlg->pListBox)
+						hWndTargetTwo = pThis->mPlaceWindow->pPlaceTileListDlg->pListBox->HWindow;
 				}
-				else if (pMDIChild == (TBC45XMDIChild *)pThis->mMoverWindow)
-					hWndChild = pThis->mMoverWindow->__wndHead.pWnd->HWindow;
-				else if (pMDIChild == (TBC45XMDIChild *)pThis->mEditWindow)
-					hWndChild = ((winscurkParMDIChild *)pThis->mEditWindow)->__wndHead.pWnd->HWindow;
+				else if (pMDIChild == (TBC45XMDIChild *)pThis->mMoverWindow) {
+					if (pThis->mMoverWindow->pTileSourceWindow)
+						hWndTargetOne = pThis->mMoverWindow->pTileSourceWindow->HWindow;
+					if (pThis->mMoverWindow->pTileWorkingWindow)
+						hWndTargetTwo = pThis->mMoverWindow->pTileWorkingWindow->HWindow;
+				}
+				else if (pMDIChild == (TBC45XMDIChild *)pThis->mEditWindow) {
+					bNoChildren = TRUE;
+					hWndTargetOne = pThis->mEditWindow->__wndHead.pWnd->HWindow;
+					if (pThis->mEditWindow->pPaintWindow)
+						hWndTargetTwo = pThis->mEditWindow->pPaintWindow->HWindow;
+					if (pThis->mEditWindow->pPaletteWindow)
+						hWndTargetThree = pThis->mEditWindow->pPaletteWindow->HWindow;
+				}
 
-				if (hWndChild)
-					RedrawWindow(hWndChild, 0, 0, RDW_ALLCHILDREN | RDW_INVALIDATE);
-				if (hWndObjSelect)
-					RedrawWindow(hWndObjSelect, 0, 0, RDW_ALLCHILDREN | RDW_INVALIDATE);
+				uFlags = RDW_INVALIDATE;
+				if (!bNoChildren)
+					uFlags |= RDW_ALLCHILDREN;
+				if (hWndTargetOne)
+					RedrawWindow(hWndTargetOne, 0, 0, uFlags);
+				if (hWndTargetTwo)
+					RedrawWindow(hWndTargetTwo, 0, 0, RDW_ALLCHILDREN | RDW_INVALIDATE);
+				if (hWndTargetThree)
+					RedrawWindow(hWndTargetThree, 0, 0, RDW_ALLCHILDREN | RDW_INVALIDATE);
 			}
 		}
 	}

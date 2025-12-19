@@ -121,6 +121,7 @@ public:
 
 class winscurkPlaceWindow;
 class winscurkMoverWindow;
+class winscurkEditWindow;
 
 class winscurkMDIClient : public TBC45XParMDIClient {
 public:
@@ -130,7 +131,7 @@ public:
 	int mNewCity;
 	winscurkPlaceWindow *mPlaceWindow;
 	winscurkMoverWindow *mMoverWindow;
-	DWORD *mEditWindow;
+	winscurkEditWindow *mEditWindow;
 	PALETTEENTRY mSlowColors[16];
 	PALETTEENTRY mFastColors[49];
 	int mCyclingColors;
@@ -151,6 +152,110 @@ public:
 	TBC45XWindow *pParentWnd;
 	HMENU hToolMenu;
 	TBC45XDerivedWindowFootNewWnd __wndFoot;
+};
+
+class winscurkEditWindow;
+
+class cPaintWindow : public TBC45XParWindow {
+public:
+	DWORD dwUndoBufferPreserved;
+	TBC45XDib *pDibMask;
+	char *pEncodeDibBits;
+	BYTE *pGraphicBits;
+	char *pDibBitsThree;
+	DWORD dwTempTwo;
+	int nPenSizeHalf;
+	char *pDibBitsOne;
+	char *pDibBitsTwo;
+	TBC45XRect shapeRect;
+	TBC45XClientDC *pClientDC;
+	TBC45XBitmap *pBitmap;
+	int nHorzScrollPos;
+	int nVertScrollPos;
+	DWORD dwLButtonDown;
+	DWORD dwPaintTool;
+	int nPenSize;
+	DWORD dwZoomLevel;
+	int nMaxVertScrollPos;
+	int nMaxHorzScrollPos;
+	int nHeight;
+	DWORD dwTempSeven[3];
+	char *pSomeBuffer;
+	char *pUndoBitsBuffer;
+	winscurkEditWindow *pScurkEditParent;
+	TBC45XPoint areaPointGridOne;
+	TBC45XPoint areaPointGridTwo;
+	DWORD dwTempEight[2];
+	TBC45XPoint areaPointMouse;
+	TEncodeDib *pEncodeDibBuffer;
+	DWORD dwTempNine;
+	TBC45XDib *pDibOne;
+	TBC45XDib *pDibTwo;
+	TBC45XDib *pDibThree;
+	CWinGBitmap *pGraphic;
+	DWORD dwTempTen;
+	DWORD dwShowClipGrid;
+	DWORD dwTempEleven[2];
+	DWORD dwShowDrawGrid;
+	TEncodeDib *pEncodeDib;
+	TBC45XDerivedWindowFoot __clFoot;
+};
+
+class cPaletteWindow : public TBC45XParWindow {
+public:
+	TBC45XDib *pDibOne;
+	TBC45XDib *pDibThree;
+	TBC45XDib *pDibFour;
+	TBC45XDib *pDibTwo;
+	float floatOne;
+	float floatTwo;
+	winscurkEditWindow *pScurkEditParent;
+	int *pPaletteBuffer;
+	BYTE colFrGrnd;
+	BYTE colBkGrnd;
+	TBC45XDerivedWindowFoot __clFoot;
+};
+
+class cPatternWindow : public TBC45XParWindow {
+public:
+	TBC45XDib *pDibOne;
+	TBC45XDib *pDibTwo;
+	TBC45XDib *pDibThree;
+	TBC45XDib *mDibs[39];
+	TBC45XDib *pDibFour;
+	TBC45XDib *pDibFive;
+	TBC45XDib *pDibSix;
+	DWORD dwPatternButPosition;
+	winscurkEditWindow *pScurkEditParent;
+	TBC45XDerivedWindowFoot __clFoot;
+};
+
+class winscurkEditWindow : public winscurkParMDIChild {
+public:
+	DWORD dwSomething;
+	cPaintWindow *pPaintWindow;
+	cPaletteWindow *pPaletteWindow;
+	cPatternWindow *pPatternWindow;
+	winscurkMDIClient *pScurkMDIParent;
+	DWORD dwTempTwo[5];
+	TBC45XDib *pDibOne;
+	cScurkToolBox *pScurkToolBoxOne;
+	cScurkToolBox *pScurkToolBoxTwo;
+	DWORD dwTempThree[10];
+	DWORD *dwPtrOne[8];
+	DWORD dwTempFour[2];
+	TBC45XDib *pDibTwo;
+	DWORD dwTempFive[2];
+	TBC45XPopupMenu *pMenuOne;
+	TBC45XPopupMenu *pMenuTwo;
+	TBC45XPopupMenu *pMenuThree;
+	TBC45XPopupMenu *pMenuFour;
+	TBC45XPopupMenu *pMenuFive;
+	DWORD dwTempSix[7];
+	TBC45XToolBox *pToolBoxOne;
+	TBC45XDib *pDibThree;
+	DWORD dwTempSeven;
+	TBC45XDerivedFrameWindowFoot __frameWndFoot;
 };
 
 class winscurkMoverWindow : public winscurkParMDIChild {

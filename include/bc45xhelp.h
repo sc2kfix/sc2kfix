@@ -546,6 +546,14 @@ public:
 	int GroupCount[6];
 };
 
+class TBC45XPopupMenu : public TBC45XMenu {
+
+};
+
+class TBC45XSystemMenu : public TBC45XMenu {
+
+};
+
 class TBC45XParTinyCaption : public TBC45XDerivedWindowHead {
 public:
 	TBC45XSize Border;
