@@ -416,7 +416,7 @@ extern HMENU hGameMenu;
 extern HMENU hDebugMenu;
 extern FARPROC fpWinMMHookList[180];
 extern DWORD dwDetectedVersion;
-extern DWORD dwSC2kFixMode;
+extern DWORD dwSC2KFixMode;
 extern DWORD dwDetectedAppTimestamp;
 extern DWORD dwSC2KFixVersion;
 extern const char* szSC2KFixVersion;

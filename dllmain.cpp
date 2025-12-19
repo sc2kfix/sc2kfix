@@ -39,7 +39,7 @@ HMENU hGameMenu = NULL;
 HMENU hDebugMenu = NULL;
 FARPROC fpWinMMHookList[180] = { NULL };
 DWORD dwDetectedVersion = VERSION_PROG_UNKNOWN;
-DWORD dwSC2kFixMode = SC2KFIX_MODE_UNKNOWN;
+DWORD dwSC2KFixMode = SC2KFIX_MODE_UNKNOWN;
 DWORD dwDetectedAppTimestamp = 0;
 DWORD dwSC2KFixVersion = SC2KFIX_VERSION_MAJOR << 24 | SC2KFIX_VERSION_MINOR << 16 | SC2KFIX_VERSION_PATCH << 8;
 const char* szSC2KFixVersion = SC2KFIX_VERSION;
@@ -64,7 +64,7 @@ std::mt19937 mtMersenneTwister(rdRandomDevice());
 // Statics
 static DWORD dwDummy;
 
-static DWORD GetSC2kFixModeFromModule(char *szModuleName) {
+static DWORD GetSC2KFixModeFromModule(char *szModuleName) {
 	if (_stricmp(szModuleName, "simcity.exe") == 0)
 		return SC2KFIX_MODE_SC2K;
 	else if (_stricmp(szModuleName, "simdemo.exe") == 0)
@@ -75,15 +75,15 @@ static DWORD GetSC2kFixModeFromModule(char *szModuleName) {
 	return SC2KFIX_MODE_UNKNOWN;
 }
 
-static const char *GetLogSuffixFromSC2kFixMode() {
-	if (dwSC2kFixMode == SC2KFIX_MODE_SC2K)
-		return "SC2K";
-	else if (dwSC2kFixMode == SC2KFIX_MODE_SC2KDEMO)
-		return "SC2KDemo";
-	else if (dwSC2kFixMode == SC2KFIX_MODE_SCURK)
-		return "SCURK";
+static const char *GetLogSuffixFromSC2KFixMode() {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SC2K)
+		return "";
+	else if (dwSC2KFixMode == SC2KFIX_MODE_SC2KDEMO)
+		return "-demo";
+	else if (dwSC2KFixMode == SC2KFIX_MODE_SCURK)
+		return "-scurk";
 	
-	return "Unknown";
+	return "-unknown";
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
@@ -117,8 +117,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Before we do anything, check to see whether we're attaching against a valid binary
 		// (Based on the filename). Otherwise breakout.
 		GetModuleBaseName(GetCurrentProcess(), NULL, szModuleBaseName, MAX_PATH);
-		dwSC2kFixMode = GetSC2kFixModeFromModule(szModuleBaseName);
-		if (dwSC2kFixMode == SC2KFIX_MODE_UNKNOWN)
+		dwSC2KFixMode = GetSC2KFixModeFromModule(szModuleBaseName);
+		if (dwSC2KFixMode == SC2KFIX_MODE_UNKNOWN)
 			break;
 
 		// Save the SimCity 2000 EXE's module handle
@@ -127,9 +127,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			return FALSE;
 		}
 
-		logSuffix = GetLogSuffixFromSC2kFixMode();
+		logSuffix = GetLogSuffixFromSC2KFixMode();
 
-		sprintf_s(szLogName, sizeof(szLogName) - 1, "sc2kfix_%s.log", logSuffix);
+		sprintf_s(szLogName, sizeof(szLogName) - 1, "sc2kfix%s.log", logSuffix);
 
 		// Ensure that the common controls library is loaded
 		InitCommonControlsEx(&icc);
@@ -327,13 +327,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		dwDetectedAppTimestamp = ((PIMAGE_NT_HEADERS)(((PIMAGE_DOS_HEADER)hSC2KAppModule)->e_lfanew + (UINT_PTR)hSC2KAppModule))->FileHeader.TimeDateStamp;
 		switch (dwDetectedAppTimestamp) {
 		case 0x313E706E:
-			if (dwSC2kFixMode == SC2KFIX_MODE_SC2K) {
+			if (dwSC2KFixMode == SC2KFIX_MODE_SC2K) {
 				dwDetectedVersion = VERSION_SC2K_1996;
 				break;
 			}
 
 		case 0x302FEA8A:
-			if (dwSC2kFixMode == SC2KFIX_MODE_SC2K) {
+			if (dwSC2KFixMode == SC2KFIX_MODE_SC2K) {
 				dwDetectedVersion = VERSION_SC2K_1995;
 				ConsoleLog(LOG_NOTICE, "CORE: 1995 CD Collection version detected. Most features and gameplay fixes will not be available.\n");
 				ConsoleLog(LOG_NOTICE, "CORE: Please consider using the 1996 Special Edition for the fully restored SimCity 2000 experience.\n");
@@ -341,21 +341,21 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			}
 
 		case 0x3103B687:
-			if (dwSC2kFixMode == SC2KFIX_MODE_SC2KDEMO) {
+			if (dwSC2KFixMode == SC2KFIX_MODE_SC2KDEMO) {
 				dwDetectedVersion = VERSION_SC2K_DEMO;
 				ConsoleLog(LOG_NOTICE, "CORE: Interactive Demo version detected. Good luck!\n");
 				break;
 			}
 
 		case 0xBC7B1F0E: // Yes, for some reason the timestamp is set to 2070.
-			if (dwSC2kFixMode == SC2KFIX_MODE_SCURK) {
+			if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
 				dwDetectedVersion = VERSION_SCURK_PRIMARY;
 				ConsoleLog(LOG_NOTICE, "CORE: SCURK version primary (1995) detected.\n");
 				break;
 			}
 
 		case 0x6C261F75:
-			if (dwSC2kFixMode == SC2KFIX_MODE_SCURK) {
+			if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
 				dwDetectedVersion = VERSION_SCURK_1996;
 				ConsoleLog(LOG_NOTICE, "CORE: SCURK version Network Edition (1996) detected.\n");
 				break;
@@ -376,7 +376,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			break;
 
 		// If we're attached to SCURK, switch over to the SCURK fix code
-		if (dwSC2kFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
 			if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
 				InstallFixes_SCURKPrimary();
 			else if (dwDetectedVersion == VERSION_SCURK_1996)
