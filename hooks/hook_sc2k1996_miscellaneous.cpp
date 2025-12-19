@@ -1183,10 +1183,18 @@ static void UpdateCityDateAndSeason(BOOL bIncrement) {
 // Called before the vanilla SimCalendar day simulation. Cannot be ignored.
 std::vector<hook_function_t> stHooks_Hook_SimCalendarAdvance_Before;
 
+// Function prototype: HOOKCB void Hook_SimCalendarDay23_Before(void)
+// Called before the vanilla day 23 code. Cannot be ignored.
+std::vector<hook_function_t> stHooks_Hook_SimCalendarDay23_Before;
+
 // Function prototype: HOOKCB BOOL Hook_ScenarioSuccessCheck(void)
 // Cannot be ignored.
 // Return value: TRUE if the mod's scenario requirements have been met, FALSE if not.
 std::vector<hook_function_t> stHooks_Hook_ScenarioSuccessCheck;
+
+// Function prototype: HOOKCB void Hook_SimCalendarDay23_After(void)
+// Called after the vanilla day 23 code. Cannot be ignored.
+std::vector<hook_function_t> stHooks_Hook_SimCalendarDay23_After;
 
 // Function prototype: HOOKCB void Hook_SimCalendarAdvance_After(void)
 // Called after the vanilla SimCalendar day simulation. Cannot be ignored.
@@ -1224,7 +1232,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	// theological discussion to be held...
 	for (const auto& hook : stHooks_Hook_SimCalendarAdvance_Before) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
-			BOOL(*fnHook)() = (BOOL(*)())hook.pFunction;
+			void(*fnHook)() = (void(*)())hook.pFunction;
 			fnHook();
 		}
 	}
@@ -1269,6 +1277,14 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 			Game_UpdateGraphData();
 			break;
 		case 22:
+			// Pre-call for Day 23
+			for (const auto& hook : stHooks_Hook_SimCalendarDay23_Before) {
+				if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
+					void(*fnHook)() = (void(*)())hook.pFunction;
+					fnHook();
+				}
+			}
+			
 			// Check against city milestone progression requirements and grant new milestones
 			dwCityProgressionRequirement = dwCityProgressionRequirements[wCityProgression];
 			if (dwCityProgressionRequirement) {
@@ -1349,6 +1365,15 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 			// Check if the city is bankrupt and impeach the mayor if so
 			if (dwCityFunds < -100000)
 				Game_EventScenarioNotification(GAMEOVER_BANKRUPT);
+
+			// Post-call for Day 23
+			for (const auto& hook : stHooks_Hook_SimCalendarDay23_After) {
+				if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
+					void(*fnHook)() = (void(*)())hook.pFunction;
+					fnHook();
+				}
+			}
+
 			break;
 		case 23:
 			if (!bSettingsFrequentCityRefresh)
@@ -1380,7 +1405,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	// Call mods for daily processing tasks - after update
 	for (const auto& hook : stHooks_Hook_SimCalendarAdvance_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
-			BOOL(*fnHook)() = (BOOL(*)())hook.pFunction;
+			void(*fnHook)() = (void(*)())hook.pFunction;
 			fnHook();
 		}
 	}

@@ -61,7 +61,9 @@ int LoadNativeCodeHooks(HMODULE hModule) {
 		REGISTER_HOOK(Hook_SimcityApp_BuildSubFrames_Before);
 		REGISTER_HOOK(Hook_SimcityApp_BuildSubFrames_After);
 		REGISTER_HOOK(Hook_SimCalendarAdvance_Before);
+		REGISTER_HOOK(Hook_SimCalendarDay23_Before);
 		REGISTER_HOOK(Hook_ScenarioSuccessCheck);
+		REGISTER_HOOK(Hook_SimCalendarDay23_After);
 		REGISTER_HOOK(Hook_SimCalendarAdvance_After);
 
 		if (!bHookRegistered) {
@@ -93,7 +95,9 @@ void SortHookLists(void) {
 	SORT_HOOKS(Hook_SimcityApp_BuildSubFrames_Before);
 	SORT_HOOKS(Hook_SimcityApp_BuildSubFrames_After);
 	SORT_HOOKS(Hook_SimCalendarAdvance_Before);
+	SORT_HOOKS(Hook_SimCalendarDay23_Before);
 	SORT_HOOKS(Hook_ScenarioSuccessCheck);
+	SORT_HOOKS(Hook_SimCalendarDay23_After);
 	SORT_HOOKS(Hook_SimCalendarAdvance_After);
 
 	if (modloader_debug & MODLOADER_DEBUG_HOOKS)

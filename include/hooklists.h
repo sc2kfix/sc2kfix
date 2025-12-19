@@ -14,5 +14,7 @@ extern std::vector<hook_function_t> stHooks_Hook_SaveGame_After;
 extern std::vector<hook_function_t> stHooks_Hook_SimcityApp_BuildSubFrames_Before;
 extern std::vector<hook_function_t> stHooks_Hook_SimcityApp_BuildSubFrames_After;
 extern std::vector<hook_function_t> stHooks_Hook_SimCalendarAdvance_Before;
+extern std::vector<hook_function_t> stHooks_Hook_SimCalendarDay23_Before;
 extern std::vector<hook_function_t> stHooks_Hook_ScenarioSuccessCheck;
+extern std::vector<hook_function_t> stHooks_Hook_SimCalendarDay23_After;
 extern std::vector<hook_function_t> stHooks_Hook_SimCalendarAdvance_After;
