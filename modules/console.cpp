@@ -37,23 +37,37 @@ BOOL bConsoleEnabled = TRUE;
 BOOL bConsoleEnabled = FALSE;
 #endif
 
+typedef struct {
+	int iType;
+	union {
+		DWORD dw;
+		int i;
+		float f;
+		char* sz;
+	};
+} script_variable_t;
+
 HANDLE hConsoleThread;
 #if !NOKUROKO
 DWORD dwConsoleThreadID;
 #endif
 char szCmdBuf[256] = { 0 };
 BOOL bConsoleUndocumentedMode = FALSE;
+int iConsoleScriptNest = 0;
+std::map<std::string, script_variable_t> mapVariables;
 
 static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments);
 
 console_command_t fpConsoleCommands[] = {
 	{ "?", ConsoleCmdHelp, CONSOLE_COMMAND_ALIAS, "" },
-	{ "clear", ConsoleCmdClear, CONSOLE_COMMAND_DOCUMENTED, "Clear screen" },
+	{ "clear", ConsoleCmdClear, CONSOLE_COMMAND_DOCUMENTED, "Clear screen or variables" },
 	{ "echo", ConsoleCmdEcho, CONSOLE_COMMAND_DOCUMENTED, "Print to console" },
 	{ "echo!", ConsoleCmdEcho, CONSOLE_COMMAND_UNDOCUMENTED, "Print to console without newline" },
 	{ "help", ConsoleCmdHelp, CONSOLE_COMMAND_DOCUMENTED, "Display this help" },
 #if !NOKUROKO
-	{ "run", ConsoleCmdRun, CONSOLE_COMMAND_DOCUMENTED, "Run Kuroko code" },
+	{ "run", ConsoleCmdRun, CONSOLE_COMMAND_DOCUMENTED, "Run Kuroko code or console script" },
+#else
+	{ "run", ConsoleCmdRun, CONSOLE_COMMAND_DOCUMENTED, "Run console script" },
 #endif
 	{ "set", ConsoleCmdSet, CONSOLE_COMMAND_DOCUMENTED, "Modify game and plugin behaviour" },
 	{ "show", ConsoleCmdShow, CONSOLE_COMMAND_DOCUMENTED, "Display various game and plugin information" },
@@ -115,9 +129,58 @@ BOOL ConsoleCmdRun(const char* szCommand, const char* szArguments) {
 	}
 	return TRUE;
 }
+#else
+BOOL ConsoleCmdRun(const char* szCommand, const char* szArguments) {
+	std::string strPossibleScriptName;
+	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
+		printf("  run <filename>   Executes a file as a series of console commands\n");
+		return TRUE;
+	}
+
+	// Try to find the script we want
+	strPossibleScriptName = szArguments;
+	if (!FileExists(strPossibleScriptName.c_str())) {
+		strPossibleScriptName += ".sx2";
+		if (!FileExists(strPossibleScriptName.c_str())) {
+			ConsoleLog(LOG_ERROR, "CORE: Couldn't find script %s.\n", szArguments);
+			return TRUE;
+		}
+	}
+
+	// Iterate through the script and run lines until they fail
+	std::ifstream fsScriptFile(strPossibleScriptName);
+	std::string strScriptLine;
+	int i = 1;
+	iConsoleScriptNest++;
+	while (std::getline(fsScriptFile, strScriptLine)) {
+		if (!ConsoleEvaluateCommand(strScriptLine.c_str(), FALSE) || !iConsoleScriptNest) {
+			ConsoleLog(LOG_ERROR, "CORE: Script %s aborted on line %d.\n", strPossibleScriptName.c_str(), i);
+			return TRUE;
+		}
+
+		// We survived!
+		i++;
+	}
+
+	// Decrement the nesting count and break	
+	iConsoleScriptNest--;
+	return TRUE;
+}
 #endif
 
 BOOL ConsoleCmdClear(const char* szCommand, const char* szArguments) {
+	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
+		printf(
+			"  clear             Clear the console (keeps scrollback)\n"
+			"  clear variables   Clear the script variable list\n");
+		return TRUE;
+	}
+
+	if (!strcmp(szArguments, "variables")) {
+		mapVariables.clear();
+		return TRUE;
+	}
+
 	WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), "\x1b[2J\x1b[0;0H", sizeof("\x1b[2J\x1b[0;0H"), NULL, NULL);
 	return TRUE;
 }
@@ -360,7 +423,7 @@ skipscanf:
 			BYTE iTileID = GetMicroSimulatorTileID(iMicrosimID);
 			printf(
 				"Microsim %i:\n"
-				"  Tile/Building: %s (%u / 0x%02X)\n"
+				"  Tile/Building:       %s (%u / 0x%02X)\n"
 				"  Data Stat0 (Byte):   %u\n"
 				"  Data Stat1 (Word 1): %u\n"
 				"  Data Stat2 (Word 2): %u\n"
