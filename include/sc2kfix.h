@@ -302,6 +302,7 @@ HOOKEXT void CenterDialogBox(HWND hwndDlg);
 HOOKEXT HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText);
 HOOKEXT const char* HexPls(UINT uNumber, int width);
 HOOKEXT const char* FormatVersion(int iMajor, int iMinor, int iPatch);
+HOOKEXT_CPP std::string WordWrap(std::string strInput, size_t iMaxWidth, size_t iIndentWidth);
 HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...);
 HOOKEXT const char* GetLowHighScale(BYTE bScale);
 HOOKEXT BOOL FileExists(const char* name);

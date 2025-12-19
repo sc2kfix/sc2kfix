@@ -94,6 +94,25 @@ HOOKEXT const char* FormatVersion(int iMajor, int iMinor, int iPatch) {
 	return szRet;
 }
 
+HOOKEXT_CPP std::string WordWrap(std::string strInput, size_t iMaxWidth, size_t iIndentWidth) {
+	std::istringstream is(strInput);
+	std::ostringstream os;
+	std::string strWord;
+	size_t iCurrentPos = iIndentWidth;
+
+	while (is >> strWord) {
+		if (strWord.size() + iCurrentPos > iMaxWidth) {
+			os << "\n" + std::string(iIndentWidth, ' ');
+			iCurrentPos = iIndentWidth;
+		}
+
+		os << strWord + ' ';
+		iCurrentPos += strWord.size() + 1;
+	}
+	
+	return os.str();
+}
+
 extern FILE* fdLog;
 
 HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...) {

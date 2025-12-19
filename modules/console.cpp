@@ -409,10 +409,15 @@ BOOL ConsoleCmdShowMods(const char* szCommand, const char* szArguments) {
 	} else
 		return FALSE;
 
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+
 	printf("%d native code mods loaded:\n", mapLoadedNativeMods.size());
 	for (auto stNativeMod : mapLoadedNativeMods) {
+
 		const char* szModVersion = _strdup(FormatVersion(stNativeMod.second.iModVersionMajor, stNativeMod.second.iModVersionMinor, stNativeMod.second.iModVersionPatch));
 		const char* szModMinimumVersion = _strdup(FormatVersion(stNativeMod.second.iMinimumVersionMajor, stNativeMod.second.iMinimumVersionMinor, stNativeMod.second.iMinimumVersionPatch));
+
 		printf(
 			"  %s version %s (0x%08X)\n"
 			"    Mod Name:             %s\n"
@@ -423,7 +428,7 @@ BOOL ConsoleCmdShowMods(const char* szCommand, const char* szArguments) {
 			stNativeMod.second.szModName,
 			stNativeMod.second.szModAuthor,
 			szModMinimumVersion,
-			stNativeMod.second.szModDescription);
+			WordWrap(stNativeMod.second.szModDescription, csbi.dwSize.X, 26));
 		if (bDetail) {
 			printf("    Hooks:\n");
 			for (auto stHook : mapLoadedNativeModHooks[stNativeMod.first])
@@ -482,21 +487,6 @@ BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
 	
 	printf("Invalid argument.\n");
 	return TRUE;
-}
-
-static void test1(void) {
-	__asm {
-		xor eax, eax
-		xor ebx, ebx
-		xor edx, edx
-		idiv ebx
-	}
-}
-static void test2(void) {
-	test1();
-}
-static void test3(void) {
-	test2();
 }
 
 static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments) {
