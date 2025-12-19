@@ -86,6 +86,17 @@ static const char *GetLogSuffixFromSC2KFixMode() {
 	return "-unknown";
 }
 
+static const char *GetProgramNameFromSC2KFixMode() {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SC2K)
+		return "SC2K";
+	else if (dwSC2KFixMode == SC2KFIX_MODE_SC2KDEMO)
+		return "SC2K Interactive Demo";
+	else if (dwSC2KFixMode == SC2KFIX_MODE_SCURK)
+		return "SCURK";
+	
+	return "Unknown Game";
+}
+
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 	int argc = 0;
 	LPWSTR* argv = NULL;
@@ -259,7 +270,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		ConsoleLog(LOG_DEBUG, "CORE: sc2kfix built with DEBUGALL. Strap in.\n");
 #endif
 
-		ConsoleLog(LOG_INFO, "CORE: %s session started at %lld.\n", logSuffix, time(NULL));
+		ConsoleLog(LOG_INFO, "CORE: %s session started at %lld.\n", GetProgramNameFromSC2KFixMode(), time(NULL));
 		ConsoleLog(LOG_INFO, "CORE: Command line: %s\n", GetCommandLine());
 
 		// Dump some OS version information for bug reports
@@ -364,10 +375,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		default:
 			dwDetectedVersion = VERSION_PROG_UNKNOWN;
 			char msg[512 + 1];
-			sprintf_s(msg, sizeof(msg) - 1, "Could not detect %s version (got timestamp 0x%08X). Fixes and features will not be loaded.\r\n\r\n"
-				"Please let us know in a GitHub issue what version of the game you're running so we can look into this.", logSuffix, dwDetectedAppTimestamp);
+			sprintf_s(msg, sizeof(msg) - 1, "Could not detect program version (got timestamp 0x%08X). Fixes and features will not be loaded.\r\n\r\n"
+				"Please let us know in a GitHub issue what version of the game you're running so we can look into this.", dwDetectedAppTimestamp);
 			MessageBox(GetActiveWindow(), msg, "sc2kfix warning", MB_OK | MB_ICONWARNING);
-			ConsoleLog(LOG_WARNING, "CORE: %s version could not be detected (got timestamp 0x%08X). Fixes and features will not be loaded.\n", logSuffix, dwDetectedAppTimestamp);
+			ConsoleLog(LOG_WARNING, "CORE: Program version could not be detected (got timestamp 0x%08X). Fixes and features will not be loaded.\n", dwDetectedAppTimestamp);
 		}
 
 		// Let's break out instead if this case is hit.

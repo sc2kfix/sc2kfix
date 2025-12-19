@@ -113,7 +113,8 @@ extern "C" BOOL __cdecl Hook_MovieCheck(char* sMovStr) {
 }
 
 void InstallMovieHooks(void) {
-	ConsoleLog(LOG_INFO, "MOV:  Loaded Movie Hooks.\n");
+	if (mov_debug)
+		ConsoleLog(LOG_DEBUG, "MOV:  Loaded movie hooks.\n");
 
 	// Hook into the movie opening function.
 	VirtualProtect((LPVOID)0x401104, 5, PAGE_EXECUTE_READWRITE, &dwDummy);

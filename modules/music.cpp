@@ -18,7 +18,7 @@
 #define MUS_DEBUG_SEQUENCER 4
 #define MUS_DEBUG_FLUIDSYNTH 8
 
-#define MUS_DEBUG DEBUG_FLAGS_EVERYTHING
+#define MUS_DEBUG DEBUG_FLAGS_NONE
 
 #ifdef DEBUGALL
 #undef MUS_DEBUG
@@ -95,7 +95,7 @@ void MusicShufflePlaylist(int iLastSongPlayed) {
 		} while (vectorRandomSongIDs[0] == iLastSongPlayed);
 
 		if (mus_debug & MUS_DEBUG_SONGS)
-			ConsoleLog(LOG_DEBUG, "MCI:  Shuffled song list (next song will be %i).\n", vectorRandomSongIDs[iCurrentSong]);
+			ConsoleLog(LOG_DEBUG, "MUS:  Shuffled song list (next song will be %i).\n", vectorRandomSongIDs[iCurrentSong]);
 	}
 }
 
