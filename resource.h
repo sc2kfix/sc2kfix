@@ -54,6 +54,7 @@
 #define IDC_CONFMUSICTRACKS_STATIC      21052
 #define IDC_EDITMUSICTRACK_STATIC       21053
 #define IDC_EDITMUSIC_TRACK_COMBO       21054
+#define IDC_SETTINGS_BUTTON_RESETFILEASSOCIATIONS 21055
 #define IDR_WAVE_500                    23001
 #define IDR_WAVE_514                    23002
 #define IDR_WAVE_529                    23003
@@ -96,7 +97,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        23043
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         21055
+#define _APS_NEXT_CONTROL_VALUE         21056
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

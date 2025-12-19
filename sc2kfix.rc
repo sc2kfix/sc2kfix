@@ -102,57 +102,58 @@ BEGIN
     CTEXT           "Organization Name",IDC_STATIC,56,69,150,8
 END
 
-IDD_SETTINGS DIALOGEX 0, 0, 299, 415
+IDD_SETTINGS DIALOGEX 0, 0, 299, 434
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOPMOST
 CAPTION "sc2kfix Settings"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",ID_SETTINGS_OK,17,389,50,14
+    DEFPUSHBUTTON   "OK",ID_SETTINGS_OK,17,409,50,14
     EDITTEXT        IDC_SETTINGS_MAYOR,114,39,165,14,ES_CENTER | ES_AUTOHSCROLL
     EDITTEXT        IDC_SETTINGS_COMPANY,114,58,165,14,ES_CENTER | ES_AUTOHSCROLL
     CTEXT           "Default Mayor Name",IDC_STATIC,19,42,82,8
     CTEXT           "Organization Name",IDC_STATIC,19,61,82,8
-    PUSHBUTTON      "Cancel",ID_SETTINGS_CANCEL,79,389,50,14
-    GROUPBOX        "Game Settings",IDC_STATIC,7,25,286,58
-    GROUPBOX        "Quality of Life / Performance Settings",IDC_STATIC,7,90,286,151
+    PUSHBUTTON      "Cancel",ID_SETTINGS_CANCEL,79,409,50,14
+    GROUPBOX        "Game Settings",IDC_STATIC,7,25,286,77
+    GROUPBOX        "Quality of Life / Performance Settings",IDC_STATIC,7,110,286,151
     CTEXT           "Settings with an asterisk next to them take effect on next game start.\nHover over a setting or button for more details.",IDC_SETTINGS_HEADER,18,5,264,16
     CONTROL         " Continue to play music when the game is in the background (Default: on)",IDC_SETTINGS_CHECK_BKGDMUSIC,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,164,268,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,184,268,10
     CONTROL         " Use grammar-corrected and disambiguated dialog strings (Default: on)",IDC_SETTINGS_CHECK_NEW_STRINGS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,286,268,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,306,268,10
     CONTROL         " Use higher quality sounds (Default: on)",IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,209,268,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,229,268,10
     CONTROL         " Shuffle music instead of looping predefined playlist (Default: off)",IDC_SETTINGS_CHECK_SHUFFLE_MUSIC,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,194,268,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,214,268,10
     CONTROL         " Use DOS/Mac style floating dialog instead of status bar (Default: off)",IDC_SETTINGS_CHECK_STATUS_DIALOG,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,258,268,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,278,268,10
     CONTROL         " * Always start the sc2kfix console on game startup (Default: off)",IDC_SETTINGS_CHECK_CONSOLE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,335,268,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,355,268,10
     CONTROL         " * Check for sc2kfix updates on game startup (Default: on)",IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,349,268,10
-    PUSHBUTTON      "Defaults",ID_SETTINGS_DEFAULTS,170,389,50,14
-    PUSHBUTTON      "Vanilla",ID_SETTINGS_VANILLA,232,389,50,14
-    RTEXT           "sc2kfix version 0.0-dev (tag)",IDC_STATIC_VERSIONINFO,172,405,126,8,WS_DISABLED
-    GROUPBOX        "Interface Settings",IDC_STATIC,7,246,286,71
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,369,268,10
+    PUSHBUTTON      "Defaults",ID_SETTINGS_DEFAULTS,170,409,50,14
+    PUSHBUTTON      "Vanilla",ID_SETTINGS_VANILLA,232,409,50,14
+    RTEXT           "sc2kfix version 0.0-dev (tag)",IDC_STATIC_VERSIONINFO,172,425,126,8,WS_DISABLED
+    GROUPBOX        "Interface Settings",IDC_STATIC,7,266,286,71
     CONTROL         " Display full SimCalendar date in title bar (Default: on)",IDC_SETTINGS_CHECK_TITLE_DATE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,272,268,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,292,268,10
     CONTROL         " Display city growth in real-time instead of in batches (Default: on)",IDC_SETTINGS_CHECK_REFRESH_RATE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,224,268,10
-    GROUPBOX        "sc2kfix Core Settings",IDC_STATIC,7,322,286,57
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,244,268,10
+    GROUPBOX        "sc2kfix Core Settings",IDC_STATIC,7,342,286,57
     CONTROL         " Always skip introduction videos (Default: off)",IDC_SETTINGS_CHECK_SKIP_INTRO,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,300,268,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,320,268,10
     CONTROL         " * Skip loading any installed mods on startup (Default: off)",IDC_SETTINGS_CHECK_DONT_LOAD_MODS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,363,268,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,383,268,10
     CONTROL         " Play next random selection after current music ends (Default: off)",IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,179,268,10
-    COMBOBOX        IDC_SETTINGS_COMBO_MUSICOUTPUT,114,105,164,122,CBS_DROPDOWNLIST | WS_TABSTOP
-    CTEXT           "Music Playback Driver",IDC_STATIC,19,107,82,8
-    CTEXT           "FluidSynth SoundFont",IDC_STATIC,19,127,82,8
-    EDITTEXT        IDC_SETTINGS_FLUIDSYNTH_SOUNDFONT,114,124,114,14,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY
-    PUSHBUTTON      "Browse",IDC_SETTINGS_BUTTON_SOUNDFONTBROWSE,234,124,44,14
-    PUSHBUTTON      "Configure MIDI Tracks",IDC_SETTINGS_BUTTON_CONFMIDTRACKS,42,145,100,14
-    PUSHBUTTON      "Configure MP3 Tracks",IDC_SETTINGS_BUTTON_CONFMP3TRACKS,159,145,100,14
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,199,268,10
+    COMBOBOX        IDC_SETTINGS_COMBO_MUSICOUTPUT,114,125,164,122,CBS_DROPDOWNLIST | WS_TABSTOP
+    CTEXT           "Music Playback Driver",IDC_STATIC,19,127,82,8
+    CTEXT           "FluidSynth SoundFont",IDC_STATIC,19,147,82,8
+    EDITTEXT        IDC_SETTINGS_FLUIDSYNTH_SOUNDFONT,114,144,114,14,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "Browse",IDC_SETTINGS_BUTTON_SOUNDFONTBROWSE,234,144,44,14
+    PUSHBUTTON      "Configure MIDI Tracks",IDC_SETTINGS_BUTTON_CONFMIDTRACKS,42,165,100,14
+    PUSHBUTTON      "Configure MP3 Tracks",IDC_SETTINGS_BUTTON_CONFMP3TRACKS,159,165,100,14
+    PUSHBUTTON      "Reset File Associations",IDC_SETTINGS_BUTTON_RESETFILEASSOCIATIONS,100,79,100,14
 END
 
 103 DIALOG 0, 0, 72, 195
@@ -346,7 +347,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 292
         TOPMARGIN, 7
-        BOTTOMMARGIN, 407
+        BOTTOMMARGIN, 426
     END
 
     103, DIALOG

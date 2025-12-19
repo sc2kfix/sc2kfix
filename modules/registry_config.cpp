@@ -19,6 +19,7 @@
 #define REGISTRY_DEBUG_OTHER 1
 #define REGISTRY_DEBUG_REGISTRY 2
 #define REGISTRY_DEBUG_PATHING 4
+#define REGISTRY_DEBUG_FILEASSOCIATIONS 8
 
 #define REGISTRY_DEBUG DEBUG_FLAGS_NONE
 
@@ -91,6 +92,74 @@ BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 	return FALSE;
 }
 
+void ResetFileAssociations(void) {
+	HKEY hkeyClassSC2, hkeyClassSCN;
+	ConsoleLog(LOG_INFO, "MISC: File association entries do not exist or ResetFileAssociations() called; updating registry.\n");
+
+	// Craft the path we're going to insert into the registry
+	char szModulePathName[MAX_PATH];
+	GetModuleFileNameEx(GetCurrentProcess(), NULL, szModulePathName, MAX_PATH);
+	std::string strShellCommand = "\"";
+	strShellCommand += szModulePathName;
+	strShellCommand += "\" \"%1\"";
+	std::string strShellIconSC2 = "\"";
+	strShellIconSC2 += szModulePathName;
+	strShellIconSC2 += "\",1";
+	std::string strShellIconSCN = "\"";
+	strShellIconSCN += szModulePathName;
+	strShellIconSCN += "\",2";
+
+	// Write the class info for .sc2 files (SimCity2000.Document.City)
+	RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Classes\\.sc2", &hkeyClassSC2);
+	RegSetValueExA(hkeyClassSC2, "", NULL, REG_SZ, (const BYTE*)"SimCity2000.Document.City", sizeof("SimCity2000.Document.City"));
+	RegCloseKey(hkeyClassSC2);
+	if (registry_debug & REGISTRY_DEBUG_FILEASSOCIATIONS)
+		ConsoleLog(LOG_DEBUG, "MISC: .sc2 file association written (stage 1).\n");
+
+	RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Classes\\SimCity2000.Document.City", &hkeyClassSC2);
+	RegSetValueExA(hkeyClassSC2, "", NULL, REG_SZ, (const BYTE*)"SimCity 2000 City", sizeof("SimCity 2000 City"));
+	RegCloseKey(hkeyClassSC2);
+	if (registry_debug & REGISTRY_DEBUG_FILEASSOCIATIONS)
+		ConsoleLog(LOG_DEBUG, "MISC: .sc2 file association written (stage 2).\n");
+
+	RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Classes\\SimCity2000.Document.City\\shell\\open\\command", &hkeyClassSC2);
+	RegSetValueExA(hkeyClassSC2, "", NULL, REG_SZ, (const BYTE*)strShellCommand.c_str(), strShellCommand.size() + 1);
+	RegCloseKey(hkeyClassSC2);
+	if (registry_debug & REGISTRY_DEBUG_FILEASSOCIATIONS)
+		ConsoleLog(LOG_DEBUG, "MISC: .sc2 file association written (stage 3).\n");
+
+	RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Classes\\SimCity2000.Document.City\\DefaultIcon", &hkeyClassSC2);
+	RegSetValueExA(hkeyClassSC2, "", NULL, REG_SZ, (const BYTE*)strShellIconSC2.c_str(), strShellIconSC2.size() + 1);
+	RegCloseKey(hkeyClassSC2);
+	if (registry_debug & REGISTRY_DEBUG_FILEASSOCIATIONS)
+		ConsoleLog(LOG_DEBUG, "MISC: .sc2 file association written (stage 4).\n");
+
+	// Write the class info for .scn files (SimCity2000.Document.Scenario)
+	RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Classes\\.scn", &hkeyClassSCN);
+	RegSetValueExA(hkeyClassSCN, "", NULL, REG_SZ, (const BYTE*)"SimCity2000.Document.Scenario", sizeof("SimCity2000.Document.Scenario"));
+	RegCloseKey(hkeyClassSCN);
+	if (registry_debug & REGISTRY_DEBUG_FILEASSOCIATIONS)
+		ConsoleLog(LOG_DEBUG, "MISC: .scn file association written (stage 1).\n");
+
+	RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Classes\\SimCity2000.Document.Scenario", &hkeyClassSCN);
+	RegSetValueExA(hkeyClassSCN, "", NULL, REG_SZ, (const BYTE*)"SimCity 2000 Scenario", sizeof("SimCity 2000 Scenario"));
+	RegCloseKey(hkeyClassSCN);
+	if (registry_debug & REGISTRY_DEBUG_FILEASSOCIATIONS)
+		ConsoleLog(LOG_DEBUG, "MISC: .scn file association written (stage 2).\n");
+
+	RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Classes\\SimCity2000.Document.Scenario\\shell\\open\\command", &hkeyClassSCN);
+	RegSetValueExA(hkeyClassSCN, "", NULL, REG_SZ, (const BYTE*)strShellCommand.c_str(), strShellCommand.size() + 1);
+	RegCloseKey(hkeyClassSCN);
+	if (registry_debug & REGISTRY_DEBUG_FILEASSOCIATIONS)
+		ConsoleLog(LOG_DEBUG, "MISC: .scn file association written (stage 3).\n");
+
+	RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Classes\\SimCity2000.Document.Scenario\\DefaultIcon", &hkeyClassSCN);
+	RegSetValueExA(hkeyClassSCN, "", NULL, REG_SZ, (const BYTE*)strShellIconSCN.c_str(), strShellIconSCN.size() + 1);
+	RegCloseKey(hkeyClassSCN);
+	if (registry_debug & REGISTRY_DEBUG_FILEASSOCIATIONS)
+		ConsoleLog(LOG_DEBUG, "MISC: .scn file association written (stage 4).\n");
+}
+
 static BOOL InstallSC2KDefaults(void) {
 	const char* ini_file = GetIniPath();
 	const char* section;
@@ -109,6 +178,18 @@ static BOOL InstallSC2KDefaults(void) {
 	if (GetPrivateProfileStringA(section, "Company Name", "", szTemp, sizeof(szTemp) - 1, ini_file) > 0) {
 		if (szTemp[0] && strlen(szTemp) > 0)
 			nRegEnts++;
+	}
+
+	// Attempt to fix shell registrations. This should happen even if a previous
+	// sc2kfix install simulation has occurred.
+	HKEY hkeyClassSC2;
+	extern BOOL bFixFileAssociations;
+	if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Classes\\.sc2", &hkeyClassSC2) != ERROR_SUCCESS || bFixFileAssociations)
+		ResetFileAssociations();
+	else {
+		RegCloseKey(hkeyClassSC2);
+		if (registry_debug & REGISTRY_DEBUG_FILEASSOCIATIONS)
+			ConsoleLog(LOG_DEBUG, "MISC: Skipping shell class registry due to .sc2 entry already existing.\n");
 	}
 
 	// If 'Installed' returns 1 and both the mayor/company entries are defined

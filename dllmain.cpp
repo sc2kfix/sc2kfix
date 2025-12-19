@@ -51,6 +51,7 @@ BOOL bKurokoVMInitialized = FALSE;
 #endif
 BOOL bUseAdvancedQuery = TRUE;
 BOOL bSkipLoadingMods = FALSE;
+BOOL bFixFileAssociations = FALSE;
 int iForcedBits = 0;
 
 std::random_device rdRandomDevice;
@@ -157,6 +158,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						timer_debug = DEBUG_FLAGS_NONE;
 						updatenotifier_debug = DEBUG_FLAGS_NONE;
 					}
+					if (!lstrcmpiW(argv[i], L"-resetfileassociations"))
+						bFixFileAssociations = TRUE;
 					if (!lstrcmpiW(argv[i], L"-defaults"))
 						bSkipLoadSettings = TRUE;
 					if (!lstrcmpiW(argv[i], L"-skipintro"))

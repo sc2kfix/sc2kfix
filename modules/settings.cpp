@@ -281,6 +281,7 @@ static void SetSettingsTabOrdering(HWND hwndDlg) {
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT), NULL, 0, 0, 0, 0, uFlags);
 
 	// Game Settings
+	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_RESETFILEASSOCIATIONS), NULL, 0, 0, 0, 0, uFlags);
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_COMPANY), NULL, 0, 0, 0, 0, uFlags);
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_MAYOR), NULL, 0, 0, 0, 0, uFlags);
 }
@@ -326,6 +327,8 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			"Changes the settings to the default sc2kfix experience but does not save settings or close the dialog.");
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, ID_SETTINGS_VANILLA),
 			"Changes the settings to disable all quality of life, interface and gameplay enhancements but does not save settings or close the dialog.");
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_RESETFILEASSOCIATIONS),
+			"Resets the file association entries in the registry so that .sc2 and .scn files will automatically open in SimCity 2000.");
 
 		// QoL/Performance settings
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT),
@@ -493,6 +496,10 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE), BST_UNCHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS), BST_UNCHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SKIP_INTRO), BST_UNCHECKED);
+			break;
+		case IDC_SETTINGS_BUTTON_RESETFILEASSOCIATIONS:
+			ResetFileAssociations();
+			MessageBox(hwndDlg, ".sc2 and .scn file associations reset!", "It Works!", MB_OK | MB_ICONINFORMATION);
 			break;
 		case IDC_SETTINGS_BUTTON_SOUNDFONTBROWSE:
 			if (GetOpenFileName(&stOFNFluidSynth)) {

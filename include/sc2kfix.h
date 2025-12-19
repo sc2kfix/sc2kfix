@@ -328,6 +328,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 void LoadStoredPaths(void);
 void SaveStoredPaths(void);
 int DoCheckAndInstall(void);
+void ResetFileAssociations(void);
 void SetGamePath(void);
 const char *GetIniPath(void);
 void InitializeSettings(void);
