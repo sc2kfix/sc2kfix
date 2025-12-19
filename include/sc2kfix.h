@@ -376,9 +376,7 @@ DWORD WINAPI ConsoleThread(LPVOID lpParameter);
 BOOL ConsoleEvaluateCommand(const char* szCommandLine, BOOL bInteractive);
 BOOL ConsoleCmdClear(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdEcho(const char* szCommand, const char* szArguments);
-#if !NOKUROKO
 BOOL ConsoleCmdRun(const char* szCommand, const char* szArguments);
-#endif
 BOOL ConsoleCmdWait(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdHelp(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments);
