@@ -26,6 +26,7 @@ mono_crash.*
 [Rr]elease/
 [Rr]eleases/
 [Rr]eleaseNoKuroko/
+[Rr]eleaseKuroko/
 x64/
 x86/
 [Ww][Ii][Nn]32/
