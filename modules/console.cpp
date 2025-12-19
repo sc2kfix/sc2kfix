@@ -428,7 +428,7 @@ BOOL ConsoleCmdShowMods(const char* szCommand, const char* szArguments) {
 			stNativeMod.second.szModName,
 			stNativeMod.second.szModAuthor,
 			szModMinimumVersion,
-			WordWrap(stNativeMod.second.szModDescription, csbi.dwSize.X, 26));
+			WordWrap(stNativeMod.second.szModDescription, csbi.dwSize.X, 26).c_str());
 		if (bDetail) {
 			printf("    Hooks:\n");
 			for (auto stHook : mapLoadedNativeModHooks[stNativeMod.first])
@@ -550,7 +550,7 @@ BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments) {
 BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments) {
 	const char* szProgramName = "SimCity 2000";
 	const char* szProgramVersion = "unknown";
-	if (dwSC2kFixMode == SC2KFIX_MODE_SC2K) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SC2K) {
 		switch (dwDetectedVersion) {
 		case VERSION_SC2K_1995:
 			szProgramVersion = "1995 CD Collection";
@@ -560,11 +560,11 @@ BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments) {
 			break;
 		}
 	}
-	else if (dwSC2kFixMode == SC2KFIX_MODE_SC2KDEMO) {
+	else if (dwSC2KFixMode == SC2KFIX_MODE_SC2KDEMO) {
 		if (dwDetectedVersion == VERSION_SC2K_DEMO)
 			szProgramVersion = "Interactive Demo";
 	}
-	else if (dwSC2kFixMode == SC2KFIX_MODE_SCURK) {
+	else if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
 		szProgramName = "SCURK";
 		switch (dwDetectedVersion) {
 		case VERSION_SCURK_PRIMARY:
