@@ -969,6 +969,10 @@ static BOOL TwoByTwoMismatchAndMilitaryBlockTileCheck(__int16 x, __int16 y, __in
 	return FALSE;
 }
 
+// Function prototype: HOOKCB void Hook_SimulationGrowSpecificZone_Success(__int16 iX, __int16 iY, BYTE iTileID, __int16 iZoneType)
+// Called if SimulationGrowSpecificZone succeeds. Cannot be ignored.
+std::vector<hook_function_t> stHooks_Hook_SimulationGrowSpecificZone_Success;
+
 extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, BYTE iTileID, __int16 iZoneType) {
 	__int16 x, y;
 	__int16 iMoveX, iMoveY;
@@ -1057,12 +1061,12 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 					y += iMoveX;
 					++iBranchingRunwayStripTileCount;
 					if (RunwayStripLengthCheck(iBranchingRunwayStripTileCount))
-						return 1;
+						goto PLACEMENT_SUCCESS;
 					continue;
 				}
 			}
 		}
-		return 1;
+		goto PLACEMENT_SUCCESS;
 	case TILE_INFRASTRUCTURE_CRANE:
 		// This check has been added to prevent a condition whereas the crane fails
 		// to be placed as a result of it being on the edge of the map but the pier
@@ -1118,7 +1122,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 				XBITSetBits(x, y, XBIT_FLIPPED);
 			--iPierLength;
 		} while (iPierLength);
-		return 1;
+		goto PLACEMENT_SUCCESS;
 	case TILE_INFRASTRUCTURE_CONTROLTOWER_CIV:
 	case TILE_MILITARY_CONTROLTOWER:
 	case TILE_MILITARY_WAREHOUSE:
@@ -1133,7 +1137,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 			SetNewZoneOnTilePortion(x, y, iZoneType);
 			MilitaryUnsetBitsOnTilePortion(x, y, iZoneType);
 		}
-		return 1;
+		goto PLACEMENT_SUCCESS;
 	case TILE_INFRASTRUCTURE_PARKINGLOT:
 	case TILE_MILITARY_PARKINGLOT:
 	case TILE_MILITARY_LOADINGBAY:
@@ -1173,13 +1177,22 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 		MilitaryUnsetBitsOnTilePortion(iNextX, iCurrY, iZoneType);
 		MilitaryUnsetBitsOnTilePortion(iCurrX, iNextY, iZoneType);
 		MilitaryUnsetBitsOnTilePortion(iNextX, iNextY, iZoneType);
-		return 1;
+		goto PLACEMENT_SUCCESS;
 	case TILE_MILITARY_MISSILESILO:
 		L_ItemPlacementCheck(x, y, TILE_MILITARY_MISSILESILO, AREA_3x3, TRUE);
-		return 1;
+		goto PLACEMENT_SUCCESS;
 	default:
-		return 1;
+		goto PLACEMENT_SUCCESS;
 	}
+
+PLACEMENT_SUCCESS:
+	for (const auto& hook : stHooks_Hook_SimulationGrowSpecificZone_Success) {
+		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
+			void(*fnHook)(__int16, __int16, BYTE, __int16) = (void(*)(__int16, __int16, BYTE, __int16))hook.pFunction;
+			fnHook(iX, iY, iTileID, iZoneType);
+		}
+	}
+	return 1;
 }
 
 static void PlacePowerLineTile(__int16 x, __int16 y, BYTE iTileID) {

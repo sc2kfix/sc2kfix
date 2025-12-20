@@ -58,6 +58,8 @@ int LoadNativeCodeHooks(HMODULE hModule) {
 		REGISTER_HOOK(Hook_LoadGame_After);
 		REGISTER_HOOK(Hook_SaveGame_Before);
 		REGISTER_HOOK(Hook_SaveGame_After);
+		REGISTER_HOOK(Hook_PrepareGame_Before);
+		REGISTER_HOOK(Hook_PrepareGame_After);
 		REGISTER_HOOK(Hook_SimcityApp_BuildSubFrames_Before);
 		REGISTER_HOOK(Hook_SimcityApp_BuildSubFrames_After);
 		REGISTER_HOOK(Hook_SimCalendarAdvance_Before);
@@ -65,6 +67,7 @@ int LoadNativeCodeHooks(HMODULE hModule) {
 		REGISTER_HOOK(Hook_ScenarioSuccessCheck);
 		REGISTER_HOOK(Hook_SimCalendarDay23_After);
 		REGISTER_HOOK(Hook_SimCalendarAdvance_After);
+		REGISTER_HOOK(Hook_SimulationGrowSpecificZone_Success);
 
 		if (!bHookRegistered) {
 			ConsoleLog(LOG_WARNING, "MODS: Native code mod %s presented invalid hook %s; skipping.\n", mapLoadedNativeMods[hModule].szModShortName, stModInfo->stHooks[i].szHookName);
@@ -92,6 +95,8 @@ void SortHookLists(void) {
 	SORT_HOOKS(Hook_LoadGame_After);
 	SORT_HOOKS(Hook_SaveGame_Before);
 	SORT_HOOKS(Hook_SaveGame_After);
+	SORT_HOOKS(Hook_PrepareGame_Before);
+	SORT_HOOKS(Hook_PrepareGame_After);
 	SORT_HOOKS(Hook_SimcityApp_BuildSubFrames_Before);
 	SORT_HOOKS(Hook_SimcityApp_BuildSubFrames_After);
 	SORT_HOOKS(Hook_SimCalendarAdvance_Before);
@@ -99,6 +104,7 @@ void SortHookLists(void) {
 	SORT_HOOKS(Hook_ScenarioSuccessCheck);
 	SORT_HOOKS(Hook_SimCalendarDay23_After);
 	SORT_HOOKS(Hook_SimCalendarAdvance_After);
+	SORT_HOOKS(Hook_SimulationGrowSpecificZone_Success);
 
 	if (modloader_debug & MODLOADER_DEBUG_HOOKS)
 		ConsoleLog(LOG_DEBUG, "MODS: Sorted all hooks.\n");

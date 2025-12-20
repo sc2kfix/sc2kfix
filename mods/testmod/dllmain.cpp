@@ -22,8 +22,7 @@
 // before a mod that exports Hook_OnNewCity_After with a priority of 1.
 sc2kfix_mod_hook_t stModHooks[] = {
 	{ "Hook_SimCalendarAdvance_Before", 0 },
-	{ "Hook_SimCalendarAdvance_After", 0 },
-	//{ "Hook_SimcityApp_BuildSubFrames_Before", 0 }
+	{ "Hook_SimCalendarAdvance_After", 0 }
 };
 
 // The stModInfo structure tells the sc2kfix mod loader about the mod and how to load it. It
@@ -36,8 +35,8 @@ sc2kfix_mod_hook_t stModHooks[] = {
 sc2kfix_mod_info_t stModInfo = {
 	/* .iModInfoVersion = */ 1,
 	/* .iModVersionMajor = */ 0,
-	/* .iModVersionMinor = */ 1,
-	/* .iModVersionPatch = */ 2,
+	/* .iModVersionMinor = */ 2,
+	/* .iModVersionPatch = */ 0,
 	/* .iMinimumVersionMajor = */ 0,
 	/* .iMinimumVersionMinor = */ 10,
 	/* .iMinimumVersionPatch = */ 0,
@@ -103,15 +102,6 @@ HOOKCB void Hook_SimCalendarAdvance_After(void) {
 	// LOG() is a macro that prepends the module tag and the stModInfo.szModShortName to the log
 	// message before calling ConsoleLog to output it. You should not directly call ConsoleLog in
 	// mod DLLs; instead use LOG() to ensure that all log messages are properly formed.
-	//LOG(LOG_NOTICE, "Today was day %d in the glorious history of %s.\n", dwCityDays + 1, *pszCityName);
+	
+	// LOG(LOG_NOTICE, "Today was day %d in the glorious history of %s.\n", dwCityDays + 1, *pszCityName);
 }
-
-/*int iLastState = 0;
-
-HOOKCB void Hook_SimcityApp_BuildSubFrames_Before(CSimcityAppPrimary* pThis) {
-	int iState = pThis->iSCAProgramStep;
-	if (iState != iLastState) {
-		LOG(LOG_DEBUG, "iState changed, %d -> %d (%s)\n", iLastState, iState, GetOnIdleStateEnumName(iState));
-		iLastState = iState;
-	}
-}*/

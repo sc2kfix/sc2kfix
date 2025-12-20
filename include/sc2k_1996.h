@@ -1505,6 +1505,7 @@ GAMECALL_MAIN(0x422EA0, void, __stdcall, CityToolBarSetBgdAndText, HDC, LONG, LO
 GAMECALL_MAIN(0x4237F0, void, __thiscall, CityToolBar_ToolMenuDisable, CCityToolBar* pThis)
 GAMECALL_MAIN(0x423860, void, __thiscall, CityToolBar_ToolMenuEnable, CCityToolBar* pThis)
 GAMECALL_MAIN(0x4255A0, void, __thiscall, SimcityApp_LoadCursorResources, CSimcityAppPrimary *)
+GAMECALL_MAIN(0x42DE20, void, __stdcall, PrepareGame, void)
 GAMECALL_MAIN(0x4302E0, DWORD, __thiscall, SimcityApp_DoLoadGame, CSimcityAppPrimary *, CMFC3XFile *, char*)
 GAMECALL_MAIN(0x432180, DWORD, __thiscall, SimcityApp_DoSaveGame, CSimcityAppPrimary *, CMFC3XString *)
 GAMECALL_MAIN(0x4348E0, void, __stdcall, StartCleanGame, void)

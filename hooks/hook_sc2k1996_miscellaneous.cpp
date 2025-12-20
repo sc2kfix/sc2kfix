@@ -455,13 +455,17 @@ static void OpenMainDialog_SC2K1996() {
 	}
 }
 
-// Function prototype: HOOKCB void Hook_SimcityApp_BuildSubFrames_Before(void)
+// Function prototype: HOOKCB void Hook_SimcityApp_BuildSubFrames_Before(CSimcityAppPrimary *pThis)
 // Ignored if bHookStopProcessing == TRUE.
 // SPECIAL NOTE: Ignoring this hook on callback results in the game effectively hanging. You have
 //   been warned!
 std::vector<hook_function_t> stHooks_Hook_SimcityApp_BuildSubFrames_Before;
 
-// Function prototype: HOOKCB void Hook_SimcityApp_BuildSubFrames_After(void)
+// Function prototype: HOOKCB void Hook_SimcityApp_BuildSubFrames_GameStartup_After(CSimcityAppPrimary *pThis)
+// Cannot be ignored.
+std::vector<hook_function_t> stHooks_Hook_SimcityApp_BuildSubFrames_GameStartup_After;
+
+// Function prototype: HOOKCB void Hook_SimcityApp_BuildSubFrames_After(CSimcityAppPrimary *pThis)
 // Ignored if bHookStopProcessing == TRUE.
 std::vector<hook_function_t> stHooks_Hook_SimcityApp_BuildSubFrames_After;
 
@@ -629,6 +633,7 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 		case ONIDLE_STATE_LOADSCENARIO_RETURN:
 			if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES)
 				ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_ - : iSCAProgramStep[%s]\n", GetOnIdleStateEnumName(pThis->iSCAProgramStep));
+
 			break;
 		case ONIDLE_STATE_MENUDIALOG:
 			if (pThis->dwSCASetNextStep) {
@@ -1034,6 +1039,32 @@ extern "C" LRESULT __stdcall Hook_DefWindowProcA(HWND hWnd, UINT Msg, WPARAM wPa
 }
 
 extern int iChurchVirus;
+
+// Function prototype: HOOKCB void Hook_PrepareGame_Before(void)
+// Called before the vanilla PrepareGame function is called. Cannot be ignored.
+std::vector<hook_function_t> stHooks_Hook_PrepareGame_Before;
+
+// Function prototype: HOOKCB void Hook_PrepareGame_After(void)
+// Called after the vanilla PrepareGame function is called. Cannot be ignored.
+std::vector<hook_function_t> stHooks_Hook_PrepareGame_After;
+
+extern "C" void __stdcall Hook_PrepareGame(void) {
+	for (const auto& hook : stHooks_Hook_PrepareGame_Before) {
+		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
+			void (*fnHook)() = (void(*)())hook.pFunction;
+			fnHook();
+		}
+	}
+
+	GameMain_PrepareGame();
+
+	for (const auto& hook : stHooks_Hook_PrepareGame_After) {
+		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
+			void (*fnHook)() = (void(*)())hook.pFunction;
+			fnHook();
+		}
+	}
+}
 
 extern "C" void __stdcall Hook_StartCleanGame(void) {
 	BOOL bMapEditor, bNewGame;
@@ -2152,6 +2183,10 @@ void InstallMiscHooks_SC2K1996(void) {
 
 	// Install hooks for saving and loading
 	InstallSaveHooks_SC2K1996();
+
+	// Hook into the PrepareGame function.
+	VirtualProtect((LPVOID)0x401578, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x401578, Hook_PrepareGame);
 
 	// Hook into the StartCleanGame function.
 	VirtualProtect((LPVOID)0x401F05, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
