@@ -105,8 +105,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
 	switch (reason) {
 	case DLL_PROCESS_ATTACH:
-		char szModuleBaseName[MAX_PATH + 1], szLogName[MAX_PATH + 1];
-		const char *logSuffix;
+		char szModuleBaseName[MAX_PATH + 1], szLogPath[MAX_PATH + 1];
 		// Save our own module handle
 		hSC2KFixModule = hModule;
 
@@ -137,10 +136,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			MessageBox(GetActiveWindow(), "Could not GetModuleHandle(NULL) (???)", "sc2kfix error", MB_OK | MB_ICONERROR);
 			return FALSE;
 		}
-
-		logSuffix = GetLogSuffixFromSC2KFixMode();
-
-		sprintf_s(szLogName, sizeof(szLogName) - 1, "sc2kfix%s.log", logSuffix);
 
 		// Ensure that the common controls library is loaded
 		InitCommonControlsEx(&icc);
@@ -232,12 +227,17 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			}
 		}
 
+		// Update the game path in memory
+		SetGamePath();
+
+		sprintf_s(szLogPath, sizeof(szLogPath) - 1, "%s\\sc2kfix%s.log", szGamePath, GetLogSuffixFromSC2KFixMode());
+
 		// Open a log file. If it fails, we handle that safely elsewhere
 		// AF - Relocated so it will record any messages that occur
 		//      prior to the console itself being enabled.
-		fdLog = old_fopen(szLogName, "w");
+		fdLog = old_fopen(szLogPath, "w");
 		if (!fdLog)
-			ConsoleLog(LOG_ERROR, "Failed to open file handle for '%s'. Logs won't be recorded.\n", szLogName);
+			ConsoleLog(LOG_ERROR, "Failed to open file handle for '%s'. Logs won't be recorded.\n", szLogPath);
 
 		// Allocate a console and immediately hide it. We will later send a ShowWindow to make it
 		// visible if the console is to be made user-facing.
@@ -294,9 +294,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			printf("[INFO ] CORE: ");
 			ConsoleCmdShowDebug(NULL, NULL);
 		}
-
-		// Update the game path in memory
-		SetGamePath();
 
 		// Load the FluidSynth library in case we need it
 		MusicLoadFluidSynth();
