@@ -8,42 +8,49 @@ sc2kfix is a plugin that patches the Special Edition release of SimCity 2000 for
 
 ### Bugs fixed
 The following game bugs are patched by this DLL:
-* The old, non-functional installer is no longer needed as sc2kfix will prompt for a default mayor and company name on first launch.
-* Multiple crash bugs related to the load and save dialogs have been fixed.
+* The old, non-functional installer is no longer needed as sc2kfix will prompt for a default mayor and company name on first launch, as well as associate .sc2 and .scn files with SimCity 2000.
+* Multiple crash and corruption bugs related to the load and save dialogs have been fixed.
 * Palette cycling based animations have been fixed to work on truecolour displays and are no longer frozen.
+* The WillTV and intro cutscenes have been restored along with the Maxis Presents intro slide.
 * SimCity 2000 now properly launches when started from Steam or other game launchers.
 * Music that was included in the game but was never added to the random playlist has been restored.
+* SCURK now works properly on Windows 11 24H2 and newer.
 * Military bases now grow properly instead of staying as empty, unusable military zones, and the intended growth of army and naval bases has been restored.
 * The military will make multiple attempts at finding a location for a base instead of permanently giving up after the first try.
 * Rail and highway neighbor connections now work after a saved city is loaded.
 * Sign rendering has been fixed to use the originally intended font.
 * City and mayor names are now properly preserved when saving and loading cities.
 * The "Add All Inventions" option in the game's hidden debug menu has been fixed.
+* Many miscellaneous display bugs have been fixed.
 
 ### New features
 sc2kfix adds the following quality of life and optional gameplay features to SimCity 2000 Special Edition:
 * A settings dialog for configuring sc2kfix's optional features has been added to the main menu and the in-game Options menu.
 * The New City dialog has been updated to allow you to specify a different mayor name when starting a city.
 * Higher quality copies of the transit, pipe, and power construction sounds, as well as the Reticulating Splines soundbite have been ported from other versions of SimCity 2000.
-* City growth is now displayed in real-time instead of in batches when certain tools are used.
+* City growth is now displayed in real-time instead of in batches.
 * The full in-game date is now shown in the title bar.
 * The floating status widget from the Macintosh and DOS versions of the game has been reimplemented and can be enabled in the settings dialog.
-* The game's music engine has been rewritten with multithreading that can run in the background and can play MP3 versions of the soundtrack if present.
+* The game's music engine has been rewritten with multithreading that can run in the background and can play MP3 versions of the soundtrack if present, as well as supporting the use of FluidSynth to play MIDI files with a user-supplied SoundFont.
+* An advanced query dialog that shows game state information for tiles has been implemented and can be used by holding the Alt key when querying a tile.
 * The middle mouse button now acts as a shortcut for the centering tool, similar to how the right mouse button works in the DOS version of the game.
 * A number of message box strings have had grammatical fixes and/or better wording added to them.
 * An update checker has been added to gently inform the player on the game's main menu if a new version of sc2kfix has been released.
 * A debugging console has been added for experiments and advanced troubleshooting, as well as an `sc2kfix.log` file for informational and error logging.
+* A crash handler has been implemented to enhance the sc2kfix team's ability to hunt down potential game or plugin bugs.
 * Multiple cheat codes from other ports of the game have been restored.
 
 ### Additional enhancements
-sc2kfix implements multiple hooks and a work-in-progress framework for detouring and injecting new code into the game. These are documented in the hooks/hooks.md file. These are currently being used to assist in reverse engineering various components of the game's code, but attaching them to eg. a scripting language of some sorts in the future is not entirely unlikely. A framework to enable loading gameplay mods written in C/C++ (or any language that can produce Win32 DLLs, though currently only C/C++ are supported) is being implemented in this development branch, with intent to support various levels of code hooking and gameplay updates for Release 10.
+sc2kfix implements multiple hooks and a work-in-progress framework for detouring and injecting new code into the game. These are documented in the hooks/hooks.md file. These are currently being used to assist in reverse engineering various components of the game's code, but attaching them to eg. a scripting language of some sorts in the future is planned. A framework to enable loading gameplay mods written in C/C++ (or any language that can produce Win32 DLLs, though currently only C/C++ are officially supported) has been implemented, with intent to expand the number of places in the simulation engine that hooks can be inserted over time.
 
 There is also a debugging console that can be enabled by passing "-console" to SimCity 2000 or by enabling the console manually in the in-game "sc2kfix Settings" dialog. While the debugging console generally tries to stop you from doing anything too dangerous, it will happily let you probe any valid memory in the game's address space, which could have adverse effect on any loaded cities. Please be careful when writing to arbitrary memory addresses.
 
-### Third-party components
-sc2kfix includes the Kuroko programming language (https://github.com/kuroko-lang/kuroko) for modding and scripting purposes, which is available as a REPL in the sc2kfix console. Kuroko is an embeddable, bytecode-compiled dialect of Python that is released under the terms of the MIT license (copyright (c) 2020-2024 K. Lange <klange@toaruos.org>). Documentation on the language including an online REPL with a tutorial can be found at https://kuroko-lang.github.io.
+Several parts of the SimCity 2000 simulation engine have been reimplemented in sc2kfix for better performance and the ability to more easily fix bugs and hook into and enhance the original game's code. Functionality has been replicated through months of reverse engineering efforts, and these reimplementations of the game's internal functions provide a higher quality experience that is still accurate to the original game.
 
-sc2kfix includes API bindings for version 2.4.7 of the FluidSynth real-time software synthesizer library (https://www.fluidsynth.org).. FluidSynth is made available under the terms of version 2.1 of the GNU Lesser General Public License (LGPL 2.1); a copy of this license has been included in the sc2kfix project as `thirdparty/lgpl-2.1-fluidsynth.txt`. You can download both the bindings and the requisite compiled version of the FluidSynth library to use them at https://github.com/FluidSynth/fluidsynth/releases/tag/v2.4.7.
+### Third-party components
+sc2kfix includes the Kuroko programming language (https://github.com/kuroko-lang/kuroko) for modding and scripting purposes, which is available as a REPL in the sc2kfix console in the development branch. Kuroko is an embeddable, bytecode-compiled dialect of Python that is released under the terms of the MIT license (copyright (c) 2020-2024 K. Lange <klange@toaruos.org>). Documentation on the language including an online REPL with a tutorial can be found at https://kuroko-lang.github.io.
+
+sc2kfix includes API bindings for version 2.4.7 of the FluidSynth real-time software synthesizer library (https://www.fluidsynth.org). FluidSynth is made available under the terms of version 2.1 of the GNU Lesser General Public License (LGPL 2.1); a copy of this license has been included in the sc2kfix project as `thirdparty/lgpl-2.1-fluidsynth.txt`. You can download both the bindings and the requisite compiled version of the FluidSynth library to use them at https://github.com/FluidSynth/fluidsynth/releases/tag/v2.4.7.
 
 ## How do I use it?
 1. If you are installing the game from scratch, copy the SC2K folder from your CD (under the WIN95 folder in the Special Edition CD) to your hard drive.
@@ -58,5 +65,4 @@ You can configure different aspects of sc2kfix by clicking on the "sc2kfix Setti
 
 ## Known issues
 * NOTICE: The 1995 CD Collection version of the game is now deprecated. Please use the 1996 Special Edition version of the game going forward to receive the latest updates.
-* BUG: Something may have changed in Windows 11 24H2 that breaks SCURK's pick-and-place tool; this is being investigated.
 * DEBUG: Experimental support for the 1995 Interactive Demo of the game has been added. This is not intended to support the full feature set of sc2kfix, and is only meant to help with ascertaining differences between the demo and release versions of the game.

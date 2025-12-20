@@ -22,6 +22,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentat
 		mods\README.md = mods\README.md
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "eh", "mods\eh\eh.vcxproj", "{D4678D53-D2B5-4C15-A516-393CD1F4015E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{FB5DC66B-A2B0-4566-B243-453D58388A0D} = {FB5DC66B-A2B0-4566-B243-453D58388A0D}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Release|x86 = Release|x86
@@ -36,6 +41,10 @@ Global
 		{D12CCD5D-5BFD-4FF0-9D42-AEED8585E538}.Release|x86.Build.0 = Release|Win32
 		{D12CCD5D-5BFD-4FF0-9D42-AEED8585E538}.ReleaseKuroko|x86.ActiveCfg = Release|Win32
 		{D12CCD5D-5BFD-4FF0-9D42-AEED8585E538}.ReleaseKuroko|x86.Build.0 = Release|Win32
+		{D4678D53-D2B5-4C15-A516-393CD1F4015E}.Release|x86.ActiveCfg = Release|Win32
+		{D4678D53-D2B5-4C15-A516-393CD1F4015E}.Release|x86.Build.0 = Release|Win32
+		{D4678D53-D2B5-4C15-A516-393CD1F4015E}.ReleaseKuroko|x86.ActiveCfg = Release|Win32
+		{D4678D53-D2B5-4C15-A516-393CD1F4015E}.ReleaseKuroko|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -44,6 +53,7 @@ Global
 		{D12CCD5D-5BFD-4FF0-9D42-AEED8585E538} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{92385693-9844-40FD-A79D-3F060425B5F5} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{BD9B61D6-E012-4089-A79A-306E00B9235E} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{D4678D53-D2B5-4C15-A516-393CD1F4015E} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {236685F7-4FC0-4D01-A5EE-C76F26C94328}
