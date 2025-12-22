@@ -20,6 +20,8 @@ GAMECALL(0x4021F8, void, __cdecl, ReadTilesetFile, const char*)
 GAMECALL(0x40286A, void, __cdecl, DisplayEventMessage, int, CMFC3XString*)
 #endif
 
+//#define EH_DEBUG
+
 sc2kfix_mod_hook_t stModHooks[] = {
 	{ "Hook_PrepareGame_After", 0 },
 	{ "Hook_SimulationGrowSpecificZone_Success", 0 }
@@ -59,23 +61,38 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			if (hMiffResource) {
 				size_t nBufSize = SizeofResource(hModule, hResFind);
 				BYTE* ptr = (BYTE*)LockResource(hMiffResource);
+				errno_t errF = 0;
 
-				if (tmpnam_s(szTilesetFilename, L_tmpnam_s)) {
-					LOG(LOG_ERROR, "she's right hosed bud (tmpnam_s)\n");
+				if (errF = tmpnam_s(szTilesetFilename, L_tmpnam_s)) {
+					LOG(LOG_ERROR, "she's right hosed bud (tmpnam_s, %u / 0x%08X)\n", errF, errF);
 					bTilesetAvailable = FALSE;
 					break;
 				}
 
+				// tmpnam behaviour under wine is dumb and bad because it doesn't set up a TMP
+				// environment variable by default for some reason, so here's an even more dumb
+				// and bad hack to work around it. 2026 year of linux on the desktop
+				if (szTilesetFilename[0] == '\\') {
+					char szTilesetFilenameTemp[L_tmpnam_s];
+					strcpy_s(szTilesetFilenameTemp + 1, L_tmpnam_s - 1, szTilesetFilename);
+					szTilesetFilenameTemp[0] = '.';
+					strcpy_s(szTilesetFilename, L_tmpnam_s, szTilesetFilenameTemp);
+				}
+
+#ifdef EH_DEBUG
+				LOG(LOG_DEBUG, "the boys are gonna try for %s\n", szTilesetFilename);
+#endif
+
 				FILE* f;
-				if (fopen_s(&f, szTilesetFilename, "wb")) {
-					LOG(LOG_ERROR, "she's right hosed bud (fopen_s)\n");
+				if (errF = fopen_s(&f, szTilesetFilename, "wb")) {
+					LOG(LOG_ERROR, "she's right hosed bud (fopen_s, %u / 0x%08X)\n", errF, errF);
 					bTilesetAvailable = FALSE;
 					break;
 				}
 
 				size_t nBytesWritten = fwrite(ptr, 1, nBufSize, f);
-				if (ferror(f)) {
-					LOG(LOG_ERROR, "she's right hosed bud (fwrite)\n");
+				if (errF = ferror(f)) {
+					LOG(LOG_ERROR, "she's right hosed bud (fwrite, %u / 0x%08X)\n", errF, errF);
 					fclose(f);
 					bTilesetAvailable = FALSE;
 					break;
@@ -93,7 +110,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		break;
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:
+		break;
 	case DLL_PROCESS_DETACH:
+		// Clean up the temporary file
+		if (bTilesetAvailable)
+			_unlink(szTilesetFilename);
 		break;
 	}
 	return TRUE;
