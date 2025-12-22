@@ -3,6 +3,7 @@
 
 #undef UNICODE
 #include <windows.h>
+#include <direct.h>
 #include <psapi.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -318,6 +319,70 @@ extern "C" void __cdecl Hook_SCURKPrimary_MoverWindow_EvGetMinMaxInfo(winscurkMo
 	pMmi->ptMaxTrackSize.y = y;
 }
 
+static char *L_SCURKPrimary_ProcessCmdLine(char *pMainPath, char *pCmdLineParms, BOOL *bValidFileEntry) {
+	int iArgc;
+	std::string str;
+	static char szFileArg[MAX_PATH + 1];
+
+	memset(szFileArg, 0, sizeof(szFileArg));
+
+	str = "\"";
+	str += pMainPath;
+	str += "\" ";
+	str += pCmdLineParms;
+
+	std::wstring wStr(str.begin(), str.end());
+	LPWSTR *pArgv;
+
+	pArgv = CommandLineToArgvW(wStr.c_str(), &iArgc);
+	if (pArgv) {
+		// When a drag-and-drop occurs (over the main program or a shortcut), the file argument
+		// is always at the very end; the processing will only accept that detail as well.
+		WideCharToMultiByte(CP_UTF8, 0, pArgv[iArgc - 1], -1, szFileArg, MAX_PATH, NULL, NULL);
+		_strlwr_s(szFileArg, sizeof(szFileArg) - 1);
+
+		free(pArgv);
+	}
+
+	*bValidFileEntry = FALSE;
+	if (iArgc > 1) {
+		if (strlen(szFileArg) > 0) {
+			if (L_IsPathValid(szFileArg))
+				*bValidFileEntry = TRUE;
+		}
+	}
+
+	return szFileArg;
+}
+
+// And we're gritting our teeth...
+extern "C" void __declspec(naked) __cdecl Hook_SCURKPrimary_OwlMainCommandLineFix(void) {
+	int nArgs;
+	char **pArgs;
+
+	__asm {
+		mov [nArgs], ebx
+		mov eax, [ebp+0xC]
+		mov [pArgs], eax
+	}
+
+	BOOL bValidFileEntry;
+	char *pRet;
+
+	bValidFileEntry = FALSE;
+	if (nArgs >= 2)
+		pRet = L_SCURKPrimary_ProcessCmdLine(pArgs[0], TAppInitCmdLine_SCURKPrimary->p->array, &bValidFileEntry);
+	if (!bValidFileEntry)
+		pRet = NULL;
+
+	_chdir(szGamePath);
+
+	__asm {
+		mov esi, [pRet]
+	}
+	GAMEJMP(0x45A138);
+}
+
 extern "C" void __cdecl Hook_SCURKPrimary_BCDialog_CmCancel(TBC45XDialog *pThis) {
 	winscurkPlaceWindow *pWindow;
 
@@ -374,6 +439,11 @@ void InstallFixes_SCURKPrimary(void) {
 	// to avoid rendering the area non-functional.
 	VirtualProtect((LPVOID)0x450080, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x450080, Hook_SCURKPrimary_MoverWindow_EvGetMinMaxInfo);
+
+	// OwlMain() command line fix.
+	VirtualProtect((LPVOID)0x45A0B9, 7, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memset((LPVOID)0x45A0B9, 0x90, 7);
+	NEWJMP((LPVOID)0x45A0B9, Hook_SCURKPrimary_OwlMainCommandLineFix);
 
 	// This hook is to prevent the Place&Pick selection dialogue
 	// from being unintentionally closed; it catches and ignores
