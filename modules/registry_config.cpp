@@ -84,6 +84,12 @@ BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 
 void ResetFileAssociations(void) {
 	HKEY hkeyClassSC2, hkeyClassSCN, hkeyClassMIF;
+
+	if (dwSC2KFixMode == SC2KFIX_MODE_SC2KDEMO) {
+		ConsoleLog(LOG_INFO, "MISC: ResetFileAssociations() called but Interactive Demo detected; not updating file association entries.\n");
+		return;
+	}
+
 	ConsoleLog(LOG_INFO, "MISC: File association entries do not exist or ResetFileAssociations() called; updating registry.\n");
 
 	char szBinary[MAX_PATH + 1];
