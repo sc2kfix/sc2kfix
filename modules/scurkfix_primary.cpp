@@ -319,7 +319,7 @@ extern "C" void __cdecl Hook_SCURKPrimary_MoverWindow_EvGetMinMaxInfo(winscurkMo
 	pMmi->ptMaxTrackSize.y = y;
 }
 
-static char *L_ScurkPrimary_ProcessCmdLine(char *pMainPath, char *pCmdLineParms, BOOL *bValidFileEntry) {
+static char *L_SCURKPrimary_ProcessCmdLine(char *pMainPath, char *pCmdLineParms, BOOL *bValidFileEntry) {
 	int iArgc;
 	std::string str;
 	static char szFileArg[MAX_PATH + 1];
@@ -371,7 +371,7 @@ extern "C" void __declspec(naked) __cdecl Hook_SCURKPrimary_OwlMainCommandLineFi
 
 	bValidFileEntry = FALSE;
 	if (nArgs >= 2)
-		pRet = L_ScurkPrimary_ProcessCmdLine(pArgs[0], TAppInitCmdLine_SCURKPrimary->p->array, &bValidFileEntry);
+		pRet = L_SCURKPrimary_ProcessCmdLine(pArgs[0], TAppInitCmdLine_SCURKPrimary->p->array, &bValidFileEntry);
 	if (!bValidFileEntry)
 		pRet = NULL;
 

@@ -306,7 +306,7 @@ extern "C" void __cdecl Hook_SCURK1996_MoverWindow_EvGetMinMaxInfo(winscurkMover
 	pMmi->ptMaxTrackSize.y = y;
 }
 
-static char *L_Scurk1996_ProcessCmdLine(char *pMainPath, char *pCmdLineParms, BOOL *bValidFileEntry) {
+static char *L_SCURK1996_ProcessCmdLine(char *pMainPath, char *pCmdLineParms, BOOL *bValidFileEntry) {
 	int iArgc;
 	std::string str;
 	static char szFileArg[MAX_PATH + 1];
@@ -358,7 +358,7 @@ extern "C" void __declspec(naked) __cdecl Hook_SCURK1996_OwlMainCommandLineFix(v
 
 	bValidFileEntry = FALSE;
 	if (nArgs >= 2)
-		pRet = L_Scurk1996_ProcessCmdLine(pArgs[0], TAppInitCmdLine_SCURK1996->p->array, &bValidFileEntry);
+		pRet = L_SCURK1996_ProcessCmdLine(pArgs[0], TAppInitCmdLine_SCURK1996->p->array, &bValidFileEntry);
 	if (!bValidFileEntry)
 		pRet = NULL;
 
