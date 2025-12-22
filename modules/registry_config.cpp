@@ -82,21 +82,27 @@ BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 	return FALSE;
 }
 
+#define SCURK_ASSOC 0 // Temporary
+
 void ResetFileAssociations(void) {
 	HKEY hkeyClassSC2, hkeyClassSCN;
+#if SCURK_ASSOC
+	HKEY hkeyClassMIF;
+#endif
 	ConsoleLog(LOG_INFO, "MISC: File association entries do not exist or ResetFileAssociations() called; updating registry.\n");
 
+	char szBinary[MAX_PATH + 1];
+
 	// Craft the path we're going to insert into the registry
-	char szModulePathName[MAX_PATH];
-	GetModuleFileNameEx(GetCurrentProcess(), NULL, szModulePathName, MAX_PATH);
+	sprintf_s(szBinary, sizeof(szBinary) - 1, "%s\\SIMCITY.EXE", szGamePath);
 	std::string strShellCommand = "\"";
-	strShellCommand += szModulePathName;
+	strShellCommand += szBinary;
 	strShellCommand += "\" \"%1\"";
 	std::string strShellIconSC2 = "\"";
-	strShellIconSC2 += szModulePathName;
+	strShellIconSC2 += szBinary;
 	strShellIconSC2 += "\",1";
 	std::string strShellIconSCN = "\"";
-	strShellIconSCN += szModulePathName;
+	strShellIconSCN += szBinary;
 	strShellIconSCN += "\",2";
 
 	// Write the class info for .sc2 files (SimCity2000.Document.City)
@@ -148,6 +154,42 @@ void ResetFileAssociations(void) {
 	RegCloseKey(hkeyClassSCN);
 	if (registry_debug & REGISTRY_DEBUG_FILEASSOCIATIONS)
 		ConsoleLog(LOG_DEBUG, "MISC: .scn file association written (stage 4).\n");
+
+#if SCURK_ASSOC
+	// Write the class info for .mif files (SimCity2000.Document.TileSet)
+	sprintf_s(szBinary, sizeof(szBinary) - 1, "%s\\WinSCURK.EXE", szGamePath);
+	strShellCommand = "\"";
+	strShellCommand += szBinary;
+	strShellCommand += "\" \"%1\"";
+
+	std::string strShellIconMIF = "\"";
+	strShellIconMIF += szBinary;
+	strShellIconMIF += "\",1";
+
+	RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Classes\\.mif", &hkeyClassMIF);
+	RegSetValueExA(hkeyClassMIF, "", NULL, REG_SZ, (const BYTE*)"SimCity2000.Document.TileSet", sizeof("SimCity2000.Document.TileSet"));
+	RegCloseKey(hkeyClassMIF);
+	if (registry_debug & REGISTRY_DEBUG_FILEASSOCIATIONS)
+		ConsoleLog(LOG_DEBUG, "MISC: .mif file association written (stage 1).\n");
+
+	RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Classes\\SimCity2000.Document.TileSet", &hkeyClassMIF);
+	RegSetValueExA(hkeyClassMIF, "", NULL, REG_SZ, (const BYTE*)"SimCity 2000 Graphics Set", sizeof("SimCity 2000 Graphics Set"));
+	RegCloseKey(hkeyClassMIF);
+	if (registry_debug & REGISTRY_DEBUG_FILEASSOCIATIONS)
+		ConsoleLog(LOG_DEBUG, "MISC: .mif file association written (stage 2).\n");
+
+	RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Classes\\SimCity2000.Document.TileSet\\shell\\open\\command", &hkeyClassMIF);
+	RegSetValueExA(hkeyClassMIF, "", NULL, REG_SZ, (const BYTE*)strShellCommand.c_str(), strShellCommand.size() + 1);
+	RegCloseKey(hkeyClassMIF);
+	if (registry_debug & REGISTRY_DEBUG_FILEASSOCIATIONS)
+		ConsoleLog(LOG_DEBUG, "MISC: .mif file association written (stage 3).\n");
+
+	RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Classes\\SimCity2000.Document.TileSet\\DefaultIcon", &hkeyClassMIF);
+	RegSetValueExA(hkeyClassMIF, "", NULL, REG_SZ, (const BYTE*)strShellIconMIF.c_str(), strShellIconMIF.size() + 1);
+	RegCloseKey(hkeyClassMIF);
+	if (registry_debug & REGISTRY_DEBUG_FILEASSOCIATIONS)
+		ConsoleLog(LOG_DEBUG, "MISC: .mif file association written (stage 4).\n");
+#endif
 }
 
 static BOOL InstallSC2KDefaults(void) {
@@ -173,13 +215,28 @@ static BOOL InstallSC2KDefaults(void) {
 	// Attempt to fix shell registrations. This should happen even if a previous
 	// sc2kfix install simulation has occurred.
 	HKEY hkeyClassSC2;
+#if SCURK_ASSOC
+	HKEY hkeyClassMIF;
+#endif
 	extern BOOL bFixFileAssociations;
-	if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Classes\\.sc2", &hkeyClassSC2) != ERROR_SUCCESS || bFixFileAssociations)
+	if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Classes\\.sc2", &hkeyClassSC2) != ERROR_SUCCESS ||
+#if SCURK_ASSOC
+		RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Classes\\.mif", &hkeyClassMIF) != ERROR_SUCCESS ||
+#endif
+		bFixFileAssociations)
 		ResetFileAssociations();
 	else {
 		RegCloseKey(hkeyClassSC2);
-		if (registry_debug & REGISTRY_DEBUG_FILEASSOCIATIONS)
-			ConsoleLog(LOG_DEBUG, "MISC: Skipping shell class registry due to .sc2 entry already existing.\n");
+#if SCURK_ASSOC
+		RegCloseKey(hkeyClassMIF);
+#endif
+		if (registry_debug & REGISTRY_DEBUG_FILEASSOCIATIONS) {
+#if SCURK_ASSOC
+			ConsoleLog(LOG_DEBUG, "MISC: Skipping shell class registry due to both primary .sc2 and .mif entries already existing.\n");
+#else
+			ConsoleLog(LOG_DEBUG, "MISC: Skipping shell class registry due to the primary .sc2 entry already existing.\n");
+#endif
+		}
 	}
 
 	// If 'Installed' returns 1 and both the mayor/company entries are defined
