@@ -82,13 +82,8 @@ BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 	return FALSE;
 }
 
-#define SCURK_ASSOC 0 // Temporary
-
 void ResetFileAssociations(void) {
-	HKEY hkeyClassSC2, hkeyClassSCN;
-#if SCURK_ASSOC
-	HKEY hkeyClassMIF;
-#endif
+	HKEY hkeyClassSC2, hkeyClassSCN, hkeyClassMIF;
 	ConsoleLog(LOG_INFO, "MISC: File association entries do not exist or ResetFileAssociations() called; updating registry.\n");
 
 	char szBinary[MAX_PATH + 1];
@@ -155,7 +150,6 @@ void ResetFileAssociations(void) {
 	if (registry_debug & REGISTRY_DEBUG_FILEASSOCIATIONS)
 		ConsoleLog(LOG_DEBUG, "MISC: .scn file association written (stage 4).\n");
 
-#if SCURK_ASSOC
 	// Write the class info for .mif files (SimCity2000.Document.TileSet)
 	sprintf_s(szBinary, sizeof(szBinary) - 1, "%s\\WinSCURK.EXE", szGamePath);
 	strShellCommand = "\"";
@@ -189,7 +183,6 @@ void ResetFileAssociations(void) {
 	RegCloseKey(hkeyClassMIF);
 	if (registry_debug & REGISTRY_DEBUG_FILEASSOCIATIONS)
 		ConsoleLog(LOG_DEBUG, "MISC: .mif file association written (stage 4).\n");
-#endif
 }
 
 static BOOL InstallSC2KDefaults(void) {
@@ -214,29 +207,17 @@ static BOOL InstallSC2KDefaults(void) {
 
 	// Attempt to fix shell registrations. This should happen even if a previous
 	// sc2kfix install simulation has occurred.
-	HKEY hkeyClassSC2;
-#if SCURK_ASSOC
-	HKEY hkeyClassMIF;
-#endif
+	HKEY hkeyClassSC2, hkeyClassMIF;
 	extern BOOL bFixFileAssociations;
 	if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Classes\\.sc2", &hkeyClassSC2) != ERROR_SUCCESS ||
-#if SCURK_ASSOC
 		RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Classes\\.mif", &hkeyClassMIF) != ERROR_SUCCESS ||
-#endif
 		bFixFileAssociations)
 		ResetFileAssociations();
 	else {
 		RegCloseKey(hkeyClassSC2);
-#if SCURK_ASSOC
 		RegCloseKey(hkeyClassMIF);
-#endif
-		if (registry_debug & REGISTRY_DEBUG_FILEASSOCIATIONS) {
-#if SCURK_ASSOC
+		if (registry_debug & REGISTRY_DEBUG_FILEASSOCIATIONS)
 			ConsoleLog(LOG_DEBUG, "MISC: Skipping shell class registry due to both primary .sc2 and .mif entries already existing.\n");
-#else
-			ConsoleLog(LOG_DEBUG, "MISC: Skipping shell class registry due to the primary .sc2 entry already existing.\n");
-#endif
-		}
 	}
 
 	// If 'Installed' returns 1 and both the mayor/company entries are defined
