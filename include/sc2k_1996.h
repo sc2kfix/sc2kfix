@@ -1177,7 +1177,7 @@ typedef struct {
 		BYTE *sprPtr;
 		int32_t sprLong;
 	};
-	uSpriteOffset dwAddress;
+	uSpriteOffset sprOffset;
 	WORD wHeight;
 	WORD wWidth;
 } sprite_header_t;
@@ -2473,8 +2473,8 @@ typedef struct {
 typedef struct {
 	WORD nArcID;
 	WORD nID;
-	DWORD dwOffset;
-	DWORD dwSize;
+	int32_t sprOffset;
+	int nSize;
 	WORD wHeight;
 	WORD wWidth;
 	WORD nSkipHit;
