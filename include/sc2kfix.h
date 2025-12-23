@@ -131,6 +131,8 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define MARINA_TILES_ALLDRY 0
 #define MARINA_TILES_ALLWET 9
 
+#define INI_GAME_SPEED_SETTING(x) (x - 1)
+
 // Struct defining an injected hook from a loaded mod and its nested call priority.
 typedef struct {
 	const char* szHookName;
