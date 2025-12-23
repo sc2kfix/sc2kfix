@@ -432,6 +432,9 @@ extern "C" void __stdcall Hook_CmdUI_Enable(BOOL bOn) {
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_ARMYBASE, MF_BYCOMMAND | MF_ENABLED);
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_NAVALYARD, MF_BYCOMMAND | MF_ENABLED);
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_MISSILESILOS, MF_BYCOMMAND | MF_ENABLED);
+
+	// Ensure that the debug "Browse Sprites" option is always enabled.
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_SPRITE_DISPLAY, MF_BYCOMMAND | MF_ENABLED);
 }
 
 static void OpenMainDialog_SC2K1996() {
@@ -2051,6 +2054,10 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 
 			case IDM_MAIN_FILE_OPENMAINDIALOG:
 				OpenMainDialog_SC2K1996();
+				return TRUE;
+
+			case IDM_DEBUG_SPRITE_DISPLAY:
+				L_MessageBoxA(pThis->m_hWnd, "Not yet...", "Nope.", MB_ICONINFORMATION);
 				return TRUE;
 			}
 			//ConsoleLog(LOG_DEBUG, "CFrameWnd::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, pExtra, pHandler, dwRetAddr);
