@@ -55,9 +55,9 @@ static BOOL CheckForExistingID(WORD nID) {
 static void AllocateAndLoadSprites1996(CMFC3XFile *pFile, sprite_archive_t *lpBuf, WORD nSpriteSet) {
 	WORD nPos, nID;
 	sprite_ids_t *pSprEnt;
-	void *pSpriteData;
+	BYTE *pSpriteData;
 
-	GameMain_File_Seek(pFile, lpBuf->pData[0].sprHeader.dwAddress, 0);
+	GameMain_File_Seek(pFile, lpBuf->pData[0].sprHeader.dwAddress.sprLong, 0);
 	for (nPos = 0; nPos < spriteIDs.size(); ++nPos) {
 		pSprEnt = &spriteIDs[nPos];
 		if (pSprEnt && pSprEnt->nArcID == nSpriteSet) {
@@ -66,7 +66,7 @@ static void AllocateAndLoadSprites1996(CMFC3XFile *pFile, sprite_archive_t *lpBu
 				if (sprite_debug & SPRITE_DEBUG_SPRITES)
 					ConsoleLog(LOG_DEBUG, "AllocateAndLoadSprites(%u): Multiple sprites with the same ID Detected (%u, 0x%06X, %u) (%u)\n", nSpriteSet, nID, pSprEnt->dwOffset, pSprEnt->dwSize, pSprEnt->nSkipHit);
 			if (pSprEnt->dwSize > 0) {
-				pSpriteData = Game_AllocateDataEntry(pSprEnt->dwSize);
+				pSpriteData = (BYTE *)Game_AllocateDataEntry(pSprEnt->dwSize);
 				if (pSpriteData) {
 					if (GameMain_File_Read(pFile, pSpriteData, pSprEnt->dwSize) == pSprEnt->dwSize) {
 						if (pSprEnt->bMultiple && pSprEnt->nSkipHit > 0) {
@@ -75,11 +75,11 @@ static void AllocateAndLoadSprites1996(CMFC3XFile *pFile, sprite_archive_t *lpBu
 							Game_FreeDataEntry(pSpriteData);
 							continue;
 						}
-						if (pArrSpriteHeaders[nID].dwAddress) {
-							Game_FreeDataEntry((void *)pArrSpriteHeaders[nID].dwAddress);
-							pArrSpriteHeaders[nID].dwAddress = 0;
+						if (pArrSpriteHeaders[nID].dwAddress.sprLong) {
+							Game_FreeDataEntry(pArrSpriteHeaders[nID].dwAddress.sprPtr);
+							pArrSpriteHeaders[nID].dwAddress.sprPtr = 0;
 						}
-						pArrSpriteHeaders[nID].dwAddress = (DWORD)pSpriteData;
+						pArrSpriteHeaders[nID].dwAddress.sprPtr = pSpriteData;
 						pArrSpriteHeaders[nID].wHeight = pSprEnt->wHeight;
 						pArrSpriteHeaders[nID].wWidth = pSprEnt->wWidth;
 					}
@@ -138,19 +138,19 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
 		nBufSize = 10 * nArcFileCnt;
 		lpBuf = (sprite_archive_t *)malloc(nBufSize + 2);
 		lpMainBuf->pData = lpBuf;
-		lpBuf->nFileCnt = nArcFileCnt;
+		lpBuf->nSprites = nArcFileCnt;
 		if (lpBuf) {
 			if (GameMain_File_Read(&datArchive, &lpBuf->pData, nBufSize) == nBufSize) {
 				uFailMsg = 0;
 				for (nPos = 0; nPos < nArcFileCnt; ++nPos) {
-					nID = Game_FlipShortBytes(lpBuf->pData[nPos].nID);
-					lpBuf->pData[nPos].nID = nID;
+					nID = Game_FlipShortBytes(lpBuf->pData[nPos].nSprNum);
+					lpBuf->pData[nPos].nSprNum = nID;
 
 					pSprtHead = &lpBuf->pData[nPos].sprHeader;
-					pSprtHead->dwAddress = Game_FlipLongBytePortions(pSprtHead->dwAddress);
+					pSprtHead->dwAddress.sprLong = Game_FlipLongBytePortions(pSprtHead->dwAddress.sprLong);
 
 					pArrSpriteHeaders[nID] = *pSprtHead;
-					pArrSpriteHeaders[nID].dwAddress = 0;
+					pArrSpriteHeaders[nID].dwAddress.sprPtr = 0;
 					pArrSpriteHeaders[nID].wHeight = Game_FlipShortBytes(pArrSpriteHeaders[nID].wHeight);
 					pArrSpriteHeaders[nID].wWidth = Game_FlipShortBytes(pArrSpriteHeaders[nID].wWidth);
 
@@ -160,16 +160,16 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
 					if (nNextPos >= 0) {
 						// The next position hasn't yet been processed, do so here so
 						// we can get the file size.
-						dwNextAddress = Game_FlipLongBytePortions(lpBuf->pData[nNextPos].sprHeader.dwAddress);
-						nSize = (dwNextAddress - pSprtHead->dwAddress);
+						dwNextAddress = Game_FlipLongBytePortions(lpBuf->pData[nNextPos].sprHeader.dwAddress.sprLong);
+						nSize = (dwNextAddress - pSprtHead->dwAddress.sprLong);
 					}
 					else
-						nSize = (nFlen - pSprtHead->dwAddress);
+						nSize = (nFlen - pSprtHead->dwAddress.sprLong);
 
 					if (nSize > 0) {
 						spriteEnt.nArcID = nSpriteSet;
 						spriteEnt.nID = nID;
-						spriteEnt.dwOffset = pSprtHead->dwAddress;
+						spriteEnt.dwOffset = pSprtHead->dwAddress.sprLong;
 						spriteEnt.dwSize = nSize;
 						spriteEnt.wHeight = pArrSpriteHeaders[nID].wHeight;
 						spriteEnt.wWidth = pArrSpriteHeaders[nID].wWidth;
@@ -253,15 +253,15 @@ static void ReloadSpriteDataArchive1996(WORD nSpriteSet) {
 		nBufSize = 10 * nArcFileCnt;
 		lpBuf = (sprite_archive_t *)malloc(nBufSize + 2);
 		lpMainBuf->pData = lpBuf;
-		lpBuf->nFileCnt = nArcFileCnt;
+		lpBuf->nSprites = nArcFileCnt;
 		if (lpBuf) {
 			if (GameMain_File_Read(&datArchive, &lpBuf->pData, nBufSize) == nBufSize) {
 				uFailMsg = 0;
 				for (nPos = 0; nPos < nArcFileCnt; ++nPos) {
-					nID = Game_FlipShortBytes(lpBuf->pData[nPos].nID);
-					lpBuf->pData[nPos].nID = nID;
-					pSprtHead = (sprite_header_t *)&lpBuf->pData[nPos].sprHeader;
-					pSprtHead->dwAddress = Game_FlipLongBytePortions(pSprtHead->dwAddress);
+					nID = Game_FlipShortBytes(lpBuf->pData[nPos].nSprNum);
+					lpBuf->pData[nPos].nSprNum = nID;
+					pSprtHead = &lpBuf->pData[nPos].sprHeader;
+					pSprtHead->dwAddress.sprLong = Game_FlipLongBytePortions(pSprtHead->dwAddress.sprLong);
 					pSprtHead->wHeight = Game_FlipShortBytes(pSprtHead->wHeight);
 					pSprtHead->wWidth = Game_FlipShortBytes(pSprtHead->wWidth);
 				}
