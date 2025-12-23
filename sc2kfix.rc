@@ -104,7 +104,6 @@ END
 
 IDD_SETTINGS DIALOGEX 0, 0, 299, 434
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-EXSTYLE WS_EX_TOPMOST
 CAPTION "sc2kfix Settings"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
@@ -121,7 +120,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,184,268,10
     CONTROL         " Use grammar-corrected and disambiguated dialog strings (Default: on)",IDC_SETTINGS_CHECK_NEW_STRINGS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,306,268,10
-    CONTROL         " Use higher quality sounds (Default: on)",IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS,
+    CONTROL         " * Use higher quality sounds (Default: on)",IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,229,268,10
     CONTROL         " Shuffle music instead of looping predefined playlist (Default: off)",IDC_SETTINGS_CHECK_SHUFFLE_MUSIC,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,214,268,10

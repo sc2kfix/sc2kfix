@@ -349,7 +349,9 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			"after which a new song will be selected when the game window regains focus.");
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS),
 			"Certain versions of SimCity 2000 had higher quality sounds than the Windows 95 versions. "
-			"This setting controls whether or not SimCity 2000 plays higher quality versions of various sounds for which said higher quality versions exist.");
+			"This setting controls whether or not SimCity 2000 plays higher quality versions of various sounds for which said higher quality versions exist.\n\n"
+
+			"Enabling or disabling this setting takes effect after restarting the game.");
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SHUFFLE_MUSIC),
 			"By default, SimCity 2000 selects \"random\" music by playing the next track in a looping playlist of songs. "
 			"This setting controls whether or not to shuffle the playlist when the game starts and when the end of the playlist is reached.");
@@ -366,7 +368,9 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 
 			"Enabling or disabling this setting takes effect after restarting the game.");
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES),
-			"This setting checks to see if there's a newer release of sc2kfix available when the game starts.\n\n");
+			"This setting checks to see if there's a newer release of sc2kfix available when the game starts.\n\n"
+
+			"Enabling or disabling this setting takes effect after restarting the game.");
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DONT_LOAD_MODS),
 			"Enabling this setting forces sc2kfix to skip loading any installed mods on startup.\n\n"
 
