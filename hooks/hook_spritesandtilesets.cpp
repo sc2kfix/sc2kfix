@@ -288,6 +288,7 @@ GETOUT:
 
 void ReloadDefaultTileSet_SC2K1996() {
 	CSimcityAppPrimary *pSCApp;
+	CSimcityView *pSCView;
 
 	pSCApp = &pCSimcityAppThis;
 
@@ -300,6 +301,12 @@ void ReloadDefaultTileSet_SC2K1996() {
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_LARGE);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_SMALLMED);
 	GameMain_CmdTarget_EndWaitCursor(pSCApp);
+
+	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+	if (pSCView) {
+		Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
+		UpdateWindow(pSCView->m_hWnd);
+	}
 }
 
 void InstallSpriteAndTileSetHooks_SC2K1996(void) {
