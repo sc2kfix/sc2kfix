@@ -260,7 +260,7 @@ static BOOL InstallSC2KDefaults(void) {
 	WritePrivateProfileIntA(section, "AutoGoto", TRUE, ini_file);
 	WritePrivateProfileIntA(section, "AutoBudget", FALSE, ini_file);
 	WritePrivateProfileIntA(section, "AutoSave", FALSE, ini_file);
-	WritePrivateProfileIntA(section, "Speed", GAME_SPEED_TURTLE, ini_file);
+	WritePrivateProfileIntA(section, "Speed", INI_GAME_SPEED_SETTING(GAME_SPEED_LLAMA), ini_file);
 
 	// Write default SCURK options
 	section = "SCURK";
@@ -535,7 +535,7 @@ extern "C" LSTATUS __stdcall Hook_RegQueryValueExA(HKEY hKey, LPCSTR lpValueName
 			GetIniOutDWORD("Options", lpValueName, 0, lpData, lpcbData);
 		
 		else if (_stricmp(lpValueName, "Speed") == 0)
-			GetIniOutDWORD("Options", lpValueName, 2, lpData, lpcbData);
+			GetIniOutDWORD("Options", lpValueName, INI_GAME_SPEED_SETTING(GAME_SPEED_LLAMA), lpData, lpcbData);
 		
 		return ERROR_SUCCESS;
 	}
