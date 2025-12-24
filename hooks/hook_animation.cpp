@@ -12,6 +12,8 @@
 
 static DWORD dwDummy;
 
+extern HWND sprHwnd;
+
 extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette, int bToggle) {
 	CSimcityAppPrimary *pSCApp;
 	CMainFrame *pMainFrm;
@@ -83,11 +85,15 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 						// CMainFrame m_hWnd - only call this specific redraw function before CSimcityView has been created.
 						// (ie, before any game has been started - palette animation on the image is disabled once the
 						// game window has been created)
+						
 						pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 						if (!pSCView)
 							RedrawWindow(pMainFrm->m_hWnd, NULL, NULL, RDW_INVALIDATE);
-						else if (pSCView && bCityViewAnim)
+						else if (pSCView && bCityViewAnim) {
 							RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+							if (sprHwnd)
+								RedrawWindow(sprHwnd, NULL, NULL, RDW_INVALIDATE);
+						}
 					}
 				}
 			}

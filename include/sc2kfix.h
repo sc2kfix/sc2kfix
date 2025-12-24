@@ -368,6 +368,7 @@ void SaveSettings(BOOL onload);
 void ShowSettingsDialog(void);
 void ShowModSettingsDialog(void);
 void ShowScenarioStatusDialog(void);
+void ShowSpriteBrowseDialog(void);
 BOOL CanUseFloatingStatusDialog();
 void ToggleFloatingStatusDialog(BOOL bEnable);
 void ToggleGotoButton(HWND hWndBut, BOOL bEnable);

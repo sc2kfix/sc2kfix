@@ -156,6 +156,9 @@ public:
 	BYTE *GRpBits;
 	BYTE *GRpBitsLoColor;
 	BITMAPINFO *GRpBitmapInfo;
+
+	void DeleteStored_SC2K1996();
+	int CreateWithPalette_SC2K1996(LONG ibiWidth, LONG ibiHeight);
 };
 #pragma pack(pop)
 

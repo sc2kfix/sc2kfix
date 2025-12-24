@@ -2057,7 +2057,7 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 				return TRUE;
 
 			case IDM_DEBUG_SPRITE_DISPLAY:
-				L_MessageBoxA(pThis->m_hWnd, "Not yet...", "Nope.", MB_ICONINFORMATION);
+				ShowSpriteBrowseDialog();
 				return TRUE;
 			}
 			//ConsoleLog(LOG_DEBUG, "CFrameWnd::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, pExtra, pHandler, dwRetAddr);

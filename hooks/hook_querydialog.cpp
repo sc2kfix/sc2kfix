@@ -43,13 +43,13 @@ static int GetQueriedSpriteIDFromCoords(WORD x, WORD y) {
 	else {
 		if (iTileID >= TILE_ARCOLOGY_PLYMOUTH) {
 			// Positioning falls into the "medium" range.
-			iSpriteID = iTileID + 500;
+			iSpriteID = iTileID + SPRITE_MEDIUM_START;
 		}
 	}	
 
 	if (iSpriteID < 0) {
 		// Positioning falls into the "large" range.
-		iSpriteID = iTileID + 1000;
+		iSpriteID = iTileID + SPRITE_LARGE_START;
 	}
 
 	iTextOverlay = XTXTGetTextOverlayID(x, y);
@@ -57,7 +57,7 @@ static int GetQueriedSpriteIDFromCoords(WORD x, WORD y) {
 		if (iTextOverlay >= MIN_XTHG_TEXT_ENTRIES &&
 			iTextOverlay <= MAX_XTHG_TEXT_ENTRIES &&
 			XTHGGetType(XTHGID_ENTRY(iTextOverlay)) == XTHG_SAILBOAT)
-			iSpriteID = 1380;
+			iSpriteID = SPRITE_LARGE_SAILBOAT_NE;
 	}
 
 	return iSpriteID;
@@ -107,7 +107,7 @@ static BYTE GetPertinentRsrcIDOffset(WORD x, WORD y) {
 	return iRsrcOffset;
 }
 
-static BOOL __cdecl L_BeingProcessObjectOnHwnd(HWND hWnd, void *vBits, int x, int y, RECT *r) {
+BOOL __cdecl L_BeingProcessObjectOnHwnd(HWND hWnd, void *vBits, int x, int y, RECT *r) {
 	CMFC3XRect clRect;
 
 	GetClientRect(hWnd, &clRect);
