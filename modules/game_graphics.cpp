@@ -100,3 +100,28 @@ int CGraphics::CreateWithPalette_SC2K1996(LONG ibiWidth, LONG ibiHeight) {
 		GRpBitmapInfo->bmiHeader.biHeight = -GRpBitmapInfo->bmiHeader.biHeight;
 	return 1;
 }
+
+CMFC3XDC *CGraphics::GetDC_SC2K1996() {
+	CMFC3XDC *pDC;
+
+	if (GRBitmap)
+		g_hBitmapOld = (HBITMAP)SelectObject(hDC_Global, GRBitmap);
+
+	pDC = new CMFC3XDC();
+	if (pDC)
+		pDC = GameMain_DC_Cons(pDC);
+	GameMain_DC_Attach(pDC, hDC_Global);
+	return pDC;
+}
+
+void CGraphics::ReleaseDC_SC2K1996(CMFC3XDC *pDC) {
+	GameMain_DC_Detach(pDC);
+	if (GRBitmap)
+		SelectObject(hDC_Global, g_hBitmapOld);
+	if (pDC) {
+		GameMain_DC_Destruct(pDC);
+		delete pDC;
+		pDC = NULL;
+	}
+	g_hBitmapOld = 0;
+}

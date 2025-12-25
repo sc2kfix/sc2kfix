@@ -159,6 +159,8 @@ public:
 
 	void DeleteStored_SC2K1996();
 	int CreateWithPalette_SC2K1996(LONG ibiWidth, LONG ibiHeight);
+	CMFC3XDC *GetDC_SC2K1996();
+	void ReleaseDC_SC2K1996(CMFC3XDC *pDC);
 };
 #pragma pack(pop)
 

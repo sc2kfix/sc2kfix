@@ -221,12 +221,10 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 											if (!pQueriedTileImageSmall->CreateWithPalette_SC2K1996(sprPt.x, sprPt.y))
 												bSpriteFailSmall = TRUE;
 											pSprBits = Game_Graphics_LockDIBBits(pQueriedTileImageSmall);
-											pDC = new CMFC3XDC();
-											pDC = Game_Graphics_GetDC(pQueriedTileImageSmall);
+											pDC = pQueriedTileImageSmall->GetDC_SC2K1996();
 											if (pDC) {
 												FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
-												Game_Graphics_ReleaseDC(pQueriedTileImageSmall, pDC);
-												pDC = NULL;
+												pQueriedTileImageSmall->ReleaseDC_SC2K1996(pDC);
 
 												L_BeingProcessObjectOnHwnd(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
 												Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
@@ -257,12 +255,10 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 											if (!pQueriedTileImageMedium->CreateWithPalette_SC2K1996(sprPt.x, sprPt.y))
 												bSpriteFailMedium = TRUE;
 											pSprBits = Game_Graphics_LockDIBBits(pQueriedTileImageMedium);
-											pDC = new CMFC3XDC();
-											pDC = Game_Graphics_GetDC(pQueriedTileImageMedium);
+											pDC = pQueriedTileImageMedium->GetDC_SC2K1996();
 											if (pDC) {
 												FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
-												Game_Graphics_ReleaseDC(pQueriedTileImageMedium, pDC);
-												pDC = NULL;
+												pQueriedTileImageMedium->ReleaseDC_SC2K1996(pDC);
 
 												L_BeingProcessObjectOnHwnd(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
 												Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
@@ -293,12 +289,10 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 											if (!pQueriedTileImageLarge->CreateWithPalette_SC2K1996(sprPt.x, sprPt.y))
 												bSpriteFailLarge = TRUE;
 											pSprBits = Game_Graphics_LockDIBBits(pQueriedTileImageLarge);
-											pDC = new CMFC3XDC();
-											pDC = Game_Graphics_GetDC(pQueriedTileImageLarge);
+											pDC = pQueriedTileImageLarge->GetDC_SC2K1996();
 											if (pDC) {
 												FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
-												Game_Graphics_ReleaseDC(pQueriedTileImageLarge, pDC);
-												pDC = NULL;
+												pQueriedTileImageLarge->ReleaseDC_SC2K1996(pDC);
 
 												L_BeingProcessObjectOnHwnd(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
 												Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);

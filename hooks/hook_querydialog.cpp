@@ -184,12 +184,10 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 
 						pQueriedTileImage->CreateWithPalette_SC2K1996(sprPt.x, sprPt.y);
 						pSprBits = Game_Graphics_LockDIBBits(pQueriedTileImage);
-						pDC = new CMFC3XDC();
-						pDC = Game_Graphics_GetDC(pQueriedTileImage);
+						pDC = pQueriedTileImage->GetDC_SC2K1996();
 						if (pDC) {
 							FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
-							Game_Graphics_ReleaseDC(pQueriedTileImage, pDC);
-							pDC = NULL;
+							pQueriedTileImage->ReleaseDC_SC2K1996(pDC);
 
 							L_BeingProcessObjectOnHwnd(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
 							Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
