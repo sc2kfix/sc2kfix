@@ -468,6 +468,32 @@ extern "C" void __cdecl Hook_QueryGeneralItem(__int16 x, __int16 y) {
 		GameMain_QueryGeneralItem(x, y);
 }
 
+extern "C" int __stdcall Hook_QuerySpecificDialog_OnInitDialog() {
+	CQuerySpecificDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	int ret;
+
+	ret = GameMain_QuerySpecificDialog_OnInitDialog(pThis);
+	hWndExt = pThis->m_hWnd;
+
+	return ret;
+}
+
+extern "C" int __stdcall Hook_QueryGeneralDialog_OnInitDialog() {
+	CQueryGeneralDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	int ret;
+
+	ret = GameMain_QueryGeneralDialog_OnInitDialog(pThis);
+	hWndExt = pThis->m_hWnd;
+
+	return ret;
+}
+
 void InstallQueryHooks_SC2K1996(void) {
 	//ConsoleLog(LOG_DEBUG, "MISC: Installing query hooks.\n");
 
@@ -476,6 +502,14 @@ void InstallQueryHooks_SC2K1996(void) {
 
 	VirtualProtect((LPVOID)0x402E19, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402E19, Hook_QueryGeneralItem);
+
+	// Hook into the CQuerySpecificDialog::OnInitDialog function
+	VirtualProtect((LPVOID)0x4019C9, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4019C9, Hook_QuerySpecificDialog_OnInitDialog);
+
+	// Hook into the CQueryGeneralDialog::OnInitDialog function
+	VirtualProtect((LPVOID)0x402C89, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402C89, Hook_QueryGeneralDialog_OnInitDialog);
 
 	// Move the alt+query bottom text to not be blocked by the OK button
 	VirtualProtect((LPVOID)0x428FB1, 3, PAGE_EXECUTE_READWRITE, &dwDummy);
