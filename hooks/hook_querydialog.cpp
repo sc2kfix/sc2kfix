@@ -23,6 +23,8 @@
 
 static DWORD dwDummy;
 
+extern HWND hWndExt;
+
 typedef struct {
 	WORD iTileX;
 	WORD iTileY;
@@ -139,6 +141,8 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 
 	switch (message) {
 	case WM_INITDIALOG:
+		hWndExt = hwndDlg;
+
 		SetWindowLong(hwndDlg, GWL_USERDATA, lParam);
 		qci = (query_coords_info *)lParam;
 
@@ -178,16 +182,20 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 						sprRect.right = sprPt.x;
 						sprRect.bottom = sprPt.y;
 
-						Game_Graphics_CreateWithPalette(pQueriedTileImage, sprPt.x, sprPt.y);
+						pQueriedTileImage->CreateWithPalette_SC2K1996(sprPt.x, sprPt.y);
 						pSprBits = Game_Graphics_LockDIBBits(pQueriedTileImage);
+						pDC = new CMFC3XDC();
 						pDC = Game_Graphics_GetDC(pQueriedTileImage);
+						if (pDC) {
+							FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
+							Game_Graphics_ReleaseDC(pQueriedTileImage, pDC);
+							pDC = NULL;
 
-						FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
-						Game_Graphics_ReleaseDC(pQueriedTileImage, pDC);
-						L_BeingProcessObjectOnHwnd(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
-						Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
-						Game_FinishProcessObjects();
-						Game_Graphics_UnlockDIBBits(pQueriedTileImage);
+							L_BeingProcessObjectOnHwnd(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
+							Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
+							Game_FinishProcessObjects();
+							Game_Graphics_UnlockDIBBits(pQueriedTileImage);
+						}
 					}
 				}
 			}
@@ -411,8 +419,9 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		}
 
 	case WM_DESTROY:
+		hWndExt = 0;
 		if (pQueriedTileImage) {
-			Game_Graphics_DeleteStored(pQueriedTileImage);
+			pQueriedTileImage->DeleteStored_SC2K1996();
 			delete pQueriedTileImage;
 			pQueriedTileImage = NULL;
 		}
@@ -438,9 +447,11 @@ static BOOL DoAdvancedQuery(__int16 x, __int16 y) {
 			qci.iTileX = x;
 			qci.iTileY = y;
 
+			pSCApp->dwSCAToggleTitleScreenAnimation = TRUE;
 			Game_CityToolBar_ToolMenuDisable(pCityToolBar);
 			DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_ADVANCEDQUERY), GameGetRootWindowHandle(), AdvancedQueryDialogProc, (LPARAM)&qci);
 			Game_CityToolBar_ToolMenuEnable(pCityToolBar);
+			pSCApp->dwSCAToggleTitleScreenAnimation = FALSE;
 			return TRUE;
 		}
 	}
@@ -448,13 +459,11 @@ static BOOL DoAdvancedQuery(__int16 x, __int16 y) {
 }
 
 extern "C" void __cdecl Hook_QuerySpecificItem(__int16 x, __int16 y) {
-
 	if (!DoAdvancedQuery(x, y))
 		GameMain_QuerySpecificItem(x, y);
 }
 
 extern "C" void __cdecl Hook_QueryGeneralItem(__int16 x, __int16 y) {
-
 	if (!DoAdvancedQuery(x, y))
 		GameMain_QueryGeneralItem(x, y);
 }

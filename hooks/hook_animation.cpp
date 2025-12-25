@@ -12,7 +12,7 @@
 
 static DWORD dwDummy;
 
-extern HWND sprHwnd;
+HWND hWndExt = 0;
 
 extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette, int bToggle) {
 	CSimcityAppPrimary *pSCApp;
@@ -59,7 +59,7 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 						pSCApp->iSCAProgramStep == ONIDLE_STATE_INGAME)
 						bRedraw = FALSE;
 
-					if (bRedraw) {
+					if (bRedraw || hWndExt) {
 						pMapToolBar = &pMainFrm->dwMFMapToolBar;
 						pCityToolBar = &pMainFrm->dwMFCityToolBar;
 
@@ -82,6 +82,9 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 						if (CanUseFloatingStatusDialog() && bStatusDialogMoving)
 							bCityViewAnim = FALSE;
 
+						if (hWndExt && !bRedraw)
+							bCityViewAnim = FALSE;
+
 						// CMainFrame m_hWnd - only call this specific redraw function before CSimcityView has been created.
 						// (ie, before any game has been started - palette animation on the image is disabled once the
 						// game window has been created)
@@ -89,10 +92,11 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 						pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 						if (!pSCView)
 							RedrawWindow(pMainFrm->m_hWnd, NULL, NULL, RDW_INVALIDATE);
-						else if (pSCView && bCityViewAnim) {
-							RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
-							if (sprHwnd)
-								RedrawWindow(sprHwnd, NULL, NULL, RDW_INVALIDATE);
+						else if (pSCView && bCityViewAnim || hWndExt) {
+							if (pSCView && bCityViewAnim)
+								RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+							if (hWndExt)
+								RedrawWindow(hWndExt, NULL, NULL, RDW_INVALIDATE);
 						}
 					}
 				}

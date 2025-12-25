@@ -268,6 +268,68 @@ extern "C" int __stdcall Hook_FileDialog_DoModal() {
 	return iRet;
 }
 
+extern "C" INT_PTR __stdcall Hook_GameDialog_DoModal() {
+	CGameDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	CSimcityAppPrimary *pSCApp;
+	BOOL bQueryDialog;
+	INT_PTR ret;
+
+	pSCApp = &pCSimcityAppThis;
+
+	bQueryDialog = FALSE;
+	if ((DWORD)_ReturnAddress() == 0x44D2C3 ||
+		(DWORD)_ReturnAddress() == 0x4719E3)
+		bQueryDialog = TRUE;
+
+	if (bQueryDialog)
+		pSCApp->dwSCAToggleTitleScreenAnimation = TRUE;
+	ret = GameMain_GameDialog_DoModal(pThis);
+	if (bQueryDialog)
+		pSCApp->dwSCAToggleTitleScreenAnimation = FALSE;
+	return ret;
+}
+
+extern HWND hWndExt;
+
+extern "C" void __stdcall Hook_GameDialog_OnDestroy() {
+	CGameDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	if (hWndExt)
+		hWndExt = 0;
+	GameMain_GameDialog_OnDestroy(pThis);
+}
+
+extern "C" int __stdcall Hook_QuerySpecificDialog_OnInitDialog() {
+	CQuerySpecificDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	int ret;
+
+	ret = GameMain_QuerySpecificDialog_OnInitDialog(pThis);
+	hWndExt = pThis->m_hWnd;
+
+	return ret;
+}
+
+extern "C" int __stdcall Hook_QueryGeneralDialog_OnInitDialog() {
+	CQueryGeneralDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	int ret;
+
+	ret = GameMain_QueryGeneralDialog_OnInitDialog(pThis);
+	hWndExt = pThis->m_hWnd;
+
+	return ret;
+}
+
 static void L_ProcessCmdLine_1996(CSimcityAppPrimary *pSCApp) {
 	char szFileArg[MAX_PATH + 1], szFileExt[16 + 1];
 	std::string str;
@@ -2153,6 +2215,22 @@ void InstallMiscHooks_SC2K1996(void) {
 	// Hook into the CFileDialog::DoModal function
 	VirtualProtect((LPVOID)0x49FE18, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x49FE18, Hook_FileDialog_DoModal);
+
+	// Hook into the CGameDialog::DoModal function
+	VirtualProtect((LPVOID)0x40219E, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x40219E, Hook_GameDialog_DoModal);
+
+	// Hook into the CGameDialog::OnDestroy function
+	VirtualProtect((LPVOID)0x401532, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x401532, Hook_GameDialog_OnDestroy);
+
+	// Hook into the CQuerySpecificDialog::OnInitDialog function
+	VirtualProtect((LPVOID)0x4019C9, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4019C9, Hook_QuerySpecificDialog_OnInitDialog);
+
+	// Hook into the CQueryGeneralDialog::OnInitDialog function
+	VirtualProtect((LPVOID)0x402C89, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402C89, Hook_QueryGeneralDialog_OnInitDialog);
 
 	// Fix the sign fonts
 	VirtualProtect((LPVOID)0x4E7267, 1, PAGE_EXECUTE_READWRITE, &dwDummy);

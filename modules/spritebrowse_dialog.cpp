@@ -16,7 +16,7 @@
 
 extern BOOL __cdecl L_BeingProcessObjectOnHwnd(HWND hWnd, void *vBits, int x, int y, RECT *r);
 
-HWND sprHwnd = 0;
+extern HWND hWndExt;
 
 BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	HWND hWndCombo;
@@ -168,8 +168,8 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 					return FALSE;
 				case IDC_SPRITEBROWSER_SELBUT:
 					if (GET_WM_COMMAND_CMD(wParam, lParam) == BN_CLICKED) {
-						if (!sprHwnd)
-							sprHwnd = hwndDlg;
+						if (!hWndExt)
+							hWndExt = hwndDlg;
 
 						hWndCombo = GetDlgItem(hwndDlg, IDC_SPRITEBROWSER_COMBOCTRL);
 
@@ -324,6 +324,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 			}
 
 			case WM_DESTROY:
+				hWndExt = 0;
 				if (pQueriedTileImageSmall) {
 					pQueriedTileImageSmall->DeleteStored_SC2K1996();
 					delete pQueriedTileImageSmall;
@@ -340,8 +341,6 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 					pQueriedTileImageLarge = NULL;
 				}
 				nBaseSpriteID = -1;
-
-				sprHwnd = 0;
 				break;
 	}
 	return FALSE;
