@@ -162,9 +162,8 @@ public:
 };
 #pragma pack(pop)
 
-// Reimplementation of an abstracted C string (not to be confused with the MFC CString) used in
-// the original SimCity 2000 code.
-class CSimString {
+// Currency string handling class.
+class CCurrencyString {
 public:
 	char *pStr;
 };
@@ -212,7 +211,7 @@ public:
 	DWORD dwSCAOneHundredFortyFour;
 	DWORD dwSCAAnimationOnCycle;
 	DWORD dwSCAAnimationOffCycle;
-	DWORD dwSCAToggleTitleScreenAnimation;
+	DWORD dwSCABackgroundColourCyclingActive;
 	DWORD dwSCALastTick;
 	int iSCAProgramStep;
 	DWORD dwSCADoStepSkip;
@@ -266,7 +265,7 @@ public:
 	DWORD dwSCAOneHundredFortyFour;
 	DWORD dwSCAAnimationOnCycle;
 	DWORD dwSCAAnimationOffCycle;
-	DWORD dwSCAToggleTitleScreenAnimation;
+	DWORD dwSCABackgroundColourCyclingActive;
 	DWORD dwSCALastTick;
 	int iSCAProgramStep;
 	DWORD dwSCADoStepSkip;

@@ -285,10 +285,10 @@ extern "C" INT_PTR __stdcall Hook_GameDialog_DoModal() {
 		bQueryDialog = TRUE;
 
 	if (bQueryDialog)
-		pSCApp->dwSCAToggleTitleScreenAnimation = TRUE;
+		pSCApp->dwSCABackgroundColourCyclingActive = TRUE;
 	ret = GameMain_GameDialog_DoModal(pThis);
 	if (bQueryDialog)
-		pSCApp->dwSCAToggleTitleScreenAnimation = FALSE;
+		pSCApp->dwSCABackgroundColourCyclingActive = FALSE;
 	return ret;
 }
 
@@ -1184,7 +1184,7 @@ extern "C" void __stdcall Hook_SimcityDoc_UpdateDocumentTitle() {
 	int iCityMonth;
 	int iCityYear;
 	const char *pCurrStr;
-	CSimString *pFundStr;
+	CCurrencyString *pFundStr;
 
 	GameMain_String_Cons(&cStr);
 
@@ -1219,18 +1219,18 @@ extern "C" void __stdcall Hook_SimcityDoc_UpdateDocumentTitle() {
 		}
 		else
 			pCurrStr = gameCurrFF;
-		pFundStr = new CSimString();
+		pFundStr = new CCurrencyString();
 		if (pFundStr)
-			pFundStr = Game_SimString_SetString(pFundStr, pCurrStr, 20, (double)dwCityFunds);
+			pFundStr = Game_CurrencyString_SetString(pFundStr, pCurrStr, 20, (double)dwCityFunds);
 		else
 			goto GETOUT;
-		Game_SimString_TruncateAtSpace(pFundStr);
+		Game_CurrencyString_TruncateAtSpace(pFundStr);
 		if (bSettingsTitleCalendar)
 			GameMain_String_Format(&cStr, "%s %d %4d <%s> %s", pSCApp->dwSCApCStringLongMonths[iCityMonth].m_pchData, iCityDayMon, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
 		else
 			GameMain_String_Format(&cStr, "%s %4d <%s> %s", pSCApp->dwSCApCStringShortMonths[iCityMonth].m_pchData, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
 		if (pFundStr) {
-			Game_SimString_Dest(pFundStr);
+			Game_CurrencyString_Dest(pFundStr);
 			operator delete(pFundStr);
 		}
 GOFORWARD:

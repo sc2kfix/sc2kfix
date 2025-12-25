@@ -355,9 +355,9 @@ void ShowSpriteBrowseDialog(void) {
 	pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 	pCityToolBar = &pMainFrm->dwMFCityToolBar;
 
-	pSCApp->dwSCAToggleTitleScreenAnimation = TRUE;
+	pSCApp->dwSCABackgroundColourCyclingActive = TRUE;
 	Game_CityToolBar_ToolMenuDisable(pCityToolBar);
 	DialogBox(hSC2KFixModule, MAKEINTRESOURCE(IDD_SPRITEBROWSER), GameGetRootWindowHandle(), SpriteBrowserDialogProc);
 	Game_CityToolBar_ToolMenuEnable(pCityToolBar);
-	pSCApp->dwSCAToggleTitleScreenAnimation = FALSE;
+	pSCApp->dwSCABackgroundColourCyclingActive = FALSE;
 }

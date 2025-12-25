@@ -33,7 +33,7 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 	bRedraw = FALSE;
 	pSCApp = &pCSimcityAppThis;
 	if (pSCApp) {
-		if (pSCApp->wSCAGameSpeedLOW != GAME_SPEED_PAUSED || pSCApp->dwSCAToggleTitleScreenAnimation || pSCApp->iSCAProgramStep != ONIDLE_STATE_INGAME) {
+		if (pSCApp->wSCAGameSpeedLOW != GAME_SPEED_PAUSED || pSCApp->dwSCABackgroundColourCyclingActive || pSCApp->iSCAProgramStep != ONIDLE_STATE_INGAME) {
 			if (!bLoColor) {
 				pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 				if (pMainFrm) {
@@ -118,7 +118,7 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1995(CMFC3XPalette *pPalette
 
 	pSCApp = &pCSimcityAppThis_1995;
 	if (pSCApp) {
-		if (pSCApp->wSCAGameSpeedLOW != GAME_SPEED_PAUSED || pSCApp->dwSCAToggleTitleScreenAnimation || pSCApp->iSCAProgramStep != ONIDLE_STATE_INGAME) {
+		if (pSCApp->wSCAGameSpeedLOW != GAME_SPEED_PAUSED || pSCApp->dwSCABackgroundColourCyclingActive || pSCApp->iSCAProgramStep != ONIDLE_STATE_INGAME) {
 			if (!bLoColor_1995) {
 				pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 				if (pMainFrm) {
@@ -192,7 +192,7 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2KDemo(CMFC3XPalette *pPalette
 
 	pSCApp = &pCSimcityAppThis_Demo;
 	if (pSCApp) {
-		if (pSCApp->wSCAGameSpeedLOW != GAME_SPEED_PAUSED || pSCApp->dwSCAToggleTitleScreenAnimation || pSCApp->iSCAProgramStep != DEMO_ONIDLE_STATE_INGAME) {
+		if (pSCApp->wSCAGameSpeedLOW != GAME_SPEED_PAUSED || pSCApp->dwSCABackgroundColourCyclingActive || pSCApp->iSCAProgramStep != DEMO_ONIDLE_STATE_INGAME) {
 			if (!bLoColor_Demo) {
 				pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 				if (pMainFrm) {

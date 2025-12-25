@@ -447,11 +447,11 @@ static BOOL DoAdvancedQuery(__int16 x, __int16 y) {
 			qci.iTileX = x;
 			qci.iTileY = y;
 
-			pSCApp->dwSCAToggleTitleScreenAnimation = TRUE;
+			pSCApp->dwSCABackgroundColourCyclingActive = TRUE;
 			Game_CityToolBar_ToolMenuDisable(pCityToolBar);
 			DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_ADVANCEDQUERY), GameGetRootWindowHandle(), AdvancedQueryDialogProc, (LPARAM)&qci);
 			Game_CityToolBar_ToolMenuEnable(pCityToolBar);
-			pSCApp->dwSCAToggleTitleScreenAnimation = FALSE;
+			pSCApp->dwSCABackgroundColourCyclingActive = FALSE;
 			return TRUE;
 		}
 	}
