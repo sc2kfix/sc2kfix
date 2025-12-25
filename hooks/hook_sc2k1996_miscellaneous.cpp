@@ -1039,11 +1039,13 @@ extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lp
 	case 101:
 		lpNewCityAfxProc = lpDialogFunc;
 		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_NewCityDialogProc, dwInitParam);
-	case 102:
-		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	case 103:
 		lpMainDialogAfxProc = lpDialogFunc;
 		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_MainDialogProc, dwInitParam);
+	case 102:
+	case 142:
+	case 154:
+		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	default:
 		return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	}

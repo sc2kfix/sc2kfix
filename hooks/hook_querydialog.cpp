@@ -42,12 +42,12 @@ static int GetQueriedSpriteIDFromCoords(WORD x, WORD y) {
 		iTileID = GetTerrainTileID(x, y);
 		iTileID = wXTERToSpriteIDMap[iTileID];
 	}
-	else {
-		if (iTileID >= TILE_ARCOLOGY_PLYMOUTH) {
-			// Positioning falls into the "medium" range.
-			iSpriteID = iTileID + SPRITE_MEDIUM_START;
-		}
-	}	
+	//else {
+	//	if (iTileID >= TILE_ARCOLOGY_PLYMOUTH) {
+	//		// Positioning falls into the "medium" range.
+	//		iSpriteID = iTileID + SPRITE_MEDIUM_START;
+	//	}
+	//}	
 
 	if (iSpriteID < 0) {
 		// Positioning falls into the "large" range.
@@ -458,7 +458,10 @@ static BOOL DoAdvancedQuery(__int16 x, __int16 y) {
 	return FALSE;
 }
 
+static BOOL bSoundPlayed = FALSE;
+
 extern "C" void __cdecl Hook_QuerySpecificItem(__int16 x, __int16 y) {
+	bSoundPlayed = FALSE;
 	if (!DoAdvancedQuery(x, y))
 		GameMain_QuerySpecificItem(x, y);
 }
@@ -494,6 +497,90 @@ extern "C" int __stdcall Hook_QueryGeneralDialog_OnInitDialog() {
 	return ret;
 }
 
+extern "C" void __declspec(naked) Hook_QuerySpecificDialog_PaintSoundTriggerTweak() {
+	CQuerySpecificDialog *pThis;
+
+	__asm {
+		mov ecx, esi
+		mov [pThis], ecx
+	}
+
+	CSimcityAppPrimary *pSCApp;
+	__int16 iTextOverlay;
+	BYTE nRating;
+
+	pSCApp = &pCSimcityAppThis;
+	
+	if (!bSoundPlayed) {
+		iTextOverlay = XTXTGetTextOverlayID((WORD)pThis->dwQSDMapX, (WORD)pThis->dwQSDMapY);
+
+		switch (pThis->dwQSDTileID) {
+			case TILE_POWERPLANT_HYDRO1:
+			case TILE_POWERPLANT_HYDRO2:
+			case TILE_POWERPLANT_WIND:
+			case TILE_POWERPLANT_GAS:
+			case TILE_POWERPLANT_OIL:
+			case TILE_POWERPLANT_NUCLEAR:
+			case TILE_POWERPLANT_SOLAR:
+			case TILE_POWERPLANT_MICROWAVE:
+			case TILE_POWERPLANT_FUSION:
+			case TILE_POWERPLANT_COAL:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_ZAP);
+				break;
+			case TILE_SERVICES_CITYHALL:
+			case TILE_SERVICES_BIGPARK:
+			case TILE_SERVICES_STADIUM:
+			case TILE_SERVICES_STATUE:
+			case TILE_INFRASTRUCTURE_MAYORSHOUSE:
+			case TILE_OTHER_BRAUNLLAMADOME:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CHEERS);
+				break;
+			case TILE_SERVICES_HOSPITAL:
+			case TILE_SERVICES_POLICE:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_POLICE);
+				break;
+			case TILE_SERVICES_FIRE:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_FIRETRUCK);
+				break;
+			case TILE_SERVICES_SCHOOL:
+			case TILE_SERVICES_COLLEGE:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_SCHOOL);
+				break;
+			case TILE_SERVICES_PRISON:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_PRISON);
+				break;
+			case TILE_SERVICES_ZOO:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_MONSTER);
+				break;
+			case TILE_INFRASTRUCTURE_BUSDEPOT:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_HORNS);
+				break;
+			case TILE_INFRASTRUCTURE_RAILSTATION:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_TRAIN);
+				break;
+			case TILE_INFRASTRUCTURE_MARINA:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_FLOOD);
+				break;
+			case TILE_ARCOLOGY_PLYMOUTH:
+			case TILE_ARCOLOGY_FOREST:
+			case TILE_ARCOLOGY_DARCO:
+			case TILE_ARCOLOGY_LAUNCH:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_ARCO);
+				nRating = GetMicroSimulatorStat0(MICROSIMID_ENTRY(iTextOverlay));
+				if (nRating > 9)
+					Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CHEERS);
+				if (nRating < 4)
+					Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_BOOS);
+				break;
+			default:
+				break;
+		}
+		bSoundPlayed = TRUE;
+	}
+
+	GAMEJMP(0x427923)
+}
+
 void InstallQueryHooks_SC2K1996(void) {
 	//ConsoleLog(LOG_DEBUG, "MISC: Installing query hooks.\n");
 
@@ -511,11 +598,21 @@ void InstallQueryHooks_SC2K1996(void) {
 	VirtualProtect((LPVOID)0x402C89, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402C89, Hook_QueryGeneralDialog_OnInitDialog);
 
-	// Move the alt+query bottom text to not be blocked by the OK button
-	VirtualProtect((LPVOID)0x428FB1, 3, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(BYTE*)0x428FB1 = 0x83;
-	*(BYTE*)0x428FB2 = 0xE8;
-	*(BYTE*)0x428FB3 = 0x32;
+	// Let's remove the limitation concerning image size for large
+	// buildings in the "Specific" query dialogue.
+	VirtualProtect((LPVOID)0x4274F5, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(BYTE*)0x4274F8 = 0xE8;
+	*(BYTE*)0x4274F9 = 0x03;
+	VirtualProtect((LPVOID)0x42779E, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(BYTE*)0x4277A0 = 0xE8;
+	*(BYTE*)0x4277A1 = 0x03;
+
+	// Hook into the sound trigger portion of CQuerySpecificDialog::OnPaint()
+	// in order to stop the sound from being repeatedly played as a result of
+	// the animation redraw trigger.
+	VirtualProtect((LPVOID)0x427861, 24, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memset((LPVOID)0x427861, 0x90, 24);
+	NEWJMP((LPVOID)0x427861, Hook_QuerySpecificDialog_PaintSoundTriggerTweak);
 
 	// Patch the maximum so it's reduced from GAME_MAP_SIZE to GAME_MAP_SIZE - 1
 	// otherwise a failure was occurring as it was attempting to fetch the XTRF
