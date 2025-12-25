@@ -75,7 +75,7 @@ static void AllocateAndLoadSprites1996(CMFC3XFile *pFile, sprite_archive_t *lpBu
 							Game_FreeDataEntry(pSpriteData);
 							continue;
 						}
-						if (pArrSpriteHeaders[nID].sprOffset.sprLong) {
+						if (pArrSpriteHeaders[nID].sprOffset.sprPtr) {
 							Game_FreeDataEntry(pArrSpriteHeaders[nID].sprOffset.sprPtr);
 							pArrSpriteHeaders[nID].sprOffset.sprPtr = 0;
 						}
