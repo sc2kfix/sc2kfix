@@ -160,10 +160,18 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		case WM_COMMAND:
 			switch (GET_WM_COMMAND_ID(wParam, lParam)) {
 				case IDC_SPRITEBROWSER_COMBOCTRL:
-					if (GET_WM_COMMAND_CMD(wParam, lParam) == CBN_SELENDCANCEL ||
-						GET_WM_COMMAND_CMD(wParam, lParam) == CBN_SELCHANGE) {
+					// Temporarily unset in-order to avoid the palette
+					// animation/cycling redraw.
+					hWndExt = 0;
+					if (GET_WM_COMMAND_CMD(wParam, lParam) == CBN_KILLFOCUS ||
+						GET_WM_COMMAND_CMD(wParam, lParam) == CBN_CLOSEUP ||
+						GET_WM_COMMAND_CMD(wParam, lParam) == CBN_SELENDOK ||
+						GET_WM_COMMAND_CMD(wParam, lParam) == CBN_SELENDCANCEL) {
 						InvalidateRect(hwndDlg, 0, FALSE);
 						UpdateWindow(hwndDlg);
+						// Set again in-order for palette animation/cycling redrawing
+						// to resume.
+						hWndExt = hwndDlg;
 						return TRUE;
 					}
 					return FALSE;
