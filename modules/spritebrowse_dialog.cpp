@@ -14,7 +14,7 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
-extern BOOL PrepareDialogSpriteGraphic(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect);
+extern BOOL PrepareDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect);
 
 extern HWND hWndExt;
 
@@ -203,13 +203,13 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 
 							if (nBaseSpriteID > 0) {
 								nSpriteID = nBaseSpriteID + SPRITE_SMALL_START;
-								bSpriteFailSmall = PrepareDialogSpriteGraphic(pQueriedTileImageSmall, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
+								bSpriteFailSmall = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImageSmall, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
 
 								nSpriteID = nBaseSpriteID + SPRITE_MEDIUM_START;
-								bSpriteFailMedium = PrepareDialogSpriteGraphic(pQueriedTileImageMedium, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
+								bSpriteFailMedium = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImageMedium, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
 
 								nSpriteID = nBaseSpriteID + SPRITE_LARGE_START;
-								bSpriteFailLarge = PrepareDialogSpriteGraphic(pQueriedTileImageLarge, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
+								bSpriteFailLarge = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImageLarge, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
 							}
 						}
 						InvalidateRect(hwndDlg, 0, TRUE);

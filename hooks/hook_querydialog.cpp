@@ -23,7 +23,7 @@
 
 static DWORD dwDummy;
 
-extern BOOL PrepareDialogSpriteGraphic(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect);
+extern BOOL PrepareDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect);
 
 extern HWND hWndExt;
 
@@ -155,7 +155,7 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 				strcpy_s(szBuf, sizeof(szBuf) - 1, pSrc);
 			else
 				Game_LoadNamedEntryFromRsrcOffset(szBuf, 2000, iRsrcOffset);
-			bSpriteFail = PrepareDialogSpriteGraphic(pQueriedTileImage, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
+			bSpriteFail = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImage, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
 		}
 
 		if (iTextOverlay >= MIN_SIM_TEXT_ENTRIES && iTextOverlay <= MAX_SIM_TEXT_ENTRIES) {

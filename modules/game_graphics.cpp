@@ -32,7 +32,7 @@ static BOOL L_hWndBeginProcessObject_SC2K1996(HWND hWnd, void *vBits, int x, int
 	return TRUE;
 }
 
-BOOL PrepareDialogSpriteGraphic(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect) {
+BOOL PrepareDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect) {
 	CMFC3XPoint sprPt;
 	CMFC3XRect sprRect;
 	BYTE *pSprBits;
