@@ -160,9 +160,6 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		case WM_COMMAND:
 			switch (GET_WM_COMMAND_ID(wParam, lParam)) {
 				case IDC_SPRITEBROWSER_COMBOCTRL:
-					// Temporarily unset in-order to avoid the palette
-					// animation/cycling redraw.
-					hWndExt = 0;
 					if (GET_WM_COMMAND_CMD(wParam, lParam) == CBN_KILLFOCUS ||
 						GET_WM_COMMAND_CMD(wParam, lParam) == CBN_CLOSEUP ||
 						GET_WM_COMMAND_CMD(wParam, lParam) == CBN_SELENDOK ||
@@ -171,8 +168,14 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 						UpdateWindow(hwndDlg);
 						// Set again in-order for palette animation/cycling redrawing
 						// to resume.
-						hWndExt = hwndDlg;
+						if (!hWndExt)
+							hWndExt = hwndDlg;
 						return TRUE;
+					}
+					else if (GET_WM_COMMAND_CMD(wParam, lParam) == CBN_DROPDOWN) {
+						// Temporarily unset in-order to avoid the palette
+						// animation/cycling redraw.
+						hWndExt = 0;
 					}
 					return FALSE;
 				case IDC_SPRITEBROWSER_SELBUT:
