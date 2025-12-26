@@ -23,7 +23,7 @@
 
 static DWORD dwDummy;
 
-extern BOOL L_hWndBeginProcessObject_SC2K1996(HWND hWnd, void *vBits, int x, int y, RECT *r);
+extern BOOL PrepareDialogSpriteGraphic(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect);
 
 extern HWND hWndExt;
 
@@ -114,12 +114,9 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 	std::string strTileHeader;
 	std::string strTileInfo;
 	BYTE iTextOverlay, iRsrcOffset, iTileID;
-	CMFC3XRect dlgRect, sprRect;
-	void *pSprBits;
-	CMFC3XDC *pDC;
+	CMFC3XRect dlgRect;
 	PAINTSTRUCT ps;
 	sprite_header_t *pSprHead;
-	CMFC3XPoint sprPt;
 	const char *pSrc;
 	char szBuf[80 + 1];
 	int x, y;
@@ -135,6 +132,9 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		qci = (query_coords_info *)lParam;
 
 		GetWindowRect(hwndDlg, &dlgRect);
+
+		pQueriedTileImage = new CGraphics();
+
 		ScreenToClient(hwndDlg, (LPPOINT)&dlgRect);
 		ScreenToClient(hwndDlg, (LPPOINT)&dlgRect.right);
 
@@ -155,37 +155,7 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 				strcpy_s(szBuf, sizeof(szBuf) - 1, pSrc);
 			else
 				Game_LoadNamedEntryFromRsrcOffset(szBuf, 2000, iRsrcOffset);
-			pSprHead = &pArrSpriteHeaders[nSpriteID];
-			if (pSprHead) {
-				sprPt.x = (pSprHead->wWidth + 7) & ~7;
-				sprPt.y = (pSprHead->wHeight + 8) & ~7;
-
-				pQueriedTileImage = new CGraphics();
-				if (pQueriedTileImage) {
-					pQueriedTileImage = Game_Graphics_Cons(pQueriedTileImage);
-					if (pQueriedTileImage) {
-						sprRect.left = 0;
-						sprRect.top = 0;
-						sprRect.right = sprPt.x;
-						sprRect.bottom = sprPt.y;
-
-						bSpriteFail = (!pQueriedTileImage->CreateWithPalette_SC2K1996(sprPt.x, sprPt.y)) ? TRUE : FALSE;
-						if (!bSpriteFail) {
-							pSprBits = Game_Graphics_LockDIBBits(pQueriedTileImage);
-							pDC = pQueriedTileImage->GetDC_SC2K1996();
-							if (pDC) {
-								FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
-								pQueriedTileImage->ReleaseDC_SC2K1996(pDC);
-
-								L_hWndBeginProcessObject_SC2K1996(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
-								Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
-								Game_FinishProcessObjects();
-							}
-							Game_Graphics_UnlockDIBBits(pQueriedTileImage);
-						}
-					}
-				}
-			}
+			bSpriteFail = PrepareDialogSpriteGraphic(pQueriedTileImage, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
 		}
 
 		if (iTextOverlay >= MIN_SIM_TEXT_ENTRIES && iTextOverlay <= MAX_SIM_TEXT_ENTRIES) {

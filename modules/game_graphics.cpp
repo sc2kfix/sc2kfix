@@ -18,7 +18,7 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
-BOOL L_hWndBeginProcessObject_SC2K1996(HWND hWnd, void *vBits, int x, int y, RECT *r) {
+static BOOL L_hWndBeginProcessObject_SC2K1996(HWND hWnd, void *vBits, int x, int y, RECT *r) {
 	CMFC3XRect clRect;
 
 	GetClientRect(hWnd, &clRect);
@@ -30,6 +30,46 @@ BOOL L_hWndBeginProcessObject_SC2K1996(HWND hWnd, void *vBits, int x, int y, REC
 		--currWndClientRect.top;
 	Game_SetSpriteForDrawing(vBits, pArrSpriteHeaders, x, (__int16)y, &currWndClientRect);
 	return TRUE;
+}
+
+BOOL PrepareDialogSpriteGraphic(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect) {
+	CMFC3XPoint sprPt;
+	CMFC3XRect sprRect;
+	BYTE *pSprBits;
+	CMFC3XDC *pDC;
+	BOOL bSpriteFail = FALSE;
+
+	if (pSprHead) {
+		sprPt.x = (pSprHead->wWidth + 7) & ~7;
+		sprPt.y = (pSprHead->wHeight + 8) & ~7;
+
+		if (pGraphic) {
+			pGraphic = Game_Graphics_Cons(pGraphic);
+			if (pGraphic) {
+				sprRect.left = 0;
+				sprRect.top = 0;
+				sprRect.right = sprPt.x;
+				sprRect.bottom = sprPt.y;
+
+				bSpriteFail = (!pGraphic->CreateWithPalette_SC2K1996(sprPt.x, sprPt.y)) ? TRUE : FALSE;
+				if (!bSpriteFail) {
+					pSprBits = Game_Graphics_LockDIBBits(pGraphic);
+					pDC = pGraphic->GetDC_SC2K1996();
+					if (pDC) {
+						FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
+						pGraphic->ReleaseDC_SC2K1996(pDC);
+
+						L_hWndBeginProcessObject_SC2K1996(hWnd, pSprBits, sprPt.x, sprPt.y, pDlgRect);
+						Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
+						Game_FinishProcessObjects();
+					}
+					Game_Graphics_UnlockDIBBits(pGraphic);
+				}
+			}
+		}
+	}
+
+	return bSpriteFail;
 }
 
 void CGraphics::DeleteStored_SC2K1996() {
