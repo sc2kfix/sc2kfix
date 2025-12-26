@@ -44,6 +44,10 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 			hWndCombo = GetDlgItem(hwndDlg, IDC_SPRITEBROWSER_COMBOCTRL);
 			GetWindowRect(hWndCombo, &cmdRect);
 
+			pQueriedTileImageSmall = new CGraphics();
+			pQueriedTileImageMedium = new CGraphics();
+			pQueriedTileImageLarge = new CGraphics();
+
 			ComboBox_AddString(hWndCombo, "(Select Sprite ID)");
 			for (unsigned i = 1; i < SPRITE_ENTRY_COUNT; i++) {
 				memset(szSprIDEnt, 0, sizeof(szSprIDEnt));
@@ -94,7 +98,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 					x = dlgRect.right - 40;
 					y = (dlgRect.bottom - pSprHead->wHeight) - 20;
 
-					if (pQueriedTileImageSmall) {
+					if (pQueriedTileImageSmall && !bSpriteFailSmall) {
 						Game_Graphics_SetColorTableFromApplicationPalette(pQueriedTileImageSmall);
 						Game_Graphics_Paint(pQueriedTileImageSmall, ps.hdc, x, y);
 					}
@@ -120,7 +124,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 					x -= (40 * 2);
 					y = (dlgRect.bottom - pSprHead->wHeight) - 20;
 
-					if (pQueriedTileImageMedium) {
+					if (pQueriedTileImageMedium && !bSpriteFailMedium) {
 						Game_Graphics_SetColorTableFromApplicationPalette(pQueriedTileImageMedium);
 						Game_Graphics_Paint(pQueriedTileImageMedium, ps.hdc, x, y);
 					}
@@ -146,7 +150,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 					x -= (40 * 4);
 					y = (dlgRect.bottom - pSprHead->wHeight) - 20;
 
-					if (pQueriedTileImageLarge) {
+					if (pQueriedTileImageLarge && !bSpriteFailLarge) {
 						Game_Graphics_SetColorTableFromApplicationPalette(pQueriedTileImageLarge);
 						Game_Graphics_Paint(pQueriedTileImageLarge, ps.hdc, x, y);
 					}
@@ -175,21 +179,12 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 
 						memset(szSprIDEnt, 0, sizeof(szSprIDEnt));
 
-						if (pQueriedTileImageSmall) {
+						if (pQueriedTileImageSmall)
 							pQueriedTileImageSmall->DeleteStored_SC2K1996();
-							delete pQueriedTileImageSmall;
-							pQueriedTileImageSmall = NULL;
-						}
-						if (pQueriedTileImageMedium) {
+						if (pQueriedTileImageMedium)
 							pQueriedTileImageMedium->DeleteStored_SC2K1996();
-							delete pQueriedTileImageMedium;
-							pQueriedTileImageMedium = NULL;
-						}
-						if (pQueriedTileImageLarge) {
+						if (pQueriedTileImageLarge)
 							pQueriedTileImageLarge->DeleteStored_SC2K1996();
-							delete pQueriedTileImageLarge;
-							pQueriedTileImageLarge = NULL;
-						}
 						nBaseSpriteID = -1;
 
 						nSel = ComboBox_GetCurSel(hWndCombo);
@@ -208,7 +203,6 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 									sprPt.x = (pSprHead->wWidth + 7) & ~7;
 									sprPt.y = (pSprHead->wHeight + 8) & ~7;
 
-									pQueriedTileImageSmall = new CGraphics();
 									if (pQueriedTileImageSmall) {
 										pQueriedTileImageSmall = Game_Graphics_Cons(pQueriedTileImageSmall);
 										if (pQueriedTileImageSmall) {
@@ -217,18 +211,18 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 											sprRect.right = sprPt.x;
 											sprRect.bottom = sprPt.y;
 
-											bSpriteFailSmall = FALSE;
-											if (!pQueriedTileImageSmall->CreateWithPalette_SC2K1996(sprPt.x, sprPt.y))
-												bSpriteFailSmall = TRUE;
-											pSprBits = Game_Graphics_LockDIBBits(pQueriedTileImageSmall);
-											pDC = pQueriedTileImageSmall->GetDC_SC2K1996();
-											if (pDC) {
-												FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
-												pQueriedTileImageSmall->ReleaseDC_SC2K1996(pDC);
+											bSpriteFailSmall = (!pQueriedTileImageSmall->CreateWithPalette_SC2K1996(sprPt.x, sprPt.y)) ? TRUE : FALSE;
+											if (!bSpriteFailSmall) {
+												pSprBits = Game_Graphics_LockDIBBits(pQueriedTileImageSmall);
+												pDC = pQueriedTileImageSmall->GetDC_SC2K1996();
+												if (pDC) {
+													FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
+													pQueriedTileImageSmall->ReleaseDC_SC2K1996(pDC);
 
-												L_BeingProcessObjectOnHwnd(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
-												Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
-												Game_FinishProcessObjects();
+													L_BeingProcessObjectOnHwnd(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
+													Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
+													Game_FinishProcessObjects();
+												}
 												Game_Graphics_UnlockDIBBits(pQueriedTileImageSmall);
 											}
 										}
@@ -241,28 +235,26 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 									sprPt.x = (pSprHead->wWidth + 7) & ~7;
 									sprPt.y = (pSprHead->wHeight + 8) & ~7;
 
-									pQueriedTileImageMedium = new CGraphics();
 									if (pQueriedTileImageMedium) {
 										pQueriedTileImageMedium = Game_Graphics_Cons(pQueriedTileImageMedium);
 										if (pQueriedTileImageMedium) {
-
 											sprRect.left = 0;
 											sprRect.top = 0;
 											sprRect.right = sprPt.x;
 											sprRect.bottom = sprPt.y;
 
-											bSpriteFailMedium = FALSE;
-											if (!pQueriedTileImageMedium->CreateWithPalette_SC2K1996(sprPt.x, sprPt.y))
-												bSpriteFailMedium = TRUE;
-											pSprBits = Game_Graphics_LockDIBBits(pQueriedTileImageMedium);
-											pDC = pQueriedTileImageMedium->GetDC_SC2K1996();
-											if (pDC) {
-												FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
-												pQueriedTileImageMedium->ReleaseDC_SC2K1996(pDC);
+											bSpriteFailMedium = (!pQueriedTileImageMedium->CreateWithPalette_SC2K1996(sprPt.x, sprPt.y)) ? TRUE : FALSE;
+											if (!bSpriteFailMedium) {
+												pSprBits = Game_Graphics_LockDIBBits(pQueriedTileImageMedium);
+												pDC = pQueriedTileImageMedium->GetDC_SC2K1996();
+												if (pDC) {
+													FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
+													pQueriedTileImageMedium->ReleaseDC_SC2K1996(pDC);
 
-												L_BeingProcessObjectOnHwnd(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
-												Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
-												Game_FinishProcessObjects();
+													L_BeingProcessObjectOnHwnd(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
+													Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
+													Game_FinishProcessObjects();
+												}
 												Game_Graphics_UnlockDIBBits(pQueriedTileImageMedium);
 											}
 										}
@@ -275,28 +267,26 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 									sprPt.x = (pSprHead->wWidth + 7) & ~7;
 									sprPt.y = (pSprHead->wHeight + 8) & ~7;
 
-									pQueriedTileImageLarge = new CGraphics();
 									if (pQueriedTileImageLarge) {
 										pQueriedTileImageLarge = Game_Graphics_Cons(pQueriedTileImageLarge);
 										if (pQueriedTileImageLarge) {
-
 											sprRect.left = 0;
 											sprRect.top = 0;
 											sprRect.right = sprPt.x;
 											sprRect.bottom = sprPt.y;
 
-											bSpriteFailLarge = FALSE;
-											if (!pQueriedTileImageLarge->CreateWithPalette_SC2K1996(sprPt.x, sprPt.y))
-												bSpriteFailLarge = TRUE;
-											pSprBits = Game_Graphics_LockDIBBits(pQueriedTileImageLarge);
-											pDC = pQueriedTileImageLarge->GetDC_SC2K1996();
-											if (pDC) {
-												FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
-												pQueriedTileImageLarge->ReleaseDC_SC2K1996(pDC);
+											bSpriteFailLarge = (!pQueriedTileImageLarge->CreateWithPalette_SC2K1996(sprPt.x, sprPt.y)) ? TRUE : FALSE;
+											if (!bSpriteFailLarge) {
+												pSprBits = Game_Graphics_LockDIBBits(pQueriedTileImageLarge);
+												pDC = pQueriedTileImageLarge->GetDC_SC2K1996();
+												if (pDC) {
+													FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
+													pQueriedTileImageLarge->ReleaseDC_SC2K1996(pDC);
 
-												L_BeingProcessObjectOnHwnd(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
-												Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
-												Game_FinishProcessObjects();
+													L_BeingProcessObjectOnHwnd(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
+													Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
+													Game_FinishProcessObjects();
+												}
 												Game_Graphics_UnlockDIBBits(pQueriedTileImageLarge);
 											}
 										}

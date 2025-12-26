@@ -30,9 +30,6 @@ typedef struct {
 	WORD iTileY;
 } query_coords_info;
 
-static CGraphics *pQueriedTileImage = NULL;
-static int nSpriteID = -1;
-
 static int GetQueriedSpriteIDFromCoords(WORD x, WORD y) {
 	__int16 iTileID, iTextOverlay;
 	int iSpriteID = -1;
@@ -138,6 +135,9 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 	const char *pSrc;
 	char szBuf[80 + 1];
 	int x, y;
+	static int nSpriteID = -1;
+	static CGraphics *pQueriedTileImage = NULL;
+	static BOOL bSpriteFail = FALSE;
 
 	switch (message) {
 	case WM_INITDIALOG:
@@ -176,22 +176,23 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 				if (pQueriedTileImage) {
 					pQueriedTileImage = Game_Graphics_Cons(pQueriedTileImage);
 					if (pQueriedTileImage) {
-
 						sprRect.left = 0;
 						sprRect.top = 0;
 						sprRect.right = sprPt.x;
 						sprRect.bottom = sprPt.y;
 
-						pQueriedTileImage->CreateWithPalette_SC2K1996(sprPt.x, sprPt.y);
-						pSprBits = Game_Graphics_LockDIBBits(pQueriedTileImage);
-						pDC = pQueriedTileImage->GetDC_SC2K1996();
-						if (pDC) {
-							FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
-							pQueriedTileImage->ReleaseDC_SC2K1996(pDC);
+						bSpriteFail = (!pQueriedTileImage->CreateWithPalette_SC2K1996(sprPt.x, sprPt.y)) ? TRUE : FALSE;
+						if (!bSpriteFail) {
+							pSprBits = Game_Graphics_LockDIBBits(pQueriedTileImage);
+							pDC = pQueriedTileImage->GetDC_SC2K1996();
+							if (pDC) {
+								FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
+								pQueriedTileImage->ReleaseDC_SC2K1996(pDC);
 
-							L_BeingProcessObjectOnHwnd(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
-							Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
-							Game_FinishProcessObjects();
+								L_BeingProcessObjectOnHwnd(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
+								Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
+								Game_FinishProcessObjects();
+							}
 							Game_Graphics_UnlockDIBBits(pQueriedTileImage);
 						}
 					}
@@ -396,7 +397,7 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 				x = dlgRect.right - pSprHead->wWidth - 20;
 				y = (dlgRect.bottom - pSprHead->wHeight) / 2;
 
-				if (pQueriedTileImage) {
+				if (pQueriedTileImage && !bSpriteFail) {
 					Game_Graphics_SetColorTableFromApplicationPalette(pQueriedTileImage);
 					Game_Graphics_Paint(pQueriedTileImage, ps.hdc, x, y);
 				}
