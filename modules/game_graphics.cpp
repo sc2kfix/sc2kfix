@@ -18,6 +18,20 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
+BOOL L_hWndBeginProcessObject_SC2K1996(HWND hWnd, void *vBits, int x, int y, RECT *r) {
+	CMFC3XRect clRect;
+
+	GetClientRect(hWnd, &clRect);
+	if (IsRectEmpty(r))
+		currWndClientRect = clRect;
+	else if (!IntersectRect(&currWndClientRect, r, &clRect))
+		return FALSE;
+	if (currWndClientRect.top > 1)
+		--currWndClientRect.top;
+	Game_SetSpriteForDrawing(vBits, pArrSpriteHeaders, x, (__int16)y, &currWndClientRect);
+	return TRUE;
+}
+
 void CGraphics::DeleteStored_SC2K1996() {
 	if (GRBitmap)
 		::DeleteObject(GRBitmap);

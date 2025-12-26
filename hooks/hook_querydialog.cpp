@@ -23,6 +23,8 @@
 
 static DWORD dwDummy;
 
+extern BOOL L_hWndBeginProcessObject_SC2K1996(HWND hWnd, void *vBits, int x, int y, RECT *r);
+
 extern HWND hWndExt;
 
 typedef struct {
@@ -106,20 +108,6 @@ static BYTE GetPertinentRsrcIDOffset(WORD x, WORD y) {
 	return iRsrcOffset;
 }
 
-BOOL __cdecl L_BeingProcessObjectOnHwnd(HWND hWnd, void *vBits, int x, int y, RECT *r) {
-	CMFC3XRect clRect;
-
-	GetClientRect(hWnd, &clRect);
-	if (IsRectEmpty(r))
-		currWndClientRect = clRect;
-	else if (!IntersectRect(&currWndClientRect, r, &clRect))
-		return FALSE;
-	if (currWndClientRect.top > 1)
-		--currWndClientRect.top;
-	Game_SetSpriteForDrawing(vBits, pArrSpriteHeaders, x, (__int16)y, &currWndClientRect);
-	return TRUE;
-}
-
 BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	query_coords_info *qci;
 	WORD iTileX, iTileY;
@@ -189,7 +177,7 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 								FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
 								pQueriedTileImage->ReleaseDC_SC2K1996(pDC);
 
-								L_BeingProcessObjectOnHwnd(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
+								L_hWndBeginProcessObject_SC2K1996(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
 								Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
 								Game_FinishProcessObjects();
 							}

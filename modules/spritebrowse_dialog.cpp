@@ -14,7 +14,7 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
-extern BOOL __cdecl L_BeingProcessObjectOnHwnd(HWND hWnd, void *vBits, int x, int y, RECT *r);
+extern BOOL L_hWndBeginProcessObject_SC2K1996(HWND hWnd, void *vBits, int x, int y, RECT *r);
 
 extern HWND hWndExt;
 
@@ -219,7 +219,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 													FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
 													pQueriedTileImageSmall->ReleaseDC_SC2K1996(pDC);
 
-													L_BeingProcessObjectOnHwnd(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
+													L_hWndBeginProcessObject_SC2K1996(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
 													Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
 													Game_FinishProcessObjects();
 												}
@@ -251,7 +251,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 													FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
 													pQueriedTileImageMedium->ReleaseDC_SC2K1996(pDC);
 
-													L_BeingProcessObjectOnHwnd(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
+													L_hWndBeginProcessObject_SC2K1996(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
 													Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
 													Game_FinishProcessObjects();
 												}
@@ -283,7 +283,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 													FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
 													pQueriedTileImageLarge->ReleaseDC_SC2K1996(pDC);
 
-													L_BeingProcessObjectOnHwnd(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
+													L_hWndBeginProcessObject_SC2K1996(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
 													Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
 													Game_FinishProcessObjects();
 												}
