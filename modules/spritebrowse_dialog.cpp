@@ -164,7 +164,6 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 						GET_WM_COMMAND_CMD(wParam, lParam) == CBN_CLOSEUP ||
 						GET_WM_COMMAND_CMD(wParam, lParam) == CBN_SELENDOK ||
 						GET_WM_COMMAND_CMD(wParam, lParam) == CBN_SELENDCANCEL) {
-						InvalidateRect(hwndDlg, 0, FALSE);
 						UpdateWindow(hwndDlg);
 						// Set again in-order for palette animation/cycling redrawing
 						// to resume.
