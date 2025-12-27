@@ -434,6 +434,12 @@
     <Media Include="blobs\529.wav">
       <Filter>Resource Files\WAVE</Filter>
     </Media>
+    <Media Include="blobs\508.wav">
+      <Filter>Resource Files\WAVE</Filter>
+    </Media>
+    <Media Include="blobs\503.wav">
+      <Filter>Resource Files\WAVE</Filter>
+    </Media>
   </ItemGroup>
   <ItemGroup>
     <Image Include="blobs\weather0.bmp">

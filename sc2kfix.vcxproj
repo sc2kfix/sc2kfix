@@ -75,7 +75,8 @@
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>
-      </AdditionalIncludeDirectories>      <PreprocessorDefinitions>NOKUROKO;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      </AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NOKUROKO;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseKuroko|Win32'">
@@ -346,6 +347,8 @@
   </ItemGroup>
   <ItemGroup>
     <Media Include="blobs\500.wav" />
+    <Media Include="blobs\503.wav" />
+    <Media Include="blobs\508.wav" />
     <Media Include="blobs\514.wav" />
     <Media Include="blobs\529.wav" />
   </ItemGroup>
