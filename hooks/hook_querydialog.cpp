@@ -23,13 +23,14 @@
 
 static DWORD dwDummy;
 
+extern BOOL PrepareDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect);
+
+extern HWND hWndExt;
+
 typedef struct {
 	WORD iTileX;
 	WORD iTileY;
 } query_coords_info;
-
-static CGraphics *pQueriedTileImage = NULL;
-static int nSpriteID = -1;
 
 static int GetQueriedSpriteIDFromCoords(WORD x, WORD y) {
 	__int16 iTileID, iTextOverlay;
@@ -40,16 +41,16 @@ static int GetQueriedSpriteIDFromCoords(WORD x, WORD y) {
 		iTileID = GetTerrainTileID(x, y);
 		iTileID = wXTERToSpriteIDMap[iTileID];
 	}
-	else {
-		if (iTileID >= TILE_ARCOLOGY_PLYMOUTH) {
-			// Positioning falls into the "medium" range.
-			iSpriteID = iTileID + 500;
-		}
-	}	
+	//else {
+	//	if (iTileID >= TILE_ARCOLOGY_PLYMOUTH) {
+	//		// Positioning falls into the "medium" range.
+	//		iSpriteID = iTileID + SPRITE_MEDIUM_START;
+	//	}
+	//}	
 
 	if (iSpriteID < 0) {
 		// Positioning falls into the "large" range.
-		iSpriteID = iTileID + 1000;
+		iSpriteID = iTileID + SPRITE_LARGE_START;
 	}
 
 	iTextOverlay = XTXTGetTextOverlayID(x, y);
@@ -57,7 +58,7 @@ static int GetQueriedSpriteIDFromCoords(WORD x, WORD y) {
 		if (iTextOverlay >= MIN_XTHG_TEXT_ENTRIES &&
 			iTextOverlay <= MAX_XTHG_TEXT_ENTRIES &&
 			XTHGGetType(XTHGID_ENTRY(iTextOverlay)) == XTHG_SAILBOAT)
-			iSpriteID = 1380;
+			iSpriteID = SPRITE_LARGE_SAILBOAT_NE;
 	}
 
 	return iSpriteID;
@@ -107,42 +108,33 @@ static BYTE GetPertinentRsrcIDOffset(WORD x, WORD y) {
 	return iRsrcOffset;
 }
 
-static BOOL __cdecl L_BeingProcessObjectOnHwnd(HWND hWnd, void *vBits, int x, int y, RECT *r) {
-	CMFC3XRect clRect;
-
-	GetClientRect(hWnd, &clRect);
-	if (IsRectEmpty(r))
-		currWndClientRect = clRect;
-	else if (!IntersectRect(&currWndClientRect, r, &clRect))
-		return FALSE;
-	if (currWndClientRect.top > 1)
-		--currWndClientRect.top;
-	Game_SetSpriteForDrawing(vBits, pArrSpriteHeaders, x, (__int16)y, &currWndClientRect);
-	return TRUE;
-}
-
 BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	query_coords_info *qci;
 	WORD iTileX, iTileY;
 	std::string strTileHeader;
 	std::string strTileInfo;
 	BYTE iTextOverlay, iRsrcOffset, iTileID;
-	CMFC3XRect dlgRect, sprRect;
-	void *pSprBits;
-	CMFC3XDC *pDC;
+	CMFC3XRect dlgRect;
 	PAINTSTRUCT ps;
 	sprite_header_t *pSprHead;
-	CMFC3XPoint sprPt;
 	const char *pSrc;
 	char szBuf[80 + 1];
 	int x, y;
+	static int nSpriteID = -1;
+	static CGraphics *pQueriedTileImage = NULL;
+	static BOOL bSpriteFail = FALSE;
 
 	switch (message) {
 	case WM_INITDIALOG:
+		hWndExt = hwndDlg;
+
 		SetWindowLong(hwndDlg, GWL_USERDATA, lParam);
 		qci = (query_coords_info *)lParam;
 
 		GetWindowRect(hwndDlg, &dlgRect);
+
+		pQueriedTileImage = new CGraphics();
+
 		ScreenToClient(hwndDlg, (LPPOINT)&dlgRect);
 		ScreenToClient(hwndDlg, (LPPOINT)&dlgRect.right);
 
@@ -163,34 +155,7 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 				strcpy_s(szBuf, sizeof(szBuf) - 1, pSrc);
 			else
 				Game_LoadNamedEntryFromRsrcOffset(szBuf, 2000, iRsrcOffset);
-			pSprHead = &pArrSpriteHeaders[nSpriteID];
-			if (pSprHead) {
-				sprPt.x = (pSprHead->wWidth + 7) & ~7;
-				sprPt.y = (pSprHead->wHeight + 8) & ~7;
-
-				pQueriedTileImage = new CGraphics();
-				if (pQueriedTileImage) {
-					pQueriedTileImage = Game_Graphics_Cons(pQueriedTileImage);
-					if (pQueriedTileImage) {
-
-						sprRect.left = 0;
-						sprRect.top = 0;
-						sprRect.right = sprPt.x;
-						sprRect.bottom = sprPt.y;
-
-						Game_Graphics_CreateWithPalette(pQueriedTileImage, sprPt.x, sprPt.y);
-						pSprBits = Game_Graphics_LockDIBBits(pQueriedTileImage);
-						pDC = Game_Graphics_GetDC(pQueriedTileImage);
-
-						FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
-						Game_Graphics_ReleaseDC(pQueriedTileImage, pDC);
-						L_BeingProcessObjectOnHwnd(hwndDlg, pSprBits, sprPt.x, sprPt.y, &dlgRect);
-						Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
-						Game_FinishProcessObjects();
-						Game_Graphics_UnlockDIBBits(pQueriedTileImage);
-					}
-				}
-			}
+			bSpriteFail = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImage, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
 		}
 
 		if (iTextOverlay >= MIN_SIM_TEXT_ENTRIES && iTextOverlay <= MAX_SIM_TEXT_ENTRIES) {
@@ -390,7 +355,7 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 				x = dlgRect.right - pSprHead->wWidth - 20;
 				y = (dlgRect.bottom - pSprHead->wHeight) / 2;
 
-				if (pQueriedTileImage) {
+				if (pQueriedTileImage && !bSpriteFail) {
 					Game_Graphics_SetColorTableFromApplicationPalette(pQueriedTileImage);
 					Game_Graphics_Paint(pQueriedTileImage, ps.hdc, x, y);
 				}
@@ -411,8 +376,9 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		}
 
 	case WM_DESTROY:
+		hWndExt = 0;
 		if (pQueriedTileImage) {
-			Game_Graphics_DeleteStored(pQueriedTileImage);
+			pQueriedTileImage->DeleteStored_SC2K1996();
 			delete pQueriedTileImage;
 			pQueriedTileImage = NULL;
 		}
@@ -438,25 +404,138 @@ static BOOL DoAdvancedQuery(__int16 x, __int16 y) {
 			qci.iTileX = x;
 			qci.iTileY = y;
 
+			pSCApp->dwSCABackgroundColourCyclingActive = TRUE;
 			Game_CityToolBar_ToolMenuDisable(pCityToolBar);
 			DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_ADVANCEDQUERY), GameGetRootWindowHandle(), AdvancedQueryDialogProc, (LPARAM)&qci);
 			Game_CityToolBar_ToolMenuEnable(pCityToolBar);
+			pSCApp->dwSCABackgroundColourCyclingActive = FALSE;
 			return TRUE;
 		}
 	}
 	return FALSE;
 }
 
-extern "C" void __cdecl Hook_QuerySpecificItem(__int16 x, __int16 y) {
+static BOOL bSoundPlayed = FALSE;
 
+extern "C" void __cdecl Hook_QuerySpecificItem(__int16 x, __int16 y) {
+	bSoundPlayed = FALSE;
 	if (!DoAdvancedQuery(x, y))
 		GameMain_QuerySpecificItem(x, y);
 }
 
 extern "C" void __cdecl Hook_QueryGeneralItem(__int16 x, __int16 y) {
-
 	if (!DoAdvancedQuery(x, y))
 		GameMain_QueryGeneralItem(x, y);
+}
+
+extern "C" int __stdcall Hook_QuerySpecificDialog_OnInitDialog() {
+	CQuerySpecificDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	int ret;
+
+	ret = GameMain_QuerySpecificDialog_OnInitDialog(pThis);
+	hWndExt = pThis->m_hWnd;
+
+	return ret;
+}
+
+extern "C" int __stdcall Hook_QueryGeneralDialog_OnInitDialog() {
+	CQueryGeneralDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	int ret;
+
+	ret = GameMain_QueryGeneralDialog_OnInitDialog(pThis);
+	hWndExt = pThis->m_hWnd;
+
+	return ret;
+}
+
+extern "C" void __declspec(naked) Hook_QuerySpecificDialog_PaintSoundTriggerTweak() {
+	CQuerySpecificDialog *pThis;
+
+	__asm {
+		mov ecx, esi
+		mov [pThis], ecx
+	}
+
+	CSimcityAppPrimary *pSCApp;
+	__int16 iTextOverlay;
+	BYTE nRating;
+
+	pSCApp = &pCSimcityAppThis;
+	
+	if (!bSoundPlayed) {
+		iTextOverlay = XTXTGetTextOverlayID((WORD)pThis->dwQSDMapX, (WORD)pThis->dwQSDMapY);
+
+		switch (pThis->dwQSDTileID) {
+			case TILE_POWERPLANT_HYDRO1:
+			case TILE_POWERPLANT_HYDRO2:
+			case TILE_POWERPLANT_WIND:
+			case TILE_POWERPLANT_GAS:
+			case TILE_POWERPLANT_OIL:
+			case TILE_POWERPLANT_NUCLEAR:
+			case TILE_POWERPLANT_SOLAR:
+			case TILE_POWERPLANT_MICROWAVE:
+			case TILE_POWERPLANT_FUSION:
+			case TILE_POWERPLANT_COAL:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_ZAP);
+				break;
+			case TILE_SERVICES_CITYHALL:
+			case TILE_SERVICES_BIGPARK:
+			case TILE_SERVICES_STADIUM:
+			case TILE_SERVICES_STATUE:
+			case TILE_INFRASTRUCTURE_MAYORSHOUSE:
+			case TILE_OTHER_BRAUNLLAMADOME:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CHEERS);
+				break;
+			case TILE_SERVICES_HOSPITAL:
+			case TILE_SERVICES_POLICE:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_POLICE);
+				break;
+			case TILE_SERVICES_FIRE:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_FIRETRUCK);
+				break;
+			case TILE_SERVICES_SCHOOL:
+			case TILE_SERVICES_COLLEGE:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_SCHOOL);
+				break;
+			case TILE_SERVICES_PRISON:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_PRISON);
+				break;
+			case TILE_SERVICES_ZOO:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_MONSTER);
+				break;
+			case TILE_INFRASTRUCTURE_BUSDEPOT:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_HORNS);
+				break;
+			case TILE_INFRASTRUCTURE_RAILSTATION:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_TRAIN);
+				break;
+			case TILE_INFRASTRUCTURE_MARINA:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_FLOOD);
+				break;
+			case TILE_ARCOLOGY_PLYMOUTH:
+			case TILE_ARCOLOGY_FOREST:
+			case TILE_ARCOLOGY_DARCO:
+			case TILE_ARCOLOGY_LAUNCH:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_ARCO);
+				nRating = GetMicroSimulatorStat0(MICROSIMID_ENTRY(iTextOverlay));
+				if (nRating > 9)
+					Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CHEERS);
+				if (nRating < 4)
+					Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_BOOS);
+				break;
+			default:
+				break;
+		}
+		bSoundPlayed = TRUE;
+	}
+
+	GAMEJMP(0x427923)
 }
 
 void InstallQueryHooks_SC2K1996(void) {
@@ -468,11 +547,29 @@ void InstallQueryHooks_SC2K1996(void) {
 	VirtualProtect((LPVOID)0x402E19, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402E19, Hook_QueryGeneralItem);
 
-	// Move the alt+query bottom text to not be blocked by the OK button
-	VirtualProtect((LPVOID)0x428FB1, 3, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(BYTE*)0x428FB1 = 0x83;
-	*(BYTE*)0x428FB2 = 0xE8;
-	*(BYTE*)0x428FB3 = 0x32;
+	// Hook into the CQuerySpecificDialog::OnInitDialog function
+	VirtualProtect((LPVOID)0x4019C9, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4019C9, Hook_QuerySpecificDialog_OnInitDialog);
+
+	// Hook into the CQueryGeneralDialog::OnInitDialog function
+	VirtualProtect((LPVOID)0x402C89, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402C89, Hook_QueryGeneralDialog_OnInitDialog);
+
+	// Let's remove the limitation concerning image size for large
+	// buildings in the "Specific" query dialogue.
+	VirtualProtect((LPVOID)0x4274F5, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(BYTE*)0x4274F8 = 0xE8;
+	*(BYTE*)0x4274F9 = 0x03;
+	VirtualProtect((LPVOID)0x42779E, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(BYTE*)0x4277A0 = 0xE8;
+	*(BYTE*)0x4277A1 = 0x03;
+
+	// Hook into the sound trigger portion of CQuerySpecificDialog::OnPaint()
+	// in order to stop the sound from being repeatedly played as a result of
+	// the animation redraw trigger.
+	VirtualProtect((LPVOID)0x427861, 24, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memset((LPVOID)0x427861, 0x90, 24);
+	NEWJMP((LPVOID)0x427861, Hook_QuerySpecificDialog_PaintSoundTriggerTweak);
 
 	// Patch the maximum so it's reduced from GAME_MAP_SIZE to GAME_MAP_SIZE - 1
 	// otherwise a failure was occurring as it was attempting to fetch the XTRF

@@ -180,6 +180,7 @@
     <ClCompile Include="hooks\hook_querydialog.cpp" />
     <ClCompile Include="hooks\hook_sndPlaySound.cpp" />
     <ClCompile Include="hooks\hook_mmtimers.cpp" />
+    <ClCompile Include="modules\game_graphics.cpp" />
     <ClCompile Include="modules\kuroko_glue.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -192,6 +193,7 @@
     <ClCompile Include="modules\scurkfix_1996.cpp" />
     <ClCompile Include="modules\scurkfix_primary.cpp" />
     <ClCompile Include="modules\settings.cpp" />
+    <ClCompile Include="modules\spritebrowse_dialog.cpp" />
     <ClCompile Include="modules\status_dialog.cpp" />
     <ClCompile Include="modules\track_config.cpp" />
     <ClCompile Include="modules\update_notifier.cpp" />

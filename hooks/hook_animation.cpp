@@ -12,6 +12,8 @@
 
 static DWORD dwDummy;
 
+HWND hWndExt = 0;
+
 extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette, int bToggle) {
 	CSimcityAppPrimary *pSCApp;
 	CMainFrame *pMainFrm;
@@ -31,7 +33,7 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 	bRedraw = FALSE;
 	pSCApp = &pCSimcityAppThis;
 	if (pSCApp) {
-		if (pSCApp->wSCAGameSpeedLOW != GAME_SPEED_PAUSED || pSCApp->dwSCAToggleTitleScreenAnimation || pSCApp->iSCAProgramStep != ONIDLE_STATE_INGAME) {
+		if (pSCApp->wSCAGameSpeedLOW != GAME_SPEED_PAUSED || pSCApp->dwSCABackgroundColourCyclingActive || pSCApp->iSCAProgramStep != ONIDLE_STATE_INGAME) {
 			if (!bLoColor) {
 				pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 				if (pMainFrm) {
@@ -57,7 +59,7 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 						pSCApp->iSCAProgramStep == ONIDLE_STATE_INGAME)
 						bRedraw = FALSE;
 
-					if (bRedraw) {
+					if (bRedraw || hWndExt) {
 						pMapToolBar = &pMainFrm->dwMFMapToolBar;
 						pCityToolBar = &pMainFrm->dwMFCityToolBar;
 
@@ -80,14 +82,22 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 						if (CanUseFloatingStatusDialog() && bStatusDialogMoving)
 							bCityViewAnim = FALSE;
 
+						if (hWndExt && !bRedraw)
+							bCityViewAnim = FALSE;
+
 						// CMainFrame m_hWnd - only call this specific redraw function before CSimcityView has been created.
 						// (ie, before any game has been started - palette animation on the image is disabled once the
 						// game window has been created)
+						
 						pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 						if (!pSCView)
 							RedrawWindow(pMainFrm->m_hWnd, NULL, NULL, RDW_INVALIDATE);
-						else if (pSCView && bCityViewAnim)
-							RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+						else if (pSCView && bCityViewAnim || hWndExt) {
+							if (pSCView && bCityViewAnim)
+								RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+							if (hWndExt)
+								RedrawWindow(hWndExt, NULL, NULL, RDW_INVALIDATE);
+						}
 					}
 				}
 			}
@@ -108,7 +118,7 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1995(CMFC3XPalette *pPalette
 
 	pSCApp = &pCSimcityAppThis_1995;
 	if (pSCApp) {
-		if (pSCApp->wSCAGameSpeedLOW != GAME_SPEED_PAUSED || pSCApp->dwSCAToggleTitleScreenAnimation || pSCApp->iSCAProgramStep != ONIDLE_STATE_INGAME) {
+		if (pSCApp->wSCAGameSpeedLOW != GAME_SPEED_PAUSED || pSCApp->dwSCABackgroundColourCyclingActive || pSCApp->iSCAProgramStep != ONIDLE_STATE_INGAME) {
 			if (!bLoColor_1995) {
 				pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 				if (pMainFrm) {
@@ -182,7 +192,7 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2KDemo(CMFC3XPalette *pPalette
 
 	pSCApp = &pCSimcityAppThis_Demo;
 	if (pSCApp) {
-		if (pSCApp->wSCAGameSpeedLOW != GAME_SPEED_PAUSED || pSCApp->dwSCAToggleTitleScreenAnimation || pSCApp->iSCAProgramStep != DEMO_ONIDLE_STATE_INGAME) {
+		if (pSCApp->wSCAGameSpeedLOW != GAME_SPEED_PAUSED || pSCApp->dwSCABackgroundColourCyclingActive || pSCApp->iSCAProgramStep != DEMO_ONIDLE_STATE_INGAME) {
 			if (!bLoColor_Demo) {
 				pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 				if (pMainFrm) {

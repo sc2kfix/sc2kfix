@@ -52,6 +52,8 @@ UINT mischook_debug = MISCHOOK_DEBUG;
 
 static DWORD dwDummy;
 
+extern HWND hWndExt;
+
 DLGPROC lpNewCityAfxProc = NULL;
 char szTempMayorName[24] = { 0 };
 
@@ -268,6 +270,40 @@ extern "C" int __stdcall Hook_FileDialog_DoModal() {
 	return iRet;
 }
 
+extern "C" INT_PTR __stdcall Hook_GameDialog_DoModal() {
+	CGameDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	CSimcityAppPrimary *pSCApp;
+	BOOL bQueryDialog;
+	INT_PTR ret;
+
+	pSCApp = &pCSimcityAppThis;
+
+	bQueryDialog = FALSE;
+	if ((DWORD)_ReturnAddress() == 0x44D2C3 ||
+		(DWORD)_ReturnAddress() == 0x4719E3)
+		bQueryDialog = TRUE;
+
+	if (bQueryDialog)
+		pSCApp->dwSCABackgroundColourCyclingActive = TRUE;
+	ret = GameMain_GameDialog_DoModal(pThis);
+	if (bQueryDialog)
+		pSCApp->dwSCABackgroundColourCyclingActive = FALSE;
+	return ret;
+}
+
+extern "C" void __stdcall Hook_GameDialog_OnDestroy() {
+	CGameDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	if (hWndExt)
+		hWndExt = 0;
+	GameMain_GameDialog_OnDestroy(pThis);
+}
+
 static void L_ProcessCmdLine_1996(CSimcityAppPrimary *pSCApp) {
 	char szFileArg[MAX_PATH + 1], szFileExt[16 + 1];
 	std::string str;
@@ -432,6 +468,9 @@ extern "C" void __stdcall Hook_CmdUI_Enable(BOOL bOn) {
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_ARMYBASE, MF_BYCOMMAND | MF_ENABLED);
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_NAVALYARD, MF_BYCOMMAND | MF_ENABLED);
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_MISSILESILOS, MF_BYCOMMAND | MF_ENABLED);
+
+	// Ensure that the debug "Browse Sprites" option is always enabled.
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_SPRITE_DISPLAY, MF_BYCOMMAND | MF_ENABLED);
 }
 
 static void OpenMainDialog_SC2K1996() {
@@ -1000,11 +1039,13 @@ extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lp
 	case 101:
 		lpNewCityAfxProc = lpDialogFunc;
 		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_NewCityDialogProc, dwInitParam);
-	case 102:
-		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	case 103:
 		lpMainDialogAfxProc = lpDialogFunc;
 		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_MainDialogProc, dwInitParam);
+	case 102:
+	case 142:
+	case 154:
+		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	default:
 		return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	}
@@ -1119,7 +1160,7 @@ extern "C" void __stdcall Hook_SimcityDoc_UpdateDocumentTitle() {
 	int iCityMonth;
 	int iCityYear;
 	const char *pCurrStr;
-	CSimString *pFundStr;
+	CCurrencyString *pFundStr;
 
 	GameMain_String_Cons(&cStr);
 
@@ -1154,18 +1195,18 @@ extern "C" void __stdcall Hook_SimcityDoc_UpdateDocumentTitle() {
 		}
 		else
 			pCurrStr = gameCurrFF;
-		pFundStr = new CSimString();
+		pFundStr = new CCurrencyString();
 		if (pFundStr)
-			pFundStr = Game_SimString_SetString(pFundStr, pCurrStr, 20, (double)dwCityFunds);
+			pFundStr = Game_CurrencyString_SetString(pFundStr, pCurrStr, 20, (double)dwCityFunds);
 		else
 			goto GETOUT;
-		Game_SimString_TruncateAtSpace(pFundStr);
+		Game_CurrencyString_TruncateAtSpace(pFundStr);
 		if (bSettingsTitleCalendar)
 			GameMain_String_Format(&cStr, "%s %d %4d <%s> %s", pSCApp->dwSCApCStringLongMonths[iCityMonth].m_pchData, iCityDayMon, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
 		else
 			GameMain_String_Format(&cStr, "%s %4d <%s> %s", pSCApp->dwSCApCStringShortMonths[iCityMonth].m_pchData, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
 		if (pFundStr) {
-			Game_SimString_Dest(pFundStr);
+			Game_CurrencyString_Dest(pFundStr);
 			operator delete(pFundStr);
 		}
 GOFORWARD:
@@ -2052,6 +2093,10 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 			case IDM_MAIN_FILE_OPENMAINDIALOG:
 				OpenMainDialog_SC2K1996();
 				return TRUE;
+
+			case IDM_DEBUG_SPRITE_DISPLAY:
+				ShowSpriteBrowseDialog();
+				return TRUE;
 			}
 			//ConsoleLog(LOG_DEBUG, "CFrameWnd::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, pExtra, pHandler, dwRetAddr);
 		}
@@ -2146,6 +2191,14 @@ void InstallMiscHooks_SC2K1996(void) {
 	// Hook into the CFileDialog::DoModal function
 	VirtualProtect((LPVOID)0x49FE18, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x49FE18, Hook_FileDialog_DoModal);
+
+	// Hook into the CGameDialog::DoModal function
+	VirtualProtect((LPVOID)0x40219E, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x40219E, Hook_GameDialog_DoModal);
+
+	// Hook into the CGameDialog::OnDestroy function
+	VirtualProtect((LPVOID)0x401532, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x401532, Hook_GameDialog_OnDestroy);
 
 	// Fix the sign fonts
 	VirtualProtect((LPVOID)0x4E7267, 1, PAGE_EXECUTE_READWRITE, &dwDummy);

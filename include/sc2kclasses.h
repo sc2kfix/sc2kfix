@@ -156,12 +156,16 @@ public:
 	BYTE *GRpBits;
 	BYTE *GRpBitsLoColor;
 	BITMAPINFO *GRpBitmapInfo;
+
+	void DeleteStored_SC2K1996();
+	int CreateWithPalette_SC2K1996(LONG ibiWidth, LONG ibiHeight);
+	CMFC3XDC *GetDC_SC2K1996();
+	void ReleaseDC_SC2K1996(CMFC3XDC *pDC);
 };
 #pragma pack(pop)
 
-// Reimplementation of an abstracted C string (not to be confused with the MFC CString) used in
-// the original SimCity 2000 code.
-class CSimString {
+// Currency string handling class.
+class CCurrencyString {
 public:
 	char *pStr;
 };
@@ -209,7 +213,7 @@ public:
 	DWORD dwSCAOneHundredFortyFour;
 	DWORD dwSCAAnimationOnCycle;
 	DWORD dwSCAAnimationOffCycle;
-	DWORD dwSCAToggleTitleScreenAnimation;
+	DWORD dwSCABackgroundColourCyclingActive;
 	DWORD dwSCALastTick;
 	int iSCAProgramStep;
 	DWORD dwSCADoStepSkip;
@@ -263,7 +267,7 @@ public:
 	DWORD dwSCAOneHundredFortyFour;
 	DWORD dwSCAAnimationOnCycle;
 	DWORD dwSCAAnimationOffCycle;
-	DWORD dwSCAToggleTitleScreenAnimation;
+	DWORD dwSCABackgroundColourCyclingActive;
 	DWORD dwSCALastTick;
 	int iSCAProgramStep;
 	DWORD dwSCADoStepSkip;
