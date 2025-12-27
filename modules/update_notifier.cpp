@@ -31,6 +31,9 @@ DWORD WINAPI UpdaterThread(LPVOID lpParameter) {
 	return EXIT_SUCCESS;
 }
 
+#define FETCHBUF_SIZE 4096
+#define BUF_SIZE (FETCHBUF_SIZE * 4)
+
 BOOL UpdaterCheckForUpdates(void) {
 	DWORD dwContext;
 	HINTERNET hInet = InternetOpen("sc2kfix Update Notifier", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, NULL);
@@ -65,7 +68,9 @@ BOOL UpdaterCheckForUpdates(void) {
 		ConsoleLog(LOG_DEBUG, "UPD:  InternetOpenUrl()\n");
 
 	DWORD dwBytesGrabbed = 0;
-	char* szBuffer = (char*)malloc(16384);
+	DWORD dwBytesReceived = 0;
+	char szTempBuf[FETCHBUF_SIZE + 1];
+	char* szBuffer = (char*)malloc(BUF_SIZE + 1);
 	if (!szBuffer) {
 		if (updatenotifier_debug)
 			ConsoleLog(LOG_ERROR, "UPD:  Couldn't allocate szBuffer.\n");
@@ -76,13 +81,26 @@ BOOL UpdaterCheckForUpdates(void) {
 		ConsoleLog(LOG_DEBUG, "UPD:  malloc()\n");
 
 	if (updatenotifier_debug)
-		ConsoleLog(LOG_DEBUG, "UPD:  Bytes to grab: %u\n", 16384);
+		ConsoleLog(LOG_DEBUG, "UPD:  Bytes to grab: %u\n", BUF_SIZE);
 
-	if (!InternetReadFile(hHttpRequest, szBuffer, 16384, &dwBytesGrabbed)) {
-		if (updatenotifier_debug)
-			ConsoleLog(LOG_ERROR, "UPD:  InternetReadFile failed, 0x%08X.\n", GetLastError());
-		return FALSE;
+	// Fetch in FETCHBUF_SIZE chunks.
+	while (InternetReadFile(hHttpRequest, szTempBuf, sizeof(szTempBuf) - 1, &dwBytesGrabbed)) {
+		if (dwBytesGrabbed == 0 || (dwBytesReceived + dwBytesGrabbed) >= BUF_SIZE)
+			break;
+		
+		dwBytesReceived += dwBytesGrabbed;
+		strcat_s(szBuffer, BUF_SIZE, szTempBuf);
+		memset(szTempBuf, 0, sizeof(szTempBuf));
 	}
+
+	szBuffer[BUF_SIZE + 1] = 0;
+
+	// This was previously in the prior InternetReadFile 'if' block (when it was checking
+	// for it to return 0); leave this here for review.
+	//
+	//if (updatenotifier_debug)
+	//	ConsoleLog(LOG_ERROR, "UPD:  InternetReadFile failed, 0x%08X.\n", GetLastError());
+	//goto FAIL;
 
 	if (updatenotifier_debug)
 		ConsoleLog(LOG_DEBUG, "UPD:  InternetReadFile()\n");
@@ -94,14 +112,13 @@ BOOL UpdaterCheckForUpdates(void) {
 		ConsoleLog(LOG_DEBUG, "UPD:  InternetCloseHandle()\n");
 
 	if (updatenotifier_debug)
-		ConsoleLog(LOG_DEBUG, "UPD:  Bytes received: %u\n", dwBytesGrabbed);
-
-	szBuffer[16383] = '\0';
+		ConsoleLog(LOG_DEBUG, "UPD:  Bytes received: %u\n", dwBytesReceived);
 
 	char* szTagString = strstr(szBuffer, "\"tag_name\"");
 	if (!szTagString) {
 		if (updatenotifier_debug)
 			ConsoleLog(LOG_ERROR, "UPD:  No release tag name found (1).\n");
+		free(szBuffer);
 		return FALSE;
 	}
 
@@ -113,6 +130,7 @@ BOOL UpdaterCheckForUpdates(void) {
 	if (!*szLatestRelease) {
 		if (updatenotifier_debug)
 			ConsoleLog(LOG_ERROR, "UPD:  No release tag name found (2) - scanned %i fields.\n", n);
+		free(szBuffer);
 		return FALSE;
 	}
 
@@ -123,8 +141,10 @@ BOOL UpdaterCheckForUpdates(void) {
 		ConsoleLog(LOG_INFO, "UPD:  New release available: %s (currently running %s)\n", szLatestRelease, szSC2KFixReleaseTag);
 		if (dwDetectedVersion == VERSION_SC2K_1996)
 			PostMessage(hwndMainDialog_SC2K1996, WM_SC2KFIX_UPDATE, 0, 1);
+		free(szBuffer);
 		return TRUE;
 	}
-
+	
+	free(szBuffer);
 	return FALSE;
 }

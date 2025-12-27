@@ -938,36 +938,52 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 	return lpNewCityAfxProc(hwndDlg, message, wParam, lParam);
 }
 
-static BOOL CALLBACK Hook_MainDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
-	std::string strInfo;
+static void SetMainDialogUpdateState(HWND hwndDlg) {
+	RECT quitRect, statRect, dlgRect;
+	HWND hdlgStaticItem, hdlgQuitItem;
+	LONG addCY, dlgCY;
 
+	bMainDialogUpdateState = TRUE;
+	if (bMainDialogUpdateState) {
+		hdlgQuitItem = GetDlgItem(hwndDlg, 115);
+		GetWindowRect(hdlgQuitItem, &quitRect);
+		ScreenToClient(hwndDlg, (LPPOINT)&quitRect);
+		ScreenToClient(hwndDlg, (LPPOINT)&quitRect.right);
+		addCY = quitRect.top;
+
+		hdlgStaticItem = GetDlgItem(hwndDlg, IDC_STATIC_UPDATENOTICE);
+		GetWindowRect(hdlgStaticItem, &statRect);
+		ScreenToClient(hwndDlg, (LPPOINT)&statRect);
+		ScreenToClient(hwndDlg, (LPPOINT)&statRect.right);
+		addCY = (((statRect.top * 2) - addCY) + 21) / 3;
+
+		statRect.top += addCY;
+		statRect.bottom += addCY;
+
+		SetWindowPos(hdlgStaticItem, HWND_TOP, statRect.left, statRect.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+
+		GetWindowRect(hwndDlg, &dlgRect);
+		dlgCY = addCY + dlgRect.bottom - dlgRect.top;
+		dlgRect.bottom += addCY;
+		SetWindowPos(hwndDlg, HWND_TOP, 0, 0, dlgRect.right - dlgRect.left, dlgCY, SWP_NOMOVE | SWP_NOACTIVATE);
+
+		SetDlgItemText(hwndDlg, IDC_STATIC_UPDATENOTICE, UPDATE_STRING);
+		ShowWindow(hdlgStaticItem, SW_SHOW);
+	}
+}
+
+static BOOL CALLBACK Hook_MainDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 	case WM_INITDIALOG:
 		hwndMainDialog_SC2K1996 = hwndDlg;
 
-		if (bUpdateAvailable) {
-			strInfo = UPDATE_STRING;
-			bMainDialogUpdateState = TRUE;
-		}
-		else {
-			// Set the version string.
-			strInfo = "Running\nsc2kfix\nVersion\n";
-			strInfo += szSC2KFixVersion;
-			strInfo += " (";
-			strInfo += szSC2KFixReleaseTag;
-			strInfo += ")";
-		}
-
-		SetDlgItemText(hwndDlg, IDC_STATIC_UPDATENOTICE, strInfo.c_str());
+		if (bUpdateAvailable)
+			SetMainDialogUpdateState(hwndDlg);
 		break;
 	case WM_SC2KFIX_UPDATE:
 		if (!bMainDialogUpdateState) {
-			if (lParam == 1) {
-				strInfo = UPDATE_STRING;
-				bMainDialogUpdateState = TRUE;
-
-				SetDlgItemText(hwndDlg, IDC_STATIC_UPDATENOTICE, strInfo.c_str());
-			}
+			if (lParam == 1)
+				SetMainDialogUpdateState(hwndDlg);
 		}
 		break;
 	case WM_DESTROY:
