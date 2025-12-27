@@ -1386,10 +1386,10 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 						if (wCityProgression == 4)
 							Game_SimulationProposeMilitaryBase();
 						else if (wCityProgression == 5)
-							Game_SimulationGrantReward(3, 1);
+							Game_SimulationToggleGrantReward(3, TRUE);
 					}
 					else
-						Game_SimulationGrantReward(wCityProgression - 1, 1);
+						Game_SimulationToggleGrantReward(wCityProgression - 1, TRUE);
 					Game_ToolMenuUpdate();
 					Game_SimcityApp_AdjustNewspaperMenu(pSCApp);
 					Game_SimcityApp_SetGameCursor(pSCApp, 0, 0);
@@ -1530,7 +1530,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 				if (wCurrentCityToolGroup != CITYTOOL_GROUP_CENTERINGTOOL) {
 					if (wTileCoordinateX < 0 || wTileCoordinateX >= GAME_MAP_SIZE ||
 						wTileCoordinateY < 0 || wTileCoordinateY >= GAME_MAP_SIZE ||
-						(wCurrentCityToolGroup == CITYTOOL_GROUP_REWARDS && wSelectedSubtool[wCurrentCityToolGroup] == REWARDS_ARCOLOGIES_WAITING)) {
+						(wCurrentCityToolGroup == CITYTOOL_GROUP_REWARDS && wSelectedSubtool[wCurrentCityToolGroup] == REWARDS_ARCOLOGIES)) {
 						wTileHighlightActive = 0;
 					}
 					else {
@@ -1565,7 +1565,7 @@ extern "C" int __stdcall Hook_AddAllInventions(void) {
 	return 0;
 }
 
-extern "C" void __stdcall Hook_SimcityView_OnLButtonDown(UINT nFlags, POINT pt) {
+extern "C" void __stdcall Hook_SimcityView_OnLButtonDown(UINT nFlags, CMFC3XPoint pt) {
 	CSimcityView *pThis;
 
 	__asm mov [pThis], ecx
@@ -1607,11 +1607,11 @@ extern "C" void __stdcall Hook_SimcityView_OnLButtonDown(UINT nFlags, POINT pt) 
 			bOverrideTickPlacementHighlight = TRUE;
 			hWnd = SetCapture(pThis->m_hWnd);
 			GameMain_Wnd_FromHandle(hWnd);
-			wCurrentTileCoordinates = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);;
+			wCurrentTileCoordinates = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
 			if (wCurrentTileCoordinates >= 0) {
-				wTileCoordinateX = (uint8_t)wCurrentTileCoordinates;
+				wTileCoordinateX = LOBYTE(wCurrentTileCoordinates);
+				wTileCoordinateY = HIBYTE(wCurrentTileCoordinates);
 				wPreviousTileCoordinateX = wTileCoordinateX;
-				wTileCoordinateY = wCurrentTileCoordinates >> 8;
 				wPreviousTileCoordinateY = wTileCoordinateY;
 				wGameScreenAreaX = (WORD)pt.x;
 				wGameScreenAreaY = (WORD)pt.y;
@@ -1640,8 +1640,8 @@ extern "C" void __stdcall Hook_SimcityView_OnMouseMove(UINT nFlags, CMFC3XPoint 
 	if (pThis->dwSCVLeftMouseDownInGameArea) {
 		wCurrentTileCoordinates = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
 		if (wCurrentTileCoordinates >= 0) {
-			wTileCoordinateX = (uint8_t)wCurrentTileCoordinates;
-			wTileCoordinateY = wCurrentTileCoordinates >> 8;
+			wTileCoordinateX = LOBYTE(wCurrentTileCoordinates);
+			wTileCoordinateY = HIBYTE(wCurrentTileCoordinates);
 			if (wPreviousTileCoordinateX != wTileCoordinateX ||
 				wPreviousTileCoordinateY != wTileCoordinateY) {
 				if ((int)abs(wGameScreenAreaX - pt.x) > 1 ||
@@ -1671,124 +1671,6 @@ extern "C" void __stdcall Hook_SimcityView_OnMouseMove(UINT nFlags, CMFC3XPoint 
 	}
 	else
 		bOverrideTickPlacementHighlight = FALSE;
-}
-
-extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, POINT pt) {
-	CSimcityAppPrimary *pSCApp;
-	CSimcityView *pThis;
-	__int16 iTileCoords;
-	__int16 iCurrMapToolGroupWithHotKey, iCurrMapToolGroupNoHotKey;
-	__int16 iTileStartX, iTileStartY;
-	__int16 iTileTargetX, iTileTargetY;
-	WORD wNewScreenPointX, wNewScreenPointY;
-	DWORD dwIsZoomed;
-	HWND hWnd;
-
-	// pThis[62] = dwSCVLeftMouseButtonDown
-	// *(DWORD *)((char *)pThis + 322) = SCVIsZoomed (This is referenced as a DWORD internally - structure alignment between it and the prior WORD at (WORD)pThis[160])
-
-	// pThis[62] - When this is set to 0, you remain within the do/while loop until you
-	//             release the left mouse button.
-	//             If it is set to 1 while the left mouse button is pressed (Shift key is
-	//             pressed and the iCurrToolGroupA is not 7 or 8 (trees or forest respectively)
-	//             it will break out of the loop and then you end up within the WM_MOUSEMOVE
-	//             call (if mouse movement is taking place).
-	//
-	// The change in this case is to only set pThis[62] to 0 when the iCurrToolGroupA is not
-	// 'Center Tool', this will then allow it to pass-through to the WM_MOUSEMOVE call.
-
-	pSCApp = &pCSimcityAppThis;
-	pThis = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);	// TODO: is this necessary or can we just dereference pCSimcityView?
-	Game_SimcityView_TileHighlightUpdate(pThis);
-	iTileStartX = 400;
-	iTileStartY = 400;
-	iCurrMapToolGroupNoHotKey = wCurrentMapToolGroup;
-	iCurrMapToolGroupWithHotKey = iCurrMapToolGroupNoHotKey;
-	if ((nFlags & MK_CONTROL) != 0)
-		iCurrMapToolGroupWithHotKey = MAPTOOL_GROUP_CENTERINGTOOL;
-	if (iCurrMapToolGroupWithHotKey != MAPTOOL_GROUP_CENTERINGTOOL)
-		pThis->dwSCVLeftMouseButtonDown = 0;
-	do {
-		iTileCoords = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
-		if (iTileCoords < 0)
-			break;
-		iTileTargetX = (uint8_t)iTileCoords;
-		iTileTargetY = iTileCoords >> 8;
-		if (iTileTargetX >= GAME_MAP_SIZE || iTileTargetY < 0)
-			break;
-		if ((nFlags & MK_SHIFT) != 0 && iCurrMapToolGroupWithHotKey != MAPTOOL_GROUP_TREES && iCurrMapToolGroupWithHotKey != MAPTOOL_GROUP_FOREST) {
-			pThis->dwSCVLeftMouseButtonDown = 1;
-			break;
-		}
-		if (iTileStartX != iTileTargetX || iTileStartY != iTileTargetY) {
-			switch (iCurrMapToolGroupWithHotKey) {
-			case MAPTOOL_GROUP_BULLDOZER: // Bulldozing, only relevant in the CityToolMenuAction code it seems.
-				Game_UseBulldozer(iTileTargetX, iTileTargetY);
-				Game_SimcityView_UpdateAreaPortionFill(pThis);
-				break;
-			case MAPTOOL_GROUP_RAISETERRAIN: // Raise Terrain
-				Game_MapToolRaiseTerrain(iTileTargetX, iTileTargetY);
-				break;
-			case MAPTOOL_GROUP_LOWERTERRAIN: // Lower Terrain
-				Game_MapToolLowerTerrain(iTileTargetX, iTileTargetY);
-				break;
-			case MAPTOOL_GROUP_STRETCHTERRAIN: // Stretch Terrain (Drag vertically)
-				Game_MapToolStretchTerrain(iTileTargetX, iTileTargetY, (__int16)pt.y);
-				break;
-			case MAPTOOL_GROUP_LEVELTERRAIN: // Level Terrain
-				Game_MapToolLevelTerrain(iTileTargetX, iTileTargetY);
-				break;
-			case MAPTOOL_GROUP_WATER: // Place Water
-			case MAPTOOL_GROUP_STREAM: // Place Stream
-				if (iCurrMapToolGroupWithHotKey == MAPTOOL_GROUP_WATER) {
-					if (!Game_MapToolPlaceWater(iTileTargetX, iTileTargetY) || Game_Sound_MapToolSoundTrigger(pSCApp->SCASNDLayer))
-						break;
-				}
-				else {
-					Game_MapToolPlaceStream(iTileTargetX, iTileTargetY, 100);
-					if (Game_Sound_MapToolSoundTrigger(pSCApp->SCASNDLayer))
-						break;
-				}
-				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_FLOOD);
-				break;
-			case MAPTOOL_GROUP_TREES: // Place Tree
-			case MAPTOOL_GROUP_FOREST: // Place Forest
-				if (!Game_Sound_MapToolSoundTrigger(pSCApp->SCASNDLayer))
-					Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_PLOP);
-				if (iCurrMapToolGroupWithHotKey == MAPTOOL_GROUP_TREES)
-					Game_MapToolPlaceTree(iTileTargetX, iTileTargetY);
-				else
-					Game_MapToolPlaceForest(iTileTargetX, iTileTargetY);
-				break;
-			case MAPTOOL_GROUP_CENTERINGTOOL: // Center Tool
-				Game_GetScreenCoordsFromTileCoords(iTileTargetX, iTileTargetY, &wNewScreenPointX, &wNewScreenPointY);
-				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
-				dwIsZoomed = pThis->dwSCVIsZoomed;
-				if (dwIsZoomed)
-					Game_SimcityView_CenterOnNewScreenCoordinates(pThis, wScreenPointX - (wNewScreenPointX >> 1), wScreenPointY - (wNewScreenPointY >> 1));
-				else
-					Game_SimcityView_CenterOnNewScreenCoordinates(pThis, wScreenPointX - wNewScreenPointX, wScreenPointY - wNewScreenPointY);
-				break;
-			default:
-				break;
-			}
-		}
-		if (iCurrMapToolGroupWithHotKey >= MAPTOOL_GROUP_RAISETERRAIN && iCurrMapToolGroupWithHotKey <= MAPTOOL_GROUP_LEVELTERRAIN)
-			break;
-		else if (iCurrMapToolGroupWithHotKey == MAPTOOL_GROUP_CENTERINGTOOL) {
-			Game_SimcityView_UpdateAreaCompleteColorFill(pThis);
-			hWnd = pThis->m_hWnd;
-			UpdateWindow(hWnd);
-			break;
-		}
-		Game_SimcityView_UpdateAreaPortionFill(pThis);
-		iTileStartX = iTileTargetX;
-		iTileStartY = iTileTargetY;
-		hWnd = pThis->m_hWnd;
-		UpdateWindow(hWnd);
-	} while (Game_GetGameAreaMouseActivity(pThis, &pt));
-	if (iCurrMapToolGroupNoHotKey != iCurrMapToolGroupWithHotKey)
-		wCurrentCityToolGroup = iCurrMapToolGroupNoHotKey;
 }
 
 extern "C" void __stdcall Hook_SimcityApp_LoadCursorResources() {
@@ -1868,6 +1750,102 @@ extern "C" int __stdcall Hook_StartupGraphics() {
 	}
 
 	return ReleaseDC(0, hDC);
+}
+
+extern "C" void __stdcall Hook_MainFrame_OnActivateApp(BOOL bActive, HTASK hTask) {
+	CMainFrame *pThis;
+
+	__asm mov[pThis], ecx
+
+	CSimcityAppPrimary *pSCApp;
+	CSimcityView *pSCView;
+	HWND hWndCapt;
+
+	pSCApp = &pCSimcityAppThis;
+	if (!pSCApp->dwSCAMainFrameDestroyVar) {
+		GameMain_Wnd_Default(pThis);
+		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+		hWndCapt = SetCapture(pThis->m_hWnd);
+		GameMain_Wnd_FromHandle(hWndCapt);
+		bMainFrameInactive = !bActive;
+		if (!bActive || pSCApp->dwSCAbForceBkgd) {
+			if (!bActive && pSCApp->dwSCAbForceBkgd) {
+				pSCApp->dwSCAbForceBkgd = FALSE;
+				Game_MainFrame_ToggleToolBars(pThis, FALSE);
+				// Only call this function if the setting to play
+				// music in background is not enabled.
+				if (!bSettingsMusicInBackground)
+					Game_SimcityApp_MusicTrigger(pSCApp);
+				L_PlaySound_SC2K1996(0, 0); // Review concerning sound call change.
+				InvalidateRect(pThis->m_hWnd, 0, TRUE);
+				if (pSCView)
+					Game_SimcityView_MainWindowUpdate(pSCView, 0, FALSE);
+			}
+		}
+		else {
+			pSCApp->dwSCAbForceBkgd = TRUE;
+			if (!IsIconic(pThis->m_hWnd)) {
+				if (!bKeepPalette)
+					Game_MainFrame_OnQueryNewPalette(pThis);
+				InvalidateRect(pThis->m_hWnd, 0, TRUE);
+				Game_MainFrame_ToggleToolBars(pThis, TRUE);
+				if (pSCView) {
+					if (!Game_Sound_GetMCIResult(pSCApp->SCASNDLayer))
+						Game_SimcityApp_MusicPlayNextRefocusSong(pSCApp);
+				}
+			}
+			Game_SimcityApp_SetGameCursor(pSCApp, 0, TRUE);
+		}
+		if (!bCSAMainFrameDirectReleaseCapture)
+			ReleaseCapture();
+	}
+}
+
+extern "C" void __stdcall Hook_MainFrame_OnSize(UINT nType, int cx, int cy) {
+	CMainFrame *pThis;
+
+	__asm mov[pThis], ecx
+
+	CSimcityAppPrimary *pSCApp;
+
+	pSCApp = &pCSimcityAppThis;
+	if (nType == 1) {
+		if (!bSettingsMusicInBackground)
+			Game_SimcityApp_MusicTrigger(pSCApp);
+		L_PlaySound_SC2K1996(0, 0); // Review concerning sound call change.
+	}
+	Game_MainFrame_OnQueryNewPalette(pThis);
+	InvalidateRect(pThis->m_hWnd, 0, TRUE);
+	Game_MainFrame_MoveStatusGoToButton(pThis);
+	GameMain_MDIFrameWnd_OnSize(pThis, nType, cx, cy);
+}
+
+extern "C" void __stdcall Hook_MainFrame_OnShowWindow(BOOL bShow, BOOL nStatus) {
+	CMainFrame *pThis;
+
+	__asm mov[pThis], ecx
+
+	CSimcityAppPrimary *pSCApp;
+	CSimcityView *pSCView;
+
+	GameMain_Wnd_Default(pThis);
+	pSCApp = &pCSimcityAppThis;
+	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+	if (bShow) {
+		Game_MainFrame_OnQueryNewPalette(pThis);
+		InvalidateRect(pThis->m_hWnd, 0, TRUE);
+		Game_MainFrame_ToggleToolBars(pThis, TRUE);
+		if (pSCView) {
+			if (!Game_Sound_GetMCIResult(pSCApp->SCASNDLayer))
+				Game_SimcityApp_MusicPlayNextRefocusSong(pSCApp);
+		}
+	}
+	else {
+		if (!bSettingsMusicInBackground)
+			Game_SimcityApp_MusicTrigger(pSCApp);
+		L_PlaySound_SC2K1996(0, 0); // Review concerning sound call change.
+	}
+	Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
 }
 
 extern "C" void __stdcall Hook_ShowViewControls() {
@@ -2241,10 +2219,6 @@ void InstallMiscHooks_SC2K1996(void) {
 	*(DWORD*)0x440943 = 50000000; // Power
 	VirtualProtect((LPVOID)0x440987, 4, PAGE_EXECUTE_READWRITE, &dwDummy); // 0x440170 <- CityToolMenuAction
 	*(DWORD*)0x440987 = 50000000; // Water
-	VirtualProtect((LPVOID)0x43F429, 4, PAGE_EXECUTE_READWRITE, &dwDummy); // CityToolMenuAction
-	*(DWORD*)0x43F429 = 50000000; // Water
-	VirtualProtect((LPVOID)0x43F3A4, 4, PAGE_EXECUTE_READWRITE, &dwDummy); // CityToolMenuAction
-	*(DWORD*)0x43F3A4 = 50000000; // Power
 
 	// Fix the pipe tool not refreshing properly at max zoom
 	VirtualProtect((LPVOID)0x43F447, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -2267,10 +2241,22 @@ void InstallMiscHooks_SC2K1996(void) {
 	InstallQueryHooks_SC2K1996();
 
 	// Expand sound buffers and load higher quality sounds from DLL resources
-	LoadReplacementSounds();
+	InstallSoundEngineHooks_SC2K1996();
 
 	// Install music engine hooks
 	InstallMusicEngineHooks();
+
+	// Hook for CMainFrame::OnActivateApp
+	VirtualProtect((LPVOID)0x40203B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x40203B, Hook_MainFrame_OnActivateApp);
+
+	// Hook for CMainFrame::OnSize
+	VirtualProtect((LPVOID)0x4027DE, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4027DE, Hook_MainFrame_OnSize);
+
+	// Hook for CMainFrame::OnShowWindow
+	VirtualProtect((LPVOID)0x401A50, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x401A50, Hook_MainFrame_OnShowWindow);
 
 	// Hook status bar updates for the status dialog implementation
 	InstallStatusHooks_SC2K1996();
@@ -2407,10 +2393,6 @@ skipgamemenu:
 	VirtualProtect((LPVOID)0x4016EA, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4016EA, Hook_SimcityView_OnMouseMove);
 
-	// Hook for the MapToolMenuAction call.
-	VirtualProtect((LPVOID)0x402B44, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x402B44, Hook_MapToolMenuAction);
-
 	// Hook for CSimcityApp::LoadCursorResources
 	VirtualProtect((LPVOID)0x402234, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402234, Hook_SimcityApp_LoadCursorResources);
@@ -2449,12 +2431,12 @@ skipgamemenu:
 // again at runtime because it can patch back in original game code. It's used for small stuff.
 void UpdateMiscHooks_SC2K1996(void) {
 	// Music in background
-	VirtualProtect((LPVOID)0x40BFDA, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	if (bSettingsMusicInBackground)
-		memset((LPVOID)0x40BFDA, 0x90, 5);
-	else {
-		BYTE bOriginalCode[5] = { 0xE8, 0xFD, 0x50, 0xFF, 0xFF };
-		memcpy_s((LPVOID)0x40BFDA, 5, bOriginalCode, 5);
-	}
+	//VirtualProtect((LPVOID)0x40BFDA, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	//if (bSettingsMusicInBackground)
+	//	memset((LPVOID)0x40BFDA, 0x90, 5);
+	//else {
+	//	BYTE bOriginalCode[5] = { 0xE8, 0xFD, 0x50, 0xFF, 0xFF };
+	//	memcpy_s((LPVOID)0x40BFDA, 5, bOriginalCode, 5);
+	//}
 }
 

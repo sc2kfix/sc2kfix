@@ -99,13 +99,12 @@ void MusicShufflePlaylist(int iLastSongPlayed) {
 	}
 }
 
-DWORD WINAPI MusicMCINotifyCallback(WPARAM wFlags, LPARAM lDevID) {
-	if (wFlags & MCI_NOTIFY_SUCCESSFUL) {
+void WINAPI MusicMCINotifyCallback(WPARAM wFlags, LPARAM lDevID) {
+	if (wFlags == MCI_NOTIFY_SUCCESSFUL || wFlags == MCI_NOTIFY_FAILURE) {
 		PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
 		if (mus_debug & MUS_DEBUG_THREAD)
-			ConsoleLog(LOG_DEBUG, "MUS:  MusicMCINotifyCallback posted WM_MUSIC_STOP.\n");
+			ConsoleLog(LOG_DEBUG, "MUS:  MusicMCINotifyCallback posted WM_MUSIC_STOP. (%u, %u)\n", wFlags, lDevID);
 	}
-	return 0;
 }
 
 int MusicFluidSynthMidiEventHandler(void* data, fluid_midi_event_t* event) {
@@ -438,7 +437,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 						iPlayingSongID = msg.wParam;
 						const char* szSongPath = GetGameSoundPath(iPlayingSongID, FALSE);
 
-						if (szSongPath)
+						if (szSongPath && !bFluidSynthPlaying)
 							CreateThread(NULL, 0, FluidSynthWatchdogThread, (LPVOID)szSongPath, 0, NULL);
 						goto next;
 					}
@@ -492,6 +491,8 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 							iPlayingSongID = 0;
 							goto next;
 						}
+
+
 					}
 				}
 				else {
@@ -561,21 +562,22 @@ void DoMusicPlay(int iSongID, BOOL bInterrupt) {
 		ConsoleLog(LOG_DEBUG, "MUS:  Hook_SimcityApp_MusicPlay posted WM_MUSIC_PLAY for iSongID = %u.\n", iSongID);
 }
 
-extern "C" int __stdcall Hook_SimcityApp_MusicPlay(int iSongID) {
+extern "C" void __stdcall Hook_MainFrame_OnMCINotify(WPARAM wFlags, LPARAM lDevID) {
+	CMainFrame *pThis;
+	__asm mov [pThis], ecx
+
+	MusicMCINotifyCallback(wFlags, lDevID);
+}
+
+extern "C" void __stdcall Hook_SimcityApp_MusicPlay(int iSongID) {
 	CSimcityAppPrimary *pThis;
 	__asm mov [pThis], ecx
 
 	if (pThis->dwSCAGameMusic)
 		DoMusicPlay(iSongID, TRUE);
-
-	// Restore "this" and leave
-	__asm {
-		mov ecx, [pThis]
-		mov eax, 1
-	}
 }
 
-extern "C" int __stdcall Hook_Sound_MusicStop(void) {
+extern "C" void __stdcall Hook_Sound_MusicStop(void) {
 	CSound *pThis;
 	__asm mov [pThis], ecx
 
@@ -583,18 +585,12 @@ extern "C" int __stdcall Hook_Sound_MusicStop(void) {
 	PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
 	if (mus_debug & MUS_DEBUG_THREAD)
 		ConsoleLog(LOG_DEBUG, "MUS:  Hook_Sound_MusicStop posted WM_MUSIC_STOP.\n");
-
-	// Restore "this" and leave
-	__asm {
-		mov ecx, [pThis]
-		xor eax, eax
-	}
 }
 
 // Replaces the original MusicPlayNextRefocusSong
-extern "C" int __stdcall Hook_SimcityApp_MusicPlayNextRefocusSong(void) {
+extern "C" void __stdcall Hook_SimcityApp_MusicPlayNextRefocusSong(void) {
 	CSimcityAppPrimary *pThis;
-	int retval, iSongToPlay;
+	int iSongToPlay;
 
 	// This is actually a __thiscall we're overriding, so save "this"
 	__asm mov [pThis], ecx
@@ -603,14 +599,15 @@ extern "C" int __stdcall Hook_SimcityApp_MusicPlayNextRefocusSong(void) {
 	if (_ReturnAddress() == (void*)0x4061EE || _ReturnAddress() == (void*)0x425444) {
 		if (mus_debug & MUS_DEBUG_SONGS)
 			ConsoleLog(LOG_DEBUG, "MUS:  Forcing song 10001 for call returning to 0x%08X.\n", (DWORD)_ReturnAddress());
-		return Game_SimcityApp_MusicPlay(pThis, 10001);
+		Game_SimcityApp_MusicPlay(pThis, 10001);
+		return;
 	}
 
 	iSongToPlay = vectorRandomSongIDs[iCurrentSong++];
 	if (mus_debug & MUS_DEBUG_SONGS)
 		ConsoleLog(LOG_DEBUG, "MUS:  Playing song %i (next iCurrentSong will be %i).\n", iSongToPlay, (iCurrentSong > 9 ? 0 : iCurrentSong));
 
-	retval = Game_SimcityApp_MusicPlay(pThis, iSongToPlay);
+	Game_SimcityApp_MusicPlay(pThis, iSongToPlay);
 
 	// Loop and/or shuffle.
 	if (iCurrentSong > 9) {
@@ -619,8 +616,6 @@ extern "C" int __stdcall Hook_SimcityApp_MusicPlayNextRefocusSong(void) {
 		// Shuffle the songs, making sure we don't get the same one twice in a row
 		MusicShufflePlaylist(iSongToPlay);
 	}
-
-	__asm mov eax, [retval]
 }
 
 static void L_MusicPlay(CSimcityAppPrimary *pThis, int iSongID) {
@@ -669,12 +664,12 @@ void InstallMusicEngineHooks(void) {
 
 	// Replace music functions with ones to post messages to the music thread
 	if (bSettingsUseMultithreadedMusic) {
+		VirtualProtect((LPVOID)0x40145B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+		NEWJMP((LPVOID)0x40145B, Hook_MainFrame_OnMCINotify);
 		VirtualProtect((LPVOID)0x402414, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 		NEWJMP((LPVOID)0x402414, Hook_SimcityApp_MusicPlay);
 		VirtualProtect((LPVOID)0x402BE4, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 		NEWJMP((LPVOID)0x402BE4, Hook_Sound_MusicStop);
-		VirtualProtect((LPVOID)0x4D2BFC, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
-		*(DWORD*)0x4D2BFC = (DWORD)MusicMCINotifyCallback;
 
 		// XXX - effectively always TRUE because the opt-in setting is now always TRUE as of
 		// r10-dev 2025-08-31. maybe this needs to go away?

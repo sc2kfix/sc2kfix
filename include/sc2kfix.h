@@ -104,6 +104,7 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #endif
 
 #define MUSIC_TRACKS 19
+#define SOUND_ENTRIES 31
 
 // It should be noted that with these values
 // they're referencing the min/max for the
@@ -114,6 +115,8 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define MAX_USER_TEXT_ENTRIES 50
 #define MIN_SIM_TEXT_ENTRIES (MAX_USER_TEXT_ENTRIES + 1)
 #define MAX_SIM_TEXT_ENTRIES 200
+
+#define MAX_LABEL_TEXT_ENTRY_RANGE 128
 
 #define MICROSIMID_MIN 0
 #define MICROSIMID_MAX (MAX_SIM_TEXT_ENTRIES - MIN_SIM_TEXT_ENTRIES)
@@ -143,6 +146,8 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define MARINA_TILES_ALLWET 9
 
 #define INI_GAME_SPEED_SETTING(x) (x - 1)
+
+#define HALVECOORD(x) (x >> 1)
 
 // Struct defining an injected hook from a loaded mod and its nested call priority.
 typedef struct {
@@ -372,7 +377,7 @@ void ShowSpriteBrowseDialog(void);
 BOOL CanUseFloatingStatusDialog();
 void ToggleFloatingStatusDialog(BOOL bEnable);
 void ToggleGotoButton(HWND hWndBut, BOOL bEnable);
-void LoadReplacementSounds(void);
+void InstallSoundEngineHooks_SC2K1996(void);
 BOOL UpdaterCheckForUpdates(void);
 DWORD WINAPI UpdaterThread(LPVOID lpParameter);
 const char *GetGameSoundPath();
@@ -486,7 +491,7 @@ void UpdateStatus_SC2K1996(int iShow);
 void InstallQueryHooks_SC2K1996(void);
 void InstallMilitaryHooks_SC2K1996(void);
 void InstallSaveHooks_SC2K1996(void);
-extern "C" int __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer);
+extern "C" int __stdcall Hook_LoadSoundIntoBuffer(int iSoundID, void* lpBuffer);
 int L_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
 void ReloadDefaultTileSet_SC2K1996();
 int IsValidSiloPosCheck(__int16 m_x, __int16 m_y);

@@ -130,7 +130,7 @@ public:
 	BOOL bSNDWasPlaying;
 	int iSNDActionThingSoundID;
 	void *dwSNDBufferClick;
-	void *dwSNDBufferDestruction;
+	void *dwSNDBufferExplosion;
 	void *dwSNDBufferGeneral;
 	int iSNDGeneralSoundID;
 	DWORD dwSNDUnknownOne;
