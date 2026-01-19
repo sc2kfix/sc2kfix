@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <random>
 
+#include <keybindings.h>
 #include <mfc3xhelp.h>
 #include <sc2kclasses.h>
 #include <sc2k_1995.h>
@@ -102,6 +103,27 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define WM_KUROKO_FILE	WM_APP+0x101
 #define WM_CONSOLE_REPL	WM_APP+0x200
 #endif
+
+#define ListView_InsertItemType(hwndLV, i, tmask) {\
+	LV_ITEM _macro_lvi;\
+	_macro_lvi.mask = (tmask);\
+	_macro_lvi.iItem = (i);\
+	_macro_lvi.iSubItem = 0;\
+	_macro_lvi.pszText = (char *)"";\
+	SNDMSG((hwndLV), LVM_INSERTITEM, (WPARAM)(i), (LPARAM)(LV_ITEM *)&_macro_lvi);\
+}
+
+#define ListView_InsertItemText(hwndLV, i) ListView_InsertItemType(hwndLV, i, LVIF_TEXT)
+
+#define ListView_InsertColumnEntry(hwndLV, i, text, width, tmask, cfmt) { \
+	LV_COLUMN _macro_lvc;\
+	_macro_lvc.mask = (tmask);\
+	_macro_lvc.fmt = (cfmt);\
+	_macro_lvc.iSubItem = (i);\
+	_macro_lvc.pszText = (char *)(text);\
+	_macro_lvc.cx = (width);\
+	(int)SNDMSG((hwndLV), LVM_INSERTCOLUMN, (WPARAM)(i), (LPARAM)(LV_COLUMN *)&_macro_lvc);\
+}
 
 #define MUSIC_TRACKS 19
 #define SOUND_ENTRIES 31
@@ -249,6 +271,7 @@ typedef struct {
 	// Attributes that the settings dialogue needs to know before and after.
 	BOOL bActiveTrackChanged;
 	BOOL bActiveMusicEngineTouched;
+	BOOL bKeyBindingsChanged;
 
 	UINT iCurrentMusicEngineOutput;
 	char szCurrentFluidSynthSoundfont[MAX_PATH + 1];
@@ -385,6 +408,7 @@ int GetCurrentActiveSongID();
 BOOL MusicLoadFluidSynth(void);
 void DoMusicPlay(int iSongID, BOOL bInterrupt);
 BOOL DoConfigureMusicTracks(settings_t *st, HWND hDlg, BOOL bMP3);
+BOOL DoConfigureKeyBindings(settings_t *st, HWND hwndDlg);
 
 BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc);
 
@@ -514,6 +538,7 @@ void InstallMovieHooks(void);
 // Debugging settings
 
 extern UINT guzzardo_debug;
+extern UINT keybinds_debug;
 extern UINT mci_debug;
 extern UINT military_debug;
 extern UINT mischook_debug;

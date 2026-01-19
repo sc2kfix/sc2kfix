@@ -1052,30 +1052,6 @@ extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lp
 }
 #pragma warning(default : 6387)
 
-// Game area Middle Mouse Button Down handler.
-static void DoOnMButtonDown(CSimcityAppPrimary *pSCApp, UINT nFlags, POINT pt) {
-	__int16 wTileCoords = 0;
-	BYTE bTileX = 0, bTileY = 0;
-	wTileCoords = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
-	bTileX = LOBYTE(wTileCoords);
-	bTileY = HIBYTE(wTileCoords);
-
-	if (wTileCoords & 0x8000)
-		return;
-	else {
-		if (nFlags & MK_CONTROL)
-			;
-		else if (nFlags & MK_SHIFT)
-			;
-		else if (GetAsyncKeyState(VK_MENU) < 0) {
-			// useful for tests
-		} else {
-			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
-			Game_CenterOnTileCoords(bTileX, bTileY);
-		}
-	}
-}
-
 extern "C" LRESULT __stdcall Hook_DefWindowProcA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
 	CSimcityAppPrimary *pSCApp;
 	CSimcityView *pSCView;
@@ -1088,8 +1064,19 @@ extern "C" LRESULT __stdcall Hook_DefWindowProcA(HWND hWnd, UINT Msg, WPARAM wPa
 
 			pt.x = GET_X_LPARAM(lParam);
 			pt.y = GET_Y_LPARAM(lParam);
-			DoOnMButtonDown(pSCApp, (UINT)wParam, pt);
+			GetKeyButtonBinding_SC2K1996(B_KEY_MOUSE_MBUTTON, FALSE, &pt);
 			return TRUE;
+		}
+	}
+	else if (Msg == WM_MOUSEWHEEL) {
+		if (pSCView && hWnd == pSCView->m_hWnd) {
+			int nDelta;
+
+			nDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+			if (nDelta < 0)
+				GetKeyBinding_SC2K1996(B_KEY_MOUSE_WHEELDOWN, FALSE);
+			else if (nDelta > 0)
+				GetKeyBinding_SC2K1996(B_KEY_MOUSE_WHEELUP, FALSE);
 		}
 	}
 	return DefWindowProcA(hWnd, Msg, wParam, lParam);
@@ -1574,34 +1561,63 @@ extern "C" void __stdcall Hook_SimcityView_OnLButtonDown(UINT nFlags, CMFC3XPoin
 	RECT r;
 
 	// pThis[19] = SCVScrollBarVert
-	// pThis[22] = SCVScrollBarVertRectOne
-	// pThis[26] = SCVScrollBarVertRectTwo
-	// pThis[30] = SCVScrollBarVertRectThree
-	// pThis[34] = SCVScrollPosVertRect
+	// pThis[22] = SCVScrollBarVertRectBar
+	// pThis[26] = SCVScrollBarVertRectUpButton
+	// pThis[30] = SCVScrollBarVertRectDownButton
+	// pThis[34] = SCVScrollPosVertRectThumb
 	// pThis[58] = SCVStaticRect
 	// pThis[62] = dwSCVLeftMouseButtonDown
 	// pThis[63] = dwSCVLeftMouseDownInGameArea
 	// pThis[67] = dwSCVRightClickMenuOpen
 
+	// It should be noted that the following variable
+	// is only unset outside of this function when
+	// the menu-specific DoCenterOnPoint() call is made.
+	// For the rest of the actions it isn't unset, which
+	// is why after bulldozing or querying a tile in that
+	// manner won't result in any action handling from
+	// the active toolbar (In the base game).
 	if (pThis->dwSCVRightClickMenuOpen)
 		pThis->dwSCVRightClickMenuOpen = 0;
 	else if (!PtInRect(&pThis->SCVStaticRect, pt)) {
 		Game_SimcityView_GetScreenAreaInfo(pThis, &r);
-		if (PtInRect(&pThis->SCVScrollBarVertRectOne, pt)) {
-			if (PtInRect(&pThis->SCVScrollBarVertRectThree, pt))
-				Game_SimCityView_OnVScroll(pThis, SB_LINEDOWN, 0, pThis->SCVScrollBarVert);
-			else if (PtInRect(&pThis->SCVScrollBarVertRectTwo, pt))
-				Game_SimCityView_OnVScroll(pThis, SB_LINEUP, 0, pThis->SCVScrollBarVert);
-			else if (PtInRect(&pThis->SCVScrollPosVertRect, pt))
-				Game_SimCityView_OnVScroll(pThis, SB_THUMBTRACK, (__int16)pt.y, pThis->SCVScrollBarVert);
+		if (PtInRect(&pThis->SCVScrollBarVertRectBar, pt)) {
+#if 0
+			ConsoleLog(LOG_DEBUG, "Vert\n");
+			if (PtInRect(&pThis->SCVScrollBarVertRectDownButton, pt))
+				Game_SimcityView_OnVScroll(pThis, SB_LINEDOWN, 0, pThis->SCVScrollBarVert);
+			else if (PtInRect(&pThis->SCVScrollBarVertRectUpButton, pt))
+				Game_SimcityView_OnVScroll(pThis, SB_LINEUP, 0, pThis->SCVScrollBarVert);
+			else if (PtInRect(&pThis->SCVScrollPosVertRectThumb, pt))
+				Game_SimcityView_OnVScroll(pThis, SB_THUMBTRACK, pt.y, pThis->SCVScrollBarVert);
 			else {
 				// This part appears to be non-functional, pressing "Page Down" will rotate the map;
 				// "Page Up" doesn't do anything.
-				if (pThis->SCVScrollPosVertRect.top >= pt.y)
-					Game_SimCityView_OnVScroll(pThis, SB_PAGEUP, 0, pThis->SCVScrollBarVert);
+				if (pThis->SCVScrollPosVertRectThumb.top >= pt.y)
+					Game_SimcityView_OnVScroll(pThis, SB_PAGEUP, 0, pThis->SCVScrollBarVert);
 				else
-					Game_SimCityView_OnVScroll(pThis, SB_PAGEDOWN, 0, pThis->SCVScrollBarVert);
+					Game_SimcityView_OnVScroll(pThis, SB_PAGEDOWN, 0, pThis->SCVScrollBarVert);
 			}
+#endif
+		}
+		else if (PtInRect(&pThis->SCVScrollBarHorzRectBar, pt)) {
+#if 0
+			ConsoleLog(LOG_DEBUG, "Horz\n");
+			if (PtInRect(&pThis->SCVScrollBarHorzRectRightButton, pt))
+				Game_SimcityView_OnHScroll(pThis, SB_LINERIGHT, 0, pThis->SCVScrollBarHorz);
+			else if (PtInRect(&pThis->SCVScrollBarHorzRectLeftButton, pt))
+				Game_SimcityView_OnHScroll(pThis, SB_LINELEFT, 0, pThis->SCVScrollBarHorz);
+			else if (PtInRect(&pThis->SCVScrollPosHorzRectThumb, pt))
+				Game_SimcityView_OnHScroll(pThis, SB_THUMBTRACK, pt.y, pThis->SCVScrollBarHorz);
+			else {
+				// This part appears to be non-functional, pressing "Page Down" will rotate the map;
+				// "Page Up" doesn't do anything.
+				if (pThis->SCVScrollPosHorzRectThumb.top >= pt.y)
+					Game_SimcityView_OnHScroll(pThis, SB_PAGEUP, 0, pThis->SCVScrollBarHorz);
+				else
+					Game_SimcityView_OnHScroll(pThis, SB_PAGEDOWN, 0, pThis->SCVScrollBarHorz);
+			}
+#endif
 		}
 		else if (!pThis->dwSCVLeftMouseDownInGameArea) {
 			bOverrideTickPlacementHighlight = TRUE;
@@ -1671,6 +1687,14 @@ extern "C" void __stdcall Hook_SimcityView_OnMouseMove(UINT nFlags, CMFC3XPoint 
 	}
 	else
 		bOverrideTickPlacementHighlight = FALSE;
+}
+
+extern "C" void __stdcall Hook_SimcityView_OnRButtonDown(UINT nFlags, CMFC3XPoint pt) {
+	CSimcityView *pThis;
+
+	__asm mov [pThis], ecx
+
+	GetKeyButtonBinding_SC2K1996(B_KEY_MOUSE_RBUTTON, FALSE, &pt);
 }
 
 extern "C" void __stdcall Hook_SimcityApp_LoadCursorResources() {
@@ -1846,6 +1870,20 @@ extern "C" void __stdcall Hook_MainFrame_OnShowWindow(BOOL bShow, BOOL nStatus) 
 		L_PlaySound_SC2K1996(0, 0); // Review concerning sound call change.
 	}
 	Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
+}
+
+extern "C" void __stdcall Hook_MainFrame_OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags) {
+	CMainFrame *pThis;
+
+	__asm mov[pThis], ecx
+
+	//ConsoleLog(LOG_DEBUG, "0x%06X -> CMainFrame::OnKeyDown(0x%06X, 0x%06X, 0x%06X)\n", _ReturnAddress(), nChar, nRepCnt, nFlags);
+
+	GetKeyBinding_SC2K1996(CharToKey(nChar), FALSE);
+
+	int nValidChar = _isctype((char)nChar, (_ALPHA|_DIGIT));
+	if (nValidChar)
+		Game_MainFrame_OnChar(pThis, nChar, nRepCnt, nFlags);
 }
 
 extern "C" void __stdcall Hook_ShowViewControls() {
@@ -2258,6 +2296,10 @@ void InstallMiscHooks_SC2K1996(void) {
 	VirtualProtect((LPVOID)0x401A50, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x401A50, Hook_MainFrame_OnShowWindow);
 
+	// Hook for CMainFrame::OnKeyDown
+	VirtualProtect((LPVOID)0x402D8D, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402D8D, Hook_MainFrame_OnKeyDown);
+
 	// Hook status bar updates for the status dialog implementation
 	InstallStatusHooks_SC2K1996();
 
@@ -2385,13 +2427,17 @@ void InstallMiscHooks_SC2K1996(void) {
 	}
 
 skipgamemenu:
-	// Hook for the game area leftmousebuttondown call.
+	// Hook for CSimcityView::OnLButtonDown
 	VirtualProtect((LPVOID)0x401523, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x401523, Hook_SimcityView_OnLButtonDown);
 
-	// Hook for the game area mouse movement call.
+	// Hook for CSimcityView::OnMouseMove
 	VirtualProtect((LPVOID)0x4016EA, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4016EA, Hook_SimcityView_OnMouseMove);
+
+	// Hook for CSimcityView::OnRButtonDown
+	VirtualProtect((LPVOID)0x401C9E, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x401C9E, Hook_SimcityView_OnRButtonDown);
 
 	// Hook for CSimcityApp::LoadCursorResources
 	VirtualProtect((LPVOID)0x402234, 5, PAGE_EXECUTE_READWRITE, &dwDummy);

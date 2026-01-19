@@ -2973,6 +2973,7 @@ GAMECALL(0x4023D3, void, __cdecl, ToggleColorCycling, CMFC3XPalette *, BOOL)
 GAMECALL(0x4023D8, void, __thiscall, SimcityApp_LoadScenario, CSimcityAppPrimary *)
 GAMECALL(0x4023EC, void, __stdcall, ToolMenuUpdate, void)
 GAMECALL(0x4023F1, int, __thiscall, MainFrame_DoInflightDialog, CMainFrame *)
+GAMECALL(0x40240A, void, __thiscall, SimcityView_OnHScroll, CSimcityView *pThis, UINT nSBCode, UINT nPos, CMFC3XScrollBar *pScrollBar)
 GAMECALL(0x402414, void, __thiscall, SimcityApp_MusicPlay, CSimcityAppPrimary *pThis, int iSongID)
 GAMECALL(0x402419, LONG, __thiscall, Graphics_Width, CGraphics *)
 GAMECALL(0x40242D, void, __thiscall, CurrencyString_Dest, CCurrencyString *)
@@ -2999,7 +3000,7 @@ GAMECALL(0x402752, void, __thiscall, MapToolBar_PressButton, CMapToolBar *, int)
 GAMECALL(0x402757, void, __thiscall, SimcityApp_LoadCityFromCMDLine, CSimcityAppPrimary *, CMFC3XString)
 GAMECALL(0x40278E, BOOL, __thiscall, MainFrame_OnQueryNewPalette, CMainFrame *)
 GAMECALL(0x402798, int, __cdecl, MapToolPlaceForest, __int16 iTileTargetX, __int16 iTileTargetY)
-GAMECALL(0x4027A7, void, __thiscall, SimCityView_OnVScroll, CSimcityView *pThis, int nSBCode, __int16 nPos, CMFC3XScrollBar *pScrollBar)
+GAMECALL(0x4027A7, void, __thiscall, SimcityView_OnVScroll, CSimcityView *pThis, UINT nSBCode, UINT nPos, CMFC3XScrollBar *pScrollBar)
 GAMECALL(0x4027E3, BOOL, __cdecl, MoviePlay, HWND)
 GAMECALL(0x4027F2, int, __cdecl, ItemPlacementCheck, __int16 x, __int16 y, BYTE iTileID, __int16 iTileArea)
 GAMECALL(0x402810, int, __thiscall, SimcityView_UpdateAreaCompleteColorFill, CSimcityView *) // This appears to be a more comprehensive update that'll occur for highlighted/selected area or when you're moving the game area.
@@ -3017,11 +3018,13 @@ GAMECALL(0x40297D, int, __thiscall, SimcityView_CheckOrLoadGraphic, CSimcityView
 GAMECALL(0x402991, void, __cdecl, SwapCycle, int)
 GAMECALL(0x4029C3, int, __cdecl, GetGameAreaMouseActivity, CSimcityView* pSCView, LPPOINT lpPoint)
 GAMECALL(0x4029C8, void, __thiscall, MyToolBar_InvalidateButton, CMyToolBar *, int)
+GAMECALL(0x4029E1, void, __thiscall, MainFrame_OnChar, CMainFrame *, UINT, UINT, UINT)
 GAMECALL(0x402A1D, void, __thiscall, CityToolBar_SetSelection, CCityToolBar *, DWORD, DWORD)
 GAMECALL(0x402A40, void, __cdecl, FailRadio, UINT)
 GAMECALL(0x402A59, void, __cdecl, CityToolSetSign, __int16, __int16)
 GAMECALL(0x402A5E, void, __thiscall, MapToolBar_SetSelection, CMapToolBar *, UINT, UINT, CMFC3XPoint *)
 GAMECALL(0x402A68, void, __thiscall, CityToolBar_UpdateControls, CCityToolBar *, BOOL)
+GAMECALL(0x402AB3, void, __thiscall, SimcityView_DoCenterOnPoint, CSimcityView *)
 GAMECALL(0x402ADB, void, __thiscall, MovieDialog_Dest, CMovieDialog *)
 GAMECALL(0x402AE5, void, __cdecl, CityToolTargetHelicopter, __int16, __int16)
 GAMECALL(0x402AF4, int, __cdecl, CityToolPlaceTunnel, __int16, __int16)
@@ -3167,6 +3170,7 @@ GAMEOFF(CSimcityAppPrimary,	pCSimcityAppThis,			0x4C7010)
 GAMEOFF(WORD,	wCurrentTileCoordinates,	0x4C7A98)
 GAMEOFF(WORD,	wTileCoordinateX,			0x4C7AB0)
 GAMEOFF(WORD,	wTileCoordinateY,			0x4C7AB4)
+GAMEOFF(CMFC3XPoint,	gameViewPt,			0x4C7AC0)
 GAMEOFF(WORD,	wGameScreenAreaX,			0x4C7AD8)		// Used here in CSimcityView_WM_LBUTTONDOWN and CSimcityView_WM_MOUSEFIRST
 GAMEOFF(WORD,	wGameScreenAreaY,			0x4C7ADC)		// Used here in CSimcityView_WM_LBUTTONDOWN and CSimcityView_WM_MOUSEFIRST
 GAMEOFF(DWORD,	dwCityToolBarArcologyDialogCancel,	0x4C7B98)
@@ -4059,6 +4063,8 @@ typedef struct {
 extern std::vector<sprite_ids_t> spriteIDs;
 
 extern HWND hwndMainDialog_SC2K1996;
+
+extern void ResetCheatInput_SC2K1996();
 
 extern BOOL L_PlaySound_SC2K1996(LPCTSTR pszSound, UINT fuSound);
 extern void L_PlayToolSound_SC2K1996(CSimcityAppPrimary *pSCApp, int iSoundID = 0);

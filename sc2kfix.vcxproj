@@ -111,6 +111,7 @@
     <ClInclude Include="include\bc45xhelp.h" />
     <ClInclude Include="include\hooklists.h" />
     <ClInclude Include="include\json.hpp" />
+    <ClInclude Include="include\keybindings.h" />
     <ClInclude Include="include\mfc3xhelp.h" />
     <ClInclude Include="include\music.h" />
     <ClInclude Include="include\sc2kclasses.h" />
@@ -182,6 +183,7 @@
     <ClCompile Include="hooks\hook_sndPlaySound.cpp" />
     <ClCompile Include="hooks\hook_mmtimers.cpp" />
     <ClCompile Include="modules\game_graphics.cpp" />
+    <ClCompile Include="modules\keybindings.cpp" />
     <ClCompile Include="modules\kuroko_glue.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
