@@ -119,9 +119,9 @@ extern "C" void __stdcall Hook_Sound_InitSoundLayer(HWND m_hWnd) {
 	pThis->iSNDGeneralSoundID = -1;
 	pThis->wSNDMCIDevID = -1;
 	Game_SimcityApp_GetValueStringA(pSCApp, &strSndPath, aPaths, aMusic);
-	strcpy(szSoundPath, strSndPath.m_pchData);
+	strcpy_s(szSoundPath, MAX_PATH, strSndPath.m_pchData);
 	if (!szSoundPath[0])
-		strcpy(szSoundPath, aSounds);
+		strcpy_s(szSoundPath, MAX_PATH, aSounds);
 	for (int i = 0; i < SOUND_ENTRIES; i++) {
 		if (snd_debug & SND_DEBUG_INTERNALS)
 			ConsoleLog(LOG_DEBUG, "B: CSound::InitSoundLayer(0x%06X): i(%d), nSoundPlayTicks[i](%d -> %d), &nSoundPlayTicks[i](0x%06X)\n", m_hWnd, i, nSoundPlayTicks[i], (nSoundPlayTicks[i] / 200 + 1), &nSoundPlayTicks[i]);

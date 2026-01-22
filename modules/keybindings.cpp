@@ -614,7 +614,7 @@ LRESULT CALLBACK NewListViewWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 				pKey = GetKeyFromName(szKeyName);
 				if (pKey && !pKey->bImmutable) {
 					if (SetKeyToAction(tempBindings, pKey, "")) {
-						ListView_SetItemText(hWnd, iRow, 1, "");
+						ListView_SetItemText(hWnd, iRow, 1, (char *)"");
 
 						kbs->bKeyBindingsChanged = TRUE;
 					}
