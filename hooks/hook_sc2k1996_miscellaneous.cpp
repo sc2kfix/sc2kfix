@@ -2268,8 +2268,8 @@ void InstallMiscHooks_SC2K1996(void) {
 	*(DWORD*)0x440987 = 50000000; // Water
 
 	// Fix the pipe tool not refreshing properly at max zoom
-	VirtualProtect((LPVOID)0x43F447, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWCALL((LPVOID)0x43F447, 0x402810);		// CSimcityView::UpdateAreaCompleteColorFill
+	//VirtualProtect((LPVOID)0x43F447, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	//NEWCALL((LPVOID)0x43F447, 0x402810);		// CSimcityView::UpdateAreaCompleteColorFill
 
 	// Install hooks for saving and loading
 	InstallSaveHooks_SC2K1996();

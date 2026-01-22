@@ -793,7 +793,11 @@ extern "C" void __cdecl Hook_CityToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 				}
 				else
 					L_PlayToolSound_SC2K1996(pSCApp, SOUND_ERROR);
+#if 1 // Fix the pipe tool not refreshing properly at max zoom - consider revisiting to see about a more specific tweak.
+				Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
+#else
 				Game_SimcityView_UpdateAreaPortionFill(pSCView);
+#endif
 				// Interesting case.. why return for anything that's not a pump?
 				if (wSelectedSubtool[iCurrCityToolGroupWithHotKey] != WATER_PUMP)
 					return;
