@@ -407,8 +407,11 @@ void UpdateKeyBindings() {
 	}
 }
 
-void ClearTempBindings() {
+void InitializeTempBindings() {
 	tempBindings.clear();
+	for (unsigned i = 0; i < defBindings.size(); i++) {
+		tempBindings.push_back(defBindings[i]);
+	}
 }
 
 static BOOL ActionAvailableKeySlot(HWND hWndDlgListView, int iItem, const char *pActionName) {
@@ -427,6 +430,23 @@ static BOOL ActionAvailableKeySlot(HWND hWndDlgListView, int iItem, const char *
 		}
 	}
 	return (nKeySlots >= MAX_BOUND_KEYS) ? FALSE : TRUE;
+}
+
+static void UpdateTempKeyBindings(HWND hWndDlgListView) {
+	char szKeyName[64 + 1], szActionName[64 + 1];
+
+	for (int i = 0; i < ListView_GetItemCount(hWndDlgListView); i++) {
+		memset(szKeyName, 0, sizeof(szKeyName));
+		memset(szActionName, 0, sizeof(szActionName));
+
+		ListView_GetItemText(hWndDlgListView, i, 0, szKeyName, countof(szKeyName) - 1);
+		ListView_GetItemText(hWndDlgListView, i, 1, szActionName, countof(szActionName) - 1);
+
+		bkey_t *pKey = GetKeyFromName(szKeyName);
+		if (pKey && !pKey->bImmutable) {
+			SetKeyToAction(tempBindings, pKey, szActionName);
+		}
+	}
 }
 
 //// Entry Selection
@@ -546,7 +566,6 @@ static void DoEditKeyBinding(keybinds_t *kbs, HWND hwndDlg, HWND hDlgListView, i
 	if (DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_EDITCONFIGENTRY), hwndDlg, EditKeyBindingDialogProc, (LPARAM)&kbe) == TRUE) {
 		if (_stricmp(pActionName, kbe.pActionName) != 0) {
 			ListView_SetItemText(hDlgListView, iItem, 1, (char *)kbe.pActionName);
-			SetKeyToAction(tempBindings, kbe.pKey, kbe.pActionName);
 			if (!kbs->bKeyBindingsChanged)
 				kbs->bKeyBindingsChanged = TRUE;
 		}
@@ -578,12 +597,14 @@ static void InsertKeyBindingViewRow(HWND hDlgListView, int iRow, const char *pKe
 	ListView_SetItemText(hDlgListView, iRow, 1, (char *)pActionName);
 }
 
-static void PopulateKeyBindingList(HWND hDlgListView) {
+static void PopulateKeyBindingList(HWND hDlgListView, BOOL bDefaults = FALSE) {
 	int nIdx = 0;
+
+	ListView_DeleteAllItems(hDlgListView);
 	for (int i = 0; i < B_KEY_COUNT; i++) {
 		bkey_t *prog_key = &progkeys[i];
 		if (prog_key && !prog_key->bImmutable) {
-			const char *pActionName = GetCurrentAction(tempBindings, prog_key->nBkey);
+			const char *pActionName = (bDefaults) ? GetDefaultAction(prog_key->nBkey) : GetCurrentAction(tempBindings, prog_key->nBkey);
 			InsertKeyBindingViewRow(hDlgListView, nIdx, prog_key->pKeyName, pActionName);
 			nIdx++;
 		}
@@ -613,24 +634,15 @@ LRESULT CALLBACK NewListViewWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 				ListView_GetItemText(hWnd, iRow, 0, szKeyName, countof(szKeyName)-1);
 				pKey = GetKeyFromName(szKeyName);
 				if (pKey && !pKey->bImmutable) {
-					if (SetKeyToAction(tempBindings, pKey, "")) {
-						ListView_SetItemText(hWnd, iRow, 1, (char *)"");
+					ListView_SetItemText(hWnd, iRow, 1, (char *)"");
 
-						kbs->bKeyBindingsChanged = TRUE;
-					}
+					kbs->bKeyBindingsChanged = TRUE;
 				}
 			}
 		}
 		else if (wParam == VK_F12) {
 			if (MessageBoxA(hWndParent, "WARNING: You are about to reset all key -> action binds back to their default state; are you quite sure that you want to proceed?", "Caution", MB_ICONEXCLAMATION | MB_YESNO) == IDYES) {
-				ClearTempBindings();
-				for (int i = 0; i < BIND_ACTION_COUNT; i++) {
-					tempBindings.push_back(prog_acts[i]);
-				}
-
-				ListView_DeleteAllItems(hWnd);
-
-				PopulateKeyBindingList(hWnd);
+				PopulateKeyBindingList(hWnd, TRUE);
 
 				kbs->bKeyBindingsChanged = TRUE;
 			}
@@ -672,7 +684,7 @@ BOOL CALLBACK ConfKeyBindingsDialogProc(HWND hwndDlg, UINT message, WPARAM wPara
 		ListView_InsertColumnEntry(hDlgListView, 0, "Key", 150, nColumnMask, nColumnFmt);
 		ListView_InsertColumnEntry(hDlgListView, 1, "Action", 250, nColumnMask, nColumnFmt);
 
-		PopulateKeyBindingList(hDlgListView);
+		PopulateKeyBindingList(hDlgListView, FALSE);
 
 		CenterDialogBox(hwndDlg);
 		return TRUE;
@@ -688,6 +700,9 @@ BOOL CALLBACK ConfKeyBindingsDialogProc(HWND hwndDlg, UINT message, WPARAM wPara
 			break;
 
 		case IDOK:
+			if (kbs->bKeyBindingsChanged) {
+				UpdateTempKeyBindings(hDlgListView);
+			}
 			EndDialog(hwndDlg, TRUE);
 			break;
 
@@ -725,18 +740,11 @@ BOOL DoConfigureKeyBindings(settings_t *st, HWND hwndDlg) {
 	keybinds_t kbs;
 	BOOL bRet;
 
-	if (!st->bKeyBindingsChanged) {
-		ClearTempBindings();
-		for (unsigned i = 0; i < defBindings.size(); i++) {
-			tempBindings.push_back(defBindings[i]);
-		}
-	}
-
 	memset(&kbs, 0, sizeof(keybinds_t));
 	kbs.bKeyBindingsChanged = (st->bKeyBindingsChanged) ? TRUE : FALSE;
 
 	bRet = DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_CONFIGSECTION), hwndDlg, ConfKeyBindingsDialogProc, (LPARAM)&kbs);
-	if (bRet == TRUE) {
+	if (bRet) {
 		if (kbs.bKeyBindingsChanged)
 			st->bKeyBindingsChanged = TRUE;
 	}

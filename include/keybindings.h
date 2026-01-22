@@ -149,6 +149,6 @@ void InitializeDefaultBindings();
 void LoadStoredBindings();
 void SaveStoredBindings();
 void UpdateKeyBindings();
-void ClearTempBindings();
+void InitializeTempBindings();
 void GetKeyBinding_SC2K1996(int nBkey, BOOL bRelease, BOOL bGlobalPtSet = FALSE);
 void GetKeyButtonBinding_SC2K1996(int nBkey, BOOL bRelease, POINT *pt);

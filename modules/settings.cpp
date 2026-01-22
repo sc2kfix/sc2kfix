@@ -566,6 +566,8 @@ void ShowSettingsDialog(void) {
 	st.iCurrentMusicEngineOutput = st.iSettingsMusicEngineOutput;
 	strcpy_s(st.szCurrentFluidSynthSoundfont, sizeof(st.szCurrentFluidSynthSoundfont), st.szSettingsFluidSynthSoundfont);
 
+	InitializeTempBindings();
+
 	ToggleFloatingStatusDialog(FALSE);
 
 	if (DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_SETTINGS), GameGetRootWindowHandle(), SettingsDialogProc, (LPARAM)&st) == TRUE) {
@@ -606,6 +608,5 @@ void ShowSettingsDialog(void) {
 			PostThreadMessage(dwMusicThreadID, WM_MUSIC_RESET, NULL, NULL);
 	}
 
-	ClearTempBindings();
 	ToggleFloatingStatusDialog(TRUE);
 }
