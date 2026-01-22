@@ -725,13 +725,15 @@ BOOL DoConfigureKeyBindings(settings_t *st, HWND hwndDlg) {
 	keybinds_t kbs;
 	BOOL bRet;
 
-	ClearTempBindings();
-	for (unsigned i = 0; i < defBindings.size(); i++) {
-		tempBindings.push_back(defBindings[i]);
+	if (!st->bKeyBindingsChanged) {
+		ClearTempBindings();
+		for (unsigned i = 0; i < defBindings.size(); i++) {
+			tempBindings.push_back(defBindings[i]);
+		}
 	}
 
 	memset(&kbs, 0, sizeof(keybinds_t));
-	kbs.bKeyBindingsChanged = FALSE;
+	kbs.bKeyBindingsChanged = (st->bKeyBindingsChanged) ? TRUE : FALSE;
 
 	bRet = DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_CONFIGSECTION), hwndDlg, ConfKeyBindingsDialogProc, (LPARAM)&kbs);
 	if (bRet == TRUE) {
