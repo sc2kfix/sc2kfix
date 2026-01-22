@@ -134,7 +134,7 @@ static bkey_t *GetKeyFromEntry(int nBkey) {
 }
 
 static bkey_t *GetKeyFromName(const char *pKeyName) {
-	for (unsigned i = 0; i < B_KEY_COUNT; i++) {
+	for (int i = 0; i < B_KEY_COUNT; i++) {
 		bkey_t *prog_key = &progkeys[i];
 		if (prog_key) {
 			if (_stricmp(prog_key->pKeyName, pKeyName) == 0)
