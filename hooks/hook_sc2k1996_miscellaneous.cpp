@@ -2041,8 +2041,17 @@ REFRESHMENUGRANTS:
 	Game_CityToolBar_RefreshToolBar(pCityToolBar);
 }
 
-// Hook for the scenario description popup
-__declspec(naked) void Hook_402B4E(const char* szDescription, int a2, void* cWnd) {
+// Hook for the scenario description popup.
+//
+// The popup is used for the following (just in case it comes up):
+// 1) Scenario information
+// 2) Version displayed from the debug option
+// 3) News paper section article.
+// 4) Specific Query Dialogue 'Ruminate' section.
+//
+// There could be a couple of other cases, however they're
+// not yet completely clear.
+__declspec(naked) void Hook_DisplayInformationMessageBox(const char* szDescription, int a2, void* cWnd) {
 	__asm push ecx
 
 	if (szDescription && strlen(szDescription))
@@ -2453,7 +2462,7 @@ skipgamemenu:
 
 	// Hook the scenario start dialog so we can save the description
 	VirtualProtect((LPVOID)0x402B4E, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x402B4E, Hook_402B4E);
+	NEWJMP((LPVOID)0x402B4E, Hook_DisplayInformationMessageBox);
 
 	// Skip over the strange bit of code that re-arranges the original main menu.
 	// 
