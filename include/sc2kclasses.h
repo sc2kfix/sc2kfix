@@ -358,8 +358,8 @@ public:
 	CGraphics *dwNDCGraphicsOne;
 	CMFC3XBitmapButton dwNDCBitmapButton;
 	DWORD dwNDPaperChoice;
-	DWORD dwNDPaperSectionOpen;
-	CMFC3XFont *dwNDCFonts;
+	DWORD dwNDPaperSectionLoadFailure;
+	CMFC3XFont dwNDCFonts[33];
 };
 
 class CJokeDialog : public CMFC3XDialog {
