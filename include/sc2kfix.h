@@ -167,6 +167,9 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define MARINA_TILES_ALLDRY 0
 #define MARINA_TILES_ALLWET 9
 
+// Although there is a Thing Index '0'
+// that one is for the bulldozer; let's
+// not step on that one.
 #define MIN_THING_IDX 1
 #define MAX_THING_IDX 39
 
