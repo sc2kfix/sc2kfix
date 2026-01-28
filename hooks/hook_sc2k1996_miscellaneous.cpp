@@ -471,6 +471,19 @@ extern "C" void __stdcall Hook_CmdUI_Enable(BOOL bOn) {
 
 	// Ensure that the debug "Browse Sprites" option is always enabled.
 	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_SPRITE_DISPLAY, MF_BYCOMMAND | MF_ENABLED);
+
+	// Ensure that the debug thing options are always enabled.
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_THING_CLEAN_PLANES, MF_BYCOMMAND | MF_ENABLED);
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_THING_CLEAN_COPTERS, MF_BYCOMMAND | MF_ENABLED);
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_THING_CLEAN_SHIPS, MF_BYCOMMAND | MF_ENABLED);
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_THING_CLEAN_SAILBOATS, MF_BYCOMMAND | MF_ENABLED);
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_THING_CLEAN_TRAINS, MF_BYCOMMAND | MF_ENABLED);
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_THING_CLEAN_HERO, MF_BYCOMMAND | MF_ENABLED);
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_THING_CLEAN_MONSTER, MF_BYCOMMAND | MF_ENABLED);
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_THING_CLEAN_TORNADO, MF_BYCOMMAND | MF_ENABLED);
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_THING_CLEAN_PLDEPLOY, MF_BYCOMMAND | MF_ENABLED);
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_THING_CLEAN_FRDEPLOY, MF_BYCOMMAND | MF_ENABLED);
+	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_THING_CLEAN_MLDEPLOY, MF_BYCOMMAND | MF_ENABLED);
 }
 
 static void OpenMainDialog_SC2K1996() {
@@ -835,6 +848,10 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 									Game_Engine_SimulationProcessTick(pSCDoc->pSimEngine);
 								if (wSetTriggerDisasterType)
 									Game_SimulationStartDisaster();
+								// A bit of clean-up regarding any disaster-specific
+								// deployments that may have become orphaned (for one
+								// reason or another).
+								DeleteAllDisasterDeploys_SC2K1996();
 								if (pThis->wSCAGameSpeedLOW != GAME_SPEED_AFRICAN_SWALLOW)
 									pThis->dwSCASimulationTicking = FALSE;
 							}
@@ -1133,6 +1150,7 @@ extern "C" void __stdcall Hook_StartCleanGame(void) {
 	}
 
 	iChurchVirus = -1;
+	ResetThingCleanupState_SC2K1996();
 	GameMain_StartCleanGame();
 }
 
@@ -2121,6 +2139,50 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 
 			case IDM_DEBUG_SPRITE_DISPLAY:
 				ShowSpriteBrowseDialog();
+				return TRUE;
+
+			case IDM_DEBUG_THING_CLEAN_PLANES:
+				DoThingClean_SC2K1996(THING_CLEAN_PLANES);
+				return TRUE;
+
+			case IDM_DEBUG_THING_CLEAN_COPTERS:
+				DoThingClean_SC2K1996(THING_CLEAN_COPTERS);
+				return TRUE;
+
+			case IDM_DEBUG_THING_CLEAN_SHIPS:
+				DoThingClean_SC2K1996(THING_CLEAN_SHIPS);
+				return TRUE;
+
+			case IDM_DEBUG_THING_CLEAN_SAILBOATS:
+				DoThingClean_SC2K1996(THING_CLEAN_SAILBOATS);
+				return TRUE;
+
+			case IDM_DEBUG_THING_CLEAN_TRAINS:
+				DoThingClean_SC2K1996(THING_CLEAN_TRAINS);
+				return TRUE;
+
+			case IDM_DEBUG_THING_CLEAN_HERO:
+				DoThingClean_SC2K1996(THING_CLEAN_HERO);
+				return TRUE;
+
+			case IDM_DEBUG_THING_CLEAN_MONSTER:
+				DoThingClean_SC2K1996(THING_CLEAN_MONSTER);
+				return TRUE;
+
+			case IDM_DEBUG_THING_CLEAN_TORNADO:
+				DoThingClean_SC2K1996(THING_CLEAN_TORNADO);
+				return TRUE;
+
+			case IDM_DEBUG_THING_CLEAN_PLDEPLOY:
+				DoThingClean_SC2K1996(THING_CLEAN_PLDEPLOY);
+				return TRUE;
+
+			case IDM_DEBUG_THING_CLEAN_FRDEPLOY:
+				DoThingClean_SC2K1996(THING_CLEAN_FRDEPLOY);
+				return TRUE;
+
+			case IDM_DEBUG_THING_CLEAN_MLDEPLOY:
+				DoThingClean_SC2K1996(THING_CLEAN_MLDEPLOY);
 				return TRUE;
 			}
 			//ConsoleLog(LOG_DEBUG, "CFrameWnd::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, pExtra, pHandler, dwRetAddr);

@@ -63,6 +63,7 @@ console_command_t fpConsoleCommands[] = {
 	{ "clear", ConsoleCmdClear, CONSOLE_COMMAND_DOCUMENTED, "Clear screen or variables" },
 	{ "echo", ConsoleCmdEcho, CONSOLE_COMMAND_DOCUMENTED, "Print to console" },
 	{ "echo!", ConsoleCmdEcho, CONSOLE_COMMAND_UNDOCUMENTED, "Print to console without newline" },
+	{ "fixup", ConsoleCmdFixUp, CONSOLE_COMMAND_DOCUMENTED, "Manual 'Fix-up' operations"},
 	{ "help", ConsoleCmdHelp, CONSOLE_COMMAND_DOCUMENTED, "Display this help" },
 #if !NOKUROKO
 	{ "run", ConsoleCmdRun, CONSOLE_COMMAND_DOCUMENTED, "Run Kuroko code or console script" },
@@ -187,6 +188,122 @@ BOOL ConsoleCmdClear(const char* szCommand, const char* szArguments) {
 
 BOOL ConsoleCmdEcho(const char* szCommand, const char* szArguments) {
 	printf("%s%s", szArguments, (!strcmp(szCommand, "echo!") ? "" : "\n"));
+	return TRUE;
+}
+
+// COMMAND: fixup [...]
+
+BOOL ConsoleCmdFixUp(const char* szCommand, const char* szArguments) {
+	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
+		printf(
+			"  fixup thing         Fix (clear) in-game 'things'\n");
+		return TRUE;
+	}
+
+	if (!strcmp(szArguments, "thing") || !strncmp(szArguments, "thing ", 6))
+		return ConsoleCmdFixUpThing(szCommand, szArguments);
+
+	printf("Invalid argument.\n");
+	return TRUE;
+}
+
+BOOL ConsoleCmdFixUpThing(const char* szCommand, const char* szArguments) {
+	const char *pThingTypeUsage = "Missing 'thing' type; valid types:\n"
+		"plane\n"
+		"helicopter\n"
+		"cargoship\n"
+		"sailboat\n"
+		"train\n"
+		"maxisman\n"
+		"monster\n"
+		"tornado\n"
+		"policedeploy\n"
+		"firedeploy\n"
+		"militarydeploy";
+
+	if (dwDetectedVersion != VERSION_SC2K_1996) {
+		printf("Command only available when attached to 1996 Special Edition.\n");
+		return TRUE;
+	}
+
+	if (*(szArguments + 5) == '\0' || *(szArguments + 6) == '\0' || !strcmp(szArguments + 6, "?")) {
+		printf(
+			"Usage:\n"
+			"  fixup thing list\n"
+			"  fixup thing delbyidx <idx>\n"
+			"  fixup thing delallbytype <type>\n");
+		return TRUE;
+	}
+
+	if (!strcmp(szArguments + 6, "list")) {
+		DumpMapThings_SC2K1996();
+		return TRUE;
+	}
+	else if (!strcmp(szArguments + 6, "delbyidx")) {
+		ConsoleLog(LOG_INFO, "Missing 'thing' index (%d-%d) (-1 for 'delete all')\n", MIN_THING_IDX, MAX_THING_IDX);
+		return TRUE;
+	}
+	else if (!strncmp(szArguments + 6, "delbyidx ", 9)) {
+		__int16 idx = 0;
+		if (strlen(szArguments + 6) <= 9) {
+			ConsoleLog(LOG_INFO, "Missing 'thing' index (%d-%d) (-1 for 'delete all')\n", MIN_THING_IDX, MAX_THING_IDX);
+			return TRUE;
+		}
+		sscanf_s(szArguments + 6 + 9, "%hi", &idx);
+		if (idx < MIN_THING_IDX || idx > MAX_THING_IDX) {
+			// idx -1 is for "clear all".
+			if (idx != -1) {
+				ConsoleLog(LOG_INFO, "Bad 'thing' index.\n");
+				return TRUE;
+			}
+		}
+
+		DeleteMapThingByIdx_SC2K1996(idx);
+		return TRUE;
+	}
+	else if (!strcmp(szArguments + 6, "delallbytype")) {
+		ConsoleLog(LOG_INFO, "%s\n", pThingTypeUsage);
+		return TRUE;
+	}
+	else if (!strncmp(szArguments + 6, "delallbytype ", 13)) {
+		BYTE type = XTHG_NONE;
+		if (strlen(szArguments + 6) <= 13) {
+			ConsoleLog(LOG_INFO, "%s\n", pThingTypeUsage);
+			return TRUE;
+		}
+
+		char szThingArg[32 + 1];
+
+		sprintf_s(szThingArg, sizeof(szThingArg) - 1, "%s", szArguments + 6 + 13);
+		if (strcmp(szThingArg, "plane") == 0)
+			DeleteAllPlanes_SC2K1996();
+		else if (strcmp(szThingArg, "helicopter") == 0)
+			DeleteAllCopters_SC2K1996();
+		else if (strcmp(szThingArg, "cargoship") == 0)
+			DeleteAllShips_SC2K1996();
+		else if (strcmp(szThingArg, "sailboat") == 0)
+			DeleteAllSailboats_SC2K1996();
+		else if (strcmp(szThingArg, "train") == 0)
+			DeleteAllTrains_SC2K1996();
+		else if (strcmp(szThingArg, "maxisman") == 0)
+			DeleteAllMaxisMen_SC2K1996();
+		else if (strcmp(szThingArg, "monster") == 0)
+			DeleteAllMonsters_SC2K1996();
+		else if (strcmp(szThingArg, "tornado") == 0)
+			DeleteAllTornadoes_SC2K1996();
+		else if (strcmp(szThingArg, "policedeploy") == 0)
+			DeleteAllPoliceDeploys_SC2K1996();
+		else if (strcmp(szThingArg, "firedeploy") == 0)
+			DeleteAllFireDeploys_SC2K1996();
+		else if (strcmp(szThingArg, "militarydeploy") == 0)
+			DeleteAllMilitaryDeploys_SC2K1996();
+		else
+			ConsoleLog(LOG_INFO, "Bad 'Thing'\n");
+
+		return TRUE;
+	}
+
+	ConsoleLog(LOG_INFO, "Invalid argument(s). %s\n", szArguments + 6);
 	return TRUE;
 }
 

@@ -294,7 +294,7 @@ extern "C" {
 		KRK_GAMEOFF(dwCityUnemployment);
 		KRK_GAMEOFF_PTR(dwNeighborValue);
 		KRK_GAMEOFF(wWaterLevel);
-		KRK_GAMEOFF(wMonsterXTHGIndex);
+		KRK_GAMEOFF(wDisasterObject);
 		KRK_GAMEOFF(dwNationalPopulation);
 		KRK_GAMEOFF_PTR(dwNeighborFame);
 		KRK_GAMEOFF_PTR(dwMilitaryTiles);
@@ -433,8 +433,8 @@ extern "C" {
 		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_SAILBOAT));
 		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_TRAIN_ENGINE));
 		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_TRAIN_CAR));
-		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_UNKNOWN_3));
-		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_UNKNOWN_4));
+		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_SUBWAY_TRAIN_ENGINE));
+		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_SUBWAY_TRAIN_CAR));
 		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_DEPLOY_MILITARY));
 		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_TORNADO));
 		krk_attachNamedValue(&objThings->fields, KRK_ENUM_PAIR(XTHG_MAXIS_MAN));

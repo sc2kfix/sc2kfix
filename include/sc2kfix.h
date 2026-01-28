@@ -167,9 +167,28 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define MARINA_TILES_ALLDRY 0
 #define MARINA_TILES_ALLWET 9
 
+#define MIN_THING_IDX 1
+#define MAX_THING_IDX 39
+
 #define INI_GAME_SPEED_SETTING(x) (x - 1)
 
 #define HALVECOORD(x) (x >> 1)
+
+enum {
+	THING_CLEAN_PLANES,
+	THING_CLEAN_COPTERS,
+	THING_CLEAN_SHIPS,
+	THING_CLEAN_SAILBOATS,
+	THING_CLEAN_TRAINS,
+	THING_CLEAN_HERO,
+	THING_CLEAN_MONSTER,
+	THING_CLEAN_TORNADO,
+	THING_CLEAN_PLDEPLOY,
+	THING_CLEAN_FRDEPLOY,
+	THING_CLEAN_MLDEPLOY,
+
+	THING_CLEAN_COUNT
+};
 
 // Struct defining an injected hook from a loaded mod and its nested call priority.
 typedef struct {
@@ -419,6 +438,8 @@ DWORD WINAPI ConsoleThread(LPVOID lpParameter);
 BOOL ConsoleEvaluateCommand(const char* szCommandLine, BOOL bInteractive);
 BOOL ConsoleCmdClear(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdEcho(const char* szCommand, const char* szArguments);
+BOOL ConsoleCmdFixUp(const char* szCommand, const char* szArguments);
+BOOL ConsoleCmdFixUpThing(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdRun(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdWait(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdHelp(const char* szCommand, const char* szArguments);
@@ -466,6 +487,7 @@ extern const char* szSC2KFixBuildInfo;
 extern BOOL bConsoleEnabled;
 extern BOOL bSkipIntro;
 extern BOOL bUseAdvancedQuery;
+extern BOOL bDisableAutoThingCleanup;
 #if !NOKUROKO
 extern BOOL bKurokoVMInitialized;
 extern DWORD dwConsoleThreadID;
@@ -549,6 +571,7 @@ extern UINT registry_debug;
 extern UINT sc2x_debug;
 extern UINT snd_debug;
 extern UINT sprite_debug;
+extern UINT things_debug;
 extern UINT timer_debug;
 extern UINT updatenotifier_debug;
 

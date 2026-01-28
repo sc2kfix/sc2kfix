@@ -2057,10 +2057,48 @@ enum {
 	UNDER_TILE_SUBWAYENTRANCE
 };
 
+// XTHG types
+enum {
+	XTHG_NONE = 0,
+	XTHG_AIRPLANE,
+	XTHG_HELICOPTER,
+	XTHG_CARGO_SHIP,
+	XTHG_BULLDOZER,
+	XTHG_MONSTER,
+	XTHG_EXPLOSION,
+	XTHG_DEPLOY_POLICE,
+	XTHG_DEPLOY_FIRE,
+	XTHG_SAILBOAT,
+	XTHG_TRAIN_ENGINE,
+	XTHG_TRAIN_CAR,
+	XTHG_SUBWAY_TRAIN_ENGINE,					// TRAIN_ENGINE switches to this state when it's in a subway tunnel
+	XTHG_SUBWAY_TRAIN_CAR,						// Likewise for TRAIN_CAR
+	XTHG_DEPLOY_MILITARY,
+	XTHG_TORNADO,
+	XTHG_MAXIS_MAN,
+
+	XTHG_COUNT
+};
+
+enum {
+	XTHG_DIRECTION_NORTH = 0,
+	XTHG_DIRECTION_NORTH_EAST,
+	XTHG_DIRECTION_EAST,
+	XTHG_DIRECTION_SOUTH_EAST,
+	XTHG_DIRECTION_SOUTH,
+	XTHG_DIRECTION_SOUTH_WEST,
+	XTHG_DIRECTION_WEST,
+	XTHG_DIRECTION_NORTH_WEST,
+
+	XTHG_DIRECTION_COUNT
+};
+
 HOOKEXT const char* szTileNames[256];
 HOOKEXT const char* szSpriteNames[SPRITE_ENTRY_COUNT];
 HOOKEXT const char* szInternalSpriteName[SPRITE_COUNT];
 HOOKEXT const char* szUndergroundNames[36];
+HOOKEXT const char* szThingNames[XTHG_COUNT];
+HOOKEXT const char* szThingDirectionNames[XTHG_DIRECTION_COUNT];
 HOOKEXT const char* szOnIdleStateEnums[ONIDLE_STATE_MAX];
 HOOKEXT const char* szOnIdleInitialDialogEnums[ONIDLE_INITIALDIALOG_MAX];
 
@@ -2139,38 +2177,6 @@ enum {
 	SURFACE_STREAM_03,         // terrain tile id: 256, water tile id: 288
 	SURFACE_STREAM_04,         // terrain tile id: 256, water tile id: 289
 	SURFACE_STREAM_05          // terrain tile id: 256, water tile id: 290
-};
-
-// XTHG types
-enum {
-	XTHG_NONE = 0,
-	XTHG_AIRPLANE,
-	XTHG_HELICOPTER,
-	XTHG_CARGO_SHIP,
-	XTHG_BULLDOZER,
-	XTHG_MONSTER,
-	XTHG_EXPLOSION,
-	XTHG_DEPLOY_POLICE,
-	XTHG_DEPLOY_FIRE,
-	XTHG_SAILBOAT,
-	XTHG_TRAIN_ENGINE,
-	XTHG_TRAIN_CAR,
-	XTHG_UNKNOWN_3,						// Seems to be a variant of TRAIN_ENGINE
-	XTHG_UNKNOWN_4,						// Likewise for TRAIN_CAR
-	XTHG_DEPLOY_MILITARY,
-	XTHG_TORNADO,
-	XTHG_MAXIS_MAN
-};
-
-enum {
-	XTHG_DIRECTION_NORTH = 0,
-	XTHG_DIRECTION_NORTH_EAST,
-	XTHG_DIRECTION_EAST,
-	XTHG_DIRECTION_SOUTH_EAST,
-	XTHG_DIRECTION_SOUTH,
-	XTHG_DIRECTION_SOUTH_WEST,
-	XTHG_DIRECTION_WEST,
-	XTHG_DIRECTION_NORTH_WEST
 };
 
 enum {
@@ -3182,8 +3188,14 @@ GAMEOFF(RECT,	currWndClientRect,			0x4C7CD0)
 GAMEOFF(WORD,	wCurrentAngle,				0x4C7CF8)
 GAMEOFF(WORD,	wTileDirection,				0x4C7D60)
 GAMEOFF(WORD,	wMaybeActiveToolGroup,		0x4C7D88)
+GAMEOFF(WORD,	wMilitaryAvailDispatch,			0x4C7D98)
+GAMEOFF(WORD,	wFireAvailDispatch,				0x4C7D9C)
+GAMEOFF(WORD,	wPoliceAvailDispatch,			0x4C838C)
+GAMEOFF(WORD,	wFireUnitsDispatched,		0x4C8390)
 GAMEOFF(DWORD,	dwBusPassengers,			0x4C85A0)
 GAMEOFF(DWORD,	dwRailPassengers,			0x4C85A4)
+GAMEOFF(WORD,	wPoliceUnitsDispatched,		0x4C85A8)
+GAMEOFF(WORD,	wMilitaryUnitsDispatched,	0x4C85F0)
 GAMEOFF(DWORD,	dwSubwayPassengers,			0x4C8600)
 GAMEOFF_ARR(PALETTEENTRY,	pPalAnimMain,		0x4C87D8)
 GAMEOFF_ARR(PALETTEENTRY,	pPalOnCycle,		0x4C8BD8)
@@ -3224,7 +3236,7 @@ GAMEOFF(DWORD,	dwCityUnemployment,			0x4CA5F8)
 GAMEOFF(DWORD*, dwNeighborValue,			0x4CA804)		// DWORD dwNeighborValue[4]
 GAMEOFF(WORD,	wNewspaperChoice,			0x4CA808)
 GAMEOFF(short,	wWaterLevel,				0x4CA818)
-GAMEOFF(WORD,	wMonsterXTHGIndex,			0x4CA81C)
+GAMEOFF(__int16,	wDisasterObject,		0x4CA81C)
 GAMEOFF(DWORD,	dwNationalPopulation,		0x4CA928)
 GAMEOFF(DWORD*, dwNeighborFame,				0x4CA92C)		// DWORD dwNeighborFame[4]
 GAMEOFF(WORD*,	dwMilitaryTiles,			0x4CA934)
@@ -3365,13 +3377,22 @@ GAMEOFF_ARR(BYTE,	bTileState,				0x4E7508)
 GAMEOFF_ARR(WORD,	wBuildingPopulation,	0x4E75B0)
 GAMEOFF_ARR(WORD, wXTERToSpriteIDMap,		0x4E7628)
 GAMEOFF_ARR(WORD, wXTERToXUNDSpriteIDMap,	0x4E76B8)
+GAMEOFF(DWORD,	dwPlacePoliceThingFail,		0x4E7FC4)
+GAMEOFF(DWORD,	dwPlaceFireThingFail,		0x4E7FC8)
+GAMEOFF(DWORD,	dwPlaceMilitaryThingFail,	0x4E7FCC)
 GAMEOFF(WORD,	wDisasterWindy,				0x4E86B0)
 GAMEOFF(BOOL,	bCSimcityDocSC2InUse,		0x4E9744)
 GAMEOFF(BOOL,	bCSimcityDocSCNInUse,		0x4E9748)
 GAMEOFF(DWORD,	dwUnknownInitVarOne,		0x4E974C)
 GAMEOFF_ARR(DWORD, dwCityNoticeStringIDs,	0x4E98B8)
+GAMEOFF(WORD,	wActivePlanes,				0x4E99C0)
+GAMEOFF(WORD,	wActiveHelicopters,			0x4E99C4)
+GAMEOFF(WORD,	wActiveShips,				0x4E99C8)
+GAMEOFF(WORD,	wActiveMaxisMan,			0x4E99CC)
 GAMEOFF(WORD,	wSailingBoats,				0x4E99D0)
+GAMEOFF(WORD,	wMonsterSpawned,			0x4E99D4)
 GAMEOFF(WORD,	wActiveTrains,				0x4E99D8)
+GAMEOFF(WORD,	wActiveTornadoes,			0x4E99DC)
 GAMEOFF_ARR(int,	dwGrantedItems,			0x4E9A10)
 GAMEOFF(DWORD,	dwCityRewardsUnlocked,		0x4E9A24)
 GAMEOFF_ARR(DWORD,	DisplayLayer,			0x4E9E48)
@@ -3501,6 +3522,10 @@ static inline BYTE XTXTGetTextOverlayID(__int16 iTileX, __int16 iTileY) {
 
 static inline void XTXTSetTextOverlayID(__int16 iTileX, __int16 iTileY, BYTE bNewTextOverlayID) {
 	dwMapXTXT[iTileX][iTileY].bTextOverlay = bNewTextOverlayID;
+}
+
+static inline map_XTHG_t* GetXTHG(int nPos) {
+	return &dwMapXTHG[0][nPos];
 }
 
 static inline BYTE XTHGGetType(__int16 iVal) {
@@ -4068,3 +4093,22 @@ extern void ResetCheatInput_SC2K1996();
 
 extern BOOL L_PlaySound_SC2K1996(LPCTSTR pszSound, UINT fuSound);
 extern void L_PlayToolSound_SC2K1996(CSimcityAppPrimary *pSCApp, int iSoundID = 0);
+
+extern void DumpMapThings_SC2K1996();
+extern void DeleteMapThingByIdx_SC2K1996(__int16 nIdx);
+
+extern void DeleteAllPlanes_SC2K1996(BOOL bVerbose = TRUE);
+extern void DeleteAllCopters_SC2K1996(BOOL bVerbose = TRUE);
+extern void DeleteAllShips_SC2K1996(BOOL bVerbose = TRUE);
+extern void DeleteAllSailboats_SC2K1996(BOOL bVerbose = TRUE);
+extern void DeleteAllTrains_SC2K1996(BOOL bVerbose = TRUE);
+extern void DeleteAllMaxisMen_SC2K1996(BOOL bVerbose = TRUE);
+extern void DeleteAllMonsters_SC2K1996(BOOL bVerbose = TRUE);
+extern void DeleteAllTornadoes_SC2K1996(BOOL bVerbose = TRUE);
+extern void DeleteAllPoliceDeploys_SC2K1996(BOOL bVerbose = TRUE);
+extern void DeleteAllFireDeploys_SC2K1996(BOOL bVerbose = TRUE);
+extern void DeleteAllMilitaryDeploys_SC2K1996(BOOL bVerbose = TRUE);
+extern void DeleteAllDisasterDeploys_SC2K1996();
+extern void ResetThingCleanupState_SC2K1996();
+
+extern void DoThingClean_SC2K1996(int nThingDef);

@@ -52,6 +52,7 @@ BOOL bKurokoVMInitialized = FALSE;
 BOOL bUseAdvancedQuery = TRUE;
 BOOL bSkipLoadingMods = FALSE;
 BOOL bFixFileAssociations = FALSE;
+BOOL bDisableAutoThingCleanup = TRUE;
 int iForcedBits = 0;
 
 std::random_device rdRandomDevice;
@@ -151,6 +152,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		iLastArgPos = -1;
 		iArg = 0;
 
+		bDisableAutoThingCleanup = TRUE;
+
 		argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 		if (argv) {
 			for (int i = 0; i < argc; i++) {
@@ -172,6 +175,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						sc2x_debug = DEBUG_FLAGS_EVERYTHING;
 						snd_debug = DEBUG_FLAGS_EVERYTHING;
 						sprite_debug = DEBUG_FLAGS_EVERYTHING;
+						things_debug = DEBUG_FLAGS_EVERYTHING;
 						timer_debug = DEBUG_FLAGS_EVERYTHING;
 						updatenotifier_debug = DEBUG_FLAGS_EVERYTHING;
 					}
@@ -188,11 +192,14 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						sc2x_debug = DEBUG_FLAGS_NONE;
 						snd_debug = DEBUG_FLAGS_NONE;
 						sprite_debug = DEBUG_FLAGS_NONE;
+						things_debug = DEBUG_FLAGS_NONE;
 						timer_debug = DEBUG_FLAGS_NONE;
 						updatenotifier_debug = DEBUG_FLAGS_NONE;
 					}
 					if (!lstrcmpiW(argv[i], L"-resetfileassociations"))
 						bFixFileAssociations = TRUE;
+					if (!lstrcmpiW(argv[i], L"-enableautothingcleanup"))
+						bDisableAutoThingCleanup = FALSE;
 					if (!lstrcmpiW(argv[i], L"-defaults"))
 						bSkipLoadSettings = TRUE;
 					if (!lstrcmpiW(argv[i], L"-skipintro"))

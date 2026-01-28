@@ -2475,6 +2475,37 @@ const char* szUndergroundNames[36] = {
 	"Subway Entrance"
 };
 
+const char* szThingNames[XTHG_COUNT] = {
+	"None",
+	"Aeroplane",
+	"Helicopter",
+	"Cargo Ship",
+	"Bulldozer",
+	"Monster",
+	"Explosion",
+	"Police Deployment",
+	"Fire Deployment",
+	"Sailboat",
+	"Train Engine",
+	"Train Car",
+	"Train Engine (Subway)",
+	"Train Car (Subway)",
+	"Military Deployment",
+	"Tornado",
+	"Maxis Man"
+};
+
+const char* szThingDirectionNames[XTHG_DIRECTION_COUNT] = {
+	"North",
+	"North East",
+	"East",
+	"South East",
+	"South",
+	"South West",
+	"West",
+	"North West"
+};
+
 const char* szOnIdleStateEnums[ONIDLE_STATE_MAX] = {
 	"ONIDLE_STATE_INGAME",
 	"ONIDLE_STATE_MAPMODE",
