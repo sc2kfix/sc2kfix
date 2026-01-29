@@ -63,7 +63,7 @@ console_command_t fpConsoleCommands[] = {
 	{ "clear", ConsoleCmdClear, CONSOLE_COMMAND_DOCUMENTED, "Clear screen or variables" },
 	{ "echo", ConsoleCmdEcho, CONSOLE_COMMAND_DOCUMENTED, "Print to console" },
 	{ "echo!", ConsoleCmdEcho, CONSOLE_COMMAND_UNDOCUMENTED, "Print to console without newline" },
-	{ "fixup", ConsoleCmdFixUp, CONSOLE_COMMAND_DOCUMENTED, "Manual 'Fix-up' operations"},
+	{ "fixup", ConsoleCmdFixUp, CONSOLE_COMMAND_DOCUMENTED, "Manual 'Fix-up' operations" },
 	{ "help", ConsoleCmdHelp, CONSOLE_COMMAND_DOCUMENTED, "Display this help" },
 #if !NOKUROKO
 	{ "run", ConsoleCmdRun, CONSOLE_COMMAND_DOCUMENTED, "Run Kuroko code or console script" },
@@ -239,11 +239,8 @@ BOOL ConsoleCmdFixUpThing(const char* szCommand, const char* szArguments) {
 		DumpMapThings_SC2K1996();
 		return TRUE;
 	}
-	else if (!strcmp(szArguments + 6, "delbyidx")) {
-		ConsoleLog(LOG_INFO, "Missing 'thing' index (%d-%d) (-1 for 'delete all')\n", MIN_THING_IDX, MAX_THING_IDX);
-		return TRUE;
-	}
-	else if (!strncmp(szArguments + 6, "delbyidx ", 9)) {
+	else if (!strcmp(szArguments + 6, "delbyidx") ||
+		!strncmp(szArguments + 6, "delbyidx ", 9)) {
 		__int16 idx = 0;
 		if (strlen(szArguments + 6) <= 9) {
 			ConsoleLog(LOG_INFO, "Missing 'thing' index (%d-%d) (-1 for 'delete all')\n", MIN_THING_IDX, MAX_THING_IDX);
@@ -261,12 +258,8 @@ BOOL ConsoleCmdFixUpThing(const char* szCommand, const char* szArguments) {
 		DeleteMapThingByIdx_SC2K1996(idx);
 		return TRUE;
 	}
-	else if (!strcmp(szArguments + 6, "delallbytype")) {
-		ConsoleLog(LOG_INFO, "%s\n", pThingTypeUsage);
-		return TRUE;
-	}
-	else if (!strncmp(szArguments + 6, "delallbytype ", 13)) {
-		BYTE type = XTHG_NONE;
+	else if (!strcmp(szArguments + 6, "delallbytype") ||
+		!strncmp(szArguments + 6, "delallbytype ", 13)) {
 		if (strlen(szArguments + 6) <= 13) {
 			ConsoleLog(LOG_INFO, "%s\n", pThingTypeUsage);
 			return TRUE;
