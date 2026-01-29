@@ -18,27 +18,6 @@
 
 #define SONGID_STR_LEN 16
 
-#define ListView_InsertItemType(hwndLV, i, tmask) \
-{ LV_ITEM _macro_lvi;\
-  _macro_lvi.mask = (tmask);\
-  _macro_lvi.iItem = (i);\
-  _macro_lvi.iSubItem = 0;\
-  _macro_lvi.pszText = (char *)"";\
-  SNDMSG((hwndLV), LVM_INSERTITEM, (WPARAM)(i), (LPARAM)(LV_ITEM *)&_macro_lvi);\
-}
-
-#define ListView_InsertItemText(hwndLV, i) ListView_InsertItemType(hwndLV, i, LVIF_TEXT)
-
-#define ListView_InsertColumnEntry(hwndLV, i, text, width, tmask, cfmt) \
-{ LV_COLUMN _macro_lvc;\
-  _macro_lvc.mask = (tmask);\
-  _macro_lvc.fmt = (cfmt);\
-  _macro_lvc.iSubItem = (i);\
-  _macro_lvc.pszText = (char *)(text);\
-  _macro_lvc.cx = (width);\
-  (int)SNDMSG((hwndLV), LVM_INSERTCOLUMN, (WPARAM)(i), (LPARAM)(LV_COLUMN *)&_macro_lvc);\
-}
-
 typedef struct {
 	BOOL bMP3;
 	int iSongID;
@@ -74,9 +53,9 @@ BOOL CALLBACK EditMusicTrackDialogProc(HWND hwndDlg, UINT message, WPARAM wParam
 		sprintf_s(szWndTitle, sizeof(szWndTitle), "Edit %s Track - Song ID: %d", ((te->bMP3) ? "MP3" : "MIDI"), te->iSongID);
 
 		SetWindowText(hwndDlg, szWndTitle);
-		SetWindowText(GetDlgItem(hwndDlg, IDC_EDITMUSICTRACK_STATIC), pDlgStaticText);
+		SetWindowText(GetDlgItem(hwndDlg, IDC_EDITCONFIGENTRY_STATIC), pDlgStaticText);
 
-		hDlgCombo = GetDlgItem(hwndDlg, IDC_EDITMUSIC_TRACK_COMBO);
+		hDlgCombo = GetDlgItem(hwndDlg, IDC_EDITCONFIGENTRY_COMBO);
 		SetWindowRedraw(hDlgCombo, FALSE);
 
 		ComboBox_ResetContent(hDlgCombo);
@@ -107,9 +86,9 @@ BOOL CALLBACK EditMusicTrackDialogProc(HWND hwndDlg, UINT message, WPARAM wParam
 
 	case WM_COMMAND:
 		te = (trackentry_t *)GetWindowLong(hwndDlg, GWL_USERDATA);
-		hDlgCombo = GetDlgItem(hwndDlg, IDC_EDITMUSIC_TRACK_COMBO);
+		hDlgCombo = GetDlgItem(hwndDlg, IDC_EDITCONFIGENTRY_COMBO);
 		switch (GET_WM_COMMAND_ID(wParam, lParam)) {
-		case IDC_EDITMUSIC_TRACK_COMBO:
+		case IDC_EDITCONFIGENTRY_COMBO:
 			if (GET_WM_COMMAND_CMD(wParam, lParam) == CBN_SELCHANGE) {
 				memset(szTemp, 0, sizeof(szTemp));
 				iCurSel = ComboBox_GetCurSel(hDlgCombo);
@@ -141,7 +120,7 @@ static void DoEditMusicTrack(conftracks_t *cft, HWND hwndDlg, HWND hDlgListView,
 	te.iSongID = atoi(pSongID);
 	strcpy_s(te.szTrackEntry, sizeof(te.szTrackEntry), cft->szMusicTracks[iItem]);
 
-	if (DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_EDITMUSICTRACK), hwndDlg, EditMusicTrackDialogProc, (LPARAM)&te) == TRUE) {
+	if (DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_EDITCONFIGENTRY), hwndDlg, EditMusicTrackDialogProc, (LPARAM)&te) == TRUE) {
 		if (_stricmp(cft->szMusicTracks[iItem], te.szTrackEntry) != 0) {
 			strcpy_s(cft->szMusicTracks[iItem], sizeof(cft->szMusicTracks[iItem]), te.szTrackEntry);
 			ListView_SetItemText(hDlgListView, iItem, 1, cft->szMusicTracks[iItem]);
@@ -192,16 +171,16 @@ BOOL CALLBACK ConfMusicTracksDialogProc(HWND hwndDlg, UINT message, WPARAM wPara
 
 		if (cft->bMP3) {
 			pDlgTitle = "Configure MP3 Music Tracks";
-			pDlgStaticText = "Empty track entries will use the named MP3 track matching the Song ID if present, or the game's default MIDI.";
+			pDlgStaticText = "\nEmpty track entries will use the named MP3 track matching the Song ID if present, or the game's default MIDI.";
 		}
 		else {
 			pDlgTitle = "Configure MIDI Music Tracks";
-			pDlgStaticText = "Empty track entries will use the game's default.";
+			pDlgStaticText = "\nEmpty track entries will use the game's default.";
 		}
 		SetWindowText(hwndDlg, pDlgTitle);
-		SetWindowText(GetDlgItem(hwndDlg, IDC_CONFMUSICTRACKS_STATIC), pDlgStaticText);
+		SetWindowText(GetDlgItem(hwndDlg, IDC_CONFIGSECTION_STATIC), pDlgStaticText);
 
-		hDlgListView = GetDlgItem(hwndDlg, IDC_CONFMUSICTRACKS_LIST);
+		hDlgListView = GetDlgItem(hwndDlg, IDC_CONFIGSECTION_LIST);
 		ListView_SetExtendedListViewStyle(hDlgListView, LVS_EX_FULLROWSELECT);
 
 		nColumnMask = (LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM);
@@ -220,9 +199,9 @@ BOOL CALLBACK ConfMusicTracksDialogProc(HWND hwndDlg, UINT message, WPARAM wPara
 
 	case WM_COMMAND:
 		cft = (conftracks_t *)GetWindowLong(hwndDlg, GWL_USERDATA);
-		hDlgListView = GetDlgItem(hwndDlg, IDC_CONFMUSICTRACKS_LIST);
+		hDlgListView = GetDlgItem(hwndDlg, IDC_CONFIGSECTION_LIST);
 		switch (GET_WM_COMMAND_ID(wParam, lParam)) {
-		case IDC_CONFMUSICTRACKS_EDITENTRY:
+		case IDC_CONFIGSECTION_EDITENTRY:
 			iRow = ListView_GetNextItem(hDlgListView, -1, LVNI_ALL | LVNI_SELECTED);
 
 			EditMusicTrack(cft, hwndDlg, hDlgListView, iRow);
@@ -240,7 +219,7 @@ BOOL CALLBACK ConfMusicTracksDialogProc(HWND hwndDlg, UINT message, WPARAM wPara
 
 	case WM_NOTIFY:
 		cft = (conftracks_t *)GetWindowLong(hwndDlg, GWL_USERDATA);
-		hDlgListView = GetDlgItem(hwndDlg, IDC_CONFMUSICTRACKS_LIST);
+		hDlgListView = GetDlgItem(hwndDlg, IDC_CONFIGSECTION_LIST);
 		switch (((LPNMHDR)lParam)->code) {
 		case NM_DBLCLK:
 			if (((LPNMHDR)lParam)->hwndFrom == hDlgListView) {
@@ -270,7 +249,7 @@ BOOL DoConfigureMusicTracks(settings_t *st, HWND hwndDlg, BOOL bMP3) {
 		strcpy_s(cft.szMusicTracks[i], MAX_PATH, pMusicTrack);
 	}
 
-	bRet = DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_CONFMUSICTRACKS), hwndDlg, ConfMusicTracksDialogProc, (LPARAM)&cft);
+	bRet = DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_CONFIGSECTION), hwndDlg, ConfMusicTracksDialogProc, (LPARAM)&cft);
 	if (bRet == TRUE) {
 		for (int i = 0; i < MUSIC_TRACKS; i++) {
 			pMusicTrack = (bMP3) ? st->szSettingsMP3TrackPath[i] : st->szSettingsMIDITrackPath[i];

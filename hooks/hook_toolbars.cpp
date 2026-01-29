@@ -206,8 +206,8 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 	if (nIndex < CITYTOOL_BUTTON_SIGNS) {
 		nSubTool = nSubIndex;
-		if (nIndex == CITYTOOL_BUTTON_REWARDS && nSubIndex > REWARDS_ARCOLOGIES_WAITING)
-			nSubTool = REWARDS_ARCOLOGIES_WAITING;
+		if (nIndex == CITYTOOL_BUTTON_REWARDS && nSubIndex > REWARDS_ARCOLOGIES)
+			nSubTool = REWARDS_ARCOLOGIES;
 		citySubToolStrings = &cityToolGroupStrings[nIndex*MAX_CITY_MENUTOOLS];
 		GameMain_String_OperatorCopy(&pThis->dwCTBString[nIndex], &citySubToolStrings[nSubTool]);
 		pThis->dwCTToolSelection[nIndex] = nSubTool;
@@ -715,6 +715,335 @@ extern "C" void __stdcall Hook_CityToolBar_DrawRCIIndicator(CMFC3XDC *pDC) {
 	GameMain_DC_SetBkColor(pDC, BkColor);
 }
 
+extern "C" void __cdecl Hook_CityToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
+	CSimcityAppPrimary *pSCApp;
+	CSimcityView *pSCView;
+	__int16 iBulldozerTool, iCurrCityToolGroupWithHotKey;
+	__int16 iTileCoords;
+	coords_w_t tileCoords;
+	int ret;
+	BYTE bTextOverlay;
+	WORD wNewScreenPointX, wNewScreenPointY;
+
+	pSCApp = &pCSimcityAppThis;
+	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+	iBulldozerTool = wSelectedSubtool[CITYTOOL_GROUP_BULLDOZER];
+	if ((nFlags & MK_SHIFT) != 0)
+		iCurrCityToolGroupWithHotKey = CITYTOOL_GROUP_QUERY;
+	else if ((nFlags & MK_CONTROL) != 0) {
+		iCurrCityToolGroupWithHotKey = CITYTOOL_GROUP_BULLDOZER;
+		wSelectedSubtool[CITYTOOL_GROUP_BULLDOZER] = BULLDOZER_DEMOLISH;
+	}
+	else
+		iCurrCityToolGroupWithHotKey = wCurrentCityToolGroup;
+	iTileCoords = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
+	if (iTileCoords >= 0) {
+		tileCoords.x = LOBYTE(iTileCoords);
+		tileCoords.y = HIBYTE(iTileCoords);
+		if (tileCoords.x < GAME_MAP_SIZE && tileCoords.y >= 0) {
+			switch (iCurrCityToolGroupWithHotKey) {
+			case CITYTOOL_GROUP_BULLDOZER:
+				Game_UseBulldozer(tileCoords.x, tileCoords.y);
+				Game_SimcityView_UpdateAreaPortionFill(pSCView);
+				break;
+			case CITYTOOL_GROUP_NATURE:
+				Game_CityToolPlaceNature(pt);
+				return;
+			case CITYTOOL_GROUP_DISPATCH:
+				if (wSelectedSubtool[iCurrCityToolGroupWithHotKey] == DISPATCH_FIRE)
+					Game_PlaceFireDispatchUnit(tileCoords.x, tileCoords.y);
+				else if (wSelectedSubtool[iCurrCityToolGroupWithHotKey] == DISPATCH_MILITARY)
+					Game_PlaceMilitaryDispatchUnit(tileCoords.x, tileCoords.y);
+				else
+					Game_PlacePoliceDispatchUnit(tileCoords.x, tileCoords.y);
+				Game_SimcityView_UpdateAreaPortionFill(pSCView);
+				break;
+			case CITYTOOL_GROUP_POWER:
+				if (wSelectedSubtool[iCurrCityToolGroupWithHotKey]) {
+					if (wSelectedSubtool[iCurrCityToolGroupWithHotKey] == POWER_PLANTS_HYDRO)
+						ret = Game_CityToolPlacePowerHydroDam(tileCoords.x, tileCoords.y);
+					else
+						ret = Game_CityToolPlaceSelectedBuilding(tileCoords.x, tileCoords.y, iCurrCityToolGroupWithHotKey, wSelectedSubtool[iCurrCityToolGroupWithHotKey]);
+				}
+				else
+					ret = Game_SimcityView_CityToolPlacePowerLine(pSCView, tileCoords.x, tileCoords.y);
+				if (ret) {
+					L_PlayToolSound_SC2K1996(pSCApp);
+					// Commented out section is to do with the power/water grid updates slowdown case.
+					if (wSelectedSubtool[iCurrCityToolGroupWithHotKey] == POWER_WIRES/* && dwCityPopulation < 50000*/)
+						Game_SimulationUpdatePowerConsumption();
+				}
+				else
+					L_PlayToolSound_SC2K1996(pSCApp, SOUND_ERROR);
+				Game_SimcityView_UpdateAreaPortionFill(pSCView);
+				// Interesting case.. why return for anything that's not wind?
+				if (wSelectedSubtool[iCurrCityToolGroupWithHotKey] != POWER_PLANTS_WIND)
+					return;
+				break;
+			case CITYTOOL_GROUP_WATER:
+				if (wSelectedSubtool[CITYTOOL_GROUP_WATER])
+					ret = Game_CityToolPlaceSelectedBuilding(tileCoords.x, tileCoords.y, iCurrCityToolGroupWithHotKey, wSelectedSubtool[iCurrCityToolGroupWithHotKey]);
+				else
+					ret = Game_SimcityView_CityToolPlaceWaterPipe(pSCView, tileCoords.x, tileCoords.y);
+				if (ret) {
+					L_PlayToolSound_SC2K1996(pSCApp);
+					// Commented out section is to do with the power/water grid updates slowdown case.
+					if (wSelectedSubtool[iCurrCityToolGroupWithHotKey] == WATER_PIPES/* && dwCityPopulation < 50000*/)
+						Game_SimulationUpdateWaterConsumption();
+				}
+				else
+					L_PlayToolSound_SC2K1996(pSCApp, SOUND_ERROR);
+#if 1 // Fix the pipe tool not refreshing properly at max zoom - consider revisiting to see about a more specific tweak.
+				Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
+#else
+				Game_SimcityView_UpdateAreaPortionFill(pSCView);
+#endif
+				// Interesting case.. why return for anything that's not a pump?
+				if (wSelectedSubtool[iCurrCityToolGroupWithHotKey] != WATER_PUMP)
+					return;
+				break;
+			case CITYTOOL_GROUP_REWARDS:
+				if (Game_CityToolPlaceSelectedBuilding(tileCoords.x, tileCoords.y, iCurrCityToolGroupWithHotKey, wSelectedSubtool[iCurrCityToolGroupWithHotKey]))
+				{
+					if (wSelectedSubtool[iCurrCityToolGroupWithHotKey] < REWARDS_ARCOLOGIES) {
+						Game_SimulationToggleGrantReward(wSelectedSubtool[iCurrCityToolGroupWithHotKey], FALSE);
+						wCurrentCityToolGroup = CITYTOOL_GROUP_CENTERINGTOOL;
+					}
+					L_PlayToolSound_SC2K1996(pSCApp);
+				}
+				else
+					L_PlayToolSound_SC2K1996(pSCApp, SOUND_ERROR);
+				Game_SimcityView_UpdateAreaPortionFill(pSCView);
+				break;
+			case CITYTOOL_GROUP_ROADS:
+				ret = iBulldozerTool;
+				switch (wSelectedSubtool[iCurrCityToolGroupWithHotKey]) {
+				case ROADS_ROAD:
+					ret = Game_SimcityView_CityToolPlaceRoad(pSCView, tileCoords.x, tileCoords.y);
+					break;
+				case ROADS_HIGHWAY:
+					ret = Game_SimcityView_CityToolPlaceHighway(pSCView, tileCoords.x, tileCoords.y);
+					break;
+				case ROADS_TUNNEL:
+					ret = Game_CityToolPlaceTunnel(tileCoords.x, tileCoords.y);
+					break;
+				case ROADS_ONRAMP:
+					ret = Game_CityToolPlaceOnRamp(tileCoords.x, tileCoords.y);
+					break;
+				case ROADS_BUSSTATION:
+					ret = Game_CityToolPlaceSelectedBuilding(tileCoords.x, tileCoords.y, iCurrCityToolGroupWithHotKey, wSelectedSubtool[iCurrCityToolGroupWithHotKey]);
+					break;
+				}
+				if (ret)
+					L_PlayToolSound_SC2K1996(pSCApp);
+				else
+					L_PlayToolSound_SC2K1996(pSCApp, SOUND_ERROR);
+				Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
+				return;
+			case CITYTOOL_GROUP_RAIL:
+				ret = iBulldozerTool;
+				switch (wSelectedSubtool[iCurrCityToolGroupWithHotKey]) {
+				case RAILS_RAIL:
+					ret = Game_SimcityView_CityToolPlaceRail(pSCView, tileCoords.x, tileCoords.y);
+					break;
+				case RAILS_SUBWAY:
+					ret = Game_SimcityView_CityToolPlaceSubway(pSCView, tileCoords.x, tileCoords.y);
+					break;
+				case RAILS_DEPOT:
+				case RAILS_SUBSTATION:
+					ret = Game_CityToolPlaceSelectedBuilding(tileCoords.x, tileCoords.y, iCurrCityToolGroupWithHotKey, wSelectedSubtool[iCurrCityToolGroupWithHotKey]);
+					break;
+				case RAILS_SUBTORAIL:
+					ret = Game_CityToolPlaceSubToRail(tileCoords.x, tileCoords.y);
+					break;
+				}
+				if (ret) {
+					if (wSelectedSubtool[iCurrCityToolGroupWithHotKey] == RAILS_DEPOT)
+						Game_SpawnTrain(tileCoords.x, tileCoords.y);
+					L_PlayToolSound_SC2K1996(pSCApp);
+				}
+				else
+					L_PlayToolSound_SC2K1996(pSCApp, SOUND_ERROR);
+				Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
+				return;
+			case CITYTOOL_GROUP_PORTS:
+			case CITYTOOL_GROUP_RESIDENTIAL:
+			case CITYTOOL_GROUP_COMMERCIAL:
+			case CITYTOOL_GROUP_INDUSTRIAL:
+				if (Game_SimcityView_CityToolSetSelectedZone(pSCView, tileCoords.x, tileCoords.y, iCurrCityToolGroupWithHotKey, wSelectedSubtool[iCurrCityToolGroupWithHotKey]))
+					L_PlayToolSound_SC2K1996(pSCApp);
+				else
+					L_PlayToolSound_SC2K1996(pSCApp, SOUND_ERROR);
+				Game_SimcityView_UpdateAreaPortionFill(pSCView);
+				return;
+			case CITYTOOL_GROUP_EDUCATION:
+			case CITYTOOL_GROUP_SERVICES:
+			case CITYTOOL_GROUP_PARKS:
+				if (Game_CityToolPlaceSelectedBuilding(tileCoords.x, tileCoords.y, iCurrCityToolGroupWithHotKey, wSelectedSubtool[iCurrCityToolGroupWithHotKey])) {
+					L_PlayToolSound_SC2K1996(pSCApp);
+					if (iCurrCityToolGroupWithHotKey == CITYTOOL_GROUP_PARKS)
+						Game_SimcityApp_MusicPlay(pSCApp, 10010);
+				}
+				else
+					L_PlayToolSound_SC2K1996(pSCApp, SOUND_ERROR);
+				Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
+				break;
+			case CITYTOOL_GROUP_SIGNS:
+				bTextOverlay = XTXTGetTextOverlayID(tileCoords.x, tileCoords.y);
+				if (bTextOverlay < MAX_LABEL_TEXT_ENTRY_RANGE)
+					Game_CityToolSetSign(tileCoords.x, tileCoords.y);
+				Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
+				break;
+			case CITYTOOL_GROUP_QUERY:
+				bTextOverlay = XTXTGetTextOverlayID(tileCoords.x, tileCoords.y);
+				if (bTextOverlay < MIN_SIM_TEXT_ENTRIES || bTextOverlay >= MIN_XTHG_TEXT_ENTRIES)
+					Game_QueryGeneralItem(tileCoords.x, tileCoords.y);
+				else
+					Game_QuerySpecificItem(tileCoords.x, tileCoords.y);
+				pSCView->dwSCVLeftMouseDownInGameArea = FALSE;
+				pSCView->dwSCVLeftMouseButtonDown = FALSE;
+				break;
+			case CITYTOOL_GROUP_CENTERINGTOOL:
+				Game_CityToolTargetHelicopter(tileCoords.x, tileCoords.y);
+				Game_GetScreenCoordsFromTileCoords(tileCoords.x, tileCoords.y, &wNewScreenPointX, &wNewScreenPointY);
+				L_PlayToolSound_SC2K1996(pSCApp, SOUND_CLICK);
+				if (pSCView->dwSCVIsZoomed)
+					Game_SimcityView_CenterOnNewScreenCoordinates(pSCView, wScreenPointX - HALVECOORD(wNewScreenPointX), wScreenPointY - HALVECOORD(wNewScreenPointY));
+				else
+					Game_SimcityView_CenterOnNewScreenCoordinates(pSCView, wScreenPointX - wNewScreenPointX, wScreenPointY - wNewScreenPointY);
+				Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
+				break;
+			default:
+				break;
+			}
+		}
+		UpdateWindow(pSCView->m_hWnd);
+		wSelectedSubtool[CITYTOOL_GROUP_BULLDOZER] = iBulldozerTool;
+	}
+}
+
+extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
+	CSimcityAppPrimary *pSCApp;
+	CSimcityView *pSCView;
+	__int16 iCurrMapToolGroupWithHotKey, iCurrMapToolGroupNoHotKey;
+	CMFC3XPoint screenCoords;
+	__int16 iTileCoords;
+	coords_w_t tileCoords;
+	WORD wNewScreenPointX, wNewScreenPointY;
+	BOOL bUpdate, bNoLoop;
+
+	// pSCView[62] = dwSCVLeftMouseButtonDown
+	// *(DWORD *)((char *)pSCView + 322) = SCVIsZoomed (This is referenced as a DWORD internally - structure alignment between it and the prior WORD at (WORD)pSCView[160])
+
+	// pSCView[62] - When this is set to 0, you remain within the do/while loop until you
+	//             release the left mouse button.
+	//             If it is set to 1 while the left mouse button is pressed (Shift key is
+	//             pressed and the iCurrToolGroupA is not 7 or 8 (trees or forest respectively)
+	//             it will break out of the loop and then you end up within the WM_MOUSEMOVE
+	//             call (if mouse movement is taking place).
+	//
+	// The change in this case is to only set pSCView[62] to 0 when the iCurrToolGroupA is not
+	// 'Center Tool', this will then allow it to pass-through to the WM_MOUSEMOVE call.
+
+	pSCApp = &pCSimcityAppThis;
+	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);	// TODO: is this necessary or can we just dereference pCSimcityView?
+	Game_SimcityView_TileHighlightUpdate(pSCView);
+	screenCoords.x = 400;
+	screenCoords.y = 400;
+	iCurrMapToolGroupNoHotKey = wCurrentMapToolGroup;
+	iCurrMapToolGroupWithHotKey = iCurrMapToolGroupNoHotKey;
+	if ((nFlags & MK_CONTROL) != 0)
+		iCurrMapToolGroupWithHotKey = MAPTOOL_GROUP_CENTERINGTOOL;
+	if (iCurrMapToolGroupWithHotKey != MAPTOOL_GROUP_CENTERINGTOOL)
+		pSCView->dwSCVLeftMouseButtonDown = 0;
+	do {
+		iTileCoords = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
+		if (iTileCoords < 0)
+			break;
+		tileCoords.x = LOBYTE(iTileCoords);
+		tileCoords.y = HIBYTE(iTileCoords);
+		if (tileCoords.x >= GAME_MAP_SIZE || tileCoords.y < 0)
+			break;
+		if ((nFlags & MK_SHIFT) != 0 && iCurrMapToolGroupWithHotKey != MAPTOOL_GROUP_TREES && iCurrMapToolGroupWithHotKey != MAPTOOL_GROUP_FOREST) {
+			pSCView->dwSCVLeftMouseButtonDown = 1;
+			break;
+		}
+		if (screenCoords.x != tileCoords.x || screenCoords.y != tileCoords.y) {
+			switch (iCurrMapToolGroupWithHotKey) {
+			case MAPTOOL_GROUP_BULLDOZER:
+				Game_UseBulldozer(tileCoords.x, tileCoords.y);
+				Game_SimcityView_UpdateAreaPortionFill(pSCView);
+				break;
+			case MAPTOOL_GROUP_RAISETERRAIN:
+				Game_MapToolRaiseTerrain(tileCoords.x, tileCoords.y);
+				break;
+			case MAPTOOL_GROUP_LOWERTERRAIN:
+				Game_MapToolLowerTerrain(tileCoords.x, tileCoords.y);
+				break;
+			case MAPTOOL_GROUP_STRETCHTERRAIN:
+				Game_MapToolStretchTerrain(tileCoords.x, tileCoords.y, (__int16)pt.y);
+				break;
+			case MAPTOOL_GROUP_LEVELTERRAIN:
+				Game_MapToolLevelTerrain(tileCoords.x, tileCoords.y);
+				break;
+			case MAPTOOL_GROUP_WATER:
+			case MAPTOOL_GROUP_STREAM:
+				if (iCurrMapToolGroupWithHotKey == MAPTOOL_GROUP_WATER) {
+					if (!Game_MapToolPlaceWater(tileCoords.x, tileCoords.y) || Game_Sound_MapToolSoundTrigger(pSCApp->SCASNDLayer))
+						break;
+				}
+				else {
+					Game_MapToolPlaceStream(tileCoords.x, tileCoords.y, 100);
+					if (Game_Sound_MapToolSoundTrigger(pSCApp->SCASNDLayer))
+						break;
+				}
+				L_PlayToolSound_SC2K1996(pSCApp);
+				break;
+			case MAPTOOL_GROUP_TREES:
+			case MAPTOOL_GROUP_FOREST:
+				if (!Game_Sound_MapToolSoundTrigger(pSCApp->SCASNDLayer))
+					L_PlayToolSound_SC2K1996(pSCApp);
+				if (iCurrMapToolGroupWithHotKey == MAPTOOL_GROUP_TREES)
+					Game_MapToolPlaceTree(tileCoords.x, tileCoords.y);
+				else
+					Game_MapToolPlaceForest(tileCoords.x, tileCoords.y);
+				break;
+			case MAPTOOL_GROUP_CENTERINGTOOL:
+				Game_GetScreenCoordsFromTileCoords(tileCoords.x, tileCoords.y, &wNewScreenPointX, &wNewScreenPointY);
+				L_PlayToolSound_SC2K1996(pSCApp, SOUND_CLICK);
+				if (pSCView->dwSCVIsZoomed)
+					Game_SimcityView_CenterOnNewScreenCoordinates(pSCView, wScreenPointX - HALVECOORD(wNewScreenPointX), wScreenPointY - HALVECOORD(wNewScreenPointY));
+				else
+					Game_SimcityView_CenterOnNewScreenCoordinates(pSCView, wScreenPointX - wNewScreenPointX, wScreenPointY - wNewScreenPointY);
+				break;
+			default:
+				break;
+			}
+		}
+		bUpdate = TRUE;  // Update window (excluding terrain tools)
+		bNoLoop = FALSE; // Break out of loop (terrain and centering tools - latter excluded while alt is pressed)
+		if ((iCurrMapToolGroupWithHotKey >= MAPTOOL_GROUP_RAISETERRAIN && iCurrMapToolGroupWithHotKey <= MAPTOOL_GROUP_LEVELTERRAIN) ||
+			iCurrMapToolGroupWithHotKey == MAPTOOL_GROUP_CENTERINGTOOL) {
+			if (iCurrMapToolGroupWithHotKey == MAPTOOL_GROUP_CENTERINGTOOL)
+				Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
+			else
+				bUpdate = FALSE;
+			bNoLoop = TRUE;
+		}
+		else {
+			Game_SimcityView_UpdateAreaPortionFill(pSCView);
+			screenCoords.x = tileCoords.x;
+			screenCoords.y = tileCoords.y;
+		}
+		if (bUpdate)
+			UpdateWindow(pSCView->m_hWnd);
+		if (bNoLoop)
+			break;
+	} while (Game_GetGameAreaMouseActivity(pSCView, &pt));
+	if (iCurrMapToolGroupNoHotKey != iCurrMapToolGroupWithHotKey)
+		wCurrentCityToolGroup = iCurrMapToolGroupNoHotKey;
+}
+
 void InstallToolBarHooks_SC2K1996(void) {
 	// Hooks for CCityToolBar::ToolMenuDisable and CCityToolBar::ToolMenuEnable
 	// Both of which are called when a modal CGameDialog is opened.
@@ -744,4 +1073,12 @@ void InstallToolBarHooks_SC2K1996(void) {
 	// Hook for CCityToolBar::DrawRCIIndicator
 	VirtualProtect((LPVOID)0x402EAF, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402EAF, Hook_CityToolBar_DrawRCIIndicator);
+
+	// Hook for the CityToolMenuAction call.
+	VirtualProtect((LPVOID)0x402C25, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402C25, Hook_CityToolMenuAction);
+
+	// Hook for the MapToolMenuAction call.
+	VirtualProtect((LPVOID)0x402B44, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402B44, Hook_MapToolMenuAction);
 }

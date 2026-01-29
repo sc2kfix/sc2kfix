@@ -16,7 +16,6 @@ enum {
 
 void InstallMusicEngineHooks(void);
 DWORD WINAPI MusicThread(LPVOID lpParameter);
-DWORD WINAPI MusicMCINotifyCallback(WPARAM wFlags, LPARAM lDevID);
 void MusicShufflePlaylist(int iLastSongPlayed);
 
 extern BOOL bUseMultithreadedMusic;

@@ -273,6 +273,8 @@ static void SetSettingsTabOrdering(HWND hwndDlg) {
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC), NULL, 0, 0, 0, 0, uFlags);
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_BKGDMUSIC), NULL, 0, 0, 0, 0, uFlags);
 
+	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_CONFKEYBINDINGS), NULL, 0, 0, 0, 0, uFlags);
+
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_CONFMP3TRACKS), NULL, 0, 0, 0, 0, uFlags);
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_CONFMIDTRACKS), NULL, 0, 0, 0, 0, uFlags);
 
@@ -522,6 +524,8 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			return DoConfigureMusicTracks(st, hwndDlg, FALSE);
 		case IDC_SETTINGS_BUTTON_CONFMP3TRACKS:
 			return DoConfigureMusicTracks(st, hwndDlg, TRUE);
+		case IDC_SETTINGS_BUTTON_CONFKEYBINDINGS:
+			return DoConfigureKeyBindings(st, hwndDlg);
 		}
 		return TRUE;
 	}
@@ -556,10 +560,13 @@ void ShowSettingsDialog(void) {
 
 	st.bActiveTrackChanged = FALSE;
 	st.bActiveMusicEngineTouched = FALSE;
+	st.bKeyBindingsChanged = FALSE;
 
 	// Save the original settings here just prior to saving.
 	st.iCurrentMusicEngineOutput = st.iSettingsMusicEngineOutput;
 	strcpy_s(st.szCurrentFluidSynthSoundfont, sizeof(st.szCurrentFluidSynthSoundfont), st.szSettingsFluidSynthSoundfont);
+
+	InitializeTempBindings();
 
 	ToggleFloatingStatusDialog(FALSE);
 
@@ -584,6 +591,11 @@ void ShowSettingsDialog(void) {
 		for (int i = 0; i < MUSIC_TRACKS; i++) {
 			strcpy_s(szSettingsMIDITrackPath[i], sizeof(szSettingsMIDITrackPath[i]), st.szSettingsMIDITrackPath[i]);
 			strcpy_s(szSettingsMP3TrackPath[i], sizeof(szSettingsMP3TrackPath[i]), st.szSettingsMP3TrackPath[i]);
+		}
+
+		if (st.bKeyBindingsChanged) {
+			UpdateKeyBindings();
+			SaveStoredBindings();
 		}
 
 		// Save the settings

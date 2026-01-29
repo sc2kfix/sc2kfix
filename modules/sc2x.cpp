@@ -430,7 +430,7 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 				wPrisonBonus = ntohl(*(DWORD*)&pChunkMISC[i]);
 				i += 4;
 
-				wMonsterXTHGIndex = ntohl(*(DWORD*)&pChunkMISC[i]);
+				wDisasterObject = ntohl(*(DWORD*)&pChunkMISC[i]);
 				i += 4;
 
 				wCurrentDisasterID = ntohl(*(DWORD*)&pChunkMISC[i]);

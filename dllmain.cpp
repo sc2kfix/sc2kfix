@@ -52,6 +52,7 @@ BOOL bKurokoVMInitialized = FALSE;
 BOOL bUseAdvancedQuery = TRUE;
 BOOL bSkipLoadingMods = FALSE;
 BOOL bFixFileAssociations = FALSE;
+BOOL bDisableAutoThingCleanup = TRUE;
 int iForcedBits = 0;
 
 std::random_device rdRandomDevice;
@@ -151,6 +152,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		iLastArgPos = -1;
 		iArg = 0;
 
+		bDisableAutoThingCleanup = TRUE;
+
 		argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 		if (argv) {
 			for (int i = 0; i < argc; i++) {
@@ -161,6 +164,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						bConsoleEnabled = TRUE;
 					if (!lstrcmpiW(argv[i], L"-debugall")) {
 						guzzardo_debug = DEBUG_FLAGS_EVERYTHING;
+						keybinds_debug = DEBUG_FLAGS_EVERYTHING;
 						mci_debug = DEBUG_FLAGS_EVERYTHING;
 						military_debug = DEBUG_FLAGS_EVERYTHING;
 						mischook_debug = DEBUG_FLAGS_EVERYTHING;
@@ -171,11 +175,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						sc2x_debug = DEBUG_FLAGS_EVERYTHING;
 						snd_debug = DEBUG_FLAGS_EVERYTHING;
 						sprite_debug = DEBUG_FLAGS_EVERYTHING;
+						things_debug = DEBUG_FLAGS_EVERYTHING;
 						timer_debug = DEBUG_FLAGS_EVERYTHING;
 						updatenotifier_debug = DEBUG_FLAGS_EVERYTHING;
 					}
 					if (!lstrcmpiW(argv[i], L"-undebugall")) {
 						guzzardo_debug = DEBUG_FLAGS_NONE;
+						keybinds_debug = DEBUG_FLAGS_NONE;
 						mci_debug = DEBUG_FLAGS_NONE;
 						military_debug = DEBUG_FLAGS_NONE;
 						mischook_debug = DEBUG_FLAGS_NONE;
@@ -186,11 +192,14 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						sc2x_debug = DEBUG_FLAGS_NONE;
 						snd_debug = DEBUG_FLAGS_NONE;
 						sprite_debug = DEBUG_FLAGS_NONE;
+						things_debug = DEBUG_FLAGS_NONE;
 						timer_debug = DEBUG_FLAGS_NONE;
 						updatenotifier_debug = DEBUG_FLAGS_NONE;
 					}
 					if (!lstrcmpiW(argv[i], L"-resetfileassociations"))
 						bFixFileAssociations = TRUE;
+					if (!lstrcmpiW(argv[i], L"-enableautothingcleanup"))
+						bDisableAutoThingCleanup = FALSE;
 					if (!lstrcmpiW(argv[i], L"-defaults"))
 						bSkipLoadSettings = TRUE;
 					if (!lstrcmpiW(argv[i], L"-skipintro"))
@@ -298,6 +307,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Load the FluidSynth library in case we need it
 		MusicLoadFluidSynth();
 
+		// Initialize default bindings.
+		InitializeDefaultBindings();
+
 		// Initialize settings
 		InitializeSettings();
 
@@ -403,6 +415,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			ConsoleLog(LOG_INFO, "CORE: Portable entries created by faux-installer.\n");
 
 		if (dwDetectedVersion == VERSION_SC2K_1996) {
+			ConsoleLog(LOG_INFO, "CORE: Loading stored key/button bindings.\n");
+			LoadStoredBindings();
+
 			ConsoleLog(LOG_INFO, "CORE: Loading last stored load/save city and load tileset paths.\n");
 			LoadStoredPaths();
 		}
@@ -564,10 +579,14 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			PostThreadMessage(dwKurokoThreadID, WM_QUIT, NULL, NULL);
 #endif
 
-		// Only save the stored paths during a graceful exit. (SC2K1996 only for now)
-		if (!bGameDead)
-			if (dwDetectedVersion == VERSION_SC2K_1996)
+		// Only save the bindings and stored paths during a graceful exit.
+		// (SC2K1996 only for now)
+		if (!bGameDead) {
+			if (dwDetectedVersion == VERSION_SC2K_1996) {
 				SaveStoredPaths();
+				SaveStoredBindings();
+			}
+		}
 
 		// Clear out the stored sprite IDs (no allocated data are contained).
 		spriteIDs.clear();

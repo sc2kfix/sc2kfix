@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <random>
 
+#include <keybindings.h>
 #include <mfc3xhelp.h>
 #include <sc2kclasses.h>
 #include <sc2k_1995.h>
@@ -103,7 +104,29 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define WM_CONSOLE_REPL	WM_APP+0x200
 #endif
 
+#define ListView_InsertItemType(hwndLV, i, tmask) {\
+	LV_ITEM _macro_lvi;\
+	_macro_lvi.mask = (tmask);\
+	_macro_lvi.iItem = (i);\
+	_macro_lvi.iSubItem = 0;\
+	_macro_lvi.pszText = (char *)"";\
+	SNDMSG((hwndLV), LVM_INSERTITEM, (WPARAM)(i), (LPARAM)(LV_ITEM *)&_macro_lvi);\
+}
+
+#define ListView_InsertItemText(hwndLV, i) ListView_InsertItemType(hwndLV, i, LVIF_TEXT)
+
+#define ListView_InsertColumnEntry(hwndLV, i, text, width, tmask, cfmt) { \
+	LV_COLUMN _macro_lvc;\
+	_macro_lvc.mask = (tmask);\
+	_macro_lvc.fmt = (cfmt);\
+	_macro_lvc.iSubItem = (i);\
+	_macro_lvc.pszText = (char *)(text);\
+	_macro_lvc.cx = (width);\
+	(int)SNDMSG((hwndLV), LVM_INSERTCOLUMN, (WPARAM)(i), (LPARAM)(LV_COLUMN *)&_macro_lvc);\
+}
+
 #define MUSIC_TRACKS 19
+#define SOUND_ENTRIES 31
 
 // It should be noted that with these values
 // they're referencing the min/max for the
@@ -114,6 +137,8 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define MAX_USER_TEXT_ENTRIES 50
 #define MIN_SIM_TEXT_ENTRIES (MAX_USER_TEXT_ENTRIES + 1)
 #define MAX_SIM_TEXT_ENTRIES 200
+
+#define MAX_LABEL_TEXT_ENTRY_RANGE 128
 
 #define MICROSIMID_MIN 0
 #define MICROSIMID_MAX (MAX_SIM_TEXT_ENTRIES - MIN_SIM_TEXT_ENTRIES)
@@ -142,7 +167,31 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define MARINA_TILES_ALLDRY 0
 #define MARINA_TILES_ALLWET 9
 
+// Although there is a Thing Index '0'
+// that one is for the bulldozer; let's
+// not step on that one.
+#define MIN_THING_IDX 1
+#define MAX_THING_IDX 39
+
 #define INI_GAME_SPEED_SETTING(x) (x - 1)
+
+#define HALVECOORD(x) (x >> 1)
+
+enum {
+	THING_CLEAN_PLANES,
+	THING_CLEAN_COPTERS,
+	THING_CLEAN_SHIPS,
+	THING_CLEAN_SAILBOATS,
+	THING_CLEAN_TRAINS,
+	THING_CLEAN_HERO,
+	THING_CLEAN_MONSTER,
+	THING_CLEAN_TORNADO,
+	THING_CLEAN_PLDEPLOY,
+	THING_CLEAN_FRDEPLOY,
+	THING_CLEAN_MLDEPLOY,
+
+	THING_CLEAN_COUNT
+};
 
 // Struct defining an injected hook from a loaded mod and its nested call priority.
 typedef struct {
@@ -244,6 +293,7 @@ typedef struct {
 	// Attributes that the settings dialogue needs to know before and after.
 	BOOL bActiveTrackChanged;
 	BOOL bActiveMusicEngineTouched;
+	BOOL bKeyBindingsChanged;
 
 	UINT iCurrentMusicEngineOutput;
 	char szCurrentFluidSynthSoundfont[MAX_PATH + 1];
@@ -372,7 +422,7 @@ void ShowSpriteBrowseDialog(void);
 BOOL CanUseFloatingStatusDialog();
 void ToggleFloatingStatusDialog(BOOL bEnable);
 void ToggleGotoButton(HWND hWndBut, BOOL bEnable);
-void LoadReplacementSounds(void);
+void InstallSoundEngineHooks_SC2K1996(void);
 BOOL UpdaterCheckForUpdates(void);
 DWORD WINAPI UpdaterThread(LPVOID lpParameter);
 const char *GetGameSoundPath();
@@ -380,6 +430,7 @@ int GetCurrentActiveSongID();
 BOOL MusicLoadFluidSynth(void);
 void DoMusicPlay(int iSongID, BOOL bInterrupt);
 BOOL DoConfigureMusicTracks(settings_t *st, HWND hDlg, BOOL bMP3);
+BOOL DoConfigureKeyBindings(settings_t *st, HWND hwndDlg);
 
 BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc);
 
@@ -390,6 +441,8 @@ DWORD WINAPI ConsoleThread(LPVOID lpParameter);
 BOOL ConsoleEvaluateCommand(const char* szCommandLine, BOOL bInteractive);
 BOOL ConsoleCmdClear(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdEcho(const char* szCommand, const char* szArguments);
+BOOL ConsoleCmdFixUp(const char* szCommand, const char* szArguments);
+BOOL ConsoleCmdFixUpThing(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdRun(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdWait(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdHelp(const char* szCommand, const char* szArguments);
@@ -437,6 +490,7 @@ extern const char* szSC2KFixBuildInfo;
 extern BOOL bConsoleEnabled;
 extern BOOL bSkipIntro;
 extern BOOL bUseAdvancedQuery;
+extern BOOL bDisableAutoThingCleanup;
 #if !NOKUROKO
 extern BOOL bKurokoVMInitialized;
 extern DWORD dwConsoleThreadID;
@@ -486,7 +540,7 @@ void UpdateStatus_SC2K1996(int iShow);
 void InstallQueryHooks_SC2K1996(void);
 void InstallMilitaryHooks_SC2K1996(void);
 void InstallSaveHooks_SC2K1996(void);
-extern "C" int __stdcall Hook_LoadSoundBuffer(int iSoundID, void* lpBuffer);
+extern "C" int __stdcall Hook_LoadSoundIntoBuffer(int iSoundID, void* lpBuffer);
 int L_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
 void ReloadDefaultTileSet_SC2K1996();
 int IsValidSiloPosCheck(__int16 m_x, __int16 m_y);
@@ -509,6 +563,7 @@ void InstallMovieHooks(void);
 // Debugging settings
 
 extern UINT guzzardo_debug;
+extern UINT keybinds_debug;
 extern UINT mci_debug;
 extern UINT military_debug;
 extern UINT mischook_debug;
@@ -519,6 +574,7 @@ extern UINT registry_debug;
 extern UINT sc2x_debug;
 extern UINT snd_debug;
 extern UINT sprite_debug;
+extern UINT things_debug;
 extern UINT timer_debug;
 extern UINT updatenotifier_debug;
 

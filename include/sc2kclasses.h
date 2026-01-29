@@ -130,7 +130,7 @@ public:
 	BOOL bSNDWasPlaying;
 	int iSNDActionThingSoundID;
 	void *dwSNDBufferClick;
-	void *dwSNDBufferDestruction;
+	void *dwSNDBufferExplosion;
 	void *dwSNDBufferGeneral;
 	int iSNDGeneralSoundID;
 	DWORD dwSNDUnknownOne;
@@ -358,8 +358,8 @@ public:
 	CGraphics *dwNDCGraphicsOne;
 	CMFC3XBitmapButton dwNDCBitmapButton;
 	DWORD dwNDPaperChoice;
-	DWORD dwNDPaperSectionOpen;
-	CMFC3XFont *dwNDCFonts;
+	DWORD dwNDPaperSectionLoadFailure;
+	CMFC3XFont dwNDCFonts[33];
 };
 
 class CJokeDialog : public CMFC3XDialog {
@@ -422,14 +422,14 @@ public:
 	CMFC3XScrollBar *SCVScrollBarVert;
 	CMFC3XScrollBar *SCVScrollBarHorz;
 	CMFC3XStatic *SCVStaticOne;
-	CMFC3XRect SCVScrollBarVertRectOne;
-	CMFC3XRect SCVScrollBarVertRectTwo;
-	CMFC3XRect SCVScrollBarVertRectThree;
-	CMFC3XRect SCVScrollPosVertRect;
-	CMFC3XRect SCVScrollBarHorzRectOne;
-	CMFC3XRect SCVScrollBarHorzRectTwo;
-	CMFC3XRect SCVScrollBarHorzRectThree;
-	CMFC3XRect SCVScrollPosHorzRect;
+	CMFC3XRect SCVScrollBarVertRectBar;
+	CMFC3XRect SCVScrollBarVertRectUpButton;
+	CMFC3XRect SCVScrollBarVertRectDownButton;
+	CMFC3XRect SCVScrollPosVertRectThumb;
+	CMFC3XRect SCVScrollBarHorzRectBar;
+	CMFC3XRect SCVScrollBarHorzRectLeftButton;
+	CMFC3XRect SCVScrollBarHorzRectRightButton;
+	CMFC3XRect SCVScrollPosHorzRectThumb;
 	CMFC3XRect SCVScrollPosRect;
 	CMFC3XRect SCVStaticRect;
 	DWORD dwSCVLeftMouseButtonDown;
