@@ -1243,10 +1243,10 @@ static void L_TileHighlightUpdate(CSimcityView *pThis) {
 				Game_FinishProcessObjects();
 			}
 			Game_Graphics_UnlockDIBBits(pThis->SCVGraphics);
-			bottom = ++rcDst.bottom;
+			bottom = ++dirtyRect.bottom;
 			if (pThis->dwSCVIsZoomed) {
-				rcDst.bottom = bottom + 2;
-				++rcDst.right;
+				dirtyRect.bottom = bottom + 2;
+				++dirtyRect.right;
 			}
 			// As it turns out this if case is necessary here.. otherwise it results in breakage when
 			// it comes to the pollution clouds (entire view window update rather than just the
@@ -1257,7 +1257,7 @@ static void L_TileHighlightUpdate(CSimcityView *pThis) {
 			if (pThis == (CSimcityView *)&pSomeWnd)
 				Game_SimcityView_MainWindowUpdate(pThis, 0, 1);
 			else
-				Game_SimcityView_MainWindowUpdate(pThis, &rcDst, 1);
+				Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, 1);
 			if (bOverrideTickPlacementHighlight)
 				wTileHighlightActive = 0;
 		}

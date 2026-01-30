@@ -838,7 +838,7 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 			DoBudgetSubwayCheck(pSCView, iX, iY);
 		}
 	}
-	rcDst.top = -1000;
+	dirtyRect.top = -1000;
 }
 
 static void DeleteTilePortion(__int16 x, __int16 y) {

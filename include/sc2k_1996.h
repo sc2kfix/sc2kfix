@@ -3263,7 +3263,7 @@ GAMEOFF_ARR(char, szNeighborNameNorth,		0x4CAD98)		// char[32]
 GAMEOFF_ARR(char, szNeighborNameEast,		0x4CADB8)		// char[32]
 GAMEOFF(WORD,	wCityTerrainSliderTrees,	0x4CADD8)
 GAMEOFF(BYTE,	bWeatherHeat,				0x4CADE0)
-GAMEOFF(RECT,	rcDst,						0x4CAD48)
+GAMEOFF(RECT,	dirtyRect,					0x4CAD48)
 GAMEOFF_ARR(BYTE, stNeighborCities,			0x4CAD58)
 GAMEOFF(DWORD,	dwCityDays,					0x4CAE04)
 GAMEOFF(BYTE,	bWeatherWind,				0x4CAE0C)
