@@ -537,6 +537,7 @@ void InstallMiscHooks_SC2K1995(void);
 void InstallMiscHooks_SC2KDemo(void);
 void InstallStatusHooks_SC2K1996(void);
 void UpdateStatus_SC2K1996(int iShow);
+void InstallDrawingHooks_SC2K1996(void);
 void InstallQueryHooks_SC2K1996(void);
 void InstallMilitaryHooks_SC2K1996(void);
 void InstallSaveHooks_SC2K1996(void);

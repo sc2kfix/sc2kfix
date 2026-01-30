@@ -2344,6 +2344,8 @@ void InstallMiscHooks_SC2K1996(void) {
 	VirtualProtect((LPVOID)0x401F05, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x401F05, Hook_StartCleanGame);
 
+	InstallDrawingHooks_SC2K1996();
+
 	InstallTileGrowthOrPlacementHandlingHooks_SC2K1996();
 	
 	// Install the advanced query hook
