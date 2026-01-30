@@ -101,6 +101,9 @@
 
 #define GAME_MAP_SIZE 128
 
+#define MAP_EDGE_MIN 0
+#define MAP_EDGE_MAX (GAME_MAP_SIZE - 1)
+
 // Enums
 
 enum {
@@ -2953,6 +2956,7 @@ GAMECALL(0x401F9B, int, __stdcall, LoadSoundIntoBuffer, int iSoundID, void *lpBu
 GAMECALL(0x401FA0, int, __cdecl, CheckAdjustTerrainAndPlacePowerLines, __int16 x, __int16 y)
 GAMECALL(0x402022, void, __stdcall, UpdateGraphData, void)
 GAMECALL(0x402045, void *, __cdecl, AllocateDataEntry, size_t iSz)
+GAMECALL(0x402095, void, __cdecl, DrawLargeTile, __int16, __int16, int, int)
 GAMECALL(0x40209F, __int16, __cdecl, SpawnTrain, __int16 x, __int16 y)
 GAMECALL(0x4020B8, void, __thiscall, SimcityView_MakeTerrain, CSimcityView *, int, int, __int16, __int16, __int16)
 GAMECALL(0x40210D, void, __thiscall, SimcityApp_AdjustNewspaperMenu, CSimcityAppPrimary *)
@@ -3054,6 +3058,7 @@ GAMECALL(0x402D56, BYTE, __stdcall, PrepareLabel, void)
 GAMECALL(0x402DA1, BYTE *, __thiscall, Graphics_LockDIBBits, CGraphics *)
 GAMECALL(0x402DF1, void, __thiscall, Graphics_Paint, CGraphics *, HDC, int, int)
 GAMECALL(0x402E19, void, __cdecl, QueryGeneralItem, __int16, __int16)
+GAMECALL(0x402E73, void, __cdecl, DrawLabel, __int16, __int16, __int16, __int16)
 GAMECALL(0x402E96, void, __thiscall, SimcityApp_GetToolSound, CSimcityAppPrimary *)
 GAMECALL(0x402EA0, int, __cdecl, CityToolPlacePowerHydroDam, __int16, __int16)
 GAMECALL(0x402EFA, int, __stdcall, GetSimcityViewMenuPos, int iPos)
@@ -3186,6 +3191,8 @@ GAMEOFF(WORD,	wViewInitialCoordY,			0x4C7CB4)
 GAMEOFF(WORD,	wViewInitialZoom,			0x4C7CB8)
 GAMEOFF(RECT,	currWndClientRect,			0x4C7CD0)
 GAMEOFF(WORD,	wCurrentAngle,				0x4C7CF8)
+GAMEOFF(RECT,	rcDst,						0x4C7D08)
+GAMEOFF(WORD,	wCurrentPositionAngle,		0x4C7D18)
 GAMEOFF(WORD,	wTileDirection,				0x4C7D60)
 GAMEOFF(WORD,	wMaybeActiveToolGroup,		0x4C7D88)
 GAMEOFF(WORD,	wMilitaryAvailDispatch,			0x4C7D98)
@@ -3251,6 +3258,8 @@ GAMEOFF(WORD,	wCityTerrainSliderWater,	0x4CAAF8)
 GAMEOFF(DWORD,	pSomeWnd,					0x4CAC18)		// Perhaps this is the active view window? (unclear - but this is referenced in the native TileHighlightUpdate function)
 GAMEOFF(DWORD*, dwNeighborPopulation,		0x4CAD10)		// DWORD dwNeighborPopulation[4]
 GAMEOFF(BOOL,	bMainFrameInactive,			0x4CAD14)
+GAMEOFF(__int16,	iScreenOffSetX,			0x4CAD18)
+GAMEOFF(__int16,	iScreenOffSetY,			0x4CAD1C)
 GAMEOFF(BYTE*,	bArrNewspaperTable1,		0x4CAD24)
 GAMEOFF(DWORD,	dwCityFame,					0x4CAD28)		// Unused in vanilla game
 GAMEOFF(BOOL,	bYearEndFlag,				0x4CAD2C)
@@ -3375,8 +3384,9 @@ GAMEOFF_ARR(sprite_archive_stored_t,	dwBaseSpriteLoading,		0x4E7448)
 GAMEOFF_ARR(WORD,	wBuildingPopLevel,		0x4E7458)
 GAMEOFF_ARR(BYTE,	bTileState,				0x4E7508)
 GAMEOFF_ARR(WORD,	wBuildingPopulation,	0x4E75B0)
-GAMEOFF_ARR(WORD, wXTERToSpriteIDMap,		0x4E7628)
+GAMEOFF_ARR(WORD, nXTERTileIDs,				0x4E7628)
 GAMEOFF_ARR(WORD, wXTERToXUNDSpriteIDMap,	0x4E76B8)
+GAMEOFF_ARR(BYTE,	BuiltUpZones,			0x4E77B8)
 GAMEOFF(DWORD,	dwPlacePoliceThingFail,		0x4E7FC4)
 GAMEOFF(DWORD,	dwPlaceFireThingFail,		0x4E7FC8)
 GAMEOFF(DWORD,	dwPlaceMilitaryThingFail,	0x4E7FCC)

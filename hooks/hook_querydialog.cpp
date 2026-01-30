@@ -39,7 +39,7 @@ static int GetQueriedSpriteIDFromCoords(WORD x, WORD y) {
 	iTileID = GetTileID(x, y);
 	if (!iTileID) {
 		iTileID = GetTerrainTileID(x, y);
-		iTileID = wXTERToSpriteIDMap[iTileID];
+		iTileID = nXTERTileIDs[iTileID];
 	}
 	//else {
 	//	if (iTileID >= TILE_ARCOLOGY_PLYMOUTH) {
