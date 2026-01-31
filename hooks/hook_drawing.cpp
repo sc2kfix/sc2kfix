@@ -122,7 +122,7 @@ extern "C" void __stdcall Hook_DrawAllLarge() {
 		rcDst.top -= 32;
 
 		// Top
-#if 1
+#if 0
 		iScan = MAP_EDGE_MIN;
 		iX = MAP_EDGE_MIN;
 		iY = MAP_EDGE_MIN;
@@ -130,7 +130,7 @@ extern "C" void __stdcall Hook_DrawAllLarge() {
 		iShpHeight = iScreenOffSetY;
 		do {
 			if (rcDst.left < iShpWidth && rcDst.right > iShpWidth) {
-				//L_DrawLargeEdge(iShpWidth, iShpHeight, iX, iY);
+				L_DrawLargeEdge(iShpWidth, iShpHeight, iX, iY);
 			}
 			if (iY) {
 				++iX;
@@ -171,7 +171,7 @@ extern "C" void __stdcall Hook_DrawAllLarge() {
 		} while (iScan < GAME_MAP_SIZE);
 
 		// Bottom
-#if 1
+#if 0
 		iScan = MAP_EDGE_MIN + 1;
 		iX = MAP_EDGE_MIN + 1;
 		iY = MAP_EDGE_MAX;
@@ -179,7 +179,7 @@ extern "C" void __stdcall Hook_DrawAllLarge() {
 		iShpHeight = iScreenOffSetY + 1024;
 		do {
 			if (rcDst.left < iShpWidth && rcDst.right > iShpWidth) {
-				//L_DrawLargeEdge(iShpWidth, iShpHeight, iX, iY);
+				L_DrawLargeEdge(iShpWidth, iShpHeight, iX, iY);
 			}
 			if (iX == MAP_EDGE_MAX) {
 				++iScan;
@@ -234,6 +234,7 @@ extern "C" void __cdecl Hook_DrawLargeTile(__int16 shpWidth, __int16 shpHeight, 
 	BYTE iTerrainTile;
 	BYTE iTile;
 	BYTE iZone;
+	BYTE iCoverage;
 	BYTE iTraffic, iLowTrfTheshold, iHeavyTrfThreshold;
 	BYTE iTrafficTile;
 
@@ -274,19 +275,34 @@ extern "C" void __cdecl Hook_DrawLargeTile(__int16 shpWidth, __int16 shpHeight, 
 		if (iTile >= TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1) {
 			if (DisplayLayer[LAYER_BUILDINGS]) {
 				if (DisplayLayer[LAYER_ZONES] || !iZone) {
-					if (XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
+					iCoverage = GetTileCoverage(iTile);
+					if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
+						bIsFlipped = FALSE;
+					else
+						bIsFlipped = XBITReturnIsFlipped(iX, iY);
+					if (!IsEven(wViewRotation))
+						bIsFlipped = !bIsFlipped;
+					if (iCoverage >= 1) {
 						iSprite = iTile + SPRITE_LARGE_START;
-						if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
-							bIsFlipped = FALSE;
-						else
-							bIsFlipped = XBITReturnIsFlipped(iX, iY);
-						if (!IsEven(wViewRotation))
-							bIsFlipped = !bIsFlipped;
-						Game_DrawProcessObject(iSprite, shpWidth, (pArrSpriteHeaders[iSprite].wWidth >> 2) - pArrSpriteHeaders[iSprite].wHeight + iTop - 8, bIsFlipped, 0);
-						if (iX < GAME_MAP_SIZE &&
-							iY < GAME_MAP_SIZE &&
-							XBITReturnIsPowerable(iX, iY) && !XBITReturnIsPowered(iX, iY)) {
-							Game_DrawProcessObject(SPRITE_LARGE_POWEROUTAGEINDICATOR, shpWidth + (pArrSpriteHeaders[iSprite].wWidth >> 1) - 16, iTop - 16, 0, 0);
+						if (iCoverage >= 2) {
+							if (iCoverage >= 3) {
+								if (iCoverage == 4) {
+									if (iX - 3 >= MAP_EDGE_MIN && XZONCornerCheck(iX - 3, iY, wCurrentPositionAngle) && GetTileID(iX - 3, iY) == iTile)
+										Game_DrawProcessObject(iSprite, shpWidth - 48, ((pArrSpriteHeaders[iSprite].wWidth >> 2) - pArrSpriteHeaders[iSprite].wHeight) + iTop - 32, bIsFlipped, 0);
+								}
+								if (iX - 2 >= MAP_EDGE_MIN && XZONCornerCheck(iX - 2, iY, wCurrentPositionAngle) && GetTileID(iX - 2, iY) == iTile)
+									Game_DrawProcessObject(iSprite, shpWidth - 32, ((pArrSpriteHeaders[iSprite].wWidth >> 2) - pArrSpriteHeaders[iSprite].wHeight) + iTop - 24, bIsFlipped, 0);
+							}
+							if (iX - 1 >= MAP_EDGE_MIN && XZONCornerCheck(iX - 1, iY, wCurrentPositionAngle) && GetTileID(iX - 1, iY) == iTile)
+								Game_DrawProcessObject(iSprite, shpWidth - 16, ((pArrSpriteHeaders[iSprite].wWidth >> 2) - pArrSpriteHeaders[iSprite].wHeight) + iTop - 16, bIsFlipped, 0);
+						}
+						if (XZONCornerCheck(iX, iY, wCurrentPositionAngle) && GetTileID(iX, iY) == iTile) {
+							Game_DrawProcessObject(iSprite, shpWidth, (pArrSpriteHeaders[iSprite].wWidth >> 2) - pArrSpriteHeaders[iSprite].wHeight + iTop - 8, bIsFlipped, 0);
+							if (iX < GAME_MAP_SIZE &&
+								iY < GAME_MAP_SIZE &&
+								XBITReturnIsPowerable(iX, iY) && !XBITReturnIsPowered(iX, iY)) {
+								Game_DrawProcessObject(SPRITE_LARGE_POWEROUTAGEINDICATOR, shpWidth + (pArrSpriteHeaders[iSprite].wWidth >> 1) - 16, iTop - 16, 0, 0);
+							}
 						}
 					}
 				}
