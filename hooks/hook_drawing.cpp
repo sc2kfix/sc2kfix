@@ -49,20 +49,29 @@ static int DoWaterfallEdge(__int16 shpWidth, int iX, int iY, __int16 iBottom) {
 	return 1;
 }
 
-static int DoMapEdge(__int16 shpWidth, __int16 shpHeight, __int16 iOffSetX, __int16 iOffSetY, int iX, int iY, __int16 iBottom, __int16 iLandAlt, BOOL bNoEdge) {
+static int DoMapEdge(__int16 shpWidth, int iX, int iY, __int16 iBottom, __int16 iLandAlt) {
 	if (iLandAlt > 0) {
 		while (rcDst.top <= iBottom) {
-			if (!bNoEdge) {
-				if (rcDst.bottom > iBottom) {
-					Game_DrawProcessObject(SPRITE_LARGE_BEDROCK, shpWidth + iOffSetX, shpHeight + iBottom + iOffSetY, 0, 0);
-				}
-			}
+			if (rcDst.bottom > iBottom)
+				Game_DrawProcessObject(SPRITE_LARGE_BEDROCK, shpWidth, iBottom, 0, 0);
 			iBottom -= 12;
 			if (--iLandAlt <= 0)
 				return DoWaterfallEdge(shpWidth, iX, iY, iBottom);
 		}
 	}
 	return 1;
+}
+
+static void DoBedrockEdge(__int16 shpWidth, __int16 iOffSetX, __int16 iOffSetY, __int16 iBottom, __int16 iLandAlt) {
+	if (iLandAlt > 0) {
+		while (rcDst.top <= iBottom) {
+			if (rcDst.bottom > iBottom)
+				Game_DrawProcessObject(SPRITE_LARGE_BEDROCK, shpWidth + iOffSetX, iBottom + iOffSetY, 0, 0);
+			iBottom -= 12;
+			if (--iLandAlt <= 0)
+				break;
+		}
+	}
 }
 
 extern "C" void __stdcall Hook_DrawAllLarge() {
@@ -141,7 +150,7 @@ extern "C" void __cdecl Hook_DrawLargeTile(__int16 shpWidth, __int16 shpHeight, 
 	BYTE iTerrainTile;
 	BYTE iTile;
 	BYTE iZone;
-	BYTE iCoverage;
+	BYTE iOff;
 	BYTE iTraffic, iLowTrfTheshold, iHeavyTrfThreshold;
 	BYTE iTrafficTile;
 
@@ -168,7 +177,7 @@ extern "C" void __cdecl Hook_DrawLargeTile(__int16 shpWidth, __int16 shpHeight, 
 	iZone = XZONReturnZone(iX, iY);
 	if (iTile == TILE_CLEAR) {
 		if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-			DoMapEdge(shpWidth, 0, 0, 0, iX, iY, iBottom, iLandAlt, FALSE);
+			DoMapEdge(shpWidth, iX, iY, iBottom, iLandAlt);
 		if (iTerrainTile > TERRAIN_00 || !iZone)
 			iSprite = nXTERTileIDs[iTerrainTile] + SPRITE_LARGE_START;
 		else
@@ -182,86 +191,77 @@ extern "C" void __cdecl Hook_DrawLargeTile(__int16 shpWidth, __int16 shpHeight, 
 		if (iTile >= TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1) {
 			if (DisplayLayer[LAYER_BUILDINGS]) {
 				if (DisplayLayer[LAYER_ZONES] || !iZone) {
-					iCoverage = GetTileCoverage(iTile);
-					if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
-						bIsFlipped = FALSE;
-					else
-						bIsFlipped = XBITReturnIsFlipped(iX, iY);
-					if (!IsEven(wViewRotation))
-						bIsFlipped = !bIsFlipped;
-					if (iCoverage >= 1) {
+					if (XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
+						iOff = GetTileCoverage(iTile);
 						iSprite = iTile + SPRITE_LARGE_START;
-						if (iCoverage >= 1) {
+						if (iOff >= 0) {
 							iBottom = shpHeight - pArrSpriteHeaders[SPRITE_LARGE_BEDROCK].wHeight;
-							if (iCoverage == 1) {
-								if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX) {
-									DoMapEdge(shpWidth, 0, 0, 0, iX, iY, iBottom, iLandAlt, FALSE);
+							iLandAlt = ALTMReturnLandAltitude(iX, iY);
+							if (iOff == 0) {
+								if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
+									DoBedrockEdge(shpWidth,  0,  0, iBottom, iLandAlt);
+							}
+							else if (iOff == 1) {
+								if (iX + 1 == MAP_EDGE_MAX) {
+									DoBedrockEdge(shpWidth, 32,  0, iBottom, iLandAlt);
+									DoBedrockEdge(shpWidth, 16,  8, iBottom, iLandAlt);
+								}
+								else if (iY == MAP_EDGE_MAX) {
+									DoBedrockEdge(shpWidth, 0,   0, iBottom, iLandAlt);
+									DoBedrockEdge(shpWidth, 16,  8, iBottom, iLandAlt);
 								}
 							}
-							else if (iCoverage == 2) {
-								if (iX + 1 == MAP_EDGE_MAX && XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
-									iLandAlt = ALTMReturnLandAltitude(iX, iY);
-									DoMapEdge(shpWidth, 0, 32,  0, iX + 1, iY, iBottom, iLandAlt, FALSE);
-									DoMapEdge(shpWidth, 0, 16,  8, iX + 1, iY - 1, iBottom, iLandAlt, FALSE);
+							else if (iOff == 2) {
+								if (iX + 2 == MAP_EDGE_MAX) {
+									DoBedrockEdge(shpWidth, 64,  0, iBottom, iLandAlt);
+									DoBedrockEdge(shpWidth, 48,  8, iBottom, iLandAlt);
+									DoBedrockEdge(shpWidth, 32, 16, iBottom, iLandAlt);
 								}
-								else if (iY == MAP_EDGE_MAX && XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
-									iLandAlt = ALTMReturnLandAltitude(iX, iY);
-									DoMapEdge(shpWidth, 0,  0,  0, iX, iY, iBottom, iLandAlt, FALSE);
-									DoMapEdge(shpWidth, 0, 16,  8, iX + 1, iY, iBottom, iLandAlt, FALSE);
-								}
-							}
-							else if (iCoverage == 3) {
-								if (iX + 2 == MAP_EDGE_MAX && XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
-									iLandAlt = ALTMReturnLandAltitude(iX, iY);
-									DoMapEdge(shpWidth, 0, 64,  0, iX + 2, iY, iBottom, iLandAlt, FALSE);
-									DoMapEdge(shpWidth, 0, 48,  8, iX + 2, iY - 1, iBottom, iLandAlt, FALSE);
-									DoMapEdge(shpWidth, 0, 32, 16, iX + 2, iY - 2, iBottom, iLandAlt, FALSE);
-								}
-								else if (iY == MAP_EDGE_MAX && XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
-									iLandAlt = ALTMReturnLandAltitude(iX, iY);
-									DoMapEdge(shpWidth, 0,  0,  0, iX, iY, iBottom, iLandAlt, FALSE);
-									DoMapEdge(shpWidth, 0, 16,  8, iX + 1, iY, iBottom, iLandAlt, FALSE);
-									DoMapEdge(shpWidth, 0, 32, 16, iX + 2, iY, iBottom, iLandAlt, FALSE);
+								else if (iY == MAP_EDGE_MAX) {
+									DoBedrockEdge(shpWidth, 0,   0, iBottom, iLandAlt);
+									DoBedrockEdge(shpWidth, 16,  8, iBottom, iLandAlt);
+									DoBedrockEdge(shpWidth, 32, 16, iBottom, iLandAlt);
 								}
 							}
-							else if (iCoverage == 4) {
-								if (iX + 3 == MAP_EDGE_MAX && XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
-									iLandAlt = ALTMReturnLandAltitude(iX, iY);
-									DoMapEdge(shpWidth, 0, 96,  0, iX + 3, iY, iBottom, iLandAlt, FALSE);
-									DoMapEdge(shpWidth, 0, 80,  8, iX + 3, iY - 1, iBottom, iLandAlt, FALSE);
-									DoMapEdge(shpWidth, 0, 64, 16, iX + 3, iY - 2, iBottom, iLandAlt, FALSE);
-									DoMapEdge(shpWidth, 0, 48, 24, iX + 3, iY - 2, iBottom, iLandAlt, FALSE);
+							else if (iOff == 3) {
+								if (iX + 3 == MAP_EDGE_MAX) {
+									DoBedrockEdge(shpWidth, 96,  0, iBottom, iLandAlt);
+									DoBedrockEdge(shpWidth, 80,  8, iBottom, iLandAlt);
+									DoBedrockEdge(shpWidth, 64, 16, iBottom, iLandAlt);
+									DoBedrockEdge(shpWidth, 48, 24, iBottom, iLandAlt);
 								}
-								else if (iY == MAP_EDGE_MAX && XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
-									iLandAlt = ALTMReturnLandAltitude(iX, iY);
-									DoMapEdge(shpWidth, 0,  0,  0, iX, iY, iBottom, iLandAlt, FALSE);
-									DoMapEdge(shpWidth, 0, 16,  8, iX + 1, iY, iBottom, iLandAlt, FALSE);
-									DoMapEdge(shpWidth, 0, 32, 16, iX + 2, iY, iBottom, iLandAlt, FALSE);
-									DoMapEdge(shpWidth, 0, 48, 24, iX + 3, iY, iBottom, iLandAlt, FALSE);
-								}
-							}
-							if (XZONCornerCheck(iX, iY, wCurrentPositionAngle) && GetTileID(iX, iY) == iTile) {
-								Game_DrawProcessObject(iSprite, shpWidth, (pArrSpriteHeaders[iSprite].wWidth >> 2) - pArrSpriteHeaders[iSprite].wHeight + iTop - 8, bIsFlipped, 0);
-								if (iX < GAME_MAP_SIZE &&
-									iY < GAME_MAP_SIZE &&
-									XBITReturnIsPowerable(iX, iY) && !XBITReturnIsPowered(iX, iY)) {
-									Game_DrawProcessObject(SPRITE_LARGE_POWEROUTAGEINDICATOR, shpWidth + (pArrSpriteHeaders[iSprite].wWidth >> 1) - 16, iTop - 16, 0, 0);
+								else if (iY == MAP_EDGE_MAX) {
+									DoBedrockEdge(shpWidth, 0,   0, iBottom, iLandAlt);
+									DoBedrockEdge(shpWidth, 16,  8, iBottom, iLandAlt);
+									DoBedrockEdge(shpWidth, 32, 16, iBottom, iLandAlt);
+									DoBedrockEdge(shpWidth, 48, 24, iBottom, iLandAlt);
 								}
 							}
 						}
-						
+						if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
+							bIsFlipped = FALSE;
+						else
+							bIsFlipped = XBITReturnIsFlipped(iX, iY);
+						if (!IsEven(wViewRotation))
+							bIsFlipped = !bIsFlipped;
+						Game_DrawProcessObject(iSprite, shpWidth, (pArrSpriteHeaders[iSprite].wWidth >> 2) - pArrSpriteHeaders[iSprite].wHeight + iTop - 8, bIsFlipped, 0);
+						if (iX < GAME_MAP_SIZE &&
+							iY < GAME_MAP_SIZE &&
+							XBITReturnIsPowerable(iX, iY) && !XBITReturnIsPowered(iX, iY)) {
+							Game_DrawProcessObject(SPRITE_LARGE_POWEROUTAGEINDICATOR, shpWidth + (pArrSpriteHeaders[iSprite].wWidth >> 1) - 16, iTop - 16, 0, 0);
+						}
 					}
 				}
 				else {
 					if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-						DoMapEdge(shpWidth, 0, 0, 0, iX, iY, iBottom, iLandAlt, FALSE);
+						DoMapEdge(shpWidth, iX, iY, iBottom, iLandAlt);
 					iSprite = iZone + SPRITE_LARGE_WATER_R_TERRAIN_TBL;
 					Game_DrawProcessObject(iSprite, shpWidth, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
 				}
 			}
 			else {
 				if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-					DoMapEdge(shpWidth, 0, 0, 0, iX, iY, iBottom, iLandAlt, FALSE);
+					DoMapEdge(shpWidth, iX, iY, iBottom, iLandAlt);
 				if (DisplayLayer[LAYER_ZONES] || !iZone)
 					iSprite = BuiltUpZones[iZone] + SPRITE_LARGE_GREENTILE;
 				else
@@ -271,7 +271,7 @@ extern "C" void __cdecl Hook_DrawLargeTile(__int16 shpWidth, __int16 shpHeight, 
 		}
 		else {
 			if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-				DoMapEdge(shpWidth, 0, 0, 0, iX, iY, iBottom, iLandAlt, FALSE);
+				DoMapEdge(shpWidth, iX, iY, iBottom, iLandAlt);
 			if (!DisplayLayer[LAYER_INFRANATURE]) {
 				iSprite = nXTERTileIDs[iTerrainTile] + SPRITE_LARGE_START;
 				Game_DrawProcessObject(iSprite, shpWidth, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
@@ -372,7 +372,7 @@ extern "C" void __cdecl Hook_DrawLargeTile(__int16 shpWidth, __int16 shpHeight, 
 	}
 	else {
 		if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-			DoMapEdge(shpWidth, 0, 0, 0, iX, iY, iBottom, iLandAlt, FALSE);
+			DoMapEdge(shpWidth, iX, iY, iBottom, iLandAlt);
 		iSprTop = shpHeight - 12 * iAltTop;
 		if (iTerrainTile == TERRAIN_13)
 			iSprTop = iTop - 12;

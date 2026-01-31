@@ -3688,7 +3688,7 @@ static inline BYTE GetTileCoverage(BYTE iTileID) {
 		case TILE_INFRASTRUCTURE_LIBRARY:
 		case TILE_INFRASTRUCTURE_HANGAR2:
 		case TILE_INFRASTRUCTURE_CHURCH:
-			return 2;
+			return 1;
 		case TILE_RESIDENTIAL_3X3_LARGEAPARTMENTS1:
 		case TILE_RESIDENTIAL_3X3_LARGEAPARTMENTS2:
 		case TILE_RESIDENTIAL_3X3_LARGECONDOS1:
@@ -3723,7 +3723,7 @@ static inline BYTE GetTileCoverage(BYTE iTileID) {
 		case TILE_INFRASTRUCTURE_MARINA:
 		case TILE_MILITARY_MISSILESILO:
 		case TILE_INFRASTRUCUTRE_DESALINIZATIONPLANT:
-			return 3;
+			return 2;
 		case TILE_POWERPLANT_GAS:
 		case TILE_POWERPLANT_OIL:
 		case TILE_POWERPLANT_NUCLEAR:
@@ -3740,11 +3740,11 @@ static inline BYTE GetTileCoverage(BYTE iTileID) {
 		case TILE_ARCOLOGY_DARCO:
 		case TILE_ARCOLOGY_LAUNCH:
 		case TILE_OTHER_BRAUNLLAMADOME:
-			return 4;
+			return 3;
 		default:
 			break;
 	}
-	return 1;
+	return 0;
 }
 
 static inline BYTE GetMilitaryFromNormalTile(BYTE iTileID) {
