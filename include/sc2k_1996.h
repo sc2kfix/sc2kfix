@@ -2869,6 +2869,7 @@ GAMECALL(0x401262, void, __stdcall, SimulationEQ_LE_Processing, void)
 GAMECALL(0x4012B2, int, __thiscall, CityToolBar_PressButton, CCityToolBar *, int)
 GAMECALL(0x4012C1, int, __cdecl, SpawnItem, __int16 x, __int16 y)
 GAMECALL(0x4012DF, void, __stdcall, DecreaseWaterLevel, void)
+GAMECALL(0x4012F8, int, __cdecl, ShipApproachingRaisingBridge, __int16, __int16, __int16, __int16)
 GAMECALL(0x4012FD, void, __cdecl, UpdateSimNationDialog, void)
 GAMECALL(0x401393, int, __cdecl, DrawProcessObject, __int16, __int16, __int16, __int16, __int16)
 GAMECALL(0x4013B1, void, __thiscall, SimcityView_ScaleOut, CSimcityView *pThis)
@@ -2978,6 +2979,7 @@ GAMECALL(0x40232E, void, __thiscall, MapToolBar_MoveAndBlitToolBar, CMapToolBar 
 GAMECALL(0x40235B, int, __thiscall, SimcityView_DrawSquareHighlight, CSimcityView *pThis, WORD wX1, WORD wY1, WORD wX2, WORD wY2)
 GAMECALL(0x402360, BOOL, __cdecl, MovieCheck, char *)
 GAMECALL(0x40239C, void, __cdecl, UpdateCityMap, void)
+GAMECALL(0x4023AB, void, __cdecl, DrawProcessMaskObject, __int16, __int16, __int16, __int16)
 GAMECALL(0x4023B0, int, __cdecl, IsValidTransitItems, __int16 x, __int16 y)
 GAMECALL(0x4023D3, void, __cdecl, ToggleColorCycling, CMFC3XPalette *, BOOL)
 GAMECALL(0x4023D8, void, __thiscall, SimcityApp_LoadScenario, CSimcityAppPrimary *)
@@ -3263,8 +3265,8 @@ GAMEOFF(__int16,	iScreenOffSetY,			0x4CAD1C)
 GAMEOFF(BYTE*,	bArrNewspaperTable1,		0x4CAD24)
 GAMEOFF(DWORD,	dwCityFame,					0x4CAD28)		// Unused in vanilla game
 GAMEOFF(BOOL,	bYearEndFlag,				0x4CAD2C)
-GAMEOFF(WORD,	wScreenPointX,				0x4CAD30)		// Used here in MapToolMenuAction
-GAMEOFF(WORD,	wScreenPointY,				0x4CAD34)		// Used here in MapToolMenuAction
+GAMEOFF(__int16,	iScreenPointX,			0x4CAD30)		// Used here in MapToolMenuAction
+GAMEOFF(__int16,	iScreenPointY,			0x4CAD34)		// Used here in MapToolMenuAction
 GAMEOFF(BOOL,	bInScenario,				0x4CAD44)
 GAMEOFF_ARR(char, szNeighborNameSouth,		0x4CAD58)		// char[32]
 GAMEOFF_ARR(char, szNeighborNameWest,		0x4CAD78)		// char[32]
@@ -3380,12 +3382,14 @@ GAMEOFF(DWORD,	dwNextRefocusSongID,		0x4E6F8C)
 GAMEOFF_ARR(BYTE,	bInfraTile,				0x4E6FA0)
 GAMEOFF_ARR(DWORD, dwZoneNameStringIDs,		0x4E7140)
 GAMEOFF_ARR(const char,	aData,				0x4E728C)
+GAMEOFF_ARR(BYTE,	trafficSpriteOverlay,	0x4E7343)
 GAMEOFF_ARR(sprite_archive_stored_t,	dwBaseSpriteLoading,		0x4E7448)
 GAMEOFF_ARR(WORD,	wBuildingPopLevel,		0x4E7458)
 GAMEOFF_ARR(BYTE,	bTileState,				0x4E7508)
 GAMEOFF_ARR(WORD,	wBuildingPopulation,	0x4E75B0)
 GAMEOFF_ARR(WORD, nXTERTileIDs,				0x4E7628)
 GAMEOFF_ARR(WORD, wXTERToXUNDSpriteIDMap,	0x4E76B8)
+GAMEOFF_ARR(BYTE,	trafficSpriteOverlayLevels,	0x4E7798)
 GAMEOFF_ARR(BYTE,	BuiltUpZones,			0x4E77B8)
 GAMEOFF(DWORD,	dwPlacePoliceThingFail,		0x4E7FC4)
 GAMEOFF(DWORD,	dwPlaceFireThingFail,		0x4E7FC8)

@@ -306,8 +306,8 @@ extern "C" {
 		KRK_GAMEOFF_PTR(dwNeighborPopulation);
 		KRK_GAMEOFF(dwCityFame);
 		KRK_GAMEOFF(bYearEndFlag);
-		KRK_GAMEOFF(wScreenPointX);
-		KRK_GAMEOFF(wScreenPointY);
+		KRK_GAMEOFF(iScreenPointX);
+		KRK_GAMEOFF(iScreenPointY);
 		KRK_GAMEOFF(bInScenario);
 		KRK_GAMEOFF_PTR(szNeighborNameSouth);
 		KRK_GAMEOFF_PTR(szNeighborNameWest);

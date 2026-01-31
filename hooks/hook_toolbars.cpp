@@ -908,9 +908,9 @@ extern "C" void __cdecl Hook_CityToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 				Game_GetScreenCoordsFromTileCoords(tileCoords.x, tileCoords.y, &wNewScreenPointX, &wNewScreenPointY);
 				L_PlayToolSound_SC2K1996(pSCApp, SOUND_CLICK);
 				if (pSCView->dwSCVIsZoomed)
-					Game_SimcityView_CenterOnNewScreenCoordinates(pSCView, wScreenPointX - HALVECOORD(wNewScreenPointX), wScreenPointY - HALVECOORD(wNewScreenPointY));
+					Game_SimcityView_CenterOnNewScreenCoordinates(pSCView, iScreenPointX - HALVECOORD(wNewScreenPointX), iScreenPointY - HALVECOORD(wNewScreenPointY));
 				else
-					Game_SimcityView_CenterOnNewScreenCoordinates(pSCView, wScreenPointX - wNewScreenPointX, wScreenPointY - wNewScreenPointY);
+					Game_SimcityView_CenterOnNewScreenCoordinates(pSCView, iScreenPointX - wNewScreenPointX, iScreenPointY - wNewScreenPointY);
 				Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
 				break;
 			default:
@@ -1012,9 +1012,9 @@ extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 				Game_GetScreenCoordsFromTileCoords(tileCoords.x, tileCoords.y, &wNewScreenPointX, &wNewScreenPointY);
 				L_PlayToolSound_SC2K1996(pSCApp, SOUND_CLICK);
 				if (pSCView->dwSCVIsZoomed)
-					Game_SimcityView_CenterOnNewScreenCoordinates(pSCView, wScreenPointX - HALVECOORD(wNewScreenPointX), wScreenPointY - HALVECOORD(wNewScreenPointY));
+					Game_SimcityView_CenterOnNewScreenCoordinates(pSCView, iScreenPointX - HALVECOORD(wNewScreenPointX), iScreenPointY - HALVECOORD(wNewScreenPointY));
 				else
-					Game_SimcityView_CenterOnNewScreenCoordinates(pSCView, wScreenPointX - wNewScreenPointX, wScreenPointY - wNewScreenPointY);
+					Game_SimcityView_CenterOnNewScreenCoordinates(pSCView, iScreenPointX - wNewScreenPointX, iScreenPointY - wNewScreenPointY);
 				break;
 			default:
 				break;
