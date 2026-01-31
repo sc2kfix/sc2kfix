@@ -15,6 +15,10 @@
 
 #pragma intrinsic(_ReturnAddress)
 
+#define DECR_LARGE 12
+#define DECR_SMALL (DECR_LARGE / 2)
+#define DECR_TINY (DECR_SMALL / 2)
+
 #define MDRAWING_DEBUG_OTHER 1
 
 #define MDRAWING_DEBUG DEBUG_FLAGS_NONE
@@ -28,7 +32,7 @@ UINT mdrawing_debug = MDRAWING_DEBUG;
 
 static DWORD dwDummy;
 
-static int DoWaterfallEdge(__int16 shpWidth, int iX, int iY, __int16 iBottom) {
+static int DoWaterfallEdge(__int16 shpWidth, int iX, int iY, __int16 iBottom, __int16 iWaterFallSpriteID, __int16 iDecr) {
 	__int16 iTopog;
 
 	if (iX < GAME_MAP_SIZE &&
@@ -38,8 +42,8 @@ static int DoWaterfallEdge(__int16 shpWidth, int iX, int iY, __int16 iBottom) {
 		if (iTopog > 0) {
 			while (rcDst.top <= iBottom) {
 				if (rcDst.bottom > iBottom)
-					Game_DrawProcessObject(SPRITE_LARGE_WATERFALL, shpWidth, iBottom, 0, 0);
-				iBottom -= 12;
+					Game_DrawProcessObject(iWaterFallSpriteID, shpWidth, iBottom, 0, 0);
+				iBottom -= iDecr;
 				if (--iTopog <= 0)
 					return 2;
 			}
@@ -49,25 +53,25 @@ static int DoWaterfallEdge(__int16 shpWidth, int iX, int iY, __int16 iBottom) {
 	return 1;
 }
 
-static int DoMapEdge(__int16 shpWidth, int iX, int iY, __int16 iBottom, __int16 iLandAlt) {
+static int DoMapEdge(__int16 shpWidth, int iX, int iY, __int16 iBottom, __int16 iLandAlt, __int16 iSpriteID, __int16 iWaterFallSpriteID, __int16 iDecr) {
 	if (iLandAlt > 0) {
 		while (rcDst.top <= iBottom) {
 			if (rcDst.bottom > iBottom)
-				Game_DrawProcessObject(SPRITE_LARGE_BEDROCK, shpWidth, iBottom, 0, 0);
-			iBottom -= 12;
+				Game_DrawProcessObject(iSpriteID, shpWidth, iBottom, 0, 0);
+			iBottom -= iDecr;
 			if (--iLandAlt <= 0)
-				return DoWaterfallEdge(shpWidth, iX, iY, iBottom);
+				return DoWaterfallEdge(shpWidth, iX, iY, iBottom, iWaterFallSpriteID, iDecr);
 		}
 	}
 	return 1;
 }
 
-static void DoBedrockEdge(__int16 shpWidth, __int16 iOffSetX, __int16 iOffSetY, __int16 iBottom, __int16 iLandAlt) {
+static void DoBedrockEdge(__int16 shpWidth, __int16 iOffSetX, __int16 iOffSetY, __int16 iBottom, __int16 iLandAlt, __int16 iSpriteID, __int16 iDecr) {
 	if (iLandAlt > 0) {
 		while (rcDst.top <= iBottom) {
 			if (rcDst.bottom > iBottom)
-				Game_DrawProcessObject(SPRITE_LARGE_BEDROCK, shpWidth + iOffSetX, iBottom + iOffSetY, 0, 0);
-			iBottom -= 12;
+				Game_DrawProcessObject(iSpriteID, shpWidth + iOffSetX, iBottom + iOffSetY, 0, 0);
+			iBottom -= iDecr;
 			if (--iLandAlt <= 0)
 				break;
 		}
@@ -160,7 +164,7 @@ extern "C" void __cdecl Hook_DrawLargeTile(__int16 shpWidth, __int16 shpHeight, 
 		iBottom = shpHeight - pArrSpriteHeaders[SPRITE_LARGE_BEDROCK].wHeight;
 		iLandAlt = ALTMReturnLandAltitude(iX, iY);
 		if (!iLandAlt) {
-			if (!DoWaterfallEdge(shpWidth, iX, iY, iBottom))
+			if (!DoWaterfallEdge(shpWidth, iX, iY, iBottom, SPRITE_LARGE_WATERFALL, DECR_LARGE))
 				return;
 		}
 	}
@@ -177,7 +181,7 @@ extern "C" void __cdecl Hook_DrawLargeTile(__int16 shpWidth, __int16 shpHeight, 
 	iZone = XZONReturnZone(iX, iY);
 	if (iTile == TILE_CLEAR) {
 		if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-			DoMapEdge(shpWidth, iX, iY, iBottom, iLandAlt);
+			DoMapEdge(shpWidth, iX, iY, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, SPRITE_LARGE_WATERFALL, DECR_LARGE);
 		if (iTerrainTile > TERRAIN_00 || !iZone)
 			iSprite = nXTERTileIDs[iTerrainTile] + SPRITE_LARGE_START;
 		else
@@ -199,42 +203,42 @@ extern "C" void __cdecl Hook_DrawLargeTile(__int16 shpWidth, __int16 shpHeight, 
 							iLandAlt = ALTMReturnLandAltitude(iX, iY);
 							if (iOff == 0) {
 								if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-									DoBedrockEdge(shpWidth,  0,  0, iBottom, iLandAlt);
+									DoBedrockEdge(shpWidth,  0,  0, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, DECR_LARGE);
 							}
 							else if (iOff == 1) {
 								if (iX + 1 == MAP_EDGE_MAX) {
-									DoBedrockEdge(shpWidth, 32,  0, iBottom, iLandAlt);
-									DoBedrockEdge(shpWidth, 16,  8, iBottom, iLandAlt);
+									DoBedrockEdge(shpWidth, 32,  0, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, DECR_LARGE);
+									DoBedrockEdge(shpWidth, 16,  8, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, DECR_LARGE);
 								}
 								else if (iY == MAP_EDGE_MAX) {
-									DoBedrockEdge(shpWidth, 0,   0, iBottom, iLandAlt);
-									DoBedrockEdge(shpWidth, 16,  8, iBottom, iLandAlt);
+									DoBedrockEdge(shpWidth, 0,   0, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, DECR_LARGE);
+									DoBedrockEdge(shpWidth, 16,  8, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, DECR_LARGE);
 								}
 							}
 							else if (iOff == 2) {
 								if (iX + 2 == MAP_EDGE_MAX) {
-									DoBedrockEdge(shpWidth, 64,  0, iBottom, iLandAlt);
-									DoBedrockEdge(shpWidth, 48,  8, iBottom, iLandAlt);
-									DoBedrockEdge(shpWidth, 32, 16, iBottom, iLandAlt);
+									DoBedrockEdge(shpWidth, 64,  0, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, DECR_LARGE);
+									DoBedrockEdge(shpWidth, 48,  8, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, DECR_LARGE);
+									DoBedrockEdge(shpWidth, 32, 16, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, DECR_LARGE);
 								}
 								else if (iY == MAP_EDGE_MAX) {
-									DoBedrockEdge(shpWidth, 0,   0, iBottom, iLandAlt);
-									DoBedrockEdge(shpWidth, 16,  8, iBottom, iLandAlt);
-									DoBedrockEdge(shpWidth, 32, 16, iBottom, iLandAlt);
+									DoBedrockEdge(shpWidth, 0,   0, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, DECR_LARGE);
+									DoBedrockEdge(shpWidth, 16,  8, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, DECR_LARGE);
+									DoBedrockEdge(shpWidth, 32, 16, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, DECR_LARGE);
 								}
 							}
 							else if (iOff == 3) {
 								if (iX + 3 == MAP_EDGE_MAX) {
-									DoBedrockEdge(shpWidth, 96,  0, iBottom, iLandAlt);
-									DoBedrockEdge(shpWidth, 80,  8, iBottom, iLandAlt);
-									DoBedrockEdge(shpWidth, 64, 16, iBottom, iLandAlt);
-									DoBedrockEdge(shpWidth, 48, 24, iBottom, iLandAlt);
+									DoBedrockEdge(shpWidth, 96,  0, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, DECR_LARGE);
+									DoBedrockEdge(shpWidth, 80,  8, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, DECR_LARGE);
+									DoBedrockEdge(shpWidth, 64, 16, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, DECR_LARGE);
+									DoBedrockEdge(shpWidth, 48, 24, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, DECR_LARGE);
 								}
 								else if (iY == MAP_EDGE_MAX) {
-									DoBedrockEdge(shpWidth, 0,   0, iBottom, iLandAlt);
-									DoBedrockEdge(shpWidth, 16,  8, iBottom, iLandAlt);
-									DoBedrockEdge(shpWidth, 32, 16, iBottom, iLandAlt);
-									DoBedrockEdge(shpWidth, 48, 24, iBottom, iLandAlt);
+									DoBedrockEdge(shpWidth, 0,   0, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, DECR_LARGE);
+									DoBedrockEdge(shpWidth, 16,  8, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, DECR_LARGE);
+									DoBedrockEdge(shpWidth, 32, 16, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, DECR_LARGE);
+									DoBedrockEdge(shpWidth, 48, 24, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, DECR_LARGE);
 								}
 							}
 						}
@@ -254,14 +258,14 @@ extern "C" void __cdecl Hook_DrawLargeTile(__int16 shpWidth, __int16 shpHeight, 
 				}
 				else {
 					if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-						DoMapEdge(shpWidth, iX, iY, iBottom, iLandAlt);
+						DoMapEdge(shpWidth, iX, iY, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, SPRITE_LARGE_WATERFALL, DECR_LARGE);
 					iSprite = iZone + SPRITE_LARGE_WATER_R_TERRAIN_TBL;
 					Game_DrawProcessObject(iSprite, shpWidth, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
 				}
 			}
 			else {
 				if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-					DoMapEdge(shpWidth, iX, iY, iBottom, iLandAlt);
+					DoMapEdge(shpWidth, iX, iY, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, SPRITE_LARGE_WATERFALL, DECR_LARGE);
 				if (DisplayLayer[LAYER_ZONES] || !iZone)
 					iSprite = BuiltUpZones[iZone] + SPRITE_LARGE_GREENTILE;
 				else
@@ -271,7 +275,7 @@ extern "C" void __cdecl Hook_DrawLargeTile(__int16 shpWidth, __int16 shpHeight, 
 		}
 		else {
 			if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-				DoMapEdge(shpWidth, iX, iY, iBottom, iLandAlt);
+				DoMapEdge(shpWidth, iX, iY, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, SPRITE_LARGE_WATERFALL, DECR_LARGE);
 			if (!DisplayLayer[LAYER_INFRANATURE]) {
 				iSprite = nXTERTileIDs[iTerrainTile] + SPRITE_LARGE_START;
 				Game_DrawProcessObject(iSprite, shpWidth, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
@@ -372,7 +376,7 @@ extern "C" void __cdecl Hook_DrawLargeTile(__int16 shpWidth, __int16 shpHeight, 
 	}
 	else {
 		if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-			DoMapEdge(shpWidth, iX, iY, iBottom, iLandAlt);
+			DoMapEdge(shpWidth, iX, iY, iBottom, iLandAlt, SPRITE_LARGE_BEDROCK, SPRITE_LARGE_WATERFALL, DECR_LARGE);
 		iSprTop = shpHeight - 12 * iAltTop;
 		if (iTerrainTile == TERRAIN_13)
 			iSprTop = iTop - 12;
@@ -399,6 +403,10 @@ extern "C" void __cdecl Hook_DrawLargeTile(__int16 shpWidth, __int16 shpHeight, 
 		Game_DrawLabel(iX, iY, shpWidth, iTop);
 }
 
+extern "C" void __cdecl Hook_DrawTinyTile(__int16 shpWidth, __int16 shpHeight, int iX, int iY) {
+
+}
+
 void InstallDrawingHooks_SC2K1996(void) {
 	// Hook for DrawAllLarge
 	VirtualProtect((LPVOID)0x4017FD, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -407,6 +415,10 @@ void InstallDrawingHooks_SC2K1996(void) {
 	// Hook for DrawLargeTile
 	VirtualProtect((LPVOID)0x402095, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402095, Hook_DrawLargeTile);
+
+	// Hook for DrawTinyTile
+	//VirtualProtect((LPVOID)0x4022D9, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	//NEWJMP((LPVOID)0x4022D9, Hook_DrawTinyTile);
 
 	// This disables the edge-checker for >= 2x2 buildings.
 	// *** REMEMBER TO REMOVE AT THE END ***
