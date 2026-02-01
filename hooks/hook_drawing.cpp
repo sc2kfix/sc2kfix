@@ -487,6 +487,60 @@ static void DoBedrockEdge(__int16 shpWidth, __int16 iOffSetX, __int16 iOffSetY, 
 	}
 }
 
+static __int16 getCoverageOffsetsX(__int16 nSizeLevel, __int16 nAxis, __int16 nPos, __int16 nCoverage) {
+	if (nCoverage == COVERAGE_2x2)
+		return coverage2x2OffsetsX[nSizeLevel][nAxis][nPos];
+	else if (nCoverage == COVERAGE_3x3)
+		return coverage3x3OffsetsX[nSizeLevel][nAxis][nPos];
+	else if (nCoverage == COVERAGE_4x4)
+		return coverage4x4OffsetsX[nSizeLevel][nAxis][nPos];
+	return 0;
+}
+
+static __int16 getCoverageOffsetsY(__int16 nSizeLevel, __int16 nAxis, __int16 nPos, __int16 nCoverage) {
+	if (nCoverage == COVERAGE_2x2)
+		return coverage2x2OffsetsY[nSizeLevel][nAxis][nPos];
+	else if (nCoverage == COVERAGE_3x3)
+		return coverage3x3OffsetsY[nSizeLevel][nAxis][nPos];
+	else if (nCoverage == COVERAGE_4x4)
+		return coverage4x4OffsetsY[nSizeLevel][nAxis][nPos];
+	return 0;
+}
+
+static __int16 getCoverageOffsets(__int16 nSizeLevel, __int16 nAxis, __int16 nPos, __int16 nCoverage, BOOL bX) {
+	if (bX)
+		return getCoverageOffsetsX(nSizeLevel, nAxis, nPos, nCoverage);
+	else
+		return getCoverageOffsetsY(nSizeLevel, nAxis, nPos, nCoverage);
+}
+
+static void DoCoverageMapEdgeFill(__int16 shpWidth, __int16 shpHeight, int iX, int iY, __int16 nSprBedrock, __int16 nDecr, __int16 nSizeLevel, BYTE iTile) {
+	__int16 iBottom, iLandAlt;
+	__int16 iCoverageSize;
+	BYTE iCoverage;
+
+	iCoverage = GetTileCoverage(iTile);
+	if (iCoverage >= COVERAGE_1x1 && iCoverage < COVERAGE_COUNT) {
+		iCoverageSize = iCoverage + 1;
+		iBottom = shpHeight - pArrSpriteHeaders[nSprBedrock].wHeight;
+		iLandAlt = ALTMReturnLandAltitude(iX, iY);
+		if (iCoverage == COVERAGE_1x1) {
+			if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
+				DoBedrockEdge(shpWidth, BLDOFF_DEFAULT, BLDOFF_DEFAULT, iBottom, iLandAlt, nSprBedrock, nDecr);
+		}
+		else {
+			if (iX + iCoverage == MAP_EDGE_MAX) {
+				for (__int16 i = 0; i < iCoverageSize; i++)
+					DoBedrockEdge(shpWidth, getCoverageOffsets(nSizeLevel, AXIS_HORZ, i, iCoverage, TRUE), getCoverageOffsets(nSizeLevel, AXIS_VERT, i, iCoverage, TRUE), iBottom, iLandAlt, nSprBedrock, nDecr);
+			}
+			else if (iY == MAP_EDGE_MAX) {
+				for (__int16 i = 0; i < iCoverageSize; i++)
+					DoBedrockEdge(shpWidth, getCoverageOffsets(nSizeLevel, AXIS_HORZ, i, iCoverage, FALSE), getCoverageOffsets(nSizeLevel, AXIS_VERT, i, iCoverage, FALSE), iBottom, iLandAlt, nSprBedrock, nDecr);
+			}
+		}
+	}
+}
+
 static void L_DrawTile_SC2K1996(__int16 shpWidth, __int16 shpHeight, int iX, int iY, int nSizeLevel) {
 	__int16 nDecr;
 	__int16 nBldOffs, nPwrIndOffs;
@@ -508,7 +562,6 @@ static void L_DrawTile_SC2K1996(__int16 shpWidth, __int16 shpHeight, int iX, int
 	BYTE iTerrainTile;
 	BYTE iTile;
 	BYTE iZone;
-	BYTE iOff;
 	BYTE iTraffic, iLowTrfThreshold, iHeavyTrfThreshold;
 
 	nDecr = drawDecr[nSizeLevel];
@@ -535,6 +588,12 @@ static void L_DrawTile_SC2K1996(__int16 shpWidth, __int16 shpHeight, int iX, int
 		}
 	}
 
+	// Note: Originally there was a general 'DoMapEdge' processing
+	// call here, however it has now been moved so the calls only
+	// occur where they're needed for greater control - such as
+	// when an alternative call is required in order to avoid
+	// map-edge bleed on >= 2x2 buildings.
+
 	iTerrainTile = GetTerrainTileID(iX, iY);
 	if (iTerrainTile < SUBMERGED_00)
 		iAltTop = ALTMReturnLandAltitude(iX, iY);
@@ -559,52 +618,16 @@ static void L_DrawTile_SC2K1996(__int16 shpWidth, __int16 shpHeight, int iX, int
 			if (DisplayLayer[LAYER_BUILDINGS]) {
 				if (DisplayLayer[LAYER_ZONES] || !iZone) {
 					if (XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
-						iOff = GetTileCoverage(iTile);
-						iSprite = iTile + nSprStart;
-						if (iOff >= COVERAGE_1x1) {
-							iBottom = shpHeight - pArrSpriteHeaders[nSprBedrock].wHeight;
-							iLandAlt = ALTMReturnLandAltitude(iX, iY);
-							if (iOff == COVERAGE_1x1) {
-								if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-									DoBedrockEdge(shpWidth, BLDOFF_DEFAULT, BLDOFF_DEFAULT, iBottom, iLandAlt, nSprBedrock, nDecr);
-							}
-							else if (iOff == COVERAGE_2x2) {
-								if (iX + COVERAGE_2x2 == MAP_EDGE_MAX) {
-									for (__int16 i=0; i<COVERAGE_SIZE_2x2; i++)
-										DoBedrockEdge(shpWidth, coverage2x2OffsetsX[nSizeLevel][AXIS_HORZ][i], coverage2x2OffsetsX[nSizeLevel][AXIS_VERT][i], iBottom, iLandAlt, nSprBedrock, nDecr);
-								}
-								else if (iY == MAP_EDGE_MAX) {
-									for (__int16 i=0; i<COVERAGE_SIZE_2x2; i++)
-										DoBedrockEdge(shpWidth, coverage2x2OffsetsY[nSizeLevel][AXIS_HORZ][i], coverage2x2OffsetsY[nSizeLevel][AXIS_VERT][i], iBottom, iLandAlt, nSprBedrock, nDecr);
-								}
-							}
-							else if (iOff == COVERAGE_3x3) {
-								if (iX + COVERAGE_3x3 == MAP_EDGE_MAX) {
-									for (__int16 i=0; i<COVERAGE_SIZE_3x3; i++)
-										DoBedrockEdge(shpWidth, coverage3x3OffsetsX[nSizeLevel][AXIS_HORZ][i], coverage3x3OffsetsX[nSizeLevel][AXIS_VERT][i], iBottom, iLandAlt, nSprBedrock, nDecr);
-								}
-								else if (iY == MAP_EDGE_MAX) {
-									for (__int16 i=0; i<COVERAGE_SIZE_3x3; i++)
-										DoBedrockEdge(shpWidth, coverage3x3OffsetsY[nSizeLevel][AXIS_HORZ][i], coverage3x3OffsetsY[nSizeLevel][AXIS_VERT][i], iBottom, iLandAlt, nSprBedrock, nDecr);
-								}
-							}
-							else if (iOff == COVERAGE_4x4) {
-								if (iX + COVERAGE_4x4 == MAP_EDGE_MAX) {
-									for (__int16 i=0; i<COVERAGE_SIZE_4x4; i++)
-										DoBedrockEdge(shpWidth, coverage4x4OffsetsX[nSizeLevel][AXIS_HORZ][i], coverage4x4OffsetsX[nSizeLevel][AXIS_VERT][i], iBottom, iLandAlt, nSprBedrock, nDecr);
-								}
-								else if (iY == MAP_EDGE_MAX) {
-									for (__int16 i=0; i<COVERAGE_SIZE_4x4; i++)
-										DoBedrockEdge(shpWidth, coverage4x4OffsetsY[nSizeLevel][AXIS_HORZ][i], coverage4x4OffsetsY[nSizeLevel][AXIS_VERT][i], iBottom, iLandAlt, nSprBedrock, nDecr);
-								}
-							}
-						}
+						// The following call is to account for >= 1x1 buildings and avoid the map-edge
+						// bedrock-bleed that was previously occurring on >= 2x2 buildings.
+						DoCoverageMapEdgeFill(shpWidth, shpHeight, iX, iY, nSprBedrock, nDecr, nSizeLevel, iTile);
 						if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
 							bIsFlipped = FALSE;
 						else
 							bIsFlipped = XBITReturnIsFlipped(iX, iY);
 						if (!IsEven(wViewRotation))
 							bIsFlipped = !bIsFlipped;
+						iSprite = iTile + nSprStart;
 						Game_DrawProcessObject(iSprite, shpWidth, (pArrSpriteHeaders[iSprite].wWidth >> 2) - pArrSpriteHeaders[iSprite].wHeight + iTop - nBldOffs, bIsFlipped, 0);
 						if (iX < GAME_MAP_SIZE &&
 							iY < GAME_MAP_SIZE &&
@@ -779,7 +802,7 @@ extern "C" void __stdcall Hook_DrawAllLarge() {
 		rcDst.bottom += 220;
 		rcDst.top -= 32;
 
-		// Top
+		// Top half
 		iScan = MAP_EDGE_MIN;
 		iX = MAP_EDGE_MIN;
 		iY = MAP_EDGE_MIN;
@@ -803,7 +826,7 @@ extern "C" void __stdcall Hook_DrawAllLarge() {
 			}
 		} while (iScan < GAME_MAP_SIZE);
 
-		// Bottom
+		// Bottom half
 		iScan = MAP_EDGE_MIN + 1;
 		iX = MAP_EDGE_MIN + 1;
 		iY = MAP_EDGE_MAX;
@@ -846,13 +869,13 @@ void InstallDrawingHooks_SC2K1996(void) {
 	VirtualProtect((LPVOID)0x4017FD, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4017FD, Hook_DrawAllLarge);
 
-	// Hook for DrawSmallTile
-	VirtualProtect((LPVOID)0x401E79, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x401E79, Hook_DrawSmallTile);
-
 	// Hook for DrawLargeTile
 	VirtualProtect((LPVOID)0x402095, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402095, Hook_DrawLargeTile);
+
+	// Hook for DrawSmallTile
+	VirtualProtect((LPVOID)0x401E79, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x401E79, Hook_DrawSmallTile);
 
 	// Hook for DrawTinyTile
 	VirtualProtect((LPVOID)0x4022D9, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
