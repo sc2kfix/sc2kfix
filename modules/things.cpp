@@ -38,7 +38,7 @@ void DumpMapThings_SC2K1996() {
 		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 		if (pSCView) {
 			ConsoleLog(LOG_INFO, "DumpMapThings:\n");
-			for (__int16 i = MIN_THING_IDX; i <= MAX_THING_IDX; i++) {
+			for (__int16 i = MIN_THING_IDX; i < MAX_THING_COUNT; i++) {
 				map_XTHG_t *pXTHG = GetXTHG(i);
 				if (pXTHG) {
 					ConsoleLog(LOG_INFO, "Thing(%d): Label(0x%06X)(%u), Thing[%s](%u), Direction[%s](%u), DirCoord(%u, %u), Goal(%u), State(%u), Coord(%u, %u, %u), PCoord(%u, %u)\n", i, 
@@ -98,7 +98,7 @@ static void RecalculateThings_SC2K1996(BOOL bVerbose = TRUE) {
 		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 		if (pSCView) {
 			BYTE nType = XTHG_NONE;
-			for (__int16 i = MIN_THING_IDX; i <= MAX_THING_IDX; i++) {
+			for (__int16 i = MIN_THING_IDX; i < MAX_THING_COUNT; i++) {
 				map_XTHG_t *pXTHG = GetXTHG(i);
 				if (pXTHG) {
 					if (pXTHG->iType == XTHG_AIRPLANE)
@@ -197,7 +197,7 @@ void DeleteMapThingByIdx_SC2K1996(__int16 nIdx) {
 				ConsoleLog(LOG_DEBUG, "DeleteMapThingByIdx(%d):\n", nIdx);
 
 			int nCnt = 0;
-			for (__int16 i = MIN_THING_IDX; i <= MAX_THING_IDX; i++) {
+			for (__int16 i = MIN_THING_IDX; i < MAX_THING_COUNT; i++) {
 				if (i == nIdx || nIdx == -1) {
 					map_XTHG_t *pXTHG = GetXTHG(i);
 					if (pXTHG) {
@@ -235,7 +235,7 @@ static int DeleteMapThingsByType_SC2K1996(BYTE nType, BOOL bVerbose = TRUE) {
 			if (things_debug & THINGS_DEBUG_VERBOSE)
 				ConsoleLog(LOG_DEBUG, "DeleteMapThingsByType(%u):\n", nType);
 	
-			for (__int16 i = MIN_THING_IDX; i <= MAX_THING_IDX; i++) {
+			for (__int16 i = MIN_THING_IDX; i < MAX_THING_COUNT; i++) {
 				map_XTHG_t *pXTHG = GetXTHG(i);
 				if (pXTHG && pXTHG->iType == nType) {
 					if (bVerbose || things_debug & THINGS_DEBUG_VERBOSE)

@@ -3382,13 +3382,14 @@ GAMEOFF(DWORD,	dwNextRefocusSongID,		0x4E6F8C)
 GAMEOFF_ARR(BYTE,	bInfraTile,				0x4E6FA0)
 GAMEOFF_ARR(DWORD, dwZoneNameStringIDs,		0x4E7140)
 GAMEOFF_ARR(const char,	aData,				0x4E728C)
-GAMEOFF_ARR(BYTE,	trafficSpriteOverlay,	0x4E7343)
+GAMEOFF_ARR(BYTE,	trafficLargeSpriteOverlay,	0x4E7343)
 GAMEOFF_ARR(sprite_archive_stored_t,	dwBaseSpriteLoading,		0x4E7448)
 GAMEOFF_ARR(WORD,	wBuildingPopLevel,		0x4E7458)
 GAMEOFF_ARR(BYTE,	bTileState,				0x4E7508)
 GAMEOFF_ARR(WORD,	wBuildingPopulation,	0x4E75B0)
 GAMEOFF_ARR(WORD, nXTERTileIDs,				0x4E7628)
 GAMEOFF_ARR(WORD, wXTERToXUNDSpriteIDMap,	0x4E76B8)
+GAMEOFF_ARR(BYTE,	trafficTinySpriteOverlay,	0x4E772B)
 GAMEOFF_ARR(BYTE,	trafficSpriteOverlayLevels,	0x4E7798)
 GAMEOFF_ARR(BYTE,	BuiltUpZones,			0x4E77B8)
 GAMEOFF(DWORD,	dwPlacePoliceThingFail,		0x4E7FC4)
@@ -3639,6 +3640,15 @@ static inline WORD GetTileArea(WORD iTileArea) {
 	return iTileArea * iTileArea;
 }
 
+enum {
+	COVERAGE_1x1,
+	COVERAGE_2x2,
+	COVERAGE_3x3,
+	COVERAGE_4x4,
+
+	COVERAGE_COUNT
+};
+
 static inline BYTE GetTileCoverage(BYTE iTileID) {
 	switch (iTileID) {
 		case TILE_RESIDENTIAL_2X2_SMALLAPARTMENTS1:
@@ -3688,7 +3698,7 @@ static inline BYTE GetTileCoverage(BYTE iTileID) {
 		case TILE_INFRASTRUCTURE_LIBRARY:
 		case TILE_INFRASTRUCTURE_HANGAR2:
 		case TILE_INFRASTRUCTURE_CHURCH:
-			return 1;
+			return COVERAGE_2x2;
 		case TILE_RESIDENTIAL_3X3_LARGEAPARTMENTS1:
 		case TILE_RESIDENTIAL_3X3_LARGEAPARTMENTS2:
 		case TILE_RESIDENTIAL_3X3_LARGECONDOS1:
@@ -3723,7 +3733,7 @@ static inline BYTE GetTileCoverage(BYTE iTileID) {
 		case TILE_INFRASTRUCTURE_MARINA:
 		case TILE_MILITARY_MISSILESILO:
 		case TILE_INFRASTRUCUTRE_DESALINIZATIONPLANT:
-			return 2;
+			return COVERAGE_3x3;
 		case TILE_POWERPLANT_GAS:
 		case TILE_POWERPLANT_OIL:
 		case TILE_POWERPLANT_NUCLEAR:
@@ -3740,11 +3750,11 @@ static inline BYTE GetTileCoverage(BYTE iTileID) {
 		case TILE_ARCOLOGY_DARCO:
 		case TILE_ARCOLOGY_LAUNCH:
 		case TILE_OTHER_BRAUNLLAMADOME:
-			return 3;
+			return COVERAGE_4x4;
 		default:
 			break;
 	}
-	return 0;
+	return COVERAGE_1x1;
 }
 
 static inline BYTE GetMilitaryFromNormalTile(BYTE iTileID) {

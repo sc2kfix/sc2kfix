@@ -173,6 +173,8 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define MIN_THING_IDX 1
 #define MAX_THING_IDX 39
 
+#define MAX_THING_COUNT MAX_THING_IDX + 1
+
 #define INI_GAME_SPEED_SETTING(x) (x - 1)
 
 #define HALVECOORD(x) (x >> 1)
