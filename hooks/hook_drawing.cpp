@@ -1158,7 +1158,7 @@ void InstallDrawingHooks_SC2K1996(void) {
 	NEWJMP((LPVOID)0x4022D9, Hook_DrawTinyTile);
 
 	// This disables the edge-checker for >= 2x2 buildings.
-	// *** REMEMBER TO REMOVE AT THE END ***
-	VirtualProtect((LPVOID)0x44056E, 166, PAGE_EXECUTE_READWRITE, &dwDummy);
-	memset((LPVOID)0x44056E, 0x90, 166);
+	// *** REMEMBER TO COMMENT OUT AT THE END ***
+	//VirtualProtect((LPVOID)0x44056E, 166, PAGE_EXECUTE_READWRITE, &dwDummy);
+	//memset((LPVOID)0x44056E, 0x90, 166);
 }
