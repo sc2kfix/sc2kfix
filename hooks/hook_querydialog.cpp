@@ -577,7 +577,7 @@ void InstallQueryHooks_SC2K1996(void) {
 	// Even though this issue only cropped up when the X coordinate was 127
 	// it has been adjusted for both X and Y cases.
 	VirtualProtect((LPVOID)0x4284F3, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(BYTE*)0x4284F3 = GAME_MAP_SIZE - 1;
+	*(BYTE*)0x4284F3 = MAP_EDGE_MAX;
 	VirtualProtect((LPVOID)0x42851D, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
-	*(BYTE*)0x42851D = GAME_MAP_SIZE - 1;
+	*(BYTE*)0x42851D = MAP_EDGE_MAX;
 }

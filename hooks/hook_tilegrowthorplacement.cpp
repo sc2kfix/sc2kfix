@@ -66,12 +66,12 @@ static int IsValidGeneralPosPlacementMain(__int16 x, __int16 y, __int16 iFarX, _
 			// tiles are equal to or exceed GAME_MAP_SIZE.. definitely abort.
 			if (iArea <= 0 && (iCurX >= GAME_MAP_SIZE || iCurY >= GAME_MAP_SIZE))
 				return 0;
-			else if (iCurX < 0 || iCurY < 0 || iCurX > GAME_MAP_SIZE - 1 || iCurY > GAME_MAP_SIZE - 1) {
+			else if (iCurX < MAP_EDGE_MIN + 1 || iCurY < MAP_EDGE_MIN + 1 || iCurX > MAP_EDGE_MAX - 1 || iCurY > MAP_EDGE_MAX - 1) {
 				// Added this due to legacy military plot drops,
 				// this allows > 1x1 type buildings to develop
 				// if the plot is on the edge of the map.
 				if (!bDoSilo) {
-					if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY && (iCurX < 0 || iCurY < 0 || iCurX > GAME_MAP_SIZE - 1 || iCurY > GAME_MAP_SIZE - 1))
+					if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY && (iCurX < MAP_EDGE_MIN || iCurY < MAP_EDGE_MIN || iCurX > MAP_EDGE_MAX || iCurY > MAP_EDGE_MAX))
 						return 0;
 					else
 						return 0;

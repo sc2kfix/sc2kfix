@@ -301,7 +301,7 @@ extern "C" void __stdcall Hook_DrawAllLarge() {
 	pSCApp = &pCSimcityAppThis;
 	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 	if (pSCView) {
-		rcDst.left -= GAME_MAP_SIZE;
+		rcDst.left -= 128;
 		rcDst.bottom += 220;
 		rcDst.top -= 32;
 
