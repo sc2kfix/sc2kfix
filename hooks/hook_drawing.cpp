@@ -369,7 +369,7 @@ extern "C" void __cdecl Hook_DrawSmallTile(__int16 shpWidth, __int16 shpHeight, 
 	BYTE iTile;
 	BYTE iZone;
 	BYTE iOff;
-	BYTE iTraffic, iLowTrfTheshold, iHeavyTrfThreshold;
+	BYTE iTraffic, iLowTrfThreshold, iHeavyTrfThreshold;
 
 	iBottom = 0;
 	iLandAlt = 0;
@@ -525,12 +525,12 @@ extern "C" void __cdecl Hook_DrawSmallTile(__int16 shpWidth, __int16 shpHeight, 
 				Game_DrawProcessObject(iSprite, shpWidth, iSprTop, bIsFlipped, 0);
 				iTraffic = GetXTRFByteDataWithNormalCoordinates(iX, iY);
 				if (iSprite < SPRITE_MEDIUM_HIGHWAY_LR || iSprite >= SPRITE_MEDIUM_SUSPENSION_BRIDGE_START_B)
-					iLowTrfTheshold = 85;
+					iLowTrfThreshold = 85;
 				else
-					iLowTrfTheshold = 28;
-				iHeavyTrfThreshold = iLowTrfTheshold * 2;
-				if (iTraffic > iLowTrfTheshold) {
-					iTrafficSpriteOffset = bTileState[iSprite + 47];
+					iLowTrfThreshold = 28;
+				iHeavyTrfThreshold = iLowTrfThreshold * 2;
+				if (iTraffic > iLowTrfThreshold) {
+					iTrafficSpriteOffset = trafficSpriteOffsets[iTile];
 					if (iTrafficSpriteOffset) {
 						if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
 							bIsFlipped = FALSE;
@@ -574,10 +574,10 @@ extern "C" void __cdecl Hook_DrawSmallTile(__int16 shpWidth, __int16 shpHeight, 
 					bIsFlipped = XBITReturnIsFlipped(iX, iY);
 				Game_DrawProcessObject(iSprite, shpWidth, iSprTop, bIsFlipped, 0);
 				iTraffic = GetXTRFByteDataWithNormalCoordinates(iX, iY);
-				iLowTrfTheshold = 28;
-				iHeavyTrfThreshold = iLowTrfTheshold * 2;
-				if (iTraffic > iLowTrfTheshold) {
-					iTrafficSpriteOffset = bTileState[iSprite + 47];
+				iLowTrfThreshold = 28;
+				iHeavyTrfThreshold = iLowTrfThreshold * 2;
+				if (iTraffic > iLowTrfThreshold) {
+					iTrafficSpriteOffset = trafficSpriteOffsets[iTile];
 					if (iTraffic > iHeavyTrfThreshold)
 						iTrafficSpriteOffset = trafficSpriteOverlayLevels[iTrafficSpriteOffset];
 					if (iTrafficSpriteOffset)
@@ -630,7 +630,7 @@ extern "C" void __cdecl Hook_DrawLargeTile(__int16 shpWidth, __int16 shpHeight, 
 	BYTE iTile;
 	BYTE iZone;
 	BYTE iOff;
-	BYTE iTraffic, iLowTrfTheshold, iHeavyTrfThreshold;
+	BYTE iTraffic, iLowTrfThreshold, iHeavyTrfThreshold;
 
 	iBottom = 0;
 	iLandAlt = 0;
@@ -786,12 +786,12 @@ extern "C" void __cdecl Hook_DrawLargeTile(__int16 shpWidth, __int16 shpHeight, 
 				Game_DrawProcessObject(iSprite, shpWidth, iSprTop, bIsFlipped, 0);
 				iTraffic = GetXTRFByteDataWithNormalCoordinates(iX, iY);
 				if (iSprite < SPRITE_LARGE_HIGHWAY_LR || iSprite >= SPRITE_LARGE_SUSPENSION_BRIDGE_START_B)
-					iLowTrfTheshold = 85;
+					iLowTrfThreshold = 85;
 				else
-					iLowTrfTheshold = 28;
-				iHeavyTrfThreshold = iLowTrfTheshold * 2;
-				if (iTraffic > iLowTrfTheshold) {
-					iTrafficSpriteOffset = trafficLargeSpriteOverlay[iSprite];
+					iLowTrfThreshold = 28;
+				iHeavyTrfThreshold = iLowTrfThreshold * 2;
+				if (iTraffic > iLowTrfThreshold) {
+					iTrafficSpriteOffset = trafficSpriteOffsets[iTile];
 					if (iTrafficSpriteOffset) {
 						if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
 							bIsFlipped = FALSE;
@@ -835,10 +835,10 @@ extern "C" void __cdecl Hook_DrawLargeTile(__int16 shpWidth, __int16 shpHeight, 
 					bIsFlipped = XBITReturnIsFlipped(iX, iY);
 				Game_DrawProcessObject(iSprite, shpWidth, iSprTop, bIsFlipped, 0);
 				iTraffic = GetXTRFByteDataWithNormalCoordinates(iX, iY);
-				iLowTrfTheshold = 28;
-				iHeavyTrfThreshold = iLowTrfTheshold * 2;
-				if (iTraffic > iLowTrfTheshold) {
-					iTrafficSpriteOffset = trafficLargeSpriteOverlay[iSprite];
+				iLowTrfThreshold = 28;
+				iHeavyTrfThreshold = iLowTrfThreshold * 2;
+				if (iTraffic > iLowTrfThreshold) {
+					iTrafficSpriteOffset = trafficSpriteOffsets[iTile];
 					if (iTraffic > iHeavyTrfThreshold)
 						iTrafficSpriteOffset = trafficSpriteOverlayLevels[iTrafficSpriteOffset];
 					if (iTrafficSpriteOffset)
@@ -891,7 +891,7 @@ extern "C" void __cdecl Hook_DrawTinyTile(__int16 shpWidth, __int16 shpHeight, i
 	BYTE iTile;
 	BYTE iZone;
 	BYTE iOff;
-	BYTE iTraffic, iLowTrfTheshold, iHeavyTrfThreshold;
+	BYTE iTraffic, iLowTrfThreshold, iHeavyTrfThreshold;
 
 	iBottom = 0;
 	iLandAlt = 0;
@@ -1047,12 +1047,12 @@ extern "C" void __cdecl Hook_DrawTinyTile(__int16 shpWidth, __int16 shpHeight, i
 				Game_DrawProcessObject(iSprite, shpWidth, iSprTop, bIsFlipped, 0);
 				iTraffic = GetXTRFByteDataWithNormalCoordinates(iX, iY);
 				if (iSprite < SPRITE_SMALL_HIGHWAY_LR || iSprite >= SPRITE_SMALL_SUSPENSION_BRIDGE_START_B)
-					iLowTrfTheshold = 85;
+					iLowTrfThreshold = 85;
 				else
-					iLowTrfTheshold = 28;
-				iHeavyTrfThreshold = iLowTrfTheshold * 2;
-				if (iTraffic > iLowTrfTheshold) {
-					iTrafficSpriteOffset = trafficTinySpriteOverlay[iSprite];
+					iLowTrfThreshold = 28;
+				iHeavyTrfThreshold = iLowTrfThreshold * 2;
+				if (iTraffic > iLowTrfThreshold) {
+					iTrafficSpriteOffset = trafficSpriteOffsets[iTile];
 					if (iTrafficSpriteOffset) {
 						if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
 							bIsFlipped = FALSE;
@@ -1098,10 +1098,10 @@ extern "C" void __cdecl Hook_DrawTinyTile(__int16 shpWidth, __int16 shpHeight, i
 					bIsFlipped = XBITReturnIsFlipped(iX, iY);
 				Game_DrawProcessObject(iSprite, shpWidth, iSprTop, bIsFlipped, 0);
 				iTraffic = GetXTRFByteDataWithNormalCoordinates(iX, iY);
-				iLowTrfTheshold = 28;
-				iHeavyTrfThreshold = iLowTrfTheshold * 2;
-				if (iTraffic > iLowTrfTheshold) {
-					iTrafficSpriteOffset = trafficTinySpriteOverlay[iSprite];
+				iLowTrfThreshold = 28;
+				iHeavyTrfThreshold = iLowTrfThreshold * 2;
+				if (iTraffic > iLowTrfThreshold) {
+					iTrafficSpriteOffset = trafficSpriteOffsets[iTile];
 					if (iTraffic > iHeavyTrfThreshold)
 						iTrafficSpriteOffset = trafficSpriteOverlayLevels[iTrafficSpriteOffset];
 					if (iTrafficSpriteOffset)
