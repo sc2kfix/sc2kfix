@@ -502,7 +502,7 @@ extern "C" void __cdecl Hook_DrawSmallTile(__int16 shpWidth, __int16 shpHeight, 
 					iSprTop = iTop - DECR_SMALL;
 				iSprite = nXTERTileIDs[iTerrainTile] + SPRITE_MEDIUM_START;
 				Game_DrawProcessObject(iSprite, shpWidth, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
-				if(iTile == TILE_RAISING_BRIDGE_LOWERED) {
+				if (iTile == TILE_RAISING_BRIDGE_LOWERED) {
 					if (wActiveShips) {
 						for (iThing = MIN_THING_IDX; iThing < MAX_THING_COUNT; ++iThing) {
 							if (XTHGGetType(iThing) == XTHG_CARGO_SHIP)
@@ -511,8 +511,11 @@ extern "C" void __cdecl Hook_DrawSmallTile(__int16 shpWidth, __int16 shpHeight, 
 						if (iThing != MAX_THING_COUNT) {
 							map_XTHG_t *pThing = GetXTHG(iThing);
 
-							if (Game_ShipApproachingRaisingBridge(iX, iY, pThing->iX, pThing->iY) < RAISE_THRESHOLD)
-								iTile = TILE_RAISING_BRIDGE_RAISED;
+							if (pThing) {
+								__int16 iDestDist = Game_GetDestDistance(iX, iY, pThing->iX, pThing->iY);
+								if (iDestDist < RAISE_THRESHOLD)
+									iTile = TILE_RAISING_BRIDGE_RAISED;
+							}
 						}
 					}
 				}
@@ -763,7 +766,7 @@ extern "C" void __cdecl Hook_DrawLargeTile(__int16 shpWidth, __int16 shpHeight, 
 					iSprTop = iTop - DECR_LARGE;
 				iSprite = nXTERTileIDs[iTerrainTile] + SPRITE_LARGE_START;
 				Game_DrawProcessObject(iSprite, shpWidth, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
-				if(iTile == TILE_RAISING_BRIDGE_LOWERED) {
+				if (iTile == TILE_RAISING_BRIDGE_LOWERED) {
 					if (wActiveShips) {
 						for (iThing = MIN_THING_IDX; iThing < MAX_THING_COUNT; ++iThing) {
 							if (XTHGGetType(iThing) == XTHG_CARGO_SHIP)
@@ -772,8 +775,11 @@ extern "C" void __cdecl Hook_DrawLargeTile(__int16 shpWidth, __int16 shpHeight, 
 						if (iThing != MAX_THING_COUNT) {
 							map_XTHG_t *pThing = GetXTHG(iThing);
 
-							if (Game_ShipApproachingRaisingBridge(iX, iY, pThing->iX, pThing->iY) < RAISE_THRESHOLD)
-								iTile = TILE_RAISING_BRIDGE_RAISED;
+							if (pThing) {
+								__int16 iDestDist = Game_GetDestDistance(iX, iY, pThing->iX, pThing->iY);
+								if (iDestDist < RAISE_THRESHOLD)
+									iTile = TILE_RAISING_BRIDGE_RAISED;
+							}
 						}
 					}
 				}
@@ -1024,7 +1030,8 @@ extern "C" void __cdecl Hook_DrawTinyTile(__int16 shpWidth, __int16 shpHeight, i
 					iSprTop = iTop - DECR_TINY;
 				iSprite = nXTERTileIDs[iTerrainTile] + SPRITE_SMALL_START;
 				Game_DrawProcessObject(iSprite, shpWidth, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
-				if(iTile == TILE_RAISING_BRIDGE_LOWERED) {
+				// ---- This block was originally only present in both DrawLargeTile and DrawSmallTile.
+				if (iTile == TILE_RAISING_BRIDGE_LOWERED) {
 					if (wActiveShips) {
 						for (iThing = MIN_THING_IDX; iThing < MAX_THING_COUNT; ++iThing) {
 							if (XTHGGetType(iThing) == XTHG_CARGO_SHIP)
@@ -1033,11 +1040,15 @@ extern "C" void __cdecl Hook_DrawTinyTile(__int16 shpWidth, __int16 shpHeight, i
 						if (iThing != MAX_THING_COUNT) {
 							map_XTHG_t *pThing = GetXTHG(iThing);
 
-							if (Game_ShipApproachingRaisingBridge(iX, iY, pThing->iX, pThing->iY) < RAISE_THRESHOLD)
-								iTile = TILE_RAISING_BRIDGE_RAISED;
+							if (pThing) {
+								__int16 iDestDist = Game_GetDestDistance(iX, iY, pThing->iX, pThing->iY);
+								if (iDestDist < RAISE_THRESHOLD)
+									iTile = TILE_RAISING_BRIDGE_RAISED;
+							}
 						}
 					}
 				}
+				// ^ ---- This block was originally only present in both DrawLargeTile and DrawSmallTile.
 				iSprite = iTile + SPRITE_SMALL_START;
 				iSprTop = iSprTop - pArrSpriteHeaders[iSprite].wHeight;
 				if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
@@ -1076,7 +1087,7 @@ extern "C" void __cdecl Hook_DrawTinyTile(__int16 shpWidth, __int16 shpHeight, i
 				if (iX < GAME_MAP_SIZE &&
 					iY < GAME_MAP_SIZE &&
 					XBITReturnIsPowerable(iX, iY) && !XBITReturnIsPowered(iX, iY)) {
-					Game_DrawProcessObject(SPRITE_LARGE_POWEROUTAGEINDICATOR, shpWidth + (pArrSpriteHeaders[iSprite].wWidth >> 1) - PWROFF_TINY, iTop - PWROFF_TINY, 0, 0);
+					Game_DrawProcessObject(SPRITE_SMALL_POWEROUTAGEINDICATOR, shpWidth + (pArrSpriteHeaders[iSprite].wWidth >> 1) - PWROFF_TINY, iTop - PWROFF_TINY, 0, 0);
 				}
 			}
 			else if (XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
