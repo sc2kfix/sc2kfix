@@ -441,7 +441,7 @@ static __int16 highwayBLOffsets[SIZE_LEVELS][AXIS_COUNT] = {
 	{ HWY_HR_BLOFF_TINY,  HWY_VT_BLOFF_TINY  }
 };
 
-static int DoWaterfallEdge(__int16 shpWidth, int iX, int iY, __int16 iBottom, __int16 iWaterFallSpriteID, __int16 iDecr) {
+static int DoWaterfallEdge(__int16 iMapOffSetX, int iX, int iY, __int16 iBottom, __int16 iWaterFallSpriteID, __int16 iDecr) {
 	__int16 iTopog;
 
 	if (iX < GAME_MAP_SIZE &&
@@ -451,7 +451,7 @@ static int DoWaterfallEdge(__int16 shpWidth, int iX, int iY, __int16 iBottom, __
 		if (iTopog > 0) {
 			while (rcDst.top <= iBottom) {
 				if (rcDst.bottom > iBottom)
-					Game_DrawProcessObject(iWaterFallSpriteID, shpWidth, iBottom, 0, 0);
+					Game_DrawProcessObject(iWaterFallSpriteID, iMapOffSetX, iBottom, 0, 0);
 				iBottom -= iDecr;
 				if (--iTopog <= 0)
 					return 2;
@@ -462,24 +462,24 @@ static int DoWaterfallEdge(__int16 shpWidth, int iX, int iY, __int16 iBottom, __
 	return 1;
 }
 
-static int DoMapEdge(__int16 shpWidth, int iX, int iY, __int16 iBottom, __int16 iLandAlt, __int16 iSpriteID, __int16 iWaterFallSpriteID, __int16 iDecr) {
+static int DoMapEdge(__int16 iMapOffSetX, int iX, int iY, __int16 iBottom, __int16 iLandAlt, __int16 iSpriteID, __int16 iWaterFallSpriteID, __int16 iDecr) {
 	if (iLandAlt > 0) {
 		while (rcDst.top <= iBottom) {
 			if (rcDst.bottom > iBottom)
-				Game_DrawProcessObject(iSpriteID, shpWidth, iBottom, 0, 0);
+				Game_DrawProcessObject(iSpriteID, iMapOffSetX, iBottom, 0, 0);
 			iBottom -= iDecr;
 			if (--iLandAlt <= 0)
-				return DoWaterfallEdge(shpWidth, iX, iY, iBottom, iWaterFallSpriteID, iDecr);
+				return DoWaterfallEdge(iMapOffSetX, iX, iY, iBottom, iWaterFallSpriteID, iDecr);
 		}
 	}
 	return 1;
 }
 
-static void DoBedrockEdge(__int16 shpWidth, __int16 iOffSetX, __int16 iOffSetY, __int16 iBottom, __int16 iLandAlt, __int16 iSpriteID, __int16 iDecr) {
+static void DoBedrockEdge(__int16 iMapOffSetX, __int16 iOffSetX, __int16 iOffSetY, __int16 iBottom, __int16 iLandAlt, __int16 iSpriteID, __int16 iDecr) {
 	if (iLandAlt > 0) {
 		while (rcDst.top <= iBottom) {
 			if (rcDst.bottom > iBottom)
-				Game_DrawProcessObject(iSpriteID, shpWidth + iOffSetX, iBottom + iOffSetY, 0, 0);
+				Game_DrawProcessObject(iSpriteID, iMapOffSetX + iOffSetX, iBottom + iOffSetY, 0, 0);
 			iBottom -= iDecr;
 			if (--iLandAlt <= 0)
 				break;
@@ -514,7 +514,7 @@ static __int16 getCoverageOffsets(__int16 nSizeLevel, __int16 nAxis, __int16 nPo
 		return getCoverageOffsetsY(nSizeLevel, nAxis, nPos, nCoverage);
 }
 
-static void DoCoverageMapEdgeFill(__int16 shpWidth, __int16 shpHeight, int iX, int iY, __int16 nSprBedrock, __int16 nDecr, __int16 nSizeLevel, BYTE iTile) {
+static void DoCoverageMapEdgeFill(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX, int iY, __int16 nSprBedrock, __int16 nDecr, __int16 nSizeLevel, BYTE iTile) {
 	__int16 iBottom, iLandAlt;
 	__int16 iCoverageSize;
 	BYTE iCoverage;
@@ -522,26 +522,26 @@ static void DoCoverageMapEdgeFill(__int16 shpWidth, __int16 shpHeight, int iX, i
 	iCoverage = GetTileCoverage(iTile);
 	if (iCoverage >= COVERAGE_1x1 && iCoverage < COVERAGE_COUNT) {
 		iCoverageSize = iCoverage + 1;
-		iBottom = shpHeight - pArrSpriteHeaders[nSprBedrock].wHeight;
+		iBottom = iMapOffSetY - pArrSpriteHeaders[nSprBedrock].wHeight;
 		iLandAlt = ALTMReturnLandAltitude(iX, iY);
 		if (iCoverage == COVERAGE_1x1) {
 			if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-				DoBedrockEdge(shpWidth, BLDOFF_DEFAULT, BLDOFF_DEFAULT, iBottom, iLandAlt, nSprBedrock, nDecr);
+				DoBedrockEdge(iMapOffSetX, BLDOFF_DEFAULT, BLDOFF_DEFAULT, iBottom, iLandAlt, nSprBedrock, nDecr);
 		}
 		else {
 			if (iX + iCoverage == MAP_EDGE_MAX) {
 				for (__int16 i = 0; i < iCoverageSize; i++)
-					DoBedrockEdge(shpWidth, getCoverageOffsets(nSizeLevel, AXIS_HORZ, i, iCoverage, TRUE), getCoverageOffsets(nSizeLevel, AXIS_VERT, i, iCoverage, TRUE), iBottom, iLandAlt, nSprBedrock, nDecr);
+					DoBedrockEdge(iMapOffSetX, getCoverageOffsets(nSizeLevel, AXIS_HORZ, i, iCoverage, TRUE), getCoverageOffsets(nSizeLevel, AXIS_VERT, i, iCoverage, TRUE), iBottom, iLandAlt, nSprBedrock, nDecr);
 			}
 			else if (iY == MAP_EDGE_MAX) {
 				for (__int16 i = 0; i < iCoverageSize; i++)
-					DoBedrockEdge(shpWidth, getCoverageOffsets(nSizeLevel, AXIS_HORZ, i, iCoverage, FALSE), getCoverageOffsets(nSizeLevel, AXIS_VERT, i, iCoverage, FALSE), iBottom, iLandAlt, nSprBedrock, nDecr);
+					DoBedrockEdge(iMapOffSetX, getCoverageOffsets(nSizeLevel, AXIS_HORZ, i, iCoverage, FALSE), getCoverageOffsets(nSizeLevel, AXIS_VERT, i, iCoverage, FALSE), iBottom, iLandAlt, nSprBedrock, nDecr);
 			}
 		}
 	}
 }
 
-static void L_DrawTile_SC2K1996(__int16 shpWidth, __int16 shpHeight, int iX, int iY, int nSizeLevel) {
+static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX, int iY, int nSizeLevel) {
 	__int16 nDecr;
 	__int16 nBldOffs, nPwrIndOffs;
 	__int16 nSprBedrock, nSprWaterfall;
@@ -580,10 +580,10 @@ static void L_DrawTile_SC2K1996(__int16 shpWidth, __int16 shpHeight, int iX, int
 	iBottom = 0;
 	iLandAlt = 0;
 	if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX) {
-		iBottom = shpHeight - pArrSpriteHeaders[nSprBedrock].wHeight;
+		iBottom = iMapOffSetY - pArrSpriteHeaders[nSprBedrock].wHeight;
 		iLandAlt = ALTMReturnLandAltitude(iX, iY);
 		if (!iLandAlt) {
-			if (!DoWaterfallEdge(shpWidth, iX, iY, iBottom, nSprWaterfall, nDecr))
+			if (!DoWaterfallEdge(iMapOffSetX, iX, iY, iBottom, nSprWaterfall, nDecr))
 				return;
 		}
 	}
@@ -599,19 +599,24 @@ static void L_DrawTile_SC2K1996(__int16 shpWidth, __int16 shpHeight, int iX, int
 		iAltTop = ALTMReturnLandAltitude(iX, iY);
 	else
 		iAltTop = ALTMReturnWaterLevel(iX, iY);
-	iTop = shpHeight - nDecr * iAltTop;
+	iTop = iMapOffSetY - nDecr * iAltTop;
 	iTile = GetTileID(iX, iY);
-	if (iTile < TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1 && iTop < rcDst.top)
+	if (iTile < TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1 && iTop < rcDst.top) {
+		// Add this here otherwise as soon as the map starts to go off screen
+		// (most noticeable in large mode) tile blocks will disappear.
+		if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
+			DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nDecr);
 		return;
+	}
 	iZone = XZONReturnZone(iX, iY);
 	if (iTile == TILE_CLEAR) {
 		if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-			DoMapEdge(shpWidth, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nDecr);
+			DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nDecr);
 		if (iTerrainTile > TERRAIN_00 || !iZone)
 			iSprite = nXTERTileIDs[iTerrainTile] + nSprStart;
 		else
 			iSprite = iZone + nSprWaterTer;
-		Game_DrawProcessObject(iSprite, shpWidth, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+		Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
 	}
 	else if (iTile >= TILE_ROAD_LR) {
 		if (iTile >= TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1) {
@@ -620,7 +625,7 @@ static void L_DrawTile_SC2K1996(__int16 shpWidth, __int16 shpHeight, int iX, int
 					if (XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
 						// The following call is to account for >= 1x1 buildings and avoid the map-edge
 						// bedrock-bleed that was previously occurring on >= 2x2 buildings.
-						DoCoverageMapEdgeFill(shpWidth, shpHeight, iX, iY, nSprBedrock, nDecr, nSizeLevel, iTile);
+						DoCoverageMapEdgeFill(iMapOffSetX, iMapOffSetY, iX, iY, nSprBedrock, nDecr, nSizeLevel, iTile);
 						if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
 							bIsFlipped = FALSE;
 						else
@@ -628,47 +633,47 @@ static void L_DrawTile_SC2K1996(__int16 shpWidth, __int16 shpHeight, int iX, int
 						if (!IsEven(wViewRotation))
 							bIsFlipped = !bIsFlipped;
 						iSprite = iTile + nSprStart;
-						Game_DrawProcessObject(iSprite, shpWidth, (pArrSpriteHeaders[iSprite].wWidth >> 2) - pArrSpriteHeaders[iSprite].wHeight + iTop - nBldOffs, bIsFlipped, 0);
+						Game_DrawProcessObject(iSprite, iMapOffSetX, (pArrSpriteHeaders[iSprite].wWidth >> 2) - pArrSpriteHeaders[iSprite].wHeight + iTop - nBldOffs, bIsFlipped, 0);
 						if (iX < GAME_MAP_SIZE &&
 							iY < GAME_MAP_SIZE &&
 							XBITReturnIsPowerable(iX, iY) && !XBITReturnIsPowered(iX, iY)) {
-							Game_DrawProcessObject(nSprPowerInd, shpWidth + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nPwrIndOffs, iTop - nPwrIndOffs, 0, 0);
+							Game_DrawProcessObject(nSprPowerInd, iMapOffSetX + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nPwrIndOffs, iTop - nPwrIndOffs, 0, 0);
 						}
 					}
 				}
 				else {
 					if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-						DoMapEdge(shpWidth, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nDecr);
+						DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nDecr);
 					iSprite = iZone + nSprWaterTer;
-					Game_DrawProcessObject(iSprite, shpWidth, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+					Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
 				}
 			}
 			else {
 				if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-					DoMapEdge(shpWidth, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nDecr);
+					DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nDecr);
 				if (DisplayLayer[LAYER_ZONES] || !iZone)
 					iSprite = BuiltUpZones[iZone] + nSprGreenTile;
 				else
 					iSprite = iZone + nSprWaterTer;
-				Game_DrawProcessObject(iSprite, shpWidth, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+				Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
 			}
 		}
 		else {
 			if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-				DoMapEdge(shpWidth, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nDecr);
+				DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nDecr);
 			if (!DisplayLayer[LAYER_INFRANATURE]) {
 				iSprite = nXTERTileIDs[iTerrainTile] + nSprStart;
-				Game_DrawProcessObject(iSprite, shpWidth, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+				Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
 				if (XTXTGetTextOverlayID(iX, iY))
-					Game_DrawLabel(iX, iY, shpWidth, iTop);
+					Game_DrawLabel(iX, iY, iMapOffSetX, iTop);
 				return;
 			}
 			if (iTile < TILE_HIGHWAY_HTB || iTile >= TILE_SUBTORAIL_T) {
-				iSprTop = shpHeight - nDecr * iAltTop;
+				iSprTop = iMapOffSetY - nDecr * iAltTop;
 				if (iTerrainTile == TERRAIN_13)
 					iSprTop = iTop - nDecr;
 				iSprite = nXTERTileIDs[iTerrainTile] + nSprStart;
-				Game_DrawProcessObject(iSprite, shpWidth, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+				Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
 				// ---- This block was originally only present in both DrawLargeTile and DrawSmallTile.
 				if (iTile == TILE_RAISING_BRIDGE_LOWERED) {
 					if (wActiveShips) {
@@ -694,7 +699,7 @@ static void L_DrawTile_SC2K1996(__int16 shpWidth, __int16 shpHeight, int iX, int
 					bIsFlipped = FALSE;
 				else
 					bIsFlipped = XBITReturnIsFlipped(iX, iY);
-				Game_DrawProcessObject(iSprite, shpWidth, iSprTop, bIsFlipped, 0);
+				Game_DrawProcessObject(iSprite, iMapOffSetX, iSprTop, bIsFlipped, 0);
 				iTraffic = GetXTRFByteDataWithNormalCoordinates(iX, iY);
 				if (iSprite < nSprHighway || iSprite >= nSprSuspBridge)
 					iLowTrfThreshold = 85;
@@ -720,25 +725,25 @@ static void L_DrawTile_SC2K1996(__int16 shpWidth, __int16 shpHeight, int iX, int
 						if (iTraffic > iHeavyTrfThreshold)
 							iTrafficSpriteOffset = trafficSpriteOverlayLevels[iTrafficSpriteOffset];
 						iTrafficSprite = iTrafficSpriteOffset + nSprFireStart;
-						Game_DrawProcessMaskObject(iTrafficSprite, shpWidth, iSprTop + pArrSpriteHeaders[iSprite].wHeight - pArrSpriteHeaders[iTrafficSprite].wHeight, bIsFlipped);
+						Game_DrawProcessMaskObject(iTrafficSprite, iMapOffSetX, iSprTop + pArrSpriteHeaders[iSprite].wHeight - pArrSpriteHeaders[iTrafficSprite].wHeight, bIsFlipped);
 					}
 				}
 				if (iX < GAME_MAP_SIZE &&
 					iY < GAME_MAP_SIZE &&
 					XBITReturnIsPowerable(iX, iY) && !XBITReturnIsPowered(iX, iY)) {
-					Game_DrawProcessObject(nSprPowerInd, shpWidth + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nPwrIndOffs, iTop - nPwrIndOffs, 0, 0);
+					Game_DrawProcessObject(nSprPowerInd, iMapOffSetX + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nPwrIndOffs, iTop - nPwrIndOffs, 0, 0);
 				}
 			}
 			else if (XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
 				// ---- This block was originally only present in both DrawLargeTile and DrawSmallTile.
 				iSprite = nXTERTileIDs[iTerrainTile] + nSprStart;
-				Game_DrawProcessObject(iSprite, shpWidth, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+				Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
 				iSprite = nXTERTileIDs[GetTerrainTileID(iX, iY - 1)] + nSprStart;
-				Game_DrawProcessObject(iSprite, shpWidth + highwayTROffsets[nSizeLevel][AXIS_HORZ], iTop - pArrSpriteHeaders[iSprite].wHeight - highwayTROffsets[nSizeLevel][AXIS_VERT], 0, 0);
+				Game_DrawProcessObject(iSprite, iMapOffSetX + highwayTROffsets[nSizeLevel][AXIS_HORZ], iTop - pArrSpriteHeaders[iSprite].wHeight - highwayTROffsets[nSizeLevel][AXIS_VERT], 0, 0);
 				iSprite = nXTERTileIDs[GetTerrainTileID(iX + 1, iY - 1)] + nSprStart;
-				Game_DrawProcessObject(iSprite, shpWidth + highwayBROffsets[nSizeLevel][AXIS_HORZ], iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+				Game_DrawProcessObject(iSprite, iMapOffSetX + highwayBROffsets[nSizeLevel][AXIS_HORZ], iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
 				iSprite = nXTERTileIDs[GetTerrainTileID(iX + 1, iY)] + nSprStart;
-				Game_DrawProcessObject(iSprite, shpWidth + highwayBLOffsets[nSizeLevel][AXIS_HORZ], iTop - pArrSpriteHeaders[iSprite].wHeight + highwayBLOffsets[nSizeLevel][AXIS_VERT], 0, 0);
+				Game_DrawProcessObject(iSprite, iMapOffSetX + highwayBLOffsets[nSizeLevel][AXIS_HORZ], iTop - pArrSpriteHeaders[iSprite].wHeight + highwayBLOffsets[nSizeLevel][AXIS_VERT], 0, 0);
 				// ^ ---- This block was originally only present in both DrawLargeTile and DrawSmallTile.
 				iSprite = iTile + nSprStart;
 				iSprTop = iTop - pArrSpriteHeaders[iSprite].wHeight + nBldOffs;
@@ -746,7 +751,7 @@ static void L_DrawTile_SC2K1996(__int16 shpWidth, __int16 shpHeight, int iX, int
 					bIsFlipped = FALSE;
 				else
 					bIsFlipped = XBITReturnIsFlipped(iX, iY);
-				Game_DrawProcessObject(iSprite, shpWidth, iSprTop, bIsFlipped, 0);
+				Game_DrawProcessObject(iSprite, iMapOffSetX, iSprTop, bIsFlipped, 0);
 				iTraffic = GetXTRFByteDataWithNormalCoordinates(iX, iY);
 				iLowTrfThreshold = 28;
 				iHeavyTrfThreshold = iLowTrfThreshold * 2;
@@ -756,43 +761,43 @@ static void L_DrawTile_SC2K1996(__int16 shpWidth, __int16 shpHeight, int iX, int
 						iTrafficSpriteOffset = trafficSpriteOverlayLevels[iTrafficSpriteOffset];
 					if (iTrafficSpriteOffset)
 						iTrafficSprite = iTrafficSpriteOffset + nSprFireStart;
-					Game_DrawProcessMaskObject(iTrafficSprite, shpWidth, iSprTop + pArrSpriteHeaders[iSprite].wHeight - pArrSpriteHeaders[iTrafficSprite].wHeight, 0);
+					Game_DrawProcessMaskObject(iTrafficSprite, iMapOffSetX, iSprTop + pArrSpriteHeaders[iSprite].wHeight - pArrSpriteHeaders[iTrafficSprite].wHeight, 0);
 				}
 			}
 		}
 	}
 	else {
 		if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-			DoMapEdge(shpWidth, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nDecr);
-		iSprTop = shpHeight - nDecr * iAltTop;
+			DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nDecr);
+		iSprTop = iMapOffSetY - nDecr * iAltTop;
 		if (iTerrainTile == TERRAIN_13)
 			iSprTop = iTop - nDecr;
 		if (iTerrainTile > TERRAIN_00 || !iZone)
 			iSprite = nXTERTileIDs[iTerrainTile] + nSprStart;
 		else
 			iSprite = iZone + nSprWaterTer;
-		Game_DrawProcessObject(iSprite, shpWidth, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+		Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
 		if (!DisplayLayer[LAYER_INFRANATURE]) {
 			if (XTXTGetTextOverlayID(iX, iY))
-				Game_DrawLabel(iX, iY, shpWidth, iTop);
+				Game_DrawLabel(iX, iY, iMapOffSetX, iTop);
 			return;
 		}
 		iSprite = iTile + nSprStart;
-		Game_DrawProcessObject(iSprite, shpWidth, iSprTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+		Game_DrawProcessObject(iSprite, iMapOffSetX, iSprTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
 		if (iX < GAME_MAP_SIZE &&
 			iY < GAME_MAP_SIZE &&
 			XBITReturnIsPowerable(iX, iY) && !XBITReturnIsPowered(iX, iY)) {
-			Game_DrawProcessObject(nSprPowerInd, shpWidth + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nPwrIndOffs, iTop - nPwrIndOffs, 0, 0);
+			Game_DrawProcessObject(nSprPowerInd, iMapOffSetX + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nPwrIndOffs, iTop - nPwrIndOffs, 0, 0);
 		}
 	}
 	if (XTXTGetTextOverlayID(iX, iY))
-		Game_DrawLabel(iX, iY, shpWidth, iTop);
+		Game_DrawLabel(iX, iY, iMapOffSetX, iTop);
 }
 
 extern "C" void __stdcall Hook_DrawAllLarge() {
 	CSimcityAppPrimary *pSCApp;
 	CSimcityView *pSCView;
-	__int16 iShpWidth, iShpHeight;
+	__int16 iMapOffSetX, iMapOffSetY;
 	__int16 iScan, iX, iY;
 
 	pSCApp = &pCSimcityAppThis;
@@ -806,23 +811,23 @@ extern "C" void __stdcall Hook_DrawAllLarge() {
 		iScan = MAP_EDGE_MIN;
 		iX = MAP_EDGE_MIN;
 		iY = MAP_EDGE_MIN;
-		iShpWidth = iScreenOffSetX;
-		iShpHeight = iScreenOffSetY;
+		iMapOffSetX = iScreenOffSetX;
+		iMapOffSetY = iScreenOffSetY;
 		do {
-			if (rcDst.left < iShpWidth && rcDst.right > iShpWidth) {
-				Game_DrawLargeTile(iShpWidth, iShpHeight, iX, iY);
+			if (rcDst.left < iMapOffSetX && rcDst.right > iMapOffSetX) {
+				Game_DrawLargeTile(iMapOffSetX, iMapOffSetY, iX, iY);
 			}
 			if (iY) {
 				++iX;
 				--iY;
-				iShpWidth += 32;
+				iMapOffSetX += 32;
 			}
 			else {
 				++iScan;
 				iX = MAP_EDGE_MIN;
 				iY = iScan;
-				iShpWidth = iScreenOffSetX - 16 * iScan;
-				iShpHeight += 8;
+				iMapOffSetX = iScreenOffSetX - 16 * iScan;
+				iMapOffSetY += 8;
 			}
 		} while (iScan < GAME_MAP_SIZE);
 
@@ -830,38 +835,51 @@ extern "C" void __stdcall Hook_DrawAllLarge() {
 		iScan = MAP_EDGE_MIN + 1;
 		iX = MAP_EDGE_MIN + 1;
 		iY = MAP_EDGE_MAX;
-		iShpWidth = iScreenOffSetX - 2016;
-		iShpHeight = iScreenOffSetY + 1024;
+		iMapOffSetX = iScreenOffSetX - 2016;
+		iMapOffSetY = iScreenOffSetY + 1024;
 		do {
-			if (rcDst.left < iShpWidth && rcDst.right > iShpWidth) {
-				Game_DrawLargeTile(iShpWidth, iShpHeight, iX, iY);
+			if (rcDst.left < iMapOffSetX && rcDst.right > iMapOffSetX) {
+				Game_DrawLargeTile(iMapOffSetX, iMapOffSetY, iX, iY);
 			}
 			if (iX == MAP_EDGE_MAX) {
 				++iScan;
 				iX = iScan;
 				iY = MAP_EDGE_MAX;
-				iShpWidth = 16 * (iScan - MAP_EDGE_MAX) + iScreenOffSetX;
-				iShpHeight += 8;
+				iMapOffSetX = 16 * (iScan - MAP_EDGE_MAX) + iScreenOffSetX;
+				iMapOffSetY += 8;
 			}
 			else {
 				++iX;
 				--iY;
-				iShpWidth += 32;
+				iMapOffSetX += 32;
 			}
 		} while (iScan < GAME_MAP_SIZE);
 	}
 }
 
-extern "C" void __cdecl Hook_DrawLargeTile(__int16 shpWidth, __int16 shpHeight, int iX, int iY) {
-	L_DrawTile_SC2K1996(shpWidth, shpHeight, iX, iY, SIZE_LARGE);
+extern "C" void __cdecl Hook_DrawLargeTile(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX, int iY) {
+	L_DrawTile_SC2K1996(iMapOffSetX, iMapOffSetY, iX, iY, SIZE_LARGE);
 }
 
-extern "C" void __cdecl Hook_DrawSmallTile(__int16 shpWidth, __int16 shpHeight, int iX, int iY) {
-	L_DrawTile_SC2K1996(shpWidth, shpHeight, iX, iY, SIZE_SMALL);
+extern "C" void __cdecl Hook_DrawSmallTile(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX, int iY) {
+	L_DrawTile_SC2K1996(iMapOffSetX, iMapOffSetY, iX, iY, SIZE_SMALL);
 }
 
-extern "C" void __cdecl Hook_DrawTinyTile(__int16 shpWidth, __int16 shpHeight, int iX, int iY) {
-	L_DrawTile_SC2K1996(shpWidth, shpHeight, iX, iY, SIZE_TINY);
+extern "C" void __cdecl Hook_DrawTinyTile(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX, int iY) {
+	L_DrawTile_SC2K1996(iMapOffSetX, iMapOffSetY, iX, iY, SIZE_TINY);
+}
+
+extern "C" void __cdecl Hook_DrawUnderTile(__int16 iX, __int16 iY) {
+	CSimcityAppPrimary *pSCApp;
+	CSimcityView *pSCView;
+
+	pSCApp = &pCSimcityAppThis;
+	if (pSCApp) {
+		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+		if (pSCView) {
+
+		}
+	}
 }
 
 void InstallDrawingHooks_SC2K1996(void) {
@@ -880,6 +898,10 @@ void InstallDrawingHooks_SC2K1996(void) {
 	// Hook for DrawTinyTile
 	VirtualProtect((LPVOID)0x4022D9, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4022D9, Hook_DrawTinyTile);
+
+	// Hook for DrawUnderTile
+	//VirtualProtect((LPVOID)0x402D9C, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	//NEWJMP((LPVOID)0x402D9C, Hook_DrawUnderTile);
 
 	// This disables the edge-checker for >= 2x2 buildings.
 	// *** REMEMBER TO COMMENT OUT AT THE END ***
