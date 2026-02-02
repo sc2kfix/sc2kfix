@@ -2679,6 +2679,22 @@ enum {
 	DEMAND_COUNT
 };
 
+enum {
+	EDIT_DATA_NONE,
+	EDIT_DATA_TRAFFIC,
+	EDIT_DATA_POPDENSITY,
+	EDIT_DATA_RATEOFGROWTH1,
+	EDIT_DATA_CRIMERATE,
+	EDIT_DATA_POLICEPWR,
+	EDIT_DATA_POLLUTION,
+	EDIT_DATA_LANDVALUE,
+	EDIT_DATA_FIREPWR,
+	EDIT_DATA_POWERED,
+	EDIT_DATA_WATERED,
+	EDIT_DATA_RATEOFGROWTH2,
+};
+
+
 // Structs
 
 #pragma pack(push, 1)
@@ -3195,6 +3211,13 @@ GAMEOFF(RECT,	currWndClientRect,			0x4C7CD0)
 GAMEOFF(WORD,	wCurrentAngle,				0x4C7CF8)
 GAMEOFF(RECT,	rcDst,						0x4C7D08)
 GAMEOFF(WORD,	wCurrentPositionAngle,		0x4C7D18)
+GAMEOFF(WORD,	g_wColorSpriteStart,		0x4C7D1C)
+GAMEOFF(WORD,	g_wColorMapYOffs,			0x4C7D20)
+GAMEOFF(WORD,	g_wColorLandAltScale,		0x4C7D24)
+GAMEOFF(WORD,	g_wColorScale,				0x4C7D28)
+GAMEOFF(WORD,	g_wColorMapXOffs,			0x4C7D2C)
+GAMEOFF(WORD,	g_iColorMapOffSetX,			0x4C7D30)
+GAMEOFF(WORD,	g_iColorMapOffSetY,			0x4C7D34)
 GAMEOFF(WORD,	wTileDirection,				0x4C7D60)
 GAMEOFF(WORD,	wMaybeActiveToolGroup,		0x4C7D88)
 GAMEOFF(WORD,	wMilitaryAvailDispatch,			0x4C7D98)
@@ -3229,6 +3252,7 @@ GAMEOFF(WORD,	wIndustrialMixBonus,		0x4CA1E8)
 GAMEOFF(WORD,	wCurrentMapToolGroup,		0x4CA1EC)
 GAMEOFF(WORD,	wCityNeighborConnections1500,	0x4CA3F0)
 GAMEOFF(WORD*,	wArrIndustrialDemands,		0x4CA3F4)
+GAMEOFF(WORD,	EditData,					0x4CA404)
 GAMEOFF(WORD,	wSubwayXUNDCount,			0x4CA41C)
 GAMEOFF(WORD,	wSetTriggerDisasterType,	0x4CA420)
 GAMEOFF(DWORD*,	pZonePops,					0x4CA428)

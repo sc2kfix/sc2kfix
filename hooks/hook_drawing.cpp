@@ -1028,6 +1028,105 @@ extern "C" void __cdecl Hook_DrawUnderTile(__int16 iX, __int16 iY) {
 	}
 }
 
+extern "C" void __cdecl Hook_DrawColorTile(__int16 iX, __int16 iY) {
+	__int16 iAltTop;
+	__int16 iTop;
+	__int16 iBottom;
+	__int16 iBaseSprite;
+	__int16 iSprite;
+	__int16 iSpriteInd;
+	BYTE iTerrainTile;
+	BYTE bBlock;
+
+	iTerrainTile = GetTerrainTileID(iX, iY);
+	if (iTerrainTile < SUBMERGED_00)
+		iAltTop = ALTMReturnLandAltitude(iX, iY);
+	else
+		iAltTop = ALTMReturnWaterLevel(iX, iY);
+	iTop = g_iColorMapOffSetY - g_wColorLandAltScale * iAltTop;
+	iBaseSprite = nXTERTileIDs[iTerrainTile];
+	iSprite = g_wColorSpriteStart + iBaseSprite;
+	if (rcDst.top <= iTop && rcDst.bottom >= iTop) {
+		iBottom = iTop - pArrSpriteHeaders[iSprite].wHeight;
+		if (iBaseSprite == SPRITE_SMALL_TERRAIN) {
+			bBlock = 0;
+			iSpriteInd = 0;
+			switch (EditData) {
+				case EDIT_DATA_TRAFFIC:
+					bBlock = GetXTRFByteDataWithNormalCoordinates(iX, iY);
+					break;
+				case EDIT_DATA_POPDENSITY:
+					bBlock = GetXPOPByteDataWithNormalCoordinates(iX, iY);
+					break;
+				case EDIT_DATA_RATEOFGROWTH1:
+					bBlock = GetXROGByteDataWithNormalCoordinates(iX, iY);
+					break;
+				case EDIT_DATA_CRIMERATE:
+					bBlock = GetXCRMByteDataWithNormalCoordinates(iX, iY);
+					break;
+				case EDIT_DATA_POLICEPWR:
+					bBlock = GetXPLCByteDataWithNormalCoordinates(iX, iY);
+					break;
+				case EDIT_DATA_POLLUTION:
+					bBlock = GetXPOPByteDataWithNormalCoordinates(iX, iY);
+					break;
+				case EDIT_DATA_LANDVALUE:
+					bBlock = GetXVALByteDataWithNormalCoordinates(iX, iY);
+					break;
+				case EDIT_DATA_FIREPWR:
+					bBlock = GetXFIRByteDataWithNormalCoordinates(iX, iY);
+					break;
+				case EDIT_DATA_POWERED:
+					if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE) {
+						if (XBITReturnIsPowerable(iX, iY)) {
+							if (XBITReturnIsPowered(iX, iY))
+								iSpriteInd = SPRITE_SMALL_GREENTILE;
+							else
+								iSpriteInd = SPRITE_SMALL_REDTILE;
+						}
+					}
+					break;
+				case EDIT_DATA_WATERED:
+					if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE) {
+						if (XBITReturnIsPiped(iX, iY)) {
+							if (XBITReturnIsWatered(iX, iY))
+								iSpriteInd = SPRITE_SMALL_GREENTILE;
+							else
+								iSpriteInd = SPRITE_SMALL_REDTILE;
+						}
+					}
+					break;
+				case EDIT_DATA_RATEOFGROWTH2:
+					bBlock = GetXROGByteDataWithNormalCoordinates(iX, iY);
+					if (bBlock < 131) {
+						if (bBlock <= 124)
+							iSpriteInd = SPRITE_SMALL_REDNEGATIVE;
+					}
+					else
+						iSpriteInd = SPRITE_SMALL_GREENPLUS;
+					break;
+			}
+			if (EditData <= EDIT_DATA_FIREPWR) {
+				if (bBlock >= 16)
+					iSprite = g_wColorSpriteStart + (bBlock >> 5) + SPRITE_SMALL_DENSITYOVERLAY1;
+			}
+			else {
+				if (iSpriteInd)
+					iSprite = g_wColorSpriteStart + iSpriteInd;
+			}
+		}
+		// ----- Enabled the underground layer.
+		if (DisplayLayer[LAYER_UNDERGROUND]) {
+			if (iSprite - g_wColorSpriteStart == iBaseSprite) {
+				iSprite = g_wColorSpriteStart + wXTERToXUNDSpriteIDMap[iTerrainTile];
+				iBottom = g_iColorMapOffSetY - g_wColorLandAltScale * ALTMReturnLandAltitude(iX, iY) - pArrSpriteHeaders[iSprite].wHeight;
+			}
+		}
+		// ^ ----- Enabled the underground layer.
+		Game_DrawProcessObject(iSprite, g_iColorMapOffSetX, iBottom, 0, 0);
+	}
+}
+
 void InstallDrawingHooks_SC2K1996(void) {
 	// Hook for DrawAllLarge
 	VirtualProtect((LPVOID)0x4017FD, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -1048,6 +1147,10 @@ void InstallDrawingHooks_SC2K1996(void) {
 	// Hook for DrawUnderTile
 	VirtualProtect((LPVOID)0x402D9C, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402D9C, Hook_DrawUnderTile);
+
+	// Hook for DrawColorTile
+	VirtualProtect((LPVOID)0x402F6D, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402F6D, Hook_DrawColorTile);
 
 	// This disables the edge-checker for >= 2x2 buildings.
 	// *** REMEMBER TO COMMENT OUT AT THE END ***
