@@ -248,6 +248,8 @@ enum {
 #define HWY_HR_BLOFF_TINY HWY_HR_TROFF_TINY
 #define HWY_VT_BLOFF_TINY HWY_VT_TROFF_TINY
 
+#define WATEREDPIPES_OFFSET 116
+
 #define MDRAWING_DEBUG_OTHER 1
 
 #define MDRAWING_DEBUG DEBUG_FLAGS_NONE
@@ -865,12 +867,163 @@ extern "C" void __cdecl Hook_DrawTinyTile(__int16 iMapOffSetX, __int16 iMapOffSe
 extern "C" void __cdecl Hook_DrawUnderTile(__int16 iX, __int16 iY) {
 	CSimcityAppPrimary *pSCApp;
 	CSimcityView *pSCView;
+	__int16 nCoordsScale;
+	__int16 nLandAltScale;
+	__int16 nScale;
+	__int16 nSpriteStart;
+	__int16 iRight;
+	__int16 iBottom;
+	__int16 iTop;
+	__int16 iAltTop;
+	__int16 iUndTrnSpr;
+	__int16 iTunnelLvl;
+	__int16 iSprBottom;
+	__int16 iSprPwrIndRight;
+	__int16 iSprite;
+	BOOL bIsFlipped;
+	BOOL bNoExecute;
+	BYTE iTerrainTile;
+	BYTE iUnderTile;
+	BYTE iTile;
 
 	pSCApp = &pCSimcityAppThis;
 	if (pSCApp) {
 		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 		if (pSCView) {
+			nCoordsScale = 2 << pSCView->wSCVZoomLevel;
+			nLandAltScale = 3 << pSCView->wSCVZoomLevel;
+			nScale = 4 << pSCView->wSCVZoomLevel;
+			nSpriteStart = 500 * pSCView->wSCVZoomLevel;
 
+			iRight = iScreenOffSetX + nScale * (iX - iY);
+			iBottom = iScreenOffSetY + nCoordsScale * (iX + iY) - nLandAltScale * ALTMReturnLandAltitude(iX, iY);
+			if (iBottom + nScale >= rcDst.top && rcDst.bottom >= iBottom) {
+				// ------ Added to reconcile the sign height difference between above/underground layers.
+				iTerrainTile = GetTerrainTileID(iX, iY);
+				if (iTerrainTile < SUBMERGED_00)
+					iAltTop = ALTMReturnLandAltitude(iX, iY);
+				else
+					iAltTop = ALTMReturnWaterLevel(iX, iY);
+				iTop = iScreenOffSetY + nCoordsScale * (iX + iY) - nLandAltScale * iAltTop;
+				// ^ ------ Added to reconcile the sign height difference between above/underground layers.
+				iUndTrnSpr = wXTERToXUNDSpriteIDMap[iTerrainTile];
+				iTunnelLvl = ALTMReturnTunnelLevels(iX, iY);
+				iSprBottom = iBottom - pArrSpriteHeaders[nSpriteStart + iUndTrnSpr].wHeight;
+				if (iTunnelLvl) {
+					if (iTunnelLvl == 1) {
+						iSprite = iTerrainTile + nSpriteStart + WATERFALL;
+						Game_DrawProcessObject(iSprite, iRight, iBottom - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+					}
+					else {
+						iSprite = nSpriteStart + SPRITE_SMALL_MISSILESILO;
+						Game_DrawProcessObject(iSprite, iRight, iBottom + nLandAltScale * (iTunnelLvl - 1) - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+					}
+				}
+				iUnderTile = GetUndergroundTileID(iX, iY);
+				if (iUnderTile >= UNDER_TILE_PIPES_LR && iUnderTile < UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR ||
+					iUnderTile == UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR ||
+					iUnderTile == UNDER_TILE_CROSSOVER_PIPESLR_SUBWAYTB) {
+					if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE &&
+						XBITReturnIsPiped(iX, iY) && XBITReturnIsWatered(iX, iY))
+						iUnderTile += WATEREDPIPES_OFFSET;
+					iSprite = iUnderTile + nSpriteStart + SPRITE_SMALL_BEDROCK_OUTLINE;
+					Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
+				}
+				else if (iUnderTile) {
+					iSprite = iUnderTile + nSpriteStart + SPRITE_SMALL_BEDROCK_OUTLINE;
+					Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
+					bNoExecute = FALSE;
+					if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE) {
+						if (XBITReturnIsPiped(iX, iY)) {
+							if (XBITReturnIsWatered(iX, iY)) {
+								iSprite = nSpriteStart + SPRITE_SMALL_BUILDINGPIPEWATERED_TRBL;
+								Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
+								bNoExecute = TRUE;
+							}
+							if (!bNoExecute) {
+								iSprite = nSpriteStart + SPRITE_SMALL_BUILDINGPIPE;
+								Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
+							}
+						}
+					}
+				}
+				else {
+					bNoExecute = FALSE;
+					if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE) {
+						if (XBITReturnIsPiped(iX, iY)) {
+							if (XBITReturnIsWatered(iX, iY)) {
+								iSprite = nSpriteStart + SPRITE_SMALL_BUILDINGPIPEWATERED_TRBL;
+								Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
+								bNoExecute = TRUE;
+							}
+							if (!bNoExecute) {
+								iSprite = nSpriteStart + SPRITE_SMALL_BUILDINGPIPE;
+								Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
+								bNoExecute = TRUE;
+							}
+						}
+					}
+					if (!bNoExecute) {
+						iSprite = iUndTrnSpr + nSpriteStart;
+						Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
+					}
+				}
+				iTile = GetTileID(iX, iY);
+				if (iTile) {
+					if (iTile < TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1) {
+						if (DisplayLayer[LAYER_INFRANATURE]) {
+							if (iTile >= TILE_HIGHWAY_HTB &&
+								iTile < TILE_SUBTORAIL_T) {
+								if (XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
+									iSprite = nSpriteStart + iTile;
+									if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE && XBITReturnIsWater(iX, iY))
+										iBottom += nLandAltScale * (ALTMReturnLandAltitude(iX, iY) - ALTMReturnWaterLevel(iX, iY));
+									iSprBottom = iBottom + nCoordsScale - pArrSpriteHeaders[iSprite].wHeight;
+									if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
+										bIsFlipped = FALSE;
+									else
+										bIsFlipped = XBITReturnIsFlipped(iX, iY);
+									Game_DrawProcessObject(iSprite, iRight, iSprBottom, bIsFlipped, 0);
+								}
+							}
+							else if (iTile >= TILE_POWERLINES_LR) {
+								iSprite = nSpriteStart + iTile;
+								if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE && XBITReturnIsWater(iX, iY))
+									iBottom += nLandAltScale * (ALTMReturnLandAltitude(iX, iY) - ALTMReturnWaterLevel(iX, iY));
+								else if (iUndTrnSpr == SPRITE_SMALL_BEDROCK_OUTLINE)
+									iBottom -= nLandAltScale;
+								iSprBottom = iBottom - pArrSpriteHeaders[iSprite].wHeight;
+								if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
+									bIsFlipped = FALSE;
+								else
+									bIsFlipped = XBITReturnIsFlipped(iX, iY);
+								Game_DrawProcessObject(iSprite, iRight, iSprBottom, bIsFlipped, 0);
+								if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE &&
+									XBITReturnIsPowerable(iX, iY) && !XBITReturnIsPowered(iX, iY)) {
+									iSprPwrIndRight = iRight + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nScale;
+									iSprBottom = iBottom - nScale;
+									Game_DrawProcessObject(nSpriteStart + SPRITE_SMALL_POWEROUTAGEINDICATOR, iSprPwrIndRight, iSprBottom, 0, 0);
+								}
+							}
+						}
+					}
+					else {
+						if (DisplayLayer[LAYER_BUILDINGS]) {
+							iSprite = BuiltUpZones[XZONReturnZone(iX, iY)] + nSpriteStart + SPRITE_SMALL_GREENOUTLINE;
+							Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
+							if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE &&
+								XBITReturnIsPowerable(iX, iY) && !XBITReturnIsPowered(iX, iY)) {
+								iSprPwrIndRight = iRight + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nScale;
+								iSprBottom = iBottom - nScale;
+								Game_DrawProcessObject(nSpriteStart + SPRITE_SMALL_POWEROUTAGEINDICATOR, iSprPwrIndRight, iSprBottom, 0, 0);
+							}
+						}
+					}
+				}
+
+				if (XTXTGetTextOverlayID(iX, iY))
+					Game_DrawLabel(iX, iY, iRight, iTop);
+			}
 		}
 	}
 }
@@ -893,8 +1046,8 @@ void InstallDrawingHooks_SC2K1996(void) {
 	NEWJMP((LPVOID)0x4022D9, Hook_DrawTinyTile);
 
 	// Hook for DrawUnderTile
-	//VirtualProtect((LPVOID)0x402D9C, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	//NEWJMP((LPVOID)0x402D9C, Hook_DrawUnderTile);
+	VirtualProtect((LPVOID)0x402D9C, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402D9C, Hook_DrawUnderTile);
 
 	// This disables the edge-checker for >= 2x2 buildings.
 	// *** REMEMBER TO COMMENT OUT AT THE END ***

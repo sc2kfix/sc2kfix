@@ -2736,9 +2736,9 @@ typedef struct {
 
 #pragma pack(push, 1)
 typedef struct {
-	WORD iLandAltitude : 5; // level / altitude
-	WORD iWaterLevel : 5;   // not always accurate (rely on XTER value instead)
-	WORD iTunnelLevels : 6; // how many levels below altitude should we display a grey block for a tunnel?
+	__int16 iLandAltitude : 5; // level / altitude
+	__int16 iWaterLevel : 5;   // not always accurate (rely on XTER value instead)
+	__int16 iTunnelLevels : 6; // how many levels below altitude should we display a grey block for a tunnel?
 } map_ALTM_attribs_t;
 #pragma pack(pop)
 
@@ -3830,7 +3830,7 @@ static inline WORD GetFlaggedTileCount(BYTE iTileID, BOOL bMilitary) {
 
 #define USE_OLD_ALTM_HANDLING 0
 
-static inline WORD ALTMReturnLandAltitude(__int16 x, __int16 y) {
+static inline __int16 ALTMReturnLandAltitude(__int16 x, __int16 y) {
 #if USE_OLD_ALTM_HANDLING
 	return *(WORD *)&dwMapALTM[x][y].w & ALTM_LANDALT_BOUNDARY;
 
@@ -3839,7 +3839,7 @@ static inline WORD ALTMReturnLandAltitude(__int16 x, __int16 y) {
 #endif
 }
 
-static inline WORD ALTMReturnWaterLevel(__int16 x, __int16 y) {
+static inline __int16 ALTMReturnWaterLevel(__int16 x, __int16 y) {
 #if USE_OLD_ALTM_HANDLING
 	return (*(WORD *)&dwMapALTM[x][y].w & ALTM_WATERLVL_BOUNDARY) >> 5;
 #else
@@ -3847,7 +3847,7 @@ static inline WORD ALTMReturnWaterLevel(__int16 x, __int16 y) {
 #endif
 }
 
-static inline WORD ALTMReturnTunnelLevels(__int16 x, __int16 y) {
+static inline __int16 ALTMReturnTunnelLevels(__int16 x, __int16 y) {
 #if USE_OLD_ALTM_HANDLING
 	return (*(WORD *)&dwMapALTM[x][y].w & ALTM_TUNNELLVLS_BOUNDARY) >> 10;
 #else
