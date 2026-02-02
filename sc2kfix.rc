@@ -102,17 +102,17 @@ BEGIN
     CTEXT           "Organization Name",IDC_STATIC,56,69,150,8
 END
 
-IDD_SETTINGS DIALOGEX 0, 0, 299, 455
+IDD_SETTINGS DIALOGEX 0, 0, 299, 466
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "sc2kfix Settings"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",ID_SETTINGS_OK,17,431,50,14
+    DEFPUSHBUTTON   "OK",ID_SETTINGS_OK,17,442,50,14
     EDITTEXT        IDC_SETTINGS_MAYOR,114,39,165,14,ES_CENTER | ES_AUTOHSCROLL
     EDITTEXT        IDC_SETTINGS_COMPANY,114,58,165,14,ES_CENTER | ES_AUTOHSCROLL
     CTEXT           "Default Mayor Name",IDC_STATIC,19,42,82,8
     CTEXT           "Organization Name",IDC_STATIC,19,61,82,8
-    PUSHBUTTON      "Cancel",ID_SETTINGS_CANCEL,79,431,50,14
+    PUSHBUTTON      "Cancel",ID_SETTINGS_CANCEL,79,442,50,14
     GROUPBOX        "Game Settings",IDC_STATIC,7,25,286,77
     GROUPBOX        "Quality of Life / Performance Settings",IDC_STATIC,7,110,286,172
     CTEXT           "Settings with an asterisk next to them take effect on next game start.\nHover over a setting or button for more details.",IDC_SETTINGS_HEADER,18,5,264,16
@@ -130,21 +130,23 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,377,268,10
     CONTROL         " * Check for sc2kfix updates on game startup (Default: on)",IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,391,268,10
-    PUSHBUTTON      "Defaults",ID_SETTINGS_DEFAULTS,170,431,50,14
-    PUSHBUTTON      "Vanilla",ID_SETTINGS_VANILLA,232,431,50,14
-    RTEXT           "sc2kfix version 0.0-dev (tag)",IDC_STATIC_VERSIONINFO,172,447,126,8,WS_DISABLED
+    PUSHBUTTON      "Defaults",ID_SETTINGS_DEFAULTS,170,442,50,14
+    PUSHBUTTON      "Vanilla",ID_SETTINGS_VANILLA,232,442,50,14
+    RTEXT           "sc2kfix version 0.0-dev (tag)",IDC_STATIC_VERSIONINFO,172,458,126,8,WS_DISABLED
     GROUPBOX        "Interface Settings",IDC_STATIC,7,288,286,71
     CONTROL         " Display full SimCalendar date in title bar (Default: on)",IDC_SETTINGS_CHECK_TITLE_DATE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,314,268,10
     CONTROL         " Display city growth in real-time instead of in batches (Default: on)",IDC_SETTINGS_CHECK_REFRESH_RATE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,266,268,10
-    GROUPBOX        "sc2kfix Core Settings",IDC_STATIC,7,364,286,57
+    GROUPBOX        "sc2kfix Core Settings",IDC_STATIC,7,364,286,69
     CONTROL         " Always skip introduction videos (Default: off)",IDC_SETTINGS_CHECK_SKIP_INTRO,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,342,268,10
     CONTROL         " * Skip loading any installed mods on startup (Default: off)",IDC_SETTINGS_CHECK_DONT_LOAD_MODS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,405,268,10
     CONTROL         " Play next random selection after current music ends (Default: off)",IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,221,268,10
+    CONTROL         " Use dark underground background (Default: off)",IDC_SETTINGS_CHECK_DARK_UNDGRND,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,419,268,10
     COMBOBOX        IDC_SETTINGS_COMBO_MUSICOUTPUT,114,125,164,122,CBS_DROPDOWNLIST | WS_TABSTOP
     CTEXT           "Music Playback Driver",IDC_STATIC,19,127,82,8
     CTEXT           "FluidSynth SoundFont",IDC_STATIC,19,147,82,8
@@ -378,7 +380,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 292
         TOPMARGIN, 7
-        BOTTOMMARGIN, 426
+        BOTTOMMARGIN, 437
     END
 
     103, DIALOG

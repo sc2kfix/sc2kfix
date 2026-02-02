@@ -64,6 +64,7 @@
 #define IDC_SPRITEBROWSER_COMBOCTRL     21051
 #define IDC_SPRITEBROWSER_COMBOLBL      21052
 #define IDC_SPRITEBROWSER_SELBUT        21053
+#define IDC_SETTINGS_CHECK_DARK_UNDGRND 21054
 #define IDR_WAVE_500                    23001
 #define IDR_WAVE_503                    23002
 #define IDR_WAVE_508                    23003
@@ -116,7 +117,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        23024
 #define _APS_NEXT_COMMAND_VALUE         40022
-#define _APS_NEXT_CONTROL_VALUE         21054
+#define _APS_NEXT_CONTROL_VALUE         21055
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

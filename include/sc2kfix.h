@@ -285,6 +285,7 @@ typedef struct {
 	BOOL bSettingsTitleCalendar;
 	BOOL bSettingsUseNewStrings;
 	BOOL bSettingsAlwaysSkipIntro;
+	BOOL bSettingsDarkUndergroundBkgnd;
 
 	UINT iSettingsMusicEngineOutput;
 	char szSettingsFluidSynthSoundfont[MAX_PATH + 1];
@@ -354,6 +355,7 @@ extern BOOL bSettingsUseStatusDialog;
 extern BOOL bSettingsTitleCalendar;
 extern BOOL bSettingsUseNewStrings;
 extern BOOL bSettingsAlwaysSkipIntro;
+extern BOOL bSettingsDarkUndergroundBkgnd;
 
 // Music track aliases
 
@@ -538,6 +540,7 @@ void UpdateMiscHooks_SC2K1996(void);
 void InstallMiscHooks_SC2K1995(void);
 void InstallMiscHooks_SC2KDemo(void);
 void InstallStatusHooks_SC2K1996(void);
+void UpdateDrawingHooks_SC2K1996(void);
 void UpdateStatus_SC2K1996(int iShow);
 void InstallDrawingHooks_SC2K1996(void);
 void InstallQueryHooks_SC2K1996(void);

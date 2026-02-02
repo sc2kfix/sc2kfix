@@ -40,6 +40,7 @@ BOOL bSettingsUseStatusDialog = FALSE;
 BOOL bSettingsTitleCalendar = TRUE;
 BOOL bSettingsUseNewStrings = TRUE;
 BOOL bSettingsAlwaysSkipIntro = FALSE;
+BOOL bSettingsDarkUndergroundBkgnd = FALSE;
 
 UINT iSettingsMusicEngineOutput = MUSIC_ENGINE_SEQUENCER;
 char szSettingsFluidSynthSoundfont[MAX_PATH + 1];
@@ -156,6 +157,7 @@ void LoadSettings(void) {
 	bSettingsTitleCalendar = GetPrivateProfileIntA(section, "bSettingsTitleCalendar", bSettingsTitleCalendar, ini_file);
 	bSettingsUseNewStrings = GetPrivateProfileIntA(section, "bSettingsUseNewStrings", bSettingsUseNewStrings, ini_file);
 	bSettingsAlwaysSkipIntro = GetPrivateProfileIntA(section, "bSettingsAlwaysSkipIntro", bSettingsAlwaysSkipIntro, ini_file);
+	bSettingsDarkUndergroundBkgnd = GetPrivateProfileIntA(section, "bSettingsDarkUndergroundBkgnd", bSettingsDarkUndergroundBkgnd, ini_file);
 
 	// FluidSynth settings (experimental -- not exposed to GUI yet)
 	if (iSettingsMusicEngineOutput == MUSIC_ENGINE_FLUIDSYNTH) {
@@ -216,6 +218,7 @@ void SaveSettings(BOOL onload) {
 	WritePrivateProfileIntA(section, "bSettingsTitleCalendar", bSettingsTitleCalendar, ini_file);
 	WritePrivateProfileIntA(section, "bSettingsUseNewStrings", bSettingsUseNewStrings, ini_file);
 	WritePrivateProfileIntA(section, "bSettingsAlwaysSkipIntro", bSettingsAlwaysSkipIntro, ini_file);
+	WritePrivateProfileIntA(section, "bSettingsDarkUndergroundBkgnd", bSettingsDarkUndergroundBkgnd, ini_file);
 
 	ConsoleLog(LOG_INFO, "CORE: Saved sc2kfix settings.\n");
 
@@ -261,6 +264,7 @@ static void SetSettingsTabOrdering(HWND hwndDlg) {
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE), NULL, 0, 0, 0, 0, uFlags);
 
 	// Interface Settings
+	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DARK_UNDGRND), NULL, 0, 0, 0, 0, uFlags);
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SKIP_INTRO), NULL, 0, 0, 0, 0, uFlags);
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS), NULL, 0, 0, 0, 0, uFlags);
 	SetWindowPos(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE), NULL, 0, 0, 0, 0, uFlags);
@@ -388,6 +392,8 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			"Certain strings in the game have typos, grammatical issues, and/or ambiguous wording. This setting loads corrected strings in memory in place of the affected originals.");
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SKIP_INTRO),
 			"Once enabled the introduction videos will be skipped on startup (This will only apply if the videos have been detected, otherwise the standard warning will be displayed).");
+		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DARK_UNDGRND),
+			"When enabled the underground layer background will be black.");
 
 		// Set the version string.
 		strVersionInfo = "sc2kfix ";
@@ -423,6 +429,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE), st->bSettingsTitleCalendar ? BST_CHECKED : BST_UNCHECKED);
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS), st->bSettingsUseNewStrings ? BST_CHECKED : BST_UNCHECKED);
 		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SKIP_INTRO), st->bSettingsAlwaysSkipIntro ? BST_CHECKED : BST_UNCHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DARK_UNDGRND), st->bSettingsDarkUndergroundBkgnd ? BST_CHECKED : BST_UNCHECKED);
 
 		// Center the dialog box
 		CenterDialogBox(hwndDlg);
@@ -459,6 +466,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			st->bSettingsTitleCalendar = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE));
 			st->bSettingsUseNewStrings = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS));
 			st->bSettingsAlwaysSkipIntro = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SKIP_INTRO));
+			st->bSettingsDarkUndergroundBkgnd = Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DARK_UNDGRND));
 
 			EndDialog(hwndDlg, TRUE);
 			break;
@@ -483,6 +491,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE), BST_CHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS), BST_CHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SKIP_INTRO), BST_UNCHECKED);
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DARK_UNDGRND), BST_UNCHECKED);
 			break;
 		case ID_SETTINGS_VANILLA:
 			// Clear all checkboxes except for the update checker.
@@ -502,6 +511,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE), BST_UNCHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS), BST_UNCHECKED);
 			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SKIP_INTRO), BST_UNCHECKED);
+			Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DARK_UNDGRND), BST_UNCHECKED);
 			break;
 		case IDC_SETTINGS_BUTTON_RESETFILEASSOCIATIONS:
 			ResetFileAssociations();
@@ -551,6 +561,7 @@ void ShowSettingsDialog(void) {
 	st.bSettingsTitleCalendar = bSettingsTitleCalendar;
 	st.bSettingsUseNewStrings = bSettingsUseNewStrings;
 	st.bSettingsAlwaysSkipIntro = bSettingsAlwaysSkipIntro;
+	st.bSettingsDarkUndergroundBkgnd = bSettingsDarkUndergroundBkgnd;
 	st.iSettingsMusicEngineOutput = iSettingsMusicEngineOutput;
 	strcpy_s(st.szSettingsFluidSynthSoundfont, sizeof(st.szSettingsFluidSynthSoundfont), szSettingsFluidSynthSoundfont);
 	for (int i = 0; i < MUSIC_TRACKS; i++) {
@@ -586,6 +597,7 @@ void ShowSettingsDialog(void) {
 		bSettingsTitleCalendar = st.bSettingsTitleCalendar;
 		bSettingsUseNewStrings = st.bSettingsUseNewStrings;
 		bSettingsAlwaysSkipIntro = st.bSettingsAlwaysSkipIntro;
+		bSettingsDarkUndergroundBkgnd = st.bSettingsDarkUndergroundBkgnd;
 		iSettingsMusicEngineOutput = st.iSettingsMusicEngineOutput;
 		strcpy_s(szSettingsFluidSynthSoundfont, sizeof(szSettingsFluidSynthSoundfont), st.szSettingsFluidSynthSoundfont);
 		for (int i = 0; i < MUSIC_TRACKS; i++) {

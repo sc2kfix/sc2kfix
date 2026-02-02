@@ -2549,13 +2549,6 @@ skipgamemenu:
 // The difference between InstallMiscHooks and UpdateMiscHooks is that UpdateMiscHooks can be run
 // again at runtime because it can patch back in original game code. It's used for small stuff.
 void UpdateMiscHooks_SC2K1996(void) {
-	// Music in background
-	//VirtualProtect((LPVOID)0x40BFDA, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	//if (bSettingsMusicInBackground)
-	//	memset((LPVOID)0x40BFDA, 0x90, 5);
-	//else {
-	//	BYTE bOriginalCode[5] = { 0xE8, 0xFD, 0x50, 0xFF, 0xFF };
-	//	memcpy_s((LPVOID)0x40BFDA, 5, bOriginalCode, 5);
-	//}
+	UpdateDrawingHooks_SC2K1996();
 }
 

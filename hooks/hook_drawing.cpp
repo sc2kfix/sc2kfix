@@ -900,4 +900,22 @@ void InstallDrawingHooks_SC2K1996(void) {
 	// *** REMEMBER TO COMMENT OUT AT THE END ***
 	//VirtualProtect((LPVOID)0x44056E, 166, PAGE_EXECUTE_READWRITE, &dwDummy);
 	//memset((LPVOID)0x44056E, 0x90, 166);
+
+	UpdateDrawingHooks_SC2K1996();
+}
+
+void UpdateDrawingHooks_SC2K1996(void) {
+	COLORREF undgrndBkgnd;
+
+	if (bSettingsDarkUndergroundBkgnd)
+		undgrndBkgnd = PALETTERGB(0, 0, 0);       // Black
+	else 
+		undgrndBkgnd = PALETTERGB(192, 192, 192); // Default
+
+	// Set via InitializeDataColorsFonts() first (on program load).
+	VirtualProtect((LPVOID)0x42C008, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(COLORREF *)0x42C008 = undgrndBkgnd;
+
+	// Set to the actual variable second (during runtime).
+	colGameBackgndUnder = undgrndBkgnd;
 }
