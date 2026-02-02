@@ -881,7 +881,6 @@ extern "C" void __cdecl Hook_DrawUnderTile(__int16 iX, __int16 iY) {
 	__int16 iSprPwrIndRight;
 	__int16 iSprite;
 	BOOL bIsFlipped;
-	BOOL bNoExecute;
 	BYTE iTerrainTile;
 	BYTE iUnderTile;
 	BYTE iTile;
@@ -932,41 +931,27 @@ extern "C" void __cdecl Hook_DrawUnderTile(__int16 iX, __int16 iY) {
 				else if (iUnderTile) {
 					iSprite = iUnderTile + nSpriteStart + SPRITE_SMALL_BEDROCK_OUTLINE;
 					Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
-					bNoExecute = FALSE;
 					if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE) {
 						if (XBITReturnIsPiped(iX, iY)) {
-							if (XBITReturnIsWatered(iX, iY)) {
+							if (XBITReturnIsWatered(iX, iY))
 								iSprite = nSpriteStart + SPRITE_SMALL_BUILDINGPIPEWATERED_TRBL;
-								Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
-								bNoExecute = TRUE;
-							}
-							if (!bNoExecute) {
+							else
 								iSprite = nSpriteStart + SPRITE_SMALL_BUILDINGPIPE;
-								Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
-							}
+							Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
 						}
 					}
 				}
 				else {
-					bNoExecute = FALSE;
+					iSprite = iUndTrnSpr + nSpriteStart;
 					if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE) {
 						if (XBITReturnIsPiped(iX, iY)) {
-							if (XBITReturnIsWatered(iX, iY)) {
+							if (XBITReturnIsWatered(iX, iY))
 								iSprite = nSpriteStart + SPRITE_SMALL_BUILDINGPIPEWATERED_TRBL;
-								Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
-								bNoExecute = TRUE;
-							}
-							if (!bNoExecute) {
+							else
 								iSprite = nSpriteStart + SPRITE_SMALL_BUILDINGPIPE;
-								Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
-								bNoExecute = TRUE;
-							}
 						}
 					}
-					if (!bNoExecute) {
-						iSprite = iUndTrnSpr + nSpriteStart;
-						Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
-					}
+					Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
 				}
 				iTile = GetTileID(iX, iY);
 				if (iTile) {
