@@ -477,7 +477,7 @@ static int DoMapEdge(__int16 iMapOffSetX, int iX, int iY, __int16 iBottom, __int
 
 static void DoBedrockEdge(__int16 iMapOffSetX, __int16 iOffSetX, __int16 iOffSetY, __int16 iBottom, __int16 iLandAlt, __int16 iSpriteID, __int16 iDecr) {
 	if (iLandAlt > 0) {
-		while (rcDst.top <= iBottom) {
+		while (rcDst.top <= iBottom + iOffSetY) {
 			if (rcDst.bottom > iBottom)
 				Game_DrawProcessObject(iSpriteID, iMapOffSetX + iOffSetX, iBottom + iOffSetY, 0, 0);
 			iBottom -= iDecr;
