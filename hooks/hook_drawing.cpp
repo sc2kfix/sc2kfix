@@ -661,109 +661,105 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 		else {
 			if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
 				DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nDecr);
-			if (!DisplayLayer[LAYER_INFRANATURE]) {
-				iSprite = nXTERTileIDs[iTerrainTile] + nSprStart;
-				Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
-				if (XTXTGetTextOverlayID(iX, iY))
-					Game_DrawLabel(iX, iY, iMapOffSetX, iTop);
-				return;
-			}
-			if (iTile < TILE_HIGHWAY_HTB || iTile >= TILE_SUBTORAIL_T) {
-				iSprTop = iMapOffSetY - nDecr * iAltTop;
-				if (iTerrainTile == TERRAIN_13)
-					iSprTop = iTop - nDecr;
-				iSprite = nXTERTileIDs[iTerrainTile] + nSprStart;
-				Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
-				// ---- This block was originally only present in both DrawLargeTile and DrawSmallTile.
-				if (iTile == TILE_RAISING_BRIDGE_LOWERED) {
-					if (wActiveShips) {
-						for (iThing = MIN_THING_IDX; iThing < MAX_THING_COUNT; ++iThing) {
-							if (XTHGGetType(iThing) == XTHG_CARGO_SHIP)
-								break;
-						}
-						if (iThing != MAX_THING_COUNT) {
-							map_XTHG_t *pThing = GetXTHG(iThing);
+			iSprite = nXTERTileIDs[iTerrainTile] + nSprStart;
+			if (DisplayLayer[LAYER_INFRANATURE]) {
+				if (iTile < TILE_HIGHWAY_HTB || iTile >= TILE_SUBTORAIL_T) {
+					Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+					// ---- This block was originally only present in both DrawLargeTile and DrawSmallTile.
+					if (iTile == TILE_RAISING_BRIDGE_LOWERED) {
+						if (wActiveShips) {
+							for (iThing = MIN_THING_IDX; iThing < MAX_THING_COUNT; ++iThing) {
+								if (XTHGGetType(iThing) == XTHG_CARGO_SHIP)
+									break;
+							}
+							if (iThing != MAX_THING_COUNT) {
+								map_XTHG_t *pThing = GetXTHG(iThing);
 
-							if (pThing) {
-								__int16 iDestDist = Game_GetDestDistance(iX, iY, pThing->iX, pThing->iY);
-								if (iDestDist < RAISE_THRESHOLD)
-									iTile = TILE_RAISING_BRIDGE_RAISED;
+								if (pThing) {
+									__int16 iDestDist = Game_GetDestDistance(iX, iY, pThing->iX, pThing->iY);
+									if (iDestDist < RAISE_THRESHOLD)
+										iTile = TILE_RAISING_BRIDGE_RAISED;
+								}
 							}
 						}
 					}
-				}
-				// ^ ---- This block was originally only present in both DrawLargeTile and DrawSmallTile.
-				iSprite = iTile + nSprStart;
-				iSprTop = iSprTop - pArrSpriteHeaders[iSprite].wHeight;
-				if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
-					bIsFlipped = FALSE;
-				else
-					bIsFlipped = XBITReturnIsFlipped(iX, iY);
-				Game_DrawProcessObject(iSprite, iMapOffSetX, iSprTop, bIsFlipped, 0);
-				iTraffic = GetXTRFByteDataWithNormalCoordinates(iX, iY);
-				if (iSprite < nSprHighway || iSprite >= nSprSuspBridge)
-					iLowTrfThreshold = 85;
-				else
-					iLowTrfThreshold = 28;
-				iHeavyTrfThreshold = iLowTrfThreshold * 2;
-				if (iTraffic > iLowTrfThreshold) {
-					iTrafficSpriteOffset = trafficSpriteOffsets[iTile];
-					if (iTrafficSpriteOffset) {
-						if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
-							bIsFlipped = FALSE;
-						else
-							bIsFlipped = XBITReturnIsFlipped(iX, iY);
-						if (iTrafficSpriteOffset == 11) {
-							if (!IsEven(iX))
-								iTrafficSpriteOffset = 12;
+					// ^ ---- This block was originally only present in both DrawLargeTile and DrawSmallTile.
+					iSprite = iTile + nSprStart;
+					iSprTop = iMapOffSetY - nDecr * iAltTop;
+					if (iTerrainTile == TERRAIN_13)
+						iSprTop = iTop - nDecr;
+					iSprTop = iSprTop - pArrSpriteHeaders[iSprite].wHeight;
+					if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
+						bIsFlipped = FALSE;
+					else
+						bIsFlipped = XBITReturnIsFlipped(iX, iY);
+					Game_DrawProcessObject(iSprite, iMapOffSetX, iSprTop, bIsFlipped, 0);
+					iTraffic = GetXTRFByteDataWithNormalCoordinates(iX, iY);
+					if (iSprite < nSprHighway || iSprite >= nSprSuspBridge)
+						iLowTrfThreshold = 85;
+					else
+						iLowTrfThreshold = 28;
+					iHeavyTrfThreshold = iLowTrfThreshold * 2;
+					if (iTraffic > iLowTrfThreshold) {
+						iTrafficSpriteOffset = trafficSpriteOffsets[iTile];
+						if (iTrafficSpriteOffset) {
+							if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
+								bIsFlipped = FALSE;
+							else
+								bIsFlipped = XBITReturnIsFlipped(iX, iY);
+							if (iTrafficSpriteOffset == 11) {
+								if (!IsEven(iX))
+									iTrafficSpriteOffset = 12;
+							}
+							else if (iTrafficSpriteOffset == 12) {
+								bIsFlipped = TRUE;
+								if (!IsEven(iY))
+									iTrafficSpriteOffset = 11;
+							}
+							if (iTraffic > iHeavyTrfThreshold)
+								iTrafficSpriteOffset = trafficSpriteOverlayLevels[iTrafficSpriteOffset];
+							iTrafficSprite = iTrafficSpriteOffset + nSprFireStart;
+							Game_DrawProcessMaskObject(iTrafficSprite, iMapOffSetX, iSprTop + pArrSpriteHeaders[iSprite].wHeight - pArrSpriteHeaders[iTrafficSprite].wHeight, bIsFlipped);
 						}
-						else if (iTrafficSpriteOffset == 12) {
-							bIsFlipped = TRUE;
-							if (!IsEven(iY))
-								iTrafficSpriteOffset = 11;
-						}
-						if (iTraffic > iHeavyTrfThreshold)
-							iTrafficSpriteOffset = trafficSpriteOverlayLevels[iTrafficSpriteOffset];
-						iTrafficSprite = iTrafficSpriteOffset + nSprFireStart;
-						Game_DrawProcessMaskObject(iTrafficSprite, iMapOffSetX, iSprTop + pArrSpriteHeaders[iSprite].wHeight - pArrSpriteHeaders[iTrafficSprite].wHeight, bIsFlipped);
+					}
+					if (iX < GAME_MAP_SIZE &&
+						iY < GAME_MAP_SIZE &&
+						XBITReturnIsPowerable(iX, iY) && !XBITReturnIsPowered(iX, iY)) {
+						Game_DrawProcessObject(nSprPowerInd, iMapOffSetX + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nPwrIndOffs, iTop - nPwrIndOffs, 0, 0);
 					}
 				}
-				if (iX < GAME_MAP_SIZE &&
-					iY < GAME_MAP_SIZE &&
-					XBITReturnIsPowerable(iX, iY) && !XBITReturnIsPowered(iX, iY)) {
-					Game_DrawProcessObject(nSprPowerInd, iMapOffSetX + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nPwrIndOffs, iTop - nPwrIndOffs, 0, 0);
+				else if (XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
+					// ---- This block was originally only present in both DrawLargeTile and DrawSmallTile.
+					Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+					iSprite = nXTERTileIDs[GetTerrainTileID(iX, iY - 1)] + nSprStart;
+					Game_DrawProcessObject(iSprite, iMapOffSetX + highwayTROffsets[nSizeLevel][AXIS_HORZ], iTop - pArrSpriteHeaders[iSprite].wHeight - highwayTROffsets[nSizeLevel][AXIS_VERT], 0, 0);
+					iSprite = nXTERTileIDs[GetTerrainTileID(iX + 1, iY - 1)] + nSprStart;
+					Game_DrawProcessObject(iSprite, iMapOffSetX + highwayBROffsets[nSizeLevel][AXIS_HORZ], iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+					iSprite = nXTERTileIDs[GetTerrainTileID(iX + 1, iY)] + nSprStart;
+					Game_DrawProcessObject(iSprite, iMapOffSetX + highwayBLOffsets[nSizeLevel][AXIS_HORZ], iTop - pArrSpriteHeaders[iSprite].wHeight + highwayBLOffsets[nSizeLevel][AXIS_VERT], 0, 0);
+					// ^ ---- This block was originally only present in both DrawLargeTile and DrawSmallTile.
+					iSprite = iTile + nSprStart;
+					iSprTop = iTop - pArrSpriteHeaders[iSprite].wHeight + nBldOffs;
+					if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
+						bIsFlipped = FALSE;
+					else
+						bIsFlipped = XBITReturnIsFlipped(iX, iY);
+					Game_DrawProcessObject(iSprite, iMapOffSetX, iSprTop, bIsFlipped, 0);
+					iTraffic = GetXTRFByteDataWithNormalCoordinates(iX, iY);
+					iLowTrfThreshold = 28;
+					iHeavyTrfThreshold = iLowTrfThreshold * 2;
+					if (iTraffic > iLowTrfThreshold) {
+						iTrafficSpriteOffset = trafficSpriteOffsets[iTile];
+						if (iTraffic > iHeavyTrfThreshold)
+							iTrafficSpriteOffset = trafficSpriteOverlayLevels[iTrafficSpriteOffset];
+						if (iTrafficSpriteOffset)
+							iTrafficSprite = iTrafficSpriteOffset + nSprFireStart;
+						Game_DrawProcessMaskObject(iTrafficSprite, iMapOffSetX, iSprTop + pArrSpriteHeaders[iSprite].wHeight - pArrSpriteHeaders[iTrafficSprite].wHeight, 0);
+					}
 				}
 			}
-			else if (XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
-				// ---- This block was originally only present in both DrawLargeTile and DrawSmallTile.
-				iSprite = nXTERTileIDs[iTerrainTile] + nSprStart;
+			else
 				Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
-				iSprite = nXTERTileIDs[GetTerrainTileID(iX, iY - 1)] + nSprStart;
-				Game_DrawProcessObject(iSprite, iMapOffSetX + highwayTROffsets[nSizeLevel][AXIS_HORZ], iTop - pArrSpriteHeaders[iSprite].wHeight - highwayTROffsets[nSizeLevel][AXIS_VERT], 0, 0);
-				iSprite = nXTERTileIDs[GetTerrainTileID(iX + 1, iY - 1)] + nSprStart;
-				Game_DrawProcessObject(iSprite, iMapOffSetX + highwayBROffsets[nSizeLevel][AXIS_HORZ], iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
-				iSprite = nXTERTileIDs[GetTerrainTileID(iX + 1, iY)] + nSprStart;
-				Game_DrawProcessObject(iSprite, iMapOffSetX + highwayBLOffsets[nSizeLevel][AXIS_HORZ], iTop - pArrSpriteHeaders[iSprite].wHeight + highwayBLOffsets[nSizeLevel][AXIS_VERT], 0, 0);
-				// ^ ---- This block was originally only present in both DrawLargeTile and DrawSmallTile.
-				iSprite = iTile + nSprStart;
-				iSprTop = iTop - pArrSpriteHeaders[iSprite].wHeight + nBldOffs;
-				if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
-					bIsFlipped = FALSE;
-				else
-					bIsFlipped = XBITReturnIsFlipped(iX, iY);
-				Game_DrawProcessObject(iSprite, iMapOffSetX, iSprTop, bIsFlipped, 0);
-				iTraffic = GetXTRFByteDataWithNormalCoordinates(iX, iY);
-				iLowTrfThreshold = 28;
-				iHeavyTrfThreshold = iLowTrfThreshold * 2;
-				if (iTraffic > iLowTrfThreshold) {
-					iTrafficSpriteOffset = trafficSpriteOffsets[iTile];
-					if (iTraffic > iHeavyTrfThreshold)
-						iTrafficSpriteOffset = trafficSpriteOverlayLevels[iTrafficSpriteOffset];
-					if (iTrafficSpriteOffset)
-						iTrafficSprite = iTrafficSpriteOffset + nSprFireStart;
-					Game_DrawProcessMaskObject(iTrafficSprite, iMapOffSetX, iSprTop + pArrSpriteHeaders[iSprite].wHeight - pArrSpriteHeaders[iTrafficSprite].wHeight, 0);
-				}
-			}
 		}
 	}
 	else {
@@ -777,17 +773,14 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 		else
 			iSprite = iZone + nSprWaterTer;
 		Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
-		if (!DisplayLayer[LAYER_INFRANATURE]) {
-			if (XTXTGetTextOverlayID(iX, iY))
-				Game_DrawLabel(iX, iY, iMapOffSetX, iTop);
-			return;
-		}
-		iSprite = iTile + nSprStart;
-		Game_DrawProcessObject(iSprite, iMapOffSetX, iSprTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
-		if (iX < GAME_MAP_SIZE &&
-			iY < GAME_MAP_SIZE &&
-			XBITReturnIsPowerable(iX, iY) && !XBITReturnIsPowered(iX, iY)) {
-			Game_DrawProcessObject(nSprPowerInd, iMapOffSetX + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nPwrIndOffs, iTop - nPwrIndOffs, 0, 0);
+		if (DisplayLayer[LAYER_INFRANATURE]) {
+			iSprite = iTile + nSprStart;
+			Game_DrawProcessObject(iSprite, iMapOffSetX, iSprTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+			if (iX < GAME_MAP_SIZE &&
+				iY < GAME_MAP_SIZE &&
+				XBITReturnIsPowerable(iX, iY) && !XBITReturnIsPowered(iX, iY)) {
+				Game_DrawProcessObject(nSprPowerInd, iMapOffSetX + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nPwrIndOffs, iTop - nPwrIndOffs, 0, 0);
+			}
 		}
 	}
 	if (XTXTGetTextOverlayID(iX, iY))
