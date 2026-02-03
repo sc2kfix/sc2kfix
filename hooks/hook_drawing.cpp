@@ -259,6 +259,8 @@ enum {
 #define MDRAWING_DEBUG DEBUG_FLAGS_EVERYTHING
 #endif
 
+extern BOOL bMapWireFrame;
+
 UINT mdrawing_debug = MDRAWING_DEBUG;
 
 static DWORD dwDummy;
@@ -543,6 +545,17 @@ static void DoCoverageMapEdgeFill(__int16 iMapOffSetX, __int16 iMapOffSetY, int 
 	}
 }
 
+static __int16 GetTerrainSprite(BYTE iTerrainTile, __int16 nSprStart) {
+	__int16 iSprite;
+
+	if (iTerrainTile >= TERRAIN_13 || !bMapWireFrame)
+		iSprite = nXTERTileIDs[iTerrainTile] + nSprStart;
+	else
+		iSprite = wXTERToXUNDSpriteIDMap[iTerrainTile] + nSprStart;
+
+	return iSprite;
+}
+
 static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX, int iY, int nSizeLevel) {
 	__int16 nDecr;
 	__int16 nBldOffs, nPwrIndOffs;
@@ -615,7 +628,7 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 		if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
 			DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nDecr);
 		if (iTerrainTile > TERRAIN_00 || !iZone)
-			iSprite = nXTERTileIDs[iTerrainTile] + nSprStart;
+			iSprite = GetTerrainSprite(iTerrainTile, nSprStart);
 		else
 			iSprite = iZone + nSprWaterTer;
 		Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
@@ -663,7 +676,7 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 		else {
 			if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
 				DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nDecr);
-			iSprite = nXTERTileIDs[iTerrainTile] + nSprStart;
+			iSprite = GetTerrainSprite(iTerrainTile, nSprStart);
 			if (DisplayLayer[LAYER_INFRANATURE]) {
 				if (iTile < TILE_HIGHWAY_HTB || iTile >= TILE_SUBTORAIL_T) {
 					Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
@@ -733,11 +746,11 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 				else if (XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
 					// ---- This block was originally only present in both DrawLargeTile and DrawSmallTile.
 					Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
-					iSprite = nXTERTileIDs[GetTerrainTileID(iX, iY - 1)] + nSprStart;
+					iSprite = GetTerrainSprite(GetTerrainTileID(iX, iY - 1), nSprStart);
 					Game_DrawProcessObject(iSprite, iMapOffSetX + highwayTROffsets[nSizeLevel][AXIS_HORZ], iTop - pArrSpriteHeaders[iSprite].wHeight - highwayTROffsets[nSizeLevel][AXIS_VERT], 0, 0);
-					iSprite = nXTERTileIDs[GetTerrainTileID(iX + 1, iY - 1)] + nSprStart;
+					iSprite = GetTerrainSprite(GetTerrainTileID(iX + 1, iY - 1), nSprStart);
 					Game_DrawProcessObject(iSprite, iMapOffSetX + highwayBROffsets[nSizeLevel][AXIS_HORZ], iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
-					iSprite = nXTERTileIDs[GetTerrainTileID(iX + 1, iY)] + nSprStart;
+					iSprite = GetTerrainSprite(GetTerrainTileID(iX + 1, iY), nSprStart);
 					Game_DrawProcessObject(iSprite, iMapOffSetX + highwayBLOffsets[nSizeLevel][AXIS_HORZ], iTop - pArrSpriteHeaders[iSprite].wHeight + highwayBLOffsets[nSizeLevel][AXIS_VERT], 0, 0);
 					// ^ ---- This block was originally only present in both DrawLargeTile and DrawSmallTile.
 					iSprite = iTile + nSprStart;
@@ -771,7 +784,7 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 		if (iTerrainTile == TERRAIN_13)
 			iSprTop = iTop - nDecr;
 		if (iTerrainTile > TERRAIN_00 || !iZone)
-			iSprite = nXTERTileIDs[iTerrainTile] + nSprStart;
+			iSprite = GetTerrainSprite(iTerrainTile, nSprStart);
 		else
 			iSprite = iZone + nSprWaterTer;
 		Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
@@ -1155,10 +1168,9 @@ void InstallDrawingHooks_SC2K1996(void) {
 void UpdateDrawingHooks_SC2K1996(void) {
 	COLORREF undgrndBkgnd;
 
+	undgrndBkgnd = PALETTERGB(192, 192, 192); // Default
 	if (bSettingsDarkUndergroundBkgnd)
-		undgrndBkgnd = PALETTERGB(0, 0, 0);       // Black
-	else 
-		undgrndBkgnd = PALETTERGB(192, 192, 192); // Default
+		undgrndBkgnd = PALETTERGB(60, 60, 60);    // Dark Grey
 
 	// Set via InitializeDataColorsFonts() first (on program load).
 	VirtualProtect((LPVOID)0x42C008, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
@@ -1166,4 +1178,13 @@ void UpdateDrawingHooks_SC2K1996(void) {
 
 	// Set to the actual variable second (during runtime).
 	colGameBackgndUnder = undgrndBkgnd;
+
+	if (bMapWireFrame) {
+		// Set via InitializeDataColorsFonts() first (on program load).
+		VirtualProtect((LPVOID)0x42BFFE, 4, PAGE_EXECUTE_READWRITE, &dwDummy);
+		*(COLORREF *)0x42BFFE = undgrndBkgnd;
+
+		// Set to the actual variable second (during runtime).
+		colGameBackgndAbove = undgrndBkgnd;
+	}
 }

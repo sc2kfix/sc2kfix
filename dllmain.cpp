@@ -53,6 +53,7 @@ BOOL bUseAdvancedQuery = TRUE;
 BOOL bSkipLoadingMods = FALSE;
 BOOL bFixFileAssociations = FALSE;
 BOOL bDisableAutoThingCleanup = TRUE;
+BOOL bMapWireFrame = FALSE;
 int iForcedBits = 0;
 
 std::random_device rdRandomDevice;
@@ -206,6 +207,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						bSkipIntro = TRUE;
 					if (!lstrcmpiW(argv[i], L"-skipmods"))
 						bSkipLoadingMods = TRUE;
+					if (!lstrcmpiW(argv[i], L"-mapwireframe"))
+						bMapWireFrame = TRUE;
 					if (!lstrcmpiW(argv[i], L"-bitmode"))
 					{
 						if (!iSetBitMode) {

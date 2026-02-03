@@ -3258,6 +3258,7 @@ GAMEOFF(WORD,	wSetTriggerDisasterType,	0x4CA420)
 GAMEOFF(DWORD*,	pZonePops,					0x4CA428)
 GAMEOFF(WORD,	wCityMode,					0x4CA42C)
 GAMEOFF(WORD,	wOldArrests,				0x4CA430)
+GAMEOFF(COLORREF,	colGameBackgndAbove,	0x4CA43C)
 GAMEOFF(int,	dwCityLandValue,			0x4CA440)
 GAMEOFF(int,	dwCityFunds,				0x4CA444)
 GAMEOFF(WORD*, dwTileCount,					0x4CA4C8)		// WORD dwTileCount[256]
