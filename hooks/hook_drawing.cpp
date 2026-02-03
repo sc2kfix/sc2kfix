@@ -16,9 +16,9 @@
 #pragma intrinsic(_ReturnAddress)
 
 enum {
-	SIZE_LARGE,
-	SIZE_SMALL,
 	SIZE_TINY,
+	SIZE_SMALL,
+	SIZE_LARGE,
 
 	SIZE_LEVELS
 };
@@ -30,225 +30,79 @@ enum {
 	AXIS_COUNT
 };
 
-// Decrement values
-#define DECR_LARGE 12
-#define DECR_SMALL (DECR_LARGE / 2)
-#define DECR_TINY (DECR_SMALL / 2)
+#define SPRITE_BOUNDARY_MULTIPLIER 500
 
-// Building offsets
-#define BLDOFF_LARGE 8
-#define BLDOFF_SMALL (BLDOFF_LARGE / 2)
-#define BLDOFF_TINY (BLDOFF_SMALL / 2)
-
-// Power outage indicator offsets
-#define PWROFF_LARGE 16
-#define PWROFF_SMALL (PWROFF_LARGE / 2)
-#define PWROFF_TINY (PWROFF_SMALL / 2)
+#define COORDSCALE_VAL(x) (2 << x)
+#define LANDALTSCALE_VAL(x) (3 << x)
+#define SCALE_VAL(x) (4 << x)
 
 // Building terrain edge offsets
 // NOTE: Ordering for X is descending and Y is ascending
-#define BLDOFF_DEFAULT 0
 
 // 2x2
 // X
-#define BLDOFF_2X2_X_HR_LAST_LARGE 32
-#define BLDOFF_2X2_X_VT_LAST_LARGE BLDOFF_DEFAULT
+#define BLDOFF_2X2_X_HR_LAST_VAL(x) (8 << x)
+#define BLDOFF_2X2_X_HR_FIRST_VAL(x) (4 << x)
 
-#define BLDOFF_2X2_X_HR_FIRST_LARGE 16
-#define BLDOFF_2X2_X_VT_FIRST_LARGE 8
-
-#define BLDOFF_2X2_X_HR_LAST_SMALL (BLDOFF_2X2_X_HR_LAST_LARGE / 2)
-#define BLDOFF_2X2_X_VT_LAST_SMALL BLDOFF_2X2_X_VT_LAST_LARGE
-
-#define BLDOFF_2X2_X_HR_FIRST_SMALL (BLDOFF_2X2_X_HR_FIRST_LARGE / 2)
-#define BLDOFF_2X2_X_VT_FIRST_SMALL (BLDOFF_2X2_X_VT_FIRST_LARGE / 2)
-
-#define BLDOFF_2X2_X_HR_LAST_TINY (BLDOFF_2X2_X_HR_LAST_SMALL / 2)
-#define BLDOFF_2X2_X_VT_LAST_TINY BLDOFF_2X2_X_VT_LAST_SMALL
-
-#define BLDOFF_2X2_X_HR_FIRST_TINY (BLDOFF_2X2_X_HR_FIRST_SMALL / 2)
-#define BLDOFF_2X2_X_VT_FIRST_TINY (BLDOFF_2X2_X_VT_FIRST_SMALL / 2)
+#define BLDOFF_2X2_X_VT_FIRST_VAL(x) (2 << x)
 
 // Y
-#define BLDOFF_2X2_Y_HR_FIRST_LARGE BLDOFF_DEFAULT
-#define BLDOFF_2X2_Y_VT_FIRST_LARGE BLDOFF_DEFAULT
-
-#define BLDOFF_2X2_Y_HR_LAST_LARGE 16
-#define BLDOFF_2X2_Y_VT_LAST_LARGE 8
-
-#define BLDOFF_2X2_Y_HR_FIRST_SMALL BLDOFF_2X2_Y_HR_FIRST_LARGE
-#define BLDOFF_2X2_Y_VT_FIRST_SMALL BLDOFF_2X2_Y_VT_FIRST_LARGE
-
-#define BLDOFF_2X2_Y_HR_LAST_SMALL (BLDOFF_2X2_Y_HR_LAST_LARGE / 2)
-#define BLDOFF_2X2_Y_VT_LAST_SMALL (BLDOFF_2X2_Y_VT_LAST_LARGE / 2)
-
-#define BLDOFF_2X2_Y_HR_FIRST_TINY BLDOFF_2X2_Y_HR_FIRST_SMALL
-#define BLDOFF_2X2_Y_VT_FIRST_TINY BLDOFF_2X2_Y_VT_FIRST_SMALL
-
-#define BLDOFF_2X2_Y_HR_LAST_TINY (BLDOFF_2X2_Y_HR_LAST_SMALL / 2)
-#define BLDOFF_2X2_Y_VT_LAST_TINY (BLDOFF_2X2_Y_VT_LAST_SMALL / 2)
+#define BLDOFF_2X2_Y_HR_LAST_VAL(x) (4 << x)
+#define BLDOFF_2X2_Y_VT_LAST_VAL(x) (2 << x)
 
 // 3x3
 // X
-#define BLDOFF_3X3_X_HR_LAST_LARGE 64
-#define BLDOFF_3X3_X_VT_LAST_LARGE BLDOFF_DEFAULT
+#define BLDOFF_3X3_X_HR_LAST_VAL(x) (16 << x)
 
-#define BLDOFF_3X3_X_HR_SECOND_LARGE 48
-#define BLDOFF_3X3_X_VT_SECOND_LARGE 8
+#define BLDOFF_3X3_X_HR_SECOND_VAL(x) (12 << x)
+#define BLDOFF_3X3_X_VT_SECOND_VAL(x) (2 << x)
 
-#define BLDOFF_3X3_X_HR_FIRST_LARGE 32
-#define BLDOFF_3X3_X_VT_FIRST_LARGE 16
-
-#define BLDOFF_3X3_X_HR_LAST_SMALL (BLDOFF_3X3_X_HR_LAST_LARGE / 2)
-#define BLDOFF_3X3_X_VT_LAST_SMALL BLDOFF_3X3_X_VT_LAST_LARGE
-
-#define BLDOFF_3X3_X_HR_SECOND_SMALL (BLDOFF_3X3_X_HR_SECOND_LARGE / 2)
-#define BLDOFF_3X3_X_VT_SECOND_SMALL (BLDOFF_3X3_X_VT_SECOND_LARGE / 2)
-
-#define BLDOFF_3X3_X_HR_FIRST_SMALL (BLDOFF_3X3_X_HR_FIRST_LARGE / 2)
-#define BLDOFF_3X3_X_VT_FIRST_SMALL (BLDOFF_3X3_X_VT_FIRST_LARGE / 2)
-
-#define BLDOFF_3X3_X_HR_LAST_TINY (BLDOFF_3X3_X_HR_LAST_SMALL / 2)
-#define BLDOFF_3X3_X_VT_LAST_TINY BLDOFF_3X3_X_VT_LAST_SMALL
-
-#define BLDOFF_3X3_X_HR_SECOND_TINY (BLDOFF_3X3_X_HR_SECOND_SMALL / 2)
-#define BLDOFF_3X3_X_VT_SECOND_TINY (BLDOFF_3X3_X_VT_SECOND_SMALL / 2)
-
-#define BLDOFF_3X3_X_HR_FIRST_TINY (BLDOFF_3X3_X_HR_FIRST_SMALL / 2)
-#define BLDOFF_3X3_X_VT_FIRST_TINY (BLDOFF_3X3_X_VT_FIRST_SMALL / 2)
+#define BLDOFF_3X3_X_HR_FIRST_VAL(x) (8 << x)
+#define BLDOFF_3X3_X_VT_FIRST_VAL(x) (4 << x)
 
 // Y
-#define BLDOFF_3X3_Y_HR_FIRST_LARGE BLDOFF_DEFAULT
-#define BLDOFF_3X3_Y_VT_FIRST_LARGE BLDOFF_DEFAULT
+#define BLDOFF_3X3_Y_HR_SECOND_VAL(x) BLDOFF_2X2_Y_HR_LAST_VAL(x)
+#define BLDOFF_3X3_Y_VT_SECOND_VAL(x) BLDOFF_2X2_Y_VT_LAST_VAL(x)
 
-#define BLDOFF_3X3_Y_HR_SECOND_LARGE BLDOFF_2X2_Y_HR_LAST_LARGE
-#define BLDOFF_3X3_Y_VT_SECOND_LARGE BLDOFF_2X2_Y_VT_LAST_LARGE
-
-#define BLDOFF_3X3_Y_HR_LAST_LARGE 32
-#define BLDOFF_3X3_Y_VT_LAST_LARGE 16
-
-#define BLDOFF_3X3_Y_HR_FIRST_SMALL BLDOFF_3X3_Y_HR_FIRST_LARGE
-#define BLDOFF_3X3_Y_VT_FIRST_SMALL BLDOFF_3X3_Y_VT_FIRST_LARGE
-
-#define BLDOFF_3X3_Y_HR_SECOND_SMALL (BLDOFF_3X3_Y_HR_SECOND_LARGE / 2)
-#define BLDOFF_3X3_Y_VT_SECOND_SMALL (BLDOFF_3X3_Y_VT_SECOND_LARGE / 2)
-
-#define BLDOFF_3X3_Y_HR_LAST_SMALL (BLDOFF_3X3_Y_HR_LAST_LARGE / 2)
-#define BLDOFF_3X3_Y_VT_LAST_SMALL (BLDOFF_3X3_Y_VT_LAST_LARGE / 2)
-
-#define BLDOFF_3X3_Y_HR_FIRST_TINY BLDOFF_3X3_Y_HR_FIRST_SMALL
-#define BLDOFF_3X3_Y_VT_FIRST_TINY BLDOFF_3X3_Y_VT_FIRST_SMALL
-
-#define BLDOFF_3X3_Y_HR_SECOND_TINY (BLDOFF_3X3_Y_HR_SECOND_SMALL / 2)
-#define BLDOFF_3X3_Y_VT_SECOND_TINY (BLDOFF_3X3_Y_VT_SECOND_SMALL / 2)
-
-#define BLDOFF_3X3_Y_HR_LAST_TINY (BLDOFF_3X3_Y_HR_LAST_SMALL / 2)
-#define BLDOFF_3X3_Y_VT_LAST_TINY (BLDOFF_3X3_Y_VT_LAST_SMALL / 2)
+#define BLDOFF_3X3_Y_HR_LAST_VAL(x) (8 << x)
+#define BLDOFF_3X3_Y_VT_LAST_VAL(x) (4 << x)
 
 // 4x4
 // X
-#define BLDOFF_4X4_X_HR_LAST_LARGE 96
-#define BLDOFF_4X4_X_VT_LAST_LARGE BLDOFF_DEFAULT
+#define BLDOFF_4X4_X_HR_LAST_VAL(x) (24 << x)
 
-#define BLDOFF_4X4_X_HR_THIRD_LARGE 80
-#define BLDOFF_4X4_X_VT_THIRD_LARGE 8
+#define BLDOFF_4X4_X_HR_THIRD_VAL(x) (20 << x)
+#define BLDOFF_4X4_X_VT_THIRD_VAL(x) (2 << x)
 
-#define BLDOFF_4X4_X_HR_SECOND_LARGE 64
-#define BLDOFF_4X4_X_VT_SECOND_LARGE 16
+#define BLDOFF_4X4_X_HR_SECOND_VAL(x) (16 << x)
+#define BLDOFF_4X4_X_VT_SECOND_VAL(x) (4 << x)
 
-#define BLDOFF_4X4_X_HR_FIRST_LARGE 48
-#define BLDOFF_4X4_X_VT_FIRST_LARGE 24
-
-#define BLDOFF_4X4_X_HR_LAST_SMALL (BLDOFF_4X4_X_HR_LAST_LARGE / 2)
-#define BLDOFF_4X4_X_VT_LAST_SMALL BLDOFF_4X4_X_VT_LAST_LARGE
-
-#define BLDOFF_4X4_X_HR_THIRD_SMALL (BLDOFF_4X4_X_HR_THIRD_LARGE / 2)
-#define BLDOFF_4X4_X_VT_THIRD_SMALL (BLDOFF_4X4_X_VT_THIRD_LARGE / 2)
-
-#define BLDOFF_4X4_X_HR_SECOND_SMALL (BLDOFF_4X4_X_HR_SECOND_LARGE / 2)
-#define BLDOFF_4X4_X_VT_SECOND_SMALL (BLDOFF_4X4_X_VT_SECOND_LARGE / 2)
-
-#define BLDOFF_4X4_X_HR_FIRST_SMALL (BLDOFF_4X4_X_HR_FIRST_LARGE / 2)
-#define BLDOFF_4X4_X_VT_FIRST_SMALL (BLDOFF_4X4_X_VT_FIRST_LARGE / 2)
-
-#define BLDOFF_4X4_X_HR_LAST_TINY (BLDOFF_4X4_X_HR_LAST_SMALL / 2)
-#define BLDOFF_4X4_X_VT_LAST_TINY BLDOFF_4X4_X_VT_LAST_SMALL
-
-#define BLDOFF_4X4_X_HR_THIRD_TINY (BLDOFF_4X4_X_HR_THIRD_SMALL / 2)
-#define BLDOFF_4X4_X_VT_THIRD_TINY (BLDOFF_4X4_X_VT_THIRD_SMALL / 2)
-
-#define BLDOFF_4X4_X_HR_SECOND_TINY (BLDOFF_4X4_X_HR_SECOND_SMALL / 2)
-#define BLDOFF_4X4_X_VT_SECOND_TINY (BLDOFF_4X4_X_VT_SECOND_SMALL / 2)
-
-#define BLDOFF_4X4_X_HR_FIRST_TINY (BLDOFF_4X4_X_HR_FIRST_SMALL / 2)
-#define BLDOFF_4X4_X_VT_FIRST_TINY (BLDOFF_4X4_X_VT_FIRST_SMALL / 2)
+#define BLDOFF_4X4_X_HR_FIRST_VAL(x) (12 << x)
+#define BLDOFF_4X4_X_VT_FIRST_VAL(x) (6 << x)
 
 // Y
-#define BLDOFF_4X4_Y_HR_FIRST_LARGE BLDOFF_DEFAULT
-#define BLDOFF_4X4_Y_VT_FIRST_LARGE BLDOFF_DEFAULT
+#define BLDOFF_4X4_Y_HR_SECOND_VAL(x) BLDOFF_2X2_Y_HR_LAST_VAL(x)
+#define BLDOFF_4X4_Y_VT_SECOND_VAL(x) BLDOFF_2X2_Y_VT_LAST_VAL(x)
 
-#define BLDOFF_4X4_Y_HR_SECOND_LARGE BLDOFF_2X2_Y_HR_LAST_LARGE
-#define BLDOFF_4X4_Y_VT_SECOND_LARGE BLDOFF_2X2_Y_VT_LAST_LARGE
+#define BLDOFF_4X4_Y_HR_THIRD_VAL(x) BLDOFF_3X3_Y_HR_LAST_VAL(x)
+#define BLDOFF_4X4_Y_VT_THIRD_VAL(x) BLDOFF_3X3_Y_VT_LAST_VAL(x)
 
-#define BLDOFF_4X4_Y_HR_THIRD_LARGE BLDOFF_3X3_Y_HR_LAST_LARGE
-#define BLDOFF_4X4_Y_VT_THIRD_LARGE BLDOFF_3X3_Y_VT_LAST_LARGE
+#define BLDOFF_4X4_Y_HR_LAST_VAL(x) (12 << x)
+#define BLDOFF_4X4_Y_VT_LAST_VAL(x) (6 << x)
 
-#define BLDOFF_4X4_Y_HR_LAST_LARGE 48
-#define BLDOFF_4X4_Y_VT_LAST_LARGE 24
+// Highway tile terrain offsets.
+#define HWY_HR_TROFF_VAL(x) (4 << x)
+#define HWY_VT_TROFF_VAL(x) (2 << x)
 
-#define BLDOFF_4X4_Y_HR_FIRST_SMALL BLDOFF_4X4_Y_HR_FIRST_LARGE
-#define BLDOFF_4X4_Y_VT_FIRST_SMALL BLDOFF_4X4_Y_VT_FIRST_LARGE
+#define HWY_HR_BROFF_VAL(x) (8 << x)
 
-#define BLDOFF_4X4_Y_HR_SECOND_SMALL (BLDOFF_4X4_Y_HR_SECOND_LARGE / 2)
-#define BLDOFF_4X4_Y_VT_SECOND_SMALL (BLDOFF_4X4_Y_VT_SECOND_LARGE / 2)
-
-#define BLDOFF_4X4_Y_HR_THIRD_SMALL (BLDOFF_4X4_Y_HR_THIRD_LARGE / 2)
-#define BLDOFF_4X4_Y_VT_THIRD_SMALL (BLDOFF_4X4_Y_VT_THIRD_LARGE / 2)
-
-#define BLDOFF_4X4_Y_HR_LAST_SMALL (BLDOFF_4X4_Y_HR_LAST_LARGE / 2)
-#define BLDOFF_4X4_Y_VT_LAST_SMALL (BLDOFF_4X4_Y_VT_LAST_LARGE / 2)
-
-#define BLDOFF_4X4_Y_HR_FIRST_TINY BLDOFF_4X4_Y_HR_FIRST_SMALL
-#define BLDOFF_4X4_Y_VT_FIRST_TINY BLDOFF_4X4_Y_VT_FIRST_SMALL
-
-#define BLDOFF_4X4_Y_HR_SECOND_TINY (BLDOFF_4X4_Y_HR_SECOND_SMALL / 2)
-#define BLDOFF_4X4_Y_VT_SECOND_TINY (BLDOFF_4X4_Y_VT_SECOND_SMALL / 2)
-
-#define BLDOFF_4X4_Y_HR_THIRD_TINY (BLDOFF_4X4_Y_HR_THIRD_SMALL / 2)
-#define BLDOFF_4X4_Y_VT_THIRD_TINY (BLDOFF_4X4_Y_VT_THIRD_SMALL / 2)
-
-#define BLDOFF_4X4_Y_HR_LAST_TINY (BLDOFF_4X4_Y_HR_LAST_SMALL / 2)
-#define BLDOFF_4X4_Y_VT_LAST_TINY (BLDOFF_4X4_Y_VT_LAST_SMALL / 2)
+#define HWY_HR_BLOFF_VAL(x) HWY_HR_TROFF_VAL(x)
+#define HWY_VT_BLOFF_VAL(x) HWY_VT_TROFF_VAL(x)
 
 // Raising bridge
 #define RAISE_THRESHOLD 8
 
-// Highway tile terrain offsets.
-#define HWY_HR_TROFF_LARGE 16
-#define HWY_VT_TROFF_LARGE 8
-
-#define HWY_HR_BROFF_LARGE 32
-
-#define HWY_HR_BLOFF_LARGE HWY_HR_TROFF_LARGE
-#define HWY_VT_BLOFF_LARGE HWY_VT_TROFF_LARGE
-
-#define HWY_HR_TROFF_SMALL (HWY_HR_TROFF_LARGE / 2)
-#define HWY_VT_TROFF_SMALL (HWY_VT_TROFF_LARGE / 2)
-
-#define HWY_HR_BROFF_SMALL (HWY_HR_BROFF_LARGE / 2)
-
-#define HWY_HR_BLOFF_SMALL HWY_HR_TROFF_SMALL
-#define HWY_VT_BLOFF_SMALL HWY_VT_TROFF_SMALL
-
-#define HWY_HR_TROFF_TINY (HWY_HR_TROFF_SMALL / 2)
-#define HWY_VT_TROFF_TINY (HWY_VT_TROFF_SMALL / 2)
-
-#define HWY_HR_BROFF_TINY (HWY_HR_BROFF_SMALL / 2)
-
-#define HWY_HR_BLOFF_TINY HWY_HR_TROFF_TINY
-#define HWY_VT_BLOFF_TINY HWY_VT_TROFF_TINY
-
-#define WATEREDPIPES_OFFSET 116
+#define WATEREDPIPES_SPRITE_OFFSET 116
 
 #define MDRAWING_DEBUG_OTHER 1
 
@@ -265,187 +119,115 @@ UINT mdrawing_debug = MDRAWING_DEBUG;
 
 static DWORD dwDummy;
 
-static __int16 drawDecr[SIZE_LEVELS] = {
-	DECR_LARGE,
-	DECR_SMALL,
-	DECR_TINY
-};
-
-static __int16 buildOffset[SIZE_LEVELS] = {
-	BLDOFF_LARGE,
-	BLDOFF_SMALL,
-	BLDOFF_TINY
-};
-
-static __int16 pwrIndOffset[SIZE_LEVELS] = {
-	PWROFF_LARGE,
-	PWROFF_SMALL,
-	PWROFF_TINY
-};
-
-static __int16 spriteBedrockSize[SIZE_LEVELS] = {
-	SPRITE_LARGE_BEDROCK,
-	SPRITE_MEDIUM_BEDROCK,
-	SPRITE_SMALL_BEDROCK
-};
-
-static __int16 spriteWaterfallSize[SIZE_LEVELS] = {
-	SPRITE_LARGE_WATERFALL,
-	SPRITE_MEDIUM_WATERFALL,
-	SPRITE_SMALL_WATERFALL
-};
-
-static __int16 spriteStartOffset[SIZE_LEVELS] = {
-	SPRITE_LARGE_START,
-	SPRITE_MEDIUM_START,
-	SPRITE_SMALL_START
-};
-
-static __int16 spritePowerIndSize[SIZE_LEVELS] = {
-	SPRITE_LARGE_POWEROUTAGEINDICATOR,
-	SPRITE_MEDIUM_POWEROUTAGEINDICATOR,
-	SPRITE_SMALL_POWEROUTAGEINDICATOR
-};
-
-static __int16 spriteWaterTerOffset[SIZE_LEVELS] = {
-	SPRITE_LARGE_WATER_R_TERRAIN_TBL,
-	SPRITE_MEDIUM_WATER_R_TERRAIN_TBL,
-	SPRITE_SMALL_WATER_R_TERRAIN_TBL
-};
-
-static __int16 spriteGreenTileOffset[SIZE_LEVELS] = {
-	SPRITE_LARGE_GREENTILE,
-	SPRITE_MEDIUM_GREENTILE,
-	SPRITE_SMALL_GREENTILE
-};
-
-static __int16 spriteHighwayOffset[SIZE_LEVELS] = {
-	SPRITE_LARGE_HIGHWAY_LR,
-	SPRITE_MEDIUM_HIGHWAY_LR,
-	SPRITE_SMALL_HIGHWAY_LR
-};
-
-static __int16 spriteSuspBridgeOffset[SIZE_LEVELS] = {
-	SPRITE_LARGE_SUSPENSION_BRIDGE_START_B,
-	SPRITE_MEDIUM_SUSPENSION_BRIDGE_START_B,
-	SPRITE_SMALL_SUSPENSION_BRIDGE_START_B
-};
-
-static __int16 spriteFire4Offset[SIZE_LEVELS] = {
-	SPRITE_LARGE_FIRE4,
-	SPRITE_MEDIUM_FIRE4,
-	SPRITE_SMALL_FIRE4
-};
-
 static __int16 coverage2x2OffsetsX[SIZE_LEVELS][AXIS_COUNT][COVERAGE_SIZE_2x2] = {
 	{
-		{ BLDOFF_2X2_X_HR_LAST_LARGE, BLDOFF_2X2_X_HR_FIRST_LARGE },
-		{ BLDOFF_2X2_X_VT_LAST_LARGE, BLDOFF_2X2_X_VT_FIRST_LARGE }
+		{ BLDOFF_2X2_X_HR_LAST_VAL(SIZE_TINY),  BLDOFF_2X2_X_HR_FIRST_VAL(SIZE_TINY)  },
+		{ 0,                                    BLDOFF_2X2_X_VT_FIRST_VAL(SIZE_TINY)  }
 	},
 	{
-		{ BLDOFF_2X2_X_HR_LAST_SMALL, BLDOFF_2X2_X_HR_FIRST_SMALL },
-		{ BLDOFF_2X2_X_VT_LAST_SMALL, BLDOFF_2X2_X_VT_FIRST_SMALL }
+		{ BLDOFF_2X2_X_HR_LAST_VAL(SIZE_SMALL), BLDOFF_2X2_X_HR_FIRST_VAL(SIZE_SMALL) },
+		{ 0,                                    BLDOFF_2X2_X_VT_FIRST_VAL(SIZE_SMALL) }
 	},
 	{
-		{ BLDOFF_2X2_X_HR_LAST_TINY,  BLDOFF_2X2_X_HR_FIRST_TINY  },
-		{ BLDOFF_2X2_X_VT_LAST_TINY,  BLDOFF_2X2_X_VT_FIRST_TINY  }
+		{ BLDOFF_2X2_X_HR_LAST_VAL(SIZE_LARGE), BLDOFF_2X2_X_HR_FIRST_VAL(SIZE_LARGE) },
+		{ 0,                                    BLDOFF_2X2_X_VT_FIRST_VAL(SIZE_LARGE) }
 	}
 };
 
 static __int16 coverage3x3OffsetsX[SIZE_LEVELS][AXIS_COUNT][COVERAGE_SIZE_3x3] = {
 	{
-		{ BLDOFF_3X3_X_HR_LAST_LARGE, BLDOFF_3X3_X_HR_SECOND_LARGE, BLDOFF_3X3_X_HR_FIRST_LARGE },
-		{ BLDOFF_3X3_X_VT_LAST_LARGE, BLDOFF_3X3_X_VT_SECOND_LARGE, BLDOFF_3X3_X_VT_FIRST_LARGE }
+		{ BLDOFF_3X3_X_HR_LAST_VAL(SIZE_TINY),   BLDOFF_3X3_X_HR_SECOND_VAL(SIZE_TINY),   BLDOFF_3X3_X_HR_FIRST_VAL(SIZE_TINY)   },
+		{ 0,                                     BLDOFF_3X3_X_VT_SECOND_VAL(SIZE_TINY),   BLDOFF_3X3_X_VT_FIRST_VAL(SIZE_TINY)   }
 	},
 	{
-		{ BLDOFF_3X3_X_HR_LAST_SMALL, BLDOFF_3X3_X_HR_SECOND_SMALL, BLDOFF_3X3_X_HR_FIRST_SMALL },
-		{ BLDOFF_3X3_X_VT_LAST_SMALL, BLDOFF_3X3_X_VT_SECOND_SMALL, BLDOFF_3X3_X_VT_FIRST_SMALL }
+		{ BLDOFF_3X3_X_HR_LAST_VAL(SIZE_SMALL),  BLDOFF_3X3_X_HR_SECOND_VAL(SIZE_SMALL),  BLDOFF_3X3_X_HR_FIRST_VAL(SIZE_SMALL)  },
+		{ 0,                                     BLDOFF_3X3_X_VT_SECOND_VAL(SIZE_SMALL),  BLDOFF_3X3_X_VT_FIRST_VAL(SIZE_SMALL)  }
 	},
 	{
-		{ BLDOFF_3X3_X_HR_LAST_TINY,  BLDOFF_3X3_X_HR_SECOND_TINY,  BLDOFF_3X3_X_HR_FIRST_TINY  },
-		{ BLDOFF_3X3_X_VT_LAST_TINY,  BLDOFF_3X3_X_VT_SECOND_TINY,  BLDOFF_3X3_X_VT_FIRST_TINY  }
+		{ BLDOFF_3X3_X_HR_LAST_VAL(SIZE_LARGE),  BLDOFF_3X3_X_HR_SECOND_VAL(SIZE_LARGE),  BLDOFF_3X3_X_HR_FIRST_VAL(SIZE_LARGE)  },
+		{ 0,                                     BLDOFF_3X3_X_VT_SECOND_VAL(SIZE_LARGE),  BLDOFF_3X3_X_VT_FIRST_VAL(SIZE_LARGE)  }
 	}
 };
 
 static __int16 coverage4x4OffsetsX[SIZE_LEVELS][AXIS_COUNT][COVERAGE_SIZE_4x4] = {
 	{
-		{ BLDOFF_4X4_X_HR_LAST_LARGE, BLDOFF_4X4_X_HR_THIRD_LARGE, BLDOFF_4X4_X_HR_SECOND_LARGE, BLDOFF_4X4_X_HR_FIRST_LARGE },
-		{ BLDOFF_4X4_X_VT_LAST_LARGE, BLDOFF_4X4_X_VT_THIRD_LARGE, BLDOFF_4X4_X_VT_SECOND_LARGE, BLDOFF_4X4_X_VT_FIRST_LARGE }
+		{ BLDOFF_4X4_X_HR_LAST_VAL(SIZE_TINY),   BLDOFF_4X4_X_HR_THIRD_VAL(SIZE_TINY),   BLDOFF_4X4_X_HR_SECOND_VAL(SIZE_TINY),   BLDOFF_4X4_X_HR_FIRST_VAL(SIZE_TINY)   },
+		{ 0,                                     BLDOFF_4X4_X_VT_THIRD_VAL(SIZE_TINY),   BLDOFF_4X4_X_VT_SECOND_VAL(SIZE_TINY),   BLDOFF_4X4_X_VT_FIRST_VAL(SIZE_TINY)   }
 	},
 	{
-		{ BLDOFF_4X4_X_HR_LAST_SMALL, BLDOFF_4X4_X_HR_THIRD_SMALL, BLDOFF_4X4_X_HR_SECOND_SMALL, BLDOFF_4X4_X_HR_FIRST_SMALL },
-		{ BLDOFF_4X4_X_VT_LAST_SMALL, BLDOFF_4X4_X_VT_THIRD_SMALL, BLDOFF_4X4_X_VT_SECOND_SMALL, BLDOFF_4X4_X_VT_FIRST_SMALL }
+		{ BLDOFF_4X4_X_HR_LAST_VAL(SIZE_SMALL),  BLDOFF_4X4_X_HR_THIRD_VAL(SIZE_SMALL),  BLDOFF_4X4_X_HR_SECOND_VAL(SIZE_SMALL),  BLDOFF_4X4_X_HR_FIRST_VAL(SIZE_SMALL)  },
+		{ 0,                                     BLDOFF_4X4_X_VT_THIRD_VAL(SIZE_SMALL),  BLDOFF_4X4_X_VT_SECOND_VAL(SIZE_SMALL),  BLDOFF_4X4_X_VT_FIRST_VAL(SIZE_SMALL)  }
 	},
 	{
-		{ BLDOFF_4X4_X_HR_LAST_TINY,  BLDOFF_4X4_X_HR_THIRD_TINY,  BLDOFF_4X4_X_HR_SECOND_TINY,  BLDOFF_4X4_X_HR_FIRST_TINY  },
-		{ BLDOFF_4X4_X_VT_LAST_TINY,  BLDOFF_4X4_X_VT_THIRD_TINY,  BLDOFF_4X4_X_VT_SECOND_TINY,  BLDOFF_4X4_X_VT_FIRST_TINY  }
+		{ BLDOFF_4X4_X_HR_LAST_VAL(SIZE_LARGE),  BLDOFF_4X4_X_HR_THIRD_VAL(SIZE_LARGE),  BLDOFF_4X4_X_HR_SECOND_VAL(SIZE_LARGE),  BLDOFF_4X4_X_HR_FIRST_VAL(SIZE_LARGE)  },
+		{ 0,                                     BLDOFF_4X4_X_VT_THIRD_VAL(SIZE_LARGE),  BLDOFF_4X4_X_VT_SECOND_VAL(SIZE_LARGE),  BLDOFF_4X4_X_VT_FIRST_VAL(SIZE_LARGE)  }
 	}
 };
 
 static __int16 coverage2x2OffsetsY[SIZE_LEVELS][AXIS_COUNT][COVERAGE_SIZE_2x2] = {
 	{
-		{ BLDOFF_2X2_Y_HR_FIRST_LARGE, BLDOFF_2X2_Y_HR_LAST_LARGE },
-		{ BLDOFF_2X2_Y_VT_FIRST_LARGE, BLDOFF_2X2_Y_VT_LAST_LARGE }
+		{ 0,  BLDOFF_2X2_Y_HR_LAST_VAL(SIZE_TINY)   },
+		{ 0,  BLDOFF_2X2_Y_VT_LAST_VAL(SIZE_TINY)   }
 	},
 	{
-		{ BLDOFF_2X2_Y_HR_FIRST_SMALL, BLDOFF_2X2_Y_HR_LAST_SMALL },
-		{ BLDOFF_2X2_Y_VT_FIRST_SMALL, BLDOFF_2X2_Y_VT_LAST_SMALL }
+		{ 0,  BLDOFF_2X2_Y_HR_LAST_VAL(SIZE_SMALL)  },
+		{ 0,  BLDOFF_2X2_Y_VT_LAST_VAL(SIZE_SMALL)  }
 	},
 	{
-		{ BLDOFF_2X2_Y_HR_FIRST_TINY,  BLDOFF_2X2_Y_HR_LAST_TINY  },
-		{ BLDOFF_2X2_Y_VT_FIRST_TINY,  BLDOFF_2X2_Y_VT_LAST_TINY  }
+		{ 0,  BLDOFF_2X2_Y_HR_LAST_VAL(SIZE_LARGE)  },
+		{ 0,  BLDOFF_2X2_Y_VT_LAST_VAL(SIZE_LARGE)  }
 	}
 };
 
 static __int16 coverage3x3OffsetsY[SIZE_LEVELS][AXIS_COUNT][COVERAGE_SIZE_3x3] = {
 	{
-		{ BLDOFF_3X3_Y_HR_FIRST_LARGE, BLDOFF_3X3_Y_HR_SECOND_LARGE, BLDOFF_3X3_Y_HR_LAST_LARGE },
-		{ BLDOFF_3X3_Y_VT_FIRST_LARGE, BLDOFF_3X3_Y_VT_SECOND_LARGE, BLDOFF_3X3_Y_VT_LAST_LARGE }
+		{ 0,  BLDOFF_3X3_Y_HR_SECOND_VAL(SIZE_TINY),   BLDOFF_3X3_Y_HR_LAST_VAL(SIZE_TINY)   },
+		{ 0,  BLDOFF_3X3_Y_VT_SECOND_VAL(SIZE_TINY),   BLDOFF_3X3_Y_VT_LAST_VAL(SIZE_TINY)   }
 	},
 	{
-		{ BLDOFF_3X3_Y_HR_FIRST_SMALL, BLDOFF_3X3_Y_HR_SECOND_SMALL, BLDOFF_3X3_Y_HR_LAST_SMALL },
-		{ BLDOFF_3X3_Y_VT_FIRST_SMALL, BLDOFF_3X3_Y_VT_SECOND_SMALL, BLDOFF_3X3_Y_VT_LAST_SMALL }
+		{ 0,  BLDOFF_3X3_Y_HR_SECOND_VAL(SIZE_SMALL),  BLDOFF_3X3_Y_HR_LAST_VAL(SIZE_SMALL)  },
+		{ 0,  BLDOFF_3X3_Y_VT_SECOND_VAL(SIZE_SMALL),  BLDOFF_3X3_Y_VT_LAST_VAL(SIZE_SMALL)  }
 	},
 	{
-		{ BLDOFF_3X3_Y_HR_FIRST_TINY,  BLDOFF_3X3_Y_HR_SECOND_TINY,  BLDOFF_3X3_Y_HR_LAST_TINY  },
-		{ BLDOFF_3X3_Y_VT_FIRST_TINY,  BLDOFF_3X3_Y_VT_SECOND_TINY,  BLDOFF_3X3_Y_VT_LAST_TINY  }
+		{ 0,  BLDOFF_3X3_Y_HR_SECOND_VAL(SIZE_LARGE),  BLDOFF_3X3_Y_HR_LAST_VAL(SIZE_LARGE)  },
+		{ 0,  BLDOFF_3X3_Y_VT_SECOND_VAL(SIZE_LARGE),  BLDOFF_3X3_Y_VT_LAST_VAL(SIZE_LARGE)  }
 	}
 };
 
 static __int16 coverage4x4OffsetsY[SIZE_LEVELS][AXIS_COUNT][COVERAGE_SIZE_4x4] = {
 	{
-		{ BLDOFF_4X4_Y_HR_FIRST_LARGE, BLDOFF_4X4_Y_HR_SECOND_LARGE, BLDOFF_4X4_Y_HR_THIRD_LARGE, BLDOFF_4X4_Y_HR_LAST_LARGE },
-		{ BLDOFF_4X4_Y_VT_FIRST_LARGE, BLDOFF_4X4_Y_VT_SECOND_LARGE, BLDOFF_4X4_Y_VT_THIRD_LARGE, BLDOFF_4X4_Y_VT_LAST_LARGE }
+		{ 0,  BLDOFF_4X4_Y_HR_SECOND_VAL(SIZE_TINY),   BLDOFF_4X4_Y_HR_THIRD_VAL(SIZE_TINY),   BLDOFF_4X4_Y_HR_LAST_VAL(SIZE_TINY)   },
+		{ 0,  BLDOFF_4X4_Y_VT_SECOND_VAL(SIZE_TINY),   BLDOFF_4X4_Y_VT_THIRD_VAL(SIZE_TINY),   BLDOFF_4X4_Y_VT_LAST_VAL(SIZE_TINY)   }
 	},
 	{
-		{ BLDOFF_4X4_Y_HR_FIRST_SMALL, BLDOFF_4X4_Y_HR_SECOND_SMALL, BLDOFF_4X4_Y_HR_THIRD_SMALL, BLDOFF_4X4_Y_HR_LAST_SMALL },
-		{ BLDOFF_4X4_Y_VT_FIRST_SMALL, BLDOFF_4X4_Y_VT_SECOND_SMALL, BLDOFF_4X4_Y_VT_THIRD_SMALL, BLDOFF_4X4_Y_VT_LAST_SMALL }
+		{ 0,  BLDOFF_4X4_Y_HR_SECOND_VAL(SIZE_SMALL),  BLDOFF_4X4_Y_HR_THIRD_VAL(SIZE_SMALL),  BLDOFF_4X4_Y_HR_LAST_VAL(SIZE_SMALL)  },
+		{ 0,  BLDOFF_4X4_Y_VT_SECOND_VAL(SIZE_SMALL),  BLDOFF_4X4_Y_VT_THIRD_VAL(SIZE_SMALL),  BLDOFF_4X4_Y_VT_LAST_VAL(SIZE_SMALL)  }
 	},
 	{
-		{ BLDOFF_4X4_Y_HR_FIRST_TINY,  BLDOFF_4X4_Y_HR_SECOND_TINY,  BLDOFF_4X4_Y_HR_THIRD_TINY,  BLDOFF_4X4_Y_HR_LAST_TINY  },
-		{ BLDOFF_4X4_Y_VT_FIRST_TINY,  BLDOFF_4X4_Y_VT_SECOND_TINY,  BLDOFF_4X4_Y_VT_THIRD_TINY,  BLDOFF_4X4_Y_VT_LAST_TINY  }
+		{ 0,  BLDOFF_4X4_Y_HR_SECOND_VAL(SIZE_LARGE),  BLDOFF_4X4_Y_HR_THIRD_VAL(SIZE_LARGE),  BLDOFF_4X4_Y_HR_LAST_VAL(SIZE_LARGE)  },
+		{ 0,  BLDOFF_4X4_Y_VT_SECOND_VAL(SIZE_LARGE),  BLDOFF_4X4_Y_VT_THIRD_VAL(SIZE_LARGE),  BLDOFF_4X4_Y_VT_LAST_VAL(SIZE_LARGE)  }
 	}
 };
 
 static __int16 highwayTROffsets[SIZE_LEVELS][AXIS_COUNT] = {
-	{ HWY_HR_TROFF_LARGE, HWY_VT_TROFF_LARGE },
-	{ HWY_HR_TROFF_SMALL, HWY_VT_TROFF_SMALL },
-	{ HWY_HR_TROFF_TINY,  HWY_VT_TROFF_TINY  }
+	{ HWY_HR_TROFF_VAL(SIZE_TINY),   HWY_VT_TROFF_VAL(SIZE_TINY)   },
+	{ HWY_HR_TROFF_VAL(SIZE_SMALL),  HWY_VT_TROFF_VAL(SIZE_SMALL)  },
+	{ HWY_HR_TROFF_VAL(SIZE_LARGE),  HWY_VT_TROFF_VAL(SIZE_LARGE)  },
 };
 
 static __int16 highwayBROffsets[SIZE_LEVELS][AXIS_COUNT] = {
-	{ HWY_HR_BROFF_LARGE, 0 },
-	{ HWY_HR_BROFF_SMALL, 0 },
-	{ HWY_HR_BROFF_TINY,  0 }
+	{ HWY_HR_BROFF_VAL(SIZE_TINY),  0 },
+	{ HWY_HR_BROFF_VAL(SIZE_SMALL), 0 },
+	{ HWY_HR_BROFF_VAL(SIZE_LARGE), 0 }
 };
 
 static __int16 highwayBLOffsets[SIZE_LEVELS][AXIS_COUNT] = {
-	{ HWY_HR_BLOFF_LARGE, HWY_VT_BLOFF_LARGE },
-	{ HWY_HR_BLOFF_SMALL, HWY_VT_BLOFF_SMALL },
-	{ HWY_HR_BLOFF_TINY,  HWY_VT_BLOFF_TINY  }
+	{ HWY_HR_BLOFF_VAL(SIZE_TINY),   HWY_VT_BLOFF_VAL(SIZE_TINY)   },
+	{ HWY_HR_BLOFF_VAL(SIZE_SMALL),  HWY_VT_BLOFF_VAL(SIZE_SMALL)  },
+	{ HWY_HR_BLOFF_VAL(SIZE_LARGE),  HWY_VT_BLOFF_VAL(SIZE_LARGE)  },
 };
 
-static int DoWaterfallEdge(__int16 iMapOffSetX, int iX, int iY, __int16 iBottom, __int16 iWaterFallSpriteID, __int16 iDecr) {
+static int DoWaterfallEdge(__int16 iMapOffSetX, int iX, int iY, __int16 iBottom, __int16 iWaterFallSpriteID, __int16 nLandAltScale) {
 	__int16 iTopog;
 
 	if (iX < GAME_MAP_SIZE &&
@@ -456,7 +238,7 @@ static int DoWaterfallEdge(__int16 iMapOffSetX, int iX, int iY, __int16 iBottom,
 			while (rcDst.top <= iBottom) {
 				if (rcDst.bottom > iBottom)
 					Game_DrawProcessObject(iWaterFallSpriteID, iMapOffSetX, iBottom, 0, 0);
-				iBottom -= iDecr;
+				iBottom -= nLandAltScale;
 				if (--iTopog <= 0)
 					return 2;
 			}
@@ -466,25 +248,28 @@ static int DoWaterfallEdge(__int16 iMapOffSetX, int iX, int iY, __int16 iBottom,
 	return 1;
 }
 
-static int DoMapEdge(__int16 iMapOffSetX, int iX, int iY, __int16 iBottom, __int16 iLandAlt, __int16 iSpriteID, __int16 iWaterFallSpriteID, __int16 iDecr) {
-	if (iLandAlt > 0) {
-		while (rcDst.top <= iBottom) {
-			if (rcDst.bottom > iBottom)
-				Game_DrawProcessObject(iSpriteID, iMapOffSetX, iBottom, 0, 0);
-			iBottom -= iDecr;
-			if (--iLandAlt <= 0)
-				return DoWaterfallEdge(iMapOffSetX, iX, iY, iBottom, iWaterFallSpriteID, iDecr);
+static void DoMapEdge(__int16 iMapOffSetX, int iX, int iY, __int16 iBottom, __int16 iLandAlt, __int16 iSpriteID, __int16 iWaterFallSpriteID, __int16 nLandAltScale) {
+	if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX) {
+		if (iLandAlt > 0) {
+			while (rcDst.top <= iBottom) {
+				if (rcDst.bottom > iBottom)
+					Game_DrawProcessObject(iSpriteID, iMapOffSetX, iBottom, 0, 0);
+				iBottom -= nLandAltScale;
+				if (--iLandAlt <= 0) {
+					DoWaterfallEdge(iMapOffSetX, iX, iY, iBottom, iWaterFallSpriteID, nLandAltScale);
+					break;
+				}
+			}
 		}
 	}
-	return 1;
 }
 
-static void DoBedrockEdge(__int16 iMapOffSetX, __int16 iOffSetX, __int16 iOffSetY, __int16 iBottom, __int16 iLandAlt, __int16 iSpriteID, __int16 iDecr) {
+static void DoBedrockEdge(__int16 iMapOffSetX, __int16 iOffSetX, __int16 iOffSetY, __int16 iBottom, __int16 iLandAlt, __int16 iSpriteID, __int16 nLandAltScale) {
 	if (iLandAlt > 0) {
 		while (rcDst.top <= iBottom + iOffSetY) {
 			if (rcDst.bottom > iBottom)
 				Game_DrawProcessObject(iSpriteID, iMapOffSetX + iOffSetX, iBottom + iOffSetY, 0, 0);
-			iBottom -= iDecr;
+			iBottom -= nLandAltScale;
 			if (--iLandAlt <= 0)
 				break;
 		}
@@ -518,7 +303,7 @@ static __int16 getCoverageOffsets(__int16 nSizeLevel, __int16 nAxis, __int16 nPo
 		return getCoverageOffsetsY(nSizeLevel, nAxis, nPos, nCoverage);
 }
 
-static void DoCoverageMapEdgeFill(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX, int iY, __int16 nSprBedrock, __int16 nDecr, __int16 nSizeLevel, BYTE iTile) {
+static void DoCoverageMapEdgeFill(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX, int iY, __int16 nSprBedrock, __int16 nLandAltScale, __int16 nSizeLevel, BYTE iTile) {
 	__int16 iBottom, iLandAlt;
 	__int16 iCoverageSize;
 	BYTE iCoverage;
@@ -530,16 +315,16 @@ static void DoCoverageMapEdgeFill(__int16 iMapOffSetX, __int16 iMapOffSetY, int 
 		iLandAlt = ALTMReturnLandAltitude(iX, iY);
 		if (iCoverage == COVERAGE_1x1) {
 			if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-				DoBedrockEdge(iMapOffSetX, BLDOFF_DEFAULT, BLDOFF_DEFAULT, iBottom, iLandAlt, nSprBedrock, nDecr);
+				DoBedrockEdge(iMapOffSetX, 0, 0, iBottom, iLandAlt, nSprBedrock, nLandAltScale);
 		}
 		else {
 			if (iX + iCoverage == MAP_EDGE_MAX) {
 				for (__int16 i = 0; i < iCoverageSize; i++)
-					DoBedrockEdge(iMapOffSetX, getCoverageOffsets(nSizeLevel, AXIS_HORZ, i, iCoverage, TRUE), getCoverageOffsets(nSizeLevel, AXIS_VERT, i, iCoverage, TRUE), iBottom, iLandAlt, nSprBedrock, nDecr);
+					DoBedrockEdge(iMapOffSetX, getCoverageOffsets(nSizeLevel, AXIS_HORZ, i, iCoverage, TRUE), getCoverageOffsets(nSizeLevel, AXIS_VERT, i, iCoverage, TRUE), iBottom, iLandAlt, nSprBedrock, nLandAltScale);
 			}
 			else if (iY == MAP_EDGE_MAX) {
 				for (__int16 i = 0; i < iCoverageSize; i++)
-					DoBedrockEdge(iMapOffSetX, getCoverageOffsets(nSizeLevel, AXIS_HORZ, i, iCoverage, FALSE), getCoverageOffsets(nSizeLevel, AXIS_VERT, i, iCoverage, FALSE), iBottom, iLandAlt, nSprBedrock, nDecr);
+					DoBedrockEdge(iMapOffSetX, getCoverageOffsets(nSizeLevel, AXIS_HORZ, i, iCoverage, FALSE), getCoverageOffsets(nSizeLevel, AXIS_VERT, i, iCoverage, FALSE), iBottom, iLandAlt, nSprBedrock, nLandAltScale);
 			}
 		}
 	}
@@ -556,9 +341,94 @@ static __int16 GetTerrainSprite(BYTE iTerrainTile, __int16 nSprStart) {
 	return iSprite;
 }
 
-static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX, int iY, int nSizeLevel) {
-	__int16 nDecr;
-	__int16 nBldOffs, nPwrIndOffs;
+// This accounts for the tunnels, subways (underground station portion and tunnels)
+// and the missile silo case, the rest is only available in the normal underground mode.
+static void DoUndergroundAspects(int iX, int iY, __int16 nSprStart, __int16 nSizeLevel) {
+	__int16 nCoordsScale;
+	__int16 nLandAltScale;
+	__int16 nScale;
+	__int16 iRight;
+	__int16 iBottom;
+	__int16 iSprBottom;
+	__int16 iTunnelLvl;
+	__int16 iUndTrnSpr;
+	__int16 iSprite;
+	BYTE iTerrainTile;
+	BYTE iUnderTile;
+
+	if (!bMapWireFrame)
+		return;
+
+	nCoordsScale = COORDSCALE_VAL(nSizeLevel);
+	nLandAltScale = LANDALTSCALE_VAL(nSizeLevel);
+	nScale = SCALE_VAL(nSizeLevel);
+
+	iTerrainTile = GetTerrainTileID(iX, iY);
+	iUndTrnSpr = wXTERToXUNDSpriteIDMap[iTerrainTile];
+	iTunnelLvl = ALTMReturnTunnelLevels(iX, iY);
+	iRight = iScreenOffSetX + nScale * (iX - iY);
+	iBottom = iScreenOffSetY + nCoordsScale * (iX + iY) - nLandAltScale * ALTMReturnLandAltitude(iX, iY);
+	if (iBottom + nScale >= rcDst.top && rcDst.bottom >= iBottom) {
+		iSprBottom = iBottom - pArrSpriteHeaders[nSprStart + iUndTrnSpr].wHeight;
+		if (iTunnelLvl) {
+			if (iTunnelLvl == 1) {
+				if (DisplayLayer[LAYER_INFRANATURE]) {
+					iSprite = iTerrainTile + nSprStart + WATERFALL;
+					Game_DrawProcessObject(iSprite, iRight, iBottom - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+				}
+			}
+			else {
+				// This one clears the area in this context.
+				if (DisplayLayer[LAYER_INFRANATURE]) {
+					iSprite = nSprStart + SPRITE_SMALL_MISSILESILO;
+					Game_DrawProcessObject(iSprite, iRight, iBottom + nLandAltScale * (iTunnelLvl - 1) - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+				}
+			}
+		}
+		iUnderTile = GetUndergroundTileID(iX, iY);
+		if (iUnderTile >= UNDER_TILE_PIPES_LR && iUnderTile < UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR ||
+			iUnderTile == UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR ||
+			iUnderTile == UNDER_TILE_CROSSOVER_PIPESLR_SUBWAYTB) {
+			if (iUnderTile == UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR)
+				iUnderTile = UNDER_TILE_SUBWAY_LR;
+			else if (iUnderTile == UNDER_TILE_CROSSOVER_PIPESLR_SUBWAYTB)
+				iUnderTile = UNDER_TILE_SUBWAY_TB;
+			else
+				return;
+
+			iSprite = iUnderTile + nSprStart + SPRITE_SMALL_BEDROCK_OUTLINE;
+			Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
+		}
+		else if (iUnderTile) {
+			iSprite = iUnderTile + nSprStart + SPRITE_SMALL_BEDROCK_OUTLINE;
+			if (iUnderTile == UNDER_TILE_MISSILESILO && 
+				(DisplayLayer[LAYER_BUILDINGS] && DisplayLayer[LAYER_ZONES])) {
+				if (XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
+					// Similar to the >= 2x2 building on-edge overwritten imagery, all of these sprites have to be set
+					// on all associated blocks while it processes this corner coordinate.
+					Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 4), iSprBottom + (nCoordsScale * -2), 0, 0);
+					Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 2), iSprBottom + (nCoordsScale * -1), 0, 0);
+					Game_DrawProcessObject(iSprite, iRight,                      iSprBottom,                       0, 0);
+
+					Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 6), iSprBottom + (nCoordsScale * -1), 0, 0);
+					Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 4), iSprBottom,                       0, 0);
+					Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 2), iSprBottom + (nCoordsScale * 1),  0, 0);
+
+					Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 8), iSprBottom,                       0, 0);
+					Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 6), iSprBottom + (nCoordsScale * 1),  0, 0);
+					Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 4), iSprBottom + (nCoordsScale * 2),  0, 0);
+				}
+			}
+			else
+				Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
+		}
+	}
+}
+
+static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX, int iY) {
+	__int16 nSizeLevel;
+	__int16 nLandAltScale;
+	__int16 nCoordsScale, nScale;
 	__int16 nSprBedrock, nSprWaterfall;
 	__int16 nSprStart, nSprWaterTer;
 	__int16 nSprGreenTile, nSprFireStart;
@@ -578,19 +448,30 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 	BYTE iTile;
 	BYTE iZone;
 	BYTE iTraffic, iLowTrfThreshold, iHeavyTrfThreshold;
+	CSimcityAppPrimary *pSCApp;
+	CSimcityView *pSCView = NULL;
 
-	nDecr = drawDecr[nSizeLevel];
-	nBldOffs = buildOffset[nSizeLevel];
-	nPwrIndOffs = pwrIndOffset[nSizeLevel];
-	nSprBedrock = spriteBedrockSize[nSizeLevel];
-	nSprWaterfall = spriteWaterfallSize[nSizeLevel];
-	nSprStart = spriteStartOffset[nSizeLevel];
-	nSprWaterTer = spriteWaterTerOffset[nSizeLevel];
-	nSprGreenTile = spriteGreenTileOffset[nSizeLevel];
-	nSprFireStart = spriteFire4Offset[nSizeLevel];
-	nSprPowerInd = spritePowerIndSize[nSizeLevel];
-	nSprHighway = spriteHighwayOffset[nSizeLevel];
-	nSprSuspBridge = spriteSuspBridgeOffset[nSizeLevel];
+	pSCApp = &pCSimcityAppThis;
+	if (pSCApp)
+		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+	if (!pSCView)
+		return;
+
+	nSizeLevel = pSCView->wSCVZoomLevel;
+
+	nCoordsScale = COORDSCALE_VAL(nSizeLevel);
+	nLandAltScale = LANDALTSCALE_VAL(nSizeLevel);
+	nScale = SCALE_VAL(nSizeLevel);
+
+	nSprStart = SPRITE_BOUNDARY_MULTIPLIER * nSizeLevel;
+	nSprBedrock = nSprStart + SPRITE_SMALL_BEDROCK;
+	nSprWaterfall = nSprStart + SPRITE_SMALL_WATERFALL;
+	nSprWaterTer = nSprStart + SPRITE_SMALL_WATER_R_TERRAIN_TBL;
+	nSprGreenTile = nSprStart + SPRITE_SMALL_GREENTILE;
+	nSprFireStart = nSprStart + SPRITE_SMALL_FIRE4;
+	nSprPowerInd = nSprStart + SPRITE_SMALL_POWEROUTAGEINDICATOR;
+	nSprHighway = nSprStart + SPRITE_SMALL_HIGHWAY_LR;
+	nSprSuspBridge = nSprStart + SPRITE_SMALL_SUSPENSION_BRIDGE_START_B;
 
 	iBottom = 0;
 	iLandAlt = 0;
@@ -598,7 +479,7 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 		iBottom = iMapOffSetY - pArrSpriteHeaders[nSprBedrock].wHeight;
 		iLandAlt = ALTMReturnLandAltitude(iX, iY);
 		if (!iLandAlt) {
-			if (!DoWaterfallEdge(iMapOffSetX, iX, iY, iBottom, nSprWaterfall, nDecr))
+			if (!DoWaterfallEdge(iMapOffSetX, iX, iY, iBottom, nSprWaterfall, nLandAltScale))
 				return;
 		}
 	}
@@ -614,19 +495,18 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 		iAltTop = ALTMReturnLandAltitude(iX, iY);
 	else
 		iAltTop = ALTMReturnWaterLevel(iX, iY);
-	iTop = iMapOffSetY - nDecr * iAltTop;
+	iTop = iMapOffSetY - nLandAltScale * iAltTop;
 	iTile = GetTileID(iX, iY);
 	if (iTile < TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1 && iTop < rcDst.top) {
 		// Add this here otherwise as soon as the map starts to go off screen
 		// (most noticeable in large mode) tile blocks will disappear.
-		if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-			DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nDecr);
+		DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
 		return;
 	}
 	iZone = XZONReturnZone(iX, iY);
 	if (iTile == TILE_CLEAR) {
-		if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-			DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nDecr);
+		DoUndergroundAspects(iX, iY, nSprStart, nSizeLevel);
+		DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
 		if (iTerrainTile > TERRAIN_00 || !iZone)
 			iSprite = GetTerrainSprite(iTerrainTile, nSprStart);
 		else
@@ -636,11 +516,12 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 	else if (iTile >= TILE_ROAD_LR) {
 		if (iTile >= TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1) {
 			if (DisplayLayer[LAYER_BUILDINGS]) {
+				DoUndergroundAspects(iX, iY, nSprStart, nSizeLevel);
 				if (DisplayLayer[LAYER_ZONES] || !iZone) {
 					if (XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
 						// The following call is to account for >= 1x1 buildings and avoid the map-edge
 						// bedrock-bleed that was previously occurring on >= 2x2 buildings.
-						DoCoverageMapEdgeFill(iMapOffSetX, iMapOffSetY, iX, iY, nSprBedrock, nDecr, nSizeLevel, iTile);
+						DoCoverageMapEdgeFill(iMapOffSetX, iMapOffSetY, iX, iY, nSprBedrock, nLandAltScale, nSizeLevel, iTile);
 						if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
 							bIsFlipped = FALSE;
 						else
@@ -648,24 +529,24 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 						if (!IsEven(wViewRotation))
 							bIsFlipped = !bIsFlipped;
 						iSprite = iTile + nSprStart;
-						Game_DrawProcessObject(iSprite, iMapOffSetX, (pArrSpriteHeaders[iSprite].wWidth >> 2) - pArrSpriteHeaders[iSprite].wHeight + iTop - nBldOffs, bIsFlipped, 0);
+						Game_DrawProcessObject(iSprite, iMapOffSetX, (pArrSpriteHeaders[iSprite].wWidth >> 2) - pArrSpriteHeaders[iSprite].wHeight + iTop - nCoordsScale, bIsFlipped, 0);
 						if (iX < GAME_MAP_SIZE &&
 							iY < GAME_MAP_SIZE &&
 							XBITReturnIsPowerable(iX, iY) && !XBITReturnIsPowered(iX, iY)) {
-							Game_DrawProcessObject(nSprPowerInd, iMapOffSetX + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nPwrIndOffs, iTop - nPwrIndOffs, 0, 0);
+							Game_DrawProcessObject(nSprPowerInd, iMapOffSetX + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nScale, iTop - nScale, 0, 0);
 						}
 					}
 				}
 				else {
-					if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-						DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nDecr);
+					DoUndergroundAspects(iX, iY, nSprStart, nSizeLevel);
+					DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
 					iSprite = iZone + nSprWaterTer;
 					Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
 				}
 			}
 			else {
-				if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-					DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nDecr);
+				DoUndergroundAspects(iX, iY, nSprStart, nSizeLevel);
+				DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
 				if (DisplayLayer[LAYER_ZONES] || !iZone)
 					iSprite = BuiltUpZones[iZone] + nSprGreenTile;
 				else
@@ -674,8 +555,8 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 			}
 		}
 		else {
-			if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-				DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nDecr);
+			DoUndergroundAspects(iX, iY, nSprStart, nSizeLevel);
+			DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
 			iSprite = GetTerrainSprite(iTerrainTile, nSprStart);
 			if (DisplayLayer[LAYER_INFRANATURE]) {
 				if (iTile < TILE_HIGHWAY_HTB || iTile >= TILE_SUBTORAIL_T) {
@@ -700,9 +581,9 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 					}
 					// ^ ---- This block was originally only present in both DrawLargeTile and DrawSmallTile.
 					iSprite = iTile + nSprStart;
-					iSprTop = iMapOffSetY - nDecr * iAltTop;
+					iSprTop = iMapOffSetY - nLandAltScale * iAltTop;
 					if (iTerrainTile == TERRAIN_13)
-						iSprTop = iTop - nDecr;
+						iSprTop = iTop - nLandAltScale;
 					iSprTop = iSprTop - pArrSpriteHeaders[iSprite].wHeight;
 					if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
 						bIsFlipped = FALSE;
@@ -740,7 +621,7 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 					if (iX < GAME_MAP_SIZE &&
 						iY < GAME_MAP_SIZE &&
 						XBITReturnIsPowerable(iX, iY) && !XBITReturnIsPowered(iX, iY)) {
-						Game_DrawProcessObject(nSprPowerInd, iMapOffSetX + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nPwrIndOffs, iTop - nPwrIndOffs, 0, 0);
+						Game_DrawProcessObject(nSprPowerInd, iMapOffSetX + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nScale, iTop - nScale, 0, 0);
 					}
 				}
 				else if (XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
@@ -754,7 +635,7 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 					Game_DrawProcessObject(iSprite, iMapOffSetX + highwayBLOffsets[nSizeLevel][AXIS_HORZ], iTop - pArrSpriteHeaders[iSprite].wHeight + highwayBLOffsets[nSizeLevel][AXIS_VERT], 0, 0);
 					// ^ ---- This block was originally only present in both DrawLargeTile and DrawSmallTile.
 					iSprite = iTile + nSprStart;
-					iSprTop = iTop - pArrSpriteHeaders[iSprite].wHeight + nBldOffs;
+					iSprTop = iTop - pArrSpriteHeaders[iSprite].wHeight + nCoordsScale;
 					if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
 						bIsFlipped = FALSE;
 					else
@@ -778,11 +659,11 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 		}
 	}
 	else {
-		if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-			DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nDecr);
-		iSprTop = iMapOffSetY - nDecr * iAltTop;
+		DoUndergroundAspects(iX, iY, nSprStart, nSizeLevel);
+		DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
+		iSprTop = iMapOffSetY - nLandAltScale * iAltTop;
 		if (iTerrainTile == TERRAIN_13)
-			iSprTop = iTop - nDecr;
+			iSprTop = iTop - nLandAltScale;
 		if (iTerrainTile > TERRAIN_00 || !iZone)
 			iSprite = GetTerrainSprite(iTerrainTile, nSprStart);
 		else
@@ -794,7 +675,7 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 			if (iX < GAME_MAP_SIZE &&
 				iY < GAME_MAP_SIZE &&
 				XBITReturnIsPowerable(iX, iY) && !XBITReturnIsPowered(iX, iY)) {
-				Game_DrawProcessObject(nSprPowerInd, iMapOffSetX + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nPwrIndOffs, iTop - nPwrIndOffs, 0, 0);
+				Game_DrawProcessObject(nSprPowerInd, iMapOffSetX + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nScale, iTop - nScale, 0, 0);
 			}
 		}
 	}
@@ -866,15 +747,15 @@ extern "C" void __stdcall Hook_DrawAllLarge() {
 }
 
 extern "C" void __cdecl Hook_DrawLargeTile(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX, int iY) {
-	L_DrawTile_SC2K1996(iMapOffSetX, iMapOffSetY, iX, iY, SIZE_LARGE);
+	L_DrawTile_SC2K1996(iMapOffSetX, iMapOffSetY, iX, iY);
 }
 
 extern "C" void __cdecl Hook_DrawSmallTile(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX, int iY) {
-	L_DrawTile_SC2K1996(iMapOffSetX, iMapOffSetY, iX, iY, SIZE_SMALL);
+	L_DrawTile_SC2K1996(iMapOffSetX, iMapOffSetY, iX, iY);
 }
 
 extern "C" void __cdecl Hook_DrawTinyTile(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX, int iY) {
-	L_DrawTile_SC2K1996(iMapOffSetX, iMapOffSetY, iX, iY, SIZE_TINY);
+	L_DrawTile_SC2K1996(iMapOffSetX, iMapOffSetY, iX, iY);
 }
 
 extern "C" void __cdecl Hook_DrawUnderTile(__int16 iX, __int16 iY) {
@@ -902,16 +783,16 @@ extern "C" void __cdecl Hook_DrawUnderTile(__int16 iX, __int16 iY) {
 	if (pSCApp) {
 		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 		if (pSCView) {
-			nCoordsScale = 2 << pSCView->wSCVZoomLevel;
-			nLandAltScale = 3 << pSCView->wSCVZoomLevel;
-			nScale = 4 << pSCView->wSCVZoomLevel;
-			nSpriteStart = 500 * pSCView->wSCVZoomLevel;
+			nCoordsScale = COORDSCALE_VAL(pSCView->wSCVZoomLevel);
+			nLandAltScale = LANDALTSCALE_VAL(pSCView->wSCVZoomLevel);
+			nScale = SCALE_VAL(pSCView->wSCVZoomLevel);
+			nSpriteStart = SPRITE_BOUNDARY_MULTIPLIER * pSCView->wSCVZoomLevel;
 
 			iRight = iScreenOffSetX + nScale * (iX - iY);
 			iBottom = iScreenOffSetY + nCoordsScale * (iX + iY) - nLandAltScale * ALTMReturnLandAltitude(iX, iY);
 			if (iBottom + nScale >= rcDst.top && rcDst.bottom >= iBottom) {
-				// ------ Added to reconcile the sign height difference between above/underground layers.
 				iTerrainTile = GetTerrainTileID(iX, iY);
+				// ------ Added to reconcile the sign height difference between above/underground layers.
 				if (iTerrainTile < SUBMERGED_00)
 					iAltTop = ALTMReturnLandAltitude(iX, iY);
 				else
@@ -937,7 +818,7 @@ extern "C" void __cdecl Hook_DrawUnderTile(__int16 iX, __int16 iY) {
 					iUnderTile == UNDER_TILE_CROSSOVER_PIPESLR_SUBWAYTB) {
 					if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE &&
 						XBITReturnIsPiped(iX, iY) && XBITReturnIsWatered(iX, iY))
-						iUnderTile += WATEREDPIPES_OFFSET;
+						iUnderTile += WATEREDPIPES_SPRITE_OFFSET;
 					iSprite = iUnderTile + nSpriteStart + SPRITE_SMALL_BEDROCK_OUTLINE;
 					Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
 				}
