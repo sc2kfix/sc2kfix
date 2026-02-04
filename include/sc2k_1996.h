@@ -2752,9 +2752,9 @@ typedef struct {
 
 #pragma pack(push, 1)
 typedef struct {
-	__int16 iLandAltitude : 5; // level / altitude
-	__int16 iWaterLevel : 5;   // not always accurate (rely on XTER value instead)
-	__int16 iTunnelLevels : 6; // how many levels below altitude should we display a grey block for a tunnel?
+	WORD iLandAltitude : 5; // level / altitude
+	WORD iWaterLevel : 5;   // not always accurate (rely on XTER value instead)
+	WORD iTunnelLevels : 6; // how many levels below altitude should we display a grey block for a tunnel?
 } map_ALTM_attribs_t;
 #pragma pack(pop)
 
