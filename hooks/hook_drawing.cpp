@@ -680,7 +680,7 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 		}
 	}
 	if (XTXTGetTextOverlayID(iX, iY))
-		Game_DrawLabel(iX, iY, iMapOffSetX, iTop);
+		Game_DrawLabelsAndObjects(iX, iY, iMapOffSetX, iTop);
 }
 
 extern "C" void __stdcall Hook_DrawAllLarge() {
@@ -901,7 +901,7 @@ extern "C" void __cdecl Hook_DrawUnderTile(__int16 iX, __int16 iY) {
 				}
 
 				if (XTXTGetTextOverlayID(iX, iY))
-					Game_DrawLabel(iX, iY, iRight, iTop);
+					Game_DrawLabelsAndObjects(iX, iY, iRight, iTop);
 			}
 		}
 	}
