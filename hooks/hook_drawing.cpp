@@ -371,15 +371,12 @@ static void DoUndergroundAspects(int iX, int iY, __int16 nSprStart, __int16 nSiz
 	if (iBottom + nScale >= rcDst.top && rcDst.bottom >= iBottom) {
 		iSprBottom = iBottom - pArrSpriteHeaders[nSprStart + iUndTrnSpr].wHeight;
 		if (iTunnelLvl) {
-			if (iTunnelLvl == 1) {
-				if (DisplayLayer[LAYER_INFRANATURE]) {
+			if (DisplayLayer[LAYER_INFRANATURE]) {
+				if (iTunnelLvl == 1) {
 					iSprite = iTerrainTile + nSprStart + WATERFALL;
 					Game_DrawProcessObject(iSprite, iRight, iBottom - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
 				}
-			}
-			else {
-				// This one clears the area in this context.
-				if (DisplayLayer[LAYER_INFRANATURE]) {
+				else {
 					iSprite = nSprStart + SPRITE_SMALL_MISSILESILO;
 					Game_DrawProcessObject(iSprite, iRight, iBottom + nLandAltScale * (iTunnelLvl - 1) - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
 				}
@@ -401,23 +398,31 @@ static void DoUndergroundAspects(int iX, int iY, __int16 nSprStart, __int16 nSiz
 		}
 		else if (iUnderTile) {
 			iSprite = iUnderTile + nSprStart + SPRITE_SMALL_BEDROCK_OUTLINE;
-			if (iUnderTile == UNDER_TILE_MISSILESILO && 
-				(DisplayLayer[LAYER_BUILDINGS] && DisplayLayer[LAYER_ZONES])) {
-				if (XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
-					// Similar to the >= 2x2 building on-edge overwritten imagery, all of these sprites have to be set
-					// on all associated blocks while it processes this corner coordinate.
-					Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 4), iSprBottom + (nCoordsScale * -2), 0, 0);
-					Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 2), iSprBottom + (nCoordsScale * -1), 0, 0);
-					Game_DrawProcessObject(iSprite, iRight,                      iSprBottom,                       0, 0);
+			if (iUnderTile == UNDER_TILE_MISSILESILO) {
+				// Only perform the comprehensive underground block draw
+				// if both the build and zone layers are enabled,
+				// otherwise only revert to the original single-tile
+				// per-coordinate draw if the zone layer is enabled.
+				// Undertiles are hidden if both layers are disabled.
+				if (DisplayLayer[LAYER_BUILDINGS] && DisplayLayer[LAYER_ZONES]) {
+					if (XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
+						// Similar to the >= 2x2 building on-edge overwritten imagery, all of these sprites have to be set
+						// on all associated blocks while it processes this corner coordinate.
+						Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 4), iSprBottom + (nCoordsScale * -2), 0, 0);
+						Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 2), iSprBottom + (nCoordsScale * -1), 0, 0);
+						Game_DrawProcessObject(iSprite, iRight,                      iSprBottom,                       0, 0);
 
-					Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 6), iSprBottom + (nCoordsScale * -1), 0, 0);
-					Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 4), iSprBottom,                       0, 0);
-					Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 2), iSprBottom + (nCoordsScale * 1),  0, 0);
+						Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 6), iSprBottom + (nCoordsScale * -1), 0, 0);
+						Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 4), iSprBottom,                       0, 0);
+						Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 2), iSprBottom + (nCoordsScale * 1),  0, 0);
 
-					Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 8), iSprBottom,                       0, 0);
-					Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 6), iSprBottom + (nCoordsScale * 1),  0, 0);
-					Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 4), iSprBottom + (nCoordsScale * 2),  0, 0);
+						Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 8), iSprBottom,                       0, 0);
+						Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 6), iSprBottom + (nCoordsScale * 1),  0, 0);
+						Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 4), iSprBottom + (nCoordsScale * 2),  0, 0);
+					}
 				}
+				else if (DisplayLayer[LAYER_ZONES])
+					Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
 			}
 			else
 				Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
@@ -526,6 +531,12 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 							bIsFlipped = FALSE;
 						else
 							bIsFlipped = XBITReturnIsFlipped(iX, iY);
+						// Point of interest here when it comes to
+						// the bIsFlipped negation depending on
+						// view rotation; if this is adjusted then
+						// certain tiles such as runway and pier cases
+						// will need to be excluded to avoid a rather
+						// bizarre view.
 						if (!IsEven(wViewRotation))
 							bIsFlipped = !bIsFlipped;
 						iSprite = iTile + nSprStart;
