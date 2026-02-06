@@ -1042,18 +1042,6 @@ void InstallDrawingHooks_SC2K1996(void) {
 	VirtualProtect((LPVOID)0x402F6D, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x402F6D, Hook_DrawColorTile);
 
-	// This disables the edge-checker for >= 2x2 buildings.
-	// Be VERY careful if this is enabled, the program WILL
-	// CRASH if you accidentally attempt to place a given
-	// building outside of the map limits.
-	//
-	// This is ONLY for certain test cases (until adjustments
-	// are made to the main AddBuilding call(s)).
-	//
-	// *** REMEMBER TO COMMENT OUT AT THE END ***
-	//VirtualProtect((LPVOID)0x44056E, 166, PAGE_EXECUTE_READWRITE, &dwDummy);
-	//memset((LPVOID)0x44056E, 0x90, 166);
-
 	UpdateDrawingHooks_SC2K1996();
 }
 

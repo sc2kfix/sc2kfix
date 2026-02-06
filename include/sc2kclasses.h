@@ -362,6 +362,16 @@ public:
 	CMFC3XFont dwNDCFonts[33];
 };
 
+class CStadiumSelectTeamDialog : public CGameDialog {
+public:
+	int dwSSTDPosX;
+	int dwSSTDPosY;
+	CMFC3XComboBox dwSSTDComboBox;
+	CMFC3XButton dwSSTDButton;
+	CMFC3XString dwSSTDStringOne;
+	CMFC3XString dwSSTDStringTwo;
+};
+
 class CJokeDialog : public CMFC3XDialog {
 public:
 	CGraphics *dwJDGraphics;

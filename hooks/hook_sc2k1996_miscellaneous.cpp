@@ -73,6 +73,13 @@ extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR l
 				"Hydroelectric Dam"))
 				return strlen(lpBuffer);
 			break;
+#if MAP_EDGE_BUILDING
+		case 105:
+			if (!strcpy_s(lpBuffer, cchBufferMax,
+				"Sorry, you cannot\r\nplace items off\r\nthe edge of the map."))
+				return strlen(lpBuffer);
+			break;
+#endif
 		case 108:
 			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Hydroelectric dams can only be placed on waterfall tiles."))
@@ -1953,10 +1960,10 @@ extern "C" void __stdcall Hook_MainFrame_UpdateSections() {
 	CMFC3XMenu *pSubMenu;
 	int nMenuItemCount;
 	int nSubMenuItemCount;
-	char szString[960];
+	char szString[80*MAX_CITY_MENUTOOLS];
 	char *pString;
 	char *pTargString;
-	DWORD uIDs[12];
+	DWORD uIDs[MAX_CITY_MENUTOOLS];
 	DWORD *pUID;
 	int nGranted;
 	int nReward;
@@ -2322,16 +2329,6 @@ void InstallMiscHooks_SC2K1996(void) {
 	VirtualProtect((LPVOID)0x4E6130, 13, PAGE_EXECUTE_READWRITE, &dwDummy);
 	memset((LPVOID)0x4E6130, 0, 13);
 	memcpy_s((LPVOID)0x4E6130, 13, "presnts.bmp", 13);
-
-	// Fix power and water grid updates slowing down after the population hits 50,000
-	VirtualProtect((LPVOID)0x440943, 4, PAGE_EXECUTE_READWRITE, &dwDummy); // 0x440170 <- CityToolMenuAction
-	*(DWORD*)0x440943 = 50000000; // Power
-	VirtualProtect((LPVOID)0x440987, 4, PAGE_EXECUTE_READWRITE, &dwDummy); // 0x440170 <- CityToolMenuAction
-	*(DWORD*)0x440987 = 50000000; // Water
-
-	// Fix the pipe tool not refreshing properly at max zoom
-	//VirtualProtect((LPVOID)0x43F447, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	//NEWCALL((LPVOID)0x43F447, 0x402810);		// CSimcityView::UpdateAreaCompleteColorFill
 
 	// Install hooks for saving and loading
 	InstallSaveHooks_SC2K1996();
