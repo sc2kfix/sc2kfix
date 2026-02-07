@@ -33,6 +33,33 @@ UINT military_debug = MILITARY_DEBUG;
 
 static DWORD dwDummy;
 
+static coords_w_t startNavalCoords[4] = {
+	{ MAP_EDGE_MAX, MAP_EDGE_MIN },
+	{ MAP_EDGE_MIN, MAP_EDGE_MIN },
+	{ MAP_EDGE_MIN, MAP_EDGE_MAX },
+	{ MAP_EDGE_MAX, MAP_EDGE_MAX }
+};
+
+static coords_w_t distNavalCoords[4] = {
+	{ -1,  0  },
+	{  0,  1  },
+	{  1,  0  },
+	{  0, -1  }
+};
+
+static __int16 advanceX[4] = {
+	-1, 0, 1, 0
+};
+
+static __int16 advanceY[4] = {
+	0, 1, 0, -1
+};
+
+static void SetNewCoords(coords_w_t *pCoords, __int16 x, __int16 y) {
+	pCoords->x = x;
+	pCoords->y = y;
+}
+
 // This function has been replicated from he equivalent that was found
 // in the DOS version of the game.
 static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
@@ -111,128 +138,6 @@ static bool FindArmyBaseCrossingLength(__int16 iY, __int16 iXA, __int16 iXB) {
 	if (GetTileID(iXA, iY) == TILE_INFRASTRUCTURE_RUNWAYCROSS && GetTileID(iXB, iY) == TILE_INFRASTRUCTURE_RUNWAYCROSS)
 		return true;
 	return false;
-}
-
-static coords_w_t SetTileCoords(int iPart) {
-	coords_w_t val;
-	switch (wViewRotation) {
-		case VIEWROTATION_EAST:
-			val.x = (iPart == 0) ? MAP_EDGE_MIN : MAP_EDGE_MAX;
-			val.y = MAP_EDGE_MIN;
-			break;
-		case VIEWROTATION_SOUTH:
-			val.x = MAP_EDGE_MIN;
-			val.y = (iPart == 0) ? MAP_EDGE_MAX : MAP_EDGE_MIN;
-			break;
-		case VIEWROTATION_WEST:
-			val.x = (iPart == 0) ? MAP_EDGE_MAX : MAP_EDGE_MIN;
-			val.y = MAP_EDGE_MAX;
-			break;
-		default:
-			val.x = MAP_EDGE_MAX;
-			val.y = (iPart == 0) ? MAP_EDGE_MIN : MAP_EDGE_MAX;
-	}
-
-	return val;
-}
-
-static coords_w_t SetRandomPointCoords() {
-	coords_w_t val;
-	__int16 iRandPos = Game_RandomWordLCGMod(MAP_EDGE_MAX);
-	switch (wViewRotation) {
-	case VIEWROTATION_EAST:
-		val.x = iRandPos;
-		val.y = MAP_EDGE_MIN;
-		break;
-	case VIEWROTATION_SOUTH:
-		val.x = MAP_EDGE_MIN;
-		val.y = iRandPos;
-		break;
-	case VIEWROTATION_WEST:
-		val.x = iRandPos;
-		val.y = MAP_EDGE_MAX;
-		break;
-	default:
-		val.x = MAP_EDGE_MAX;
-		val.y = iRandPos;
-	}
-
-	return val;
-}
-
-static __int16 GetTileDepth(__int16 iPosA, __int16 iPosB, int iPlus) {
-	__int16 iVal = iPosA;
-	__int16 n = -1;
-	__int16 iBaseLevel = ALTMReturnLandAltitude(iPosA, iPosB);
-	while (1) {
-		n++;
-		if (n >= 5)
-			break;
-		if (iPlus) {
-			if (GetTerrainTileID(iPosA + n, iPosB) || ALTMReturnLandAltitude(iPosA + n, iPosB) > iBaseLevel) {
-				n = 0;
-				break;
-			}
-		}
-		else {
-			if (GetTerrainTileID(iPosA - n, iPosB) || ALTMReturnLandAltitude(iPosA - n, iPosB) > iBaseLevel) {
-				n = 0;
-				break;
-			}
-		}
-	}
-	if (iPlus)
-		iVal += n;
-	else
-		iVal -= n;
-	return iVal;
-}
-
-static __int16 GetTileLength(__int16 iPosA, __int16 iPosB, int iPlus) {
-	__int16 iVal = iPosB;
-	__int16 n = -1;
-	__int16 iRandMaxLength = Game_RandomWordLCGMod(6);
-	if (iRandMaxLength < 3)
-		iRandMaxLength = 3;
-	__int16 iBaseLevel = ALTMReturnLandAltitude(iPosA, iPosB);
-	while (1) {
-		n++;
-		if (n >= iRandMaxLength)
-			break;
-		if (iPlus) {
-			if (GetTerrainTileID(iPosA, iPosB + n) || ALTMReturnLandAltitude(iPosA, iPosB + n) > iBaseLevel) {
-				n = 0;
-				break;
-			}
-		}
-		else {
-			if (GetTerrainTileID(iPosA, iPosB - n) || ALTMReturnLandAltitude(iPosA, iPosB - n) > iBaseLevel) {
-				n = 0;
-				break;
-			}
-		}
-	}
-	if (n != iRandMaxLength)
-		return -1;
-	if (iPlus)
-		iVal += n;
-	else
-		iVal -= n;
-	return iVal;
-}
-
-static __int16 GetStartPoint(coords_w_t *iCoords) {
-	if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_WEST)
-		return iCoords->x;
-	else
-		return iCoords->y;
-}
-
-static __int16 GetDepthPoint(coords_w_t *iCoords) {
-	if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_WEST)
-		return iCoords->y;
-	else
-		return iCoords->x;
 }
 
 static int isValidWaterBody(__int16 x, __int16 y) {
@@ -416,21 +321,18 @@ RETRYFROMCURRENT:
 				}
 				if (iTileArea == 9) {
 					iSiloIdx = iValidPositions++;
-					wSiloPos[iSiloIdx].x = iLengthWays;
-					wSiloPos[iSiloIdx].y = iDepthWays;
+					SetNewCoords(&wSiloPos[iSiloIdx], iLengthWays, iDepthWays);
 					//ConsoleLog(LOG_DEBUG, "DBG: iTileArea == 9: (%d) (%u, %d)\n", iSiloIdx, wSiloPos[iSiloIdx].x, wSiloPos[iSiloIdx].y);
 				}
 			} while (iValidPositions < 6);
 		}
 		if (iValidPositions == 6) {
-			__int16 iSiloStartXPos = 0;
-			__int16 iSiloStartYPos = 0;
+			coords_w_t iSiloStartPos;
 			bMilitaryBaseType = MILITARY_BASE_MISSILE_SILOS;
 			for (iSiloIdx = 0; iSiloIdx < 6; iSiloIdx++) {
-				iSiloStartXPos = wSiloPos[iSiloIdx].x;
-				iSiloStartYPos = wSiloPos[iSiloIdx].y;
-				for (__int16 iSiloXPos = iSiloStartXPos; iSiloXPos < iSiloStartXPos + 3; ++iSiloXPos) {
-					for (__int16 iSiloYPos = iSiloStartYPos; iSiloYPos < iSiloStartYPos + 3; ++iSiloYPos) {
+				iSiloStartPos = wSiloPos[iSiloIdx];
+				for (__int16 iSiloXPos = iSiloStartPos.x; iSiloXPos < iSiloStartPos.x + 3; ++iSiloXPos) {
+					for (__int16 iSiloYPos = iSiloStartPos.y; iSiloYPos < iSiloStartPos.y + 3; ++iSiloYPos) {
 						BYTE iTileID = GetTileID(iSiloXPos, iSiloYPos);
 						--dwTileCount[iTileID];
 						if (iSiloXPos < GAME_MAP_SIZE && iSiloYPos < GAME_MAP_SIZE)
@@ -439,7 +341,7 @@ RETRYFROMCURRENT:
 					}
 				}
 			}
-			Game_CenterOnTileCoords(iSiloStartXPos, iSiloStartYPos);
+			Game_CenterOnTileCoords(iSiloStartPos.x, iSiloStartPos.y);
 			return GameMain_AfxMessageBoxID(244, 0, -1);
 		}
 		else {
@@ -529,33 +431,6 @@ static int MilitaryBaseArmyBase(int iValidTiles, int iValidAltitudeTiles, __int1
 	return -1;
 }
 
-static coords_w_t startNavalCoords[4] = {
-	{ MAP_EDGE_MAX, MAP_EDGE_MIN },
-	{ MAP_EDGE_MIN, MAP_EDGE_MIN },
-	{ MAP_EDGE_MIN, MAP_EDGE_MAX },
-	{ MAP_EDGE_MAX, MAP_EDGE_MAX }
-};
-
-static coords_w_t distNavalCoords[4] = {
-	{ -1,  0  },
-	{  0,  1  },
-	{  1,  0  },
-	{  0, -1  }
-};
-
-static __int16 advanceX[4] = {
-	-1, 0, 1, 0
-};
-
-static __int16 advanceY[4] = {
-	0, 1, 0, -1
-};
-
-static void SetNewCoords(coords_w_t *pCoords, __int16 x, __int16 y) {
-	pCoords->x = x;
-	pCoords->y = y;
-}
-
 static int MilitaryBaseNavalYard(bool force) {
 	__int16 iBaseLevel;
 
@@ -564,17 +439,14 @@ static int MilitaryBaseNavalYard(bool force) {
 	int nCurrPos, nNextPos;
 	WORD iRotOne, iRotTwo, iRotThree;
 	__int16 iNextX, iNextY;
-	int iNavyLandingAttempts = 0;
 	
 	if (bCityHasOcean) {
 		if ((rand() & 1) != 0 || force) {
-#if 1
 			iStartCoords = startNavalCoords[wViewRotation];
 			iAdvanceBy = distNavalCoords[wViewRotation];
 
 			if (military_debug & MILITARY_DEBUG_PLACEMENT_NAVAL)
-				ConsoleLog(LOG_DEBUG, "(%u) (%d, %d) (%d, %d) | (%d, %d)\n", wViewRotation, iStartCoords.x, iStartCoords.y, iAdvanceBy.x, iAdvanceBy.y,
-					SetTileCoords(0).x, SetTileCoords(0).y);
+				ConsoleLog(LOG_DEBUG, "(%u) (%d, %d) (%d, %d)\n", wViewRotation, iStartCoords.x, iStartCoords.y, iAdvanceBy.x, iAdvanceBy.y);
 
 			if (XBITReturnIsWater(iStartCoords.x, iStartCoords.y)) {
 				while (TRUE) {
@@ -742,161 +614,6 @@ static int MilitaryBaseNavalYard(bool force) {
 					return GameMain_AfxMessageBoxID(243, 0, -1);
 				}
 			}
-#else
-BACKTOSPOTREROLL:
-			iTileCoords[0] = SetTileCoords(0); // First Corner
-			iTileCoords[1] = SetTileCoords(1); // Second Corner
-			if (XBITReturnIsWater(iTileCoords[0].x, iTileCoords[0].y)) { // First Corner
-				if (XBITReturnIsWater(iTileCoords[1].x, iTileCoords[1].y)) { // Second Corner
-																										 // Calculate a random point along the coastal area and then use that to plot the path
-																										 // towards dry land, if this fails then retry N number of attempts.
-				REROLLCOASTALSPOT:
-					if (iNavyLandingAttempts >= 20)
-						goto NONAVY;
-					coords_w_t iTempCoords = SetRandomPointCoords();
-					if ((iTempCoords.x < MAP_EDGE_MIN || iTempCoords.x > MAP_EDGE_MAX) ||
-						(iTempCoords.y < MAP_EDGE_MIN || iTempCoords.y > MAP_EDGE_MAX)) {
-						goto NONAVY;
-					}
-					while (1) {
-						if ((iTempCoords.x < MAP_EDGE_MIN || iTempCoords.x > MAP_EDGE_MAX) ||
-							(iTempCoords.y < MAP_EDGE_MIN || iTempCoords.y > MAP_EDGE_MAX)) {
-							goto NONAVY;
-						}
-						BYTE iTileID = GetTileID(iTempCoords.x, iTempCoords.y);
-						if (!XBITReturnIsWater(iTempCoords.x, iTempCoords.y))
-						{
-							if (iTileID >= TILE_SMALLPARK || 
-								GetTerrainTileID(iTempCoords.x, iTempCoords.y)) {
-								iNavyLandingAttempts++;
-								goto REROLLCOASTALSPOT;
-							}
-							iTileCoords[0] = iTempCoords;
-							break;
-						}
-						if (wViewRotation == VIEWROTATION_EAST)
-							iTempCoords.y += 1;
-						else if (wViewRotation == VIEWROTATION_SOUTH)
-							iTempCoords.x += 1;
-						else if (wViewRotation == VIEWROTATION_WEST)
-							iTempCoords.y -= 1;
-						else
-							iTempCoords.x -= 1;
-					}
-				}
-
-				__int16 iStartLengthPoint = GetStartPoint(&iTileCoords[0]); // Lengthway coordinate
-				__int16 iFarthestDepth = GetDepthPoint(&iTileCoords[1]); // Edge of the map out at sea.
-
-				// Landing Zone.
-				__int16 iStartDepthPoint = GetDepthPoint(&iTileCoords[0]);
-				// Depth of the base from landfall to further in-land.
-				__int16 iDepthPoint = GetTileDepth(iStartDepthPoint, iStartLengthPoint, ((wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) ? 1 : 0));
-
-				// Determine relative "left"
-				__int16 iLengthPointA = GetTileLength(iDepthPoint, iStartLengthPoint, ((wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) ? 1 : 0));
-				if (iLengthPointA <= 0)
-					goto BACKTOSPOTREROLL;
-
-				// Determine relative "right"
-				__int16 iLengthPointB = GetTileLength(iDepthPoint, iStartLengthPoint, ((wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) ? 0 : 1));
-				if (iLengthPointB <= 0)
-					goto BACKTOSPOTREROLL;
-
-				int iNumTiles = 0;
-				int iPass = 0;
-PLACENAVAL:
-				// Let's avoid bases that are too small.
-				if (!iPass || (iNumTiles >= 50 && iNumTiles <= 60)) {
-					iBaseLevel = ALTMReturnLandAltitude(iStartLengthPoint, iStartDepthPoint);
-					for (__int16 iLengthWay = iLengthPointA;;) {
-						if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) {
-							if (iLengthWay <= iLengthPointB)
-								break;
-						}
-						else {
-							if (iLengthWay >= iLengthPointB)
-								break;
-						}
-
-						int iNonContiguousDepth = 0;
-						for (__int16 iDepthWay = iDepthPoint;;) {
-							if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH) {
-								if (iDepthWay <= iFarthestDepth)
-									break;
-							}
-							else {
-								if (iDepthWay >= iFarthestDepth)
-									break;
-							}
-
-							__int16 iDirectionOne, iDirectionTwo;
-							if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_WEST) {
-								iDirectionOne = iLengthWay;
-								iDirectionTwo = iDepthWay;
-							}
-							else {
-
-								iDirectionOne = iDepthWay;
-								iDirectionTwo = iLengthWay;
-							}
-
-							BYTE iTileID = GetTileID(iDirectionOne, iDirectionTwo);
-							if (iTileID < TILE_SMALLPARK &&
-								XZONReturnZone(iDirectionOne, iDirectionTwo) == ZONE_NONE &&
-								!GetTerrainTileID(iDirectionOne, iDirectionTwo) &&
-								!isValidWaterBody(iDirectionOne, iDirectionTwo) &&
-								!GetUndergroundTileID(iDirectionOne, iDirectionTwo) &&
-								ALTMReturnLandAltitude(iDirectionOne, iDirectionTwo) == iBaseLevel) {
-								if (!iNonContiguousDepth) {
-									if (iPass) {
-										Game_PlaceTileWithMilitaryCheck(iDirectionOne, iDirectionTwo, 0);
-										XZONSetNewZone(iDirectionOne, iDirectionTwo, ZONE_MILITARY);
-										--dwTileCount[iTileID];
-										++dwMilitaryTiles[MILITARYTILE_OTHER];
-									}
-									else {
-										iNumTiles++;
-									}
-								}
-							}
-							else {
-								if (iTileID >= TILE_SMALLPARK ||
-									GetTerrainTileID(iDirectionOne, iDirectionTwo) < SUBMERGED_00 ||
-									GetTerrainTileID(iDirectionOne, iDirectionTwo) > COAST_13 ||
-									GetUndergroundTileID(iDirectionOne, iDirectionTwo) ||
-									ALTMReturnLandAltitude(iDirectionOne, iDirectionTwo) > iBaseLevel) {
-									iNonContiguousDepth = 1;
-								}
-							}
-
-							if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH)
-								--iDepthWay;
-							else
-								++iDepthWay;
-						}
-
-						if (wViewRotation == VIEWROTATION_EAST || wViewRotation == VIEWROTATION_SOUTH)
-							--iLengthWay;
-						else
-							++iLengthWay;
-					}
-
-					if (iPass) {
-						bMilitaryBaseType = MILITARY_BASE_NAVY;
-						Game_CenterOnTileCoords(iTileCoords[0].x, iTileCoords[0].y);
-						return GameMain_AfxMessageBoxID(243, 0, -1);
-					}
-					else {
-						iPass = 1;
-						goto PLACENAVAL;
-					}
-				}
-				else if (iNumTiles < 50) {
-					goto BACKTOSPOTREROLL;
-				}
-			}
-#endif
 		}
 	}
 NONAVY:
