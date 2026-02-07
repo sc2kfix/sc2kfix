@@ -264,14 +264,16 @@ static void DoMapEdge(__int16 iMapOffSetX, int iX, int iY, __int16 iBottom, __in
 	}
 }
 
-static void DoBedrockEdge(__int16 iMapOffSetX, __int16 iOffSetX, __int16 iOffSetY, __int16 iBottom, __int16 iLandAlt, __int16 iSpriteID, __int16 nLandAltScale) {
+static void DoBedrockEdge(__int16 iMapOffSetX, __int16 iX, __int16 iY, __int16 iOffSetX, __int16 iOffSetY, __int16 iBottom, __int16 iLandAlt, __int16 iSpriteID, __int16 iWaterFallSpriteID, __int16 nLandAltScale) {
 	if (iLandAlt > 0) {
 		while (rcDst.top <= iBottom + iOffSetY) {
 			if (rcDst.bottom > iBottom)
 				Game_DrawProcessObject(iSpriteID, iMapOffSetX + iOffSetX, iBottom + iOffSetY, 0, 0);
 			iBottom -= nLandAltScale;
-			if (--iLandAlt <= 0)
+			if (--iLandAlt <= 0) {
+				DoWaterfallEdge(iMapOffSetX + iOffSetX, iX, iY, iBottom + iOffSetY, iWaterFallSpriteID, nLandAltScale);
 				break;
+			}
 		}
 	}
 }
@@ -303,7 +305,7 @@ static __int16 getCoverageOffsets(__int16 nSizeLevel, __int16 nAxis, __int16 nPo
 		return getCoverageOffsetsY(nSizeLevel, nAxis, nPos, nCoverage);
 }
 
-static void DoCoverageMapEdgeFill(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX, int iY, __int16 nSprBedrock, __int16 nLandAltScale, __int16 nSizeLevel, BYTE iTile) {
+static void DoCoverageMapEdgeFill(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX, int iY, __int16 nSprBedrock, __int16 nSprWaterfall, __int16 nLandAltScale, __int16 nSizeLevel, BYTE iTile) {
 	__int16 iBottom, iLandAlt;
 	__int16 iCoverageSize;
 	BYTE iCoverage;
@@ -315,16 +317,16 @@ static void DoCoverageMapEdgeFill(__int16 iMapOffSetX, __int16 iMapOffSetY, int 
 		iLandAlt = ALTMReturnLandAltitude(iX, iY);
 		if (iCoverage == COVERAGE_1x1) {
 			if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX)
-				DoBedrockEdge(iMapOffSetX, 0, 0, iBottom, iLandAlt, nSprBedrock, nLandAltScale);
+				DoBedrockEdge(iMapOffSetX, iX, iY, 0, 0, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
 		}
 		else {
 			if (iX + iCoverage == MAP_EDGE_MAX) {
 				for (__int16 i = 0; i < iCoverageSize; i++)
-					DoBedrockEdge(iMapOffSetX, getCoverageOffsets(nSizeLevel, AXIS_HORZ, i, iCoverage, TRUE), getCoverageOffsets(nSizeLevel, AXIS_VERT, i, iCoverage, TRUE), iBottom, iLandAlt, nSprBedrock, nLandAltScale);
+					DoBedrockEdge(iMapOffSetX, iX, iY, getCoverageOffsets(nSizeLevel, AXIS_HORZ, i, iCoverage, TRUE), getCoverageOffsets(nSizeLevel, AXIS_VERT, i, iCoverage, TRUE), iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
 			}
 			else if (iY == MAP_EDGE_MAX) {
 				for (__int16 i = 0; i < iCoverageSize; i++)
-					DoBedrockEdge(iMapOffSetX, getCoverageOffsets(nSizeLevel, AXIS_HORZ, i, iCoverage, FALSE), getCoverageOffsets(nSizeLevel, AXIS_VERT, i, iCoverage, FALSE), iBottom, iLandAlt, nSprBedrock, nLandAltScale);
+					DoBedrockEdge(iMapOffSetX, iX, iY, getCoverageOffsets(nSizeLevel, AXIS_HORZ, i, iCoverage, FALSE), getCoverageOffsets(nSizeLevel, AXIS_VERT, i, iCoverage, FALSE), iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
 			}
 		}
 	}
@@ -526,7 +528,7 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 					if (XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
 						// The following call is to account for >= 1x1 buildings and avoid the map-edge
 						// bedrock-bleed that was previously occurring on >= 2x2 buildings.
-						DoCoverageMapEdgeFill(iMapOffSetX, iMapOffSetY, iX, iY, nSprBedrock, nLandAltScale, nSizeLevel, iTile);
+						DoCoverageMapEdgeFill(iMapOffSetX, iMapOffSetY, iX, iY, nSprBedrock, nSprWaterfall, nLandAltScale, nSizeLevel, iTile);
 						if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
 							bIsFlipped = FALSE;
 						else

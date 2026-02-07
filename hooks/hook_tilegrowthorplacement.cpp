@@ -16,7 +16,7 @@
 
 #pragma intrinsic(_ReturnAddress)
 
-#if MAP_EDGE_BUILDING
+#if MAP_EDGE_BUILDING == 2
 #define ABSOLUTE_MIN_EDGE MAP_EDGE_MIN
 #define ABSOLUTE_MAX_EDGE MAP_EDGE_MAX
 
@@ -29,8 +29,14 @@
 #define AREA_4x4_MIN_EDGE AREA_3x3_MIN_EDGE
 #define AREA_4x4_MAX_EDGE MAP_EDGE_MAX - 2
 #else
+
+#if MAP_EDGE_BUILDING == 1
+#define ABSOLUTE_MIN_EDGE MAP_EDGE_MIN
+#define ABSOLUTE_MAX_EDGE MAP_EDGE_MAX
+#else
 #define ABSOLUTE_MIN_EDGE MAP_EDGE_MIN + 1
 #define ABSOLUTE_MAX_EDGE MAP_EDGE_MAX - 1
+#endif
 
 #define AREA_2x2_MIN_EDGE MAP_EDGE_MIN + 1
 #define AREA_2x2_MAX_EDGE MAP_EDGE_MAX - 2
@@ -146,7 +152,7 @@ static int IsValidGeneralPosPlacementMain(__int16 x, __int16 y, __int16 iFarX, _
 					// could be placed on military zones.
 					if (!TILE_IS_MILITARY(iTileID))
 						return 0;
-					if (iCurTile == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
+					if (TILE_IS_MILITARY(iCurTile) ||
 						iCurTile == TILE_ROAD_LR ||
 						iCurTile == TILE_ROAD_TB)
 						return 0;
@@ -160,12 +166,14 @@ static int IsValidGeneralPosPlacementMain(__int16 x, __int16 y, __int16 iFarX, _
 				else {
 					if (XZONReturnZone(iCurX, iCurY) != ZONE_MILITARY)
 						return 0;
-					if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY && 
-						(iCurTile == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
+					else {
+						if (!TILE_IS_MILITARY(iTileID))
+							return 0;
+						if (TILE_IS_MILITARY(iCurTile) ||
 							iCurTile == TILE_ROAD_LR ||
-							iCurTile == TILE_ROAD_TB ||
-							iCurTile == TILE_MILITARY_MISSILESILO))
-						return 0;
+							iCurTile == TILE_ROAD_TB)
+							return 0;
+					}
 				}
 			}
 
@@ -1104,21 +1112,17 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 		}
 		goto PLACEMENT_SUCCESS;
 	case TILE_INFRASTRUCTURE_CRANE:
-		// This check has been added to prevent a condition whereas the crane fails
-		// to be placed as a result of it being on the edge of the map but the pier
-		// itself is still spawned (REVISIT if the various literal edge-cases end
-		// up being overcome!).
-		if ((x <= 0 || x >= GAME_MAP_SIZE - 1) || (y <= 0 || y >= GAME_MAP_SIZE - 1))
+		if (x < MAP_EDGE_MIN || x > MAP_EDGE_MAX || y < MAP_EDGE_MIN || y > MAP_EDGE_MAX)
 			return 0;
 		for (iPierTileCount = 0; iPierTileCount < PIER_MAXTILES; iPierTileCount++) {
 			iMoveX = x + wTilePierLengthWays[iPierTileCount];
-			if (iMoveX < GAME_MAP_SIZE) {
+			if (iMoveX >= MAP_EDGE_MIN && iMoveX <= MAP_EDGE_MAX) {
 				iMoveY = y + wTilePierDepthWays[iPierTileCount];
-				if (iMoveY < GAME_MAP_SIZE && XBITReturnIsWater(iMoveX, iMoveY))
+				if (iMoveY >= MAP_EDGE_MIN && iMoveY <= MAP_EDGE_MAX && XBITReturnIsWater(iMoveX, iMoveY))
 					break;
 			}
 		}
-		if (iPierTileCount == PIER_MAXTILES)
+		if (iPierTileCount == PIER_MAXTILES || iMoveX < MAP_EDGE_MIN || iMoveX > MAP_EDGE_MAX || iMoveY < MAP_EDGE_MIN || iMoveY > MAP_EDGE_MAX)
 			return 0;
 		iMoveY = wTilePierDepthWays[iPierTileCount];
 		if (iMoveY && !IsEven(x))

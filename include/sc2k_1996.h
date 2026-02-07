@@ -59,7 +59,7 @@
 
 #define BITMASK(x) (1 << x)
 
-#define MAP_EDGE_BUILDING 0
+#define MAP_EDGE_BUILDING 1
 
 // This will get the general RCI zone that's passed
 // without distinguishing between light/dense.

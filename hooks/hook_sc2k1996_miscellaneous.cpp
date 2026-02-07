@@ -73,7 +73,7 @@ extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR l
 				"Hydroelectric Dam"))
 				return strlen(lpBuffer);
 			break;
-#if MAP_EDGE_BUILDING
+#if MAP_EDGE_BUILDING == 2
 		case 105:
 			if (!strcpy_s(lpBuffer, cchBufferMax,
 				"Sorry, you cannot\r\nplace items off\r\nthe edge of the map."))
