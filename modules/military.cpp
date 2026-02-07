@@ -33,25 +33,25 @@ UINT military_debug = MILITARY_DEBUG;
 
 static DWORD dwDummy;
 
-static coords_w_t startNavalCoords[4] = {
+static coords_w_t startNavalCoords[VIEWROTATION_COUNT] = {
 	{ MAP_EDGE_MAX, MAP_EDGE_MIN },
 	{ MAP_EDGE_MIN, MAP_EDGE_MIN },
 	{ MAP_EDGE_MIN, MAP_EDGE_MAX },
 	{ MAP_EDGE_MAX, MAP_EDGE_MAX }
 };
 
-static coords_w_t distNavalCoords[4] = {
+static coords_w_t distNavalCoords[VIEWROTATION_COUNT] = {
 	{ -1,  0  },
 	{  0,  1  },
 	{  1,  0  },
 	{  0, -1  }
 };
 
-static __int16 advanceX[4] = {
+static __int16 advanceX[VIEWROTATION_COUNT] = {
 	-1, 0, 1, 0
 };
 
-static __int16 advanceY[4] = {
+static __int16 advanceY[VIEWROTATION_COUNT] = {
 	0, 1, 0, -1
 };
 
@@ -126,18 +126,6 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 	}
 	wMaybeActiveToolGroup = wOldToolGroup;
 	Game_ResetTileDirection();
-}
-
-static bool FindArmyBaseCrossingDepth(__int16 iX, __int16 iYA, __int16 iYB) {
-	if (GetTileID(iX, iYA) == TILE_INFRASTRUCTURE_RUNWAYCROSS && GetTileID(iX, iYB) == TILE_INFRASTRUCTURE_RUNWAYCROSS)
-		return true;
-	return false;
-}
-
-static bool FindArmyBaseCrossingLength(__int16 iY, __int16 iXA, __int16 iXB) {
-	if (GetTileID(iXA, iY) == TILE_INFRASTRUCTURE_RUNWAYCROSS && GetTileID(iXB, iY) == TILE_INFRASTRUCTURE_RUNWAYCROSS)
-		return true;
-	return false;
 }
 
 static int isValidWaterBody(__int16 x, __int16 y) {
@@ -409,21 +397,20 @@ static int MilitaryBaseArmyBase(int iValidTiles, int iValidAltitudeTiles, __int1
 		// Explanation:
 		// First it lays down the depth-way roads and runwaycross.
 		// Second it lays down the length-way roads and runwaycross.
-		// If during each attempt it fails at laying down the roadway, it will
-		// check to see whether both runwaycross items are present, if they're
-		// not then it'll attempt to place down the respective crossing once more
-		// but from the opposite direction.
+		// It checks to make sure at X and Y + N that the tile is
+		// empty (just in case a spawn failed), and then it lays the 
+		// road-strip and runwaycross from the opposite direction.
 		FormArmyBaseStrip(iRandXPos + 2, iRandYPos, iRandXPos + 2, iRandYPos + 7);
-		if (!FindArmyBaseCrossingDepth(iRandXPos + 2, iRandYPos, iRandYPos + 7))
+		if (!GetTileID(iRandXPos + 2, iRandYPos + 7))
 			FormArmyBaseStrip(iRandXPos + 2, iRandYPos + 7, iRandXPos + 2, iRandYPos);
 		FormArmyBaseStrip(iRandXPos + 5, iRandYPos, iRandXPos + 5, iRandYPos + 7);
-		if (!FindArmyBaseCrossingDepth(iRandXPos + 5, iRandYPos, iRandYPos + 7))
+		if (!GetTileID(iRandXPos + 5, iRandYPos + 7))
 			FormArmyBaseStrip(iRandXPos + 5, iRandYPos + 7, iRandXPos + 5, iRandYPos);
 		FormArmyBaseStrip(iRandXPos, iRandYPos + 2, iRandXPos + 7, iRandYPos + 2);
-		if (!FindArmyBaseCrossingLength(iRandYPos + 2, iRandXPos + 7, iRandXPos))
+		if (!GetTileID(iRandXPos + 7, iRandYPos + 2))
 			FormArmyBaseStrip(iRandXPos + 7, iRandYPos + 2, iRandXPos, iRandYPos + 2);
 		FormArmyBaseStrip(iRandXPos, iRandYPos + 5, iRandXPos + 7, iRandYPos + 5);
-		if (!FindArmyBaseCrossingLength(iRandYPos + 5, iRandXPos + 7, iRandXPos))
+		if (!GetTileID(iRandXPos + 7, iRandYPos + 5))
 			FormArmyBaseStrip(iRandXPos + 7, iRandYPos + 5, iRandXPos, iRandYPos + 5);
 		return Game_CenterOnTileCoords(iRandXPos + 4, iRandYPos + 4);
 	}
