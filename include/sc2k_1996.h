@@ -3868,7 +3868,7 @@ static inline WORD GetFlaggedTileCount(BYTE iTileID, BOOL bMilitary) {
 
 #define USE_OLD_ALTM_HANDLING 0
 
-static inline __int16 ALTMReturnLandAltitude(__int16 x, __int16 y) {
+static inline WORD ALTMReturnLandAltitude(__int16 x, __int16 y) {
 #if USE_OLD_ALTM_HANDLING
 	return *(WORD *)&dwMapALTM[x][y].w & ALTM_LANDALT_BOUNDARY;
 
@@ -3877,7 +3877,7 @@ static inline __int16 ALTMReturnLandAltitude(__int16 x, __int16 y) {
 #endif
 }
 
-static inline __int16 ALTMReturnWaterLevel(__int16 x, __int16 y) {
+static inline WORD ALTMReturnWaterLevel(__int16 x, __int16 y) {
 #if USE_OLD_ALTM_HANDLING
 	return (*(WORD *)&dwMapALTM[x][y].w & ALTM_WATERLVL_BOUNDARY) >> 5;
 #else
@@ -3885,7 +3885,7 @@ static inline __int16 ALTMReturnWaterLevel(__int16 x, __int16 y) {
 #endif
 }
 
-static inline __int16 ALTMReturnTunnelLevels(__int16 x, __int16 y) {
+static inline WORD ALTMReturnTunnelLevels(__int16 x, __int16 y) {
 #if USE_OLD_ALTM_HANDLING
 	return (*(WORD *)&dwMapALTM[x][y].w & ALTM_TUNNELLVLS_BOUNDARY) >> 10;
 #else
