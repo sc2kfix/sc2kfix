@@ -16,6 +16,7 @@
 
 #define MILITARY_DEBUG_PLACEMENT_OTHER 1
 #define MILITARY_DEBUG_PLACEMENT_NAVAL 2
+#define MILITARY_DEBUG_PLACEMENT_NAVAL_VERBOSE 4
 
 #define MILITARY_DEBUG DEBUG_FLAGS_NONE
 
@@ -528,23 +529,220 @@ static int MilitaryBaseArmyBase(int iValidTiles, int iValidAltitudeTiles, __int1
 	return -1;
 }
 
+static coords_w_t startNavalCoords[4] = {
+	{ MAP_EDGE_MAX, MAP_EDGE_MIN },
+	{ MAP_EDGE_MIN, MAP_EDGE_MIN },
+	{ MAP_EDGE_MIN, MAP_EDGE_MAX },
+	{ MAP_EDGE_MAX, MAP_EDGE_MAX }
+};
+
+static coords_w_t distNavalCoords[4] = {
+	{ -1,  0  },
+	{  0,  1  },
+	{  1,  0  },
+	{  0, -1  }
+};
+
+static __int16 advanceX[4] = {
+	-1, 0, 1, 0
+};
+
+static __int16 advanceY[4] = {
+	0, 1, 0, -1
+};
+
+static void SetNewCoords(coords_w_t *pCoords, __int16 x, __int16 y) {
+	pCoords->x = x;
+	pCoords->y = y;
+}
+
 static int MilitaryBaseNavalYard(bool force) {
 	__int16 iBaseLevel;
 
-	coords_w_t iTileCoords[2];
+	coords_w_t iStartCoords, iAdvanceBy;
+	coords_w_t iFinalCoords, iIntermediateCoords;
+	int nCurrPos, nNextPos;
+	WORD iRotOne, iRotTwo, iRotThree;
+	__int16 iNextX, iNextY;
 	int iNavyLandingAttempts = 0;
-
-	// For reference, the current Naval Yard placement checks only account
-	// for the coast that's directly adjacent to the neighbouring ocean.
-	//
-	// This likely does NOT match what is done in the DOS version.
-	//
-	// TODO: Do a scan and check concerning other deep-water tiles to see
-	// about whether it's viable to spawn the Naval Yard elsewhere (as long
-	// as said body of water is connected to the ocean).
 	
 	if (bCityHasOcean) {
 		if ((rand() & 1) != 0 || force) {
+#if 1
+			iStartCoords = startNavalCoords[wViewRotation];
+			iAdvanceBy = distNavalCoords[wViewRotation];
+
+			if (military_debug & MILITARY_DEBUG_PLACEMENT_NAVAL)
+				ConsoleLog(LOG_DEBUG, "(%u) (%d, %d) (%d, %d) | (%d, %d)\n", wViewRotation, iStartCoords.x, iStartCoords.y, iAdvanceBy.x, iAdvanceBy.y,
+					SetTileCoords(0).x, SetTileCoords(0).y);
+
+			if (XBITReturnIsWater(iStartCoords.x, iStartCoords.y)) {
+				while (TRUE) {
+					if (iStartCoords.x < MAP_EDGE_MIN || iStartCoords.x > MAP_EDGE_MAX || iStartCoords.y < MAP_EDGE_MIN || iStartCoords.y > MAP_EDGE_MAX)
+						goto NONAVY;
+					if (!XBITReturnIsWater(iStartCoords.x, iStartCoords.y))
+						break;
+					iStartCoords.x += iAdvanceBy.x;
+					iStartCoords.y += iAdvanceBy.y;
+				}
+
+				if (military_debug & MILITARY_DEBUG_PLACEMENT_NAVAL)
+					ConsoleLog(LOG_DEBUG, "- (%d, %d) (%d, %d) (%d, %d)\n", iStartCoords.x, iStartCoords.y, iAdvanceBy.x, iAdvanceBy.y, advanceX[wViewRotation], advanceY[wViewRotation]);
+
+				iRotOne   = wViewRotation;
+				iRotTwo   = (iRotOne + 1) & 3;
+				iRotThree = (iRotOne + 2) & 3;
+
+				if (military_debug & MILITARY_DEBUG_PLACEMENT_NAVAL)
+					ConsoleLog(LOG_DEBUG, "-- (%d, %d) (%d, %d) (%u, %u, %u)\n", iStartCoords.x, iStartCoords.y, iAdvanceBy.x, iAdvanceBy.y,
+						iRotOne, iRotTwo, iRotThree);
+
+				iFinalCoords = iStartCoords;
+				iIntermediateCoords = iStartCoords;
+				nCurrPos = 0;
+				nNextPos = 0;
+				while (iStartCoords.x >= MAP_EDGE_MIN && iStartCoords.x <= MAP_EDGE_MAX && iStartCoords.y >= MAP_EDGE_MIN && iStartCoords.y <= MAP_EDGE_MAX) {
+					iBaseLevel = ALTMReturnLandAltitude(iStartCoords.x, iStartCoords.y);
+					if (GetTileID(iStartCoords.x, iStartCoords.y) >= TILE_SMALLPARK ||
+						GetTerrainTileID(iStartCoords.x, iStartCoords.y) ||
+						XBITReturnIsWater(iStartCoords.x, iStartCoords.y) ||
+						GetUndergroundTileID(iStartCoords.x, iStartCoords.y) ||
+						ALTMReturnLandAltitude(iStartCoords.x, iStartCoords.y) != iBaseLevel) {
+						iFinalCoords = iStartCoords;
+						nNextPos = 0;
+					}
+					else if (++nNextPos > nCurrPos) {
+						iIntermediateCoords = iFinalCoords;
+						nCurrPos = nNextPos;
+					}
+					iNextX = (iStartCoords.x + advanceX[iRotTwo]);
+					iNextY = (iStartCoords.y + advanceY[iRotTwo]);
+					if (iNextX < MAP_EDGE_MIN || iNextX > MAP_EDGE_MAX || iNextY < MAP_EDGE_MIN || iNextY > MAP_EDGE_MAX) {
+						if (military_debug & MILITARY_DEBUG_PLACEMENT_NAVAL)
+							ConsoleLog(LOG_DEBUG, "Break 0: (%d, %d)\n", iNextX, iNextY);
+						break;
+					}
+					SetNewCoords(&iAdvanceBy, iNextX, iNextY);
+					//if (military_debug & (MILITARY_DEBUG_PLACEMENT_NAVAL|MILITARY_DEBUG_PLACEMENT_NAVAL_VERBOSE))
+					//	ConsoleLog(LOG_DEBUG, "0 (%d, %d)\n", iStartCoords.x, iStartCoords.y);
+					if (isValidWaterBody(iAdvanceBy.x, iAdvanceBy.y)) {
+						do {
+							iNextX = (iAdvanceBy.x + advanceX[iRotOne]);
+							iNextY = (iAdvanceBy.y + advanceY[iRotOne]);
+							if (iNextX < MAP_EDGE_MIN || iNextX > MAP_EDGE_MAX || iNextY < MAP_EDGE_MIN || iNextY > MAP_EDGE_MAX) {
+								if (military_debug & MILITARY_DEBUG_PLACEMENT_NAVAL)
+									ConsoleLog(LOG_DEBUG, "Break 1: (%d, %d)\n", iNextX, iNextY);
+								break;
+							}
+							SetNewCoords(&iStartCoords, iNextX, iNextY);
+							iAdvanceBy = iStartCoords;
+							//if (military_debug & (MILITARY_DEBUG_PLACEMENT_NAVAL|MILITARY_DEBUG_PLACEMENT_NAVAL_VERBOSE))
+							//	ConsoleLog(LOG_DEBUG, "1 (%d, %d)\n", iStartCoords.x, iStartCoords.y);
+						} while (isValidWaterBody(iStartCoords.x, iStartCoords.y));
+					}
+					else {
+						do {
+							iStartCoords = iAdvanceBy;
+							iNextX = (iAdvanceBy.x + advanceX[iRotThree]);
+							iNextY = (iAdvanceBy.y + advanceY[iRotThree]);
+							if (iNextX < MAP_EDGE_MIN || iNextX > MAP_EDGE_MAX || iNextY < MAP_EDGE_MIN || iNextY > MAP_EDGE_MAX) {
+								if (military_debug & MILITARY_DEBUG_PLACEMENT_NAVAL)
+									ConsoleLog(LOG_DEBUG, "Break 2: (%d, %d)\n", iNextX, iNextY);
+								break;
+							}
+							SetNewCoords(&iAdvanceBy, iNextX, iNextY);
+							//BYTE iTile = (wViewRotation == VIEWROTATION_SOUTH) ? TILE_TREES7 : (wViewRotation == VIEWROTATION_WEST) ? TILE_TREES5 : (wViewRotation == VIEWROTATION_EAST) ? TILE_TREES3 : TILE_TREES1;
+							// Temporary coastline drawing.
+							//Game_PlaceTileWithMilitaryCheck(iAdvanceBy.x, iAdvanceBy.y, iTile);
+							//if (military_debug & (MILITARY_DEBUG_PLACEMENT_NAVAL|MILITARY_DEBUG_PLACEMENT_NAVAL_VERBOSE))
+							//	ConsoleLog(LOG_DEBUG, "2 (%d, %d)\n", iAdvanceBy.x, iAdvanceBy.y);
+						} while (!isValidWaterBody(iAdvanceBy.x, iAdvanceBy.y));
+					}
+				}
+				iStartCoords = iIntermediateCoords;
+				if (nCurrPos >= 12) {
+					if (military_debug & MILITARY_DEBUG_PLACEMENT_NAVAL)
+						ConsoleLog(LOG_DEBUG, "--- (%d, %d) (%d) (%d) (%d, %d)\n", iStartCoords.x, iStartCoords.y, nCurrPos, nNextPos,
+							iIntermediateCoords.x, iIntermediateCoords.y);
+					int nRow = (nCurrPos - 12) / 2;
+					while (nRow <= --nCurrPos) {
+						iNextX = (iStartCoords.x + advanceX[iRotTwo]);
+						iNextY = (iStartCoords.y + advanceY[iRotTwo]);
+						if (iNextX < MAP_EDGE_MIN || iNextX > MAP_EDGE_MAX || iNextY < MAP_EDGE_MIN || iNextY > MAP_EDGE_MAX) {
+							if (military_debug & MILITARY_DEBUG_PLACEMENT_NAVAL)
+								ConsoleLog(LOG_DEBUG, "Break 3: (%d, %d)\n", iNextX, iNextY);
+							break;
+						}
+						SetNewCoords(&iAdvanceBy, iNextX, iNextY);
+						//if (military_debug & (MILITARY_DEBUG_PLACEMENT_NAVAL|MILITARY_DEBUG_PLACEMENT_NAVAL_VERBOSE))
+						//	ConsoleLog(LOG_DEBUG, "3 (%d, %d)\n", iAdvanceBy.x, iAdvanceBy.y);
+						if (isValidWaterBody(iAdvanceBy.x, iAdvanceBy.y)) {
+							do {
+								iNextX = (iAdvanceBy.x + advanceX[iRotOne]);
+								iNextY = (iAdvanceBy.y + advanceY[iRotOne]);
+								if (iNextX < MAP_EDGE_MIN || iNextX > MAP_EDGE_MAX || iNextY < MAP_EDGE_MIN || iNextY > MAP_EDGE_MAX) {
+									if (military_debug & MILITARY_DEBUG_PLACEMENT_NAVAL)
+										ConsoleLog(LOG_DEBUG, "Break 4: (%d, %d)\n", iNextX, iNextY);
+									break;
+								}
+								SetNewCoords(&iStartCoords, iNextX, iNextY);
+								iAdvanceBy = iStartCoords;
+								//if (military_debug & (MILITARY_DEBUG_PLACEMENT_NAVAL|MILITARY_DEBUG_PLACEMENT_NAVAL_VERBOSE))
+								//	ConsoleLog(LOG_DEBUG, "4 (%d, %d)\n", iStartCoords.x, iStartCoords.y);
+							} while (isValidWaterBody(iStartCoords.x, iStartCoords.y));
+						}
+						else {
+							do {
+								iStartCoords = iAdvanceBy;
+								iNextX = (iAdvanceBy.x + advanceX[iRotThree]);
+								iNextY = (iAdvanceBy.y + advanceY[iRotThree]);
+								if (iNextX < MAP_EDGE_MIN || iNextX > MAP_EDGE_MAX || iNextY < MAP_EDGE_MIN || iNextY > MAP_EDGE_MAX) {
+									if (military_debug & MILITARY_DEBUG_PLACEMENT_NAVAL)
+										ConsoleLog(LOG_DEBUG, "Break 5: (%d, %d)\n", iNextX, iNextY);
+									break;
+								}
+								SetNewCoords(&iAdvanceBy, iNextX, iNextY);
+								//BYTE iTile = (wViewRotation == VIEWROTATION_SOUTH) ? TILE_RUBBLE1 : (wViewRotation == VIEWROTATION_WEST) ? TILE_RUBBLE3 : (wViewRotation == VIEWROTATION_EAST) ? TILE_RUBBLE2 : TILE_RUBBLE4;
+								// Temporary drawing.
+								//Game_PlaceTileWithMilitaryCheck(iAdvanceBy.x, iAdvanceBy.y, iTile);
+								//if (military_debug & (MILITARY_DEBUG_PLACEMENT_NAVAL|MILITARY_DEBUG_PLACEMENT_NAVAL_VERBOSE))
+								//	ConsoleLog(LOG_DEBUG, "5 (%d, %d)\n", iAdvanceBy.x, iAdvanceBy.y);
+							} while (!isValidWaterBody(iAdvanceBy.x, iAdvanceBy.y));
+						}
+						if (nCurrPos < nRow + 10) {
+							iAdvanceBy = iStartCoords;
+							iBaseLevel = ALTMReturnLandAltitude(iAdvanceBy.x, iAdvanceBy.y);
+							for (nNextPos = 0; nNextPos < 4; ++nNextPos) {
+								BYTE iTileID = GetTileID(iAdvanceBy.x, iAdvanceBy.y);
+								if (iTileID < TILE_SMALLPARK &&
+									!GetTerrainTileID(iAdvanceBy.x, iAdvanceBy.y) &&
+									!XBITReturnIsWater(iAdvanceBy.x, iAdvanceBy.y) &&
+									!GetUndergroundTileID(iAdvanceBy.x, iAdvanceBy.y) && 
+									ALTMReturnLandAltitude(iAdvanceBy.x, iAdvanceBy.y) == iBaseLevel) {
+									Game_PlaceTileWithMilitaryCheck(iAdvanceBy.x, iAdvanceBy.y, 0);
+									XZONSetNewZone(iAdvanceBy.x, iAdvanceBy.y, ZONE_MILITARY);
+									--dwTileCount[iTileID];
+									++dwMilitaryTiles[MILITARYTILE_OTHER];
+								}
+								iNextX = (iAdvanceBy.x + advanceX[iRotOne]);
+								iNextY = (iAdvanceBy.y + advanceY[iRotOne]);
+								if (iNextX < MAP_EDGE_MIN || iNextX > MAP_EDGE_MAX || iNextY < MAP_EDGE_MIN || iNextY > MAP_EDGE_MAX) {
+									if (military_debug & MILITARY_DEBUG_PLACEMENT_NAVAL)
+										ConsoleLog(LOG_DEBUG, "Break 6: (%d, %d)\n", iNextX, iNextY);
+									break;
+								}
+								SetNewCoords(&iAdvanceBy, iNextX, iNextY);
+							}
+							if (nCurrPos == nRow + 5)
+								iFinalCoords = iStartCoords;
+						}
+					}
+					bMilitaryBaseType = MILITARY_BASE_NAVY;
+					Game_CenterOnTileCoords(iFinalCoords.x, iFinalCoords.y);
+					return GameMain_AfxMessageBoxID(243, 0, -1);
+				}
+			}
+#else
 BACKTOSPOTREROLL:
 			iTileCoords[0] = SetTileCoords(0); // First Corner
 			iTileCoords[1] = SetTileCoords(1); // Second Corner
@@ -698,6 +896,7 @@ PLACENAVAL:
 					goto BACKTOSPOTREROLL;
 				}
 			}
+#endif
 		}
 	}
 NONAVY:
