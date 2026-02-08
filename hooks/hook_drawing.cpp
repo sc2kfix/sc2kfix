@@ -512,8 +512,8 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 		return;
 	}
 	iZone = XZONReturnZone(iX, iY);
+	DoUndergroundAspects(iX, iY, nSprStart, nSizeLevel);
 	if (iTile == TILE_CLEAR) {
-		DoUndergroundAspects(iX, iY, nSprStart, nSizeLevel);
 		DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
 		if (iTerrainTile > TERRAIN_00 || !iZone)
 			iSprite = GetTerrainSprite(iTerrainTile, nSprStart);
@@ -524,7 +524,6 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 	else if (iTile >= TILE_ROAD_LR) {
 		if (iTile >= TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1) {
 			if (DisplayLayer[LAYER_BUILDINGS]) {
-				DoUndergroundAspects(iX, iY, nSprStart, nSizeLevel);
 				if (DisplayLayer[LAYER_ZONES] || !iZone) {
 					if (XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
 						// The following call is to account for >= 1x1 buildings and avoid the map-edge
@@ -552,14 +551,12 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 					}
 				}
 				else {
-					DoUndergroundAspects(iX, iY, nSprStart, nSizeLevel);
 					DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
 					iSprite = iZone + nSprWaterTer;
 					Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
 				}
 			}
 			else {
-				DoUndergroundAspects(iX, iY, nSprStart, nSizeLevel);
 				DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
 				if (DisplayLayer[LAYER_ZONES] || !iZone)
 					iSprite = BuiltUpZones[iZone] + nSprGreenTile;
@@ -569,7 +566,6 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 			}
 		}
 		else {
-			DoUndergroundAspects(iX, iY, nSprStart, nSizeLevel);
 			DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
 			iSprite = GetTerrainSprite(iTerrainTile, nSprStart);
 			if (DisplayLayer[LAYER_INFRANATURE]) {
@@ -673,7 +669,6 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 		}
 	}
 	else {
-		DoUndergroundAspects(iX, iY, nSprStart, nSizeLevel);
 		DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
 		iSprTop = iMapOffSetY - nLandAltScale * iAltTop;
 		if (iTerrainTile == TERRAIN_13)
