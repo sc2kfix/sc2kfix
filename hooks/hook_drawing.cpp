@@ -298,13 +298,6 @@ static __int16 getCoverageOffsetsY(__int16 nSizeLevel, __int16 nAxis, __int16 nP
 	return 0;
 }
 
-static __int16 getCoverageOffsets(__int16 nSizeLevel, __int16 nAxis, __int16 nPos, __int16 nCoverage, BOOL bX) {
-	if (bX)
-		return getCoverageOffsetsX(nSizeLevel, nAxis, nPos, nCoverage);
-	else
-		return getCoverageOffsetsY(nSizeLevel, nAxis, nPos, nCoverage);
-}
-
 static void DoCoverageMapEdgeFill(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX, int iY, __int16 nSprBedrock, __int16 nSprWaterfall, __int16 nLandAltScale, __int16 nSizeLevel, BYTE iTile) {
 	__int16 iBottom;
 	WORD iLandAlt;
@@ -323,11 +316,11 @@ static void DoCoverageMapEdgeFill(__int16 iMapOffSetX, __int16 iMapOffSetY, int 
 		else {
 			if (iX + iCoverage == MAP_EDGE_MAX) {
 				for (__int16 i = 0; i < iCoverageSize; i++)
-					DoBedrockEdge(iMapOffSetX, iX, iY, getCoverageOffsets(nSizeLevel, AXIS_HORZ, i, iCoverage, TRUE), getCoverageOffsets(nSizeLevel, AXIS_VERT, i, iCoverage, TRUE), iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
+					DoBedrockEdge(iMapOffSetX, iX, iY, getCoverageOffsetsX(nSizeLevel, AXIS_HORZ, i, iCoverage), getCoverageOffsetsX(nSizeLevel, AXIS_VERT, i, iCoverage), iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
 			}
 			else if (iY == MAP_EDGE_MAX) {
 				for (__int16 i = 0; i < iCoverageSize; i++)
-					DoBedrockEdge(iMapOffSetX, iX, iY, getCoverageOffsets(nSizeLevel, AXIS_HORZ, i, iCoverage, FALSE), getCoverageOffsets(nSizeLevel, AXIS_VERT, i, iCoverage, FALSE), iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
+					DoBedrockEdge(iMapOffSetX, iX, iY, getCoverageOffsetsY(nSizeLevel, AXIS_HORZ, i, iCoverage), getCoverageOffsetsY(nSizeLevel, AXIS_VERT, i, iCoverage), iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
 			}
 		}
 	}
