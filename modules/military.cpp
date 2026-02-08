@@ -37,7 +37,7 @@ UINT military_debug = MILITARY_DEBUG;
 
 static DWORD dwDummy;
 
-static coords_w_t startNavalCoords[VIEWROTATION_COUNT] = {
+static coords_w_t cornerCoords[VIEWROTATION_COUNT] = {
 	{ MAP_EDGE_MAX, MAP_EDGE_MIN },
 	{ MAP_EDGE_MIN, MAP_EDGE_MIN },
 	{ MAP_EDGE_MIN, MAP_EDGE_MAX },
@@ -72,78 +72,6 @@ static void SwapAxis(coords_w_t *pCoords) {
 
 	pCoords->x = tempPos.y;
 	pCoords->y = tempPos.x;
-}
-
-// This function has been replicated from he equivalent that was found
-// in the DOS version of the game.
-static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
-	WORD wOldToolGroup;
-	__int16 nCnt;
-	__int16 iX;
-	__int16 iY;
-	__int16 iNewX;
-	__int16 iNewY;
-	BYTE iTileID;
-
-	wOldToolGroup = wMaybeActiveToolGroup;
-	iX = x2;
-	iY = y2;
-	wMaybeActiveToolGroup = CITYTOOL_GROUP_ROADS;
-	nCnt = 0;
-	if (Game_MaybeCheckViablePlacementPath(x1, y1, x2, y2)) {
-		iNewX = iX = x1;
-		iNewY = iY = y1;
-		while (Game_MaybeRoadViabilityAlongPath(&iNewX, &iNewY)) {
-			Game_CheckAndAdjustTraversableTerrain(iX, iY);
-			iTileID = GetTileID(iX, iY);
-			if (iTileID < TILE_SMALLPARK && iTileID != TILE_RADIOACTIVITY) {
-				Game_PlaceRoadAtCoordinates(iX, iY);
-				if (GetTileID(iX, iY) >= TILE_ROAD_LR && GetTileID(iX, iY) <= TILE_ROAD_LTBR) {
-					XZONSetNewZone(iX, iY, ZONE_MILITARY);
-					nCnt++;
-				}
-			}
-			iX = iNewX;
-			iY = iNewY;
-		}
-		Game_CheckAndAdjustTraversableTerrain(iX, iY);
-		iTileID = GetTileID(iX, iY);
-		if (iTileID < TILE_SMALLPARK && iTileID != TILE_RADIOACTIVITY) {
-			Game_PlaceRoadAtCoordinates(iX, iY);
-			if (GetTileID(iX, iY) >= TILE_ROAD_LR && GetTileID(iX, iY) <= TILE_ROAD_LTBR) {
-				XZONSetNewZone(iX, iY, ZONE_MILITARY);
-				nCnt++;
-			}
-		}
-	}
-	if (nCnt > 0) {
-		iTileID = GetTileID(x1, y1);
-		if (iTileID >= TILE_ROAD_LR && iTileID <= TILE_ROAD_LTBR) {
-			// TERRAIN_00 check added here to avoid the runwaycross
-			// being placed into a dip (likely replacing a slope or granite block).
-			if (!GetTerrainTileID(x1, y1) && XZONReturnZone(x1, y1) == ZONE_MILITARY) {
-				XZONSetCornerMask(x1, y1, CORNER_ALL);
-				Game_PlaceTileWithMilitaryCheck(x1, y1, TILE_INFRASTRUCTURE_RUNWAYCROSS);
-			}
-		}
-		if (nCnt > 1) {
-			iTileID = GetTileID(iX, iY);
-			if (iTileID >= TILE_ROAD_LR && iTileID <= TILE_ROAD_LTBR) {
-				// TERRAIN_00 check added here to avoid the runwaycross
-				// being placed into a dip (likely replacing a slope or granite block).
-				if (!GetTerrainTileID(iX, iY) && XZONReturnZone(iX, iY) == ZONE_MILITARY) {
-					XZONSetCornerMask(iX, iY, CORNER_ALL);
-					Game_PlaceTileWithMilitaryCheck(iX, iY, TILE_INFRASTRUCTURE_RUNWAYCROSS);
-				}
-			}
-		}
-	}
-	wMaybeActiveToolGroup = wOldToolGroup;
-	Game_ResetTileDirection();
-}
-
-static int isValidWaterBody(__int16 x, __int16 y) {
-	return (XBITReturnIsSaltWater(x, y) && XBITReturnIsWater(x, y)) ? 1 : 0;
 }
 
 static int CheckOverlappingSiloPosition(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
@@ -362,9 +290,9 @@ static void MilitaryBasePlotCheck(__int16 *iVAltitudeTiles, __int16 *iVTiles, co
 	*pRandPos = randPos;
 }
 
-static void MilitaryBasePlotPlacement(__int16 iRandXPos, __int16 iRandYPos) {
-	for (__int16 iCurrXPos = iRandXPos; iCurrXPos < iRandXPos + 8; ++iCurrXPos) {
-		for (__int16 iCurrYPos = iRandYPos; iCurrYPos < iRandYPos + 8; ++iCurrYPos) {
+static void MilitaryBasePlotPlacement(coords_w_t *pRandPos) {
+	for (__int16 iCurrXPos = pRandPos->x; iCurrXPos < pRandPos->x + 8; ++iCurrXPos) {
+		for (__int16 iCurrYPos = pRandPos->y; iCurrYPos < pRandPos->y + 8; ++iCurrYPos) {
 			BYTE iTileID = GetTileID(iCurrXPos, iCurrYPos);
 			if (iTileID < TILE_SMALLPARK &&
 				!GetTerrainTileID(iCurrXPos, iCurrYPos) &&
@@ -386,7 +314,7 @@ static int MilitaryBaseDecline(void) {
 	return iRes;
 }
 
-static int MilitaryBaseAirForce(int iValidTiles, int iValidAltitudeTiles, __int16 iRandXPos, __int16 iRandYPos) {
+static int MilitaryBaseAirForce(int iValidTiles, int iValidAltitudeTiles, coords_w_t *pRandPos) {
 	if (iValidAltitudeTiles < 40)
 		return 0;
 
@@ -394,15 +322,89 @@ static int MilitaryBaseAirForce(int iValidTiles, int iValidAltitudeTiles, __int1
 		bMilitaryBaseType = MILITARY_BASE_AIR_FORCE;
 		GameMain_AfxMessageBoxID(242, 0, -1);
 
-		MilitaryBasePlotPlacement(iRandXPos, iRandYPos);
+		MilitaryBasePlotPlacement(pRandPos);
 
-		return Game_CenterOnTileCoords(iRandXPos + 4, iRandYPos + 4);
+		return Game_CenterOnTileCoords(pRandPos->x + 4, pRandPos->y + 4);
 	}
 
 	return -1;
 }
 
-static int MilitaryBaseArmyBase(int iValidTiles, int iValidAltitudeTiles, __int16 iRandXPos, __int16 iRandYPos) {
+// This function has been replicated from the equivalent that was found
+// in the DOS version of the game.
+static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
+	WORD wOldToolGroup;
+	__int16 nCnt;
+	__int16 iX;
+	__int16 iY;
+	__int16 iNewX;
+	__int16 iNewY;
+	BYTE iTileID;
+
+	wOldToolGroup = wMaybeActiveToolGroup;
+	iX = x2;
+	iY = y2;
+	wMaybeActiveToolGroup = CITYTOOL_GROUP_ROADS;
+	nCnt = 0;
+	if (Game_MaybeCheckViablePlacementPath(x1, y1, x2, y2)) {
+		iNewX = iX = x1;
+		iNewY = iY = y1;
+		while (Game_MaybeRoadViabilityAlongPath(&iNewX, &iNewY)) {
+			Game_CheckAndAdjustTraversableTerrain(iX, iY);
+			iTileID = GetTileID(iX, iY);
+			if (iTileID < TILE_SMALLPARK && iTileID != TILE_RADIOACTIVITY) {
+				Game_PlaceRoadAtCoordinates(iX, iY);
+				if (GetTileID(iX, iY) >= TILE_ROAD_LR && GetTileID(iX, iY) <= TILE_ROAD_LTBR) {
+					XZONSetNewZone(iX, iY, ZONE_MILITARY);
+					nCnt++;
+				}
+			}
+			iX = iNewX;
+			iY = iNewY;
+		}
+		Game_CheckAndAdjustTraversableTerrain(iX, iY);
+		iTileID = GetTileID(iX, iY);
+		if (iTileID < TILE_SMALLPARK && iTileID != TILE_RADIOACTIVITY) {
+			Game_PlaceRoadAtCoordinates(iX, iY);
+			if (GetTileID(iX, iY) >= TILE_ROAD_LR && GetTileID(iX, iY) <= TILE_ROAD_LTBR) {
+				XZONSetNewZone(iX, iY, ZONE_MILITARY);
+				nCnt++;
+			}
+		}
+	}
+	if (nCnt > 0) {
+		iTileID = GetTileID(x1, y1);
+		if (iTileID >= TILE_ROAD_LR && iTileID <= TILE_ROAD_LTBR) {
+			// TERRAIN_00 check added here to avoid the runwaycross
+			// being placed into a dip (likely replacing a slope or granite block).
+			if (!GetTerrainTileID(x1, y1) && XZONReturnZone(x1, y1) == ZONE_MILITARY) {
+				XZONSetCornerMask(x1, y1, CORNER_ALL);
+				Game_PlaceTileWithMilitaryCheck(x1, y1, TILE_INFRASTRUCTURE_RUNWAYCROSS);
+			}
+		}
+		if (nCnt > 1) {
+			iTileID = GetTileID(iX, iY);
+			if (iTileID >= TILE_ROAD_LR && iTileID <= TILE_ROAD_LTBR) {
+				// TERRAIN_00 check added here to avoid the runwaycross
+				// being placed into a dip (likely replacing a slope or granite block).
+				if (!GetTerrainTileID(iX, iY) && XZONReturnZone(iX, iY) == ZONE_MILITARY) {
+					XZONSetCornerMask(iX, iY, CORNER_ALL);
+					Game_PlaceTileWithMilitaryCheck(iX, iY, TILE_INFRASTRUCTURE_RUNWAYCROSS);
+				}
+			}
+		}
+	}
+	wMaybeActiveToolGroup = wOldToolGroup;
+	Game_ResetTileDirection();
+}
+
+static void DoArmyBaseStrips(__int16 iStartX, __int16 iStartY, __int16 iEndX, __int16 iEndY) {
+	FormArmyBaseStrip(iStartX, iStartY, iEndX, iEndY);
+	if (!GetTileID(iEndX, iEndY))
+		FormArmyBaseStrip(iEndX, iEndY, iStartX, iStartY);
+}
+
+static int MilitaryBaseArmyBase(int iValidTiles, int iValidAltitudeTiles, coords_w_t *pRandPos) {
 	if (iValidTiles < 40)
 		return 0;
 
@@ -410,30 +412,28 @@ static int MilitaryBaseArmyBase(int iValidTiles, int iValidAltitudeTiles, __int1
 		bMilitaryBaseType = MILITARY_BASE_ARMY;
 		GameMain_AfxMessageBoxID(241, 0, -1);
 
-		MilitaryBasePlotPlacement(iRandXPos, iRandYPos);
+		MilitaryBasePlotPlacement(pRandPos);
 
 		// Explanation:
 		// First it lays down the depth-way roads and runwaycross.
 		// Second it lays down the length-way roads and runwaycross.
-		// It checks to make sure at X and Y + N that the tile is
+		// It checks to make sure at X + N and Y + N that the tile is
 		// empty (just in case a spawn failed), and then it lays the 
 		// road-strip and runwaycross from the opposite direction.
-		FormArmyBaseStrip(iRandXPos + 2, iRandYPos, iRandXPos + 2, iRandYPos + 7);
-		if (!GetTileID(iRandXPos + 2, iRandYPos + 7))
-			FormArmyBaseStrip(iRandXPos + 2, iRandYPos + 7, iRandXPos + 2, iRandYPos);
-		FormArmyBaseStrip(iRandXPos + 5, iRandYPos, iRandXPos + 5, iRandYPos + 7);
-		if (!GetTileID(iRandXPos + 5, iRandYPos + 7))
-			FormArmyBaseStrip(iRandXPos + 5, iRandYPos + 7, iRandXPos + 5, iRandYPos);
-		FormArmyBaseStrip(iRandXPos, iRandYPos + 2, iRandXPos + 7, iRandYPos + 2);
-		if (!GetTileID(iRandXPos + 7, iRandYPos + 2))
-			FormArmyBaseStrip(iRandXPos + 7, iRandYPos + 2, iRandXPos, iRandYPos + 2);
-		FormArmyBaseStrip(iRandXPos, iRandYPos + 5, iRandXPos + 7, iRandYPos + 5);
-		if (!GetTileID(iRandXPos + 7, iRandYPos + 5))
-			FormArmyBaseStrip(iRandXPos + 7, iRandYPos + 5, iRandXPos, iRandYPos + 5);
-		return Game_CenterOnTileCoords(iRandXPos + 4, iRandYPos + 4);
+		DoArmyBaseStrips(pRandPos->x + 2, pRandPos->y, pRandPos->x + 2, pRandPos->y + 7);
+		DoArmyBaseStrips(pRandPos->x + 5, pRandPos->y, pRandPos->x + 5, pRandPos->y + 7);
+		
+		DoArmyBaseStrips(pRandPos->x, pRandPos->y + 2, pRandPos->x + 7, pRandPos->y + 2);
+		DoArmyBaseStrips(pRandPos->x, pRandPos->y + 5, pRandPos->x + 7, pRandPos->y + 5);
+
+		return Game_CenterOnTileCoords(pRandPos->x + 4, pRandPos->y + 4);
 	}
 
 	return -1;
+}
+
+static int isValidWaterBody(__int16 x, __int16 y) {
+	return (XBITReturnIsSaltWater(x, y) && XBITReturnIsWater(x, y)) ? 1 : 0;
 }
 
 static int MilitaryBaseNavalYard(bool force) {
@@ -447,7 +447,7 @@ static int MilitaryBaseNavalYard(bool force) {
 	
 	if (bCityHasOcean) {
 		if ((rand() & 1) != 0 || force) {
-			iStartCoords = startNavalCoords[wViewRotation];
+			iStartCoords = cornerCoords[wViewRotation];
 			iAdvanceBy = directionalSteps[wViewRotation];
 
 			if (military_debug & MILITARY_DEBUG_PLACEMENT_NAVAL)
@@ -683,11 +683,10 @@ void ProposeMilitaryBaseAirForceBase(void) {
 		return;
 	
 	unsigned int iMilitaryBaseTries = 0;
-
 REATTEMPT:
 	MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &randPos);
 	
-	iResult = MilitaryBaseAirForce(iValidTiles, iValidAltitudeTiles, randPos.x, randPos.y);
+	iResult = MilitaryBaseAirForce(iValidTiles, iValidAltitudeTiles, &randPos);
 	if (iResult <= 0) {
 		if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
 			iMilitaryBaseTries++;
@@ -714,7 +713,7 @@ void ProposeMilitaryBaseArmyBase(void) {
 REATTEMPT:
 	MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &randPos);
 	
-	iResult = MilitaryBaseArmyBase(iValidTiles, iValidAltitudeTiles, randPos.x, randPos.y);
+	iResult = MilitaryBaseArmyBase(iValidTiles, iValidAltitudeTiles, &randPos);
 	if (iResult <= 0) {
 		if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
 			iMilitaryBaseTries++;
@@ -771,10 +770,10 @@ extern "C" void __stdcall Hook_SimulationProposeMilitaryBase(void) {
 			iResult = MilitaryBaseMissileSilos(iValidAltitudeTiles, iValidTiles, &nSiloCnt, wSiloPos, false);
 			if (iResult <= 0) {
 				if (iResult < 0)
-					iResult = MilitaryBaseAirForce(iValidTiles, iValidAltitudeTiles, randPos.x, randPos.y);
+					iResult = MilitaryBaseAirForce(iValidTiles, iValidAltitudeTiles, &randPos);
 				if (iResult <= 0) {
 					if (iResult < 0)
-						iResult = MilitaryBaseArmyBase(iValidTiles, iValidAltitudeTiles, randPos.x, randPos.y);
+						iResult = MilitaryBaseArmyBase(iValidTiles, iValidAltitudeTiles, &randPos);
 					if (iResult <= 0) {
 						iResult = 0;
 
