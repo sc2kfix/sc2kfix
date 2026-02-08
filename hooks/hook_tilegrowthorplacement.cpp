@@ -1500,7 +1500,7 @@ extern "C" int __cdecl Hook_CityToolPlaceSelectedBuilding(__int16 iX, __int16 iY
 
 FAIL:
 	GameMain_String_Dest(&errString);
-	return (bFail) ? 0 : 0; // Change the else case to 1 once testing has completed.
+	return (bFail) ? 0 : 1;
 }
 
 void InstallTileGrowthOrPlacementHandlingHooks_SC2K1996(void) {
