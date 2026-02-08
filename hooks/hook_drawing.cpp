@@ -433,6 +433,25 @@ static void DoUndergroundAspects(int iX, int iY, __int16 nSprStart, __int16 nSiz
 	}
 }
 
+static BOOL DoSpecificEdge(int iX, int iY, BYTE iZone, BYTE iTile) {
+	if (iTile >= TILE_ROAD_LR) {
+		if (iTile >= TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1) {
+			if (DisplayLayer[LAYER_BUILDINGS]) {
+				if (DisplayLayer[LAYER_ZONES] || !iZone) {
+					if (XZONCornerCheck(iX, iY, wCurrentPositionAngle))
+						return TRUE;
+					else {
+						// No edge drawing should occur here, otherwise
+						// you again end up with the original bleed case.
+						return -1;
+					}
+				}
+			}
+		}
+	}
+	return FALSE;
+}
+
 static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX, int iY) {
 	__int16 nSizeLevel;
 	__int16 nLandAltScale;
@@ -451,6 +470,7 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 	__int16 iSprite;
 	__int16 iTrafficSprite, iTrafficSpriteOffset;
 	__int16 iThing;
+	BOOL bSpecificEdge;
 	BOOL bIsFlipped;
 	BYTE iTerrainTile;
 	BYTE iTile;
@@ -505,16 +525,27 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 		iAltTop = ALTMReturnWaterLevel(iX, iY);
 	iTop = iMapOffSetY - nLandAltScale * iAltTop;
 	iTile = GetTileID(iX, iY);
-	if (iTile < TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1 && iTop < rcDst.top) {
-		// Add this here otherwise as soon as the map starts to go off screen
-		// (most noticeable in large mode) tile blocks will disappear.
-		DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
-		return;
-	}
 	iZone = XZONReturnZone(iX, iY);
+
 	DoUndergroundAspects(iX, iY, nSprStart, nSizeLevel);
+
+	// -------- Move the edge-drawing here with a specific check for the coverage version.
+	bSpecificEdge = DoSpecificEdge(iX, iY, iZone, iTile);
+	if (bSpecificEdge >= 0) {
+		if (bSpecificEdge) {
+			// The following call is to account for >= 1x1 buildings and avoid the map-edge
+			// bedrock-bleed that was previously occurring on >= 2x2 buildings.
+			DoCoverageMapEdgeFill(iMapOffSetX, iMapOffSetY, iX, iY, nSprBedrock, nSprWaterfall, nLandAltScale, nSizeLevel, iTile);
+		}
+		else
+			DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
+	}
+	// ^ -------- Move the edge-drawing here with a specific check for the coverage version.
+
+	if (iTile < TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1 && iTop < rcDst.top)
+		return;
+
 	if (iTile == TILE_CLEAR) {
-		DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
 		if (iTerrainTile > TERRAIN_00 || !iZone)
 			iSprite = GetTerrainSprite(iTerrainTile, nSprStart);
 		else
@@ -526,9 +557,6 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 			if (DisplayLayer[LAYER_BUILDINGS]) {
 				if (DisplayLayer[LAYER_ZONES] || !iZone) {
 					if (XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
-						// The following call is to account for >= 1x1 buildings and avoid the map-edge
-						// bedrock-bleed that was previously occurring on >= 2x2 buildings.
-						DoCoverageMapEdgeFill(iMapOffSetX, iMapOffSetY, iX, iY, nSprBedrock, nSprWaterfall, nLandAltScale, nSizeLevel, iTile);
 						if (iX >= GAME_MAP_SIZE || iY >= GAME_MAP_SIZE)
 							bIsFlipped = FALSE;
 						else
@@ -551,13 +579,11 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 					}
 				}
 				else {
-					DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
 					iSprite = iZone + nSprWaterTer;
 					Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
 				}
 			}
 			else {
-				DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
 				if (DisplayLayer[LAYER_ZONES] || !iZone)
 					iSprite = BuiltUpZones[iZone] + nSprGreenTile;
 				else
@@ -566,7 +592,6 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 			}
 		}
 		else {
-			DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
 			iSprite = GetTerrainSprite(iTerrainTile, nSprStart);
 			if (DisplayLayer[LAYER_INFRANATURE]) {
 				if (iTile < TILE_HIGHWAY_HTB || iTile >= TILE_SUBTORAIL_T) {
@@ -669,7 +694,6 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 		}
 	}
 	else {
-		DoMapEdge(iMapOffSetX, iX, iY, iBottom, iLandAlt, nSprBedrock, nSprWaterfall, nLandAltScale);
 		iSprTop = iMapOffSetY - nLandAltScale * iAltTop;
 		if (iTerrainTile == TERRAIN_13)
 			iSprTop = iTop - nLandAltScale;
