@@ -241,7 +241,7 @@ RETRYFROMCURRENT:
 			}
 		}
 	}
-	// When 'force' is set to false, this will lead to the normal
+	// When 'bForce' is set to FALSE, this will lead to the normal
 	// Air Force or Army Base cases.
 	return (bForce) ? 0 : -1;
 }
@@ -436,7 +436,7 @@ static int isValidWaterBody(__int16 x, __int16 y) {
 	return (XBITReturnIsSaltWater(x, y) && XBITReturnIsWater(x, y)) ? 1 : 0;
 }
 
-static int MilitaryBaseNavalYard(bool force) {
+static int MilitaryBaseNavalYard(BOOL bForce) {
 	WORD iBaseLevel;
 
 	coords_w_t iStartCoords, iAdvanceBy;
@@ -446,7 +446,7 @@ static int MilitaryBaseNavalYard(bool force) {
 	__int16 iNextX, iNextY;
 	
 	if (bCityHasOcean) {
-		if ((rand() & 1) != 0 || force) {
+		if ((rand() & 1) != 0 || bForce) {
 			iStartCoords = cornerCoords[wViewRotation];
 			iAdvanceBy = directionalSteps[wViewRotation];
 
@@ -662,7 +662,7 @@ REATTEMPT:
 			iMilitaryBaseTries++;
 			// Force on the last attempt.
 			if (iMilitaryBaseTries == MILITARY_RETRY_ATTEMPT_MAX - 1)
-				bForce = true;
+				bForce = TRUE;
 			goto REATTEMPT;
 		}
 		MilitaryBaseDecline();
@@ -737,7 +737,7 @@ void ProposeMilitaryBaseNavalYard(void) {
 	
 	unsigned int iMilitaryBaseTries = 0;
 REATTEMPT:
-	int iResult = MilitaryBaseNavalYard(true);
+	int iResult = MilitaryBaseNavalYard(TRUE);
 	if (iResult < 0) {
 		if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
 			iMilitaryBaseTries++;
@@ -764,10 +764,10 @@ extern "C" void __stdcall Hook_SimulationProposeMilitaryBase(void) {
 		bMilitaryBaseType = MILITARY_BASE_DECLINED;
 	else {
 	REATTEMPT:
-		if (MilitaryBaseNavalYard(false) < 0) {
+		if (MilitaryBaseNavalYard(FALSE) < 0) {
 			MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &randPos);
 
-			iResult = MilitaryBaseMissileSilos(iValidAltitudeTiles, iValidTiles, &nSiloCnt, wSiloPos, false);
+			iResult = MilitaryBaseMissileSilos(iValidAltitudeTiles, iValidTiles, &nSiloCnt, wSiloPos, FALSE);
 			if (iResult <= 0) {
 				if (iResult < 0)
 					iResult = MilitaryBaseAirForce(iValidTiles, iValidAltitudeTiles, &randPos);
