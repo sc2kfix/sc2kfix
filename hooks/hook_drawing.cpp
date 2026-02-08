@@ -248,7 +248,7 @@ static int DoWaterfallEdge(__int16 iMapOffSetX, int iX, int iY, __int16 iBottom,
 	return 1;
 }
 
-static void DoMapEdge(__int16 iMapOffSetX, int iX, int iY, __int16 iBottom, __int16 iLandAlt, __int16 iSpriteID, __int16 iWaterFallSpriteID, __int16 nLandAltScale) {
+static void DoMapEdge(__int16 iMapOffSetX, int iX, int iY, __int16 iBottom, WORD iLandAlt, __int16 iSpriteID, __int16 iWaterFallSpriteID, __int16 nLandAltScale) {
 	if (iX == MAP_EDGE_MAX || iY == MAP_EDGE_MAX) {
 		if (iLandAlt > 0) {
 			while (rcDst.top <= iBottom) {
@@ -264,7 +264,7 @@ static void DoMapEdge(__int16 iMapOffSetX, int iX, int iY, __int16 iBottom, __in
 	}
 }
 
-static void DoBedrockEdge(__int16 iMapOffSetX, __int16 iX, __int16 iY, __int16 iOffSetX, __int16 iOffSetY, __int16 iBottom, __int16 iLandAlt, __int16 iSpriteID, __int16 iWaterFallSpriteID, __int16 nLandAltScale) {
+static void DoBedrockEdge(__int16 iMapOffSetX, __int16 iX, __int16 iY, __int16 iOffSetX, __int16 iOffSetY, __int16 iBottom, WORD iLandAlt, __int16 iSpriteID, __int16 iWaterFallSpriteID, __int16 nLandAltScale) {
 	if (iLandAlt > 0) {
 		while (rcDst.top <= iBottom + iOffSetY) {
 			if (rcDst.bottom > iBottom)
@@ -306,7 +306,8 @@ static __int16 getCoverageOffsets(__int16 nSizeLevel, __int16 nAxis, __int16 nPo
 }
 
 static void DoCoverageMapEdgeFill(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX, int iY, __int16 nSprBedrock, __int16 nSprWaterfall, __int16 nLandAltScale, __int16 nSizeLevel, BYTE iTile) {
-	__int16 iBottom, iLandAlt;
+	__int16 iBottom;
+	WORD iLandAlt;
 	__int16 iCoverageSize;
 	BYTE iCoverage;
 
@@ -352,7 +353,7 @@ static void DoUndergroundAspects(int iX, int iY, __int16 nSprStart, __int16 nSiz
 	__int16 iRight;
 	__int16 iBottom;
 	__int16 iSprBottom;
-	__int16 iTunnelLvl;
+	WORD iTunnelLvl;
 	__int16 iUndTrnSpr;
 	__int16 iSprite;
 	BYTE iTerrainTile;
@@ -445,8 +446,8 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 	__int16 iBottom;
 	__int16 iTop;
 	__int16 iSprTop;
-	__int16 iAltTop;
-	__int16 iLandAlt;
+	WORD iAltTop;
+	WORD iLandAlt;
 	__int16 iSprite;
 	__int16 iTrafficSprite, iTrafficSpriteOffset;
 	__int16 iThing;
@@ -781,9 +782,9 @@ extern "C" void __cdecl Hook_DrawUnderTile(__int16 iX, __int16 iY) {
 	__int16 iRight;
 	__int16 iBottom;
 	__int16 iTop;
-	__int16 iAltTop;
+	WORD iAltTop;
 	__int16 iUndTrnSpr;
-	__int16 iTunnelLvl;
+	WORD iTunnelLvl;
 	__int16 iSprBottom;
 	__int16 iSprPwrIndRight;
 	__int16 iSprite;
@@ -921,7 +922,7 @@ extern "C" void __cdecl Hook_DrawUnderTile(__int16 iX, __int16 iY) {
 }
 
 extern "C" void __cdecl Hook_DrawColorTile(__int16 iX, __int16 iY) {
-	__int16 iAltTop;
+	WORD iAltTop;
 	__int16 iTop;
 	__int16 iBottom;
 	__int16 iBaseSprite;

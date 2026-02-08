@@ -199,15 +199,15 @@ static int CheckForOverlappingSiloPositions(coords_w_t *wSiloPos, int iPos, __in
 	return 0;
 }
 
-static int MilitaryBaseMissileSilos(int iValidAltitudeTiles, int iValidTiles, int *nSiloCnt, coords_w_t *wSiloPos, bool force) {
+static int MilitaryBaseMissileSilos(int iValidAltitudeTiles, int iValidTiles, int *nSiloCnt, coords_w_t *wSiloPos, BOOL bForce) {
 	coords_w_t randPos;
 	__int16 iCurrXPos, iCurrYPos;
 	int iSiloIdx;
 	
-	if (iValidAltitudeTiles < 40 || force) {
+	if (iValidAltitudeTiles < 40 || bForce) {
 		int iSiloAttempt = 0;
 		int iValidPositions = *nSiloCnt;
-		if (iValidTiles < 40 || force) {
+		if (iValidTiles < 40 || bForce) {
 RETRYFROMBEGINNING:
 			int iRetrySiloAltitudePos = 0;
 			int iRetrySiloOverlapPos = 0;
@@ -224,11 +224,12 @@ RETRYFROMCURRENT:
 				randPos.y = Game_RandomWordLCGMod(GAME_MAP_SIZE-4);
 
 				// Randomize rotation here to cause an axis-swap.
-				if ((rand() & 3) != 0)
+				srand((randPos.x * randPos.y) + 1);
+				if ((rand() & MAP_EDGE_MAX) != 0)
 					SwapAxis(&randPos);
 
-				__int16 iBaseLevel = ALTMReturnLandAltitude(randPos.x, randPos.y);
-				if (!force) {
+				WORD iBaseLevel = ALTMReturnLandAltitude(randPos.x, randPos.y);
+				if (!bForce) {
 					if (iBaseLevel <= 5) {
 						if (iRetrySiloAltitudePos < MILITARY_RETRY_SILO_REPOSIT) {
 							iRetrySiloAltitudePos++;
@@ -314,7 +315,7 @@ RETRYFROMCURRENT:
 	}
 	// When 'force' is set to false, this will lead to the normal
 	// Air Force or Army Base cases.
-	return (force) ? 0 : -1;
+	return (bForce) ? 0 : -1;
 }
 
 static void MilitaryBasePlotCheck(__int16 *iVAltitudeTiles, __int16 *iVTiles, coords_w_t *pRandPos) {
@@ -341,7 +342,7 @@ static void MilitaryBasePlotCheck(__int16 *iVAltitudeTiles, __int16 *iVTiles, co
 			randPos.y = MAP_EDGE_MAX - 8;
 		iValidAltitudeTiles = 0;
 		iValidTiles = 0;
-		__int16 iBaseLevel = ALTMReturnLandAltitude(randPos.x, randPos.y);
+		WORD iBaseLevel = ALTMReturnLandAltitude(randPos.x, randPos.y);
 		for (__int16 iCurrXPos = randPos.x; iCurrXPos < randPos.x + 8; ++iCurrXPos) {
 			for (__int16 iCurrYPos = randPos.y; iCurrYPos < randPos.y + 8; ++iCurrYPos) {
 				if (GetTileID(iCurrXPos, iCurrYPos) < TILE_SMALLPARK &&
@@ -436,7 +437,7 @@ static int MilitaryBaseArmyBase(int iValidTiles, int iValidAltitudeTiles, __int1
 }
 
 static int MilitaryBaseNavalYard(bool force) {
-	__int16 iBaseLevel;
+	WORD iBaseLevel;
 
 	coords_w_t iStartCoords, iAdvanceBy;
 	coords_w_t iFinalCoords, iIntermediateCoords;
@@ -639,6 +640,7 @@ void ProposeMilitaryBaseDecline(void) {
 }
 
 void ProposeMilitaryBaseMissileSilos(void) {
+	BOOL bForce = FALSE;
 	int nSiloCnt;
 	coords_w_t wSiloPos[MAX_SILOS];
 
@@ -654,10 +656,13 @@ void ProposeMilitaryBaseMissileSilos(void) {
 	memset(wSiloPos, 0, sizeof(wSiloPos));
 
 REATTEMPT:
-	int iSiloRet = MilitaryBaseMissileSilos(0, 0, &nSiloCnt, wSiloPos, true);
+	int iSiloRet = MilitaryBaseMissileSilos(0, 0, &nSiloCnt, wSiloPos, bForce);
 	if (iSiloRet <= 0) {
 		if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
 			iMilitaryBaseTries++;
+			// Force on the last attempt.
+			if (iMilitaryBaseTries == MILITARY_RETRY_ATTEMPT_MAX - 1)
+				bForce = true;
 			goto REATTEMPT;
 		}
 		MilitaryBaseDecline();
