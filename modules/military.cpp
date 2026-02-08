@@ -317,11 +317,10 @@ RETRYFROMCURRENT:
 	return (force) ? 0 : -1;
 }
 
-static void MilitaryBasePlotCheck(__int16 *iVAltitudeTiles, __int16 *iVTiles, __int16 *iRXPos, __int16 *iRYPos) {
+static void MilitaryBasePlotCheck(__int16 *iVAltitudeTiles, __int16 *iVTiles, coords_w_t *pRandPos) {
 	__int16 iValidAltitudeTiles;
 	__int16 iValidTiles;
-	__int16 iRandXPos;
-	__int16 iRandYPos;
+	coords_w_t randPos;
 
 	int iIterations = 24;
 	iValidAltitudeTiles = 0;
@@ -330,21 +329,21 @@ static void MilitaryBasePlotCheck(__int16 *iVAltitudeTiles, __int16 *iVTiles, __
 		BOOL bMaxIteration = iIterations-- == 0;
 		if (bMaxIteration)
 			break;
-		iRandXPos = Game_RandomWordLCGMod(119);
-		if (iRandXPos < MAP_EDGE_MIN)
-			iRandXPos = MAP_EDGE_MIN;
-		else if (iRandXPos > MAP_EDGE_MAX)
-			iRandXPos = MAP_EDGE_MAX - 8;
-		iRandYPos = Game_RandomWordLCGMod(119);
-		if (iRandYPos < MAP_EDGE_MIN)
-			iRandYPos = MAP_EDGE_MIN;
-		else if (iRandYPos > MAP_EDGE_MAX)
-			iRandYPos = MAP_EDGE_MAX - 8;
+		randPos.x = Game_RandomWordLCGMod(119);
+		if (randPos.x < MAP_EDGE_MIN)
+			randPos.x = MAP_EDGE_MIN;
+		else if (randPos.x > MAP_EDGE_MAX)
+			randPos.x = MAP_EDGE_MAX - 8;
+		randPos.y = Game_RandomWordLCGMod(119);
+		if (randPos.y < MAP_EDGE_MIN)
+			randPos.y = MAP_EDGE_MIN;
+		else if (randPos.y > MAP_EDGE_MAX)
+			randPos.y = MAP_EDGE_MAX - 8;
 		iValidAltitudeTiles = 0;
 		iValidTiles = 0;
-		__int16 iBaseLevel = ALTMReturnLandAltitude(iRandXPos, iRandYPos);
-		for (__int16 iCurrXPos = iRandXPos; iCurrXPos < iRandXPos + 8; ++iCurrXPos) {
-			for (__int16 iCurrYPos = iRandYPos; iCurrYPos < iRandYPos + 8; ++iCurrYPos) {
+		__int16 iBaseLevel = ALTMReturnLandAltitude(randPos.x, randPos.y);
+		for (__int16 iCurrXPos = randPos.x; iCurrXPos < randPos.x + 8; ++iCurrXPos) {
+			for (__int16 iCurrYPos = randPos.y; iCurrYPos < randPos.y + 8; ++iCurrYPos) {
 				if (GetTileID(iCurrXPos, iCurrYPos) < TILE_SMALLPARK &&
 					!GetTerrainTileID(iCurrXPos, iCurrYPos) &&
 					(iCurrXPos >= GAME_MAP_SIZE || iCurrYPos >= GAME_MAP_SIZE || !XBITReturnIsWater(iCurrXPos, iCurrYPos)) &&
@@ -359,8 +358,7 @@ static void MilitaryBasePlotCheck(__int16 *iVAltitudeTiles, __int16 *iVTiles, __
 
 	*iVAltitudeTiles = iValidAltitudeTiles;
 	*iVTiles = iValidTiles;
-	*iRXPos = iRandXPos;
-	*iRYPos = iRandYPos;
+	*pRandPos = randPos;
 }
 
 static void MilitaryBasePlotPlacement(__int16 iRandXPos, __int16 iRandYPos) {
@@ -670,8 +668,7 @@ void ProposeMilitaryBaseAirForceBase(void) {
 	int iResult;
 	__int16 iValidAltitudeTiles;
 	__int16 iValidTiles;
-	__int16 iRandXPos;
-	__int16 iRandYPos;
+	coords_w_t randPos;
 
 	if (!Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis) || !wCityMode)
 		return;
@@ -683,9 +680,9 @@ void ProposeMilitaryBaseAirForceBase(void) {
 	unsigned int iMilitaryBaseTries = 0;
 
 REATTEMPT:
-	MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &iRandXPos, &iRandYPos);
+	MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &randPos);
 	
-	iResult = MilitaryBaseAirForce(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandYPos);
+	iResult = MilitaryBaseAirForce(iValidTiles, iValidAltitudeTiles, randPos.x, randPos.y);
 	if (iResult <= 0) {
 		if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
 			iMilitaryBaseTries++;
@@ -699,8 +696,7 @@ void ProposeMilitaryBaseArmyBase(void) {
 	int iResult;
 	__int16 iValidAltitudeTiles;
 	__int16 iValidTiles;
-	__int16 iRandXPos;
-	__int16 iRandYPos;
+	coords_w_t randPos;
 
 	if (!Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis) || !wCityMode)
 		return;
@@ -711,9 +707,9 @@ void ProposeMilitaryBaseArmyBase(void) {
 	
 	unsigned int iMilitaryBaseTries = 0;
 REATTEMPT:
-	MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &iRandXPos, &iRandYPos);
+	MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &randPos);
 	
-	iResult = MilitaryBaseArmyBase(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandYPos);
+	iResult = MilitaryBaseArmyBase(iValidTiles, iValidAltitudeTiles, randPos.x, randPos.y);
 	if (iResult <= 0) {
 		if (iMilitaryBaseTries < MILITARY_RETRY_ATTEMPT_MAX) {
 			iMilitaryBaseTries++;
@@ -751,8 +747,7 @@ extern "C" void __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	int iResult;
 	__int16 iValidAltitudeTiles;
 	__int16 iValidTiles;
-	__int16 iRandXPos;
-	__int16 iRandYPos;
+	coords_w_t randPos;
 	int nSiloCnt;
 	coords_w_t wSiloPos[MAX_SILOS];
 	
@@ -766,15 +761,15 @@ extern "C" void __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	else {
 	REATTEMPT:
 		if (MilitaryBaseNavalYard(false) < 0) {
-			MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &iRandXPos, &iRandYPos);
+			MilitaryBasePlotCheck(&iValidAltitudeTiles, &iValidTiles, &randPos);
 
 			iResult = MilitaryBaseMissileSilos(iValidAltitudeTiles, iValidTiles, &nSiloCnt, wSiloPos, false);
 			if (iResult <= 0) {
 				if (iResult < 0)
-					iResult = MilitaryBaseAirForce(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandYPos);
+					iResult = MilitaryBaseAirForce(iValidTiles, iValidAltitudeTiles, randPos.x, randPos.y);
 				if (iResult <= 0) {
 					if (iResult < 0)
-						iResult = MilitaryBaseArmyBase(iValidTiles, iValidAltitudeTiles, iRandXPos, iRandYPos);
+						iResult = MilitaryBaseArmyBase(iValidTiles, iValidAltitudeTiles, randPos.x, randPos.y);
 					if (iResult <= 0) {
 						iResult = 0;
 
