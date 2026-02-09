@@ -337,6 +337,31 @@ static __int16 GetTerrainSprite(BYTE iTerrainTile, __int16 nSprStart) {
 	return iSprite;
 }
 
+static BOOL NoUnderDraw(int iX, int iY) {
+	BYTE iTile = GetTileID(iX, iY);
+	
+	if (GetTileCoverage(iTile)) {
+		if (iTile >= TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1) {
+			if (DisplayLayer[LAYER_BUILDINGS]) {
+				if (DisplayLayer[LAYER_ZONES] || !XZONReturnZone(iX, iY)) {
+					if (!XZONCornerCheck(iX, iY, wCurrentPositionAngle))
+						return TRUE;
+				}
+			}
+		}
+		else {
+			if (DisplayLayer[LAYER_INFRANATURE]) {
+				if (iTile >= TILE_HIGHWAY_HTB && iTile < TILE_SUBTORAIL_T) {
+					if (!XZONCornerCheck(iX, iY, wCurrentPositionAngle))
+						return TRUE;
+				}
+			}
+		}
+	}
+
+	return FALSE;
+}
+
 // This accounts for the tunnels, subways (underground station portion and tunnels)
 // and the missile silo case, the rest is only available in the normal underground mode.
 static void DoUndergroundAspects(int iX, int iY, __int16 nSprStart, __int16 nSizeLevel) {
@@ -389,8 +414,10 @@ static void DoUndergroundAspects(int iX, int iY, __int16 nSprStart, __int16 nSiz
 			else
 				return;
 
-			iSprite = iUnderTile + nSprStart + SPRITE_SMALL_BEDROCK_OUTLINE;
-			Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
+			if (!NoUnderDraw(iX, iY)) {
+				iSprite = iUnderTile + nSprStart + SPRITE_SMALL_BEDROCK_OUTLINE;
+				Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
+			}
 		}
 		else if (iUnderTile) {
 			iSprite = iUnderTile + nSprStart + SPRITE_SMALL_BEDROCK_OUTLINE;
@@ -420,8 +447,10 @@ static void DoUndergroundAspects(int iX, int iY, __int16 nSprStart, __int16 nSiz
 				else if (DisplayLayer[LAYER_ZONES])
 					Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
 			}
-			else
-				Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
+			else {
+				if (!NoUnderDraw(iX, iY))
+					Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
+			}
 		}
 	}
 }
