@@ -36,17 +36,8 @@ enum {
 #define LANDALTSCALE_VAL(x) (3 << x)
 #define SCALE_VAL(x) (4 << x)
 
-// Highway tile terrain offsets.
-#define HWY_HR_TROFF_VAL(x) (4 << x)
-#define HWY_VT_TROFF_VAL(x) (2 << x)
-
-#define HWY_HR_BROFF_VAL(x) (8 << x)
-
-#define HWY_HR_BLOFF_VAL(x) HWY_HR_TROFF_VAL(x)
-#define HWY_VT_BLOFF_VAL(x) HWY_VT_TROFF_VAL(x)
-
 // Raising bridge
-#define RAISE_THRESHOLD 8
+#define SHIP_MIN_DIST 8
 
 #define WATEREDPIPES_SPRITE_OFFSET 116
 
@@ -64,24 +55,6 @@ extern BOOL bMapWireFrame;
 UINT mdrawing_debug = MDRAWING_DEBUG;
 
 static DWORD dwDummy;
-
-static __int16 highwayTROffsets[SIZE_LEVELS][AXIS_COUNT] = {
-	{ HWY_HR_TROFF_VAL(SIZE_TINY),   HWY_VT_TROFF_VAL(SIZE_TINY)   },
-	{ HWY_HR_TROFF_VAL(SIZE_SMALL),  HWY_VT_TROFF_VAL(SIZE_SMALL)  },
-	{ HWY_HR_TROFF_VAL(SIZE_LARGE),  HWY_VT_TROFF_VAL(SIZE_LARGE)  },
-};
-
-static __int16 highwayBROffsets[SIZE_LEVELS][AXIS_COUNT] = {
-	{ HWY_HR_BROFF_VAL(SIZE_TINY),  0 },
-	{ HWY_HR_BROFF_VAL(SIZE_SMALL), 0 },
-	{ HWY_HR_BROFF_VAL(SIZE_LARGE), 0 }
-};
-
-static __int16 highwayBLOffsets[SIZE_LEVELS][AXIS_COUNT] = {
-	{ HWY_HR_BLOFF_VAL(SIZE_TINY),   HWY_VT_BLOFF_VAL(SIZE_TINY)   },
-	{ HWY_HR_BLOFF_VAL(SIZE_SMALL),  HWY_VT_BLOFF_VAL(SIZE_SMALL)  },
-	{ HWY_HR_BLOFF_VAL(SIZE_LARGE),  HWY_VT_BLOFF_VAL(SIZE_LARGE)  },
-};
 
 static int DoWaterfallEdge(__int16 iMapOffSetX, int iX, int iY, __int16 iBottom, __int16 iWaterFallSpriteID, __int16 nLandAltScale) {
 	__int16 iTopog;
@@ -197,6 +170,27 @@ static __int16 GetTerrainSprite(BYTE iTerrainTile, __int16 nSprStart) {
 		iSprite = wXTERToXUNDSpriteIDMap[iTerrainTile] + nSprStart;
 
 	return iSprite;
+}
+
+static void DoHighwayCoverageFill(int iX, int iY, __int16 nSprStart, __int16 nCoordsScale, __int16 nLandAltScale, __int16 nScale) {
+	__int16 iRight;
+	__int16 iBottom;
+	__int16 iAltTop;
+	__int16 iTop;
+	__int16 iSprite;
+	BYTE iTerrainTile;
+
+	iTerrainTile = GetTerrainTileID(iX, iY);
+	if (iTerrainTile < SUBMERGED_00)
+		iAltTop = ALTMReturnLandAltitude(iX, iY);
+	else
+		iAltTop = ALTMReturnWaterLevel(iX, iY);
+	iRight = iScreenOffSetX + nScale * (iX - iY);
+	iBottom = iScreenOffSetY + nCoordsScale * (iX + iY) - nLandAltScale * iAltTop;
+	
+	iSprite = GetTerrainSprite(iTerrainTile, nSprStart);
+	iTop = iBottom - pArrSpriteHeaders[iSprite].wHeight;
+	Game_DrawProcessObject(iSprite, iRight, iTop, 0, 0);
 }
 
 static BOOL IsSpecificUnderDraw(int iX, int iY, BYTE iTile) {
@@ -508,13 +502,11 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 				if (iTile >= TILE_HIGHWAY_HTB && iTile < TILE_SUBTORAIL_T) {
 					if (XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
 						// ---- This block was originally only present in both DrawLargeTile and DrawSmallTile.
-						Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
-						iSprite = GetTerrainSprite(GetTerrainTileID(iX, iY - 1), nSprStart);
-						Game_DrawProcessObject(iSprite, iMapOffSetX + highwayTROffsets[nSizeLevel][AXIS_HORZ], iTop - pArrSpriteHeaders[iSprite].wHeight - highwayTROffsets[nSizeLevel][AXIS_VERT], 0, 0);
-						iSprite = GetTerrainSprite(GetTerrainTileID(iX + 1, iY - 1), nSprStart);
-						Game_DrawProcessObject(iSprite, iMapOffSetX + highwayBROffsets[nSizeLevel][AXIS_HORZ], iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
-						iSprite = GetTerrainSprite(GetTerrainTileID(iX + 1, iY), nSprStart);
-						Game_DrawProcessObject(iSprite, iMapOffSetX + highwayBLOffsets[nSizeLevel][AXIS_HORZ], iTop - pArrSpriteHeaders[iSprite].wHeight + highwayBLOffsets[nSizeLevel][AXIS_VERT], 0, 0);
+						BYTE iCoverageSize = iCoverage + 1;
+						for (int iOffX = 0; iOffX < iCoverageSize; iOffX++) {
+							for (int iOffY = iCoverageSize - 1; iOffY >= 0; iOffY--)
+								DoHighwayCoverageFill(iX + iOffX, iY - iOffY, nSprStart, nCoordsScale, nLandAltScale, nScale);
+						}
 						// ^ ---- This block was originally only present in both DrawLargeTile and DrawSmallTile.
 						iSprite = iTile + nSprStart;
 						iSprTop = iTop - pArrSpriteHeaders[iSprite].wHeight + nCoordsScale;
@@ -550,7 +542,7 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 
 								if (pThing) {
 									__int16 iDestDist = Game_GetDestDistance(iX, iY, pThing->iX, pThing->iY);
-									if (iDestDist < RAISE_THRESHOLD)
+									if (iDestDist < SHIP_MIN_DIST)
 										iTile = TILE_RAISING_BRIDGE_RAISED;
 								}
 							}
