@@ -337,29 +337,77 @@ static __int16 GetTerrainSprite(BYTE iTerrainTile, __int16 nSprStart) {
 	return iSprite;
 }
 
-static BOOL NoUnderDraw(int iX, int iY) {
-	BYTE iTile = GetTileID(iX, iY);
-	
+static BOOL IsSpecificUnderDraw(int iX, int iY, BYTE iTile) {
 	if (GetTileCoverage(iTile)) {
 		if (iTile >= TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1) {
 			if (DisplayLayer[LAYER_BUILDINGS]) {
 				if (DisplayLayer[LAYER_ZONES] || !XZONReturnZone(iX, iY)) {
-					if (!XZONCornerCheck(iX, iY, wCurrentPositionAngle))
+					if (XZONCornerCheck(iX, iY, wCurrentPositionAngle))
 						return TRUE;
+					else
+						return -1;
 				}
 			}
 		}
 		else {
 			if (DisplayLayer[LAYER_INFRANATURE]) {
 				if (iTile >= TILE_HIGHWAY_HTB && iTile < TILE_SUBTORAIL_T) {
-					if (!XZONCornerCheck(iX, iY, wCurrentPositionAngle))
+					if (XZONCornerCheck(iX, iY, wCurrentPositionAngle))
 						return TRUE;
+					else
+						return -1;
 				}
 			}
 		}
 	}
 
 	return FALSE;
+}
+
+static BYTE GetUnderlayTileID(__int16 iX, __int16 iY) {
+	BYTE iUnderTile = GetUndergroundTileID(iX, iY);
+	if (iUnderTile >= UNDER_TILE_PIPES_LR && iUnderTile < UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR ||
+		iUnderTile == UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR ||
+		iUnderTile == UNDER_TILE_CROSSOVER_PIPESLR_SUBWAYTB) {
+		if (iUnderTile == UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR)
+			iUnderTile = UNDER_TILE_SUBWAY_LR;
+		else if (iUnderTile == UNDER_TILE_CROSSOVER_PIPESLR_SUBWAYTB)
+			iUnderTile = UNDER_TILE_SUBWAY_TB;
+		else
+			return 0;
+		return iUnderTile;
+	}
+	else if (iUnderTile >= UNDER_TILE_SUBWAY_LR && iUnderTile <= UNDER_TILE_SUBWAY_LTBR || iUnderTile >= UNDER_TILE_UNKNOWN) {
+		if (iUnderTile == UNDER_TILE_MISSILESILO) {
+			if (!DisplayLayer[LAYER_BUILDINGS] && !DisplayLayer[LAYER_ZONES])
+				return 0;
+		}
+		return iUnderTile;
+	}
+	return 0;
+}
+
+static void DrawUnderCoveragePortion(__int16 iX, __int16 iY, __int16 nSprStart, __int16 nCoordsScale, __int16 nLandAltScale, __int16 nScale) {
+	__int16 iRight;
+	__int16 iBottom;
+	__int16 iSprBottom;
+	__int16 iUndTrnSpr;
+	__int16 iSprite;
+	BYTE iTerrainTile;
+	BYTE iUnderTile;
+
+	iTerrainTile = GetTerrainTileID(iX, iY);
+	iUndTrnSpr = wXTERToXUNDSpriteIDMap[iTerrainTile];
+	iRight = iScreenOffSetX + nScale * (iX - iY);
+	iBottom = iScreenOffSetY + nCoordsScale * (iX + iY) - nLandAltScale * ALTMReturnLandAltitude(iX, iY);
+	if (iBottom + nScale >= rcDst.top && rcDst.bottom >= iBottom) {
+		iSprBottom = iBottom - pArrSpriteHeaders[nSprStart + iUndTrnSpr].wHeight;
+		iUnderTile = GetUnderlayTileID(iX, iY);
+		if (iUnderTile) {
+			iSprite = iUnderTile + nSprStart + SPRITE_SMALL_BEDROCK_OUTLINE;
+			Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
+		}
+	}
 }
 
 // This accounts for the tunnels, subways (underground station portion and tunnels)
@@ -376,6 +424,9 @@ static void DoUndergroundAspects(int iX, int iY, __int16 nSprStart, __int16 nSiz
 	__int16 iSprite;
 	BYTE iTerrainTile;
 	BYTE iUnderTile;
+	BYTE iTile;
+	BYTE iCoverage;
+	BOOL bSpecificUnderDraw;
 
 	if (!bMapWireFrame)
 		return;
@@ -403,6 +454,8 @@ static void DoUndergroundAspects(int iX, int iY, __int16 nSprStart, __int16 nSiz
 				}
 			}
 		}
+		iTile = GetTileID(iX, iY);
+		bSpecificUnderDraw = IsSpecificUnderDraw(iX, iY, iTile);
 		iUnderTile = GetUndergroundTileID(iX, iY);
 		if (iUnderTile >= UNDER_TILE_PIPES_LR && iUnderTile < UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR ||
 			iUnderTile == UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR ||
@@ -414,7 +467,7 @@ static void DoUndergroundAspects(int iX, int iY, __int16 nSprStart, __int16 nSiz
 			else
 				return;
 
-			if (!NoUnderDraw(iX, iY)) {
+			if (bSpecificUnderDraw == 0) {
 				iSprite = iUnderTile + nSprStart + SPRITE_SMALL_BEDROCK_OUTLINE;
 				Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
 			}
@@ -422,34 +475,61 @@ static void DoUndergroundAspects(int iX, int iY, __int16 nSprStart, __int16 nSiz
 		else if (iUnderTile) {
 			iSprite = iUnderTile + nSprStart + SPRITE_SMALL_BEDROCK_OUTLINE;
 			if (iUnderTile == UNDER_TILE_MISSILESILO) {
-				// Only perform the comprehensive underground block draw
-				// if both the build and zone layers are enabled,
-				// otherwise only revert to the original single-tile
-				// per-coordinate draw if the zone layer is enabled.
-				// Undertiles are hidden if both layers are disabled.
-				if (DisplayLayer[LAYER_BUILDINGS] && DisplayLayer[LAYER_ZONES]) {
-					if (XZONCornerCheck(iX, iY, wCurrentPositionAngle)) {
-						// Similar to the >= 2x2 building on-edge overwritten imagery, all of these sprites have to be set
-						// on all associated blocks while it processes this corner coordinate.
-						Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 4), iSprBottom + (nCoordsScale * -2), 0, 0);
-						Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 2), iSprBottom + (nCoordsScale * -1), 0, 0);
-						Game_DrawProcessObject(iSprite, iRight,                      iSprBottom,                       0, 0);
-
-						Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 6), iSprBottom + (nCoordsScale * -1), 0, 0);
-						Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 4), iSprBottom,                       0, 0);
-						Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 2), iSprBottom + (nCoordsScale * 1),  0, 0);
-
-						Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 8), iSprBottom,                       0, 0);
-						Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 6), iSprBottom + (nCoordsScale * 1),  0, 0);
-						Game_DrawProcessObject(iSprite, iRight + (nCoordsScale * 4), iSprBottom + (nCoordsScale * 2),  0, 0);
-					}
+				if (DisplayLayer[LAYER_ZONES]) {
+					if (bSpecificUnderDraw == 0)
+						Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
 				}
-				else if (DisplayLayer[LAYER_ZONES])
-					Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
 			}
 			else {
-				if (!NoUnderDraw(iX, iY))
+				if (bSpecificUnderDraw == 0)
 					Game_DrawProcessObject(iSprite, iRight, iSprBottom, 0, 0);
+			}
+		}
+
+		if (bSpecificUnderDraw > 0) {
+			iCoverage = GetTileCoverage(iTile);
+			if (iCoverage >= COVERAGE_2x2 && iCoverage <= COVERAGE_4x4) {
+				if (iCoverage == COVERAGE_2x2) {
+					DrawUnderCoveragePortion(iX,     iY - 1, nSprStart, nCoordsScale, nLandAltScale, nScale);
+					DrawUnderCoveragePortion(iX,     iY,     nSprStart, nCoordsScale, nLandAltScale, nScale);
+
+					DrawUnderCoveragePortion(iX + 1, iY - 1, nSprStart, nCoordsScale, nLandAltScale, nScale);
+					DrawUnderCoveragePortion(iX + 1, iY,     nSprStart, nCoordsScale, nLandAltScale, nScale);
+				}
+				else if (iCoverage == COVERAGE_3x3) {
+					DrawUnderCoveragePortion(iX,     iY - 2, nSprStart, nCoordsScale, nLandAltScale, nScale);
+					DrawUnderCoveragePortion(iX,     iY - 1, nSprStart, nCoordsScale, nLandAltScale, nScale);
+					DrawUnderCoveragePortion(iX,     iY,     nSprStart, nCoordsScale, nLandAltScale, nScale);
+
+					DrawUnderCoveragePortion(iX + 1, iY - 2, nSprStart, nCoordsScale, nLandAltScale, nScale);
+					DrawUnderCoveragePortion(iX + 1, iY - 1, nSprStart, nCoordsScale, nLandAltScale, nScale);
+					DrawUnderCoveragePortion(iX + 1, iY,     nSprStart, nCoordsScale, nLandAltScale, nScale);
+
+					DrawUnderCoveragePortion(iX + 2, iY - 2, nSprStart, nCoordsScale, nLandAltScale, nScale);
+					DrawUnderCoveragePortion(iX + 2, iY - 1, nSprStart, nCoordsScale, nLandAltScale, nScale);
+					DrawUnderCoveragePortion(iX + 2, iY,     nSprStart, nCoordsScale, nLandAltScale, nScale);
+				}
+				else if (iCoverage == COVERAGE_4x4) {
+					DrawUnderCoveragePortion(iX,     iY - 3, nSprStart, nCoordsScale, nLandAltScale, nScale);
+					DrawUnderCoveragePortion(iX,     iY - 2, nSprStart, nCoordsScale, nLandAltScale, nScale);
+					DrawUnderCoveragePortion(iX,     iY - 1, nSprStart, nCoordsScale, nLandAltScale, nScale);
+					DrawUnderCoveragePortion(iX,     iY,     nSprStart, nCoordsScale, nLandAltScale, nScale);
+
+					DrawUnderCoveragePortion(iX + 1, iY - 3, nSprStart, nCoordsScale, nLandAltScale, nScale);
+					DrawUnderCoveragePortion(iX + 1, iY - 2, nSprStart, nCoordsScale, nLandAltScale, nScale);
+					DrawUnderCoveragePortion(iX + 1, iY - 1, nSprStart, nCoordsScale, nLandAltScale, nScale);
+					DrawUnderCoveragePortion(iX + 1, iY,     nSprStart, nCoordsScale, nLandAltScale, nScale);
+
+					DrawUnderCoveragePortion(iX + 2, iY - 3, nSprStart, nCoordsScale, nLandAltScale, nScale);
+					DrawUnderCoveragePortion(iX + 2, iY - 2, nSprStart, nCoordsScale, nLandAltScale, nScale);
+					DrawUnderCoveragePortion(iX + 2, iY - 1, nSprStart, nCoordsScale, nLandAltScale, nScale);
+					DrawUnderCoveragePortion(iX + 2, iY,     nSprStart, nCoordsScale, nLandAltScale, nScale);
+
+					DrawUnderCoveragePortion(iX + 3, iY - 3, nSprStart, nCoordsScale, nLandAltScale, nScale);
+					DrawUnderCoveragePortion(iX + 3, iY - 2, nSprStart, nCoordsScale, nLandAltScale, nScale);
+					DrawUnderCoveragePortion(iX + 3, iY - 1, nSprStart, nCoordsScale, nLandAltScale, nScale);
+					DrawUnderCoveragePortion(iX + 3, iY,     nSprStart, nCoordsScale, nLandAltScale, nScale);
+				}
 			}
 		}
 	}
