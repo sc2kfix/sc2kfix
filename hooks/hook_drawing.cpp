@@ -36,7 +36,6 @@ enum {
 #define LANDALTSCALE_VAL(x) (3 << x)
 #define SCALE_VAL(x) (4 << x)
 
-// Raising bridge
 #define SHIP_MIN_DIST 8
 
 #define WATEREDPIPES_SPRITE_OFFSET 116
@@ -438,8 +437,8 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 	bSpecificEdge = DoSpecificEdge(iX, iY, iCoverage, iZone, iTile);
 	if (bSpecificEdge >= 0) {
 		if (bSpecificEdge) {
-			// The following call is to account for >= 1x1 buildings and avoid the map-edge
-			// bedrock-bleed that was previously occurring on >= 2x2 buildings.
+			// The following call is to account for >= 2x2 buildings and avoid the map-edge
+			// bedrock-bleed that was previously occurring.
 			DoCoverageMapEdgeFill(iX, iY, nSprBedrock, nSprWaterfall, nCoordsScale, nLandAltScale, nScale, iCoverage, iTile);
 		}
 		else
