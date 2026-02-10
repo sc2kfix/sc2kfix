@@ -387,7 +387,7 @@ static BYTE GetUnderlayTileID(__int16 iX, __int16 iY) {
 	return 0;
 }
 
-static void DrawUnderCoveragePortion(__int16 iX, __int16 iY, __int16 nSprStart, __int16 nCoordsScale, __int16 nLandAltScale, __int16 nScale) {
+static void DrawUnderCoveragePortion(int iX, int iY, __int16 nSprStart, __int16 nCoordsScale, __int16 nLandAltScale, __int16 nScale) {
 	__int16 iRight;
 	__int16 iBottom;
 	__int16 iSprBottom;
@@ -489,46 +489,10 @@ static void DoUndergroundAspects(int iX, int iY, __int16 nSprStart, __int16 nSiz
 		if (bSpecificUnderDraw > 0) {
 			iCoverage = GetTileCoverage(iTile);
 			if (iCoverage >= COVERAGE_2x2 && iCoverage <= COVERAGE_4x4) {
-				if (iCoverage == COVERAGE_2x2) {
-					DrawUnderCoveragePortion(iX,     iY - 1, nSprStart, nCoordsScale, nLandAltScale, nScale);
-					DrawUnderCoveragePortion(iX,     iY,     nSprStart, nCoordsScale, nLandAltScale, nScale);
-
-					DrawUnderCoveragePortion(iX + 1, iY - 1, nSprStart, nCoordsScale, nLandAltScale, nScale);
-					DrawUnderCoveragePortion(iX + 1, iY,     nSprStart, nCoordsScale, nLandAltScale, nScale);
-				}
-				else if (iCoverage == COVERAGE_3x3) {
-					DrawUnderCoveragePortion(iX,     iY - 2, nSprStart, nCoordsScale, nLandAltScale, nScale);
-					DrawUnderCoveragePortion(iX,     iY - 1, nSprStart, nCoordsScale, nLandAltScale, nScale);
-					DrawUnderCoveragePortion(iX,     iY,     nSprStart, nCoordsScale, nLandAltScale, nScale);
-
-					DrawUnderCoveragePortion(iX + 1, iY - 2, nSprStart, nCoordsScale, nLandAltScale, nScale);
-					DrawUnderCoveragePortion(iX + 1, iY - 1, nSprStart, nCoordsScale, nLandAltScale, nScale);
-					DrawUnderCoveragePortion(iX + 1, iY,     nSprStart, nCoordsScale, nLandAltScale, nScale);
-
-					DrawUnderCoveragePortion(iX + 2, iY - 2, nSprStart, nCoordsScale, nLandAltScale, nScale);
-					DrawUnderCoveragePortion(iX + 2, iY - 1, nSprStart, nCoordsScale, nLandAltScale, nScale);
-					DrawUnderCoveragePortion(iX + 2, iY,     nSprStart, nCoordsScale, nLandAltScale, nScale);
-				}
-				else if (iCoverage == COVERAGE_4x4) {
-					DrawUnderCoveragePortion(iX,     iY - 3, nSprStart, nCoordsScale, nLandAltScale, nScale);
-					DrawUnderCoveragePortion(iX,     iY - 2, nSprStart, nCoordsScale, nLandAltScale, nScale);
-					DrawUnderCoveragePortion(iX,     iY - 1, nSprStart, nCoordsScale, nLandAltScale, nScale);
-					DrawUnderCoveragePortion(iX,     iY,     nSprStart, nCoordsScale, nLandAltScale, nScale);
-
-					DrawUnderCoveragePortion(iX + 1, iY - 3, nSprStart, nCoordsScale, nLandAltScale, nScale);
-					DrawUnderCoveragePortion(iX + 1, iY - 2, nSprStart, nCoordsScale, nLandAltScale, nScale);
-					DrawUnderCoveragePortion(iX + 1, iY - 1, nSprStart, nCoordsScale, nLandAltScale, nScale);
-					DrawUnderCoveragePortion(iX + 1, iY,     nSprStart, nCoordsScale, nLandAltScale, nScale);
-
-					DrawUnderCoveragePortion(iX + 2, iY - 3, nSprStart, nCoordsScale, nLandAltScale, nScale);
-					DrawUnderCoveragePortion(iX + 2, iY - 2, nSprStart, nCoordsScale, nLandAltScale, nScale);
-					DrawUnderCoveragePortion(iX + 2, iY - 1, nSprStart, nCoordsScale, nLandAltScale, nScale);
-					DrawUnderCoveragePortion(iX + 2, iY,     nSprStart, nCoordsScale, nLandAltScale, nScale);
-
-					DrawUnderCoveragePortion(iX + 3, iY - 3, nSprStart, nCoordsScale, nLandAltScale, nScale);
-					DrawUnderCoveragePortion(iX + 3, iY - 2, nSprStart, nCoordsScale, nLandAltScale, nScale);
-					DrawUnderCoveragePortion(iX + 3, iY - 1, nSprStart, nCoordsScale, nLandAltScale, nScale);
-					DrawUnderCoveragePortion(iX + 3, iY,     nSprStart, nCoordsScale, nLandAltScale, nScale);
+				BYTE iCoverageSize = iCoverage + 1;
+				for (int iOffX = 0; iOffX < iCoverageSize; iOffX++) {
+					for (int iOffY = iCoverageSize - 1; iOffY >= 0; iOffY--)
+						DrawUnderCoveragePortion(iX + iOffX, iY - iOffY, nSprStart, nCoordsScale, nLandAltScale, nScale);
 				}
 			}
 		}
