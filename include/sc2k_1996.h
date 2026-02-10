@@ -3691,11 +3691,6 @@ enum {
 	COVERAGE_COUNT
 };
 
-#define COVERAGE_SIZE_1x1 COVERAGE_1x1 + 1
-#define COVERAGE_SIZE_2x2 COVERAGE_2x2 + 1
-#define COVERAGE_SIZE_3x3 COVERAGE_3x3 + 1
-#define COVERAGE_SIZE_4x4 COVERAGE_4x4 + 1
-
 static inline BYTE GetTileCoverage(BYTE iTileID) {
 	switch (iTileID) {
 		case TILE_HIGHWAY_HTB:
