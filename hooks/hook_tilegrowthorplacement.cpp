@@ -146,12 +146,6 @@ static int IsValidGeneralPosPlacementMain(__int16 x, __int16 y, __int16 iFarX, _
 			//    in many unnecessary calls.
 			if (!bDoSilo) {
 				if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY) {
-					// Added a specific check here to block non-military
-					// tile choices, rather than otherwise allowing
-					// anything through, otherwise general 1x1 buildings
-					// could be placed on military zones.
-					if (!TILE_IS_MILITARY(iTileID))
-						return 0;
 					if (TILE_IS_MILITARY(iCurTile) ||
 						iCurTile == TILE_ROAD_LR ||
 						iCurTile == TILE_ROAD_TB)
@@ -167,8 +161,6 @@ static int IsValidGeneralPosPlacementMain(__int16 x, __int16 y, __int16 iFarX, _
 					if (XZONReturnZone(iCurX, iCurY) != ZONE_MILITARY)
 						return 0;
 					else {
-						if (!TILE_IS_MILITARY(iTileID))
-							return 0;
 						if (TILE_IS_MILITARY(iCurTile) ||
 							iCurTile == TILE_ROAD_LR ||
 							iCurTile == TILE_ROAD_TB)
