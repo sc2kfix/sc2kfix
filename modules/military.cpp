@@ -333,7 +333,7 @@ static int MilitaryBaseAirForce(int iValidTiles, int iValidAltitudeTiles, coords
 // This function has been replicated from the equivalent that was found
 // in the DOS version of the game.
 static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
-	WORD wOldToolGroup;
+	WORD wOldTraceAction;
 	__int16 nCnt;
 	__int16 iX;
 	__int16 iY;
@@ -341,10 +341,10 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 	__int16 iNewY;
 	BYTE iTileID;
 
-	wOldToolGroup = wMaybeActiveToolGroup;
+	wOldTraceAction = traceAction;
 	iX = x2;
 	iY = y2;
-	wMaybeActiveToolGroup = TRACE_ACTION_ARMYROADS;
+	traceAction = TRACE_ACTION_ARMYROADS;
 	nCnt = 0;
 	if (Game_BeginTrace(x1, y1, x2, y2)) {
 		iNewX = iX = x1;
@@ -394,7 +394,7 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 			}
 		}
 	}
-	wMaybeActiveToolGroup = wOldToolGroup;
+	traceAction = wOldTraceAction;
 	Game_EndTrace();
 }
 

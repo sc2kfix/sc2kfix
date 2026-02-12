@@ -273,7 +273,7 @@ extern "C" {
 		KRK_GAMEOFF(wTileCoordinateY);
 		KRK_GAMEOFF(wGameScreenAreaX);
 		KRK_GAMEOFF(wGameScreenAreaY);
-		KRK_GAMEOFF(wMaybeActiveToolGroup);
+		KRK_GAMEOFF(traceAction);
 		KRK_GAMEOFF(wViewRotation);
 		KRK_GAMEOFF(bCityHasOcean);
 		KRK_GAMEOFF(dwArcologyPopulation);

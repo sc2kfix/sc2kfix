@@ -2044,7 +2044,7 @@ REFRESHMENUGRANTS:
 				pUID = uIDs;
 				pString = szString;
 				// calculation here is citytoolbuttongroup * maxmenutools, this sets it to CITYTOOL_GROUP_REWARDS.
-				citySubToolStrings = &cityToolGroupStrings[CITYTOOL_GROUP_REWARDS*MAX_CITY_MENUTOOLS];
+				citySubToolStrings = &cityToolGroupStrings[CITY_MENUTOOL_COUNT(CITYTOOL_GROUP_REWARDS)];
 				do {
 					// (1 << nReward) bit-shifted result of the nReward count.
 					nRewardBit = (1 << nReward);

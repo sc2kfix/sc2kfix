@@ -69,6 +69,10 @@
 
 #define MAX_CITY_MENUTOOLS 12
 
+#define CITY_MENUTOOL_COUNT(x) (MAX_CITY_MENUTOOLS * x)
+#define CITY_MENUTOOL_TOTAL CITY_MENUTOOL_COUNT(CITYTOOL_GROUP_COUNT)
+#define CITY_MENUTOOL_POS(x, y) (x + CITY_MENUTOOL_COUNT(y))
+
 #define AREA_1x1 1
 #define AREA_2x2 2
 #define AREA_3x3 3
@@ -3244,8 +3248,8 @@ GAMEOFF(WORD,	g_wColorScale,				0x4C7D28)
 GAMEOFF(WORD,	g_wColorMapXOffs,			0x4C7D2C)
 GAMEOFF(WORD,	g_iColorMapOffSetX,			0x4C7D30)
 GAMEOFF(WORD,	g_iColorMapOffSetY,			0x4C7D34)
-GAMEOFF(WORD,	wTileDirection,				0x4C7D60)
-GAMEOFF(WORD,	wMaybeActiveToolGroup,		0x4C7D88)
+GAMEOFF(WORD,	traceDir,				0x4C7D60)
+GAMEOFF(WORD,	traceAction,		0x4C7D88)
 GAMEOFF(WORD,	wMilitaryAvailDispatch,			0x4C7D98)
 GAMEOFF(WORD,	wFireAvailDispatch,				0x4C7D9C)
 GAMEOFF(WORD,	wPoliceAvailDispatch,			0x4C838C)
