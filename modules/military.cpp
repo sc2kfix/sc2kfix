@@ -344,7 +344,7 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 	wOldToolGroup = wMaybeActiveToolGroup;
 	iX = x2;
 	iY = y2;
-	wMaybeActiveToolGroup = CITYTOOL_GROUP_ROADS;
+	wMaybeActiveToolGroup = TRACE_ACTION_ARMYROADS;
 	nCnt = 0;
 	if (Game_BeginTrace(x1, y1, x2, y2)) {
 		iNewX = iX = x1;
@@ -374,7 +374,7 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 	}
 	if (nCnt > 0) {
 		iTileID = GetTileID(x1, y1);
-		if (iTileID >= TILE_ROAD_LR && iTileID <= TILE_ROAD_LTBR) {
+		if (iTileID == TILE_ROAD_LR || iTileID == TILE_ROAD_TB) {
 			// TERRAIN_00 check added here to avoid the runwaycross
 			// being placed into a dip (likely replacing a slope or granite block).
 			if (!GetTerrainTileID(x1, y1) && XZONReturnZone(x1, y1) == ZONE_MILITARY) {
@@ -384,7 +384,7 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 		}
 		if (nCnt > 1) {
 			iTileID = GetTileID(iX, iY);
-			if (iTileID >= TILE_ROAD_LR && iTileID <= TILE_ROAD_LTBR) {
+			if (iTileID == TILE_ROAD_LR || iTileID <= TILE_ROAD_TB) {
 				// TERRAIN_00 check added here to avoid the runwaycross
 				// being placed into a dip (likely replacing a slope or granite block).
 				if (!GetTerrainTileID(iX, iY) && XZONReturnZone(iX, iY) == ZONE_MILITARY) {
