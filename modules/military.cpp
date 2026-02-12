@@ -346,11 +346,11 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 	iY = y2;
 	wMaybeActiveToolGroup = CITYTOOL_GROUP_ROADS;
 	nCnt = 0;
-	if (Game_MaybeCheckViablePlacementPath(x1, y1, x2, y2)) {
+	if (Game_BeginTrace(x1, y1, x2, y2)) {
 		iNewX = iX = x1;
 		iNewY = iY = y1;
-		while (Game_MaybeRoadViabilityAlongPath(&iNewX, &iNewY)) {
-			Game_CheckAndAdjustTraversableTerrain(iX, iY);
+		while (Game_StepTrace(&iNewX, &iNewY)) {
+			Game_TraceEdit(iX, iY);
 			iTileID = GetTileID(iX, iY);
 			if (iTileID < TILE_SMALLPARK && iTileID != TILE_RADIOACTIVITY) {
 				Game_PlaceRoadAtCoordinates(iX, iY);
@@ -362,7 +362,7 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 			iX = iNewX;
 			iY = iNewY;
 		}
-		Game_CheckAndAdjustTraversableTerrain(iX, iY);
+		Game_TraceEdit(iX, iY);
 		iTileID = GetTileID(iX, iY);
 		if (iTileID < TILE_SMALLPARK && iTileID != TILE_RADIOACTIVITY) {
 			Game_PlaceRoadAtCoordinates(iX, iY);
@@ -395,7 +395,7 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 		}
 	}
 	wMaybeActiveToolGroup = wOldToolGroup;
-	Game_ResetTileDirection();
+	Game_EndTrace();
 }
 
 static void DoArmyBaseStrips(__int16 iStartX, __int16 iStartY, __int16 iEndX, __int16 iEndY) {
