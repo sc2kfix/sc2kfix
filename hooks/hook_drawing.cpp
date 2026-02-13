@@ -373,6 +373,7 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 
 	__int16 iBottom;
 	__int16 iTop;
+	__int16 iIndTop;
 	__int16 iSprTop;
 	WORD iAltTop;
 	WORD iLandAlt;
@@ -596,7 +597,11 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 					if (iX < GAME_MAP_SIZE &&
 						iY < GAME_MAP_SIZE &&
 						XBITReturnIsPowerable(iX, iY) && !XBITReturnIsPowered(iX, iY)) {
-						Game_DrawProcessObject(nSprPowerInd, iMapOffSetX + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nScale, iTop - nScale, 0, 0);
+						iIndTop = iTop;
+						if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE && XBITReturnIsWater(iX, iY) && iTile == TILE_ELEVATED_POWERLINES)
+							iIndTop -= nLandAltScale;
+						iIndTop = iIndTop - nScale;
+						Game_DrawProcessObject(nSprPowerInd, iMapOffSetX + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nScale, iIndTop, 0, 0);
 					}
 				}
 			}
@@ -619,7 +624,11 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 			if (iX < GAME_MAP_SIZE &&
 				iY < GAME_MAP_SIZE &&
 				XBITReturnIsPowerable(iX, iY) && !XBITReturnIsPowered(iX, iY)) {
-				Game_DrawProcessObject(nSprPowerInd, iMapOffSetX + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nScale, iTop - nScale, 0, 0);
+				iIndTop = iTop;
+				if (iTerrainTile >= TERRAIN_01 && iTerrainTile <= TERRAIN_13)
+					iIndTop -= nLandAltScale;
+				iIndTop = iIndTop - nScale;
+				Game_DrawProcessObject(nSprPowerInd, iMapOffSetX + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nScale, iIndTop, 0, 0);
 			}
 		}
 	}
@@ -918,6 +927,9 @@ extern "C" void __cdecl Hook_DrawUnderTile(__int16 iX, __int16 iY) {
 							if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE &&
 								XBITReturnIsPowerable(iX, iY) && !XBITReturnIsPowered(iX, iY)) {
 								iSprPwrIndRight = iRight + (pArrSpriteHeaders[iSprite].wWidth >> 1) - nScale;
+								if ((iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE && XBITReturnIsWater(iX, iY) && iTile == TILE_ELEVATED_POWERLINES) ||
+									(iTerrainTile >= TERRAIN_01 && iTerrainTile < TERRAIN_13))
+									iBottom -= nLandAltScale;
 								iSprBottom = iBottom - nScale;
 								Game_DrawProcessObject(nSpriteStart + SPRITE_SMALL_POWEROUTAGEINDICATOR, iSprPwrIndRight, iSprBottom, 0, 0);
 							}
