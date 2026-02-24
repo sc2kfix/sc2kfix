@@ -43,7 +43,7 @@ struct shapeinfo_t {
 
 struct tilesetheader_t {
 	int16_t numShapes;
-	shapeinfo_t infoShapes;
+	shapeinfo_t infoShapes[1];
 };
 
 class cEditableTileSet {
