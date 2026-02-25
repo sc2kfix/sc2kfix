@@ -204,7 +204,7 @@ LONG __cdecl L_SCURK_EditableTileSet_mReadFromFile(cEditableTileSet *pThis, cons
 	int nRes;
 	int nIdx;
 
-	f = fopen(lpPathName, "rb");
+	f = old_fopen(lpPathName, "rb");
 	if (!f)
 		return 0;
 	fseek(f, 0, SEEK_END);
