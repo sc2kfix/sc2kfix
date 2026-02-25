@@ -355,6 +355,9 @@ static void L_LoadFixedLargeSpritesRsrc_SC2K1996() {
 												bGotShap = TRUE;
 											else
 												bGotShap = (nHeight > 1) ? Game_ChangeTileSpriteEntry(nSpriteID, nWidth, nHeight, dwSize_Shap, &pTileShap->pBuf) : TRUE;
+
+											if (bGotShap && nHeight > 1 && nSpriteID >= SPRITE_LARGE_START)
+												ConsoleLog(LOG_INFO, "Loaded replacement large sprite for: %s\n", szSpriteNames[nSpriteID - SPRITE_LARGE_START]);
 										}
 										else if (memcmp(szHead, "NAME", 4) == 0) {
 											pTileName = (tileName_t *)pBuf;
@@ -389,7 +392,7 @@ static void L_LoadFixedLargeSpritesRsrc_SC2K1996() {
 		}
 		FreeResource(hTileSetGlobal);
 	}
-	ConsoleLog(LOG_DEBUG, "Load Replacement Default Large Sprite Resources.\n");
+	ConsoleLog(LOG_INFO, "Load Replacement Default Large Sprite Resources.\n");
 }
 
 void ReloadDefaultTileSet_SC2K1996() {
