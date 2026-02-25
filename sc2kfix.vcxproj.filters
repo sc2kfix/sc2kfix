@@ -49,6 +49,9 @@
     <Filter Include="Header Files\Third-Party\FluidSynth">
       <UniqueIdentifier>{04f88fc4-5fd6-400e-bb81-044b6785a05c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\TSET">
+      <UniqueIdentifier>{ca8eb73e-28cd-4e27-bff2-b368eadd1ba8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\sc2kfix.h">
@@ -434,6 +437,9 @@
     </None>
     <None Include="thirdparty\kuroko\wcwidth._h">
       <Filter>Header Files\Third-Party\Kuroko</Filter>
+    </None>
+    <None Include="blobs\FIXEDTILES.MIF">
+      <Filter>Resource Files\TSET</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

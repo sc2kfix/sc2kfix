@@ -339,6 +339,7 @@
     <ClCompile Include="utility.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="blobs\FIXEDTILES.MIF" />
     <None Include="hooks\exports.def" />
     <None Include="README.md" />
     <None Include="script.md" />

@@ -286,6 +286,150 @@ GETOUT:
 	GameMain_File_Dest(&datArchive);
 }
 
+#pragma pack(push, 1)
+typedef struct {
+	char szTypeHead[4];
+	DWORD dwSize;
+	char szSC2KHead[4];
+} tilesetMainHeader_t;
+
+typedef struct {
+	char szHead[4];
+	DWORD dwSize;
+} tilesetHeadInfo_t;
+
+typedef struct {
+	char szHead[4];
+	DWORD dwSize;
+	char pBuf;
+} tileMem_t;
+
+typedef struct {
+	WORD nMaxChunks;
+	tileMem_t tileMem;
+} tilesetMem_t;
+
+typedef struct {
+	WORD nSpriteID;
+	WORD nWidth;
+	WORD nHeight;
+	DWORD dwSize;
+	char pBuf;
+} tileShap_t;
+
+typedef struct {
+	WORD nTileNameID;
+	WORD nNameLength;
+	char pBuf;
+} tileName_t;
+#pragma pack(pop)
+
+static void L_LoadFixedLargeSpritesRsrc_SC2K1996() {
+	HRSRC hTileSetHandle;
+	HGLOBAL hTileSetGlobal;
+	DWORD dwTileDatSz;
+	DWORD dwOffset;
+	WORD nChunk;
+	char *szHead[4];
+	DWORD dwSize;
+	__int16 nSpriteID;
+	WORD nWidth, nHeight;
+	DWORD dwSize_Shap;
+	WORD nTileNameID, nNameLength;
+	BOOL bGotShap, bGotName, bResize;
+	char *pRsrcDat;
+	char *pTileDat;
+	char *pBuf;
+	tilesetMainHeader_t *pTileHeader;
+	tilesetHeadInfo_t *pTileInfo;
+	tilesetHeadInfo_t *pTileTiles;
+	tilesetMem_t *pTileMem;
+	tileMem_t *pTileContents;
+	tileShap_t *pTileShap;
+	tileName_t *pTileName;
+
+	dwOffset = 0;
+	hTileSetHandle = FindResourceA(hSC2KFixModule, MAKEINTRESOURCE(IDR_TSET_FIXED), "TSET");
+	if (hTileSetHandle) {
+		hTileSetGlobal = LoadResource(hSC2KFixModule, hTileSetHandle);
+		dwTileDatSz = SizeofResource(hSC2KFixModule, hTileSetHandle);
+		pRsrcDat = (char *)LockResource(hTileSetGlobal);
+		if (pRsrcDat) {
+			pTileDat = (char *)malloc(dwTileDatSz);
+			if (pTileDat) {
+				memcpy(pTileDat, pRsrcDat, dwTileDatSz);
+				pTileHeader = (tilesetMainHeader_t *)pTileDat;
+				if (memcmp(pTileHeader->szTypeHead, "MIFF", 4) == 0 &&
+					memcmp(pTileHeader->szSC2KHead, "SC2K", 4) == 0) {
+					dwSize = Game_FlipLongBytePortions(pTileHeader->dwSize);
+					dwOffset += sizeof(tilesetMainHeader_t);
+					pTileInfo = (tilesetHeadInfo_t *)(pTileDat + dwOffset);
+					if (pTileInfo && memcmp(pTileInfo->szHead, "INFO", 4) == 0) {
+						dwSize = Game_FlipLongBytePortions(pTileInfo->dwSize);
+						dwOffset += sizeof(tilesetHeadInfo_t) + dwSize;
+						pTileTiles = (tilesetHeadInfo_t *)(pTileDat + dwOffset);
+						if (pTileTiles && memcmp(pTileTiles->szHead, "TILE", 4) == 0) {
+							dwSize = Game_FlipLongBytePortions(pTileTiles->dwSize);
+							dwOffset += sizeof(tilesetHeadInfo_t);
+							pTileMem = (tilesetMem_t *)(pTileDat + dwOffset);
+							if (pTileMem) {
+								pTileMem->nMaxChunks = Game_FlipShortBytes(pTileMem->nMaxChunks);
+								pTileContents = &pTileMem->tileMem;
+								if (pTileContents) {
+									for (nChunk = 0; pTileMem->nMaxChunks > nChunk; ++nChunk) {
+										memcpy(szHead, pTileContents->szHead, 4);
+										dwSize = Game_FlipLongBytePortions(pTileContents->dwSize);
+										pBuf = &pTileContents->pBuf;
+
+										bGotShap = bGotName = bResize = FALSE;
+										if (memcmp(szHead, "SHAP", 4) == 0) {
+											pTileShap = (tileShap_t *)pBuf;
+											nSpriteID = Game_FlipShortBytes(pTileShap->nSpriteID);
+											nWidth = Game_FlipShortBytes(pTileShap->nWidth);
+											nHeight = Game_FlipShortBytes(pTileShap->nHeight);
+											dwSize_Shap = Game_FlipLongBytePortions(pTileShap->dwSize);
+											// In this case we ONLY want to load the large sprites.
+											if (nSpriteID < SPRITE_LARGE_START)
+												bGotShap = TRUE;
+											else
+												bGotShap = (nHeight > 1) ? Game_ChangeTileSpriteEntry(nSpriteID, nWidth, nHeight, dwSize_Shap, &pTileShap->pBuf) : TRUE;
+										}
+										else if (memcmp(szHead, "NAME", 4) == 0) {
+											pTileName = (tileName_t *)pBuf;
+											nTileNameID = Game_FlipShortBytes(pTileName->nTileNameID);
+											nNameLength = Game_FlipShortBytes(pTileName->nNameLength);
+											// Although we process the above we leave the
+											// names alone here.
+											bGotName = TRUE;
+										}
+
+										// Added. If this is set to true it stands to reason
+										// you'd then want to break out of the loop.
+										if (bTilesetLoadOutOfMemory)
+											break;
+
+										if (bGotShap || bGotName || bResize) {
+											bResize = FALSE;
+											pTileContents = (tileMem_t *)&pBuf[dwSize];
+											continue;
+										}
+
+										bResize = TRUE;
+										pTileContents = (tileMem_t *)Game_ReallocateDataEntry((char *)pTileMem, pBuf);
+									}
+								}
+							}
+						}
+					}
+				}
+				free(pTileDat);
+			}
+		}
+		FreeResource(hTileSetGlobal);
+	}
+	ConsoleLog(LOG_DEBUG, "Load Replacement Default Large Sprite Resources.\n");
+}
+
 void ReloadDefaultTileSet_SC2K1996() {
 	CSimcityAppPrimary *pSCApp;
 	CSimcityView *pSCView;
@@ -300,6 +444,7 @@ void ReloadDefaultTileSet_SC2K1996() {
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_SPECIAL);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_LARGE);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_SMALLMED);
+	L_LoadFixedLargeSpritesRsrc_SC2K1996();
 	GameMain_CmdTarget_EndWaitCursor(pSCApp);
 
 	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
@@ -309,8 +454,22 @@ void ReloadDefaultTileSet_SC2K1996() {
 	}
 }
 
+extern "C" void __declspec(naked) __stdcall Hook_LoadSpriteArchives1996() {
+	Game_LoadDataArchive(TILEDAT_DEFS_SPECIAL);
+	Game_LoadDataArchive(TILEDAT_DEFS_LARGE);
+	Game_LoadDataArchive(TILEDAT_DEFS_SMALLMED);
+	L_LoadFixedLargeSpritesRsrc_SC2K1996();
+	GAMEJMP(0x42C332)
+}
+
 void InstallSpriteAndTileSetHooks_SC2K1996(void) {
 	// Hook LoadSpriteDataArchive
 	VirtualProtect((LPVOID)0x4029B4, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4029B4, Hook_LoadSpriteDataArchive1996);
+
+	// Hook into InitializeDataColorsFonts - move actual
+	// sprite loading into external call.
+	VirtualProtect((LPVOID)0x42C314, 30, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memset((LPVOID)0x42C314, 0x90, 30);
+	NEWJMP((LPVOID)0x42C314, Hook_LoadSpriteArchives1996);
 }
