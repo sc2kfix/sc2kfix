@@ -213,8 +213,10 @@ LONG __cdecl L_SCURK_EditableTileSet_mReadFromFile(cEditableTileSet *pThis, cons
 	fread(&pThis->mNumTiles, 2, 1, f);
 	if (!pThis->mTileSet)
 		pThis->mTileSet = (sprite_archive_t *)L_BOR_gAllocBlock(10 * pThis->mNumTiles + 2);
-	if (!pThis->mTileSet)
+	if (!pThis->mTileSet) {
+		fclose(f);
 		return 0;
+	}
 	pThis->mTileSet->nSprites = pThis->mNumTiles;
 	L_BOR_gUpdateWaitWindow();
 	fread(pThis->mTileSet->pData, 1, 10 * pThis->mNumTiles, f);
