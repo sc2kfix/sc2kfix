@@ -323,33 +323,33 @@ static void L_LoadFixedLargeSpritesRsrc_SC2K1996() {
 				pTileHeader = (tilesetMainHeader_t *)pTileDat;
 				if (memcmp(pTileHeader->szTypeHead, "MIFF", 4) == 0 &&
 					memcmp(pTileHeader->szSC2KHead, "SC2K", 4) == 0) {
-					dwSize = Game_FlipLongBytePortions(pTileHeader->dwSize);
+					dwSize = L_FlipLongBytePortions(pTileHeader->dwSize);
 					dwOffset += sizeof(tilesetMainHeader_t);
 					pTileInfo = (tilesetHeadInfo_t *)(pTileDat + dwOffset);
 					if (pTileInfo && memcmp(pTileInfo->szHead, "INFO", 4) == 0) {
-						dwSize = Game_FlipLongBytePortions(pTileInfo->dwSize);
+						dwSize = L_FlipLongBytePortions(pTileInfo->dwSize);
 						dwOffset += sizeof(tilesetHeadInfo_t) + dwSize;
 						pTileTiles = (tilesetHeadInfo_t *)(pTileDat + dwOffset);
 						if (pTileTiles && memcmp(pTileTiles->szHead, "TILE", 4) == 0) {
-							dwSize = Game_FlipLongBytePortions(pTileTiles->dwSize);
+							dwSize = L_FlipLongBytePortions(pTileTiles->dwSize);
 							dwOffset += sizeof(tilesetHeadInfo_t);
 							pTileMem = (tilesetMem_t *)(pTileDat + dwOffset);
 							if (pTileMem) {
-								pTileMem->nMaxChunks = Game_FlipShortBytes(pTileMem->nMaxChunks);
+								pTileMem->nMaxChunks = L_FlipShortBytes(pTileMem->nMaxChunks);
 								pTileContents = &pTileMem->tileMem;
 								if (pTileContents) {
 									for (nChunk = 0; pTileMem->nMaxChunks > nChunk; ++nChunk) {
 										memcpy(szHead, pTileContents->szHead, 4);
-										dwSize = Game_FlipLongBytePortions(pTileContents->dwSize);
+										dwSize = L_FlipLongBytePortions(pTileContents->dwSize);
 										pBuf = &pTileContents->pBuf;
 
 										bGotShap = bGotName = bResize = FALSE;
 										if (memcmp(szHead, "SHAP", 4) == 0) {
 											pTileShap = (tileShap_t *)pBuf;
-											nSpriteID = Game_FlipShortBytes(pTileShap->nSpriteID);
-											nWidth = Game_FlipShortBytes(pTileShap->nWidth);
-											nHeight = Game_FlipShortBytes(pTileShap->nHeight);
-											dwSize_Shap = Game_FlipLongBytePortions(pTileShap->dwSize);
+											nSpriteID = L_FlipShortBytes(pTileShap->nSpriteID);
+											nWidth = L_FlipShortBytes(pTileShap->nWidth);
+											nHeight = L_FlipShortBytes(pTileShap->nHeight);
+											dwSize_Shap = L_FlipLongBytePortions(pTileShap->dwSize);
 											// In this case we ONLY want to load the large sprites.
 											if (nSpriteID < SPRITE_LARGE_START)
 												bGotShap = TRUE;
@@ -358,8 +358,8 @@ static void L_LoadFixedLargeSpritesRsrc_SC2K1996() {
 										}
 										else if (memcmp(szHead, "NAME", 4) == 0) {
 											pTileName = (tileName_t *)pBuf;
-											nTileNameID = Game_FlipShortBytes(pTileName->nTileNameID);
-											nNameLength = Game_FlipShortBytes(pTileName->nNameLength);
+											nTileNameID = L_FlipShortBytes(pTileName->nTileNameID);
+											nNameLength = L_FlipShortBytes(pTileName->nNameLength);
 											// Although we process the above we leave the
 											// names alone here.
 											bGotName = TRUE;

@@ -268,7 +268,29 @@ BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc) {
 #pragma warning(disable:4996)
 FILE *old_fopen(const char *fname, const char *mode) {
 	return fopen(fname, mode);
-	#pragma warning(default:4996)
+}
+#pragma warning(default:4996)
+
+void *__cdecl L_ReallocateDataEntry(char *pDest, char *pSrc) {
+	DWORD dwCurr;
+	DWORD dwDiff;
+	char *pDestPtr;
+	DWORD dwSize;
+	DWORD dwPos;
+	void *pNew;
+
+	dwCurr = GlobalSize(pDest);
+	dwDiff = 0;
+	if (pSrc != pDest) {
+		do
+			pDestPtr = &pDest[++dwDiff];
+		while (pDestPtr != pSrc);
+	}
+	dwSize = dwCurr - dwDiff;
+	for (dwPos = 0; dwSize > dwPos; ++dwPos)
+		pDest[dwPos] = pSrc[dwPos];
+	pNew = realloc(pDest, dwSize);
+	return (pNew) ? pNew : pDest;
 }
 
 // start of base64 code

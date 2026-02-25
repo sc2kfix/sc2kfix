@@ -82,44 +82,6 @@ enum {
 
 #define ONIDLE_INITIALDIALOG_MAX (ONIDLE_INITIALDIALOG_COUNT)
 
-#pragma pack(push, 1)
-typedef struct {
-	char szTypeHead[4];
-	DWORD dwSize;
-	char szSC2KHead[4];
-} tilesetMainHeader_t;
-
-typedef struct {
-	char szHead[4];
-	DWORD dwSize;
-} tilesetHeadInfo_t;
-
-typedef struct {
-	char szHead[4];
-	DWORD dwSize;
-	char pBuf;
-} tileMem_t;
-
-typedef struct {
-	WORD nMaxChunks;
-	tileMem_t tileMem;
-} tilesetMem_t;
-
-typedef struct {
-	WORD nSpriteID;
-	WORD nWidth;
-	WORD nHeight;
-	DWORD dwSize;
-	char pBuf;
-} tileShap_t;
-
-typedef struct {
-	WORD nTileNameID;
-	WORD nNameLength;
-	char pBuf;
-} tileName_t;
-#pragma pack(pop)
-
 // This specifical structure is the equivalent
 // of the LOGPALETTE struct from the WinAPI
 // except the pPalEnts array is preset to

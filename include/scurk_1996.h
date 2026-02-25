@@ -46,7 +46,12 @@
 #endif
 
 // Program funcs
+SCURK1996_GAMECALL_MAIN(0x413788, void *, __cdecl, gAllocBlock, size_t)
+SCURK1996_GAMECALL_MAIN(0x41380C, void, __cdecl, gFreeBlock, void *)
+SCURK1996_GAMECALL_MAIN(0x4139B0, int, __stdcall, gUpdateWaitWindow)
 SCURK1996_GAMECALL_MAIN(0x414D98, char *, __cdecl, EditableTileSet_GetLongName, cEditableTileSet *, int)
+SCURK1996_GAMECALL_MAIN(0x430D24, __int16, __cdecl, FlipShortBytes, __int16)
+SCURK1996_GAMECALL_MAIN(0x430D74, int, __cdecl, FlipLongBytePortions, int)
 SCURK1996_GAMECALL_MAIN(0x440FEC, void, __cdecl, winscurkPlaceWindow_ClearCurrentTool, winscurkPlaceWindow *)
 SCURK1996_GAMECALL_MAIN(0x4496E8, void, __cdecl, winscurkMDIClient_RotateColors, winscurkMDIClient *, int)
 SCURK1996_GAMECALL_MAIN(0x458150, TBC45XPalette *, __cdecl, winscurkApp_GetPalette, winscurkApp *)

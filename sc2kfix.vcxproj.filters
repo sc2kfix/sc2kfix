@@ -180,6 +180,9 @@
     <ClInclude Include="include\keybindings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\commonhelp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="hooks\hook_mciSendCommand.cpp">
@@ -418,6 +421,9 @@
     </ClCompile>
     <ClCompile Include="hooks\hook_drawing.cpp">
       <Filter>Source Files\Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\common_remote_functions.cpp">
+      <Filter>Source Files\Modules</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

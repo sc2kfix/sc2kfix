@@ -257,6 +257,10 @@ extern "C" void __cdecl Hook_SCURK1996_PlaceTileListDlg_EvLBNSelChange(TPlaceTil
 	}
 }
 
+extern "C" LONG __cdecl Hook_SCURK1996_EditableTileSet_mReadFromFile(cEditableTileSet *pThis, LPCSTR lpPathName) {
+	return L_SCURK_EditableTileSet_mReadFromFile(pThis, lpPathName);
+}
+
 extern "C" void __declspec(naked) Hook_SCURK1996_MoverWindow_DisableMaximizeBox(void) {
 	TBC45XWindow *pWnd;
 
@@ -408,6 +412,11 @@ void InstallFixes_SCURK1996(void) {
 	NEWJMP((LPVOID)0x410D94, Hook_SCURK1996_PlaceTileListDlg_EvLButtonDblClk);
 	VirtualProtect((LPVOID)0x410ED0, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x410ED0, Hook_SCURK1996_PlaceTileListDlg_EvLBNSelChange);
+
+	// Hook cEditableTileSet::mReadFromFile
+	// This call is used to load the TILES.DB.
+	VirtualProtect((LPVOID)0x4150EC, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x41510C, Hook_SCURK1996_EditableTileSet_mReadFromFile);
 
 	// winscurkMoverWindow::EvSize():
 	// Temporarily remove the TFrameWindow::EvSize call.

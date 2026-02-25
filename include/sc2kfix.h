@@ -16,6 +16,7 @@
 
 #include <keybindings.h>
 #include <mfc3xhelp.h>
+#include <commonhelp.h>
 #include <sc2kclasses.h>
 #include <sc2k_1995.h>
 #include <sc2k_1996.h>
@@ -439,6 +440,8 @@ BOOL DoConfigureKeyBindings(settings_t *st, HWND hwndDlg);
 BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc);
 
 FILE *old_fopen(const char *fname, const char *mode);
+
+void *__cdecl L_ReallocateDataEntry(char *pDest, char *pSrc);
 
 BOOL WINAPI ConsoleCtrlHandler(DWORD fdwCtrlType);
 DWORD WINAPI ConsoleThread(LPVOID lpParameter);

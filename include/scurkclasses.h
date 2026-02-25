@@ -25,33 +25,12 @@ class CWinGBitmap {
 	WORD wGRDIBUsage;
 };
 
-struct shapedetail_t {
-	union uShapeOffset {
-		BYTE *shapePtr;
-		int32_t shapeLong;
-	};
-
-	uShapeOffset shapeOffset;
-	uint16_t shapeHeight;
-	uint16_t shapeWidth;
-};
-
-struct shapeinfo_t {
-	int16_t shapeNum;
-	shapedetail_t shapeDetail;
-};
-
-struct tilesetheader_t {
-	int16_t numShapes;
-	shapeinfo_t infoShapes[1];
-};
-
 class cEditableTileSet {
 public:
 	uint8_t *mTiles[1510];
 	char *mTileNames[184];
 	int32_t *mTileIsRenamed[184];
-	tilesetheader_t *mTileSet;
+	sprite_archive_t *mTileSet;
 	char *mFileName;
 	int32_t *mDBIndexFromShapeNum;
 	int32_t *mShapeNumFromEditableNum;

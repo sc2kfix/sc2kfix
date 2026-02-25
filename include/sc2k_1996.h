@@ -2746,30 +2746,6 @@ typedef struct {
 #pragma pack(pop)
 
 typedef struct {
-	union uSpriteOffset {
-		BYTE *sprPtr;
-		int32_t sprLong;
-	};
-	uSpriteOffset sprOffset;
-	WORD wHeight;
-	WORD wWidth;
-} sprite_header_t;
-
-#pragma pack(push, 1)
-typedef struct {
-	__int16 nSprNum;
-	sprite_header_t sprHeader;
-} sprite_file_header_t;
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-typedef struct {
-	__int16 nSprites;
-	sprite_file_header_t pData[1];
-} sprite_archive_t;
-#pragma pack(pop)
-
-typedef struct {
 	sprite_archive_t *pData;
 } sprite_archive_stored_t;
 
