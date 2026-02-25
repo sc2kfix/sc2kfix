@@ -12,6 +12,7 @@
 
 #include "../include/json.hpp"
 #include "../include/mfc3xhelp.h"
+#include "../include/commonhelp.h"
 #include "../include/sc2kclasses.h"
 #include "../include/sc2k_1996.h"
 
