@@ -415,7 +415,7 @@ void InstallFixes_SCURK1996(void) {
 
 	// Hook cEditableTileSet::mReadFromFile
 	// This call is used to load the TILES.DB.
-	VirtualProtect((LPVOID)0x4150EC, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	VirtualProtect((LPVOID)0x41510C, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x41510C, Hook_SCURK1996_EditableTileSet_mReadFromFile);
 
 	// winscurkMoverWindow::EvSize():
