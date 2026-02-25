@@ -528,6 +528,8 @@ extern BOOL bStatusDialogMoving;
 extern char szLatestRelease[24];
 extern BOOL bUpdateAvailable;
 
+extern BOOL bDisableFixedTiles;
+
 HOOKEXT BOOL bHookStopProcessing;
 
 // Hooks to inject in dllmain.cpp

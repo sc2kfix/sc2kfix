@@ -54,6 +54,7 @@ BOOL bSkipLoadingMods = FALSE;
 BOOL bFixFileAssociations = FALSE;
 BOOL bDisableAutoThingCleanup = TRUE;
 BOOL bMapWireFrame = FALSE;
+BOOL bDisableFixedTiles = FALSE;
 int iForcedBits = 0;
 
 std::random_device rdRandomDevice;
@@ -209,6 +210,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						bSkipLoadingMods = TRUE;
 					if (!lstrcmpiW(argv[i], L"-mapwireframe"))
 						bMapWireFrame = TRUE;
+					if (!lstrcmpiW(argv[i], L"-disablefixedtiles"))
+						bDisableFixedTiles = TRUE;
 					if (!lstrcmpiW(argv[i], L"-bitmode"))
 					{
 						if (!iSetBitMode) {

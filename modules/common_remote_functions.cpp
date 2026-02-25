@@ -251,8 +251,11 @@ LONG __cdecl L_SCURK_EditableTileSet_mReadFromFile(cEditableTileSet *pThis, cons
 	pThis->mTileSet[543].pData[0].nSprNum += 4;
 	pThis->mTileSet[126].pData[0].sprHeader.sprOffset.sprLong += 2;
 	fclose(f);
-	if (nRes)
-		L_SCURK_LoadFixedLargeSpritesRsrc(pThis);
-	L_BOR_gUpdateWaitWindow();
+	if (!bDisableFixedTiles) {
+		if (nRes) {
+			L_SCURK_LoadFixedLargeSpritesRsrc(pThis);
+			L_BOR_gUpdateWaitWindow();
+		}
+	}
 	return nRes;
 }

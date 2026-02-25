@@ -409,7 +409,8 @@ void ReloadDefaultTileSet_SC2K1996() {
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_SPECIAL);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_LARGE);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_SMALLMED);
-	L_LoadFixedLargeSpritesRsrc_SC2K1996();
+	if (!bDisableFixedTiles)
+		L_LoadFixedLargeSpritesRsrc_SC2K1996();
 	GameMain_CmdTarget_EndWaitCursor(pSCApp);
 
 	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
@@ -423,7 +424,8 @@ extern "C" void __declspec(naked) __stdcall Hook_LoadSpriteArchives1996() {
 	Game_LoadDataArchive(TILEDAT_DEFS_SPECIAL);
 	Game_LoadDataArchive(TILEDAT_DEFS_LARGE);
 	Game_LoadDataArchive(TILEDAT_DEFS_SMALLMED);
-	L_LoadFixedLargeSpritesRsrc_SC2K1996();
+	if (!bDisableFixedTiles)
+		L_LoadFixedLargeSpritesRsrc_SC2K1996();
 	GAMEJMP(0x42C332)
 }
 
