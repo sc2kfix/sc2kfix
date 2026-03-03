@@ -1,6 +1,10 @@
 // sc2kfix modules/scurkfix_1996.cpp: fixes for SCURK - Network Edition (1996) version
 // (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
+// This source file only contains hooks that by their very nature are unique
+// to the 1996 version of SCURK (partial cases or those that only apply
+// against this version), the rest are under scurkfix_common.cpp
+
 #undef UNICODE
 #include <windows.h>
 #include <direct.h>
@@ -12,10 +16,6 @@
 
 static DWORD dwDummy;
 
-extern "C" void Hook_SCURK1996_winscurkMDIClient_CycleColors(winscurkMDIClient *pThis) {
-	L_SCURK_winscurkMDIClient_CycleColors(pThis);
-}
-
 extern "C" void __cdecl Hook_SCURK1996_DebugOut(char const *fmt, ...) {
 	va_list args;
 
@@ -25,22 +25,6 @@ extern "C" void __cdecl Hook_SCURK1996_DebugOut(char const *fmt, ...) {
 	va_start(args, fmt);
 	L_SCURK_gDebugOut(fmt, args);
 	va_end(args);
-}
-
-extern "C" void __cdecl Hook_SCURK1996_PlaceTileListDlg_SetupWindow(TPlaceTileListDlg *pThis) {
-	L_SCURK_PlaceTileListDlg_SetupWindow(pThis);
-}
-
-extern "C" void __cdecl Hook_SCURK1996_PlaceTileListDlg_EvLButtonDblClk(TPlaceTileListDlg *pThis) {
-	L_SCURK_PlaceTileListDlg_EvLButtonDblClk(pThis);
-}
-
-extern "C" void __cdecl Hook_SCURK1996_PlaceTileListDlg_EvLBNSelChange(TPlaceTileListDlg *pThis) {
-	L_SCURK_PlaceTileListDlg_EvLBNSelChange(pThis);
-}
-
-extern "C" LONG __cdecl Hook_SCURK1996_EditableTileSet_mReadFromFile(cEditableTileSet *pThis, LPCSTR lpPathName) {
-	return L_SCURK_EditableTileSet_mReadFromFile(pThis, lpPathName);
 }
 
 extern "C" void __declspec(naked) Hook_SCURK1996_MoverWindow_DisableMaximizeBox(void) {
@@ -58,10 +42,6 @@ extern "C" void __declspec(naked) Hook_SCURK1996_MoverWindow_DisableMaximizeBox(
 		mov [ebx + 0x4], eax
 	}
 	GAMEJMP(0x44E55A);
-}
-
-extern "C" void __cdecl Hook_SCURK1996_MoverWindow_EvGetMinMaxInfo(winscurkMoverWindow *pThis, MINMAXINFO *pMmi) {
-	L_SCURK_MoverWindow_EvGetMinMaxInfo(pThis, pMmi);
 }
 
 // And we're gritting our teeth...
@@ -85,19 +65,17 @@ extern "C" void __declspec(naked) __cdecl Hook_SCURK1996_OwlMainCommandLineFix(v
 	GAMEJMP(0x45A7F6);
 }
 
-extern "C" void __cdecl Hook_SCURK1996_BCDialog_CmCancel(TBC45XDialog *pThis) {
-	L_SCURK_BCDialog_CmCancel(pThis);
-}
-
 void InstallFixes_SCURK1996(void) {
 	if (mischook_debug == DEBUG_FLAGS_EVERYTHING)
 		mischook_scurk_debug = DEBUG_FLAGS_EVERYTHING;
 
 	InstallRegistryPathingHooks_SCURK1996();
 
+	L_SCURK_InitDOSMacPaletteIdxTable();
+
 	// Hook for palette animation fix
 	VirtualProtect((LPVOID)0x449800, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x449800, Hook_SCURK1996_winscurkMDIClient_CycleColors);
+	NEWJMP((LPVOID)0x449800, Hook_SCURK_winscurkMDIClient_CycleColors);
 	ConsoleLog(LOG_INFO, "CORE: Patched palette animation fix for SCURK.\n");
 
 	// Add back the internal debug notices for tracing purposes.
@@ -110,19 +88,111 @@ void InstallFixes_SCURK1996(void) {
 	// 2) Mouse selection was no longer recognised - or rather
 	//    the stored point within the window wasn't recorded.
 	VirtualProtect((LPVOID)0x4104B8, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4104B8, Hook_SCURK1996_PlaceTileListDlg_SetupWindow);
+	NEWJMP((LPVOID)0x4104B8, Hook_SCURK_PlaceTileListDlg_SetupWindow);
 	VirtualProtect((LPVOID)0x410D94, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x410D94, Hook_SCURK1996_PlaceTileListDlg_EvLButtonDblClk);
+	NEWJMP((LPVOID)0x410D94, Hook_SCURK_PlaceTileListDlg_EvLButtonDblClk);
 	VirtualProtect((LPVOID)0x410ED0, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x410ED0, Hook_SCURK1996_PlaceTileListDlg_EvLBNSelChange);
+	NEWJMP((LPVOID)0x410ED0, Hook_SCURK_PlaceTileListDlg_EvLBNSelChange);
+
+	// TEncodeDib::mFillAt
+	// TEncodeDib::mFillLine
+	// Tweaks concerning various off-by-one and alignment
+	// situations when it came to using the fill tool.
+	// (There is some crossover with changes made to the
+	// cEditableTileSet::mRenderDBShapeToDIB calls that
+	// only apply when you switch back and forth between
+	// tiles). #1
+	VirtualProtect((LPVOID)0x4140F0, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4140F0, Hook_SCURK_EncodeDib_mFillAt);
+	VirtualProtect((LPVOID)0x4141E8, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4141E8, Hook_SCURK_EncodeDib_mFillLine);
+
+	// TEncodeDib::mDetermineShapeHeight
+	// Tweaks concerning height off-by-one cases.
+	VirtualProtect((LPVOID)0x414334, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x414334, Hook_SCURK_EncodeDib_mDetermineShapeHeight);
+
+	// TEncodeDib::mShrink
+	// Account for an ancient issue concerning the
+	// left-most column of pixels being missed
+	// (This was the most visible when it came to the
+	// Plymouth Arcology).
+	VirtualProtect((LPVOID)0x41437C, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x41437C, Hook_SCURK_EncodeDib_mShrink);
+
+	// TEncodeDib::mEncodeShape
+	// Fixes concerning off-by-one situation
+	// as well as ensuring that once the bottom row
+	// has been processed it always uses the "End of Shape"
+	// mode.
+	VirtualProtect((LPVOID)0x414470, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x414470, Hook_SCURK_EncodeDib_mEncodeShape);
 
 	// Hook cEditableTileSet::mReadFromFile
 	// This call is used to load the TILES.DB.
 	VirtualProtect((LPVOID)0x41510C, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x41510C, Hook_SCURK1996_EditableTileSet_mReadFromFile);
+	NEWJMP((LPVOID)0x41510C, Hook_SCURK_EditableTileSet_mReadFromFile);
+
+	// cEditableTileSet::mWriteToMIFFFile
+	// Backup functionality added.
+	VirtualProtect((LPVOID)0x415460, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x415460, Hook_SCURK_EditableTileSet_mWriteToMIFFFile);
+
+	// cEditableTileSet::mReadFromMIFFFile
+	// Macintosh-type MIF detection added
+	// for proper palette processing.
+	VirtualProtect((LPVOID)0x415DD4, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x415DD4, Hook_SCURK_EditableTileSet_mReadFromMIFFFile);
+
+	// cEditableTileSet::mReadShapeFromDib
+	// PostBuild: This one concerns the reading of Shap information
+	// from the processed Dib during TIL Large -> Small/Med building.
+	// Paint: This one concerns the reading of Shap information
+	// from the PaintWindow's EncodedDib during EditWindow tile
+	// selection in-order to update the Small/Med objects based on
+	// the large object.
+	VirtualProtect((LPVOID)0x416988, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x416988, Hook_SCURK_EditableTileSet_mReadShapeFromDib_PostBuild);
+	VirtualProtect((LPVOID)0x416A74, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x416A74, Hook_SCURK_EditableTileSet_mReadShapeFromDib_Paint);
+
+	// cEditableTileSet::mRenderDBShapeToDIB
+	// Dib: Encoded Shap to PaintWindow Dib
+	// Graphic: Encoded Shap PaintWindow WinGBitmap
+	// Fixes/adjustments concerning both vertical off-by-one
+	// and the omission of portions of the
+	// right-most column of pixels on 4x4 objects
+	// (Plymouth Arcology being a prime example).
+	VirtualProtect((LPVOID)0x416CD8, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x416CD8, Hook_SCURK_EditableTileSet_mRenderDBShapeToDIB_Dib);
+	VirtualProtect((LPVOID)0x416E58, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x416E58, Hook_SCURK_EditableTileSet_mRenderDBShapeToDIB_Graphic);
+
+	// cEditableTileSet::mRenderShapeToTile
+	// Shap to the tile selection on the following windows:
+	// - Place & Print object selection dialogue
+	// - Pick & Copy tiles for source and working sets
+	// - Paint the Town for the current working set
+	// Fix/adjustment concerning a vertical off-by-one case.
+	VirtualProtect((LPVOID)0x416FE0, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x416FE0, Hook_SCURK_EditableTileSet_mRenderShapeToTile);
+
+	// cEditableTileSet::mReadFromDOSFile
+	// Included a more comprehensive conversion
+	// of the TIL set so it accounts for the
+	// original small and tiny tiles
+	// (At the moment processing only occurs
+	// for Shap objects that are within the
+	// bounds of the nEdNum range for WinSCURK).
+	VirtualProtect((LPVOID)0x4171AC, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4171AC, Hook_SCURK_EditableTileSet_mReadFromDOSFile);
+
+	// cPaintWindow::mEncodeShape
+	VirtualProtect((LPVOID)0x447138, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x447138, Hook_SCURK_PaintWindow_mEncodeShape);
 
 	// 'nop' out the -1 case in the following functions in-regards to the
-	// maximum extent:
+	// nMaxHorzScrollPos maximum extent:
 	// - cPaintWindow::mZoomOut
 	// - cPaintWindow::mZoomIn
 	// - cPaintWindow::EvHScroll
@@ -143,6 +213,30 @@ void InstallFixes_SCURK1996(void) {
 	VirtualProtect((LPVOID)0x4432B4, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
 	*(BYTE *)(0x4432B4) = 0x01;
 
+	// cPaintWindow::mFill
+	// Tweaks concerning various off-by-one and alignment
+	// situations when it came to using the fill tool.
+	// (There is some crossover with changes made to the
+	// cEditableTileSet::mRenderDBShapeToDIB calls that
+	// only apply when you switch back and forth between
+	// tiles). #2
+	VirtualProtect((LPVOID)0x4446D0, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4446D0, Hook_SCURK_PaintWindow_mFill);
+
+	// Hook cPaintWindow::mClipDrawing
+	// Fixes/Adjustments to prevent certain
+	// over/under clipping situations
+	// (Originally even with a properly aligned
+	// shape you'd see at least one pixel on each
+	// row being clipped on the right-most side
+	// of the tile base).
+	VirtualProtect((LPVOID)0x443F04, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x443F04, Hook_SCURK_PaintWindow_mClipDrawing);
+
+	// winscurkMDIFrame::AssignMenu
+	VirtualProtect((LPVOID)0x448294, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x448294, Hook_SCURK_winscurkMDIFrame_AssignMenu);
+
 	// winscurkMoverWindow::EvSize():
 	// Temporarily remove the TFrameWindow::EvSize call.
 	// This avoids some redrawing strangeness that otherwise occurs
@@ -159,16 +253,24 @@ void InstallFixes_SCURK1996(void) {
 	// Temporarily lock the Min/Max size of the Pick&Copy window
 	// to avoid rendering the area non-functional.
 	VirtualProtect((LPVOID)0x4502E8, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4502E8, Hook_SCURK1996_MoverWindow_EvGetMinMaxInfo);
+	NEWJMP((LPVOID)0x4502E8, Hook_SCURK_MoverWindow_EvGetMinMaxInfo);
 
 	// OwlMain() command line fix.
 	VirtualProtect((LPVOID)0x45A777, 7, PAGE_EXECUTE_READWRITE, &dwDummy);
 	memset((LPVOID)0x45A777, 0x90, 7);
 	NEWJMP((LPVOID)0x45A777, Hook_SCURK1996_OwlMainCommandLineFix);
 
+	// TCommandEnabler::Enable
+	VirtualProtect((LPVOID)0x469598, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x469598, Hook_SCURK_CommandEnabler_Enable);
+
 	// This hook is to prevent the Place&Pick selection dialogue
 	// from being unintentionally closed; it catches and ignores
 	// the cancel (esc) action.
 	VirtualProtect((LPVOID)0x4702A6, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x4702A6, Hook_SCURK1996_BCDialog_CmCancel);
+	NEWJMP((LPVOID)0x4702A6, Hook_SCURK_BCDialog_CmCancel);
+
+	// TFrameWindow::EvCommand
+	VirtualProtect((LPVOID)0x473EB3, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x473EB3, Hook_SCURK_FrameWindow_EvCommand);
 }

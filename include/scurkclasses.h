@@ -13,6 +13,9 @@
 #define MISCHOOK_SCURK_DEBUG_INTERNAL 1
 #define MISCHOOK_SCURK_DEBUG_PICKANDPLACE 2
 #define MISCHOOK_SCURK_DEBUG_PLACEANDCOPY 4
+#define MISCHOOK_SCURK_DEBUG_MENU 8
+#define MISCHOOK_SCURK_DEBUG_ONCMD 16
+#define MISCHOOK_SCURK_DEBUG_CREATEBAK 32
 
 #define MISCHOOK_SCURK_DEBUG DEBUG_FLAGS_NONE
 
@@ -22,6 +25,14 @@
 #endif
 
 extern UINT mischook_scurk_debug;
+
+// If set to 0 it'll use the original
+// method of shrinking the large shape
+// to their small and tiny equivalents.
+// While set to 1 it'll do a "more"
+// comprehensive conversion (for now this
+// is within the bounds of the EDNUM range).
+#define COMPREHENSIVE_DOS_LOAD 1
 
 #define MAX_EDNUM 184
 #define MAX_WORKING_SHAPS (MAX_EDNUM * 3) // Large, Small and Tiny
@@ -44,6 +55,22 @@ extern UINT mischook_scurk_debug;
 #define _BS_LONG_NAME_LOC(x)  ((BYTE)((x & 1) + x + 4) << 24) | ((((x & 1) + (WORD)x + 4) & 0xFF00) << 8) | ((((x & 1) + x + 4) & 0xFF0000) >> 8) | ((((x & 1) + x + 4) & 0xFF000000) >> 24)
 // NAME - Name Length
 #define _BS_SHORT_NAME_LEN(x) ((BYTE)((x & 1) + x) << 8) | ((int)(WORD)((x & 1) + x) >> 8)
+
+#define SINGLE_TILE_WIDTH 32
+
+#define TILE_BASE_INVALID 0
+#define TILE_BASE_4x4 1
+#define TILE_BASE_3x3 2
+#define TILE_BASE_2x2 3
+#define TILE_BASE_1x1 4
+
+enum {
+	SHUNT_NONE,
+	SHUNT_UP,
+	SHUNT_DOWN,
+	SHUNT_LEFT,
+	SHUNT_RIGHT
+};
 
 #pragma pack(push, 1)
 class CWinGBitmap {

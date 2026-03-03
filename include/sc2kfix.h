@@ -7,6 +7,7 @@
 
 #include <windows.h>
 #include <windowsx.h>
+#include <time.h>
 #include <string>
 #include <list>
 #include <map>
@@ -478,6 +479,7 @@ extern HANDLE hConsoleThread;
 extern HMENU hMainMenu;
 extern HMENU hGameMenu;
 extern HMENU hDebugMenu;
+extern HMENU hSCURKEWMenu;
 extern FARPROC fpWinMMHookList[180];
 extern DWORD dwDetectedVersion;
 extern DWORD dwSC2KFixMode;
