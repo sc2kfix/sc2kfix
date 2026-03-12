@@ -1,5 +1,5 @@
 // sc2kfix modules/console.cpp: sc2kfix console and SX2 interpreter
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 // Notes: 2025-03-01 (@araxestroy)
 //
@@ -11,6 +11,14 @@
 // with the reverse engineering process and that's what matters to me.
 //
 // I'd say I remember when I used to have standards, but I never have.
+//
+//        2026-03-11 (@araxestroy)
+//
+// The console can now run Lua scripts and switch into the official Lua REPL. It's not visually
+// pretty, but it works.
+//
+// I still don't have standards.
+
 
 #undef UNICODE
 #include <windows.h>
@@ -18,6 +26,7 @@
 #include <stdlib.h>
 #include <mmsystem.h>
 #include <io.h>
+#include <signal.h>
 #include <fstream>
 #include <map>
 #include <regex>
@@ -25,6 +34,8 @@
 
 #include <sc2kfix.h>
 #include "../resource.h"
+
+#include "../thirdparty/lua/lua.hpp"
 
 #ifdef CONSOLE_ENABLED
 BOOL bConsoleEnabled = TRUE;
@@ -46,10 +57,12 @@ HANDLE hConsoleThread;
 
 char szCmdBuf[256] = { 0 };
 BOOL bConsoleUndocumentedMode = FALSE;
+BOOL bConsoleInLuaREPL = FALSE;
 int iConsoleScriptNest = 0;
 std::map<std::string, script_variable_t> mapVariables;
 
 static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments);
+int LuaRunREPL(void);
 
 console_command_t fpConsoleCommands[] = {
 	{ "?", ConsoleCmdHelp, CONSOLE_COMMAND_ALIAS, "" },
@@ -58,11 +71,7 @@ console_command_t fpConsoleCommands[] = {
 	{ "echo!", ConsoleCmdEcho, CONSOLE_COMMAND_UNDOCUMENTED, "Print to console without newline" },
 	{ "fixup", ConsoleCmdFixUp, CONSOLE_COMMAND_DOCUMENTED, "Manual 'Fix-up' operations" },
 	{ "help", ConsoleCmdHelp, CONSOLE_COMMAND_DOCUMENTED, "Display this help" },
-#if !NOKUROKO
-	{ "run", ConsoleCmdRun, CONSOLE_COMMAND_DOCUMENTED, "Run Kuroko code or console script" },
-#else
-	{ "run", ConsoleCmdRun, CONSOLE_COMMAND_DOCUMENTED, "Run console script" },
-#endif
+	{ "run", ConsoleCmdRun, CONSOLE_COMMAND_DOCUMENTED, "Run Lua or console scripts" },
 	{ "set", ConsoleCmdSet, CONSOLE_COMMAND_DOCUMENTED, "Modify game and plugin behaviour" },
 	{ "show", ConsoleCmdShow, CONSOLE_COMMAND_DOCUMENTED, "Display various game and plugin information" },
 	{ "unset", ConsoleCmdSet, CONSOLE_COMMAND_DOCUMENTED, "Modify game and plugin behaviour" },
@@ -79,38 +88,68 @@ void ConsoleScriptSleep(DWORD dwMilliseconds) {
 // COMMAND: run ...
 BOOL ConsoleCmdRun(const char* szCommand, const char* szArguments) {
 	std::string strPossibleScriptName;
-	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
-		printf("  run <filename>   Executes a file as a series of console commands\n");
+	if (!szArguments || !*szArguments || !strcmp(szArguments, "?") || !strcmp(szArguments, "console")) {
+		printf(
+			"  run console <filename>   Executes a file as a series of console commands\n"
+			"  run lua                  Switches to the Lua REPL\n"
+			"  run lua <filename>       Executes a file as a standalone Lua script\n");
 		return TRUE;
 	}
 
-	// Try to find the script we want
-	strPossibleScriptName = szArguments;
-	if (!FileExists(strPossibleScriptName.c_str())) {
-		strPossibleScriptName += ".sx2";
+	if (!strncmp(szArguments, "console ", 8)) {
+		// Try to find the script we want
+		strPossibleScriptName = szArguments + 8;
 		if (!FileExists(strPossibleScriptName.c_str())) {
-			ConsoleLog(LOG_ERROR, "CORE: Couldn't find script %s.\n", szArguments);
-			return TRUE;
-		}
-	}
-
-	// Iterate through the script and run lines until they fail
-	std::ifstream fsScriptFile(strPossibleScriptName);
-	std::string strScriptLine;
-	int i = 1;
-	iConsoleScriptNest++;
-	while (std::getline(fsScriptFile, strScriptLine)) {
-		if (!ConsoleEvaluateCommand(strScriptLine.c_str(), FALSE) || !iConsoleScriptNest) {
-			ConsoleLog(LOG_ERROR, "CORE: Script %s aborted on line %d.\n", strPossibleScriptName.c_str(), i);
-			return TRUE;
+			strPossibleScriptName += ".sx2";
+			if (!FileExists(strPossibleScriptName.c_str())) {
+				ConsoleLog(LOG_ERROR, "CORE: Couldn't find console script %s.\n", strPossibleScriptName.c_str());
+				return TRUE;
+			}
 		}
 
-		// We survived!
-		i++;
+		// Iterate through the script and run lines until they fail
+		std::ifstream fsScriptFile(strPossibleScriptName);
+		std::string strScriptLine;
+		int i = 1;
+		iConsoleScriptNest++;
+		while (std::getline(fsScriptFile, strScriptLine)) {
+			if (!ConsoleEvaluateCommand(strScriptLine.c_str(), FALSE) || !iConsoleScriptNest) {
+				ConsoleLog(LOG_ERROR, "CORE: Script %s aborted on line %d.\n", strPossibleScriptName.c_str(), i);
+				return TRUE;
+			}
+
+			// We survived!
+			i++;
+		}
+
+		// Decrement the nesting count and break	
+		iConsoleScriptNest--;
+	} else if (!strcmp(szArguments, "lua")) {
+		// Start the Lua REPL and hand over control to it
+		bConsoleInLuaREPL = TRUE;
+		LuaRunREPL();
+		bConsoleInLuaREPL = FALSE;
+	} else if (!strncmp(szArguments, "lua ", 4)) {
+		// Try to find the script we want
+		strPossibleScriptName = szArguments + 4;
+		if (!FileExists(strPossibleScriptName.c_str())) {
+			strPossibleScriptName += ".lua";
+			if (!FileExists(strPossibleScriptName.c_str())) {
+				ConsoleLog(LOG_ERROR, "CORE: Couldn't find Lua script %s.\n", strPossibleScriptName.c_str());
+				return TRUE;
+			}
+		}
+
+		// Spin up a new Lua VM, load the file, and run it.
+		lua_State* L = luaL_newstate();
+		luaL_openlibs(L);
+		luaL_loadfile(L, strPossibleScriptName.c_str());
+		lua_pcall(L, 0, 0, 0);
+		lua_close(L);
+	} else {
+		printf("Invalid argument.\n");
 	}
 
-	// Decrement the nesting count and break	
-	iConsoleScriptNest--;
 	return TRUE;
 }
 
@@ -608,7 +647,14 @@ BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
 }
 
 static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments) {
-	printf("%s\n", jsonSettingsCore.dump().c_str());
+	//printf("%s\n", jsonSettingsCore.dump().c_str());
+
+	// goddammit fuck shit arse fuck
+	lua_State* L = luaL_newstate();
+	luaL_openlibs(L);
+	luaL_loadstring(L, "print(\"Hello world from Lua!\")");
+	lua_pcall(L, 0, 0, 0);
+
 	return TRUE;
 }
 
@@ -826,9 +872,9 @@ DWORD WINAPI ConsoleThread(LPVOID lpParameter) {
 	SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
 	for (;;) {
 		if (bConsoleUndocumentedMode)
-			printf("# ");
+			printf("sc2kfix# ");
 		else
-			printf("> ");
+			printf("sc2kfix> ");
 
 		gets_s(szCmdBuf, 256);
 		if (!ConsoleEvaluateCommand(szCmdBuf, TRUE))

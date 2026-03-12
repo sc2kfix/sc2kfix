@@ -43,6 +43,12 @@
     <Filter Include="Resource Files\TSET">
       <UniqueIdentifier>{ca8eb73e-28cd-4e27-bff2-b368eadd1ba8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Third-Party\Lua">
+      <UniqueIdentifier>{befb2c0e-8a00-4925-b3b3-3385af9ed828}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Third-Party\Lua">
+      <UniqueIdentifier>{6ceea1da-0511-4c8e-85bc-9d00604ac252}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\sc2kfix.h">
@@ -150,6 +156,90 @@
     <ClInclude Include="include\commonhelp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="thirdparty\lua\lapi.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\lauxlib.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\lcode.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\lctype.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\ldebug.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\ldo.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\lfunc.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\lgc.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\ljumptab.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\llex.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\llimits.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\lmem.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\lobject.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\lopcodes.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\lopnames.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\lparser.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\lprefix.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\lstate.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\lstring.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\ltable.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\ltm.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\lua.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\lua.hpp">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\luaconf.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\lualib.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\lundump.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\lvm.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\lua\lzio.h">
+      <Filter>Header Files\Third-Party\Lua</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="hooks\hook_mciSendCommand.cpp">
@@ -255,6 +345,105 @@
       <Filter>Source Files\Hooks</Filter>
     </ClCompile>
     <ClCompile Include="modules\common_remote_functions.cpp">
+      <Filter>Source Files\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\lapi.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\lauxlib.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\lbaselib.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\lcode.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\lcorolib.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\lctype.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\ldblib.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\ldebug.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\ldo.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\ldump.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\lfunc.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\lgc.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\linit.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\liolib.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\llex.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\lmathlib.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\lmem.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\loadlib.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\lobject.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\lopcodes.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\loslib.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\lparser.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\lstate.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\lstring.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\lstrlib.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\ltable.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\ltablib.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\ltm.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\lundump.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\lutf8lib.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\lvm.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\lua\lzio.c">
+      <Filter>Source Files\Third-Party\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\luarepl.cpp">
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
   </ItemGroup>
