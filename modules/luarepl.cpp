@@ -7,6 +7,8 @@
 #include <string.h>
 #include <signal.h>
 
+#include <vt100.h>
+
 #include "../thirdparty/lua/lua.hpp"
 #include "../thirdparty/lua/llimits.h"
 
@@ -117,8 +119,8 @@ static void print_version (void) {
 */
 
 #if !defined(LUA_PROMPT)
-#define LUA_PROMPT		"> "
-#define LUA_PROMPT2		">> "
+#define LUA_PROMPT		VT100_COLOUR_BRIGHT_WHITE "> " VT100_DEFAULT
+#define LUA_PROMPT2		VT100_COLOUR_BRIGHT_WHITE ">> " VT100_DEFAULT
 #endif
 
 #if !defined(LUA_MAXINPUT)

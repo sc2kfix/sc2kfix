@@ -120,34 +120,44 @@ HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...) {
 	int len;
 	char* buf;
 	const char* prefix;
+	const char* colour;
 
 	switch (iLogLevel) {
 	case LOG_EMERGENCY:
-		prefix = "[EMERG] ";
+		colour = VT100_BGCOLOUR_BRIGHT_RED VT100_COLOUR_BLACK;
+		prefix = "[EMERG]";
 		break;
 	case LOG_ALERT:
-		prefix = "[ALERT] ";
+		colour = VT100_BGCOLOUR_RED VT100_COLOUR_BLACK;
+		prefix = "[ALERT]";
 		break;
 	case LOG_CRITICAL:
-		prefix = "[CRIT ] ";
+		colour = VT100_COLOUR_BRIGHT_RED;
+		prefix = "[CRIT ]";
 		break;
 	case LOG_ERROR:
-		prefix = "[ERROR] ";
+		colour = VT100_COLOUR_RED;
+		prefix = "[ERROR]";
 		break;
 	case LOG_WARNING:
-		prefix = "[WARN ] ";
+		colour = VT100_COLOUR_YELLOW;
+		prefix = "[WARN ]";
 		break;
 	case LOG_NOTICE:
-		prefix = "[NOTE ] ";
+		colour = VT100_COLOUR_GREEN;
+		prefix = "[NOTE ]";
 		break;
 	case LOG_INFO:
-		prefix = "[INFO ] ";
+		colour = VT100_COLOUR_CYAN;
+		prefix = "[INFO ]";
 		break;
 	case LOG_DEBUG:
-		prefix = "[DEBUG] ";
+		colour = "";
+		prefix = "[DEBUG]";
 		break;
 	case LOG_NONE:
 	default:
+		colour = "";
 		prefix = "";
 		break;
 	}
@@ -159,12 +169,12 @@ HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...) {
 		vsprintf_s(buf, len, fmt, args);
 
 		if (fdLog) {
-			fprintf(fdLog, "%s%s", prefix, buf);
+			fprintf(fdLog, "%s %s", prefix, buf);
 			fflush(fdLog);
 		}
 
 		if (bConsoleEnabled)
-			printf("%s%s", prefix, buf);
+			printf("%s%s%s %s", colour, prefix, VT100_DEFAULT, buf);
 
 		free(buf);
 	}

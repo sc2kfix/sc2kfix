@@ -240,6 +240,9 @@
     <ClInclude Include="thirdparty\lua\lzio.h">
       <Filter>Header Files\Third-Party\Lua</Filter>
     </ClInclude>
+    <ClInclude Include="include\vt100.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="hooks\hook_mciSendCommand.cpp">

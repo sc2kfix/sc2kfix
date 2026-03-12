@@ -1,5 +1,5 @@
 // sc2kfix include/sc2kfix.h: globals that need to be used elsewhere
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #pragma once
 #pragma warning(disable : 4200)
@@ -26,6 +26,7 @@
 #include <scurk_1996.h>
 #include <scurk_primary.h>
 #include <music.h>
+#include <vt100.h>
 
 // Turning this on enables every debugging option. You have been warned.
 // #define DEBUGALL

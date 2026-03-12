@@ -43,6 +43,8 @@ BOOL bConsoleEnabled = TRUE;
 BOOL bConsoleEnabled = FALSE;
 #endif
 
+#define printf_yellow(s, ...) printf(VT100_COLOUR_YELLOW s VT100_DEFAULT, __VA_ARGS__)
+
 typedef struct {
 	int iType;
 	union {
@@ -147,7 +149,7 @@ BOOL ConsoleCmdRun(const char* szCommand, const char* szArguments) {
 		lua_pcall(L, 0, 0, 0);
 		lua_close(L);
 	} else {
-		printf("Invalid argument.\n");
+		printf_yellow("Invalid argument.\n");
 	}
 
 	return TRUE;
@@ -187,7 +189,7 @@ BOOL ConsoleCmdFixUp(const char* szCommand, const char* szArguments) {
 	if (!strcmp(szArguments, "thing") || !strncmp(szArguments, "thing ", 6))
 		return ConsoleCmdFixUpThing(szCommand, szArguments);
 
-	printf("Invalid argument.\n");
+	printf_yellow("Invalid argument.\n");
 	return TRUE;
 }
 
@@ -206,7 +208,7 @@ BOOL ConsoleCmdFixUpThing(const char* szCommand, const char* szArguments) {
 		"militarydeploy";
 
 	if (dwDetectedVersion != VERSION_SC2K_1996) {
-		printf("Command only available when attached to 1996 Special Edition.\n");
+		printf_yellow("Command only available when attached to 1996 Special Edition.\n");
 		return TRUE;
 	}
 
@@ -355,7 +357,7 @@ BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 	if (!strcmp(szArguments, "version"))
 		return ConsoleCmdShowVersion(szCommand, szArguments);
 
-	printf("Invalid argument.\n");
+	printf_yellow("Invalid argument.\n");
 	return TRUE;
 }
 
@@ -396,7 +398,7 @@ BOOL ConsoleCmdShowDebug(const char* szCommand, const char* szArguments) {
 
 BOOL ConsoleCmdShowMemory(const char* szCommand, const char* szArguments) {
 	if (dwDetectedVersion != VERSION_SC2K_1996) {
-		printf("Command only available when attached to 1996 Special Edition.\n");
+		printf_yellow("Command only available when attached to 1996 Special Edition.\n");
 		return TRUE;
 	}
 
@@ -447,13 +449,13 @@ BOOL ConsoleCmdShowMemory(const char* szCommand, const char* szArguments) {
 		return TRUE;
 	}
 
-	printf("Invalid argument.\n");
+	printf_yellow("Invalid argument.\n");
 	return TRUE;
 }
 
 BOOL ConsoleCmdShowMicrosim(const char* szCommand, const char* szArguments) {
 	if (dwDetectedVersion != VERSION_SC2K_1996) {
-		printf("Command only available when attached to 1996 Special Edition.\n");
+		printf_yellow("Command only available when attached to 1996 Special Edition.\n");
 		return TRUE;
 	}
 
@@ -527,7 +529,7 @@ skipscanf:
 		}
 	}
 
-	printf("Invalid argument.\n");
+	printf_yellow("Invalid argument.\n");
 	return TRUE;
 }
 
@@ -598,7 +600,7 @@ BOOL ConsoleCmdShowMods(const char* szCommand, const char* szArguments) {
 
 BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
 	if (dwDetectedVersion != VERSION_SC2K_1996) {
-		printf("Command only available when attached to 1996 Special Edition.\n");
+		printf_yellow("Command only available when attached to 1996 Special Edition.\n");
 		return TRUE;
 	}
 
@@ -642,25 +644,28 @@ BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
 		return TRUE;
 	}
 	
-	printf("Invalid argument.\n");
+	printf_yellow("Invalid argument.\n");
 	return TRUE;
 }
 
 static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments) {
 	//printf("%s\n", jsonSettingsCore.dump().c_str());
 
-	// goddammit fuck shit arse fuck
-	lua_State* L = luaL_newstate();
-	luaL_openlibs(L);
-	luaL_loadstring(L, "print(\"Hello world from Lua!\")");
-	lua_pcall(L, 0, 0, 0);
+	ConsoleLog(LOG_EMERGENCY, "CORE: Test message!\n");
+	ConsoleLog(LOG_ALERT, "CORE: Test message!\n");
+	ConsoleLog(LOG_CRITICAL, "CORE: Test message!\n");
+	ConsoleLog(LOG_ERROR, "CORE: Test message!\n");
+	ConsoleLog(LOG_WARNING, "CORE: Test message!\n");
+	ConsoleLog(LOG_NOTICE, "CORE: Test message!\n");
+	ConsoleLog(LOG_INFO, "CORE: Test message!\n");
+	ConsoleLog(LOG_DEBUG, "CORE: Test message!\n");
 
 	return TRUE;
 }
 
 BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments) {
 	if (dwDetectedVersion != VERSION_SC2K_1996) {
-		printf("Command only available when attached to 1996 Special Edition.\n");
+		printf_yellow("Command only available when attached to 1996 Special Edition.\n");
 		return TRUE;
 	}
 
@@ -707,7 +712,7 @@ BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments) {
 		return TRUE;
 	}
 
-	printf("Invalid argument.\n");
+	printf_yellow("Invalid argument.\n");
 	return TRUE;
 }
 
@@ -785,7 +790,7 @@ BOOL ConsoleCmdSet(const char* szCommand, const char* szArguments) {
 		return TRUE;
 	}
 
-	printf("Invalid argument.\n");
+	printf_yellow("Invalid argument.\n");
 	return TRUE;
 }
 
@@ -831,7 +836,7 @@ BOOL ConsoleCmdSetDebug(const char* szCommand, const char* szArguments) {
 	else SETDEBUGOP("timer", timer, "timer hook")
 	else SETDEBUGOP("update", updatenotifier, "update notifier")
 	else
-		printf("Invalid argument.\n");
+		printf_yellow("Invalid argument.\n");
 
 	return TRUE;
 }
@@ -861,7 +866,7 @@ BOOL ConsoleCmdSetTile(const char* szCommand, const char* szArguments) {
 		}
 	}
 	
-	printf("Invalid argument.\n");
+	printf_yellow("Invalid argument.\n");
 	return TRUE;
 }
 
@@ -872,13 +877,13 @@ DWORD WINAPI ConsoleThread(LPVOID lpParameter) {
 	SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
 	for (;;) {
 		if (bConsoleUndocumentedMode)
-			printf("sc2kfix# ");
+			printf(VT100_COLOUR_BRIGHT_WHITE "sc2kfix# " VT100_DEFAULT);
 		else
-			printf("sc2kfix> ");
+			printf(VT100_COLOUR_BRIGHT_WHITE "sc2kfix> " VT100_DEFAULT);
 
 		gets_s(szCmdBuf, 256);
 		if (!ConsoleEvaluateCommand(szCmdBuf, TRUE))
-			printf("Invalid command.\n");
+			printf_yellow("Invalid command.\n");
 	}
 }
 

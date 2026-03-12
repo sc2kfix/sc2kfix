@@ -302,7 +302,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Dump some console opening info
 		if (bConsoleEnabled) {
 			ConsoleLog(LOG_INFO, "CORE: Spawned console session.\n");
-			printf("[INFO ] CORE: ");
+			printf(VT100_COLOUR_CYAN "[INFO ]" VT100_DEFAULT " CORE: ");
 			ConsoleCmdShowDebug(NULL, NULL);
 		}
 
