@@ -19,11 +19,6 @@
 #include <winmm_exports.h>
 #include "resource.h"
 
-#if !NOKUROKO
-#include <kuroko/kuroko.h>
-#include <kuroko/util.h>
-#endif
-
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
@@ -46,9 +41,6 @@ const char* szSC2KFixVersion = SC2KFIX_VERSION;
 const char* szSC2KFixReleaseTag = SC2KFIX_RELEASE_TAG;
 const char* szSC2KFixBuildInfo = __DATE__ " " __TIME__;
 FILE* fdLog = NULL;
-#if !NOKUROKO
-BOOL bKurokoVMInitialized = FALSE;
-#endif
 BOOL bUseAdvancedQuery = TRUE;
 BOOL bSkipLoadingMods = FALSE;
 BOOL bFixFileAssociations = FALSE;
@@ -552,20 +544,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Start the console thread.
 		if (bConsoleEnabled) {
 			ConsoleLog(LOG_INFO, "CORE: Starting console thread.\n");
-#if !NOKUROKO
-			hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, &dwConsoleThreadID);
-#else
 			hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, NULL);
-#endif
 		}
 
 		// Set up the modding infrastructure for the 1996 Special Edition version.
 		if (dwDetectedVersion == VERSION_SC2K_1996) {
-#if !NOKUROKO
-			// Initialize the Kuroko VM
-			CreateThread(NULL, 0, KurokoThread, 0, 0, &dwKurokoThreadID);
-#endif
-
 			// Load native code mods.
 			if (!bSkipLoadingMods && !bSettingsDontLoadMods)
 				LoadNativeCodeMods();
@@ -582,12 +565,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 	case DLL_PROCESS_DETACH:
 		// Shut down the music thread
 		PostThreadMessage(dwMusicThreadID, WM_QUIT, NULL, NULL);
-
-#if !NOKUROKO
-		// Shut down the Kuroko thread
-		if (bKurokoVMInitialized)
-			PostThreadMessage(dwKurokoThreadID, WM_QUIT, NULL, NULL);
-#endif
 
 		// Only save the bindings and stored paths during a graceful exit.
 		// (SC2K1996 only for now)

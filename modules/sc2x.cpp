@@ -32,17 +32,10 @@
 #define SC2X_DEBUG DEBUG_FLAGS_EVERYTHING
 #endif
 
-#if !NOKUROKO
-#define BAILOUT(s, ...) do { \
-	ConsoleLog(LOG_ERROR, "SC2X: " s, __VA_ARGS__); \
-	return 0; \
-} while (0)
-#else
 #define BAILOUT(s, ...) do { \
 	ConsoleLog(LOG_ERROR, "SAVE: " s, __VA_ARGS__); \
 	return 0; \
 } while (0)
-#endif
 
 UINT sc2x_debug = SC2X_DEBUG;
 

@@ -26,11 +26,6 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
-#if !NOKUROKO
-#include <kuroko/kuroko.h>
-#include <kuroko/util.h>
-#endif
-
 #ifdef CONSOLE_ENABLED
 BOOL bConsoleEnabled = TRUE;
 #else 
@@ -48,9 +43,7 @@ typedef struct {
 } script_variable_t;
 
 HANDLE hConsoleThread;
-#if !NOKUROKO
-DWORD dwConsoleThreadID;
-#endif
+
 char szCmdBuf[256] = { 0 };
 BOOL bConsoleUndocumentedMode = FALSE;
 int iConsoleScriptNest = 0;
@@ -84,53 +77,6 @@ void ConsoleScriptSleep(DWORD dwMilliseconds) {
 }
 
 // COMMAND: run ...
-
-#if !NOKUROKO
-BOOL ConsoleCmdRun(const char* szCommand, const char* szArguments) {
-	MSG msg;
-	std::string strPossibleScriptName;
-	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
-		printf(
-			"  run kuroko       Enters the Kuroko REPL\n"
-			"  run <filename>   Executes a file as a Kuroko module\n");
-		return TRUE;
-	}
-
-	// Start the Kuroko REPL if requested
-	if (!strcmp(szArguments, "kuroko")) {
-		if (bKurokoVMInitialized) {
-			printf("\n");
-			PostThreadMessage(dwKurokoThreadID, WM_KUROKO_REPL, NULL, NULL);
-			GetMessage(&msg, NULL, 0, 0);
-			printf("\nKuroko REPL exited, returning control to console thread.\n");
-		}
-		return TRUE;
-	}
-
-	// Try to find the script we want
-	strPossibleScriptName = szArguments;
-	if (!FileExists(strPossibleScriptName.c_str())) {
-		strPossibleScriptName += ".krk";
-		if (!FileExists(strPossibleScriptName.c_str())) {
-			ConsoleLog(LOG_ERROR, "CORE: Couldn't find script %s.\n", szArguments);
-			return TRUE;
-		}
-	}
-
-	// Execute through Kuroko
-	if (bKurokoVMInitialized) {
-		char* szFilename = (char*)malloc(strPossibleScriptName.length() + 1);
-		if (!szFilename)
-			return TRUE;
-
-		strcpy_s(szFilename, strPossibleScriptName.length() + 1, strPossibleScriptName.c_str());
-		PostThreadMessage(dwKurokoThreadID, WM_KUROKO_FILE, (WPARAM)szFilename, NULL);
-		GetMessage(&msg, NULL, 0, 0);
-		free(szFilename);
-	}
-	return TRUE;
-}
-#else
 BOOL ConsoleCmdRun(const char* szCommand, const char* szArguments) {
 	std::string strPossibleScriptName;
 	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
@@ -167,7 +113,6 @@ BOOL ConsoleCmdRun(const char* szCommand, const char* szArguments) {
 	iConsoleScriptNest--;
 	return TRUE;
 }
-#endif
 
 BOOL ConsoleCmdClear(const char* szCommand, const char* szArguments) {
 	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
@@ -751,11 +696,6 @@ BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments) {
 	else
 		szProgramName = "Unknown";
 
-#if !NOKUROKO
-	KrkValue kuroko_version;
-	krk_tableGet_fast(&vm.system->fields, S("version"), &kuroko_version);
-#endif
-
 	// AF - the separation comma positioning in this case is deliberate
 	// in order to be a bit more "friendly" concerning missing or varied
 	// end-arguments depending on the build.
@@ -764,17 +704,11 @@ BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments) {
 		"Plugin build info: %s\n"
 		"%s version: %s\n"
 		"Plugin loaded at 0x%08X\n"
-#if !NOKUROKO
-		"Kuroko version: Kuroko %s\n" 
-#endif
 		,szSC2KFixVersion 
 		,szSC2KFixBuildInfo
 		,szProgramName
 		,szProgramVersion
 		,(DWORD)hSC2KFixModule 
-#if !NOKUROKO
-		,AS_CSTRING(kuroko_version)
-#endif
 	);
 
 	return TRUE;

@@ -99,12 +99,6 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define DEBUG_FLAGS_NONE		0
 #define DEBUG_FLAGS_EVERYTHING	0xFFFFFFFF
 
-#if !NOKUROKO
-#define WM_KUROKO_REPL	WM_APP+0x100
-#define WM_KUROKO_FILE	WM_APP+0x101
-#define WM_CONSOLE_REPL	WM_APP+0x200
-#endif
-
 #define ListView_InsertItemType(hwndLV, i, tmask) {\
 	LV_ITEM _macro_lvi;\
 	_macro_lvi.mask = (tmask);\
@@ -468,10 +462,6 @@ BOOL ConsoleCmdSetTile(const char* szCommand, const char* szArguments);
 
 void LoadNativeCodeMods(void);
 
-#if !NOKUROKO
-DWORD WINAPI KurokoThread(LPVOID lpParameter);
-#endif
-
 extern const char *gamePrimaryKey;
 
 extern char szLastStoredCityPath[MAX_PATH + 1];
@@ -498,11 +488,6 @@ extern BOOL bConsoleEnabled;
 extern BOOL bSkipIntro;
 extern BOOL bUseAdvancedQuery;
 extern BOOL bDisableAutoThingCleanup;
-#if !NOKUROKO
-extern BOOL bKurokoVMInitialized;
-extern DWORD dwConsoleThreadID;
-extern DWORD dwKurokoThreadID;
-#endif
 
 extern BOOL bFontsInitialized;
 extern HFONT hFontMSSansSerifRegular8;

@@ -33,22 +33,10 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: msbuild /m /p:Configuration=Release ${{env.SOLUTION_FILE_PATH}}
 
-    - name: Upload Release Artifact
+    - name: Upload Release Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: sc2kfix-dev
         path: |
           Release/winmm.dll
           Release/mods/*.dll
-
-    - name: Build ReleaseKuroko
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild /m /p:Configuration=ReleaseKuroko /t:Rebuild ${{env.SOLUTION_FILE_PATH}}
-
-    - name: Upload ReleaseKuroko Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: sc2kfix-dev-kuroko
-        path: |
-          ReleaseKuroko/winmm.dll
-          ReleaseKuroko/mods/*.dll
