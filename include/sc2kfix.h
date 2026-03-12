@@ -222,7 +222,7 @@ typedef struct {
 enum {
 	HOOKFN_TYPE_NONE,
 	HOOKFN_TYPE_NATIVE,
-	HOOKFN_TYPE_KUROKO
+	HOOKFN_TYPE_LUA
 };
 
 // Function pointers (native and otherwise) for hooks
