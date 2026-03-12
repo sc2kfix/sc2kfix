@@ -166,7 +166,7 @@ static void L_SCURK_LoadFixedLargeSpritesRsrc(cEditableTileSet *pThis) {
 												bGotShap = TRUE;
 
 											if (bGotShap && nHeight > 1 && nSpriteID >= SPRITE_LARGE_START)
-												ConsoleLog(LOG_INFO, "Loaded replacement large sprite for: %s\n", szSpriteNames[nSpriteID - SPRITE_LARGE_START]);
+												ConsoleLog(LOG_DEBUG, "TILE: Loaded replacement large sprite for: %s\n", szSpriteNames[nSpriteID - SPRITE_LARGE_START]);
 										}
 										else if (memcmp(szHead, "NAME", 4) == 0) {
 											pTileName = (tileName_t *)pBuf;
@@ -196,7 +196,6 @@ static void L_SCURK_LoadFixedLargeSpritesRsrc(cEditableTileSet *pThis) {
 		}
 		FreeResource(hTileSetGlobal);
 	}
-	ConsoleLog(LOG_INFO, "Load Replacement Default Sprite Resources.\n");
 }
 
 LONG __cdecl L_SCURK_EditableTileSet_mReadFromFile(cEditableTileSet *pThis, const char *lpPathName) {
