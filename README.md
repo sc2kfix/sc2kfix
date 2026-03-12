@@ -48,7 +48,9 @@ There is also a debugging console that can be enabled by passing "-console" to S
 Several parts of the SimCity 2000 simulation engine have been reimplemented in sc2kfix for better performance and the ability to more easily fix bugs and hook into and enhance the original game's code. Functionality has been replicated through months of reverse engineering efforts, and these reimplementations of the game's internal functions provide a higher quality experience that is still accurate to the original game.
 
 ### Third-party components
-sc2kfix includes API bindings for version 2.4.7 of the FluidSynth real-time software synthesizer library (https://www.fluidsynth.org). FluidSynth is made available under the terms of version 2.1 of the GNU Lesser General Public License (LGPL 2.1); a copy of this license has been included in the sc2kfix project as `thirdparty/lgpl-2.1-fluidsynth.txt`. You can download both the bindings and the requisite compiled version of the FluidSynth library to use them at https://github.com/FluidSynth/fluidsynth/releases/tag/v2.4.7.
+sc2kfix includes API bindings for version 2.4.7 of the FluidSynth real-time software synthesizer library (https://www.fluidsynth.org). FluidSynth is made available under the terms of version 2.1 of the GNU Lesser General Public License (LGPL 2.1); a copy of this license has been included in the sc2kfix project as `thirdparty/fluidsynth/LICENSE`. You can download both the bindings and the requisite compiled version of the FluidSynth library to use them at https://github.com/FluidSynth/fluidsynth/releases/tag/v2.4.7.
+
+sc2kfix includes the Lua embeddable programming language (https://www.lua.org). Lua is made available under the terms of the MIT license; a copy of this license has been included in the sc2kfix project as `thirdparty/lua/LICENSE`. Lua is copyright (c) 1994-2025 Lua.org, PUC-Rio.
 
 ## How do I use it?
 1. If you are installing the game from scratch, copy the SC2K folder from your CD (under the WIN95 folder in the Special Edition CD) to your hard drive.
