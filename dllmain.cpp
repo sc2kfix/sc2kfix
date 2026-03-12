@@ -257,7 +257,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Allocate a console and immediately hide it. We will later send a ShowWindow to make it
 		// visible if the console is to be made user-facing.
 		{
-			AllocConsole();
+			// Attempt to attach to the parent process console (if being launched from eg. wt or
+			// xterm), and failing that, allocate a new console (spawning a conhost session on
+			// Windows).
+			if (!AttachConsole(ATTACH_PARENT_PROCESS))
+				AllocConsole();
 			ShowWindow(GetConsoleWindow(), SW_HIDE);
 			SetConsoleOutputCP(65001);
 			SetConsoleCP(65001);
