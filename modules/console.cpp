@@ -69,6 +69,7 @@ int LuaRunREPL(void);
 console_command_t fpConsoleCommands[] = {
 	{ "?", ConsoleCmdHelp, CONSOLE_COMMAND_ALIAS, "" },
 	{ "clear", ConsoleCmdClear, CONSOLE_COMMAND_DOCUMENTED, "Clear screen or variables" },
+	{ "crash", (console_cmdproc_t)(NULL), CONSOLE_COMMAND_UNDOCUMENTED, "Crash sc2kfix intentionally"},
 	{ "echo", ConsoleCmdEcho, CONSOLE_COMMAND_DOCUMENTED, "Print to console" },
 	{ "echo!", ConsoleCmdEcho, CONSOLE_COMMAND_UNDOCUMENTED, "Print to console without newline" },
 	{ "fixup", ConsoleCmdFixUp, CONSOLE_COMMAND_DOCUMENTED, "Manual 'Fix-up' operations" },
@@ -754,7 +755,7 @@ BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments) {
 	// Reworked this significantly due to some legal advice (araxestroy)
 	printf(
 		VT100_COLOUR_BRIGHT_WHITE "sc2kfix version %s - (c) 2025-2026 sc2kfix Project (https://sc2kfix.net)\n" VT100_DEFAULT
-		"Build date and time: %s\n"
+		"Build info: %s\n"
 		"%s version: %s\n"
 		"Lua version: %s\n"
 		"Plugin loaded at 0x%08X\n\n"

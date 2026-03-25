@@ -39,7 +39,6 @@ DWORD dwDetectedAppTimestamp = 0;
 DWORD dwSC2KFixVersion = SC2KFIX_VERSION_MAJOR << 24 | SC2KFIX_VERSION_MINOR << 16 | SC2KFIX_VERSION_PATCH << 8;
 const char* szSC2KFixVersion = SC2KFIX_VERSION;
 const char* szSC2KFixReleaseTag = SC2KFIX_RELEASE_TAG;
-const char* szSC2KFixBuildInfo = __DATE__ " " __TIME__;
 FILE* fdLog = NULL;
 BOOL bUseAdvancedQuery = TRUE;
 BOOL bSkipLoadingMods = FALSE;
@@ -618,6 +617,8 @@ LONG WINAPI CrashHandler(LPEXCEPTION_POINTERS lpExceptions) {
 	ConsoleLog(LOG_EMERGENCY, "CORE: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 	ConsoleLog(LOG_EMERGENCY, "CORE: \n");
 	ConsoleLog(LOG_EMERGENCY, "CORE: Unhandled exception 0x%08X caught at %i.\n", lpExceptions->ExceptionRecord->ExceptionCode, time(NULL));
+	ConsoleLog(LOG_EMERGENCY, "CORE: sc2kfix build info: %s\n", szSC2KFixBuildInfo);
+	ConsoleLog(LOG_EMERGENCY, "CORE: \n");
 	ConsoleLog(LOG_EMERGENCY, "CORE: Faulting Process: %s\n", szProcessName);
 	ConsoleLog(LOG_EMERGENCY, "CORE: Faulting Module:  %s\n", szModuleName);
 	ConsoleLog(LOG_EMERGENCY, "CORE: Faulting Address: 0x%08X\n", (DWORD)lpExceptions->ContextRecord->Eip);
