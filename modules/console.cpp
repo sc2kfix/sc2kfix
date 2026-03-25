@@ -326,8 +326,8 @@ BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 			"  show debug          Display enabled debugging options\n"
 			"  show memory ...     Display memory contents\n"
 			"  show microsim ...   Display microsim info\n"
-			"  show mods           Display loaded mods\n"
-			"  show sound          Display sound info\n"
+			"  show mods ...       Display loaded mods\n"
+			"  show sound ...      Display sound info\n"
 			"  show tile ...       Display tile info\n"
 			"  show version        Display sc2kfix version info\n");
 		return TRUE;
@@ -750,16 +750,31 @@ BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments) {
 	// AF - the separation comma positioning in this case is deliberate
 	// in order to be a bit more "friendly" concerning missing or varied
 	// end-arguments depending on the build.
+	//
+	// Reworked this significantly due to some legal advice (araxestroy)
 	printf(
-		"sc2kfix version %s - https://sc2kfix.net\n"
-		"Plugin build info: %s\n"
+		VT100_COLOUR_BRIGHT_WHITE "sc2kfix version %s - (c) 2025-2026 sc2kfix Project (https://sc2kfix.net)\n" VT100_DEFAULT
+		"Build date and time: %s\n"
 		"%s version: %s\n"
-		"Plugin loaded at 0x%08X\n"
-		,szSC2KFixVersion 
-		,szSC2KFixBuildInfo
-		,szProgramName
-		,szProgramVersion
-		,(DWORD)hSC2KFixModule 
+		"Lua version: %s\n"
+		"Plugin loaded at 0x%08X\n\n"
+		
+		"This program includes code from the following projects:\n"
+		"  %s is (c) 1994-2025 Lua.org, PUC-Rio; made available under the MIT License\n"
+		"  FluidSynth is (c) FluidSynth; made available under the LGPL 2.1 license\n\n"
+
+		"Licenses for third-party code can be found in the sc2kfix repository and distribution under\n"
+		"the `thirdparty` directory. The sc2kfix plugin, example mods, and frameworks are released\n"
+		"under the terms of the MIT license unless otherwise stated.\n\n"
+		
+		"SimCity 2000 is a registered trademark of Electronic Arts, Inc.\n",
+		szSC2KFixVersion,
+		szSC2KFixBuildInfo,
+		szProgramName,
+		szProgramVersion,
+		LUA_VERSION,
+		(DWORD)hSC2KFixModule,
+		LUA_VERSION
 	);
 
 	return TRUE;
