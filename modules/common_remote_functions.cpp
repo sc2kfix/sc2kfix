@@ -24,34 +24,6 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
-__int16 __cdecl L_FlipShortBytes(__int16 nVal) {
-	if (dwSC2KFixMode == SC2KFIX_MODE_SC2K) {
-		if (dwDetectedVersion == VERSION_SC2K_1996)
-			return Game_FlipShortBytes(nVal);
-	}
-	else if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
-		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
-			return GameMain_FlipShortBytes_SCURKPrimary(nVal);
-		else if (dwDetectedVersion == VERSION_SCURK_1996)
-			return GameMain_FlipShortBytes_SCURK1996(nVal);
-	}
-	return -1;
-}
-
-int __cdecl L_FlipLongBytePortions(int nVal) {
-	if (dwSC2KFixMode == SC2KFIX_MODE_SC2K) {
-		if (dwDetectedVersion == VERSION_SC2K_1996)
-			return Game_FlipLongBytePortions(nVal);
-	}
-	else if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
-		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
-			return GameMain_FlipLongBytePortions_SCURKPrimary(nVal);
-		else if (dwDetectedVersion == VERSION_SCURK_1996)
-			return GameMain_FlipLongBytePortions_SCURK1996(nVal);
-	}
-	return -1;
-}
-
 void *__cdecl L_BOR_gAllocBlock(size_t nSz) {
 	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
 		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
@@ -119,33 +91,33 @@ static void L_SCURK_LoadFixedLargeSpritesRsrc(cEditableTileSet *pThis) {
 				pTileHeader = (tilesetMainHeader_t *)pTileDat;
 				if (memcmp(pTileHeader->szTypeHead, "MIFF", 4) == 0 &&
 					memcmp(pTileHeader->szSC2KHead, "SC2K", 4) == 0) {
-					dwSize = L_FlipLongBytePortions(pTileHeader->dwSize);
+					dwSize = _byteswap_ulong(pTileHeader->dwSize);
 					dwOffset += sizeof(tilesetMainHeader_t);
 					pTileInfo = (tilesetHeadInfo_t *)(pTileDat + dwOffset);
 					if (pTileInfo && memcmp(pTileInfo->szHead, "INFO", 4) == 0) {
-						dwSize = L_FlipLongBytePortions(pTileInfo->dwSize);
+						dwSize = _byteswap_ulong(pTileInfo->dwSize);
 						dwOffset += sizeof(tilesetHeadInfo_t) + dwSize;
 						pTileTiles = (tilesetHeadInfo_t *)(pTileDat + dwOffset);
 						if (pTileTiles && memcmp(pTileTiles->szHead, "TILE", 4) == 0) {
-							dwSize = L_FlipLongBytePortions(pTileTiles->dwSize);
+							dwSize = _byteswap_ulong(pTileTiles->dwSize);
 							dwOffset += sizeof(tilesetHeadInfo_t);
 							pTileMem = (tilesetMem_t *)(pTileDat + dwOffset);
 							if (pTileMem) {
-								pTileMem->nMaxChunks = L_FlipShortBytes(pTileMem->nMaxChunks);
+								pTileMem->nMaxChunks = _byteswap_ushort(pTileMem->nMaxChunks);
 								pTileContents = &pTileMem->tileMem;
 								if (pTileContents) {
 									for (nChunk = 0; pTileMem->nMaxChunks > nChunk; ++nChunk) {
 										memcpy(szHead, pTileContents->szHead, 4);
-										dwSize = L_FlipLongBytePortions(pTileContents->dwSize);
+										dwSize = _byteswap_ulong(pTileContents->dwSize);
 										pBuf = &pTileContents->pBuf;
 
 										bGotShap = bGotName = bResize = FALSE;
 										if (memcmp(szHead, "SHAP", 4) == 0) {
 											pTileShap = (tileShap_t *)pBuf;
-											nSpriteID = L_FlipShortBytes(pTileShap->nSpriteID);
-											nWidth = L_FlipShortBytes(pTileShap->nWidth);
-											nHeight = L_FlipShortBytes(pTileShap->nHeight);
-											dwSize_Shap = L_FlipLongBytePortions(pTileShap->dwSize);
+											nSpriteID = _byteswap_ushort(pTileShap->nSpriteID);
+											nWidth = _byteswap_ushort(pTileShap->nWidth);
+											nHeight = _byteswap_ushort(pTileShap->nHeight);
+											dwSize_Shap = _byteswap_ulong(pTileShap->dwSize);
 											nDBID = pThis->mDBIndexFromShapeNum[nSpriteID];
 
 											// Only replace sprites with a height above 1 (similar to the main game
@@ -170,8 +142,8 @@ static void L_SCURK_LoadFixedLargeSpritesRsrc(cEditableTileSet *pThis) {
 										}
 										else if (memcmp(szHead, "NAME", 4) == 0) {
 											pTileName = (tileName_t *)pBuf;
-											nTileNameID = L_FlipShortBytes(pTileName->nTileNameID);
-											nNameLength = L_FlipShortBytes(pTileName->nNameLength);
+											nTileNameID = _byteswap_ushort(pTileName->nTileNameID);
+											nNameLength = _byteswap_ushort(pTileName->nNameLength);
 											// Although we process the above we leave the
 											// names alone here.
 											bGotName = TRUE;

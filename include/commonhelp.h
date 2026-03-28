@@ -64,11 +64,8 @@ typedef struct {
 #pragma pack(pop)
 
 // General
-__int16 __cdecl L_FlipShortBytes(__int16 nVal);
-int __cdecl L_FlipLongBytePortions(int nVal);
 
 // MFC
-
 
 // Borland
 void *__cdecl L_BOR_gAllocBlock(size_t nSz);
