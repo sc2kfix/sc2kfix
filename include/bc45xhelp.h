@@ -237,15 +237,12 @@ public:
 	class TXBC45XInvalidModule : public TXBC45XOwl {
 
 	};
-
-protected:    
+   
 	char  *Name;
 	HINSTANCE HInstance;
-
-private:    
+    
 	BOOL      ShouldFree;
 
-public:
 	char *lpCmdLine;
 	TBC45XStatus   Status;
 };
@@ -629,7 +626,16 @@ public:
 	TBC45XDerivedFrameWindowFoot __frameWndFoot;
 };
 
-class TBC45XParDecoratedMDIFrame : public TBC45XDerivedFrameWindowHead {
+class TBC45XParMDIFrame : public TBC45XDerivedFrameWindowHead {
+
+};
+
+class TBC45XMDIFrame : public TBC45XParMDIFrame {
+public:
+	TBC45XDerivedFrameWindowFoot __frameWndFoot;
+};
+
+class TBC45XParDecoratedMDIFrame : public TBC45XParMDIFrame {
 	TBC45XParDecoratedFrame newDecorFrame;
 };
 
