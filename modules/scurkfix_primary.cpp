@@ -433,6 +433,28 @@ void InstallFixes_SCURKPrimary(void) {
 	VirtualProtect((LPVOID)0x4150EC, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4150EC, Hook_SCURKPrimary_EditableTileSet_mReadFromFile);
 
+	// 'nop' out the -1 case in the following functions in-regards to the
+	// maximum extent:
+	// - cPaintWindow::mZoomOut
+	// - cPaintWindow::mZoomIn
+	// - cPaintWindow::EvHScroll
+	VirtualProtect((LPVOID)0x443D58, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(BYTE *)(0x443D58) = 0x90;
+	VirtualProtect((LPVOID)0x443DA2, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(BYTE *)(0x443DA2) = 0x90;
+	VirtualProtect((LPVOID)0x443E88, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(BYTE *)(0x443E88) = 0x90;
+	VirtualProtect((LPVOID)0x443ECD, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(BYTE *)(0x443ECD) = 0x90;
+	VirtualProtect((LPVOID)0x44703E, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(BYTE *)(0x44703E) = 0x90;
+
+	// Increased the maximum extent by 1 to fix the lack of the last
+	// right-side column of pixels:
+	// cPaintWindow::cPaintWindow
+	VirtualProtect((LPVOID)0x4432E4, 1, PAGE_EXECUTE_READWRITE, &dwDummy);
+	*(BYTE *)(0x4432E4) = 0x01;
+
 	// winscurkMoverWindow::EvSize():
 	// Temporarily remove the TFrameWindow::EvSize call.
 	// This avoids some redrawing strangeness that otherwise occurs
