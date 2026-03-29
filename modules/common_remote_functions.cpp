@@ -34,6 +34,14 @@ void *__cdecl L_BOR_gAllocBlock(size_t nSz) {
 	return NULL;
 }
 
+void *__cdecl L_BOR_gResizeBlock(BYTE *pBlock, size_t nSz) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return GameMain_gResizeBlock_SCURKPrimary(pBlock, nSz);
+	}
+	return NULL;
+}
+
 void __cdecl L_BOR_gFreeBlock(void *pBlock) {
 	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
 		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)

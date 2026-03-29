@@ -52,6 +52,7 @@ SCURKPRIMARY_GAMECALL_MAIN(0x41083C, void, __cdecl, PlaceTileListDlg_DrawTile, T
 SCURKPRIMARY_GAMECALL_MAIN(0x410A80, void, __cdecl, PlaceTileListDlg_ChangeHiLight, TPlaceTileListDlg *, DRAWITEMSTRUCT *)
 SCURKPRIMARY_GAMECALL_MAIN(0x4132EC, void, __cdecl, DebugOut, const char *, ...)
 SCURKPRIMARY_GAMECALL_MAIN(0x41378C, void *, __cdecl, gAllocBlock, size_t)
+SCURKPRIMARY_GAMECALL_MAIN(0x4137EC, void *, __cdecl, gResizeBlock, BYTE *, size_t)
 SCURKPRIMARY_GAMECALL_MAIN(0x413810, void, __cdecl, gFreeBlock, void *)
 SCURKPRIMARY_GAMECALL_MAIN(0x4139B4, int, __stdcall, gUpdateWaitWindow)
 SCURKPRIMARY_GAMECALL_MAIN(0x414D78, char *, __cdecl, EditableTileSet_GetLongName, cEditableTileSet *, int)

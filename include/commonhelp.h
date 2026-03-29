@@ -69,6 +69,7 @@ typedef struct {
 
 // Borland
 void *__cdecl L_BOR_gAllocBlock(size_t nSz);
+void *__cdecl L_BOR_gResizeBlock(BYTE *pBlock, size_t nSz);
 void __cdecl L_BOR_gFreeBlock(void *pBlock);
 int __stdcall L_BOR_gUpdateWaitWindow();
 
