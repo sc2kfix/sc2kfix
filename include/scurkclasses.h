@@ -171,7 +171,7 @@ public:
 	TBC45XPoint areaPointGridTwo;
 	TBC45XPoint gridCoords;
 	TBC45XPoint areaPointMouse;
-	TEncodeDib *pDibBuffer;
+	TBC45XDib *pDibBuffer;
 	DWORD dwTempNine;
 	TBC45XDib *pDibSmallCircle;
 	TBC45XDib *pDibBigCircle;
