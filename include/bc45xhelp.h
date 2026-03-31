@@ -237,10 +237,10 @@ public:
 	class TXBC45XInvalidModule : public TXBC45XOwl {
 
 	};
-   
+
 	char  *Name;
 	HINSTANCE HInstance;
-    
+
 	BOOL      ShouldFree;
 
 	char *lpCmdLine;

@@ -3,6 +3,8 @@
 // Common structures between supported programs.
 // Common wrapped functions.
 
+#define PAL_IDX(x) (16 * (15 - x / 16) + x % 16)
+
 // BC45X forward declarations.
 class BC45Xstring;
 class TBC45XPalette;
@@ -61,6 +63,29 @@ typedef struct {
 typedef struct {
 	char szHead[4];
 	DWORD dwSize;
+	WORD nMaxChunks;
+} tilesetTileInfo_t;
+
+typedef struct {
+	DWORD dwSize;
+	char szHead[4];
+} tilesetChunkHeader_t;
+
+typedef struct {
+	WORD nSpriteID;
+	WORD nWidth;
+	WORD nHeight;
+	DWORD dwSize;
+} tilesetShapHeader_t;
+
+typedef struct {
+	WORD nShapNum;
+	WORD nNameLength;
+} tilesetNameHeader_t;
+
+typedef struct {
+	char szHead[4];
+	DWORD dwSize;
 	char pBuf;
 } tileMem_t;
 
@@ -83,6 +108,60 @@ typedef struct {
 	char pBuf;
 } tileName_t;
 #pragma pack(pop)
+
+typedef struct {
+	DWORD dwOffset;
+	BYTE height;
+	BYTE width;
+	WORD wPad;
+} tilHeader_t;
+
+typedef struct {
+	BYTE largeArc[12];
+	DWORD dwLargeSize;
+	BYTE largeHed[12];
+	DWORD dwLargeOffset;
+	BYTE otherArc[12];
+	DWORD dwOtherSize;
+	BYTE otherHed[12];
+	DWORD dwOtherOffset;
+	BYTE smallArc[12];
+	DWORD dwSmallSize;
+	BYTE smallHed[12];
+	DWORD dwSmallOffset;
+	BYTE urkTextFile[12];
+	DWORD dwUrkTextOffset;
+	BYTE readOnlyFile[12];
+	DWORD dwReadOnlyOffset;
+} tilMainStruct_t;
+
+#pragma pack(push, 1)
+typedef struct {
+	BYTE nChunkMode;
+	BYTE nCount;
+	WORD pBuf;
+} spriteDosData_t;
+
+typedef struct {
+	BYTE nCount;
+	BYTE nChunkMode;
+	WORD pBuf;
+} spriteData_t;
+#pragma pack(pop)
+
+#define SPRITEDOSDATA(x) ((spriteDosData_t *)x)
+#define SPRITEDATA(x) ((spriteData_t *)x)
+
+#define MIF_CM_EMPTY 0
+#define MIF_CM_NEWROWSTART 1
+#define MIF_CM_ENDOFSPRITE 2
+#define MIF_CM_SKIPPIXELS  3
+#define MIF_CM_PROCPIXELS  4
+
+#define TIL_CM_ENDOFSPRITE 0
+#define TIL_CM_SKIPPIXELS  0x4
+#define TIL_CM_PROCPIXELS  0xC
+#define TIL_CM_NEWROWSTART 0x10
 
 // General
 static inline BOOL IsEven(int nVal) {
