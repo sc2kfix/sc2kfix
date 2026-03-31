@@ -3663,10 +3663,6 @@ static inline DWORD SwapDWORD(DWORD dwData) {
 	return _byteswap_ulong(dwData);
 }
 
-static inline BOOL IsEven(__int16 iAxis) {
-	return (iAxis % 2) == 0 ? TRUE : FALSE;
-}
-
 //HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...);
 
 static inline BYTE GetRubbleTileID() {

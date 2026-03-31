@@ -85,6 +85,13 @@ typedef struct {
 #pragma pack(pop)
 
 // General
+static inline BOOL IsEven(int nVal) {
+	return (nVal % 2) == 0 ? TRUE : FALSE;
+}
+
+static inline BOOL IsEvenUnsigned(DWORD nVal) {
+	return (nVal % 2) == 0 ? TRUE : FALSE;
+}
 
 // MFC
 
