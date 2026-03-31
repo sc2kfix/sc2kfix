@@ -10,7 +10,20 @@
 *              ensure alignment.
 */
 
+#define MISCHOOK_SCURK_DEBUG_INTERNAL 1
+#define MISCHOOK_SCURK_DEBUG_PICKANDPLACE 2
+#define MISCHOOK_SCURK_DEBUG_PLACEANDCOPY 4
+
+#define MISCHOOK_SCURK_DEBUG DEBUG_FLAGS_NONE
+
+#ifdef DEBUGALL
+#undef MISCHOOK_SCURK_DEBUG
+#define MISCHOOK_SCURK_DEBUG DEBUG_FLAGS_EVERYTHING
+#endif
+
 #define MAX_EDNUM 184
+
+extern UINT mischook_scurk_debug;
 
 #pragma pack(push, 1)
 class CWinGBitmap {

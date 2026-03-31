@@ -24,7 +24,9 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
-void *__cdecl L_BOR_gAllocBlock(size_t nSz) {
+// Borland function wrappers.
+
+void *__cdecl L_BOR_WRP_gAllocBlock(size_t nSz) {
 	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
 		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
 			return GameMain_gAllocBlock_SCURKPrimary(nSz);
@@ -34,15 +36,17 @@ void *__cdecl L_BOR_gAllocBlock(size_t nSz) {
 	return NULL;
 }
 
-void *__cdecl L_BOR_gResizeBlock(BYTE *pBlock, size_t nSz) {
+void *__cdecl L_BOR_WRP_gResizeBlock(BYTE *pBlock, size_t nSz) {
 	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
 		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
 			return GameMain_gResizeBlock_SCURKPrimary(pBlock, nSz);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return GameMain_gResizeBlock_SCURK1996(pBlock, nSz);
 	}
 	return NULL;
 }
 
-void __cdecl L_BOR_gFreeBlock(void *pBlock) {
+void __cdecl L_BOR_WRP_gFreeBlock(void *pBlock) {
 	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
 		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
 			GameMain_gFreeBlock_SCURKPrimary(pBlock);
@@ -51,192 +55,282 @@ void __cdecl L_BOR_gFreeBlock(void *pBlock) {
 	}
 }
 
-int __stdcall L_BOR_gUpdateWaitWindow() {
+void __stdcall L_BOR_WRP_gUpdateWaitWindow() {
 	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
 		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
-			return GameMain_gUpdateWaitWindow_SCURKPrimary();
+			GameMain_gUpdateWaitWindow_SCURKPrimary();
 		else if (dwDetectedVersion == VERSION_SCURK_1996)
-			return GameMain_gUpdateWaitWindow_SCURK1996();
+			GameMain_gUpdateWaitWindow_SCURK1996();
+	}
+}
+
+void L_BOR_WRP_DC_SelectObjectPalette(TBC45XDC *pThis, TBC45XPalette *pPal, int nVal) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			GameMain_BCDC_SelectObjectPalette_SCURKPrimary(pThis, pPal, nVal);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			GameMain_BCDC_SelectObjectPalette_SCURK1996(pThis, pPal, nVal);
+	}
+}
+
+unsigned int L_BOR_WRP_Window_DefaultProcessing(TBC45XParWindow *pThis) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return GameMain_BCWindow_DefaultProcessing_SCURKPrimary(pThis);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return GameMain_BCWindow_DefaultProcessing_SCURK1996(pThis);
 	}
 	return 0;
 }
 
-static void L_SCURK_LoadFixedLargeSpritesRsrc(cEditableTileSet *pThis) {
-	HRSRC hTileSetHandle;
-	HGLOBAL hTileSetGlobal;
-	DWORD dwTileDatSz;
-	DWORD dwOffset;
-	WORD nChunk;
-	char *szHead[4];
-	DWORD dwSize;
-	__int16 nSpriteID;
-	__int16 nDBID;
-	WORD nWidth, nHeight;
-	DWORD dwSize_Shap;
-	WORD nTileNameID, nNameLength;
-	BOOL bGotShap, bGotName, bResize;
-	char *pRsrcDat;
-	char *pTileDat;
-	char *pBuf;
-	tilesetMainHeader_t *pTileHeader;
-	tilesetHeadInfo_t *pTileInfo;
-	tilesetHeadInfo_t *pTileTiles;
-	tilesetMem_t *pTileMem;
-	tileMem_t *pTileContents;
-	tileShap_t *pTileShap;
-	tileName_t *pTileName;
+LRESULT L_BOR_WRP_Window_HandleMessage(TBC45XParWindow *pThis, unsigned int msg, WPARAM wParam, LPARAM lParam) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return GameMain_BCWindow_HandleMessage_SCURKPrimary(pThis, msg, wParam, lParam);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return GameMain_BCWindow_HandleMessage_SCURK1996(pThis, msg, wParam, lParam);
+	}
+	return 0;
+}
 
-	dwOffset = 0;
-	hTileSetHandle = FindResourceA(hSC2KFixModule, MAKEINTRESOURCE(IDR_TSET_FIXED), "TSET");
-	if (hTileSetHandle) {
-		hTileSetGlobal = LoadResource(hSC2KFixModule, hTileSetHandle);
-		dwTileDatSz = SizeofResource(hSC2KFixModule, hTileSetHandle);
-		pRsrcDat = (char *)LockResource(hTileSetGlobal);
-		if (pRsrcDat) {
-			pTileDat = (char *)malloc(dwTileDatSz);
-			if (pTileDat) {
-				memcpy(pTileDat, pRsrcDat, dwTileDatSz);
-				pTileHeader = (tilesetMainHeader_t *)pTileDat;
-				if (memcmp(pTileHeader->szTypeHead, "MIFF", 4) == 0 &&
-					memcmp(pTileHeader->szSC2KHead, "SC2K", 4) == 0) {
-					dwSize = _byteswap_ulong(pTileHeader->dwSize);
-					dwOffset += sizeof(tilesetMainHeader_t);
-					pTileInfo = (tilesetHeadInfo_t *)(pTileDat + dwOffset);
-					if (pTileInfo && memcmp(pTileInfo->szHead, "INFO", 4) == 0) {
-						dwSize = _byteswap_ulong(pTileInfo->dwSize);
-						dwOffset += sizeof(tilesetHeadInfo_t) + dwSize;
-						pTileTiles = (tilesetHeadInfo_t *)(pTileDat + dwOffset);
-						if (pTileTiles && memcmp(pTileTiles->szHead, "TILE", 4) == 0) {
-							dwSize = _byteswap_ulong(pTileTiles->dwSize);
-							dwOffset += sizeof(tilesetHeadInfo_t);
-							pTileMem = (tilesetMem_t *)(pTileDat + dwOffset);
-							if (pTileMem) {
-								pTileMem->nMaxChunks = _byteswap_ushort(pTileMem->nMaxChunks);
-								pTileContents = &pTileMem->tileMem;
-								if (pTileContents) {
-									for (nChunk = 0; pTileMem->nMaxChunks > nChunk; ++nChunk) {
-										memcpy(szHead, pTileContents->szHead, 4);
-										dwSize = _byteswap_ulong(pTileContents->dwSize);
-										pBuf = &pTileContents->pBuf;
-
-										bGotShap = bGotName = bResize = FALSE;
-										if (memcmp(szHead, "SHAP", 4) == 0) {
-											pTileShap = (tileShap_t *)pBuf;
-											nSpriteID = _byteswap_ushort(pTileShap->nSpriteID);
-											nWidth = _byteswap_ushort(pTileShap->nWidth);
-											nHeight = _byteswap_ushort(pTileShap->nHeight);
-											dwSize_Shap = _byteswap_ulong(pTileShap->dwSize);
-											nDBID = pThis->mDBIndexFromShapeNum[nSpriteID];
-
-											// Only replace sprites with a height above 1 (similar to the main game
-											// under these circumstances).
-											if (nHeight > 1) {
-												if (pThis->mTiles[nDBID])
-													L_BOR_gFreeBlock(pThis->mTiles[nDBID]);
-												pThis->mTiles[nDBID] = (uint8_t *)L_BOR_gAllocBlock(dwSize_Shap);
-												if (pThis->mTiles[nDBID]) {
-													memcpy(pThis->mTiles[nDBID], &pTileShap->pBuf, dwSize_Shap);
-													pThis->mTileSet->pData[nDBID].sprHeader.wWidth = nWidth;
-													pThis->mTileSet->pData[nDBID].sprHeader.wHeight = nHeight;
-													pThis->mTileSizeTable[nDBID] = dwSize_Shap;
-												}
-												bGotShap = (pThis->mTiles[nDBID]) ? TRUE : FALSE;
-											}
-											else
-												bGotShap = TRUE;
-
-											if (bGotShap && nHeight > 1 && nSpriteID >= SPRITE_LARGE_START)
-												ConsoleLog(LOG_DEBUG, "TILE: Loaded replacement large sprite for: %s\n", szSpriteNames[nSpriteID - SPRITE_LARGE_START]);
-										}
-										else if (memcmp(szHead, "NAME", 4) == 0) {
-											pTileName = (tileName_t *)pBuf;
-											nTileNameID = _byteswap_ushort(pTileName->nTileNameID);
-											nNameLength = _byteswap_ushort(pTileName->nNameLength);
-											// Although we process the above we leave the
-											// names alone here.
-											bGotName = TRUE;
-										}
-
-										if (bGotShap || bGotName || bResize) {
-											bResize = FALSE;
-											pTileContents = (tileMem_t *)&pBuf[dwSize];
-											continue;
-										}
-
-										bResize = TRUE;
-										pTileContents = (tileMem_t *)L_ReallocateDataEntry((char *)pTileMem, pBuf);
-									}
-								}
-							}
-						}
-					}
-				}
-				free(pTileDat);
-			}
-		}
-		FreeResource(hTileSetGlobal);
+void L_BOR_WRP_Window_SetCursor(TBC45XParWindow *pThis, TBC45XModule *pModule, const char *pResID) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			GameMain_BCWindow_SetCursor_SCURKPrimary(pThis, pModule, pResID);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			GameMain_BCWindow_SetCursor_SCURK1996(pThis, pModule, pResID);
 	}
 }
 
-LONG __cdecl L_SCURK_EditableTileSet_mReadFromFile(cEditableTileSet *pThis, const char *lpPathName) {
-	FILE *f;
-	int nRes;
-	int nIdx;
+void L_BOR_WRP_WindowDC_Destruct(TBC45XWindowDC *pThis, char c) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			GameMain_BCWindowDC_Destruct_SCURKPrimary(pThis, c);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			GameMain_BCWindowDC_Destruct_SCURK1996(pThis, c);
+	}
+}
 
-	f = old_fopen(lpPathName, "rb");
-	if (!f)
-		return 0;
-	fseek(f, 0, SEEK_END);
-	nRes = ftell(f);
-	fseek(f, 0, SEEK_SET);
-	fread(&pThis->mNumTiles, 2, 1, f);
-	if (!pThis->mTileSet)
-		pThis->mTileSet = (sprite_archive_t *)L_BOR_gAllocBlock(10 * pThis->mNumTiles + 2);
-	if (!pThis->mTileSet) {
-		fclose(f);
-		return 0;
+TBC45XClientDC *L_BOR_WRP_ClientDC_Construct(TBC45XClientDC *pThis, HWND hWnd) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return GameMain_BCClientDC_Construct_SCURKPrimary(pThis, hWnd);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return GameMain_BCClientDC_Construct_SCURK1996(pThis, hWnd);
 	}
-	pThis->mTileSet->nSprites = pThis->mNumTiles;
-	L_BOR_gUpdateWaitWindow();
-	fread(pThis->mTileSet->pData, 1, 10 * pThis->mNumTiles, f);
-	fread(pThis->mTileSizeTable, 1, 4 * pThis->mNumTiles, f);
-	L_BOR_gUpdateWaitWindow();
-	pThis->mStartPos = 0;
-	nIdx = SPRITE_SMALL_START;
-	do {
-		if (pThis->mTiles[nIdx])
-			L_BOR_gFreeBlock(pThis->mTiles[nIdx]);
-		pThis->mTiles[nIdx] = (uint8_t *)L_BOR_gAllocBlock(pThis->mTileSizeTable[nIdx]);
-		fread(pThis->mTiles[nIdx], 1, pThis->mTileSizeTable[nIdx], f);
-		if ((nIdx % 100) == 0)
-			L_BOR_gUpdateWaitWindow();
-		++nIdx;
-	} while (nIdx < SPRITE_LARGE_START);
-	L_BOR_gUpdateWaitWindow();
-	nIdx = SPRITE_LARGE_START;
-	do {
-		if (pThis->mTiles[nIdx])
-			L_BOR_gFreeBlock(pThis->mTiles[nIdx]);
-		pThis->mTiles[nIdx] = (uint8_t *)L_BOR_gAllocBlock(pThis->mTileSizeTable[nIdx]);
-		fread(pThis->mTiles[nIdx], 1, pThis->mTileSizeTable[nIdx], f);
-		pThis->mDBIndexFromShapeNum[pThis->mTileSet->pData[nIdx].nSprNum % SPRITE_COUNT] = nIdx;
-		pThis->mDBIndexFromShapeNum[(pThis->mTileSet->pData[nIdx].nSprNum - SPRITE_MEDIUM_START) % SPRITE_COUNT] = nIdx - SPRITE_MEDIUM_START;
-		pThis->mDBIndexFromShapeNum[(pThis->mTileSet->pData[nIdx].nSprNum - SPRITE_LARGE_START) % SPRITE_COUNT] = nIdx - SPRITE_LARGE_START;
-		if ((nIdx % 100) == 0)
-			L_BOR_gUpdateWaitWindow();
-		++nIdx;
-	} while (nIdx < pThis->mTileSet->nSprites);
-	L_BOR_gUpdateWaitWindow();
-	pThis->mTileSet[514].pData[0].sprHeader.wWidth += 4;
-	pThis->mTileSet[98].pData[0].nSprNum += 2;
-	pThis->mTileSet[543].pData[0].nSprNum += 4;
-	pThis->mTileSet[126].pData[0].sprHeader.sprOffset.sprLong += 2;
-	fclose(f);
-	if (!bDisableFixedTiles) {
-		if (nRes) {
-			L_SCURK_LoadFixedLargeSpritesRsrc(pThis);
-			L_BOR_gUpdateWaitWindow();
-		}
+	return NULL;
+}
+
+void L_BOR_WRP_Dialog_SetupWindow(TBC45XParDialog *pThis) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			GameMain_BCDialog_SetupWindow_SCURKPrimary(pThis);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			GameMain_BCDialog_SetupWindow_SCURK1996(pThis);
 	}
-	return nRes;
+}
+
+void L_BOR_WRP_Dialog_SetCaption(TBC45XParDialog *pThis, char *pCaption) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			GameMain_BCDialog_SetCaption_SCURKPrimary(pThis, pCaption);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			GameMain_BCDialog_SetCaption_SCURK1996(pThis, pCaption);
+	}
+}
+
+void L_BOR_WRP_Dialog_EvClose(TBC45XParDialog *pThis) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			GameMain_BCDialog_EvClose_SCURKPrimary(pThis);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			GameMain_BCDialog_EvClose_SCURK1996(pThis);
+	}
+}
+
+int L_BOR_WRP_ListBox_GetSelIndex(TBC45XParListBox *pThis) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return GameMain_BCListBox_GetSelIndex_SCURKPrimary(pThis);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return GameMain_BCListBox_GetSelIndex_SCURK1996(pThis);
+	}
+	return 0;
+}
+
+LRESULT L_BOR_WRP_ListBox_GetString(TBC45XParListBox *pThis, char *pString, int nIndex) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return GameMain_BCListBox_GetString_SCURKPrimary(pThis, pString, nIndex);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return GameMain_BCListBox_GetString_SCURK1996(pThis, pString, nIndex);
+	}
+	return 0;
+}
+
+int L_BOR_WRP_ListBox_SetItemData(TBC45XParListBox *pThis, int nIndex, unsigned int uItemData) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return GameMain_BCListBox_SetItemData_SCURKPrimary(pThis, nIndex, uItemData);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return GameMain_BCListBox_SetItemData_SCURK1996(pThis, nIndex, uItemData);
+	}
+	return 0;
+}
+
+int L_BOR_WRP_ListBox_AddString(TBC45XParListBox *pThis, const char *pString) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return GameMain_BCListBox_AddString_SCURKPrimary(pThis, pString);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return GameMain_BCListBox_AddString_SCURK1996(pThis, pString);
+	}
+	return 0;
+}
+
+TBC45XMDIChild *L_BOR_WRP_MDIClient_GetActiveMDIChild(TBC45XParMDIClient *pThis) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return GameMain_BCMDIClient_GetActiveMDIChild_SCURKPrimary(pThis);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return GameMain_BCMDIClient_GetActiveMDIChild_SCURK1996(pThis);
+	}
+	return NULL;
+}
+
+// SCURK global variable wrappers
+
+__int16 *L_SCURK_WRP_GetwTileObjects() {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return wTileObjects_SCURKPrimary;
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return wTileObjects_SCURK1996;
+	}
+	return NULL;
+}
+
+WORD *L_SCURK_WRP_GetwColFastCnt() {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return &wColFastCnt_SCURKPrimary;
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return &wColFastCnt_SCURK1996;
+	}
+	return NULL;
+}
+
+WORD *L_SCURK_WRP_GetwColSlowCnt() {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return &wColSlowCnt_SCURKPrimary;
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return &wColSlowCnt_SCURK1996;
+	}
+	return NULL;
+}
+
+__int16 *L_SCURK_WRP_GetwToolNum() {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return wtoolNum_SCURKPrimary;
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return wtoolNum_SCURK1996;
+	}
+	return NULL;
+}
+
+__int16 *L_SCURK_WRP_GetwToolValue() {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return &wtoolValue_SCURKPrimary;
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return &wtoolValue_SCURK1996;
+	}
+	return 0;
+}
+
+winscurkApp *L_SCURK_WRP_winscurkApp_GetPointerToClass() {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return gScurkApplication_SCURKPrimary;
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return gScurkApplication_SCURK1996;
+	}
+	return NULL;
+}
+
+BC45Xstring *L_SCURK_WRP_GetTAppInitCmdLine() {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return TAppInitCmdLine_SCURKPrimary;
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return TAppInitCmdLine_SCURK1996;
+	}
+	return NULL;
+}
+
+// cEditableTileSet function wrappers
+
+char *L_SCURK_WRP_EditableTileSet_GetLongName(cEditableTileSet *pThis, int nEdNum) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return GameMain_EditableTileSet_GetLongName_SCURKPrimary(pThis, nEdNum);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return GameMain_EditableTileSet_GetLongName_SCURK1996(pThis, nEdNum);
+	}
+	return NULL;
+}
+
+// winscurkPlaceWindow function wrappers
+
+void L_SCURK_WRP_winscurkPlaceWindow_ClearCurrentTool(winscurkPlaceWindow *pThis) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			GameMain_winscurkPlaceWindow_ClearCurrentTool_SCURKPrimary(pThis);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			GameMain_winscurkPlaceWindow_ClearCurrentTool_SCURK1996(pThis);
+	}
+}
+
+// winscurkMDIClient function wrappers
+
+void L_SCURK_WRP_winscurkMDIClient_RotateColors(winscurkMDIClient *pThis, BOOL bFast) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			GameMain_winscurkMDIClient_RotateColors_SCURKPrimary(pThis, bFast);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			GameMain_winscurkMDIClient_RotateColors_SCURK1996(pThis, bFast);
+	}
+}
+
+// winscurkApp function wrappers
+
+TBC45XPalette *L_SCURK_WRP_winscurkApp_GetPalette(winscurkApp *pThis) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return GameMain_winscurkApp_GetPalette_SCURKPrimary(pThis);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return GameMain_winscurkApp_GetPalette_SCURK1996(pThis);
+	}
+	return NULL;
+}
+
+void L_SCURK_WRP_winscurkApp_ScurkSound(winscurkApp *pThis, int nSoundID) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			GameMain_winscurkApp_ScurkSound_SCURKPrimary(pThis, nSoundID);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			GameMain_winscurkApp_ScurkSound_SCURK1996(pThis, nSoundID);
+	}
+}
+
+winscurkPlaceWindow *L_SCURK_WRP_winscurkApp_GetPlaceWindow(winscurkApp *pThis) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return GameMain_winscurkApp_GetPlaceWindow_SCURKPrimary(pThis);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return GameMain_winscurkApp_GetPlaceWindow_SCURK1996(pThis);
+	}
+	return NULL;
 }

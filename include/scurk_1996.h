@@ -47,8 +47,9 @@
 
 // Program funcs
 SCURK1996_GAMECALL_MAIN(0x413788, void *, __cdecl, gAllocBlock, size_t)
+SCURK1996_GAMECALL_MAIN(0x4137E8, void *, __cdecl, gResizeBlock, BYTE *, size_t)
 SCURK1996_GAMECALL_MAIN(0x41380C, void, __cdecl, gFreeBlock, void *)
-SCURK1996_GAMECALL_MAIN(0x4139B0, int, __stdcall, gUpdateWaitWindow)
+SCURK1996_GAMECALL_MAIN(0x4139B0, void, __stdcall, gUpdateWaitWindow)
 SCURK1996_GAMECALL_MAIN(0x414D98, char *, __cdecl, EditableTileSet_GetLongName, cEditableTileSet *, int)
 SCURK1996_GAMECALL_MAIN(0x440FEC, void, __cdecl, winscurkPlaceWindow_ClearCurrentTool, winscurkPlaceWindow *)
 SCURK1996_GAMECALL_MAIN(0x4496E8, void, __cdecl, winscurkMDIClient_RotateColors, winscurkMDIClient *, int)
@@ -76,7 +77,7 @@ SCURK1996_GAMECALL_MAIN(0x478CCE, TBC45XMDIChild *, __cdecl, BCMDIClient_GetActi
 SCURK1996_GAMEOFF_PTR(__int16,	wTileObjects,		0x491BAE)
 SCURK1996_GAMEOFF(WORD,			wColFastCnt,		0x498232)
 SCURK1996_GAMEOFF(WORD,			wColSlowCnt,		0x498234)
-SCURK1996_GAMEOFF(__int16,		wtoolNum,			0x4A4892)
-SCURK1996_GAMEOFF(__int16,	wtoolValue,				0x4A48CA)
+SCURK1996_GAMEOFF_PTR(__int16,		wtoolNum,			0x4A4892)
+SCURK1996_GAMEOFF(__int16,		wtoolValue,				0x4A48CA)
 SCURK1996_GAMEOFF(winscurkApp *,	gScurkApplication,	0x4A6DEC)
 SCURK1996_GAMEOFF_PTR(BC45Xstring,	TAppInitCmdLine,	0x4A7434)
