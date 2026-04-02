@@ -7,10 +7,8 @@
 #include <string.h>
 #include <signal.h>
 
+#include <lua_glue.h>
 #include <vt100.h>
-
-#include "../thirdparty/lua/lua.hpp"
-#include "../thirdparty/lua/llimits.h"
 
 #define LUA_PROGNAME		"lua"
 #define LUA_INIT_VAR		"LUA_INIT"
@@ -341,10 +339,22 @@ static void doREPL (lua_State *L) {
   progname = oldprogname;
 }
 
+
 static int pmain(lua_State *L) {
+    // Do some initial setup
     luaL_openlibs(L);
     printf("Type Control-C to exit the Lua REPL.\n");
     print_version();
+
+    // Set up the libsc2kfix state, run autoexec.lua if it exists, and set up
+    // a dummy mod_info table.
+    luaL_dostring(L,
+        "mod_info = {}\n"
+        "mod_info.name = \"sc2kfix Lua REPL\"\n"
+        "mod_info.shortname = \"repl\"\n");
+    LuaGlueSetupState(L);
+    
+    // Enter the REPL proper
     doREPL(L);
     lua_pushboolean(L, 1);
     return 1;

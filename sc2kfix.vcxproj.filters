@@ -243,6 +243,9 @@
     <ClInclude Include="include\vt100.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\lua_glue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="hooks\hook_mciSendCommand.cpp">
@@ -449,7 +452,10 @@
     <ClCompile Include="thirdparty\lua\lzio.c">
       <Filter>Source Files\Third-Party\Lua</Filter>
     </ClCompile>
-    <ClCompile Include="modules\luarepl.cpp">
+    <ClCompile Include="modules\lua_repl.cpp">
+      <Filter>Source Files\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\lua_glue.cpp">
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
   </ItemGroup>

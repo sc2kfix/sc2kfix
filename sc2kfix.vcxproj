@@ -42,7 +42,7 @@ const char* szSC2KFixBuildInfo = "$(UserName)@$(ComputerName)  $([System.DateTim
     </BuildInfo>
   </PropertyGroup>
   <Target Name="UpdateBuildInfoCpp" BeforeTargets="PreBuildEvent">
-    <WriteLinesToFile File="buildinfo.cpp" Lines="$(BuildInfo)" Overwrite="true"/>
+    <WriteLinesToFile File="buildinfo.cpp" Lines="$(BuildInfo)" Overwrite="true" />
   </Target>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -79,6 +79,7 @@ const char* szSC2KFixBuildInfo = "$(UserName)@$(ComputerName)  $([System.DateTim
     <ClInclude Include="include\hooklists.h" />
     <ClInclude Include="include\json.hpp" />
     <ClInclude Include="include\keybindings.h" />
+    <ClInclude Include="include\lua_glue.h" />
     <ClInclude Include="include\mfc3xhelp.h" />
     <ClInclude Include="include\music.h" />
     <ClInclude Include="include\sc2kclasses.h" />
@@ -159,7 +160,8 @@ const char* szSC2KFixBuildInfo = "$(UserName)@$(ComputerName)  $([System.DateTim
     <ClCompile Include="hooks\hook_mmtimers.cpp" />
     <ClCompile Include="modules\game_graphics.cpp" />
     <ClCompile Include="modules\keybindings.cpp" />
-    <ClCompile Include="modules\luarepl.cpp" />
+    <ClCompile Include="modules\lua_glue.cpp" />
+    <ClCompile Include="modules\lua_repl.cpp" />
     <ClCompile Include="modules\military.cpp" />
     <ClCompile Include="modules\mod_loader.cpp" />
     <ClCompile Include="modules\music.cpp" />

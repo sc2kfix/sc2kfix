@@ -33,9 +33,8 @@
 #include <string>
 
 #include <sc2kfix.h>
+#include <lua_glue.h>
 #include "../resource.h"
-
-#include "../thirdparty/lua/lua.hpp"
 
 #ifdef CONSOLE_ENABLED
 BOOL bConsoleEnabled = TRUE;
@@ -64,7 +63,6 @@ int iConsoleScriptNest = 0;
 std::map<std::string, script_variable_t> mapVariables;
 
 static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments);
-int LuaRunREPL(void);
 
 console_command_t fpConsoleCommands[] = {
 	{ "?", ConsoleCmdHelp, CONSOLE_COMMAND_ALIAS, "" },
@@ -143,11 +141,15 @@ BOOL ConsoleCmdRun(const char* szCommand, const char* szArguments) {
 			}
 		}
 
-		// Spin up a new Lua VM, load the file, and run it.
+		// Spin up a new Lua VM, set up the glue logic, load the file, and run it.
 		lua_State* L = luaL_newstate();
 		luaL_openlibs(L);
-		luaL_loadfile(L, strPossibleScriptName.c_str());
-		lua_pcall(L, 0, 0, 0);
+		luaL_dostring(L,
+			"mod_info = {}\n"
+			"mod_info.name = \"sc2kfix Lua REPL\"\n"
+			"mod_info.shortname = \"repl\"\n");
+		LuaGlueSetupState(L);
+		luaL_dofile(L, strPossibleScriptName.c_str());
 		lua_close(L);
 	} else {
 		printf_yellow("Invalid argument.\n");
@@ -157,7 +159,7 @@ BOOL ConsoleCmdRun(const char* szCommand, const char* szArguments) {
 }
 
 BOOL ConsoleCmdClear(const char* szCommand, const char* szArguments) {
-	if (!szArguments || !*szArguments || !strcmp(szArguments, "?")) {
+	if (!szArguments || !strcmp(szArguments, "?")) {
 		printf(
 			"  clear             Clear the console (keeps scrollback)\n"
 			"  clear variables   Clear the script variable list\n");
@@ -169,7 +171,12 @@ BOOL ConsoleCmdClear(const char* szCommand, const char* szArguments) {
 		return TRUE;
 	}
 
-	WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), "\x1b[2J\x1b[0;0H", sizeof("\x1b[2J\x1b[0;0H"), NULL, NULL);
+	if (!*szArguments) {
+		WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), "\x1b[2J\x1b[0;0H", sizeof("\x1b[2J\x1b[0;0H"), NULL, NULL);
+		return TRUE;
+	}
+
+	printf_yellow("Invalid argument.\n");
 	return TRUE;
 }
 
