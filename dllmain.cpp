@@ -596,7 +596,7 @@ LONG WINAPI CrashHandler(LPEXCEPTION_POINTERS lpExceptions) {
 	STACKFRAME stStackFrame = { 0 };
 	CONTEXT stContext = { 0 };
 	BOOL bHaveDebugSyms = FALSE;
-	int iStackFrameLimit = 20;
+	int iStackFrameLimit = 32;
 
 	// She's dead, Jim.
 	bGameDead = TRUE;
