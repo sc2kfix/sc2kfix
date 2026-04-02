@@ -400,6 +400,7 @@ HOOKEXT_CPP json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBig
 HOOKEXT_CPP json::JSON EncodeBudgetArray(DWORD* dwBudgetArray, BOOL bBigEndian);
 HOOKEXT_CPP void DecodeDWORDArray(DWORD* dwArray, json::JSON jsonArray, size_t iCount, BOOL bBigEndian);
 void PorntipsGuzzardo(void);
+void SetCPoint(CPoint* pt, int x, int y);
 
 // Globals etc.
 

@@ -2864,6 +2864,7 @@ GAMECALL(0x401000, void, __thiscall, CityToolBar_RefreshToolBar, CCityToolBar *)
 GAMECALL(0x401005, int, __cdecl, CityToolPlaceSelectedBuilding, __int16, __int16, __int16, __int16)
 GAMECALL(0x40103C, int, __thiscall, MainFrame_ToggleToolBars, CMainFrame *pThis, int iShow)
 GAMECALL(0x40104B, void, __cdecl, PlacePoliceDispatchUnit, __int16, __int16)
+GAMECALL(0x401069, LONG, __cdecl, StackPop, POINT*)
 GAMECALL(0x40106E, int, __cdecl, PlaceRoadAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x401073, void, __cdecl, PlacePipesAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x401096, int, __thiscall, SimcityApp_SoundPlaySound, CSimcityAppPrimary* pThis, int iSoundID)
@@ -2879,6 +2880,7 @@ GAMECALL(0x401163, void, __thiscall, Sound_PlayPrioritySound, CSound *)
 GAMECALL(0x4011E5, BOOL, __thiscall, Sound_MapToolSoundTrigger, CSound* pThis)
 GAMECALL(0x4011EA, CMovieDialog *, __thiscall, MovieDialog_Cons, CMovieDialog *, CMFC3XWnd *)
 GAMECALL(0x401154, void, __stdcall, SimulationPollutionTerrainAndLandValueScan, void)
+GAMECALL(0x401203, LONG, __cdecl, StackPeek, POINT*)
 GAMECALL(0x401212, int, __cdecl, CityToolPlaceSubToRail, __int16, __int16)
 GAMECALL(0x401226, int, __cdecl, BeginProcessObjects, CMFC3XWnd *pTargetWnd, void *, int, __int16, RECT *)
 GAMECALL(0x401235, UINT, __thiscall, MyToolBar_GetButtonStyle, CMyToolBar *, int)
@@ -2900,6 +2902,7 @@ GAMECALL(0x401460, BYTE, __cdecl, SimulationProvisionMicrosim, __int16, __int16,
 GAMECALL(0x40146A, void, __cdecl, LoadNamedEntryFromRsrcOffset, char *, int, int)
 GAMECALL(0x40147E, int, __thiscall, Graphics_CreateWithPalette, CGraphics *, LONG, LONG)
 GAMECALL(0x40148D, DWORD, __thiscall, Sound_GetMCIResult, CSound *)
+GAMECALL(0x4014B0, void, __cdecl, InitStack, __int16, __int16)
 GAMECALL(0x4014CE, int, __cdecl, SpawnAeroplane, __int16 x, __int16 y, __int16 iDirection)
 GAMECALL(0x4014EC, void, __cdecl, CityToolPlaceNature, CMFC3XPoint)
 GAMECALL(0x4014F1, int, __thiscall, SimcityView_TileHighlightUpdate, CSimcityView *pThis)
@@ -2917,7 +2920,7 @@ GAMECALL(0x4016A9, void, __thiscall, SimcityApp_CallAutoSave, CSimcityAppPrimary
 GAMECALL(0x4016D1, int, __thiscall, SimcityView_CenterOnNewScreenCoordinates, CSimcityView *pThis, __int16 iNewScreenPointX, __int16 iNewScreenPointY)
 GAMECALL(0x4016DB, void, __thiscall, MainFrame_DisableCityToolBarButton, CMainFrame *, int)
 GAMECALL(0x4016F9, int, __cdecl, PlaceChurch, __int16 x, __int16 y)
-GAMECALL(0x40174E, void, __cdecl, SimulationPrepareDiasterCoordinates, POINT *pt, __int16 x, __int16 y)
+GAMECALL(0x40174E, void, __cdecl, SetCPoint, POINT *pt, __int16 x, __int16 y)
 GAMECALL(0x401753, void, __thiscall, SimcityApp_OnQuit, CSimcityAppPrimary *)
 GAMECALL(0x40178F, __int16, __cdecl, PlaceTileWithMilitaryCheck, __int16 x, __int16 y, __int16 iTileID)
 GAMECALL(0x4017B2, void, __thiscall, SimcityDoc_UpdateDocumentTitle, CSimcityDoc* pThis)
@@ -3090,6 +3093,7 @@ GAMECALL(0x402E19, void, __cdecl, QueryGeneralItem, __int16, __int16)
 GAMECALL(0x402E73, void, __cdecl, DrawLabelsAndObjects, __int16, __int16, __int16, __int16)
 GAMECALL(0x402E96, void, __thiscall, SimcityApp_GetToolSound, CSimcityAppPrimary *)
 GAMECALL(0x402EA0, int, __cdecl, CityToolPlacePowerHydroDam, __int16, __int16)
+GAMECALL(0x402EA5, void, __cdecl, StackPush, __int16, __int16)
 GAMECALL(0x402EFA, int, __stdcall, GetSimcityViewMenuPos, int iPos)
 GAMECALL(0x402F18, void, __thiscall, MainFrame_UpdateCityToolBar, CMainFrame *)
 GAMECALL(0x402F4A, void, __cdecl, PlaceSubwayAtCoordinates, __int16 x, __int16 y)
@@ -4256,6 +4260,8 @@ typedef struct {
 	int x;
 	int y;
 } coords_dw_t;
+
+typedef struct tagPOINT CPoint;
 
 typedef struct {
 	WORD nArcID;

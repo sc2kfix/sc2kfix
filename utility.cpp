@@ -512,3 +512,8 @@ HOOKEXT_CPP void DecodeDWORDArray(DWORD* dwArray, json::JSON jsonArray, size_t i
 	for (size_t i = 0; i < iCount; i++)
 		dwArray[i] = (bBigEndian ? SwapDWORD(jsonArray[i].ToInt()) : jsonArray[i].ToInt());
 }
+
+void SetCPoint(CPoint* pt, int x, int y) {
+	pt->x = x;
+	pt->y = y;
+}

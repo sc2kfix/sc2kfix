@@ -430,7 +430,7 @@ TRYAGAIN:
 			case CHEAT_CASS:
 				if (!Game_RandomWordLFSRMod(16)) {
 					wSetTriggerDisasterType = DISASTER_FIRESTORM;
-					Game_SimulationPrepareDiasterCoordinates(&dwDisasterPoint, wCityCenterX, wCityCenterY);
+					Game_SetCPoint(&dwDisasterPoint, wCityCenterX, wCityCenterY);
 				}
 				dwCityFunds += 250;
 				break;
@@ -441,7 +441,7 @@ TRYAGAIN:
 				break;
 			case CHEAT_MAJORFLOOD:
 				wSetTriggerDisasterType = DISASTER_MASSFLOODS;
-				Game_SimulationPrepareDiasterCoordinates(&dwDisasterPoint, wCityCenterX, wCityCenterY);
+				Game_SetCPoint(&dwDisasterPoint, wCityCenterX, wCityCenterY);
 				break;
 			case CHEAT_PARTTHESEA:
 				// An extrapolation of 'moses' from the Windows 3.1 game.
@@ -460,7 +460,7 @@ TRYAGAIN:
 				break;
 			case CHEAT_FIRESTORM:
 				wSetTriggerDisasterType = DISASTER_FIRESTORM;
-				Game_SimulationPrepareDiasterCoordinates(&dwDisasterPoint, wCityCenterX, wCityCenterY);
+				Game_SetCPoint(&dwDisasterPoint, wCityCenterX, wCityCenterY);
 				break;
 			case CHEAT_DEBUG:
 				if (!pSCApp->bSCAPriscillaActivated) {
