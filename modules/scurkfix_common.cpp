@@ -743,14 +743,14 @@ extern "C" LONG __cdecl Hook_SCURK_EditableTileSet_mReadFromFile(cEditableTileSe
 
 static void L_SCURK_BackupFile(LPCSTR lpPathName) {
 	time_t t;
-	tm *pTM;
+	tm pTM;
 	char szStamp[14 + 1], szFileName[MAX_PATH + 1];
 
 	if (FileExists(lpPathName)) {
 		t = time(NULL);
-		pTM = localtime(&t);
+		localtime_s(&pTM, &t);
 
-		sprintf_s(szStamp, "%04d%02d%02d%02d%02d%02d", pTM->tm_year + 1900, pTM->tm_mon + 1, pTM->tm_mday, pTM->tm_hour, pTM->tm_min, pTM->tm_sec);
+		sprintf_s(szStamp, "%04d%02d%02d%02d%02d%02d", pTM.tm_year + 1900, pTM.tm_mon + 1, pTM.tm_mday, pTM.tm_hour, pTM.tm_min, pTM.tm_sec);
 		for (int i = 0; i <= 10; ++i) {
 			sprintf_s(szFileName, "%s.bak.%s%02d", lpPathName, szStamp, i);
 			if (!FileExists(szFileName)) {
@@ -837,7 +837,7 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mWriteToMIFFFile(cEditableTile
 		// of the program; the line is left here for original reference
 		// purposes.
 		// szInfoPortion[54] = mTileFileName[0]; // Remote var unused.
-		strcpy(&szInfoPortion[94], "winSCURK");
+		old_strcpy(&szInfoPortion[94], "winSCURK");
 		*(DWORD *)szInfoPortion = '_WIN'; // This gets reversed
 		fwrite(szInfoPortion, 1, sizeof(szInfoPortion), f);
 
@@ -1023,7 +1023,7 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mReadFromMIFFFile(cEditableTil
 
 	ret = 0;
 	bMac = FALSE;
-	f = fopen(lpPathName, "rb");
+	f = old_fopen(lpPathName, "rb");
 	if (f) {
 		for (int i = 0; i < MAX_EDNUM; ++i) {
 			pThis->mTileIsRenamed[i] = 0;

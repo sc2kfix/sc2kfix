@@ -279,6 +279,10 @@ BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc) {
 FILE *old_fopen(const char *fname, const char *mode) {
 	return fopen(fname, mode);
 }
+
+char *old_strcpy(char *pDest, const char *pSource) {
+	return strcpy(pDest, pSource);
+}
 #pragma warning(default:4996)
 
 void *__cdecl L_ReallocateDataEntry(char *pDest, char *pSrc) {

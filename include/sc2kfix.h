@@ -436,7 +436,9 @@ BOOL DoConfigureKeyBindings(settings_t *st, HWND hwndDlg);
 
 BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc);
 
+// Yes...
 FILE *old_fopen(const char *fname, const char *mode);
+char *old_strcpy(char *pDest, const char *pSource);
 
 void *__cdecl L_ReallocateDataEntry(char *pDest, char *pSrc);
 
