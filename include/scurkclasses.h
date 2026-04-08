@@ -16,6 +16,8 @@
 #define MISCHOOK_SCURK_DEBUG_MENU 8
 #define MISCHOOK_SCURK_DEBUG_ONCMD 16
 #define MISCHOOK_SCURK_DEBUG_CREATEBAK 32
+#define MISCHOOK_SCURK_DEBUG_FIXEDTILES 64
+#define MISCHOOK_SCURK_DEBUG_CONVERT 128
 
 #define MISCHOOK_SCURK_DEBUG DEBUG_FLAGS_NONE
 
@@ -26,13 +28,9 @@
 
 extern UINT mischook_scurk_debug;
 
-// If set to 0 it'll use the original
-// method of shrinking the large shape
-// to their small and tiny equivalents.
-// While set to 1 it'll do a "more"
-// comprehensive conversion (for now this
-// is within the bounds of the EDNUM range).
-#define COMPREHENSIVE_DOS_LOAD 1
+// Useful for checking the base images
+// from the game itself.
+#define SPRITE_ARCHIVE_LOADING 0
 
 #define MAX_EDNUM 184
 #define MAX_WORKING_SHAPS (MAX_EDNUM * 3) // Large, Small and Tiny
@@ -44,6 +42,7 @@ extern UINT mischook_scurk_debug;
                                                    ) * MAX_WORKING_SHAPS))
  */
  #define DEF_TILE_LOC (sizeof(WORD) + ((sizeof(tilesetHeadInfo_t) + sizeof(tilesetShapHeader_t)) * MAX_WORKING_SHAPS))
+#define CONV_TILE_LOC(x) (sizeof(WORD) + ((sizeof(tilesetHeadInfo_t) + sizeof(tilesetShapHeader_t)) * x))
 
 #define SINGLE_TILE_WIDTH 32
 
@@ -61,6 +60,18 @@ enum {
 	SHUNT_RIGHT
 };
 
+enum {
+	CONVSAVEAS_ONLY,
+	CONVSAVEAS_LOADSRC,
+	CONVSAVEAS_LOADWRK
+};
+
+enum {
+	CONVTYPE_NONE,
+	CONVTYPE_MACMIF,
+	CONVTYPE_DOSTIL
+};
+
 #pragma pack(push, 1)
 class CWinGBitmap {
 public:
@@ -76,6 +87,14 @@ public:
 	BYTE *GRpBitsLoColor;
 	WORD wGRDIBUsage;
 };
+
+// This is a custom struct.
+typedef struct {
+	BYTE *pObjects[SPRITE_COUNT + 10]; // Shap encoded object
+	sprite_archive_t *pObjectSet; // Main attributes minus encoded object (in this context)
+	int *pObjectSetSize; // Size of each object
+	int nObjectNum; // Total number of objects
+} tileConv_t;
 
 class cEditableTileSet {
 public:
@@ -117,6 +136,18 @@ public:
 	DWORD dwSomethingOne[7];
 	DWORD dwPosition;
 	int nSomethingTwo[2];
+	TBC45XDerivedWindowFoot __clFoot;
+};
+
+class TDoneMeter : public TBC45XParWindow {
+	int nMin;
+	int nMax;
+	char *pText;
+	int nWidth;
+	int nHeight;
+	TBC45XRect rectOne;
+	TBC45XRect rectTwo;
+	TBC45XPoint pointOne;
 	TBC45XDerivedWindowFoot __clFoot;
 };
 
@@ -390,3 +421,5 @@ public:
 	DWORD Printing;
 };
 #pragma pack(pop)
+
+extern BYTE DOSMacPalTable[256];

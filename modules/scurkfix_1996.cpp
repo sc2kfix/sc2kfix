@@ -295,6 +295,10 @@ void InstallFixes_SCURK1996(void) {
 	VirtualProtect((LPVOID)0x4738EA, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4738EA, Hook_SCURK_MenuItemEnabler_Enable);
 
+	// TMenuItemEnabler::SetCheck
+	VirtualProtect((LPVOID)0x473939, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x473939, Hook_SCURK_MenuItemEnabler_SetCheck);
+
 	// This hook is to prevent the Place&Pick selection dialogue
 	// from being unintentionally closed; it catches and ignores
 	// the cancel (esc) action.

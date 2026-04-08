@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Release|Win32">
@@ -171,6 +171,7 @@ const char* szSC2KFixBuildInfo = "$(UserName)@$(ComputerName)  $([System.DateTim
     <ClCompile Include="modules\scurkfix_1996.cpp" />
     <ClCompile Include="modules\scurkfix_common.cpp" />
     <ClCompile Include="modules\scurkfix_primary.cpp" />
+    <ClCompile Include="modules\scurk_convert.cpp" />
     <ClCompile Include="modules\settings.cpp" />
     <ClCompile Include="modules\spritebrowse_dialog.cpp" />
     <ClCompile Include="modules\status_dialog.cpp" />
