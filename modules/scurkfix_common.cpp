@@ -1668,32 +1668,38 @@ void L_SCURK_InitDOSMacPaletteIdxTable() {
 			DOSMacPalTable[i] = 0;
 	}
 
-	// This fixes certain colours being
-	// lost during the DOS/Mac -> Windows
+	// This fixes certain colours being lost during the DOS/Mac -> Windows
 	// translation process.
-	// It must be noted that these cases
-	// were manually determined during
-	// the comprehensive examination of
-	// certain tiles and their prior
+	// It must be noted that these cases were manually determined during
+	// the comprehensive examination of certain tiles and their prior
 	// pre-conversion palette indices.
+	// Based on further checks, those currently set "did" exist in the
+	// DOS version of SCURK however in the Macintosh version any attempts
+	// to "pick" the colour will result in no entry being selected - while
+	// in the Windows version they simply don't exist.
+	//
+	// Tilesets used for nearest-confirmation cases:
+	// - FUTURE.TIL
+	// - ORIGINAL.TIL
+	//
 	// // CHECK AS NEEDED - these values
-	//    aren't fatal regardless, previously
-	//    they were just being set to 0x00 - 
-	//    which caused a noticeable negative
-	//    effect on certain tiles (see the
-	//    Marina, Seaport Warehouse,
-	//    Seaport Loading Bar, Army Hangar,
+	//    aren't fatal regardless, previously they were just being set to
+	//    0x00 - which caused a noticeable negative effect on certain tiles
+	//    (see the Marina, Seaport Warehouse, Seaport Loading Bar, Army Hangar,
 	//    Military Control Tower)
+	DOSMacPalTable[204] = 0x38;
+	DOSMacPalTable[205] = 0x03;
+	DOSMacPalTable[210] = 0x44;
 	DOSMacPalTable[211] = 0x22;
 	DOSMacPalTable[212] = 0x7E;
 	DOSMacPalTable[213] = 0x7C;
+	DOSMacPalTable[215] = 0x03;
+	DOSMacPalTable[218] = 0x3D;
+	DOSMacPalTable[219] = 0x01;
 	DOSMacPalTable[222] = 0x79;
+	DOSMacPalTable[255] = 0xFF;
 
 	ConsoleLog(LOG_INFO, "Initialize DOS/Mac -> Windows Palette Index Table.\n");
-
-	//for (int i = 0; i < 256; ++i) {
-	//	ConsoleLog(LOG_DEBUG, "0x%02X (%d) (%u, %u) | 0x%02X (%d) (%u, %u) -> 0x%02X (%u) (%u, %u)\n", i, i, HIGHNIBBLE(i), LOWNIBBLE(i), PAL_IDX(i), PAL_IDX(i), HIGHNIBBLE(PAL_IDX(i)), LOWNIBBLE(PAL_IDX(i)), DOSMacPalTable[i], DOSMacPalTable[i], HIGHNIBBLE(DOSMacPalTable[i]), LOWNIBBLE(DOSMacPalTable[i]));
-	//}
 }
 
 // cPaintWindow functions
