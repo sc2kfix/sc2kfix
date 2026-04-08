@@ -981,8 +981,12 @@ static void L_SCURK_TranslateFromMac(cEditableTileSet *pThis, WORD nDBID) {
 						{
 							if (*pTileBits == 0xFC)
 								pBit = 0x61;
-							else
-								pBit = DOSMacPalTable[*pTileBits];
+							else {
+								// Exception needed in this case.
+								// Under DOS you want the bit to be 0xFF/White
+								// while under Mac you want it to be 0x00/Black.
+								pBit = (*pTileBits == 0xFF) ? 0x00 : DOSMacPalTable[*pTileBits];
+							}
 							*pTileBits = pBit;
 						}
 						++pTileBits;
@@ -1697,7 +1701,7 @@ void L_SCURK_InitDOSMacPaletteIdxTable() {
 	DOSMacPalTable[218] = 0x3D;
 	DOSMacPalTable[219] = 0x01;
 	DOSMacPalTable[222] = 0x79;
-	DOSMacPalTable[255] = 0xFF;
+	DOSMacPalTable[255] = 0xFF; // Only used during DOS conversion, a bad idea for Mac.
 
 	ConsoleLog(LOG_INFO, "Initialize DOS/Mac -> Windows Palette Index Table.\n");
 }
