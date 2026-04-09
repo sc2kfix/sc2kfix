@@ -36,25 +36,14 @@ extern UINT mischook_scurk_debug;
 
 #define MAX_EDNUM 184
 #define MAX_WORKING_SHAPS (MAX_EDNUM * 3) // Large, Small and Tiny
-#define DEF_TILE_LOC (sizeof(WORD) + (((sizeof(char) * 4) + sizeof(DWORD) + sizeof(tilesetShapHeader_t)) * MAX_WORKING_SHAPS))
-
-#define _BS_LONG(x)  ((BYTE)(x) << 24) | ((WORD(x) & 0xFF00) << 8) | (((x) & 0xFF0000) >> 8) | (((x) & 0xFF000000) >> 24)
-#define _BS_SHORT(x) ((BYTE)(x) << 8) | ((int)(x) >> 8)
-
-// TILE - Length of Contents - 9938 = ((sizeof(char[4] + DWORD + tilesetShapHeader_t) * 552) + 2 - default number of SHAP chunks + chunk count short.
-#define _BS_LONG_LOC(x) ((BYTE)(x - 46) << 24) | ((WORD(x + DEF_TILE_LOC) & 0xFF00) << 8) | (((x + DEF_TILE_LOC) & 0xFF0000) >> 8) | (((x + DEF_TILE_LOC) & 0xFF000000) >> 24)
-// Tile - Chunk Count - by default there are 552 chunks, each additional chunk is a modified name.
-#define _BS_SHORT_CC(x) ((BYTE)(x + 40) << 8) | ((int)(WORD)(x + MAX_WORKING_SHAPS) >> 8)
-
-// Shap Sizes
-#define _BS_SHORT_SHAP_LARGE(x) ((BYTE)LOWORD(x) << 8) | ((int)LOWORD(x) >> 8)
-#define _BS_SHORT_SHAP_SMALL(x) ((BYTE)(LOWORD(x) + 12) << 8) | ((int)(WORD)(LOWORD(x) - SPRITE_MEDIUM_START) >> 8)
-#define _BS_SHORT_SHAP_TINY(x)  ((BYTE)(LOWORD(x) + 24) << 8) | ((int)(WORD)(LOWORD(x) - SPRITE_LARGE_START) >> 8)
-
-// NAME - Length of Contents
-#define _BS_LONG_NAME_LOC(x)  ((BYTE)((x & 1) + x + 4) << 24) | ((((x & 1) + (WORD)x + 4) & 0xFF00) << 8) | ((((x & 1) + x + 4) & 0xFF0000) >> 8) | ((((x & 1) + x + 4) & 0xFF000000) >> 24)
-// NAME - Name Length
-#define _BS_SHORT_NAME_LEN(x) ((BYTE)((x & 1) + x) << 8) | ((int)(WORD)((x & 1) + x) >> 8)
+/*
+ Calculation demystification:
+                              (ChunkCount (WORD) + (
+                                                    (tilesetheaderinfo (label (char[4]) + entrysize (DWORD)) + 
+                                                     tilesetShapHeader (shapID (WORD) + Width (WORD) + Height (WORD) + entrysize (DWORD))
+                                                   ) * MAX_WORKING_SHAPS))
+ */
+ #define DEF_TILE_LOC (sizeof(WORD) + ((sizeof(tilesetHeadInfo_t) + sizeof(tilesetShapHeader_t)) * MAX_WORKING_SHAPS))
 
 #define SINGLE_TILE_WIDTH 32
 

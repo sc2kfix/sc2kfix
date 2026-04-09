@@ -775,12 +775,34 @@ static void L_SCURK_BackupFile(LPCSTR lpPathName) {
 	}
 }
 
+static void L_SCURK_WriteMIFFShap(cEditableTileSet *pThis, FILE *f, int nShapNum, int nShapSubtractStart) {
+	DWORD dwBuf;
+	WORD wBuf;
+	int nDBID;
+	char szHeadName[4];
+
+	nDBID = pThis->mDBIndexFromShapeNum[nShapNum] - nShapSubtractStart;
+	memcpy(szHeadName, "SHAP", 4);
+	fwrite(szHeadName, 1, sizeof(szHeadName), f);
+	dwBuf = _byteswap_ulong(pThis->mTileSizeTable[nDBID] + sizeof(tilesetShapHeader_t));
+	fwrite(&dwBuf, sizeof(dwBuf), 1, f);
+	wBuf = _byteswap_ushort(nShapNum - nShapSubtractStart);
+	fwrite(&wBuf, sizeof(wBuf), 1, f);
+	wBuf = _byteswap_ushort(pThis->mTileSet->pData[nDBID].sprHeader.wWidth);
+	fwrite(&wBuf, sizeof(wBuf), 1, f);
+	wBuf = _byteswap_ushort(pThis->mTileSet->pData[nDBID].sprHeader.wHeight);
+	fwrite(&wBuf, sizeof(wBuf), 1, f);
+	dwBuf = _byteswap_ulong(pThis->mTileSizeTable[nDBID]);
+	fwrite(&dwBuf, sizeof(dwBuf), 1, f);
+	fwrite(pThis->mTiles[nDBID], pThis->mTileSizeTable[nDBID], 1, f);
+}
+
 extern "C" int __cdecl Hook_SCURK_EditableTileSet_mWriteToMIFFFile(cEditableTileSet *pThis, LPCSTR lpPathName) {
 	int ret;
 	FILE *f;
 	DWORD dwBuf, dwContLen;
 	WORD wNameChunkCount, wBuf;
-	int nEdNum, nShapNum, nDBID, nNameLen;
+	int nEdNum, nShapNum, nDBID, nNameLen, nStoreLen;
 	BYTE bBuf[4];
 	char szHeadName[4];
 	char szInfoPortion[114];
@@ -807,7 +829,7 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mWriteToMIFFFile(cEditableTile
 				++wNameChunkCount;
 			}
 		}
-		dwBuf = _BS_LONG(dwBuf + dwContLen);
+		dwBuf = _byteswap_ulong(dwBuf + dwContLen);
 
 		// Initial part of the header:
 		// MIFF
@@ -859,9 +881,9 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mWriteToMIFFFile(cEditableTile
 		// Chunk Count
 		memcpy(szHeadName, "TILE", 4);
 		fwrite(szHeadName, 1, sizeof(szHeadName), f);
-		dwBuf = _BS_LONG_LOC(dwContLen);
+		dwBuf = _byteswap_ulong(dwContLen + DEF_TILE_LOC);
 		fwrite(&dwBuf, sizeof(dwBuf), 1, f);
-		wBuf = _BS_SHORT_CC(wNameChunkCount);
+		wBuf = _byteswap_ushort(wNameChunkCount + MAX_WORKING_SHAPS);
 		fwrite(&wBuf, sizeof(wBuf), 1, f);
 
 		// The main body of first NAME and SHAP entries.
@@ -878,13 +900,14 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mWriteToMIFFFile(cEditableTile
 				memcpy(szHeadName, "NAME", 4);
 				fwrite(szHeadName, 1, sizeof(szHeadName), f);
 				nNameLen = strlen(pThis->mTileNames[nEdNum]);
-				dwBuf = _BS_LONG_NAME_LOC(nNameLen);
+				nStoreLen = (nNameLen & 1) + nNameLen;
+				dwBuf = _byteswap_ulong(nStoreLen + sizeof(tilesetNameHeader_t));
 				fwrite(&dwBuf, sizeof(dwBuf), 1, f);
-				wBuf = _BS_SHORT_SHAP_TINY(nShapNum);
+				wBuf = _byteswap_ushort(nShapNum - SPRITE_LARGE_START);
 				fwrite(&wBuf, sizeof(wBuf), 1, f);
-				wBuf = _BS_SHORT_NAME_LEN(nNameLen);
+				wBuf = _byteswap_ushort(nStoreLen);
 				fwrite(&wBuf, sizeof(wBuf), 1, f);
-				fwrite(pThis->mTileNames[nEdNum], (nNameLen & 1) + nNameLen, 1, f);
+				fwrite(pThis->mTileNames[nEdNum], nStoreLen, 1, f);
 			}
 
 			// SHAP
@@ -895,53 +918,22 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mWriteToMIFFFile(cEditableTile
 			// Length of Content (minus header)
 			// Content
 
-			// Large
-			nDBID = pThis->mDBIndexFromShapeNum[nShapNum];
-			memcpy(szHeadName, "SHAP", 4);
-			fwrite(szHeadName, 1, sizeof(szHeadName), f);
-			dwBuf = _BS_LONG(pThis->mTileSizeTable[nDBID] + 10);
-			fwrite(&dwBuf, sizeof(dwBuf), 1, f);
-			wBuf = _BS_SHORT_SHAP_LARGE(nShapNum);
-			fwrite(&wBuf, sizeof(wBuf), 1, f);
-			wBuf = _BS_SHORT(pThis->mTileSet->pData[nDBID].sprHeader.wWidth);
-			fwrite(&wBuf, sizeof(wBuf), 1, f);
-			wBuf = _BS_SHORT(pThis->mTileSet->pData[nDBID].sprHeader.wHeight);
-			fwrite(&wBuf, sizeof(wBuf), 1, f);
-			dwBuf = _BS_LONG(pThis->mTileSizeTable[nDBID]);
-			fwrite(&dwBuf, sizeof(dwBuf), 1, f);
-			fwrite(pThis->mTiles[nDBID], pThis->mTileSizeTable[nDBID], 1, f);
+			// Since we are processing Large, Small and Tiny Shapes here
+			// the size subtraction must be performed as a result of the 
+			// nShapNum being translated from the nEdnum; it'll always
+			// give you Shape Numbers within the large range (1000+).
+			// The subtraction parameter should only come into play here;
+			// if another writing call is made that iterates through the
+			// full Shape number range, then it can be left set as 0.
 
-			// Small
-			nDBID = pThis->mDBIndexFromShapeNum[nShapNum] - SPRITE_MEDIUM_START;
-			memcpy(szHeadName, "SHAP", 4);
-			fwrite(szHeadName, 1, sizeof(szHeadName), f);
-			dwBuf = _BS_LONG(pThis->mTileSizeTable[nDBID] + 10);
-			fwrite(&dwBuf, sizeof(dwBuf), 1, f);
-			wBuf = _BS_SHORT_SHAP_SMALL(nShapNum);
-			fwrite(&wBuf, sizeof(wBuf), 1, f);
-			wBuf = _BS_SHORT(pThis->mTileSet->pData[nDBID].sprHeader.wWidth);
-			fwrite(&wBuf, sizeof(wBuf), 1, f);
-			wBuf = _BS_SHORT(pThis->mTileSet->pData[nDBID].sprHeader.wHeight);
-			fwrite(&wBuf, sizeof(wBuf), 1, f);
-			dwBuf = _BS_LONG(pThis->mTileSizeTable[nDBID]);
-			fwrite(&dwBuf, sizeof(dwBuf), 1, f);
-			fwrite(pThis->mTiles[nDBID], pThis->mTileSizeTable[nDBID], 1, f);
+			// Large - subtract by SPRITE_SMALL_START
+			L_SCURK_WriteMIFFShap(pThis, f, nShapNum, SPRITE_SMALL_START);
 
-			// Tiny
-			nDBID = pThis->mDBIndexFromShapeNum[nShapNum] - SPRITE_LARGE_START;
-			memcpy(szHeadName, "SHAP", 4);
-			fwrite(szHeadName, 1, sizeof(szHeadName), f);
-			dwBuf = _BS_LONG(pThis->mTileSizeTable[nDBID] + 10);
-			fwrite(&dwBuf, sizeof(dwBuf), 1, f);
-			wBuf = _BS_SHORT_SHAP_TINY(nShapNum);
-			fwrite(&wBuf, sizeof(wBuf), 1, f);
-			wBuf = _BS_SHORT(pThis->mTileSet->pData[nDBID].sprHeader.wWidth);
-			fwrite(&wBuf, sizeof(wBuf), 1, f);
-			wBuf = _BS_SHORT(pThis->mTileSet->pData[nDBID].sprHeader.wHeight);
-			fwrite(&wBuf, sizeof(wBuf), 1, f);
-			dwBuf = _BS_LONG(pThis->mTileSizeTable[nDBID]);
-			fwrite(&dwBuf, sizeof(dwBuf), 1, f);
-			fwrite(pThis->mTiles[nDBID], pThis->mTileSizeTable[nDBID], 1, f);
+			// Small - subtract by SPRITE_MEDIUM_START
+			L_SCURK_WriteMIFFShap(pThis, f, nShapNum, SPRITE_MEDIUM_START);
+
+			// Tiny - subtract by SPRITE_LARGE_START
+			L_SCURK_WriteMIFFShap(pThis, f, nShapNum, SPRITE_LARGE_START);
 		}
 		fclose(f);
 		ret = 1;
