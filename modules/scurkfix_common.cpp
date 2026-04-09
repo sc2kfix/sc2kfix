@@ -624,6 +624,7 @@ static void L_SCURK_LoadFixedLargeSpritesRsrc(cEditableTileSet *pThis) {
 													R_BOR_WRP_gFreeBlock(pThis->mTiles[nDBID]);
 												pThis->mTiles[nDBID] = (uint8_t *)R_BOR_WRP_gAllocBlock(dwSize_Shap);
 												if (pThis->mTiles[nDBID]) {
+													memset(pThis->mTiles[nDBID], 0, dwSize_Shap);
 													memcpy(pThis->mTiles[nDBID], &pTileShap->pBuf, dwSize_Shap);
 													pThis->mTileSet->pData[nDBID].sprHeader.wWidth = nWidth;
 													pThis->mTileSet->pData[nDBID].sprHeader.wHeight = nHeight;
@@ -697,6 +698,7 @@ extern "C" LONG __cdecl Hook_SCURK_EditableTileSet_mReadFromFile(cEditableTileSe
 		if (pThis->mTiles[nIdx])
 			R_BOR_WRP_gFreeBlock(pThis->mTiles[nIdx]);
 		pThis->mTiles[nIdx] = (uint8_t *)R_BOR_WRP_gAllocBlock(pThis->mTileSizeTable[nIdx]);
+		memset(pThis->mTiles[nIdx], 0, pThis->mTileSizeTable[nIdx]);
 		fread(pThis->mTiles[nIdx], 1, pThis->mTileSizeTable[nIdx], f);
 		if (pThis->mTileSet->pData[nIdx].nSprNum != SPRITE_SMALL_RESIDENTIAL_3X3_LARGEAPARTMENTS1 &&
 			pThis->mTileSet->pData[nIdx].nSprNum != SPRITE_MEDIUM_RESIDENTIAL_3X3_LARGEAPARTMENTS1) {
@@ -721,6 +723,7 @@ extern "C" LONG __cdecl Hook_SCURK_EditableTileSet_mReadFromFile(cEditableTileSe
 		if (pThis->mTiles[nIdx])
 			R_BOR_WRP_gFreeBlock(pThis->mTiles[nIdx]);
 		pThis->mTiles[nIdx] = (uint8_t *)R_BOR_WRP_gAllocBlock(pThis->mTileSizeTable[nIdx]);
+		memset(pThis->mTiles[nIdx], 0, pThis->mTileSizeTable[nIdx]);
 		fread(pThis->mTiles[nIdx], 1, pThis->mTileSizeTable[nIdx], f);
 		if (pThis->mTileSet->pData[nIdx].nSprNum != SPRITE_LARGE_RESIDENTIAL_3X3_LARGEAPARTMENTS1) {
 			nEdNum = R_SCURK_WRP_EditableTileSet_mShapeNumToEditableNum(pThis, pThis->mTileSet->pData[nIdx].nSprNum - SPRITE_LARGE_START);
@@ -1093,6 +1096,7 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mReadFromMIFFFile(cEditableTil
 							if (pThis->mTiles[nDBID])
 								R_BOR_WRP_gFreeBlock(pThis->mTiles[nDBID]);
 							pThis->mTiles[nDBID] = (BYTE *)R_BOR_WRP_gAllocBlock(shapHeader.dwSize);
+							memset(pThis->mTiles[nDBID], 0, shapHeader.dwSize);
 							pThis->mTileSet->pData[nDBID].sprHeader.wHeight = shapHeader.nHeight;
 							pThis->mTileSet->pData[nDBID].sprHeader.wWidth = shapHeader.nWidth;
 							pThis->mTileSizeTable[nDBID] = shapHeader.dwSize;
@@ -1463,6 +1467,7 @@ static void L_SCURK_TranslateFromDOS(cEditableTileSet *pThis, WORD nDBID, BYTE *
 	if (pThis->mTiles[nDBID])
 		R_BOR_WRP_gFreeBlock(pThis->mTiles[nDBID]);
 	pThis->mTiles[nDBID] = (BYTE *)R_BOR_WRP_gAllocBlock(0xFFFF);
+	memset(pThis->mTiles[nDBID], 0, 0xFFFF);
 	pDOSTileBits = pDOSTileBuf;
 	pTileBitsBuf = pThis->mTiles[nDBID];
 	nTileSize = 0;
