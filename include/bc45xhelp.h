@@ -274,6 +274,8 @@ struct TBC45XCurrentEvent {
 
 class TBC45XCommandEnabler {
 public:
+	DWORD *__vftable;
+
 	const unsigned int  Id;
 
 	const HWND  HWndReceiver;
@@ -281,6 +283,12 @@ public:
 	enum {WasHandled = 1, NonSender = 2};
 
 	unsigned int        Handled;
+};
+
+class TBC45XMenuItemEnabler : public TBC45XCommandEnabler {
+public:
+	HMENU hMenu;
+	int Position;
 };
 
 class TBC45XResId {
