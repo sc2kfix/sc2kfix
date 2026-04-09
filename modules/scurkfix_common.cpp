@@ -671,6 +671,7 @@ extern "C" LONG __cdecl Hook_SCURK_EditableTileSet_mReadFromFile(cEditableTileSe
 	FILE *f;
 	int nRes;
 	int nIdx;
+	__int16 nEdNum;
 
 	f = old_fopen(lpPathName, "rb");
 	if (!f)
@@ -697,11 +698,18 @@ extern "C" LONG __cdecl Hook_SCURK_EditableTileSet_mReadFromFile(cEditableTileSe
 			R_BOR_WRP_gFreeBlock(pThis->mTiles[nIdx]);
 		pThis->mTiles[nIdx] = (uint8_t *)R_BOR_WRP_gAllocBlock(pThis->mTileSizeTable[nIdx]);
 		fread(pThis->mTiles[nIdx], 1, pThis->mTileSizeTable[nIdx], f);
-		// Offset by 1 to avoid the default set from floating off the base.
 		if (pThis->mTileSet->pData[nIdx].nSprNum != SPRITE_SMALL_RESIDENTIAL_3X3_LARGEAPARTMENTS1 &&
 			pThis->mTileSet->pData[nIdx].nSprNum != SPRITE_MEDIUM_RESIDENTIAL_3X3_LARGEAPARTMENTS1) {
-			if (pThis->mTileSet->pData[nIdx].sprHeader.wHeight > 1)
-				pThis->mTileSet->pData[nIdx].sprHeader.wHeight -= 1;
+			// Let's only adjust the height offset for objects (to avoid them floating)
+			// within the EDNUM range (minus the RESIDENTIAL_3X3_LARGEAPARTMENTS1).
+			if (pThis->mTileSet->pData[nIdx].nSprNum < SPRITE_MEDIUM_START)
+				nEdNum = R_SCURK_WRP_EditableTileSet_mShapeNumToEditableNum(pThis, pThis->mTileSet->pData[nIdx].nSprNum);
+			else
+				nEdNum = R_SCURK_WRP_EditableTileSet_mShapeNumToEditableNum(pThis, pThis->mTileSet->pData[nIdx].nSprNum - SPRITE_MEDIUM_START);
+			if (nEdNum >= 0) {
+				if (pThis->mTileSet->pData[nIdx].sprHeader.wHeight > 1)
+					pThis->mTileSet->pData[nIdx].sprHeader.wHeight -= 1;
+			}
 		}
 		if ((nIdx % 100) == 0)
 			R_BOR_WRP_gUpdateWaitWindow();
@@ -714,10 +722,14 @@ extern "C" LONG __cdecl Hook_SCURK_EditableTileSet_mReadFromFile(cEditableTileSe
 			R_BOR_WRP_gFreeBlock(pThis->mTiles[nIdx]);
 		pThis->mTiles[nIdx] = (uint8_t *)R_BOR_WRP_gAllocBlock(pThis->mTileSizeTable[nIdx]);
 		fread(pThis->mTiles[nIdx], 1, pThis->mTileSizeTable[nIdx], f);
-		// Offset by 1 to avoid the default set from floating off the base.
 		if (pThis->mTileSet->pData[nIdx].nSprNum != SPRITE_LARGE_RESIDENTIAL_3X3_LARGEAPARTMENTS1) {
-			if (pThis->mTileSet->pData[nIdx].sprHeader.wHeight > 1)
-				pThis->mTileSet->pData[nIdx].sprHeader.wHeight -= 1;
+			nEdNum = R_SCURK_WRP_EditableTileSet_mShapeNumToEditableNum(pThis, pThis->mTileSet->pData[nIdx].nSprNum - SPRITE_LARGE_START);
+			// Let's only adjust the height offset for objects (to avoid them floating)
+			// within the EDNUM range (minus the RESIDENTIAL_3X3_LARGEAPARTMENTS1).
+			if (nEdNum >= 0) {
+				if (pThis->mTileSet->pData[nIdx].sprHeader.wHeight > 1)
+					pThis->mTileSet->pData[nIdx].sprHeader.wHeight -= 1;
+			}
 		}
 		pThis->mDBIndexFromShapeNum[pThis->mTileSet->pData[nIdx].nSprNum % SPRITE_COUNT] = nIdx;
 		pThis->mDBIndexFromShapeNum[(pThis->mTileSet->pData[nIdx].nSprNum - SPRITE_MEDIUM_START) % SPRITE_COUNT] = nIdx - SPRITE_MEDIUM_START;
