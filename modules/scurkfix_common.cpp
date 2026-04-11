@@ -1940,21 +1940,17 @@ extern "C" void __cdecl Hook_SCURK_MoverWindow_EvGetMinMaxInfo(winscurkMoverWind
 	pMmi->ptMaxTrackSize.y = y;
 }
 
-// TCommandEnabler functions
+// TMenuItemEnabler Functions
 
-extern "C" void __cdecl Hook_SCURK_CommandEnabler_Enable(TBC45XCommandEnabler *pThis) {
-	pThis->Handled = 1;
+extern "C" void __cdecl Hook_SCURK_MenuItemEnabler_Enable(TBC45XMenuItemEnabler *pThis, int nEnable) {
+	int nEnableOverride;
+	R_BOR_WRP_CommandEnabler_Enable(pThis);
 
-	// Added here to allow for the new menu
-	// items to be enabled.
-	winscurkApp *pSCApp = R_SCURK_WRP_winscurkApp_GetPointerToClass();
-	winscurkMDIClient *pclWnd = pSCApp->mdiClient;
-	if (pclWnd) {
-		EnableMenuItem(GetMenu(pclWnd->pWnd->Parent->HWindow), IDM_SCRK_EW_EDIT_MOVE_UP, MF_BYCOMMAND | MF_ENABLED);
-		EnableMenuItem(GetMenu(pclWnd->pWnd->Parent->HWindow), IDM_SCRK_EW_EDIT_MOVE_DOWN, MF_BYCOMMAND | MF_ENABLED);
-		EnableMenuItem(GetMenu(pclWnd->pWnd->Parent->HWindow), IDM_SCRK_EW_EDIT_MOVE_LEFT, MF_BYCOMMAND | MF_ENABLED);
-		EnableMenuItem(GetMenu(pclWnd->pWnd->Parent->HWindow), IDM_SCRK_EW_EDIT_MOVE_RIGHT, MF_BYCOMMAND | MF_ENABLED);
-	}
+	nEnableOverride = nEnable;
+	// These are the menu items we always want to enable.
+	if (pThis->Id >= IDM_SCRK_EW_EDIT_MOVE_UP && pThis->Id <= IDM_SCRK_EW_EDIT_MOVE_RIGHT)
+		nEnableOverride = 1;
+	EnableMenuItem(pThis->hMenu, pThis->Position, (nEnableOverride ? MF_ENABLED : MF_GRAYED) | MF_BYPOSITION);
 }
 
 // TDialog functions

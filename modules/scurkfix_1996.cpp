@@ -260,9 +260,9 @@ void InstallFixes_SCURK1996(void) {
 	memset((LPVOID)0x45A777, 0x90, 7);
 	NEWJMP((LPVOID)0x45A777, Hook_SCURK1996_OwlMainCommandLineFix);
 
-	// TCommandEnabler::Enable
-	VirtualProtect((LPVOID)0x469598, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	NEWJMP((LPVOID)0x469598, Hook_SCURK_CommandEnabler_Enable);
+	// TMenuItemEnabler::Enable
+	VirtualProtect((LPVOID)0x4738EA, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4738EA, Hook_SCURK_MenuItemEnabler_Enable);
 
 	// This hook is to prevent the Place&Pick selection dialogue
 	// from being unintentionally closed; it catches and ignores

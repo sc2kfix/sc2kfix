@@ -90,6 +90,7 @@ SCURKPRIMARY_GAMECALL_MAIN(0x459CB8, winscurkEditWindow *, __cdecl, winscurkApp_
 
 // BC and WinAPI
 SCURKPRIMARY_GAMECALL_MAIN(0x45F80F, void, __cdecl, BCDC_SelectObjectPalette, TBC45XDC *, TBC45XPalette *, int)
+SCURKPRIMARY_GAMECALL_MAIN(0x468E18, void, __cdecl, BCCommandEnabler_Enable, TBC45XCommandEnabler *)
 SCURKPRIMARY_GAMECALL_MAIN(0x4695CA, unsigned int, __cdecl, BCWindow_DefaultProcessing, TBC45XParWindow *)
 SCURKPRIMARY_GAMECALL_MAIN(0x46975C, LRESULT, __cdecl, BCWindow_EvCommand, TBC45XWindow *, DWORD, HWND, DWORD)
 SCURKPRIMARY_GAMECALL_MAIN(0x469C64, LRESULT, __cdecl, BCWindow_HandleMessage, TBC45XParWindow *, unsigned int msg, WPARAM wParam, LPARAM lParam)

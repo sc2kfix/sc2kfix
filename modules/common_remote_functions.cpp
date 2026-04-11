@@ -73,6 +73,15 @@ void R_BOR_WRP_DC_SelectObjectPalette(TBC45XDC *pThis, TBC45XPalette *pPal, int 
 	}
 }
 
+void R_BOR_WRP_CommandEnabler_Enable(TBC45XCommandEnabler *pThis) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			GameMain_BCCommandEnabler_Enable_SCURKPrimary(pThis);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			GameMain_BCCommandEnabler_Enable_SCURK1996(pThis);
+	}
+}
+
 LRESULT R_BOR_WRP_Window_EvCommand(TBC45XWindow *pThis, DWORD dwID, HWND hWndCtl, DWORD dwNotifyCode) {
 	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
 		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)

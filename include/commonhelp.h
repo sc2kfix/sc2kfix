@@ -44,6 +44,7 @@ class TBC45XMDIChild;
 class TBC45XMDIFrame;
 class TBC45XResId;
 class TBC45XCommandEnabler;
+class TBC45XMenuItemEnabler;
 class TBC45XApplication;
 
 // SCURK forward declarations.
@@ -212,6 +213,7 @@ void *__cdecl R_BOR_WRP_gResizeBlock(BYTE *pBlock, size_t nSz);
 void __cdecl R_BOR_WRP_gFreeBlock(void *pBlock);
 void __stdcall R_BOR_WRP_gUpdateWaitWindow();
 void R_BOR_WRP_DC_SelectObjectPalette(TBC45XDC *pThis, TBC45XPalette *pPal, int nVal);
+void R_BOR_WRP_CommandEnabler_Enable(TBC45XCommandEnabler *pThis);
 LRESULT R_BOR_WRP_Window_EvCommand(TBC45XWindow *pThis, DWORD dwID, HWND hWndCtl, DWORD dwNotifyCode);
 unsigned int R_BOR_WRP_Window_DefaultProcessing(TBC45XParWindow *pThis);
 LRESULT R_BOR_WRP_Window_HandleMessage(TBC45XParWindow *pThis, unsigned int msg, WPARAM wParam, LPARAM lParam);
@@ -304,7 +306,7 @@ extern "C" void __cdecl Hook_SCURK_PaintWindow_mEncodeShape(cPaintWindow *pThis,
 extern "C" int __cdecl Hook_SCURK_winscurkMDIFrame_AssignMenu(winscurkMDIFrame *pThis, TBC45XResId menuResID);
 TBC45XWindow *L_SCURK_MoverWindow_DisableMaximizeBox(TBC45XWindow *pThis);
 extern "C" void __cdecl Hook_SCURK_MoverWindow_EvGetMinMaxInfo(winscurkMoverWindow *pThis, MINMAXINFO *pMmi);
-extern "C" void __cdecl Hook_SCURK_CommandEnabler_Enable(TBC45XCommandEnabler *pThis);
+extern "C" void __cdecl Hook_SCURK_MenuItemEnabler_Enable(TBC45XMenuItemEnabler *pThis, int nEnable);
 extern "C" void __cdecl Hook_SCURK_BCDialog_CmCancel(TBC45XDialog *pThis);
 extern "C" LRESULT __cdecl Hook_SCURK_FrameWindow_EvCommand(TBC45XFrameWindow *pThis, DWORD id, HWND hWndCtl, DWORD notifyCode);
 
