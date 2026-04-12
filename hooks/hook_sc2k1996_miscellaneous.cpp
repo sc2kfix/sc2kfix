@@ -429,13 +429,29 @@ extern "C" void __stdcall Hook_CmdUI_Enable(BOOL bOn) {
 	HWND hNextDlgTabItem;
 	CMFC3XWnd *pNextDlgTabItem;
 	HWND hWndFocus;
+	BOOL bOnOverride;
 
 	if (pThis->m_pMenu != NULL) {
 		if (pThis->m_pSubMenu != NULL)
 			return;
 
+		// Added this here to account for the items we've added.
+		// We can override them accordingly here.
+		bOnOverride = bOn;
+		if (pThis->m_nID == IDM_GAME_WINDOWS_SCENARIOGOALS)
+			bOnOverride = (bInScenario) ? TRUE : FALSE;
+		else if ((pThis->m_nID >= IDM_DEBUG_MILITARY_DECLINED && pThis->m_nID <= IDM_DEBUG_MILITARY_MISSILESILOS) ||
+			(pThis->m_nID >= IDM_DEBUG_THING_CLEAN_PLANES && pThis->m_nID <= IDM_DEBUG_THING_CLEAN_MLDEPLOY))
+			bOnOverride = (wCityMode > GAME_MODE_TERRAIN_EDIT) ? TRUE : FALSE;
+		else if (pThis->m_nID == IDM_GAME_OPTIONS_SC2KFIXSETTINGS ||
+			pThis->m_nID == IDM_GAME_OPTIONS_MODCONFIG ||
+			pThis->m_nID == IDM_GAME_FILE_RELOADDEFAULTTILESET ||
+			pThis->m_nID == IDM_MAIN_FILE_OPENMAINDIALOG ||
+			pThis->m_nID == IDM_DEBUG_SPRITE_DISPLAY)
+			bOnOverride = TRUE;
+		
 		EnableMenuItem(pThis->m_pMenu->m_hMenu, pThis->m_nIndex, MF_BYPOSITION |
-			(bOn ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
+			(bOnOverride ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
 	}
 	else {
 		if (!bOn && (GetFocus() == pThis->m_pOther->m_hWnd)) {
@@ -449,48 +465,6 @@ extern "C" void __stdcall Hook_CmdUI_Enable(BOOL bOn) {
 		EnableWindow(pThis->m_pOther->m_hWnd, bOn);
 	}
 	pThis->m_bEnableChanged = TRUE;
-
-	// This section has been added to account for menu items that aren't handled
-	// natively (yet).
-
-	// Ensure that the "Open Main Dialog" item is always enabled.
-	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_MAIN_FILE_OPENMAINDIALOG, MF_BYCOMMAND | MF_ENABLED);
-
-	// Ensure that the new 'Reload Default Tile Set' item is always enabled.
-	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_GAME_FILE_RELOADDEFAULTTILESET, MF_BYCOMMAND | MF_ENABLED);
-
-	// Ensure the main config menu options are always enabled
-	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_GAME_OPTIONS_SC2KFIXSETTINGS, MF_BYCOMMAND | MF_ENABLED);
-	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_GAME_OPTIONS_MODCONFIG, MF_BYCOMMAND | MF_ENABLED);
-
-	// Only enable the Scenario Goals option if we need it
-	if (bInScenario)
-		EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_GAME_WINDOWS_SCENARIOGOALS, MF_BYCOMMAND | MF_ENABLED);
-	else
-		EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_GAME_WINDOWS_SCENARIOGOALS, MF_BYCOMMAND | MF_GRAYED);
-
-	// Ensure that the debug military options are always enabled.
-	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_DECLINED, MF_BYCOMMAND | MF_ENABLED);
-	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_AIRFORCE, MF_BYCOMMAND | MF_ENABLED);
-	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_ARMYBASE, MF_BYCOMMAND | MF_ENABLED);
-	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_NAVALYARD, MF_BYCOMMAND | MF_ENABLED);
-	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_MILITARY_MISSILESILOS, MF_BYCOMMAND | MF_ENABLED);
-
-	// Ensure that the debug "Browse Sprites" option is always enabled.
-	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_SPRITE_DISPLAY, MF_BYCOMMAND | MF_ENABLED);
-
-	// Ensure that the debug thing options are always enabled.
-	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_THING_CLEAN_PLANES, MF_BYCOMMAND | MF_ENABLED);
-	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_THING_CLEAN_COPTERS, MF_BYCOMMAND | MF_ENABLED);
-	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_THING_CLEAN_SHIPS, MF_BYCOMMAND | MF_ENABLED);
-	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_THING_CLEAN_SAILBOATS, MF_BYCOMMAND | MF_ENABLED);
-	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_THING_CLEAN_TRAINS, MF_BYCOMMAND | MF_ENABLED);
-	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_THING_CLEAN_HERO, MF_BYCOMMAND | MF_ENABLED);
-	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_THING_CLEAN_MONSTER, MF_BYCOMMAND | MF_ENABLED);
-	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_THING_CLEAN_TORNADO, MF_BYCOMMAND | MF_ENABLED);
-	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_THING_CLEAN_PLDEPLOY, MF_BYCOMMAND | MF_ENABLED);
-	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_THING_CLEAN_FRDEPLOY, MF_BYCOMMAND | MF_ENABLED);
-	EnableMenuItem(GetMenu(GameGetRootWindowHandle()), IDM_DEBUG_THING_CLEAN_MLDEPLOY, MF_BYCOMMAND | MF_ENABLED);
 }
 
 static void OpenMainDialog_SC2K1996() {

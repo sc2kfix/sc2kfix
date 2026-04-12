@@ -133,7 +133,7 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
 		uFailMsg = 48;
 		nFlen = GameMain_File_GetLength(&datArchive);
 		GameMain_File_Read(&datArchive, &nSpriteCnt, 2);
-		nSpriteCnt = Game_FlipShortBytes(nSpriteCnt);
+		nSpriteCnt = _byteswap_ushort(nSpriteCnt);
 		lpMainBuf = &dwBaseSpriteLoading[nSpriteSet];
 		nBufSize = 10 * nSpriteCnt;
 		lpBuf = (sprite_archive_t *)malloc(nBufSize + 2);
@@ -143,16 +143,16 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
 			if (GameMain_File_Read(&datArchive, &lpBuf->pData, nBufSize) == nBufSize) {
 				uFailMsg = 0;
 				for (nPos = 0; nPos < nSpriteCnt; ++nPos) {
-					nID = Game_FlipShortBytes(lpBuf->pData[nPos].nSprNum);
+					nID = _byteswap_ushort(lpBuf->pData[nPos].nSprNum);
 					lpBuf->pData[nPos].nSprNum = nID;
 
 					pSprtHead = &lpBuf->pData[nPos].sprHeader;
-					pSprtHead->sprOffset.sprLong = Game_FlipLongBytePortions(pSprtHead->sprOffset.sprLong);
+					pSprtHead->sprOffset.sprLong = _byteswap_ulong(pSprtHead->sprOffset.sprLong);
 
 					pArrSpriteHeaders[nID] = *pSprtHead;
 					pArrSpriteHeaders[nID].sprOffset.sprPtr = 0;
-					pArrSpriteHeaders[nID].wHeight = Game_FlipShortBytes(pArrSpriteHeaders[nID].wHeight);
-					pArrSpriteHeaders[nID].wWidth = Game_FlipShortBytes(pArrSpriteHeaders[nID].wWidth);
+					pArrSpriteHeaders[nID].wHeight = _byteswap_ushort(pArrSpriteHeaders[nID].wHeight);
+					pArrSpriteHeaders[nID].wWidth = _byteswap_ushort(pArrSpriteHeaders[nID].wWidth);
 
 					nNextPos = (nPos >= nSpriteCnt - 1) ? -1 : nPos + 1;
 					nNextID = (nNextPos >=0) ? nID : -1;
@@ -160,7 +160,7 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
 					if (nNextPos >= 0) {
 						// The next position hasn't yet been processed, do so here so
 						// we can get the file size.
-						sprNextOffset = Game_FlipLongBytePortions(lpBuf->pData[nNextPos].sprHeader.sprOffset.sprLong);
+						sprNextOffset = _byteswap_ulong(lpBuf->pData[nNextPos].sprHeader.sprOffset.sprLong);
 						nSize = (sprNextOffset - pSprtHead->sprOffset.sprLong);
 					}
 					else
@@ -248,7 +248,7 @@ static void ReloadSpriteDataArchive1996(WORD nSpriteSet) {
 		uFailMsg = 48;
 		nFlen = GameMain_File_GetLength(&datArchive);
 		GameMain_File_Read(&datArchive, &nSpriteCnt, 2);
-		nSpriteCnt = Game_FlipShortBytes(nSpriteCnt);
+		nSpriteCnt = _byteswap_ushort(nSpriteCnt);
 		lpMainBuf = &dwBaseSpriteLoading[nSpriteSet];
 		nBufSize = 10 * nSpriteCnt;
 		lpBuf = (sprite_archive_t *)malloc(nBufSize + 2);
@@ -258,12 +258,12 @@ static void ReloadSpriteDataArchive1996(WORD nSpriteSet) {
 			if (GameMain_File_Read(&datArchive, &lpBuf->pData, nBufSize) == nBufSize) {
 				uFailMsg = 0;
 				for (nPos = 0; nPos < nSpriteCnt; ++nPos) {
-					nID = Game_FlipShortBytes(lpBuf->pData[nPos].nSprNum);
+					nID = _byteswap_ushort(lpBuf->pData[nPos].nSprNum);
 					lpBuf->pData[nPos].nSprNum = nID;
 					pSprtHead = &lpBuf->pData[nPos].sprHeader;
-					pSprtHead->sprOffset.sprLong = Game_FlipLongBytePortions(pSprtHead->sprOffset.sprLong);
-					pSprtHead->wHeight = Game_FlipShortBytes(pSprtHead->wHeight);
-					pSprtHead->wWidth = Game_FlipShortBytes(pSprtHead->wWidth);
+					pSprtHead->sprOffset.sprLong = _byteswap_ulong(pSprtHead->sprOffset.sprLong);
+					pSprtHead->wHeight = _byteswap_ushort(pSprtHead->wHeight);
+					pSprtHead->wWidth = _byteswap_ushort(pSprtHead->wWidth);
 				}
 
 				AllocateAndLoadSprites1996(&datArchive, lpBuf, nSpriteSet);
@@ -324,33 +324,33 @@ static void L_LoadFixedLargeSpritesRsrc_SC2K1996() {
 				pTileHeader = (tilesetMainHeader_t *)pTileDat;
 				if (memcmp(pTileHeader->szTypeHead, "MIFF", 4) == 0 &&
 					memcmp(pTileHeader->szSC2KHead, "SC2K", 4) == 0) {
-					dwSize = L_FlipLongBytePortions(pTileHeader->dwSize);
+					dwSize = _byteswap_ulong(pTileHeader->dwSize);
 					dwOffset += sizeof(tilesetMainHeader_t);
 					pTileInfo = (tilesetHeadInfo_t *)(pTileDat + dwOffset);
 					if (pTileInfo && memcmp(pTileInfo->szHead, "INFO", 4) == 0) {
-						dwSize = L_FlipLongBytePortions(pTileInfo->dwSize);
+						dwSize = _byteswap_ulong(pTileInfo->dwSize);
 						dwOffset += sizeof(tilesetHeadInfo_t) + dwSize;
 						pTileTiles = (tilesetHeadInfo_t *)(pTileDat + dwOffset);
 						if (pTileTiles && memcmp(pTileTiles->szHead, "TILE", 4) == 0) {
-							dwSize = L_FlipLongBytePortions(pTileTiles->dwSize);
+							dwSize = _byteswap_ulong(pTileTiles->dwSize);
 							dwOffset += sizeof(tilesetHeadInfo_t);
 							pTileMem = (tilesetMem_t *)(pTileDat + dwOffset);
 							if (pTileMem) {
-								pTileMem->nMaxChunks = L_FlipShortBytes(pTileMem->nMaxChunks);
+								pTileMem->nMaxChunks = _byteswap_ushort(pTileMem->nMaxChunks);
 								pTileContents = &pTileMem->tileMem;
 								if (pTileContents) {
 									for (nChunk = 0; pTileMem->nMaxChunks > nChunk; ++nChunk) {
 										memcpy(szHead, pTileContents->szHead, 4);
-										dwSize = L_FlipLongBytePortions(pTileContents->dwSize);
+										dwSize = _byteswap_ulong(pTileContents->dwSize);
 										pBuf = &pTileContents->pBuf;
 
 										bGotShap = bGotName = bResize = FALSE;
 										if (memcmp(szHead, "SHAP", 4) == 0) {
 											pTileShap = (tileShap_t *)pBuf;
-											nSpriteID = L_FlipShortBytes(pTileShap->nSpriteID);
-											nWidth = L_FlipShortBytes(pTileShap->nWidth);
-											nHeight = L_FlipShortBytes(pTileShap->nHeight);
-											dwSize_Shap = L_FlipLongBytePortions(pTileShap->dwSize);
+											nSpriteID = _byteswap_ushort(pTileShap->nSpriteID);
+											nWidth = _byteswap_ushort(pTileShap->nWidth);
+											nHeight = _byteswap_ushort(pTileShap->nHeight);
+											dwSize_Shap = _byteswap_ulong(pTileShap->dwSize);
 											// In this case we ONLY want to load the large sprites.
 											if (nSpriteID < SPRITE_LARGE_START)
 												bGotShap = TRUE;
@@ -365,8 +365,8 @@ static void L_LoadFixedLargeSpritesRsrc_SC2K1996() {
 										}
 										else if (memcmp(szHead, "NAME", 4) == 0) {
 											pTileName = (tileName_t *)pBuf;
-											nTileNameID = L_FlipShortBytes(pTileName->nTileNameID);
-											nNameLength = L_FlipShortBytes(pTileName->nNameLength);
+											nTileNameID = _byteswap_ushort(pTileName->nTileNameID);
+											nNameLength = _byteswap_ushort(pTileName->nNameLength);
 											// Although we process the above we leave the
 											// names alone here.
 											bGotName = TRUE;

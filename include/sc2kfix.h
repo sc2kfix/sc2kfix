@@ -7,6 +7,7 @@
 
 #include <windows.h>
 #include <windowsx.h>
+#include <time.h>
 #include <string>
 #include <list>
 #include <map>
@@ -435,7 +436,9 @@ BOOL DoConfigureKeyBindings(settings_t *st, HWND hwndDlg);
 
 BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc);
 
+// Yes...
 FILE *old_fopen(const char *fname, const char *mode);
+char *old_strcpy(char *pDest, const char *pSource);
 
 void *__cdecl L_ReallocateDataEntry(char *pDest, char *pSrc);
 
@@ -478,6 +481,7 @@ extern HANDLE hConsoleThread;
 extern HMENU hMainMenu;
 extern HMENU hGameMenu;
 extern HMENU hDebugMenu;
+extern HMENU hSCURKEWMenu;
 extern FARPROC fpWinMMHookList[180];
 extern DWORD dwDetectedVersion;
 extern DWORD dwSC2KFixMode;

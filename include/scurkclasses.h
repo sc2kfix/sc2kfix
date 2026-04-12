@@ -10,8 +10,60 @@
 *              ensure alignment.
 */
 
+#define MISCHOOK_SCURK_DEBUG_INTERNAL 1
+#define MISCHOOK_SCURK_DEBUG_PICKANDPLACE 2
+#define MISCHOOK_SCURK_DEBUG_PLACEANDCOPY 4
+#define MISCHOOK_SCURK_DEBUG_MENU 8
+#define MISCHOOK_SCURK_DEBUG_ONCMD 16
+#define MISCHOOK_SCURK_DEBUG_CREATEBAK 32
+
+#define MISCHOOK_SCURK_DEBUG DEBUG_FLAGS_NONE
+
+#ifdef DEBUGALL
+#undef MISCHOOK_SCURK_DEBUG
+#define MISCHOOK_SCURK_DEBUG DEBUG_FLAGS_EVERYTHING
+#endif
+
+extern UINT mischook_scurk_debug;
+
+// If set to 0 it'll use the original
+// method of shrinking the large shape
+// to their small and tiny equivalents.
+// While set to 1 it'll do a "more"
+// comprehensive conversion (for now this
+// is within the bounds of the EDNUM range).
+#define COMPREHENSIVE_DOS_LOAD 1
+
+#define MAX_EDNUM 184
+#define MAX_WORKING_SHAPS (MAX_EDNUM * 3) // Large, Small and Tiny
+/*
+ Calculation demystification:
+                              (ChunkCount (WORD) + (
+                                                    (tilesetheaderinfo (label (char[4]) + entrysize (DWORD)) + 
+                                                     tilesetShapHeader (shapID (WORD) + Width (WORD) + Height (WORD) + entrysize (DWORD))
+                                                   ) * MAX_WORKING_SHAPS))
+ */
+ #define DEF_TILE_LOC (sizeof(WORD) + ((sizeof(tilesetHeadInfo_t) + sizeof(tilesetShapHeader_t)) * MAX_WORKING_SHAPS))
+
+#define SINGLE_TILE_WIDTH 32
+
+#define TILE_BASE_INVALID 0
+#define TILE_BASE_4x4 1
+#define TILE_BASE_3x3 2
+#define TILE_BASE_2x2 3
+#define TILE_BASE_1x1 4
+
+enum {
+	SHUNT_NONE,
+	SHUNT_UP,
+	SHUNT_DOWN,
+	SHUNT_LEFT,
+	SHUNT_RIGHT
+};
+
 #pragma pack(push, 1)
 class CWinGBitmap {
+public:
 	HBITMAP GRBitmap;
 	HBITMAP GRBitmapLoColor;
 	int GRlastPalUpdate;
@@ -27,9 +79,9 @@ class CWinGBitmap {
 
 class cEditableTileSet {
 public:
-	uint8_t *mTiles[1510];
-	char *mTileNames[184];
-	int32_t *mTileIsRenamed[184];
+	uint8_t *mTiles[SPRITE_COUNT + 10];
+	char *mTileNames[MAX_EDNUM];
+	int32_t mTileIsRenamed[MAX_EDNUM];
 	sprite_archive_t *mTileSet;
 	char *mFileName;
 	int32_t *mDBIndexFromShapeNum;
@@ -41,7 +93,7 @@ public:
 
 class TEncodeDib : public TBC45XDib {
 public:
-	uint8_t *mShapeBuf;
+	BYTE *mShapeBuf;
 	DWORD mLength;
 	int32_t mHeight;
 };
@@ -55,7 +107,7 @@ public:
 class cShowTileWindow : public TBC45XParWindow {
 public:
 	TBC45XRect *mRect[150];
-	DWORD dwSelectedTiles[184];
+	DWORD dwSelectedTiles[MAX_EDNUM];
 	DWORD *dwPointerOne;
 	DWORD *dwPointerTwo;
 	TBC45XDib *mDibs[150];
@@ -139,43 +191,46 @@ class cPaintWindow : public TBC45XParWindow {
 public:
 	DWORD dwUndoBufferPreserved;
 	TBC45XDib *pDibMask;
-	char *pEncodeDibBits;
+	BYTE *pEncodeDibBits;
 	BYTE *pGraphicBits;
-	char *pDibBitsThree;
-	DWORD dwTempTwo;
+	BYTE *pDibBitsEmpty;
+	BYTE *pBits;
 	int nPenSizeHalf;
-	char *pDibBitsOne;
-	char *pDibBitsTwo;
+	BYTE *pDibBitsSmallCircle;
+	BYTE *pDibBitsBigCircle;
 	TBC45XRect shapeRect;
 	TBC45XClientDC *pClientDC;
 	TBC45XBitmap *pBitmap;
-	int nHorzScrollPos;
 	int nVertScrollPos;
+	int nHorzScrollPos;
 	DWORD dwLButtonDown;
 	DWORD dwPaintTool;
 	int nPenSize;
-	DWORD dwZoomLevel;
+	int iZoomLevel;
 	int nMaxVertScrollPos;
 	int nMaxHorzScrollPos;
 	int nHeight;
-	DWORD dwTempSeven[3];
-	char *pSomeBuffer;
-	char *pUndoBitsBuffer;
+	int bSnapToGrid;
+	int bInValidDrawingArea;
+	DWORD dwTempSeven;
+	BYTE *pSomeBuffer;
+	BYTE *pUndoBitsBuffer;
 	winscurkEditWindow *pScurkEditParent;
 	TBC45XPoint areaPointGridOne;
 	TBC45XPoint areaPointGridTwo;
-	DWORD dwTempEight[2];
+	TBC45XPoint gridCoords;
 	TBC45XPoint areaPointMouse;
-	TEncodeDib *pEncodeDibBuffer;
+	TBC45XDib *pDibBuffer;
 	DWORD dwTempNine;
-	TBC45XDib *pDibOne;
-	TBC45XDib *pDibTwo;
-	TBC45XDib *pDibThree;
+	TBC45XDib *pDibSmallCircle;
+	TBC45XDib *pDibBigCircle;
+	TBC45XDib *pDibEmptyTile;
 	CWinGBitmap *pGraphic;
 	DWORD dwTempTen;
-	DWORD dwShowClipGrid;
-	DWORD dwTempEleven[2];
-	DWORD dwShowDrawGrid;
+	int bShowClipGrid;
+	DWORD dwTouching;
+	DWORD dwTempEleven;
+	int bShowDrawGrid;
 	TEncodeDib *pEncodeDib;
 	TBC45XDerivedWindowFoot __clFoot;
 };
@@ -197,13 +252,13 @@ public:
 
 class cPatternWindow : public TBC45XParWindow {
 public:
-	TBC45XDib *pDibOne;
+	TBC45XDib *pDibOne[39];
 	TBC45XDib *pDibTwo;
 	TBC45XDib *pDibThree;
-	TBC45XDib *mDibs[39];
 	TBC45XDib *pDibFour;
 	TBC45XDib *pDibFive;
 	TBC45XDib *pDibSix;
+	DWORD dwOne;
 	DWORD dwPatternButPosition;
 	winscurkEditWindow *pScurkEditParent;
 	TBC45XDerivedWindowFoot __clFoot;
@@ -211,16 +266,20 @@ public:
 
 class winscurkEditWindow : public winscurkParMDIChild {
 public:
-	DWORD dwSomething;
+	int nEdNum;
 	cPaintWindow *pPaintWindow;
 	cPaletteWindow *pPaletteWindow;
 	cPatternWindow *pPatternWindow;
 	winscurkMDIClient *pScurkMDIParent;
-	DWORD dwTempTwo[5];
+	DWORD dwTempTwo[2];
+	char *pCharBuf;
+	int nSelectedBrush;
+	BYTE *pSelectedDibBits;
 	TBC45XDib *pDibOne;
 	cScurkToolBox *pScurkToolBoxOne;
 	cScurkToolBox *pScurkToolBoxTwo;
-	DWORD dwTempThree[10];
+	TBC45XRect *pDibDimensions[8];
+	DWORD dwTempThree[2];
 	DWORD *dwPtrOne[8];
 	DWORD dwTempFour[2];
 	TBC45XDib *pDibTwo;
@@ -230,10 +289,16 @@ public:
 	TBC45XPopupMenu *pMenuThree;
 	TBC45XPopupMenu *pMenuFour;
 	TBC45XPopupMenu *pMenuFive;
-	DWORD dwTempSix[7];
+	int nItemOne;
+	int nItemTwo;
+	int nItemThree;
+	int nItemFour;
+	int nItemFive;
+	int nSelectedRow;
+	int nSelectedTool;
 	TBC45XToolBox *pToolBoxOne;
 	TBC45XDib *pDibThree;
-	DWORD dwTempSeven;
+	DWORD dwTempSix;
 	TBC45XDerivedFrameWindowFoot __frameWndFoot;
 };
 
