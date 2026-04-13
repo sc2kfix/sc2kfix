@@ -2895,7 +2895,6 @@ GAMECALL(0x4013B1, void, __thiscall, SimcityView_ScaleOut, CSimcityView *pThis)
 GAMECALL(0x4013E3, BOOL, __cdecl, ChangeTileSpriteEntry, int, WORD, WORD, DWORD, void *)
 GAMECALL(0x4013F7, CMFC3XPalette *, __thiscall, SimcityApp_GetActivePalette, CSimcityAppPrimary *)
 GAMECALL(0x40140B, void, __thiscall, SimcityView_ScaleIn, CSimcityView *pThis)
-GAMECALL(0x401429, int, __cdecl, FlipLongBytePortions, int)
 GAMECALL(0x40142E, void, __stdcall, UpdateIndustryDialog, void)
 GAMECALL(0x40144C, void, __thiscall, SimcityApp_NewCity, CSimcityAppPrimary *)
 GAMECALL(0x401460, BYTE, __cdecl, SimulationProvisionMicrosim, __int16, __int16, __int16 iTileID) // The first two arguments aren't clear, though they "could" be the X/Y tile coordinates.
@@ -2926,7 +2925,6 @@ GAMECALL(0x40178F, __int16, __cdecl, PlaceTileWithMilitaryCheck, __int16 x, __in
 GAMECALL(0x4017B2, void, __thiscall, SimcityDoc_UpdateDocumentTitle, CSimcityDoc* pThis)
 GAMECALL(0x401820, void, __thiscall, Engine_SimulationProcessTick, CEngine *)
 GAMECALL(0x401857, int, __cdecl, MapToolPlaceTree, __int16 iTileTargetX, __int16 iTileTargetY)
-GAMECALL(0x401861, __int16, __cdecl, FlipShortBytes, __int16)
 GAMECALL(0x40191F, void, __cdecl, DoFund, __int16)
 GAMECALL(0x401951, void, __thiscall, Graphics_DeleteObject, CGraphics *)
 GAMECALL(0x40198D, int, __cdecl, MapToolPlaceStream, __int16 iTileTargetX, __int16 iTileTargetY, __int16) // XXX - the last parameter isn't entirely clear, perhaps area or offset?
@@ -3663,10 +3661,6 @@ static inline HWND GameGetRootWindowHandle(void) {
 // XXX: should we be using something like htnol here?
 static inline DWORD SwapDWORD(DWORD dwData) {
 	return _byteswap_ulong(dwData);
-}
-
-static inline BOOL IsEven(__int16 iAxis) {
-	return (iAxis % 2) == 0 ? TRUE : FALSE;
 }
 
 //HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...);

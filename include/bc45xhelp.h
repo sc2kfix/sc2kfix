@@ -238,14 +238,11 @@ public:
 
 	};
 
-protected:    
 	char  *Name;
 	HINSTANCE HInstance;
 
-private:    
 	BOOL      ShouldFree;
 
-public:
 	char *lpCmdLine;
 	TBC45XStatus   Status;
 };
@@ -277,6 +274,8 @@ struct TBC45XCurrentEvent {
 
 class TBC45XCommandEnabler {
 public:
+	DWORD *__vftable;
+
 	const unsigned int  Id;
 
 	const HWND  HWndReceiver;
@@ -284,6 +283,12 @@ public:
 	enum {WasHandled = 1, NonSender = 2};
 
 	unsigned int        Handled;
+};
+
+class TBC45XMenuItemEnabler : public TBC45XCommandEnabler {
+public:
+	HMENU hMenu;
+	int Position;
 };
 
 class TBC45XResId {
@@ -629,7 +634,16 @@ public:
 	TBC45XDerivedFrameWindowFoot __frameWndFoot;
 };
 
-class TBC45XParDecoratedMDIFrame : public TBC45XDerivedFrameWindowHead {
+class TBC45XParMDIFrame : public TBC45XDerivedFrameWindowHead {
+
+};
+
+class TBC45XMDIFrame : public TBC45XParMDIFrame {
+public:
+	TBC45XDerivedFrameWindowFoot __frameWndFoot;
+};
+
+class TBC45XParDecoratedMDIFrame : public TBC45XParMDIFrame {
 	TBC45XParDecoratedFrame newDecorFrame;
 };
 
