@@ -2193,18 +2193,6 @@ void InstallTileGrowthOrPlacementHandlingHooks_SC2K1996(void) {
 	VirtualProtect((LPVOID)0x401005, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x401005, Hook_CityToolPlaceSelectedBuilding);
 
-	// StupidFuckingTripGeneratorStartHook
-	// VirtualProtect((LPVOID)0x457626, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	// NEWJMP((LPVOID)0x457626, StupidFuckingTripGeneratorStartHook);
-
-	// StupidFuckingTripGeneratorEndHook
-	// VirtualProtect((LPVOID)0x458347, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	// NEWJMP((LPVOID)0x458347, StupidFuckingTripGeneratorEndHook);
-	
-	// StupidFuckingTripGeneratorClobberHook
-	// VirtualProtect((LPVOID)0x45811B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-	// NEWJMP((LPVOID)0x45811B, StupidFuckingTripGeneratorClobberHook);
-
 	// Military base hooks
 	InstallMilitaryHooks_SC2K1996();
 }
