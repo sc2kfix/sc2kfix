@@ -1,5 +1,5 @@
 // sc2kfix include/sc2k_1996.h: defines specific to the 1996 Special Edition version
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 // !!! HIC SUNT DRACONES !!!
 // This is basically a live interface to a bunch of the reverse engineering I've done. Some of it
@@ -2119,6 +2119,24 @@ HOOKEXT const char* szOnIdleInitialDialogEnums[ONIDLE_INITIALDIALOG_MAX];
 	(iTileID == TILE_MILITARY_F15B) || (iTileID == TILE_MILITARY_HANGAR1) || (iTileID == TILE_INFRASTRUCTURE_HANGAR2) || \
 	(iTileID == TILE_MILITARY_MISSILESILO))
 
+// TODO: enumify
+#define TILE_IS_ROAD(iTileID) \
+	(iTileID >= 0x1Du && iTileID < 0x2Cu || \
+	iTileID >= 0x3Fu && iTileID < 0x47u || \
+	iTileID == 75 || iTileID == 76 || \
+	iTileID >= 0x5Du && iTileID < 0x61u)
+
+#define TILE_IS_ROAD_WITH_SIDEWALKS(iTileID) \
+	(iTileID >= 0x1Du && iTileID < 0x2Cu || \
+	iTileID >= 0x3Fu && iTileID < 0x47u || \
+	iTileID == 75 || iTileID == 76)
+
+#define TILE_IS_RAIL(iTileID) \
+	(iTileID >= 0x2Cu && iTileID < 0x3Fu || \
+	iTileID >= 0x45u && iTileID < 0x49u || \
+	iTileID >= 0x6Cu && iTileID < 0x70u || \
+	iTileID == 77 || iTileID == 78)
+
 // XTER map
 //
 // Terrain tiles only need to consider the surface display (terrain tile id)
@@ -2716,6 +2734,61 @@ enum {
 	EDIT_DATA_WATERED,
 	EDIT_DATA_RATEOFGROWTH2,
 };
+
+enum {
+	TRANSIT_TYPE_NONE = -1,
+	TRANSIT_TYPE_ROAD,
+	TRANSIT_TYPE_HIGHWAY,
+	TRANSIT_TYPE_TUNNEL,
+	TRANSIT_TYPE_ROADBRIDGE,
+	TRANSIT_TYPE_PEDESTRIAN,
+	TRANSIT_TYPE_PEDESTRIAN_UNDERPASS,
+	TRANSIT_TYPE_PEDESTRIAN_TUNNEL,
+	TRANSIT_TYPE_PEDESTRIAN_UNDERPASS2,
+	TRANSIT_TYPE_BUS,
+	TRANSIT_TYPE_SUBWAY_EXIT,
+	TRANSIT_TYPE_RAIL_ENTER,
+	TRANSIT_TYPE_SUBWAY_ENTER,
+	TRANSIT_TYPE_RAIL,
+	TRANSIT_TYPE_SUBWAY,
+};
+
+static inline const char* GetTransitTypeName(int iType) {
+	switch (iType) {
+	case TRANSIT_TYPE_NONE:
+		return "TRANSIT_TYPE_NONE";
+	case TRANSIT_TYPE_ROAD:
+		return "TRANSIT_TYPE_ROAD";
+	case TRANSIT_TYPE_HIGHWAY:
+		return "TRANSIT_TYPE_HIGHWAY";
+	case TRANSIT_TYPE_TUNNEL:
+		return "TRANSIT_TYPE_TUNNEL";
+	case TRANSIT_TYPE_ROADBRIDGE:
+		return "TRANSIT_TYPE_ROADBRIDGE";
+	case TRANSIT_TYPE_PEDESTRIAN:
+		return "TRANSIT_TYPE_PEDESTRIAN";
+	case TRANSIT_TYPE_PEDESTRIAN_UNDERPASS:
+		return "TRANSIT_TYPE_PEDESTRIAN_UNDERPASS";
+	case TRANSIT_TYPE_PEDESTRIAN_TUNNEL:
+		return "TRANSIT_TYPE_PEDESTRIAN_TUNNEL";
+	case TRANSIT_TYPE_PEDESTRIAN_UNDERPASS2:
+		return "TRANSIT_TYPE_PEDESTRIAN_UNDERPASS2";
+	case TRANSIT_TYPE_BUS:
+		return "TRANSIT_TYPE_BUS";
+	case TRANSIT_TYPE_SUBWAY_EXIT:
+		return "TRANSIT_TYPE_SUBWAY_EXIT";
+	case TRANSIT_TYPE_RAIL_ENTER:
+		return "TRANSIT_TYPE_RAIL_ENTER";
+	case TRANSIT_TYPE_SUBWAY_ENTER:
+		return "TRANSIT_TYPE_SUBWAY_ENTER";
+	case TRANSIT_TYPE_RAIL:
+		return "TRANSIT_TYPE_RAIL";
+	case TRANSIT_TYPE_SUBWAY:
+		return "TRANSIT_TYPE_SUBWAY";
+	default:
+		return "INVALID";
+	}
+}
 
 
 // Structs

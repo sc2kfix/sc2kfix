@@ -1,6 +1,5 @@
-// sc2kfix hooks/hook_tilegrowthorplacement.cpp: tile item placement and/or
-//                                               growth handling.
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// sc2kfix hooks/hook_tilegrowthorplacement.cpp: tile placement and growth handling
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
 #include <windows.h>
@@ -10,6 +9,7 @@
 #include <list>
 #include <map>
 #include <string>
+#include <stack>
 
 #include <sc2kfix.h>
 #include "../resource.h"
@@ -48,10 +48,24 @@
 #define AREA_4x4_MAX_EDGE MAP_EDGE_MAX - 3
 #endif
 
-#define TILEBUILD_DEBUG_OTHER 1
-#define TILEBUILD_DEBUG_SPRITES 2
-#define TILEBUILD_DEBUG_TILESETS 4
-#define TILEBUILD_DEBUG_BUILDING 8
+// Internal defines to turn bits of the reimplemented trip generator on and off.
+
+#define USE_NEW_TRIP_GENERATOR		1		// use the recompiled trip generator
+#define USE_NEW_STARTINGCOORDS		1		// use our own starting coords code
+#define USE_NATIVE_STACKS			1		// use std::stack instead of SC2K's shared point stack
+
+#define SHUFFLE_TRIP_GENERATOR		0		// shuffles dwTripStartingCoords for added randomness
+
+// Debug flags
+// TILEBUILD_DEBUG_TRIP_* are meant to turn on deeper levels of trip generator output when
+// debugging the reimplementation and extensions. Be very careful turning them on.
+
+#define TILEBUILD_DEBUG_OTHER		1
+#define TILEBUILD_DEBUG_SPRITES		2
+#define TILEBUILD_DEBUG_TILESETS	4
+#define TILEBUILD_DEBUG_BUILDING	8
+#define TILEBUILD_DEBUG_TRIP_DUMP	16		// dumps trip start/end info to console + log
+#define TILEBUILD_DEBUG_TRIP_LOG	32		// I AM DEATH INCARNATE
 
 #define TILEBUILD_DEBUG DEBUG_FLAGS_NONE
 
@@ -63,6 +77,656 @@
 UINT tilebuild_debug = TILEBUILD_DEBUG;
 
 static DWORD dwDummy;
+
+#if USE_NEW_STARTINGCOORDS
+CPoint dwTripStartingCoords[24] = {
+	{ 0, 1 },
+	{ 1, 0 },
+	{ 0, -1 },
+	{ -1, 0 },
+	{ 0, 2 },
+	{ 2, 0 },
+	{ 0, -2 },
+	{ -2, 0 },
+	{ 0, 3 },
+	{ 3, 0 },
+	{ 0, -3 },
+	{ -3, 0 },
+	{ 1, 1 },
+	{ -1, 1 },
+	{ 1, -1 },
+	{ -1, -1 },
+	{ 2, 1 },
+	{ -2, 1 },
+	{ 2, -1 },
+	{ -2, -1 },
+	{ 1, 2 },
+	{ -1, 2 },
+	{ 1, -2 },
+	{ -1, -2 }
+};
+
+int IsValidTransitItems(int x, int y) {
+	for (int i = 0; i < 24; i++) {
+		int x1 = x + dwTripStartingCoords[i].x;
+		int y1 = y + dwTripStartingCoords[i].y;
+
+		if (x >= GAME_MAP_SIZE || y >= GAME_MAP_SIZE)
+			continue;
+
+		int iTileID = GetTileID(x1, y1);
+
+		if (iTileID >= TILE_ROAD_LR && iTileID < TILE_RAIL_LR)
+			return 1;
+
+		if (iTileID >= TILE_TUNNEL_T && iTileID < TILE_CROSSOVER_POWERTB_RAILLR
+			|| iTileID == TILE_CROSSOVER_HIGHWAYLR_ROADTB
+			|| iTileID == TILE_CROSSOVER_HIGHWAYTB_ROADLR
+			|| iTileID >= TILE_ONRAMP_TL && iTileID < TILE_HIGHWAY_HTB)
+			return 1;
+
+		if (iTileID == TILE_INFRASTRUCTURE_BUSDEPOT
+			|| iTileID == TILE_INFRASTRUCTURE_RAILSTATION
+			|| iTileID == TILE_INFRASTRUCTURE_SUBWAYSTATION)
+			return 1;
+	}
+
+	return 0;
+}
+#else
+static CPoint* dwTripStartingCoords = (CPoint*)0x4C92C0;
+#endif
+
+#define TRIP_SCALE_FACTOR_STEP		1		// scaling for cars/busses/pedestrians
+#define TRIP_SCALE_FACTOR_CHANGE	1		// scaling for transit type changes
+#define TRIP_SCALE_FACTOR_RAPID		1		// scaling for rapid transit (highway/rail/subway)
+
+#define TRIP_MAX_STEPS_VANILLA		100
+#define TRIP_MAX_STEPS_SCALE		1
+
+#define TRIP_MAX_ATTEMPTS			4		// vanilla: 4
+#define TRIP_ITERATION_LOG_SIZE		512		// vanilla: 512
+
+// TODO: get these cleaned up and moved into sc2k_1996.h
+
+__int16 wTripX[] = { 0, 1, 0, -1 };
+__int16 wTripY[] = { -1, 0, 1, 0 };
+WORD* wArrZoneDestinations = (WORD*)0x4E8570;
+BYTE* byte_4E858C = (BYTE*)0x4E858C;
+
+#pragma pack(push, 1)
+typedef struct {
+	__int16 iCurrentTransitType;
+	__int16 iIterationCount;
+	__int16 iDunno1;
+	__int16 iMaybeDirection;
+	__int16 iDunno2;
+	WORD wDunno3;
+	DWORD bTripCompleted;
+	CPoint ptTripNextLocation;
+	CPoint ptTripCurrentLocation;
+	int array1[TRIP_ITERATION_LOG_SIZE];
+	int array2[TRIP_ITERATION_LOG_SIZE];
+	int array3[TRIP_ITERATION_LOG_SIZE];
+} tripStruct;
+#pragma pack(pop)
+
+// Recompilation helpers (TODO: wean off these)
+
+#define LAST_IND(x, type)	(sizeof(x) / sizeof(type) - 1)
+#define HIGH_IND(x, type)	LAST_IND(x,type)
+#define LOW_IND(x, type)	0
+#define SBYTEn(x, n)		(*((__int8*)&(x)+n))
+#define SWORDn(x, n)		(*((__int16*)&(x)+n))
+#define SDWORDn(x, n)		(*((__int32*)&(x)+n))
+
+#define SLOBYTE(x)				SBYTEn(x,LOW_IND(x,__int8))
+#define SLOWORD(x)				SWORDn(x,LOW_IND(x,__int16))
+#define SLODWORD(x)				SDWORDn(x,LOW_IND(x,__int32))
+#define SHIBYTE(x)				SBYTEn(x,HIGH_IND(x,__int8))
+#define SHIWORD(x)				SWORDn(x,HIGH_IND(x,__int16))
+#define SHIDWORD(x)				SDWORDn(x,HIGH_IND(x,__int32))
+
+static int iTotalTripCount = 0;
+
+// This is REALLY rough and has only had enough cleanup to make sense in my head so it probably
+// won't make much sense to anyone else yet.
+int __cdecl L_RunTripGenerator(__int16 x, __int16 y, __int16 nZoneType, __int16 nBuildingPopLevel, __int16 nTripMaxSteps) {
+	unsigned __int16 iTileID;
+	__int16 iTripCurrentSteps;
+	int v9;
+	__int16 var_61A;
+	__int16 n15_1;
+	BOOL bUsedRail = FALSE;
+	BOOL bUsedSubway = FALSE;
+	BOOL bUsedBus = FALSE;
+	unsigned __int16 iTransitType;
+
+	map_mini64_t* bXTRFData;
+	unsigned int iBuffer = 0;
+	unsigned int iBuffer2 = 0;
+	tripStruct stTripData;
+	std::stack<CPoint> stackTripPoints;
+		
+	memset(&stTripData, 0, sizeof(tripStruct));
+	iTotalTripCount++;
+
+	// Shuffle the trip generator's search order if requested. This adds a bit more randomness to
+	// the traffic simulation, but at unknown costs (seriously, I don't know how this will affect
+	// gameplay, test at your own risk).
+	if (SHUFFLE_TRIP_GENERATOR && USE_NEW_STARTINGCOORDS)
+		std::shuffle(dwTripStartingCoords, dwTripStartingCoords + 24, mtMersenneTwister);
+
+	// See if we can find a transit type within 3 tiles.
+	stTripData.iCurrentTransitType = TRANSIT_TYPE_NONE;
+	for (int iTripStartAttempt = 0; iTripStartAttempt < 24; iTripStartAttempt++) {
+		if (stTripData.iCurrentTransitType >= 0)
+			break;
+
+		SetCPoint(&stTripData.ptTripCurrentLocation, x + dwTripStartingCoords[iTripStartAttempt].x, y + dwTripStartingCoords[iTripStartAttempt].y);
+
+		if (stTripData.ptTripCurrentLocation.x < GAME_MAP_SIZE && stTripData.ptTripCurrentLocation.y < GAME_MAP_SIZE) {
+			iTileID = GetTileID(stTripData.ptTripCurrentLocation.x, stTripData.ptTripCurrentLocation.y);
+			if (TILE_IS_ROAD(iTileID))
+				stTripData.iCurrentTransitType = TRANSIT_TYPE_ROAD;
+			else {
+				switch (iTileID) {
+				case TILE_INFRASTRUCTURE_BUSDEPOT:
+					stTripData.iCurrentTransitType = TRANSIT_TYPE_BUS;
+					break;
+				case TILE_INFRASTRUCTURE_RAILSTATION:
+					stTripData.iCurrentTransitType = TRANSIT_TYPE_RAIL_ENTER;
+					break;
+				case TILE_INFRASTRUCTURE_SUBWAYSTATION:
+					stTripData.iCurrentTransitType = TRANSIT_TYPE_SUBWAY_ENTER;
+					break;
+				}
+			}
+		}
+	}
+
+	// If we didn't find a transit type within 3 tiles, bail out now.
+	if (stTripData.iCurrentTransitType == TRANSIT_TYPE_NONE)
+		return 0;
+
+#if !USE_NATIVE_STACKS
+	Game_InitStack(stTripData.ptTripCurrentLocation.x, stTripData.ptTripCurrentLocation.y);
+#endif
+
+	// Set up the initial variables for the trip
+	iTripCurrentSteps = 0;
+	stTripData.iDunno1 = 15;
+	stTripData.array2[0] = 15;
+	stTripData.array1[0] = stTripData.iCurrentTransitType;
+	stTripData.bTripCompleted = 0;
+	stTripData.iIterationCount = 1;
+	*(DWORD*)&stTripData.wDunno3 = (unsigned __int16)(2 * (rand() & 1) + 1);
+	if (nBuildingPopLevel == 1)
+		nTripMaxSteps -= nTripMaxSteps >> 2;
+
+	if (tilebuild_debug & TILEBUILD_DEBUG_TRIP_DUMP) {
+		ConsoleLog(LOG_DEBUG, "TRIP: New trip! Starting tile is (%d, %d), zone type %d.\n", x, y, nZoneType);
+		ConsoleLog(LOG_DEBUG, "TRIP: Starting with %s from position (%d, %d).\n", GetTransitTypeName(stTripData.iCurrentTransitType), stTripData.ptTripCurrentLocation.x, stTripData.ptTripCurrentLocation.y);
+	}
+
+	while (nTripMaxSteps > iTripCurrentSteps) {
+		stackTripPoints = {};
+		v9 = 0;
+		stTripData.iMaybeDirection = rand() & 3;
+		stTripData.iDunno2 = 0;
+		do {
+			if (v9)
+				goto FINISHTRIP;
+
+			var_61A = (LOBYTE(stTripData.iMaybeDirection) + LOBYTE(stTripData.wDunno3)) & 3;
+			stTripData.iMaybeDirection = var_61A;
+			if ((stTripData.iDunno1 & (1 << var_61A)) != 0) {
+				stTripData.iDunno1 += 0xFFFF << var_61A;
+				SetCPoint(
+					&stTripData.ptTripNextLocation,
+					LOWORD(stTripData.ptTripCurrentLocation.x) + wTripX[var_61A],
+					LOWORD(stTripData.ptTripCurrentLocation.y) + wTripY[var_61A]);
+				if (stTripData.ptTripNextLocation.x >= GAME_MAP_SIZE || stTripData.ptTripNextLocation.y >= GAME_MAP_SIZE) {
+					if (dwMapXTXT[stTripData.ptTripCurrentLocation.x][stTripData.ptTripCurrentLocation.y].bTextOverlay == 250) {
+TRIPSUCCESS:
+						v9 = 1;
+						stTripData.bTripCompleted = 1;
+						continue;
+					}
+				} else {
+					switch (stTripData.iCurrentTransitType) {
+					case TRANSIT_TYPE_ROAD:
+						if (((unsigned __int16)(1 << (*(BYTE*)&dwMapXZON[SLOWORD(stTripData.ptTripNextLocation.x)][SLOWORD(stTripData.ptTripNextLocation.y)].b & 0xF)) & (unsigned __int16)wArrZoneDestinations[nZoneType]) != 0)
+							goto TRIPSUCCESS;
+
+						iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+						
+						// TODO: rework this for clarity
+						if (iTileID < TILE_TUNNEL_T || iTileID >= TILE_CROSSOVER_POWERTB_ROADLR) {
+							if (iTileID >= TILE_SUSPENSION_BRIDGE_START_B
+								&& iTileID < TILE_ONRAMP_TL
+								|| iTileID == TILE_REINFORCED_BRIDGE_PYLON
+								|| iTileID == TILE_REINFORCED_BRIDGE) {
+								iTripCurrentSteps += 3 * TRIP_SCALE_FACTOR_STEP;
+								v9 = 1;
+								stTripData.iCurrentTransitType = TRANSIT_TYPE_ROADBRIDGE;
+							} else if (iTileID < TILE_ONRAMP_TL || iTileID >= TILE_HIGHWAY_HTB) {
+								if (TILE_IS_ROAD_WITH_SIDEWALKS(iTileID)) {
+									iTripCurrentSteps += 3 * TRIP_SCALE_FACTOR_STEP;
+									v9 = 1;
+								} else {
+									switch (iTileID) {
+									case TILE_INFRASTRUCTURE_BUSDEPOT:
+										iTripCurrentSteps += 4 * TRIP_SCALE_FACTOR_CHANGE;
+										v9 = 1;
+										stTripData.iCurrentTransitType = TRANSIT_TYPE_BUS;
+										break;
+									case TILE_INFRASTRUCTURE_RAILSTATION:
+										iTripCurrentSteps += 4 * TRIP_SCALE_FACTOR_CHANGE;
+										v9 = 1;
+										stTripData.iCurrentTransitType = TRANSIT_TYPE_RAIL_ENTER;
+										break;
+									case TILE_INFRASTRUCTURE_SUBWAYSTATION:
+										iTripCurrentSteps += 4 * TRIP_SCALE_FACTOR_CHANGE;
+										v9 = 1;
+										stTripData.iCurrentTransitType = TRANSIT_TYPE_SUBWAY_ENTER;
+										break;
+									default:
+										if (iTileID > TILE_INFRASTRUCUTRE_DESALINIZATIONPLANT)
+											goto TRIPSUCCESS;
+										break;
+									}
+								}
+							} else {
+								iTripCurrentSteps += 2 * TRIP_SCALE_FACTOR_STEP;
+								v9 = 1;
+								stTripData.iCurrentTransitType = TRANSIT_TYPE_HIGHWAY;
+							}
+						} else {
+							iTripCurrentSteps += 3 * TRIP_SCALE_FACTOR_STEP;
+							v9 = 1;
+							stTripData.iCurrentTransitType = TRANSIT_TYPE_TUNNEL;
+						}
+
+						break;
+
+					case TRANSIT_TYPE_HIGHWAY:
+						iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+
+						if ((iTileID < 0x61u || iTileID >= 0x6Cu) && (iTileID < 0x49u || iTileID >= 0x51u)) {
+							if (iTileID >= 0x5Du && iTileID < 0x61u) {
+								stTripData.iCurrentTransitType = TRANSIT_TYPE_ROAD;
+								v9 = 1;
+								iTripCurrentSteps += 1 * TRIP_SCALE_FACTOR_RAPID;
+							}
+						} else {
+							v9 = 1;
+							iTripCurrentSteps += 1 * TRIP_SCALE_FACTOR_RAPID;
+						}
+
+						break;
+
+					case TRANSIT_TYPE_TUNNEL:
+						if ((*((BYTE*)&dwMapALTM[stTripData.ptTripNextLocation.x][stTripData.ptTripNextLocation.y].w + 1) & 0x7C) != 0) {
+							iTripCurrentSteps += 3 * TRIP_SCALE_FACTOR_STEP;
+							v9 = 1;
+						} else {
+							iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+
+							if (TILE_IS_ROAD(iTileID)) {
+								iTripCurrentSteps += 3 * TRIP_SCALE_FACTOR_STEP;
+								v9 = 1;
+								stTripData.iCurrentTransitType = TRANSIT_TYPE_ROAD;
+							}
+						}
+
+						break;
+
+					case TRANSIT_TYPE_ROADBRIDGE:
+						iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+
+						if (iTileID >= (unsigned int)TILE_SUSPENSION_BRIDGE_START_B && iTileID < (unsigned int)TILE_ONRAMP_TL
+							|| iTileID == TILE_REINFORCED_BRIDGE_PYLON
+							|| iTileID == TILE_REINFORCED_BRIDGE) {
+							iTripCurrentSteps += 3 * TRIP_SCALE_FACTOR_STEP;
+							v9 = 1;
+						} else if (TILE_IS_ROAD(iTileID)) {
+							iTripCurrentSteps += 3 * TRIP_SCALE_FACTOR_STEP;
+							v9 = 1;
+							stTripData.iCurrentTransitType = TRANSIT_TYPE_ROAD;
+						}
+
+						break;
+
+					case TRANSIT_TYPE_PEDESTRIAN:
+						if (((unsigned __int16)(1 << (*(BYTE*)&dwMapXZON[SLOWORD(stTripData.ptTripNextLocation.x)][SLOWORD(stTripData.ptTripNextLocation.y)].b & 0xF)) & (unsigned __int16)wArrZoneDestinations[nZoneType]) != 0)
+							goto TRIPSUCCESS;
+
+						iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+
+						if (iTileID < TILE_TUNNEL_T || iTileID >= TILE_CROSSOVER_POWERTB_ROADLR) {
+							if (iTileID >= TILE_TUNNEL_T && iTileID < TILE_ONRAMP_TL || iTileID == TILE_REINFORCED_BRIDGE_PYLON || iTileID == TILE_REINFORCED_BRIDGE) {
+								iTripCurrentSteps += 2 * TRIP_SCALE_FACTOR_STEP;
+								v9 = 1;
+								stTripData.iCurrentTransitType = TRANSIT_TYPE_PEDESTRIAN_UNDERPASS2;
+							} else if (iTileID < (unsigned int)TILE_ONRAMP_TL || iTileID >= (unsigned int)TILE_HIGHWAY_HTB) {
+								if (TILE_IS_ROAD_WITH_SIDEWALKS(iTileID)) {
+									iTripCurrentSteps += 2 * TRIP_SCALE_FACTOR_STEP;
+									v9 = 1;
+								} else {
+									switch (iTileID) {
+									case TILE_INFRASTRUCTURE_BUSDEPOT:
+										iTripCurrentSteps += 4 * TRIP_SCALE_FACTOR_CHANGE;
+										v9 = 1;
+										stTripData.iCurrentTransitType = TRANSIT_TYPE_BUS;
+										break;
+									case TILE_INFRASTRUCTURE_RAILSTATION:
+										iTripCurrentSteps += 4 * TRIP_SCALE_FACTOR_CHANGE;
+										v9 = 1;
+										stTripData.iCurrentTransitType = TRANSIT_TYPE_RAIL_ENTER;
+										break;
+									case TILE_INFRASTRUCTURE_SUBWAYSTATION:
+										iTripCurrentSteps += 4 * TRIP_SCALE_FACTOR_CHANGE;
+										v9 = 1;
+										stTripData.iCurrentTransitType = TRANSIT_TYPE_SUBWAY_ENTER;
+										break;
+									default:
+										if (iTileID > (unsigned int)TILE_INFRASTRUCUTRE_DESALINIZATIONPLANT)
+											goto TRIPSUCCESS;
+										break;
+									}
+								}
+							} else {
+								iTripCurrentSteps += 2 * TRIP_SCALE_FACTOR_STEP;
+								v9 = 1;
+								stTripData.iCurrentTransitType = TRANSIT_TYPE_PEDESTRIAN_UNDERPASS;
+							}
+						} else {
+							iTripCurrentSteps += 2 * TRIP_SCALE_FACTOR_STEP;
+							v9 = 1;
+							stTripData.iCurrentTransitType = TRANSIT_TYPE_PEDESTRIAN_TUNNEL;
+						}
+
+						break;
+
+					// TODO: determine if this is actually what it seems to be
+					case TRANSIT_TYPE_PEDESTRIAN_UNDERPASS:
+						iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+
+						if ((iTileID < (unsigned int)TILE_HIGHWAY_HTB || iTileID >= (unsigned int)TILE_SUBTORAIL_T)
+							&& (iTileID < (unsigned int)TILE_HIGHWAY_LR || iTileID >= (unsigned int)TILE_SUSPENSION_BRIDGE_START_B)) {
+							if (iTileID >= (unsigned int)TILE_ONRAMP_TL && iTileID < (unsigned int)TILE_HIGHWAY_HTB) {
+								stTripData.iCurrentTransitType = TRANSIT_TYPE_PEDESTRIAN;
+								v9 = 1;
+								iTripCurrentSteps += 1 * TRIP_SCALE_FACTOR_STEP;
+							}
+						} else {
+							v9 = 1;
+							iTripCurrentSteps += 1 * TRIP_SCALE_FACTOR_STEP;
+						}
+
+						break;
+
+					// TODO: determine if this is actually what it seems to be
+					case TRANSIT_TYPE_PEDESTRIAN_TUNNEL:
+						if ((*((BYTE*)&dwMapALTM[stTripData.ptTripNextLocation.x][stTripData.ptTripNextLocation.y].w + 1) & 0x7C) != 0) {
+							iTripCurrentSteps += 2 * TRIP_SCALE_FACTOR_STEP;
+							v9 = 1;
+						} else {
+							iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+
+							if (TILE_IS_ROAD(iTileID)) {
+								iTripCurrentSteps += 2 * TRIP_SCALE_FACTOR_STEP;
+								v9 = 1;
+								stTripData.iCurrentTransitType = TRANSIT_TYPE_PEDESTRIAN;
+							}
+						}
+
+						break;
+
+					// TODO: determine if this is actually what it seems to be
+					case TRANSIT_TYPE_PEDESTRIAN_UNDERPASS2:
+						iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+
+						if (iTileID >= TILE_SUSPENSION_BRIDGE_START_B && iTileID < TILE_ONRAMP_TL || iTileID == TILE_REINFORCED_BRIDGE_PYLON || iTileID == TILE_REINFORCED_BRIDGE) {
+							iTripCurrentSteps += 2 * TRIP_SCALE_FACTOR_STEP;
+							v9 = 1;
+						} else if (TILE_IS_ROAD(iTileID)) {
+							iTripCurrentSteps += 2 * TRIP_SCALE_FACTOR_STEP;
+							v9 = 1;
+							stTripData.iCurrentTransitType = TRANSIT_TYPE_PEDESTRIAN;
+						}
+
+						break;
+
+					case TRANSIT_TYPE_BUS:
+						if (((unsigned __int16)(1 << (*(BYTE*)&dwMapXZON[SLOWORD(stTripData.ptTripNextLocation.x)][SLOWORD(stTripData.ptTripNextLocation.y)].b & 0xF)) & (unsigned __int16)wArrZoneDestinations[nZoneType]) != 0)
+							goto TRIPSUCCESS;
+
+						iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+
+						if (iTileID == TILE_INFRASTRUCTURE_BUSDEPOT) {
+							iTripCurrentSteps += 4 * TRIP_SCALE_FACTOR_CHANGE;
+							v9 = 1;
+						} else if (TILE_IS_ROAD(iTileID)) {
+							iTripCurrentSteps += 2 * TRIP_SCALE_FACTOR_STEP;
+							v9 = 1;
+							stTripData.iCurrentTransitType = TRANSIT_TYPE_PEDESTRIAN;
+						}
+
+						break;
+
+					case TRANSIT_TYPE_SUBWAY_EXIT:
+						if (((unsigned __int16)(1 << (*(BYTE*)&dwMapXZON[SLOWORD(stTripData.ptTripNextLocation.x)][SLOWORD(stTripData.ptTripNextLocation.y)].b & 0xF)) & (unsigned __int16)wArrZoneDestinations[nZoneType]) != 0)
+							goto TRIPSUCCESS;
+
+						iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+
+						if (iTileID == TILE_INFRASTRUCTURE_BUSDEPOT || iTileID == TILE_INFRASTRUCTURE_RAILSTATION) {
+							iTripCurrentSteps += 4 * TRIP_SCALE_FACTOR_CHANGE;
+							v9 = 1;
+						} else if (TILE_IS_ROAD(iTileID)) {
+							iTripCurrentSteps += 3 * TRIP_SCALE_FACTOR_STEP;
+							v9 = 1;
+							stTripData.iCurrentTransitType = TRANSIT_TYPE_ROAD;
+						}
+
+						break;
+
+					case TRANSIT_TYPE_RAIL_ENTER:
+						iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+
+						if (iTileID == TILE_INFRASTRUCTURE_RAILSTATION) {
+							iTripCurrentSteps += 4 * TRIP_SCALE_FACTOR_CHANGE;
+							v9 = 1;
+						} else if (TILE_IS_RAIL(iTileID)) {
+							stTripData.iCurrentTransitType = TRANSIT_TYPE_RAIL;
+							v9 = 1;
+							iTripCurrentSteps += 1 * TRIP_SCALE_FACTOR_RAPID;
+						}
+
+						break;
+
+					case TRANSIT_TYPE_SUBWAY_ENTER:
+						iTileID = dwMapXUND[stTripData.ptTripNextLocation.x][stTripData.ptTripNextLocation.y].iTileID;
+
+						if (iTileID && iTileID < UNDER_TILE_PIPES_LR
+							|| iTileID == UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR
+							|| iTileID == UNDER_TILE_CROSSOVER_PIPESLR_SUBWAYTB
+							|| iTileID == UNDER_TILE_MISSILESILO	// I assure you, I have clearance
+							|| iTileID == UNDER_TILE_SUBWAYENTRANCE) {
+							stTripData.iCurrentTransitType = TRANSIT_TYPE_SUBWAY;
+							v9 = 1;
+							iTripCurrentSteps += 1 * TRIP_SCALE_FACTOR_RAPID;
+						}
+
+						break;
+
+					case TRANSIT_TYPE_RAIL:
+						iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+
+						if (iTileID == TILE_INFRASTRUCTURE_RAILSTATION) {
+							iTripCurrentSteps += 4 * TRIP_SCALE_FACTOR_CHANGE;
+							v9 = 1;
+							stTripData.iCurrentTransitType = TRANSIT_TYPE_SUBWAY_EXIT;
+						} else if (TILE_IS_RAIL(iTileID)) {
+							v9 = 1;
+							iTripCurrentSteps += 1 * TRIP_SCALE_FACTOR_RAPID;
+						} else if (iTileID > 0xFAu)
+							goto TRIPSUCCESS;
+
+						break;
+
+					case TRANSIT_TYPE_SUBWAY:
+						if (GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y) == TILE_INFRASTRUCTURE_SUBWAYSTATION) {
+							iTripCurrentSteps += 4 * TRIP_SCALE_FACTOR_CHANGE;
+							v9 = 1;
+							stTripData.iCurrentTransitType = TRANSIT_TYPE_SUBWAY_EXIT;
+						} else {
+							iTileID = dwMapXUND[stTripData.ptTripNextLocation.x][stTripData.ptTripNextLocation.y].iTileID;
+							if (iTileID && iTileID < UNDER_TILE_PIPES_LR
+								|| iTileID == UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR
+								|| iTileID == UNDER_TILE_CROSSOVER_PIPESLR_SUBWAYTB
+								|| iTileID == UNDER_TILE_MISSILESILO	// I assure you, I *still* have clearance
+								|| iTileID == UNDER_TILE_SUBWAYENTRANCE) {
+								v9 = 1;
+								iTripCurrentSteps += 1 * TRIP_SCALE_FACTOR_RAPID;
+							}
+						}
+
+						break;
+
+					default:
+						ConsoleLog(LOG_NOTICE, "TRIP: Got weird iCurrentTransitType %d. Maybe tell a developer if this keeps happening.\n", stTripData.iCurrentTransitType);
+						break;
+					}
+				}
+			}
+			++stTripData.iDunno2;
+		} while (stTripData.iDunno2 < TRIP_MAX_ATTEMPTS);
+
+		if (v9) {
+FINISHTRIP:
+			if (stTripData.bTripCompleted)
+				break;
+			stTripData.ptTripCurrentLocation = stTripData.ptTripNextLocation;
+			stTripData.array2[stTripData.iIterationCount - 1] = stTripData.iDunno1;
+
+#if USE_NATIVE_STACKS
+			stackTripPoints.push({ stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y });
+#else
+			Game_StackPush(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+#endif
+
+			if (stTripData.iCurrentTransitType == TRANSIT_TYPE_ROADBRIDGE || stTripData.iCurrentTransitType == TRANSIT_TYPE_PEDESTRIAN_UNDERPASS2)
+				n15_1 = 1 << SLOBYTE(stTripData.iMaybeDirection);
+			else {
+				if (stTripData.iCurrentTransitType == TRANSIT_TYPE_SUBWAY_ENTER) {
+					stTripData.iDunno1 = 15;
+LABEL_229:
+					stTripData.array2[stTripData.iIterationCount] = stTripData.iDunno1;
+					stTripData.array3[stTripData.iIterationCount] = iTripCurrentSteps;
+					stTripData.array1[stTripData.iIterationCount] = stTripData.iCurrentTransitType;
+
+					if (tilebuild_debug & TILEBUILD_DEBUG_TRIP_DUMP)
+						if (tilebuild_debug & TILEBUILD_DEBUG_TRIP_LOG)
+							ConsoleLog(LOG_DEBUG, "TRIP: Iteration %d (%d steps): (%d, %d), %s.\n",
+								stTripData.iIterationCount, iTripCurrentSteps,
+								stTripData.ptTripCurrentLocation.x, stTripData.ptTripCurrentLocation.y,
+								GetTransitTypeName(stTripData.iCurrentTransitType));
+						else
+							printf("[DEBUG] TRIP: Iteration %d (%d steps): (%d, %d), %s. [nolog]\n",
+								stTripData.iIterationCount, iTripCurrentSteps,
+								stTripData.ptTripCurrentLocation.x, stTripData.ptTripCurrentLocation.y,
+								GetTransitTypeName(stTripData.iCurrentTransitType));
+
+					stTripData.iIterationCount++;
+					goto LABEL_236;
+				}
+				n15_1 = (unsigned __int8)byte_4E858C[stTripData.iMaybeDirection];
+			}
+			stTripData.iDunno1 = n15_1;
+			goto LABEL_229;
+		}
+		do {
+			if (--stTripData.iIterationCount > 0) {
+#if USE_NATIVE_STACKS
+				if (!stackTripPoints.empty()) {
+					stackTripPoints.pop();
+					stTripData.ptTripCurrentLocation = stackTripPoints.top();
+				}
+#else
+				Game_StackPop(&stTripData.ptTripCurrentLocation);
+				Game_StackPeek(&stTripData.ptTripCurrentLocation);
+#endif
+
+				stTripData.iCurrentTransitType = *((unsigned __int8*)&stTripData.ptTripCurrentLocation.y + stTripData.iIterationCount + 3); // XXX - wtf?
+				iTripCurrentSteps = stTripData.array3[stTripData.iIterationCount - 1];
+				stTripData.iDunno1 = stTripData.array2[stTripData.iIterationCount - 1];
+			}
+		} while (!stTripData.iDunno1 && stTripData.iIterationCount > 0);
+		if (!stTripData.iIterationCount)
+			iTripCurrentSteps = nTripMaxSteps;
+LABEL_236:
+		if (stTripData.bTripCompleted)
+			break;
+	}
+
+	// Iterate through our trip data to see what kinds of effects we had (traffic usage, public
+	// transit load, etc).
+	if (stTripData.bTripCompleted) {
+		if (tilebuild_debug & TILEBUILD_DEBUG_TRIP_DUMP)
+			ConsoleLog(LOG_DEBUG, "TRIP: Trip completed, made it to (%d, %d).\n", stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+
+		// TODO: don't manipulate the point-stack data directly.
+		// TODO: magic numbers
+#if USE_NATIVE_STACKS
+		if (nBuildingPopLevel > 0 && !stackTripPoints.empty()) {
+#else
+		if (nBuildingPopLevel > 0 && *(WORD*)0x4CC908 != *(WORD*)0x4CA424) {
+#endif
+			do {
+#if USE_NATIVE_STACKS
+				stTripData.ptTripCurrentLocation = stackTripPoints.top();
+				stackTripPoints.pop();
+#else
+				Game_StackPop(&stTripData.ptTripCurrentLocation);
+#endif
+
+				if (--stTripData.iIterationCount < 0)
+					stTripData.iIterationCount = 0;
+				iTransitType = stTripData.array1[stTripData.iIterationCount];
+
+				if (iTransitType == TRANSIT_TYPE_SUBWAY_ENTER)
+					bUsedSubway = TRUE;
+				if (iTransitType == TRANSIT_TYPE_RAIL_ENTER)
+					bUsedRail = TRUE;
+				if (iTransitType == TRANSIT_TYPE_BUS)
+					bUsedBus = TRUE;
+
+				if (iTransitType < TRANSIT_TYPE_TUNNEL || iTransitType == TRANSIT_TYPE_ROADBRIDGE) {
+					bXTRFData = &dwMapXTRF[stTripData.ptTripCurrentLocation.x / 2][stTripData.ptTripCurrentLocation.y / 2];
+					bXTRFData->bBlock = ((nBuildingPopLevel + bXTRFData->bBlock) > 0xFF ? 0xFF : (nBuildingPopLevel + bXTRFData->bBlock));
+				}
+#if USE_NATIVE_STACKS
+			} while (!stackTripPoints.empty());
+#else
+			} while (*(WORD*)0x4CC908 != *(WORD*)0x4CA424);
+#endif
+		}
+		//printf("\n");
+	} else
+		if (tilebuild_debug & TILEBUILD_DEBUG_TRIP_DUMP)
+			ConsoleLog(LOG_DEBUG, "TRIP: Failed to generate trip. :(\n", stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+
+	if (bUsedSubway)
+		dwSubwayPassengers += nBuildingPopLevel;
+	if (bUsedRail)
+		dwRailPassengers += nBuildingPopLevel;
+	if (bUsedBus)
+		dwBusPassengers += nBuildingPopLevel;
+	return stTripData.bTripCompleted;
+}
 
 static void GetItemPlacementAreaAndFarPosition(__int16 m_x, __int16 m_y, __int16 iTileArea, __int16 *outX, __int16 *outY, __int16 *outFarX, __int16 *outFarY, __int16 *outArea) {
 	__int16 x;
@@ -711,7 +1375,11 @@ static BOOL GetPopulatedTileAndLevel(__int16 iX, __int16 iY, BYTE iCurrentTileID
 		iTilePopLevel = wBuildingPopLevel[iPopulatedTile];
 	}
 	else {
+#if USE_NEW_TRIP_GENERATOR && USE_NEW_STARTINGCOORDS
+		if (iCurrentTileID >= TILE_ROAD_LR || !IsValidTransitItems(iX, iY))
+#else
 		if (iCurrentTileID >= TILE_ROAD_LR || !Game_IsValidTransitItems(iX, iY))
+#endif
 			return FALSE;
 	}
 
@@ -783,9 +1451,18 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 						iCurrentDemand = 0;
 						iRemainderDemand = 4000;
 						if (Game_IsZonedTilePowered(iX, iY)) {
-							if (Game_RunTripGenerator(iX, iY, iCurrZoneType, iTilePopLevel, GROWTH_TILE_MAX_TRIP_STEPS)) {
+							int iTripResult = 0;
+#if USE_NEW_TRIP_GENERATOR
+							iTripResult = L_RunTripGenerator(iX, iY, iCurrZoneType, iTilePopLevel, TRIP_MAX_STEPS_VANILLA * TRIP_MAX_STEPS_SCALE);
+#else
+							iTripResult = Game_RunTripGenerator(iX, iY, iCurrZoneType, iTilePopLevel, GROWTH_TILE_MAX_TRIP_STEPS);
+#endif
+
+							if (iTripResult) {
 								iCurrentDemand = wCityDemand[GET_GENERAL_RCI_ZONE(iCurrZoneType)] + 2000;
 								iRemainderDemand = 4000 - iCurrentDemand;
+							} else {
+								//printf("!!! iTripResult failed, iRunTimes = %d\n", iRunTimes);
 							}
 						}
 
@@ -1515,6 +2192,18 @@ void InstallTileGrowthOrPlacementHandlingHooks_SC2K1996(void) {
 	// Hook CityToolPlaceSelectedBuilding
 	VirtualProtect((LPVOID)0x401005, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x401005, Hook_CityToolPlaceSelectedBuilding);
+
+	// StupidFuckingTripGeneratorStartHook
+	// VirtualProtect((LPVOID)0x457626, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	// NEWJMP((LPVOID)0x457626, StupidFuckingTripGeneratorStartHook);
+
+	// StupidFuckingTripGeneratorEndHook
+	// VirtualProtect((LPVOID)0x458347, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	// NEWJMP((LPVOID)0x458347, StupidFuckingTripGeneratorEndHook);
+	
+	// StupidFuckingTripGeneratorClobberHook
+	// VirtualProtect((LPVOID)0x45811B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	// NEWJMP((LPVOID)0x45811B, StupidFuckingTripGeneratorClobberHook);
 
 	// Military base hooks
 	InstallMilitaryHooks_SC2K1996();
