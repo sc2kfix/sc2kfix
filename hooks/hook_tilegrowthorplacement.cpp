@@ -49,10 +49,12 @@
 #endif
 
 // Internal defines to turn bits of the reimplemented trip generator on and off.
+// WARNING: USE_NATIVE_STACKS breaks things and is intended for experimentation. It will soon be
+// replaced with something a little less finicky.
 
 #define USE_NEW_TRIP_GENERATOR		1		// use the recompiled trip generator
 #define USE_NEW_STARTINGCOORDS		1		// use our own starting coords code
-#define USE_NATIVE_STACKS			1		// use std::stack instead of SC2K's shared point stack
+#define USE_NATIVE_STACKS			0		// use std::stack instead of SC2K's shared point stack
 
 #define SHUFFLE_TRIP_GENERATOR		0		// shuffles dwTripStartingCoords for added randomness
 
