@@ -1,5 +1,5 @@
 // sc2kfix modules/settings.cpp: settings dialog code and configurator
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
 #include <windows.h>
@@ -138,7 +138,7 @@ void LoadSettings(void) {
 		ConsoleLog(LOG_ERROR, "CORE: FluidSynth music engine selected but library not available; falling back to MIDI sequencer.\n");
 		iSettingsMusicEngineOutput = MUSIC_ENGINE_SEQUENCER;
 	}
-	GetPrivateProfileStringA(section, "szSettingsFluidSynthSoundfont", "", szSettingsFluidSynthSoundfont, MAX_PATH, ini_file);
+	GetPrivateProfileStringA(section, "szSettingsFluidSynthSoundfont", "C:\Windows\System32\drivers\gm.dls", szSettingsFluidSynthSoundfont, MAX_PATH, ini_file);
 
 	bSettingsMusicInBackground = GetPrivateProfileIntA(section, "bSettingsMusicInBackground", bSettingsMusicInBackground, ini_file);
 	bSettingsUseSoundReplacements = GetPrivateProfileIntA(section, "bSettingsUseSoundReplacements", bSettingsUseSoundReplacements, ini_file);
