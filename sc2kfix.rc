@@ -631,6 +631,14 @@ END
 
 IDR_TSET_FIXED          TSET                    "blobs\\FIXEDTILES.MIF"
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// BLOB
+//
+
+IDR_BLOB_LIBSC2KFIX_LUA BLOB                    "blobs\\libsc2kfix.lua"
+
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 

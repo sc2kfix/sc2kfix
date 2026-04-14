@@ -11,6 +11,7 @@
 
 #include <sc2kfix.h>
 #include <lua_glue.h>
+#include "../resource.h"
 
 #define LUA_DEBUG_LOAD 1
 
@@ -135,6 +136,9 @@ int LuaGlueCall_WriteByte(lua_State* L) {
 }
 
 void LuaGlueSetupState(lua_State* L) {
+	HRSRC hResFind;
+	HGLOBAL hLuaResource;
+
 	// Load libsc2kfix from a file if it exists, or the built-in copy if not
 	if (FileExists("libsc2kfix.lua")) {
 		if (!bLuaLibLoadedFromDiskNotice) {
@@ -142,15 +146,44 @@ void LuaGlueSetupState(lua_State* L) {
 			ConsoleLog(LOG_INFO, "LUA:  This message will only be shown once.\n");
 			bLuaLibLoadedFromDiskNotice = TRUE;
 		}
+
 		if (lua_debug & LUA_DEBUG_LOAD)
 			ConsoleLog(LOG_INFO, "LUA:  (%s) Loading libsc2kfix.lua from disk.\n", LuaGetModName(L));
+
 		int status = luaL_dofile(L, "libsc2kfix.lua");
 		if (status)
 			LuaReport(L, status);
 	} else {
 		if (lua_debug & LUA_DEBUG_LOAD)
 			ConsoleLog(LOG_INFO, "LUA:  (%s) Loading libsc2kfix.lua from memory.\n", LuaGetModName(L));
-		// TODO: load libsc2kfix from a resource or something
+
+		hResFind = FindResourceA(hSC2KFixModule, MAKEINTRESOURCE(IDR_BLOB_LIBSC2KFIX_LUA), "BLOB");
+		if (hResFind) {
+			hLuaResource = LoadResource(hSC2KFixModule, hResFind);
+			if (hLuaResource) {
+				size_t nBlobSize = SizeofResource(hSC2KFixModule, hResFind);
+				char* szLuaLibrary = (char*)malloc(nBlobSize + 1);
+
+				if (szLuaLibrary) {
+					void* ptr = LockResource(hLuaResource);
+					if (ptr) {
+						memset(szLuaLibrary, 0, nBlobSize + 1);
+						memcpy_s(szLuaLibrary, nBlobSize + 1, ptr, nBlobSize);
+						FreeResource(hLuaResource);
+
+						int status = luaL_dostring(L, szLuaLibrary);
+						if (status)
+							LuaReport(L, status);
+						free(szLuaLibrary);
+						return;
+					}
+				}
+				else
+					ConsoleLog(LOG_ERROR, "LUA:  (%s) Couldn't allocate buffer for libsc2kfix.lua. Lua will almost certainly fail to initialize.\n", LuaGetModName(L));
+			}
+		}
+		else
+			ConsoleLog(LOG_ERROR, "LUA:  (%s) Couldn't load libsc2kfix.lua from memory. Lua will almost certainly fail to initialize.\n", LuaGetModName(L));
 	}
 
 	// Add the log levels to the global scope
