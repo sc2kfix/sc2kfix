@@ -55,6 +55,7 @@ int LuaGlueCall_ConsoleLog(lua_State* L) {
 	int iLogLevel = luaL_checkinteger(L, 1);
 	const char* szFormattedMessage = luaL_checkstring(L, 2);
 	ConsoleLog(iLogLevel, "MODS: (%s) %s", LuaGetModName(L), szFormattedMessage);
+	return 0;
 }
 
 int LuaGlueCall_ReadDword(lua_State* L) {
