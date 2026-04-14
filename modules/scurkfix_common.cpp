@@ -1940,6 +1940,94 @@ extern "C" void __cdecl Hook_SCURK_MoverWindow_EvGetMinMaxInfo(winscurkMoverWind
 	pMmi->ptMaxTrackSize.y = y;
 }
 
+// cPaletteWindow Functions
+
+cPaletteWindow *__cdecl L_SCURK_LoadOwnPaletteResources(cPaletteWindow *pThis) {
+	HRSRC hRsrc;
+	HGLOBAL hResDat;
+	LPVOID pDat;
+
+	// Palette - display graphic
+	hRsrc = FindResourceA(hSC2KFixModule, MAKEINTRESOURCEA(IDR_SCRKPALWND), "RAW");
+	if (!hRsrc) {
+		R_BOR_WRP_Window_MessageBox((TBC45XWindow *)pThis, "Resource Load Failed", 0, 0);
+		exit(0);
+	}
+	hResDat = LoadResource(hSC2KFixModule, hRsrc);
+	pDat = LockResource(hResDat);
+	memcpy(pThis->pDibTwo->Bits, pDat, 53120);
+	FreeResource(hResDat);
+	pDat = 0;
+
+	// Palette - Map of colours to palette indices (graphic <-> index table)
+	hRsrc = FindResourceA(hSC2KFixModule, MAKEINTRESOURCEA(IDR_SCRKPALMAP), "RAW");
+	if (!hRsrc) {
+		R_BOR_WRP_Window_MessageBox((TBC45XWindow *)pThis, "Resource Load Failed", 0, 0);
+		exit(0);
+	}
+	hResDat = LoadResource(hSC2KFixModule, hRsrc);
+	pDat = LockResource(hResDat);
+	memcpy(pThis->pPaletteBuffer, pDat, 1024);
+	FreeResource(hResDat);
+	pDat = 0;
+
+	// Palette - Bitmap containing the palette colours in their absolute positions.
+	hRsrc = FindResourceA(hSC2KFixModule, MAKEINTRESOURCEA(IDR_SCRKPALBMP), "RAW");
+	if (!hRsrc) {
+		R_BOR_WRP_Window_MessageBox((TBC45XWindow *)pThis, "Resource Load Failed", 0, 0);
+		exit(0);
+	}
+	hResDat = LoadResource(hSC2KFixModule, hRsrc);
+	pDat = LockResource(hResDat);
+	memcpy(pThis->pDibOne->Bits, pDat, 256);
+	FreeResource(hResDat);
+	pDat = 0;
+
+	return pThis;
+}
+
+extern "C" void __cdecl Hook_SCURK_PaletteWindow_EvLButtonDown(cPaletteWindow *pThis, DWORD modKeys, TBC45XPoint *pt) {
+	winscurkApp *pSCApp;
+	int nRow, nScrollPos, nHorizPos, nSound;
+
+	pSCApp = R_SCURK_WRP_winscurkApp_GetPointerToClass();
+
+	R_BOR_WRP_Window_EvLButtonDown((TBC45XWindow *)pThis, modKeys, pt);
+	nScrollPos = GetScrollPos(pThis->HWindow, SB_VERT);
+	nRow = nScrollPos + (int)(pt->y / pThis->floatTwo);
+	nHorizPos = (int)(pt->x / pThis->floatOne);
+	if ((nRow == 10 && (nHorizPos > 11 && nHorizPos < 15)) || nRow == 11 || (nRow == 13 && nHorizPos > 7))
+		nSound = 3;
+	else {
+		pThis->colFrGrnd = nHorizPos + 16 * nRow;
+		InvalidateRect(pThis->HWindow, 0, 0);
+		R_SCURK_WRP_EditWindow_mDoCurrentPatternDib(pThis->pScurkEditParent);
+		nSound = 1;
+	}
+	R_SCURK_WRP_winscurkApp_ScurkSound(pSCApp, nSound);
+}
+
+extern "C" void __cdecl Hook_SCURK_PaletteWindow_EvRButtonDown(cPaletteWindow *pThis, DWORD modKeys, TBC45XPoint *pt) {
+	winscurkApp *pSCApp;
+	int nRow, nScrollPos, nHorizPos, nSound;
+
+	pSCApp = R_SCURK_WRP_winscurkApp_GetPointerToClass();
+
+	R_BOR_WRP_Window_DefaultProcessing(pThis);
+	nScrollPos = GetScrollPos(pThis->HWindow, SB_VERT);
+	nRow = nScrollPos + (int)(pt->y / pThis->floatTwo);
+	nHorizPos = (int)(pt->x / pThis->floatOne);
+	if ((nRow == 10 && (nHorizPos > 11 && nHorizPos < 15)) || nRow == 11 || (nRow == 13 && nHorizPos > 7))
+		nSound = 3;
+	else {
+		pThis->colBkGrnd = nHorizPos + 16 * nRow;
+		InvalidateRect(pThis->HWindow, 0, 0);
+		R_SCURK_WRP_EditWindow_mDoCurrentPatternDib(pThis->pScurkEditParent);
+		nSound = 1;
+	}
+	R_SCURK_WRP_winscurkApp_ScurkSound(pSCApp, nSound);
+}
+
 // TMenuItemEnabler Functions
 
 extern "C" void __cdecl Hook_SCURK_MenuItemEnabler_Enable(TBC45XMenuItemEnabler *pThis, int nEnable) {

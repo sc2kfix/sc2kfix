@@ -57,6 +57,7 @@ class winscurkMDIFrame;
 class winscurkMoverWindow;
 class winscurkPlaceWindow;
 class cPaintWindow;
+class cPaletteWindow;
 class winscurkMDIClient;
 class winscurkApp;
 
@@ -218,7 +219,9 @@ LRESULT R_BOR_WRP_Window_EvCommand(TBC45XWindow *pThis, DWORD dwID, HWND hWndCtl
 unsigned int R_BOR_WRP_Window_DefaultProcessing(TBC45XParWindow *pThis);
 LRESULT R_BOR_WRP_Window_HandleMessage(TBC45XParWindow *pThis, unsigned int msg, WPARAM wParam, LPARAM lParam);
 TBC45XWindow *R_BOR_WRP_GetWindowPtr(HWND hWndTarget, TBC45XApplication *pApp);
+void R_BOR_WRP_Window_EvLButtonDown(TBC45XWindow *pThis, DWORD modKeys, TBC45XPoint *pt);
 void R_BOR_WRP_Window_SetCursor(TBC45XParWindow *pThis, TBC45XModule *pModule, const char *pResID);
+int R_BOR_WRP_Window_MessageBox(TBC45XWindow *pThis, const char *pText, const char *pCaption, DWORD uType);
 void R_BOR_WRP_WindowDC_Destruct(TBC45XWindowDC *pThis, char c);
 TBC45XClientDC *R_BOR_WRP_ClientDC_Construct(TBC45XClientDC *pThis, HWND hWnd);
 void R_BOR_WRP_Dialog_SetupWindow(TBC45XParDialog *pThis);
@@ -261,6 +264,7 @@ void R_SCURK_WRP_EditableTileSet_mRenderEditableShapeToDIB_Dib(cEditableTileSet 
 void R_SCURK_WRP_EditableTileSet_mRenderEditableShapeToDIB_Graphic(cEditableTileSet *pThis, CWinGBitmap *pGraphic, int nEdNum);
 void R_SCURK_WRP_EditableTileSet_mBuildSmallMedTiles(cEditableTileSet *pThis);
 TBC45XDib *R_SCURK_WRP_EditWindow_mGetForegroundPattern(winscurkEditWindow *pThis);
+void R_SCURK_WRP_EditWindow_mDoCurrentPatternDib(winscurkEditWindow *pThis);
 int R_SCURK_WRP_EditWindow_mGetShapeWidth(winscurkEditWindow *pThis);
 BYTE R_SCURK_WRP_EditWindow_mGetForegroundColor(winscurkEditWindow *pThis);
 BYTE R_SCURK_WRP_EditWindow_mGetBackgroundColor(winscurkEditWindow *pThis);
@@ -306,6 +310,9 @@ extern "C" void __cdecl Hook_SCURK_PaintWindow_mEncodeShape(cPaintWindow *pThis,
 extern "C" int __cdecl Hook_SCURK_winscurkMDIFrame_AssignMenu(winscurkMDIFrame *pThis, TBC45XResId menuResID);
 TBC45XWindow *L_SCURK_MoverWindow_DisableMaximizeBox(TBC45XWindow *pThis);
 extern "C" void __cdecl Hook_SCURK_MoverWindow_EvGetMinMaxInfo(winscurkMoverWindow *pThis, MINMAXINFO *pMmi);
+cPaletteWindow *__cdecl L_SCURK_LoadOwnPaletteResources(cPaletteWindow *pThis);
+extern "C" void __cdecl Hook_SCURK_PaletteWindow_EvLButtonDown(cPaletteWindow *pThis, DWORD modKeys, TBC45XPoint *pt);
+extern "C" void __cdecl Hook_SCURK_PaletteWindow_EvRButtonDown(cPaletteWindow *pThis, DWORD modKeys, TBC45XPoint *pt);
 extern "C" void __cdecl Hook_SCURK_MenuItemEnabler_Enable(TBC45XMenuItemEnabler *pThis, int nEnable);
 extern "C" void __cdecl Hook_SCURK_BCDialog_CmCancel(TBC45XDialog *pThis);
 extern "C" LRESULT __cdecl Hook_SCURK_FrameWindow_EvCommand(TBC45XFrameWindow *pThis, DWORD id, HWND hWndCtl, DWORD notifyCode);

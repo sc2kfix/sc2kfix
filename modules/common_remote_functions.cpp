@@ -122,6 +122,15 @@ TBC45XWindow *R_BOR_WRP_GetWindowPtr(HWND hWndTarget, TBC45XApplication *pApp) {
 	return NULL;
 }
 
+void R_BOR_WRP_Window_EvLButtonDown(TBC45XWindow *pThis, DWORD modKeys, TBC45XPoint *pt) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			GameMain_BCWindow_EvLButtonDown_SCURKPrimary(pThis, modKeys, pt);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			GameMain_BCWindow_EvLButtonDown_SCURK1996(pThis, modKeys, pt);
+	}
+}
+
 void R_BOR_WRP_Window_SetCursor(TBC45XParWindow *pThis, TBC45XModule *pModule, const char *pResID) {
 	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
 		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
@@ -129,6 +138,16 @@ void R_BOR_WRP_Window_SetCursor(TBC45XParWindow *pThis, TBC45XModule *pModule, c
 		else if (dwDetectedVersion == VERSION_SCURK_1996)
 			GameMain_BCWindow_SetCursor_SCURK1996(pThis, pModule, pResID);
 	}
+}
+
+int R_BOR_WRP_Window_MessageBox(TBC45XWindow *pThis, const char *pText, const char *pCaption, DWORD uType) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return GameMain_BCWindow_MessageBox_SCURKPrimary(pThis, pText, pCaption, uType);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return GameMain_BCWindow_MessageBox_SCURK1996(pThis, pText, pCaption, uType);
+	}
+	return -1;
 }
 
 void R_BOR_WRP_WindowDC_Destruct(TBC45XWindowDC *pThis, char c) {
@@ -528,6 +547,15 @@ TBC45XDib *R_SCURK_WRP_EditWindow_mGetForegroundPattern(winscurkEditWindow *pThi
 			return GameMain_EditWindow_mGetForegroundPattern_SCURK1996(pThis);
 	}
 	return NULL;
+}
+
+void R_SCURK_WRP_EditWindow_mDoCurrentPatternDib(winscurkEditWindow *pThis) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			GameMain_EditWindow_mDoCurrentPatternDib_SCURKPrimary(pThis);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			GameMain_EditWindow_mDoCurrentPatternDib_SCURK1996(pThis);
+	}
 }
 
 int R_SCURK_WRP_EditWindow_mGetShapeWidth(winscurkEditWindow *pThis) {
