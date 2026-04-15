@@ -121,11 +121,15 @@ int MusicFluidSynthMidiEventHandler(void* data, fluid_midi_event_t* event) {
 }
 
 void MusicFluidSynthLoggerError(int level, const char* message, void* data) {
+	// Ignore the error we get if we're loading the default Windows GM "soundfont"
+	if (message && !strcmp(message, "Not a SoundFont file") && !_stricmp(GetFileBaseName(szSettingsFluidSynthSoundfont), "gm.dls"))
+		return;
+
 	ConsoleLog(LOG_ERROR, "MUS:  FluidSynth: %s\n", message);
 }
 
 void MusicFluidSynthLoggerWarning(int level, const char* message, void* data) {
-	if (message && !strncmp(message, "SDL", 3))
+	if (message && (!strncmp(message, "SDL", 3) || !strncmp(message, "Ignoring unknown top-level DLS chunk", 36)))
 		return;
 	ConsoleLog(LOG_WARNING, "MUS:  FluidSynth: %s\n", message);
 }
