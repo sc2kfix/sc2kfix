@@ -218,7 +218,6 @@ const char* szSC2KFixBuildInfo = "$(UserName)@$(ComputerName)  $([System.DateTim
     <None Include="blobs\libsc2kfix.lua" />
     <None Include="hooks\exports.def" />
     <None Include="README.md" />
-    <None Include="script.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="sc2kfix.rc" />

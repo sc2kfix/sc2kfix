@@ -477,9 +477,6 @@
     <None Include="README.md">
       <Filter>Documentation</Filter>
     </None>
-    <None Include="script.md">
-      <Filter>Documentation</Filter>
-    </None>
     <None Include="blobs\FIXEDTILES.MIF">
       <Filter>Resource Files\TSET</Filter>
     </None>
