@@ -226,6 +226,7 @@ BOOL MusicLoadFluidSynth(void) {
 	if (!bUseFluidSynth) {
 		ConsoleLog(LOG_ERROR, "MUS:  One or more FluidSynth functions could not be loaded. Disabling FluidSynth.\n");
 		FreeLibrary(hmodFluidSynth);
+		hmodFluidSynth = NULL;
 		return FALSE;
 	}
 
@@ -265,9 +266,14 @@ DWORD WINAPI FluidSynthWatchdogThread(LPVOID lpParameter) {
 	pFluidSynthPlayer = FS_new_fluid_player(pFluidSynthSynth);
 	if (FS_fluid_is_soundfont(szSettingsFluidSynthSoundfont))
 		FS_fluid_synth_sfload(pFluidSynthSynth, szSettingsFluidSynthSoundfont, 1);
+	if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
+		ConsoleLog(LOG_DEBUG, "MUS:  Loaded soundfont \"%s\" into new pFluidSynthPlayer.\n", szSettingsFluidSynthSoundfont);
+
 	FS_fluid_player_set_playback_callback(pFluidSynthPlayer, MusicFluidSynthMidiEventHandler, pFluidSynthSynth);
 	FS_fluid_player_add(pFluidSynthPlayer, szSongPath);
 	pFluidSynthDriver = FS_new_fluid_audio_driver(pFluidSynthSettings, pFluidSynthSynth);
+	if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
+		ConsoleLog(LOG_DEBUG, "MUS:  Loaded MIDI file \"%s\" into pFluidSynthPlayer.\n", szSongPath);
 
 	// Disable chorus and set reverb and gain to the default level used by Roland synthesizers
 	FS_fluid_settings_setint(pFluidSynthSettings, "synth.chorus.active", 0);
@@ -277,6 +283,8 @@ DWORD WINAPI FluidSynthWatchdogThread(LPVOID lpParameter) {
 	// Play track
 	FS_fluid_player_play(pFluidSynthPlayer);
 	bFluidSynthPlaying = TRUE;
+	if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
+		ConsoleLog(LOG_DEBUG, "MUS:  Started playback on pFluidSynthPlayer; watchdog thread joining player thread.\n");
 	
 	// Wait until the FluidSynth player thread exits
 	FS_fluid_player_join(pFluidSynthPlayer);

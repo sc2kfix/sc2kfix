@@ -132,7 +132,7 @@ void LoadSettings(void) {
 
 	// QoL/performance settings
 	char szSettingsMusicEngineOutput[32];
-	GetPrivateProfileStringA(section, "szSettingsMusicEngineOutput", "sequencer", szSettingsMusicEngineOutput, 31, ini_file);
+	GetPrivateProfileStringA(section, "szSettingsMusicEngineOutput", "fluidsynth", szSettingsMusicEngineOutput, 31, ini_file);
 	iSettingsMusicEngineOutput = SettingsLoadMusicEngine(szSettingsMusicEngineOutput);
 	if (!hmodFluidSynth && iSettingsMusicEngineOutput == MUSIC_ENGINE_FLUIDSYNTH) {
 		ConsoleLog(LOG_ERROR, "CORE: FluidSynth music engine selected but library not available; falling back to MIDI sequencer.\n");
@@ -159,13 +159,13 @@ void LoadSettings(void) {
 	bSettingsAlwaysSkipIntro = GetPrivateProfileIntA(section, "bSettingsAlwaysSkipIntro", bSettingsAlwaysSkipIntro, ini_file);
 	bSettingsDarkUndergroundBkgnd = GetPrivateProfileIntA(section, "bSettingsDarkUndergroundBkgnd", bSettingsDarkUndergroundBkgnd, ini_file);
 
-	// FluidSynth settings (experimental -- not exposed to GUI yet)
+	// Music settings
 	if (iSettingsMusicEngineOutput == MUSIC_ENGINE_FLUIDSYNTH) {
 		ConsoleLog(LOG_INFO, "CORE: FluidSynth music engine enabled.\n");
 
 		if (!strcmp(szSettingsFluidSynthSoundfont, "") || !FileExists(szSettingsFluidSynthSoundfont)) {
-			ConsoleLog(LOG_ERROR, "CORE: FluidSynth soundfont not specified or does not exist; falling back to MIDI sequencer.\n");
-			iSettingsMusicEngineOutput = MUSIC_ENGINE_SEQUENCER;
+			ConsoleLog(LOG_ERROR, "CORE: FluidSynth soundfont not specified or does not exist; falling back to gm.dls.\n");
+			strcpy_s(szSettingsFluidSynthSoundfont, MAX_PATH, "C:\\Windows\\System32\\drivers\\gm.dls");
 		} else
 			ConsoleLog(LOG_INFO, "CORE: Using \"%s\" as FluidSynth soundfont.\n", szSettingsFluidSynthSoundfont);
 	}
@@ -342,7 +342,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			""
 			"None: Disables music playback independent of the per-game music option.\n"
 			"Windows MIDI: Uses the native Windows MIDI sequencer.\n"
-			"FluidSynth: Uses the FluidSynth software synth, if available.\n"
+			"FluidSynth: Uses the FluidSynth software synth, if available (default).\n"
 			"MP3 Playback: Uses MP3 files for playback, if available.");
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_FLUIDSYNTH_SOUNDFONT),
 			"FluidSynth requires a soundfont for playback that contains the samples and synthesis data required to play back MIDI files. Any SoundFont 2 standard soundfont\n\n"
