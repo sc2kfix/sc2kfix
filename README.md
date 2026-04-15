@@ -52,6 +52,8 @@ sc2kfix includes API bindings for the FluidSynth real-time software synthesizer 
 
 sc2kfix includes the Lua embeddable programming language (https://www.lua.org). Lua is made available under the terms of the MIT license; a copy of this license has been included in the sc2kfix project as `thirdparty/lua/LICENSE`. Lua is copyright (c) 1994-2025 Lua.org, PUC-Rio.
 
+Binary releases of sc2kfix are distributed with the Simple DirectMedia Layer (SDL3) and libsndfile libraries in DLL form. SDL3 is made available under the terms of the zlib license; you can download the library in source form at https://github.com/libsdl-org/SDL. libsndfile is made available under the terms of version 2.1 of the GNU Lesser General Public License (LGPL 2.1); you can download the library in source form at https://github.com/libsndfile/libsndfile.
+
 ## How do I use it?
 1. If you are installing the game from scratch, copy the SC2K folder from your CD (under the WIN95 folder in the Special Edition CD) to your hard drive.
    * Make sure to copy the SC2K folder somewhere writable, as the game stores its saves in a subfolder of that directory.
