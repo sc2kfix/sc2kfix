@@ -1700,6 +1700,7 @@ void L_SCURK_InitDOSMacPaletteIdxTable() {
 	//    0x00 - which caused a noticeable negative effect on certain tiles
 	//    (see the Marina, Seaport Warehouse, Seaport Loading Bar, Army Hangar,
 	//    Military Control Tower)
+	DOSMacPalTable[1] =   0x00; // This was previously 0x11 - which would "pick" within the animated range - not desirable.
 	DOSMacPalTable[204] = 0x38;
 	DOSMacPalTable[205] = 0x03;
 	DOSMacPalTable[210] = 0x44;
