@@ -227,22 +227,6 @@ int DoCheckAndInstall(void) {
 	return InstallSC2KDefaults();
 }
 
-/*void LoadStoredPaths() {
-	const char *ini_file = GetIniPath();
-	const char *section = "LastAccessedPaths";
-
-	GetPrivateProfileStringA(section, "szLastStoredCityPath", "", szLastStoredCityPath, sizeof(szLastStoredCityPath) - 1, ini_file);
-	GetPrivateProfileStringA(section, "szLastStoredTileSetPath", "", szLastStoredTileSetPath, sizeof(szLastStoredTileSetPath) - 1, ini_file);
-}
-
-void SaveStoredPaths() {
-	const char *ini_file = GetIniPath();
-	const char *section = "LastAccessedPaths";
-
-	WritePrivateProfileStringA(section, "szLastStoredCityPath", szLastStoredCityPath, ini_file);
-	WritePrivateProfileStringA(section, "szLastStoredTileSetPath", szLastStoredTileSetPath, ini_file);
-}*/
-
 static BOOL IsRegKey(HKEY hKey, int rkVal) {
 	if (rkVal < enSoftwareKey || rkVal >= enCountKey)
 		return FALSE;
@@ -361,20 +345,6 @@ static void GamePathAdjust(const char *szBasePath, const char *target, LPBYTE lp
 	sprintf_s(szTarget, MAX_PATH, "%s\\%s", szBasePath, target);
 	GetOutString(szTarget, lpData, lpcbData);
 }
-
-/*static void GetIniOutString(const char* section, const char* key, const char* sValue, LPBYTE lpData, LPDWORD lpcbData) {
-	const char *ini_file = GetIniPath();
-
-	char szBuf[64];
-	GetPrivateProfileStringA(section, key, sValue, szBuf, sizeof(szBuf) - 1, ini_file);
-	GetOutString(szBuf, lpData, lpcbData);
-}
-
-static void GetIniOutDWORD(const char *section, const char *key, DWORD dvVal, LPBYTE lpData, LPDWORD lpcbData) {
-	const char *ini_file = GetIniPath();
-
-	GetOutDWORD(GetPrivateProfileIntA(section, key, dvVal, ini_file), lpData, lpcbData);
-}*/
 
 extern "C" LSTATUS __stdcall Hook_RegSetValueExA(HKEY hKey, LPCSTR lpValueName, DWORD dwReserved, DWORD dwType, const BYTE *lpData, DWORD cbData) {
 	const char *section = SectionLookup(hKey);

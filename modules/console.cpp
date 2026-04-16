@@ -63,9 +63,6 @@ BOOL bConsoleInLuaREPL = FALSE;
 int iConsoleScriptNest = 0;
 std::map<std::string, script_variable_t> mapVariables;
 
-static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments);
-UINT SettingsLoadMusicEngine(const char* szMusicEngine);
-
 console_command_t fpConsoleCommands[] = {
 	{ "?", ConsoleCmdHelp, CONSOLE_COMMAND_ALIAS, "" },
 	{ "clear", ConsoleCmdClear, CONSOLE_COMMAND_DOCUMENTED, "Clear screen or variables" },
@@ -691,9 +688,7 @@ BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
 	return TRUE;
 }
 
-static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments) {
-	LoadJSONSettings();
-	printf_lightblue("JSON settings loaded.\n");
+BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments) {
 	return TRUE;
 }
 

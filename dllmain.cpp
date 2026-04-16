@@ -1,5 +1,5 @@
 // sc2kfix dllmain.cpp: all the magic happens here
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #define GETPROC(i, name) fpWinMMHookList[i] = GetProcAddress(hRealWinMM, #name);
 #define DEFPROC(i, name) extern "C" __declspec(naked) void __stdcall _##name() { __asm { jmp fpWinMMHookList[i*4] }};
@@ -415,15 +415,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		iInstallCheck = DoCheckAndInstall();
 		if (iInstallCheck)
 			ConsoleLog(LOG_INFO, "CORE: Portable entries created by faux-installer.\n");
-
-		// Not needed anymore in the JSON settings branch (I think?)
-		/*if (dwDetectedVersion == VERSION_SC2K_1996) {
-			ConsoleLog(LOG_INFO, "CORE: Loading stored key/button bindings.\n");
-			LoadStoredBindings();
-
-			ConsoleLog(LOG_INFO, "CORE: Loading last stored load/save city and load tileset paths.\n");
-			LoadStoredPaths();
-		}*/
 
 		// Check for updates
 		if (jsonSettingsCore["sc2kfix"]["core"]["check_for_updates"].ToBool()) {

@@ -64,33 +64,6 @@ const char *GetIniPath() {
 	return szIniPath;
 }
 
-const char* SettingsSaveMusicEngine(UINT iMusicEngine) {
-	switch (iMusicEngine) {
-	case MUSIC_ENGINE_NONE:
-		return "none";
-	case MUSIC_ENGINE_SEQUENCER:
-		return "sequencer";
-	case MUSIC_ENGINE_FLUIDSYNTH:
-		return "fluidsynth";
-	case MUSIC_ENGINE_MP3:
-		return "mp3";
-	default:
-		return "sequencer";
-	}
-}
-
-UINT SettingsLoadMusicEngine(const char* szMusicEngine) {
-	if (!strcmp(szMusicEngine, "none"))
-		return MUSIC_ENGINE_NONE;
-	if (!strcmp(szMusicEngine, "sequencer"))
-		return MUSIC_ENGINE_SEQUENCER;
-	if (!strcmp(szMusicEngine, "fluidsynth"))
-		return MUSIC_ENGINE_FLUIDSYNTH;
-	if (!strcmp(szMusicEngine, "mp3"))
-		return MUSIC_ENGINE_MP3;
-	return MUSIC_ENGINE_SEQUENCER;
-}
-
 void DefaultSettingsSC2K(json::JSON& jsonSettings) {
 	jsonSettings["SimCity2000"]["Registration"]["Mayor Name"] = "Marvin Maxis";
 	jsonSettings["SimCity2000"]["Registration"]["Company Name"] = "Q37 Space Modulator Mfg.";
@@ -442,7 +415,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 		SetDlgItemText(hwndDlg, IDC_SETTINGS_MAYOR, jsonSettingsCoreWorkingCopy["SimCity2000"]["Registration"]["Mayor Name"].ToString().c_str());
 		SetDlgItemText(hwndDlg, IDC_SETTINGS_COMPANY, jsonSettingsCoreWorkingCopy["SimCity2000"]["Registration"]["Company Name"].ToString().c_str());
 
-		ComboBox_SetCurSel(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT), SettingsLoadMusicEngine(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_driver"].ToString().c_str()));
+		ComboBox_SetCurSel(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT), MusicEngineStringToInt(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_driver"].ToString().c_str()));
 
 		{
 			const char* szSoundFontBaseName = GetFileBaseName(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["soundfont"].ToString().c_str());
@@ -485,7 +458,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			if (!GetDlgItemText(hwndDlg, IDC_SETTINGS_COMPANY, szTempRegistrationNameBuffer, 63))
 				jsonSettingsCoreWorkingCopy["SimCity2000"]["Registration"]["Company Name"] = szTempRegistrationNameBuffer;
 
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_driver"] = SettingsSaveMusicEngine(ComboBox_GetCurSel(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT)));
+			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_driver"] = MusicEngineIntToString(ComboBox_GetCurSel(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT)));
 
 			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_in_background"], IDC_SETTINGS_CHECK_BKGDMUSIC);
 			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["use_sound_replacements"], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);

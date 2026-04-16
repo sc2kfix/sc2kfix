@@ -99,6 +99,33 @@ void MusicShufflePlaylist(int iLastSongPlayed) {
 	}
 }
 
+const char* MusicEngineIntToString(UINT iMusicEngine) {
+	switch (iMusicEngine) {
+	case MUSIC_ENGINE_NONE:
+		return "none";
+	case MUSIC_ENGINE_SEQUENCER:
+		return "sequencer";
+	case MUSIC_ENGINE_FLUIDSYNTH:
+		return "fluidsynth";
+	case MUSIC_ENGINE_MP3:
+		return "mp3";
+	default:
+		return "sequencer";
+	}
+}
+
+UINT MusicEngineStringToInt(const char* szMusicEngine) {
+	if (!strcmp(szMusicEngine, "none"))
+		return MUSIC_ENGINE_NONE;
+	if (!strcmp(szMusicEngine, "sequencer"))
+		return MUSIC_ENGINE_SEQUENCER;
+	if (!strcmp(szMusicEngine, "fluidsynth"))
+		return MUSIC_ENGINE_FLUIDSYNTH;
+	if (!strcmp(szMusicEngine, "mp3"))
+		return MUSIC_ENGINE_MP3;
+	return MUSIC_ENGINE_SEQUENCER;
+}
+
 void WINAPI MusicMCINotifyCallback(WPARAM wFlags, LPARAM lDevID) {
 	if (wFlags == MCI_NOTIFY_SUCCESSFUL || wFlags == MCI_NOTIFY_FAILURE) {
 		PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
@@ -305,7 +332,7 @@ DWORD WINAPI FluidSynthWatchdogThread(LPVOID lpParameter) {
 	return 0;
 }
 
-const char* SettingsSaveMusicEngine(UINT iMusicEngine);
+const char* MusicEngineIntToString(UINT iMusicEngine);
 
 static int GetAliasIndexFromSongID(int iSongID) {
 	if (iSongID < 10000 || iSongID > 10018)

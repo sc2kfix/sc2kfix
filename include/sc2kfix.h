@@ -403,6 +403,8 @@ const char *GetGameSoundPath();
 int GetCurrentActiveSongID();
 BOOL MusicLoadFluidSynth(void);
 void DoMusicPlay(int iSongID, BOOL bInterrupt);
+const char* MusicEngineIntToString(UINT iMusicEngine);
+UINT MusicEngineStringToInt(const char* szMusicEngine);
 BOOL DoConfigureMusicTracks(settings_t *st, HWND hDlg, BOOL bMP3);
 BOOL DoConfigureKeyBindings(settings_t *st, HWND hwndDlg);
 
@@ -432,6 +434,7 @@ BOOL ConsoleCmdShowMods(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowSettings(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments);
 //BOOL ConsoleCmdShowSprite(const char* szCommand, const char* szArguments);
+BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdSet(const char* szCommand, const char* szArguments);
