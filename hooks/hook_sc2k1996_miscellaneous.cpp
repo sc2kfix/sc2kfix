@@ -264,9 +264,9 @@ extern "C" int __stdcall Hook_FileDialog_DoModal() {
 				if (L_IsDirectoryPathValid(szPath)) {
 					if ((DWORD)_ReturnAddress() == 0x42EB82 ||
 						(DWORD)_ReturnAddress() == 0x42FDCE) // From 'LoadCity' or 'SaveCityAs'
-						strcpy_s(szLastStoredCityPath, sizeof(szLastStoredCityPath) - 1, szPath);
+						jsonSettingsCore["sc2kfix"]["paths"]["cities"] = szPath;
 					else if ((DWORD)_ReturnAddress() == 0x42F312) // From 'LoadTileSet'
-						strcpy_s(szLastStoredTileSetPath, sizeof(szLastStoredTileSetPath) - 1, szPath);
+						jsonSettingsCore["sc2kfix"]["paths"]["tilesets"] = szPath;
 				}
 			}
 		}

@@ -49,8 +49,8 @@ enum redirected_keys_t {
 
 const char *gamePrimaryKey = "SimCity 2000";
 
-char szLastStoredCityPath[MAX_PATH + 1];
-char szLastStoredTileSetPath[MAX_PATH + 1];
+//char szLastStoredCityPath[MAX_PATH + 1];
+//char szLastStoredTileSetPath[MAX_PATH + 1];
 
 BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
@@ -227,7 +227,7 @@ int DoCheckAndInstall(void) {
 	return InstallSC2KDefaults();
 }
 
-void LoadStoredPaths() {
+/*void LoadStoredPaths() {
 	const char *ini_file = GetIniPath();
 	const char *section = "LastAccessedPaths";
 
@@ -241,7 +241,7 @@ void SaveStoredPaths() {
 
 	WritePrivateProfileStringA(section, "szLastStoredCityPath", szLastStoredCityPath, ini_file);
 	WritePrivateProfileStringA(section, "szLastStoredTileSetPath", szLastStoredTileSetPath, ini_file);
-}
+}*/
 
 static BOOL IsRegKey(HKEY hKey, int rkVal) {
 	if (rkVal < enSoftwareKey || rkVal >= enCountKey)

@@ -416,13 +416,14 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		if (iInstallCheck)
 			ConsoleLog(LOG_INFO, "CORE: Portable entries created by faux-installer.\n");
 
-		if (dwDetectedVersion == VERSION_SC2K_1996) {
+		// Not needed anymore in the JSON settings branch (I think?)
+		/*if (dwDetectedVersion == VERSION_SC2K_1996) {
 			ConsoleLog(LOG_INFO, "CORE: Loading stored key/button bindings.\n");
 			LoadStoredBindings();
 
 			ConsoleLog(LOG_INFO, "CORE: Loading last stored load/save city and load tileset paths.\n");
 			LoadStoredPaths();
-		}
+		}*/
 
 		// Check for updates
 		if (jsonSettingsCore["sc2kfix"]["core"]["check_for_updates"].ToBool()) {
