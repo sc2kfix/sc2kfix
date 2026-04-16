@@ -22,32 +22,12 @@ json::JSON jsonSettingsMods;
 
 char szGamePath[MAX_PATH];
 
+// No longer actually used for settings, but as temporary buffers
 char szSettingsMayorName[64];
 char szSettingsCompanyName[64];
-
-BOOL bSettingsMusicInBackground = TRUE;
-BOOL bSettingsUseSoundReplacements = TRUE;
-BOOL bSettingsShuffleMusic = FALSE;
-BOOL bSettingsUseMultithreadedMusic = TRUE;
-BOOL bSettingsFrequentCityRefresh = TRUE;
-BOOL bSettingsUseMP3Music = FALSE;
-BOOL bSettingsAlwaysPlayMusic = FALSE;
-
-BOOL bSettingsAlwaysConsole = FALSE;
-BOOL bSettingsCheckForUpdates = TRUE;
-BOOL bSettingsDontLoadMods = FALSE;
-
-BOOL bSettingsUseStatusDialog = FALSE;
-BOOL bSettingsTitleCalendar = TRUE;
-BOOL bSettingsUseNewStrings = TRUE;
-BOOL bSettingsAlwaysSkipIntro = FALSE;
-BOOL bSettingsDarkUndergroundBkgnd = FALSE;
-
-UINT iSettingsMusicEngineOutput = MUSIC_ENGINE_SEQUENCER;
-char szSettingsFluidSynthSoundfont[MAX_PATH + 1];
-
 char szSettingsMIDITrackPath[MUSIC_TRACKS][MAX_PATH + 1];
 char szSettingsMP3TrackPath[MUSIC_TRACKS][MAX_PATH + 1];
+static char szSettingsFluidSynthSoundfont[MAX_PATH + 1];
 
 void SetGamePath(void) {
 	char szModulePathName[MAX_PATH];
@@ -62,6 +42,13 @@ const char *GetIniPath() {
 
 	sprintf_s(szIniPath, MAX_PATH, "%s\\%s", szGamePath, SC2KFIX_INIFILE);
 	return szIniPath;
+}
+
+const char* GetSettingsJsonPath() {
+	static char szJsonPath[MAX_PATH];
+
+	sprintf_s(szJsonPath, MAX_PATH, "%s\\%s", szGamePath, SC2KFIX_COREJSON);
+	return szJsonPath;
 }
 
 void DefaultSettingsSC2K(json::JSON& jsonSettings) {
@@ -207,7 +194,7 @@ void ConvertSettingsToJSON(void) {
 	// Rename the old INI, save the JSON, and print a notice in the console
 	MoveFile(szSettingsIniPath, (std::string(szSettingsIniPath) + ".old").c_str());
 	SaveJSONSettings();
-	ConsoleLog(LOG_INFO, "CORE: Converted existing sc2kfix.ini to settings.json.\n");
+	ConsoleLog(LOG_INFO, "CORE: Converted existing " SC2KFIX_INIFILE " to " SC2KFIX_COREJSON ".\n");
 }
 
 void InitializeJSONSettings(void) {
@@ -225,14 +212,14 @@ void InitializeJSONSettings(void) {
 	SaveJSONBindings(jsonSettingsCore);
 
 	// Convert existing settings INI if needed
-	if (!FileExists((std::string(szGamePath) + "\\settings.json").c_str()) && FileExists(GetIniPath()))
+	if (!FileExists(GetSettingsJsonPath()) && FileExists(GetIniPath()))
 		ConvertSettingsToJSON();
 }
 
 void LoadJSONSettings(void) {
 	// XXX: this is a bit inefficient; maybe do a std::string with a pre-allocation using
 	// std::filesystem::file_size() instead?
-	std::ifstream fSettingsJSON(std::string(szGamePath) + "\\settings.json");
+	std::ifstream fSettingsJSON(GetSettingsJsonPath());
 	std::stringstream strLoadedJSONDump;
 	strLoadedJSONDump << fSettingsJSON.rdbuf();
 	jsonSettingsCore.merge(jsonSettingsCore.Load(strLoadedJSONDump.str()));
@@ -240,7 +227,7 @@ void LoadJSONSettings(void) {
 
 void SaveJSONSettings(void) {
 	jsonSettingsCore["sc2kfix"]["core"]["settings_save_time"] = std::to_string(time(NULL));
-	std::ofstream fSettingsJSON(std::string(szGamePath) + "\\settings.json", std::ios::out | std::ios::trunc);
+	std::ofstream fSettingsJSON(GetSettingsJsonPath(), std::ios::out | std::ios::trunc);
 	fSettingsJSON << jsonSettingsCore.dump();
 
 	if (dwDetectedVersion == VERSION_SC2K_1996) {

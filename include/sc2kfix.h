@@ -61,6 +61,7 @@
 #define SC2KFIX_RELEASE_TAG		"r10"
 
 #define SC2KFIX_INIFILE		"sc2kfix.ini"
+#define SC2KFIX_COREJSON	"settings.json"
 #define SC2KFIX_MODSFOLDER	"mods"
 
 #define WM_SC2KFIX_UPDATE 37241
@@ -304,30 +305,9 @@ extern json::JSON jsonSettingsCore;
 extern json::JSON jsonSettingsCoreWorkingCopy;
 extern json::JSON jsonSettingsMods;
 
+// No longer actually used for settings, but as temporary buffers
 extern char szSettingsMayorName[64];
 extern char szSettingsCompanyName[64];
-
-extern UINT iSettingsMusicEngineOutput;
-extern BOOL bSettingsMusicInBackground;
-extern BOOL bSettingsUseSoundReplacements;
-extern BOOL bSettingsShuffleMusic;
-extern BOOL bSettingsUseMultithreadedMusic;
-extern BOOL bSettingsFrequentCityRefresh;
-extern BOOL bSettingsUseMP3Music;
-extern BOOL bSettingsAlwaysPlayMusic;
-
-extern BOOL bSettingsAlwaysConsole;
-extern BOOL bSettingsCheckForUpdates;
-extern BOOL bSettingsDontLoadMods;
-
-extern BOOL bSettingsUseStatusDialog;
-extern BOOL bSettingsTitleCalendar;
-extern BOOL bSettingsUseNewStrings;
-extern BOOL bSettingsAlwaysSkipIntro;
-extern BOOL bSettingsDarkUndergroundBkgnd;
-
-// Music track aliases
-
 extern char szSettingsMIDITrackPath[MUSIC_TRACKS][MAX_PATH + 1];
 extern char szSettingsMP3TrackPath[MUSIC_TRACKS][MAX_PATH + 1];
 

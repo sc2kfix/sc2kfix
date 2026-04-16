@@ -36,7 +36,6 @@ DWORD dwMusicThreadID;
 MCIDEVICEID mciDevice = NULL;
 BOOL bMultithreadedMusicEnabled = FALSE;
 BOOL bUseFluidSynth = FALSE;
-extern char szSettingsFluidSynthSoundfont[MAX_PATH + 1];
 
 HMODULE hmodFluidSynth = NULL;
 fluid_settings_t* pFluidSynthSettings = NULL;
