@@ -327,7 +327,7 @@ static BOOL SetKeyToAction(std::vector<baction_t> &targBindings, bkey_t *key_ent
 	return bRet;
 }
 
-void LoadStoredBindings() {
+/*void LoadStoredBindings() {
 	const char *ini_file = GetIniPath();
 	const char *section = "sc2kfix.Bindings";
 	char szActionName[64 + 1];
@@ -357,7 +357,7 @@ void SaveStoredBindings() {
 			WritePrivateProfileStringA(section, key_entry->pKeyName, pCurrentAction, ini_file);
 		}
 	}
-}
+}*/
 
 void LoadJSONBindings(json::JSON& jsonSettings) {
 	for (int i = 0; i < B_KEY_COUNT; i++) {
