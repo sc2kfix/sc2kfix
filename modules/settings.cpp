@@ -269,133 +269,10 @@ void SaveJSONSettings(void) {
 	jsonSettingsCore["sc2kfix"]["core"]["settings_save_time"] = std::to_string(time(NULL));
 	std::ofstream fSettingsJSON(std::string(szGamePath) + "\\settings.json", std::ios::out | std::ios::trunc);
 	fSettingsJSON << jsonSettingsCore.dump();
-}
 
-void LoadSettings(void) {
-	const char *ini_file = GetIniPath();
-	const char *section = "Registration";
-	GetPrivateProfileStringA(section, "Mayor Name", "", szSettingsMayorName, sizeof(szSettingsMayorName)-1, ini_file);
-	GetPrivateProfileStringA(section, "Company Name", "", szSettingsCompanyName, sizeof(szSettingsCompanyName)-1, ini_file);
-
-	section = "sc2kfix";
-
-	memset(szSettingsMIDITrackPath, 0, sizeof(szSettingsMIDITrackPath));
-	memset(szSettingsMP3TrackPath, 0, sizeof(szSettingsMP3TrackPath));
-
-	// QoL/performance settings
-	char szSettingsMusicEngineOutput[32];
-	GetPrivateProfileStringA(section, "szSettingsMusicEngineOutput", "fluidsynth", szSettingsMusicEngineOutput, 31, ini_file);
-	iSettingsMusicEngineOutput = SettingsLoadMusicEngine(szSettingsMusicEngineOutput);
-	if (!hmodFluidSynth && iSettingsMusicEngineOutput == MUSIC_ENGINE_FLUIDSYNTH) {
-		ConsoleLog(LOG_ERROR, "CORE: FluidSynth music engine selected but library not available; falling back to MIDI sequencer.\n");
-		iSettingsMusicEngineOutput = MUSIC_ENGINE_SEQUENCER;
-	}
-	GetPrivateProfileStringA(section, "szSettingsFluidSynthSoundfont", "C:\\Windows\\System32\\drivers\\gm.dls", szSettingsFluidSynthSoundfont, MAX_PATH, ini_file);
-
-	bSettingsMusicInBackground = GetPrivateProfileIntA(section, "bSettingsMusicInBackground", bSettingsMusicInBackground, ini_file);
-	bSettingsUseSoundReplacements = GetPrivateProfileIntA(section, "bSettingsUseSoundReplacements", bSettingsUseSoundReplacements, ini_file);
-	bSettingsShuffleMusic = GetPrivateProfileIntA(section, "bSettingsShuffleMusic", bSettingsShuffleMusic, ini_file);
-	bSettingsFrequentCityRefresh = GetPrivateProfileIntA(section, "bSettingsFrequentCityRefresh", bSettingsFrequentCityRefresh, ini_file);
-	bSettingsUseMP3Music = GetPrivateProfileIntA(section, "bSettingsUseMP3Music", bSettingsUseMP3Music, ini_file);
-	bSettingsAlwaysPlayMusic = GetPrivateProfileIntA(section, "bSettingsAlwaysPlayMusic", bSettingsAlwaysPlayMusic, ini_file);
-
-	// Internal settings
-	bSettingsAlwaysConsole = GetPrivateProfileIntA(section, "bSettingsAlwaysConsole", bSettingsAlwaysConsole, ini_file);
-	bSettingsCheckForUpdates = GetPrivateProfileIntA(section, "bSettingsCheckForUpdates", bSettingsCheckForUpdates, ini_file);
-	bSettingsDontLoadMods = GetPrivateProfileIntA(section, "bSettingsDontLoadMods", bSettingsDontLoadMods, ini_file);
-
-	// Interface settings
-	bSettingsUseStatusDialog = GetPrivateProfileIntA(section, "bSettingsUseStatusDialog", bSettingsUseStatusDialog, ini_file);
-	bSettingsTitleCalendar = GetPrivateProfileIntA(section, "bSettingsTitleCalendar", bSettingsTitleCalendar, ini_file);
-	bSettingsUseNewStrings = GetPrivateProfileIntA(section, "bSettingsUseNewStrings", bSettingsUseNewStrings, ini_file);
-	bSettingsAlwaysSkipIntro = GetPrivateProfileIntA(section, "bSettingsAlwaysSkipIntro", bSettingsAlwaysSkipIntro, ini_file);
-	bSettingsDarkUndergroundBkgnd = GetPrivateProfileIntA(section, "bSettingsDarkUndergroundBkgnd", bSettingsDarkUndergroundBkgnd, ini_file);
-
-	// Music settings
-	if (iSettingsMusicEngineOutput == MUSIC_ENGINE_FLUIDSYNTH) {
-		ConsoleLog(LOG_INFO, "CORE: FluidSynth music engine enabled.\n");
-
-		if (!strcmp(szSettingsFluidSynthSoundfont, "") || !FileExists(szSettingsFluidSynthSoundfont)) {
-			ConsoleLog(LOG_ERROR, "CORE: FluidSynth soundfont not specified or does not exist; falling back to gm.dls.\n");
-			strcpy_s(szSettingsFluidSynthSoundfont, MAX_PATH, "C:\\Windows\\System32\\drivers\\gm.dls");
-		} else
-			ConsoleLog(LOG_INFO, "CORE: Using \"%s\" as FluidSynth soundfont.\n", szSettingsFluidSynthSoundfont);
-	}
-
-	char szKeyBuf[32];
-
-	section = "sc2kfix.music.MIDI";
-	for (int i = 0; i < MUSIC_TRACKS; i++) {
-		sprintf_s(szKeyBuf, sizeof(szKeyBuf), "100%02d", i);
-		GetPrivateProfileStringA(section, szKeyBuf, "", szSettingsMIDITrackPath[i], sizeof(szSettingsMIDITrackPath[i]) - 1, ini_file);
-		StrTrimA(szSettingsMIDITrackPath[i], " \t\r\n");
-	}
-
-	section = "sc2kfix.music.MP3";
-	for (int i = 0; i < MUSIC_TRACKS; i++) {
-		sprintf_s(szKeyBuf, sizeof(szKeyBuf), "100%02d", i);
-		GetPrivateProfileStringA(section, szKeyBuf, "", szSettingsMP3TrackPath[i], sizeof(szSettingsMP3TrackPath[i]) - 1, ini_file);
-		StrTrimA(szSettingsMP3TrackPath[i], " \t\r\n");
-	}
-
-	SaveSettings(TRUE);
-}
-
-void SaveSettings(BOOL onload) {
-	const char *ini_file = GetIniPath();
-	const char *section = "Registration";
-
-	WritePrivateProfileStringA(section, "Mayor Name", szSettingsMayorName, ini_file);
-	WritePrivateProfileStringA(section, "Company Name", szSettingsCompanyName, ini_file);
-
-	section = "sc2kfix";
-
-	// QoL/performance settings
-	WritePrivateProfileStringA(section, "szSettingsMusicEngineOutput", SettingsSaveMusicEngine(iSettingsMusicEngineOutput), ini_file);
-	WritePrivateProfileStringA(section, "szSettingsFluidSynthSoundfont", szSettingsFluidSynthSoundfont, ini_file);
-	WritePrivateProfileIntA(section, "bSettingsMusicInBackground", bSettingsMusicInBackground, ini_file);
-	WritePrivateProfileIntA(section, "bSettingsUseSoundReplacements", bSettingsUseSoundReplacements, ini_file);
-	WritePrivateProfileIntA(section, "bSettingsShuffleMusic", bSettingsShuffleMusic, ini_file);
-	WritePrivateProfileIntA(section, "bSettingsFrequentCityRefresh", bSettingsFrequentCityRefresh, ini_file);
-	WritePrivateProfileIntA(section, "bSettingsUseMP3Music", bSettingsUseMP3Music, ini_file);
-	WritePrivateProfileIntA(section, "bSettingsAlwaysPlayMusic", bSettingsAlwaysPlayMusic, ini_file);
-
-	// Internal settings
-	WritePrivateProfileIntA(section, "bSettingsAlwaysConsole", bSettingsAlwaysConsole, ini_file);
-	WritePrivateProfileIntA(section, "bSettingsCheckForUpdates", bSettingsCheckForUpdates, ini_file);
-	WritePrivateProfileIntA(section, "bSettingsDontLoadMods", bSettingsDontLoadMods, ini_file);
-
-	// Interface settings
-	WritePrivateProfileIntA(section, "bSettingsUseStatusDialog", bSettingsUseStatusDialog, ini_file);
-	WritePrivateProfileIntA(section, "bSettingsTitleCalendar", bSettingsTitleCalendar, ini_file);
-	WritePrivateProfileIntA(section, "bSettingsUseNewStrings", bSettingsUseNewStrings, ini_file);
-	WritePrivateProfileIntA(section, "bSettingsAlwaysSkipIntro", bSettingsAlwaysSkipIntro, ini_file);
-	WritePrivateProfileIntA(section, "bSettingsDarkUndergroundBkgnd", bSettingsDarkUndergroundBkgnd, ini_file);
-
-	ConsoleLog(LOG_INFO, "CORE: Saved sc2kfix settings.\n");
-
-	if (!onload) {
-		if (dwDetectedVersion == VERSION_SC2K_1996) {
-			char szKeyBuf[32];
-
-			section = "sc2kfix.music.MIDI";
-			for (int i = 0; i < MUSIC_TRACKS; i++) {
-				sprintf_s(szKeyBuf, sizeof(szKeyBuf), "100%02d", i);
-				StrTrimA(szSettingsMIDITrackPath[i], " \t\r\n");
-				WritePrivateProfileStringA(section, szKeyBuf, szSettingsMIDITrackPath[i], ini_file);
-			}
-
-			section = "sc2kfix.music.MP3";
-			for (int i = 0; i < MUSIC_TRACKS; i++) {
-				sprintf_s(szKeyBuf, sizeof(szKeyBuf), "100%02d", i);
-				StrTrimA(szSettingsMP3TrackPath[i], " \t\r\n");
-				WritePrivateProfileStringA(section, szKeyBuf, szSettingsMP3TrackPath[i], ini_file);
-			}
-	
-			// Update any hooks we need to.
-			UpdateMiscHooks_SC2K1996();
-			UpdateStatus_SC2K1996(-1);
-		}
+	if (dwDetectedVersion == VERSION_SC2K_1996) {
+		UpdateMiscHooks_SC2K1996();
+		UpdateStatus_SC2K1996(-1);
 	}
 }
 
@@ -722,7 +599,7 @@ void ShowSettingsDialog(void) {
 			SaveJSONBindings(jsonSettingsCore);
 		}
 
-		// Save the settings JSON file
+		// Save the settings JSON file and update hooks
 		SaveJSONSettings();
 
 		// See if we need to reset the music engine.

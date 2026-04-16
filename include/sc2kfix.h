@@ -389,8 +389,6 @@ const char *GetIniPath(void);
 void InitializeJSONSettings(void);
 void LoadJSONSettings(void);
 void SaveJSONSettings(void);
-void LoadSettings(void);
-void SaveSettings(BOOL onload);
 void ShowSettingsDialog(void);
 void ShowModSettingsDialog(void);
 void ShowScenarioStatusDialog(void);
