@@ -6,6 +6,8 @@ sc2kfix is a plugin that patches the Special Edition release of SimCity 2000 for
 
 **For the most up-to-date information on how to install and configure sc2kfix, as well as a full list of features, check out the plugin user guide on the sc2kfix website: https://sc2kfix.net**
 
+sc2kfix is an entirely human-created and human-driven project. No generative AI has been used in the development process. Any AI-generated or AI-assisted pull requests will be rejected. Maxis didn't need a neural network trained on billions of lines of scraped code, and neither do we.
+
 ### Bugs fixed
 The following game bugs are patched by this DLL:
 * The old, non-functional installer is no longer needed as sc2kfix will prompt for a default mayor and company name on first launch, as well as associate .sc2 and .scn files with SimCity 2000.
@@ -14,7 +16,7 @@ The following game bugs are patched by this DLL:
 * The WillTV and intro cutscenes have been restored along with the Maxis Presents intro slide.
 * SimCity 2000 now properly launches when started from Steam or other game launchers.
 * Music that was included in the game but was never added to the random playlist has been restored.
-* SCURK now works properly on Windows 11 24H2 and newer.
+* SCURK now works properly on Windows 11 24H2 and newer, as well as no longer  having issues with tile alignment, palette conversion, and transparency, among myriad other optimizations being implemented.
 * Military bases now grow properly instead of staying as empty, unusable military zones, and the intended growth of army and naval bases has been restored.
 * The military will make multiple attempts at finding a location for a base instead of permanently giving up after the first try.
 * Rail and highway neighbor connections now work after a saved city is loaded.
@@ -25,25 +27,27 @@ The following game bugs are patched by this DLL:
 
 ### New features
 sc2kfix adds the following quality of life and optional gameplay features to SimCity 2000 Special Edition:
-* A settings dialog for configuring sc2kfix's optional features has been added to the main menu and the in-game Options menu.
-* The New City dialog has been updated to allow you to specify a different mayor name when starting a city.
+* Many parts of the game's simulation engine have been reverse engineered and reimplemented for improved performance, debugging, and extensibility (see the "Additional enhancements" section).
+* A settings dialog for configuring sc2kfix's features has been added to the main menu and the in-game Options menu, and the game's native settings are no longer stored in the registry but rather in a portable JSON-based settings file.
+* The New City dialog has been updated to allow you to specify a different mayor name when starting a city, as well as with detailed tooltips for the other game settings.
 * Higher quality copies of the transit, pipe, and power construction sounds, as well as the Reticulating Splines soundbite have been ported from other versions of SimCity 2000.
 * City growth is now displayed in real-time instead of in batches.
 * The full in-game date is now shown in the title bar.
 * The floating status widget from the Macintosh and DOS versions of the game has been reimplemented and can be enabled in the settings dialog.
-* The game's music engine has been rewritten with multithreading that can run in the background and can play MP3 versions of the soundtrack if present, as well as supporting the use of FluidSynth to play MIDI files with a user-supplied SoundFont.
+* The game's music engine has been rewritten with multithreading that can run in the background and can play MP3 versions of the soundtrack if present, as well as supporting the use of FluidSynth to play MIDI files with either a user-supplied SoundFont or the default General MIDI soundfont on Windows.
 * An advanced query dialog that shows game state information for tiles has been implemented and can be used by holding the Alt key when querying a tile.
+* The Lua programming language has been integrated into the sc2kfix plugin to allow for Lua scripts to be written that can interact with the SimCity 2000 game engine.
 * The middle mouse button now acts as a shortcut for the centering tool, similar to how the right mouse button works in the DOS version of the game.
 * A number of message box strings have had grammatical fixes and/or better wording added to them.
 * An update checker has been added to gently inform the player on the game's main menu if a new version of sc2kfix has been released.
-* A debugging console has been added for experiments and advanced troubleshooting, as well as an `sc2kfix.log` file for informational and error logging.
+* A developer console has been added for experiments and advanced troubleshooting, as well as an `sc2kfix.log` file for informational and error logging. The console can also be used as a Lua REPL.
 * A crash handler has been implemented to enhance the sc2kfix team's ability to hunt down potential game or plugin bugs.
 * Multiple cheat codes from other ports of the game have been restored.
 
 ### Additional enhancements
 sc2kfix implements multiple hooks and a work-in-progress framework for detouring and injecting new code into the game. These are documented in the hooks/hooks.md file. These are currently being used to assist in reverse engineering various components of the game's code, but attaching them to eg. a scripting language of some sorts in the future is planned. A framework to enable loading gameplay mods written in C/C++ (or any language that can produce Win32 DLLs, though currently only C/C++ are officially supported) has been implemented, with intent to expand the number of places in the simulation engine that hooks can be inserted over time.
 
-There is also a debugging console that can be enabled by passing "-console" to SimCity 2000 or by enabling the console manually in the in-game "sc2kfix Settings" dialog. While the debugging console generally tries to stop you from doing anything too dangerous, it will happily let you probe any valid memory in the game's address space, which could have adverse effect on any loaded cities. Please be careful when writing to arbitrary memory addresses.
+There is also a developer console that can be enabled by passing "-console" to SimCity 2000 or by enabling the console manually in the in-game "sc2kfix Settings" dialog. While the console generally tries to stop you from doing anything too dangerous, it will happily let you probe any valid memory in the game's address space, which could have adverse effect on any loaded cities. Please be careful when writing to arbitrary memory addresses.
 
 Several parts of the SimCity 2000 simulation engine have been reimplemented in sc2kfix for better performance and the ability to more easily fix bugs and hook into and enhance the original game's code. Functionality has been replicated through months of reverse engineering efforts, and these reimplementations of the game's internal functions provide a higher quality experience that is still accurate to the original game.
 
@@ -66,6 +70,6 @@ Binary releases of sc2kfix are distributed with the Simple DirectMedia Layer (SD
 You can configure different aspects of sc2kfix by clicking on the "sc2kfix Settings" button on the game's main menu, or while you're in a gameplay session by selecting the same option from the Options menu. Settings marked with an asterisk require restarting the game for them to take effect. sc2kfix defaults to providing a "vanilla plus" gameplay experience with bug fixes and minor quality of life improvements; gameplay-modifying features are opt-in through the settings dialog, and quality of life features can be opted out of the same way.
 
 ## Known issues
-* WARNING: MIDI playback support on Wine/Proton is unpredictable. Native Linux installations of FluidSynth or TiMIDity++ may result in playback errors, and using Windows builds of FluidSynth in Wine/Proton can occasionally cause freezes on some distros. We recommend using MP3 playback on Linux if possible.
+* WARNING: MIDI playback support on Wine/Proton is unpredictable. Native Linux installations of FluidSynth or TiMIDity++ may result in playback errors, and using Windows builds of FluidSynth in Wine/Proton can occasionally cause freezes on older distros. We recommend using MP3 playback on Linux if possible, or ensuring your distro and Wine/Proton are up to date if you experience crashes with MIDI playback via FluidSynth.
 * NOTICE: The 1995 CD Collection version of the game is now deprecated. Please use the 1996 Special Edition version of the game going forward to receive the latest updates.
 * DEBUG: Experimental support for the 1995 Interactive Demo of the game has been added. This is not intended to support the full feature set of sc2kfix, and is only meant to help with ascertaining differences between the demo and release versions of the game.
