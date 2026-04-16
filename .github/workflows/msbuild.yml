@@ -34,10 +34,22 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: msbuild /m /p:Configuration=Release ${{env.SOLUTION_FILE_PATH}}
 
+    - name: Grab Third-Party Libraries
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: |
+        Invoke-WebRequest https://sc2kfix.net/thirdparty/LICENSES -OutFile Release/LICENSES
+        Invoke-WebRequest https://sc2kfix.net/thirdparty/SDL3.dll -OutFile Release/SDL3.dll
+        Invoke-WebRequest https://sc2kfix.net/thirdparty/libfluidsynth-3.dll -OutFile Release/libfluidsynth-3.dll
+        Invoke-WebRequest https://sc2kfix.net/thirdparty/sndfile.dll -OutFile Release/sndfile.dll
+
     - name: Upload Release Artifacts
       uses: actions/upload-artifact@v6
       with:
         name: sc2kfix-dev
         path: |
+          Release/LICENSES
+          Release/SDL3.dll
+          Release/libfluidsynth-3.dll
+          Release/sndfile.dll
           Release/winmm.dll
           Release/mods/*.dll
