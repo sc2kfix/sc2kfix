@@ -639,6 +639,18 @@ IDR_TSET_FIXED          TSET                    "blobs\\FIXEDTILES.MIF"
 
 IDR_BLOB_LIBSC2KFIX_LUA BLOB                    "blobs\\libsc2kfix.lua"
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RAW
+//
+
+IDR_SCRKPALBMP          RAW                     "blobs\\SCURKBMP_PAL.bin"
+
+IDR_SCRKPALWND          RAW                     "blobs\\SCURKWND_PAL.bin"
+
+IDR_SCRKPALMAP          RAW                     "blobs\\SCURKMAP_PAL.bin"
+
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 

@@ -90,6 +90,9 @@
 #define IDB_COMPASS3                    23023
 #define IDR_TSET_FIXED                  23024
 #define IDR_BLOB_LIBSC2KFIX_LUA         23025
+#define IDR_SCRKPALBMP                  23026
+#define IDR_SCRKPALWND                  23027
+#define IDR_SCRKPALMAP                  23028
 #define IDM_GAME_OPTIONS_SC2KFIXSETTINGS 40000
 #define IDM_GAME_OPTIONS_MODCONFIG      40001
 #define IDM_DEBUG_MILITARY_DECLINED     40002
@@ -121,7 +124,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        23026
+#define _APS_NEXT_RESOURCE_VALUE        23029
 #define _APS_NEXT_COMMAND_VALUE         40026
 #define _APS_NEXT_CONTROL_VALUE         21055
 #define _APS_NEXT_SYMED_VALUE           101

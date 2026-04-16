@@ -216,6 +216,9 @@ const char* szSC2KFixBuildInfo = "$(UserName)@$(ComputerName)  $([System.DateTim
   <ItemGroup>
     <None Include="blobs\FIXEDTILES.MIF" />
     <None Include="blobs\libsc2kfix.lua" />
+    <None Include="blobs\SCURKBMP_PAL.bin" />
+    <None Include="blobs\SCURKMAP_PAL.bin" />
+    <None Include="blobs\SCURKWND_PAL.bin" />
     <None Include="hooks\exports.def" />
     <None Include="README.md" />
   </ItemGroup>
