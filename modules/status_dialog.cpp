@@ -1,5 +1,5 @@
 // sc2kfix modules/status_dialog.cpp: recreation of the DOS/Mac version status dialog
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
 #include <windows.h>
@@ -43,7 +43,7 @@ static SIZE szFloat;
 static WNDPROC OldGotoButtonWndProc;
 
 BOOL CanUseFloatingStatusDialog() {
-	return (bSettingsUseStatusDialog && hStatusDialog) ? TRUE : FALSE;
+	return (jsonSettingsCore["sc2kfix"]["qol"]["use_floating_status"].ToBool() && hStatusDialog) ? TRUE : FALSE;
 }
 
 void ToggleFloatingStatusDialog(BOOL bEnable) {

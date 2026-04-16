@@ -1,5 +1,5 @@
 // sc2kfix modules/registry_config.cpp: registry and pathing hooks and configuration file handling
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
 #include <windows.h>
@@ -75,6 +75,11 @@ BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 				strcpy_s(szSettingsMayorName, 64, "Marvin Maxis");
 			if (!GetDlgItemText(hwndDlg, IDC_EDIT_COMPANY, szSettingsCompanyName, 63))
 				strcpy_s(szSettingsCompanyName, 64, "Q37 Space Modulator Mfg.");
+
+			// Update the settings JSON object
+			jsonSettingsCore["SimCity2000"]["Registration"]["Mayor Name"] = szSettingsMayorName;
+			jsonSettingsCore["SimCity2000"]["Registration"]["Company Name"] = szSettingsCompanyName;
+
 			EndDialog(hwndDlg, wParam);
 			return TRUE;
 		}
@@ -192,27 +197,8 @@ void ResetFileAssociations(void) {
 }
 
 static BOOL InstallSC2KDefaults(void) {
-	const char* ini_file = GetIniPath();
-	const char* section;
-	char szTemp[63 + 1];
-	int nRegEnts = 0;
-
-	section = "Registration";
-
-	memset(szTemp, 0, sizeof(szTemp));
-	if (GetPrivateProfileStringA(section, "Mayor Name", "", szTemp, sizeof(szTemp) - 1, ini_file) > 0) {
-		if (szTemp[0] && strlen(szTemp) > 0)
-			nRegEnts++;
-	}
-
-	memset(szTemp, 0, sizeof(szTemp));
-	if (GetPrivateProfileStringA(section, "Company Name", "", szTemp, sizeof(szTemp) - 1, ini_file) > 0) {
-		if (szTemp[0] && strlen(szTemp) > 0)
-			nRegEnts++;
-	}
-
-	// Attempt to fix shell registrations. This should happen even if a previous
-	// sc2kfix install simulation has occurred.
+	// Attempt to fix shell registrations. This should happen even if a previous sc2kfix install
+	// simulation has occurred.
 	HKEY hkeyClassSC2, hkeyClassMIF;
 	extern BOOL bFixFileAssociations;
 	if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Classes\\.sc2", &hkeyClassSC2) != ERROR_SUCCESS ||
@@ -226,54 +212,15 @@ static BOOL InstallSC2KDefaults(void) {
 			ConsoleLog(LOG_DEBUG, "MISC: Skipping shell class registry due to both primary .sc2 and .mif entries already existing.\n");
 	}
 
-	// If 'Installed' returns 1 and both the mayor/company entries are defined
-	// return false (nothing needs to be done), otherwise in either case proceed
-	// with the installation process and reset the referenced settings below
-	// to their defaults.
-	section = "Portable";
-	if (GetPrivateProfileIntA(section, "Installed", 0, ini_file) == 1) {
-		if (nRegEnts == 2)
-			return FALSE;
+	// If we haven't got an "installed" flag set to true in our setting structure (ie. there's no
+	// existing settings.json or we didn't just convert an sc2kfix.ini), prompt the user for the
+	// installer registration info.
+	if (!jsonSettingsCore["sc2kfix"]["core"]["installed"].ToBool()) {
+		DialogBox(hSC2KFixModule, MAKEINTRESOURCE(IDD_INSTALL), NULL, InstallDialogProc);
+		jsonSettingsCore["sc2kfix"]["core"]["installed"] = true;
+		SaveJSONSettings();
+		return TRUE;
 	}
-
-	WritePrivateProfileIntA(section, "Installed", 1, ini_file);
-
-	// Prompt the user for the mayor and company names
-	DialogBox(hSC2KFixModule, MAKEINTRESOURCE(IDD_INSTALL), NULL, InstallDialogProc);
-
-	// Write version info
-	DWORD dwSC2KVersion = 0x00000100;
-
-	section = "Version";
-	WritePrivateProfileIntA(section, "SCURK", dwSC2KVersion, ini_file);
-	WritePrivateProfileIntA(section, "SimCity 2000", dwSC2KVersion, ini_file);
-
-	// Write language info
-	section = "Localize";
-	WritePrivateProfileStringA(section, "Language", "USA", ini_file);
-
-	// Write default options
-	section = "Options";
-	WritePrivateProfileIntA(section, "Disasters", TRUE, ini_file);
-	WritePrivateProfileIntA(section, "Music", TRUE, ini_file);
-	WritePrivateProfileIntA(section, "Sound", TRUE, ini_file);
-	WritePrivateProfileIntA(section, "AutoGoto", TRUE, ini_file);
-	WritePrivateProfileIntA(section, "AutoBudget", FALSE, ini_file);
-	WritePrivateProfileIntA(section, "AutoSave", FALSE, ini_file);
-	WritePrivateProfileIntA(section, "Speed", INI_GAME_SPEED_SETTING(GAME_SPEED_LLAMA), ini_file);
-
-	// Write default SCURK options
-	section = "SCURK";
-	WritePrivateProfileIntA(section, "CycleColors", 1, ini_file);
-	WritePrivateProfileIntA(section, "GridHeight", 2, ini_file);
-	WritePrivateProfileIntA(section, "GridWidth", 2, ini_file);
-	WritePrivateProfileIntA(section, "ShowClipRegion", 0, ini_file);
-	WritePrivateProfileIntA(section, "ShowDrawGrid", 0, ini_file);
-	WritePrivateProfileIntA(section, "SnapToGrid", 0, ini_file);
-	WritePrivateProfileIntA(section, "Sound", 1, ini_file);
-
-	SaveSettings(TRUE);
-	return TRUE;
 }
 
 int DoCheckAndInstall(void) {
@@ -415,7 +362,7 @@ static void GamePathAdjust(const char *szBasePath, const char *target, LPBYTE lp
 	GetOutString(szTarget, lpData, lpcbData);
 }
 
-static void GetIniOutString(const char *section, const char *key, const char *sValue, LPBYTE lpData, LPDWORD lpcbData) {
+/*static void GetIniOutString(const char* section, const char* key, const char* sValue, LPBYTE lpData, LPDWORD lpcbData) {
 	const char *ini_file = GetIniPath();
 
 	char szBuf[64];
@@ -427,17 +374,33 @@ static void GetIniOutDWORD(const char *section, const char *key, DWORD dvVal, LP
 	const char *ini_file = GetIniPath();
 
 	GetOutDWORD(GetPrivateProfileIntA(section, key, dvVal, ini_file), lpData, lpcbData);
-}
+}*/
 
 extern "C" LSTATUS __stdcall Hook_RegSetValueExA(HKEY hKey, LPCSTR lpValueName, DWORD dwReserved, DWORD dwType, const BYTE *lpData, DWORD cbData) {
 	const char *section = SectionLookup(hKey);
+	std::string strActualValue = lpValueName;
 
 	if (section) {
-		const char *ini_file;
+		// Awful hack to get around SC2K sometimes SHOUTING VALUE NAMES IN ALL CAPS
+		if (IsRegKey(hKey, enOptionsKey)) {
+			if (!_stricmp(lpValueName, "MUSIC"))
+				strActualValue = "Music";
+			if (!_stricmp(lpValueName, "SOUND"))
+				strActualValue = "Sound";
+			if (!_stricmp(lpValueName, "AUTOSAVE"))
+				strActualValue = "AutoSave";
+			if (!_stricmp(lpValueName, "AUTOBUDGET"))
+				strActualValue = "AutoBudget";
+			if (!_stricmp(lpValueName, "AUTOGOTO"))
+				strActualValue = "AutoGoto";
+			if (!_stricmp(lpValueName, "DISASTERS"))
+				strActualValue = "Disasters";
+			if (!_stricmp(lpValueName, "SPEED"))
+				strActualValue = "Speed";
+		}
 
-		ini_file = GetIniPath();
 		if (dwType == REG_DWORD || (dwType == REG_BINARY && cbData == sizeof(DWORD)))
-			WritePrivateProfileIntA(section, lpValueName, *(const DWORD*)lpData, ini_file);
+			jsonSettingsCore["SimCity2000"][section][strActualValue] = *(const DWORD*)lpData;
 
 		return ERROR_SUCCESS;
 	}
@@ -461,8 +424,8 @@ extern "C" LSTATUS __stdcall Hook_RegQueryValueExA(HKEY hKey, LPCSTR lpValueName
 		}
 		else if (_stricmp(lpValueName, "Cities") == 0 ||
 			_stricmp(lpValueName, "SaveGame") == 0) {
-			if (L_IsDirectoryPathValid(szLastStoredCityPath) && dwDetectedVersion == VERSION_SC2K_1996)
-				GetOutString(szLastStoredCityPath, lpData, lpcbData);
+			if (L_IsDirectoryPathValid(jsonSettingsCore["sc2kfix"]["paths"]["cities"].ToString().c_str()) && dwDetectedVersion == VERSION_SC2K_1996)
+				GetOutString(jsonSettingsCore["sc2kfix"]["paths"]["cities"].ToString().c_str(), lpData, lpcbData);
 			else
 				GamePathAdjust(szTargetPath, "Cities", lpData, lpcbData);
 		}
@@ -483,8 +446,8 @@ extern "C" LSTATUS __stdcall Hook_RegQueryValueExA(HKEY hKey, LPCSTR lpValueName
 			GamePathAdjust(szTargetPath, "Scenario", lpData, lpcbData);
 		
 		else if (_stricmp(lpValueName, "TileSets") == 0) {
-			if (L_IsDirectoryPathValid(szLastStoredTileSetPath) && dwDetectedVersion == VERSION_SC2K_1996)
-				GetOutString(szLastStoredTileSetPath, lpData, lpcbData);
+			if (L_IsDirectoryPathValid(jsonSettingsCore["sc2kfix"]["paths"]["tilesets"].ToString().c_str()) && dwDetectedVersion == VERSION_SC2K_1996)
+				GetOutString(jsonSettingsCore["sc2kfix"]["paths"]["tilesets"].ToString().c_str(), lpData, lpcbData);
 			else
 				GamePathAdjust(szTargetPath, "ScurkArt", lpData, lpcbData);
 		}
@@ -494,90 +457,90 @@ extern "C" LSTATUS __stdcall Hook_RegQueryValueExA(HKEY hKey, LPCSTR lpValueName
 
 	if (IsRegKey(hKey, enWindowsKey)) {
 		if (_stricmp(lpValueName, "Display") == 0)
-			GetIniOutString("Windows", lpValueName, "8 1", lpData, lpcbData);
+			GetOutString("8 1", lpData, lpcbData);
 		
 		else if (_stricmp(lpValueName, "Color Check") == 0)
-			GetIniOutDWORD("Windows", lpValueName, 0, lpData, lpcbData);
+			GetOutDWORD(0, lpData, lpcbData);
 		
 		else if (_stricmp(lpValueName, "Last Color Depth") == 0)
-			GetIniOutDWORD("Windows", lpValueName, 20, lpData, lpcbData);
+			GetOutDWORD(jsonSettingsCore["SimCity2000"]["Windows"]["Last Color Depth"].ToInt(), lpData, lpcbData);
 		
 		return ERROR_SUCCESS;
 	}
 
 	if (IsRegKey(hKey, enVersionKey)) {
 		if (_stricmp(lpValueName, "SimCity 2000") == 0)
-			GetIniOutDWORD("Version", lpValueName, 256, lpData, lpcbData);
+			GetOutDWORD(jsonSettingsCore["SimCity2000"]["Version"]["SimCity 2000"].ToInt(), lpData, lpcbData);
 		
 		else if (_stricmp(lpValueName, "SCURK") == 0)
-			GetIniOutDWORD("Version", lpValueName, 256, lpData, lpcbData);
+			GetOutDWORD(jsonSettingsCore["SimCity2000"]["Version"]["SCURK"].ToInt(), lpData, lpcbData);
 		
 		return ERROR_SUCCESS;
 	}
 
 	if (IsRegKey(hKey, enOptionsKey)) {
 		if (_stricmp(lpValueName, "Disasters") == 0)
-			GetIniOutDWORD("Options", lpValueName, 1, lpData, lpcbData);
+			GetOutDWORD(jsonSettingsCore["SimCity2000"]["Options"]["Disasters"].ToInt(), lpData, lpcbData);
 		
 		else if (_stricmp(lpValueName, "Music") == 0)
-			GetIniOutDWORD("Options", lpValueName, 1, lpData, lpcbData);
+			GetOutDWORD(jsonSettingsCore["SimCity2000"]["Options"]["Music"].ToInt(), lpData, lpcbData);
 		
 		else if (_stricmp(lpValueName, "Sound") == 0)
-			GetIniOutDWORD("Options", lpValueName, 1, lpData, lpcbData);
+			GetOutDWORD(jsonSettingsCore["SimCity2000"]["Options"]["Sound"].ToInt(), lpData, lpcbData);
 		
 		else if (_stricmp(lpValueName, "AutoGoto") == 0)
-			GetIniOutDWORD("Options", lpValueName, 1, lpData, lpcbData);
+			GetOutDWORD(jsonSettingsCore["SimCity2000"]["Options"]["AutoGoto"].ToInt(), lpData, lpcbData);
 		
 		else if (_stricmp(lpValueName, "AutoBudget") == 0)
-			GetIniOutDWORD("Options", lpValueName, 0, lpData, lpcbData);
+			GetOutDWORD(jsonSettingsCore["SimCity2000"]["Options"]["AutoBudget"].ToInt(), lpData, lpcbData);
 		
 		else if (_stricmp(lpValueName, "AutoSave") == 0)
-			GetIniOutDWORD("Options", lpValueName, 0, lpData, lpcbData);
+			GetOutDWORD(jsonSettingsCore["SimCity2000"]["Options"]["AutoSave"].ToInt(), lpData, lpcbData);
 		
 		else if (_stricmp(lpValueName, "Speed") == 0)
-			GetIniOutDWORD("Options", lpValueName, INI_GAME_SPEED_SETTING(GAME_SPEED_LLAMA), lpData, lpcbData);
+			GetOutDWORD(jsonSettingsCore["SimCity2000"]["Options"]["Speed"].ToInt(), lpData, lpcbData);
 		
 		return ERROR_SUCCESS;
 	}
 
 	if (IsRegKey(hKey, enLocalizeKey)) {
 		if (_stricmp(lpValueName, "Language") == 0)
-			GetIniOutString("Localize", lpValueName, "USA", lpData, lpcbData);
+			GetOutString(jsonSettingsCore["SimCity2000"]["Localize"]["Language"].ToString().c_str(), lpData, lpcbData);
 		
 		return ERROR_SUCCESS;
 	}
 
 	if (IsRegKey(hKey, enRegistrationKey)) {
 		if (_stricmp(lpValueName, "Mayor Name") == 0)
-			GetIniOutString("Registration", lpValueName, szSettingsMayorName, lpData, lpcbData);
+			GetOutString(jsonSettingsCore["SimCity2000"]["Registration"]["Mayor Name"].ToString().c_str(), lpData, lpcbData);
 		
 		else if (_stricmp(lpValueName, "Company Name") == 0)
-			GetIniOutString("Registration", lpValueName, szSettingsCompanyName, lpData, lpcbData);
+			GetOutString(jsonSettingsCore["SimCity2000"]["Registration"]["Company Name"].ToString().c_str(), lpData, lpcbData);
 		
 		return ERROR_SUCCESS;
 	}
 
 	if (IsRegKey(hKey, enSCURKKey)) {
 		if (_stricmp(lpValueName, "CycleColors") == 0)
-			GetIniOutDWORD("SCURK", lpValueName, 1, lpData, lpcbData);
+			GetOutDWORD(jsonSettingsCore["SimCity2000"]["SCURK"]["CycleColors"].ToInt(), lpData, lpcbData);
 		
 		else if (_stricmp(lpValueName, "GridHeight") == 0)
-			GetIniOutDWORD("SCURK", lpValueName, 2, lpData, lpcbData);
+			GetOutDWORD(jsonSettingsCore["SimCity2000"]["SCURK"]["GridHeight"].ToInt(), lpData, lpcbData);
 		
 		else if (_stricmp(lpValueName, "GridWidth") == 0)
-			GetIniOutDWORD("SCURK", lpValueName, 2, lpData, lpcbData);
+			GetOutDWORD(jsonSettingsCore["SimCity2000"]["SCURK"]["GridWidth"].ToInt(), lpData, lpcbData);
 		
 		else if (_stricmp(lpValueName, "ShowClipRegion") == 0)
-			GetIniOutDWORD("SCURK", lpValueName, 0, lpData, lpcbData);
+			GetOutDWORD(jsonSettingsCore["SimCity2000"]["SCURK"]["ShowClipRegion"].ToInt(), lpData, lpcbData);
 		
 		else if (_stricmp(lpValueName, "ShowDrawGrid") == 0)
-			GetIniOutDWORD("SCURK", lpValueName, 0, lpData, lpcbData);
+			GetOutDWORD(jsonSettingsCore["SimCity2000"]["SCURK"]["ShowDrawGrid"].ToInt(), lpData, lpcbData);
 		
 		else if (_stricmp(lpValueName, "SnapToGrid") == 0)
-			GetIniOutDWORD("SCURK", lpValueName, 0, lpData, lpcbData);
+			GetOutDWORD(jsonSettingsCore["SimCity2000"]["SCURK"]["SnapToGrid"].ToInt(), lpData, lpcbData);
 		
 		else if (_stricmp(lpValueName, "Sound") == 0)
-			GetIniOutDWORD("SCURK", lpValueName, 1, lpData, lpcbData);
+			GetOutDWORD(jsonSettingsCore["SimCity2000"]["SCURK"]["Sound"].ToInt(), lpData, lpcbData);
 		
 		return ERROR_SUCCESS;
 	}

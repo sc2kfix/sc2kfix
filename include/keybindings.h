@@ -1,5 +1,5 @@
 // sc2kfix include/keybindings.h: Key to Action bindings and configuration dialogues header.
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #pragma once
 
@@ -148,6 +148,8 @@ int CharToKey(UINT nChar);
 void InitializeDefaultBindings();
 void LoadStoredBindings();
 void SaveStoredBindings();
+void LoadJSONBindings(json::JSON& jsonSettings);
+void SaveJSONBindings(json::JSON& jsonSettings);
 void UpdateKeyBindings();
 void InitializeTempBindings();
 void GetKeyBinding_SC2K1996(int nBkey, BOOL bRelease, BOOL bGlobalPtSet = FALSE);

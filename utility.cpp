@@ -1,5 +1,5 @@
 // sc2kfix utility.cpp: utility functions to save me from reinventing the wheel
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
 #include <windows.h>
@@ -270,7 +270,7 @@ HOOKEXT BOOL IsFileNameValid(const char *pName) {
 }
 
 BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc) {
-	if (!strcpy_s(pDest, SizeInBytes, pSrc) && bSettingsUseNewStrings)
+	if (!strcpy_s(pDest, SizeInBytes, pSrc) && jsonSettingsCore["sc2kfix"]["qol"]["use_new_strings"].ToBool())
 		return TRUE;
 	return FALSE;
 }

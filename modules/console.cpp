@@ -43,6 +43,7 @@ BOOL bConsoleEnabled = FALSE;
 #endif
 
 #define printf_yellow(s, ...) printf(VT100_COLOUR_YELLOW s VT100_DEFAULT, __VA_ARGS__)
+#define printf_lightblue(s, ...) printf(VT100_COLOUR_BRIGHT_BLUE s VT100_DEFAULT, __VA_ARGS__)
 
 typedef struct {
 	int iType;
@@ -63,6 +64,7 @@ int iConsoleScriptNest = 0;
 std::map<std::string, script_variable_t> mapVariables;
 
 static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments);
+UINT SettingsLoadMusicEngine(const char* szMusicEngine);
 
 console_command_t fpConsoleCommands[] = {
 	{ "?", ConsoleCmdHelp, CONSOLE_COMMAND_ALIAS, "" },
@@ -335,6 +337,7 @@ BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 			"  show memory ...     Display memory contents\n"
 			"  show microsim ...   Display microsim info\n"
 			"  show mods ...       Display loaded mods\n"
+			"  show settings ...   Display settings info\n"
 			"  show sound ...      Display sound info\n"
 			"  show tile ...       Display tile info\n"
 			"  show version        Display sc2kfix version info\n");
@@ -352,6 +355,9 @@ BOOL ConsoleCmdShow(const char* szCommand, const char* szArguments) {
 
 	if (!strcmp(szArguments, "mods") || !strncmp(szArguments, "mods ", 5))
 		return ConsoleCmdShowMods(szCommand, szArguments);
+
+	if (!strcmp(szArguments, "settings") || !strncmp(szArguments, "settings ", 9))
+		return ConsoleCmdShowSettings(szCommand, szArguments);
 
 	if (!strcmp(szArguments, "sound") || !strncmp(szArguments, "sound ", 6))
 		return ConsoleCmdShowSound(szCommand, szArguments);
@@ -606,6 +612,24 @@ BOOL ConsoleCmdShowMods(const char* szCommand, const char* szArguments) {
 	return TRUE;
 }
 
+BOOL ConsoleCmdShowSettings(const char* szCommand, const char* szArguments) {
+	BOOL bDetail = FALSE;
+	if (*(szArguments + 8) == '\0' || *(szArguments + 9) == '\0' || !strcmp(szArguments + 9, "?")) {
+		printf(
+			"  show settings        Show settings info\n"
+			"  show settings json   Dump settings JSON structure\n");
+		return TRUE;
+	}
+
+	else if (!strcmp(szArguments + 9, "json")) {
+		printf("jsonSettingsCore:\n\n%s\n", jsonSettingsCore.dump().c_str());
+		return TRUE;
+	}
+
+	printf_yellow("Invalid argument.\n");
+	return TRUE;
+}
+
 BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
 	if (dwDetectedVersion != VERSION_SC2K_1996) {
 		printf_yellow("Command only available when attached to 1996 Special Edition.\n");
@@ -615,6 +639,7 @@ BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
 	if (*(szArguments + 5) == '\0' || *(szArguments + 6) == '\0' || !strcmp(szArguments + 6, "?")) {
 		printf(
 			"  show sound buffers   Dump loaded WAV buffers\n"
+			"  show sound engine    Show audio engine information\n"
 			"  show sound midi      Show all MIDI devices\n"
 			"  show sound songs     Show the current song list\n");
 		return TRUE;
@@ -625,6 +650,16 @@ BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
 		int i = 0;
 		for (const auto& iter : mapSoundBuffers)
 			printf("  %i: <0x%08X>   %i.wav   (reloads: %i)\n", i++, iter.first, iter.second.iSoundID, iter.second.iReloadCount);
+		return TRUE;
+	}
+
+	if (!strcmp(szArguments + 6, "engine")) {
+		//const char* szMusicDriver;
+
+		printf(
+			"Audio engine: %s\n"
+			"Music driver: %s\n",
+			"old", jsonSettingsCore["sc2kfix"]["audio"]["music_driver"].ToString().c_str());
 		return TRUE;
 	}
 
@@ -657,17 +692,8 @@ BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments) {
 }
 
 static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments) {
-	//printf("%s\n", jsonSettingsCore.dump().c_str());
-
-	ConsoleLog(LOG_EMERGENCY, "CORE: Test message!\n");
-	ConsoleLog(LOG_ALERT, "CORE: Test message!\n");
-	ConsoleLog(LOG_CRITICAL, "CORE: Test message!\n");
-	ConsoleLog(LOG_ERROR, "CORE: Test message!\n");
-	ConsoleLog(LOG_WARNING, "CORE: Test message!\n");
-	ConsoleLog(LOG_NOTICE, "CORE: Test message!\n");
-	ConsoleLog(LOG_INFO, "CORE: Test message!\n");
-	ConsoleLog(LOG_DEBUG, "CORE: Test message!\n");
-
+	LoadJSONSettings();
+	printf_lightblue("JSON settings loaded.\n");
 	return TRUE;
 }
 

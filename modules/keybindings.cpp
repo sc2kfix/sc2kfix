@@ -359,6 +359,29 @@ void SaveStoredBindings() {
 	}
 }
 
+void LoadJSONBindings(json::JSON& jsonSettings) {
+	for (int i = 0; i < B_KEY_COUNT; i++) {
+		bkey_t* key_entry = &progkeys[i];
+		if (key_entry && !key_entry->bImmutable) {
+			const char* pDefAction = GetDefaultAction(key_entry->nBkey);
+			std::string strActionName = jsonSettings["sc2kfix"]["keybinds"][key_entry->pKeyName].ToString();
+			if (!IsKeyAndActionValid(defBindings, key_entry, pDefAction, strActionName.c_str()))
+				continue;
+			SetKeyToAction(defBindings, key_entry, strActionName.c_str());
+		}
+	}
+}
+
+void SaveJSONBindings(json::JSON& jsonSettings) {
+	for (int i = 0; i < B_KEY_COUNT; i++) {
+		bkey_t* key_entry = &progkeys[i];
+		if (key_entry && !key_entry->bImmutable) {
+			const char* pCurrentAction = GetCurrentAction(defBindings, key_entry->nBkey);
+			jsonSettings["sc2kfix"]["keybinds"][key_entry->pKeyName] = pCurrentAction;
+		}
+	}
+}
+
 static int GetBinding(int nBkey) {
 	for (unsigned i = 0; i < defBindings.size(); i++) {
 		baction_t *prog_act = GetActionFromKey(&defBindings[i], nBkey);
