@@ -323,6 +323,9 @@ static void SetSettingsTabOrdering(HWND hwndDlg) {
 
 json::JSON jsonSettingsCoreWorkingCopy;
 
+#define GET_CHECKBOX(dest, src) dest = (bool)Button_GetCheck(GetDlgItem(hwndDlg, src))
+#define SET_CHECKBOX(src, dest) Button_SetCheck(GetDlgItem(hwndDlg, dest), src.ToBool() ? BST_CHECKED : BST_UNCHECKED)
+
 BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	std::string strVersionInfo;
 	settings_t *st;
@@ -447,21 +450,21 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			free((void*)szSoundFontBaseName);
 		}
 
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_BKGDMUSIC), jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_in_background"].ToBool() ? BST_CHECKED : BST_UNCHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS), jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["use_sound_replacements"].ToBool() ? BST_CHECKED : BST_UNCHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SHUFFLE_MUSIC), jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["shuffle_music"].ToBool() ? BST_CHECKED : BST_UNCHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_REFRESH_RATE), jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["frequent_updates"].ToBool() ? BST_CHECKED : BST_UNCHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC), jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["always_play_music"].ToBool() ? BST_CHECKED : BST_UNCHECKED);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_in_background"], IDC_SETTINGS_CHECK_BKGDMUSIC);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["use_sound_replacements"], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["shuffle_music"], IDC_SETTINGS_CHECK_SHUFFLE_MUSIC);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["frequent_updates"], IDC_SETTINGS_CHECK_REFRESH_RATE);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["always_play_music"], IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC);
 
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE), jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["force_console"].ToBool() ? BST_CHECKED : BST_UNCHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES), jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["check_for_updates"].ToBool() ? BST_CHECKED : BST_UNCHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DONT_LOAD_MODS), jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["skip_mods"].ToBool() ? BST_CHECKED : BST_UNCHECKED);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["force_console"], IDC_SETTINGS_CHECK_CONSOLE);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["check_for_updates"], IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["skip_mods"], IDC_SETTINGS_CHECK_DONT_LOAD_MODS);
 
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG), jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["floating_status"].ToBool() ? BST_CHECKED : BST_UNCHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE), jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["title_calendar"].ToBool() ? BST_CHECKED : BST_UNCHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS), jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_new_strings"].ToBool() ? BST_CHECKED : BST_UNCHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SKIP_INTRO), jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["skip_intro"].ToBool() ? BST_CHECKED : BST_UNCHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DARK_UNDGRND), jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["dark_background"].ToBool() ? BST_CHECKED : BST_UNCHECKED);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["floating_status"], IDC_SETTINGS_CHECK_STATUS_DIALOG);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["title_calendar"], IDC_SETTINGS_CHECK_TITLE_DATE);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_new_strings"], IDC_SETTINGS_CHECK_NEW_STRINGS);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["skip_intro"], IDC_SETTINGS_CHECK_SKIP_INTRO);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["dark_background"], IDC_SETTINGS_CHECK_DARK_UNDGRND);
 
 		// Center the dialog box
 		CenterDialogBox(hwndDlg);
@@ -484,21 +487,21 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 
 			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_driver"] = SettingsSaveMusicEngine(ComboBox_GetCurSel(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT)));
 
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_in_background"] = (bool)Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_BKGDMUSIC));
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["use_sound_replacements"] = (bool)Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS));
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["shuffle_music"] = (bool)Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SHUFFLE_MUSIC));
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["frequent_updates"] = (bool)Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_REFRESH_RATE));
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["always_play_music"] = (bool)Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC));
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_in_background"], IDC_SETTINGS_CHECK_BKGDMUSIC);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["use_sound_replacements"], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["shuffle_music"], IDC_SETTINGS_CHECK_SHUFFLE_MUSIC);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["frequent_updates"], IDC_SETTINGS_CHECK_REFRESH_RATE);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["always_play_music"], IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC);
 
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["force_console"] = (bool)Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE));
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["check_for_updates"] = (bool)Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES));
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["skip_mods"] = (bool)Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DONT_LOAD_MODS));
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["force_console"], IDC_SETTINGS_CHECK_CONSOLE);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["check_for_updates"], IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["skip_mods"], IDC_SETTINGS_CHECK_DONT_LOAD_MODS);
 
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["floating_status"] = (bool)Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG));
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["title_calendar"] = (bool)Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE));
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_new_strings"] = (bool)Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS));
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["skip_intro"] = (bool)Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SKIP_INTRO));
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["dark_background"] = (bool)Button_GetCheck(GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DARK_UNDGRND));
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["floating_status"], IDC_SETTINGS_CHECK_STATUS_DIALOG);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["title_calendar"], IDC_SETTINGS_CHECK_TITLE_DATE);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_new_strings"], IDC_SETTINGS_CHECK_NEW_STRINGS);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["skip_intro"], IDC_SETTINGS_CHECK_SKIP_INTRO);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["dark_background"], IDC_SETTINGS_CHECK_DARK_UNDGRND);
 
 			EndDialog(hwndDlg, TRUE);
 			break;
