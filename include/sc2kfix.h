@@ -439,6 +439,7 @@ BOOL DoConfigureMusicTracks(settings_t *st, HWND hDlg, BOOL bMP3);
 BOOL DoConfigureKeyBindings(settings_t *st, HWND hwndDlg);
 
 BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc);
+char *ConvertFileTypeFilterString(const char *pInStr);
 
 // Yes...
 FILE *old_fopen(const char *fname, const char *mode);

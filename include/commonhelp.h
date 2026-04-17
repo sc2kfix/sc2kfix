@@ -112,6 +112,13 @@ typedef struct {
 } tilesetShapHeader_t;
 
 typedef struct {
+	WORD nSpriteID;
+	WORD nWidth;
+	WORD nHeight;
+	int nValidated;
+} tilesetShapVerify_t;
+
+typedef struct {
 	WORD nShapNum;
 	WORD nNameLength;
 } tilesetNameHeader_t;
@@ -209,10 +216,6 @@ static inline BOOL IsEvenUnsigned(DWORD nVal) {
 
 
 // Borland
-void *__cdecl R_BOR_WRP_gAllocBlock(size_t nSz);
-void *__cdecl R_BOR_WRP_gResizeBlock(BYTE *pBlock, size_t nSz);
-void __cdecl R_BOR_WRP_gFreeBlock(void *pBlock);
-void __stdcall R_BOR_WRP_gUpdateWaitWindow();
 void R_BOR_WRP_DC_SelectObjectPalette(TBC45XDC *pThis, TBC45XPalette *pPal, int nVal);
 void R_BOR_WRP_CommandEnabler_Enable(TBC45XCommandEnabler *pThis);
 LRESULT R_BOR_WRP_Window_EvCommand(TBC45XWindow *pThis, DWORD dwID, HWND hWndCtl, DWORD dwNotifyCode);
@@ -236,6 +239,7 @@ TBC45XMDIChild *R_BOR_WRP_MDIClient_GetActiveMDIChild(TBC45XParMDIClient *pThis)
 BOOL R_BOR_MDIFrame_SetMenu(TBC45XMDIFrame *pThis, HMENU hMenu);
 char *R_BOR_strnewdup(char *pStr, size_t nSz);
 void *R_BOR_Op_New(size_t nSz);
+void R_BOR_String_Destruct(BC45Xstring *pThis, char c);
 
 // SCURK-only - wrappers above, common reconstructed calls below from scurkfix_common.cpp
 __int16 *R_SCURK_WRP_GetwTileObjects();
@@ -244,9 +248,22 @@ WORD *R_SCURK_WRP_GetwColSlowCnt();
 __int16 *R_SCURK_WRP_GetwToolNum();
 __int16 *R_SCURK_WRP_GetwToolValue();
 TBC45XDib *R_SCURK_WRP_mTileBack();
+int *R_SCURK_WRP_GetgSaveSucceeded();
 winscurkApp *R_SCURK_WRP_winscurkApp_GetPointerToClass();
 BC45Xstring *R_SCURK_WRP_GetTAppInitCmdLine();
 DWORD R_SCURK_ADDR_FrameWindow_EvCommand_To_TDecoratedFrame_EvCommand();
+int R_SCURK_WRP_gScurkMessage(DWORD dwMsgID, DWORD dwTitleID, DWORD uType);
+int R_SCURK_WRP_gScurkMessage_Str(char *pMsg, DWORD dwTitleID, DWORD uType);
+BC45Xstring *R_SCURK_WRP_gScurkLoadString(BC45Xstring *pThis, DWORD dwStrID);
+void *R_SCURK_WRP_gAllocBlock(size_t nSz);
+void *R_SCURK_WRP_gResizeBlock(BYTE *pBlock, size_t nSz);
+void R_SCURK_WRP_gFreeBlock(void *pBlock);
+void __stdcall R_SCURK_WRP_BeginWaitCursor();
+void __stdcall R_SCURK_WRP_EndWaitCursor();
+void R_SCURK_WRP_gBeginWaitWindow(int nDenom, char *szMeterStr, TBC45XModule *pTitle);
+void __stdcall R_SCURK_WRP_gUpdateWaitWindow();
+void __stdcall R_SCURK_WRP_gEndWaitWindow();
+void R_SCURK_WRP_CheckExtension(char *pFilePath, char *pExt);
 int R_SCURK_WRP_WinGBitmap_Width(CWinGBitmap *pThis);
 int R_SCURK_WRP_WinGBitmap_Height(CWinGBitmap *pThis);
 TEncodeDib *R_SCURK_WRP_EncodeDib_Construct_Dimens(TEncodeDib *pThis, LONG nWidth, LONG nHeight, DWORD dwColors, WORD wMode);
@@ -268,6 +285,7 @@ void R_SCURK_WRP_EditWindow_mDoCurrentPatternDib(winscurkEditWindow *pThis);
 int R_SCURK_WRP_EditWindow_mGetShapeWidth(winscurkEditWindow *pThis);
 BYTE R_SCURK_WRP_EditWindow_mGetForegroundColor(winscurkEditWindow *pThis);
 BYTE R_SCURK_WRP_EditWindow_mGetBackgroundColor(winscurkEditWindow *pThis);
+void R_SCURK_WRP_PlaceWindow_DrawHouse(winscurkPlaceWindow *pThis, char *pBits);
 void R_SCURK_WRP_PlaceWindow_ClearCurrentTool(winscurkPlaceWindow *pThis);
 void R_SCURK_WRP_PaintWindow_mPreserveToUndoBuffer(cPaintWindow *pThis);
 void R_SCURK_WRP_PaintWindow_mApplyTileToScreen(cPaintWindow *pThis);
@@ -278,10 +296,16 @@ void R_SCURK_WRP_PaintWindow_mPutPixel(cPaintWindow *pThis, TBC45XRect *pRect, B
 void R_SCURK_WRP_PaintWindow_mDraw(cPaintWindow *pThis);
 void R_SCURK_WRP_PaintWindow_mEncodeShape(cPaintWindow *pThis, int nZoomLevel);
 void R_SCURK_WRP_winscurkMDIClient_RotateColors(winscurkMDIClient *pThis, BOOL bFast);
+void R_SCURK_WRP_winscurkMDIClient_mReadFromMIFFile(winscurkMDIClient *pThis, cEditableTileSet *pTileSet, const char *pFilePath);
+OPENFILENAMEA *R_SCURK_WRP_winscurkMDIClient_mGetOpenFileName(winscurkMDIClient *pThis);
+void R_SCURK_WRP_winscurkMDIClient_CmFileSaveWorking(winscurkMDIClient *pThis);
 TBC45XPalette *R_SCURK_WRP_winscurkApp_GetPalette(winscurkApp *pThis);
+char *R_SCURK_WRP_winscurkApp_mGetMiffPath(winscurkApp *pThis);
+void R_SCURK_WRP_winscurkApp_mSetMiffPath(winscurkApp *pThis, char *pTilePath);
 void R_SCURK_WRP_winscurkApp_ScurkSound(winscurkApp *pThis, int nSoundID);
 winscurkPlaceWindow *R_SCURK_WRP_winscurkApp_GetPlaceWindow(winscurkApp *pThis);
 winscurkEditWindow *R_SCURK_WRP_winscurkApp_GetEditWindow(winscurkApp *pThis);
+int R_SCURK_WRP_winscurkApp_mGetFileType(winscurkApp *pThis, char *pFilePath);
 
 void L_SCURK_gDebugOut(const char *fmt, va_list args);
 char *L_SCURK_OwlMainCommandLineFix(char **pArgs, int nArgs);
@@ -295,6 +319,7 @@ extern "C" void __cdecl Hook_SCURK_EncodeDib_mShrink(TEncodeDib *pThis, TBC45XDi
 extern "C" void __cdecl Hook_SCURK_EncodeDib_mEncodeShape(TEncodeDib *pThis, WORD shapeHeight, WORD shapeWidth, WORD nOffSet);
 extern "C" void __cdecl Hook_SCURK_winscurkMDIClient_CycleColors(winscurkMDIClient *pThis);
 extern "C" LONG __cdecl Hook_SCURK_EditableTileSet_mReadFromFile(cEditableTileSet *pThis, const char *lpPathName);
+void L_SCURK_BackupFile(LPCSTR lpPathName);
 extern "C" int __cdecl Hook_SCURK_EditableTileSet_mWriteToMIFFFile(cEditableTileSet *pThis, LPCSTR lpPathName);
 extern "C" int __cdecl Hook_SCURK_EditableTileSet_mReadFromMIFFFile(cEditableTileSet *pThis, LPCSTR lpPathName);
 extern "C" void __cdecl Hook_SCURK_EditableTileSet_mReadShapeFromDib_PostBuild(cEditableTileSet *pThis, int nDBID, TEncodeDib *pEncDib);
@@ -310,11 +335,16 @@ extern "C" void __cdecl Hook_SCURK_PaintWindow_mEncodeShape(cPaintWindow *pThis,
 extern "C" int __cdecl Hook_SCURK_winscurkMDIFrame_AssignMenu(winscurkMDIFrame *pThis, TBC45XResId menuResID);
 TBC45XWindow *L_SCURK_MoverWindow_DisableMaximizeBox(TBC45XWindow *pThis);
 extern "C" void __cdecl Hook_SCURK_MoverWindow_EvGetMinMaxInfo(winscurkMoverWindow *pThis, MINMAXINFO *pMmi);
-cPaletteWindow *__cdecl L_SCURK_LoadOwnPaletteResources(cPaletteWindow *pThis);
+cPaletteWindow *L_SCURK_LoadOwnPaletteResources(cPaletteWindow *pThis);
 extern "C" void __cdecl Hook_SCURK_PaletteWindow_EvLButtonDown(cPaletteWindow *pThis, DWORD modKeys, TBC45XPoint *pt);
 extern "C" void __cdecl Hook_SCURK_PaletteWindow_EvRButtonDown(cPaletteWindow *pThis, DWORD modKeys, TBC45XPoint *pt);
 extern "C" void __cdecl Hook_SCURK_MenuItemEnabler_Enable(TBC45XMenuItemEnabler *pThis, int nEnable);
+extern "C" void __cdecl Hook_SCURK_MenuItemEnabler_SetCheck(TBC45XMenuItemEnabler *pThis, int nState);
 extern "C" void __cdecl Hook_SCURK_BCDialog_CmCancel(TBC45XDialog *pThis);
 extern "C" LRESULT __cdecl Hook_SCURK_FrameWindow_EvCommand(TBC45XFrameWindow *pThis, DWORD id, HWND hWndCtl, DWORD notifyCode);
+
+// From scurk_convert.cpp
+void L_SCURK_LoadFixedLargeSpritesRsrc(cEditableTileSet *pThis);
+void L_SCURK_DirectConvert(winscurkMDIClient *pThis, int nLoad);
 
 // SC2K-only
