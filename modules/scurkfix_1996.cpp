@@ -1,5 +1,5 @@
 // sc2kfix modules/scurkfix_1996.cpp: fixes for SCURK - Network Edition (1996) version
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 // This source file only contains hooks that by their very nature are unique
 // to the 1996 version of SCURK (partial cases or those that only apply

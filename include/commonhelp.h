@@ -347,4 +347,7 @@ extern "C" LRESULT __cdecl Hook_SCURK_FrameWindow_EvCommand(TBC45XFrameWindow *p
 void L_SCURK_LoadFixedLargeSpritesRsrc(cEditableTileSet *pThis);
 void L_SCURK_DirectConvert(winscurkMDIClient *pThis, int nLoad);
 
+// From scurk_objmove.cpp
+void L_SCURK_MoveDIB(winscurkMDIClient *pThis, int nDir);
+
 // SC2K-only
