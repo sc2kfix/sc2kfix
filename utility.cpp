@@ -275,7 +275,7 @@ BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc) {
 	return FALSE;
 }
 
-char *ConvertFileTypeFilterString(char *pInStr) {
+char *ConvertFileTypeFilterString(const char *pInStr) {
 	const char *startChar;
 	char *currChar;
 	static char szOutStr[1024 + 1];
