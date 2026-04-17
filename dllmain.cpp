@@ -1,5 +1,5 @@
 // sc2kfix dllmain.cpp: all the magic happens here
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #define GETPROC(i, name) fpWinMMHookList[i] = GetProcAddress(hRealWinMM, #name);
 #define DEFPROC(i, name) extern "C" __declspec(naked) void __stdcall _##name() { __asm { jmp fpWinMMHookList[i*4] }};
@@ -41,6 +41,7 @@ DWORD dwSC2KFixVersion = SC2KFIX_VERSION_MAJOR << 24 | SC2KFIX_VERSION_MINOR << 
 const char* szSC2KFixVersion = SC2KFIX_VERSION;
 const char* szSC2KFixReleaseTag = SC2KFIX_RELEASE_TAG;
 FILE* fdLog = NULL;
+DWORD dwExperimentsEnabled = EXPERIMENT_NONE;
 BOOL bUseAdvancedQuery = TRUE;
 BOOL bSkipLoadingMods = FALSE;
 BOOL bFixFileAssociations = FALSE;
@@ -204,6 +205,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						bMapWireFrame = TRUE;
 					if (!lstrcmpiW(argv[i], L"-disablefixedtiles"))
 						bDisableFixedTiles = TRUE;
+					if (!lstrcmpiW(argv[i], L"-experiment=tripgenerator"))
+						dwExperimentsEnabled &= EXPERIMENT_TRIPGENERATOR;
+					if (!lstrcmpiW(argv[i], L"-experiment=all"))
+						dwExperimentsEnabled = EXPERIMENT_EVERYTHING;
 					if (!lstrcmpiW(argv[i], L"-bitmode"))
 					{
 						if (!iSetBitMode) {

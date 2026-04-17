@@ -48,7 +48,9 @@
 #define AREA_4x4_MAX_EDGE MAP_EDGE_MAX - 3
 #endif
 
-// Internal defines to turn bits of the reimplemented trip generator on and off.
+// Internal defines to turn bits of the reimplemented trip generator on and off, if the command
+// line option -experiment=tripgenerator is passed (or dwExperimentsEnabled is set to
+// EXPERIMENT_TRIPGENERATOR by default).
 // WARNING: USE_NATIVE_STACKS breaks things and is intended for experimentation. It will soon be
 // replaced with something a little less finicky.
 
@@ -1377,12 +1379,13 @@ static BOOL GetPopulatedTileAndLevel(__int16 iX, __int16 iY, BYTE iCurrentTileID
 		iTilePopLevel = wBuildingPopLevel[iPopulatedTile];
 	}
 	else {
-#if USE_NEW_TRIP_GENERATOR && USE_NEW_STARTINGCOORDS
-		if (iCurrentTileID >= TILE_ROAD_LR || !IsValidTransitItems(iX, iY))
-#else
-		if (iCurrentTileID >= TILE_ROAD_LR || !Game_IsValidTransitItems(iX, iY))
-#endif
-			return FALSE;
+		if (dwExperimentsEnabled & EXPERIMENT_TRIPGENERATOR && USE_NEW_TRIP_GENERATOR && USE_NEW_STARTINGCOORDS) {
+			if (iCurrentTileID >= TILE_ROAD_LR || !IsValidTransitItems(iX, iY))
+				return FALSE;
+		} else {
+			if (iCurrentTileID >= TILE_ROAD_LR || !Game_IsValidTransitItems(iX, iY))
+				return FALSE;
+		}
 	}
 
 	*p_iPopulatedTile = iPopulatedTile;
@@ -1454,11 +1457,10 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 						iRemainderDemand = 4000;
 						if (Game_IsZonedTilePowered(iX, iY)) {
 							int iTripResult = 0;
-#if USE_NEW_TRIP_GENERATOR
-							iTripResult = L_RunTripGenerator(iX, iY, iCurrZoneType, iTilePopLevel, TRIP_MAX_STEPS_VANILLA * TRIP_MAX_STEPS_SCALE);
-#else
-							iTripResult = Game_RunTripGenerator(iX, iY, iCurrZoneType, iTilePopLevel, GROWTH_TILE_MAX_TRIP_STEPS);
-#endif
+							if (dwExperimentsEnabled & EXPERIMENT_TRIPGENERATOR && USE_NEW_TRIP_GENERATOR)
+								iTripResult = L_RunTripGenerator(iX, iY, iCurrZoneType, iTilePopLevel, TRIP_MAX_STEPS_VANILLA * TRIP_MAX_STEPS_SCALE);
+							else
+								iTripResult = Game_RunTripGenerator(iX, iY, iCurrZoneType, iTilePopLevel, GROWTH_TILE_MAX_TRIP_STEPS);
 
 							if (iTripResult) {
 								iCurrentDemand = wCityDemand[GET_GENERAL_RCI_ZONE(iCurrZoneType)] + 2000;
