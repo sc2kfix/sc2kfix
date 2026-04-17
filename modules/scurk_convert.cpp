@@ -204,7 +204,7 @@ void L_SCURK_LoadFixedLargeSpritesRsrc(cEditableTileSet *pThis) {
 
 static void InsertObjectEntryViewRow(HWND hDlgListView, int iRow, const char *pObjectID, const char *pObjectName) {
 	ListView_InsertItemText(hDlgListView, iRow);
-	ListView_SetItemText(hDlgListView, iRow, 0, "");
+	ListView_SetItemText(hDlgListView, iRow, 0, (char *)"");
 	ListView_SetItemText(hDlgListView, iRow, 1, (char *)pObjectID);
 	ListView_SetItemText(hDlgListView, iRow, 2, (char *)pObjectName);
 }
@@ -1067,7 +1067,7 @@ void L_SCURK_DirectConvert(winscurkMDIClient *pThis, int nLoad) {
 					else
 						sprintf_s(szMsg, "DOS TIL Object Set converted and saved as '%s' -> '%s'", szSourcePath, pSaveOfn->lpstrFile);
 					if (nFixCnt > 0) {
-						sprintf_s(szFixMsg, "\n\n%d selected 'fixed' objects merged.", nFixCnt);
+						sprintf_s(szFixMsg, "\n\n%d selected 'fixed' object%s merged.", nFixCnt, ((nFixCnt == 1) ? "" : "s"));
 						strcat_s(szMsg, szFixMsg);
 					}
 					if (nLoad > CONVSAVEAS_ONLY) {
