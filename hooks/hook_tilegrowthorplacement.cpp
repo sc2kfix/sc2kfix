@@ -112,13 +112,14 @@ CPoint dwTripStartingCoords[24] = {
 
 int IsValidTransitItems(int x, int y) {
 	for (int i = 0; i < 24; i++) {
-		int x1 = x + dwTripStartingCoords[i].x;
-		int y1 = y + dwTripStartingCoords[i].y;
+		int newX = x + dwTripStartingCoords[i].x;
+		int newY = y + dwTripStartingCoords[i].y;
 
-		if (x >= GAME_MAP_SIZE || y >= GAME_MAP_SIZE)
+		if ((newX < MAP_EDGE_MIN || newX > MAP_EDGE_MAX) ||
+			(newY < MAP_EDGE_MIN || newY > MAP_EDGE_MAX))
 			continue;
 
-		int iTileID = GetTileID(x1, y1);
+		int iTileID = GetTileID(newX, newY);
 
 		if (iTileID >= TILE_ROAD_LR && iTileID < TILE_RAIL_LR)
 			return 1;
@@ -155,6 +156,8 @@ static CPoint* dwTripStartingCoords = (CPoint*)0x4C92C0;
 
 __int16 wTripX[] = { 0, 1, 0, -1 };
 __int16 wTripY[] = { -1, 0, 1, 0 };
+__int16& FTop = *(__int16*)0x4CA424;
+__int16& FBot = *(__int16*)0x4CC908;
 WORD* wArrZoneDestinations = (WORD*)0x4E8570;
 BYTE* byte_4E858C = (BYTE*)0x4E858C;
 
@@ -715,7 +718,7 @@ LABEL_236:
 #if USE_NATIVE_STACKS
 			} while (!stackTripPoints.empty());
 #else
-			} while (*(WORD*)0x4CC908 != *(WORD*)0x4CA424);
+			} while (FBot != FTop);
 #endif
 		}
 		//printf("\n");
