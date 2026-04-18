@@ -715,7 +715,10 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 						pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
 						break;
 					case ONIDLE_INITIALDIALOG_SC2KFIXSETTINGS:
-						ShowSettingsDialog();
+						if (GetAsyncKeyState(VK_SHIFT) < 0)
+							ShowSettingsDialog();
+						else
+							ShowNewSettingsDialog();
 						pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
 						break;
 					default:
@@ -2079,7 +2082,10 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 		if (nCode == _CN_COMMAND) {
 			switch (nID) {
 			case IDM_GAME_OPTIONS_SC2KFIXSETTINGS:
-				ShowSettingsDialog();
+				if (GetAsyncKeyState(VK_SHIFT) < 0)
+					ShowSettingsDialog();
+				else
+					ShowNewSettingsDialog();
 				return TRUE;
 
 			case IDM_GAME_OPTIONS_MODCONFIG:

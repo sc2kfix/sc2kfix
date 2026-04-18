@@ -370,6 +370,7 @@ void InitializeJSONSettings(void);
 void LoadJSONSettings(void);
 void SaveJSONSettings(void);
 void ShowSettingsDialog(void);
+void ShowNewSettingsDialog(void);
 void ShowModSettingsDialog(void);
 void ShowScenarioStatusDialog(void);
 void ShowSpriteBrowseDialog(void);

@@ -51,8 +51,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,10,0,0
- PRODUCTVERSION 0,10,0,0
+ FILEVERSION 0,11,0,0
+ PRODUCTVERSION 0,11,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -69,12 +69,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "sc2kfix Project"
             VALUE "FileDescription", "Bugfix and modding DLL for SimCity 2000: Special Edition"
-            VALUE "FileVersion", "0.10.0.0"
+            VALUE "FileVersion", "0.11.0.0"
             VALUE "InternalName", "sc2kfix.dll"
-            VALUE "LegalCopyright", "Copyright (C) 2025 sc2kfix Project"
+            VALUE "LegalCopyright", "Copyright (C) 2025-2026 sc2kfix Project"
             VALUE "OriginalFilename", "sc2kfix.dll"
             VALUE "ProductName", "sc2kfix"
-            VALUE "ProductVersion", "0.10.0.0"
+            VALUE "ProductVersion", "0.11.0.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -358,6 +358,95 @@ BEGIN
     PUSHBUTTON      "Analyze",120,114,152,36,13,NOT WS_VISIBLE
 END
 
+IDD_SETTINGS_CONTAINER DIALOGEX 0, 0, 319, 308
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "sc2kfix Settings"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,18,282,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,80,282,50,14
+    RTEXT           "sc2kfix version 0.0-dev (tag)",IDC_SETTINGS_STATIC_VERSIONINFO,198,300,121,8,WS_DISABLED
+    PUSHBUTTON      "Defaults",IDC_SETTINGS_BUTTON_DEFAULTS,185,282,50,14
+    PUSHBUTTON      "Vanilla",IDC_SETTINGS_BUTTON_VANILLA,247,282,50,14
+    CTEXT           "Settings with an asterisk next to them take effect on next game start.\nHover over a setting or button for more details.",IDC_SETTINGS_HEADER,27,5,264,16
+    CONTROL         "",IDC_SETTINGS_TAB_CONTAINER,"SysTabControl32",TCS_FIXEDWIDTH | WS_CLIPSIBLINGS,2,27,315,243
+END
+
+IDD_SETTINGS_GAMEPLAY DIALOGEX 0, 0, 307, 217
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+EXSTYLE WS_EX_TRANSPARENT
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "Interface Settings",IDC_STATIC,6,2,294,85
+    GROUPBOX        "Visual and Performance Settings",IDC_STATIC,6,93,294,63
+    CONTROL         " Display city growth in real-time instead of in batches (Default: on)",IDC_SETTINGS_CHECK_REFRESH_RATE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,107,280,10
+    CONTROL         " Use dark underground background (Default: off)",IDC_SETTINGS_CHECK_DARK_UNDGRND,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,122,280,10
+    PUSHBUTTON      "Configure Key Bindings",IDC_SETTINGS_BUTTON_CONFKEYBINDINGS,102,64,100,14
+    CONTROL         " Use grammar-corrected and disambiguated dialog strings (Default: on)",IDC_SETTINGS_CHECK_NEW_STRINGS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,47,280,10
+    CONTROL         " Use DOS/Mac style floating dialog instead of status bar (Default: off)",IDC_SETTINGS_CHECK_STATUS_DIALOG,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,17,280,10
+    CONTROL         " Display full SimCalendar date in title bar (Default: on)",IDC_SETTINGS_CHECK_TITLE_DATE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,32,280,10
+    CONTROL         " * Use higher quality sounds (Default: on)",IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,137,280,10
+END
+
+IDD_SETTINGS_GENERAL DIALOGEX 0, 0, 307, 217
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+EXSTYLE WS_EX_TRANSPARENT
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    EDITTEXT        IDC_SETTINGS_MAYOR,119,20,165,14,ES_CENTER | ES_AUTOHSCROLL
+    EDITTEXT        IDC_SETTINGS_COMPANY,119,39,165,14,ES_CENTER | ES_AUTOHSCROLL
+    CTEXT           "Default Mayor Name",IDC_STATIC,24,23,82,8
+    CTEXT           "Organization Name",IDC_STATIC,24,42,82,8
+    GROUPBOX        "Game Settings",IDC_STATIC,6,2,294,82
+    PUSHBUTTON      "Reset File Associations",IDC_SETTINGS_BUTTON_RESETFILEASSOCIATIONS,105,60,100,14
+    CONTROL         " * Always start the sc2kfix console on game startup (Default: off)",IDC_SETTINGS_CHECK_CONSOLE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,102,280,10
+    CONTROL         " * Check for sc2kfix updates on game startup (Default: on)",IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,116,280,10
+    GROUPBOX        "sc2kfix Core Settings",IDC_STATIC,6,90,294,73
+    CONTROL         " * Skip loading any installed mods on startup (Default: off)",IDC_SETTINGS_CHECK_DONT_LOAD_MODS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,131,280,10
+    CONTROL         " * Always skip introduction videos (Default: off)",IDC_SETTINGS_CHECK_SKIP_INTRO,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,145,280,10
+END
+
+IDD_SETTINGS_AUDIO DIALOGEX 0, 0, 307, 217
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+EXSTYLE WS_EX_TRANSPARENT
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "Volume Settings",IDC_STATIC,6,2,294,82
+    GROUPBOX        "Music Settings",IDC_STATIC,6,90,294,124
+    CONTROL         "",IDC_SLIDER_VOLUME_MASTER,"msctls_trackbar32",TBS_AUTOTICKS | TBS_TOP | WS_DISABLED | WS_TABSTOP,96,16,126,15
+    CTEXT           "Master Volume",IDC_STATIC,30,20,60,8,WS_DISABLED
+    CONTROL         "",IDC_SLIDER_VOLUME_MUSIC,"msctls_trackbar32",TBS_AUTOTICKS | TBS_TOP | WS_DISABLED | WS_TABSTOP,96,37,126,15
+    CTEXT           "Music",IDC_STATIC,30,41,60,8,WS_DISABLED
+    CONTROL         "",IDC_SLIDER_VOLUME_SOUNDS,"msctls_trackbar32",TBS_AUTOTICKS | TBS_TOP | WS_DISABLED | WS_TABSTOP,96,58,126,15
+    CTEXT           "Sound Effects",IDC_STATIC,30,62,60,8,WS_DISABLED
+    CONTROL         " Mute",IDC_CHECK_MUTE_MASTER,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,236,19,40,10
+    CONTROL         " Mute",IDC_CHECK_MUTE_MUSIC,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,236,40,40,10
+    CONTROL         " Mute",IDC_CHECK_MUTE_SOUNDS,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,236,61,40,10
+    COMBOBOX        IDC_SETTINGS_COMBO_MUSICOUTPUT,119,106,164,122,CBS_DROPDOWNLIST | WS_TABSTOP
+    CTEXT           "Music Playback Driver",IDC_STATIC,24,108,82,8
+    CTEXT           "FluidSynth SoundFont",IDC_STATIC,24,128,82,8
+    EDITTEXT        IDC_SETTINGS_FLUIDSYNTH_SOUNDFONT,119,125,114,14,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "Browse",IDC_SETTINGS_BUTTON_SOUNDFONTBROWSE,239,125,44,14
+    PUSHBUTTON      "Configure MIDI Tracks",IDC_SETTINGS_BUTTON_CONFMIDTRACKS,47,146,100,14
+    PUSHBUTTON      "Configure MP3 Tracks",IDC_SETTINGS_BUTTON_CONFMP3TRACKS,164,146,100,14
+    CONTROL         " Continue to play music when the game is in the background (Default: on)",IDC_SETTINGS_CHECK_BKGDMUSIC,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,168,280,10
+    CONTROL         " Shuffle music instead of looping predefined playlist (Default: off)",IDC_SETTINGS_CHECK_SHUFFLE_MUSIC,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,198,280,10
+    CONTROL         " Play next random selection after current music ends (Default: off)",IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,183,280,10
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -459,6 +548,38 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 165
     END
+
+    IDD_SETTINGS_CONTAINER, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 312
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 301
+    END
+
+    IDD_SETTINGS_GAMEPLAY, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 300
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 210
+    END
+
+    IDD_SETTINGS_GENERAL, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 300
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 210
+    END
+
+    IDD_SETTINGS_AUDIO, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 300
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 210
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -538,6 +659,26 @@ BEGIN
     0
 END
 
+IDD_SETTINGS_CONTAINER AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_SETTINGS_GENERAL AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_SETTINGS_GAMEPLAY AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_SETTINGS_AUDIO AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -611,6 +752,19 @@ IDI_TOPSECRET           ICON                    "blobs\\topsecret.ico"
 //
 
 IDD_SETTINGS DLGINIT
+BEGIN
+    IDC_SETTINGS_COMBO_MUSICOUTPUT, 0x403, 2, 0
+0x0061, 
+    IDC_SETTINGS_COMBO_MUSICOUTPUT, 0x403, 2, 0
+0x0062, 
+    IDC_SETTINGS_COMBO_MUSICOUTPUT, 0x403, 2, 0
+0x0063, 
+    IDC_SETTINGS_COMBO_MUSICOUTPUT, 0x403, 2, 0
+0x0064, 
+    0
+END
+
+IDD_SETTINGS_AUDIO DLGINIT
 BEGIN
     IDC_SETTINGS_COMBO_MUSICOUTPUT, 0x403, 2, 0
 0x0061, 

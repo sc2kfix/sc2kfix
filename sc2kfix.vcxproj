@@ -172,6 +172,7 @@ const char* szSC2KFixBuildInfo = "$(UserName)@$(ComputerName)  $([System.DateTim
     <ClCompile Include="modules\scurkfix_common.cpp" />
     <ClCompile Include="modules\scurkfix_primary.cpp" />
     <ClCompile Include="modules\settings.cpp" />
+    <ClCompile Include="modules\settings_dialog.cpp" />
     <ClCompile Include="modules\spritebrowse_dialog.cpp" />
     <ClCompile Include="modules\status_dialog.cpp" />
     <ClCompile Include="modules\things.cpp" />
