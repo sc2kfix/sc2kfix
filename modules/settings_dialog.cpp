@@ -67,6 +67,10 @@ static BOOL CALLBACK SettingsDialogGeneralTabProc(HWND hwndDlg, UINT message, WP
 			(stSettingsDialogHeader.rcDisplay.bottom - stSettingsDialogHeader.rcDisplay.top),
 			SWP_SHOWWINDOW);
 
+		Static_GetIcon(GetDlgItem(hwndDlg, IDC_STATIC_TOPSECRET), LoadIcon(hSC2KFixModule, MAKEINTRESOURCE(IDI_TOPSECRET)));
+		SendMessage(GetDlgItem(hwndDlg, IDC_STATIC_RELEASEBANNER), WM_SETFONT, (WPARAM)hSystemRegular12, TRUE);
+		InvalidateRect(hwndDlg, NULL, TRUE);
+
 		// Create tooltips
 		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_RESETFILEASSOCIATIONS),
 			"Resets the file association entries in the registry so that .sc2 and .scn files will automatically open in SimCity 2000.");

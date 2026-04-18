@@ -74,7 +74,10 @@
 #define IDC_SLIDER_VOLUME_SOUNDS        21061
 #define IDC_CHECK_MUTE_MASTER           21062
 #define IDC_CHECK_MUTE_MUSIC            21063
+#define IDC_STATIC_TOPSECRET            21063
 #define IDC_CHECK_MUTE_SOUNDS           21064
+#define IDC_STATIC_RELEASEBANNER        21064
+#define IDC_STATIC_RELEASEMESSAGE       21065
 #define IDR_WAVE_500                    23001
 #define IDR_WAVE_503                    23002
 #define IDR_WAVE_508                    23003
@@ -137,7 +140,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        23031
 #define _APS_NEXT_COMMAND_VALUE         40026
-#define _APS_NEXT_CONTROL_VALUE         21063
+#define _APS_NEXT_CONTROL_VALUE         21066
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
