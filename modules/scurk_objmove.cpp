@@ -332,7 +332,7 @@ void L_SCURK_MoveDIB(winscurkMDIClient *pThis) {
 		nVertMove = 0;
 		nVertMax = 64;
 
-		sprintf(szTileName, "%s (%dx%d)", pLongName, nTileBase, nTileBase);
+		sprintf_s(szTileName, "%s (%dx%d)", pLongName, nTileBase, nTileBase);
 		if (!L_SCURK_DoShuntBy(pThis, szTileName, &nHorzMove, &nVertMove, nHorzMax, nVertMax))
 			return;
 
