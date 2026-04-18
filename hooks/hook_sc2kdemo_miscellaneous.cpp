@@ -187,15 +187,21 @@ extern "C" void __stdcall Hook_Demo_CmdUI_Enable(BOOL bOn) {
 	HWND hNextDlgTabItem;
 	CMFC3XWnd *pNextDlgTabItem;
 	HWND hWndFocus;
+	BOOL bOnOverride;
 	CSimcityAppDemo *pSCApp;
-	CMainFrame *pMainFrm;
 
 	if (pThis->m_pMenu != NULL) {
 		if (pThis->m_pSubMenu != NULL)
 			return;
 
+		pSCApp = &pCSimcityAppThis_Demo;
+
+		bOnOverride = bOn;
+		if (pThis->m_nID == IDM_MAIN_FILE_OPENMAINDIALOG)
+			bOnOverride = TRUE;
+
 		EnableMenuItem(pThis->m_pMenu->m_hMenu, pThis->m_nIndex, MF_BYPOSITION |
-			(bOn ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
+			(bOnOverride ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
 	}
 	else {
 		if (!bOn && (GetFocus() == pThis->m_pOther->m_hWnd)) {
@@ -209,18 +215,6 @@ extern "C" void __stdcall Hook_Demo_CmdUI_Enable(BOOL bOn) {
 		EnableWindow(pThis->m_pOther->m_hWnd, bOn);
 	}
 	pThis->m_bEnableChanged = TRUE;
-
-	pSCApp = &pCSimcityAppThis_Demo;
-	if (pSCApp) {
-		pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
-		if (pMainFrm) {
-			// This section has been added to account for menu items that aren't handled
-			// natively (yet).
-
-			// Ensure that the "Open Main Dialog" item is always enabled.
-			EnableMenuItem(GetMenu(pMainFrm->m_hWnd), IDM_MAIN_FILE_OPENMAINDIALOG, MF_BYCOMMAND | MF_ENABLED);
-		}
-	}
 }
 
 void InstallMiscHooks_SC2KDemo(void) {
