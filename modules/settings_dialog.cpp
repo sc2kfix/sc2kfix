@@ -163,7 +163,7 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 			"Enabling or disabling this setting takes effect after restarting the game.");
 
 		// Set fields based on the working JSON
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["floating_status"], IDC_SETTINGS_CHECK_STATUS_DIALOG);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_floating_status"], IDC_SETTINGS_CHECK_STATUS_DIALOG);
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["title_calendar"], IDC_SETTINGS_CHECK_TITLE_DATE);
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_new_strings"], IDC_SETTINGS_CHECK_NEW_STRINGS);
 
@@ -175,7 +175,7 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 
 	case WM_DESTROY:
 		// Update the working JSON based on our fields
-		GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["floating_status"], IDC_SETTINGS_CHECK_STATUS_DIALOG);
+		GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_floating_status"], IDC_SETTINGS_CHECK_STATUS_DIALOG);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["title_calendar"], IDC_SETTINGS_CHECK_TITLE_DATE);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_new_strings"], IDC_SETTINGS_CHECK_NEW_STRINGS);
 
@@ -494,6 +494,7 @@ BOOL CALLBACK SettingsDialogContainerProc(HWND hwndDlg, UINT message, WPARAM wPa
 
 void ShowNewSettingsDialog(void) {
 	settings_t stSettingsChanges;
+	memset(&stSettingsChanges, 0, sizeof(settings_t));
 
 	// Copy the active settings structure into the working copy
 	jsonSettingsCoreWorkingCopy = jsonSettingsCore;
