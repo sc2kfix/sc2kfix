@@ -383,7 +383,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,107,280,10
     CONTROL         " Use dark underground background (Default: off)",IDC_SETTINGS_CHECK_DARK_UNDGRND,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,122,280,10
-    PUSHBUTTON      "Configure Key Bindings",IDC_SETTINGS_BUTTON_CONFKEYBINDINGS,102,64,100,14
+    PUSHBUTTON      "Configure Key Bindings",IDC_SETTINGS_BUTTON_CONFKEYBINDINGS,103,64,100,14
     CONTROL         " Use grammar-corrected and disambiguated dialog strings (Default: on)",IDC_SETTINGS_CHECK_NEW_STRINGS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,47,280,10
     CONTROL         " Use DOS/Mac style floating dialog instead of status bar (Default: off)",IDC_SETTINGS_CHECK_STATUS_DIALOG,
@@ -403,8 +403,8 @@ BEGIN
     EDITTEXT        IDC_SETTINGS_COMPANY,119,39,165,14,ES_CENTER | ES_AUTOHSCROLL
     CTEXT           "Default Mayor Name",IDC_STATIC,24,23,82,8
     CTEXT           "Organization Name",IDC_STATIC,24,42,82,8
-    GROUPBOX        "Game Settings",IDC_STATIC,6,2,294,82
-    PUSHBUTTON      "Reset File Associations",IDC_SETTINGS_BUTTON_RESETFILEASSOCIATIONS,105,60,100,14
+    GROUPBOX        "SimCity 2000 Registration",IDC_STATIC,6,2,294,82
+    PUSHBUTTON      "Reset File Associations",IDC_SETTINGS_BUTTON_RESETFILEASSOCIATIONS,104,60,100,14
     CONTROL         " * Always start the sc2kfix console on game startup (Default: off)",IDC_SETTINGS_CHECK_CONSOLE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,102,280,10
     CONTROL         " * Check for sc2kfix updates on game startup (Default: on)",IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES,
@@ -421,7 +421,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 EXSTYLE WS_EX_TRANSPARENT
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    GROUPBOX        "Volume Settings",IDC_STATIC,6,2,294,82
+    GROUPBOX        "Volume Settings (NYI)",IDC_STATIC,6,2,294,82,WS_DISABLED
     GROUPBOX        "Music Settings",IDC_STATIC,6,90,294,124
     CONTROL         "",IDC_SLIDER_VOLUME_MASTER,"msctls_trackbar32",TBS_AUTOTICKS | TBS_TOP | WS_DISABLED | WS_TABSTOP,96,16,126,15
     CTEXT           "Master Volume",IDC_STATIC,30,20,60,8,WS_DISABLED
