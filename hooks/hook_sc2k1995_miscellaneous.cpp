@@ -301,13 +301,10 @@ extern "C" void __stdcall Hook_1995_CmdUI_Enable(BOOL bOn) {
 	CMFC3XWnd *pNextDlgTabItem;
 	HWND hWndFocus;
 	BOOL bOnOverride;
-	CSimcityAppPrimary *pSCApp;
 
 	if (pThis->m_pMenu != NULL) {
 		if (pThis->m_pSubMenu != NULL)
 			return;
-
-		pSCApp = &pCSimcityAppThis_1995;
 
 		bOnOverride = bOn;
 		if (pThis->m_nID == IDM_MAIN_FILE_OPENMAINDIALOG)

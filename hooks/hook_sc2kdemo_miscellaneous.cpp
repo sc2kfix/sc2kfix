@@ -188,13 +188,10 @@ extern "C" void __stdcall Hook_Demo_CmdUI_Enable(BOOL bOn) {
 	CMFC3XWnd *pNextDlgTabItem;
 	HWND hWndFocus;
 	BOOL bOnOverride;
-	CSimcityAppDemo *pSCApp;
 
 	if (pThis->m_pMenu != NULL) {
 		if (pThis->m_pSubMenu != NULL)
 			return;
-
-		pSCApp = &pCSimcityAppThis_Demo;
 
 		bOnOverride = bOn;
 		if (pThis->m_nID == IDM_MAIN_FILE_OPENMAINDIALOG)
