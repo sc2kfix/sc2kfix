@@ -420,11 +420,11 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["check_for_updates"], IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES);
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["skip_mods"], IDC_SETTINGS_CHECK_DONT_LOAD_MODS);
 
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["floating_status"], IDC_SETTINGS_CHECK_STATUS_DIALOG);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_floating_status"], IDC_SETTINGS_CHECK_STATUS_DIALOG);
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["title_calendar"], IDC_SETTINGS_CHECK_TITLE_DATE);
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_new_strings"], IDC_SETTINGS_CHECK_NEW_STRINGS);
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["skip_intro"], IDC_SETTINGS_CHECK_SKIP_INTRO);
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["dark_background"], IDC_SETTINGS_CHECK_DARK_UNDGRND);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["dark_underground"], IDC_SETTINGS_CHECK_DARK_UNDGRND);
 
 		// Center the dialog box
 		CenterDialogBox(hwndDlg);
@@ -457,11 +457,11 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["check_for_updates"], IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES);
 			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["skip_mods"], IDC_SETTINGS_CHECK_DONT_LOAD_MODS);
 
-			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["floating_status"], IDC_SETTINGS_CHECK_STATUS_DIALOG);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_floating_status"], IDC_SETTINGS_CHECK_STATUS_DIALOG);
 			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["title_calendar"], IDC_SETTINGS_CHECK_TITLE_DATE);
 			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_new_strings"], IDC_SETTINGS_CHECK_NEW_STRINGS);
 			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["skip_intro"], IDC_SETTINGS_CHECK_SKIP_INTRO);
-			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["dark_background"], IDC_SETTINGS_CHECK_DARK_UNDGRND);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["dark_underground"], IDC_SETTINGS_CHECK_DARK_UNDGRND);
 
 			EndDialog(hwndDlg, TRUE);
 			break;

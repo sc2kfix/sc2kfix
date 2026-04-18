@@ -168,7 +168,7 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_new_strings"], IDC_SETTINGS_CHECK_NEW_STRINGS);
 
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["frequent_updates"], IDC_SETTINGS_CHECK_REFRESH_RATE);
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["dark_background"], IDC_SETTINGS_CHECK_DARK_UNDGRND);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["dark_underground"], IDC_SETTINGS_CHECK_DARK_UNDGRND);
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["use_sound_replacements"], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
 
 		return TRUE;
@@ -180,9 +180,16 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_new_strings"], IDC_SETTINGS_CHECK_NEW_STRINGS);
 
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["frequent_updates"], IDC_SETTINGS_CHECK_REFRESH_RATE);
-		GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["dark_background"], IDC_SETTINGS_CHECK_DARK_UNDGRND);
+		GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["dark_underground"], IDC_SETTINGS_CHECK_DARK_UNDGRND);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["use_sound_replacements"], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
 
+		return TRUE;
+
+	case WM_COMMAND:
+		switch (GET_WM_COMMAND_ID(wParam, lParam)) {
+		case IDC_SETTINGS_BUTTON_CONFKEYBINDINGS:
+			return DoConfigureKeyBindings(stSettingsDialogHeader.stSettingsChanges, hwndDlg);
+		}
 		return TRUE;
 	}
 
