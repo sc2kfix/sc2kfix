@@ -586,12 +586,12 @@ int R_SCURK_WRP_EditableTileSet_mShapeNumToEditableNum(cEditableTileSet *pThis, 
 	return 0;
 }
 
-char *R_SCURK_WRP_EditableTileSet_GetLongName(cEditableTileSet *pThis, int nEdNum) {
+char *R_SCURK_WRP_EditableTileSet_mGetLongName(cEditableTileSet *pThis, int nEdNum) {
 	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
 		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
-			return GameMain_EditableTileSet_GetLongName_SCURKPrimary(pThis, nEdNum);
+			return GameMain_EditableTileSet_mGetLongName_SCURKPrimary(pThis, nEdNum);
 		else if (dwDetectedVersion == VERSION_SCURK_1996)
-			return GameMain_EditableTileSet_GetLongName_SCURK1996(pThis, nEdNum);
+			return GameMain_EditableTileSet_mGetLongName_SCURK1996(pThis, nEdNum);
 	}
 	return NULL;
 }

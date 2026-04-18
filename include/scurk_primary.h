@@ -71,7 +71,7 @@ SCURKPRIMARY_GAMECALL_MAIN(0x41435C, void, __cdecl, EncodeDib_mShrink, TEncodeDi
 SCURKPRIMARY_GAMECALL_MAIN(0x41441C, void, __cdecl, EncodeDib_mAcquireEncodedShapeData, TEncodeDib *, TEncodeDib *)
 SCURKPRIMARY_GAMECALL_MAIN(0x414450, void, __cdecl, EncodeDib_mEncodeShape, TEncodeDib *, WORD, WORD, WORD)
 SCURKPRIMARY_GAMECALL_MAIN(0x4148E8, int, __cdecl, EditableTileSet_mShapeNumToEditableNum, cEditableTileSet *, int)
-SCURKPRIMARY_GAMECALL_MAIN(0x414D78, char *, __cdecl, EditableTileSet_GetLongName, cEditableTileSet *, int)
+SCURKPRIMARY_GAMECALL_MAIN(0x414D78, char *, __cdecl, EditableTileSet_mGetLongName, cEditableTileSet *, int)
 SCURKPRIMARY_GAMECALL_MAIN(0x4168B0, int, __cdecl, EditableTileSet_mGetShapeWidth, cEditableTileSet *, int)
 SCURKPRIMARY_GAMECALL_MAIN(0x416C0C, void, __cdecl, EditableTileSet_mRenderEditableShapeToDIB_Dib, cEditableTileSet *, TBC45XDib *, int)
 SCURKPRIMARY_GAMECALL_MAIN(0x416C44, void, __cdecl, EditableTileSet_mRenderEditableShapeToDIB_Graphic, cEditableTileSet *, CWinGBitmap *, int)

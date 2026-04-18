@@ -1,5 +1,5 @@
 // sc2kfix modules/scurkfix_primary.cpp: fixes for SCURK - primary (1995) version
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 // This source file only contains hooks that by their very nature are unique
 // to the primary version of SCURK (partial cases or those that only apply
