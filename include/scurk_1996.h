@@ -69,7 +69,7 @@ SCURK1996_GAMECALL_MAIN(0x41437C, void, __cdecl, EncodeDib_mShrink, TEncodeDib *
 SCURK1996_GAMECALL_MAIN(0x41443C, void, __cdecl, EncodeDib_mAcquireEncodedShapeData, TEncodeDib *, TEncodeDib *)
 SCURK1996_GAMECALL_MAIN(0x414470, void, __cdecl, EncodeDib_mEncodeShape, TEncodeDib *, WORD, WORD, WORD)
 SCURK1996_GAMECALL_MAIN(0x414908, int, __cdecl, EditableTileSet_mShapeNumToEditableNum, cEditableTileSet *, int)
-SCURK1996_GAMECALL_MAIN(0x414D98, char *, __cdecl, EditableTileSet_GetLongName, cEditableTileSet *, int)
+SCURK1996_GAMECALL_MAIN(0x414D98, char *, __cdecl, EditableTileSet_mGetLongName, cEditableTileSet *, int)
 SCURK1996_GAMECALL_MAIN(0x41690C, int, __cdecl, EditableTileSet_mGetShapeWidth, cEditableTileSet *, int)
 SCURK1996_GAMECALL_MAIN(0x416C68, void, __cdecl, EditableTileSet_mRenderEditableShapeToDIB_Dib, cEditableTileSet *, TBC45XDib *, int)
 SCURK1996_GAMECALL_MAIN(0x416CA0, void, __cdecl, EditableTileSet_mRenderEditableShapeToDIB_Graphic, cEditableTileSet *, CWinGBitmap *, int)

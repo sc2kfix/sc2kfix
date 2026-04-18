@@ -227,7 +227,7 @@ extern "C" void __cdecl Hook_SCURK_PlaceTileListDlg_EvLBNSelChange(TPlaceTileLis
 		pThis->nXPos = nValOne;
 		pThis->nCurPos = nValTwo;
 		pThis->nSelected = 1;
-		pLongTileName = R_SCURK_WRP_EditableTileSet_GetLongName(pSCApp->mWorkingTiles, pThis->nCurPos);
+		pLongTileName = R_SCURK_WRP_EditableTileSet_mGetLongName(pSCApp->mWorkingTiles, pThis->nCurPos);
 		R_BOR_WRP_Dialog_SetCaption(pThis, pLongTileName);
 		wtoolValue = R_SCURK_WRP_GetwToolValue();
 		*wtoolValue = 8;
@@ -1910,24 +1910,12 @@ extern "C" int __cdecl Hook_SCURK_winscurkMDIFrame_AssignMenu(winscurkMDIFrame *
 			goto skipmainmenu;
 		}
 		hEditPopup = miiEditPopup.hSubMenu;
-		if (!InsertMenu(hEditPopup, 9, MF_BYPOSITION|MF_STRING, IDM_SCRK_EW_EDIT_MOVE_RIGHT, "Move Object Right") && mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_MENU) {
+		if (!InsertMenu(hEditPopup, 9, MF_BYPOSITION|MF_STRING, IDM_SCRK_EW_EDIT_MOVE, "Move Object...") && mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_MENU) {
 			ConsoleLog(LOG_DEBUG, "MISC: Edit InsertMenuA #1 failed, error = 0x%08X.\n", GetLastError());
 			goto skipmainmenu;
 		}
-		if (!InsertMenu(hEditPopup, 9, MF_BYPOSITION|MF_STRING, IDM_SCRK_EW_EDIT_MOVE_LEFT, "Move Object Left") && mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Edit InsertMenuA #2 failed, error = 0x%08X.\n", GetLastError());
-			goto skipmainmenu;
-		}
-		if (!InsertMenu(hEditPopup, 9, MF_BYPOSITION|MF_STRING, IDM_SCRK_EW_EDIT_MOVE_DOWN, "Move Object Down") && mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Edit InsertMenuA #3 failed, error = 0x%08X.\n", GetLastError());
-			goto skipmainmenu;
-		}
-		if (!InsertMenu(hEditPopup, 9, MF_BYPOSITION|MF_STRING, IDM_SCRK_EW_EDIT_MOVE_UP, "Move Object Up") && mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Edit InsertMenuA #4 failed, error = 0x%08X.\n", GetLastError());
-			goto skipmainmenu;
-		}
 		if (!InsertMenu(hEditPopup, 9, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Edit InsertMenuA #5 failed, error = 0x%08X.\n", GetLastError());
+			ConsoleLog(LOG_DEBUG, "MISC: Edit InsertMenuA #2 failed, error = 0x%08X.\n", GetLastError());
 			goto skipmainmenu;
 		}
 
@@ -2078,7 +2066,7 @@ extern "C" void __cdecl Hook_SCURK_MenuItemEnabler_Enable(TBC45XMenuItemEnabler 
 
 	nEnableOverride = nEnable;
 	// These are the menu items we always want to enable.
-	if ((pThis->Id >= IDM_SCRK_EW_EDIT_MOVE_UP && pThis->Id <= IDM_SCRK_EW_EDIT_MOVE_RIGHT) ||
+	if (pThis->Id == IDM_SCRK_EW_EDIT_MOVE ||
 	    (pThis->Id >= IDM_SCRK_EW_FILE_DIRCONV_CONVERT && pThis->Id <= IDM_SCRK_EW_FILE_DIRCONV_CONVERTLOADWRK))
 		nEnableOverride = 1;
 	EnableMenuItem(pThis->hMenu, pThis->Position, (nEnableOverride ? MF_ENABLED : MF_GRAYED) | MF_BYPOSITION);
@@ -2120,17 +2108,8 @@ extern "C" LRESULT __cdecl Hook_SCURK_FrameWindow_EvCommand(TBC45XFrameWindow *p
 	if (dwDecoFrmEvCmdAddr && (DWORD)_ReturnAddress() == dwDecoFrmEvCmdAddr) {
 		if (pThis == (TBC45XFrameWindow *)pSCApp->mdiClient->mParent->pFrameWnd) {
 			switch (id) {
-			case IDM_SCRK_EW_EDIT_MOVE_UP:
-				L_SCURK_MoveDIB(pSCApp->mdiClient, SHUNT_UP);
-				return TRUE;
-			case IDM_SCRK_EW_EDIT_MOVE_DOWN:
-				L_SCURK_MoveDIB(pSCApp->mdiClient, SHUNT_DOWN);
-				return TRUE;
-			case IDM_SCRK_EW_EDIT_MOVE_LEFT:
-				L_SCURK_MoveDIB(pSCApp->mdiClient, SHUNT_LEFT);
-				return TRUE;
-			case IDM_SCRK_EW_EDIT_MOVE_RIGHT:
-				L_SCURK_MoveDIB(pSCApp->mdiClient, SHUNT_RIGHT);
+			case IDM_SCRK_EW_EDIT_MOVE:
+				L_SCURK_MoveDIB(pSCApp->mdiClient);
 				return TRUE;
 			case IDM_SCRK_EW_FILE_DIRCONV_CONVERT:
 				L_SCURK_DirectConvert(pSCApp->mdiClient, CONVSAVEAS_ONLY);

@@ -14,6 +14,162 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
+// The dialogue for selecting both the
+// horizontal and vertical shunting
+// values.
+
+typedef struct {
+	int nHorzMove;
+	int nHorzMax;
+	int nVertMove;
+	int nVertMax;
+	const char *pTileDesc;
+} shunt_info;
+
+static int GetMoveFromPos(HWND hWndTrackbar, int nDirMax) {
+	int nTrackPos, nDirMove;
+
+	nDirMove = 0;
+	if (hWndTrackbar) {
+		nTrackPos = SendMessage(hWndTrackbar, TBM_GETPOS, 0, 0);
+		nDirMove = (nTrackPos == nDirMax) ? 0 : nTrackPos - nDirMax;
+	}
+	return nDirMove;
+}
+
+BOOL CALLBACK ShuntDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
+	char szDlgTitle[128 + 1], szTextLabel[64 + 1];
+	HWND hWndStatic, hWndTrackbar, hWndHotTrackbar;
+	int nTrackMax, nTrackPos;
+	shunt_info *si;
+
+	switch (message) {
+		case WM_INITDIALOG:
+			SetWindowLong(hwndDlg, GWL_USERDATA, lParam);
+			si = (shunt_info *)lParam;
+
+			sprintf_s(szDlgTitle, "Shunt Object - %s", si->pTileDesc);
+			SetWindowTextA(hwndDlg, szDlgTitle);
+
+			ConsoleLog(LOG_DEBUG, "ShuntDialogProc(): WM_INITDIALOG - Start: (%d, %d) (%d, %d)\n", si->nHorzMove, si->nVertMove, si->nHorzMax, si->nVertMax);
+
+			if (si->nHorzMove > 0) {
+				if (si->nHorzMove > si->nHorzMax)
+					si->nHorzMove = si->nHorzMax;
+			}
+			else if (si->nHorzMove < 0) {
+				if (si->nHorzMove < -si->nHorzMax)
+					si->nHorzMove = -si->nHorzMax;
+			}
+
+			if (si->nVertMove > 0) {
+				if (si->nVertMove > si->nVertMax)
+					si->nVertMove = si->nVertMax;
+			}
+			else if (si->nVertMove < 0) {
+				if (si->nVertMove < -si->nVertMax)
+					si->nVertMove = -si->nVertMax;
+			}
+
+			sprintf_s(szTextLabel, "Horizontal:    %d", si->nHorzMove);
+			hWndStatic = GetDlgItem(hwndDlg, IDC_SHUNT_TXTHORZ);
+			SetWindowTextA(hWndStatic, szTextLabel);
+
+			sprintf_s(szTextLabel, "Vertical:    %d", si->nVertMove);
+			hWndStatic = GetDlgItem(hwndDlg, IDC_SHUNT_TXTVERT);
+			SetWindowTextA(hWndStatic, szTextLabel);
+
+			hWndTrackbar = GetDlgItem(hwndDlg, IDC_SHUNT_SLIDHORZ);
+			nTrackMax = (si->nHorzMax * 2);
+			SendMessageA(hWndTrackbar, TBM_SETRANGEMAX, TRUE, nTrackMax);
+			nTrackPos = si->nHorzMax;
+			if (si->nHorzMove > 0)
+				nTrackPos = si->nHorzMax + si->nHorzMove;
+			else if (si->nHorzMove < 0)
+				nTrackPos = si->nHorzMax + si->nHorzMove;
+			SendMessageA(hWndTrackbar, TBM_SETPOS, TRUE, nTrackPos);
+
+			ConsoleLog(LOG_DEBUG, "ShuntDialogProc(): WM_INITDIALOG - HorzSlider: (%d / %d) (%d) (%d)\n", si->nHorzMove, si->nHorzMax, nTrackPos, nTrackMax);
+
+			hWndTrackbar = GetDlgItem(hwndDlg, IDC_SHUNT_SLIDVERT);
+			nTrackMax = (si->nVertMax * 2);
+			SendMessageA(hWndTrackbar, TBM_SETRANGEMAX, TRUE, nTrackMax);
+			nTrackPos = si->nVertMax;
+			if (si->nVertMove > 0)
+				nTrackPos = si->nVertMax + si->nVertMove;
+			else if (si->nVertMove < 0)
+				nTrackPos = si->nVertMax + si->nVertMove;
+			SendMessageA(hWndTrackbar, TBM_SETPOS, TRUE, nTrackPos);
+
+			ConsoleLog(LOG_DEBUG, "ShuntDialogProc(): WM_INITDIALOG - VertSlider: (%d / %d) (%d) (%d)\n", si->nVertMove, si->nVertMax, nTrackPos, nTrackMax);
+
+			CenterDialogBox(hwndDlg);
+			return TRUE;
+
+		case WM_COMMAND:
+			si = (shunt_info *)GetWindowLong(hwndDlg, GWL_USERDATA);
+			switch (GET_WM_COMMAND_ID(wParam, lParam)) {
+				case IDOK:
+					EndDialog(hwndDlg, 1);
+					return TRUE;
+				case IDCANCEL:
+					si->nHorzMove = 0;
+					si->nVertMove = 0;
+					EndDialog(hwndDlg, 0);
+					return TRUE;
+			}
+			break;
+
+		case WM_HSCROLL:
+			si = (shunt_info *)GetWindowLong(hwndDlg, GWL_USERDATA);
+			switch (GET_WM_HSCROLL_CODE(wParam, lParam)) {
+				case TB_ENDTRACK:
+					hWndHotTrackbar = GET_WM_HSCROLL_HWND(wParam, lParam);
+					if (hWndHotTrackbar == GetDlgItem(hwndDlg, IDC_SHUNT_SLIDHORZ)) {
+						si->nHorzMove = GetMoveFromPos(hWndHotTrackbar, si->nHorzMax);
+
+						sprintf_s(szTextLabel, "Horizontal:    %d", si->nHorzMove);
+						hWndStatic = GetDlgItem(hwndDlg, IDC_SHUNT_TXTHORZ);
+						SetWindowTextA(hWndStatic, szTextLabel);
+					}
+					else if (hWndHotTrackbar == GetDlgItem(hwndDlg, IDC_SHUNT_SLIDVERT)) {
+						si->nVertMove = GetMoveFromPos(hWndHotTrackbar, si->nVertMax);
+						
+						sprintf_s(szTextLabel, "Vertical:     %d", si->nVertMove);
+						hWndStatic = GetDlgItem(hwndDlg, IDC_SHUNT_TXTVERT);
+						SetWindowTextA(hWndStatic, szTextLabel);
+					}
+					break;
+			}
+			break;
+	}
+	return FALSE;
+}
+
+static BOOL L_SCURK_DoShuntBy(winscurkMDIClient *pParWnd, const char *pTileName, int *nHorzMove, int *nVertMove, int nHorzMax, int nVertMax) {
+	BOOL bRes;
+	shunt_info si;
+
+	memset(&si, 0, sizeof(si));
+	si.nHorzMove = *nHorzMove;
+	si.nHorzMax = nHorzMax;
+	si.nVertMove = *nVertMove;
+	si.nVertMax = nVertMax;
+	si.pTileDesc = pTileName;
+
+	bRes = (DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_SHUNT), pParWnd->pWnd->HWindow, ShuntDialogProc, (LPARAM)&si) == 1);
+	if (bRes) {
+		*nHorzMove = si.nHorzMove;
+		*nVertMove = si.nVertMove;
+		ConsoleLog(LOG_DEBUG, "DoShuntBy(%d, %d, %d, %d): IDOK\n", *nHorzMove, *nVertMove, nHorzMax, nVertMax);
+	}
+	ConsoleLog(LOG_DEBUG, "DoShuntBy(%d, %d, %d, %d): (%d)\n", *nHorzMove, *nVertMove, nHorzMax, nVertMax, bRes);
+
+	return bRes;
+}
+
+// Functions to do with shunting
+
 static void  L_SCURK_EncodeWithShunt(TEncodeDib *pThis, WORD shapeHeight, WORD shapeWidth, WORD nOffSet, int nDir) {
 	BYTE *pThisBits, *pShapeBuf;
 	int nHeight, nWidth;
@@ -127,24 +283,30 @@ static void  L_SCURK_EncodeWithShunt(TEncodeDib *pThis, WORD shapeHeight, WORD s
 	pThis->mLength = pTileBuf - pThis->mShapeBuf;
 }
 
-static int L_SCURK_GetTileBase(cEditableTileSet *pEdTileSet, int nEdNum) {
+static int L_SCURK_GetTileBase(cEditableTileSet *pEdTileSet, int nEdNum, BOOL bInvert) {
 	int nShapeWidth, nTileBase;
 
 	nShapeWidth = R_SCURK_WRP_EditableTileSet_mGetShapeWidth(pEdTileSet, nEdNum) - SINGLE_TILE_WIDTH;
-	nTileBase = TILE_BASE_4x4;
+	nTileBase = (bInvert) ? TILE_BASE_1x1 : TILE_BASE_4x4;
 	if (nShapeWidth) {
-		nTileBase = TILE_BASE_3x3;
+		ConsoleLog(LOG_DEBUG, "1\n");
+		nTileBase = (bInvert) ? TILE_BASE_2x2 : TILE_BASE_3x3;
 		nShapeWidth -= SINGLE_TILE_WIDTH;
 		if (nShapeWidth) {
-			nTileBase = TILE_BASE_2x2;
+			ConsoleLog(LOG_DEBUG, "2\n");
+			nTileBase = (bInvert) ? TILE_BASE_3x3 : TILE_BASE_2x2;
 			nShapeWidth -= SINGLE_TILE_WIDTH;
 			if (nShapeWidth) {
-				nTileBase = TILE_BASE_1x1;
-				if (nShapeWidth < SINGLE_TILE_WIDTH)
+				ConsoleLog(LOG_DEBUG, "3\n");
+				nTileBase = (bInvert) ? TILE_BASE_4x4 : TILE_BASE_1x1;
+				if (nShapeWidth < SINGLE_TILE_WIDTH) {
+					ConsoleLog(LOG_DEBUG, "4\n");
 					nTileBase = TILE_BASE_INVALID;
+				}
 			}
 		}
 	}
+	ConsoleLog(LOG_DEBUG, "GetTileBase(%d - %d): %d / %d\n", nEdNum, bInvert, nShapeWidth, nTileBase);
 
 	return nTileBase;
 }
@@ -163,7 +325,7 @@ static void L_SCURK_RefreshTile(cPaintWindow *pThis, cEditableTileSet *pEdTileSe
 	pEdTileSet->mTileSizeTable[nDBID] = pThis->pEncodeDib->mLength;
 	pEdTileSet->mTileSet->pData[nDBID].sprHeader.wHeight = LOWORD(pThis->pEncodeDib->mHeight);
 
-	nTileBase = L_SCURK_GetTileBase(pEdTileSet, nEdNum);
+	nTileBase = L_SCURK_GetTileBase(pEdTileSet, nEdNum, FALSE);
 
 	// Clear and refresh the displayed shape.
 	R_SCURK_WRP_PaintWindow_mClearTile(pThis, nTileBase);
@@ -172,20 +334,76 @@ static void L_SCURK_RefreshTile(cPaintWindow *pThis, cEditableTileSet *pEdTileSe
 	InvalidateRect(pThis->HWindow, 0, 0);
 }
 
-void L_SCURK_MoveDIB(winscurkMDIClient *pThis, int nDir) {
+void L_SCURK_MoveDIB(winscurkMDIClient *pThis) {
 	winscurkApp *pSCApp;
+	int nHorzDir, nHorzShunt, nHorzMax, nVertDir, nVertShunt, nVertMax, nTileBase, nTileBaseInv, nMove;
+	const char *pLongName;
+	char szTileName[128 + 1];
 	TEncodeDib *pEncDib;
 	__int32 nXOffset;
 	WORD shapeWidth, shapeHeight;
 	cPaintWindow *pPaintWnd;
+	// These values are designed to persist
+	// unless it hits a maximum based on
+	// the changing nTileBaseInv.
+	static int nHorzMove = 0,
+		nVertMove = 0;
 
 	pSCApp = R_SCURK_WRP_winscurkApp_GetPointerToClass();
 	if (pThis->mEditWindow) {
 		pPaintWnd = pThis->mEditWindow->pPaintWindow;
 
+		nTileBase = L_SCURK_GetTileBase(pSCApp->mWorkingTiles, pPaintWnd->pScurkEditParent->nEdNum, FALSE);
+		pLongName = R_SCURK_WRP_EditableTileSet_mGetLongName(pSCApp->mWorkingTiles, pPaintWnd->pScurkEditParent->nEdNum);
+
+		nTileBaseInv = L_SCURK_GetTileBase(pSCApp->mWorkingTiles, pPaintWnd->pScurkEditParent->nEdNum, TRUE);
+
+		nHorzDir = SHUNT_NONE;
+		nHorzShunt = 0;
+		nHorzMax = 2;
+		if (nTileBaseInv == TILE_BASE_4x4)
+			nHorzMax = 16;
+		else if (nTileBaseInv == TILE_BASE_3x3)
+			nHorzMax = 8;
+		else if (nTileBaseInv == TILE_BASE_2x2)
+			nHorzMax = 4;
+
+		nVertDir = SHUNT_NONE;
+		nVertShunt = 0;
+		nVertMax = 16;
+
+		ConsoleLog(LOG_DEBUG, "[%d] (%d) (%d, %d) (%d, %d) (%d, %d)\n", pPaintWnd->pScurkEditParent->nEdNum, nTileBaseInv, nHorzMax, nVertMax, nHorzMove, nVertMove, nHorzShunt, nVertShunt);
+
+		sprintf(szTileName, "%s (%dx%d)", pLongName, nTileBase, nTileBase);
+		if (!L_SCURK_DoShuntBy(pThis, szTileName, &nHorzMove, &nVertMove, nHorzMax, nVertMax))
+			return;
+
+		if (!nHorzMove && !nVertMove)
+			return;
+
+		if (nHorzMove < 0) {
+			nHorzDir = SHUNT_LEFT;
+			nHorzShunt = -nHorzMove;
+		}
+		else if (nHorzMove > 0) {
+			nHorzDir = SHUNT_RIGHT;
+			nHorzShunt = nHorzMove;
+		}
+
+		if (nVertMove < 0) {
+			nVertDir = SHUNT_UP;
+			nVertShunt = -nVertMove;
+		}
+		else if (nVertMove > 0) {
+			nVertDir = SHUNT_DOWN;
+			nVertShunt = nVertMove;
+		}
+
+		ConsoleLog(LOG_DEBUG, "- [%d] (%d) (%d, %d) (%d, %d) (%d / %d)\n", pPaintWnd->pScurkEditParent->nEdNum, nTileBaseInv, nHorzMax, nVertMax, nHorzShunt, nVertShunt, nHorzDir, nVertDir);
+
 		pEncDib = (TEncodeDib *)R_BOR_Op_New(sizeof(TEncodeDib));
 		if (!pEncDib) {
-			ConsoleLog(LOG_DEBUG, "L_SCURK_MoveDIB(%d): !pEncDib allocation has failed.\n", nDir);
+			ConsoleLog(LOG_DEBUG, "L_SCURK_MoveDIB(): !pEncDib allocation has failed.\n");
 			return;
 		}
 
@@ -196,15 +414,30 @@ void L_SCURK_MoveDIB(winscurkMDIClient *pThis, int nDir) {
 			// just in case we want to shunt by more
 			// than 1).
 			R_SCURK_WRP_PaintWindow_mPreserveToUndoBuffer(pPaintWnd);
-			{
-				nXOffset = 64 - ((int)(WORD)R_SCURK_WRP_EditWindow_mGetShapeWidth(pPaintWnd->pScurkEditParent) >> 1);
-				R_SCURK_WRP_EncodeDib_mShrink(pEncDib, pPaintWnd->pEncodeDib, 1);
-				shapeWidth = (WORD)R_SCURK_WRP_EditWindow_mGetShapeWidth(pPaintWnd->pScurkEditParent);
-				shapeHeight = R_SCURK_WRP_EncodeDib_mDetermineShapeHeight(pEncDib);
-				L_SCURK_EncodeWithShunt(pEncDib, shapeHeight, shapeWidth, nXOffset, nDir);
-				R_SCURK_WRP_EncodeDib_mAcquireEncodedShapeData(pPaintWnd->pEncodeDib, pEncDib);
+			if (nHorzShunt > 0) {
+				for (nMove = 0; nMove < nHorzShunt; ++nMove) {
+					nXOffset = 64 - ((int)(WORD)R_SCURK_WRP_EditWindow_mGetShapeWidth(pPaintWnd->pScurkEditParent) >> 1);
+					R_SCURK_WRP_EncodeDib_mShrink(pEncDib, pPaintWnd->pEncodeDib, 1);
+					shapeWidth = (WORD)R_SCURK_WRP_EditWindow_mGetShapeWidth(pPaintWnd->pScurkEditParent);
+					shapeHeight = R_SCURK_WRP_EncodeDib_mDetermineShapeHeight(pEncDib);
+					L_SCURK_EncodeWithShunt(pEncDib, shapeHeight, shapeWidth, nXOffset, nHorzDir);
+					R_SCURK_WRP_EncodeDib_mAcquireEncodedShapeData(pPaintWnd->pEncodeDib, pEncDib);
 
-				L_SCURK_RefreshTile(pPaintWnd, pSCApp->mWorkingTiles);
+					L_SCURK_RefreshTile(pPaintWnd, pSCApp->mWorkingTiles);
+				}
+			}
+
+			if (nVertShunt > 0) {
+				for (nMove = 0; nMove < nVertShunt; ++nMove) {
+					nXOffset = 64 - ((int)(WORD)R_SCURK_WRP_EditWindow_mGetShapeWidth(pPaintWnd->pScurkEditParent) >> 1);
+					R_SCURK_WRP_EncodeDib_mShrink(pEncDib, pPaintWnd->pEncodeDib, 1);
+					shapeWidth = (WORD)R_SCURK_WRP_EditWindow_mGetShapeWidth(pPaintWnd->pScurkEditParent);
+					shapeHeight = R_SCURK_WRP_EncodeDib_mDetermineShapeHeight(pEncDib);
+					L_SCURK_EncodeWithShunt(pEncDib, shapeHeight, shapeWidth, nXOffset, nVertDir);
+					R_SCURK_WRP_EncodeDib_mAcquireEncodedShapeData(pPaintWnd->pEncodeDib, pEncDib);
+
+					L_SCURK_RefreshTile(pPaintWnd, pSCApp->mWorkingTiles);
+				}
 			}
 
 			R_SCURK_WRP_EncodeDib_Destruct(pEncDib, 3);

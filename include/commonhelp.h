@@ -275,7 +275,7 @@ void R_SCURK_WRP_EncodeDib_mShrink(TEncodeDib *pThis, TBC45XDib *pInDib, int nSc
 void R_SCURK_WRP_EncodeDib_mAcquireEncodedShapeData(TEncodeDib *pThis, TEncodeDib *pEncDib);
 void R_SCURK_WRP_EncodeDib_mEncodeShape(TEncodeDib *pThis, WORD shapeHeight, WORD shapeWidth, WORD nOffSet);
 int R_SCURK_WRP_EditableTileSet_mShapeNumToEditableNum(cEditableTileSet *pThis, int nShapNum);
-char *R_SCURK_WRP_EditableTileSet_GetLongName(cEditableTileSet *pThis, int nEdNum);
+char *R_SCURK_WRP_EditableTileSet_mGetLongName(cEditableTileSet *pThis, int nEdNum);
 int R_SCURK_WRP_EditableTileSet_mGetShapeWidth(cEditableTileSet *pThis, int nEdNum);
 void R_SCURK_WRP_EditableTileSet_mRenderEditableShapeToDIB_Dib(cEditableTileSet *pThis, TBC45XDib *pDib, int nEdNum);
 void R_SCURK_WRP_EditableTileSet_mRenderEditableShapeToDIB_Graphic(cEditableTileSet *pThis, CWinGBitmap *pGraphic, int nEdNum);
@@ -348,6 +348,6 @@ void L_SCURK_LoadFixedLargeSpritesRsrc(cEditableTileSet *pThis);
 void L_SCURK_DirectConvert(winscurkMDIClient *pThis, int nLoad);
 
 // From scurk_objmove.cpp
-void L_SCURK_MoveDIB(winscurkMDIClient *pThis, int nDir);
+void L_SCURK_MoveDIB(winscurkMDIClient *pThis);
 
 // SC2K-only
