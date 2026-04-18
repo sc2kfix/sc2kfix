@@ -66,9 +66,9 @@ static BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments);
 
 console_command_t fpConsoleCommands[] = {
 	{ "?", ConsoleCmdHelp, CONSOLE_COMMAND_ALIAS, "" },
-	{ "clear", ConsoleCmdClear, CONSOLE_COMMAND_DOCUMENTED, "Clear screen or variables" },
+	{ "clear", ConsoleCmdClear, CONSOLE_COMMAND_DOCUMENTED, "Clear screen" },
 	{ "crash", (console_cmdproc_t)(NULL), CONSOLE_COMMAND_UNDOCUMENTED, "Crash sc2kfix intentionally"},
-	{ "echo", ConsoleCmdEcho, CONSOLE_COMMAND_DOCUMENTED, "Print to console" },
+	{ "echo", ConsoleCmdEcho, CONSOLE_COMMAND_UNDOCUMENTED, "Print to console" },
 	{ "echo!", ConsoleCmdEcho, CONSOLE_COMMAND_UNDOCUMENTED, "Print to console without newline" },
 	{ "fixup", ConsoleCmdFixUp, CONSOLE_COMMAND_DOCUMENTED, "Manual 'Fix-up' operations" },
 	{ "help", ConsoleCmdHelp, CONSOLE_COMMAND_DOCUMENTED, "Display this help" },
