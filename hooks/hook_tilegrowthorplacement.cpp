@@ -690,7 +690,7 @@ LABEL_236:
 #if USE_NATIVE_STACKS
 		if (nBuildingPopLevel > 0 && !stackTripPoints.empty()) {
 #else
-		if (nBuildingPopLevel > 0 && *(WORD*)0x4CC908 != *(WORD*)0x4CA424) {
+		if (nBuildingPopLevel > 0 && FBot != FTop) {
 #endif
 			do {
 #if USE_NATIVE_STACKS

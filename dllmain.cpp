@@ -206,7 +206,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 					if (!lstrcmpiW(argv[i], L"-disablefixedtiles"))
 						bDisableFixedTiles = TRUE;
 					if (!lstrcmpiW(argv[i], L"-experiment=tripgenerator"))
-						dwExperimentsEnabled &= EXPERIMENT_TRIPGENERATOR;
+						dwExperimentsEnabled |= EXPERIMENT_TRIPGENERATOR;
 					if (!lstrcmpiW(argv[i], L"-experiment=all"))
 						dwExperimentsEnabled = EXPERIMENT_EVERYTHING;
 					if (!lstrcmpiW(argv[i], L"-bitmode"))
