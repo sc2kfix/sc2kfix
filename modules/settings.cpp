@@ -105,7 +105,7 @@ void DefaultSettingsSC2KFixCore(json::JSON& jsonSettings) {
 	jsonSettings["sc2kfix"]["qol"]["use_floating_status"] = false;
 	jsonSettings["sc2kfix"]["qol"]["title_calendar"] = true;
 	
-	for (int i = 10000; i <= 10019; i++) {
+	for (int i = 10000; i < 10019; i++) {
 		jsonSettings["sc2kfix"]["music_midi"][std::to_string(i)] = "";
 		jsonSettings["sc2kfix"]["music_mp3"][std::to_string(i)] = "";
 	}

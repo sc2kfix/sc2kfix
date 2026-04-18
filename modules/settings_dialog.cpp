@@ -438,7 +438,7 @@ BOOL CALLBACK SettingsDialogContainerProc(HWND hwndDlg, UINT message, WPARAM wPa
 			jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_floating_status"] = false;
 			jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["title_calendar"] = true;
 
-			for (int i = 10000; i <= 10019; i++) {
+			for (int i = 10000; i < 10019; i++) {
 				jsonSettingsCoreWorkingCopy["sc2kfix"]["music_midi"][std::to_string(i)] = "";
 				jsonSettingsCoreWorkingCopy["sc2kfix"]["music_mp3"][std::to_string(i)] = "";
 			}
@@ -469,7 +469,7 @@ BOOL CALLBACK SettingsDialogContainerProc(HWND hwndDlg, UINT message, WPARAM wPa
 			jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_floating_status"] = false;
 			jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["title_calendar"] = false;
 
-			for (int i = 10000; i <= 10019; i++) {
+			for (int i = 10000; i < 10019; i++) {
 				jsonSettingsCoreWorkingCopy["sc2kfix"]["music_midi"][std::to_string(i)] = "";
 				jsonSettingsCoreWorkingCopy["sc2kfix"]["music_mp3"][std::to_string(i)] = "";
 			}
