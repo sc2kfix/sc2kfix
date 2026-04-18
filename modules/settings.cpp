@@ -440,9 +440,9 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 		switch (GET_WM_COMMAND_ID(wParam, lParam)) {
 		case ID_SETTINGS_OK:
 			// Grab settings from the dialog controls
-			if (!GetDlgItemText(hwndDlg, IDC_SETTINGS_MAYOR, szTempRegistrationNameBuffer, 63))
+			if (GetDlgItemText(hwndDlg, IDC_SETTINGS_MAYOR, szTempRegistrationNameBuffer, 63))
 				jsonSettingsCoreWorkingCopy["SimCity2000"]["Registration"]["Mayor Name"] = szTempRegistrationNameBuffer;
-			if (!GetDlgItemText(hwndDlg, IDC_SETTINGS_COMPANY, szTempRegistrationNameBuffer, 63))
+			if (GetDlgItemText(hwndDlg, IDC_SETTINGS_COMPANY, szTempRegistrationNameBuffer, 63))
 				jsonSettingsCoreWorkingCopy["SimCity2000"]["Registration"]["Company Name"] = szTempRegistrationNameBuffer;
 
 			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_driver"] = MusicEngineIntToString(ComboBox_GetCurSel(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT)));
