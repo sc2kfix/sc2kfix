@@ -1,6 +1,6 @@
 // sc2kfix modules/sc2x.cpp: JSON-based extensible save game file format
 //                           and hooks for fixing save/load bugs.
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
 #include <windows.h>
@@ -835,8 +835,8 @@ extern "C" void __cdecl Hook_CheckAndAppendCityExtension(CMFC3XString *lpFileNam
 		if (_stricmp(szTempFile + (nLen - 3), szTempExt) != 0) {
 			// Check for a valid last stored city path, otherwise use the default
 			// derived from the game path.
-			if (L_IsDirectoryPathValid(szLastStoredCityPath))
-				strcpy_s(szTempPath, sizeof(szTempPath), szLastStoredCityPath);
+			if (L_IsDirectoryPathValid(jsonSettingsCore["sc2kfix"]["paths"]["cities"].ToString().c_str()))
+				strcpy_s(szTempPath, sizeof(szTempPath), jsonSettingsCore["sc2kfix"]["paths"]["cities"].ToString().c_str());
 			else
 				sprintf_s(szTempPath, sizeof(szTempPath), "%s\\Cities\\", szGamePath);
 

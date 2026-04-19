@@ -1,5 +1,5 @@
 // sc2kfix hooks/hook_toolbars.cpp: toolbar handling.
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
 #include <windows.h>
@@ -349,10 +349,10 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 			Game_MainFrame_ToggleNonModalDialog((CMainFrame *)pSCApp->m_pMainWnd, 160);
 			break;
 		case CITYTOOL_BUTTON_BUDGET:
-			bCurrentBudgetSetting = bOptionsAutoBudget;
-			bOptionsAutoBudget = 0;
+			bCurrentBudgetSetting = jsonSettingsCore["SimCity2000"]["Options"]["AutoBudget"].ToInt();
+			jsonSettingsCore["SimCity2000"]["Options"]["AutoBudget"] = 0;
 			Game_SimulationPrepareBudgetDialog(0);
-			bOptionsAutoBudget = bCurrentBudgetSetting;
+			jsonSettingsCore["SimCity2000"]["Options"]["AutoBudget"] = bCurrentBudgetSetting;
 			Game_MyToolBar_SetButtonStyle(pThis, CITYTOOL_BUTTON_BUDGET, 0);
 			break;
 		case CITYTOOL_BUTTON_DISPLAYBUILDINGS:

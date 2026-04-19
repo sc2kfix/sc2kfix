@@ -36,7 +36,6 @@ DWORD dwMusicThreadID;
 MCIDEVICEID mciDevice = NULL;
 BOOL bMultithreadedMusicEnabled = FALSE;
 BOOL bUseFluidSynth = FALSE;
-extern char szSettingsFluidSynthSoundfont[MAX_PATH + 1];
 
 HMODULE hmodFluidSynth = NULL;
 fluid_settings_t* pFluidSynthSettings = NULL;
@@ -89,7 +88,7 @@ int GetCurrentActiveSongID() {
 }
 
 void MusicShufflePlaylist(int iLastSongPlayed) {
-	if (bSettingsShuffleMusic) {
+	if (jsonSettingsCore["sc2kfix"]["audio"]["shuffle_music"].ToBool()) {
 		do {
 			std::shuffle(vectorRandomSongIDs.begin(), vectorRandomSongIDs.end(), mtMersenneTwister);
 		} while (vectorRandomSongIDs[0] == iLastSongPlayed);
@@ -97,6 +96,33 @@ void MusicShufflePlaylist(int iLastSongPlayed) {
 		if (mus_debug & MUS_DEBUG_SONGS)
 			ConsoleLog(LOG_DEBUG, "MUS:  Shuffled song list (next song will be %i).\n", vectorRandomSongIDs[iCurrentSong]);
 	}
+}
+
+const char* MusicEngineIntToString(UINT iMusicEngine) {
+	switch (iMusicEngine) {
+	case MUSIC_ENGINE_NONE:
+		return "none";
+	case MUSIC_ENGINE_SEQUENCER:
+		return "sequencer";
+	case MUSIC_ENGINE_FLUIDSYNTH:
+		return "fluidsynth";
+	case MUSIC_ENGINE_MP3:
+		return "mp3";
+	default:
+		return "sequencer";
+	}
+}
+
+UINT MusicEngineStringToInt(const char* szMusicEngine) {
+	if (!strcmp(szMusicEngine, "none"))
+		return MUSIC_ENGINE_NONE;
+	if (!strcmp(szMusicEngine, "sequencer"))
+		return MUSIC_ENGINE_SEQUENCER;
+	if (!strcmp(szMusicEngine, "fluidsynth"))
+		return MUSIC_ENGINE_FLUIDSYNTH;
+	if (!strcmp(szMusicEngine, "mp3"))
+		return MUSIC_ENGINE_MP3;
+	return MUSIC_ENGINE_SEQUENCER;
 }
 
 void WINAPI MusicMCINotifyCallback(WPARAM wFlags, LPARAM lDevID) {
@@ -122,7 +148,7 @@ int MusicFluidSynthMidiEventHandler(void* data, fluid_midi_event_t* event) {
 
 void MusicFluidSynthLoggerError(int level, const char* message, void* data) {
 	// Ignore the error we get if we're loading the default Windows GM "soundfont"
-	if (message && !strcmp(message, "Not a SoundFont file") && !_stricmp(GetFileBaseName(szSettingsFluidSynthSoundfont), "gm.dls"))
+	if (message && !strcmp(message, "Not a SoundFont file") && !_stricmp(GetFileBaseName(jsonSettingsCore["sc2kfix"]["audio"]["soundfont"].ToString().c_str()), "gm.dls"))
 		return;
 
 	ConsoleLog(LOG_ERROR, "MUS:  FluidSynth: %s\n", message);
@@ -264,10 +290,10 @@ DWORD WINAPI FluidSynthWatchdogThread(LPVOID lpParameter) {
 
 	// Spin up a new player-driver combo
 	pFluidSynthPlayer = FS_new_fluid_player(pFluidSynthSynth);
-	if (FS_fluid_is_soundfont(szSettingsFluidSynthSoundfont))
-		FS_fluid_synth_sfload(pFluidSynthSynth, szSettingsFluidSynthSoundfont, 1);
+	if (FS_fluid_is_soundfont(jsonSettingsCore["sc2kfix"]["audio"]["soundfont"].ToString().c_str()))
+		FS_fluid_synth_sfload(pFluidSynthSynth, jsonSettingsCore["sc2kfix"]["audio"]["soundfont"].ToString().c_str(), 1);
 	if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
-		ConsoleLog(LOG_DEBUG, "MUS:  Loaded soundfont \"%s\" into new pFluidSynthPlayer.\n", szSettingsFluidSynthSoundfont);
+		ConsoleLog(LOG_DEBUG, "MUS:  Loaded soundfont \"%s\" into new pFluidSynthPlayer.\n", jsonSettingsCore["sc2kfix"]["audio"]["soundfont"].ToString().c_str());
 
 	FS_fluid_player_set_playback_callback(pFluidSynthPlayer, MusicFluidSynthMidiEventHandler, pFluidSynthSynth);
 	FS_fluid_player_add(pFluidSynthPlayer, szSongPath);
@@ -276,9 +302,10 @@ DWORD WINAPI FluidSynthWatchdogThread(LPVOID lpParameter) {
 		ConsoleLog(LOG_DEBUG, "MUS:  Loaded MIDI file \"%s\" into pFluidSynthPlayer.\n", szSongPath);
 
 	// Disable chorus and set reverb and gain to the default level used by Roland synthesizers
+	// Also update the music volume here
 	FS_fluid_settings_setint(pFluidSynthSettings, "synth.chorus.active", 0);
 	FS_fluid_settings_setnum(pFluidSynthSettings, "synth.reverb.level", 0.3);
-	FS_fluid_settings_setnum(pFluidSynthSettings, "synth.gain", 0.5);
+	FS_fluid_settings_setnum(pFluidSynthSettings, "synth.gain", 0.5 * jsonSettingsCore["sc2kfix"]["audio"]["music_volume"].ToFloat());
 
 	// Play track
 	FS_fluid_player_play(pFluidSynthPlayer);
@@ -304,7 +331,7 @@ DWORD WINAPI FluidSynthWatchdogThread(LPVOID lpParameter) {
 	return 0;
 }
 
-const char* SettingsSaveMusicEngine(UINT iMusicEngine);
+const char* MusicEngineIntToString(UINT iMusicEngine);
 
 static int GetAliasIndexFromSongID(int iSongID) {
 	if (iSongID < 10000 || iSongID > 10018)
@@ -361,12 +388,15 @@ static const char *GetGameSoundPath(int iSongID, BOOL bDoMP3) {
 	BOOL bUseAliasedSong;
 	int iAliasIdx;
 
+	// TODO: clean up alias index stuff
 	pExt = (bDoMP3) ? ".mp3" : ".mid";
 	strSongPath = szSoundPath;
 	bUseAliasedSong = FALSE;
 	iAliasIdx = GetAliasIndexFromSongID(iSongID);
 	if (iAliasIdx >= 0 && iAliasIdx <= MUSIC_TRACKS) {
-		const char *pName = (bDoMP3) ? szSettingsMP3TrackPath[iAliasIdx] : szSettingsMIDITrackPath[iAliasIdx];
+		char szTrackName[32];
+		sprintf_s(szTrackName, sizeof(szTrackName), "100%02d", iAliasIdx);
+		const char *pName = (bDoMP3) ? jsonSettingsCore["sc2kfix"]["music_mp3"][szTrackName].ToString().c_str() : jsonSettingsCore["sc2kfix"]["music_midi"][szTrackName].ToString().c_str();
 		if (ValidateFilename(pName, pExt)) {
 			strSongPath += pName;
 			if (FileExists(strSongPath.c_str()))
@@ -390,7 +420,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 	MCIERROR dwMCIError = NULL;
 
 	if (mus_debug & MUS_DEBUG_THREAD)
-		ConsoleLog(LOG_DEBUG, "MUS:  Starting music engine! Initial engine set to \"%s\".\n", SettingsSaveMusicEngine(iSettingsMusicEngineOutput));
+		ConsoleLog(LOG_DEBUG, "MUS:  Starting music engine! Initial music driver set to \"%s\".\n", jsonSettingsCore["sc2kfix"]["audio"]["music_driver"].ToString());
 	
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		pSCApp = &pCSimcityAppThis;
@@ -399,12 +429,12 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 			// In this case even with the engine set to MUSIC_ENGINE_NONE it
 			// will still continue, however once mciDevice is NULL it'll then
 			// getout.
-			if (iSettingsMusicEngineOutput == MUSIC_ENGINE_NONE)
+			if (jsonSettingsCore["sc2kfix"]["audio"]["music_driver"].ToString() == "none")
 				if (mus_debug & MUS_DEBUG_THREAD)
-					ConsoleLog(LOG_DEBUG, "MUS:  Music engine set to None; ignoring WM_MUSIC_STOP message.\n");
+					ConsoleLog(LOG_DEBUG, "MUS:  Music driver set to None; ignoring WM_MUSIC_STOP message.\n");
 
 			// Stop the FluidSynth thread if it's active
-			if (iSettingsMusicEngineOutput == MUSIC_ENGINE_FLUIDSYNTH && hmodFluidSynth) {
+			if (jsonSettingsCore["sc2kfix"]["audio"]["music_driver"].ToString() == "fluidsynth" && hmodFluidSynth) {
 				FS_fluid_player_stop(pFluidSynthPlayer);
 				bFluidSynthPlaying = FALSE;
 				if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
@@ -435,16 +465,16 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 		}
 		else if (msg.message == WM_MUSIC_PLAY) {
 			// Log a debug message at best if the music engine is set to none
-			if (iSettingsMusicEngineOutput == MUSIC_ENGINE_NONE) {
+			if (jsonSettingsCore["sc2kfix"]["audio"]["music_driver"].ToString() == "none") {
 				if (mus_debug & MUS_DEBUG_THREAD)
-					ConsoleLog(LOG_DEBUG, "MUS:  Music engine set to None; ignoring WM_MUSIC_PLAY message.\n");
+					ConsoleLog(LOG_DEBUG, "MUS:  Music driver set to None; ignoring WM_MUSIC_PLAY message.\n");
 				goto next;
 			}
 
 			// If we're using FluidSynth, set up a watchdog thread that runs the FluidSynth engine
 			// and waits for it to exit
 			if (pSCApp->dwSCAGameMusic) {
-				if (iSettingsMusicEngineOutput == MUSIC_ENGINE_FLUIDSYNTH && hmodFluidSynth) {
+				if (jsonSettingsCore["sc2kfix"]["audio"]["music_driver"].ToString() == "fluidsynth" && hmodFluidSynth) {
 					if (msg.wParam >= 10000 && msg.wParam <= 10018) {
 						iPlayingSongID = msg.wParam;
 						const char* szSongPath = GetGameSoundPath(iPlayingSongID, FALSE);
@@ -461,7 +491,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 						iPlayingSongID = msg.wParam;
 						const char* szSongPath = "";
 						BOOL bUseMP3 = FALSE;
-						if (iSettingsMusicEngineOutput == MUSIC_ENGINE_MP3) {
+						if (jsonSettingsCore["sc2kfix"]["audio"]["music_driver"].ToString() == "mp3") {
 							szSongPath = GetGameSoundPath(iPlayingSongID, TRUE);
 							if (FileExists(szSongPath))
 								bUseMP3 = TRUE;
@@ -530,7 +560,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 			}
 
 			// Only restart if the engine is not set to MUSIC_ENGINE_NONE
-			if (iSettingsMusicEngineOutput != MUSIC_ENGINE_NONE) {
+			if (jsonSettingsCore["sc2kfix"]["audio"]["music_driver"].ToString() != "none") {
 				// Restart the active song if there is one
 				if (iPlayingSongID)
 					DoMusicPlay(iPlayingSongID, FALSE);
@@ -654,7 +684,7 @@ extern "C" void __stdcall Hook_SimcityApp_MusicPlayNext(BOOL bNext) {
 	if (!Game_Sound_GetMCIResult(pThis->SCASNDLayer)) {
 		if (bNext)
 			Game_SimcityApp_MusicPlayNextRefocusSong(pThis);
-		else if ((!(rand() % (8 * (3 * nSpeed - 3)))) || bSettingsAlwaysPlayMusic) {
+		else if ((!(rand() % (8 * (3 * nSpeed - 3)))) || jsonSettingsCore["sc2kfix"]["audio"]["always_play_music"].ToBool()) {
 			iRandMusic = rand();
 			iSongID = 10000 + (iRandMusic % 19);
 			L_MusicPlay(pThis, iSongID);
@@ -675,16 +705,14 @@ void InstallMusicEngineHooks(void) {
 	MusicShufflePlaylist(0);
 
 	// Replace music functions with ones to post messages to the music thread
-	if (bSettingsUseMultithreadedMusic) {
-		VirtualProtect((LPVOID)0x40145B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-		NEWJMP((LPVOID)0x40145B, Hook_MainFrame_OnMCINotify);
-		VirtualProtect((LPVOID)0x402414, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-		NEWJMP((LPVOID)0x402414, Hook_SimcityApp_MusicPlay);
-		VirtualProtect((LPVOID)0x402BE4, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
-		NEWJMP((LPVOID)0x402BE4, Hook_Sound_MusicStop);
+	VirtualProtect((LPVOID)0x40145B, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x40145B, Hook_MainFrame_OnMCINotify);
+	VirtualProtect((LPVOID)0x402414, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402414, Hook_SimcityApp_MusicPlay);
+	VirtualProtect((LPVOID)0x402BE4, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x402BE4, Hook_Sound_MusicStop);
 
-		// XXX - effectively always TRUE because the opt-in setting is now always TRUE as of
-		// r10-dev 2025-08-31. maybe this needs to go away?
-		bMultithreadedMusicEnabled = TRUE;
-	}
+	// XXX - effectively always TRUE because the opt-in setting is now always TRUE as of
+	// r10-dev 2025-08-31. maybe this needs to go away?
+	bMultithreadedMusicEnabled = TRUE;
 }

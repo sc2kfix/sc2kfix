@@ -67,13 +67,26 @@
 #define IDC_SPRITEBROWSER_COMBOLBL      21052
 #define IDC_SPRITEBROWSER_SELBUT        21053
 #define IDC_SETTINGS_CHECK_DARK_UNDGRND 21054
-#define IDC_OBJECTLIST                  21055
-#define IDC_ENBALLBUT                   21056
-#define IDC_DISALLBUT                   21057
-#define IDC_SHUNT_SLIDHORZ              21058
-#define IDC_SHUNT_SLIDVERT              21059
-#define IDC_SHUNT_TXTHORZ               21060
-#define IDC_SHUNT_TXTVERT               21061
+#define IDC_SETTINGS_STATIC_VERSIONINFO 21055
+#define IDC_SETTINGS_BUTTON_DEFAULTS    21056
+#define IDC_SETTINGS_BUTTON_VANILLA     21057
+#define IDC_SETTINGS_TAB_CONTAINER      21058
+#define IDC_SLIDER_VOLUME_MASTER        21059
+#define IDC_SLIDER_VOLUME_MUSIC         21060
+#define IDC_SLIDER_VOLUME_SOUNDS        21061
+#define IDC_CHECK_MUTE_MASTER           21062
+#define IDC_CHECK_MUTE_MUSIC            21063
+#define IDC_STATIC_TOPSECRET            21063
+#define IDC_CHECK_MUTE_SOUNDS           21064
+#define IDC_STATIC_RELEASEBANNER        21064
+#define IDC_STATIC_RELEASEMESSAGE       21065
+#define IDC_OBJECTLIST                  21066
+#define IDC_ENBALLBUT                   21067
+#define IDC_DISALLBUT                   21068
+#define IDC_SHUNT_SLIDHORZ              21069
+#define IDC_SHUNT_SLIDVERT              21070
+#define IDC_SHUNT_TXTHORZ               21071
+#define IDC_SHUNT_TXTVERT               21072
 #define IDR_WAVE_500                    23001
 #define IDR_WAVE_503                    23002
 #define IDR_WAVE_508                    23003
@@ -99,9 +112,13 @@
 #define IDB_COMPASS3                    23023
 #define IDR_TSET_FIXED                  23024
 #define IDR_BLOB_LIBSC2KFIX_LUA         23025
-#define IDR_SCRKPALBMP                  23026
-#define IDR_SCRKPALWND                  23027
-#define IDR_SCRKPALMAP                  23028
+#define IDD_SETTINGS_CONTAINER          23026
+#define IDD_SETTINGS_GENERAL            23028
+#define IDD_SETTINGS_GAMEPLAY           23029
+#define IDD_SETTINGS_AUDIO              23030
+#define IDR_SCRKPALBMP                  23031
+#define IDR_SCRKPALWND                  23032
+#define IDR_SCRKPALMAP                  23033
 #define IDM_GAME_OPTIONS_SC2KFIXSETTINGS 40000
 #define IDM_GAME_OPTIONS_MODCONFIG      40001
 #define IDM_DEBUG_MILITARY_DECLINED     40002
@@ -133,9 +150,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        23029
+#define _APS_NEXT_RESOURCE_VALUE        23034
 #define _APS_NEXT_COMMAND_VALUE         40026
-#define _APS_NEXT_CONTROL_VALUE         21062
+#define _APS_NEXT_CONTROL_VALUE         21073
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

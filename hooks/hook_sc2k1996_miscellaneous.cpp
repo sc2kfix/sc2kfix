@@ -264,9 +264,9 @@ extern "C" int __stdcall Hook_FileDialog_DoModal() {
 				if (L_IsDirectoryPathValid(szPath)) {
 					if ((DWORD)_ReturnAddress() == 0x42EB82 ||
 						(DWORD)_ReturnAddress() == 0x42FDCE) // From 'LoadCity' or 'SaveCityAs'
-						strcpy_s(szLastStoredCityPath, sizeof(szLastStoredCityPath) - 1, szPath);
+						jsonSettingsCore["sc2kfix"]["paths"]["cities"] = szPath;
 					else if ((DWORD)_ReturnAddress() == 0x42F312) // From 'LoadTileSet'
-						strcpy_s(szLastStoredTileSetPath, sizeof(szLastStoredTileSetPath) - 1, szPath);
+						jsonSettingsCore["sc2kfix"]["paths"]["tilesets"] = szPath;
 				}
 			}
 		}
@@ -715,7 +715,10 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 						pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
 						break;
 					case ONIDLE_INITIALDIALOG_SC2KFIXSETTINGS:
-						ShowSettingsDialog();
+						if (GetAsyncKeyState(VK_SHIFT) < 0)
+							ShowSettingsDialog();
+						else
+							ShowNewSettingsDialog();
 						pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
 						break;
 					default:
@@ -774,7 +777,7 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 				pThis->dwSCADoStepSkip = FALSE;
 				pThis->dwSCALastTick = GetTickCount();
 				pThis->iSCAProgramStep = ONIDLE_STATE_DISPLAYMAXIS;
-				if (!bSkipIntro && !bSettingsAlwaysSkipIntro) {
+				if (!bSkipIntro && !jsonSettingsCore["sc2kfix"]["qol"]["skip_intro"].ToBool()) {
 					if (Game_MovieCheck(aIntroASmk) && Game_MovieCheck(aIntroBSmk)) {
 						Game_SimcityApp_MusicTrigger(pThis);
 						if (Game_MovieCreateWindow()) {
@@ -950,13 +953,13 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 			" - 50% chance of Forest arcologies being unlocked.");
 
 		// Set the default mayor name.
-		SetDlgItemText(hwndDlg, 150, szSettingsMayorName);
+		SetDlgItemText(hwndDlg, 150, jsonSettingsCore["SimCity2000"]["Registration"]["Mayor Name"].ToString().c_str());
 		break;
 	case WM_DESTROY:
 		// XXX - there's probably a better window message to use here.
 		memset(szTempMayorName, 0, 24);
 		if (!GetDlgItemText(hwndDlg, 150, szTempMayorName, 24))
-			strcpy_s(szTempMayorName, 24, szSettingsMayorName);
+			strcpy_s(szTempMayorName, 24, jsonSettingsCore["SimCity2000"]["Registration"]["Mayor Name"].ToString().c_str());
 
 		SetXLABEntry(0, szTempMayorName);
 
@@ -1187,7 +1190,7 @@ extern "C" void __stdcall Hook_SimcityDoc_UpdateDocumentTitle() {
 		else
 			goto GETOUT;
 		Game_CurrencyString_TruncateAtSpace(pFundStr);
-		if (bSettingsTitleCalendar)
+		if (jsonSettingsCore["sc2kfix"]["qol"]["title_calendar"].ToBool())
 			GameMain_String_Format(&cStr, "%s %d %4d <%s> %s", pSCApp->dwSCApCStringLongMonths[iCityMonth].m_pchData, iCityDayMon, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
 		else
 			GameMain_String_Format(&cStr, "%s %4d <%s> %s", pSCApp->dwSCApCStringShortMonths[iCityMonth].m_pchData, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
@@ -1296,7 +1299,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 		Game_SimcityApp_CallAutoSave(pSCApp);
 	}
 
-	if (bSettingsFrequentCityRefresh) {
+	if (jsonSettingsCore["sc2kfix"]["qol"]["frequent_updates"].ToBool()) {
 		Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
 		GameMain_Document_UpdateAllViews(pCSimcityDoc, NULL, 2, NULL);
 	}
@@ -1314,7 +1317,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	// Advance the simulation for the current SimCalendar day
 	switch (dwMonDay) {
 		case 0:
-			if (!bSettingsFrequentCityRefresh)
+			if (!jsonSettingsCore["sc2kfix"]["qol"]["frequent_updates"].ToBool())
 				Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
 			if (bYearEndFlag)
 				Game_SimulationPrepareBudgetDialog(0);
@@ -1450,7 +1453,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 
 			break;
 		case 23:
-			if (!bSettingsFrequentCityRefresh)
+			if (!jsonSettingsCore["sc2kfix"]["qol"]["frequent_updates"].ToBool())
 				GameMain_Document_UpdateAllViews(pCSimcityDoc, NULL, 2, NULL);
 			Game_UpdatePopulationDialog();
 			Game_UpdateIndustryDialog();
@@ -1493,7 +1496,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	// isn't set to paused.
 
 	bDoTileHighlightUpdate = FALSE;
-	if (!bSettingsFrequentCityRefresh) {
+	if (!jsonSettingsCore["sc2kfix"]["qol"]["frequent_updates"].ToBool()) {
 		if (pSCApp->wSCAGameSpeedLOW == GAME_SPEED_AFRICAN_SWALLOW) {
 			if (pSCApp->dwSCAAnimationOffCycle || dwMonDay == 21)
 				bDoTileHighlightUpdate = TRUE;
@@ -1797,7 +1800,7 @@ extern "C" void __stdcall Hook_MainFrame_OnActivateApp(BOOL bActive, HTASK hTask
 				Game_MainFrame_ToggleToolBars(pThis, FALSE);
 				// Only call this function if the setting to play
 				// music in background is not enabled.
-				if (!bSettingsMusicInBackground)
+				if (!jsonSettingsCore["sc2kfix"]["audio"]["music_in_background"].ToBool())
 					Game_SimcityApp_MusicTrigger(pSCApp);
 				L_PlaySound_SC2K1996(0, 0); // Review concerning sound call change.
 				InvalidateRect(pThis->m_hWnd, 0, TRUE);
@@ -1833,7 +1836,7 @@ extern "C" void __stdcall Hook_MainFrame_OnSize(UINT nType, int cx, int cy) {
 
 	pSCApp = &pCSimcityAppThis;
 	if (nType == 1) {
-		if (!bSettingsMusicInBackground)
+		if (!jsonSettingsCore["sc2kfix"]["audio"]["music_in_background"].ToBool())
 			Game_SimcityApp_MusicTrigger(pSCApp);
 		L_PlaySound_SC2K1996(0, 0); // Review concerning sound call change.
 	}
@@ -1864,7 +1867,7 @@ extern "C" void __stdcall Hook_MainFrame_OnShowWindow(BOOL bShow, BOOL nStatus) 
 		}
 	}
 	else {
-		if (!bSettingsMusicInBackground)
+		if (!jsonSettingsCore["sc2kfix"]["audio"]["music_in_background"].ToBool())
 			Game_SimcityApp_MusicTrigger(pSCApp);
 		L_PlaySound_SC2K1996(0, 0); // Review concerning sound call change.
 	}
@@ -2079,7 +2082,10 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 		if (nCode == _CN_COMMAND) {
 			switch (nID) {
 			case IDM_GAME_OPTIONS_SC2KFIXSETTINGS:
-				ShowSettingsDialog();
+				if (GetAsyncKeyState(VK_SHIFT) < 0)
+					ShowSettingsDialog();
+				else
+					ShowNewSettingsDialog();
 				return TRUE;
 
 			case IDM_GAME_OPTIONS_MODCONFIG:

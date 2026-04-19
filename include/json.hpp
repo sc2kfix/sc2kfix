@@ -1,5 +1,5 @@
 // sc2kfix include/json.hpp: fork of nbsdx/SimpleJSON for quick and dirty JSON work
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #pragma once
 
@@ -326,6 +326,27 @@ namespace json {
 			if (Type == Class::Array)
 				return JSONConstWrapper<deque<JSON>>(Internal.List);
 			return JSONConstWrapper<deque<JSON>>(nullptr);
+		}
+
+		// TODO: support arrays (we don't use them yet)
+		void merge(JSON jsonSource) {
+			for (auto& p : *jsonSource.Internal.Map) {
+				switch (p.second.Type) {
+				case Class::Array:
+					std::cerr << "json::JSON::merge called with jsonSource containing array; bad things likely to happen\n";
+					Internal.Map->operator[](p.first) = p.second;
+					break;
+				case Class::Object:
+					if (Internal.Map->operator[](p.first).IsNull())
+						Internal.Map->operator[](p.first) = p.second;
+					else
+						Internal.Map->operator[](p.first).merge(p.second);
+					break;
+				default:
+					Internal.Map->operator[](p.first) = p.second;
+					break;
+				}
+			}
 		}
 
 		string dump(int depth = 1, string tab = "  ") const {

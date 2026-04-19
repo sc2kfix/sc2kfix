@@ -1128,7 +1128,7 @@ void UpdateDrawingHooks_SC2K1996(void) {
 	COLORREF undgrndBkgnd;
 
 	undgrndBkgnd = PALETTERGB(192, 192, 192); // Default
-	if (bSettingsDarkUndergroundBkgnd)
+	if (jsonSettingsCore["sc2kfix"]["qol"]["dark_underground"].ToBool())
 		undgrndBkgnd = PALETTERGB(60, 60, 60);    // Dark Grey
 
 	// Set via InitializeDataColorsFonts() first (on program load).

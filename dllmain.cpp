@@ -317,17 +317,17 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Initialize default bindings.
 		InitializeDefaultBindings();
 
-		// Initialize settings
-		InitializeSettings();
+		// Initialize JSON settings
+		InitializeJSONSettings();
 
 		// Load settings
 		if (!bSkipLoadSettings)
-			LoadSettings();
+			LoadJSONSettings();
 		else
 			ConsoleLog(LOG_INFO, "CORE: -default passed, skipping LoadSettings()\n");
 
 		// Force the console to be visible if bSettingsAlwaysConsole is set
-		if (bSettingsAlwaysConsole)
+		if (jsonSettingsCore["sc2kfix"]["core"]["force_console"].ToBool())
 			bConsoleEnabled = true;
 
 		// Foce n-bit mode if requested
@@ -421,25 +421,15 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		if (iInstallCheck)
 			ConsoleLog(LOG_INFO, "CORE: Portable entries created by faux-installer.\n");
 
-		if (dwDetectedVersion == VERSION_SC2K_1996) {
-			ConsoleLog(LOG_INFO, "CORE: Loading stored key/button bindings.\n");
-			LoadStoredBindings();
-
-			ConsoleLog(LOG_INFO, "CORE: Loading last stored load/save city and load tileset paths.\n");
-			LoadStoredPaths();
-		}
-
 		// Check for updates
-		if (bSettingsCheckForUpdates) {
+		if (jsonSettingsCore["sc2kfix"]["core"]["check_for_updates"].ToBool()) {
 			CreateThread(NULL, 0, UpdaterThread, 0, 0, NULL);
 			ConsoleLog(LOG_INFO, "UPD:  Update notifier thread started.\n");
 		}
 
 		// Create music thread
-		if (bSettingsUseMultithreadedMusic) {
-			CreateThread(NULL, 0, MusicThread, 0, 0, &dwMusicThreadID);
-			ConsoleLog(LOG_INFO, "MUS:  Music thread started.\n");
-		}
+		CreateThread(NULL, 0, MusicThread, 0, 0, &dwMusicThreadID);
+		ConsoleLog(LOG_INFO, "MUS:  Music thread started.\n");
 
 		// Palette animation fix
 		BOOL bCanFixAnimation;
@@ -555,7 +545,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Set up the modding infrastructure for the 1996 Special Edition version.
 		if (dwDetectedVersion == VERSION_SC2K_1996) {
 			// Load native code mods.
-			if (!bSkipLoadingMods && !bSettingsDontLoadMods)
+			if (!bSkipLoadingMods && !jsonSettingsCore["sc2kfix"]["core"]["skip_mods"].ToBool())
 				LoadNativeCodeMods();
 		}
 
@@ -573,12 +563,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
 		// Only save the bindings and stored paths during a graceful exit.
 		// (SC2K1996 only for now)
-		if (!bGameDead) {
-			if (dwDetectedVersion == VERSION_SC2K_1996) {
-				SaveStoredPaths();
-				SaveStoredBindings();
-			}
-		}
+		if (!bGameDead && dwDetectedVersion == VERSION_SC2K_1996)
+			SaveJSONSettings();
 
 		// Clear out the stored sprite IDs (no allocated data are contained).
 		spriteIDs.clear();

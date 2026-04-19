@@ -14,7 +14,14 @@
 #include <vector>
 #include <algorithm>
 #include <random>
+#include <fstream>
 
+#define SC2KFIX_CORE
+
+#define HOOKEXT extern "C" __declspec(dllexport)
+#define HOOKEXT_CPP __declspec(dllexport)
+
+#include <json.hpp>
 #include <keybindings.h>
 #include <mfc3xhelp.h>
 #include <commonhelp.h>
@@ -35,8 +42,6 @@
 // Turning this on forces the console to be enabled, as if -console was passed to SIMCITY.EXE.
 // #define CONSOLE_ENABLED
 
-#define SC2KFIX_CORE
-
 #define VERSION_PROG_UNKNOWN  0
 #define VERSION_SC2K_1996     1
 #define VERSION_SC2K_1995     2
@@ -56,16 +61,12 @@
 #define SC2KFIX_RELEASE_TAG		"r10"
 
 #define SC2KFIX_INIFILE		"sc2kfix.ini"
+#define SC2KFIX_COREJSON	"settings.json"
 #define SC2KFIX_MODSFOLDER	"mods"
-
-#define HOOKEXT extern "C" __declspec(dllexport)
-#define HOOKEXT_CPP __declspec(dllexport)
 
 #define WM_SC2KFIX_UPDATE 37241
 
 #define UPDATE_STRING "A new version of sc2kfix is available for download from the GitHub releases page."
-
-#include <json.hpp>
 
 #ifdef __cplusplus
 #include <sstream>
@@ -263,44 +264,15 @@ typedef struct {
 	DWORD nBufSize;
 } sound_replacement_t;
 
-// This structure is explicitly used in the settings dialogue.
-// Once EndDialog is called (with TRUE set is the result)
-// have it apply the variables back to their equivalent
-// globals and save. If the EndDialog passed result is FALSE
-// it insulates the primary globals from being modified.
+// This structure is passed to the settings dialog to allow it to return multiple pieces of
+// information about what settings were changed, if any.
 typedef struct {
-	// These are the primary settings.
-	char szSettingsMayorName[64];
-	char szSettingsCompanyName[64];
-
-	BOOL bSettingsMusicInBackground;
-	BOOL bSettingsUseSoundReplacements;
-	BOOL bSettingsShuffleMusic;
-	BOOL bSettingsFrequentCityRefresh;
-	BOOL bSettingsUseMP3Music;
-	BOOL bSettingsAlwaysPlayMusic;
-	BOOL bSettingsAlwaysConsole;
-	BOOL bSettingsCheckForUpdates;
-	BOOL bSettingsDontLoadMods;
-	BOOL bSettingsUseStatusDialog;
-	BOOL bSettingsTitleCalendar;
-	BOOL bSettingsUseNewStrings;
-	BOOL bSettingsAlwaysSkipIntro;
-	BOOL bSettingsDarkUndergroundBkgnd;
-
-	UINT iSettingsMusicEngineOutput;
-	char szSettingsFluidSynthSoundfont[MAX_PATH + 1];
-
-	char szSettingsMIDITrackPath[MUSIC_TRACKS][MAX_PATH + 1];
-	char szSettingsMP3TrackPath[MUSIC_TRACKS][MAX_PATH + 1];
-
-	// Attributes that the settings dialogue needs to know before and after.
 	BOOL bActiveTrackChanged;
-	BOOL bActiveMusicEngineTouched;
+	BOOL bActiveMusicDriverTouched;
 	BOOL bKeyBindingsChanged;
 
-	UINT iCurrentMusicEngineOutput;
-	char szCurrentFluidSynthSoundfont[MAX_PATH + 1];
+	std::string strMusicDriver;
+	std::string strSoundfont;
 } settings_t;
 
 // Enum for console command visibility in inline help. Documented commands always appear in inline
@@ -334,32 +306,12 @@ extern char szGamePath[MAX_PATH];
 // Settings globals
 
 extern json::JSON jsonSettingsCore;
+extern json::JSON jsonSettingsCoreWorkingCopy;
 extern json::JSON jsonSettingsMods;
 
+// No longer actually used for settings, but as temporary buffers
 extern char szSettingsMayorName[64];
 extern char szSettingsCompanyName[64];
-
-extern UINT iSettingsMusicEngineOutput;
-extern BOOL bSettingsMusicInBackground;
-extern BOOL bSettingsUseSoundReplacements;
-extern BOOL bSettingsShuffleMusic;
-extern BOOL bSettingsUseMultithreadedMusic;
-extern BOOL bSettingsFrequentCityRefresh;
-extern BOOL bSettingsUseMP3Music;
-extern BOOL bSettingsAlwaysPlayMusic;
-
-extern BOOL bSettingsAlwaysConsole;
-extern BOOL bSettingsCheckForUpdates;
-extern BOOL bSettingsDontLoadMods;
-
-extern BOOL bSettingsUseStatusDialog;
-extern BOOL bSettingsTitleCalendar;
-extern BOOL bSettingsUseNewStrings;
-extern BOOL bSettingsAlwaysSkipIntro;
-extern BOOL bSettingsDarkUndergroundBkgnd;
-
-// Music track aliases
-
 extern char szSettingsMIDITrackPath[MUSIC_TRACKS][MAX_PATH + 1];
 extern char szSettingsMP3TrackPath[MUSIC_TRACKS][MAX_PATH + 1];
 
@@ -412,16 +364,17 @@ void SetCPoint(CPoint* pt, int x, int y);
 LONG WINAPI CrashHandler(LPEXCEPTION_POINTERS lpExceptions);
 BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
-void LoadStoredPaths(void);
-void SaveStoredPaths(void);
+//void LoadStoredPaths(void);
+//void SaveStoredPaths(void);
 int DoCheckAndInstall(void);
 void ResetFileAssociations(void);
 void SetGamePath(void);
 const char *GetIniPath(void);
-void InitializeSettings(void);
-void LoadSettings(void);
-void SaveSettings(BOOL onload);
+void InitializeJSONSettings(void);
+void LoadJSONSettings(void);
+void SaveJSONSettings(void);
 void ShowSettingsDialog(void);
+void ShowNewSettingsDialog(void);
 void ShowModSettingsDialog(void);
 void ShowScenarioStatusDialog(void);
 void ShowSpriteBrowseDialog(void);
@@ -435,6 +388,8 @@ const char *GetGameSoundPath();
 int GetCurrentActiveSongID();
 BOOL MusicLoadFluidSynth(void);
 void DoMusicPlay(int iSongID, BOOL bInterrupt);
+const char* MusicEngineIntToString(UINT iMusicEngine);
+UINT MusicEngineStringToInt(const char* szMusicEngine);
 BOOL DoConfigureMusicTracks(settings_t *st, HWND hDlg, BOOL bMP3);
 BOOL DoConfigureKeyBindings(settings_t *st, HWND hwndDlg);
 
@@ -462,8 +417,10 @@ BOOL ConsoleCmdShowDebug(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowMemory(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowMicrosim(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowMods(const char* szCommand, const char* szArguments);
+BOOL ConsoleCmdShowSettings(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowSound(const char* szCommand, const char* szArguments);
 //BOOL ConsoleCmdShowSprite(const char* szCommand, const char* szArguments);
+BOOL ConsoleCmdShowTest(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowTile(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdSet(const char* szCommand, const char* szArguments);
@@ -474,8 +431,8 @@ void LoadNativeCodeMods(void);
 
 extern const char *gamePrimaryKey;
 
-extern char szLastStoredCityPath[MAX_PATH + 1];
-extern char szLastStoredTileSetPath[MAX_PATH + 1];
+//extern char szLastStoredCityPath[MAX_PATH + 1];
+//extern char szLastStoredTileSetPath[MAX_PATH + 1];
 
 extern BOOL bGameDead;
 extern HMODULE hRealWinMM;

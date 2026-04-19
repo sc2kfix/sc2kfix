@@ -1,5 +1,5 @@
 // sc2kfix modules/track_config.cpp: Track listing and configuration dialogues.
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
 #include <windows.h>
@@ -238,22 +238,24 @@ BOOL CALLBACK ConfMusicTracksDialogProc(HWND hwndDlg, UINT message, WPARAM wPara
 BOOL DoConfigureMusicTracks(settings_t *st, HWND hwndDlg, BOOL bMP3) {
 	conftracks_t cft;
 	BOOL bRet;
-	char *pMusicTrack;
+	std::string strMusicTrack;
 
 	memset(&cft, 0, sizeof(conftracks_t));
 	cft.bMP3 = bMP3;
 	cft.bActiveTrackTouched = FALSE;
 	cft.iActiveTrack = GetCurrentActiveSongID();
 	for (int i = 0; i < MUSIC_TRACKS; i++) {
-		pMusicTrack = (bMP3) ? st->szSettingsMP3TrackPath[i] : st->szSettingsMIDITrackPath[i];
-		strcpy_s(cft.szMusicTracks[i], MAX_PATH, pMusicTrack);
+		strMusicTrack = (bMP3) ? jsonSettingsCoreWorkingCopy["sc2kfix"]["music_mp3"][std::to_string(i + 10000)].ToString() : jsonSettingsCoreWorkingCopy["sc2kfix"]["music_midi"][std::to_string(i + 10000)].ToString();
+		strcpy_s(cft.szMusicTracks[i], MAX_PATH, strMusicTrack.c_str());
 	}
 
 	bRet = DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_CONFIGSECTION), hwndDlg, ConfMusicTracksDialogProc, (LPARAM)&cft);
 	if (bRet == TRUE) {
 		for (int i = 0; i < MUSIC_TRACKS; i++) {
-			pMusicTrack = (bMP3) ? st->szSettingsMP3TrackPath[i] : st->szSettingsMIDITrackPath[i];
-			strcpy_s(pMusicTrack, MAX_PATH, cft.szMusicTracks[i]);
+			if (bMP3)
+				jsonSettingsCoreWorkingCopy["sc2kfix"]["music_mp3"][std::to_string(i + 10000)] = cft.szMusicTracks[i];
+			else
+				jsonSettingsCoreWorkingCopy["sc2kfix"]["music_midi"][std::to_string(i + 10000)] = cft.szMusicTracks[i];
 		}
 
 		if (!st->bActiveTrackChanged) {
@@ -261,16 +263,16 @@ BOOL DoConfigureMusicTracks(settings_t *st, HWND hwndDlg, BOOL bMP3) {
 				st->bActiveTrackChanged = TRUE;
 		}
 
-		if (!st->bActiveMusicEngineTouched) {
-			if (st->iCurrentMusicEngineOutput != MUSIC_ENGINE_NONE) {
+		if (!st->bActiveMusicDriverTouched) {
+			if (st->strMusicDriver != "none") {
 				if (bMP3) {
-					if (st->iCurrentMusicEngineOutput == MUSIC_ENGINE_MP3)
-						st->bActiveMusicEngineTouched = TRUE;
+					if (st->strMusicDriver == "mp3")
+						st->bActiveMusicDriverTouched = TRUE;
 				}
 				else {
-					if (st->iCurrentMusicEngineOutput == MUSIC_ENGINE_SEQUENCER ||
-						st->iCurrentMusicEngineOutput == MUSIC_ENGINE_FLUIDSYNTH)
-						st->bActiveMusicEngineTouched = TRUE;
+					if (st->strMusicDriver == "sequencer" ||
+						st->strMusicDriver == "fluidsynth")
+						st->bActiveMusicDriverTouched = TRUE;
 				}
 			}
 		}
