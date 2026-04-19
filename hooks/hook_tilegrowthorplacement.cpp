@@ -48,7 +48,9 @@
 #define AREA_4x4_MAX_EDGE MAP_EDGE_MAX - 3
 #endif
 
-// Internal defines to turn bits of the reimplemented trip generator on and off.
+// Internal defines to turn bits of the reimplemented trip generator on and off, if the command
+// line option -experiment=tripgenerator is passed (or dwExperimentsEnabled is set to
+// EXPERIMENT_TRIPGENERATOR by default).
 // WARNING: USE_NATIVE_STACKS breaks things and is intended for experimentation. It will soon be
 // replaced with something a little less finicky.
 
@@ -110,13 +112,14 @@ CPoint dwTripStartingCoords[24] = {
 
 int IsValidTransitItems(int x, int y) {
 	for (int i = 0; i < 24; i++) {
-		int x1 = x + dwTripStartingCoords[i].x;
-		int y1 = y + dwTripStartingCoords[i].y;
+		int newX = x + dwTripStartingCoords[i].x;
+		int newY = y + dwTripStartingCoords[i].y;
 
-		if (x >= GAME_MAP_SIZE || y >= GAME_MAP_SIZE)
+		if ((newX < MAP_EDGE_MIN || newX > MAP_EDGE_MAX) ||
+			(newY < MAP_EDGE_MIN || newY > MAP_EDGE_MAX))
 			continue;
 
-		int iTileID = GetTileID(x1, y1);
+		int iTileID = GetTileID(newX, newY);
 
 		if (iTileID >= TILE_ROAD_LR && iTileID < TILE_RAIL_LR)
 			return 1;
@@ -153,6 +156,8 @@ static CPoint* dwTripStartingCoords = (CPoint*)0x4C92C0;
 
 __int16 wTripX[] = { 0, 1, 0, -1 };
 __int16 wTripY[] = { -1, 0, 1, 0 };
+__int16& FTop = *(__int16*)0x4CA424;
+__int16& FBot = *(__int16*)0x4CC908;
 WORD* wArrZoneDestinations = (WORD*)0x4E8570;
 BYTE* byte_4E858C = (BYTE*)0x4E858C;
 
@@ -685,7 +690,7 @@ LABEL_236:
 #if USE_NATIVE_STACKS
 		if (nBuildingPopLevel > 0 && !stackTripPoints.empty()) {
 #else
-		if (nBuildingPopLevel > 0 && *(WORD*)0x4CC908 != *(WORD*)0x4CA424) {
+		if (nBuildingPopLevel > 0 && FBot != FTop) {
 #endif
 			do {
 #if USE_NATIVE_STACKS
@@ -713,7 +718,7 @@ LABEL_236:
 #if USE_NATIVE_STACKS
 			} while (!stackTripPoints.empty());
 #else
-			} while (*(WORD*)0x4CC908 != *(WORD*)0x4CA424);
+			} while (FBot != FTop);
 #endif
 		}
 		//printf("\n");
@@ -1377,12 +1382,13 @@ static BOOL GetPopulatedTileAndLevel(__int16 iX, __int16 iY, BYTE iCurrentTileID
 		iTilePopLevel = wBuildingPopLevel[iPopulatedTile];
 	}
 	else {
-#if USE_NEW_TRIP_GENERATOR && USE_NEW_STARTINGCOORDS
-		if (iCurrentTileID >= TILE_ROAD_LR || !IsValidTransitItems(iX, iY))
-#else
-		if (iCurrentTileID >= TILE_ROAD_LR || !Game_IsValidTransitItems(iX, iY))
-#endif
-			return FALSE;
+		if (dwExperimentsEnabled & EXPERIMENT_TRIPGENERATOR && USE_NEW_TRIP_GENERATOR && USE_NEW_STARTINGCOORDS) {
+			if (iCurrentTileID >= TILE_ROAD_LR || !IsValidTransitItems(iX, iY))
+				return FALSE;
+		} else {
+			if (iCurrentTileID >= TILE_ROAD_LR || !Game_IsValidTransitItems(iX, iY))
+				return FALSE;
+		}
 	}
 
 	*p_iPopulatedTile = iPopulatedTile;
@@ -1454,11 +1460,10 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 						iRemainderDemand = 4000;
 						if (Game_IsZonedTilePowered(iX, iY)) {
 							int iTripResult = 0;
-#if USE_NEW_TRIP_GENERATOR
-							iTripResult = L_RunTripGenerator(iX, iY, iCurrZoneType, iTilePopLevel, TRIP_MAX_STEPS_VANILLA * TRIP_MAX_STEPS_SCALE);
-#else
-							iTripResult = Game_RunTripGenerator(iX, iY, iCurrZoneType, iTilePopLevel, GROWTH_TILE_MAX_TRIP_STEPS);
-#endif
+							if (dwExperimentsEnabled & EXPERIMENT_TRIPGENERATOR && USE_NEW_TRIP_GENERATOR)
+								iTripResult = L_RunTripGenerator(iX, iY, iCurrZoneType, iTilePopLevel, TRIP_MAX_STEPS_VANILLA * TRIP_MAX_STEPS_SCALE);
+							else
+								iTripResult = Game_RunTripGenerator(iX, iY, iCurrZoneType, iTilePopLevel, GROWTH_TILE_MAX_TRIP_STEPS);
 
 							if (iTripResult) {
 								iCurrentDemand = wCityDemand[GET_GENERAL_RCI_ZONE(iCurrZoneType)] + 2000;

@@ -41,6 +41,7 @@ DWORD dwSC2KFixVersion = SC2KFIX_VERSION_MAJOR << 24 | SC2KFIX_VERSION_MINOR << 
 const char* szSC2KFixVersion = SC2KFIX_VERSION;
 const char* szSC2KFixReleaseTag = SC2KFIX_RELEASE_TAG;
 FILE* fdLog = NULL;
+DWORD dwExperimentsEnabled = EXPERIMENT_NONE;
 BOOL bUseAdvancedQuery = TRUE;
 BOOL bSkipLoadingMods = FALSE;
 BOOL bFixFileAssociations = FALSE;
@@ -204,6 +205,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						bMapWireFrame = TRUE;
 					if (!lstrcmpiW(argv[i], L"-disablefixedtiles"))
 						bDisableFixedTiles = TRUE;
+					if (!lstrcmpiW(argv[i], L"-experiment=tripgenerator"))
+						dwExperimentsEnabled |= EXPERIMENT_TRIPGENERATOR;
+					if (!lstrcmpiW(argv[i], L"-experiment=all"))
+						dwExperimentsEnabled = EXPERIMENT_EVERYTHING;
 					if (!lstrcmpiW(argv[i], L"-bitmode"))
 					{
 						if (!iSetBitMode) {

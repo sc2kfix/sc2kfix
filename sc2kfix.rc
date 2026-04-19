@@ -450,6 +450,33 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,183,280,10
 END
 
+IDD_CONVERT_SELFIXOBJECTS DIALOGEX 0, 0, 316, 185
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Include Fixed Objects"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,122,164,74,14
+    CONTROL         "",IDC_OBJECTLIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_ALIGNLEFT | LVS_NOSORTHEADER | WS_TABSTOP,17,43,283,113,WS_EX_CLIENTEDGE
+    PUSHBUTTON      "Enable All",IDC_ENBALLBUT,49,24,70,14
+    PUSHBUTTON      "Disable All",IDC_DISALLBUT,199,24,70,14
+    CTEXT           "Enable the 'Fixed"" objects you want to include during conversion.",IDC_STATIC,7,4,301,14,SS_CENTERIMAGE
+END
+
+IDD_SHUNT DIALOGEX 0, 0, 316, 135
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Shunt Object"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Horizontal: ",IDC_SHUNT_TXTHORZ,6,7,102,10,SS_CENTERIMAGE
+    LTEXT           "Vertical: ",IDC_SHUNT_TXTVERT,6,62,102,10,SS_CENTERIMAGE
+    CONTROL         "",IDC_SHUNT_SLIDHORZ,"msctls_trackbar32",TBS_AUTOTICKS | TBS_BOTH | WS_TABSTOP,6,22,301,25
+    CONTROL         "",IDC_SHUNT_SLIDVERT,"msctls_trackbar32",TBS_AUTOTICKS | TBS_BOTH | WS_TABSTOP,6,76,301,25
+    DEFPUSHBUTTON   "OK",IDOK,92,116,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,170,116,50,14
+    RTEXT           "Left < > Right",IDC_STATIC,252,7,55,10,SS_CENTERIMAGE
+    RTEXT           "Down < > Up",IDC_STATIC,252,62,55,10,SS_CENTERIMAGE
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -583,6 +610,22 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 210
     END
+
+    IDD_CONVERT_SELFIXOBJECTS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 309
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 178
+    END
+
+    IDD_SHUNT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 309
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 128
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -667,6 +710,11 @@ BEGIN
     0
 END
 
+IDD_CONVERT_SELFIXOBJECTS AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
 IDD_SETTINGS_GENERAL AFX_DIALOG_LAYOUT
 BEGIN
     0
@@ -678,6 +726,11 @@ BEGIN
 END
 
 IDD_SETTINGS_AUDIO AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_SHUNT AFX_DIALOG_LAYOUT
 BEGIN
     0
 END
@@ -795,6 +848,18 @@ IDR_TSET_FIXED          TSET                    "blobs\\FIXEDTILES.MIF"
 //
 
 IDR_BLOB_LIBSC2KFIX_LUA BLOB                    "blobs\\libsc2kfix.lua"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RAW
+//
+
+IDR_SCRKPALBMP          RAW                     "blobs\\SCURKBMP_PAL.bin"
+
+IDR_SCRKPALWND          RAW                     "blobs\\SCURKWND_PAL.bin"
+
+IDR_SCRKPALMAP          RAW                     "blobs\\SCURKMAP_PAL.bin"
 
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////

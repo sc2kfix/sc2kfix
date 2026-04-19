@@ -1,5 +1,5 @@
 // sc2kfix modules/scurkfix_1996.cpp: fixes for SCURK - Network Edition (1996) version
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 // This source file only contains hooks that by their very nature are unique
 // to the 1996 version of SCURK (partial cases or those that only apply
@@ -63,6 +63,24 @@ extern "C" void __declspec(naked) __cdecl Hook_SCURK1996_OwlMainCommandLineFix(v
 		mov esi, [pRet]
 	}
 	GAMEJMP(0x45A7F6);
+}
+
+extern "C" void __declspec(naked) __cdecl Hook_SCURK1996_PaletteWindow_Construct_PalRes(void) {
+	cPaletteWindow *pThis;
+	
+	__asm {
+		mov ebx, [ebp + 0x8]
+		mov [pThis], ebx
+	}
+
+	pThis = L_SCURK_LoadOwnPaletteResources(pThis);
+
+	__asm {
+		mov ebx, [pThis]
+		mov [ebp + 0x8], ebx
+	}
+
+	GAMEJMP(0x45125B);
 }
 
 void InstallFixes_SCURK1996(void) {
@@ -255,6 +273,19 @@ void InstallFixes_SCURK1996(void) {
 	VirtualProtect((LPVOID)0x4502E8, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4502E8, Hook_SCURK_MoverWindow_EvGetMinMaxInfo);
 
+	// Re-route the loading of palette-related resources
+	// in order for it use the adjusted set here.
+	VirtualProtect((LPVOID)0x4510A7, 441, PAGE_EXECUTE_READWRITE, &dwDummy);
+	memset((LPVOID)0x4510A7, 0x90, 441);
+	NEWJMP((LPVOID)0x4510A7, Hook_SCURK1996_PaletteWindow_Construct_PalRes);
+
+	// For both Left and Right Button Down it has now been adjusted so it
+	// can access entries that are on row 10.
+	VirtualProtect((LPVOID)0x4517C8, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x4517C8, Hook_SCURK_PaletteWindow_EvLButtonDown);
+	VirtualProtect((LPVOID)0x451894, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x451894, Hook_SCURK_PaletteWindow_EvRButtonDown);
+
 	// OwlMain() command line fix.
 	VirtualProtect((LPVOID)0x45A777, 7, PAGE_EXECUTE_READWRITE, &dwDummy);
 	memset((LPVOID)0x45A777, 0x90, 7);
@@ -263,6 +294,10 @@ void InstallFixes_SCURK1996(void) {
 	// TMenuItemEnabler::Enable
 	VirtualProtect((LPVOID)0x4738EA, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
 	NEWJMP((LPVOID)0x4738EA, Hook_SCURK_MenuItemEnabler_Enable);
+
+	// TMenuItemEnabler::SetCheck
+	VirtualProtect((LPVOID)0x473939, 5, PAGE_EXECUTE_READWRITE, &dwDummy);
+	NEWJMP((LPVOID)0x473939, Hook_SCURK_MenuItemEnabler_SetCheck);
 
 	// This hook is to prevent the Place&Pick selection dialogue
 	// from being unintentionally closed; it catches and ignores

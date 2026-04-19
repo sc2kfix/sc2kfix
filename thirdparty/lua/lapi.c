@@ -1121,6 +1121,7 @@ LUA_API int lua_load (lua_State *L, lua_Reader reader, void *data,
                       const char *chunkname, const char *mode) {
   ZIO z;
   TStatus status;
+  luaC_checkGC(L);
   lua_lock(L);
   if (!chunkname) chunkname = "?";
   luaZ_init(L, &z, reader, data);
@@ -1201,11 +1202,16 @@ LUA_API int lua_gc (lua_State *L, int what, ...) {
     case LUA_GCSTEP: {
       lu_byte oldstp = g->gcstp;
       l_mem n = cast(l_mem, va_arg(argp, size_t));
+      l_mem newdebt;
       int work = 0;  /* true if GC did some work */
       g->gcstp = 0;  /* allow GC to run (other bits must be zero here) */
       if (n <= 0)
-        n = g->GCdebt;  /* force to run one basic step */
-      luaE_setdebt(g, g->GCdebt - n);
+        newdebt = 0;  /* force to run one basic step */
+      else if (g->GCdebt >= n - MAX_LMEM)  /* no overflow? */
+        newdebt = g->GCdebt - n;
+      else  /* overflow */
+        newdebt = -MAX_LMEM;  /* set debt to miminum value */
+      luaE_setdebt(g, newdebt);
       luaC_condGC(L, (void)0, work = 1);
       if (work && g->gcstate == GCSpause)  /* end of cycle? */
         res = 1;  /* signal it */

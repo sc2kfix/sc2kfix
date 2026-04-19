@@ -102,6 +102,10 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define DEBUG_FLAGS_NONE		0
 #define DEBUG_FLAGS_EVERYTHING	0xFFFFFFFF
 
+#define EXPERIMENT_NONE				0			// status: nice and safe
+#define EXPERIMENT_TRIPGENERATOR	1			// status: dubiously stable
+#define EXPERIMENT_EVERYTHING		0xFFFFFFFF	// status: good luck and godspeed
+
 #define ListView_InsertItemType(hwndLV, i, tmask) {\
 	LV_ITEM _macro_lvi;\
 	_macro_lvi.mask = (tmask);\
@@ -390,6 +394,7 @@ BOOL DoConfigureMusicTracks(settings_t *st, HWND hDlg, BOOL bMP3);
 BOOL DoConfigureKeyBindings(settings_t *st, HWND hwndDlg);
 
 BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc);
+char *ConvertFileTypeFilterString(const char *pInStr);
 
 // Yes...
 FILE *old_fopen(const char *fname, const char *mode);
@@ -447,6 +452,7 @@ extern DWORD dwSC2KFixVersion;
 extern const char* szSC2KFixVersion;
 extern const char* szSC2KFixReleaseTag;
 extern const char* szSC2KFixBuildInfo;
+extern DWORD dwExperimentsEnabled;
 extern BOOL bConsoleEnabled;
 extern BOOL bSkipIntro;
 extern BOOL bUseAdvancedQuery;

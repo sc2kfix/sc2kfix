@@ -52,6 +52,9 @@
     <Filter Include="Resource Files\BLOB">
       <UniqueIdentifier>{c2c4a45c-6c70-4253-a6b9-a115684185fc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\RAW">
+      <UniqueIdentifier>{0fdd0012-770e-43e2-9531-8fd0dea3807b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\sc2kfix.h">
@@ -467,6 +470,12 @@
     <ClCompile Include="modules\settings_dialog.cpp">
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="modules\scurk_convert.cpp">
+      <Filter>Source Files\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\scurk_objmove.cpp">
+      <Filter>Source Files\Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="sc2kfix.rc">
@@ -485,6 +494,15 @@
     </None>
     <None Include="blobs\libsc2kfix.lua">
       <Filter>Resource Files\BLOB</Filter>
+    </None>
+    <None Include="blobs\SCURKBMP_PAL.bin">
+      <Filter>Resource Files\RAW</Filter>
+    </None>
+    <None Include="blobs\SCURKWND_PAL.bin">
+      <Filter>Resource Files\RAW</Filter>
+    </None>
+    <None Include="blobs\SCURKMAP_PAL.bin">
+      <Filter>Resource Files\RAW</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

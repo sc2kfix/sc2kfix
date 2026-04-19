@@ -275,6 +275,23 @@ BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc) {
 	return FALSE;
 }
 
+char *ConvertFileTypeFilterString(const char *pInStr) {
+	const char *startChar;
+	char *currChar;
+	static char szOutStr[1024 + 1];
+
+	memset(szOutStr, 0, sizeof(szOutStr));
+	strcpy_s(szOutStr, pInStr);
+	for (startChar = szOutStr;; startChar = currChar + 1) {
+		currChar = (char *)strchr(startChar, '|');
+		if (!currChar)
+			break;
+		*currChar = 0;
+	}
+
+	return szOutStr;
+}
+
 #pragma warning(disable:4996)
 FILE *old_fopen(const char *fname, const char *mode) {
 	return fopen(fname, mode);

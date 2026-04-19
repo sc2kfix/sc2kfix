@@ -430,6 +430,7 @@ extern "C" void __declspec(naked) __stdcall Hook_LoadSpriteArchives1996() {
 	Game_LoadDataArchive(TILEDAT_DEFS_SPECIAL);
 	Game_LoadDataArchive(TILEDAT_DEFS_LARGE);
 	Game_LoadDataArchive(TILEDAT_DEFS_SMALLMED);
+
 	if (!bDisableFixedTiles)
 		L_LoadFixedLargeSpritesRsrc_SC2K1996();
 	GAMEJMP(0x42C332)
