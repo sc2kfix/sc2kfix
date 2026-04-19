@@ -223,6 +223,7 @@ void LoadJSONSettings(void) {
 	std::stringstream strLoadedJSONDump;
 	strLoadedJSONDump << fSettingsJSON.rdbuf();
 	jsonSettingsCore.merge(jsonSettingsCore.Load(strLoadedJSONDump.str()));
+	LoadJSONBindings(jsonSettingsCore);
 }
 
 void SaveJSONSettings(void) {

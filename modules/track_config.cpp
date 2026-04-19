@@ -238,15 +238,15 @@ BOOL CALLBACK ConfMusicTracksDialogProc(HWND hwndDlg, UINT message, WPARAM wPara
 BOOL DoConfigureMusicTracks(settings_t *st, HWND hwndDlg, BOOL bMP3) {
 	conftracks_t cft;
 	BOOL bRet;
-	const char *pMusicTrack;
+	std::string strMusicTrack;
 
 	memset(&cft, 0, sizeof(conftracks_t));
 	cft.bMP3 = bMP3;
 	cft.bActiveTrackTouched = FALSE;
 	cft.iActiveTrack = GetCurrentActiveSongID();
 	for (int i = 0; i < MUSIC_TRACKS; i++) {
-		pMusicTrack = (bMP3) ? jsonSettingsCoreWorkingCopy["sc2kfix"]["music_mp3"][std::to_string(i + 10000)].ToString().c_str() : jsonSettingsCoreWorkingCopy["sc2kfix"]["music_midi"][std::to_string(i + 10000)].ToString().c_str();
-		strcpy_s(cft.szMusicTracks[i], MAX_PATH, pMusicTrack);
+		strMusicTrack = (bMP3) ? jsonSettingsCoreWorkingCopy["sc2kfix"]["music_mp3"][std::to_string(i + 10000)].ToString() : jsonSettingsCoreWorkingCopy["sc2kfix"]["music_midi"][std::to_string(i + 10000)].ToString();
+		strcpy_s(cft.szMusicTracks[i], MAX_PATH, strMusicTrack.c_str());
 	}
 
 	bRet = DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_CONFIGSECTION), hwndDlg, ConfMusicTracksDialogProc, (LPARAM)&cft);
