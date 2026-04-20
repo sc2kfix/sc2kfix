@@ -538,3 +538,18 @@ void SetCPoint(CPoint* pt, int x, int y) {
 	pt->x = x;
 	pt->y = y;
 }
+
+// Similar to std::string::starts_with in C++20
+HOOKEXT_CPP bool string_starts_with(std::string& str, const char* prefix) {
+	return (str.rfind(prefix, 0) != std::string::npos);
+}
+
+// Similar to std::string::ends_with in C++20
+HOOKEXT_CPP bool string_ends_with(std::string& str, const char* suffix) {
+	return (str.find(suffix, str.length() - strlen(suffix)) != std::string::npos);
+}
+
+// Similar to std::string::contains in C++20
+HOOKEXT_CPP bool string_contains(std::string& str, const char* substr) {
+	return (str.find(substr) != std::string::npos);
+}
