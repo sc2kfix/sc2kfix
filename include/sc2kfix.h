@@ -361,6 +361,7 @@ void SetCPoint(CPoint* pt, int x, int y);
 HOOKEXT_CPP bool string_starts_with(std::string& str, const char* prefix);
 HOOKEXT_CPP bool string_ends_with(std::string& str, const char* suffix);
 HOOKEXT_CPP bool string_contains(std::string& str, const char* substr);
+HOOKEXT_CPP std::string string_format(const char* fmt, ...);
 
 // Globals etc.
 

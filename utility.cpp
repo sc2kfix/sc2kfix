@@ -553,3 +553,23 @@ HOOKEXT_CPP bool string_ends_with(std::string& str, const char* suffix) {
 HOOKEXT_CPP bool string_contains(std::string& str, const char* substr) {
 	return (str.find(substr) != std::string::npos);
 }
+
+// Similar to std::format() in C++20
+HOOKEXT_CPP std::string string_format(const char* fmt, ...) {
+	va_list args;
+	int len;
+	char* buf;
+
+	va_start(args, fmt);
+	len = _vscprintf(fmt, args) + 1;
+	std::string str(len, '\0');
+	buf = (char*)malloc(len);
+	if (buf) {
+		vsprintf_s(buf, len, fmt, args);
+		str = buf;
+		free(buf);
+	}
+
+	va_end(args);
+	return str;
+}
