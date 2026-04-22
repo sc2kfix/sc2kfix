@@ -178,7 +178,7 @@ namespace console {
 
 		ConsoleCommand ToCommand(bool& ok) const {
 			ok = (Type == Class::Command);
-			return ok ? std::move(*Internal.Command) : ConsoleCommand();
+			return ok ? *Internal.Command : ConsoleCommand();
 		}
 
 		JSONWrapper<map<string, CommandTree>> ObjectRange() {
