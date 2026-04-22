@@ -207,6 +207,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						bDisableFixedTiles = TRUE;
 					if (!lstrcmpiW(argv[i], L"-experiment=tripgenerator"))
 						dwExperimentsEnabled |= EXPERIMENT_TRIPGENERATOR;
+					if (!lstrcmpiW(argv[i], L"-experiment=newconsole"))
+						dwExperimentsEnabled |= EXPERIMENT_NEWCONSOLE;
 					if (!lstrcmpiW(argv[i], L"-experiment=all"))
 						dwExperimentsEnabled = EXPERIMENT_EVERYTHING;
 					if (!lstrcmpiW(argv[i], L"-bitmode"))
@@ -539,7 +541,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Start the console thread.
 		if (bConsoleEnabled) {
 			ConsoleLog(LOG_INFO, "CORE: Starting console thread.\n");
-			hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, NULL);
+			if (dwExperimentsEnabled & EXPERIMENT_NEWCONSOLE) {
+				ConsoleLog(LOG_INFO, "CORE: EXPERIMENT_NEWCONSOLE enabled.\n");
+				hConsoleThread = CreateThread(NULL, 0, NewConsoleThread, 0, 0, NULL);
+			} else
+				hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, NULL);
 		}
 
 		// Set up the modding infrastructure for the 1996 Special Edition version.

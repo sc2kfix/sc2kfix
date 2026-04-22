@@ -1,0 +1,638 @@
+// sc2kfix modules/console_new.cpp: sc2kfix console 2.0
+// (c) 2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+
+// Notes: 2026-04-21 (@araxestroy)
+//
+// I'm very, very sorry.
+
+
+#undef UNICODE
+#include <windows.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <mmsystem.h>
+#include <io.h>
+#include <signal.h>
+#include <conio.h>
+#include <fstream>
+#include <map>
+#include <regex>
+#include <string>
+
+#include <sc2kfix.h>
+#include <lua_glue.h>
+#include <commandtree.hpp>
+#include "../resource.h"
+
+#define CLI_DEBUG 0
+
+#if CLI_DEBUG == 0
+#define debug_printf drop_args
+#else
+#define debug_printf printf
+#endif
+
+#define printf_red(s, ...) printf(VT100_COLOUR_RED s VT100_DEFAULT, __VA_ARGS__)
+#define printf_lightred(s, ...) printf(VT100_COLOUR_BRIGHT_RED s VT100_DEFAULT, __VA_ARGS__)
+#define printf_yellow(s, ...) printf(VT100_COLOUR_YELLOW s VT100_DEFAULT, __VA_ARGS__)
+#define printf_lightblue(s, ...) printf(VT100_COLOUR_BRIGHT_BLUE s VT100_DEFAULT, __VA_ARGS__)
+
+void drop_args(...) {
+	return;
+}
+
+bool bConsoleInLuaREPL = false;
+bool bDontClearNextCommand = false;
+console::CommandTree treeConsoleCommands;
+
+void PrintAlignedStringMap(std::map<std::string, std::string> mapStr, int iPrefixSpaces = 3) {
+	std::map<std::string, std::string> mapOutput;
+	std::string strPrefixSpaces(iPrefixSpaces, ' ');
+	int iLeftAlign = 0;
+
+	for (auto s : mapStr) {
+		mapOutput[s.first] = s.second;
+		if (iLeftAlign < s.first.size())
+			iLeftAlign = s.first.size();
+	}
+
+	for (auto s : mapOutput)
+		printf("%s%s%s%s\n", strPrefixSpaces.c_str(), s.first.c_str(), std::string(3 + iLeftAlign - s.first.size(), ' ').c_str(), s.second.c_str());
+}
+
+bool ConsoleCommandRunLua(std::vector<std::string> args, int iBreakoutState) {
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap(
+			{
+				{"<[Enter]>", "Switches to the Lua REPL"},
+				{"<filename>", "Executes a file as a standalone Lua script"},
+			});
+		bDontClearNextCommand = true;
+		return true;
+	}
+
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+	
+	if (args.size() == 0) {
+		bConsoleInLuaREPL = true;
+		LuaRunREPL();
+		bConsoleInLuaREPL = false;
+	} else if (args.size() > 1)
+		return false;
+	else {
+		std::string strPossibleScriptName = args[0];
+		if (!FileExists(strPossibleScriptName.c_str())) {
+			strPossibleScriptName += ".lua";
+			if (!FileExists(strPossibleScriptName.c_str())) {
+				ConsoleLog(LOG_ERROR, "CORE: Couldn't find Lua script %s.\n", strPossibleScriptName.c_str());
+				return true;
+			}
+		}
+
+		// Spin up a new Lua VM, set up the glue logic, load the file, and run it.
+		lua_State* L = luaL_newstate();
+		luaL_openlibs(L);
+		luaL_dostring(L,
+			"mod_info = {}\n"
+			"mod_info.name = \"sc2kfix Lua REPL\"\n"
+			"mod_info.shortname = \"repl\"\n");
+		LuaGlueSetupState(L);
+		luaL_dofile(L, strPossibleScriptName.c_str());
+		lua_close(L);
+	}
+	
+	return true;
+}
+
+bool ConsoleCommandShowDebug(std::vector<std::string> args, int iBreakoutState) {
+	// No arguments allowed
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		bDontClearNextCommand = true;
+		return false;
+	}
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+
+	printf("Debugging labels enabled: ");
+
+	if (guzzardo_debug)
+		printf("GUZZ=0x%08X ", guzzardo_debug);
+	if (mci_debug)
+		printf("MCI=0x%08X ", mci_debug);
+	if (military_debug)
+		printf("MIL=0x%08X ", military_debug);
+	if (mischook_debug)
+		printf("MISC=0x%08X ", mischook_debug);
+	if (modloader_debug)
+		printf("MODS=0x%08X ", modloader_debug);
+	if (mov_debug)
+		printf("MOV=0x%08X ", mov_debug);
+	if (mus_debug)
+		printf("MUS=0x%08X ", mus_debug);
+	if (registry_debug)
+		printf("REG=0x%08X ", registry_debug);
+	if (sc2x_debug)
+		printf("SC2X=0x%08X ", sc2x_debug);
+	if (snd_debug)
+		printf("SND=0x%08X ", snd_debug);
+	if (sprite_debug)
+		printf("SPR=0x%08X ", sprite_debug);
+	if (timer_debug)
+		printf("TIMER=0x%08X ", timer_debug);
+	if (updatenotifier_debug)
+		printf("UPD=0x%08X ", updatenotifier_debug);
+
+	printf("\n");
+	return true;
+}
+
+bool ConsoleCommandShowVersion(std::vector<std::string> args, int iBreakoutState) {
+	std::string strProgramName = "SimCity 2000";
+	std::string strProgramVersion = "unknown";
+
+	// No arguments allowed
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		bDontClearNextCommand = true;
+		return false;
+	}
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+
+	if (dwSC2KFixMode == SC2KFIX_MODE_SC2K) {
+		switch (dwDetectedVersion) {
+		case VERSION_SC2K_1995:
+			strProgramVersion = "1995 CD Collection";
+			break;
+		case VERSION_SC2K_1996:
+			strProgramVersion = "1996 Special Edition";
+			break;
+		}
+	}
+	else if (dwSC2KFixMode == SC2KFIX_MODE_SC2KDEMO) {
+		if (dwDetectedVersion == VERSION_SC2K_DEMO)
+			strProgramVersion = "Interactive Demo";
+	}
+	else if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		strProgramName = "SCURK";
+		switch (dwDetectedVersion) {
+		case VERSION_SCURK_PRIMARY:
+			strProgramVersion = "1995 (Primary version)";
+			break;
+		case VERSION_SCURK_1996:
+			strProgramVersion = "1996 Network Edition";
+			break;
+		}
+	}
+	else
+		strProgramName = "Unknown";
+
+	// AF - the separation comma positioning in this case is deliberate
+	// in order to be a bit more "friendly" concerning missing or varied
+	// end-arguments depending on the build.
+	//
+	// Reworked this significantly due to some legal advice (araxestroy)
+	printf(
+		VT100_COLOUR_BRIGHT_WHITE "sc2kfix version %s - (c) 2025-2026 sc2kfix Project (https://sc2kfix.net)\n" VT100_DEFAULT
+		"Build info: %s\n"
+		"%s version: %s\n"
+		"Lua version: %s\n"
+		"Plugin loaded at 0x%08X\n\n"
+
+		"This program includes code from the following projects:\n"
+		"  %s is (c) 1994-2025 Lua.org, PUC-Rio; made available under the MIT License\n"
+		"  FluidSynth is (c) FluidSynth; made available under the LGPL 2.1 license\n\n"
+
+		"Licenses for third-party code can be found in the sc2kfix repository and distribution under\n"
+		"the `thirdparty` directory. The sc2kfix plugin, example mods, and frameworks are released\n"
+		"under the terms of the MIT license unless otherwise stated.\n\n"
+
+		"SimCity 2000 is a registered trademark of Electronic Arts, Inc.\n",
+		szSC2KFixVersion,
+		szSC2KFixBuildInfo,
+		strProgramName.c_str(),
+		strProgramVersion.c_str(),
+		LUA_VERSION,
+		(DWORD)hSC2KFixModule,
+		LUA_VERSION
+	);
+
+	return true;
+}
+
+void NewConsoleInitializeCommands(console::CommandTree& treeCommands) {
+	treeCommands["run"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Run Lua REPL or scripts");
+	treeCommands["run"]["lua"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandRunLua, "Run Lua REPL or scripts");
+	treeCommands["show"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Display various game and plugin information");
+	treeCommands["show"]["debug"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowDebug, "Display enabled debugging options");
+	treeCommands["show"]["version"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowVersion, "Show sc2kfix and library version info");
+}
+
+DWORD WINAPI NewConsoleThread(LPVOID lpParameter) {
+	std::string strCommand;
+	int breakout = BREAKOUT_NONE;
+	bool bFullCommand = false;
+	bool bDoneQuestionOut = false;
+	bool bDoJuniperStyle = true;
+	bool bConsoleUndocumentedMode = false;
+	bDontClearNextCommand = false;
+
+	// Initialize the console
+	Sleep(200);
+	SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
+	NewConsoleInitializeCommands(treeConsoleCommands);
+
+	// HIC SUNT DRACONES
+	while (true) {
+		if (bConsoleUndocumentedMode)
+			printf(VT100_COLOUR_BRIGHT_WHITE "sc2kfix# " VT100_DEFAULT "%s", strCommand.c_str());
+		else
+			printf(VT100_COLOUR_BRIGHT_WHITE "sc2kfix> " VT100_DEFAULT "%s", strCommand.c_str());
+		breakout = BREAKOUT_NONE;
+		bDoneQuestionOut = false;
+		while (!breakout) {
+			int c = _getch();
+			switch (c) {
+			case CTRL('C'):
+				printf("\n");
+				breakout = BREAKOUT_INTERRUPT;
+				break;
+			case '\r':
+			case '\n':
+				printf("\n");
+				breakout = BREAKOUT_RETURN;
+				break;
+			case '?':
+				printf("?\n");
+				breakout = BREAKOUT_QUESTION;
+				break;
+			case '\t':
+				printf("\n");
+				breakout = BREAKOUT_TAB;
+				break;
+			case ' ':
+				if (strCommand == "") {
+					printf("\a");
+					continue;
+				}
+				else if (bDoJuniperStyle) {
+					breakout = BREAKOUT_SPACE;
+					break;
+				}
+				else {
+					putc(c, stdout);
+					strCommand.push_back(c);
+					continue;
+				}
+			case '\b':
+				if (strCommand == "") {
+					printf("\a");
+					continue;
+				}
+				strCommand.pop_back();
+				printf("\b \b");
+				continue;
+			default:
+				putc(c, stdout);
+				strCommand.push_back(c);
+				continue;
+			}
+		}
+
+		strCommand.erase(std::find_if(strCommand.rbegin(), strCommand.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), strCommand.end());
+
+		std::vector<std::string> vecSplit;
+		if (!string_split(strCommand, vecSplit)) {
+			printf_yellow("Unmatched quote.\n");
+			continue;
+		};
+
+		debug_printf("vecSplit.size: %d\n", vecSplit.size());
+
+		if ((bDoJuniperStyle && breakout == BREAKOUT_SPACE) || breakout == BREAKOUT_QUESTION || breakout == BREAKOUT_TAB) {
+			int iDepth = 0;
+			console::CommandTree* treePointer = &treeConsoleCommands;
+			while (iDepth < vecSplit.size()) {
+				if (treePointer->hasKey(vecSplit[iDepth])) {
+					//printf("%d: found key\n", iDepth);
+					if ((*treePointer)[vecSplit[iDepth]].ObjectType() == console::CommandTree::Class::Object) {
+						//printf("%d: found object\n", iDepth);
+						treePointer = &(*treePointer)[vecSplit[iDepth++]];
+
+						if (vecSplit.size() == iDepth && !treePointer->hasKey(""))
+							break;
+
+						if (vecSplit.size() == iDepth && !treePointer->hasKey(vecSplit[iDepth - 1])) {
+							debug_printf("bFC 1\n");
+							bFullCommand = true;
+						}
+
+						if (vecSplit.size() == iDepth && treePointer->hasKey("")) {
+							//printf("%d: found nested command\n", iDepth);
+							if ((*treePointer)[""].ToCommand().iType == COMMAND_TYPE_BRANCH && !treePointer->hasKey(vecSplit[iDepth - 1])) {
+								debug_printf("bFC 2 -- \"%s\"\n", vecSplit[iDepth - 1].c_str());
+								bFullCommand = true;
+								break;
+							}
+						}
+						else if (!treePointer->hasKey(vecSplit[iDepth]) && treePointer->hasKey("")) {
+							if ((*treePointer)[""].ToCommand().iType == COMMAND_TYPE_BRANCH && !treePointer->hasKey(vecSplit[iDepth])) {
+								debug_printf("bFC 3 -- \"%s\"\n", vecSplit[iDepth - 1].c_str());
+								bFullCommand = false;
+								break;
+							}
+						}
+						else if (treePointer->hasKey(vecSplit[iDepth])) {
+							debug_printf("bFC 4 -- \"%s\"\n", vecSplit[iDepth].c_str());
+							bFullCommand = true;
+							break;
+						}
+						else {
+							bFullCommand = false;
+							break;
+						}
+
+						//printf("%d: continue\n", iDepth);
+						continue;
+					}
+					else if ((*treePointer)[vecSplit[iDepth]].ObjectType() == console::CommandTree::Class::Command) {
+						//printf("%d: found command\n", iDepth);
+						debug_printf("bFC 5\n");
+						bFullCommand = true;
+						break;
+					}
+				}
+				else {
+					bFullCommand = false;
+					break;
+				}
+			}
+		}
+
+		//for (int i = 0; i < vecSplit.size(); i++)
+			//printf("%d: \"%s\"\n", i, vecSplit[i].c_str());
+
+		/*if (breakout == BREAKOUT_SPACE && bFullCommand) {
+			putc(' ', stdout);
+			strCommand.push_back(' ');
+		}*/
+
+		if (bFullCommand && (breakout == BREAKOUT_TAB || breakout == BREAKOUT_SPACE)) {
+			debug_printf("bFullCommand\n");
+			strCommand.push_back(' ');
+
+			if (breakout == BREAKOUT_SPACE)
+				printf("\r");
+				//printf("\x1B[1K\r");
+		}
+
+		if (breakout == BREAKOUT_QUESTION || breakout == BREAKOUT_TAB || (breakout == BREAKOUT_SPACE)) {
+			int iDepth = 0;
+			console::CommandTree* treePointer = &treeConsoleCommands;
+
+			std::map<std::string, std::string> mapOutput;
+			int iLongestCommand = 0;
+
+			if (vecSplit.size() == 0) {
+				for (auto s : treePointer->ObjectRange()) {
+					if ((*treePointer)[s.first].ObjectType() == console::CommandTree::Class::Command) {
+						mapOutput[s.first] = s.second.ToCommand().szDescription;
+						if (iLongestCommand < s.first.size())
+							iLongestCommand = s.first.size();
+					}
+					else if ((*treePointer)[s.first].ObjectType() == console::CommandTree::Class::Object && s.second.hasKey("")) {
+						mapOutput[s.first + " ..."] = s.second[""].ToCommand().szDescription;
+						if (iLongestCommand < s.first.size() + 4)
+							iLongestCommand = s.first.size() + 4;
+					}
+				}
+
+				if (breakout == BREAKOUT_SPACE)
+					printf("\n");
+
+				for (auto s : mapOutput)
+					printf("   %s%s%s\n", s.first.c_str(), std::string(3 + iLongestCommand - s.first.size(), ' ').c_str(), s.second.c_str());
+
+				bDoneQuestionOut = true;
+				continue;
+			}
+
+			bool bGo = false;
+
+			while (iDepth < vecSplit.size()) {
+				if (treePointer->hasKey(vecSplit[iDepth])) {
+					//printf("%d: found key\n", iDepth);
+					if ((*treePointer)[vecSplit[iDepth]].ObjectType() == console::CommandTree::Class::Object) {
+						//printf("%d: found object\n", iDepth);
+						treePointer = &(*treePointer)[vecSplit[iDepth++]];
+
+						if (vecSplit.size() == iDepth && treePointer->hasKey("")) {
+							//printf("%d: found nested command\n", iDepth);
+							bGo = true;
+							break;
+						}
+
+						//printf("%d: continue\n", iDepth);
+						continue;
+					}
+					else if ((*treePointer)[vecSplit[iDepth]].ObjectType() == console::CommandTree::Class::Command) {
+						if (breakout != BREAKOUT_QUESTION)
+							bGo = true;
+						break;
+					}
+				}
+				else {
+					bGo = true;
+					break;
+				}
+			}
+
+			if (iDepth == vecSplit.size()) {
+				if (strCommand[strCommand.size() - 1] != ' ')
+					strCommand.push_back(' ');
+				vecSplit.push_back("");
+			}
+
+			if (bGo) {
+				int i = 0;
+				for (auto s : treePointer->ObjectRange()) {
+					std::string s2 = s.first;
+					if ((*treePointer)[s.first].ObjectType() == console::CommandTree::Class::Command) {
+						if (!string_starts_with(s2, vecSplit[iDepth].c_str()))
+							continue;
+						if (s.first == "" && s.second.ToCommand().iType != COMMAND_TYPE_BRANCH) {
+							mapOutput["..."] = s.second.ToCommand().szDescription;
+							if (iLongestCommand < 3)
+								iLongestCommand = 3;
+
+						}
+						else {
+							mapOutput[s.first] = s.second.ToCommand().szDescription;
+							if (iLongestCommand < s.first.size())
+								iLongestCommand = s.first.size();
+						}
+					}
+					else if ((*treePointer)[s.first].ObjectType() == console::CommandTree::Class::Object && s.second.hasKey("")) {
+						if (!string_starts_with(s2, vecSplit[iDepth].c_str()))
+							continue;
+						mapOutput[s.first + " ..."] = s.second[""].ToCommand().szDescription;
+						if (iLongestCommand < s.first.size() + 4)
+							iLongestCommand = s.first.size() + 4;
+					}
+				}
+
+				//printf("%d: itsame\n", iDepth);
+
+				strCommand.erase(std::find_if(strCommand.rbegin(), strCommand.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), strCommand.end());
+
+				if (breakout == BREAKOUT_TAB || breakout == BREAKOUT_SPACE) {
+					int i = 0;
+					std::map<std::string, std::string> mapSort = mapOutput;
+
+					for (auto s : mapSort) {
+						std::string s2 = s.first;
+
+						if (string_ends_with(s2, " ...")) {
+							s2.pop_back();
+							s2.pop_back();
+							s2.pop_back();
+							s2.pop_back();
+						}
+
+						if (s2.size() > i)
+							i = s2.size();
+					}
+					for (auto s : mapSort) {
+						std::string s2 = s.first;
+
+						if (string_ends_with(s2, " ...")) {
+							s2.pop_back();
+							s2.pop_back();
+							s2.pop_back();
+							s2.pop_back();
+						}
+						if (s2.size() < i)
+							i = s2.size();
+					}
+
+					//printf("shortest command: %d\n", i);
+
+					bool local_breakout = false;
+					int j;
+					for (j = vecSplit[iDepth].size(); j < i; j++) {
+						char c = mapOutput.begin()->first[j];
+						for (auto s : mapOutput) {
+							if (s.first[j] != c) {
+								local_breakout = true;
+								break;
+							}
+						}
+						if (local_breakout)
+							break;
+						vecSplit[iDepth].push_back(c);
+						strCommand.push_back(c);
+					}
+					if (i == j) {
+						bFullCommand = true;
+						debug_printf("autocompleted whole command\n");
+					}
+				}
+
+				if (mapOutput.size() == 0) {
+					printf_yellow("%sInvalid argument.\n", breakout == BREAKOUT_SPACE ? "\n" : "");
+					bDoneQuestionOut = true;
+				}
+				else if (!(mapOutput.size() == 1 && breakout == BREAKOUT_SPACE)) {
+					bDoneQuestionOut = true;
+
+					if (mapOutput.size() != 1 && breakout == BREAKOUT_SPACE && !bFullCommand)
+						printf("\n");
+
+					for (auto s : mapOutput) {
+						if (s.first != "" && (breakout == BREAKOUT_TAB || breakout == BREAKOUT_QUESTION || (breakout == BREAKOUT_SPACE && !bFullCommand)))
+							printf("   %s%s%s\n", s.first.c_str(), std::string(3 + iLongestCommand - s.first.size(), ' ').c_str(), s.second.c_str());
+					}
+
+					if (bFullCommand)
+						strCommand.push_back(' ');
+				}
+
+				if (mapOutput.size() == 1) {
+					if (breakout == BREAKOUT_SPACE) {
+						if (bFullCommand) {
+							strCommand.push_back(' ');
+							printf("\r");
+							//printf("\x1B[1K\r");
+						}
+					}
+				}
+			}
+		}
+
+		if (breakout == BREAKOUT_RETURN || breakout == BREAKOUT_INTERRUPT || (breakout == BREAKOUT_QUESTION && !bDoneQuestionOut)) {
+			if (breakout == BREAKOUT_INTERRUPT)
+				continue;
+
+			strCommand.erase(std::find_if(strCommand.rbegin(), strCommand.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), strCommand.end());
+
+			int iDepth = 0;
+			console::CommandTree* treePointer = &treeConsoleCommands;
+			while (iDepth < vecSplit.size()) {
+				if (treePointer->hasKey(vecSplit[iDepth])) {
+					debug_printf("%d: found key\n", iDepth);
+					if ((*treePointer)[vecSplit[iDepth]].ObjectType() == console::CommandTree::Class::Object) {
+						debug_printf("%d: found object\n", iDepth);
+						treePointer = &(*treePointer)[vecSplit[iDepth++]];
+						if (breakout == BREAKOUT_QUESTION)
+							continue;
+
+						if (vecSplit.size() == iDepth && !treePointer->hasKey("")) {
+							printf_yellow("Invalid argument.\n");
+							break;
+						}
+
+						if ((vecSplit.size() == iDepth && treePointer->hasKey("") ||
+							!treePointer->hasKey(vecSplit[iDepth]) && treePointer->hasKey("")) &&
+							breakout != BREAKOUT_QUESTION) {
+							debug_printf("%d: found nested command\n", iDepth);
+							if ((*treePointer)[""].ToCommand().iType == COMMAND_TYPE_BRANCH) {
+								printf_yellow("Invalid argument.\n");
+								break;
+							}
+
+							std::vector<std::string> vecArgs;
+							for (int i = iDepth + 1; i < vecSplit.size(); i++)
+								vecArgs.push_back(vecSplit[i]);
+
+							if (!(*treePointer)[""].ToCommand().pCommand(vecArgs, breakout))
+								printf_yellow("Invalid argument.\n");
+							break;
+						}
+
+						debug_printf("%d: continue\n", iDepth);
+						continue;
+					}
+					else if ((*treePointer)[vecSplit[iDepth]].ObjectType() == console::CommandTree::Class::Command) {
+						debug_printf("%d: found command\n", iDepth);
+						std::vector<std::string> vecArgs;
+						for (int i = iDepth + 1; i < vecSplit.size(); i++)
+							vecArgs.push_back(vecSplit[i]);
+
+						if (!((*treePointer)[vecSplit[iDepth]].ToCommand().pCommand(vecArgs, breakout)))
+							printf_yellow("Invalid argument.\n");
+						break;
+					}
+				}
+				else {
+					printf_yellow("Invalid argument.\n");
+					break;
+				}
+			}
+
+			if (!bDontClearNextCommand && !bDoneQuestionOut)
+				strCommand = "";
+
+			bDontClearNextCommand = false;
+		}
+	}
+}

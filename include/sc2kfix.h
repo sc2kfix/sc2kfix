@@ -104,6 +104,7 @@ template <typename T> std::string to_string_precision(const T value, const int p
 
 #define EXPERIMENT_NONE				0			// status: nice and safe
 #define EXPERIMENT_TRIPGENERATOR	1			// status: dubiously stable
+#define EXPERIMENT_NEWCONSOLE		2			// status: dubiously stable and uncommented
 #define EXPERIMENT_EVERYTHING		0xFFFFFFFF	// status: good luck and godspeed
 
 #define ListView_InsertItemType(hwndLV, i, tmask) {\
@@ -299,6 +300,44 @@ enum {
 	LOG_DEBUG
 };
 
+// New console stuff
+#define CTRL(c) (c - 64)
+
+#define COMMAND_TYPE_UNKNOWN		0		// undefined
+#define COMMAND_TYPE_BRANCH			1		// fake "command" used to add documentation to trees
+#define COMMAND_TYPE_DOCUMENTED		2		// command will show up in ? without set undoc
+#define COMMAND_TYPE_UNDOCUMENTED	3		// command requires set undoc to show up in ?
+#define COMMAND_TYPE_HIDDEN			4		// command does not show up in ? or autocomplete
+
+#define BREAKOUT_NONE		0
+#define BREAKOUT_RETURN		1
+#define BREAKOUT_TAB		2
+#define BREAKOUT_QUESTION	3
+#define BREAKOUT_INTERRUPT	4
+#define BREAKOUT_SPACE		5
+
+// command_proc_t: console command procedure typedef
+// Returns false if the parser should throw "invalid argument", true otherwise
+// All arguments after the command are in `args`. The CLI parser breakout state that caused the
+// command to be invoked is in `iBreakoutState` (should usually only be BREAKOUT_QUESTION or
+// BREAKOUT_RETURN; others should generally be treated as a syntax error)
+// 
+// Generally starts with:
+//   if (iBreakoutState == BREAKOUT_QUESTION)
+//       bDontClearNextCommand = true;
+//   if (iBreakoutState != BREAKOUT_RETURN)
+//       return false;
+typedef bool (*command_proc_t)(std::vector<std::string> args, int iBreakoutState);
+
+class ConsoleCommand {
+public:
+	ConsoleCommand() { iType = 0; pCommand = NULL; szDescription = ""; }
+	ConsoleCommand(int i, command_proc_t p, const char* s = "") { iType = i; pCommand = p; szDescription = s; }
+	int iType;
+	command_proc_t pCommand;
+	const char* szDescription;
+};
+
 // Game path global
 
 extern char szGamePath[MAX_PATH];
@@ -362,6 +401,7 @@ HOOKEXT_CPP bool string_starts_with(std::string& str, const char* prefix);
 HOOKEXT_CPP bool string_ends_with(std::string& str, const char* suffix);
 HOOKEXT_CPP bool string_contains(std::string& str, const char* substr);
 HOOKEXT_CPP std::string string_format(const char* fmt, ...);
+HOOKEXT_CPP bool string_split(std::string str, std::vector<std::string>& qargs);
 
 // Globals etc.
 
@@ -430,6 +470,8 @@ BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdSet(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdSetDebug(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdSetTile(const char* szCommand, const char* szArguments);
+
+DWORD WINAPI NewConsoleThread(LPVOID lpParameter);
 
 void LoadNativeCodeMods(void);
 
