@@ -99,7 +99,7 @@ namespace json {
 		JSON(initializer_list<JSON> list) : JSON() {
 			SetType(Class::Object);
 			for (auto i = list.begin(), e = list.end(); i != e; ++i, ++i)
-				operator[](i->ToString()) = *std::next(i);
+				operator[](i->ToInternalString()) = *std::next(i);
 		}
 
 		JSON(JSON&& other) noexcept : Internal(other.Internal), Type(other.Type) {
@@ -265,13 +265,22 @@ namespace json {
 		/// Functions for getting primitives from the JSON object.
 		bool IsNull() const { return Type == Class::Null; }
 
+		string ToInternalString() const {
+			bool b; return std::move(ToInternalString(b));
+		}
+
+		string ToInternalString(bool& ok) const {
+			ok = (Type == Class::String);
+			return ok ? std::move(json_escape(*Internal.String)) : string("");
+		}
+
 		string ToString() const {
-			bool b; return std::move(ToString(b));
+			bool b; return ToString(b);
 		}
 
 		string ToString(bool& ok) const {
 			ok = (Type == Class::String);
-			return ok ? std::move(json_escape(*Internal.String)) : string("");
+			return ok ? *Internal.String : string("");
 		}
 
 		double ToFloat() const {
