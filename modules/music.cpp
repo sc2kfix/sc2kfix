@@ -420,7 +420,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 	MCIERROR dwMCIError = NULL;
 
 	if (mus_debug & MUS_DEBUG_THREAD)
-		ConsoleLog(LOG_DEBUG, "MUS:  Starting music engine! Initial music driver set to \"%s\".\n", jsonSettingsCore["sc2kfix"]["audio"]["music_driver"].ToString());
+		ConsoleLog(LOG_DEBUG, "MUS:  Starting music engine! Initial music driver set to \"%s\".\n", jsonSettingsCore["sc2kfix"]["audio"]["music_driver"].ToString().c_str());
 	
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		pSCApp = &pCSimcityAppThis;
