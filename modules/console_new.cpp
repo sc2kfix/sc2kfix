@@ -48,7 +48,7 @@ console::CommandTree treeConsoleCommands;
 void PrintAlignedStringMap(std::map<std::string, std::string> mapStr, int iPrefixSpaces = 3) {
 	std::map<std::string, std::string> mapOutput;
 	std::string strPrefixSpaces(iPrefixSpaces, ' ');
-	int iLeftAlign = 0;
+	size_t iLeftAlign = 0;
 
 	for (auto s : mapStr) {
 		mapOutput[s.first] = s.second;
@@ -60,7 +60,7 @@ void PrintAlignedStringMap(std::map<std::string, std::string> mapStr, int iPrefi
 		printf("%s%s%s%s\n", strPrefixSpaces.c_str(), s.first.c_str(), std::string(3 + iLeftAlign - s.first.size(), ' ').c_str(), s.second.c_str());
 }
 
-bool ConsoleCommandRunLua(std::vector<std::string> args, int iBreakoutState) {
+bool ConsoleCommandRunLua(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
 	if (iBreakoutState == BREAKOUT_QUESTION) {
 		PrintAlignedStringMap(
 			{
@@ -105,7 +105,218 @@ bool ConsoleCommandRunLua(std::vector<std::string> args, int iBreakoutState) {
 	return true;
 }
 
-bool ConsoleCommandShowDebug(std::vector<std::string> args, int iBreakoutState) {
+static BYTE AttemptSafeReadByte(BYTE* address) {
+	__try {
+		return *address;
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER) {
+		ConsoleLog(LOG_ERROR, "CORE: Segmentation fault caught. Don't do that again.\n");
+		throw std::out_of_range("segfault");
+		return 0;
+	}
+}
+
+static WORD AttemptSafeReadWord(WORD* address) {
+	__try {
+		return *address;
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER) {
+		ConsoleLog(LOG_ERROR, "CORE: Segmentation fault caught. Don't do that again.\n");
+		throw std::out_of_range("segfault");
+		return 0;
+	}
+}
+
+static DWORD AttemptSafeReadDword(DWORD* address) {
+	__try {
+		return *address;
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER) {
+		ConsoleLog(LOG_ERROR, "CORE: Segmentation fault caught. Don't do that again.\n");
+		throw std::out_of_range("segfault");
+		return 0;
+	}
+}
+
+static uint64_t AttemptSafeReadQword(uint64_t* address) {
+	__try {
+		return *address;
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER) {
+		ConsoleLog(LOG_ERROR, "CORE: Segmentation fault caught. Don't do that again.\n");
+		throw std::out_of_range("segfault");
+		return 0;
+	}
+}
+
+static void AttemptSafeMemcpy(BYTE* dest, BYTE* src, size_t bytes) {
+	__try {
+		while (bytes--)
+			*dest++ = *src++;
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER) {
+		ConsoleLog(LOG_ERROR, "CORE: Segmentation fault caught. Don't do that again.\n");
+		throw std::out_of_range("segfault");
+		return;
+	}
+}
+
+bool ConsoleCommandShowMemory(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	DWORD dwAddress = NULL;
+	int iElementsCount = 1;
+	bool bAddressScanned = false;
+
+	BYTE b;
+	WORD w;
+	DWORD dw;
+	uint64_t qw;
+
+	// iOptParam is the element size (+1 for floating point when size == 4 or 8)
+	bool bFloat = (iOptParam == 5 || iOptParam == 9);
+	if (bFloat)
+		iOptParam--;
+
+	if (dwDetectedVersion != VERSION_SC2K_1996) {
+		printf_yellow("Command only available when attached to 1996 Special Edition.\n");
+		return true;
+	}
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap(
+			{
+				{"<address>", "Address to examine in hexadecimal"},
+				{"[count <count>]", "Number of elements to show (default 1)"},
+			});
+		bDontClearNextCommand = true;
+		return true;
+	}
+
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+
+	if (args.size() == 0)
+		return false;
+
+	// Parse arguments
+	for (size_t i = 0; i < args.size(); i++) {
+		// [count <count>]
+		if (args[i] == "count") {
+			if (++i >= args.size())
+				return false;
+
+			if (!sscanf_s(args[i].c_str(), "%u", &iElementsCount))
+				return false;
+
+			continue;
+		}
+
+		// <address>
+		if (!bAddressScanned && sscanf_s(args[i].c_str(), "%X", &dwAddress)) {
+			bAddressScanned = true;
+			continue;
+		}
+
+		// Invalid arugment, bail out
+		return false;
+	}
+
+	// Do some quick sanity checking
+	if (iElementsCount < 1 || !dwAddress)
+		return false;
+
+	try {
+		if (iElementsCount == 1) {
+			printf("0x%08X: ", dwAddress);
+			switch (iOptParam) {
+			case 1:
+				b = AttemptSafeReadByte((BYTE*)dwAddress);
+				printf("(byte) 0x%02X / %d\n", b, b);
+				break;
+			case 2:
+				w = AttemptSafeReadWord((WORD*)dwAddress);
+				printf("(word) 0x%04X / %d\n", w, w);
+				break;
+			case 4:
+				dw = AttemptSafeReadDword((DWORD*)dwAddress);
+				if (bFloat)
+					printf("(float) %f\n", *(float*)&dw);
+				else
+					printf("(dword) 0x%08X / %d\n", dw, dw);
+				break;
+			case 8:
+				qw = AttemptSafeReadQword((uint64_t*)dwAddress);
+				if (bFloat)
+					printf("(double) %lf\n", *(double*)&qw);
+				else
+					printf("(qword) 0x%016llX / %lld\n", qw, qw);
+				break;
+			}
+		} else {
+			while (iElementsCount > 0) {
+				printf("0x%08X:", dwAddress);
+				size_t uNextElements = (iElementsCount * iOptParam > 16 ? 16 / iOptParam : iElementsCount);
+				iElementsCount -= 16 / iOptParam;
+
+				BYTE buf[16];
+				AttemptSafeMemcpy(buf, (BYTE*)dwAddress, 16);
+				for (int i = 0; i < uNextElements; i++) {
+					switch (iOptParam) {
+					case 1:
+						printf(" %02X", buf[i]);
+						break;
+					case 2:
+						printf(" %04X", *(WORD*)&buf[i * iOptParam]);
+						break;
+					case 4:
+						if (bFloat)
+							printf(" %f", *(float*)&buf[i * iOptParam]);
+						else
+							printf(" %08X", *(DWORD*)&buf[i * iOptParam]);
+						break;
+					case 8:
+						if (bFloat)
+							printf(" %lf", *(double*)&buf[i * iOptParam]);
+						else
+							printf(" %016llX", *(uint64_t*)&buf[i * iOptParam]);
+						break;
+					}
+				}
+				printf("\n");
+				dwAddress += 16;
+			}
+		}
+	}
+	catch (...) {
+		return true;
+	}
+
+	return true;
+}
+
+bool ConsoleCommandShowMemoryByte(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	return ConsoleCommandShowMemory(args, iBreakoutState, 1);
+}
+
+bool ConsoleCommandShowMemoryWord(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	return ConsoleCommandShowMemory(args, iBreakoutState, 2);
+}
+
+bool ConsoleCommandShowMemoryDword(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	return ConsoleCommandShowMemory(args, iBreakoutState, 4);
+}
+
+bool ConsoleCommandShowMemoryQword(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	return ConsoleCommandShowMemory(args, iBreakoutState, 8);
+}
+
+bool ConsoleCommandShowMemoryFloat(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	return ConsoleCommandShowMemory(args, iBreakoutState, 5);
+}
+
+bool ConsoleCommandShowMemoryDouble(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	return ConsoleCommandShowMemory(args, iBreakoutState, 9);
+}
+
+bool ConsoleCommandShowDebug(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
 	// No arguments allowed
 	if (iBreakoutState == BREAKOUT_QUESTION) {
 		bDontClearNextCommand = true;
@@ -147,7 +358,7 @@ bool ConsoleCommandShowDebug(std::vector<std::string> args, int iBreakoutState) 
 	return true;
 }
 
-bool ConsoleCommandShowVersion(std::vector<std::string> args, int iBreakoutState) {
+bool ConsoleCommandShowVersion(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
 	std::string strProgramName = "SimCity 2000";
 	std::string strProgramVersion = "unknown";
 
@@ -200,7 +411,7 @@ bool ConsoleCommandShowVersion(std::vector<std::string> args, int iBreakoutState
 		"Plugin loaded at 0x%08X\n\n"
 
 		"This program includes code from the following projects:\n"
-		"  %s is (c) 1994-2025 Lua.org, PUC-Rio; made available under the MIT License\n"
+		"  Lua is (c) 1994-2025 Lua.org, PUC-Rio; made available under the MIT License\n"
 		"  FluidSynth is (c) FluidSynth; made available under the LGPL 2.1 license\n\n"
 
 		"Licenses for third-party code can be found in the sc2kfix repository and distribution under\n"
@@ -213,8 +424,7 @@ bool ConsoleCommandShowVersion(std::vector<std::string> args, int iBreakoutState
 		strProgramName.c_str(),
 		strProgramVersion.c_str(),
 		LUA_VERSION,
-		(DWORD)hSC2KFixModule,
-		LUA_VERSION
+		(DWORD)hSC2KFixModule
 	);
 
 	return true;
@@ -225,6 +435,13 @@ void NewConsoleInitializeCommands(console::CommandTree& treeCommands) {
 	treeCommands["run"]["lua"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandRunLua, "Run Lua REPL or scripts");
 	treeCommands["show"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Display various game and plugin information");
 	treeCommands["show"]["debug"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowDebug, "Display enabled debugging options");
+	treeCommands["show"]["memory"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Display memory contents");
+	treeCommands["show"]["memory"]["byte"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowMemoryByte, "Display byte-sized elements");
+	treeCommands["show"]["memory"]["word"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowMemoryWord, "Display word-sized elements");
+	treeCommands["show"]["memory"]["dword"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowMemoryDword, "Display double word-sized elements");
+	treeCommands["show"]["memory"]["qword"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowMemoryQword, "Display quad word-sized elements");
+	treeCommands["show"]["memory"]["float"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowMemoryFloat, "Display single precision floating point elements");
+	treeCommands["show"]["memory"]["double"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowMemoryDouble, "Display double precision floating point elements");
 	treeCommands["show"]["version"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowVersion, "Show sc2kfix and library version info");
 }
 
@@ -310,7 +527,7 @@ DWORD WINAPI NewConsoleThread(LPVOID lpParameter) {
 		debug_printf("vecSplit.size: %d\n", vecSplit.size());
 
 		if ((bDoJuniperStyle && breakout == BREAKOUT_SPACE) || breakout == BREAKOUT_QUESTION || breakout == BREAKOUT_TAB) {
-			int iDepth = 0;
+			size_t iDepth = 0;
 			console::CommandTree* treePointer = &treeConsoleCommands;
 			while (iDepth < vecSplit.size()) {
 				if (treePointer->hasKey(vecSplit[iDepth])) {
@@ -387,11 +604,11 @@ DWORD WINAPI NewConsoleThread(LPVOID lpParameter) {
 		}
 
 		if (breakout == BREAKOUT_QUESTION || breakout == BREAKOUT_TAB || (breakout == BREAKOUT_SPACE)) {
-			int iDepth = 0;
+			size_t iDepth = 0;
 			console::CommandTree* treePointer = &treeConsoleCommands;
 
 			std::map<std::string, std::string> mapOutput;
-			int iLongestCommand = 0;
+			size_t iLongestCommand = 0;
 
 			if (vecSplit.size() == 0) {
 				for (auto s : treePointer->ObjectRange()) {
@@ -486,7 +703,7 @@ DWORD WINAPI NewConsoleThread(LPVOID lpParameter) {
 				strCommand.erase(std::find_if(strCommand.rbegin(), strCommand.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), strCommand.end());
 
 				if (breakout == BREAKOUT_TAB || breakout == BREAKOUT_SPACE) {
-					int i = 0;
+					size_t i = 0;
 					std::map<std::string, std::string> mapSort = mapOutput;
 
 					for (auto s : mapSort) {
@@ -518,7 +735,7 @@ DWORD WINAPI NewConsoleThread(LPVOID lpParameter) {
 					//printf("shortest command: %d\n", i);
 
 					bool local_breakout = false;
-					int j;
+					size_t j;
 					for (j = vecSplit[iDepth].size(); j < i; j++) {
 						char c = mapOutput.begin()->first[j];
 						for (auto s : mapOutput) {
@@ -575,7 +792,7 @@ DWORD WINAPI NewConsoleThread(LPVOID lpParameter) {
 
 			strCommand.erase(std::find_if(strCommand.rbegin(), strCommand.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), strCommand.end());
 
-			int iDepth = 0;
+			size_t iDepth = 0;
 			console::CommandTree* treePointer = &treeConsoleCommands;
 			while (iDepth < vecSplit.size()) {
 				if (treePointer->hasKey(vecSplit[iDepth])) {
@@ -601,10 +818,10 @@ DWORD WINAPI NewConsoleThread(LPVOID lpParameter) {
 							}
 
 							std::vector<std::string> vecArgs;
-							for (int i = iDepth + 1; i < vecSplit.size(); i++)
+							for (size_t i = iDepth + 1; i < vecSplit.size(); i++)
 								vecArgs.push_back(vecSplit[i]);
 
-							if (!(*treePointer)[""].ToCommand().pCommand(vecArgs, breakout))
+							if (!(*treePointer)[""].ToCommand().pCommand(vecArgs, breakout, 0))
 								printf_yellow("Invalid argument.\n");
 							break;
 						}
@@ -615,10 +832,10 @@ DWORD WINAPI NewConsoleThread(LPVOID lpParameter) {
 					else if ((*treePointer)[vecSplit[iDepth]].ObjectType() == console::CommandTree::Class::Command) {
 						debug_printf("%d: found command\n", iDepth);
 						std::vector<std::string> vecArgs;
-						for (int i = iDepth + 1; i < vecSplit.size(); i++)
+						for (size_t i = iDepth + 1; i < vecSplit.size(); i++)
 							vecArgs.push_back(vecSplit[i]);
 
-						if (!((*treePointer)[vecSplit[iDepth]].ToCommand().pCommand(vecArgs, breakout)))
+						if (!((*treePointer)[vecSplit[iDepth]].ToCommand().pCommand(vecArgs, breakout, 0)))
 							printf_yellow("Invalid argument.\n");
 						break;
 					}

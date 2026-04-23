@@ -320,22 +320,24 @@ enum {
 // Returns false if the parser should throw "invalid argument", true otherwise
 // All arguments after the command are in `args`. The CLI parser breakout state that caused the
 // command to be invoked is in `iBreakoutState` (should usually only be BREAKOUT_QUESTION or
-// BREAKOUT_RETURN; others should generally be treated as a syntax error)
+// BREAKOUT_RETURN; others should generally be treated as a syntax error). iOptParam allows a
+// command that cascades into another command to pass data down the chain.
 // 
 // Generally starts with:
 //   if (iBreakoutState == BREAKOUT_QUESTION)
 //       bDontClearNextCommand = true;
 //   if (iBreakoutState != BREAKOUT_RETURN)
 //       return false;
-typedef bool (*command_proc_t)(std::vector<std::string> args, int iBreakoutState);
+typedef bool (*command_proc_t)(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam);
 
 class ConsoleCommand {
 public:
-	ConsoleCommand() { iType = 0; pCommand = NULL; szDescription = ""; }
-	ConsoleCommand(int i, command_proc_t p, const char* s = "") { iType = i; pCommand = p; szDescription = s; }
+	ConsoleCommand() { iType = 0; pCommand = NULL; szDescription = ""; iOptParam = 0; }
+	ConsoleCommand(int i, command_proc_t p, const char* s = "", intptr_t o = 0) { iType = i; pCommand = p; szDescription = s; iOptParam = o; }
 	int iType;
 	command_proc_t pCommand;
 	const char* szDescription;
+	intptr_t iOptParam;
 };
 
 // Game path global
