@@ -327,7 +327,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			ConsoleLog(LOG_INFO, "CORE: -default passed, skipping LoadSettings()\n");
 
 		// Force the console to be visible if bSettingsAlwaysConsole is set
-		if (jsonSettingsCore["sc2kfix"]["core"]["force_console"].ToBool())
+		if (jsonSettingsCore[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_FORCECON].ToBool())
 			bConsoleEnabled = true;
 
 		// Foce n-bit mode if requested
@@ -422,7 +422,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			ConsoleLog(LOG_INFO, "CORE: Portable entries created by faux-installer.\n");
 
 		// Check for updates
-		if (jsonSettingsCore["sc2kfix"]["core"]["check_for_updates"].ToBool()) {
+		if (jsonSettingsCore[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_CHECKFORUPD].ToBool()) {
 			CreateThread(NULL, 0, UpdaterThread, 0, 0, NULL);
 			ConsoleLog(LOG_INFO, "UPD:  Update notifier thread started.\n");
 		}
@@ -545,7 +545,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Set up the modding infrastructure for the 1996 Special Edition version.
 		if (dwDetectedVersion == VERSION_SC2K_1996) {
 			// Load native code mods.
-			if (!bSkipLoadingMods && !jsonSettingsCore["sc2kfix"]["core"]["skip_mods"].ToBool())
+			if (!bSkipLoadingMods && !jsonSettingsCore[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_SKIPMODS].ToBool())
 				LoadNativeCodeMods();
 		}
 

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Release|Win32">
@@ -89,6 +89,7 @@ const char* szSC2KFixBuildInfo = "$(UserName)@$(ComputerName)  $([System.DateTim
     <ClInclude Include="include\scurkclasses.h" />
     <ClInclude Include="include\scurk_1996.h" />
     <ClInclude Include="include\scurk_primary.h" />
+    <ClInclude Include="include\setting_schema.h" />
     <ClInclude Include="include\vt100.h" />
     <ClInclude Include="include\winmm_exports.h" />
     <ClInclude Include="include\sc2k_1996.h" />
