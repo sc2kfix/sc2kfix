@@ -396,6 +396,139 @@ bool ConsoleCommandShowMemoryDouble(std::vector<std::string> args, int iBreakout
 	return ConsoleCommandShowMemory(args, iBreakoutState, 9);
 }
 
+bool ConsoleCommandShowMicrosim(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	DWORD dwAddress = NULL;
+	int iMicrosimID = 0;
+	bool bListAllMicrosims = false;
+
+	if (dwDetectedVersion != VERSION_SC2K_1996) {
+		printf_yellow("Command only available when attached to 1996 Special Edition.\n");
+		return true;
+	}
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap(
+			{
+				{"all", "Display list of provisioned microsims"},
+				{"bigpark", "Display microsim data for large parks"},
+				{"bus", "Display microsim data for bus depots"},
+				{"hydro", "Display microsim data for hydroelectric dams"},
+				{"id <id>", "ID of specific microsim to examine"},
+				{"library", "Display microsim data for libraries"},
+				{"marina", "Display microsim data for marinas"},
+				{"museum", "Display microsim data for museums"},
+				{"rail", "Display microsim data for rail stations"},
+				{"subway", "Display microsim data for subway stations"},
+				{"wind", "Display microsim data for wind power plants"},
+			});
+		bDontClearNextCommand = true;
+		return true;
+	}
+
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+
+	// Arguments are required for this command
+	if (args.size() == 0) {
+		bDontClearNextCommand = true;
+		return false;
+	}
+
+	// Parse arguments
+	for (size_t i = 0; i < args.size(); i++) {
+		// [id <id>]
+		if (args[i] == "id") {
+			if (++i >= args.size())
+				return false;
+
+			if (!sscanf_s(args[i].c_str(), "%u", &iMicrosimID))
+				return false;
+
+			continue;
+		}
+
+		// all
+		if (args[i] == "all") {
+			bListAllMicrosims = true;
+			continue;
+		}
+
+		// bigpark
+		if (args[i] == "bigpark") {
+			iMicrosimID = 6;
+			continue;
+		}
+
+		// bus
+		if (args[i] == "bus") {
+			iMicrosimID = 1;
+			continue;
+		}
+
+		// hydro
+		if (args[i] == "hydro") {
+			iMicrosimID = 5;
+			continue;
+		}
+
+		// library
+		if (args[i] == "library") {
+			iMicrosimID = 8;
+			continue;
+		}
+
+		// marina
+		if (args[i] == "marina") {
+			iMicrosimID = 9;
+			continue;
+		}
+
+		// museum
+		if (args[i] == "museum") {
+			iMicrosimID = 7;
+			continue;
+		}
+
+		// rail
+		if (args[i] == "rail") {
+			iMicrosimID = 2;
+			continue;
+		}
+
+		// subway
+		if (args[i] == "subway") {
+			iMicrosimID = 3;
+			continue;
+		}
+
+		// Invalid arugment, bail out
+		return false;
+	}
+
+	// Show list if requested
+	if (bListAllMicrosims) {
+		printf("Provisioned microsims:\n");
+		for (int i = 0; i <= MICROSIMID_MAX; i++)
+			if (GetMicroSimulatorTileID(i) != TILE_CLEAR)
+				printf("   %i: bTileID = %u\n", i, GetMicroSimulatorTileID(i));
+	} else {
+		if (iMicrosimID >= MICROSIMID_MIN && iMicrosimID <= MICROSIMID_MAX) {
+			BYTE iTileID = GetMicroSimulatorTileID(iMicrosimID);
+			printf(
+				"Microsim %i:\n"
+				"   Tile/Building:       %s (%u / 0x%02X)\n"
+				"   Data Stat0 (Byte):   %u\n"
+				"   Data Stat1 (Word 1): %u\n"
+				"   Data Stat2 (Word 2): %u\n"
+				"   Data Stat3 (Word 3): %u\n", iMicrosimID, szTileNames[iTileID], iTileID, iTileID, GetMicroSimulatorStat0(iMicrosimID),
+				GetMicroSimulatorStat1(iMicrosimID), GetMicroSimulatorStat2(iMicrosimID), GetMicroSimulatorStat3(iMicrosimID));
+			return true;
+		}
+		return false;
+	}
+
+	return true;
+}
+
 bool ConsoleCommandShowMods(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
 	bool bDetailed = false;
 	bool bShowLuaMods = true;
@@ -609,6 +742,7 @@ void NewConsoleInitializeCommands(console::CommandTree& treeCommands) {
 	treeCommands["show"]["memory"]["qword"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowMemoryQword, "Display quad word-sized elements");
 	treeCommands["show"]["memory"]["float"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowMemoryFloat, "Display single precision floating point elements");
 	treeCommands["show"]["memory"]["double"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowMemoryDouble, "Display double precision floating point elements");
+	treeCommands["show"]["microsim"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowMicrosim, "Show microsim data");
 	treeCommands["show"]["mods"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowMods, "Show loaded mods");
 	treeCommands["show"]["version"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowVersion, "Show sc2kfix and library version info");
 }
