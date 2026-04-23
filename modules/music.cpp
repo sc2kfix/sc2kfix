@@ -88,7 +88,7 @@ int GetCurrentActiveSongID() {
 }
 
 void MusicShufflePlaylist(int iLastSongPlayed) {
-	if (jsonSettingsCore["sc2kfix"]["audio"]["shuffle_music"].ToBool()) {
+	if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SHUFFLEMUSIC].ToBool()) {
 		do {
 			std::shuffle(vectorRandomSongIDs.begin(), vectorRandomSongIDs.end(), mtMersenneTwister);
 		} while (vectorRandomSongIDs[0] == iLastSongPlayed);
@@ -148,7 +148,7 @@ int MusicFluidSynthMidiEventHandler(void* data, fluid_midi_event_t* event) {
 
 void MusicFluidSynthLoggerError(int level, const char* message, void* data) {
 	// Ignore the error we get if we're loading the default Windows GM "soundfont"
-	if (message && !strcmp(message, "Not a SoundFont file") && !_stricmp(GetFileBaseName(jsonSettingsCore["sc2kfix"]["audio"]["soundfont"].ToString().c_str()), "gm.dls"))
+	if (message && !strcmp(message, "Not a SoundFont file") && !_stricmp(GetFileBaseName(jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT].ToString().c_str()), "gm.dls"))
 		return;
 
 	ConsoleLog(LOG_ERROR, "MUS:  FluidSynth: %s\n", message);
@@ -290,10 +290,10 @@ DWORD WINAPI FluidSynthWatchdogThread(LPVOID lpParameter) {
 
 	// Spin up a new player-driver combo
 	pFluidSynthPlayer = FS_new_fluid_player(pFluidSynthSynth);
-	if (FS_fluid_is_soundfont(jsonSettingsCore["sc2kfix"]["audio"]["soundfont"].ToString().c_str()))
-		FS_fluid_synth_sfload(pFluidSynthSynth, jsonSettingsCore["sc2kfix"]["audio"]["soundfont"].ToString().c_str(), 1);
+	if (FS_fluid_is_soundfont(jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT].ToString().c_str()))
+		FS_fluid_synth_sfload(pFluidSynthSynth, jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT].ToString().c_str(), 1);
 	if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
-		ConsoleLog(LOG_DEBUG, "MUS:  Loaded soundfont \"%s\" into new pFluidSynthPlayer.\n", jsonSettingsCore["sc2kfix"]["audio"]["soundfont"].ToString().c_str());
+		ConsoleLog(LOG_DEBUG, "MUS:  Loaded soundfont \"%s\" into new pFluidSynthPlayer.\n", jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT].ToString().c_str());
 
 	FS_fluid_player_set_playback_callback(pFluidSynthPlayer, MusicFluidSynthMidiEventHandler, pFluidSynthSynth);
 	FS_fluid_player_add(pFluidSynthPlayer, szSongPath);
@@ -305,7 +305,7 @@ DWORD WINAPI FluidSynthWatchdogThread(LPVOID lpParameter) {
 	// Also update the music volume here
 	FS_fluid_settings_setint(pFluidSynthSettings, "synth.chorus.active", 0);
 	FS_fluid_settings_setnum(pFluidSynthSettings, "synth.reverb.level", 0.3);
-	FS_fluid_settings_setnum(pFluidSynthSettings, "synth.gain", 0.5 * jsonSettingsCore["sc2kfix"]["audio"]["music_volume"].ToFloat());
+	FS_fluid_settings_setnum(pFluidSynthSettings, "synth.gain", 0.5 * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICVOLUME].ToFloat());
 
 	// Play track
 	FS_fluid_player_play(pFluidSynthPlayer);
@@ -396,7 +396,7 @@ static const char *GetGameSoundPath(int iSongID, BOOL bDoMP3) {
 	if (iAliasIdx >= 0 && iAliasIdx <= MUSIC_TRACKS) {
 		char szTrackName[32];
 		sprintf_s(szTrackName, sizeof(szTrackName), "100%02d", iAliasIdx);
-		const char *pName = (bDoMP3) ? jsonSettingsCore["sc2kfix"]["music_mp3"][szTrackName].ToString().c_str() : jsonSettingsCore["sc2kfix"]["music_midi"][szTrackName].ToString().c_str();
+		const char *pName = (bDoMP3) ? jsonSettingsCore[C_SC2KFIX][S_FIX_MUSMP3][szTrackName].ToString().c_str() : jsonSettingsCore[C_SC2KFIX][S_FIX_MUSMID][szTrackName].ToString().c_str();
 		if (ValidateFilename(pName, pExt)) {
 			strSongPath += pName;
 			if (FileExists(strSongPath.c_str()))
@@ -420,7 +420,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 	MCIERROR dwMCIError = NULL;
 
 	if (mus_debug & MUS_DEBUG_THREAD)
-		ConsoleLog(LOG_DEBUG, "MUS:  Starting music engine! Initial music driver set to \"%s\".\n", jsonSettingsCore["sc2kfix"]["audio"]["music_driver"].ToString().c_str());
+		ConsoleLog(LOG_DEBUG, "MUS:  Starting music engine! Initial music driver set to \"%s\".\n", jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString().c_str());
 	
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		pSCApp = &pCSimcityAppThis;
@@ -429,12 +429,12 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 			// In this case even with the engine set to MUSIC_ENGINE_NONE it
 			// will still continue, however once mciDevice is NULL it'll then
 			// getout.
-			if (jsonSettingsCore["sc2kfix"]["audio"]["music_driver"].ToString() == "none")
+			if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "none")
 				if (mus_debug & MUS_DEBUG_THREAD)
 					ConsoleLog(LOG_DEBUG, "MUS:  Music driver set to None; ignoring WM_MUSIC_STOP message.\n");
 
 			// Stop the FluidSynth thread if it's active
-			if (jsonSettingsCore["sc2kfix"]["audio"]["music_driver"].ToString() == "fluidsynth" && hmodFluidSynth) {
+			if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "fluidsynth" && hmodFluidSynth) {
 				FS_fluid_player_stop(pFluidSynthPlayer);
 				bFluidSynthPlaying = FALSE;
 				if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
@@ -465,7 +465,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 		}
 		else if (msg.message == WM_MUSIC_PLAY) {
 			// Log a debug message at best if the music engine is set to none
-			if (jsonSettingsCore["sc2kfix"]["audio"]["music_driver"].ToString() == "none") {
+			if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "none") {
 				if (mus_debug & MUS_DEBUG_THREAD)
 					ConsoleLog(LOG_DEBUG, "MUS:  Music driver set to None; ignoring WM_MUSIC_PLAY message.\n");
 				goto next;
@@ -474,7 +474,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 			// If we're using FluidSynth, set up a watchdog thread that runs the FluidSynth engine
 			// and waits for it to exit
 			if (pSCApp->dwSCAGameMusic) {
-				if (jsonSettingsCore["sc2kfix"]["audio"]["music_driver"].ToString() == "fluidsynth" && hmodFluidSynth) {
+				if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "fluidsynth" && hmodFluidSynth) {
 					if (msg.wParam >= 10000 && msg.wParam <= 10018) {
 						iPlayingSongID = msg.wParam;
 						const char* szSongPath = GetGameSoundPath(iPlayingSongID, FALSE);
@@ -491,7 +491,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 						iPlayingSongID = msg.wParam;
 						const char* szSongPath = "";
 						BOOL bUseMP3 = FALSE;
-						if (jsonSettingsCore["sc2kfix"]["audio"]["music_driver"].ToString() == "mp3") {
+						if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "mp3") {
 							szSongPath = GetGameSoundPath(iPlayingSongID, TRUE);
 							if (FileExists(szSongPath))
 								bUseMP3 = TRUE;
@@ -560,7 +560,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 			}
 
 			// Only restart if the engine is not set to MUSIC_ENGINE_NONE
-			if (jsonSettingsCore["sc2kfix"]["audio"]["music_driver"].ToString() != "none") {
+			if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() != "none") {
 				// Restart the active song if there is one
 				if (iPlayingSongID)
 					DoMusicPlay(iPlayingSongID, FALSE);
@@ -684,7 +684,7 @@ extern "C" void __stdcall Hook_SimcityApp_MusicPlayNext(BOOL bNext) {
 	if (!Game_Sound_GetMCIResult(pThis->SCASNDLayer)) {
 		if (bNext)
 			Game_SimcityApp_MusicPlayNextRefocusSong(pThis);
-		else if ((!(rand() % (8 * (3 * nSpeed - 3)))) || jsonSettingsCore["sc2kfix"]["audio"]["always_play_music"].ToBool()) {
+		else if ((!(rand() % (8 * (3 * nSpeed - 3)))) || jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_ALWAYSPLAYMUSIC].ToBool()) {
 			iRandMusic = rand();
 			iSongID = 10000 + (iRandMusic % 19);
 			L_MusicPlay(pThis, iSongID);

@@ -52,64 +52,66 @@ const char* GetSettingsJsonPath() {
 }
 
 void DefaultSettingsSC2K(json::JSON& jsonSettings) {
-	jsonSettings["SimCity2000"]["Registration"]["Mayor Name"] = "Marvin Maxis";
-	jsonSettings["SimCity2000"]["Registration"]["Company Name"] = "Q37 Space Modulator Mfg.";
+	jsonSettings[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME] = DEF_SIM_REG_MAYOR_NAME;
+	jsonSettings[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_COMPANYNAME] = DEF_SIM_REG_COMPANY_NAME;
 
-	jsonSettings["SimCity2000"]["Version"]["SCURK"] = 256;
-	jsonSettings["SimCity2000"]["Version"]["SimCity 2000"] = 256;
+	jsonSettings[C_SIMCITY2000][S_SIM_VER][I_SIM_VER_SC2K] = DEF_SIM_VER_PROGS;
+	jsonSettings[C_SIMCITY2000][S_SIM_VER][I_SIM_VER_SCURK] = DEF_SIM_VER_PROGS;
 
-	jsonSettings["SimCity2000"]["Localize"]["Language"] = "USA";
+	jsonSettings[C_SIMCITY2000][S_SIM_LOCALIZE][I_SIM_LOC_LANG] = DEF_SIM_LOC_LANGUAGE;
 
-	jsonSettings["SimCity2000"]["Options"]["Disasters"] = 1;
-	jsonSettings["SimCity2000"]["Options"]["Music"] = 1;
-	jsonSettings["SimCity2000"]["Options"]["Sound"] = 1;
-	jsonSettings["SimCity2000"]["Options"]["AutoGoto"] = 1;
-	jsonSettings["SimCity2000"]["Options"]["AutoBudget"] = 0;
-	jsonSettings["SimCity2000"]["Options"]["AutoSave"] = 0;
-	jsonSettings["SimCity2000"]["Options"]["Speed"] = INI_GAME_SPEED_SETTING(GAME_SPEED_LLAMA);
+	jsonSettings[C_SIMCITY2000][S_SIM_OPTIONS][I_SIM_OPT_DISASTERS] = DEF_SIM_OPT_DISASTERS;
+	jsonSettings[C_SIMCITY2000][S_SIM_OPTIONS][I_SIM_OPT_MUSIC] = DEF_SIM_OPT_MUSIC;
+	jsonSettings[C_SIMCITY2000][S_SIM_OPTIONS][I_SIM_OPT_SOUND] = DEF_SIM_OPT_SOUND;
+	jsonSettings[C_SIMCITY2000][S_SIM_OPTIONS][I_SIM_OPT_AUTOGOTO] = DEF_SIM_OPT_AUTOGOTO;
+	jsonSettings[C_SIMCITY2000][S_SIM_OPTIONS][I_SIM_OPT_AUTOBUDGET] = DEF_SIM_OPT_AUTOBUDGET;
+	jsonSettings[C_SIMCITY2000][S_SIM_OPTIONS][I_SIM_OPT_AUTOSAVE] = DEF_SIM_OPT_AUTOSAVE;
+	jsonSettings[C_SIMCITY2000][S_SIM_OPTIONS][I_SIM_OPT_SPEED] = DEF_SIM_OPT_SPEED;
 
-	jsonSettings["SimCity2000"]["SCURK"]["CycleColors"] = 1;
-	jsonSettings["SimCity2000"]["SCURK"]["GridHeight"] = 2;
-	jsonSettings["SimCity2000"]["SCURK"]["GridWidth"] = 2;
-	jsonSettings["SimCity2000"]["SCURK"]["ShowClipRegion"] = 0;
-	jsonSettings["SimCity2000"]["SCURK"]["ShowDrawGrid"] = 0;
-	jsonSettings["SimCity2000"]["SCURK"]["SnapToGrid"] = 0;
-	jsonSettings["SimCity2000"]["SCURK"]["Sound"] = 1;
+	jsonSettings[C_SIMCITY2000][S_SIM_SCURK][I_SIM_SCRK_CYCLECOLORS] = DEF_SIM_SCRK_CYCLECOLORS;
+	jsonSettings[C_SIMCITY2000][S_SIM_SCURK][I_SIM_SCRK_GRIDHEIGHT] = DEF_SIM_SCRK_GRIDHEIGHT;
+	jsonSettings[C_SIMCITY2000][S_SIM_SCURK][I_SIM_SCRK_GRIDWIDTH] = DEF_SIM_SCRK_GRIDWIDTH;
+	jsonSettings[C_SIMCITY2000][S_SIM_SCURK][I_SIM_SCRK_SHOWCLIPREG] = DEF_SIM_SCRK_SHOWCLIPREG;
+	jsonSettings[C_SIMCITY2000][S_SIM_SCURK][I_SIM_SCRK_SHOWDRAWGRID] = DEF_SIM_SCRK_SHOWDRAWGRID;
+	jsonSettings[C_SIMCITY2000][S_SIM_SCURK][I_SIM_SCRK_SNAPTOGRID] = DEF_SIM_SCRK_SNAPTOGRID;
+	jsonSettings[C_SIMCITY2000][S_SIM_SCURK][I_SIM_SCRK_SOUND] = DEF_SIM_SCRK_SOUND;
 
-	jsonSettings["SimCity2000"]["Windows"]["Last Color Depth"] = 32;
+	jsonSettings[C_SIMCITY2000][S_SIM_WIN][I_SIM_WIN_LASTCOLDEPTH] = DEF_SIM_WIN_LASTCOLDEPTH;
 }
 
 void DefaultSettingsSC2KFixCore(json::JSON& jsonSettings) {
-	jsonSettings["sc2kfix"]["core"]["installed"] = false;
-	jsonSettings["sc2kfix"]["core"]["force_console"] = false;
-	jsonSettings["sc2kfix"]["core"]["check_for_updates"] = true;
-	jsonSettings["sc2kfix"]["core"]["skip_mods"] = false;
+	jsonSettings[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_INSTALLED] = DEF_FIX_CORE_INSTALLED;
+	jsonSettings[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_FORCECON] = DEF_FIX_CORE_FORCECON;
+	jsonSettings[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_CHECKFORUPD] = DEF_FIX_CORE_CHECKFORUPD;
+	jsonSettings[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_SKIPMODS] = DEF_FIX_CORE_SKIPMODS;
 
-	jsonSettings["sc2kfix"]["audio"]["music_in_background"] = true;
-	jsonSettings["sc2kfix"]["audio"]["use_sound_replacements"] = true;
-	jsonSettings["sc2kfix"]["audio"]["shuffle_music"] = false;
-	jsonSettings["sc2kfix"]["audio"]["music_driver"] = "fluidsynth";
-	jsonSettings["sc2kfix"]["audio"]["soundfont"] = "C:\\Windows\\System32\\drivers\\gm.dls";
-	jsonSettings["sc2kfix"]["audio"]["always_play_music"] = false;
-	jsonSettings["sc2kfix"]["audio"]["master_volume"] = 1.0;
-	jsonSettings["sc2kfix"]["audio"]["music_volume"] = 1.0;
-	jsonSettings["sc2kfix"]["audio"]["sound_volume"] = 1.0;
+	jsonSettings[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND] = DEF_FIX_AUD_MUSICINBKGRND;
+	jsonSettings[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE] = DEF_FIX_AUD_USESNDREPLACE;
+	jsonSettings[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SHUFFLEMUSIC] = DEF_FIX_AUD_SHUFFLEMUSIC;
+	jsonSettings[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER] = DEF_FIX_AUD_MUSICDRIVER;
+	jsonSettings[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT] = DEF_FIX_AUD_SOUNDFONT;
+	jsonSettings[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_ALWAYSPLAYMUSIC] = DEF_FIX_AUD_ALWAYSPLAYMUSIC;
+	jsonSettings[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME] = DEF_FIX_AUD_MASTERVOLUME;
+	jsonSettings[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICVOLUME] = DEF_FIX_AUD_MUSICVOLUME;
+	jsonSettings[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDVOLUME] = DEF_FIX_AUD_SOUNDVOLUME;
 
-	jsonSettings["sc2kfix"]["paths"]["cities"] = std::string(szGamePath) + "\\CITIES\\";
-	jsonSettings["sc2kfix"]["paths"]["tilesets"] = std::string(szGamePath) + "\\SCURKART\\";
+	jsonSettings[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_CITIES] = std::string(szGamePath) + "\\" + DEF_SIM_PATHS_CITIES + "\\";
+	jsonSettings[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_TILESETS] = std::string(szGamePath) + "\\" + DEF_SIM_PATHS_TILESETS + "\\";
 
-	jsonSettings["sc2kfix"]["qol"]["frequent_updates"] = true;
-	jsonSettings["sc2kfix"]["qol"]["dark_underground"] = false;
-	jsonSettings["sc2kfix"]["qol"]["skip_intro"] = false;
-	jsonSettings["sc2kfix"]["qol"]["use_new_strings"] = true;
-	jsonSettings["sc2kfix"]["qol"]["use_floating_status"] = false;
-	jsonSettings["sc2kfix"]["qol"]["title_calendar"] = true;
+	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES] = DEF_FIX_QOL_FREQUPDATES;
+	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND] = DEF_FIX_QOL_DARKUNDGRND;
+	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SKIPINTRO] = DEF_FIX_QOL_SKIPINTRO;
+	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USENEWSTRINGS] = DEF_FIX_QOL_USENEWSTRINGS;
+	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USEFLTSTATUS] = DEF_FIX_QOL_USEFLTSTATUS;
+	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND] = DEF_FIX_QOL_TITLECALEND;
 	
 	for (int i = 10000; i < 10019; i++) {
-		jsonSettings["sc2kfix"]["music_midi"][std::to_string(i)] = "";
-		jsonSettings["sc2kfix"]["music_mp3"][std::to_string(i)] = "";
+		jsonSettings[C_SC2KFIX][S_FIX_MUSMID][std::to_string(i)] = "";
+		jsonSettings[C_SC2KFIX][S_FIX_MUSMP3][std::to_string(i)] = "";
 	}
 }
+
+#define GETBOOLVAL(x) (x) ? true : false
 
 void ConvertSettingsToJSON(void) {
 	const char* szSettingsIniPath = GetIniPath();
@@ -117,70 +119,70 @@ void ConvertSettingsToJSON(void) {
 	char szSettingsMusicEngineOutput[32];
 
 	// [Registration]
-	const char* section = "Registration";
-	GetPrivateProfileStringA(section, "Mayor Name", "", szSettingsMayorName, sizeof(szSettingsMayorName) - 1, szSettingsIniPath);
-	GetPrivateProfileStringA(section, "Company Name", "", szSettingsCompanyName, sizeof(szSettingsCompanyName) - 1, szSettingsIniPath);
-	jsonSettingsCore["SimCity2000"]["Registration"]["Mayor Name"] = szSettingsMayorName;
-	jsonSettingsCore["SimCity2000"]["Registration"]["Company Name"] = szSettingsCompanyName;
+	const char* section = S_SIM_REG;
+	GetPrivateProfileStringA(section, I_SIM_REG_MAYORNAME, "", szSettingsMayorName, sizeof(szSettingsMayorName) - 1, szSettingsIniPath);
+	GetPrivateProfileStringA(section, I_SIM_REG_COMPANYNAME, "", szSettingsCompanyName, sizeof(szSettingsCompanyName) - 1, szSettingsIniPath);
+	jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME] = szSettingsMayorName;
+	jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_COMPANYNAME] = szSettingsCompanyName;
 
 	// [Options]
-	section = "Options";
-	jsonSettingsCore["SimCity2000"]["Options"]["Disasters"] = GetPrivateProfileIntA(section, "Disasters", 1, szSettingsIniPath);
-	jsonSettingsCore["SimCity2000"]["Options"]["Music"] = GetPrivateProfileIntA(section, "Music", 1, szSettingsIniPath);
-	jsonSettingsCore["SimCity2000"]["Options"]["Sound"] = GetPrivateProfileIntA(section, "Sound", 1, szSettingsIniPath);
-	jsonSettingsCore["SimCity2000"]["Options"]["AutoGoto"] = GetPrivateProfileIntA(section, "AutoGoto", 1, szSettingsIniPath);
-	jsonSettingsCore["SimCity2000"]["Options"]["AutoBudget"] = GetPrivateProfileIntA(section, "AutoBudget", 0, szSettingsIniPath);
-	jsonSettingsCore["SimCity2000"]["Options"]["AutoSave"] = GetPrivateProfileIntA(section, "AutoSave", 0, szSettingsIniPath);
-	jsonSettingsCore["SimCity2000"]["Options"]["Speed"] = GetPrivateProfileIntA(section, "Speed", INI_GAME_SPEED_SETTING(GAME_SPEED_LLAMA), szSettingsIniPath);
+	section = S_SIM_OPTIONS;
+	jsonSettingsCore[C_SIMCITY2000][S_SIM_OPTIONS][I_SIM_OPT_DISASTERS] = GetPrivateProfileIntA(section, I_SIM_OPT_DISASTERS, DEF_SIM_OPT_DISASTERS, szSettingsIniPath);
+	jsonSettingsCore[C_SIMCITY2000][S_SIM_OPTIONS][I_SIM_OPT_MUSIC] = GetPrivateProfileIntA(section, I_SIM_OPT_MUSIC, DEF_SIM_OPT_MUSIC, szSettingsIniPath);
+	jsonSettingsCore[C_SIMCITY2000][S_SIM_OPTIONS][I_SIM_OPT_SOUND] = GetPrivateProfileIntA(section, I_SIM_OPT_SOUND, DEF_SIM_OPT_SOUND, szSettingsIniPath);
+	jsonSettingsCore[C_SIMCITY2000][S_SIM_OPTIONS][I_SIM_OPT_AUTOGOTO] = GetPrivateProfileIntA(section, I_SIM_OPT_AUTOGOTO, DEF_SIM_OPT_AUTOGOTO, szSettingsIniPath);
+	jsonSettingsCore[C_SIMCITY2000][S_SIM_OPTIONS][I_SIM_OPT_AUTOBUDGET] = GetPrivateProfileIntA(section, I_SIM_OPT_AUTOBUDGET, DEF_SIM_OPT_AUTOBUDGET, szSettingsIniPath);
+	jsonSettingsCore[C_SIMCITY2000][S_SIM_OPTIONS][I_SIM_OPT_AUTOSAVE] = GetPrivateProfileIntA(section, I_SIM_OPT_AUTOSAVE, DEF_SIM_OPT_AUTOSAVE, szSettingsIniPath);
+	jsonSettingsCore[C_SIMCITY2000][S_SIM_OPTIONS][I_SIM_OPT_SPEED] = GetPrivateProfileIntA(section, I_SIM_OPT_SPEED, DEF_SIM_OPT_SPEED, szSettingsIniPath);
 
 	// [Options]
-	section = "SCURK";
-	jsonSettingsCore["SimCity2000"]["SCURK"]["CycleColors"] = GetPrivateProfileIntA(section, "CycleColors", 1, szSettingsIniPath);
-	jsonSettingsCore["SimCity2000"]["SCURK"]["GridHeight"] = GetPrivateProfileIntA(section, "GridHeight", 2, szSettingsIniPath);
-	jsonSettingsCore["SimCity2000"]["SCURK"]["GridWidth"] = GetPrivateProfileIntA(section, "GridWidth", 2, szSettingsIniPath);
-	jsonSettingsCore["SimCity2000"]["SCURK"]["ShowClipRegion"] = GetPrivateProfileIntA(section, "ShowClipRegion", 0, szSettingsIniPath);
-	jsonSettingsCore["SimCity2000"]["SCURK"]["ShowDrawGrid"] = GetPrivateProfileIntA(section, "ShowDrawGrid", 0, szSettingsIniPath);
-	jsonSettingsCore["SimCity2000"]["SCURK"]["SnapToGrid"] = GetPrivateProfileIntA(section, "SnapToGrid", 0, szSettingsIniPath);
-	jsonSettingsCore["SimCity2000"]["SCURK"]["Sound"] = GetPrivateProfileIntA(section, "Sound", 1, szSettingsIniPath);
+	section = S_SIM_SCURK;
+	jsonSettingsCore[C_SIMCITY2000][S_SIM_SCURK][I_SIM_SCRK_CYCLECOLORS] = GetPrivateProfileIntA(section, I_SIM_SCRK_CYCLECOLORS, DEF_SIM_SCRK_CYCLECOLORS, szSettingsIniPath);
+	jsonSettingsCore[C_SIMCITY2000][S_SIM_SCURK][I_SIM_SCRK_GRIDHEIGHT] = GetPrivateProfileIntA(section, I_SIM_SCRK_GRIDHEIGHT, DEF_SIM_SCRK_GRIDHEIGHT, szSettingsIniPath);
+	jsonSettingsCore[C_SIMCITY2000][S_SIM_SCURK][I_SIM_SCRK_GRIDWIDTH] = GetPrivateProfileIntA(section, I_SIM_SCRK_GRIDWIDTH, DEF_SIM_SCRK_GRIDWIDTH, szSettingsIniPath);
+	jsonSettingsCore[C_SIMCITY2000][S_SIM_SCURK][I_SIM_SCRK_SHOWCLIPREG] = GetPrivateProfileIntA(section, I_SIM_SCRK_SHOWCLIPREG, DEF_SIM_SCRK_SHOWCLIPREG, szSettingsIniPath);
+	jsonSettingsCore[C_SIMCITY2000][S_SIM_SCURK][I_SIM_SCRK_SHOWDRAWGRID] = GetPrivateProfileIntA(section, I_SIM_SCRK_SHOWDRAWGRID, DEF_SIM_SCRK_SHOWDRAWGRID, szSettingsIniPath);
+	jsonSettingsCore[C_SIMCITY2000][S_SIM_SCURK][I_SIM_SCRK_SNAPTOGRID] = GetPrivateProfileIntA(section, I_SIM_SCRK_SNAPTOGRID, DEF_SIM_SCRK_SNAPTOGRID, szSettingsIniPath);
+	jsonSettingsCore[C_SIMCITY2000][S_SIM_SCURK][I_SIM_SCRK_SOUND] = GetPrivateProfileIntA(section, I_SIM_SCRK_SOUND, DEF_SIM_SCRK_SOUND, szSettingsIniPath);
 	
 	// [sc2kfix]
-	section = "sc2kfix";
+	section = C_SC2KFIX;
 
-	jsonSettingsCore["sc2kfix"]["audio"]["music_in_background"] = (bool)GetPrivateProfileIntA(section, "bSettingsMusicInBackground", jsonSettingsCore["sc2kfix"]["audio"]["music_in_background"].ToBool(), szSettingsIniPath);
-	jsonSettingsCore["sc2kfix"]["audio"]["use_sound_replacements"] = (bool)GetPrivateProfileIntA(section, "bSettingsUseSoundReplacements", jsonSettingsCore["sc2kfix"]["audio"]["use_sound_replacements"].ToBool(), szSettingsIniPath);
-	jsonSettingsCore["sc2kfix"]["audio"]["shuffle_music"] = (bool)GetPrivateProfileIntA(section, "bSettingsShuffleMusic", jsonSettingsCore["sc2kfix"]["audio"]["shuffle_music"].ToBool(), szSettingsIniPath);
-	jsonSettingsCore["sc2kfix"]["audio"]["always_play_music"] = (bool)GetPrivateProfileIntA(section, "bSettingsAlwaysPlayMusic", jsonSettingsCore["sc2kfix"]["audio"]["always_play_music"].ToBool(), szSettingsIniPath);
+	jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND] = GETBOOLVAL(GetPrivateProfileIntA(section, "bSettingsMusicInBackground", jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND].ToBool(), szSettingsIniPath));
+	jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE] = GETBOOLVAL(GetPrivateProfileIntA(section, "bSettingsUseSoundReplacements", jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE].ToBool(), szSettingsIniPath));
+	jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SHUFFLEMUSIC] = GETBOOLVAL(GetPrivateProfileIntA(section, "bSettingsShuffleMusic", jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SHUFFLEMUSIC].ToBool(), szSettingsIniPath));
+	jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_ALWAYSPLAYMUSIC] = GETBOOLVAL(GetPrivateProfileIntA(section, "bSettingsAlwaysPlayMusic", jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_ALWAYSPLAYMUSIC].ToBool(), szSettingsIniPath));
 
 	// Core settings
-	jsonSettingsCore["sc2kfix"]["core"]["installed"] = true;
-	jsonSettingsCore["sc2kfix"]["core"]["force_console"] = (bool)GetPrivateProfileIntA(section, "bSettingsAlwaysConsole", jsonSettingsCore["sc2kfix"]["core"]["force_console"].ToBool(), szSettingsIniPath);
-	jsonSettingsCore["sc2kfix"]["core"]["check_for_updates"] = (bool)GetPrivateProfileIntA(section, "bSettingsCheckForUpdates", jsonSettingsCore["sc2kfix"]["core"]["check_for_updates"].ToBool(), szSettingsIniPath);
-	jsonSettingsCore["sc2kfix"]["core"]["skip_mods"] = (bool)GetPrivateProfileIntA(section, "bSettingsDontLoadMods", jsonSettingsCore["sc2kfix"]["core"]["skip_mods"].ToBool(), szSettingsIniPath);
+	jsonSettingsCore[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_INSTALLED] = true;
+	jsonSettingsCore[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_FORCECON] = GETBOOLVAL(GetPrivateProfileIntA(section, "bSettingsAlwaysConsole", jsonSettingsCore[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_FORCECON].ToBool(), szSettingsIniPath));
+	jsonSettingsCore[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_CHECKFORUPD] = GETBOOLVAL(GetPrivateProfileIntA(section, "bSettingsCheckForUpdates", jsonSettingsCore[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_CHECKFORUPD].ToBool(), szSettingsIniPath));
+	jsonSettingsCore[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_SKIPMODS] = GETBOOLVAL(GetPrivateProfileIntA(section, "bSettingsDontLoadMods", jsonSettingsCore[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_SKIPMODS].ToBool(), szSettingsIniPath));
 
 	// QOL settings
-	jsonSettingsCore["sc2kfix"]["qol"]["frequent_updates"] = (bool)GetPrivateProfileIntA(section, "bSettingsFrequentCityRefresh", jsonSettingsCore["sc2kfix"]["qol"]["frequent_updates"].ToBool(), szSettingsIniPath);
-	jsonSettingsCore["sc2kfix"]["qol"]["use_floating_status"] = (bool)GetPrivateProfileIntA(section, "bSettingsUseStatusDialog", jsonSettingsCore["sc2kfix"]["qol"]["use_floating_status"].ToBool(), szSettingsIniPath);
-	jsonSettingsCore["sc2kfix"]["qol"]["title_calendar"] = (bool)GetPrivateProfileIntA(section, "bSettingsTitleCalendar", jsonSettingsCore["sc2kfix"]["qol"]["title_calendar"].ToBool(), szSettingsIniPath);
-	jsonSettingsCore["sc2kfix"]["qol"]["use_new_strings"] = (bool)GetPrivateProfileIntA(section, "bSettingsUseNewStrings", jsonSettingsCore["sc2kfix"]["qol"]["use_new_strings"].ToBool(), szSettingsIniPath);
-	jsonSettingsCore["sc2kfix"]["qol"]["skip_intro"] = (bool)GetPrivateProfileIntA(section, "bSettingsAlwaysSkipIntro", jsonSettingsCore["sc2kfix"]["qol"]["skip_intro"].ToBool(), szSettingsIniPath);
-	jsonSettingsCore["sc2kfix"]["qol"]["dark_underground"] = (bool)GetPrivateProfileIntA(section, "bSettingsDarkUndergroundBkgnd", jsonSettingsCore["sc2kfix"]["qol"]["dark_underground"].ToBool(), szSettingsIniPath);
+	jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES] = GETBOOLVAL(GetPrivateProfileIntA(section, "bSettingsFrequentCityRefresh", jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool(), szSettingsIniPath));
+	jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USEFLTSTATUS] = GETBOOLVAL(GetPrivateProfileIntA(section, "bSettingsUseStatusDialog", jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USEFLTSTATUS].ToBool(), szSettingsIniPath));
+	jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND] = GETBOOLVAL(GetPrivateProfileIntA(section, "bSettingsTitleCalendar", jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND].ToBool(), szSettingsIniPath));
+	jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USENEWSTRINGS] = GETBOOLVAL(GetPrivateProfileIntA(section, "bSettingsUseNewStrings", jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USENEWSTRINGS].ToBool(), szSettingsIniPath));
+	jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SKIPINTRO] = GETBOOLVAL(GetPrivateProfileIntA(section, "bSettingsAlwaysSkipIntro", jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SKIPINTRO].ToBool(), szSettingsIniPath));
+	jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND] = GETBOOLVAL(GetPrivateProfileIntA(section, "bSettingsDarkUndergroundBkgnd", jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND].ToBool(), szSettingsIniPath));
 
 	// Audio settings
 	memset(szSettingsMIDITrackPath, 0, sizeof(szSettingsMIDITrackPath));
 	memset(szSettingsMP3TrackPath, 0, sizeof(szSettingsMP3TrackPath));
 
-	GetPrivateProfileStringA(section, "szSettingsMusicEngineOutput", "fluidsynth", szSettingsMusicEngineOutput, 31, szSettingsIniPath);
-	jsonSettingsCore["sc2kfix"]["audio"]["music_driver"] = szSettingsMusicEngineOutput;
+	GetPrivateProfileStringA(section, "szSettingsMusicEngineOutput", DEF_FIX_AUD_MUSICDRIVER, szSettingsMusicEngineOutput, 31, szSettingsIniPath);
+	jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER] = szSettingsMusicEngineOutput;
 
-	GetPrivateProfileStringA(section, "szSettingsFluidSynthSoundfont", "C:\\Windows\\System32\\drivers\\gm.dls", szSettingsFluidSynthSoundfont, MAX_PATH, szSettingsIniPath);
-	jsonSettingsCore["sc2kfix"]["audio"]["soundfont"] = szSettingsFluidSynthSoundfont;
+	GetPrivateProfileStringA(section, "szSettingsFluidSynthSoundfont", DEF_FIX_AUD_SOUNDFONT, szSettingsFluidSynthSoundfont, MAX_PATH, szSettingsIniPath);
+	jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT] = szSettingsFluidSynthSoundfont;
 
 	section = "sc2kfix.music.MIDI";
 	for (int i = 0; i < MUSIC_TRACKS; i++) {
 		sprintf_s(szKeyBuf, sizeof(szKeyBuf), "100%02d", i);
 		GetPrivateProfileStringA(section, szKeyBuf, "", szSettingsMIDITrackPath[i], sizeof(szSettingsMIDITrackPath[i]) - 1, szSettingsIniPath);
 		StrTrimA(szSettingsMIDITrackPath[i], " \t\r\n");
-		jsonSettingsCore["sc2kfix"]["music_midi"][std::string(szKeyBuf)] = szSettingsMIDITrackPath[i];
+		jsonSettingsCore[C_SC2KFIX][S_FIX_MUSMID][std::string(szKeyBuf)] = szSettingsMIDITrackPath[i];
 	}
 
 	section = "sc2kfix.music.MP3";
@@ -188,8 +190,12 @@ void ConvertSettingsToJSON(void) {
 		sprintf_s(szKeyBuf, sizeof(szKeyBuf), "100%02d", i);
 		GetPrivateProfileStringA(section, szKeyBuf, "", szSettingsMP3TrackPath[i], sizeof(szSettingsMP3TrackPath[i]) - 1, szSettingsIniPath);
 		StrTrimA(szSettingsMP3TrackPath[i], " \t\r\n");
-		jsonSettingsCore["sc2kfix"]["music_mp3"][std::string(szKeyBuf)] = szSettingsMP3TrackPath[i];
+		jsonSettingsCore[C_SC2KFIX][S_FIX_MUSMP3][std::string(szKeyBuf)] = szSettingsMP3TrackPath[i];
 	}
+
+	// Keybinding settings
+	section = "sc2kfix.Bindings";
+	LoadLegacyStoredBindings(jsonSettingsCore, section, szSettingsIniPath);
 
 	// Rename the old INI, save the JSON, and print a notice in the console
 	MoveFile(szSettingsIniPath, (std::string(szSettingsIniPath) + ".old").c_str());
@@ -227,7 +233,7 @@ void LoadJSONSettings(void) {
 }
 
 void SaveJSONSettings(void) {
-	jsonSettingsCore["sc2kfix"]["core"]["settings_save_time"] = std::to_string(time(NULL));
+	jsonSettingsCore[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_SETSAVETIME] = std::to_string(time(NULL));
 	std::ofstream fSettingsJSON(GetSettingsJsonPath(), std::ios::out | std::ios::trunc);
 	fSettingsJSON << jsonSettingsCore.dump();
 
@@ -284,7 +290,7 @@ static void SetSettingsTabOrdering(HWND hwndDlg) {
 
 json::JSON jsonSettingsCoreWorkingCopy;
 
-#define GET_CHECKBOX(dest, src) dest = (bool)Button_GetCheck(GetDlgItem(hwndDlg, src))
+#define GET_CHECKBOX(dest, src) dest = (Button_GetCheck(GetDlgItem(hwndDlg, src)) == BST_CHECKED) ? true : false
 #define SET_CHECKBOX(src, dest) Button_SetCheck(GetDlgItem(hwndDlg, dest), src.ToBool() ? BST_CHECKED : BST_UNCHECKED)
 
 BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -400,32 +406,32 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 		SetDlgItemText(hwndDlg, IDC_STATIC_VERSIONINFO, strVersionInfo.c_str());
 
 		// Load the existing settings into the dialog
-		SetDlgItemText(hwndDlg, IDC_SETTINGS_MAYOR, jsonSettingsCoreWorkingCopy["SimCity2000"]["Registration"]["Mayor Name"].ToString().c_str());
-		SetDlgItemText(hwndDlg, IDC_SETTINGS_COMPANY, jsonSettingsCoreWorkingCopy["SimCity2000"]["Registration"]["Company Name"].ToString().c_str());
+		SetDlgItemText(hwndDlg, IDC_SETTINGS_MAYOR, jsonSettingsCoreWorkingCopy[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
+		SetDlgItemText(hwndDlg, IDC_SETTINGS_COMPANY, jsonSettingsCoreWorkingCopy[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_COMPANYNAME].ToString().c_str());
 
-		ComboBox_SetCurSel(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT), MusicEngineStringToInt(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_driver"].ToString().c_str()));
+		ComboBox_SetCurSel(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT), MusicEngineStringToInt(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString().c_str()));
 
 		{
-			const char* szSoundFontBaseName = GetFileBaseName(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["soundfont"].ToString().c_str());
+			const char* szSoundFontBaseName = GetFileBaseName(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT].ToString().c_str());
 			SetDlgItemText(hwndDlg, IDC_SETTINGS_FLUIDSYNTH_SOUNDFONT, szSoundFontBaseName);
 			free((void*)szSoundFontBaseName);
 		}
 
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_in_background"], IDC_SETTINGS_CHECK_BKGDMUSIC);
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["use_sound_replacements"], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["shuffle_music"], IDC_SETTINGS_CHECK_SHUFFLE_MUSIC);
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["frequent_updates"], IDC_SETTINGS_CHECK_REFRESH_RATE);
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["always_play_music"], IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND], IDC_SETTINGS_CHECK_BKGDMUSIC);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SHUFFLEMUSIC], IDC_SETTINGS_CHECK_SHUFFLE_MUSIC);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES], IDC_SETTINGS_CHECK_REFRESH_RATE);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_ALWAYSPLAYMUSIC], IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC);
 
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["force_console"], IDC_SETTINGS_CHECK_CONSOLE);
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["check_for_updates"], IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES);
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["skip_mods"], IDC_SETTINGS_CHECK_DONT_LOAD_MODS);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_FORCECON], IDC_SETTINGS_CHECK_CONSOLE);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_CHECKFORUPD], IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_SKIPMODS], IDC_SETTINGS_CHECK_DONT_LOAD_MODS);
 
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_floating_status"], IDC_SETTINGS_CHECK_STATUS_DIALOG);
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["title_calendar"], IDC_SETTINGS_CHECK_TITLE_DATE);
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_new_strings"], IDC_SETTINGS_CHECK_NEW_STRINGS);
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["skip_intro"], IDC_SETTINGS_CHECK_SKIP_INTRO);
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["dark_underground"], IDC_SETTINGS_CHECK_DARK_UNDGRND);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USEFLTSTATUS], IDC_SETTINGS_CHECK_STATUS_DIALOG);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND], IDC_SETTINGS_CHECK_TITLE_DATE);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USENEWSTRINGS], IDC_SETTINGS_CHECK_NEW_STRINGS);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SKIPINTRO], IDC_SETTINGS_CHECK_SKIP_INTRO);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND], IDC_SETTINGS_CHECK_DARK_UNDGRND);
 
 		// Center the dialog box
 		CenterDialogBox(hwndDlg);
@@ -442,27 +448,27 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 		case ID_SETTINGS_OK:
 			// Grab settings from the dialog controls
 			if (GetDlgItemText(hwndDlg, IDC_SETTINGS_MAYOR, szTempRegistrationNameBuffer, 63))
-				jsonSettingsCoreWorkingCopy["SimCity2000"]["Registration"]["Mayor Name"] = szTempRegistrationNameBuffer;
+				jsonSettingsCoreWorkingCopy[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME] = szTempRegistrationNameBuffer;
 			if (GetDlgItemText(hwndDlg, IDC_SETTINGS_COMPANY, szTempRegistrationNameBuffer, 63))
-				jsonSettingsCoreWorkingCopy["SimCity2000"]["Registration"]["Company Name"] = szTempRegistrationNameBuffer;
+				jsonSettingsCoreWorkingCopy[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_COMPANYNAME] = szTempRegistrationNameBuffer;
 
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_driver"] = MusicEngineIntToString(ComboBox_GetCurSel(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT)));
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER] = MusicEngineIntToString(ComboBox_GetCurSel(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT)));
 
-			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_in_background"], IDC_SETTINGS_CHECK_BKGDMUSIC);
-			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["use_sound_replacements"], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
-			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["shuffle_music"], IDC_SETTINGS_CHECK_SHUFFLE_MUSIC);
-			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["frequent_updates"], IDC_SETTINGS_CHECK_REFRESH_RATE);
-			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["always_play_music"], IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND], IDC_SETTINGS_CHECK_BKGDMUSIC);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SHUFFLEMUSIC], IDC_SETTINGS_CHECK_SHUFFLE_MUSIC);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES], IDC_SETTINGS_CHECK_REFRESH_RATE);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_ALWAYSPLAYMUSIC], IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC);
 
-			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["force_console"], IDC_SETTINGS_CHECK_CONSOLE);
-			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["check_for_updates"], IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES);
-			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["skip_mods"], IDC_SETTINGS_CHECK_DONT_LOAD_MODS);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_FORCECON], IDC_SETTINGS_CHECK_CONSOLE);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_CHECKFORUPD], IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_SKIPMODS], IDC_SETTINGS_CHECK_DONT_LOAD_MODS);
 
-			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_floating_status"], IDC_SETTINGS_CHECK_STATUS_DIALOG);
-			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["title_calendar"], IDC_SETTINGS_CHECK_TITLE_DATE);
-			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_new_strings"], IDC_SETTINGS_CHECK_NEW_STRINGS);
-			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["skip_intro"], IDC_SETTINGS_CHECK_SKIP_INTRO);
-			GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["dark_underground"], IDC_SETTINGS_CHECK_DARK_UNDGRND);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USEFLTSTATUS], IDC_SETTINGS_CHECK_STATUS_DIALOG);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND], IDC_SETTINGS_CHECK_TITLE_DATE);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USENEWSTRINGS], IDC_SETTINGS_CHECK_NEW_STRINGS);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SKIPINTRO], IDC_SETTINGS_CHECK_SKIP_INTRO);
+			GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND], IDC_SETTINGS_CHECK_DARK_UNDGRND);
 
 			EndDialog(hwndDlg, TRUE);
 			break;
@@ -518,7 +524,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 				if (mus_debug & 8)
 					ConsoleLog(LOG_DEBUG, "CORE: SoundFont setting changed; new soundfont is %s\n", szFluidSynthSettingPath);
 
-				jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["soundfont"] = szFluidSynthSettingPath;
+				jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT] = szFluidSynthSettingPath;
 
 				{
 					const char* szSoundFontBaseName = GetFileBaseName(szFluidSynthSettingPath);
@@ -546,8 +552,8 @@ void ShowSettingsDialog(void) {
 	jsonSettingsCoreWorkingCopy = jsonSettingsCore;
 
 	// Save the original settings here just prior to saving.
-	std::string strOriginalMusicDriver = jsonSettingsCore["sc2kfix"]["audio"]["music_driver"].ToString();
-	std::string strOriginalSoundfont = jsonSettingsCore["sc2kfix"]["audio"]["soundfont"].ToString();
+	std::string strOriginalMusicDriver = jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString();
+	std::string strOriginalSoundfont = jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT].ToString();
 
 	InitializeTempBindings();
 
@@ -567,8 +573,8 @@ void ShowSettingsDialog(void) {
 		SaveJSONSettings();
 
 		// See if we need to reset the music engine.
-		if (dwMusicThreadID && (strOriginalMusicDriver != jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_driver"].ToString() ||
-			strOriginalSoundfont != jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["soundfont"].ToString()) ||
+		if (dwMusicThreadID && (strOriginalMusicDriver != jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() ||
+			strOriginalSoundfont != jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT].ToString()) ||
 			(st.bActiveMusicDriverTouched && st.bActiveTrackChanged))
 			PostThreadMessage(dwMusicThreadID, WM_MUSIC_RESET, NULL, NULL);
 	}
