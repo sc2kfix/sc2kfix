@@ -45,66 +45,6 @@ bool bConsoleInLuaREPL = false;
 bool bDontClearNextCommand = false;
 console::CommandTree treeConsoleCommands;
 
-void PrintAlignedStringMap(std::map<std::string, std::string> mapStr, int iPrefixSpaces = 3) {
-	std::map<std::string, std::string> mapOutput;
-	std::string strPrefixSpaces(iPrefixSpaces, ' ');
-	size_t iLeftAlign = 0;
-
-	for (auto s : mapStr) {
-		mapOutput[s.first] = s.second;
-		if (iLeftAlign < s.first.size())
-			iLeftAlign = s.first.size();
-	}
-
-	for (auto s : mapOutput)
-		printf("%s%s%s%s\n", strPrefixSpaces.c_str(), s.first.c_str(), std::string(3 + iLeftAlign - s.first.size(), ' ').c_str(), s.second.c_str());
-}
-
-bool ConsoleCommandRunLua(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
-	if (iBreakoutState == BREAKOUT_QUESTION) {
-		PrintAlignedStringMap(
-			{
-				{"<[Enter]>", "Switches to the Lua REPL"},
-				{"<filename>", "Executes a file as a standalone Lua script"},
-			});
-		bDontClearNextCommand = true;
-		return true;
-	}
-
-	if (iBreakoutState != BREAKOUT_RETURN)
-		return false;
-	
-	if (args.size() == 0) {
-		bConsoleInLuaREPL = true;
-		LuaRunREPL();
-		bConsoleInLuaREPL = false;
-	} else if (args.size() > 1)
-		return false;
-	else {
-		std::string strPossibleScriptName = args[0];
-		if (!FileExists(strPossibleScriptName.c_str())) {
-			strPossibleScriptName += ".lua";
-			if (!FileExists(strPossibleScriptName.c_str())) {
-				ConsoleLog(LOG_ERROR, "CORE: Couldn't find Lua script %s.\n", strPossibleScriptName.c_str());
-				return true;
-			}
-		}
-
-		// Spin up a new Lua VM, set up the glue logic, load the file, and run it.
-		lua_State* L = luaL_newstate();
-		luaL_openlibs(L);
-		luaL_dostring(L,
-			"mod_info = {}\n"
-			"mod_info.name = \"sc2kfix Lua REPL\"\n"
-			"mod_info.shortname = \"repl\"\n");
-		LuaGlueSetupState(L);
-		luaL_dofile(L, strPossibleScriptName.c_str());
-		lua_close(L);
-	}
-	
-	return true;
-}
-
 static BYTE AttemptSafeReadByte(BYTE* address) {
 	__try {
 		return *address;
@@ -161,10 +101,87 @@ static void AttemptSafeMemcpy(BYTE* dest, BYTE* src, size_t bytes) {
 	}
 }
 
+void PrintAlignedStringMap(std::map<std::string, std::string> mapStr, int iPrefixSpaces = 3) {
+	std::map<std::string, std::string> mapOutput;
+	std::string strPrefixSpaces(iPrefixSpaces, ' ');
+	size_t iLeftAlign = 0;
+
+	for (auto s : mapStr) {
+		mapOutput[s.first] = s.second;
+		if (iLeftAlign < s.first.size())
+			iLeftAlign = s.first.size();
+	}
+
+	for (auto s : mapOutput)
+		printf("%s%s%s%s\n", strPrefixSpaces.c_str(), s.first.c_str(), std::string(3 + iLeftAlign - s.first.size(), ' ').c_str(), s.second.c_str());
+}
+
+bool ConsoleCommandClear(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	// No arguments allowed
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap({ {"<[Enter]>", "Execute this command"} });
+		bDontClearNextCommand = true;
+		return true;
+	}
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+
+	// It is the year 2026. Don't let anyone tell you Windows doesn't support VT100 control codes.
+	printf("\x1b[2J\x1b[0;0H");
+
+	return true;
+}
+
+bool ConsoleCommandRunLua(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap(
+			{
+				{"<[Enter]>", "Switches to the Lua REPL"},
+				{"<filename>", "Executes a file as a standalone Lua script"},
+			});
+		bDontClearNextCommand = true;
+		return true;
+	}
+
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+	
+	if (args.size() == 0) {
+		bConsoleInLuaREPL = true;
+		LuaRunREPL();
+		bConsoleInLuaREPL = false;
+	} else if (args.size() > 1)
+		return false;
+	else {
+		std::string strPossibleScriptName = args[0];
+		if (!FileExists(strPossibleScriptName.c_str())) {
+			strPossibleScriptName += ".lua";
+			if (!FileExists(strPossibleScriptName.c_str())) {
+				ConsoleLog(LOG_ERROR, "CORE: Couldn't find Lua script %s.\n", strPossibleScriptName.c_str());
+				return true;
+			}
+		}
+
+		// Spin up a new Lua VM, set up the glue logic, load the file, and run it.
+		lua_State* L = luaL_newstate();
+		luaL_openlibs(L);
+		luaL_dostring(L,
+			"mod_info = {}\n"
+			"mod_info.name = \"sc2kfix Lua REPL\"\n"
+			"mod_info.shortname = \"repl\"\n");
+		LuaGlueSetupState(L);
+		luaL_dofile(L, strPossibleScriptName.c_str());
+		lua_close(L);
+	}
+	
+	return true;
+}
+
 bool ConsoleCommandShowMemory(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
 	DWORD dwAddress = NULL;
 	int iElementsCount = 1;
 	bool bAddressScanned = false;
+	int iBase = 16;
 
 	BYTE b;
 	WORD w;
@@ -185,6 +202,8 @@ bool ConsoleCommandShowMemory(std::vector<std::string> args, int iBreakoutState,
 			{
 				{"<address>", "Address to examine in hexadecimal"},
 				{"[count <count>]", "Number of elements to show (default 1)"},
+				{"[decimal]", "Display integers in decimal instead of hex"},
+				{"[octal]", "Display integers in octal instead of hex"},
 			});
 		bDontClearNextCommand = true;
 		return true;
@@ -193,8 +212,11 @@ bool ConsoleCommandShowMemory(std::vector<std::string> args, int iBreakoutState,
 	if (iBreakoutState != BREAKOUT_RETURN)
 		return false;
 
-	if (args.size() == 0)
+	// Arguments are required for this command
+	if (args.size() == 0) {
+		bDontClearNextCommand = true;
 		return false;
+	}
 
 	// Parse arguments
 	for (size_t i = 0; i < args.size(); i++) {
@@ -206,6 +228,18 @@ bool ConsoleCommandShowMemory(std::vector<std::string> args, int iBreakoutState,
 			if (!sscanf_s(args[i].c_str(), "%u", &iElementsCount))
 				return false;
 
+			continue;
+		}
+
+		// [decimal]
+		if (args[i] == "decimal" && iBase == 16) {
+			iBase = 10;
+			continue;
+		}
+
+		// [octal]
+		if (args[i] == "octal" && iBase == 16) {
+			iBase = 8;
 			continue;
 		}
 
@@ -224,33 +258,57 @@ bool ConsoleCommandShowMemory(std::vector<std::string> args, int iBreakoutState,
 		return false;
 
 	try {
+		// Display single items in both hexadecimal and decimal by default
 		if (iElementsCount == 1) {
 			printf("0x%08X: ", dwAddress);
 			switch (iOptParam) {
 			case 1:
 				b = AttemptSafeReadByte((BYTE*)dwAddress);
-				printf("(byte) 0x%02X / %d\n", b, b);
+				if (iBase == 10)
+					printf("(byte) %u / %d\n", b, b);
+				else if (iBase == 8)
+					printf("(byte) %03o\n", b);
+				else
+					printf("(byte) 0x%02X / %d\n", b, b);
 				break;
 			case 2:
 				w = AttemptSafeReadWord((WORD*)dwAddress);
-				printf("(word) 0x%04X / %d\n", w, w);
+				if (iBase == 10)
+					printf("(word) %u / %d\n", w, w);
+				else if (iBase == 8)
+					printf("(word) %06o\n", w);
+				else
+					printf("(word) 0x%04X / %d\n", w, w);
 				break;
 			case 4:
 				dw = AttemptSafeReadDword((DWORD*)dwAddress);
 				if (bFloat)
 					printf("(float) %f\n", *(float*)&dw);
-				else
-					printf("(dword) 0x%08X / %d\n", dw, dw);
+				else {
+					if (iBase == 10)
+						printf("(dword) %u / %d\n", dw, dw);
+					else if (iBase == 8)
+						printf("(dword) %011o\n", dw);
+					else
+						printf("(dword) 0x%08X / %d\n", dw, dw);
+				}
 				break;
 			case 8:
 				qw = AttemptSafeReadQword((uint64_t*)dwAddress);
 				if (bFloat)
 					printf("(double) %lf\n", *(double*)&qw);
-				else
-					printf("(qword) 0x%016llX / %lld\n", qw, qw);
+				else {
+					if (iBase == 10)
+						printf("(qword) %llu / %lld\n", qw, qw);
+					else if (iBase == 8)
+						printf("(qword) %022llo\n", qw);
+					else
+						printf("(qword) 0x%016llX / %lld\n", qw, qw);
+				}
 				break;
 			}
 		} else {
+			// Display multiple elements (in hexadecimal for integers by default)
 			while (iElementsCount > 0) {
 				printf("0x%08X:", dwAddress);
 				size_t uNextElements = (iElementsCount * iOptParam > 16 ? 16 / iOptParam : iElementsCount);
@@ -261,22 +319,44 @@ bool ConsoleCommandShowMemory(std::vector<std::string> args, int iBreakoutState,
 				for (int i = 0; i < uNextElements; i++) {
 					switch (iOptParam) {
 					case 1:
-						printf(" %02X", buf[i]);
+						if (iBase == 10)
+							printf(" %3u", buf[i]);
+						else if (iBase == 8)
+							printf(" %03o", buf[i]);
+						else
+							printf(" %02X", buf[i]);
 						break;
 					case 2:
-						printf(" %04X", *(WORD*)&buf[i * iOptParam]);
+						if (iBase == 10)
+							printf(" %5u", *(WORD*)&buf[i * iOptParam]);
+						else if (iBase == 8)
+							printf(" %06o", *(WORD*)&buf[i * iOptParam]);
+						else
+							printf(" %04X", *(WORD*)&buf[i * iOptParam]);
 						break;
 					case 4:
 						if (bFloat)
 							printf(" %f", *(float*)&buf[i * iOptParam]);
-						else
-							printf(" %08X", *(DWORD*)&buf[i * iOptParam]);
+						else {
+							if (iBase == 10)
+								printf(" %10u", *(DWORD*)&buf[i * iOptParam]);
+							else if (iBase == 8)
+								printf(" %011o", *(DWORD*)&buf[i * iOptParam]);
+							else
+								printf(" %08X", *(DWORD*)&buf[i * iOptParam]);
+						}
 						break;
 					case 8:
 						if (bFloat)
 							printf(" %lf", *(double*)&buf[i * iOptParam]);
-						else
-							printf(" %016llX", *(uint64_t*)&buf[i * iOptParam]);
+						else {
+							if (iBase == 10)
+								printf(" %20llu", *(uint64_t*)&buf[i * iOptParam]);
+							else if (iBase == 8)
+								printf(" %022llo", *(uint64_t*)&buf[i * iOptParam]);
+							else
+								printf(" %016llX", *(uint64_t*)&buf[i * iOptParam]);
+						}
 						break;
 					}
 				}
@@ -316,11 +396,96 @@ bool ConsoleCommandShowMemoryDouble(std::vector<std::string> args, int iBreakout
 	return ConsoleCommandShowMemory(args, iBreakoutState, 9);
 }
 
+bool ConsoleCommandShowMods(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	bool bDetailed = false;
+	bool bShowLuaMods = true;
+	bool bShowNativeMods = true;
+
+	if (dwDetectedVersion != VERSION_SC2K_1996) {
+		printf_yellow("Command only available when attached to 1996 Special Edition.\n");
+		return true;
+	}
+
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap(
+			{
+				{"<[Enter]>", "Executes this command"},
+				{"[detail]", "Shows verbose information about loaded mods"},
+				{"[lua]", "Only shows information about Lua mods"},
+				{"[native]", "Only shows information about native code mods"},
+			});
+		bDontClearNextCommand = true;
+		return true;
+	}
+
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+
+	// Parse arguments
+	for (size_t i = 0; i < args.size(); i++) {
+		// [detail]
+		if (args[i] == "detail") {
+			bDetailed = true;
+			continue;
+		}
+
+		// [lua]
+		if (args[i] == "lua") {
+			bShowLuaMods = true;
+			bShowNativeMods = false;
+			continue;
+		}
+
+		// [native]
+		if (args[i] == "native") {
+			bShowLuaMods = false;
+			bShowNativeMods = true;
+			continue;
+		}
+
+		// Invalid argument, bail out
+		return false;
+	}
+
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+
+	if (bShowNativeMods) {
+		printf("%d native code mods loaded:\n", mapLoadedNativeMods.size());
+		for (auto stNativeMod : mapLoadedNativeMods) {
+
+			const char* szModVersion = _strdup(FormatVersion(stNativeMod.second.iModVersionMajor, stNativeMod.second.iModVersionMinor, stNativeMod.second.iModVersionPatch));
+			const char* szModMinimumVersion = _strdup(FormatVersion(stNativeMod.second.iMinimumVersionMajor, stNativeMod.second.iMinimumVersionMinor, stNativeMod.second.iMinimumVersionPatch));
+
+			printf(
+				"   %s version %s (0x%08X)\n"
+				"      Mod Name:             %s\n"
+				"      Author:               %s\n"
+				"      Req. sc2kfix version: %s\n"
+				"      Description:          %s\n",
+				stNativeMod.second.szModShortName, szModVersion, (INT_PTR)stNativeMod.first,
+				stNativeMod.second.szModName,
+				stNativeMod.second.szModAuthor,
+				szModMinimumVersion,
+				WordWrap(stNativeMod.second.szModDescription, csbi.dwSize.X, 28).c_str());
+			if (bDetailed) {
+				printf("      Hooks:\n");
+				for (auto stHook : mapLoadedNativeModHooks[stNativeMod.first])
+					printf("         %s (pri %d)\n", stHook.szHookName, stHook.iHookPriority);
+			}
+			printf("\n");
+		}
+	}
+
+	return true;
+}
+
 bool ConsoleCommandShowDebug(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
 	// No arguments allowed
 	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap({{"<[Enter]>", "Execute this command"}});
 		bDontClearNextCommand = true;
-		return false;
+		return true;
 	}
 	if (iBreakoutState != BREAKOUT_RETURN)
 		return false;
@@ -364,8 +529,9 @@ bool ConsoleCommandShowVersion(std::vector<std::string> args, int iBreakoutState
 
 	// No arguments allowed
 	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap({ {"<[Enter]>", "Execute this command"} });
 		bDontClearNextCommand = true;
-		return false;
+		return true;
 	}
 	if (iBreakoutState != BREAKOUT_RETURN)
 		return false;
@@ -431,6 +597,7 @@ bool ConsoleCommandShowVersion(std::vector<std::string> args, int iBreakoutState
 }
 
 void NewConsoleInitializeCommands(console::CommandTree& treeCommands) {
+	treeCommands["clear"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandClear, "Clear the console");
 	treeCommands["run"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Run Lua REPL or scripts");
 	treeCommands["run"]["lua"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandRunLua, "Run Lua REPL or scripts");
 	treeCommands["show"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Display various game and plugin information");
@@ -442,6 +609,7 @@ void NewConsoleInitializeCommands(console::CommandTree& treeCommands) {
 	treeCommands["show"]["memory"]["qword"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowMemoryQword, "Display quad word-sized elements");
 	treeCommands["show"]["memory"]["float"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowMemoryFloat, "Display single precision floating point elements");
 	treeCommands["show"]["memory"]["double"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowMemoryDouble, "Display double precision floating point elements");
+	treeCommands["show"]["mods"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowMods, "Show loaded mods");
 	treeCommands["show"]["version"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowVersion, "Show sc2kfix and library version info");
 }
 
@@ -821,7 +989,7 @@ DWORD WINAPI NewConsoleThread(LPVOID lpParameter) {
 							for (size_t i = iDepth + 1; i < vecSplit.size(); i++)
 								vecArgs.push_back(vecSplit[i]);
 
-							if (!(*treePointer)[""].ToCommand().pCommand(vecArgs, breakout, 0))
+							if (!(*treePointer)[""].ToCommand().pCommand(vecArgs, breakout, (*treePointer)[""].ToCommand().iOptParam))
 								printf_yellow("Invalid argument.\n");
 							break;
 						}
@@ -835,7 +1003,7 @@ DWORD WINAPI NewConsoleThread(LPVOID lpParameter) {
 						for (size_t i = iDepth + 1; i < vecSplit.size(); i++)
 							vecArgs.push_back(vecSplit[i]);
 
-						if (!((*treePointer)[vecSplit[iDepth]].ToCommand().pCommand(vecArgs, breakout, 0)))
+						if (!((*treePointer)[vecSplit[iDepth]].ToCommand().pCommand(vecArgs, breakout, (*treePointer)[vecSplit[iDepth]].ToCommand().iOptParam)))
 							printf_yellow("Invalid argument.\n");
 						break;
 					}

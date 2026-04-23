@@ -303,11 +303,15 @@ enum {
 // New console stuff
 #define CTRL(c) (c - 64)
 
-#define COMMAND_TYPE_UNKNOWN		0		// undefined
-#define COMMAND_TYPE_BRANCH			1		// fake "command" used to add documentation to trees
-#define COMMAND_TYPE_DOCUMENTED		2		// command will show up in ? without set undoc
-#define COMMAND_TYPE_UNDOCUMENTED	3		// command requires set undoc to show up in ?
-#define COMMAND_TYPE_HIDDEN			4		// command does not show up in ? or autocomplete
+#define COMMAND_TYPE_UNKNOWN		0	// undefined
+#define COMMAND_TYPE_BRANCH			1	// fake "command" used to add documentation to trees
+#define COMMAND_TYPE_DOCUMENTED		2	// command will show up in ? without set undoc
+#define COMMAND_TYPE_UNDOCUMENTED	3	// command requires set undoc to show up in ?
+#define COMMAND_TYPE_HIDDEN			4	// command does not show up in ? or autocomplete
+
+#define COMMAND_OPTPARAM_NONE		0	// don't pass anything special in iOptParam (default)
+#define COMMAND_OPTPARAM_ROOTNAME	1	// pass a pointer to the entered root command name
+#define COMMAND_OPTPARAM_TREE		2	// pass a pointer to std::string vecSplit
 
 #define BREAKOUT_NONE		0
 #define BREAKOUT_RETURN		1
@@ -321,7 +325,8 @@ enum {
 // All arguments after the command are in `args`. The CLI parser breakout state that caused the
 // command to be invoked is in `iBreakoutState` (should usually only be BREAKOUT_QUESTION or
 // BREAKOUT_RETURN; others should generally be treated as a syntax error). iOptParam allows a
-// command that cascades into another command to pass data down the chain.
+// command that cascades into another command to pass data down the chain, and also allows for
+// the command parser to send extra data to the command if registered to do so.
 // 
 // Generally starts with:
 //   if (iBreakoutState == BREAKOUT_QUESTION)
@@ -332,8 +337,8 @@ typedef bool (*command_proc_t)(std::vector<std::string> args, int iBreakoutState
 
 class ConsoleCommand {
 public:
-	ConsoleCommand() { iType = 0; pCommand = NULL; szDescription = ""; iOptParam = 0; }
-	ConsoleCommand(int i, command_proc_t p, const char* s = "", intptr_t o = 0) { iType = i; pCommand = p; szDescription = s; iOptParam = o; }
+	ConsoleCommand() { iType = 0; pCommand = NULL; szDescription = "(description not set)"; iOptParam = COMMAND_OPTPARAM_NONE; }
+	ConsoleCommand(int i, command_proc_t p, const char* s = "(description not set)", intptr_t o = COMMAND_OPTPARAM_NONE) { iType = i; pCommand = p; szDescription = s; iOptParam = o; }
 	int iType;
 	command_proc_t pCommand;
 	const char* szDescription;
