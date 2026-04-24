@@ -212,37 +212,37 @@ bool ConsoleCommandFixupThingsClear(std::vector<std::string> args, int iBreakout
 			if (++i >= args.size())
 				return false;
 
-			if (args[i] == "plane") {
+			if (args[i] == "plane" || args[i] == "planes") {
 				DeleteAllPlanes_SC2K1996();
 				continue;
-			} else if (args[i] == "helicopter") {
+			} else if (args[i] == "helicopter" || args[i] == "helicopters") {
 				DeleteAllCopters_SC2K1996();
 				continue;
-			} else if (args[i] == "cargoship") {
+			} else if (args[i] == "cargoship" || args[i] == "cargoships") {
 				DeleteAllShips_SC2K1996();
 				continue;
-			} else if (args[i] == "sailboat") {
+			} else if (args[i] == "sailboat" || args[i] == "sailboats") {
 				DeleteAllSailboats_SC2K1996();
 				continue;
-			} else if (args[i] == "train") {
+			} else if (args[i] == "train" || args[i] == "trains") {
 				DeleteAllTrains_SC2K1996();
 				continue;
-			} else if (args[i] == "maxisman") {
+			} else if (args[i] == "maxisman" || args[i] == "maxismen") {
 				DeleteAllMaxisMen_SC2K1996();
 				continue;
-			} else if (args[i] == "monster") {
+			} else if (args[i] == "monster" || args[i] == "monsters") {
 				DeleteAllMonsters_SC2K1996();
 				continue;
-			} else if (args[i] == "tornado") {
+			} else if (args[i] == "tornado" || args[i] == "tornadoes") {
 				DeleteAllTornadoes_SC2K1996();
 				continue;
-			} else if (args[i] == "policedeploy") {
+			} else if (args[i] == "policedeploy" || args[i] == "policedeploys" || args[i] == "police") {
 				DeleteAllPoliceDeploys_SC2K1996();
 				continue;
-			} else if (args[i] == "firedeploy") {
+			} else if (args[i] == "firedeploy" || args[i] == "firedeploys" || args[i] == "firefighters") {
 				DeleteAllFireDeploys_SC2K1996();
 				continue;
-			} else if (args[i] == "militarydeploy") {
+			} else if (args[i] == "militarydeploy" || args[i] == "militarydeploys" || args[i] == "tanks") {
 				DeleteAllMilitaryDeploys_SC2K1996();
 				continue;
 			} else
