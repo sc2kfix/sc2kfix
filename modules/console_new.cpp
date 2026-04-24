@@ -101,6 +101,27 @@ static void AttemptSafeMemcpy(BYTE* dest, BYTE* src, size_t bytes) {
 	}
 }
 
+static const char* GetMidiDeviceTechnologyString(WORD wTechnology) {
+	switch (wTechnology) {
+	case MOD_MIDIPORT:
+		return "Hardware MIDI port";
+	case MOD_SYNTH:
+		return "Hardware synthesizer";
+	case MOD_SQSYNTH:
+		return "Square wave synthesizer";
+	case MOD_FMSYNTH:
+		return "FM synthesizer";
+	case MOD_MAPPER:
+		return "Microsoft MIDI mapper";
+	case MOD_WAVETABLE:
+		return "Wavetable synthesizer";
+	case MOD_SWSYNTH:
+		return "Software synthesizer";
+	default:
+		return "Unknown";
+	}
+}
+
 void PrintAlignedStringMap(std::map<std::string, std::string> mapStr, int iPrefixSpaces = 3) {
 	std::map<std::string, std::string> mapOutput;
 	std::string strPrefixSpaces(iPrefixSpaces, ' ');
@@ -129,6 +150,81 @@ bool ConsoleCommandClear(std::vector<std::string> args, int iBreakoutState, intp
 	// It is the year 2026. Don't let anyone tell you Windows doesn't support VT100 control codes.
 	printf("\x1b[2J\x1b[0;0H");
 
+	return true;
+}
+
+bool ConsoleCommandShowAudioBuffers(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	// No arguments allowed
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap({ {"<[Enter]>", "Execute this command"} });
+		bDontClearNextCommand = true;
+		return true;
+	}
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+
+	int i = 0;
+	for (const auto& iter : mapSoundBuffers)
+		printf("  %i: <0x%08X>   %i.wav   (reloads: %i)\n", i++, iter.first, iter.second.iSoundID, iter.second.iReloadCount);
+	return true;
+}
+
+bool ConsoleCommandShowAudioEngine(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	// No arguments allowed
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap({ {"<[Enter]>", "Execute this command"} });
+		bDontClearNextCommand = true;
+		return true;
+	}
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+
+	printf(
+		"Audio engine: %s\n"
+		"Music driver: %s\n",
+		"old", jsonSettingsCore["sc2kfix"]["audio"]["music_driver"].ToString().c_str());
+	return true;
+}
+
+bool ConsoleCommandShowAudioMidi(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	// No arguments allowed
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap({ {"<[Enter]>", "Execute this command"} });
+		bDontClearNextCommand = true;
+		return true;
+	}
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+
+	printf("MIDI devices (max %u):\n", midiOutGetNumDevs());
+	int maxdevs = midiOutGetNumDevs();
+	for (int i = -1; i < maxdevs; i++) {
+		MIDIOUTCAPS moc;
+		midiOutGetDevCaps(i, &moc, sizeof(MIDIOUTCAPS));
+		printf(
+			"  Device %i:\n"
+			"    Product ID:   %04X:%04X\n"
+			"    Name:         %s\n"
+			"    Technology:   %s\n", i, moc.wMid, moc.wPid, moc.szPname, GetMidiDeviceTechnologyString(moc.wTechnology));
+	}
+	return true;
+}
+
+bool ConsoleCommandShowAudioSongs(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	// No arguments allowed
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap({ {"<[Enter]>", "Execute this command"} });
+		bDontClearNextCommand = true;
+		return true;
+	}
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+
+	extern int iCurrentSong;
+	printf("Current playlist: ");
+	for (int i = 0; i < (int)vectorRandomSongIDs.size(); i++)
+		printf("%i%s ", vectorRandomSongIDs[i], (i == iCurrentSong ? "*" : ""));
+	printf("\n");
 	return true;
 }
 
@@ -174,6 +270,19 @@ bool ConsoleCommandRunLua(std::vector<std::string> args, int iBreakoutState, int
 		lua_close(L);
 	}
 	
+	return true;
+}
+
+bool ConsoleCommandRunTest(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	// No arguments allowed
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap({ {"<[Enter]>", "Execute this command"} });
+		bDontClearNextCommand = true;
+		return true;
+	}
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+
 	return true;
 }
 
@@ -656,6 +765,21 @@ bool ConsoleCommandShowDebug(std::vector<std::string> args, int iBreakoutState, 
 	return true;
 }
 
+bool ConsoleCommandShowSettingsJson(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	// No arguments allowed
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap({ {"<[Enter]>", "Execute this command"} });
+		bDontClearNextCommand = true;
+		return true;
+	}
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+
+	printf("jsonSettingsCore:\n%s\n\n", jsonSettingsCore.dump().c_str());
+	printf("jsonSettingsMods:\n%s\n", jsonSettingsMods.dump().c_str());
+	return true;
+}
+
 bool ConsoleCommandShowVersion(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
 	std::string strProgramName = "SimCity 2000";
 	std::string strProgramVersion = "unknown";
@@ -733,7 +857,13 @@ void NewConsoleInitializeCommands(console::CommandTree& treeCommands) {
 	treeCommands["clear"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandClear, "Clear the console");
 	treeCommands["run"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Run Lua REPL or scripts");
 	treeCommands["run"]["lua"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandRunLua, "Run Lua REPL or scripts");
+	treeCommands["run"]["test"] = ConsoleCommand(COMMAND_TYPE_UNDOCUMENTED, ConsoleCommandRunTest, "Test command");
 	treeCommands["show"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Display various game and plugin information");
+	treeCommands["show"]["audio"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Show audio engine info");
+	treeCommands["show"]["audio"]["buffers"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowAudioBuffers, "Dump loaded WAV buffer metadata");
+	treeCommands["show"]["audio"]["engine"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowAudioEngine, "Display audio engine information");
+	treeCommands["show"]["audio"]["midi"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowAudioMidi, "Dump all discovered MIDI devices");
+	treeCommands["show"]["audio"]["songs"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowAudioSongs, "Dump the current song playlist");
 	treeCommands["show"]["debug"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowDebug, "Display enabled debugging options");
 	treeCommands["show"]["memory"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Display memory contents");
 	treeCommands["show"]["memory"]["byte"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowMemoryByte, "Display byte-sized elements");
@@ -744,7 +874,12 @@ void NewConsoleInitializeCommands(console::CommandTree& treeCommands) {
 	treeCommands["show"]["memory"]["double"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowMemoryDouble, "Display double precision floating point elements");
 	treeCommands["show"]["microsim"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowMicrosim, "Show microsim data");
 	treeCommands["show"]["mods"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowMods, "Show loaded mods");
-	treeCommands["show"]["version"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowVersion, "Show sc2kfix and library version info");
+	treeCommands["show"]["settings"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Show settings info");
+	treeCommands["show"]["settings"]["json"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowSettingsJson, "Dump JSON settings structure");
+	treeCommands["show"]["version"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowVersion, "Show sc2kfix and library versions");
+
+	// Aliases
+	treeCommands["show"]["sound"] = treeCommands["show"]["audio"];
 }
 
 DWORD WINAPI NewConsoleThread(LPVOID lpParameter) {
