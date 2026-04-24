@@ -154,6 +154,108 @@ bool ConsoleCommandClear(std::vector<std::string> args, int iBreakoutState, intp
 	return true;
 }
 
+bool ConsoleCommandFixupThingsClear(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	int iIndex = 0;
+
+	if (dwDetectedVersion != VERSION_SC2K_1996) {
+		printf_yellow("Command only available when attached to 1996 Special Edition.\n");
+		return true;
+	}
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap(
+			{
+				{"all", "Remove every Thing entity on the map (potentially dangerous!)"},
+				{"index <index>", "XTHG index of Thing to remove"},
+				{"type <type>", "Remove all Things of a specific type"},
+			});
+		bConsoleKeepCommandBuffer = true;
+		return true;
+	}
+
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+
+	// Arguments are required for this command
+	if (args.size() == 0) {
+		bConsoleKeepCommandBuffer = true;
+		return false;
+	}
+
+	// Parse arguments
+	for (size_t i = 0; i < args.size(); i++) {
+		// all
+		if (args[i] == "all") {
+			// Danger, Will Robinson!
+			DeleteMapThingByIdx_SC2K1996(-1);
+			ConsoleLog(LOG_INFO, "Cleared all things by console command.\n");
+			continue;
+		}
+
+		// index <index>
+		if (args[i] == "index") {
+			if (++i >= args.size())
+				return false;
+
+			if (!sscanf_s(args[i].c_str(), "%u", &iIndex))
+				return false;
+
+			if (iIndex >= MIN_THING_IDX && iIndex <= MAX_THING_IDX) {
+				DeleteMapThingByIdx_SC2K1996(iIndex);
+				ConsoleLog(LOG_INFO, "Cleared thing index %d by console command.\n", iIndex);
+			} else
+				return false;
+
+			continue;
+		}
+		// type <type>
+		if (args[i] == "type") {
+			if (++i >= args.size())
+				return false;
+
+			if (args[i] == "plane") {
+				DeleteAllPlanes_SC2K1996();
+				continue;
+			} else if (args[i] == "helicopter") {
+				DeleteAllCopters_SC2K1996();
+				continue;
+			} else if (args[i] == "cargoship") {
+				DeleteAllShips_SC2K1996();
+				continue;
+			} else if (args[i] == "sailboat") {
+				DeleteAllSailboats_SC2K1996();
+				continue;
+			} else if (args[i] == "train") {
+				DeleteAllTrains_SC2K1996();
+				continue;
+			} else if (args[i] == "maxisman") {
+				DeleteAllMaxisMen_SC2K1996();
+				continue;
+			} else if (args[i] == "monster") {
+				DeleteAllMonsters_SC2K1996();
+				continue;
+			} else if (args[i] == "tornado") {
+				DeleteAllTornadoes_SC2K1996();
+				continue;
+			} else if (args[i] == "policedeploy") {
+				DeleteAllPoliceDeploys_SC2K1996();
+				continue;
+			} else if (args[i] == "firedeploy") {
+				DeleteAllFireDeploys_SC2K1996();
+				continue;
+			} else if (args[i] == "militarydeploy") {
+				DeleteAllMilitaryDeploys_SC2K1996();
+				continue;
+			} else
+				return false;
+		}
+
+		// Invalid arugment, bail out
+		return false;
+	}
+
+	return true;
+}
+
 #define SETDEBUGOP(keyword, var, description) \
 	if (args[i] == keyword || bSetAll) { \
 		var ## _debug = dwOperation; \
@@ -952,6 +1054,9 @@ bool ConsoleCommandShowVersion(std::vector<std::string> args, int iBreakoutState
 
 void NewConsoleInitializeCommands(console::CommandTree& treeCommands) {
 	treeCommands["clear"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandClear, "Clear the console");
+	treeCommands["fixup"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Fix up engine gremlins");
+	treeCommands["fixup"]["things"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Fixup commands for Thing entities");
+	treeCommands["fixup"]["things"]["clear"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandFixupThingsClear, "Clear (specific) Thing entities");
 	treeCommands["run"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Run Lua REPL or scripts");
 	treeCommands["run"]["lua"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandRunLua, "Run Lua REPL or scripts");
 	treeCommands["run"]["test"] = ConsoleCommand(COMMAND_TYPE_UNDOCUMENTED, ConsoleCommandRunTest, "Test command");
