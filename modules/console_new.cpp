@@ -42,6 +42,7 @@ void drop_args(...) {
 }
 
 bool bConsoleInLuaREPL = false;
+bool bConsoleUndocumentedMode = false;
 bool bDontClearNextCommand = false;
 console::CommandTree treeConsoleCommands;
 
@@ -150,6 +151,24 @@ bool ConsoleCommandClear(std::vector<std::string> args, int iBreakoutState, intp
 	// It is the year 2026. Don't let anyone tell you Windows doesn't support VT100 control codes.
 	printf("\x1b[2J\x1b[0;0H");
 
+	return true;
+}
+
+bool ConsoleCommandSetUndocumented(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	// No arguments allowed
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap({ {"<[Enter]>", "Execute this command"} });
+		bDontClearNextCommand = true;
+		return true;
+	}
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+
+	std::string& strRootName = *((std::string*)iOptParam);
+	if (strRootName == "set")
+		bConsoleUndocumentedMode = true;
+	else
+		bConsoleUndocumentedMode = false;
 	return true;
 }
 
@@ -858,6 +877,8 @@ void NewConsoleInitializeCommands(console::CommandTree& treeCommands) {
 	treeCommands["run"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Run Lua REPL or scripts");
 	treeCommands["run"]["lua"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandRunLua, "Run Lua REPL or scripts");
 	treeCommands["run"]["test"] = ConsoleCommand(COMMAND_TYPE_UNDOCUMENTED, ConsoleCommandRunTest, "Test command");
+	treeCommands["set"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Modify game and plugin behaviour");
+	treeCommands["set"]["undocumented"] = ConsoleCommand(COMMAND_TYPE_UNDOCUMENTED, ConsoleCommandSetUndocumented, "Enable/disable display of special commands", COMMAND_OPTPARAM_ROOTNAME);
 	treeCommands["show"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Display various game and plugin information");
 	treeCommands["show"]["audio"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Show audio engine info");
 	treeCommands["show"]["audio"]["buffers"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowAudioBuffers, "Dump loaded WAV buffer metadata");
@@ -880,6 +901,7 @@ void NewConsoleInitializeCommands(console::CommandTree& treeCommands) {
 
 	// Aliases
 	treeCommands["show"]["sound"] = treeCommands["show"]["audio"];
+	treeCommands["unset"] = treeCommands["set"];
 }
 
 DWORD WINAPI NewConsoleThread(LPVOID lpParameter) {
@@ -888,7 +910,6 @@ DWORD WINAPI NewConsoleThread(LPVOID lpParameter) {
 	bool bFullCommand = false;
 	bool bDoneQuestionOut = false;
 	bool bDoJuniperStyle = true;
-	bool bConsoleUndocumentedMode = false;
 	bDontClearNextCommand = false;
 
 	// Initialize the console
@@ -1114,6 +1135,10 @@ DWORD WINAPI NewConsoleThread(LPVOID lpParameter) {
 					if ((*treePointer)[s.first].ObjectType() == console::CommandTree::Class::Command) {
 						if (!string_starts_with(s2, vecSplit[iDepth].c_str()))
 							continue;
+						if (!bConsoleUndocumentedMode && s.second.ToCommand().iType == COMMAND_TYPE_UNDOCUMENTED ||
+							s.second.ToCommand().iType == COMMAND_TYPE_HIDDEN)
+							continue;
+
 						if (s.first == "" && s.second.ToCommand().iType != COMMAND_TYPE_BRANCH) {
 							mapOutput["..."] = s.second.ToCommand().szDescription;
 							if (iLongestCommand < 3)
@@ -1258,7 +1283,13 @@ DWORD WINAPI NewConsoleThread(LPVOID lpParameter) {
 							for (size_t i = iDepth + 1; i < vecSplit.size(); i++)
 								vecArgs.push_back(vecSplit[i]);
 
-							if (!(*treePointer)[""].ToCommand().pCommand(vecArgs, breakout, (*treePointer)[""].ToCommand().iOptParam))
+							intptr_t iOptParam = NULL;
+							if ((*treePointer)[""].ToCommand().iOptParam == COMMAND_OPTPARAM_ROOTNAME)
+								iOptParam = (intptr_t)&vecSplit[0];
+							else if ((*treePointer)[""].ToCommand().iOptParam == COMMAND_OPTPARAM_TREE)
+								iOptParam = (intptr_t)&vecSplit;
+
+							if (!(*treePointer)[""].ToCommand().pCommand(vecArgs, breakout, iOptParam))
 								printf_yellow("Invalid argument.\n");
 							break;
 						}
@@ -1272,7 +1303,13 @@ DWORD WINAPI NewConsoleThread(LPVOID lpParameter) {
 						for (size_t i = iDepth + 1; i < vecSplit.size(); i++)
 							vecArgs.push_back(vecSplit[i]);
 
-						if (!((*treePointer)[vecSplit[iDepth]].ToCommand().pCommand(vecArgs, breakout, (*treePointer)[vecSplit[iDepth]].ToCommand().iOptParam)))
+						intptr_t iOptParam = NULL;
+						if ((*treePointer)[vecSplit[iDepth]].ToCommand().iOptParam == COMMAND_OPTPARAM_ROOTNAME)
+							iOptParam = (intptr_t)&vecSplit[0];
+						else if ((*treePointer)[vecSplit[iDepth]].ToCommand().iOptParam == COMMAND_OPTPARAM_TREE)
+							iOptParam = (intptr_t)&vecSplit;
+
+						if (!((*treePointer)[vecSplit[iDepth]].ToCommand().pCommand(vecArgs, breakout, iOptParam)))
 							printf_yellow("Invalid argument.\n");
 						break;
 					}
