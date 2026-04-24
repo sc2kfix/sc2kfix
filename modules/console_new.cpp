@@ -42,8 +42,8 @@ void drop_args(...) {
 }
 
 bool bConsoleInLuaREPL = false;
-bool bConsoleUndocumentedMode = false;
-bool bDontClearNextCommand = false;
+bool bConsoleElevatedMode = false;
+bool bConsoleKeepCommandBuffer = false;
 console::CommandTree treeConsoleCommands;
 
 static BYTE AttemptSafeReadByte(BYTE* address) {
@@ -142,7 +142,7 @@ bool ConsoleCommandClear(std::vector<std::string> args, int iBreakoutState, intp
 	// No arguments allowed
 	if (iBreakoutState == BREAKOUT_QUESTION) {
 		PrintAlignedStringMap({ {"<[Enter]>", "Execute this command"} });
-		bDontClearNextCommand = true;
+		bConsoleKeepCommandBuffer = true;
 		return true;
 	}
 	if (iBreakoutState != BREAKOUT_RETURN)
@@ -154,11 +154,89 @@ bool ConsoleCommandClear(std::vector<std::string> args, int iBreakoutState, intp
 	return true;
 }
 
+#define SETDEBUGOP(keyword, var, description) \
+	if (args[i] == keyword || bSetAll) { \
+		var ## _debug = dwOperation; \
+		printf("%sabled " description " debugging.\n", (dwOperation ? "En" : "Dis")); \
+		bSuccess = true; \
+	}
+
+bool ConsoleCommandSetDebug(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	DWORD dwOperation = DEBUG_FLAGS_NONE;
+	bool bSetAll = false;
+
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap(
+			{
+				{"guzzardo", "Enable/disable cousin Vinnie debugging"},
+				{"mci", "Enable/disable MCI debugging"},
+				{"military", "Enable/disable military base algorithm debugging"},
+				{"mischook", "Enable/disable miscellaneous debugging"},
+				{"modloader", "Enable/disable native code mod loader debugging"},
+				{"mus", "Enable/disable music engine debugging"},
+				{"registry", "Enable/disable registry override hooks debugging"},
+				{"sc2x", "Enable/disable SC2X format and load/save debugging"},
+				{"snd", "Enable/disable sound hook debugging"},
+				{"sprite", "Enable/disable sprite and tileset hook debugging"},
+				{"timer", "Enable/disable timer hook debugging"},
+				{"update", "Enable/disable update notifier debugging"}
+			});
+		bConsoleKeepCommandBuffer = true;
+		return true;
+	}
+
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+
+	std::string& strRootName = *((std::string*)iOptParam);
+	if (strRootName == "set")
+		dwOperation = DEBUG_FLAGS_EVERYTHING;
+	else
+		dwOperation = DEBUG_FLAGS_NONE;
+
+	// Arguments are required for this command
+	if (args.size() == 0) {
+		bConsoleKeepCommandBuffer = true;
+		return false;
+	}
+
+	// Parse arguments
+	// To save on typing this one works a bit differently than other commands. A better example
+	// of how to parse arguments would be the "show memory" or "show microsim" commands.
+	for (size_t i = 0; i < args.size(); i++) {
+		bool bSuccess = false;
+		if (args[i] == "all") {
+			bSetAll = true;
+			i = args.size();
+			bSuccess = true;
+		}
+
+		SETDEBUGOP("guzzardo", guzzardo, "cousin Vinnie")
+		SETDEBUGOP("mci", mci, "MCI")
+		SETDEBUGOP("military", military, "military base algorithm")
+		SETDEBUGOP("mischook", mischook, "miscellaneous")
+		SETDEBUGOP("modloader", modloader, "native code mod loader")
+		SETDEBUGOP("mus", mus, "music engine")
+		SETDEBUGOP("registry", registry, "registry override hooks")
+		SETDEBUGOP("sc2x", sc2x, "SC2X format and load/save")
+		SETDEBUGOP("snd", snd, "sound hook")
+		SETDEBUGOP("sprite", sprite, "sprite and tileset hook")
+		SETDEBUGOP("timer", timer, "timer hook")
+		SETDEBUGOP("update", updatenotifier, "update notifier")
+
+		// Invalid arugment, bail out
+		if (!bSuccess)
+			return false;
+	}
+
+	return true;
+}
+
 bool ConsoleCommandSetUndocumented(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
 	// No arguments allowed
 	if (iBreakoutState == BREAKOUT_QUESTION) {
 		PrintAlignedStringMap({ {"<[Enter]>", "Execute this command"} });
-		bDontClearNextCommand = true;
+		bConsoleKeepCommandBuffer = true;
 		return true;
 	}
 	if (iBreakoutState != BREAKOUT_RETURN)
@@ -166,9 +244,9 @@ bool ConsoleCommandSetUndocumented(std::vector<std::string> args, int iBreakoutS
 
 	std::string& strRootName = *((std::string*)iOptParam);
 	if (strRootName == "set")
-		bConsoleUndocumentedMode = true;
+		bConsoleElevatedMode = true;
 	else
-		bConsoleUndocumentedMode = false;
+		bConsoleElevatedMode = false;
 	return true;
 }
 
@@ -176,7 +254,7 @@ bool ConsoleCommandShowAudioBuffers(std::vector<std::string> args, int iBreakout
 	// No arguments allowed
 	if (iBreakoutState == BREAKOUT_QUESTION) {
 		PrintAlignedStringMap({ {"<[Enter]>", "Execute this command"} });
-		bDontClearNextCommand = true;
+		bConsoleKeepCommandBuffer = true;
 		return true;
 	}
 	if (iBreakoutState != BREAKOUT_RETURN)
@@ -192,7 +270,7 @@ bool ConsoleCommandShowAudioEngine(std::vector<std::string> args, int iBreakoutS
 	// No arguments allowed
 	if (iBreakoutState == BREAKOUT_QUESTION) {
 		PrintAlignedStringMap({ {"<[Enter]>", "Execute this command"} });
-		bDontClearNextCommand = true;
+		bConsoleKeepCommandBuffer = true;
 		return true;
 	}
 	if (iBreakoutState != BREAKOUT_RETURN)
@@ -209,7 +287,7 @@ bool ConsoleCommandShowAudioMidi(std::vector<std::string> args, int iBreakoutSta
 	// No arguments allowed
 	if (iBreakoutState == BREAKOUT_QUESTION) {
 		PrintAlignedStringMap({ {"<[Enter]>", "Execute this command"} });
-		bDontClearNextCommand = true;
+		bConsoleKeepCommandBuffer = true;
 		return true;
 	}
 	if (iBreakoutState != BREAKOUT_RETURN)
@@ -233,7 +311,7 @@ bool ConsoleCommandShowAudioSongs(std::vector<std::string> args, int iBreakoutSt
 	// No arguments allowed
 	if (iBreakoutState == BREAKOUT_QUESTION) {
 		PrintAlignedStringMap({ {"<[Enter]>", "Execute this command"} });
-		bDontClearNextCommand = true;
+		bConsoleKeepCommandBuffer = true;
 		return true;
 	}
 	if (iBreakoutState != BREAKOUT_RETURN)
@@ -254,7 +332,7 @@ bool ConsoleCommandRunLua(std::vector<std::string> args, int iBreakoutState, int
 				{"<[Enter]>", "Switches to the Lua REPL"},
 				{"<filename>", "Executes a file as a standalone Lua script"},
 			});
-		bDontClearNextCommand = true;
+		bConsoleKeepCommandBuffer = true;
 		return true;
 	}
 
@@ -296,7 +374,7 @@ bool ConsoleCommandRunTest(std::vector<std::string> args, int iBreakoutState, in
 	// No arguments allowed
 	if (iBreakoutState == BREAKOUT_QUESTION) {
 		PrintAlignedStringMap({ {"<[Enter]>", "Execute this command"} });
-		bDontClearNextCommand = true;
+		bConsoleKeepCommandBuffer = true;
 		return true;
 	}
 	if (iBreakoutState != BREAKOUT_RETURN)
@@ -333,7 +411,7 @@ bool ConsoleCommandShowMemory(std::vector<std::string> args, int iBreakoutState,
 				{"[decimal]", "Display integers in decimal instead of hex"},
 				{"[octal]", "Display integers in octal instead of hex"},
 			});
-		bDontClearNextCommand = true;
+		bConsoleKeepCommandBuffer = true;
 		return true;
 	}
 
@@ -342,7 +420,7 @@ bool ConsoleCommandShowMemory(std::vector<std::string> args, int iBreakoutState,
 
 	// Arguments are required for this command
 	if (args.size() == 0) {
-		bDontClearNextCommand = true;
+		bConsoleKeepCommandBuffer = true;
 		return false;
 	}
 
@@ -548,7 +626,7 @@ bool ConsoleCommandShowMicrosim(std::vector<std::string> args, int iBreakoutStat
 				{"subway", "Display microsim data for subway stations"},
 				{"wind", "Display microsim data for wind power plants"},
 			});
-		bDontClearNextCommand = true;
+		bConsoleKeepCommandBuffer = true;
 		return true;
 	}
 
@@ -557,7 +635,7 @@ bool ConsoleCommandShowMicrosim(std::vector<std::string> args, int iBreakoutStat
 
 	// Arguments are required for this command
 	if (args.size() == 0) {
-		bDontClearNextCommand = true;
+		bConsoleKeepCommandBuffer = true;
 		return false;
 	}
 
@@ -675,7 +753,7 @@ bool ConsoleCommandShowMods(std::vector<std::string> args, int iBreakoutState, i
 				{"[lua]", "Only shows information about Lua mods"},
 				{"[native]", "Only shows information about native code mods"},
 			});
-		bDontClearNextCommand = true;
+		bConsoleKeepCommandBuffer = true;
 		return true;
 	}
 
@@ -745,7 +823,7 @@ bool ConsoleCommandShowDebug(std::vector<std::string> args, int iBreakoutState, 
 	// No arguments allowed
 	if (iBreakoutState == BREAKOUT_QUESTION) {
 		PrintAlignedStringMap({{"<[Enter]>", "Execute this command"}});
-		bDontClearNextCommand = true;
+		bConsoleKeepCommandBuffer = true;
 		return true;
 	}
 	if (iBreakoutState != BREAKOUT_RETURN)
@@ -788,7 +866,7 @@ bool ConsoleCommandShowSettingsJson(std::vector<std::string> args, int iBreakout
 	// No arguments allowed
 	if (iBreakoutState == BREAKOUT_QUESTION) {
 		PrintAlignedStringMap({ {"<[Enter]>", "Execute this command"} });
-		bDontClearNextCommand = true;
+		bConsoleKeepCommandBuffer = true;
 		return true;
 	}
 	if (iBreakoutState != BREAKOUT_RETURN)
@@ -806,7 +884,7 @@ bool ConsoleCommandShowVersion(std::vector<std::string> args, int iBreakoutState
 	// No arguments allowed
 	if (iBreakoutState == BREAKOUT_QUESTION) {
 		PrintAlignedStringMap({ {"<[Enter]>", "Execute this command"} });
-		bDontClearNextCommand = true;
+		bConsoleKeepCommandBuffer = true;
 		return true;
 	}
 	if (iBreakoutState != BREAKOUT_RETURN)
@@ -878,6 +956,7 @@ void NewConsoleInitializeCommands(console::CommandTree& treeCommands) {
 	treeCommands["run"]["lua"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandRunLua, "Run Lua REPL or scripts");
 	treeCommands["run"]["test"] = ConsoleCommand(COMMAND_TYPE_UNDOCUMENTED, ConsoleCommandRunTest, "Test command");
 	treeCommands["set"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Modify game and plugin behaviour");
+	treeCommands["set"]["debug"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandSetDebug, "Enable/disable debugging options", COMMAND_OPTPARAM_ROOTNAME);
 	treeCommands["set"]["undocumented"] = ConsoleCommand(COMMAND_TYPE_UNDOCUMENTED, ConsoleCommandSetUndocumented, "Enable/disable display of special commands", COMMAND_OPTPARAM_ROOTNAME);
 	treeCommands["show"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Display various game and plugin information");
 	treeCommands["show"]["audio"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Show audio engine info");
@@ -910,7 +989,7 @@ DWORD WINAPI NewConsoleThread(LPVOID lpParameter) {
 	bool bFullCommand = false;
 	bool bDoneQuestionOut = false;
 	bool bDoJuniperStyle = true;
-	bDontClearNextCommand = false;
+	bConsoleKeepCommandBuffer = false;
 
 	// Initialize the console
 	Sleep(200);
@@ -919,7 +998,7 @@ DWORD WINAPI NewConsoleThread(LPVOID lpParameter) {
 
 	// HIC SUNT DRACONES
 	while (true) {
-		if (bConsoleUndocumentedMode)
+		if (bConsoleElevatedMode)
 			printf(VT100_COLOUR_BRIGHT_WHITE "sc2kfix# " VT100_DEFAULT "%s", strCommand.c_str());
 		else
 			printf(VT100_COLOUR_BRIGHT_WHITE "sc2kfix> " VT100_DEFAULT "%s", strCommand.c_str());
@@ -1135,7 +1214,7 @@ DWORD WINAPI NewConsoleThread(LPVOID lpParameter) {
 					if ((*treePointer)[s.first].ObjectType() == console::CommandTree::Class::Command) {
 						if (!string_starts_with(s2, vecSplit[iDepth].c_str()))
 							continue;
-						if (!bConsoleUndocumentedMode && s.second.ToCommand().iType == COMMAND_TYPE_UNDOCUMENTED ||
+						if (!bConsoleElevatedMode && s.second.ToCommand().iType == COMMAND_TYPE_UNDOCUMENTED ||
 							s.second.ToCommand().iType == COMMAND_TYPE_HIDDEN)
 							continue;
 
@@ -1320,10 +1399,10 @@ DWORD WINAPI NewConsoleThread(LPVOID lpParameter) {
 				}
 			}
 
-			if (!bDontClearNextCommand && !bDoneQuestionOut)
+			if (!bConsoleKeepCommandBuffer && !bDoneQuestionOut)
 				strCommand = "";
 
-			bDontClearNextCommand = false;
+			bConsoleKeepCommandBuffer = false;
 		}
 	}
 }

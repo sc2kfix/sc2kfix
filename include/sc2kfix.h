@@ -330,7 +330,7 @@ enum {
 // 
 // Generally starts with:
 //   if (iBreakoutState == BREAKOUT_QUESTION)
-//       bDontClearNextCommand = true;
+//       bConsoleKeepCommandBuffer = true;
 //   if (iBreakoutState != BREAKOUT_RETURN)
 //       return false;
 typedef bool (*command_proc_t)(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam);
