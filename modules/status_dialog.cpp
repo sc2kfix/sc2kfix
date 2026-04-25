@@ -43,7 +43,7 @@ static SIZE szFloat;
 static WNDPROC OldGotoButtonWndProc;
 
 BOOL CanUseFloatingStatusDialog() {
-	return (jsonSettingsCore["sc2kfix"]["qol"]["use_floating_status"].ToBool() && hStatusDialog) ? TRUE : FALSE;
+	return (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USEFLTSTATUS].ToBool() && hStatusDialog) ? TRUE : FALSE;
 }
 
 void ToggleFloatingStatusDialog(BOOL bEnable) {

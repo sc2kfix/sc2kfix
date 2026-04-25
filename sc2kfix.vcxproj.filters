@@ -252,6 +252,9 @@
     <ClInclude Include="include\lua_glue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\setting_schema.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="hooks\hook_mciSendCommand.cpp">

@@ -22,6 +22,7 @@
 #define HOOKEXT_CPP __declspec(dllexport)
 
 #include <json.hpp>
+#include <setting_schema.h>
 #include <keybindings.h>
 #include <mfc3xhelp.h>
 #include <commonhelp.h>
@@ -176,8 +177,6 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define MAX_THING_IDX 39
 
 #define MAX_THING_COUNT MAX_THING_IDX + 1
-
-#define INI_GAME_SPEED_SETTING(x) (x - 1)
 
 #define HALVECOORD(x) (x >> 1)
 
@@ -434,9 +433,6 @@ BOOL ConsoleCmdSetTile(const char* szCommand, const char* szArguments);
 void LoadNativeCodeMods(void);
 
 extern const char *gamePrimaryKey;
-
-//extern char szLastStoredCityPath[MAX_PATH + 1];
-//extern char szLastStoredTileSetPath[MAX_PATH + 1];
 
 extern BOOL bGameDead;
 extern HMODULE hRealWinMM;

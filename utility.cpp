@@ -270,7 +270,7 @@ HOOKEXT BOOL IsFileNameValid(const char *pName) {
 }
 
 BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc) {
-	if (!strcpy_s(pDest, SizeInBytes, pSrc) && jsonSettingsCore["sc2kfix"]["qol"]["use_new_strings"].ToBool())
+	if (!strcpy_s(pDest, SizeInBytes, pSrc) && jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USENEWSTRINGS].ToBool())
 		return TRUE;
 	return FALSE;
 }

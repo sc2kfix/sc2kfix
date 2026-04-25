@@ -146,8 +146,7 @@ typedef struct {
 
 int CharToKey(UINT nChar);
 void InitializeDefaultBindings();
-//void LoadStoredBindings();
-//void SaveStoredBindings();
+void LoadLegacyStoredBindings(json::JSON& jsonSettings, const char *section, const char *ini);
 void LoadJSONBindings(json::JSON& jsonSettings);
 void SaveJSONBindings(json::JSON& jsonSettings);
 void UpdateKeyBindings();

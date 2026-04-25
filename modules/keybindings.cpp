@@ -327,12 +327,30 @@ static BOOL SetKeyToAction(std::vector<baction_t> &targBindings, bkey_t *key_ent
 	return bRet;
 }
 
+void LoadLegacyStoredBindings(json::JSON& jsonSettings, const char *section, const char *ini) {
+	char szActionName[64 + 1];
+
+	for (int i = 0; i < B_KEY_COUNT; i++) {
+		memset(szActionName, 0, sizeof(szActionName));
+
+		bkey_t *key_entry = &progkeys[i];
+		if (key_entry && !key_entry->bImmutable) {
+			const char *pDefAction = GetDefaultAction(key_entry->nBkey);
+			GetPrivateProfileStringA(section, key_entry->pKeyName, pDefAction, szActionName, sizeof(szActionName) - 1, ini);
+			if (!IsKeyAndActionValid(defBindings, key_entry, pDefAction, szActionName))
+				continue;
+			SetKeyToAction(defBindings, key_entry, szActionName);
+			jsonSettings[C_SC2KFIX][S_FIX_KEYBINDS][key_entry->pKeyName] = szActionName;
+		}
+	}
+}
+
 void LoadJSONBindings(json::JSON& jsonSettings) {
 	for (int i = 0; i < B_KEY_COUNT; i++) {
 		bkey_t* key_entry = &progkeys[i];
 		if (key_entry && !key_entry->bImmutable) {
 			const char* pDefAction = GetDefaultAction(key_entry->nBkey);
-			std::string strActionName = jsonSettings["sc2kfix"]["keybinds"][key_entry->pKeyName].ToString();
+			std::string strActionName = jsonSettings[C_SC2KFIX][S_FIX_KEYBINDS][key_entry->pKeyName].ToString();
 			if (!IsKeyAndActionValid(defBindings, key_entry, pDefAction, strActionName.c_str()))
 				continue;
 			SetKeyToAction(defBindings, key_entry, strActionName.c_str());
@@ -345,7 +363,7 @@ void SaveJSONBindings(json::JSON& jsonSettings) {
 		bkey_t* key_entry = &progkeys[i];
 		if (key_entry && !key_entry->bImmutable) {
 			const char* pCurrentAction = GetCurrentAction(defBindings, key_entry->nBkey);
-			jsonSettings["sc2kfix"]["keybinds"][key_entry->pKeyName] = pCurrentAction;
+			jsonSettings[C_SC2KFIX][S_FIX_KEYBINDS][key_entry->pKeyName] = pCurrentAction;
 		}
 	}
 }

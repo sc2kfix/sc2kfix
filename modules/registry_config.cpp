@@ -49,9 +49,6 @@ enum redirected_keys_t {
 
 const char *gamePrimaryKey = "SimCity 2000";
 
-//char szLastStoredCityPath[MAX_PATH + 1];
-//char szLastStoredTileSetPath[MAX_PATH + 1];
-
 BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 	case WM_INITDIALOG:
@@ -61,8 +58,8 @@ BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 
 		// These both come from the game themselves.
 		// I don't know if they're used anywhere, but they're there.
-		SetDlgItemText(hwndDlg, IDC_EDIT_MAYOR, "Marvin Maxis");
-		SetDlgItemText(hwndDlg, IDC_EDIT_COMPANY, "Q37 Space Modulator Mfg.");
+		SetDlgItemText(hwndDlg, IDC_EDIT_MAYOR, DEF_SIM_REG_MAYOR_NAME);
+		SetDlgItemText(hwndDlg, IDC_EDIT_COMPANY, DEF_SIM_REG_COMPANY_NAME);
 
 		// Center the dialog box
 		CenterDialogBox(hwndDlg);
@@ -72,13 +69,13 @@ BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 		switch (LOWORD(wParam)) {
 		case ID_INSTALL_OK:
 			if (!GetDlgItemText(hwndDlg, IDC_EDIT_MAYOR, szSettingsMayorName, 63))
-				strcpy_s(szSettingsMayorName, 64, "Marvin Maxis");
+				strcpy_s(szSettingsMayorName, 64, DEF_SIM_REG_MAYOR_NAME);
 			if (!GetDlgItemText(hwndDlg, IDC_EDIT_COMPANY, szSettingsCompanyName, 63))
-				strcpy_s(szSettingsCompanyName, 64, "Q37 Space Modulator Mfg.");
+				strcpy_s(szSettingsCompanyName, 64, DEF_SIM_REG_COMPANY_NAME);
 
 			// Update the settings JSON object
-			jsonSettingsCore["SimCity2000"]["Registration"]["Mayor Name"] = szSettingsMayorName;
-			jsonSettingsCore["SimCity2000"]["Registration"]["Company Name"] = szSettingsCompanyName;
+			jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME] = szSettingsMayorName;
+			jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_COMPANYNAME] = szSettingsCompanyName;
 
 			EndDialog(hwndDlg, wParam);
 			return TRUE;
@@ -215,9 +212,9 @@ static BOOL InstallSC2KDefaults(void) {
 	// If we haven't got an "installed" flag set to true in our setting structure (ie. there's no
 	// existing settings.json or we didn't just convert an sc2kfix.ini), prompt the user for the
 	// installer registration info.
-	if (!jsonSettingsCore["sc2kfix"]["core"]["installed"].ToBool()) {
+	if (!jsonSettingsCore[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_INSTALLED].ToBool()) {
 		DialogBox(hSC2KFixModule, MAKEINTRESOURCE(IDD_INSTALL), NULL, InstallDialogProc);
-		jsonSettingsCore["sc2kfix"]["core"]["installed"] = true;
+		jsonSettingsCore[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_INSTALLED] = true;
 		SaveJSONSettings();
 		return TRUE;
 	}
@@ -268,31 +265,31 @@ static BOOL RegLookup(const char *lpSubKey, unsigned long *ulKey) {
 		*ulKey = enSC2KKey;
 		ret = TRUE;
 	}
-	else if (_stricmp(lpSubKey, "Paths") == 0) {
+	else if (_stricmp(lpSubKey, S_SIM_PATHS) == 0) {
 		*ulKey = enPathsKey;
 		ret = TRUE;
 	}
-	else if (_stricmp(lpSubKey, "Windows") == 0) {
+	else if (_stricmp(lpSubKey, S_SIM_WIN) == 0) {
 		*ulKey = enWindowsKey;
 		ret = TRUE;
 	}
-	else if (_stricmp(lpSubKey, "Version") == 0) {
+	else if (_stricmp(lpSubKey, S_SIM_VER) == 0) {
 		*ulKey = enVersionKey;
 		ret = TRUE;
 	}
-	else if (_stricmp(lpSubKey, "Options") == 0) {
+	else if (_stricmp(lpSubKey, S_SIM_OPTIONS) == 0) {
 		*ulKey = enOptionsKey;
 		ret = TRUE;
 	}
-	else if (_stricmp(lpSubKey, "Localize") == 0) {
+	else if (_stricmp(lpSubKey, S_SIM_LOCALIZE) == 0) {
 		*ulKey = enLocalizeKey;
 		ret = TRUE;
 	}
-	else if (_stricmp(lpSubKey, "Registration") == 0) {
+	else if (_stricmp(lpSubKey, S_SIM_REG) == 0) {
 		*ulKey = enRegistrationKey;
 		ret = TRUE;
 	}
-	else if (_stricmp(lpSubKey, "SCURK") == 0) {
+	else if (_stricmp(lpSubKey, S_SIM_SCURK) == 0) {
 		*ulKey = enSCURKKey;
 		ret = TRUE;
 	}
@@ -302,15 +299,15 @@ static BOOL RegLookup(const char *lpSubKey, unsigned long *ulKey) {
 static const char *SectionLookup(HKEY hKey) {
 	switch (GetRedirectKey(hKey)) {
 		case enWindowsKey:
-			return "Windows";
+			return S_SIM_WIN;
 		case enVersionKey:
-			return "Version";
+			return S_SIM_VER;
 		case enOptionsKey:
-			return "Options";
+			return S_SIM_OPTIONS;
 		case enLocalizeKey:
-			return "Localize";
+			return S_SIM_LOCALIZE;
 		case enSCURKKey:
-			return "SCURK";
+			return S_SIM_SCURK;
 		default:
 			break;
 	}
@@ -354,23 +351,23 @@ extern "C" LSTATUS __stdcall Hook_RegSetValueExA(HKEY hKey, LPCSTR lpValueName, 
 		// Awful hack to get around SC2K sometimes SHOUTING VALUE NAMES IN ALL CAPS
 		if (IsRegKey(hKey, enOptionsKey)) {
 			if (!_stricmp(lpValueName, "MUSIC"))
-				strActualValue = "Music";
+				strActualValue = I_SIM_OPT_MUSIC;
 			if (!_stricmp(lpValueName, "SOUND"))
-				strActualValue = "Sound";
+				strActualValue = I_SIM_OPT_SOUND;
 			if (!_stricmp(lpValueName, "AUTOSAVE"))
-				strActualValue = "AutoSave";
+				strActualValue = I_SIM_OPT_AUTOSAVE;
 			if (!_stricmp(lpValueName, "AUTOBUDGET"))
-				strActualValue = "AutoBudget";
+				strActualValue = I_SIM_OPT_AUTOBUDGET;
 			if (!_stricmp(lpValueName, "AUTOGOTO"))
-				strActualValue = "AutoGoto";
+				strActualValue = I_SIM_OPT_AUTOGOTO;
 			if (!_stricmp(lpValueName, "DISASTERS"))
-				strActualValue = "Disasters";
+				strActualValue = I_SIM_OPT_DISASTERS;
 			if (!_stricmp(lpValueName, "SPEED"))
-				strActualValue = "Speed";
+				strActualValue = I_SIM_OPT_SPEED;
 		}
 
 		if (dwType == REG_DWORD || (dwType == REG_BINARY && cbData == sizeof(DWORD)))
-			jsonSettingsCore["SimCity2000"][section][strActualValue] = *(const DWORD*)lpData;
+			jsonSettingsCore[C_SIMCITY2000][section][strActualValue] = *(const DWORD*)lpData;
 
 		return ERROR_SUCCESS;
 	}
@@ -387,130 +384,130 @@ extern "C" LSTATUS __stdcall Hook_RegQueryValueExA(HKEY hKey, LPCSTR lpValueName
 		char szTargetPath[MAX_PATH];
 
 		strcpy_s(szTargetPath, MAX_PATH, szGamePath);
-		if (_stricmp(lpValueName, "Goodies") == 0) {
+		if (_stricmp(lpValueName, I_SIM_PATHS_GOODIES) == 0) {
 			if (registry_debug & REGISTRY_DEBUG_REGISTRY)
-				ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> Query Adjustment - %s -> %s\n", _ReturnAddress(), lpValueName, "MOVIES");
-			GamePathAdjust(szTargetPath, "Movies", lpData, lpcbData);
+				ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> Query Adjustment - %s -> %s\n", _ReturnAddress(), lpValueName, DEF_SIM_PATHS_MOVIES);
+			GamePathAdjust(szTargetPath, DEF_SIM_PATHS_MOVIES, lpData, lpcbData);
 		}
-		else if (_stricmp(lpValueName, "Cities") == 0 ||
-			_stricmp(lpValueName, "SaveGame") == 0) {
-			if (L_IsDirectoryPathValid(jsonSettingsCore["sc2kfix"]["paths"]["cities"].ToString().c_str()) && dwDetectedVersion == VERSION_SC2K_1996)
-				GetOutString(jsonSettingsCore["sc2kfix"]["paths"]["cities"].ToString().c_str(), lpData, lpcbData);
+		else if (_stricmp(lpValueName, I_SIM_PATHS_CITIES) == 0 ||
+			_stricmp(lpValueName, I_SIM_PATHS_SAVEGAME) == 0) {
+			if (L_IsDirectoryPathValid(jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_CITIES].ToString().c_str()) && dwDetectedVersion == VERSION_SC2K_1996)
+				GetOutString(jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_CITIES].ToString().c_str(), lpData, lpcbData);
 			else
-				GamePathAdjust(szTargetPath, "Cities", lpData, lpcbData);
+				GamePathAdjust(szTargetPath, DEF_SIM_PATHS_CITIES, lpData, lpcbData);
 		}
 
-		else if (_stricmp(lpValueName, "Data") == 0)
-			GamePathAdjust(szTargetPath, "Data", lpData, lpcbData);
+		else if (_stricmp(lpValueName, I_SIM_PATHS_DATA) == 0)
+			GamePathAdjust(szTargetPath, DEF_SIM_PATHS_DATA, lpData, lpcbData);
 
-		else if (_stricmp(lpValueName, "Graphics") == 0)
-			GamePathAdjust(szTargetPath, "Bitmaps", lpData, lpcbData);
+		else if (_stricmp(lpValueName, I_SIM_PATHS_GRAPHICS) == 0)
+			GamePathAdjust(szTargetPath, DEF_SIM_PATHS_GRAPHICS, lpData, lpcbData);
 		
-		else if (_stricmp(lpValueName, "Home") == 0)
+		else if (_stricmp(lpValueName, I_SIM_PATHS_HOME) == 0)
 			GetOutString(szTargetPath, lpData, lpcbData);
 		
-		else if (_stricmp(lpValueName, "Music") == 0)
-			GamePathAdjust(szTargetPath, "Sounds", lpData, lpcbData);
+		else if (_stricmp(lpValueName, I_SIM_PATHS_MUSIC) == 0)
+			GamePathAdjust(szTargetPath, DEF_SIM_PATHS_MUSIC, lpData, lpcbData);
 		
-		else if (_stricmp(lpValueName, "Scenarios") == 0)
-			GamePathAdjust(szTargetPath, "Scenario", lpData, lpcbData);
+		else if (_stricmp(lpValueName, I_SIM_PATHS_SCENARIOS) == 0)
+			GamePathAdjust(szTargetPath, DEF_SIM_PATHS_SCENARIOS, lpData, lpcbData);
 		
-		else if (_stricmp(lpValueName, "TileSets") == 0) {
-			if (L_IsDirectoryPathValid(jsonSettingsCore["sc2kfix"]["paths"]["tilesets"].ToString().c_str()) && dwDetectedVersion == VERSION_SC2K_1996)
-				GetOutString(jsonSettingsCore["sc2kfix"]["paths"]["tilesets"].ToString().c_str(), lpData, lpcbData);
+		else if (_stricmp(lpValueName, I_SIM_PATHS_TILESETS) == 0) {
+			if (L_IsDirectoryPathValid(jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_TILESETS].ToString().c_str()) && dwDetectedVersion == VERSION_SC2K_1996)
+				GetOutString(jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_TILESETS].ToString().c_str(), lpData, lpcbData);
 			else
-				GamePathAdjust(szTargetPath, "ScurkArt", lpData, lpcbData);
+				GamePathAdjust(szTargetPath, DEF_SIM_PATHS_TILESETS, lpData, lpcbData);
 		}
 		
 		return ERROR_SUCCESS;
 	}
 
 	if (IsRegKey(hKey, enWindowsKey)) {
-		if (_stricmp(lpValueName, "Display") == 0)
-			GetOutString("8 1", lpData, lpcbData);
+		if (_stricmp(lpValueName, I_SIM_WIN_DISPLAY) == 0)
+			GetOutString(DEF_SIM_WIN_DISPLAY, lpData, lpcbData);
 		
-		else if (_stricmp(lpValueName, "Color Check") == 0)
-			GetOutDWORD(0, lpData, lpcbData);
+		else if (_stricmp(lpValueName, I_SIM_WIN_COLCHECK) == 0)
+			GetOutDWORD(DEF_SIM_WIN_COLCHECK, lpData, lpcbData);
 		
-		else if (_stricmp(lpValueName, "Last Color Depth") == 0)
-			GetOutDWORD(jsonSettingsCore["SimCity2000"]["Windows"]["Last Color Depth"].ToInt(), lpData, lpcbData);
+		else if (_stricmp(lpValueName, I_SIM_WIN_LASTCOLDEPTH) == 0)
+			GetOutDWORD(jsonSettingsCore[C_SIMCITY2000][S_SIM_WIN][I_SIM_WIN_LASTCOLDEPTH].ToInt(), lpData, lpcbData);
 		
 		return ERROR_SUCCESS;
 	}
 
 	if (IsRegKey(hKey, enVersionKey)) {
-		if (_stricmp(lpValueName, "SimCity 2000") == 0)
-			GetOutDWORD(jsonSettingsCore["SimCity2000"]["Version"]["SimCity 2000"].ToInt(), lpData, lpcbData);
+		if (_stricmp(lpValueName, I_SIM_VER_SC2K) == 0)
+			GetOutDWORD(jsonSettingsCore[C_SIMCITY2000][S_SIM_VER][I_SIM_VER_SC2K].ToInt(), lpData, lpcbData);
 		
-		else if (_stricmp(lpValueName, "SCURK") == 0)
-			GetOutDWORD(jsonSettingsCore["SimCity2000"]["Version"]["SCURK"].ToInt(), lpData, lpcbData);
+		else if (_stricmp(lpValueName, I_SIM_VER_SCURK) == 0)
+			GetOutDWORD(jsonSettingsCore[C_SIMCITY2000][S_SIM_VER][I_SIM_VER_SCURK].ToInt(), lpData, lpcbData);
 		
 		return ERROR_SUCCESS;
 	}
 
 	if (IsRegKey(hKey, enOptionsKey)) {
-		if (_stricmp(lpValueName, "Disasters") == 0)
-			GetOutDWORD(jsonSettingsCore["SimCity2000"]["Options"]["Disasters"].ToInt(), lpData, lpcbData);
+		if (_stricmp(lpValueName, I_SIM_OPT_DISASTERS) == 0)
+			GetOutDWORD(jsonSettingsCore[C_SIMCITY2000][S_SIM_OPTIONS][I_SIM_OPT_DISASTERS].ToInt(), lpData, lpcbData);
 		
-		else if (_stricmp(lpValueName, "Music") == 0)
-			GetOutDWORD(jsonSettingsCore["SimCity2000"]["Options"]["Music"].ToInt(), lpData, lpcbData);
+		else if (_stricmp(lpValueName, I_SIM_OPT_MUSIC) == 0)
+			GetOutDWORD(jsonSettingsCore[C_SIMCITY2000][S_SIM_OPTIONS][I_SIM_OPT_MUSIC].ToInt(), lpData, lpcbData);
 		
-		else if (_stricmp(lpValueName, "Sound") == 0)
-			GetOutDWORD(jsonSettingsCore["SimCity2000"]["Options"]["Sound"].ToInt(), lpData, lpcbData);
+		else if (_stricmp(lpValueName, I_SIM_OPT_SOUND) == 0)
+			GetOutDWORD(jsonSettingsCore[C_SIMCITY2000][S_SIM_OPTIONS][I_SIM_OPT_SOUND].ToInt(), lpData, lpcbData);
 		
-		else if (_stricmp(lpValueName, "AutoGoto") == 0)
-			GetOutDWORD(jsonSettingsCore["SimCity2000"]["Options"]["AutoGoto"].ToInt(), lpData, lpcbData);
+		else if (_stricmp(lpValueName, I_SIM_OPT_AUTOGOTO) == 0)
+			GetOutDWORD(jsonSettingsCore[C_SIMCITY2000][S_SIM_OPTIONS][I_SIM_OPT_AUTOGOTO].ToInt(), lpData, lpcbData);
 		
-		else if (_stricmp(lpValueName, "AutoBudget") == 0)
-			GetOutDWORD(jsonSettingsCore["SimCity2000"]["Options"]["AutoBudget"].ToInt(), lpData, lpcbData);
+		else if (_stricmp(lpValueName, I_SIM_OPT_AUTOBUDGET) == 0)
+			GetOutDWORD(jsonSettingsCore[C_SIMCITY2000][S_SIM_OPTIONS][I_SIM_OPT_AUTOBUDGET].ToInt(), lpData, lpcbData);
 		
-		else if (_stricmp(lpValueName, "AutoSave") == 0)
-			GetOutDWORD(jsonSettingsCore["SimCity2000"]["Options"]["AutoSave"].ToInt(), lpData, lpcbData);
+		else if (_stricmp(lpValueName, I_SIM_OPT_AUTOSAVE) == 0)
+			GetOutDWORD(jsonSettingsCore[C_SIMCITY2000][S_SIM_OPTIONS][I_SIM_OPT_AUTOSAVE].ToInt(), lpData, lpcbData);
 		
-		else if (_stricmp(lpValueName, "Speed") == 0)
-			GetOutDWORD(jsonSettingsCore["SimCity2000"]["Options"]["Speed"].ToInt(), lpData, lpcbData);
+		else if (_stricmp(lpValueName, I_SIM_OPT_SPEED) == 0)
+			GetOutDWORD(jsonSettingsCore[C_SIMCITY2000][S_SIM_OPTIONS][I_SIM_OPT_SPEED].ToInt(), lpData, lpcbData);
 		
 		return ERROR_SUCCESS;
 	}
 
 	if (IsRegKey(hKey, enLocalizeKey)) {
-		if (_stricmp(lpValueName, "Language") == 0)
-			GetOutString(jsonSettingsCore["SimCity2000"]["Localize"]["Language"].ToString().c_str(), lpData, lpcbData);
+		if (_stricmp(lpValueName, I_SIM_LOC_LANG) == 0)
+			GetOutString(jsonSettingsCore[C_SIMCITY2000][S_SIM_LOCALIZE][I_SIM_LOC_LANG].ToString().c_str(), lpData, lpcbData);
 		
 		return ERROR_SUCCESS;
 	}
 
 	if (IsRegKey(hKey, enRegistrationKey)) {
-		if (_stricmp(lpValueName, "Mayor Name") == 0)
-			GetOutString(jsonSettingsCore["SimCity2000"]["Registration"]["Mayor Name"].ToString().c_str(), lpData, lpcbData);
+		if (_stricmp(lpValueName, I_SIM_REG_MAYORNAME) == 0)
+			GetOutString(jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str(), lpData, lpcbData);
 		
-		else if (_stricmp(lpValueName, "Company Name") == 0)
-			GetOutString(jsonSettingsCore["SimCity2000"]["Registration"]["Company Name"].ToString().c_str(), lpData, lpcbData);
+		else if (_stricmp(lpValueName, I_SIM_REG_COMPANYNAME) == 0)
+			GetOutString(jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_COMPANYNAME].ToString().c_str(), lpData, lpcbData);
 		
 		return ERROR_SUCCESS;
 	}
 
 	if (IsRegKey(hKey, enSCURKKey)) {
-		if (_stricmp(lpValueName, "CycleColors") == 0)
-			GetOutDWORD(jsonSettingsCore["SimCity2000"]["SCURK"]["CycleColors"].ToInt(), lpData, lpcbData);
+		if (_stricmp(lpValueName, I_SIM_SCRK_CYCLECOLORS) == 0)
+			GetOutDWORD(jsonSettingsCore[C_SIMCITY2000][S_SIM_SCURK][I_SIM_SCRK_CYCLECOLORS].ToInt(), lpData, lpcbData);
 		
-		else if (_stricmp(lpValueName, "GridHeight") == 0)
-			GetOutDWORD(jsonSettingsCore["SimCity2000"]["SCURK"]["GridHeight"].ToInt(), lpData, lpcbData);
+		else if (_stricmp(lpValueName, I_SIM_SCRK_GRIDHEIGHT) == 0)
+			GetOutDWORD(jsonSettingsCore[C_SIMCITY2000][S_SIM_SCURK][I_SIM_SCRK_GRIDHEIGHT].ToInt(), lpData, lpcbData);
 		
-		else if (_stricmp(lpValueName, "GridWidth") == 0)
-			GetOutDWORD(jsonSettingsCore["SimCity2000"]["SCURK"]["GridWidth"].ToInt(), lpData, lpcbData);
+		else if (_stricmp(lpValueName, I_SIM_SCRK_GRIDWIDTH) == 0)
+			GetOutDWORD(jsonSettingsCore[C_SIMCITY2000][S_SIM_SCURK][I_SIM_SCRK_GRIDWIDTH].ToInt(), lpData, lpcbData);
 		
-		else if (_stricmp(lpValueName, "ShowClipRegion") == 0)
-			GetOutDWORD(jsonSettingsCore["SimCity2000"]["SCURK"]["ShowClipRegion"].ToInt(), lpData, lpcbData);
+		else if (_stricmp(lpValueName, I_SIM_SCRK_SHOWCLIPREG) == 0)
+			GetOutDWORD(jsonSettingsCore[C_SIMCITY2000][S_SIM_SCURK][I_SIM_SCRK_SHOWCLIPREG].ToInt(), lpData, lpcbData);
 		
-		else if (_stricmp(lpValueName, "ShowDrawGrid") == 0)
-			GetOutDWORD(jsonSettingsCore["SimCity2000"]["SCURK"]["ShowDrawGrid"].ToInt(), lpData, lpcbData);
+		else if (_stricmp(lpValueName, I_SIM_SCRK_SHOWDRAWGRID) == 0)
+			GetOutDWORD(jsonSettingsCore[C_SIMCITY2000][S_SIM_SCURK][I_SIM_SCRK_SHOWDRAWGRID].ToInt(), lpData, lpcbData);
 		
-		else if (_stricmp(lpValueName, "SnapToGrid") == 0)
-			GetOutDWORD(jsonSettingsCore["SimCity2000"]["SCURK"]["SnapToGrid"].ToInt(), lpData, lpcbData);
+		else if (_stricmp(lpValueName, I_SIM_SCRK_SNAPTOGRID) == 0)
+			GetOutDWORD(jsonSettingsCore[C_SIMCITY2000][S_SIM_SCURK][I_SIM_SCRK_SNAPTOGRID].ToInt(), lpData, lpcbData);
 		
-		else if (_stricmp(lpValueName, "Sound") == 0)
-			GetOutDWORD(jsonSettingsCore["SimCity2000"]["SCURK"]["Sound"].ToInt(), lpData, lpcbData);
+		else if (_stricmp(lpValueName, I_SIM_SCRK_SOUND) == 0)
+			GetOutDWORD(jsonSettingsCore[C_SIMCITY2000][S_SIM_SCURK][I_SIM_SCRK_SOUND].ToInt(), lpData, lpcbData);
 		
 		return ERROR_SUCCESS;
 	}

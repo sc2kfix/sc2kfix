@@ -51,7 +51,7 @@ static void SettingsTabSelectionChanged(HWND hwndDlg) {
 	return;
 }
 
-#define GET_CHECKBOX(dest, src) dest = (bool)Button_GetCheck(GetDlgItem(hwndDlg, src))
+#define GET_CHECKBOX(dest, src) dest = (Button_GetCheck(GetDlgItem(hwndDlg, src)) == BST_CHECKED) ? true : false
 #define SET_CHECKBOX(src, dest) Button_SetCheck(GetDlgItem(hwndDlg, dest), src.ToBool() ? BST_CHECKED : BST_UNCHECKED)
 
 static BOOL CALLBACK SettingsDialogGeneralTabProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -93,26 +93,26 @@ static BOOL CALLBACK SettingsDialogGeneralTabProc(HWND hwndDlg, UINT message, WP
 			"Enabling or disabling this setting takes effect after restarting the game.");
 
 		// Set fields based on the working JSON
-		SetDlgItemText(hwndDlg, IDC_SETTINGS_MAYOR, jsonSettingsCoreWorkingCopy["SimCity2000"]["Registration"]["Mayor Name"].ToString().c_str());
-		SetDlgItemText(hwndDlg, IDC_SETTINGS_COMPANY, jsonSettingsCoreWorkingCopy["SimCity2000"]["Registration"]["Company Name"].ToString().c_str());
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["force_console"], IDC_SETTINGS_CHECK_CONSOLE);
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["check_for_updates"], IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES);
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["skip_mods"], IDC_SETTINGS_CHECK_DONT_LOAD_MODS);
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["skip_intro"], IDC_SETTINGS_CHECK_SKIP_INTRO);
+		SetDlgItemText(hwndDlg, IDC_SETTINGS_MAYOR, jsonSettingsCoreWorkingCopy[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
+		SetDlgItemText(hwndDlg, IDC_SETTINGS_COMPANY, jsonSettingsCoreWorkingCopy[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_COMPANYNAME].ToString().c_str());
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_FORCECON], IDC_SETTINGS_CHECK_CONSOLE);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_CHECKFORUPD], IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_SKIPMODS], IDC_SETTINGS_CHECK_DONT_LOAD_MODS);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SKIPINTRO], IDC_SETTINGS_CHECK_SKIP_INTRO);
 
 		return TRUE;
 
 	case WM_DESTROY:
 		// Update the working JSON based on our fields
 		if (GetDlgItemText(hwndDlg, IDC_SETTINGS_MAYOR, szTempRegistrationNameBuffer, 63))
-			jsonSettingsCoreWorkingCopy["SimCity2000"]["Registration"]["Mayor Name"] = szTempRegistrationNameBuffer;
+			jsonSettingsCoreWorkingCopy[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME] = szTempRegistrationNameBuffer;
 		if (GetDlgItemText(hwndDlg, IDC_SETTINGS_COMPANY, szTempRegistrationNameBuffer, 63))
-			jsonSettingsCoreWorkingCopy["SimCity2000"]["Registration"]["Company Name"] = szTempRegistrationNameBuffer;
+			jsonSettingsCoreWorkingCopy[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_COMPANYNAME] = szTempRegistrationNameBuffer;
 
-		GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["force_console"], IDC_SETTINGS_CHECK_CONSOLE);
-		GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["check_for_updates"], IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES);
-		GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["skip_mods"], IDC_SETTINGS_CHECK_DONT_LOAD_MODS);
-		GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["skip_intro"], IDC_SETTINGS_CHECK_SKIP_INTRO);
+		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_FORCECON], IDC_SETTINGS_CHECK_CONSOLE);
+		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_CHECKFORUPD], IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES);
+		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_SKIPMODS], IDC_SETTINGS_CHECK_DONT_LOAD_MODS);
+		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SKIPINTRO], IDC_SETTINGS_CHECK_SKIP_INTRO);
 
 		return TRUE;
 
@@ -163,25 +163,25 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 			"Enabling or disabling this setting takes effect after restarting the game.");
 
 		// Set fields based on the working JSON
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_floating_status"], IDC_SETTINGS_CHECK_STATUS_DIALOG);
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["title_calendar"], IDC_SETTINGS_CHECK_TITLE_DATE);
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_new_strings"], IDC_SETTINGS_CHECK_NEW_STRINGS);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USEFLTSTATUS], IDC_SETTINGS_CHECK_STATUS_DIALOG);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND], IDC_SETTINGS_CHECK_TITLE_DATE);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USENEWSTRINGS], IDC_SETTINGS_CHECK_NEW_STRINGS);
 
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["frequent_updates"], IDC_SETTINGS_CHECK_REFRESH_RATE);
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["dark_underground"], IDC_SETTINGS_CHECK_DARK_UNDGRND);
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["use_sound_replacements"], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES], IDC_SETTINGS_CHECK_REFRESH_RATE);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND], IDC_SETTINGS_CHECK_DARK_UNDGRND);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
 
 		return TRUE;
 
 	case WM_DESTROY:
 		// Update the working JSON based on our fields
-		GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_floating_status"], IDC_SETTINGS_CHECK_STATUS_DIALOG);
-		GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["title_calendar"], IDC_SETTINGS_CHECK_TITLE_DATE);
-		GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_new_strings"], IDC_SETTINGS_CHECK_NEW_STRINGS);
+		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USEFLTSTATUS], IDC_SETTINGS_CHECK_STATUS_DIALOG);
+		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND], IDC_SETTINGS_CHECK_TITLE_DATE);
+		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USENEWSTRINGS], IDC_SETTINGS_CHECK_NEW_STRINGS);
 
-		GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["frequent_updates"], IDC_SETTINGS_CHECK_REFRESH_RATE);
-		GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["dark_underground"], IDC_SETTINGS_CHECK_DARK_UNDGRND);
-		GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["use_sound_replacements"], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
+		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES], IDC_SETTINGS_CHECK_REFRESH_RATE);
+		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND], IDC_SETTINGS_CHECK_DARK_UNDGRND);
+		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
 
 		return TRUE;
 
@@ -250,37 +250,37 @@ static BOOL CALLBACK SettingsDialogAudioTabProc(HWND hwndDlg, UINT message, WPAR
 			"This setting controls whether or not to shuffle the playlist when the game starts and when the end of the playlist is reached.");
 
 		// Set fields based on the working JSON
-		SendMessage(GetDlgItem(hwndDlg, IDC_SLIDER_VOLUME_MASTER), TBM_SETPOS, TRUE, (int)(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["master_volume"].ToFloat() * 10));
+		SendMessage(GetDlgItem(hwndDlg, IDC_SLIDER_VOLUME_MASTER), TBM_SETPOS, TRUE, (int)(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat() * 10));
 		SendMessage(GetDlgItem(hwndDlg, IDC_SLIDER_VOLUME_MASTER), TBM_SETTICFREQ, 1, 0);
 		SendMessage(GetDlgItem(hwndDlg, IDC_SLIDER_VOLUME_MASTER), TBM_SETRANGE, TRUE, MAKELONG(0, 10));
-		SendMessage(GetDlgItem(hwndDlg, IDC_SLIDER_VOLUME_MUSIC), TBM_SETPOS, TRUE, (int)(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_volume"].ToFloat() * 10));
+		SendMessage(GetDlgItem(hwndDlg, IDC_SLIDER_VOLUME_MUSIC), TBM_SETPOS, TRUE, (int)(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICVOLUME].ToFloat() * 10));
 		SendMessage(GetDlgItem(hwndDlg, IDC_SLIDER_VOLUME_MUSIC), TBM_SETTICFREQ, 1, 0);
 		SendMessage(GetDlgItem(hwndDlg, IDC_SLIDER_VOLUME_MUSIC), TBM_SETRANGE, TRUE, MAKELONG(0, 10));
-		SendMessage(GetDlgItem(hwndDlg, IDC_SLIDER_VOLUME_SOUNDS), TBM_SETPOS, TRUE, (int)(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["sound_volume"].ToFloat() * 10));
+		SendMessage(GetDlgItem(hwndDlg, IDC_SLIDER_VOLUME_SOUNDS), TBM_SETPOS, TRUE, (int)(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDVOLUME].ToFloat() * 10));
 		SendMessage(GetDlgItem(hwndDlg, IDC_SLIDER_VOLUME_SOUNDS), TBM_SETTICFREQ, 1, 0);
 		SendMessage(GetDlgItem(hwndDlg, IDC_SLIDER_VOLUME_SOUNDS), TBM_SETRANGE, TRUE, MAKELONG(0, 10));
 		InvalidateRect(hwndDlg, NULL, TRUE);	// Force a redraw so the sliders show up. Friggin' WinAPI.
 
-		ComboBox_SetCurSel(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT), MusicEngineStringToInt(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_driver"].ToString().c_str()));
-		SetDlgItemText(hwndDlg, IDC_SETTINGS_FLUIDSYNTH_SOUNDFONT, GetFileBaseName(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["soundfont"].ToString().c_str()));
+		ComboBox_SetCurSel(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT), MusicEngineStringToInt(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString().c_str()));
+		SetDlgItemText(hwndDlg, IDC_SETTINGS_FLUIDSYNTH_SOUNDFONT, GetFileBaseName(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT].ToString().c_str()));
 
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_in_background"], IDC_SETTINGS_CHECK_BKGDMUSIC);
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["shuffle_music"], IDC_SETTINGS_CHECK_SHUFFLE_MUSIC);
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["always_play_music"], IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND], IDC_SETTINGS_CHECK_BKGDMUSIC);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SHUFFLEMUSIC], IDC_SETTINGS_CHECK_SHUFFLE_MUSIC);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_ALWAYSPLAYMUSIC], IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC);
 
 		return TRUE;
 
 	case WM_DESTROY:
 		// Update the working JSON based on our fields
-		jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["master_volume"] = 0.1f * SendMessage(GetDlgItem(hwndDlg, IDC_SLIDER_VOLUME_MASTER), TBM_GETPOS, 0, 0);
-		jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_volume"] = 0.1f * SendMessage(GetDlgItem(hwndDlg, IDC_SLIDER_VOLUME_MUSIC), TBM_GETPOS, 0, 0);
-		jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["sound_volume"] = 0.1f * SendMessage(GetDlgItem(hwndDlg, IDC_SLIDER_VOLUME_SOUNDS), TBM_GETPOS, 0, 0);
+		jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME] = 0.1f * SendMessage(GetDlgItem(hwndDlg, IDC_SLIDER_VOLUME_MASTER), TBM_GETPOS, 0, 0);
+		jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICVOLUME] = 0.1f * SendMessage(GetDlgItem(hwndDlg, IDC_SLIDER_VOLUME_MUSIC), TBM_GETPOS, 0, 0);
+		jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDVOLUME] = 0.1f * SendMessage(GetDlgItem(hwndDlg, IDC_SLIDER_VOLUME_SOUNDS), TBM_GETPOS, 0, 0);
 
-		jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_driver"] = MusicEngineIntToString(ComboBox_GetCurSel(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT)));
+		jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER] = MusicEngineIntToString(ComboBox_GetCurSel(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT)));
 
-		GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_in_background"], IDC_SETTINGS_CHECK_BKGDMUSIC);
-		GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["shuffle_music"], IDC_SETTINGS_CHECK_SHUFFLE_MUSIC);
-		GET_CHECKBOX(jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["always_play_music"], IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC);
+		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND], IDC_SETTINGS_CHECK_BKGDMUSIC);
+		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SHUFFLEMUSIC], IDC_SETTINGS_CHECK_SHUFFLE_MUSIC);
+		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_ALWAYSPLAYMUSIC], IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC);
 
 		return TRUE;
 
@@ -291,7 +291,7 @@ static BOOL CALLBACK SettingsDialogAudioTabProc(HWND hwndDlg, UINT message, WPAR
 				if (mus_debug & 8)
 					ConsoleLog(LOG_DEBUG, "CORE: SoundFont setting changed; new soundfont is %s\n", szFluidSynthSettingPath);
 
-				jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["soundfont"] = szFluidSynthSettingPath;
+				jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT] = szFluidSynthSettingPath;
 				SetDlgItemText(hwndDlg, IDC_SETTINGS_FLUIDSYNTH_SOUNDFONT, GetFileBaseName(szFluidSynthSettingPath));
 			}
 			break;
@@ -424,30 +424,30 @@ BOOL CALLBACK SettingsDialogContainerProc(HWND hwndDlg, UINT message, WPARAM wPa
 			break;
 		case IDC_SETTINGS_BUTTON_DEFAULTS:
 			// Set all the checkboxes to the defaults.
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["force_console"] = false;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["check_for_updates"] = true;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["skip_mods"] = false;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_FORCECON] = DEF_FIX_CORE_FORCECON;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_CHECKFORUPD] = DEF_FIX_CORE_CHECKFORUPD;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_SKIPMODS] = DEF_FIX_CORE_SKIPMODS;
 
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_in_background"] = true;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["use_sound_replacements"] = true;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["shuffle_music"] = false;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_driver"] = "fluidsynth";
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["soundfont"] = "C:\\Windows\\System32\\drivers\\gm.dls";
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["always_play_music"] = false;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["master_volume"] = 1.0;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_volume"] = 1.0;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["sound_volume"] = 1.0;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND] = DEF_FIX_AUD_MUSICINBKGRND;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE] = DEF_FIX_AUD_USESNDREPLACE;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SHUFFLEMUSIC] = DEF_FIX_AUD_SHUFFLEMUSIC;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER] = DEF_FIX_AUD_MUSICDRIVER;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT] = DEF_FIX_AUD_SOUNDFONT;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_ALWAYSPLAYMUSIC] = DEF_FIX_AUD_ALWAYSPLAYMUSIC;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME] = DEF_FIX_AUD_MASTERVOLUME;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICVOLUME] = DEF_FIX_AUD_MUSICVOLUME;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDVOLUME] = DEF_FIX_AUD_SOUNDVOLUME;
 
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["frequent_updates"] = true;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["dark_underground"] = false;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["skip_intro"] = false;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_new_strings"] = true;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_floating_status"] = false;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["title_calendar"] = true;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES] = DEF_FIX_QOL_FREQUPDATES;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND] = DEF_FIX_QOL_DARKUNDGRND;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SKIPINTRO] = DEF_FIX_QOL_SKIPINTRO;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USENEWSTRINGS] = DEF_FIX_QOL_USENEWSTRINGS;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USEFLTSTATUS] = DEF_FIX_QOL_USEFLTSTATUS;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND] = DEF_FIX_QOL_TITLECALEND;
 
 			for (int i = 10000; i < 10019; i++) {
-				jsonSettingsCoreWorkingCopy["sc2kfix"]["music_midi"][std::to_string(i)] = "";
-				jsonSettingsCoreWorkingCopy["sc2kfix"]["music_mp3"][std::to_string(i)] = "";
+				jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_MUSMID][std::to_string(i)] = "";
+				jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_MUSMP3][std::to_string(i)] = "";
 			}
 
 			// Refresh the tab we're on
@@ -455,30 +455,30 @@ BOOL CALLBACK SettingsDialogContainerProc(HWND hwndDlg, UINT message, WPARAM wPa
 			break;
 		case IDC_SETTINGS_BUTTON_VANILLA:
 			// Clear all checkboxes except for the update checker.
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["force_console"] = false;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["check_for_updates"] = true;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["core"]["skip_mods"] = false;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_FORCECON] = DEF_FIX_CORE_FORCECON;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_CHECKFORUPD] = DEF_FIX_CORE_CHECKFORUPD;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_SKIPMODS] = DEF_FIX_CORE_SKIPMODS;
 
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_in_background"] = false;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["use_sound_replacements"] = false;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["shuffle_music"] = false;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_driver"] = "fluidsynth";
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["soundfont"] = "C:\\Windows\\System32\\drivers\\gm.dls";
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["always_play_music"] = false;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["master_volume"] = 1.0;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_volume"] = 1.0;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["sound_volume"] = 1.0;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND] = false;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE] = false;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SHUFFLEMUSIC] = DEF_FIX_AUD_SHUFFLEMUSIC;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER] = DEF_FIX_AUD_MUSICDRIVER;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT] = DEF_FIX_AUD_SOUNDFONT;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_ALWAYSPLAYMUSIC] = DEF_FIX_AUD_ALWAYSPLAYMUSIC;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME] = DEF_FIX_AUD_MASTERVOLUME;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICVOLUME] = DEF_FIX_AUD_MUSICVOLUME;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDVOLUME] = DEF_FIX_AUD_SOUNDVOLUME;
 
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["frequent_updates"] = false;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["dark_underground"] = false;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["skip_intro"] = false;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_new_strings"] = false;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["use_floating_status"] = false;
-			jsonSettingsCoreWorkingCopy["sc2kfix"]["qol"]["title_calendar"] = false;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES] = false;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND] = DEF_FIX_QOL_DARKUNDGRND;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SKIPINTRO] = DEF_FIX_QOL_SKIPINTRO;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USENEWSTRINGS] = false;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USEFLTSTATUS] = DEF_FIX_QOL_USENEWSTRINGS;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND] = false;
 
 			for (int i = 10000; i < 10019; i++) {
-				jsonSettingsCoreWorkingCopy["sc2kfix"]["music_midi"][std::to_string(i)] = "";
-				jsonSettingsCoreWorkingCopy["sc2kfix"]["music_mp3"][std::to_string(i)] = "";
+				jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_MUSMID][std::to_string(i)] = "";
+				jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_MUSMP3][std::to_string(i)] = "";
 			}
 
 			// Refresh the tab we're on
@@ -507,8 +507,8 @@ void ShowNewSettingsDialog(void) {
 	jsonSettingsCoreWorkingCopy = jsonSettingsCore;
 
 	// Save the original settings here just prior to saving.
-	std::string strOriginalMusicDriver = jsonSettingsCore["sc2kfix"]["audio"]["music_driver"].ToString();
-	std::string strOriginalSoundfont = jsonSettingsCore["sc2kfix"]["audio"]["soundfont"].ToString();
+	std::string strOriginalMusicDriver = jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString();
+	std::string strOriginalSoundfont = jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT].ToString();
 
 	InitializeTempBindings();
 
@@ -528,8 +528,8 @@ void ShowNewSettingsDialog(void) {
 		SaveJSONSettings();
 
 		// See if we need to reset the music engine.
-		if (dwMusicThreadID && (strOriginalMusicDriver != jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["music_driver"].ToString() ||
-			strOriginalSoundfont != jsonSettingsCoreWorkingCopy["sc2kfix"]["audio"]["soundfont"].ToString()) ||
+		if (dwMusicThreadID && (strOriginalMusicDriver != jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() ||
+			strOriginalSoundfont != jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT].ToString()) ||
 			(stSettingsChanges.bActiveMusicDriverTouched && stSettingsChanges.bActiveTrackChanged))
 			PostThreadMessage(dwMusicThreadID, WM_MUSIC_RESET, NULL, NULL);
 	}
