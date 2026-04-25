@@ -151,7 +151,6 @@ const char* szSC2KFixBuildInfo = "$(UserName)@$(ComputerName)  $([System.DateTim
     <ClCompile Include="hooks\hook_tilegrowthorplacement.cpp" />
     <ClCompile Include="hooks\hook_toolbars.cpp" />
     <ClCompile Include="modules\common_remote_functions.cpp" />
-    <ClCompile Include="modules\console.cpp" />
     <ClCompile Include="buildinfo.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="hooks\hook_mciSendCommand.cpp" />

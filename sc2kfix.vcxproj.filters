@@ -263,9 +263,6 @@
     <ClCompile Include="hooks\hook_sndPlaySound.cpp">
       <Filter>Source Files\Hooks</Filter>
     </ClCompile>
-    <ClCompile Include="modules\console.cpp">
-      <Filter>Source Files\Modules</Filter>
-    </ClCompile>
     <ClCompile Include="hooks\hook_mmtimers.cpp">
       <Filter>Source Files\Hooks</Filter>
     </ClCompile>

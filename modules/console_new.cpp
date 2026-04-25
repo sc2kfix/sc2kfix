@@ -32,10 +32,17 @@
 #define debug_printf printf
 #endif
 
+#ifdef CONSOLE_ENABLED
+BOOL bConsoleEnabled = TRUE;
+#else 
+BOOL bConsoleEnabled = FALSE;
+#endif
+
 void drop_args(...) {
 	return;
 }
 
+HANDLE hConsoleThread;
 HOOKEXT bool bConsoleInLuaREPL = false;
 HOOKEXT bool bConsoleElevatedMode = false;
 HOOKEXT bool bConsoleKeepCommandBuffer = false;
@@ -1505,4 +1512,12 @@ DWORD WINAPI NewConsoleThread(LPVOID lpParameter) {
 			bConsoleKeepCommandBuffer = false;
 		}
 	}
+}
+
+BOOL WINAPI ConsoleCtrlHandler(DWORD fdwCtrlType) {
+	switch (fdwCtrlType) {
+	case CTRL_C_EVENT:
+		return TRUE;
+	}
+	return FALSE;
 }
