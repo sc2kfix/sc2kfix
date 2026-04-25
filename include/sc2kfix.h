@@ -434,9 +434,6 @@ void LoadNativeCodeMods(void);
 
 extern const char *gamePrimaryKey;
 
-//extern char szLastStoredCityPath[MAX_PATH + 1];
-//extern char szLastStoredTileSetPath[MAX_PATH + 1];
-
 extern BOOL bGameDead;
 extern HMODULE hRealWinMM;
 extern HMODULE hSC2KAppModule;
