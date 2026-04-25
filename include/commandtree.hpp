@@ -194,7 +194,7 @@ namespace console {
 
 		ConsoleCommand ToCommand() const {
 			bool b;
-			return std::move(ToCommand(b));
+			return ToCommand(b);
 		}
 
 		ConsoleCommand ToCommand(bool& ok) const {
