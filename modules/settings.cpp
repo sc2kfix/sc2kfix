@@ -117,6 +117,8 @@ void ConvertSettingsToJSON(void) {
 	const char* szSettingsIniPath = GetIniPath();
 	char szKeyBuf[32];
 	char szSettingsMusicEngineOutput[32];
+	char szLastStoredCityPath[MAX_PATH + 1];
+	char szLastStoredTileSetPath[MAX_PATH + 1];
 
 	// [Registration]
 	const char* section = S_SIM_REG;
@@ -196,6 +198,13 @@ void ConvertSettingsToJSON(void) {
 	// Keybinding settings
 	section = "sc2kfix.Bindings";
 	LoadLegacyStoredBindings(jsonSettingsCore, section, szSettingsIniPath);
+
+	// Last Stored Paths
+	section = "LastAccessedPaths";
+	GetPrivateProfileStringA(section, "szLastStoredCityPath", "", szLastStoredCityPath, sizeof(szLastStoredCityPath) - 1, szSettingsIniPath);
+	jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_CITIES] = szLastStoredCityPath;
+	GetPrivateProfileStringA(section, "szLastStoredTileSetPath", "", szLastStoredTileSetPath, sizeof(szLastStoredTileSetPath) - 1, szSettingsIniPath);
+	jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_TILESETS] = szLastStoredTileSetPath;
 
 	// Rename the old INI, save the JSON, and print a notice in the console
 	MoveFile(szSettingsIniPath, (std::string(szSettingsIniPath) + ".old").c_str());
