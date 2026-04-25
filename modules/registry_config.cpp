@@ -49,9 +49,6 @@ enum redirected_keys_t {
 
 const char *gamePrimaryKey = "SimCity 2000";
 
-//char szLastStoredCityPath[MAX_PATH + 1];
-//char szLastStoredTileSetPath[MAX_PATH + 1];
-
 BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 	case WM_INITDIALOG:
