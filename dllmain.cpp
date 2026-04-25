@@ -307,8 +307,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Dump some console opening info
 		if (bConsoleEnabled) {
 			ConsoleLog(LOG_INFO, "CORE: Spawned console session.\n");
-			printf(VT100_COLOUR_CYAN "[INFO ]" VT100_DEFAULT " CORE: ");
-			ConsoleCmdShowDebug(NULL, NULL);
+			// printf(VT100_COLOUR_CYAN "[INFO ]" VT100_DEFAULT " CORE: ");
+			// ConsoleCmdShowDebug(NULL, NULL);
 		}
 
 		// Load the FluidSynth library in case we need it
@@ -539,7 +539,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Start the console thread.
 		if (bConsoleEnabled) {
 			ConsoleLog(LOG_INFO, "CORE: Starting console thread.\n");
-			hConsoleThread = CreateThread(NULL, 0, ConsoleThread, 0, 0, NULL);
+			hConsoleThread = CreateThread(NULL, 0, NewConsoleThread, 0, 0, NULL);
 		}
 
 		// Set up the modding infrastructure for the 1996 Special Edition version.
