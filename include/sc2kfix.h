@@ -320,6 +320,11 @@ enum {
 #define BREAKOUT_INTERRUPT	4
 #define BREAKOUT_SPACE		5
 
+#define printf_red(s, ...) printf(VT100_COLOUR_RED s VT100_DEFAULT, __VA_ARGS__)
+#define printf_lightred(s, ...) printf(VT100_COLOUR_BRIGHT_RED s VT100_DEFAULT, __VA_ARGS__)
+#define printf_yellow(s, ...) printf(VT100_COLOUR_YELLOW s VT100_DEFAULT, __VA_ARGS__)
+#define printf_lightblue(s, ...) printf(VT100_COLOUR_BRIGHT_BLUE s VT100_DEFAULT, __VA_ARGS__)
+
 // command_proc_t: console command procedure typedef
 // Returns false if the parser should throw "invalid argument", true otherwise
 // All arguments after the command are in `args`. The CLI parser breakout state that caused the

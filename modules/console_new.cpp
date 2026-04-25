@@ -32,11 +32,6 @@
 #define debug_printf printf
 #endif
 
-#define printf_red(s, ...) printf(VT100_COLOUR_RED s VT100_DEFAULT, __VA_ARGS__)
-#define printf_lightred(s, ...) printf(VT100_COLOUR_BRIGHT_RED s VT100_DEFAULT, __VA_ARGS__)
-#define printf_yellow(s, ...) printf(VT100_COLOUR_YELLOW s VT100_DEFAULT, __VA_ARGS__)
-#define printf_lightblue(s, ...) printf(VT100_COLOUR_BRIGHT_BLUE s VT100_DEFAULT, __VA_ARGS__)
-
 void drop_args(...) {
 	return;
 }

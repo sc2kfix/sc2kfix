@@ -1,5 +1,5 @@
 // sc2kfix mods/sc2kfix.h: main include file for mods
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #pragma once
 #pragma warning(disable : 4200)
@@ -16,6 +16,7 @@
 #include "../include/commonhelp.h"
 #include "../include/sc2kclasses.h"
 #include "../include/sc2k_1996.h"
+#include "../include/vt100.h"
 
 #define IFF_HEAD(a, b, c, d) ((DWORD)d << 24 | (DWORD)c << 16 | (DWORD)b << 8 | (DWORD)a)
 
@@ -88,6 +89,11 @@ typedef struct {
 #define BREAKOUT_QUESTION	3
 #define BREAKOUT_INTERRUPT	4
 #define BREAKOUT_SPACE		5
+
+#define printf_red(s, ...) printf(VT100_COLOUR_RED s VT100_DEFAULT, __VA_ARGS__)
+#define printf_lightred(s, ...) printf(VT100_COLOUR_BRIGHT_RED s VT100_DEFAULT, __VA_ARGS__)
+#define printf_yellow(s, ...) printf(VT100_COLOUR_YELLOW s VT100_DEFAULT, __VA_ARGS__)
+#define printf_lightblue(s, ...) printf(VT100_COLOUR_BRIGHT_BLUE s VT100_DEFAULT, __VA_ARGS__)
 
 #define HOOKS_COUNT(st) (sizeof(st) / sizeof(sc2kfix_mod_hook_t))
 

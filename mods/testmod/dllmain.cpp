@@ -1,5 +1,5 @@
 // sc2kfix/testmod dllmain.cpp: test/template mod with inline documentation
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 // These two lines are mandatory for sc2kfix mods. The first one ensures that all Windows API
 // calls use the ANSI calls instead of the Unicode calls, which aligns with the way that SimCity
