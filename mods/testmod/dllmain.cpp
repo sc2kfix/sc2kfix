@@ -35,10 +35,10 @@ sc2kfix_mod_hook_t stModHooks[] = {
 sc2kfix_mod_info_t stModInfo = {
 	/* .iModInfoVersion = */ 1,
 	/* .iModVersionMajor = */ 0,
-	/* .iModVersionMinor = */ 2,
+	/* .iModVersionMinor = */ 3,
 	/* .iModVersionPatch = */ 0,
 	/* .iMinimumVersionMajor = */ 0,
-	/* .iMinimumVersionMinor = */ 10,
+	/* .iMinimumVersionMinor = */ 11,
 	/* .iMinimumVersionPatch = */ 0,
 	/* .szModName = */ "Test Native Code Mod",
 	/* .szModShortName = */ "testmod",
@@ -56,19 +56,39 @@ HOOKCB sc2kfix_mod_info_t* HookCb_GetModInfo(void) {
 	return &stModInfo;
 }
 
+// Console commands can be added to the command tree just like in the plugin itself. Be sure to
+// remove any console commands you add as part of your cleanup process; a good place to do this is
+// in DllMain when dwReason is DLL_PROCESS_DETACH.
+bool ConsoleCommandTestmod(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	// No arguments allowed
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap({ {"<[Enter]>", "Execute this command"} });
+		bConsoleKeepCommandBuffer = true;
+		return true;
+	}
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+
+	// Print a little hello message.
+	printf("You found me!\n");
+	return true;
+}
+
 // The DllMain function in each hook should be used sparingly and follow the best practices
 // conventions of the Windows API documentation for DLL entry points, as the DllMain function
 // is executed while under the global loader lock. See the following link for details:
 // https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-best-practices
-BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
-	switch (reason) {
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved) {
+	switch (dwReason) {
 	case DLL_PROCESS_ATTACH:
 		LOG(LOG_INFO, "testmod says hello!\n");
+		treeConsoleCommands["testmod"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandTestmod, "This command is brought to you by testmod!");
 		break;
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:
 		break;
 	case DLL_PROCESS_DETACH:
+		treeConsoleCommands["testmod"].~CommandTree();
 		LOG(LOG_INFO, "testmod says goodbye!\n");
 		break;
 	}

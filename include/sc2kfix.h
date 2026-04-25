@@ -351,9 +351,9 @@ extern char szGamePath[MAX_PATH];
 
 // Settings globals
 
-extern json::JSON jsonSettingsCore;
-extern json::JSON jsonSettingsCoreWorkingCopy;
-extern json::JSON jsonSettingsMods;
+extern HOOKEXT_CPP json::JSON jsonSettingsCore;
+extern HOOKEXT_CPP json::JSON jsonSettingsCoreWorkingCopy;
+extern HOOKEXT_CPP json::JSON jsonSettingsMods;
 
 // No longer actually used for settings, but as temporary buffers
 extern char szSettingsMayorName[64];
@@ -409,6 +409,7 @@ HOOKEXT_CPP bool string_ends_with(std::string& str, const char* suffix);
 HOOKEXT_CPP bool string_contains(std::string& str, const char* substr);
 HOOKEXT_CPP std::string string_format(const char* fmt, ...);
 HOOKEXT_CPP bool string_split(std::string str, std::vector<std::string>& qargs);
+HOOKEXT_CPP void PrintAlignedStringMap(std::map<std::string, std::string> mapStr, int iPrefixSpaces = 3);
 
 // Globals etc.
 

@@ -9,12 +9,33 @@
 #include <string>
 #include <deque>
 #include <map>
+#include <vector>
 #include <type_traits>
 #include <initializer_list>
 #include <ostream>
 #include <iostream>
 
+#ifdef SC2KFIX_CORE
 #include <sc2kfix.h>
+#else
+#ifndef command_proc_t
+typedef bool (*command_proc_t)(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam);
+#endif
+#ifndef COMMAND_OPTPARAM_NONE
+#define COMMAND_OPTPARAM_NONE 0
+#endif
+#ifndef ConsoleCommand
+class ConsoleCommand {
+public:
+	ConsoleCommand() { iType = 0; pCommand = NULL; szDescription = "(description not set)"; iOptParam = COMMAND_OPTPARAM_NONE; }
+	ConsoleCommand(int i, command_proc_t p, const char* s = "(description not set)", intptr_t o = COMMAND_OPTPARAM_NONE) { iType = i; pCommand = p; szDescription = s; iOptParam = o; }
+	int iType;
+	command_proc_t pCommand;
+	const char* szDescription;
+	intptr_t iOptParam;
+};
+#endif
+#endif
 
 // Variant of json::JSON specifically for console command trees
 std::string string_format(const char* fmt, ...);

@@ -41,10 +41,10 @@ void drop_args(...) {
 	return;
 }
 
-bool bConsoleInLuaREPL = false;
-bool bConsoleElevatedMode = false;
-bool bConsoleKeepCommandBuffer = false;
-console::CommandTree treeConsoleCommands;
+HOOKEXT bool bConsoleInLuaREPL = false;
+HOOKEXT bool bConsoleElevatedMode = false;
+HOOKEXT bool bConsoleKeepCommandBuffer = false;
+HOOKEXT_CPP console::CommandTree treeConsoleCommands;
 
 static BYTE AttemptSafeReadByte(BYTE* address) {
 	__try {
@@ -123,7 +123,7 @@ static const char* GetMidiDeviceTechnologyString(WORD wTechnology) {
 	}
 }
 
-void PrintAlignedStringMap(std::map<std::string, std::string> mapStr, int iPrefixSpaces = 3) {
+HOOKEXT_CPP void PrintAlignedStringMap(std::map<std::string, std::string> mapStr, int iPrefixSpaces) {
 	std::map<std::string, std::string> mapOutput;
 	std::string strPrefixSpaces(iPrefixSpaces, ' ');
 	size_t iLeftAlign = 0;
