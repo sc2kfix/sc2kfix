@@ -10,6 +10,7 @@
 #include <stdio.h>
 
 #include <sc2kfix.h>
+#include <commandtree.hpp>
 #include "resource.h"
 
 BOOL bFontsInitialized = FALSE;
@@ -498,6 +499,10 @@ HOOKEXT_CPP json::JSON json::JSON::Load(const string& str) {
 	return std::move(parse_next(str, offset));
 }
 
+console::CommandTree console::Object() {
+	return std::move(CommandTree::Make(CommandTree::Class::Object));
+}
+
 HOOKEXT_CPP json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBigEndian) {
 	json::JSON jsonArray = json::Array();
 	for (size_t i = 0; i < iCount; i++) {
@@ -572,4 +577,51 @@ HOOKEXT_CPP std::string string_format(const char* fmt, ...) {
 
 	va_end(args);
 	return str;
+}
+
+HOOKEXT_CPP bool string_split(std::string str, std::vector<std::string>& qargs) {
+	int len = str.length();
+	bool qot = false, sqot = false;
+	int arglen;
+	qargs.clear();
+
+	for (int i = 0; i < len; i++) {
+		int start = i;
+		if (str[i] == '\"')
+			qot = true;
+
+		else if (str[i] == '\'') sqot = true;
+
+		if (qot) {
+			i++;
+			start++;
+			while (i < len && str[i] != '\"')
+				i++;
+			if (i < len)
+				qot = false;
+			arglen = i - start;
+			i++;
+		}
+		else if (sqot) {
+			i++;
+			start++;
+			while (i < len && str[i] != '\'')
+				i++;
+			if (i < len)
+				sqot = false;
+			arglen = i - start;
+			i++;
+		}
+		else {
+			while (i < len && str[i] != ' ')
+				i++;
+			arglen = i - start;
+		}
+		qargs.push_back(str.substr(start, arglen));
+	}
+
+	// Return false if there's a syntax error, true if not
+	if (qot || sqot)
+		return false;
+	return true;
 }

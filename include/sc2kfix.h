@@ -104,6 +104,7 @@ template <typename T> std::string to_string_precision(const T value, const int p
 
 #define EXPERIMENT_NONE				0			// status: nice and safe
 #define EXPERIMENT_TRIPGENERATOR	1			// status: dubiously stable
+#define EXPERIMENT_NEWCONSOLE		2			// status: dubiously stable and uncommented
 #define EXPERIMENT_EVERYTHING		0xFFFFFFFF	// status: good luck and godspeed
 
 #define ListView_InsertItemType(hwndLV, i, tmask) {\
@@ -299,15 +300,65 @@ enum {
 	LOG_DEBUG
 };
 
+// New console stuff
+#define CTRL(c) (c - 64)
+
+#define COMMAND_TYPE_UNKNOWN		0	// undefined
+#define COMMAND_TYPE_BRANCH			1	// fake "command" used to add documentation to trees
+#define COMMAND_TYPE_DOCUMENTED		2	// command will show up in ? without set undoc
+#define COMMAND_TYPE_UNDOCUMENTED	3	// command requires set undoc to show up in ?
+#define COMMAND_TYPE_HIDDEN			4	// command does not show up in ? or autocomplete
+
+#define COMMAND_OPTPARAM_NONE		0	// don't pass anything special in iOptParam (default)
+#define COMMAND_OPTPARAM_ROOTNAME	1	// pass a pointer to the entered root command name
+#define COMMAND_OPTPARAM_TREE		2	// pass a pointer to std::string vecSplit
+
+#define BREAKOUT_NONE		0
+#define BREAKOUT_RETURN		1
+#define BREAKOUT_TAB		2
+#define BREAKOUT_QUESTION	3
+#define BREAKOUT_INTERRUPT	4
+#define BREAKOUT_SPACE		5
+
+#define printf_red(s, ...) printf(VT100_COLOUR_RED s VT100_DEFAULT, __VA_ARGS__)
+#define printf_lightred(s, ...) printf(VT100_COLOUR_BRIGHT_RED s VT100_DEFAULT, __VA_ARGS__)
+#define printf_yellow(s, ...) printf(VT100_COLOUR_YELLOW s VT100_DEFAULT, __VA_ARGS__)
+#define printf_lightblue(s, ...) printf(VT100_COLOUR_BRIGHT_BLUE s VT100_DEFAULT, __VA_ARGS__)
+
+// command_proc_t: console command procedure typedef
+// Returns false if the parser should throw "invalid argument", true otherwise
+// All arguments after the command are in `args`. The CLI parser breakout state that caused the
+// command to be invoked is in `iBreakoutState` (should usually only be BREAKOUT_QUESTION or
+// BREAKOUT_RETURN; others should generally be treated as a syntax error). iOptParam allows a
+// command that cascades into another command to pass data down the chain, and also allows for
+// the command parser to send extra data to the command if registered to do so.
+// 
+// Generally starts with:
+//   if (iBreakoutState == BREAKOUT_QUESTION)
+//       bConsoleKeepCommandBuffer = true;
+//   if (iBreakoutState != BREAKOUT_RETURN)
+//       return false;
+typedef bool (*command_proc_t)(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam);
+
+class ConsoleCommand {
+public:
+	ConsoleCommand() { iType = 0; pCommand = NULL; szDescription = "(description not set)"; iOptParam = COMMAND_OPTPARAM_NONE; }
+	ConsoleCommand(int i, command_proc_t p, const char* s = "(description not set)", intptr_t o = COMMAND_OPTPARAM_NONE) { iType = i; pCommand = p; szDescription = s; iOptParam = o; }
+	int iType;
+	command_proc_t pCommand;
+	const char* szDescription;
+	intptr_t iOptParam;
+};
+
 // Game path global
 
 extern char szGamePath[MAX_PATH];
 
 // Settings globals
 
-extern json::JSON jsonSettingsCore;
-extern json::JSON jsonSettingsCoreWorkingCopy;
-extern json::JSON jsonSettingsMods;
+extern HOOKEXT_CPP json::JSON jsonSettingsCore;
+extern HOOKEXT_CPP json::JSON jsonSettingsCoreWorkingCopy;
+extern HOOKEXT_CPP json::JSON jsonSettingsMods;
 
 // No longer actually used for settings, but as temporary buffers
 extern char szSettingsMayorName[64];
@@ -362,6 +413,8 @@ HOOKEXT_CPP bool string_starts_with(std::string& str, const char* prefix);
 HOOKEXT_CPP bool string_ends_with(std::string& str, const char* suffix);
 HOOKEXT_CPP bool string_contains(std::string& str, const char* substr);
 HOOKEXT_CPP std::string string_format(const char* fmt, ...);
+HOOKEXT_CPP bool string_split(std::string str, std::vector<std::string>& qargs);
+HOOKEXT_CPP void PrintAlignedStringMap(std::map<std::string, std::string> mapStr, int iPrefixSpaces = 3);
 
 // Globals etc.
 
@@ -430,6 +483,8 @@ BOOL ConsoleCmdShowVersion(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdSet(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdSetDebug(const char* szCommand, const char* szArguments);
 BOOL ConsoleCmdSetTile(const char* szCommand, const char* szArguments);
+
+DWORD WINAPI NewConsoleThread(LPVOID lpParameter);
 
 void LoadNativeCodeMods(void);
 

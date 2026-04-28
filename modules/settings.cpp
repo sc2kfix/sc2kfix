@@ -17,8 +17,8 @@
 
 static DWORD dwDummy;
 
-json::JSON jsonSettingsCore;
-json::JSON jsonSettingsMods;
+HOOKEXT_CPP json::JSON jsonSettingsCore;
+HOOKEXT_CPP json::JSON jsonSettingsMods;
 
 char szGamePath[MAX_PATH];
 

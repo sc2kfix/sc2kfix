@@ -252,6 +252,9 @@
     <ClInclude Include="include\lua_glue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\commandtree.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="hooks\hook_mciSendCommand.cpp">
@@ -259,9 +262,6 @@
     </ClCompile>
     <ClCompile Include="hooks\hook_sndPlaySound.cpp">
       <Filter>Source Files\Hooks</Filter>
-    </ClCompile>
-    <ClCompile Include="modules\console.cpp">
-      <Filter>Source Files\Modules</Filter>
     </ClCompile>
     <ClCompile Include="hooks\hook_mmtimers.cpp">
       <Filter>Source Files\Hooks</Filter>
@@ -474,6 +474,9 @@
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
     <ClCompile Include="modules\scurk_objmove.cpp">
+      <Filter>Source Files\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\console_new.cpp">
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
   </ItemGroup>

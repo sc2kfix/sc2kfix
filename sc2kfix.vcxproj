@@ -75,6 +75,7 @@ const char* szSC2KFixBuildInfo = "$(UserName)@$(ComputerName)  $([System.DateTim
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\bc45xhelp.h" />
+    <ClInclude Include="include\commandtree.hpp" />
     <ClInclude Include="include\commonhelp.h" />
     <ClInclude Include="include\hooklists.h" />
     <ClInclude Include="include\json.hpp" />
@@ -150,7 +151,6 @@ const char* szSC2KFixBuildInfo = "$(UserName)@$(ComputerName)  $([System.DateTim
     <ClCompile Include="hooks\hook_tilegrowthorplacement.cpp" />
     <ClCompile Include="hooks\hook_toolbars.cpp" />
     <ClCompile Include="modules\common_remote_functions.cpp" />
-    <ClCompile Include="modules\console.cpp" />
     <ClCompile Include="buildinfo.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="hooks\hook_mciSendCommand.cpp" />
@@ -158,6 +158,7 @@ const char* szSC2KFixBuildInfo = "$(UserName)@$(ComputerName)  $([System.DateTim
     <ClCompile Include="hooks\hook_querydialog.cpp" />
     <ClCompile Include="hooks\hook_sndPlaySound.cpp" />
     <ClCompile Include="hooks\hook_mmtimers.cpp" />
+    <ClCompile Include="modules\console_new.cpp" />
     <ClCompile Include="modules\game_graphics.cpp" />
     <ClCompile Include="modules\keybindings.cpp" />
     <ClCompile Include="modules\lua_glue.cpp" />
