@@ -148,7 +148,7 @@ int MusicFluidSynthMidiEventHandler(void* data, fluid_midi_event_t* event) {
 
 void MusicFluidSynthLoggerError(int level, const char* message, void* data) {
 	// Ignore the error we get if we're loading the default Windows GM "soundfont"
-	if (message && !strcmp(message, "Not a SoundFont file") && !_stricmp(GetFileBaseName(jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT].ToString().c_str()), "gm.dls"))
+	if (message && !strcmp(message, "Not a SoundFont file") && !_stricmp(GetFileBaseName(jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT].ToString().c_str()), DEF_FIX_AUD_SOUNDFONT))
 		return;
 
 	ConsoleLog(LOG_ERROR, "MUS:  FluidSynth: %s\n", message);
