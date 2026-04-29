@@ -53,6 +53,8 @@ int iForcedBits = 0;
 std::random_device rdRandomDevice;
 std::mt19937 mtMersenneTwister(rdRandomDevice());
 
+std::vector<tooltip_store_t> storedToolTips;
+
 #ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
 #define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
 #endif

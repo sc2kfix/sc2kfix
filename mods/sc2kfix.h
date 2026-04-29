@@ -71,6 +71,12 @@ typedef struct {
 	sc2kfix_mod_hook_t* pstHooks;		// Mandatory
 } sc2kfix_mod_info_t;
 
+typedef struct {
+	HWND hParent;
+	HWND hControl;
+	HWND hToolTip;
+} tooltip_store_t;
+
 #define CTRL(c) (c - 64)
 
 #define COMMAND_TYPE_UNKNOWN		0	// undefined
@@ -103,7 +109,8 @@ HOOKEXT bool bConsoleKeepCommandBuffer;
 HOOKEXT_CPP console::CommandTree treeConsoleCommands;
 
 HOOKEXT void CenterDialogBox(HWND hwndDlg);
-HOOKEXT HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText);
+HOOKEXT void StoreTooltip(std::vector<tooltip_store_t> &tt_s, HWND hParent, HWND hControl, const char *szText);
+HOOKEXT void DestroyStoredTooltips(std::vector<tooltip_store_t> &tt_s, HWND hParent);
 HOOKEXT const char* HexPls(UINT uNumber, int width);
 HOOKEXT const char* FormatVersion(int iMajor, int iMinor, int iPatch);
 HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...);

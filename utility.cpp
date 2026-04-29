@@ -56,16 +56,12 @@ HOOKEXT void CenterDialogBox(HWND hwndDlg) {
 
 // Creates a Win32 common controls tooltip and assigns it to a given control in a given window.
 // XXX - Technically leaks a small amount of memory, as _strdup() is called on each invocation.
-HOOKEXT HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText) {
+static HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText) {
 	if (!hDlg || !hControl || !szText)
 		return NULL;
 
 	HWND hTooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL, WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX, 0, 0, 0, 0, hDlg, NULL, hSC2KFixModule, NULL);
 	if (!hTooltip)
-		return NULL;
-
-	char* lpszText = _strdup(szText);
-	if (!lpszText)
 		return NULL;
 
 	SendMessage(hTooltip, TTM_ACTIVATE, TRUE, 0);
@@ -74,12 +70,53 @@ HOOKEXT HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText) {
 	TOOLINFO tooltipInfo = { 0 };
 	tooltipInfo.cbSize = sizeof(TOOLINFO);
 	tooltipInfo.hwnd = hDlg;
-	tooltipInfo.uId = (UINT_PTR)hControl;
 	tooltipInfo.uFlags = TTF_SUBCLASS | TTF_IDISHWND;
-	tooltipInfo.lpszText = lpszText;
+	tooltipInfo.uId = (UINT_PTR)hControl;
+	tooltipInfo.lpszText = (LPSTR) szText;
 	SendMessage(hTooltip, TTM_ADDTOOL, NULL, (LPARAM)&tooltipInfo);
 
 	return hTooltip;
+}
+
+// Create and store tooltip for later destruction.
+HOOKEXT void StoreTooltip(std::vector<tooltip_store_t> &tt_s, HWND hParent, HWND hControl, const char *szText) {
+	HWND hToolTip;
+	tooltip_store_t tt_item;
+
+	hToolTip = CreateTooltip(hParent, hControl, szText);
+	if (hToolTip) {
+		tt_item.hParent = hParent;
+		tt_item.hControl = hControl;
+		tt_item.hToolTip = hToolTip;
+		tt_s.push_back(tt_item);
+	}
+}
+
+// Destroys the stored tooltip and frees the string.
+static void DeleteTooltip(HWND hDlg, HWND hControl, HWND hTooltip) {
+	if (!hDlg || !hControl || !hTooltip)
+		return;
+
+	TOOLINFO tooltipInfo = { 0 };
+	tooltipInfo.cbSize = sizeof(TOOLINFO);
+	tooltipInfo.hwnd = hDlg;
+	tooltipInfo.uFlags = TTF_IDISHWND;
+	tooltipInfo.uId = (UINT_PTR)hControl;
+	SendMessage(hTooltip, TTM_DELTOOL, 0, (LPARAM)&tooltipInfo);
+
+	DestroyWindow(hTooltip);
+}
+
+// Destroy associated tooltip entries.
+HOOKEXT void DestroyStoredTooltips(std::vector<tooltip_store_t> &tt_s, HWND hParent) {
+	for (std::vector<tooltip_store_t>::iterator it = tt_s.begin(); it != tt_s.end();) {
+		if (it->hParent == hParent) {
+			DeleteTooltip(it->hParent, it->hControl, it->hToolTip);
+			it = tt_s.erase(it);
+		}
+		else
+			++it;
+	}
 }
 
 // Formats a hexadecimal number in a very temporary C string.
