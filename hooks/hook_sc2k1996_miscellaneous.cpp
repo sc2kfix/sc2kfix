@@ -264,9 +264,9 @@ extern "C" int __stdcall Hook_FileDialog_DoModal() {
 				if (L_IsDirectoryPathValid(szPath)) {
 					if ((DWORD)_ReturnAddress() == 0x42EB82 ||
 						(DWORD)_ReturnAddress() == 0x42FDCE) // From 'LoadCity' or 'SaveCityAs'
-						jsonSettingsCore["sc2kfix"]["paths"]["cities"] = szPath;
+						jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_CITIES] = szPath;
 					else if ((DWORD)_ReturnAddress() == 0x42F312) // From 'LoadTileSet'
-						jsonSettingsCore["sc2kfix"]["paths"]["tilesets"] = szPath;
+						jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_TILESETS] = szPath;
 				}
 			}
 		}
@@ -777,7 +777,7 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 				pThis->dwSCADoStepSkip = FALSE;
 				pThis->dwSCALastTick = GetTickCount();
 				pThis->iSCAProgramStep = ONIDLE_STATE_DISPLAYMAXIS;
-				if (!bSkipIntro && !jsonSettingsCore["sc2kfix"]["qol"]["skip_intro"].ToBool()) {
+				if (!bSkipIntro && !jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SKIPINTRO].ToBool()) {
 					if (Game_MovieCheck(aIntroASmk) && Game_MovieCheck(aIntroBSmk)) {
 						Game_SimcityApp_MusicTrigger(pThis);
 						if (Game_MovieCreateWindow()) {
@@ -953,13 +953,13 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 			" - 50% chance of Forest arcologies being unlocked.");
 
 		// Set the default mayor name.
-		SetDlgItemText(hwndDlg, 150, jsonSettingsCore["SimCity2000"]["Registration"]["Mayor Name"].ToString().c_str());
+		SetDlgItemText(hwndDlg, 150, jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
 		break;
 	case WM_DESTROY:
 		// XXX - there's probably a better window message to use here.
 		memset(szTempMayorName, 0, 24);
 		if (!GetDlgItemText(hwndDlg, 150, szTempMayorName, 24))
-			strcpy_s(szTempMayorName, 24, jsonSettingsCore["SimCity2000"]["Registration"]["Mayor Name"].ToString().c_str());
+			strcpy_s(szTempMayorName, 24, jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
 
 		SetXLABEntry(0, szTempMayorName);
 
@@ -1190,7 +1190,7 @@ extern "C" void __stdcall Hook_SimcityDoc_UpdateDocumentTitle() {
 		else
 			goto GETOUT;
 		Game_CurrencyString_TruncateAtSpace(pFundStr);
-		if (jsonSettingsCore["sc2kfix"]["qol"]["title_calendar"].ToBool())
+		if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND].ToBool())
 			GameMain_String_Format(&cStr, "%s %d %4d <%s> %s", pSCApp->dwSCApCStringLongMonths[iCityMonth].m_pchData, iCityDayMon, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
 		else
 			GameMain_String_Format(&cStr, "%s %4d <%s> %s", pSCApp->dwSCApCStringShortMonths[iCityMonth].m_pchData, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
@@ -1299,7 +1299,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 		Game_SimcityApp_CallAutoSave(pSCApp);
 	}
 
-	if (jsonSettingsCore["sc2kfix"]["qol"]["frequent_updates"].ToBool()) {
+	if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool()) {
 		Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
 		GameMain_Document_UpdateAllViews(pCSimcityDoc, NULL, 2, NULL);
 	}
@@ -1317,7 +1317,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	// Advance the simulation for the current SimCalendar day
 	switch (dwMonDay) {
 		case 0:
-			if (!jsonSettingsCore["sc2kfix"]["qol"]["frequent_updates"].ToBool())
+			if (!jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool())
 				Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
 			if (bYearEndFlag)
 				Game_SimulationPrepareBudgetDialog(0);
@@ -1453,7 +1453,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 
 			break;
 		case 23:
-			if (!jsonSettingsCore["sc2kfix"]["qol"]["frequent_updates"].ToBool())
+			if (!jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool())
 				GameMain_Document_UpdateAllViews(pCSimcityDoc, NULL, 2, NULL);
 			Game_UpdatePopulationDialog();
 			Game_UpdateIndustryDialog();
@@ -1496,7 +1496,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	// isn't set to paused.
 
 	bDoTileHighlightUpdate = FALSE;
-	if (!jsonSettingsCore["sc2kfix"]["qol"]["frequent_updates"].ToBool()) {
+	if (!jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool()) {
 		if (pSCApp->wSCAGameSpeedLOW == GAME_SPEED_AFRICAN_SWALLOW) {
 			if (pSCApp->dwSCAAnimationOffCycle || dwMonDay == 21)
 				bDoTileHighlightUpdate = TRUE;
@@ -1800,7 +1800,7 @@ extern "C" void __stdcall Hook_MainFrame_OnActivateApp(BOOL bActive, HTASK hTask
 				Game_MainFrame_ToggleToolBars(pThis, FALSE);
 				// Only call this function if the setting to play
 				// music in background is not enabled.
-				if (!jsonSettingsCore["sc2kfix"]["audio"]["music_in_background"].ToBool())
+				if (!jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND].ToBool())
 					Game_SimcityApp_MusicTrigger(pSCApp);
 				L_PlaySound_SC2K1996(0, 0); // Review concerning sound call change.
 				InvalidateRect(pThis->m_hWnd, 0, TRUE);
@@ -1836,7 +1836,7 @@ extern "C" void __stdcall Hook_MainFrame_OnSize(UINT nType, int cx, int cy) {
 
 	pSCApp = &pCSimcityAppThis;
 	if (nType == 1) {
-		if (!jsonSettingsCore["sc2kfix"]["audio"]["music_in_background"].ToBool())
+		if (!jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND].ToBool())
 			Game_SimcityApp_MusicTrigger(pSCApp);
 		L_PlaySound_SC2K1996(0, 0); // Review concerning sound call change.
 	}
@@ -1867,7 +1867,7 @@ extern "C" void __stdcall Hook_MainFrame_OnShowWindow(BOOL bShow, BOOL nStatus) 
 		}
 	}
 	else {
-		if (!jsonSettingsCore["sc2kfix"]["audio"]["music_in_background"].ToBool())
+		if (!jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND].ToBool())
 			Game_SimcityApp_MusicTrigger(pSCApp);
 		L_PlaySound_SC2K1996(0, 0); // Review concerning sound call change.
 	}

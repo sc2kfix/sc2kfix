@@ -197,7 +197,7 @@ extern "C" int __stdcall Hook_LoadSoundIntoBuffer(int iSoundID, void* lpBuffer) 
 	}
 
 	bSuccess = FALSE;
-	if (mapReplacementSounds.find(iSoundID) != mapReplacementSounds.end() && jsonSettingsCore["sc2kfix"]["audio"]["use_sound_replacements"].ToBool()) {
+	if (mapReplacementSounds.find(iSoundID) != mapReplacementSounds.end() && jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE].ToBool()) {
 		memcpy_s(lpBuffer, mapReplacementSounds[iSoundID].nBufSize, mapReplacementSounds[iSoundID].bBuffer, mapReplacementSounds[iSoundID].nBufSize);
 		nNumBytesToRead = mapReplacementSounds[iSoundID].nBufSize;
 		if (snd_debug & SND_DEBUG_PLAYS)

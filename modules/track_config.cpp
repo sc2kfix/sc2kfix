@@ -245,7 +245,7 @@ BOOL DoConfigureMusicTracks(settings_t *st, HWND hwndDlg, BOOL bMP3) {
 	cft.bActiveTrackTouched = FALSE;
 	cft.iActiveTrack = GetCurrentActiveSongID();
 	for (int i = 0; i < MUSIC_TRACKS; i++) {
-		strMusicTrack = (bMP3) ? jsonSettingsCoreWorkingCopy["sc2kfix"]["music_mp3"][std::to_string(i + 10000)].ToString() : jsonSettingsCoreWorkingCopy["sc2kfix"]["music_midi"][std::to_string(i + 10000)].ToString();
+		strMusicTrack = (bMP3) ? jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_MUSMP3][std::to_string(i + 10000)].ToString() : jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_MUSMID][std::to_string(i + 10000)].ToString();
 		strcpy_s(cft.szMusicTracks[i], MAX_PATH, strMusicTrack.c_str());
 	}
 
@@ -253,9 +253,9 @@ BOOL DoConfigureMusicTracks(settings_t *st, HWND hwndDlg, BOOL bMP3) {
 	if (bRet == TRUE) {
 		for (int i = 0; i < MUSIC_TRACKS; i++) {
 			if (bMP3)
-				jsonSettingsCoreWorkingCopy["sc2kfix"]["music_mp3"][std::to_string(i + 10000)] = cft.szMusicTracks[i];
+				jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_MUSMP3][std::to_string(i + 10000)] = cft.szMusicTracks[i];
 			else
-				jsonSettingsCoreWorkingCopy["sc2kfix"]["music_midi"][std::to_string(i + 10000)] = cft.szMusicTracks[i];
+				jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_MUSMID][std::to_string(i + 10000)] = cft.szMusicTracks[i];
 		}
 
 		if (!st->bActiveTrackChanged) {

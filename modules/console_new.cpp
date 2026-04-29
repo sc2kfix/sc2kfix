@@ -383,7 +383,7 @@ bool ConsoleCommandShowAudioEngine(std::vector<std::string> args, int iBreakoutS
 	printf(
 		"Audio engine: %s\n"
 		"Music driver: %s\n",
-		"old", jsonSettingsCore["sc2kfix"]["audio"]["music_driver"].ToString().c_str());
+		"old", jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString().c_str());
 	return true;
 }
 
