@@ -170,8 +170,8 @@ typedef struct {
 	__int16 iDunno2;
 	WORD wDunno3;
 	DWORD bTripCompleted;
-	CPoint ptTripNextLocation;
-	CPoint ptTripCurrentLocation;
+	CMFC3XPoint ptTripNextLocation;
+	CMFC3XPoint ptTripCurrentLocation;
 	int array1[TRIP_ITERATION_LOG_SIZE];
 	int array2[TRIP_ITERATION_LOG_SIZE];
 	int array3[TRIP_ITERATION_LOG_SIZE];

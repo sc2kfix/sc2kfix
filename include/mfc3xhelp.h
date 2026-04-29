@@ -709,3 +709,9 @@ struct CMFC3XHandleMap {
 	size_t m_nOffset;
 	int m_nHandles;
 };
+
+// Helper function to set an MFC3 CPoint
+static inline void SetCPoint(CMFC3XPoint* pt, int x, int y) {
+	pt->x = x;
+	pt->y = y;
+}

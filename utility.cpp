@@ -54,6 +54,8 @@ HOOKEXT void CenterDialogBox(HWND hwndDlg) {
 	SetWindowPos(hwndDlg, HWND_TOP, rcDesktop.left + (rcTemp.right / 2), rcDesktop.top + (rcTemp.bottom / 2), 0, 0, SWP_NOSIZE);
 }
 
+// Creates a Win32 common controls tooltip and assigns it to a given control in a given window.
+// XXX - Technically leaks a small amount of memory, as _strdup() is called on each invocation.
 HOOKEXT HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText) {
 	if (!hDlg || !hControl || !szText)
 		return NULL;
@@ -80,12 +82,15 @@ HOOKEXT HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText) {
 	return hTooltip;
 }
 
+// Formats a hexadecimal number in a very temporary C string.
+// Please don't use this function if you can avoid it.
 HOOKEXT const char* HexPls(UINT uNumber, int width) {
 	thread_local char szRet[16] = { 0 };
 	sprintf_s(szRet, 16, "0x%0*X", width, uNumber);
 	return szRet;
 }
 
+// Formats an internal sc2kfix version as a static char[]
 HOOKEXT const char* FormatVersion(int iMajor, int iMinor, int iPatch) {
 	static char szRet[16] = { 0 };
 	if (!iPatch)
@@ -95,6 +100,8 @@ HOOKEXT const char* FormatVersion(int iMajor, int iMinor, int iPatch) {
 	return szRet;
 }
 
+// Transforms a std::string into another std::string with a max width of iMaxWidth and an optional
+// indentation on each wrap.
 HOOKEXT_CPP std::string WordWrap(std::string strInput, size_t iMaxWidth, size_t iIndentWidth) {
 	std::istringstream is(strInput);
 	std::ostringstream os;
@@ -116,6 +123,8 @@ HOOKEXT_CPP std::string WordWrap(std::string strInput, size_t iMaxWidth, size_t 
 
 extern FILE* fdLog;
 
+// Writes a message to the console and the running log file, with a colour-coded log level prefix
+// for the message displayed on the console.
 HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...) {
 	va_list args;
 	int len;
@@ -358,6 +367,7 @@ static const unsigned char base64_decodetable[256] = {
 	128, 128, 128
 };
 
+// Encodes a block of memory as base64 and returns it as a std::string.
 HOOKEXT_CPP std::string Base64Encode(const unsigned char* pSrcData, size_t iSrcCount) {
 	unsigned char* out, * pos;
 	const unsigned char* end, * in;
@@ -401,6 +411,7 @@ HOOKEXT_CPP std::string Base64Encode(const unsigned char* pSrcData, size_t iSrcC
 	return outStr;
 }
 
+// Decodes a base64 string into a memory buffer. Returns the number of bytes actually written.
 HOOKEXT_CPP size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned char* pSrcData, size_t iSrcCount) {
 	unsigned char* pos, block[4], tmp;
 	size_t i, count, olen;
@@ -458,6 +469,7 @@ HOOKEXT_CPP size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned c
 
 // end of base64 code
 
+// Decompresses a MaxisRLE blob into a buffer
 int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize) {
 	int i = 0, j = 0;
 
@@ -503,6 +515,7 @@ console::CommandTree console::Object() {
 	return std::move(CommandTree::Make(CommandTree::Class::Object));
 }
 
+// Transforms an array of 32-bit integers into a JSON array, including endian swapping if needed
 HOOKEXT_CPP json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBigEndian) {
 	json::JSON jsonArray = json::Array();
 	for (size_t i = 0; i < iCount; i++) {
@@ -514,6 +527,7 @@ HOOKEXT_CPP json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBig
 	return jsonArray;
 }
 
+// Transforms a budget array into a JSON array, including endian swapping if needed
 HOOKEXT_CPP json::JSON EncodeBudgetArray(DWORD* dwBudgetArray, BOOL bBigEndian) {
 	json::JSON jsonObject = json::Object();
 	jsonObject["iCurrentCosts"] = DWORD_NTOHL_CHECK(dwBudgetArray[0]);
@@ -533,15 +547,12 @@ HOOKEXT_CPP json::JSON EncodeBudgetArray(DWORD* dwBudgetArray, BOOL bBigEndian) 
 	return jsonObject;
 }
 
-// Scary function! Overflows abound! Be careful!
+// Transforms a JSON array of integers into an array of 32-bit integers at a memory location.
+// WARNING: Be very sure you know what you're doing with this function, as it will happily over-
+// flow a buffer if you specify an iCount higher than the number of elements in the target array.
 HOOKEXT_CPP void DecodeDWORDArray(DWORD* dwArray, json::JSON jsonArray, size_t iCount, BOOL bBigEndian) {
 	for (size_t i = 0; i < iCount; i++)
 		dwArray[i] = (bBigEndian ? SwapDWORD(jsonArray[i].ToInt()) : jsonArray[i].ToInt());
-}
-
-void SetCPoint(CPoint* pt, int x, int y) {
-	pt->x = x;
-	pt->y = y;
 }
 
 // Similar to std::string::starts_with in C++20
@@ -559,7 +570,7 @@ HOOKEXT_CPP bool string_contains(std::string& str, const char* substr) {
 	return (str.find(substr) != std::string::npos);
 }
 
-// Similar to std::format() in C++20
+// C++ string wrapper for vsprintf_s
 HOOKEXT_CPP std::string string_format(const char* fmt, ...) {
 	va_list args;
 	int len;
@@ -579,6 +590,7 @@ HOOKEXT_CPP std::string string_format(const char* fmt, ...) {
 	return str;
 }
 
+// Splits a std::string into a vector array of strings for CLI parsing
 HOOKEXT_CPP bool string_split(std::string str, std::vector<std::string>& qargs) {
 	int len = str.length();
 	bool qot = false, sqot = false;
