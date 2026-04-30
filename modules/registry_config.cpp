@@ -218,6 +218,7 @@ static BOOL InstallSC2KDefaults(void) {
 		SaveJSONSettings();
 		return TRUE;
 	}
+	return FALSE;
 }
 
 int DoCheckAndInstall(void) {
