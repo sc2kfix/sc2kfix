@@ -310,7 +310,7 @@ BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 	char szFluidSynthSettingPath[MAX_PATH] = { 0 };
 	OPENFILENAMEA stOFNFluidSynth = {
 		sizeof(OPENFILENAMEA), hwndDlg, NULL,
-		"SoundFont2 Files (*.sf2)\0*.sf2\0",
+		"SoundFont2 Files (*.sf2)\0*.sf2\0\0",
 		NULL, NULL, NULL,
 		szFluidSynthSettingPath, MAX_PATH - 1,
 		NULL, NULL, NULL,

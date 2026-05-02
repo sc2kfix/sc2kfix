@@ -1023,7 +1023,7 @@ void L_SCURK_DirectConvert(winscurkMDIClient *pThis, int nLoad) {
 	nFixCnt = 0;
 	mType = MB_OK;
 	pLoadOfn = R_SCURK_WRP_winscurkMDIClient_mGetOpenFileName(pThis);
-	pLoadOfn->lpstrFilter = ConvertFileTypeFilterString("Macintosh MIF File (*.mif)|*.mif|DOS TIL File (*.til)|*.til|All Files|*.*|");
+	pLoadOfn->lpstrFilter = ConvertFileTypeFilterString("Macintosh MIF File (*.mif)|*.mif|DOS TIL File (*.til)|*.til|All Files (*.*)|*.*||");
 	pLoadOfn->lpstrInitialDir = R_SCURK_WRP_winscurkApp_mGetMiffPath(pSCApp);
 	if (GetOpenFileNameA(pLoadOfn)) {
 		nRes = R_SCURK_WRP_winscurkApp_mGetFileType(pSCApp, pLoadOfn->lpstrFile) - 1;
