@@ -384,9 +384,18 @@ BOOL L_IsDirectoryPathValid(const char *pStr);
 
 // Utility functions
 
+typedef struct {
+	HWND hParent;
+	HWND hControl;
+	HWND hToolTip;
+} tooltip_store_t;
+
+extern std::vector<tooltip_store_t> storedToolTips;
+
 void InitializeFonts(void);
 HOOKEXT void CenterDialogBox(HWND hwndDlg);
-HOOKEXT HWND CreateTooltip(HWND hDlg, HWND hControl, const char* szText);
+HOOKEXT void StoreTooltip(std::vector<tooltip_store_t> &tt_s, HWND hParent, HWND hControl, const char *szText);
+HOOKEXT void DestroyStoredTooltips(std::vector<tooltip_store_t> &tt_s, HWND hParent);
 HOOKEXT const char* HexPls(UINT uNumber, int width);
 HOOKEXT const char* FormatVersion(int iMajor, int iMinor, int iPatch);
 HOOKEXT_CPP std::string WordWrap(std::string strInput, size_t iMaxWidth, size_t iIndentWidth);

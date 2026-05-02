@@ -71,23 +71,25 @@ static BOOL CALLBACK SettingsDialogGeneralTabProc(HWND hwndDlg, UINT message, WP
 		SendMessage(GetDlgItem(hwndDlg, IDC_STATIC_RELEASEBANNER), WM_SETFONT, (WPARAM)hSystemRegular12, TRUE);
 		InvalidateRect(hwndDlg, NULL, TRUE);
 
+		DestroyStoredTooltips(storedToolTips, hwndDlg);
+
 		// Create tooltips
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_RESETFILEASSOCIATIONS),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_RESETFILEASSOCIATIONS),
 			"Resets the file association entries in the registry so that .sc2 and .scn files will automatically open in SimCity 2000.");
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CONSOLE),
 			"sc2kfix has a debugging console that can be activated by passing the -console argument to SimCity 2000's command line. "
 			"This setting forces sc2kfix to always start the console along with the game, even if the -console argument is not passed.\n\n"
 
 			"Enabling or disabling this setting takes effect after restarting the game.");
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES),
 			"This setting checks to see if there's a newer release of sc2kfix available when the game starts.\n\n"
 
 			"Enabling or disabling this setting takes effect after restarting the game.");
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DONT_LOAD_MODS),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DONT_LOAD_MODS),
 			"Enabling this setting forces sc2kfix to skip loading any installed mods on startup.\n\n"
 
 			"Enabling or disabling this setting takes effect after restarting the game.");
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SKIP_INTRO),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SKIP_INTRO),
 			"Once enabled the introduction videos will be skipped on startup. Only applies if videos have been detected.\n\n"
 
 			"Enabling or disabling this setting takes effect after restarting the game.");
@@ -113,6 +115,8 @@ static BOOL CALLBACK SettingsDialogGeneralTabProc(HWND hwndDlg, UINT message, WP
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_CHECKFORUPD], IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_SKIPMODS], IDC_SETTINGS_CHECK_DONT_LOAD_MODS);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SKIPINTRO], IDC_SETTINGS_CHECK_SKIP_INTRO);
+
+		DestroyStoredTooltips(storedToolTips, hwndDlg);
 
 		return TRUE;
 
@@ -142,21 +146,23 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 			(stSettingsDialogHeader.rcDisplay.bottom - stSettingsDialogHeader.rcDisplay.top),
 			SWP_SHOWWINDOW);
 
+		DestroyStoredTooltips(storedToolTips, hwndDlg);
+
 		// Create tooltips
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_STATUS_DIALOG),
 			"The DOS and Mac versions of SimCity 2000 used a movable floating dialog to show the current tool, status line, and weather instead of a fixed bar at the bottom of the game window. "
 			"Enabling this setting will use the floating status dialog instead of the bottom status bar.");
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_TITLE_DATE),
 			"By default the title bar only displays the month and year. Enabling this setting will display the full in-game date instead.");
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS),
 			"Certain strings in the game have typos, grammatical issues, and/or ambiguous wording. This setting loads corrected strings in memory in place of the affected originals.");
 
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_REFRESH_RATE),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_REFRESH_RATE),
 			"SimCity 2000 was designed to spend more CPU time on simulation than on rendering by only updating the city's growth when the display moves or on the 24th day of the month. "
 			"Enabling this setting allows the game to refresh the city display in real-time instead of batching display updates.");
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DARK_UNDGRND),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DARK_UNDGRND),
 			"When enabled the underground layer background will be dark.");
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS),
 			"Certain versions of SimCity 2000 had higher quality sounds than the Windows 95 versions. "
 			"This setting controls whether or not SimCity 2000 plays higher quality versions of various sounds for which said higher quality versions exist.\n\n"
 
@@ -182,6 +188,8 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES], IDC_SETTINGS_CHECK_REFRESH_RATE);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND], IDC_SETTINGS_CHECK_DARK_UNDGRND);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
+
+		DestroyStoredTooltips(storedToolTips, hwndDlg);
 
 		return TRUE;
 
@@ -224,28 +232,30 @@ static BOOL CALLBACK SettingsDialogAudioTabProc(HWND hwndDlg, UINT message, WPAR
 		ComboBox_AddString(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT), "MP3 Playback");	// MUSIC_ENGINE_MP3
 		ComboBox_SetMinVisible(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT), 4);
 
+		DestroyStoredTooltips(storedToolTips, hwndDlg);
+
 		// Create tooltips
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MUSICOUTPUT),
 			"Selects the music output driver. Uses Windows MIDI as a fallback option.\n\n"
 			""
 			"None: Disables music playback independent of the per-game music option.\n"
 			"Windows MIDI: Uses the native Windows MIDI sequencer.\n"
 			"FluidSynth: Uses the FluidSynth software synth, if available (default).\n"
 			"MP3 Playback: Uses MP3 files for playback, if available.");
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_FLUIDSYNTH_SOUNDFONT),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_FLUIDSYNTH_SOUNDFONT),
 			"FluidSynth requires a soundfont for playback that contains the samples and synthesis data required to play back MIDI files. Any SoundFont 2 standard soundfont can be selected. "
 			"By default, sc2kfix uses the General MIDI soundfont included with Windows that the MIDI sequencer uses.\n\n"
 			""
 			"Selecting a new soundfont will reset the music engine and restart the currently playing song.");
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_SOUNDFONTBROWSE),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_SOUNDFONTBROWSE),
 			"Opens a file browser to select a soundfont for FluidSynth. Not needed for Windows MIDI or MP3 playback drivers.");
 
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_BKGDMUSIC),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_BKGDMUSIC),
 			"By default, SimCity 2000 stops the currently-playing song when the game window loses focus. This setting continues playing music in the background until the end of the track, "
 			"after which a new song will be selected when the game window regains focus.");
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC),
 			"Enabling this setting will result in the next random music selection being played after the current song finishes.");
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SHUFFLE_MUSIC),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SHUFFLE_MUSIC),
 			"By default, SimCity 2000 selects \"random\" music by playing the next track in a looping playlist of songs. "
 			"This setting controls whether or not to shuffle the playlist when the game starts and when the end of the playlist is reached.");
 
@@ -281,6 +291,8 @@ static BOOL CALLBACK SettingsDialogAudioTabProc(HWND hwndDlg, UINT message, WPAR
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND], IDC_SETTINGS_CHECK_BKGDMUSIC);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SHUFFLEMUSIC], IDC_SETTINGS_CHECK_SHUFFLE_MUSIC);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_ALWAYSPLAYMUSIC], IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC);
+
+		DestroyStoredTooltips(storedToolTips, hwndDlg);
 
 		return TRUE;
 
@@ -319,6 +331,8 @@ static BOOL CALLBACK TabDlg(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lP
 			(stSettingsDialogHeader.rcDisplay.bottom - stSettingsDialogHeader.rcDisplay.top),
 			SWP_SHOWWINDOW);
 
+		DestroyStoredTooltips(storedToolTips, hwndDlg);
+
 		// Create tooltips
 		
 		// Set fields based on the working JSON
@@ -327,6 +341,8 @@ static BOOL CALLBACK TabDlg(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lP
 
 	case WM_DESTROY:
 		// Update the working JSON based on our fields
+
+		DestroyStoredTooltips(storedToolTips, hwndDlg);
 
 		return TRUE;
 
@@ -350,14 +366,16 @@ BOOL CALLBACK SettingsDialogContainerProc(HWND hwndDlg, UINT message, WPARAM wPa
 		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)LoadIcon(hSC2KFixModule, MAKEINTRESOURCE(IDI_TOPSECRET)));
 		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(hSC2KFixModule, MAKEINTRESOURCE(IDI_TOPSECRET)));
 
+		DestroyStoredTooltips(storedToolTips, hwndDlg);
+
 		// Create tooltips
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDOK),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDOK),
 			"Saves the currently selected settings and closes the settings dialog.");
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDCANCEL),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDCANCEL),
 			"Discards changed settings and closes the settings dialog.");
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_DEFAULTS),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_DEFAULTS),
 			"Changes the settings to the default sc2kfix experience but does not save settings or close the dialog.");
-		CreateTooltip(hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_VANILLA),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_VANILLA),
 			"Changes the settings to disable all quality of life, interface and gameplay enhancements but does not save settings or close the dialog.");
 
 		// Set the version string.
@@ -485,6 +503,11 @@ BOOL CALLBACK SettingsDialogContainerProc(HWND hwndDlg, UINT message, WPARAM wPa
 			SettingsTabSelectionChanged(hwndDlg);
 			break;
 		}
+		return TRUE;
+
+	case WM_DESTROY:
+		DestroyStoredTooltips(storedToolTips, hwndDlg);
+
 		return TRUE;
 
 	// Handle the tab selection
