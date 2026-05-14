@@ -42,13 +42,13 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 					pDC = GameMain_DC_FromHandle(hDC);
 					pSelPal = GameMain_DC_SelectPalette(pDC, pPalette, FALSE);
 					if (bToggle) {
-						Game_SwapCycle(0);
-						AnimatePalette((HPALETTE)pPalette->m_hObject, 224, 16, pPalOffCycle);
+						//Game_SwapCycle(0);
+						//AnimatePalette((HPALETTE)pPalette->m_hObject, 224, 16, pPalOffCycle);
 						bRedraw = TRUE;
 					}
 					else {
-						Game_SwapCycle(1);
-						AnimatePalette((HPALETTE)pPalette->m_hObject, 171, 49, pPalOnCycle);
+						//Game_SwapCycle(1);
+						//AnimatePalette((HPALETTE)pPalette->m_hObject, 171, 49, pPalOnCycle);
 						bRedraw = TRUE;
 					}
 					GameMain_DC_SelectPalette(pDC, pSelPal, FALSE);
@@ -93,8 +93,8 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 						if (!pSCView)
 							RedrawWindow(pMainFrm->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 						else if (pSCView && bCityViewAnim || hWndExt) {
-							if (pSCView && bCityViewAnim)
-								RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+							//if (pSCView && bCityViewAnim)
+							//	RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 							if (hWndExt)
 								RedrawWindow(hWndExt, NULL, NULL, RDW_INVALIDATE);
 						}
