@@ -14,6 +14,13 @@ static DWORD dwDummy;
 
 HWND hWndExt = 0;
 
+static __int16 nFastCycleIdx = 0;
+static __int16 nSlowCycleIdx = 0;
+
+__int16 nFastCyclePos = 0;
+__int16 nMidCyclePos = 0;
+__int16 nSlowCyclePos = 0;
+
 extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette, int bToggle) {
 	CSimcityAppPrimary *pSCApp;
 	CMainFrame *pMainFrm;
@@ -37,11 +44,29 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 			if (!bLoColor) {
 				pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 				if (pMainFrm) {
+					if (nFastCycleIdx < 16)
+						nFastCycleIdx++;
+					else
+						nFastCycleIdx = 0;
+					nFastCyclePos = iCycleOff[nFastCycleIdx];
+
+					if (nSlowCycleIdx < 49)
+						nSlowCycleIdx++;
+					else
+						nSlowCycleIdx = 0;
+					nSlowCyclePos = iCycleOn[nSlowCycleIdx];
+
 					GetPaletteEntries((HPALETTE)pPalette->m_hObject, 0, 0x100, pPalAnimMain);
 					hDC = GetDC(pMainFrm->m_hWnd);
 					pDC = GameMain_DC_FromHandle(hDC);
 					pSelPal = GameMain_DC_SelectPalette(pDC, pPalette, FALSE);
 					if (bToggle) {
+						if (nFastCycleIdx % 16) {
+							if (nMidCyclePos < 16)
+								nMidCyclePos++;
+							else
+								nMidCyclePos = 0;
+						}
 						//Game_SwapCycle(0);
 						//AnimatePalette((HPALETTE)pPalette->m_hObject, 224, 16, pPalOffCycle);
 						bRedraw = TRUE;

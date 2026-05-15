@@ -1157,6 +1157,163 @@ extern "C" void __stdcall Hook_SimcityView_DrawHouse() {
 	L_DrawHouse_SC2K1996(pThis, FALSE);
 }
 
+extern __int16 nFastCyclePos;
+extern __int16 nMidCyclePos;
+extern __int16 nSlowCyclePos;
+
+int cycleIndices[256] = {
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0,  1,  2,  3,  4, 
+	 5,  6,  7,  0,  1,  2,  3,  4,  5,  6,  7,  0,  1,  2,  3,  4,
+	 5,  6,  7,  3,  2,  1,  0, -1,  7,  6,  5,  4,  3,  2,  1,  0,
+	 0,  1,  2,  3,  7,  6,  5,  4,  3,  2,  1,  0, -1, -1, -1, -1,
+	 0,  1,  0,  1,  0,  1,  0,  1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+};
+
+BYTE fastCycleOne[]   = { 0xC6, 0xC5, 0xC4, 0xC3 };
+BYTE fastCycleTwo[]   = { 0xD0, 0xD1, 0xD2, 0xD3 };
+BYTE midCycleOne[]    = { 0xE0, 0xE1 };
+BYTE midCycleTwo[]    = { 0xE2, 0xE3 };
+BYTE midCycleThree[]  = { 0xE4, 0xE5 };
+BYTE midCycleFour[]   = { 0xE6, 0xE7 };
+BYTE slowCycleOne[]   = { 0xCF, 0xCE, 0xCD, 0xCC, 0xCB, 0xCA, 0xC9, 0xC8 };
+BYTE slowCycleTwo[]   = { 0xBB, 0xBC, 0xBD, 0xBE, 0xBF, 0xC0, 0xC1, 0xC2 };
+BYTE slowCycleThree[] = { 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA };
+BYTE slowCycleFour[]  = { 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xB2 };
+BYTE slowCycleFive[]  = { 0xDB, 0xDA, 0xD9, 0xD8, 0xD7, 0xD6, 0xD5, 0xD4 };
+
+BYTE GetCycleColIndex(BYTE col, BYTE *pRange, int nCount, int nTarg) {
+	BYTE newCol = col;
+	if (nTarg) {
+		int nIdx = cycleIndices[col];
+		if (nIdx >= 0 && pRange[nIdx] == col) {
+			nIdx = (nIdx + nTarg) % nCount;
+			if (nIdx < 0)
+				nIdx = -nIdx;
+			newCol = pRange[nIdx];
+		}
+	}
+	return newCol;
+}
+
+static BYTE ProcessCyclingIndex(BYTE colIdx) {
+	BYTE newIdx = colIdx;
+	newIdx = GetCycleColIndex(newIdx, fastCycleOne, sizeof(fastCycleOne), (nFastCyclePos % 4));
+	newIdx = GetCycleColIndex(newIdx, fastCycleTwo, sizeof(fastCycleTwo), (nFastCyclePos % 4));
+	newIdx = GetCycleColIndex(newIdx, midCycleOne, sizeof(midCycleOne), (nMidCyclePos % 2));
+	newIdx = GetCycleColIndex(newIdx, midCycleTwo, sizeof(midCycleTwo), (nMidCyclePos % 2));
+	newIdx = GetCycleColIndex(newIdx, midCycleThree, sizeof(midCycleThree), (nMidCyclePos % 2));
+	newIdx = GetCycleColIndex(newIdx, midCycleFour, sizeof(midCycleFour), (nMidCyclePos % 2));
+	newIdx = GetCycleColIndex(newIdx, slowCycleOne, sizeof(slowCycleOne), (nSlowCyclePos % 8));
+	newIdx = GetCycleColIndex(newIdx, slowCycleTwo, sizeof(slowCycleTwo), (nSlowCyclePos % 8));
+	newIdx = GetCycleColIndex(newIdx, slowCycleThree, sizeof(slowCycleThree), (nSlowCyclePos % 8));
+	newIdx = GetCycleColIndex(newIdx, slowCycleFour, sizeof(slowCycleFour), (nSlowCyclePos % 8));
+	newIdx = GetCycleColIndex(newIdx, slowCycleFive, sizeof(slowCycleFive), (nSlowCyclePos % 8));
+	return newIdx;
+}
+
+static BYTE ProcessWeatherIndex(BYTE colIdx) {
+	BYTE newIdx = colIdx;
+	if (newIdx >= 0x73 && newIdx <= 0x78)
+		newIdx += 0x27;
+	return newIdx;
+}
+
+static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
+	int iCityMonth = dwCityDays / 25 % 12;
+
+	BYTE newIdx = colIdx;
+	if (bWeatherTrend == 4 ||
+		bWeatherTrend == 6 ||
+		bWeatherTrend == 9) {
+		if (!bIgnore) {
+			if (newIdx >= 0x40 && newIdx <= 0x45)
+				newIdx += 0x60;
+			else if (newIdx >= 0x46 && newIdx <= 0x4A)
+				newIdx += 0x5A;
+			else if (newIdx >= 0x50 && newIdx <= 0x52)
+				newIdx += 0x50;
+		}
+	}
+	else if ((iCityMonth >= 0 && iCityMonth <= 2) ||
+		(iCityMonth >= 9 && iCityMonth <= 11)) {
+		if (newIdx >= 0x40 && newIdx <= 0x4A)
+			newIdx += 0x38;
+		else if (newIdx >= 0x50 && newIdx <= 0x52)
+			newIdx += 0x28;
+	}
+	return newIdx;
+}
+
+static DWORD ProcessCyclingSequence(DWORD colSeq) {
+	WORD lowWord = LOWORD(colSeq);
+	WORD highWord = HIWORD(colSeq);
+	BYTE lowlowIdx  = LOBYTE(lowWord);
+	BYTE lowhighIdx = HIBYTE(lowWord);
+	BYTE highlowIdx  = LOBYTE(highWord);
+	BYTE highhighIdx = HIBYTE(highWord);
+	//ConsoleLog(LOG_DEBUG, "(0x%06X) (0x%02X) (0x%02X) (0x%02X) (0x%02X)\n", colSeq, lowlowIdx, lowhighIdx, highlowIdx, highhighIdx);
+	
+	lowlowIdx = ProcessCyclingIndex(lowlowIdx);
+	lowhighIdx = ProcessCyclingIndex(lowhighIdx);
+	highlowIdx = ProcessCyclingIndex(highlowIdx);
+	highhighIdx = ProcessCyclingIndex(highhighIdx);
+
+	WORD newLowIdx = (lowlowIdx | (lowhighIdx << 8));
+	WORD newHighIdx = (highlowIdx | (highhighIdx << 8));
+	DWORD newSeq = (newLowIdx | (newHighIdx << 16));
+	//ConsoleLog(LOG_DEBUG, "(0x%06X) (0x%02X) (0x%02X) (0x%06X)\n", colSeq, newLowIdx, newHighIdx, newSeq);
+	return newSeq;
+}
+
+static DWORD ProcessWeatherAdjustment(DWORD colSeq) {
+	WORD lowWord = LOWORD(colSeq);
+	WORD highWord = HIWORD(colSeq);
+	BYTE lowlowIdx  = LOBYTE(lowWord);
+	BYTE lowhighIdx = HIBYTE(lowWord);
+	BYTE highlowIdx  = LOBYTE(highWord);
+	BYTE highhighIdx = HIBYTE(highWord);
+
+	//lowlowIdx = ProcessWeatherIndex(lowlowIdx);
+	lowhighIdx = ProcessWeatherIndex(lowhighIdx);
+	highlowIdx = ProcessWeatherIndex(highlowIdx);
+	//highhighIdx = ProcessWeatherIndex(highhighIdx);
+
+	WORD newLowIdx = (lowlowIdx | (lowhighIdx << 8));
+	WORD newHighIdx = (highlowIdx | (highhighIdx << 8));
+	DWORD newSeq = (newLowIdx | (newHighIdx << 16));
+	return newSeq;
+}
+
+static DWORD ProcessSeasonAdjustment(DWORD colSeq) {
+	WORD lowWord = LOWORD(colSeq);
+	WORD highWord = HIWORD(colSeq);
+	BYTE lowlowIdx  = LOBYTE(lowWord);
+	BYTE lowhighIdx = HIBYTE(lowWord);
+	BYTE highlowIdx  = LOBYTE(highWord);
+	BYTE highhighIdx = HIBYTE(highWord);
+
+	lowlowIdx = ProcessSeasonIndex(lowlowIdx);
+	lowhighIdx = ProcessSeasonIndex(lowhighIdx);
+	highlowIdx = ProcessSeasonIndex(highlowIdx, TRUE);
+	//highhighIdx = ProcessSeasonIndex(highhighIdx, TRUE);
+
+	WORD newLowIdx = (lowlowIdx | (lowhighIdx << 8));
+	WORD newHighIdx = (highlowIdx | (highhighIdx << 8));
+	DWORD newSeq = (newLowIdx | (newHighIdx << 16));
+	return newSeq;
+}
+
 static BYTE AdjustInversion(__int16 nSpriteID, BYTE palIdx) {
 	BYTE newIdx = ~palIdx;
 	// In the DOS and Macintosh version the tile inversion
@@ -1296,6 +1453,160 @@ static void L_drawShape_Invert_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, _
 	}
 }
 
+static void L_drawShape_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom) {
+	BYTE *pShapeBitsLine, *pShapeBitsLinePrev;
+	BYTE nCount;
+	BYTE nChunkMode;
+	WORD nRemHeight;
+	DWORD shapeSeq;
+
+	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
+	pShapeBitsLinePrev = pShapeBitsLine;
+	nRemHeight = shapeCurrent[nSpriteID].wHeight;
+	while (TRUE) {
+		nCount = SPRITEDATA(shapePtr)->nCount;
+		nChunkMode = SPRITEDATA(shapePtr)->nChunkMode;
+		shapePtr += 2;
+		switch (nChunkMode) {
+		case MIF_CM_EMPTY:
+			continue;
+		case MIF_CM_NEWROWSTART:
+			pShapeBitsLine += shapeX;
+			pShapeBitsLinePrev = pShapeBitsLine;
+			--nRemHeight;
+			break;
+		case MIF_CM_SKIPPIXELS:
+			pShapeBitsLinePrev += nCount;
+			break;
+		case MIF_CM_PROCPIXELS:
+			for (WORD nPos = nCount; nPos > 3; shapePtr += 4) {
+				nPos -= 4;
+				shapeSeq = *(DWORD *)shapePtr;
+				// Proof-of-concept weather experiment.
+				if ((nSpriteID >= SPRITE_SMALL_TREES1 && nSpriteID <= SPRITE_SMALL_TREES7) ||
+					(nSpriteID >= SPRITE_MEDIUM_TREES1 && nSpriteID <= SPRITE_MEDIUM_TREES7) ||
+					(nSpriteID >= SPRITE_LARGE_TREES1 && nSpriteID <= SPRITE_LARGE_TREES7)) {
+					shapeSeq = ProcessSeasonAdjustment(shapeSeq);
+				}
+				else if (nSpriteID == SPRITE_SMALL_TERRAIN ||
+					nSpriteID == SPRITE_MEDIUM_TERRAIN ||
+					nSpriteID == SPRITE_LARGE_TERRAIN) {
+					if (bWeatherTrend == 4 || bWeatherTrend == 6 || bWeatherTrend == 9) {
+						if (nRemHeight <= (shapeCurrent[nSpriteID].wHeight / 2)) {
+							shapeSeq = ProcessWeatherAdjustment(shapeSeq);
+						}
+					}
+				}
+				shapeSeq = ProcessCyclingSequence(shapeSeq);
+				*(DWORD *)pShapeBitsLinePrev = shapeSeq;
+				pShapeBitsLinePrev += 4;
+			}
+			if ((nCount & 2) != 0) {
+				*(WORD *)pShapeBitsLinePrev = *(WORD *)shapePtr;
+				pShapeBitsLinePrev += 2;
+				shapePtr += 2;
+			}
+			if ((nCount & 1) != 0) {
+				*pShapeBitsLinePrev++ = *shapePtr;
+				shapePtr += 2;
+			}
+			break;
+		default:
+			return;
+		}
+	}
+}
+
+static void L_drawShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom) {
+	__int16 leftEdge, topEdge, rightEdge, bottomEdge;
+	BYTE *pShapeBitsLine, *spritePtr;
+	WORD nRemHeight;
+	__int16 leftShapeBits, rightShapeBits;
+	BYTE *pShapeBits, nCount, nChunkMode;
+	bool bReachedBottom;
+
+	leftEdge = shapeLeft - right;
+	topEdge = shapeTop - bottom;
+	rightEdge = shapeRight - right;
+	bottomEdge = shapeBottom - bottom;
+	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
+	nRemHeight = shapeCurrent[nSpriteID].wHeight;
+	spritePtr = shapePtr;
+	if (topEdge > 0) {
+		bottomEdge -= topEdge;
+		pShapeBitsLine += shapeX * topEdge;
+		do {
+			spritePtr += (*spritePtr + 2);
+			--topEdge;
+		} while (topEdge);
+	}
+	leftShapeBits = (__int16)pShapeBitsLine;
+	pShapeBits = pShapeBitsLine;
+	rightShapeBits = (__int16)pShapeBitsLine;
+	while (TRUE) {
+		nCount = SPRITEDATA(spritePtr)->nCount;
+		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
+		spritePtr += 2;
+		switch (nChunkMode) {
+		case MIF_CM_EMPTY:
+			continue;
+		case MIF_CM_NEWROWSTART:
+			leftShapeBits = leftEdge;
+			rightShapeBits = rightEdge;
+			bReachedBottom = --bottomEdge < 0;
+			pShapeBits = &pShapeBitsLine[shapeX];
+			pShapeBitsLine += shapeX;
+			--nRemHeight;
+			if (!bReachedBottom)
+				continue;
+			break;
+		case MIF_CM_SKIPPIXELS:
+			leftShapeBits -= nCount;
+			rightShapeBits -= nCount;
+			pShapeBits += nCount;
+			continue;
+		case MIF_CM_PROCPIXELS:
+			for (int nPos = nCount; nPos; ++spritePtr) {
+				if (leftShapeBits <= 0 && rightShapeBits > 0) {
+					BYTE palIdx = *spritePtr;
+					// Proof-of-concept weather experiment.
+					if ((nSpriteID >= SPRITE_SMALL_TREES1 && nSpriteID <= SPRITE_SMALL_TREES7) ||
+						(nSpriteID >= SPRITE_MEDIUM_TREES1 && nSpriteID <= SPRITE_MEDIUM_TREES7) ||
+						(nSpriteID >= SPRITE_LARGE_TREES1 && nSpriteID <= SPRITE_LARGE_TREES7)) {
+						if ((nPos % 4) == 0 || (nPos % 4) == 1 || (nPos % 4) == 3) {
+							BOOL bIgnore = FALSE;
+							if ((nPos % 4) == 1)
+								bIgnore = TRUE;
+							palIdx = ProcessSeasonIndex(palIdx, bIgnore);
+						}	
+					}
+					else if (nSpriteID == SPRITE_SMALL_TERRAIN ||
+						nSpriteID == SPRITE_MEDIUM_TERRAIN ||
+						nSpriteID == SPRITE_LARGE_TERRAIN) {
+						if (bWeatherTrend == 4 || bWeatherTrend == 6 || bWeatherTrend == 9) {
+							if (nRemHeight <= (shapeCurrent[nSpriteID].wHeight / 2))
+								if ((nPos % 4) == 3 || (nPos % 4) == 2)
+									palIdx = ProcessWeatherIndex(palIdx);
+							}
+					}
+					palIdx = ProcessCyclingIndex(palIdx);
+					*pShapeBits = palIdx;
+				}
+				--leftShapeBits;
+				++pShapeBits;
+				--rightShapeBits;
+				--nPos;
+			}
+			if ((nCount & 1) != 0)
+				++spritePtr;
+			continue;
+		default:
+			return;
+		}
+		break;
+	}
+}
+
 extern "C" void __cdecl Hook_drawShape(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert) {
 	sprite_header_t *shapePtr;
 	BYTE *shapeData;
@@ -1323,9 +1634,9 @@ extern "C" void __cdecl Hook_drawShape(__int16 nSpriteID, __int16 right, __int16
 						GameMain_drawShape_Flipped_MainArea(shapeData, nShapeRight, bottom);
 				}
 				else if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)
-					GameMain_drawShape_OutOfContext(shapeData, right, bottom);
+					L_drawShape_OutOfContext(shapeData, nSpriteID, right, bottom);
 				else
-					GameMain_drawShape_MainArea(shapeData, right, bottom);
+					L_drawShape_MainArea(shapeData, nSpriteID, right, bottom);
 			}
 		}
 	}
@@ -1371,6 +1682,10 @@ void InstallDrawingHooks_SC2K1996(void) {
 	// Hook for drawShape
 	SafeVirtualProtect((LPVOID)0x401393, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401393, Hook_drawShape);
+
+	for (int i = 0; i < 256; ++i) {
+		ConsoleLog(LOG_DEBUG, "(%u - 0x%02X) (%d)\n", i, i, cycleIndices[i]);
+	}
 
 	UpdateDrawingHooks_SC2K1996();
 }
