@@ -1683,10 +1683,6 @@ void InstallDrawingHooks_SC2K1996(void) {
 	SafeVirtualProtect((LPVOID)0x401393, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401393, Hook_drawShape);
 
-	for (int i = 0; i < 256; ++i) {
-		ConsoleLog(LOG_DEBUG, "(%u - 0x%02X) (%d)\n", i, i, cycleIndices[i]);
-	}
-
 	UpdateDrawingHooks_SC2K1996();
 }
 
