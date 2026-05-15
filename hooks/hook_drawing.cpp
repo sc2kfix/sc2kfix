@@ -1237,12 +1237,13 @@ static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
 		bWeatherTrend == 6 ||
 		bWeatherTrend == 9) {
 		if (!bIgnore) {
-			if (newIdx >= 0x40 && newIdx <= 0x45)
+			/*if (newIdx >= 0x40 && newIdx <= 0x45)
 				newIdx += 0x60;
 			else if (newIdx >= 0x46 && newIdx <= 0x4A)
 				newIdx += 0x5A;
 			else if (newIdx >= 0x50 && newIdx <= 0x52)
-				newIdx += 0x50;
+				newIdx += 0x50;*/
+			newIdx = 0xFF;
 		}
 	}
 	else if ((iCityMonth >= 0 && iCityMonth <= 2) ||
@@ -1253,65 +1254,6 @@ static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
 			newIdx += 0x28;
 	}
 	return newIdx;
-}
-
-static DWORD ProcessCyclingSequence(DWORD colSeq) {
-	WORD lowWord = LOWORD(colSeq);
-	WORD highWord = HIWORD(colSeq);
-	BYTE lowlowIdx  = LOBYTE(lowWord);
-	BYTE lowhighIdx = HIBYTE(lowWord);
-	BYTE highlowIdx  = LOBYTE(highWord);
-	BYTE highhighIdx = HIBYTE(highWord);
-	//ConsoleLog(LOG_DEBUG, "(0x%06X) (0x%02X) (0x%02X) (0x%02X) (0x%02X)\n", colSeq, lowlowIdx, lowhighIdx, highlowIdx, highhighIdx);
-	
-	lowlowIdx = ProcessCyclingIndex(lowlowIdx);
-	lowhighIdx = ProcessCyclingIndex(lowhighIdx);
-	highlowIdx = ProcessCyclingIndex(highlowIdx);
-	highhighIdx = ProcessCyclingIndex(highhighIdx);
-
-	WORD newLowIdx = (lowlowIdx | (lowhighIdx << 8));
-	WORD newHighIdx = (highlowIdx | (highhighIdx << 8));
-	DWORD newSeq = (newLowIdx | (newHighIdx << 16));
-	//ConsoleLog(LOG_DEBUG, "(0x%06X) (0x%02X) (0x%02X) (0x%06X)\n", colSeq, newLowIdx, newHighIdx, newSeq);
-	return newSeq;
-}
-
-static DWORD ProcessWeatherAdjustment(DWORD colSeq) {
-	WORD lowWord = LOWORD(colSeq);
-	WORD highWord = HIWORD(colSeq);
-	BYTE lowlowIdx  = LOBYTE(lowWord);
-	BYTE lowhighIdx = HIBYTE(lowWord);
-	BYTE highlowIdx  = LOBYTE(highWord);
-	BYTE highhighIdx = HIBYTE(highWord);
-
-	//lowlowIdx = ProcessWeatherIndex(lowlowIdx);
-	lowhighIdx = ProcessWeatherIndex(lowhighIdx);
-	highlowIdx = ProcessWeatherIndex(highlowIdx);
-	//highhighIdx = ProcessWeatherIndex(highhighIdx);
-
-	WORD newLowIdx = (lowlowIdx | (lowhighIdx << 8));
-	WORD newHighIdx = (highlowIdx | (highhighIdx << 8));
-	DWORD newSeq = (newLowIdx | (newHighIdx << 16));
-	return newSeq;
-}
-
-static DWORD ProcessSeasonAdjustment(DWORD colSeq) {
-	WORD lowWord = LOWORD(colSeq);
-	WORD highWord = HIWORD(colSeq);
-	BYTE lowlowIdx  = LOBYTE(lowWord);
-	BYTE lowhighIdx = HIBYTE(lowWord);
-	BYTE highlowIdx  = LOBYTE(highWord);
-	BYTE highhighIdx = HIBYTE(highWord);
-
-	lowlowIdx = ProcessSeasonIndex(lowlowIdx);
-	lowhighIdx = ProcessSeasonIndex(lowhighIdx);
-	highlowIdx = ProcessSeasonIndex(highlowIdx, TRUE);
-	//highhighIdx = ProcessSeasonIndex(highhighIdx, TRUE);
-
-	WORD newLowIdx = (lowlowIdx | (lowhighIdx << 8));
-	WORD newHighIdx = (highlowIdx | (highhighIdx << 8));
-	DWORD newSeq = (newLowIdx | (newHighIdx << 16));
-	return newSeq;
 }
 
 static BYTE AdjustInversion(__int16 nSpriteID, BYTE palIdx) {
@@ -1454,62 +1396,60 @@ static void L_drawShape_Invert_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, _
 }
 
 static void L_drawShape_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom) {
-	BYTE *pShapeBitsLine, *pShapeBitsLinePrev;
+	BYTE *pShapeBitsLine, *spritePtr, *pShapeBits;
 	BYTE nCount;
 	BYTE nChunkMode;
 	WORD nRemHeight;
-	DWORD shapeSeq;
 
 	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
-	pShapeBitsLinePrev = pShapeBitsLine;
 	nRemHeight = shapeCurrent[nSpriteID].wHeight;
+	spritePtr = shapePtr;
+	pShapeBits = pShapeBitsLine;
 	while (TRUE) {
-		nCount = SPRITEDATA(shapePtr)->nCount;
-		nChunkMode = SPRITEDATA(shapePtr)->nChunkMode;
-		shapePtr += 2;
+		nCount = SPRITEDATA(spritePtr)->nCount;
+		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
+		spritePtr += 2;
 		switch (nChunkMode) {
 		case MIF_CM_EMPTY:
 			continue;
 		case MIF_CM_NEWROWSTART:
+			pShapeBits = &pShapeBitsLine[shapeX];
 			pShapeBitsLine += shapeX;
-			pShapeBitsLinePrev = pShapeBitsLine;
 			--nRemHeight;
 			break;
 		case MIF_CM_SKIPPIXELS:
-			pShapeBitsLinePrev += nCount;
+			pShapeBits += nCount;
 			break;
 		case MIF_CM_PROCPIXELS:
-			for (WORD nPos = nCount; nPos > 3; shapePtr += 4) {
-				nPos -= 4;
-				shapeSeq = *(DWORD *)shapePtr;
+			for (int nPos = nCount; nPos; ++spritePtr) {
+				BYTE palIdx = *spritePtr;
 				// Proof-of-concept weather experiment.
 				if ((nSpriteID >= SPRITE_SMALL_TREES1 && nSpriteID <= SPRITE_SMALL_TREES7) ||
 					(nSpriteID >= SPRITE_MEDIUM_TREES1 && nSpriteID <= SPRITE_MEDIUM_TREES7) ||
 					(nSpriteID >= SPRITE_LARGE_TREES1 && nSpriteID <= SPRITE_LARGE_TREES7)) {
-					shapeSeq = ProcessSeasonAdjustment(shapeSeq);
+					if ((nPos % 4) == 0 || (nPos % 4) == 2) {
+						BOOL bIgnore = FALSE;
+						if ((nPos % 4) == 2)
+							bIgnore = TRUE;
+						palIdx = ProcessSeasonIndex(palIdx, bIgnore);
+					}	
 				}
 				else if (nSpriteID == SPRITE_SMALL_TERRAIN ||
 					nSpriteID == SPRITE_MEDIUM_TERRAIN ||
 					nSpriteID == SPRITE_LARGE_TERRAIN) {
 					if (bWeatherTrend == 4 || bWeatherTrend == 6 || bWeatherTrend == 9) {
-						if (nRemHeight <= (shapeCurrent[nSpriteID].wHeight / 2)) {
-							shapeSeq = ProcessWeatherAdjustment(shapeSeq);
-						}
+						if (nRemHeight <= (shapeCurrent[nSpriteID].wHeight / 2))
+							if ((nPos % 4) == 3 || (nPos % 4) == 2)
+								palIdx = ProcessWeatherIndex(palIdx);
 					}
 				}
-				shapeSeq = ProcessCyclingSequence(shapeSeq);
-				*(DWORD *)pShapeBitsLinePrev = shapeSeq;
-				pShapeBitsLinePrev += 4;
+				palIdx = ProcessCyclingIndex(palIdx);
+				*pShapeBits = palIdx;
+				++pShapeBits;
+				--nPos;
 			}
-			if ((nCount & 2) != 0) {
-				*(WORD *)pShapeBitsLinePrev = *(WORD *)shapePtr;
-				pShapeBitsLinePrev += 2;
-				shapePtr += 2;
-			}
-			if ((nCount & 1) != 0) {
-				*pShapeBitsLinePrev++ = *shapePtr;
-				shapePtr += 2;
-			}
+			if ((nCount & 1) != 0)
+				++spritePtr;
 			break;
 		default:
 			return;
@@ -1573,9 +1513,9 @@ static void L_drawShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 
 					if ((nSpriteID >= SPRITE_SMALL_TREES1 && nSpriteID <= SPRITE_SMALL_TREES7) ||
 						(nSpriteID >= SPRITE_MEDIUM_TREES1 && nSpriteID <= SPRITE_MEDIUM_TREES7) ||
 						(nSpriteID >= SPRITE_LARGE_TREES1 && nSpriteID <= SPRITE_LARGE_TREES7)) {
-						if ((nPos % 4) == 0 || (nPos % 4) == 1 || (nPos % 4) == 3) {
+						if ((nPos % 4) == 0 || (nPos % 4) == 2) {
 							BOOL bIgnore = FALSE;
-							if ((nPos % 4) == 1)
+							if ((nPos % 4) == 2)
 								bIgnore = TRUE;
 							palIdx = ProcessSeasonIndex(palIdx, bIgnore);
 						}	
