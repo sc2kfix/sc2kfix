@@ -1224,8 +1224,61 @@ static BYTE ProcessCyclingIndex(BYTE colIdx) {
 
 static BYTE ProcessWeatherIndex(BYTE colIdx) {
 	BYTE newIdx = colIdx;
-	if (newIdx >= 0x73 && newIdx <= 0x78)
-		newIdx += 0x27;
+	// Snow effect - for ground or water tiles.
+	if (newIdx == 0x73 || newIdx == 0x79 || newIdx == 0x7F || newIdx == 0x80) // Ground tiles here
+		newIdx = 0x9A;
+	else if (newIdx == 0x74 || newIdx == 0x7A || newIdx == 0x81)
+		newIdx = 0x9B;
+	else if (newIdx == 0x75 || newIdx == 0x7B || newIdx == 0x82)
+		newIdx = 0x9C;
+	else if (newIdx == 0x76 || newIdx == 0x7C || newIdx == 0x85)
+		newIdx = 0x9D;
+	else if (newIdx == 0x77 || newIdx == 0x7D)
+		newIdx = 0x9E;
+	else if (newIdx == 0x78 || newIdx == 0x7E)
+		newIdx = 0x9F;
+	else if (newIdx == 0xC8 || newIdx == 0xCC || newIdx == 0xD0) // Water tiles here
+		newIdx = 0x53;
+	else if (newIdx == 0xC9 || newIdx == 0xCD || newIdx == 0xD1)
+		newIdx = 0x54;
+	else if (newIdx == 0xCA || newIdx == 0xCE || newIdx == 0xD2)
+		newIdx = 0x55;
+	else if (newIdx == 0xCB || newIdx == 0xCF || newIdx == 0xD3)
+		newIdx = 0x56;
+	return newIdx;
+}
+
+static BYTE ProcessTreeSnowEffect(BYTE colIdx) {
+	BYTE newIdx = colIdx;
+	if (newIdx == 0x3B || newIdx == 0x40 || newIdx == 0x46 || newIdx == 0x50)
+		newIdx = 0x9A;
+	else if (newIdx == 0x3C || newIdx == 0x41 || newIdx == 0x47 || newIdx == 0x51)
+		newIdx = 0x9B;
+	else if (newIdx == 0x3D || newIdx == 0x42 || newIdx == 0x48 || newIdx == 0x52)
+		newIdx = 0x9C;
+	else if (newIdx == 0x3E || newIdx == 0x43 || newIdx == 0x49)
+		newIdx = 0x9D;
+	else if (newIdx == 0x3F || newIdx == 0x44 || newIdx == 0x4A)
+		newIdx = 0x9E;
+	else if (newIdx == 0x45)
+		newIdx = 0x9F;
+	return newIdx;
+}
+
+static BYTE ProcessTreeAutumnEffect(BYTE colIdx) {
+	BYTE newIdx = colIdx;
+	if (newIdx == 0x3B || newIdx == 0x40 || newIdx == 0x46 || newIdx == 0x50)
+		newIdx = 0x7D;
+	else if (newIdx == 0x3C || newIdx == 0x41 || newIdx == 0x47 || newIdx == 0x51)
+		newIdx = 0x7E;
+	else if (newIdx == 0x3D || newIdx == 0x42 || newIdx == 0x48 || newIdx == 0x52)
+		newIdx = 0x7F;
+	else if (newIdx == 0x3E || newIdx == 0x43 || newIdx == 0x49)
+		newIdx = 0x28;
+	else if (newIdx == 0x3F || newIdx == 0x44 || newIdx == 0x4A)
+		newIdx = 0x29;
+	else if (newIdx == 0x45)
+		newIdx = 0x2A;
 	return newIdx;
 }
 
@@ -1236,24 +1289,41 @@ static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
 	if (bWeatherTrend == 4 ||
 		bWeatherTrend == 6 ||
 		bWeatherTrend == 9) {
-		if (!bIgnore) {
-			/*if (newIdx >= 0x40 && newIdx <= 0x45)
-				newIdx += 0x60;
-			else if (newIdx >= 0x46 && newIdx <= 0x4A)
-				newIdx += 0x5A;
-			else if (newIdx >= 0x50 && newIdx <= 0x52)
-				newIdx += 0x50;*/
-			newIdx = 0xFF;
-		}
+		if (!bIgnore)
+			newIdx = ProcessTreeSnowEffect(newIdx);
 	}
-	else if ((iCityMonth >= 0 && iCityMonth <= 2) ||
+	if ((iCityMonth >= 0 && iCityMonth <= 2) ||
 		(iCityMonth >= 9 && iCityMonth <= 11)) {
-		if (newIdx >= 0x40 && newIdx <= 0x4A)
-			newIdx += 0x38;
-		else if (newIdx >= 0x50 && newIdx <= 0x52)
-			newIdx += 0x28;
+		newIdx = ProcessTreeAutumnEffect(newIdx);
 	}
 	return newIdx;
+}
+
+static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemHeight, int nPos) {
+	BYTE palIdx = colIdx;
+	// Proof-of-concept weather experiment.
+	if ((nSpriteID >= SPRITE_SMALL_TREES1 && nSpriteID <= SPRITE_SMALL_TREES7) ||
+		(nSpriteID >= SPRITE_MEDIUM_TREES1 && nSpriteID <= SPRITE_MEDIUM_TREES7) ||
+		(nSpriteID >= SPRITE_LARGE_TREES1 && nSpriteID <= SPRITE_LARGE_TREES7)) {
+		if ((nPos % 4) == 0 || (nPos % 4) == 2) {
+			BOOL bIgnore = FALSE;
+			if ((nPos % 4) == 2)
+				bIgnore = TRUE;
+			palIdx = ProcessSeasonIndex(palIdx, bIgnore);
+		}	
+	}
+	else if ((nSpriteID >= SPRITE_SMALL_TERRAIN && nSpriteID <= SPRITE_SMALL_WATER_R_TERRAIN_TBL) ||
+		(nSpriteID >= SPRITE_MEDIUM_TERRAIN && nSpriteID <= SPRITE_MEDIUM_WATER_R_TERRAIN_TBL) ||
+		(nSpriteID >= SPRITE_LARGE_TERRAIN && nSpriteID <= SPRITE_LARGE_WATER_R_TERRAIN_TBL)) {
+		if (bWeatherTrend == 4 || bWeatherTrend == 6 || bWeatherTrend == 9) {
+			// This if is for partial drawing based on row.
+			/*if (nRemHeight <= (shapeCurrent[nSpriteID].wHeight / 2))*/
+				if ((nPos % 4) == 3 || (nPos % 4) == 2)
+					palIdx = ProcessWeatherIndex(palIdx);
+		}
+	}
+	palIdx = ProcessCyclingIndex(palIdx);
+	return palIdx;
 }
 
 static BYTE AdjustInversion(__int16 nSpriteID, BYTE palIdx) {
@@ -1408,7 +1478,7 @@ static void L_drawShape_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int16 righ
 	while (TRUE) {
 		nCount = SPRITEDATA(spritePtr)->nCount;
 		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
-		spritePtr += 2;
+		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
 		switch (nChunkMode) {
 		case MIF_CM_EMPTY:
 			continue;
@@ -1422,29 +1492,7 @@ static void L_drawShape_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int16 righ
 			break;
 		case MIF_CM_PROCPIXELS:
 			for (int nPos = nCount; nPos; ++spritePtr) {
-				BYTE palIdx = *spritePtr;
-				// Proof-of-concept weather experiment.
-				if ((nSpriteID >= SPRITE_SMALL_TREES1 && nSpriteID <= SPRITE_SMALL_TREES7) ||
-					(nSpriteID >= SPRITE_MEDIUM_TREES1 && nSpriteID <= SPRITE_MEDIUM_TREES7) ||
-					(nSpriteID >= SPRITE_LARGE_TREES1 && nSpriteID <= SPRITE_LARGE_TREES7)) {
-					if ((nPos % 4) == 0 || (nPos % 4) == 2) {
-						BOOL bIgnore = FALSE;
-						if ((nPos % 4) == 2)
-							bIgnore = TRUE;
-						palIdx = ProcessSeasonIndex(palIdx, bIgnore);
-					}	
-				}
-				else if (nSpriteID == SPRITE_SMALL_TERRAIN ||
-					nSpriteID == SPRITE_MEDIUM_TERRAIN ||
-					nSpriteID == SPRITE_LARGE_TERRAIN) {
-					if (bWeatherTrend == 4 || bWeatherTrend == 6 || bWeatherTrend == 9) {
-						if (nRemHeight <= (shapeCurrent[nSpriteID].wHeight / 2))
-							if ((nPos % 4) == 3 || (nPos % 4) == 2)
-								palIdx = ProcessWeatherIndex(palIdx);
-					}
-				}
-				palIdx = ProcessCyclingIndex(palIdx);
-				*pShapeBits = palIdx;
+				*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos);
 				++pShapeBits;
 				--nPos;
 			}
@@ -1486,7 +1534,7 @@ static void L_drawShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 
 	while (TRUE) {
 		nCount = SPRITEDATA(spritePtr)->nCount;
 		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
-		spritePtr += 2;
+		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
 		switch (nChunkMode) {
 		case MIF_CM_EMPTY:
 			continue;
@@ -1507,31 +1555,8 @@ static void L_drawShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 
 			continue;
 		case MIF_CM_PROCPIXELS:
 			for (int nPos = nCount; nPos; ++spritePtr) {
-				if (leftShapeBits <= 0 && rightShapeBits > 0) {
-					BYTE palIdx = *spritePtr;
-					// Proof-of-concept weather experiment.
-					if ((nSpriteID >= SPRITE_SMALL_TREES1 && nSpriteID <= SPRITE_SMALL_TREES7) ||
-						(nSpriteID >= SPRITE_MEDIUM_TREES1 && nSpriteID <= SPRITE_MEDIUM_TREES7) ||
-						(nSpriteID >= SPRITE_LARGE_TREES1 && nSpriteID <= SPRITE_LARGE_TREES7)) {
-						if ((nPos % 4) == 0 || (nPos % 4) == 2) {
-							BOOL bIgnore = FALSE;
-							if ((nPos % 4) == 2)
-								bIgnore = TRUE;
-							palIdx = ProcessSeasonIndex(palIdx, bIgnore);
-						}	
-					}
-					else if (nSpriteID == SPRITE_SMALL_TERRAIN ||
-						nSpriteID == SPRITE_MEDIUM_TERRAIN ||
-						nSpriteID == SPRITE_LARGE_TERRAIN) {
-						if (bWeatherTrend == 4 || bWeatherTrend == 6 || bWeatherTrend == 9) {
-							if (nRemHeight <= (shapeCurrent[nSpriteID].wHeight / 2))
-								if ((nPos % 4) == 3 || (nPos % 4) == 2)
-									palIdx = ProcessWeatherIndex(palIdx);
-							}
-					}
-					palIdx = ProcessCyclingIndex(palIdx);
-					*pShapeBits = palIdx;
-				}
+				if (leftShapeBits <= 0 && rightShapeBits > 0)
+					*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos);
 				--leftShapeBits;
 				++pShapeBits;
 				--rightShapeBits;
