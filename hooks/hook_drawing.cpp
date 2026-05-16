@@ -1305,7 +1305,7 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 	if ((nSpriteID >= SPRITE_SMALL_TREES1 && nSpriteID <= SPRITE_SMALL_TREES7) ||
 		(nSpriteID >= SPRITE_MEDIUM_TREES1 && nSpriteID <= SPRITE_MEDIUM_TREES7) ||
 		(nSpriteID >= SPRITE_LARGE_TREES1 && nSpriteID <= SPRITE_LARGE_TREES7)) {
-		if ((nPos % 4) == 0 || (nPos % 4) == 2) {
+		if ((nPos % 4) == 0 || (nPos % 4) == 2 || (nPos % 4) == 3) {
 			BOOL bIgnore = FALSE;
 			if ((nPos % 4) == 2)
 				bIgnore = TRUE;
@@ -1465,7 +1465,7 @@ static void L_drawShape_Invert_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, _
 	}
 }
 
-static void L_drawShape_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom) {
+static void L_drawShape_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isRoadMask, BOOL isFlipped) {
 	BYTE *pShapeBitsLine, *spritePtr, *pShapeBits;
 	BYTE nCount;
 	BYTE nChunkMode;
@@ -1488,12 +1488,24 @@ static void L_drawShape_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int16 righ
 			--nRemHeight;
 			break;
 		case MIF_CM_SKIPPIXELS:
-			pShapeBits += nCount;
+			if (isFlipped)
+				pShapeBits -= nCount;
+			else
+				pShapeBits += nCount;
 			break;
 		case MIF_CM_PROCPIXELS:
 			for (int nPos = nCount; nPos; ++spritePtr) {
-				*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos);
-				++pShapeBits;
+				BOOL bProcessBit = (isRoadMask) ? FALSE : TRUE;
+				if (isRoadMask) {
+					if (*pShapeBits == 0xA1)
+						bProcessBit = TRUE;
+				}
+				if (bProcessBit)
+					*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos);
+				if (isFlipped)
+					--pShapeBits;
+				else
+					++pShapeBits;
 				--nPos;
 			}
 			if ((nCount & 1) != 0)
@@ -1505,7 +1517,7 @@ static void L_drawShape_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int16 righ
 	}
 }
 
-static void L_drawShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom) {
+static void L_drawShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isRoadMask, BOOL isFlipped) {
 	__int16 leftEdge, topEdge, rightEdge, bottomEdge;
 	BYTE *pShapeBitsLine, *spritePtr;
 	WORD nRemHeight;
@@ -1513,9 +1525,15 @@ static void L_drawShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 
 	BYTE *pShapeBits, nCount, nChunkMode;
 	bool bReachedBottom;
 
-	leftEdge = shapeLeft - right;
+	if (isFlipped) {
+		leftEdge = right - shapeLeft;
+		rightEdge = right - shapeRight;
+	}
+	else {
+		leftEdge = shapeLeft - right;
+		rightEdge = shapeRight - right;
+	}
 	topEdge = shapeTop - bottom;
-	rightEdge = shapeRight - right;
 	bottomEdge = shapeBottom - bottom;
 	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
 	nRemHeight = shapeCurrent[nSpriteID].wHeight;
@@ -1551,14 +1569,41 @@ static void L_drawShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 
 		case MIF_CM_SKIPPIXELS:
 			leftShapeBits -= nCount;
 			rightShapeBits -= nCount;
-			pShapeBits += nCount;
+			if (isFlipped)
+				pShapeBits -= nCount;
+			else
+				pShapeBits += nCount;
 			continue;
 		case MIF_CM_PROCPIXELS:
 			for (int nPos = nCount; nPos; ++spritePtr) {
-				if (leftShapeBits <= 0 && rightShapeBits > 0)
+				BOOL bProcessBit = FALSE;
+				if (isRoadMask) {
+					if (isFlipped) {
+						if (rightShapeBits <= 0 && leftShapeBits > 0 && *pShapeBits == 0xA1)
+							bProcessBit = TRUE;
+					}
+					else {
+						if (leftShapeBits <= 0 && rightShapeBits > 0 && *pShapeBits == 0xA1)
+							bProcessBit = TRUE;
+					}
+				}
+				else {
+					if (isFlipped) {
+						if (rightShapeBits <= 0 && leftShapeBits > 0)
+							bProcessBit = TRUE;
+					}
+					else {
+						if (leftShapeBits <= 0 && rightShapeBits > 0)
+							bProcessBit = TRUE;
+					}
+				}
+				if (bProcessBit)
 					*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos);
 				--leftShapeBits;
-				++pShapeBits;
+				if (isFlipped)
+					--pShapeBits;
+				else
+					++pShapeBits;
 				--rightShapeBits;
 				--nPos;
 			}
@@ -1584,6 +1629,7 @@ extern "C" void __cdecl Hook_drawShape(__int16 nSpriteID, __int16 right, __int16
 			nShapeBottom = bottom + shapePtr->wHeight;
 			nShapeRight = right + shapePtr->wWidth;
 			if (shapeRight > right && shapeLeft < nShapeRight && shapeBottom > bottom && shapeTop < nShapeBottom) {
+				int nRight = (isFlipped) ? nShapeRight : right;
 				// The 'doInvert' flag is used from the InvertShape and InvertTerrain calls.
 				// It's the "Placement Preview".
 				if (doInvert) {
@@ -1592,16 +1638,32 @@ extern "C" void __cdecl Hook_drawShape(__int16 nSpriteID, __int16 right, __int16
 					else
 						L_drawShape_Invert_MainArea(shapeData, nSpriteID, right, bottom);
 				}
-				else if (isFlipped) {
-					if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)
-						GameMain_drawShape_Flipped_OutOfContext(shapeData, nShapeRight, bottom);
-					else
-						GameMain_drawShape_Flipped_MainArea(shapeData, nShapeRight, bottom);
-				}
 				else if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)
-					L_drawShape_OutOfContext(shapeData, nSpriteID, right, bottom);
+					L_drawShape_OutOfContext(shapeData, nSpriteID, nRight, bottom, FALSE, isFlipped);
 				else
-					L_drawShape_MainArea(shapeData, nSpriteID, right, bottom);
+					L_drawShape_MainArea(shapeData, nSpriteID, nRight, bottom, FALSE, isFlipped);
+			}
+		}
+	}
+}
+
+extern "C" void __cdecl Hook_drawMaskShape(__int16 nSpriteID, __int16 left, __int16 top, __int16 isFlipped) {
+	sprite_header_t *shapePtr;
+	BYTE *shapeData;
+	int nShapeTop, nShapeLeft;
+
+	shapePtr = &shapeCurrent[nSpriteID];
+	if (shapePtr) {
+		shapeData = shapePtr->sprOffset.sprPtr;
+		if (shapeData) {
+			nShapeTop = top + shapePtr->wHeight;
+			nShapeLeft = left + shapePtr->wWidth;
+			if (shapeRight > left && nShapeLeft > shapeLeft && shapeBottom > top && nShapeTop > shapeTop) {
+				int nLeft = (isFlipped) ? nShapeLeft : left;
+				if (shapeTop >= top || shapeLeft >= left || nShapeTop >= shapeBottom || nShapeLeft >= shapeRight)
+					L_drawShape_OutOfContext(shapeData, nSpriteID, nLeft, top, TRUE, isFlipped);
+				else
+					L_drawShape_MainArea(shapeData, nSpriteID, nLeft, top, TRUE, isFlipped);
 			}
 		}
 	}
@@ -1647,6 +1709,10 @@ void InstallDrawingHooks_SC2K1996(void) {
 	// Hook for drawShape
 	SafeVirtualProtect((LPVOID)0x401393, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401393, Hook_drawShape);
+
+	// Hook for drawMaskShape
+	SafeVirtualProtect((LPVOID)0x4023AB, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4023AB, Hook_drawMaskShape);
 
 	UpdateDrawingHooks_SC2K1996();
 }
