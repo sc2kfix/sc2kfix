@@ -1545,7 +1545,7 @@ static void L_drawShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 
 		bottomEdge -= topEdge;
 		pShapeBitsLine += shapeX * topEdge;
 		do {
-			spritePtr += (*spritePtr + 2);
+			spritePtr += SPRITEDATA(spritePtr)->nCount + 2;
 			--topEdge;
 		} while (topEdge);
 	}
