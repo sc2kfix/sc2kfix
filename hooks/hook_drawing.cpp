@@ -1320,7 +1320,7 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 			if (bWeatherTrend == 4 || bWeatherTrend == 6 || bWeatherTrend == 9) {
 				// This if is for partial drawing based on row.
 				/*if (nRemHeight <= (shapeCurrent[nSpriteID].wHeight / 2))*/
-				if ((nPos % 4) == 3 || (nPos % 4) == 2)
+				if ((nPos % 4) == 3 || (nPos % 4) == 1)
 					palIdx = ProcessWeatherIndex(palIdx);
 			}
 		}
@@ -1524,7 +1524,7 @@ static void L_drawShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 
 	__int16 leftEdge, topEdge, rightEdge, bottomEdge;
 	BYTE *pShapeBitsLine, *spritePtr;
 	WORD nRemHeight;
-	__int16 leftShapeBits, rightShapeBits;
+	int leftShapeBits, rightShapeBits;
 	BYTE *pShapeBits, nCount, nChunkMode;
 	bool bReachedBottom;
 
@@ -1549,9 +1549,9 @@ static void L_drawShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 
 			--topEdge;
 		} while (topEdge);
 	}
-	leftShapeBits = (__int16)pShapeBitsLine;
+	leftShapeBits = (int)pShapeBitsLine;
 	pShapeBits = pShapeBitsLine;
-	rightShapeBits = (__int16)pShapeBitsLine;
+	rightShapeBits = (int)pShapeBitsLine;
 	while (TRUE) {
 		nCount = SPRITEDATA(spritePtr)->nCount;
 		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
