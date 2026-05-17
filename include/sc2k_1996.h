@@ -61,6 +61,12 @@
 
 #define MAP_EDGE_BUILDING 1
 
+#define SCD_UPDATE_VIEW_REDRAW                 0
+#define SCD_UPDATE_VIEW_TITLE                  1
+#define SCD_UPDATE_VIEW_UPDATE                 2
+#define SCD_UPDATE_VIEW_UPDATE_WITHTILEINVERT  3
+#define SCD_UPDATE_VIEW_CHECKTILEINVERT        4
+
 // This will get the general RCI zone that's passed
 // without distinguishing between light/dense.
 #define GET_GENERAL_RCI_ZONE(x) ((x - 1) / 2)

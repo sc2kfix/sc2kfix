@@ -861,11 +861,11 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 							// (Without this being done the animations are rather fast).
 							if (bUpdateGameView) {
 								Game_SimcityDoc_UpdateDocumentTitle(pSCDoc);
-								GameMain_Document_UpdateAllViews(pSCDoc, NULL, 3, NULL);
+								GameMain_Document_UpdateAllViews(pSCDoc, NULL, SCD_UPDATE_VIEW_UPDATE_WITHTILEINVERT, NULL);
 							}
 						}
 					}
-					GameMain_Document_UpdateAllViews(pSCDoc, NULL, 4, NULL);
+					GameMain_Document_UpdateAllViews(pSCDoc, NULL, SCD_UPDATE_VIEW_CHECKTILEINVERT, NULL);
 				}
 				UpdateWindow(pSCView->m_hWnd);
 			}
@@ -1218,7 +1218,7 @@ extern "C" void __stdcall Hook_SimcityDoc_UpdateDocumentTitle() {
 			operator delete(pFundStr);
 		}
 GOFORWARD:
-		GameMain_Document_UpdateAllViews(pThis, 0, 1, (CMFC3XObject *)&cStr);
+		GameMain_Document_UpdateAllViews(pThis, NULL, SCD_UPDATE_VIEW_TITLE, (CMFC3XObject *)&cStr);
 	}
 GETOUT:
 	GameMain_String_Dest(&cStr);
@@ -1428,7 +1428,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 			// Mode '3' also used here for "placement preview" preservation and
 			// blink mitigation.
 			if (!jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool())
-				GameMain_Document_UpdateAllViews(pCSimcityDoc, NULL, 3, NULL);
+				GameMain_Document_UpdateAllViews(pCSimcityDoc, NULL, SCD_UPDATE_VIEW_UPDATE_WITHTILEINVERT, NULL);
 			Game_UpdatePopulationDialog();
 			Game_UpdateIndustryDialog();
 			Game_UpdateGraphDialog();
@@ -1544,16 +1544,16 @@ extern "C" void __stdcall Hook_SimcityView_OnUpdate(CMFC3XView *pSender, LPARAM 
 	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
 
 	if (!pSCApp->dwSCAMainFrameDestroyVar) {
-		if (lHint == 1) {
+		if (lHint == SCD_UPDATE_VIEW_TITLE) {
 			pBuf = GameMain_String_GetBuffer((CMFC3XString *)pHint, 1);
 			GameMain_Document_SetTitle(pThis->m_pDocument, pBuf);
 		}
 		else {
-			if (lHint == 4)
+			if (lHint == SCD_UPDATE_VIEW_CHECKTILEINVERT)
 				L_CheckTileHighlight_SC2K1996(pThis);
-			else if (lHint == 3)
+			else if (lHint == SCD_UPDATE_VIEW_UPDATE_WITHTILEINVERT)
 				L_DrawHouse_SC2K1996(pThis, TRUE);
-			else if (lHint == 2)
+			else if (lHint == SCD_UPDATE_VIEW_UPDATE)
 				Game_SimcityView_UpdateAreaCompleteColorFill(pThis);
 			else
 				Game_SimcityView_MainWindowUpdate(pThis, 0, 0);
