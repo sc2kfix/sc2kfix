@@ -3072,7 +3072,7 @@ GAMECALL(0x402211, void, __thiscall, SimcityView_DestroyStructure, CSimcityView 
 GAMECALL(0x402225, int, __thiscall, MainFrame_LoadOwnerInformation, CMainFrame *)
 GAMECALL(0x402252, int, __thiscall, MainFrame_DoInitialDialog, CMainFrame *)
 GAMECALL(0x402266, LONG, __cdecl, SetSpriteForDrawing, void *, sprite_header_t *, int, __int16, RECT *)
-GAMECALL(0x40226B, int, __thiscall, SimcityView_UpdateAreaPortionFill, CSimcityView *) // This appears to do a partial update of selected/highlighted area while appearing to dispense with immediate color updates.
+GAMECALL(0x40226B, int, __thiscall, SimcityView_UpdateHouse, CSimcityView *) // Update partial sections ("dirty" areas)
 GAMECALL(0x402289, char, __cdecl, PerhapsGeneralZoneChooseAndPlaceBuilding, __int16 x, __int16 y, __int16 iBuildingPopLevel, __int16)
 GAMECALL(0x4022FC, void, __cdecl, SimulationGrowthTick, __int16 iStep, __int16 iSubStep)
 GAMECALL(0x402306, void, __thiscall, MyToolBar_SetButtonStyle, CMyToolBar *, int nIndex, UINT nStyle)
@@ -3121,7 +3121,7 @@ GAMECALL(0x4027A7, void, __thiscall, SimcityView_OnVScroll, CSimcityView *pThis,
 GAMECALL(0x4027B6, __int16, __cdecl, CalcTileHit16, __int16, __int16)
 GAMECALL(0x4027E3, BOOL, __cdecl, MoviePlay, HWND)
 GAMECALL(0x4027F2, int, __cdecl, ItemPlacementCheck, __int16 x, __int16 y, BYTE iTileID, __int16 iTileArea)
-GAMECALL(0x402810, int, __thiscall, SimcityView_DrawHouse, CSimcityView *) // This appears to be a more comprehensive update that'll occur for highlighted/selected area or when you're moving the game area.
+GAMECALL(0x402810, int, __thiscall, SimcityView_DrawHouse, CSimcityView *) // Primary drawing call (complete draw/update)
 GAMECALL(0x40281F, int, __cdecl, RunTripGenerator, __int16 x, __int16 y, __int16 iZoneType, __int16 iBuildingPopLevel, __int16 iTripMaxSteps)
 GAMECALL(0x402829, void, __cdecl, SpawnShip, __int16 x, __int16 y)
 GAMECALL(0x40282E, void, __thiscall, SimcityView_RotateClockwise, CSimcityView *pThis)
