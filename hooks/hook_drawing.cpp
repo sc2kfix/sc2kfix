@@ -1301,28 +1301,31 @@ static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
 
 static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemHeight, int nPos) {
 	BYTE palIdx = colIdx;
-	// Proof-of-concept weather experiment.
-	if ((nSpriteID >= SPRITE_SMALL_TREES1 && nSpriteID <= SPRITE_SMALL_TREES7) ||
-		(nSpriteID >= SPRITE_MEDIUM_TREES1 && nSpriteID <= SPRITE_MEDIUM_TREES7) ||
-		(nSpriteID >= SPRITE_LARGE_TREES1 && nSpriteID <= SPRITE_LARGE_TREES7)) {
-		if ((nPos % 4) == 0 || (nPos % 4) == 2 || (nPos % 4) == 3) {
-			BOOL bIgnore = FALSE;
-			if ((nPos % 4) == 2)
-				bIgnore = TRUE;
-			palIdx = ProcessSeasonIndex(palIdx, bIgnore);
-		}	
-	}
-	else if ((nSpriteID >= SPRITE_SMALL_TERRAIN && nSpriteID <= SPRITE_SMALL_WATER_R_TERRAIN_TBL) ||
-		(nSpriteID >= SPRITE_MEDIUM_TERRAIN && nSpriteID <= SPRITE_MEDIUM_WATER_R_TERRAIN_TBL) ||
-		(nSpriteID >= SPRITE_LARGE_TERRAIN && nSpriteID <= SPRITE_LARGE_WATER_R_TERRAIN_TBL)) {
-		if (bWeatherTrend == 4 || bWeatherTrend == 6 || bWeatherTrend == 9) {
-			// This if is for partial drawing based on row.
-			/*if (nRemHeight <= (shapeCurrent[nSpriteID].wHeight / 2))*/
+	// Only enable this if the "Frequent Updates" setting is enabled.
+	if (bFrequentUpdates) {
+		// Proof-of-concept weather experiment.
+		if ((nSpriteID >= SPRITE_SMALL_TREES1 && nSpriteID <= SPRITE_SMALL_TREES7) ||
+			(nSpriteID >= SPRITE_MEDIUM_TREES1 && nSpriteID <= SPRITE_MEDIUM_TREES7) ||
+			(nSpriteID >= SPRITE_LARGE_TREES1 && nSpriteID <= SPRITE_LARGE_TREES7)) {
+			if ((nPos % 4) == 0 || (nPos % 4) == 2 || (nPos % 4) == 3) {
+				BOOL bIgnore = FALSE;
+				if ((nPos % 4) == 2)
+					bIgnore = TRUE;
+				palIdx = ProcessSeasonIndex(palIdx, bIgnore);
+			}
+		}
+		else if ((nSpriteID >= SPRITE_SMALL_TERRAIN && nSpriteID <= SPRITE_SMALL_WATER_R_TERRAIN_TBL) ||
+			(nSpriteID >= SPRITE_MEDIUM_TERRAIN && nSpriteID <= SPRITE_MEDIUM_WATER_R_TERRAIN_TBL) ||
+			(nSpriteID >= SPRITE_LARGE_TERRAIN && nSpriteID <= SPRITE_LARGE_WATER_R_TERRAIN_TBL)) {
+			if (bWeatherTrend == 4 || bWeatherTrend == 6 || bWeatherTrend == 9) {
+				// This if is for partial drawing based on row.
+				/*if (nRemHeight <= (shapeCurrent[nSpriteID].wHeight / 2))*/
 				if ((nPos % 4) == 3 || (nPos % 4) == 2)
 					palIdx = ProcessWeatherIndex(palIdx);
+			}
 		}
+		palIdx = ProcessCyclingIndex(palIdx);
 	}
-	palIdx = ProcessCyclingIndex(palIdx);
 	return palIdx;
 }
 

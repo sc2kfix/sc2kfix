@@ -37,6 +37,8 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 	// 2) While the CSimcityView window is active and the toolbars aren't being dragged.
 	// 3) None of the additional redraw calls in LoColor mode.
 
+	bool bUseCycle = false;
+
 	bRedraw = FALSE;
 	pSCApp = &pCSimcityAppThis;
 	if (pSCApp) {
@@ -56,6 +58,14 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 						nSlowCycleIdx = 0;
 					nSlowCyclePos = iCycleOn[nSlowCycleIdx];
 
+					pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+					if (!pSCView)
+						bUseCycle = true;
+					else {
+						if (!bFrequentUpdates)
+							bUseCycle = true;
+					}
+
 					GetPaletteEntries((HPALETTE)pPalette->m_hObject, 0, 0x100, pPalAnimMain);
 					hDC = GetDC(pMainFrm->m_hWnd);
 					pDC = GameMain_DC_FromHandle(hDC);
@@ -67,13 +77,17 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 							else
 								nMidCyclePos = 0;
 						}
-						//Game_SwapCycle(0);
-						//AnimatePalette((HPALETTE)pPalette->m_hObject, 224, 16, pPalOffCycle);
+						if (bUseCycle) {
+							Game_SwapCycle(0);
+							AnimatePalette((HPALETTE)pPalette->m_hObject, 224, 16, pPalOffCycle);
+						}
 						bRedraw = TRUE;
 					}
 					else {
-						//Game_SwapCycle(1);
-						//AnimatePalette((HPALETTE)pPalette->m_hObject, 171, 49, pPalOnCycle);
+						if (bUseCycle) {
+							Game_SwapCycle(1);
+							AnimatePalette((HPALETTE)pPalette->m_hObject, 171, 49, pPalOnCycle);
+						}
 						bRedraw = TRUE;
 					}
 					GameMain_DC_SelectPalette(pDC, pSelPal, FALSE);
@@ -114,12 +128,11 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 						// (ie, before any game has been started - palette animation on the image is disabled once the
 						// game window has been created)
 						
-						pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 						if (!pSCView)
 							RedrawWindow(pMainFrm->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 						else if (pSCView && bCityViewAnim || hWndExt) {
-							//if (pSCView && bCityViewAnim)
-							//	RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+							if (pSCView && bCityViewAnim && bUseCycle)
+								RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 							if (hWndExt)
 								RedrawWindow(hWndExt, NULL, NULL, RDW_INVALIDATE);
 						}
