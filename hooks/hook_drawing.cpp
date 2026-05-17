@@ -1088,6 +1088,88 @@ extern "C" __int16 __cdecl Hook_PointToTile(__int16 x, __int16 y) {
 	return retval;
 }
 
+void L_CheckTileHighlight_SC2K1996(CSimcityView *pSCView) {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	BYTE *pBits;
+	LONG x;
+	__int16 y;
+
+	if (wTileHighlightActive) {
+		if (pSCApp->dwSCACursorGameHit) {
+			pBits = Game_Graphics_LockDIBBits(pSCView->SCVGraphics);
+			if (pBits || Game_SimcityView_CheckOrLoadGraphic(pSCView)) {
+				x = Game_Graphics_Width(pSCView->SCVGraphics);
+				y = Game_Graphics_Height(pSCView->SCVGraphics);
+				Game_BeginProcessObjects(pSCView, pBits, x, y, &pSCView->SCVAreaView);
+				Game_SimcityView_DrawSquareHighlight(pSCView, wHighlightedTileX1, wHighlightedTileY1, wHighlightedTileX2, wHighlightedTileY2);
+				Game_FinishProcessObjects();
+				Game_Graphics_UnlockDIBBits(pSCView->SCVGraphics);
+			}
+		}
+		else
+			wTileHighlightActive = 0;
+	}
+}
+
+void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveTileHighlightActive) {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	COLORREF cr;
+
+	if (pSCView->SCVGraphics && pSCView->pSCVGraphicLockDIBRes || Game_SimcityView_CheckOrLoadGraphic(pSCView)) {
+		curLockedDIBBits = Game_Graphics_LockDIBBits(pSCView->SCVGraphics);
+		Game_Graphics_Width(pSCView->SCVGraphics);
+		Game_Graphics_Height(pSCView->SCVGraphics);
+		Game_BeginProcessObjects(pSCView, curLockedDIBBits, pSCView->dwSCVGraphicWidth, (__int16)pSCView->dwSCVGraphicHeight, &pSCView->SCVAreaView);
+		rcDst = pSCView->SCVAreaView;
+		theSCVDC = Game_Graphics_GetDC(pSCView->SCVGraphics);
+		if (DisplayLayer[LAYER_UNDERGROUND])
+			cr = colGameBackgndUnder;
+		else
+			cr = colGameBackgndAbove;
+		SetBkColor(theSCVDC->m_hDC, cr);
+		ExtTextOutA(theSCVDC->m_hDC, 0, 0, ETO_OPAQUE, &rcDst, 0, 0, 0);
+		Game_Graphics_ReleaseDC(pSCView->SCVGraphics, theSCVDC);
+		wCurrentPositionAngle = wPositionAngle[wViewRotation];
+		if (!IsIconic(pSCView->m_hWnd) && showColor && EditData)
+			Game_DrawAllColor();
+		else if (DisplayLayer[LAYER_UNDERGROUND])
+			Game_DrawAllUnder();
+		else {
+			if (pSCView->wSCVZoomLevel) {
+				if (pSCView->wSCVZoomLevel == 1)
+					Game_DrawAllSmall();
+				else
+					Game_DrawAllLarge();
+			}
+			else
+				Game_DrawAllTiny();
+		}
+		if (!bLeaveTileHighlightActive)
+			wTileHighlightActive = 0;
+		else {
+			if (wTileHighlightActive) {
+				if (pSCApp->dwSCACursorGameHit)
+					Game_SimcityView_DrawSquareHighlight(pSCView, wHighlightedTileX1, wHighlightedTileY1, wHighlightedTileX2, wHighlightedTileY2);
+				else
+					wTileHighlightActive = 0;
+			}
+		}
+		Game_FinishProcessObjects();
+		Game_SimcityView_MainWindowUpdate(pSCView, 0, TRUE);
+		Game_UpdateCityMap();
+		Game_Graphics_UnlockDIBBits(pSCView->SCVGraphics);
+		curLockedDIBBits = 0;
+	}
+}
+
+extern "C" void __stdcall Hook_SimcityView_DrawHouse() {
+	CSimcityView *pThis;
+
+	__asm mov [pThis], ecx
+
+	L_DrawHouse_SC2K1996(pThis, FALSE);
+}
+
 void InstallDrawingHooks_SC2K1996(void) {
 	// Hook for DrawAllLarge
 	SafeVirtualProtect((LPVOID)0x4017FD, 5, PAGE_EXECUTE_READWRITE);
@@ -1120,6 +1202,10 @@ void InstallDrawingHooks_SC2K1996(void) {
 	// Hook for PointToTile
 	SafeVirtualProtect((LPVOID)0x401D16, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401D16, Hook_PointToTile);
+
+	// Hook for CSimcityView::DrawHouse (UpdateAreaCompleteColorFill)
+	SafeVirtualProtect((LPVOID)0x402810, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402810, Hook_SimcityView_DrawHouse);
 
 	UpdateDrawingHooks_SC2K1996();
 }
