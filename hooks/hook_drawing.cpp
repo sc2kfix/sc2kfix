@@ -1090,24 +1090,11 @@ extern "C" __int16 __cdecl Hook_PointToTile(__int16 x, __int16 y) {
 
 void L_CheckTileHighlight_SC2K1996(CSimcityView *pSCView) {
 	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
-	BYTE *pBits;
-	LONG x;
-	__int16 y;
-
 	if (wTileHighlightActive) {
-		if (pSCApp->dwSCACursorGameHit) {
-			pBits = Game_Graphics_LockDIBBits(pSCView->SCVGraphics);
-			if (pBits || Game_SimcityView_CheckOrLoadGraphic(pSCView)) {
-				x = Game_Graphics_Width(pSCView->SCVGraphics);
-				y = Game_Graphics_Height(pSCView->SCVGraphics);
-				Game_BeginProcessObjects(pSCView, pBits, x, y, &pSCView->SCVAreaView);
-				Game_SimcityView_DrawSquareHighlight(pSCView, wHighlightedTileX1, wHighlightedTileY1, wHighlightedTileX2, wHighlightedTileY2);
-				Game_FinishProcessObjects();
-				Game_Graphics_UnlockDIBBits(pSCView->SCVGraphics);
-			}
-		}
+		if (pSCApp->dwSCACursorGameHit)
+			Game_SimcityView_MaintainCursor(pSCView);
 		else
-			wTileHighlightActive = 0;
+			Game_SimcityView_TileHighlightRemove(pSCView);
 	}
 }
 

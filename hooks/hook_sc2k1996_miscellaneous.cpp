@@ -850,21 +850,22 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 				if (pSCDoc && pSCDoc->pSimEngine) {
 					if (pThis->wSCAGameSpeedLOW != GAME_SPEED_PAUSED) {
 						if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool()) {
+							BOOL bUpdateGameView = (wCityMode == GAME_MODE_DISASTER && !bOffCycle) ? FALSE : TRUE;
 							// Moved the title and view update calls out of the SimulationProcessTick()
 							// function so they always occur at the end to ensure everything is updated
 							// and to account for the new mode '3' for preserving the "placement preview"
 							// tile highlight during granular updates.
-							Game_SimcityDoc_UpdateDocumentTitle(pSCDoc);
-							GameMain_Document_UpdateAllViews(pSCDoc, NULL, 3, NULL);
-						}
-						else {
-							// This check here is for keeping the "placement preview"
-							// tile highlight updated when the speed is set to "african swallow"
-							// and the "frequent updates" (granular mode) setting is disabled.
-							if (pThis->wSCAGameSpeedLOW == GAME_SPEED_AFRICAN_SWALLOW)
-								GameMain_Document_UpdateAllViews(pSCDoc, NULL, 4, NULL);
+							//
+							// When disaster mode is active we only want to instigate an update when
+							// 'OffCycle' in order to not have a negative effect on the disaster animations
+							// (Without this being done the animations are rather fast).
+							if (bUpdateGameView) {
+								Game_SimcityDoc_UpdateDocumentTitle(pSCDoc);
+								GameMain_Document_UpdateAllViews(pSCDoc, NULL, 3, NULL);
+							}
 						}
 					}
+					GameMain_Document_UpdateAllViews(pSCDoc, NULL, 4, NULL);
 				}
 				UpdateWindow(pSCView->m_hWnd);
 			}

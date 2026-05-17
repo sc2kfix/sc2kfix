@@ -947,7 +947,7 @@ extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 
 	pSCApp = &pCSimcityAppThis;
 	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);	// TODO: is this necessary or can we just dereference pCSimcityView?
-	Game_SimcityView_TileHighlightUpdate(pSCView);
+	Game_SimcityView_TileHighlightRemove(pSCView);
 	screenCoords.x = 400;
 	screenCoords.y = 400;
 	iCurrMapToolGroupNoHotKey = wCurrentMapToolGroup;
