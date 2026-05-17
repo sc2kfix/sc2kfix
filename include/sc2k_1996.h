@@ -3121,7 +3121,7 @@ GAMECALL(0x4027A7, void, __thiscall, SimcityView_OnVScroll, CSimcityView *pThis,
 GAMECALL(0x4027B6, __int16, __cdecl, CalcTileHit16, __int16, __int16)
 GAMECALL(0x4027E3, BOOL, __cdecl, MoviePlay, HWND)
 GAMECALL(0x4027F2, int, __cdecl, ItemPlacementCheck, __int16 x, __int16 y, BYTE iTileID, __int16 iTileArea)
-GAMECALL(0x402810, int, __thiscall, SimcityView_UpdateAreaCompleteColorFill, CSimcityView *) // This appears to be a more comprehensive update that'll occur for highlighted/selected area or when you're moving the game area.
+GAMECALL(0x402810, int, __thiscall, SimcityView_DrawHouse, CSimcityView *) // This appears to be a more comprehensive update that'll occur for highlighted/selected area or when you're moving the game area.
 GAMECALL(0x40281F, int, __cdecl, RunTripGenerator, __int16 x, __int16 y, __int16 iZoneType, __int16 iBuildingPopLevel, __int16 iTripMaxSteps)
 GAMECALL(0x402829, void, __cdecl, SpawnShip, __int16 x, __int16 y)
 GAMECALL(0x40282E, void, __thiscall, SimcityView_RotateClockwise, CSimcityView *pThis)

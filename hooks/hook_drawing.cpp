@@ -1190,7 +1190,7 @@ void InstallDrawingHooks_SC2K1996(void) {
 	SafeVirtualProtect((LPVOID)0x401D16, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401D16, Hook_PointToTile);
 
-	// Hook for CSimcityView::DrawHouse (UpdateAreaCompleteColorFill)
+	// Hook for CSimcityView::DrawHouse
 	SafeVirtualProtect((LPVOID)0x402810, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x402810, Hook_SimcityView_DrawHouse);
 

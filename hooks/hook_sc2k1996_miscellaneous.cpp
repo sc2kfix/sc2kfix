@@ -1554,7 +1554,7 @@ extern "C" void __stdcall Hook_SimcityView_OnUpdate(CMFC3XView *pSender, LPARAM 
 			else if (lHint == SCD_UPDATE_VIEW_UPDATE_WITHTILEINVERT)
 				L_DrawHouse_SC2K1996(pThis, TRUE);
 			else if (lHint == SCD_UPDATE_VIEW_UPDATE)
-				Game_SimcityView_UpdateAreaCompleteColorFill(pThis);
+				Game_SimcityView_DrawHouse(pThis);
 			else
 				Game_SimcityView_MainWindowUpdate(pThis, 0, 0);
 			UpdateWindow(pThis->m_hWnd);
