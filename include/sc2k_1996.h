@@ -1741,6 +1741,11 @@ enum spriteEnum {
 
 #define SPRITE_ENTRY_COUNT SPRITE_MEDIUM_START
 
+#define GET_OVERALL_SPRITE(var, spr) (var == (spr + SPRITE_SMALL_START) || var == (spr + SPRITE_MEDIUM_START) || var == (spr + SPRITE_LARGE_START))
+#define GET_OVERALL_SPRITE_RANGE(var, sprStart, sprEnd) ((var >= (sprStart + SPRITE_SMALL_START) && var <= (sprEnd + SPRITE_SMALL_START))  || \
+														(var >= (sprStart + SPRITE_MEDIUM_START) && var <= (sprEnd + SPRITE_MEDIUM_START)) || \
+														(var >= (sprStart + SPRITE_LARGE_START) && var <= (sprEnd + SPRITE_LARGE_START)))
+
 // Building (XBLD) tile IDs
 enum {
 	TILE_CLEAR,
@@ -3208,6 +3213,10 @@ GAMECALL_MAIN(0x44D1B0, void, __cdecl, QuerySpecificItem, __int16, __int16)
 GAMECALL_MAIN(0x45CF10, void, __stdcall, SimulationStartDisaster, void)
 GAMECALL_MAIN(0x4719A0, void, __cdecl, QueryGeneralItem, __int16, __int16)
 GAMECALL_MAIN(0x4815E0, INT_PTR, __thiscall, GameDialog_DoModal, CGameDialog *)
+GAMECALL_MAIN(0x4856E0, void, __cdecl, drawShape_MainArea, BYTE *, __int16, __int16)
+GAMECALL_MAIN(0x4857B0, void, __cdecl, drawShape_Flipped_MainArea, BYTE *, __int16, __int16)
+GAMECALL_MAIN(0x485850, void, __cdecl, drawShape_OutOfContext, BYTE *, __int16, __int16)
+GAMECALL_MAIN(0x4859E0, void, __cdecl, drawShape_Flipped_OutOfContext, BYTE *, __int16, __int16)
 GAMECALL_MAIN(0x489C80, void, __thiscall, StatusControlBar_DestructStatusBar, CStatusControlBar *)
 GAMECALL_MAIN(0x489D50, void, __thiscall, StatusControlBar_UpdateStatusBar, CStatusControlBar *, int, char *, int, COLORREF)
 
@@ -3471,6 +3480,14 @@ GAMEOFF(WORD,	wHighlightedTileY2,			0x4CDB74)
 GAMEOFF(DWORD,	dwLFSRState,				0x4CDB7C)
 GAMEOFF(DWORD,	dwLCGState,					0x4CDB80)
 GAMEOFF_ARR(char,	szSoundPath,			0x4CDB88)
+GAMEOFF(int,	shapeLeft,					0x4CDE30)
+GAMEOFF(int,	shapeTop,					0x4CDE34)
+GAMEOFF(int,	shapeRight,					0x4CDE38)
+GAMEOFF(int,	shapeBottom,				0x4CDE3C)
+GAMEOFF(__int16,	shapeY,					0x4CDE40)
+GAMEOFF(int,	shapeX,						0x4CDE44)
+GAMEOFF(BYTE *,	shapeBits,					0x4CDE48)
+GAMEOFF(sprite_header_t *,	shapeCurrent,	0x4CDE4C)
 GAMEOFF_ARR(char *,	pTileNames,				0x4CDE68)
 GAMEOFF(HWND,	hWndMovieCap,				0x4CE7E8)
 GAMEOFF(HWND,	hWndMovie,					0x4CE7EC)

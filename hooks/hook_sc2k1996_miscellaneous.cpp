@@ -849,7 +849,7 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 				}
 				if (pSCDoc && pSCDoc->pSimEngine) {
 					if (pThis->wSCAGameSpeedLOW != GAME_SPEED_PAUSED) {
-						if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool()) {
+						if (bFrequentUpdates) {
 							BOOL bUpdateGameView = (wCityMode == GAME_MODE_DISASTER && !bOffCycle) ? FALSE : TRUE;
 							// Moved the title and view update calls out of the SimulationProcessTick()
 							// function so they always occur at the end to ensure everything is updated
@@ -1289,7 +1289,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	// Advance the simulation for the current SimCalendar day
 	switch (dwMonDay) {
 		case 0:
-			if (!jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool())
+			if (!bFrequentUpdates)
 				Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
 			if (bYearEndFlag)
 				Game_SimulationPrepareBudgetDialog(0);
@@ -1427,7 +1427,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 		case 23:
 			// Mode '3' also used here for "placement preview" preservation and
 			// blink mitigation.
-			if (!jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool())
+			if (!bFrequentUpdates)
 				GameMain_Document_UpdateAllViews(pCSimcityDoc, NULL, SCD_UPDATE_VIEW_UPDATE_WITHTILEINVERT, NULL);
 			Game_UpdatePopulationDialog();
 			Game_UpdateIndustryDialog();

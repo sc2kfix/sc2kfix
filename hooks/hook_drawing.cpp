@@ -1157,6 +1157,180 @@ extern "C" void __stdcall Hook_SimcityView_DrawHouse() {
 	L_DrawHouse_SC2K1996(pThis, FALSE);
 }
 
+static BYTE AdjustInversion(__int16 nSpriteID, BYTE palIdx) {
+	BYTE newIdx = ~palIdx;
+	// In the DOS and Macintosh version the tile inversion
+	// colouration was slightly different, this was a result
+	// of different palette indices. To compensate all that's
+	// required is to increment by 0x20 to get it back into
+	// range.
+	BOOL bPalOffset = TRUE;
+	if (GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_UNDERGROUND_TERRAIN, SPRITE_SMALL_SUBWAYENTRANCE)) {
+		if (bDarkUnderground)
+			bPalOffset = FALSE;
+	}
+
+	if (bPalOffset)
+		newIdx += 0x20;
+	return newIdx;
+}
+
+static BYTE CheckInversion(__int16 nSpriteID, BYTE palIdx) {
+	BYTE newIdx = palIdx;
+	
+	BOOL bPalOffset = TRUE;
+	if (GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_UNDERGROUND_TERRAIN, SPRITE_SMALL_SUBWAYENTRANCE)) {
+		if (bDarkUnderground)
+			bPalOffset = FALSE;
+	}
+
+	if (bPalOffset)
+		newIdx -= 0x20;
+	return newIdx;
+}
+
+static void L_drawShape_Invert_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom) {
+	BYTE *pShapeBitsLine, *spritePtr, *pShapeBits;
+	BYTE nCount;
+	BYTE nChunkMode;
+
+	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
+	spritePtr = shapePtr;
+	pShapeBits = pShapeBitsLine;
+	while (TRUE) {
+		nCount = SPRITEDATA(spritePtr)->nCount;
+		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
+		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
+		switch (nChunkMode) {
+		case MIF_CM_EMPTY:
+			continue;
+		case MIF_CM_NEWROWSTART:
+			pShapeBits = &pShapeBitsLine[shapeX];
+			pShapeBitsLine += shapeX;
+			break;
+		case MIF_CM_SKIPPIXELS:
+			pShapeBits += nCount;
+			break;
+		case MIF_CM_PROCPIXELS:
+			for (int nPos = nCount; nPos; ++spritePtr) {
+				if (*pShapeBits == *spritePtr || (char)(CheckInversion(nSpriteID, *spritePtr) ^ *pShapeBits) == -1)
+					*pShapeBits = AdjustInversion(nSpriteID, *pShapeBits);
+				++pShapeBits;
+				--nPos;
+			}
+			if ((nCount & 1) != 0)
+				++spritePtr;
+			break;
+		default:
+			return;
+		}
+	}
+}
+
+static void L_drawShape_Invert_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom) {
+	__int16 leftEdge, topEdge, rightEdge, bottomEdge;
+	BYTE *pShapeBitsLine, *spritePtr;
+	WORD nRemHeight;
+	int leftShapeBits, rightShapeBits;
+	BYTE *pShapeBits, nCount, nChunkMode;
+	bool bReachedBottom;
+
+	leftEdge = shapeLeft - right;
+	rightEdge = shapeRight - right;
+	topEdge = shapeTop - bottom;
+	bottomEdge = shapeBottom - bottom;
+	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
+	nRemHeight = shapeCurrent[nSpriteID].wHeight;
+	spritePtr = shapePtr;
+	if (topEdge > 0) {
+		bottomEdge -= topEdge;
+		pShapeBitsLine += shapeX * topEdge;
+		do {
+			spritePtr += SPRITEDATA(spritePtr)->nCount + 2;
+			--topEdge;
+		} while (topEdge);
+	}
+	leftShapeBits = (int)pShapeBitsLine;
+	pShapeBits = pShapeBitsLine;
+	rightShapeBits = (int)pShapeBitsLine;
+	while (TRUE) {
+		nCount = SPRITEDATA(spritePtr)->nCount;
+		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
+		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
+		switch (nChunkMode) {
+		case MIF_CM_EMPTY:
+			continue;
+		case MIF_CM_NEWROWSTART:
+			leftShapeBits = leftEdge;
+			rightShapeBits = rightEdge;
+			bReachedBottom = --bottomEdge < 0;
+			pShapeBits = &pShapeBitsLine[shapeX];
+			pShapeBitsLine += shapeX;
+			--nRemHeight;
+			if (!bReachedBottom)
+				continue;
+			break;
+		case MIF_CM_SKIPPIXELS:
+			leftShapeBits -= nCount;
+			rightShapeBits -= nCount;
+			pShapeBits += nCount;
+			continue;
+		case MIF_CM_PROCPIXELS:
+			for (int nPos = nCount; nPos; ++spritePtr) {
+				if (leftShapeBits <= 0 && rightShapeBits > 0) {
+					if (*pShapeBits == *spritePtr || (char)(CheckInversion(nSpriteID, *spritePtr) ^ *pShapeBits) == -1)
+						*pShapeBits = AdjustInversion(nSpriteID, *pShapeBits);
+				}
+				--leftShapeBits;
+				++pShapeBits;
+				--rightShapeBits;
+				--nPos;
+			}
+			if ((nCount & 1) != 0)
+				++spritePtr;
+			continue;
+		default:
+			return;
+		}
+		break;
+	}
+}
+
+extern "C" void __cdecl Hook_drawShape(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert) {
+	sprite_header_t *shapePtr;
+	BYTE *shapeData;
+	int nShapeBottom, nShapeRight;
+
+	shapePtr = &shapeCurrent[nSpriteID];
+	if (shapePtr) {
+		shapeData = shapePtr->sprOffset.sprPtr;
+		if (shapeData) {
+			nShapeBottom = bottom + shapePtr->wHeight;
+			nShapeRight = right + shapePtr->wWidth;
+			if (shapeRight > right && shapeLeft < nShapeRight && shapeBottom > bottom && shapeTop < nShapeBottom) {
+				// The 'doInvert' flag is used from the InvertShape and InvertTerrain calls.
+				// It's the "Placement Preview".
+				if (doInvert) {
+					if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)
+						L_drawShape_Invert_OutOfContext(shapeData, nSpriteID, right, bottom);
+					else
+						L_drawShape_Invert_MainArea(shapeData, nSpriteID, right, bottom);
+				}
+				else if (isFlipped) {
+					if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)
+						GameMain_drawShape_Flipped_OutOfContext(shapeData, nShapeRight, bottom);
+					else
+						GameMain_drawShape_Flipped_MainArea(shapeData, nShapeRight, bottom);
+				}
+				else if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)
+					GameMain_drawShape_OutOfContext(shapeData, right, bottom);
+				else
+					GameMain_drawShape_MainArea(shapeData, right, bottom);
+			}
+		}
+	}
+}
+
 void InstallDrawingHooks_SC2K1996(void) {
 	// Hook for DrawAllLarge
 	SafeVirtualProtect((LPVOID)0x4017FD, 5, PAGE_EXECUTE_READWRITE);
@@ -1194,6 +1368,10 @@ void InstallDrawingHooks_SC2K1996(void) {
 	SafeVirtualProtect((LPVOID)0x402810, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x402810, Hook_SimcityView_DrawHouse);
 
+	// Hook for drawShape
+	SafeVirtualProtect((LPVOID)0x401393, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401393, Hook_drawShape);
+
 	UpdateDrawingHooks_SC2K1996();
 }
 
@@ -1201,7 +1379,7 @@ void UpdateDrawingHooks_SC2K1996(void) {
 	COLORREF undgrndBkgnd;
 
 	undgrndBkgnd = PALETTERGB(192, 192, 192); // Default
-	if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND].ToBool())
+	if (bDarkUnderground)
 		undgrndBkgnd = PALETTERGB(60, 60, 60);    // Dark Grey
 
 	// Set via InitializeDataColorsFonts() first (on program load).
