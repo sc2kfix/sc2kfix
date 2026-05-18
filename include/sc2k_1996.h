@@ -3221,8 +3221,6 @@ GAMECALL_MAIN(0x44D1B0, void, __cdecl, QuerySpecificItem, __int16, __int16)
 GAMECALL_MAIN(0x45CF10, void, __stdcall, SimulationStartDisaster, void)
 GAMECALL_MAIN(0x4719A0, void, __cdecl, QueryGeneralItem, __int16, __int16)
 GAMECALL_MAIN(0x4815E0, INT_PTR, __thiscall, GameDialog_DoModal, CGameDialog *)
-GAMECALL_MAIN(0x4857B0, void, __cdecl, drawShape_Flipped_MainArea, BYTE *, __int16, __int16)
-GAMECALL_MAIN(0x4859E0, void, __cdecl, drawShape_Flipped_OutOfContext, BYTE *, __int16, __int16)
 GAMECALL_MAIN(0x489C80, void, __thiscall, StatusControlBar_DestructStatusBar, CStatusControlBar *)
 GAMECALL_MAIN(0x489D50, void, __thiscall, StatusControlBar_UpdateStatusBar, CStatusControlBar *, int, char *, int, COLORREF)
 
