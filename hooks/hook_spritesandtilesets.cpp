@@ -421,7 +421,7 @@ void ReloadDefaultTileSet_SC2K1996() {
 
 	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 	if (pSCView) {
-		Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
+		Game_SimcityView_DrawHouse(pSCView);
 		UpdateWindow(pSCView->m_hWnd);
 	}
 }

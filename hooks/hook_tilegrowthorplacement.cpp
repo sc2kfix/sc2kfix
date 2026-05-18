@@ -2156,7 +2156,7 @@ extern "C" int __cdecl Hook_CityToolPlaceSelectedBuilding(__int16 iX, __int16 iY
 			if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE)
 				XBITClearBits(iX, iY, XBIT_PIPED);
 			pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
-			Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
+			Game_SimcityView_DrawHouse(pSCView);
 			UpdateWindow(pSCView->m_hWnd);
 			break;
 	}

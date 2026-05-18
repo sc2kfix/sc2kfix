@@ -922,7 +922,7 @@ static void DoBindAction_SC2K1996(int nAction, BOOL bRelease) {
 						coords_w_t tileCoords;
 						HMENU hMenu, hSubMenu;
 
-						Game_SimcityView_TileHighlightUpdate(pSCView);
+						Game_SimcityView_TileHighlightRemove(pSCView);
 						pt.x = gameViewPt.x;
 						pt.y = gameViewPt.y;
 						wTileCoords = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);

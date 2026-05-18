@@ -61,8 +61,6 @@ DLGPROC lpMainDialogAfxProc = NULL;
 HWND hwndMainDialog_SC2K1996 = NULL;
 BOOL bMainDialogUpdateState = FALSE;
 
-static BOOL bOverrideTickPlacementHighlight = FALSE;
-
 // Override some strings that have egregiously bad grammar/capitalization.
 // Maxis fail English? That's unpossible!
 extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMax) {
@@ -849,6 +847,26 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 						}
 					}
 				}
+				if (pSCDoc && pSCDoc->pSimEngine) {
+					if (pThis->wSCAGameSpeedLOW != GAME_SPEED_PAUSED) {
+						if (bFrequentUpdates) {
+							BOOL bUpdateGameView = (wCityMode == GAME_MODE_DISASTER && !bOffCycle) ? FALSE : TRUE;
+							// Moved the title and view update calls out of the SimulationProcessTick()
+							// function so they always occur at the end to ensure everything is updated
+							// and to account for the new mode '3' for preserving the "placement preview"
+							// tile highlight during granular updates.
+							//
+							// When disaster mode is active we only want to instigate an update when
+							// 'OffCycle' in order to not have a negative effect on the disaster animations
+							// (Without this being done the animations are rather fast).
+							if (bUpdateGameView) {
+								Game_SimcityDoc_UpdateDocumentTitle(pSCDoc);
+								GameMain_Document_UpdateAllViews(pSCDoc, NULL, SCD_UPDATE_VIEW_UPDATE_WITHTILEINVERT, NULL);
+							}
+						}
+					}
+					GameMain_Document_UpdateAllViews(pSCDoc, NULL, SCD_UPDATE_VIEW_CHECKTILEINVERT, NULL);
+				}
 				UpdateWindow(pSCView->m_hWnd);
 			}
 			break;
@@ -1200,53 +1218,10 @@ extern "C" void __stdcall Hook_SimcityDoc_UpdateDocumentTitle() {
 			operator delete(pFundStr);
 		}
 GOFORWARD:
-		GameMain_Document_UpdateAllViews(pThis, 0, 1, (CMFC3XObject *)&cStr);
+		GameMain_Document_UpdateAllViews(pThis, NULL, SCD_UPDATE_VIEW_TITLE, (CMFC3XObject *)&cStr);
 	}
 GETOUT:
 	GameMain_String_Dest(&cStr);
-}
-
-// Local TileHightlightUpdate function.
-// This is for attempts at mitigating some of
-// the oddities that come with either:
-// 1) African Swallow mode during non-granular updates (batch).
-// 2) Granular updates on all speed levels. (more so for African Swallow and Cheetah)
-static void L_TileHighlightUpdate(CSimcityView *pThis) {
-	BYTE *vBits;
-	LONG bottom;
-	LONG x;
-	__int16 y;
-
-	if (wTileHighlightActive) {
-		vBits = Game_Graphics_LockDIBBits(pThis->SCVGraphics);
-		if (vBits || Game_SimcityView_CheckOrLoadGraphic(pThis)) {
-			x = Game_Graphics_Width(pThis->SCVGraphics);
-			y = Game_Graphics_Height(pThis->SCVGraphics);
-			if (!bOverrideTickPlacementHighlight) {
-				Game_BeginProcessObjects(pThis, vBits, x, y, &pThis->SCVAreaView);
-				Game_SimcityView_DrawSquareHighlight(pThis, wHighlightedTileX1, wHighlightedTileY1, wHighlightedTileX2, wHighlightedTileY2);
-				Game_FinishProcessObjects();
-			}
-			Game_Graphics_UnlockDIBBits(pThis->SCVGraphics);
-			bottom = ++dirtyRect.bottom;
-			if (pThis->dwSCVIsZoomed) {
-				dirtyRect.bottom = bottom + 2;
-				++dirtyRect.right;
-			}
-			// As it turns out this if case is necessary here.. otherwise it results in breakage when
-			// it comes to the pollution clouds (entire view window update rather than just the
-			// "dirty" area).
-			// ^ Unclear - the pollution case still expresses itself even with this case implemented.
-			// Tests performed in the 'Interactive Demo' (of which don't have any of these hooks) have
-			// also resulted in similar intermittent encounters.
-			if (pThis == (CSimcityView *)&pSomeWnd)
-				Game_SimcityView_MainWindowUpdate(pThis, 0, 1);
-			else
-				Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, 1);
-			if (bOverrideTickPlacementHighlight)
-				wTileHighlightActive = 0;
-		}
-	}
 }
 
 static void UpdateCityDateAndSeason(BOOL bIncrement) {
@@ -1285,9 +1260,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	DWORD dwCityProgressionRequirement;
 	BYTE iPaperVal;
 	BOOL bScenarioSuccess;
-	BOOL bDoTileHighlightUpdate;
 	CSimcityAppPrimary *pSCApp;
-	CSimcityView *pSCView;
 	CNewspaperDialog newsDialog;
 
 	pSCApp = &pCSimcityAppThis;
@@ -1298,11 +1271,6 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 		!wCityCurrentMonth &&
 		!dwMonDay) {
 		Game_SimcityApp_CallAutoSave(pSCApp);
-	}
-
-	if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool()) {
-		Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
-		GameMain_Document_UpdateAllViews(pCSimcityDoc, NULL, 2, NULL);
 	}
 
 	// Call mods for daily processing tasks - before update
@@ -1321,7 +1289,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	// Advance the simulation for the current SimCalendar day
 	switch (dwMonDay) {
 		case 0:
-			if (!jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool())
+			if (!bFrequentUpdates)
 				Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
 			if (bYearEndFlag)
 				Game_SimulationPrepareBudgetDialog(0);
@@ -1457,8 +1425,10 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 
 			break;
 		case 23:
-			if (!jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool())
-				GameMain_Document_UpdateAllViews(pCSimcityDoc, NULL, 2, NULL);
+			// Mode '3' also used here for "placement preview" preservation and
+			// blink mitigation.
+			if (!bFrequentUpdates)
+				GameMain_Document_UpdateAllViews(pCSimcityDoc, NULL, SCD_UPDATE_VIEW_UPDATE_WITHTILEINVERT, NULL);
 			Game_UpdatePopulationDialog();
 			Game_UpdateIndustryDialog();
 			Game_UpdateGraphDialog();
@@ -1488,51 +1458,6 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
 			void(*fnHook)() = (void(*)())hook.pFunction;
 			fnHook();
-		}
-	}
-
-	// Explanation:
-	// !bSettingsFrequentCityRefresh - It will do the tile highlight update if:
-	// 1) pSCApp->wSCAGameSpeedLOW is set to African Swallow
-	// 2) pSCApp[198] is true (AnimationOffCycle) or it is game day 21 - CDocument::UpdateAllViews case.
-	//
-	// bSettingsFrequentCityRefresh - Tile highlight updates only occur if pSCApp->wSCAGameSpeedLOW
-	// isn't set to paused.
-
-	bDoTileHighlightUpdate = FALSE;
-	if (!jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool()) {
-		if (pSCApp->wSCAGameSpeedLOW == GAME_SPEED_AFRICAN_SWALLOW) {
-			if (pSCApp->dwSCAAnimationOffCycle || dwMonDay == 21)
-				bDoTileHighlightUpdate = TRUE;
-		}
-	}
-	else {
-		if (pSCApp->wSCAGameSpeedLOW != GAME_SPEED_PAUSED) {
-			bDoTileHighlightUpdate = TRUE;
-		}
-	}
-
-	if (bDoTileHighlightUpdate) {
-		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
-		if (pSCView) {
-			if (wCityMode) {
-				// It should be noted that the highlight will only appear with a valid selected tool.
-				// If you attempt to press Shift or Control (for the bulldozer or query) while an
-				// invalid tool is selected, there'll be no placement highlighted (this matches the
-				// behaviour in the normal game as well).
-				if (wCurrentCityToolGroup != CITYTOOL_GROUP_CENTERINGTOOL) {
-					if (wTileCoordinateX < 0 || wTileCoordinateX >= GAME_MAP_SIZE ||
-						wTileCoordinateY < 0 || wTileCoordinateY >= GAME_MAP_SIZE ||
-						(wCurrentCityToolGroup == CITYTOOL_GROUP_REWARDS && wSelectedSubtool[wCurrentCityToolGroup] == REWARDS_ARCOLOGIES)) {
-						wTileHighlightActive = 0;
-					}
-					else {
-						wTileHighlightActive = 1;
-						L_TileHighlightUpdate(pSCView);
-					}
-					Game_SimcityView_MaintainCursor(pSCView);
-				}
-			}
 		}
 	}
 }
@@ -1743,6 +1668,33 @@ extern "C" void __stdcall Hook_RecalculateCityValue(void) {
 	dwCityValue = dwNewCityValue;
  }
 
+extern "C" void __stdcall Hook_SimcityView_OnUpdate(CMFC3XView *pSender, LPARAM lHint, CMFC3XObject *pHint) {
+	CSimcityView *pThis;
+
+	__asm mov [pThis], ecx
+
+	char *pBuf;
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+
+	if (!pSCApp->dwSCAMainFrameDestroyVar) {
+		if (lHint == SCD_UPDATE_VIEW_TITLE) {
+			pBuf = GameMain_String_GetBuffer((CMFC3XString *)pHint, 1);
+			GameMain_Document_SetTitle(pThis->m_pDocument, pBuf);
+		}
+		else {
+			if (lHint == SCD_UPDATE_VIEW_CHECKTILEINVERT)
+				L_CheckTileHighlight_SC2K1996(pThis);
+			else if (lHint == SCD_UPDATE_VIEW_UPDATE_WITHTILEINVERT)
+				L_DrawHouse_SC2K1996(pThis, TRUE);
+			else if (lHint == SCD_UPDATE_VIEW_UPDATE)
+				Game_SimcityView_DrawHouse(pThis);
+			else
+				Game_SimcityView_MainWindowUpdate(pThis, 0, 0);
+			UpdateWindow(pThis->m_hWnd);
+		}
+	}
+}
+
 extern "C" void __stdcall Hook_SimcityView_OnLButtonDown(UINT nFlags, CMFC3XPoint pt) {
 	CSimcityView *pThis;
 
@@ -1811,7 +1763,6 @@ extern "C" void __stdcall Hook_SimcityView_OnLButtonDown(UINT nFlags, CMFC3XPoin
 #endif
 		}
 		else if (!pThis->dwSCVLeftMouseDownInGameArea) {
-			bOverrideTickPlacementHighlight = TRUE;
 			hWnd = SetCapture(pThis->m_hWnd);
 			GameMain_Wnd_FromHandle(hWnd);
 			wCurrentTileCoordinates = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
@@ -1876,8 +1827,6 @@ extern "C" void __stdcall Hook_SimcityView_OnMouseMove(UINT nFlags, CMFC3XPoint 
 			}
 		}
 	}
-	else
-		bOverrideTickPlacementHighlight = FALSE;
 }
 
 extern "C" void __stdcall Hook_SimcityView_OnRButtonDown(UINT nFlags, CMFC3XPoint pt) {
@@ -2681,6 +2630,10 @@ void InstallMiscHooks_SC2K1996(void) {
 	}
 
 skipgamemenu:
+	// Hook for CSimcityView::OnUpdate
+	SafeVirtualProtect((LPVOID)0x4024E1, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4024E1, Hook_SimcityView_OnUpdate);
+
 	// Hook for CSimcityView::OnLButtonDown
 	SafeVirtualProtect((LPVOID)0x401523, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401523, Hook_SimcityView_OnLButtonDown);

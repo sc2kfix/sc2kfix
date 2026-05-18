@@ -349,6 +349,11 @@ public:
 	intptr_t iOptParam;
 };
 
+// Globals for widely used JSON settings.
+
+extern bool bFrequentUpdates;
+extern bool bDarkUnderground;
+
 // Game path global
 
 extern char szGamePath[MAX_PATH];

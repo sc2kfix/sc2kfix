@@ -32,6 +32,9 @@ struct {
 	settings_t* stSettingsChanges;
 } stSettingsDialogHeader;
 
+bool bFrequentUpdates = false;
+bool bDarkUnderground = false;
+
 char szGamePath[MAX_PATH];
 
 // No longer actually used for settings, but as temporary buffers
@@ -255,6 +258,9 @@ void LoadJSONSettings(void) {
 		}
 	}
 	LoadJSONBindings(jsonSettingsCore);
+
+	bFrequentUpdates = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool();
+	bDarkUnderground = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND].ToBool();
 }
 
 void SaveJSONSettings(void) {
@@ -263,6 +269,9 @@ void SaveJSONSettings(void) {
 	fSettingsJSON << jsonSettingsCore.dump();
 
 	if (dwDetectedVersion == VERSION_SC2K_1996) {
+		bFrequentUpdates = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool();
+		bDarkUnderground = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND].ToBool();
+
 		UpdateMiscHooks_SC2K1996();
 		UpdateStatus_SC2K1996(-1);
 	}

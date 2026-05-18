@@ -364,7 +364,7 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 			DisplayLayer[iLayer] = !DisplayLayer[iLayer];
 			if (nIndex == CITYTOOL_BUTTON_DISPLAYUNDERGROUND)
 				Game_CityToolBar_AdjustLayers(pThis, 0);
-			Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
+			Game_SimcityView_DrawHouse(pSCView);
 			break;
 		case CITYTOOL_BUTTON_HELP:
 #if USE_NEW_HELP_HANDLING
@@ -387,7 +387,7 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 			if (!DisplayLayer[LAYER_UNDERGROUND]) {
 				DisplayLayer[LAYER_UNDERGROUND] = 1;
 				Game_CityToolBar_AdjustLayers(pThis, 1);
-				Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
+				Game_SimcityView_DrawHouse(pSCView);
 			}
 		}
 		else if (nIndex) {
@@ -396,7 +396,7 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 				if (DisplayLayer[LAYER_UNDERGROUND]) {
 					DisplayLayer[LAYER_UNDERGROUND] = 0;
 					Game_CityToolBar_AdjustLayers(pThis, 1);
-					Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
+					Game_SimcityView_DrawHouse(pSCView);
 				}
 			}
 		}
@@ -744,7 +744,7 @@ extern "C" void __cdecl Hook_CityToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 			switch (iCurrCityToolGroupWithHotKey) {
 			case CITYTOOL_GROUP_BULLDOZER:
 				Game_UseBulldozer(tileCoords.x, tileCoords.y);
-				Game_SimcityView_UpdateAreaPortionFill(pSCView);
+				Game_SimcityView_UpdateHouse(pSCView);
 				break;
 			case CITYTOOL_GROUP_NATURE:
 				Game_CityToolPlaceNature(pt);
@@ -756,7 +756,7 @@ extern "C" void __cdecl Hook_CityToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 					Game_PlaceMilitaryDispatchUnit(tileCoords.x, tileCoords.y);
 				else
 					Game_PlacePoliceDispatchUnit(tileCoords.x, tileCoords.y);
-				Game_SimcityView_UpdateAreaPortionFill(pSCView);
+				Game_SimcityView_UpdateHouse(pSCView);
 				break;
 			case CITYTOOL_GROUP_POWER:
 				if (wSelectedSubtool[iCurrCityToolGroupWithHotKey]) {
@@ -775,7 +775,7 @@ extern "C" void __cdecl Hook_CityToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 				}
 				else
 					L_PlayToolSound_SC2K1996(pSCApp, SOUND_ERROR);
-				Game_SimcityView_UpdateAreaPortionFill(pSCView);
+				Game_SimcityView_UpdateHouse(pSCView);
 				// Interesting case.. why return for anything that's not wind?
 				if (wSelectedSubtool[iCurrCityToolGroupWithHotKey] != POWER_PLANTS_WIND)
 					return;
@@ -794,9 +794,9 @@ extern "C" void __cdecl Hook_CityToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 				else
 					L_PlayToolSound_SC2K1996(pSCApp, SOUND_ERROR);
 #if 1 // Fix the pipe tool not refreshing properly at max zoom - consider revisiting to see about a more specific tweak.
-				Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
+				Game_SimcityView_DrawHouse(pSCView);
 #else
-				Game_SimcityView_UpdateAreaPortionFill(pSCView);
+				Game_SimcityView_UpdateHouse(pSCView);
 #endif
 				// Interesting case.. why return for anything that's not a pump?
 				if (wSelectedSubtool[iCurrCityToolGroupWithHotKey] != WATER_PUMP)
@@ -813,7 +813,7 @@ extern "C" void __cdecl Hook_CityToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 				}
 				else
 					L_PlayToolSound_SC2K1996(pSCApp, SOUND_ERROR);
-				Game_SimcityView_UpdateAreaPortionFill(pSCView);
+				Game_SimcityView_UpdateHouse(pSCView);
 				break;
 			case CITYTOOL_GROUP_ROADS:
 				ret = iBulldozerTool;
@@ -838,7 +838,7 @@ extern "C" void __cdecl Hook_CityToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 					L_PlayToolSound_SC2K1996(pSCApp);
 				else
 					L_PlayToolSound_SC2K1996(pSCApp, SOUND_ERROR);
-				Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
+				Game_SimcityView_DrawHouse(pSCView);
 				return;
 			case CITYTOOL_GROUP_RAIL:
 				ret = iBulldozerTool;
@@ -864,7 +864,7 @@ extern "C" void __cdecl Hook_CityToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 				}
 				else
 					L_PlayToolSound_SC2K1996(pSCApp, SOUND_ERROR);
-				Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
+				Game_SimcityView_DrawHouse(pSCView);
 				return;
 			case CITYTOOL_GROUP_PORTS:
 			case CITYTOOL_GROUP_RESIDENTIAL:
@@ -874,7 +874,7 @@ extern "C" void __cdecl Hook_CityToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 					L_PlayToolSound_SC2K1996(pSCApp);
 				else
 					L_PlayToolSound_SC2K1996(pSCApp, SOUND_ERROR);
-				Game_SimcityView_UpdateAreaPortionFill(pSCView);
+				Game_SimcityView_UpdateHouse(pSCView);
 				return;
 			case CITYTOOL_GROUP_EDUCATION:
 			case CITYTOOL_GROUP_SERVICES:
@@ -886,13 +886,13 @@ extern "C" void __cdecl Hook_CityToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 				}
 				else
 					L_PlayToolSound_SC2K1996(pSCApp, SOUND_ERROR);
-				Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
+				Game_SimcityView_DrawHouse(pSCView);
 				break;
 			case CITYTOOL_GROUP_SIGNS:
 				bTextOverlay = XTXTGetTextOverlayID(tileCoords.x, tileCoords.y);
 				if (bTextOverlay < MAX_LABEL_TEXT_ENTRY_RANGE)
 					Game_CityToolSetSign(tileCoords.x, tileCoords.y);
-				Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
+				Game_SimcityView_DrawHouse(pSCView);
 				break;
 			case CITYTOOL_GROUP_QUERY:
 				bTextOverlay = XTXTGetTextOverlayID(tileCoords.x, tileCoords.y);
@@ -911,7 +911,7 @@ extern "C" void __cdecl Hook_CityToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 					Game_SimcityView_CenterOnNewScreenCoordinates(pSCView, iScreenPointX - HALVECOORD(wNewScreenPointX), iScreenPointY - HALVECOORD(wNewScreenPointY));
 				else
 					Game_SimcityView_CenterOnNewScreenCoordinates(pSCView, iScreenPointX - wNewScreenPointX, iScreenPointY - wNewScreenPointY);
-				Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
+				Game_SimcityView_DrawHouse(pSCView);
 				break;
 			default:
 				break;
@@ -947,7 +947,7 @@ extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 
 	pSCApp = &pCSimcityAppThis;
 	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);	// TODO: is this necessary or can we just dereference pCSimcityView?
-	Game_SimcityView_TileHighlightUpdate(pSCView);
+	Game_SimcityView_TileHighlightRemove(pSCView);
 	screenCoords.x = 400;
 	screenCoords.y = 400;
 	iCurrMapToolGroupNoHotKey = wCurrentMapToolGroup;
@@ -972,7 +972,7 @@ extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 			switch (iCurrMapToolGroupWithHotKey) {
 			case MAPTOOL_GROUP_BULLDOZER:
 				Game_UseBulldozer(tileCoords.x, tileCoords.y);
-				Game_SimcityView_UpdateAreaPortionFill(pSCView);
+				Game_SimcityView_UpdateHouse(pSCView);
 				break;
 			case MAPTOOL_GROUP_RAISETERRAIN:
 				Game_MapToolRaiseTerrain(tileCoords.x, tileCoords.y);
@@ -1025,13 +1025,13 @@ extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 		if ((iCurrMapToolGroupWithHotKey >= MAPTOOL_GROUP_RAISETERRAIN && iCurrMapToolGroupWithHotKey <= MAPTOOL_GROUP_LEVELTERRAIN) ||
 			iCurrMapToolGroupWithHotKey == MAPTOOL_GROUP_CENTERINGTOOL) {
 			if (iCurrMapToolGroupWithHotKey == MAPTOOL_GROUP_CENTERINGTOOL)
-				Game_SimcityView_UpdateAreaCompleteColorFill(pSCView);
+				Game_SimcityView_DrawHouse(pSCView);
 			else
 				bUpdate = FALSE;
 			bNoLoop = TRUE;
 		}
 		else {
-			Game_SimcityView_UpdateAreaPortionFill(pSCView);
+			Game_SimcityView_UpdateHouse(pSCView);
 			screenCoords.x = tileCoords.x;
 			screenCoords.y = tileCoords.y;
 		}
