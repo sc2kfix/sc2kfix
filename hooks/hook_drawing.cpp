@@ -1580,25 +1580,13 @@ static void L_drawShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 
 		case MIF_CM_PROCPIXELS:
 			for (int nPos = nCount; nPos; ++spritePtr) {
 				BOOL bProcessBit = FALSE;
-				if (isRoadMask) {
-					if (isFlipped) {
-						if (rightShapeBits <= 0 && leftShapeBits > 0 && *pShapeBits == 0xA1)
-							bProcessBit = TRUE;
-					}
-					else {
-						if (leftShapeBits <= 0 && rightShapeBits > 0 && *pShapeBits == 0xA1)
-							bProcessBit = TRUE;
-					}
+				if (isFlipped) {
+					if (rightShapeBits <= 0 && leftShapeBits > 0)
+						bProcessBit = (isRoadMask && *pShapeBits != 0xA1) ? FALSE : TRUE;
 				}
 				else {
-					if (isFlipped) {
-						if (rightShapeBits <= 0 && leftShapeBits > 0)
-							bProcessBit = TRUE;
-					}
-					else {
-						if (leftShapeBits <= 0 && rightShapeBits > 0)
-							bProcessBit = TRUE;
-					}
+					if (leftShapeBits <= 0 && rightShapeBits > 0)
+						bProcessBit = (isRoadMask && *pShapeBits != 0xA1) ? FALSE : TRUE;
 				}
 				if (bProcessBit)
 					*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos);
