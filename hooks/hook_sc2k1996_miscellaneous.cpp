@@ -1555,6 +1555,58 @@ extern "C" int __stdcall Hook_AddAllInventions(void) {
 	return 0;
 }
 
+// TODO: actually reimplement this function
+void __declspec(naked) Hook_RecalculateCityValue(void) {
+	//ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> CalculateCityValue()\n", _ReturnAddress());
+	GAMEJMP(0x46A270);
+}
+
+volatile int iCityValueFixTileID = 0;
+volatile int iCityValueFixTileCost = 0;
+
+// Temporary unpleasant fix for power plant valuation bug
+void __declspec(naked) Hook_RecalculateCityValue_PowerPlantFix(void) {
+	__asm mov dword ptr [iCityValueFixTileID], edi
+	__asm pusha
+
+	switch (iCityValueFixTileID) {
+	case TILE_POWERPLANT_HYDRO1:
+	case TILE_POWERPLANT_HYDRO2:
+		iCityValueFixTileCost = costFromSubTool[CITY_MENUTOOL_POS(POWER_PLANTS_HYDRO, CITYTOOL_GROUP_POWER)] * dwTileCount[iCityValueFixTileID];
+		break;
+	case TILE_POWERPLANT_WIND:
+		iCityValueFixTileCost = costFromSubTool[CITY_MENUTOOL_POS(POWER_PLANTS_WIND, CITYTOOL_GROUP_POWER)] * dwTileCount[iCityValueFixTileID];
+		break;
+	case TILE_POWERPLANT_GAS:
+		iCityValueFixTileCost = costFromSubTool[CITY_MENUTOOL_POS(POWER_PLANTS_GAS, CITYTOOL_GROUP_POWER)] * dwTileCount[iCityValueFixTileID] / 16;
+		break;
+	case TILE_POWERPLANT_OIL:
+		iCityValueFixTileCost = costFromSubTool[CITY_MENUTOOL_POS(POWER_PLANTS_OIL, CITYTOOL_GROUP_POWER)] * dwTileCount[iCityValueFixTileID] / 16;
+		break;
+	case TILE_POWERPLANT_NUCLEAR:
+		iCityValueFixTileCost = costFromSubTool[CITY_MENUTOOL_POS(POWER_PLANTS_NUCLEAR, CITYTOOL_GROUP_POWER)] * dwTileCount[iCityValueFixTileID] / 16;
+		break;
+	case TILE_POWERPLANT_SOLAR:
+		iCityValueFixTileCost = costFromSubTool[CITY_MENUTOOL_POS(POWER_PLANTS_SOLAR, CITYTOOL_GROUP_POWER)] * dwTileCount[iCityValueFixTileID] / 16;
+		break;
+	case TILE_POWERPLANT_MICROWAVE:
+		iCityValueFixTileCost = costFromSubTool[CITY_MENUTOOL_POS(POWER_PLANTS_MICROWAVE, CITYTOOL_GROUP_POWER)] * dwTileCount[iCityValueFixTileID] / 16;
+		break;
+	case TILE_POWERPLANT_FUSION:
+		iCityValueFixTileCost = costFromSubTool[CITY_MENUTOOL_POS(POWER_PLANTS_FUSION, CITYTOOL_GROUP_POWER)] * dwTileCount[iCityValueFixTileID] / 16;
+		break;
+	case TILE_POWERPLANT_COAL:
+		iCityValueFixTileCost = costFromSubTool[CITY_MENUTOOL_POS(POWER_PLANTS_COAL, CITYTOOL_GROUP_POWER)] * dwTileCount[iCityValueFixTileID] / 16;
+		break;
+	default:
+		ConsoleLog(LOG_WARNING, "MISC: Got unexpected tile type %d in Hook_RecalculateCityValue_PowerPlantFix. This should never happen.\n", iCityValueFixTileID);
+	}
+
+	__asm popa
+	__asm mov eax, dword ptr [iCityValueFixTileCost]
+	GAMEJMP(0x46A63D);
+}
+
 extern "C" void __stdcall Hook_SimcityView_OnLButtonDown(UINT nFlags, CMFC3XPoint pt) {
 	CSimcityView *pThis;
 
@@ -2383,6 +2435,16 @@ void InstallMiscHooks_SC2K1996(void) {
 	NEWJMP((LPVOID)0x4017B2, Hook_SimcityDoc_UpdateDocumentTitle);
 	SafeVirtualProtect((LPVOID)0x401820, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401820, Hook_Engine_SimulationProcessTick);
+
+	// Hook CalculateCityValue
+	SafeVirtualProtect((LPVOID)0x401F50, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401F50, Hook_RecalculateCityValue);
+
+	// Unpleasant but functional bug fix for power plant valuation
+	SafeVirtualProtect((LPVOID)0x46A36F, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x46A36F, Hook_RecalculateCityValue_PowerPlantFix);
+	SafeVirtualProtect((LPVOID)0x46A385, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x46A385, Hook_RecalculateCityValue_PowerPlantFix);
 
 	// Hook SimulationStartDisaster
 	SafeVirtualProtect((LPVOID)0x402527, 5, PAGE_EXECUTE_READWRITE);
