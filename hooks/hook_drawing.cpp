@@ -1286,8 +1286,7 @@ static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
 	int iCityMonth = dwCityDays / 25 % 12;
 
 	BYTE newIdx = colIdx;
-	if (bWeatherTrend == 4 ||
-		bWeatherTrend == 6 ||
+	if (bWeatherTrend == 6 ||
 		bWeatherTrend == 9) {
 		if (!bIgnore)
 			newIdx = ProcessTreeSnowEffect(newIdx);
@@ -1317,7 +1316,7 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 		else if ((nSpriteID >= SPRITE_SMALL_TERRAIN && nSpriteID <= SPRITE_SMALL_WATER_R_TERRAIN_TBL) ||
 			(nSpriteID >= SPRITE_MEDIUM_TERRAIN && nSpriteID <= SPRITE_MEDIUM_WATER_R_TERRAIN_TBL) ||
 			(nSpriteID >= SPRITE_LARGE_TERRAIN && nSpriteID <= SPRITE_LARGE_WATER_R_TERRAIN_TBL)) {
-			if (bWeatherTrend == 4 || bWeatherTrend == 6 || bWeatherTrend == 9) {
+			if (bWeatherTrend == 6 || bWeatherTrend == 9) {
 				// This if is for partial drawing based on row.
 				/*if (nRemHeight <= (shapeCurrent[nSpriteID].wHeight / 2))*/
 				if ((nPos % 4) == 3 || (nPos % 4) == 1)
