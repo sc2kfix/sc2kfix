@@ -1356,6 +1356,17 @@ static BYTE CheckInversion(__int16 nSpriteID, BYTE palIdx) {
 	return newIdx;
 }
 
+static BYTE CheckWeatherInversion(__int16 nSpriteID, BYTE palIdx, int nPos) {
+	BYTE newIdx = palIdx;
+	if (!GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_UNDERGROUND_TERRAIN, SPRITE_SMALL_SUBWAYENTRANCE)) {
+		if (bWeatherTrend == 6 || bWeatherTrend == 9) {
+			if ((nPos % 4) == 3 || (nPos % 4) == 1)
+				newIdx = ProcessWeatherIndex(newIdx);
+		}
+	}
+	return newIdx;
+}
+
 static void L_drawShape_Invert_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom) {
 	BYTE *pShapeBitsLine, *spritePtr, *pShapeBits;
 	BYTE nCount;
@@ -1380,8 +1391,10 @@ static void L_drawShape_Invert_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int
 			break;
 		case MIF_CM_PROCPIXELS:
 			for (int nPos = nCount; nPos; ++spritePtr) {
-				if (*pShapeBits == *spritePtr || (char)(CheckInversion(nSpriteID, *spritePtr) ^ *pShapeBits) == -1)
-					*pShapeBits = AdjustInversion(nSpriteID, *pShapeBits);
+				if (CheckWeatherInversion(nSpriteID, *pShapeBits, nPos) == CheckWeatherInversion(nSpriteID, *spritePtr, nPos))
+					*pShapeBits = AdjustInversion(nSpriteID, *spritePtr);
+				else if ((char)(CheckInversion(nSpriteID, *spritePtr) ^ *pShapeBits) == -1)
+					*pShapeBits = CheckWeatherInversion(nSpriteID, *spritePtr, nPos);
 				++pShapeBits;
 				--nPos;
 			}
@@ -1445,8 +1458,10 @@ static void L_drawShape_Invert_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, _
 		case MIF_CM_PROCPIXELS:
 			for (int nPos = nCount; nPos; ++spritePtr) {
 				if (leftShapeBits <= 0 && rightShapeBits > 0) {
-					if (*pShapeBits == *spritePtr || (char)(CheckInversion(nSpriteID, *spritePtr) ^ *pShapeBits) == -1)
-						*pShapeBits = AdjustInversion(nSpriteID, *pShapeBits);
+					if (CheckWeatherInversion(nSpriteID, *pShapeBits, nPos) == CheckWeatherInversion(nSpriteID, *spritePtr, nPos))
+						*pShapeBits = AdjustInversion(nSpriteID, *spritePtr);
+					else if ((char)(CheckInversion(nSpriteID, *spritePtr) ^ *pShapeBits) == -1)
+						*pShapeBits = CheckWeatherInversion(nSpriteID, *spritePtr, nPos);
 				}
 				--leftShapeBits;
 				++pShapeBits;
