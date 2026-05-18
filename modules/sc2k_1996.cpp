@@ -137,7 +137,7 @@ const char *getXTERNames(BYTE iVal) {
 		return "<invalid>";
 }
 
-const char* szTileNames[256] = {
+const char* szTileNames[TILE_COUNT] = {
 	"Empty",
 	"Rubble 1",
 	"Rubble 2",
@@ -2433,7 +2433,7 @@ const char *szInternalSpriteName[SPRITE_COUNT] = {
 	"SPRITE_LARGE_TORNADO3"
 };
 
-const char* szUndergroundNames[36] = {
+const char* szUndergroundNames[UNDER_TILE_COUNT] = {
 	"Bedrock Outline",
 
 	"Subway (LR)",
