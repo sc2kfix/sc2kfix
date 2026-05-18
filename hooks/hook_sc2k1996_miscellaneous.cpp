@@ -1315,6 +1315,9 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 		}
 	}
 
+	// Bugfix: recalculate city valuation every day.
+	Game_RecalculateCityValue();
+
 	// Advance the simulation for the current SimCalendar day
 	switch (dwMonDay) {
 		case 0:
