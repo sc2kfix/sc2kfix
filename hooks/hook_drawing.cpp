@@ -1648,6 +1648,141 @@ extern "C" void __cdecl Hook_drawShape(__int16 nSpriteID, __int16 right, __int16
 	}
 }
 
+static void L_drawShadowShape_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isFlipped) {
+	BYTE *pShapeBitsLine, *spritePtr, *pShapeBits;
+	BYTE nCount;
+	BYTE nChunkMode;
+
+	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
+	spritePtr = shapePtr;
+	pShapeBits = pShapeBitsLine;
+	while (TRUE) {
+		nCount = SPRITEDATA(spritePtr)->nCount;
+		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
+		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
+		switch (nChunkMode) {
+		case MIF_CM_EMPTY:
+			continue;
+		case MIF_CM_NEWROWSTART:
+			pShapeBits = &pShapeBitsLine[shapeX];
+			pShapeBitsLine += shapeX;
+			break;
+		case MIF_CM_SKIPPIXELS:
+			if (isFlipped)
+				pShapeBits -= nCount;
+			else
+				pShapeBits += nCount;
+			break;
+		case MIF_CM_PROCPIXELS:
+			for (int nPos = nCount; nPos; ++spritePtr) {
+				if (*pShapeBits == 0x5F)
+					*pShapeBits = 0x64;
+				else if (*pShapeBits >= 0x74 && *pShapeBits <= 0x7E)
+					*pShapeBits = 0x7E;
+				if (isFlipped)
+					--pShapeBits;
+				else
+					++pShapeBits;
+				--nPos;
+			}
+			if ((nCount & 1) != 0)
+				++spritePtr;
+			break;
+		default:
+			return;
+		}
+	}
+}
+
+static void L_drawShadowShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isFlipped) {
+	__int16 leftEdge, topEdge, rightEdge, bottomEdge;
+	BYTE *pShapeBitsLine, *spritePtr;
+	int leftShapeBits, rightShapeBits;
+	BYTE *pShapeBits, nCount, nChunkMode;
+	bool bReachedBottom;
+
+	if (isFlipped) {
+		leftEdge = right - shapeLeft;
+		rightEdge = right - shapeRight;
+	}
+	else {
+		leftEdge = shapeLeft - right;
+		rightEdge = shapeRight - right;
+	}
+	topEdge = shapeTop - bottom;
+	bottomEdge = shapeBottom - bottom;
+	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
+	spritePtr = shapePtr;
+	if (topEdge > 0) {
+		bottomEdge -= topEdge;
+		pShapeBitsLine += shapeX * topEdge;
+		do {
+			spritePtr += SPRITEDATA(spritePtr)->nCount + 2;
+			--topEdge;
+		} while (topEdge);
+	}
+	leftShapeBits = (int)pShapeBitsLine;
+	pShapeBits = pShapeBitsLine;
+	rightShapeBits = (int)pShapeBitsLine;
+	while (TRUE) {
+		nCount = SPRITEDATA(spritePtr)->nCount;
+		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
+		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
+		switch (nChunkMode) {
+		case MIF_CM_EMPTY:
+			continue;
+		case MIF_CM_NEWROWSTART:
+			leftShapeBits = leftEdge;
+			rightShapeBits = rightEdge;
+			bReachedBottom = --bottomEdge < 0;
+			pShapeBits = &pShapeBitsLine[shapeX];
+			pShapeBitsLine += shapeX;
+			if (!bReachedBottom)
+				continue;
+			break;
+		case MIF_CM_SKIPPIXELS:
+			leftShapeBits -= nCount;
+			rightShapeBits -= nCount;
+			if (isFlipped)
+				pShapeBits -= nCount;
+			else
+				pShapeBits += nCount;
+			continue;
+		case MIF_CM_PROCPIXELS:
+			for (int nPos = nCount; nPos; ++spritePtr) {
+				BOOL bProcessBit = FALSE;
+				if (isFlipped) {
+					if (rightShapeBits <= 0 && leftShapeBits > 0)
+						bProcessBit = TRUE;
+				}
+				else {
+					if (leftShapeBits <= 0 && rightShapeBits > 0)
+						bProcessBit = TRUE;
+				}
+				if (bProcessBit) {
+					if (*pShapeBits == 0x5F)
+						*pShapeBits = 0x64;
+					else if (*pShapeBits >= 0x74 && *pShapeBits <= 0x7E)
+						*pShapeBits = 0x7E;
+				}
+				--leftShapeBits;
+				if (isFlipped)
+					--pShapeBits;
+				else
+					++pShapeBits;
+				--rightShapeBits;
+				--nPos;
+			}
+			if ((nCount & 1) != 0)
+				++spritePtr;
+			continue;
+		default:
+			return;
+		}
+		break;
+	}
+}
+
 extern "C" void __cdecl Hook_drawMaskShape(__int16 nSpriteID, __int16 left, __int16 top, __int16 isFlipped) {
 	sprite_header_t *shapePtr;
 	BYTE *shapeData;
@@ -1665,6 +1800,28 @@ extern "C" void __cdecl Hook_drawMaskShape(__int16 nSpriteID, __int16 left, __in
 					L_drawShape_OutOfContext(shapeData, nSpriteID, nLeft, top, TRUE, isFlipped);
 				else
 					L_drawShape_MainArea(shapeData, nSpriteID, nLeft, top, TRUE, isFlipped);
+			}
+		}
+	}
+}
+
+extern "C" void __cdecl Hook_drawShadowShape(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped) {
+	sprite_header_t *shapePtr;
+	BYTE *shapeData;
+	int nShapeBottom, nShapeRight;
+
+	shapePtr = &shapeCurrent[nSpriteID];
+	if (shapePtr) {
+		shapeData = shapePtr->sprOffset.sprPtr;
+		if (shapeData) {
+			nShapeBottom = bottom + shapePtr->wHeight;
+			nShapeRight = right + shapePtr->wWidth;
+			if (shapeRight > right && shapeLeft < nShapeRight && shapeBottom > bottom && shapeTop < nShapeBottom) {
+				int nRight = (isFlipped) ? nShapeRight : right;
+				if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)
+					L_drawShadowShape_OutOfContext(shapeData, nSpriteID, nRight, bottom, isFlipped);
+				else
+					L_drawShadowShape_MainArea(shapeData, nSpriteID, nRight, bottom, isFlipped);
 			}
 		}
 	}
@@ -1714,6 +1871,10 @@ void InstallDrawingHooks_SC2K1996(void) {
 	// Hook for drawMaskShape
 	SafeVirtualProtect((LPVOID)0x4023AB, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4023AB, Hook_drawMaskShape);
+
+	// Hook for drawShadowShape
+	SafeVirtualProtect((LPVOID)0x401357, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401357, Hook_drawShadowShape);
 
 	UpdateDrawingHooks_SC2K1996();
 }
