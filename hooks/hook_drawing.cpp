@@ -1648,6 +1648,22 @@ extern "C" void __cdecl Hook_drawShape(__int16 nSpriteID, __int16 right, __int16
 	}
 }
 
+static BYTE ProcessWeatherSolidShadow(BYTE palIdx, BYTE currIdx) {
+	if (palIdx != currIdx) {
+		// The original intent here was to allow
+		// for shadow projection onto the tiles
+		// that had their indices adjusted by
+		// the snow effect, however a side-effect
+		// was that other objects were touched that
+		// fell within range - but the effect looked
+		// rather good, so here it will remain for
+		// all seasons.
+		if (currIdx >= 0x9A && currIdx <= 0x9F)
+			return currIdx;
+	}
+	return palIdx;
+}
+
 static void L_drawShadowShape_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isFlipped) {
 	BYTE *pShapeBitsLine, *spritePtr, *pShapeBits;
 	BYTE nCount;
@@ -1677,7 +1693,7 @@ static void L_drawShadowShape_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int1
 			for (int nPos = nCount; nPos; ++spritePtr) {
 				if (*pShapeBits == 0x5F)
 					*pShapeBits = 0x64;
-				else if (*pShapeBits >= 0x74 && *pShapeBits <= 0x7E)
+				else if (*pShapeBits >= ProcessWeatherSolidShadow(0x74, *pShapeBits) && *pShapeBits <= ProcessWeatherSolidShadow(0x7E, *pShapeBits))
 					*pShapeBits = 0x7E;
 				if (isFlipped)
 					--pShapeBits;
@@ -1762,7 +1778,7 @@ static void L_drawShadowShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __
 				if (bProcessBit) {
 					if (*pShapeBits == 0x5F)
 						*pShapeBits = 0x64;
-					else if (*pShapeBits >= 0x74 && *pShapeBits <= 0x7E)
+					else if (*pShapeBits >= ProcessWeatherSolidShadow(0x74, *pShapeBits) && *pShapeBits <= ProcessWeatherSolidShadow(0x7E, *pShapeBits))
 						*pShapeBits = 0x7E;
 				}
 				--leftShapeBits;
@@ -1875,6 +1891,10 @@ void InstallDrawingHooks_SC2K1996(void) {
 	// Hook for drawMaskShape
 	SafeVirtualProtect((LPVOID)0x4023AB, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4023AB, Hook_drawMaskShape);
+
+	// Hook for drawShadowShape
+	SafeVirtualProtect((LPVOID)0x401357, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401357, Hook_drawShadowShape);
 
 	UpdateDrawingHooks_SC2K1996();
 }
