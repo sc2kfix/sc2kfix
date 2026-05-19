@@ -30,6 +30,7 @@ UINT snd_debug = SND_DEBUG;
 
 std::map<DWORD, soundbufferinfo_t> mapSoundBuffers;
 std::map<int, sound_replacement_t> mapReplacementSounds;
+std::map<int, audio_entity_t> mapSoundCache;
 
 static DWORD dwDummy;
 
@@ -176,7 +177,8 @@ extern "C" void __stdcall Hook_Sound_StopSound() {
 
 	__asm mov [pThis], ecx
 
-	L_PlaySound_SC2K1996(0, 0);
+	SoundEngineStopStream(&pStreamCurrentSound);
+	//L_PlaySound_SC2K1996(0, 0);
 	pThis->bSNDWasPlaying = FALSE;
 	Game_Sound_PlayPrioritySound(pThis);
 }
@@ -292,7 +294,10 @@ extern "C" void __stdcall Hook_Sound_PlayActionThingSound(int iSoundID, int nDur
 					Game_Sound_LoadActionThingSound(pThis, iSoundID);
 				pThis->bSNDWasPlaying = TRUE;
 				if (pThis->iSNDActionThingSoundID == iSoundID && pThis->dwSNDBufferActionThing != 0) {
-					if (L_PlaySound_SC2K1996((LPCSTR)pThis->dwSNDBufferActionThing, SND_ASYNC | SND_MEMORY | SND_LOOP)) {
+					if (SoundEnginePlayStream(&pStreamCurrentSound, &mapSoundCache[iSoundID],
+						jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat(),
+						true, true)) {
+					//if (L_PlaySound_SC2K1996((LPCSTR)pThis->dwSNDBufferActionThing, SND_ASYNC | SND_MEMORY | SND_LOOP)) {
 						pThis->iSNDActionThingSoundID = iSoundID;
 						pThis->iSNDCurrSoundID = iSoundID;
 						pThis->bSNDPlaySound = TRUE;
@@ -308,12 +313,15 @@ extern "C" void __stdcall Hook_Sound_PlayActionThingSound(int iSoundID, int nDur
 					if (snd_debug & SND_DEBUG_INTERNALS)
 						ConsoleLog(LOG_DEBUG, "CSound::PlayActionThingSound(%d, %d): ActionSoundBufferEmpty.\n");
 
-					char szSoundFileName[24 + 1], szCurrentSoundPath[MAX_PATH + 1];
+					/*char szSoundFileName[24 + 1], szCurrentSoundPath[MAX_PATH + 1];
 
 					strcpy_s(szCurrentSoundPath, sizeof(szCurrentSoundPath) - 1, szSoundPath);
 					sprintf_s(szSoundFileName, sizeof(szSoundFileName) - 1, aDWav, iSoundID);
 					strcat_s(szCurrentSoundPath, sizeof(szCurrentSoundPath) - 1, szSoundFileName);
-					pThis->bSNDPlaySound = L_PlaySound_SC2K1996(szCurrentSoundPath, SND_ASYNC | SND_NODEFAULT | SND_LOOP);
+					pThis->bSNDPlaySound = L_PlaySound_SC2K1996(szCurrentSoundPath, SND_ASYNC | SND_NODEFAULT | SND_LOOP);*/
+					pThis->bSNDPlaySound = SoundEnginePlayStream(&pStreamCurrentSound, &mapSoundCache[iSoundID],
+						jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat(),
+						true, true);
 					nActionThingSoundPlayTicks = (nDuration <= 0) ? 0 : GetTickDurationBySoundID_SC2K1996(iSoundID, nDuration);
 					pThis->iSNDCurrSoundID = iSoundID;
 					pThis->bSNDWasPlaying = pThis->bSNDPlaySound;
@@ -427,7 +435,8 @@ extern "C" void __stdcall Hook_Sound_StopActionThingSound(int iSoundID) {
 	if (pThis->iSNDActionThingSoundID == iSoundID) {
 		pThis->bSNDWasPlaying = FALSE;
 		if (pThis->iSNDCurrSoundID == iSoundID) {
-			L_PlaySound_SC2K1996(0, 0);
+			SoundEngineStopStream(&pStreamCurrentSound);
+			//L_PlaySound_SC2K1996(0, 0);
 			pThis->bSNDPlaySound = FALSE;
 			pThis->iSNDCurrSoundID = -1;
 		}
@@ -456,7 +465,7 @@ extern "C" void __stdcall Hook_Sound_PlaySound(int iSoundID) {
 				else
 					nActionThingSoundPlayTicksCurrent = 0;
 
-				BOOL bRet = -1;
+				/*BOOL bRet = -1;
 				if (iSoundID == SOUND_CLICK && pThis->dwSNDBufferClick != 0)
 					bRet = L_PlaySound_SC2K1996((LPCSTR)pThis->dwSNDBufferClick, SND_ASYNC | SND_NODEFAULT | SND_MEMORY);
 				else if (iSoundID == SOUND_EXPLODE && pThis->dwSNDBufferExplosion != 0)
@@ -477,8 +486,10 @@ extern "C" void __stdcall Hook_Sound_PlaySound(int iSoundID) {
 						}
 						bRet = L_PlaySound_SC2K1996((LPCSTR)pThis->dwSNDBufferGeneral, SND_ASYNC | SND_NODEFAULT | SND_MEMORY);
 					}
-				}
-				pThis->bSNDPlaySound = bRet;
+				}*/
+				pThis->bSNDPlaySound = SoundEnginePlayStream(&pStreamCurrentSound, &mapSoundCache[iSoundID],
+					jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat(),
+					true, (pThis->iSNDActionThingSoundID == iSoundID && pThis->dwSNDBufferActionThing ? true : false));
 				if (pThis->bSNDPlaySound) {
 					pThis->iSNDCurrSoundID = iSoundID;
 					if (pThis->bSNDWasPlaying && pThis->iSNDActionThingSoundID == iSoundID)
@@ -493,7 +504,39 @@ extern "C" void __stdcall Hook_Sound_PlaySound(int iSoundID) {
 	}
 }
 
-static BOOL LoadReplacementSoundFromResource(int iResourceID, int iSoundID) {
+static bool LoadSoundFromFile(int iSoundID, std::string strPath) {
+	SF_INFO stSoundFileInfo;
+	audio_entity_t stAudioEntity;
+	SNDFILE* sndfile = SF_open(strPath.c_str(), SFM_READ, &stSoundFileInfo);
+
+	if (!sndfile) {
+		ConsoleLog(LOG_ERROR, "SND:  Couldn't load sound file \"%s\" (sndfile).\n", strPath.c_str());
+		return false;
+	}
+
+	// Build the audio entity data
+	stAudioEntity.iFrames = stSoundFileInfo.frames;
+	stAudioEntity.iSampleRate = stSoundFileInfo.samplerate;
+	stAudioEntity.iChannels = stSoundFileInfo.channels;
+	stAudioEntity.iFormat = stSoundFileInfo.format;
+	stAudioEntity.bSeekable = stSoundFileInfo.seekable;
+	stAudioEntity.uBufferSize = stAudioEntity.iChannels * sizeof(short) * stAudioEntity.iFrames;
+	stAudioEntity.pBuffer = (short*)malloc(stAudioEntity.uBufferSize);
+	if (!stAudioEntity.pBuffer) {
+		ConsoleLog(LOG_ERROR, "SND:  Couldn't load sound file \"%s\" (malloc).\n", strPath.c_str());
+		return false;
+	}
+
+	// Read the audio into the buffer as 16-bit PCM
+	SF_readf_short(sndfile, stAudioEntity.pBuffer, stAudioEntity.iFrames);
+
+	// Cache it and return
+	mapSoundCache[iSoundID] = stAudioEntity;
+	SF_close(sndfile);
+	return true;
+}
+
+static BOOL LoadSoundFromResource(int iSoundID, int iResourceID) {
     HRSRC hResFind;
     HGLOBAL hWaveResource;
 
@@ -511,6 +554,19 @@ static BOOL LoadReplacementSoundFromResource(int iResourceID, int iSoundID) {
                 if (ptr) {
                     memcpy_s(entry.bBuffer, entry.nBufSize, ptr, entry.nBufSize);
                     FreeResource(hWaveResource);
+
+					// There's probably a better way to do this.
+					char szTempFileName[L_tmpnam];
+					tmpnam_s(szTempFileName);
+					FILE* fileTempWav;
+					fopen_s(&fileTempWav, szTempFileName, "wb");
+					if (fileTempWav) {
+						fwrite(entry.bBuffer, 1, entry.nBufSize, fileTempWav);
+						fclose(fileTempWav);
+						LoadSoundFromFile(iSoundID, szTempFileName);
+						_unlink(szTempFileName);
+					}
+
                     if (snd_debug & SND_DEBUG_REPLACEMENTS)
                         ConsoleLog(LOG_DEBUG, "SND:  Loaded replacement for %d.wav.\n", iSoundID);
                         return TRUE;
@@ -588,10 +644,14 @@ void InstallSoundEngineHooks_SC2K1996(void) {
 	SafeVirtualProtect((LPVOID)0x403026, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x403026, Hook_Sound_PlaySound);
 
+	// Cache all sounds
+	for (int i = SOUND_START; i <= SOUND_SILENT; i++)
+		LoadSoundFromFile(i, string_format("SOUNDS/%d.wav", i));
+
 	// Load the replacement sound resources
-	LoadReplacementSoundFromResource(IDR_WAVE_500, SOUND_BUILD);
-	LoadReplacementSoundFromResource(IDR_WAVE_503, SOUND_PLOP);
-	LoadReplacementSoundFromResource(IDR_WAVE_508, SOUND_BULLDOZER);
-	LoadReplacementSoundFromResource(IDR_WAVE_514, SOUND_ZAP);
-	LoadReplacementSoundFromResource(IDR_WAVE_529, SOUND_RETICULATINGSPLINES);
+	LoadSoundFromResource(SOUND_BUILD, IDR_WAVE_500);
+	LoadSoundFromResource(SOUND_PLOP, IDR_WAVE_503);
+	LoadSoundFromResource(SOUND_BULLDOZER, IDR_WAVE_508);
+	LoadSoundFromResource(SOUND_ZAP, IDR_WAVE_514);
+	LoadSoundFromResource(SOUND_RETICULATINGSPLINES, IDR_WAVE_529);
 }

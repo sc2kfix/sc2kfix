@@ -31,10 +31,11 @@
 #include <sc2k_1996.h>
 #include <sc2k_demo.h>
 #include <bc45xhelp.h>
+#include <music.h>
 #include <scurkclasses.h>
 #include <scurk_1996.h>
 #include <scurk_primary.h>
-#include <music.h>
+#include <sound_engine.h>
 #include <vt100.h>
 
 // Turning this on enables every debugging option. You have been warned.
@@ -65,7 +66,8 @@
 #define SC2KFIX_COREJSON	"settings.json"
 #define SC2KFIX_MODSFOLDER	"mods"
 
-#define WM_SC2KFIX_UPDATE 37241
+#define WM_SC2KFIX_UPDATE		37241
+#define WM_SC2KFIX_AUDIO_STOP	37242
 
 #define UPDATE_STRING "A new version of sc2kfix is available for download from the GitHub releases page."
 
@@ -457,7 +459,7 @@ BOOL UpdaterCheckForUpdates(void);
 DWORD WINAPI UpdaterThread(LPVOID lpParameter);
 const char *GetGameSoundPath();
 int GetCurrentActiveSongID();
-BOOL MusicLoadFluidSynth(void);
+bool MusicLoadFluidSynth(void);
 void DoMusicPlay(int iSongID, BOOL bInterrupt);
 const char* MusicEngineIntToString(UINT iMusicEngine);
 UINT MusicEngineStringToInt(const char* szMusicEngine);
@@ -541,6 +543,7 @@ extern HFONT hSystemRegular12;
 extern std::map<HMODULE, sc2kfix_mod_info_t> mapLoadedNativeMods;
 extern std::map<HMODULE, std::vector<sc2kfix_mod_hook_t>> mapLoadedNativeModHooks;
 extern std::map<DWORD, soundbufferinfo_t> mapSoundBuffers;
+extern std::map<int, audio_entity_t> mapSoundCache;
 extern std::vector<int> vectorRandomSongIDs;
 extern std::random_device rdRandomDevice;
 extern std::mt19937 mtMersenneTwister;

@@ -313,8 +313,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			// ConsoleCmdShowDebug(NULL, NULL);
 		}
 
-		// Load the FluidSynth library in case we need it
+		// Start up the new music engine
 		MusicLoadFluidSynth();
+		LoadSoundEngineLibraries();
 
 		// Initialize default bindings.
 		InitializeDefaultBindings();
@@ -332,7 +333,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		if (jsonSettingsCore[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_FORCECON].ToBool())
 			bConsoleEnabled = true;
 
-		// Foce n-bit mode if requested
+		// Force n-bit mode if requested
 		if (iForcedBits > 0)
 			ConsoleLog(LOG_INFO, "CORE: -bitmode passed, forcing %d-bit mode.\n", iForcedBits);
 

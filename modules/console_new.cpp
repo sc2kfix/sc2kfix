@@ -484,6 +484,10 @@ bool ConsoleCommandRunTest(std::vector<std::string> args, int iBreakoutState, in
 	if (iBreakoutState != BREAKOUT_RETURN)
 		return false;
 
+	if (pStreamCurrentSound)
+		SoundEngineStopStream(&pStreamCurrentSound);
+	else
+		SoundEnginePlayStream(&pStreamCurrentSound, &mapSoundCache[SOUND_ZAP], 1.0, false, true);
 	return true;
 }
 

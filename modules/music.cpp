@@ -160,7 +160,7 @@ void MusicFluidSynthLoggerWarning(int level, const char* message, void* data) {
 	ConsoleLog(LOG_WARNING, "MUS:  FluidSynth: %s\n", message);
 }
 
-BOOL MusicLoadFluidSynth(void) {
+bool MusicLoadFluidSynth(void) {
 	if (mus_debug & MUS_DEBUG_FLUIDSYNTH)
 		ConsoleLog(LOG_DEBUG, "MUS:  FluidSynth enabled, probing for valid FluidSynth library.\n");
 
@@ -305,7 +305,7 @@ DWORD WINAPI FluidSynthWatchdogThread(LPVOID lpParameter) {
 	// Also update the music volume here
 	FS_fluid_settings_setint(pFluidSynthSettings, "synth.chorus.active", 0);
 	FS_fluid_settings_setnum(pFluidSynthSettings, "synth.reverb.level", 0.3);
-	FS_fluid_settings_setnum(pFluidSynthSettings, "synth.gain", 0.5 * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICVOLUME].ToFloat());
+	FS_fluid_settings_setnum(pFluidSynthSettings, "synth.gain", 0.5 * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat());
 
 	// Play track
 	FS_fluid_player_play(pFluidSynthPlayer);
@@ -418,6 +418,8 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 	CSimcityAppPrimary *pSCApp;
 	MSG msg;
 	MCIERROR dwMCIError = NULL;
+	SF_INFO stInfoMP3File = { 0 };
+	audio_entity_t stAudioEntityMP3 = { 0 };
 
 	if (mus_debug & MUS_DEBUG_THREAD)
 		ConsoleLog(LOG_DEBUG, "MUS:  Starting music engine! Initial music driver set to \"%s\".\n", jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString().c_str());
@@ -439,6 +441,16 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 				bFluidSynthPlaying = FALSE;
 				if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
 					ConsoleLog(LOG_DEBUG, "MUS:  Thread stopped FluidSynth player due to WM_MUSIC_STOP message.\n");
+				goto next;
+			}
+
+			// If we're playing an MP3, stop it and unload it from memory
+			if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "mp3") {
+				SoundEngineStopStream(&pStreamCurrentSong);
+				free(stAudioEntityMP3.pBuffer);
+				memset(&stAudioEntityMP3, 0, sizeof(audio_entity_t));
+				if (mus_debug & MUS_DEBUG_THREAD)
+					ConsoleLog(LOG_DEBUG, "MUS:  Thread stopped MP3 playback due to WM_MUSIC_STOP message.\n");
 				goto next;
 			}
 
@@ -485,30 +497,60 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 					}
 				}
 
-				// Failing all of the above, use MCI to handle MIDI and MP3 playback
+				// Attempt MP3 playback via SDL3 if we've got it selected
+				if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "mp3") {
+					if (msg.wParam >= 10000 && msg.wParam <= 10018) {
+						iPlayingSongID = msg.wParam;
+						const char* szSongPath = GetGameSoundPath(iPlayingSongID, TRUE);
+
+						if (szSongPath) {
+							SNDFILE* sndfile = SF_open(szSongPath, SFM_READ, &stInfoMP3File);
+
+							if (!sndfile) {
+								ConsoleLog(LOG_ERROR, "MUS:  Couldn't load MP3 file \"%s\" (sndfile).\n", szSongPath);
+								return false;
+							}
+
+							// Build the audio entity data
+							stAudioEntityMP3.iFrames = stInfoMP3File.frames;
+							stAudioEntityMP3.iSampleRate = stInfoMP3File.samplerate;
+							stAudioEntityMP3.iChannels = stInfoMP3File.channels;
+							stAudioEntityMP3.iFormat = stInfoMP3File.format;
+							stAudioEntityMP3.bSeekable = stInfoMP3File.seekable;
+							stAudioEntityMP3.uBufferSize = stAudioEntityMP3.iChannels * sizeof(short) * stAudioEntityMP3.iFrames;
+							stAudioEntityMP3.pBuffer = (short*)malloc(stAudioEntityMP3.uBufferSize);
+							if (!stAudioEntityMP3.pBuffer) {
+								ConsoleLog(LOG_ERROR, "MUS:  Couldn't load MP3 file \"%s\" (malloc).\n", szSongPath);
+								return false;
+							}
+
+							// Read the audio into the buffer as 16-bit PCM
+							SF_readf_short(sndfile, stAudioEntityMP3.pBuffer, stAudioEntityMP3.iFrames);
+							SF_close(sndfile);
+
+
+							// Start playing the song and finish processing this message
+							if (mus_debug & MUS_DEBUG_THREAD)
+								ConsoleLog(LOG_DEBUG, "MUS:  Playing MP3 file \"%s\" via SDL3.\n", szSongPath);
+							SoundEnginePlaySong(&pStreamCurrentSong, &stAudioEntityMP3,
+								jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat(),
+								true);
+							goto next;
+						} else
+							ConsoleLog(LOG_ERROR, "MUS:  Could not find music file %s; failing back to MIDI sequencer.\n", szSongPath);
+					}
+				}
+
+				// Failing all of the above, use MCI to handle MIDI playback
 				if (!mciDevice) {
 					if (msg.wParam >= 10000 && msg.wParam <= 10018) {
 						iPlayingSongID = msg.wParam;
-						const char* szSongPath = "";
-						BOOL bUseMP3 = FALSE;
-						if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "mp3") {
-							szSongPath = GetGameSoundPath(iPlayingSongID, TRUE);
-							if (FileExists(szSongPath))
-								bUseMP3 = TRUE;
-							else {
-								ConsoleLog(LOG_ERROR, "MUS:  Could not find music file %s; failing back to MIDI sequencer.\n", szSongPath);
-								bUseMP3 = FALSE;
-							}
-						}
-
-						if (!bUseMP3) {
-							szSongPath = GetGameSoundPath(iPlayingSongID, FALSE);
-						}
+						const char* szSongPath = GetGameSoundPath(iPlayingSongID, FALSE);
 						
 						if (!szSongPath)
 							goto next;
 
-						MCI_OPEN_PARMS mciOpenParms = { NULL, NULL, (bUseMP3 ? "mpegvideo" : "sequencer"), szSongPath, NULL };
+						MCI_OPEN_PARMS mciOpenParms = { NULL, NULL, "sequencer", szSongPath, NULL };
 						dwMCIError = mciSendCommand(NULL, MCI_OPEN, MCI_OPEN_TYPE | MCI_OPEN_ELEMENT, (DWORD_PTR)&mciOpenParms);
 						if (dwMCIError) {
 							char szErrorBuf[MAXERRORLENGTH];

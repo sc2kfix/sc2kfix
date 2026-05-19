@@ -1940,7 +1940,8 @@ extern "C" void __stdcall Hook_MainFrame_OnActivateApp(BOOL bActive, HTASK hTask
 				// music in background is not enabled.
 				if (!jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND].ToBool())
 					Game_SimcityApp_MusicTrigger(pSCApp);
-				L_PlaySound_SC2K1996(0, 0); // Review concerning sound call change.
+				SoundEngineStopStream(&pStreamCurrentSound);
+				//L_PlaySound_SC2K1996(0, 0); // Review concerning sound call change.
 				InvalidateRect(pThis->m_hWnd, 0, TRUE);
 				if (pSCView)
 					Game_SimcityView_MainWindowUpdate(pSCView, 0, FALSE);
@@ -1976,7 +1977,9 @@ extern "C" void __stdcall Hook_MainFrame_OnSize(UINT nType, int cx, int cy) {
 	if (nType == 1) {
 		if (!jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND].ToBool())
 			Game_SimcityApp_MusicTrigger(pSCApp);
-		L_PlaySound_SC2K1996(0, 0); // Review concerning sound call change.
+
+		SoundEngineStopStream(&pStreamCurrentSound);
+		//L_PlaySound_SC2K1996(0, 0); // Review concerning sound call change.
 	}
 	Game_MainFrame_OnQueryNewPalette(pThis);
 	InvalidateRect(pThis->m_hWnd, 0, TRUE);
@@ -2007,7 +2010,9 @@ extern "C" void __stdcall Hook_MainFrame_OnShowWindow(BOOL bShow, BOOL nStatus) 
 	else {
 		if (!jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND].ToBool())
 			Game_SimcityApp_MusicTrigger(pSCApp);
-		L_PlaySound_SC2K1996(0, 0); // Review concerning sound call change.
+
+		SoundEngineStopStream(&pStreamCurrentSound);
+		//L_PlaySound_SC2K1996(0, 0); // Review concerning sound call change.
 	}
 	Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
 }
@@ -2379,11 +2384,29 @@ void ShowModSettingsDialog(void) {
 	L_MessageBoxA(GameGetRootWindowHandle(), "The mod settings dialog has not yet been implemented. Check back later.", "sc2fix", MB_OK);
 }
 
+// Early startup hook. Be very careful with what you do in this function.
+static void __declspec(naked) Hook_WinMain(void) {
+	SoundEngineInitialize();
+
+	// Run the code that we clobbered to get here and return to the original WinMain
+	__asm {
+		push ebp
+		mov ebp, esp
+		push ebx
+		push esi
+	}
+	GAMEJMP(0x4AA490);
+}
+
 // Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
 // This should probably have a better name. And maybe be broken out into smaller functions.
 //
 // UPDATE 2025-08-15 (araxestroy): Working on breaking this out nicely. It's not going well.
 void InstallMiscHooks_SC2K1996(void) {
+	// Install early startup hook
+	SafeVirtualProtect((LPVOID)0x4AA48B, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4AA48B, Hook_WinMain);
+	
 	// Install critical Windows API hooks
 	*(DWORD*)(0x4EFBE8) = (DWORD)Hook_LoadStringA;
 	*(DWORD*)(0x4EFDCC) = (DWORD)Hook_LoadMenuA;
