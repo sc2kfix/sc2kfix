@@ -1805,7 +1805,7 @@ extern "C" void __cdecl Hook_drawMaskShape(__int16 nSpriteID, __int16 left, __in
 	}
 }
 
-extern "C" void __cdecl Hook_drawShadowShape(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped) {
+void L_drawShadowShape_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped) {
 	sprite_header_t *shapePtr;
 	BYTE *shapeData;
 	int nShapeBottom, nShapeRight;
@@ -1825,6 +1825,10 @@ extern "C" void __cdecl Hook_drawShadowShape(__int16 nSpriteID, __int16 right, _
 			}
 		}
 	}
+}
+
+extern "C" void __cdecl Hook_drawShadowShape(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped) {
+	L_drawShadowShape_SC2K1996(nSpriteID, right, bottom, isFlipped);
 }
 
 void InstallDrawingHooks_SC2K1996(void) {
@@ -1871,10 +1875,6 @@ void InstallDrawingHooks_SC2K1996(void) {
 	// Hook for drawMaskShape
 	SafeVirtualProtect((LPVOID)0x4023AB, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4023AB, Hook_drawMaskShape);
-
-	// Hook for drawShadowShape
-	SafeVirtualProtect((LPVOID)0x401357, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x401357, Hook_drawShadowShape);
 
 	UpdateDrawingHooks_SC2K1996();
 }

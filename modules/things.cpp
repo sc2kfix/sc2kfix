@@ -464,6 +464,106 @@ void DoThingClean_SC2K1996(int nThingDef) {
 	}
 }
 
+extern "C" void __stdcall Hook_SimcityView_DrawThingObjects(__int16 x, __int16 y, __int16 nThingID) {
+	CSimcityView *pThis;
+
+	__asm mov [pThis], ecx
+
+	map_XTHG_t *pTHG;
+	int DoFlip, nFlip;
+	__int16 nBaseSprite, nSpriteID;
+	__int16 nScale, nElevation;
+	sprite_header_t *pSprite;
+	__int16 bottom, right;
+
+	pTHG = GetXTHG(nThingID);
+	if (wThingZoomVisibility[pTHG->iType] <= pThis->wSCVZoomLevel) {
+		if ((pTHG->iX != x || pTHG->iY != y) && pTHG->iType != XTHG_TRAIN_ENGINE && pTHG->iType != XTHG_TRAIN_CAR) {
+			XTXTSetTextOverlayID(x, y, 0);
+			return;
+		}
+		if (pTHG->iType - 1 > XTHG_TORNADO) {
+			ConsoleLog(LOG_DEBUG, "Before DO_SAILBOAT_BULLDOZE_CHECK: (%u - %u) [%s]\n", pTHG->iType, pTHG->iType - 1, szThingNames[pTHG->iType]);
+		DO_SAILBOAT_BULLDOZE_CHECK:
+			if (DisplayLayer[LAYER_UNDERGROUND])
+				return;
+			ConsoleLog(LOG_DEBUG, "After DO_SAILBOAT_BULLDOZE_CHECK: (%u - %u) (%u) [%s]\n", pTHG->iType, pTHG->iType - 1, pTHG->iState, szThingNames[pTHG->iType]);
+			if (pTHG->iType != XTHG_SAILBOAT || !pTHG->iState) {
+				nBaseSprite = nThingDirectionPosition[pTHG->iDirection] + wThingSprites[pTHG->iType];
+				DoFlip = nThingDirectionFlip[pTHG->iDirection];
+				goto DO_DRAW;
+			}
+			ConsoleLog(LOG_DEBUG, "Nessie! (%u)\n", pTHG->iState);
+			nBaseSprite = SPRITE_SMALL_NESSIE;
+			nFlip = nNessieFlip & 1;
+		}
+		else {
+			switch (pTHG->iType) {
+				case XTHG_AIRPLANE:
+				case XTHG_HELICOPTER:
+				case XTHG_CARGO_SHIP:
+					if (DisplayLayer[LAYER_UNDERGROUND])
+						return;
+					nBaseSprite = nShipDirectionPos[pTHG->iDirection] + wThingSprites[pTHG->iType];
+					nFlip = nShipDirectionFlip[pTHG->iDirection];
+					break;
+				case XTHG_BULLDOZER:
+				case XTHG_SAILBOAT:
+					goto DO_SAILBOAT_BULLDOZE_CHECK;
+				case XTHG_MONSTER:
+					Game_SimcityView_DrawMonster(pThis, x, y, nThingID);
+					return;
+				case XTHG_EXPLOSION:
+					nBaseSprite = pTHG->iDirection + wThingSprites[pTHG->iType];
+					nFlip = Game_RandomWordLFSRMod(2);
+					break;
+				case XTHG_DEPLOY_POLICE:
+				case XTHG_DEPLOY_FIRE:
+				case XTHG_DEPLOY_MILITARY:
+					Game_DrawThings(x, y, nThingID);
+					return;
+				case XTHG_TRAIN_ENGINE:
+				case XTHG_TRAIN_CAR:
+					Game_DrawTrain(x, y, nThingID);
+					return;
+				case XTHG_SUBWAY_TRAIN_ENGINE:
+				case XTHG_SUBWAY_TRAIN_CAR:
+					return;
+				case XTHG_TORNADO:
+					Game_SimcityView_DrawTornado(pThis, x, y, nThingID);
+					return;
+				case XTHG_MAXIS_MAN:
+					nBaseSprite = wThingSprites[pTHG->iType];
+					nFlip = pTHG->iDirection > XTHG_DIRECTION_SOUTH_EAST;
+					break;
+				default:
+					return;
+			}
+		}
+		DoFlip = nFlip;
+	DO_DRAW:
+		nScale = 2 << pThis->wSCVZoomLevel;
+		nSpriteID = SPRITE_MEDIUM_START * pThis->wSCVZoomLevel + nBaseSprite;
+		if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE && XBITReturnIsWater(x, y))
+			nElevation = ALTMReturnWaterLevel(x, y);
+		else
+			nElevation = ALTMReturnLandAltitude(x, y);
+		pSprite = &pArrSpriteHeaders[nSpriteID];
+		bottom = iScreenOffSetY +
+			nScale * (x + y) + (pTHG->iPY + pTHG->iPX) / nThingZoomYDivisor[pThis->wSCVZoomLevel] -
+			pSprite->wHeight - ((3 << pThis->wSCVZoomLevel) * nElevation + pTHG->iZ * nScale);
+		right = iScreenOffSetX +
+			(pTHG->iPX - pTHG->iPY) / nThingZoomXDivisor[pThis->wSCVZoomLevel] +
+			(4 << pThis->wSCVZoomLevel) * (x - y + 1) - (pSprite->wWidth >> 1);
+		if ((pTHG->iType == XTHG_HELICOPTER || pTHG->iType == XTHG_AIRPLANE || pTHG->iType == XTHG_MAXIS_MAN) &&
+			GetTileID(x, y) < TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1)
+			L_drawShadowShape_SC2K1996(nSpriteID, right, bottom + nScale * (pTHG->iZ - 2), DoFlip);
+		Game_DrawProcessObject(nSpriteID, right, bottom, DoFlip, 0);
+	}
+}
+
 void InstallThingHooks_SC2K1996(void) {
-	
+	// Hook for CSimcityView::DrawThingObjects
+	SafeVirtualProtect((LPVOID)0x401334, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401334, Hook_SimcityView_DrawThingObjects);
 }
