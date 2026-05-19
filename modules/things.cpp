@@ -463,3 +463,7 @@ void DoThingClean_SC2K1996(int nThingDef) {
 		}
 	}
 }
+
+void InstallThingHooks_SC2K1996(void) {
+	
+}

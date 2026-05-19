@@ -2508,6 +2508,8 @@ void InstallMiscHooks_SC2K1996(void) {
 
 	InstallDrawingHooks_SC2K1996();
 
+	InstallThingHooks_SC2K1996();
+
 	InstallTileGrowthOrPlacementHandlingHooks_SC2K1996();
 	
 	// Install the advanced query hook
