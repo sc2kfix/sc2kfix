@@ -806,6 +806,12 @@ void ShowSettingsDialog(void) {
 			strOriginalSoundfont != jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT].ToString()) ||
 			(stSettingsChanges.bActiveMusicDriverTouched && stSettingsChanges.bActiveTrackChanged))
 			PostThreadMessage(dwMusicThreadID, WM_MUSIC_RESET, NULL, NULL);
+
+		// Update volume of actively playing music/sounds if needed
+		if (pStreamCurrentSound)
+			SDL_SetAudioStreamGain(pStreamCurrentSound, jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat());
+		if (pStreamCurrentSong)
+			SDL_SetAudioStreamGain(pStreamCurrentSong, jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat());
 	}
 
 	ToggleFloatingStatusDialog(TRUE);
