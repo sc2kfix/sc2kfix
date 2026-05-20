@@ -2384,18 +2384,13 @@ void ShowModSettingsDialog(void) {
 	L_MessageBoxA(GameGetRootWindowHandle(), "The mod settings dialog has not yet been implemented. Check back later.", "sc2fix", MB_OK);
 }
 
-// Early startup hook. Be very careful with what you do in this function.
-static void __declspec(naked) Hook_WinMain(void) {
-	SoundEngineInitialize();
+extern "C" int __stdcall Hook_SimcityApp_InitInstance() {
+	CSimcityAppPrimary* pThis;
 
-	// Run the code that we clobbered to get here and return to the original WinMain
-	__asm {
-		push ebp
-		mov ebp, esp
-		push ebx
-		push esi
-	}
-	GAMEJMP(0x4AA490);
+	__asm mov [pThis], ecx
+
+	SoundEngineInitialize();
+	return GameMain_SimcityApp_InitInstance(pThis);
 }
 
 // Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
@@ -2403,9 +2398,9 @@ static void __declspec(naked) Hook_WinMain(void) {
 //
 // UPDATE 2025-08-15 (araxestroy): Working on breaking this out nicely. It's not going well.
 void InstallMiscHooks_SC2K1996(void) {
-	// Install early startup hook
-	SafeVirtualProtect((LPVOID)0x4AA48B, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x4AA48B, Hook_WinMain);
+	// Install early startup hook before CSimcityApp::InitInstance
+	SafeVirtualProtect((LPVOID)0x4016B3, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4016B3, Hook_SimcityApp_InitInstance);
 	
 	// Install critical Windows API hooks
 	*(DWORD*)(0x4EFBE8) = (DWORD)Hook_LoadStringA;

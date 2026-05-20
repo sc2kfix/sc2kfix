@@ -3204,6 +3204,7 @@ GAMECALL(0x402261, __int16, __stdcall, RandomWordLFSRMod4, void)
 GAMECALL(0x402B3F, __int16, __stdcall, RandomWordLFSRMod128, void)
 
 /* Main */
+GAMECALL_MAIN(0x405650, int, __thiscall, SimcityApp_InitInstance, CSimcityAppPrimary*)
 GAMECALL_MAIN(0x409010, void, __thiscall, GameDialog_OnDestroy, CGameDialog *)
 GAMECALL_MAIN(0x422EA0, void, __stdcall, CityToolBarSetBgdAndText, HDC, LONG, LONG, int, int, COLORREF)
 GAMECALL_MAIN(0x4237F0, void, __thiscall, CityToolBar_ToolMenuDisable, CCityToolBar* pThis)
