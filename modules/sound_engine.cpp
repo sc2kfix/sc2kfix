@@ -109,7 +109,6 @@ bool SoundEngineInitialize(void) {
 	// Initialize SDL3 for sound only
 	if (!SDL_Init(0x10)) {
 		ConsoleLog(LOG_ERROR, "SND:  SDL_Init failed: %s.\n", SDL_GetError());
-		MessageBox(NULL, "SHIT", "FUCK", MB_ICONERROR);
 		return false;
 	}
 
