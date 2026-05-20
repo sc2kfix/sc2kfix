@@ -16,25 +16,25 @@ The following game bugs are patched by this DLL:
 * The WillTV and intro cutscenes have been restored along with the Maxis Presents intro slide.
 * SimCity 2000 now properly launches when started from Steam or other game launchers.
 * Music that was included in the game but was never added to the random playlist has been restored.
-* SCURK now works properly on Windows 11 24H2 and newer, as well as no longer  having issues with tile alignment, palette conversion, and transparency, among myriad other optimizations being implemented.
-* Military bases now grow properly instead of staying as empty, unusable military zones, and the intended growth of army and naval bases has been restored.
-* The military will make multiple attempts at finding a location for a base instead of permanently giving up after the first try.
+* SCURK now works properly on Windows 11 24H2 and newer, as well as no longer having issues with tile alignment, palette conversion, and transparency, among myriad other optimizations being implemented.
+* Military bases now grow properly instead of staying as empty, unusable military zones, and the intended growth of army and naval bases has been restored, and the military will make multiple attempts at finding a location for a base instead of permanently giving up after the first try.
 * Rail and highway neighbor connections now work after a saved city is loaded.
 * Sign rendering has been fixed to use the originally intended font.
 * City and mayor names are now properly preserved when saving and loading cities.
 * The "Add All Inventions" option in the game's hidden debug menu has been fixed.
+* City infrastructure valuation and city center calculations have been fixed.
 * Many miscellaneous display bugs have been fixed.
 
 ### New features
 sc2kfix adds the following quality of life and optional gameplay features to SimCity 2000 Special Edition:
-* Many parts of the game's simulation engine have been reverse engineered and reimplemented for improved performance, debugging, and extensibility (see the "Additional enhancements" section).
+* Many parts of the game's engine have been reverse engineered and reimplemented for improved performance, debugging, and extensibility (see the "Additional enhancements" section).
 * A settings dialog for configuring sc2kfix's features has been added to the main menu and the in-game Options menu, and the game's native settings are no longer stored in the registry but rather in a portable JSON-based settings file.
 * The New City dialog has been updated to allow you to specify a different mayor name when starting a city, as well as with detailed tooltips for the other game settings.
 * Higher quality copies of the transit, pipe, and power construction sounds, as well as the Reticulating Splines soundbite have been ported from other versions of SimCity 2000.
 * City growth is now displayed in real-time instead of in batches.
 * The full in-game date is now shown in the title bar.
 * The floating status widget from the Macintosh and DOS versions of the game has been reimplemented and can be enabled in the settings dialog.
-* The game's music engine has been rewritten with multithreading that can run in the background and can play MP3 versions of the soundtrack if present, as well as supporting the use of FluidSynth to play MIDI files with either a user-supplied SoundFont or the default General MIDI soundfont on Windows.
+* The game's sound engine has been reimplemented with multithreading and SDL3, allowing support for music and sound volume settings, high-quality MIDI playback via FluidSynth, MP3 playback, music playback in the background, better support for Linux, and near-instant music load times on Windows 10 and 11.
 * An advanced query dialog that shows game state information for tiles has been implemented and can be used by holding the Alt key when querying a tile.
 * The Lua programming language has been integrated into the sc2kfix plugin to allow for Lua scripts to be written that can interact with the SimCity 2000 game engine.
 * The middle mouse button now acts as a shortcut for the centering tool, similar to how the right mouse button works in the DOS version of the game.
@@ -54,9 +54,9 @@ Several parts of the SimCity 2000 simulation engine have been reimplemented in s
 ### Third-party components
 sc2kfix includes API bindings for the FluidSynth real-time software synthesizer library (https://www.fluidsynth.org) and distributes it in binary form as DLLs in official releases. FluidSynth is made available under the terms of version 2.1 of the GNU Lesser General Public License (LGPL 2.1); a copy of this license has been included in the sc2kfix project as `thirdparty/fluidsynth/LICENSE`. You can download the FluidSynth library in both source and binary release forms from GitHub at https://github.com/FluidSynth/fluidsynth.
 
-sc2kfix includes the Lua embeddable programming language (https://www.lua.org). Lua is made available under the terms of the MIT license; a copy of this license has been included in the sc2kfix project as `thirdparty/lua/LICENSE`. Lua is copyright (c) 1994-2025 Lua.org, PUC-Rio.
+sc2kfix includes API bindings for the Simple DirectMedia Layer (SDL3) and libsndfile libraries and distributes them in binary form as DLLs in original releases. SDL3 is made available under the terms of the zlib license; you can download the library in source form at https://github.com/libsdl-org/SDL. libsndfile is made available under the terms of version 2.1 of the GNU Lesser General Public License (LGPL 2.1); you can download the library in source form at https://github.com/libsndfile/libsndfile.
 
-Binary releases of sc2kfix are distributed with the Simple DirectMedia Layer (SDL3) and libsndfile libraries in DLL form. SDL3 is made available under the terms of the zlib license; you can download the library in source form at https://github.com/libsdl-org/SDL. libsndfile is made available under the terms of version 2.1 of the GNU Lesser General Public License (LGPL 2.1); you can download the library in source form at https://github.com/libsndfile/libsndfile.
+sc2kfix includes the Lua embeddable programming language (https://www.lua.org). Lua is made available under the terms of the MIT license; a copy of this license has been included in the sc2kfix project as `thirdparty/lua/LICENSE`. Lua is copyright (c) 1994-2025 Lua.org, PUC-Rio.
 
 ## How do I use it?
 1. If you are installing the game from scratch, copy the SC2K folder from your CD (under the WIN95 folder in the Special Edition CD) to your hard drive.
