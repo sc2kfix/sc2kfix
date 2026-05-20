@@ -489,10 +489,14 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 				if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "fluidsynth" && hmodFluidSynth) {
 					if (msg.wParam >= 10000 && msg.wParam <= 10018) {
 						iPlayingSongID = msg.wParam;
-						const char* szSongPath = GetGameSoundPath(iPlayingSongID, FALSE);
+						char* szSongPath = _strdup(GetGameSoundPath(iPlayingSongID, FALSE));
+						if (mus_debug & MUS_DEBUG_FLUIDSYNTH)
+							ConsoleLog(LOG_DEBUG, "MUS:  GetGameSoundPath(%d, FALSE) returned \"%s\".\n", iPlayingSongID, szSongPath);
 
 						if (szSongPath && !bFluidSynthPlaying)
 							CreateThread(NULL, 0, FluidSynthWatchdogThread, (LPVOID)szSongPath, 0, NULL);
+						else
+							free(szSongPath);
 						goto next;
 					}
 				}
