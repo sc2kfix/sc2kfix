@@ -446,7 +446,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 
 			// If we're playing an MP3, stop it and unload it from memory
 			if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "mp3") {
-				SoundEngineStopStream(&pStreamCurrentSong);
+				SoundEngineStopSong(&pStreamCurrentSong);
 				free(stAudioEntityMP3.pBuffer);
 				memset(&stAudioEntityMP3, 0, sizeof(audio_entity_t));
 				if (mus_debug & MUS_DEBUG_THREAD)
@@ -600,6 +600,15 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 				if (mus_debug & MUS_DEBUG_THREAD)
 					ConsoleLog(LOG_DEBUG, "MUS:  Thread stopped FluidSynth player due to WM_MUSIC_RESET message.\n");
 			}
+
+			if (pStreamCurrentSong) {
+				SoundEngineStopSong(&pStreamCurrentSong);
+				free(stAudioEntityMP3.pBuffer);
+				memset(&stAudioEntityMP3, 0, sizeof(audio_entity_t));
+				if (mus_debug & MUS_DEBUG_THREAD)
+					ConsoleLog(LOG_DEBUG, "MUS:  Thread stopped MP3 player due to WM_MUSIC_RESET message.\n");
+			}
+
 			if (mciDevice) {
 				dwMCIError = mciSendCommand(mciDevice, MCI_CLOSE, MCI_WAIT, NULL);
 				if (mus_debug & MUS_DEBUG_THREAD)

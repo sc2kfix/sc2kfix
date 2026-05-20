@@ -163,6 +163,17 @@ bool SoundEnginePlayStream(SDL_AudioStream** pStream, audio_entity_t* stAudioDat
 	return true;
 }
 
+void SoundEngineStopSong(SDL_AudioStream** pStream) {
+	if (!pStream)
+		return;
+	if (*pStream)
+		SDL_DestroyAudioStream(*pStream);
+	if (hCurrentSongThread)
+		TerminateThread(hCurrentSongThread, EXIT_SUCCESS);
+
+	*pStream = NULL;
+}
+
 bool SoundEnginePlaySong(SDL_AudioStream** pStream, audio_entity_t* stAudioData, float fVolume, bool bOverride) {
 	if (!pStream || !stAudioData)
 		return false;
