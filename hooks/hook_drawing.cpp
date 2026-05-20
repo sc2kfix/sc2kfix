@@ -49,6 +49,8 @@ enum {
 #define MDRAWING_DEBUG DEBUG_FLAGS_EVERYTHING
 #endif
 
+extern HWND hWndExt;
+
 extern BOOL bMapWireFrame;
 
 UINT mdrawing_debug = MDRAWING_DEBUG;
@@ -1301,7 +1303,7 @@ static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
 static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemHeight, int nPos) {
 	BYTE palIdx = colIdx;
 	// Only enable this if the "Frequent Updates" setting is enabled.
-	if (bFrequentUpdates) {
+	if (bFrequentUpdates && !hWndExt) {
 		// Proof-of-concept weather experiment.
 		if (GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_TREES1, SPRITE_SMALL_TREES7)) {
 			if ((nPos % 4) == 0 || (nPos % 4) == 2 || (nPos % 4) == 3) {

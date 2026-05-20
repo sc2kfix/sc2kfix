@@ -59,7 +59,7 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 					nSlowCyclePos = iCycleOn[nSlowCycleIdx];
 
 					pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
-					if (!pSCView)
+					if (!pSCView || hWndExt)
 						bUseCycle = true;
 					else {
 						if (!bFrequentUpdates)
@@ -131,10 +131,12 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 						if (!pSCView)
 							RedrawWindow(pMainFrm->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 						else if (pSCView && bCityViewAnim || hWndExt) {
-							if (pSCView && bCityViewAnim && bUseCycle)
-								RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 							if (hWndExt)
 								RedrawWindow(hWndExt, NULL, NULL, RDW_INVALIDATE);
+							else {
+								if (pSCView && bCityViewAnim && bUseCycle)
+									RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+							}
 						}
 					}
 				}
