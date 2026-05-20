@@ -181,7 +181,7 @@ bool SoundEnginePlaySong(SDL_AudioStream** pStream, audio_entity_t* stAudioData,
 	if (!bOverride && *pStream)
 		return false;
 	else if (*pStream)
-		SoundEngineStopStream(pStream);
+		SoundEngineStopSong(pStream);
 
 	SDL_AudioSpec spec = {
 		SDL_AUDIO_S16,
@@ -197,10 +197,10 @@ bool SoundEnginePlaySong(SDL_AudioStream** pStream, audio_entity_t* stAudioData,
 	SDL_PutAudioStreamData(*pStream, stAudioData->pBuffer, stAudioData->uBufferSize);
 	SDL_ResumeAudioStreamDevice(*pStream);
 
-	hCurrentSongThread = CreateThread(NULL, 0, SoundEngineOneShotThread, stAudioData, 0, NULL);
+	hCurrentSongThread = CreateThread(NULL, 0, SoundEngineSongThread, stAudioData, 0, NULL);
 
 	if (!hCurrentSongThread) {
-		SoundEngineStopStream(pStream);
+		SoundEngineStopSong(pStream);
 		return false;
 	}
 
