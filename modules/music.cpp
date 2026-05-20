@@ -504,6 +504,10 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 						const char* szSongPath = GetGameSoundPath(iPlayingSongID, TRUE);
 
 						if (szSongPath) {
+							//uint64_t uTickStart = GetTickCount64();
+							LARGE_INTEGER uTickStart, uTickEnd, uTicksPerSecond;
+							QueryPerformanceFrequency(&uTicksPerSecond);
+							QueryPerformanceCounter(&uTickStart);
 							SNDFILE* sndfile = SF_open(szSongPath, SFM_READ, &stInfoMP3File);
 
 							if (!sndfile) {
@@ -527,7 +531,9 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 							// Read the audio into the buffer as 16-bit PCM
 							SF_readf_short(sndfile, stAudioEntityMP3.pBuffer, stAudioEntityMP3.iFrames);
 							SF_close(sndfile);
-
+							QueryPerformanceCounter(&uTickEnd);
+							if (mus_debug & MUS_DEBUG_SONGS)
+								ConsoleLog(LOG_DEBUG, "MUS:  Loading MP3 file \"%s\" took %llu microseconds.\n", szSongPath, ((uTickEnd.QuadPart - uTickStart.QuadPart) * 1000000 / uTicksPerSecond.QuadPart));
 
 							// Start playing the song and finish processing this message
 							if (mus_debug & MUS_DEBUG_THREAD)

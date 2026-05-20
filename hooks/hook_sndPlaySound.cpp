@@ -645,8 +645,14 @@ void InstallSoundEngineHooks_SC2K1996(void) {
 	NEWJMP((LPVOID)0x403026, Hook_Sound_PlaySound);
 
 	// Cache all sounds
+	LARGE_INTEGER uTickStart, uTickEnd, uTicksPerSecond;
+	QueryPerformanceFrequency(&uTicksPerSecond);
+	QueryPerformanceCounter(&uTickStart);
 	for (int i = SOUND_START; i <= SOUND_SILENT; i++)
 		LoadSoundFromFile(i, string_format("SOUNDS/%d.wav", i));
+	QueryPerformanceCounter(&uTickEnd);
+	if (snd_debug & SND_DEBUG_INTERNALS)
+		ConsoleLog(LOG_DEBUG, "SND:  Pre-caching sounds from disk took %llu microseconds.\n", ((uTickEnd.QuadPart - uTickStart.QuadPart) * 1000000 / uTicksPerSecond.QuadPart));
 
 	// Load the replacement sound resources
 	LoadSoundFromResource(SOUND_BUILD, IDR_WAVE_500);
