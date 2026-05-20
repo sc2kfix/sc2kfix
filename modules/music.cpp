@@ -32,7 +32,7 @@ static DWORD dwDummy;
 std::vector<int> vectorRandomSongIDs = { 10001, 10004, 10008, 10012, 10018, 10003, 10007, 10011, 10013, 10017 };
 int iCurrentSong = 0;
 int iPlayingSongID = 0;
-DWORD dwMusicThreadID;
+DWORD dwMusicThreadID = 0;
 MCIDEVICEID mciDevice = NULL;
 BOOL bMultithreadedMusicEnabled = FALSE;
 BOOL bUseFluidSynth = FALSE;
@@ -127,7 +127,8 @@ UINT MusicEngineStringToInt(const char* szMusicEngine) {
 
 void WINAPI MusicMCINotifyCallback(WPARAM wFlags, LPARAM lDevID) {
 	if (wFlags == MCI_NOTIFY_SUCCESSFUL || wFlags == MCI_NOTIFY_FAILURE) {
-		PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
+		if (dwMusicThreadID)
+			PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
 		if (mus_debug & MUS_DEBUG_THREAD)
 			ConsoleLog(LOG_DEBUG, "MUS:  MusicMCINotifyCallback posted WM_MUSIC_STOP. (%u, %u)\n", wFlags, lDevID);
 	}
@@ -148,7 +149,7 @@ int MusicFluidSynthMidiEventHandler(void* data, fluid_midi_event_t* event) {
 
 void MusicFluidSynthLoggerError(int level, const char* message, void* data) {
 	// Ignore the error we get if we're loading the default Windows GM "soundfont"
-	if (message && !strcmp(message, "Not a SoundFont file") && !_stricmp(GetFileBaseName(jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT].ToString().c_str()), DEF_FIX_AUD_SOUNDFONT))
+	if (message && !strcmp(message, "Not a SoundFont file") && !_stricmp(GetFileBaseName(jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT].ToString().c_str()), "gm.dls"))
 		return;
 
 	ConsoleLog(LOG_ERROR, "MUS:  FluidSynth: %s\n", message);
@@ -437,7 +438,8 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 
 			// Stop the FluidSynth thread if it's active
 			if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "fluidsynth" && hmodFluidSynth) {
-				FS_fluid_player_stop(pFluidSynthPlayer);
+				if (pFluidSynthPlayer)
+					FS_fluid_player_stop(pFluidSynthPlayer);
 				bFluidSynthPlaying = FALSE;
 				if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
 					ConsoleLog(LOG_DEBUG, "MUS:  Thread stopped FluidSynth player due to WM_MUSIC_STOP message.\n");
@@ -652,7 +654,8 @@ void DoMusicPlay(int iSongID, BOOL bInterrupt) {
 		case 10010:
 		case 10012:
 		case 10016:
-			PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
+			if (dwMusicThreadID)
+				PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
 			if (mus_debug & MUS_DEBUG_THREAD)
 				ConsoleLog(LOG_DEBUG, "MUS:  Hook_SimcityApp_MusicPlay posted WM_MUSIC_STOP.\n");
 			break;
@@ -660,7 +663,8 @@ void DoMusicPlay(int iSongID, BOOL bInterrupt) {
 	}
 
 	// Post the play message to the music thread
-	PostThreadMessage(dwMusicThreadID, WM_MUSIC_PLAY, iSongID, (bInterrupt) ? NULL : 1);
+	if (dwMusicThreadID)
+		PostThreadMessage(dwMusicThreadID, WM_MUSIC_PLAY, iSongID, (bInterrupt) ? NULL : 1);
 	if (mus_debug & MUS_DEBUG_THREAD && bInterrupt)
 		ConsoleLog(LOG_DEBUG, "MUS:  Hook_SimcityApp_MusicPlay posted WM_MUSIC_PLAY for iSongID = %u.\n", iSongID);
 }
@@ -685,7 +689,8 @@ extern "C" void __stdcall Hook_Sound_MusicStop(void) {
 	__asm mov [pThis], ecx
 
 	// Post the stop message to the music thread
-	PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
+	if (dwMusicThreadID)
+		PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
 	if (mus_debug & MUS_DEBUG_THREAD)
 		ConsoleLog(LOG_DEBUG, "MUS:  Hook_Sound_MusicStop posted WM_MUSIC_STOP.\n");
 }

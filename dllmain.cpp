@@ -562,7 +562,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 	// Clean up after ourselves and get ready to exit
 	case DLL_PROCESS_DETACH:
 		// Shut down the music thread
-		PostThreadMessage(dwMusicThreadID, WM_QUIT, NULL, NULL);
+		if (dwMusicThreadID)
+			PostThreadMessage(dwMusicThreadID, WM_QUIT, NULL, NULL);
 
 		// Only save the bindings and stored paths during a graceful exit.
 		// (SC2K1996 only for now)
