@@ -383,7 +383,7 @@ static BOOL ValidateFilename(const char *pName, const char *pExt) {
 	return FALSE;
 }
 
-static const char *GetGameSoundPath(int iSongID, BOOL bDoMP3) {
+const char *GetGameMusicSoundPath(int iSongID, BOOL bDoMP3) {
 	const char *pExt;
 	static std::string strSongPath;
 	BOOL bUseAliasedSong;
@@ -419,8 +419,6 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 	CSimcityAppPrimary *pSCApp;
 	MSG msg;
 	MCIERROR dwMCIError = NULL;
-	SF_INFO stInfoMP3File = { 0 };
-	audio_entity_t stAudioEntityMP3 = { 0 };
 
 	if (mus_debug & MUS_DEBUG_THREAD)
 		ConsoleLog(LOG_DEBUG, "MUS:  Starting music engine! Initial music driver set to \"%s\".\n", jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString().c_str());
@@ -448,9 +446,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 
 			// If we're playing an MP3, stop it and unload it from memory
 			if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "mp3") {
-				SoundEngineStopSong(&pStreamCurrentSong);
-				free(stAudioEntityMP3.pBuffer);
-				memset(&stAudioEntityMP3, 0, sizeof(audio_entity_t));
+				PostThreadMessageA(dwSDLSongThreadID, WM_SDL_STOP, 0, 0);
 				if (mus_debug & MUS_DEBUG_THREAD)
 					ConsoleLog(LOG_DEBUG, "MUS:  Thread stopped MP3 playback due to WM_MUSIC_STOP message.\n");
 				goto next;
@@ -491,9 +487,9 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 				if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "fluidsynth" && hmodFluidSynth) {
 					if (msg.wParam >= 10000 && msg.wParam <= 10018) {
 						iPlayingSongID = msg.wParam;
-						char* szSongPath = _strdup(GetGameSoundPath(iPlayingSongID, FALSE));
+						char* szSongPath = _strdup(GetGameMusicSoundPath(iPlayingSongID, FALSE));
 						if (mus_debug & MUS_DEBUG_FLUIDSYNTH)
-							ConsoleLog(LOG_DEBUG, "MUS:  GetGameSoundPath(%d, FALSE) returned \"%s\".\n", iPlayingSongID, szSongPath);
+							ConsoleLog(LOG_DEBUG, "MUS:  GetGameMusicSoundPath(%d, FALSE) returned \"%s\".\n", iPlayingSongID, szSongPath);
 
 						if (szSongPath && !bFluidSynthPlaying)
 							CreateThread(NULL, 0, FluidSynthWatchdogThread, (LPVOID)szSongPath, 0, NULL);
@@ -507,46 +503,10 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 				if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "mp3") {
 					if (msg.wParam >= 10000 && msg.wParam <= 10018) {
 						iPlayingSongID = msg.wParam;
-						const char* szSongPath = GetGameSoundPath(iPlayingSongID, TRUE);
+						const char* szSongPath = GetGameMusicSoundPath(iPlayingSongID, TRUE);
 
 						if (szSongPath) {
-							//uint64_t uTickStart = GetTickCount64();
-							LARGE_INTEGER uTickStart, uTickEnd, uTicksPerSecond;
-							QueryPerformanceFrequency(&uTicksPerSecond);
-							QueryPerformanceCounter(&uTickStart);
-							SNDFILE* sndfile = SF_open(szSongPath, SFM_READ, &stInfoMP3File);
-
-							if (!sndfile) {
-								ConsoleLog(LOG_ERROR, "MUS:  Couldn't load MP3 file \"%s\" (sndfile).\n", szSongPath);
-								return false;
-							}
-
-							// Build the audio entity data
-							stAudioEntityMP3.iFrames = stInfoMP3File.frames;
-							stAudioEntityMP3.iSampleRate = stInfoMP3File.samplerate;
-							stAudioEntityMP3.iChannels = stInfoMP3File.channels;
-							stAudioEntityMP3.iFormat = stInfoMP3File.format;
-							stAudioEntityMP3.bSeekable = stInfoMP3File.seekable;
-							stAudioEntityMP3.uBufferSize = stAudioEntityMP3.iChannels * sizeof(short) * stAudioEntityMP3.iFrames;
-							stAudioEntityMP3.pBuffer = (short*)malloc(stAudioEntityMP3.uBufferSize);
-							if (!stAudioEntityMP3.pBuffer) {
-								ConsoleLog(LOG_ERROR, "MUS:  Couldn't load MP3 file \"%s\" (malloc).\n", szSongPath);
-								return false;
-							}
-
-							// Read the audio into the buffer as 16-bit PCM
-							SF_readf_short(sndfile, stAudioEntityMP3.pBuffer, stAudioEntityMP3.iFrames);
-							SF_close(sndfile);
-							QueryPerformanceCounter(&uTickEnd);
-							if (mus_debug & MUS_DEBUG_SONGS)
-								ConsoleLog(LOG_DEBUG, "MUS:  Loading MP3 file \"%s\" took %llu microseconds.\n", szSongPath, ((uTickEnd.QuadPart - uTickStart.QuadPart) * 1000000 / uTicksPerSecond.QuadPart));
-
-							// Start playing the song and finish processing this message
-							if (mus_debug & MUS_DEBUG_THREAD)
-								ConsoleLog(LOG_DEBUG, "MUS:  Playing MP3 file \"%s\" via SDL3.\n", szSongPath);
-							SoundEnginePlaySong(&pStreamCurrentSong, &stAudioEntityMP3,
-								jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat(),
-								true);
+							PostThreadMessageA(dwSDLSongThreadID, WM_SDL_PLAY, iPlayingSongID, 0);
 							goto next;
 						} else
 							ConsoleLog(LOG_ERROR, "MUS:  Could not find music file %s; failing back to MIDI sequencer.\n", szSongPath);
@@ -557,7 +517,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 				if (!mciDevice) {
 					if (msg.wParam >= 10000 && msg.wParam <= 10018) {
 						iPlayingSongID = msg.wParam;
-						const char* szSongPath = GetGameSoundPath(iPlayingSongID, FALSE);
+						const char* szSongPath = GetGameMusicSoundPath(iPlayingSongID, FALSE);
 						
 						if (!szSongPath)
 							goto next;
@@ -608,9 +568,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 			}
 
 			if (pStreamCurrentSong) {
-				SoundEngineStopSong(&pStreamCurrentSong);
-				free(stAudioEntityMP3.pBuffer);
-				memset(&stAudioEntityMP3, 0, sizeof(audio_entity_t));
+				PostThreadMessageA(dwSDLSongThreadID, WM_SDL_STOP, 0, 0);
 				if (mus_debug & MUS_DEBUG_THREAD)
 					ConsoleLog(LOG_DEBUG, "MUS:  Thread stopped MP3 player due to WM_MUSIC_RESET message.\n");
 			}

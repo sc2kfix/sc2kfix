@@ -1940,8 +1940,7 @@ extern "C" void __stdcall Hook_MainFrame_OnActivateApp(BOOL bActive, HTASK hTask
 				// music in background is not enabled.
 				if (!jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND].ToBool())
 					Game_SimcityApp_MusicTrigger(pSCApp);
-				SoundEngineStopStream(&pStreamCurrentSound);
-				//L_PlaySound_SC2K1996(0, 0); // Review concerning sound call change.
+				L_PlaySound_SC2K1996(0, 0);
 				InvalidateRect(pThis->m_hWnd, 0, TRUE);
 				if (pSCView)
 					Game_SimcityView_MainWindowUpdate(pSCView, 0, FALSE);
@@ -1957,6 +1956,9 @@ extern "C" void __stdcall Hook_MainFrame_OnActivateApp(BOOL bActive, HTASK hTask
 				if (pSCView) {
 					if (!Game_Sound_GetMCIResult(pSCApp->SCASNDLayer))
 						Game_SimcityApp_MusicPlayNextRefocusSong(pSCApp);
+					// Added to get things going again.
+					bSoundKickstart = true;
+					Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_SILENT);
 				}
 			}
 			Game_SimcityApp_SetGameCursor(pSCApp, 0, TRUE);
@@ -1978,8 +1980,7 @@ extern "C" void __stdcall Hook_MainFrame_OnSize(UINT nType, int cx, int cy) {
 		if (!jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND].ToBool())
 			Game_SimcityApp_MusicTrigger(pSCApp);
 
-		SoundEngineStopStream(&pStreamCurrentSound);
-		//L_PlaySound_SC2K1996(0, 0); // Review concerning sound call change.
+		L_PlaySound_SC2K1996(0, 0);
 	}
 	Game_MainFrame_OnQueryNewPalette(pThis);
 	InvalidateRect(pThis->m_hWnd, 0, TRUE);
@@ -2005,14 +2006,16 @@ extern "C" void __stdcall Hook_MainFrame_OnShowWindow(BOOL bShow, BOOL nStatus) 
 		if (pSCView) {
 			if (!Game_Sound_GetMCIResult(pSCApp->SCASNDLayer))
 				Game_SimcityApp_MusicPlayNextRefocusSong(pSCApp);
+			// Added to get things going again.
+			bSoundKickstart = true;
+			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_SILENT);
 		}
 	}
 	else {
 		if (!jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND].ToBool())
 			Game_SimcityApp_MusicTrigger(pSCApp);
 
-		SoundEngineStopStream(&pStreamCurrentSound);
-		//L_PlaySound_SC2K1996(0, 0); // Review concerning sound call change.
+		L_PlaySound_SC2K1996(0, 0);
 	}
 	Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
 }
@@ -2393,6 +2396,17 @@ extern "C" int __stdcall Hook_SimcityApp_InitInstance() {
 	return GameMain_SimcityApp_InitInstance(pThis);
 }
 
+extern "C" void __stdcall Hook_SimcityApp_ExitInstance() {
+	CSimcityAppPrimary* pThis;
+
+	__asm mov [pThis], ecx
+
+	Game_PerhapsFreeDocumentsLibraryAndStrings();
+	FreeLibrary(pThis->dwSCAhModule);
+	SoundEngineDestroy();
+	GameMain_WinApp_ExitInstance(pThis);
+}
+
 // Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
 // This should probably have a better name. And maybe be broken out into smaller functions.
 //
@@ -2401,6 +2415,10 @@ void InstallMiscHooks_SC2K1996(void) {
 	// Install early startup hook before CSimcityApp::InitInstance
 	SafeVirtualProtect((LPVOID)0x4016B3, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4016B3, Hook_SimcityApp_InitInstance);
+
+	// Hook CSimcityApp::ExitInstance
+	SafeVirtualProtect((LPVOID)0x402E5F, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402E5F, Hook_SimcityApp_ExitInstance);
 	
 	// Install critical Windows API hooks
 	*(DWORD*)(0x4EFBE8) = (DWORD)Hook_LoadStringA;

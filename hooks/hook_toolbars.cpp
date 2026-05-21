@@ -97,13 +97,7 @@ extern "C" void __stdcall Hook_CityToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoin
 			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_ERROR);
 			return;
 		}
-
-		// Bug workaround: Playing sound on this toolbar button can cause deadlocks when using the
-		// native Windows MIDI sequencer on some machines. It may also affect MP3 and FluidSynth,
-		// we aren't completely sure.
-		if (iHitMenuButton != CITYTOOL_BUTTON_BUDGET)
-			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
-
+		Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
 		hSubMenu = GetSubMenu(pThis->dwCTBMenuOne.m_hMenu, pThis->iMyTBMenuButtonPos);
 		pSubMenu = GameMain_Menu_FromHandle(hSubMenu);
 		if (pSubMenu) {

@@ -178,22 +178,6 @@ typedef struct {
 } tripStruct;
 #pragma pack(pop)
 
-// Recompilation helpers (TODO: wean off these)
-
-#define LAST_IND(x, type)	(sizeof(x) / sizeof(type) - 1)
-#define HIGH_IND(x, type)	LAST_IND(x,type)
-#define LOW_IND(x, type)	0
-#define SBYTEn(x, n)		(*((__int8*)&(x)+n))
-#define SWORDn(x, n)		(*((__int16*)&(x)+n))
-#define SDWORDn(x, n)		(*((__int32*)&(x)+n))
-
-#define SLOBYTE(x)				SBYTEn(x,LOW_IND(x,__int8))
-#define SLOWORD(x)				SWORDn(x,LOW_IND(x,__int16))
-#define SLODWORD(x)				SDWORDn(x,LOW_IND(x,__int32))
-#define SHIBYTE(x)				SBYTEn(x,HIGH_IND(x,__int8))
-#define SHIWORD(x)				SWORDn(x,HIGH_IND(x,__int16))
-#define SHIDWORD(x)				SDWORDn(x,HIGH_IND(x,__int32))
-
 static int iTotalTripCount = 0;
 
 // This is REALLY rough and has only had enough cleanup to make sense in my head so it probably
