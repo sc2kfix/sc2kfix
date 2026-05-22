@@ -293,7 +293,7 @@ DWORD WINAPI SoundEngineOneShotThread(LPVOID lpParameter) {
 	bSoundThreadActive[0] = true;
 	bSoundStop = false;
 	while (SDL_GetAudioStreamAvailable(pStreamCurrentSound) > 0) {
-		if (bSoundStop)
+		if (bSoundStop || !pStreamCurrentSound)
 			break;
 		Sleep(10);
 	}
@@ -310,7 +310,7 @@ DWORD WINAPI SoundEngineSongThread(LPVOID lpParameter) {
 	bSongThreadActive = true;
 	bSongStop = false;
 	while (SDL_GetAudioStreamAvailable(pStreamCurrentSong) > 0) {
-		if (bSongStop)
+		if (bSongStop || !pStreamCurrentSong)
 			break;
 		Sleep(10);
 	}
@@ -328,10 +328,8 @@ DWORD WINAPI SoundEngineLoopThread(LPVOID lpParameter) {
 	bSoundThreadActive[1] = true;
 	bSoundStop = false;
 	for (;;) {
-		if (bSoundStop)
+		if (bSoundStop || !bSoundPlaying || !pStreamCurrentSound)
 			break;
-		if (!bSoundPlaying || !pStreamCurrentSound)
-			return EXIT_SUCCESS;
 		if (SDL_GetAudioStreamAvailable(pStreamCurrentSound) < stAudioData->uBufferSize)
 			SDL_PutAudioStreamData(pStreamCurrentSound, stAudioData->pBuffer, stAudioData->uBufferSize);
 		Sleep(10);
@@ -397,10 +395,14 @@ bool SoundEngineInitialize(void) {
 }
 
 void SoundEngineDestroy(void) {
-	if (pStreamCurrentSong)
+	if (pStreamCurrentSong) {
 		SDL_DestroyAudioStream(pStreamCurrentSong);
-	if (pStreamCurrentSound)
+		pStreamCurrentSong = 0;
+	}
+	if (pStreamCurrentSound) {
 		SDL_DestroyAudioStream(pStreamCurrentSound);
+		pStreamCurrentSound = 0;
+	}
 
 	if (sdl_debug & SDL_DEBUG_GENERAL)
 		ConsoleLog(LOG_DEBUG, "SND: SDL Sound Engine Destroyed.\n");
