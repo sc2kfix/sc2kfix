@@ -378,19 +378,19 @@ bool ConsoleCommandSetGameSeason(std::vector<std::string> args, int iBreakoutSta
 	}
 
 	if (args[0] == "auto")
-		iForcedSeason = 0;
+		iForcedSeason = FORCED_SEASON_NONE;
 	else if (args[0] == "autumn")
-		iForcedSeason = 3;
+		iForcedSeason = FORCED_SEASON_AUTUMN;
 	else if (args[0] == "blizzard")
-		iForcedSeason = 6;
+		iForcedSeason = FORCED_SEASON_BLIZZARD;
 	else if (args[0] == "snow")
-		iForcedSeason = 5;
+		iForcedSeason = FORCED_SEASON_SNOW;
 	else if (args[0] == "spring")
-		iForcedSeason = 1;
+		iForcedSeason = FORCED_SEASON_SPRING;
 	else if (args[0] == "summer")
-		iForcedSeason = 2;
+		iForcedSeason = FORCED_SEASON_SUMMER;
 	else if (args[0] == "winter")
-		iForcedSeason = 4;
+		iForcedSeason = FORCED_SEASON_WINTER;
 	else {
 		bConsoleKeepCommandBuffer = true;
 		return false;
@@ -401,6 +401,7 @@ bool ConsoleCommandSetGameSeason(std::vector<std::string> args, int iBreakoutSta
 }
 
 bool ConsoleCommandSetGameWeathermap(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	extern std::map<BYTE, BYTE> mapBuildingSnowIndexMap;
 	extern std::map<BYTE, BYTE> mapTerrainSnowIndexMap;
 	extern std::map<BYTE, BYTE> mapTreeSnowEffectMap;
 	extern std::map<BYTE, BYTE> mapTreeAutumnEffectMap;
@@ -422,6 +423,7 @@ bool ConsoleCommandSetGameWeathermap(std::vector<std::string> args, int iBreakou
 			{
 				{"<key>", "Key to set"},
 				{"<value>", "Value to set"},
+				{"buildingsnow", "Set the building snow map"},
 				{"groundsnow", "Set the ground snow map"},
 				{"treeautumn", "Set the tree autumn map"},
 				{"treesnow", "Set the tree snow map"},
@@ -449,6 +451,12 @@ bool ConsoleCommandSetGameWeathermap(std::vector<std::string> args, int iBreakou
 		// <value>
 		if (!bValueScanned && sscanf_s(args[i].c_str(), "%X", &iValue)) {
 			bValueScanned = true;
+			continue;
+		}
+
+		// buildingsnow
+		if (args[i] == "buildingsnow" && !pMap) {
+			pMap = &mapBuildingSnowIndexMap;
 			continue;
 		}
 
@@ -485,9 +493,9 @@ bool ConsoleCommandSetGameWeathermap(std::vector<std::string> args, int iBreakou
 		return false;
 	}
 
-	printf("-> pMap[0x%02X]  = 0x%02X\n", iKey, iValue);
+	//printf("-> pMap[0x%02X]  = 0x%02X\n", iKey, iValue);
 	(*pMap)[iKey] = iValue;
-	printf("   pMap[0x%02X] -> 0x%02X\n", iKey, (*pMap)[iKey]);
+	//printf("   pMap[0x%02X] -> 0x%02X\n", iKey, (*pMap)[iKey]);
 	RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 	return true;
 }

@@ -1399,8 +1399,7 @@ static BYTE ProcessTreeAutumnEffect(BYTE colIdx) {
 	return newIdx;
 }
 
-// 0 = no forced season, 1 = spring, 2 = summer, 3 = autumn, 4 = winter, 5 = winter + snow, 6 = winter + blizzard
-int iForcedSeason = 0;
+int iForcedSeason = FORCED_SEASON_NONE;
 
 static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
 	int iCityMonth = dwCityDays / 25 % 12;
@@ -1408,13 +1407,13 @@ static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
 	BYTE newIdx = colIdx;
 	if (bWeatherTrend == WEATHER_TREND_BLIZZARD ||
 		bWeatherTrend == WEATHER_TREND_SNOW ||
-		iForcedSeason == 5 || iForcedSeason == 6) {
+		iForcedSeason == FORCED_SEASON_SNOW || iForcedSeason == FORCED_SEASON_BLIZZARD) {
 		if (!bIgnore)
 			newIdx = ProcessTreeSnowEffect(newIdx);
 	}
 	if ((iCityMonth >= 0 && iCityMonth <= 2) ||
 		(iCityMonth >= 9 && iCityMonth <= 11) ||
-		iForcedSeason == 3 || iForcedSeason == 4) {
+		iForcedSeason == FORCED_SEASON_AUTUMN || iForcedSeason == FORCED_SEASON_WINTER) {
 		newIdx = ProcessTreeAutumnEffect(newIdx);
 	}
 	return newIdx;
@@ -1443,10 +1442,10 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 
 				// Handle deep water differently.
 				if (nSpriteID == SPRITE_SMALL_WATER_TRBL || nSpriteID == SPRITE_MEDIUM_WATER_TRBL || nSpriteID == SPRITE_LARGE_WATER_TRBL) {
-					if (((nPos % 4) == 1 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == 6)) || (nPos % 4) == 2)
+					if (((nPos % 4) == 1 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD)) || (nPos % 4) == 2)
 						palIdx = ProcessTerrainSnowIndex(palIdx);
 				}
-				else if (((nPos % 4) == 2 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == 6)) || (nPos % 4) == 3 || (nPos % 4) == 1)
+				else if (((nPos % 4) == 2 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD)) || (nPos % 4) == 3 || (nPos % 4) == 1)
 					palIdx = ProcessTerrainSnowIndex(palIdx);
 			}
 		}
@@ -1457,7 +1456,7 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 			GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_SMALLPARK) || GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INFRASTRUCTURE_WATERPUMP)) &&
 			!GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INDUSTRIAL_2X2_FACTORY2) && !GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INDUSTRIAL_3X3_THINGAMAJIG)) {
 			if (bWeatherTrend == WEATHER_TREND_SNOW || bWeatherTrend == WEATHER_TREND_BLIZZARD ||
-				iForcedSeason == 5 || iForcedSeason == 6) {
+				iForcedSeason == FORCED_SEASON_SNOW || iForcedSeason == FORCED_SEASON_BLIZZARD) {
 				palIdx = ProcessBuildingSnowIndex(palIdx);
 			}
 		}
@@ -1509,13 +1508,13 @@ static BYTE CheckWeatherInversion(__int16 nSpriteID, BYTE palIdx, int nPos) {
 	if (bFrequentUpdates && bWeatherEffects && !hWndExt) {
 		if (!GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_UNDERGROUND_TERRAIN, SPRITE_SMALL_SUBWAYENTRANCE)) {
 			if (bWeatherTrend == WEATHER_TREND_SNOW || bWeatherTrend == WEATHER_TREND_BLIZZARD ||
-				iForcedSeason == 5 || iForcedSeason == 6) {
+				iForcedSeason == FORCED_SEASON_SNOW || iForcedSeason == FORCED_SEASON_BLIZZARD) {
 				// Handle deep water differently.
 				if (nSpriteID == SPRITE_SMALL_WATER_TRBL || nSpriteID == SPRITE_MEDIUM_WATER_TRBL || nSpriteID == SPRITE_LARGE_WATER_TRBL) {
-					if (((nPos % 4) == 1 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == 6)) || (nPos % 4) == 2)
+					if (((nPos % 4) == 1 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD)) || (nPos % 4) == 2)
 						palIdx = ProcessTerrainSnowIndex(palIdx);
 				}
-				else if (((nPos % 4) == 2 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == 6)) || (nPos % 4) == 3 || (nPos % 4) == 1)
+				else if (((nPos % 4) == 2 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD)) || (nPos % 4) == 3 || (nPos % 4) == 1)
 					palIdx = ProcessTerrainSnowIndex(palIdx);
 			}
 		}

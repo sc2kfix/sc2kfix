@@ -197,6 +197,16 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define MARINA_TILES_ALLDRY 0
 #define MARINA_TILES_ALLWET 9
 
+#define FORCED_SEASON_NONE		0
+#define FORCED_SEASON_SPRING	1
+#define FORCED_SEASON_SUMMER	2
+#define FORCED_SEASON_AUTUMN	3
+#define FORCED_SEASON_WINTER	4
+#define FORCED_SEASON_SNOW		5
+#define FORCED_SEASON_BLIZZARD	6
+#define FORCED_SEASON_HEATWAVE	7	// NYI
+#define FORCED_SEASON_DROUGHT	8	// NYI
+
 // Although there is a Thing Index '0'
 // that one is for the bulldozer; let's
 // not step on that one.
