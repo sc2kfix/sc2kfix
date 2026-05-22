@@ -1408,7 +1408,7 @@ static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
 	BYTE newIdx = colIdx;
 	if (bWeatherTrend == WEATHER_TREND_BLIZZARD ||
 		bWeatherTrend == WEATHER_TREND_SNOW ||
-		iForcedSeason == 5) {
+		iForcedSeason == 5 || iForcedSeason == 6) {
 		if (!bIgnore)
 			newIdx = ProcessTreeSnowEffect(newIdx);
 	}
