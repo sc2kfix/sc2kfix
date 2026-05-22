@@ -1356,7 +1356,7 @@ static BYTE ProcessTreeAutumnEffect(BYTE colIdx) {
 	return newIdx;
 }
 
-// 0 = no forced season, 1 = spring, 2 = summer, 3 = autumn, 4 = winter, 5 = winter + snow
+// 0 = no forced season, 1 = spring, 2 = summer, 3 = autumn, 4 = winter, 5 = winter + snow, 6 = winter + blizzard
 int iForcedSeason = 0;
 
 static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
@@ -1391,10 +1391,11 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 			}
 		}
 		else if (GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_TERRAIN, SPRITE_SMALL_WATER_R_TERRAIN_TBL)) {
-			if (bWeatherTrend == 6 || bWeatherTrend == 9 || iForcedSeason == 5) {
+			if (bWeatherTrend == WEATHER_TREND_SNOW || bWeatherTrend == WEATHER_TREND_BLIZZARD ||
+				iForcedSeason == 5 || iForcedSeason == 6) {
 				// This if is for partial drawing based on row.
 				/*if (nRemHeight <= (shapeCurrent[nSpriteID].wHeight / 2))*/
-				if ((nPos % 4) == 3 || (nPos % 4) == 1)
+				if (((nPos % 4) == 2 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == 6)) || (nPos % 4) == 3 || (nPos % 4) == 1)
 					palIdx = ProcessWeatherIndex(palIdx);
 			}
 		}
@@ -1439,8 +1440,9 @@ static BYTE CheckWeatherInversion(__int16 nSpriteID, BYTE palIdx, int nPos) {
 	BYTE newIdx = palIdx;
 	if (bFrequentUpdates && bWeatherEffects && !hWndExt) {
 		if (!GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_UNDERGROUND_TERRAIN, SPRITE_SMALL_SUBWAYENTRANCE)) {
-			if (bWeatherTrend == 6 || bWeatherTrend == 9) {
-				if ((nPos % 4) == 3 || (nPos % 4) == 1)
+			if (bWeatherTrend == WEATHER_TREND_SNOW || bWeatherTrend == WEATHER_TREND_BLIZZARD ||
+				iForcedSeason == 5 || iForcedSeason == 6) {
+				if (((nPos % 4) == 2 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == 6)) || (nPos % 4) == 3 || (nPos % 4) == 1)
 					newIdx = ProcessWeatherIndex(newIdx);
 			}
 		}

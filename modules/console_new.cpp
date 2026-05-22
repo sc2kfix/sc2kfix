@@ -353,6 +353,7 @@ bool ConsoleCommandSetGameSeason(std::vector<std::string> args, int iBreakoutSta
 			{
 				{"auto", "Restores the flow of time"},
 				{"autumn", "Forces seasonal effects to autumn"},
+				{"blizzard", "Forces seasonal effects to blizzardy winter"},
 				{"snow", "Forces seasonal effects to snowy winter"},
 				{"spring", "Forces seasonal effects to spring"},
 				{"summer", "Forces seasonal effects to summer"},
@@ -380,6 +381,8 @@ bool ConsoleCommandSetGameSeason(std::vector<std::string> args, int iBreakoutSta
 		iForcedSeason = 0;
 	else if (args[0] == "autumn")
 		iForcedSeason = 3;
+	else if (args[0] == "blizzard")
+		iForcedSeason = 6;
 	else if (args[0] == "snow")
 		iForcedSeason = 5;
 	else if (args[0] == "spring")
