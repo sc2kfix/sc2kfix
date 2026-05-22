@@ -245,33 +245,6 @@ public:
 	int m_nAllocLength;
 };
 
-#define _IOREAD 	0x0001
-#define _IOWRT		0x0002
-
-#define _IOFBF		0x0000
-#define _IOLBF		0x0040
-#define _IONBF		0x0004
-
-#define _IOMYBUF	0x0008
-#define _IOEOF		0x0010
-#define _IOERR		0x0020
-#define _IOSTRG 	0x0040
-#define _IORW		0x0080
-
-struct _oldiobuf {
-	char *_ptr;
-	int   _cnt;
-	char *_base;
-	int   _flag;
-	int   _file;
-	int   _charbuf;
-	int   _bufsiz;
-	char *_tmpfname;
-};
-typedef struct _oldiobuf OLDFILE;
-
-#define oldfeof(_stream)	  (((OLDFILE *)(_stream))->_flag & _IOEOF)
-
 class CMFC3XFile : public CMFC3XObject {
 public:
 	enum OpenFlags {

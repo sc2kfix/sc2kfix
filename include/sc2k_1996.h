@@ -3250,13 +3250,6 @@ GAMECALL_MAIN(0x48B99A, int, __cdecl, SmackSoundUseDirectSound, HWND)
 // MFC function pointers. Use with care.
 GAMECALL_MAIN(0x48B9E6, BOOL, __thiscall, DC_TextOutA, CMFC3XDC *, int, int, const char *, int)
 GAMECALL_MAIN(0x48BA0A, BOOL, __thiscall, DC_ExtTextOutA, CMFC3XDC *, int, int, unsigned int, RECT *, const char *, unsigned int, int *)
-GAMECALL_MAIN(0x48E7B2, int, __cdecl, FClose, FILE *)
-GAMECALL_MAIN(0x48E8D0, FILE *, __cdecl, FOpen, const char *, const char *)
-GAMECALL_MAIN(0x48E8E7, size_t, __cdecl, FRead, void *, size_t, size_t, FILE *)
-GAMECALL_MAIN(0x48EAB1, int, __cdecl, FSeek, FILE *, int, int)
-GAMECALL_MAIN(0x49BCF4, BOOL, __stdcall, IsIconic, HWND hWnd)
-GAMECALL_MAIN(0x49C354, BOOL, __stdcall, GetSaveFileNameA, LPOPENFILENAMEA)
-GAMECALL_MAIN(0x49C35A, BOOL, __stdcall, GetLoadFileNameA, LPOPENFILENAMEA)
 GAMECALL_MAIN(0x49E59F, void, __stdcall, AfxAbort)
 GAMECALL_MAIN(0x49EBD3, void, __cdecl, String_Format, CMFC3XString *pThis, char const *Ptr, ...)
 GAMECALL_MAIN(0x49FC26, CMFC3XFileDialog *, __thiscall, FileDialog_Cons, CMFC3XFileDialog *, void *, const char *, const char *, unsigned int, char *, CMFC3XWnd *)
@@ -3286,13 +3279,6 @@ GAMECALL_MAIN(0x4A7196, INT_PTR, __thiscall, Dialog_DoModal, CMFC3XDialog*)
 GAMECALL_MAIN(0x4A7427, CMFC3XMenu *, __stdcall, Menu_FromHandle, HMENU)
 GAMECALL_MAIN(0x4A7483, int, __thiscall, Menu_Attach, CMFC3XMenu *, HMENU)
 GAMECALL_MAIN(0x4A74FB, BOOL, __thiscall, Menu_DestroyMenu, CMFC3XMenu *)
-GAMECALL_MAIN(0x4A7E82, CMFC3XFile *, __thiscall, File_Cons, CMFC3XFile *)
-GAMECALL_MAIN(0x4A8072, void, __thiscall, File_Dest, CMFC3XFile *)
-GAMECALL_MAIN(0x4A8190, BOOL, __thiscall, File_Open, CMFC3XFile *, const char *, UINT, void *)
-GAMECALL_MAIN(0x4A8313, UINT, __thiscall, File_Read, CMFC3XFile *, void *, DWORD)
-GAMECALL_MAIN(0x4A83B8, LONG, __thiscall, File_Seek, CMFC3XFile *, LONG, UINT)
-GAMECALL_MAIN(0x4A8448, void, __thiscall, File_Close, CMFC3XFile *)
-GAMECALL_MAIN(0x4A854E, DWORD, __thiscall, File_GetLength, CMFC3XFile *)
 GAMECALL_MAIN(0x4A8A58, BOOL, __stdcall, File_GetStatusWithString, const char *, CMFC3XFileStatus *)
 GAMECALL_MAIN(0x4AA573, void, __thiscall, WinApp_OnAppExit, CMFC3XWinApp *pThis)
 GAMECALL_MAIN(0x4AABF3, CMFC3XDC *, __thiscall, DC_Cons, CMFC3XDC *)
@@ -4417,9 +4403,38 @@ typedef struct {
 
 extern std::vector<sprite_ids_t> spriteIDs;
 
+typedef struct {
+	DWORD nFrID;
+	WORD wHeight;
+	WORD wWidth;
+	int nSize;
+	BYTE  *pBuf;
+} spriteFrame_t;
+
+typedef struct {
+	DWORD nID;
+	std::vector<spriteFrame_t> sprFrame;
+	std::vector<spriteFrame_t> sprSeasonAutumnFrame;      // Trees currently
+	std::vector<spriteFrame_t> sprSeasonAutumnSnowFrame;  // Trees currently
+	std::vector<spriteFrame_t> sprSeasonSnowFrame;        // Trees currently
+	std::vector<spriteFrame_t> sprTerrainSnowFrame;       // Terrain
+	std::vector<spriteFrame_t> sprTerrainBlizzardFrame;   // Terrain (Blizzard)
+	std::vector<spriteFrame_t> sprDeepWaterIceFrame;      // Water
+	std::vector<spriteFrame_t> sprDeepWaterBlizzardFrame; // Water (Blizzard)
+	std::vector<spriteFrame_t> sprGrassSnowFrame;         // Buildings with grass
+} spriteCache_t;
+
+extern std::vector<spriteCache_t> spriteCache;
+extern BYTE *Get_SpriteCache_BaseBuffer(sprite_header_t *pShapePtr, __int16 nSpriteID);
+extern BYTE *Get_SpriteCache_Buffer(sprite_header_t *pShapePtr, __int16 nSpriteID);
+extern WORD Get_SpriteCache_Height(sprite_header_t *pShapePtr, __int16 nSpriteID);
+extern WORD Get_SpriteCache_Width(sprite_header_t *pShapePtr, __int16 nSpriteID);
+
 extern HWND hwndMainDialog_SC2K1996;
 
 extern bool bSoundKickstart;
+
+extern void Clear_SpriteCache();
 
 extern int GetSoundPlayTicksBySoundID_SC2K1996(int iSoundID);
 extern int GetTickDurationBySoundID_SC2K1996(int iSoundID, int nDuration);

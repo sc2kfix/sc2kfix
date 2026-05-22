@@ -25,8 +25,6 @@ static DWORD dwDummy;
 
 extern BOOL PrepareDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect);
 
-extern HWND hWndExt;
-
 typedef struct {
 	WORD iTileX;
 	WORD iTileY;
@@ -126,8 +124,6 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 
 	switch (message) {
 	case WM_INITDIALOG:
-		hWndExt = hwndDlg;
-
 		SetWindowLong(hwndDlg, GWL_USERDATA, lParam);
 		qci = (query_coords_info *)lParam;
 
@@ -376,7 +372,6 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		}
 
 	case WM_DESTROY:
-		hWndExt = 0;
 		if (pQueriedTileImage) {
 			pQueriedTileImage->DeleteStored_SC2K1996();
 			delete pQueriedTileImage;
@@ -436,7 +431,6 @@ extern "C" int __stdcall Hook_QuerySpecificDialog_OnInitDialog() {
 	int ret;
 
 	ret = GameMain_QuerySpecificDialog_OnInitDialog(pThis);
-	hWndExt = pThis->m_hWnd;
 
 	return ret;
 }
@@ -449,7 +443,6 @@ extern "C" int __stdcall Hook_QueryGeneralDialog_OnInitDialog() {
 	int ret;
 
 	ret = GameMain_QueryGeneralDialog_OnInitDialog(pThis);
-	hWndExt = pThis->m_hWnd;
 
 	return ret;
 }

@@ -19,6 +19,7 @@
 #define SPRITE_DEBUG_OTHER 1
 #define SPRITE_DEBUG_SPRITES 2
 #define SPRITE_DEBUG_TILESETS 4
+#define SPRITE_DEBUG_CACHING 8
 
 #define SPRITE_DEBUG DEBUG_FLAGS_NONE
 
@@ -31,7 +32,441 @@ UINT sprite_debug = SPRITE_DEBUG;
 
 static DWORD dwDummy; 
 
-#define CUSTOM_TILENAME_MAXNUM 500
+#define PALCACHE_TYPE_NONE                    -1
+#define PALCACHE_TYPE_CYCLE                    0
+#define PALCACHE_TYPE_TREES_SEASON_AUTUMN      1
+#define PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW  2
+#define PALCACHE_TYPE_TREES_SEASON_SNOW        3
+#define PALCACHE_TYPE_TERRAIN_SNOW             4
+#define PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD    5
+#define PALCACHE_TYPE_WATER_ICE                6
+#define PALCACHE_TYPE_WATER_ICE_BLIZZARD       7
+#define PALCACHE_GRASS_SNOW                    8
+
+#define CACHED_FRAMES 16
+
+std::vector<spriteCache_t> spriteCache;
+
+static void Delete_SpriteFrame_Cache(std::vector<spriteFrame_t> &sprFrame, DWORD nID, int nType) {
+	for (std::vector<spriteFrame_t>::iterator itFr = sprFrame.begin(); itFr != sprFrame.end();) {
+		if (itFr->pBuf) {
+			if (sprite_debug & SPRITE_DEBUG_CACHING)
+				ConsoleLog(LOG_DEBUG, "Delete_SpriteFrame_Cache(%d): (%d) clear sprite frame (%d)\n", nType, nID, itFr->nFrID);
+			free(itFr->pBuf);
+			itFr->pBuf = 0;
+		}
+		itFr = sprFrame.erase(itFr);
+	}
+}
+
+static void Delete_Sprite_Cache(spriteCache_t *pSpriteCache) {
+	Delete_SpriteFrame_Cache(pSpriteCache->sprFrame, pSpriteCache->nID, PALCACHE_TYPE_CYCLE);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprSeasonAutumnFrame, pSpriteCache->nID, PALCACHE_TYPE_TREES_SEASON_AUTUMN);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprSeasonAutumnSnowFrame, pSpriteCache->nID, PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprSeasonSnowFrame, pSpriteCache->nID, PALCACHE_TYPE_TREES_SEASON_SNOW);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprTerrainSnowFrame, pSpriteCache->nID, PALCACHE_TYPE_TERRAIN_SNOW);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprTerrainBlizzardFrame, pSpriteCache->nID, PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprDeepWaterIceFrame, pSpriteCache->nID, PALCACHE_TYPE_WATER_ICE);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprDeepWaterBlizzardFrame, pSpriteCache->nID, PALCACHE_TYPE_WATER_ICE_BLIZZARD);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprGrassSnowFrame, pSpriteCache->nID, PALCACHE_GRASS_SNOW);
+}
+
+void Clear_SpriteCache() {
+	if (sprite_debug & SPRITE_DEBUG_CACHING)
+		ConsoleLog(LOG_DEBUG, "Clear_SpriteCache(): Start - %d\n", spriteCache.size());
+
+	for (unsigned i = 0; i < spriteCache.size(); ++i) {
+		Delete_Sprite_Cache(&spriteCache[i]);
+	}
+
+	spriteCache.clear();
+
+	if (sprite_debug & SPRITE_DEBUG_CACHING)
+		ConsoleLog(LOG_DEBUG, "Clear_SpriteCache(): Finish - %d\n", spriteCache.size());
+}
+
+static void Init_SpriteCache(bool bReload) {
+	if (bReload)
+		Clear_SpriteCache();
+
+	spriteCache_t sprCacheEnt;
+	for (int i = 0; i < SPRITE_COUNT; ++i) {
+		sprCacheEnt.nID = i;
+		spriteCache.push_back(sprCacheEnt);
+	}
+}
+
+static bool Scan_Sprite(BYTE *shapePtr, __int16 right, __int16 bottom) {
+	BYTE *spritePtr;
+	BYTE nCount;
+	BYTE nChunkMode;
+
+	spritePtr = shapePtr;
+	while (TRUE) {
+		nCount = SPRITEDATA(spritePtr)->nCount;
+		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
+		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
+		switch (nChunkMode) {
+		case MIF_CM_EMPTY:
+			continue;
+		case MIF_CM_NEWROWSTART:
+			break;
+		case MIF_CM_SKIPPIXELS:
+			break;
+		case MIF_CM_PROCPIXELS:
+			for (int nPos = nCount; nPos; ++spritePtr) {
+				// Scan for the presence of any cycling palette index.
+				if ((*spritePtr >= 0xAB && *spritePtr <= 0xC6) || (*spritePtr >= 0xC8 && *spritePtr <= 0xDB) || (*spritePtr >= 0xE0 && *spritePtr <= 0xE7))
+					return true;
+				--nPos;
+			}
+			if ((nCount & 1) != 0)
+				++spritePtr;
+			break;
+		default:
+			return false;
+		}
+	}
+
+	return false;
+}
+
+static int cycleCacheIndices[256] = {
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0,  1,  2,  3,  4, 
+	5,  6,  7,  0,  1,  2,  3,  4,  5,  6,  7,  0,  1,  2,  3,  4,
+	5,  6,  7,  0,  1,  2,  3, -1,  0,  1,  2,  3,  4,  5,  6,  7,
+	0,  1,  2,  3,  0,  1,  2,  3,  4,  5,  6,  7, -1, -1, -1, -1,
+	0,  8,  0,  8,  0,  8,  0,  8, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+};
+
+static BYTE fastCacheCycleOne[]   = { 0xC3, 0xC4, 0xC5, 0xC6 };
+static BYTE fastCacheCycleTwo[]   = { 0xD0, 0xD1, 0xD2, 0xD3 };
+static BYTE midCacheCycleOne[]    = { 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE1, 0xE1, 0xE1, 0xE1, 0xE1, 0xE1, 0xE1, 0xE1 };
+static BYTE midCacheCycleTwo[]    = { 0xE2, 0xE2, 0xE2, 0xE2, 0xE2, 0xE2, 0xE2, 0xE2, 0xE3, 0xE3, 0xE3, 0xE3, 0xE3, 0xE3, 0xE3, 0xE3 };
+static BYTE midCacheCycleThree[]  = { 0xE4, 0xE4, 0xE4, 0xE4, 0xE4, 0xE4, 0xE4, 0xE4, 0xE5, 0xE5, 0xE5, 0xE5, 0xE5, 0xE5, 0xE5, 0xE5 };
+static BYTE midCacheCycleFour[]   = { 0xE6, 0xE6, 0xE6, 0xE6, 0xE6, 0xE6, 0xE6, 0xE6, 0xE7, 0xE7, 0xE7, 0xE7, 0xE7, 0xE7, 0xE7, 0xE7 };
+static BYTE slowCacheCycleOne[]   = { 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF };
+static BYTE slowCacheCycleTwo[]   = { 0xBB, 0xBC, 0xBD, 0xBE, 0xBF, 0xC0, 0xC1, 0xC2 };
+static BYTE slowCacheCycleThree[] = { 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA };
+static BYTE slowCacheCycleFour[]  = { 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xB2 };
+static BYTE slowCacheCycleFive[]  = { 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xDB };
+
+extern __int16 nCycleIdx;
+
+static BYTE GetCycleColIdx(BYTE col, BYTE *pRange, int nCount, int nTarg, bool bRev) {
+	BYTE newCol = col;
+	if (nTarg) {
+		int nIdx = cycleCacheIndices[col];
+		if (nIdx >= 0) {
+			if (pRange[nIdx] == col) {
+				if (bRev)
+					nIdx = (nIdx - nTarg) & nCount - 1;
+				else
+					nIdx = (nIdx + nTarg) & nCount - 1;
+				if (nIdx < 0)
+					nIdx = -nIdx;
+				newCol = pRange[nIdx];
+			}
+		}
+	}
+	return newCol;
+}
+
+static BYTE CyclePaletteIdx(BYTE colIdx, int cIdx) {
+	BYTE newIdx = colIdx;
+	newIdx = GetCycleColIdx(newIdx, fastCacheCycleOne, sizeof(fastCacheCycleOne), (cIdx % 4), false);
+	newIdx = GetCycleColIdx(newIdx, fastCacheCycleTwo, sizeof(fastCacheCycleTwo), (cIdx % 4), false);
+	newIdx = GetCycleColIdx(newIdx, midCacheCycleOne, sizeof(midCacheCycleOne), (cIdx % 16), false);
+	newIdx = GetCycleColIdx(newIdx, midCacheCycleTwo, sizeof(midCacheCycleTwo), (cIdx % 16), false);
+	newIdx = GetCycleColIdx(newIdx, midCacheCycleThree, sizeof(midCacheCycleThree), (cIdx % 16), false);
+	newIdx = GetCycleColIdx(newIdx, midCacheCycleFour, sizeof(midCacheCycleFour), (cIdx % 16), false);
+	newIdx = GetCycleColIdx(newIdx, slowCacheCycleOne, sizeof(slowCacheCycleOne), (cIdx % 8), true);
+	newIdx = GetCycleColIdx(newIdx, slowCacheCycleTwo, sizeof(slowCacheCycleTwo), (cIdx % 8), false);
+	newIdx = GetCycleColIdx(newIdx, slowCacheCycleThree, sizeof(slowCacheCycleThree), (cIdx % 8), false);
+	newIdx = GetCycleColIdx(newIdx, slowCacheCycleFour, sizeof(slowCacheCycleFour), (cIdx % 8), false);
+	newIdx = GetCycleColIdx(newIdx, slowCacheCycleFive, sizeof(slowCacheCycleFive), (cIdx % 8), false);
+	return newIdx;
+}
+
+extern BYTE ProcessBuildingSnowIndex(BYTE colIdx);
+extern BYTE ProcessTerrainSnowIndex(BYTE colIdx, bool bBlizzard);
+extern BYTE ProcessTreeSnowEffect(BYTE colIdx);
+extern BYTE ProcessTreeAutumnEffect(BYTE colIdx);
+
+static void Adjust_SpritePalette(BYTE *shapePtr, int cIdx, int nType) {
+	BYTE *spritePtr;
+	BYTE nCount;
+	BYTE nChunkMode;
+
+	spritePtr = shapePtr;
+	while (TRUE) {
+		nCount = SPRITEDATA(spritePtr)->nCount;
+		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
+		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
+		switch (nChunkMode) {
+		case MIF_CM_EMPTY:
+			continue;
+		case MIF_CM_NEWROWSTART:
+			break;
+		case MIF_CM_SKIPPIXELS:
+			break;
+		case MIF_CM_PROCPIXELS:
+			for (int nPos = nCount; nPos; ++spritePtr) {
+				BYTE palIdx = *spritePtr;
+				if (nType == PALCACHE_TYPE_CYCLE)
+					palIdx = CyclePaletteIdx(palIdx, cIdx);
+				else if (nType >= PALCACHE_TYPE_TREES_SEASON_AUTUMN && nType <= PALCACHE_TYPE_TREES_SEASON_SNOW) {
+					if ((nPos % 4) == 0 || (nPos % 4) == 2 || (nPos % 4) == 3) {
+						if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMN)
+							palIdx = ProcessTreeAutumnEffect(palIdx);
+						else if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW) {
+							palIdx = ProcessTreeAutumnEffect(palIdx);
+							if ((nPos % 4) != 2)
+								palIdx = ProcessTreeSnowEffect(*spritePtr);
+						}
+						else if (nType == PALCACHE_TYPE_TREES_SEASON_SNOW)
+							palIdx = ProcessTreeSnowEffect(palIdx);
+					}
+				}
+				else if (nType >= PALCACHE_TYPE_TERRAIN_SNOW && nType <= PALCACHE_TYPE_WATER_ICE_BLIZZARD) {
+					if (nType == PALCACHE_TYPE_TERRAIN_SNOW)
+						palIdx = ProcessTerrainSnowIndex(palIdx, false);
+					else if (nType == PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD)
+						palIdx = ProcessTerrainSnowIndex(palIdx, true);
+					else if (nType == PALCACHE_TYPE_WATER_ICE) {
+						if ((nPos % 4) == 2)
+							palIdx = ProcessTerrainSnowIndex(palIdx, false);
+					}
+					else if (nType == PALCACHE_TYPE_WATER_ICE_BLIZZARD) {
+						if ((nPos % 4) == 1 || (nPos % 4) == 2)
+							palIdx = ProcessTerrainSnowIndex(palIdx, true);
+					}
+				}
+				else if (nType == PALCACHE_GRASS_SNOW)
+					palIdx = ProcessBuildingSnowIndex(palIdx);
+				*spritePtr = palIdx;
+				--nPos;
+			}
+			if ((nCount & 1) != 0)
+				++spritePtr;
+			break;
+		default:
+			return;
+		}
+	}
+}
+
+static void Create_SpriteNew(std::vector<spriteFrame_t> &frameCache, BYTE *pSpriteBuf, int nSize, WORD wHeight, WORD wWidth, int nFrm, int nType) {
+	spriteFrame_t sprFrame;
+	int cIdx = (nType == PALCACHE_TYPE_CYCLE) ? nFrm : 0;
+
+	sprFrame.nFrID = nFrm;
+	sprFrame.wHeight = wHeight;
+	sprFrame.wWidth = wWidth;
+	sprFrame.nSize = nSize;
+	sprFrame.pBuf = (BYTE *)malloc(nSize);
+	memcpy(sprFrame.pBuf, pSpriteBuf, nSize);
+	if (nType > PALCACHE_TYPE_NONE)
+		Adjust_SpritePalette(sprFrame.pBuf, cIdx, nType);
+	frameCache.push_back(sprFrame);
+}
+
+static void Create_SpriteFrame(std::vector<spriteFrame_t> &frameCache, spriteFrame_t *pSpriteFrame, int cIdx, int nType) {
+	Create_SpriteNew(frameCache, pSpriteFrame->pBuf, pSpriteFrame->nSize, pSpriteFrame->wHeight, pSpriteFrame->wWidth, cIdx, nType);
+}
+
+static void Season_SpritePalette_Trees(DWORD nID, spriteFrame_t *pSpriteFrame, int nFrmID) {
+	// Cache accumulated snow or fading/browning on trees
+	Create_SpriteFrame(spriteCache[nID].sprSeasonAutumnFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_TREES_SEASON_AUTUMN);
+	Create_SpriteFrame(spriteCache[nID].sprSeasonAutumnSnowFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW);
+	Create_SpriteFrame(spriteCache[nID].sprSeasonSnowFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_TREES_SEASON_SNOW);
+}
+
+static void Snow_SpritePalette_DeepWater(DWORD nID, spriteFrame_t *pSpriteFrame, int nFrmID) {
+	// Cache "deep water" snow/blizzard frames
+	Create_SpriteFrame(spriteCache[nID].sprDeepWaterIceFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_WATER_ICE);
+	Create_SpriteFrame(spriteCache[nID].sprDeepWaterBlizzardFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_WATER_ICE_BLIZZARD);
+}
+
+static void Snow_SpritePalette_Terrain(DWORD nID, spriteFrame_t *pSpriteFrame, int nFrmID) {
+	// Cache - ground should be mostly covered in regular snow or absolutely blanketed in a blizzard.
+	Create_SpriteFrame(spriteCache[nID].sprTerrainSnowFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_TERRAIN_SNOW);
+	Create_SpriteFrame(spriteCache[nID].sprTerrainBlizzardFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD);
+}
+
+static void Snow_SpritePalette_Grass(DWORD nID, spriteFrame_t *pSpriteFrame, int nFrmID) {
+	// Cache accumulated snow on grass for various objects
+	Create_SpriteFrame(spriteCache[nID].sprGrassSnowFrame, pSpriteFrame, nFrmID, PALCACHE_GRASS_SNOW);
+}
+
+static void Cache_Sprite(DWORD nID, BYTE *pSpriteBuf, int nSize, WORD wHeight, WORD wWidth) {
+	Delete_Sprite_Cache(&spriteCache[nID]);
+
+	bool bCycling = (!bLoColor) ? Scan_Sprite(pSpriteBuf, wHeight, wWidth) : false;
+
+	for (int nFrm = 0; nFrm < CACHED_FRAMES; ++nFrm) {
+		if (!bCycling && nFrm > 0)
+			break;
+		// Cycling (or only frame for non-cycling cases)
+		Create_SpriteNew(spriteCache[nID].sprFrame, pSpriteBuf, nSize, wHeight, wWidth, nFrm, ((bCycling) ? PALCACHE_TYPE_CYCLE : PALCACHE_TYPE_NONE));
+		if (!bLoColor && !bOnTheFlyPalIdx) {
+			if (GET_OVERALL_SPRITE_RANGE(nID, SPRITE_SMALL_TREES1, SPRITE_SMALL_TREES7))
+				Season_SpritePalette_Trees(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
+			else if (GET_OVERALL_SPRITE_RANGE(nID, SPRITE_SMALL_TERRAIN, SPRITE_SMALL_SEAPORTZONE)) {
+				if (GET_OVERALL_SPRITE(nID, SPRITE_SMALL_WATER_TRBL))
+					Snow_SpritePalette_DeepWater(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
+				else
+					Snow_SpritePalette_Terrain(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
+			}
+			else if ((GET_OVERALL_SPRITE_RANGE(nID, SPRITE_SMALL_RESIDENTIAL_1X1_LOWERCLASSHOMES1, SPRITE_SMALL_SERVICES_STATUE) ||
+				GET_OVERALL_SPRITE(nID, SPRITE_SMALL_INFRASTRUCTURE_MAYORSHOUSE) || GET_OVERALL_SPRITE(nID, SPRITE_SMALL_INFRASTRUCTURE_LIBRARY) ||
+				GET_OVERALL_SPRITE(nID, SPRITE_SMALL_SMALLPARK) || GET_OVERALL_SPRITE(nID, SPRITE_SMALL_INFRASTRUCTURE_WATERPUMP) ||
+				GET_OVERALL_SPRITE(nID, SPRITE_SMALL_INFRASTRUCTURE_CHURCH)) &&
+				!GET_OVERALL_SPRITE(nID, SPRITE_SMALL_INDUSTRIAL_2X2_FACTORY2) && !GET_OVERALL_SPRITE(nID, SPRITE_SMALL_INDUSTRIAL_3X3_THINGAMAJIG)) {
+				Snow_SpritePalette_Grass(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
+			}
+		}
+	}
+}
+
+extern int iForcedSeason;
+
+BYTE *Get_SpriteFrame_Buffer(std::vector<spriteFrame_t> &frameCache, BYTE *pSpriteBuf, DWORD nFrmIdx) {
+	if (nFrmIdx >= 0 && frameCache.size() > 0) {
+		for (std::vector<spriteFrame_t>::reverse_iterator itFr = frameCache.rbegin(); itFr != frameCache.rend();) {
+			if (itFr->nFrID <= nFrmIdx) {
+				if (itFr->pBuf)
+					return itFr->pBuf;
+			}
+			++itFr;
+		}
+	}
+	return pSpriteBuf;
+}
+
+BYTE *Get_SpriteCache_BaseBuffer(sprite_header_t *pShapePtr, __int16 nSpriteID) {
+	BYTE *pSpriteBuf;
+
+	if (pShapePtr->wHeight > 0) {
+		if (bFrequentUpdates) {
+			pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, 0);
+			if (pSpriteBuf)
+				return pSpriteBuf;
+		}
+		return pShapePtr->sprOffset.sprPtr;
+	}
+	return NULL;
+}
+
+BYTE *Get_SpriteCache_Buffer(sprite_header_t *pShapePtr, __int16 nSpriteID) {
+	int nType = PALCACHE_TYPE_NONE;
+	int iCityMonth = dwCityDays / 25 % 12;
+	BYTE *pSpriteBuf;
+
+	if (pShapePtr->wHeight > 0) {
+		if (bFrequentUpdates) {
+			int nFrmIdx = nCycleIdx % CACHED_FRAMES;
+			if (nFrmIdx < 0)
+				nFrmIdx = -nFrmIdx;
+			pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, nFrmIdx);
+			if (pSpriteBuf) {
+				if (bWeatherEffects && !bLoColor && !bOnTheFlyPalIdx) {
+					if (GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_TREES1, SPRITE_SMALL_TREES7)) {
+						if (bWeatherTrend == WEATHER_TREND_BLIZZARD ||
+							bWeatherTrend == WEATHER_TREND_SNOW ||
+							iForcedSeason == FORCED_SEASON_SNOW || iForcedSeason == FORCED_SEASON_BLIZZARD)
+							nType = PALCACHE_TYPE_TREES_SEASON_SNOW;
+
+						if ((iCityMonth >= 0 && iCityMonth <= 2) ||
+							(iCityMonth >= 9 && iCityMonth <= 11) ||
+							iForcedSeason == FORCED_SEASON_AUTUMN || iForcedSeason == FORCED_SEASON_WINTER)
+							nType = (nType == PALCACHE_TYPE_TREES_SEASON_SNOW) ? PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW : PALCACHE_TYPE_TREES_SEASON_AUTUMN;
+
+						if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMN)
+							return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonAutumnFrame, pSpriteBuf, nFrmIdx);
+						else if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW)
+							return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonAutumnSnowFrame, pSpriteBuf, nFrmIdx);
+						else if (nType == PALCACHE_TYPE_TREES_SEASON_SNOW)
+							return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonSnowFrame, pSpriteBuf, nFrmIdx);
+					}
+					else if (GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_TERRAIN, SPRITE_SMALL_SEAPORTZONE)) {
+						if (bWeatherTrend == WEATHER_TREND_SNOW || bWeatherTrend == WEATHER_TREND_BLIZZARD ||
+							iForcedSeason == FORCED_SEASON_SNOW || iForcedSeason == FORCED_SEASON_BLIZZARD) {
+							if (GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_WATER_TRBL)) {
+								nType = (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD) ? PALCACHE_TYPE_WATER_ICE_BLIZZARD : PALCACHE_TYPE_WATER_ICE;
+								if (nType == PALCACHE_TYPE_WATER_ICE)
+									return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprDeepWaterIceFrame, pSpriteBuf, nFrmIdx);
+								else if (nType == PALCACHE_TYPE_WATER_ICE_BLIZZARD)
+									return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprDeepWaterBlizzardFrame, pSpriteBuf, nFrmIdx);
+							}
+							else {
+								nType = (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD) ? PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD : PALCACHE_TYPE_TERRAIN_SNOW;
+								if (nType == PALCACHE_TYPE_TERRAIN_SNOW)
+									return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainSnowFrame, pSpriteBuf, nFrmIdx);
+								else if (nType == PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD)
+									return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainBlizzardFrame, pSpriteBuf, nFrmIdx);
+							}
+						}
+					}
+					else if ((GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_RESIDENTIAL_1X1_LOWERCLASSHOMES1, SPRITE_SMALL_SERVICES_STATUE) ||
+						GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INFRASTRUCTURE_MAYORSHOUSE) || GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INFRASTRUCTURE_LIBRARY) ||
+						GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_SMALLPARK) || GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INFRASTRUCTURE_WATERPUMP) ||
+						GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INFRASTRUCTURE_CHURCH)) &&
+						!GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INDUSTRIAL_2X2_FACTORY2) && !GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INDUSTRIAL_3X3_THINGAMAJIG)) {
+						if (bWeatherTrend == WEATHER_TREND_SNOW || bWeatherTrend == WEATHER_TREND_BLIZZARD ||
+							iForcedSeason == FORCED_SEASON_SNOW || iForcedSeason == FORCED_SEASON_BLIZZARD) {
+							nType = PALCACHE_GRASS_SNOW; // Yes I know.. this is the only option here currently.
+							if (nType == PALCACHE_GRASS_SNOW)
+								return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprGrassSnowFrame, pSpriteBuf, nFrmIdx);
+						}
+					}
+				}
+				return pSpriteBuf;
+			}
+		}
+		return pShapePtr->sprOffset.sprPtr;
+	}
+	return NULL;
+}
+
+WORD Get_SpriteCache_Height(sprite_header_t *pShapePtr, __int16 nSpriteID) {
+	BYTE *pSpriteBuf;
+
+	if (pShapePtr->wHeight > 0) {
+		if (bFrequentUpdates) {
+			pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, 0);
+			if (pSpriteBuf)
+				return spriteCache[nSpriteID].sprFrame[0].wHeight;
+		}
+		return pShapePtr->wHeight;
+	}
+	return 0;
+}
+
+WORD Get_SpriteCache_Width(sprite_header_t *pShapePtr, __int16 nSpriteID) {
+	BYTE *pSpriteBuf;
+
+	if (pShapePtr->wHeight > 0) {
+		if (bFrequentUpdates) {
+			pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, 0);
+			if (pSpriteBuf)
+				return spriteCache[nSpriteID].sprFrame[0].wWidth;
+		}
+		return pShapePtr->wWidth;
+	}
+	return 0;
+}
 
 std::vector<sprite_ids_t> spriteIDs;
 
@@ -52,12 +487,12 @@ static BOOL CheckForExistingID(WORD nID) {
 	return (nSkipHit) ? TRUE : FALSE;
 }
 
-static void AllocateAndLoadSprites1996(CMFC3XFile *pFile, sprite_archive_t *lpBuf, WORD nSpriteSet) {
+static void AllocateAndLoadSprites1996(FILE *pFile, sprite_archive_t *lpBuf, WORD nSpriteSet) {
 	WORD nPos, nID;
 	sprite_ids_t *pSprEnt;
 	BYTE *pSpriteData;
 
-	GameMain_File_Seek(pFile, lpBuf->pData[0].sprHeader.sprOffset.sprLong, 0);
+	fseek(pFile, lpBuf->pData[0].sprHeader.sprOffset.sprLong, SEEK_SET);
 	for (nPos = 0; nPos < spriteIDs.size(); ++nPos) {
 		pSprEnt = &spriteIDs[nPos];
 		if (pSprEnt && pSprEnt->nArcID == nSpriteSet) {
@@ -68,7 +503,7 @@ static void AllocateAndLoadSprites1996(CMFC3XFile *pFile, sprite_archive_t *lpBu
 			if (pSprEnt->nSize > 0) {
 				pSpriteData = (BYTE *)Game_AllocateDataEntry(pSprEnt->nSize);
 				if (pSpriteData) {
-					if (GameMain_File_Read(pFile, pSpriteData, pSprEnt->nSize) == pSprEnt->nSize) {
+					if (fread(pSpriteData, 1, pSprEnt->nSize, pFile) == pSprEnt->nSize) {
 						if (pSprEnt->bMultiple && pSprEnt->nSkipHit > 0) {
 							if (sprite_debug & SPRITE_DEBUG_SPRITES)
 								ConsoleLog(LOG_DEBUG, "AllocateAndLoadSprites(%u): discarding skipped sprite with ID (%u, 0x%06X, %d).\n", nSpriteSet, nID, pSprEnt->sprOffset, pSprEnt->nSize);
@@ -82,6 +517,8 @@ static void AllocateAndLoadSprites1996(CMFC3XFile *pFile, sprite_archive_t *lpBu
 						pArrSpriteHeaders[nID].sprOffset.sprPtr = pSpriteData;
 						pArrSpriteHeaders[nID].wHeight = pSprEnt->wHeight;
 						pArrSpriteHeaders[nID].wWidth = pSprEnt->wWidth;
+
+						Cache_Sprite(nID, pSpriteData, pSprEnt->nSize, pSprEnt->wHeight, pSprEnt->wWidth);
 					}
 				}
 			}
@@ -90,7 +527,7 @@ static void AllocateAndLoadSprites1996(CMFC3XFile *pFile, sprite_archive_t *lpBu
 }
 
 extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
-	CMFC3XFile datArchive;
+	FILE *f;
 	CMFC3XString retString;
 	CMFC3XString retStrPath;
 	CMFC3XString *pString;
@@ -107,7 +544,6 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
 	sprite_ids_t spriteEnt;
 	int nSize;
 
-	GameMain_File_Cons(&datArchive);
 	GameMain_String_Cons(&retString);
 	GameMain_String_Cons(&retStrPath);
 
@@ -127,12 +563,15 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
 
 	GameMain_String_Format(&retStrPath, "%s%s%s", retString.m_pchData, cBackslash, pString->m_pchData);
 
-	if (GameMain_File_Open(&datArchive, retStrPath.m_pchData, 0, 0)) {
+	f = old_fopen(retStrPath.m_pchData, "rb");
+	if (f) {
 		// Set the uFailMsg by default here - then unset it once
 		// the main read begins.
 		uFailMsg = 48;
-		nFlen = GameMain_File_GetLength(&datArchive);
-		GameMain_File_Read(&datArchive, &nSpriteCnt, 2);
+		fseek(f, 0, SEEK_END);
+		nFlen = ftell(f);
+		fseek(f, 0, SEEK_SET);
+		fread(&nSpriteCnt, 2, 1, f);
 		nSpriteCnt = _byteswap_ushort(nSpriteCnt);
 		lpMainBuf = &dwBaseSpriteLoading[nSpriteSet];
 		nBufSize = 10 * nSpriteCnt;
@@ -140,7 +579,7 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
 		lpMainBuf->pData = lpBuf;
 		lpBuf->nSprites = nSpriteCnt;
 		if (lpBuf) {
-			if (GameMain_File_Read(&datArchive, &lpBuf->pData, nBufSize) == nBufSize) {
+			if (fread(&lpBuf->pData, 1, nBufSize, f) == nBufSize) {
 				uFailMsg = 0;
 				for (nPos = 0; nPos < nSpriteCnt; ++nPos) {
 					nID = _byteswap_ushort(lpBuf->pData[nPos].nSprNum);
@@ -179,12 +618,12 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
 					}
 				}
 
-				AllocateAndLoadSprites1996(&datArchive, lpBuf, nSpriteSet);
+				AllocateAndLoadSprites1996(f, lpBuf, nSpriteSet);
 				free(lpMainBuf->pData);
 				lpMainBuf->pData = 0;
 			}
 		}
-		GameMain_File_Close(&datArchive);
+		fclose(f);
 	}
 	else {
 		uFailMsg = 47;
@@ -196,11 +635,10 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
 GETOUT:
 	GameMain_String_Dest(&retStrPath);
 	GameMain_String_Dest(&retString);
-	GameMain_File_Dest(&datArchive);
 }
 
 static void ResetCustomTileNames() {
-	for (int i = 0; i < CUSTOM_TILENAME_MAXNUM; ++i) {
+	for (int i = 0; i < SPRITE_MEDIUM_START; ++i) {
 		if (pTileNames[i])
 			Game_FreeDataEntry(pTileNames[i]);
 		pTileNames[i] = 0;
@@ -208,7 +646,7 @@ static void ResetCustomTileNames() {
 }
 
 static void ReloadSpriteDataArchive1996(WORD nSpriteSet) {
-	CMFC3XFile datArchive;
+	FILE *f;
 	CMFC3XString retString;
 	CMFC3XString retStrPath;
 	CMFC3XString *pString;
@@ -222,7 +660,6 @@ static void ReloadSpriteDataArchive1996(WORD nSpriteSet) {
 	sprite_archive_stored_t *lpMainBuf;
 	sprite_header_t *pSprtHead;
 
-	GameMain_File_Cons(&datArchive);
 	GameMain_String_Cons(&retString);
 	GameMain_String_Cons(&retStrPath);
 
@@ -242,12 +679,15 @@ static void ReloadSpriteDataArchive1996(WORD nSpriteSet) {
 
 	GameMain_String_Format(&retStrPath, "%s%s%s", retString.m_pchData, cBackslash, pString->m_pchData);
 
-	if (GameMain_File_Open(&datArchive, retStrPath.m_pchData, 0, 0)) {
+	f = old_fopen(retStrPath.m_pchData, "rb");
+	if (f) {
 		// Set the uFailMsg by default here - then unset it once
 		// the main read begins.
 		uFailMsg = 48;
-		nFlen = GameMain_File_GetLength(&datArchive);
-		GameMain_File_Read(&datArchive, &nSpriteCnt, 2);
+		fseek(f, 0, SEEK_END);
+		nFlen = ftell(f);
+		fseek(f, 0, SEEK_SET);
+		fread(&nSpriteCnt, 2, 1, f);
 		nSpriteCnt = _byteswap_ushort(nSpriteCnt);
 		lpMainBuf = &dwBaseSpriteLoading[nSpriteSet];
 		nBufSize = 10 * nSpriteCnt;
@@ -255,7 +695,7 @@ static void ReloadSpriteDataArchive1996(WORD nSpriteSet) {
 		lpMainBuf->pData = lpBuf;
 		lpBuf->nSprites = nSpriteCnt;
 		if (lpBuf) {
-			if (GameMain_File_Read(&datArchive, &lpBuf->pData, nBufSize) == nBufSize) {
+			if (fread(&lpBuf->pData, 1, nBufSize, f) == nBufSize) {
 				uFailMsg = 0;
 				for (nPos = 0; nPos < nSpriteCnt; ++nPos) {
 					nID = _byteswap_ushort(lpBuf->pData[nPos].nSprNum);
@@ -266,12 +706,12 @@ static void ReloadSpriteDataArchive1996(WORD nSpriteSet) {
 					pSprtHead->wWidth = _byteswap_ushort(pSprtHead->wWidth);
 				}
 
-				AllocateAndLoadSprites1996(&datArchive, lpBuf, nSpriteSet);
+				AllocateAndLoadSprites1996(f, lpBuf, nSpriteSet);
 				free(lpMainBuf->pData);
 				lpMainBuf->pData = 0;
 			}
 		}
-		GameMain_File_Close(&datArchive);
+		fclose(f);
 	}
 	else {
 		uFailMsg = 47;
@@ -283,7 +723,6 @@ static void ReloadSpriteDataArchive1996(WORD nSpriteSet) {
 GETOUT:
 	GameMain_String_Dest(&retStrPath);
 	GameMain_String_Dest(&retString);
-	GameMain_File_Dest(&datArchive);
 }
 
 static void L_LoadFixedLargeSpritesRsrc_SC2K1996() {
@@ -411,6 +850,8 @@ void ReloadDefaultTileSet_SC2K1996() {
 		return;
 
 	GameMain_CmdTarget_BeginWaitCursor(pSCApp);
+	Init_SpriteCache(true);
+
 	ResetCustomTileNames();
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_SPECIAL);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_LARGE);
@@ -427,6 +868,8 @@ void ReloadDefaultTileSet_SC2K1996() {
 }
 
 extern "C" void __declspec(naked) __stdcall Hook_LoadSpriteArchives1996() {
+	Init_SpriteCache(false);
+
 	Game_LoadDataArchive(TILEDAT_DEFS_SPECIAL);
 	Game_LoadDataArchive(TILEDAT_DEFS_LARGE);
 	Game_LoadDataArchive(TILEDAT_DEFS_SMALLMED);
@@ -504,7 +947,7 @@ extern "C" void __cdecl Hook_ReadTilesetFile1996(char *pFilePath) {
 
 	pSCApp = &pCSimcityAppThis;
 	bTilesetLoadOutOfMemory = FALSE;
-	f = GameMain_FOpen(pFilePath, "rb");
+	f = old_fopen(pFilePath, "rb");
 	if (f) {
 		if (Game_CheckTilesetFileHeader(f)) {
 			// There was a prior null function prior to
@@ -534,7 +977,7 @@ extern "C" void __cdecl Hook_ReadTilesetFile1996(char *pFilePath) {
 				GameMain_String_ReleaseBuffer(&reqText, 0);
 			}
 		}
-		GameMain_FClose(f);
+		fclose(f);
 	}
 }
 
@@ -546,8 +989,8 @@ extern "C" BOOL __cdecl Hook_CheckTilesetFileHeader1996(FILE *f) {
 
 	// The original program-native calls are required otherwise
 	// the crash is spectacular.
-	GameMain_FSeek(f, 0, SEEK_SET);
-	GameMain_FRead(&tileHead, sizeof(tilesetMainHeader_t), 1, f);
+	fseek(f, 0, SEEK_SET);
+	fread(&tileHead, sizeof(tilesetMainHeader_t), 1, f);
 
 	return memcmp(tileHead.szTypeHead, "MIFF", 4) == 0 && memcmp(tileHead.szSC2KHead, "SC2K", 4) == 0;
 }
@@ -559,22 +1002,22 @@ extern "C" void __cdecl Hook_VerifyAndLoadNewTiles1996(FILE *f) {
 	CSimcityView *pSCView;
 
 	// Seek and process 'Info' portion.
-	GameMain_FSeek(f, sizeof(tilesetMainHeader_t), SEEK_SET);
-	GameMain_FRead(tilesetInfo.szHead, 4, 1, f);
+	fseek(f, sizeof(tilesetMainHeader_t), SEEK_SET);
+	fread(tilesetInfo.szHead, 4, 1, f);
 	if (memcmp(tilesetInfo.szHead, "INFO", 4) != 0)
 		return;
 
-	GameMain_FRead(&tilesetInfo.dwSize, 4, 1, f);
+	fread(&tilesetInfo.dwSize, 4, 1, f);
 	tilesetInfo.dwSize = _byteswap_ulong(tilesetInfo.dwSize);
-	GameMain_FSeek(f, tilesetInfo.dwSize, SEEK_CUR);
+	fseek(f, tilesetInfo.dwSize, SEEK_CUR);
 
 	// Process 'Tile' portion.
 	memset(&tilesetChunkHeader, 0, sizeof(tilesetChunkHeader_t));
-	GameMain_FRead(tilesetChunkHeader.szHead, 4, 1, f);
+	fread(tilesetChunkHeader.szHead, 4, 1, f);
 	if (memcmp(tilesetChunkHeader.szHead, "TILE", 4) != 0)
 		return;
 
-	GameMain_FRead(&tilesetChunkHeader.dwSize, 4, 1, f);
+	fread(&tilesetChunkHeader.dwSize, 4, 1, f);
 	tilesetChunkHeader.dwSize = _byteswap_ulong(tilesetChunkHeader.dwSize);
 	
 	pBuf = (char *)malloc(tilesetChunkHeader.dwSize);
@@ -602,7 +1045,7 @@ extern "C" void __stdcall Hook_GetAndLoadNextTileFileChunkToMemory1996(FILE *f, 
 	while (dwRemainingSize > 0) {
 		if (dwChunkSize > dwRemainingSize)
 			dwChunkSize = dwRemainingSize;
-		dwFetchedSize = GameMain_FRead(pBuf, 1, dwChunkSize, f);
+		dwFetchedSize = fread(pBuf, 1, dwChunkSize, f);
 		if (dwFetchedSize == 0)
 			break;
 		dwRemainingSize -= dwFetchedSize;
@@ -686,19 +1129,19 @@ extern "C" void __cdecl Hook_LoadTilesFromFile1996(FILE *f) {
 	bTilesetLoadOutOfMemory = FALSE;
 	pBuf = (char *)malloc(0x10000);
 	if (pBuf) {
-		GameMain_FRead(&nMaxChunks, 2, 1, f);
+		fread(&nMaxChunks, 2, 1, f);
 		nMaxChunks = _byteswap_ushort(nMaxChunks);
 		for (nChunk = 0; nMaxChunks > nChunk; ++nChunk) {
 			memset(&tilesetChunkHeader, 0, sizeof(tilesetChunkHeader_t));
-			GameMain_FRead(tilesetChunkHeader.szHead, 1, 4, f);
-			if (oldfeof(f))
+			fread(tilesetChunkHeader.szHead, 1, 4, f);
+			if (feof(f))
 				break;
-			GameMain_FRead(&dwSize, 4, 1, f);
+			fread(&dwSize, 4, 1, f);
 			bSomeBool = (dwSize & 0x1000000) == 0;
 			tilesetChunkHeader.dwSize = _byteswap_ulong(dwSize);
 			if (!bSomeBool)
 				tilesetChunkHeader.dwSize += 1;
-			GameMain_FRead(pBuf, 1, tilesetChunkHeader.dwSize, f);
+			fread(pBuf, 1, tilesetChunkHeader.dwSize, f);
 			if (memcmp(tilesetChunkHeader.szHead, "SHAP", 4) == 0) {
 				if (!Game_ReadTileShapInformation((tileShap_t *)pBuf) && !bTilesetLoadOutOfMemory)
 					bTilesetLoadOutOfMemory = TRUE;
@@ -765,6 +1208,7 @@ extern "C" BOOL __cdecl Hook_ChangeTileSpriteEntry1996(int nSpriteID, WORD nWidt
 		pArrSpriteHeaders[nSpriteID].sprOffset.sprPtr = pDst;
 		pArrSpriteHeaders[nSpriteID].wWidth = nWidth;
 		pArrSpriteHeaders[nSpriteID].wHeight = nHeight;
+		Cache_Sprite(nSpriteID, pDst, dwSize, nHeight, nWidth);
 	}
 	return (pDst) ? TRUE : FALSE;
 }

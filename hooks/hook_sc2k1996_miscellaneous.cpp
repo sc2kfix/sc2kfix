@@ -52,8 +52,6 @@ UINT mischook_debug = MISCHOOK_DEBUG;
 
 static DWORD dwDummy;
 
-extern HWND hWndExt;
-
 DLGPROC lpNewCityAfxProc = NULL;
 char szTempMayorName[24] = { 0 };
 
@@ -245,9 +243,9 @@ extern "C" int __stdcall Hook_FileDialog_DoModal() {
 	pOfn = &pThis->m_ofn;
 
 	if (bIsReserved)
-		iRet = GameMain_GetSaveFileNameA(pOfn);
+		iRet = GetSaveFileNameA(pOfn);
 	else
-		iRet = GameMain_GetLoadFileNameA(pOfn);
+		iRet = GetOpenFileNameA(pOfn);
 	GameMain_Dialog_PostModal(pThis);
 	if (!iRet)
 		iRet = IDCANCEL;
@@ -304,8 +302,6 @@ extern "C" void __stdcall Hook_GameDialog_OnDestroy() {
 
 	__asm mov [pThis], ecx
 
-	if (hWndExt)
-		hWndExt = 0;
 	GameMain_GameDialog_OnDestroy(pThis);
 }
 
@@ -1222,7 +1218,7 @@ extern "C" void __stdcall Hook_SimcityDoc_UpdateDocumentTitle() {
 		iCityDayMon = dwCityDays % 25 + 1;
 		iCityMonth = dwCityDays / 25 % 12;
 		iCityYear = wCityStartYear + dwCityDays / 300;
-		if (GameMain_IsIconic(GameGetRootWindowHandle())) {
+		if (IsIconic(GameGetRootWindowHandle())) {
 			if (dwDisasterActive) {
 				if (wCurrentDisasterID <= DISASTER_HURRICANE)
 					GameMain_String_LoadStringA(&cStr, dwDisasterStringIndex[wCurrentDisasterID]);
@@ -1709,11 +1705,14 @@ extern "C" void __stdcall Hook_RecalculateCityValue(void) {
 
 extern "C" void __stdcall Hook_SimcityView_OnUpdate(CMFC3XView *pSender, LPARAM lHint, CMFC3XObject *pHint) {
 	CSimcityView *pThis;
+	LARGE_INTEGER uTickStart, uTickEnd, uTicksPerSecond;
 
 	__asm mov [pThis], ecx
 
 	char *pBuf;
 	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	QueryPerformanceFrequency(&uTicksPerSecond);
+	QueryPerformanceCounter(&uTickStart);
 
 	if (!pSCApp->dwSCAMainFrameDestroyVar) {
 		if (lHint == SCD_UPDATE_VIEW_TITLE) {
@@ -1731,6 +1730,15 @@ extern "C" void __stdcall Hook_SimcityView_OnUpdate(CMFC3XView *pSender, LPARAM 
 				Game_SimcityView_MainWindowUpdate(pThis, 0, 0);
 			UpdateWindow(pThis->m_hWnd);
 		}
+	}
+	QueryPerformanceCounter(&uTickEnd);
+	if (dwPerfMonEnabled & PERFMON_ONUPDATE) {
+		if (((uTickEnd.QuadPart - uTickStart.QuadPart) * 1000000 / uTicksPerSecond.QuadPart) > 1000)
+			ConsoleLog(LOG_INFO, "PERFMON: %s %2d, %d - OnUpdate took %llu microseconds.\n",
+				pSCApp->dwSCApCStringLongMonths[dwCityDays / 25 % 12].m_pchData,
+				dwCityDays % 25 + 1,
+				wCityStartYear + dwCityDays / 300,
+				((uTickEnd.QuadPart - uTickStart.QuadPart) * 1000000 / uTicksPerSecond.QuadPart));
 	}
 }
 

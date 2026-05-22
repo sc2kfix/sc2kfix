@@ -134,6 +134,10 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define EXPERIMENT_NEWCONSOLE		2			// status: dubiously stable and uncommented
 #define EXPERIMENT_EVERYTHING		0xFFFFFFFF	// status: good luck and godspeed
 
+#define PERFMON_NONE                0
+#define PERFMON_ONUPDATE            1
+#define PERFMON_EVERTHING           0xFFFFFFFF
+
 #define ListView_InsertItemType(hwndLV, i, tmask) {\
 	LV_ITEM _macro_lvi;\
 	_macro_lvi.mask = (tmask);\
@@ -561,9 +565,11 @@ extern const char* szSC2KFixVersion;
 extern const char* szSC2KFixReleaseTag;
 extern const char* szSC2KFixBuildInfo;
 extern DWORD dwExperimentsEnabled;
+extern DWORD dwPerfMonEnabled;
 extern BOOL bConsoleEnabled;
 extern BOOL bSkipIntro;
 extern BOOL bUseAdvancedQuery;
+extern BOOL bOnTheFlyPalIdx;
 extern BOOL bDisableAutoThingCleanup;
 
 extern BOOL bFontsInitialized;

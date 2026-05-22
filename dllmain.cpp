@@ -42,11 +42,13 @@ const char* szSC2KFixVersion = SC2KFIX_VERSION;
 const char* szSC2KFixReleaseTag = SC2KFIX_RELEASE_TAG;
 FILE* fdLog = NULL;
 DWORD dwExperimentsEnabled = EXPERIMENT_NONE;
+DWORD dwPerfMonEnabled = PERFMON_NONE;
 BOOL bUseAdvancedQuery = TRUE;
 BOOL bSkipLoadingMods = FALSE;
 BOOL bFixFileAssociations = FALSE;
 BOOL bDisableAutoThingCleanup = TRUE;
 BOOL bMapWireFrame = FALSE;
+BOOL bOnTheFlyPalIdx = FALSE;
 BOOL bDisableFixedTiles = FALSE;
 int iForcedBits = 0;
 
@@ -207,10 +209,16 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						bMapWireFrame = TRUE;
 					if (!lstrcmpiW(argv[i], L"-disablefixedtiles"))
 						bDisableFixedTiles = TRUE;
+					if (!lstrcmpiW(argv[i], L"-ontheflypalidx"))
+						bOnTheFlyPalIdx = TRUE;
 					if (!lstrcmpiW(argv[i], L"-experiment=tripgenerator"))
 						dwExperimentsEnabled |= EXPERIMENT_TRIPGENERATOR;
 					if (!lstrcmpiW(argv[i], L"-experiment=all"))
 						dwExperimentsEnabled = EXPERIMENT_EVERYTHING;
+					if (!lstrcmpiW(argv[i], L"-perfmon=onupdate"))
+						dwPerfMonEnabled |= PERFMON_ONUPDATE;
+					if (!lstrcmpiW(argv[i], L"-perfmon=all"))
+						dwPerfMonEnabled = PERFMON_EVERTHING;
 					if (!lstrcmpiW(argv[i], L"-bitmode"))
 					{
 						if (!iSetBitMode) {
@@ -581,6 +589,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
 		// Clear out the stored sprite IDs (no allocated data are contained).
 		spriteIDs.clear();
+
+		Clear_SpriteCache();
 
 		// Send a closing message and close the log file
 		ConsoleLog(LOG_INFO, "CORE: Closing down at %lld. Goodnight!\n", time(NULL));
