@@ -1395,7 +1395,13 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 				iForcedSeason == 5 || iForcedSeason == 6) {
 				// This if is for partial drawing based on row.
 				/*if (nRemHeight <= (shapeCurrent[nSpriteID].wHeight / 2))*/
-				if (((nPos % 4) == 2 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == 6)) || (nPos % 4) == 3 || (nPos % 4) == 1)
+
+				// Handle deep water differently.
+				if (nSpriteID == SPRITE_SMALL_WATER_TRBL || nSpriteID == SPRITE_MEDIUM_WATER_TRBL || nSpriteID == SPRITE_LARGE_WATER_TRBL) {
+					if (((nPos % 4) == 1 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == 6)) || (nPos % 4) == 2)
+						palIdx = ProcessWeatherIndex(palIdx);
+				}
+				else if (((nPos % 4) == 2 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == 6)) || (nPos % 4) == 3 || (nPos % 4) == 1)
 					palIdx = ProcessWeatherIndex(palIdx);
 			}
 		}
@@ -1442,8 +1448,13 @@ static BYTE CheckWeatherInversion(__int16 nSpriteID, BYTE palIdx, int nPos) {
 		if (!GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_UNDERGROUND_TERRAIN, SPRITE_SMALL_SUBWAYENTRANCE)) {
 			if (bWeatherTrend == WEATHER_TREND_SNOW || bWeatherTrend == WEATHER_TREND_BLIZZARD ||
 				iForcedSeason == 5 || iForcedSeason == 6) {
-				if (((nPos % 4) == 2 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == 6)) || (nPos % 4) == 3 || (nPos % 4) == 1)
-					newIdx = ProcessWeatherIndex(newIdx);
+				// Handle deep water differently.
+				if (nSpriteID == SPRITE_SMALL_WATER_TRBL || nSpriteID == SPRITE_MEDIUM_WATER_TRBL || nSpriteID == SPRITE_LARGE_WATER_TRBL) {
+					if (((nPos % 4) == 1 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == 6)) || (nPos % 4) == 2)
+						palIdx = ProcessWeatherIndex(palIdx);
+				}
+				else if (((nPos % 4) == 2 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == 6)) || (nPos % 4) == 3 || (nPos % 4) == 1)
+					palIdx = ProcessWeatherIndex(palIdx);
 			}
 		}
 	}
