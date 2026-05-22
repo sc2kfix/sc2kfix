@@ -40,6 +40,14 @@ void InitializeFonts(void) {
 	bFontsInitialized = TRUE;
 }
 
+#pragma warning(push)
+#pragma warning(disable : 28159)
+// Wrapper for GetTickCount that shuts up MSVC warnings.
+HOOKEXT DWORD __stdcall GetTickCount32(void) {
+	return GetTickCount();
+}
+#pragma warning(pop)
+
 // Wrapper for VirtualProtect that throws a fatal error if it fails
 bool SafeVirtualProtectEx(void* lpAddress, size_t dwSize, DWORD flNewProtect, const char* szFile, int iLine, const char* szFunction) {
 	DWORD dwDummy;

@@ -437,6 +437,7 @@ extern std::vector<tooltip_store_t> storedToolTips;
 #define SafeVirtualProtect(lpAddress, dwSize, flNewProtect) SafeVirtualProtectEx(lpAddress, dwSize, flNewProtect, __FILE__, __LINE__, __FUNCTION__) 
 
 void InitializeFonts(void);
+HOOKEXT DWORD __stdcall GetTickCount32(void);
 bool SafeVirtualProtectEx(void* lpAddress, size_t dwSize, DWORD flNewProtect, const char* szFile, int iLine, const char* szFunction);
 HOOKEXT void CenterDialogBox(HWND hwndDlg);
 HOOKEXT void StoreTooltip(std::vector<tooltip_store_t> &tt_s, HWND hParent, HWND hControl, const char *szText);

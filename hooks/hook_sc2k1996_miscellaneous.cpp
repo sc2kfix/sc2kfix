@@ -562,9 +562,9 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 				pThis->dwSCADoStepSkip = FALSE;
 				if (!Game_MainFrame_LoadGraphic(pMainFrm, aPresentsBmp))
 					GameMain_AfxAbort();
-				pThis->dwSCALastTick = GetTickCount();
+				pThis->dwSCALastTick = GetTickCount32();
 			}
-			if (pThis->dwSCADoStepSkip || (GetTickCount() - pThis->dwSCALastTick) > 5000) {
+			if (pThis->dwSCADoStepSkip || (GetTickCount32() - pThis->dwSCALastTick) > 5000) {
 				pThis->iSCAProgramStep = ONIDLE_STATE_WAITMAXIS;
 				pThis->dwSCASetNextStep = TRUE;
 			}
@@ -588,9 +588,9 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 					GameMain_AfxAbort();
 				bCSAMainFrameDirectReleaseCapture = FALSE;
 				Game_SimcityApp_SetGameCursor(pThis, 0, FALSE);
-				pThis->dwSCALastTick = GetTickCount();
+				pThis->dwSCALastTick = GetTickCount32();
 			}
-			if (pThis->dwSCADoStepSkip || (GetTickCount() - pThis->dwSCALastTick) > 5000) {
+			if (pThis->dwSCADoStepSkip || (GetTickCount32() - pThis->dwSCALastTick) > 5000) {
 				pThis->iSCAProgramStep = ONIDLE_STATE_DISPLAYREGISTRATION;
 				pThis->dwSCASetNextStep = TRUE;
 			}
@@ -616,9 +616,9 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 				pThis->dwSCADoStepSkip = FALSE;
 				if (!Game_MainFrame_LoadOwnerInformation(pMainFrm))
 					GameMain_AfxAbort();
-				pThis->dwSCALastTick = GetTickCount();
+				pThis->dwSCALastTick = GetTickCount32();
 			}
-			if (pThis->dwSCADoStepSkip || (GetTickCount() - pThis->dwSCALastTick) > 5000) {
+			if (pThis->dwSCADoStepSkip || (GetTickCount32() - pThis->dwSCALastTick) > 5000) {
 				pThis->iSCAProgramStep = ONIDLE_STATE_CLOSEREGISTRATION;
 				pThis->dwSCASetNextStep = TRUE;
 			}
@@ -770,7 +770,7 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 					ConsoleLog(LOG_DEBUG, "ONIDLE_STATE_INTROVIDEO\n");
 				pThis->dwSCASetNextStep = FALSE;
 				pThis->dwSCADoStepSkip = FALSE;
-				pThis->dwSCALastTick = GetTickCount();
+				pThis->dwSCALastTick = GetTickCount32();
 				pThis->iSCAProgramStep = ONIDLE_STATE_DISPLAYMAXIS;
 				if (!bSkipIntro && !jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SKIPINTRO].ToBool()) {
 					if (Game_MovieCheck(aIntroASmk) && Game_MovieCheck(aIntroBSmk)) {
@@ -796,9 +796,9 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 				pThis->dwSCADoStepSkip = FALSE;
 				if (!Game_MainFrame_DoInflightDialog(pMainFrm))
 					GameMain_AfxAbort();
-				pThis->dwSCALastTick = GetTickCount();
+				pThis->dwSCALastTick = GetTickCount32();
 			}
-			if (pThis->dwSCADoStepSkip || (GetTickCount() - pThis->dwSCALastTick) > 5000) {
+			if (pThis->dwSCADoStepSkip || (GetTickCount32() - pThis->dwSCALastTick) > 5000) {
 				pThis->iSCAProgramStep = ONIDLE_STATE_CLOSEINFLIGHT;
 				pThis->dwSCASetNextStep = TRUE;
 			}
