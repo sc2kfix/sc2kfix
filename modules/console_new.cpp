@@ -484,10 +484,11 @@ bool ConsoleCommandRunTest(std::vector<std::string> args, int iBreakoutState, in
 	if (iBreakoutState != BREAKOUT_RETURN)
 		return false;
 
-	if (pStreamCurrentSound)
-		SoundEngineStopStream(&pStreamCurrentSound);
-	else
-		SoundEnginePlayStream(&pStreamCurrentSound, &mapSoundCache[SOUND_ZAP], 1.0, false, true);
+	int nAttrib;
+
+	ULOWORD(nAttrib) = SOUND_ZAP;
+	UHIWORD(nAttrib) = SND_ORIG_PLAYSND;
+	L_PlaySound_SC2K1996(nAttrib, 0);
 	return true;
 }
 

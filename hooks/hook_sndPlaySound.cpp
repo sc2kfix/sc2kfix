@@ -32,13 +32,17 @@ std::map<DWORD, soundbufferinfo_t> mapSoundBuffers;
 std::map<int, sound_replacement_t> mapReplacementSounds;
 std::map<int, audio_entity_t> mapSoundCache;
 
+bool bSoundKickstart = false;
+
 static DWORD dwDummy;
+
+static bool LoadSoundFromFile(int iSoundID, std::string strPath);
 
 static int GetSoundPosBySoundID(int iSoundID) {
 	return iSoundID - SOUND_START;
 }
 
-static int GetSoundPlayTicksBySoundID_SC2K1996(int iSoundID) {
+int GetSoundPlayTicksBySoundID_SC2K1996(int iSoundID) {
 	for (int i = 0; i < SOUND_ENTRIES; i++) {
 		if (GetSoundPosBySoundID(iSoundID) == i) {
 			if (snd_debug & SND_DEBUG_INTERNALS)
@@ -49,7 +53,7 @@ static int GetSoundPlayTicksBySoundID_SC2K1996(int iSoundID) {
 	return 0;
 }
 
-static int GetTickDurationBySoundID_SC2K1996(int iSoundID, int nDuration) {
+int GetTickDurationBySoundID_SC2K1996(int iSoundID, int nDuration) {
 	// For clarity it interpreted the needed array position based off
 	// of the following originally for the address:
 	// *((DWORD *)&rgbLoColor[8].wPos + iSoundID)
@@ -150,17 +154,17 @@ extern "C" void __stdcall Hook_Sound_InitSoundLayer(HWND m_hWnd) {
 	GameMain_String_Dest(&strSndPath);
 }
 
-BOOL L_PlaySound_SC2K1996(LPCTSTR pszSound, UINT fuSound) {
-	if (snd_debug & SND_DEBUG_PLAYS) {
-		if (fuSound & SND_MEMORY)
-			ConsoleLog(LOG_DEBUG, "SND:  L_PlaySound_SC2K1996(<0x%06X>, 0x%06X)\n", pszSound, fuSound);
-		else if (!pszSound && !fuSound)
-			ConsoleLog(LOG_DEBUG, "SND:  L_PlaySound_SC2K1996(0, 0)\n");
-		else
-			ConsoleLog(LOG_DEBUG, "SND:  L_PlaySound_SC2K1996(%s, 0x%06X)\n", (pszSound ? pszSound : "NULL"), fuSound);
+void L_PlaySound_SC2K1996(int nAttrib, int nDuration) {
+	if (nAttrib) {
+		if (snd_debug & SND_DEBUG_PLAYS)
+			ConsoleLog(LOG_DEBUG, "SND:  L_PlaySound_SC2K1996(%d, %d) - Play: (%d, %d)\n", nAttrib, nDuration, LOWORD(nAttrib), HIWORD(nAttrib));
+		PostThreadMessageA(dwSDLSoundThreadID, WM_SDL_PLAY, (WPARAM)nDuration, (LPARAM)nAttrib);
 	}
-	return sndPlaySoundA(pszSound, fuSound);
-	//return PlaySoundA(pszSound, NULL, fuSound);
+	else {
+		if (snd_debug & SND_DEBUG_PLAYS)
+			ConsoleLog(LOG_DEBUG, "SND:  L_PlaySound_SC2K1996(0, 0) - Stop\n");
+		PostThreadMessageA(dwSDLSoundThreadID, WM_SDL_STOP, 0, 0);
+	}
 }
 
 extern "C" void __stdcall Hook_Sound_StopSoundBySoundID(int iSoundID) {
@@ -177,8 +181,7 @@ extern "C" void __stdcall Hook_Sound_StopSound() {
 
 	__asm mov [pThis], ecx
 
-	SoundEngineStopStream(&pStreamCurrentSound);
-	//L_PlaySound_SC2K1996(0, 0);
+	L_PlaySound_SC2K1996(0, 0);
 	pThis->bSNDWasPlaying = FALSE;
 	Game_Sound_PlayPrioritySound(pThis);
 }
@@ -208,24 +211,28 @@ extern "C" int __stdcall Hook_LoadSoundIntoBuffer(int iSoundID, void* lpBuffer) 
 	}
 	else {
 		char szSoundFileName[24 + 1], szCurrentSoundPath[MAX_PATH + 1];
-		CMFC3XFile cFile;
-		GameMain_File_Cons(&cFile);
 		if (lpBuffer) {
 			strcpy_s(szCurrentSoundPath, sizeof(szCurrentSoundPath) - 1, szSoundPath);
 			sprintf_s(szSoundFileName, sizeof(szSoundFileName) - 1, aDWav, iSoundID);
 			strcat_s(szCurrentSoundPath, sizeof(szCurrentSoundPath) - 1, szSoundFileName);
 			if (snd_debug & SND_DEBUG_INTERNALS)
 				ConsoleLog(LOG_DEBUG, "LoadSoundIntoBuffer(%d, 0x%06X): [%s] [%s]\n", iSoundID, lpBuffer, szCurrentSoundPath, szSoundFileName);
-			if (GameMain_File_Open(&cFile, szCurrentSoundPath, 0, 0)) {
-				nNumBytesToRead = GameMain_File_GetLength(&cFile);
-				GameMain_File_Read(&cFile, lpBuffer, nNumBytesToRead);
-				GameMain_File_Close(&cFile);
+			FILE *f = old_fopen(szCurrentSoundPath, "rb");
+			if (f) {
+				fseek(f, 0, SEEK_END);
+				nNumBytesToRead = ftell(f);
+				fseek(f, 0, SEEK_SET);
+				fread(lpBuffer, nNumBytesToRead, 1, f);
+				fclose(f);
 				bSuccess = TRUE;
 			}
 			if (snd_debug & SND_DEBUG_INTERNALS)
 				ConsoleLog(LOG_DEBUG, "LoadSoundIntoBuffer(%d, 0x%06X): [%s] [%s] - bSuccess(%d)\n", iSoundID, lpBuffer, szCurrentSoundPath, szSoundFileName, bSuccess);
+			// This should only be encountered if the original file failed to load
+			// and was never cached.
+			if (!mapSoundCache[iSoundID].pBuffer)
+				bSuccess = LoadSoundFromFile(iSoundID, string_format("SOUNDS/%d.wav", iSoundID)) ? TRUE : FALSE;
 		}
-		GameMain_File_Dest(&cFile);
 	}
 
 	return bSuccess;
@@ -273,12 +280,23 @@ extern "C" void __stdcall Hook_Sound_DestroySoundLayer() {
 	_heapmin();
 }
 
+static int __stdcall L_Sound_LoadActionThingSound_SC2K1996(CSound *pSound, int iSoundID) {
+	if (pSound->iSNDActionThingSoundID != iSoundID) {
+		if (Game_LoadSoundIntoBuffer(iSoundID, pSound->dwSNDBufferActionThing))
+			pSound->iSNDActionThingSoundID = iSoundID;
+		else
+			pSound->iSNDActionThingSoundID = SOUND_BULLDOZER;
+	}
+	return pSound->iSNDActionThingSoundID;
+}
+
 extern "C" void __stdcall Hook_Sound_PlayActionThingSound(int iSoundID, int nDuration) {
 	CSound *pThis;
 
 	__asm mov [pThis], ecx
 
 	CSimcityAppPrimary *pSCApp;
+	int nAttrib;
 
 	pSCApp = &pCSimcityAppThis;
 	if (pSCApp->dwSCAGameSound) {
@@ -291,41 +309,11 @@ extern "C" void __stdcall Hook_Sound_PlayActionThingSound(int iSoundID, int nDur
 				nCurrentActionThingSoundID = iSoundID;
 			else {
 				if (iSoundID != pThis->iSNDActionThingSoundID)
-					Game_Sound_LoadActionThingSound(pThis, iSoundID);
+					iSoundID = L_Sound_LoadActionThingSound_SC2K1996(pThis, iSoundID);
 				pThis->bSNDWasPlaying = TRUE;
-				if (pThis->iSNDActionThingSoundID == iSoundID && pThis->dwSNDBufferActionThing != 0) {
-					if (SoundEnginePlayStream(&pStreamCurrentSound, &mapSoundCache[iSoundID],
-						jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat(),
-						true, true)) {
-					//if (L_PlaySound_SC2K1996((LPCSTR)pThis->dwSNDBufferActionThing, SND_ASYNC | SND_MEMORY | SND_LOOP)) {
-						pThis->iSNDActionThingSoundID = iSoundID;
-						pThis->iSNDCurrSoundID = iSoundID;
-						pThis->bSNDPlaySound = TRUE;
-						pThis->bSNDWasPlaying = TRUE;
-						nActionThingSoundPlayTicks = (nDuration <= 0) ? 0 : GetTickDurationBySoundID_SC2K1996(iSoundID, nDuration);
-						if (snd_debug & SND_DEBUG_INTERNALS)
-							ConsoleLog(LOG_DEBUG, "CSound::PlayActionThingSound(%d, %d): nActionThingSoundPlayTicks(%d)\n", iSoundID, nDuration, nActionThingSoundPlayTicks);
-					}
-					else
-						pThis->bSNDWasPlaying = FALSE;
-				}
-				else {
-					if (snd_debug & SND_DEBUG_INTERNALS)
-						ConsoleLog(LOG_DEBUG, "CSound::PlayActionThingSound(%d, %d): ActionSoundBufferEmpty.\n");
-
-					/*char szSoundFileName[24 + 1], szCurrentSoundPath[MAX_PATH + 1];
-
-					strcpy_s(szCurrentSoundPath, sizeof(szCurrentSoundPath) - 1, szSoundPath);
-					sprintf_s(szSoundFileName, sizeof(szSoundFileName) - 1, aDWav, iSoundID);
-					strcat_s(szCurrentSoundPath, sizeof(szCurrentSoundPath) - 1, szSoundFileName);
-					pThis->bSNDPlaySound = L_PlaySound_SC2K1996(szCurrentSoundPath, SND_ASYNC | SND_NODEFAULT | SND_LOOP);*/
-					pThis->bSNDPlaySound = SoundEnginePlayStream(&pStreamCurrentSound, &mapSoundCache[iSoundID],
-						jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat(),
-						true, true);
-					nActionThingSoundPlayTicks = (nDuration <= 0) ? 0 : GetTickDurationBySoundID_SC2K1996(iSoundID, nDuration);
-					pThis->iSNDCurrSoundID = iSoundID;
-					pThis->bSNDWasPlaying = pThis->bSNDPlaySound;
-				}
+				ULOWORD(nAttrib) = iSoundID;
+				UHIWORD(nAttrib) = (pThis->iSNDActionThingSoundID == iSoundID && pThis->dwSNDBufferActionThing != 0) ? SND_ORIG_ACTSND_EXIST : SND_ORIG_ACTSND_NONBUF;
+				L_PlaySound_SC2K1996(nAttrib, nDuration);
 			}
 		}
 	}
@@ -421,10 +409,7 @@ extern "C" void __stdcall Hook_Sound_LoadActionThingSound(int iSoundID) {
 
 	__asm mov [pThis], ecx
 
-	if (pThis->iSNDActionThingSoundID != iSoundID) {
-		if (Game_LoadSoundIntoBuffer(iSoundID, pThis->dwSNDBufferActionThing))
-			pThis->iSNDActionThingSoundID = iSoundID;
-	}
+	L_Sound_LoadActionThingSound_SC2K1996(pThis, iSoundID);
 }
 
 extern "C" void __stdcall Hook_Sound_StopActionThingSound(int iSoundID) {
@@ -435,8 +420,7 @@ extern "C" void __stdcall Hook_Sound_StopActionThingSound(int iSoundID) {
 	if (pThis->iSNDActionThingSoundID == iSoundID) {
 		pThis->bSNDWasPlaying = FALSE;
 		if (pThis->iSNDCurrSoundID == iSoundID) {
-			SoundEngineStopStream(&pStreamCurrentSound);
-			//L_PlaySound_SC2K1996(0, 0);
+			L_PlaySound_SC2K1996(0, 0);
 			pThis->bSNDPlaySound = FALSE;
 			pThis->iSNDCurrSoundID = -1;
 		}
@@ -449,6 +433,7 @@ extern "C" void __stdcall Hook_Sound_PlaySound(int iSoundID) {
 	__asm mov [pThis], ecx
 
 	CSimcityAppPrimary *pSCApp;
+	int nAttrib;
 
 	pSCApp = &pCSimcityAppThis;
 	if (pSCApp->dwSCAGameSound) {
@@ -457,48 +442,22 @@ extern "C" void __stdcall Hook_Sound_PlaySound(int iSoundID) {
 				return;
 		}
 		if (iSoundID >= SOUND_START && 
-			iSoundID < SOUND_SILENT) {
+			iSoundID < SOUND_SILENT || bSoundKickstart) {
+			if (bSoundKickstart) {
+				bSoundKickstart = false;
+				if (iSoundID < SOUND_START || iSoundID > SOUND_SILENT)
+					return;
+			}
 			int nSoundPlayTicksEntry = GetSoundPlayTicksBySoundID_SC2K1996(iSoundID);
 			if (!pThis->bSNDPlaySound || pThis->iSNDCurrSoundID != iSoundID || nSoundPlayTicksEntry - nActionThingSoundPlayTicks >= 3) {
+				ULOWORD(nAttrib) = iSoundID;
+				UHIWORD(nAttrib) = SND_ORIG_PLAYSND;
 				if (pThis->iSNDActionThingSoundID == pThis->iSNDCurrSoundID && pThis->bSNDWasPlaying)
 					nActionThingSoundPlayTicksCurrent = nActionThingSoundPlayTicks;
 				else
 					nActionThingSoundPlayTicksCurrent = 0;
 
-				/*BOOL bRet = -1;
-				if (iSoundID == SOUND_CLICK && pThis->dwSNDBufferClick != 0)
-					bRet = L_PlaySound_SC2K1996((LPCSTR)pThis->dwSNDBufferClick, SND_ASYNC | SND_NODEFAULT | SND_MEMORY);
-				else if (iSoundID == SOUND_EXPLODE && pThis->dwSNDBufferExplosion != 0)
-					bRet = L_PlaySound_SC2K1996((LPCSTR)pThis->dwSNDBufferExplosion, SND_ASYNC | SND_NODEFAULT | SND_MEMORY);
-				else if (pThis->iSNDToolSoundID == iSoundID && pThis->dwSNDBufferTool != 0)
-					bRet = L_PlaySound_SC2K1996((LPCSTR)pThis->dwSNDBufferTool, SND_ASYNC | SND_NODEFAULT | SND_MEMORY);
-				else {
-					if (pThis->iSNDActionThingSoundID == iSoundID) {
-						if (pThis->dwSNDBufferActionThing) {
-							bRet = L_PlaySound_SC2K1996((LPCSTR)pThis->dwSNDBufferActionThing, SND_ASYNC | SND_NODEFAULT | SND_MEMORY | SND_LOOP);
-							pThis->bSNDWasPlaying = bRet;
-						}
-					}
-					if (bRet < 0) {
-						if (pThis->iSNDGeneralSoundID != iSoundID) {
-							Game_LoadSoundIntoBuffer(iSoundID, pThis->dwSNDBufferGeneral);
-							pThis->iSNDGeneralSoundID = iSoundID;
-						}
-						bRet = L_PlaySound_SC2K1996((LPCSTR)pThis->dwSNDBufferGeneral, SND_ASYNC | SND_NODEFAULT | SND_MEMORY);
-					}
-				}*/
-				pThis->bSNDPlaySound = SoundEnginePlayStream(&pStreamCurrentSound, &mapSoundCache[iSoundID],
-					jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat(),
-					true, (pThis->iSNDActionThingSoundID == iSoundID && pThis->dwSNDBufferActionThing ? true : false));
-				if (pThis->bSNDPlaySound) {
-					pThis->iSNDCurrSoundID = iSoundID;
-					if (pThis->bSNDWasPlaying && pThis->iSNDActionThingSoundID == iSoundID)
-						nActionThingSoundPlayTicks = 0;
-					else
-						nActionThingSoundPlayTicks = nSoundPlayTicksEntry;
-				}
-				else
-					Game_Sound_PlayPrioritySound(pThis);
+				L_PlaySound_SC2K1996(nAttrib, 0);
 			}
 		}
 	}
@@ -508,6 +467,8 @@ static bool LoadSoundFromFile(int iSoundID, std::string strPath) {
 	SF_INFO stSoundFileInfo;
 	audio_entity_t stAudioEntity;
 	SNDFILE* sndfile = SF_open(strPath.c_str(), SFM_READ, &stSoundFileInfo);
+
+	memset(&mapSoundCache[iSoundID], 0, sizeof(mapSoundCache[iSoundID]));
 
 	if (!sndfile) {
 		ConsoleLog(LOG_ERROR, "SND:  Couldn't load sound file \"%s\" (sndfile).\n", strPath.c_str());

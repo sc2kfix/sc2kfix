@@ -90,6 +90,30 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define WORD_OFFSETOF(ty, el)  SIZE_OFFSETOF(WORD, ty, el)
 #define BYTE_OFFSETOF(ty, el)  SIZE_OFFSETOF(BYTE, ty, el)
 
+// Recompilation helpers - useful in various places - moved here
+#define LAST_IND(x, type)	(sizeof(x) / sizeof(type) - 1)
+#define HIGH_IND(x, type)	LAST_IND(x,type)
+#define LOW_IND(x, type)	0
+#define UBYTEn(x, n)		(*((uint8_t*)&(x)+n))
+#define UWORDn(x, n)		(*((uint16_t*)&(x)+n))
+#define UDWORDn(x, n)		(*((uint32_t*)&(x)+n))
+#define SBYTEn(x, n)		(*((__int8*)&(x)+n))
+#define SWORDn(x, n)		(*((__int16*)&(x)+n))
+#define SDWORDn(x, n)		(*((__int32*)&(x)+n))
+
+#define ULOBYTE(x)			UBYTEn(x,LOW_IND(x,uint8_t))
+#define ULOWORD(x)			UWORDn(x,LOW_IND(x,uint16_t))
+#define ULODWORD(x)			UDWORDn(x,LOW_IND(x,uint32_t))
+#define UHIBYTE(x)			UBYTEn(x,HIGH_IND(x,uint8_t))
+#define UHIWORD(x)			UWORDn(x,HIGH_IND(x,uint16_t))
+#define UHIDWORD(x)			UDWORDn(x,HIGH_IND(x,uint32_t))
+#define SLOBYTE(x)			SBYTEn(x,LOW_IND(x,__int8))
+#define SLOWORD(x)			SWORDn(x,LOW_IND(x,__int16))
+#define SLODWORD(x)			SDWORDn(x,LOW_IND(x,__int32))
+#define SHIBYTE(x)			SBYTEn(x,HIGH_IND(x,__int8))
+#define SHIWORD(x)			SWORDn(x,HIGH_IND(x,__int16))
+#define SHIDWORD(x)			SDWORDn(x,HIGH_IND(x,__int32))
+
 #define IFF_HEAD(a, b, c, d) ((DWORD)d << 24 | (DWORD)c << 16 | (DWORD)b << 8 | (DWORD)a)
 #define DWORD_NTOHL_CHECK(x) (bBigEndian ? ntohl(x) : x)
 #define DWORD_HTONL_CHECK(x) (bBigEndian ? htonl(x) : x)

@@ -2996,6 +2996,7 @@ GAMECALL(0x4014CE, int, __cdecl, SpawnAeroplane, __int16 x, __int16 y, __int16 i
 GAMECALL(0x4014EC, void, __cdecl, CityToolPlaceNature, CMFC3XPoint)
 GAMECALL(0x4014F1, int, __thiscall, SimcityView_TileHighlightRemove, CSimcityView *pThis)
 GAMECALL(0x40150A, int, __thiscall, SimcityApp_ExitRequester, CSimcityAppPrimary *pThis, int iSource)
+GAMECALL(0x401514, void, __stdcall, PerhapsFreeDocumentsLibraryAndStrings)
 GAMECALL(0x401519, void, __thiscall, CityToolBar_ToolMenuEnable, CCityToolBar* pThis)
 GAMECALL(0x40152D, BOOL, __thiscall, SimcityView_MainWindowUpdate, CSimcityView *, RECT *, BOOL)
 GAMECALL(0x401573, int, __thiscall, SimcityView_CityToolPlaceSubway, CSimcityView*, __int16, __int16)
@@ -3304,6 +3305,7 @@ GAMECALL_MAIN(0x4BA2E5, CMFC3XView *, __thiscall, FrameWnd_GetActiveView, CMFC3X
 GAMECALL_MAIN(0x4BA3A0, void, __thiscall, FrameWnd_ShowControlBar, CMFC3XFrameWnd *pThis, CMFC3XControlBar *pBar, BOOL, int)
 GAMECALL_MAIN(0x4BA38B, CMFC3XDocument *, __thiscall, FrameWnd_GetActiveDocument, CMFC3XFrameWnd *)
 GAMECALL_MAIN(0x4BB23A, void, __thiscall, FrameWnd_RecalcLayout, CMFC3XFrameWnd *pThis, int)
+GAMECALL_MAIN(0x4BE492, void, __thiscall, WinApp_ExitInstance, CMFC3XWinApp *)
 GAMECALL_MAIN(0x4BE7F7, void, __thiscall, WinApp_EnableShellOpen, CMFC3XWinApp *)
 GAMECALL_MAIN(0x4C0730, MFC3X_AFX_THREAD_STATE *, __stdcall, AfxGetThreadState, void)
 
@@ -4386,9 +4388,14 @@ extern std::vector<sprite_ids_t> spriteIDs;
 
 extern HWND hwndMainDialog_SC2K1996;
 
+extern bool bSoundKickstart;
+
+extern int GetSoundPlayTicksBySoundID_SC2K1996(int iSoundID);
+extern int GetTickDurationBySoundID_SC2K1996(int iSoundID, int nDuration);
+
 extern void ResetCheatInput_SC2K1996();
 
-extern BOOL L_PlaySound_SC2K1996(LPCTSTR pszSound, UINT fuSound);
+extern void L_PlaySound_SC2K1996(int nAttrib, int nDuration);
 extern void L_PlayToolSound_SC2K1996(CSimcityAppPrimary *pSCApp, int iSoundID = 0);
 
 extern void DumpMapThings_SC2K1996();

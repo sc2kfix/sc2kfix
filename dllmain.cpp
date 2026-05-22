@@ -434,6 +434,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		CreateThread(NULL, 0, MusicThread, 0, 0, &dwMusicThreadID);
 		ConsoleLog(LOG_INFO, "MUS:  Music thread started.\n");
 
+		CreateThread(NULL, 0, SDLSoundThread, 0, 0, &dwSDLSoundThreadID);
+		CreateThread(NULL, 0, SDLSongThread, 0, 0, &dwSDLSongThreadID);
+		ConsoleLog(LOG_INFO, "SND:  SDL Sound threads started.\n");
+
 		// Palette animation fix
 		BOOL bCanFixAnimation;
 
@@ -561,6 +565,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
 	// Clean up after ourselves and get ready to exit
 	case DLL_PROCESS_DETACH:
+		if (dwSDLSongThreadID)
+			PostThreadMessage(dwSDLSongThreadID, WM_QUIT, NULL, NULL);
+		if (dwSDLSoundThreadID)
+			PostThreadMessage(dwSDLSoundThreadID, WM_QUIT, NULL, NULL);
+
 		// Shut down the music thread
 		if (dwMusicThreadID)
 			PostThreadMessage(dwMusicThreadID, WM_QUIT, NULL, NULL);
