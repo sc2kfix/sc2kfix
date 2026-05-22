@@ -336,6 +336,159 @@ bool ConsoleCommandSetDebug(std::vector<std::string> args, int iBreakoutState, i
 	return true;
 }
 
+bool ConsoleCommandSetGameSeason(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	extern int iForcedSeason;
+
+	bool bDetailed = false;
+	bool bShowLuaMods = true;
+	bool bShowNativeMods = true;
+
+	if (dwDetectedVersion != VERSION_SC2K_1996) {
+		printf_yellow("Command only available when attached to 1996 Special Edition.\n");
+		return true;
+	}
+
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap(
+			{
+				{"auto", "Restores the flow of time"},
+				{"autumn", "Forces seasonal effects to autumn"},
+				{"snow", "Forces seasonal effects to snowy winter"},
+				{"spring", "Forces seasonal effects to spring"},
+				{"summer", "Forces seasonal effects to summer"},
+				{"winter", "Forces seasonal effects to winter"},
+			});
+		bConsoleKeepCommandBuffer = true;
+		return true;
+	}
+
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+
+	// Exactly one argument is required for this command, unless it's an unset
+	std::string& strRootName = *((std::string*)iOptParam);
+	if (args.size() == 0 && strRootName == "unset") {
+		iForcedSeason = 0;
+		RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+		return true;
+	} else if (args.size() != 1) {
+		bConsoleKeepCommandBuffer = true;
+		return false;
+	}
+
+	if (args[0] == "auto")
+		iForcedSeason = 0;
+	else if (args[0] == "autumn")
+		iForcedSeason = 3;
+	else if (args[0] == "snow")
+		iForcedSeason = 5;
+	else if (args[0] == "spring")
+		iForcedSeason = 1;
+	else if (args[0] == "summer")
+		iForcedSeason = 2;
+	else if (args[0] == "winter")
+		iForcedSeason = 4;
+	else {
+		bConsoleKeepCommandBuffer = true;
+		return false;
+	}
+
+	RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+	return true;
+}
+
+bool ConsoleCommandSetGameWeathermap(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	extern std::map<BYTE, BYTE> mapWeatherIndexMap;
+	extern std::map<BYTE, BYTE> mapTreeSnowEffectMap;
+	extern std::map<BYTE, BYTE> mapTreeAutumnEffectMap;
+
+	std::map<BYTE, BYTE>* pMap = NULL;
+
+	bool bKeyScanned = false;
+	bool bValueScanned = false;
+	int iKey = 0;
+	int iValue = 0;
+
+	if (dwDetectedVersion != VERSION_SC2K_1996) {
+		printf_yellow("Command only available when attached to 1996 Special Edition.\n");
+		return true;
+	}
+
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap(
+			{
+				{"<key>", "Key to set"},
+				{"<value>", "Value to set"},
+				{"groundsnow", "Set the ground snow map"},
+				{"treeautumn", "Set the tree autumn map"},
+				{"treesnow", "Set the tree snow map"},
+			});
+		bConsoleKeepCommandBuffer = true;
+		return true;
+	}
+
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+
+	// Requires arguments
+	if (args.size() == 0) {
+		bConsoleKeepCommandBuffer = true;
+		return false;
+	}
+
+	for (size_t i = 0; i < args.size(); i++) {
+		// <key>
+		if (!bKeyScanned && sscanf_s(args[i].c_str(), "%X", &iKey)) {
+			bKeyScanned = true;
+			continue;
+		}
+
+		// <value>
+		if (!bValueScanned && sscanf_s(args[i].c_str(), "%X", &iValue)) {
+			bValueScanned = true;
+			continue;
+		}
+
+		// groundsnow
+		if (args[i] == "groundsnow" && !pMap) {
+			pMap = &mapWeatherIndexMap;
+			continue;
+		}
+
+		// treeautumn
+		if (args[i] == "treeautumn" && !pMap) {
+			pMap = &mapTreeAutumnEffectMap;
+			continue;
+		}
+
+		// treesnow
+		if (args[i] == "treesnow" && !pMap) {
+			pMap = &mapTreeSnowEffectMap;
+			continue;
+		}
+
+		// Invalid arugment, bail out
+		return false;
+	}
+
+	if (!bKeyScanned || !bValueScanned) {
+		printf_yellow("Command requires both key and value.\n");
+		bConsoleKeepCommandBuffer = true;
+		return false;
+	}
+
+	if (!pMap) {
+		bConsoleKeepCommandBuffer = true;
+		return false;
+	}
+
+	printf("-> pMap[0x%02X]  = 0x%02X\n", iKey, iValue);
+	(*pMap)[iKey] = iValue;
+	printf("   pMap[0x%02X] -> 0x%02X\n", iKey, (*pMap)[iKey]);
+	RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+	return true;
+}
+
 bool ConsoleCommandSetUndocumented(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
 	// No arguments allowed
 	if (iBreakoutState == BREAKOUT_QUESTION) {
@@ -1069,6 +1222,9 @@ void NewConsoleInitializeCommands(console::CommandTree& treeCommands) {
 	treeCommands["run"]["test"] = ConsoleCommand(COMMAND_TYPE_UNDOCUMENTED, ConsoleCommandRunTest, "Test command");
 	treeCommands["set"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Modify game and plugin behaviour");
 	treeCommands["set"]["debug"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandSetDebug, "Enable/disable debugging options", COMMAND_OPTPARAM_ROOTNAME);
+	treeCommands["set"]["game"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Modify game behaviour");
+	treeCommands["set"]["game"]["season"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandSetGameSeason, "Forces a specific season and weather effect", COMMAND_OPTPARAM_ROOTNAME);
+	treeCommands["set"]["game"]["weathermap"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandSetGameWeathermap, "Changes the seasonal drawing map on the fly", COMMAND_OPTPARAM_ROOTNAME);
 	treeCommands["set"]["undocumented"] = ConsoleCommand(COMMAND_TYPE_UNDOCUMENTED, ConsoleCommandSetUndocumented, "Enable/disable display of special commands", COMMAND_OPTPARAM_ROOTNAME);
 	treeCommands["show"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Display various game and plugin information");
 	treeCommands["show"]["audio"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Show audio engine info");

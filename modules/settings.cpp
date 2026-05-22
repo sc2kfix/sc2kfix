@@ -32,7 +32,10 @@ struct {
 	settings_t* stSettingsChanges;
 } stSettingsDialogHeader;
 
+// A handful of settings get checked incredibly frequently and need to be cached for performance.
+// These variables are updated whenever the settings in the JSON structure change.
 bool bFrequentUpdates = false;
+bool bWeatherEffects = false;
 bool bDarkUnderground = false;
 
 char szGamePath[MAX_PATH];
@@ -114,6 +117,7 @@ void DefaultSettingsSC2KFixCore(json::JSON& jsonSettings) {
 	jsonSettings[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_TILESETS] = std::string(szGamePath) + "\\" + DEF_SIM_PATHS_TILESETS + "\\";
 
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES] = DEF_FIX_QOL_FREQUPDATES;
+	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_WEATHEREFFECTS] = DEF_FIX_QOL_WEATHEREFFECTS;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND] = DEF_FIX_QOL_DARKUNDGRND;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SKIPINTRO] = DEF_FIX_QOL_SKIPINTRO;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USENEWSTRINGS] = DEF_FIX_QOL_USENEWSTRINGS;
@@ -260,6 +264,7 @@ void LoadJSONSettings(void) {
 	LoadJSONBindings(jsonSettingsCore);
 
 	bFrequentUpdates = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool();
+	bWeatherEffects = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_WEATHEREFFECTS].ToBool();
 	bDarkUnderground = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND].ToBool();
 }
 
@@ -270,6 +275,7 @@ void SaveJSONSettings(void) {
 
 	if (dwDetectedVersion == VERSION_SC2K_1996) {
 		bFrequentUpdates = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool();
+		bWeatherEffects = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_WEATHEREFFECTS].ToBool();
 		bDarkUnderground = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND].ToBool();
 
 		UpdateMiscHooks_SC2K1996();
@@ -411,6 +417,13 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_REFRESH_RATE),
 			"SimCity 2000 was designed to spend more CPU time on simulation than on rendering by only updating the city's growth when the display moves or on the 24th day of the month. "
 			"Enabling this setting allows the game to refresh the city display in real-time instead of batching display updates.");
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_WEATHER_EFFECTS),
+			"Enabling this setting causes the following weather and seasonal effects to be drawn:\n"
+			" - Trees will become less vibrant in autumn and winter.\n"
+			" - Trees and the ground will become dusted with snow during snowy weather, and covered in blizzards.\n"
+			" - Bodies of water will partially freeze during snowy weather and blizzards.\n\n"
+
+			"This setting does nothing unless the real-time city growth setting is also enabled.");
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DARK_UNDGRND),
 			"When enabled the underground layer background will be dark.");
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS),
@@ -425,6 +438,7 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USENEWSTRINGS], IDC_SETTINGS_CHECK_NEW_STRINGS);
 
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES], IDC_SETTINGS_CHECK_REFRESH_RATE);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_WEATHEREFFECTS], IDC_SETTINGS_CHECK_WEATHER_EFFECTS);
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND], IDC_SETTINGS_CHECK_DARK_UNDGRND);
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
 
@@ -437,6 +451,7 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USENEWSTRINGS], IDC_SETTINGS_CHECK_NEW_STRINGS);
 
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES], IDC_SETTINGS_CHECK_REFRESH_RATE);
+		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_WEATHEREFFECTS], IDC_SETTINGS_CHECK_WEATHER_EFFECTS);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND], IDC_SETTINGS_CHECK_DARK_UNDGRND);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
 
@@ -708,6 +723,7 @@ BOOL CALLBACK SettingsDialogContainerProc(HWND hwndDlg, UINT message, WPARAM wPa
 			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDVOLUME] = DEF_FIX_AUD_SOUNDVOLUME;
 
 			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES] = DEF_FIX_QOL_FREQUPDATES;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_WEATHEREFFECTS] = DEF_FIX_QOL_WEATHEREFFECTS;
 			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND] = DEF_FIX_QOL_DARKUNDGRND;
 			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SKIPINTRO] = DEF_FIX_QOL_SKIPINTRO;
 			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USENEWSTRINGS] = DEF_FIX_QOL_USENEWSTRINGS;
@@ -739,6 +755,7 @@ BOOL CALLBACK SettingsDialogContainerProc(HWND hwndDlg, UINT message, WPARAM wPa
 			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDVOLUME] = DEF_FIX_AUD_SOUNDVOLUME;
 
 			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES] = false;
+			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_WEATHEREFFECTS] = false;
 			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND] = DEF_FIX_QOL_DARKUNDGRND;
 			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SKIPINTRO] = DEF_FIX_QOL_SKIPINTRO;
 			jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USENEWSTRINGS] = false;

@@ -378,6 +378,7 @@ public:
 // Globals for widely used JSON settings.
 
 extern bool bFrequentUpdates;
+extern bool bWeatherEffects;
 extern bool bDarkUnderground;
 
 // Game path global

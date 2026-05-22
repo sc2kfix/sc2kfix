@@ -378,11 +378,11 @@ EXSTYLE WS_EX_TRANSPARENT
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     GROUPBOX        "Interface Settings",IDC_STATIC,6,2,294,85
-    GROUPBOX        "Visual and Performance Settings",IDC_STATIC,6,93,294,63
+    GROUPBOX        "Visual and Performance Settings",IDC_STATIC,6,93,294,75
     CONTROL         " Display city growth in real-time instead of in batches (Default: on)",IDC_SETTINGS_CHECK_REFRESH_RATE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,107,280,10
     CONTROL         " Use dark underground background (Default: off)",IDC_SETTINGS_CHECK_DARK_UNDGRND,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,122,280,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,137,280,10
     PUSHBUTTON      "Configure Key Bindings",IDC_SETTINGS_BUTTON_CONFKEYBINDINGS,103,64,100,14
     CONTROL         " Use grammar-corrected and disambiguated dialog strings (Default: on)",IDC_SETTINGS_CHECK_NEW_STRINGS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,47,280,10
@@ -391,7 +391,9 @@ BEGIN
     CONTROL         " Display full SimCalendar date in title bar (Default: on)",IDC_SETTINGS_CHECK_TITLE_DATE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,32,280,10
     CONTROL         " * Use higher quality sounds (Default: on)",IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,137,280,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,152,280,10
+    CONTROL         " Display seasonal and weather effects (Default: on)",IDC_SETTINGS_CHECK_WEATHER_EFFECTS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,122,280,10
 END
 
 IDD_SETTINGS_GENERAL DIALOGEX 0, 0, 307, 217

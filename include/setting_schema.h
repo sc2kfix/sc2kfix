@@ -64,6 +64,7 @@
 
 #define DEF_FIX_QOL_DARKUNDGRND     false
 #define DEF_FIX_QOL_FREQUPDATES     true
+#define DEF_FIX_QOL_WEATHEREFFECTS  true
 #define DEF_FIX_QOL_SKIPINTRO       false
 #define DEF_FIX_QOL_TITLECALEND     true
 #define DEF_FIX_QOL_USEFLTSTATUS    false
@@ -158,6 +159,7 @@
 
 #define I_FIX_QOL_DARKUNDGRND     "dark_underground"
 #define I_FIX_QOL_FREQUPDATES     "frequent_updates"
+#define I_FIX_QOL_WEATHEREFFECTS  "weather_effects"
 #define I_FIX_QOL_SKIPINTRO       "skip_intro"
 #define I_FIX_QOL_TITLECALEND     "title_calendar"
 #define I_FIX_QOL_USEFLTSTATUS    "use_floating_status"

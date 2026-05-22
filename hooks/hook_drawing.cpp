@@ -40,6 +40,8 @@ enum {
 
 #define WATEREDPIPES_SPRITE_OFFSET 116
 
+#define EFFECTS_USE_MAP_SLOW 1
+
 #define MDRAWING_DEBUG_OTHER 1
 
 #define MDRAWING_DEBUG DEBUG_FLAGS_NONE
@@ -1224,7 +1226,35 @@ static BYTE ProcessCyclingIndex(BYTE colIdx) {
 	return newIdx;
 }
 
+
+std::map<BYTE, BYTE> mapWeatherIndexMap = {
+	// Ground tiles
+	{0x73, 0x9A}, { 0x79, 0x9A }, { 0x7F, 0x9A }, { 0x80, 0x9A },
+	{0x74, 0x9B}, { 0x7A, 0x9B }, { 0x81, 0x9B },
+	{0x75, 0x9C}, { 0x7B, 0x9C }, { 0x82, 0x9C },
+	{0x76, 0x9D}, { 0x7C, 0x9D }, { 0x85, 0x9D },
+	{0x77, 0x9E}, { 0x7D, 0x9E },
+	{0x78, 0x9F}, { 0x7E, 0x9F },
+
+	// Water tiles
+	{0xC8, 0x53}, { 0xCC, 0x53 }, { 0xD0, 0x53 },
+	{0xC9, 0x54}, { 0xCD, 0x54 }, { 0xD1, 0x54 },
+	{0xCA, 0x55}, { 0xCE, 0x55 }, { 0xD2, 0x55 },
+	{0xCB, 0x56}, { 0xCF, 0x56 }, { 0xD3, 0x56 },
+};
+
+// Probably a bit slower. Use for debugging/testing only.
+static BYTE ProcessWeatherIndexMap(BYTE colIdx) {
+	auto iter = mapWeatherIndexMap.find(colIdx);
+	if (iter != mapWeatherIndexMap.end())
+		return iter->second;
+	else
+		return colIdx;
+}
+
 static BYTE ProcessWeatherIndex(BYTE colIdx) {
+	if (EFFECTS_USE_MAP_SLOW)
+		return ProcessWeatherIndexMap(colIdx);
 	BYTE newIdx = colIdx;
 	// Snow effect - for ground or water tiles.
 	if (newIdx == 0x73 || newIdx == 0x79 || newIdx == 0x7F || newIdx == 0x80) // Ground tiles here
@@ -1250,7 +1280,28 @@ static BYTE ProcessWeatherIndex(BYTE colIdx) {
 	return newIdx;
 }
 
+std::map<BYTE, BYTE> mapTreeSnowEffectMap = {
+	{0x3B, 0x9A}, { 0x40, 0x9A }, { 0x46, 0x9A }, { 0x50, 0x9A },
+	{0x3C, 0x9B}, { 0x41, 0x9B }, { 0x47, 0x9B }, { 0x51, 0x9B },
+	{0x3D, 0x9C}, { 0x42, 0x9C }, { 0x48, 0x9C }, { 0x52, 0x9C },
+	{0x3E, 0x9D}, { 0x43, 0x9D }, { 0x49, 0x9D },
+	{0x3F, 0x9E}, { 0x44, 0x9E }, { 0x4A, 0x9E },
+	{0x45, 0x9F},
+};
+
+// Probably a bit slower. Use for debugging/testing only.
+static BYTE ProcessTreeSnowEffectMap(BYTE colIdx) {
+	auto iter = mapTreeSnowEffectMap.find(colIdx);
+	if (iter != mapTreeSnowEffectMap.end())
+		return iter->second;
+	else
+		return colIdx;
+}
+
 static BYTE ProcessTreeSnowEffect(BYTE colIdx) {
+	if (EFFECTS_USE_MAP_SLOW)
+		return ProcessTreeSnowEffectMap(colIdx);
+
 	BYTE newIdx = colIdx;
 	if (newIdx == 0x3B || newIdx == 0x40 || newIdx == 0x46 || newIdx == 0x50)
 		newIdx = 0x9A;
@@ -1267,7 +1318,28 @@ static BYTE ProcessTreeSnowEffect(BYTE colIdx) {
 	return newIdx;
 }
 
+std::map<BYTE, BYTE> mapTreeAutumnEffectMap = {
+	{0x3B, 0x7D}, { 0x40, 0x7D }, { 0x46, 0x7D }, { 0x50, 0x7D },
+	{0x3C, 0x7E}, { 0x41, 0x7E }, { 0x47, 0x7E }, { 0x51, 0x7E },
+	{0x3D, 0x7F}, { 0x42, 0x7F }, { 0x48, 0x7F }, { 0x52, 0x7F },
+	{0x3E, 0x28}, { 0x43, 0x28 }, { 0x49, 0x28 },
+	{0x3F, 0x29}, { 0x44, 0x29 }, { 0x4A, 0x29 },
+	{0x45, 0x2A},
+};
+
+// Probably a bit slower. Use for debugging/testing only.
+static BYTE ProcessTreeAutumnEffectMap(BYTE colIdx) {
+	auto iter = mapTreeAutumnEffectMap.find(colIdx);
+	if (iter != mapTreeAutumnEffectMap.end())
+		return iter->second;
+	else
+		return colIdx;
+}
+
 static BYTE ProcessTreeAutumnEffect(BYTE colIdx) {
+	if (EFFECTS_USE_MAP_SLOW)
+		return ProcessTreeAutumnEffectMap(colIdx);
+
 	BYTE newIdx = colIdx;
 	if (newIdx == 0x3B || newIdx == 0x40 || newIdx == 0x46 || newIdx == 0x50)
 		newIdx = 0x7D;
@@ -1284,17 +1356,22 @@ static BYTE ProcessTreeAutumnEffect(BYTE colIdx) {
 	return newIdx;
 }
 
+// 0 = no forced season, 1 = spring, 2 = summer, 3 = autumn, 4 = winter, 5 = winter + snow
+int iForcedSeason = 0;
+
 static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
 	int iCityMonth = dwCityDays / 25 % 12;
 
 	BYTE newIdx = colIdx;
 	if (bWeatherTrend == 6 ||
-		bWeatherTrend == 9) {
+		bWeatherTrend == 9 ||
+		iForcedSeason == 5) {
 		if (!bIgnore)
 			newIdx = ProcessTreeSnowEffect(newIdx);
 	}
 	if ((iCityMonth >= 0 && iCityMonth <= 2) ||
-		(iCityMonth >= 9 && iCityMonth <= 11)) {
+		(iCityMonth >= 9 && iCityMonth <= 11) ||
+		iForcedSeason == 3 || iForcedSeason == 4) {
 		newIdx = ProcessTreeAutumnEffect(newIdx);
 	}
 	return newIdx;
@@ -1303,7 +1380,7 @@ static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
 static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemHeight, int nPos) {
 	BYTE palIdx = colIdx;
 	// Only enable this if the "Frequent Updates" setting is enabled.
-	if (bFrequentUpdates && !hWndExt) {
+	if (bFrequentUpdates && bWeatherEffects && !hWndExt) {
 		// Proof-of-concept weather experiment.
 		if (GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_TREES1, SPRITE_SMALL_TREES7)) {
 			if ((nPos % 4) == 0 || (nPos % 4) == 2 || (nPos % 4) == 3) {
@@ -1314,7 +1391,7 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 			}
 		}
 		else if (GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_TERRAIN, SPRITE_SMALL_WATER_R_TERRAIN_TBL)) {
-			if (bWeatherTrend == 6 || bWeatherTrend == 9) {
+			if (bWeatherTrend == 6 || bWeatherTrend == 9 || iForcedSeason == 5) {
 				// This if is for partial drawing based on row.
 				/*if (nRemHeight <= (shapeCurrent[nSpriteID].wHeight / 2))*/
 				if ((nPos % 4) == 3 || (nPos % 4) == 1)
@@ -1360,10 +1437,12 @@ static BYTE CheckInversion(__int16 nSpriteID, BYTE palIdx) {
 
 static BYTE CheckWeatherInversion(__int16 nSpriteID, BYTE palIdx, int nPos) {
 	BYTE newIdx = palIdx;
-	if (!GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_UNDERGROUND_TERRAIN, SPRITE_SMALL_SUBWAYENTRANCE)) {
-		if (bWeatherTrend == 6 || bWeatherTrend == 9) {
-			if ((nPos % 4) == 3 || (nPos % 4) == 1)
-				newIdx = ProcessWeatherIndex(newIdx);
+	if (bFrequentUpdates && bWeatherEffects && !hWndExt) {
+		if (!GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_UNDERGROUND_TERRAIN, SPRITE_SMALL_SUBWAYENTRANCE)) {
+			if (bWeatherTrend == 6 || bWeatherTrend == 9) {
+				if ((nPos % 4) == 3 || (nPos % 4) == 1)
+					newIdx = ProcessWeatherIndex(newIdx);
+			}
 		}
 	}
 	return newIdx;
