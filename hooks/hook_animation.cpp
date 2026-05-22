@@ -14,6 +14,13 @@ static DWORD dwDummy;
 
 HWND hWndExt = 0;
 
+static __int16 nFastCycleIdx = 0;
+static __int16 nSlowCycleIdx = 0;
+
+__int16 nFastCyclePos = 0;
+__int16 nMidCyclePos = 0;
+__int16 nSlowCyclePos = 0;
+
 extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette, int bToggle) {
 	CSimcityAppPrimary *pSCApp;
 	CMainFrame *pMainFrm;
@@ -30,6 +37,8 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 	// 2) While the CSimcityView window is active and the toolbars aren't being dragged.
 	// 3) None of the additional redraw calls in LoColor mode.
 
+	bool bUseCycle = false;
+
 	bRedraw = FALSE;
 	pSCApp = &pCSimcityAppThis;
 	if (pSCApp) {
@@ -37,18 +46,48 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 			if (!bLoColor) {
 				pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 				if (pMainFrm) {
+					if (nFastCycleIdx < 16)
+						nFastCycleIdx++;
+					else
+						nFastCycleIdx = 0;
+					nFastCyclePos = iCycleOff[nFastCycleIdx];
+
+					if (nSlowCycleIdx < 49)
+						nSlowCycleIdx++;
+					else
+						nSlowCycleIdx = 0;
+					nSlowCyclePos = iCycleOn[nSlowCycleIdx];
+
+					pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+					if (!pSCView || hWndExt)
+						bUseCycle = true;
+					else {
+						if (!bFrequentUpdates)
+							bUseCycle = true;
+					}
+
 					GetPaletteEntries((HPALETTE)pPalette->m_hObject, 0, 0x100, pPalAnimMain);
 					hDC = GetDC(pMainFrm->m_hWnd);
 					pDC = GameMain_DC_FromHandle(hDC);
 					pSelPal = GameMain_DC_SelectPalette(pDC, pPalette, FALSE);
 					if (bToggle) {
-						Game_SwapCycle(0);
-						AnimatePalette((HPALETTE)pPalette->m_hObject, 224, 16, pPalOffCycle);
+						if (nFastCycleIdx % 16) {
+							if (nMidCyclePos < 16)
+								nMidCyclePos++;
+							else
+								nMidCyclePos = 0;
+						}
+						if (bUseCycle) {
+							Game_SwapCycle(0);
+							AnimatePalette((HPALETTE)pPalette->m_hObject, 224, 16, pPalOffCycle);
+						}
 						bRedraw = TRUE;
 					}
 					else {
-						Game_SwapCycle(1);
-						AnimatePalette((HPALETTE)pPalette->m_hObject, 171, 49, pPalOnCycle);
+						if (bUseCycle) {
+							Game_SwapCycle(1);
+							AnimatePalette((HPALETTE)pPalette->m_hObject, 171, 49, pPalOnCycle);
+						}
 						bRedraw = TRUE;
 					}
 					GameMain_DC_SelectPalette(pDC, pSelPal, FALSE);
@@ -89,14 +128,15 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 						// (ie, before any game has been started - palette animation on the image is disabled once the
 						// game window has been created)
 						
-						pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 						if (!pSCView)
 							RedrawWindow(pMainFrm->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 						else if (pSCView && bCityViewAnim || hWndExt) {
-							if (pSCView && bCityViewAnim)
-								RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 							if (hWndExt)
 								RedrawWindow(hWndExt, NULL, NULL, RDW_INVALIDATE);
+							else {
+								if (pSCView && bCityViewAnim && bUseCycle)
+									RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+							}
 						}
 					}
 				}
