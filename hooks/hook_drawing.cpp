@@ -1227,7 +1227,7 @@ static BYTE ProcessCyclingIndex(BYTE colIdx) {
 }
 
 
-std::map<BYTE, BYTE> mapWeatherIndexMap = {
+std::map<BYTE, BYTE> mapTerrainSnowIndexMap = {
 	// Ground tiles
 	{0x73, 0x9A}, { 0x79, 0x9A }, { 0x7F, 0x9A }, { 0x80, 0x9A },
 	{0x74, 0x9B}, { 0x7A, 0x9B }, { 0x81, 0x9B },
@@ -1244,17 +1244,17 @@ std::map<BYTE, BYTE> mapWeatherIndexMap = {
 };
 
 // Probably a bit slower. Use for debugging/testing only.
-static BYTE ProcessWeatherIndexMap(BYTE colIdx) {
-	auto iter = mapWeatherIndexMap.find(colIdx);
-	if (iter != mapWeatherIndexMap.end())
+static BYTE ProcessTerrainSnowIndexMap(BYTE colIdx) {
+	auto iter = mapTerrainSnowIndexMap.find(colIdx);
+	if (iter != mapTerrainSnowIndexMap.end())
 		return iter->second;
 	else
 		return colIdx;
 }
 
-static BYTE ProcessWeatherIndex(BYTE colIdx) {
+static BYTE ProcessTerrainSnowIndex(BYTE colIdx) {
 	if (EFFECTS_USE_MAP_SLOW)
-		return ProcessWeatherIndexMap(colIdx);
+		return ProcessTerrainSnowIndexMap(colIdx);
 	BYTE newIdx = colIdx;
 	// Snow effect - for ground or water tiles.
 	if (newIdx == 0x73 || newIdx == 0x79 || newIdx == 0x7F || newIdx == 0x80) // Ground tiles here
@@ -1278,6 +1278,49 @@ static BYTE ProcessWeatherIndex(BYTE colIdx) {
 	else if (newIdx == 0xCB || newIdx == 0xCF || newIdx == 0xD3)
 		newIdx = 0x56;
 	return newIdx;
+}
+
+// Experimental. Looks pretty good on most default buildings but a few have had to be manually
+// flagged as exempt, and some separate adjustments might need to be done specifically for the
+// the Resort Hotel and College sprites.
+std::map<BYTE, BYTE> mapBuildingSnowIndexMap = {
+	{0x43, 0x10},
+	{0x44, 0x10},
+	{0x45, 0x9A},
+	{0x46, 0x9B},
+	{0x47, 0x9C},
+	{0x48, 0x9D},
+	{0x49, 0x9E},
+	{0x4A, 0x9E},
+};
+
+// Probably a bit slower. Use for debugging/testing only.
+static BYTE ProcessBuildingSnowIndexMap(BYTE colIdx) {
+	auto iter = mapBuildingSnowIndexMap.find(colIdx);
+	if (iter != mapBuildingSnowIndexMap.end())
+		return iter->second;
+	else
+		return colIdx;
+	return colIdx;
+}
+
+static inline BYTE ProcessBuildingSnowIndex(BYTE colIdx) {
+	if (EFFECTS_USE_MAP_SLOW)
+		return ProcessBuildingSnowIndexMap(colIdx);
+
+	if (colIdx == 0x43 || colIdx == 0x44)
+		return 0x10;
+	if (colIdx == 0x45)
+		return 0x9A;
+	if (colIdx == 0x46)
+		return 0x9B;
+	if (colIdx == 0x47)
+		return 0x9C;
+	if (colIdx == 0x48)
+		return 0x9D;
+	if (colIdx == 0x49 || colIdx == 0x4A)
+		return 0x9E;
+	return colIdx;
 }
 
 std::map<BYTE, BYTE> mapTreeSnowEffectMap = {
@@ -1363,8 +1406,8 @@ static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
 	int iCityMonth = dwCityDays / 25 % 12;
 
 	BYTE newIdx = colIdx;
-	if (bWeatherTrend == 6 ||
-		bWeatherTrend == 9 ||
+	if (bWeatherTrend == WEATHER_TREND_BLIZZARD ||
+		bWeatherTrend == WEATHER_TREND_SNOW ||
 		iForcedSeason == 5) {
 		if (!bIgnore)
 			newIdx = ProcessTreeSnowEffect(newIdx);
@@ -1379,9 +1422,9 @@ static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
 
 static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemHeight, int nPos) {
 	BYTE palIdx = colIdx;
-	// Only enable this if the "Frequent Updates" setting is enabled.
+
 	if (bFrequentUpdates && bWeatherEffects && !hWndExt) {
-		// Proof-of-concept weather experiment.
+		// Accumulate snow or fading on trees
 		if (GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_TREES1, SPRITE_SMALL_TREES7)) {
 			if ((nPos % 4) == 0 || (nPos % 4) == 2 || (nPos % 4) == 3) {
 				BOOL bIgnore = FALSE;
@@ -1390,7 +1433,9 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 				palIdx = ProcessSeasonIndex(palIdx, bIgnore);
 			}
 		}
-		else if (GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_TERRAIN, SPRITE_SMALL_WATER_R_TERRAIN_TBL)) {
+
+		// Accumulate snow on ground
+		else if (GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_TERRAIN, SPRITE_SMALL_SEAPORTZONE)) {
 			if (bWeatherTrend == WEATHER_TREND_SNOW || bWeatherTrend == WEATHER_TREND_BLIZZARD ||
 				iForcedSeason == 5 || iForcedSeason == 6) {
 				// This if is for partial drawing based on row.
@@ -1399,12 +1444,28 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 				// Handle deep water differently.
 				if (nSpriteID == SPRITE_SMALL_WATER_TRBL || nSpriteID == SPRITE_MEDIUM_WATER_TRBL || nSpriteID == SPRITE_LARGE_WATER_TRBL) {
 					if (((nPos % 4) == 1 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == 6)) || (nPos % 4) == 2)
-						palIdx = ProcessWeatherIndex(palIdx);
+						palIdx = ProcessTerrainSnowIndex(palIdx);
 				}
 				else if (((nPos % 4) == 2 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == 6)) || (nPos % 4) == 3 || (nPos % 4) == 1)
-					palIdx = ProcessWeatherIndex(palIdx);
+					palIdx = ProcessTerrainSnowIndex(palIdx);
 			}
 		}
+
+		// Accumulate snow on grass
+		else if ((GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_RESIDENTIAL_1X1_LOWERCLASSHOMES1, SPRITE_SMALL_SERVICES_STATUE) ||
+			GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INFRASTRUCTURE_MAYORSHOUSE) || GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INFRASTRUCTURE_LIBRARY) ||
+			GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_SMALLPARK) || GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INFRASTRUCTURE_WATERPUMP)) &&
+			!GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INDUSTRIAL_2X2_FACTORY2) && !GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INDUSTRIAL_3X3_THINGAMAJIG)) {
+			if (bWeatherTrend == WEATHER_TREND_SNOW || bWeatherTrend == WEATHER_TREND_BLIZZARD ||
+				iForcedSeason == 5 || iForcedSeason == 6) {
+				palIdx = ProcessBuildingSnowIndex(palIdx);
+			}
+		}
+
+		// IDEA: high temperatures + WEATHER_TREND_HOT = patchy, dried out grass?
+		// IDEA: detect drought conditions and affect the edges of water?
+
+		// Cycle animated palettes
 		palIdx = ProcessCyclingIndex(palIdx);
 	}
 	return palIdx;
@@ -1444,6 +1505,7 @@ static BYTE CheckInversion(__int16 nSpriteID, BYTE palIdx) {
 
 static BYTE CheckWeatherInversion(__int16 nSpriteID, BYTE palIdx, int nPos) {
 	BYTE newIdx = palIdx;
+
 	if (bFrequentUpdates && bWeatherEffects && !hWndExt) {
 		if (!GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_UNDERGROUND_TERRAIN, SPRITE_SMALL_SUBWAYENTRANCE)) {
 			if (bWeatherTrend == WEATHER_TREND_SNOW || bWeatherTrend == WEATHER_TREND_BLIZZARD ||
@@ -1451,10 +1513,10 @@ static BYTE CheckWeatherInversion(__int16 nSpriteID, BYTE palIdx, int nPos) {
 				// Handle deep water differently.
 				if (nSpriteID == SPRITE_SMALL_WATER_TRBL || nSpriteID == SPRITE_MEDIUM_WATER_TRBL || nSpriteID == SPRITE_LARGE_WATER_TRBL) {
 					if (((nPos % 4) == 1 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == 6)) || (nPos % 4) == 2)
-						palIdx = ProcessWeatherIndex(palIdx);
+						palIdx = ProcessTerrainSnowIndex(palIdx);
 				}
 				else if (((nPos % 4) == 2 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == 6)) || (nPos % 4) == 3 || (nPos % 4) == 1)
-					palIdx = ProcessWeatherIndex(palIdx);
+					palIdx = ProcessTerrainSnowIndex(palIdx);
 			}
 		}
 	}

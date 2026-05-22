@@ -401,7 +401,7 @@ bool ConsoleCommandSetGameSeason(std::vector<std::string> args, int iBreakoutSta
 }
 
 bool ConsoleCommandSetGameWeathermap(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
-	extern std::map<BYTE, BYTE> mapWeatherIndexMap;
+	extern std::map<BYTE, BYTE> mapTerrainSnowIndexMap;
 	extern std::map<BYTE, BYTE> mapTreeSnowEffectMap;
 	extern std::map<BYTE, BYTE> mapTreeAutumnEffectMap;
 
@@ -454,7 +454,7 @@ bool ConsoleCommandSetGameWeathermap(std::vector<std::string> args, int iBreakou
 
 		// groundsnow
 		if (args[i] == "groundsnow" && !pMap) {
-			pMap = &mapWeatherIndexMap;
+			pMap = &mapTerrainSnowIndexMap;
 			continue;
 		}
 
