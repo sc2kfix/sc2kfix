@@ -1539,13 +1539,13 @@ static BYTE CheckWeatherInversion(__int16 nSpriteID, BYTE palIdx, int nPos) {
 				// Handle deep water differently.
 				if (nSpriteID == SPRITE_SMALL_WATER_TRBL || nSpriteID == SPRITE_MEDIUM_WATER_TRBL || nSpriteID == SPRITE_LARGE_WATER_TRBL) {
 					if (((nPos % 4) == 1 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD)) || (nPos % 4) == 2)
-						palIdx = ProcessTerrainSnowIndex(palIdx, (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD));
+						newIdx = ProcessTerrainSnowIndex(palIdx, (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD));
 				}
 
 				// Ground should be mostly covered in regular snow or absolutely blanketed in a blizzard.
 				else {
 					/*if ((bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD) || (nPos % 4) == 2 || (nPos % 4) == 3 || (nPos % 4) == 1)
-						*/palIdx = ProcessTerrainSnowIndex(palIdx, (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD));
+						*/newIdx = ProcessTerrainSnowIndex(palIdx, (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD));
 				}
 			}
 		}
