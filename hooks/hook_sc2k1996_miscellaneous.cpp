@@ -1670,11 +1670,14 @@ extern "C" void __stdcall Hook_RecalculateCityValue(void) {
 
 extern "C" void __stdcall Hook_SimcityView_OnUpdate(CMFC3XView *pSender, LPARAM lHint, CMFC3XObject *pHint) {
 	CSimcityView *pThis;
+	LARGE_INTEGER uTickStart, uTickEnd, uTicksPerSecond;
 
 	__asm mov [pThis], ecx
 
 	char *pBuf;
 	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	QueryPerformanceFrequency(&uTicksPerSecond);
+	QueryPerformanceCounter(&uTickStart);
 
 	if (!pSCApp->dwSCAMainFrameDestroyVar) {
 		if (lHint == SCD_UPDATE_VIEW_TITLE) {
@@ -1693,6 +1696,13 @@ extern "C" void __stdcall Hook_SimcityView_OnUpdate(CMFC3XView *pSender, LPARAM 
 			UpdateWindow(pThis->m_hWnd);
 		}
 	}
+	QueryPerformanceCounter(&uTickEnd);
+	if (((uTickEnd.QuadPart - uTickStart.QuadPart) * 1000000 / uTicksPerSecond.QuadPart) > 1000)
+		ConsoleLog(LOG_INFO, "%s %2d, %d - OnUpdate took %llu microseconds.\n",
+			pSCApp->dwSCApCStringLongMonths[dwCityDays / 25 % 12].m_pchData,
+			dwCityDays % 25 + 1,
+			wCityStartYear + dwCityDays / 300,
+			((uTickEnd.QuadPart - uTickStart.QuadPart) * 1000000 / uTicksPerSecond.QuadPart));
 }
 
 extern "C" void __stdcall Hook_SimcityView_OnLButtonDown(UINT nFlags, CMFC3XPoint pt) {
