@@ -28,10 +28,11 @@ The following game bugs are patched by this DLL:
 ### New features
 sc2kfix adds the following quality of life and optional gameplay features to SimCity 2000 Special Edition:
 * Many parts of the game's engine have been reverse engineered and reimplemented for improved performance, debugging, and extensibility (see the "Additional enhancements" section).
-* A settings dialog for configuring sc2kfix's features has been added to the main menu and the in-game Options menu, and the game's native settings are no longer stored in the registry but rather in a portable JSON-based settings file.
+* A detailed settings dialog for configuring sc2kfix's features has been added to the main menu and the in-game Options menu, and the game's native settings are no longer stored in the registry but rather in a portable JSON-based settings file.
+* City growth is now displayed in real-time instead of in batches, giving you near-instant feedback on the development of your city.
+* Environmental effects based on simulation conditions such as seasons and extreme weather have been implemented when real-time city rendering is enabled. This has a bit of a performance cost at African Swallow game speed and can be turned off separately in the settings.
 * The New City dialog has been updated to allow you to specify a different mayor name when starting a city, as well as with detailed tooltips for the other game settings.
 * Higher quality copies of the transit, pipe, and power construction sounds, as well as the Reticulating Splines soundbite have been ported from other versions of SimCity 2000.
-* City growth is now displayed in real-time instead of in batches.
 * The full in-game date is now shown in the title bar.
 * The floating status widget from the Macintosh and DOS versions of the game has been reimplemented and can be enabled in the settings dialog.
 * The game's sound engine has been reimplemented with multithreading and SDL3, allowing support for music and sound volume settings, high-quality MIDI playback via FluidSynth, MP3 playback, music playback in the background, better support for Linux, and near-instant music load times on Windows 10 and 11.
@@ -49,7 +50,7 @@ sc2kfix implements multiple hooks and a work-in-progress framework for detouring
 
 There is also a developer console that can be enabled by passing "-console" to SimCity 2000 or by enabling the console manually in the in-game "sc2kfix Settings" dialog. While the console generally tries to stop you from doing anything too dangerous, it will happily let you probe any valid memory in the game's address space, which could have adverse effect on any loaded cities. Please be careful when writing to arbitrary memory addresses.
 
-Several parts of the SimCity 2000 simulation engine have been reimplemented in sc2kfix for better performance and the ability to more easily fix bugs and hook into and enhance the original game's code. Functionality has been replicated through months of reverse engineering efforts, and these reimplementations of the game's internal functions provide a higher quality experience that is still accurate to the original game.
+Several parts of the SimCity 2000 simulation engine have been reimplemented in sc2kfix for better performance and the ability to more easily fix bugs and hook into and enhance the original game's code. Functionality has been replicated through months of reverse engineering efforts, and these reimplementations of the game's internal functions provide a higher quality experience that is still accurate to the original game. All non-vanilla components are capable of being individually disabled in the sc2kfix settings dialog.
 
 ### Third-party components
 sc2kfix includes API bindings for the FluidSynth real-time software synthesizer library (https://www.fluidsynth.org) and distributes it in binary form as DLLs in official releases. FluidSynth is made available under the terms of version 2.1 of the GNU Lesser General Public License (LGPL 2.1); a copy of this license has been included in the sc2kfix project as `thirdparty/fluidsynth/LICENSE`. You can download the FluidSynth library in both source and binary release forms from GitHub at https://github.com/FluidSynth/fluidsynth.
