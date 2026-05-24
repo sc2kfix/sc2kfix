@@ -774,17 +774,19 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 				pThis->iSCAProgramStep = ONIDLE_STATE_DISPLAYMAXIS;
 				if (!bSkipIntro && !jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SKIPINTRO].ToBool()) {
 					if (Game_MovieCheck(aIntroASmk) && Game_MovieCheck(aIntroBSmk)) {
-						Game_SimcityApp_MusicTrigger(pThis);
+						if (!Game_Sound_GetMCIResult(pThis->SCASNDLayer))
+							Game_SimcityApp_MusicTrigger(pThis);
 						if (Game_MovieCreateWindow()) {
 							if (!Game_MovieOpen(aIntroASmk))
 								Game_MovieOpen(aIntroBSmk);
 							Game_MovieDestroyWindow();
 						}
-						Game_SimcityApp_MusicPlayNextRefocusSong(pThis);
 					}
 					else
 						pThis->iSCAProgramStep = ONIDLE_STATE_DISPLAYINFLIGHT;
 				}
+				if (!Game_Sound_GetMCIResult(pThis->SCASNDLayer))
+					Game_SimcityApp_MusicPlayNextRefocusSong(pThis);
 				pThis->dwSCASetNextStep = TRUE;
 			}
 			break;
@@ -2487,6 +2489,12 @@ void InstallMiscHooks_SC2K1996(void) {
 	NEWJMP((LPVOID)0x401753, Hook_SimcityApp_OnQuit);
 
 	InstallSpriteAndTileSetHooks_SC2K1996();
+	
+	// CSimcityApp::GetCapabilities
+	// nop'ed this out to avoid music playing during the intro video
+	// (MP3 and perhaps FluidSynth cases).
+	SafeVirtualProtect((LPVOID)0x42542B, 25, PAGE_EXECUTE_READWRITE);
+	memset((LPVOID)(LPVOID)0x42542B, 0x90, 25);
 
 	// Hook CSimcityApp::BuildSubFrames
 	SafeVirtualProtect((LPVOID)0x402A3B, 5, PAGE_EXECUTE_READWRITE);
