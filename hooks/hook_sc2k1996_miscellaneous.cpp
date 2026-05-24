@@ -486,6 +486,43 @@ static void OpenMainDialog_SC2K1996() {
 	}
 }
 
+extern "C" void __stdcall Hook_SimcityApp_GetCapabilities(CMainFrame* pMainFrm) {
+	CSimcityAppPrimary* pThis;
+
+	__asm mov[pThis], ecx
+
+	HDC hDC;
+	__int16 wVersion;
+	DWORD LFSRSeed, LCGSeed;
+
+	hDC = GetDC(pMainFrm->m_hWnd);
+	GetDeviceCaps(hDC, BITSPIXEL);
+	GetDeviceCaps(hDC, NUMRESERVED);
+#pragma warning(disable : 4996)
+	wVersion = (WORD)GetVersion();
+#pragma warning(default : 4996)
+	if (LOBYTE(wVersion) <= 3 && (LOBYTE(wVersion) != 3 || HIBYTE(wVersion) < 51)) {
+		Game_FailRadio(238);
+		pThis->wSCAGameSpeedLOW = GAME_SPEED_PAUSED;
+		Game_SimcityApp_OnQuit(pThis);
+	}
+	pThis->iSCAGDCHorzRes = GetDeviceCaps(hDC, HORZRES);
+	pThis->iSCAGDCVertRes = GetDeviceCaps(hDC, VERTRES);
+	ReleaseDC(pMainFrm->m_hWnd, hDC);
+	LFSRSeed = GetTickCount32();
+	Game_SeedRandomLFSR(LFSRSeed | 1);
+	LCGSeed = GetTickCount32();
+	Game_SeedRandomLCG(LCGSeed | 1);
+	// Originally there was a call here to trigger
+	// the music, however this was causing problems
+	// with other music engines during intro video
+	// playback (this was also the root cause of
+	// track 10001 not being played after the intro
+	// or in-flight dialogue).
+	pThis->iSCAActiveCursor = GAMECURSOR_ARROW;
+	Game_SimcityApp_SetGameCursor(pThis, GAMECURSOR_ARROW, FALSE);
+}
+
 // Function prototype: HOOKCB void Hook_SimcityApp_BuildSubFrames_Before(CSimcityAppPrimary *pThis)
 // Ignored if bHookStopProcessing == TRUE.
 // SPECIAL NOTE: Ignoring this hook on callback results in the game effectively hanging. You have
@@ -2491,10 +2528,8 @@ void InstallMiscHooks_SC2K1996(void) {
 	InstallSpriteAndTileSetHooks_SC2K1996();
 	
 	// CSimcityApp::GetCapabilities
-	// nop'ed this out to avoid music playing during the intro video
-	// (MP3 and perhaps FluidSynth cases).
-	SafeVirtualProtect((LPVOID)0x42542B, 25, PAGE_EXECUTE_READWRITE);
-	memset((LPVOID)(LPVOID)0x42542B, 0x90, 25);
+	SafeVirtualProtect((LPVOID)0x401E15, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401E15, Hook_SimcityApp_GetCapabilities);
 
 	// Hook CSimcityApp::BuildSubFrames
 	SafeVirtualProtect((LPVOID)0x402A3B, 5, PAGE_EXECUTE_READWRITE);
