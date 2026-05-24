@@ -3205,7 +3205,9 @@ GAMECALL(0x403017, void, __stdcall, SimulationProposeMilitaryBase, void)
 // Random calls.
 GAMECALL(0x40116D, __int16, __cdecl, RandomWordLCGMod, __int16 iSeed)
 GAMECALL(0x401CAD, __int16, __cdecl, RandomWordLFSRMod, __int16 iSeed)
+GAMECALL(0x401F19, void, __cdecl, SeedRandomLCG, int)
 GAMECALL(0x402261, __int16, __stdcall, RandomWordLFSRMod4, void)
+GAMECALL(0x402626, void, __cdecl, SeedRandomLFSR, int)
 GAMECALL(0x402B3F, __int16, __stdcall, RandomWordLFSRMod128, void)
 
 /* Main */
