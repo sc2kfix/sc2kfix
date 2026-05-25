@@ -1381,9 +1381,9 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 	if (bFrequentUpdates && bWeatherEffects && !bLoColor && bOnTheFlyPalIdx) {
 		// Accumulate snow or fading on trees
 		if (GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_TREES1, SPRITE_SMALL_TREES7)) {
-			if ((nPos % 4) == 0 || (nPos % 4) == 2 || (nPos % 4) == 3) {
+			if ((nPos % SEQ_MODULUS) == 0 || (nPos % SEQ_MODULUS) == 2 || (nPos % SEQ_MODULUS) == 3) {
 				BOOL bIgnore = FALSE;
-				if ((nPos % 4) == 2)
+				if ((nPos % SEQ_MODULUS) == 2)
 					bIgnore = TRUE;
 				palIdx = ProcessSeasonIndex(palIdx, bIgnore);
 			}
@@ -1398,13 +1398,13 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 					iForcedSeason == FORCED_SEASON_SNOW || iForcedSeason == FORCED_SEASON_BLIZZARD) {
 					// Handle deep water differently.
 					if (nSpriteID == SPRITE_SMALL_WATER_TRBL || nSpriteID == SPRITE_MEDIUM_WATER_TRBL || nSpriteID == SPRITE_LARGE_WATER_TRBL) {
-						if (((nPos % 4) == 1 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD)) || (nPos % 4) == 2)
+						if (((nPos % SEQ_MODULUS) == 1 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD)) || (nPos % SEQ_MODULUS) == 2)
 							palIdx = ProcessTerrainSnowIndex(palIdx, (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD));
 					}
 
 					// Ground should be mostly covered in regular snow or absolutely blanketed in a blizzard.
 					else {
-						/*if ((bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD) || (nPos % 4) == 2 || (nPos % 4) == 3 || (nPos % 4) == 1)
+						/*if ((bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD) || (nPos % SEQ_MODULUS) == 2 || (nPos % SEQ_MODULUS) == 3 || (nPos % SEQ_MODULUS) == 1)
 							*/palIdx = ProcessTerrainSnowIndex(palIdx, (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD));
 					}
 				}

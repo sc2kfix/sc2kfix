@@ -137,24 +137,28 @@ static int cycleCacheIndices[256] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0,  1,  2,  3,  4, 
-	5,  6,  7,  0,  1,  2,  3,  4,  5,  6,  7,  0,  1,  2,  3,  4,
-	5,  6,  7,  0,  1,  2,  3, -1,  0,  1,  2,  3,  4,  5,  6,  7,
-	0,  1,  2,  3,  0,  1,  2,  3,  4,  5,  6,  7, -1, -1, -1, -1,
-	0,  8,  0,  8,  0,  8,  0,  8, -1, -1, -1, -1, -1, -1, -1, -1,
+	 5,  6,  7,  0,  1,  2,  3,  4,  5,  6,  7,  0,  1,  2,  3,  4,
+	 5,  6,  7,  0,  1,  2,  3, -1,  0,  1,  2,  3,  4,  5,  6,  7,
+	 0,  1,  2,  3,  0,  1,  2,  3,  4,  5,  6,  7, -1, -1, -1, -1,
+	 0,  8,  0,  8,  0,  8,  0,  8, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
 };
 
-static BYTE fastCacheCycleOne[]   = { 0xC3, 0xC4, 0xC5, 0xC6 };
-static BYTE fastCacheCycleTwo[]   = { 0xD0, 0xD1, 0xD2, 0xD3 };
-static BYTE midCacheCycleOne[]    = { 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE1, 0xE1, 0xE1, 0xE1, 0xE1, 0xE1, 0xE1, 0xE1 };
-static BYTE midCacheCycleTwo[]    = { 0xE2, 0xE2, 0xE2, 0xE2, 0xE2, 0xE2, 0xE2, 0xE2, 0xE3, 0xE3, 0xE3, 0xE3, 0xE3, 0xE3, 0xE3, 0xE3 };
-static BYTE midCacheCycleThree[]  = { 0xE4, 0xE4, 0xE4, 0xE4, 0xE4, 0xE4, 0xE4, 0xE4, 0xE5, 0xE5, 0xE5, 0xE5, 0xE5, 0xE5, 0xE5, 0xE5 };
-static BYTE midCacheCycleFour[]   = { 0xE6, 0xE6, 0xE6, 0xE6, 0xE6, 0xE6, 0xE6, 0xE6, 0xE7, 0xE7, 0xE7, 0xE7, 0xE7, 0xE7, 0xE7, 0xE7 };
-static BYTE slowCacheCycleOne[]   = { 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF };
-static BYTE slowCacheCycleTwo[]   = { 0xBB, 0xBC, 0xBD, 0xBE, 0xBF, 0xC0, 0xC1, 0xC2 };
-static BYTE slowCacheCycleThree[] = { 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA };
-static BYTE slowCacheCycleFour[]  = { 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xB2 };
-static BYTE slowCacheCycleFive[]  = { 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xDB };
+static BYTE shortCycleLightsRedYellow[] = { 0xC3, 0xC4, 0xC5, 0xC6 };
+static BYTE shortCycleBlueShimmer[]     = { 0xD0, 0xD1, 0xD2, 0xD3 };
+static BYTE longCycleRedBlinkLight[]    = { 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE1, 0xE1, 0xE1, 0xE1, 0xE1, 0xE1, 0xE1, 0xE1 };
+static BYTE longCycleYellowBlinkLight[] = { 0xE2, 0xE2, 0xE2, 0xE2, 0xE2, 0xE2, 0xE2, 0xE2, 0xE3, 0xE3, 0xE3, 0xE3, 0xE3, 0xE3, 0xE3, 0xE3 };
+static BYTE longCycleGreenBlinkLight[]  = { 0xE4, 0xE4, 0xE4, 0xE4, 0xE4, 0xE4, 0xE4, 0xE4, 0xE5, 0xE5, 0xE5, 0xE5, 0xE5, 0xE5, 0xE5, 0xE5 };
+static BYTE longCycleBlueBlinkLight[]   = { 0xE6, 0xE6, 0xE6, 0xE6, 0xE6, 0xE6, 0xE6, 0xE6, 0xE7, 0xE7, 0xE7, 0xE7, 0xE7, 0xE7, 0xE7, 0xE7 };
+static BYTE midCycleBlueShimmer[]       = { 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF };
+static BYTE midCycleBlueGreyLong[]      = { 0xBB, 0xBC, 0xBD, 0xBE, 0xBF, 0xC0, 0xC1, 0xC2 };
+static BYTE midCycleBlackGreyShort[]    = { 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA };
+static BYTE midCycleBlueGreyShort[]     = { 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xB2 };
+static BYTE midCycleEarthAndGreyTones[] = { 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xDB };
+
+#define SHORT_CYCLE 4
+#define MID_CYCLE   8
+#define LONG_CYCLE  16
 
 extern __int16 nCycleIdx;
 
@@ -179,17 +183,17 @@ static BYTE GetCycleColIdx(BYTE col, BYTE *pRange, int nCount, int nTarg, bool b
 
 static BYTE CyclePaletteIdx(BYTE colIdx, int cIdx) {
 	BYTE newIdx = colIdx;
-	newIdx = GetCycleColIdx(newIdx, fastCacheCycleOne, sizeof(fastCacheCycleOne), (cIdx % 4), false);
-	newIdx = GetCycleColIdx(newIdx, fastCacheCycleTwo, sizeof(fastCacheCycleTwo), (cIdx % 4), false);
-	newIdx = GetCycleColIdx(newIdx, midCacheCycleOne, sizeof(midCacheCycleOne), (cIdx % 16), false);
-	newIdx = GetCycleColIdx(newIdx, midCacheCycleTwo, sizeof(midCacheCycleTwo), (cIdx % 16), false);
-	newIdx = GetCycleColIdx(newIdx, midCacheCycleThree, sizeof(midCacheCycleThree), (cIdx % 16), false);
-	newIdx = GetCycleColIdx(newIdx, midCacheCycleFour, sizeof(midCacheCycleFour), (cIdx % 16), false);
-	newIdx = GetCycleColIdx(newIdx, slowCacheCycleOne, sizeof(slowCacheCycleOne), (cIdx % 8), true);
-	newIdx = GetCycleColIdx(newIdx, slowCacheCycleTwo, sizeof(slowCacheCycleTwo), (cIdx % 8), false);
-	newIdx = GetCycleColIdx(newIdx, slowCacheCycleThree, sizeof(slowCacheCycleThree), (cIdx % 8), false);
-	newIdx = GetCycleColIdx(newIdx, slowCacheCycleFour, sizeof(slowCacheCycleFour), (cIdx % 8), false);
-	newIdx = GetCycleColIdx(newIdx, slowCacheCycleFive, sizeof(slowCacheCycleFive), (cIdx % 8), false);
+	newIdx = GetCycleColIdx(newIdx, shortCycleLightsRedYellow, sizeof(shortCycleLightsRedYellow), (cIdx % SHORT_CYCLE), false);
+	newIdx = GetCycleColIdx(newIdx, shortCycleBlueShimmer, sizeof(shortCycleBlueShimmer), (cIdx % SHORT_CYCLE), false);
+	newIdx = GetCycleColIdx(newIdx, longCycleRedBlinkLight, sizeof(longCycleRedBlinkLight), (cIdx % LONG_CYCLE), false);
+	newIdx = GetCycleColIdx(newIdx, longCycleYellowBlinkLight, sizeof(longCycleYellowBlinkLight), (cIdx % LONG_CYCLE), false);
+	newIdx = GetCycleColIdx(newIdx, longCycleGreenBlinkLight, sizeof(longCycleGreenBlinkLight), (cIdx % LONG_CYCLE), false);
+	newIdx = GetCycleColIdx(newIdx, longCycleBlueBlinkLight, sizeof(longCycleBlueBlinkLight), (cIdx % LONG_CYCLE), false);
+	newIdx = GetCycleColIdx(newIdx, midCycleBlueShimmer, sizeof(midCycleBlueShimmer), (cIdx % MID_CYCLE), true);
+	newIdx = GetCycleColIdx(newIdx, midCycleBlueGreyLong, sizeof(midCycleBlueGreyLong), (cIdx % MID_CYCLE), false);
+	newIdx = GetCycleColIdx(newIdx, midCycleBlackGreyShort, sizeof(midCycleBlackGreyShort), (cIdx % MID_CYCLE), false);
+	newIdx = GetCycleColIdx(newIdx, midCycleBlueGreyShort, sizeof(midCycleBlueGreyShort), (cIdx % MID_CYCLE), false);
+	newIdx = GetCycleColIdx(newIdx, midCycleEarthAndGreyTones, sizeof(midCycleEarthAndGreyTones), (cIdx % MID_CYCLE), false);
 	return newIdx;
 }
 
@@ -221,12 +225,12 @@ static void Adjust_SpritePalette(BYTE *shapePtr, int cIdx, int nType) {
 				if (nType == PALCACHE_TYPE_CYCLE)
 					palIdx = CyclePaletteIdx(palIdx, cIdx);
 				else if (nType >= PALCACHE_TYPE_TREES_SEASON_AUTUMN && nType <= PALCACHE_TYPE_TREES_SEASON_SNOW) {
-					if ((nPos % 4) == 0 || (nPos % 4) == 2 || (nPos % 4) == 3) {
+					if ((nPos % SEQ_MODULUS) == 0 || (nPos % SEQ_MODULUS) == 2 || (nPos % SEQ_MODULUS) == 3) {
 						if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMN)
 							palIdx = ProcessTreeAutumnEffect(palIdx);
 						else if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW) {
 							palIdx = ProcessTreeAutumnEffect(palIdx);
-							if ((nPos % 4) != 2)
+							if ((nPos % SEQ_MODULUS) != 2)
 								palIdx = ProcessTreeSnowEffect(*spritePtr);
 						}
 						else if (nType == PALCACHE_TYPE_TREES_SEASON_SNOW)
@@ -239,11 +243,11 @@ static void Adjust_SpritePalette(BYTE *shapePtr, int cIdx, int nType) {
 					else if (nType == PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD)
 						palIdx = ProcessTerrainSnowIndex(palIdx, true);
 					else if (nType == PALCACHE_TYPE_WATER_ICE) {
-						if ((nPos % 4) == 2)
+						if ((nPos % SEQ_MODULUS) == 2)
 							palIdx = ProcessTerrainSnowIndex(palIdx, false);
 					}
 					else if (nType == PALCACHE_TYPE_WATER_ICE_BLIZZARD) {
-						if ((nPos % 4) == 1 || (nPos % 4) == 2)
+						if ((nPos % SEQ_MODULUS) == 1 || (nPos % SEQ_MODULUS) == 2)
 							palIdx = ProcessTerrainSnowIndex(palIdx, true);
 					}
 				}

@@ -67,6 +67,10 @@
 #define SCD_UPDATE_VIEW_UPDATE_WITHTILEINVERT  3
 #define SCD_UPDATE_VIEW_CHECKTILEINVERT        4
 
+// This is for grouping sequences of pixels
+// during encoded processing.
+#define SEQ_MODULUS 4
+
 // This will get the general RCI zone that's passed
 // without distinguishing between light/dense.
 #define GET_GENERAL_RCI_ZONE(x) ((x - 1) / 2)
@@ -3567,8 +3571,6 @@ GAMEOFF_ARR(BYTE,	nThingDirectionPosition,	0x4E8140)
 GAMEOFF_ARR(int,	nThingDirectionFlip,	0x4E8148)
 GAMEOFF_ARR(BYTE,	nThingZoomXDivisor,		0x4E8158)
 GAMEOFF_ARR(BYTE,	nThingZoomYDivisor,		0x4E815C)
-GAMEOFF_ARR(__int16,	iCycleOn,			0x4E84B8)
-GAMEOFF_ARR(__int16,	iCycleOff,			0x4E8520)
 GAMEOFF(WORD,	wDisasterWindy,				0x4E86B0)
 GAMEOFF(BOOL,	bCSimcityDocSC2InUse,		0x4E9744)
 GAMEOFF(BOOL,	bCSimcityDocSCNInUse,		0x4E9748)
