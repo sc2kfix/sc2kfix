@@ -50,13 +50,13 @@ std::vector<spriteCache_t> spriteCache;
 static void Delete_SpriteFrame_Cache(std::vector<spriteFrame_t> &sprFrame, DWORD nID, int nType) {
 	for (std::vector<spriteFrame_t>::iterator itFr = sprFrame.begin(); itFr != sprFrame.end();) {
 		if (itFr->pBuf) {
-			if (sprite_debug & SPRITE_DEBUG_CACHING)
-				ConsoleLog(LOG_DEBUG, "Delete_SpriteFrame_Cache(%d): (%d) clear sprite frame (%d)\n", nType, nID, itFr->nFrID);
 			free(itFr->pBuf);
 			itFr->pBuf = 0;
 		}
 		itFr = sprFrame.erase(itFr);
 	}
+
+	sprFrame.clear();
 }
 
 static void Delete_Sprite_Cache(spriteCache_t *pSpriteCache) {
@@ -72,17 +72,11 @@ static void Delete_Sprite_Cache(spriteCache_t *pSpriteCache) {
 }
 
 void Clear_SpriteCache() {
-	if (sprite_debug & SPRITE_DEBUG_CACHING)
-		ConsoleLog(LOG_DEBUG, "Clear_SpriteCache(): Start - %d\n", spriteCache.size());
-
 	for (unsigned i = 0; i < spriteCache.size(); ++i) {
 		Delete_Sprite_Cache(&spriteCache[i]);
 	}
 
 	spriteCache.clear();
-
-	if (sprite_debug & SPRITE_DEBUG_CACHING)
-		ConsoleLog(LOG_DEBUG, "Clear_SpriteCache(): Finish - %d\n", spriteCache.size());
 }
 
 static void Init_SpriteCache(bool bReload) {
@@ -96,7 +90,7 @@ static void Init_SpriteCache(bool bReload) {
 	}
 }
 
-static bool Scan_Sprite(BYTE *shapePtr, __int16 right, __int16 bottom) {
+static bool Scan_Sprite(BYTE *shapePtr) {
 	BYTE *spritePtr;
 	BYTE nCount;
 	BYTE nChunkMode;
@@ -313,7 +307,7 @@ static void Snow_SpritePalette_Grass(DWORD nID, spriteFrame_t *pSpriteFrame, int
 static void Cache_Sprite(DWORD nID, BYTE *pSpriteBuf, int nSize, WORD wHeight, WORD wWidth) {
 	Delete_Sprite_Cache(&spriteCache[nID]);
 
-	bool bCycling = (!bLoColor) ? Scan_Sprite(pSpriteBuf, wHeight, wWidth) : false;
+	bool bCycling = (!bLoColor) ? Scan_Sprite(pSpriteBuf) : false;
 
 	for (int nFrm = 0; nFrm < CACHED_FRAMES; ++nFrm) {
 		if (!bCycling && nFrm > 0)
@@ -358,7 +352,7 @@ BYTE *Get_SpriteFrame_Buffer(std::vector<spriteFrame_t> &frameCache, BYTE *pSpri
 BYTE *Get_SpriteCache_BaseBuffer(sprite_header_t *pShapePtr, __int16 nSpriteID) {
 	BYTE *pSpriteBuf;
 
-	if (pShapePtr->wHeight > 0) {
+	if (pShapePtr->wHeight > 1) {
 		if (bFrequentUpdates) {
 			pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, 0);
 			if (pSpriteBuf)
@@ -374,7 +368,7 @@ BYTE *Get_SpriteCache_Buffer(sprite_header_t *pShapePtr, __int16 nSpriteID) {
 	int iCityMonth = dwCityDays / 25 % 12;
 	BYTE *pSpriteBuf;
 
-	if (pShapePtr->wHeight > 0) {
+	if (pShapePtr->wHeight > 1) {
 		if (bFrequentUpdates) {
 			int nFrmIdx = nCycleIdx % CACHED_FRAMES;
 			if (nFrmIdx < 0)
@@ -443,7 +437,7 @@ BYTE *Get_SpriteCache_Buffer(sprite_header_t *pShapePtr, __int16 nSpriteID) {
 WORD Get_SpriteCache_Height(sprite_header_t *pShapePtr, __int16 nSpriteID) {
 	BYTE *pSpriteBuf;
 
-	if (pShapePtr->wHeight > 0) {
+	if (pShapePtr->wHeight > 1) {
 		if (bFrequentUpdates) {
 			pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, 0);
 			if (pSpriteBuf)
@@ -457,7 +451,7 @@ WORD Get_SpriteCache_Height(sprite_header_t *pShapePtr, __int16 nSpriteID) {
 WORD Get_SpriteCache_Width(sprite_header_t *pShapePtr, __int16 nSpriteID) {
 	BYTE *pSpriteBuf;
 
-	if (pShapePtr->wHeight > 0) {
+	if (pShapePtr->wHeight > 1) {
 		if (bFrequentUpdates) {
 			pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, 0);
 			if (pSpriteBuf)
