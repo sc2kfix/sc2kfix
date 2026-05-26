@@ -1433,23 +1433,23 @@ static BYTE ProcessTreeAutumnEffect(BYTE colIdx) {
 
 int iForcedSeason = FORCED_SEASON_NONE;
 
-static bool UndergroundSprites(DWORD nID) {
+static bool UndergroundSpritesCheck(DWORD nID) {
 	return GET_OVERALL_SPRITE_RANGE(nID, SPRITE_SMALL_UNDERGROUND_TERRAIN, SPRITE_SMALL_SUBWAYENTRANCE) ? true : false;
 }
 
-static bool TreeSprites(DWORD nID) {
+static bool TreeSpritesCheck(DWORD nID) {
 	return GET_OVERALL_SPRITE_RANGE(nID, SPRITE_SMALL_TREES1, SPRITE_SMALL_TREES7) ? true : false;
 }
 
-static bool TerrainSprites(DWORD nID) {
+static bool TerrainSpritesCheck(DWORD nID) {
 	return GET_OVERALL_SPRITE_RANGE(nID, SPRITE_SMALL_TERRAIN, SPRITE_SMALL_SEAPORTZONE) ? true : false;
 }
 
-static bool DeepWaterSprite(DWORD nID) {
+static bool DeepWaterSpriteCheck(DWORD nID) {
 	return GET_OVERALL_SPRITE(nID, SPRITE_SMALL_WATER_TRBL) ? true : false;
 }
 
-static bool ObjectGrassSprites(DWORD nID) {
+static bool ObjectGrassSpritesCheck(DWORD nID) {
 	return ((GET_OVERALL_SPRITE_RANGE(nID, SPRITE_SMALL_RESIDENTIAL_1X1_LOWERCLASSHOMES1, SPRITE_SMALL_SERVICES_STATUE) ||
 		GET_OVERALL_SPRITE(nID, SPRITE_SMALL_INFRASTRUCTURE_MAYORSHOUSE) || GET_OVERALL_SPRITE(nID, SPRITE_SMALL_INFRASTRUCTURE_LIBRARY) ||
 		GET_OVERALL_SPRITE(nID, SPRITE_SMALL_SMALLPARK) || GET_OVERALL_SPRITE(nID, SPRITE_SMALL_INFRASTRUCTURE_WATERPUMP) ||
@@ -1701,15 +1701,15 @@ void Cache_Sprite(DWORD nID, BYTE *pSpriteBuf, int nSize, WORD wHeight, WORD wWi
 		// Cycling (or only frame for non-cycling cases)
 		Create_SpriteNew(spriteCache[nID].sprFrame, pSpriteBuf, nSize, wHeight, wWidth, nFrm, ((bCycling) ? PALCACHE_TYPE_CYCLE : PALCACHE_TYPE_NONE));
 		if (!bLoColor && !bOnTheFlyPalIdx) {
-			if (TreeSprites(nID))
+			if (TreeSpritesCheck(nID))
 				Season_SpritePalette_Trees(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
-			else if (TerrainSprites(nID)) {
-				if (DeepWaterSprite(nID))
+			else if (TerrainSpritesCheck(nID)) {
+				if (DeepWaterSpriteCheck(nID))
 					Snow_SpritePalette_DeepWater(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
 				else
 					Snow_SpritePalette_Terrain(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
 			}
-			else if (ObjectGrassSprites(nID)) {
+			else if (ObjectGrassSpritesCheck(nID)) {
 				Snow_SpritePalette_Grass(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
 			}
 		}
@@ -1752,7 +1752,7 @@ static BYTE *Get_SpriteCache_Buffer(sprite_header_t *pShapePtr, __int16 nSpriteI
 			BYTE *pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, nFrmIdx);
 			if (pSpriteBuf) {
 				if (bWeatherEffects && !bLoColor && !bOnTheFlyPalIdx) {
-					if (TreeSprites(nSpriteID)) {
+					if (TreeSpritesCheck(nSpriteID)) {
 						if (WeatherCheck())
 							nType = PALCACHE_TYPE_TREES_SEASON_SNOW;
 
@@ -1766,9 +1766,9 @@ static BYTE *Get_SpriteCache_Buffer(sprite_header_t *pShapePtr, __int16 nSpriteI
 						else if (nType == PALCACHE_TYPE_TREES_SEASON_SNOW)
 							return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonSnowFrame, pSpriteBuf, nFrmIdx);
 					}
-					else if (TerrainSprites(nSpriteID)) {
+					else if (TerrainSpritesCheck(nSpriteID)) {
 						if (WeatherCheck()) {
-							if (DeepWaterSprite(nSpriteID)) {
+							if (DeepWaterSpriteCheck(nSpriteID)) {
 								nType = (BlizzardCheck()) ? PALCACHE_TYPE_WATER_ICE_BLIZZARD : PALCACHE_TYPE_WATER_ICE;
 								if (nType == PALCACHE_TYPE_WATER_ICE)
 									return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprDeepWaterIceFrame, pSpriteBuf, nFrmIdx);
@@ -1784,7 +1784,7 @@ static BYTE *Get_SpriteCache_Buffer(sprite_header_t *pShapePtr, __int16 nSpriteI
 							}
 						}
 					}
-					else if (ObjectGrassSprites(nSpriteID)) {
+					else if (ObjectGrassSpritesCheck(nSpriteID)) {
 						if (WeatherCheck()) {
 							nType = PALCACHE_GRASS_SNOW; // Yes I know.. this is the only option here currently.
 							if (nType == PALCACHE_GRASS_SNOW)
@@ -1843,7 +1843,7 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 
 	if (bFrequentUpdates && bWeatherEffects && !bLoColor && bOnTheFlyPalIdx) {
 		// Accumulate snow or fading on trees
-		if (TreeSprites(nSpriteID)) {
+		if (TreeSpritesCheck(nSpriteID)) {
 			if ((nPos % SEQ_MODULUS) == 0 || (nPos % SEQ_MODULUS) == 2 || (nPos % SEQ_MODULUS) == 3) {
 				BOOL bIgnore = FALSE;
 				if ((nPos % SEQ_MODULUS) == 2)
@@ -1855,10 +1855,10 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 		// Handle snow-related tile stuff
 		if (WeatherCheck()) {
 			// Accumulate snow on ground
-			if (TerrainSprites(nSpriteID)) {
+			if (TerrainSpritesCheck(nSpriteID)) {
 				if (WeatherCheck()) {
 					// Handle deep water differently.
-					if (DeepWaterSprite(nSpriteID)) {
+					if (DeepWaterSpriteCheck(nSpriteID)) {
 						if (((nPos % SEQ_MODULUS) == 1 && BlizzardCheck()) || (nPos % SEQ_MODULUS) == 2)
 							palIdx = ProcessTerrainSnowIndex(palIdx, BlizzardCheck());
 					}
@@ -1872,7 +1872,7 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 			}
 
 			// Accumulate snow on grass
-			else if (ObjectGrassSprites(nSpriteID)) {
+			else if (ObjectGrassSpritesCheck(nSpriteID)) {
 				palIdx = ProcessBuildingSnowIndex(palIdx);
 			}
 		}
@@ -1891,7 +1891,7 @@ static BYTE AdjustInversion(__int16 nSpriteID, BYTE palIdx) {
 	// required is to increment by 0x20 to get it back into
 	// range.
 	BOOL bPalOffset = TRUE;
-	if (UndergroundSprites(nSpriteID)) {
+	if (UndergroundSpritesCheck(nSpriteID)) {
 		if (bDarkUnderground)
 			bPalOffset = FALSE;
 	}
@@ -1905,7 +1905,7 @@ static BYTE CheckInversion(__int16 nSpriteID, BYTE palIdx) {
 	BYTE newIdx = palIdx;
 	
 	BOOL bPalOffset = TRUE;
-	if (UndergroundSprites(nSpriteID)) {
+	if (UndergroundSpritesCheck(nSpriteID)) {
 		if (bDarkUnderground)
 			bPalOffset = FALSE;
 	}
