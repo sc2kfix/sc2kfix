@@ -16,8 +16,6 @@
 
 extern BOOL PrepareDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect);
 
-extern HWND hWndExt;
-
 BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	HWND hWndCombo;
 	CMFC3XRect cmdRect, dlgRect, paintRect;
@@ -165,23 +163,11 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 						GET_WM_COMMAND_CMD(wParam, lParam) == CBN_SELENDOK ||
 						GET_WM_COMMAND_CMD(wParam, lParam) == CBN_SELENDCANCEL) {
 						UpdateWindow(hwndDlg);
-						// Set again in-order for palette animation/cycling redrawing
-						// to resume.
-						if (!hWndExt)
-							hWndExt = hwndDlg;
 						return TRUE;
-					}
-					else if (GET_WM_COMMAND_CMD(wParam, lParam) == CBN_DROPDOWN) {
-						// Temporarily unset in-order to avoid the palette
-						// animation/cycling redraw.
-						hWndExt = 0;
 					}
 					return FALSE;
 				case IDC_SPRITEBROWSER_SELBUT:
 					if (GET_WM_COMMAND_CMD(wParam, lParam) == BN_CLICKED) {
-						if (!hWndExt)
-							hWndExt = hwndDlg;
-
 						hWndCombo = GetDlgItem(hwndDlg, IDC_SPRITEBROWSER_COMBOCTRL);
 
 						memset(szSprIDEnt, 0, sizeof(szSprIDEnt));
@@ -228,7 +214,6 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 			}
 
 			case WM_DESTROY:
-				hWndExt = 0;
 				if (pQueriedTileImageSmall) {
 					pQueriedTileImageSmall->DeleteStored_SC2K1996();
 					delete pQueriedTileImageSmall;

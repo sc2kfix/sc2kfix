@@ -51,8 +51,6 @@ enum {
 #define MDRAWING_DEBUG DEBUG_FLAGS_EVERYTHING
 #endif
 
-extern HWND hWndExt;
-
 extern BOOL bMapWireFrame;
 
 UINT mdrawing_debug = MDRAWING_DEBUG;
@@ -1161,11 +1159,15 @@ extern "C" void __stdcall Hook_SimcityView_DrawHouse() {
 	L_DrawHouse_SC2K1996(pThis, FALSE);
 }
 
-extern __int16 nFastCyclePos;
-extern __int16 nMidCyclePos;
-extern __int16 nSlowCyclePos;
+// Cycling and palette swap tables/maps - related vars
 
-int cycleIndices[256] = {
+#define SHORT_CYCLE 4
+#define MID_CYCLE   8
+#define LONG_CYCLE  16
+
+extern __int16 nCycleIdx;
+
+static int cycleCacheIndices[256] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -1178,54 +1180,58 @@ int cycleIndices[256] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0,  1,  2,  3,  4, 
 	 5,  6,  7,  0,  1,  2,  3,  4,  5,  6,  7,  0,  1,  2,  3,  4,
-	 5,  6,  7,  3,  2,  1,  0, -1,  7,  6,  5,  4,  3,  2,  1,  0,
-	 0,  1,  2,  3,  7,  6,  5,  4,  3,  2,  1,  0, -1, -1, -1, -1,
-	 0,  1,  0,  1,  0,  1,  0,  1, -1, -1, -1, -1, -1, -1, -1, -1,
+	 5,  6,  7,  0,  1,  2,  3, -1,  0,  1,  2,  3,  4,  5,  6,  7,
+	 0,  1,  2,  3,  0,  1,  2,  3,  4,  5,  6,  7, -1, -1, -1, -1,
+	 0,  8,  0,  8,  0,  8,  0,  8, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
 };
 
-BYTE fastCycleOne[]   = { 0xC6, 0xC5, 0xC4, 0xC3 };
-BYTE fastCycleTwo[]   = { 0xD0, 0xD1, 0xD2, 0xD3 };
-BYTE midCycleOne[]    = { 0xE0, 0xE1 };
-BYTE midCycleTwo[]    = { 0xE2, 0xE3 };
-BYTE midCycleThree[]  = { 0xE4, 0xE5 };
-BYTE midCycleFour[]   = { 0xE6, 0xE7 };
-BYTE slowCycleOne[]   = { 0xCF, 0xCE, 0xCD, 0xCC, 0xCB, 0xCA, 0xC9, 0xC8 };
-BYTE slowCycleTwo[]   = { 0xBB, 0xBC, 0xBD, 0xBE, 0xBF, 0xC0, 0xC1, 0xC2 };
-BYTE slowCycleThree[] = { 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA };
-BYTE slowCycleFour[]  = { 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xB2 };
-BYTE slowCycleFive[]  = { 0xDB, 0xDA, 0xD9, 0xD8, 0xD7, 0xD6, 0xD5, 0xD4 };
+static BYTE shortCycleLightsRedYellow[] = { 0xC3, 0xC4, 0xC5, 0xC6 };
+static BYTE shortCycleBlueShimmer[]     = { 0xD0, 0xD1, 0xD2, 0xD3 };
+static BYTE longCycleRedBlinkLight[]    = { 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE1, 0xE1, 0xE1, 0xE1, 0xE1, 0xE1, 0xE1, 0xE1 };
+static BYTE longCycleYellowBlinkLight[] = { 0xE2, 0xE2, 0xE2, 0xE2, 0xE2, 0xE2, 0xE2, 0xE2, 0xE3, 0xE3, 0xE3, 0xE3, 0xE3, 0xE3, 0xE3, 0xE3 };
+static BYTE longCycleGreenBlinkLight[]  = { 0xE4, 0xE4, 0xE4, 0xE4, 0xE4, 0xE4, 0xE4, 0xE4, 0xE5, 0xE5, 0xE5, 0xE5, 0xE5, 0xE5, 0xE5, 0xE5 };
+static BYTE longCycleBlueBlinkLight[]   = { 0xE6, 0xE6, 0xE6, 0xE6, 0xE6, 0xE6, 0xE6, 0xE6, 0xE7, 0xE7, 0xE7, 0xE7, 0xE7, 0xE7, 0xE7, 0xE7 };
+static BYTE midCycleBlueShimmer[]       = { 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF };
+static BYTE midCycleBlueGreyLong[]      = { 0xBB, 0xBC, 0xBD, 0xBE, 0xBF, 0xC0, 0xC1, 0xC2 };
+static BYTE midCycleBlackGreyShort[]    = { 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA };
+static BYTE midCycleBlueGreyShort[]     = { 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xB2 };
+static BYTE midCycleEarthAndGreyTones[] = { 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xDB };
 
-BYTE GetCycleColIndex(BYTE col, BYTE *pRange, int nCount, int nTarg) {
+static BYTE GetCycleColIdx(BYTE col, BYTE *pRange, int nCount, int nTarg, bool bRev) {
 	BYTE newCol = col;
 	if (nTarg) {
-		int nIdx = cycleIndices[col];
-		if (nIdx >= 0 && pRange[nIdx] == col) {
-			nIdx = (nIdx + nTarg) % nCount;
-			if (nIdx < 0)
-				nIdx = -nIdx;
-			newCol = pRange[nIdx];
+		int nIdx = cycleCacheIndices[col];
+		if (nIdx >= 0) {
+			if (pRange[nIdx] == col) {
+				if (bRev)
+					nIdx = (nIdx - nTarg) & nCount - 1;
+				else
+					nIdx = (nIdx + nTarg) & nCount - 1;
+				if (nIdx < 0)
+					nIdx = -nIdx;
+				newCol = pRange[nIdx];
+			}
 		}
 	}
 	return newCol;
 }
 
-static BYTE ProcessCyclingIndex(BYTE colIdx) {
+static BYTE CyclePaletteIdx(BYTE colIdx, int cIdx) {
 	BYTE newIdx = colIdx;
-	newIdx = GetCycleColIndex(newIdx, fastCycleOne, sizeof(fastCycleOne), (nFastCyclePos % 4));
-	newIdx = GetCycleColIndex(newIdx, fastCycleTwo, sizeof(fastCycleTwo), (nFastCyclePos % 4));
-	newIdx = GetCycleColIndex(newIdx, midCycleOne, sizeof(midCycleOne), (nMidCyclePos % 2));
-	newIdx = GetCycleColIndex(newIdx, midCycleTwo, sizeof(midCycleTwo), (nMidCyclePos % 2));
-	newIdx = GetCycleColIndex(newIdx, midCycleThree, sizeof(midCycleThree), (nMidCyclePos % 2));
-	newIdx = GetCycleColIndex(newIdx, midCycleFour, sizeof(midCycleFour), (nMidCyclePos % 2));
-	newIdx = GetCycleColIndex(newIdx, slowCycleOne, sizeof(slowCycleOne), (nSlowCyclePos % 8));
-	newIdx = GetCycleColIndex(newIdx, slowCycleTwo, sizeof(slowCycleTwo), (nSlowCyclePos % 8));
-	newIdx = GetCycleColIndex(newIdx, slowCycleThree, sizeof(slowCycleThree), (nSlowCyclePos % 8));
-	newIdx = GetCycleColIndex(newIdx, slowCycleFour, sizeof(slowCycleFour), (nSlowCyclePos % 8));
-	newIdx = GetCycleColIndex(newIdx, slowCycleFive, sizeof(slowCycleFive), (nSlowCyclePos % 8));
+	newIdx = GetCycleColIdx(newIdx, shortCycleLightsRedYellow, sizeof(shortCycleLightsRedYellow), (cIdx % SHORT_CYCLE), false);
+	newIdx = GetCycleColIdx(newIdx, shortCycleBlueShimmer, sizeof(shortCycleBlueShimmer), (cIdx % SHORT_CYCLE), false);
+	newIdx = GetCycleColIdx(newIdx, longCycleRedBlinkLight, sizeof(longCycleRedBlinkLight), (cIdx % LONG_CYCLE), false);
+	newIdx = GetCycleColIdx(newIdx, longCycleYellowBlinkLight, sizeof(longCycleYellowBlinkLight), (cIdx % LONG_CYCLE), false);
+	newIdx = GetCycleColIdx(newIdx, longCycleGreenBlinkLight, sizeof(longCycleGreenBlinkLight), (cIdx % LONG_CYCLE), false);
+	newIdx = GetCycleColIdx(newIdx, longCycleBlueBlinkLight, sizeof(longCycleBlueBlinkLight), (cIdx % LONG_CYCLE), false);
+	newIdx = GetCycleColIdx(newIdx, midCycleBlueShimmer, sizeof(midCycleBlueShimmer), (cIdx % MID_CYCLE), true);
+	newIdx = GetCycleColIdx(newIdx, midCycleBlueGreyLong, sizeof(midCycleBlueGreyLong), (cIdx % MID_CYCLE), false);
+	newIdx = GetCycleColIdx(newIdx, midCycleBlackGreyShort, sizeof(midCycleBlackGreyShort), (cIdx % MID_CYCLE), false);
+	newIdx = GetCycleColIdx(newIdx, midCycleBlueGreyShort, sizeof(midCycleBlueGreyShort), (cIdx % MID_CYCLE), false);
+	newIdx = GetCycleColIdx(newIdx, midCycleEarthAndGreyTones, sizeof(midCycleEarthAndGreyTones), (cIdx % MID_CYCLE), true);
 	return newIdx;
 }
-
 
 std::map<BYTE, BYTE> mapTerrainSnowIndexMap = {
 	// Ground tiles
@@ -1276,7 +1282,7 @@ static BYTE ProcessTerrainBlizzardIndexMap(BYTE colIdx) {
 		return colIdx;
 }
 
-static BYTE ProcessTerrainSnowIndex(BYTE colIdx, bool bBlizzard) {
+BYTE ProcessTerrainSnowIndex(BYTE colIdx, bool bBlizzard) {
 	if (EFFECTS_USE_MAP_SLOW)
 		return (bBlizzard ? ProcessTerrainBlizzardIndexMap(colIdx) : ProcessTerrainSnowIndexMap(colIdx));
 	BYTE newIdx = colIdx;
@@ -1328,7 +1334,7 @@ static BYTE ProcessBuildingSnowIndexMap(BYTE colIdx) {
 	return colIdx;
 }
 
-static inline BYTE ProcessBuildingSnowIndex(BYTE colIdx) {
+static BYTE ProcessBuildingSnowIndex(BYTE colIdx) {
 	if (EFFECTS_USE_MAP_SLOW)
 		return ProcessBuildingSnowIndexMap(colIdx);
 
@@ -1423,21 +1429,410 @@ static BYTE ProcessTreeAutumnEffect(BYTE colIdx) {
 	return newIdx;
 }
 
+// Sprite, season and weather checks
+
 int iForcedSeason = FORCED_SEASON_NONE;
 
-static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
+static bool UndergroundSpritesCheck(DWORD nID) {
+	return GET_OVERALL_SPRITE_RANGE(nID, SPRITE_SMALL_UNDERGROUND_TERRAIN, SPRITE_SMALL_SUBWAYENTRANCE) ? true : false;
+}
+
+static bool TreeSpritesCheck(DWORD nID) {
+	return GET_OVERALL_SPRITE_RANGE(nID, SPRITE_SMALL_TREES1, SPRITE_SMALL_TREES7) ? true : false;
+}
+
+static bool TerrainSpritesCheck(DWORD nID) {
+	return GET_OVERALL_SPRITE_RANGE(nID, SPRITE_SMALL_TERRAIN, SPRITE_SMALL_SEAPORTZONE) ? true : false;
+}
+
+static bool DeepWaterSpriteCheck(DWORD nID) {
+	return GET_OVERALL_SPRITE(nID, SPRITE_SMALL_WATER_TRBL) ? true : false;
+}
+
+static bool ObjectGrassSpritesCheck(DWORD nID) {
+	return ((GET_OVERALL_SPRITE_RANGE(nID, SPRITE_SMALL_RESIDENTIAL_1X1_LOWERCLASSHOMES1, SPRITE_SMALL_SERVICES_STATUE) ||
+		GET_OVERALL_SPRITE(nID, SPRITE_SMALL_INFRASTRUCTURE_MAYORSHOUSE) || GET_OVERALL_SPRITE(nID, SPRITE_SMALL_INFRASTRUCTURE_LIBRARY) ||
+		GET_OVERALL_SPRITE(nID, SPRITE_SMALL_SMALLPARK) || GET_OVERALL_SPRITE(nID, SPRITE_SMALL_INFRASTRUCTURE_WATERPUMP) ||
+		GET_OVERALL_SPRITE(nID, SPRITE_SMALL_INFRASTRUCTURE_CHURCH)) &&
+		!GET_OVERALL_SPRITE(nID, SPRITE_SMALL_INDUSTRIAL_2X2_FACTORY2) && !GET_OVERALL_SPRITE(nID, SPRITE_SMALL_INDUSTRIAL_3X3_THINGAMAJIG)) ? true : false;
+}
+
+static bool SnowCheck() {
+	return (bWeatherTrend == WEATHER_TREND_SNOW || iForcedSeason == FORCED_SEASON_SNOW) ? true : false;
+}
+
+static bool BlizzardCheck() {
+	return (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD) ? true : false;
+}
+
+static bool WeatherCheck() {
+	return (SnowCheck() || BlizzardCheck()) ? true : false;
+}
+
+static bool AutWintSeasonCheck() {
 	int iCityMonth = dwCityDays / 25 % 12;
 
+	// zero-based: 0-2 (Jan-Mar), 9-11 (Oct-Dec)
+	return ((iCityMonth >= 0 && iCityMonth <= 2) || (iCityMonth >= 9 && iCityMonth <= 11) ||
+		iForcedSeason == FORCED_SEASON_AUTUMN || iForcedSeason == FORCED_SEASON_WINTER) ? true : false;
+}
+
+// Sprite Caching
+
+#define PALCACHE_TYPE_NONE                    -1
+#define PALCACHE_TYPE_CYCLE                    0
+#define PALCACHE_TYPE_TREES_SEASON_AUTUMN      1
+#define PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW  2
+#define PALCACHE_TYPE_TREES_SEASON_SNOW        3
+#define PALCACHE_TYPE_TERRAIN_SNOW             4
+#define PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD    5
+#define PALCACHE_TYPE_WATER_ICE                6
+#define PALCACHE_TYPE_WATER_ICE_BLIZZARD       7
+#define PALCACHE_GRASS_SNOW                    8
+
+#define CACHED_FRAMES 16
+
+// This is for grouping sequences of pixels
+// during encoded processing.
+#define SEQ_MODULUS 4
+
+static std::vector<spriteCache_t> spriteCache;
+
+static void Delete_SpriteFrame_Cache(std::vector<spriteFrame_t> &sprFrame, DWORD nID, int nType) {
+	for (std::vector<spriteFrame_t>::iterator itFr = sprFrame.begin(); itFr != sprFrame.end();) {
+		if (itFr->pBuf) {
+			free(itFr->pBuf);
+			itFr->pBuf = 0;
+		}
+		itFr = sprFrame.erase(itFr);
+	}
+
+	sprFrame.clear();
+}
+
+static void Delete_Sprite_Cache(spriteCache_t *pSpriteCache) {
+	Delete_SpriteFrame_Cache(pSpriteCache->sprFrame, pSpriteCache->nID, PALCACHE_TYPE_CYCLE);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprSeasonAutumnFrame, pSpriteCache->nID, PALCACHE_TYPE_TREES_SEASON_AUTUMN);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprSeasonAutumnSnowFrame, pSpriteCache->nID, PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprSeasonSnowFrame, pSpriteCache->nID, PALCACHE_TYPE_TREES_SEASON_SNOW);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprTerrainSnowFrame, pSpriteCache->nID, PALCACHE_TYPE_TERRAIN_SNOW);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprTerrainBlizzardFrame, pSpriteCache->nID, PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprDeepWaterIceFrame, pSpriteCache->nID, PALCACHE_TYPE_WATER_ICE);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprDeepWaterBlizzardFrame, pSpriteCache->nID, PALCACHE_TYPE_WATER_ICE_BLIZZARD);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprGrassSnowFrame, pSpriteCache->nID, PALCACHE_GRASS_SNOW);
+}
+
+void Clear_SpriteCache() {
+	for (unsigned i = 0; i < spriteCache.size(); ++i) {
+		Delete_Sprite_Cache(&spriteCache[i]);
+	}
+
+	spriteCache.clear();
+}
+
+void Init_SpriteCache(bool bReload) {
+	if (bReload)
+		Clear_SpriteCache();
+
+	spriteCache_t sprCacheEnt;
+	for (int i = 0; i < SPRITE_COUNT; ++i) {
+		sprCacheEnt.nID = i;
+		spriteCache.push_back(sprCacheEnt);
+	}
+}
+
+static bool Scan_Sprite(BYTE *shapePtr) {
+	BYTE *spritePtr;
+	BYTE nCount;
+	BYTE nChunkMode;
+
+	spritePtr = shapePtr;
+	while (TRUE) {
+		nCount = SPRITEDATA(spritePtr)->nCount;
+		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
+		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
+		switch (nChunkMode) {
+		case MIF_CM_EMPTY:
+			continue;
+		case MIF_CM_NEWROWSTART:
+			break;
+		case MIF_CM_SKIPPIXELS:
+			break;
+		case MIF_CM_PROCPIXELS:
+			for (int nPos = nCount; nPos; ++spritePtr) {
+				// Scan for the presence of any cycling palette index.
+				if ((*spritePtr >= 0xAB && *spritePtr <= 0xC6) || (*spritePtr >= 0xC8 && *spritePtr <= 0xDB) || (*spritePtr >= 0xE0 && *spritePtr <= 0xE7))
+					return true;
+				--nPos;
+			}
+			if ((nCount & 1) != 0)
+				++spritePtr;
+			break;
+		default:
+			return false;
+		}
+	}
+
+	return false;
+}
+
+static void Adjust_SpritePalette(BYTE *shapePtr, int cIdx, int nType) {
+	BYTE *spritePtr;
+	BYTE nCount;
+	BYTE nChunkMode;
+
+	spritePtr = shapePtr;
+	while (TRUE) {
+		nCount = SPRITEDATA(spritePtr)->nCount;
+		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
+		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
+		switch (nChunkMode) {
+		case MIF_CM_EMPTY:
+			continue;
+		case MIF_CM_NEWROWSTART:
+			break;
+		case MIF_CM_SKIPPIXELS:
+			break;
+		case MIF_CM_PROCPIXELS:
+			for (int nPos = nCount; nPos; ++spritePtr) {
+				BYTE palIdx = *spritePtr;
+				if (nType == PALCACHE_TYPE_CYCLE)
+					palIdx = CyclePaletteIdx(palIdx, cIdx);
+				else if (nType >= PALCACHE_TYPE_TREES_SEASON_AUTUMN && nType <= PALCACHE_TYPE_TREES_SEASON_SNOW) {
+					if ((nPos % SEQ_MODULUS) == 0 || (nPos % SEQ_MODULUS) == 2 || (nPos % SEQ_MODULUS) == 3) {
+						if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMN)
+							palIdx = ProcessTreeAutumnEffect(palIdx);
+						else if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW) {
+							palIdx = ProcessTreeAutumnEffect(palIdx);
+							if ((nPos % SEQ_MODULUS) != 2)
+								palIdx = ProcessTreeSnowEffect(*spritePtr);
+						}
+						else if (nType == PALCACHE_TYPE_TREES_SEASON_SNOW)
+							palIdx = ProcessTreeSnowEffect(palIdx);
+					}
+				}
+				else if (nType >= PALCACHE_TYPE_TERRAIN_SNOW && nType <= PALCACHE_TYPE_WATER_ICE_BLIZZARD) {
+					if (nType == PALCACHE_TYPE_TERRAIN_SNOW)
+						palIdx = ProcessTerrainSnowIndex(palIdx, false);
+					else if (nType == PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD)
+						palIdx = ProcessTerrainSnowIndex(palIdx, true);
+					else if (nType == PALCACHE_TYPE_WATER_ICE) {
+						if ((nPos % SEQ_MODULUS) == 2)
+							palIdx = ProcessTerrainSnowIndex(palIdx, false);
+					}
+					else if (nType == PALCACHE_TYPE_WATER_ICE_BLIZZARD) {
+						if ((nPos % SEQ_MODULUS) == 1 || (nPos % SEQ_MODULUS) == 2)
+							palIdx = ProcessTerrainSnowIndex(palIdx, true);
+					}
+				}
+				else if (nType == PALCACHE_GRASS_SNOW)
+					palIdx = ProcessBuildingSnowIndex(palIdx);
+				*spritePtr = palIdx;
+				--nPos;
+			}
+			if ((nCount & 1) != 0)
+				++spritePtr;
+			break;
+		default:
+			return;
+		}
+	}
+}
+
+static void Create_SpriteNew(std::vector<spriteFrame_t> &frameCache, BYTE *pSpriteBuf, int nSize, WORD wHeight, WORD wWidth, int nFrm, int nType) {
+	spriteFrame_t sprFrame;
+	int cIdx = (nType == PALCACHE_TYPE_CYCLE) ? nFrm : 0;
+
+	memset(&sprFrame, 0, sizeof(sprFrame));
+	sprFrame.nFrID = nFrm;
+	sprFrame.wHeight = wHeight;
+	sprFrame.wWidth = wWidth;
+	sprFrame.nSize = nSize;
+	sprFrame.pBuf = (BYTE *)malloc(nSize);
+	if (sprFrame.pBuf) {
+		memcpy(sprFrame.pBuf, pSpriteBuf, nSize);
+		if (nType > PALCACHE_TYPE_NONE)
+			Adjust_SpritePalette(sprFrame.pBuf, cIdx, nType);
+	}
+	else {
+		ConsoleLog(LOG_ERROR, "Create_SpriteNew(%d, %u, %u, %d, %d): Allocation failed for sprite frame.\n", nSize, wHeight, wWidth, nFrm, nType);
+		sprFrame.pBuf = 0;
+	}
+	// Push even if allocation fails.
+	frameCache.push_back(sprFrame);
+}
+
+static void Create_SpriteFrame(std::vector<spriteFrame_t> &frameCache, spriteFrame_t *pSpriteFrame, int cIdx, int nType) {
+	Create_SpriteNew(frameCache, pSpriteFrame->pBuf, pSpriteFrame->nSize, pSpriteFrame->wHeight, pSpriteFrame->wWidth, cIdx, nType);
+}
+
+static void Season_SpritePalette_Trees(DWORD nID, spriteFrame_t *pSpriteFrame, int nFrmID) {
+	// Cache accumulated snow or fading/browning on trees
+	Create_SpriteFrame(spriteCache[nID].sprSeasonAutumnFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_TREES_SEASON_AUTUMN);
+	Create_SpriteFrame(spriteCache[nID].sprSeasonAutumnSnowFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW);
+	Create_SpriteFrame(spriteCache[nID].sprSeasonSnowFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_TREES_SEASON_SNOW);
+}
+
+static void Snow_SpritePalette_DeepWater(DWORD nID, spriteFrame_t *pSpriteFrame, int nFrmID) {
+	// Cache "deep water" snow/blizzard frames
+	Create_SpriteFrame(spriteCache[nID].sprDeepWaterIceFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_WATER_ICE);
+	Create_SpriteFrame(spriteCache[nID].sprDeepWaterBlizzardFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_WATER_ICE_BLIZZARD);
+}
+
+static void Snow_SpritePalette_Terrain(DWORD nID, spriteFrame_t *pSpriteFrame, int nFrmID) {
+	// Cache - ground should be mostly covered in regular snow or absolutely blanketed in a blizzard.
+	Create_SpriteFrame(spriteCache[nID].sprTerrainSnowFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_TERRAIN_SNOW);
+	Create_SpriteFrame(spriteCache[nID].sprTerrainBlizzardFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD);
+}
+
+static void Snow_SpritePalette_Grass(DWORD nID, spriteFrame_t *pSpriteFrame, int nFrmID) {
+	// Cache accumulated snow on grass for various objects
+	Create_SpriteFrame(spriteCache[nID].sprGrassSnowFrame, pSpriteFrame, nFrmID, PALCACHE_GRASS_SNOW);
+}
+
+void Cache_Sprite(DWORD nID, BYTE *pSpriteBuf, int nSize, WORD wHeight, WORD wWidth) {
+	Delete_Sprite_Cache(&spriteCache[nID]);
+
+	bool bCycling = (!bLoColor) ? Scan_Sprite(pSpriteBuf) : false;
+
+	for (int nFrm = 0; nFrm < CACHED_FRAMES; ++nFrm) {
+		if (!bCycling && nFrm > 0)
+			break;
+		// Cycling (or only frame for non-cycling cases)
+		Create_SpriteNew(spriteCache[nID].sprFrame, pSpriteBuf, nSize, wHeight, wWidth, nFrm, ((bCycling) ? PALCACHE_TYPE_CYCLE : PALCACHE_TYPE_NONE));
+		if (!bLoColor && !bOnTheFlyPalIdx) {
+			if (TreeSpritesCheck(nID))
+				Season_SpritePalette_Trees(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
+			else if (TerrainSpritesCheck(nID)) {
+				if (DeepWaterSpriteCheck(nID))
+					Snow_SpritePalette_DeepWater(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
+				else
+					Snow_SpritePalette_Terrain(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
+			}
+			else if (ObjectGrassSpritesCheck(nID)) {
+				Snow_SpritePalette_Grass(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
+			}
+		}
+	}
+}
+
+static BYTE *Get_SpriteFrame_Buffer(std::vector<spriteFrame_t> &frameCache, BYTE *pSpriteBuf, DWORD nFrmIdx) {
+	if (nFrmIdx >= 0 && frameCache.size() > 0) {
+		for (std::vector<spriteFrame_t>::reverse_iterator itFr = frameCache.rbegin(); itFr != frameCache.rend();) {
+			if (itFr->nFrID <= nFrmIdx) {
+				if (itFr->pBuf)
+					return itFr->pBuf;
+			}
+			++itFr;
+		}
+	}
+	return pSpriteBuf;
+}
+
+static BYTE *Get_SpriteCache_BaseBuffer(sprite_header_t *pShapePtr, __int16 nSpriteID) {
+	if (pShapePtr->wHeight > 1) {
+		if (bFrequentUpdates) {
+			BYTE *pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, 0);
+			if (pSpriteBuf)
+				return pSpriteBuf;
+		}
+		return pShapePtr->sprOffset.sprPtr;
+	}
+	return NULL;
+}
+
+static BYTE *Get_SpriteCache_Buffer(sprite_header_t *pShapePtr, __int16 nSpriteID) {
+	int nType = PALCACHE_TYPE_NONE;
+
+	if (pShapePtr->wHeight > 1) {
+		if (bFrequentUpdates) {
+			int nFrmIdx = nCycleIdx % CACHED_FRAMES;
+			if (nFrmIdx < 0)
+				nFrmIdx = -nFrmIdx;
+			BYTE *pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, nFrmIdx);
+			if (pSpriteBuf) {
+				if (bWeatherEffects && !bLoColor && !bOnTheFlyPalIdx) {
+					if (TreeSpritesCheck(nSpriteID)) {
+						if (WeatherCheck())
+							nType = PALCACHE_TYPE_TREES_SEASON_SNOW;
+
+						if (AutWintSeasonCheck())
+							nType = (nType == PALCACHE_TYPE_TREES_SEASON_SNOW) ? PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW : PALCACHE_TYPE_TREES_SEASON_AUTUMN;
+
+						if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMN)
+							return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonAutumnFrame, pSpriteBuf, nFrmIdx);
+						else if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW)
+							return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonAutumnSnowFrame, pSpriteBuf, nFrmIdx);
+						else if (nType == PALCACHE_TYPE_TREES_SEASON_SNOW)
+							return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonSnowFrame, pSpriteBuf, nFrmIdx);
+					}
+					else if (TerrainSpritesCheck(nSpriteID)) {
+						if (WeatherCheck()) {
+							if (DeepWaterSpriteCheck(nSpriteID)) {
+								nType = (BlizzardCheck()) ? PALCACHE_TYPE_WATER_ICE_BLIZZARD : PALCACHE_TYPE_WATER_ICE;
+								if (nType == PALCACHE_TYPE_WATER_ICE)
+									return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprDeepWaterIceFrame, pSpriteBuf, nFrmIdx);
+								else if (nType == PALCACHE_TYPE_WATER_ICE_BLIZZARD)
+									return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprDeepWaterBlizzardFrame, pSpriteBuf, nFrmIdx);
+							}
+							else {
+								nType = (BlizzardCheck()) ? PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD : PALCACHE_TYPE_TERRAIN_SNOW;
+								if (nType == PALCACHE_TYPE_TERRAIN_SNOW)
+									return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainSnowFrame, pSpriteBuf, nFrmIdx);
+								else if (nType == PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD)
+									return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainBlizzardFrame, pSpriteBuf, nFrmIdx);
+							}
+						}
+					}
+					else if (ObjectGrassSpritesCheck(nSpriteID)) {
+						if (WeatherCheck()) {
+							nType = PALCACHE_GRASS_SNOW; // Yes I know.. this is the only option here currently.
+							if (nType == PALCACHE_GRASS_SNOW)
+								return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprGrassSnowFrame, pSpriteBuf, nFrmIdx);
+						}
+					}
+				}
+				return pSpriteBuf;
+			}
+		}
+		return pShapePtr->sprOffset.sprPtr;
+	}
+	return NULL;
+}
+
+static WORD Get_SpriteCache_Height(sprite_header_t *pShapePtr, __int16 nSpriteID) {
+	if (pShapePtr->wHeight > 1) {
+		if (bFrequentUpdates) {
+			BYTE *pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, 0);
+			if (pSpriteBuf)
+				return spriteCache[nSpriteID].sprFrame[0].wHeight;
+		}
+		return pShapePtr->wHeight;
+	}
+	return 0;
+}
+
+static WORD Get_SpriteCache_Width(sprite_header_t *pShapePtr, __int16 nSpriteID) {
+	if (pShapePtr->wHeight > 1) {
+		if (bFrequentUpdates) {
+			BYTE *pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, 0);
+			if (pSpriteBuf)
+				return spriteCache[nSpriteID].sprFrame[0].wWidth;
+		}
+		return pShapePtr->wWidth;
+	}
+	return 0;
+}
+
+// On-the-fly palette index swapping
+
+static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
 	BYTE newIdx = colIdx;
-	if (bWeatherTrend == WEATHER_TREND_BLIZZARD ||
-		bWeatherTrend == WEATHER_TREND_SNOW ||
-		iForcedSeason == FORCED_SEASON_SNOW || iForcedSeason == FORCED_SEASON_BLIZZARD) {
-		if (!bIgnore || bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD)
+	if (WeatherCheck()) {
+		if (!bIgnore || BlizzardCheck())
 			newIdx = ProcessTreeSnowEffect(newIdx);
 	}
-	if ((iCityMonth >= 0 && iCityMonth <= 2) ||
-		(iCityMonth >= 9 && iCityMonth <= 11) ||
-		iForcedSeason == FORCED_SEASON_AUTUMN || iForcedSeason == FORCED_SEASON_WINTER) {
+	if (AutWintSeasonCheck()) {
 		newIdx = ProcessTreeAutumnEffect(newIdx);
 	}
 	return newIdx;
@@ -1446,53 +1841,44 @@ static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
 static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemHeight, int nPos) {
 	BYTE palIdx = colIdx;
 
-	if (bFrequentUpdates && bWeatherEffects && !hWndExt) {
+	if (bFrequentUpdates && bWeatherEffects && !bLoColor && bOnTheFlyPalIdx) {
 		// Accumulate snow or fading on trees
-		if (GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_TREES1, SPRITE_SMALL_TREES7)) {
-			if ((nPos % 4) == 0 || (nPos % 4) == 2 || (nPos % 4) == 3) {
+		if (TreeSpritesCheck(nSpriteID)) {
+			if ((nPos % SEQ_MODULUS) == 0 || (nPos % SEQ_MODULUS) == 2 || (nPos % SEQ_MODULUS) == 3) {
 				BOOL bIgnore = FALSE;
-				if ((nPos % 4) == 2)
+				if ((nPos % SEQ_MODULUS) == 2)
 					bIgnore = TRUE;
 				palIdx = ProcessSeasonIndex(palIdx, bIgnore);
 			}
 		}
 
 		// Handle snow-related tile stuff
-		if (bWeatherTrend == WEATHER_TREND_SNOW || bWeatherTrend == WEATHER_TREND_BLIZZARD ||
-			iForcedSeason == FORCED_SEASON_SNOW || iForcedSeason == FORCED_SEASON_BLIZZARD) {
+		if (WeatherCheck()) {
 			// Accumulate snow on ground
-			if (GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_TERRAIN, SPRITE_SMALL_SEAPORTZONE)) {
-				if (bWeatherTrend == WEATHER_TREND_SNOW || bWeatherTrend == WEATHER_TREND_BLIZZARD ||
-					iForcedSeason == FORCED_SEASON_SNOW || iForcedSeason == FORCED_SEASON_BLIZZARD) {
+			if (TerrainSpritesCheck(nSpriteID)) {
+				if (WeatherCheck()) {
 					// Handle deep water differently.
-					if (nSpriteID == SPRITE_SMALL_WATER_TRBL || nSpriteID == SPRITE_MEDIUM_WATER_TRBL || nSpriteID == SPRITE_LARGE_WATER_TRBL) {
-						if (((nPos % 4) == 1 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD)) || (nPos % 4) == 2)
-							palIdx = ProcessTerrainSnowIndex(palIdx, (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD));
+					if (DeepWaterSpriteCheck(nSpriteID)) {
+						if (((nPos % SEQ_MODULUS) == 1 && BlizzardCheck()) || (nPos % SEQ_MODULUS) == 2)
+							palIdx = ProcessTerrainSnowIndex(palIdx, BlizzardCheck());
 					}
 
 					// Ground should be mostly covered in regular snow or absolutely blanketed in a blizzard.
 					else {
-						/*if ((bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD) || (nPos % 4) == 2 || (nPos % 4) == 3 || (nPos % 4) == 1)
-							*/palIdx = ProcessTerrainSnowIndex(palIdx, (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD));
+						/*if (BlizzardCheck() || (nPos % SEQ_MODULUS) == 2 || (nPos % SEQ_MODULUS) == 3 || (nPos % SEQ_MODULUS) == 1)
+							*/palIdx = ProcessTerrainSnowIndex(palIdx, BlizzardCheck());
 					}
 				}
 			}
 
 			// Accumulate snow on grass
-			else if ((GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_RESIDENTIAL_1X1_LOWERCLASSHOMES1, SPRITE_SMALL_SERVICES_STATUE) ||
-				GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INFRASTRUCTURE_MAYORSHOUSE) || GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INFRASTRUCTURE_LIBRARY) ||
-				GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_SMALLPARK) || GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INFRASTRUCTURE_WATERPUMP) || 
-				GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INFRASTRUCTURE_CHURCH)) &&
-				!GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INDUSTRIAL_2X2_FACTORY2) && !GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INDUSTRIAL_3X3_THINGAMAJIG)) {
+			else if (ObjectGrassSpritesCheck(nSpriteID)) {
 				palIdx = ProcessBuildingSnowIndex(palIdx);
 			}
 		}
 
 		// IDEA: high temperatures + WEATHER_TREND_HOT = patchy, dried out grass?
 		// IDEA: detect drought conditions and affect the edges of water?
-
-		// Cycle animated palettes
-		palIdx = ProcessCyclingIndex(palIdx);
 	}
 	return palIdx;
 }
@@ -1505,7 +1891,7 @@ static BYTE AdjustInversion(__int16 nSpriteID, BYTE palIdx) {
 	// required is to increment by 0x20 to get it back into
 	// range.
 	BOOL bPalOffset = TRUE;
-	if (GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_UNDERGROUND_TERRAIN, SPRITE_SMALL_SUBWAYENTRANCE)) {
+	if (UndergroundSpritesCheck(nSpriteID)) {
 		if (bDarkUnderground)
 			bPalOffset = FALSE;
 	}
@@ -1519,7 +1905,7 @@ static BYTE CheckInversion(__int16 nSpriteID, BYTE palIdx) {
 	BYTE newIdx = palIdx;
 	
 	BOOL bPalOffset = TRUE;
-	if (GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_UNDERGROUND_TERRAIN, SPRITE_SMALL_SUBWAYENTRANCE)) {
+	if (UndergroundSpritesCheck(nSpriteID)) {
 		if (bDarkUnderground)
 			bPalOffset = FALSE;
 	}
@@ -1529,42 +1915,20 @@ static BYTE CheckInversion(__int16 nSpriteID, BYTE palIdx) {
 	return newIdx;
 }
 
-static BYTE CheckWeatherInversion(__int16 nSpriteID, BYTE palIdx, int nPos) {
-	BYTE newIdx = palIdx;
-
-	if (bFrequentUpdates && bWeatherEffects && !hWndExt) {
-		if (!GET_OVERALL_SPRITE_RANGE(nSpriteID, SPRITE_SMALL_UNDERGROUND_TERRAIN, SPRITE_SMALL_SUBWAYENTRANCE)) {
-			if (bWeatherTrend == WEATHER_TREND_SNOW || bWeatherTrend == WEATHER_TREND_BLIZZARD ||
-				iForcedSeason == FORCED_SEASON_SNOW || iForcedSeason == FORCED_SEASON_BLIZZARD) {
-				// Handle deep water differently.
-				if (nSpriteID == SPRITE_SMALL_WATER_TRBL || nSpriteID == SPRITE_MEDIUM_WATER_TRBL || nSpriteID == SPRITE_LARGE_WATER_TRBL) {
-					if (((nPos % 4) == 1 && (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD)) || (nPos % 4) == 2)
-						newIdx = ProcessTerrainSnowIndex(palIdx, (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD));
-				}
-
-				// Ground should be mostly covered in regular snow or absolutely blanketed in a blizzard.
-				else {
-					/*if ((bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD) || (nPos % 4) == 2 || (nPos % 4) == 3 || (nPos % 4) == 1)
-						*/newIdx = ProcessTerrainSnowIndex(palIdx, (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD));
-				}
-			}
-		}
-	}
-	return newIdx;
-}
-
-static void L_drawShape_Invert_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom) {
-	BYTE *pShapeBitsLine, *spritePtr, *pShapeBits;
+static void L_drawShape_Invert_MainArea(BYTE *shapePtr, BYTE *baseShapePtr, __int16 nSpriteID, __int16 right, __int16 bottom) {
+	BYTE *pShapeBitsLine, *spritePtr, *baseSpritePtr, *pShapeBits;
 	BYTE nCount;
 	BYTE nChunkMode;
 
 	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
 	spritePtr = shapePtr;
+	baseSpritePtr = baseShapePtr;
 	pShapeBits = pShapeBitsLine;
 	while (TRUE) {
 		nCount = SPRITEDATA(spritePtr)->nCount;
 		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
 		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
+		baseSpritePtr = (BYTE *)&SPRITEDATA(baseSpritePtr)->pBuf;
 		switch (nChunkMode) {
 		case MIF_CM_EMPTY:
 			continue;
@@ -1577,15 +1941,18 @@ static void L_drawShape_Invert_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int
 			break;
 		case MIF_CM_PROCPIXELS:
 			for (int nPos = nCount; nPos; ++spritePtr) {
-				if (CheckWeatherInversion(nSpriteID, *pShapeBits, nPos) == CheckWeatherInversion(nSpriteID, *spritePtr, nPos))
-					*pShapeBits = AdjustInversion(nSpriteID, *spritePtr);
-				else if ((char)(CheckInversion(nSpriteID, *spritePtr) ^ *pShapeBits) == -1)
-					*pShapeBits = CheckWeatherInversion(nSpriteID, *spritePtr, nPos);
+				if (*pShapeBits == *spritePtr)
+					*pShapeBits = AdjustInversion(nSpriteID, *baseSpritePtr);
+				else if ((char)(CheckInversion(nSpriteID, *baseSpritePtr) ^ *pShapeBits) == -1)
+					*pShapeBits = *spritePtr;
 				++pShapeBits;
+				++baseSpritePtr;
 				--nPos;
 			}
-			if ((nCount & 1) != 0)
+			if ((nCount & 1) != 0) {
+				++baseSpritePtr;;
 				++spritePtr;
+			}
 			break;
 		default:
 			return;
@@ -1593,9 +1960,9 @@ static void L_drawShape_Invert_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int
 	}
 }
 
-static void L_drawShape_Invert_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom) {
+static void L_drawShape_Invert_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr, __int16 nSpriteID, __int16 right, __int16 bottom) {
 	__int16 leftEdge, topEdge, rightEdge, bottomEdge;
-	BYTE *pShapeBitsLine, *spritePtr;
+	BYTE *pShapeBitsLine, *spritePtr, *baseSpritePtr;
 	WORD nRemHeight;
 	int leftShapeBits, rightShapeBits;
 	BYTE *pShapeBits, nCount, nChunkMode;
@@ -1608,11 +1975,13 @@ static void L_drawShape_Invert_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, _
 	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
 	nRemHeight = shapeCurrent[nSpriteID].wHeight;
 	spritePtr = shapePtr;
+	baseSpritePtr = baseShapePtr;
 	if (topEdge > 0) {
 		bottomEdge -= topEdge;
 		pShapeBitsLine += shapeX * topEdge;
 		do {
 			spritePtr += SPRITEDATA(spritePtr)->nCount + 2;
+			baseSpritePtr += SPRITEDATA(baseSpritePtr)->nCount + 2;
 			--topEdge;
 		} while (topEdge);
 	}
@@ -1623,6 +1992,7 @@ static void L_drawShape_Invert_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, _
 		nCount = SPRITEDATA(spritePtr)->nCount;
 		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
 		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
+		baseSpritePtr = (BYTE *)&SPRITEDATA(baseSpritePtr)->pBuf;
 		switch (nChunkMode) {
 		case MIF_CM_EMPTY:
 			continue;
@@ -1644,18 +2014,21 @@ static void L_drawShape_Invert_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, _
 		case MIF_CM_PROCPIXELS:
 			for (int nPos = nCount; nPos; ++spritePtr) {
 				if (leftShapeBits <= 0 && rightShapeBits > 0) {
-					if (CheckWeatherInversion(nSpriteID, *pShapeBits, nPos) == CheckWeatherInversion(nSpriteID, *spritePtr, nPos))
-						*pShapeBits = AdjustInversion(nSpriteID, *spritePtr);
-					else if ((char)(CheckInversion(nSpriteID, *spritePtr) ^ *pShapeBits) == -1)
-						*pShapeBits = CheckWeatherInversion(nSpriteID, *spritePtr, nPos);
+					if (*pShapeBits == *spritePtr)
+						*pShapeBits = AdjustInversion(nSpriteID, *baseSpritePtr);
+					else if ((char)(CheckInversion(nSpriteID, *baseSpritePtr) ^ *pShapeBits) == -1)
+						*pShapeBits = *spritePtr;
 				}
 				--leftShapeBits;
 				++pShapeBits;
+				++baseSpritePtr;
 				--rightShapeBits;
 				--nPos;
 			}
-			if ((nCount & 1) != 0)
+			if ((nCount & 1) != 0) {
+				++baseSpritePtr;
 				++spritePtr;
+			}
 			continue;
 		default:
 			return;
@@ -1806,24 +2179,27 @@ static void L_drawShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 
 
 extern "C" void __cdecl Hook_drawShape(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert) {
 	sprite_header_t *shapePtr;
-	BYTE *shapeData;
+	BYTE *shapeData, *baseShapeData;
 	int nShapeBottom, nShapeRight;
 
 	shapePtr = &shapeCurrent[nSpriteID];
 	if (shapePtr) {
-		shapeData = shapePtr->sprOffset.sprPtr;
+		shapeData = Get_SpriteCache_Buffer(shapePtr, nSpriteID);
 		if (shapeData) {
-			nShapeBottom = bottom + shapePtr->wHeight;
-			nShapeRight = right + shapePtr->wWidth;
+			nShapeBottom = bottom + Get_SpriteCache_Height(shapePtr, nSpriteID);
+			nShapeRight = right + Get_SpriteCache_Width(shapePtr, nSpriteID);
 			if (shapeRight > right && shapeLeft < nShapeRight && shapeBottom > bottom && shapeTop < nShapeBottom) {
 				int nRight = (isFlipped) ? nShapeRight : right;
 				// The 'doInvert' flag is used from the InvertShape and InvertTerrain calls.
 				// It's the "Placement Preview".
 				if (doInvert) {
-					if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)
-						L_drawShape_Invert_OutOfContext(shapeData, nSpriteID, right, bottom);
-					else
-						L_drawShape_Invert_MainArea(shapeData, nSpriteID, right, bottom);
+					baseShapeData = Get_SpriteCache_BaseBuffer(shapePtr, nSpriteID);
+					if (baseShapeData) {
+						if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)
+							L_drawShape_Invert_OutOfContext(shapeData, baseShapeData, nSpriteID, right, bottom);
+						else
+							L_drawShape_Invert_MainArea(shapeData, baseShapeData, nSpriteID, right, bottom);
+					}
 				}
 				else if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)
 					L_drawShape_OutOfContext(shapeData, nSpriteID, nRight, bottom, FALSE, isFlipped);
@@ -1992,10 +2368,10 @@ extern "C" void __cdecl Hook_drawMaskShape(__int16 nSpriteID, __int16 left, __in
 
 	shapePtr = &shapeCurrent[nSpriteID];
 	if (shapePtr) {
-		shapeData = shapePtr->sprOffset.sprPtr;
+		shapeData = Get_SpriteCache_Buffer(shapePtr, nSpriteID);
 		if (shapeData) {
-			nShapeTop = top + shapePtr->wHeight;
-			nShapeLeft = left + shapePtr->wWidth;
+			nShapeTop = top + Get_SpriteCache_Height(shapePtr, nSpriteID);
+			nShapeLeft = left + Get_SpriteCache_Width(shapePtr, nSpriteID);
 			if (shapeRight > left && nShapeLeft > shapeLeft && shapeBottom > top && nShapeTop > shapeTop) {
 				int nLeft = (isFlipped) ? nShapeLeft : left;
 				if (shapeTop >= top || shapeLeft >= left || nShapeTop >= shapeBottom || nShapeLeft >= shapeRight)
@@ -2014,10 +2390,10 @@ void L_drawShadowShape_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom
 
 	shapePtr = &shapeCurrent[nSpriteID];
 	if (shapePtr) {
-		shapeData = shapePtr->sprOffset.sprPtr;
+		shapeData = Get_SpriteCache_Buffer(shapePtr, nSpriteID);
 		if (shapeData) {
-			nShapeBottom = bottom + shapePtr->wHeight;
-			nShapeRight = right + shapePtr->wWidth;
+			nShapeBottom = bottom + Get_SpriteCache_Height(shapePtr, nSpriteID);
+			nShapeRight = right + Get_SpriteCache_Width(shapePtr, nSpriteID);
 			if (shapeRight > right && shapeLeft < nShapeRight && shapeBottom > bottom && shapeTop < nShapeBottom) {
 				int nRight = (isFlipped) ? nShapeRight : right;
 				if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)

@@ -31,8 +31,6 @@ UINT sprite_debug = SPRITE_DEBUG;
 
 static DWORD dwDummy; 
 
-#define CUSTOM_TILENAME_MAXNUM 500
-
 std::vector<sprite_ids_t> spriteIDs;
 
 static BOOL CheckForExistingID(WORD nID) {
@@ -52,12 +50,12 @@ static BOOL CheckForExistingID(WORD nID) {
 	return (nSkipHit) ? TRUE : FALSE;
 }
 
-static void AllocateAndLoadSprites1996(CMFC3XFile *pFile, sprite_archive_t *lpBuf, WORD nSpriteSet) {
+static void AllocateAndLoadSprites1996(FILE *pFile, sprite_archive_t *lpBuf, WORD nSpriteSet) {
 	WORD nPos, nID;
 	sprite_ids_t *pSprEnt;
 	BYTE *pSpriteData;
 
-	GameMain_File_Seek(pFile, lpBuf->pData[0].sprHeader.sprOffset.sprLong, 0);
+	fseek(pFile, lpBuf->pData[0].sprHeader.sprOffset.sprLong, SEEK_SET);
 	for (nPos = 0; nPos < spriteIDs.size(); ++nPos) {
 		pSprEnt = &spriteIDs[nPos];
 		if (pSprEnt && pSprEnt->nArcID == nSpriteSet) {
@@ -68,7 +66,7 @@ static void AllocateAndLoadSprites1996(CMFC3XFile *pFile, sprite_archive_t *lpBu
 			if (pSprEnt->nSize > 0) {
 				pSpriteData = (BYTE *)Game_AllocateDataEntry(pSprEnt->nSize);
 				if (pSpriteData) {
-					if (GameMain_File_Read(pFile, pSpriteData, pSprEnt->nSize) == pSprEnt->nSize) {
+					if (fread(pSpriteData, 1, pSprEnt->nSize, pFile) == pSprEnt->nSize) {
 						if (pSprEnt->bMultiple && pSprEnt->nSkipHit > 0) {
 							if (sprite_debug & SPRITE_DEBUG_SPRITES)
 								ConsoleLog(LOG_DEBUG, "AllocateAndLoadSprites(%u): discarding skipped sprite with ID (%u, 0x%06X, %d).\n", nSpriteSet, nID, pSprEnt->sprOffset, pSprEnt->nSize);
@@ -82,6 +80,8 @@ static void AllocateAndLoadSprites1996(CMFC3XFile *pFile, sprite_archive_t *lpBu
 						pArrSpriteHeaders[nID].sprOffset.sprPtr = pSpriteData;
 						pArrSpriteHeaders[nID].wHeight = pSprEnt->wHeight;
 						pArrSpriteHeaders[nID].wWidth = pSprEnt->wWidth;
+
+						Cache_Sprite(nID, pSpriteData, pSprEnt->nSize, pSprEnt->wHeight, pSprEnt->wWidth);
 					}
 				}
 			}
@@ -90,7 +90,7 @@ static void AllocateAndLoadSprites1996(CMFC3XFile *pFile, sprite_archive_t *lpBu
 }
 
 extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
-	CMFC3XFile datArchive;
+	FILE *f;
 	CMFC3XString retString;
 	CMFC3XString retStrPath;
 	CMFC3XString *pString;
@@ -107,7 +107,6 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
 	sprite_ids_t spriteEnt;
 	int nSize;
 
-	GameMain_File_Cons(&datArchive);
 	GameMain_String_Cons(&retString);
 	GameMain_String_Cons(&retStrPath);
 
@@ -127,12 +126,15 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
 
 	GameMain_String_Format(&retStrPath, "%s%s%s", retString.m_pchData, cBackslash, pString->m_pchData);
 
-	if (GameMain_File_Open(&datArchive, retStrPath.m_pchData, 0, 0)) {
+	f = old_fopen(retStrPath.m_pchData, "rb");
+	if (f) {
 		// Set the uFailMsg by default here - then unset it once
 		// the main read begins.
 		uFailMsg = 48;
-		nFlen = GameMain_File_GetLength(&datArchive);
-		GameMain_File_Read(&datArchive, &nSpriteCnt, 2);
+		fseek(f, 0, SEEK_END);
+		nFlen = ftell(f);
+		fseek(f, 0, SEEK_SET);
+		fread(&nSpriteCnt, 2, 1, f);
 		nSpriteCnt = _byteswap_ushort(nSpriteCnt);
 		lpMainBuf = &dwBaseSpriteLoading[nSpriteSet];
 		nBufSize = 10 * nSpriteCnt;
@@ -140,7 +142,7 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
 		lpMainBuf->pData = lpBuf;
 		lpBuf->nSprites = nSpriteCnt;
 		if (lpBuf) {
-			if (GameMain_File_Read(&datArchive, &lpBuf->pData, nBufSize) == nBufSize) {
+			if (fread(&lpBuf->pData, 1, nBufSize, f) == nBufSize) {
 				uFailMsg = 0;
 				for (nPos = 0; nPos < nSpriteCnt; ++nPos) {
 					nID = _byteswap_ushort(lpBuf->pData[nPos].nSprNum);
@@ -179,12 +181,12 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
 					}
 				}
 
-				AllocateAndLoadSprites1996(&datArchive, lpBuf, nSpriteSet);
+				AllocateAndLoadSprites1996(f, lpBuf, nSpriteSet);
 				free(lpMainBuf->pData);
 				lpMainBuf->pData = 0;
 			}
 		}
-		GameMain_File_Close(&datArchive);
+		fclose(f);
 	}
 	else {
 		uFailMsg = 47;
@@ -196,11 +198,10 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
 GETOUT:
 	GameMain_String_Dest(&retStrPath);
 	GameMain_String_Dest(&retString);
-	GameMain_File_Dest(&datArchive);
 }
 
 static void ResetCustomTileNames() {
-	for (int i = 0; i < CUSTOM_TILENAME_MAXNUM; ++i) {
+	for (int i = 0; i < SPRITE_MEDIUM_START; ++i) {
 		if (pTileNames[i])
 			Game_FreeDataEntry(pTileNames[i]);
 		pTileNames[i] = 0;
@@ -208,7 +209,7 @@ static void ResetCustomTileNames() {
 }
 
 static void ReloadSpriteDataArchive1996(WORD nSpriteSet) {
-	CMFC3XFile datArchive;
+	FILE *f;
 	CMFC3XString retString;
 	CMFC3XString retStrPath;
 	CMFC3XString *pString;
@@ -222,7 +223,6 @@ static void ReloadSpriteDataArchive1996(WORD nSpriteSet) {
 	sprite_archive_stored_t *lpMainBuf;
 	sprite_header_t *pSprtHead;
 
-	GameMain_File_Cons(&datArchive);
 	GameMain_String_Cons(&retString);
 	GameMain_String_Cons(&retStrPath);
 
@@ -242,12 +242,15 @@ static void ReloadSpriteDataArchive1996(WORD nSpriteSet) {
 
 	GameMain_String_Format(&retStrPath, "%s%s%s", retString.m_pchData, cBackslash, pString->m_pchData);
 
-	if (GameMain_File_Open(&datArchive, retStrPath.m_pchData, 0, 0)) {
+	f = old_fopen(retStrPath.m_pchData, "rb");
+	if (f) {
 		// Set the uFailMsg by default here - then unset it once
 		// the main read begins.
 		uFailMsg = 48;
-		nFlen = GameMain_File_GetLength(&datArchive);
-		GameMain_File_Read(&datArchive, &nSpriteCnt, 2);
+		fseek(f, 0, SEEK_END);
+		nFlen = ftell(f);
+		fseek(f, 0, SEEK_SET);
+		fread(&nSpriteCnt, 2, 1, f);
 		nSpriteCnt = _byteswap_ushort(nSpriteCnt);
 		lpMainBuf = &dwBaseSpriteLoading[nSpriteSet];
 		nBufSize = 10 * nSpriteCnt;
@@ -255,7 +258,7 @@ static void ReloadSpriteDataArchive1996(WORD nSpriteSet) {
 		lpMainBuf->pData = lpBuf;
 		lpBuf->nSprites = nSpriteCnt;
 		if (lpBuf) {
-			if (GameMain_File_Read(&datArchive, &lpBuf->pData, nBufSize) == nBufSize) {
+			if (fread(&lpBuf->pData, 1, nBufSize, f) == nBufSize) {
 				uFailMsg = 0;
 				for (nPos = 0; nPos < nSpriteCnt; ++nPos) {
 					nID = _byteswap_ushort(lpBuf->pData[nPos].nSprNum);
@@ -266,12 +269,12 @@ static void ReloadSpriteDataArchive1996(WORD nSpriteSet) {
 					pSprtHead->wWidth = _byteswap_ushort(pSprtHead->wWidth);
 				}
 
-				AllocateAndLoadSprites1996(&datArchive, lpBuf, nSpriteSet);
+				AllocateAndLoadSprites1996(f, lpBuf, nSpriteSet);
 				free(lpMainBuf->pData);
 				lpMainBuf->pData = 0;
 			}
 		}
-		GameMain_File_Close(&datArchive);
+		fclose(f);
 	}
 	else {
 		uFailMsg = 47;
@@ -283,7 +286,6 @@ static void ReloadSpriteDataArchive1996(WORD nSpriteSet) {
 GETOUT:
 	GameMain_String_Dest(&retStrPath);
 	GameMain_String_Dest(&retString);
-	GameMain_File_Dest(&datArchive);
 }
 
 static void L_LoadFixedLargeSpritesRsrc_SC2K1996() {
@@ -411,6 +413,8 @@ void ReloadDefaultTileSet_SC2K1996() {
 		return;
 
 	GameMain_CmdTarget_BeginWaitCursor(pSCApp);
+	Init_SpriteCache(true);
+
 	ResetCustomTileNames();
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_SPECIAL);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_LARGE);
@@ -427,6 +431,8 @@ void ReloadDefaultTileSet_SC2K1996() {
 }
 
 extern "C" void __declspec(naked) __stdcall Hook_LoadSpriteArchives1996() {
+	Init_SpriteCache(false);
+
 	Game_LoadDataArchive(TILEDAT_DEFS_SPECIAL);
 	Game_LoadDataArchive(TILEDAT_DEFS_LARGE);
 	Game_LoadDataArchive(TILEDAT_DEFS_SMALLMED);
@@ -434,6 +440,340 @@ extern "C" void __declspec(naked) __stdcall Hook_LoadSpriteArchives1996() {
 	if (!bDisableFixedTiles)
 		L_LoadFixedLargeSpritesRsrc_SC2K1996();
 	GAMEJMP(0x42C332)
+}
+
+extern "C" void __stdcall Hook_SimcityApp_LoadTileset1996() {
+	CSimcityAppPrimary *pThis;
+
+	__asm mov[pThis], ecx
+
+	CMFC3XString strFileTypes;
+	CMFC3XString strCaption;
+	CMFC3XFileDialog fileDialog;
+	CMFC3XString strFilePath;
+	int nPathLen, nFileLen, nNewLen;
+	char szPath[MAX_PATH + 1];
+	OPENFILENAMEA* pOfn;
+
+	memset(szPath, 0, sizeof(szPath));
+
+	GameMain_String_Cons(&strFileTypes);
+	GameMain_String_Cons(&strCaption);
+
+	GameMain_String_LoadStringA(&strFileTypes, 4004);
+	GameMain_String_LoadStringA(&strCaption, 4005);
+
+	GameMain_FileDialog_Cons(&fileDialog, (void *)1, "mif", "*.mif", OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY, strFileTypes.m_pchData, 0);
+
+	Game_SimcityApp_GetValueStringA(pThis, &strFilePath, aPaths, aTilesets);
+
+	old_strcpy(fileDialog.m_szFileName, strFilePath.m_pchData);
+	pOfn = &fileDialog.m_ofn;
+	pOfn->lpstrInitialDir = fileDialog.m_szFileName;
+	pOfn->lpstrTitle = strCaption.m_pchData;
+
+	if (GameMain_FileDialog_DoModal(&fileDialog) == 1) {
+		GameMain_CmdTarget_BeginWaitCursor(pThis);
+		Game_ReadTilesetFile(pOfn->lpstrFile);
+
+		nNewLen = 0;
+		nPathLen = strlen(pOfn->lpstrFile);
+		nFileLen = strlen(pOfn->lpstrFileTitle);
+		if (nPathLen > 0 && nFileLen > 0) {
+			nNewLen = nPathLen - nFileLen;
+			if (nNewLen > 0) {
+				strncpy_s(szPath, sizeof(szPath) - 1, pOfn->lpstrFile, nNewLen);
+				if (L_IsPathValid(szPath))
+					jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_TILESETS] = szPath;
+			}
+		}
+
+		GameMain_CmdTarget_EndWaitCursor(pThis);
+	}
+
+	GameMain_String_Dest(&strFilePath);
+
+	Game_GameFileDialog_Dest(&fileDialog);
+
+	GameMain_String_Dest(&strCaption);
+	GameMain_String_Dest(&strFileTypes);
+}
+
+extern "C" void __cdecl Hook_ReadTilesetFile1996(char *pFilePath) {
+	CSimcityAppPrimary *pSCApp;
+	FILE *f;
+	DWORD nLen;
+	char currChar;
+	const char *pFileName;
+	char *pBuf;
+	CSimcityView *pSCView;
+
+	pSCApp = &pCSimcityAppThis;
+	bTilesetLoadOutOfMemory = FALSE;
+	f = old_fopen(pFilePath, "rb");
+	if (f) {
+		if (Game_CheckTilesetFileHeader(f)) {
+			// There was a prior null function prior to
+			// actual main tileset loading; it most likely
+			// could have been to debug the main body of
+			// the file prior to actual loading.
+			Game_VerifyAndLoadNewTiles(f);
+			if (bTilesetLoadOutOfMemory) {
+				GameMain_String_LoadStringA(&reqCaption, 4007);
+				GameMain_String_LoadStringA(&reqText, 4008);
+				nLen = strlen(pFilePath);
+				do
+					currChar = pFilePath[--nLen];
+				while (currChar != '\\' && nLen > 0);
+				pFileName = &pFilePath[nLen + 1];
+				pBuf = (char *)Game_AllocateDataEntry(reqText.m_nDataLength + 2 * (strlen(pFileName) + 1) - 2);
+				if (pBuf) {
+					wsprintfA(pBuf, reqText.m_pchData, pFileName, pFileName);
+					GameMain_CmdTarget_EndWaitCursor(pSCApp);
+					L_MessageBoxA(0, pBuf, reqCaption.m_pchData, MB_OK);
+					pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+					if (pSCView)
+						UpdateWindow(pSCView->m_hWnd);
+					Game_FreeDataEntry(pBuf);
+				}
+				GameMain_String_ReleaseBuffer(&reqCaption, 0);
+				GameMain_String_ReleaseBuffer(&reqText, 0);
+			}
+		}
+		fclose(f);
+	}
+}
+
+extern "C" BOOL __cdecl Hook_CheckTilesetFileHeader1996(FILE *f) {
+	tilesetMainHeader_t tileHead;
+
+	if (!f)
+		return FALSE;
+
+	// The original program-native calls are required otherwise
+	// the crash is spectacular.
+	fseek(f, 0, SEEK_SET);
+	fread(&tileHead, sizeof(tilesetMainHeader_t), 1, f);
+
+	return memcmp(tileHead.szTypeHead, "MIFF", 4) == 0 && memcmp(tileHead.szSC2KHead, "SC2K", 4) == 0;
+}
+
+extern "C" void __cdecl Hook_VerifyAndLoadNewTiles1996(FILE *f) {
+	char *pBuf;
+	tilesetHeadInfo_t tilesetInfo;
+	tilesetChunkHeader_t tilesetChunkHeader;
+	CSimcityView *pSCView;
+
+	// Seek and process 'Info' portion.
+	fseek(f, sizeof(tilesetMainHeader_t), SEEK_SET);
+	fread(tilesetInfo.szHead, 4, 1, f);
+	if (memcmp(tilesetInfo.szHead, "INFO", 4) != 0)
+		return;
+
+	fread(&tilesetInfo.dwSize, 4, 1, f);
+	tilesetInfo.dwSize = _byteswap_ulong(tilesetInfo.dwSize);
+	fseek(f, tilesetInfo.dwSize, SEEK_CUR);
+
+	// Process 'Tile' portion.
+	memset(&tilesetChunkHeader, 0, sizeof(tilesetChunkHeader_t));
+	fread(tilesetChunkHeader.szHead, 4, 1, f);
+	if (memcmp(tilesetChunkHeader.szHead, "TILE", 4) != 0)
+		return;
+
+	fread(&tilesetChunkHeader.dwSize, 4, 1, f);
+	tilesetChunkHeader.dwSize = _byteswap_ulong(tilesetChunkHeader.dwSize);
+	
+	pBuf = (char *)malloc(tilesetChunkHeader.dwSize);
+	if (!pBuf)
+		Game_LoadTilesFromFile(f);
+	else {
+		Game_GetAndLoadNextTileFileChunkToMemory(f, pBuf, tilesetChunkHeader.dwSize);
+		Game_LoadTilesFromMemory(pBuf);
+		free(pBuf);
+	}
+
+	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis);
+	if (pSCView) {
+		Game_SimcityView_DrawHouse(pSCView);
+		UpdateWindow(pSCView->m_hWnd);
+	}
+}
+
+extern "C" void __stdcall Hook_GetAndLoadNextTileFileChunkToMemory1996(FILE *f, char *pBuf, DWORD dwSize) {
+	DWORD dwRemainingSize, dwChunkSize, dwFetchedSize;
+
+	dwRemainingSize = dwSize;
+	dwChunkSize = 0x8000;
+	dwFetchedSize = 0;
+	while (dwRemainingSize > 0) {
+		if (dwChunkSize > dwRemainingSize)
+			dwChunkSize = dwRemainingSize;
+		dwFetchedSize = fread(pBuf, 1, dwChunkSize, f);
+		if (dwFetchedSize == 0)
+			break;
+		dwRemainingSize -= dwFetchedSize;
+		pBuf += dwFetchedSize;
+	}
+}
+
+extern "C" void *__cdecl Hook_ReallocateDataEntry1996(char *pDest, char *pSrc) {
+	DWORD dwCurr;
+	DWORD dwDiff;
+	char *pDestPtr;
+	DWORD dwSize;
+	DWORD dwPos;
+	void *pNew;
+
+	dwCurr = GlobalSize(pDest);
+	dwDiff = 0;
+	if (pSrc != pDest) {
+		do
+			pDestPtr = &pDest[++dwDiff];
+		while (pDestPtr != pSrc);
+	}
+	dwSize = dwCurr - dwDiff;
+	for (dwPos = 0; dwSize > dwPos; ++dwPos)
+		pDest[dwPos] = pSrc[dwPos];
+	pNew = realloc(pDest, dwSize);
+	return (pNew) ? pNew : pDest;
+}
+
+extern "C" void __cdecl Hook_LoadTilesFromMemory1996(tilesetMem_t *pTileMem) {
+	WORD nMaxChunks, nChunk;
+	tileMem_t *pTileMemEntry;
+	tilesetChunkHeader_t tilesetChunkHeader;
+	char *pBuf;
+	BOOL bGotShap, bGotName, bResize;
+
+	nMaxChunks = _byteswap_ushort(pTileMem->nMaxChunks);
+	pTileMemEntry = &pTileMem->tileMem;
+	for (nChunk = 0; nMaxChunks > nChunk; ++nChunk) {
+		memset(&tilesetChunkHeader, 0, sizeof(tilesetChunkHeader_t));
+		memcpy(tilesetChunkHeader.szHead, pTileMemEntry->szHead, 4);
+		tilesetChunkHeader.dwSize = _byteswap_ulong(pTileMemEntry->dwSize);
+		pBuf = &pTileMemEntry->pBuf;
+
+		bGotShap = bGotName = FALSE;
+		if (memcmp(tilesetChunkHeader.szHead, "SHAP", 4) == 0) {
+			bGotShap = Game_ReadTileShapInformation((tileShap_t *)pBuf);
+			if (!bGotShap) {
+				if (!bTilesetLoadOutOfMemory && bResize) {
+					bTilesetLoadOutOfMemory = TRUE;
+					bResize = FALSE;
+				}
+			}
+		}
+		else if (memcmp(tilesetChunkHeader.szHead, "NAME", 4) == 0)
+			bGotName = Game_ReadTileNameInformation((tileName_t *)pBuf);
+
+		// Added. If this is set to true it stands to reason
+		// you'd then want to break out of the loop.
+		if (bTilesetLoadOutOfMemory)
+			break;
+
+		if (bGotShap || bGotName || bResize) {
+			bResize = FALSE;
+			pTileMemEntry = (tileMem_t *)&pBuf[tilesetChunkHeader.dwSize];
+			continue;
+		}
+
+		bResize = TRUE;
+		pTileMemEntry = (tileMem_t *)Game_ReallocateDataEntry((char *)pTileMem, pBuf);
+	}
+}
+
+extern "C" void __cdecl Hook_LoadTilesFromFile1996(FILE *f) {
+	char *pBuf;
+	WORD nMaxChunks, nChunk;
+	DWORD dwSize;
+	tilesetChunkHeader_t tilesetChunkHeader;
+	BOOL bSomeBool;
+
+	bTilesetLoadOutOfMemory = FALSE;
+	pBuf = (char *)malloc(0x10000);
+	if (pBuf) {
+		fread(&nMaxChunks, 2, 1, f);
+		nMaxChunks = _byteswap_ushort(nMaxChunks);
+		for (nChunk = 0; nMaxChunks > nChunk; ++nChunk) {
+			memset(&tilesetChunkHeader, 0, sizeof(tilesetChunkHeader_t));
+			fread(tilesetChunkHeader.szHead, 1, 4, f);
+			if (feof(f))
+				break;
+			fread(&dwSize, 4, 1, f);
+			bSomeBool = (dwSize & 0x1000000) == 0;
+			tilesetChunkHeader.dwSize = _byteswap_ulong(dwSize);
+			if (!bSomeBool)
+				tilesetChunkHeader.dwSize += 1;
+			fread(pBuf, 1, tilesetChunkHeader.dwSize, f);
+			if (memcmp(tilesetChunkHeader.szHead, "SHAP", 4) == 0) {
+				if (!Game_ReadTileShapInformation((tileShap_t *)pBuf) && !bTilesetLoadOutOfMemory)
+					bTilesetLoadOutOfMemory = TRUE;
+			}
+			else if (memcmp(tilesetChunkHeader.szHead, "NAME", 4) == 0)
+				Game_ReadTileNameInformation((tileName_t *)pBuf);
+
+			// Added. If this is set to true it stands to reason
+			// you'd then want to break out of the loop.
+			if (bTilesetLoadOutOfMemory)
+				break;
+		}
+		free(pBuf);
+	}
+	else
+		bTilesetLoadOutOfMemory = TRUE;
+}
+
+extern "C" BOOL __cdecl Hook_ReadTileShapInformation1996(tileShap_t *pTileShap) {
+	__int16 nSpriteID;
+	WORD nWidth, nHeight;
+	DWORD dwSize;
+
+	// if 'nHeight' > 1 then change the tile sprite entry, otherwise just return TRUE.
+	// This check avoids zero'ing a building that may not be contained within the
+	// tileset that's being loaded.
+
+	nSpriteID = _byteswap_ushort(pTileShap->nSpriteID);
+	nWidth = _byteswap_ushort(pTileShap->nWidth);
+	nHeight = _byteswap_ushort(pTileShap->nHeight);
+	dwSize = _byteswap_ulong(pTileShap->dwSize);
+	return (nHeight > 1) ? Game_ChangeTileSpriteEntry(nSpriteID, nWidth, nHeight, dwSize, &pTileShap->pBuf) : TRUE;
+}
+
+extern "C" BOOL __cdecl Hook_ReadTileNameInformation1996(tileName_t *pTileName) {
+	WORD nTileNameID, nNameLength;
+	char *pNewTileName;
+
+	nTileNameID = _byteswap_ushort(pTileName->nTileNameID);
+	nNameLength = _byteswap_ushort(pTileName->nNameLength);
+	pNewTileName = (char *)Game_AllocateDataEntry(nNameLength + 1);
+	if (pNewTileName) {
+		memcpy(pNewTileName, &pTileName->pBuf, nNameLength);
+		pNewTileName[nNameLength] = 0;
+		if (pTileNames[nTileNameID]) {
+			Game_FreeDataEntry(pTileNames[nTileNameID]);
+			pTileNames[nTileNameID] = 0;
+		}
+		pTileNames[nTileNameID] = pNewTileName;
+	}
+	return TRUE;
+}
+
+extern "C" BOOL __cdecl Hook_ChangeTileSpriteEntry1996(int nSpriteID, WORD nWidth, WORD nHeight, DWORD dwSize, void *pBuf) {
+	BYTE *pDst;
+
+	pDst = (BYTE *)Game_AllocateDataEntry(dwSize);
+	if (pDst) {
+		if (pArrSpriteHeaders[nSpriteID].sprOffset.sprPtr) {
+			Game_FreeDataEntry(pArrSpriteHeaders[nSpriteID].sprOffset.sprPtr);
+			pArrSpriteHeaders[nSpriteID].sprOffset.sprPtr = 0;
+		}
+		memcpy(pDst, pBuf, dwSize);
+		pArrSpriteHeaders[nSpriteID].sprOffset.sprPtr = pDst;
+		pArrSpriteHeaders[nSpriteID].wWidth = nWidth;
+		pArrSpriteHeaders[nSpriteID].wHeight = nHeight;
+		Cache_Sprite(nSpriteID, pDst, dwSize, nHeight, nWidth);
+	}
+	return (pDst) ? TRUE : FALSE;
 }
 
 void InstallSpriteAndTileSetHooks_SC2K1996(void) {
@@ -445,4 +785,48 @@ void InstallSpriteAndTileSetHooks_SC2K1996(void) {
 	SafeVirtualProtect((LPVOID)0x42C314, 30, PAGE_EXECUTE_READWRITE);
 	memset((LPVOID)0x42C314, 0x90, 30);
 	NEWJMP((LPVOID)0x42C314, Hook_LoadSpriteArchives1996);
+
+	// Hook CSimcityApp:LoadTileset
+	SafeVirtualProtect((LPVOID)0x401E29, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401E29, Hook_SimcityApp_LoadTileset1996);
+
+	// Hook ReadTilesetFile
+	SafeVirtualProtect((LPVOID)0x4021F8, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4021F8, Hook_ReadTilesetFile1996);
+
+	// Hook CheckTilesetFileHeader
+	SafeVirtualProtect((LPVOID)0x401280, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401280, Hook_CheckTilesetFileHeader1996);
+
+	// Hook VerifyAndLoadNewTiles
+	SafeVirtualProtect((LPVOID)0x4019F6, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4019F6, Hook_VerifyAndLoadNewTiles1996);
+
+	// Hook GetAndLoadNextTileFileChunkToMemory
+	SafeVirtualProtect((LPVOID)0x402739, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402739, Hook_GetAndLoadNextTileFileChunkToMemory1996);
+
+	// Hook ReallocateDataEntry
+	SafeVirtualProtect((LPVOID)0x40264E, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x40264E, Hook_ReallocateDataEntry1996);
+
+	// Hook LoadTilesFromMemory
+	SafeVirtualProtect((LPVOID)0x401654, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401654, Hook_LoadTilesFromMemory1996);
+
+	// Hook LoadTilesFromFile
+	SafeVirtualProtect((LPVOID)0x401C35, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401C35, Hook_LoadTilesFromFile1996);
+
+	// Hook ReadTileShapInformation
+	SafeVirtualProtect((LPVOID)0x403044, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x403044, Hook_ReadTileShapInformation1996);
+
+	// Hook ReadTileNameInformation
+	SafeVirtualProtect((LPVOID)0x40260D, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x40260D, Hook_ReadTileNameInformation1996);
+
+	// Hook ChangeTileSpriteEntry
+	SafeVirtualProtect((LPVOID)0x4013E3, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4013E3, Hook_ChangeTileSpriteEntry1996);
 }

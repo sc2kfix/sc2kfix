@@ -12,10 +12,6 @@
 #include "../sc2kfix.h"
 #include "resource.h"
 
-#ifndef Game_ReadTilesetFile
-GAMECALL(0x4021F8, void, __cdecl, ReadTilesetFile, const char*)
-#endif
-
 #ifndef Game_DisplayEventMessage
 GAMECALL(0x40286A, void, __cdecl, DisplayEventMessage, int, CMFC3XString*)
 #endif
