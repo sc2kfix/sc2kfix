@@ -67,10 +67,6 @@
 #define SCD_UPDATE_VIEW_UPDATE_WITHTILEINVERT  3
 #define SCD_UPDATE_VIEW_CHECKTILEINVERT        4
 
-// This is for grouping sequences of pixels
-// during encoded processing.
-#define SEQ_MODULUS 4
-
 // This will get the general RCI zone that's passed
 // without distinguishing between light/dense.
 #define GET_GENERAL_RCI_ZONE(x) ((x - 1) / 2)
@@ -4426,17 +4422,13 @@ typedef struct {
 	std::vector<spriteFrame_t> sprGrassSnowFrame;         // Buildings with grass
 } spriteCache_t;
 
-extern std::vector<spriteCache_t> spriteCache;
-extern BYTE *Get_SpriteCache_BaseBuffer(sprite_header_t *pShapePtr, __int16 nSpriteID);
-extern BYTE *Get_SpriteCache_Buffer(sprite_header_t *pShapePtr, __int16 nSpriteID);
-extern WORD Get_SpriteCache_Height(sprite_header_t *pShapePtr, __int16 nSpriteID);
-extern WORD Get_SpriteCache_Width(sprite_header_t *pShapePtr, __int16 nSpriteID);
-
 extern HWND hwndMainDialog_SC2K1996;
 
 extern bool bSoundKickstart;
 
 extern void Clear_SpriteCache();
+extern void Init_SpriteCache(bool bReload);
+extern void Cache_Sprite(DWORD nID, BYTE *pSpriteBuf, int nSize, WORD wHeight, WORD wWidth);
 
 extern int GetSoundPlayTicksBySoundID_SC2K1996(int iSoundID);
 extern int GetTickDurationBySoundID_SC2K1996(int iSoundID, int nDuration);
