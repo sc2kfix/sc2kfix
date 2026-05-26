@@ -36,6 +36,7 @@ DWORD dwMusicThreadID = 0;
 MCIDEVICEID mciDevice = NULL;
 BOOL bMultithreadedMusicEnabled = FALSE;
 BOOL bUseFluidSynth = FALSE;
+bool bMusicForceIntroSongOnce = true;
 
 HMODULE hmodFluidSynth = NULL;
 fluid_settings_t* pFluidSynthSettings = NULL;
@@ -662,15 +663,14 @@ extern "C" void __stdcall Hook_SimcityApp_MusicPlayNextRefocusSong(void) {
 	__asm mov [pThis], ecx
 
 	// Fix for the wrong song being played after the intro video
-	// No longer needed - see 0x42542B in the mischooks source.
-#if 0
-	if (_ReturnAddress() == (void*)0x4061EE || _ReturnAddress() == (void*)0x425444) {
+	if (bMusicForceIntroSongOnce) {
+		bMusicForceIntroSongOnce = false;
+
 		if (mus_debug & MUS_DEBUG_SONGS)
 			ConsoleLog(LOG_DEBUG, "MUS:  Forcing song 10001 for call returning to 0x%08X.\n", (DWORD)_ReturnAddress());
 		Game_SimcityApp_MusicPlay(pThis, 10001);
 		return;
 	}
-#endif
 
 	iSongToPlay = vectorRandomSongIDs[iCurrentSong++];
 	if (mus_debug & MUS_DEBUG_SONGS)
