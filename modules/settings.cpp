@@ -416,14 +416,16 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_REFRESH_RATE),
 			"SimCity 2000 was designed to spend more CPU time on simulation than on rendering by only updating the city's growth when the display moves or on the 24th day of the month. "
-			"Enabling this setting allows the game to refresh the city display in real-time instead of batching display updates.");
+			"Enabling this setting switches to a reimplemented renderer that refreshes the city display in real-time instead of batching display updates.\n\n"
+		
+			"This new renderer also allows for the implementation of weather and seasonal effects as well as a better and more future-proofed animation system.");
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_WEATHER_EFFECTS),
 			"Enabling this setting causes the following weather and seasonal effects to be drawn:\n"
 			" - Trees will become less vibrant in autumn and winter.\n"
 			" - Trees and the ground will become dusted with snow during snowy weather, and covered in blizzards.\n"
 			" - Bodies of water will partially freeze during snowy weather and blizzards.\n\n"
 
-			"This setting does nothing unless the real-time city growth setting is also enabled.");
+			"This setting does nothing unless the real-time renderer setting is also enabled.");
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DARK_UNDGRND),
 			"When enabled the underground layer background will be dark.");
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS),

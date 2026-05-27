@@ -379,7 +379,7 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     GROUPBOX        "Interface Settings",IDC_STATIC,6,2,294,85
     GROUPBOX        "Visual and Performance Settings",IDC_STATIC,6,93,294,75
-    CONTROL         " Display city growth in real-time instead of in batches (Default: on)",IDC_SETTINGS_CHECK_REFRESH_RATE,
+    CONTROL         " Use new real-time renderer instead of original batched renderer (Default: on)",IDC_SETTINGS_CHECK_REFRESH_RATE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,107,280,10
     CONTROL         " Use dark underground background (Default: off)",IDC_SETTINGS_CHECK_DARK_UNDGRND,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,137,280,10
