@@ -662,25 +662,18 @@ extern "C" void __stdcall Hook_SimcityApp_MusicPlayNextRefocusSong(void) {
 	// This is actually a __thiscall we're overriding, so save "this"
 	__asm mov [pThis], ecx
 
-	// Fix for the wrong song being played after the intro video
-	if (bMusicForceIntroSongOnce) {
-		bMusicForceIntroSongOnce = false;
-
-		if (mus_debug & MUS_DEBUG_SONGS)
-			ConsoleLog(LOG_DEBUG, "MUS:  Forcing song 10001 for call returning to 0x%08X.\n", (DWORD)_ReturnAddress());
-		Game_SimcityApp_MusicPlay(pThis, 10001);
-		return;
-	}
-
 	iSongToPlay = vectorRandomSongIDs[iCurrentSong++];
 	if (mus_debug & MUS_DEBUG_SONGS)
 		ConsoleLog(LOG_DEBUG, "MUS:  Playing song %i (next iCurrentSong will be %i).\n", iSongToPlay, (iCurrentSong > 9 ? 0 : iCurrentSong));
 
 	Game_SimcityApp_MusicPlay(pThis, iSongToPlay);
 
-	// Loop and/or shuffle.
-	if (iCurrentSong > 9) {
+	// Loop and/or shuffle if needed or if the intro music is done being played.
+	if (iCurrentSong > 9 || bMusicForceIntroSongOnce) {
 		iCurrentSong = 0;
+
+		if (bMusicForceIntroSongOnce)
+			bMusicForceIntroSongOnce = false;
 
 		// Shuffle the songs, making sure we don't get the same one twice in a row
 		MusicShufflePlaylist(iSongToPlay);
@@ -727,9 +720,6 @@ void InstallMusicEngineHooks(void) {
 	// Hook for CSimcityApp::MusicPlayNext
 	SafeVirtualProtect((LPVOID)0x402AEF, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x402AEF, Hook_SimcityApp_MusicPlayNext);
-
-	// Shuffle music if the shuffle setting is enabled
-	MusicShufflePlaylist(0);
 
 	// Replace music functions with ones to post messages to the music thread
 	SafeVirtualProtect((LPVOID)0x40145B, 5, PAGE_EXECUTE_READWRITE);
