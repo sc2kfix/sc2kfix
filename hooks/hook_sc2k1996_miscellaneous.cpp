@@ -884,21 +884,22 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 				}
 				if (pSCDoc && pSCDoc->pSimEngine) {
 					if (pThis->wSCAGameSpeedLOW != GAME_SPEED_PAUSED) {
-						if (bFrequentUpdates) {
-							BOOL bUpdateGameView = (wCityMode == GAME_MODE_DISASTER && !bOffCycle) ? FALSE : TRUE;
-							// Moved the title and view update calls out of the SimulationProcessTick()
-							// function so they always occur at the end to ensure everything is updated
-							// and to account for the new mode '3' for preserving the "placement preview"
-							// tile highlight during granular updates.
-							//
-							// When disaster mode is active we only want to instigate an update when
-							// 'OffCycle' in order to not have a negative effect on the disaster animations
-							// (Without this being done the animations are rather fast).
-							if (bUpdateGameView) {
-								Game_SimcityDoc_UpdateDocumentTitle(pSCDoc);
-								GameMain_Document_UpdateAllViews(pSCDoc, NULL, SCD_UPDATE_VIEW_UPDATE_WITHTILEINVERT, NULL);
-							}
-						}
+						BOOL bUpdateGameView = (wCityMode == GAME_MODE_DISASTER && !bOffCycle) ? FALSE : TRUE;
+						// Moved the title and view update calls out of the SimulationProcessTick()
+						// function so they always occur at the end to ensure everything is updated
+						// and to account for the new mode '3' for preserving the "placement preview"
+						// tile highlight during granular updates.
+						//
+						// When disaster mode is active we only want to instigate an update when
+						// 'OffCycle' is FALSE in order to not have a negative effect on the disaster
+						// animations (Without this being done the animations are rather fast).
+						//
+						// When "Frequent Updates" are disabled, only have it send a view update when
+						// bOffCycle is TRUE.
+						if (bFrequentUpdates && bUpdateGameView)
+							Game_SimcityDoc_UpdateDocumentTitle(pSCDoc);
+						if ((bFrequentUpdates && bUpdateGameView) || (!bFrequentUpdates && bOffCycle))
+							GameMain_Document_UpdateAllViews(pSCDoc, NULL, SCD_UPDATE_VIEW_UPDATE_WITHTILEINVERT, NULL);
 					}
 					GameMain_Document_UpdateAllViews(pSCDoc, NULL, SCD_UPDATE_VIEW_CHECKTILEINVERT, NULL);
 				}
@@ -1244,7 +1245,7 @@ extern "C" void __stdcall Hook_SimcityDoc_UpdateDocumentTitle() {
 		else
 			goto GETOUT;
 		Game_CurrencyString_TruncateAtSpace(pFundStr);
-		if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND].ToBool())
+		if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND].ToBool() && bFrequentUpdates)
 			GameMain_String_Format(&cStr, "%s %d %4d <%s> %s", pSCApp->dwSCApCStringLongMonths[iCityMonth].m_pchData, iCityDayMon, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
 		else
 			GameMain_String_Format(&cStr, "%s %4d <%s> %s", pSCApp->dwSCApCStringShortMonths[iCityMonth].m_pchData, iCityYear, pszCityName.m_pchData, pFundStr->pStr);

@@ -1731,11 +1731,9 @@ static BYTE *Get_SpriteFrame_Buffer(std::vector<spriteFrame_t> &frameCache, BYTE
 
 static BYTE *Get_SpriteCache_BaseBuffer(sprite_header_t *pShapePtr, __int16 nSpriteID) {
 	if (pShapePtr->wHeight > 1) {
-		if (bFrequentUpdates) {
-			BYTE *pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, 0);
-			if (pSpriteBuf)
-				return pSpriteBuf;
-		}
+		BYTE *pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, 0);
+		if (pSpriteBuf)
+			return pSpriteBuf;
 		return pShapePtr->sprOffset.sprPtr;
 	}
 	return NULL;
@@ -1745,55 +1743,53 @@ static BYTE *Get_SpriteCache_Buffer(sprite_header_t *pShapePtr, __int16 nSpriteI
 	int nType = PALCACHE_TYPE_NONE;
 
 	if (pShapePtr->wHeight > 1) {
-		if (bFrequentUpdates) {
-			int nFrmIdx = nCycleIdx % CACHED_FRAMES;
-			if (nFrmIdx < 0)
-				nFrmIdx = -nFrmIdx;
-			BYTE *pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, nFrmIdx);
-			if (pSpriteBuf) {
-				if (bWeatherEffects && !bLoColor && !bOnTheFlyPalIdx) {
-					if (TreeSpritesCheck(nSpriteID)) {
-						if (WeatherCheck())
-							nType = PALCACHE_TYPE_TREES_SEASON_SNOW;
+		int nFrmIdx = nCycleIdx % CACHED_FRAMES;
+		if (nFrmIdx < 0)
+			nFrmIdx = -nFrmIdx;
+		BYTE *pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, nFrmIdx);
+		if (pSpriteBuf) {
+			if (bWeatherEffects && !bLoColor && !bOnTheFlyPalIdx) {
+				if (TreeSpritesCheck(nSpriteID)) {
+					if (WeatherCheck())
+						nType = PALCACHE_TYPE_TREES_SEASON_SNOW;
 
-						if (AutWintSeasonCheck())
-							nType = (nType == PALCACHE_TYPE_TREES_SEASON_SNOW) ? PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW : PALCACHE_TYPE_TREES_SEASON_AUTUMN;
+					if (AutWintSeasonCheck())
+						nType = (nType == PALCACHE_TYPE_TREES_SEASON_SNOW) ? PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW : PALCACHE_TYPE_TREES_SEASON_AUTUMN;
 
-						if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMN)
-							return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonAutumnFrame, pSpriteBuf, nFrmIdx);
-						else if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW)
-							return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonAutumnSnowFrame, pSpriteBuf, nFrmIdx);
-						else if (nType == PALCACHE_TYPE_TREES_SEASON_SNOW)
-							return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonSnowFrame, pSpriteBuf, nFrmIdx);
-					}
-					else if (TerrainSpritesCheck(nSpriteID)) {
-						if (WeatherCheck()) {
-							if (DeepWaterSpriteCheck(nSpriteID)) {
-								nType = (BlizzardCheck()) ? PALCACHE_TYPE_WATER_ICE_BLIZZARD : PALCACHE_TYPE_WATER_ICE;
-								if (nType == PALCACHE_TYPE_WATER_ICE)
-									return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprDeepWaterIceFrame, pSpriteBuf, nFrmIdx);
-								else if (nType == PALCACHE_TYPE_WATER_ICE_BLIZZARD)
-									return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprDeepWaterBlizzardFrame, pSpriteBuf, nFrmIdx);
-							}
-							else {
-								nType = (BlizzardCheck()) ? PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD : PALCACHE_TYPE_TERRAIN_SNOW;
-								if (nType == PALCACHE_TYPE_TERRAIN_SNOW)
-									return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainSnowFrame, pSpriteBuf, nFrmIdx);
-								else if (nType == PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD)
-									return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainBlizzardFrame, pSpriteBuf, nFrmIdx);
-							}
+					if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMN)
+						return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonAutumnFrame, pSpriteBuf, nFrmIdx);
+					else if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW)
+						return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonAutumnSnowFrame, pSpriteBuf, nFrmIdx);
+					else if (nType == PALCACHE_TYPE_TREES_SEASON_SNOW)
+						return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonSnowFrame, pSpriteBuf, nFrmIdx);
+				}
+				else if (TerrainSpritesCheck(nSpriteID)) {
+					if (WeatherCheck()) {
+						if (DeepWaterSpriteCheck(nSpriteID)) {
+							nType = (BlizzardCheck()) ? PALCACHE_TYPE_WATER_ICE_BLIZZARD : PALCACHE_TYPE_WATER_ICE;
+							if (nType == PALCACHE_TYPE_WATER_ICE)
+								return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprDeepWaterIceFrame, pSpriteBuf, nFrmIdx);
+							else if (nType == PALCACHE_TYPE_WATER_ICE_BLIZZARD)
+								return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprDeepWaterBlizzardFrame, pSpriteBuf, nFrmIdx);
 						}
-					}
-					else if (ObjectGrassSpritesCheck(nSpriteID)) {
-						if (WeatherCheck()) {
-							nType = PALCACHE_GRASS_SNOW; // Yes I know.. this is the only option here currently.
-							if (nType == PALCACHE_GRASS_SNOW)
-								return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprGrassSnowFrame, pSpriteBuf, nFrmIdx);
+						else {
+							nType = (BlizzardCheck()) ? PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD : PALCACHE_TYPE_TERRAIN_SNOW;
+							if (nType == PALCACHE_TYPE_TERRAIN_SNOW)
+								return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainSnowFrame, pSpriteBuf, nFrmIdx);
+							else if (nType == PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD)
+								return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainBlizzardFrame, pSpriteBuf, nFrmIdx);
 						}
 					}
 				}
-				return pSpriteBuf;
+				else if (ObjectGrassSpritesCheck(nSpriteID)) {
+					if (WeatherCheck()) {
+						nType = PALCACHE_GRASS_SNOW; // Yes I know.. this is the only option here currently.
+						if (nType == PALCACHE_GRASS_SNOW)
+							return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprGrassSnowFrame, pSpriteBuf, nFrmIdx);
+					}
+				}
 			}
+			return pSpriteBuf;
 		}
 		return pShapePtr->sprOffset.sprPtr;
 	}
@@ -1802,11 +1798,9 @@ static BYTE *Get_SpriteCache_Buffer(sprite_header_t *pShapePtr, __int16 nSpriteI
 
 static WORD Get_SpriteCache_Height(sprite_header_t *pShapePtr, __int16 nSpriteID) {
 	if (pShapePtr->wHeight > 1) {
-		if (bFrequentUpdates) {
-			BYTE *pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, 0);
-			if (pSpriteBuf)
-				return spriteCache[nSpriteID].sprFrame[0].wHeight;
-		}
+		BYTE *pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, 0);
+		if (pSpriteBuf)
+			return spriteCache[nSpriteID].sprFrame[0].wHeight;
 		return pShapePtr->wHeight;
 	}
 	return 0;
@@ -1814,11 +1808,9 @@ static WORD Get_SpriteCache_Height(sprite_header_t *pShapePtr, __int16 nSpriteID
 
 static WORD Get_SpriteCache_Width(sprite_header_t *pShapePtr, __int16 nSpriteID) {
 	if (pShapePtr->wHeight > 1) {
-		if (bFrequentUpdates) {
-			BYTE *pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, 0);
-			if (pSpriteBuf)
-				return spriteCache[nSpriteID].sprFrame[0].wWidth;
-		}
+		BYTE *pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, 0);
+		if (pSpriteBuf)
+			return spriteCache[nSpriteID].sprFrame[0].wWidth;
 		return pShapePtr->wWidth;
 	}
 	return 0;
@@ -1841,7 +1833,7 @@ static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
 static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemHeight, int nPos) {
 	BYTE palIdx = colIdx;
 
-	if (bFrequentUpdates && bWeatherEffects && !bLoColor && bOnTheFlyPalIdx) {
+	if (bWeatherEffects && !bLoColor && bOnTheFlyPalIdx) {
 		// Accumulate snow or fading on trees
 		if (TreeSpritesCheck(nSpriteID)) {
 			if ((nPos % SEQ_MODULUS) == 0 || (nPos % SEQ_MODULUS) == 2 || (nPos % SEQ_MODULUS) == 3) {
