@@ -108,12 +108,12 @@
 #define IDR_TSET_FIXED                  23024
 #define IDR_BLOB_LIBSC2KFIX_LUA         23025
 #define IDD_SETTINGS_CONTAINER          23026
-#define IDD_SETTINGS_GENERAL            23028
-#define IDD_SETTINGS_GAMEPLAY           23029
-#define IDD_SETTINGS_AUDIO              23030
-#define IDR_SCRKPALBMP                  23031
-#define IDR_SCRKPALWND                  23032
-#define IDR_SCRKPALMAP                  23033
+#define IDD_SETTINGS_GENERAL            23027
+#define IDD_SETTINGS_GAMEPLAY           23028
+#define IDD_SETTINGS_AUDIO              23029
+#define IDR_SCRKPALBMP                  23030
+#define IDR_SCRKPALWND                  23031
+#define IDR_SCRKPALMAP                  23032
 #define IDM_GAME_OPTIONS_SC2KFIXSETTINGS 40000
 #define IDM_GAME_OPTIONS_MODCONFIG      40001
 #define IDM_DEBUG_MILITARY_DECLINED     40002
@@ -145,7 +145,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        23034
+#define _APS_NEXT_RESOURCE_VALUE        23033
 #define _APS_NEXT_COMMAND_VALUE         40026
 #define _APS_NEXT_CONTROL_VALUE         21073
 #define _APS_NEXT_SYMED_VALUE           101
