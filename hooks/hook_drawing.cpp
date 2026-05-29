@@ -40,8 +40,6 @@ enum {
 
 #define WATEREDPIPES_SPRITE_OFFSET 116
 
-#define EFFECTS_USE_MAP_SLOW 1
-
 #define MDRAWING_DEBUG_OTHER 1
 
 #define MDRAWING_DEBUG DEBUG_FLAGS_NONE
@@ -1266,48 +1264,19 @@ std::map<BYTE, BYTE> mapTerrainBlizzardIndexMap = {
 	{0xCB, 0x56}, { 0xCF, 0x56 }, { 0xD3, 0x56 },
 };
 
-// Probably a bit slower. Use for debugging/testing only.
-static BYTE ProcessTerrainSnowIndexMap(BYTE colIdx) {
+static BYTE ProcessTerrainSnowIndex(BYTE colIdx) {
 	auto iter = mapTerrainSnowIndexMap.find(colIdx);
 	if (iter != mapTerrainSnowIndexMap.end())
 		return iter->second;
 	else
 		return colIdx;
 }
-static BYTE ProcessTerrainBlizzardIndexMap(BYTE colIdx) {
+static BYTE ProcessTerrainBlizzardIndex(BYTE colIdx) {
 	auto iter = mapTerrainBlizzardIndexMap.find(colIdx);
 	if (iter != mapTerrainBlizzardIndexMap.end())
 		return iter->second;
 	else
 		return colIdx;
-}
-
-BYTE ProcessTerrainSnowIndex(BYTE colIdx, bool bBlizzard) {
-	if (EFFECTS_USE_MAP_SLOW)
-		return (bBlizzard ? ProcessTerrainBlizzardIndexMap(colIdx) : ProcessTerrainSnowIndexMap(colIdx));
-	BYTE newIdx = colIdx;
-	// Snow effect - for ground or water tiles.
-	if (newIdx == 0x73 || newIdx == 0x79 || newIdx == 0x7F || newIdx == 0x80) // Ground tiles here
-		newIdx = 0x9A;
-	else if (newIdx == 0x74 || newIdx == 0x7A || newIdx == 0x81)
-		newIdx = 0x9B;
-	else if (newIdx == 0x75 || newIdx == 0x7B || newIdx == 0x82)
-		newIdx = 0x9C;
-	else if (newIdx == 0x76 || newIdx == 0x7C || newIdx == 0x85)
-		newIdx = 0x9D;
-	else if (newIdx == 0x77 || newIdx == 0x7D)
-		newIdx = 0x9E;
-	else if (newIdx == 0x78 || newIdx == 0x7E)
-		newIdx = 0x9F;
-	else if (newIdx == 0xC8 || newIdx == 0xCC || newIdx == 0xD0) // Water tiles here
-		newIdx = 0x53;
-	else if (newIdx == 0xC9 || newIdx == 0xCD || newIdx == 0xD1)
-		newIdx = 0x54;
-	else if (newIdx == 0xCA || newIdx == 0xCE || newIdx == 0xD2)
-		newIdx = 0x55;
-	else if (newIdx == 0xCB || newIdx == 0xCF || newIdx == 0xD3)
-		newIdx = 0x56;
-	return newIdx;
 }
 
 // Experimental. Looks pretty good on most default buildings but a few have had to be manually
@@ -1324,32 +1293,12 @@ std::map<BYTE, BYTE> mapBuildingSnowIndexMap = {
 	{0x4A, 0x9E},
 };
 
-// Probably a bit slower. Use for debugging/testing only.
-static BYTE ProcessBuildingSnowIndexMap(BYTE colIdx) {
+static BYTE ProcessBuildingSnowIndex(BYTE colIdx) {
 	auto iter = mapBuildingSnowIndexMap.find(colIdx);
 	if (iter != mapBuildingSnowIndexMap.end())
 		return iter->second;
 	else
 		return colIdx;
-	return colIdx;
-}
-
-static BYTE ProcessBuildingSnowIndex(BYTE colIdx) {
-	if (EFFECTS_USE_MAP_SLOW)
-		return ProcessBuildingSnowIndexMap(colIdx);
-
-	if (colIdx == 0x43 || colIdx == 0x44)
-		return 0x10;
-	if (colIdx == 0x45)
-		return 0x9A;
-	if (colIdx == 0x46)
-		return 0x9B;
-	if (colIdx == 0x47)
-		return 0x9C;
-	if (colIdx == 0x48)
-		return 0x9D;
-	if (colIdx == 0x49 || colIdx == 0x4A)
-		return 0x9E;
 	return colIdx;
 }
 
@@ -1362,33 +1311,12 @@ std::map<BYTE, BYTE> mapTreeSnowEffectMap = {
 	{0x45, 0x9F},
 };
 
-// Probably a bit slower. Use for debugging/testing only.
-static BYTE ProcessTreeSnowEffectMap(BYTE colIdx) {
+static BYTE ProcessTreeSnowEffect(BYTE colIdx) {
 	auto iter = mapTreeSnowEffectMap.find(colIdx);
 	if (iter != mapTreeSnowEffectMap.end())
 		return iter->second;
 	else
 		return colIdx;
-}
-
-static BYTE ProcessTreeSnowEffect(BYTE colIdx) {
-	if (EFFECTS_USE_MAP_SLOW)
-		return ProcessTreeSnowEffectMap(colIdx);
-
-	BYTE newIdx = colIdx;
-	if (newIdx == 0x3B || newIdx == 0x40 || newIdx == 0x46 || newIdx == 0x50)
-		newIdx = 0x9A;
-	else if (newIdx == 0x3C || newIdx == 0x41 || newIdx == 0x47 || newIdx == 0x51)
-		newIdx = 0x9B;
-	else if (newIdx == 0x3D || newIdx == 0x42 || newIdx == 0x48 || newIdx == 0x52)
-		newIdx = 0x9C;
-	else if (newIdx == 0x3E || newIdx == 0x43 || newIdx == 0x49)
-		newIdx = 0x9D;
-	else if (newIdx == 0x3F || newIdx == 0x44 || newIdx == 0x4A)
-		newIdx = 0x9E;
-	else if (newIdx == 0x45)
-		newIdx = 0x9F;
-	return newIdx;
 }
 
 std::map<BYTE, BYTE> mapTreeAutumnEffectMap = {
@@ -1400,33 +1328,12 @@ std::map<BYTE, BYTE> mapTreeAutumnEffectMap = {
 	{0x45, 0x2A},
 };
 
-// Probably a bit slower. Use for debugging/testing only.
-static BYTE ProcessTreeAutumnEffectMap(BYTE colIdx) {
+static BYTE ProcessTreeAutumnEffect(BYTE colIdx) {
 	auto iter = mapTreeAutumnEffectMap.find(colIdx);
 	if (iter != mapTreeAutumnEffectMap.end())
 		return iter->second;
 	else
 		return colIdx;
-}
-
-static BYTE ProcessTreeAutumnEffect(BYTE colIdx) {
-	if (EFFECTS_USE_MAP_SLOW)
-		return ProcessTreeAutumnEffectMap(colIdx);
-
-	BYTE newIdx = colIdx;
-	if (newIdx == 0x3B || newIdx == 0x40 || newIdx == 0x46 || newIdx == 0x50)
-		newIdx = 0x7D;
-	else if (newIdx == 0x3C || newIdx == 0x41 || newIdx == 0x47 || newIdx == 0x51)
-		newIdx = 0x7E;
-	else if (newIdx == 0x3D || newIdx == 0x42 || newIdx == 0x48 || newIdx == 0x52)
-		newIdx = 0x7F;
-	else if (newIdx == 0x3E || newIdx == 0x43 || newIdx == 0x49)
-		newIdx = 0x28;
-	else if (newIdx == 0x3F || newIdx == 0x44 || newIdx == 0x4A)
-		newIdx = 0x29;
-	else if (newIdx == 0x45)
-		newIdx = 0x2A;
-	return newIdx;
 }
 
 // Sprite, season and weather checks
@@ -1613,16 +1520,16 @@ static void Adjust_SpritePalette(BYTE *shapePtr, int cIdx, int nType) {
 				}
 				else if (nType >= PALCACHE_TYPE_TERRAIN_SNOW && nType <= PALCACHE_TYPE_WATER_ICE_BLIZZARD) {
 					if (nType == PALCACHE_TYPE_TERRAIN_SNOW)
-						palIdx = ProcessTerrainSnowIndex(palIdx, false);
+						palIdx = ProcessTerrainSnowIndex(palIdx);
 					else if (nType == PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD)
-						palIdx = ProcessTerrainSnowIndex(palIdx, true);
+						palIdx = ProcessTerrainBlizzardIndex(palIdx);
 					else if (nType == PALCACHE_TYPE_WATER_ICE) {
 						if ((nPos % SEQ_MODULUS) == 2)
-							palIdx = ProcessTerrainSnowIndex(palIdx, false);
+							palIdx = ProcessTerrainSnowIndex(palIdx);
 					}
 					else if (nType == PALCACHE_TYPE_WATER_ICE_BLIZZARD) {
 						if ((nPos % SEQ_MODULUS) == 1 || (nPos % SEQ_MODULUS) == 2)
-							palIdx = ProcessTerrainSnowIndex(palIdx, true);
+							palIdx = ProcessTerrainBlizzardIndex(palIdx);
 					}
 				}
 				else if (nType == PALCACHE_GRASS_SNOW)
@@ -1852,14 +1759,12 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 					// Handle deep water differently.
 					if (DeepWaterSpriteCheck(nSpriteID)) {
 						if (((nPos % SEQ_MODULUS) == 1 && BlizzardCheck()) || (nPos % SEQ_MODULUS) == 2)
-							palIdx = ProcessTerrainSnowIndex(palIdx, BlizzardCheck());
+							palIdx = (BlizzardCheck() ? ProcessTerrainBlizzardIndex(palIdx) : ProcessTerrainSnowIndex(palIdx));
 					}
 
 					// Ground should be mostly covered in regular snow or absolutely blanketed in a blizzard.
-					else {
-						/*if (BlizzardCheck() || (nPos % SEQ_MODULUS) == 2 || (nPos % SEQ_MODULUS) == 3 || (nPos % SEQ_MODULUS) == 1)
-							*/palIdx = ProcessTerrainSnowIndex(palIdx, BlizzardCheck());
-					}
+					else 
+						palIdx = (BlizzardCheck() ? ProcessTerrainBlizzardIndex(palIdx) : ProcessTerrainSnowIndex(palIdx));
 				}
 			}
 
