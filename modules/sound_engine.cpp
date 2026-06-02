@@ -342,8 +342,7 @@ DWORD WINAPI SoundEngineLoopThread(LPVOID lpParameter) {
 bool LoadSoundEngineLibraries(void) {
 	hmodSndFile = LoadLibrary("sndfile.dll");
 	if (!hmodSndFile) {
-		ConsoleLog(LOG_ERROR, "SND:  Couldn't load sndfile.dll.\n");
-		return false;
+		DLLCrash("sndfile.dll", GetLastError());
 	}
 
 	SF_open = (decltype(SF_open))GetProcAddress(hmodSndFile, "sf_open");
@@ -354,8 +353,7 @@ bool LoadSoundEngineLibraries(void) {
 
 	hmodSDL3 = LoadLibrary("SDL3.dll");
 	if (!hmodSDL3) {
-		ConsoleLog(LOG_ERROR, "SND:  Couldn't load SDL3.dll.\n");
-		return false;
+		DLLCrash("SDL3.dll", GetLastError());
 	}
 
 	SDL_Init = (decltype(SDL_Init))GetProcAddress(hmodSDL3, "SDL_Init");

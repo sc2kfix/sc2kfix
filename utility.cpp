@@ -48,6 +48,30 @@ HOOKEXT DWORD __stdcall GetTickCount32(void) {
 }
 #pragma warning(pop)
 
+// Pop up a crash error for a missing DLL
+void DLLCrash(const char* szDLLName, DWORD dwErrorCode) {
+	ConsoleLog(LOG_EMERGENCY, "CORE: Couldn't load %s; error code 0x%08X.\n", szDLLName, dwErrorCode);
+
+	std::string strErrorMessage = string_format(
+		"sc2kfix has encountered a fatal error when trying to load the %s library used "
+		"in the plugin's sound engine. This may be due to the %s file supplied with the plugin "
+		"not being present. Please ensure that you have extracted all DLLs in the root of the sc2kfix "
+		"release ZIP alongside winmm.dll.\n\n"
+
+		"If you have all four DLLs present, please submit a crash report to the sc2kfix developers "
+		"either via the sc2kfix GitHub issues page (https://github.com/sc2kfix/sc2kfix/issues -- "
+		"preferred) or via the sc2kfix Discord server (https://sc2kfix.net/discord). In order for "
+		"us to best assist with the crash, please make a copy of the sc2kfix.log file after closing "
+		"this dialog and before you re-open SimCity 2000. Submit this copy of the log file along with "
+		"your crash report, and we will do our best to investigate.\n\n"
+
+		"Clicking the OK button will immediately terminate SimCity 2000. Any unsaved progress "
+		"will be lost.", szDLLName, szDLLName);
+
+	MessageBox(GetActiveWindow(), strErrorMessage.c_str(), "sc2kfix fatal error", MB_OK | MB_ICONSTOP);
+	abort();
+}
+
 // Wrapper for VirtualProtect that throws a fatal error if it fails
 bool SafeVirtualProtectEx(void* lpAddress, size_t dwSize, DWORD flNewProtect, const char* szFile, int iLine, const char* szFunction) {
 	DWORD dwDummy;

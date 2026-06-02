@@ -134,9 +134,10 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define EXPERIMENT_NEWCONSOLE		2			// status: dubiously stable and uncommented
 #define EXPERIMENT_EVERYTHING		0xFFFFFFFF	// status: good luck and godspeed
 
-#define PERFMON_NONE                0
-#define PERFMON_ONUPDATE            1
-#define PERFMON_EVERTHING           0xFFFFFFFF
+#define PERFMON_NONE			0
+#define PERFMON_ONUPDATE		1
+#define PERFMON_SPRITECACHE		2
+#define PERFMON_EVERYTHING		0xFFFFFFFF
 
 #define ListView_InsertItemType(hwndLV, i, tmask) {\
 	LV_ITEM _macro_lvi;\
@@ -442,6 +443,7 @@ extern std::vector<tooltip_store_t> storedToolTips;
 
 void InitializeFonts(void);
 HOOKEXT DWORD __stdcall GetTickCount32(void);
+void DLLCrash(const char* szDLLName, DWORD dwErrorCode);
 bool SafeVirtualProtectEx(void* lpAddress, size_t dwSize, DWORD flNewProtect, const char* szFile, int iLine, const char* szFunction);
 HOOKEXT void CenterDialogBox(HWND hwndDlg);
 HOOKEXT void StoreTooltip(std::vector<tooltip_store_t> &tt_s, HWND hParent, HWND hControl, const char *szText);

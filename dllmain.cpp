@@ -217,8 +217,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						dwExperimentsEnabled = EXPERIMENT_EVERYTHING;
 					if (!lstrcmpiW(argv[i], L"-perfmon=onupdate"))
 						dwPerfMonEnabled |= PERFMON_ONUPDATE;
+					if (!lstrcmpiW(argv[i], L"-perfmon=spritecache"))
+						dwPerfMonEnabled |= PERFMON_SPRITECACHE;
 					if (!lstrcmpiW(argv[i], L"-perfmon=all"))
-						dwPerfMonEnabled = PERFMON_EVERTHING;
+						dwPerfMonEnabled = PERFMON_EVERYTHING;
 					if (!lstrcmpiW(argv[i], L"-bitmode"))
 					{
 						if (!iSetBitMode) {
