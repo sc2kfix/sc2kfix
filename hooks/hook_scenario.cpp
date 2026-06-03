@@ -51,7 +51,7 @@ extern "C" void __stdcall Hook_ScenarioDialog_OnInitDialog() {
 
 	Game_SimcityApp_GetValueStringA(pSCApp, &strFilePath, "PATHS", "SCENARIOS");
 	if (!strFilePath.m_nDataLength)
-		GameMain_String_OperatorConcat(&strFilePath, ".\\scenario\\");
+		GameMain_String_OperatorConcat(&strFilePath, (char *)".\\scenario\\");
 
 	strcpy_s(szPathBuf, strFilePath.m_pchData);
 	strcat_s(szPathBuf, "*.scn");
@@ -94,7 +94,7 @@ extern "C" void __stdcall Hook_ScenarioDialog_OnInitDialog() {
 
 	Game_SimcityApp_GetValueStringA(pSCApp, &strFilePath, "PATHS", "GRAPHICS");
 	if (!strFilePath.m_nDataLength)
-		GameMain_String_OperatorConcat(&strFilePath, ".\\graphics");
+		GameMain_String_OperatorConcat(&strFilePath, (char *)".\\graphics");
 
 	sprintf_s(szPathBuf, "%s\\pal_mac.bmp", strFilePath.m_pchData);
 
