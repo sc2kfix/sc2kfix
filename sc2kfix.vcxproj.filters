@@ -485,6 +485,9 @@
     <ClCompile Include="modules\sound_engine.cpp">
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="hooks\hook_scenario.cpp">
+      <Filter>Source Files\Hooks</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="sc2kfix.rc">

@@ -495,6 +495,15 @@ public:
 	CMFC3XDC QGDDC;
 };
 
+class CScenarioDialog : public CGameDialog {
+public:
+	int nIdx;
+	char szScenFilePath[260];
+	CGraphics *pGraphPict;
+	HPALETTE hPictPal;
+	CMFC3XListBox listBox;
+};
+
 // !!! At the moment the CMovieDialog class is structured
 // to achieve alignment, it is heavily subject to change.
 
