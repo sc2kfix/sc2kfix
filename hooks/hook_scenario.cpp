@@ -16,6 +16,18 @@
 
 #pragma intrinsic(_ReturnAddress)
 
+#define SCENARIO_DEBUG_OTHER 1
+#define SCENARIO_DEBUG_LISTINIT 2
+
+#define SCENARIO_DEBUG DEBUG_FLAGS_NONE
+
+#ifdef DEBUGALL
+#undef SCENARIO_DEBUG
+#define SCENARIO_DEBUG DEBUG_FLAGS_EVERYTHING
+#endif
+
+UINT scenario_debug = SCENARIO_DEBUG;
+
 extern "C" void __stdcall Hook_ScenarioDialog_OnInitDialog() {
 	CScenarioDialog *pThis;
 
@@ -56,7 +68,8 @@ extern "C" void __stdcall Hook_ScenarioDialog_OnInitDialog() {
 						++nScenCnt;
 						strcpy_s(szFileBuf, strFilePath.m_pchData);
 						strcat_s(szFileBuf, fdat.name);
-						ConsoleLog(LOG_DEBUG, "(%d) [%s]\n", nScenCnt, szFileBuf);
+						if (scenario_debug & SCENARIO_DEBUG_LISTINIT)
+							ConsoleLog(LOG_DEBUG, "(%d) [%s]\n", nScenCnt, szFileBuf);
 						SendMessageA(pThis->listBox.m_hWnd, LB_ADDSTRING, 0, (LPARAM)szFileBuf);
 					}
 				}
@@ -102,6 +115,9 @@ extern "C" void __stdcall Hook_ScenarioDialog_OnInitDialog() {
 }
 
 void InstallScenarioHooks_SC2K1996(void) {
+	if (mischook_debug == DEBUG_FLAGS_EVERYTHING)
+		scenario_debug = DEBUG_FLAGS_EVERYTHING;
+
 	// Hook for CScenarioDialog::OnInitDialog
 	SafeVirtualProtect((LPVOID)0x4016A4, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4016A4, Hook_ScenarioDialog_OnInitDialog);
