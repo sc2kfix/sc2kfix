@@ -443,7 +443,7 @@ extern std::vector<tooltip_store_t> storedToolTips;
 
 void InitializeFonts(void);
 HOOKEXT DWORD __stdcall GetTickCount32(void);
-void DLLCrash(const char* szDLLName, DWORD dwErrorCode);
+void __declspec(noreturn) MessageBoxCrash(std::string strComponent, DWORD dwErrorCode);
 bool SafeVirtualProtectEx(void* lpAddress, size_t dwSize, DWORD flNewProtect, const char* szFile, int iLine, const char* szFunction);
 HOOKEXT void CenterDialogBox(HWND hwndDlg);
 HOOKEXT void StoreTooltip(std::vector<tooltip_store_t> &tt_s, HWND hParent, HWND hControl, const char *szText);
@@ -468,6 +468,8 @@ HOOKEXT_CPP json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBig
 HOOKEXT_CPP json::JSON EncodeBudgetArray(DWORD* dwBudgetArray, BOOL bBigEndian);
 HOOKEXT_CPP void DecodeDWORDArray(DWORD* dwArray, json::JSON jsonArray, size_t iCount, BOOL bBigEndian);
 void PorntipsGuzzardo(void);
+HOOKEXT_CPP std::string string_tolower(std::string& str);
+HOOKEXT_CPP std::string string_toupper(std::string& str);
 HOOKEXT_CPP bool string_starts_with(std::string& str, const char* prefix);
 HOOKEXT_CPP bool string_ends_with(std::string& str, const char* suffix);
 HOOKEXT_CPP bool string_contains(std::string& str, const char* substr);
@@ -480,8 +482,6 @@ HOOKEXT_CPP void PrintAlignedStringMap(std::map<std::string, std::string> mapStr
 LONG WINAPI CrashHandler(LPEXCEPTION_POINTERS lpExceptions);
 BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK SettingsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
-//void LoadStoredPaths(void);
-//void SaveStoredPaths(void);
 int DoCheckAndInstall(void);
 void ResetFileAssociations(void);
 void SetGamePath(void);
@@ -513,7 +513,6 @@ char *ConvertFileTypeFilterString(const char *pInStr);
 
 // Yes...
 FILE *old_fopen(const char *fname, const char *mode);
-char *old_strcpy(char *pDest, const char *pSource);
 
 void *__cdecl L_ReallocateDataEntry(char *pDest, char *pSrc);
 

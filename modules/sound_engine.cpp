@@ -342,7 +342,7 @@ DWORD WINAPI SoundEngineLoopThread(LPVOID lpParameter) {
 bool LoadSoundEngineLibraries(void) {
 	hmodSndFile = LoadLibrary("sndfile.dll");
 	if (!hmodSndFile) {
-		DLLCrash("sndfile.dll", GetLastError());
+		MessageBoxCrash("sndfile.dll", GetLastError());
 	}
 
 	SF_open = (decltype(SF_open))GetProcAddress(hmodSndFile, "sf_open");
@@ -353,7 +353,7 @@ bool LoadSoundEngineLibraries(void) {
 
 	hmodSDL3 = LoadLibrary("SDL3.dll");
 	if (!hmodSDL3) {
-		DLLCrash("SDL3.dll", GetLastError());
+		MessageBoxCrash("SDL3.dll", GetLastError());
 	}
 
 	SDL_Init = (decltype(SDL_Init))GetProcAddress(hmodSDL3, "SDL_Init");

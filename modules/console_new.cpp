@@ -354,6 +354,8 @@ bool ConsoleCommandSetGameSeason(std::vector<std::string> args, int iBreakoutSta
 				{"auto", "Restores the flow of time"},
 				{"autumn", "Forces seasonal effects to autumn"},
 				{"blizzard", "Forces seasonal effects to blizzardy winter"},
+				{"drought", "Forces seasonal effects to drought"},
+				{"heatwave", "Forces seasonal effects to heat wave"},
 				{"snow", "Forces seasonal effects to snowy winter"},
 				{"spring", "Forces seasonal effects to spring"},
 				{"summer", "Forces seasonal effects to summer"},
@@ -383,6 +385,10 @@ bool ConsoleCommandSetGameSeason(std::vector<std::string> args, int iBreakoutSta
 		iForcedSeason = FORCED_SEASON_AUTUMN;
 	else if (args[0] == "blizzard")
 		iForcedSeason = FORCED_SEASON_BLIZZARD;
+	else if (args[0] == "drought")
+		iForcedSeason = FORCED_SEASON_DROUGHT;
+	else if (args[0] == "heatwave")
+		iForcedSeason = FORCED_SEASON_HEATWAVE;
 	else if (args[0] == "snow")
 		iForcedSeason = FORCED_SEASON_SNOW;
 	else if (args[0] == "spring")
@@ -1225,6 +1231,7 @@ bool ConsoleCommandShowVersion(std::vector<std::string> args, int iBreakoutState
 
 void NewConsoleInitializeCommands(console::CommandTree& treeCommands) {
 	treeCommands["clear"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandClear, "Clear the console");
+	treeCommands["crash"] = ConsoleCommand(COMMAND_TYPE_UNDOCUMENTED, (command_proc_t)NULL, "Crash the game");
 	treeCommands["fixup"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Fix up engine gremlins");
 	treeCommands["fixup"]["things"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Fixup commands for Thing entities");
 	treeCommands["fixup"]["things"]["clear"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandFixupThingsClear, "Clear (specific) Thing entities");

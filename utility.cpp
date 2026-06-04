@@ -49,27 +49,98 @@ HOOKEXT DWORD __stdcall GetTickCount32(void) {
 #pragma warning(pop)
 
 // Pop up a crash error for a missing DLL
-void DLLCrash(const char* szDLLName, DWORD dwErrorCode) {
-	ConsoleLog(LOG_EMERGENCY, "CORE: Couldn't load %s; error code 0x%08X.\n", szDLLName, dwErrorCode);
+void __declspec(noreturn) MessageBoxCrash(std::string strComponent, DWORD dwErrorCode) {
+	std::string strErrorMessage;
 
-	std::string strErrorMessage = string_format(
-		"sc2kfix has encountered a fatal error when trying to load the %s library used "
-		"in the plugin's sound engine. This may be due to the %s file supplied with the plugin "
-		"not being present. Please ensure that you have extracted all DLLs in the root of the sc2kfix "
-		"release ZIP alongside winmm.dll.\n\n"
+	if (strComponent == "SafeVirtualProtect" || strComponent == "exception")
+		;	// do nothing
+	else if (string_ends_with(strComponent, ".dll"))
+		ConsoleLog(LOG_EMERGENCY, "CORE: Couldn't load %s; error code 0x%08X.\n", strComponent.c_str(), dwErrorCode);
+	else
+		ConsoleLog(LOG_EMERGENCY, "CORE: Fatal error in component %s detected.\n", strComponent.c_str());
 
-		"If you have all four DLLs present, please submit a crash report to the sc2kfix developers "
-		"either via the sc2kfix GitHub issues page (https://github.com/sc2kfix/sc2kfix/issues -- "
-		"preferred) or via the sc2kfix Discord server (https://sc2kfix.net/discord). In order for "
-		"us to best assist with the crash, please make a copy of the sc2kfix.log file after closing "
-		"this dialog and before you re-open SimCity 2000. Submit this copy of the log file along with "
-		"your crash report, and we will do our best to investigate.\n\n"
+	if (string_ends_with(strComponent, ".dll")) {
+		strErrorMessage = string_format(
+			"sc2kfix has encountered a fatal error when trying to load the %s library required "
+			"by the plugin to function. This may be due to the %s file supplied with the plugin "
+			"not being present. Please ensure that you have extracted all DLLs in the root of the sc2kfix "
+			"release ZIP alongside winmm.dll.\n\n"
 
-		"Clicking the OK button will immediately terminate SimCity 2000. Any unsaved progress "
-		"will be lost.", szDLLName, szDLLName);
+			"If you have all four DLLs present, please submit a crash report to the sc2kfix developers "
+			"either via the sc2kfix GitHub issues page (https://github.com/sc2kfix/sc2kfix/issues -- "
+			"preferred) or via the sc2kfix Discord server (https://sc2kfix.net/discord). In order for "
+			"us to best assist with the crash, please make a copy of the %s file after closing "
+			"this dialog and before you re-open %s. Submit this copy of the log file along with "
+			"your crash report, and we will do our best to investigate.\n\n"
+
+			"Clicking the OK button will immediately terminate %s. Any unsaved progress "
+			"will be lost.",
+			strComponent.c_str(), strComponent.c_str()),
+			(dwSC2KFixMode == SC2KFIX_MODE_SCURK ? "sc2kfix-scurk.log" : "sc2kfix.log"),
+			(dwSC2KFixMode == SC2KFIX_MODE_SCURK ? "SCURK" : "SimCity 2000"),
+			(dwSC2KFixMode == SC2KFIX_MODE_SCURK ? "SCURK" : "SimCity 2000");
+	} else if (strComponent == "SafeVirtualProtect") {
+		strErrorMessage = string_format(
+			"sc2kfix has encountered a fatal error when trying to set up critical hooks into the "
+			"%s game engine. Initialization of the game cannot continue. This may be due "
+			"to system security configuration, misbehaving antivirus software, or running the game "
+			"alongside another game with aggressive anti-cheat functionality.\n\n"
+
+			"Please submit a crash report to the sc2kfix developers either via the sc2kfix GitHub "
+			"issues page (https://github.com/sc2kfix/sc2kfix/issues -- preferred) or via the sc2kfix "
+			"Discord server (https://sc2kfix.net/discord). In order for us to best assist with the "
+			"crash, please make a copy of the %s file after closing this dialog and before "
+			"you re-open %s. Submit this copy of the log file along with your crash report, "
+			"and we will do our best to investigate.\n\n"
+
+			"Clicking the OK button will immediately terminate %s. Any unsaved progress "
+			"will be lost.",
+			(dwSC2KFixMode == SC2KFIX_MODE_SCURK ? "SCURK" : "SimCity 2000"),
+			(dwSC2KFixMode == SC2KFIX_MODE_SCURK ? "sc2kfix-scurk.log" : "sc2kfix.log"),
+			(dwSC2KFixMode == SC2KFIX_MODE_SCURK ? "SCURK" : "SimCity 2000"),
+			(dwSC2KFixMode == SC2KFIX_MODE_SCURK ? "SCURK" : "SimCity 2000")
+		);
+	} else if (strComponent == "exception") {
+		strErrorMessage = string_format(
+			"sc2kfix has detected an unhandled top-level exception in %s. If you have the "
+			"console open, check the console for details. Fault information has been logged to the "
+			"console and to sc2kfix.log.\n\n"
+
+			"Please submit a crash report to the sc2kfix developers either via the sc2kfix GitHub "
+			"issues page (https://github.com/sc2kfix/sc2kfix/issues -- preferred) or via the sc2kfix "
+			"Discord server (https://sc2kfix.net/discord). In order for us to best assist with the "
+			"crash, please make a copy of the %s file after closing this dialog and before "
+			"you re-open %s. Submit this copy of the log file along with your crash report, "
+			"and we will do our best to investigate.\n\n"
+
+			"Clicking the OK button will immediately terminate %s. Any unsaved progress "
+			"will be lost.",
+			(dwSC2KFixMode == SC2KFIX_MODE_SCURK ? "SCURK" : "SimCity 2000"),
+			(dwSC2KFixMode == SC2KFIX_MODE_SCURK ? "sc2kfix-scurk.log" : "sc2kfix.log"),
+			(dwSC2KFixMode == SC2KFIX_MODE_SCURK ? "SCURK" : "SimCity 2000"),
+			(dwSC2KFixMode == SC2KFIX_MODE_SCURK ? "SCURK" : "SimCity 2000")
+		);
+	} else
+		strErrorMessage = string_format(
+			"sc2kfix has detected an unspecified fatal error and cannot continue. This SHOULD NOT happen; "
+			"please inform a developer immediately by submitting a crash report to either via the sc2kfix GitHub "
+			"issues page (https://github.com/sc2kfix/sc2kfix/issues -- preferred) or via the sc2kfix "
+			"Discord server (https://sc2kfix.net/discord). In order for us to best assist with the "
+			"crash, please make a copy of the %s file after closing this dialog and before "
+			"you re-open %s. Submit this copy of the log file along with your crash report, "
+			"and we will do our best to investigate.\n\n"
+
+			"Clicking the OK button will immediately terminate %s. Any unsaved progress "
+			"will be lost.",
+			(dwSC2KFixMode == SC2KFIX_MODE_SCURK ? "sc2kfix-scurk.log" : "sc2kfix.log"),
+			(dwSC2KFixMode == SC2KFIX_MODE_SCURK ? "SCURK" : "SimCity 2000"),
+			(dwSC2KFixMode == SC2KFIX_MODE_SCURK ? "SCURK" : "SimCity 2000")
+		);
 
 	MessageBox(GetActiveWindow(), strErrorMessage.c_str(), "sc2kfix fatal error", MB_OK | MB_ICONSTOP);
-	abort();
+
+	if (strComponent != "exception")
+		abort();
 }
 
 // Wrapper for VirtualProtect that throws a fatal error if it fails
@@ -83,23 +154,7 @@ bool SafeVirtualProtectEx(void* lpAddress, size_t dwSize, DWORD flNewProtect, co
 	DWORD dwError = GetLastError();
 
 	ConsoleLog(LOG_EMERGENCY, "CORE: SafeVirtualProtect(0x%08X, %d, 0x%08X) failed at %s:%d in function %s(); error code 0x%08X.\n", lpAddress, dwSize, flNewProtect, szFile, iLine, szFunction, dwError);
-
-	MessageBox(GetActiveWindow(),
-		"sc2kfix has encountered a fatal error when trying to set up critical hooks into the "
-		"SimCity 2000 game engine. Initialization of the game cannot continue. This may be due "
-		"to system security configuration, misbehaving antivirus software, or running the game "
-		"alongside another game with aggressive anti-cheat functionality.\n\n"
-
-		"Please submit a crash report to the sc2kfix developers either via the sc2kfix GitHub "
-		"issues page (https://github.com/sc2kfix/sc2kfix/issues -- preferred) or via the sc2kfix "
-		"Discord server (https://sc2kfix.net/discord). In order for us to best assist with the "
-		"crash, please make a copy of the sc2kfix.log file after closing this dialog and before "
-		"you re-open SimCity 2000. Submit this copy of the log file along with your crash report, "
-		"and we will do our best to investigate.\n\n"
-
-		"Clicking the OK button will immediately terminate SimCity 2000. Any unsaved progress "
-		"will be lost.", "sc2kfix fatal error", MB_OK | MB_ICONSTOP);
-	abort();
+	MessageBoxCrash("SafeVirtualProtect", NULL);
 }
 
 HOOKEXT void CenterDialogBox(HWND hwndDlg) {
@@ -401,15 +456,12 @@ char *ConvertFileTypeFilterString(const char *pInStr) {
 	return szOutStr;
 }
 
-#pragma warning(disable:4996)
-FILE *old_fopen(const char *fname, const char *mode) {
-	return fopen(fname, mode);
+FILE* old_fopen(const char* fname, const char* mode) {
+	FILE* f;
+	if (!fopen_s(&f, fname, mode))
+		return f;
+	return NULL;
 }
-
-char *old_strcpy(char *pDest, const char *pSource) {
-	return strcpy(pDest, pSource);
-}
-#pragma warning(default:4996)
 
 void *__cdecl L_ReallocateDataEntry(char *pDest, char *pSrc) {
 	DWORD dwCurr;
@@ -652,6 +704,20 @@ HOOKEXT_CPP json::JSON EncodeBudgetArray(DWORD* dwBudgetArray, BOOL bBigEndian) 
 HOOKEXT_CPP void DecodeDWORDArray(DWORD* dwArray, json::JSON jsonArray, size_t iCount, BOOL bBigEndian) {
 	for (size_t i = 0; i < iCount; i++)
 		dwArray[i] = (bBigEndian ? SwapDWORD(jsonArray[i].ToInt()) : jsonArray[i].ToInt());
+}
+
+// Returns a std::string that's a clone of the parameter but entirely lowercase
+HOOKEXT_CPP std::string string_tolower(std::string& str) {
+	std::string strNew = str;
+	std::transform(strNew.begin(), strNew.end(), strNew.begin(), std::tolower);
+	return strNew;
+}
+
+// Returns a std::string that's a clone of the parameter but entirely uppercase
+HOOKEXT_CPP std::string string_toupper(std::string& str) {
+	std::string strNew = str;
+	std::transform(strNew.begin(), strNew.end(), strNew.begin(), std::toupper);
+	return strNew;
 }
 
 // Similar to std::string::starts_with in C++20

@@ -467,7 +467,7 @@ extern "C" void __stdcall Hook_SimcityApp_LoadTileset1996() {
 
 	Game_SimcityApp_GetValueStringA(pThis, &strFilePath, aPaths, aTilesets);
 
-	old_strcpy(fileDialog.m_szFileName, strFilePath.m_pchData);
+	strcpy_s(fileDialog.m_szFileName, strFilePath.m_pchData);
 	pOfn = &fileDialog.m_ofn;
 	pOfn->lpstrInitialDir = fileDialog.m_szFileName;
 	pOfn->lpstrTitle = strCaption.m_pchData;

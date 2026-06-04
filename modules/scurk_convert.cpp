@@ -466,7 +466,7 @@ static int L_SCURK_SaveConvertedSet(tileConv_t *pObjSet, cEditableTileSet *pWork
 		// of the program; the line is left here for original reference
 		// purposes.
 		// szInfoPortion[54] = mTileFileName[0]; // Remote var unused.
-		old_strcpy(&szInfoPortion[94], "winSCURK");
+		strcpy_s(&szInfoPortion[94], sizeof("winSCURK"), "winSCURK");
 		*(DWORD *)szInfoPortion = '_WIN'; // This gets reversed
 		fwrite(szInfoPortion, 1, sizeof(szInfoPortion), f);
 
