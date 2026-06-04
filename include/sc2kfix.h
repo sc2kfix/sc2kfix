@@ -602,6 +602,8 @@ extern BOOL bDisableFixedTiles;
 
 HOOKEXT BOOL bHookStopProcessing;
 
+extern HWND hWndExt;
+
 // Hooks to inject in dllmain.cpp
 
 void InstallAnimationHooks_SC2K1996(void);

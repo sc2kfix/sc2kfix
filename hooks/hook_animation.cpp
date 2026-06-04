@@ -12,6 +12,8 @@
 
 static DWORD dwDummy;
 
+HWND hWndExt = 0;
+
 __int16 nCycleIdx = 0;
 
 extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette, int bToggle) {
@@ -81,6 +83,8 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 						
 						if (!pSCView)
 							RedrawWindow(pMainFrm->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+						else if (hWndExt)
+							RedrawWindow(hWndExt, NULL, NULL, RDW_INVALIDATE);
 					}
 				}
 			}

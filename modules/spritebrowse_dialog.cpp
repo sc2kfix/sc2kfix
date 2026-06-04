@@ -61,7 +61,9 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 
 		case WM_PAINT:
 			BeginPaint(hwndDlg, &ps);
-			GetClientRect(hwndDlg, &dlgRect);
+			GetWindowRect(hwndDlg, &dlgRect);
+			ScreenToClient(hwndDlg, (LPPOINT)&dlgRect);
+			ScreenToClient(hwndDlg, (LPPOINT)&dlgRect.right);
 
 			paintRect.left = 10;
 			paintRect.top = 160;
@@ -75,7 +77,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 
 			if (nBaseSpriteID > 0) {
 				nSpriteID = nBaseSpriteID + SPRITE_SMALL_START;
-
+				bSpriteFailSmall = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImageSmall, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
 				str = "Small Sprite: ";
 				str += szInternalSpriteName[nSpriteID];
 				str += " / ";
@@ -100,7 +102,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 				}
 
 				nSpriteID = nBaseSpriteID + SPRITE_MEDIUM_START;
-
+				bSpriteFailMedium = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImageMedium, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
 				str = "Medium Sprite: ";
 				str += szInternalSpriteName[nSpriteID];
 				str += " / ";
@@ -126,7 +128,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 				}
 
 				nSpriteID = nBaseSpriteID + SPRITE_LARGE_START;
-
+				bSpriteFailLarge = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImageLarge, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
 				str = "Large Sprite: ";
 				str += szInternalSpriteName[nSpriteID];
 				str += " / ";
@@ -163,11 +165,24 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 						GET_WM_COMMAND_CMD(wParam, lParam) == CBN_SELENDOK ||
 						GET_WM_COMMAND_CMD(wParam, lParam) == CBN_SELENDCANCEL) {
 						UpdateWindow(hwndDlg);
+						// Set here in order for the palette animation/cycling redrawing
+						// to resume.
+						if (!hWndExt)
+							hWndExt = hwndDlg;
 						return TRUE;
+					}
+					else if (GET_WM_COMMAND_CMD(wParam, lParam) == CBN_DROPDOWN) {
+						// Temporarily unset in-order to avoid the palette
+						// animation/cycling redraw.
+						if (hWndExt)
+							hWndExt = 0;
 					}
 					return FALSE;
 				case IDC_SPRITEBROWSER_SELBUT:
 					if (GET_WM_COMMAND_CMD(wParam, lParam) == BN_CLICKED) {
+						if (!hWndExt)
+							hWndExt = hwndDlg;
+
 						hWndCombo = GetDlgItem(hwndDlg, IDC_SPRITEBROWSER_COMBOCTRL);
 
 						memset(szSprIDEnt, 0, sizeof(szSprIDEnt));
@@ -182,23 +197,8 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 
 						nSel = ComboBox_GetCurSel(hWndCombo);
 						if (nSel > 0) {
-							GetWindowRect(hwndDlg, &dlgRect);
-							ScreenToClient(hwndDlg, (LPPOINT)&dlgRect);
-							ScreenToClient(hwndDlg, (LPPOINT)&dlgRect.right);
-
 							GetWindowText(hWndCombo, szSprIDEnt, 5);
 							nBaseSpriteID = atoi(szSprIDEnt);
-
-							if (nBaseSpriteID > 0) {
-								nSpriteID = nBaseSpriteID + SPRITE_SMALL_START;
-								bSpriteFailSmall = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImageSmall, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
-
-								nSpriteID = nBaseSpriteID + SPRITE_MEDIUM_START;
-								bSpriteFailMedium = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImageMedium, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
-
-								nSpriteID = nBaseSpriteID + SPRITE_LARGE_START;
-								bSpriteFailLarge = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImageLarge, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
-							}
 						}
 						InvalidateRect(hwndDlg, 0, TRUE);
 						UpdateWindow(hwndDlg);
@@ -214,6 +214,8 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 			}
 
 			case WM_DESTROY:
+				hWndExt = 0;
+				nBaseSpriteID = -1;
 				if (pQueriedTileImageSmall) {
 					pQueriedTileImageSmall->DeleteStored_SC2K1996();
 					delete pQueriedTileImageSmall;
@@ -229,7 +231,6 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 					delete pQueriedTileImageLarge;
 					pQueriedTileImageLarge = NULL;
 				}
-				nBaseSpriteID = -1;
 				break;
 	}
 	return FALSE;
