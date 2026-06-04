@@ -302,6 +302,8 @@ extern "C" void __stdcall Hook_GameDialog_OnDestroy() {
 
 	__asm mov [pThis], ecx
 
+	if (hWndExt)
+		hWndExt = 0;
 	GameMain_GameDialog_OnDestroy(pThis);
 }
 

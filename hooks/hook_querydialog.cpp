@@ -124,6 +124,8 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 
 	switch (message) {
 	case WM_INITDIALOG:
+		hWndExt = hwndDlg;
+
 		SetWindowLong(hwndDlg, GWL_USERDATA, lParam);
 		qci = (query_coords_info *)lParam;
 
@@ -372,12 +374,13 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		}
 
 	case WM_DESTROY:
+		hWndExt = 0;
+		nSpriteID = -1;
 		if (pQueriedTileImage) {
 			pQueriedTileImage->DeleteStored_SC2K1996();
 			delete pQueriedTileImage;
 			pQueriedTileImage = NULL;
 		}
-		nSpriteID = -1;
 		break;
 	}
 	return FALSE;
@@ -431,6 +434,8 @@ extern "C" int __stdcall Hook_QuerySpecificDialog_OnInitDialog() {
 	int ret;
 
 	ret = GameMain_QuerySpecificDialog_OnInitDialog(pThis);
+	if (ret)
+		hWndExt = pThis->m_hWnd;
 
 	return ret;
 }
@@ -443,6 +448,8 @@ extern "C" int __stdcall Hook_QueryGeneralDialog_OnInitDialog() {
 	int ret;
 
 	ret = GameMain_QueryGeneralDialog_OnInitDialog(pThis);
+	if (ret)
+		hWndExt = pThis->m_hWnd;
 
 	return ret;
 }
