@@ -576,6 +576,10 @@ class CMFC3XEdit : public CMFC3XWnd {
 
 };
 
+class CMFC3XListBox : public CMFC3XWnd {
+
+};
+
 class CMFC3XComboBox : public CMFC3XWnd {
 	
 };

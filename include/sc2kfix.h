@@ -618,6 +618,7 @@ void InstallMiscHooks_SC2KDemo(void);
 void InstallStatusHooks_SC2K1996(void);
 void UpdateDrawingHooks_SC2K1996(void);
 void UpdateStatus_SC2K1996(int iShow);
+void InstallScenarioHooks_SC2K1996(void);
 void InstallDrawingHooks_SC2K1996(void);
 void InstallThingHooks_SC2K1996(void);
 void InstallQueryHooks_SC2K1996(void);

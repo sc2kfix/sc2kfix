@@ -2547,6 +2547,8 @@ void InstallMiscHooks_SC2K1996(void) {
 	*(BYTE *)0x487B3B = 0xA4;
 	*(BYTE *)0x487B3A = 0x04;
 
+	InstallScenarioHooks_SC2K1996();
+
 	// Install hooks for saving and loading
 	InstallSaveHooks_SC2K1996();
 
