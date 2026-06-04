@@ -114,6 +114,20 @@ extern "C" void __stdcall Hook_ScenarioDialog_OnInitDialog() {
 	GameMain_String_Dest(&strFilePath);
 }
 
+extern "C" BOOL __stdcall Hook_ScenarioDialog_SetCursorAndDeleteGraphics() {
+	CScenarioDialog *pThis;
+
+	__asm mov[pThis], ecx
+
+	Game_GameDialog_SetCursor(pThis);
+	if (pThis->pGraphPict) {
+		pThis->pGraphPict->DeleteStored_SC2K1996();
+		delete pThis->pGraphPict;
+		pThis->pGraphPict = 0;
+	}
+	return DeleteObject(pThis->hPictPal);
+}
+
 void InstallScenarioHooks_SC2K1996(void) {
 	if (mischook_debug == DEBUG_FLAGS_EVERYTHING)
 		scenario_debug = DEBUG_FLAGS_EVERYTHING;
@@ -121,4 +135,8 @@ void InstallScenarioHooks_SC2K1996(void) {
 	// Hook for CScenarioDialog::OnInitDialog
 	SafeVirtualProtect((LPVOID)0x4016A4, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4016A4, Hook_ScenarioDialog_OnInitDialog);
+
+	// Hook for CScenarioDialog::SetCursorAndDeleteGraphics
+	SafeVirtualProtect((LPVOID)0x402806, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402806, Hook_ScenarioDialog_SetCursorAndDeleteGraphics);
 }
