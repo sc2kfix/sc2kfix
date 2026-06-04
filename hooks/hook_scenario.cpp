@@ -49,9 +49,9 @@ extern "C" void __stdcall Hook_ScenarioDialog_OnInitDialog() {
 	pWnd = GameMain_Wnd_FromHandle(GetParent(pThis->m_hWnd));
 	Game_GameDialog_RepositionSubDialog(pThis, pWnd);
 
-	Game_SimcityApp_GetValueStringA(pSCApp, &strFilePath, "PATHS", "SCENARIOS");
+	Game_SimcityApp_GetValueStringA(pSCApp, &strFilePath, aPaths, aScenarios);
 	if (!strFilePath.m_nDataLength)
-		GameMain_String_OperatorConcat(&strFilePath, (char *)".\\scenario\\");
+		GameMain_String_OperatorConcat(&strFilePath, aScenarioDir);
 
 	strcpy_s(szPathBuf, strFilePath.m_pchData);
 	strcat_s(szPathBuf, "*.scn");
@@ -69,7 +69,7 @@ extern "C" void __stdcall Hook_ScenarioDialog_OnInitDialog() {
 						strcpy_s(szFileBuf, strFilePath.m_pchData);
 						strcat_s(szFileBuf, fdat.name);
 						if (scenario_debug & SCENARIO_DEBUG_LISTINIT)
-							ConsoleLog(LOG_DEBUG, "(%d) [%s]\n", nScenCnt, szFileBuf);
+							ConsoleLog(LOG_DEBUG, "ScenarioDialog::OnInitDialog(): (%d) [%s]\n", nScenCnt, szFileBuf);
 						SendMessageA(pThis->listBox.m_hWnd, LB_ADDSTRING, 0, (LPARAM)szFileBuf);
 					}
 				}
@@ -92,9 +92,9 @@ extern "C" void __stdcall Hook_ScenarioDialog_OnInitDialog() {
 	if (pGraphic)
 		pGraphic = Game_Graphics_Cons(pGraphic);
 
-	Game_SimcityApp_GetValueStringA(pSCApp, &strFilePath, "PATHS", "GRAPHICS");
+	Game_SimcityApp_GetValueStringA(pSCApp, &strFilePath, aPaths, aGraphics);
 	if (!strFilePath.m_nDataLength)
-		GameMain_String_OperatorConcat(&strFilePath, (char *)".\\graphics");
+		GameMain_String_OperatorConcat(&strFilePath, aGraphicsDir);
 
 	sprintf_s(szPathBuf, "%s\\pal_mac.bmp", strFilePath.m_pchData);
 
