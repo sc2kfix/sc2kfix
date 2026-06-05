@@ -72,6 +72,30 @@ BOOL PrepareDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_
 	return bSpriteFail;
 }
 
+void ShowCurrentDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect, BOOL bSpriteFail) {
+	CMFC3XPoint sprPt;
+	CMFC3XRect sprRect;
+	BYTE *pSprBits;
+	CMFC3XDC *pDC;
+
+	if (pSprHead) {
+		sprPt.x = (pSprHead->wWidth + 7) & ~7;
+		sprPt.y = (pSprHead->wHeight + 8) & ~7;
+		if (pGraphic && !bSpriteFail) {
+			pSprBits = Game_Graphics_LockDIBBits(pGraphic);
+			pDC = pGraphic->GetDC_SC2K1996();
+			if (pDC) {
+				FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
+				pGraphic->ReleaseDC_SC2K1996(pDC);
+				L_hWndBeginProcessObject_SC2K1996(hWnd, pSprBits, sprPt.x, sprPt.y, pDlgRect);
+				Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
+				Game_FinishProcessObjects();
+			}
+			Game_Graphics_UnlockDIBBits(pGraphic);
+		}
+	}
+}
+
 void CGraphics::DeleteStored_SC2K1996() {
 	if (GRBitmap)
 		::DeleteObject(GRBitmap);

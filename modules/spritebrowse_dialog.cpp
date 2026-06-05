@@ -15,6 +15,7 @@
 #include "../resource.h"
 
 extern BOOL PrepareDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect);
+extern void ShowCurrentDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect, BOOL bSpriteFail);
 
 BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	HWND hWndCombo;
@@ -77,7 +78,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 
 			if (nBaseSpriteID > 0) {
 				nSpriteID = nBaseSpriteID + SPRITE_SMALL_START;
-				bSpriteFailSmall = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImageSmall, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
+				
 				str = "Small Sprite: ";
 				str += szInternalSpriteName[nSpriteID];
 				str += " / ";
@@ -95,6 +96,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 					x = dlgRect.right - 40;
 					y = (dlgRect.bottom - pSprHead->wHeight) - 20;
 
+					ShowCurrentDialogSpriteGraphic_SC2K1996(pQueriedTileImageSmall, hwndDlg, pSprHead, nSpriteID, &dlgRect, bSpriteFailSmall);
 					if (pQueriedTileImageSmall && !bSpriteFailSmall) {
 						Game_Graphics_SetColorTableFromApplicationPalette(pQueriedTileImageSmall);
 						Game_Graphics_Paint(pQueriedTileImageSmall, ps.hdc, x, y);
@@ -102,7 +104,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 				}
 
 				nSpriteID = nBaseSpriteID + SPRITE_MEDIUM_START;
-				bSpriteFailMedium = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImageMedium, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
+				
 				str = "Medium Sprite: ";
 				str += szInternalSpriteName[nSpriteID];
 				str += " / ";
@@ -121,6 +123,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 					x -= (40 * 2);
 					y = (dlgRect.bottom - pSprHead->wHeight) - 20;
 
+					ShowCurrentDialogSpriteGraphic_SC2K1996(pQueriedTileImageMedium, hwndDlg, pSprHead, nSpriteID, &dlgRect, bSpriteFailMedium);
 					if (pQueriedTileImageMedium && !bSpriteFailMedium) {
 						Game_Graphics_SetColorTableFromApplicationPalette(pQueriedTileImageMedium);
 						Game_Graphics_Paint(pQueriedTileImageMedium, ps.hdc, x, y);
@@ -128,7 +131,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 				}
 
 				nSpriteID = nBaseSpriteID + SPRITE_LARGE_START;
-				bSpriteFailLarge = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImageLarge, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
+				
 				str = "Large Sprite: ";
 				str += szInternalSpriteName[nSpriteID];
 				str += " / ";
@@ -147,6 +150,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 					x -= (40 * 4);
 					y = (dlgRect.bottom - pSprHead->wHeight) - 20;
 
+					ShowCurrentDialogSpriteGraphic_SC2K1996(pQueriedTileImageLarge, hwndDlg, pSprHead, nSpriteID, &dlgRect, bSpriteFailLarge);
 					if (pQueriedTileImageLarge && !bSpriteFailLarge) {
 						Game_Graphics_SetColorTableFromApplicationPalette(pQueriedTileImageLarge);
 						Game_Graphics_Paint(pQueriedTileImageLarge, ps.hdc, x, y);
@@ -197,8 +201,23 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 
 						nSel = ComboBox_GetCurSel(hWndCombo);
 						if (nSel > 0) {
+							GetWindowRect(hwndDlg, &dlgRect);
+							ScreenToClient(hwndDlg, (LPPOINT)&dlgRect);
+							ScreenToClient(hwndDlg, (LPPOINT)&dlgRect.right);
+
 							GetWindowText(hWndCombo, szSprIDEnt, 5);
 							nBaseSpriteID = atoi(szSprIDEnt);
+
+							if (nBaseSpriteID > 0) {
+								nSpriteID = nBaseSpriteID + SPRITE_SMALL_START;
+								bSpriteFailSmall = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImageSmall, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
+
+								nSpriteID = nBaseSpriteID + SPRITE_MEDIUM_START;
+								bSpriteFailMedium = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImageMedium, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
+
+								nSpriteID = nBaseSpriteID + SPRITE_LARGE_START;
+								bSpriteFailLarge = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImageLarge, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
+							}
 						}
 						InvalidateRect(hwndDlg, 0, TRUE);
 						UpdateWindow(hwndDlg);
