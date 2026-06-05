@@ -61,6 +61,17 @@
 
 #define MAP_EDGE_BUILDING 1
 
+#define PALCACHE_TYPE_NONE                    -1
+#define PALCACHE_TYPE_CYCLE                    0
+#define PALCACHE_TYPE_TREES_SEASON_AUTUMN      1
+#define PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW  2
+#define PALCACHE_TYPE_TREES_SEASON_SNOW        3
+#define PALCACHE_TYPE_TERRAIN_SNOW             4
+#define PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD    5
+#define PALCACHE_TYPE_WATER_ICE                6
+#define PALCACHE_TYPE_WATER_ICE_BLIZZARD       7
+#define PALCACHE_TYPE_GRASS_SNOW               8
+
 #define SCD_UPDATE_VIEW_REDRAW                 0
 #define SCD_UPDATE_VIEW_TITLE                  1
 #define SCD_UPDATE_VIEW_UPDATE                 2

@@ -14,11 +14,55 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
-extern BOOL PrepareDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect);
-extern void ShowCurrentDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect, BOOL bSpriteFail);
+enum {
+	SPRTYPE_NONE,
+	SPRTYPE_AUTUMN,
+	SPRTYPE_AUTUMNSNOW,
+	SPRTYPE_SNOW,
+	SPRTYPE_BLIZZARD
+};
+
+extern bool UndergroundSpritesCheck(DWORD nID);
+extern bool TreeSpritesCheck(DWORD nID);
+extern bool TerrainSpritesCheck(DWORD nID);
+extern bool DeepWaterSpriteCheck(DWORD nID);
+extern bool ObjectGrassSpritesCheck(DWORD nID);
+
+extern BOOL PrepareDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect, __int16 isFlipped = 0, __int16 doInvert = 0, int nType = PALCACHE_TYPE_NONE);
+extern void ShowCurrentDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect, BOOL bSpriteFail, __int16 isFlipped = 0, __int16 doInvert = 0, int nType = PALCACHE_TYPE_NONE);
+
+static int GetApplicableSpriteType(HWND hwndDlg, __int16 nSpriteID) {
+	HWND hWndCombo;
+	int nSel;
+
+	hWndCombo = GetDlgItem(hwndDlg, IDC_SPRITEBROWSER_EFFECTCOMBOCTRL);
+	if (hWndCombo) {
+		nSel = ComboBox_GetCurSel(hWndCombo);
+		if (nSel > SPRTYPE_NONE) {
+			if (nSel == SPRTYPE_AUTUMN) {
+				if (TreeSpritesCheck(nSpriteID))
+					return PALCACHE_TYPE_TREES_SEASON_AUTUMN;
+			}
+			else if (nSel == SPRTYPE_AUTUMNSNOW || nSel == SPRTYPE_SNOW || nSel == SPRTYPE_BLIZZARD) {
+				if (TreeSpritesCheck(nSpriteID)) {
+					return (nSel == SPRTYPE_AUTUMNSNOW) ? PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW : PALCACHE_TYPE_TREES_SEASON_SNOW;
+				}
+				else if (TerrainSpritesCheck(nSpriteID)) {
+					if (DeepWaterSpriteCheck(nSpriteID))
+						return (nSel == SPRTYPE_BLIZZARD) ? PALCACHE_TYPE_WATER_ICE_BLIZZARD : PALCACHE_TYPE_WATER_ICE;
+					else
+						return (nSel == SPRTYPE_BLIZZARD) ? PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD : PALCACHE_TYPE_TERRAIN_SNOW;
+				}
+				else if (ObjectGrassSpritesCheck(nSpriteID))
+					return PALCACHE_TYPE_GRASS_SNOW;
+			}
+		}
+	}
+	return PALCACHE_TYPE_CYCLE;
+}
 
 BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
-	HWND hWndCombo;
+	HWND hWndCombo, hWndEffectCombo, hWndCheck;
 	CMFC3XRect cmdRect, dlgRect, paintRect;
 	__int16 nSpriteID;
 	char szSprIDEnt[80 + 1];
@@ -28,6 +72,9 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 	std::string str;
 	int x, y;
 	static __int16 nBaseSpriteID = -1;
+	static __int16 isFlipped = 0;
+	static __int16 doInvert = 0;
+	static int nType = PALCACHE_TYPE_CYCLE;
 	static CGraphics *pQueriedTileImageSmall = NULL;
 	static CGraphics *pQueriedTileImageMedium = NULL;
 	static CGraphics *pQueriedTileImageLarge = NULL;
@@ -56,6 +103,16 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 			ComboBox_SetCurSel(hWndCombo, 0);
 
 			SetWindowPos(hWndCombo, HWND_TOP, 0, 0, cmdRect.right - cmdRect.left, 200, SWP_NOZORDER | SWP_NOMOVE);
+
+			hWndEffectCombo = GetDlgItem(hwndDlg, IDC_SPRITEBROWSER_EFFECTCOMBOCTRL);
+			ComboBox_AddString(hWndEffectCombo, "None");
+			ComboBox_AddString(hWndEffectCombo, "Autumn (Trees)");
+			ComboBox_AddString(hWndEffectCombo, "Autumn Snow (Trees, Terrain, Water, Certain Buildings)");
+			ComboBox_AddString(hWndEffectCombo, "Snow (Trees, Terrain, Water, Certain Buildings)");
+			ComboBox_AddString(hWndEffectCombo, "Blizzard (Trees, Terrain, Water, Certain Buildings)");
+			ComboBox_SetCurSel(hWndEffectCombo, 0);
+
+			SetWindowPos(hWndEffectCombo, HWND_TOP, 0, 0, cmdRect.right - cmdRect.left, 200, SWP_NOZORDER | SWP_NOMOVE);
 
 			CenterDialogBox(hwndDlg);
 			return TRUE;
@@ -96,7 +153,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 					x = dlgRect.right - 40;
 					y = (dlgRect.bottom - pSprHead->wHeight) - 20;
 
-					ShowCurrentDialogSpriteGraphic_SC2K1996(pQueriedTileImageSmall, hwndDlg, pSprHead, nSpriteID, &dlgRect, bSpriteFailSmall);
+					ShowCurrentDialogSpriteGraphic_SC2K1996(pQueriedTileImageSmall, hwndDlg, pSprHead, nSpriteID, &dlgRect, bSpriteFailSmall, isFlipped, doInvert, nType);
 					if (pQueriedTileImageSmall && !bSpriteFailSmall) {
 						Game_Graphics_SetColorTableFromApplicationPalette(pQueriedTileImageSmall);
 						Game_Graphics_Paint(pQueriedTileImageSmall, ps.hdc, x, y);
@@ -123,7 +180,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 					x -= (40 * 2);
 					y = (dlgRect.bottom - pSprHead->wHeight) - 20;
 
-					ShowCurrentDialogSpriteGraphic_SC2K1996(pQueriedTileImageMedium, hwndDlg, pSprHead, nSpriteID, &dlgRect, bSpriteFailMedium);
+					ShowCurrentDialogSpriteGraphic_SC2K1996(pQueriedTileImageMedium, hwndDlg, pSprHead, nSpriteID, &dlgRect, bSpriteFailMedium, isFlipped, doInvert, nType);
 					if (pQueriedTileImageMedium && !bSpriteFailMedium) {
 						Game_Graphics_SetColorTableFromApplicationPalette(pQueriedTileImageMedium);
 						Game_Graphics_Paint(pQueriedTileImageMedium, ps.hdc, x, y);
@@ -150,7 +207,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 					x -= (40 * 4);
 					y = (dlgRect.bottom - pSprHead->wHeight) - 20;
 
-					ShowCurrentDialogSpriteGraphic_SC2K1996(pQueriedTileImageLarge, hwndDlg, pSprHead, nSpriteID, &dlgRect, bSpriteFailLarge);
+					ShowCurrentDialogSpriteGraphic_SC2K1996(pQueriedTileImageLarge, hwndDlg, pSprHead, nSpriteID, &dlgRect, bSpriteFailLarge, isFlipped, doInvert, nType);
 					if (pQueriedTileImageLarge && !bSpriteFailLarge) {
 						Game_Graphics_SetColorTableFromApplicationPalette(pQueriedTileImageLarge);
 						Game_Graphics_Paint(pQueriedTileImageLarge, ps.hdc, x, y);
@@ -164,6 +221,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		case WM_COMMAND:
 			switch (GET_WM_COMMAND_ID(wParam, lParam)) {
 				case IDC_SPRITEBROWSER_COMBOCTRL:
+				case IDC_SPRITEBROWSER_EFFECTCOMBOCTRL:
 					if (GET_WM_COMMAND_CMD(wParam, lParam) == CBN_KILLFOCUS ||
 						GET_WM_COMMAND_CMD(wParam, lParam) == CBN_CLOSEUP ||
 						GET_WM_COMMAND_CMD(wParam, lParam) == CBN_SELENDOK ||
@@ -208,17 +266,51 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 							GetWindowText(hWndCombo, szSprIDEnt, 5);
 							nBaseSpriteID = atoi(szSprIDEnt);
 
+							nType = GetApplicableSpriteType(hwndDlg, nBaseSpriteID + SPRITE_LARGE_START);
+
 							if (nBaseSpriteID > 0) {
 								nSpriteID = nBaseSpriteID + SPRITE_SMALL_START;
-								bSpriteFailSmall = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImageSmall, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
+								bSpriteFailSmall = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImageSmall, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect, isFlipped, doInvert, nType);
 
 								nSpriteID = nBaseSpriteID + SPRITE_MEDIUM_START;
-								bSpriteFailMedium = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImageMedium, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
+								bSpriteFailMedium = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImageMedium, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect, isFlipped, doInvert, nType);
 
 								nSpriteID = nBaseSpriteID + SPRITE_LARGE_START;
-								bSpriteFailLarge = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImageLarge, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect);
+								bSpriteFailLarge = PrepareDialogSpriteGraphic_SC2K1996(pQueriedTileImageLarge, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect, isFlipped, doInvert, nType);
 							}
 						}
+						InvalidateRect(hwndDlg, 0, TRUE);
+						UpdateWindow(hwndDlg);
+						return TRUE;
+					}
+					break;
+				case IDC_SPRITEBROWSER_EFFECTSELBUT:
+					if (GET_WM_COMMAND_CMD(wParam, lParam) == BN_CLICKED) {
+						if (!hWndExt)
+							hWndExt = hwndDlg;
+
+						nType = GetApplicableSpriteType(hwndDlg, nBaseSpriteID + SPRITE_LARGE_START);
+
+						InvalidateRect(hwndDlg, 0, TRUE);
+						UpdateWindow(hwndDlg);
+						return TRUE;
+					}
+					break;
+				case IDC_SPRITEBROWSER_CHECKFLIP:
+					if (GET_WM_COMMAND_CMD(wParam, lParam) == BN_CLICKED) {
+						hWndCheck = GetDlgItem(hwndDlg, IDC_SPRITEBROWSER_CHECKFLIP);
+						isFlipped = (Button_GetCheck(hWndCheck) == BST_CHECKED) ? 1 : 0;
+
+						InvalidateRect(hwndDlg, 0, TRUE);
+						UpdateWindow(hwndDlg);
+						return TRUE;
+					}
+					break;
+				case IDC_SPRITEBROWSER_CHECKINVERT:
+					if (GET_WM_COMMAND_CMD(wParam, lParam) == BN_CLICKED) {
+						hWndCheck = GetDlgItem(hwndDlg, IDC_SPRITEBROWSER_CHECKINVERT);
+						doInvert = (Button_GetCheck(hWndCheck) == BST_CHECKED) ? 1 : 0;
+
 						InvalidateRect(hwndDlg, 0, TRUE);
 						UpdateWindow(hwndDlg);
 						return TRUE;

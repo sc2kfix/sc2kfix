@@ -18,6 +18,8 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
+extern void L_drawShapeSpecific_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert, int nType);
+
 static BOOL L_hWndBeginProcessObject_SC2K1996(HWND hWnd, void *vBits, int x, int y, RECT *r) {
 	CMFC3XRect clRect;
 
@@ -32,15 +34,17 @@ static BOOL L_hWndBeginProcessObject_SC2K1996(HWND hWnd, void *vBits, int x, int
 	return TRUE;
 }
 
-BOOL PrepareDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect) {
+BOOL PrepareDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect, __int16 isFlipped, __int16 doInvert, int nType) {
 	CMFC3XPoint sprPt;
 	CMFC3XRect sprRect;
 	BYTE *pSprBits;
+	WORD nWidthOffset;
 	CMFC3XDC *pDC;
 	BOOL bSpriteFail = FALSE;
 
 	if (pSprHead) {
-		sprPt.x = (pSprHead->wWidth + 7) & ~7;
+		nWidthOffset = (nType >= PALCACHE_TYPE_CYCLE) ? 10 : 7;
+		sprPt.x = (pSprHead->wWidth + nWidthOffset) & ~7;
 		sprPt.y = (pSprHead->wHeight + 8) & ~7;
 
 		if (pGraphic) {
@@ -60,7 +64,10 @@ BOOL PrepareDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_
 						pGraphic->ReleaseDC_SC2K1996(pDC);
 
 						L_hWndBeginProcessObject_SC2K1996(hWnd, pSprBits, sprPt.x, sprPt.y, pDlgRect);
-						Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
+						if (nType >= PALCACHE_TYPE_CYCLE)
+							L_drawShapeSpecific_SC2K1996(nSpriteID, 0, 0, isFlipped, doInvert, nType);
+						else
+							Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
 						Game_FinishProcessObjects();
 					}
 					Game_Graphics_UnlockDIBBits(pGraphic);
@@ -72,14 +79,16 @@ BOOL PrepareDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_
 	return bSpriteFail;
 }
 
-void ShowCurrentDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect, BOOL bSpriteFail) {
+void ShowCurrentDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect, BOOL bSpriteFail, __int16 isFlipped, __int16 doInvert, int nType) {
 	CMFC3XPoint sprPt;
 	CMFC3XRect sprRect;
 	BYTE *pSprBits;
+	WORD nWidthOffset;
 	CMFC3XDC *pDC;
 
 	if (pSprHead) {
-		sprPt.x = (pSprHead->wWidth + 7) & ~7;
+		nWidthOffset = (nType >= PALCACHE_TYPE_CYCLE) ? 10 : 7;
+		sprPt.x = (pSprHead->wWidth + nWidthOffset) & ~7;
 		sprPt.y = (pSprHead->wHeight + 8) & ~7;
 		if (pGraphic && !bSpriteFail) {
 			pSprBits = Game_Graphics_LockDIBBits(pGraphic);
@@ -87,8 +96,12 @@ void ShowCurrentDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, spr
 			if (pDC) {
 				FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
 				pGraphic->ReleaseDC_SC2K1996(pDC);
+
 				L_hWndBeginProcessObject_SC2K1996(hWnd, pSprBits, sprPt.x, sprPt.y, pDlgRect);
-				Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
+				if (nType >= PALCACHE_TYPE_CYCLE)
+					L_drawShapeSpecific_SC2K1996(nSpriteID, 0, 0, isFlipped, doInvert, nType);
+				else
+					Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
 				Game_FinishProcessObjects();
 			}
 			Game_Graphics_UnlockDIBBits(pGraphic);

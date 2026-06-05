@@ -1340,23 +1340,23 @@ static BYTE ProcessTreeAutumnEffect(BYTE colIdx) {
 
 int iForcedSeason = FORCED_SEASON_NONE;
 
-static bool UndergroundSpritesCheck(DWORD nID) {
+bool UndergroundSpritesCheck(DWORD nID) {
 	return GET_OVERALL_SPRITE_RANGE(nID, SPRITE_SMALL_UNDERGROUND_TERRAIN, SPRITE_SMALL_SUBWAYENTRANCE) ? true : false;
 }
 
-static bool TreeSpritesCheck(DWORD nID) {
+bool TreeSpritesCheck(DWORD nID) {
 	return GET_OVERALL_SPRITE_RANGE(nID, SPRITE_SMALL_TREES1, SPRITE_SMALL_TREES7) ? true : false;
 }
 
-static bool TerrainSpritesCheck(DWORD nID) {
+bool TerrainSpritesCheck(DWORD nID) {
 	return GET_OVERALL_SPRITE_RANGE(nID, SPRITE_SMALL_TERRAIN, SPRITE_SMALL_SEAPORTZONE) ? true : false;
 }
 
-static bool DeepWaterSpriteCheck(DWORD nID) {
+bool DeepWaterSpriteCheck(DWORD nID) {
 	return GET_OVERALL_SPRITE(nID, SPRITE_SMALL_WATER_TRBL) ? true : false;
 }
 
-static bool ObjectGrassSpritesCheck(DWORD nID) {
+bool ObjectGrassSpritesCheck(DWORD nID) {
 	return ((GET_OVERALL_SPRITE_RANGE(nID, SPRITE_SMALL_RESIDENTIAL_1X1_LOWERCLASSHOMES1, SPRITE_SMALL_SERVICES_STATUE) ||
 		GET_OVERALL_SPRITE(nID, SPRITE_SMALL_INFRASTRUCTURE_MAYORSHOUSE) || GET_OVERALL_SPRITE(nID, SPRITE_SMALL_INFRASTRUCTURE_LIBRARY) ||
 		GET_OVERALL_SPRITE(nID, SPRITE_SMALL_SMALLPARK) || GET_OVERALL_SPRITE(nID, SPRITE_SMALL_INFRASTRUCTURE_WATERPUMP) ||
@@ -1385,17 +1385,6 @@ static bool AutWintSeasonCheck() {
 }
 
 // Sprite Caching
-
-#define PALCACHE_TYPE_NONE                    -1
-#define PALCACHE_TYPE_CYCLE                    0
-#define PALCACHE_TYPE_TREES_SEASON_AUTUMN      1
-#define PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW  2
-#define PALCACHE_TYPE_TREES_SEASON_SNOW        3
-#define PALCACHE_TYPE_TERRAIN_SNOW             4
-#define PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD    5
-#define PALCACHE_TYPE_WATER_ICE                6
-#define PALCACHE_TYPE_WATER_ICE_BLIZZARD       7
-#define PALCACHE_GRASS_SNOW                    8
 
 #define CACHED_FRAMES 16
 
@@ -1426,7 +1415,7 @@ static void Delete_Sprite_Cache(spriteCache_t *pSpriteCache) {
 	Delete_SpriteFrame_Cache(pSpriteCache->sprTerrainBlizzardFrame, pSpriteCache->nID, PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD);
 	Delete_SpriteFrame_Cache(pSpriteCache->sprDeepWaterIceFrame, pSpriteCache->nID, PALCACHE_TYPE_WATER_ICE);
 	Delete_SpriteFrame_Cache(pSpriteCache->sprDeepWaterBlizzardFrame, pSpriteCache->nID, PALCACHE_TYPE_WATER_ICE_BLIZZARD);
-	Delete_SpriteFrame_Cache(pSpriteCache->sprGrassSnowFrame, pSpriteCache->nID, PALCACHE_GRASS_SNOW);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprGrassSnowFrame, pSpriteCache->nID, PALCACHE_TYPE_GRASS_SNOW);
 }
 
 void Clear_SpriteCache() {
@@ -1532,7 +1521,7 @@ static void Adjust_SpritePalette(BYTE *shapePtr, int cIdx, int nType) {
 							palIdx = ProcessTerrainBlizzardIndex(palIdx);
 					}
 				}
-				else if (nType == PALCACHE_GRASS_SNOW)
+				else if (nType == PALCACHE_TYPE_GRASS_SNOW)
 					palIdx = ProcessBuildingSnowIndex(palIdx);
 				*spritePtr = palIdx;
 				--nPos;
@@ -1594,7 +1583,7 @@ static void Snow_SpritePalette_Terrain(DWORD nID, spriteFrame_t *pSpriteFrame, i
 
 static void Snow_SpritePalette_Grass(DWORD nID, spriteFrame_t *pSpriteFrame, int nFrmID) {
 	// Cache accumulated snow on grass for various objects
-	Create_SpriteFrame(spriteCache[nID].sprGrassSnowFrame, pSpriteFrame, nFrmID, PALCACHE_GRASS_SNOW);
+	Create_SpriteFrame(spriteCache[nID].sprGrassSnowFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_GRASS_SNOW);
 }
 
 void Cache_Sprite(DWORD nID, BYTE *pSpriteBuf, int nSize, WORD wHeight, WORD wWidth) {
@@ -1690,11 +1679,43 @@ static BYTE *Get_SpriteCache_Buffer(sprite_header_t *pShapePtr, __int16 nSpriteI
 				}
 				else if (ObjectGrassSpritesCheck(nSpriteID)) {
 					if (WeatherCheck()) {
-						nType = PALCACHE_GRASS_SNOW; // Yes I know.. this is the only option here currently.
-						if (nType == PALCACHE_GRASS_SNOW)
+						nType = PALCACHE_TYPE_GRASS_SNOW; // Yes I know.. this is the only option here currently.
+						if (nType == PALCACHE_TYPE_GRASS_SNOW)
 							return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprGrassSnowFrame, pSpriteBuf, nFrmIdx);
 					}
 				}
+			}
+			return pSpriteBuf;
+		}
+		return pShapePtr->sprOffset.sprPtr;
+	}
+	return NULL;
+}
+
+static BYTE *Get_SpecificSpriteCache_Buffer(sprite_header_t *pShapePtr, __int16 nSpriteID, int nType) {
+	if (pShapePtr->wHeight > 1) {
+		int nFrmIdx = nCycleIdx % CACHED_FRAMES;
+		if (nFrmIdx < 0)
+			nFrmIdx = -nFrmIdx;
+		BYTE *pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, nFrmIdx);
+		if (pSpriteBuf) {
+			if (nType > PALCACHE_TYPE_CYCLE && !bLoColor && !bOnTheFlyPalIdx) {
+				if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMN)
+					return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonAutumnFrame, pSpriteBuf, nFrmIdx);
+				else if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW)
+					return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonAutumnSnowFrame, pSpriteBuf, nFrmIdx);
+				else if (nType == PALCACHE_TYPE_TREES_SEASON_SNOW)
+					return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonSnowFrame, pSpriteBuf, nFrmIdx);
+				else if (nType == PALCACHE_TYPE_TERRAIN_SNOW)
+					return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainSnowFrame, pSpriteBuf, nFrmIdx);
+				else if (nType == PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD)
+					return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainBlizzardFrame, pSpriteBuf, nFrmIdx);
+				else if (nType == PALCACHE_TYPE_WATER_ICE)
+					return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprDeepWaterIceFrame, pSpriteBuf, nFrmIdx);
+				else if (nType == PALCACHE_TYPE_WATER_ICE_BLIZZARD)
+					return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprDeepWaterBlizzardFrame, pSpriteBuf, nFrmIdx);
+				else if (nType == PALCACHE_TYPE_GRASS_SNOW)
+					return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprGrassSnowFrame, pSpriteBuf, nFrmIdx);
 			}
 			return pSpriteBuf;
 		}
@@ -1737,8 +1758,69 @@ static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
 	return newIdx;
 }
 
-static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemHeight, int nPos) {
+static BYTE ProcessSpriteSpecificPaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemHeight, int nPos, int nType) {
 	BYTE palIdx = colIdx;
+
+	if (nType > PALCACHE_TYPE_CYCLE && !bLoColor && bOnTheFlyPalIdx) {
+		// Accumulate snow or fading on trees
+		if (TreeSpritesCheck(nSpriteID)) {
+			if ((nPos % SEQ_MODULUS) == 0 || (nPos % SEQ_MODULUS) == 2 || (nPos % SEQ_MODULUS) == 3) {
+				BOOL bIgnore = FALSE;
+				if ((nPos % SEQ_MODULUS) == 2)
+					bIgnore = TRUE;
+				if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMN)
+					palIdx = ProcessTreeAutumnEffect(palIdx);
+				else if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW) {
+					if (!bIgnore)
+						palIdx = ProcessTreeSnowEffect(palIdx);
+					palIdx = ProcessTreeAutumnEffect(palIdx);
+				}
+				else if (nType == PALCACHE_TYPE_TREES_SEASON_SNOW) {
+					if (!bIgnore)
+						palIdx = ProcessTreeSnowEffect(palIdx);
+				}
+			}
+		}
+
+		// Handle snow-related tile stuff
+		// Accumulate snow on ground
+		if (TerrainSpritesCheck(nSpriteID)) {
+			// Handle deep water differently.
+			if (DeepWaterSpriteCheck(nSpriteID)) {
+				if (((nPos % SEQ_MODULUS) == 1 && nType == PALCACHE_TYPE_WATER_ICE_BLIZZARD) || (nPos % SEQ_MODULUS) == 2) {
+					if (nType == PALCACHE_TYPE_WATER_ICE)
+						palIdx = ProcessTerrainSnowIndex(palIdx);
+					else if (nType == PALCACHE_TYPE_WATER_ICE_BLIZZARD)
+						palIdx = ProcessTerrainBlizzardIndex(palIdx);
+				}
+			}
+			// Ground should be mostly covered in regular snow or absolutely blanketed in a blizzard.
+			else {
+				if (nType == PALCACHE_TYPE_TERRAIN_SNOW)
+					palIdx = ProcessTerrainSnowIndex(palIdx);
+				else if (nType == PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD)
+					palIdx = ProcessTerrainBlizzardIndex(palIdx);
+			}
+		}
+
+		// Accumulate snow on grass
+		else if (ObjectGrassSpritesCheck(nSpriteID)) {
+			if (nType == PALCACHE_TYPE_GRASS_SNOW)
+				palIdx = ProcessBuildingSnowIndex(palIdx);
+		}
+
+		// IDEA: high temperatures + WEATHER_TREND_HOT = patchy, dried out grass?
+		// IDEA: detect drought conditions and affect the edges of water?
+	}
+	return palIdx;
+}
+
+static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemHeight, int nPos, int nType = PALCACHE_TYPE_NONE) {
+	BYTE palIdx = colIdx;
+
+	// Goes directly to the specific call - sprite browser mode.
+	if (nType > PALCACHE_TYPE_CYCLE)
+		return ProcessSpriteSpecificPaletteIndex(nSpriteID, colIdx, nRemHeight, nPos, nType);
 
 	if (bWeatherEffects && !bLoColor && bOnTheFlyPalIdx) {
 		// Accumulate snow or fading on trees
@@ -1780,7 +1862,7 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 	return palIdx;
 }
 
-static BYTE AdjustInversion(__int16 nSpriteID, BYTE palIdx) {
+static BYTE AdjustInversion(__int16 nSpriteID, BYTE palIdx, BOOL bInvUnder = FALSE) {
 	BYTE newIdx = ~palIdx;
 	// In the DOS and Macintosh version the tile inversion
 	// colouration was slightly different, this was a result
@@ -1789,7 +1871,7 @@ static BYTE AdjustInversion(__int16 nSpriteID, BYTE palIdx) {
 	// range.
 	BOOL bPalOffset = TRUE;
 	if (UndergroundSpritesCheck(nSpriteID)) {
-		if (bDarkUnderground)
+		if (bDarkUnderground && !bInvUnder)
 			bPalOffset = FALSE;
 	}
 
@@ -1798,12 +1880,12 @@ static BYTE AdjustInversion(__int16 nSpriteID, BYTE palIdx) {
 	return newIdx;
 }
 
-static BYTE CheckInversion(__int16 nSpriteID, BYTE palIdx) {
+static BYTE CheckInversion(__int16 nSpriteID, BYTE palIdx, BOOL bInvUnder = FALSE) {
 	BYTE newIdx = palIdx;
 	
 	BOOL bPalOffset = TRUE;
 	if (UndergroundSpritesCheck(nSpriteID)) {
-		if (bDarkUnderground)
+		if (bDarkUnderground && !bInvUnder)
 			bPalOffset = FALSE;
 	}
 
@@ -1918,6 +2000,151 @@ static void L_drawShape_Invert_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr, 
 				}
 				--leftShapeBits;
 				++pShapeBits;
+				++baseSpritePtr;
+				--rightShapeBits;
+				--nPos;
+			}
+			if ((nCount & 1) != 0) {
+				++baseSpritePtr;
+				++spritePtr;
+			}
+			continue;
+		default:
+			return;
+		}
+		break;
+	}
+}
+
+static void L_drawShapeSpecific_Invert_MainArea(BYTE *shapePtr, BYTE *baseShapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isFlipped) {
+	BYTE *pShapeBitsLine, *spritePtr, *baseSpritePtr, *pShapeBits;
+	BYTE nCount;
+	BYTE nChunkMode;
+
+	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
+	spritePtr = shapePtr;
+	baseSpritePtr = baseShapePtr;
+	pShapeBits = pShapeBitsLine;
+	while (TRUE) {
+		nCount = SPRITEDATA(spritePtr)->nCount;
+		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
+		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
+		baseSpritePtr = (BYTE *)&SPRITEDATA(baseSpritePtr)->pBuf;
+		switch (nChunkMode) {
+		case MIF_CM_EMPTY:
+			continue;
+		case MIF_CM_NEWROWSTART:
+			pShapeBits = &pShapeBitsLine[shapeX];
+			pShapeBitsLine += shapeX;
+			break;
+		case MIF_CM_SKIPPIXELS:
+			if (isFlipped)
+				pShapeBits -= nCount;
+			else
+				pShapeBits += nCount;
+			break;
+		case MIF_CM_PROCPIXELS:
+			for (int nPos = nCount; nPos; ++spritePtr) {
+				if ((char)(CheckInversion(nSpriteID, *baseSpritePtr, TRUE) ^ *baseSpritePtr) > -1)
+					*pShapeBits = AdjustInversion(nSpriteID, *baseSpritePtr, TRUE);
+				if (isFlipped)
+					--pShapeBits;
+				else
+					++pShapeBits;
+				++baseSpritePtr;
+				--nPos;
+			}
+			if ((nCount & 1) != 0) {
+				++baseSpritePtr;;
+				++spritePtr;
+			}
+			break;
+		default:
+			return;
+		}
+	}
+}
+
+static void L_drawShapeSpecific_Invert_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isFlipped) {
+	__int16 leftEdge, topEdge, rightEdge, bottomEdge;
+	BYTE *pShapeBitsLine, *spritePtr, *baseSpritePtr;
+	WORD nRemHeight;
+	int leftShapeBits, rightShapeBits;
+	BYTE *pShapeBits, nCount, nChunkMode;
+	bool bReachedBottom;
+
+	if (isFlipped) {
+		leftEdge = right - shapeLeft;
+		rightEdge = right - shapeRight;
+	}
+	else {
+		leftEdge = shapeLeft - right;
+		rightEdge = shapeRight - right;
+	}
+	topEdge = shapeTop - bottom;
+	bottomEdge = shapeBottom - bottom;
+	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
+	nRemHeight = shapeCurrent[nSpriteID].wHeight;
+	spritePtr = shapePtr;
+	baseSpritePtr = baseShapePtr;
+	if (topEdge > 0) {
+		bottomEdge -= topEdge;
+		pShapeBitsLine += shapeX * topEdge;
+		do {
+			spritePtr += SPRITEDATA(spritePtr)->nCount + 2;
+			baseSpritePtr += SPRITEDATA(baseSpritePtr)->nCount + 2;
+			--topEdge;
+		} while (topEdge);
+	}
+	leftShapeBits = (int)pShapeBitsLine;
+	pShapeBits = pShapeBitsLine;
+	rightShapeBits = (int)pShapeBitsLine;
+	while (TRUE) {
+		nCount = SPRITEDATA(spritePtr)->nCount;
+		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
+		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
+		baseSpritePtr = (BYTE *)&SPRITEDATA(baseSpritePtr)->pBuf;
+		switch (nChunkMode) {
+		case MIF_CM_EMPTY:
+			continue;
+		case MIF_CM_NEWROWSTART:
+			leftShapeBits = leftEdge;
+			rightShapeBits = rightEdge;
+			bReachedBottom = --bottomEdge < 0;
+			pShapeBits = &pShapeBitsLine[shapeX];
+			pShapeBitsLine += shapeX;
+			--nRemHeight;
+			if (!bReachedBottom)
+				continue;
+			break;
+		case MIF_CM_SKIPPIXELS:
+			leftShapeBits -= nCount;
+			rightShapeBits -= nCount;
+			if (isFlipped)
+				pShapeBits -= nCount;
+			else
+				pShapeBits += nCount;
+			continue;
+		case MIF_CM_PROCPIXELS:
+			for (int nPos = nCount; nPos; ++spritePtr) {
+				BOOL bProcessBit = FALSE;
+				if (isFlipped) {
+					if (rightShapeBits <= 0 && leftShapeBits > 0)
+						bProcessBit = TRUE;
+				}
+				else {
+					if (leftShapeBits <= 0 && rightShapeBits > 0)
+						bProcessBit = TRUE;
+				}
+				if (bProcessBit) {
+					if ((char)(CheckInversion(nSpriteID, *baseSpritePtr, TRUE) ^ *baseSpritePtr) > -1)
+						*pShapeBits = AdjustInversion(nSpriteID, *baseSpritePtr, TRUE);
+				}
+				--leftShapeBits;
+				if (isFlipped)
+					--pShapeBits;
+				else
+					++pShapeBits;
 				++baseSpritePtr;
 				--rightShapeBits;
 				--nPos;
@@ -2074,6 +2301,146 @@ static void L_drawShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 
 	}
 }
 
+static void L_drawShapeSpecific_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isRoadMask, BOOL isFlipped, int nType) {
+	BYTE *pShapeBitsLine, *spritePtr, *pShapeBits;
+	BYTE nCount;
+	BYTE nChunkMode;
+	WORD nRemHeight;
+
+	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
+	nRemHeight = shapeCurrent[nSpriteID].wHeight;
+	spritePtr = shapePtr;
+	pShapeBits = pShapeBitsLine;
+	while (TRUE) {
+		nCount = SPRITEDATA(spritePtr)->nCount;
+		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
+		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
+		switch (nChunkMode) {
+		case MIF_CM_EMPTY:
+			continue;
+		case MIF_CM_NEWROWSTART:
+			pShapeBits = &pShapeBitsLine[shapeX];
+			pShapeBitsLine += shapeX;
+			--nRemHeight;
+			break;
+		case MIF_CM_SKIPPIXELS:
+			if (isFlipped)
+				pShapeBits -= nCount;
+			else
+				pShapeBits += nCount;
+			break;
+		case MIF_CM_PROCPIXELS:
+			for (int nPos = nCount; nPos; ++spritePtr) {
+				BOOL bProcessBit = (isRoadMask) ? FALSE : TRUE;
+				if (isRoadMask) {
+					if (*pShapeBits == 0xA1)
+						bProcessBit = TRUE;
+				}
+				if (bProcessBit)
+					*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos, nType);
+				if (isFlipped)
+					--pShapeBits;
+				else
+					++pShapeBits;
+				--nPos;
+			}
+			if ((nCount & 1) != 0)
+				++spritePtr;
+			break;
+		default:
+			return;
+		}
+	}
+}
+
+static void L_drawShapeSpecific_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isRoadMask, BOOL isFlipped, int nType) {
+	__int16 leftEdge, topEdge, rightEdge, bottomEdge;
+	BYTE *pShapeBitsLine, *spritePtr;
+	WORD nRemHeight;
+	int leftShapeBits, rightShapeBits;
+	BYTE *pShapeBits, nCount, nChunkMode;
+	bool bReachedBottom;
+
+	if (isFlipped) {
+		leftEdge = right - shapeLeft;
+		rightEdge = right - shapeRight;
+	}
+	else {
+		leftEdge = shapeLeft - right;
+		rightEdge = shapeRight - right;
+	}
+	topEdge = shapeTop - bottom;
+	bottomEdge = shapeBottom - bottom;
+	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
+	nRemHeight = shapeCurrent[nSpriteID].wHeight;
+	spritePtr = shapePtr;
+	if (topEdge > 0) {
+		bottomEdge -= topEdge;
+		pShapeBitsLine += shapeX * topEdge;
+		do {
+			spritePtr += SPRITEDATA(spritePtr)->nCount + 2;
+			--topEdge;
+		} while (topEdge);
+	}
+	leftShapeBits = (int)pShapeBitsLine;
+	pShapeBits = pShapeBitsLine;
+	rightShapeBits = (int)pShapeBitsLine;
+	while (TRUE) {
+		nCount = SPRITEDATA(spritePtr)->nCount;
+		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
+		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
+		switch (nChunkMode) {
+		case MIF_CM_EMPTY:
+			continue;
+		case MIF_CM_NEWROWSTART:
+			leftShapeBits = leftEdge;
+			rightShapeBits = rightEdge;
+			bReachedBottom = --bottomEdge < 0;
+			pShapeBits = &pShapeBitsLine[shapeX];
+			pShapeBitsLine += shapeX;
+			--nRemHeight;
+			if (!bReachedBottom)
+				continue;
+			break;
+		case MIF_CM_SKIPPIXELS:
+			leftShapeBits -= nCount;
+			rightShapeBits -= nCount;
+			if (isFlipped)
+				pShapeBits -= nCount;
+			else
+				pShapeBits += nCount;
+			continue;
+		case MIF_CM_PROCPIXELS:
+			for (int nPos = nCount; nPos; ++spritePtr) {
+				BOOL bProcessBit = FALSE;
+				if (isFlipped) {
+					if (rightShapeBits <= 0 && leftShapeBits > 0)
+						bProcessBit = (isRoadMask && *pShapeBits != 0xA1) ? FALSE : TRUE;
+				}
+				else {
+					if (leftShapeBits <= 0 && rightShapeBits > 0)
+						bProcessBit = (isRoadMask && *pShapeBits != 0xA1) ? FALSE : TRUE;
+				}
+				if (bProcessBit)
+					*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos, nType);
+				--leftShapeBits;
+				if (isFlipped)
+					--pShapeBits;
+				else
+					++pShapeBits;
+				--rightShapeBits;
+				--nPos;
+			}
+			if ((nCount & 1) != 0)
+				++spritePtr;
+			continue;
+		default:
+			return;
+		}
+		break;
+	}
+}
+
 extern "C" void __cdecl Hook_drawShape(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert) {
 	sprite_header_t *shapePtr;
 	BYTE *shapeData, *baseShapeData;
@@ -2102,6 +2469,39 @@ extern "C" void __cdecl Hook_drawShape(__int16 nSpriteID, __int16 right, __int16
 					L_drawShape_OutOfContext(shapeData, nSpriteID, nRight, bottom, FALSE, isFlipped);
 				else
 					L_drawShape_MainArea(shapeData, nSpriteID, nRight, bottom, FALSE, isFlipped);
+			}
+		}
+	}
+}
+
+void L_drawShapeSpecific_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert, int nType) {
+	sprite_header_t *shapePtr;
+	BYTE *shapeData, *baseShapeData;
+	int nShapeBottom, nShapeRight;
+
+	shapePtr = &shapeCurrent[nSpriteID];
+	if (shapePtr) {
+		shapeData = Get_SpecificSpriteCache_Buffer(shapePtr, nSpriteID, nType);
+		if (shapeData) {
+			nShapeBottom = bottom + Get_SpriteCache_Height(shapePtr, nSpriteID);
+			nShapeRight = right + Get_SpriteCache_Width(shapePtr, nSpriteID);
+			if (shapeRight > right && shapeLeft < nShapeRight && shapeBottom > bottom && shapeTop < nShapeBottom) {
+				int nRight = (isFlipped) ? nShapeRight : right;
+				// The 'doInvert' flag is used from the InvertShape and InvertTerrain calls.
+				// It's the "Placement Preview".
+				if (doInvert) {
+					baseShapeData = Get_SpriteCache_BaseBuffer(shapePtr, nSpriteID);
+					if (baseShapeData) {
+						if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)
+							L_drawShapeSpecific_Invert_OutOfContext(shapeData, baseShapeData, nSpriteID, nRight, bottom, isFlipped);
+						else
+							L_drawShapeSpecific_Invert_MainArea(shapeData, baseShapeData, nSpriteID, nRight, bottom, isFlipped);
+					}
+				}
+				else if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)
+					L_drawShapeSpecific_OutOfContext(shapeData, nSpriteID, nRight, bottom, FALSE, isFlipped, nType);
+				else
+					L_drawShapeSpecific_MainArea(shapeData, nSpriteID, nRight, bottom, FALSE, isFlipped, nType);
 			}
 		}
 	}

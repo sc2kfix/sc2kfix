@@ -72,11 +72,13 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 					ReleaseDC(pMainFrm->m_hWnd, pDC->m_hDC);
 
 					// Let's not.
-					if (pSCApp->wSCAGameSpeedLOW == GAME_SPEED_PAUSED &&
-						pSCApp->iSCAProgramStep == ONIDLE_STATE_INGAME)
-						bRedraw = FALSE;
+					if (!hWndExt) {
+						if (pSCApp->wSCAGameSpeedLOW == GAME_SPEED_PAUSED &&
+							pSCApp->iSCAProgramStep == ONIDLE_STATE_INGAME)
+							bRedraw = FALSE;
+					}
 
-					if (bRedraw || hWndExt) {
+					if (bRedraw) {
 						// CMainFrame m_hWnd - only call this specific redraw function before CSimcityView has been created.
 						// (ie, before any game has been started - palette animation on the image is disabled once the
 						// game window has been created)
