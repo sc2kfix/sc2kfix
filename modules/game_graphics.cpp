@@ -216,3 +216,11 @@ void CGraphics::ReleaseDC_SC2K1996(CMFC3XDC *pDC) {
 	}
 	g_hBitmapOld = 0;
 }
+
+void InstallGraphicHooks_SC2K1996(void) {
+	// Fix the black <-> white palette index swap
+	// that occurs within CGraphics::RemapBitmapColors(BOOL)
+	// eax rather than ecx.
+	SafeVirtualProtect((LPVOID)0x475F5F, 1, PAGE_EXECUTE_READWRITE);
+	*(BYTE*)0x475F5F = 0x84; // This was 0x8C
+}

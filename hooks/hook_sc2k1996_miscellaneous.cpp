@@ -2495,11 +2495,7 @@ void InstallMiscHooks_SC2K1996(void) {
 	SafeVirtualProtect((LPVOID)0x401532, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401532, Hook_GameDialog_OnDestroy);
 
-	// Fix the black <-> white palette index swap
-	// that occurs within CGraphics::RemapBitmapColors(BOOL)
-	// eax rather than ecx.
-	SafeVirtualProtect((LPVOID)0x475F5F, 1, PAGE_EXECUTE_READWRITE);
-	*(BYTE*)0x475F5F = 0x84; // This was 0x8C
+	InstallGraphicHooks_SC2K1996();
 
 	// Fix the sign fonts
 	SafeVirtualProtect((LPVOID)0x4E7267, 1, PAGE_EXECUTE_READWRITE);
