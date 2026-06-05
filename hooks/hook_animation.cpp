@@ -19,9 +19,9 @@ __int16 nCycleIdx = 0;
 extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette, int bToggle) {
 	CSimcityAppPrimary *pSCApp;
 	CMainFrame *pMainFrm;
-	HDC hDC;
-	CMFC3XDC *pDC;
-	CMFC3XPalette *pSelPal;
+	//HDC hDC;
+	//CMFC3XDC *pDC;
+	//CMFC3XPalette *pSelPal;
 	CSimcityView *pSCView;
 	BOOL bRedraw;
 
@@ -40,18 +40,18 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 				pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 				if (pMainFrm) {
 					pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
-					if (!pSCView)
-						bUseCycle = true;
+					//if (!pSCView)
+					//	bUseCycle = true;
 
-					GetPaletteEntries((HPALETTE)pPalette->m_hObject, 0, 0x100, pPalAnimMain);
-					hDC = GetDC(pMainFrm->m_hWnd);
-					pDC = GameMain_DC_FromHandle(hDC);
-					pSelPal = GameMain_DC_SelectPalette(pDC, pPalette, FALSE);
+					//GetPaletteEntries((HPALETTE)pPalette->m_hObject, 0, 0x100, pPalAnimMain);
+					//hDC = GetDC(pMainFrm->m_hWnd);
+					//pDC = GameMain_DC_FromHandle(hDC);
+					//pSelPal = GameMain_DC_SelectPalette(pDC, pPalette, FALSE);
 					if (bToggle) {
-						if (bUseCycle) {
-							Game_SwapCycle(0);
-							AnimatePalette((HPALETTE)pPalette->m_hObject, 224, 16, pPalOffCycle);
-						}
+						//if (bUseCycle) {
+						//	Game_SwapCycle(0);
+						//	AnimatePalette((HPALETTE)pPalette->m_hObject, 224, 16, pPalOffCycle);
+						//}
 						bRedraw = TRUE;
 					}
 					else {
@@ -62,14 +62,14 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 						else
 							nCycleIdx = 0;
 
-						if (bUseCycle) {
-							Game_SwapCycle(1);
-							AnimatePalette((HPALETTE)pPalette->m_hObject, 171, 49, pPalOnCycle);
-						}
+						//if (bUseCycle) {
+						//	Game_SwapCycle(1);
+						//	AnimatePalette((HPALETTE)pPalette->m_hObject, 171, 49, pPalOnCycle);
+						//}
 						bRedraw = TRUE;
 					}
-					GameMain_DC_SelectPalette(pDC, pSelPal, FALSE);
-					ReleaseDC(pMainFrm->m_hWnd, pDC->m_hDC);
+					//GameMain_DC_SelectPalette(pDC, pSelPal, FALSE);
+					//ReleaseDC(pMainFrm->m_hWnd, pDC->m_hDC);
 
 					// Let's not.
 					if (!hWndExt) {
@@ -83,7 +83,7 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 						// (ie, before any game has been started - palette animation on the image is disabled once the
 						// game window has been created)
 						
-						if (!pSCView)
+						if (!pSCView && pSCApp->dwSCABackgroundColourCyclingActive)
 							RedrawWindow(pMainFrm->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 						else if (hWndExt)
 							RedrawWindow(hWndExt, NULL, NULL, RDW_INVALIDATE);

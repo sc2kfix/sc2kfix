@@ -1196,6 +1196,12 @@ static BYTE midCycleBlackGreyShort[]    = { 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 
 static BYTE midCycleBlueGreyShort[]     = { 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xB2 };
 static BYTE midCycleEarthAndGreyTones[] = { 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xDB };
 
+bool CycleIndexCheck(BYTE palIdx) {
+	if ((palIdx >= 0xAB && palIdx <= 0xC6) || (palIdx >= 0xC8 && palIdx <= 0xDB) || (palIdx >= 0xE0 && palIdx <= 0xE7))
+		return true;
+	return false;
+}
+
 static BYTE GetCycleColIdx(BYTE col, BYTE *pRange, int nCount, int nTarg, bool bRev) {
 	BYTE newCol = col;
 	if (nTarg) {
@@ -1215,7 +1221,7 @@ static BYTE GetCycleColIdx(BYTE col, BYTE *pRange, int nCount, int nTarg, bool b
 	return newCol;
 }
 
-static BYTE CyclePaletteIdx(BYTE colIdx, int cIdx) {
+BYTE CyclePaletteIdx(BYTE colIdx, int cIdx) {
 	BYTE newIdx = colIdx;
 	newIdx = GetCycleColIdx(newIdx, shortCycleLightsRedYellow, sizeof(shortCycleLightsRedYellow), (cIdx % SHORT_CYCLE), false);
 	newIdx = GetCycleColIdx(newIdx, shortCycleBlueShimmer, sizeof(shortCycleBlueShimmer), (cIdx % SHORT_CYCLE), false);
@@ -1386,8 +1392,6 @@ static bool AutWintSeasonCheck() {
 
 // Sprite Caching
 
-#define CACHED_FRAMES 16
-
 // This is for grouping sequences of pixels
 // during encoded processing.
 #define SEQ_MODULUS 4
@@ -1457,7 +1461,7 @@ static bool Scan_Sprite(BYTE *shapePtr) {
 		case MIF_CM_PROCPIXELS:
 			for (int nPos = nCount; nPos; ++spritePtr) {
 				// Scan for the presence of any cycling palette index.
-				if ((*spritePtr >= 0xAB && *spritePtr <= 0xC6) || (*spritePtr >= 0xC8 && *spritePtr <= 0xDB) || (*spritePtr >= 0xE0 && *spritePtr <= 0xE7))
+				if (CycleIndexCheck(*spritePtr))
 					return true;
 				--nPos;
 			}

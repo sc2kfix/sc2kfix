@@ -72,6 +72,8 @@
 #define PALCACHE_TYPE_WATER_ICE_BLIZZARD       7
 #define PALCACHE_TYPE_GRASS_SNOW               8
 
+#define CACHED_FRAMES 16
+
 #define SCD_UPDATE_VIEW_REDRAW                 0
 #define SCD_UPDATE_VIEW_TITLE                  1
 #define SCD_UPDATE_VIEW_UPDATE                 2
@@ -4454,6 +4456,9 @@ extern bool bSoundKickstart;
 extern void Clear_SpriteCache();
 extern void Init_SpriteCache(bool bReload);
 extern void Cache_Sprite(DWORD nID, BYTE *pSpriteBuf, int nSize, WORD wHeight, WORD wWidth);
+
+extern int L_LoadAnimatedGraphic_SC2K1996(CMainFrame *pMainFrm, const char *pStr);
+extern int L_DeleteAnimatedGraphic_SC2K1996(CMainFrame *pMainFrame, BOOL bUnused);
 
 extern int GetSoundPlayTicksBySoundID_SC2K1996(int iSoundID);
 extern int GetTickDurationBySoundID_SC2K1996(int iSoundID, int nDuration);

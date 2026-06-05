@@ -619,7 +619,7 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 				pThis->dwSCASetNextStep = FALSE;
 				pThis->dwSCADoStepSkip = FALSE;
 				Game_MainFrame_DeleteGraphic(pMainFrm, FALSE);
-				if (!Game_MainFrame_LoadGraphic(pMainFrm, aTitlescrBmp))
+				if (!L_LoadAnimatedGraphic_SC2K1996(pMainFrm, aTitlescrBmp))
 					GameMain_AfxAbort();
 				bCSAMainFrameDirectReleaseCapture = FALSE;
 				Game_SimcityApp_SetGameCursor(pThis, 0, FALSE);
@@ -633,7 +633,7 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 				Game_SimcityApp_GetActivePalette(pThis);
 			break;
 		case ONIDLE_STATE_DIALOGFINISH:
-			if (!Game_MainFrame_DeleteGraphic(pMainFrm, TRUE))
+			if (!L_DeleteAnimatedGraphic_SC2K1996(pMainFrm, TRUE))
 				GameMain_AfxAbort();
 			if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES) {
 				if (iReportLimit <= 1 || pThis->wSCAInitDialogFinishLastProgramStep != ONIDLE_STATE_MENUDIALOG)
@@ -684,7 +684,7 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 				else {
 					// Let's avoid trying to reload the same graphic if it gets stuck in a loop.
 					if (pThis->wSCAInitDialogFinishLastProgramStep != ONIDLE_STATE_PENDINGACTION) {
-						if (!pMainFrm->dwMFCGraphicsOne && !Game_MainFrame_LoadGraphic(pMainFrm, aTitlescrBmp))
+						if (!pMainFrm->dwMFCGraphicsOne && !L_LoadAnimatedGraphic_SC2K1996(pMainFrm, aTitlescrBmp))
 							GameMain_AfxAbort();
 					}
 					pThis->iSCAMenuDialogStep = Game_MainFrame_DoInitialDialog(pMainFrm);
