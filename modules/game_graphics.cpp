@@ -310,6 +310,10 @@ static BYTE *Get_ImageFrame_Buffer(BYTE *pImageBuf, DWORD nFrmIdx) {
 }
 
 void L_NextAnimatedImageFrame_SC2K1996(CGraphics *pGraphic) {
+	// Only used if:
+	// 1) the buffer isn't NULL
+	// 2) Not in LoColor mode
+	// 3) the cache has more than 1 frame.
 	if (pGraphic && pGraphic->GRpBits && !bLoColor) {
 		if (imageCache.size() > 1) {
 			BYTE *pBits = Game_Graphics_LockDIBBits(pGraphic);
