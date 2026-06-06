@@ -20,14 +20,12 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 	CSimcityAppPrimary *pSCApp;
 	CMainFrame *pMainFrm;
 	CSimcityView *pSCView;
-	BOOL bRedraw;
 
 	// Only redraw the relevant windows during:
 	// 1) Titlescreen image animation.
 	// 2) Certain applicable dialogues are active (hWndExt won't be NULL in these cases)
 	// 3) The program is not in LoColor mode (which applies to the above).
 
-	bRedraw = FALSE;
 	pSCApp = &pCSimcityAppThis;
 	if (pSCApp) {
 		if (pSCApp->wSCAGameSpeedLOW != GAME_SPEED_PAUSED || pSCApp->dwSCABackgroundColourCyclingActive || pSCApp->iSCAProgramStep != ONIDLE_STATE_INGAME) {
@@ -36,17 +34,14 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 				if (pMainFrm) {
 					pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 					
-					if (bToggle)
-						bRedraw = TRUE;
-					else {
+					BOOL bRedraw = TRUE;
+					if (!bToggle) {
 						// For this we use the original "slow"
 						// cycle.
 						if (nCycleIdx < 48)
 							nCycleIdx++;
 						else
 							nCycleIdx = 0;
-
-						bRedraw = TRUE;
 					}
 
 					// Let's not.
@@ -62,8 +57,7 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 
 					if (bRedraw) {
 						// CMainFrame m_hWnd - only call this specific redraw function before CSimcityView has been created.
-						// (ie, before any game has been started - palette animation on the image is disabled once the
-						// game window has been created)
+						// hWndExt - only valid when the query or sprite browser dialogues are active (both of which draw shapes).
 						
 						if (!pSCView)
 							RedrawWindow(pMainFrm->m_hWnd, NULL, NULL, RDW_INVALIDATE);
