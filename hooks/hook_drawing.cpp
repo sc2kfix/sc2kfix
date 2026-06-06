@@ -1823,7 +1823,7 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 	BYTE palIdx = colIdx;
 
 	// Goes directly to the specific call - sprite browser mode.
-	if (nType > PALCACHE_TYPE_CYCLE)
+	if (nType >= PALCACHE_TYPE_CYCLE)
 		return ProcessSpriteSpecificPaletteIndex(nSpriteID, colIdx, nRemHeight, nPos, nType);
 
 	if (bWeatherEffects && !bLoColor && bOnTheFlyPalIdx) {
