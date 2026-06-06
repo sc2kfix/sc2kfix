@@ -61,6 +61,8 @@ static int GetApplicableSpriteType(HWND hwndDlg, __int16 nSpriteID) {
 	return PALCACHE_TYPE_CYCLE;
 }
 
+#define STRETCHMULTFACTOR 2
+
 BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	HWND hWndCombo, hWndEffectCombo, hWndCheck;
 	CMFC3XRect cmdRect, dlgRect, paintRect;
@@ -70,7 +72,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 	sprite_header_t *pSprHead;
 	PAINTSTRUCT ps;
 	std::string str;
-	int x, y;
+	int x, y, sX, sY;
 	static __int16 nBaseSpriteID = -1;
 	static __int16 isFlipped = 0;
 	static __int16 doInvert = 0;
@@ -86,6 +88,10 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		case WM_INITDIALOG:
 			hWndCombo = GetDlgItem(hwndDlg, IDC_SPRITEBROWSER_COMBOCTRL);
 			GetWindowRect(hWndCombo, &cmdRect);
+
+			isFlipped = 0;
+			doInvert = 0;
+			nType = PALCACHE_TYPE_CYCLE;
 
 			pQueriedTileImageSmall = new CGraphics();
 			pQueriedTileImageMedium = new CGraphics();
@@ -123,10 +129,10 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 			ScreenToClient(hwndDlg, (LPPOINT)&dlgRect);
 			ScreenToClient(hwndDlg, (LPPOINT)&dlgRect.right);
 
-			paintRect.left = 10;
+			paintRect.left = (dlgRect.right / 2) - 40;
 			paintRect.top = 160;
 			paintRect.bottom = 180;
-			paintRect.right = 180;
+			paintRect.right = dlgRect.right - 10;
 
 			SelectFont(ps.hdc, hFontMSSansSerifRegular8);
 			SetTextAlign(ps.hdc, 8);
@@ -150,13 +156,16 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 
 				pSprHead = &pArrSpriteHeaders[nSpriteID];
 				if (pSprHead) {
-					x = dlgRect.right - 40;
+					x = dlgRect.right - 50;
 					y = (dlgRect.bottom - pSprHead->wHeight) - 20;
+
+					sX = x - (40 * 3);
+					sY = (dlgRect.bottom - (pSprHead->wHeight * STRETCHMULTFACTOR)) - 20;
 
 					ShowCurrentDialogSpriteGraphic_SC2K1996(pQueriedTileImageSmall, hwndDlg, pSprHead, nSpriteID, &dlgRect, bSpriteFailSmall, isFlipped, doInvert, nType);
 					if (pQueriedTileImageSmall && !bSpriteFailSmall) {
 						Game_Graphics_SetColorTableFromApplicationPalette(pQueriedTileImageSmall);
-						Game_Graphics_Paint(pQueriedTileImageSmall, ps.hdc, x, y);
+						pQueriedTileImageSmall->PaintNormalAndStretch(ps.hdc, x, y, sX, sY, STRETCHMULTFACTOR);
 					}
 				}
 
@@ -177,13 +186,16 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 
 				pSprHead = &pArrSpriteHeaders[nSpriteID];
 				if (pSprHead) {
-					x -= (40 * 2);
+					x = sX - (40 * 3);
 					y = (dlgRect.bottom - pSprHead->wHeight) - 20;
+
+					sX = x - (40 * 4);
+					sY = (dlgRect.bottom - (pSprHead->wHeight * STRETCHMULTFACTOR)) - 20;
 
 					ShowCurrentDialogSpriteGraphic_SC2K1996(pQueriedTileImageMedium, hwndDlg, pSprHead, nSpriteID, &dlgRect, bSpriteFailMedium, isFlipped, doInvert, nType);
 					if (pQueriedTileImageMedium && !bSpriteFailMedium) {
 						Game_Graphics_SetColorTableFromApplicationPalette(pQueriedTileImageMedium);
-						Game_Graphics_Paint(pQueriedTileImageMedium, ps.hdc, x, y);
+						pQueriedTileImageMedium->PaintNormalAndStretch(ps.hdc, x, y, sX, sY, STRETCHMULTFACTOR);
 					}
 				}
 
@@ -204,13 +216,16 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 
 				pSprHead = &pArrSpriteHeaders[nSpriteID];
 				if (pSprHead) {
-					x -= (40 * 4);
+					x = sX - (40 * 4);
 					y = (dlgRect.bottom - pSprHead->wHeight) - 20;
+
+					sX = x - (40 * 8);
+					sY = (dlgRect.bottom - (pSprHead->wHeight * STRETCHMULTFACTOR)) - 20;
 
 					ShowCurrentDialogSpriteGraphic_SC2K1996(pQueriedTileImageLarge, hwndDlg, pSprHead, nSpriteID, &dlgRect, bSpriteFailLarge, isFlipped, doInvert, nType);
 					if (pQueriedTileImageLarge && !bSpriteFailLarge) {
 						Game_Graphics_SetColorTableFromApplicationPalette(pQueriedTileImageLarge);
-						Game_Graphics_Paint(pQueriedTileImageLarge, ps.hdc, x, y);
+						pQueriedTileImageLarge->PaintNormalAndStretch(ps.hdc, x, y, sX, sY, STRETCHMULTFACTOR);
 					}
 				}
 			}

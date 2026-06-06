@@ -3000,6 +3000,7 @@ GAMECALL(0x4013E3, BOOL, __cdecl, ChangeTileSpriteEntry, int, WORD, WORD, DWORD,
 GAMECALL(0x4013F7, CMFC3XPalette *, __thiscall, SimcityApp_GetActivePalette, CSimcityAppPrimary *)
 GAMECALL(0x40140B, void, __thiscall, SimcityView_ScaleIn, CSimcityView *pThis)
 GAMECALL(0x40142E, void, __stdcall, UpdateIndustryDialog, void)
+GAMECALL(0x401433, void, __thiscall, Graphics_RemapTo16ColorsMain, CGraphics *)
 GAMECALL(0x40144C, void, __thiscall, SimcityApp_NewCity, CSimcityAppPrimary *)
 GAMECALL(0x401460, BYTE, __cdecl, SimulationProvisionMicrosim, __int16, __int16, __int16 iTileID) // The first two arguments aren't clear, though they "could" be the X/Y tile coordinates.
 GAMECALL(0x40146A, void, __cdecl, LoadNamedEntryFromRsrcOffset, char *, int, int)

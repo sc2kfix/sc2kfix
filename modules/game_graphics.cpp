@@ -196,6 +196,40 @@ int CGraphics::CreateWithPalette_SC2K1996(LONG ibiWidth, LONG ibiHeight) {
 	return 1;
 }
 
+void CGraphics::PaintNormalAndStretch(HDC hDC, int x, int y, int sX, int sY, int nFactor) {
+	CSimcityAppPrimary *pSCApp;
+	HGDIOBJ hObj;
+	CMFC3XPalette *pActPal;
+	HPALETTE hActPal;
+	HPALETTE hSelPal;
+	BOOL bForceBkgd = FALSE;
+
+	pSCApp = &pCSimcityAppThis;
+	if (GRBitmap)
+	{
+		if (bLoColor)
+		{
+			Game_Graphics_RemapTo16ColorsMain(this);
+			hObj = ::SelectObject(hDC_Global, GRBitmapLoColor);
+			hActPal = hLoColor;
+			bForceBkgd = FALSE;
+		}
+		else
+		{
+			hObj = ::SelectObject(hDC_Global, GRBitmap);
+			pActPal = Game_SimcityApp_GetActivePalette(pSCApp);
+			hActPal = (HPALETTE)pActPal->m_hObject;
+			bForceBkgd = pSCApp->dwSCAbForceBkgd;
+		}
+		hSelPal = SelectPalette(hDC, hActPal, bForceBkgd);
+		RealizePalette(hDC);
+		::BitBlt(hDC, x, y, GRwidth, GRheight, hDC_Global, 0, 0, SRCCOPY);
+		::StretchBlt(hDC, sX, sY, GRwidth * 2, GRheight * 2, hDC_Global, 0, 0, GRwidth, GRheight, SRCCOPY);
+		SelectPalette(hDC, hSelPal, 0);
+		::SelectObject(hDC_Global, hObj);
+	}
+}
+
 CMFC3XDC *CGraphics::GetDC_SC2K1996() {
 	CMFC3XDC *pDC;
 
