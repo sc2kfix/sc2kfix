@@ -95,6 +95,11 @@ void ShowCurrentDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, spr
 		sprPt.x = (pSprHead->wWidth + nWidthOffset) & ~7;
 		sprPt.y = (pSprHead->wHeight + 8) & ~7;
 		if (pGraphic && !bSpriteFail) {
+			sprRect.left = 0;
+			sprRect.top = 0;
+			sprRect.right = sprPt.x;
+			sprRect.bottom = sprPt.y;
+
 			pSprBits = Game_Graphics_LockDIBBits(pGraphic);
 			pDC = pGraphic->GetDC_SC2K1996();
 			if (pDC) {
