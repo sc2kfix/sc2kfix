@@ -260,7 +260,6 @@ int L_LoadAnimatedGraphic_SC2K1996(CMainFrame *pMainFrm, const char *pStr) {
 		if (pMainFrm->dwMFCGraphicsOne) {
 			if (pMainFrm->dwMFCGraphicsOne->GRpBits) {
 				BOOL bCycling = FALSE;
-				ConsoleLog(LOG_DEBUG, "%u\n", pMainFrm->dwMFCGraphicsOne->GRpBitmapInfo->bmiHeader.biSizeImage);
 				for (DWORD nBit = 0; nBit < pMainFrm->dwMFCGraphicsOne->GRpBitmapInfo->bmiHeader.biSizeImage; ++nBit) {
 					if (CycleIndexCheck(pMainFrm->dwMFCGraphicsOne->GRpBits[nBit])) {
 						bCycling = TRUE;
