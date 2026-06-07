@@ -44,37 +44,39 @@ BOOL PrepareDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_
 	BYTE *pSprBits;
 	WORD nWidthOffset;
 	CMFC3XDC *pDC;
-	BOOL bSpriteFail = FALSE;
+	BOOL bSpriteFail = TRUE;
 
 	if (pSprHead) {
-		nWidthOffset = (nType >= PALCACHE_TYPE_CYCLE) ? 10 : 7;
-		sprPt.x = (pSprHead->wWidth + nWidthOffset) & ~7;
-		sprPt.y = (pSprHead->wHeight + 8) & ~7;
+		if (pSprHead->wHeight > 1) {
+			nWidthOffset = (nType >= PALCACHE_TYPE_CYCLE) ? 10 : 7;
+			sprPt.x = (pSprHead->wWidth + nWidthOffset) & ~7;
+			sprPt.y = (pSprHead->wHeight + 8) & ~7;
 
-		if (pGraphic) {
-			pGraphic = Game_Graphics_Cons(pGraphic);
 			if (pGraphic) {
-				sprRect.left = 0;
-				sprRect.top = 0;
-				sprRect.right = sprPt.x;
-				sprRect.bottom = sprPt.y;
+				pGraphic = Game_Graphics_Cons(pGraphic);
+				if (pGraphic) {
+					sprRect.left = 0;
+					sprRect.top = 0;
+					sprRect.right = sprPt.x;
+					sprRect.bottom = sprPt.y;
 
-				bSpriteFail = (!pGraphic->CreateWithPalette_SC2K1996(sprPt.x, sprPt.y)) ? TRUE : FALSE;
-				if (!bSpriteFail) {
-					pSprBits = Game_Graphics_LockDIBBits(pGraphic);
-					pDC = pGraphic->GetDC_SC2K1996();
-					if (pDC) {
-						FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
-						pGraphic->ReleaseDC_SC2K1996(pDC);
+					bSpriteFail = (!pGraphic->CreateWithPalette_SC2K1996(sprPt.x, sprPt.y)) ? TRUE : FALSE;
+					if (!bSpriteFail) {
+						pSprBits = Game_Graphics_LockDIBBits(pGraphic);
+						pDC = pGraphic->GetDC_SC2K1996();
+						if (pDC) {
+							FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
+							pGraphic->ReleaseDC_SC2K1996(pDC);
 
-						L_hWndBeginProcessObject_SC2K1996(hWnd, pSprBits, sprPt.x, sprPt.y, pDlgRect);
-						if (nType >= PALCACHE_TYPE_CYCLE)
-							L_drawShapeSpecific_SC2K1996(nSpriteID, 0, 0, isFlipped, doInvert, nType);
-						else
-							Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
-						Game_FinishProcessObjects();
+							L_hWndBeginProcessObject_SC2K1996(hWnd, pSprBits, sprPt.x, sprPt.y, pDlgRect);
+							if (nType >= PALCACHE_TYPE_CYCLE)
+								L_drawShapeSpecific_SC2K1996(nSpriteID, 0, 0, isFlipped, doInvert, nType);
+							else
+								Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
+							Game_FinishProcessObjects();
+						}
+						Game_Graphics_UnlockDIBBits(pGraphic);
 					}
-					Game_Graphics_UnlockDIBBits(pGraphic);
 				}
 			}
 		}
@@ -91,29 +93,31 @@ void ShowCurrentDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, spr
 	CMFC3XDC *pDC;
 
 	if (pSprHead) {
-		nWidthOffset = (nType >= PALCACHE_TYPE_CYCLE) ? 10 : 7;
-		sprPt.x = (pSprHead->wWidth + nWidthOffset) & ~7;
-		sprPt.y = (pSprHead->wHeight + 8) & ~7;
-		if (pGraphic && !bSpriteFail) {
-			sprRect.left = 0;
-			sprRect.top = 0;
-			sprRect.right = sprPt.x;
-			sprRect.bottom = sprPt.y;
+		if (pSprHead->wHeight > 1) {
+			nWidthOffset = (nType >= PALCACHE_TYPE_CYCLE) ? 10 : 7;
+			sprPt.x = (pSprHead->wWidth + nWidthOffset) & ~7;
+			sprPt.y = (pSprHead->wHeight + 8) & ~7;
+			if (pGraphic && !bSpriteFail) {
+				sprRect.left = 0;
+				sprRect.top = 0;
+				sprRect.right = sprPt.x;
+				sprRect.bottom = sprPt.y;
 
-			pSprBits = Game_Graphics_LockDIBBits(pGraphic);
-			pDC = pGraphic->GetDC_SC2K1996();
-			if (pDC) {
-				FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
-				pGraphic->ReleaseDC_SC2K1996(pDC);
+				pSprBits = Game_Graphics_LockDIBBits(pGraphic);
+				pDC = pGraphic->GetDC_SC2K1996();
+				if (pDC) {
+					FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
+					pGraphic->ReleaseDC_SC2K1996(pDC);
 
-				L_hWndBeginProcessObject_SC2K1996(hWnd, pSprBits, sprPt.x, sprPt.y, pDlgRect);
-				if (nType >= PALCACHE_TYPE_CYCLE)
-					L_drawShapeSpecific_SC2K1996(nSpriteID, 0, 0, isFlipped, doInvert, nType);
-				else
-					Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
-				Game_FinishProcessObjects();
+					L_hWndBeginProcessObject_SC2K1996(hWnd, pSprBits, sprPt.x, sprPt.y, pDlgRect);
+					if (nType >= PALCACHE_TYPE_CYCLE)
+						L_drawShapeSpecific_SC2K1996(nSpriteID, 0, 0, isFlipped, doInvert, nType);
+					else
+						Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
+					Game_FinishProcessObjects();
+				}
+				Game_Graphics_UnlockDIBBits(pGraphic);
 			}
-			Game_Graphics_UnlockDIBBits(pGraphic);
 		}
 	}
 }
