@@ -229,7 +229,7 @@ void CGraphics::PaintNormalAndStretch(HDC hDC, int x, int y, int sX, int sY, int
 		hSelPal = SelectPalette(hDC, hActPal, bForceBkgd);
 		RealizePalette(hDC);
 		::BitBlt(hDC, x, y, GRwidth, GRheight, hDC_Global, 0, 0, SRCCOPY);
-		::StretchBlt(hDC, sX, sY, GRwidth * 2, GRheight * 2, hDC_Global, 0, 0, GRwidth, GRheight, SRCCOPY);
+		::StretchBlt(hDC, sX, sY, GRwidth * nFactor, GRheight * nFactor, hDC_Global, 0, 0, GRwidth, GRheight, SRCCOPY);
 		SelectPalette(hDC, hSelPal, 0);
 		::SelectObject(hDC_Global, hObj);
 	}
