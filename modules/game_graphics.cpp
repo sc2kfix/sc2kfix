@@ -214,17 +214,14 @@ void CGraphics::PaintNormalAndStretch(HDC hDC, int x, int y, int sX, int sY, int
 	BOOL bForceBkgd = FALSE;
 
 	pSCApp = &pCSimcityAppThis;
-	if (GRBitmap)
-	{
-		if (bLoColor)
-		{
+	if (GRBitmap) {
+		if (bLoColor) {
 			Game_Graphics_RemapTo16ColorsMain(this);
 			hObj = ::SelectObject(hDC_Global, GRBitmapLoColor);
 			hActPal = hLoColor;
 			bForceBkgd = FALSE;
 		}
-		else
-		{
+		else {
 			hObj = ::SelectObject(hDC_Global, GRBitmap);
 			pActPal = Game_SimcityApp_GetActivePalette(pSCApp);
 			hActPal = (HPALETTE)pActPal->m_hObject;
