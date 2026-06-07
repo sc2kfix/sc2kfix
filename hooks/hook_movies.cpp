@@ -27,6 +27,8 @@ UINT mov_debug = MOVIE_DEBUG;
 
 static DWORD dwDummy;
 
+extern int nMovZoomFactor;
+
 BOOL bSkipIntro = FALSE;
 
 extern "C" BOOL __cdecl Hook_MovieOpen(char* sMovStr) {
@@ -53,10 +55,13 @@ extern "C" BOOL __cdecl Hook_MovieOpen(char* sMovStr) {
 	if (smkOpenRet) {
 		bLoaded = TRUE;
 		hWndMovieCap = SetCapture(hWndMovie);
-		nWidth = smkOpenRet[1];
-		nHeight = smkOpenRet[2];
+		nWidth = smkOpenRet[1] * nMovZoomFactor;
+		nHeight = smkOpenRet[2] * nMovZoomFactor;
 		smkBufOpenRet = (DWORD *)GameMain_SmackBufferOpen(hWndMovie, 0, nWidth, nHeight, nWidth, nHeight);
 		if (smkBufOpenRet) {
+			smkBufOpenRet[7] *= nMovZoomFactor;
+			smkBufOpenRet[8] *= nMovZoomFactor;
+
 			nBufWidth = smkBufOpenRet[4];
 			nBufHeight = smkBufOpenRet[5];
 			pMovBuf = (void *)smkBufOpenRet[271];

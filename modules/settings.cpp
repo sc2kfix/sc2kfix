@@ -37,6 +37,7 @@ struct {
 bool bFrequentUpdates = false;
 bool bWeatherEffects = false;
 bool bDarkUnderground = false;
+int nMovZoomFactor = MIN_MOVZOOMFACTOR;
 
 char szGamePath[MAX_PATH];
 
@@ -123,6 +124,7 @@ void DefaultSettingsSC2KFixCore(json::JSON& jsonSettings) {
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USENEWSTRINGS] = DEF_FIX_QOL_USENEWSTRINGS;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USEFLTSTATUS] = DEF_FIX_QOL_USEFLTSTATUS;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND] = DEF_FIX_QOL_TITLECALEND;
+	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_MOVZOOMFACTOR] = DEF_FIX_QOL_MOVZOOMFACTOR;
 	
 	for (int i = 10000; i < 10019; i++) {
 		jsonSettings[C_SC2KFIX][S_FIX_MUSMID][std::to_string(i)] = "";
@@ -250,6 +252,21 @@ void InitializeJSONSettings(void) {
 		ConvertSettingsToJSON();
 }
 
+static void GetSpecificStoredJSONVars() {
+	bFrequentUpdates = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool();
+	bWeatherEffects = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_WEATHEREFFECTS].ToBool();
+	bDarkUnderground = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND].ToBool();
+	nMovZoomFactor = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_MOVZOOMFACTOR].ToInt();
+	if (nMovZoomFactor < MIN_MOVZOOMFACTOR) {
+		ConsoleLog(LOG_INFO, "Invalid Movie Zoom Factor '%d' - it cannot be less than '%d'; setting to '%d'\n", nMovZoomFactor, MIN_MOVZOOMFACTOR, MIN_MOVZOOMFACTOR);
+		nMovZoomFactor = MIN_MOVZOOMFACTOR;
+	}
+	else if (nMovZoomFactor > MAX_MOVZOOMFACTOR) {
+		ConsoleLog(LOG_INFO, "Invalid Movie Zoom Factor '%d' - it cannot be greater than '%d'; setting to '%d'\n", nMovZoomFactor, MAX_MOVZOOMFACTOR, MAX_MOVZOOMFACTOR);
+		nMovZoomFactor = MAX_MOVZOOMFACTOR;
+	}
+}
+
 void LoadJSONSettings(void) {
 	// XXX: this is a bit inefficient; maybe do a std::string with a pre-allocation using
 	// std::filesystem::file_size() instead?
@@ -263,9 +280,7 @@ void LoadJSONSettings(void) {
 	}
 	LoadJSONBindings(jsonSettingsCore);
 
-	bFrequentUpdates = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool();
-	bWeatherEffects = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_WEATHEREFFECTS].ToBool();
-	bDarkUnderground = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND].ToBool();
+	GetSpecificStoredJSONVars();
 }
 
 void SaveJSONSettings(void) {
@@ -274,9 +289,7 @@ void SaveJSONSettings(void) {
 	fSettingsJSON << jsonSettingsCore.dump();
 
 	if (dwDetectedVersion == VERSION_SC2K_1996) {
-		bFrequentUpdates = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool();
-		bWeatherEffects = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_WEATHEREFFECTS].ToBool();
-		bDarkUnderground = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND].ToBool();
+		GetSpecificStoredJSONVars();
 
 		UpdateMiscHooks_SC2K1996();
 		UpdateStatus_SC2K1996(-1);
