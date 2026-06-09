@@ -14,6 +14,8 @@
 
 #include <sc2kfix.h>
 
+#define MAX_MOVBUT 5
+
 #define MOVIE_DEBUG_CALLS 1
 
 #define MOVIE_DEBUG DEBUG_FLAGS_NONE
@@ -117,6 +119,138 @@ extern "C" BOOL __cdecl Hook_MovieCheck(char* sMovStr) {
 	return bRet;
 }
 
+#define PIECE_AREA 70
+
+enum {
+	MOVBUT_QUIT,
+	MOVBUT_TOPLEFT,
+	MOVBUT_TOPRIGHT,
+	MOVBUT_BTMLEFT,
+	MOVBUT_BTMRIGHT
+};
+
+enum {
+	MOVACT_NONE,
+	MOVACT_FIRST,
+	MOVACT_SECOND,
+	MOVACT_THIRD,
+	MOVACT_FOURTH,
+	MOVACT_QUIT
+};
+
+static int GetZoomedPieceArea() {
+	return PIECE_AREA * /*nMovZoomFactor*/ 1;
+}
+
+extern "C" BOOL Hook_MovieDialog_OnInitDialog() {
+	CMovieDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	HINSTANCE hModule;
+	HRSRC hResInfo, hResInfoButUp, hResInfoButDown;
+	HGLOBAL hResData, hResDataButUp, hResDataButDown;
+	LOGPAL movPal;
+	HPALETTE hPal;
+	int nCX, nHalfCX, nCY, nPieceArea;
+	RECT movQuitBut, movTopLeftBut, movTopRightBut, movBottomLeftBut, movBottomRightBut;
+
+	GameMain_Dialog_OnInitDialog(pThis);
+
+	hModule = (HINSTANCE)GetWindowLongA(pThis->m_hWnd, GWL_HINSTANCE);
+	if (hModule) {
+		hResInfo = FindResourceA(hModule, MAKEINTRESOURCEA(261), RT_BITMAP);
+		if (hResInfo) {
+			hResData = LoadResource(hModule, hResInfo);
+			if (hResData) {
+				pThis->pOWMainBitmapInfo = (BITMAPINFO *)LockResource(hResData);
+				movPal.wVersion = 768;
+				movPal.wNumPalEnts = HICOLORCNT;
+				memset(movPal.pPalEnts, 0, sizeof(movPal.pPalEnts));
+				for (int nCol = 0; nCol < HICOLORCNT; ++nCol) {
+					movPal.pPalEnts[nCol].peRed = pThis->pOWMainBitmapInfo->bmiColors[nCol].rgbRed;
+					movPal.pPalEnts[nCol].peGreen = pThis->pOWMainBitmapInfo->bmiColors[nCol].rgbGreen;
+					movPal.pPalEnts[nCol].peBlue = pThis->pOWMainBitmapInfo->bmiColors[nCol].rgbBlue;
+					movPal.pPalEnts[nCol].peFlags = 0;
+				}
+				hPal = CreatePalette((const LOGPALETTE *)&movPal);
+				GameMain_GdiObject_Attach(&pThis->MovPalette, hPal);
+			}
+			FreeResource(hResData);
+		}
+
+		nCX = GetSystemMetrics(SM_CXSCREEN);
+		nCY = GetSystemMetrics(SM_CYSCREEN);
+
+		SetWindowPos(pThis->m_hWnd, 0, 0, 0, nCX, nCY, SWP_NOZORDER | SWP_NOMOVE);
+
+		WORD nBut = 0;
+		for (int i = 0; i < MAX_MOVBUT; i++) {
+			hResInfoButUp = FindResourceA(hModule, MAKEINTRESOURCEA(wMovButtonsUp[nBut]), RT_BITMAP);
+			if (hResInfoButUp) {
+				hResDataButUp = LoadResource(hModule, hResInfoButUp);
+				if (hResDataButUp)
+					pThis->pOWButtonBitmapInfo[i] = (BITMAPINFO *)LockResource(hResDataButUp);
+				FreeResource(hResDataButUp);
+			}
+			hResInfoButDown = FindResourceA(hModule, MAKEINTRESOURCEA(wMovButtonsDown[nBut]), RT_BITMAP);
+			if (hResInfoButDown) {
+				hResDataButDown = LoadResource(hModule, hResInfoButDown);
+				if (hResDataButDown)
+					pThis->pOWButtonBitmapInfo[MAX_MOVBUT + i] = (BITMAPINFO *)LockResource(hResDataButDown);
+				FreeResource(hResDataButDown);
+			}
+			nBut += 2;
+		}
+
+		nHalfCX = nCX / 2;
+		nPieceArea = GetZoomedPieceArea();
+
+		movQuitBut.left = nHalfCX - nPieceArea;
+		movQuitBut.top = (nCY + nPieceArea) / 2;
+		movQuitBut.bottom = movQuitBut.top + nPieceArea;
+		movQuitBut.right = nHalfCX + nPieceArea;
+
+		// Quit button
+		CopyRect(&pThis->MovButRECT[MOVBUT_QUIT], &movQuitBut);
+
+		movTopLeftBut.left = movQuitBut.left;
+		movTopLeftBut.top = (nCY - (nPieceArea * 3)) / 2;
+		movTopLeftBut.bottom = movTopLeftBut.top + nPieceArea;
+		movTopLeftBut.right = nHalfCX;
+
+		// Movie button top-left
+		CopyRect(&pThis->MovButRECT[MOVBUT_TOPLEFT], &movTopLeftBut);
+		
+		movTopRightBut.left = nHalfCX;
+		movTopRightBut.top = movTopLeftBut.top;
+		movTopRightBut.bottom = movTopRightBut.top + nPieceArea;
+		movTopRightBut.right = movQuitBut.right;
+
+		// Movie button top-right
+		CopyRect(&pThis->MovButRECT[MOVBUT_TOPRIGHT], &movTopRightBut);
+
+		movBottomLeftBut.left = movQuitBut.left;
+		movBottomLeftBut.top = (nCY - nPieceArea) / 2;
+		movBottomLeftBut.bottom = movBottomLeftBut.top + nPieceArea;
+		movBottomLeftBut.right = nHalfCX;
+
+		// Movie button bottom-left
+		CopyRect(&pThis->MovButRECT[MOVBUT_BTMLEFT], &movBottomLeftBut);
+
+		movBottomRightBut.left = nHalfCX;
+		movBottomRightBut.top = movBottomLeftBut.top;
+		movBottomRightBut.bottom = movBottomRightBut.top + nPieceArea;
+		movBottomRightBut.right = movQuitBut.right;
+
+		// Movie button bottom-right
+		CopyRect(&pThis->MovButRECT[MOVBUT_BTMRIGHT], &movBottomRightBut);
+	}
+	else	
+		EndDialog(pThis->m_hWnd, MOVACT_QUIT);
+	return TRUE;
+}
+
 void InstallMovieHooks(void) {
 	if (mov_debug)
 		ConsoleLog(LOG_DEBUG, "MOV:  Loaded movie hooks.\n");
@@ -128,4 +262,8 @@ void InstallMovieHooks(void) {
 	// Hook into the movie checking function.
 	SafeVirtualProtect((LPVOID)0x402360, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x402360, Hook_MovieCheck);
+
+	// Hook CMovieDialog::OnInitDialog
+	SafeVirtualProtect((LPVOID)0x4018ED, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4018ED, Hook_MovieDialog_OnInitDialog);
 }

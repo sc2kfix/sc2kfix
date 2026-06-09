@@ -512,7 +512,7 @@ class CMovieDialog : public CMFC3XDialog {
 public:
 	HICON hMovIcon;
 	BITMAPINFO *pOWMainBitmapInfo;
-	CMFC3XRect MovRECT[5];
+	CMFC3XRect MovButRECT[5];
 	BITMAPINFO *pOWButtonBitmapInfo[10];
 	CMFC3XPalette MovPalette;
 	int iButtonOne;
