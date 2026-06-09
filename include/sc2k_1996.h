@@ -3063,6 +3063,7 @@ GAMECALL(0x401BB3, void, __thiscall, Sound_StopSound, CSound *)
 GAMECALL(0x401BE5, void, __thiscall, Graphics_UnlockDIBBits, CGraphics *)
 GAMECALL(0x401C0D, void, __thiscall, SimcityView_DebugGrantAllGifts, CSimcityView*)
 GAMECALL(0x401C35, void, __cdecl, LoadTilesFromFile, FILE *)
+GAMECALL(0x401C4E, BOOL, __thiscall, MovieDialog_OnCommand, CMovieDialog *, WPARAM, LPARAM)
 GAMECALL(0x401C80, void, __thiscall, Graphics_Set16ColorTable, CGraphics *)
 GAMECALL(0x401C99, void, __cdecl, FreeDataEntry, void *)
 GAMECALL(0x401CA8, void, __stdcall, SimulationUpdateWaterConsumption, void)
@@ -3635,6 +3636,7 @@ GAMEOFF(BOOL,	MovieWndInitFinish,			0x4EAA5C)
 GAMEOFF(BOOL,	MovieWndExit,				0x4EAA60)
 GAMEOFF_ARR(WORD,	wMovButtonsUp,			0x4EAA90)
 GAMEOFF_ARR(WORD,	wMovButtonsDown,		0x4EAAA8)
+GAMEOFF_ARR(DWORD,	dwMovButtons,			0x4EAAC0)
 
 
 // Specific tile corner, length and depth cases.

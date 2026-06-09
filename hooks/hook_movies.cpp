@@ -277,6 +277,102 @@ extern "C" void __stdcall Hook_MovieDialog_OnPaint() {
 	ReleaseDC(pThis->m_hWnd, pDC->m_hDC);
 }
 
+extern "C" void __stdcall Hook_MovieDialog_OnLButtonDown(UINT nFlags, CMFC3XPoint pt) {
+	CMovieDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	int nBut;
+	RECT *pMovRect;
+	BITMAPINFO *pBMPInfo;
+	void *lpBits;
+	CMFC3XDC *pDC;
+
+	GameMain_Wnd_Default(pThis);
+	pThis->iButtonDown = MOVBUT_QUIT;
+	for (nBut = MOVBUT_QUIT; nBut < MOVBUT_COUNT; ++nBut) {
+		if (PtInRect(&pThis->MovButRECT[pThis->iButtonDown], pt))
+			break;
+		++pThis->iButtonDown;
+	}
+	if (pThis->iButtonDown >= MOVBUT_COUNT) {
+		pThis->iButtonDown = MOVBUT_COUNT;
+		pThis->iButtonUp = MOVBUT_COUNT;
+	}
+	else {
+		pThis->iButtonUp = pThis->iButtonDown;
+		pBMPInfo = pThis->pOWButtonBitmapInfo[MOVBUT_COUNT + pThis->iButtonDown];
+		pMovRect = &pThis->MovButRECT[pThis->iButtonDown];
+		if (pBMPInfo) {
+			LONG xDest = pMovRect->left;
+			LONG yDest = pMovRect->top;
+			LONG cxSrc = pMovRect->right - pMovRect->left;
+			LONG cySrc = pMovRect->bottom - pMovRect->top;
+			LONG cxDest = cxSrc * nMovZoomFactor;
+			if (cxDest < 0)
+				cxDest = -cxDest;
+			LONG cyDest = cySrc * nMovZoomFactor;
+			if (cyDest < 0)
+				cyDest = -cyDest;
+			yDest -= (PIECE_AREA * nMovZoomFactor) * (nMovZoomFactor - 1);
+			lpBits = &pBMPInfo[24].bmiHeader.biHeight;
+			pDC = GameMain_DC_FromHandle(GetDC(pThis->m_hWnd));
+			GameMain_DC_SelectPalette(pDC, &pThis->MovPalette, FALSE);
+			RealizePalette(pDC->m_hDC);
+			StretchDIBits(pDC->m_hDC, xDest, yDest, cxDest, cyDest, 0, 0, cxSrc, cySrc, lpBits, pBMPInfo, 0, SRCCOPY);
+			ReleaseDC(pThis->m_hWnd, pDC->m_hDC);
+		}
+	}
+}
+
+extern "C" void __stdcall Hook_MovieDialog_OnLButtonUp(UINT nFlags, CMFC3XPoint pt) {
+	CMovieDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	int nBut;
+	RECT *pMovRect;
+	BITMAPINFO *pBMPInfo;
+	void *lpBits;
+	CMFC3XDC *pDC;
+
+	GameMain_Wnd_Default(pThis);
+	pThis->iButtonDown = MOVBUT_QUIT;
+	for (nBut = MOVBUT_QUIT; nBut < MOVBUT_COUNT; ++nBut) {
+		if (PtInRect(&pThis->MovButRECT[pThis->iButtonDown], pt))
+			break;
+		++pThis->iButtonDown;
+	}
+	if (pThis->iButtonUp < MOVBUT_COUNT) {
+		if (pThis->iButtonUp == pThis->iButtonDown)
+			Game_MovieDialog_OnCommand(pThis, dwMovButtons[pThis->iButtonDown], 0);
+	}
+	pBMPInfo = pThis->pOWButtonBitmapInfo[pThis->iButtonUp];
+	pMovRect = &pThis->MovButRECT[pThis->iButtonUp];
+	if (pBMPInfo) {
+		LONG xDest = pMovRect->left;
+		LONG yDest = pMovRect->top;
+		LONG cxSrc = pMovRect->right - pMovRect->left;
+		LONG cySrc = pMovRect->bottom - pMovRect->top;
+		LONG cxDest = cxSrc * nMovZoomFactor;
+		if (cxDest < 0)
+			cxDest = -cxDest;
+		LONG cyDest = cySrc * nMovZoomFactor;
+		if (cyDest < 0)
+			cyDest = -cyDest;
+		yDest -= (PIECE_AREA * nMovZoomFactor) * (nMovZoomFactor - 1);
+		lpBits = &pBMPInfo[24].bmiHeader.biHeight;
+		pDC = GameMain_DC_FromHandle(GetDC(pThis->m_hWnd));
+		GameMain_DC_SelectPalette(pDC, &pThis->MovPalette, FALSE);
+		RealizePalette(pDC->m_hDC);
+		StretchDIBits(pDC->m_hDC, xDest, yDest, cxDest, cyDest, 0, 0, cxSrc, cySrc, lpBits, pBMPInfo, 0, SRCCOPY);
+		ReleaseDC(pThis->m_hWnd, pDC->m_hDC);
+	}
+	InvalidateRect(pThis->m_hWnd, pMovRect, TRUE);
+	pThis->iButtonDown = MOVBUT_COUNT;
+	pThis->iButtonUp = MOVBUT_COUNT;
+}
+
 void InstallMovieHooks(void) {
 	if (mov_debug)
 		ConsoleLog(LOG_DEBUG, "MOV:  Loaded movie hooks.\n");
@@ -296,4 +392,12 @@ void InstallMovieHooks(void) {
 	// Hook CMovieDialog::OnPaint
 	SafeVirtualProtect((LPVOID)0x403067, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x403067, Hook_MovieDialog_OnPaint);
+
+	// Hook CMovieDialog::OnLButtonDown
+	SafeVirtualProtect((LPVOID)0x40206D, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x40206D, Hook_MovieDialog_OnLButtonDown);
+
+	// Hook CMovieDialog::OnLButtonUp
+	SafeVirtualProtect((LPVOID)0x4010B4, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4010B4, Hook_MovieDialog_OnLButtonUp);
 }

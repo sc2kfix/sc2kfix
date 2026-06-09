@@ -534,6 +534,6 @@ public:
 	CMFC3XRect MovButRECT[MOVBUT_COUNT];
 	BITMAPINFO *pOWButtonBitmapInfo[MOVBUT_COUNT * 2];
 	CMFC3XPalette MovPalette;
-	int iButtonOne;
-	int iButtonTwo;
+	int iButtonDown;
+	int iButtonUp;
 };
