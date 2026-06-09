@@ -5,6 +5,9 @@
 
 #define CONF_GAME_SPEED_SETTING(x) (x - 1)
 
+#define MIN_MOVZOOMFACTOR 1
+#define MAX_MOVZOOMFACTOR 4
+
 // Defaults
 
 // SimCity2000
@@ -69,6 +72,7 @@
 #define DEF_FIX_QOL_TITLECALEND     true
 #define DEF_FIX_QOL_USEFLTSTATUS    false
 #define DEF_FIX_QOL_USENEWSTRINGS   true
+#define DEF_FIX_QOL_MOVZOOMFACTOR   2
 
 // Setting defines
 
@@ -164,3 +168,4 @@
 #define I_FIX_QOL_TITLECALEND     "title_calendar"
 #define I_FIX_QOL_USEFLTSTATUS    "use_floating_status"
 #define I_FIX_QOL_USENEWSTRINGS   "use_new_strings"
+#define I_FIX_QOL_MOVZOOMFACTOR   "movie_zoom_factor"

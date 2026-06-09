@@ -23,7 +23,8 @@
 
 static DWORD dwDummy;
 
-extern BOOL PrepareDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect);
+extern BOOL PrepareDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect, __int16 isFlipped = 0, __int16 doInvert = 0, int nType = PALCACHE_TYPE_NONE);
+extern void ShowCurrentDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect, BOOL bSpriteFail, __int16 isFlipped = 0, __int16 doInvert = 0, int nType = PALCACHE_TYPE_NONE);
 
 typedef struct {
 	WORD iTileX;
@@ -124,6 +125,8 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 
 	switch (message) {
 	case WM_INITDIALOG:
+		hWndExt = hwndDlg;
+
 		SetWindowLong(hwndDlg, GWL_USERDATA, lParam);
 		qci = (query_coords_info *)lParam;
 
@@ -343,7 +346,9 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 
 	case WM_PAINT:
 		BeginPaint(hwndDlg, &ps);
-		GetClientRect(hwndDlg, &dlgRect);
+		GetWindowRect(hwndDlg, &dlgRect);
+		ScreenToClient(hwndDlg, (LPPOINT)&dlgRect);
+		ScreenToClient(hwndDlg, (LPPOINT)&dlgRect.right);
 
 		if (nSpriteID >= 0) {
 			pSprHead = &pArrSpriteHeaders[nSpriteID];
@@ -351,6 +356,7 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 				x = dlgRect.right - pSprHead->wWidth - 20;
 				y = (dlgRect.bottom - pSprHead->wHeight) / 2;
 
+				ShowCurrentDialogSpriteGraphic_SC2K1996(pQueriedTileImage, hwndDlg, &pArrSpriteHeaders[nSpriteID], nSpriteID, &dlgRect, bSpriteFail);
 				if (pQueriedTileImage && !bSpriteFail) {
 					Game_Graphics_SetColorTableFromApplicationPalette(pQueriedTileImage);
 					Game_Graphics_Paint(pQueriedTileImage, ps.hdc, x, y);
@@ -372,12 +378,13 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		}
 
 	case WM_DESTROY:
+		hWndExt = 0;
+		nSpriteID = -1;
 		if (pQueriedTileImage) {
 			pQueriedTileImage->DeleteStored_SC2K1996();
 			delete pQueriedTileImage;
 			pQueriedTileImage = NULL;
 		}
-		nSpriteID = -1;
 		break;
 	}
 	return FALSE;
@@ -431,6 +438,8 @@ extern "C" int __stdcall Hook_QuerySpecificDialog_OnInitDialog() {
 	int ret;
 
 	ret = GameMain_QuerySpecificDialog_OnInitDialog(pThis);
+	if (ret)
+		hWndExt = pThis->m_hWnd;
 
 	return ret;
 }
@@ -443,27 +452,71 @@ extern "C" int __stdcall Hook_QueryGeneralDialog_OnInitDialog() {
 	int ret;
 
 	ret = GameMain_QueryGeneralDialog_OnInitDialog(pThis);
+	if (ret)
+		hWndExt = pThis->m_hWnd;
 
 	return ret;
 }
 
-extern "C" void __declspec(naked) Hook_QuerySpecificDialog_PaintSoundTriggerTweak() {
+extern "C" void __stdcall Hook_QuerySpecificDialog_OnPaint() {
 	CQuerySpecificDialog *pThis;
 
-	__asm {
-		mov ecx, esi
-		mov [pThis], ecx
-	}
+	__asm mov [pThis], ecx
 
+	COLORREF crSysColor, crColor;
+	CMFC3XPaintDC paintDC;
+	RECT dlgRect;
 	CSimcityAppPrimary *pSCApp;
 	__int16 iTextOverlay;
+	int nSpriteID = -1;
+	BYTE *pBits;
+	CMFC3XDC *pDC;
+	BYTE iMicrosimID;
+	__int16 nLine;
+	int x, y, nHeight;
+	POINT pt;
 	BYTE nRating;
 
-	pSCApp = &pCSimcityAppThis;
-	
-	if (!bSoundPlayed) {
-		iTextOverlay = XTXTGetTextOverlayID((WORD)pThis->dwQSDMapX, (WORD)pThis->dwQSDMapY);
+	GameMain_PaintDC_Cons(&paintDC, pThis);
 
+	pSCApp = &pCSimcityAppThis;
+	Game_SimcityApp_GetActivePalette(pSCApp);
+
+	GetWindowRect(pThis->m_hWnd, &dlgRect);
+	ScreenToClient(pThis->m_hWnd, (LPPOINT)&dlgRect);
+	ScreenToClient(pThis->m_hWnd, (LPPOINT)&dlgRect.right);
+
+	iTextOverlay = XTXTGetTextOverlayID((WORD)pThis->dwQSDMapX, (WORD)pThis->dwQSDMapY);
+	crSysColor = GetSysColor(COLOR_BTNFACE);
+	SetBkColor(paintDC.m_hDC, crSysColor);
+	nSpriteID = pThis->dwQSDTileID + SPRITE_LARGE_START;
+	x = (pArrSpriteHeaders[nSpriteID].wWidth + 7) & ~7;
+	y = (pArrSpriteHeaders[nSpriteID].wHeight + 8) & ~7;
+	pBits = Game_Graphics_LockDIBBits(pThis->dwQSDCGraphicsOne);
+	if (pBits) {
+		pDC = Game_Graphics_GetDC(pThis->dwQSDCGraphicsOne);
+		if (pDC) {
+			FillRect(pDC->m_hDC, &dlgRect, (HBRUSH)MainBrushFace->m_hObject);
+			Game_Graphics_ReleaseDC(pThis->dwQSDCGraphicsOne, pDC);
+			Game_BeginProcessObjects(pThis, pBits, x, y, &dlgRect);
+			Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
+			Game_FinishProcessObjects();
+		}
+		Game_Graphics_UnlockDIBBits(pThis->dwQSDCGraphicsOne);
+	}
+	x = dlgRect.right - pArrSpriteHeaders[nSpriteID].wWidth - 20;
+	y = (dlgRect.bottom - pArrSpriteHeaders[nSpriteID].wHeight) / 2;
+	Game_Graphics_SetColorTableFromApplicationPalette(pThis->dwQSDCGraphicsOne);
+	Game_Graphics_Paint(pThis->dwQSDCGraphicsOne, paintDC.m_hDC, x, y);
+	SetTextAlign(paintDC.m_hDC, TA_UPDATECP);
+	crColor = GetSysColor(COLOR_BTNTEXT);
+	nHeight = 20 + 40;
+	iMicrosimID = MICROSIMID_ENTRY(iTextOverlay);
+	for (nLine = 0; nLine < 5; ++nLine) {
+		MoveToEx(paintDC.m_hDC, 12, nHeight + 20 * nLine, &pt);
+		Game_CalculateGrade(&paintDC, iMicrosimID, nLine);
+	}
+	if (!bSoundPlayed) {
 		switch (pThis->dwQSDTileID) {
 			case TILE_POWERPLANT_HYDRO1:
 			case TILE_POWERPLANT_HYDRO2:
@@ -516,7 +569,7 @@ extern "C" void __declspec(naked) Hook_QuerySpecificDialog_PaintSoundTriggerTwea
 			case TILE_ARCOLOGY_DARCO:
 			case TILE_ARCOLOGY_LAUNCH:
 				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_ARCO);
-				nRating = GetMicroSimulatorStat0(MICROSIMID_ENTRY(iTextOverlay));
+				nRating = GetMicroSimulatorStat0(iMicrosimID);
 				if (nRating > 9)
 					Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CHEERS);
 				if (nRating < 4)
@@ -527,8 +580,7 @@ extern "C" void __declspec(naked) Hook_QuerySpecificDialog_PaintSoundTriggerTwea
 		}
 		bSoundPlayed = TRUE;
 	}
-
-	GAMEJMP(0x427923)
+	GameMain_PaintDC_Dest(&paintDC);
 }
 
 void InstallQueryHooks_SC2K1996(void) {
@@ -553,16 +605,12 @@ void InstallQueryHooks_SC2K1996(void) {
 	SafeVirtualProtect((LPVOID)0x4274F5, 5, PAGE_EXECUTE_READWRITE);
 	*(BYTE*)0x4274F8 = 0xE8;
 	*(BYTE*)0x4274F9 = 0x03;
-	SafeVirtualProtect((LPVOID)0x42779E, 4, PAGE_EXECUTE_READWRITE);
-	*(BYTE*)0x4277A0 = 0xE8;
-	*(BYTE*)0x4277A1 = 0x03;
 
-	// Hook into the sound trigger portion of CQuerySpecificDialog::OnPaint()
-	// in order to stop the sound from being repeatedly played as a result of
-	// the animation redraw trigger.
-	SafeVirtualProtect((LPVOID)0x427861, 24, PAGE_EXECUTE_READWRITE);
-	memset((LPVOID)0x427861, 0x90, 24);
-	NEWJMP((LPVOID)0x427861, Hook_QuerySpecificDialog_PaintSoundTriggerTweak);
+	// Hook into CQuerySpecificDialog::OnPaint in order to:
+	// 1) Enable the new cycling effects
+	// 2) Avoid sound playing over and over due to the redraw for (1)
+	SafeVirtualProtect((LPVOID)0x427720, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x427720, Hook_QuerySpecificDialog_OnPaint);
 
 	// Patch the maximum so it's reduced from GAME_MAP_SIZE to GAME_MAP_SIZE - 1
 	// otherwise a failure was occurring as it was attempting to fetch the XTRF

@@ -18,6 +18,12 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
+extern bool CycleIndexCheck(BYTE palIdx);
+extern BYTE CyclePaletteIdx(BYTE colIdx, int cIdx);
+extern void L_drawShapeSpecific_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert, int nType);
+
+extern __int16 nCycleIdx;
+
 static BOOL L_hWndBeginProcessObject_SC2K1996(HWND hWnd, void *vBits, int x, int y, RECT *r) {
 	CMFC3XRect clRect;
 
@@ -32,44 +38,88 @@ static BOOL L_hWndBeginProcessObject_SC2K1996(HWND hWnd, void *vBits, int x, int
 	return TRUE;
 }
 
-BOOL PrepareDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect) {
+BOOL PrepareDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect, __int16 isFlipped, __int16 doInvert, int nType) {
 	CMFC3XPoint sprPt;
 	CMFC3XRect sprRect;
 	BYTE *pSprBits;
+	WORD nWidthOffset;
 	CMFC3XDC *pDC;
-	BOOL bSpriteFail = FALSE;
+	BOOL bSpriteFail = TRUE;
 
 	if (pSprHead) {
-		sprPt.x = (pSprHead->wWidth + 7) & ~7;
-		sprPt.y = (pSprHead->wHeight + 8) & ~7;
+		if (pSprHead->wHeight > 1) {
+			nWidthOffset = (nType >= PALCACHE_TYPE_CYCLE) ? 10 : 7;
+			sprPt.x = (pSprHead->wWidth + nWidthOffset) & ~7;
+			sprPt.y = (pSprHead->wHeight + 8) & ~7;
 
-		if (pGraphic) {
-			pGraphic = Game_Graphics_Cons(pGraphic);
 			if (pGraphic) {
-				sprRect.left = 0;
-				sprRect.top = 0;
-				sprRect.right = sprPt.x;
-				sprRect.bottom = sprPt.y;
+				pGraphic = Game_Graphics_Cons(pGraphic);
+				if (pGraphic) {
+					sprRect.left = 0;
+					sprRect.top = 0;
+					sprRect.right = sprPt.x;
+					sprRect.bottom = sprPt.y;
 
-				bSpriteFail = (!pGraphic->CreateWithPalette_SC2K1996(sprPt.x, sprPt.y)) ? TRUE : FALSE;
-				if (!bSpriteFail) {
-					pSprBits = Game_Graphics_LockDIBBits(pGraphic);
-					pDC = pGraphic->GetDC_SC2K1996();
-					if (pDC) {
-						FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
-						pGraphic->ReleaseDC_SC2K1996(pDC);
+					bSpriteFail = (!pGraphic->CreateWithPalette_SC2K1996(sprPt.x, sprPt.y)) ? TRUE : FALSE;
+					if (!bSpriteFail) {
+						pSprBits = Game_Graphics_LockDIBBits(pGraphic);
+						pDC = pGraphic->GetDC_SC2K1996();
+						if (pDC) {
+							FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
+							pGraphic->ReleaseDC_SC2K1996(pDC);
 
-						L_hWndBeginProcessObject_SC2K1996(hWnd, pSprBits, sprPt.x, sprPt.y, pDlgRect);
-						Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
-						Game_FinishProcessObjects();
+							L_hWndBeginProcessObject_SC2K1996(hWnd, pSprBits, sprPt.x, sprPt.y, pDlgRect);
+							if (nType >= PALCACHE_TYPE_CYCLE)
+								L_drawShapeSpecific_SC2K1996(nSpriteID, 0, 0, isFlipped, doInvert, nType);
+							else
+								Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
+							Game_FinishProcessObjects();
+						}
+						Game_Graphics_UnlockDIBBits(pGraphic);
 					}
-					Game_Graphics_UnlockDIBBits(pGraphic);
 				}
 			}
 		}
 	}
 
 	return bSpriteFail;
+}
+
+void ShowCurrentDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_header_t *pSprHead, __int16 nSpriteID, CMFC3XRect *pDlgRect, BOOL bSpriteFail, __int16 isFlipped, __int16 doInvert, int nType) {
+	CMFC3XPoint sprPt;
+	CMFC3XRect sprRect;
+	BYTE *pSprBits;
+	WORD nWidthOffset;
+	CMFC3XDC *pDC;
+
+	if (pSprHead) {
+		if (pSprHead->wHeight > 1) {
+			nWidthOffset = (nType >= PALCACHE_TYPE_CYCLE) ? 10 : 7;
+			sprPt.x = (pSprHead->wWidth + nWidthOffset) & ~7;
+			sprPt.y = (pSprHead->wHeight + 8) & ~7;
+			if (pGraphic && !bSpriteFail) {
+				sprRect.left = 0;
+				sprRect.top = 0;
+				sprRect.right = sprPt.x;
+				sprRect.bottom = sprPt.y;
+
+				pSprBits = Game_Graphics_LockDIBBits(pGraphic);
+				pDC = pGraphic->GetDC_SC2K1996();
+				if (pDC) {
+					FillRect(pDC->m_hDC, &sprRect, (HBRUSH)MainBrushFace->m_hObject);
+					pGraphic->ReleaseDC_SC2K1996(pDC);
+
+					L_hWndBeginProcessObject_SC2K1996(hWnd, pSprBits, sprPt.x, sprPt.y, pDlgRect);
+					if (nType >= PALCACHE_TYPE_CYCLE)
+						L_drawShapeSpecific_SC2K1996(nSpriteID, 0, 0, isFlipped, doInvert, nType);
+					else
+						Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
+					Game_FinishProcessObjects();
+				}
+				Game_Graphics_UnlockDIBBits(pGraphic);
+			}
+		}
+	}
 }
 
 void CGraphics::DeleteStored_SC2K1996() {
@@ -155,6 +205,37 @@ int CGraphics::CreateWithPalette_SC2K1996(LONG ibiWidth, LONG ibiHeight) {
 	return 1;
 }
 
+void CGraphics::PaintNormalAndStretch(HDC hDC, int x, int y, int sX, int sY, int nFactor) {
+	CSimcityAppPrimary *pSCApp;
+	HGDIOBJ hObj;
+	CMFC3XPalette *pActPal;
+	HPALETTE hActPal;
+	HPALETTE hSelPal;
+	BOOL bForceBkgd = FALSE;
+
+	pSCApp = &pCSimcityAppThis;
+	if (GRBitmap) {
+		if (bLoColor) {
+			Game_Graphics_RemapTo16ColorsMain(this);
+			hObj = ::SelectObject(hDC_Global, GRBitmapLoColor);
+			hActPal = hLoColor;
+			bForceBkgd = FALSE;
+		}
+		else {
+			hObj = ::SelectObject(hDC_Global, GRBitmap);
+			pActPal = Game_SimcityApp_GetActivePalette(pSCApp);
+			hActPal = (HPALETTE)pActPal->m_hObject;
+			bForceBkgd = pSCApp->dwSCAbForceBkgd;
+		}
+		hSelPal = SelectPalette(hDC, hActPal, bForceBkgd);
+		RealizePalette(hDC);
+		::BitBlt(hDC, x, y, GRwidth, GRheight, hDC_Global, 0, 0, SRCCOPY);
+		::StretchBlt(hDC, sX, sY, GRwidth * nFactor, GRheight * nFactor, hDC_Global, 0, 0, GRwidth, GRheight, SRCCOPY);
+		SelectPalette(hDC, hSelPal, 0);
+		::SelectObject(hDC_Global, hObj);
+	}
+}
+
 CMFC3XDC *CGraphics::GetDC_SC2K1996() {
 	CMFC3XDC *pDC;
 
@@ -178,4 +259,158 @@ void CGraphics::ReleaseDC_SC2K1996(CMFC3XDC *pDC) {
 		pDC = NULL;
 	}
 	g_hBitmapOld = 0;
+}
+
+typedef struct {
+	DWORD nFrID;
+	int nHeight;
+	int nWidth;
+	DWORD nSize;
+	BYTE  *pBuf;
+} imageFrame_t;
+
+static std::vector<imageFrame_t> imageCache;
+
+static void Create_ImageNew(BYTE *pImageBuf, DWORD nSize, int nHeight, int nWidth, int nFrm) {
+	imageFrame_t imgFrame;
+
+	memset(&imgFrame, 0, sizeof(imgFrame));
+	imgFrame.nFrID = nFrm;
+	imgFrame.nHeight = nHeight;
+	imgFrame.nWidth = nWidth;
+	imgFrame.nSize = nSize;
+	imgFrame.pBuf = (BYTE *)malloc(nSize);
+	if (imgFrame.pBuf) {
+		memcpy(imgFrame.pBuf, pImageBuf, nSize);
+		for (DWORD nBit = 0; nBit < nSize; ++nBit) {
+			imgFrame.pBuf[nBit] = CyclePaletteIdx(imgFrame.pBuf[nBit], nFrm);
+		}
+	}
+	else {
+		ConsoleLog(LOG_ERROR, "Create_ImageNew(%u, %d, %d, %d): Allocation failed for image frame.\n", nSize, nHeight, nWidth, nFrm);
+		imgFrame.pBuf = 0;
+	}
+	// Push even if allocation fails.
+	imageCache.push_back(imgFrame);
+}
+
+int L_LoadAnimatedGraphic_SC2K1996(CMainFrame *pMainFrm, const char *pStr) {
+	int ret = Game_MainFrame_LoadGraphic(pMainFrm, pStr);
+	if (ret && !bLoColor) {
+		if (pMainFrm->dwMFCGraphicsOne) {
+			if (pMainFrm->dwMFCGraphicsOne->GRpBits) {
+				BOOL bCycling = FALSE;
+				for (DWORD nBit = 0; nBit < pMainFrm->dwMFCGraphicsOne->GRpBitmapInfo->bmiHeader.biSizeImage; ++nBit) {
+					if (CycleIndexCheck(pMainFrm->dwMFCGraphicsOne->GRpBits[nBit])) {
+						bCycling = TRUE;
+						break;
+					}
+				}
+				if (bCycling) {
+					BYTE *pBits = Game_Graphics_LockDIBBits(pMainFrm->dwMFCGraphicsOne);
+					if (pBits) {
+						for (int nFrm = 0; nFrm < CACHED_FRAMES; ++nFrm)
+							Create_ImageNew(pBits, pMainFrm->dwMFCGraphicsOne->GRpBitmapInfo->bmiHeader.biSizeImage, pMainFrm->dwMFCGraphicsOne->GRheight, pMainFrm->dwMFCGraphicsOne->GRwidth, nFrm);
+						Game_Graphics_UnlockDIBBits(pMainFrm->dwMFCGraphicsOne);
+					}
+				}
+			}
+		}
+	}
+	return ret;
+}
+
+int L_DeleteAnimatedGraphic_SC2K1996(CMainFrame *pMainFrm, BOOL bUnused) {
+	if (pMainFrm && pMainFrm->dwMFCGraphicsOne && !bLoColor) {
+		for (std::vector<imageFrame_t>::iterator itFr = imageCache.begin(); itFr != imageCache.end();) {
+			if (itFr->pBuf) {
+				free(itFr->pBuf);
+				itFr->pBuf = 0;
+			}
+			itFr = imageCache.erase(itFr);
+		}
+
+		imageCache.clear();
+	}
+	return Game_MainFrame_DeleteGraphic(pMainFrm, bUnused);
+}
+
+static BYTE *Get_ImageFrame_Buffer(BYTE *pImageBuf, DWORD nFrmIdx) {
+	if (nFrmIdx >= 0 && imageCache.size() > 0) {
+		for (std::vector<imageFrame_t>::reverse_iterator itFr = imageCache.rbegin(); itFr != imageCache.rend();) {
+			if (itFr->nFrID <= nFrmIdx) {
+				if (itFr->pBuf)
+					return itFr->pBuf;
+			}
+			++itFr;
+		}
+	}
+	return pImageBuf;
+}
+
+void L_NextAnimatedImageFrame_SC2K1996(CGraphics *pGraphic) {
+	// Only used if:
+	// 1) the buffer isn't NULL
+	// 2) Not in LoColor mode
+	// 3) the cache has more than 1 frame.
+	if (pGraphic && pGraphic->GRpBits && !bLoColor) {
+		if (imageCache.size() > 1) {
+			BYTE *pBits = Game_Graphics_LockDIBBits(pGraphic);
+			if (pBits) {
+				int nFrmIdx = nCycleIdx % CACHED_FRAMES;
+				if (nFrmIdx < 0)
+					nFrmIdx = -nFrmIdx;
+				BYTE *pNewBits = Get_ImageFrame_Buffer(pBits, nFrmIdx);
+				if (pNewBits)
+					memcpy(pBits, pNewBits, imageCache[0].nSize);
+				Game_Graphics_UnlockDIBBits(pGraphic);
+			}
+		}
+	}
+}
+
+extern "C" void __stdcall Hook_SimcityWnd_OnEraseBkgnd(CMFC3XDC *pDC) {
+	CSimcityWnd *pThis;
+
+	__asm mov[pThis], ecx
+
+	RECT r;
+	POINT pt;
+	HBRUSH hBrush;
+	HGDIOBJ hOldObj;
+	int iGrHeight, iGrWidth, iHeight, iWidth;
+
+	GetClientRect(pThis->m_hWnd, &r);
+	hBrush = CreateSolidBrush(0);
+	SetBrushOrgEx(pDC->m_hDC, 0, 0, &pt);
+	hOldObj = SelectObject(pDC->m_hDC, hBrush);
+	if (pThis->m_pSCWGraphics) {
+		iGrHeight = Game_Graphics_Height(pThis->m_pSCWGraphics);
+		iGrWidth = Game_Graphics_Width(pThis->m_pSCWGraphics);
+		iWidth = (r.right - r.left - iGrWidth) / 2;
+		iHeight = (r.bottom - r.top - iGrHeight) / 2;
+		PatBlt(pDC->m_hDC, r.left, r.top, r.right - r.left, iHeight, PATCOPY);
+		PatBlt(pDC->m_hDC, r.left, iHeight, iWidth, iGrHeight, PATCOPY);
+		PatBlt(pDC->m_hDC, iWidth + iGrWidth, iHeight, iWidth, iGrHeight, PATCOPY);
+		PatBlt(pDC->m_hDC, r.left, iHeight + iGrHeight, r.right - r.left, iHeight, PATCOPY);
+		L_NextAnimatedImageFrame_SC2K1996(pThis->m_pSCWGraphics);
+		Game_Graphics_SetColorTableFromApplicationPalette(pThis->m_pSCWGraphics);
+		Game_Graphics_Paint(pThis->m_pSCWGraphics, pDC->m_hDC, iWidth, iHeight);
+	}
+	else
+		PatBlt(pDC->m_hDC, r.left, r.top, r.right - r.left, r.bottom - r.top, PATCOPY);
+	SelectObject(pDC->m_hDC, hOldObj);
+	DeleteObject(hBrush);
+}
+
+void InstallGraphicHooks_SC2K1996(void) {
+	// Hook for CSimcityWnd::OnEraseBkgnd
+	SafeVirtualProtect((LPVOID)0x401D75, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401D75, Hook_SimcityWnd_OnEraseBkgnd);
+
+	// Fix the black <-> white palette index swap
+	// that occurs within CGraphics::RemapBitmapColors(BOOL)
+	// eax rather than ecx.
+	SafeVirtualProtect((LPVOID)0x475F5F, 1, PAGE_EXECUTE_READWRITE);
+	*(BYTE*)0x475F5F = 0x84; // This was 0x8C
 }

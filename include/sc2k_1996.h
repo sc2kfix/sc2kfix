@@ -61,6 +61,19 @@
 
 #define MAP_EDGE_BUILDING 1
 
+#define PALCACHE_TYPE_NONE                    -1
+#define PALCACHE_TYPE_CYCLE                    0
+#define PALCACHE_TYPE_TREES_SEASON_AUTUMN      1
+#define PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW  2
+#define PALCACHE_TYPE_TREES_SEASON_SNOW        3
+#define PALCACHE_TYPE_TERRAIN_SNOW             4
+#define PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD    5
+#define PALCACHE_TYPE_WATER_ICE                6
+#define PALCACHE_TYPE_WATER_ICE_BLIZZARD       7
+#define PALCACHE_TYPE_GRASS_SNOW               8
+
+#define CACHED_FRAMES 16
+
 #define SCD_UPDATE_VIEW_REDRAW                 0
 #define SCD_UPDATE_VIEW_TITLE                  1
 #define SCD_UPDATE_VIEW_UPDATE                 2
@@ -2987,6 +3000,7 @@ GAMECALL(0x4013E3, BOOL, __cdecl, ChangeTileSpriteEntry, int, WORD, WORD, DWORD,
 GAMECALL(0x4013F7, CMFC3XPalette *, __thiscall, SimcityApp_GetActivePalette, CSimcityAppPrimary *)
 GAMECALL(0x40140B, void, __thiscall, SimcityView_ScaleIn, CSimcityView *pThis)
 GAMECALL(0x40142E, void, __stdcall, UpdateIndustryDialog, void)
+GAMECALL(0x401433, void, __thiscall, Graphics_RemapTo16ColorsMain, CGraphics *)
 GAMECALL(0x40144C, void, __thiscall, SimcityApp_NewCity, CSimcityAppPrimary *)
 GAMECALL(0x401460, BYTE, __cdecl, SimulationProvisionMicrosim, __int16, __int16, __int16 iTileID) // The first two arguments aren't clear, though they "could" be the X/Y tile coordinates.
 GAMECALL(0x40146A, void, __cdecl, LoadNamedEntryFromRsrcOffset, char *, int, int)
@@ -3060,6 +3074,7 @@ GAMECALL(0x401D3E, int, __thiscall, MainFrame_CloseInflightDialog, CMainFrame *)
 GAMECALL(0x401D7A, int, __thiscall, JokeDialog_Destruct, CJokeDialog *)
 GAMECALL(0x401DBB, void, __thiscall, SimcityApp_UpdateTick, CSimcityAppPrimary *)
 GAMECALL(0x401DCA, void, __cdecl, RemoveLabel, __int16)
+GAMECALL(0x401E06, void, __cdecl, CalculateGrade, CMFC3XPaintDC *, __int16, __int16)
 GAMECALL(0x401E1A, void, __stdcall, MovieDestroyWindow)
 GAMECALL(0x401E1F, void, __thiscall, SimcityApp_LoadCity, CSimcityAppPrimary *)
 GAMECALL(0x401E29, void, __thiscall, SimcityApp_LoadTileset, CSimcityAppPrimary *)
@@ -3299,6 +3314,8 @@ GAMECALL_MAIN(0x4AB1E2, COLORREF, __thiscall, DC_SetBkColor, CMFC3XDC *, COLORRE
 GAMECALL_MAIN(0x4AB22F, int, __thiscall, DC_SetBkMode, CMFC3XDC *, int)
 GAMECALL_MAIN(0x4AB363, COLORREF, __thiscall, DC_SetTextColor, CMFC3XDC *, COLORREF)
 GAMECALL_MAIN(0x4ABAF0, UINT, __thiscall, DC_SetTextAlign, CMFC3XDC *, UINT)
+GAMECALL_MAIN(0x4AC670, CMFC3XPaintDC *, __thiscall, PaintDC_Cons, CMFC3XPaintDC *, CMFC3XWnd *)
+GAMECALL_MAIN(0x4AC716, void, __thiscall, PaintDC_Dest, CMFC3XPaintDC *)
 GAMECALL_MAIN(0x4ACEE0, void, __thiscall, Document_SetTitle, CMFC3XDocument *, const char *)
 GAMECALL_MAIN(0x4AE0BC, void, __thiscall, Document_UpdateAllViews, CMFC3XDocument *pThis, CMFC3XView *pSender, LPARAM lHint, CMFC3XObject *pHint)
 GAMECALL_MAIN(0x4AE16C, BOOL, __thiscall, Document_OnCmdMsg, CMFC3XDocument *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo)
@@ -4440,6 +4457,9 @@ extern bool bSoundKickstart;
 extern void Clear_SpriteCache();
 extern void Init_SpriteCache(bool bReload);
 extern void Cache_Sprite(DWORD nID, BYTE *pSpriteBuf, int nSize, WORD wHeight, WORD wWidth);
+
+extern int L_LoadAnimatedGraphic_SC2K1996(CMainFrame *pMainFrm, const char *pStr);
+extern int L_DeleteAnimatedGraphic_SC2K1996(CMainFrame *pMainFrame, BOOL bUnused);
 
 extern int GetSoundPlayTicksBySoundID_SC2K1996(int iSoundID);
 extern int GetTickDurationBySoundID_SC2K1996(int iSoundID, int nDuration);

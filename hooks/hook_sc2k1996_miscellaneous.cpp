@@ -302,6 +302,8 @@ extern "C" void __stdcall Hook_GameDialog_OnDestroy() {
 
 	__asm mov [pThis], ecx
 
+	if (hWndExt)
+		hWndExt = 0;
 	GameMain_GameDialog_OnDestroy(pThis);
 }
 
@@ -617,7 +619,7 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 				pThis->dwSCASetNextStep = FALSE;
 				pThis->dwSCADoStepSkip = FALSE;
 				Game_MainFrame_DeleteGraphic(pMainFrm, FALSE);
-				if (!Game_MainFrame_LoadGraphic(pMainFrm, aTitlescrBmp))
+				if (!L_LoadAnimatedGraphic_SC2K1996(pMainFrm, aTitlescrBmp))
 					GameMain_AfxAbort();
 				bCSAMainFrameDirectReleaseCapture = FALSE;
 				Game_SimcityApp_SetGameCursor(pThis, 0, FALSE);
@@ -631,7 +633,7 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 				Game_SimcityApp_GetActivePalette(pThis);
 			break;
 		case ONIDLE_STATE_DIALOGFINISH:
-			if (!Game_MainFrame_DeleteGraphic(pMainFrm, TRUE))
+			if (!L_DeleteAnimatedGraphic_SC2K1996(pMainFrm, TRUE))
 				GameMain_AfxAbort();
 			if (mischook_debug & MISCHOOK_DEBUG_BUILDSUBFRAMES) {
 				if (iReportLimit <= 1 || pThis->wSCAInitDialogFinishLastProgramStep != ONIDLE_STATE_MENUDIALOG)
@@ -682,7 +684,7 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 				else {
 					// Let's avoid trying to reload the same graphic if it gets stuck in a loop.
 					if (pThis->wSCAInitDialogFinishLastProgramStep != ONIDLE_STATE_PENDINGACTION) {
-						if (!pMainFrm->dwMFCGraphicsOne && !Game_MainFrame_LoadGraphic(pMainFrm, aTitlescrBmp))
+						if (!pMainFrm->dwMFCGraphicsOne && !L_LoadAnimatedGraphic_SC2K1996(pMainFrm, aTitlescrBmp))
 							GameMain_AfxAbort();
 					}
 					pThis->iSCAMenuDialogStep = Game_MainFrame_DoInitialDialog(pMainFrm);
@@ -2493,11 +2495,7 @@ void InstallMiscHooks_SC2K1996(void) {
 	SafeVirtualProtect((LPVOID)0x401532, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401532, Hook_GameDialog_OnDestroy);
 
-	// Fix the black <-> white palette index swap
-	// that occurs within CGraphics::RemapBitmapColors(BOOL)
-	// eax rather than ecx.
-	SafeVirtualProtect((LPVOID)0x475F5F, 1, PAGE_EXECUTE_READWRITE);
-	*(BYTE*)0x475F5F = 0x84; // This was 0x8C
+	InstallGraphicHooks_SC2K1996();
 
 	// Fix the sign fonts
 	SafeVirtualProtect((LPVOID)0x4E7267, 1, PAGE_EXECUTE_READWRITE);

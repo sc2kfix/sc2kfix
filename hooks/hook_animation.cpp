@@ -12,25 +12,20 @@
 
 static DWORD dwDummy;
 
+HWND hWndExt = 0;
+
 __int16 nCycleIdx = 0;
 
 extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette, int bToggle) {
 	CSimcityAppPrimary *pSCApp;
 	CMainFrame *pMainFrm;
-	HDC hDC;
-	CMFC3XDC *pDC;
-	CMFC3XPalette *pSelPal;
 	CSimcityView *pSCView;
-	BOOL bRedraw;
 
 	// Only redraw the relevant windows during:
 	// 1) Titlescreen image animation.
-	// 2) While the CSimcityView window is active and the toolbars aren't being dragged.
-	// 3) None of the additional redraw calls in LoColor mode.
+	// 2) Certain applicable dialogues are active (hWndExt won't be NULL in these cases)
+	// 3) The program is not in LoColor mode (which applies to the above).
 
-	bool bUseCycle = false;
-
-	bRedraw = FALSE;
 	pSCApp = &pCSimcityAppThis;
 	if (pSCApp) {
 		if (pSCApp->wSCAGameSpeedLOW != GAME_SPEED_PAUSED || pSCApp->dwSCABackgroundColourCyclingActive || pSCApp->iSCAProgramStep != ONIDLE_STATE_INGAME) {
@@ -38,49 +33,36 @@ extern "C" void __cdecl Hook_ToggleColorCycling_SC2K1996(CMFC3XPalette *pPalette
 				pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 				if (pMainFrm) {
 					pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
-					if (!pSCView)
-						bUseCycle = true;
-
-					GetPaletteEntries((HPALETTE)pPalette->m_hObject, 0, 0x100, pPalAnimMain);
-					hDC = GetDC(pMainFrm->m_hWnd);
-					pDC = GameMain_DC_FromHandle(hDC);
-					pSelPal = GameMain_DC_SelectPalette(pDC, pPalette, FALSE);
-					if (bToggle) {
-						if (bUseCycle) {
-							Game_SwapCycle(0);
-							AnimatePalette((HPALETTE)pPalette->m_hObject, 224, 16, pPalOffCycle);
-						}
-						bRedraw = TRUE;
-					}
-					else {
+					
+					BOOL bRedraw = TRUE;
+					if (!bToggle) {
 						// For this we use the original "slow"
 						// cycle.
 						if (nCycleIdx < 48)
 							nCycleIdx++;
 						else
 							nCycleIdx = 0;
-
-						if (bUseCycle) {
-							Game_SwapCycle(1);
-							AnimatePalette((HPALETTE)pPalette->m_hObject, 171, 49, pPalOnCycle);
-						}
-						bRedraw = TRUE;
 					}
-					GameMain_DC_SelectPalette(pDC, pSelPal, FALSE);
-					ReleaseDC(pMainFrm->m_hWnd, pDC->m_hDC);
 
 					// Let's not.
-					if (pSCApp->wSCAGameSpeedLOW == GAME_SPEED_PAUSED &&
-						pSCApp->iSCAProgramStep == ONIDLE_STATE_INGAME)
-						bRedraw = FALSE;
+					if (!hWndExt) {
+						if (!pSCView && !pSCApp->dwSCABackgroundColourCyclingActive)
+							bRedraw = FALSE;
+						else {
+							if (pSCApp->wSCAGameSpeedLOW == GAME_SPEED_PAUSED &&
+								pSCApp->iSCAProgramStep == ONIDLE_STATE_INGAME)
+								bRedraw = FALSE;
+						}
+					}
 
 					if (bRedraw) {
 						// CMainFrame m_hWnd - only call this specific redraw function before CSimcityView has been created.
-						// (ie, before any game has been started - palette animation on the image is disabled once the
-						// game window has been created)
+						// hWndExt - only valid when the query or sprite browser dialogues are active (both of which draw shapes).
 						
 						if (!pSCView)
 							RedrawWindow(pMainFrm->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+						else if (hWndExt)
+							RedrawWindow(hWndExt, NULL, NULL, RDW_INVALIDATE);
 					}
 				}
 			}
