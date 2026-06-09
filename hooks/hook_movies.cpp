@@ -139,7 +139,7 @@ enum {
 };
 
 static int GetZoomedPieceArea() {
-	return PIECE_AREA * /*nMovZoomFactor*/ 1;
+	return PIECE_AREA * nMovZoomFactor;
 }
 
 extern "C" BOOL Hook_MovieDialog_OnInitDialog() {
@@ -152,8 +152,8 @@ extern "C" BOOL Hook_MovieDialog_OnInitDialog() {
 	HGLOBAL hResData, hResDataButUp, hResDataButDown;
 	LOGPAL movPal;
 	HPALETTE hPal;
-	int nCX, nHalfCX, nCY, nPieceArea;
-	RECT movQuitBut, movTopLeftBut, movTopRightBut, movBottomLeftBut, movBottomRightBut;
+	int nCX, nWndCX, nCY, nWndCY, nPieceArea;
+	RECT wndRect, movQuitBut, movTopLeftBut, movTopRightBut, movBottomLeftBut, movBottomRightBut;
 
 	GameMain_Dialog_OnInitDialog(pThis);
 
@@ -203,26 +203,29 @@ extern "C" BOOL Hook_MovieDialog_OnInitDialog() {
 			nBut += 2;
 		}
 
-		nHalfCX = nCX / 2;
+		GetWindowRect(pThis->m_hWnd, &wndRect);
+
+		nWndCX = (wndRect.right - wndRect.left) / 2;
+		nWndCY = (wndRect.bottom - wndRect.top);
 		nPieceArea = GetZoomedPieceArea();
 
-		movQuitBut.left = nHalfCX - nPieceArea;
-		movQuitBut.top = (nCY + nPieceArea) / 2;
+		movQuitBut.left = nWndCX - nPieceArea;
+		movQuitBut.top = (nWndCY + nPieceArea) / 2;
 		movQuitBut.bottom = movQuitBut.top + nPieceArea;
-		movQuitBut.right = nHalfCX + nPieceArea;
+		movQuitBut.right = nWndCX + nPieceArea;
 
 		// Quit button
 		CopyRect(&pThis->MovButRECT[MOVBUT_QUIT], &movQuitBut);
 
 		movTopLeftBut.left = movQuitBut.left;
-		movTopLeftBut.top = (nCY - (nPieceArea * 3)) / 2;
+		movTopLeftBut.top = (nWndCY - (nPieceArea * 3)) / 2;
 		movTopLeftBut.bottom = movTopLeftBut.top + nPieceArea;
-		movTopLeftBut.right = nHalfCX;
+		movTopLeftBut.right = nWndCX;
 
 		// Movie button top-left
 		CopyRect(&pThis->MovButRECT[MOVBUT_TOPLEFT], &movTopLeftBut);
 		
-		movTopRightBut.left = nHalfCX;
+		movTopRightBut.left = nWndCX;
 		movTopRightBut.top = movTopLeftBut.top;
 		movTopRightBut.bottom = movTopRightBut.top + nPieceArea;
 		movTopRightBut.right = movQuitBut.right;
@@ -231,14 +234,14 @@ extern "C" BOOL Hook_MovieDialog_OnInitDialog() {
 		CopyRect(&pThis->MovButRECT[MOVBUT_TOPRIGHT], &movTopRightBut);
 
 		movBottomLeftBut.left = movQuitBut.left;
-		movBottomLeftBut.top = (nCY - nPieceArea) / 2;
+		movBottomLeftBut.top = (nWndCY - nPieceArea) / 2;
 		movBottomLeftBut.bottom = movBottomLeftBut.top + nPieceArea;
-		movBottomLeftBut.right = nHalfCX;
+		movBottomLeftBut.right = nWndCX;
 
 		// Movie button bottom-left
 		CopyRect(&pThis->MovButRECT[MOVBUT_BTMLEFT], &movBottomLeftBut);
 
-		movBottomRightBut.left = nHalfCX;
+		movBottomRightBut.left = nWndCX;
 		movBottomRightBut.top = movBottomLeftBut.top;
 		movBottomRightBut.bottom = movBottomRightBut.top + nPieceArea;
 		movBottomRightBut.right = movQuitBut.right;
