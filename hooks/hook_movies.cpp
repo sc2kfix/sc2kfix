@@ -121,27 +121,6 @@ extern "C" BOOL __cdecl Hook_MovieCheck(char* sMovStr) {
 
 #define PIECE_AREA 70
 
-enum {
-	MOVBUT_QUIT,
-	MOVBUT_TOPLEFT,
-	MOVBUT_TOPRIGHT,
-	MOVBUT_BTMLEFT,
-	MOVBUT_BTMRIGHT
-};
-
-enum {
-	MOVACT_NONE,
-	MOVACT_FIRST,
-	MOVACT_SECOND,
-	MOVACT_THIRD,
-	MOVACT_FOURTH,
-	MOVACT_QUIT
-};
-
-static int GetZoomedPieceArea() {
-	return PIECE_AREA * nMovZoomFactor;
-}
-
 extern "C" BOOL Hook_MovieDialog_OnInitDialog() {
 	CMovieDialog *pThis;
 
@@ -207,7 +186,7 @@ extern "C" BOOL Hook_MovieDialog_OnInitDialog() {
 
 		nWndCX = (wndRect.right - wndRect.left) / 2;
 		nWndCY = (wndRect.bottom - wndRect.top);
-		nPieceArea = GetZoomedPieceArea();
+		nPieceArea = PIECE_AREA * nMovZoomFactor;
 
 		movQuitBut.left = nWndCX - nPieceArea;
 		movQuitBut.top = (nWndCY + nPieceArea) / 2;
@@ -254,6 +233,50 @@ extern "C" BOOL Hook_MovieDialog_OnInitDialog() {
 	return TRUE;
 }
 
+extern "C" void __stdcall Hook_MovieDialog_OnPaint() {
+	CMovieDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	CMFC3XDC *pDC;
+	CMFC3XPalette *pPal;
+	HBRUSH hBrush;
+	RECT wndRect, *pMovRect;
+	BITMAPINFO *pBMPInfo;
+	void *lpBits;
+
+	GameMain_Wnd_Default(pThis);
+	pDC = GameMain_DC_FromHandle(GetDC(pThis->m_hWnd));
+	pPal = GameMain_DC_SelectPalette(pDC, &pThis->MovPalette, FALSE);
+	RealizePalette(pDC->m_hDC);
+	hBrush = CreateSolidBrush(0);
+	GetClientRect(pThis->m_hWnd, &wndRect);
+	FillRect(pDC->m_hDC, &wndRect, hBrush);
+	for (int i = 0; i < MAX_MOVBUT ; ++i) {
+		pBMPInfo = pThis->pOWButtonBitmapInfo[i];
+		pMovRect = &pThis->MovButRECT[i];
+		if (pBMPInfo) {
+			LONG xDest = pMovRect->left;
+			LONG yDest = pMovRect->top;
+			LONG cxSrc = pMovRect->right - pMovRect->left;
+			LONG cySrc = pMovRect->bottom - pMovRect->top;
+			LONG cxDest = cxSrc * nMovZoomFactor;
+			if (cxDest < 0)
+				cxDest = -cxDest;
+			LONG cyDest = cySrc * nMovZoomFactor;
+			if (cyDest < 0)
+				cyDest = -cyDest;
+			yDest -= (PIECE_AREA * nMovZoomFactor) * (nMovZoomFactor - 1);
+			lpBits = &pBMPInfo[24].bmiHeader.biHeight;
+			StretchDIBits(pDC->m_hDC, xDest, yDest, cxDest, cyDest, 0, 0, cxSrc, cySrc, lpBits, pBMPInfo, 0, SRCCOPY);
+		}
+	}
+	if (pPal)
+		GameMain_DC_SelectPalette(pDC, pPal, FALSE);
+	DeleteObject(hBrush);
+	ReleaseDC(pThis->m_hWnd, pDC->m_hDC);
+}
+
 void InstallMovieHooks(void) {
 	if (mov_debug)
 		ConsoleLog(LOG_DEBUG, "MOV:  Loaded movie hooks.\n");
@@ -269,4 +292,8 @@ void InstallMovieHooks(void) {
 	// Hook CMovieDialog::OnInitDialog
 	SafeVirtualProtect((LPVOID)0x4018ED, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4018ED, Hook_MovieDialog_OnInitDialog);
+
+	// Hook CMovieDialog::OnPaint
+	SafeVirtualProtect((LPVOID)0x403067, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x403067, Hook_MovieDialog_OnPaint);
 }
