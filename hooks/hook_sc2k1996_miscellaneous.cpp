@@ -1291,6 +1291,9 @@ std::vector<hook_function_t> stHooks_Hook_SimCalendarDay23_After;
 // Called after the vanilla SimCalendar day simulation. Cannot be ignored.
 std::vector<hook_function_t> stHooks_Hook_SimCalendarAdvance_After;
 
+
+LARGE_INTEGER SPT_uTickStart, SPT_uTickEnd, SPT_uTicksPerSecond;
+
 extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	int i;
 	DWORD dwMonDay;
@@ -1300,6 +1303,8 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	BOOL bScenarioSuccess;
 	CSimcityAppPrimary *pSCApp;
 	CNewspaperDialog newsDialog;
+	if (!QueryPerformanceFrequency(&SPT_uTicksPerSecond))
+		ConsoleLog(LOG_WARNING, "CORE: WTF? QueryPerformanceFrequency errored out 0x%08X.\n", GetLastError());
 
 	pSCApp = &pCSimcityAppThis;
 	UpdateCityDateAndSeason(TRUE);
@@ -1327,6 +1332,8 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	// Advance the simulation for the current SimCalendar day
 	switch (dwMonDay) {
 		case 0:
+			QueryPerformanceCounter(&SPT_uTickStart);
+
 			if (!bFrequentUpdates)
 				Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
 			if (bYearEndFlag)
@@ -1476,6 +1483,20 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 			Game_UpdateCityMap();
 			Game_UpdateSimNationDialog();
 			Game_UpdateWeatherOrDisasterState();
+
+			QueryPerformanceCounter(&SPT_uTickEnd);
+			if (dwPerfMonEnabled & PERFMON_WHOLEMONTH) {
+				if (SPT_uTicksPerSecond.QuadPart && SPT_uTickStart.QuadPart) {
+					if (((SPT_uTickEnd.QuadPart - SPT_uTickStart.QuadPart) * 1000000 / SPT_uTicksPerSecond.QuadPart) > 1000)
+						ConsoleLog(LOG_INFO, "PERFMON: %s %d - Month took %llu microseconds.\n",
+							pSCApp->dwSCApCStringLongMonths[dwCityDays / 25 % 12].m_pchData,
+							wCityStartYear + dwCityDays / 300,
+							((SPT_uTickEnd.QuadPart - SPT_uTickStart.QuadPart) * 1000000 / SPT_uTicksPerSecond.QuadPart));
+				} else {
+					ConsoleLog(LOG_INFO, "PERFMON: %s %d - Incomplete month, performance data not available.\n");
+				}
+			}
+
 			break;
 		default:
 			// Moved here rather than the prior list of cases that were

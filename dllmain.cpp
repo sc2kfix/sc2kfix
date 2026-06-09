@@ -219,6 +219,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						dwPerfMonEnabled |= PERFMON_ONUPDATE;
 					if (!lstrcmpiW(argv[i], L"-perfmon=spritecache"))
 						dwPerfMonEnabled |= PERFMON_SPRITECACHE;
+					if (!lstrcmpiW(argv[i], L"-perfmon=wholemonth"))
+						dwPerfMonEnabled |= PERFMON_WHOLEMONTH;
 					if (!lstrcmpiW(argv[i], L"-perfmon=all"))
 						dwPerfMonEnabled = PERFMON_EVERYTHING;
 					if (!lstrcmpiW(argv[i], L"-bitmode"))

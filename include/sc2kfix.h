@@ -137,6 +137,7 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define PERFMON_NONE			0
 #define PERFMON_ONUPDATE		1
 #define PERFMON_SPRITECACHE		2
+#define PERFMON_WHOLEMONTH		4
 #define PERFMON_EVERYTHING		0xFFFFFFFF
 
 #define ListView_InsertItemType(hwndLV, i, tmask) {\
