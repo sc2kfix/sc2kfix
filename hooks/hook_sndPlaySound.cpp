@@ -231,7 +231,7 @@ extern "C" int __stdcall Hook_LoadSoundIntoBuffer(int iSoundID, void* lpBuffer) 
 			// This should only be encountered if the original file failed to load
 			// and was never cached.
 			if (!mapSoundCache[iSoundID].pBuffer)
-				bSuccess = LoadSoundFromFile(iSoundID, string_format("SOUNDS/%d.wav", iSoundID)) ? TRUE : FALSE;
+				bSuccess = LoadSoundFromFile(iSoundID, string_format("%s\\SOUNDS\\%d.wav", szGamePath, iSoundID)) ? TRUE : FALSE;
 		}
 	}
 
@@ -610,7 +610,7 @@ void InstallSoundEngineHooks_SC2K1996(void) {
 	QueryPerformanceFrequency(&uTicksPerSecond);
 	QueryPerformanceCounter(&uTickStart);
 	for (int i = SOUND_START; i <= SOUND_SILENT; i++)
-		LoadSoundFromFile(i, string_format("SOUNDS/%d.wav", i));
+		LoadSoundFromFile(i, string_format("%s\\SOUNDS\\%d.wav", szGamePath, i));
 	QueryPerformanceCounter(&uTickEnd);
 	if (snd_debug & SND_DEBUG_INTERNALS)
 		ConsoleLog(LOG_DEBUG, "SND:  Pre-caching sounds from disk took %llu microseconds.\n", ((uTickEnd.QuadPart - uTickStart.QuadPart) * 1000000 / uTicksPerSecond.QuadPart));
