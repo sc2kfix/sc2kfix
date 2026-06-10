@@ -116,7 +116,7 @@ extern "C" BOOL __cdecl Hook_MovieCheck(char* sMovStr) {
 
 #define PIECE_AREA 70
 
-extern "C" BOOL Hook_MovieDialog_OnInitDialog() {
+extern "C" BOOL __stdcall Hook_MovieDialog_OnInitDialog() {
 	CMovieDialog *pThis;
 
 	__asm mov [pThis], ecx
