@@ -513,6 +513,7 @@ BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc);
 char *ConvertFileTypeFilterString(const char *pInStr);
 
 // Yes...
+FILE *log_fopen(const char *fname, const char *mode);
 FILE *old_fopen(const char *fname, const char *mode);
 
 void *__cdecl L_ReallocateDataEntry(char *pDest, char *pSrc);

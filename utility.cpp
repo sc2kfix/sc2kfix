@@ -456,6 +456,16 @@ char *ConvertFileTypeFilterString(const char *pInStr) {
 	return szOutStr;
 }
 
+// This is done deliberately in order
+// to allow for a log file to be opened
+// while the program is active - fopen_s
+// doesn't allow for this while fopen does.
+#pragma warning(disable:4996)
+FILE* log_fopen(const char* fname, const char* mode) {
+	return fopen(fname, mode);
+}
+#pragma warning(default:4996)
+
 FILE* old_fopen(const char* fname, const char* mode) {
 	FILE* f;
 	if (!fopen_s(&f, fname, mode))
