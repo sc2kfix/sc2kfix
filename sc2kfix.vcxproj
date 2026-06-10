@@ -162,6 +162,7 @@ const char* szSC2KFixBuildInfo = "$(UserName)@$(ComputerName)  $([System.DateTim
     <ClCompile Include="hooks\hook_sndPlaySound.cpp" />
     <ClCompile Include="hooks\hook_mmtimers.cpp" />
     <ClCompile Include="modules\console_new.cpp" />
+    <ClCompile Include="modules\fluidsynth_engine.cpp" />
     <ClCompile Include="modules\game_graphics.cpp" />
     <ClCompile Include="modules\keybindings.cpp" />
     <ClCompile Include="modules\lua_glue.cpp" />

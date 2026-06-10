@@ -442,9 +442,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			ConsoleLog(LOG_INFO, "UPD:  Update notifier thread started.\n");
 		}
 
-		// Create music thread
+		// Create music threads
 		CreateThread(NULL, 0, MusicThread, 0, 0, &dwMusicThreadID);
-		ConsoleLog(LOG_INFO, "MUS:  Music thread started.\n");
+		CreateThread(NULL, 0, FSMIDIThread, 0, 0, &dwFSMIDIThreadID);
+		ConsoleLog(LOG_INFO, "MUS:  Music threads started.\n");
 
 		CreateThread(NULL, 0, SDLSoundThread, 0, 0, &dwSDLSoundThreadID);
 		CreateThread(NULL, 0, SDLSongThread, 0, 0, &dwSDLSongThreadID);
@@ -582,7 +583,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		if (dwSDLSoundThreadID)
 			PostThreadMessage(dwSDLSoundThreadID, WM_QUIT, NULL, NULL);
 
-		// Shut down the music thread
+		// Shut down the music threads
+		if (dwFSMIDIThreadID)
+			PostThreadMessage(dwFSMIDIThreadID, WM_QUIT, NULL, NULL);
 		if (dwMusicThreadID)
 			PostThreadMessage(dwMusicThreadID, WM_QUIT, NULL, NULL);
 
