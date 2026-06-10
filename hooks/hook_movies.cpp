@@ -14,8 +14,6 @@
 
 #include <sc2kfix.h>
 
-#define MAX_MOVBUT 5
-
 #define MOVIE_DEBUG_CALLS 1
 
 #define MOVIE_DEBUG DEBUG_FLAGS_NONE
@@ -161,7 +159,7 @@ extern "C" BOOL Hook_MovieDialog_OnInitDialog() {
 		SetWindowPos(pThis->m_hWnd, 0, 0, 0, nCX, nCY, SWP_NOZORDER | SWP_NOMOVE);
 
 		WORD nBut = 0;
-		for (int i = 0; i < MAX_MOVBUT; i++) {
+		for (int i = 0; i < MOVBUT_COUNT; i++) {
 			hResInfoButUp = FindResourceA(hModule, MAKEINTRESOURCEA(wMovButtonsUp[nBut]), RT_BITMAP);
 			if (hResInfoButUp) {
 				hResDataButUp = LoadResource(hModule, hResInfoButUp);
@@ -173,7 +171,7 @@ extern "C" BOOL Hook_MovieDialog_OnInitDialog() {
 			if (hResInfoButDown) {
 				hResDataButDown = LoadResource(hModule, hResInfoButDown);
 				if (hResDataButDown)
-					pThis->pOWButtonBitmapInfo[MAX_MOVBUT + i] = (BITMAPINFO *)LockResource(hResDataButDown);
+					pThis->pOWButtonBitmapInfo[MOVBUT_COUNT + i] = (BITMAPINFO *)LockResource(hResDataButDown);
 				FreeResource(hResDataButDown);
 			}
 			nBut += 2;
@@ -249,7 +247,7 @@ extern "C" void __stdcall Hook_MovieDialog_OnPaint() {
 	hBrush = CreateSolidBrush(0);
 	GetClientRect(pThis->m_hWnd, &wndRect);
 	FillRect(pDC->m_hDC, &wndRect, hBrush);
-	for (int i = 0; i < MAX_MOVBUT ; ++i) {
+	for (int i = 0; i < MOVBUT_COUNT ; ++i) {
 		pBMPInfo = pThis->pOWButtonBitmapInfo[i];
 		pMovRect = &pThis->MovButRECT[i];
 		if (pBMPInfo) {
