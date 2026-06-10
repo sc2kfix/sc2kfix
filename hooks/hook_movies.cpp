@@ -56,14 +56,11 @@ extern "C" BOOL __cdecl Hook_MovieOpen(char* sMovStr) {
 	smkOpenRet = (DWORD *)GameMain_SmackOpen(movStr.m_pchData, 0xFE000, -1);
 	if (smkOpenRet) {
 		bLoaded = TRUE;
-		hWndMovieCap = SetCapture(hWndMovie);
 		nWidth = smkOpenRet[1] * nMovZoomFactor;
 		nHeight = smkOpenRet[2] * nMovZoomFactor;
-		smkBufOpenRet = (DWORD *)GameMain_SmackBufferOpen(hWndMovie, 0, nWidth, nHeight, nWidth, nHeight);
+		hWndMovieCap = SetCapture(hWndMovie);
+		smkBufOpenRet = (DWORD *)GameMain_SmackBufferOpen(hWndMovie, 0, nWidth, nHeight, nWidth * nMovZoomFactor, nHeight * nMovZoomFactor);
 		if (smkBufOpenRet) {
-			smkBufOpenRet[7] *= nMovZoomFactor;
-			smkBufOpenRet[8] *= nMovZoomFactor;
-
 			nBufWidth = smkBufOpenRet[4];
 			nBufHeight = smkBufOpenRet[5];
 			pMovBuf = (void *)smkBufOpenRet[271];
