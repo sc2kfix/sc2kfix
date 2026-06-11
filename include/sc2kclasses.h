@@ -82,6 +82,25 @@ enum {
 
 #define ONIDLE_INITIALDIALOG_MAX (ONIDLE_INITIALDIALOG_COUNT)
 
+enum {
+	MOVBUT_QUIT,
+	MOVBUT_TOPLEFT,
+	MOVBUT_TOPRIGHT,
+	MOVBUT_BTMLEFT,
+	MOVBUT_BTMRIGHT,
+
+	MOVBUT_COUNT
+};
+
+enum {
+	MOVACT_NONE,
+	MOVACT_FIRST,
+	MOVACT_SECOND,
+	MOVACT_THIRD,
+	MOVACT_FOURTH,
+	MOVACT_QUIT
+};
+
 // This specifical structure is the equivalent
 // of the LOGPALETTE struct from the WinAPI
 // except the pPalEnts array is preset to
@@ -512,9 +531,9 @@ class CMovieDialog : public CMFC3XDialog {
 public:
 	HICON hMovIcon;
 	BITMAPINFO *pOWMainBitmapInfo;
-	CMFC3XRect MovRECT[5];
-	BITMAPINFO *pOWButtonBitmapInfo[10];
+	CMFC3XRect MovButRECT[MOVBUT_COUNT];
+	BITMAPINFO *pOWButtonBitmapInfo[MOVBUT_COUNT * 2];
 	CMFC3XPalette MovPalette;
-	int iButtonOne;
-	int iButtonTwo;
+	int iButtonDown;
+	int iButtonUp;
 };

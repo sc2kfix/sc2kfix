@@ -3063,6 +3063,7 @@ GAMECALL(0x401BB3, void, __thiscall, Sound_StopSound, CSound *)
 GAMECALL(0x401BE5, void, __thiscall, Graphics_UnlockDIBBits, CGraphics *)
 GAMECALL(0x401C0D, void, __thiscall, SimcityView_DebugGrantAllGifts, CSimcityView*)
 GAMECALL(0x401C35, void, __cdecl, LoadTilesFromFile, FILE *)
+GAMECALL(0x401C4E, BOOL, __thiscall, MovieDialog_OnCommand, CMovieDialog *, WPARAM, LPARAM)
 GAMECALL(0x401C80, void, __thiscall, Graphics_Set16ColorTable, CGraphics *)
 GAMECALL(0x401C99, void, __cdecl, FreeDataEntry, void *)
 GAMECALL(0x401CA8, void, __stdcall, SimulationUpdateWaterConsumption, void)
@@ -3316,6 +3317,7 @@ GAMECALL_MAIN(0x4AB363, COLORREF, __thiscall, DC_SetTextColor, CMFC3XDC *, COLOR
 GAMECALL_MAIN(0x4ABAF0, UINT, __thiscall, DC_SetTextAlign, CMFC3XDC *, UINT)
 GAMECALL_MAIN(0x4AC670, CMFC3XPaintDC *, __thiscall, PaintDC_Cons, CMFC3XPaintDC *, CMFC3XWnd *)
 GAMECALL_MAIN(0x4AC716, void, __thiscall, PaintDC_Dest, CMFC3XPaintDC *)
+GAMECALL_MAIN(0x4AC851, BOOL, __thiscall, GdiObject_Attach, CMFC3XGdiObject *, HGDIOBJ)
 GAMECALL_MAIN(0x4ACEE0, void, __thiscall, Document_SetTitle, CMFC3XDocument *, const char *)
 GAMECALL_MAIN(0x4AE0BC, void, __thiscall, Document_UpdateAllViews, CMFC3XDocument *pThis, CMFC3XView *pSender, LPARAM lHint, CMFC3XObject *pHint)
 GAMECALL_MAIN(0x4AE16C, BOOL, __thiscall, Document_OnCmdMsg, CMFC3XDocument *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo)
@@ -3632,6 +3634,10 @@ GAMEOFF(DWORD *,	smkBufOpenRet,			0x4EAA54)
 GAMEOFF(DWORD *,	smkOpenRet,				0x4EAA58)
 GAMEOFF(BOOL,	MovieWndInitFinish,			0x4EAA5C)
 GAMEOFF(BOOL,	MovieWndExit,				0x4EAA60)
+GAMEOFF_ARR(WORD,	wMovButtonsUp,			0x4EAA90)
+GAMEOFF_ARR(WORD,	wMovButtonsDown,		0x4EAAA8)
+GAMEOFF_ARR(DWORD,	dwMovButtons,			0x4EAAC0)
+
 
 // Specific tile corner, length and depth cases.
 //
