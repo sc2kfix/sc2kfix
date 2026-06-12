@@ -609,6 +609,7 @@ void DoMusicPlay(int iSongID, BOOL bInterrupt) {
 		// Certain songs should interrupt others
 		switch (iSongID) {
 		case 10002:
+		case 10004:
 		case 10005:
 		case 10010:
 		case 10012:
