@@ -302,6 +302,7 @@ DWORD WINAPI SoundEngineOneShotThread(LPVOID lpParameter) {
 	bSoundPlaying = false;
 	return EXIT_SUCCESS;
 }
+
 DWORD WINAPI SoundEngineSongThread(LPVOID lpParameter) {
 	audio_entity_t* stAudioData = (audio_entity_t*)lpParameter;
 
@@ -430,10 +431,6 @@ bool SoundEnginePlayStream(SDL_AudioStream** pStream, audio_entity_t* stAudioDat
 		stAudioData->iSampleRate
 	};
 
-	/**pStream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, NULL, NULL);
-	if (!*pStream)
-		ConsoleLog(LOG_ERROR, "SND:  SDL_OpenAudioDeviceStream failed: %s.\n", SDL_GetError());*/
-
 	SDL_SetAudioStreamFormat(*pStream, &spec, NULL);
 	SDL_SetAudioStreamGain(*pStream, fVolume);
 	SDL_PutAudioStreamData(*pStream, stAudioData->pBuffer, stAudioData->uBufferSize);
@@ -477,10 +474,6 @@ bool SoundEnginePlaySong(SDL_AudioStream** pStream, audio_entity_t* stAudioData,
 		stAudioData->iChannels,
 		stAudioData->iSampleRate
 	};
-
-	/**pStream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, NULL, NULL);
-	if (!*pStream)
-		ConsoleLog(LOG_ERROR, "SND:  SDL_OpenAudioDeviceStream failed: %s.\n", SDL_GetError());*/
 
 	SDL_SetAudioStreamGain(*pStream, fVolume);
 	SDL_PutAudioStreamData(*pStream, stAudioData->pBuffer, stAudioData->uBufferSize);
