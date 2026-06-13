@@ -251,6 +251,7 @@ static void FluidSynthStopSong(fluid_audio_driver_t** pAudDriver, fluid_synth_t*
 }
 
 static DWORD WINAPI FluidSynthSongThread(LPVOID lpParameter) {
+	fluid_player_t *pPlayer = (fluid_player_t *)lpParameter;
 	if (bFSSongThreadActive) {
 		if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
 			ConsoleLog(LOG_DEBUG, "MUS: FluidSynth song 'join' monitoring thread already active.\n");
@@ -262,7 +263,7 @@ static DWORD WINAPI FluidSynthSongThread(LPVOID lpParameter) {
 		ConsoleLog(LOG_DEBUG, "MUS: Starting new FluidSynth song 'join' monitoring thread.\n");
 
 	// Wait until the FluidSynth player thread exits
-	FS_fluid_player_join(pFluidSynthPlayer);
+	FS_fluid_player_join(pPlayer);
 
 	if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
 		ConsoleLog(LOG_DEBUG, "MUS: Exiting FluidSynth song 'join' monitoring thread.\n");
@@ -323,7 +324,7 @@ static bool FluidSynthPlaySong(fluid_audio_driver_t** pAudDriver, fluid_synth_t*
 	if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
 		ConsoleLog(LOG_DEBUG, "MUS:  Started playback on pFluidSynthPlayer; joining player thread.\n");
 
-	hCurrentFSSongThread = CreateThread(NULL, 0, FluidSynthSongThread, NULL, 0, NULL);
+	hCurrentFSSongThread = CreateThread(NULL, 0, FluidSynthSongThread, *pPlayer, 0, NULL);
 
 	if (!hCurrentFSSongThread) {
 		FluidSynthStopSong(pAudDriver, pSynth, pPlayer);
