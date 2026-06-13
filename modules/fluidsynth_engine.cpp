@@ -14,7 +14,7 @@
 #include <string>
 
 #include <sc2kfix.h>
-#include "music.h"
+#include <fluidsynth.h>
 #include "../resource.h"
 
 #define MAX_START 35

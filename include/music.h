@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include <fluidsynth.h>
-
 #define MUS_DEBUG_SONGS 1
 #define MUS_DEBUG_THREAD 2
 #define MUS_DEBUG_SEQUENCER 4
