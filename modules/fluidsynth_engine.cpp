@@ -263,7 +263,10 @@ static DWORD WINAPI FluidSynthSongThread(LPVOID lpParameter) {
 		ConsoleLog(LOG_DEBUG, "MUS: Starting new FluidSynth song 'join' monitoring thread.\n");
 
 	// Wait until the FluidSynth player thread exits
-	FS_fluid_player_join(pPlayer);
+	if (pPlayer)
+		FS_fluid_player_join(pPlayer);
+	else
+		ConsoleLog(LOG_DEBUG, "MUS: NULL pPlayer ???\n");
 
 	if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
 		ConsoleLog(LOG_DEBUG, "MUS: Exiting FluidSynth song 'join' monitoring thread.\n");
