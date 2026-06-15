@@ -194,20 +194,6 @@ const char *GetGameMusicSoundPath(BOOL bDoMP3) {
 	return strSongPath.c_str();
 }
 
-static void DoMusicPlay(int iSongID) {
-	// Always do this.
-	if (dwMusicThreadID)
-		PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
-	if (mus_debug & MUS_DEBUG_THREAD)
-		ConsoleLog(LOG_DEBUG, "MUS:  Hook_SimcityApp_MusicPlay posted WM_MUSIC_STOP.\n");
-
-	// Post the play message to the music thread
-	if (dwMusicThreadID)
-		PostThreadMessage(dwMusicThreadID, WM_MUSIC_PLAY, iSongID, NULL);
-	if (mus_debug & MUS_DEBUG_THREAD)
-		ConsoleLog(LOG_DEBUG, "MUS:  Hook_SimcityApp_MusicPlay posted WM_MUSIC_PLAY for iSongID = %u.\n", iSongID);
-}
-
 DWORD WINAPI MusicThread(LPVOID lpParameter) {
 	CSimcityAppPrimary *pSCApp;
 	MSG msg;
@@ -383,7 +369,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 				// Restart the active song if there is one
 				int iSongID = GetCurrentActiveSongID();
 				if (iSongID)
-					DoMusicPlay(iSongID);
+					Game_SimcityApp_MusicPlay(pSCApp, iSongID);
 			}
 		}
 		else if (msg.message == WM_QUIT)
@@ -415,8 +401,19 @@ extern "C" void __stdcall Hook_SimcityApp_MusicPlay(int iSongID) {
 	CSimcityAppPrimary *pThis;
 	__asm mov [pThis], ecx
 
-	if (pThis->dwSCAGameMusic)
-		DoMusicPlay(iSongID);
+	if (pThis->dwSCAGameMusic) {
+		// Always do this.
+		if (dwMusicThreadID)
+			PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
+		if (mus_debug & MUS_DEBUG_THREAD)
+			ConsoleLog(LOG_DEBUG, "MUS:  Hook_SimcityApp_MusicPlay posted WM_MUSIC_STOP.\n");
+
+		// Post the play message to the music thread
+		if (dwMusicThreadID)
+			PostThreadMessage(dwMusicThreadID, WM_MUSIC_PLAY, iSongID, NULL);
+		if (mus_debug & MUS_DEBUG_THREAD)
+			ConsoleLog(LOG_DEBUG, "MUS:  Hook_SimcityApp_MusicPlay posted WM_MUSIC_PLAY for iSongID = %u.\n", iSongID);
+	}
 }
 
 extern "C" void __stdcall Hook_Sound_MusicStop(void) {
