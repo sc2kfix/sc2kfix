@@ -474,11 +474,11 @@ static bool LoadSoundFromFile(int iSoundID, std::string strPath) {
 	}
 
 	// Build the audio entity data
-	stAudioEntity.iFrames = stSoundFileInfo.frames;
+	stAudioEntity.iFrames = (int)stSoundFileInfo.frames;
 	stAudioEntity.iSampleRate = stSoundFileInfo.samplerate;
 	stAudioEntity.iChannels = stSoundFileInfo.channels;
 	stAudioEntity.iFormat = stSoundFileInfo.format;
-	stAudioEntity.bSeekable = stSoundFileInfo.seekable;
+	stAudioEntity.bSeekable = stSoundFileInfo.seekable ? true : false;
 	stAudioEntity.uBufferSize = stAudioEntity.iChannels * sizeof(short) * stAudioEntity.iFrames;
 	stAudioEntity.pBuffer = (short*)malloc(stAudioEntity.uBufferSize);
 	if (!stAudioEntity.pBuffer) {

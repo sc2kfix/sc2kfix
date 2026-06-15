@@ -143,7 +143,7 @@ static DWORD WINAPI SoundEngineLoopThread(LPVOID lpParameter) {
 	for (;;) {
 		if (bSoundStop || !bSoundPlaying || !pStreamCurrentSound)
 			break;
-		if (SDL_GetAudioStreamAvailable(pStreamCurrentSound) < stAudioData->uBufferSize)
+		if (SDL_GetAudioStreamAvailable(pStreamCurrentSound) < (int)stAudioData->uBufferSize)
 			SDL_PutAudioStreamData(pStreamCurrentSound, stAudioData->pBuffer, stAudioData->uBufferSize);
 		Sleep(10);
 	}
@@ -207,7 +207,7 @@ DWORD WINAPI SDLSoundThread(LPVOID lpParameter) {
 			if (sdl_debug & SDL_DEBUG_SOUND)
 				ConsoleLog(LOG_DEBUG, "SDLSoundThread: WM_SDL_PLAY: (%d) (%d) %d\n", soundAttrib.iSoundID, nDuration, soundAttrib.nOrig);
 			
-			fVolume = jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat();
+			fVolume = float(jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat());
 
 			pSCApp = &pCSimcityAppThis;
 			if (pSCApp) {
@@ -374,11 +374,11 @@ DWORD WINAPI SDLSongThread(LPVOID lpParameter) {
 					}
 
 					// Build the audio entity data
-					stAudioEntityMP3.iFrames = stInfoMP3File.frames;
+					stAudioEntityMP3.iFrames = (int)stInfoMP3File.frames;
 					stAudioEntityMP3.iSampleRate = stInfoMP3File.samplerate;
 					stAudioEntityMP3.iChannels = stInfoMP3File.channels;
 					stAudioEntityMP3.iFormat = stInfoMP3File.format;
-					stAudioEntityMP3.bSeekable = stInfoMP3File.seekable;
+					stAudioEntityMP3.bSeekable = stInfoMP3File.seekable ? true : false;
 					stAudioEntityMP3.uBufferSize = stAudioEntityMP3.iChannels * sizeof(short) * stAudioEntityMP3.iFrames;
 					stAudioEntityMP3.pBuffer = (short*)malloc(stAudioEntityMP3.uBufferSize);
 					if (!stAudioEntityMP3.pBuffer) {
@@ -397,7 +397,7 @@ DWORD WINAPI SDLSongThread(LPVOID lpParameter) {
 					if (sdl_debug & SDL_DEBUG_SONG)
 						ConsoleLog(LOG_DEBUG, "MUS:  Playing MP3 file \"%s\" via SDL3.\n", szSongPath);
 					SoundEnginePlaySong(&pStreamCurrentSong, &stAudioEntityMP3,
-						jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat());
+						float(jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat()));
 				}
 			}
 		}
