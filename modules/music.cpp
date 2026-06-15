@@ -305,16 +305,17 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 					}
 
 					// Failing all of the above, use MCI to handle MIDI playback
+					const char* szSongPath = GetGameMusicSoundPath(FALSE);
+					if (!szSongPath || IsSongPlaying())
+						goto next;
+
 					if (mciDevice != -1) {
 						mciSendCommand(mciDevice, MCI_CLOSE, MCI_WAIT, NULL);
 						mciDevice = -1;
+						SetMCIDevID(mciDevice);
 					}
 
 					if (mciDevice == -1) {
-						const char* szSongPath = GetGameMusicSoundPath(FALSE);
-						if (!szSongPath || IsSongPlaying())
-							goto next;
-
 						SetSongPlaying(true);
 						MCI_OPEN_PARMS mciOpenParms = { NULL, NULL, "sequencer", szSongPath, NULL };
 						dwMCIError = mciSendCommand(NULL, MCI_OPEN, MCI_OPEN_TYPE | MCI_OPEN_ELEMENT, (DWORD_PTR)&mciOpenParms);
@@ -350,7 +351,6 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 					else {
 						if (mus_debug & MUS_DEBUG_THREAD)
 							ConsoleLog(LOG_DEBUG, "MUS:  WM_MUSIC_PLAY message received but MCI is still active; discarding message.\n");
-						goto next;
 					}
 				}
 			}
@@ -386,8 +386,6 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 				if (iSongID)
 					DoMusicPlay(iSongID);
 			}
-
-			goto next;
 		}
 		else if (msg.message == WM_QUIT)
 			break;
