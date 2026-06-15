@@ -14,8 +14,6 @@
 
 #include <sc2kfix.h>
 
-static DWORD dwDummy;
-
 // Commented out but retained, just in case any manual VTable entry
 // confirmation checks are needed.
 /*

@@ -29,8 +29,6 @@
 
 UINT sprite_debug = SPRITE_DEBUG;
 
-static DWORD dwDummy; 
-
 std::vector<sprite_ids_t> spriteIDs;
 
 static BOOL CheckForExistingID(WORD nID) {

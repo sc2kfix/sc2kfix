@@ -30,8 +30,6 @@
 
 UINT mischook_demo_debug = MISCHOOK_DEMO_DEBUG;
 
-static DWORD dwDummy;
-
 #pragma warning(disable : 6387)
 // Hook LoadMenuA so we can insert our own menu items.
 extern "C" HMENU __stdcall Hook_Demo_LoadMenuA(HINSTANCE hInstance, LPCSTR lpMenuName) {
@@ -296,7 +294,7 @@ void InstallMiscHooks_SC2KDemo(void) {
 skipmainmenu:
 	;
 	// Experiment with nullifying the timer during the first load.
-	//SafeVirtualProtect((LPVOID)0x47685E, 10, PAGE_EXECUTE_READWRITE, &dwDummy);
+	//SafeVirtualProtect((LPVOID)0x47685E, 10, PAGE_EXECUTE_READWRITE);
 	//BYTE bTimePatch[10] = { 0xC7, 0x05, 0x68, 0x6A, 0x4B, 0x00, 0xFF, 0xFF, 0x00, 0x00 };
 	//memcpy((LPVOID)0x47685E, bTimePatch, 10);
 }

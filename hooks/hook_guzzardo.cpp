@@ -27,8 +27,6 @@
 
 UINT guzzardo_debug = GUZZARDO_DEBUG;
 
-static DWORD dwDummy; 
-
 #define NUM_CHEATS 15
 #define NUM_CHEAT_MAXCHARS 9
 

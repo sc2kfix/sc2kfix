@@ -14,8 +14,6 @@
 
 UINT mus_debug = MUS_DEBUG;
 
-static DWORD dwDummy;
-
 static int iPlayingSongID = 0;
 static MCIDEVICEID mciDevice = -1;
 static bool bMusicForceIntroSongOnce = true;

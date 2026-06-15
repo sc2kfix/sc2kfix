@@ -24,8 +24,6 @@
 
 UINT scenstat_debug = SCENSTAT_DEBUG;
 
-static DWORD dwDummy;
-
 // Scenario locals; read on scenario load
 const char* scScenarioDescription = NULL;
 DWORD dwScenarioStartDays = 0;

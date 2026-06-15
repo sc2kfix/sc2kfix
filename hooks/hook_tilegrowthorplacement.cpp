@@ -80,8 +80,6 @@
 
 UINT tilebuild_debug = TILEBUILD_DEBUG;
 
-static DWORD dwDummy;
-
 #if USE_NEW_STARTINGCOORDS
 CPoint dwTripStartingCoords[24] = {
 	{ 0, 1 },

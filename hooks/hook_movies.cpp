@@ -25,8 +25,6 @@
 
 UINT mov_debug = MOVIE_DEBUG;
 
-static DWORD dwDummy;
-
 extern int nMovZoomFactor;
 
 BOOL bSkipIntro = FALSE;

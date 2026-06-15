@@ -50,8 +50,6 @@
 
 UINT mischook_debug = MISCHOOK_DEBUG;
 
-static DWORD dwDummy;
-
 DLGPROC lpNewCityAfxProc = NULL;
 char szTempMayorName[24] = { 0 };
 

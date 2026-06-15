@@ -34,8 +34,6 @@ std::map<int, audio_entity_t> mapSoundCache;
 
 bool bSoundKickstart = false;
 
-static DWORD dwDummy;
-
 static bool LoadSoundFromFile(int iSoundID, std::string strPath);
 
 static int GetSoundPosBySoundID(int iSoundID) {
