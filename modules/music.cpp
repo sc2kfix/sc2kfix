@@ -17,11 +17,12 @@ UINT mus_debug = MUS_DEBUG;
 static DWORD dwDummy;
 
 static int iPlayingSongID = 0;
+static MCIDEVICEID mciDevice = -1;
+static bool bMusicForceIntroSongOnce = true;
+
 std::vector<int> vectorRandomSongIDs = { 10001, 10004, 10008, 10012, 10018, 10003, 10007, 10011, 10013, 10017 };
 int iCurrentSong = 0;
 DWORD dwMusicThreadID = 0;
-MCIDEVICEID mciDevice = -1;
-bool bMusicForceIntroSongOnce = true;
 
 const char *GetGameSoundPath() {
 	return szSoundPath;
@@ -62,7 +63,7 @@ bool IsSongPlaying() {
 	return false;
 }
 
-void MusicShufflePlaylist(int iLastSongPlayed) {
+static void MusicShufflePlaylist(int iLastSongPlayed) {
 	if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SHUFFLEMUSIC].ToBool()) {
 		do {
 			std::shuffle(vectorRandomSongIDs.begin(), vectorRandomSongIDs.end(), mtMersenneTwister);
@@ -100,7 +101,7 @@ UINT MusicEngineStringToInt(const char* szMusicEngine) {
 	return MUSIC_ENGINE_SEQUENCER;
 }
 
-void WINAPI MusicMCINotifyCallback(WPARAM wFlags, LPARAM lDevID) {
+static void WINAPI MusicMCINotifyCallback(WPARAM wFlags, LPARAM lDevID) {
 	if (wFlags == MCI_NOTIFY_SUCCESSFUL || wFlags == MCI_NOTIFY_FAILURE) {
 		if (dwMusicThreadID)
 			PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
@@ -108,8 +109,6 @@ void WINAPI MusicMCINotifyCallback(WPARAM wFlags, LPARAM lDevID) {
 			ConsoleLog(LOG_DEBUG, "MUS:  MusicMCINotifyCallback posted WM_MUSIC_STOP. (%u, %u)\n", wFlags, lDevID);
 	}
 }
-
-const char* MusicEngineIntToString(UINT iMusicEngine);
 
 static int GetAliasIndexFromSongID(int iSongID) {
 	if (iSongID < 10000 || iSongID > 10018)

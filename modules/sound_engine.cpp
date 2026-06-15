@@ -49,25 +49,24 @@ const char* (*SDL_GetError)(void);
 bool (*SDL_MixAudio)(uint8_t* dst, const uint8_t* src, SDL_AudioFormat format, uint32_t len, float volume);
 bool (*SDL_SetAudioStreamGain)(SDL_AudioStream* stream, float gain);
 
-HMODULE hmodSndFile = NULL;
-HMODULE hmodSDL3 = NULL;
+static HMODULE hmodSndFile = NULL;
+static HMODULE hmodSDL3 = NULL;
+
+static HANDLE hCurrentSongThread = NULL;
+static HANDLE hCurrentSoundThread = NULL;
+static bool bSoundPlaying = false;
+
+static bool bSongStop = false;
+static bool bSoundStop = false;
+
+static bool bSongThreadActive = false;
+static bool bSoundThreadActive[2] = { false, false };
 
 DWORD dwSDLSoundThreadID = 0;
 DWORD dwSDLSongThreadID = 0;
 
-int iCurrentSongID = 0;
-int iCurrentSoundID = 0;
 SDL_AudioStream* pStreamCurrentSong = NULL;
 SDL_AudioStream* pStreamCurrentSound = NULL;
-HANDLE hCurrentSongThread = NULL;
-HANDLE hCurrentSoundThread = NULL;
-bool bSoundPlaying = false;
-
-bool bSongStop = false;
-bool bSoundStop = false;
-
-bool bSongThreadActive = false;
-bool bSoundThreadActive[2] = { false, false };
 
 #define MAX_START 35
 

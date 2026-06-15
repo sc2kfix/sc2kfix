@@ -63,9 +63,6 @@ typedef void* SDL_AudioStreamCallback;
 
 #define SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK ((SDL_AudioDeviceID) 0xFFFFFFFFu)
 
-extern HMODULE hmodSndFile;
-extern HMODULE hmodSDL3;
-
 extern SDL_AudioStream* pStreamCurrentSong;
 extern SDL_AudioStream* pStreamCurrentSound;
 
