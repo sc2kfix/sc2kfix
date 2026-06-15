@@ -3,9 +3,24 @@
 
 #pragma once
 
+#define MUS_DEBUG_SONGS 1
+#define MUS_DEBUG_THREAD 2
+#define MUS_DEBUG_SEQUENCER 4
+#define MUS_DEBUG_FLUIDSYNTH 8
+
+#define MUS_DEBUG DEBUG_FLAGS_NONE
+
+#ifdef DEBUGALL
+#undef MUS_DEBUG
+#define MUS_DEBUG DEBUG_FLAGS_EVERYTHING
+#endif
+
 #define WM_MUSIC_STOP	WM_APP+1
 #define WM_MUSIC_PLAY	WM_APP+2
 #define WM_MUSIC_RESET	WM_APP+3
+
+#define WM_FS_STOP	WM_APP+1
+#define WM_FS_PLAY	WM_APP+2
 
 enum {
 	MUSIC_ENGINE_NONE,
@@ -15,9 +30,13 @@ enum {
 };
 
 void InstallMusicEngineHooks(void);
-const char *GetGameMusicSoundPath(int iSongID, BOOL bDoMP3);
+const char *GetGameMusicSoundPath(BOOL bDoMP3);
 DWORD WINAPI MusicThread(LPVOID lpParameter);
 void MusicShufflePlaylist(int iLastSongPlayed);
 
 extern BOOL bUseMultithreadedMusic;
+extern bool bFluidSynthPlaying;
 extern DWORD dwMusicThreadID;
+extern DWORD dwFSMIDIThreadID;
+
+DWORD WINAPI FSMIDIThread(LPVOID lpParameter);

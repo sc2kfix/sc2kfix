@@ -220,11 +220,10 @@ DWORD WINAPI SDLSongThread(LPVOID lpParameter) {
 
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		if (msg.message == WM_SDL_PLAY) {
-			int iPlayingSongID = (int)msg.wParam;
-			if (iPlayingSongID >= 10000 && iPlayingSongID <= 10018) {
+			if (msg.wParam >= 10000 && msg.wParam <= 10018) {
 				if (bSongPlaying)
 					goto next;
-				const char* szSongPath = GetGameMusicSoundPath(iPlayingSongID, TRUE);
+				const char* szSongPath = GetGameMusicSoundPath(TRUE);
 				if (szSongPath) {
 					//uint64_t uTickStart = GetTickCount64();
 					LARGE_INTEGER uTickStart, uTickEnd, uTicksPerSecond;
@@ -302,6 +301,7 @@ DWORD WINAPI SoundEngineOneShotThread(LPVOID lpParameter) {
 	bSoundPlaying = false;
 	return EXIT_SUCCESS;
 }
+
 DWORD WINAPI SoundEngineSongThread(LPVOID lpParameter) {
 	audio_entity_t* stAudioData = (audio_entity_t*)lpParameter;
 
@@ -430,10 +430,6 @@ bool SoundEnginePlayStream(SDL_AudioStream** pStream, audio_entity_t* stAudioDat
 		stAudioData->iSampleRate
 	};
 
-	/**pStream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, NULL, NULL);
-	if (!*pStream)
-		ConsoleLog(LOG_ERROR, "SND:  SDL_OpenAudioDeviceStream failed: %s.\n", SDL_GetError());*/
-
 	SDL_SetAudioStreamFormat(*pStream, &spec, NULL);
 	SDL_SetAudioStreamGain(*pStream, fVolume);
 	SDL_PutAudioStreamData(*pStream, stAudioData->pBuffer, stAudioData->uBufferSize);
@@ -477,10 +473,6 @@ bool SoundEnginePlaySong(SDL_AudioStream** pStream, audio_entity_t* stAudioData,
 		stAudioData->iChannels,
 		stAudioData->iSampleRate
 	};
-
-	/**pStream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, NULL, NULL);
-	if (!*pStream)
-		ConsoleLog(LOG_ERROR, "SND:  SDL_OpenAudioDeviceStream failed: %s.\n", SDL_GetError());*/
 
 	SDL_SetAudioStreamGain(*pStream, fVolume);
 	SDL_PutAudioStreamData(*pStream, stAudioData->pBuffer, stAudioData->uBufferSize);
