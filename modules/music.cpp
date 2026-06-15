@@ -21,7 +21,6 @@ std::vector<int> vectorRandomSongIDs = { 10001, 10004, 10008, 10012, 10018, 1000
 int iCurrentSong = 0;
 DWORD dwMusicThreadID = 0;
 MCIDEVICEID mciDevice = -1;
-BOOL bMultithreadedMusicEnabled = FALSE;
 bool bMusicForceIntroSongOnce = true;
 
 const char *GetGameSoundPath() {
@@ -498,8 +497,4 @@ void InstallMusicEngineHooks(void) {
 	NEWJMP((LPVOID)0x402414, Hook_SimcityApp_MusicPlay);
 	SafeVirtualProtect((LPVOID)0x402BE4, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x402BE4, Hook_Sound_MusicStop);
-
-	// XXX - effectively always TRUE because the opt-in setting is now always TRUE as of
-	// r10-dev 2025-08-31. maybe this needs to go away?
-	bMultithreadedMusicEnabled = TRUE;
 }
