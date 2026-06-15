@@ -206,8 +206,6 @@ bool MusicLoadFluidSynth(void) {
 }
 
 static void FluidSynthStopSong(fluid_audio_driver_t** pAudDriver, fluid_synth_t** pSynth, fluid_player_t** pPlayer) {
-	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
-	CSound *pSound = pSCApp->SCASNDLayer;
 	int i;
 	
 	if (!pAudDriver && !pSynth && !pPlayer)
@@ -286,8 +284,6 @@ static DWORD WINAPI FluidSynthSongThread(LPVOID lpParameter) {
 }
 
 static bool FluidSynthPlaySong(fluid_audio_driver_t** pAudDriver, fluid_synth_t** pSynth, fluid_settings_t** pSettings, fluid_player_t** pPlayer, const char *szSongPath) {
-	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
-	CSound *pSound = pSCApp->SCASNDLayer;
 	if (!pPlayer)
 		return false;
 

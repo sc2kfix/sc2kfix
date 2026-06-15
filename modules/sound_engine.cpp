@@ -182,9 +182,6 @@ DWORD WINAPI SDLSoundThread(LPVOID lpParameter) {
 }
 
 static void StopCurrentSong(SDL_AudioStream** pStream) {
-	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
-	CSound *pSound = pSCApp->SCASNDLayer;
-
 	if (*pStream) {
 		if (bSongThreadActive) {
 			if (hCurrentSongThread) {
@@ -463,9 +460,6 @@ void SoundEngineStopSong(SDL_AudioStream** pStream) {
 }
 
 bool SoundEnginePlaySong(SDL_AudioStream** pStream, audio_entity_t* stAudioData, float fVolume) {
-	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
-	CSound *pSound = pSCApp->SCASNDLayer;
-
 	if (!pStream || !stAudioData)
 		return false;
 	
