@@ -286,13 +286,10 @@ static DWORD WINAPI FluidSynthSongThread(LPVOID lpParameter) {
 	return EXIT_SUCCESS;
 }
 
-static bool FluidSynthPlaySong(fluid_audio_driver_t** pAudDriver, fluid_synth_t** pSynth, fluid_settings_t** pSettings, fluid_player_t** pPlayer, const char *szSongPath, bool bOverride) {
+static bool FluidSynthPlaySong(fluid_audio_driver_t** pAudDriver, fluid_synth_t** pSynth, fluid_settings_t** pSettings, fluid_player_t** pPlayer, const char *szSongPath) {
 	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
 	CSound *pSound = pSCApp->SCASNDLayer;
 	if (!pPlayer)
-		return false;
-
-	if (!bOverride && bFluidSynthPlaying)
 		return false;
 
 	FluidSynthStopSong(pAudDriver, pSynth, pPlayer);
@@ -360,7 +357,7 @@ DWORD WINAPI FSMIDIThread(LPVOID lpParameter) {
 					goto next;
 				const char* szSongPath = GetGameMusicSoundPath(FALSE);
 				if (szSongPath)
-					FluidSynthPlaySong(&pFluidSynthDriver, &pFluidSynthSynth, &pFluidSynthSettings, &pFluidSynthPlayer, szSongPath, true);
+					FluidSynthPlaySong(&pFluidSynthDriver, &pFluidSynthSynth, &pFluidSynthSettings, &pFluidSynthPlayer, szSongPath);
 			}
 		}
 		else if (msg.message == WM_FS_STOP)

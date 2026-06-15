@@ -266,8 +266,7 @@ DWORD WINAPI SDLSongThread(LPVOID lpParameter) {
 					if (sdl_debug & SDL_DEBUG_SONG)
 						ConsoleLog(LOG_DEBUG, "MUS:  Playing MP3 file \"%s\" via SDL3.\n", szSongPath);
 					SoundEnginePlaySong(&pStreamCurrentSong, &stAudioEntityMP3,
-						jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat(),
-						true);
+						jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat());
 				}
 			}
 		}
@@ -465,14 +464,11 @@ void SoundEngineStopSong(SDL_AudioStream** pStream) {
 	bSongPlaying = false;
 }
 
-bool SoundEnginePlaySong(SDL_AudioStream** pStream, audio_entity_t* stAudioData, float fVolume, bool bOverride) {
+bool SoundEnginePlaySong(SDL_AudioStream** pStream, audio_entity_t* stAudioData, float fVolume) {
 	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
 	CSound *pSound = pSCApp->SCASNDLayer;
 
 	if (!pStream || !stAudioData)
-		return false;
-
-	if (!bOverride && bSongPlaying)
 		return false;
 	
 	StopCurrentSong(pStream);

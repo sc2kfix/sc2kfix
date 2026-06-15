@@ -101,4 +101,4 @@ void SoundEngineDestroy(void);
 void SoundEngineStopStream(SDL_AudioStream** pStream);
 bool SoundEnginePlayStream(SDL_AudioStream** pStream, audio_entity_t* stAudioData, float fVolume, bool bOverride, bool bLoop);
 void SoundEngineStopSong(SDL_AudioStream** pStream);
-bool SoundEnginePlaySong(SDL_AudioStream** pStream, audio_entity_t* stAudioData, float fVolume, bool bOverride);
+bool SoundEnginePlaySong(SDL_AudioStream** pStream, audio_entity_t* stAudioData, float fVolume);
