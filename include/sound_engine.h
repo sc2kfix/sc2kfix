@@ -72,6 +72,8 @@ extern SDL_AudioStream* pStreamCurrentSound;
 extern DWORD dwSDLSoundThreadID;
 extern DWORD dwSDLSongThreadID;
 
+extern bool bSongPlaying;
+
 extern SNDFILE* (*SF_open)(const char* path, int mode, SF_INFO* sfinfo);
 extern SNDFILE* (*SF_open_virtual)(SF_VIRTUAL_IO* sfvirtual, int mode, SF_INFO* sfinfo, void* user_data);
 extern sf_count_t(*SF_seek)(SNDFILE* sndfile, sf_count_t frames, int whence);

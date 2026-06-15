@@ -16,8 +16,6 @@ UINT mus_debug = MUS_DEBUG;
 
 static DWORD dwDummy;
 
-extern bool bSongPlaying;
-
 static int iPlayingSongID = 0;
 std::vector<int> vectorRandomSongIDs = { 10001, 10004, 10008, 10012, 10018, 10003, 10007, 10011, 10013, 10017 };
 int iCurrentSong = 0;
@@ -170,6 +168,20 @@ const char *GetGameMusicSoundPath(BOOL bDoMP3) {
 	return strSongPath.c_str();
 }
 
+static void DoMusicPlay(int iSongID) {
+	// Always do this.
+	if (dwMusicThreadID)
+		PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
+	if (mus_debug & MUS_DEBUG_THREAD)
+		ConsoleLog(LOG_DEBUG, "MUS:  Hook_SimcityApp_MusicPlay posted WM_MUSIC_STOP.\n");
+
+	// Post the play message to the music thread
+	if (dwMusicThreadID)
+		PostThreadMessage(dwMusicThreadID, WM_MUSIC_PLAY, iSongID, NULL);
+	if (mus_debug & MUS_DEBUG_THREAD)
+		ConsoleLog(LOG_DEBUG, "MUS:  Hook_SimcityApp_MusicPlay posted WM_MUSIC_PLAY for iSongID = %u.\n", iSongID);
+}
+
 DWORD WINAPI MusicThread(LPVOID lpParameter) {
 	CSimcityAppPrimary *pSCApp;
 	MSG msg;
@@ -246,7 +258,6 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 					if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "fluidsynth") {
 						if (hmodFluidSynth) {
 							const char* szSongPath = GetGameMusicSoundPath(FALSE);
-
 							if (szSongPath)
 								PostThreadMessageA(dwFSMIDIThreadID, WM_FS_PLAY, msg.wParam, 0);
 							goto next;
@@ -310,7 +321,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 						pSCApp->SCASNDLayer->dwSNDMusPlaying = 1;
 					}
 					else {
-						if (mus_debug & MUS_DEBUG_THREAD && msg.lParam != 1)
+						if (mus_debug & MUS_DEBUG_THREAD)
 							ConsoleLog(LOG_DEBUG, "MUS:  WM_MUSIC_PLAY message received but MCI is still active; discarding message.\n");
 						goto next;
 					}
@@ -374,31 +385,6 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 	return EXIT_SUCCESS;
 }
 
-void DoMusicPlay(int iSongID, BOOL bInterrupt) {
-	/*if (bInterrupt)*/ {
-		// Certain songs should interrupt others
-		/*switch (iSongID)*/ {
-		/*case 10002:
-		case 10004:
-		case 10005:
-		case 10010:
-		case 10012:
-		case 10016:*/
-			if (dwMusicThreadID)
-				PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
-			if (mus_debug & MUS_DEBUG_THREAD)
-				ConsoleLog(LOG_DEBUG, "MUS:  Hook_SimcityApp_MusicPlay posted WM_MUSIC_STOP.\n");
-			/*break;*/
-		}
-	}
-
-	// Post the play message to the music thread
-	if (dwMusicThreadID)
-		PostThreadMessage(dwMusicThreadID, WM_MUSIC_PLAY, iSongID, (bInterrupt) ? NULL : 1);
-	if (mus_debug & MUS_DEBUG_THREAD && bInterrupt)
-		ConsoleLog(LOG_DEBUG, "MUS:  Hook_SimcityApp_MusicPlay posted WM_MUSIC_PLAY for iSongID = %u.\n", iSongID);
-}
-
 extern "C" void __stdcall Hook_MainFrame_OnMCINotify(WPARAM wFlags, LPARAM lDevID) {
 	CMainFrame *pThis;
 	__asm mov [pThis], ecx
@@ -411,7 +397,7 @@ extern "C" void __stdcall Hook_SimcityApp_MusicPlay(int iSongID) {
 	__asm mov [pThis], ecx
 
 	if (pThis->dwSCAGameMusic)
-		DoMusicPlay(iSongID, TRUE);
+		DoMusicPlay(iSongID);
 }
 
 extern "C" void __stdcall Hook_Sound_MusicStop(void) {
@@ -451,13 +437,6 @@ extern "C" void __stdcall Hook_SimcityApp_MusicPlayNextRefocusSong(void) {
 	}
 }
 
-static void L_MusicPlay(CSimcityAppPrimary *pThis, int iSongID) {
-	if (bMultithreadedMusicEnabled)
-		DoMusicPlay(iSongID, FALSE);
-	else
-		Game_SimcityApp_MusicPlay(pThis, iSongID);
-}
-
 extern "C" void __stdcall Hook_SimcityApp_MusicPlayNext(BOOL bNext) {
 	CSimcityAppPrimary *pThis;
 
@@ -478,7 +457,7 @@ extern "C" void __stdcall Hook_SimcityApp_MusicPlayNext(BOOL bNext) {
 		else if ((!(rand() % (8 * (3 * nSpeed - 3)))) || jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_ALWAYSPLAYMUSIC].ToBool()) {
 			iRandMusic = rand();
 			iSongID = 10000 + (iRandMusic % 19);
-			L_MusicPlay(pThis, iSongID);
+			Game_SimcityApp_MusicPlay(pThis, iSongID);
 		}
 	}
 }
