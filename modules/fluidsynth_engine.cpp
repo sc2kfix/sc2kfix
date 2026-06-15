@@ -207,6 +207,8 @@ bool MusicLoadFluidSynth(void) {
 }
 
 static void FluidSynthStopSong(fluid_audio_driver_t** pAudDriver, fluid_synth_t** pSynth, fluid_player_t** pPlayer) {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CSound *pSound = pSCApp->SCASNDLayer;
 	int i;
 	
 	if (!pAudDriver && !pSynth && !pPlayer)
@@ -247,6 +249,8 @@ static void FluidSynthStopSong(fluid_audio_driver_t** pAudDriver, fluid_synth_t*
 		*pPlayer = 0;
 	}
 
+	pSound->wSNDMCIDevID = -1;
+	pSound->dwSNDMusPlaying = 0;
 	bFluidSynthPlaying = false;
 }
 
@@ -283,6 +287,8 @@ static DWORD WINAPI FluidSynthSongThread(LPVOID lpParameter) {
 }
 
 static bool FluidSynthPlaySong(fluid_audio_driver_t** pAudDriver, fluid_synth_t** pSynth, fluid_settings_t** pSettings, fluid_player_t** pPlayer, const char *szSongPath, bool bOverride) {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CSound *pSound = pSCApp->SCASNDLayer;
 	if (!pPlayer)
 		return false;
 
@@ -326,6 +332,9 @@ static bool FluidSynthPlaySong(fluid_audio_driver_t** pAudDriver, fluid_synth_t*
 	bFluidSynthPlaying = true;
 	if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
 		ConsoleLog(LOG_DEBUG, "MUS:  Started playback on pFluidSynthPlayer; joining player thread.\n");
+
+	pSound->wSNDMCIDevID = 1;
+	pSound->dwSNDMusPlaying = 1;
 
 	hCurrentFSSongThread = CreateThread(NULL, 0, FluidSynthSongThread, *pPlayer, 0, NULL);
 

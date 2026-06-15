@@ -114,7 +114,7 @@ extern "C" void __stdcall Hook_Sound_InitSoundLayer(HWND m_hWnd) {
 	pThis->hMainWnd = m_hWnd;
 	GameMain_String_Empty(&pThis->dwSNDMusicString);
 	pThis->dwSNDUnknownOne = 0;
-	pThis->dwSNDMCIError = 0;
+	pThis->dwSNDMusPlaying = 0;
 	pThis->dwSNDUnknownTwo = -1;
 	pThis->bSNDPlaySound = FALSE;
 	pThis->bSNDWasPlaying = FALSE;

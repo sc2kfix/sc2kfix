@@ -153,8 +153,8 @@ public:
 	void *dwSNDBufferGeneral;
 	int iSNDGeneralSoundID;
 	DWORD dwSNDUnknownOne;
-	WORD wSNDMCIDevID;
-	DWORD dwSNDMCIError;
+	__int16 wSNDMCIDevID;
+	DWORD dwSNDMusPlaying;
 	DWORD dwSNDUnknownTwo;
 	CMFC3XString dwSNDMusicString;
 };

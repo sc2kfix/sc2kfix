@@ -183,6 +183,9 @@ DWORD WINAPI SDLSoundThread(LPVOID lpParameter) {
 }
 
 static void StopCurrentSong(SDL_AudioStream** pStream) {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CSound *pSound = pSCApp->SCASNDLayer;
+
 	if (*pStream) {
 		if (bSongThreadActive) {
 			if (hCurrentSongThread) {
@@ -208,6 +211,9 @@ static void StopCurrentSong(SDL_AudioStream** pStream) {
 			SoundEngineStopSong(pStream);
 		}
 	}
+
+	pSound->wSNDMCIDevID = -1;
+	pSound->dwSNDMusPlaying = 0;
 }
 
 DWORD WINAPI SDLSongThread(LPVOID lpParameter) {
@@ -460,6 +466,9 @@ void SoundEngineStopSong(SDL_AudioStream** pStream) {
 }
 
 bool SoundEnginePlaySong(SDL_AudioStream** pStream, audio_entity_t* stAudioData, float fVolume, bool bOverride) {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CSound *pSound = pSCApp->SCASNDLayer;
+
 	if (!pStream || !stAudioData)
 		return false;
 
@@ -478,6 +487,9 @@ bool SoundEnginePlaySong(SDL_AudioStream** pStream, audio_entity_t* stAudioData,
 	SDL_PutAudioStreamData(*pStream, stAudioData->pBuffer, stAudioData->uBufferSize);
 	SDL_ResumeAudioStreamDevice(*pStream);
 	bSongPlaying = true;
+
+	pSound->wSNDMCIDevID = 1;
+	pSound->dwSNDMusPlaying = 1;
 
 	hCurrentSongThread = CreateThread(NULL, 0, SoundEngineSongThread, stAudioData, 0, NULL);
 
