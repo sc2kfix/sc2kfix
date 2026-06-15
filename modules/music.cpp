@@ -28,6 +28,10 @@ const char *GetGameSoundPath() {
 	return szSoundPath;
 }
 
+static void SetCurrentActiveSongID(int iSongID) {
+	iPlayingSongID = iSongID;
+}
+
 int GetCurrentActiveSongID() {
 	return iPlayingSongID;
 }
@@ -130,12 +134,14 @@ static BOOL ValidateFilename(const char *pName, const char *pExt) {
 	return FALSE;
 }
 
-const char *GetGameMusicSoundPath(int iSongID, BOOL bDoMP3) {
+const char *GetGameMusicSoundPath(BOOL bDoMP3) {
 	const char *pExt;
 	static std::string strSongPath;
 	BOOL bUseAliasedSong;
 	int iAliasIdx;
+	int iSongID;
 
+	iSongID = GetCurrentActiveSongID();
 	// TODO: clean up alias index stuff
 	pExt = (bDoMP3) ? ".mp3" : ".mid";
 	strSongPath = szSoundPath;
@@ -204,7 +210,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 				goto next;
 
 			dwMCIError = mciSendCommand(mciDevice, MCI_CLOSE, MCI_WAIT, NULL);
-			iPlayingSongID = 0;
+			SetCurrentActiveSongID(0);
 
 			if (mus_debug & MUS_DEBUG_THREAD)
 				ConsoleLog(LOG_DEBUG, "MUS:  Sent MCI_CLOSE to mciDevice 0x%08X.\n", mciDevice);
@@ -231,41 +237,33 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 			// If we're using FluidSynth, set up a watchdog thread that runs the FluidSynth engine
 			// and waits for it to exit
 			if (pSCApp->dwSCAGameMusic) {
-				if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "fluidsynth") {
-					if (hmodFluidSynth) {
-						if (msg.wParam >= 10000 && msg.wParam <= 10018) {
-							iPlayingSongID = msg.wParam;
-							const char* szSongPath = GetGameMusicSoundPath(iPlayingSongID, FALSE);
-
+				if (msg.wParam >= 10000 && msg.wParam <= 10018) {
+					SetCurrentActiveSongID(msg.wParam);
+					if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "fluidsynth") {
+						if (hmodFluidSynth) {
+							const char* szSongPath = GetGameMusicSoundPath(FALSE);
 							if (szSongPath)
-								PostThreadMessageA(dwFSMIDIThreadID, WM_FS_PLAY, iPlayingSongID, 0);
+								PostThreadMessageA(dwFSMIDIThreadID, WM_FS_PLAY, msg.wParam, 0);
 							goto next;
 						}
+						else
+							ConsoleLog(LOG_ERROR, "MUS: FluidSynth not loaded; failing back to MIDI sequencer.\n");
 					}
-					else
-						ConsoleLog(LOG_ERROR, "MUS: FluidSynth not loaded; failing back to MIDI sequencer.\n");
-				}
 
-				// Attempt MP3 playback via SDL3 if we've got it selected
-				if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "mp3") {
-					if (msg.wParam >= 10000 && msg.wParam <= 10018) {
-						iPlayingSongID = msg.wParam;
-						const char* szSongPath = GetGameMusicSoundPath(iPlayingSongID, TRUE);
-
+					// Attempt MP3 playback via SDL3 if we've got it selected
+					if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "mp3") {
+						const char* szSongPath = GetGameMusicSoundPath(TRUE);
 						if (szSongPath) {
-							PostThreadMessageA(dwSDLSongThreadID, WM_SDL_PLAY, iPlayingSongID, 0);
+							PostThreadMessageA(dwSDLSongThreadID, WM_SDL_PLAY, msg.wParam, 0);
 							goto next;
-						} else
+						}
+						else
 							ConsoleLog(LOG_ERROR, "MUS:  Could not find music file %s; failing back to MIDI sequencer.\n", szSongPath);
 					}
-				}
 
-				// Failing all of the above, use MCI to handle MIDI playback
-				if (!mciDevice) {
-					if (msg.wParam >= 10000 && msg.wParam <= 10018) {
-						iPlayingSongID = msg.wParam;
-						const char* szSongPath = GetGameMusicSoundPath(iPlayingSongID, FALSE);
-						
+					// Failing all of the above, use MCI to handle MIDI playback
+					if (!mciDevice) {
+						const char* szSongPath = GetGameMusicSoundPath(FALSE);
 						if (!szSongPath)
 							goto next;
 
@@ -275,7 +273,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 							char szErrorBuf[MAXERRORLENGTH];
 							mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
 							ConsoleLog(LOG_ERROR, "MUS:  MCI_OPEN failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
-							iPlayingSongID = 0;
+							SetCurrentActiveSongID(0);
 							goto next;
 						}
 
@@ -283,7 +281,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 							ConsoleLog(LOG_DEBUG, "MUS:  Received mciDevice 0x%08X from MCI_OPEN.\n", mciDevice);
 
 						mciDevice = mciOpenParms.wDeviceID;
-						MCI_PLAY_PARMS mciPlayParms = { (DWORD_PTR)GameGetRootWindowHandle(), NULL, NULL};
+						MCI_PLAY_PARMS mciPlayParms = { (DWORD_PTR)GameGetRootWindowHandle(), NULL, NULL };
 						dwMCIError = mciSendCommand(mciDevice, MCI_PLAY, MCI_NOTIFY, (DWORD_PTR)&mciPlayParms);
 						// SC2K sometimes tries to run over its own sequencer device. We ignore the
 						// error that causes (0x151, MCIERR_SEQ_PORT_INUSE) just like the game itself does.
@@ -291,17 +289,15 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 							char szErrorBuf[MAXERRORLENGTH];
 							mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
 							ConsoleLog(LOG_ERROR, "MUS:  MCI_PLAY failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
-							iPlayingSongID = 0;
+							SetCurrentActiveSongID(0);
 							goto next;
 						}
-
-
 					}
-				}
-				else {
-					if (mus_debug & MUS_DEBUG_THREAD && msg.lParam != 1)
-						ConsoleLog(LOG_DEBUG, "MUS:  WM_MUSIC_PLAY message received but MCI is still active; discarding message.\n");
-					goto next;
+					else {
+						if (mus_debug & MUS_DEBUG_THREAD && msg.lParam != 1)
+							ConsoleLog(LOG_DEBUG, "MUS:  WM_MUSIC_PLAY message received but MCI is still active; discarding message.\n");
+						goto next;
+					}
 				}
 			}
 		}
@@ -331,8 +327,9 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 			// Only restart if the engine is not set to MUSIC_ENGINE_NONE
 			if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() != "none") {
 				// Restart the active song if there is one
-				if (iPlayingSongID)
-					DoMusicPlay(iPlayingSongID, FALSE);
+				int iSongID = GetCurrentActiveSongID();
+				if (iSongID)
+					DoMusicPlay(iSongID, FALSE);
 			}
 
 			goto next;

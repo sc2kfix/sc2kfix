@@ -346,11 +346,10 @@ DWORD WINAPI FSMIDIThread(LPVOID lpParameter) {
 
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		if (msg.message == WM_FS_PLAY) {
-			int iPlayingSongID = (int)msg.wParam;
-			if (iPlayingSongID >= 10000 && iPlayingSongID <= 10018) {
+			if (msg.wParam >= 10000 && msg.wParam <= 10018) {
 				if (bFluidSynthPlaying)
 					goto next;
-				const char* szSongPath = GetGameMusicSoundPath(iPlayingSongID, FALSE);
+				const char* szSongPath = GetGameMusicSoundPath(FALSE);
 				if (szSongPath)
 					FluidSynthPlaySong(&pFluidSynthDriver, &pFluidSynthSynth, &pFluidSynthSettings, &pFluidSynthPlayer, szSongPath, true);
 			}

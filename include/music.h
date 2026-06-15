@@ -30,7 +30,7 @@ enum {
 };
 
 void InstallMusicEngineHooks(void);
-const char *GetGameMusicSoundPath(int iSongID, BOOL bDoMP3);
+const char *GetGameMusicSoundPath(BOOL bDoMP3);
 DWORD WINAPI MusicThread(LPVOID lpParameter);
 void MusicShufflePlaylist(int iLastSongPlayed);
 

@@ -220,11 +220,10 @@ DWORD WINAPI SDLSongThread(LPVOID lpParameter) {
 
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		if (msg.message == WM_SDL_PLAY) {
-			int iPlayingSongID = (int)msg.wParam;
-			if (iPlayingSongID >= 10000 && iPlayingSongID <= 10018) {
+			if (msg.wParam >= 10000 && msg.wParam <= 10018) {
 				if (bSongPlaying)
 					goto next;
-				const char* szSongPath = GetGameMusicSoundPath(iPlayingSongID, TRUE);
+				const char* szSongPath = GetGameMusicSoundPath(TRUE);
 				if (szSongPath) {
 					//uint64_t uTickStart = GetTickCount64();
 					LARGE_INTEGER uTickStart, uTickEnd, uTicksPerSecond;
