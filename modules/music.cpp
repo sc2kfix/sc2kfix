@@ -36,6 +36,33 @@ int GetCurrentActiveSongID() {
 	return iPlayingSongID;
 }
 
+void SetMCIDevID(__int16 wMCIDevID) {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CSound *pSound = pSCApp->SCASNDLayer;
+
+	if (pSCApp && pSound) {
+		pSound->wSNDMCIDevID = wMCIDevID;
+	}
+}
+
+void SetSongPlaying(bool bPlaying) {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CSound *pSound = pSCApp->SCASNDLayer;
+
+	if (pSCApp && pSound) {
+		pSound->dwSNDMusPlaying = (bPlaying) ? 1 : 0;
+	}
+}
+
+bool IsSongPlaying() {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CSound *pSound = pSCApp->SCASNDLayer;
+
+	if (pSCApp && pSound)
+		return (pSound->dwSNDMusPlaying) ? true : false;
+	return false;
+}
+
 void MusicShufflePlaylist(int iLastSongPlayed) {
 	if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SHUFFLEMUSIC].ToBool()) {
 		do {
@@ -239,8 +266,8 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 				goto next;
 			}
 			mciDevice = -1;
-			pSCApp->SCASNDLayer->wSNDMCIDevID = mciDevice;
-			pSCApp->SCASNDLayer->dwSNDMusPlaying = 0;
+			SetMCIDevID(mciDevice);
+			SetSongPlaying(false);
 		}
 		else if (msg.message == WM_MUSIC_PLAY) {
 			// Log a debug message at best if the music engine is set to none
@@ -285,10 +312,10 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 
 					if (mciDevice == -1) {
 						const char* szSongPath = GetGameMusicSoundPath(FALSE);
-						if (!szSongPath || pSCApp->SCASNDLayer->dwSNDMusPlaying)
+						if (!szSongPath || IsSongPlaying())
 							goto next;
 
-						pSCApp->SCASNDLayer->dwSNDMusPlaying = 1;
+						SetSongPlaying(true);
 						MCI_OPEN_PARMS mciOpenParms = { NULL, NULL, "sequencer", szSongPath, NULL };
 						dwMCIError = mciSendCommand(NULL, MCI_OPEN, MCI_OPEN_TYPE | MCI_OPEN_ELEMENT, (DWORD_PTR)&mciOpenParms);
 						if (dwMCIError) {
@@ -296,7 +323,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 							mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
 							ConsoleLog(LOG_ERROR, "MUS:  MCI_OPEN failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
 							SetCurrentActiveSongID(0);
-							pSCApp->SCASNDLayer->dwSNDMusPlaying = 0;
+							SetSongPlaying(false);
 							goto next;
 						}
 
@@ -313,12 +340,12 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 							mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
 							ConsoleLog(LOG_ERROR, "MUS:  MCI_PLAY failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
 							SetCurrentActiveSongID(0);
-							pSCApp->SCASNDLayer->dwSNDMusPlaying = 0;
+							SetSongPlaying(false);
 							goto next;
 						}
 
-						pSCApp->SCASNDLayer->wSNDMCIDevID = mciDevice;
-						pSCApp->SCASNDLayer->dwSNDMusPlaying = 1;
+						SetMCIDevID(mciDevice);
+						SetSongPlaying(true);
 					}
 					else {
 						if (mus_debug & MUS_DEBUG_THREAD)
@@ -331,19 +358,15 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 		else if (msg.message == WM_MUSIC_RESET) {
 			// Attempt to hard stop all music engines, since our music engine has probably changed
 			if (hmodFluidSynth) {
-				if (bFluidSynthPlaying) {
-					PostThreadMessageA(dwFSMIDIThreadID, WM_FS_STOP, 0, 0);
-					if (mus_debug & MUS_DEBUG_THREAD)
-						ConsoleLog(LOG_DEBUG, "MUS:  Thread stopped FluidSynth player due to WM_MUSIC_RESET message.\n");
-				}
+				PostThreadMessageA(dwFSMIDIThreadID, WM_FS_STOP, 0, 0);
+				if (mus_debug & MUS_DEBUG_THREAD)
+					ConsoleLog(LOG_DEBUG, "MUS:  Thread stopped FluidSynth player due to WM_MUSIC_RESET message.\n");
 			}
 
 			if (pStreamCurrentSong) {
-				if (bSongPlaying) {
-					PostThreadMessageA(dwSDLSongThreadID, WM_SDL_STOP, 0, 0);
-					if (mus_debug & MUS_DEBUG_THREAD)
-						ConsoleLog(LOG_DEBUG, "MUS:  Thread stopped MP3 player due to WM_MUSIC_RESET message.\n");
-				}
+				PostThreadMessageA(dwSDLSongThreadID, WM_SDL_STOP, 0, 0);
+				if (mus_debug & MUS_DEBUG_THREAD)
+					ConsoleLog(LOG_DEBUG, "MUS:  Thread stopped MP3 player due to WM_MUSIC_RESET message.\n");
 			}
 
 			if (mciDevice != -1) {
@@ -353,15 +376,15 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 			}
 
 			mciDevice = -1;
-			pSCApp->SCASNDLayer->wSNDMCIDevID = -1;
-			pSCApp->SCASNDLayer->dwSNDMusPlaying = 0;
+			SetMCIDevID(mciDevice);
+			SetSongPlaying(false);
 
 			// Only restart if the engine is not set to MUSIC_ENGINE_NONE
 			if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() != "none") {
 				// Restart the active song if there is one
 				int iSongID = GetCurrentActiveSongID();
 				if (iSongID)
-					DoMusicPlay(iSongID, FALSE);
+					DoMusicPlay(iSongID);
 			}
 
 			goto next;
@@ -373,13 +396,12 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 		DispatchMessage(&msg);
 	}
 
-	if (mciDevice != -1)
+	if (mciDevice != -1) {
 		mciSendCommand(mciDevice, MCI_CLOSE, MCI_WAIT, NULL);
-	pSCApp = &pCSimcityAppThis;
-	if (pSCApp && pSCApp->SCASNDLayer) {
-		pSCApp->SCASNDLayer->wSNDMCIDevID = -1;
-		pSCApp->SCASNDLayer->dwSNDMusPlaying = 0;
+		mciDevice = -1;
 	}
+	SetMCIDevID(mciDevice);
+	SetSongPlaying(false);
 	ConsoleLog(LOG_INFO, "MUS:  Shutting down music thread.\n");
 
 	return EXIT_SUCCESS;

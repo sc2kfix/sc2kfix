@@ -30,12 +30,14 @@ enum {
 };
 
 void InstallMusicEngineHooks(void);
+void SetMCIDevID(__int16 wMCIDevID);
+void SetSongPlaying(bool bPlaying);
+bool IsSongPlaying();
 const char *GetGameMusicSoundPath(BOOL bDoMP3);
 DWORD WINAPI MusicThread(LPVOID lpParameter);
 void MusicShufflePlaylist(int iLastSongPlayed);
 
 extern BOOL bUseMultithreadedMusic;
-extern bool bFluidSynthPlaying;
 extern DWORD dwMusicThreadID;
 extern DWORD dwFSMIDIThreadID;
 

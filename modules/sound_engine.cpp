@@ -61,7 +61,6 @@ SDL_AudioStream* pStreamCurrentSong = NULL;
 SDL_AudioStream* pStreamCurrentSound = NULL;
 HANDLE hCurrentSongThread = NULL;
 HANDLE hCurrentSoundThread = NULL;
-bool bSongPlaying = false;
 bool bSoundPlaying = false;
 
 bool bSongStop = false;
@@ -212,8 +211,8 @@ static void StopCurrentSong(SDL_AudioStream** pStream) {
 		}
 	}
 
-	pSound->wSNDMCIDevID = -1;
-	pSound->dwSNDMusPlaying = 0;
+	SetMCIDevID(-1);
+	SetSongPlaying(false);
 }
 
 DWORD WINAPI SDLSongThread(LPVOID lpParameter) {
@@ -227,7 +226,7 @@ DWORD WINAPI SDLSongThread(LPVOID lpParameter) {
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		if (msg.message == WM_SDL_PLAY) {
 			if (msg.wParam >= 10000 && msg.wParam <= 10018) {
-				if (bSongPlaying)
+				if (IsSongPlaying())
 					goto next;
 				const char* szSongPath = GetGameMusicSoundPath(TRUE);
 				if (szSongPath) {
@@ -321,7 +320,8 @@ DWORD WINAPI SoundEngineSongThread(LPVOID lpParameter) {
 	}
 
 	bSongThreadActive = false;
-	bSongPlaying = false;
+	SetMCIDevID(-1);
+	SetSongPlaying(false);
 	return EXIT_SUCCESS;
 }
 
@@ -460,8 +460,6 @@ void SoundEngineStopSong(SDL_AudioStream** pStream) {
 		return;
 	if (*pStream)
 		SDL_ClearAudioStream(*pStream);
-
-	bSongPlaying = false;
 }
 
 bool SoundEnginePlaySong(SDL_AudioStream** pStream, audio_entity_t* stAudioData, float fVolume) {
@@ -482,10 +480,8 @@ bool SoundEnginePlaySong(SDL_AudioStream** pStream, audio_entity_t* stAudioData,
 	SDL_SetAudioStreamGain(*pStream, fVolume);
 	SDL_PutAudioStreamData(*pStream, stAudioData->pBuffer, stAudioData->uBufferSize);
 	SDL_ResumeAudioStreamDevice(*pStream);
-	bSongPlaying = true;
 
-	pSound->wSNDMCIDevID = 1;
-	pSound->dwSNDMusPlaying = 1;
+	SetSongPlaying(true);
 
 	hCurrentSongThread = CreateThread(NULL, 0, SoundEngineSongThread, stAudioData, 0, NULL);
 
