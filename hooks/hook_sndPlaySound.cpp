@@ -132,7 +132,7 @@ extern "C" void __stdcall Hook_Sound_InitSoundLayer(HWND m_hWnd) {
 		if (snd_debug & SND_DEBUG_INTERNALS)
 			ConsoleLog(LOG_DEBUG, "A: CSound::InitSoundLayer(0x%06X): i(%d), nSoundPlayTicks[i](%d), &nSoundPlayTicks[i](0x%06X)\n", m_hWnd, i, nSoundPlayTicks[i], &nSoundPlayTicks[i]);
 	}
-	_heapmin();
+	GameMain__heapmin();
 	pThis->dwSNDBufferClick = malloc(0x40000);
 	Game_Sound_LoadClickSound(pThis);
 	if (dwSoundBufferClear) {
@@ -275,7 +275,7 @@ extern "C" void __stdcall Hook_Sound_DestroySoundLayer() {
 		free(pThis->dwSNDBufferGeneral);
 		pThis->dwSNDBufferGeneral = 0;
 	}
-	_heapmin();
+	GameMain__heapmin();
 }
 
 static int __stdcall L_Sound_LoadActionThingSound_SC2K1996(CSound *pSound, int iSoundID) {

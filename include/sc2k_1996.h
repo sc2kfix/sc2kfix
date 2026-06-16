@@ -3268,6 +3268,7 @@ GAMECALL_MAIN(0x48B994, int, __cdecl, SmackOpen, const char *, int, int)
 GAMECALL_MAIN(0x48B99A, int, __cdecl, SmackSoundUseDirectSound, HWND)
 
 // MFC function pointers. Use with care.
+GAMECALL_MAIN(0x48CF5A, int, __cdecl, _heapmin)
 GAMECALL_MAIN(0x48B9E6, BOOL, __thiscall, DC_TextOutA, CMFC3XDC *, int, int, const char *, int)
 GAMECALL_MAIN(0x48BA0A, BOOL, __thiscall, DC_ExtTextOutA, CMFC3XDC *, int, int, unsigned int, RECT *, const char *, unsigned int, int *)
 GAMECALL_MAIN(0x49E59F, void, __stdcall, AfxAbort)
