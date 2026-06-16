@@ -53,8 +53,6 @@ extern BOOL bMapWireFrame;
 
 UINT mdrawing_debug = MDRAWING_DEBUG;
 
-static DWORD dwDummy;
-
 static int DoWaterfallEdge(__int16 iMapOffSetX, int iX, int iY, __int16 iBottom, __int16 iWaterFallSpriteID, __int16 nLandAltScale) {
 	__int16 iTopog;
 

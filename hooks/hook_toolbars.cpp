@@ -28,8 +28,6 @@
 
 UINT toolbar_debug = TOOLBAR_DEBUG;
 
-static DWORD dwDummy;
-
 extern "C" void __stdcall Hook_CityToolBar_ToolMenuDisable() {
 	CCityToolBar *pThis;
 

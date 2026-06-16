@@ -503,7 +503,6 @@ DWORD WINAPI UpdaterThread(LPVOID lpParameter);
 const char *GetGameSoundPath();
 int GetCurrentActiveSongID();
 bool MusicLoadFluidSynth(void);
-void DoMusicPlay(int iSongID, BOOL bInterrupt);
 const char* MusicEngineIntToString(UINT iMusicEngine);
 UINT MusicEngineStringToInt(const char* szMusicEngine);
 BOOL DoConfigureMusicTracks(settings_t *st, HWND hDlg, BOOL bMP3);

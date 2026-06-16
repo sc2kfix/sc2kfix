@@ -35,8 +35,6 @@
 
 UINT military_debug = MILITARY_DEBUG;
 
-static DWORD dwDummy;
-
 static coords_w_t cornerCoords[VIEWROTATION_COUNT] = {
 	{ MAP_EDGE_MAX, MAP_EDGE_MIN },
 	{ MAP_EDGE_MIN, MAP_EDGE_MIN },

@@ -15,8 +15,6 @@
 #include <keybindings.h>
 #include "../resource.h"
 
-static DWORD dwDummy;
-
 HOOKEXT_CPP json::JSON jsonSettingsCore;
 HOOKEXT_CPP json::JSON jsonSettingsMods;
 json::JSON jsonSettingsCoreWorkingCopy;

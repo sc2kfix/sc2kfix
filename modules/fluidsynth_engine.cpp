@@ -21,7 +21,6 @@
 
 HMODULE hmodFluidSynth = NULL;
 DWORD dwFSMIDIThreadID = 0;
-bool bFluidSynthPlaying = false;
 
 static HANDLE hCurrentFSSongThread = 0;
 static BOOL bUseFluidSynth = FALSE;
@@ -247,7 +246,8 @@ static void FluidSynthStopSong(fluid_audio_driver_t** pAudDriver, fluid_synth_t*
 		*pPlayer = 0;
 	}
 
-	bFluidSynthPlaying = false;
+	SetMCIDevID(-1);
+	SetSongPlaying(false);
 }
 
 static DWORD WINAPI FluidSynthSongThread(LPVOID lpParameter) {
@@ -272,7 +272,8 @@ static DWORD WINAPI FluidSynthSongThread(LPVOID lpParameter) {
 		ConsoleLog(LOG_DEBUG, "MUS: Exiting FluidSynth song 'join' monitoring thread.\n");
 
 	bFSSongThreadActive = false;
-	bFluidSynthPlaying = false;
+	SetMCIDevID(-1);
+	SetSongPlaying(false);
 
 	// In the old watchdog thread there was a sleep call at
 	// the end that was present to avoid any reverb-effect
@@ -282,11 +283,8 @@ static DWORD WINAPI FluidSynthSongThread(LPVOID lpParameter) {
 	return EXIT_SUCCESS;
 }
 
-static bool FluidSynthPlaySong(fluid_audio_driver_t** pAudDriver, fluid_synth_t** pSynth, fluid_settings_t** pSettings, fluid_player_t** pPlayer, const char *szSongPath, bool bOverride) {
+static bool FluidSynthPlaySong(fluid_audio_driver_t** pAudDriver, fluid_synth_t** pSynth, fluid_settings_t** pSettings, fluid_player_t** pPlayer, const char *szSongPath) {
 	if (!pPlayer)
-		return false;
-
-	if (!bOverride && bFluidSynthPlaying)
 		return false;
 
 	FluidSynthStopSong(pAudDriver, pSynth, pPlayer);
@@ -323,9 +321,10 @@ static bool FluidSynthPlaySong(fluid_audio_driver_t** pAudDriver, fluid_synth_t*
 
 	// Play track
 	FS_fluid_player_play(*pPlayer);
-	bFluidSynthPlaying = true;
 	if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
 		ConsoleLog(LOG_DEBUG, "MUS:  Started playback on pFluidSynthPlayer; joining player thread.\n");
+
+	SetSongPlaying(true);
 
 	hCurrentFSSongThread = CreateThread(NULL, 0, FluidSynthSongThread, *pPlayer, 0, NULL);
 
@@ -347,11 +346,11 @@ DWORD WINAPI FSMIDIThread(LPVOID lpParameter) {
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		if (msg.message == WM_FS_PLAY) {
 			if (msg.wParam >= 10000 && msg.wParam <= 10018) {
-				if (bFluidSynthPlaying)
+				if (IsSongPlaying())
 					goto next;
 				const char* szSongPath = GetGameMusicSoundPath(FALSE);
 				if (szSongPath)
-					FluidSynthPlaySong(&pFluidSynthDriver, &pFluidSynthSynth, &pFluidSynthSettings, &pFluidSynthPlayer, szSongPath, true);
+					FluidSynthPlaySong(&pFluidSynthDriver, &pFluidSynthSynth, &pFluidSynthSettings, &pFluidSynthPlayer, szSongPath);
 			}
 		}
 		else if (msg.message == WM_FS_STOP)

@@ -34,8 +34,6 @@ std::map<int, audio_entity_t> mapSoundCache;
 
 bool bSoundKickstart = false;
 
-static DWORD dwDummy;
-
 static bool LoadSoundFromFile(int iSoundID, std::string strPath);
 
 static int GetSoundPosBySoundID(int iSoundID) {
@@ -114,7 +112,7 @@ extern "C" void __stdcall Hook_Sound_InitSoundLayer(HWND m_hWnd) {
 	pThis->hMainWnd = m_hWnd;
 	GameMain_String_Empty(&pThis->dwSNDMusicString);
 	pThis->dwSNDUnknownOne = 0;
-	pThis->dwSNDMCIError = 0;
+	pThis->dwSNDMusPlaying = 0;
 	pThis->dwSNDUnknownTwo = -1;
 	pThis->bSNDPlaySound = FALSE;
 	pThis->bSNDWasPlaying = FALSE;
@@ -476,11 +474,11 @@ static bool LoadSoundFromFile(int iSoundID, std::string strPath) {
 	}
 
 	// Build the audio entity data
-	stAudioEntity.iFrames = stSoundFileInfo.frames;
+	stAudioEntity.iFrames = (int)stSoundFileInfo.frames;
 	stAudioEntity.iSampleRate = stSoundFileInfo.samplerate;
 	stAudioEntity.iChannels = stSoundFileInfo.channels;
 	stAudioEntity.iFormat = stSoundFileInfo.format;
-	stAudioEntity.bSeekable = stSoundFileInfo.seekable;
+	stAudioEntity.bSeekable = stSoundFileInfo.seekable ? true : false;
 	stAudioEntity.uBufferSize = stAudioEntity.iChannels * sizeof(short) * stAudioEntity.iFrames;
 	stAudioEntity.pBuffer = (short*)malloc(stAudioEntity.uBufferSize);
 	if (!stAudioEntity.pBuffer) {

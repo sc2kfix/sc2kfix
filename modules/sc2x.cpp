@@ -41,7 +41,6 @@ UINT sc2x_debug = SC2X_DEBUG;
 
 static char* szLoadFileName = NULL;
 static int iCorruptedFixupSize = 0;
-static DWORD dwDummy;
 
 void LoadInterleavedBudgetVanilla(budget_t* pTarget, DWORD* pSource) {
 	pTarget->iCurrentCosts = ntohl(pSource[0]);

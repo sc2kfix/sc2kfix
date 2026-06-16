@@ -24,8 +24,6 @@
 
 #define GOTO_IMG_POS    12
 
-static DWORD dwDummy;
-
 HANDLE hWeatherBitmaps[13];
 HANDLE hCompassBitmaps[4];
 BOOL bStatusDialogMoving = FALSE;

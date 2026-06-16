@@ -14,8 +14,6 @@
 
 #include <sc2kfix.h>
 
-static DWORD dwDummy;
-
 extern "C" void __cdecl Hook_SCURK1996_DebugOut(char const *fmt, ...) {
 	va_list args;
 

@@ -33,8 +33,6 @@
 
 UINT mischook_1995_debug = MISCHOOK_1995_DEBUG;
 
-static DWORD dwDummy;
-
 extern "C" int __stdcall Hook_1995_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMax) {
 	if (hInstance == hSC2KAppModule) {
 		switch (uID) {

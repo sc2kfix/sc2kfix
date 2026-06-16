@@ -50,8 +50,6 @@
 
 UINT mischook_debug = MISCHOOK_DEBUG;
 
-static DWORD dwDummy;
-
 DLGPROC lpNewCityAfxProc = NULL;
 char szTempMayorName[24] = { 0 };
 
@@ -809,7 +807,7 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 				pThis->iSCAProgramStep = ONIDLE_STATE_DISPLAYMAXIS;
 				if (!bSkipIntro && !jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SKIPINTRO].ToBool()) {
 					if (Game_MovieCheck(aIntroASmk) && Game_MovieCheck(aIntroBSmk)) {
-						if (!Game_Sound_GetMCIResult(pThis->SCASNDLayer))
+						if (!Game_Sound_IsMusicPlaying(pThis->SCASNDLayer))
 							Game_SimcityApp_MusicTrigger(pThis);
 						if (Game_MovieCreateWindow()) {
 							if (!Game_MovieOpen(aIntroASmk))
@@ -820,7 +818,7 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 					else
 						pThis->iSCAProgramStep = ONIDLE_STATE_DISPLAYINFLIGHT;
 				}
-				if (!Game_Sound_GetMCIResult(pThis->SCASNDLayer))
+				if (!Game_Sound_IsMusicPlaying(pThis->SCASNDLayer))
 					Game_SimcityApp_MusicPlayNextRefocusSong(pThis);
 				pThis->dwSCASetNextStep = TRUE;
 			}
@@ -2025,7 +2023,7 @@ extern "C" void __stdcall Hook_MainFrame_OnActivateApp(BOOL bActive, HTASK hTask
 				InvalidateRect(pThis->m_hWnd, 0, TRUE);
 				Game_MainFrame_ToggleToolBars(pThis, TRUE);
 				if (pSCView) {
-					if (!Game_Sound_GetMCIResult(pSCApp->SCASNDLayer))
+					if (!Game_Sound_IsMusicPlaying(pSCApp->SCASNDLayer))
 						Game_SimcityApp_MusicPlayNextRefocusSong(pSCApp);
 					// Added to get things going again.
 					bSoundKickstart = true;
@@ -2075,7 +2073,7 @@ extern "C" void __stdcall Hook_MainFrame_OnShowWindow(BOOL bShow, BOOL nStatus) 
 		InvalidateRect(pThis->m_hWnd, 0, TRUE);
 		Game_MainFrame_ToggleToolBars(pThis, TRUE);
 		if (pSCView) {
-			if (!Game_Sound_GetMCIResult(pSCApp->SCASNDLayer))
+			if (!Game_Sound_IsMusicPlaying(pSCApp->SCASNDLayer))
 				Game_SimcityApp_MusicPlayNextRefocusSong(pSCApp);
 			// Added to get things going again.
 			bSoundKickstart = true;

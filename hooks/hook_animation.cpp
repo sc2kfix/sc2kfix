@@ -10,8 +10,6 @@
 
 #include <sc2kfix.h>
 
-static DWORD dwDummy;
-
 HWND hWndExt = 0;
 
 __int16 nCycleIdx = 0;
