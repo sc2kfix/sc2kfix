@@ -492,6 +492,15 @@ extern "C" void __stdcall Hook_SimcityApp_MusicPlayNext(BOOL bNext) {
 
 	if (!pThis->dwSCAGameMusic)
 		return;
+
+	// Added in order to ensure that when the window
+	// is out-of-focus that the music isn't started
+	// erroneously.
+	if (!jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND].ToBool()) {
+		if (bMainFrameInactive)
+			return;
+	}
+
 	nSpeed = pThis->wSCAGameSpeedLOW;
 	if (nSpeed == GAME_SPEED_PAUSED)
 		nSpeed = GAME_SPEED_TURTLE;
