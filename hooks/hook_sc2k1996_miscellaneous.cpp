@@ -2087,7 +2087,7 @@ extern "C" void __stdcall Hook_MainFrame_OnActivateApp(BOOL bActive, HTASK hTask
 				Game_MainFrame_ToggleToolBars(pThis, FALSE);
 				// Only call this function if the setting to play
 				// music in background is not enabled.
-				if (!jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND].ToBool())
+				if (!bBackgroundMusic)
 					Game_SimcityApp_MusicStop(pSCApp);
 				L_PlaySound_SC2K1996(0, 0);
 				InvalidateRect(pThis->m_hWnd, 0, TRUE);
@@ -2126,7 +2126,7 @@ extern "C" void __stdcall Hook_MainFrame_OnSize(UINT nType, int cx, int cy) {
 
 	pSCApp = &pCSimcityAppThis;
 	if (nType == 1) {
-		if (!jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND].ToBool())
+		if (!bBackgroundMusic)
 			Game_SimcityApp_MusicStop(pSCApp);
 
 		L_PlaySound_SC2K1996(0, 0);
@@ -2161,7 +2161,7 @@ extern "C" void __stdcall Hook_MainFrame_OnShowWindow(BOOL bShow, BOOL nStatus) 
 		}
 	}
 	else {
-		if (!jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND].ToBool())
+		if (!bBackgroundMusic)
 			Game_SimcityApp_MusicStop(pSCApp);
 
 		L_PlaySound_SC2K1996(0, 0);

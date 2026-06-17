@@ -393,6 +393,7 @@ public:
 
 // Globals for widely used JSON settings.
 
+extern bool bBackgroundMusic;
 extern bool bFrequentUpdates;
 extern bool bWeatherEffects;
 extern bool bDarkUnderground;

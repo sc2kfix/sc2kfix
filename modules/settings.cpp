@@ -32,6 +32,7 @@ struct {
 
 // A handful of settings get checked incredibly frequently and need to be cached for performance.
 // These variables are updated whenever the settings in the JSON structure change.
+bool bBackgroundMusic = false;
 bool bFrequentUpdates = false;
 bool bWeatherEffects = false;
 bool bDarkUnderground = false;
@@ -251,6 +252,7 @@ void InitializeJSONSettings(void) {
 }
 
 static void GetSpecificStoredJSONVars() {
+	bBackgroundMusic = jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND].ToBool();
 	bFrequentUpdates = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool();
 	bWeatherEffects = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_WEATHEREFFECTS].ToBool();
 	bDarkUnderground = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND].ToBool();
