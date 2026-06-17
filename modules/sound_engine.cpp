@@ -304,6 +304,9 @@ static DWORD WINAPI SoundEngineSongThread(LPVOID lpParameter) {
 
 	if (bSongThreadActive)
 		return EXIT_SUCCESS;
+
+	PostThreadMessage(dwMusicThreadID, WM_MUSIC_CONFIRM, NULL, NULL);
+
 	bSongThreadActive = true;
 	bSongStop = false;
 	while (SDL_GetAudioStreamAvailable(pStreamCurrentSong) > 0) {
@@ -340,6 +343,7 @@ static bool SoundEnginePlaySong(SDL_AudioStream** pStream, audio_entity_t* stAud
 
 	if (!hCurrentSongThread) {
 		StopCurrentSong(pStream);
+		PostThreadMessage(dwMusicThreadID, WM_MUSIC_CONFIRM, NULL, NULL);
 		return false;
 	}
 

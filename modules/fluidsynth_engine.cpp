@@ -257,6 +257,9 @@ static DWORD WINAPI FluidSynthSongThread(LPVOID lpParameter) {
 			ConsoleLog(LOG_DEBUG, "MUS: FluidSynth song 'join' monitoring thread already active.\n");
 		return EXIT_SUCCESS;
 	}
+
+	PostThreadMessage(dwMusicThreadID, WM_MUSIC_CONFIRM, NULL, NULL);
+
 	bFSSongThreadActive = true;
 	
 	if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
@@ -330,6 +333,7 @@ static bool FluidSynthPlaySong(fluid_audio_driver_t** pAudDriver, fluid_synth_t*
 
 	if (!hCurrentFSSongThread) {
 		FluidSynthStopSong(pAudDriver, pSynth, pPlayer);
+		PostThreadMessage(dwMusicThreadID, WM_MUSIC_CONFIRM, NULL, NULL);
 		return false;
 	}
 

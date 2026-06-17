@@ -17,6 +17,12 @@ UINT mus_debug = MUS_DEBUG;
 static int iPlayingSongID = 0;
 static MCIDEVICEID mciDevice = -1;
 static bool bMusicForceIntroSongOnce = true;
+// The iStartMusic variable has been introduced
+// in-order to avoid a condition whereas play/stop
+// messages will be constantly sent to the music thread
+// when the speed is African Swallow and granular mode
+// is disabled - race condition.
+static int iStartMusic = 0;
 
 std::vector<int> vectorRandomSongIDs = { 10001, 10004, 10008, 10012, 10018, 10003, 10007, 10011, 10013, 10017 };
 int iCurrentSong = 0;
@@ -47,9 +53,8 @@ void SetSongPlaying(bool bPlaying) {
 	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
 	CSound *pSound = pSCApp->SCASNDLayer;
 
-	if (pSCApp && pSound) {
+	if (pSCApp && pSound)
 		pSound->dwSNDMusPlaying = (bPlaying) ? 1 : 0;
-	}
 }
 
 bool IsSongPlaying() {
@@ -57,7 +62,7 @@ bool IsSongPlaying() {
 	CSound *pSound = pSCApp->SCASNDLayer;
 
 	if (pSCApp && pSound)
-		return (pSound->dwSNDMusPlaying) ? true : false;
+		return (Game_Sound_IsMusicPlaying(pSound)) ? true : false;
 	return false;
 }
 
@@ -202,6 +207,11 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		pSCApp = &pCSimcityAppThis;
 		if (msg.message == WM_MUSIC_STOP) {
+			// the next track is still starting - avoid.
+			if (iStartMusic >= 2)
+				goto next;
+			if (iStartMusic == 1)
+				iStartMusic = 2;
 			// Log a debug message at best if the music engine is set to none.
 			// In this case even with the engine set to MUSIC_ENGINE_NONE it
 			// will still continue, however once mciDevice is NULL it'll then
@@ -252,6 +262,11 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 			SetSongPlaying(false);
 		}
 		else if (msg.message == WM_MUSIC_PLAY) {
+			// the next track is still starting - avoid.
+			if (iStartMusic >= 3)
+				goto next;
+			if (iStartMusic >= 1)
+				iStartMusic = 3;
 			// Log a debug message at best if the music engine is set to none
 			if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "none") {
 				if (mus_debug & MUS_DEBUG_THREAD)
@@ -307,6 +322,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 							ConsoleLog(LOG_ERROR, "MUS:  MCI_OPEN failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
 							SetCurrentActiveSongID(0);
 							SetSongPlaying(false);
+							iStartMusic = 0;
 							goto next;
 						}
 
@@ -324,11 +340,13 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 							ConsoleLog(LOG_ERROR, "MUS:  MCI_PLAY failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
 							SetCurrentActiveSongID(0);
 							SetSongPlaying(false);
+							iStartMusic = 0;
 							goto next;
 						}
 
 						SetMCIDevID(mciDevice);
 						SetSongPlaying(true);
+						goto confirm;
 					}
 					else {
 						if (mus_debug & MUS_DEBUG_THREAD)
@@ -360,6 +378,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 			mciDevice = -1;
 			SetMCIDevID(mciDevice);
 			SetSongPlaying(false);
+			iStartMusic = 0;
 
 			// Only restart if the engine is not set to MUSIC_ENGINE_NONE
 			if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() != "none") {
@@ -369,10 +388,16 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 					Game_SimcityApp_MusicPlay(pSCApp, iSongID);
 			}
 		}
+		else if (msg.message == WM_MUSIC_CONFIRM) {
+			confirm:
+			if (mus_debug & MUS_DEBUG_THREAD)
+				ConsoleLog(LOG_DEBUG, "MUS:  WM_MUSIC_CONFIRM - resetting iStartMusic (last value: %d)\n", iStartMusic);
+			iStartMusic = 0;
+		}
 		else if (msg.message == WM_QUIT)
 			break;
 
-	next:
+		next:
 		DispatchMessage(&msg);
 	}
 
@@ -399,6 +424,9 @@ extern "C" void __stdcall Hook_SimcityApp_MusicPlay(int iSongID) {
 	__asm mov [pThis], ecx
 
 	if (pThis->dwSCAGameMusic) {
+		if (!iStartMusic)
+			iStartMusic = 1;
+
 		// Always do this.
 		if (dwMusicThreadID)
 			PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
@@ -416,6 +444,9 @@ extern "C" void __stdcall Hook_SimcityApp_MusicPlay(int iSongID) {
 extern "C" void __stdcall Hook_Sound_MusicStop(void) {
 	CSound *pThis;
 	__asm mov [pThis], ecx
+
+	if (iStartMusic)
+		iStartMusic = 0;
 
 	// Post the stop message to the music thread
 	if (dwMusicThreadID)
@@ -464,13 +495,16 @@ extern "C" void __stdcall Hook_SimcityApp_MusicPlayNext(BOOL bNext) {
 	nSpeed = pThis->wSCAGameSpeedLOW;
 	if (nSpeed == GAME_SPEED_PAUSED)
 		nSpeed = GAME_SPEED_TURTLE;
-	if (!Game_Sound_IsMusicPlaying(pThis->SCASNDLayer)) {
-		if (bNext)
-			Game_SimcityApp_MusicPlayNextRefocusSong(pThis);
-		else if ((!(rand() % (8 * (3 * nSpeed - 3)))) || jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_ALWAYSPLAYMUSIC].ToBool()) {
-			iRandMusic = rand();
-			iSongID = 10000 + (iRandMusic % 19);
-			Game_SimcityApp_MusicPlay(pThis, iSongID);
+	if (!IsSongPlaying()) {
+		if (!iStartMusic) {
+			iStartMusic = 1;
+			if (bNext)
+				Game_SimcityApp_MusicPlayNextRefocusSong(pThis);
+			else if ((!(rand() % (8 * (3 * nSpeed - 3)))) || jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_ALWAYSPLAYMUSIC].ToBool()) {
+				iRandMusic = rand();
+				iSongID = 10000 + (iRandMusic % 19);
+				Game_SimcityApp_MusicPlay(pThis, iSongID);
+			}
 		}
 	}
 }
