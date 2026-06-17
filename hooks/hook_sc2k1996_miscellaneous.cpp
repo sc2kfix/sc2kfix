@@ -872,7 +872,7 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 					// "skipping in-flight sequence" dialog 
 					if (Game_MovieCheck(aIntroASmk) && Game_MovieCheck(aIntroBSmk)) {
 						if (!Game_Sound_IsMusicPlaying(pThis->SCASNDLayer))
-							Game_SimcityApp_MusicTrigger(pThis);
+							Game_SimcityApp_MusicStop(pThis);
 						if (Game_MovieCreateWindow()) {
 							if (!Game_MovieOpen(aIntroASmk))
 								Game_MovieOpen(aIntroBSmk);
@@ -2087,8 +2087,8 @@ extern "C" void __stdcall Hook_MainFrame_OnActivateApp(BOOL bActive, HTASK hTask
 				Game_MainFrame_ToggleToolBars(pThis, FALSE);
 				// Only call this function if the setting to play
 				// music in background is not enabled.
-				if (!jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND].ToBool())
-					Game_SimcityApp_MusicTrigger(pSCApp);
+				if (!bBackgroundMusic)
+					Game_SimcityApp_MusicStop(pSCApp);
 				L_PlaySound_SC2K1996(0, 0);
 				InvalidateRect(pThis->m_hWnd, 0, TRUE);
 				if (pSCView)
@@ -2126,8 +2126,8 @@ extern "C" void __stdcall Hook_MainFrame_OnSize(UINT nType, int cx, int cy) {
 
 	pSCApp = &pCSimcityAppThis;
 	if (nType == 1) {
-		if (!jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND].ToBool())
-			Game_SimcityApp_MusicTrigger(pSCApp);
+		if (!bBackgroundMusic)
+			Game_SimcityApp_MusicStop(pSCApp);
 
 		L_PlaySound_SC2K1996(0, 0);
 	}
@@ -2161,8 +2161,8 @@ extern "C" void __stdcall Hook_MainFrame_OnShowWindow(BOOL bShow, BOOL nStatus) 
 		}
 	}
 	else {
-		if (!jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND].ToBool())
-			Game_SimcityApp_MusicTrigger(pSCApp);
+		if (!bBackgroundMusic)
+			Game_SimcityApp_MusicStop(pSCApp);
 
 		L_PlaySound_SC2K1996(0, 0);
 	}
