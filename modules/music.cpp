@@ -196,6 +196,68 @@ const char *GetGameMusicSoundPath(BOOL bDoMP3) {
 	return strSongPath.c_str();
 }
 
+static bool MusicThread_MusicStop() {
+	MCIERROR dwMCIError = NULL;
+
+	// the next track is still starting - avoid.
+	if (iStartMusic >= 2)
+		return false;
+	if (iStartMusic == 1)
+		iStartMusic = 2;
+	// Log a debug message at best if the music engine is set to none.
+	// In this case even with the engine set to MUSIC_ENGINE_NONE it
+	// will still continue, however once mciDevice is NULL it'll then
+	// getout.
+	if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "none")
+		if (mus_debug & MUS_DEBUG_THREAD)
+			ConsoleLog(LOG_DEBUG, "MUS:  Music driver set to None; ignoring WM_MUSIC_STOP message.\n");
+
+	// Stop the FluidSynth thread if it's active
+	if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "fluidsynth") {
+		if (hmodFluidSynth) {
+			PostThreadMessageA(dwFSMIDIThreadID, WM_FS_STOP, 0, 0);
+			if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
+				ConsoleLog(LOG_DEBUG, "MUS:  Thread stopped FluidSynth player due to WM_MUSIC_STOP message.\n");
+			// return true here since in the 'play' context we want to continue.
+			return true;
+		}
+	}
+
+	// If we're playing an MP3, stop it and unload it from memory
+	if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "mp3") {
+		PostThreadMessageA(dwSDLSongThreadID, WM_SDL_STOP, 0, 0);
+		if (mus_debug & MUS_DEBUG_THREAD)
+			ConsoleLog(LOG_DEBUG, "MUS:  Thread stopped MP3 playback due to WM_MUSIC_STOP message.\n");
+		// return true here since in the 'play' context we want to continue.
+		return true;
+	}
+
+	// Failing the above, run what we need to through the MCI interface
+	// return true here since in the 'play' context we want to continue.
+	if (mciDevice == -1)
+		return true;
+
+	dwMCIError = mciSendCommand(mciDevice, MCI_CLOSE, MCI_WAIT, NULL);
+	SetCurrentActiveSongID(0);
+
+	if (mus_debug & MUS_DEBUG_THREAD)
+		ConsoleLog(LOG_DEBUG, "MUS:  Sent MCI_CLOSE to mciDevice 0x%08X.\n", mciDevice);
+
+	if (dwMCIError) {
+		char szErrorBuf[MAXERRORLENGTH];
+		mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
+		if (dwMCIError == MCIERR_INVALID_DEVICE_ID && mus_debug & MUS_DEBUG_THREAD)
+			ConsoleLog(LOG_DEBUG, "MUS:  MCI_CLOSE failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
+		else
+			ConsoleLog(LOG_ERROR, "MUS:  MCI_CLOSE failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
+		return false;
+	}
+	mciDevice = -1;
+	SetMCIDevID(mciDevice);
+	SetSongPlaying(false);
+	return true;
+}
+
 DWORD WINAPI MusicThread(LPVOID lpParameter) {
 	CSimcityAppPrimary *pSCApp;
 	MSG msg;
@@ -206,66 +268,16 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 	
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		pSCApp = &pCSimcityAppThis;
-		if (msg.message == WM_MUSIC_STOP) {
-			// the next track is still starting - avoid.
-			if (iStartMusic >= 2)
-				goto next;
-			if (iStartMusic == 1)
-				iStartMusic = 2;
-			// Log a debug message at best if the music engine is set to none.
-			// In this case even with the engine set to MUSIC_ENGINE_NONE it
-			// will still continue, however once mciDevice is NULL it'll then
-			// getout.
-			if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "none")
-				if (mus_debug & MUS_DEBUG_THREAD)
-					ConsoleLog(LOG_DEBUG, "MUS:  Music driver set to None; ignoring WM_MUSIC_STOP message.\n");
-
-			// Stop the FluidSynth thread if it's active
-			if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "fluidsynth") {
-				if (hmodFluidSynth) {
-					PostThreadMessageA(dwFSMIDIThreadID, WM_FS_STOP, 0, 0);
-					if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
-						ConsoleLog(LOG_DEBUG, "MUS:  Thread stopped FluidSynth player due to WM_MUSIC_STOP message.\n");
-					goto next;
-				}
-			}
-
-			// If we're playing an MP3, stop it and unload it from memory
-			if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "mp3") {
-				PostThreadMessageA(dwSDLSongThreadID, WM_SDL_STOP, 0, 0);
-				if (mus_debug & MUS_DEBUG_THREAD)
-					ConsoleLog(LOG_DEBUG, "MUS:  Thread stopped MP3 playback due to WM_MUSIC_STOP message.\n");
-				goto next;
-			}
-
-			// Failing the above, run what we need to through the MCI interface
-			if (mciDevice == -1)
-				goto next;
-
-			dwMCIError = mciSendCommand(mciDevice, MCI_CLOSE, MCI_WAIT, NULL);
-			SetCurrentActiveSongID(0);
-
-			if (mus_debug & MUS_DEBUG_THREAD)
-				ConsoleLog(LOG_DEBUG, "MUS:  Sent MCI_CLOSE to mciDevice 0x%08X.\n", mciDevice);
-
-			if (dwMCIError) {
-				char szErrorBuf[MAXERRORLENGTH];
-				mciGetErrorString(dwMCIError, szErrorBuf, MAXERRORLENGTH);
-				if (dwMCIError == MCIERR_INVALID_DEVICE_ID && mus_debug & MUS_DEBUG_THREAD)
-					ConsoleLog(LOG_DEBUG, "MUS:  MCI_CLOSE failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
-				else
-					ConsoleLog(LOG_ERROR, "MUS:  MCI_CLOSE failed, 0x%08X (%s)\n", dwMCIError, szErrorBuf);
-				goto next;
-			}
-			mciDevice = -1;
-			SetMCIDevID(mciDevice);
-			SetSongPlaying(false);
-		}
+		if (msg.message == WM_MUSIC_STOP)
+			MusicThread_MusicStop();
 		else if (msg.message == WM_MUSIC_PLAY) {
-			// the next track is still starting - avoid.
-			if (iStartMusic >= 3)
+			// Stop the track (if one is playing).
+			// Only fall-through if it fails or
+			// iStartMusic is already >= 2.
+			if (!MusicThread_MusicStop())
 				goto next;
-			if (iStartMusic >= 1)
+
+			if (iStartMusic >= 2)
 				iStartMusic = 3;
 			// Log a debug message at best if the music engine is set to none
 			if (jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICDRIVER].ToString() == "none") {
@@ -426,12 +438,6 @@ extern "C" void __stdcall Hook_SimcityApp_MusicPlay(int iSongID) {
 	if (pThis->dwSCAGameMusic) {
 		if (!iStartMusic)
 			iStartMusic = 1;
-
-		// Always do this.
-		if (dwMusicThreadID)
-			PostThreadMessage(dwMusicThreadID, WM_MUSIC_STOP, NULL, NULL);
-		if (mus_debug & MUS_DEBUG_THREAD)
-			ConsoleLog(LOG_DEBUG, "MUS:  Hook_SimcityApp_MusicPlay posted WM_MUSIC_STOP.\n");
 
 		// Post the play message to the music thread
 		if (dwMusicThreadID)
