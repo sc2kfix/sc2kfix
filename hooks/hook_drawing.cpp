@@ -735,7 +735,7 @@ extern "C" void __stdcall Hook_DrawAllUnder() {
 		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 		if (pSCView) {
 			nBottomScale = 2 * COORDSCALE_VAL(pSCView->wSCVZoomLevel);
-			if (pSCView->wSCVZoomLevel && pSCView->wSCVZoomLevel != 1) {
+			if (pSCView->wSCVZoomLevel && pSCView->wSCVZoomLevel != ZOOM_LEVEL_SMALL) {	// XXX (araxestroy): should this just be `if (pSCView->wSCVZoomLevel == 2)`?
 				nBottomRcScale = 220;
 				nLeftScale = 128;
 			}
@@ -1072,9 +1072,9 @@ extern "C" __int16 __cdecl Hook_PointToTile(__int16 x, __int16 y) {
 	__int16 iOffsetAdjustmentY = ptY - iScreenOffSetY + iOffsetAdjustmentCenter - 3;
 
 	if (pSCView->wSCVZoomLevel) {
-		if (pSCView->wSCVZoomLevel == 1)
+		if (pSCView->wSCVZoomLevel == ZOOM_LEVEL_SMALL)
 			retval = Game_CalcTileHit8(iOffsetAdjustmentY + 12, iOffsetAdjustmentX + 12);
-		else if (pSCView->wSCVZoomLevel == 2)
+		else if (pSCView->wSCVZoomLevel == ZOOM_LEVEL_LARGE)
 			retval = Game_CalcTileHit16(iOffsetAdjustmentY + 16, iOffsetAdjustmentX + 24);
 		else
 			retval = 0;
@@ -1096,17 +1096,23 @@ void L_CheckTileHighlight_SC2K1996(CSimcityView *pSCView) {
 	}
 }
 
+// CSimcityView::DrawHouse, as named in the SCURK and Win3.1 Demo debugging data, is actually the
+// functon that's called to draw the whole view.
+// For more detalied information, see https://sc2kfix.net/images/drawhouse.png
 void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveTileHighlightActive) {
 	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
 	COLORREF cr;
 
 	if (pSCView->SCVGraphics && pSCView->pSCVGraphicLockDIBRes || Game_SimcityView_CheckOrLoadGraphic(pSCView)) {
+		// Lock what we need to and set up the drawing process
 		curLockedDIBBits = Game_Graphics_LockDIBBits(pSCView->SCVGraphics);
-		Game_Graphics_Width(pSCView->SCVGraphics);
-		Game_Graphics_Height(pSCView->SCVGraphics);
+		Game_Graphics_Width(pSCView->SCVGraphics);		// XXX (araxestroy): needed? return value discarded, no side effects
+		Game_Graphics_Height(pSCView->SCVGraphics);		// XXX (araxestroy): needed? return value discarded, no side effects
 		Game_BeginProcessObjects(pSCView, curLockedDIBBits, pSCView->dwSCVGraphicWidth, (__int16)pSCView->dwSCVGraphicHeight, &pSCView->SCVAreaView);
 		rcDst = pSCView->SCVAreaView;
 		theSCVDC = Game_Graphics_GetDC(pSCView->SCVGraphics);
+
+		// Set the background colour based on the display layer and draw it
 		if (DisplayLayer[LAYER_UNDERGROUND])
 			cr = colGameBackgndUnder;
 		else
@@ -1115,20 +1121,35 @@ void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveTileHighlightActive)
 		ExtTextOutA(theSCVDC->m_hDC, 0, 0, ETO_OPAQUE, &rcDst, 0, 0, 0);
 		Game_Graphics_ReleaseDC(pSCView->SCVGraphics, theSCVDC);
 		wCurrentPositionAngle = wPositionAngle[wViewRotation];
+
+		// Draw colour data for map overlays if we're in one of those modes
 		if (!IsIconic(pSCView->m_hWnd) && showColor && EditData)
 			Game_DrawAllColor();
+		
+		// Otherwise check to see if the active display layer is the underground view
 		else if (DisplayLayer[LAYER_UNDERGROUND])
 			Game_DrawAllUnder();
+
+		// If neither of those, draw the above ground view
 		else {
-			if (pSCView->wSCVZoomLevel) {
-				if (pSCView->wSCVZoomLevel == 1)
-					Game_DrawAllSmall();
-				else
-					Game_DrawAllLarge();
-			}
-			else
+			switch (pSCView->wSCVZoomLevel) {
+			case 0:
 				Game_DrawAllTiny();
+				break;
+			case 1:
+				Game_DrawAllSmall();
+				break;
+			case 2:
+				Game_DrawAllLarge();
+				break;
+			default:
+				ConsoleLog(LOG_WARNING, "DRAW: CSimcityView::DrawHouse got bad ::wSCVZoomLevel = %d, assuming 2.\n", pSCView->wSCVZoomLevel);
+				Game_DrawAllLarge();
+				break;
+			}
 		}
+
+		// Draw the highlight if needed, and turn it off if requested
 		if (!bLeaveTileHighlightActive)
 			wTileHighlightActive = 0;
 		else {
@@ -1139,6 +1160,8 @@ void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveTileHighlightActive)
 					wTileHighlightActive = 0;
 			}
 		}
+
+		// Clean up the drawing process and redraw the window (and any subdialogs)
 		Game_FinishProcessObjects();
 		Game_SimcityView_MainWindowUpdate(pSCView, 0, TRUE);
 		Game_UpdateCityMap();
@@ -1376,16 +1399,26 @@ static bool BlizzardCheck() {
 	return (bWeatherTrend == WEATHER_TREND_BLIZZARD || iForcedSeason == FORCED_SEASON_BLIZZARD) ? true : false;
 }
 
-static bool WeatherCheck() {
+static bool ColdWeatherCheck() {
 	return (SnowCheck() || BlizzardCheck()) ? true : false;
 }
 
-static bool AutWintSeasonCheck() {
-	int iCityMonth = dwCityDays / 25 % 12;
+static bool HeatwaveCheck() {
+	return ((bWeatherTrend == WEATHER_TREND_HOT && bWeatherHeat >= 185 && bWeatherHeat < 200) || iForcedSeason == FORCED_SEASON_HEATWAVE) ? true : false;
+}
 
-	// zero-based: 0-2 (Jan-Mar), 9-11 (Oct-Dec)
-	return ((iCityMonth >= 0 && iCityMonth <= 2) || (iCityMonth >= 9 && iCityMonth <= 11) ||
-		iForcedSeason == FORCED_SEASON_AUTUMN || iForcedSeason == FORCED_SEASON_WINTER) ? true : false;
+static bool DroughtCheck() {
+	return ((bWeatherTrend == WEATHER_TREND_HOT && bWeatherHeat >= 200) || iForcedSeason == FORCED_SEASON_DROUGHT) ? true : false;
+}
+
+static bool HotWeatherCheck() {
+	return (HeatwaveCheck() || DroughtCheck()) ? true : false;
+}
+
+static bool TreeBrowningCheck() {
+	return (GetGameSeason() == GAME_SEASON_WINTER || GetGameSeason() == GAME_SEASON_AUTUMN ||
+		iForcedSeason == FORCED_SEASON_AUTUMN || iForcedSeason == FORCED_SEASON_WINTER ||
+		HotWeatherCheck()) ? true : false;
 }
 
 // Sprite Caching
@@ -1418,6 +1451,9 @@ static void Delete_Sprite_Cache(spriteCache_t *pSpriteCache) {
 	Delete_SpriteFrame_Cache(pSpriteCache->sprDeepWaterIceFrame, pSpriteCache->nID, PALCACHE_TYPE_WATER_ICE);
 	Delete_SpriteFrame_Cache(pSpriteCache->sprDeepWaterBlizzardFrame, pSpriteCache->nID, PALCACHE_TYPE_WATER_ICE_BLIZZARD);
 	Delete_SpriteFrame_Cache(pSpriteCache->sprGrassSnowFrame, pSpriteCache->nID, PALCACHE_TYPE_GRASS_SNOW);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprSeasonHeatwaveFrame, pSpriteCache->nID, PALCACHE_TYPE_TREES_SEASON_HEAT);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprGrassHeatwaveFrame, pSpriteCache->nID, PALCACHE_TYPE_GRASS_HEAT);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprGrassDroughtFrame, pSpriteCache->nID, PALCACHE_TYPE_GRASS_DROUGHT);
 }
 
 void Clear_SpriteCache() {
@@ -1648,10 +1684,10 @@ static BYTE *Get_SpriteCache_Buffer(sprite_header_t *pShapePtr, __int16 nSpriteI
 		if (pSpriteBuf) {
 			if (bWeatherEffects && !bLoColor && !bOnTheFlyPalIdx) {
 				if (TreeSpritesCheck(nSpriteID)) {
-					if (WeatherCheck())
+					if (ColdWeatherCheck())
 						nType = PALCACHE_TYPE_TREES_SEASON_SNOW;
 
-					if (AutWintSeasonCheck())
+					if (TreeBrowningCheck())
 						nType = (nType == PALCACHE_TYPE_TREES_SEASON_SNOW) ? PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW : PALCACHE_TYPE_TREES_SEASON_AUTUMN;
 
 					if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMN)
@@ -1662,7 +1698,7 @@ static BYTE *Get_SpriteCache_Buffer(sprite_header_t *pShapePtr, __int16 nSpriteI
 						return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonSnowFrame, pSpriteBuf, nFrmIdx);
 				}
 				else if (TerrainSpritesCheck(nSpriteID)) {
-					if (WeatherCheck()) {
+					if (ColdWeatherCheck()) {
 						if (DeepWaterSpriteCheck(nSpriteID)) {
 							nType = (BlizzardCheck()) ? PALCACHE_TYPE_WATER_ICE_BLIZZARD : PALCACHE_TYPE_WATER_ICE;
 							if (nType == PALCACHE_TYPE_WATER_ICE)
@@ -1680,7 +1716,7 @@ static BYTE *Get_SpriteCache_Buffer(sprite_header_t *pShapePtr, __int16 nSpriteI
 					}
 				}
 				else if (ObjectGrassSpritesCheck(nSpriteID)) {
-					if (WeatherCheck()) {
+					if (ColdWeatherCheck()) {
 						nType = PALCACHE_TYPE_GRASS_SNOW; // Yes I know.. this is the only option here currently.
 						if (nType == PALCACHE_TYPE_GRASS_SNOW)
 							return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprGrassSnowFrame, pSpriteBuf, nFrmIdx);
@@ -1750,11 +1786,11 @@ static WORD Get_SpriteCache_Width(sprite_header_t *pShapePtr, __int16 nSpriteID)
 
 static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
 	BYTE newIdx = colIdx;
-	if (WeatherCheck()) {
+	if (ColdWeatherCheck()) {
 		if (!bIgnore || BlizzardCheck())
 			newIdx = ProcessTreeSnowEffect(newIdx);
 	}
-	if (AutWintSeasonCheck()) {
+	if (TreeBrowningCheck()) {
 		newIdx = ProcessTreeAutumnEffect(newIdx);
 	}
 	return newIdx;
@@ -1836,10 +1872,10 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 		}
 
 		// Handle snow-related tile stuff
-		if (WeatherCheck()) {
+		if (ColdWeatherCheck()) {
 			// Accumulate snow on ground
 			if (TerrainSpritesCheck(nSpriteID)) {
-				if (WeatherCheck()) {
+				if (ColdWeatherCheck()) {
 					// Handle deep water differently.
 					if (DeepWaterSpriteCheck(nSpriteID)) {
 						if (((nPos % SEQ_MODULUS) == 1 && BlizzardCheck()) || (nPos % SEQ_MODULUS) == 2)

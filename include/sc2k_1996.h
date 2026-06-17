@@ -61,16 +61,19 @@
 
 #define MAP_EDGE_BUILDING 1
 
-#define PALCACHE_TYPE_NONE                    -1
-#define PALCACHE_TYPE_CYCLE                    0
-#define PALCACHE_TYPE_TREES_SEASON_AUTUMN      1
-#define PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW  2
-#define PALCACHE_TYPE_TREES_SEASON_SNOW        3
-#define PALCACHE_TYPE_TERRAIN_SNOW             4
-#define PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD    5
-#define PALCACHE_TYPE_WATER_ICE                6
-#define PALCACHE_TYPE_WATER_ICE_BLIZZARD       7
-#define PALCACHE_TYPE_GRASS_SNOW               8
+#define PALCACHE_TYPE_NONE						-1
+#define PALCACHE_TYPE_CYCLE						0
+#define PALCACHE_TYPE_TREES_SEASON_AUTUMN		1
+#define PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW	2
+#define PALCACHE_TYPE_TREES_SEASON_SNOW			3
+#define PALCACHE_TYPE_TERRAIN_SNOW				4
+#define PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD		5
+#define PALCACHE_TYPE_WATER_ICE					6
+#define PALCACHE_TYPE_WATER_ICE_BLIZZARD		7
+#define PALCACHE_TYPE_GRASS_SNOW				8
+#define PALCACHE_TYPE_TREES_SEASON_HEAT			9
+#define PALCACHE_TYPE_GRASS_HEAT				10
+#define PALCACHE_TYPE_GRASS_DROUGHT				11
 
 #define CACHED_FRAMES 16
 
@@ -79,6 +82,15 @@
 #define SCD_UPDATE_VIEW_UPDATE                 2
 #define SCD_UPDATE_VIEW_UPDATE_WITHTILEINVERT  3
 #define SCD_UPDATE_VIEW_CHECKTILEINVERT        4
+
+#define	ZOOM_LEVEL_TINY		0
+#define ZOOM_LEVEL_SMALL	1
+#define ZOOM_LEVEL_LARGE	2
+
+#define GAME_SEASON_WINTER		0
+#define GAME_SEASON_SPRING		1
+#define GAME_SEASON_SUMMER		2
+#define GAME_SEASON_AUTUMN		3
 
 // This will get the general RCI zone that's passed
 // without distinguishing between light/dense.
@@ -4406,6 +4418,28 @@ static inline BYTE GetXROGByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
 	return dwMapXROG[x][y].bBlock;
 }
 
+static inline int GetGameSeason(void) {
+	switch (dwCityDays / 25 % 12) {
+	case 0:
+	case 1:
+	case 2:
+	default:							// Should not happen unless the laws of mathematics change
+		return GAME_SEASON_WINTER;
+	case 3:
+	case 4:
+	case 5:
+		return GAME_SEASON_SPRING;
+	case 6:
+	case 7:
+	case 8:
+		return GAME_SEASON_SUMMER;
+	case 9:
+	case 10:
+	case 11:
+		return GAME_SEASON_AUTUMN;
+	}
+}
+
 // This coordinate structure is used for the missile silo
 // case (potentially for any modifications to the naval yard
 // case as well).
@@ -4454,7 +4488,10 @@ typedef struct {
 	std::vector<spriteFrame_t> sprTerrainBlizzardFrame;   // Terrain (Blizzard)
 	std::vector<spriteFrame_t> sprDeepWaterIceFrame;      // Water
 	std::vector<spriteFrame_t> sprDeepWaterBlizzardFrame; // Water (Blizzard)
-	std::vector<spriteFrame_t> sprGrassSnowFrame;         // Buildings with grass
+	std::vector<spriteFrame_t> sprGrassSnowFrame;         // Buildings with grass (snow)
+	std::vector<spriteFrame_t> sprSeasonHeatwaveFrame;        // Trees (heatwave)
+	std::vector<spriteFrame_t> sprGrassHeatwaveFrame;         // Buildings with grass (heatwave)
+	std::vector<spriteFrame_t> sprGrassDroughtFrame;         // Buildings with grass (drought)
 } spriteCache_t;
 
 extern HWND hwndMainDialog_SC2K1996;

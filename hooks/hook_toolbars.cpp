@@ -100,10 +100,10 @@ extern "C" void __stdcall Hook_CityToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoin
 		pSubMenu = GameMain_Menu_FromHandle(hSubMenu);
 		if (pSubMenu) {
 			iCursorMoving = 1;
-			nTargetTicks = GetTickCount() + 500;
+			nTargetTicks = GetTickCount32() + 500;
 			pThis->dwMyTBButtonMenu = 1;
 			while (TRUE) {
-				if (GetTickCount() < nTargetTicks) {
+				if (GetTickCount32() < nTargetTicks) {
 					if (PeekMessageA(&Msg, pThis->m_hWnd, 0, 0, WM_MOVE)) {
 						if (!Game_SimcityApp_PreTranslateMessage(pSCApp, &Msg)) {
 							TranslateMessage(&Msg);
@@ -310,7 +310,7 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 			UpdateWindow(pSCView->m_hWnd);
 			if (pSCView->wSCVZoomLevel) {
 				Game_MyToolBar_SetButtonStyle(pThis, CITYTOOL_BUTTON_ZOOMOUT, 0);
-				if (pSCView->wSCVZoomLevel == 2 && !pSCView->dwSCVIsZoomed)
+				if (pSCView->wSCVZoomLevel == ZOOM_LEVEL_LARGE && !pSCView->dwSCVIsZoomed)
 					Game_MyToolBar_SetButtonStyle(pThis, CITYTOOL_BUTTON_ZOOMIN, 0);
 			}
 			else
@@ -323,7 +323,7 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 				Game_MyToolBar_SetButtonStyle(pThis, CITYTOOL_BUTTON_ZOOMIN, TBBS_DISABLED);
 			else {
 				Game_MyToolBar_SetButtonStyle(pThis, CITYTOOL_BUTTON_ZOOMIN, 0);
-				if (pSCView->wSCVZoomLevel == 1)
+				if (pSCView->wSCVZoomLevel == ZOOM_LEVEL_SMALL)
 					Game_MyToolBar_SetButtonStyle(pThis, CITYTOOL_BUTTON_ZOOMOUT, 0);
 			}
 			break;
@@ -509,7 +509,7 @@ extern "C" void __stdcall Hook_MapToolBar_SetSelection(UINT nIndex, UINT nSubInd
 			UpdateWindow(pSCView->m_hWnd);
 			if (pSCView->wSCVZoomLevel) {
 				Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_ZOOMOUT, 0);
-				if (pSCView->wSCVZoomLevel == 2 && !pSCView->dwSCVIsZoomed)
+				if (pSCView->wSCVZoomLevel == ZOOM_LEVEL_LARGE && !pSCView->dwSCVIsZoomed)
 					Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_ZOOMIN, 0);
 			}
 			else
@@ -522,7 +522,7 @@ extern "C" void __stdcall Hook_MapToolBar_SetSelection(UINT nIndex, UINT nSubInd
 				Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_ZOOMIN, TBBS_DISABLED);
 			else {
 				Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_ZOOMIN, 0);
-				if (pSCView->wSCVZoomLevel == 1)
+				if (pSCView->wSCVZoomLevel == ZOOM_LEVEL_SMALL)
 					Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_ZOOMOUT, 0);
 			}
 			break;
