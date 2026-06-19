@@ -8,6 +8,12 @@
 #define MIN_MOVZOOMFACTOR 1
 #define MAX_MOVZOOMFACTOR 4
 
+#define TERRAIN_COSMETIC_NONE  0
+#define TERRAIN_COSMETIC_GREY  1
+#define TERRAIN_COSMETIC_GREEN 2
+#define TERRAIN_COSMETIC_COLD  3
+#define TERRAIN_COSMETIC_HOT   4
+
 // Defaults
 
 // SimCity2000
@@ -73,6 +79,7 @@
 #define DEF_FIX_QOL_USEFLTSTATUS    false
 #define DEF_FIX_QOL_USENEWSTRINGS   true
 #define DEF_FIX_QOL_MOVZOOMFACTOR   2
+#define DEF_FIX_QOL_TERRAINCOSMETIC TERRAIN_COSMETIC_NONE
 
 // Setting defines
 
@@ -169,3 +176,4 @@
 #define I_FIX_QOL_USEFLTSTATUS    "use_floating_status"
 #define I_FIX_QOL_USENEWSTRINGS   "use_new_strings"
 #define I_FIX_QOL_MOVZOOMFACTOR   "movie_zoom_factor"
+#define I_FIX_QOL_TERRAINCOSMETIC "terrain_cosmetic_mode"

@@ -398,6 +398,8 @@ extern bool bFrequentUpdates;
 extern bool bWeatherEffects;
 extern bool bDarkUnderground;
 
+extern int iTerrainCosmeticMode;
+
 // Game path global
 
 extern char szGamePath[MAX_PATH];

@@ -66,14 +66,18 @@
 #define PALCACHE_TYPE_TREES_SEASON_AUTUMN		1
 #define PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW	2
 #define PALCACHE_TYPE_TREES_SEASON_SNOW			3
-#define PALCACHE_TYPE_TERRAIN_SNOW				4
-#define PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD		5
-#define PALCACHE_TYPE_WATER_ICE					6
-#define PALCACHE_TYPE_WATER_ICE_BLIZZARD		7
-#define PALCACHE_TYPE_GRASS_SNOW				8
-#define PALCACHE_TYPE_TREES_SEASON_HEAT			9
-#define PALCACHE_TYPE_GRASS_HEAT				10
-#define PALCACHE_TYPE_GRASS_DROUGHT				11
+#define PALCACHE_TYPE_TERRAIN_GEN_GREY			4
+#define PALCACHE_TYPE_TERRAIN_GEN_GREEN			5
+#define PALCACHE_TYPE_TERRAIN_GEN_COLD			6
+#define PALCACHE_TYPE_TERRAIN_GEN_HOT			7
+#define PALCACHE_TYPE_TERRAIN_SNOW				8
+#define PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD		9
+#define PALCACHE_TYPE_WATER_ICE					10
+#define PALCACHE_TYPE_WATER_ICE_BLIZZARD		11
+#define PALCACHE_TYPE_GRASS_SNOW				12
+#define PALCACHE_TYPE_TREES_SEASON_HEAT			13
+#define PALCACHE_TYPE_GRASS_HEAT				14
+#define PALCACHE_TYPE_GRASS_DROUGHT				15
 
 #define CACHED_FRAMES 16
 
@@ -4484,14 +4488,18 @@ typedef struct {
 	std::vector<spriteFrame_t> sprSeasonAutumnFrame;      // Trees currently
 	std::vector<spriteFrame_t> sprSeasonAutumnSnowFrame;  // Trees currently
 	std::vector<spriteFrame_t> sprSeasonSnowFrame;        // Trees currently
+	std::vector<spriteFrame_t> sprTerrainGenGreyFrame;    // Terrain - gravel
+	std::vector<spriteFrame_t> sprTerrainGenGreenFrame;   // Terrain - grass
+	std::vector<spriteFrame_t> sprTerrainGenColdFrame;    // Terrain - frost
+	std::vector<spriteFrame_t> sprTerrainGenHotFrame;     // Terrain - orange/red
 	std::vector<spriteFrame_t> sprTerrainSnowFrame;       // Terrain
 	std::vector<spriteFrame_t> sprTerrainBlizzardFrame;   // Terrain (Blizzard)
 	std::vector<spriteFrame_t> sprDeepWaterIceFrame;      // Water
 	std::vector<spriteFrame_t> sprDeepWaterBlizzardFrame; // Water (Blizzard)
 	std::vector<spriteFrame_t> sprGrassSnowFrame;         // Buildings with grass (snow)
-	std::vector<spriteFrame_t> sprSeasonHeatwaveFrame;        // Trees (heatwave)
-	std::vector<spriteFrame_t> sprGrassHeatwaveFrame;         // Buildings with grass (heatwave)
-	std::vector<spriteFrame_t> sprGrassDroughtFrame;         // Buildings with grass (drought)
+	std::vector<spriteFrame_t> sprSeasonHeatwaveFrame;    // Trees (heatwave)
+	std::vector<spriteFrame_t> sprGrassHeatwaveFrame;     // Buildings with grass (heatwave)
+	std::vector<spriteFrame_t> sprGrassDroughtFrame;      // Buildings with grass (drought)
 } spriteCache_t;
 
 extern HWND hwndMainDialog_SC2K1996;
