@@ -2234,8 +2234,12 @@ static void L_drawShape_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int16 righ
 					if (*pShapeBits == 0xA1)
 						bProcessBit = TRUE;
 				}
-				if (bProcessBit)
-					*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos);
+				if (bProcessBit) {
+					if (bOnTheFlyPalIdx)
+						*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos);
+					else
+						*pShapeBits = *spritePtr;
+				}
 				if (isFlipped)
 					--pShapeBits;
 				else
@@ -2319,8 +2323,12 @@ static void L_drawShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 
 					if (leftShapeBits <= 0 && rightShapeBits > 0)
 						bProcessBit = (isRoadMask && *pShapeBits != 0xA1) ? FALSE : TRUE;
 				}
-				if (bProcessBit)
-					*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos);
+				if (bProcessBit) {
+					if (bOnTheFlyPalIdx)
+						*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos);
+					else
+						*pShapeBits = *spritePtr;
+				}
 				--leftShapeBits;
 				if (isFlipped)
 					--pShapeBits;
