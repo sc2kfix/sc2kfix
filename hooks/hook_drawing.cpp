@@ -1622,7 +1622,7 @@ static void Adjust_SpritePalette(BYTE *shapePtr, int cIdx, int nType) {
 							bProcess = TRUE;
 					}
 					else {
-						if ((nPos % SEQ_MODULUS) == 0 || (nPos % SEQ_MODULUS) == 2)
+						if ((nPos % SEQ_MODULUS) == 1 || (nPos % SEQ_MODULUS) == 3)
 							bProcess = TRUE;
 					}
 					if (nType == PALCACHE_TYPE_TERRAIN_GEN_GREY) {
@@ -1963,7 +1963,7 @@ static BYTE ProcessSpriteSpecificPaletteIndex(__int16 nSpriteID, BYTE colIdx, WO
 						bProcess = TRUE;
 				}
 				else {
-					if ((nPos % SEQ_MODULUS) == 0 || (nPos % SEQ_MODULUS) == 2)
+					if ((nPos % SEQ_MODULUS) == 1 || (nPos % SEQ_MODULUS) == 3)
 						bProcess = TRUE;
 				}
 				if (nType == PALCACHE_TYPE_TERRAIN_GEN_GREY) {
@@ -2037,7 +2037,7 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 								bProcess = TRUE;
 						}
 						else {
-							if ((nPos % SEQ_MODULUS) == 0 || (nPos % SEQ_MODULUS) == 2)
+							if ((nPos % SEQ_MODULUS) == 1 || (nPos % SEQ_MODULUS) == 3)
 								bProcess = TRUE;
 						}
 						if (iTerrainCosmetic == PALCACHE_TYPE_TERRAIN_GEN_GREY) {
