@@ -1306,14 +1306,56 @@ static BYTE ProcessTerrainGenGreenIndex(BYTE colIdx) {
 		return colIdx;
 }
 
+std::map<BYTE, BYTE> mapTerrainGenColdIndexMap = {
+	// Ground tiles
+	{0x73, 0x9A}, { 0x79, 0x9A }, { 0x7F, 0x9A }, { 0x80, 0x9A },
+	{0x74, 0x9B}, { 0x7A, 0x9B }, { 0x81, 0x9B },
+	{0x75, 0x9C}, { 0x7B, 0x9C }, { 0x82, 0x9C },
+	{0x76, 0x9D}, { 0x7C, 0x9D }, { 0x85, 0x9D },
+	{0x77, 0x9E}, { 0x7D, 0x9E },
+	{0x78, 0x9F}, { 0x7E, 0x9F },
+};
+
+static BYTE ProcessTerrainGenColdIndex(BYTE colIdx) {
+	auto iter = mapTerrainGenColdIndexMap.find(colIdx);
+	if (iter != mapTerrainGenColdIndexMap.end())
+		return iter->second;
+	else
+		return colIdx;
+}
+
+std::map<BYTE, BYTE> mapTerrainGenColdSnowIndexMap = {
+	// Ground tiles
+	{0x73, 0x9A}, { 0x79, 0x9A }, { 0x7F, 0x9A }, { 0x80, 0xA6 },
+	{0x74, 0x9B}, { 0x7A, 0x9B }, { 0x81, 0xA3 },
+	{0x75, 0x9C}, { 0x7B, 0x9C }, { 0x82, 0xA4 },
+	{0x76, 0x9D}, { 0x7C, 0x9D }, { 0x85, 0xA5 },
+	{0x77, 0x9E}, { 0x7D, 0x9E },
+	{0x78, 0x9F}, { 0x7E, 0x9F },
+
+	// Water tiles
+	{0xC8, 0x53}, { 0xCC, 0x53 }, { 0xD0, 0x53 },
+	{0xC9, 0x54}, { 0xCD, 0x54 }, { 0xD1, 0x54 },
+	{0xCA, 0x55}, { 0xCE, 0x55 }, { 0xD2, 0x55 },
+	{0xCB, 0x56}, { 0xCF, 0x56 }, { 0xD3, 0x56 },
+};
+
+static BYTE ProcessTerrainGenColdSnowIndex(BYTE colIdx) {
+	auto iter = mapTerrainGenColdSnowIndexMap.find(colIdx);
+	if (iter != mapTerrainGenColdSnowIndexMap.end())
+		return iter->second;
+	else
+		return colIdx;
+}
+
 std::map<BYTE, BYTE> mapTerrainGenHotIndexMap = {
 	// Ground tiles
-	{0x73, 0x24}, { 0x79, 0x1F }, { 0x7F, 0x28 }, { 0x80, 0x2A },
-	{0x74, 0x1D}, { 0x7A, 0x26 }, { 0x81, 0x22 },
+	{0x73, 0x24}, { 0x79, 0x26 }, { 0x7F, 0x28 }, { 0x80, 0x2A },
+	{0x74, 0x24}, { 0x7A, 0x26 }, { 0x81, 0x21 },
 	{0x75, 0x24}, { 0x7B, 0x26 }, { 0x82, 0x29 },
-	{0x76, 0x25}, { 0x7C, 0x20 }, { 0x85, 0x23 },
+	{0x76, 0x25}, { 0x7C, 0x20 }, { 0x85, 0x22 },
 	{0x77, 0x25}, { 0x7D, 0x27 },
-	{0x78, 0x1E}, { 0x7E, 0x21 },
+	{0x78, 0x25}, { 0x7E, 0x20 },
 };
 
 static BYTE ProcessTerrainGenHotIndex(BYTE colIdx) {
@@ -1628,12 +1670,8 @@ static void Adjust_SpritePalette(BYTE *shapePtr, WORD wHeight, int cIdx, int nTy
 						if ((nPos % SEQ_MODULUS) == 1 || (nPos % SEQ_MODULUS) == 3)
 							bProcess = TRUE;
 					}
-					else if (nType == PALCACHE_TYPE_TERRAIN_GEN_COLD) {
-						if (((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2) && ((nPos % 2) == 1))
-							bProcess = TRUE;
-					}
 					else {
-						if (((nRemHeight % 2) == 0) && ((nPos % SEQ_MODULUS) == 1 || (nPos % SEQ_MODULUS) == 3))
+						if (((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2) && ((nPos % 2) == 1))
 							bProcess = TRUE;
 					}
 					if (nType == PALCACHE_TYPE_TERRAIN_GEN_GREY) {
@@ -1645,12 +1683,16 @@ static void Adjust_SpritePalette(BYTE *shapePtr, WORD wHeight, int cIdx, int nTy
 					}
 					else if (nType == PALCACHE_TYPE_TERRAIN_GEN_COLD) {
 						if ((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2)
-							palIdx = (bProcess) ? ProcessTerrainGenGreyIndex(palIdx) : ProcessTerrainSnowIndex(palIdx);
+							palIdx = (bProcess) ? ProcessTerrainGenColdSnowIndex(palIdx) : ProcessTerrainGenGreyIndex(palIdx);
 						else if ((nPos % 3) == 1)
-							palIdx = ProcessTerrainSnowIndex(palIdx);
+							palIdx = ProcessTerrainGenColdIndex(palIdx);
 					}
 					else if (nType == PALCACHE_TYPE_TERRAIN_GEN_HOT) {
-						if (bProcess)
+						if ((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2) {
+							if (!bProcess)
+								palIdx = ProcessTerrainGenHotIndex(palIdx);
+						}
+						else
 							palIdx = ProcessTerrainGenHotIndex(palIdx);
 					}
 				}
@@ -1980,12 +2022,8 @@ static BYTE ProcessSpriteSpecificPaletteIndex(__int16 nSpriteID, BYTE colIdx, WO
 					if ((nPos % SEQ_MODULUS) == 1 || (nPos % SEQ_MODULUS) == 3)
 						bProcess = TRUE;
 				}
-				else if (nType == PALCACHE_TYPE_TERRAIN_GEN_COLD) {
-					if (((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2) && ((nPos % 2) == 1))
-						bProcess = TRUE;
-				}
 				else {
-					if (((nRemHeight % 2) == 0) && ((nPos % SEQ_MODULUS) == 1 || (nPos % SEQ_MODULUS) == 3))
+					if (((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2) && ((nPos % 2) == 1))
 						bProcess = TRUE;
 				}
 				if (nType == PALCACHE_TYPE_TERRAIN_GEN_GREY) {
@@ -1997,12 +2035,16 @@ static BYTE ProcessSpriteSpecificPaletteIndex(__int16 nSpriteID, BYTE colIdx, WO
 				}
 				else if (nType == PALCACHE_TYPE_TERRAIN_GEN_COLD) {
 					if ((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2)
-						palIdx = (bProcess) ? ProcessTerrainGenGreyIndex(palIdx) : ProcessTerrainSnowIndex(palIdx);
+						palIdx = (bProcess) ? ProcessTerrainGenColdSnowIndex(palIdx) : ProcessTerrainGenGreyIndex(palIdx);
 					else if ((nPos % 3) == 1)
-						palIdx = ProcessTerrainSnowIndex(palIdx);
+						palIdx = ProcessTerrainGenColdIndex(palIdx);
 				}
 				else if (nType == PALCACHE_TYPE_TERRAIN_GEN_HOT) {
-					if (bProcess)
+					if ((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2) {
+						if (!bProcess)
+							palIdx = ProcessTerrainGenHotIndex(palIdx);
+					}
+					else
 						palIdx = ProcessTerrainGenHotIndex(palIdx);
 				}
 			}
@@ -2065,12 +2107,8 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 							if ((nPos % SEQ_MODULUS) == 1 || (nPos % SEQ_MODULUS) == 3)
 								bProcess = TRUE;
 						}
-						else if (iTerrainCosmetic == PALCACHE_TYPE_TERRAIN_GEN_COLD) {
-							if (((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2) && ((nPos % 2) == 1))
-								bProcess = TRUE;
-						}
 						else {
-							if (((nRemHeight % 2) == 0) && ((nPos % SEQ_MODULUS) == 1 || (nPos % SEQ_MODULUS) == 3))
+							if (((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2) && ((nPos % 2) == 1))
 								bProcess = TRUE;
 						}
 						if (iTerrainCosmetic == PALCACHE_TYPE_TERRAIN_GEN_GREY) {
@@ -2082,12 +2120,16 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 						}
 						else if (iTerrainCosmetic == PALCACHE_TYPE_TERRAIN_GEN_COLD) {
 							if ((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2)
-								palIdx = (bProcess) ? ProcessTerrainGenGreyIndex(palIdx) : ProcessTerrainSnowIndex(palIdx);
+								palIdx = (bProcess) ? ProcessTerrainGenColdSnowIndex(palIdx) : ProcessTerrainGenGreyIndex(palIdx);
 							else if ((nPos % 3) == 1)
-								palIdx = ProcessTerrainSnowIndex(palIdx);
+								palIdx = ProcessTerrainGenColdIndex(palIdx);
 						}
 						else if (iTerrainCosmetic == PALCACHE_TYPE_TERRAIN_GEN_HOT) {
-							if (bProcess)
+							if ((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2) {
+								if (!bProcess)
+									palIdx = ProcessTerrainGenHotIndex(palIdx);
+							}
+							else
 								palIdx = ProcessTerrainGenHotIndex(palIdx);
 						}
 					}
