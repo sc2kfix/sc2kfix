@@ -1580,11 +1580,13 @@ static bool Scan_Sprite(BYTE *shapePtr) {
 	return false;
 }
 
-static void Adjust_SpritePalette(BYTE *shapePtr, int cIdx, int nType) {
+static void Adjust_SpritePalette(BYTE *shapePtr, WORD wHeight, int cIdx, int nType) {
 	BYTE *spritePtr;
 	BYTE nCount;
 	BYTE nChunkMode;
+	WORD nRemHeight;
 
+	nRemHeight = wHeight;
 	spritePtr = shapePtr;
 	while (TRUE) {
 		nCount = SPRITEDATA(spritePtr)->nCount;
@@ -1594,6 +1596,7 @@ static void Adjust_SpritePalette(BYTE *shapePtr, int cIdx, int nType) {
 		case MIF_CM_EMPTY:
 			continue;
 		case MIF_CM_NEWROWSTART:
+			--nRemHeight;
 			break;
 		case MIF_CM_SKIPPIXELS:
 			break;
@@ -1621,8 +1624,16 @@ static void Adjust_SpritePalette(BYTE *shapePtr, int cIdx, int nType) {
 						if ((nPos % SEQ_MODULUS) == 0 || (nPos % SEQ_MODULUS) == 2 || (nPos % SEQ_MODULUS) == 3)
 							bProcess = TRUE;
 					}
-					else {
+					else if (nType == PALCACHE_TYPE_TERRAIN_GEN_GREEN) {
 						if ((nPos % SEQ_MODULUS) == 1 || (nPos % SEQ_MODULUS) == 3)
+							bProcess = TRUE;
+					}
+					else if (nType == PALCACHE_TYPE_TERRAIN_GEN_COLD) {
+						if (((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2) && ((nPos % 2) == 1))
+							bProcess = TRUE;
+					}
+					else {
+						if (((nRemHeight % 2) == 0) && ((nPos % SEQ_MODULUS) == 1 || (nPos % SEQ_MODULUS) == 3))
 							bProcess = TRUE;
 					}
 					if (nType == PALCACHE_TYPE_TERRAIN_GEN_GREY) {
@@ -1633,7 +1644,8 @@ static void Adjust_SpritePalette(BYTE *shapePtr, int cIdx, int nType) {
 						palIdx = (bProcess) ? ProcessTerrainGenGreenIndex(palIdx) : ProcessTerrainGenGreyIndex(palIdx);
 					}
 					else if (nType == PALCACHE_TYPE_TERRAIN_GEN_COLD) {
-						palIdx = (bProcess) ? ProcessTerrainSnowIndex(palIdx) : ProcessTerrainGenGreyIndex(palIdx);
+						if ((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2)
+							palIdx = (bProcess) ? ProcessTerrainSnowIndex(palIdx) : ProcessTerrainGenGreyIndex(palIdx);
 					}
 					else if (nType == PALCACHE_TYPE_TERRAIN_GEN_HOT) {
 						if (bProcess)
@@ -1681,7 +1693,7 @@ static void Create_SpriteNew(std::vector<spriteFrame_t> &frameCache, BYTE *pSpri
 	if (sprFrame.pBuf) {
 		memcpy(sprFrame.pBuf, pSpriteBuf, nSize);
 		if (nType > PALCACHE_TYPE_NONE)
-			Adjust_SpritePalette(sprFrame.pBuf, cIdx, nType);
+			Adjust_SpritePalette(sprFrame.pBuf, sprFrame.wHeight, cIdx, nType);
 	}
 	else {
 		ConsoleLog(LOG_ERROR, "Create_SpriteNew(%d, %u, %u, %d, %d): Allocation failed for sprite frame.\n", nSize, wHeight, wWidth, nFrm, nType);
@@ -1962,8 +1974,16 @@ static BYTE ProcessSpriteSpecificPaletteIndex(__int16 nSpriteID, BYTE colIdx, WO
 					if ((nPos % SEQ_MODULUS) == 0 || (nPos % SEQ_MODULUS) == 2 || (nPos % SEQ_MODULUS) == 3)
 						bProcess = TRUE;
 				}
-				else {
+				else if (nType == PALCACHE_TYPE_TERRAIN_GEN_GREEN) {
 					if ((nPos % SEQ_MODULUS) == 1 || (nPos % SEQ_MODULUS) == 3)
+						bProcess = TRUE;
+				}
+				else if (nType == PALCACHE_TYPE_TERRAIN_GEN_COLD) {
+					if (((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2) && ((nPos % 2) == 1))
+						bProcess = TRUE;
+				}
+				else {
+					if (((nRemHeight % 2) == 0) && ((nPos % SEQ_MODULUS) == 1 || (nPos % SEQ_MODULUS) == 3))
 						bProcess = TRUE;
 				}
 				if (nType == PALCACHE_TYPE_TERRAIN_GEN_GREY) {
@@ -1974,7 +1994,8 @@ static BYTE ProcessSpriteSpecificPaletteIndex(__int16 nSpriteID, BYTE colIdx, WO
 					palIdx = (bProcess) ? ProcessTerrainGenGreenIndex(palIdx) : ProcessTerrainGenGreyIndex(palIdx);
 				}
 				else if (nType == PALCACHE_TYPE_TERRAIN_GEN_COLD) {
-					palIdx = (bProcess) ? ProcessTerrainSnowIndex(palIdx) : ProcessTerrainGenGreyIndex(palIdx);
+					if ((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2)
+						palIdx = (bProcess) ? ProcessTerrainSnowIndex(palIdx) : ProcessTerrainGenGreyIndex(palIdx);
 				}
 				else if (nType == PALCACHE_TYPE_TERRAIN_GEN_HOT) {
 					if (bProcess)
@@ -2036,8 +2057,16 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 							if ((nPos % SEQ_MODULUS) == 0 || (nPos % SEQ_MODULUS) == 2 || (nPos % SEQ_MODULUS) == 3)
 								bProcess = TRUE;
 						}
-						else {
+						else if (iTerrainCosmetic == PALCACHE_TYPE_TERRAIN_GEN_GREEN) {
 							if ((nPos % SEQ_MODULUS) == 1 || (nPos % SEQ_MODULUS) == 3)
+								bProcess = TRUE;
+						}
+						else if (iTerrainCosmetic == PALCACHE_TYPE_TERRAIN_GEN_COLD) {
+							if (((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2) && ((nPos % 2) == 1))
+								bProcess = TRUE;
+						}
+						else {
+							if (((nRemHeight % 2) == 0) && ((nPos % SEQ_MODULUS) == 1 || (nPos % SEQ_MODULUS) == 3))
 								bProcess = TRUE;
 						}
 						if (iTerrainCosmetic == PALCACHE_TYPE_TERRAIN_GEN_GREY) {
@@ -2048,7 +2077,8 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 							palIdx = (bProcess) ? ProcessTerrainGenGreenIndex(palIdx) : ProcessTerrainGenGreyIndex(palIdx);
 						}
 						else if (iTerrainCosmetic == PALCACHE_TYPE_TERRAIN_GEN_COLD) {
-							palIdx = (bProcess) ? ProcessTerrainSnowIndex(palIdx) : ProcessTerrainGenGreyIndex(palIdx);
+							if ((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2)
+								palIdx = (bProcess) ? ProcessTerrainSnowIndex(palIdx) : ProcessTerrainGenGreyIndex(palIdx);
 						}
 						else if (iTerrainCosmetic == PALCACHE_TYPE_TERRAIN_GEN_HOT) {
 							if (bProcess)
