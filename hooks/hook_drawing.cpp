@@ -1275,7 +1275,7 @@ std::map<BYTE, BYTE> mapTerrainGenGreyIndexMap = {
 	{0x73, 0x9E}, { 0x79, 0xA3 }, { 0x7F, 0xA5 }, { 0x80, 0xA7 },
 	{0x74, 0x9F}, { 0x7A, 0xA4 }, { 0x81, 0xA6 },
 	{0x75, 0xA0}, { 0x7B, 0xA4 }, { 0x82, 0xA6 },
-	{0x76, 0xA1}, { 0x7C, 0xA4 }, { 0x85, 0xA7 },
+	{0x76, 0xA2}, { 0x7C, 0xA4 }, { 0x85, 0xA7 },
 	{0x77, 0xA2}, { 0x7D, 0xA5 },
 	{0x78, 0xA3}, { 0x7E, 0xA5 },
 };
@@ -2814,6 +2814,23 @@ static BYTE ProcessWeatherSolidShadow(BYTE palIdx, BYTE currIdx) {
 		// all seasons.
 		if (currIdx >= 0x9A && currIdx <= 0x9F)
 			return currIdx;
+		if (iTerrainCosmeticMode) {
+			// Ordering:
+			// Grey (don't include 0xA1 in the range to avoid traffic disruption)
+			// Green
+			// Hot
+			//
+			// It should be noted that as a result of the inclusion of these cases
+			// when a cosmetic terrain mode is enabled, the shadow "can" intersect
+			// with a non-terrain tile - this is more noticeable when a monster is
+			// active (Revisit for future improvements).
+			if (currIdx >= 0xA0 && currIdx <= 0xA7 && currIdx != 0xA1)
+				return currIdx;
+			else if ((currIdx >= 0x34 && currIdx <= 0x36) || (currIdx >= 0x3D && currIdx <= 0x3F) || (currIdx >= 0x45 && currIdx <= 0x4A))
+				return currIdx;
+			else if ((currIdx >= 0x20 && currIdx <= 0x22) || (currIdx >= 0x24 && currIdx <= 0x2A))
+				return currIdx;
+		}
 	}
 	return palIdx;
 }
