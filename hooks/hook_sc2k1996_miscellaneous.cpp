@@ -1852,7 +1852,57 @@ extern "C" void __stdcall Hook_RecalculateCityValue(void) {
 			dwNewCityValue += nVal;
  	}
 	dwCityValue = dwNewCityValue;
- }
+}
+
+CGraphics *pBaseGraphics = NULL;
+LONG nBaseGraphicWidth = 0;
+LONG nBaseGraphicHeight = 0;
+BYTE *pBaseGraphicLockDIBRes = NULL;
+
+extern "C" CSimcityView *__stdcall Hook_SimcityView_Cons() {
+	CSimcityView *pThis;
+
+	__asm mov [pThis], ecx
+
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CMainFrame *pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
+
+	pThis = GameMain_SimcityView_Cons(pThis);
+	if (pThis) {
+		pBaseGraphics = new CGraphics();
+		if (pBaseGraphics) {
+			pBaseGraphics = Game_Graphics_Cons(pBaseGraphics);
+			if (pBaseGraphics) {
+				pBaseGraphics->CreateWithPalette_SC2K1996(pMainFrm->iMFbiWidth, pMainFrm->iMFbiHeight);
+				nBaseGraphicWidth = Game_Graphics_Width(pBaseGraphics);
+				nBaseGraphicHeight = Game_Graphics_Height(pBaseGraphics);
+				pBaseGraphicLockDIBRes = Game_Graphics_LockDIBBits(pBaseGraphics);
+			}
+			else {
+				delete pBaseGraphics;
+				pBaseGraphics = NULL;
+			}
+		}
+	}
+
+	return pThis;
+}
+
+extern "C" void __stdcall Hook_SimcityView_ResetScrollViewsAndDeleteGraphics() {
+	CSimcityView *pThis;
+
+	__asm mov [pThis], ecx
+
+	if (pThis) {
+		if (pBaseGraphics) {
+			pBaseGraphics->DeleteStored_SC2K1996();
+			delete pBaseGraphics;
+			pBaseGraphics = NULL;
+		}
+	}
+
+	GameMain_SimcityView_ResetScrollViewsAndDeleteGraphics(pThis);
+}
 
 extern "C" void __stdcall Hook_SimcityView_OnUpdate(CMFC3XView *pSender, LPARAM lHint, CMFC3XObject *pHint) {
 	CSimcityView *pThis;
@@ -2815,6 +2865,14 @@ void InstallMiscHooks_SC2K1996(void) {
 	}
 
 skipgamemenu:
+	// Hook for CSimcityView::CSimcityView
+	SafeVirtualProtect((LPVOID)0x402E28, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402E28, Hook_SimcityView_Cons);
+
+	// Hook for CSimcityView::ResetScrollViewsAndDeleteGraphics
+	SafeVirtualProtect((LPVOID)0x402B62, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402B62, Hook_SimcityView_ResetScrollViewsAndDeleteGraphics);
+
 	// Hook for CSimcityView::OnUpdate
 	SafeVirtualProtect((LPVOID)0x4024E1, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4024E1, Hook_SimcityView_OnUpdate);

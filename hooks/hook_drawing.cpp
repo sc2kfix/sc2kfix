@@ -1096,6 +1096,40 @@ void L_CheckTileHighlight_SC2K1996(CSimcityView *pSCView) {
 	}
 }
 
+extern CGraphics *pBaseGraphics;
+extern LONG nBaseGraphicWidth;
+extern LONG nBaseGraphicHeight;
+extern BYTE *pBaseGraphicLockDIBRes;
+
+void *curBaseLockedDIBBits = NULL;
+
+BYTE *shapeBaseBits = NULL;
+
+static void __cdecl L_SetSpriteForDrawing(BYTE *pBaseBits, BYTE *pModdedBits, sprite_header_t *pCurrentSprite, int x, int y, RECT *p_rc) {
+	shapeBaseBits = pBaseBits;
+	shapeBits = pModdedBits;
+	shapeCurrent = pCurrentSprite;
+	shapeY = y;
+	shapeX = x;
+	shapeLeft = p_rc->left;
+	shapeRight = p_rc->right;
+	shapeTop = p_rc->top;
+	shapeBottom = p_rc->bottom;
+}
+
+static void __cdecl L_BeginProcessObjects(HWND hWnd, void *pBaseBits, void *pModdedBits, int x, int y, RECT *r) {
+	CMFC3XRect clRect;
+
+	GetClientRect(hWnd, &clRect);
+	if (IsRectEmpty(r))
+		currWndClientRect = clRect;
+	else if (!IntersectRect(&currWndClientRect, r, &clRect))
+		return;
+	if (currWndClientRect.top > 1)
+		--currWndClientRect.top;
+	L_SetSpriteForDrawing((BYTE *)pBaseBits, (BYTE *)pModdedBits, pArrSpriteHeaders, x, y, &currWndClientRect);
+}
+
 // CSimcityView::DrawHouse, as named in the SCURK and Win3.1 Demo debugging data, is actually the
 // functon that's called to draw the whole view.
 // For more detalied information, see https://sc2kfix.net/images/drawhouse.png
@@ -1104,69 +1138,71 @@ void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveTileHighlightActive)
 	COLORREF cr;
 
 	if (pSCView->SCVGraphics && pSCView->pSCVGraphicLockDIBRes || Game_SimcityView_CheckOrLoadGraphic(pSCView)) {
-		// Lock what we need to and set up the drawing process
-		curLockedDIBBits = Game_Graphics_LockDIBBits(pSCView->SCVGraphics);
-		Game_Graphics_Width(pSCView->SCVGraphics);		// XXX (araxestroy): needed? return value discarded, no side effects
-		Game_Graphics_Height(pSCView->SCVGraphics);		// XXX (araxestroy): needed? return value discarded, no side effects
-		Game_BeginProcessObjects(pSCView, curLockedDIBBits, pSCView->dwSCVGraphicWidth, (__int16)pSCView->dwSCVGraphicHeight, &pSCView->SCVAreaView);
-		rcDst = pSCView->SCVAreaView;
-		theSCVDC = Game_Graphics_GetDC(pSCView->SCVGraphics);
+		if (pBaseGraphics && pBaseGraphicLockDIBRes) {
+			// Lock what we need to and set up the drawing process
+			curLockedDIBBits = Game_Graphics_LockDIBBits(pSCView->SCVGraphics);
+			Game_Graphics_Width(pSCView->SCVGraphics);		// XXX (araxestroy): needed? return value discarded, no side effects
+			Game_Graphics_Height(pSCView->SCVGraphics);		// XXX (araxestroy): needed? return value discarded, no side effects
+			L_BeginProcessObjects(pSCView->m_hWnd, NULL, curLockedDIBBits, pSCView->dwSCVGraphicWidth, pSCView->dwSCVGraphicHeight, &pSCView->SCVAreaView);
+			rcDst = pSCView->SCVAreaView;
+			theSCVDC = Game_Graphics_GetDC(pSCView->SCVGraphics);
 
-		// Set the background colour based on the display layer and draw it
-		if (DisplayLayer[LAYER_UNDERGROUND])
-			cr = colGameBackgndUnder;
-		else
-			cr = colGameBackgndAbove;
-		SetBkColor(theSCVDC->m_hDC, cr);
-		ExtTextOutA(theSCVDC->m_hDC, 0, 0, ETO_OPAQUE, &rcDst, 0, 0, 0);
-		Game_Graphics_ReleaseDC(pSCView->SCVGraphics, theSCVDC);
-		wCurrentPositionAngle = wPositionAngle[wViewRotation];
+			// Set the background colour based on the display layer and draw it
+			if (DisplayLayer[LAYER_UNDERGROUND])
+				cr = colGameBackgndUnder;
+			else
+				cr = colGameBackgndAbove;
+			SetBkColor(theSCVDC->m_hDC, cr);
+			ExtTextOutA(theSCVDC->m_hDC, 0, 0, ETO_OPAQUE, &rcDst, 0, 0, 0);
+			Game_Graphics_ReleaseDC(pSCView->SCVGraphics, theSCVDC);
+			wCurrentPositionAngle = wPositionAngle[wViewRotation];
 
-		// Draw colour data for map overlays if we're in one of those modes
-		if (!IsIconic(pSCView->m_hWnd) && showColor && EditData)
-			Game_DrawAllColor();
-		
-		// Otherwise check to see if the active display layer is the underground view
-		else if (DisplayLayer[LAYER_UNDERGROUND])
-			Game_DrawAllUnder();
+			// Draw colour data for map overlays if we're in one of those modes
+			if (!IsIconic(pSCView->m_hWnd) && showColor && EditData)
+				Game_DrawAllColor();
 
-		// If neither of those, draw the above ground view
-		else {
-			switch (pSCView->wSCVZoomLevel) {
-			case 0:
-				Game_DrawAllTiny();
-				break;
-			case 1:
-				Game_DrawAllSmall();
-				break;
-			case 2:
-				Game_DrawAllLarge();
-				break;
-			default:
-				ConsoleLog(LOG_WARNING, "DRAW: CSimcityView::DrawHouse got bad ::wSCVZoomLevel = %d, assuming 2.\n", pSCView->wSCVZoomLevel);
-				Game_DrawAllLarge();
-				break;
+			// Otherwise check to see if the active display layer is the underground view
+			else if (DisplayLayer[LAYER_UNDERGROUND])
+				Game_DrawAllUnder();
+
+			// If neither of those, draw the above ground view
+			else {
+				switch (pSCView->wSCVZoomLevel) {
+				case 0:
+					Game_DrawAllTiny();
+					break;
+				case 1:
+					Game_DrawAllSmall();
+					break;
+				case 2:
+					Game_DrawAllLarge();
+					break;
+				default:
+					ConsoleLog(LOG_WARNING, "DRAW: CSimcityView::DrawHouse got bad ::wSCVZoomLevel = %d, assuming 2.\n", pSCView->wSCVZoomLevel);
+					Game_DrawAllLarge();
+					break;
+				}
 			}
-		}
 
-		// Draw the highlight if needed, and turn it off if requested
-		if (!bLeaveTileHighlightActive)
-			wTileHighlightActive = 0;
-		else {
-			if (wTileHighlightActive) {
-				if (pSCApp->dwSCACursorGameHit)
-					Game_SimcityView_DrawSquareHighlight(pSCView, wHighlightedTileX1, wHighlightedTileY1, wHighlightedTileX2, wHighlightedTileY2);
-				else
-					wTileHighlightActive = 0;
+			// Draw the highlight if needed, and turn it off if requested
+			if (!bLeaveTileHighlightActive)
+				wTileHighlightActive = 0;
+			else {
+				if (wTileHighlightActive) {
+					if (pSCApp->dwSCACursorGameHit)
+						Game_SimcityView_DrawSquareHighlight(pSCView, wHighlightedTileX1, wHighlightedTileY1, wHighlightedTileX2, wHighlightedTileY2);
+					else
+						wTileHighlightActive = 0;
+				}
 			}
-		}
 
-		// Clean up the drawing process and redraw the window (and any subdialogs)
-		Game_FinishProcessObjects();
-		Game_SimcityView_MainWindowUpdate(pSCView, 0, TRUE);
-		Game_UpdateCityMap();
-		Game_Graphics_UnlockDIBBits(pSCView->SCVGraphics);
-		curLockedDIBBits = 0;
+			// Clean up the drawing process and redraw the window (and any subdialogs)
+			Game_FinishProcessObjects();
+			Game_SimcityView_MainWindowUpdate(pSCView, 0, TRUE);
+			Game_UpdateCityMap();
+			Game_Graphics_UnlockDIBBits(pSCView->SCVGraphics);
+			curLockedDIBBits = 0;
+		}
 	}
 }
 
