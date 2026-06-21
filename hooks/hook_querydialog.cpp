@@ -497,7 +497,7 @@ extern "C" void __stdcall Hook_QuerySpecificDialog_OnPaint() {
 			FillRect(pDC->m_hDC, &dlgRect, (HBRUSH)MainBrushFace->m_hObject);
 			Game_Graphics_ReleaseDC(pThis->dwQSDCGraphicsOne, pDC);
 			Game_BeginProcessObjects(pThis, pBits, x, y, &dlgRect);
-			Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
+			L_drawShapeDialog_SC2K1996(nSpriteID, 0, 0, 0, 0);
 			Game_FinishProcessObjects();
 		}
 		Game_Graphics_UnlockDIBBits(pThis->dwQSDCGraphicsOne);

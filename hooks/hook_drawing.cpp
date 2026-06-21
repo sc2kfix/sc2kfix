@@ -1106,7 +1106,7 @@ CMFC3XDC *pBaseSCVDC = NULL;
 
 BYTE *shapeBaseBits = NULL;
 
-static void __cdecl L_SetSpriteForDrawing(BYTE *pBaseBits, BYTE *pModdedBits, sprite_header_t *pCurrentSprite, int x, int y, RECT *p_rc) {
+static void __cdecl L_SetSpriteForDrawing_SC2K1996(BYTE *pBaseBits, BYTE *pModdedBits, sprite_header_t *pCurrentSprite, int x, int y, RECT *p_rc) {
 	shapeBaseBits = pBaseBits;
 	shapeBits = pModdedBits;
 	shapeCurrent = pCurrentSprite;
@@ -1118,7 +1118,11 @@ static void __cdecl L_SetSpriteForDrawing(BYTE *pBaseBits, BYTE *pModdedBits, sp
 	shapeBottom = p_rc->bottom;
 }
 
-static void __cdecl L_BeginProcessObjects(HWND hWnd, void *pBaseBits, void *pModdedBits, int x, int y, RECT *r) {
+extern "C" void __cdecl Hook_start16bitShapes(BYTE *pBits, sprite_header_t *pCurrentSprite, int x, __int16 y, RECT *p_rc) {
+	L_SetSpriteForDrawing_SC2K1996(NULL, pBits, pCurrentSprite, x, y, p_rc);
+}
+
+void __cdecl L_BeginProcessObjects_SC2K1996(HWND hWnd, void *pBaseBits, void *pModdedBits, int x, int y, RECT *r) {
 	CMFC3XRect clRect;
 
 	GetClientRect(hWnd, &clRect);
@@ -1128,10 +1132,10 @@ static void __cdecl L_BeginProcessObjects(HWND hWnd, void *pBaseBits, void *pMod
 		return;
 	if (currWndClientRect.top > 1)
 		--currWndClientRect.top;
-	L_SetSpriteForDrawing((BYTE *)pBaseBits, (BYTE *)pModdedBits, pArrSpriteHeaders, x, y, &currWndClientRect);
+	L_SetSpriteForDrawing_SC2K1996((BYTE *)pBaseBits, (BYTE *)pModdedBits, pArrSpriteHeaders, x, y, &currWndClientRect);
 }
 
-static void L_FinishProcessObjects() {
+extern "C" void __stdcall Hook_endShapes() {
 	shapeBaseBits = NULL;
 	SetRectEmpty(&currWndClientRect);
 }
@@ -1150,7 +1154,7 @@ void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveTileHighlightActive)
 			curLockedDIBBits = Game_Graphics_LockDIBBits(pSCView->SCVGraphics);
 			Game_Graphics_Width(pSCView->SCVGraphics);		// XXX (araxestroy): needed? return value discarded, no side effects
 			Game_Graphics_Height(pSCView->SCVGraphics);		// XXX (araxestroy): needed? return value discarded, no side effects
-			L_BeginProcessObjects(pSCView->m_hWnd, curBaseLockedDIBBits, curLockedDIBBits, pSCView->dwSCVGraphicWidth, pSCView->dwSCVGraphicHeight, &pSCView->SCVAreaView);
+			L_BeginProcessObjects_SC2K1996(pSCView->m_hWnd, curBaseLockedDIBBits, curLockedDIBBits, pSCView->dwSCVGraphicWidth, pSCView->dwSCVGraphicHeight, &pSCView->SCVAreaView);
 			rcDst = pSCView->SCVAreaView;
 			pBaseSCVDC = pBaseGraphics->GetDC_SC2K1996();
 			theSCVDC = Game_Graphics_GetDC(pSCView->SCVGraphics);
@@ -1208,7 +1212,7 @@ void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveTileHighlightActive)
 			}
 
 			// Clean up the drawing process and redraw the window (and any subdialogs)
-			L_FinishProcessObjects();
+			Game_FinishProcessObjects();
 			Game_SimcityView_MainWindowUpdate(pSCView, 0, TRUE);
 			Game_UpdateCityMap();
 			Game_Graphics_UnlockDIBBits(pSCView->SCVGraphics);
@@ -3675,6 +3679,14 @@ void InstallDrawingHooks_SC2K1996(void) {
 	// Hook for CSimcityView::DrawHouse
 	SafeVirtualProtect((LPVOID)0x402810, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x402810, Hook_SimcityView_DrawHouse);
+
+	// Hook for start16bitShapes
+	SafeVirtualProtect((LPVOID)0x402266, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402266, Hook_start16bitShapes);
+
+	// Hook for endShapes
+	SafeVirtualProtect((LPVOID)0x402B7B, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402B7B, Hook_endShapes);
 
 	// Hook for drawShape
 	SafeVirtualProtect((LPVOID)0x401393, 5, PAGE_EXECUTE_READWRITE);
