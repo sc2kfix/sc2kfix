@@ -2409,7 +2409,7 @@ static void L_drawShape_Invert_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseS
 	__int16 leftEdge, topEdge, rightEdge, bottomEdge;
 	BYTE *pShapeBitsLine, *pBaseShapeBitsLine, *spritePtr, *baseSpritePtr;
 	WORD nRemHeight;
-	int leftShapeBits, rightShapeBits, leftBaseShapeBits, rightBaseShapeBits;
+	int leftShapeBits, rightShapeBits;
 	BYTE *pShapeBits, *pBaseShapeBits, nCount, nChunkMode;
 	bool bReachedBottom;
 
@@ -2435,9 +2435,7 @@ static void L_drawShape_Invert_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseS
 	leftShapeBits = (int)pShapeBitsLine;
 	pShapeBits = pShapeBitsLine;
 	rightShapeBits = (int)pShapeBitsLine;
-	leftBaseShapeBits = (int)pBaseShapeBitsLine;
 	pBaseShapeBits = pBaseShapeBitsLine;
-	rightBaseShapeBits = (int)pBaseShapeBitsLine;
 	while (TRUE) {
 		nCount = SPRITEDATA(spritePtr)->nCount;
 		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
@@ -2449,8 +2447,6 @@ static void L_drawShape_Invert_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseS
 		case MIF_CM_NEWROWSTART:
 			leftShapeBits = leftEdge;
 			rightShapeBits = rightEdge;
-			leftBaseShapeBits = leftEdge;
-			rightBaseShapeBits = rightEdge;
 			bReachedBottom = --bottomEdge < 0;
 			pShapeBits = &pShapeBitsLine[shapeX];
 			pShapeBitsLine += shapeX;
@@ -2464,8 +2460,6 @@ static void L_drawShape_Invert_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseS
 			leftShapeBits -= nCount;
 			rightShapeBits -= nCount;
 			pShapeBits += nCount;
-			leftBaseShapeBits -= nCount;
-			rightBaseShapeBits -= nCount;
 			pBaseShapeBits += nCount;
 			continue;
 		case MIF_CM_PROCPIXELS:
@@ -2481,12 +2475,10 @@ static void L_drawShape_Invert_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseS
 					}
 				}
 				--leftShapeBits;
-				--leftBaseShapeBits;
 				++pShapeBits;
 				++pBaseShapeBits;
 				++baseSpritePtr;
 				--rightShapeBits;
-				--rightBaseShapeBits;
 				--nPos;
 			}
 			if ((nCount & 1) != 0) {
@@ -2868,7 +2860,7 @@ static void L_drawShape_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr
 	__int16 leftEdge, topEdge, rightEdge, bottomEdge;
 	BYTE *pShapeBitsLine, *pBaseShapeBitsLine, *spritePtr, *baseSpritePtr;
 	WORD nRemHeight;
-	int leftShapeBits, rightShapeBits, leftBaseShapeBits, rightBaseShapeBits;
+	int leftShapeBits, rightShapeBits;
 	BYTE *pShapeBits, *pBaseShapeBits, nCount, nChunkMode;
 	bool bReachedBottom;
 
@@ -2900,9 +2892,7 @@ static void L_drawShape_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr
 	leftShapeBits = (int)pShapeBitsLine;
 	pShapeBits = pShapeBitsLine;
 	rightShapeBits = (int)pShapeBitsLine;
-	leftBaseShapeBits = (int)pBaseShapeBitsLine;
 	pBaseShapeBits = pBaseShapeBitsLine;
-	rightBaseShapeBits = (int)pBaseShapeBitsLine;
 	while (TRUE) {
 		nCount = SPRITEDATA(spritePtr)->nCount;
 		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
@@ -2914,8 +2904,6 @@ static void L_drawShape_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr
 		case MIF_CM_NEWROWSTART:
 			leftShapeBits = leftEdge;
 			rightShapeBits = rightEdge;
-			leftBaseShapeBits = leftEdge;
-			rightBaseShapeBits = rightEdge;
 			bReachedBottom = --bottomEdge < 0;
 			pShapeBits = &pShapeBitsLine[shapeX];
 			pShapeBitsLine += shapeX;
@@ -2928,8 +2916,6 @@ static void L_drawShape_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr
 		case MIF_CM_SKIPPIXELS:
 			leftShapeBits -= nCount;
 			rightShapeBits -= nCount;
-			leftBaseShapeBits -= nCount;
-			rightBaseShapeBits -= nCount;
 			if (isFlipped) {
 				pShapeBits -= nCount;
 				pBaseShapeBits -= nCount;
@@ -2955,7 +2941,6 @@ static void L_drawShape_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr
 					*pBaseShapeBits = *baseSpritePtr;
 				}
 				--leftShapeBits;
-				--leftBaseShapeBits;
 				if (isFlipped) {
 					--pShapeBits;
 					--pBaseShapeBits;
@@ -2965,7 +2950,6 @@ static void L_drawShape_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr
 					++pBaseShapeBits;
 				}
 				--rightShapeBits;
-				--rightBaseShapeBits;
 				--nPos;
 			}
 			if ((nCount & 1) != 0) {
@@ -3439,7 +3423,7 @@ static void L_drawShadowShape_WithBase_MainArea(BYTE *shapePtr, BYTE *baseShapeP
 static void L_drawShadowShape_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isFlipped) {
 	__int16 leftEdge, topEdge, rightEdge, bottomEdge;
 	BYTE *pShapeBitsLine, *pBaseShapeBitsLine, *spritePtr, *baseSpritePtr;
-	int leftShapeBits, rightShapeBits, leftBaseShapeBits, rightBaseShapeBits;
+	int leftShapeBits, rightShapeBits;
 	BYTE *pShapeBits, *pBaseShapeBits, nCount, nChunkMode;
 	bool bReachedBottom;
 
@@ -3470,9 +3454,7 @@ static void L_drawShadowShape_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseSh
 	leftShapeBits = (int)pShapeBitsLine;
 	pShapeBits = pShapeBitsLine;
 	rightShapeBits = (int)pShapeBitsLine;
-	leftBaseShapeBits = (int)pBaseShapeBitsLine;
 	pBaseShapeBits = pBaseShapeBitsLine;
-	rightBaseShapeBits = (int)pBaseShapeBitsLine;
 	while (TRUE) {
 		nCount = SPRITEDATA(spritePtr)->nCount;
 		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
@@ -3484,8 +3466,6 @@ static void L_drawShadowShape_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseSh
 		case MIF_CM_NEWROWSTART:
 			leftShapeBits = leftEdge;
 			rightShapeBits = rightEdge;
-			leftBaseShapeBits = leftEdge;
-			rightBaseShapeBits = rightEdge;
 			bReachedBottom = --bottomEdge < 0;
 			pShapeBits = &pShapeBitsLine[shapeX];
 			pShapeBitsLine += shapeX;
@@ -3497,8 +3477,6 @@ static void L_drawShadowShape_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseSh
 		case MIF_CM_SKIPPIXELS:
 			leftShapeBits -= nCount;
 			rightShapeBits -= nCount;
-			leftBaseShapeBits -= nCount;
-			rightBaseShapeBits -= nCount;
 			if (isFlipped) {
 				pShapeBits -= nCount;
 				pBaseShapeBits -= nCount;
@@ -3530,7 +3508,6 @@ static void L_drawShadowShape_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseSh
 					}
 				}
 				--leftShapeBits;
-				--leftBaseShapeBits;
 				if (isFlipped) {
 					--pShapeBits;
 					--pBaseShapeBits;
@@ -3540,7 +3517,6 @@ static void L_drawShadowShape_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseSh
 					++pBaseShapeBits;
 				}
 				--rightShapeBits;
-				--rightBaseShapeBits;
 				--nPos;
 			}
 			if ((nCount & 1) != 0) {
