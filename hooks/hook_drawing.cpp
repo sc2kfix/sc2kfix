@@ -1245,7 +1245,7 @@ extern "C" void __stdcall Hook_SimcityView_UpdateHouse() {
 
 	if (dirtyRect.top != -1000) {
 		dirtyRect.bottom += 20 << pThis->wSCVZoomLevel;
-		dirtyRect.left += 20 << pThis->wSCVZoomLevel;
+		dirtyRect.left += -20 << pThis->wSCVZoomLevel;
 		IntersectRect(&rcDst, &pThis->SCVAreaView, &dirtyRect);
 		if (pThis->SCVGraphics && pThis->pSCVGraphicLockDIBRes || Game_SimcityView_CheckOrLoadGraphic(pThis)) {
 			if (pBaseGraphics && pBaseGraphicLockDIBRes) {
