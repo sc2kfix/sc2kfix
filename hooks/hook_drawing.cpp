@@ -2350,6 +2350,61 @@ static void L_drawShape_Invert_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr, 
 	}
 }
 
+static void L_drawShape_Invert_WithBase_MainArea(BYTE *shapePtr, BYTE *baseShapePtr, __int16 nSpriteID, __int16 right, __int16 bottom) {
+	BYTE *pShapeBitsLine, *pBaseShapeBitsLine, *spritePtr, *baseSpritePtr, *pShapeBits, *pBaseShapeBits;
+	BYTE nCount;
+	BYTE nChunkMode;
+
+	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
+	pBaseShapeBitsLine = &shapeBaseBits[right + shapeX * bottom];
+	spritePtr = shapePtr;
+	baseSpritePtr = baseShapePtr;
+	pShapeBits = pShapeBitsLine;
+	pBaseShapeBits = pBaseShapeBitsLine;
+	while (TRUE) {
+		nCount = SPRITEDATA(spritePtr)->nCount;
+		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
+		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
+		baseSpritePtr = (BYTE *)&SPRITEDATA(baseSpritePtr)->pBuf;
+		switch (nChunkMode) {
+		case MIF_CM_EMPTY:
+			continue;
+		case MIF_CM_NEWROWSTART:
+			pShapeBits = &pShapeBitsLine[shapeX];
+			pShapeBitsLine += shapeX;
+			pBaseShapeBits = &pBaseShapeBitsLine[shapeX];
+			pBaseShapeBitsLine += shapeX;
+			break;
+		case MIF_CM_SKIPPIXELS:
+			pShapeBits += nCount;
+			pBaseShapeBits += nCount;
+			break;
+		case MIF_CM_PROCPIXELS:
+			for (int nPos = nCount; nPos; ++spritePtr) {
+				if (*pBaseShapeBits == *baseSpritePtr) {
+					*pBaseShapeBits = AdjustInversion(nSpriteID, *baseSpritePtr);
+					*pShapeBits = *pBaseShapeBits;
+				}
+				else if ((char)(CheckInversion(nSpriteID, *baseSpritePtr) ^ *pBaseShapeBits) == -1) {
+					*pBaseShapeBits = *baseSpritePtr;
+					*pShapeBits = *spritePtr;
+				}
+				++pShapeBits;
+				++pBaseShapeBits;
+				++baseSpritePtr;
+				--nPos;
+			}
+			if ((nCount & 1) != 0) {
+				++baseSpritePtr;;
+				++spritePtr;
+			}
+			break;
+		default:
+			return;
+		}
+	}
+}
+
 static void L_drawShape_Invert_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr, __int16 nSpriteID, __int16 right, __int16 bottom) {
 	__int16 leftEdge, topEdge, rightEdge, bottomEdge;
 	BYTE *pShapeBitsLine, *pBaseShapeBitsLine, *spritePtr, *baseSpritePtr;
@@ -3092,7 +3147,7 @@ extern "C" void __cdecl Hook_drawShape(__int16 nSpriteID, __int16 right, __int16
 						}
 						else {
 							if (shapeBaseBits) {
-
+								L_drawShape_Invert_WithBase_MainArea(shapeData, baseShapeData, nSpriteID, right, bottom);
 							}
 							else
 								L_drawShape_Invert_MainArea(shapeData, baseShapeData, nSpriteID, right, bottom);
