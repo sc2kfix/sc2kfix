@@ -1102,6 +1102,7 @@ extern LONG nBaseGraphicHeight;
 extern BYTE *pBaseGraphicLockDIBRes;
 
 void *curBaseLockedDIBBits = NULL;
+CMFC3XDC *pBaseSCVDC = NULL;
 
 BYTE *shapeBaseBits = NULL;
 
@@ -1140,11 +1141,13 @@ void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveTileHighlightActive)
 	if (pSCView->SCVGraphics && pSCView->pSCVGraphicLockDIBRes || Game_SimcityView_CheckOrLoadGraphic(pSCView)) {
 		if (pBaseGraphics && pBaseGraphicLockDIBRes) {
 			// Lock what we need to and set up the drawing process
+			curBaseLockedDIBBits = Game_Graphics_LockDIBBits(pBaseGraphics);
 			curLockedDIBBits = Game_Graphics_LockDIBBits(pSCView->SCVGraphics);
 			Game_Graphics_Width(pSCView->SCVGraphics);		// XXX (araxestroy): needed? return value discarded, no side effects
 			Game_Graphics_Height(pSCView->SCVGraphics);		// XXX (araxestroy): needed? return value discarded, no side effects
-			L_BeginProcessObjects(pSCView->m_hWnd, NULL, curLockedDIBBits, pSCView->dwSCVGraphicWidth, pSCView->dwSCVGraphicHeight, &pSCView->SCVAreaView);
+			L_BeginProcessObjects(pSCView->m_hWnd, curBaseLockedDIBBits, curLockedDIBBits, pSCView->dwSCVGraphicWidth, pSCView->dwSCVGraphicHeight, &pSCView->SCVAreaView);
 			rcDst = pSCView->SCVAreaView;
+			pBaseSCVDC = pBaseGraphics->GetDC_SC2K1996();
 			theSCVDC = Game_Graphics_GetDC(pSCView->SCVGraphics);
 
 			// Set the background colour based on the display layer and draw it
@@ -1152,8 +1155,11 @@ void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveTileHighlightActive)
 				cr = colGameBackgndUnder;
 			else
 				cr = colGameBackgndAbove;
+			SetBkColor(pBaseSCVDC->m_hDC, cr);
 			SetBkColor(theSCVDC->m_hDC, cr);
+			ExtTextOutA(pBaseSCVDC->m_hDC, 0, 0, ETO_OPAQUE, &rcDst, 0, 0, 0);
 			ExtTextOutA(theSCVDC->m_hDC, 0, 0, ETO_OPAQUE, &rcDst, 0, 0, 0);
+			pBaseGraphics->ReleaseDC_SC2K1996(pBaseSCVDC);
 			Game_Graphics_ReleaseDC(pSCView->SCVGraphics, theSCVDC);
 			wCurrentPositionAngle = wPositionAngle[wViewRotation];
 
@@ -1202,6 +1208,8 @@ void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveTileHighlightActive)
 			Game_UpdateCityMap();
 			Game_Graphics_UnlockDIBBits(pSCView->SCVGraphics);
 			curLockedDIBBits = 0;
+			Game_Graphics_UnlockDIBBits(pBaseGraphics);
+			curBaseLockedDIBBits = 0;
 		}
 	}
 }
@@ -2632,6 +2640,123 @@ static void L_drawShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 
 	}
 }
 
+static void L_drawShape_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isRoadMask, BOOL isFlipped) {
+	__int16 leftEdge, topEdge, rightEdge, bottomEdge;
+	BYTE *pShapeBitsLine, *pBaseShapeBitsLine, *spritePtr, *baseSpritePtr;
+	WORD nRemHeight;
+	int leftShapeBits, rightShapeBits, leftBaseShapeBits, rightBaseShapeBits;
+	BYTE *pShapeBits, *pBaseShapeBits, nCount, nChunkMode;
+	bool bReachedBottom;
+
+	if (isFlipped) {
+		leftEdge = right - shapeLeft;
+		rightEdge = right - shapeRight;
+	}
+	else {
+		leftEdge = shapeLeft - right;
+		rightEdge = shapeRight - right;
+	}
+	topEdge = shapeTop - bottom;
+	bottomEdge = shapeBottom - bottom;
+	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
+	pBaseShapeBitsLine = &shapeBaseBits[right + shapeX * bottom];
+	nRemHeight = shapeCurrent[nSpriteID].wHeight;
+	spritePtr = shapePtr;
+	baseSpritePtr = baseShapePtr;
+	if (topEdge > 0) {
+		bottomEdge -= topEdge;
+		pShapeBitsLine += shapeX * topEdge;
+		pBaseShapeBitsLine += shapeX * topEdge;
+		do {
+			spritePtr += SPRITEDATA(spritePtr)->nCount + 2;
+			baseSpritePtr += SPRITEDATA(baseSpritePtr)->nCount + 2;
+			--topEdge;
+		} while (topEdge);
+	}
+	leftShapeBits = (int)pShapeBitsLine;
+	pShapeBits = pShapeBitsLine;
+	rightShapeBits = (int)pShapeBitsLine;
+	leftBaseShapeBits = (int)pBaseShapeBitsLine;
+	pBaseShapeBits = pBaseShapeBitsLine;
+	rightBaseShapeBits = (int)pBaseShapeBitsLine;
+	while (TRUE) {
+		nCount = SPRITEDATA(spritePtr)->nCount;
+		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
+		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
+		baseSpritePtr = (BYTE *)&SPRITEDATA(baseSpritePtr)->pBuf;
+		switch (nChunkMode) {
+		case MIF_CM_EMPTY:
+			continue;
+		case MIF_CM_NEWROWSTART:
+			leftShapeBits = leftEdge;
+			rightShapeBits = rightEdge;
+			leftBaseShapeBits = leftEdge;
+			rightBaseShapeBits = rightEdge;
+			bReachedBottom = --bottomEdge < 0;
+			pShapeBits = &pShapeBitsLine[shapeX];
+			pShapeBitsLine += shapeX;
+			pBaseShapeBits = &pBaseShapeBitsLine[shapeX];
+			pBaseShapeBitsLine += shapeX;
+			--nRemHeight;
+			if (!bReachedBottom)
+				continue;
+			break;
+		case MIF_CM_SKIPPIXELS:
+			leftShapeBits -= nCount;
+			rightShapeBits -= nCount;
+			leftBaseShapeBits -= nCount;
+			rightBaseShapeBits -= nCount;
+			if (isFlipped) {
+				pShapeBits -= nCount;
+				pBaseShapeBits -= nCount;
+			}
+			else {
+				pShapeBits += nCount;
+				pBaseShapeBits += nCount;
+			}
+			continue;
+		case MIF_CM_PROCPIXELS:
+			for (int nPos = nCount; nPos; ++spritePtr, ++baseSpritePtr) {
+				BOOL bProcessBit = FALSE;
+				if (isFlipped) {
+					if (rightShapeBits <= 0 && leftShapeBits > 0)
+						bProcessBit = (isRoadMask && *pBaseShapeBits != 0xA1) ? FALSE : TRUE;
+				}
+				else {
+					if (leftShapeBits <= 0 && rightShapeBits > 0)
+						bProcessBit = (isRoadMask && *pBaseShapeBits != 0xA1) ? FALSE : TRUE;
+				}
+				if (bProcessBit) {
+					//*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos);
+					*pBaseShapeBits = *baseSpritePtr;
+					*pShapeBits = *pBaseShapeBits;
+				}
+				--leftShapeBits;
+				--leftBaseShapeBits;
+				if (isFlipped) {
+					--pShapeBits;
+					--pBaseShapeBits;
+				}
+				else {
+					++pShapeBits;
+					++pBaseShapeBits;
+				}
+				--rightShapeBits;
+				--rightBaseShapeBits;
+				--nPos;
+			}
+			if ((nCount & 1) != 0) {
+				++spritePtr;
+				++baseSpritePtr;
+			}
+			continue;
+		default:
+			return;
+		}
+		break;
+	}
+}
+
 static void L_drawShapeSpecific_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isRoadMask, BOOL isFlipped, int nType) {
 	BYTE *pShapeBitsLine, *spritePtr, *pShapeBits;
 	BYTE nCount;
@@ -2787,19 +2912,39 @@ extern "C" void __cdecl Hook_drawShape(__int16 nSpriteID, __int16 right, __int16
 				int nRight = (isFlipped) ? nShapeRight : right;
 				// The 'doInvert' flag is used from the InvertShape and InvertTerrain calls.
 				// It's the "Placement Preview".
-				if (doInvert) {
-					baseShapeData = Get_SpriteCache_BaseBuffer(shapePtr, nSpriteID);
-					if (baseShapeData) {
-						if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)
-							L_drawShape_Invert_OutOfContext(shapeData, baseShapeData, nSpriteID, right, bottom);
+				baseShapeData = Get_SpriteCache_BaseBuffer(shapePtr, nSpriteID);
+				if (baseShapeData) {
+					if (doInvert) {
+						if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight) {
+							if (shapeBaseBits) {
+
+							}
+							else
+								L_drawShape_Invert_OutOfContext(shapeData, baseShapeData, nSpriteID, right, bottom);
+						}
+						else {
+							if (shapeBaseBits) {
+
+							}
+							else
+								L_drawShape_Invert_MainArea(shapeData, baseShapeData, nSpriteID, right, bottom);
+						}
+					}
+					else if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight) {
+						if (shapeBaseBits) {
+							L_drawShape_WithBase_OutOfContext(shapeData, baseShapeData, nSpriteID, nRight, bottom, FALSE, isFlipped);
+						}
 						else
-							L_drawShape_Invert_MainArea(shapeData, baseShapeData, nSpriteID, right, bottom);
+							L_drawShape_OutOfContext(shapeData, nSpriteID, nRight, bottom, FALSE, isFlipped);
+					}
+					else {
+						if (shapeBaseBits) {
+
+						}
+						else
+							L_drawShape_MainArea(shapeData, nSpriteID, nRight, bottom, FALSE, isFlipped);
 					}
 				}
-				else if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)
-					L_drawShape_OutOfContext(shapeData, nSpriteID, nRight, bottom, FALSE, isFlipped);
-				else
-					L_drawShape_MainArea(shapeData, nSpriteID, nRight, bottom, FALSE, isFlipped);
 			}
 		}
 	}
