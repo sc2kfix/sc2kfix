@@ -1865,7 +1865,10 @@ static BYTE *Get_SpriteFrame_Buffer(std::vector<spriteFrame_t> &frameCache, BYTE
 
 static BYTE *Get_SpriteCache_BaseBuffer(sprite_header_t *pShapePtr, __int16 nSpriteID) {
 	if (pShapePtr->wHeight > 1) {
-		BYTE *pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, 0);
+		int nFrmIdx = nCycleIdx % CACHED_FRAMES;
+		if (nFrmIdx < 0)
+			nFrmIdx = -nFrmIdx;
+		BYTE *pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, nFrmIdx);
 		if (pSpriteBuf)
 			return pSpriteBuf;
 		return pShapePtr->sprOffset.sprPtr;
@@ -2640,6 +2643,76 @@ static void L_drawShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 
 	}
 }
 
+static void L_drawShape_WithBase_MainArea(BYTE *shapePtr, BYTE *baseShapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isRoadMask, BOOL isFlipped) {
+	BYTE *pShapeBitsLine, *pBaseShapeBitsLine, *spritePtr, *baseSpritePtr, *pShapeBits, *pBaseShapeBits;
+	BYTE nCount;
+	BYTE nChunkMode;
+	WORD nRemHeight;
+
+	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
+	pBaseShapeBitsLine = &shapeBaseBits[right + shapeX * bottom];
+	nRemHeight = shapeCurrent[nSpriteID].wHeight;
+	spritePtr = shapePtr;
+	baseSpritePtr = baseShapePtr;
+	pShapeBits = pShapeBitsLine;
+	pBaseShapeBits = pBaseShapeBitsLine;
+	while (TRUE) {
+		nCount = SPRITEDATA(spritePtr)->nCount;
+		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
+		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
+		baseSpritePtr = (BYTE *)&SPRITEDATA(baseSpritePtr)->pBuf;
+		switch (nChunkMode) {
+		case MIF_CM_EMPTY:
+			continue;
+		case MIF_CM_NEWROWSTART:
+			pShapeBits = &pShapeBitsLine[shapeX];
+			pShapeBitsLine += shapeX;
+			pBaseShapeBits = &pBaseShapeBitsLine[shapeX];
+			pBaseShapeBitsLine += shapeX;
+			--nRemHeight;
+			break;
+		case MIF_CM_SKIPPIXELS:
+			if (isFlipped) {
+				pShapeBits -= nCount;
+				pBaseShapeBits -= nCount;
+			}
+			else {
+				pShapeBits += nCount;
+				pBaseShapeBits += nCount;
+			}
+			break;
+		case MIF_CM_PROCPIXELS:
+			for (int nPos = nCount; nPos; ++spritePtr, ++baseSpritePtr) {
+				BOOL bProcessBit = (isRoadMask) ? FALSE : TRUE;
+				if (isRoadMask) {
+					if (*pBaseShapeBits == 0xA1)
+						bProcessBit = TRUE;
+				}
+				if (bProcessBit) {
+					*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos);
+					*pBaseShapeBits = *baseSpritePtr;
+				}
+				if (isFlipped) {
+					--pShapeBits;
+					--pBaseShapeBits;
+				}
+				else {
+					++pShapeBits;
+					++pBaseShapeBits;
+				}
+				--nPos;
+			}
+			if ((nCount & 1) != 0) {
+				++spritePtr;
+				++baseSpritePtr;
+			}
+			break;
+		default:
+			return;
+		}
+	}
+}
+
 static void L_drawShape_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isRoadMask, BOOL isFlipped) {
 	__int16 leftEdge, topEdge, rightEdge, bottomEdge;
 	BYTE *pShapeBitsLine, *pBaseShapeBitsLine, *spritePtr, *baseSpritePtr;
@@ -2727,9 +2800,8 @@ static void L_drawShape_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr
 						bProcessBit = (isRoadMask && *pBaseShapeBits != 0xA1) ? FALSE : TRUE;
 				}
 				if (bProcessBit) {
-					//*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos);
+					*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos);
 					*pBaseShapeBits = *baseSpritePtr;
-					*pShapeBits = *pBaseShapeBits;
 				}
 				--leftShapeBits;
 				--leftBaseShapeBits;
@@ -2939,7 +3011,7 @@ extern "C" void __cdecl Hook_drawShape(__int16 nSpriteID, __int16 right, __int16
 					}
 					else {
 						if (shapeBaseBits) {
-
+							L_drawShape_WithBase_MainArea(shapeData, baseShapeData, nSpriteID, nRight, bottom, FALSE, isFlipped);
 						}
 						else
 							L_drawShape_MainArea(shapeData, nSpriteID, nRight, bottom, FALSE, isFlipped);
