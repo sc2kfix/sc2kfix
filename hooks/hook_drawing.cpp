@@ -1312,7 +1312,8 @@ extern "C" void __stdcall Hook_SimcityView_UpdateHouse() {
 					// that it may have directed to a different
 					// view window at the time - one that doesn't
 					// appear to be hit at this stage - perhaps
-					// debugging at the time?
+					// debugging at the time? unless related
+					// to an excerpt capture?
 					if (pThis == (CSimcityView *)&pSomeWnd)
 						Game_SimcityView_MainWindowUpdate(pThis, 0, TRUE);
 					else
