@@ -1258,6 +1258,114 @@ BYTE CyclePaletteIdx(BYTE colIdx, int cIdx) {
 	return newIdx;
 }
 
+static int GetTerrainCosmetic() {
+	if (iTerrainCosmeticMode == TERRAIN_COSMETIC_GREY)
+		return PALCACHE_TYPE_TERRAIN_GEN_GREY;
+	else if (iTerrainCosmeticMode == TERRAIN_COSMETIC_GREEN)
+		return PALCACHE_TYPE_TERRAIN_GEN_GREEN;
+	else if (iTerrainCosmeticMode == TERRAIN_COSMETIC_COLD)
+		return PALCACHE_TYPE_TERRAIN_GEN_COLD;
+	else if (iTerrainCosmeticMode == TERRAIN_COSMETIC_HOT)
+		return PALCACHE_TYPE_TERRAIN_GEN_HOT;
+	return 0;
+}
+
+std::map<BYTE, BYTE> mapTerrainGenGreyIndexMap = {
+	// Ground tiles
+	{0x73, 0x9E}, { 0x79, 0xA3 }, { 0x7F, 0xA5 }, { 0x80, 0xA7 },
+	{0x74, 0x9F}, { 0x7A, 0xA4 }, { 0x81, 0xA6 },
+	{0x75, 0xA0}, { 0x7B, 0xA4 }, { 0x82, 0xA6 },
+	{0x76, 0xA2}, { 0x7C, 0xA4 }, { 0x85, 0xA7 },
+	{0x77, 0xA2}, { 0x7D, 0xA5 },
+	{0x78, 0xA3}, { 0x7E, 0xA5 },
+};
+
+static BYTE ProcessTerrainGenGreyIndex(BYTE colIdx) {
+	auto iter = mapTerrainGenGreyIndexMap.find(colIdx);
+	if (iter != mapTerrainGenGreyIndexMap.end())
+		return iter->second;
+	else
+		return colIdx;
+}
+
+std::map<BYTE, BYTE> mapTerrainGenGreenIndexMap = {
+	// Ground tiles
+	{0x73, 0x34}, { 0x79, 0x47 }, { 0x7F, 0x49 }, { 0x80, 0x4A },
+	{0x74, 0x3D}, { 0x7A, 0x3F }, { 0x81, 0x49 },
+	{0x75, 0x45}, { 0x7B, 0x36 }, { 0x82, 0x49 },
+	{0x76, 0x3E}, { 0x7C, 0x48 }, { 0x85, 0x4A },
+	{0x77, 0x35}, { 0x7D, 0x48 },
+	{0x78, 0x46}, { 0x7E, 0x48 },
+};
+
+static BYTE ProcessTerrainGenGreenIndex(BYTE colIdx) {
+	auto iter = mapTerrainGenGreenIndexMap.find(colIdx);
+	if (iter != mapTerrainGenGreenIndexMap.end())
+		return iter->second;
+	else
+		return colIdx;
+}
+
+std::map<BYTE, BYTE> mapTerrainGenColdIndexMap = {
+	// Ground tiles
+	{0x73, 0x9A}, { 0x79, 0x9A }, { 0x7F, 0x9A }, { 0x80, 0x9A },
+	{0x74, 0x9B}, { 0x7A, 0x9B }, { 0x81, 0x9B },
+	{0x75, 0x9C}, { 0x7B, 0x9C }, { 0x82, 0x9C },
+	{0x76, 0x9D}, { 0x7C, 0x9D }, { 0x85, 0x9D },
+	{0x77, 0x9E}, { 0x7D, 0x9E },
+	{0x78, 0x9F}, { 0x7E, 0x9F },
+};
+
+static BYTE ProcessTerrainGenColdIndex(BYTE colIdx) {
+	auto iter = mapTerrainGenColdIndexMap.find(colIdx);
+	if (iter != mapTerrainGenColdIndexMap.end())
+		return iter->second;
+	else
+		return colIdx;
+}
+
+std::map<BYTE, BYTE> mapTerrainGenColdSnowIndexMap = {
+	// Ground tiles
+	{0x73, 0x9A}, { 0x79, 0x9A }, { 0x7F, 0x9A }, { 0x80, 0xA6 },
+	{0x74, 0x9B}, { 0x7A, 0x9B }, { 0x81, 0xA3 },
+	{0x75, 0x9C}, { 0x7B, 0x9C }, { 0x82, 0xA4 },
+	{0x76, 0x9D}, { 0x7C, 0x9D }, { 0x85, 0xA5 },
+	{0x77, 0x9E}, { 0x7D, 0x9E },
+	{0x78, 0x9F}, { 0x7E, 0x9F },
+
+	// Water tiles
+	{0xC8, 0x53}, { 0xCC, 0x53 }, { 0xD0, 0x53 },
+	{0xC9, 0x54}, { 0xCD, 0x54 }, { 0xD1, 0x54 },
+	{0xCA, 0x55}, { 0xCE, 0x55 }, { 0xD2, 0x55 },
+	{0xCB, 0x56}, { 0xCF, 0x56 }, { 0xD3, 0x56 },
+};
+
+static BYTE ProcessTerrainGenColdSnowIndex(BYTE colIdx) {
+	auto iter = mapTerrainGenColdSnowIndexMap.find(colIdx);
+	if (iter != mapTerrainGenColdSnowIndexMap.end())
+		return iter->second;
+	else
+		return colIdx;
+}
+
+std::map<BYTE, BYTE> mapTerrainGenHotIndexMap = {
+	// Ground tiles
+	{0x73, 0x24}, { 0x79, 0x26 }, { 0x7F, 0x28 }, { 0x80, 0x2A },
+	{0x74, 0x24}, { 0x7A, 0x26 }, { 0x81, 0x21 },
+	{0x75, 0x24}, { 0x7B, 0x26 }, { 0x82, 0x29 },
+	{0x76, 0x25}, { 0x7C, 0x20 }, { 0x85, 0x22 },
+	{0x77, 0x25}, { 0x7D, 0x27 },
+	{0x78, 0x25}, { 0x7E, 0x20 },
+};
+
+static BYTE ProcessTerrainGenHotIndex(BYTE colIdx) {
+	auto iter = mapTerrainGenHotIndexMap.find(colIdx);
+	if (iter != mapTerrainGenHotIndexMap.end())
+		return iter->second;
+	else
+		return colIdx;
+}
+
 std::map<BYTE, BYTE> mapTerrainSnowIndexMap = {
 	// Ground tiles
 	{0x73, 0x9A}, { 0x79, 0x9A }, { 0x7F, 0x9A }, { 0x80, 0x9A },
@@ -1273,7 +1381,6 @@ std::map<BYTE, BYTE> mapTerrainSnowIndexMap = {
 	{0xCA, 0x55}, { 0xCE, 0x55 }, { 0xD2, 0x55 },
 	{0xCB, 0x56}, { 0xCF, 0x56 }, { 0xD3, 0x56 },
 };
-
 
 std::map<BYTE, BYTE> mapTerrainBlizzardIndexMap = {
 	// Ground tiles
@@ -1298,6 +1405,7 @@ static BYTE ProcessTerrainSnowIndex(BYTE colIdx) {
 	else
 		return colIdx;
 }
+
 static BYTE ProcessTerrainBlizzardIndex(BYTE colIdx) {
 	auto iter = mapTerrainBlizzardIndexMap.find(colIdx);
 	if (iter != mapTerrainBlizzardIndexMap.end())
@@ -1446,6 +1554,10 @@ static void Delete_Sprite_Cache(spriteCache_t *pSpriteCache) {
 	Delete_SpriteFrame_Cache(pSpriteCache->sprSeasonAutumnFrame, pSpriteCache->nID, PALCACHE_TYPE_TREES_SEASON_AUTUMN);
 	Delete_SpriteFrame_Cache(pSpriteCache->sprSeasonAutumnSnowFrame, pSpriteCache->nID, PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW);
 	Delete_SpriteFrame_Cache(pSpriteCache->sprSeasonSnowFrame, pSpriteCache->nID, PALCACHE_TYPE_TREES_SEASON_SNOW);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprTerrainGenGreyFrame, pSpriteCache->nID, PALCACHE_TYPE_TERRAIN_GEN_GREY);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprTerrainGenGreenFrame, pSpriteCache->nID, PALCACHE_TYPE_TERRAIN_GEN_GREEN);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprTerrainGenColdFrame, pSpriteCache->nID, PALCACHE_TYPE_TERRAIN_GEN_COLD);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprTerrainGenHotFrame, pSpriteCache->nID, PALCACHE_TYPE_TERRAIN_GEN_HOT);
 	Delete_SpriteFrame_Cache(pSpriteCache->sprTerrainSnowFrame, pSpriteCache->nID, PALCACHE_TYPE_TERRAIN_SNOW);
 	Delete_SpriteFrame_Cache(pSpriteCache->sprTerrainBlizzardFrame, pSpriteCache->nID, PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD);
 	Delete_SpriteFrame_Cache(pSpriteCache->sprDeepWaterIceFrame, pSpriteCache->nID, PALCACHE_TYPE_WATER_ICE);
@@ -1510,11 +1622,13 @@ static bool Scan_Sprite(BYTE *shapePtr) {
 	return false;
 }
 
-static void Adjust_SpritePalette(BYTE *shapePtr, int cIdx, int nType) {
+static void Adjust_SpritePalette(BYTE *shapePtr, WORD wHeight, int cIdx, int nType) {
 	BYTE *spritePtr;
 	BYTE nCount;
 	BYTE nChunkMode;
+	WORD nRemHeight;
 
+	nRemHeight = wHeight;
 	spritePtr = shapePtr;
 	while (TRUE) {
 		nCount = SPRITEDATA(spritePtr)->nCount;
@@ -1524,6 +1638,7 @@ static void Adjust_SpritePalette(BYTE *shapePtr, int cIdx, int nType) {
 		case MIF_CM_EMPTY:
 			continue;
 		case MIF_CM_NEWROWSTART:
+			--nRemHeight;
 			break;
 		case MIF_CM_SKIPPIXELS:
 			break;
@@ -1543,6 +1658,42 @@ static void Adjust_SpritePalette(BYTE *shapePtr, int cIdx, int nType) {
 						}
 						else if (nType == PALCACHE_TYPE_TREES_SEASON_SNOW)
 							palIdx = ProcessTreeSnowEffect(palIdx);
+					}
+				}
+				else if (nType >= PALCACHE_TYPE_TERRAIN_GEN_GREY && nType <= PALCACHE_TYPE_TERRAIN_GEN_HOT) {
+					BOOL bProcess = FALSE;
+					if (nType == PALCACHE_TYPE_TERRAIN_GEN_GREY) {
+						if ((nPos % SEQ_MODULUS) == 0 || (nPos % SEQ_MODULUS) == 2 || (nPos % SEQ_MODULUS) == 3)
+							bProcess = TRUE;
+					}
+					else if (nType == PALCACHE_TYPE_TERRAIN_GEN_GREEN) {
+						if ((nPos % SEQ_MODULUS) == 1 || (nPos % SEQ_MODULUS) == 3)
+							bProcess = TRUE;
+					}
+					else {
+						if (((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2) && ((nPos % 2) == 1))
+							bProcess = TRUE;
+					}
+					if (nType == PALCACHE_TYPE_TERRAIN_GEN_GREY) {
+						if (bProcess)
+							palIdx = ProcessTerrainGenGreyIndex(palIdx);
+					}
+					else if (nType == PALCACHE_TYPE_TERRAIN_GEN_GREEN) {
+						palIdx = (bProcess) ? ProcessTerrainGenGreenIndex(palIdx) : ProcessTerrainGenGreyIndex(palIdx);
+					}
+					else if (nType == PALCACHE_TYPE_TERRAIN_GEN_COLD) {
+						if ((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2)
+							palIdx = (bProcess) ? ProcessTerrainGenColdSnowIndex(palIdx) : ProcessTerrainGenGreyIndex(palIdx);
+						else if ((nPos % 3) == 1)
+							palIdx = ProcessTerrainGenColdIndex(palIdx);
+					}
+					else if (nType == PALCACHE_TYPE_TERRAIN_GEN_HOT) {
+						if ((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2) {
+							if (!bProcess)
+								palIdx = ProcessTerrainGenHotIndex(palIdx);
+						}
+						else
+							palIdx = ProcessTerrainGenHotIndex(palIdx);
 					}
 				}
 				else if (nType >= PALCACHE_TYPE_TERRAIN_SNOW && nType <= PALCACHE_TYPE_WATER_ICE_BLIZZARD) {
@@ -1586,7 +1737,7 @@ static void Create_SpriteNew(std::vector<spriteFrame_t> &frameCache, BYTE *pSpri
 	if (sprFrame.pBuf) {
 		memcpy(sprFrame.pBuf, pSpriteBuf, nSize);
 		if (nType > PALCACHE_TYPE_NONE)
-			Adjust_SpritePalette(sprFrame.pBuf, cIdx, nType);
+			Adjust_SpritePalette(sprFrame.pBuf, sprFrame.wHeight, cIdx, nType);
 	}
 	else {
 		ConsoleLog(LOG_ERROR, "Create_SpriteNew(%d, %u, %u, %d, %d): Allocation failed for sprite frame.\n", nSize, wHeight, wWidth, nFrm, nType);
@@ -1613,7 +1764,12 @@ static void Snow_SpritePalette_DeepWater(DWORD nID, spriteFrame_t *pSpriteFrame,
 	Create_SpriteFrame(spriteCache[nID].sprDeepWaterBlizzardFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_WATER_ICE_BLIZZARD);
 }
 
-static void Snow_SpritePalette_Terrain(DWORD nID, spriteFrame_t *pSpriteFrame, int nFrmID) {
+static void Effect_SpritePalette_Terrain(DWORD nID, spriteFrame_t *pSpriteFrame, int nFrmID) {
+	// Cache - overall selectable terrain effects.
+	Create_SpriteFrame(spriteCache[nID].sprTerrainGenGreyFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_TERRAIN_GEN_GREY);
+	Create_SpriteFrame(spriteCache[nID].sprTerrainGenGreenFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_TERRAIN_GEN_GREEN);
+	Create_SpriteFrame(spriteCache[nID].sprTerrainGenColdFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_TERRAIN_GEN_COLD);
+	Create_SpriteFrame(spriteCache[nID].sprTerrainGenHotFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_TERRAIN_GEN_HOT);
 	// Cache - ground should be mostly covered in regular snow or absolutely blanketed in a blizzard.
 	Create_SpriteFrame(spriteCache[nID].sprTerrainSnowFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_TERRAIN_SNOW);
 	Create_SpriteFrame(spriteCache[nID].sprTerrainBlizzardFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD);
@@ -1641,7 +1797,7 @@ void Cache_Sprite(DWORD nID, BYTE *pSpriteBuf, int nSize, WORD wHeight, WORD wWi
 				if (DeepWaterSpriteCheck(nID))
 					Snow_SpritePalette_DeepWater(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
 				else
-					Snow_SpritePalette_Terrain(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
+					Effect_SpritePalette_Terrain(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
 			}
 			else if (ObjectGrassSpritesCheck(nID)) {
 				Snow_SpritePalette_Grass(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
@@ -1682,44 +1838,59 @@ static BYTE *Get_SpriteCache_Buffer(sprite_header_t *pShapePtr, __int16 nSpriteI
 			nFrmIdx = -nFrmIdx;
 		BYTE *pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, nFrmIdx);
 		if (pSpriteBuf) {
-			if (bWeatherEffects && !bLoColor && !bOnTheFlyPalIdx) {
-				if (TreeSpritesCheck(nSpriteID)) {
-					if (ColdWeatherCheck())
-						nType = PALCACHE_TYPE_TREES_SEASON_SNOW;
+			if (!bLoColor && !bOnTheFlyPalIdx) {
+				if (bWeatherEffects) {
+					if (TreeSpritesCheck(nSpriteID)) {
+						if (ColdWeatherCheck())
+							nType = PALCACHE_TYPE_TREES_SEASON_SNOW;
 
-					if (TreeBrowningCheck())
-						nType = (nType == PALCACHE_TYPE_TREES_SEASON_SNOW) ? PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW : PALCACHE_TYPE_TREES_SEASON_AUTUMN;
+						if (TreeBrowningCheck())
+							nType = (nType == PALCACHE_TYPE_TREES_SEASON_SNOW) ? PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW : PALCACHE_TYPE_TREES_SEASON_AUTUMN;
 
-					if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMN)
-						return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonAutumnFrame, pSpriteBuf, nFrmIdx);
-					else if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW)
-						return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonAutumnSnowFrame, pSpriteBuf, nFrmIdx);
-					else if (nType == PALCACHE_TYPE_TREES_SEASON_SNOW)
-						return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonSnowFrame, pSpriteBuf, nFrmIdx);
-				}
-				else if (TerrainSpritesCheck(nSpriteID)) {
-					if (ColdWeatherCheck()) {
-						if (DeepWaterSpriteCheck(nSpriteID)) {
-							nType = (BlizzardCheck()) ? PALCACHE_TYPE_WATER_ICE_BLIZZARD : PALCACHE_TYPE_WATER_ICE;
-							if (nType == PALCACHE_TYPE_WATER_ICE)
-								return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprDeepWaterIceFrame, pSpriteBuf, nFrmIdx);
-							else if (nType == PALCACHE_TYPE_WATER_ICE_BLIZZARD)
-								return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprDeepWaterBlizzardFrame, pSpriteBuf, nFrmIdx);
+						if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMN)
+							return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonAutumnFrame, pSpriteBuf, nFrmIdx);
+						else if (nType == PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW)
+							return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonAutumnSnowFrame, pSpriteBuf, nFrmIdx);
+						else if (nType == PALCACHE_TYPE_TREES_SEASON_SNOW)
+							return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonSnowFrame, pSpriteBuf, nFrmIdx);
+					}
+					else if (TerrainSpritesCheck(nSpriteID)) {
+						if (ColdWeatherCheck()) {
+							if (DeepWaterSpriteCheck(nSpriteID)) {
+								nType = (BlizzardCheck()) ? PALCACHE_TYPE_WATER_ICE_BLIZZARD : PALCACHE_TYPE_WATER_ICE;
+								if (nType == PALCACHE_TYPE_WATER_ICE)
+									return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprDeepWaterIceFrame, pSpriteBuf, nFrmIdx);
+								else if (nType == PALCACHE_TYPE_WATER_ICE_BLIZZARD)
+									return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprDeepWaterBlizzardFrame, pSpriteBuf, nFrmIdx);
+							}
+							else {
+								nType = (BlizzardCheck()) ? PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD : PALCACHE_TYPE_TERRAIN_SNOW;
+								if (nType == PALCACHE_TYPE_TERRAIN_SNOW)
+									return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainSnowFrame, pSpriteBuf, nFrmIdx);
+								else if (nType == PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD)
+									return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainBlizzardFrame, pSpriteBuf, nFrmIdx);
+							}
 						}
-						else {
-							nType = (BlizzardCheck()) ? PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD : PALCACHE_TYPE_TERRAIN_SNOW;
-							if (nType == PALCACHE_TYPE_TERRAIN_SNOW)
-								return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainSnowFrame, pSpriteBuf, nFrmIdx);
-							else if (nType == PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD)
-								return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainBlizzardFrame, pSpriteBuf, nFrmIdx);
+					}
+					else if (ObjectGrassSpritesCheck(nSpriteID)) {
+						if (ColdWeatherCheck()) {
+							nType = PALCACHE_TYPE_GRASS_SNOW; // Yes I know.. this is the only option here currently.
+							if (nType == PALCACHE_TYPE_GRASS_SNOW)
+								return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprGrassSnowFrame, pSpriteBuf, nFrmIdx);
 						}
 					}
 				}
-				else if (ObjectGrassSpritesCheck(nSpriteID)) {
-					if (ColdWeatherCheck()) {
-						nType = PALCACHE_TYPE_GRASS_SNOW; // Yes I know.. this is the only option here currently.
-						if (nType == PALCACHE_TYPE_GRASS_SNOW)
-							return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprGrassSnowFrame, pSpriteBuf, nFrmIdx);
+				if (TerrainSpritesCheck(nSpriteID) && !DeepWaterSpriteCheck(nSpriteID)) {
+					nType = GetTerrainCosmetic();
+					if (nType >= PALCACHE_TYPE_TERRAIN_GEN_GREY && nType <= PALCACHE_TYPE_TERRAIN_GEN_HOT) {
+						if (nType == PALCACHE_TYPE_TERRAIN_GEN_GREY)
+							return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainGenGreyFrame, pSpriteBuf, nFrmIdx);
+						else if (nType == PALCACHE_TYPE_TERRAIN_GEN_GREEN)
+							return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainGenGreenFrame, pSpriteBuf, nFrmIdx);
+						else if (nType == PALCACHE_TYPE_TERRAIN_GEN_COLD)
+							return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainGenColdFrame, pSpriteBuf, nFrmIdx);
+						else if (nType == PALCACHE_TYPE_TERRAIN_GEN_HOT)
+							return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainGenHotFrame, pSpriteBuf, nFrmIdx);
 					}
 				}
 			}
@@ -1744,6 +1915,14 @@ static BYTE *Get_SpecificSpriteCache_Buffer(sprite_header_t *pShapePtr, __int16 
 					return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonAutumnSnowFrame, pSpriteBuf, nFrmIdx);
 				else if (nType == PALCACHE_TYPE_TREES_SEASON_SNOW)
 					return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprSeasonSnowFrame, pSpriteBuf, nFrmIdx);
+				else if (nType == PALCACHE_TYPE_TERRAIN_GEN_GREY)
+					return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainGenGreyFrame, pSpriteBuf, nFrmIdx);
+				else if (nType == PALCACHE_TYPE_TERRAIN_GEN_GREEN)
+					return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainGenGreenFrame, pSpriteBuf, nFrmIdx);
+				else if (nType == PALCACHE_TYPE_TERRAIN_GEN_COLD)
+					return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainGenColdFrame, pSpriteBuf, nFrmIdx);
+				else if (nType == PALCACHE_TYPE_TERRAIN_GEN_HOT)
+					return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainGenHotFrame, pSpriteBuf, nFrmIdx);
 				else if (nType == PALCACHE_TYPE_TERRAIN_SNOW)
 					return Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainSnowFrame, pSpriteBuf, nFrmIdx);
 				else if (nType == PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD)
@@ -1834,10 +2013,40 @@ static BYTE ProcessSpriteSpecificPaletteIndex(__int16 nSpriteID, BYTE colIdx, WO
 			}
 			// Ground should be mostly covered in regular snow or absolutely blanketed in a blizzard.
 			else {
-				if (nType == PALCACHE_TYPE_TERRAIN_SNOW)
-					palIdx = ProcessTerrainSnowIndex(palIdx);
-				else if (nType == PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD)
-					palIdx = ProcessTerrainBlizzardIndex(palIdx);
+				BOOL bProcess = FALSE;
+				if (nType == PALCACHE_TYPE_TERRAIN_GEN_GREY) {
+					if ((nPos % SEQ_MODULUS) == 0 || (nPos % SEQ_MODULUS) == 2 || (nPos % SEQ_MODULUS) == 3)
+						bProcess = TRUE;
+				}
+				else if (nType == PALCACHE_TYPE_TERRAIN_GEN_GREEN) {
+					if ((nPos % SEQ_MODULUS) == 1 || (nPos % SEQ_MODULUS) == 3)
+						bProcess = TRUE;
+				}
+				else {
+					if (((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2) && ((nPos % 2) == 1))
+						bProcess = TRUE;
+				}
+				if (nType == PALCACHE_TYPE_TERRAIN_GEN_GREY) {
+					if (bProcess)
+						palIdx = ProcessTerrainGenGreyIndex(palIdx);
+				}
+				else if (nType == PALCACHE_TYPE_TERRAIN_GEN_GREEN) {
+					palIdx = (bProcess) ? ProcessTerrainGenGreenIndex(palIdx) : ProcessTerrainGenGreyIndex(palIdx);
+				}
+				else if (nType == PALCACHE_TYPE_TERRAIN_GEN_COLD) {
+					if ((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2)
+						palIdx = (bProcess) ? ProcessTerrainGenColdSnowIndex(palIdx) : ProcessTerrainGenGreyIndex(palIdx);
+					else if ((nPos % 3) == 1)
+						palIdx = ProcessTerrainGenColdIndex(palIdx);
+				}
+				else if (nType == PALCACHE_TYPE_TERRAIN_GEN_HOT) {
+					if ((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2) {
+						if (!bProcess)
+							palIdx = ProcessTerrainGenHotIndex(palIdx);
+					}
+					else
+						palIdx = ProcessTerrainGenHotIndex(palIdx);
+				}
 			}
 		}
 
@@ -1872,26 +2081,66 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 		}
 
 		// Handle snow-related tile stuff
-		if (ColdWeatherCheck()) {
-			// Accumulate snow on ground
-			if (TerrainSpritesCheck(nSpriteID)) {
-				if (ColdWeatherCheck()) {
-					// Handle deep water differently.
-					if (DeepWaterSpriteCheck(nSpriteID)) {
-						if (((nPos % SEQ_MODULUS) == 1 && BlizzardCheck()) || (nPos % SEQ_MODULUS) == 2)
-							palIdx = (BlizzardCheck() ? ProcessTerrainBlizzardIndex(palIdx) : ProcessTerrainSnowIndex(palIdx));
-					}
-
-					// Ground should be mostly covered in regular snow or absolutely blanketed in a blizzard.
-					else 
+		// Accumulate snow on ground
+		if (TerrainSpritesCheck(nSpriteID)) {
+			if (ColdWeatherCheck()) {
+				// Handle deep water differently.
+				if (DeepWaterSpriteCheck(nSpriteID)) {
+					if (((nPos % SEQ_MODULUS) == 1 && BlizzardCheck()) || (nPos % SEQ_MODULUS) == 2)
 						palIdx = (BlizzardCheck() ? ProcessTerrainBlizzardIndex(palIdx) : ProcessTerrainSnowIndex(palIdx));
 				}
-			}
 
-			// Accumulate snow on grass
-			else if (ObjectGrassSpritesCheck(nSpriteID)) {
-				palIdx = ProcessBuildingSnowIndex(palIdx);
+				// Ground should be mostly covered in regular snow or absolutely blanketed in a blizzard.
+				else 
+					palIdx = (BlizzardCheck() ? ProcessTerrainBlizzardIndex(palIdx) : ProcessTerrainSnowIndex(palIdx));
 			}
+			else {
+				if (!DeepWaterSpriteCheck(nSpriteID)) {
+					int iTerrainCosmetic = GetTerrainCosmetic();
+					if (iTerrainCosmetic >= PALCACHE_TYPE_TERRAIN_GEN_GREY && iTerrainCosmetic <= PALCACHE_TYPE_TERRAIN_GEN_HOT) {
+						BOOL bProcess = FALSE;
+						if (iTerrainCosmetic == PALCACHE_TYPE_TERRAIN_GEN_GREY) {
+							if ((nPos % SEQ_MODULUS) == 0 || (nPos % SEQ_MODULUS) == 2 || (nPos % SEQ_MODULUS) == 3)
+								bProcess = TRUE;
+						}
+						else if (iTerrainCosmetic == PALCACHE_TYPE_TERRAIN_GEN_GREEN) {
+							if ((nPos % SEQ_MODULUS) == 1 || (nPos % SEQ_MODULUS) == 3)
+								bProcess = TRUE;
+						}
+						else {
+							if (((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2) && ((nPos % 2) == 1))
+								bProcess = TRUE;
+						}
+						if (iTerrainCosmetic == PALCACHE_TYPE_TERRAIN_GEN_GREY) {
+							if (bProcess)
+								palIdx = ProcessTerrainGenGreyIndex(palIdx);
+						}
+						else if (iTerrainCosmetic == PALCACHE_TYPE_TERRAIN_GEN_GREEN) {
+							palIdx = (bProcess) ? ProcessTerrainGenGreenIndex(palIdx) : ProcessTerrainGenGreyIndex(palIdx);
+						}
+						else if (iTerrainCosmetic == PALCACHE_TYPE_TERRAIN_GEN_COLD) {
+							if ((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2)
+								palIdx = (bProcess) ? ProcessTerrainGenColdSnowIndex(palIdx) : ProcessTerrainGenGreyIndex(palIdx);
+							else if ((nPos % 3) == 1)
+								palIdx = ProcessTerrainGenColdIndex(palIdx);
+						}
+						else if (iTerrainCosmetic == PALCACHE_TYPE_TERRAIN_GEN_HOT) {
+							if ((nRemHeight % 3) == 0 || (nRemHeight % 3) == 2) {
+								if (!bProcess)
+									palIdx = ProcessTerrainGenHotIndex(palIdx);
+							}
+							else
+								palIdx = ProcessTerrainGenHotIndex(palIdx);
+						}
+					}
+				}
+			}
+		}
+
+		// Accumulate snow on grass
+		else if (ObjectGrassSpritesCheck(nSpriteID)) {
+			if (ColdWeatherCheck())
+				palIdx = ProcessBuildingSnowIndex(palIdx);
 		}
 
 		// IDEA: high temperatures + WEATHER_TREND_HOT = patchy, dried out grass?
@@ -2565,6 +2814,23 @@ static BYTE ProcessWeatherSolidShadow(BYTE palIdx, BYTE currIdx) {
 		// all seasons.
 		if (currIdx >= 0x9A && currIdx <= 0x9F)
 			return currIdx;
+		if (iTerrainCosmeticMode) {
+			// Ordering:
+			// Grey (don't include 0xA1 in the range to avoid traffic disruption)
+			// Green
+			// Hot
+			//
+			// It should be noted that as a result of the inclusion of these cases
+			// when a cosmetic terrain mode is enabled, the shadow "can" intersect
+			// with a non-terrain tile - this is more noticeable when a monster is
+			// active (Revisit for future improvements).
+			if (currIdx >= 0xA0 && currIdx <= 0xA7 && currIdx != 0xA1)
+				return currIdx;
+			else if ((currIdx >= 0x34 && currIdx <= 0x36) || (currIdx >= 0x3D && currIdx <= 0x3F) || (currIdx >= 0x45 && currIdx <= 0x4A))
+				return currIdx;
+			else if ((currIdx >= 0x20 && currIdx <= 0x22) || (currIdx >= 0x24 && currIdx <= 0x2A))
+				return currIdx;
+		}
 	}
 	return palIdx;
 }

@@ -19,7 +19,11 @@ enum {
 	SPRTYPE_AUTUMN,
 	SPRTYPE_AUTUMNSNOW,
 	SPRTYPE_SNOW,
-	SPRTYPE_BLIZZARD
+	SPRTYPE_BLIZZARD,
+	SPRTYPE_TERRAIN_GEN_GREY,
+	SPRTYPE_TERRAIN_GEN_GREEN,
+	SPRTYPE_TERRAIN_GEN_COLD,
+	SPRTYPE_TERRAIN_GEN_HOT
 };
 
 extern bool UndergroundSpritesCheck(DWORD nID);
@@ -43,15 +47,27 @@ static int GetApplicableSpriteType(HWND hwndDlg, __int16 nSpriteID) {
 				if (TreeSpritesCheck(nSpriteID))
 					return PALCACHE_TYPE_TREES_SEASON_AUTUMN;
 			}
-			else if (nSel == SPRTYPE_AUTUMNSNOW || nSel == SPRTYPE_SNOW || nSel == SPRTYPE_BLIZZARD) {
+			else if (nSel >= SPRTYPE_AUTUMNSNOW && nSel <= SPRTYPE_TERRAIN_GEN_HOT) {
 				if (TreeSpritesCheck(nSpriteID)) {
 					return (nSel == SPRTYPE_AUTUMNSNOW) ? PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW : PALCACHE_TYPE_TREES_SEASON_SNOW;
 				}
 				else if (TerrainSpritesCheck(nSpriteID)) {
 					if (DeepWaterSpriteCheck(nSpriteID))
 						return (nSel == SPRTYPE_BLIZZARD) ? PALCACHE_TYPE_WATER_ICE_BLIZZARD : PALCACHE_TYPE_WATER_ICE;
-					else
-						return (nSel == SPRTYPE_BLIZZARD) ? PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD : PALCACHE_TYPE_TERRAIN_SNOW;
+					else {
+						if (nSel >= SPRTYPE_TERRAIN_GEN_GREY && nSel <= SPRTYPE_TERRAIN_GEN_HOT) {
+							if (nSel == SPRTYPE_TERRAIN_GEN_GREY)
+								return PALCACHE_TYPE_TERRAIN_GEN_GREY;
+							else if (nSel == SPRTYPE_TERRAIN_GEN_GREEN)
+								return PALCACHE_TYPE_TERRAIN_GEN_GREEN;
+							else if (nSel == SPRTYPE_TERRAIN_GEN_COLD)
+								return PALCACHE_TYPE_TERRAIN_GEN_COLD;
+							else if (nSel == SPRTYPE_TERRAIN_GEN_HOT)
+								return PALCACHE_TYPE_TERRAIN_GEN_HOT;
+						}
+						else
+							return (nSel == SPRTYPE_BLIZZARD) ? PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD : PALCACHE_TYPE_TERRAIN_SNOW;
+					}
 				}
 				else if (ObjectGrassSpritesCheck(nSpriteID))
 					return PALCACHE_TYPE_GRASS_SNOW;
@@ -116,6 +132,10 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 			ComboBox_AddString(hWndEffectCombo, "Autumn Snow (Trees, Terrain, Water, Certain Buildings)");
 			ComboBox_AddString(hWndEffectCombo, "Snow (Trees, Terrain, Water, Certain Buildings)");
 			ComboBox_AddString(hWndEffectCombo, "Blizzard (Trees, Terrain, Water, Certain Buildings)");
+			ComboBox_AddString(hWndEffectCombo, "Grey / Rough (Terrain)");
+			ComboBox_AddString(hWndEffectCombo, "Green (Terrain)");
+			ComboBox_AddString(hWndEffectCombo, "Cold (Terrain, Coast)");
+			ComboBox_AddString(hWndEffectCombo, "Hot (Terrain)");
 			ComboBox_SetCurSel(hWndEffectCombo, 0);
 
 			SetWindowPos(hWndEffectCombo, HWND_TOP, 0, 0, cmdRect.right - cmdRect.left, 200, SWP_NOZORDER | SWP_NOMOVE);

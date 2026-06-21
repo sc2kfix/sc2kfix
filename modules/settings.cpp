@@ -36,6 +36,7 @@ bool bBackgroundMusic = false;
 bool bFrequentUpdates = false;
 bool bWeatherEffects = false;
 bool bDarkUnderground = false;
+int iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
 int nMovZoomFactor = MIN_MOVZOOMFACTOR;
 
 char szGamePath[MAX_PATH];
@@ -124,6 +125,7 @@ void DefaultSettingsSC2KFixCore(json::JSON& jsonSettings) {
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USEFLTSTATUS] = DEF_FIX_QOL_USEFLTSTATUS;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND] = DEF_FIX_QOL_TITLECALEND;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_MOVZOOMFACTOR] = DEF_FIX_QOL_MOVZOOMFACTOR;
+	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC] = DEF_FIX_QOL_TERRAINCOSMETIC;
 	
 	for (int i = 10000; i < 10019; i++) {
 		jsonSettings[C_SC2KFIX][S_FIX_MUSMID][std::to_string(i)] = "";
@@ -256,6 +258,7 @@ static void GetSpecificStoredJSONVars() {
 	bFrequentUpdates = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool();
 	bWeatherEffects = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_WEATHEREFFECTS].ToBool();
 	bDarkUnderground = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND].ToBool();
+	iTerrainCosmeticMode = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt();
 	nMovZoomFactor = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_MOVZOOMFACTOR].ToInt();
 	if (nMovZoomFactor < MIN_MOVZOOMFACTOR) {
 		ConsoleLog(LOG_INFO, "Invalid Movie Zoom Factor '%d' - it cannot be less than '%d'; setting to '%d'\n", nMovZoomFactor, MIN_MOVZOOMFACTOR, MIN_MOVZOOMFACTOR);
