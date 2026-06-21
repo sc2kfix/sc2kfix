@@ -3374,7 +3374,7 @@ static void L_drawShadowShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __
 
 extern "C" void __cdecl Hook_drawMaskShape(__int16 nSpriteID, __int16 left, __int16 top, __int16 isFlipped) {
 	sprite_header_t *shapePtr;
-	BYTE *shapeData;
+	BYTE *shapeData, *baseShapeData;
 	int nShapeTop, nShapeLeft;
 
 	shapePtr = &shapeCurrent[nSpriteID];
@@ -3385,10 +3385,23 @@ extern "C" void __cdecl Hook_drawMaskShape(__int16 nSpriteID, __int16 left, __in
 			nShapeLeft = left + Get_SpriteCache_Width(shapePtr, nSpriteID);
 			if (shapeRight > left && nShapeLeft > shapeLeft && shapeBottom > top && nShapeTop > shapeTop) {
 				int nLeft = (isFlipped) ? nShapeLeft : left;
-				if (shapeTop >= top || shapeLeft >= left || nShapeTop >= shapeBottom || nShapeLeft >= shapeRight)
-					L_drawShape_OutOfContext(shapeData, nSpriteID, nLeft, top, TRUE, isFlipped);
-				else
-					L_drawShape_MainArea(shapeData, nSpriteID, nLeft, top, TRUE, isFlipped);
+				baseShapeData = Get_SpriteCache_BaseBuffer(shapePtr, nSpriteID);
+				if (baseShapeData) {
+					if (shapeTop >= top || shapeLeft >= left || nShapeTop >= shapeBottom || nShapeLeft >= shapeRight) {
+						if (shapeBaseBits) {
+							L_drawShape_WithBase_OutOfContext(shapeData, baseShapeData, nSpriteID, nLeft, top, TRUE, isFlipped);
+						}
+						else
+							L_drawShape_OutOfContext(shapeData, nSpriteID, nLeft, top, TRUE, isFlipped);
+					}
+					else {
+						if (shapeBaseBits) {
+							L_drawShape_WithBase_MainArea(shapeData, baseShapeData, nSpriteID, nLeft, top, TRUE, isFlipped);
+						}
+						else
+							L_drawShape_MainArea(shapeData, nSpriteID, nLeft, top, TRUE, isFlipped);
+					}
+				}
 			}
 		}
 	}
