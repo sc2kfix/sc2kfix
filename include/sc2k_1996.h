@@ -3415,6 +3415,7 @@ GAMEOFF(WORD,	wNationalEconomyTrend,		0x4CA1BC)
 GAMEOFF(BYTE*,	bArrNewspaperTable2,		0x4CA1C0)
 GAMEOFF(WORD,	wPrisonBonus,				0x4CA1DC)
 GAMEOFF(WORD,	wCityTerrainSliderHills,	0x4CA1E0)
+GAMEOFF(__int16,	wClipXhigh,				0x4CA1E4)
 GAMEOFF(WORD,	wIndustrialMixBonus,		0x4CA1E8)
 GAMEOFF(WORD,	wCurrentMapToolGroup,		0x4CA1EC)
 GAMEOFF(WORD,	wCityNeighborConnections1500,	0x4CA3F0)
@@ -3438,6 +3439,7 @@ GAMEOFF(DWORD*, dwNeighborValue,			0x4CA804)		// DWORD dwNeighborValue[4]
 GAMEOFF(WORD,	wNewspaperChoice,			0x4CA808)
 GAMEOFF(short,	wWaterLevel,				0x4CA818)
 GAMEOFF(__int16,	wDisasterObject,		0x4CA81C)
+GAMEOFF(__int16,	wClipYhigh,				0x4CA820)
 GAMEOFF(DWORD,	dwNationalPopulation,		0x4CA928)
 GAMEOFF(DWORD*, dwNeighborFame,				0x4CA92C)		// DWORD dwNeighborFame[4]
 GAMEOFF(WORD*,	dwMilitaryTiles,			0x4CA934)
@@ -3449,7 +3451,7 @@ GAMEOFF(DWORD,	dwPowerUsedPercentage,		0x4CAA50)
 GAMEOFF(POINT,	dwDisasterPoint,			0x4CAA58)
 GAMEOFF(DWORD,	dwCityPopulation,			0x4CAA74)
 GAMEOFF(WORD,	wCityTerrainSliderWater,	0x4CAAF8)
-GAMEOFF(DWORD,	pSomeWnd,					0x4CAC18)		// Perhaps this is the active view window? (unclear - but this is referenced in the native TileHighlightRemove function)
+GAMEOFF_PTR(DWORD,	pSomeWnd,				0x4CAC18)		// Perhaps this is the active view window? (unclear - but this is referenced in the native TileHighlightRemove function)
 GAMEOFF(DWORD*, dwNeighborPopulation,		0x4CAD10)		// DWORD dwNeighborPopulation[4]
 GAMEOFF(BOOL,	bMainFrameInactive,			0x4CAD14)
 GAMEOFF(__int16,	iScreenOffSetX,			0x4CAD18)
@@ -3469,6 +3471,7 @@ GAMEOFF(WORD,	wCityTerrainSliderTrees,	0x4CADD8)
 GAMEOFF(BYTE,	bWeatherHeat,				0x4CADE0)
 GAMEOFF(RECT,	dirtyRect,					0x4CAD48)
 GAMEOFF_ARR(BYTE, stNeighborCities,			0x4CAD58)
+GAMEOFF(__int16,	wClipXlow,				0x4CAE00)
 GAMEOFF(DWORD,	dwCityDays,					0x4CAE04)
 GAMEOFF(BYTE,	bWeatherWind,				0x4CAE0C)
 GAMEOFF(WORD,	wCityProgression,			0x4CB010)
@@ -3476,6 +3479,7 @@ GAMEOFF(DWORD,	dwNationalValue,			0x4CB014)
 GAMEOFF(DWORD,	dwCityAdvertising,			0x4CB018)		// Unused in vanilla game
 GAMEOFF(WORD,	wCityCurrentMonth,			0x4CB01C)
 GAMEOFF(WORD,	wCityElapsedYears,			0x4CB020)
+GAMEOFF(__int16,	wClipYlow,				0x4CB024)
 GAMEOFF_ARR(CMFC3XBrush,	MainBrushBorder,	0x4CB1B0)
 GAMEOFF(sprite_header_t*, pArrSpriteHeaders, 0x4CB1B8)
 GAMEOFF(BOOL,	bNewspaperSubscription,		0x4CB3D0)
@@ -4543,7 +4547,7 @@ extern void ResetThingCleanupState_SC2K1996();
 extern void DoThingClean_SC2K1996(int nThingDef);
 
 extern void L_CheckTileHighlight_SC2K1996(CSimcityView *pSCView);
-extern void __cdecl L_BeginProcessObjects_SC2K1996(HWND hWnd, void *pBaseBits, void *pModdedBits, int x, int y, RECT *r);
+extern int __cdecl L_BeginProcessObjects_SC2K1996(HWND hWnd, void *pBaseBits, void *pModdedBits, int x, int y, RECT *r);
 extern void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveTileHighlightActive);
 extern void L_drawShapeSpecific_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert, int nType);
 extern void L_drawShapeDialog_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert);

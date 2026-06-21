@@ -1122,17 +1122,18 @@ extern "C" void __cdecl Hook_start16bitShapes(BYTE *pBits, sprite_header_t *pCur
 	L_SetSpriteForDrawing_SC2K1996(NULL, pBits, pCurrentSprite, x, y, p_rc);
 }
 
-void __cdecl L_BeginProcessObjects_SC2K1996(HWND hWnd, void *pBaseBits, void *pModdedBits, int x, int y, RECT *r) {
+int __cdecl L_BeginProcessObjects_SC2K1996(HWND hWnd, void *pBaseBits, void *pModdedBits, int x, int y, RECT *r) {
 	CMFC3XRect clRect;
 
 	GetClientRect(hWnd, &clRect);
 	if (IsRectEmpty(r))
 		currWndClientRect = clRect;
 	else if (!IntersectRect(&currWndClientRect, r, &clRect))
-		return;
+		return 0;
 	if (currWndClientRect.top > 1)
 		--currWndClientRect.top;
 	L_SetSpriteForDrawing_SC2K1996((BYTE *)pBaseBits, (BYTE *)pModdedBits, pArrSpriteHeaders, x, y, &currWndClientRect);
+	return 1;
 }
 
 extern "C" void __stdcall Hook_endShapes() {
@@ -1171,6 +1172,9 @@ void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveTileHighlightActive)
 			pBaseGraphics->ReleaseDC_SC2K1996(pBaseSCVDC);
 			Game_Graphics_ReleaseDC(pSCView->SCVGraphics, theSCVDC);
 			wCurrentPositionAngle = wPositionAngle[wViewRotation];
+
+			pBaseSCVDC = NULL;
+			theSCVDC = NULL;
 
 			// Draw colour data for map overlays if we're in one of those modes
 			if (!IsIconic(pSCView->m_hWnd) && showColor && EditData)
@@ -1229,6 +1233,109 @@ extern "C" void __stdcall Hook_SimcityView_DrawHouse() {
 	__asm mov [pThis], ecx
 
 	L_DrawHouse_SC2K1996(pThis, FALSE);
+}
+
+extern "C" void __stdcall Hook_SimcityView_UpdateHouse() {
+	CSimcityView *pThis;
+
+	__asm mov [pThis], ecx
+
+	COLORREF cr;
+	HBRUSH hBrush;
+
+	if (dirtyRect.top != -1000) {
+		dirtyRect.bottom += 20 << pThis->wSCVZoomLevel;
+		dirtyRect.left += 20 << pThis->wSCVZoomLevel;
+		IntersectRect(&rcDst, &pThis->SCVAreaView, &dirtyRect);
+		if (pThis->SCVGraphics && pThis->pSCVGraphicLockDIBRes || Game_SimcityView_CheckOrLoadGraphic(pThis)) {
+			if (pBaseGraphics && pBaseGraphicLockDIBRes) {
+				// Lock what we need to and set up the drawing process
+				curBaseLockedDIBBits = Game_Graphics_LockDIBBits(pBaseGraphics);
+				curLockedDIBBits = Game_Graphics_LockDIBBits(pThis->SCVGraphics);
+				if (L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, curBaseLockedDIBBits, curLockedDIBBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &rcDst)) {
+					pBaseSCVDC = pBaseGraphics->GetDC_SC2K1996();
+					theSCVDC = Game_Graphics_GetDC(pThis->SCVGraphics);
+
+					// Set the background colour based on the display layer and draw it
+					if (DisplayLayer[LAYER_UNDERGROUND])
+						cr = colGameBackgndUnder;
+					else
+						cr = colGameBackgndAbove;
+					hBrush = CreateSolidBrush(cr);
+					SetBkColor(pBaseSCVDC->m_hDC, cr);
+					SetBkColor(theSCVDC->m_hDC, cr);
+					FillRect(pBaseSCVDC->m_hDC, &rcDst, hBrush);
+					FillRect(theSCVDC->m_hDC, &rcDst, hBrush);
+					DeleteObject(hBrush);
+					pBaseGraphics->ReleaseDC_SC2K1996(pBaseSCVDC);
+					Game_Graphics_ReleaseDC(pThis->SCVGraphics, theSCVDC);
+					wCurrentPositionAngle = wPositionAngle[wViewRotation];
+
+					pBaseSCVDC = NULL;
+					theSCVDC = NULL;
+
+					// Draw colour data for map overlays if we're in one of those modes
+					if (!IsIconic(pThis->m_hWnd) && showColor && EditData)
+						Game_DrawAllColor();
+
+					// Otherwise check to see if the active display layer is the underground view
+					else if (DisplayLayer[LAYER_UNDERGROUND])
+						Game_DrawAllUnder();
+
+					// If neither of those, draw the above ground view
+					else {
+						switch (pThis->wSCVZoomLevel) {
+						case 0:
+							Game_DrawAllTiny();
+							break;
+						case 1:
+							Game_DrawAllSmall();
+							break;
+						case 2:
+							Game_DrawAllLarge();
+							break;
+						default:
+							ConsoleLog(LOG_WARNING, "DRAW: CSimcityView::UpdateHouse got bad ::wSCVZoomLevel = %d, assuming 2.\n", pThis->wSCVZoomLevel);
+							Game_DrawAllLarge();
+							break;
+						}
+					}
+
+					// Clean up the drawing process and redraw the window (and any subdialogs)
+					Game_FinishProcessObjects();
+					Game_Graphics_UnlockDIBBits(pThis->SCVGraphics);
+					curLockedDIBBits = 0;
+					Game_Graphics_UnlockDIBBits(pBaseGraphics);
+					curBaseLockedDIBBits = 0;
+
+					// pSomeWnd - not clear, though it's possible
+					// that it may have directed to a different
+					// view window at the time - one that doesn't
+					// appear to be hit at this stage - perhaps
+					// debugging at the time?
+					if (pThis == (CSimcityView *)&pSomeWnd)
+						Game_SimcityView_MainWindowUpdate(pThis, 0, TRUE);
+					else
+						Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
+					dirtyRect.top = -1000;
+					wTileHighlightActive = 0;
+					wClipXlow = 1000;
+					wClipYlow = 1000;
+					wClipXhigh = 0;
+					wClipYhigh = 0;
+				}
+				else {
+					dirtyRect.top = -1000;
+					wClipXlow = 1000;
+					wClipYlow = 1000;
+					wClipXhigh = 0;
+					wClipYhigh = 0;
+					Game_Graphics_UnlockDIBBits(pThis->SCVGraphics);
+					Game_Graphics_UnlockDIBBits(pBaseGraphics);
+				}
+			}
+		}
+	}
 }
 
 // Cycling and palette swap tables/maps - related vars
@@ -3679,6 +3786,10 @@ void InstallDrawingHooks_SC2K1996(void) {
 	// Hook for CSimcityView::DrawHouse
 	SafeVirtualProtect((LPVOID)0x402810, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x402810, Hook_SimcityView_DrawHouse);
+
+	// Hook for CSimcityView::UpdateHouse
+	SafeVirtualProtect((LPVOID)0x40226B, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x40226B, Hook_SimcityView_UpdateHouse);
 
 	// Hook for start16bitShapes
 	SafeVirtualProtect((LPVOID)0x402266, 5, PAGE_EXECUTE_READWRITE);
