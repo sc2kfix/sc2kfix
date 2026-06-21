@@ -3139,16 +3139,14 @@ extern "C" void __cdecl Hook_drawShape(__int16 nSpriteID, __int16 right, __int16
 				if (baseShapeData) {
 					if (doInvert) {
 						if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight) {
-							if (shapeBaseBits) {
+							if (shapeBaseBits)
 								L_drawShape_Invert_WithBase_OutOfContext(shapeData, baseShapeData, nSpriteID, right, bottom);
-							}
 							else
 								L_drawShape_Invert_OutOfContext(shapeData, baseShapeData, nSpriteID, right, bottom);
 						}
 						else {
-							if (shapeBaseBits) {
+							if (shapeBaseBits)
 								L_drawShape_Invert_WithBase_MainArea(shapeData, baseShapeData, nSpriteID, right, bottom);
-							}
 							else
 								L_drawShape_Invert_MainArea(shapeData, baseShapeData, nSpriteID, right, bottom);
 						}
@@ -3573,16 +3571,14 @@ extern "C" void __cdecl Hook_drawMaskShape(__int16 nSpriteID, __int16 left, __in
 				baseShapeData = Get_SpriteCache_BaseBuffer(shapePtr, nSpriteID);
 				if (baseShapeData) {
 					if (shapeTop >= top || shapeLeft >= left || nShapeTop >= shapeBottom || nShapeLeft >= shapeRight) {
-						if (shapeBaseBits) {
+						if (shapeBaseBits)
 							L_drawShape_WithBase_OutOfContext(shapeData, baseShapeData, nSpriteID, nLeft, top, TRUE, isFlipped);
-						}
 						else
 							L_drawShape_OutOfContext(shapeData, nSpriteID, nLeft, top, TRUE, isFlipped);
 					}
 					else {
-						if (shapeBaseBits) {
+						if (shapeBaseBits)
 							L_drawShape_WithBase_MainArea(shapeData, baseShapeData, nSpriteID, nLeft, top, TRUE, isFlipped);
-						}
 						else
 							L_drawShape_MainArea(shapeData, nSpriteID, nLeft, top, TRUE, isFlipped);
 					}
@@ -3608,16 +3604,14 @@ void L_drawShadowShape_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom
 				baseShapeData = Get_SpriteCache_BaseBuffer(shapePtr, nSpriteID);
 				if (baseShapeData) {
 					if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight) {
-						if (shapeBaseBits) {
+						if (shapeBaseBits)
 							L_drawShadowShape_WithBase_OutOfContext(shapeData, baseShapeData, nSpriteID, nRight, bottom, isFlipped);
-						}
 						else
 							L_drawShadowShape_OutOfContext(shapeData, nSpriteID, nRight, bottom, isFlipped);
 					}
 					else {
-						if (shapeBaseBits) {
+						if (shapeBaseBits)
 							L_drawShadowShape_WithBase_MainArea(shapeData, baseShapeData, nSpriteID, nRight, bottom, isFlipped);
-						}
 						else
 							L_drawShadowShape_MainArea(shapeData, nSpriteID, nRight, bottom, isFlipped);
 					}
