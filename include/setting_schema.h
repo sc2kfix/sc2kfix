@@ -176,4 +176,4 @@
 #define I_FIX_QOL_USEFLTSTATUS    "use_floating_status"
 #define I_FIX_QOL_USENEWSTRINGS   "use_new_strings"
 #define I_FIX_QOL_MOVZOOMFACTOR   "movie_zoom_factor"
-#define I_FIX_QOL_TERRAINCOSMETIC "terrain_cosmetic_mode"
+#define I_FIX_QOL_TERRAINCOSMETIC "force_terrain_cosmetic_mode"
