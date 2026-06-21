@@ -3003,16 +3003,14 @@ extern "C" void __cdecl Hook_drawShape(__int16 nSpriteID, __int16 right, __int16
 						}
 					}
 					else if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight) {
-						if (shapeBaseBits) {
+						if (shapeBaseBits)
 							L_drawShape_WithBase_OutOfContext(shapeData, baseShapeData, nSpriteID, nRight, bottom, FALSE, isFlipped);
-						}
 						else
 							L_drawShape_OutOfContext(shapeData, nSpriteID, nRight, bottom, FALSE, isFlipped);
 					}
 					else {
-						if (shapeBaseBits) {
+						if (shapeBaseBits)
 							L_drawShape_WithBase_MainArea(shapeData, baseShapeData, nSpriteID, nRight, bottom, FALSE, isFlipped);
-						}
 						else
 							L_drawShape_MainArea(shapeData, nSpriteID, nRight, bottom, FALSE, isFlipped);
 					}
