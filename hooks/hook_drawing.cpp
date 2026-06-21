@@ -2138,6 +2138,9 @@ static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
 	return newIdx;
 }
 
+#define USE_ONTHEFLYPALIDX 0
+
+#if USE_ONTHEFLYPALIDX
 static BYTE ProcessSpriteSpecificPaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemHeight, int nPos, int nType) {
 	BYTE palIdx = colIdx;
 
@@ -2225,7 +2228,7 @@ static BYTE ProcessSpriteSpecificPaletteIndex(__int16 nSpriteID, BYTE colIdx, WO
 	return palIdx;
 }
 
-static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemHeight, int nPos, int nType = PALCACHE_TYPE_NONE) {
+static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemHeight, int nPos, int nType) {
 	BYTE palIdx = colIdx;
 
 	// Goes directly to the specific call - sprite browser mode.
@@ -2311,6 +2314,9 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 	}
 	return palIdx;
 }
+#else
+#define ProcessSpritePaletteIndex(nSpriteID, colIdx, nRemHeight, nPos, nType) colIdx
+#endif
 
 static BYTE AdjustInversion(__int16 nSpriteID, BYTE palIdx, BOOL bInvUnder = FALSE) {
 	BYTE newIdx = ~palIdx;
@@ -2791,7 +2797,7 @@ static void L_drawShape_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int16 righ
 				}
 				if (bProcessBit) {
 					if (bOnTheFlyPalIdx)
-						*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos);
+						*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos, PALCACHE_TYPE_NONE);
 					else
 						*pShapeBits = *spritePtr;
 				}
@@ -2880,7 +2886,7 @@ static void L_drawShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 
 				}
 				if (bProcessBit) {
 					if (bOnTheFlyPalIdx)
-						*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos);
+						*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos, PALCACHE_TYPE_NONE);
 					else
 						*pShapeBits = *spritePtr;
 				}
@@ -2948,7 +2954,7 @@ static void L_drawShape_WithBase_MainArea(BYTE *shapePtr, BYTE *baseShapePtr, __
 						bProcessBit = TRUE;
 				}
 				if (bProcessBit) {
-					*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos);
+					*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos, PALCACHE_TYPE_NONE);
 					*pBaseShapeBits = *baseSpritePtr;
 				}
 				if (isFlipped) {
@@ -3053,7 +3059,7 @@ static void L_drawShape_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr
 						bProcessBit = (isRoadMask && *pBaseShapeBits != 0xA1) ? FALSE : TRUE;
 				}
 				if (bProcessBit) {
-					*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos);
+					*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos, PALCACHE_TYPE_NONE);
 					*pBaseShapeBits = *baseSpritePtr;
 				}
 				--leftShapeBits;
@@ -3335,38 +3341,8 @@ void L_drawShapeDialog_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom
 	}
 }
 
-static BYTE ProcessWeatherSolidShadow(BYTE palIdx, BYTE currIdx) {
-	if (palIdx != currIdx) {
-		// The original intent here was to allow
-		// for shadow projection onto the tiles
-		// that had their indices adjusted by
-		// the snow effect, however a side-effect
-		// was that other objects were touched that
-		// fell within range - but the effect looked
-		// rather good, so here it will remain for
-		// all seasons.
-		if (currIdx >= 0x9A && currIdx <= 0x9F)
-			return currIdx;
-		if (iTerrainCosmeticMode) {
-			// Ordering:
-			// Grey (don't include 0xA1 in the range to avoid traffic disruption)
-			// Green
-			// Hot
-			//
-			// It should be noted that as a result of the inclusion of these cases
-			// when a cosmetic terrain mode is enabled, the shadow "can" intersect
-			// with a non-terrain tile - this is more noticeable when a monster is
-			// active (Revisit for future improvements).
-			if (currIdx >= 0xA0 && currIdx <= 0xA7 && currIdx != 0xA1)
-				return currIdx;
-			else if ((currIdx >= 0x34 && currIdx <= 0x36) || (currIdx >= 0x3D && currIdx <= 0x3F) || (currIdx >= 0x45 && currIdx <= 0x4A))
-				return currIdx;
-			else if ((currIdx >= 0x20 && currIdx <= 0x22) || (currIdx >= 0x24 && currIdx <= 0x2A))
-				return currIdx;
-		}
-	}
-	return palIdx;
-}
+// Remnant - remove once no longer needed.
+#define ProcessWeatherSolidShadow(palBit, curBit) palBit
 
 static void L_drawShadowShape_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isFlipped) {
 	BYTE *pShapeBitsLine, *spritePtr, *pShapeBits;
