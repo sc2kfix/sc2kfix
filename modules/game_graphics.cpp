@@ -21,6 +21,7 @@
 extern bool CycleIndexCheck(BYTE palIdx);
 extern BYTE CyclePaletteIdx(BYTE colIdx, int cIdx);
 extern void L_drawShapeSpecific_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert, int nType);
+extern void L_drawShapeDialog_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert);
 
 extern __int16 nCycleIdx;
 
@@ -72,7 +73,7 @@ BOOL PrepareDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, sprite_
 							if (nType >= PALCACHE_TYPE_CYCLE)
 								L_drawShapeSpecific_SC2K1996(nSpriteID, 0, 0, isFlipped, doInvert, nType);
 							else
-								Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
+								L_drawShapeDialog_SC2K1996(nSpriteID, 0, 0, 0, 0);
 							Game_FinishProcessObjects();
 						}
 						Game_Graphics_UnlockDIBBits(pGraphic);
@@ -113,7 +114,7 @@ void ShowCurrentDialogSpriteGraphic_SC2K1996(CGraphics *pGraphic, HWND hWnd, spr
 					if (nType >= PALCACHE_TYPE_CYCLE)
 						L_drawShapeSpecific_SC2K1996(nSpriteID, 0, 0, isFlipped, doInvert, nType);
 					else
-						Game_DrawProcessObject(nSpriteID, 0, 0, 0, 0);
+						L_drawShapeDialog_SC2K1996(nSpriteID, 0, 0, 0, 0);
 					Game_FinishProcessObjects();
 				}
 				Game_Graphics_UnlockDIBBits(pGraphic);
