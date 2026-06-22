@@ -2127,6 +2127,7 @@ static WORD Get_SpriteCache_Width(sprite_header_t *pShapePtr, __int16 nSpriteID)
 
 // On-the-fly palette index swapping
 
+#if USE_ONTHEFLYPALIDX
 static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
 	BYTE newIdx = colIdx;
 	if (ColdWeatherCheck()) {
@@ -2139,9 +2140,6 @@ static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
 	return newIdx;
 }
 
-#define USE_ONTHEFLYPALIDX 0
-
-#if USE_ONTHEFLYPALIDX
 static BYTE ProcessSpriteSpecificPaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemHeight, int nPos, int nType) {
 	BYTE palIdx = colIdx;
 
