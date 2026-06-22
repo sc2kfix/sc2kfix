@@ -1281,6 +1281,39 @@ void L_CheckCursor_SC2K1996(CSimcityView *pSCView) {
 	}
 }
 
+extern "C" int __stdcall Hook_SimcityView_InvertLine(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
+	CSimcityView *pThis;
+
+	__asm mov [pThis], ecx
+
+	__int16 destX, destY;
+	BYTE iTerrainTileID;
+
+	L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pBaseGraphicLockDIBRes ,pThis->pSCVGraphicLockDIBRes, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
+	if (Game_BeginTrace(x1, y1, x2, y2)) {
+		destX = x1;
+		destY = y1;
+		dirtCount = 0;
+		tileCount = 0;
+		do {
+			iTerrainTileID = GetTerrainTileID(destX, destY);
+			++tileCount;
+			if (iTerrainTileID < SURFACE_WATER_00 ) {
+				if (traversableTerrain[iTerrainTileID & TERRAIN_BOUNDARY])
+					++dirtCount;
+			}
+			Game_InvertTerrain(destX, destY);
+		}
+		while (Game_StepTrace(&destX, &destY));
+		Game_FinishProcessObjects();
+		return 1;
+	}
+	else {
+		Game_FinishProcessObjects();
+		return 0;
+	}
+}
+
 // CSimcityView::DrawHouse, as named in the SCURK and Win3.1 Demo debugging data, is actually the
 // functon that's called to draw the whole view.
 // For more detalied information, see https://sc2kfix.net/images/drawhouse.png
@@ -3966,6 +3999,10 @@ void InstallDrawingHooks_SC2K1996(void) {
 	// Hook for CSimcityView::MaintainCursor
 	SafeVirtualProtect((LPVOID)0x401A96, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401A96, Hook_SimcityView_MaintainCursor);
+
+	// Hook for CSimcityView::InvertLine
+	SafeVirtualProtect((LPVOID)0x401906, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401906, Hook_SimcityView_InvertLine);
 
 	// Hook for CSimcityView::DrawHouse
 	SafeVirtualProtect((LPVOID)0x402810, 5, PAGE_EXECUTE_READWRITE);

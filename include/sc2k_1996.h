@@ -2257,6 +2257,10 @@ enum {
 	SURFACE_STREAM_05          // terrain tile id: 256, water tile id: 290
 };
 
+// Boundary point in traversableTerrain - though it goes beyond the bounds
+// of non-water-type terrain tiles but one prior to submerged.
+#define TERRAIN_BOUNDARY 0xF
+
 enum {
 	GAME_MODE_TERRAIN_EDIT = 0,
 	GAME_MODE_CITY,
@@ -3089,6 +3093,7 @@ GAMECALL(0x401CCB, int, __stdcall, EndTrace, void)
 GAMECALL(0x401CE9, void, __thiscall, SimcityApp_SoundStopActionThingSound, CSimcityAppPrimary *, int)
 GAMECALL(0x401CFD, void, __cdecl, QuerySpecificItem, __int16, __int16)
 GAMECALL(0x401D16, __int16, __cdecl, PointToTile, __int16 x, __int16 y)
+GAMECALL(0x401D2A, int, __cdecl, InvertTerrain, __int16, __int16)
 GAMECALL(0x401D3E, int, __thiscall, MainFrame_CloseInflightDialog, CMainFrame *)
 GAMECALL(0x401D7A, int, __thiscall, JokeDialog_Destruct, CJokeDialog *)
 GAMECALL(0x401DBB, void, __thiscall, SimcityApp_UpdateTick, CSimcityAppPrimary *)
@@ -3388,11 +3393,13 @@ GAMEOFF(WORD,	g_wColorScale,				0x4C7D28)
 GAMEOFF(WORD,	g_wColorMapXOffs,			0x4C7D2C)
 GAMEOFF(WORD,	g_iColorMapOffSetX,			0x4C7D30)
 GAMEOFF(WORD,	g_iColorMapOffSetY,			0x4C7D34)
-GAMEOFF(WORD,	traceDir,				0x4C7D60)
-GAMEOFF(WORD,	traceAction,		0x4C7D88)
-GAMEOFF(WORD,	wMilitaryAvailDispatch,			0x4C7D98)
-GAMEOFF(WORD,	wFireAvailDispatch,				0x4C7D9C)
-GAMEOFF(WORD,	wPoliceAvailDispatch,			0x4C838C)
+GAMEOFF(int,	dirtCount,					0x4C7D58)
+GAMEOFF(WORD,	traceDir,					0x4C7D60)
+GAMEOFF(int,	tileCount,					0x4C7D84)
+GAMEOFF(WORD,	traceAction,				0x4C7D88)
+GAMEOFF(WORD,	wMilitaryAvailDispatch,		0x4C7D98)
+GAMEOFF(WORD,	wFireAvailDispatch,			0x4C7D9C)
+GAMEOFF(WORD,	wPoliceAvailDispatch,		0x4C838C)
 GAMEOFF(WORD,	wFireUnitsDispatched,		0x4C8390)
 GAMEOFF(DWORD,	dwBusPassengers,			0x4C85A0)
 GAMEOFF(DWORD,	dwRailPassengers,			0x4C85A4)
@@ -3612,6 +3619,7 @@ GAMEOFF_ARR(BYTE,	trafficSpriteOffsets,	0x4E772B)
 GAMEOFF_ARR(BYTE,	trafficSpriteOverlayLevels,	0x4E7798)
 GAMEOFF_ARR(BYTE,	BuiltUpZones,			0x4E77B8)
 GAMEOFF(void *,	curLockedDIBBits,			0x4E77C8)
+GAMEOFF_ARR(int,	traversableTerrain,		0x4E7B28)
 GAMEOFF(DWORD,	dwPlacePoliceThingFail,		0x4E7FC4)
 GAMEOFF(DWORD,	dwPlaceFireThingFail,		0x4E7FC8)
 GAMEOFF(DWORD,	dwPlaceMilitaryThingFail,	0x4E7FCC)
