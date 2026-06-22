@@ -2374,17 +2374,16 @@ static void L_drawShape_Invert_MainArea(BYTE *shapePtr, BYTE *baseShapePtr, __in
 			pShapeBits += nCount;
 			break;
 		case MIF_CM_PROCPIXELS:
-			for (int nPos = nCount; nPos; ++spritePtr) {
+			for (int nPos = nCount; nPos; ++baseSpritePtr, ++spritePtr) {
 				if (*pShapeBits == *spritePtr)
 					*pShapeBits = AdjustInversion(nSpriteID, *baseSpritePtr);
 				else if ((char)(CheckInversion(nSpriteID, *baseSpritePtr) ^ *pShapeBits) == -1)
 					*pShapeBits = *spritePtr;
 				++pShapeBits;
-				++baseSpritePtr;
 				--nPos;
 			}
 			if ((nCount & 1) != 0) {
-				++baseSpritePtr;;
+				++baseSpritePtr;
 				++spritePtr;
 			}
 			break;
@@ -2446,7 +2445,7 @@ static void L_drawShape_Invert_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr, 
 			pShapeBits += nCount;
 			continue;
 		case MIF_CM_PROCPIXELS:
-			for (int nPos = nCount; nPos; ++spritePtr) {
+			for (int nPos = nCount; nPos; ++baseSpritePtr, ++spritePtr) {
 				if (leftShapeBits <= 0 && rightShapeBits > 0) {
 					if (*pShapeBits == *spritePtr)
 						*pShapeBits = AdjustInversion(nSpriteID, *baseSpritePtr);
@@ -2455,7 +2454,6 @@ static void L_drawShape_Invert_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr, 
 				}
 				--leftShapeBits;
 				++pShapeBits;
-				++baseSpritePtr;
 				--rightShapeBits;
 				--nPos;
 			}
@@ -2501,7 +2499,7 @@ static void L_drawShape_Invert_WithBase_MainArea(BYTE *shapePtr, BYTE *baseShape
 			pBaseShapeBits += nCount;
 			break;
 		case MIF_CM_PROCPIXELS:
-			for (int nPos = nCount; nPos; ++spritePtr) {
+			for (int nPos = nCount; nPos; ++baseSpritePtr, ++spritePtr) {
 				if (*pBaseShapeBits == *baseSpritePtr) {
 					*pBaseShapeBits = AdjustInversion(nSpriteID, *baseSpritePtr);
 					*pShapeBits = *pBaseShapeBits;
@@ -2512,7 +2510,6 @@ static void L_drawShape_Invert_WithBase_MainArea(BYTE *shapePtr, BYTE *baseShape
 				}
 				++pShapeBits;
 				++pBaseShapeBits;
-				++baseSpritePtr;
 				--nPos;
 			}
 			if ((nCount & 1) != 0) {
@@ -2584,7 +2581,7 @@ static void L_drawShape_Invert_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseS
 			pBaseShapeBits += nCount;
 			continue;
 		case MIF_CM_PROCPIXELS:
-			for (int nPos = nCount; nPos; ++spritePtr) {
+			for (int nPos = nCount; nPos; ++baseSpritePtr, ++spritePtr) {
 				if (leftShapeBits <= 0 && rightShapeBits > 0) {
 					if (*pBaseShapeBits == *baseSpritePtr) {
 						*pBaseShapeBits = AdjustInversion(nSpriteID, *baseSpritePtr);
@@ -2598,7 +2595,6 @@ static void L_drawShape_Invert_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseS
 				--leftShapeBits;
 				++pShapeBits;
 				++pBaseShapeBits;
-				++baseSpritePtr;
 				--rightShapeBits;
 				--nPos;
 			}
@@ -2642,14 +2638,13 @@ static void L_drawShapeSpecific_Invert_MainArea(BYTE *shapePtr, BYTE *baseShapeP
 				pShapeBits += nCount;
 			break;
 		case MIF_CM_PROCPIXELS:
-			for (int nPos = nCount; nPos; ++spritePtr) {
+			for (int nPos = nCount; nPos; ++baseSpritePtr, ++spritePtr) {
 				if ((char)(CheckInversion(nSpriteID, *baseSpritePtr, TRUE) ^ *baseSpritePtr) > -1)
 					*pShapeBits = AdjustInversion(nSpriteID, *baseSpritePtr, TRUE);
 				if (isFlipped)
 					--pShapeBits;
 				else
 					++pShapeBits;
-				++baseSpritePtr;
 				--nPos;
 			}
 			if ((nCount & 1) != 0) {
@@ -2724,7 +2719,7 @@ static void L_drawShapeSpecific_Invert_OutOfContext(BYTE *shapePtr, BYTE *baseSh
 				pShapeBits += nCount;
 			continue;
 		case MIF_CM_PROCPIXELS:
-			for (int nPos = nCount; nPos; ++spritePtr) {
+			for (int nPos = nCount; nPos; ++baseSpritePtr, ++spritePtr) {
 				BOOL bProcessBit = FALSE;
 				if (isFlipped) {
 					if (rightShapeBits <= 0 && leftShapeBits > 0)
@@ -2743,7 +2738,6 @@ static void L_drawShapeSpecific_Invert_OutOfContext(BYTE *shapePtr, BYTE *baseSh
 					--pShapeBits;
 				else
 					++pShapeBits;
-				++baseSpritePtr;
 				--rightShapeBits;
 				--nPos;
 			}
@@ -2946,7 +2940,7 @@ static void L_drawShape_WithBase_MainArea(BYTE *shapePtr, BYTE *baseShapePtr, __
 			}
 			break;
 		case MIF_CM_PROCPIXELS:
-			for (int nPos = nCount; nPos; ++spritePtr, ++baseSpritePtr) {
+			for (int nPos = nCount; nPos; ++baseSpritePtr, ++spritePtr) {
 				BOOL bProcessBit = (isRoadMask) ? FALSE : TRUE;
 				if (isRoadMask) {
 					if (*pBaseShapeBits == 0xA1)
@@ -2967,8 +2961,8 @@ static void L_drawShape_WithBase_MainArea(BYTE *shapePtr, BYTE *baseShapePtr, __
 				--nPos;
 			}
 			if ((nCount & 1) != 0) {
-				++spritePtr;
 				++baseSpritePtr;
+				++spritePtr;
 			}
 			break;
 		default:
@@ -3047,7 +3041,7 @@ static void L_drawShape_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr
 			}
 			continue;
 		case MIF_CM_PROCPIXELS:
-			for (int nPos = nCount; nPos; ++spritePtr, ++baseSpritePtr) {
+			for (int nPos = nCount; nPos; ++baseSpritePtr, ++spritePtr) {
 				BOOL bProcessBit = FALSE;
 				if (isFlipped) {
 					if (rightShapeBits <= 0 && leftShapeBits > 0)
@@ -3074,8 +3068,8 @@ static void L_drawShape_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr
 				--nPos;
 			}
 			if ((nCount & 1) != 0) {
-				++spritePtr;
 				++baseSpritePtr;
+				++spritePtr;
 			}
 			continue;
 		default:
@@ -3514,7 +3508,7 @@ static void L_drawShadowShape_WithBase_MainArea(BYTE *shapePtr, BYTE *baseShapeP
 			}
 			break;
 		case MIF_CM_PROCPIXELS:
-			for (int nPos = nCount; nPos; ++spritePtr, ++baseSpritePtr) {
+			for (int nPos = nCount; nPos; ++baseSpritePtr, ++spritePtr) {
 				if (*pBaseShapeBits == 0x5F) {
 					*pBaseShapeBits = 0x64;
 					*pShapeBits = *pBaseShapeBits;
@@ -3534,8 +3528,8 @@ static void L_drawShadowShape_WithBase_MainArea(BYTE *shapePtr, BYTE *baseShapeP
 				--nPos;
 			}
 			if ((nCount & 1) != 0) {
-				++spritePtr;
 				++baseSpritePtr;
+				++spritePtr;
 			}
 			break;
 		default:
@@ -3611,7 +3605,7 @@ static void L_drawShadowShape_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseSh
 			}
 			continue;
 		case MIF_CM_PROCPIXELS:
-			for (int nPos = nCount; nPos; ++spritePtr, ++baseSpritePtr) {
+			for (int nPos = nCount; nPos; ++baseSpritePtr, ++spritePtr) {
 				BOOL bProcessBit = FALSE;
 				if (isFlipped) {
 					if (rightShapeBits <= 0 && leftShapeBits > 0)
@@ -3644,8 +3638,8 @@ static void L_drawShadowShape_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseSh
 				--nPos;
 			}
 			if ((nCount & 1) != 0) {
-				++spritePtr;
 				++baseSpritePtr;
+				++spritePtr;
 			}
 			continue;
 		default:
