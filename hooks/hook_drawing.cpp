@@ -1281,6 +1281,76 @@ void L_CheckCursor_SC2K1996(CSimcityView *pSCView) {
 	}
 }
 
+extern "C" void __stdcall Hook_SimcityView_InvertArea(__int16 x1, __int16 y1, __int16 x2, __int16 y2, __int16 x3, __int16 y3) {
+	CSimcityView *pThis;
+
+	__asm mov [pThis], ecx
+
+	POINT pt;
+	RECT rcSrc1, rcSrc2, rcDst;
+	BYTE iTileID;
+	__int16 wZone;
+	BOOL bInFirst, bInSecond;
+
+	L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pBaseGraphicLockDIBRes, pThis->pSCVGraphicLockDIBRes, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
+	dirtCount = 0;
+	tileCount = 0;
+	if (x1 <= x2) {
+		rcSrc2.left = x1;
+		rcSrc2.right = x2 + 1;
+	}
+	else {
+		rcSrc2.left = x2;
+		rcSrc2.right = x1 + 1;
+	}
+	if (y2 >= y1) {
+		rcSrc2.top = y1;
+		rcSrc2.bottom = y2 + 1;
+	}
+	else {
+		rcSrc2.top = y2;
+		rcSrc2.bottom = y1 + 1;
+	}
+	if (x1 <= x3) {
+		rcSrc1.left = x1;
+		rcSrc1.right = x3 + 1;
+	}
+	else {
+		rcSrc1.left = x3;
+		rcSrc1.right = x1 + 1;
+	}
+	if (y3 >= y1) {
+		rcSrc1.top = y1;
+		rcSrc1.bottom = y3 + 1;
+	}
+	else {
+		rcSrc1.top = y3;
+		rcSrc1.bottom = y1 + 1;
+	}
+	UnionRect(&rcDst, &rcSrc1, &rcSrc2);
+	for (pt.x = rcDst.left; pt.x < rcDst.right; ++pt.x) {
+		for (pt.y = rcDst.top; pt.y < rcDst.bottom; ++pt.y) {
+			if (!GetTerrainTileID((__int16)pt.x, (__int16)pt.y)) {
+				iTileID = GetTileID((__int16)pt.x, (__int16)pt.y);
+				if (iTileID < TILE_ROAD_LR && iTileID != TILE_RADIOACTIVITY && iTileID != TILE_SMALLPARK) {
+					wZone = XZONReturnZone((__int16)pt.x, (__int16)pt.y);
+					if (wZone != ZONE_MILITARY) {
+						bInFirst = PtInRect(&rcSrc2, pt);
+						bInSecond = PtInRect(&rcSrc1, pt);
+						if (wZone != actionZone) {
+							if (bInSecond)
+								++tileCount;
+						}
+						if (bInFirst && !bInSecond || bInSecond && !bInFirst)
+							Game_InvertTerrain((__int16)pt.x, (__int16)pt.y);
+					}
+				}
+			}
+		}
+	}
+	Game_FinishProcessObjects();
+}
+
 extern "C" int __stdcall Hook_SimcityView_InvertLine(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 	CSimcityView *pThis;
 
@@ -3999,6 +4069,10 @@ void InstallDrawingHooks_SC2K1996(void) {
 	// Hook for CSimcityView::MaintainCursor
 	SafeVirtualProtect((LPVOID)0x401A96, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401A96, Hook_SimcityView_MaintainCursor);
+
+	// Hook for CSimcityView::InvertArea
+	SafeVirtualProtect((LPVOID)0x402135, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402135, Hook_SimcityView_InvertArea);
 
 	// Hook for CSimcityView::InvertLine
 	SafeVirtualProtect((LPVOID)0x401906, 5, PAGE_EXECUTE_READWRITE);
