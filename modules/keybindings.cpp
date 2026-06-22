@@ -771,7 +771,7 @@ static void DoCenterTool_SC2K1996(CSimcityAppPrimary *pSCApp, UINT nFlags, POINT
 	if (pSCApp)
 		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 	if (pSCView) {
-		wTileCoords = Game_GetTileCoordsFromScreenCoords((__int16)pt->x, (__int16)pt->y);
+		wTileCoords = Game_PointToTile((__int16)pt->x, (__int16)pt->y);
 		if (wTileCoords >= 0) {
 			tileCoords.x = LOBYTE(wTileCoords);
 			tileCoords.y = HIBYTE(wTileCoords);
@@ -925,7 +925,7 @@ static void DoBindAction_SC2K1996(int nAction, BOOL bRelease) {
 						Game_SimcityView_KillCursor(pSCView);
 						pt.x = gameViewPt.x;
 						pt.y = gameViewPt.y;
-						wTileCoords = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
+						wTileCoords = Game_PointToTile((__int16)pt.x, (__int16)pt.y);
 						if (wTileCoords >= 0) {
 							tileCoords.x = LOBYTE(wTileCoords);
 							tileCoords.y = HIBYTE(wTileCoords);

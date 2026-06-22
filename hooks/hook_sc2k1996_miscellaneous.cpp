@@ -1962,7 +1962,7 @@ extern "C" void __stdcall Hook_SimcityView_OnLButtonDown(UINT nFlags, CMFC3XPoin
 			// Set mouse capture and calculate the tile coordinates for the click
 			HWND hWnd = SetCapture(pThis->m_hWnd);
 			GameMain_Wnd_FromHandle(hWnd);
-			wCurrentTileCoordinates = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
+			wCurrentTileCoordinates = Game_PointToTile((__int16)pt.x, (__int16)pt.y);
 
 			// Ensure the tile coordinates are valid before sending them through to the game
 			if (wCurrentTileCoordinates >= 0) {
@@ -1993,7 +1993,7 @@ extern "C" void __stdcall Hook_SimcityView_OnMouseMove(UINT nFlags, CMFC3XPoint 
 
 	pThis->SCVMousePoint = pt;
 	if (pThis->dwSCVLeftMouseDownInGameArea) {
-		wCurrentTileCoordinates = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
+		wCurrentTileCoordinates = Game_PointToTile((__int16)pt.x, (__int16)pt.y);
 		if (wCurrentTileCoordinates >= 0) {
 			wTileCoordinateX = LOBYTE(wCurrentTileCoordinates);
 			wTileCoordinateY = HIBYTE(wCurrentTileCoordinates);

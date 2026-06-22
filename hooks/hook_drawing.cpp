@@ -1086,16 +1086,6 @@ extern "C" __int16 __cdecl Hook_PointToTile(__int16 x, __int16 y) {
 	return retval;
 }
 
-void L_CheckCursor_SC2K1996(CSimcityView *pSCView) {
-	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
-	if (wCursorActive) {
-		if (pSCApp->dwSCACursorGameHit)
-			Game_SimcityView_MaintainCursor(pSCView);
-		else
-			Game_SimcityView_KillCursor(pSCView);
-	}
-}
-
 extern CGraphics *pBaseGraphics;
 extern LONG nBaseGraphicWidth;
 extern LONG nBaseGraphicHeight;
@@ -1139,6 +1129,156 @@ int __cdecl L_BeginProcessObjects_SC2K1996(HWND hWnd, void *pBaseBits, void *pMo
 extern "C" void __stdcall Hook_endShapes() {
 	shapeBaseBits = NULL;
 	SetRectEmpty(&currWndClientRect);
+}
+
+extern "C" void __stdcall Hook_SimcityView_KillCursor() {
+	CSimcityView *pThis;
+
+	__asm mov [pThis], ecx
+
+	BYTE *vBaseBits, *vActiveBits;
+	LONG x, y, bottom;
+
+	if (wCursorActive) {
+		vActiveBits = Game_Graphics_LockDIBBits(pThis->SCVGraphics);
+		if (vActiveBits || Game_SimcityView_CheckOrLoadGraphic(pThis)) {
+			vBaseBits = Game_Graphics_LockDIBBits(pBaseGraphics);
+			if (vBaseBits) {
+				x = Game_Graphics_Width(pThis->SCVGraphics);
+				y = Game_Graphics_Height(pThis->SCVGraphics);
+				L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, vBaseBits, vActiveBits, x, y, &pThis->SCVAreaView);
+				Game_SimcityView_InvertZoneList(pThis, wCurBndsX1, wCurBndsY1, wCurBndsX2, wCurBndsY2);
+				Game_FinishProcessObjects();
+				Game_Graphics_UnlockDIBBits(pThis->SCVGraphics);
+				Game_Graphics_UnlockDIBBits(pBaseGraphics);
+				bottom = ++dirtyRect.bottom;
+				if (pThis->dwSCVIsZoomed) {
+					dirtyRect.bottom = bottom + 2;
+					++dirtyRect.right;
+				}
+				if (pThis == (CSimcityView *)&pSomeWnd)
+					Game_SimcityView_MainWindowUpdate(pThis, 0, TRUE);
+				else
+					Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
+				wCursorActive = 0;
+			}
+		}
+	}
+}
+
+extern "C" void __stdcall Hook_SimcityView_MaintainCursor() {
+	CSimcityView *pThis;
+
+	__asm mov [pThis], ecx
+
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	BYTE nBuildArea, n2x2SingularBuildStrip, n3x3SingularBuildStrip;
+	BOOL bHighway = FALSE;
+	POINT pt;
+	__int16 nTileCoords;
+	coords_w_t tileCoords;
+	__int16 nHalfCoords;
+	BYTE *vBaseBits, *vActiveBits;
+	LONG x, y, bottom;
+
+	Game_SimcityView_GameCursorHitTest(pThis);
+	if (pSCApp->dwSCACursorGameHit != 1) {
+		if (wCursorActive)
+			Game_SimcityView_KillCursor(pThis);
+		return;
+	}
+	if (wMonsterSpawned)
+		return;
+	if (!wCityMode)
+		nBuildArea = wCurrentMapToolGroup != MAPTOOL_GROUP_CENTERINGTOOL;
+	else {
+		BYTE iPos = MAX_CITY_MENUTOOLS * wCurrentCityToolGroup + wSelectedSubtool[wCurrentCityToolGroup];
+		nBuildArea = areaFromSubTool[iPos];
+		if (wCurrentCityToolGroup == CITYTOOL_GROUP_ROADS && wSelectedSubtool[CITYTOOL_GROUP_ROADS] == ROADS_HIGHWAY)
+			bHighway = TRUE;
+	}
+	if (!nBuildArea)
+		return;
+	n2x2SingularBuildStrip = nBuildArea / 2;
+	n3x3SingularBuildStrip = nBuildArea / 3;
+	pt.x = pThis->SCVMousePoint.x;
+	pt.y = pThis->SCVMousePoint.y;
+	if (pThis->dwSCVIsZoomed) {
+		pt.x >>= 1;
+		pt.y >>= 1;
+	}
+	if (!PtInRect(&pThis->SCVAreaView, pt)) {
+		Game_SimcityView_KillCursor(pThis);
+		return;
+	}
+	nTileCoords = Game_PointToTile((__int16)pThis->SCVMousePoint.x, (__int16)pThis->SCVMousePoint.y);
+	if (nTileCoords < 0) {
+		Game_SimcityView_KillCursor(pThis);
+		return;
+	}
+	tileCoords.x = LOBYTE(nTileCoords);
+	tileCoords.y = HIBYTE(nTileCoords);
+	if (bHighway) {
+		tileCoords.x = LOBYTE(nTileCoords) & (GAME_MAP_SIZE - 2);
+		tileCoords.y = HIBYTE(nTileCoords) & ((GAME_MAP_SIZE * 2) - 2);
+	}
+	if (tileCoords.x < n3x3SingularBuildStrip) {
+		Game_SimcityView_KillCursor(pThis);
+		return;
+	}
+	if (n3x3SingularBuildStrip > tileCoords.y) {
+		Game_SimcityView_KillCursor(pThis);
+		return;
+	}
+	nHalfCoords = GAME_MAP_SIZE - n2x2SingularBuildStrip;
+	if (tileCoords.x > nHalfCoords || tileCoords.y > nHalfCoords) {
+		Game_SimcityView_KillCursor(pThis);
+		return;
+	}
+	if (tileCoords.x != LastCursorX || tileCoords.y != LastCursorY) {
+		vActiveBits = Game_Graphics_LockDIBBits(pThis->SCVGraphics);
+		if (vActiveBits || Game_SimcityView_CheckOrLoadGraphic(pThis)) {
+			vBaseBits = Game_Graphics_LockDIBBits(pBaseGraphics);
+			if (vBaseBits) {
+				x = Game_Graphics_Width(pThis->SCVGraphics);
+				y = Game_Graphics_Height(pThis->SCVGraphics);
+				L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, vBaseBits, vActiveBits, x, y, &pThis->SCVAreaView);
+				if (wCursorActive)
+					Game_SimcityView_InvertZoneList(pThis, wCurBndsX1, wCurBndsY1, wCurBndsX2, wCurBndsY2);
+				LastCursorX = tileCoords.x;
+				LastCursorY = tileCoords.y;
+				wCurBndsX1 = tileCoords.x - n3x3SingularBuildStrip;
+				wCurBndsY1 = tileCoords.y - n3x3SingularBuildStrip;
+				wCurBndsX2 = n2x2SingularBuildStrip + tileCoords.x;
+				wCurBndsY2 = n2x2SingularBuildStrip + tileCoords.y;
+				Game_SimcityView_InvertZoneList(pThis, wCurBndsX1, wCurBndsY1, wCurBndsX2, wCurBndsY2);
+				wCursorActive = 1;
+				Game_FinishProcessObjects();
+				Game_Graphics_UnlockDIBBits(pThis->SCVGraphics);
+				Game_Graphics_UnlockDIBBits(pBaseGraphics);
+				bottom = ++dirtyRect.bottom;
+				if (pThis->dwSCVIsZoomed) {
+					dirtyRect.bottom = bottom + 2;
+					++dirtyRect.right;
+				}
+				if (pThis == (CSimcityView *)&pSomeWnd)
+					Game_SimcityView_MainWindowUpdate(pThis, 0, TRUE);
+				else
+					Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
+				dirtyRect.top = -1000;
+			}
+		}
+	}
+}
+
+void L_CheckCursor_SC2K1996(CSimcityView *pSCView) {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	if (wCursorActive) {
+		if (pSCApp->dwSCACursorGameHit)
+			Game_SimcityView_MaintainCursor(pSCView);
+		else
+			Game_SimcityView_KillCursor(pSCView);
+	}
 }
 
 // CSimcityView::DrawHouse, as named in the SCURK and Win3.1 Demo debugging data, is actually the
@@ -3817,6 +3957,14 @@ void InstallDrawingHooks_SC2K1996(void) {
 	// Hook for PointToTile
 	SafeVirtualProtect((LPVOID)0x401D16, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401D16, Hook_PointToTile);
+
+	// Hook for CSimcityView::KillCursor
+	SafeVirtualProtect((LPVOID)0x4014F1, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4014F1, Hook_SimcityView_KillCursor);
+
+	// Hook for CSimcityView::MaintainCursor
+	SafeVirtualProtect((LPVOID)0x401A96, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401A96, Hook_SimcityView_MaintainCursor);
 
 	// Hook for CSimcityView::DrawHouse
 	SafeVirtualProtect((LPVOID)0x402810, 5, PAGE_EXECUTE_READWRITE);
