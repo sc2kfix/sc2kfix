@@ -86,8 +86,8 @@
 #define SCD_UPDATE_VIEW_REDRAW                 0
 #define SCD_UPDATE_VIEW_TITLE                  1
 #define SCD_UPDATE_VIEW_UPDATE                 2
-#define SCD_UPDATE_VIEW_UPDATE_WITHTILEINVERT  3
-#define SCD_UPDATE_VIEW_CHECKTILEINVERT        4
+#define SCD_UPDATE_VIEW_UPDATE_DOCURSOR        3
+#define SCD_UPDATE_VIEW_CHECKCURSOR            4
 
 #define	ZOOM_LEVEL_TINY		0
 #define ZOOM_LEVEL_SMALL	1
@@ -2586,7 +2586,7 @@ enum {
 
 // When 'REWARDS_ARCOLOGIES' is selected
 // with wCurrentCityToolGroup == TOOL_GROUP_REWARDS,
-// the tile highlighting is always off.
+// the wCursorActive is always off.
 enum {
 	REWARDS_MAYORSHOUSE,
 	REWARDS_CITYHALL,
@@ -3027,7 +3027,7 @@ GAMECALL(0x40148D, DWORD, __thiscall, Sound_IsMusicPlaying, CSound *)
 GAMECALL(0x4014B0, void, __cdecl, InitStack, __int16, __int16)
 GAMECALL(0x4014CE, int, __cdecl, SpawnAeroplane, __int16 x, __int16 y, __int16 iDirection)
 GAMECALL(0x4014EC, void, __cdecl, CityToolPlaceNature, CMFC3XPoint)
-GAMECALL(0x4014F1, int, __thiscall, SimcityView_TileHighlightRemove, CSimcityView *pThis)
+GAMECALL(0x4014F1, int, __thiscall, SimcityView_KillCursor, CSimcityView *pThis)
 GAMECALL(0x40150A, int, __thiscall, SimcityApp_ExitRequester, CSimcityAppPrimary *pThis, int iSource)
 GAMECALL(0x401514, void, __stdcall, PerhapsFreeDocumentsLibraryAndStrings)
 GAMECALL(0x401519, void, __thiscall, CityToolBar_ToolMenuEnable, CCityToolBar* pThis)
@@ -3132,7 +3132,7 @@ GAMECALL(0x402289, char, __cdecl, PerhapsGeneralZoneChooseAndPlaceBuilding, __in
 GAMECALL(0x4022FC, void, __cdecl, SimulationGrowthTick, __int16 iStep, __int16 iSubStep)
 GAMECALL(0x402306, void, __thiscall, MyToolBar_SetButtonStyle, CMyToolBar *, int nIndex, UINT nStyle)
 GAMECALL(0x40232E, void, __thiscall, MapToolBar_MoveAndBlitToolBar, CMapToolBar *, int, int)
-GAMECALL(0x40235B, int, __thiscall, SimcityView_DrawSquareHighlight, CSimcityView *pThis, WORD wX1, WORD wY1, WORD wX2, WORD wY2)
+GAMECALL(0x40235B, int, __thiscall, SimcityView_InvertZoneList, CSimcityView *pThis, WORD wX1, WORD wY1, WORD wX2, WORD wY2)
 GAMECALL(0x402360, BOOL, __cdecl, MovieCheck, char *)
 GAMECALL(0x40239C, void, __cdecl, UpdateCityMap, void)
 GAMECALL(0x4023AB, void, __cdecl, DrawProcessMaskObject, __int16, __int16, __int16, __int16)
@@ -3453,7 +3453,7 @@ GAMEOFF(DWORD,	dwPowerUsedPercentage,		0x4CAA50)
 GAMEOFF(POINT,	dwDisasterPoint,			0x4CAA58)
 GAMEOFF(DWORD,	dwCityPopulation,			0x4CAA74)
 GAMEOFF(WORD,	wCityTerrainSliderWater,	0x4CAAF8)
-GAMEOFF_PTR(DWORD,	pSomeWnd,				0x4CAC18)		// Perhaps this is the active view window? (unclear - but this is referenced in the native TileHighlightRemove function)
+GAMEOFF_PTR(DWORD,	pSomeWnd,				0x4CAC18)		// Perhaps this is the active view window? (unclear)
 GAMEOFF(DWORD*, dwNeighborPopulation,		0x4CAD10)		// DWORD dwNeighborPopulation[4]
 GAMEOFF(BOOL,	bMainFrameInactive,			0x4CAD14)
 GAMEOFF(__int16,	iScreenOffSetX,			0x4CAD18)
@@ -3536,10 +3536,10 @@ GAMEOFF(WORD,	wScenarioBuildingGoal1Count,0x4CC948)
 GAMEOFF(WORD,	wScenarioBuildingGoal2Count,0x4CC94A)
 GAMEOFF_ARR(WORD,	wSelectedSubtool,		0x4CC950)
 GAMEOFF_PTR(const char *,	pCustomTileNamesFromSpriteID,	0x4CCEC8)
-GAMEOFF(WORD,	wHighlightedTileX1,			0x4CDB68)
-GAMEOFF(WORD,	wHighlightedTileX2,			0x4CDB6C)
-GAMEOFF(WORD,	wHighlightedTileY1,			0x4CDB70)
-GAMEOFF(WORD,	wHighlightedTileY2,			0x4CDB74)
+GAMEOFF(WORD,	wCurBndsX1,					0x4CDB68)
+GAMEOFF(WORD,	wCurBndsX2,					0x4CDB6C)
+GAMEOFF(WORD,	wCurBndsY1,					0x4CDB70)
+GAMEOFF(WORD,	wCurBndsY2,					0x4CDB74)
 GAMEOFF(DWORD,	dwLFSRState,				0x4CDB7C)
 GAMEOFF(DWORD,	dwLCGState,					0x4CDB80)
 GAMEOFF_ARR(char,	szSoundPath,			0x4CDB88)
@@ -3646,7 +3646,7 @@ GAMEOFF(BOOL,	bLoColor,					0x4EA04C)
 GAMEOFF(BOOL,	bPaletteSet,				0x4EA050)
 GAMEOFF_ARR(testColStruct,	rgbLoColor,		0x4EA058)
 GAMEOFF_ARR(testColStruct,	rgbNormalColor,	0x4EA0B8)
-GAMEOFF(WORD,	wTileHighlightActive,		0x4EA7F0)
+GAMEOFF(WORD,	wCursorActive,		0x4EA7F0)
 GAMEOFF(DWORD,	dwSoundBufferClear,			0x4EA848)
 GAMEOFF(int,	nCurrentActionThingSoundID,	0x4EA854)
 GAMEOFF_ARR(int,	nSoundPlayTicks,		0x4EA858)
@@ -4548,9 +4548,9 @@ extern void ResetThingCleanupState_SC2K1996();
 
 extern void DoThingClean_SC2K1996(int nThingDef);
 
-extern void L_CheckTileHighlight_SC2K1996(CSimcityView *pSCView);
+extern void L_CheckCursor_SC2K1996(CSimcityView *pSCView);
 extern int __cdecl L_BeginProcessObjects_SC2K1996(HWND hWnd, void *pBaseBits, void *pModdedBits, int x, int y, RECT *r);
-extern void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveTileHighlightActive);
+extern void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveCursorActive);
 extern void L_drawShapeSpecific_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert, int nType);
 extern void L_drawShapeDialog_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert);
 extern void L_drawShadowShape_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped);

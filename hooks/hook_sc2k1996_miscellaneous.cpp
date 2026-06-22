@@ -983,7 +983,7 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 						// Moved the title and view update calls out of the SimulationProcessTick()
 						// function so they always occur at the end to ensure everything is updated
 						// and to account for the new mode '3' for preserving the "placement preview"
-						// tile highlight during granular updates.
+						// active cursor during granular updates.
 						//
 						// When disaster mode is active we only want to instigate an update when
 						// 'OffCycle' is FALSE in order to not have a negative effect on the disaster
@@ -994,9 +994,9 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 						if (bFrequentUpdates && bUpdateGameView)
 							Game_SimcityDoc_UpdateDocumentTitle(pSCDoc);
 						if ((bFrequentUpdates && bUpdateGameView) || (!bFrequentUpdates && bOffCycle))
-							GameMain_Document_UpdateAllViews(pSCDoc, NULL, SCD_UPDATE_VIEW_UPDATE_WITHTILEINVERT, NULL);
+							GameMain_Document_UpdateAllViews(pSCDoc, NULL, SCD_UPDATE_VIEW_UPDATE_DOCURSOR, NULL);
 					}
-					GameMain_Document_UpdateAllViews(pSCDoc, NULL, SCD_UPDATE_VIEW_CHECKTILEINVERT, NULL);
+					GameMain_Document_UpdateAllViews(pSCDoc, NULL, SCD_UPDATE_VIEW_CHECKCURSOR, NULL);
 				}
 
 				// Call for a window update
@@ -1593,7 +1593,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 			// Mode '3' also used here for "placement preview" preservation and
 			// blink mitigation.
 			if (!bFrequentUpdates)
-				GameMain_Document_UpdateAllViews(pCSimcityDoc, NULL, SCD_UPDATE_VIEW_UPDATE_WITHTILEINVERT, NULL);
+				GameMain_Document_UpdateAllViews(pCSimcityDoc, NULL, SCD_UPDATE_VIEW_UPDATE_DOCURSOR, NULL);
 
 			// Run updates for various stats subdialogs
 			Game_UpdatePopulationDialog();
@@ -1921,9 +1921,9 @@ extern "C" void __stdcall Hook_SimcityView_OnUpdate(CMFC3XView *pSender, LPARAM 
 			GameMain_Document_SetTitle(pThis->m_pDocument, pBuf);
 		}
 		else {
-			if (lHint == SCD_UPDATE_VIEW_CHECKTILEINVERT)
-				L_CheckTileHighlight_SC2K1996(pThis);
-			else if (lHint == SCD_UPDATE_VIEW_UPDATE_WITHTILEINVERT)
+			if (lHint == SCD_UPDATE_VIEW_CHECKCURSOR)
+				L_CheckCursor_SC2K1996(pThis);
+			else if (lHint == SCD_UPDATE_VIEW_UPDATE_DOCURSOR)
 				L_DrawHouse_SC2K1996(pThis, TRUE);
 			else if (lHint == SCD_UPDATE_VIEW_UPDATE)
 				Game_SimcityView_DrawHouse(pThis);

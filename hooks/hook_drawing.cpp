@@ -1086,13 +1086,13 @@ extern "C" __int16 __cdecl Hook_PointToTile(__int16 x, __int16 y) {
 	return retval;
 }
 
-void L_CheckTileHighlight_SC2K1996(CSimcityView *pSCView) {
+void L_CheckCursor_SC2K1996(CSimcityView *pSCView) {
 	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
-	if (wTileHighlightActive) {
+	if (wCursorActive) {
 		if (pSCApp->dwSCACursorGameHit)
 			Game_SimcityView_MaintainCursor(pSCView);
 		else
-			Game_SimcityView_TileHighlightRemove(pSCView);
+			Game_SimcityView_KillCursor(pSCView);
 	}
 }
 
@@ -1144,7 +1144,7 @@ extern "C" void __stdcall Hook_endShapes() {
 // CSimcityView::DrawHouse, as named in the SCURK and Win3.1 Demo debugging data, is actually the
 // functon that's called to draw the whole view.
 // For more detalied information, see https://sc2kfix.net/images/drawhouse.png
-void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveTileHighlightActive) {
+void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveCursorActive) {
 	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
 	COLORREF cr;
 
@@ -1203,15 +1203,15 @@ void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveTileHighlightActive)
 				}
 			}
 
-			// Draw the highlight if needed, and turn it off if requested
-			if (!bLeaveTileHighlightActive)
-				wTileHighlightActive = 0;
+			// Activate the cursor if needed, and turn it off if requested
+			if (!bLeaveCursorActive)
+				wCursorActive = 0;
 			else {
-				if (wTileHighlightActive) {
+				if (wCursorActive) {
 					if (pSCApp->dwSCACursorGameHit)
-						Game_SimcityView_DrawSquareHighlight(pSCView, wHighlightedTileX1, wHighlightedTileY1, wHighlightedTileX2, wHighlightedTileY2);
+						Game_SimcityView_InvertZoneList(pSCView, wCurBndsX1, wCurBndsY1, wCurBndsX2, wCurBndsY2);
 					else
-						wTileHighlightActive = 0;
+						wCursorActive = 0;
 				}
 			}
 
@@ -1319,7 +1319,7 @@ extern "C" void __stdcall Hook_SimcityView_UpdateHouse() {
 					else
 						Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
 					dirtyRect.top = -1000;
-					wTileHighlightActive = 0;
+					wCursorActive = 0;
 					wClipXlow = 1000;
 					wClipYlow = 1000;
 					wClipXhigh = 0;
