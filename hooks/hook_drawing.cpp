@@ -1219,8 +1219,8 @@ extern "C" void __stdcall Hook_SimcityView_MaintainCursor() {
 	tileCoords.x = LOBYTE(nTileCoords);
 	tileCoords.y = HIBYTE(nTileCoords);
 	if (bHighway) {
-		tileCoords.x = LOBYTE(nTileCoords) & (GAME_MAP_SIZE - 2);
-		tileCoords.y = HIBYTE(nTileCoords) & ((GAME_MAP_SIZE * 2) - 2);
+		tileCoords.x = LOBYTE(nTileCoords) & (MAP_EDGE_MAX - 1);
+		tileCoords.y = HIBYTE(nTileCoords) & (MAP_EDGE_MAX * 2);
 	}
 	if (tileCoords.x < n3x3SingularBuildStrip) {
 		Game_SimcityView_KillCursor(pThis);
