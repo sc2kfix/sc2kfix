@@ -1287,7 +1287,7 @@ extern "C" void __stdcall Hook_SimcityView_InvertArea(__int16 x1, __int16 y1, __
 	__asm mov [pThis], ecx
 
 	POINT pt;
-	RECT rcSrc1, rcSrc2, rcDst;
+	RECT rcSrc1, rcSrc2, rcDest;
 	BYTE iTileID;
 	__int16 wZone;
 	BOOL bInFirst, bInSecond;
@@ -1327,9 +1327,9 @@ extern "C" void __stdcall Hook_SimcityView_InvertArea(__int16 x1, __int16 y1, __
 		rcSrc1.top = y3;
 		rcSrc1.bottom = y1 + 1;
 	}
-	UnionRect(&rcDst, &rcSrc1, &rcSrc2);
-	for (pt.x = rcDst.left; pt.x < rcDst.right; ++pt.x) {
-		for (pt.y = rcDst.top; pt.y < rcDst.bottom; ++pt.y) {
+	UnionRect(&rcDest, &rcSrc1, &rcSrc2);
+	for (pt.x = rcDest.left; pt.x < rcDest.right; ++pt.x) {
+		for (pt.y = rcDest.top; pt.y < rcDest.bottom; ++pt.y) {
 			if (!GetTerrainTileID((__int16)pt.x, (__int16)pt.y)) {
 				iTileID = GetTileID((__int16)pt.x, (__int16)pt.y);
 				if (iTileID < TILE_ROAD_LR && iTileID != TILE_RADIOACTIVITY && iTileID != TILE_SMALLPARK) {
