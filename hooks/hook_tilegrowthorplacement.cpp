@@ -951,7 +951,7 @@ static int L_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iTileID, __int16 
 			}
 			else if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 				XZONSetCornerMask(x, y, CORNER_ALL);
-			Game_SpawnItem(x, iFarY);
+			Game_DirtyTile(x, iFarY);
 			return 1;
 		}
 	}

@@ -1384,6 +1384,45 @@ extern "C" int __stdcall Hook_SimcityView_InvertLine(__int16 x1, __int16 y1, __i
 	}
 }
 
+extern "C" void __stdcall Hook_SimcityView_FatInvertLine(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
+	CSimcityView *pThis;
+
+	__asm mov [pThis], ecx
+
+	HDC hDC;
+	BYTE *vBaseBits, *vActiveBits;
+	__int16 destX, destY, fatDestX, fatDestY;
+	__int16 nTileGroup, nTileRow, nGroupRow, nTileColumn;
+
+	hDC = GetDC(pThis->m_hWnd);
+	vActiveBits = Game_Graphics_LockDIBBits(pThis->SCVGraphics);
+	vBaseBits = Game_Graphics_LockDIBBits(pBaseGraphics);
+	if (Game_FatTerrain(x1, y1) != 0x8000) {
+		L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, vBaseBits, vActiveBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
+		Game_FatBeginTrace(x1, y1, x2, y2);
+		destX = x1;
+		destY = y1;
+		dirtCount = 0;
+		tileCount = 0;
+		do {
+			nTileGroup = 0;
+			do {
+				nTileRow = nTileGroup & 1;
+				++tileCount;
+				nGroupRow = nTileGroup++;
+				nTileColumn = nGroupRow / 2;
+				fatDestX = destX + nTileRow;
+				fatDestY = destY + nTileColumn;
+				Game_InvertTerrain(fatDestX, fatDestY);
+				Game_DirtyTile(fatDestX, fatDestY);
+			} while (nTileGroup < 4);
+		} while (Game_FatStepTrace(&destX, &destY));
+		Game_EndTrace();
+		Game_FinishProcessObjects();
+		ReleaseDC(pThis->m_hWnd, hDC);
+	}
+}
+
 // CSimcityView::DrawHouse, as named in the SCURK and Win3.1 Demo debugging data, is actually the
 // functon that's called to draw the whole view.
 // For more detalied information, see https://sc2kfix.net/images/drawhouse.png
@@ -4077,6 +4116,10 @@ void InstallDrawingHooks_SC2K1996(void) {
 	// Hook for CSimcityView::InvertLine
 	SafeVirtualProtect((LPVOID)0x401906, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401906, Hook_SimcityView_InvertLine);
+
+	// Hook for CSimcityView::FatInvertLine
+	SafeVirtualProtect((LPVOID)0x40100F, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x40100F, Hook_SimcityView_FatInvertLine);
 
 	// Hook for CSimcityView::DrawHouse
 	SafeVirtualProtect((LPVOID)0x402810, 5, PAGE_EXECUTE_READWRITE);
