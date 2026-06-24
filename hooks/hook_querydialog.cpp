@@ -416,11 +416,9 @@ static BOOL DoAdvancedQuery(__int16 x, __int16 y) {
 }
 
 static BOOL bSoundPlayed = FALSE;
-static BOOL bBtnMoved = FALSE;
 
 extern "C" void __cdecl Hook_QuerySpecificItem(__int16 x, __int16 y) {
 	bSoundPlayed = FALSE;
-	bBtnMoved = FALSE;
 	if (!DoAdvancedQuery(x, y))
 		GameMain_QuerySpecificItem(x, y);
 }
@@ -435,13 +433,40 @@ extern "C" int __stdcall Hook_QuerySpecificDialog_OnInitDialog() {
 
 	__asm mov [pThis], ecx
 
+	CMFC3XPaintDC paintDC;
 	CMFC3XWnd *pWnd;
+	RECT btnTextRect;
+	char szBuf[255 + 1];
+	SIZE txtSz;
+	int nWidth;
 	int nSpriteID;
 
+	GameMain_PaintDC_Cons(&paintDC, pThis);
 	GameMain_Dialog_OnInitDialog(pThis);
 	pWnd = GameMain_Wnd_FromHandle(GetParent(pThis->m_hWnd));
 	Game_GameDialog_RepositionSubDialog(pThis, pWnd);
 	EnableWindow(pThis->dwQSDCEdit.m_hWnd, FALSE);
+
+	// Moved here from OnInitDialog().
+	GetWindowRect(pThis->dwQSDCButton.m_hWnd, &btnTextRect);
+	ScreenToClient(pThis->m_hWnd, (LPPOINT)&btnTextRect.left);
+	ScreenToClient(pThis->m_hWnd, (LPPOINT)&btnTextRect.right);
+
+	BOOL nBtnCmdShow = SW_HIDE;
+	if (pThis->dwQSDTileID == TILE_SERVICES_CITYHALL || pThis->dwQSDTileID == TILE_INFRASTRUCTURE_LIBRARY) {
+		if (pThis->dwQSDTileID == TILE_SERVICES_CITYHALL)
+			LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 810, szBuf, sizeof(szBuf) - 1);
+		else
+			LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 811, szBuf, sizeof(szBuf) - 1);
+		SetWindowText(pThis->dwQSDCButton.m_hWnd, szBuf);
+		GetTextExtentPointA(paintDC.m_hAttribDC, szBuf, strlen(szBuf), &txtSz);
+		nWidth = txtSz.cx - btnTextRect.right + btnTextRect.left + 8;
+		btnTextRect.left -= nWidth / 2;
+		btnTextRect.right += nWidth / 2;
+		MoveWindow(pThis->dwQSDCButton.m_hWnd, btnTextRect.left, btnTextRect.top, btnTextRect.right - btnTextRect.left, btnTextRect.bottom - btnTextRect.top, TRUE);
+		nBtnCmdShow = SW_SHOW;
+	}
+	ShowWindow(pThis->dwQSDCButton.m_hWnd, nBtnCmdShow);
 
 	// Originally there was a check whereas tiles
 	// prior to the arcologies were displayed in
@@ -457,10 +482,24 @@ extern "C" int __stdcall Hook_QuerySpecificDialog_OnInitDialog() {
 
 	pThis->dwQSDPointOne.x = (pArrSpriteHeaders[nSpriteID].wWidth + 7) & ~7;
 	pThis->dwQSDPointOne.y = (pArrSpriteHeaders[nSpriteID].wHeight + 8) & ~7;
-	Game_Graphics_CreateWithPalette(pThis->dwQSDCGraphicsOne, pThis->dwQSDPointOne.x, pThis->dwQSDPointOne.y);
+	pThis->dwQSDCGraphicsOne->CreateWithPalette_SC2K1996(pThis->dwQSDPointOne.x, pThis->dwQSDPointOne.y);
 
 	hWndExt = pThis->m_hWnd;
+	GameMain_PaintDC_Dest(&paintDC);
 	return 1;
+}
+
+extern "C" void __stdcall Hook_QuerySpecificDialog_SetCursorAndDeleteGraphics() {
+	CQuerySpecificDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	Game_GameDialog_SetCursor(pThis);
+	if (pThis->dwQSDCGraphicsOne) {
+		pThis->dwQSDCGraphicsOne->DeleteStored_SC2K1996();
+		delete pThis->dwQSDCGraphicsOne;
+		pThis->dwQSDCGraphicsOne = 0;
+	}
 }
 
 extern "C" int __stdcall Hook_QueryGeneralDialog_OnInitDialog() {
@@ -484,10 +523,7 @@ extern "C" void __stdcall Hook_QuerySpecificDialog_OnPaint() {
 
 	COLORREF crSysColor, crColor;
 	CMFC3XPaintDC paintDC;
-	char szBuf[255 + 1];
-	RECT btnTextRect, dlgRect;
-	SIZE txtSz;
-	int nWidth;
+	RECT dlgRect;
 	CSimcityAppPrimary *pSCApp;
 	__int16 iTextOverlay;
 	int nSpriteID = -1;
@@ -503,30 +539,6 @@ extern "C" void __stdcall Hook_QuerySpecificDialog_OnPaint() {
 
 	pSCApp = &pCSimcityAppThis;
 	Game_SimcityApp_GetActivePalette(pSCApp);
-
-	// Moved here from OnInitDialog().
-	if (!bBtnMoved) {
-		GetWindowRect(pThis->dwQSDCButton.m_hWnd, &btnTextRect);
-		ScreenToClient(pThis->m_hWnd, (LPPOINT)&btnTextRect.left);
-		ScreenToClient(pThis->m_hWnd, (LPPOINT)&btnTextRect.right);
-
-		BOOL nBtnCmdShow = SW_HIDE;
-		if (pThis->dwQSDTileID == TILE_SERVICES_CITYHALL || pThis->dwQSDTileID == TILE_INFRASTRUCTURE_LIBRARY) {
-			if (pThis->dwQSDTileID == TILE_SERVICES_CITYHALL)
-				LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 810, szBuf, sizeof(szBuf) - 1);
-			else
-				LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 811, szBuf, sizeof(szBuf) - 1);
-			SetWindowText(pThis->dwQSDCButton.m_hWnd, szBuf);
-			GetTextExtentPointA(paintDC.m_hAttribDC, szBuf, strlen(szBuf), &txtSz);
-			nWidth = txtSz.cx - btnTextRect.right + btnTextRect.left + 8;
-			btnTextRect.left -= nWidth / 2;
-			btnTextRect.right += nWidth / 2;
-			MoveWindow(pThis->dwQSDCButton.m_hWnd, btnTextRect.left, btnTextRect.top, btnTextRect.right - btnTextRect.left, btnTextRect.bottom - btnTextRect.top, TRUE);
-			nBtnCmdShow = SW_SHOW;
-		}
-		ShowWindow(pThis->dwQSDCButton.m_hWnd, nBtnCmdShow);
-		bBtnMoved = TRUE;
-	}
 
 	GetWindowRect(pThis->m_hWnd, &dlgRect);
 	ScreenToClient(pThis->m_hWnd, (LPPOINT)&dlgRect);
@@ -1031,14 +1043,18 @@ void InstallQueryHooks_SC2K1996(void) {
 	NEWJMP((LPVOID)0x402E19, Hook_QueryGeneralItem);
 
 	// Hook into the CQuerySpecificDialog::OnInitDialog function
-	SafeVirtualProtect((LPVOID)0x4019C9, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x4019C9, Hook_QuerySpecificDialog_OnInitDialog);
-
-	// Hook CQueryGeneralDialog::OnInitDialog in order to:
 	// 1) The original drawing call
 	// 2) To move the button text adjustment, movement and showing
 	//    to the paint call (otherwise it crashes in quite the
 	//    spectacular manner when locally implemented).
+	SafeVirtualProtect((LPVOID)0x4019C9, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4019C9, Hook_QuerySpecificDialog_OnInitDialog);
+
+	// Hook the CQuerySpecificDialog::SetCursorAndDeleteGraphics
+	SafeVirtualProtect((LPVOID)0x402D06, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402D06, Hook_QuerySpecificDialog_SetCursorAndDeleteGraphics);
+
+	// Hook CQueryGeneralDialog::OnInitDialog in order to:
 	SafeVirtualProtect((LPVOID)0x402C89, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x402C89, Hook_QueryGeneralDialog_OnInitDialog);
 
