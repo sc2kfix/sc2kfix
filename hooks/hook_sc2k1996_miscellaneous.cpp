@@ -2712,6 +2712,8 @@ void InstallMiscHooks_SC2K1996(void) {
 	// Install the advanced query hook
 	InstallQueryHooks_SC2K1996();
 
+	InstallArcologyDialogHooks_SC2K1996();
+
 	InstallBridgeDialogHooks_SC2K1996();
 
 	// Expand sound buffers and load higher quality sounds from DLL resources

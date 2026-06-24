@@ -494,6 +494,9 @@
     <ClCompile Include="hooks\hook_bridgedialog.cpp">
       <Filter>Source Files\Hooks</Filter>
     </ClCompile>
+    <ClCompile Include="hooks\hook_arcologydialog.cpp">
+      <Filter>Source Files\Hooks</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="sc2kfix.rc">
