@@ -180,7 +180,7 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 				bWeatherWind = ntohl(*(DWORD*)&pChunkMISC[i]);
 				i += 4;
 
-				bWeatherHumidity = ntohl(*(DWORD*)&pChunkMISC[i]);
+				bWeatherRain = ntohl(*(DWORD*)&pChunkMISC[i]);
 				i += 4;
 
 				bWeatherTrend = ntohl(*(DWORD*)&pChunkMISC[i]);
