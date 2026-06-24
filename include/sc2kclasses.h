@@ -101,6 +101,18 @@ enum {
 	MOVACT_QUIT
 };
 
+enum {
+	BRIDGE_WIRE,
+	BRIDGE_RAIL,
+	BRIDGE_ROAD_CAUSEWAY,
+	BRIDGE_ROAD_RAISING,
+	BRIDGE_ROAD_SUSPENSION,
+	BRIDGE_HIGHWAY,
+	BRIDGE_HIGHWAY_REINFORCED,
+
+	BRIDGE_COUNT
+};
+
 // This specifical structure is the equivalent
 // of the LOGPALETTE struct from the WinAPI
 // except the pPalEnts array is preset to
@@ -524,8 +536,15 @@ public:
 	CMFC3XListBox listBox;
 };
 
-// !!! At the moment the CMovieDialog class is structured
-// to achieve alignment, it is heavily subject to change.
+class CBridgeSelectDialog : public CGameDialog {
+public:
+	DWORD dwBSDNumTiles;
+	DWORD dwBSDBridgeType;
+	DWORD dwBSDSelectedBridge;
+	CGraphics *dwBSDCGraphicsOne[BRIDGE_COUNT];
+	DWORD dwBSDWidth;
+	DWORD dwBSDHeight;
+};
 
 class CMovieDialog : public CMFC3XDialog {
 public:
