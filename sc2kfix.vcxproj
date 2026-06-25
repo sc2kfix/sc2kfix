@@ -148,6 +148,7 @@ const char* szSC2KFixBuildInfo = "$(UserName)@$(ComputerName)  $([System.DateTim
     <ClCompile Include="hooks\hook_arcologydialog.cpp" />
     <ClCompile Include="hooks\hook_bridgedialog.cpp" />
     <ClCompile Include="hooks\hook_drawing.cpp" />
+    <ClCompile Include="hooks\hook_powerplantdialog.cpp" />
     <ClCompile Include="hooks\hook_sc2k1995_miscellaneous.cpp" />
     <ClCompile Include="hooks\hook_sc2kdemo_miscellaneous.cpp" />
     <ClCompile Include="hooks\hook_guzzardo.cpp" />

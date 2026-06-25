@@ -1200,6 +1200,7 @@ extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lp
 		lpMainDialogAfxProc = lpDialogFunc;
 		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_MainDialogProc, dwInitParam);
 	case 102:
+	case 113:
 	case 142:
 	case 154:
 		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
@@ -2713,6 +2714,8 @@ void InstallMiscHooks_SC2K1996(void) {
 	InstallQueryHooks_SC2K1996();
 
 	InstallArcologyDialogHooks_SC2K1996();
+
+	InstallPowerPlantDialogHooks_SC2K1996();
 
 	InstallBridgeDialogHooks_SC2K1996();
 
