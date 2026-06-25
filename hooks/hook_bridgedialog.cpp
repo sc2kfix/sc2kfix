@@ -92,10 +92,7 @@ extern "C" int __stdcall Hook_BridgeSelectDialog_OnInitDialog() {
 		Game_Graphics_ReleaseDC(pThis->dwBSDCGraphicsOne[nItem], pDC);
 		Game_BeginProcessObjects(pThis, vBridgeBits, pThis->dwBSDWidth, (__int16)pThis->dwBSDHeight, &dlgRect);
 		__int16 nImageWidth = (__int16)pThis->dwBSDWidth;
-		// Previously it subtracted by 70, however it's been
-		// adjusted to avoid the price tag from overlapping
-		// the shape.
-		__int16 nImageHeight = (__int16)pThis->dwBSDHeight - 60;
+		__int16 nImageHeight = (__int16)pThis->dwBSDHeight - 72;
 		switch (wDlgAvailableBridges[nItem]) {
 			case BRIDGE_WIRE:
 				Game_drawBridgeShape(nImageWidth / 2 + 12, nImageHeight, SPRITE_MEDIUM_POWERLINES_BR);
@@ -159,6 +156,45 @@ extern "C" int __stdcall Hook_BridgeSelectDialog_OnInitDialog() {
 	return 1;
 }
 
+extern "C" void __stdcall Hook_BridgeSelectDialog_OnPaint() {
+	CBridgeSelectDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	CMFC3XPaintDC paintDC;
+	HWND hDlgItem;
+	RECT imageRect;
+	CGraphics *pGraphic;
+	CMFC3XDC *pDC;
+	char szResBuf[255 + 1];
+	POINT pt;
+
+	GameMain_PaintDC_Cons(&paintDC, pThis);
+	SetTextAlign(paintDC.m_hDC, TA_UPDATECP);
+	SetBkColor(paintDC.m_hDC, GetSysColor(COLOR_BTNFACE));
+	SetTextColor(paintDC.m_hDC, GetSysColor(COLOR_BTNTEXT));
+	SelectFont(paintDC.m_hDC, hFontMSSansSerifRegular10);
+	for (__int16 nItem = 0; nItem < wDlgNumAvailableBridges; ++nItem) {
+		__int16 nAvailableBridge = wDlgAvailableBridges[nItem];
+		hDlgItem = GetDlgItem(pThis->m_hWnd, dwBridgeImageSurfaceID[nItem]);
+		GetWindowRect(hDlgItem, &imageRect);
+		ScreenToClient(pThis->m_hWnd, (LPPOINT)&imageRect.left);
+		ScreenToClient(pThis->m_hWnd, (LPPOINT)&imageRect.right);
+		pGraphic = pThis->dwBSDCGraphicsOne[nItem];
+		pDC = Game_Graphics_GetDC(pGraphic);
+		Game_Graphics_SetColorTableFromApplicationPalette(pGraphic);
+		Game_Graphics_Paint(pGraphic, paintDC.m_hDC, imageRect.left, imageRect.top);
+		Game_Graphics_ReleaseDC(pGraphic, pDC);
+		LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, dwBridgeStringID[nAvailableBridge], szResBuf, sizeof(szResBuf) - 1);
+		hDlgItem = GetDlgItem(pThis->m_hWnd, dwBridgeSelectBtnID[nItem]);
+		SetWindowTextA(hDlgItem, szResBuf);
+		MoveToEx(paintDC.m_hDC, imageRect.left + 20, imageRect.bottom - 42, &pt);
+		Game_DisplayItemCost(&paintDC, pThis->dwBSDNumTiles * dwBridgeBaseCost[nAvailableBridge]);
+	}
+	SetTextAlign(paintDC.m_hDC, TA_NOUPDATECP);
+	GameMain_PaintDC_Dest(&paintDC);
+}
+
 extern "C" void __stdcall Hook_BridgeSelectDialog_SetCursorAndDeleteGraphics() {
 	CBridgeSelectDialog *pThis;
 
@@ -186,6 +222,10 @@ void InstallBridgeDialogHooks_SC2K1996(void) {
 	// Hook CBridgeSelectDialog::OnInitDialog
 	SafeVirtualProtect((LPVOID)0x4021DA, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4021DA, Hook_BridgeSelectDialog_OnInitDialog);
+
+	// Hook CBridgeSelectDialog::OnPaint
+	SafeVirtualProtect((LPVOID)0x4010C3, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4010C3, Hook_BridgeSelectDialog_OnPaint);
 
 	// Hook CBridgeSelectDialog::SetCursorAndDeleteGraphics
 	SafeVirtualProtect((LPVOID)0x401B27, 5, PAGE_EXECUTE_READWRITE);
