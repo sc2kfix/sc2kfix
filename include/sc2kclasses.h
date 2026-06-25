@@ -113,6 +113,8 @@ enum {
 	BRIDGE_COUNT
 };
 
+#define POWERPLANT_COUNT 9
+
 // This specifical structure is the equivalent
 // of the LOGPALETTE struct from the WinAPI
 // except the pPalEnts array is preset to
@@ -536,11 +538,23 @@ public:
 	CMFC3XListBox listBox;
 };
 
+class CPowerPlantDialog : public CGameDialog {
+public:
+	int dwPPDSelectedPowerPlant;
+	CGraphics *dwPPDCGraphics[POWERPLANT_COUNT];
+	DWORD dwPPDBtnsID[POWERPLANT_COUNT];
+	DWORD dwPPDBtnsState[POWERPLANT_COUNT];
+	CMFC3XFont dwPPDCFont;
+	CMFC3XPoint dwPPDPoint[POWERPLANT_COUNT];
+	CMFC3XButton dwPPDButtonCancel;
+	CMFC3XButton dwPPDButtonInfo;
+};
+
 class CBridgeSelectDialog : public CGameDialog {
 public:
 	DWORD dwBSDNumTiles;
 	DWORD dwBSDBridgeType;
-	DWORD dwBSDSelectedBridge;
+	int dwBSDSelectedBridge;
 	CGraphics *dwBSDCGraphicsOne[BRIDGE_COUNT];
 	DWORD dwBSDWidth;
 	DWORD dwBSDHeight;
