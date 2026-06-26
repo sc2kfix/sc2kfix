@@ -2578,6 +2578,42 @@ extern "C" BOOL __stdcall Hook_Wnd_OnCommand(WPARAM wParam, LPARAM lParam) {
 	return L_OnCmdMsg(pThis, nID, nCode, 0, 0, _ReturnAddress());
 }
 
+int nOwnDrwDlg = OWNDRW_DLG_NONE;
+CMFC3XWnd *pStoredWnd = NULL;
+
+extern "C" int __declspec(naked) Hook_Wnd_WindowProc_vOWNER() {
+	CMFC3XWnd *pThis;
+	UINT nMsg;
+	WPARAM wParam;
+	LPARAM lParam;
+
+	__asm {
+		mov ecx, [ebp + -0x10]
+		mov [nMsg], ebx
+		mov [pThis], ecx
+		mov [wParam], esi
+		mov [lParam], edi
+	}
+
+	if (pStoredWnd == pThis) {
+		if (nOwnDrwDlg == OWNDRW_DLG_BRIDGE)
+			ConsoleLog(LOG_DEBUG, "0x%06X -> CWnd::WindowProc(0x%06X, 0x%06X, 0x%06X, 0x%06X) (AfxSig_vOWNER)\n", _ReturnAddress(), &pThis->m_hWnd, nMsg, wParam, lParam);
+	}
+
+	if (nOwnDrwDlg > OWNDRW_DLG_NONE && nOwnDrwDlg < OWNDRW_DLG_COUNT) {
+		__asm mov eax, TRUE
+	}
+	else {
+		__asm {
+			push esi
+			push edi
+			call[ebp + -0x14]
+			mov eax, TRUE
+		}
+	}
+	GAMEJMP(0x4A5040)
+}
+
 // Placeholder.
 void ShowModSettingsDialog(void) {
 	L_MessageBoxA(GameGetRootWindowHandle(), "The mod settings dialog has not yet been implemented. Check back later.", "sc2fix", MB_OK);
@@ -2778,6 +2814,10 @@ void InstallMiscHooks_SC2K1996(void) {
 	// Hook CWnd::OnCommand
 	SafeVirtualProtect((LPVOID)0x4A5352, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4A5352, Hook_Wnd_OnCommand);
+
+	// Hook into CWnd::WindowProc - AfxSig_vOWNER
+	SafeVirtualProtect((LPVOID)0x4A5033, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4A5033, Hook_Wnd_WindowProc_vOWNER);
 
 	// Add more buttons to SC2K's menus
 	hMainMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(2));

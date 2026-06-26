@@ -13,6 +13,9 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
+extern int nOwnDrwDlg;
+extern CMFC3XWnd *pStoredWnd;
+
 extern "C" void __stdcall Hook_drawBridgeShape(__int16 nWidth, __int16 nHeight, __int16 nSpriteID) {
 	L_drawShapeDialog_SC2K1996(SPRITE_MEDIUM_WATER_TRBL, nWidth, nHeight - pArrSpriteHeaders[SPRITE_MEDIUM_WATER_TRBL].wHeight, 0, 0);
 	L_drawShapeDialog_SC2K1996(nSpriteID, nWidth, nHeight - pArrSpriteHeaders[nSpriteID].wHeight, 0, 0);
@@ -42,6 +45,8 @@ extern "C" int __stdcall Hook_BridgeSelectDialog_OnInitDialog() {
 	CMFC3XWnd *pWnd;
 
 	GameMain_Dialog_OnInitDialog(pThis);
+	pStoredWnd = pThis;
+	nOwnDrwDlg = OWNDRW_DLG_BRIDGE;
 	for (nItem = 0; nItem < BRIDGE_COUNT; ++nItem)
 		pThis->dwBSDCGraphicsOne[nItem] = 0;
 	hDlgItem = GetDlgItem(pThis->m_hWnd, dwBridgeImageSurfaceID[0]);
@@ -202,6 +207,8 @@ extern "C" void __stdcall Hook_BridgeSelectDialog_SetCursorAndDeleteGraphics() {
 
 	int nItem;
 
+	nOwnDrwDlg = OWNDRW_DLG_NONE;
+	pStoredWnd = NULL;
 	Game_GameDialog_SetCursor(pThis);
 	for (nItem = 0; nItem < BRIDGE_COUNT; ++nItem) {
 		if (pThis->dwBSDCGraphicsOne[nItem]) {
