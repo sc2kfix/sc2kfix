@@ -1131,6 +1131,67 @@ extern "C" void __stdcall Hook_endShapes() {
 	SetRectEmpty(&currWndClientRect);
 }
 
+extern "C" void __cdecl Hook_InvertTerrain(__int16 x, __int16 y) {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CSimcityView *pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+	__int16 nSprStart;
+	__int16 nScale;
+	__int16 nTerrainTileID, nUnderTile, nTileID;
+	__int16 nAltitude;
+	__int16 nSpriteID;
+	__int16 nShapeHeight;
+	LONG nTop;
+	RECT r;
+
+	nSprStart = SPRITE_BOUNDARY_MULTIPLIER * pSCView->wSCVZoomLevel;
+	nScale = SCALE_VAL(pSCView->wSCVZoomLevel);
+	r.left = iScreenOffSetX + nScale * (x - y);
+	r.top = iScreenOffSetY + ((2 * (x + y)) << pSCView->wSCVZoomLevel);
+	nTerrainTileID = GetTerrainTileID(x, y);
+	if (DisplayLayer[LAYER_UNDERGROUND] || bMapWireFrame) {
+		nUnderTile = wXTERToXUNDSpriteIDMap[nTerrainTileID];
+		if (!DisplayLayer[LAYER_UNDERGROUND] && bMapWireFrame) {
+			nAltitude = (nTerrainTileID < SUBMERGED_00) ? ALTMReturnLandAltitude(x, y) : ALTMReturnWaterLevel(x, y);
+			nTileID = (nTerrainTileID >= TERRAIN_13) ? nXTERTileIDs[nTerrainTileID] : nUnderTile;
+		}
+		else {
+			nAltitude = ALTMReturnLandAltitude(x, y);
+			nTileID = nUnderTile;
+		}
+	}
+	else {
+		nAltitude = (nTerrainTileID < SUBMERGED_00) ? ALTMReturnLandAltitude(x, y) : ALTMReturnWaterLevel(x, y);
+		nTileID = nXTERTileIDs[nTerrainTileID];
+	}
+	r.bottom = r.top - ((3 * nAltitude) << pSCView->wSCVZoomLevel);
+	nSpriteID = nSprStart + nTileID;
+	nShapeHeight = pArrSpriteHeaders[nSpriteID].wHeight;
+	nTop = r.bottom - nShapeHeight;
+	r.top = nShapeHeight + 1;
+	Game_DrawProcessObject(nSpriteID, (__int16)r.left, (__int16)nTop, 0, 1);
+	if (pSCView->dwSCVIsZoomed) {
+		r.left *= 2;
+		r.top *= 2;
+		r.bottom *= 2;
+		nScale *= 2;
+	}
+	// This is here deliberately.
+	r.right = r.left + 2 * nScale;
+	nTop = r.bottom - r.top;
+	if (dirtyRect.top == -1000)
+		SetRect(&dirtyRect, r.left, nTop, r.right, r.bottom);
+	else {
+		if (dirtyRect.left > r.left)
+			dirtyRect.left = r.left;
+		if (dirtyRect.right < r.right)
+			dirtyRect.right = r.right;
+		if (dirtyRect.bottom < r.bottom)
+			dirtyRect.bottom = r.bottom;
+		if (dirtyRect.top > nTop)
+			dirtyRect.top = nTop;
+	}
+}
+
 extern "C" void __stdcall Hook_SimcityView_KillCursor() {
 	CSimcityView *pThis;
 
@@ -1197,8 +1258,16 @@ extern "C" void __stdcall Hook_SimcityView_MaintainCursor() {
 		if (wCurrentCityToolGroup == CITYTOOL_GROUP_ROADS && wSelectedSubtool[CITYTOOL_GROUP_ROADS] == ROADS_HIGHWAY)
 			bHighway = TRUE;
 	}
-	if (!nBuildArea)
-		return;
+	if (!nBuildArea) {
+		// This'll allow you to see where you're hovering
+		// if you're making use of the shift/control-key
+		// activated tools (query or demolition).
+		if (GetAsyncKeyState(VK_SHIFT) >= 0 && GetAsyncKeyState(VK_CONTROL) >= 0) {
+			if (wCursorActive)
+				Game_SimcityView_KillCursor(pThis);
+			return;
+		}
+	}
 	n2x2SingularBuildStrip = nBuildArea / 2;
 	n3x3SingularBuildStrip = nBuildArea / 3;
 	pt.x = pThis->SCVMousePoint.x;
@@ -4101,6 +4170,10 @@ void InstallDrawingHooks_SC2K1996(void) {
 	// Hook for PointToTile
 	SafeVirtualProtect((LPVOID)0x401D16, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401D16, Hook_PointToTile);
+
+	// Hook for InvertTerrain
+	SafeVirtualProtect((LPVOID)0x401D2A, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401D2A, Hook_InvertTerrain);
 
 	// Hook for CSimcityView::KillCursor
 	SafeVirtualProtect((LPVOID)0x4014F1, 5, PAGE_EXECUTE_READWRITE);

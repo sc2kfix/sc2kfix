@@ -418,12 +418,21 @@ static BOOL DoAdvancedQuery(__int16 x, __int16 y) {
 static BOOL bSoundPlayed = FALSE;
 
 extern "C" void __cdecl Hook_QuerySpecificItem(__int16 x, __int16 y) {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CSimcityView *pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 	bSoundPlayed = FALSE;
+	if (pSCView && wCursorActive)
+		Game_SimcityView_KillCursor(pSCView);
 	if (!DoAdvancedQuery(x, y))
 		GameMain_QuerySpecificItem(x, y);
+
 }
 
 extern "C" void __cdecl Hook_QueryGeneralItem(__int16 x, __int16 y) {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CSimcityView *pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+	if (pSCView && wCursorActive)
+		Game_SimcityView_KillCursor(pSCView);
 	if (!DoAdvancedQuery(x, y))
 		GameMain_QueryGeneralItem(x, y);
 }
