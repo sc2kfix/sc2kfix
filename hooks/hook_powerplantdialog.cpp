@@ -112,6 +112,97 @@ extern "C" int __stdcall Hook_PowerPlantDialog_OnInitDialog() {
 	return 1;
 }
 
+extern "C" void __stdcall Hook_PowerPlantDialog_OnDrawEntire(int nPos, int nDlgItemID, LPDRAWITEMSTRUCT lpDIS) {
+	CPowerPlantDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	HWND hDlgItem;
+	HDC hDlgDC;
+	CMFC3XPaintDC *pDC;
+	RECT rcDest;
+	DWORD dwState;
+	int nOuterWidth, nOuterHeight;
+	int nOuterHalfWidth;
+	int nInnerWidth, nInnerHeight;
+	int nAvailablePlant;
+	int nCost;
+	COLORREF cr, crTextOld;
+	HFONT hFont;
+	SIZE textSz;
+	POINT pt;
+	char szBuf[255 + 1];
+	int nY;
+	int nImageX, nImageY;
+
+	hDlgItem = GetDlgItem(pThis->m_hWnd, nDlgItemID);
+	hDlgDC = GetDC(hDlgItem);
+	pDC = (CMFC3XPaintDC *)GameMain_DC_FromHandle(hDlgDC);
+	CopyRect(&rcDest, &lpDIS->rcItem);
+	dwState = pThis->dwPPDBtnsState[nPos];
+	nOuterWidth = rcDest.right - rcDest.left;
+	nOuterHeight = rcDest.bottom - rcDest.top;
+	nOuterHalfWidth = nOuterWidth / 2;
+	nInnerWidth = nOuterWidth - 2;
+	nInnerHeight = nOuterHeight - 2;
+	nAvailablePlant = wDlgAvailablePlants[nPos];
+	cr = (dwState == TBBS_CHECKED) ? crPowerPlantColBtnShadow : crPowerPlantColBtnFace;
+	Game_SetRectBackground(lpDIS->hDC, 1, 1, nInnerWidth, nInnerHeight, cr);
+	SetTextColor(pDC->m_hDC, GetSysColor(COLOR_BTNTEXT));
+	SetBkColor(pDC->m_hDC, GetSysColor(COLOR_BTNFACE));
+	SetTextAlign(pDC->m_hDC, TA_UPDATECP);
+	hFont = SelectFont(pDC->m_hDC, pThis->dwPPDCFont.m_hObject);
+	sprintf_s(szBuf, "%d%s", wPowerPlantMWs[nAvailablePlant], aMw);
+	GetTextExtentPointA(pDC->m_hAttribDC, szBuf, strlen(szBuf), &textSz);
+	nY = nOuterHeight - textSz.cy - 4;
+	MoveToEx(pDC->m_hDC, nOuterHalfWidth - textSz.cx / 2, nY, &pt);
+	TextOutA(pDC->m_hDC, 0, 0, szBuf, strlen(szBuf));
+	nCost = costFromSubTool[CITY_MENUTOOL_POS(nAvailablePlant + POWER_PLANTS_COAL, CITYTOOL_GROUP_POWER)];
+	// One oddity here with the currency string is
+	// that it'll move horizontally (observed prior
+	// to any changes as well). This issue is greatly
+	// mitigated by it now being on a separate line,
+	// so it'll no longer overlap with the MW read-out.
+	textSz.cx = Game_GetAvailableFunds(pDC, nCost);
+	nY = nY - textSz.cy;
+	crTextOld = GetSysColor(COLOR_BTNTEXT);
+	if (nCost > dwCityFunds)
+		crTextOld = SetTextColor(pDC->m_hDC, RGB(255, 0, 0));
+	MoveToEx(pDC->m_hDC, nOuterHalfWidth - textSz.cx / 2, nY, &pt);
+	Game_DisplayItemCost(pDC, nCost);
+	SetTextColor(pDC->m_hDC, crTextOld);
+	strcpy_s(szBuf, cityToolGroupStrings[CITY_MENUTOOL_POS(nAvailablePlant + POWER_PLANTS_COAL, CITYTOOL_GROUP_POWER)].m_pchData);
+	GetTextExtentPointA(pDC->m_hAttribDC, szBuf, strlen(szBuf), &textSz);
+	nY = nY - textSz.cy;
+	MoveToEx(pDC->m_hDC, nOuterHalfWidth - textSz.cx / 2, nY, &pt);
+	TextOutA(pDC->m_hDC, 0, 0, szBuf, strlen(szBuf));
+	SetTextAlign(pDC->m_hDC, TA_NOUPDATECP);
+	nImageX = (nInnerWidth - pThis->dwPPDPoint[nPos].x - 1) >> 1;
+	nImageY = (nInnerHeight - pThis->dwPPDPoint[nPos].y) >> 1;
+	Game_Graphics_SetColorTableFromApplicationPalette(pThis->dwPPDCGraphics[nPos]);
+	Game_Graphics_BitBlit(pThis->dwPPDCGraphics[nPos], lpDIS->hDC, nImageX + 1, nImageY - 12, pThis->dwPPDPoint[nPos].x, pThis->dwPPDPoint[nPos].y, 0, 0);
+	if (dwState == TBBS_CHECKED)
+		InvertRect(pDC->m_hDC, &rcDest);
+	Game_SetRectBackground(lpDIS->hDC, 1, 0, nInnerWidth, 1, crPowerPlantColWndFrame);
+	Game_SetRectBackground(lpDIS->hDC, 1, nInnerHeight + 1, nInnerWidth, 1, crPowerPlantColWndFrame);
+	Game_SetRectBackground(lpDIS->hDC, 0, 1, 1, nInnerHeight, crPowerPlantColWndFrame);
+	Game_SetRectBackground(lpDIS->hDC, nInnerWidth + 1, 1, 1, nInnerHeight, crPowerPlantColWndFrame);
+	if ((dwState & (TBBS_CHECKED | TBBS_PRESSED)) != 0) {
+		Game_SetRectBackground(lpDIS->hDC, 1, 1, 1, nInnerHeight, crPowerPlantColBtnShadow);
+		Game_SetRectBackground(lpDIS->hDC, 1, 1, nInnerWidth, 1, crPowerPlantColBtnShadow);
+	}
+	else {
+		Game_SetRectBackground(lpDIS->hDC, 1, 1, 1, nInnerHeight - 1, crPowerPlantColBtnHighlight);
+		Game_SetRectBackground(lpDIS->hDC, 1, 1, nInnerWidth - 1, 1, crPowerPlantColBtnHighlight);
+		Game_SetRectBackground(lpDIS->hDC, nInnerWidth, 1, 1, nInnerHeight, crPowerPlantColBtnShadow);
+		Game_SetRectBackground(lpDIS->hDC, 1, nInnerHeight, nInnerWidth, 1, crPowerPlantColBtnShadow);
+		Game_SetRectBackground(lpDIS->hDC, nInnerWidth - 1, 2, 1, nInnerHeight - 2, crPowerPlantColBtnShadow);
+		Game_SetRectBackground(lpDIS->hDC, 2, nInnerHeight - 1, nInnerWidth - 2, 1, crPowerPlantColBtnShadow);
+	}
+	SelectFont(pDC->m_hDC, hFont);
+	ReleaseDC(hDlgItem, pDC->m_hDC);
+}
+
 extern "C" void __stdcall Hook_PowerPlantDialog_SetCursorDeleteGraphics() {
 	CPowerPlantDialog *pThis;
 
@@ -135,6 +226,10 @@ void InstallPowerPlantDialogHooks_SC2K1996(void) {
 	// Hook CPowerPlantDialog::OnInitDialog
 	SafeVirtualProtect((LPVOID)0x401889, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401889, Hook_PowerPlantDialog_OnInitDialog);
+
+	// Hook CPowerPlantDialog::OnDrawEntire
+	SafeVirtualProtect((LPVOID)0x402194, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402194, Hook_PowerPlantDialog_OnDrawEntire);
 
 	// Hook CPowerPlantDialog::SetCursorDeleteGraphics
 	SafeVirtualProtect((LPVOID)0x403008, 5, PAGE_EXECUTE_READWRITE);
