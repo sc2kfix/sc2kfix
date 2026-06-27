@@ -120,6 +120,7 @@ enum {
 	BRIDGE_COUNT
 };
 
+#define ARCOLOGY_COUNT 4
 #define POWERPLANT_COUNT 9
 
 // This specifical structure is the equivalent
@@ -543,6 +544,15 @@ public:
 	CGraphics *pGraphPict;
 	HPALETTE hPictPal;
 	CMFC3XListBox listBox;
+};
+
+class CSelectArcologyDialog : public CGameDialog {
+public:
+	int dwSADArcologySelection;
+	CMFC3XFont dwSADCFont;
+	CGraphics *dwSADCGraphicsOne[4];
+	CMFC3XPoint dwSADPoints[4];
+	DWORD dwSADBtnState[4];
 };
 
 class CPowerPlantDialog : public CGameDialog {
