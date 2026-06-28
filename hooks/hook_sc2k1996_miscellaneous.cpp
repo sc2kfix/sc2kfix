@@ -1146,6 +1146,43 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		}
 
 		break;
+
+	case WM_COMMAND:
+		if (HIWORD(wParam) == BN_CLICKED) {
+			// Preview the selected terrain type
+			switch (LOWORD(wParam)) {
+			case 108:
+				iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
+				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
+				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				break;
+			case 112:
+				iTerrainCosmeticMode = TERRAIN_COSMETIC_GREY;
+				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
+				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				break;
+			case 113:
+				iTerrainCosmeticMode = TERRAIN_COSMETIC_GREEN;
+				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
+				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				break;
+			case 114:
+				iTerrainCosmeticMode = TERRAIN_COSMETIC_COLD;
+				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
+				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				break;
+			case 115:
+				iTerrainCosmeticMode = TERRAIN_COSMETIC_HOT;
+				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
+				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				break;
+			case 116:
+				iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
+				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
+				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				break;
+			}
+		}
 	}
 
 	// Fall through to the original dialog procedure
