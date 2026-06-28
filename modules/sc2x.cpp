@@ -18,6 +18,8 @@
 
 //#define SC2X_USE_VANILLA_LOAD_REPLACEMENT
 
+#define SC2X_USE_SC2J_ADDENDUM 1
+
 #define SC2X_DEBUG_LOAD 1
 #define SC2X_DEBUG_SAVE 2
 #define SC2X_DEBUG_VANILLA_LOAD 4
@@ -41,6 +43,20 @@ UINT sc2x_debug = SC2X_DEBUG;
 
 static char* szLoadFileName = NULL;
 static int iCorruptedFixupSize = 0;
+
+json::JSON jsonSC2JAddendum;
+
+// Initializes the jsonSC2JAddendum structure to default values
+void CreateDefaultSC2JAddendum(void) {
+	jsonSC2JAddendum = {};
+
+	jsonSC2JAddendum["meta"] = {};
+	jsonSC2JAddendum["meta"]["creator"] = "sc2kfix " SC2KFIX_VERSION;
+	jsonSC2JAddendum["meta"]["timestamp"] = time(NULL);
+
+	jsonSC2JAddendum["map"] = {};
+	jsonSC2JAddendum["map"]["iTerrainCosmeticMode"] = TERRAIN_COSMETIC_NONE;
+}
 
 void LoadInterleavedBudgetVanilla(budget_t* pTarget, DWORD* pSource) {
 	pTarget->iCurrentCosts = ntohl(pSource[0]);
@@ -714,6 +730,33 @@ extern "C" DWORD __stdcall Hook_LoadGame(CMFC3XFile* pFile, char* src) {
 		ret = GameMain_SimcityApp_DoLoadGame(pThis, pFile, src);
 	}
 
+	// Create the default SC2J addendum contents
+	CreateDefaultSC2JAddendum();
+
+#ifdef SC2X_USE_SC2J_ADDENDUM
+	// Load SC2J addendum file
+	std::string strSC2JFileName = szLoadFileName;
+	strSC2JFileName = strSC2JFileName.substr(0, strSC2JFileName.find_last_of(".")) + ".sc2j";
+
+	if (FileExists(strSC2JFileName.c_str())) {
+		if (sc2x_debug & SC2X_DEBUG_LOAD)
+			ConsoleLog(LOG_DEBUG, "SC2X: Loading SC2J addendum file \"%s\".\n", strSC2JFileName.c_str());
+
+		std::ifstream fSC2JFile(strSC2JFileName);
+		if (fSC2JFile.good()) {
+			std::stringstream strLoadedJSONDump;
+			if (strLoadedJSONDump.good()) {
+				strLoadedJSONDump << fSC2JFile.rdbuf();
+				jsonSC2JAddendum.merge(jsonSC2JAddendum.Load(strLoadedJSONDump.str()));
+			}
+		}
+
+		// Update iTerrainCosmeticMode if we don't have a global override
+		if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt() == TERRAIN_COSMETIC_NONE)
+			iTerrainCosmeticMode = jsonSC2JAddendum["map"]["iTerrainCosmeticMode"].ToInt();
+	}
+#endif
+
 	for (const auto& hook : stHooks_Hook_LoadGame_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
 			void (*fnHook)(CSimcityAppPrimary*, CMFC3XFile*, char*) = (void(*)(CSimcityAppPrimary*, CMFC3XFile*, char*))hook.pFunction;
@@ -750,6 +793,15 @@ extern "C" DWORD __stdcall Hook_SaveGame(CMFC3XString* lpFileName) {
 	}
 
 	ret = GameMain_SimcityApp_DoSaveGame(pThis, lpFileName);
+
+#ifdef SC2X_USE_SC2J_ADDENDUM
+	// Save SC2J addendum file
+	jsonSC2JAddendum["meta"]["timestamp"] = time(NULL);
+	std::string strSC2JFileName = lpFileName->m_pchData;
+	strSC2JFileName = strSC2JFileName.substr(0, strSC2JFileName.find_last_of(".")) + ".sc2j";
+	std::ofstream fSettingsJSON(strSC2JFileName, std::ios::out | std::ios::trunc);
+	fSettingsJSON << jsonSC2JAddendum.dump();
+#endif
 
 	for (const auto& hook : stHooks_Hook_SaveGame_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {

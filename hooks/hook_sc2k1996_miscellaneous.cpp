@@ -1297,6 +1297,8 @@ extern "C" void __stdcall Hook_StartCleanGame(void) {
 	// Clean up the game state and start the new game/map
 	iChurchVirus = -1;
 	ResetThingCleanupState_SC2K1996();
+	CreateDefaultSC2JAddendum();
+	iTerrainCosmeticMode = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt();
 	GameMain_StartCleanGame();
 }
 
