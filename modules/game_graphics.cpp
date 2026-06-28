@@ -260,6 +260,33 @@ void CGraphics::ReleaseDC_SC2K1996(CMFC3XDC *pDC) {
 	g_hBitmapOld = 0;
 }
 
+void L_SetRectBackground_SC2K1996(HDC hDC, LONG left, LONG top, LONG right, LONG bottom, COLORREF cr) {
+	RECT r;
+
+	SetBkColor(hDC, cr);
+	SetRect(&r, left, top, right + left, top + bottom);
+	ExtTextOutA(hDC, 0, 0, OPAQUE, &r, 0, 0, NULL);
+}
+
+void L_SetButtonShape_SC2K1996(HDC hDC, int nInnerWidth, int nInnerHeight, DWORD dwState) {
+	L_SetRectBackground_SC2K1996(hDC, 1, 0, nInnerWidth, 1, crDlgColWndFrame);
+	L_SetRectBackground_SC2K1996(hDC, 1, nInnerHeight + 1, nInnerWidth, 1, crDlgColWndFrame);
+	L_SetRectBackground_SC2K1996(hDC, 0, 1, 1, nInnerHeight, crDlgColWndFrame);
+	L_SetRectBackground_SC2K1996(hDC, nInnerWidth + 1, 1, 1, nInnerHeight, crDlgColWndFrame);
+	if ((dwState & (TBBS_CHECKED | TBBS_PRESSED)) != 0) {
+		L_SetRectBackground_SC2K1996(hDC, 1, 1, 1, nInnerHeight, crDlgColBtnShadow);
+		L_SetRectBackground_SC2K1996(hDC, 1, 1, nInnerWidth, 1, crDlgColBtnShadow);
+	}
+	else {
+		L_SetRectBackground_SC2K1996(hDC, 1, 1, 1, nInnerHeight - 1, crDlgColBtnHighlight);
+		L_SetRectBackground_SC2K1996(hDC, 1, 1, nInnerWidth - 1, 1, crDlgColBtnHighlight);
+		L_SetRectBackground_SC2K1996(hDC, nInnerWidth, 1, 1, nInnerHeight, crDlgColBtnShadow);
+		L_SetRectBackground_SC2K1996(hDC, 1, nInnerHeight, nInnerWidth, 1, crDlgColBtnShadow);
+		L_SetRectBackground_SC2K1996(hDC, nInnerWidth - 1, 2, 1, nInnerHeight - 2, crDlgColBtnShadow);
+		L_SetRectBackground_SC2K1996(hDC, 2, nInnerHeight - 1, nInnerWidth - 2, 1, crDlgColBtnShadow);
+	}
+}
+
 typedef struct {
 	DWORD nFrID;
 	int nHeight;

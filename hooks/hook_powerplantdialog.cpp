@@ -21,7 +21,8 @@ extern "C" int __stdcall Hook_PowerPlantDialog_OnInitDialog() {
 	__int16 nItem;
 	HFONT hFont;
 	HWND hDlgItem;
-	RECT infoRect, cancelRect, dlgWndRect, dlgClientRect, dlgRect, sectRect;
+	RECT borderRect, cancelRect, dlgWndRect, dlgClientRect, dlgRect, sectRect;
+	int nPadding, nWidth;
 	HBRUSH hBrush;
 	CGraphics *pGraphics;
 	CMFC3XDC *pDC;
@@ -45,29 +46,33 @@ extern "C" int __stdcall Hook_PowerPlantDialog_OnInitDialog() {
 			wDlgAvailablePlants[wDlgNumAvailablePlants] = nItem;
 			++wDlgNumAvailablePlants;
 		}
-		//ConsoleLog(LOG_DEBUG, "(%d) (%d, %d)\n", nItem, pThis->dwPPDPoint[nItem].x, pThis->dwPPDPoint[nItem].y);
  	}
-	GetWindowRect(pThis->dwPPDButtonInfo.m_hWnd, &infoRect);
+	GetWindowRect(pThis->dwPPDButtonBorder.m_hWnd, &borderRect);
 	GetWindowRect(pThis->dwPPDButtonCancel.m_hWnd, &cancelRect);
 	GetWindowRect(pThis->m_hWnd, &dlgWndRect);
 	GetClientRect(pThis->m_hWnd, &dlgClientRect);
+	nPadding = 3;
+	nWidth = dlgWndRect.right +
+		dlgClientRect.left - dlgClientRect.right -
+		dlgWndRect.left +
+		(((borderRect.right - borderRect.left) + nPadding) * nPadding);
 	SetRect(&dlgRect,
 		0,
 		0,
-		dlgWndRect.right - dlgWndRect.left,
+		nWidth,
 		(cancelRect.bottom + dlgWndRect.bottom +
 		dlgClientRect.top - dlgClientRect.bottom -
 		dlgWndRect.top +
-		(infoRect.bottom - infoRect.top) * ((wDlgNumAvailablePlants + 2) / 3) -
+		(borderRect.bottom - borderRect.top) * ((wDlgNumAvailablePlants + 2) / 3) -
 		cancelRect.top));
 	SetWindowPos(pThis->m_hWnd, 0, dlgRect.top, dlgRect.left, dlgRect.right - dlgRect.left, dlgRect.bottom - dlgRect.top, SWP_NOZORDER|SWP_NOACTIVATE);
 
-	crPowerPlantColBtnFace = GetSysColor(COLOR_BTNFACE);
-	crPowerPlantColBtnShadow = GetSysColor(COLOR_BTNSHADOW);
-	crPowerPlantColBtnHighlight = GetSysColor(COLOR_BTNHIGHLIGHT);
-	crPowerPlantColBtnText = GetSysColor(COLOR_BTNTEXT);
-	crPowerPlantColWndFrame = GetSysColor(COLOR_WINDOWFRAME);
-	hBrush = CreateSolidBrush(crPowerPlantColBtnFace);
+	crDlgColBtnFace = GetSysColor(COLOR_BTNFACE);
+	crDlgColBtnShadow = GetSysColor(COLOR_BTNSHADOW);
+	crDlgColBtnHighlight = GetSysColor(COLOR_BTNHIGHLIGHT);
+	crDlgColBtnText = GetSysColor(COLOR_BTNTEXT);
+	crDlgColWndFrame = GetSysColor(COLOR_WINDOWFRAME);
+	hBrush = CreateSolidBrush(crDlgColBtnFace);
 
 	for (nItem = 0; nItem < wDlgNumAvailablePlants; ++nItem) {
 		POINT pt;
@@ -112,7 +117,7 @@ extern "C" int __stdcall Hook_PowerPlantDialog_OnInitDialog() {
 	return 1;
 }
 
-extern "C" void __stdcall Hook_PowerPlantDialog_OnDrawEntire(int nPos, int nDlgItemID, LPDRAWITEMSTRUCT lpDIS) {
+extern "C" void __stdcall Hook_PowerPlantDialog_OnDrawEntire(int nPos, int nCtlID, LPDRAWITEMSTRUCT lpDIS) {
 	CPowerPlantDialog *pThis;
 
 	__asm mov [pThis], ecx
@@ -129,13 +134,13 @@ extern "C" void __stdcall Hook_PowerPlantDialog_OnDrawEntire(int nPos, int nDlgI
 	int nCost;
 	COLORREF cr, crTextOld;
 	HFONT hFont;
+	char szBuf[255 + 1];
 	SIZE textSz;
 	POINT pt;
-	char szBuf[255 + 1];
 	int nY;
 	int nImageX, nImageY;
 
-	hDlgItem = GetDlgItem(pThis->m_hWnd, nDlgItemID);
+	hDlgItem = GetDlgItem(pThis->m_hWnd, nCtlID);
 	hDlgDC = GetDC(hDlgItem);
 	pDC = (CMFC3XPaintDC *)GameMain_DC_FromHandle(hDlgDC);
 	CopyRect(&rcDest, &lpDIS->rcItem);
@@ -146,10 +151,10 @@ extern "C" void __stdcall Hook_PowerPlantDialog_OnDrawEntire(int nPos, int nDlgI
 	nInnerWidth = nOuterWidth - 2;
 	nInnerHeight = nOuterHeight - 2;
 	nAvailablePlant = wDlgAvailablePlants[nPos];
-	cr = (dwState == TBBS_CHECKED) ? crPowerPlantColBtnShadow : crPowerPlantColBtnFace;
-	Game_SetRectBackground(lpDIS->hDC, 1, 1, nInnerWidth, nInnerHeight, cr);
-	SetTextColor(pDC->m_hDC, GetSysColor(COLOR_BTNTEXT));
-	SetBkColor(pDC->m_hDC, GetSysColor(COLOR_BTNFACE));
+	cr = (dwState == TBBS_CHECKED) ? crDlgColBtnShadow : crDlgColBtnFace;
+	L_SetRectBackground_SC2K1996(lpDIS->hDC, 1, 1, nInnerWidth, nInnerHeight, cr);
+	SetTextColor(pDC->m_hDC, crDlgColBtnText);
+	SetBkColor(pDC->m_hDC, crDlgColBtnFace);
 	SetTextAlign(pDC->m_hDC, TA_UPDATECP);
 	hFont = SelectFont(pDC->m_hDC, pThis->dwPPDCFont.m_hObject);
 	sprintf_s(szBuf, "%d%s", wPowerPlantMWs[nAvailablePlant], aMw);
@@ -165,7 +170,7 @@ extern "C" void __stdcall Hook_PowerPlantDialog_OnDrawEntire(int nPos, int nDlgI
 	// so it'll no longer overlap with the MW read-out.
 	textSz.cx = Game_GetAvailableFunds(pDC, nCost);
 	nY = nY - textSz.cy;
-	crTextOld = GetSysColor(COLOR_BTNTEXT);
+	crTextOld = crDlgColBtnText;
 	if (nCost > dwCityFunds)
 		crTextOld = SetTextColor(pDC->m_hDC, RGB(255, 0, 0));
 	MoveToEx(pDC->m_hDC, nOuterHalfWidth - textSz.cx / 2, nY, &pt);
@@ -183,22 +188,7 @@ extern "C" void __stdcall Hook_PowerPlantDialog_OnDrawEntire(int nPos, int nDlgI
 	Game_Graphics_BitBlit(pThis->dwPPDCGraphics[nPos], lpDIS->hDC, nImageX + 1, nImageY - 12, pThis->dwPPDPoint[nPos].x, pThis->dwPPDPoint[nPos].y, 0, 0);
 	if (dwState == TBBS_CHECKED)
 		InvertRect(pDC->m_hDC, &rcDest);
-	Game_SetRectBackground(lpDIS->hDC, 1, 0, nInnerWidth, 1, crPowerPlantColWndFrame);
-	Game_SetRectBackground(lpDIS->hDC, 1, nInnerHeight + 1, nInnerWidth, 1, crPowerPlantColWndFrame);
-	Game_SetRectBackground(lpDIS->hDC, 0, 1, 1, nInnerHeight, crPowerPlantColWndFrame);
-	Game_SetRectBackground(lpDIS->hDC, nInnerWidth + 1, 1, 1, nInnerHeight, crPowerPlantColWndFrame);
-	if ((dwState & (TBBS_CHECKED | TBBS_PRESSED)) != 0) {
-		Game_SetRectBackground(lpDIS->hDC, 1, 1, 1, nInnerHeight, crPowerPlantColBtnShadow);
-		Game_SetRectBackground(lpDIS->hDC, 1, 1, nInnerWidth, 1, crPowerPlantColBtnShadow);
-	}
-	else {
-		Game_SetRectBackground(lpDIS->hDC, 1, 1, 1, nInnerHeight - 1, crPowerPlantColBtnHighlight);
-		Game_SetRectBackground(lpDIS->hDC, 1, 1, nInnerWidth - 1, 1, crPowerPlantColBtnHighlight);
-		Game_SetRectBackground(lpDIS->hDC, nInnerWidth, 1, 1, nInnerHeight, crPowerPlantColBtnShadow);
-		Game_SetRectBackground(lpDIS->hDC, 1, nInnerHeight, nInnerWidth, 1, crPowerPlantColBtnShadow);
-		Game_SetRectBackground(lpDIS->hDC, nInnerWidth - 1, 2, 1, nInnerHeight - 2, crPowerPlantColBtnShadow);
-		Game_SetRectBackground(lpDIS->hDC, 2, nInnerHeight - 1, nInnerWidth - 2, 1, crPowerPlantColBtnShadow);
-	}
+	L_SetButtonShape_SC2K1996(lpDIS->hDC, nInnerWidth, nInnerHeight, dwState);
 	SelectFont(pDC->m_hDC, hFont);
 	ReleaseDC(hDlgItem, pDC->m_hDC);
 }

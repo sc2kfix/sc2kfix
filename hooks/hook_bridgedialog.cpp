@@ -40,6 +40,7 @@ extern "C" int __stdcall Hook_BridgeSelectDialog_OnInitDialog() {
 	HWND hDlgItem;
 	RECT imageRect, sectRect, dlgRect;
 	__int16 nBridgeTypeBit;
+	HBRUSH hBrush;
 	CGraphics *pGraphic;
 	CMFC3XDC *pDC;
 	CMFC3XWnd *pWnd;
@@ -86,6 +87,12 @@ extern "C" int __stdcall Hook_BridgeSelectDialog_OnInitDialog() {
 	else
 		SetRect(&dlgRect, 0, 0, wDlgNumAvailableBridges * (imageRect.right - imageRect.left) + 34, (imageRect.bottom - imageRect.top) * ((wDlgNumAvailableBridges + 2) / 3) + 64);
 	SetWindowPos(pThis->m_hWnd, 0, dlgRect.top, dlgRect.left, dlgRect.right - dlgRect.left, dlgRect.bottom - dlgRect.top, SWP_NOZORDER|SWP_NOACTIVATE);
+	crDlgColBtnFace = GetSysColor(COLOR_BTNFACE);
+	crDlgColBtnShadow = GetSysColor(COLOR_BTNSHADOW);
+	crDlgColBtnHighlight = GetSysColor(COLOR_BTNHIGHLIGHT);
+	crDlgColBtnText = GetSysColor(COLOR_BTNTEXT);
+	crDlgColWndFrame = GetSysColor(COLOR_WINDOWFRAME);
+	hBrush = CreateSolidBrush(crDlgColBtnFace);
 	for (nItem = 0; nItem < wDlgNumAvailableBridges; ++nItem) {
 		vBridgeBits = Game_Graphics_LockDIBBits(pThis->dwBSDCGraphicsOne[nItem]);
 		pDC = Game_Graphics_GetDC(pThis->dwBSDCGraphicsOne[nItem]);
@@ -155,7 +162,7 @@ extern "C" int __stdcall Hook_BridgeSelectDialog_OnInitDialog() {
 		Game_Graphics_UnlockDIBBits(pThis->dwBSDCGraphicsOne[nItem]);
 		Game_FinishProcessObjects();
 	}
-
+	DeleteObject(hBrush);
 	pWnd = GameMain_Wnd_FromHandle(GetParent(pThis->m_hWnd));
 	Game_GameDialog_RepositionSubDialog(pThis, pWnd);
 	return 1;

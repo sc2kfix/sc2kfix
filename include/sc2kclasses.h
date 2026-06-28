@@ -564,7 +564,7 @@ public:
 	CMFC3XFont dwPPDCFont;
 	CMFC3XPoint dwPPDPoint[POWERPLANT_COUNT];
 	CMFC3XButton dwPPDButtonCancel;
-	CMFC3XButton dwPPDButtonInfo;
+	CMFC3XButton dwPPDButtonBorder;
 };
 
 class CBridgeSelectDialog : public CGameDialog {
