@@ -2587,7 +2587,7 @@ extern "C" void __stdcall Hook_Wnd_OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDIS
 
 	if (pStoredWnd == pThis) {
 		if (nOwnDrwDlg == OWNDRW_DLG_BRIDGE) {
-			ConsoleLog(LOG_DEBUG, "0x%06X -> CWnd::OnDrawItem(0x%06X, 0x%06X, 0x%06X)\n", _ReturnAddress(), &pThis->m_hWnd, nIDCtl, lpDIS);
+			L_BridgeSelectDialog_OnDrawItem_SC2K1996((CBridgeSelectDialog *)pThis, nIDCtl, lpDIS);
 			return;
 		}
 	}

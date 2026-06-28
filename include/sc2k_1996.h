@@ -3637,10 +3637,7 @@ GAMEOFF_ARR(COLORREF,	colRCI,				0x4E6F28)
 GAMEOFF(DWORD,	dwNextRefocusSongID,		0x4E6F8C)
 GAMEOFF_ARR(BYTE,	bInfraTile,				0x4E6FA0)
 GAMEOFF_ARR(int,	dwBridgeBaseCost,		0x4E6FB8)
-GAMEOFF_ARR(UINT,	dwBridgeStringID,		0x4E6FD8)
-GAMEOFF_ARR(UINT,	dwBridgeSelectBtnID,	0x4E6FF8)
-GAMEOFF_ARR(UINT,	dwBridgeImageSurfaceID,	0x4E7018)
-GAMEOFF_ARR(UINT,	dwBridgeInfoBtnID,		0x4E7038)
+GAMEOFF_ARR(UINT,	dwBridgeStringIDs,		0x4E6FD8)
 GAMEOFF_ARR(char,	aGraphicsDir,			0x4E70D0)
 GAMEOFF_ARR(char,	aScenarioDir,			0x4E70EC)
 GAMEOFF_ARR(const char,	aScenarios,			0x4E70FC)
@@ -4568,6 +4565,8 @@ extern bool bSoundKickstart;
 
 extern void L_SetRectBackground_SC2K1996(HDC hDC, LONG left, LONG top, LONG right, LONG bottom, COLORREF cr);
 extern void L_SetButtonShape_SC2K1996(HDC hDC, int nInnerWidth, int nInnerHeight, DWORD dwState);
+
+extern void L_BridgeSelectDialog_OnDrawItem_SC2K1996(CBridgeSelectDialog *pThis, int nCtlID, LPDRAWITEMSTRUCT lpDIS);
 
 extern void Clear_SpriteCache();
 extern void Init_SpriteCache(bool bReload);

@@ -13,14 +13,14 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
-DWORD dwArcologyBtnIDs[ARCOLOGY_COUNT] = {
+static DWORD dwArcologyBtnIDs[ARCOLOGY_COUNT] = {
 	120,
 	121,
 	122,
 	129
 };
 
-DWORD dwArcologyInfoBtnIDs[ARCOLOGY_COUNT] = {
+static DWORD dwArcologyInfoBtnIDs[ARCOLOGY_COUNT] = {
 	3,
 	4,
 	5,
@@ -225,6 +225,8 @@ extern "C" void __stdcall Hook_SelectArcologyDialog_OnDrawEntire(int nPos, int n
 	nImageY = (nInnerHeight - pThis->dwSADPoints[nPos].y) >> 1;
 	Game_Graphics_SetColorTableFromApplicationPalette(pThis->dwSADCGraphicsOne[nPos]);
 	Game_Graphics_BitBlit(pThis->dwSADCGraphicsOne[nPos], lpDIS->hDC, nImageX + 1, nImageY - 12, pThis->dwSADPoints[nPos].x, pThis->dwSADPoints[nPos].y, 0, 0);
+	if (dwState == TBBS_CHECKED)
+		InvertRect(pDC->m_hDC, &rcDest);
 	L_SetButtonShape_SC2K1996(lpDIS->hDC, nInnerWidth, nInnerHeight, dwState);
 	SelectFont(pDC->m_hDC, hFont);
 	ReleaseDC(hDlgItem, pDC->m_hDC);

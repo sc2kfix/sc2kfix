@@ -550,9 +550,9 @@ class CSelectArcologyDialog : public CGameDialog {
 public:
 	int dwSADArcologySelection;
 	CMFC3XFont dwSADCFont;
-	CGraphics *dwSADCGraphicsOne[4];
-	CMFC3XPoint dwSADPoints[4];
-	DWORD dwSADBtnState[4];
+	CGraphics *dwSADCGraphicsOne[ARCOLOGY_COUNT];
+	CMFC3XPoint dwSADPoints[ARCOLOGY_COUNT];
+	DWORD dwSADBtnState[ARCOLOGY_COUNT];
 };
 
 class CPowerPlantDialog : public CGameDialog {
