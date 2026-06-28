@@ -1101,8 +1101,9 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 			" - Plymouth arcologies unlocked.\n"
 			" - 50% chance of Forest arcologies being unlocked.");
 
-		// Set the default mayor name.
+		// Set the default mayor name and terrain setting.
 		SetDlgItemText(hwndDlg, 150, jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
+		Button_SetCheck(GetDlgItem(hwndDlg, 108), BST_CHECKED);
 		break;
 	case WM_DESTROY:
 		// XXX (araxestroy): there's probably a better window message to use here.
@@ -1112,6 +1113,25 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		if (!GetDlgItemText(hwndDlg, 150, szTempMayorName, 24))
 			strcpy_s(szTempMayorName, 24, jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
 		SetXLABEntry(0, szTempMayorName);
+
+		// Get the selected terrain setting (or randomize it if requested)
+		if (Button_GetCheck(GetDlgItem(hwndDlg, 108)) == BST_CHECKED)
+			jsonSC2JAddendum["map"]["iTerrainCosmeticMode"] = TERRAIN_COSMETIC_NONE;
+		else if (Button_GetCheck(GetDlgItem(hwndDlg, 112)) == BST_CHECKED)
+			jsonSC2JAddendum["map"]["iTerrainCosmeticMode"] = TERRAIN_COSMETIC_GREY;
+		else if (Button_GetCheck(GetDlgItem(hwndDlg, 113)) == BST_CHECKED)
+			jsonSC2JAddendum["map"]["iTerrainCosmeticMode"] = TERRAIN_COSMETIC_GREEN;
+		else if (Button_GetCheck(GetDlgItem(hwndDlg, 114)) == BST_CHECKED)
+			jsonSC2JAddendum["map"]["iTerrainCosmeticMode"] = TERRAIN_COSMETIC_COLD;
+		else if (Button_GetCheck(GetDlgItem(hwndDlg, 115)) == BST_CHECKED)
+			jsonSC2JAddendum["map"]["iTerrainCosmeticMode"] = TERRAIN_COSMETIC_HOT;
+		else if (Button_GetCheck(GetDlgItem(hwndDlg, 116)) == BST_CHECKED)
+			jsonSC2JAddendum["map"]["iTerrainCosmeticMode"] = rand() % 5;
+
+		if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt() == 0)
+			iTerrainCosmeticMode = jsonSC2JAddendum["map"]["iTerrainCosmeticMode"].ToInt();
+		Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
+		RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 
 		// Clean up window tooltips
 		DestroyStoredTooltips(storedToolTips, hwndDlg);

@@ -399,6 +399,7 @@ extern bool bWeatherEffects;
 extern bool bDarkUnderground;
 
 extern int iTerrainCosmeticMode;
+extern HOOKEXT_CPP json::JSON jsonSC2JAddendum;
 
 // Game path global
 
