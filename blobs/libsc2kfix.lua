@@ -48,6 +48,11 @@ end
 
 debug.setmetatable({}, { __concat = table.join })
 
+-- Returns whether a string starts with a specific substring or not
+function string.starts_with(str, substr)
+	return string.sub(str, 1, string.len(substr)) == substr
+end
+
 
 -------------------------------------------------
 -- Core tables and sub-initialization routines --
@@ -863,6 +868,38 @@ sc2k = {
 sc2k.zones["ZONE_BOUNDARY"] = 15
 sc2k.sounds["SOUND_START"] = 500
 
+
+-----------------------------------------------
+-- Helper table/metatable for game addresses --
+-----------------------------------------------
+
+game = {}
+
+-- Read helper
+function game:__index(key)
+	if string.starts_with(key, "b") then
+		return sc2k.read_byte(sc2k.addr[key])
+	elseif string.starts_with(key, "w") then
+		return sc2k.read_word(sc2k.addr[key])
+	else
+		return sc2k.read_dword(sc2k.addr[key])
+	end
+end
+
+-- Write helper (slightly smarter than the read helper)
+function game:__newindex(key, value)
+	if string.starts_with(key, "b") then
+		return sc2k.write_byte(sc2k.addr[key], value)
+	elseif string.starts_with(key, "w") then
+		return sc2k.write_word(sc2k.addr[key], value)
+	elseif string.starts_with(key, "dw") or string.starts_with(key, "i") or string.starts_with(key, "u") then
+		return sc2k.write_dword(sc2k.addr[key], value)
+	else
+		error("game:__newindex called with ambiguously-named key; please use a specific write function instead")
+	end
+end
+
+setmetatable(game, game)
 
 ---------------------------------
 -- Member functions for tables --
