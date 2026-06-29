@@ -140,6 +140,12 @@ void LuaGlueSetupState(lua_State* L) {
 	HRSRC hResFind;
 	HGLOBAL hLuaResource;
 
+	// Create the global tables first
+	lua_newtable(L);
+	lua_setglobal(L, "sc2k");
+	lua_newtable(L);
+	lua_setglobal(L, "sc2kfix");
+
 	// Load libsc2kfix from a file if it exists, or the built-in copy if not
 	if (FileExists("libsc2kfix.lua")) {
 		if (!bLuaLibLoadedFromDiskNotice) {
