@@ -742,7 +742,10 @@ extern "C" void __cdecl Hook_CityToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 			switch (iCurrCityToolGroupWithHotKey) {
 			case CITYTOOL_GROUP_BULLDOZER:
 				Game_UseBulldozer(tileCoords.x, tileCoords.y);
-				Game_SimcityView_UpdateHouse(pSCView);
+				// This was UpdateHouse(), however ghost
+				// inverted tiles were left in underground
+				// mode when clicking single clear tiles.
+				Game_SimcityView_DrawHouse(pSCView);
 				break;
 			case CITYTOOL_GROUP_NATURE:
 				Game_CityToolPlaceNature(pt);
