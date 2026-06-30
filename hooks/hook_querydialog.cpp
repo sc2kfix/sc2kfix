@@ -229,6 +229,12 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		strTileInfo += std::to_string(GetXPLTByteDataWithNormalCoordinates(iTileX, iTileY));
 		strTileInfo += ")\n\n";
 
+		// XTXT
+		strTileInfo += std::to_string(XTXTGetTextOverlayID(iTileX, iTileY));
+		strTileInfo += " / ";
+		strTileInfo += HexPls(XTXTGetTextOverlayID(iTileX, iTileY), 2);
+		strTileInfo += "\n";
+
 		// Raw XZON data
 		switch (XZONReturnCornerMask(iTileX, iTileY)) {
 		case CORNER_NONE:
