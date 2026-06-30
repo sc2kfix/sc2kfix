@@ -3493,7 +3493,7 @@ GAMEOFF(__int16,	wDisasterObject,		0x4CA81C)
 GAMEOFF(__int16,	wClipYhigh,				0x4CA820)
 GAMEOFF(DWORD,	dwNationalPopulation,		0x4CA928)
 GAMEOFF(DWORD*, dwNeighborFame,				0x4CA92C)		// DWORD dwNeighborFame[4]
-GAMEOFF(WORD*,	dwMilitaryTiles,			0x4CA934)
+GAMEOFF(WORD*,	wMilitaryTiles,				0x4CA934)
 GAMEOFF(WORD,	wNationalTax,				0x4CA938)
 GAMEOFF(WORD,	wCurrentDisasterID,			0x4CA93C)
 GAMEOFF(DWORD,	dwCityOrdinances,			0x4CAA40)
@@ -4116,7 +4116,7 @@ static inline BYTE GetMilitaryFromNormalTile(BYTE iTileID) {
 
 static inline WORD GetFlaggedTileCount(BYTE iTileID, BOOL bMilitary) {
 	BYTE iMilitaryTileID = GetMilitaryFromNormalTile(iTileID);
-	return (bMilitary) ? dwMilitaryTiles[iMilitaryTileID] : dwTileCount[iTileID];
+	return (bMilitary) ? wMilitaryTiles[iMilitaryTileID] : dwTileCount[iTileID];
 }
 
 #define USE_OLD_ALTM_HANDLING 0

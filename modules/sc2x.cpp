@@ -332,9 +332,9 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 				i += 4;
 
 				// This table is staying as a Base64Encode because you SHOULD NOT mess with it
-				//sc2json["MISC"]["dwMilitaryTiles"] = Base64Encode(&pChunkMISC[i], 4 * 16);
+				//sc2json["MISC"]["wMilitaryTiles"] = Base64Encode(&pChunkMISC[i], 4 * 16);
 				for (int i = 0; i < 16; i++)
-					dwMilitaryTiles[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
+					wMilitaryTiles[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
 				i += 4 * 16;
 
 				wSubwayXUNDCount = ntohl(*(DWORD*)&pChunkMISC[i]);

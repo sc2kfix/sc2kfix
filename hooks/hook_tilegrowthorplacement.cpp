@@ -1581,7 +1581,7 @@ static BOOL GetRunwayTilePositionalOffset(__int16 x, __int16 y, __int16 iZoneTyp
 	bMoveXAxis = FALSE;
 	bMoveYAxis = FALSE;
 	// Slight change here: distinguish between military and standard runway tiles.
-	wTileCountType = (iZoneType == ZONE_MILITARY) ? dwMilitaryTiles[MILITARYTILE_RUNWAY] : dwTileCount[TILE_INFRASTRUCTURE_RUNWAY];
+	wTileCountType = (iZoneType == ZONE_MILITARY) ? wMilitaryTiles[MILITARYTILE_RUNWAY] : dwTileCount[TILE_INFRASTRUCTURE_RUNWAY];
 	if (IsEven(wTileCountType)) {
 		if (!SetMoveRunwayTileAxis(x, y, &bMoveXAxis, &bMoveYAxis))
 			return FALSE;

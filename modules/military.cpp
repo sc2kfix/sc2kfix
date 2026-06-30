@@ -222,7 +222,7 @@ RETRYFROMCURRENT:
 						--dwTileCount[iTileID];
 						if (iCurrXPos < GAME_MAP_SIZE && iCurrYPos < GAME_MAP_SIZE)
 							XZONSetNewZone(iCurrXPos, iCurrYPos, ZONE_MILITARY);
-						++dwMilitaryTiles[MILITARYTILE_OTHER];
+						++wMilitaryTiles[MILITARYTILE_OTHER];
 					}
 				}
 			}
@@ -300,7 +300,7 @@ static void MilitaryBasePlotPlacement(coords_w_t *pRandPos) {
 				--dwTileCount[iTileID];
 				if (iCurrXPos < GAME_MAP_SIZE && iCurrYPos < GAME_MAP_SIZE)
 					XZONSetNewZone(iCurrXPos, iCurrYPos, ZONE_MILITARY);
-				++dwMilitaryTiles[MILITARYTILE_OTHER];
+				++wMilitaryTiles[MILITARYTILE_OTHER];
 			}
 		}
 	}
@@ -597,7 +597,7 @@ static int MilitaryBaseNavalYard(BOOL bForce) {
 									Game_PlaceTile(iAdvanceBy.x, iAdvanceBy.y, 0);
 									XZONSetNewZone(iAdvanceBy.x, iAdvanceBy.y, ZONE_MILITARY);
 									--dwTileCount[iTileID];
-									++dwMilitaryTiles[MILITARYTILE_OTHER];
+									++wMilitaryTiles[MILITARYTILE_OTHER];
 								}
 								iNextX = (iAdvanceBy.x + advanceX[iRotOne]);
 								iNextY = (iAdvanceBy.y + advanceY[iRotOne]);
