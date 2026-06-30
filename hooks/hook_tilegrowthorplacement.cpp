@@ -2425,7 +2425,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 					XBITClearBits(pt.x, pt.y, XBIT_FLIPPED|XBIT_POWERED|XBIT_POWERABLE);
 				}
 				if (bExplosion) {
-					nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD;
+					nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
 					nExplodeX = iScreenOffSetX + nScaleVal * (pt.x - pt.y);
 					if (pt.x < GAME_MAP_SIZE && pt.y < GAME_MAP_SIZE && XBITReturnIsWater(pt.x, pt.y))
 						nAltitude = ALTMReturnWaterLevel(pt.x, pt.y);
@@ -2491,7 +2491,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 											__int16 nCurrHorzPos = nHorzPos;
 											__int16 nVertAreaPos = nArea;
 											do {
-												nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD;
+												nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
 												nAreaExplodeY = nCurrHorzPos + nExplodeY - pArrSpriteHeaders[nSpriteID].wHeight - nVertPos;
 												bIsFlipped = rand() & 1;
 												Game_DrawProcessObject(nSpriteID, nAreaExplodeX, nAreaExplodeY, bIsFlipped, 0);
