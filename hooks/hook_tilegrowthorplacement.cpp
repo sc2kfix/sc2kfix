@@ -2609,7 +2609,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 				}
 				Game_DirtyTile(nX, nY);
 				nTileID = TILE_CLEAR;
-				Game_PlaceTileWithMilitaryCheck(nX, nY, nTileID);
+				nRubbleTile = (rand() & 3) + 1;
+				Game_PlaceTileWithMilitaryCheck(nX, nY, nRubbleTile);
 				if (nX >= MAP_EDGE_MIN) {
 					if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE) {
 						XZONClearCorners(nX, nY);
@@ -2631,7 +2632,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 					nTileID = GetTileID(nX, nY);
 				}
 				Game_DirtyTile(nX, nY);
-				Game_PlaceTileWithMilitaryCheck(nX, nY, TILE_CLEAR);
+				nRubbleTile = (rand() & 3) + 1;
+				Game_PlaceTileWithMilitaryCheck(nX, nY, nRubbleTile);
 				if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE)
 					XZONClearCorners(nX, nY);
 				nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
