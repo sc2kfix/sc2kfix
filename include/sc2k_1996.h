@@ -147,6 +147,12 @@
 #define MAP_EDGE_MIN 0
 #define MAP_EDGE_MAX (GAME_MAP_SIZE - 1)
 
+#define SPRITE_BOUNDARY_MULTIPLIER 500
+
+#define COORDSCALE_VAL(x) (2 << x)
+#define LANDALTSCALE_VAL(x) (3 << x)
+#define SCALE_VAL(x) (4 << x)
+
 // Enums
 
 enum {
@@ -2996,6 +3002,7 @@ GAMECALL(0x401096, int, __thiscall, SimcityApp_SoundPlaySound, CSimcityAppPrimar
 GAMECALL(0x4010A5, void, __stdcall, UpdateGraphDialog, void)
 GAMECALL(0x4010D2, int, __thiscall, SimcityView_CityToolSetSelectedZone, CSimcityView *, __int16, __int16, __int16, __int16)
 GAMECALL(0x4010DC, void, __thiscall, SimcityApp_MusicStop, CSimcityAppPrimary *)
+GAMECALL(0x4010EB, void, __cdecl, YieldToWindows, __int16)
 GAMECALL(0x4010FA, void, __thiscall, StadiumSelectTeamDialog_Destruct, CStadiumSelectTeamDialog *)
 GAMECALL(0x401104, int, __cdecl, MovieOpen, char *)
 GAMECALL(0x40113B, int, __thiscall, SimcityView_CityToolPlacePowerLine, CSimcityView *, __int16, __int16)
@@ -3033,6 +3040,7 @@ GAMECALL(0x40146A, void, __cdecl, LoadNamedEntryFromRsrcOffset, char *, int, int
 GAMECALL(0x40147E, int, __thiscall, Graphics_CreateWithPalette, CGraphics *, LONG, LONG)
 GAMECALL(0x40148D, DWORD, __thiscall, Sound_IsMusicPlaying, CSound *)
 GAMECALL(0x4014B0, void, __cdecl, InitStack, __int16, __int16)
+GAMECALL(0x4014C9, __int16, __cdecl, GetHighwayTile, __int16, __int16)
 GAMECALL(0x4014CE, int, __cdecl, SpawnAeroplane, __int16 x, __int16 y, __int16 iDirection)
 GAMECALL(0x4014EC, void, __cdecl, CityToolPlaceNature, CMFC3XPoint)
 GAMECALL(0x4014F1, int, __thiscall, SimcityView_KillCursor, CSimcityView *pThis)
@@ -3054,6 +3062,8 @@ GAMECALL(0x4016DB, void, __thiscall, MainFrame_DisableCityToolBarButton, CMainFr
 GAMECALL(0x4016F9, int, __cdecl, PlaceChurch, __int16 x, __int16 y)
 GAMECALL(0x40174E, void, __cdecl, SetCPoint, POINT *pt, __int16 x, __int16 y)
 GAMECALL(0x401753, void, __thiscall, SimcityApp_OnQuit, CSimcityAppPrimary *)
+GAMECALL(0x401758, void, __cdecl, DirtyThing, __int16)
+GAMECALL(0x401780, __int16, __stdcall, StackSize)
 GAMECALL(0x40178F, __int16, __cdecl, PlaceTileWithMilitaryCheck, __int16 x, __int16 y, __int16 iTileID)
 GAMECALL(0x4017B2, void, __thiscall, SimcityDoc_UpdateDocumentTitle, CSimcityDoc* pThis)
 GAMECALL(0x4017FD, void, __stdcall, DrawAllLarge)
@@ -3115,6 +3125,7 @@ GAMECALL(0x401E51, int, __thiscall, SimcityView_CityToolPlaceWaterPipe, CSimcity
 GAMECALL(0x401E65, void, __stdcall, UpdateWeatherOrDisasterState, void)
 GAMECALL(0x401EA1, int, __cdecl, MapToolLowerTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x401ECE, int, __thiscall, Graphics_Load, CGraphics *, const char *, int)
+GAMECALL(0x401ED8, void, __cdecl, DirtyCloud, __int16, __int16, __int16)
 GAMECALL(0x401F23, CNewspaperDialog *, __thiscall, NewspaperDialog_Construct, CNewspaperDialog *, CMainFrame *)
 GAMECALL(0x401F50, int, __cdecl, RecalculateCityValue, void)
 GAMECALL(0x401F82, void, __thiscall, SimcityView_DrawTornado, CSimcityView *, __int16, __int16, __int16)
@@ -3134,7 +3145,7 @@ GAMECALL(0x40217B, void, __stdcall, SimulationRCIDemandUpdates, void)
 GAMECALL(0x40219E, INT_PTR, __thiscall, GameDialog_DoModal, CGameDialog *)
 GAMECALL(0x4021A8, void, __thiscall, MainFrame_ToggleStatusControlBar, CMainFrame *, BOOL)
 GAMECALL(0x4021F8, void, __cdecl, ReadTilesetFile, char *)
-GAMECALL(0x402211, void, __thiscall, SimcityView_DestroyStructure, CSimcityView *pThis, __int16 x, __int16 y, int iExplosion)
+GAMECALL(0x402211, void, __thiscall, SimcityView_Demolish, CSimcityView *pThis, __int16 x, __int16 y, int iExplosion)
 GAMECALL(0x402225, int, __thiscall, MainFrame_LoadOwnerInformation, CMainFrame *)
 GAMECALL(0x402252, int, __thiscall, MainFrame_DoInitialDialog, CMainFrame *)
 GAMECALL(0x402266, LONG, __cdecl, SetSpriteForDrawing, void *, sprite_header_t *, int, __int16, RECT *)
@@ -3232,6 +3243,7 @@ GAMECALL(0x402B8A, void, __thiscall, Sound_LoadActionThingSound, CSound *, int)
 GAMECALL(0x402B94, int, __cdecl, MapToolLevelTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x402BD5, void, __thiscall, Graphics_BitBlit, CGraphics *, HDC, int, int, int, int, int, int)
 GAMECALL(0x402BC6, int, __thiscall, MapToolBar_HitTestFromPoint, CMapToolBar *, CMFC3XPoint)
+GAMECALL(0x402BD0, void, __cdecl, SetTerrainTile, __int16, __int16)
 GAMECALL(0x402BE4, void, __thiscall, Sound_MusicStop, CSound *)
 GAMECALL(0x402BE9, void, __stdcall, DrawAllTiny)
 GAMECALL(0x402C02, int, __thiscall, MainFrame_CloseOwnerInformation, CMainFrame *)
@@ -4137,6 +4149,18 @@ static inline WORD ALTMReturnMask(__int16 x, __int16 y) {
 	return *(WORD *)&dwMapALTM[x][y].w;
 }
 
+static inline void ALTMSetLandAltitude(__int16 x, __int16 y, WORD nLandAlt) {
+	dwMapALTM[x][y].w.iLandAltitude = nLandAlt;
+}
+
+static inline void ALTMSetWaterLevel(__int16 x, __int16 y, WORD nWaterLevel) {
+	dwMapALTM[x][y].w.iWaterLevel = nWaterLevel;
+}
+
+static inline void ALTMSetTunnelLevels(__int16 x, __int16 y, WORD nTunnelLevels) {
+	dwMapALTM[x][y].w.iTunnelLevels = nTunnelLevels;
+}
+
 #define USE_OLD_XZON_HANDLING 0
 
 // These four functions will perform either an absolute comparison or that the
@@ -4601,6 +4625,11 @@ extern void DeleteAllDisasterDeploys_SC2K1996();
 extern void ResetThingCleanupState_SC2K1996();
 
 extern void DoThingClean_SC2K1996(int nThingDef);
+
+extern CGraphics *pBaseGraphics;
+extern LONG nBaseGraphicWidth;
+extern LONG nBaseGraphicHeight;
+extern BYTE *pBaseGraphicLockDIBRes;
 
 extern void L_CheckCursor_SC2K1996(CSimcityView *pSCView);
 extern int __cdecl L_BeginProcessObjects_SC2K1996(HWND hWnd, void *pBaseBits, void *pModdedBits, int x, int y, RECT *r);

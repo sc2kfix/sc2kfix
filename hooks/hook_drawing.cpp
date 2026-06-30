@@ -30,12 +30,6 @@ enum {
 	AXIS_COUNT
 };
 
-#define SPRITE_BOUNDARY_MULTIPLIER 500
-
-#define COORDSCALE_VAL(x) (2 << x)
-#define LANDALTSCALE_VAL(x) (3 << x)
-#define SCALE_VAL(x) (4 << x)
-
 #define SHIP_MIN_DIST 8
 
 #define WATEREDPIPES_SPRITE_OFFSET 116
@@ -1085,11 +1079,6 @@ extern "C" __int16 __cdecl Hook_PointToTile(__int16 x, __int16 y) {
 		return -1;
 	return retval;
 }
-
-extern CGraphics *pBaseGraphics;
-extern LONG nBaseGraphicWidth;
-extern LONG nBaseGraphicHeight;
-extern BYTE *pBaseGraphicLockDIBRes;
 
 void *curBaseLockedDIBBits = NULL;
 CMFC3XDC *pBaseSCVDC = NULL;

@@ -70,6 +70,7 @@
 #define TILEBUILD_DEBUG_BUILDING	8
 #define TILEBUILD_DEBUG_TRIP_DUMP	16		// dumps trip start/end info to console + log
 #define TILEBUILD_DEBUG_TRIP_LOG	32		// I AM DEATH INCARNATE
+#define TILEBUILD_DEBUG_DEMOLISH	64
 
 #define TILEBUILD_DEBUG DEBUG_FLAGS_NONE
 
@@ -1223,7 +1224,7 @@ static BOOL DoBudgetBridgeCheck(CSimcityView *pSCView, __int16 iX, __int16 iY, B
 		if (iFundingPercent != 100 && (int)(bWeatherWind + (unsigned __int16)rand() % 50) >= iFundingPercent) {
 			//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Bridge. Weather Vulnerable\n", iStep, iSubStep);
 			Game_CenterOnTileCoords(iX, iY);
-			Game_SimcityView_DestroyStructure(pSCView, iX, iY, 1);
+			Game_SimcityView_Demolish(pSCView, iX, iY, 1);
 			Game_NewspaperStoryGenerator(39, 0);
 			DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
 		}
@@ -1286,7 +1287,7 @@ static BOOL DoBudgetTunnelCheck(CSimcityView *pSCView, __int16 iX, __int16 iY, B
 		if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
 			//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Tunnel. Item(%s)\n", iStep, iSubStep, szTileNames[iCurrentTileID]);
 			Game_CenterOnTileCoords(iX, iY);
-			Game_SimcityView_DestroyStructure(pSCView, iX, iY, 1);
+			Game_SimcityView_Demolish(pSCView, iX, iY, 1);
 			DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
 		}
 		return TRUE;
@@ -1331,7 +1332,7 @@ static void DoBudgetSubwayCheck(CSimcityView *pSCView, __int16 iX, __int16 iY) {
 				bRemoveUndergroundTile = FALSE;
 				iReplaceUndergroundTile = UNDER_TILE_CLEAR;
 				if (iCurrentUndergroundTileID == UNDER_TILE_SUBWAYENTRANCE) {
-					Game_SimcityView_DestroyStructure(pSCView, iX, iY, 0);
+					Game_SimcityView_Demolish(pSCView, iX, iY, 0);
 					bRemoveUndergroundTile = TRUE;
 				}
 				else {
@@ -2161,6 +2162,567 @@ FAIL:
 	return (bFail) ? 0 : 1;
 }
 
+static void L_PierCheckStackPush(__int16 x, __int16 y) {
+	__int16 nTileID = GetTileID(x, y);
+	if (nTileID) {
+		if (GET_TILE_RANGE(nTileID, TILE_INFRASTRUCTURE_PIER, TILE_INFRASTRUCTURE_CRANE))
+			Game_StackPush(x, y);
+	}
+}
+
+static void L_RunwayCheckStackPush(__int16 x, __int16 y) {
+	__int16 nTileID = GetTileID(x, y);
+	if (nTileID) {
+		if (GET_TILE_RANGE(nTileID, TILE_INFRASTRUCTURE_RUNWAY, TILE_INFRASTRUCTURE_RUNWAYCROSS))
+			Game_StackPush(x, y);
+	}
+}
+
+extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL bExplosion) {
+	CSimcityView *pThis;
+
+	__asm mov [pThis], ecx
+
+	CSimcityAppPrimary *pSCApp;
+	BYTE *pLockedBits = NULL;
+	BYTE *pLockedBaseBits = NULL;
+	BOOL bDoYield;
+	__int16 nX, nY;
+	__int16 nTileID, nLoopTileID;
+	__int16 nCornerX, nCornerY;
+	__int16 nArea;
+	__int16 nCoordScale, nLandAltScale, nScaleVal;
+	__int16 nHighwayTile;
+	__int16 nHorzMult, nVertMult;
+	__int16 nStoredHorzMult, nStoredVertMult;
+	__int16 nSpriteBase, nSpriteID;
+	__int16 nExplodeX, nExplodeY, nAltitude;
+	__int16 nAreaExplodeX, nAreaExplodeY;
+	__int16 nAreaCornerX, nAreaCornerY;
+	__int16 nOffsetX, nOffsetY;
+	__int16 nRubbleTile;
+	WORD nLandAlt;
+	BYTE bIsFlipped;
+	BYTE bTextOverlay;
+	CMFC3XPoint pt;
+
+	pSCApp = &pCSimcityAppThis;
+	pLockedBits = Game_Graphics_LockDIBBits(pThis->SCVGraphics);
+	pLockedBaseBits = Game_Graphics_LockDIBBits(pBaseGraphics);
+	bDoYield = FALSE;
+	nX = x;
+	nY = y;
+	nTileID = GetTileID(nX, nY);
+	if (nTileID >= TILE_TREES1) {
+		nCornerX = nX;
+		nCornerY = nY;
+		nArea = Game_FindCorner(&nCornerX, &nCornerY, nTileID);
+		nCoordScale = COORDSCALE_VAL(pThis->wSCVZoomLevel);
+		nLandAltScale = LANDALTSCALE_VAL(pThis->wSCVZoomLevel);
+		nScaleVal = SCALE_VAL(pThis->wSCVZoomLevel);
+		nSpriteBase = SPRITE_BOUNDARY_MULTIPLIER * pThis->wSCVZoomLevel;
+		Game_DirtyThing(wDisasterObject);
+		if (nArea == 1 && (GET_TILE_RANGE(nTileID, TILE_SUSPENSION_BRIDGE_START_B, TILE_ELEVATED_POWERLINES) ||
+			GET_TILE_RANGE(nTileID, TILE_REINFORCED_BRIDGE_PYLON, TILE_REINFORCED_BRIDGE))) {
+			// Originally this one may have been undefined
+			// until it got further down the chain.
+			nHighwayTile = -1;
+		HighwayChk:
+			if (nArea == 2)
+				--nCornerY;
+			if (nArea == 1 &&
+				nCornerX < GAME_MAP_SIZE &&
+				nCornerY < GAME_MAP_SIZE &&
+				XBITReturnIsFlipped(nCornerX, nCornerY) ||
+				nArea == 2 &&
+				(nHighwayTile & 1) == 0) {
+				nHorzMult = 1;
+				nVertMult = 0;
+			}
+			else {
+				nHorzMult = 0;
+				nVertMult = 1;
+			}
+			nStoredHorzMult = nHorzMult * nArea;
+			nStoredVertMult = nVertMult * nArea;
+			while (TRUE) {
+				nHighwayTile = Game_GetHighwayTile(nCornerX, nCornerY);
+				if (nArea != 2 || nHighwayTile < 13) {
+					if (nArea != 1)
+						goto AreaChkOne;
+					nLoopTileID = GetTileID(nCornerX, nCornerY);
+					if ((nLoopTileID < TILE_SUSPENSION_BRIDGE_START_B || nLoopTileID > TILE_ELEVATED_POWERLINES) &&
+						nLoopTileID != TILE_REINFORCED_BRIDGE_PYLON &&
+						nLoopTileID != TILE_REINFORCED_BRIDGE)
+						break;
+				}
+				nCornerX -= nStoredHorzMult;
+				nCornerY -= nStoredVertMult;
+			}
+			if (nCornerX >= GAME_MAP_SIZE ||
+				nCornerY >= GAME_MAP_SIZE ||
+				!XBITReturnIsWater(nCornerX, nCornerY)) {
+				Game_DirtyTile(nCornerX, nCornerY);
+				Game_PlaceTileWithMilitaryCheck(nCornerX, nCornerY, TILE_CLEAR);
+				if (nCornerX >= MAP_EDGE_MIN) {
+					if (nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE) {
+						nLandAlt = ALTMReturnLandAltitude(nCornerX, nCornerY);
+						nLandAlt -= nLandAlt - 1;
+						ALTMSetLandAltitude(nCornerX, nCornerY, nLandAlt);
+						XBITSetBits(nCornerX, nCornerY, XBIT_WATER);
+					}
+				}
+				Game_SetTerrainTile(nCornerX, nCornerY);
+				if (nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE)
+					XBITClearBits(nCornerX, nCornerY, XBIT_FLIPPED);
+			}
+		AreaChkOne:
+			if (nArea == 2 && nTileID != TILE_HIGHWAY_LR && nTileID != TILE_HIGHWAY_TB) {
+				Game_DirtyTile(nCornerX, nCornerY);
+				Game_SetTerrainTile(nCornerX, nCornerY);
+				Game_DirtyTile(nCornerX, nCornerY);
+				Game_SetTerrainTile(nCornerX + 1, nCornerY);
+				Game_DirtyTile(nCornerX + 1, nCornerY);
+				Game_SetTerrainTile(nCornerX + 1, nCornerY + 1);
+				Game_DirtyTile(nCornerX + 1, nCornerY + 1);
+				Game_SetTerrainTile(nCornerX, nCornerY + 1);
+				Game_DirtyTile(nCornerX, nCornerY + 1);
+			}
+			nCornerX += nStoredHorzMult;
+			nCornerY += nStoredVertMult;
+			if (bExplosion) {
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
+				bDoYield = TRUE;
+				L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
+			}
+			nExplodeX = -1;
+			nExplodeY = -1;
+			while (TRUE) {
+				nHighwayTile = Game_GetHighwayTile(nCornerX, nCornerY);
+				if (nArea != 2 || nHighwayTile < 13) {
+					if (nArea != 1)
+						goto AreaChkTwo;
+					nLoopTileID = GetTileID(nCornerX, nCornerY);
+					if ((nLoopTileID < TILE_SUSPENSION_BRIDGE_START_B || nLoopTileID > TILE_ELEVATED_POWERLINES) &&
+						nLoopTileID != TILE_REINFORCED_BRIDGE_PYLON &&
+						nLoopTileID != TILE_REINFORCED_BRIDGE)
+						break;
+				}
+				Game_DirtyTile(nCornerX, nCornerY);
+				if (nArea == 2 && nHighwayTile < 15) {
+					Game_DirtyTile(nCornerX, nCornerY + 1);
+					Game_DirtyTile(nCornerX + 1, nCornerY + 1);
+					Game_DirtyTile(nCornerX + 1, nCornerY);
+				}
+				if (bExplosion) {
+					nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
+					nExplodeX = iScreenOffSetX + nScaleVal * (nCornerX - nCornerY);
+					nExplodeY = iScreenOffSetY + nCoordScale * (nCornerX + nCornerY) -
+						nLandAltScale * ALTMReturnWaterLevel(nCornerX, nCornerY) -
+						pArrSpriteHeaders[nSpriteID].wHeight;
+					bIsFlipped = rand() & 1;
+					Game_DrawProcessObject(nSpriteID, nExplodeX, nExplodeY, bIsFlipped, 0);
+					Game_DirtyCloud(nSpriteID, nExplodeX, nExplodeY);
+				}
+				Game_PlaceTileWithMilitaryCheck(nCornerX, nCornerY, TILE_CLEAR);
+				if (nCornerX >= MAP_EDGE_MIN) {
+					if (nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE) {
+						XZONClearCorners(nCornerX, nCornerY);
+						XBITClearBits(nCornerX, nCornerY, XBIT_FLIPPED);
+					}
+				}
+				if (nArea == 2) {
+					if (bExplosion) {
+						nAreaExplodeX = nExplodeX + nScaleVal;
+						nAreaExplodeY = nExplodeY - nCoordScale;
+						bIsFlipped = rand() & 1;
+						Game_DrawProcessObject(nSpriteID, nAreaExplodeX, nAreaExplodeY, bIsFlipped, 0);
+						Game_DirtyCloud(nSpriteID, nAreaExplodeX, nAreaExplodeY);
+						nAreaExplodeX = nExplodeX + 2 * nScaleVal;
+						bIsFlipped = rand() & 1;
+						Game_DrawProcessObject(nSpriteID, nAreaExplodeX, nExplodeY, bIsFlipped, 0);
+						Game_DirtyCloud(nSpriteID, nAreaExplodeX, nExplodeY);
+						nAreaExplodeY = nExplodeY + nCoordScale;
+						bIsFlipped = rand() & 1;
+						Game_DrawProcessObject(nSpriteID, nAreaExplodeX, nAreaExplodeY, bIsFlipped, 0);
+						Game_DirtyCloud(nSpriteID, nAreaExplodeX, nAreaExplodeY);
+					}
+					nAreaCornerY = nCornerY + 1;
+					Game_PlaceTileWithMilitaryCheck(nCornerX, nAreaCornerY, TILE_CLEAR);
+					if (nCornerX < GAME_MAP_SIZE && nAreaCornerY < GAME_MAP_SIZE) {
+						XZONClearCorners(nCornerX, nAreaCornerY);
+						XBITClearBits(nCornerX, nAreaCornerY, XBIT_FLIPPED);
+					}
+					nAreaCornerX = nCornerX + 1;
+					Game_PlaceTileWithMilitaryCheck(nAreaCornerX, nAreaCornerY, TILE_CLEAR);
+					if (nCornerX >= MAP_EDGE_MIN && nAreaCornerX < GAME_MAP_SIZE && nAreaCornerY < GAME_MAP_SIZE) {
+						XZONClearCorners(nAreaCornerX, nAreaCornerY);
+						XBITClearBits(nAreaCornerX, nAreaCornerY, XBIT_FLIPPED);
+					}
+					Game_PlaceTileWithMilitaryCheck(nAreaCornerX, nCornerY, TILE_CLEAR);
+					if (nCornerX >= MAP_EDGE_MIN && nAreaCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE) {
+						XZONClearCorners(nAreaCornerX, nCornerY);
+						XBITClearBits(nAreaCornerX, nCornerY, XBIT_FLIPPED);
+					}
+				}
+				nCornerX += nStoredHorzMult;
+				nCornerY += nStoredVertMult;
+			}
+			if (nCornerX >= GAME_MAP_SIZE ||
+				nCornerY >= GAME_MAP_SIZE ||
+				!XBITReturnIsWater(nCornerX, nCornerY)) {
+				Game_DirtyTile(nCornerX, nCornerY);
+				Game_PlaceTileWithMilitaryCheck(nCornerX, nCornerY, TILE_CLEAR);
+				if (nCornerX >= MAP_EDGE_MIN) {
+					if (nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE) {
+						nLandAlt = ALTMReturnLandAltitude(nCornerX, nCornerY);
+						nLandAlt -= nLandAlt - 1;
+						ALTMSetLandAltitude(nCornerX, nCornerY, nLandAlt);
+						XBITSetBits(nCornerX, nCornerY, XBIT_WATER);
+					}
+				}
+				Game_SetTerrainTile(nCornerX, nCornerY);
+			}
+		AreaChkTwo:
+			if (nArea == 2 && nTileID != TILE_HIGHWAY_LR && nTileID != TILE_HIGHWAY_TB) {
+				Game_DirtyTile(nCornerX, nCornerY);
+				Game_SetTerrainTile(nCornerX, nCornerY);
+				Game_DirtyTile(nCornerX, nCornerY);
+				Game_SetTerrainTile(nCornerX + 1, nCornerY);
+				Game_DirtyTile(nCornerX + 1, nCornerY);
+				Game_SetTerrainTile(nCornerX + 1, nCornerY + 1);
+				Game_DirtyTile(nCornerX + 1, nCornerY + 1);
+				Game_SetTerrainTile(nCornerX, nCornerY + 1);
+				Game_DirtyTile(nCornerX, nCornerY + 1);
+			}
+			if (!bExplosion)
+				goto UpdHouse;
+			Game_FinishProcessObjects();
+			if (pThis == (CSimcityView *)&pSomeWnd)
+				Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
+			else
+				Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
+			UpdateWindow(pThis->m_hWnd);
+			if (bDoYield)
+				goto YieldWnd;
+			goto PlaySnd;
+		}
+		if (nArea == 2) {
+			nHighwayTile = Game_GetHighwayTile(nCornerX, nCornerY - 1);
+			if (nHighwayTile >= 13)
+				goto HighwayChk;
+		}
+		if (GET_TILE_RANGE(nTileID, TILE_INFRASTRUCTURE_PIER, TILE_INFRASTRUCTURE_CRANE)) {
+			if (bExplosion)
+				L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
+			Game_InitStack(nX, nY);
+			while (Game_StackSize()) {
+				Game_StackPop(&pt);
+				Game_PlaceTileWithMilitaryCheck(pt.x, pt.y, TILE_CLEAR);
+				if (pt.x < GAME_MAP_SIZE && pt.y < GAME_MAP_SIZE) {
+					XZONClearCorners(pt.x, pt.y);
+					XZONClearZone(pt.x, pt.y);
+					XBITClearBits(pt.x, pt.y, XBIT_FLIPPED|XBIT_POWERED|XBIT_POWERABLE);
+				}
+				if (bExplosion) {
+					nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD;
+					nExplodeX = iScreenOffSetX + nScaleVal * (pt.x - pt.y);
+					if (pt.x < GAME_MAP_SIZE && pt.y < GAME_MAP_SIZE && XBITReturnIsWater(pt.x, pt.y))
+						nAltitude = ALTMReturnWaterLevel(pt.x, pt.y);
+					else
+						nAltitude = ALTMReturnLandAltitude(pt.x, pt.y);
+					nExplodeY = iScreenOffSetY + (nCoordScale * (pt.x + pt.y)) - nLandAltScale * nAltitude - pArrSpriteHeaders[nSpriteID].wHeight;
+					bIsFlipped = rand() & 1;
+					Game_DrawProcessObject(nSpriteID, nExplodeX, nExplodeY, bIsFlipped, 0);
+					Game_DirtyCloud(nSpriteID, nExplodeX, nExplodeY);
+				}
+				if (pt.x > MAP_EDGE_MIN)
+					L_PierCheckStackPush(pt.x - 1, pt.y);
+				if (pt.x < MAP_EDGE_MAX)
+					L_PierCheckStackPush(pt.x + 1, pt.y);
+				if (pt.y > MAP_EDGE_MIN)
+					L_PierCheckStackPush(pt.x, pt.y - 1);
+				// This one here was also pt.x.
+				// Most likely a bug, commenting
+				// just in case.
+				if (pt.y < MAP_EDGE_MAX)
+					L_PierCheckStackPush(pt.x, pt.y + 1);
+			}
+			if (!bExplosion)
+				goto UpdHouse;
+			Game_FinishProcessObjects();
+			if (pThis == (CSimcityView *)&pSomeWnd) {
+			FullRdrw:
+				Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
+			UpdWnd:
+				UpdateWindow(pThis->m_hWnd);
+			PlaySnd:
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
+			YieldWnd:
+				Game_YieldToWindows(100);
+				goto UpdHouse;
+			}
+		}
+		else {
+			if (nTileID != TILE_INFRASTRUCTURE_RUNWAY && nTileID != TILE_INFRASTRUCTURE_RUNWAYCROSS) {
+				if (nTileID < TILE_TUNNEL_T || nTileID > TILE_TUNNEL_L) {
+					if (bExplosion) {
+						nExplodeX = iScreenOffSetX + nScaleVal * (nCornerX - nCornerY);
+						if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE && XBITReturnIsWater(nX, nY))
+							nAltitude = ALTMReturnWaterLevel(nCornerX, nCornerY);
+						else
+							nAltitude = ALTMReturnLandAltitude(nCornerX, nCornerY);
+						nExplodeY = iScreenOffSetY + (nCoordScale * (nCornerX + nCornerY)) - nLandAltScale * nAltitude;
+						if (nTileID >= TILE_ARCOLOGY_PLYMOUTH)
+							dirtyRect.top = 0;
+						if (nArea > 0) {
+							__int16 nVertPos = 0;
+							//nExplodeX = nCoordScale;
+							//nExplodeY = nCoordScale;
+							__int16 nAreaPos = nArea;
+							do {
+								L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
+								if (nArea > 0) {
+									__int16 nHorzPos = 0;
+									__int16 nHorzAreaPos = nArea;
+									nAreaExplodeX = nExplodeX;
+									do {
+										if (nArea > 0) {
+											__int16 nCurrHorzPos = nHorzPos;
+											__int16 nVertAreaPos = nArea;
+											do {
+												nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD;
+												nAreaExplodeY = nCurrHorzPos + nExplodeY - pArrSpriteHeaders[nSpriteID].wHeight - nVertPos;
+												bIsFlipped = rand() & 1;
+												Game_DrawProcessObject(nSpriteID, nAreaExplodeX, nAreaExplodeY, bIsFlipped, 0);
+												Game_DirtyCloud(nSpriteID, nAreaExplodeX, nAreaExplodeY);
+												nCurrHorzPos -= nCoordScale;
+												nAreaExplodeX += nScaleVal;
+												--nVertAreaPos;
+											} while (nVertAreaPos);
+										}
+										nHorzPos += nLandAltScale;
+										nAreaExplodeX += nCoordScale;
+										--nHorzAreaPos;
+									} while (nHorzAreaPos);
+								}
+								Game_FinishProcessObjects();
+								if (pThis == (CSimcityView *)&pSomeWnd)
+									Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
+								else
+									Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
+								UpdateWindow(pThis->m_hWnd);
+								if (!bDoYield) {
+									Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
+									bDoYield = 1;
+								}
+								Game_YieldToWindows(100);
+								nVertPos += nCoordScale;
+								--nAreaPos;
+							} while (nAreaPos);
+						}
+					}
+					bTextOverlay = XTXTGetTextOverlayID(nCornerX, nCornerY);
+					if (nTileID == TILE_INFRASTRUCTURE_MAYORSHOUSE)
+						Game_SimulationToggleGrantReward(0, 1);
+					if (nTileID == TILE_SERVICES_CITYHALL)
+						Game_SimulationToggleGrantReward(1, 1);
+					if (nTileID == TILE_SERVICES_STATUE)
+						Game_SimulationToggleGrantReward(2, 1);
+					if (nTileID == TILE_OTHER_BRAUNLLAMADOME)
+						Game_SimulationToggleGrantReward(3, 1);
+					if (nTileID == TILE_SERVICES_STADIUM &&
+						bTextOverlay >= MIN_SIM_TEXT_ENTRIES &&
+						bTextOverlay <= MAX_SIM_TEXT_ENTRIES) {
+						BYTE bMicrosimEntry = MICROSIMID_ENTRY(bTextOverlay);
+						if (GetMicroSimulatorTileID(bMicrosimEntry) == nTileID)
+							wSportsTeams += -1 << GetMicroSimulatorStat2(bMicrosimEntry);
+					}
+					for (__int16 nPosX = 0; nArea > nPosX; ++nPosX) {
+						for (__int16 nPosY = 0; nArea > nPosY; ++nPosY) {
+							__int16 nCurrX = nPosX + nCornerX;
+							__int16 nCurrY = nCornerY - nPosY;
+							if (nCurrX < GAME_MAP_SIZE && nCurrY < GAME_MAP_SIZE) {
+								nRubbleTile = (GetTerrainTileID(nCurrX, nCurrY)) ? TILE_CLEAR : (rand() & 3) + 1;
+								Game_PlaceTileWithMilitaryCheck(nCurrX, nCurrY, nRubbleTile);
+								if (nCurrX >= MAP_EDGE_MIN && nCurrX < GAME_MAP_SIZE && nCurrY < GAME_MAP_SIZE) {
+									XBITClearBits(nCurrX, nCurrY, XBIT_FLIPPED|XBIT_POWERED|XBIT_POWERABLE);
+									XZONClearCorners(nCurrX, nCurrY);
+								}
+								bTextOverlay = XTXTGetTextOverlayID(nCurrX, nCurrY);
+								if (bTextOverlay) {
+									if (bTextOverlay <= MAX_XTHG_TEXT_ENTRIES || bTextOverlay == NGHBR_CONNECTION_TEXT_ENTRY) {
+										if (bTextOverlay <= MAX_SIM_TEXT_ENTRIES || bTextOverlay == NGHBR_CONNECTION_TEXT_ENTRY)
+											XTXTSetTextOverlayID(nCurrX, nCurrY, 0);
+										Game_RemoveLabel(bTextOverlay);
+										if (bTextOverlay == NGHBR_CONNECTION_TEXT_ENTRY) {
+											if (GET_TILE_RANGE(nTileID, TILE_ROAD_LR, TILE_ROAD_LTBR) ||
+												GET_TILE_RANGE(nTileID, TILE_TUNNEL_T, TILE_CROSSOVER_ROADTB_RAILLR) ||
+												GET_TILE_RANGE(nTileID, TILE_CROSSOVER_HIGHWAYLR_ROADTB, TILE_CROSSOVER_HIGHWAYTB_ROADLR) ||
+												GET_TILE_RANGE(nTileID, TILE_ONRAMP_TL, TILE_ONRAMP_BR))
+												--wCityNeighborConnections1000;
+											else
+												--wCityNeighborConnections1500;
+										}
+									}
+								}
+							}
+						}
+					}
+					if (GET_TILE_RANGE(nTileID, TILE_HIGHWAY_HTB, TILE_REINFORCED_BRIDGE) ||
+						GET_TILE_RANGE(nTileID, TILE_HIGHWAY_LR, TILE_CROSSOVER_HIGHWAYTB_POWERLR)) {
+						Game_SetTerrainTile(nCornerX, nCornerY);
+						Game_SetTerrainTile(nCornerX + 1, nCornerY);
+						Game_SetTerrainTile(nCornerX + 1, nCornerY - 1);
+						Game_SetTerrainTile(nCornerX, nCornerY - 1);
+					}
+					if (nArea == 1 && nTileID <= TILE_SUBTORAIL_L) {
+						if (GetTerrainTileID(nCornerX, nCornerY))
+							Game_SetTerrainTile(nCornerX, nCornerY);
+					}
+					goto UpdHouse;
+				}
+				nOffsetX = 0;
+				nOffsetY = 0;
+				switch (nTileID) {
+					case TILE_TUNNEL_T:
+						nOffsetX = -1;
+						nOffsetY = 0;
+						break;
+					case TILE_TUNNEL_R:
+						nOffsetX = 0;
+						nOffsetY = -1;
+						break;
+					case TILE_TUNNEL_B:
+						nOffsetX = 1;
+						nOffsetY = 0;
+						break;
+					case TILE_TUNNEL_L:
+						nOffsetX = 0;
+						nOffsetY = 1;
+						break;
+					default:
+						break;
+				}
+				Game_DirtyTile(nX, nY);
+				nTileID = TILE_CLEAR;
+				Game_PlaceTileWithMilitaryCheck(nX, nY, nTileID);
+				if (nX >= MAP_EDGE_MIN) {
+					if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE) {
+						XZONClearCorners(nX, nY);
+						ALTMSetTunnelLevels(nX, nY, 0); // ALTM[nX][nY].w &= 0x3FFu;
+					}
+				}
+				L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
+				nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
+				nExplodeX = iScreenOffSetX + nScaleVal * (nX - nY);
+				nExplodeY = iScreenOffSetY + nCoordScale * (nX + nY) - nLandAltScale * ALTMReturnLandAltitude(nX, nY) - pArrSpriteHeaders[nSpriteID].wHeight;
+				bIsFlipped = rand() & 1;
+				Game_DrawProcessObject(nSpriteID, nExplodeX, nExplodeY, bIsFlipped, 0);
+				Game_DirtyCloud(nSpriteID, nExplodeX, nExplodeY);
+				while (nTileID < TILE_TUNNEL_T || nTileID > TILE_TUNNEL_L) {
+					nX += nOffsetX;
+					nY += nOffsetY;
+					if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE)
+						ALTMSetTunnelLevels(nX, nY, 0); // ALTM[nX][nY].w &= 0x3FFu;
+					nTileID = GetTileID(nX, nY);
+				}
+				Game_DirtyTile(nX, nY);
+				Game_PlaceTileWithMilitaryCheck(nX, nY, TILE_CLEAR);
+				if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE)
+					XZONClearCorners(nX, nY);
+				nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
+				nExplodeX = iScreenOffSetX + nScaleVal * (nX - nY);
+				nExplodeY = iScreenOffSetY + nCoordScale * (nX + nY) - nLandAltScale * ALTMReturnLandAltitude(nX, nY) - pArrSpriteHeaders[nSpriteID].wHeight;
+				bIsFlipped = rand() & 1;
+				Game_DrawProcessObject(nSpriteID, nExplodeX, nExplodeY, bIsFlipped, 0);
+				Game_DirtyCloud(nSpriteID, nExplodeX, nExplodeY);
+				Game_FinishProcessObjects();
+				if (pThis == (CSimcityView *)&pSomeWnd)
+					Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
+				else
+					Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
+				UpdateWindow(pThis->m_hWnd);
+				if (!bExplosion) {
+				UpdHouse:
+					__int16 nFirstPosX = nX;
+					__int16 nSecondPosX = nX;
+					__int16 nAreaPosX = (nX + nArea);
+					if (nAreaPosX > nX) {
+						do {
+							__int16 nCurrPosX = nSecondPosX++;
+							Game_DirtyTile(nCurrPosX - 1, nY - 1);
+							Game_DirtyTile(nCurrPosX - 2, nY - 2);
+							Game_DirtyTile(nCurrPosX - 3, nY - 3);
+							Game_DirtyTile(nCurrPosX - 4, nY - 4);
+						} while (nSecondPosX < nAreaPosX);
+					}
+					__int16 nFirstPosY = nY;
+					__int16 nSecondPosY = nY;
+					__int16 nAreaPosY = (nY + nArea);
+					if (nAreaPosY > nY) {
+						do {
+							__int16 nCurrPosY = nSecondPosY++;
+							Game_DirtyTile(nX - 1, nCurrPosY - 1);
+							Game_DirtyTile(nX - 2, nCurrPosY - 2);
+							Game_DirtyTile(nX - 3, nCurrPosY - 3);
+							Game_DirtyTile(nX - 4, nCurrPosY - 4);
+						} while (nSecondPosY < nAreaPosY);
+					}
+					if (nAreaPosX > nX) {
+						do {
+							for (__int16 nCurrPosY = nFirstPosY; nCurrPosY < nAreaPosY; ++nCurrPosY)
+								Game_DirtyTile(nFirstPosX, nCurrPosY);
+							++nFirstPosX;
+						} while (nFirstPosX < nAreaPosX);
+					}
+					Game_SimcityView_UpdateHouse(pThis);
+					return;
+				}
+				goto PlaySnd;
+			}
+			if (bExplosion)
+				L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
+			Game_InitStack(nX, nY);
+			while (Game_StackSize()) {
+				Game_StackPop(&pt);
+				nRubbleTile = (rand() & 3) + 1;
+				Game_PlaceTileWithMilitaryCheck(pt.x, pt.y, nRubbleTile);
+				if (pt.x < GAME_MAP_SIZE && pt.y < GAME_MAP_SIZE) {
+					XZONClearCorners(pt.x, pt.y);
+					XBITClearBits(pt.x, pt.y, XBIT_FLIPPED|XBIT_POWERED|XBIT_POWERABLE);
+				}
+				if (bExplosion) {
+					nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
+					nExplodeX = iScreenOffSetX + nScaleVal * (pt.x - pt.y);
+					nExplodeY = iScreenOffSetY + nCoordScale * (pt.x + pt.y) - nLandAltScale * ALTMReturnLandAltitude(pt.x, pt.y) - pArrSpriteHeaders[nSpriteID].wHeight;
+					bIsFlipped = rand() & 1;
+					Game_DrawProcessObject(nSpriteID, nExplodeX, nExplodeY, bIsFlipped, 0);
+					Game_DirtyCloud(nSpriteID, nExplodeX, nExplodeY);
+				}
+				if (pt.x > MAP_EDGE_MIN)
+					L_RunwayCheckStackPush(pt.x - 1, pt.y);
+				if (pt.x < MAP_EDGE_MAX)
+					L_RunwayCheckStackPush(pt.x + 1, pt.y);
+				if (pt.y > MAP_EDGE_MIN)
+					L_RunwayCheckStackPush(pt.x, pt.y - 1);
+				// This one here was also pt.x.
+				// Most likely a bug, commenting
+				// just in case.
+				if (pt.y < MAP_EDGE_MAX)
+					L_RunwayCheckStackPush(pt.x, pt.y + 1);
+			}
+			if (!bExplosion)
+				goto UpdHouse;
+			Game_FinishProcessObjects();
+			if (pThis == (CSimcityView *)&pSomeWnd)
+				goto FullRdrw;
+		}
+		Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
+		goto UpdWnd;
+	}
+}
+
 void InstallTileGrowthOrPlacementHandlingHooks_SC2K1996(void) {
 	// Hook into the SimulationGrowthTick function
 	SafeVirtualProtect((LPVOID)0x4022FC, 5, PAGE_EXECUTE_READWRITE);
@@ -2181,6 +2743,10 @@ void InstallTileGrowthOrPlacementHandlingHooks_SC2K1996(void) {
 	// Hook CityToolPlaceSelectedBuilding
 	SafeVirtualProtect((LPVOID)0x401005, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401005, Hook_CityToolPlaceSelectedBuilding);
+
+	// Hook for CSimcityView::Demolish()
+	SafeVirtualProtect((LPVOID)0x402211, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402211, Hook_SimcityView_Demolish);
 
 	// Military base hooks
 	InstallMilitaryHooks_SC2K1996();
