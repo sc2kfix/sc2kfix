@@ -212,16 +212,6 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		strTileInfo += HexPls(ALTMReturnMask(iTileX, iTileY), 4);
 		strTileInfo += ")\n";
 
-		// Certain checks - REMOVE ONCE DONE (Demolish()).
-		{
-			WORD altmMask = ALTMReturnMask(iTileX, iTileY);
-			WORD altmMaskNeg = altmMask;
-			ConsoleLog(LOG_DEBUG, "DBG: (%u, %u) ALTM(0x%04X, 0x%04X, 0x%04X) (0x%04X) (0x%04X - 0x%04X) (0x%04X)\n", iTileX, iTileY,
-				(altmMask & ALTM_LANDALT_BOUNDARY), (altmMask & ALTM_WATERLVL_BOUNDARY), (altmMask & ALTM_TUNNELLVLS_BOUNDARY),
-				altmMask,
-				altmMaskNeg & (ALTM_LANDALT_BOUNDARY | ALTM_WATERLVL_BOUNDARY), altmMaskNeg & ~(ALTM_LANDALT_BOUNDARY | ALTM_WATERLVL_BOUNDARY), ~(ALTM_LANDALT_BOUNDARY | ALTM_WATERLVL_BOUNDARY));
-		}
-
 		// Land value
 		strTileInfo += "$";
 		strTileInfo += std::to_string(GetXVALByteDataWithNormalCoordinates(iTileX, iTileY) + 1);

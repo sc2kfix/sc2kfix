@@ -3025,6 +3025,7 @@ GAMECALL(0x4012C1, int, __cdecl, DirtyTile, __int16 x, __int16 y)
 GAMECALL(0x4012DF, void, __stdcall, DecreaseWaterLevel, void)
 GAMECALL(0x4012F8, __int16, __cdecl, GetDestDistance, __int16, __int16, __int16, __int16)
 GAMECALL(0x4012FD, void, __cdecl, UpdateSimNationDialog, void)
+GAMECALL(0x401357, void, __cdecl, DrawProcessShadowObject, __int16, __int16, __int16, __int16)
 GAMECALL(0x401370, DWORD, __thiscall, Graphics_WidthBytes, CGraphics *)
 GAMECALL(0x401393, int, __cdecl, DrawProcessObject, __int16, __int16, __int16, __int16, __int16)
 GAMECALL(0x4013B1, void, __thiscall, SimcityView_ScaleOut, CSimcityView *pThis)
@@ -4637,4 +4638,3 @@ extern int __cdecl L_BeginProcessObjects_SC2K1996(HWND hWnd, void *pBaseBits, vo
 extern void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveCursorActive);
 extern void L_drawShapeSpecific_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert, int nType);
 extern void L_drawShapeDialog_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert);
-extern void L_drawShadowShape_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped);
