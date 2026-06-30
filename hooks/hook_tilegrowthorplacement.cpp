@@ -2205,6 +2205,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 	BYTE bIsFlipped;
 	BYTE bTextOverlay;
 	CMFC3XPoint pt;
+	coords_w_t tileCoords;
 
 	// Debugging and testing.
 	if (GetAsyncKeyState(VK_MENU) < 0) {
@@ -2422,35 +2423,37 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 			Game_InitStack(nX, nY);
 			while (Game_StackSize()) {
 				Game_StackPop(&pt);
-				Game_PlaceTile(pt.x, pt.y, TILE_CLEAR);
-				if (pt.x < GAME_MAP_SIZE && pt.y < GAME_MAP_SIZE) {
-					XZONClearCorners(pt.x, pt.y);
-					XZONClearZone(pt.x, pt.y);
-					XBITClearBits(pt.x, pt.y, XBIT_FLIPPED|XBIT_POWERED|XBIT_POWERABLE);
+				tileCoords.x = (__int16)pt.x;
+				tileCoords.y = (__int16)pt.y;
+				Game_PlaceTile(tileCoords.x, tileCoords.y, TILE_CLEAR);
+				if (tileCoords.x < GAME_MAP_SIZE && tileCoords.y < GAME_MAP_SIZE) {
+					XZONClearCorners(tileCoords.x, tileCoords.y);
+					XZONClearZone(tileCoords.x, tileCoords.y);
+					XBITClearBits(tileCoords.x, tileCoords.y, XBIT_FLIPPED|XBIT_POWERED|XBIT_POWERABLE);
 				}
 				if (bExplosion) {
 					nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
-					nExplodeX = iScreenOffSetX + nScaleVal * (pt.x - pt.y);
-					if (pt.x < GAME_MAP_SIZE && pt.y < GAME_MAP_SIZE && XBITReturnIsWater(pt.x, pt.y))
-						nAltitude = ALTMReturnWaterLevel(pt.x, pt.y);
+					nExplodeX = iScreenOffSetX + nScaleVal * (tileCoords.x - tileCoords.y);
+					if (tileCoords.x < GAME_MAP_SIZE && tileCoords.y < GAME_MAP_SIZE && XBITReturnIsWater(tileCoords.x, tileCoords.y))
+						nAltitude = ALTMReturnWaterLevel(tileCoords.x, tileCoords.y);
 					else
-						nAltitude = ALTMReturnLandAltitude(pt.x, pt.y);
-					nExplodeY = iScreenOffSetY + (nCoordScale * (pt.x + pt.y)) - nLandAltScale * nAltitude - pArrSpriteHeaders[nSpriteID].wHeight;
+						nAltitude = ALTMReturnLandAltitude(tileCoords.x, tileCoords.y);
+					nExplodeY = iScreenOffSetY + (nCoordScale * (tileCoords.x + tileCoords.y)) - nLandAltScale * nAltitude - pArrSpriteHeaders[nSpriteID].wHeight;
 					bIsFlipped = rand() & 1;
 					Game_DrawProcessObject(nSpriteID, nExplodeX, nExplodeY, bIsFlipped, 0);
 					Game_DirtyCloud(nSpriteID, nExplodeX, nExplodeY);
 				}
-				if (pt.x > MAP_EDGE_MIN)
-					L_PierCheckStackPush(pt.x - 1, pt.y);
-				if (pt.x < MAP_EDGE_MAX)
-					L_PierCheckStackPush(pt.x + 1, pt.y);
-				if (pt.y > MAP_EDGE_MIN)
-					L_PierCheckStackPush(pt.x, pt.y - 1);
-				// This one here was also pt.x.
+				if (tileCoords.x > MAP_EDGE_MIN)
+					L_PierCheckStackPush(tileCoords.x - 1, tileCoords.y);
+				if (tileCoords.x < MAP_EDGE_MAX)
+					L_PierCheckStackPush(tileCoords.x + 1, tileCoords.y);
+				if (tileCoords.y > MAP_EDGE_MIN)
+					L_PierCheckStackPush(tileCoords.x, tileCoords.y - 1);
+				// This one here was also tileCoords.x.
 				// Most likely a bug, commenting
 				// just in case.
-				if (pt.y < MAP_EDGE_MAX)
-					L_PierCheckStackPush(pt.x, pt.y + 1);
+				if (tileCoords.y < MAP_EDGE_MAX)
+					L_PierCheckStackPush(tileCoords.x, tileCoords.y + 1);
 			}
 			if (!bExplosion)
 				goto UpdHouse;
@@ -2691,31 +2694,33 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 			Game_InitStack(nX, nY);
 			while (Game_StackSize()) {
 				Game_StackPop(&pt);
+				tileCoords.x = (__int16)pt.x;
+				tileCoords.y = (__int16)pt.y;
 				nRubbleTile = (rand() & 3) + 1;
-				Game_PlaceTile(pt.x, pt.y, nRubbleTile);
-				if (pt.x < GAME_MAP_SIZE && pt.y < GAME_MAP_SIZE) {
-					XZONClearCorners(pt.x, pt.y);
-					XBITClearBits(pt.x, pt.y, XBIT_FLIPPED|XBIT_POWERED|XBIT_POWERABLE);
+				Game_PlaceTile(tileCoords.x, tileCoords.y, nRubbleTile);
+				if (tileCoords.x < GAME_MAP_SIZE && tileCoords.y < GAME_MAP_SIZE) {
+					XZONClearCorners(tileCoords.x, tileCoords.y);
+					XBITClearBits(tileCoords.x, tileCoords.y, XBIT_FLIPPED|XBIT_POWERED|XBIT_POWERABLE);
 				}
 				if (bExplosion) {
 					nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
-					nExplodeX = iScreenOffSetX + nScaleVal * (pt.x - pt.y);
-					nExplodeY = iScreenOffSetY + nCoordScale * (pt.x + pt.y) - nLandAltScale * ALTMReturnLandAltitude(pt.x, pt.y) - pArrSpriteHeaders[nSpriteID].wHeight;
+					nExplodeX = iScreenOffSetX + nScaleVal * (tileCoords.x - tileCoords.y);
+					nExplodeY = iScreenOffSetY + nCoordScale * (tileCoords.x + tileCoords.y) - nLandAltScale * ALTMReturnLandAltitude(tileCoords.x, tileCoords.y) - pArrSpriteHeaders[nSpriteID].wHeight;
 					bIsFlipped = rand() & 1;
 					Game_DrawProcessObject(nSpriteID, nExplodeX, nExplodeY, bIsFlipped, 0);
 					Game_DirtyCloud(nSpriteID, nExplodeX, nExplodeY);
 				}
-				if (pt.x > MAP_EDGE_MIN)
-					L_RunwayCheckStackPush(pt.x - 1, pt.y);
-				if (pt.x < MAP_EDGE_MAX)
-					L_RunwayCheckStackPush(pt.x + 1, pt.y);
-				if (pt.y > MAP_EDGE_MIN)
-					L_RunwayCheckStackPush(pt.x, pt.y - 1);
-				// This one here was also pt.x.
+				if (tileCoords.x > MAP_EDGE_MIN)
+					L_RunwayCheckStackPush(tileCoords.x - 1, tileCoords.y);
+				if (tileCoords.x < MAP_EDGE_MAX)
+					L_RunwayCheckStackPush(tileCoords.x + 1, tileCoords.y);
+				if (tileCoords.y > MAP_EDGE_MIN)
+					L_RunwayCheckStackPush(tileCoords.x, tileCoords.y - 1);
+				// This one here was also tileCoords.x.
 				// Most likely a bug, commenting
 				// just in case.
-				if (pt.y < MAP_EDGE_MAX)
-					L_RunwayCheckStackPush(pt.x, pt.y + 1);
+				if (tileCoords.y < MAP_EDGE_MAX)
+					L_RunwayCheckStackPush(tileCoords.x, tileCoords.y + 1);
 			}
 			if (!bExplosion)
 				goto UpdHouse;
