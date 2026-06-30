@@ -3639,7 +3639,7 @@ extern "C" void __cdecl Hook_drawShadowShape(__int16 nSpriteID, __int16 right, _
 	int nShapeBottom, nShapeRight;
 
 	shapePtr = &shapeCurrent[nSpriteID];
-	if (shapePtr) {
+	if (shapePtr && shapeBaseBits) {
 		shapeData = Get_SpriteCache_Buffer(shapePtr, nSpriteID);
 		if (shapeData) {
 			nShapeBottom = bottom + Get_SpriteCache_Height(shapePtr, nSpriteID);
@@ -3648,14 +3648,10 @@ extern "C" void __cdecl Hook_drawShadowShape(__int16 nSpriteID, __int16 right, _
 				int nRight = (isFlipped) ? nShapeRight : right;
 				baseShapeData = Get_SpriteCache_BaseBuffer(shapePtr, nSpriteID);
 				if (baseShapeData) {
-					if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight) {
-						if (shapeBaseBits)
-							L_drawShadowShape_WithBase_OutOfContext(shapeData, baseShapeData, nSpriteID, nRight, bottom, isFlipped);
-					}
-					else {
-						if (shapeBaseBits)
-							L_drawShadowShape_WithBase_MainArea(shapeData, baseShapeData, nSpriteID, nRight, bottom, isFlipped);
-					}
+					if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)
+						L_drawShadowShape_WithBase_OutOfContext(shapeData, baseShapeData, nSpriteID, nRight, bottom, isFlipped);
+					else
+						L_drawShadowShape_WithBase_MainArea(shapeData, baseShapeData, nSpriteID, nRight, bottom, isFlipped);
 				}
 			}
 		}
