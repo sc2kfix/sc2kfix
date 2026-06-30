@@ -2563,9 +2563,9 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 												GET_TILE_RANGE(nTileID, TILE_TUNNEL_T, TILE_CROSSOVER_ROADTB_RAILLR) ||
 												GET_TILE_RANGE(nTileID, TILE_CROSSOVER_HIGHWAYLR_ROADTB, TILE_CROSSOVER_HIGHWAYTB_ROADLR) ||
 												GET_TILE_RANGE(nTileID, TILE_ONRAMP_TL, TILE_ONRAMP_BR))
-												--wCityNeighborConnections1000;
+												--wCommerceConnect;
 											else
-												--wCityNeighborConnections1500;
+												--wIndustryConnect;
 										}
 									}
 								}
@@ -2614,7 +2614,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 				if (nX >= MAP_EDGE_MIN) {
 					if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE) {
 						XZONClearCorners(nX, nY);
-						ALTMSetTunnelLevels(nX, nY, 0); // ALTM[nX][nY].w &= 0x3FFu;
+						ALTMSetTunnelLevels(nX, nY, 0);
 					}
 				}
 				L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
@@ -2628,7 +2628,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 					nX += nOffsetX;
 					nY += nOffsetY;
 					if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE)
-						ALTMSetTunnelLevels(nX, nY, 0); // ALTM[nX][nY].w &= 0x3FFu;
+						ALTMSetTunnelLevels(nX, nY, 0);
 					nTileID = GetTileID(nX, nY);
 				}
 				Game_DirtyTile(nX, nY);
