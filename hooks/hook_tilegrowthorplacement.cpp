@@ -2206,6 +2206,12 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 	BYTE bTextOverlay;
 	CMFC3XPoint pt;
 
+	// Debugging and testing.
+	if (GetAsyncKeyState(VK_MENU) < 0) {
+		GameMain_SimcityView_Demolish(pThis, x, y, bExplosion);
+		return;
+	}
+
 	pSCApp = &pCSimcityAppThis;
 	pLockedBits = Game_Graphics_LockDIBBits(pThis->SCVGraphics);
 	pLockedBaseBits = Game_Graphics_LockDIBBits(pBaseGraphics);
@@ -2266,8 +2272,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 				Game_PlaceTileWithMilitaryCheck(nCornerX, nCornerY, TILE_CLEAR);
 				if (nCornerX >= MAP_EDGE_MIN) {
 					if (nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE) {
-						nLandAlt = ALTMReturnLandAltitude(nCornerX, nCornerY);
-						nLandAlt -= nLandAlt - 1;
+						nLandAlt = ALTMReturnLandAltitude(nCornerX, nCornerY) - 1;
 						ALTMSetLandAltitude(nCornerX, nCornerY, nLandAlt);
 						XBITSetBits(nCornerX, nCornerY, XBIT_WATER);
 					}
@@ -2375,8 +2380,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 				Game_PlaceTileWithMilitaryCheck(nCornerX, nCornerY, TILE_CLEAR);
 				if (nCornerX >= MAP_EDGE_MIN) {
 					if (nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE) {
-						nLandAlt = ALTMReturnLandAltitude(nCornerX, nCornerY);
-						nLandAlt -= nLandAlt - 1;
+						nLandAlt = ALTMReturnLandAltitude(nCornerX, nCornerY) - 1;
 						ALTMSetLandAltitude(nCornerX, nCornerY, nLandAlt);
 						XBITSetBits(nCornerX, nCornerY, XBIT_WATER);
 					}
