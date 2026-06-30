@@ -924,7 +924,7 @@ static int L_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iTileID, __int16 
 									XBITSetBits(iCurX, iCurY, iTileBitMask);
 							}
 						}
-						Game_PlaceTileWithMilitaryCheck(iCurX, iCurY, iTileID);
+						Game_PlaceTile(iCurX, iCurY, iTileID);
 						if (bDoSilo)
 							Game_PlaceUndergroundTiles(iCurX, iCurY, UNDER_TILE_MISSILESILO);
 						else {
@@ -1184,7 +1184,7 @@ static BOOL DoBudgetRoadCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID) {
 		// Transportation budget, roads - if below 100% related tiles will be replaced with rubble.
 		iFundingPercent = pBudgetArr[BUDGET_ROAD].iFundingPercent;
 		if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
-			Game_PlaceTileWithMilitaryCheck(iX, iY, GetRubbleTileID());
+			Game_PlaceTile(iX, iY, GetRubbleTileID());
 			XBITClearBits(iX, iY, XBIT_POWERABLE);
 			DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
 		}
@@ -1204,7 +1204,7 @@ static BOOL DoBudgetRailCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID) {
 		// Transportation budget, rails - if below 100% related tiles will be replaced with rubble.
 		iFundingPercent = pBudgetArr[BUDGET_RAIL].iFundingPercent;
 		if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
-			Game_PlaceTileWithMilitaryCheck(iX, iY, GetRubbleTileID());
+			Game_PlaceTile(iX, iY, GetRubbleTileID());
 			XBITClearBits(iX, iY, XBIT_POWERABLE);
 			DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
 		}
@@ -1251,24 +1251,24 @@ static BOOL DoBudgetHighwayCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID) {
 
 					// each individual highway tile within the 2x2 block.
 					if (iX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE && XBITReturnIsWater(iX, iY))
-						Game_PlaceTileWithMilitaryCheck(iX, iY, 0);
+						Game_PlaceTile(iX, iY, 0);
 					else
-						Game_PlaceTileWithMilitaryCheck(iX, iY, GetRubbleTileID());
+						Game_PlaceTile(iX, iY, GetRubbleTileID());
 
 					if (iNextX >= 0 && iNextX < GAME_MAP_SIZE && iY < GAME_MAP_SIZE &&  XBITReturnIsWater(iNextX, iY))
-						Game_PlaceTileWithMilitaryCheck(iNextX, iY, 0);
+						Game_PlaceTile(iNextX, iY, 0);
 					else
-						Game_PlaceTileWithMilitaryCheck(iNextX, iY, GetRubbleTileID());
+						Game_PlaceTile(iNextX, iY, GetRubbleTileID());
 
 					if (iX < GAME_MAP_SIZE && iNextY >= 0 && iNextY < GAME_MAP_SIZE && XBITReturnIsWater(iX, iNextY))
-						Game_PlaceTileWithMilitaryCheck(iX, iNextY, 0);
+						Game_PlaceTile(iX, iNextY, 0);
 					else
-						Game_PlaceTileWithMilitaryCheck(iX, iNextY, GetRubbleTileID());
+						Game_PlaceTile(iX, iNextY, GetRubbleTileID());
 
 					if (iNextX < GAME_MAP_SIZE && iNextY < GAME_MAP_SIZE && XBITReturnIsWater(iNextX, iNextY))
-						Game_PlaceTileWithMilitaryCheck(iNextX, iNextY, 0);
+						Game_PlaceTile(iNextX, iNextY, 0);
 					else
-						Game_PlaceTileWithMilitaryCheck(iNextX, iNextY, GetRubbleTileID());
+						Game_PlaceTile(iNextX, iNextY, GetRubbleTileID());
 
 					DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
 				}
@@ -1737,7 +1737,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 							if (GetTileID(x, y) == TILE_INFRASTRUCTURE_RUNWAY) {
 								iTileFlipped = (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE && XBITReturnIsFlipped(x, y));
 								if (iTileFlipped != iToFlip) {
-									Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_RUNWAYCROSS);
+									Game_PlaceTile(x, y, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 									if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 										XZONSetCornerMask(x, y, CORNER_ALL);
 									if (iZoneType != ZONE_MILITARY && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
@@ -1751,7 +1751,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 							if (!RunwayTileMilitaryCheck(x, y, iZoneType))
 								return 0;
 							DeleteTilePortion(x, y);
-							Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_RUNWAY);
+							Game_PlaceTile(x, y, TILE_INFRASTRUCTURE_RUNWAY);
 							if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 								XZONSetCornerMask(x, y, CORNER_ALL);
 							if (iZoneType != ZONE_MILITARY && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
@@ -1814,7 +1814,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 		do {
 			x += wTilePierLengthWays[iPierTileCount];
 			y += wTilePierDepthWays[iPierTileCount];
-			Game_PlaceTileWithMilitaryCheck(x, y, TILE_INFRASTRUCTURE_PIER);
+			Game_PlaceTile(x, y, TILE_INFRASTRUCTURE_PIER);
 			if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 				XZONSetCornerMask(x, y, CORNER_ALL);
 			if (iToFlip && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
@@ -1895,7 +1895,7 @@ PLACEMENT_SUCCESS:
 }
 
 static void PlacePowerLineTile(__int16 x, __int16 y, BYTE iTileID) {
-	Game_PlaceTileWithMilitaryCheck(x, y, iTileID);
+	Game_PlaceTile(x, y, iTileID);
 	if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 		XBITSetBits(x, y, XBIT_POWERABLE);
 	Game_CheckAdjustTerrainAndPlacePowerLines(x, y);
@@ -2269,7 +2269,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 				nCornerY >= GAME_MAP_SIZE ||
 				!XBITReturnIsWater(nCornerX, nCornerY)) {
 				Game_DirtyTile(nCornerX, nCornerY);
-				Game_PlaceTileWithMilitaryCheck(nCornerX, nCornerY, TILE_CLEAR);
+				Game_PlaceTile(nCornerX, nCornerY, TILE_CLEAR);
 				if (nCornerX >= MAP_EDGE_MIN) {
 					if (nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE) {
 						nLandAlt = ALTMReturnLandAltitude(nCornerX, nCornerY) - 1;
@@ -2329,7 +2329,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 					Game_DrawProcessObject(nSpriteID, nExplodeX, nExplodeY, bIsFlipped, 0);
 					Game_DirtyCloud(nSpriteID, nExplodeX, nExplodeY);
 				}
-				Game_PlaceTileWithMilitaryCheck(nCornerX, nCornerY, TILE_CLEAR);
+				Game_PlaceTile(nCornerX, nCornerY, TILE_CLEAR);
 				if (nCornerX >= MAP_EDGE_MIN) {
 					if (nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE) {
 						XZONClearCorners(nCornerX, nCornerY);
@@ -2353,18 +2353,18 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 						Game_DirtyCloud(nSpriteID, nAreaExplodeX, nAreaExplodeY);
 					}
 					nAreaCornerY = nCornerY + 1;
-					Game_PlaceTileWithMilitaryCheck(nCornerX, nAreaCornerY, TILE_CLEAR);
+					Game_PlaceTile(nCornerX, nAreaCornerY, TILE_CLEAR);
 					if (nCornerX < GAME_MAP_SIZE && nAreaCornerY < GAME_MAP_SIZE) {
 						XZONClearCorners(nCornerX, nAreaCornerY);
 						XBITClearBits(nCornerX, nAreaCornerY, XBIT_FLIPPED);
 					}
 					nAreaCornerX = nCornerX + 1;
-					Game_PlaceTileWithMilitaryCheck(nAreaCornerX, nAreaCornerY, TILE_CLEAR);
+					Game_PlaceTile(nAreaCornerX, nAreaCornerY, TILE_CLEAR);
 					if (nCornerX >= MAP_EDGE_MIN && nAreaCornerX < GAME_MAP_SIZE && nAreaCornerY < GAME_MAP_SIZE) {
 						XZONClearCorners(nAreaCornerX, nAreaCornerY);
 						XBITClearBits(nAreaCornerX, nAreaCornerY, XBIT_FLIPPED);
 					}
-					Game_PlaceTileWithMilitaryCheck(nAreaCornerX, nCornerY, TILE_CLEAR);
+					Game_PlaceTile(nAreaCornerX, nCornerY, TILE_CLEAR);
 					if (nCornerX >= MAP_EDGE_MIN && nAreaCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE) {
 						XZONClearCorners(nAreaCornerX, nCornerY);
 						XBITClearBits(nAreaCornerX, nCornerY, XBIT_FLIPPED);
@@ -2377,7 +2377,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 				nCornerY >= GAME_MAP_SIZE ||
 				!XBITReturnIsWater(nCornerX, nCornerY)) {
 				Game_DirtyTile(nCornerX, nCornerY);
-				Game_PlaceTileWithMilitaryCheck(nCornerX, nCornerY, TILE_CLEAR);
+				Game_PlaceTile(nCornerX, nCornerY, TILE_CLEAR);
 				if (nCornerX >= MAP_EDGE_MIN) {
 					if (nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE) {
 						nLandAlt = ALTMReturnLandAltitude(nCornerX, nCornerY) - 1;
@@ -2422,7 +2422,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 			Game_InitStack(nX, nY);
 			while (Game_StackSize()) {
 				Game_StackPop(&pt);
-				Game_PlaceTileWithMilitaryCheck(pt.x, pt.y, TILE_CLEAR);
+				Game_PlaceTile(pt.x, pt.y, TILE_CLEAR);
 				if (pt.x < GAME_MAP_SIZE && pt.y < GAME_MAP_SIZE) {
 					XZONClearCorners(pt.x, pt.y);
 					XZONClearZone(pt.x, pt.y);
@@ -2547,7 +2547,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 							__int16 nCurrY = nCornerY - nPosY;
 							if (nCurrX < GAME_MAP_SIZE && nCurrY < GAME_MAP_SIZE) {
 								nRubbleTile = (GetTerrainTileID(nCurrX, nCurrY)) ? TILE_CLEAR : (rand() & 3) + 1;
-								Game_PlaceTileWithMilitaryCheck(nCurrX, nCurrY, nRubbleTile);
+								Game_PlaceTile(nCurrX, nCurrY, nRubbleTile);
 								if (nCurrX >= MAP_EDGE_MIN && nCurrX < GAME_MAP_SIZE && nCurrY < GAME_MAP_SIZE) {
 									XBITClearBits(nCurrX, nCurrY, XBIT_FLIPPED|XBIT_POWERED|XBIT_POWERABLE);
 									XZONClearCorners(nCurrX, nCurrY);
@@ -2610,7 +2610,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 				Game_DirtyTile(nX, nY);
 				nTileID = TILE_CLEAR;
 				nRubbleTile = (rand() & 3) + 1;
-				Game_PlaceTileWithMilitaryCheck(nX, nY, nRubbleTile);
+				Game_PlaceTile(nX, nY, nRubbleTile);
 				if (nX >= MAP_EDGE_MIN) {
 					if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE) {
 						XZONClearCorners(nX, nY);
@@ -2633,7 +2633,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 				}
 				Game_DirtyTile(nX, nY);
 				nRubbleTile = (rand() & 3) + 1;
-				Game_PlaceTileWithMilitaryCheck(nX, nY, nRubbleTile);
+				Game_PlaceTile(nX, nY, nRubbleTile);
 				if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE)
 					XZONClearCorners(nX, nY);
 				nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
@@ -2692,7 +2692,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 			while (Game_StackSize()) {
 				Game_StackPop(&pt);
 				nRubbleTile = (rand() & 3) + 1;
-				Game_PlaceTileWithMilitaryCheck(pt.x, pt.y, nRubbleTile);
+				Game_PlaceTile(pt.x, pt.y, nRubbleTile);
 				if (pt.x < GAME_MAP_SIZE && pt.y < GAME_MAP_SIZE) {
 					XZONClearCorners(pt.x, pt.y);
 					XBITClearBits(pt.x, pt.y, XBIT_FLIPPED|XBIT_POWERED|XBIT_POWERABLE);

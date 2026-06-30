@@ -377,7 +377,7 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 			// being placed into a dip (likely replacing a slope or granite block).
 			if (!GetTerrainTileID(x1, y1) && XZONReturnZone(x1, y1) == ZONE_MILITARY) {
 				XZONSetCornerMask(x1, y1, CORNER_ALL);
-				Game_PlaceTileWithMilitaryCheck(x1, y1, TILE_INFRASTRUCTURE_RUNWAYCROSS);
+				Game_PlaceTile(x1, y1, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 			}
 		}
 		if (nCnt > 1) {
@@ -387,7 +387,7 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 				// being placed into a dip (likely replacing a slope or granite block).
 				if (!GetTerrainTileID(iX, iY) && XZONReturnZone(iX, iY) == ZONE_MILITARY) {
 					XZONSetCornerMask(iX, iY, CORNER_ALL);
-					Game_PlaceTileWithMilitaryCheck(iX, iY, TILE_INFRASTRUCTURE_RUNWAYCROSS);
+					Game_PlaceTile(iX, iY, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 				}
 			}
 		}
@@ -528,7 +528,7 @@ static int MilitaryBaseNavalYard(BOOL bForce) {
 							SetNewCoords(&iAdvanceBy, iNextX, iNextY);
 							//BYTE iTile = (wViewRotation == VIEWROTATION_SOUTH) ? TILE_TREES7 : (wViewRotation == VIEWROTATION_WEST) ? TILE_TREES5 : (wViewRotation == VIEWROTATION_EAST) ? TILE_TREES3 : TILE_TREES1;
 							// Temporary coastline drawing.
-							//Game_PlaceTileWithMilitaryCheck(iAdvanceBy.x, iAdvanceBy.y, iTile);
+							//Game_PlaceTile(iAdvanceBy.x, iAdvanceBy.y, iTile);
 							//if (military_debug & (MILITARY_DEBUG_PLACEMENT_NAVAL|MILITARY_DEBUG_PLACEMENT_NAVAL_VERBOSE))
 							//	ConsoleLog(LOG_DEBUG, "2 (%d, %d)\n", iAdvanceBy.x, iAdvanceBy.y);
 						} while (!isValidWaterBody(iAdvanceBy.x, iAdvanceBy.y));
@@ -579,7 +579,7 @@ static int MilitaryBaseNavalYard(BOOL bForce) {
 								SetNewCoords(&iAdvanceBy, iNextX, iNextY);
 								//BYTE iTile = (wViewRotation == VIEWROTATION_SOUTH) ? TILE_RUBBLE1 : (wViewRotation == VIEWROTATION_WEST) ? TILE_RUBBLE3 : (wViewRotation == VIEWROTATION_EAST) ? TILE_RUBBLE2 : TILE_RUBBLE4;
 								// Temporary drawing.
-								//Game_PlaceTileWithMilitaryCheck(iAdvanceBy.x, iAdvanceBy.y, iTile);
+								//Game_PlaceTile(iAdvanceBy.x, iAdvanceBy.y, iTile);
 								//if (military_debug & (MILITARY_DEBUG_PLACEMENT_NAVAL|MILITARY_DEBUG_PLACEMENT_NAVAL_VERBOSE))
 								//	ConsoleLog(LOG_DEBUG, "5 (%d, %d)\n", iAdvanceBy.x, iAdvanceBy.y);
 							} while (!isValidWaterBody(iAdvanceBy.x, iAdvanceBy.y));
@@ -594,7 +594,7 @@ static int MilitaryBaseNavalYard(BOOL bForce) {
 									!XBITReturnIsWater(iAdvanceBy.x, iAdvanceBy.y) &&
 									!GetUndergroundTileID(iAdvanceBy.x, iAdvanceBy.y) && 
 									ALTMReturnLandAltitude(iAdvanceBy.x, iAdvanceBy.y) == iBaseLevel) {
-									Game_PlaceTileWithMilitaryCheck(iAdvanceBy.x, iAdvanceBy.y, 0);
+									Game_PlaceTile(iAdvanceBy.x, iAdvanceBy.y, 0);
 									XZONSetNewZone(iAdvanceBy.x, iAdvanceBy.y, ZONE_MILITARY);
 									--dwTileCount[iTileID];
 									++dwMilitaryTiles[MILITARYTILE_OTHER];

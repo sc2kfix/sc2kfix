@@ -331,7 +331,7 @@ static void ChangeChurchZone() {
 		for (iDepth = 0; iDepth < GAME_MAP_SIZE; ++iDepth) {
 			if (GetTileID(iLength, iDepth) == TILE_INFRASTRUCTURE_CHURCH) {
 				if (XZONReturnZone(iLength, iDepth) == ZONE_NONE) {
-					Game_PlaceTileWithMilitaryCheck(iLength, iDepth, GetRubbleTileID()); // Replace
+					Game_PlaceTile(iLength, iDepth, GetRubbleTileID()); // Replace
 					XZONSetNewZone(iLength, iDepth, ZONE_DENSE_RESIDENTIAL); // Re-zone
 					// It should be noted here that we're 'not' unsetting the powered/powerable
 					// bits so consequently once the tiles are replaced and re-zoned they will
