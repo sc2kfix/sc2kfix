@@ -1141,7 +1141,7 @@ extern "C" void __cdecl Hook_InvertTerrain(__int16 x, __int16 y) {
 		nUnderTile = wXTERToXUNDSpriteIDMap[nTerrainTileID];
 		if (!DisplayLayer[LAYER_UNDERGROUND] && bMapWireFrame) {
 			nAltitude = (nTerrainTileID < SUBMERGED_00) ? ALTMReturnLandAltitude(x, y) : ALTMReturnWaterLevel(x, y);
-			nTileID = (nTerrainTileID >= TERRAIN_13) ? nXTERTileIDs[nTerrainTileID] : nUnderTile;
+			nTileID = (nTerrainTileID >= TERRAIN_13 || XZONReturnZone(x, y)) ? nXTERTileIDs[nTerrainTileID] : nUnderTile;
 		}
 		else {
 			nAltitude = ALTMReturnLandAltitude(x, y);
