@@ -2207,11 +2207,13 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 	CMFC3XPoint pt;
 	coords_w_t tileCoords;
 
+#if 0
 	// Debugging and testing.
 	if (GetAsyncKeyState(VK_MENU) < 0) {
 		GameMain_SimcityView_Demolish(pThis, x, y, bExplosion);
 		return;
 	}
+#endif
 
 	pSCApp = &pCSimcityAppThis;
 	pLockedBits = Game_Graphics_LockDIBBits(pThis->SCVGraphics);
