@@ -2481,8 +2481,6 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 							dirtyRect.top = 0;
 						if (nArea > 0) {
 							__int16 nVertPos = 0;
-							//nExplodeX = nCoordScale;
-							//nExplodeY = nCoordScale;
 							__int16 nAreaPos = nArea;
 							do {
 								L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
@@ -2492,21 +2490,22 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 									nAreaExplodeX = nExplodeX;
 									do {
 										if (nArea > 0) {
+											__int16 nAreaExplodeIntX = nAreaExplodeX;
 											__int16 nCurrHorzPos = nHorzPos;
 											__int16 nVertAreaPos = nArea;
 											do {
 												nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
 												nAreaExplodeY = nCurrHorzPos + nExplodeY - pArrSpriteHeaders[nSpriteID].wHeight - nVertPos;
 												bIsFlipped = rand() & 1;
-												Game_DrawProcessObject(nSpriteID, nAreaExplodeX, nAreaExplodeY, bIsFlipped, 0);
-												Game_DirtyCloud(nSpriteID, nAreaExplodeX, nAreaExplodeY);
+												Game_DrawProcessObject(nSpriteID, nAreaExplodeIntX, nAreaExplodeY, bIsFlipped, 0);
+												Game_DirtyCloud(nSpriteID, nAreaExplodeIntX, nAreaExplodeY);
 												nCurrHorzPos -= nCoordScale;
-												nAreaExplodeX += nScaleVal;
+												nAreaExplodeIntX += nScaleVal;
 												--nVertAreaPos;
 											} while (nVertAreaPos);
 										}
-										nHorzPos += nLandAltScale;
-										nAreaExplodeX += nCoordScale;
+										nHorzPos += nCoordScale;
+										nAreaExplodeX += nScaleVal;
 										--nHorzAreaPos;
 									} while (nHorzAreaPos);
 								}
