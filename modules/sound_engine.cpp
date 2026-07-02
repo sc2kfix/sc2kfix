@@ -125,7 +125,7 @@ static DWORD WINAPI SoundEngineOneShotThread(LPVOID lpParameter) {
 	while (SDL_GetAudioStreamAvailable(pStreamCurrentSound) > 0) {
 		if (bSoundStop || !pStreamCurrentSound)
 			break;
-		Sleep(10);
+		Sleep(1);
 	}
 
 	bSoundThreadActive[0] = false;
@@ -145,7 +145,7 @@ static DWORD WINAPI SoundEngineLoopThread(LPVOID lpParameter) {
 			break;
 		if (SDL_GetAudioStreamAvailable(pStreamCurrentSound) < (int)stAudioData->uBufferSize)
 			SDL_PutAudioStreamData(pStreamCurrentSound, stAudioData->pBuffer, stAudioData->uBufferSize);
-		Sleep(10);
+		Sleep(1);
 	}
 
 	bSoundThreadActive[1] = false;

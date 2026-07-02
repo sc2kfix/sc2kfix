@@ -83,6 +83,13 @@ enum {
 #define ONIDLE_INITIALDIALOG_MAX (ONIDLE_INITIALDIALOG_COUNT)
 
 enum {
+	OWNDRW_DLG_NONE,
+	OWNDRW_DLG_BRIDGE,
+
+	OWNDRW_DLG_COUNT
+};
+
+enum {
 	MOVBUT_QUIT,
 	MOVBUT_TOPLEFT,
 	MOVBUT_TOPRIGHT,
@@ -100,6 +107,21 @@ enum {
 	MOVACT_FOURTH,
 	MOVACT_QUIT
 };
+
+enum {
+	BRIDGE_WIRE,
+	BRIDGE_RAIL,
+	BRIDGE_ROAD_CAUSEWAY,
+	BRIDGE_ROAD_RAISING,
+	BRIDGE_ROAD_SUSPENSION,
+	BRIDGE_HIGHWAY,
+	BRIDGE_HIGHWAY_REINFORCED,
+
+	BRIDGE_COUNT
+};
+
+#define ARCOLOGY_COUNT 4
+#define POWERPLANT_COUNT 9
 
 // This specifical structure is the equivalent
 // of the LOGPALETTE struct from the WinAPI
@@ -524,8 +546,36 @@ public:
 	CMFC3XListBox listBox;
 };
 
-// !!! At the moment the CMovieDialog class is structured
-// to achieve alignment, it is heavily subject to change.
+class CSelectArcologyDialog : public CGameDialog {
+public:
+	int dwSADArcologySelection;
+	CMFC3XFont dwSADCFont;
+	CGraphics *dwSADCGraphicsOne[ARCOLOGY_COUNT];
+	CMFC3XPoint dwSADPoints[ARCOLOGY_COUNT];
+	DWORD dwSADBtnState[ARCOLOGY_COUNT];
+};
+
+class CPowerPlantDialog : public CGameDialog {
+public:
+	int dwPPDSelectedPowerPlant;
+	CGraphics *dwPPDCGraphics[POWERPLANT_COUNT];
+	DWORD dwPPDBtnsID[POWERPLANT_COUNT];
+	DWORD dwPPDBtnsState[POWERPLANT_COUNT];
+	CMFC3XFont dwPPDCFont;
+	CMFC3XPoint dwPPDPoint[POWERPLANT_COUNT];
+	CMFC3XButton dwPPDButtonCancel;
+	CMFC3XButton dwPPDButtonBorder;
+};
+
+class CBridgeSelectDialog : public CGameDialog {
+public:
+	DWORD dwBSDNumTiles;
+	DWORD dwBSDBridgeType;
+	int dwBSDSelectedBridge;
+	CGraphics *dwBSDCGraphicsOne[BRIDGE_COUNT];
+	DWORD dwBSDWidth;
+	DWORD dwBSDHeight;
+};
 
 class CMovieDialog : public CMFC3XDialog {
 public:
