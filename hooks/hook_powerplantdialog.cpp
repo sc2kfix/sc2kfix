@@ -13,12 +13,15 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
+static char *pPowerPlantCostStrs[POWERPLANT_COUNT];
+
 extern "C" int __stdcall Hook_PowerPlantDialog_OnInitDialog() {
 	CPowerPlantDialog *pThis;
 
 	__asm mov [pThis], ecx
 
 	__int16 nItem;
+	int nCost;
 	HFONT hFont;
 	HWND hDlgItem;
 	RECT borderRect, cancelRect, dlgWndRect, dlgClientRect, dlgRect, sectRect;
@@ -31,19 +34,24 @@ extern "C" int __stdcall Hook_PowerPlantDialog_OnInitDialog() {
 
 	GameMain_Dialog_OnInitDialog(pThis);
 	pThis->dwPPDSelectedPowerPlant = -1;
-	for (nItem = 0; nItem < POWERPLANT_COUNT; ++nItem)
+	for (nItem = 0; nItem < POWERPLANT_COUNT; ++nItem) {
 		pThis->dwPPDCGraphics[nItem] = 0;
+		pPowerPlantCostStrs[nItem] = 0;
+	}
 	hFont = CreateFont(8, 0, 0, 0, FW_MEDIUM, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, PROOF_QUALITY, DEFAULT_PITCH, "MS Sans Serif");
 	pThis->dwPPDCFont.m_hObject =  hFont;
 	wDlgNumAvailablePlants = 0;
 	for (nItem = 0; nItem < POWERPLANT_COUNT; ++nItem) {
 		if (((1 << nItem) & wGrantedPowerPlants) != 0) {
+			wDlgAvailablePlants[wDlgNumAvailablePlants] = nItem;
 			hDlgItem = GetDlgItem(pThis->m_hWnd, dwPowerPlantBtnIDs[wDlgNumAvailablePlants]);
 			ShowWindow(hDlgItem, SW_NORMAL);
-
 			hDlgItem = GetDlgItem(pThis->m_hWnd, dwPowerPlantInfoBtnIDs[wDlgNumAvailablePlants]);
 			ShowWindow(hDlgItem, SW_NORMAL);
-			wDlgAvailablePlants[wDlgNumAvailablePlants] = nItem;
+
+			nCost = costFromSubTool[CITY_MENUTOOL_POS(nItem + POWER_PLANTS_COAL, CITYTOOL_GROUP_POWER)];
+			pPowerPlantCostStrs[nItem] = L_GetCurrencyString_SC2K1996(nCost);
+
 			++wDlgNumAvailablePlants;
 		}
  	}
@@ -163,18 +171,16 @@ extern "C" void __stdcall Hook_PowerPlantDialog_OnDrawEntire(int nPos, int nCtlI
 	MoveToEx(pDC->m_hDC, nOuterHalfWidth - textSz.cx / 2, nY, &pt);
 	TextOutA(pDC->m_hDC, 0, 0, szBuf, strlen(szBuf));
 	nCost = costFromSubTool[CITY_MENUTOOL_POS(nAvailablePlant + POWER_PLANTS_COAL, CITYTOOL_GROUP_POWER)];
-	// One oddity here with the currency string is
-	// that it'll move horizontally (observed prior
-	// to any changes as well). This issue is greatly
-	// mitigated by it now being on a separate line,
-	// so it'll no longer overlap with the MW read-out.
-	textSz.cx = Game_GetAvailableFunds(pDC, nCost);
+	memset(szBuf, 0, sizeof(szBuf));
+	if (pPowerPlantCostStrs[nAvailablePlant])
+		strcpy_s(szBuf, pPowerPlantCostStrs[nAvailablePlant]);
+	GetTextExtentPointA(pDC->m_hAttribDC, szBuf, strlen(szBuf), &textSz);
 	nY = nY - textSz.cy;
 	crTextOld = crDlgColBtnText;
 	if (nCost > dwCityFunds)
 		crTextOld = SetTextColor(pDC->m_hDC, RGB(255, 0, 0));
 	MoveToEx(pDC->m_hDC, nOuterHalfWidth - textSz.cx / 2, nY, &pt);
-	Game_DisplayItemCost(pDC, nCost);
+	TextOutA(pDC->m_hDC, 0, 0, szBuf, strlen(szBuf));
 	SetTextColor(pDC->m_hDC, crTextOld);
 	strcpy_s(szBuf, cityToolGroupStrings[CITY_MENUTOOL_POS(nAvailablePlant + POWER_PLANTS_COAL, CITYTOOL_GROUP_POWER)].m_pchData);
 	GetTextExtentPointA(pDC->m_hAttribDC, szBuf, strlen(szBuf), &textSz);
@@ -200,6 +206,10 @@ extern "C" void __stdcall Hook_PowerPlantDialog_SetCursorDeleteGraphics() {
 
 	Game_GameDialog_SetCursor(pThis);
 	for (__int16 nItems = 0; nItems < wDlgNumAvailablePlants; ++nItems) {
+		if (pPowerPlantCostStrs[nItems]) {
+			free(pPowerPlantCostStrs[nItems]);
+			pPowerPlantCostStrs[nItems] = 0;
+		}
 		if (pThis->dwPPDCGraphics[nItems]) {
 			pThis->dwPPDCGraphics[nItems]->DeleteStored_SC2K1996();
 			delete pThis->dwPPDCGraphics[nItems];

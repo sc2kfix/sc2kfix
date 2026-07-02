@@ -50,6 +50,8 @@ static DWORD dwBridgeInfoBtnIDs[BRIDGE_COUNT] = {
 	9
 };
 
+static char *pBridgeCostStrs[BRIDGE_COUNT];
+
 extern "C" void __stdcall Hook_drawBridgeShape(__int16 nWidth, __int16 nHeight, __int16 nSpriteID) {
 	L_drawShapeDialog_SC2K1996(SPRITE_MEDIUM_WATER_TRBL, nWidth, nHeight - pArrSpriteHeaders[SPRITE_MEDIUM_WATER_TRBL].wHeight, 0, 0);
 	L_drawShapeDialog_SC2K1996(nSpriteID, nWidth, nHeight - pArrSpriteHeaders[nSpriteID].wHeight, 0, 0);
@@ -71,6 +73,7 @@ extern "C" int __stdcall Hook_BridgeSelectDialog_OnInitDialog() {
 	__asm mov [pThis], ecx
 
 	__int16 nItem;
+	int nCost;
 	HWND hDlgItem;
 	RECT imageRect, dlgWndRect, dlgClientRect, cancelRect, borderRect, dlgRect, sectRect;
 	int nPadding, nWidth;
@@ -84,8 +87,10 @@ extern "C" int __stdcall Hook_BridgeSelectDialog_OnInitDialog() {
 	pStoredWnd = pThis;
 	nOwnDrwDlg = OWNDRW_DLG_BRIDGE;
 	SetWindowTextA(pThis->m_hWnd, "Select Bridge");
-	for (nItem = 0; nItem < BRIDGE_COUNT; ++nItem)
+	for (nItem = 0; nItem < BRIDGE_COUNT; ++nItem) {
 		pThis->dwBSDCGraphicsOne[nItem] = 0;
+		pBridgeCostStrs[nItem] = 0;
+	}
 	hBSDFont = CreateFont(8, 0, 0, 0, FW_MEDIUM, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, PROOF_QUALITY, DEFAULT_PITCH, "MS Sans Serif");
 	hDlgItem = GetDlgItem(pThis->m_hWnd, dwBridgeSelectBtnIDs[0]);
 	GetWindowRect(hDlgItem, &imageRect);
@@ -104,6 +109,9 @@ extern "C" int __stdcall Hook_BridgeSelectDialog_OnInitDialog() {
 			ShowWindow(hDlgItem, SW_SHOWNORMAL);
 			hDlgItem = GetDlgItem(pThis->m_hWnd, dwBridgeInfoBtnIDs[wDlgNumAvailableBridges]);
 			ShowWindow(hDlgItem, SW_SHOWNORMAL);
+
+			nCost = pThis->dwBSDNumTiles * dwBridgeBaseCost[nItem];
+			pBridgeCostStrs[nItem] = L_GetCurrencyString_SC2K1996(nCost);
 
 			++wDlgNumAvailableBridges;
 		}
@@ -259,20 +267,16 @@ static void L_BridgeSelectDialog_OnDrawEntire_SC2K1996(CBridgeSelectDialog *pThi
 	SetTextAlign(pDC->m_hDC, TA_UPDATECP);
 	hFont = SelectFont(pDC->m_hDC, hBSDFont);
 	nCost = pThis->dwBSDNumTiles * dwBridgeBaseCost[nAvailableBridge];
-	strcpy_s(szBuf, "Placeholder");
+	memset(szBuf, 0, sizeof(szBuf));
+	if (pBridgeCostStrs[nAvailableBridge])
+		strcpy_s(szBuf, pBridgeCostStrs[nAvailableBridge]);
 	GetTextExtentPointA(pDC->m_hAttribDC, szBuf, strlen(szBuf), &textSz);
-	// One oddity here with the currency string is
-	// that it'll move horizontally (observed prior
-	// to any changes as well). This issue is greatly
-	// mitigated by it now being on a separate line,
-	// so it'll no longer overlap with the MW read-out.
-	textSz.cx = Game_GetAvailableFunds(pDC, nCost);
 	nY = nOuterHeight - textSz.cy - 4;
 	crTextOld = crDlgColBtnText;
 	if (nCost > dwCityFunds)
 		crTextOld = SetTextColor(pDC->m_hDC, RGB(255, 0, 0));
 	MoveToEx(pDC->m_hDC, nOuterHalfWidth - textSz.cx / 2, nY, &pt);
-	Game_DisplayItemCost(pDC, nCost);
+	TextOutA(pDC->m_hDC, 0, 0, szBuf, strlen(szBuf));
 	SetTextColor(pDC->m_hDC, crTextOld);
 	LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, dwBridgeStringIDs[nAvailableBridge], szBuf, sizeof(szBuf) - 1);
 	GetTextExtentPointA(pDC->m_hAttribDC, szBuf, strlen(szBuf), &textSz);
@@ -346,6 +350,10 @@ extern "C" void __stdcall Hook_BridgeSelectDialog_SetCursorAndDeleteGraphics() {
 	pStoredWnd = NULL;
 	Game_GameDialog_SetCursor(pThis);
 	for (nItem = 0; nItem < BRIDGE_COUNT; ++nItem) {
+		if (pBridgeCostStrs[nItem]) {
+			free(pBridgeCostStrs[nItem]);
+			pBridgeCostStrs[nItem] = 0;
+		}
 		if (pThis->dwBSDCGraphicsOne[nItem]) {
 			pThis->dwBSDCGraphicsOne[nItem]->DeleteStored_SC2K1996();
 			delete pThis->dwBSDCGraphicsOne[nItem];

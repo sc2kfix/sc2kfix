@@ -4592,6 +4592,8 @@ extern bool bSoundKickstart;
 extern void L_SetRectBackground_SC2K1996(HDC hDC, LONG left, LONG top, LONG right, LONG bottom, COLORREF cr);
 extern void L_SetButtonShape_SC2K1996(HDC hDC, int nInnerWidth, int nInnerHeight, DWORD dwState);
 
+extern char *L_GetCurrencyString_SC2K1996(unsigned __int32 nCost);
+
 extern void L_BridgeSelectDialog_OnDrawItem_SC2K1996(CBridgeSelectDialog *pThis, int nCtlID, LPDRAWITEMSTRUCT lpDIS);
 
 extern void Clear_SpriteCache();

@@ -27,12 +27,15 @@ static DWORD dwArcologyInfoBtnIDs[ARCOLOGY_COUNT] = {
 	12
 };
 
+static char *pArcologyCostStrs[ARCOLOGY_COUNT];
+
 extern "C" int __stdcall Hook_SelectArcologyDialog_OnInitDialog() {
 	CSelectArcologyDialog *pThis;
 
 	__asm mov [pThis], ecx
 
 	__int16 nItem;
+	int nCost;
 	HFONT hFont;
 	HWND hDlgItem;
 	RECT dlgWndRect, dlgClientRect, borderRect, cancelRect, dlgRect, sectRect;
@@ -46,13 +49,17 @@ extern "C" int __stdcall Hook_SelectArcologyDialog_OnInitDialog() {
 	GameMain_Dialog_OnInitDialog(pThis);
 	SetWindowTextA(pThis->m_hWnd, "Select Arcology");
 	pThis->dwSADArcologySelection = -1;
-	for (nItem = 0; nItem < ARCOLOGY_COUNT; ++nItem)
+	for (nItem = 0; nItem < ARCOLOGY_COUNT; ++nItem) {
 		pThis->dwSADCGraphicsOne[nItem] = 0;
+		pArcologyCostStrs[nItem] = NULL;
+	}
 	hFont = CreateFont(8, 0, 0, 0, FW_MEDIUM, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, PROOF_QUALITY, DEFAULT_PITCH, "MS Sans Serif");
 	pThis->dwSADCFont.m_hObject =  hFont;
 	for (nItem = 0; nItem < wGrantedArcologies; ++nItem) {
 		ShowWindow(GetDlgItem(pThis->m_hWnd, dwArcologyBtnIDs[nItem]), SW_SHOWNORMAL);
 		ShowWindow(GetDlgItem(pThis->m_hWnd, dwArcologyInfoBtnIDs[nItem]), SW_SHOWNORMAL);
+		nCost = costFromSubTool[CITY_MENUTOOL_POS(nItem + REWARDS_ARCOLOGIES_PLYMOUTH, CITYTOOL_GROUP_REWARDS)];
+		pArcologyCostStrs[nItem] = L_GetCurrencyString_SC2K1996(nCost);
 	}
 	hDlgItem = GetDlgItem(pThis->m_hWnd, 331);
 	GetWindowRect(hDlgItem, &borderRect);
@@ -198,18 +205,16 @@ extern "C" void __stdcall Hook_SelectArcologyDialog_OnDrawEntire(int nPos, int n
 	MoveToEx(pDC->m_hDC, nOuterHalfWidth - textSz.cx / 2, nY, &pt);
 	TextOutA(pDC->m_hDC, 0, 0, szBuf, strlen(szBuf));
 	nCost = costFromSubTool[CITY_MENUTOOL_POS(nPos + REWARDS_ARCOLOGIES_PLYMOUTH, CITYTOOL_GROUP_REWARDS)];
-	// One oddity here with the currency string is
-	// that it'll move horizontally (observed prior
-	// to any changes as well). This issue is greatly
-	// mitigated by it now being on a separate line,
-	// so it'll no longer overlap with the MW read-out.
-	textSz.cx = Game_GetAvailableFunds(pDC, nCost);
+	memset(szBuf, 0, sizeof(szBuf));
+	if (pArcologyCostStrs[nPos])
+		strcpy_s(szBuf, pArcologyCostStrs[nPos]);
+	GetTextExtentPointA(pDC->m_hAttribDC, szBuf, strlen(szBuf), &textSz);
 	nY = nY - textSz.cy;
 	crTextOld = crDlgColBtnText;
 	if (nCost > dwCityFunds)
 		crTextOld = SetTextColor(pDC->m_hDC, RGB(255, 0, 0));
 	MoveToEx(pDC->m_hDC, nOuterHalfWidth - textSz.cx / 2, nY, &pt);
-	Game_DisplayItemCost(pDC, nCost);
+	TextOutA(pDC->m_hDC, 0, 0, szBuf, strlen(szBuf));
 	SetTextColor(pDC->m_hDC, crTextOld);
 	pTileStr = pTileNames[nPos + TILE_ARCOLOGY_PLYMOUTH];
 	if (!pTileStr)
@@ -239,6 +244,10 @@ extern "C" void __stdcall Hook_SelectArcologyDialog_SetCursorDeleteGraphics() {
 
 	Game_GameDialog_SetCursor(pThis);
 	for (__int16 nItem = 0; nItem < ARCOLOGY_COUNT; ++nItem) {
+		if (pArcologyCostStrs[nItem]) {
+			free(pArcologyCostStrs[nItem]);
+			pArcologyCostStrs[nItem] = 0;
+		}
 		if (pThis->dwSADCGraphicsOne[nItem]) {
 			pThis->dwSADCGraphicsOne[nItem]->DeleteStored_SC2K1996();
 			delete pThis->dwSADCGraphicsOne[nItem];

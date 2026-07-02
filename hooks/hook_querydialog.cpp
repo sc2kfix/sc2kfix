@@ -712,11 +712,11 @@ extern "C" void __stdcall Hook_QueryGeneralDialog_OnPaint() {
 	nGerman = 0;
 	nFrench = 0;
 	nOffsetX = 0;
-	if (_stricmp(pSCApp->dwSCACStringLang.m_pchData, "ger") == 0) {
+	if (_stricmp(pSCApp->dwSCACStringLang.m_pchData, gameLangGerman) == 0) {
 		nGerman = 1;
 		nOffsetX = 50;
 	}
-	else if (_stricmp(pSCApp->dwSCACStringLang.m_pchData, "fre") == 0) {
+	else if (_stricmp(pSCApp->dwSCACStringLang.m_pchData, gameLangFrench) == 0) {
 		nFrench = 1;
 		nOffsetX = 1;
 	}

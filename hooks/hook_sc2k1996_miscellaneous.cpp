@@ -1312,57 +1312,43 @@ extern "C" void __stdcall Hook_SimcityDoc_UpdateDocumentTitle() {
 	int iCityDayMon;
 	int iCityMonth;
 	int iCityYear;
-	const char *pCurrStr;
-	CCurrencyString *pFundStr;
+	char *pFundStr = NULL;
 
 	GameMain_String_Cons(&cStr);
 
 	pSCApp = &pCSimcityAppThis;
 	if (!pSCApp->dwSCAMainFrameDestroyVar) {
-		if (!wCityMode) {
-			GameMain_String_LoadStringA(&cStr, 0x19D); // "Editing Terrain..."
-			goto GOFORWARD;
-		}
-		if (!pszCityName.m_nDataLength)
-			goto GETOUT;
-		iCityDayMon = dwCityDays % 25 + 1;
-		iCityMonth = dwCityDays / 25 % 12;
-		iCityYear = wCityStartYear + dwCityDays / 300;
-		if (IsIconic(GameGetRootWindowHandle())) {
-			if (dwDisasterActive) {
-				if (wCurrentDisasterID <= DISASTER_HURRICANE)
-					GameMain_String_LoadStringA(&cStr, dwDisasterStringIndex[wCurrentDisasterID]);
+		if (!wCityMode)
+			GameMain_String_LoadStringA(&cStr, 413); // "Editing Terrain..."
+		else {
+			if (!pszCityName.m_nDataLength)
+				goto GETOUT;
+			iCityDayMon = dwCityDays % 25 + 1;
+			iCityMonth = dwCityDays / 25 % 12;
+			iCityYear = wCityStartYear + dwCityDays / 300;
+			if (IsIconic(pSCApp->m_pMainWnd->m_hWnd)) {
+				if (dwDisasterActive) {
+					if (wCurrentDisasterID <= DISASTER_HURRICANE)
+						GameMain_String_LoadStringA(&cStr, dwDisasterStringIndex[wCurrentDisasterID]);
+					else
+						GameMain_String_Empty(&cStr);
+				}
 				else
-					GameMain_String_Empty(&cStr);
+					GameMain_String_Format(&cStr, "%s%s%d", pszCityName.m_pchData, gameStrHyphen, iCityYear);
 			}
-			else
-				GameMain_String_Format(&cStr, "%s%s%d", pszCityName.m_pchData, gameStrHyphen, iCityYear);
-			goto GOFORWARD;
+			else {
+				GameMain_String_Empty(&cStr);
+				pFundStr = L_GetCurrencyString_SC2K1996(dwCityFunds);
+				if (!pFundStr)
+					goto GETOUT;
+				if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND].ToBool() && bFrequentUpdates)
+					GameMain_String_Format(&cStr, "%s %d %4d <%s> %s", pSCApp->dwSCApCStringLongMonths[iCityMonth].m_pchData, iCityDayMon, iCityYear, pszCityName.m_pchData, pFundStr);
+				else
+					GameMain_String_Format(&cStr, "%s %4d <%s> %s", pSCApp->dwSCApCStringShortMonths[iCityMonth].m_pchData, iCityYear, pszCityName.m_pchData, pFundStr);
+				free(pFundStr);
+				pFundStr = 0;
+			}
 		}
-		GameMain_String_Empty(&cStr);
-		if (strcmp(pSCApp->dwSCACStringLang.m_pchData, gameLangFrench) != 0) {
-			if (strcmp(pSCApp->dwSCACStringLang.m_pchData, gameLangGerman) != 0)
-				pCurrStr = gameCurrDollar;
-			else
-				pCurrStr = gameCurrDM;
-		}
-		else
-			pCurrStr = gameCurrFF;
-		pFundStr = new CCurrencyString();
-		if (pFundStr)
-			pFundStr = Game_CurrencyString_SetString(pFundStr, pCurrStr, 20, (double)dwCityFunds);
-		else
-			goto GETOUT;
-		Game_CurrencyString_TruncateAtSpace(pFundStr);
-		if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND].ToBool() && bFrequentUpdates)
-			GameMain_String_Format(&cStr, "%s %d %4d <%s> %s", pSCApp->dwSCApCStringLongMonths[iCityMonth].m_pchData, iCityDayMon, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
-		else
-			GameMain_String_Format(&cStr, "%s %4d <%s> %s", pSCApp->dwSCApCStringShortMonths[iCityMonth].m_pchData, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
-		if (pFundStr) {
-			Game_CurrencyString_Dest(pFundStr);
-			operator delete(pFundStr);
-		}
-GOFORWARD:
 		GameMain_Document_UpdateAllViews(pThis, NULL, SCD_UPDATE_VIEW_TITLE, (CMFC3XObject *)&cStr);
 	}
 GETOUT:
@@ -2734,6 +2720,8 @@ void InstallMiscHooks_SC2K1996(void) {
 	NEWJMP((LPVOID)0x401F05, Hook_StartCleanGame);
 
 	InstallDrawingHooks_SC2K1996();
+
+	InstallCurrencyStringHooks_SC2K1996();
 
 	InstallThingHooks_SC2K1996();
 
