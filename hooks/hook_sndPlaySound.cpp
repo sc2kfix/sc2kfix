@@ -33,20 +33,17 @@ std::map<int, sound_replacement_t> mapReplacementSounds;
 std::map<int, audio_entity_t> mapSoundCache;
 
 bool bSoundKickstart = false;
+bool bFallbackSound = false;
 
 static bool LoadSoundFromFile(int iSoundID, std::string strPath);
 
-static int GetSoundPosBySoundID(int iSoundID) {
-	return iSoundID - SOUND_START;
-}
-
 int GetSoundPlayTicksBySoundID_SC2K1996(int iSoundID) {
-	for (int i = 0; i < SOUND_ENTRIES; i++) {
-		if (GetSoundPosBySoundID(iSoundID) == i) {
-			if (snd_debug & SND_DEBUG_INTERNALS)
-				ConsoleLog(LOG_DEBUG, "GetSoundPlayTicksBySoundID_SC2K1996(%d): i(%d) nSoundPlayTicks[i](%d)\n", iSoundID, i, nSoundPlayTicks[i]);
-			return nSoundPlayTicks[i];
-		}
+	int i = iSoundID - SOUND_START;
+
+	if (i >= 0 && i < SOUND_ENTRIES) {
+		if (snd_debug & SND_DEBUG_INTERNALS)
+			ConsoleLog(LOG_DEBUG, "GetSoundPlayTicksBySoundID_SC2K1996(%d): i(%d) nSoundPlayTicks[i](%d)\n", iSoundID, i, nSoundPlayTicks[i]);
+		return nSoundPlayTicks[i];
 	}
 	return 0;
 }
@@ -280,10 +277,14 @@ extern "C" void __stdcall Hook_Sound_DestroySoundLayer() {
 
 static int __stdcall L_Sound_LoadActionThingSound_SC2K1996(CSound *pSound, int iSoundID) {
 	if (pSound->iSNDActionThingSoundID != iSoundID) {
-		if (Game_LoadSoundIntoBuffer(iSoundID, pSound->dwSNDBufferActionThing))
+		if (Game_LoadSoundIntoBuffer(iSoundID, pSound->dwSNDBufferActionThing)) {
+			bFallbackSound = false;
 			pSound->iSNDActionThingSoundID = iSoundID;
-		else
+		}
+		else {
+			bFallbackSound = true;
 			pSound->iSNDActionThingSoundID = SOUND_BULLDOZER;
+		}
 	}
 	return pSound->iSNDActionThingSoundID;
 }

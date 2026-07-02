@@ -1635,10 +1635,28 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	}
 }
 
+extern bool bFallbackSound;
+
 extern "C" void __stdcall Hook_SimulationStartDisaster(void) {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CSound *pSound = pSCApp->SCASNDLayer;
 	if (mischook_debug & MISCHOOK_DEBUG_DISASTERS)
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> SimulationStartDisaster(), wDisasterType = %u.\n", _ReturnAddress(), wSetTriggerDisasterType);
 
+	// Check added here to allow for the siren sound to play
+	// once more if it ends up being overridden by the
+	// bulldozer - an exception is present for if bFallbackSound
+	// is set to true (which defaults to the bulldozer sound).
+	if (dwDisasterActive) {
+		if (pSCApp && pSound) {
+			if (pSound->iSNDActionThingSoundID != SOUND_SIREN && !bFallbackSound) {
+				if (pSound->iSNDActionThingSoundID == SOUND_BULLDOZER) {
+					Game_SimcityApp_StopSounds(pSCApp);
+					Game_SimcityApp_SoundPlayActionThingSound(pSCApp, SOUND_SIREN, 5);
+				}
+			}
+		}
+	}
 	GameMain_SimulationStartDisaster();
 }
 
