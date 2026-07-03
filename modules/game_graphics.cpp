@@ -429,10 +429,51 @@ extern "C" void __stdcall Hook_SimcityWnd_OnEraseBkgnd(CMFC3XDC *pDC) {
 	DeleteObject(hBrush);
 }
 
+extern "C" void __stdcall Hook_SimcityView_OnDraw(CMFC3XDC *pDC) {
+	CSimcityView *pThis;
+
+	__asm mov[pThis], ecx
+
+	CMFC3XRect r[2];
+
+	if (pThis->pSCVGraphicLockDIBRes)
+	{
+		Game_SimcityView_GetScreenAreaInfo(pThis, &r[0]);
+		r[1].left = 0;
+		r[1].top = 0;
+		r[1].right = Game_Graphics_Width(pThis->SCVGraphics);
+		r[1].bottom = Game_Graphics_Height(pThis->SCVGraphics);
+		Game_Graphics_SetColorTableFromApplicationPalette(pThis->SCVGraphics);
+		if (pThis->dwSCVIsZoomed == 1)
+		{
+			r[1] = r[0];
+			r[1].bottom = r[0].bottom >> 1;
+			r[1].right = r[0].right >> 1;
+			Game_Graphics_StretchPaint(pThis->SCVGraphics, pDC, &r[1], &r[0]);
+		}
+		else
+		{
+			Game_Graphics_BitBlit(pThis->SCVGraphics, pDC->m_hDC,
+				r[0].left,
+				r[0].top,
+				r[0].right - r[0].left,
+				r[0].bottom - r[0].top,
+				r[1].left,
+				r[1].top);
+		}
+		if (bRedraw)
+			PatBlt(pDC->m_hDC, r[0].right, r[0].bottom, dwSystemMetricCXVScroll, dwSystemMetricCYHScroll, BLACKNESS);
+	}
+}
+
 void InstallGraphicHooks_SC2K1996(void) {
 	// Hook for CSimcityWnd::OnEraseBkgnd
 	SafeVirtualProtect((LPVOID)0x401D75, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401D75, Hook_SimcityWnd_OnEraseBkgnd);
+
+	// Hook for CSimcityView::OnDraw
+	SafeVirtualProtect((LPVOID)0x401C62, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401C62, Hook_SimcityView_OnDraw);
 
 	// Fix the black <-> white palette index swap
 	// that occurs within CGraphics::RemapBitmapColors(BOOL)
