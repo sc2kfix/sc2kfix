@@ -734,7 +734,7 @@ extern "C" void __cdecl Hook_CityToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 	}
 	else
 		iCurrCityToolGroupWithHotKey = wCurrentCityToolGroup;
-	iTileCoords = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
+	iTileCoords = Game_PointToTile((__int16)pt.x, (__int16)pt.y);
 	if (iTileCoords >= 0) {
 		tileCoords.x = LOBYTE(iTileCoords);
 		tileCoords.y = HIBYTE(iTileCoords);
@@ -742,7 +742,10 @@ extern "C" void __cdecl Hook_CityToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 			switch (iCurrCityToolGroupWithHotKey) {
 			case CITYTOOL_GROUP_BULLDOZER:
 				Game_UseBulldozer(tileCoords.x, tileCoords.y);
-				Game_SimcityView_UpdateHouse(pSCView);
+				// This was UpdateHouse(), however ghost
+				// inverted tiles were left in underground
+				// mode when clicking single clear tiles.
+				Game_SimcityView_DrawHouse(pSCView);
 				break;
 			case CITYTOOL_GROUP_NATURE:
 				Game_CityToolPlaceNature(pt);
@@ -945,7 +948,7 @@ extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 
 	pSCApp = &pCSimcityAppThis;
 	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);	// TODO: is this necessary or can we just dereference pCSimcityView?
-	Game_SimcityView_TileHighlightRemove(pSCView);
+	Game_SimcityView_KillCursor(pSCView);
 	screenCoords.x = 400;
 	screenCoords.y = 400;
 	iCurrMapToolGroupNoHotKey = wCurrentMapToolGroup;
@@ -955,7 +958,7 @@ extern "C" void __cdecl Hook_MapToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 	if (iCurrMapToolGroupWithHotKey != MAPTOOL_GROUP_CENTERINGTOOL)
 		pSCView->dwSCVLeftMouseButtonDown = 0;
 	do {
-		iTileCoords = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
+		iTileCoords = Game_PointToTile((__int16)pt.x, (__int16)pt.y);
 		if (iTileCoords < 0)
 			break;
 		tileCoords.x = LOBYTE(iTileCoords);

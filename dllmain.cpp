@@ -209,8 +209,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						bMapWireFrame = TRUE;
 					if (!lstrcmpiW(argv[i], L"-disablefixedtiles"))
 						bDisableFixedTiles = TRUE;
+#if USE_ONTHEFLYPALIDX
 					if (!lstrcmpiW(argv[i], L"-ontheflypalidx"))
 						bOnTheFlyPalIdx = TRUE;
+#endif
 					if (!lstrcmpiW(argv[i], L"-experiment=tripgenerator"))
 						dwExperimentsEnabled |= EXPERIMENT_TRIPGENERATOR;
 					if (!lstrcmpiW(argv[i], L"-experiment=all"))

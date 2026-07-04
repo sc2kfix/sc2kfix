@@ -548,7 +548,7 @@ extern "C" void __stdcall Hook_SimcityView_DrawThingObjects(__int16 x, __int16 y
 			(4 << pThis->wSCVZoomLevel) * (x - y + 1) - (pSprite->wWidth >> 1);
 		if ((pTHG->iType == XTHG_HELICOPTER || pTHG->iType == XTHG_AIRPLANE || pTHG->iType == XTHG_MAXIS_MAN) &&
 			GetTileID(x, y) < TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1)
-			L_drawShadowShape_SC2K1996(nSpriteID, right, bottom + nScale * (pTHG->iZ - 2), nFlip);
+			Game_DrawProcessShadowObject(nSpriteID, right, bottom + nScale * (pTHG->iZ - 2), nFlip);
 		Game_DrawProcessObject(nSpriteID, right, bottom, nFlip, 0);
 	}
 }

@@ -30,12 +30,6 @@ enum {
 	AXIS_COUNT
 };
 
-#define SPRITE_BOUNDARY_MULTIPLIER 500
-
-#define COORDSCALE_VAL(x) (2 << x)
-#define LANDALTSCALE_VAL(x) (3 << x)
-#define SCALE_VAL(x) (4 << x)
-
 #define SHIP_MIN_DIST 8
 
 #define WATEREDPIPES_SPRITE_OFFSET 116
@@ -1086,87 +1080,490 @@ extern "C" __int16 __cdecl Hook_PointToTile(__int16 x, __int16 y) {
 	return retval;
 }
 
-void L_CheckTileHighlight_SC2K1996(CSimcityView *pSCView) {
+void *curBaseLockedDIBBits = NULL;
+CMFC3XDC *pBaseSCVDC = NULL;
+
+BYTE *shapeBaseBits = NULL;
+
+static void __cdecl L_SetSpriteForDrawing_SC2K1996(BYTE *pBaseBits, BYTE *pModdedBits, sprite_header_t *pCurrentSprite, int x, int y, RECT *p_rc) {
+	shapeBaseBits = pBaseBits;
+	shapeBits = pModdedBits;
+	shapeCurrent = pCurrentSprite;
+	shapeY = y;
+	shapeX = x;
+	shapeLeft = p_rc->left;
+	shapeRight = p_rc->right;
+	shapeTop = p_rc->top;
+	shapeBottom = p_rc->bottom;
+}
+
+extern "C" void __cdecl Hook_start16bitShapes(BYTE *pBits, sprite_header_t *pCurrentSprite, int x, __int16 y, RECT *p_rc) {
+	L_SetSpriteForDrawing_SC2K1996(NULL, pBits, pCurrentSprite, x, y, p_rc);
+}
+
+int __cdecl L_BeginProcessObjects_SC2K1996(HWND hWnd, void *pBaseBits, void *pModdedBits, int x, int y, RECT *r) {
+	CMFC3XRect clRect;
+
+	GetClientRect(hWnd, &clRect);
+	if (IsRectEmpty(r))
+		currWndClientRect = clRect;
+	else if (!IntersectRect(&currWndClientRect, r, &clRect))
+		return 0;
+	if (currWndClientRect.top > 1)
+		--currWndClientRect.top;
+	L_SetSpriteForDrawing_SC2K1996((BYTE *)pBaseBits, (BYTE *)pModdedBits, pArrSpriteHeaders, x, y, &currWndClientRect);
+	return 1;
+}
+
+extern "C" void __stdcall Hook_endShapes() {
+	shapeBaseBits = NULL;
+	SetRectEmpty(&currWndClientRect);
+}
+
+extern "C" void __cdecl Hook_InvertTerrain(__int16 x, __int16 y) {
 	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
-	if (wTileHighlightActive) {
+	CSimcityView *pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+	__int16 nSprStart;
+	__int16 nScale;
+	__int16 nTerrainTileID, nUnderTile, nTileID;
+	__int16 nAltitude;
+	__int16 nSpriteID;
+	__int16 nShapeHeight;
+	LONG nTop;
+	RECT r;
+
+	nSprStart = SPRITE_BOUNDARY_MULTIPLIER * pSCView->wSCVZoomLevel;
+	nScale = SCALE_VAL(pSCView->wSCVZoomLevel);
+	r.left = iScreenOffSetX + nScale * (x - y);
+	r.top = iScreenOffSetY + ((2 * (x + y)) << pSCView->wSCVZoomLevel);
+	nTerrainTileID = GetTerrainTileID(x, y);
+	if (DisplayLayer[LAYER_UNDERGROUND] || bMapWireFrame) {
+		nUnderTile = wXTERToXUNDSpriteIDMap[nTerrainTileID];
+		if (!DisplayLayer[LAYER_UNDERGROUND] && bMapWireFrame) {
+			nAltitude = (nTerrainTileID < SUBMERGED_00) ? ALTMReturnLandAltitude(x, y) : ALTMReturnWaterLevel(x, y);
+			nTileID = (nTerrainTileID >= TERRAIN_13 || XZONReturnZone(x, y)) ? nXTERTileIDs[nTerrainTileID] : nUnderTile;
+		}
+		else {
+			nAltitude = ALTMReturnLandAltitude(x, y);
+			nTileID = nUnderTile;
+		}
+	}
+	else {
+		nAltitude = (nTerrainTileID < SUBMERGED_00) ? ALTMReturnLandAltitude(x, y) : ALTMReturnWaterLevel(x, y);
+		nTileID = nXTERTileIDs[nTerrainTileID];
+	}
+	r.bottom = r.top - ((3 * nAltitude) << pSCView->wSCVZoomLevel);
+	nSpriteID = nSprStart + nTileID;
+	nShapeHeight = pArrSpriteHeaders[nSpriteID].wHeight;
+	nTop = r.bottom - nShapeHeight;
+	r.top = nShapeHeight + 1;
+	Game_DrawProcessObject(nSpriteID, (__int16)r.left, (__int16)nTop, 0, 1);
+	if (pSCView->dwSCVIsZoomed) {
+		r.left *= 2;
+		r.top *= 2;
+		r.bottom *= 2;
+		nScale *= 2;
+	}
+	// This is here deliberately.
+	r.right = r.left + 2 * nScale;
+	nTop = r.bottom - r.top;
+	if (dirtyRect.top == -1000)
+		SetRect(&dirtyRect, r.left, nTop, r.right, r.bottom);
+	else {
+		if (dirtyRect.left > r.left)
+			dirtyRect.left = r.left;
+		if (dirtyRect.right < r.right)
+			dirtyRect.right = r.right;
+		if (dirtyRect.bottom < r.bottom)
+			dirtyRect.bottom = r.bottom;
+		if (dirtyRect.top > nTop)
+			dirtyRect.top = nTop;
+	}
+}
+
+extern "C" void __stdcall Hook_SimcityView_KillCursor() {
+	CSimcityView *pThis;
+
+	__asm mov [pThis], ecx
+
+	BYTE *vBaseBits, *vActiveBits;
+	LONG x, y, bottom;
+
+	if (wCursorActive) {
+		vActiveBits = Game_Graphics_LockDIBBits(pThis->SCVGraphics);
+		if (vActiveBits || Game_SimcityView_CheckOrLoadGraphic(pThis)) {
+			vBaseBits = Game_Graphics_LockDIBBits(pBaseGraphics);
+			if (vBaseBits) {
+				x = Game_Graphics_Width(pThis->SCVGraphics);
+				y = Game_Graphics_Height(pThis->SCVGraphics);
+				L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, vBaseBits, vActiveBits, x, y, &pThis->SCVAreaView);
+				Game_SimcityView_InvertZoneList(pThis, wCurBndsX1, wCurBndsY1, wCurBndsX2, wCurBndsY2);
+				Game_FinishProcessObjects();
+				Game_Graphics_UnlockDIBBits(pThis->SCVGraphics);
+				Game_Graphics_UnlockDIBBits(pBaseGraphics);
+				bottom = ++dirtyRect.bottom;
+				if (pThis->dwSCVIsZoomed) {
+					dirtyRect.bottom = bottom + 2;
+					++dirtyRect.right;
+				}
+				if (pThis == (CSimcityView *)&pSomeWnd)
+					Game_SimcityView_MainWindowUpdate(pThis, 0, TRUE);
+				else
+					Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
+				wCursorActive = 0;
+			}
+		}
+	}
+}
+
+extern "C" void __stdcall Hook_SimcityView_MaintainCursor() {
+	CSimcityView *pThis;
+
+	__asm mov [pThis], ecx
+
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	BYTE nBuildArea, n2x2SingularBuildStrip, n3x3SingularBuildStrip;
+	BOOL bHighway = FALSE;
+	POINT pt;
+	__int16 nTileCoords;
+	coords_w_t tileCoords;
+	__int16 nHalfCoords;
+	BYTE *vBaseBits, *vActiveBits;
+	LONG x, y, bottom;
+
+	Game_SimcityView_GameCursorHitTest(pThis);
+	if (pSCApp->dwSCACursorGameHit != 1) {
+		if (wCursorActive)
+			Game_SimcityView_KillCursor(pThis);
+		return;
+	}
+	if (wMonsterSpawned)
+		return;
+	if (!wCityMode)
+		nBuildArea = wCurrentMapToolGroup != MAPTOOL_GROUP_CENTERINGTOOL;
+	else {
+		BYTE iPos = MAX_CITY_MENUTOOLS * wCurrentCityToolGroup + wSelectedSubtool[wCurrentCityToolGroup];
+		nBuildArea = areaFromSubTool[iPos];
+		if (wCurrentCityToolGroup == CITYTOOL_GROUP_ROADS && wSelectedSubtool[CITYTOOL_GROUP_ROADS] == ROADS_HIGHWAY)
+			bHighway = TRUE;
+	}
+	if (!nBuildArea) {
+		// This'll allow you to see where you're hovering
+		// if you're making use of the shift/control-key
+		// activated tools (query or demolition).
+		if (GetAsyncKeyState(VK_SHIFT) >= 0 && GetAsyncKeyState(VK_CONTROL) >= 0) {
+			if (wCursorActive)
+				Game_SimcityView_KillCursor(pThis);
+			return;
+		}
+	}
+	n2x2SingularBuildStrip = nBuildArea / 2;
+	n3x3SingularBuildStrip = nBuildArea / 3;
+	pt.x = pThis->SCVMousePoint.x;
+	pt.y = pThis->SCVMousePoint.y;
+	if (pThis->dwSCVIsZoomed) {
+		pt.x >>= 1;
+		pt.y >>= 1;
+	}
+	if (!PtInRect(&pThis->SCVAreaView, pt)) {
+		Game_SimcityView_KillCursor(pThis);
+		return;
+	}
+	nTileCoords = Game_PointToTile((__int16)pThis->SCVMousePoint.x, (__int16)pThis->SCVMousePoint.y);
+	if (nTileCoords < 0) {
+		Game_SimcityView_KillCursor(pThis);
+		return;
+	}
+	tileCoords.x = LOBYTE(nTileCoords);
+	tileCoords.y = HIBYTE(nTileCoords);
+	if (bHighway) {
+		tileCoords.x = LOBYTE(nTileCoords) & (MAP_EDGE_MAX - 1);
+		tileCoords.y = HIBYTE(nTileCoords) & (MAP_EDGE_MAX * 2);
+	}
+	if (tileCoords.x < n3x3SingularBuildStrip) {
+		Game_SimcityView_KillCursor(pThis);
+		return;
+	}
+	if (n3x3SingularBuildStrip > tileCoords.y) {
+		Game_SimcityView_KillCursor(pThis);
+		return;
+	}
+	nHalfCoords = GAME_MAP_SIZE - n2x2SingularBuildStrip;
+	if (tileCoords.x > nHalfCoords || tileCoords.y > nHalfCoords) {
+		Game_SimcityView_KillCursor(pThis);
+		return;
+	}
+	if (tileCoords.x != LastCursorX || tileCoords.y != LastCursorY) {
+		vActiveBits = Game_Graphics_LockDIBBits(pThis->SCVGraphics);
+		if (vActiveBits || Game_SimcityView_CheckOrLoadGraphic(pThis)) {
+			vBaseBits = Game_Graphics_LockDIBBits(pBaseGraphics);
+			if (vBaseBits) {
+				x = Game_Graphics_Width(pThis->SCVGraphics);
+				y = Game_Graphics_Height(pThis->SCVGraphics);
+				L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, vBaseBits, vActiveBits, x, y, &pThis->SCVAreaView);
+				if (wCursorActive)
+					Game_SimcityView_InvertZoneList(pThis, wCurBndsX1, wCurBndsY1, wCurBndsX2, wCurBndsY2);
+				LastCursorX = tileCoords.x;
+				LastCursorY = tileCoords.y;
+				wCurBndsX1 = tileCoords.x - n3x3SingularBuildStrip;
+				wCurBndsY1 = tileCoords.y - n3x3SingularBuildStrip;
+				wCurBndsX2 = n2x2SingularBuildStrip + tileCoords.x;
+				wCurBndsY2 = n2x2SingularBuildStrip + tileCoords.y;
+				Game_SimcityView_InvertZoneList(pThis, wCurBndsX1, wCurBndsY1, wCurBndsX2, wCurBndsY2);
+				wCursorActive = 1;
+				Game_FinishProcessObjects();
+				Game_Graphics_UnlockDIBBits(pThis->SCVGraphics);
+				Game_Graphics_UnlockDIBBits(pBaseGraphics);
+				bottom = ++dirtyRect.bottom;
+				if (pThis->dwSCVIsZoomed) {
+					dirtyRect.bottom = bottom + 2;
+					++dirtyRect.right;
+				}
+				if (pThis == (CSimcityView *)&pSomeWnd)
+					Game_SimcityView_MainWindowUpdate(pThis, 0, TRUE);
+				else
+					Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
+				dirtyRect.top = -1000;
+			}
+		}
+	}
+}
+
+void L_CheckCursor_SC2K1996(CSimcityView *pSCView) {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	if (wCursorActive) {
 		if (pSCApp->dwSCACursorGameHit)
 			Game_SimcityView_MaintainCursor(pSCView);
 		else
-			Game_SimcityView_TileHighlightRemove(pSCView);
+			Game_SimcityView_KillCursor(pSCView);
+	}
+}
+
+extern "C" void __stdcall Hook_SimcityView_InvertArea(__int16 x1, __int16 y1, __int16 x2, __int16 y2, __int16 x3, __int16 y3) {
+	CSimcityView *pThis;
+
+	__asm mov [pThis], ecx
+
+	POINT pt;
+	RECT rcSrc1, rcSrc2, rcDest;
+	BYTE iTileID;
+	__int16 wZone;
+	BOOL bInFirst, bInSecond;
+
+	L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pBaseGraphicLockDIBRes, pThis->pSCVGraphicLockDIBRes, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
+	dirtCount = 0;
+	tileCount = 0;
+	if (x1 <= x2) {
+		rcSrc2.left = x1;
+		rcSrc2.right = x2 + 1;
+	}
+	else {
+		rcSrc2.left = x2;
+		rcSrc2.right = x1 + 1;
+	}
+	if (y2 >= y1) {
+		rcSrc2.top = y1;
+		rcSrc2.bottom = y2 + 1;
+	}
+	else {
+		rcSrc2.top = y2;
+		rcSrc2.bottom = y1 + 1;
+	}
+	if (x1 <= x3) {
+		rcSrc1.left = x1;
+		rcSrc1.right = x3 + 1;
+	}
+	else {
+		rcSrc1.left = x3;
+		rcSrc1.right = x1 + 1;
+	}
+	if (y3 >= y1) {
+		rcSrc1.top = y1;
+		rcSrc1.bottom = y3 + 1;
+	}
+	else {
+		rcSrc1.top = y3;
+		rcSrc1.bottom = y1 + 1;
+	}
+	UnionRect(&rcDest, &rcSrc1, &rcSrc2);
+	for (pt.x = rcDest.left; pt.x < rcDest.right; ++pt.x) {
+		for (pt.y = rcDest.top; pt.y < rcDest.bottom; ++pt.y) {
+			if (!GetTerrainTileID((__int16)pt.x, (__int16)pt.y)) {
+				iTileID = GetTileID((__int16)pt.x, (__int16)pt.y);
+				if (iTileID < TILE_ROAD_LR && iTileID != TILE_RADIOACTIVITY && iTileID != TILE_SMALLPARK) {
+					wZone = XZONReturnZone((__int16)pt.x, (__int16)pt.y);
+					if (wZone != ZONE_MILITARY) {
+						bInFirst = PtInRect(&rcSrc2, pt);
+						bInSecond = PtInRect(&rcSrc1, pt);
+						if (wZone != actionZone) {
+							if (bInSecond)
+								++tileCount;
+						}
+						if (bInFirst && !bInSecond || bInSecond && !bInFirst)
+							Game_InvertTerrain((__int16)pt.x, (__int16)pt.y);
+					}
+				}
+			}
+		}
+	}
+	Game_FinishProcessObjects();
+}
+
+extern "C" int __stdcall Hook_SimcityView_InvertLine(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
+	CSimcityView *pThis;
+
+	__asm mov [pThis], ecx
+
+	__int16 destX, destY;
+	BYTE iTerrainTileID;
+
+	L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pBaseGraphicLockDIBRes ,pThis->pSCVGraphicLockDIBRes, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
+	if (Game_BeginTrace(x1, y1, x2, y2)) {
+		destX = x1;
+		destY = y1;
+		dirtCount = 0;
+		tileCount = 0;
+		do {
+			iTerrainTileID = GetTerrainTileID(destX, destY);
+			++tileCount;
+			if (iTerrainTileID < SURFACE_WATER_00 ) {
+				if (traversableTerrain[iTerrainTileID & TERRAIN_BOUNDARY])
+					++dirtCount;
+			}
+			Game_InvertTerrain(destX, destY);
+		}
+		while (Game_StepTrace(&destX, &destY));
+		Game_FinishProcessObjects();
+		return 1;
+	}
+	else {
+		Game_FinishProcessObjects();
+		return 0;
+	}
+}
+
+extern "C" void __stdcall Hook_SimcityView_FatInvertLine(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
+	CSimcityView *pThis;
+
+	__asm mov [pThis], ecx
+
+	HDC hDC;
+	BYTE *vBaseBits, *vActiveBits;
+	__int16 destX, destY, fatDestX, fatDestY;
+	__int16 nTileGroup, nTileRow, nGroupRow, nTileColumn;
+
+	hDC = GetDC(pThis->m_hWnd);
+	vActiveBits = Game_Graphics_LockDIBBits(pThis->SCVGraphics);
+	vBaseBits = Game_Graphics_LockDIBBits(pBaseGraphics);
+	if (Game_FatTerrain(x1, y1) != 0x8000) {
+		L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, vBaseBits, vActiveBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
+		Game_FatBeginTrace(x1, y1, x2, y2);
+		destX = x1;
+		destY = y1;
+		dirtCount = 0;
+		tileCount = 0;
+		do {
+			nTileGroup = 0;
+			do {
+				nTileRow = nTileGroup & 1;
+				++tileCount;
+				nGroupRow = nTileGroup++;
+				nTileColumn = nGroupRow / 2;
+				fatDestX = destX + nTileRow;
+				fatDestY = destY + nTileColumn;
+				Game_InvertTerrain(fatDestX, fatDestY);
+				Game_DirtyTile(fatDestX, fatDestY);
+			} while (nTileGroup < 4);
+		} while (Game_FatStepTrace(&destX, &destY));
+		Game_EndTrace();
+		Game_FinishProcessObjects();
+		ReleaseDC(pThis->m_hWnd, hDC);
 	}
 }
 
 // CSimcityView::DrawHouse, as named in the SCURK and Win3.1 Demo debugging data, is actually the
 // functon that's called to draw the whole view.
 // For more detalied information, see https://sc2kfix.net/images/drawhouse.png
-void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveTileHighlightActive) {
+void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveCursorActive) {
 	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
 	COLORREF cr;
 
 	if (pSCView->SCVGraphics && pSCView->pSCVGraphicLockDIBRes || Game_SimcityView_CheckOrLoadGraphic(pSCView)) {
-		// Lock what we need to and set up the drawing process
-		curLockedDIBBits = Game_Graphics_LockDIBBits(pSCView->SCVGraphics);
-		Game_Graphics_Width(pSCView->SCVGraphics);		// XXX (araxestroy): needed? return value discarded, no side effects
-		Game_Graphics_Height(pSCView->SCVGraphics);		// XXX (araxestroy): needed? return value discarded, no side effects
-		Game_BeginProcessObjects(pSCView, curLockedDIBBits, pSCView->dwSCVGraphicWidth, (__int16)pSCView->dwSCVGraphicHeight, &pSCView->SCVAreaView);
-		rcDst = pSCView->SCVAreaView;
-		theSCVDC = Game_Graphics_GetDC(pSCView->SCVGraphics);
+		if (pBaseGraphics && pBaseGraphicLockDIBRes) {
+			// Lock what we need to and set up the drawing process
+			curBaseLockedDIBBits = Game_Graphics_LockDIBBits(pBaseGraphics);
+			curLockedDIBBits = Game_Graphics_LockDIBBits(pSCView->SCVGraphics);
+			Game_Graphics_Width(pSCView->SCVGraphics);		// XXX (araxestroy): needed? return value discarded, no side effects
+			Game_Graphics_Height(pSCView->SCVGraphics);		// XXX (araxestroy): needed? return value discarded, no side effects
+			L_BeginProcessObjects_SC2K1996(pSCView->m_hWnd, curBaseLockedDIBBits, curLockedDIBBits, pSCView->dwSCVGraphicWidth, pSCView->dwSCVGraphicHeight, &pSCView->SCVAreaView);
+			rcDst = pSCView->SCVAreaView;
+			pBaseSCVDC = pBaseGraphics->GetDC_SC2K1996();
+			theSCVDC = Game_Graphics_GetDC(pSCView->SCVGraphics);
 
-		// Set the background colour based on the display layer and draw it
-		if (DisplayLayer[LAYER_UNDERGROUND])
-			cr = colGameBackgndUnder;
-		else
-			cr = colGameBackgndAbove;
-		SetBkColor(theSCVDC->m_hDC, cr);
-		ExtTextOutA(theSCVDC->m_hDC, 0, 0, ETO_OPAQUE, &rcDst, 0, 0, 0);
-		Game_Graphics_ReleaseDC(pSCView->SCVGraphics, theSCVDC);
-		wCurrentPositionAngle = wPositionAngle[wViewRotation];
+			// Set the background colour based on the display layer and draw it
+			if (DisplayLayer[LAYER_UNDERGROUND])
+				cr = colGameBackgndUnder;
+			else
+				cr = colGameBackgndAbove;
+			SetBkColor(pBaseSCVDC->m_hDC, cr);
+			SetBkColor(theSCVDC->m_hDC, cr);
+			ExtTextOutA(pBaseSCVDC->m_hDC, 0, 0, ETO_OPAQUE, &rcDst, 0, 0, 0);
+			ExtTextOutA(theSCVDC->m_hDC, 0, 0, ETO_OPAQUE, &rcDst, 0, 0, 0);
+			pBaseGraphics->ReleaseDC_SC2K1996(pBaseSCVDC);
+			Game_Graphics_ReleaseDC(pSCView->SCVGraphics, theSCVDC);
+			wCurrentPositionAngle = wPositionAngle[wViewRotation];
 
-		// Draw colour data for map overlays if we're in one of those modes
-		if (!IsIconic(pSCView->m_hWnd) && showColor && EditData)
-			Game_DrawAllColor();
-		
-		// Otherwise check to see if the active display layer is the underground view
-		else if (DisplayLayer[LAYER_UNDERGROUND])
-			Game_DrawAllUnder();
+			pBaseSCVDC = NULL;
+			theSCVDC = NULL;
 
-		// If neither of those, draw the above ground view
-		else {
-			switch (pSCView->wSCVZoomLevel) {
-			case 0:
-				Game_DrawAllTiny();
-				break;
-			case 1:
-				Game_DrawAllSmall();
-				break;
-			case 2:
-				Game_DrawAllLarge();
-				break;
-			default:
-				ConsoleLog(LOG_WARNING, "DRAW: CSimcityView::DrawHouse got bad ::wSCVZoomLevel = %d, assuming 2.\n", pSCView->wSCVZoomLevel);
-				Game_DrawAllLarge();
-				break;
+			// Draw colour data for map overlays if we're in one of those modes
+			if (!IsIconic(pSCView->m_hWnd) && showColor && EditData)
+				Game_DrawAllColor();
+
+			// Otherwise check to see if the active display layer is the underground view
+			else if (DisplayLayer[LAYER_UNDERGROUND])
+				Game_DrawAllUnder();
+
+			// If neither of those, draw the above ground view
+			else {
+				switch (pSCView->wSCVZoomLevel) {
+				case 0:
+					Game_DrawAllTiny();
+					break;
+				case 1:
+					Game_DrawAllSmall();
+					break;
+				case 2:
+					Game_DrawAllLarge();
+					break;
+				default:
+					ConsoleLog(LOG_WARNING, "DRAW: CSimcityView::DrawHouse got bad ::wSCVZoomLevel = %d, assuming 2.\n", pSCView->wSCVZoomLevel);
+					Game_DrawAllLarge();
+					break;
+				}
 			}
-		}
 
-		// Draw the highlight if needed, and turn it off if requested
-		if (!bLeaveTileHighlightActive)
-			wTileHighlightActive = 0;
-		else {
-			if (wTileHighlightActive) {
-				if (pSCApp->dwSCACursorGameHit)
-					Game_SimcityView_DrawSquareHighlight(pSCView, wHighlightedTileX1, wHighlightedTileY1, wHighlightedTileX2, wHighlightedTileY2);
-				else
-					wTileHighlightActive = 0;
+			// Activate the cursor if needed, and turn it off if requested
+			if (!bLeaveCursorActive)
+				wCursorActive = 0;
+			else {
+				if (wCursorActive) {
+					if (pSCApp->dwSCACursorGameHit)
+						Game_SimcityView_InvertZoneList(pSCView, wCurBndsX1, wCurBndsY1, wCurBndsX2, wCurBndsY2);
+					else
+						wCursorActive = 0;
+				}
 			}
-		}
 
-		// Clean up the drawing process and redraw the window (and any subdialogs)
-		Game_FinishProcessObjects();
-		Game_SimcityView_MainWindowUpdate(pSCView, 0, TRUE);
-		Game_UpdateCityMap();
-		Game_Graphics_UnlockDIBBits(pSCView->SCVGraphics);
-		curLockedDIBBits = 0;
+			// Clean up the drawing process and redraw the window (and any subdialogs)
+			Game_FinishProcessObjects();
+			Game_SimcityView_MainWindowUpdate(pSCView, 0, TRUE);
+			Game_UpdateCityMap();
+			Game_Graphics_UnlockDIBBits(pSCView->SCVGraphics);
+			curLockedDIBBits = 0;
+			Game_Graphics_UnlockDIBBits(pBaseGraphics);
+			curBaseLockedDIBBits = 0;
+		}
 	}
 }
 
@@ -1176,6 +1573,110 @@ extern "C" void __stdcall Hook_SimcityView_DrawHouse() {
 	__asm mov [pThis], ecx
 
 	L_DrawHouse_SC2K1996(pThis, FALSE);
+}
+
+extern "C" void __stdcall Hook_SimcityView_UpdateHouse() {
+	CSimcityView *pThis;
+
+	__asm mov [pThis], ecx
+
+	COLORREF cr;
+	HBRUSH hBrush;
+
+	if (dirtyRect.top != -1000) {
+		dirtyRect.bottom += 20 << pThis->wSCVZoomLevel;
+		dirtyRect.left += -20 << pThis->wSCVZoomLevel;
+		IntersectRect(&rcDst, &pThis->SCVAreaView, &dirtyRect);
+		if (pThis->SCVGraphics && pThis->pSCVGraphicLockDIBRes || Game_SimcityView_CheckOrLoadGraphic(pThis)) {
+			if (pBaseGraphics && pBaseGraphicLockDIBRes) {
+				// Lock what we need to and set up the drawing process
+				curBaseLockedDIBBits = Game_Graphics_LockDIBBits(pBaseGraphics);
+				curLockedDIBBits = Game_Graphics_LockDIBBits(pThis->SCVGraphics);
+				if (L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, curBaseLockedDIBBits, curLockedDIBBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &rcDst)) {
+					pBaseSCVDC = pBaseGraphics->GetDC_SC2K1996();
+					theSCVDC = Game_Graphics_GetDC(pThis->SCVGraphics);
+
+					// Set the background colour based on the display layer and draw it
+					if (DisplayLayer[LAYER_UNDERGROUND])
+						cr = colGameBackgndUnder;
+					else
+						cr = colGameBackgndAbove;
+					hBrush = CreateSolidBrush(cr);
+					SetBkColor(pBaseSCVDC->m_hDC, cr);
+					SetBkColor(theSCVDC->m_hDC, cr);
+					FillRect(pBaseSCVDC->m_hDC, &rcDst, hBrush);
+					FillRect(theSCVDC->m_hDC, &rcDst, hBrush);
+					DeleteObject(hBrush);
+					pBaseGraphics->ReleaseDC_SC2K1996(pBaseSCVDC);
+					Game_Graphics_ReleaseDC(pThis->SCVGraphics, theSCVDC);
+					wCurrentPositionAngle = wPositionAngle[wViewRotation];
+
+					pBaseSCVDC = NULL;
+					theSCVDC = NULL;
+
+					// Draw colour data for map overlays if we're in one of those modes
+					if (!IsIconic(pThis->m_hWnd) && showColor && EditData)
+						Game_DrawAllColor();
+
+					// Otherwise check to see if the active display layer is the underground view
+					else if (DisplayLayer[LAYER_UNDERGROUND])
+						Game_DrawAllUnder();
+
+					// If neither of those, draw the above ground view
+					else {
+						switch (pThis->wSCVZoomLevel) {
+						case 0:
+							Game_DrawAllTiny();
+							break;
+						case 1:
+							Game_DrawAllSmall();
+							break;
+						case 2:
+							Game_DrawAllLarge();
+							break;
+						default:
+							ConsoleLog(LOG_WARNING, "DRAW: CSimcityView::UpdateHouse got bad ::wSCVZoomLevel = %d, assuming 2.\n", pThis->wSCVZoomLevel);
+							Game_DrawAllLarge();
+							break;
+						}
+					}
+
+					// Clean up the drawing process and redraw the window (and any subdialogs)
+					Game_FinishProcessObjects();
+					Game_Graphics_UnlockDIBBits(pThis->SCVGraphics);
+					curLockedDIBBits = 0;
+					Game_Graphics_UnlockDIBBits(pBaseGraphics);
+					curBaseLockedDIBBits = 0;
+
+					// pSomeWnd - not clear, though it's possible
+					// that it may have directed to a different
+					// view window at the time - one that doesn't
+					// appear to be hit at this stage - perhaps
+					// debugging at the time? unless related
+					// to an excerpt capture?
+					if (pThis == (CSimcityView *)&pSomeWnd)
+						Game_SimcityView_MainWindowUpdate(pThis, 0, TRUE);
+					else
+						Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
+					dirtyRect.top = -1000;
+					wCursorActive = 0;
+					wClipXlow = 1000;
+					wClipYlow = 1000;
+					wClipXhigh = 0;
+					wClipYhigh = 0;
+				}
+				else {
+					dirtyRect.top = -1000;
+					wClipXlow = 1000;
+					wClipYlow = 1000;
+					wClipXhigh = 0;
+					wClipYhigh = 0;
+					Game_Graphics_UnlockDIBBits(pThis->SCVGraphics);
+					Game_Graphics_UnlockDIBBits(pBaseGraphics);
+				}
+			}
+		}
+	}
 }
 
 // Cycling and palette swap tables/maps - related vars
@@ -1484,7 +1985,9 @@ bool TreeSpritesCheck(DWORD nID) {
 }
 
 bool TerrainSpritesCheck(DWORD nID) {
-	return GET_OVERALL_SPRITE_RANGE(nID, SPRITE_SMALL_TERRAIN, SPRITE_SMALL_SEAPORTZONE) ? true : false;
+	return (GET_OVERALL_SPRITE_RANGE(nID, SPRITE_SMALL_TERRAIN, SPRITE_SMALL_SEAPORTZONE) || 
+		GET_OVERALL_SPRITE_RANGE(nID, SPRITE_SMALL_TUNNEL_T, SPRITE_SMALL_TUNNEL_L) ||
+		GET_OVERALL_SPRITE_RANGE(nID, TILE_ONRAMP_TL, TILE_ONRAMP_BR)) ? true : false;
 }
 
 bool DeepWaterSpriteCheck(DWORD nID) {
@@ -1821,7 +2324,10 @@ static BYTE *Get_SpriteFrame_Buffer(std::vector<spriteFrame_t> &frameCache, BYTE
 
 static BYTE *Get_SpriteCache_BaseBuffer(sprite_header_t *pShapePtr, __int16 nSpriteID) {
 	if (pShapePtr->wHeight > 1) {
-		BYTE *pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, 0);
+		int nFrmIdx = nCycleIdx % CACHED_FRAMES;
+		if (nFrmIdx < 0)
+			nFrmIdx = -nFrmIdx;
+		BYTE *pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, nFrmIdx);
 		if (pSpriteBuf)
 			return pSpriteBuf;
 		return pShapePtr->sprOffset.sprPtr;
@@ -1963,6 +2469,7 @@ static WORD Get_SpriteCache_Width(sprite_header_t *pShapePtr, __int16 nSpriteID)
 
 // On-the-fly palette index swapping
 
+#if USE_ONTHEFLYPALIDX
 static BYTE ProcessSeasonIndex(BYTE colIdx, BOOL bIgnore = FALSE) {
 	BYTE newIdx = colIdx;
 	if (ColdWeatherCheck()) {
@@ -2062,7 +2569,7 @@ static BYTE ProcessSpriteSpecificPaletteIndex(__int16 nSpriteID, BYTE colIdx, WO
 	return palIdx;
 }
 
-static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemHeight, int nPos, int nType = PALCACHE_TYPE_NONE) {
+static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemHeight, int nPos, int nType) {
 	BYTE palIdx = colIdx;
 
 	// Goes directly to the specific call - sprite browser mode.
@@ -2148,6 +2655,9 @@ static BYTE ProcessSpritePaletteIndex(__int16 nSpriteID, BYTE colIdx, WORD nRemH
 	}
 	return palIdx;
 }
+#else
+#define ProcessSpritePaletteIndex(nSpriteID, colIdx, nRemHeight, nPos, nType) colIdx
+#endif
 
 static BYTE AdjustInversion(__int16 nSpriteID, BYTE palIdx, BOOL bInvUnder = FALSE) {
 	BYTE newIdx = ~palIdx;
@@ -2181,15 +2691,17 @@ static BYTE CheckInversion(__int16 nSpriteID, BYTE palIdx, BOOL bInvUnder = FALS
 	return newIdx;
 }
 
-static void L_drawShape_Invert_MainArea(BYTE *shapePtr, BYTE *baseShapePtr, __int16 nSpriteID, __int16 right, __int16 bottom) {
-	BYTE *pShapeBitsLine, *spritePtr, *baseSpritePtr, *pShapeBits;
+static void L_drawShape_Invert_WithBase_MainArea(BYTE *shapePtr, BYTE *baseShapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isFlipped) {
+	BYTE *pShapeBitsLine, *pBaseShapeBitsLine, *spritePtr, *baseSpritePtr, *pShapeBits, *pBaseShapeBits;
 	BYTE nCount;
 	BYTE nChunkMode;
 
 	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
+	pBaseShapeBitsLine = &shapeBaseBits[right + shapeX * bottom];
 	spritePtr = shapePtr;
 	baseSpritePtr = baseShapePtr;
 	pShapeBits = pShapeBitsLine;
+	pBaseShapeBits = pBaseShapeBitsLine;
 	while (TRUE) {
 		nCount = SPRITEDATA(spritePtr)->nCount;
 		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
@@ -2201,18 +2713,37 @@ static void L_drawShape_Invert_MainArea(BYTE *shapePtr, BYTE *baseShapePtr, __in
 		case MIF_CM_NEWROWSTART:
 			pShapeBits = &pShapeBitsLine[shapeX];
 			pShapeBitsLine += shapeX;
+			pBaseShapeBits = &pBaseShapeBitsLine[shapeX];
+			pBaseShapeBitsLine += shapeX;
 			break;
 		case MIF_CM_SKIPPIXELS:
-			pShapeBits += nCount;
+			if (isFlipped) {
+				pShapeBits -= nCount;
+				pBaseShapeBits -= nCount;
+			}
+			else {
+				pShapeBits += nCount;
+				pBaseShapeBits += nCount;
+			}
 			break;
 		case MIF_CM_PROCPIXELS:
-			for (int nPos = nCount; nPos; ++spritePtr) {
-				if (*pShapeBits == *spritePtr)
-					*pShapeBits = AdjustInversion(nSpriteID, *baseSpritePtr);
-				else if ((char)(CheckInversion(nSpriteID, *baseSpritePtr) ^ *pShapeBits) == -1)
+			for (int nPos = nCount; nPos; ++baseSpritePtr, ++spritePtr) {
+				if (*pBaseShapeBits == *baseSpritePtr) {
+					*pBaseShapeBits = AdjustInversion(nSpriteID, *baseSpritePtr);
+					*pShapeBits = *pBaseShapeBits;
+				}
+				else if ((char)(CheckInversion(nSpriteID, *baseSpritePtr) ^ *pBaseShapeBits) == -1) {
+					*pBaseShapeBits = *baseSpritePtr;
 					*pShapeBits = *spritePtr;
-				++pShapeBits;
-				++baseSpritePtr;
+				}
+				if (isFlipped) {
+					--pShapeBits;
+					--pBaseShapeBits;
+				}
+				else {
+					++pShapeBits;
+					++pBaseShapeBits;
+				}
 				--nPos;
 			}
 			if ((nCount & 1) != 0) {
@@ -2226,25 +2757,33 @@ static void L_drawShape_Invert_MainArea(BYTE *shapePtr, BYTE *baseShapePtr, __in
 	}
 }
 
-static void L_drawShape_Invert_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr, __int16 nSpriteID, __int16 right, __int16 bottom) {
+static void L_drawShape_Invert_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isFlipped) {
 	__int16 leftEdge, topEdge, rightEdge, bottomEdge;
-	BYTE *pShapeBitsLine, *spritePtr, *baseSpritePtr;
+	BYTE *pShapeBitsLine, *pBaseShapeBitsLine, *spritePtr, *baseSpritePtr;
 	WORD nRemHeight;
 	int leftShapeBits, rightShapeBits;
-	BYTE *pShapeBits, nCount, nChunkMode;
+	BYTE *pShapeBits, *pBaseShapeBits, nCount, nChunkMode;
 	bool bReachedBottom;
 
-	leftEdge = shapeLeft - right;
-	rightEdge = shapeRight - right;
+	if (isFlipped) {
+		leftEdge = right - shapeLeft;
+		rightEdge = right - shapeRight;
+	}
+	else {
+		leftEdge = shapeLeft - right;
+		rightEdge = shapeRight - right;
+	}
 	topEdge = shapeTop - bottom;
 	bottomEdge = shapeBottom - bottom;
 	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
+	pBaseShapeBitsLine = &shapeBaseBits[right + shapeX *bottom];
 	nRemHeight = shapeCurrent[nSpriteID].wHeight;
 	spritePtr = shapePtr;
 	baseSpritePtr = baseShapePtr;
 	if (topEdge > 0) {
 		bottomEdge -= topEdge;
 		pShapeBitsLine += shapeX * topEdge;
+		pBaseShapeBitsLine += shapeX * topEdge;
 		do {
 			spritePtr += SPRITEDATA(spritePtr)->nCount + 2;
 			baseSpritePtr += SPRITEDATA(baseSpritePtr)->nCount + 2;
@@ -2254,6 +2793,7 @@ static void L_drawShape_Invert_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr, 
 	leftShapeBits = (int)pShapeBitsLine;
 	pShapeBits = pShapeBitsLine;
 	rightShapeBits = (int)pShapeBitsLine;
+	pBaseShapeBits = pBaseShapeBitsLine;
 	while (TRUE) {
 		nCount = SPRITEDATA(spritePtr)->nCount;
 		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
@@ -2268,6 +2808,8 @@ static void L_drawShape_Invert_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr, 
 			bReachedBottom = --bottomEdge < 0;
 			pShapeBits = &pShapeBitsLine[shapeX];
 			pShapeBitsLine += shapeX;
+			pBaseShapeBits = &pBaseShapeBitsLine[shapeX];
+			pBaseShapeBitsLine += shapeX;
 			--nRemHeight;
 			if (!bReachedBottom)
 				continue;
@@ -2275,19 +2817,45 @@ static void L_drawShape_Invert_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr, 
 		case MIF_CM_SKIPPIXELS:
 			leftShapeBits -= nCount;
 			rightShapeBits -= nCount;
-			pShapeBits += nCount;
+			if (isFlipped) {
+				pShapeBits -= nCount;
+				pBaseShapeBits -= nCount;
+			}
+			else {
+				pShapeBits += nCount;
+				pBaseShapeBits += nCount;
+			}
 			continue;
 		case MIF_CM_PROCPIXELS:
-			for (int nPos = nCount; nPos; ++spritePtr) {
-				if (leftShapeBits <= 0 && rightShapeBits > 0) {
-					if (*pShapeBits == *spritePtr)
-						*pShapeBits = AdjustInversion(nSpriteID, *baseSpritePtr);
-					else if ((char)(CheckInversion(nSpriteID, *baseSpritePtr) ^ *pShapeBits) == -1)
+			for (int nPos = nCount; nPos; ++baseSpritePtr, ++spritePtr) {
+				BOOL bProcessBit = FALSE;
+				if (isFlipped) {
+					if (rightShapeBits <= 0 && leftShapeBits > 0)
+						bProcessBit = TRUE;
+				}
+				else {
+					if (leftShapeBits <= 0 && rightShapeBits > 0)
+						bProcessBit = TRUE;
+				}
+				if (bProcessBit) {
+					if (*pBaseShapeBits == *baseSpritePtr) {
+						*pBaseShapeBits = AdjustInversion(nSpriteID, *baseSpritePtr);
+						*pShapeBits = *pBaseShapeBits;
+					}
+					else if ((char)(CheckInversion(nSpriteID, *baseSpritePtr) ^ *pBaseShapeBits) == -1) {
+						*pBaseShapeBits = *baseSpritePtr;
 						*pShapeBits = *spritePtr;
+					}
 				}
 				--leftShapeBits;
-				++pShapeBits;
-				++baseSpritePtr;
+				if (isFlipped) {
+					--pShapeBits;
+					--pBaseShapeBits;
+				}
+				else {
+					++pShapeBits;
+					++pBaseShapeBits;
+				}
 				--rightShapeBits;
 				--nPos;
 			}
@@ -2331,14 +2899,13 @@ static void L_drawShapeSpecific_Invert_MainArea(BYTE *shapePtr, BYTE *baseShapeP
 				pShapeBits += nCount;
 			break;
 		case MIF_CM_PROCPIXELS:
-			for (int nPos = nCount; nPos; ++spritePtr) {
+			for (int nPos = nCount; nPos; ++baseSpritePtr, ++spritePtr) {
 				if ((char)(CheckInversion(nSpriteID, *baseSpritePtr, TRUE) ^ *baseSpritePtr) > -1)
 					*pShapeBits = AdjustInversion(nSpriteID, *baseSpritePtr, TRUE);
 				if (isFlipped)
 					--pShapeBits;
 				else
 					++pShapeBits;
-				++baseSpritePtr;
 				--nPos;
 			}
 			if ((nCount & 1) != 0) {
@@ -2413,7 +2980,7 @@ static void L_drawShapeSpecific_Invert_OutOfContext(BYTE *shapePtr, BYTE *baseSh
 				pShapeBits += nCount;
 			continue;
 		case MIF_CM_PROCPIXELS:
-			for (int nPos = nCount; nPos; ++spritePtr) {
+			for (int nPos = nCount; nPos; ++baseSpritePtr, ++spritePtr) {
 				BOOL bProcessBit = FALSE;
 				if (isFlipped) {
 					if (rightShapeBits <= 0 && leftShapeBits > 0)
@@ -2432,7 +2999,6 @@ static void L_drawShapeSpecific_Invert_OutOfContext(BYTE *shapePtr, BYTE *baseSh
 					--pShapeBits;
 				else
 					++pShapeBits;
-				++baseSpritePtr;
 				--rightShapeBits;
 				--nPos;
 			}
@@ -2448,55 +3014,69 @@ static void L_drawShapeSpecific_Invert_OutOfContext(BYTE *shapePtr, BYTE *baseSh
 	}
 }
 
-static void L_drawShape_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isRoadMask, BOOL isFlipped) {
-	BYTE *pShapeBitsLine, *spritePtr, *pShapeBits;
+static void L_drawShape_WithBase_MainArea(BYTE *shapePtr, BYTE *baseShapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isRoadMask, BOOL isFlipped) {
+	BYTE *pShapeBitsLine, *pBaseShapeBitsLine, *spritePtr, *baseSpritePtr, *pShapeBits, *pBaseShapeBits;
 	BYTE nCount;
 	BYTE nChunkMode;
 	WORD nRemHeight;
 
 	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
+	pBaseShapeBitsLine = &shapeBaseBits[right + shapeX * bottom];
 	nRemHeight = shapeCurrent[nSpriteID].wHeight;
 	spritePtr = shapePtr;
+	baseSpritePtr = baseShapePtr;
 	pShapeBits = pShapeBitsLine;
+	pBaseShapeBits = pBaseShapeBitsLine;
 	while (TRUE) {
 		nCount = SPRITEDATA(spritePtr)->nCount;
 		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
 		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
+		baseSpritePtr = (BYTE *)&SPRITEDATA(baseSpritePtr)->pBuf;
 		switch (nChunkMode) {
 		case MIF_CM_EMPTY:
 			continue;
 		case MIF_CM_NEWROWSTART:
 			pShapeBits = &pShapeBitsLine[shapeX];
 			pShapeBitsLine += shapeX;
+			pBaseShapeBits = &pBaseShapeBitsLine[shapeX];
+			pBaseShapeBitsLine += shapeX;
 			--nRemHeight;
 			break;
 		case MIF_CM_SKIPPIXELS:
-			if (isFlipped)
+			if (isFlipped) {
 				pShapeBits -= nCount;
-			else
+				pBaseShapeBits -= nCount;
+			}
+			else {
 				pShapeBits += nCount;
+				pBaseShapeBits += nCount;
+			}
 			break;
 		case MIF_CM_PROCPIXELS:
-			for (int nPos = nCount; nPos; ++spritePtr) {
+			for (int nPos = nCount; nPos; ++baseSpritePtr, ++spritePtr) {
 				BOOL bProcessBit = (isRoadMask) ? FALSE : TRUE;
 				if (isRoadMask) {
-					if (*pShapeBits == 0xA1)
+					if (*pBaseShapeBits == 0xA1)
 						bProcessBit = TRUE;
 				}
 				if (bProcessBit) {
-					if (bOnTheFlyPalIdx)
-						*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos);
-					else
-						*pShapeBits = *spritePtr;
+					*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos, PALCACHE_TYPE_NONE);
+					*pBaseShapeBits = *baseSpritePtr;
 				}
-				if (isFlipped)
+				if (isFlipped) {
 					--pShapeBits;
-				else
+					--pBaseShapeBits;
+				}
+				else {
 					++pShapeBits;
+					++pBaseShapeBits;
+				}
 				--nPos;
 			}
-			if ((nCount & 1) != 0)
+			if ((nCount & 1) != 0) {
+				++baseSpritePtr;
 				++spritePtr;
+			}
 			break;
 		default:
 			return;
@@ -2504,12 +3084,12 @@ static void L_drawShape_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int16 righ
 	}
 }
 
-static void L_drawShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isRoadMask, BOOL isFlipped) {
+static void L_drawShape_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isRoadMask, BOOL isFlipped) {
 	__int16 leftEdge, topEdge, rightEdge, bottomEdge;
-	BYTE *pShapeBitsLine, *spritePtr;
+	BYTE *pShapeBitsLine, *pBaseShapeBitsLine, *spritePtr, *baseSpritePtr;
 	WORD nRemHeight;
 	int leftShapeBits, rightShapeBits;
-	BYTE *pShapeBits, nCount, nChunkMode;
+	BYTE *pShapeBits, *pBaseShapeBits, nCount, nChunkMode;
 	bool bReachedBottom;
 
 	if (isFlipped) {
@@ -2523,23 +3103,29 @@ static void L_drawShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 
 	topEdge = shapeTop - bottom;
 	bottomEdge = shapeBottom - bottom;
 	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
+	pBaseShapeBitsLine = &shapeBaseBits[right + shapeX * bottom];
 	nRemHeight = shapeCurrent[nSpriteID].wHeight;
 	spritePtr = shapePtr;
+	baseSpritePtr = baseShapePtr;
 	if (topEdge > 0) {
 		bottomEdge -= topEdge;
 		pShapeBitsLine += shapeX * topEdge;
+		pBaseShapeBitsLine += shapeX * topEdge;
 		do {
 			spritePtr += SPRITEDATA(spritePtr)->nCount + 2;
+			baseSpritePtr += SPRITEDATA(baseSpritePtr)->nCount + 2;
 			--topEdge;
 		} while (topEdge);
 	}
 	leftShapeBits = (int)pShapeBitsLine;
 	pShapeBits = pShapeBitsLine;
 	rightShapeBits = (int)pShapeBitsLine;
+	pBaseShapeBits = pBaseShapeBitsLine;
 	while (TRUE) {
 		nCount = SPRITEDATA(spritePtr)->nCount;
 		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
 		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
+		baseSpritePtr = (BYTE *)&SPRITEDATA(baseSpritePtr)->pBuf;
 		switch (nChunkMode) {
 		case MIF_CM_EMPTY:
 			continue;
@@ -2549,6 +3135,8 @@ static void L_drawShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 
 			bReachedBottom = --bottomEdge < 0;
 			pShapeBits = &pShapeBitsLine[shapeX];
 			pShapeBitsLine += shapeX;
+			pBaseShapeBits = &pBaseShapeBitsLine[shapeX];
+			pBaseShapeBitsLine += shapeX;
 			--nRemHeight;
 			if (!bReachedBottom)
 				continue;
@@ -2556,38 +3144,46 @@ static void L_drawShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 
 		case MIF_CM_SKIPPIXELS:
 			leftShapeBits -= nCount;
 			rightShapeBits -= nCount;
-			if (isFlipped)
+			if (isFlipped) {
 				pShapeBits -= nCount;
-			else
+				pBaseShapeBits -= nCount;
+			}
+			else {
 				pShapeBits += nCount;
+				pBaseShapeBits += nCount;
+			}
 			continue;
 		case MIF_CM_PROCPIXELS:
-			for (int nPos = nCount; nPos; ++spritePtr) {
+			for (int nPos = nCount; nPos; ++baseSpritePtr, ++spritePtr) {
 				BOOL bProcessBit = FALSE;
 				if (isFlipped) {
 					if (rightShapeBits <= 0 && leftShapeBits > 0)
-						bProcessBit = (isRoadMask && *pShapeBits != 0xA1) ? FALSE : TRUE;
+						bProcessBit = (isRoadMask && *pBaseShapeBits != 0xA1) ? FALSE : TRUE;
 				}
 				else {
 					if (leftShapeBits <= 0 && rightShapeBits > 0)
-						bProcessBit = (isRoadMask && *pShapeBits != 0xA1) ? FALSE : TRUE;
+						bProcessBit = (isRoadMask && *pBaseShapeBits != 0xA1) ? FALSE : TRUE;
 				}
 				if (bProcessBit) {
-					if (bOnTheFlyPalIdx)
-						*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos);
-					else
-						*pShapeBits = *spritePtr;
+					*pShapeBits = ProcessSpritePaletteIndex(nSpriteID, *spritePtr, nRemHeight, nPos, PALCACHE_TYPE_NONE);
+					*pBaseShapeBits = *baseSpritePtr;
 				}
 				--leftShapeBits;
-				if (isFlipped)
+				if (isFlipped) {
 					--pShapeBits;
-				else
+					--pBaseShapeBits;
+				}
+				else {
 					++pShapeBits;
+					++pBaseShapeBits;
+				}
 				--rightShapeBits;
 				--nPos;
 			}
-			if ((nCount & 1) != 0)
+			if ((nCount & 1) != 0) {
+				++baseSpritePtr;
 				++spritePtr;
+			}
 			continue;
 		default:
 			return;
@@ -2742,7 +3338,7 @@ extern "C" void __cdecl Hook_drawShape(__int16 nSpriteID, __int16 right, __int16
 	int nShapeBottom, nShapeRight;
 
 	shapePtr = &shapeCurrent[nSpriteID];
-	if (shapePtr) {
+	if (shapePtr && shapeBaseBits) {
 		shapeData = Get_SpriteCache_Buffer(shapePtr, nSpriteID);
 		if (shapeData) {
 			nShapeBottom = bottom + Get_SpriteCache_Height(shapePtr, nSpriteID);
@@ -2751,19 +3347,19 @@ extern "C" void __cdecl Hook_drawShape(__int16 nSpriteID, __int16 right, __int16
 				int nRight = (isFlipped) ? nShapeRight : right;
 				// The 'doInvert' flag is used from the InvertShape and InvertTerrain calls.
 				// It's the "Placement Preview".
-				if (doInvert) {
-					baseShapeData = Get_SpriteCache_BaseBuffer(shapePtr, nSpriteID);
-					if (baseShapeData) {
+				baseShapeData = Get_SpriteCache_BaseBuffer(shapePtr, nSpriteID);
+				if (baseShapeData) {
+					if (doInvert) {
 						if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)
-							L_drawShape_Invert_OutOfContext(shapeData, baseShapeData, nSpriteID, right, bottom);
+							L_drawShape_Invert_WithBase_OutOfContext(shapeData, baseShapeData, nSpriteID, nRight, bottom, isFlipped);
 						else
-							L_drawShape_Invert_MainArea(shapeData, baseShapeData, nSpriteID, right, bottom);
+							L_drawShape_Invert_WithBase_MainArea(shapeData, baseShapeData, nSpriteID, nRight, bottom, isFlipped);
 					}
+					else if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)
+						L_drawShape_WithBase_OutOfContext(shapeData, baseShapeData, nSpriteID, nRight, bottom, FALSE, isFlipped);
+					else
+						L_drawShape_WithBase_MainArea(shapeData, baseShapeData, nSpriteID, nRight, bottom, FALSE, isFlipped);
 				}
-				else if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)
-					L_drawShape_OutOfContext(shapeData, nSpriteID, nRight, bottom, FALSE, isFlipped);
-				else
-					L_drawShape_MainArea(shapeData, nSpriteID, nRight, bottom, FALSE, isFlipped);
 			}
 		}
 	}
@@ -2802,78 +3398,98 @@ void L_drawShapeSpecific_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bott
 	}
 }
 
-static BYTE ProcessWeatherSolidShadow(BYTE palIdx, BYTE currIdx) {
-	if (palIdx != currIdx) {
-		// The original intent here was to allow
-		// for shadow projection onto the tiles
-		// that had their indices adjusted by
-		// the snow effect, however a side-effect
-		// was that other objects were touched that
-		// fell within range - but the effect looked
-		// rather good, so here it will remain for
-		// all seasons.
-		if (currIdx >= 0x9A && currIdx <= 0x9F)
-			return currIdx;
-		if (iTerrainCosmeticMode) {
-			// Ordering:
-			// Grey (don't include 0xA1 in the range to avoid traffic disruption)
-			// Green
-			// Hot
-			//
-			// It should be noted that as a result of the inclusion of these cases
-			// when a cosmetic terrain mode is enabled, the shadow "can" intersect
-			// with a non-terrain tile - this is more noticeable when a monster is
-			// active (Revisit for future improvements).
-			if (currIdx >= 0xA0 && currIdx <= 0xA7 && currIdx != 0xA1)
-				return currIdx;
-			else if ((currIdx >= 0x34 && currIdx <= 0x36) || (currIdx >= 0x3D && currIdx <= 0x3F) || (currIdx >= 0x45 && currIdx <= 0x4A))
-				return currIdx;
-			else if ((currIdx >= 0x20 && currIdx <= 0x22) || (currIdx >= 0x24 && currIdx <= 0x2A))
-				return currIdx;
+void L_drawShapeDialog_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert) {
+	sprite_header_t *shapePtr;
+	BYTE *shapeData, *baseShapeData;
+	int nShapeBottom, nShapeRight;
+
+	shapePtr = &shapeCurrent[nSpriteID];
+	if (shapePtr) {
+		shapeData = Get_SpriteCache_Buffer(shapePtr, nSpriteID);
+		if (shapeData) {
+			nShapeBottom = bottom + Get_SpriteCache_Height(shapePtr, nSpriteID);
+			nShapeRight = right + Get_SpriteCache_Width(shapePtr, nSpriteID);
+			if (shapeRight > right && shapeLeft < nShapeRight && shapeBottom > bottom && shapeTop < nShapeBottom) {
+				int nRight = (isFlipped) ? nShapeRight : right;
+				// The 'doInvert' flag is used from the InvertShape and InvertTerrain calls.
+				// It's the "Placement Preview".
+				if (doInvert) {
+					baseShapeData = Get_SpriteCache_BaseBuffer(shapePtr, nSpriteID);
+					if (baseShapeData) {
+						if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)
+							L_drawShapeSpecific_Invert_OutOfContext(shapeData, baseShapeData, nSpriteID, nRight, bottom, isFlipped);
+						else
+							L_drawShapeSpecific_Invert_MainArea(shapeData, baseShapeData, nSpriteID, nRight, bottom, isFlipped);
+					}
+				}
+				else if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)
+					L_drawShapeSpecific_OutOfContext(shapeData, nSpriteID, nRight, bottom, FALSE, isFlipped, -1);
+				else
+					L_drawShapeSpecific_MainArea(shapeData, nSpriteID, nRight, bottom, FALSE, isFlipped, -1);
+			}
 		}
 	}
-	return palIdx;
 }
 
-static void L_drawShadowShape_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isFlipped) {
-	BYTE *pShapeBitsLine, *spritePtr, *pShapeBits;
+static void L_drawShadowShape_WithBase_MainArea(BYTE *shapePtr, BYTE *baseShapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isFlipped) {
+	BYTE *pShapeBitsLine, *pBaseShapeBitsLine, *spritePtr, *baseSpritePtr, *pShapeBits, *pBaseShapeBits;
 	BYTE nCount;
 	BYTE nChunkMode;
 
 	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
+	pBaseShapeBitsLine = &shapeBaseBits[right + shapeX * bottom];
 	spritePtr = shapePtr;
+	baseSpritePtr = baseShapePtr;
 	pShapeBits = pShapeBitsLine;
+	pBaseShapeBits = pBaseShapeBitsLine;
 	while (TRUE) {
 		nCount = SPRITEDATA(spritePtr)->nCount;
 		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
 		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
+		baseSpritePtr = (BYTE *)&SPRITEDATA(baseSpritePtr)->pBuf;
 		switch (nChunkMode) {
 		case MIF_CM_EMPTY:
 			continue;
 		case MIF_CM_NEWROWSTART:
 			pShapeBits = &pShapeBitsLine[shapeX];
 			pShapeBitsLine += shapeX;
+			pBaseShapeBits = &pBaseShapeBitsLine[shapeX];
+			pBaseShapeBitsLine += shapeX;
 			break;
 		case MIF_CM_SKIPPIXELS:
-			if (isFlipped)
+			if (isFlipped) {
 				pShapeBits -= nCount;
-			else
+				pBaseShapeBits -= nCount;
+			}
+			else {
 				pShapeBits += nCount;
+				pBaseShapeBits += nCount;
+			}
 			break;
 		case MIF_CM_PROCPIXELS:
-			for (int nPos = nCount; nPos; ++spritePtr) {
-				if (*pShapeBits == 0x5F)
-					*pShapeBits = 0x64;
-				else if (*pShapeBits >= ProcessWeatherSolidShadow(0x74, *pShapeBits) && *pShapeBits <= ProcessWeatherSolidShadow(0x7E, *pShapeBits))
-					*pShapeBits = 0x7E;
-				if (isFlipped)
+			for (int nPos = nCount; nPos; ++baseSpritePtr, ++spritePtr) {
+				if (*pBaseShapeBits == 0x5F) {
+					*pBaseShapeBits = 0x64;
+					*pShapeBits = *pBaseShapeBits;
+				}
+				else if (*pBaseShapeBits >= 0x74 && *pBaseShapeBits <= 0x7E) {
+					*pBaseShapeBits = 0x7E;
+					*pShapeBits = *pBaseShapeBits;
+				}
+				if (isFlipped) {
 					--pShapeBits;
-				else
+					--pBaseShapeBits;
+				}
+				else {
 					++pShapeBits;
+					++pBaseShapeBits;
+				}
 				--nPos;
 			}
-			if ((nCount & 1) != 0)
+			if ((nCount & 1) != 0) {
+				++baseSpritePtr;
 				++spritePtr;
+			}
 			break;
 		default:
 			return;
@@ -2881,11 +3497,11 @@ static void L_drawShadowShape_MainArea(BYTE *shapePtr, __int16 nSpriteID, __int1
 	}
 }
 
-static void L_drawShadowShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isFlipped) {
+static void L_drawShadowShape_WithBase_OutOfContext(BYTE *shapePtr, BYTE *baseShapePtr, __int16 nSpriteID, __int16 right, __int16 bottom, BOOL isFlipped) {
 	__int16 leftEdge, topEdge, rightEdge, bottomEdge;
-	BYTE *pShapeBitsLine, *spritePtr;
+	BYTE *pShapeBitsLine, *pBaseShapeBitsLine, *spritePtr, *baseSpritePtr;
 	int leftShapeBits, rightShapeBits;
-	BYTE *pShapeBits, nCount, nChunkMode;
+	BYTE *pShapeBits, *pBaseShapeBits, nCount, nChunkMode;
 	bool bReachedBottom;
 
 	if (isFlipped) {
@@ -2899,22 +3515,28 @@ static void L_drawShadowShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __
 	topEdge = shapeTop - bottom;
 	bottomEdge = shapeBottom - bottom;
 	pShapeBitsLine = &shapeBits[right + shapeX * bottom];
+	pBaseShapeBitsLine = &shapeBaseBits[right + shapeX * bottom];
 	spritePtr = shapePtr;
+	baseSpritePtr = baseShapePtr;
 	if (topEdge > 0) {
 		bottomEdge -= topEdge;
 		pShapeBitsLine += shapeX * topEdge;
+		pBaseShapeBitsLine += shapeX * topEdge;
 		do {
 			spritePtr += SPRITEDATA(spritePtr)->nCount + 2;
+			baseSpritePtr += SPRITEDATA(baseSpritePtr)->nCount + 2;
 			--topEdge;
 		} while (topEdge);
 	}
 	leftShapeBits = (int)pShapeBitsLine;
 	pShapeBits = pShapeBitsLine;
 	rightShapeBits = (int)pShapeBitsLine;
+	pBaseShapeBits = pBaseShapeBitsLine;
 	while (TRUE) {
 		nCount = SPRITEDATA(spritePtr)->nCount;
 		nChunkMode = SPRITEDATA(spritePtr)->nChunkMode;
 		spritePtr = (BYTE *)&SPRITEDATA(spritePtr)->pBuf;
+		baseSpritePtr = (BYTE *)&SPRITEDATA(baseSpritePtr)->pBuf;
 		switch (nChunkMode) {
 		case MIF_CM_EMPTY:
 			continue;
@@ -2924,19 +3546,25 @@ static void L_drawShadowShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __
 			bReachedBottom = --bottomEdge < 0;
 			pShapeBits = &pShapeBitsLine[shapeX];
 			pShapeBitsLine += shapeX;
+			pBaseShapeBits = &pBaseShapeBitsLine[shapeX];
+			pBaseShapeBitsLine += shapeX;
 			if (!bReachedBottom)
 				continue;
 			break;
 		case MIF_CM_SKIPPIXELS:
 			leftShapeBits -= nCount;
 			rightShapeBits -= nCount;
-			if (isFlipped)
+			if (isFlipped) {
 				pShapeBits -= nCount;
-			else
+				pBaseShapeBits -= nCount;
+			}
+			else {
 				pShapeBits += nCount;
+				pBaseShapeBits += nCount;
+			}
 			continue;
 		case MIF_CM_PROCPIXELS:
-			for (int nPos = nCount; nPos; ++spritePtr) {
+			for (int nPos = nCount; nPos; ++baseSpritePtr, ++spritePtr) {
 				BOOL bProcessBit = FALSE;
 				if (isFlipped) {
 					if (rightShapeBits <= 0 && leftShapeBits > 0)
@@ -2947,21 +3575,31 @@ static void L_drawShadowShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __
 						bProcessBit = TRUE;
 				}
 				if (bProcessBit) {
-					if (*pShapeBits == 0x5F)
-						*pShapeBits = 0x64;
-					else if (*pShapeBits >= ProcessWeatherSolidShadow(0x74, *pShapeBits) && *pShapeBits <= ProcessWeatherSolidShadow(0x7E, *pShapeBits))
-						*pShapeBits = 0x7E;
+					if (*pBaseShapeBits == 0x5F) {
+						*pBaseShapeBits = 0x64;
+						*pShapeBits = *pBaseShapeBits;
+					}
+					else if (*pBaseShapeBits >= 0x74 && *pBaseShapeBits <= 0x7E) {
+						*pBaseShapeBits = 0x7E;
+						*pShapeBits = *pBaseShapeBits;
+					}
 				}
 				--leftShapeBits;
-				if (isFlipped)
+				if (isFlipped) {
 					--pShapeBits;
-				else
+					--pBaseShapeBits;
+				}
+				else {
 					++pShapeBits;
+					++pBaseShapeBits;
+				}
 				--rightShapeBits;
 				--nPos;
 			}
-			if ((nCount & 1) != 0)
+			if ((nCount & 1) != 0) {
+				++baseSpritePtr;
 				++spritePtr;
+			}
 			continue;
 		default:
 			return;
@@ -2972,50 +3610,52 @@ static void L_drawShadowShape_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, __
 
 extern "C" void __cdecl Hook_drawMaskShape(__int16 nSpriteID, __int16 left, __int16 top, __int16 isFlipped) {
 	sprite_header_t *shapePtr;
-	BYTE *shapeData;
+	BYTE *shapeData, *baseShapeData;
 	int nShapeTop, nShapeLeft;
 
 	shapePtr = &shapeCurrent[nSpriteID];
-	if (shapePtr) {
+	if (shapePtr && shapeBaseBits) {
 		shapeData = Get_SpriteCache_Buffer(shapePtr, nSpriteID);
 		if (shapeData) {
 			nShapeTop = top + Get_SpriteCache_Height(shapePtr, nSpriteID);
 			nShapeLeft = left + Get_SpriteCache_Width(shapePtr, nSpriteID);
 			if (shapeRight > left && nShapeLeft > shapeLeft && shapeBottom > top && nShapeTop > shapeTop) {
 				int nLeft = (isFlipped) ? nShapeLeft : left;
-				if (shapeTop >= top || shapeLeft >= left || nShapeTop >= shapeBottom || nShapeLeft >= shapeRight)
-					L_drawShape_OutOfContext(shapeData, nSpriteID, nLeft, top, TRUE, isFlipped);
-				else
-					L_drawShape_MainArea(shapeData, nSpriteID, nLeft, top, TRUE, isFlipped);
-			}
-		}
-	}
-}
-
-void L_drawShadowShape_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped) {
-	sprite_header_t *shapePtr;
-	BYTE *shapeData;
-	int nShapeBottom, nShapeRight;
-
-	shapePtr = &shapeCurrent[nSpriteID];
-	if (shapePtr) {
-		shapeData = Get_SpriteCache_Buffer(shapePtr, nSpriteID);
-		if (shapeData) {
-			nShapeBottom = bottom + Get_SpriteCache_Height(shapePtr, nSpriteID);
-			nShapeRight = right + Get_SpriteCache_Width(shapePtr, nSpriteID);
-			if (shapeRight > right && shapeLeft < nShapeRight && shapeBottom > bottom && shapeTop < nShapeBottom) {
-				int nRight = (isFlipped) ? nShapeRight : right;
-				if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)
-					L_drawShadowShape_OutOfContext(shapeData, nSpriteID, nRight, bottom, isFlipped);
-				else
-					L_drawShadowShape_MainArea(shapeData, nSpriteID, nRight, bottom, isFlipped);
+				baseShapeData = Get_SpriteCache_BaseBuffer(shapePtr, nSpriteID);
+				if (baseShapeData) {
+					if (shapeTop >= top || shapeLeft >= left || nShapeTop >= shapeBottom || nShapeLeft >= shapeRight)
+						L_drawShape_WithBase_OutOfContext(shapeData, baseShapeData, nSpriteID, nLeft, top, TRUE, isFlipped);
+					else
+						L_drawShape_WithBase_MainArea(shapeData, baseShapeData, nSpriteID, nLeft, top, TRUE, isFlipped);
+				}
 			}
 		}
 	}
 }
 
 extern "C" void __cdecl Hook_drawShadowShape(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped) {
-	L_drawShadowShape_SC2K1996(nSpriteID, right, bottom, isFlipped);
+	sprite_header_t *shapePtr;
+	BYTE *shapeData, *baseShapeData;
+	int nShapeBottom, nShapeRight;
+
+	shapePtr = &shapeCurrent[nSpriteID];
+	if (shapePtr && shapeBaseBits) {
+		shapeData = Get_SpriteCache_Buffer(shapePtr, nSpriteID);
+		if (shapeData) {
+			nShapeBottom = bottom + Get_SpriteCache_Height(shapePtr, nSpriteID);
+			nShapeRight = right + Get_SpriteCache_Width(shapePtr, nSpriteID);
+			if (shapeRight > right && shapeLeft < nShapeRight && shapeBottom > bottom && shapeTop < nShapeBottom) {
+				int nRight = (isFlipped) ? nShapeRight : right;
+				baseShapeData = Get_SpriteCache_BaseBuffer(shapePtr, nSpriteID);
+				if (baseShapeData) {
+					if (shapeTop >= bottom || shapeLeft >= right || shapeBottom <= nShapeBottom || shapeRight <= nShapeRight)
+						L_drawShadowShape_WithBase_OutOfContext(shapeData, baseShapeData, nSpriteID, nRight, bottom, isFlipped);
+					else
+						L_drawShadowShape_WithBase_MainArea(shapeData, baseShapeData, nSpriteID, nRight, bottom, isFlipped);
+				}
+			}
+		}
+	}
 }
 
 void InstallDrawingHooks_SC2K1996(void) {
@@ -3051,9 +3691,45 @@ void InstallDrawingHooks_SC2K1996(void) {
 	SafeVirtualProtect((LPVOID)0x401D16, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401D16, Hook_PointToTile);
 
+	// Hook for InvertTerrain
+	SafeVirtualProtect((LPVOID)0x401D2A, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401D2A, Hook_InvertTerrain);
+
+	// Hook for CSimcityView::KillCursor
+	SafeVirtualProtect((LPVOID)0x4014F1, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4014F1, Hook_SimcityView_KillCursor);
+
+	// Hook for CSimcityView::MaintainCursor
+	SafeVirtualProtect((LPVOID)0x401A96, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401A96, Hook_SimcityView_MaintainCursor);
+
+	// Hook for CSimcityView::InvertArea
+	SafeVirtualProtect((LPVOID)0x402135, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402135, Hook_SimcityView_InvertArea);
+
+	// Hook for CSimcityView::InvertLine
+	SafeVirtualProtect((LPVOID)0x401906, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401906, Hook_SimcityView_InvertLine);
+
+	// Hook for CSimcityView::FatInvertLine
+	SafeVirtualProtect((LPVOID)0x40100F, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x40100F, Hook_SimcityView_FatInvertLine);
+
 	// Hook for CSimcityView::DrawHouse
 	SafeVirtualProtect((LPVOID)0x402810, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x402810, Hook_SimcityView_DrawHouse);
+
+	// Hook for CSimcityView::UpdateHouse
+	SafeVirtualProtect((LPVOID)0x40226B, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x40226B, Hook_SimcityView_UpdateHouse);
+
+	// Hook for start16bitShapes
+	SafeVirtualProtect((LPVOID)0x402266, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402266, Hook_start16bitShapes);
+
+	// Hook for endShapes
+	SafeVirtualProtect((LPVOID)0x402B7B, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402B7B, Hook_endShapes);
 
 	// Hook for drawShape
 	SafeVirtualProtect((LPVOID)0x401393, 5, PAGE_EXECUTE_READWRITE);
