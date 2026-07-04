@@ -1444,7 +1444,7 @@ extern "C" void __cdecl Hook_SCURK_EditableTileSet_mRenderShapeToTile(cEditableT
 	}
 }
 
-static void L_SCURK_TranslateFromDOS(cEditableTileSet *pThis, WORD nDBID, BYTE *pDOSTileBuf) {
+static void L_SCURK_TranslateFromDOS(cEditableTileSet *pThis, WORD nDBID, BYTE *pDOSTileBuf, WORD nShapNum = 0) {
 	BYTE *pDOSTileBits, *pTileBitsBuf, *pTileBits;
 	int nTileSize;
 	BOOL bDone;
@@ -1471,6 +1471,8 @@ static void L_SCURK_TranslateFromDOS(cEditableTileSet *pThis, WORD nDBID, BYTE *
 	while (!bDone) {
 		pDOSTileChunkMode = SPRITEDOSDATA(pDOSTileBits)->nChunkMode;
 		pDOSTileBitCount = SPRITEDOSDATA(pDOSTileBits)->nCount;
+		if (nShapNum == SPRITE_LARGE_RESIDENTIAL_3X3_LARGEAPARTMENTS1 || nShapNum == SPRITE_LARGE_RESIDENTIAL_3X3_LARGEAPARTMENTS2)
+			ConsoleLog(LOG_DEBUG, "nShapNum(%u - %s), pDOSTileChunkMode(0x%02X), pDOSTileBitCount(0x%02X - %u)\n", nShapNum, szInternalSpriteName[nShapNum], pDOSTileChunkMode, pDOSTileBitCount, pDOSTileBitCount);
 		pDOSTileBits = (BYTE *)&SPRITEDOSDATA(pDOSTileBits)->pBuf;
 		switch (pDOSTileChunkMode) {
 		case TIL_CM_SKIPPIXELS:
@@ -1484,8 +1486,11 @@ static void L_SCURK_TranslateFromDOS(cEditableTileSet *pThis, WORD nDBID, BYTE *
 			SPRITEDATA(pTileBitsBuf)->nChunkMode = MIF_CM_PROCPIXELS;
 			pTileBitsBuf = (BYTE *)&SPRITEDATA(pTileBitsBuf)->pBuf;
 			pDOSTileRemainingBitCount = pDOSTileBitCount;
-			for (nTileSize += 2; pDOSTileRemainingBitCount--; ++nTileSize)
+			for (nTileSize += 2; pDOSTileRemainingBitCount--; ++nTileSize) {
+				if (nShapNum == SPRITE_LARGE_RESIDENTIAL_3X3_LARGEAPARTMENTS1 || nShapNum == SPRITE_LARGE_RESIDENTIAL_3X3_LARGEAPARTMENTS2)
+					ConsoleLog(LOG_DEBUG, "(0x%02X - %u)\n", *pDOSTileBits, *pDOSTileBits);
 				*pTileBitsBuf++ = DOSMacPalTable[*pDOSTileBits++];
+			}
 			if (!IsEvenUnsigned(pDOSTileBitCount) && pTileBits) {
 				++*pTileBits;
 				++pTileBitsBuf;
@@ -1567,7 +1572,7 @@ extern "C" void __cdecl Hook_SCURK_EditableTileSet_mReadFromDOSFile(cEditableTil
 			fseek(f, dwLargeSize + dwLargeOffset, SEEK_SET);
 			fread(lpBuffer, 1, 0xFFFF, f);
 			if (validTiles[nShapNum].nValidated == 1)
-				L_SCURK_TranslateFromDOS(pThis, nDBID, lpBuffer);
+				L_SCURK_TranslateFromDOS(pThis, nDBID, lpBuffer, nShapNum);
 		}
 
 		lpOtherShapeBuf = (tilHeader_t *)R_SCURK_WRP_gAllocBlock(0x2EE0);
