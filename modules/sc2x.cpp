@@ -180,7 +180,7 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 				bWeatherWind = ntohl(*(DWORD*)&pChunkMISC[i]);
 				i += 4;
 
-				bWeatherHumidity = ntohl(*(DWORD*)&pChunkMISC[i]);
+				bWeatherRain = ntohl(*(DWORD*)&pChunkMISC[i]);
 				i += 4;
 
 				bWeatherTrend = ntohl(*(DWORD*)&pChunkMISC[i]);
@@ -332,9 +332,9 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 				i += 4;
 
 				// This table is staying as a Base64Encode because you SHOULD NOT mess with it
-				//sc2json["MISC"]["dwMilitaryTiles"] = Base64Encode(&pChunkMISC[i], 4 * 16);
+				//sc2json["MISC"]["wMilitaryTiles"] = Base64Encode(&pChunkMISC[i], 4 * 16);
 				for (int i = 0; i < 16; i++)
-					dwMilitaryTiles[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
+					wMilitaryTiles[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
 				i += 4 * 16;
 
 				wSubwayXUNDCount = ntohl(*(DWORD*)&pChunkMISC[i]);
@@ -849,7 +849,7 @@ extern "C" void __cdecl Hook_CheckAndAppendCityExtension(CMFC3XString *lpFileNam
 
 // Fix rail and highway border connections not loading properly
 extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
-	wCityNeighborConnections1500 = 0;
+	wIndustryConnect = 0;
 	dwBusPassengers = 0;
 
 	for (int x = 0; x < GAME_MAP_SIZE; x++) {
@@ -859,13 +859,13 @@ extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
 				if (iTileID >= TILE_RAIL_LR && iTileID < TILE_TUNNEL_T
 					|| iTileID >= TILE_CROSSOVER_ROADLR_RAILTB && iTileID < TILE_SUSPENSION_BRIDGE_START_B
 					|| iTileID >= TILE_HIGHWAY_HTB && iTileID < TILE_REINFORCED_BRIDGE_PYLON)
-					++wCityNeighborConnections1500;
+					++wIndustryConnect;
 			}
 		}
 	}
 
 	if (sc2x_debug & SC2X_DEBUG_LOAD)
-		ConsoleLog(LOG_DEBUG, "SC2X: Loaded %d $1500 neighbor connections.\n", wCityNeighborConnections1500);
+		ConsoleLog(LOG_DEBUG, "SC2X: Loaded %d $1500 neighbor connections.\n", wIndustryConnect);
 }
 
 void InstallSaveHooks_SC2K1996(void) {

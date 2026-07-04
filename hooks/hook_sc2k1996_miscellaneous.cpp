@@ -983,7 +983,7 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 						// Moved the title and view update calls out of the SimulationProcessTick()
 						// function so they always occur at the end to ensure everything is updated
 						// and to account for the new mode '3' for preserving the "placement preview"
-						// tile highlight during granular updates.
+						// active cursor during granular updates.
 						//
 						// When disaster mode is active we only want to instigate an update when
 						// 'OffCycle' is FALSE in order to not have a negative effect on the disaster
@@ -994,9 +994,9 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 						if (bFrequentUpdates && bUpdateGameView)
 							Game_SimcityDoc_UpdateDocumentTitle(pSCDoc);
 						if ((bFrequentUpdates && bUpdateGameView) || (!bFrequentUpdates && bOffCycle))
-							GameMain_Document_UpdateAllViews(pSCDoc, NULL, SCD_UPDATE_VIEW_UPDATE_WITHTILEINVERT, NULL);
+							GameMain_Document_UpdateAllViews(pSCDoc, NULL, SCD_UPDATE_VIEW_UPDATE_DOCURSOR, NULL);
 					}
-					GameMain_Document_UpdateAllViews(pSCDoc, NULL, SCD_UPDATE_VIEW_CHECKTILEINVERT, NULL);
+					GameMain_Document_UpdateAllViews(pSCDoc, NULL, SCD_UPDATE_VIEW_CHECKCURSOR, NULL);
 				}
 
 				// Call for a window update
@@ -1200,6 +1200,7 @@ extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lp
 		lpMainDialogAfxProc = lpDialogFunc;
 		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_MainDialogProc, dwInitParam);
 	case 102:
+	case 113:
 	case 142:
 	case 154:
 		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
@@ -1311,57 +1312,43 @@ extern "C" void __stdcall Hook_SimcityDoc_UpdateDocumentTitle() {
 	int iCityDayMon;
 	int iCityMonth;
 	int iCityYear;
-	const char *pCurrStr;
-	CCurrencyString *pFundStr;
+	char *pFundStr = NULL;
 
 	GameMain_String_Cons(&cStr);
 
 	pSCApp = &pCSimcityAppThis;
 	if (!pSCApp->dwSCAMainFrameDestroyVar) {
-		if (!wCityMode) {
-			GameMain_String_LoadStringA(&cStr, 0x19D); // "Editing Terrain..."
-			goto GOFORWARD;
-		}
-		if (!pszCityName.m_nDataLength)
-			goto GETOUT;
-		iCityDayMon = dwCityDays % 25 + 1;
-		iCityMonth = dwCityDays / 25 % 12;
-		iCityYear = wCityStartYear + dwCityDays / 300;
-		if (IsIconic(GameGetRootWindowHandle())) {
-			if (dwDisasterActive) {
-				if (wCurrentDisasterID <= DISASTER_HURRICANE)
-					GameMain_String_LoadStringA(&cStr, dwDisasterStringIndex[wCurrentDisasterID]);
+		if (!wCityMode)
+			GameMain_String_LoadStringA(&cStr, 413); // "Editing Terrain..."
+		else {
+			if (!pszCityName.m_nDataLength)
+				goto GETOUT;
+			iCityDayMon = dwCityDays % 25 + 1;
+			iCityMonth = dwCityDays / 25 % 12;
+			iCityYear = wCityStartYear + dwCityDays / 300;
+			if (IsIconic(pSCApp->m_pMainWnd->m_hWnd)) {
+				if (dwDisasterActive) {
+					if (wCurrentDisasterID <= DISASTER_HURRICANE)
+						GameMain_String_LoadStringA(&cStr, dwDisasterStringIndex[wCurrentDisasterID]);
+					else
+						GameMain_String_Empty(&cStr);
+				}
 				else
-					GameMain_String_Empty(&cStr);
+					GameMain_String_Format(&cStr, "%s%s%d", pszCityName.m_pchData, gameStrHyphen, iCityYear);
 			}
-			else
-				GameMain_String_Format(&cStr, "%s%s%d", pszCityName.m_pchData, gameStrHyphen, iCityYear);
-			goto GOFORWARD;
+			else {
+				GameMain_String_Empty(&cStr);
+				pFundStr = L_GetCurrencyString_SC2K1996(dwCityFunds);
+				if (!pFundStr)
+					goto GETOUT;
+				if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND].ToBool() && bFrequentUpdates)
+					GameMain_String_Format(&cStr, "%s %d %4d <%s> %s", pSCApp->dwSCApCStringLongMonths[iCityMonth].m_pchData, iCityDayMon, iCityYear, pszCityName.m_pchData, pFundStr);
+				else
+					GameMain_String_Format(&cStr, "%s %4d <%s> %s", pSCApp->dwSCApCStringShortMonths[iCityMonth].m_pchData, iCityYear, pszCityName.m_pchData, pFundStr);
+				free(pFundStr);
+				pFundStr = 0;
+			}
 		}
-		GameMain_String_Empty(&cStr);
-		if (strcmp(pSCApp->dwSCACStringLang.m_pchData, gameLangFrench) != 0) {
-			if (strcmp(pSCApp->dwSCACStringLang.m_pchData, gameLangGerman) != 0)
-				pCurrStr = gameCurrDollar;
-			else
-				pCurrStr = gameCurrDM;
-		}
-		else
-			pCurrStr = gameCurrFF;
-		pFundStr = new CCurrencyString();
-		if (pFundStr)
-			pFundStr = Game_CurrencyString_SetString(pFundStr, pCurrStr, 20, (double)dwCityFunds);
-		else
-			goto GETOUT;
-		Game_CurrencyString_TruncateAtSpace(pFundStr);
-		if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND].ToBool() && bFrequentUpdates)
-			GameMain_String_Format(&cStr, "%s %d %4d <%s> %s", pSCApp->dwSCApCStringLongMonths[iCityMonth].m_pchData, iCityDayMon, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
-		else
-			GameMain_String_Format(&cStr, "%s %4d <%s> %s", pSCApp->dwSCApCStringShortMonths[iCityMonth].m_pchData, iCityYear, pszCityName.m_pchData, pFundStr->pStr);
-		if (pFundStr) {
-			Game_CurrencyString_Dest(pFundStr);
-			operator delete(pFundStr);
-		}
-GOFORWARD:
 		GameMain_Document_UpdateAllViews(pThis, NULL, SCD_UPDATE_VIEW_TITLE, (CMFC3XObject *)&cStr);
 	}
 GETOUT:
@@ -1593,7 +1580,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 			// Mode '3' also used here for "placement preview" preservation and
 			// blink mitigation.
 			if (!bFrequentUpdates)
-				GameMain_Document_UpdateAllViews(pCSimcityDoc, NULL, SCD_UPDATE_VIEW_UPDATE_WITHTILEINVERT, NULL);
+				GameMain_Document_UpdateAllViews(pCSimcityDoc, NULL, SCD_UPDATE_VIEW_UPDATE_DOCURSOR, NULL);
 
 			// Run updates for various stats subdialogs
 			Game_UpdatePopulationDialog();
@@ -1648,10 +1635,28 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	}
 }
 
+extern bool bFallbackSound;
+
 extern "C" void __stdcall Hook_SimulationStartDisaster(void) {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CSound *pSound = pSCApp->SCASNDLayer;
 	if (mischook_debug & MISCHOOK_DEBUG_DISASTERS)
 		ConsoleLog(LOG_DEBUG, "MISC: 0x%08X -> SimulationStartDisaster(), wDisasterType = %u.\n", _ReturnAddress(), wSetTriggerDisasterType);
 
+	// Check added here to allow for the siren sound to play
+	// once more if it ends up being overridden by the
+	// bulldozer - an exception is present for if bFallbackSound
+	// is set to true (which defaults to the bulldozer sound).
+	if (dwDisasterActive) {
+		if (pSCApp && pSound) {
+			if (pSound->iSNDActionThingSoundID != SOUND_SIREN && !bFallbackSound) {
+				if (pSound->iSNDActionThingSoundID == SOUND_BULLDOZER) {
+					Game_SimcityApp_StopSounds(pSCApp);
+					Game_SimcityApp_SoundPlayActionThingSound(pSCApp, SOUND_SIREN, 5);
+				}
+			}
+		}
+	}
 	GameMain_SimulationStartDisaster();
 }
 
@@ -1852,7 +1857,57 @@ extern "C" void __stdcall Hook_RecalculateCityValue(void) {
 			dwNewCityValue += nVal;
  	}
 	dwCityValue = dwNewCityValue;
- }
+}
+
+CGraphics *pBaseGraphics = NULL;
+LONG nBaseGraphicWidth = 0;
+LONG nBaseGraphicHeight = 0;
+BYTE *pBaseGraphicLockDIBRes = NULL;
+
+extern "C" CSimcityView *__stdcall Hook_SimcityView_Cons() {
+	CSimcityView *pThis;
+
+	__asm mov [pThis], ecx
+
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CMainFrame *pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
+
+	pThis = GameMain_SimcityView_Cons(pThis);
+	if (pThis) {
+		pBaseGraphics = new CGraphics();
+		if (pBaseGraphics) {
+			pBaseGraphics = Game_Graphics_Cons(pBaseGraphics);
+			if (pBaseGraphics) {
+				pBaseGraphics->CreateWithPalette_SC2K1996(pMainFrm->iMFbiWidth, pMainFrm->iMFbiHeight);
+				nBaseGraphicWidth = Game_Graphics_Width(pBaseGraphics);
+				nBaseGraphicHeight = Game_Graphics_Height(pBaseGraphics);
+				pBaseGraphicLockDIBRes = Game_Graphics_LockDIBBits(pBaseGraphics);
+			}
+			else {
+				delete pBaseGraphics;
+				pBaseGraphics = NULL;
+			}
+		}
+	}
+
+	return pThis;
+}
+
+extern "C" void __stdcall Hook_SimcityView_ResetScrollViewsAndDeleteGraphics() {
+	CSimcityView *pThis;
+
+	__asm mov [pThis], ecx
+
+	if (pThis) {
+		if (pBaseGraphics) {
+			pBaseGraphics->DeleteStored_SC2K1996();
+			delete pBaseGraphics;
+			pBaseGraphics = NULL;
+		}
+	}
+
+	GameMain_SimcityView_ResetScrollViewsAndDeleteGraphics(pThis);
+}
 
 extern "C" void __stdcall Hook_SimcityView_OnUpdate(CMFC3XView *pSender, LPARAM lHint, CMFC3XObject *pHint) {
 	CSimcityView *pThis;
@@ -1871,9 +1926,9 @@ extern "C" void __stdcall Hook_SimcityView_OnUpdate(CMFC3XView *pSender, LPARAM 
 			GameMain_Document_SetTitle(pThis->m_pDocument, pBuf);
 		}
 		else {
-			if (lHint == SCD_UPDATE_VIEW_CHECKTILEINVERT)
-				L_CheckTileHighlight_SC2K1996(pThis);
-			else if (lHint == SCD_UPDATE_VIEW_UPDATE_WITHTILEINVERT)
+			if (lHint == SCD_UPDATE_VIEW_CHECKCURSOR)
+				L_CheckCursor_SC2K1996(pThis);
+			else if (lHint == SCD_UPDATE_VIEW_UPDATE_DOCURSOR)
 				L_DrawHouse_SC2K1996(pThis, TRUE);
 			else if (lHint == SCD_UPDATE_VIEW_UPDATE)
 				Game_SimcityView_DrawHouse(pThis);
@@ -1912,7 +1967,7 @@ extern "C" void __stdcall Hook_SimcityView_OnLButtonDown(UINT nFlags, CMFC3XPoin
 			// Set mouse capture and calculate the tile coordinates for the click
 			HWND hWnd = SetCapture(pThis->m_hWnd);
 			GameMain_Wnd_FromHandle(hWnd);
-			wCurrentTileCoordinates = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
+			wCurrentTileCoordinates = Game_PointToTile((__int16)pt.x, (__int16)pt.y);
 
 			// Ensure the tile coordinates are valid before sending them through to the game
 			if (wCurrentTileCoordinates >= 0) {
@@ -1943,7 +1998,7 @@ extern "C" void __stdcall Hook_SimcityView_OnMouseMove(UINT nFlags, CMFC3XPoint 
 
 	pThis->SCVMousePoint = pt;
 	if (pThis->dwSCVLeftMouseDownInGameArea) {
-		wCurrentTileCoordinates = Game_GetTileCoordsFromScreenCoords((__int16)pt.x, (__int16)pt.y);
+		wCurrentTileCoordinates = Game_PointToTile((__int16)pt.x, (__int16)pt.y);
 		if (wCurrentTileCoordinates >= 0) {
 			wTileCoordinateX = LOBYTE(wCurrentTileCoordinates);
 			wTileCoordinateY = HIBYTE(wCurrentTileCoordinates);
@@ -2527,6 +2582,35 @@ extern "C" BOOL __stdcall Hook_Wnd_OnCommand(WPARAM wParam, LPARAM lParam) {
 	return L_OnCmdMsg(pThis, nID, nCode, 0, 0, _ReturnAddress());
 }
 
+int nOwnDrwDlg = OWNDRW_DLG_NONE;
+CMFC3XWnd *pStoredWnd = NULL;
+
+extern "C" void __stdcall Hook_Wnd_OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDIS) {
+	CMFC3XWnd *pThis;
+	__asm mov [pThis], ecx
+
+	if (pStoredWnd == pThis) {
+		if (nOwnDrwDlg == OWNDRW_DLG_BRIDGE) {
+			L_BridgeSelectDialog_OnDrawItem_SC2K1996((CBridgeSelectDialog *)pThis, nIDCtl, lpDIS);
+			return;
+		}
+	}
+
+	if (lpDIS->CtlType == ODT_MENU) {
+		CMFC3XMenu* pMenu = GameMain_Menu_FromHandlePermanent((HMENU)lpDIS->hwndItem);
+		if (pMenu != NULL) {
+			GameMain_Menu_DrawItem(pMenu, lpDIS);
+			return;
+		}
+	}
+	else {
+		CMFC3XWnd* pChild = GameMain_Wnd_FromHandlePermanent(lpDIS->hwndItem);
+		if (pChild != NULL && GameMain_Wnd_SendChildNotifyLastMsg(pChild, NULL))
+			return;
+	}
+	GameMain_Wnd_Default(pThis);
+}
+
 // Placeholder.
 void ShowModSettingsDialog(void) {
 	L_MessageBoxA(GameGetRootWindowHandle(), "The mod settings dialog has not yet been implemented. Check back later.", "sc2fix", MB_OK);
@@ -2655,12 +2739,20 @@ void InstallMiscHooks_SC2K1996(void) {
 
 	InstallDrawingHooks_SC2K1996();
 
+	InstallCurrencyStringHooks_SC2K1996();
+
 	InstallThingHooks_SC2K1996();
 
 	InstallTileGrowthOrPlacementHandlingHooks_SC2K1996();
 	
 	// Install the advanced query hook
 	InstallQueryHooks_SC2K1996();
+
+	InstallArcologyDialogHooks_SC2K1996();
+
+	InstallPowerPlantDialogHooks_SC2K1996();
+
+	InstallBridgeDialogHooks_SC2K1996();
 
 	// Expand sound buffers and load higher quality sounds from DLL resources
 	InstallSoundEngineHooks_SC2K1996();
@@ -2721,6 +2813,10 @@ void InstallMiscHooks_SC2K1996(void) {
 	// Hook CWnd::OnCommand
 	SafeVirtualProtect((LPVOID)0x4A5352, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4A5352, Hook_Wnd_OnCommand);
+
+	// Hook into CWnd::OnDrawItem
+	SafeVirtualProtect((LPVOID)0x4A468C, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4A468C, Hook_Wnd_OnDrawItem);
 
 	// Add more buttons to SC2K's menus
 	hMainMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(2));
@@ -2815,6 +2911,14 @@ void InstallMiscHooks_SC2K1996(void) {
 	}
 
 skipgamemenu:
+	// Hook for CSimcityView::CSimcityView
+	SafeVirtualProtect((LPVOID)0x402E28, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402E28, Hook_SimcityView_Cons);
+
+	// Hook for CSimcityView::ResetScrollViewsAndDeleteGraphics
+	SafeVirtualProtect((LPVOID)0x402B62, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402B62, Hook_SimcityView_ResetScrollViewsAndDeleteGraphics);
+
 	// Hook for CSimcityView::OnUpdate
 	SafeVirtualProtect((LPVOID)0x4024E1, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4024E1, Hook_SimcityView_OnUpdate);
