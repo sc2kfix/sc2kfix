@@ -204,6 +204,50 @@ int CGraphics::CreateWithPalette_SC2K1996(LONG ibiWidth, LONG ibiHeight) {
 	return 1;
 }
 
+void CGraphics::SetAdjustedColorTableFromMainPalette(int nPal) {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CMFC3XPalette *pPal;
+	HPALETTE hPal;
+
+	pPal = Game_SimcityApp_GetActivePalette(pSCApp);
+	hPal = (pPal->m_hObject) ? hPal = (HPALETTE)pPal->m_hObject : NULL;
+
+	int nPos;
+	HGDIOBJ hObj;
+	RGBQUAD rgbq[HICOLORCNT];
+	PALETTEENTRY palEnts[HICOLORCNT];
+
+	if (GRBitmap) {
+		GetPaletteEntries(hPal, 0, HICOLORCNT, palEnts);
+		for (nPos = 0; nPos < HICOLORCNT; ++nPos) {
+			rgbq[nPos].rgbRed = palEnts[nPos].peRed;
+			rgbq[nPos].rgbGreen = palEnts[nPos].peGreen;
+			rgbq[nPos].rgbBlue = palEnts[nPos].peBlue;
+			rgbq[nPos].rgbReserved = 0;
+		}
+		while (nPos < HICOLORCNT);
+		if (nPal == 1) {
+			rgbq[36].rgbRed = rgbq[36].rgbGreen = rgbq[36].rgbBlue = 156;
+			rgbq[37].rgbRed = rgbq[37].rgbGreen = rgbq[37].rgbBlue = 130;
+			rgbq[38].rgbRed = rgbq[38].rgbGreen = rgbq[38].rgbBlue = 110;
+			rgbq[39].rgbRed = rgbq[39].rgbGreen = rgbq[39].rgbBlue = 88;
+			rgbq[40].rgbRed = rgbq[40].rgbGreen = rgbq[40].rgbBlue = 70;
+			rgbq[41].rgbRed = rgbq[41].rgbGreen = rgbq[41].rgbBlue = 52;
+			rgbq[42].rgbRed = rgbq[42].rgbGreen = rgbq[42].rgbBlue = 37;
+			rgbq[57].rgbRed = rgbq[57].rgbGreen = rgbq[57].rgbBlue = 168;
+			rgbq[58].rgbRed = rgbq[58].rgbGreen = rgbq[58].rgbBlue = 151;
+			rgbq[59].rgbRed = rgbq[59].rgbGreen = rgbq[59].rgbBlue = 135;
+			rgbq[60].rgbRed = rgbq[60].rgbGreen = rgbq[60].rgbBlue = 124;
+			rgbq[61].rgbRed = rgbq[61].rgbGreen = rgbq[61].rgbBlue = 108;
+			rgbq[62].rgbRed = rgbq[62].rgbGreen = rgbq[62].rgbBlue = 97;
+			rgbq[63].rgbRed = rgbq[63].rgbGreen = rgbq[63].rgbBlue = 81;
+		}
+		hObj = SelectObject(hDC_Global, GRBitmap);
+		SetDIBColorTable(hDC_Global, 0, HICOLORCNT, rgbq);
+		SelectObject(hDC_Global, hObj);
+	}
+}
+
 void CGraphics::PaintNormalAndStretch(HDC hDC, int x, int y, int sX, int sY, int nFactor) {
 	CSimcityAppPrimary *pSCApp;
 	HGDIOBJ hObj;
@@ -444,6 +488,7 @@ extern "C" void __stdcall Hook_SimcityView_OnDraw(CMFC3XDC *pDC) {
 		r[1].right = Game_Graphics_Width(pThis->SCVGraphics);
 		r[1].bottom = Game_Graphics_Height(pThis->SCVGraphics);
 		Game_Graphics_SetColorTableFromApplicationPalette(pThis->SCVGraphics);
+		//pThis->SCVGraphics->SetAdjustedColorTableFromMainPalette(1);
 		if (pThis->dwSCVIsZoomed == 1)
 		{
 			r[1] = r[0];
