@@ -1471,8 +1471,6 @@ static void L_SCURK_TranslateFromDOS(cEditableTileSet *pThis, WORD nDBID, BYTE *
 	while (!bDone) {
 		pDOSTileChunkMode = SPRITEDOSDATA(pDOSTileBits)->nChunkMode;
 		pDOSTileBitCount = SPRITEDOSDATA(pDOSTileBits)->nCount;
-		if (nShapNum == SPRITE_LARGE_RESIDENTIAL_3X3_LARGEAPARTMENTS1 || nShapNum == SPRITE_LARGE_RESIDENTIAL_3X3_LARGEAPARTMENTS2)
-			ConsoleLog(LOG_DEBUG, "nShapNum(%u - %s), pDOSTileChunkMode(0x%02X), pDOSTileBitCount(0x%02X - %u)\n", nShapNum, szInternalSpriteName[nShapNum], pDOSTileChunkMode, pDOSTileBitCount, pDOSTileBitCount);
 		pDOSTileBits = (BYTE *)&SPRITEDOSDATA(pDOSTileBits)->pBuf;
 		switch (pDOSTileChunkMode) {
 		case TIL_CM_SKIPPIXELS:
@@ -1486,11 +1484,8 @@ static void L_SCURK_TranslateFromDOS(cEditableTileSet *pThis, WORD nDBID, BYTE *
 			SPRITEDATA(pTileBitsBuf)->nChunkMode = MIF_CM_PROCPIXELS;
 			pTileBitsBuf = (BYTE *)&SPRITEDATA(pTileBitsBuf)->pBuf;
 			pDOSTileRemainingBitCount = pDOSTileBitCount;
-			for (nTileSize += 2; pDOSTileRemainingBitCount--; ++nTileSize) {
-				if (nShapNum == SPRITE_LARGE_RESIDENTIAL_3X3_LARGEAPARTMENTS1 || nShapNum == SPRITE_LARGE_RESIDENTIAL_3X3_LARGEAPARTMENTS2)
-					ConsoleLog(LOG_DEBUG, "(0x%02X - %u)\n", *pDOSTileBits, *pDOSTileBits);
+			for (nTileSize += 2; pDOSTileRemainingBitCount--; ++nTileSize)
 				*pTileBitsBuf++ = DOSMacPalTable[*pDOSTileBits++];
-			}
 			if (!IsEvenUnsigned(pDOSTileBitCount) && pTileBits) {
 				++*pTileBits;
 				++pTileBitsBuf;
@@ -1694,16 +1689,28 @@ void L_SCURK_InitDOSMacPaletteIdxTable() {
 	//    (see the Marina, Seaport Warehouse, Seaport Loading Bar, Army Hangar,
 	//    Military Control Tower)
 	DOSMacPalTable[1] =   0x00; // This was previously 0x11 - which would "pick" within the animated range - not desirable.
-	DOSMacPalTable[204] = 0x38;
-	DOSMacPalTable[205] = 0x03;
-	DOSMacPalTable[210] = 0x44;
-	DOSMacPalTable[211] = 0x22;
-	DOSMacPalTable[212] = 0x7E;
-	DOSMacPalTable[213] = 0x7C;
-	DOSMacPalTable[215] = 0x03;
-	DOSMacPalTable[218] = 0x3D;
-	DOSMacPalTable[219] = 0x01;
-	DOSMacPalTable[222] = 0x79;
+	DOSMacPalTable[204] = 0x0A;
+	DOSMacPalTable[205] = 0x0B;
+	DOSMacPalTable[206] = 0x0C;
+	DOSMacPalTable[207] = 0x0D;
+	DOSMacPalTable[208] = 0x0E;
+	DOSMacPalTable[209] = 0x0F;
+	DOSMacPalTable[210] = 0xE8;
+	DOSMacPalTable[211] = 0xE9;
+	DOSMacPalTable[212] = 0xEA;
+	DOSMacPalTable[213] = 0xEB;
+	DOSMacPalTable[214] = 0xEC;
+	DOSMacPalTable[215] = 0xED;
+	DOSMacPalTable[216] = 0xEE;
+	DOSMacPalTable[217] = 0xEF;
+	DOSMacPalTable[218] = 0xF0;
+	DOSMacPalTable[219] = 0xF1;
+	DOSMacPalTable[220] = 0xF2;
+	DOSMacPalTable[221] = 0xF3;
+	DOSMacPalTable[222] = 0xF4;
+	DOSMacPalTable[223] = 0xF5;
+	for (i = 0; i < 8; ++i)
+		DOSMacPalTable[232 + i] = 0xB3 + i;
 	DOSMacPalTable[255] = 0xFF; // Only used during DOS conversion, a bad idea for Mac.
 
 	ConsoleLog(LOG_INFO, "Initialize DOS/Mac -> Windows Palette Index Table.\n");
