@@ -729,6 +729,13 @@ extern "C" DWORD __stdcall Hook_LoadGame(CMFC3XFile* pFile, char* src) {
 			ConsoleLog(LOG_DEBUG, "SC2X: Saved game is a SimCity Classic file. Passing control to SC2K.\n");
 
 		ret = GameMain_SimcityApp_DoLoadGame(pThis, pFile, src);
+	} else if (std::regex_search(szLoadFileName, std::regex("\\.[Ss][Cc]2[Jj]$"))) {
+		if (sc2x_debug & SC2X_DEBUG_LOAD)
+			ConsoleLog(LOG_DEBUG, "SC2X: User selected an SC2J file. Fixing that and then passing control to SC2K.\n");
+
+		std::string strSC2FileName = szLoadFileName;
+		strSC2FileName = strSC2FileName.substr(0, strSC2FileName.find_last_of(".")) + ".sc2";
+		ret = GameMain_SimcityApp_DoLoadGame(pThis, pFile, (char*)strSC2FileName.c_str());
 	}
 
 	// Create the default SC2J addendum contents
