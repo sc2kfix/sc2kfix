@@ -407,9 +407,6 @@ void ReloadDefaultTileSet_SC2K1996() {
 
 	pSCApp = &pCSimcityAppThis;
 
-	if (L_MessageBoxA(GameGetRootWindowHandle(), "Are you sure that you want to reload the base game tile set?", gamePrimaryKey, MB_YESNO | MB_DEFBUTTON2 | MB_ICONEXCLAMATION) != IDYES)
-		return;
-
 	GameMain_CmdTarget_BeginWaitCursor(pSCApp);
 	Init_SpriteCache(true);
 
@@ -473,6 +470,7 @@ extern "C" void __stdcall Hook_SimcityApp_LoadTileset1996() {
 	if (GameMain_FileDialog_DoModal(&fileDialog) == 1) {
 		GameMain_CmdTarget_BeginWaitCursor(pThis);
 		Game_ReadTilesetFile(pOfn->lpstrFile);
+		jsonSC2JAddendum["map"]["tilesets"].append(std::string(pOfn->lpstrFile));
 
 		nNewLen = 0;
 		nPathLen = strlen(pOfn->lpstrFile);

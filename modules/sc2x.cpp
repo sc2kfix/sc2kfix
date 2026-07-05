@@ -55,7 +55,8 @@ void CreateDefaultSC2JAddendum(void) {
 	jsonSC2JAddendum["meta"]["timestamp"] = time(NULL);
 
 	jsonSC2JAddendum["map"] = {};
-	jsonSC2JAddendum["map"]["iTerrainCosmeticMode"] = TERRAIN_COSMETIC_NONE;
+	jsonSC2JAddendum["map"]["terrain_cosmetic_mode"] = TERRAIN_COSMETIC_NONE;
+	jsonSC2JAddendum["map"]["tilesets"] = json::Array();
 }
 
 void LoadInterleavedBudgetVanilla(budget_t* pTarget, DWORD* pSource) {
@@ -753,7 +754,15 @@ extern "C" DWORD __stdcall Hook_LoadGame(CMFC3XFile* pFile, char* src) {
 
 		// Update iTerrainCosmeticMode if we don't have a global override
 		if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt() == TERRAIN_COSMETIC_NONE)
-			iTerrainCosmeticMode = jsonSC2JAddendum["map"]["iTerrainCosmeticMode"].ToInt();
+			iTerrainCosmeticMode = jsonSC2JAddendum["map"]["terrain_cosmetic_mode"].ToInt();
+
+		// Reset the current tileset to the default and load any listed saved tilesets in order
+		ReloadDefaultTileSet_SC2K1996();
+		for (json::JSON j : jsonSC2JAddendum["map"]["tilesets"].ArrayRange()) {
+			if (sc2x_debug & SC2X_DEBUG_LOAD)
+				ConsoleLog(LOG_DEBUG, "SC2X: Loaded tilset \"%s\".\n", j.ToString().c_str());
+			Game_ReadTilesetFile((char*)j.ToString().c_str());
+		}
 	}
 #endif
 
