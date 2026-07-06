@@ -421,5 +421,3 @@ public:
 	DWORD Printing;
 };
 #pragma pack(pop)
-
-extern BYTE DOSMacPalTable[256];

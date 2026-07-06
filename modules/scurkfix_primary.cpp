@@ -27,13 +27,6 @@ ConsoleLog(LOG_DEBUG, "SCURK_VTable_Check[class path - %s] - 0x%06X - TListBox::
 }
 */
 
-static void SetRGBEntry(RGBQUAD *pRGB, BYTE r, BYTE g, BYTE b) {
-	pRGB->rgbRed = r;
-	pRGB->rgbGreen = g;
-	pRGB->rgbBlue = b;
-	pRGB->rgbReserved = 0;
-}
-
 extern "C" void __cdecl Hook_SCURK_WinGBitmap_SetColorTable(CWinGBitmap *pThis, HPALETTE hPal) {
 	int nPos;
 	HGDIOBJ hObj;
@@ -147,8 +140,6 @@ void InstallFixes_SCURKPrimary(void) {
 		mischook_scurk_debug = DEBUG_FLAGS_EVERYTHING;
 
 	InstallRegistryPathingHooks_SCURKPrimary();
-
-	L_SCURK_InitDOSMacPaletteIdxTable();
 
 	// Hook for palette animation fix
 	SafeVirtualProtect((LPVOID)0x4496D4, 5, PAGE_EXECUTE_READWRITE);

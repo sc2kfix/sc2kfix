@@ -87,7 +87,6 @@ void InstallFixes_SCURK1996(void) {
 
 	InstallRegistryPathingHooks_SCURK1996();
 
-	L_SCURK_InitDOSMacPaletteIdxTable();
 
 	// Hook for palette animation fix
 	SafeVirtualProtect((LPVOID)0x449800, 5, PAGE_EXECUTE_READWRITE);

@@ -495,6 +495,56 @@ void *__cdecl L_ReallocateDataEntry(char *pDest, char *pSrc) {
 	return (pNew) ? pNew : pDest;
 }
 
+void SetRGBEntry(RGBQUAD *pRGB, BYTE r, BYTE g, BYTE b) {
+	pRGB->rgbRed = r;
+	pRGB->rgbGreen = g;
+	pRGB->rgbBlue = b;
+	pRGB->rgbReserved = 0;
+}
+
+void L_InitDOSMacPaletteIdxTable() {
+	int i;
+
+	for (i = 0; i < 256; ++i) {
+		if (i >= 0 && i < 204)
+			DOSMacPalTable[i] = i + 16;
+		else if (i >= 224 && i < 239)
+			DOSMacPalTable[i] = i;
+		else
+			DOSMacPalTable[i] = 0;
+	}
+
+	// The values set below are the previously unavailable indices
+	// that have now been re-introduced into the main game palette
+	// on the Windows version of the game.
+	DOSMacPalTable[1] =   0x00; // This was previously 0x11 - which would "pick" within the animated range - not desirable.
+	DOSMacPalTable[204] = 0x0A;
+	DOSMacPalTable[205] = 0x0B;
+	DOSMacPalTable[206] = 0x0C;
+	DOSMacPalTable[207] = 0x0D;
+	DOSMacPalTable[208] = 0x0E;
+	DOSMacPalTable[209] = 0x0F;
+	DOSMacPalTable[210] = 0xE8;
+	DOSMacPalTable[211] = 0xE9;
+	DOSMacPalTable[212] = 0xEA;
+	DOSMacPalTable[213] = 0xEB;
+	DOSMacPalTable[214] = 0xEC;
+	DOSMacPalTable[215] = 0xED;
+	DOSMacPalTable[216] = 0xEE;
+	DOSMacPalTable[217] = 0xEF;
+	DOSMacPalTable[218] = 0xF0;
+	DOSMacPalTable[219] = 0xF1;
+	DOSMacPalTable[220] = 0xF2;
+	DOSMacPalTable[221] = 0xF3;
+	DOSMacPalTable[222] = 0xF4;
+	DOSMacPalTable[223] = 0xF5;
+	for (i = 0; i < 8; ++i)
+		DOSMacPalTable[232 + i] = 0xB3 + i;
+	DOSMacPalTable[255] = 0xFF; // Only used during DOS conversion, a bad idea for Mac.
+
+	ConsoleLog(LOG_INFO, "Initialize DOS/Mac -> Windows Palette Index Table.\n");
+}
+
 // start of base64 code
 /*
 * Base64 encoding/decoding (RFC1341)

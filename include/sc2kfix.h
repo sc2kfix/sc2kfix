@@ -513,6 +513,8 @@ BOOL DoConfigureKeyBindings(settings_t *st, HWND hwndDlg);
 
 BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc);
 char *ConvertFileTypeFilterString(const char *pInStr);
+void SetRGBEntry(RGBQUAD *pRGB, BYTE r, BYTE g, BYTE b);
+void L_InitDOSMacPaletteIdxTable();
 
 // Yes...
 FILE *log_fopen(const char *fname, const char *mode);
@@ -607,6 +609,8 @@ extern BOOL bDisableFixedTiles;
 HOOKEXT BOOL bHookStopProcessing;
 
 extern HWND hWndExt;
+
+extern BYTE DOSMacPalTable[256];
 
 // Hooks to inject in dllmain.cpp
 

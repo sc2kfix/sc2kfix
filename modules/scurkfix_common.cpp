@@ -20,8 +20,6 @@
 
 UINT mischook_scurk_debug = MISCHOOK_SCURK_DEBUG;
 
-BYTE DOSMacPalTable[256];
-
 // SCURK-side debug output function
 
 void L_SCURK_gDebugOut(const char *fmt, va_list args) {
@@ -1655,65 +1653,6 @@ extern "C" void __cdecl Hook_SCURK_EditableTileSet_mReadFromDOSFile(cEditableTil
 		R_SCURK_WRP_gFreeBlock(lpBuffer);
 		fclose(f);
 	}
-}
-
-void L_SCURK_InitDOSMacPaletteIdxTable() {
-	int i;
-
-	for (i = 0; i < 256; ++i) {
-		if (i >= 0 && i < 204)
-			DOSMacPalTable[i] = i + 16;
-		else if (i >= 224 && i < 239)
-			DOSMacPalTable[i] = i;
-		else
-			DOSMacPalTable[i] = 0;
-	}
-
-	// This fixes certain colours being lost during the DOS/Mac -> Windows
-	// translation process.
-	// It must be noted that these cases were manually determined during
-	// the comprehensive examination of certain tiles and their prior
-	// pre-conversion palette indices.
-	// Based on further checks, those currently set "did" exist in the
-	// DOS version of SCURK however in the Macintosh version any attempts
-	// to "pick" the colour will result in no entry being selected - while
-	// in the Windows version they simply don't exist.
-	//
-	// Tilesets used for nearest-confirmation cases:
-	// - FUTURE.TIL
-	// - ORIGINAL.TIL
-	//
-	// // CHECK AS NEEDED - these values
-	//    aren't fatal regardless, previously they were just being set to
-	//    0x00 - which caused a noticeable negative effect on certain tiles
-	//    (see the Marina, Seaport Warehouse, Seaport Loading Bar, Army Hangar,
-	//    Military Control Tower)
-	DOSMacPalTable[1] =   0x00; // This was previously 0x11 - which would "pick" within the animated range - not desirable.
-	DOSMacPalTable[204] = 0x0A;
-	DOSMacPalTable[205] = 0x0B;
-	DOSMacPalTable[206] = 0x0C;
-	DOSMacPalTable[207] = 0x0D;
-	DOSMacPalTable[208] = 0x0E;
-	DOSMacPalTable[209] = 0x0F;
-	DOSMacPalTable[210] = 0xE8;
-	DOSMacPalTable[211] = 0xE9;
-	DOSMacPalTable[212] = 0xEA;
-	DOSMacPalTable[213] = 0xEB;
-	DOSMacPalTable[214] = 0xEC;
-	DOSMacPalTable[215] = 0xED;
-	DOSMacPalTable[216] = 0xEE;
-	DOSMacPalTable[217] = 0xEF;
-	DOSMacPalTable[218] = 0xF0;
-	DOSMacPalTable[219] = 0xF1;
-	DOSMacPalTable[220] = 0xF2;
-	DOSMacPalTable[221] = 0xF3;
-	DOSMacPalTable[222] = 0xF4;
-	DOSMacPalTable[223] = 0xF5;
-	for (i = 0; i < 8; ++i)
-		DOSMacPalTable[232 + i] = 0xB3 + i;
-	DOSMacPalTable[255] = 0xFF; // Only used during DOS conversion, a bad idea for Mac.
-
-	ConsoleLog(LOG_INFO, "Initialize DOS/Mac -> Windows Palette Index Table.\n");
 }
 
 // cPaintWindow functions

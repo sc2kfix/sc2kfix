@@ -328,7 +328,6 @@ extern "C" void __cdecl Hook_SCURK_EditableTileSet_mRenderDBShapeToDIB_Dib(cEdit
 extern "C" void __cdecl Hook_SCURK_EditableTileSet_mRenderDBShapeToDIB_Graphic(cEditableTileSet *pThis, CWinGBitmap *pGraphic, int nDBID);
 extern "C" void __cdecl Hook_SCURK_EditableTileSet_mRenderShapeToTile(cEditableTileSet *pThis, TBC45XDib *pDib, int nEdNum);
 extern "C" void __cdecl Hook_SCURK_EditableTileSet_mReadFromDOSFile(cEditableTileSet *pThis, LPCSTR lpPathName);
-void L_SCURK_InitDOSMacPaletteIdxTable();
 extern "C" void __cdecl Hook_SCURK_PaintWindow_mFill(cPaintWindow *pThis, TBC45XPoint *pPoint);
 extern "C" void __cdecl Hook_SCURK_PaintWindow_mClipDrawing(cPaintWindow *pThis);
 extern "C" void __cdecl Hook_SCURK_PaintWindow_mEncodeShape(cPaintWindow *pThis, int nZoomLevel);

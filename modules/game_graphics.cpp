@@ -439,6 +439,67 @@ void L_NextAnimatedImageFrame_SC2K1996(CGraphics *pGraphic) {
 	}
 }
 
+extern "C" HPALETTE __stdcall Hook_Graphics_MakeGraphicsPalette(BYTE peFlags) {
+	CGraphics *pThis;
+
+	__asm mov[pThis], ecx
+
+	int nPos;
+	HDC hDC;
+	HGDIOBJ hGdiObj;
+	RGBQUAD rgbq[HICOLORCNT];
+	LOGPAL plpal;
+
+	plpal.wVersion = 768;
+	plpal.wNumPalEnts = HICOLORCNT;
+	memset(plpal.pPalEnts, 0, sizeof(plpal.pPalEnts));
+	if (!pThis->GRBitmap)
+		return 0;
+	hDC = GetDC(0);
+	GetSystemPaletteEntries(hDC, 0, HICOLORCNT, plpal.pPalEnts);
+	ReleaseDC(0, hDC);
+	hGdiObj = SelectObject(hDC_Global, pThis->GRBitmap);
+	GetDIBColorTable(hDC_Global, 0, HICOLORCNT, rgbq);
+	SetRGBEntry(&rgbq[0x0A], 79, 53,   0); // DOS Entry (0xCC - 204)
+	SetRGBEntry(&rgbq[0x0B], 79, 79,   0); // DOS Entry (0xCD - 205)
+	SetRGBEntry(&rgbq[0x0C], 79, 104,  0); // DOS Entry (0xCE - 206)
+	SetRGBEntry(&rgbq[0x0D], 79, 130,  0); // DOS Entry (0xCF - 207)
+	SetRGBEntry(&rgbq[0x0E], 79, 156,  0); // DOS Entry (0xD0 - 208)
+	SetRGBEntry(&rgbq[0x0F], 79, 181,  0); // DOS Entry (0xD1 - 209)
+	SetRGBEntry(&rgbq[0xE8], 79, 207,  0); // DOS Entry (0xD2 - 210)
+	SetRGBEntry(&rgbq[0xE9], 104, 28,  0); // DOS Entry (0xD3 - 211)
+	SetRGBEntry(&rgbq[0xEA], 104, 53,  0); // DOS Entry (0xD4 - 212)
+	SetRGBEntry(&rgbq[0xEB], 104, 79,  0); // DOS Entry (0xD5 - 213)
+	SetRGBEntry(&rgbq[0xEC], 104, 104, 0); // DOS Entry (0xD6 - 214)
+	SetRGBEntry(&rgbq[0xED], 104, 130, 0); // DOS Entry (0xD7 - 215)
+	SetRGBEntry(&rgbq[0xEE], 104, 156, 0); // DOS Entry (0xD8 - 216)
+	SetRGBEntry(&rgbq[0xEF], 104, 181, 0); // DOS Entry (0xD9 - 217)
+	SetRGBEntry(&rgbq[0xF0], 104, 207, 0); // DOS Entry (0xDA - 218)
+	SetRGBEntry(&rgbq[0xF1], 130, 28,  0); // DOS Entry (0xDB - 219)
+	SetRGBEntry(&rgbq[0xF2], 130, 53,  0); // DOS Entry (0xDC - 220)
+	SetRGBEntry(&rgbq[0xF3], 130, 79,  0); // DOS Entry (0xDD - 221)
+	SetRGBEntry(&rgbq[0xF4], 130, 104, 0); // DOS Entry (0xDE - 222)
+	SetRGBEntry(&rgbq[0xF5], 130, 130, 0); // DOS Entry (0xDF - 223)
+	for (nPos = 0; nPos < HICOLORCNT; ++nPos) {
+		if (nPos >= 10 && nPos < 246 || bHiColor) {
+			plpal.pPalEnts[nPos].peRed = rgbq[nPos].rgbRed;
+			plpal.pPalEnts[nPos].peGreen = rgbq[nPos].rgbGreen;
+			plpal.pPalEnts[nPos].peBlue = rgbq[nPos].rgbBlue;
+			plpal.pPalEnts[nPos].peFlags = peFlags;
+		}
+		else {
+			plpal.pPalEnts[nPos].peFlags = 0;
+			rgbq[nPos].rgbRed = plpal.pPalEnts[nPos].peRed;
+			rgbq[nPos].rgbGreen = plpal.pPalEnts[nPos].peGreen;
+			rgbq[nPos].rgbBlue = plpal.pPalEnts[nPos].peBlue;
+			rgbq[nPos].rgbReserved = 0;
+		}
+	}
+	GetDIBColorTable(hDC_Global, 0, HICOLORCNT, rgbq);
+	SelectObject(hDC_Global, hGdiObj);
+	return CreatePalette((const LOGPALETTE *)&plpal);
+}
+
 extern "C" void __stdcall Hook_SimcityWnd_OnEraseBkgnd(CMFC3XDC *pDC) {
 	CSimcityWnd *pThis;
 
@@ -512,6 +573,10 @@ extern "C" void __stdcall Hook_SimcityView_OnDraw(CMFC3XDC *pDC) {
 }
 
 void InstallGraphicHooks_SC2K1996(void) {
+	// Hook for CGraphics::MakeGraphicsPalette
+	SafeVirtualProtect((LPVOID)0x401F5F, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401F5F, Hook_Graphics_MakeGraphicsPalette);
+
 	// Hook for CSimcityWnd::OnEraseBkgnd
 	SafeVirtualProtect((LPVOID)0x401D75, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401D75, Hook_SimcityWnd_OnEraseBkgnd);

@@ -52,6 +52,8 @@ BOOL bOnTheFlyPalIdx = FALSE;
 BOOL bDisableFixedTiles = FALSE;
 int iForcedBits = 0;
 
+BYTE DOSMacPalTable[256];
+
 std::random_device rdRandomDevice;
 std::mt19937 mtMersenneTwister(rdRandomDevice());
 
@@ -418,6 +420,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Better to avoid anomalous behaviour.
 		if (dwDetectedVersion == VERSION_PROG_UNKNOWN)
 			break;
+
+		L_InitDOSMacPaletteIdxTable();
 
 		// If we're attached to SCURK, switch over to the SCURK fix code
 		if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {

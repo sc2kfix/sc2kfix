@@ -29,7 +29,85 @@
 
 UINT sprite_debug = SPRITE_DEBUG;
 
+enum {
+	REV_WIN,
+	REV_DOSMAC,
+	REV_W00
+};
+
+static int nRevType = REV_WIN;
+
 std::vector<sprite_ids_t> spriteIDs;
+
+static void L_ConvertSprite(WORD nWidth, WORD nHeight, BYTE *pBits, int nConvType) {
+	BYTE *pTileBits, pTileBitCount, pTileChunkMode, pBit;
+	WORD nShapeWidth, nShapeHeight, nCurrWidth;
+	BOOL bDone;
+	WORD pTileRemainingBitCount;
+
+	nCurrWidth = 0;
+	pTileBits = pBits;
+	if (pTileBits) {
+		nShapeHeight = nHeight;
+		nShapeWidth = nWidth;
+
+		bDone = 0;
+		while (!bDone) {
+			pTileBitCount = SPRITEDATA(pTileBits)->nCount;
+			pTileChunkMode = SPRITEDATA(pTileBits)->nChunkMode;
+			pTileBits = (BYTE *)&SPRITEDATA(pTileBits)->pBuf;
+			switch (pTileChunkMode) {
+			case MIF_CM_EMPTY:
+				continue;
+			case MIF_CM_NEWROWSTART:
+				nCurrWidth = 0;
+				bDone = nShapeHeight == 0;
+				--nShapeHeight;
+				break;
+			case MIF_CM_ENDOFSPRITE:
+				bDone = 1;
+				break;
+			case MIF_CM_SKIPPIXELS:
+				nCurrWidth += pTileBitCount;
+				break;
+			case MIF_CM_PROCPIXELS:
+				for (pTileRemainingBitCount = pTileBitCount; pTileRemainingBitCount; ++nCurrWidth) {
+					--pTileRemainingBitCount;
+					// *pTileBits here in this case is nPixelIndex (colour lookup palette index)
+					//
+					// 'if (nCurrWidth < nShapeWidth)' removed
+					// to avoid certain columns of pixels being
+					// missed during palette processing.
+					{
+						if (*pTileBits == 0xFC)
+							pBit = 0x61;
+						else {
+							// Exception needed in this case.
+							// Under DOS you want the bit to be 0xFF/White
+							// while under Mac you want it to be 0x00/Black.
+							if (nConvType == REV_DOSMAC)
+								pBit = (*pTileBits == 0xFF) ? 0x00 : DOSMacPalTable[*pTileBits];
+							else if (nConvType == REV_WIN)
+								pBit = (*pTileBits == 0xE8) ? 0x00 : *pTileBits;
+							else
+								pBit = *pTileBits;
+						}
+						*pTileBits = pBit;
+					}
+					++pTileBits;
+				}
+				if (!IsEvenUnsigned(pTileBitCount)) {
+					++pTileBits;
+					++nCurrWidth;
+				}
+				break;
+			default:
+				bDone = 1;
+				break;
+			}
+		}
+	}
+}
 
 static BOOL CheckForExistingID(WORD nID) {
 	WORD nSkipHit;
@@ -75,6 +153,8 @@ static void AllocateAndLoadSprites1996(FILE *pFile, sprite_archive_t *lpBuf, WOR
 							Game_FreeDataEntry(pArrSpriteHeaders[nID].sprOffset.sprPtr);
 							pArrSpriteHeaders[nID].sprOffset.sprPtr = 0;
 						}
+						if (nRevType >= REV_WIN && nRevType <= REV_DOSMAC)
+							L_ConvertSprite(pSprEnt->wWidth, pSprEnt->wHeight, pSpriteData, nRevType);
 						pArrSpriteHeaders[nID].sprOffset.sprPtr = pSpriteData;
 						pArrSpriteHeaders[nID].wHeight = pSprEnt->wHeight;
 						pArrSpriteHeaders[nID].wWidth = pSprEnt->wWidth;
@@ -300,7 +380,7 @@ static void L_LoadFixedLargeSpritesRsrc_SC2K1996() {
 	WORD nTileNameID, nNameLength;
 	BOOL bGotShap, bGotName, bResize;
 	char *pRsrcDat;
-	char *pTileDat;
+	char *pTileDat, *pTileType;
 	char *pBuf;
 	tilesetMainHeader_t *pTileHeader;
 	tilesetHeadInfo_t *pTileInfo;
@@ -329,6 +409,14 @@ static void L_LoadFixedLargeSpritesRsrc_SC2K1996() {
 					pTileInfo = (tilesetHeadInfo_t *)(pTileDat + dwOffset);
 					if (pTileInfo && memcmp(pTileInfo->szHead, "INFO", 4) == 0) {
 						dwSize = _byteswap_ulong(pTileInfo->dwSize);
+						pTileType = (char *)(pTileDat + dwOffset + sizeof(tilesetHeadInfo_t));
+						if (pTileType) {
+							nRevType = REV_WIN;
+							if (memcmp(pTileType, "_MAC", 4) == 0)
+								goto DONOTPROCEED;
+							else if (memcmp(pTileType, "00W_", 4) == 0)
+								nRevType = REV_W00;
+						}
 						dwOffset += sizeof(tilesetHeadInfo_t) + dwSize;
 						pTileTiles = (tilesetHeadInfo_t *)(pTileDat + dwOffset);
 						if (pTileTiles && memcmp(pTileTiles->szHead, "TILE", 4) == 0) {
@@ -391,6 +479,7 @@ static void L_LoadFixedLargeSpritesRsrc_SC2K1996() {
 						}
 					}
 				}
+				DONOTPROCEED:
 				free(pTileDat);
 			}
 		}
@@ -413,6 +502,8 @@ void ReloadDefaultTileSet_SC2K1996() {
 	GameMain_CmdTarget_BeginWaitCursor(pSCApp);
 	Init_SpriteCache(true);
 
+	nRevType = REV_WIN;
+
 	ResetCustomTileNames();
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_SPECIAL);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_LARGE);
@@ -430,6 +521,8 @@ void ReloadDefaultTileSet_SC2K1996() {
 
 extern "C" void __declspec(naked) __stdcall Hook_LoadSpriteArchives1996() {
 	Init_SpriteCache(false);
+
+	nRevType = REV_WIN;
 
 	Game_LoadDataArchive(TILEDAT_DEFS_SPECIAL);
 	Game_LoadDataArchive(TILEDAT_DEFS_LARGE);
@@ -557,19 +650,40 @@ extern "C" BOOL __cdecl Hook_CheckTilesetFileHeader1996(FILE *f) {
 }
 
 extern "C" void __cdecl Hook_VerifyAndLoadNewTiles1996(FILE *f) {
-	char *pBuf;
+	DWORD dwMainSize;
+	char *pBuf, szHeader[4];
 	tilesetHeadInfo_t tilesetInfo;
 	tilesetChunkHeader_t tilesetChunkHeader;
 	CSimcityView *pSCView;
 
 	// Seek and process 'Info' portion.
-	fseek(f, sizeof(tilesetMainHeader_t), SEEK_SET);
+	fseek(f, 4, SEEK_SET);
+	fread(&dwMainSize, 1, 4, f);
+	dwMainSize = _byteswap_ulong(dwMainSize);
+	fseek(f, 4, SEEK_CUR);
 	fread(tilesetInfo.szHead, 4, 1, f);
 	if (memcmp(tilesetInfo.szHead, "INFO", 4) != 0)
 		return;
 
 	fread(&tilesetInfo.dwSize, 4, 1, f);
 	tilesetInfo.dwSize = _byteswap_ulong(tilesetInfo.dwSize);
+
+	fread(szHeader, 1, 4, f);
+	fseek(f, -4, SEEK_CUR);
+
+	ConsoleLog(LOG_DEBUG, "(Load) Type: [%c%c%c%c] (%u) (%u)\n", szHeader[0], szHeader[1], szHeader[2], szHeader[3], tilesetInfo.dwSize, dwMainSize);
+
+	nRevType = REV_WIN;
+	if (memcmp(szHeader, "_MAC", 4) == 0) {
+		nRevType = REV_DOSMAC;
+		// the following only applies to the very rare (and specific) Macintosh tilesets:
+		// subtract the main header, the info header, the platform tag, and the 'TILE' chunk header
+		// which then just leaves the number of tiles and subsequent SHAP/NAME lumps.
+		dwMainSize -= sizeof(tilesetMainHeader_t) - sizeof(tilesetHeadInfo_t) - tilesetInfo.dwSize - sizeof(tilesetChunkHeader_t);
+	}
+	else if (memcmp(szHeader, "00W_", 4) == 0)
+		nRevType = REV_W00;
+
 	fseek(f, tilesetInfo.dwSize, SEEK_CUR);
 
 	// Process 'Tile' portion.
@@ -579,12 +693,13 @@ extern "C" void __cdecl Hook_VerifyAndLoadNewTiles1996(FILE *f) {
 		return;
 
 	fread(&tilesetChunkHeader.dwSize, 4, 1, f);
-	tilesetChunkHeader.dwSize = _byteswap_ulong(tilesetChunkHeader.dwSize);
-	
+	tilesetChunkHeader.dwSize = (nRevType != REV_DOSMAC) ? _byteswap_ulong(tilesetChunkHeader.dwSize) : dwMainSize;
+
 	pBuf = (char *)malloc(tilesetChunkHeader.dwSize);
 	if (!pBuf)
 		Game_LoadTilesFromFile(f);
 	else {
+		memset(pBuf, 0, tilesetChunkHeader.dwSize);
 		Game_GetAndLoadNextTileFileChunkToMemory(f, pBuf, tilesetChunkHeader.dwSize);
 		Game_LoadTilesFromMemory(pBuf);
 		free(pBuf);
@@ -651,8 +766,22 @@ extern "C" void __cdecl Hook_LoadTilesFromMemory1996(tilesetMem_t *pTileMem) {
 		tilesetChunkHeader.dwSize = _byteswap_ulong(pTileMemEntry->dwSize);
 		pBuf = &pTileMemEntry->pBuf;
 
+		ConsoleLog(LOG_DEBUG, "(%u/%u) (%u) [%c%c%c%c]\n", nChunk, nMaxChunks - 1, tilesetChunkHeader.dwSize, tilesetChunkHeader.szHead[0], tilesetChunkHeader.szHead[1], tilesetChunkHeader.szHead[2], tilesetChunkHeader.szHead[3]);
+
 		bGotShap = bGotName = FALSE;
 		if (memcmp(tilesetChunkHeader.szHead, "SHAP", 4) == 0) {
+			// This check is present to avoid a misalignment
+			// situation that was originally occurring while
+			// processing the reconstituted Macintosh-specific
+			// MIF tilesets. It is necessary as a result of the
+			// empty SHAP entries only containing the size + 4
+			// (The size of the SHAP header).
+			if (nRevType == REV_DOSMAC) {
+				if (memcmp(pBuf, "SHAP", 4) == 0 && !tilesetChunkHeader.dwSize) {
+					pTileMemEntry = (tileMem_t *)&pTileMemEntry->pBuf;
+					continue;
+				}
+			}
 			bGotShap = Game_ReadTileShapInformation((tileShap_t *)pBuf);
 			if (!bGotShap) {
 				if (!bTilesetLoadOutOfMemory && bResize) {
@@ -681,7 +810,7 @@ extern "C" void __cdecl Hook_LoadTilesFromMemory1996(tilesetMem_t *pTileMem) {
 }
 
 extern "C" void __cdecl Hook_LoadTilesFromFile1996(FILE *f) {
-	char *pBuf;
+	char *pBuf, szHeader[4];
 	WORD nMaxChunks, nChunk;
 	DWORD dwSize;
 	tilesetChunkHeader_t tilesetChunkHeader;
@@ -693,6 +822,7 @@ extern "C" void __cdecl Hook_LoadTilesFromFile1996(FILE *f) {
 		fread(&nMaxChunks, 2, 1, f);
 		nMaxChunks = _byteswap_ushort(nMaxChunks);
 		for (nChunk = 0; nMaxChunks > nChunk; ++nChunk) {
+			memset(pBuf, 0, 0x10000);
 			memset(&tilesetChunkHeader, 0, sizeof(tilesetChunkHeader_t));
 			fread(tilesetChunkHeader.szHead, 1, 4, f);
 			if (feof(f))
@@ -702,13 +832,32 @@ extern "C" void __cdecl Hook_LoadTilesFromFile1996(FILE *f) {
 			tilesetChunkHeader.dwSize = _byteswap_ulong(dwSize);
 			if (!bSomeBool)
 				tilesetChunkHeader.dwSize += 1;
-			fread(pBuf, 1, tilesetChunkHeader.dwSize, f);
+
+			ConsoleLog(LOG_DEBUG, "(%u/%u) (%u) [%c%c%c%c]\n", nChunk, nMaxChunks - 1, tilesetChunkHeader.dwSize, tilesetChunkHeader.szHead[0], tilesetChunkHeader.szHead[1], tilesetChunkHeader.szHead[2], tilesetChunkHeader.szHead[3]);
+
 			if (memcmp(tilesetChunkHeader.szHead, "SHAP", 4) == 0) {
+				// This check is present to avoid a misalignment
+				// situation that was originally occurring while
+				// processing the reconstituted Macintosh-specific
+				// MIF tilesets. It is necessary as a result of the
+				// empty SHAP entries only containing the size + 4
+				// (The size of the SHAP header).
+				if (nRevType == REV_DOSMAC) {
+					fread(szHeader, 1, 4, f);
+					fseek(f, -4, SEEK_CUR);
+					if (memcmp(szHeader, "SHAP", 4) == 0 && !tilesetChunkHeader.dwSize)
+						continue;
+				}
+				fread(pBuf, 1, tilesetChunkHeader.dwSize, f);
 				if (!Game_ReadTileShapInformation((tileShap_t *)pBuf) && !bTilesetLoadOutOfMemory)
 					bTilesetLoadOutOfMemory = TRUE;
 			}
-			else if (memcmp(tilesetChunkHeader.szHead, "NAME", 4) == 0)
+			else if (memcmp(tilesetChunkHeader.szHead, "NAME", 4) == 0) {
+				fread(pBuf, 1, tilesetChunkHeader.dwSize, f);
 				Game_ReadTileNameInformation((tileName_t *)pBuf);
+			}
+			else
+				fseek(f, tilesetChunkHeader.dwSize, SEEK_CUR);
 
 			// Added. If this is set to true it stands to reason
 			// you'd then want to break out of the loop.
@@ -766,6 +915,8 @@ extern "C" BOOL __cdecl Hook_ChangeTileSpriteEntry1996(int nSpriteID, WORD nWidt
 			pArrSpriteHeaders[nSpriteID].sprOffset.sprPtr = 0;
 		}
 		memcpy(pDst, pBuf, dwSize);
+		if (nRevType >= REV_WIN && nRevType <= REV_DOSMAC)
+			L_ConvertSprite(nWidth, nHeight, pDst, nRevType);
 		pArrSpriteHeaders[nSpriteID].sprOffset.sprPtr = pDst;
 		pArrSpriteHeaders[nSpriteID].wWidth = nWidth;
 		pArrSpriteHeaders[nSpriteID].wHeight = nHeight;
