@@ -52,8 +52,6 @@ BOOL bOnTheFlyPalIdx = FALSE;
 BOOL bDisableFixedTiles = FALSE;
 int iForcedBits = 0;
 
-BYTE DOSMacPalTable[256];
-
 std::random_device rdRandomDevice;
 std::mt19937 mtMersenneTwister(rdRandomDevice());
 

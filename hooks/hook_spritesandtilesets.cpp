@@ -39,7 +39,7 @@ static int nRevType = REV_WIN;
 
 std::vector<sprite_ids_t> spriteIDs;
 
-static void L_ConvertSprite(WORD nWidth, WORD nHeight, BYTE *pBits, int nConvType) {
+static void L_ConvertSprite(WORD nWidth, WORD nHeight, BYTE *pBits, int nConvType, int nConvReplPal) {
 	BYTE *pTileBits, pTileBitCount, pTileChunkMode, pBit;
 	WORD nShapeWidth, nShapeHeight, nCurrWidth;
 	BOOL bDone;
@@ -86,9 +86,9 @@ static void L_ConvertSprite(WORD nWidth, WORD nHeight, BYTE *pBits, int nConvTyp
 							// Under DOS you want the bit to be 0xFF/White
 							// while under Mac you want it to be 0x00/Black.
 							if (nConvType == REV_DOSMAC)
-								pBit = (*pTileBits == 0xFF) ? 0x00 : DOSMacPalTable[*pTileBits];
+								pBit = (*pTileBits == 0xFF) ? 0x00 : L_GetTranslatedDOSMacPaletteIdx(*pTileBits, nConvReplPal);
 							else if (nConvType == REV_WIN)
-								pBit = (*pTileBits == 0xE8) ? 0x00 : *pTileBits;
+								pBit = L_GetAdjustedPaletteIdx(*pTileBits, nConvReplPal);
 							else
 								pBit = *pTileBits;
 						}
@@ -153,8 +153,15 @@ static void AllocateAndLoadSprites1996(FILE *pFile, sprite_archive_t *lpBuf, WOR
 							Game_FreeDataEntry(pArrSpriteHeaders[nID].sprOffset.sprPtr);
 							pArrSpriteHeaders[nID].sprOffset.sprPtr = 0;
 						}
-						if (nRevType >= REV_WIN && nRevType <= REV_DOSMAC)
-							L_ConvertSprite(pSprEnt->wWidth, pSprEnt->wHeight, pSpriteData, nRevType);
+						if (nRevType >= REV_WIN && nRevType <= REV_DOSMAC) {
+							int nConvRepl = 0;
+							if (GET_OVERALL_SPRITE(nID, SPRITE_SMALL_INFRASTRUCTURE_CRANE) ||
+								GET_OVERALL_SPRITE(nID, SPRITE_SMALL_MILITARY_LOADINGBAY))
+								nConvRepl = 2;
+							else if (GET_OVERALL_SPRITE(nID, SPRITE_SMALL_MILITARY_HANGAR1))
+								nConvRepl = 1;
+							L_ConvertSprite(pSprEnt->wWidth, pSprEnt->wHeight, pSpriteData, nRevType, nConvRepl);
+						}
 						pArrSpriteHeaders[nID].sprOffset.sprPtr = pSpriteData;
 						pArrSpriteHeaders[nID].wHeight = pSprEnt->wHeight;
 						pArrSpriteHeaders[nID].wWidth = pSprEnt->wWidth;
@@ -915,8 +922,15 @@ extern "C" BOOL __cdecl Hook_ChangeTileSpriteEntry1996(int nSpriteID, WORD nWidt
 			pArrSpriteHeaders[nSpriteID].sprOffset.sprPtr = 0;
 		}
 		memcpy(pDst, pBuf, dwSize);
-		if (nRevType >= REV_WIN && nRevType <= REV_DOSMAC)
-			L_ConvertSprite(nWidth, nHeight, pDst, nRevType);
+		if (nRevType >= REV_WIN && nRevType <= REV_DOSMAC) {
+			int nConvRepl = 0;
+			if (nRevType == REV_DOSMAC) {
+				if (GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INFRASTRUCTURE_CRANE) ||
+					GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_MILITARY_LOADINGBAY))
+					nConvRepl = 2;
+			}
+			L_ConvertSprite(nWidth, nHeight, pDst, nRevType, nConvRepl);
+		}
 		pArrSpriteHeaders[nSpriteID].sprOffset.sprPtr = pDst;
 		pArrSpriteHeaders[nSpriteID].wWidth = nWidth;
 		pArrSpriteHeaders[nSpriteID].wHeight = nHeight;

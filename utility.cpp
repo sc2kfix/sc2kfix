@@ -23,6 +23,8 @@ HFONT hFontArialBold10;
 HFONT hFontArialBold16;
 HFONT hSystemRegular12;
 
+static BYTE DOSMacPalTable[256];
+
 void InitializeFonts(void) {
 	if (bFontsInitialized)
 		return;
@@ -500,6 +502,34 @@ void SetRGBEntry(RGBQUAD *pRGB, BYTE r, BYTE g, BYTE b) {
 	pRGB->rgbGreen = g;
 	pRGB->rgbBlue = b;
 	pRGB->rgbReserved = 0;
+}
+
+int L_GetTranslatedDOSMacPaletteIdx(BYTE palIdx, int nType) {
+	// In the tiny/small equivalents of the
+	// "Hangar1", "Loading Bay" and "Crane" tiles
+	// instead of index 0xB3 it uses 0x34 - consider
+	// this as a conversion option during translation.
+	if (palIdx == 0xE8) {
+		if (nType == 2)
+			return 0x34;
+	}
+	return DOSMacPalTable[palIdx];
+}
+
+int L_GetAdjustedPaletteIdx(BYTE palIdx, int nType) {
+	// In the tiny/small equivalents of the
+	// "Hangar1", "Loading Bay" and "Crane" tiles
+	// instead of index 0xB3 it uses 0x34 - consider
+	// this as a conversion option during translation.
+	if (palIdx == 0xE8) {
+		if (nType == 1)
+			return 0xB3;
+		else if (nType == 2)
+			return 0x34;
+		else
+			return 0x00;
+	}
+	return palIdx;
 }
 
 void L_InitDOSMacPaletteIdxTable() {
