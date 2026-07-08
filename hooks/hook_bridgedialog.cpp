@@ -278,7 +278,7 @@ static void L_BridgeSelectDialog_OnDrawEntire_SC2K1996(CBridgeSelectDialog *pThi
 	MoveToEx(pDC->m_hDC, nOuterHalfWidth - textSz.cx / 2, nY, &pt);
 	TextOutA(pDC->m_hDC, 0, 0, szBuf, strlen(szBuf));
 	SetTextColor(pDC->m_hDC, crTextOld);
-	LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, dwBridgeStringIDs[nAvailableBridge], szBuf, sizeof(szBuf) - 1);
+	L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, dwBridgeStringIDs[nAvailableBridge], szBuf, sizeof(szBuf) - 1);
 	GetTextExtentPointA(pDC->m_hAttribDC, szBuf, strlen(szBuf), &textSz);
 	nY = nY - textSz.cy;
 	MoveToEx(pDC->m_hDC, nOuterHalfWidth - textSz.cx / 2, nY, &pt);
