@@ -400,6 +400,9 @@ extern bool bDarkUnderground;
 
 extern int iTerrainCosmeticMode;
 
+extern DWORD dwFixedTileMask;
+extern int nHangar1Mode;
+
 // Game path global
 
 extern char szGamePath[MAX_PATH];

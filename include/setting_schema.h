@@ -14,6 +14,25 @@
 #define TERRAIN_COSMETIC_COLD  3
 #define TERRAIN_COSMETIC_HOT   4
 
+#define FIXTIL_MASK_HORZOFF    1    // "Drive-In Theater", "Gas Power Plant", "Oil Power Plant", "Nuclear Power Plant"
+#define FIXTIL_MASK_VERTOFF    2    // "Large Apartment Building"
+#define FIXTIL_MASK_BADPALIDX  4    // "Theater Square", "Chemical Processing 1", "Hospital", "Marina", "Seaport Warehouse", "Control Tower (Military)", "Dustclouds 1-4"
+#define FIXTIL_MASK_MISSPIXELS 8    // "Plymouth Arcology"
+#define FIXTIL_MASK_OOBPALIDX  16   // "Crane", "Loading Bay"
+#define FIXTIL_MASK_HANGAROPEN 32   // "Hangar 1" - door open
+#define FIXTIL_MASK_HANGARANIM 64   // "Hangar 1" - door will open and shut (grey)
+#define FIXTIL_MASK_HANGARSHUT 128  // "Hangar 1" - door shut (yellow - extrapolated from small/tiny object)
+
+#define FIXTIL_SC2K_MASK       (FIXTIL_MASK_HORZOFF|FIXTIL_MASK_VERTOFF|FIXTIL_MASK_BADPALIDX|FIXTIL_MASK_OOBPALIDX|FIXTIL_MASK_HANGARANIM)
+#define FIXTIL_SCURK_MASK      (FIXTIL_MASK_HORZOFF|FIXTIL_MASK_VERTOFF|FIXTIL_MASK_BADPALIDX|FIXTIL_MASK_MISSPIXELS|FIXTIL_MASK_OOBPALIDX|FIXTIL_MASK_HANGARANIM)
+
+#define HANGAR1_SHUT     0    // Yellow background (extrapolated from small/tiny object)
+#define HANGAR1_ANIM     1    // Black/grey 8 frame animation
+#define HANGAR1_OPEN     2    // Black background
+
+#define HANGAR1_MIN      HANGAR1_SHUT
+#define HANGAR1_MAX      HANGAR1_OPEN
+
 // Defaults
 
 // SimCity2000
@@ -80,6 +99,11 @@
 #define DEF_FIX_QOL_USENEWSTRINGS   true
 #define DEF_FIX_QOL_MOVZOOMFACTOR   2
 #define DEF_FIX_QOL_TERRAINCOSMETIC TERRAIN_COSMETIC_NONE
+
+#define DEF_FIX_QOL_SC2K_FIXTILMSK  FIXTIL_SC2K_MASK
+#define DEF_FIX_QOL_SCURK_FIXTILMSK FIXTIL_SCURK_MASK
+#define DEF_FIX_QOL_SC2K_HANGARCNV  HANGAR1_ANIM
+#define DEF_FIX_QOL_SCURK_HANGARCNV HANGAR1_ANIM
 
 // Setting defines
 
@@ -177,3 +201,8 @@
 #define I_FIX_QOL_USENEWSTRINGS   "use_new_strings"
 #define I_FIX_QOL_MOVZOOMFACTOR   "movie_zoom_factor"
 #define I_FIX_QOL_TERRAINCOSMETIC "force_terrain_cosmetic_mode"
+
+#define I_FIX_QOL_SC2K_FIXTILMSK  "fixed_object_mask_sc2k"
+#define I_FIX_QOL_SCURK_FIXTILMSK "fixed_object_mask_scurk"
+#define I_FIX_QOL_SC2K_HANGARCNV  "hangar1_convmode_sc2k"
+#define I_FIX_QOL_SCURK_HANGARCNV "hangar1_convmode_scurk"

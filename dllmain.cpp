@@ -19,6 +19,8 @@
 #include <winmm_exports.h>
 #include "resource.h"
 
+#define TIXEDTIL_BUILD 1
+
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
@@ -50,6 +52,7 @@ BOOL bDisableAutoThingCleanup = TRUE;
 BOOL bMapWireFrame = FALSE;
 BOOL bOnTheFlyPalIdx = FALSE;
 BOOL bDisableFixedTiles = FALSE;
+BOOL bBuildFixedTiles = FALSE;
 int iForcedBits = 0;
 
 std::random_device rdRandomDevice;
@@ -209,6 +212,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						bMapWireFrame = TRUE;
 					if (!lstrcmpiW(argv[i], L"-disablefixedtiles"))
 						bDisableFixedTiles = TRUE;
+#if TIXEDTIL_BUILD
+					if (!lstrcmpiW(argv[i], L"-buildfixedtiles"))
+						bBuildFixedTiles = TRUE;
+#endif
 #if USE_ONTHEFLYPALIDX
 					if (!lstrcmpiW(argv[i], L"-ontheflypalidx"))
 						bOnTheFlyPalIdx = TRUE;

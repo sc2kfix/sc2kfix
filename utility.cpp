@@ -510,8 +510,10 @@ int L_GetTranslatedDOSMacPaletteIdx(BYTE palIdx, int nType) {
 	// instead of index 0xB3 it uses 0x34 - consider
 	// this as a conversion option during translation.
 	if (palIdx == 0xE8) {
-		if (nType == 2)
+		if (nType == 0)
 			return 0x34;
+		else if (nType == 2)
+			return 0x00;
 	}
 	return DOSMacPalTable[palIdx];
 }
@@ -521,13 +523,18 @@ int L_GetAdjustedPaletteIdx(BYTE palIdx, int nType) {
 	// "Hangar1", "Loading Bay" and "Crane" tiles
 	// instead of index 0xB3 it uses 0x34 - consider
 	// this as a conversion option during translation.
+	if (nType == 3) {
+		if ((palIdx >= 0x0A && palIdx <= 0x0F) ||
+			(palIdx >= 0xE8 && palIdx <= 0xF5))
+			return 0x00;
+	}
 	if (palIdx == 0xE8) {
 		if (nType == 1)
 			return 0xB3;
 		else if (nType == 2)
-			return 0x34;
-		else
 			return 0x00;
+		else
+			return 0x34;
 	}
 	return palIdx;
 }

@@ -38,6 +38,8 @@ bool bWeatherEffects = false;
 bool bDarkUnderground = false;
 int iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
 int nMovZoomFactor = MIN_MOVZOOMFACTOR;
+int nHangar1Mode = HANGAR1_ANIM;
+DWORD dwFixedTileMask = 0;
 
 char szGamePath[MAX_PATH];
 
@@ -126,6 +128,10 @@ void DefaultSettingsSC2KFixCore(json::JSON& jsonSettings) {
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND] = DEF_FIX_QOL_TITLECALEND;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_MOVZOOMFACTOR] = DEF_FIX_QOL_MOVZOOMFACTOR;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC] = DEF_FIX_QOL_TERRAINCOSMETIC;
+	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_FIXTILMSK] = DEF_FIX_QOL_SC2K_FIXTILMSK;
+	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SCURK_FIXTILMSK] = DEF_FIX_QOL_SCURK_FIXTILMSK;
+	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_HANGARCNV] = DEF_FIX_QOL_SC2K_HANGARCNV;
+	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SCURK_HANGARCNV] = DEF_FIX_QOL_SCURK_HANGARCNV;
 	
 	for (int i = 10000; i < 10019; i++) {
 		jsonSettings[C_SC2KFIX][S_FIX_MUSMID][std::to_string(i)] = "";
@@ -268,6 +274,18 @@ static void GetSpecificStoredJSONVars() {
 		ConsoleLog(LOG_INFO, "Invalid Movie Zoom Factor '%d' - it cannot be greater than '%d'; setting to '%d'\n", nMovZoomFactor, MAX_MOVZOOMFACTOR, MAX_MOVZOOMFACTOR);
 		nMovZoomFactor = MAX_MOVZOOMFACTOR;
 	}
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		dwFixedTileMask = (DWORD)jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SCURK_FIXTILMSK].ToInt();
+		nHangar1Mode = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SCURK_HANGARCNV].ToInt();
+	}
+	else {
+		dwFixedTileMask = (DWORD)jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_FIXTILMSK].ToInt();
+		nHangar1Mode = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_HANGARCNV].ToInt();
+	}
+	if (nHangar1Mode < HANGAR1_MIN)
+		nHangar1Mode = HANGAR1_MIN;
+	else if (nHangar1Mode > HANGAR1_MAX)
+		nHangar1Mode = HANGAR1_MAX;
 }
 
 void LoadJSONSettings(void) {

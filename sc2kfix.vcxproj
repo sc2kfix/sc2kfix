@@ -226,7 +226,14 @@ const char* szSC2KFixBuildInfo = "$(UserName)@$(ComputerName)  $([System.DateTim
     <ClCompile Include="utility.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="blobs\FIXEDTILES.MIF" />
+    <None Include="blobs\FIXEDTILES_BADPALIDX.MIF" />
+    <None Include="blobs\FIXEDTILES_HANGAR1_ANIM.MIF" />
+    <None Include="blobs\FIXEDTILES_HANGAR1_OPEN.MIF" />
+    <None Include="blobs\FIXEDTILES_HANGAR1_SHUT.MIF" />
+    <None Include="blobs\FIXEDTILES_HORZOFF.MIF" />
+    <None Include="blobs\FIXEDTILES_MISSPIXELS.MIF" />
+    <None Include="blobs\FIXEDTILES_OOBPALIDX.MIF" />
+    <None Include="blobs\FIXEDTILES_VERTOFF.MIF" />
     <None Include="blobs\libsc2kfix.lua" />
     <None Include="blobs\SCURKBMP_PAL.bin" />
     <None Include="blobs\SCURKMAP_PAL.bin" />

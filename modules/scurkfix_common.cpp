@@ -18,6 +18,8 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
+extern BOOL bBuildFixedTiles;
+
 UINT mischook_scurk_debug = MISCHOOK_SCURK_DEBUG;
 
 // SCURK-side debug output function
@@ -549,6 +551,78 @@ extern "C" void __cdecl Hook_SCURK_winscurkMDIClient_CycleColors(winscurkMDIClie
 
 // cEditableTileSet functions
 
+static void L_SCURK_TranslateConvert(cEditableTileSet *pThis, WORD nDBID, int nConvType, int nConvRepl) {
+	BYTE *pTileBits, pTileBitCount, pTileChunkMode, pBit;
+	WORD nShapeWidth, nShapeHeight, nCurrWidth;
+	BOOL bDone;
+	WORD pTileRemainingBitCount;
+
+	if (pThis->mTileSet) {
+		nCurrWidth = 0;
+		pTileBits = pThis->mTiles[nDBID];
+		if (pTileBits) {
+			nShapeHeight = pThis->mTileSet->pData[nDBID].sprHeader.wHeight;
+			nShapeWidth = pThis->mTileSet->pData[nDBID].sprHeader.wWidth;
+
+			bDone = 0;
+			while (!bDone) {
+				pTileBitCount = SPRITEDATA(pTileBits)->nCount;
+				pTileChunkMode = SPRITEDATA(pTileBits)->nChunkMode;
+				pTileBits = (BYTE *)&SPRITEDATA(pTileBits)->pBuf;
+				switch (pTileChunkMode) {
+				case MIF_CM_EMPTY:
+					continue;
+				case MIF_CM_NEWROWSTART:
+					nCurrWidth = 0;
+					bDone = nShapeHeight == 0;
+					--nShapeHeight;
+					break;
+				case MIF_CM_ENDOFSPRITE:
+					bDone = 1;
+					break;
+				case MIF_CM_SKIPPIXELS:
+					nCurrWidth += pTileBitCount;
+					break;
+				case MIF_CM_PROCPIXELS:
+					for (pTileRemainingBitCount = pTileBitCount; pTileRemainingBitCount; ++nCurrWidth) {
+						--pTileRemainingBitCount;
+						// *pTileBits here in this case is nPixelIndex (colour lookup palette index)
+						//
+						// 'if (nCurrWidth < nShapeWidth)' removed
+						// to avoid certain columns of pixels being
+						// missed during palette processing.
+						{
+							if (*pTileBits == 0xFC)
+								pBit = 0x61;
+							else {
+								// Exception needed in this case.
+								// Under DOS you want the bit to be 0xFF/White
+								// while under Mac you want it to be 0x00/Black.
+								if (nConvType == REV_DOSMAC)
+									pBit = (*pTileBits == 0xFF) ? 0x00 : L_GetTranslatedDOSMacPaletteIdx(*pTileBits, nConvRepl);
+								else if (nConvType == REV_WIN)
+									pBit = L_GetAdjustedPaletteIdx(*pTileBits, nConvRepl);
+								else
+									pBit = *pTileBits;
+							}
+							*pTileBits = pBit;
+						}
+						++pTileBits;
+					}
+					if (!IsEvenUnsigned(pTileBitCount)) {
+						++pTileBits;
+						++nCurrWidth;
+					}
+					break;
+				default:
+					bDone = 1;
+					break;
+				}
+			}
+		}
+	}
+}
+
 #if SPRITE_ARCHIVE_LOADING
 static void L_SCURK_LoadDataArchive(cEditableTileSet *pTileSet, const char *pArcPath) {
 	FILE *f;
@@ -604,6 +678,8 @@ static void L_SCURK_LoadDataArchive(cEditableTileSet *pTileSet, const char *pArc
 
 				fseek(f, shapHeader.dwSize, SEEK_SET);
 				fread(pTileSet->mTiles[nDBID], nSize, 1, f);
+
+				L_SCURK_TranslateConvert(pTileSet, nDBID, REV_WIN, 3);
 			}
 			R_SCURK_WRP_gFreeBlock(pSpriteArc);
 			pSpriteArc = 0;
@@ -690,6 +766,13 @@ extern "C" LONG __cdecl Hook_SCURK_EditableTileSet_mReadFromFile(cEditableTileSe
 			R_SCURK_WRP_gUpdateWaitWindow();
 		++nIdx;
 	} while (nIdx < pThis->mTileSet->nSprites);
+	// Added this block here due to some interesting 
+	// palette index strangeness that exists within 
+	// certain tiles in the TILES.DB
+	for (nIdx = 0; nIdx < SPRITE_COUNT; ++nIdx) {
+		WORD nDBID = pThis->mDBIndexFromShapeNum[nIdx];
+		L_SCURK_TranslateConvert(pThis, nDBID, REV_WIN, 3);
+	}
 	R_SCURK_WRP_gUpdateWaitWindow();
 	pThis->mTileSet[514].pData[0].sprHeader.wWidth += 4;
 	pThis->mTileSet[98].pData[0].nSprNum += 2;
@@ -783,6 +866,28 @@ static void L_SCURK_WriteMIFFShap(cEditableTileSet *pThis, FILE *f, int nShapNum
 	fwrite(pThis->mTiles[nDBID], pThis->mTileSizeTable[nDBID], 1, f);
 }
 
+static void L_SCURK_WriteEmptyMIFFShap(cEditableTileSet *pThis, FILE *f, int nShapNum, int nShapSubtractStart) {
+	DWORD dwBuf, dwEmpty = 0;
+	WORD wBuf;
+	int nDBID;
+	char szHeadName[4];
+
+	nDBID = pThis->mDBIndexFromShapeNum[nShapNum] - nShapSubtractStart;
+	memcpy(szHeadName, "SHAP", 4);
+	fwrite(szHeadName, 1, sizeof(szHeadName), f);
+	dwBuf = _byteswap_ulong(4 + sizeof(tilesetShapHeader_t));
+	fwrite(&dwBuf, sizeof(dwBuf), 1, f);
+	wBuf = _byteswap_ushort(nShapNum - nShapSubtractStart);
+	fwrite(&wBuf, sizeof(wBuf), 1, f);
+	wBuf = _byteswap_ushort(pThis->mTileSet->pData[nDBID].sprHeader.wWidth);
+	fwrite(&wBuf, sizeof(wBuf), 1, f);
+	wBuf = _byteswap_ushort(0);
+	fwrite(&wBuf, sizeof(wBuf), 1, f);
+	dwBuf = _byteswap_ulong(4);
+	fwrite(&dwBuf, sizeof(dwBuf), 1, f);
+	fwrite(&dwEmpty, 4, 1, f);
+}
+
 extern "C" int __cdecl Hook_SCURK_EditableTileSet_mWriteToMIFFFile(cEditableTileSet *pThis, LPCSTR lpPathName) {
 	int ret;
 	FILE *f;
@@ -807,7 +912,10 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mWriteToMIFFFile(cEditableTile
 			nShapNum = pThis->mShapeNumFromEditableNum[nEdNum];
 			nDBID = pThis->mDBIndexFromShapeNum[nShapNum];
 
-			dwContLen += pThis->mTileSizeTable[nDBID - SPRITE_LARGE_START] + pThis->mTileSizeTable[nDBID - SPRITE_MEDIUM_START] + pThis->mTileSizeTable[nDBID];
+			if (bBuildFixedTiles)
+				dwContLen += 4 + 4 + pThis->mTileSizeTable[nDBID];
+			else
+				dwContLen += pThis->mTileSizeTable[nDBID - SPRITE_LARGE_START] + pThis->mTileSizeTable[nDBID - SPRITE_MEDIUM_START] + pThis->mTileSizeTable[nDBID];
 			if (pThis->mTileIsRenamed[nEdNum]) {
 				nNameLen = strlen(pThis->mTileNames[nEdNum]);
 				pThis->mTileNames[nNameLen] = 0;
@@ -915,11 +1023,20 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mWriteToMIFFFile(cEditableTile
 			// Large - subtract by SPRITE_SMALL_START
 			L_SCURK_WriteMIFFShap(pThis, f, nShapNum, SPRITE_SMALL_START);
 
-			// Small - subtract by SPRITE_MEDIUM_START
-			L_SCURK_WriteMIFFShap(pThis, f, nShapNum, SPRITE_MEDIUM_START);
+			if (!bBuildFixedTiles) {
+				// Small - subtract by SPRITE_MEDIUM_START
+				L_SCURK_WriteMIFFShap(pThis, f, nShapNum, SPRITE_MEDIUM_START);
 
-			// Tiny - subtract by SPRITE_LARGE_START
-			L_SCURK_WriteMIFFShap(pThis, f, nShapNum, SPRITE_LARGE_START);
+				// Tiny - subtract by SPRITE_LARGE_START
+				L_SCURK_WriteMIFFShap(pThis, f, nShapNum, SPRITE_LARGE_START);
+			}
+			else {
+				// Small - subtract by SPRITE_MEDIUM_START
+				L_SCURK_WriteEmptyMIFFShap(pThis, f, nShapNum, SPRITE_MEDIUM_START);
+
+				// Tiny - subtract by SPRITE_LARGE_START
+				L_SCURK_WriteEmptyMIFFShap(pThis, f, nShapNum, SPRITE_LARGE_START);
+			}
 		}
 		fclose(f);
 		ret = 1;
@@ -928,79 +1045,13 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mWriteToMIFFFile(cEditableTile
 	return ret;
 }
 
-static void L_SCURK_TranslateFromMac(cEditableTileSet *pThis, WORD nDBID, int nConvRepl) {
-	BYTE *pTileBits, pTileBitCount, pTileChunkMode, pBit;
-	WORD nShapeWidth, nShapeHeight, nCurrWidth;
-	BOOL bDone;
-	WORD pTileRemainingBitCount;
-
-	if (pThis->mTileSet) {
-		nCurrWidth = 0;
-		pTileBits = pThis->mTiles[nDBID];
-		if (pTileBits) {
-			nShapeHeight = pThis->mTileSet->pData[nDBID].sprHeader.wHeight;
-			nShapeWidth = pThis->mTileSet->pData[nDBID].sprHeader.wWidth;
-
-			bDone = 0;
-			while (!bDone) {
-				pTileBitCount = SPRITEDATA(pTileBits)->nCount;
-				pTileChunkMode = SPRITEDATA(pTileBits)->nChunkMode;
-				pTileBits = (BYTE *)&SPRITEDATA(pTileBits)->pBuf;
-				switch (pTileChunkMode) {
-				case MIF_CM_EMPTY:
-					continue;
-				case MIF_CM_NEWROWSTART:
-					nCurrWidth = 0;
-					bDone = nShapeHeight == 0;
-					--nShapeHeight;
-					break;
-				case MIF_CM_ENDOFSPRITE:
-					bDone = 1;
-					break;
-				case MIF_CM_SKIPPIXELS:
-					nCurrWidth += pTileBitCount;
-					break;
-				case MIF_CM_PROCPIXELS:
-					for (pTileRemainingBitCount = pTileBitCount; pTileRemainingBitCount; ++nCurrWidth) {
-						--pTileRemainingBitCount;
-						// *pTileBits here in this case is nPixelIndex (colour lookup palette index)
-						//
-						// 'if (nCurrWidth < nShapeWidth)' removed
-						// to avoid certain columns of pixels being
-						// missed during palette processing.
-						{
-							if (*pTileBits == 0xFC)
-								pBit = 0x61;
-							else {
-								// Exception needed in this case.
-								// Under DOS you want the bit to be 0xFF/White
-								// while under Mac you want it to be 0x00/Black.
-								pBit = (*pTileBits == 0xFF) ? 0x00 : L_GetTranslatedDOSMacPaletteIdx(*pTileBits, nConvRepl);
-							}
-							*pTileBits = pBit;
-						}
-						++pTileBits;
-					}
-					if (!IsEvenUnsigned(pTileBitCount)) {
-						++pTileBits;
-						++nCurrWidth;
-					}
-					break;
-				default:
-					bDone = 1;
-					break;
-				}
-			}
-		}
-	}
-}
-
 extern "C" int __cdecl Hook_SCURK_EditableTileSet_mReadFromMIFFFile(cEditableTileSet *pThis, LPCSTR lpPathName) {
 	int ret;
 	FILE *f;
 	tilesetMainHeader_t mainHeader;
 	tilesetHeadInfo_t infoHeader;
 	char szHeader[4];
+	int nRevType;
 	BOOL bMac;
 	tilesetTileInfo_t tileHeader;
 	tilesetChunkHeader_t chunkHeader;
@@ -1030,8 +1081,11 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mReadFromMIFFFile(cEditableTil
 			if (memcmp(infoHeader.szHead, "INFO", 4) == 0) {
 				fread(szHeader, 1, 4, f);
 				fseek(f, -4, SEEK_CUR);
+				nRevType = REV_WIN;
 				if (memcmp(szHeader, "_MAC", 4) == 0)
-					bMac = TRUE;
+					nRevType = REV_DOSMAC;
+				else if (memcmp(szHeader, "00W_", 4) == 0)
+					nRevType = REV_W00;
 
 				mainHeader.dwSize = _byteswap_ulong(mainHeader.dwSize);
 				infoHeader.dwSize = _byteswap_ulong(infoHeader.dwSize);
@@ -1058,7 +1112,7 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mReadFromMIFFFile(cEditableTil
 							// MIF tilesets. It is necessary as a result of the
 							// empty SHAP entries only containing the size + 4
 							// (The size of the SHAP header).
-							if (bMac) {
+							if (nRevType == REV_DOSMAC) {
 								fread(szHeader, 1, 4, f);
 								fseek(f, -4, SEEK_CUR);
 								if (memcmp(szHeader, "SHAP", 4) == 0 && !chunkHeader.dwSize)
@@ -1076,11 +1130,15 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mReadFromMIFFFile(cEditableTil
 							shapHeader.nHeight = _byteswap_ushort(nHeight);
 							shapHeader.dwSize = _byteswap_ulong(dwSize);
 
-							int nConvRepl = 0;
-							if (bMac) {
-								if (GET_OVERALL_SPRITE(shapHeader.nSpriteID, SPRITE_SMALL_INFRASTRUCTURE_CRANE) ||
-									GET_OVERALL_SPRITE(shapHeader.nSpriteID, SPRITE_SMALL_MILITARY_LOADINGBAY))
-									nConvRepl = 2;
+							int nConvRepl = 3;
+							if (nRevType == REV_DOSMAC) {
+								nConvRepl = 0;
+								if (GET_OVERALL_SPRITE(shapHeader.nSpriteID, SPRITE_SMALL_MILITARY_HANGAR1)) {
+									if (nHangar1Mode == HANGAR1_ANIM)
+										nConvRepl = 1;
+									else if (nHangar1Mode == HANGAR1_OPEN)
+										nConvRepl = 2;
+								}
 							}
 
 							nDBID = pThis->mDBIndexFromShapeNum[shapHeader.nSpriteID];
@@ -1089,14 +1147,17 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mReadFromMIFFFile(cEditableTil
 								R_SCURK_WRP_gFreeBlock(pThis->mTiles[nDBID]);
 							pThis->mTiles[nDBID] = (BYTE *)R_SCURK_WRP_gAllocBlock(shapHeader.dwSize);
 							memset(pThis->mTiles[nDBID], 0, shapHeader.dwSize);
-							pThis->mTileSet->pData[nDBID].sprHeader.wHeight = shapHeader.nHeight;
-							pThis->mTileSet->pData[nDBID].sprHeader.wWidth = shapHeader.nWidth;
-							pThis->mTileSizeTable[nDBID] = shapHeader.dwSize;
+							if (!bBuildFixedTiles || (bBuildFixedTiles && shapHeader.nSpriteID >= SPRITE_LARGE_START)) {
+								pThis->mTileSet->pData[nDBID].sprHeader.wHeight = shapHeader.nHeight;
+								pThis->mTileSet->pData[nDBID].sprHeader.wWidth = shapHeader.nWidth;
+								pThis->mTileSizeTable[nDBID] = shapHeader.dwSize;
 
-							fread(pThis->mTiles[nDBID], shapHeader.dwSize, 1, f);
-
-							if (bMac)
-								L_SCURK_TranslateFromMac(pThis, nDBID, nConvRepl);
+								fread(pThis->mTiles[nDBID], shapHeader.dwSize, 1, f);
+								if (nRevType != REV_W00)
+									L_SCURK_TranslateConvert(pThis, nDBID, nRevType, nConvRepl);
+							}
+							else if (bBuildFixedTiles && shapHeader.nSpriteID < SPRITE_LARGE_START)
+								fseek(f, shapHeader.dwSize, SEEK_CUR);
 						}
 						else if (memcmp(chunkHeader.szHead, "NAME", 4) == 0) {
 							fread(&nameHeader, sizeof(tilesetNameHeader_t), 1, f);
@@ -1118,6 +1179,8 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mReadFromMIFFFile(cEditableTil
 
 						ret = 1;
 					}
+					if (bBuildFixedTiles)
+						R_SCURK_WRP_EditableTileSet_mBuildSmallMedTiles(pThis);
 				}
 			}
 		}
@@ -1449,12 +1512,22 @@ extern "C" void __cdecl Hook_SCURK_EditableTileSet_mRenderShapeToTile(cEditableT
 	}
 }
 
-static void L_SCURK_TranslateFromDOS(cEditableTileSet *pThis, WORD nDBID, BYTE *pDOSTileBuf, int nConvRepl) {
+static void L_SCURK_TranslateFromDOS(cEditableTileSet *pThis, WORD nShapNum, WORD nDBID, BYTE *pDOSTileBuf, bool bReadOnly) {
 	BYTE *pDOSTileBits, *pTileBitsBuf, *pTileBits;
 	int nTileSize;
 	BOOL bDone;
 	BYTE pDOSTileChunkMode, pDOSTileBitCount;
 	WORD pDOSTileRemainingBitCount;
+
+	int nConvRepl = 0;
+	if (bReadOnly) {
+		if (GET_OVERALL_SPRITE(nShapNum, SPRITE_SMALL_MILITARY_HANGAR1)) {
+			if (nHangar1Mode == HANGAR1_ANIM)
+				nConvRepl = 1;
+			else if (nHangar1Mode == HANGAR1_OPEN)
+				nConvRepl = 2;
+		}
+	}
 
 	if (pThis->mTiles[nDBID])
 		R_SCURK_WRP_gFreeBlock(pThis->mTiles[nDBID]);
@@ -1521,10 +1594,10 @@ extern "C" void __cdecl Hook_SCURK_EditableTileSet_mReadFromDOSFile(cEditableTil
 	FILE *f;
 	BYTE *lpBuffer;
 	tilMainStruct_t Buffer;
+	bool bReadOnly;
 	tilHeader_t *lpLargeShapeBuf, *lpSmallShapeBuf, *lpOtherShapeBuf;
 	DWORD dwLargeSize, dwLargeOffset, dwSmallSize, dwSmallOffset, dwOtherSize, dwOtherOffset;
 	WORD nShapNum, nDBID;
-	int nConvRepl;
 	__int16 nEdNum;
 	BOOL bValid;
 	tilesetShapVerify_t validTiles[SPRITE_COUNT];
@@ -1542,18 +1615,13 @@ extern "C" void __cdecl Hook_SCURK_EditableTileSet_mReadFromDOSFile(cEditableTil
 	if (f) {
 		lpBuffer = (BYTE *)R_SCURK_WRP_gAllocBlock(0xFFFF);
 		fread(&Buffer, 1, 0x80, f);
+		bReadOnly = (memcmp(Buffer.readOnlyFile, "READONLY.XXX", 12) == 0) ? true : false;
 		lpLargeShapeBuf = (tilHeader_t *)R_SCURK_WRP_gAllocBlock(0x2EE0);
 		fseek(f, Buffer.dwLargeOffset, SEEK_SET);
 		fread(lpLargeShapeBuf, 1, 0x2EE0, f);
 		dwLargeSize = Buffer.dwLargeSize;
 		for (nShapNum = SPRITE_LARGE_START; nShapNum < SPRITE_COUNT; ++nShapNum) {
 			R_SCURK_WRP_gUpdateWaitWindow();
-			nConvRepl = 0;
-			if (memcmp(Buffer.readOnlyFile, "READONLY.XXX", 12) == 0) {
-				if (GET_OVERALL_SPRITE(nShapNum, SPRITE_SMALL_INFRASTRUCTURE_CRANE) ||
-					GET_OVERALL_SPRITE(nShapNum, SPRITE_SMALL_MILITARY_LOADINGBAY))
-					nConvRepl = 2;
-			}
 			nEdNum = R_SCURK_WRP_EditableTileSet_mShapeNumToEditableNum(pThis, nShapNum - SPRITE_LARGE_START);
 			nDBID = pThis->mDBIndexFromShapeNum[nShapNum];
 			dwLargeOffset = lpLargeShapeBuf[nShapNum].dwOffset;
@@ -1579,7 +1647,7 @@ extern "C" void __cdecl Hook_SCURK_EditableTileSet_mReadFromDOSFile(cEditableTil
 			fseek(f, dwLargeSize + dwLargeOffset, SEEK_SET);
 			fread(lpBuffer, 1, 0xFFFF, f);
 			if (validTiles[nShapNum].nValidated == 1)
-				L_SCURK_TranslateFromDOS(pThis, nDBID, lpBuffer, nConvRepl);
+				L_SCURK_TranslateFromDOS(pThis, nShapNum, nDBID, lpBuffer, bReadOnly);
 		}
 
 		lpOtherShapeBuf = (tilHeader_t *)R_SCURK_WRP_gAllocBlock(0x2EE0);
@@ -1588,12 +1656,6 @@ extern "C" void __cdecl Hook_SCURK_EditableTileSet_mReadFromDOSFile(cEditableTil
 		dwOtherSize = Buffer.dwOtherSize;
 		for (nShapNum = SPRITE_MEDIUM_START; nShapNum < SPRITE_LARGE_START; ++nShapNum) {
 			R_SCURK_WRP_gUpdateWaitWindow();
-			nConvRepl = 0;
-			if (memcmp(Buffer.readOnlyFile, "READONLY.XXX", 12) == 0) {
-				if (GET_OVERALL_SPRITE(nShapNum, SPRITE_SMALL_INFRASTRUCTURE_CRANE) ||
-					GET_OVERALL_SPRITE(nShapNum, SPRITE_SMALL_MILITARY_LOADINGBAY))
-					nConvRepl = 2;
-			}
 			nEdNum = R_SCURK_WRP_EditableTileSet_mShapeNumToEditableNum(pThis, nShapNum - SPRITE_MEDIUM_START);
 			nDBID = pThis->mDBIndexFromShapeNum[nShapNum];
 			dwOtherOffset = lpOtherShapeBuf[nShapNum].dwOffset;
@@ -1619,7 +1681,7 @@ extern "C" void __cdecl Hook_SCURK_EditableTileSet_mReadFromDOSFile(cEditableTil
 			fseek(f, dwOtherSize + dwOtherOffset, SEEK_SET);
 			fread(lpBuffer, 1, 0xFFFF, f);
 			if (validTiles[nShapNum].nValidated == 1)
-				L_SCURK_TranslateFromDOS(pThis, nDBID, lpBuffer, nConvRepl);
+				L_SCURK_TranslateFromDOS(pThis, nShapNum, nDBID, lpBuffer, bReadOnly);
 		}
 
 		lpSmallShapeBuf = (tilHeader_t *)R_SCURK_WRP_gAllocBlock(0x2EE0);
@@ -1628,12 +1690,6 @@ extern "C" void __cdecl Hook_SCURK_EditableTileSet_mReadFromDOSFile(cEditableTil
 		dwSmallSize = Buffer.dwSmallSize;
 		for (nShapNum = SPRITE_SMALL_START; nShapNum < SPRITE_LARGE_START; ++nShapNum) {
 			R_SCURK_WRP_gUpdateWaitWindow();
-			nConvRepl = 0;
-			if (memcmp(Buffer.readOnlyFile, "READONLY.XXX", 12) == 0) {
-				if (GET_OVERALL_SPRITE(nShapNum, SPRITE_SMALL_INFRASTRUCTURE_CRANE) ||
-					GET_OVERALL_SPRITE(nShapNum, SPRITE_SMALL_MILITARY_LOADINGBAY))
-					nConvRepl = 2;
-			}
 			if (nShapNum < SPRITE_MEDIUM_START)
 				nEdNum = R_SCURK_WRP_EditableTileSet_mShapeNumToEditableNum(pThis, nShapNum);
 			else
@@ -1669,11 +1725,11 @@ extern "C" void __cdecl Hook_SCURK_EditableTileSet_mReadFromDOSFile(cEditableTil
 			// a) the tile has been successfully validated once here and now.
 			// b) the tile isn't valid (and wasn't previously valid - ie from a prior archive - it's a skip case)
 			if (validTiles[nShapNum].nValidated != 2)
-				L_SCURK_TranslateFromDOS(pThis, nDBID, lpBuffer, nConvRepl);
+				L_SCURK_TranslateFromDOS(pThis, nShapNum, nDBID, lpBuffer, bReadOnly);
 		}
 		
-		R_SCURK_WRP_gFreeBlock(lpOtherShapeBuf);
 		R_SCURK_WRP_gFreeBlock(lpSmallShapeBuf);
+		R_SCURK_WRP_gFreeBlock(lpOtherShapeBuf);
 		R_SCURK_WRP_gFreeBlock(lpLargeShapeBuf);
 
 		R_SCURK_WRP_gFreeBlock(lpBuffer);

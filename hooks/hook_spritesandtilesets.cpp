@@ -29,12 +29,6 @@
 
 UINT sprite_debug = SPRITE_DEBUG;
 
-enum {
-	REV_WIN,
-	REV_DOSMAC,
-	REV_W00
-};
-
 static int nRevType = REV_WIN;
 
 std::vector<sprite_ids_t> spriteIDs;
@@ -221,15 +215,7 @@ static void AllocateAndLoadSprites1996(FILE *pFile, sprite_archive_t *lpBuf, WOR
 							Game_FreeDataEntry(pArrSpriteHeaders[nID].sprOffset.sprPtr);
 							pArrSpriteHeaders[nID].sprOffset.sprPtr = 0;
 						}
-						if (nRevType >= REV_WIN && nRevType <= REV_DOSMAC) {
-							int nConvRepl = 0;
-							if (GET_OVERALL_SPRITE(nID, SPRITE_SMALL_INFRASTRUCTURE_CRANE) ||
-								GET_OVERALL_SPRITE(nID, SPRITE_SMALL_MILITARY_LOADINGBAY))
-								nConvRepl = 2;
-							else if (GET_OVERALL_SPRITE(nID, SPRITE_SMALL_MILITARY_HANGAR1))
-								nConvRepl = 1;
-							L_ConvertSprite(pSprEnt->wWidth, pSprEnt->wHeight, pSpriteData, nRevType, nConvRepl);
-						}
+						L_ConvertSprite(pSprEnt->wWidth, pSprEnt->wHeight, pSpriteData, REV_WIN, 3);
 						pArrSpriteHeaders[nID].sprOffset.sprPtr = pSpriteData;
 						pArrSpriteHeaders[nID].wHeight = pSprEnt->wHeight;
 						pArrSpriteHeaders[nID].wWidth = pSprEnt->wWidth;
@@ -441,7 +427,7 @@ GETOUT:
 	GameMain_String_Dest(&retString);
 }
 
-static void L_LoadFixedLargeSpritesRsrc_SC2K1996() {
+static void L_LoadFixedLargeSpritesRsrc_SC2K1996(int nTileSet) {
 	HRSRC hTileSetHandle;
 	HGLOBAL hTileSetGlobal;
 	DWORD dwTileDatSz;
@@ -467,7 +453,7 @@ static void L_LoadFixedLargeSpritesRsrc_SC2K1996() {
 	int iReplacementsLoaded = 0;
 
 	dwOffset = 0;
-	hTileSetHandle = FindResourceA(hSC2KFixModule, MAKEINTRESOURCE(IDR_TSET_FIXED), "TSET");
+	hTileSetHandle = FindResourceA(hSC2KFixModule, MAKEINTRESOURCE(nTileSet), "TSET");
 	if (hTileSetHandle) {
 		hTileSetGlobal = LoadResource(hSC2KFixModule, hTileSetHandle);
 		dwTileDatSz = SizeofResource(hSC2KFixModule, hTileSetHandle);
@@ -523,7 +509,7 @@ static void L_LoadFixedLargeSpritesRsrc_SC2K1996() {
 											if (bGotShap && nHeight > 1 && nSpriteID >= SPRITE_LARGE_START) {
 												iReplacementsLoaded++;
 												if (sprite_debug & SPRITE_DEBUG_TILESETS)
-													ConsoleLog(LOG_DEBUG, "TILE: Loaded replacement large sprite for: %s\n", szSpriteNames[nSpriteID - SPRITE_LARGE_START]);
+													ConsoleLog(LOG_DEBUG, "TILE: Loaded (%d) replacement large sprite for: %s\n", nTileSet, szSpriteNames[nSpriteID - SPRITE_LARGE_START]);
 											}
 										}
 										else if (memcmp(szHead, "NAME", 4) == 0) {
@@ -583,8 +569,25 @@ void ReloadDefaultTileSet_SC2K1996() {
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_SPECIAL);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_LARGE);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_SMALLMED);
-	if (!bDisableFixedTiles)
-		L_LoadFixedLargeSpritesRsrc_SC2K1996();
+	if (!bDisableFixedTiles) {
+		if (dwFixedTileMask & FIXTIL_MASK_HORZOFF)
+			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HORZOFF);
+		if (dwFixedTileMask & FIXTIL_MASK_VERTOFF)
+			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_VERTOFF);
+		if (dwFixedTileMask & FIXTIL_MASK_BADPALIDX)
+			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_BADPALIDX);
+		if (dwFixedTileMask & FIXTIL_MASK_MISSPIXELS)
+			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_MISSPIXELS);
+		if (dwFixedTileMask & FIXTIL_MASK_OOBPALIDX)
+			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_OOBPALIDX);
+
+		if (dwFixedTileMask & FIXTIL_MASK_HANGARANIM)
+			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HANGARANIM);
+		else if (dwFixedTileMask & FIXTIL_MASK_HANGARSHUT)
+			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HANGARSHUT);
+		else if (dwFixedTileMask & FIXTIL_MASK_HANGAROPEN)
+			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HANGAROPEN);
+	}
 	GameMain_CmdTarget_EndWaitCursor(pSCApp);
 
 	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
@@ -603,8 +606,25 @@ extern "C" void __declspec(naked) __stdcall Hook_LoadSpriteArchives1996() {
 	Game_LoadDataArchive(TILEDAT_DEFS_LARGE);
 	Game_LoadDataArchive(TILEDAT_DEFS_SMALLMED);
 
-	if (!bDisableFixedTiles)
-		L_LoadFixedLargeSpritesRsrc_SC2K1996();
+	if (!bDisableFixedTiles) {
+		if (dwFixedTileMask & FIXTIL_MASK_HORZOFF)
+			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HORZOFF);
+		if (dwFixedTileMask & FIXTIL_MASK_VERTOFF)
+			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_VERTOFF);
+		if (dwFixedTileMask & FIXTIL_MASK_BADPALIDX)
+			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_BADPALIDX);
+		if (dwFixedTileMask & FIXTIL_MASK_MISSPIXELS)
+			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_MISSPIXELS);
+		if (dwFixedTileMask & FIXTIL_MASK_OOBPALIDX)
+			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_OOBPALIDX);
+
+		if (dwFixedTileMask & FIXTIL_MASK_HANGARANIM)
+			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HANGARANIM);
+		else if (dwFixedTileMask & FIXTIL_MASK_HANGARSHUT)
+			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HANGARSHUT);
+		else if (dwFixedTileMask & FIXTIL_MASK_HANGAROPEN)
+			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HANGAROPEN);
+	}
 	GAMEJMP(0x42C332)
 }
 
@@ -638,9 +658,12 @@ static void L_ChangeDOSTileSpriteEntry(tileConv_t *pObjSet, WORD nSpriteID, BYTE
 		return;
 	int nConvRepl = 0;
 	if (bReadOnly) {
-		if (GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INFRASTRUCTURE_CRANE) ||
-			GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_MILITARY_LOADINGBAY))
-			nConvRepl = 2;
+		if (GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_MILITARY_HANGAR1)) {
+			if (nHangar1Mode == HANGAR1_ANIM)
+				nConvRepl = 1;
+			else if (nHangar1Mode == HANGAR1_OPEN)
+				nConvRepl = 2;
+		}
 	}
 	L_ConvertDOSSprite(pObjSet, nSpriteID, pBuf, nConvRepl);
 	BYTE *pDst = (BYTE *)Game_AllocateDataEntry(pObjSet->pObjectSetSize[nSpriteID]);
@@ -1187,10 +1210,15 @@ extern "C" BOOL __cdecl Hook_ChangeTileSpriteEntry1996(int nSpriteID, WORD nWidt
 		if (nRevType >= REV_WIN && nRevType <= REV_DOSMAC) {
 			int nConvRepl = 0;
 			if (nRevType == REV_DOSMAC) {
-				if (GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_INFRASTRUCTURE_CRANE) ||
-					GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_MILITARY_LOADINGBAY))
-					nConvRepl = 2;
+				if (GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_MILITARY_HANGAR1)) {
+					if (nHangar1Mode == HANGAR1_ANIM)
+						nConvRepl = 1;
+					else if (nHangar1Mode == HANGAR1_OPEN)
+						nConvRepl = 2;
+				}
 			}
+			else if (nRevType == REV_WIN)
+				nConvRepl = 3;
 			L_ConvertSprite(nWidth, nHeight, pDst, nRevType, nConvRepl);
 		}
 		pArrSpriteHeaders[nSpriteID].sprOffset.sprPtr = pDst;

@@ -516,9 +516,6 @@
     <None Include="README.md">
       <Filter>Documentation</Filter>
     </None>
-    <None Include="blobs\FIXEDTILES.MIF">
-      <Filter>Resource Files\TSET</Filter>
-    </None>
     <None Include="blobs\libsc2kfix.lua">
       <Filter>Resource Files\BLOB</Filter>
     </None>
@@ -530,6 +527,30 @@
     </None>
     <None Include="blobs\SCURKMAP_PAL.bin">
       <Filter>Resource Files\RAW</Filter>
+    </None>
+    <None Include="blobs\FIXEDTILES_BADPALIDX.MIF">
+      <Filter>Resource Files\TSET</Filter>
+    </None>
+    <None Include="blobs\FIXEDTILES_HANGAR1_ANIM.MIF">
+      <Filter>Resource Files\TSET</Filter>
+    </None>
+    <None Include="blobs\FIXEDTILES_HANGAR1_OPEN.MIF">
+      <Filter>Resource Files\TSET</Filter>
+    </None>
+    <None Include="blobs\FIXEDTILES_HANGAR1_SHUT.MIF">
+      <Filter>Resource Files\TSET</Filter>
+    </None>
+    <None Include="blobs\FIXEDTILES_HORZOFF.MIF">
+      <Filter>Resource Files\TSET</Filter>
+    </None>
+    <None Include="blobs\FIXEDTILES_MISSPIXELS.MIF">
+      <Filter>Resource Files\TSET</Filter>
+    </None>
+    <None Include="blobs\FIXEDTILES_OOBPALIDX.MIF">
+      <Filter>Resource Files\TSET</Filter>
+    </None>
+    <None Include="blobs\FIXEDTILES_VERTOFF.MIF">
+      <Filter>Resource Files\TSET</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

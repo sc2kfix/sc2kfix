@@ -87,6 +87,7 @@
 #define IDC_SPRITEBROWSER_EFFECTSELBUT  21075
 #define IDC_SPRITEBROWSER_CHECKFLIP     21076
 #define IDC_SPRITEBROWSER_CHECKINVERT   21077
+#define IDC_HANGAR1TYPE                 21078
 #define IDR_WAVE_500                    23001
 #define IDR_WAVE_503                    23002
 #define IDR_WAVE_508                    23003
@@ -110,15 +111,22 @@
 #define IDB_COMPASS1                    23021
 #define IDB_COMPASS2                    23022
 #define IDB_COMPASS3                    23023
-#define IDR_TSET_FIXED                  23024
-#define IDR_BLOB_LIBSC2KFIX_LUA         23025
-#define IDD_SETTINGS_CONTAINER          23026
-#define IDD_SETTINGS_GENERAL            23027
-#define IDD_SETTINGS_GAMEPLAY           23028
-#define IDD_SETTINGS_AUDIO              23029
-#define IDR_SCRKPALBMP                  23030
-#define IDR_SCRKPALWND                  23031
-#define IDR_SCRKPALMAP                  23032
+#define IDR_BLOB_LIBSC2KFIX_LUA         23024
+#define IDD_SETTINGS_CONTAINER          23025
+#define IDD_SETTINGS_GENERAL            23026
+#define IDD_SETTINGS_GAMEPLAY           23027
+#define IDD_SETTINGS_AUDIO              23028
+#define IDR_SCRKPALBMP                  23029
+#define IDR_SCRKPALWND                  23030
+#define IDR_SCRKPALMAP                  23031
+#define IDR_TSET_FIXTIL_HORZOFF         23032
+#define IDR_TSET_FIXTIL_VERTOFF         23033
+#define IDR_TSET_FIXTIL_BADPALIDX       23034
+#define IDR_TSET_FIXTIL_MISSPIXELS      23035
+#define IDR_TSET_FIXTIL_OOBPALIDX       23036
+#define IDR_TSET_FIXTIL_HANGAROPEN      23037
+#define IDR_TSET_FIXTIL_HANGARANIM      23038
+#define IDR_TSET_FIXTIL_HANGARSHUT      23039
 #define IDM_GAME_OPTIONS_SC2KFIXSETTINGS 40000
 #define IDM_GAME_OPTIONS_MODCONFIG      40001
 #define IDM_DEBUG_MILITARY_DECLINED     40002
@@ -150,9 +158,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        23033
+#define _APS_NEXT_RESOURCE_VALUE        23040
 #define _APS_NEXT_COMMAND_VALUE         40026
-#define _APS_NEXT_CONTROL_VALUE         21078
+#define _APS_NEXT_CONTROL_VALUE         21079
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

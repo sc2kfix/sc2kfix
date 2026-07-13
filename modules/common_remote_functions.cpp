@@ -158,6 +158,25 @@ void R_BOR_WRP_Dialog_EvClose(TBC45XParDialog *pThis) {
 	}
 }
 
+void R_BOR_WRP_Dib_Destruct(TBC45XDib *pThis, char c) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			GameMain_Dib_Destruct_SCURKPrimary(pThis, c);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			GameMain_Dib_Destruct_SCURK1996(pThis, c);
+	}
+}
+
+TBC45XDib *R_BOR_WRP_Dib_Construct_Dimens(TBC45XDib *pThis, LONG nWidth, LONG nHeight, DWORD dwColors, WORD wMode) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return GameMain_Dib_Construct_Dimens_SCURKPrimary(pThis, nWidth, nHeight, dwColors, wMode);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return GameMain_Dib_Construct_Dimens_SCURK1996(pThis, nWidth, nHeight, dwColors, wMode);
+	}
+	return NULL;
+}
+
 HWND R_BOR_WRP_FrameWindow_GetCommandTarget(TBC45XFrameWindow *pThis) {
 	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
 		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
@@ -606,6 +625,15 @@ int R_SCURK_WRP_EditableTileSet_mGetShapeWidth(cEditableTileSet *pThis, int nEdN
 	return 0;
 }
 
+void R_SCURK_WRP_EditableTileSet_mReadShapeFromDIB_Dib(cEditableTileSet *pThis, int nDBID, TEncodeDib *pEncDib) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			GameMain_EditableTileSet_mReadShapeFromDIB_Dib_SCURKPrimary(pThis, nDBID, pEncDib);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			GameMain_EditableTileSet_mReadShapeFromDIB_Dib_SCURK1996(pThis, nDBID, pEncDib);
+	}
+}
+
 void R_SCURK_WRP_EditableTileSet_mRenderEditableShapeToDIB_Dib(cEditableTileSet *pThis, TBC45XDib *pDib, int nEdNum) {
 	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
 		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
@@ -621,6 +649,15 @@ void R_SCURK_WRP_EditableTileSet_mRenderEditableShapeToDIB_Graphic(cEditableTile
 			GameMain_EditableTileSet_mRenderEditableShapeToDIB_Graphic_SCURKPrimary(pThis, pGraphic, nEdNum);
 		else if (dwDetectedVersion == VERSION_SCURK_1996)
 			GameMain_EditableTileSet_mRenderEditableShapeToDIB_Graphic_SCURK1996(pThis, pGraphic, nEdNum);
+	}
+}
+
+void R_SCURK_WRP_EditableTileSet_mRenderDBShapeToDIB_Dib(cEditableTileSet *pThis, TBC45XDib *pDib, int nDBID) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			GameMain_EditableTileSet_mRenderDBShapeToDIB_Dib_SCURKPrimary(pThis, pDib, nDBID);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			GameMain_EditableTileSet_mRenderDBShapeToDIB_Dib_SCURK1996(pThis, pDib, nDBID);
 	}
 }
 

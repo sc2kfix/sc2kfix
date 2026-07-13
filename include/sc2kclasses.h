@@ -123,6 +123,12 @@ enum {
 #define ARCOLOGY_COUNT 4
 #define POWERPLANT_COUNT 9
 
+enum {
+	REV_WIN,
+	REV_DOSMAC,
+	REV_W00
+};
+
 // This specifical structure is the equivalent
 // of the LOGPALETTE struct from the WinAPI
 // except the pPalEnts array is preset to
