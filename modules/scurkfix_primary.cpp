@@ -27,47 +27,6 @@ ConsoleLog(LOG_DEBUG, "SCURK_VTable_Check[class path - %s] - 0x%06X - TListBox::
 }
 */
 
-extern "C" void __cdecl Hook_SCURK_WinGBitmap_SetColorTable(CWinGBitmap *pThis, HPALETTE hPal) {
-	int nPos;
-	HGDIOBJ hObj;
-	RGBQUAD rgbq[HICOLORCNT];
-	PALETTEENTRY palEnts[HICOLORCNT];
-
-	if (pThis->GRBitmap) {
-		GetPaletteEntries(hPal, 0, HICOLORCNT, palEnts);
-		for (nPos = 0; nPos < HICOLORCNT; ++nPos) {
-			rgbq[nPos].rgbRed = palEnts[nPos].peRed;
-			rgbq[nPos].rgbGreen = palEnts[nPos].peGreen;
-			rgbq[nPos].rgbBlue = palEnts[nPos].peBlue;
-			rgbq[nPos].rgbReserved = 0;
-		}
-		while (nPos < HICOLORCNT);
-		SetRGBEntry(&rgbq[0x0A], 79, 53,   0); // DOS Entry (0xCC - 204)
-		SetRGBEntry(&rgbq[0x0B], 79, 79,   0); // DOS Entry (0xCD - 205)
-		SetRGBEntry(&rgbq[0x0C], 79, 104,  0); // DOS Entry (0xCE - 206)
-		SetRGBEntry(&rgbq[0x0D], 79, 130,  0); // DOS Entry (0xCF - 207)
-		SetRGBEntry(&rgbq[0x0E], 79, 156,  0); // DOS Entry (0xD0 - 208)
-		SetRGBEntry(&rgbq[0x0F], 79, 181,  0); // DOS Entry (0xD1 - 209)
-		SetRGBEntry(&rgbq[0xE8], 79, 207,  0); // DOS Entry (0xD2 - 210)
-		SetRGBEntry(&rgbq[0xE9], 104, 28,  0); // DOS Entry (0xD3 - 211)
-		SetRGBEntry(&rgbq[0xEA], 104, 53,  0); // DOS Entry (0xD4 - 212)
-		SetRGBEntry(&rgbq[0xEB], 104, 79,  0); // DOS Entry (0xD5 - 213)
-		SetRGBEntry(&rgbq[0xEC], 104, 104, 0); // DOS Entry (0xD6 - 214)
-		SetRGBEntry(&rgbq[0xED], 104, 130, 0); // DOS Entry (0xD7 - 215)
-		SetRGBEntry(&rgbq[0xEE], 104, 156, 0); // DOS Entry (0xD8 - 216)
-		SetRGBEntry(&rgbq[0xEF], 104, 181, 0); // DOS Entry (0xD9 - 217)
-		SetRGBEntry(&rgbq[0xF0], 104, 207, 0); // DOS Entry (0xDA - 218)
-		SetRGBEntry(&rgbq[0xF1], 130, 28,  0); // DOS Entry (0xDB - 219)
-		SetRGBEntry(&rgbq[0xF2], 130, 53,  0); // DOS Entry (0xDC - 220)
-		SetRGBEntry(&rgbq[0xF3], 130, 79,  0); // DOS Entry (0xDD - 221)
-		SetRGBEntry(&rgbq[0xF4], 130, 104, 0); // DOS Entry (0xDE - 222)
-		SetRGBEntry(&rgbq[0xF5], 130, 130, 0); // DOS Entry (0xDF - 223)
-		hObj = SelectObject(hDCWinG_SCURKPrimary, pThis->GRBitmap);
-		SetDIBColorTable(hDCWinG_SCURKPrimary, 0, HICOLORCNT, rgbq);
-		SelectObject(hDCWinG_SCURKPrimary, hObj);
-	}
-}
-
 extern "C" void __cdecl Hook_SCURKPrimary_DebugOut(char const *fmt, ...) {
 	va_list args;
 
@@ -94,6 +53,19 @@ extern "C" void __declspec(naked) Hook_SCURKPrimary_MoverWindow_DisableMaximizeB
 		mov [ebx + 0x4], eax
 	}
 	GAMEJMP(0x44E2EF);
+}
+
+extern "C" void __declspec(naked) __cdecl Hook_SCURKPrimary_winscurkApp_InitMainWindow_SCURKPalette(void) {
+	winscurkApp *pThis;
+
+	__asm mov [pThis], ebx
+
+	L_SCURK_winscurkApp_SCURKPalette(pThis);
+
+	__asm {
+		mov ebx, [pThis]
+	}
+	GAMEJMP(0x458B58)
 }
 
 // And we're gritting our teeth...
@@ -161,10 +133,6 @@ void InstallFixes_SCURKPrimary(void) {
 	NEWJMP((LPVOID)0x410D94, Hook_SCURK_PlaceTileListDlg_EvLButtonDblClk);
 	SafeVirtualProtect((LPVOID)0x410ED0, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x410ED0, Hook_SCURK_PlaceTileListDlg_EvLBNSelChange);
-
-	// Hook for CWinGBitmap::SetColorTable
-	SafeVirtualProtect((LPVOID)0x412160, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x412160, Hook_SCURK_WinGBitmap_SetColorTable);
 
 	// TEncodeDib::mFillAt
 	// TEncodeDib::mFillLine
@@ -339,6 +307,10 @@ void InstallFixes_SCURKPrimary(void) {
 	NEWJMP((LPVOID)0x4514E8, Hook_SCURK_PaletteWindow_EvLButtonDown);
 	SafeVirtualProtect((LPVOID)0x4515B4, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4515B4, Hook_SCURK_PaletteWindow_EvRButtonDown);
+
+	// winscurkApp::InitMainWindow() detour
+	SafeVirtualProtect((LPVOID)0x458959, 511, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x458959, Hook_SCURKPrimary_winscurkApp_InitMainWindow_SCURKPalette);
 
 	// OwlMain() command line fix.
 	SafeVirtualProtect((LPVOID)0x45A0B9, 7, PAGE_EXECUTE_READWRITE);

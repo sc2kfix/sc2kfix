@@ -39,6 +39,87 @@ void L_SCURK_gDebugOut(const char *fmt, va_list args) {
 	}
 }
 
+// Detour for including the previously non-present palette entries
+// that were used in the DOS and Macintosh sets, and to also adjust
+// the "slow" cycling range to avoid erroneous cycling on a range
+// of 8 that had been cut after the DOS/Macintosh 1.1 version.
+
+void L_SCURK_winscurkApp_SCURKPalette(winscurkApp *pThis) {
+	HWND hWnd;
+	HDC hPrimaryDC, hSavedDC;
+	int nSavedDCHndl;
+	TBC45XDib *pDIB;
+	int nPos;
+	PALETTEENTRY palEntries[HICOLORCNT], *pPalEnt;
+	RGBQUAD *pRGB;
+	TBC45XPalette *pPal;
+
+	hWnd = GetDesktopWindow();
+	hPrimaryDC = GetDC(hWnd);
+	hSavedDC = hPrimaryDC;
+	nSavedDCHndl = SaveDC(hSavedDC);
+	pDIB = (TBC45XDib *)R_BOR_Op_New(sizeof(TBC45XDib));
+	if (pDIB) {
+		R_BOR_WRP_Dib_Construct_Res(pDIB, pThis->HInstance, 22005);
+	}
+	else {
+		pDIB = 0;
+	}
+	pThis->mPaletteDIB = pDIB;
+
+	// Add in the missing entries without having to modify the
+	// base resource.
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0x0A], 79, 53,   0); // DOS Entry (0xCC - 204)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0x0B], 79, 79,   0); // DOS Entry (0xCD - 205)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0x0C], 79, 104,  0); // DOS Entry (0xCE - 206)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0x0D], 79, 130,  0); // DOS Entry (0xCF - 207)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0x0E], 79, 156,  0); // DOS Entry (0xD0 - 208)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0x0F], 79, 181,  0); // DOS Entry (0xD1 - 209)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xE8], 79, 207,  0); // DOS Entry (0xD2 - 210)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xE9], 104, 28,  0); // DOS Entry (0xD3 - 211)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xEA], 104, 53,  0); // DOS Entry (0xD4 - 212)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xEB], 104, 79,  0); // DOS Entry (0xD5 - 213)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xEC], 104, 104, 0); // DOS Entry (0xD6 - 214)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xED], 104, 130, 0); // DOS Entry (0xD7 - 215)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xEE], 104, 156, 0); // DOS Entry (0xD8 - 216)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xEF], 104, 181, 0); // DOS Entry (0xD9 - 217)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xF0], 104, 207, 0); // DOS Entry (0xDA - 218)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xF1], 130, 28,  0); // DOS Entry (0xDB - 219)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xF2], 130, 53,  0); // DOS Entry (0xDC - 220)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xF3], 130, 79,  0); // DOS Entry (0xDD - 221)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xF4], 130, 104, 0); // DOS Entry (0xDE - 222)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xF5], 130, 130, 0); // DOS Entry (0xDF - 223)
+
+	for (nPos = 10; nPos < HICOLORCNT - 10; ++nPos) {
+		pPalEnt = &palEntries[nPos];
+		pRGB = &pThis->mPaletteDIB->Info->bmiColors[nPos];
+		pPalEnt->peRed = pRGB->rgbRed;
+		pPalEnt->peGreen = pRGB->rgbGreen;
+		pPalEnt->peBlue = pRGB->rgbBlue;
+		pPalEnt->peFlags = 1;
+	}
+	GetSystemPaletteEntries(hPrimaryDC, 0, 10, &palEntries[0]);
+	GetSystemPaletteEntries(hPrimaryDC, 246, 10, &palEntries[HICOLORCNT - 10]);
+	RestoreDC(hSavedDC, nSavedDCHndl);
+	DeleteDC(hPrimaryDC);
+	for (nPos = 171; nPos < 171 + 49; ++nPos) {
+		pPalEnt = &palEntries[nPos];
+		pPalEnt->peFlags = 1;
+	}
+	for (nPos = 224; nPos < 224 + 16; ++nPos) {
+		pPalEnt = &palEntries[nPos];
+		pPalEnt->peFlags = 1;
+	}
+	pPal = (TBC45XPalette *)R_BOR_Op_New(sizeof(TBC45XPalette));
+	if (pPal) {
+		R_BOR_WRP_Palette_Construct(pPal, palEntries, HICOLORCNT);
+	}
+	else {
+		pPal = 0;
+	}
+	pThis->mScurkPalette = pPal;
+}
+
 // OwlMainCommandLine-specific workaround
 
 static char *L_SCURK_ProcessCmdLine(char *pMainPath, char *pCmdLineParms, BOOL *bValidFileEntry) {
@@ -488,13 +569,13 @@ extern "C" void __cdecl Hook_SCURK_winscurkMDIClient_CycleColors(winscurkMDIClie
 		wColSlowCnt = R_SCURK_WRP_GetwColSlowCnt();
 		if (*wColFastCnt == 5) {
 			R_SCURK_WRP_winscurkMDIClient_RotateColors(pThis, 1);
-			AnimatePalette((HPALETTE)pPal->Handle, 0xAB, 0x31, pThis->mFastColors);
+			AnimatePalette((HPALETTE)pPal->Handle, 0xAB, 49, pThis->mFastColors);
 			*wColFastCnt = 0;
 			bRedraw = TRUE;
 		}
 		if (*wColSlowCnt == 30) {
 			R_SCURK_WRP_winscurkMDIClient_RotateColors(pThis, 0);
-			AnimatePalette((HPALETTE)pPal->Handle, 0xE0, 0x10, pThis->mSlowColors);
+			AnimatePalette((HPALETTE)pPal->Handle, 0xE0, 8, pThis->mSlowColors);
 			*wColSlowCnt = 0;
 			bRedraw = TRUE;
 		}
@@ -816,6 +897,9 @@ extern "C" LONG __cdecl Hook_SCURK_EditableTileSet_mReadFromFile(cEditableTileSe
 			}
 #endif
 			L_SCURK_LoadFixedLargeSpritesRsrc(pThis);
+#if !SPRITE_ARCHIVE_LOADING
+			R_SCURK_WRP_EditableTileSet_mBuildSmallMedTiles(pThis);
+#endif
 			R_SCURK_WRP_gUpdateWaitWindow();
 		}
 	}
@@ -2022,17 +2106,7 @@ cPaletteWindow *L_SCURK_LoadOwnPaletteResources(cPaletteWindow *pThis) {
 	FreeResource(hResDat);
 	pDat = 0;
 
-	// Palette - Map of colours to palette indices (graphic <-> index table)
-	hRsrc = FindResourceA(hSC2KFixModule, MAKEINTRESOURCEA(IDR_SCRKPALMAP), "RAW");
-	if (!hRsrc) {
-		R_BOR_WRP_Window_MessageBox((TBC45XWindow *)pThis, "Resource Load Failed", 0, 0);
-		exit(0);
-	}
-	hResDat = LoadResource(hSC2KFixModule, hRsrc);
-	pDat = LockResource(hResDat);
-	memcpy(pThis->pPaletteBuffer, pDat, 1024);
-	FreeResource(hResDat);
-	pDat = 0;
+	memset(pThis->pPaletteBuffer, 0, 1024);
 
 	// Palette - Bitmap containing the palette colours in their absolute positions.
 	hRsrc = FindResourceA(hSC2KFixModule, MAKEINTRESOURCEA(IDR_SCRKPALBMP), "RAW");
@@ -2043,6 +2117,20 @@ cPaletteWindow *L_SCURK_LoadOwnPaletteResources(cPaletteWindow *pThis) {
 	hResDat = LoadResource(hSC2KFixModule, hRsrc);
 	pDat = LockResource(hResDat);
 	memcpy(pThis->pDibOne->Bits, pDat, 256);
+	// Set the BMP <-> palette selection mapping.
+	for (int nPos = 0; nPos < 256; ++nPos) {
+		BYTE nPPos = pThis->pDibOne->Bits[nPos];
+		if (nPPos == 0xFC)
+			memset(&pThis->pPaletteBuffer[nPPos], 0xFF, sizeof(pThis->pPaletteBuffer[nPPos]));
+		else if ((nPos >= 40 && nPos <= 47) ||
+			(nPos >= 125 && nPos <= 126) ||
+			(nPos >= 238 && nPos <= 239))
+			ULOWORD(ULOBYTE(pThis->pPaletteBuffer[nPPos])) = 0xEF;
+		else
+			ULOWORD(ULOBYTE(pThis->pPaletteBuffer[nPPos])) = nPos;
+		if (mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_PALETTE)
+			ConsoleLog(LOG_DEBUG, "BMP <-> Palette Selection Mapping: (%d - 0x%02X) (%u - 0x%02X) (%u - 0x%06X)\n", nPos, nPos, nPPos, nPPos, pThis->pPaletteBuffer[nPPos], pThis->pPaletteBuffer[nPPos]);
+	}
 	FreeResource(hResDat);
 	pDat = 0;
 
@@ -2059,7 +2147,7 @@ extern "C" void __cdecl Hook_SCURK_PaletteWindow_EvLButtonDown(cPaletteWindow *p
 	nScrollPos = GetScrollPos(pThis->HWindow, SB_VERT);
 	nRow = nScrollPos + (int)(pt->y / pThis->floatTwo);
 	nHorizPos = (int)(pt->x / pThis->floatOne);
-	if ((nRow == 10 && (nHorizPos > 11 && nHorizPos < 15)) || nRow == 11 || (nRow == 13 && nHorizPos > 7))
+	if ((nRow == 1 && nHorizPos == 14) || (nRow == 8 && (nHorizPos >= 13 && nHorizPos <= 14)) || (nRow == 13 && nHorizPos >= 8))
 		nSound = 3;
 	else {
 		pThis->colFrGrnd = nHorizPos + 16 * nRow;
@@ -2080,7 +2168,7 @@ extern "C" void __cdecl Hook_SCURK_PaletteWindow_EvRButtonDown(cPaletteWindow *p
 	nScrollPos = GetScrollPos(pThis->HWindow, SB_VERT);
 	nRow = nScrollPos + (int)(pt->y / pThis->floatTwo);
 	nHorizPos = (int)(pt->x / pThis->floatOne);
-	if ((nRow == 10 && (nHorizPos > 11 && nHorizPos < 15)) || nRow == 11 || (nRow == 13 && nHorizPos > 7))
+	if ((nRow == 1 && nHorizPos == 14) || (nRow == 8 && (nHorizPos >= 13 && nHorizPos <= 14)) || (nRow == 13 && nHorizPos >= 8))
 		nSound = 3;
 	else {
 		pThis->colBkGrnd = nHorizPos + 16 * nRow;

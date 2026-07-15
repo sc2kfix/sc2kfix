@@ -600,9 +600,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		if (dwMusicThreadID)
 			PostThreadMessage(dwMusicThreadID, WM_QUIT, NULL, NULL);
 
-		// Only save the bindings and stored paths during a graceful exit.
-		// (SC2K1996 only for now)
-		if (!bGameDead && dwDetectedVersion == VERSION_SC2K_1996)
+		// Only save the settings if the program has closed gracefully.
+		if (!bGameDead)
 			SaveJSONSettings();
 
 		// Clear out the stored sprite IDs (no allocated data are contained).

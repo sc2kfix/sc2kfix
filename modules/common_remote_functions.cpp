@@ -35,6 +35,16 @@ void R_BOR_WRP_DC_SelectObjectPalette(TBC45XDC *pThis, TBC45XPalette *pPal, int 
 	}
 }
 
+TBC45XPalette *R_BOR_WRP_Palette_Construct(TBC45XPalette *pThis, PALETTEENTRY *pPalEnts, int nCols) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return GameMain_BCPalette_Construct_SCURKPrimary(pThis, pPalEnts, nCols);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return GameMain_BCPalette_Construct_SCURK1996(pThis, pPalEnts, nCols);
+	}
+	return NULL;
+}
+
 void R_BOR_WRP_CommandEnabler_Enable(TBC45XCommandEnabler *pThis) {
 	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
 		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
@@ -165,6 +175,16 @@ void R_BOR_WRP_Dib_Destruct(TBC45XDib *pThis, char c) {
 		else if (dwDetectedVersion == VERSION_SCURK_1996)
 			GameMain_Dib_Destruct_SCURK1996(pThis, c);
 	}
+}
+
+TBC45XDib *R_BOR_WRP_Dib_Construct_Res(TBC45XDib *pThis, HINSTANCE hInstance, int nResID) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return GameMain_Dib_Construct_Res_SCURKPrimary(pThis, hInstance, nResID);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return GameMain_Dib_Construct_Res_SCURK1996(pThis, hInstance, nResID);
+	}
+	return NULL;
 }
 
 TBC45XDib *R_BOR_WRP_Dib_Construct_Dimens(TBC45XDib *pThis, LONG nWidth, LONG nHeight, DWORD dwColors, WORD wMode) {

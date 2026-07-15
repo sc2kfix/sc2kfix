@@ -525,9 +525,6 @@
     <None Include="blobs\SCURKWND_PAL.bin">
       <Filter>Resource Files\RAW</Filter>
     </None>
-    <None Include="blobs\SCURKMAP_PAL.bin">
-      <Filter>Resource Files\RAW</Filter>
-    </None>
     <None Include="blobs\FIXEDTILES_BADPALIDX.MIF">
       <Filter>Resource Files\TSET</Filter>
     </None>

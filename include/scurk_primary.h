@@ -108,6 +108,7 @@ SCURKPRIMARY_GAMECALL_MAIN(0x459F04, int, __cdecl, winscurkApp_mGetFileType, win
 
 // BC and WinAPI
 SCURKPRIMARY_GAMECALL_MAIN(0x45F80F, void, __cdecl, BCDC_SelectObjectPalette, TBC45XDC *, TBC45XPalette *, int)
+SCURKPRIMARY_GAMECALL_MAIN(0x466C85, TBC45XPalette *, __cdecl, BCPalette_Construct, TBC45XPalette *, PALETTEENTRY *, int)
 SCURKPRIMARY_GAMECALL_MAIN(0x468E18, void, __cdecl, BCCommandEnabler_Enable, TBC45XCommandEnabler *)
 SCURKPRIMARY_GAMECALL_MAIN(0x4695CA, unsigned int, __cdecl, BCWindow_DefaultProcessing, TBC45XParWindow *)
 SCURKPRIMARY_GAMECALL_MAIN(0x46975C, LRESULT, __cdecl, BCWindow_EvCommand, TBC45XWindow *, DWORD, HWND, DWORD)
@@ -122,6 +123,7 @@ SCURKPRIMARY_GAMECALL_MAIN(0x46F9DB, void, __cdecl, BCDialog_SetupWindow, TBC45X
 SCURKPRIMARY_GAMECALL_MAIN(0x46FABD, void, __cdecl, BCDialog_SetCaption, TBC45XParDialog *, char *)
 SCURKPRIMARY_GAMECALL_MAIN(0x46FB35, void, __cdecl, BCDialog_EvClose, TBC45XParDialog *)
 SCURKPRIMARY_GAMECALL_MAIN(0x46FFCD, void, __cdecl, Dib_Destruct, TBC45XDib *, char)
+SCURKPRIMARY_GAMECALL_MAIN(0x470D34, TBC45XDib *, __cdecl, Dib_Construct_Res, TBC45XDib *, HINSTANCE, int)
 SCURKPRIMARY_GAMECALL_MAIN(0x4711BC, TBC45XDib *, __cdecl, Dib_Construct_Dimens, TBC45XDib *, LONG, LONG, DWORD, WORD)
 SCURKPRIMARY_GAMECALL_MAIN(0x4736E2, HWND, __cdecl, BCFrameWindow_GetCommandTarget, TBC45XFrameWindow *)
 SCURKPRIMARY_GAMECALL_MAIN(0x476475, int, __cdecl, BCListBox_GetSelIndex, TBC45XParListBox *)
