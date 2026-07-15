@@ -709,6 +709,30 @@ int L_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMa
 	return LoadStringA(hInstance, uID, lpBuffer, cchBufferMax);
 }
 
+const char *GetFixedTileType(int nTileSet) {
+	switch (nTileSet) {
+		case IDR_TSET_FIXTIL_HORZOFF:
+			return "Horizontal Offset";
+		case IDR_TSET_FIXTIL_VERTOFF:
+			return "Vertical Offset";
+		case IDR_TSET_FIXTIL_BADPALIDX:
+			return "Bad Palette Index";
+		case IDR_TSET_FIXTIL_MISSPIXELS:
+			return "Missing Pixels";
+		case IDR_TSET_FIXTIL_OOBPALIDX:
+			return "Out-of-bounds Palette Index";
+		case IDR_TSET_FIXTIL_HANGAROPEN:
+			return "Hangar1 Open (Black)";
+		case IDR_TSET_FIXTIL_HANGARANIM:
+			return "Hangar1 Anim (Grey)";
+		case IDR_TSET_FIXTIL_HANGARSHUT:
+			return "Hangar1 Shut (Yellow)";
+		default:
+			break;
+	}
+	return "";
+}
+
 // start of base64 code
 /*
 * Base64 encoding/decoding (RFC1341)

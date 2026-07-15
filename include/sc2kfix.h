@@ -521,6 +521,7 @@ int L_GetTranslatedDOSMacPaletteIdx(BYTE palIdx, int nType);
 int L_GetAdjustedPaletteIdx(BYTE palIdx, int nType);
 void L_InitDOSMacPaletteIdxTable();
 int L_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMax);
+const char *GetFixedTileType(int nTileSet);
 
 // Yes...
 FILE *log_fopen(const char *fname, const char *mode);

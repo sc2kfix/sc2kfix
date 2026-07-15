@@ -176,7 +176,7 @@ static void L_SCURK_LoadSpecificFixedLargeSpritesRsrc(cEditableTileSet *pThis, i
 												fixedTiles.push_back(fixedEnt);
 
 												if (mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_FIXEDTILES)
-													ConsoleLog(LOG_DEBUG, "TILE: %s (%d) replacement large sprite for: %s\n", ((!bNoReplace) ? "Loaded" : "Cached"), nTileSet, szSpriteNames[nSpriteID - SPRITE_LARGE_START]);
+													ConsoleLog(LOG_DEBUG, "TILE: %s (%s) replacement large sprite for: %s\n", ((!bNoReplace) ? "Loaded" : "Cached"), GetFixedTileType(nTileSet), szSpriteNames[nSpriteID - SPRITE_LARGE_START]);
 											}
 										}
 										else if (memcmp(szHead, "NAME", 4) == 0) {

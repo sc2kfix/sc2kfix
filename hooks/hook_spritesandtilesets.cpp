@@ -450,7 +450,6 @@ static void L_LoadFixedLargeSpritesRsrc_SC2K1996(int nTileSet) {
 	tileMem_t *pTileContents;
 	tileShap_t *pTileShap;
 	tileName_t *pTileName;
-	int iReplacementsLoaded = 0;
 
 	dwOffset = 0;
 	hTileSetHandle = FindResourceA(hSC2KFixModule, MAKEINTRESOURCE(nTileSet), "TSET");
@@ -507,9 +506,8 @@ static void L_LoadFixedLargeSpritesRsrc_SC2K1996(int nTileSet) {
 												bGotShap = (nHeight > 1) ? Game_ChangeTileSpriteEntry(nSpriteID, nWidth, nHeight, dwSize_Shap, &pTileShap->pBuf) : TRUE;
 
 											if (bGotShap && nHeight > 1 && nSpriteID >= SPRITE_LARGE_START) {
-												iReplacementsLoaded++;
 												if (sprite_debug & SPRITE_DEBUG_TILESETS)
-													ConsoleLog(LOG_DEBUG, "TILE: Loaded (%d) replacement large sprite for: %s\n", nTileSet, szSpriteNames[nSpriteID - SPRITE_LARGE_START]);
+													ConsoleLog(LOG_DEBUG, "TILE: Loaded (%s) replacement large sprite for: %s\n", GetFixedTileType(nTileSet), szSpriteNames[nSpriteID - SPRITE_LARGE_START]);
 											}
 										}
 										else if (memcmp(szHead, "NAME", 4) == 0) {
@@ -546,9 +544,6 @@ static void L_LoadFixedLargeSpritesRsrc_SC2K1996(int nTileSet) {
 		}
 		FreeResource(hTileSetGlobal);
 	}
-
-	if (iReplacementsLoaded && sprite_debug & SPRITE_DEBUG_TILESETS)
-		ConsoleLog(LOG_DEBUG, "TILE: Loaded %i replacement default large sprite resources.\n", iReplacementsLoaded);
 }
 
 void ReloadDefaultTileSet_SC2K1996() {

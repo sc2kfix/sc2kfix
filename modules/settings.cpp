@@ -259,6 +259,31 @@ void InitializeJSONSettings(void) {
 		ConvertSettingsToJSON();
 }
 
+static void FinalizeFixedTileMask() {
+	DWORD dwTempTileMask = 0;
+
+	// We don't include any of the Hangar bits in this portion.
+	if (dwFixedTileMask & FIXTIL_MASK_HORZOFF)
+		dwTempTileMask |= FIXTIL_MASK_HORZOFF;
+	if (dwFixedTileMask & FIXTIL_MASK_VERTOFF)
+		dwTempTileMask |= FIXTIL_MASK_VERTOFF;
+	if (dwFixedTileMask & FIXTIL_MASK_BADPALIDX)
+		dwTempTileMask |= FIXTIL_MASK_BADPALIDX;
+	if (dwFixedTileMask & FIXTIL_MASK_MISSPIXELS)
+		dwTempTileMask |= FIXTIL_MASK_MISSPIXELS;
+	if (dwFixedTileMask & FIXTIL_MASK_OOBPALIDX)
+		dwTempTileMask |= FIXTIL_MASK_OOBPALIDX;
+
+	// Set the correct Hangar bit based on nHangar1Mode.
+	if (nHangar1Mode == HANGAR1_ANIM)
+		dwTempTileMask |= FIXTIL_MASK_HANGARANIM;
+	else if (nHangar1Mode == HANGAR1_OPEN)
+		dwTempTileMask |= FIXTIL_MASK_HANGAROPEN;
+	else
+		dwTempTileMask |= FIXTIL_MASK_HANGARSHUT;
+	dwFixedTileMask = dwTempTileMask;
+}
+
 static void GetSpecificStoredJSONVars() {
 	bBackgroundMusic = jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND].ToBool();
 	bFrequentUpdates = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool();
@@ -266,6 +291,7 @@ static void GetSpecificStoredJSONVars() {
 	bDarkUnderground = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND].ToBool();
 	iTerrainCosmeticMode = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt();
 	nMovZoomFactor = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_MOVZOOMFACTOR].ToInt();
+
 	if (nMovZoomFactor < MIN_MOVZOOMFACTOR) {
 		ConsoleLog(LOG_INFO, "Invalid Movie Zoom Factor '%d' - it cannot be less than '%d'; setting to '%d'\n", nMovZoomFactor, MIN_MOVZOOMFACTOR, MIN_MOVZOOMFACTOR);
 		nMovZoomFactor = MIN_MOVZOOMFACTOR;
@@ -274,6 +300,7 @@ static void GetSpecificStoredJSONVars() {
 		ConsoleLog(LOG_INFO, "Invalid Movie Zoom Factor '%d' - it cannot be greater than '%d'; setting to '%d'\n", nMovZoomFactor, MAX_MOVZOOMFACTOR, MAX_MOVZOOMFACTOR);
 		nMovZoomFactor = MAX_MOVZOOMFACTOR;
 	}
+
 	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
 		dwFixedTileMask = (DWORD)jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SCURK_FIXTILMSK].ToInt();
 		nHangar1Mode = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SCURK_HANGARCNV].ToInt();
@@ -282,10 +309,13 @@ static void GetSpecificStoredJSONVars() {
 		dwFixedTileMask = (DWORD)jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_FIXTILMSK].ToInt();
 		nHangar1Mode = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_HANGARCNV].ToInt();
 	}
+
 	if (nHangar1Mode < HANGAR1_MIN)
 		nHangar1Mode = HANGAR1_MIN;
 	else if (nHangar1Mode > HANGAR1_MAX)
 		nHangar1Mode = HANGAR1_MAX;
+
+	FinalizeFixedTileMask();
 }
 
 void LoadJSONSettings(void) {
@@ -860,9 +890,9 @@ void ShowSettingsDialog(void) {
 
 		// Update volume of actively playing music/sounds if needed
 		if (pStreamCurrentSound)
-			SDL_SetAudioStreamGain(pStreamCurrentSound, jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat());
+			SDL_SetAudioStreamGain(pStreamCurrentSound, float(jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat()));
 		if (pStreamCurrentSong)
-			SDL_SetAudioStreamGain(pStreamCurrentSong, jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat());
+			SDL_SetAudioStreamGain(pStreamCurrentSong, float(jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat()));
 	}
 
 	ToggleFloatingStatusDialog(TRUE);
