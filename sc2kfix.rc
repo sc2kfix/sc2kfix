@@ -327,7 +327,7 @@ EXSTYLE WS_EX_TRANSPARENT
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     GROUPBOX        "Interface Settings",IDC_STATIC,6,2,294,85
-    GROUPBOX        "Visual and Performance Settings",IDC_STATIC,6,93,294,75
+    GROUPBOX        "Visual and Performance Settings",IDC_STATIC,6,93,294,97
     CONTROL         " Use new real-time renderer instead of original batched renderer (Default: on)",IDC_SETTINGS_CHECK_REFRESH_RATE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,107,280,10
     CONTROL         " Use dark underground background (Default: off)",IDC_SETTINGS_CHECK_DARK_UNDGRND,
@@ -343,6 +343,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,152,280,10
     CONTROL         " Display seasonal and weather effects (Default: on)",IDC_SETTINGS_CHECK_WEATHER_EFFECTS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,122,280,10
+    PUSHBUTTON      "Tile Conversion/Defaults",IDC_SETTINGS_BUTTON_CONFTILECONV,103,168,100,14
 END
 
 IDD_SETTINGS_GENERAL DIALOGEX 0, 0, 307, 217
@@ -463,6 +464,27 @@ BEGIN
     GROUPBOX        "",339,82,280,79,135
     GROUPBOX        "",340,164,280,79,135
     GROUPBOX        "",341,246,11,79,135
+END
+
+IDD_TILECONV DIALOGEX 0, 0, 313, 159
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Tile Conversion/Defaults Configuration"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,90,136,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,177,136,50,14
+    LTEXT           "Hangar1 Default Type:",IDC_STATIC,50,9,78,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_TILECONV_COMBO,136,9,120,12,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Horizontal Offset",IDC_TILECONV_CHECK_HORZOFF,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,26,44,160,12
+    CONTROL         "Vertical Offset (Only relevant in SCURK)",IDC_TILECONV_CHECK_VERTOFF,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,26,60,160,12
+    CONTROL         "Bad Palette Indices",IDC_TILECONV_CHECK_BADPALIDX,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,26,76,160,12
+    CONTROL         "Missing Pixels (Only relevant in SCURK)",IDC_TILECONV_CHECK_MISSPIXELS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,26,92,160,12
+    CONTROL         "Out-of-bounds Palette Indices",IDC_TILECONV_CHECK_OOBPALIDX,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,26,108,160,12
+    GROUPBOX        "Fixed Tile Categories (Only applied when the default object set is (re)loaded)",IDC_STATIC,11,30,290,97
 END
 
 
@@ -614,6 +636,14 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 348
     END
+
+    IDD_TILECONV, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 306
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 152
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -719,6 +749,11 @@ BEGIN
 END
 
 113 AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_TILECONV AFX_DIALOG_LAYOUT
 BEGIN
     0
 END

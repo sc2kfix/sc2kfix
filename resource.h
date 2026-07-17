@@ -11,6 +11,7 @@
 #define IDD_SPRITEBROWSER               20108
 #define IDD_CONVERT_SELFIXOBJECTS       20109
 #define IDD_SHUNT                       20110
+#define IDD_TILECONV                    20111
 #define ID_INSTALL_OK                   21001
 #define IDC_EDIT_MAYOR                  21002
 #define IDC_EDIT_COMPANY                21003
@@ -88,6 +89,13 @@
 #define IDC_SPRITEBROWSER_CHECKFLIP     21076
 #define IDC_SPRITEBROWSER_CHECKINVERT   21077
 #define IDC_HANGAR1TYPE                 21078
+#define IDC_SETTINGS_BUTTON_CONFTILECONV 21079
+#define IDC_TILECONV_COMBO              21080
+#define IDC_TILECONV_CHECK_HORZOFF      21081
+#define IDC_TILECONV_CHECK_VERTOFF      21082
+#define IDC_TILECONV_CHECK_BADPALIDX    21083
+#define IDC_TILECONV_CHECK_MISSPIXELS   21084
+#define IDC_TILECONV_CHECK_OOBPALIDX    21085
 #define IDR_WAVE_500                    23001
 #define IDR_WAVE_503                    23002
 #define IDR_WAVE_508                    23003
@@ -152,14 +160,15 @@
 #define IDM_SCRK_EW_FILE_DIRCONV_CONVERT 40023
 #define IDM_SCRK_EW_FILE_DIRCONV_CONVERTLOADSRC 40024
 #define IDM_SCRK_EW_FILE_DIRCONV_CONVERTLOADWRK 40025
+#define IDM_SCRK_OPTIONS_TILCONV_CONFIG 40026
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        23039
-#define _APS_NEXT_COMMAND_VALUE         40026
-#define _APS_NEXT_CONTROL_VALUE         21079
+#define _APS_NEXT_COMMAND_VALUE         40027
+#define _APS_NEXT_CONTROL_VALUE         21086
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

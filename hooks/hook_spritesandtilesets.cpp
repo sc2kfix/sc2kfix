@@ -564,25 +564,25 @@ void ReloadDefaultTileSet_SC2K1996() {
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_SPECIAL);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_LARGE);
 	ReloadSpriteDataArchive1996(TILEDAT_DEFS_SMALLMED);
-	if (!bDisableFixedTiles) {
-		if (dwFixedTileMask & FIXTIL_MASK_HORZOFF)
-			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HORZOFF);
-		if (dwFixedTileMask & FIXTIL_MASK_VERTOFF)
-			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_VERTOFF);
-		if (dwFixedTileMask & FIXTIL_MASK_BADPALIDX)
-			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_BADPALIDX);
-		if (dwFixedTileMask & FIXTIL_MASK_MISSPIXELS)
-			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_MISSPIXELS);
-		if (dwFixedTileMask & FIXTIL_MASK_OOBPALIDX)
-			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_OOBPALIDX);
 
-		if (dwFixedTileMask & FIXTIL_MASK_HANGARANIM)
-			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HANGARANIM);
-		else if (dwFixedTileMask & FIXTIL_MASK_HANGARSHUT)
-			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HANGARSHUT);
-		else if (dwFixedTileMask & FIXTIL_MASK_HANGAROPEN)
-			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HANGAROPEN);
-	}
+	if (dwFixedTileMask & FIXTIL_MASK_HORZOFF)
+		L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HORZOFF);
+	if (dwFixedTileMask & FIXTIL_MASK_VERTOFF)
+		L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_VERTOFF);
+	if (dwFixedTileMask & FIXTIL_MASK_BADPALIDX)
+		L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_BADPALIDX);
+	if (dwFixedTileMask & FIXTIL_MASK_MISSPIXELS)
+		L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_MISSPIXELS);
+	if (dwFixedTileMask & FIXTIL_MASK_OOBPALIDX)
+		L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_OOBPALIDX);
+
+	if (dwFixedTileMask & FIXTIL_MASK_HANGARANIM)
+		L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HANGARANIM);
+	else if (dwFixedTileMask & FIXTIL_MASK_HANGARSHUT)
+		L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HANGARSHUT);
+	else if (dwFixedTileMask & FIXTIL_MASK_HANGAROPEN)
+		L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HANGAROPEN);
+
 	GameMain_CmdTarget_EndWaitCursor(pSCApp);
 
 	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
@@ -601,25 +601,24 @@ extern "C" void __declspec(naked) __stdcall Hook_LoadSpriteArchives1996() {
 	Game_LoadDataArchive(TILEDAT_DEFS_LARGE);
 	Game_LoadDataArchive(TILEDAT_DEFS_SMALLMED);
 
-	if (!bDisableFixedTiles) {
-		if (dwFixedTileMask & FIXTIL_MASK_HORZOFF)
-			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HORZOFF);
-		if (dwFixedTileMask & FIXTIL_MASK_VERTOFF)
-			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_VERTOFF);
-		if (dwFixedTileMask & FIXTIL_MASK_BADPALIDX)
-			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_BADPALIDX);
-		if (dwFixedTileMask & FIXTIL_MASK_MISSPIXELS)
-			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_MISSPIXELS);
-		if (dwFixedTileMask & FIXTIL_MASK_OOBPALIDX)
-			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_OOBPALIDX);
+	if (dwFixedTileMask & FIXTIL_MASK_HORZOFF)
+		L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HORZOFF);
+	if (dwFixedTileMask & FIXTIL_MASK_VERTOFF)
+		L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_VERTOFF);
+	if (dwFixedTileMask & FIXTIL_MASK_BADPALIDX)
+		L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_BADPALIDX);
+	if (dwFixedTileMask & FIXTIL_MASK_MISSPIXELS)
+		L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_MISSPIXELS);
+	if (dwFixedTileMask & FIXTIL_MASK_OOBPALIDX)
+		L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_OOBPALIDX);
 
-		if (dwFixedTileMask & FIXTIL_MASK_HANGARANIM)
-			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HANGARANIM);
-		else if (dwFixedTileMask & FIXTIL_MASK_HANGARSHUT)
-			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HANGARSHUT);
-		else if (dwFixedTileMask & FIXTIL_MASK_HANGAROPEN)
-			L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HANGAROPEN);
-	}
+	if (dwFixedTileMask & FIXTIL_MASK_HANGARANIM)
+		L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HANGARANIM);
+	else if (dwFixedTileMask & FIXTIL_MASK_HANGARSHUT)
+		L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HANGARSHUT);
+	else if (dwFixedTileMask & FIXTIL_MASK_HANGAROPEN)
+		L_LoadFixedLargeSpritesRsrc_SC2K1996(IDR_TSET_FIXTIL_HANGAROPEN);
+
 	GAMEJMP(0x42C332)
 }
 
@@ -656,7 +655,7 @@ static void L_ChangeDOSTileSpriteEntry(tileConv_t *pObjSet, WORD nSpriteID, BYTE
 		if (GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_MILITARY_HANGAR1)) {
 			if (nHangar1Mode == HANGAR1_ANIM)
 				nConvRepl = 1;
-			else if (nHangar1Mode == HANGAR1_OPEN)
+			else if (nHangar1Mode != HANGAR1_SHUT)
 				nConvRepl = 2;
 		}
 	}
@@ -1208,7 +1207,7 @@ extern "C" BOOL __cdecl Hook_ChangeTileSpriteEntry1996(int nSpriteID, WORD nWidt
 				if (GET_OVERALL_SPRITE(nSpriteID, SPRITE_SMALL_MILITARY_HANGAR1)) {
 					if (nHangar1Mode == HANGAR1_ANIM)
 						nConvRepl = 1;
-					else if (nHangar1Mode == HANGAR1_OPEN)
+					else if (nHangar1Mode != HANGAR1_SHUT)
 						nConvRepl = 2;
 				}
 			}

@@ -187,6 +187,7 @@ const char* szSC2KFixBuildInfo = "$(UserName)@$(ComputerName)  $([System.DateTim
     <ClCompile Include="modules\spritebrowse_dialog.cpp" />
     <ClCompile Include="modules\status_dialog.cpp" />
     <ClCompile Include="modules\things.cpp" />
+    <ClCompile Include="modules\tileconv_config.cpp" />
     <ClCompile Include="modules\track_config.cpp" />
     <ClCompile Include="modules\update_notifier.cpp" />
     <ClCompile Include="hooks\hook_movies.cpp" />

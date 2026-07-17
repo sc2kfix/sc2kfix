@@ -279,7 +279,7 @@ static void FinalizeFixedTileMask() {
 		dwTempTileMask |= FIXTIL_MASK_HANGARANIM;
 	else if (nHangar1Mode == HANGAR1_OPEN)
 		dwTempTileMask |= FIXTIL_MASK_HANGAROPEN;
-	else
+	else if (nHangar1Mode == HANGAR1_SHUT)
 		dwTempTileMask |= FIXTIL_MASK_HANGARSHUT;
 	dwFixedTileMask = dwTempTileMask;
 }
@@ -339,9 +339,9 @@ void SaveJSONSettings(void) {
 	std::ofstream fSettingsJSON(GetSettingsJsonPath(), std::ios::out | std::ios::trunc);
 	fSettingsJSON << jsonSettingsCore.dump();
 
-	if (dwDetectedVersion == VERSION_SC2K_1996) {
-		GetSpecificStoredJSONVars();
+	GetSpecificStoredJSONVars();
 
+	if (dwDetectedVersion == VERSION_SC2K_1996) {
 		UpdateMiscHooks_SC2K1996();
 		UpdateStatus_SC2K1996(-1);
 	}
@@ -495,6 +495,9 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 			"This setting controls whether or not SimCity 2000 plays higher quality versions of various sounds for which said higher quality versions exist.\n\n"
 
 			"Enabling or disabling this setting takes effect after restarting the game.");
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_CONFTILECONV),
+			"Configure which 'fixed' tiles are used when loading the default tileset.\n\n"
+			"Choose which 'Hangar1' type to use as well when it comes to both the 'fixed' tiles and also converting the default 'ORIGINAL' set from the DOS and Macintosh versions of the game.");
 
 		// Set fields based on the working JSON
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USEFLTSTATUS], IDC_SETTINGS_CHECK_STATUS_DIALOG);
@@ -527,6 +530,8 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 		switch (GET_WM_COMMAND_ID(wParam, lParam)) {
 		case IDC_SETTINGS_BUTTON_CONFKEYBINDINGS:
 			return DoConfigureKeyBindings(stSettingsDialogHeader.stSettingsChanges, hwndDlg);
+		case IDC_SETTINGS_BUTTON_CONFTILECONV:
+			return DoConfigureTileConv(hwndDlg);
 		}
 		return TRUE;
 	}

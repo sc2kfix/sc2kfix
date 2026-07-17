@@ -333,11 +333,14 @@ BOOL CALLBACK SelectFixedObjectsDialogProc(HWND hwndDlg, UINT message, WPARAM wP
 
 	switch (message) {
 		case WM_INITDIALOG:
+			DestroyStoredTooltips(storedToolTips, hwndDlg);
+
 			nSelectedHangar1Mode = nHangar1Mode;
 
 			hComboBox = GetDlgItem(hwndDlg, IDC_HANGAR1TYPE);
 			GetWindowRect(hComboBox, &cmdRect);
 			SetWindowRedraw(hComboBox, FALSE);
+			ComboBox_AddString(hComboBox, "(Ignore)");
 			ComboBox_AddString(hComboBox, "Shut");
 			ComboBox_AddString(hComboBox, "Anim (Grey)");
 			ComboBox_AddString(hComboBox, "Open");
@@ -360,7 +363,19 @@ BOOL CALLBACK SelectFixedObjectsDialogProc(HWND hwndDlg, UINT message, WPARAM wP
 
 			PopulateObjectEntryList(hDlgListView);
 
+			StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_HANGAR1TYPE),
+				"Select the 'Hangar1' default type you want to have applied during the conversion process.\n\n"
+				" Types:\n"
+				" - Shut (Yellow door - extrapolated from the tiny/small view)\n"
+				" - Anim (Grey door - DOS/Macintosh pre-release to version 1.1 cycling effect)\n"
+				" - Open (Black internal area - default from DOS/Macintosh 1.2 and all Windows editions)\n\n"
+				"** If set to '(Ignore)' it won't attempt to use the associated fixed tile or adjust the palette index.");
+
 			CenterDialogBox(hwndDlg);
+			return TRUE;
+
+		case WM_DESTROY:
+			DestroyStoredTooltips(storedToolTips, hwndDlg);
 			return TRUE;
 
 		case WM_COMMAND:
@@ -772,7 +787,7 @@ static int L_SCURK_ConvertMacMIFAndSave(tileConv_t *pObjSet, const char *pLoadFi
 								if (GET_OVERALL_SPRITE(shapHeader.nSpriteID, SPRITE_SMALL_MILITARY_HANGAR1)) {
 									if (nSelectedHangar1Mode == HANGAR1_ANIM)
 										nConvRepl = 1;
-									else if (nSelectedHangar1Mode == HANGAR1_OPEN)
+									else if (nSelectedHangar1Mode != HANGAR1_SHUT)
 										nConvRepl = 2;
 								}
 
@@ -820,7 +835,7 @@ static void L_SCURK_ConvertFromDOS(tileConv_t *pObjSet, WORD nShapNum, WORD nDBI
 		if (GET_OVERALL_SPRITE(nShapNum, SPRITE_SMALL_MILITARY_HANGAR1)) {
 			if (nSelectedHangar1Mode == HANGAR1_ANIM)
 				nConvRepl = 1;
-			else if (nSelectedHangar1Mode == HANGAR1_OPEN)
+			else if (nSelectedHangar1Mode != HANGAR1_SHUT)
 				nConvRepl = 2;
 		}
 	}

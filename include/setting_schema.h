@@ -23,14 +23,14 @@
 #define FIXTIL_MASK_HANGARANIM 64   // "Hangar 1" - door will open and shut (grey)
 #define FIXTIL_MASK_HANGARSHUT 128  // "Hangar 1" - door shut (yellow - extrapolated from small/tiny object)
 
-#define FIXTIL_SC2K_MASK       (FIXTIL_MASK_HORZOFF|FIXTIL_MASK_VERTOFF|FIXTIL_MASK_BADPALIDX|FIXTIL_MASK_OOBPALIDX|FIXTIL_MASK_HANGARANIM)
+#define FIXTIL_SC2K_MASK       (FIXTIL_MASK_HORZOFF|FIXTIL_MASK_BADPALIDX|FIXTIL_MASK_OOBPALIDX|FIXTIL_MASK_HANGARANIM)
 #define FIXTIL_SCURK_MASK      (FIXTIL_MASK_HORZOFF|FIXTIL_MASK_VERTOFF|FIXTIL_MASK_BADPALIDX|FIXTIL_MASK_MISSPIXELS|FIXTIL_MASK_OOBPALIDX|FIXTIL_MASK_HANGARANIM)
 
-#define HANGAR1_SHUT     0    // Yellow background (extrapolated from small/tiny object)
-#define HANGAR1_ANIM     1    // Black/grey 8 frame animation
-#define HANGAR1_OPEN     2    // Black background
+#define HANGAR1_SHUT     1    // Yellow background (extrapolated from small/tiny object)
+#define HANGAR1_ANIM     2    // Black/grey 8 frame animation
+#define HANGAR1_OPEN     3    // Black background
 
-#define HANGAR1_MIN      HANGAR1_SHUT
+#define HANGAR1_MIN      0
 #define HANGAR1_MAX      HANGAR1_OPEN
 
 // Defaults

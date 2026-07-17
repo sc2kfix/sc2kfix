@@ -51,7 +51,6 @@ BOOL bFixFileAssociations = FALSE;
 BOOL bDisableAutoThingCleanup = TRUE;
 BOOL bMapWireFrame = FALSE;
 BOOL bOnTheFlyPalIdx = FALSE;
-BOOL bDisableFixedTiles = FALSE;
 BOOL bBuildFixedTiles = FALSE;
 int iForcedBits = 0;
 
@@ -210,8 +209,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						bSkipLoadingMods = TRUE;
 					if (!lstrcmpiW(argv[i], L"-mapwireframe"))
 						bMapWireFrame = TRUE;
-					if (!lstrcmpiW(argv[i], L"-disablefixedtiles"))
-						bDisableFixedTiles = TRUE;
 #if TIXEDTIL_BUILD
 					if (!lstrcmpiW(argv[i], L"-buildfixedtiles"))
 						bBuildFixedTiles = TRUE;

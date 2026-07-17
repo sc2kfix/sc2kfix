@@ -860,48 +860,46 @@ extern "C" LONG __cdecl Hook_SCURK_EditableTileSet_mReadFromFile(cEditableTileSe
 	pThis->mTileSet[543].pData[0].nSprNum += 4;
 	pThis->mTileSet[126].pData[0].sprHeader.sprOffset.sprLong += 2;
 	fclose(f);
-	if (!bDisableFixedTiles) {
-		if (nRes) {
-			// Leave this portion here, it specifically deals with
-			// loading the main game sprite archives.
+	if (nRes) {
+		// Leave this portion here, it specifically deals with
+		// loading the main game sprite archives.
 #if SPRITE_ARCHIVE_LOADING
-			winscurkApp *pSCApp;
-			char szDataPath[MAX_PATH + 1], szArchiveName[MAX_PATH + 1];
-			BOOL bArcsExist;
+		winscurkApp *pSCApp;
+		char szDataPath[MAX_PATH + 1], szArchiveName[MAX_PATH + 1];
+		BOOL bArcsExist;
 
-			pSCApp = R_SCURK_WRP_winscurkApp_GetPointerToClass();
+		pSCApp = R_SCURK_WRP_winscurkApp_GetPointerToClass();
 
-			bArcsExist = FALSE;
-			sprintf_s(szDataPath, "%s\\Data", pSCApp->mExePath);
-			if (_access(szDataPath, 0) != -1) {
-				sprintf_s(szArchiveName, "%s\\SPECIAL.DAT", szDataPath);
+		bArcsExist = FALSE;
+		sprintf_s(szDataPath, "%s\\Data", pSCApp->mExePath);
+		if (_access(szDataPath, 0) != -1) {
+			sprintf_s(szArchiveName, "%s\\SPECIAL.DAT", szDataPath);
+			if (FileExists(szArchiveName)) {
+				sprintf_s(szArchiveName, "%s\\LARGE.DAT", szDataPath);
 				if (FileExists(szArchiveName)) {
-					sprintf_s(szArchiveName, "%s\\LARGE.DAT", szDataPath);
-					if (FileExists(szArchiveName)) {
-						sprintf_s(szArchiveName, "%s\\SMALLMED.DAT", szDataPath);
-						if (FileExists(szArchiveName))
-							bArcsExist = TRUE;
-					}
+					sprintf_s(szArchiveName, "%s\\SMALLMED.DAT", szDataPath);
+					if (FileExists(szArchiveName))
+						bArcsExist = TRUE;
 				}
 			}
-
-			if (bArcsExist) {
-				sprintf_s(szArchiveName, "%s\\SPECIAL.DAT", szDataPath);
-				L_SCURK_LoadDataArchive(pThis, szArchiveName);
-
-				sprintf_s(szArchiveName, "%s\\LARGE.DAT", szDataPath);
-				L_SCURK_LoadDataArchive(pThis, szArchiveName);
-
-				sprintf_s(szArchiveName, "%s\\SMALLMED.DAT", szDataPath);
-				L_SCURK_LoadDataArchive(pThis, szArchiveName);
-			}
-#endif
-			L_SCURK_LoadFixedLargeSpritesRsrc(pThis);
-#if !SPRITE_ARCHIVE_LOADING
-			R_SCURK_WRP_EditableTileSet_mBuildSmallMedTiles(pThis);
-#endif
-			R_SCURK_WRP_gUpdateWaitWindow();
 		}
+
+		if (bArcsExist) {
+			sprintf_s(szArchiveName, "%s\\SPECIAL.DAT", szDataPath);
+			L_SCURK_LoadDataArchive(pThis, szArchiveName);
+
+			sprintf_s(szArchiveName, "%s\\LARGE.DAT", szDataPath);
+			L_SCURK_LoadDataArchive(pThis, szArchiveName);
+
+			sprintf_s(szArchiveName, "%s\\SMALLMED.DAT", szDataPath);
+			L_SCURK_LoadDataArchive(pThis, szArchiveName);
+		}
+#endif
+		L_SCURK_LoadFixedLargeSpritesRsrc(pThis);
+#if !SPRITE_ARCHIVE_LOADING
+		R_SCURK_WRP_EditableTileSet_mBuildSmallMedTiles(pThis);
+#endif
+		R_SCURK_WRP_gUpdateWaitWindow();
 	}
 	return nRes;
 }
@@ -1220,7 +1218,7 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mReadFromMIFFFile(cEditableTil
 								if (GET_OVERALL_SPRITE(shapHeader.nSpriteID, SPRITE_SMALL_MILITARY_HANGAR1)) {
 									if (nHangar1Mode == HANGAR1_ANIM)
 										nConvRepl = 1;
-									else if (nHangar1Mode == HANGAR1_OPEN)
+									else if (nHangar1Mode != HANGAR1_SHUT)
 										nConvRepl = 2;
 								}
 							}
@@ -1608,7 +1606,7 @@ static void L_SCURK_TranslateFromDOS(cEditableTileSet *pThis, WORD nShapNum, WOR
 		if (GET_OVERALL_SPRITE(nShapNum, SPRITE_SMALL_MILITARY_HANGAR1)) {
 			if (nHangar1Mode == HANGAR1_ANIM)
 				nConvRepl = 1;
-			else if (nHangar1Mode == HANGAR1_OPEN)
+			else if (nHangar1Mode != HANGAR1_SHUT)
 				nConvRepl = 2;
 		}
 	}
@@ -1981,6 +1979,29 @@ static void L_SCURK_FileAddConvMenu(HMENU hMenu, DWORD dwID, const void *pRetAdd
 	}
 }
 
+static void L_SCURK_OptionsMenuAdd(HMENU hMenu, DWORD dwID, int nMenuPos, const void *pRetAddr) {
+	HMENU hOptionsPopup;
+	MENUITEMINFO miiOptionsPopup;
+
+	if (mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_MENU)
+		ConsoleLog(LOG_DEBUG, "0x%06X -> OptionsMenuAdd(0x%06X, %u, %d)\n", pRetAddr, hMenu, dwID, nMenuPos);
+	miiOptionsPopup.cbSize = sizeof(MENUITEMINFO);
+	miiOptionsPopup.fMask = MIIM_SUBMENU;
+	if (!GetMenuItemInfo(hMenu, nMenuPos, TRUE, &miiOptionsPopup) && mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_MENU) {
+		ConsoleLog(LOG_DEBUG, "MISC: Options GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
+		return;
+	}
+	hOptionsPopup = miiOptionsPopup.hSubMenu;
+	if (!InsertMenu(hOptionsPopup, -1, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_MENU) {
+		ConsoleLog(LOG_DEBUG, "MISC: Options InsertMenuA #1 failed, error = 0x%08X.\n", GetLastError());
+		return;
+	}
+	if (!InsertMenu(hOptionsPopup, -1, MF_BYPOSITION|MF_STRING, IDM_SCRK_OPTIONS_TILCONV_CONFIG, "Tile Conversion/Defaults...") && mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_MENU) {
+		ConsoleLog(LOG_DEBUG, "MISC: Options InsertMenuA #2 failed, error = 0x%08X.\n", GetLastError());
+		return;
+	}
+}
+
 extern "C" int __cdecl Hook_SCURK_winscurkMDIFrame_AssignMenu(winscurkMDIFrame *pThis, TBC45XResId menuResID) {
 	winscurkApp *pSCApp;
 	HMENU hDefaultMenu, hMenu;
@@ -2007,16 +2028,19 @@ extern "C" int __cdecl Hook_SCURK_winscurkMDIFrame_AssignMenu(winscurkMDIFrame *
 		if (mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_MENU)
 			ConsoleLog(LOG_DEBUG, "0x%06X -> winscurkMDIFrame::AssignMenu(%u): - PlaceWindow Menu\n", _ReturnAddress(), (DWORD)menuResID.Id);
 		L_SCURK_FileAddConvMenu(hMenu, (DWORD)pThis->__wndHead.pWnd->Attr.Menu.Id, _ReturnAddress());
+		L_SCURK_OptionsMenuAdd(hMenu, (DWORD)pThis->__wndHead.pWnd->Attr.Menu.Id, 1, _ReturnAddress());
 	}
 	else if (hMenu && pThis->__wndHead.pWnd->Attr.Menu.Id == (const char *)300) {
 		if (mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_MENU)
 			ConsoleLog(LOG_DEBUG, "0x%06X -> winscurkMDIFrame::AssignMenu(%u): - MoverWindow Menu\n", _ReturnAddress(), (DWORD)menuResID.Id);
 		L_SCURK_FileAddConvMenu(hMenu, (DWORD)pThis->__wndHead.pWnd->Attr.Menu.Id, _ReturnAddress());
+		L_SCURK_OptionsMenuAdd(hMenu, (DWORD)pThis->__wndHead.pWnd->Attr.Menu.Id, 2, _ReturnAddress());
 	}
 	else if (hMenu && pThis->__wndHead.pWnd->Attr.Menu.Id == (const char *)400) {
 		if (mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_MENU)
 			ConsoleLog(LOG_DEBUG, "0x%06X -> winscurkMDIFrame::AssignMenu(%u): - EditWindow Menu\n", _ReturnAddress(), (DWORD)menuResID.Id);
 		L_SCURK_FileAddConvMenu(hMenu, (DWORD)pThis->__wndHead.pWnd->Attr.Menu.Id, _ReturnAddress());
+		L_SCURK_OptionsMenuAdd(hMenu, (DWORD)pThis->__wndHead.pWnd->Attr.Menu.Id, 2, _ReturnAddress());
 
 		HMENU hEditPopup;
 		MENUITEMINFO miiEditPopup;
@@ -2188,7 +2212,8 @@ extern "C" void __cdecl Hook_SCURK_MenuItemEnabler_Enable(TBC45XMenuItemEnabler 
 	nEnableOverride = nEnable;
 	// These are the menu items we always want to enable.
 	if (pThis->Id == IDM_SCRK_EW_EDIT_MOVE ||
-	    (pThis->Id >= IDM_SCRK_EW_FILE_DIRCONV_CONVERT && pThis->Id <= IDM_SCRK_EW_FILE_DIRCONV_CONVERTLOADWRK))
+	    (pThis->Id >= IDM_SCRK_EW_FILE_DIRCONV_CONVERT && pThis->Id <= IDM_SCRK_EW_FILE_DIRCONV_CONVERTLOADWRK) ||
+		pThis->Id == IDM_SCRK_OPTIONS_TILCONV_CONFIG)
 		nEnableOverride = 1;
 	EnableMenuItem(pThis->hMenu, pThis->Position, (nEnableOverride ? MF_ENABLED : MF_GRAYED) | MF_BYPOSITION);
 	if (mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_MENU)
@@ -2240,6 +2265,9 @@ extern "C" LRESULT __cdecl Hook_SCURK_FrameWindow_EvCommand(TBC45XFrameWindow *p
 				return TRUE;
 			case IDM_SCRK_EW_FILE_DIRCONV_CONVERTLOADWRK:
 				L_SCURK_DirectConvert(pSCApp->mdiClient, CONVSAVEAS_LOADWRK);
+				return TRUE;
+			case IDM_SCRK_OPTIONS_TILCONV_CONFIG:
+				DoConfigureTileConv(pSCApp->mdiClient->pWnd->HWindow);
 				return TRUE;
 			default:
 				break;
