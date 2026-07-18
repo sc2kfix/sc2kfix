@@ -206,7 +206,9 @@ public:
 
 	void DeleteStored_SC2K1996();
 	int CreateWithPalette_SC2K1996(LONG ibiWidth, LONG ibiHeight);
+#if 0
 	void SetAdjustedColorTableFromMainPalette(int nPal);
+#endif
 	void PaintNormalAndStretch(HDC hDC, int x, int y, int sX, int sY, int nFactor);
 	CMFC3XDC *GetDC_SC2K1996();
 	void ReleaseDC_SC2K1996(CMFC3XDC *pDC);

@@ -204,6 +204,7 @@ int CGraphics::CreateWithPalette_SC2K1996(LONG ibiWidth, LONG ibiHeight) {
 	return 1;
 }
 
+#if 0
 void CGraphics::SetAdjustedColorTableFromMainPalette(int nPal) {
 	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
 	CMFC3XPalette *pPal;
@@ -247,6 +248,7 @@ void CGraphics::SetAdjustedColorTableFromMainPalette(int nPal) {
 		SelectObject(hDC_Global, hObj);
 	}
 }
+#endif
 
 void CGraphics::PaintNormalAndStretch(HDC hDC, int x, int y, int sX, int sY, int nFactor) {
 	CSimcityAppPrimary *pSCApp;
@@ -548,8 +550,11 @@ extern "C" void __stdcall Hook_SimcityView_OnDraw(CMFC3XDC *pDC) {
 		r[1].top = 0;
 		r[1].right = Game_Graphics_Width(pThis->SCVGraphics);
 		r[1].bottom = Game_Graphics_Height(pThis->SCVGraphics);
+#if 0
+		pThis->SCVGraphics->SetAdjustedColorTableFromMainPalette(1);
+#else
 		Game_Graphics_SetColorTableFromApplicationPalette(pThis->SCVGraphics);
-		//pThis->SCVGraphics->SetAdjustedColorTableFromMainPalette(1);
+#endif
 		if (pThis->dwSCVIsZoomed == 1)
 		{
 			r[1] = r[0];
