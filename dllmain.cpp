@@ -19,7 +19,7 @@
 #include <winmm_exports.h>
 #include "resource.h"
 
-#define TIXEDTIL_BUILD 1
+#define FIXEDTIL_BUILD 0
 
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
@@ -209,7 +209,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						bSkipLoadingMods = TRUE;
 					if (!lstrcmpiW(argv[i], L"-mapwireframe"))
 						bMapWireFrame = TRUE;
-#if TIXEDTIL_BUILD
+#if FIXEDTIL_BUILD
 					if (!lstrcmpiW(argv[i], L"-buildfixedtiles"))
 						bBuildFixedTiles = TRUE;
 #endif
