@@ -73,10 +73,8 @@ SCURKPRIMARY_GAMECALL_MAIN(0x414450, void, __cdecl, EncodeDib_mEncodeShape, TEnc
 SCURKPRIMARY_GAMECALL_MAIN(0x4148E8, int, __cdecl, EditableTileSet_mShapeNumToEditableNum, cEditableTileSet *, int)
 SCURKPRIMARY_GAMECALL_MAIN(0x414D78, char *, __cdecl, EditableTileSet_mGetLongName, cEditableTileSet *, int)
 SCURKPRIMARY_GAMECALL_MAIN(0x4168B0, int, __cdecl, EditableTileSet_mGetShapeWidth, cEditableTileSet *, int)
-SCURKPRIMARY_GAMECALL_MAIN(0x41692C, void, __cdecl, EditableTileSet_mReadShapeFromDIB_Dib, cEditableTileSet *, int, TEncodeDib *)
 SCURKPRIMARY_GAMECALL_MAIN(0x416C0C, void, __cdecl, EditableTileSet_mRenderEditableShapeToDIB_Dib, cEditableTileSet *, TBC45XDib *, int)
 SCURKPRIMARY_GAMECALL_MAIN(0x416C44, void, __cdecl, EditableTileSet_mRenderEditableShapeToDIB_Graphic, cEditableTileSet *, CWinGBitmap *, int)
-SCURKPRIMARY_GAMECALL_MAIN(0x416C7C, void, __cdecl, EditableTileSet_mRenderDBShapeToDIB_Dib, cEditableTileSet *, TBC45XDib *, int)
 SCURKPRIMARY_GAMECALL_MAIN(0x4173EC, void, __cdecl, EditableTileSet_mBuildSmallMedTiles, cEditableTileSet *)
 SCURKPRIMARY_GAMECALL_MAIN(0x429448, void, __cdecl, PlaceWindow_DrawHouse, winscurkPlaceWindow *, char *)
 SCURKPRIMARY_GAMECALL_MAIN(0x436B6C, void, __cdecl, CheckExtension, char *, char *)
@@ -137,7 +135,6 @@ SCURKPRIMARY_GAMECALL_MAIN(0x488028, void *, __cdecl, Op_New, size_t)
 SCURKPRIMARY_GAMECALL_MAIN(0x4895C0, void, __cdecl, BCString_Destruct, BC45Xstring *, char)
 
 // Vars
-SCURKPRIMARY_GAMEOFF(HDC,			hDCWinG,				0x4905EC)
 SCURKPRIMARY_GAMEOFF_PTR(__int16,	wTileObjects,			0x491BAA)
 SCURKPRIMARY_GAMEOFF(WORD,			wColFastCnt,			0x498506)
 SCURKPRIMARY_GAMEOFF(WORD,			wColSlowCnt,			0x498508)

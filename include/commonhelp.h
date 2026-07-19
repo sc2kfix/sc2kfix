@@ -281,10 +281,8 @@ void R_SCURK_WRP_EncodeDib_mEncodeShape(TEncodeDib *pThis, WORD shapeHeight, WOR
 int R_SCURK_WRP_EditableTileSet_mShapeNumToEditableNum(cEditableTileSet *pThis, int nShapNum);
 char *R_SCURK_WRP_EditableTileSet_mGetLongName(cEditableTileSet *pThis, int nEdNum);
 int R_SCURK_WRP_EditableTileSet_mGetShapeWidth(cEditableTileSet *pThis, int nEdNum);
-void R_SCURK_WRP_EditableTileSet_mReadShapeFromDIB_Dib(cEditableTileSet *pThis, int nDBID, TEncodeDib *pEncDib);
 void R_SCURK_WRP_EditableTileSet_mRenderEditableShapeToDIB_Dib(cEditableTileSet *pThis, TBC45XDib *pDib, int nEdNum);
 void R_SCURK_WRP_EditableTileSet_mRenderEditableShapeToDIB_Graphic(cEditableTileSet *pThis, CWinGBitmap *pGraphic, int nEdNum);
-void R_SCURK_WRP_EditableTileSet_mRenderDBShapeToDIB_Dib(cEditableTileSet *pThis, TBC45XDib *pDib, int nDBID);
 void R_SCURK_WRP_EditableTileSet_mBuildSmallMedTiles(cEditableTileSet *pThis);
 TBC45XDib *R_SCURK_WRP_EditWindow_mGetForegroundPattern(winscurkEditWindow *pThis);
 void R_SCURK_WRP_EditWindow_mDoCurrentPatternDib(winscurkEditWindow *pThis);
