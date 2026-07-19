@@ -543,8 +543,7 @@ extern "C" void __stdcall Hook_SimcityView_OnDraw(CMFC3XDC *pDC) {
 
 	CMFC3XRect r[2];
 
-	if (pThis->pSCVGraphicLockDIBRes)
-	{
+	if (pThis->pSCVGraphicLockDIBRes) {
 		Game_SimcityView_GetScreenAreaInfo(pThis, &r[0]);
 		r[1].left = 0;
 		r[1].top = 0;
@@ -555,15 +554,13 @@ extern "C" void __stdcall Hook_SimcityView_OnDraw(CMFC3XDC *pDC) {
 #else
 		Game_Graphics_SetColorTableFromApplicationPalette(pThis->SCVGraphics);
 #endif
-		if (pThis->dwSCVIsZoomed == 1)
-		{
+		if (pThis->dwSCVIsZoomed == 1) {
 			r[1] = r[0];
 			r[1].bottom = r[0].bottom >> 1;
 			r[1].right = r[0].right >> 1;
 			Game_Graphics_StretchPaint(pThis->SCVGraphics, pDC, &r[1], &r[0]);
 		}
-		else
-		{
+		else {
 			Game_Graphics_BitBlit(pThis->SCVGraphics, pDC->m_hDC,
 				r[0].left,
 				r[0].top,
