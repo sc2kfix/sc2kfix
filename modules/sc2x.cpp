@@ -7,6 +7,7 @@
 #include <shlwapi.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <direct.h>
 #include <intrin.h>
 #include <iostream>
 #include <fstream>
@@ -724,6 +725,116 @@ extern "C" DWORD __stdcall Hook_LoadGame(CMFC3XFile* pFile, char* src) {
 	return ret;
 }
 
+extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
+	CSimcityAppPrimary* pThis;
+
+	__asm mov [pThis], ecx
+
+	CMainFrame *pMainFrm;
+	char szFileTypes[255 + 1], szCaption[255 + 1];
+	CMFC3XString strFilePath;
+	int nRet, nPathLen, nFileLen, nNewLen;
+	char szFilePath[MAX_PATH + 1], szPath[MAX_PATH + 1];
+	OPENFILENAMEA m_ofn;
+
+	pMainFrm = (CMainFrame *)pThis->m_pMainWnd;
+	if (Game_SimcityApp_CheckActiveGame(pThis) == IDCANCEL) {
+		if (pThis->dwSCAOnInitToggleToolBar)
+			Game_MainFrame_ToggleToolBars(pMainFrm, TRUE);
+		else {
+			pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
+			pThis->dwSCASetNextStep = TRUE;
+			pThis->dwSCAGameStarted = FALSE;
+		}
+	}
+	else {
+		pThis->dwSCABackgroundColourCyclingActive = TRUE;
+		
+		memset(szPath, 0, sizeof(szPath));
+
+		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 4002, szFileTypes, sizeof(szFileTypes) - 1);
+		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 4003, szCaption, sizeof(szCaption) - 1);
+
+		Game_SimcityApp_GetValueStringA(pThis, &strFilePath, aPaths, aCities);
+
+		strcpy_s(szFilePath, sizeof(szFilePath) - 1, strFilePath.m_pchData);
+
+		memset(&m_ofn, 0, sizeof(OPENFILENAMEA));
+		m_ofn.lStructSize = sizeof(OPENFILENAMEA);
+		m_ofn.hwndOwner = pThis->m_pMainWnd->m_hWnd;
+		m_ofn.hInstance = pThis->m_hInstance;
+		m_ofn.lpstrFilter = ConvertFileTypeFilterString(szFileTypes);
+		m_ofn.lpstrInitialDir = szFilePath;
+		m_ofn.lpstrTitle = szCaption;
+		m_ofn.nMaxFile = _countof(szPath);
+		m_ofn.nMaxFileTitle = _countof(szPath);
+		m_ofn.nFilterIndex = 1;
+		m_ofn.lpstrDefExt = "sc2";
+		m_ofn.lpstrFile = szPath;
+		m_ofn.lpstrFileTitle = szFilePath;
+		m_ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_ENABLESIZING;
+		nRet = GetOpenFileNameA(&m_ofn);
+		nRetState = (!nRet) ? IDCANCEL : nRet;
+		nNewLen = 0;
+		nPathLen = strlen(m_ofn.lpstrFile);
+		if (nRetState == IDCANCEL || nPathLen == 0) {
+			if (pThis->dwSCAOnInitToggleToolBar) {
+				Game_MainFrame_ToggleToolBars(pMainFrm, TRUE);
+				Game_UpdateSectionsAndResetWindowMenu();
+			}
+			else {
+				pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
+				pThis->dwSCASetNextStep = TRUE;
+			}
+			pThis->dwSCABackgroundColourCyclingActive = FALSE;
+		}
+		else {
+			pThis->dwSCABackgroundColourCyclingActive = FALSE;
+			pThis->iSCAProgramStep = ONIDLE_STATE_LOADCITY_RETURN;
+			pThis->dwSCASetNextStep = TRUE;
+			Game_StartCleanGame();
+			Game_PrepareGame();
+			if (Game_SimcityApp_OpenCity(pThis, m_ofn.lpstrFile)) {
+				nFileLen = strlen(m_ofn.lpstrFileTitle);
+				if (nPathLen > 0 && nFileLen > 0) {
+					nNewLen = nPathLen - nFileLen;
+					if (nNewLen > 0) {
+						strncpy_s(szPath, sizeof(szPath) - 1, m_ofn.lpstrFile, nNewLen);
+						if (L_IsPathValid(szPath))
+							jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_CITIES] = szPath;
+					}
+				}
+				GameMain_Document_UpdateAllViews(pCSimcityDoc, 0, SCD_UPDATE_VIEW_UPDATE, 0);
+				CSimcityView *pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pThis);
+				Game_ShowViewControls();
+				UpdateWindow(pSCView->m_hWnd);
+				pThis->iSCAProgramStep = ONIDLE_STATE_INGAME;
+				pThis->dwSCASetNextStep = TRUE;
+				Game_SimcityApp_AdjustMenus(pThis, wCityMode);
+				dwMapEditingMode = wCityMode == 0;
+				Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
+				if (pThis->dwSCAOnInitToggleToolBar)
+					Game_MainFrame_ToggleToolBars(pMainFrm, TRUE);
+				pThis->dwSCAMapModeVarCheck = FALSE;
+				pThis->dwSCAGameStarted = TRUE;
+			}
+			else {
+				GameMain_AfxMessageBoxID(412, 0, 0xFFFFFFFF);
+				pThis->dwSCAOnInitToggleToolBar = 0;
+				pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
+				pThis->dwSCASetNextStep = TRUE;
+				Game_SimcityApp_CloseWidgetWindows(pThis);
+				Game_MainFrame_ToggleToolBars(pMainFrm, FALSE);
+				pThis->dwSCAGameStarted = FALSE;
+				
+			}
+			_chdir(pThis->dwSCACStringDriveCurrentWorkingDirectory.m_pchData);
+			Game_UpdateSectionsAndResetWindowMenu();
+		}
+		GameMain_String_Dest(&strFilePath);
+	}
+}
+
 // Function prototype: HOOKCB void Hook_SaveGame_Before(void)
 // Cannot be ignored.
 // SPECIAL NOTE: When the SC2X save format is implemented, this will be where mods will be fed a
@@ -893,6 +1004,10 @@ void InstallSaveHooks_SC2K1996(void) {
 	// Load game hook
 	SafeVirtualProtect((LPVOID)0x4025A4, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4025A4, Hook_LoadGame);
+
+	// CSimcityApp::LoadCity
+	SafeVirtualProtect((LPVOID)0x401E1F, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401E1F, Hook_SimcityApp_LoadCity);
 	
 	// Patch to stop CFile::CFile() from being called in exclusive mode when loading a game
 	SafeVirtualProtect((LPVOID)0x430118, 5, PAGE_EXECUTE_READWRITE);
