@@ -795,7 +795,6 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 			Game_StartCleanGame();
 			Game_PrepareGame();
 			if (Game_SimcityApp_OpenCity(pThis, m_ofn.lpstrFile)) {
-				ConsoleLog(LOG_DEBUG, "LoadCity(): [%s] [%s]\n", m_ofn.lpstrFile, m_ofn.lpstrFileTitle);
 				nFileLen = strlen(m_ofn.lpstrFileTitle);
 				if (nPathLen > 0 && nFileLen > 0) {
 					nNewLen = nPathLen - nFileLen;
@@ -827,7 +826,6 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 				Game_SimcityApp_CloseWidgetWindows(pThis);
 				Game_MainFrame_ToggleToolBars(pMainFrm, FALSE);
 				pThis->dwSCAGameStarted = FALSE;
-				
 			}
 			_chdir(pThis->dwSCACStringDriveCurrentWorkingDirectory.m_pchData);
 			Game_UpdateSectionsAndResetWindowMenu();
@@ -902,8 +900,6 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 			strcpy_s(szPath, pszCityName.m_pchData);
 		strcat_s(szPath, ".sc2");
 
-		ConsoleLog(LOG_DEBUG, "SaveCityAs(): [%s] [%s] [%s] [%s]\n", strCityFilename.m_pchData, pszCityName.m_pchData, szFilePath, szPath);
-
 		memset(&m_ofn, 0, sizeof(OPENFILENAMEA));
 		m_ofn.lStructSize = sizeof(OPENFILENAMEA);
 		m_ofn.hwndOwner = pThis->m_pMainWnd->m_hWnd;
@@ -934,9 +930,7 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 				if (nPathLen > 0 && nFileLen > 0) {
 					nNewLen = nPathLen - nFileLen;
 					if (nNewLen > 0) {
-						ConsoleLog(LOG_DEBUG, "Full Path: '%s' (%s)\n", m_ofn.lpstrFile, m_ofn.lpstrFileTitle);
 						strncpy_s(szPath, sizeof(szPath) - 1, m_ofn.lpstrFile, nNewLen);
-						ConsoleLog(LOG_DEBUG, "Stored Path: '%s'\n", m_ofn.lpstrFile);
 						if (L_IsPathValid(szPath))
 							jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_CITIES] = szPath;
 					}
