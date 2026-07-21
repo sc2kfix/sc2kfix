@@ -761,7 +761,7 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 
 		memset(&m_ofn, 0, sizeof(OPENFILENAMEA));
 		m_ofn.lStructSize = sizeof(OPENFILENAMEA);
-		m_ofn.hwndOwner = pThis->m_pMainWnd->m_hWnd;
+		m_ofn.hwndOwner = pMainFrm->m_hWnd;
 		m_ofn.hInstance = pThis->m_hInstance;
 		m_ofn.lpstrFilter = ConvertFileTypeFilterString(szFileTypes);
 		m_ofn.lpstrInitialDir = szFilePath;
@@ -795,6 +795,7 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 			Game_StartCleanGame();
 			Game_PrepareGame();
 			if (Game_SimcityApp_OpenCity(pThis, m_ofn.lpstrFile)) {
+				ConsoleLog(LOG_DEBUG, "LoadCity(): [%s] [%s]\n", m_ofn.lpstrFile, m_ofn.lpstrFileTitle);
 				nFileLen = strlen(m_ofn.lpstrFileTitle);
 				if (nPathLen > 0 && nFileLen > 0) {
 					nNewLen = nPathLen - nFileLen;
@@ -870,6 +871,86 @@ extern "C" DWORD __stdcall Hook_SaveGame(CMFC3XString* lpFileName) {
 	}
 
 	return ret;
+}
+
+extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
+	CSimcityAppPrimary* pThis;
+
+	__asm mov [pThis], ecx
+
+	CMainFrame *pMainFrm;
+	CMFC3XString strFilePath, strFileName;
+	int nRet, nPathLen, nFileLen, nNewLen;
+	char szFilePath[MAX_PATH + 1], szPath[MAX_PATH + 1], szErrStr[512 + 1];
+	OPENFILENAMEA m_ofn;
+
+	pMainFrm = (CMainFrame *)pThis->m_pMainWnd;
+	if (pThis->dwSCAGameStarted) {
+		memset(szPath, 0, sizeof(szPath));
+
+		GameMain_String_Cons(&strFileName);
+		Game_SimcityApp_GetValueStringA(pThis, &strFilePath, aPaths, aSavegame);
+
+		strcpy_s(szFilePath, sizeof(szFilePath) - 1, strFilePath.m_pchData);
+
+		if (strCityFilename.m_nDataLength > 0) {
+			strcpy_s(szPath, strCityFilename.m_pchData);
+			PathStripPathA(szPath);
+			PathRemoveExtensionA(szPath);
+		}
+		else
+			strcpy_s(szPath, pszCityName.m_pchData);
+		strcat_s(szPath, ".sc2");
+
+		ConsoleLog(LOG_DEBUG, "SaveCityAs(): [%s] [%s] [%s] [%s]\n", strCityFilename.m_pchData, pszCityName.m_pchData, szFilePath, szPath);
+
+		memset(&m_ofn, 0, sizeof(OPENFILENAMEA));
+		m_ofn.lStructSize = sizeof(OPENFILENAMEA);
+		m_ofn.hwndOwner = pThis->m_pMainWnd->m_hWnd;
+		m_ofn.hInstance = pThis->m_hInstance;
+		m_ofn.lpstrFilter = ConvertFileTypeFilterString("SimCity 2000 City (*.sc2)|*.sc2||");
+		m_ofn.lpstrInitialDir = szFilePath;
+		m_ofn.nMaxFile = _countof(szPath);
+		m_ofn.nMaxFileTitle = _countof(szPath);
+		m_ofn.nFilterIndex = 1;
+		m_ofn.lpstrDefExt = "sc2";
+		m_ofn.lpstrFile = szPath;
+		m_ofn.lpstrFileTitle = szFilePath;
+		m_ofn.Flags = OFN_NOREADONLYRETURN | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_ENABLESIZING;
+		nRet = GetSaveFileNameA(&m_ofn);
+		nRetState = (!nRet) ? IDCANCEL : nRet;
+		nNewLen = 0;
+		nPathLen = strlen(m_ofn.lpstrFile);
+		if (nRetState != IDCANCEL) {
+			GameMain_String_OperatorSet(&strFileName, m_ofn.lpstrFile);
+			if (Game_SimcityApp_DoSave(pThis, &strFileName)) {
+				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 51, szErrStr, sizeof(szErrStr) - 1);
+				GameMain_String_Empty(&strUnusedString);
+				GameMain_String_OperatorSet(&strCityFilename, m_ofn.lpstrFile);
+				strcat_s(szErrStr, m_ofn.lpstrFile);
+
+				nFileLen = strlen(m_ofn.lpstrFileTitle);
+				if (nPathLen > 0 && nFileLen > 0) {
+					nNewLen = nPathLen - nFileLen;
+					if (nNewLen > 0) {
+						ConsoleLog(LOG_DEBUG, "Full Path: '%s' (%s)\n", m_ofn.lpstrFile, m_ofn.lpstrFileTitle);
+						strncpy_s(szPath, sizeof(szPath) - 1, m_ofn.lpstrFile, nNewLen);
+						ConsoleLog(LOG_DEBUG, "Stored Path: '%s'\n", m_ofn.lpstrFile);
+						if (L_IsPathValid(szPath))
+							jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_CITIES] = szPath;
+					}
+				}
+			}
+			else {
+				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 60, szErrStr, sizeof(szErrStr) - 1);
+			}
+			L_MessageBoxA(0, szErrStr, gamePrimaryKey, 0);
+		}
+		pThis->dwSCAOnQuitSuspendSim = 0;
+
+		GameMain_String_Dest(&strFilePath);
+		GameMain_String_Dest(&strFileName);
+	}
 }
 
 // Assembly language hook to try to fix up corrupted save file headers.
@@ -1020,4 +1101,8 @@ void InstallSaveHooks_SC2K1996(void) {
 	// Save game hook
 	SafeVirtualProtect((LPVOID)0x401870, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401870, Hook_SaveGame);
+
+	// CSimcityApp::SaveCityAs
+	SafeVirtualProtect((LPVOID)0x401929, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401929, Hook_SimcityApp_SaveCityAs);
 }

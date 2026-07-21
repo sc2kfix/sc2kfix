@@ -3074,6 +3074,7 @@ GAMECALL(0x4017B2, void, __thiscall, SimcityDoc_UpdateDocumentTitle, CSimcityDoc
 GAMECALL(0x4017FD, void, __stdcall, DrawAllLarge)
 GAMECALL(0x401820, void, __thiscall, Engine_SimulationProcessTick, CEngine *)
 GAMECALL(0x401857, int, __cdecl, MapToolPlaceTree, __int16 iTileTargetX, __int16 iTileTargetY)
+GAMECALL(0x401870, int, __thiscall, SimcityApp_DoSave, CSimcityAppPrimary *, CMFC3XString *)
 GAMECALL(0x4018C0, void, __stdcall, SelectArcologyDialog_OnDrawState, LPDRAWITEMSTRUCT)
 GAMECALL(0x401901, void, __thiscall, SelectArcologyDialog_OnDrawEntire, CSelectArcologyDialog *, int, int, LPDRAWITEMSTRUCT)
 GAMECALL(0x40191F, void, __cdecl, DoFund, __int16)
@@ -3478,6 +3479,7 @@ GAMEOFF_ARR(CMFC3XString,	cityToolGroupStrings,		0x4C94C8)
 GAMEOFF(DWORD,	dwDisasterActive,			0x4C9EE8)
 GAMEOFF_ARR(WORD, wBondArr,					0x4C9EF0)
 GAMEOFF_ARR(CMFC3XString,	cStrDataArchiveNames,	0x4CA160)
+GAMEOFF(CMFC3XString,	strUnusedString,		0x4CA188)
 GAMEOFF(DWORD,	dwCityResidentialPopulation,	0x4CA194)
 GAMEOFF(CMFC3XString, pszCityName,				0x4CA1A0)
 GAMEOFF(WORD,	wNationalEconomyTrend,		0x4CA1BC)
@@ -3531,6 +3533,7 @@ GAMEOFF(DWORD,	dwCityFame,					0x4CAD28)		// Unused in vanilla game
 GAMEOFF(BOOL,	bYearEndFlag,				0x4CAD2C)
 GAMEOFF(__int16,	iScreenPointX,			0x4CAD30)		// Used here in MapToolMenuAction
 GAMEOFF(__int16,	iScreenPointY,			0x4CAD34)		// Used here in MapToolMenuAction
+GAMEOFF(CMFC3XString,	strCityFilename,	0x4CAD38)
 GAMEOFF(BOOL,	bInScenario,				0x4CAD44)
 GAMEOFF_ARR(char, szNeighborNameSouth,		0x4CAD58)		// char[32]
 GAMEOFF_ARR(char, szNeighborNameWest,		0x4CAD78)		// char[32]
@@ -3677,6 +3680,7 @@ GAMEOFF_ARR(const char,	aTilesets,			0x4E7244)
 GAMEOFF_ARR(const char,	aData,				0x4E728C)
 GAMEOFF(DWORD,	dwMapEditingMode,			0x4E72F0)
 GAMEOFF_ARR(const char,	aCities,			0x4E730C)
+GAMEOFF_ARR(const char,	aSavegame,			0x4E7338)
 GAMEOFF_ARR(sprite_archive_stored_t,	dwBaseSpriteLoading,		0x4E7448)
 GAMEOFF_ARR(WORD,	wBuildingPopLevel,		0x4E7458)
 GAMEOFF_ARR(BYTE,	bTileState,				0x4E7508)
