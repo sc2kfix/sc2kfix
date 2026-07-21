@@ -96,56 +96,6 @@ int L_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
 	return ret;
 }
 
-extern "C" int __stdcall Hook_FileDialog_DoModal() {
-	CMFC3XFileDialog *pThis;
-
-	__asm mov [pThis], ecx
-
-	HWND hWndOwner;
-	bool bIsReserved;
-	int iRet;
-	int nPathLen, nFileLen, nNewLen;
-	char szPath[MAX_PATH + 1];
-	OPENFILENAMEA* pOfn;
-
-	memset(szPath, 0, sizeof(szPath));
-
-	ToggleFloatingStatusDialog(FALSE);
-
-	hWndOwner = GameMain_Dialog_PreModal(pThis);
-	bIsReserved = pThis->m_ofn.pvReserved == 0;
-	pThis->m_ofn.hwndOwner = hWndOwner;
-	pOfn = &pThis->m_ofn;
-
-	if (bIsReserved)
-		iRet = GetSaveFileNameA(pOfn);
-	else
-		iRet = GetOpenFileNameA(pOfn);
-	GameMain_Dialog_PostModal(pThis);
-	if (!iRet)
-		iRet = IDCANCEL;
-
-	if (iRet != IDCANCEL) {
-		nPathLen = strlen(pOfn->lpstrFile);
-		nFileLen = strlen(pOfn->lpstrFileTitle);
-		if (nPathLen > 0 && nFileLen > 0) {
-			nNewLen = nPathLen - nFileLen;
-			if (nNewLen > 0) {
-				strncpy_s(szPath, sizeof(szPath)-1, pOfn->lpstrFile, nNewLen);
-				if (L_IsDirectoryPathValid(szPath)) {
-					if ((DWORD)_ReturnAddress() == 0x42EB82 ||
-						(DWORD)_ReturnAddress() == 0x42FDCE) // From 'LoadCity' or 'SaveCityAs'
-						jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_CITIES] = szPath;
-				}
-			}
-		}
-	}
-
-	ToggleFloatingStatusDialog(TRUE);
-
-	return iRet;
-}
-
 extern "C" INT_PTR __stdcall Hook_GameDialog_DoModal() {
 	CGameDialog *pThis;
 	__asm mov [pThis], ecx
@@ -2536,10 +2486,6 @@ void InstallMiscHooks_SC2K1996(void) {
 
 	// Install Movie hooks
 	InstallMovieHooks();
-
-	// Hook into the CFileDialog::DoModal function
-	SafeVirtualProtect((LPVOID)0x49FE18, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x49FE18, Hook_FileDialog_DoModal);
 
 	// Hook into the CGameDialog::DoModal function
 	SafeVirtualProtect((LPVOID)0x40219E, 5, PAGE_EXECUTE_READWRITE);

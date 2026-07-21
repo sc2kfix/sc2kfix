@@ -495,12 +495,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			lpDialogFix2 = (LPVOID)0x49EEF2;
 			break;
 
-		case VERSION_SC2K_1996:
-			bCanFixDialogCrash = TRUE;
-			lpDialogFix1 = (LPVOID)0x4A04FA;
-			lpDialogFix2 = (LPVOID)0x4A0559;
-			break;
-
 		default:
 			bCanFixDialogCrash = FALSE;
 			break;

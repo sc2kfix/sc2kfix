@@ -917,6 +917,7 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 		m_ofn.lpstrFile = szPath;
 		m_ofn.lpstrFileTitle = szFilePath;
 		m_ofn.Flags = OFN_NOREADONLYRETURN | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_ENABLESIZING;
+		ToggleFloatingStatusDialog(FALSE);
 		nRet = GetSaveFileNameA(&m_ofn);
 		nRetState = (!nRet) ? IDCANCEL : nRet;
 		nNewLen = 0;
@@ -947,6 +948,7 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 			L_MessageBoxA(0, szErrStr, gamePrimaryKey, 0);
 		}
 		pThis->dwSCAOnQuitSuspendSim = 0;
+		ToggleFloatingStatusDialog(TRUE);
 
 		GameMain_String_Dest(&strFilePath);
 		GameMain_String_Dest(&strFileName);
@@ -1061,18 +1063,6 @@ extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
 }
 
 void InstallSaveHooks_SC2K1996(void) {
-	// Fix city name being overwritten by filename on save
-	BYTE bFilenamePatch[6] = { 0xB9, 0xA0, 0xA1, 0x4C, 0x00, 0x51 };
-	SafeVirtualProtect((LPVOID)0x42FE62, 6, PAGE_EXECUTE_READWRITE);
-	memcpy((LPVOID)0x42FE62, bFilenamePatch, 6);
-	SafeVirtualProtect((LPVOID)0x42FE99, 6, PAGE_EXECUTE_READWRITE);
-	memcpy((LPVOID)0x42FE99, bFilenamePatch, 6);
-
-	// Adjust the Save File dialog type criterion
-	SafeVirtualProtect((LPVOID)0x4E7344, 32, PAGE_EXECUTE_READWRITE);
-	memset((LPVOID)0x4E7344, 0, 32);
-	memcpy_s((LPVOID)0x4E7344, 32, "SimCity Files (*.sc2)|*.sc2||", 30);
-
 	// Fix save filenames going wonky
 	SafeVirtualProtect((LPVOID)0x432870, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x432870, Hook_CheckAndAppendCityExtension);
