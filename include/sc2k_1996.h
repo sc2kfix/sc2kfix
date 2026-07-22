@@ -3078,6 +3078,7 @@ GAMECALL(0x401870, int, __thiscall, SimcityApp_DoSave, CSimcityAppPrimary *, CMF
 GAMECALL(0x4018C0, void, __stdcall, SelectArcologyDialog_OnDrawState, LPDRAWITEMSTRUCT)
 GAMECALL(0x401901, void, __thiscall, SelectArcologyDialog_OnDrawEntire, CSelectArcologyDialog *, int, int, LPDRAWITEMSTRUCT)
 GAMECALL(0x40191F, void, __cdecl, DoFund, __int16)
+GAMECALL(0x401929, void, __thiscall, SimcityApp_SaveCityAs, CSimcityAppPrimary *)
 GAMECALL(0x401951, void, __thiscall, Graphics_DeleteObject, CGraphics *)
 GAMECALL(0x40198D, int, __cdecl, MapToolPlaceStream, __int16 iTileTargetX, __int16 iTileTargetY, __int16) // XXX - the last parameter isn't entirely clear, perhaps area or offset?
 GAMECALL(0x401997, int, __cdecl, MapToolPlaceWater, __int16 iTileTargetX, __int16 iTileTargetY)

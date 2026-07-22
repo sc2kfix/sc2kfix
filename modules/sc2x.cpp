@@ -871,6 +871,35 @@ extern "C" DWORD __stdcall Hook_SaveGame(CMFC3XString* lpFileName) {
 	return ret;
 }
 
+extern "C" void __stdcall Hook_SimcityApp_SaveCity() {
+	CSimcityAppPrimary* pThis;
+
+	__asm mov [pThis], ecx
+
+	char szErrStr[512 + 1];
+	UINT uType;
+
+	if (pThis->dwSCAGameStarted) {
+		if (strCityFilename.m_nDataLength > 0) {
+			if (Game_SimcityApp_DoSave(pThis, &strCityFilename)) {
+				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 51, szErrStr, sizeof(szErrStr) - 1);
+				uType = 0;
+			}
+			else {
+				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 60, szErrStr, sizeof(szErrStr) - 1);
+				uType = 0xFFFFFFFF;
+			}
+			strcat_s(szErrStr, strCityFilename.m_pchData);
+			L_MessageBoxA(0, szErrStr, gamePrimaryKey, uType);
+		}
+		else {
+			pThis->dwSCAOnQuitSuspendSim = 1;
+			Game_SimcityApp_SaveCityAs(pThis);
+		}
+		pThis->dwSCAOnQuitSuspendSim = 0;
+	}
+}
+
 extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 	CSimcityAppPrimary* pThis;
 
@@ -1085,6 +1114,10 @@ void InstallSaveHooks_SC2K1996(void) {
 	// Save game hook
 	SafeVirtualProtect((LPVOID)0x401870, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401870, Hook_SaveGame);
+
+	// CSimcityApp::SaveCity
+	SafeVirtualProtect((LPVOID)0x4015A0, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4015A0, Hook_SimcityApp_SaveCity);
 
 	// CSimcityApp::SaveCityAs
 	SafeVirtualProtect((LPVOID)0x401929, 5, PAGE_EXECUTE_READWRITE);
