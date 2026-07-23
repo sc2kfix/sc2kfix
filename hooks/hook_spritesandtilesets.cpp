@@ -4,6 +4,7 @@
 #undef UNICODE
 #include <windows.h>
 #include <windowsx.h>
+#include <Shlwapi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <intrin.h>
@@ -822,11 +823,12 @@ extern "C" void __stdcall Hook_SimcityApp_LoadTileset1996() {
 
 	char szFileTypes[255 + 1], szCaption[255 + 1];
 	CMFC3XString strFilePath;
-	int nPathLen, nFileLen, nNewLen;
-	char szFilePath[MAX_PATH + 1], szPath[MAX_PATH + 1];
+	int nPathLen;
+	char szFilePath[MAX_PATH + 1], szPath[MAX_PATH + 1], szDirPath[MAX_PATH + 1];
 	OPENFILENAMEA m_ofn;
 
 	memset(szPath, 0, sizeof(szPath));
+	memset(szDirPath, 0, sizeof(szDirPath));
 
 	L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 4004, szFileTypes, sizeof(szFileTypes) - 1);
 	L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 4005, szCaption, sizeof(szCaption) - 1);
@@ -858,17 +860,14 @@ extern "C" void __stdcall Hook_SimcityApp_LoadTileset1996() {
 				Game_ReadTilesetFile(m_ofn.lpstrFile);
 			else
 				L_ReadDOSTilesetFile(m_ofn.lpstrFile);
-			nNewLen = 0;
-			nPathLen = strlen(m_ofn.lpstrFile);
-			nFileLen = strlen(m_ofn.lpstrFileTitle);
-			if (nPathLen > 0 && nFileLen > 0) {
-				nNewLen = nPathLen - nFileLen;
-				if (nNewLen > 0) {
-					strncpy_s(szPath, sizeof(szPath) - 1, m_ofn.lpstrFile, nNewLen);
-					if (L_IsPathValid(szPath))
-						jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_TILESETS] = szPath;
-				}
-			}
+
+			strcpy_s(szDirPath, m_ofn.lpstrFile);
+			PathRemoveFileSpecA(szDirPath);
+			nPathLen = strlen(szDirPath);
+			if (szDirPath[nPathLen - 1] != '\\')
+				strcat_s(szDirPath, "\\");
+			if (L_IsPathValid(szDirPath))
+				jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_TILESETS] = szDirPath;
 		}
 		else {
 			char szError[512 + 1];

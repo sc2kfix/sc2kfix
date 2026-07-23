@@ -301,6 +301,30 @@ public:
 	int m_bAutoDelete;
 };
 
+class CMFC3XFileException : public CMFC3XException {
+public:
+	enum {
+		none,
+		generic,
+		fileNotFound,
+		badPath,
+		tooManyOpenFiles,
+		accessDenied,
+		invalidFile,
+		removeCurrentDir,
+		directoryFull,
+		badSeek,
+		hardIO,
+		sharingViolation,
+		lockViolation,
+		diskFull,
+		endOfFile
+	};
+
+	int m_cause;
+	int m_lOsError;
+};
+
 struct CMFC3XAssoc {
 	CMFC3XAssoc* pNext;
 	UINT nHashValue;
