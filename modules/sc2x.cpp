@@ -763,7 +763,7 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 		memset(&m_ofn, 0, sizeof(OPENFILENAMEA));
 		m_ofn.lStructSize = sizeof(OPENFILENAMEA);
 		m_ofn.hwndOwner = pMainFrm->m_hWnd;
-		m_ofn.hInstance = pThis->m_hInstance;
+		m_ofn.hInstance = hSC2KFixModule;
 		m_ofn.lpstrFilter = ConvertFileTypeFilterString(szFileTypes);
 		m_ofn.lpstrInitialDir = szFilePath;
 		m_ofn.lpstrTitle = szCaption;
@@ -773,7 +773,10 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 		m_ofn.lpstrDefExt = "sc2";
 		m_ofn.lpstrFile = szPath;
 		m_ofn.lpstrFileTitle = szFilePath;
-		m_ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_ENABLESIZING;
+		m_ofn.Flags = OFN_EXPLORER | OFN_ENABLETEMPLATE | OFN_ENABLEHOOK | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_ENABLESIZING;
+		m_ofn.lpfnHook = (LPOFNHOOKPROC)FileHookProc;
+		m_ofn.lpTemplateName = MAKEINTRESOURCEA(IDD_FILEDLGEXT);
+		m_ofn.FlagsEx = OFN_EX_NOPLACESBAR;
 		nRet = GetOpenFileNameA(&m_ofn);
 		nRetState = (!nRet) ? IDCANCEL : nRet;
 		if (nRetState == IDCANCEL || strlen(m_ofn.lpstrFile) == 0) {
@@ -1003,8 +1006,9 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 
 	CMainFrame *pMainFrm;
 	CMFC3XString strFilePath;
-	int nRet, nPathLen;
+	int nLen, nRet, nPathLen;
 	char szFilePath[MAX_PATH + 1], szPath[MAX_PATH + 1], szDirPath[MAX_PATH + 1], szErrStr[512 + 1];
+	extFileDlg_t m_extFileDlg;
 	OPENFILENAMEA m_ofn;
 
 	pMainFrm = (CMainFrame *)pThis->m_pMainWnd;
@@ -1016,19 +1020,26 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 
 		strcpy_s(szFilePath, sizeof(szFilePath) - 1, strFilePath.m_pchData);
 
+		memset(&m_extFileDlg, 0, sizeof(m_extFileDlg));
+		m_extFileDlg.nExtType = FEXT_TYPE_SAVECITYNAME;
+		m_extFileDlg.bCityNameChanged = false;
+		memcpy(m_extFileDlg.szCityName, pszCityName.m_pchData, CITY_NAME_LEN);
+		nLen = strlen(m_extFileDlg.szCityName);
+		m_extFileDlg.szCityName[nLen] = 0;
+
 		if (strCityFilename.m_nDataLength > 0) {
 			strcpy_s(szPath, strCityFilename.m_pchData);
 			PathStripPathA(szPath);
 			PathRemoveExtensionA(szPath);
 		}
 		else
-			strcpy_s(szPath, pszCityName.m_pchData);
+			strcpy_s(szPath, m_extFileDlg.szCityName);
 		strcat_s(szPath, ".sc2");
 
 		memset(&m_ofn, 0, sizeof(OPENFILENAMEA));
 		m_ofn.lStructSize = sizeof(OPENFILENAMEA);
 		m_ofn.hwndOwner = pThis->m_pMainWnd->m_hWnd;
-		m_ofn.hInstance = pThis->m_hInstance;
+		m_ofn.hInstance = hSC2KFixModule;
 		m_ofn.lpstrFilter = ConvertFileTypeFilterString("SimCity 2000 City (*.sc2)|*.sc2||");
 		m_ofn.lpstrInitialDir = szFilePath;
 		m_ofn.nMaxFile = _countof(szPath);
@@ -1038,11 +1049,24 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 		//m_ofn.lpstrDefExt = "sc2";
 		m_ofn.lpstrFile = szPath;
 		m_ofn.lpstrFileTitle = szFilePath;
-		m_ofn.Flags = OFN_NOREADONLYRETURN | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_ENABLESIZING;
+		m_ofn.Flags = OFN_EXPLORER | OFN_ENABLETEMPLATE | OFN_ENABLEHOOK | OFN_NOREADONLYRETURN | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_ENABLESIZING;
+		m_ofn.lpfnHook = (LPOFNHOOKPROC)FileHookProc;
+		m_ofn.lpTemplateName = MAKEINTRESOURCEA(IDD_FILEDLGEXT);
+		m_ofn.lCustData = (LPARAM)&m_extFileDlg;
+		m_ofn.FlagsEx = OFN_EX_NOPLACESBAR;
 		ToggleFloatingStatusDialog(FALSE);
 		nRet = GetSaveFileNameA(&m_ofn);
 		nRetState = (!nRet) ? IDCANCEL : nRet;
 		if (nRetState != IDCANCEL) {
+			if (m_extFileDlg.bCityNameChanged) {
+				int nLen = strlen(m_extFileDlg.szCityName);
+				if (nLen >= 1 && nLen <= CITY_NAME_LEN) {
+					if (sc2x_debug & SC2X_DEBUG_VANILLA_SAVE)
+						ConsoleLog(LOG_DEBUG, "New City Name: '%s' (%d)\n", m_extFileDlg.szCityName, nLen);
+					GameMain_String_Empty(&pszCityName);
+					GameMain_String_OperatorSet(&pszCityName, m_extFileDlg.szCityName);
+				}
+			}
 			strcpy_s(szDirPath, m_ofn.lpstrFile);
 			PathRemoveFileSpecA(szDirPath);
 			nPathLen = strlen(szDirPath);

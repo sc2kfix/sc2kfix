@@ -12,6 +12,7 @@
 #define IDD_CONVERT_SELFIXOBJECTS       20109
 #define IDD_SHUNT                       20110
 #define IDD_TILECONV                    20111
+#define IDD_FILEDLGEXT                  20112
 #define ID_INSTALL_OK                   21001
 #define IDC_EDIT_MAYOR                  21002
 #define IDC_EDIT_COMPANY                21003
@@ -96,6 +97,8 @@
 #define IDC_TILECONV_CHECK_BADPALIDX    21083
 #define IDC_TILECONV_CHECK_MISSPIXELS   21084
 #define IDC_TILECONV_CHECK_OOBPALIDX    21085
+#define IDC_CUST_STATIC1                21086
+#define IDC_CUST_EDIT1                  21087
 #define IDR_WAVE_500                    23001
 #define IDR_WAVE_503                    23002
 #define IDR_WAVE_508                    23003
@@ -166,9 +169,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        23039
+#define _APS_NEXT_RESOURCE_VALUE        23040
 #define _APS_NEXT_COMMAND_VALUE         40027
-#define _APS_NEXT_CONTROL_VALUE         21086
+#define _APS_NEXT_CONTROL_VALUE         21088
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

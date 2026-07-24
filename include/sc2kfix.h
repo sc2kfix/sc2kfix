@@ -317,6 +317,22 @@ typedef struct {
 	std::string strSoundfont;
 } settings_t;
 
+// This structure is passed to the game file dialog (at the moment the Save As dialogue).
+#define FEXT_TYPE_NONE         0
+#define FEXT_TYPE_SAVECITYNAME 1
+#define FEXT_TYPE_OPENCITYATTR 2
+
+// For now set to 30 rather than 31 due to some unsafe reading/writing further downstream
+// in the native game. What may have (perhaps) been safe in the DOS/Macintosh game is not
+// in the Windows version when the standard maximum city name length is used.
+#define CITY_NAME_LEN 30
+
+typedef struct {
+	int nExtType;
+	bool bCityNameChanged;
+	char szCityName[CITY_NAME_LEN + 1];
+} extFileDlg_t;
+
 // Enum for console command visibility in inline help. Documented commands always appear in inline
 // help, undocumented commands only appear if `set undocumented` has been activated. Commands
 // tagged as aliases never appear. Commands tagged as script-only return an error in interactive
@@ -683,3 +699,6 @@ extern UINT updatenotifier_debug;
 
 void InstallFixes_SCURKPrimary(void);
 void InstallFixes_SCURK1996(void);
+
+// Custom file dialog stuff
+BOOL CALLBACK FileHookProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);

@@ -926,6 +926,10 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 			" - Plymouth arcologies unlocked.\n"
 			" - 50% chance of Forest arcologies being unlocked.");
 
+		// Limit the City name to 30 characters (not 31 - this avoids a rather
+		// nasty overrun that can occur if the old limit is hit).
+		SendMessage(GetDlgItem(hwndDlg, 101), EM_SETLIMITTEXT, CITY_NAME_LEN, 0);
+
 		// Set the default mayor name.
 		SetDlgItemText(hwndDlg, 150, jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
 		break;
