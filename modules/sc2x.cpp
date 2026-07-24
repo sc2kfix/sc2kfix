@@ -1093,11 +1093,11 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 }
 
 // Assembly language hook to try to fix up corrupted save file headers.
-void __declspec(naked) Hook_431212(void) {
+void __declspec(naked) Hook_FileValidation_FormChunkCheck(void) {
 	// Replace the code we're clobbering to inject ourselves
 	__asm {
 		// Original call flow
-		mov eax, 0x401429
+		mov eax, 0x401429     // program-side equivalent of _byteswap_ulong()
 		call eax
 		add esp, 4
 
@@ -1189,7 +1189,7 @@ void InstallSaveHooks_SC2K1996(void) {
 
 	// Patch to attempt to fix loading partially corrupted saves
 	SafeVirtualProtect((LPVOID)0x431212, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x431212, Hook_431212);
+	NEWJMP((LPVOID)0x431212, Hook_FileValidation_FormChunkCheck);
 
 	// CSimcityApp::SaveCity
 	SafeVirtualProtect((LPVOID)0x4015A0, 5, PAGE_EXECUTE_READWRITE);
