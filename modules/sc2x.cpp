@@ -1208,7 +1208,6 @@ extern "C" void __stdcall Hook_InitializeCityData() {
 			nBaseResComValue = *pTempMapResCom;
 			nBaseIndValue = *pTempMapInd;
 			iTileID = GetTileID(iX, iY);
-			ConsoleLog(LOG_DEBUG, "Full(%d, %d), Half(%d, %d), Quarter(%d, %d): ResCom(%d) IndVal(%d) - [%s]\n", iX, iY, iXHalf, iYHalf, iXQuarter, iYQuarter, nBaseResComValue, nBaseIndValue, szTileNames[iTileID]);
 			if (iTileID) {
 				if (iTileID == TILE_SERVICES_BIGPARK)
 					nBaseResComValue += 40;
