@@ -1364,7 +1364,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 					bScenarioSuccess = FALSE;
 				if (dwScenarioCrimeLimit > 0 && dwCityCrime > dwScenarioCrimeLimit)
 					bScenarioSuccess = FALSE;
-				if (dwScenarioTrafficLimit > 0 && dwCityTrafficUnknown > dwScenarioTrafficLimit)
+				if (dwScenarioTrafficLimit > 0 && dwCityTrafficCount > dwScenarioTrafficLimit)
 					bScenarioSuccess = FALSE;
 				if (bScenarioBuildingGoal1) {
 					if (dwTileCount[bScenarioBuildingGoal1] < wScenarioBuildingGoal1Count)

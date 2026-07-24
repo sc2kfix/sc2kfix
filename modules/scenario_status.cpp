@@ -113,7 +113,7 @@ BOOL CALLBACK ScenarioStatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam
 		// BUG: Needs work
 		if (dwScenarioTrafficLimit) {
 			strScenarioGoals += "Maintain a traffic rating of " + to_string_precision(dwScenarioTrafficLimit, 0) + "% or lower.\n\n";
-			strScenarioCurrent += to_string_precision(dwCityTrafficUnknown, 0) + "%\n\n";
+			strScenarioCurrent += to_string_precision(dwCityTrafficCount, 0) + "%\n\n";
 		}
 
 		// TODO: Building goals

@@ -143,6 +143,8 @@
 #define GROWTH_TILE_MAX_TRIP_STEPS 100
 
 #define GAME_MAP_SIZE 128u
+#define MINI_MAP_64   GAME_MAP_SIZE / 2
+#define MINI_MAP_32   GAME_MAP_SIZE / 4
 
 #define MAP_EDGE_MIN 0
 #define MAP_EDGE_MAX (GAME_MAP_SIZE - 1)
@@ -3482,7 +3484,7 @@ GAMEOFF(BOOL,	bCityHasOcean,				0x4C94C0)
 GAMEOFF(DWORD,	dwArcologyPopulation,		0x4C94C4)
 GAMEOFF_ARR(CMFC3XString,	cityToolGroupStrings,		0x4C94C8)
 GAMEOFF(DWORD,	dwDisasterActive,			0x4C9EE8)
-GAMEOFF_ARR(WORD, wBondArr,					0x4C9EF0)
+GAMEOFF_ARR(WORD, wArrBondData,				0x4C9EF0)
 GAMEOFF_ARR(CMFC3XString,	cStrDataArchiveNames,	0x4CA160)
 GAMEOFF(CMFC3XString,	strUnusedString,		0x4CA188)
 GAMEOFF(DWORD,	dwCityResidentialPopulation,	0x4CA194)
@@ -3496,6 +3498,7 @@ GAMEOFF(WORD,	wIndustrialMixBonus,		0x4CA1E8)
 GAMEOFF(WORD,	wCurrentMapToolGroup,		0x4CA1EC)
 GAMEOFF(WORD,	wIndustryConnect,			0x4CA3F0)
 GAMEOFF(WORD*,	wArrIndustrialDemands,		0x4CA3F4)
+GAMEOFF(DWORD,	dwInterestRateSum,			0x4CA400)
 GAMEOFF(WORD,	EditData,					0x4CA404)
 GAMEOFF(WORD,	wSubwayXUNDCount,			0x4CA41C)
 GAMEOFF(WORD,	wSetTriggerDisasterType,	0x4CA420)
@@ -3546,6 +3549,7 @@ GAMEOFF_ARR(char, szNeighborNameWest,		0x4CAD78)		// char[32]
 GAMEOFF_ARR(char, szNeighborNameNorth,		0x4CAD98)		// char[32]
 GAMEOFF_ARR(char, szNeighborNameEast,		0x4CADB8)		// char[32]
 GAMEOFF(WORD,	wCityTerrainSliderTrees,	0x4CADD8)
+GAMEOFF(WORD,	wConnectTiles,				0x4CADDC)
 GAMEOFF(BYTE,	bWeatherHeat,				0x4CADE0)
 GAMEOFF(RECT,	dirtyRect,					0x4CAD48)
 GAMEOFF_ARR(BYTE, stNeighborCities,			0x4CAD58)
@@ -3591,7 +3595,7 @@ GAMEOFF(WORD,	wCommerceConnect,	0x4CC4D8)
 GAMEOFF(WORD,	wSportsTeams,				0x4CC4E0)
 GAMEOFF(BYTE,	bMilitaryBaseType,			0x4CC4E4)
 GAMEOFF(int,	dwCityBonds,				0x4CC4E8)
-GAMEOFF(DWORD,	dwCityTrafficUnknown,		0x4CC6F4)
+GAMEOFF(DWORD,	dwCityTrafficCount,			0x4CC6F4)
 GAMEOFF_ARR(__int16,	wCityDemand,			0x4CC8F8)
 GAMEOFF(DWORD,	dwCityPollution,			0x4CC910)		// Needs reverse engineering. See wiki.
 GAMEOFF(WORD,	wScenarioDisasterID,		0x4CC918)
@@ -3820,6 +3824,9 @@ GAMEOFF_ARR(map_mini32_t*,	dwMapXROG,	0x4CB028)
 GAMEOFF_ARR(map_XLAB_t*,	dwMapXLAB,	0x4CA198)
 GAMEOFF_ARR(map_XTHG_t*,	dwMapXTHG,	0x4CA434)
 GAMEOFF_ARR(DWORD,			dwMapXGRP,	0x4CC470)
+
+// Temp map(s)
+GAMEOFF_ARR(__int16 *,		wTMap,		0x4CC6F8)
 
 extern const char *getXTERNames(BYTE iVal);
 
@@ -4403,6 +4410,14 @@ static inline void XBITSetBits(__int16 x, __int16 y, BYTE bitMask) {
 	if (bitMask & XBIT_POWERABLE)
 		dwMapXBIT[x][y].b.iPowerable = 1;
 #endif
+}
+
+static inline __int16 *GetTMap(__int16 x, __int16 y) {
+	if (x < MAP_EDGE_MIN || x > MAP_EDGE_MAX)
+		return NULL;
+	if (y < MAP_EDGE_MIN || y > MAP_EDGE_MAX)
+		return NULL;
+	return &wTMap[x][y];
 }
 
 // Helper functions for the 'map_mini64_t'

@@ -139,7 +139,7 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 				dwCityCrime = ntohl(*(DWORD*)&pChunkMISC[i]);
 				i += 4;
 
-				dwCityTrafficUnknown = ntohl(*(DWORD*)&pChunkMISC[i]);
+				dwCityTrafficCount = ntohl(*(DWORD*)&pChunkMISC[i]);
 				i += 4;
 
 				dwCityPollution = ntohl(*(DWORD*)&pChunkMISC[i]);
@@ -220,7 +220,7 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 				i += 4 * 8;
 
 				for (int i = 0; i < 50; i++)
-					wBondArr[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
+					wArrBondData[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
 				i += 4 * 50;
 
 				// TODO: Encode as arrays of useful JSON
@@ -402,7 +402,7 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 				dwArcologyPopulation = ntohl(*(DWORD*)&pChunkMISC[i]);
 				i += 4;
 
-				*(WORD*)(0x4CADDC) = ntohl(*(DWORD*)&pChunkMISC[i]);	// Unused, but we'll load it anyways.
+				wConnectTiles = ntohl(*(DWORD*)&pChunkMISC[i]);	// Unused, but we'll load it anyways.
 				i += 4;
 
 				wSportsTeams = ntohl(*(DWORD*)&pChunkMISC[i]);
@@ -1148,32 +1148,130 @@ void __declspec(naked) Hook_FileValidation_FormChunkCheck(void) {
 	}
 }
 
-// Fix rail and highway border connections not loading properly
-extern "C" void __stdcall Hook_LoadNeighborConnections1500(void) {
-	wIndustryConnect = 0;
-	dwBusPassengers = 0;
+extern "C" void __stdcall Hook_InitializeCityData() {
+	__int16 iX, iY, iXHalf, iYHalf, iXQuarter, iYQuarter;
+	__int16 *pTempMapResCom, *pTempMapInd;
+	__int16 nBaseResComValue, nBaseIndValue;
+	BYTE iTileID, iTerrainTileID;
+	DWORD dwCurrBonds;
+	WORD wCurrBond;
 
-	for (int x = 0; x < GAME_MAP_SIZE; x++) {
-		for (int y = 0; y < GAME_MAP_SIZE; y++) {
-			if (XTXTGetTextOverlayID(x, y) == 0xFA) {
-				BYTE iTileID = GetTileID(x, y);
-				if (iTileID >= TILE_RAIL_LR && iTileID < TILE_TUNNEL_T
-					|| iTileID >= TILE_CROSSOVER_ROADLR_RAILTB && iTileID < TILE_SUSPENSION_BRIDGE_START_B
-					|| iTileID >= TILE_HIGHWAY_HTB && iTileID < TILE_REINFORCED_BRIDGE_PYLON)
+	wCommerceConnect = 0;
+	for (iX = 0; iX < GAME_MAP_SIZE; ++iX) {
+		for (iY = 0; iY < GAME_MAP_SIZE; ++iY) {
+			if (XTXTGetTextOverlayID(iX, iY) == NGHBR_CONNECTION_TEXT_ENTRY) {
+				iTileID = GetTileID(iX, iY);
+				if (GET_TILE_RANGE(iTileID, TILE_ROAD_LR, TILE_ROAD_LTBR) ||
+					GET_TILE_RANGE(iTileID, TILE_TUNNEL_T, TILE_TUNNEL_L) ||
+					GET_TILE_RANGE(iTileID, TILE_CROSSOVER_HIGHWAYLR_ROADTB, TILE_CROSSOVER_HIGHWAYTB_ROADLR) ||
+					GET_TILE_RANGE(iTileID, TILE_ONRAMP_TL, TILE_ONRAMP_BR))
+					++wCommerceConnect;
+			}
+		}
+	}
+
+	// The 'wIndustryConnect' block was previously missing
+	// and fixed via a separate detour, however it has now been
+	// formalized in this re-constructed call.
+	wIndustryConnect = 0;
+	for (iX = 0; iX < GAME_MAP_SIZE; ++iX) {
+		for (iY = 0; iY < GAME_MAP_SIZE; ++iY) {
+			if (XTXTGetTextOverlayID(iX, iY) == NGHBR_CONNECTION_TEXT_ENTRY) {
+				iTileID = GetTileID(iX, iY);
+				if (GET_TILE_RANGE(iTileID, TILE_RAIL_LR, TILE_RAIL_HHLR) ||
+					GET_TILE_RANGE(iTileID, TILE_CROSSOVER_ROADLR_RAILTB, TILE_CROSSOVER_HIGHWAYTB_POWERLR) ||
+					GET_TILE_RANGE(iTileID, TILE_HIGHWAY_HTB, TILE_HIGHWAY_LTBR))
 					++wIndustryConnect;
 			}
 		}
 	}
 
 	if (sc2x_debug & SC2X_DEBUG_LOAD)
-		ConsoleLog(LOG_DEBUG, "SC2X: Loaded %d $1500 neighbor connections.\n", wIndustryConnect);
+		ConsoleLog(LOG_DEBUG, "SC2X: Loaded %d $1500 neighbor connections (Industry Connect).\n", wIndustryConnect);
+
+	dwBusPassengers = 0;
+	dwRailPassengers = 0;
+	dwSubwayPassengers = 0;
+
+	Game_SimulationUpdatePowerConsumption();
+	Game_SimulationUpdateWaterConsumption();
+
+	wCityDevelopedTiles = 0;
+	for (iX = 0; iX < GAME_MAP_SIZE; ++iX) {
+		iXHalf = iX / 2;
+		iXQuarter = iXHalf / 2;
+		for (iY = 0; iY < GAME_MAP_SIZE; ++iY) {
+			iYHalf = iY / 2;
+			iYQuarter = iYHalf / 2;
+			pTempMapResCom = GetTMap(iXQuarter, iYQuarter);
+			pTempMapInd = GetTMap(iXQuarter + MINI_MAP_32, iYQuarter);
+			nBaseResComValue = *pTempMapResCom;
+			nBaseIndValue = *pTempMapInd;
+			iTileID = GetTileID(iX, iY);
+			ConsoleLog(LOG_DEBUG, "Full(%d, %d), Half(%d, %d), Quarter(%d, %d): ResCom(%d) IndVal(%d) - [%s]\n", iX, iY, iXHalf, iYHalf, iXQuarter, iYQuarter, nBaseResComValue, nBaseIndValue, szTileNames[iTileID]);
+			if (iTileID) {
+				if (iTileID == TILE_SERVICES_BIGPARK)
+					nBaseResComValue += 40;
+				else if (iTileID < TILE_TREES1 || iTileID > TILE_SMALLPARK) {
+					if (iTileID <= TILE_RADIOACTIVITY)
+						nBaseResComValue -= 20;
+				}
+				else
+					nBaseResComValue += 20;
+			}
+			else if (XBITReturnIsWater(iX, iY)) {
+				nBaseResComValue += 12;
+				nBaseIndValue += 12;
+			}
+			else
+				nBaseResComValue += 4;
+			if (iTileID >= TILE_ROAD_LR || XZONReturnZone(iX, iY) != ZONE_NONE) {
+				// Maximum bound here changed from GAME_SIZE_MAP to
+				// MINI_MAP_64 due to it using the half-coordinate vars.
+				// In this context even if the coordinate values may not
+				// have a bearing on actual placement on the full-size map
+				// it seems that the intent is a temporary corresponding
+				// value that can be used in-conjunction with the temp map(s)
+				// and any referenced mini-maps.
+				if (iXHalf < MINI_MAP_64 && iYHalf < MINI_MAP_64)
+					XBITSetBits(iXHalf, iYHalf, XBIT_MARK);
+				++wCityDevelopedTiles;
+			}
+			if (XBITReturnIsWatered(iX, iY)) {
+				nBaseResComValue += 4;
+				nBaseIndValue += 4;
+			}
+			iTerrainTileID = GetTerrainTileID(iX, iY);
+			if (iTerrainTileID) {
+				if (iTerrainTileID < SUBMERGED_00)
+					nBaseResComValue += 12;
+			}
+			*pTempMapResCom = nBaseResComValue;
+			*pTempMapInd = nBaseIndValue;
+		}
+	}
+
+	wDisasterWindy = 0;
+	wDisasterFloodArea = 0;
+
+	wCurrBond = 0;
+	dwCurrBonds = dwCityBonds;
+	dwInterestRateSum = 0;
+	if (dwCityBonds > 0) {
+		do {
+			--dwCurrBonds;
+			dwInterestRateSum += wArrBondData[wCurrBond];
+			++wCurrBond;
+		} while (dwCurrBonds);
+	}
 }
 
 void InstallSaveHooks_SC2K1996(void) {
-	// Fix $1500 neighbor connections on game load
-	SafeVirtualProtect((LPVOID)0x434BEA, 6, PAGE_EXECUTE_READWRITE);
-	NEWCALL((LPVOID)0x434BEA, Hook_LoadNeighborConnections1500);
-	*(BYTE*)0x434BEF = 0x90;
+	// InitializeCityData:
+	// - Demystification
+	// - A formal fix for the $1500 neighbor connections on game load (IndustryConnect)
+	SafeVirtualProtect((LPVOID)0x402743, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402743, Hook_InitializeCityData);
 
 	// Load game hook
 	SafeVirtualProtect((LPVOID)0x4025A4, 5, PAGE_EXECUTE_READWRITE);
