@@ -735,6 +735,7 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 	CMFC3XString strFilePath;
 	int nRet, nPathLen;
 	char szFilePath[MAX_PATH + 1], szPath[MAX_PATH + 1], szDirPath[MAX_PATH + 1];
+	extFileDlg_t m_extFileDlg;
 	OPENFILENAMEA m_ofn;
 
 	pMainFrm = (CMainFrame *)pThis->m_pMainWnd;
@@ -760,6 +761,9 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 
 		strcpy_s(szFilePath, sizeof(szFilePath) - 1, strFilePath.m_pchData);
 
+		memset(&m_extFileDlg, 0, sizeof(m_extFileDlg));
+		m_extFileDlg.nExtType = FEXT_TYPE_OPENCITYATTR;
+
 		memset(&m_ofn, 0, sizeof(OPENFILENAMEA));
 		m_ofn.lStructSize = sizeof(OPENFILENAMEA);
 		m_ofn.hwndOwner = pMainFrm->m_hWnd;
@@ -776,6 +780,7 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 		m_ofn.Flags = OFN_EXPLORER | OFN_ENABLETEMPLATE | OFN_ENABLEHOOK | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_ENABLESIZING;
 		m_ofn.lpfnHook = (LPOFNHOOKPROC)FileHookProc;
 		m_ofn.lpTemplateName = MAKEINTRESOURCEA(IDD_FILEDLGEXT);
+		m_ofn.lCustData = (LPARAM)&m_extFileDlg;
 		m_ofn.FlagsEx = OFN_EX_NOPLACESBAR;
 		nRet = GetOpenFileNameA(&m_ofn);
 		nRetState = (!nRet) ? IDCANCEL : nRet;
