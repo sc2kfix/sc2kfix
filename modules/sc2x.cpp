@@ -1177,6 +1177,22 @@ void __declspec(naked) Hook_FileValidation_FormChunkCheck(void) {
 	}
 }
 
+extern "C" int __cdecl Hook_ByteSwap_LongLabel(char *pBuf) {
+	return L_byteswap_longlabel(pBuf);
+}
+
+extern "C" void __cdecl Hook_ByteSwap_UShorts(WORD *pBuf, int nCount) {
+	L_byteswap_ushorts(pBuf, nCount);
+}
+
+extern "C" void __cdecl Hook_ByteSwap_Buffer(DWORD *pBuf, int nCount) {
+	L_byteswap_buffer(pBuf, nCount);
+}
+
+extern "C" void __cdecl Hook_ByteSwap_Micro(WORD *pBuf, int nCount) {
+	L_byteswap_micro(pBuf, nCount);
+}
+
 extern "C" void __stdcall Hook_InitializeCityData() {
 	__int16 iX, iY, iXHalf, iYHalf, iXQuarter, iYQuarter;
 	__int16 *pTempMapResCom, *pTempMapInd;
@@ -1295,6 +1311,22 @@ extern "C" void __stdcall Hook_InitializeCityData() {
 }
 
 void InstallSaveHooks_SC2K1996(void) {
+	// Internal long label byteswap call
+	SafeVirtualProtect((LPVOID)0x40223E, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x40223E, Hook_ByteSwap_LongLabel);
+
+	// Internal Shorts byteswap call
+	SafeVirtualProtect((LPVOID)0x402301, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402301, Hook_ByteSwap_UShorts);
+
+	// Internal long buffer byteswap call
+	SafeVirtualProtect((LPVOID)0x402FF9, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402FF9, Hook_ByteSwap_Buffer);
+
+	// Internal short micro byteswap call
+	SafeVirtualProtect((LPVOID)0x401FB4, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401FB4, Hook_ByteSwap_Micro);
+
 	// InitializeCityData:
 	// - Demystification
 	// - A formal fix for the $1500 neighbor connections on game load (IndustryConnect)

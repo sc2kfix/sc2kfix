@@ -539,6 +539,10 @@ int L_GetAdjustedPaletteIdx(BYTE palIdx, int nType);
 void L_InitDOSMacPaletteIdxTable();
 int L_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMax);
 const char *GetFixedTileType(int nTileSet);
+int L_byteswap_longlabel(char *pBuf);
+void L_byteswap_buffer(DWORD *pBuf, int nCount);
+void L_byteswap_micro(WORD *pBuf, unsigned int nCount);
+void L_byteswap_ushorts(WORD *pBuf, int nCount);
 
 // Yes...
 FILE *log_fopen(const char *fname, const char *mode);

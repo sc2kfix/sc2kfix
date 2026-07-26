@@ -733,6 +733,29 @@ const char *GetFixedTileType(int nTileSet) {
 	return "";
 }
 
+int L_byteswap_longlabel(char *pBuf) {
+	return _byteswap_ulong(*(DWORD *)pBuf);
+}
+
+void L_byteswap_buffer(DWORD *pBuf, int nCount) {
+	for (int nPos = 0; int(nCount / 4) > nPos; ++nPos)
+		pBuf[nPos] = _byteswap_ulong(pBuf[nPos]);
+}
+
+void L_byteswap_micro(WORD *pBuf, unsigned int nCount) {
+	for (int nPos = 0; nPos < int(nCount >> 3); ++nPos) {
+		pBuf[1] = _byteswap_ushort(pBuf[1]);
+		pBuf[2] = _byteswap_ushort(pBuf[2]);
+		pBuf[3] = _byteswap_ushort(pBuf[3]);
+		pBuf += 4;
+	}
+}
+
+void L_byteswap_ushorts(WORD *pBuf, int nCount) {
+	for (int nPos = 0; int(nCount / 2) > nPos; ++nPos)
+		pBuf[nPos] = _byteswap_ushort(pBuf[nPos]);
+}
+
 // start of base64 code
 /*
 * Base64 encoding/decoding (RFC1341)
