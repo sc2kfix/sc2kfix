@@ -859,25 +859,22 @@ extern "C" int __stdcall Hook_SimcityApp_WriteCityHeader(CMFC3XFile *pFile, int 
 	return 1;
 }
 
-// For the CNAM chunk this must not be changed, it must
-// remain set to a value of 32.
-#define CNAM_DAT_LEN 32
-
 extern "C" int __stdcall Hook_SimcityApp_WriteCityName(CMFC3XFile *pFile, DWORD scrChunk, CMFC3XString pName) {
 	CSimcityAppPrimary* pThis;
 
 	__asm mov [pThis], ecx
 
+	char szTemp[CNAM_DAT_LEN];
 	DWORD nChunk, nFullLen;
-	DWORD nNameLen;
+
+	memset(szTemp, 0, sizeof(szTemp));
+	L_CharStringToPascalString(pName.m_pchData, szTemp, CNAM_DAT_LEN - 1, true);
 
 	nChunk = _byteswap_ulong(scrChunk);
 	GameMain_File_Write(pFile, &nChunk, sizeof(nChunk));
 	nFullLen = _byteswap_ulong(CNAM_DAT_LEN);
 	GameMain_File_Write(pFile, &nFullLen, sizeof(nFullLen));
-	nNameLen = CNAM_DAT_LEN - 1; // 31
-	GameMain_File_Write(pFile, &nNameLen, 1);
-	GameMain_File_Write(pFile, pName.m_pchData, nNameLen);
+	GameMain_File_Write(pFile, szTemp, CNAM_DAT_LEN);
 	nDataOffset += CNAM_DAT_LEN + 8;
 	GameMain_String_Dest(&pName);
 	return 1;
@@ -888,16 +885,91 @@ extern "C" int __stdcall Hook_SimcityApp_WriteCityUncompressed(CMFC3XFile *pFile
 
 	__asm mov [pThis], ecx
 
+	WORD *pDst;
 	DWORD nChunk, nScrDatSize;
 
+	pDst = (WORD *)malloc(nDatSize);
+	if (!pDst)
+		return 0;
+	memset(pDst, 0, nDatSize);
+	memcpy(pDst, pDat, nDatSize);
 	nChunk = _byteswap_ulong(scrChunk);
 	GameMain_File_Write(pFile, &nChunk, sizeof(nChunk));
 	nScrDatSize = _byteswap_ulong(nDatSize);
 	GameMain_File_Write(pFile, &nScrDatSize, sizeof(nScrDatSize));
-	L_byteswap_ushorts(pDat, nDatSize);
-	GameMain_File_Write(pFile, pDat, nDatSize);
-	L_byteswap_ushorts(pDat, nDatSize);
+	L_byteswap_ushorts(pDst, nDatSize);
+	GameMain_File_Write(pFile, pDst, nDatSize);
 	nDataOffset += nDatSize + 8;
+	free(pDst);
+	return 1;
+}
+
+extern "C" int __stdcall Hook_SimcityApp_WriteCityCompressed(CMFC3XFile *pFile, DWORD scrChunk, const char *pDat, int nDatSize) {
+	CSimcityAppPrimary* pThis;
+
+	__asm mov [pThis], ecx
+
+	char *pDst;
+	char *pTmp;
+	DWORD cmpChunkMISC, cmpChunkXGRP, cmpChunkXMIC;
+	int nDp, nTp, ix;
+	BYTE dat;
+	DWORD nChunk, nScrTp;
+
+	pDst = (char *)malloc(nDatSize);
+	if (!pDst)
+		return 0;
+	memset(pDst, 0, nDatSize);
+	memcpy(pDst, pDat, nDatSize);
+	pTmp = (char *)malloc(3 * nDatSize / 2);
+	if (!pTmp) {
+		free(pDst);
+		return 0;
+	}
+	memset(pTmp, 0, 3 * nDatSize / 2);
+	cmpChunkMISC = L_byteswap_longlabel("MISC");
+	cmpChunkXGRP = L_byteswap_longlabel("XGRP");
+	cmpChunkXMIC = L_byteswap_longlabel("XMIC");
+	if (cmpChunkMISC == scrChunk || cmpChunkXGRP == scrChunk)
+		L_byteswap_buffer((DWORD *)pDst, nDatSize);
+	else if (cmpChunkXMIC == scrChunk)
+		L_byteswap_micro((WORD *)pDst, nDatSize);
+	nDp = nTp = 0;
+	while (nDatSize - 1 > nDp) {
+		dat = pDst[nDp];
+		if (pDst[nDp + 1] == dat) {
+			for (ix = 2; pDst[nDp + ix] == dat && ix < 128 && nDp + ix < nDatSize; ++ix)
+				;
+			pTmp[nTp] = (ix - 1) | 0x80;
+			pTmp[++nTp] = dat;
+			++nTp;
+			nDp += ix;
+		}
+		else {
+			ix = 1;
+			pTmp[nTp + 1] = dat;
+			while (pDst[nDp + ix] != dat && ix < 128 && nDp + ix < nDatSize) {
+				dat = pDst[nDp + ix++];
+				pTmp[nTp + ix] = dat;
+			}
+			pTmp[nTp] = ix - 1;
+			nDp += ix - 1;
+			nTp += ix;
+		}
+	}
+	if (nDatSize - 1 == nDp) {
+		pTmp[nTp] = 1;
+		pTmp[++nTp] = pDst[nDp++];
+		++nTp;
+	}
+	nDataOffset += nTp + 8;
+	nChunk = _byteswap_ulong(scrChunk);
+	GameMain_File_Write(pFile, &nChunk, sizeof(nChunk));
+	nScrTp = _byteswap_ulong(nTp);
+	GameMain_File_Write(pFile, &nScrTp, sizeof(nScrTp));
+	GameMain_File_Write(pFile, pTmp, nTp);
+	free(pTmp);
+	free(pDst);
 	return 1;
 }
 
@@ -1394,9 +1466,13 @@ void InstallSaveHooks_SC2K1996(void) {
 	SafeVirtualProtect((LPVOID)0x402400, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x402400, Hook_SimcityApp_WriteCityName);
 
-	// CSimcityApp::WriteCityUncompress
+	// CSimcityApp::WriteCityUncompressed
 	SafeVirtualProtect((LPVOID)0x401C2B, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401C2B, Hook_SimcityApp_WriteCityUncompressed);
+
+	// CSimcityApp::WriteCityCompressed
+	SafeVirtualProtect((LPVOID)0x402CD9, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402CD9, Hook_SimcityApp_WriteCityCompressed);
 
 	// CSimcityApp::SaveCity
 	SafeVirtualProtect((LPVOID)0x4015A0, 5, PAGE_EXECUTE_READWRITE);

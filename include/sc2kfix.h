@@ -322,10 +322,14 @@ typedef struct {
 #define FEXT_TYPE_SAVECITYNAME 1
 #define FEXT_TYPE_OPENCITYATTR 2
 
+// For the CNAM chunk this must not be changed, it must
+// remain set to a value of 32.
+#define CNAM_DAT_LEN 32
+
 // For now set to 30 rather than 31 due to some unsafe reading/writing further downstream
 // in the native game. What may have (perhaps) been safe in the DOS/Macintosh game is not
 // in the Windows version when the standard maximum city name length is used.
-#define CITY_NAME_LEN 30
+#define CITY_NAME_LEN (CNAM_DAT_LEN - 2)
 
 typedef struct {
 	int nExtType;
@@ -543,6 +547,7 @@ int L_byteswap_longlabel(char *pBuf);
 void L_byteswap_buffer(DWORD *pBuf, int nCount);
 void L_byteswap_micro(WORD *pBuf, unsigned int nCount);
 void L_byteswap_ushorts(WORD *pBuf, int nCount);
+void L_CharStringToPascalString(const char *pInStr, char *pOutStr, int nMaxSize, bool bFixedSize);
 
 // Yes...
 FILE *log_fopen(const char *fname, const char *mode);
