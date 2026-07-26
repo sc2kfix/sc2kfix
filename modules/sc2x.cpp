@@ -840,6 +840,30 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 	}
 }
 
+// For the CNAM chunk this must not be changed, it must
+// remain set to a value of 32.
+#define CNAM_DAT_LEN 32
+
+extern "C" int __stdcall Hook_SimcityApp_WriteCityName(CMFC3XFile *pFile, DWORD scrChunk, CMFC3XString pName) {
+	CSimcityAppPrimary* pThis;
+
+	__asm mov [pThis], ecx
+
+	DWORD nChunk, nFullLen;
+	DWORD nNameLen;
+
+	nChunk = _byteswap_ulong(scrChunk);
+	GameMain_File_Write(pFile, &nChunk, sizeof(nChunk));
+	nFullLen = _byteswap_ulong(CNAM_DAT_LEN);
+	GameMain_File_Write(pFile, &nFullLen, sizeof(nFullLen));
+	nNameLen = CNAM_DAT_LEN - 1; // 31
+	GameMain_File_Write(pFile, &nNameLen, 1);
+	GameMain_File_Write(pFile, pName.m_pchData, nNameLen);
+	nDataOffset += CNAM_DAT_LEN + 8;
+	GameMain_String_Dest(&pName);
+	return 1;
+}
+
 // The new local call concerning wonky filenames - the original remote hook
 // is no longer necessary.
 static bool L_CheckAndAppendCityExtension(char *lpFileName, char *pExt) {
@@ -1292,6 +1316,10 @@ void InstallSaveHooks_SC2K1996(void) {
 	// Patch to attempt to fix loading partially corrupted saves
 	SafeVirtualProtect((LPVOID)0x431212, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x431212, Hook_FileValidation_FormChunkCheck);
+
+	// CSimcityApp::WriteCityName
+	SafeVirtualProtect((LPVOID)0x402400, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402400, Hook_SimcityApp_WriteCityName);
 
 	// CSimcityApp::SaveCity
 	SafeVirtualProtect((LPVOID)0x4015A0, 5, PAGE_EXECUTE_READWRITE);

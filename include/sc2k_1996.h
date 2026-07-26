@@ -3374,6 +3374,8 @@ GAMECALL_MAIN(0x4A7519, void, __thiscall, Menu_DrawItem, CMFC3XMenu *, LPDRAWITE
 GAMECALL_MAIN(0x4A7E82, CMFC3XFile *, __thiscall, File_Cons, CMFC3XFile *)
 GAMECALL_MAIN(0x4A8072, void, __thiscall, File_Dest, CMFC3XFile *)
 GAMECALL_MAIN(0x4A8190, int, __thiscall, File_Open, CMFC3XFile *, const char *, unsigned int, CMFC3XFileException *)
+GAMECALL_MAIN(0x4A8313, DWORD, __thiscall, File_Read, CMFC3XFile *, void *, DWORD)
+GAMECALL_MAIN(0x4A8360, void, __thiscall, File_Write, CMFC3XFile *, void const *, unsigned int)
 GAMECALL_MAIN(0x4A8448, void, __thiscall, File_Close, CMFC3XFile *)
 GAMECALL_MAIN(0x4A85B4, void, __stdcall, File_Remove, const char *)
 GAMECALL_MAIN(0x4A8A58, BOOL, __stdcall, File_GetStatusWithString, const char *, CMFC3XFileStatus *)
