@@ -840,6 +840,25 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 	}
 }
 
+extern "C" int __stdcall Hook_SimcityApp_WriteCityHeader(CMFC3XFile *pFile, int nDatSize) {
+	CSimcityAppPrimary* pThis;
+
+	__asm mov [pThis], ecx
+
+	DWORD scrChunk, nChunk, nScrDatSize;
+
+	GameMain_File_Seek(pFile, 0, 0);
+	scrChunk = L_byteswap_longlabel("FORM");
+	nChunk = _byteswap_ulong(scrChunk);
+	GameMain_File_Write(pFile, &nChunk, sizeof(nChunk));
+	nScrDatSize = _byteswap_ulong(nDatSize);
+	GameMain_File_Write(pFile, &nScrDatSize, sizeof(nScrDatSize));
+	scrChunk = L_byteswap_longlabel("SCDH");
+	nChunk = _byteswap_ulong(scrChunk);
+	GameMain_File_Write(pFile, &nChunk, sizeof(nChunk));
+	return 1;
+}
+
 // For the CNAM chunk this must not be changed, it must
 // remain set to a value of 32.
 #define CNAM_DAT_LEN 32
@@ -861,6 +880,24 @@ extern "C" int __stdcall Hook_SimcityApp_WriteCityName(CMFC3XFile *pFile, DWORD 
 	GameMain_File_Write(pFile, pName.m_pchData, nNameLen);
 	nDataOffset += CNAM_DAT_LEN + 8;
 	GameMain_String_Dest(&pName);
+	return 1;
+}
+
+extern "C" int __stdcall Hook_SimcityApp_WriteCityUncompressed(CMFC3XFile *pFile, DWORD scrChunk, WORD *pDat, int nDatSize) {
+	CSimcityAppPrimary* pThis;
+
+	__asm mov [pThis], ecx
+
+	DWORD nChunk, nScrDatSize;
+
+	nChunk = _byteswap_ulong(scrChunk);
+	GameMain_File_Write(pFile, &nChunk, sizeof(nChunk));
+	nScrDatSize = _byteswap_ulong(nDatSize);
+	GameMain_File_Write(pFile, &nScrDatSize, sizeof(nScrDatSize));
+	L_byteswap_ushorts(pDat, nDatSize);
+	GameMain_File_Write(pFile, pDat, nDatSize);
+	L_byteswap_ushorts(pDat, nDatSize);
+	nDataOffset += nDatSize + 8;
 	return 1;
 }
 
@@ -1122,7 +1159,7 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 }
 
 // Assembly language hook to try to fix up corrupted save file headers.
-void __declspec(naked) Hook_FileValidation_FormChunkCheck(void) {
+void __declspec(naked) Hook_OpenCityHeader_FormChunkCheck(void) {
 	// Replace the code we're clobbering to inject ourselves
 	__asm {
 		// Original call flow
@@ -1347,11 +1384,19 @@ void InstallSaveHooks_SC2K1996(void) {
 
 	// Patch to attempt to fix loading partially corrupted saves
 	SafeVirtualProtect((LPVOID)0x431212, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x431212, Hook_FileValidation_FormChunkCheck);
+	NEWJMP((LPVOID)0x431212, Hook_OpenCityHeader_FormChunkCheck);
+
+	// CSimcityApp::WriteCityName
+	SafeVirtualProtect((LPVOID)0x4010CD, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4010CD, Hook_SimcityApp_WriteCityHeader);
 
 	// CSimcityApp::WriteCityName
 	SafeVirtualProtect((LPVOID)0x402400, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x402400, Hook_SimcityApp_WriteCityName);
+
+	// CSimcityApp::WriteCityUncompress
+	SafeVirtualProtect((LPVOID)0x401C2B, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401C2B, Hook_SimcityApp_WriteCityUncompressed);
 
 	// CSimcityApp::SaveCity
 	SafeVirtualProtect((LPVOID)0x4015A0, 5, PAGE_EXECUTE_READWRITE);
