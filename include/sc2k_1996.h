@@ -140,6 +140,8 @@
 #define XVALPOPLEVEL_MEDIUM (XVALPOPLEVEL_LOW * 3)
 #define XVALPOPLEVEL_HIGH (XVALPOPLEVEL_MEDIUM * 2)
 
+#define MAX_LABEL_LEN 23
+
 #define GROWTH_TILE_MAX_TRIP_STEPS 100
 
 #define GAME_MAP_SIZE 128u
@@ -3002,7 +3004,7 @@ typedef struct {
 // Struct defining an SC2K XLAB (Label) entity.
 #pragma pack(push, 1)
 typedef struct {
-	char szLabel[24];
+	char szLabel[MAX_LABEL_LEN + 1];
 	BYTE bPadding;
 } map_XLAB_t;
 #pragma pack(pop)
@@ -3874,16 +3876,16 @@ static inline const char* GetXLABEntry(BYTE iLabelID) {
 }
 
 static inline void SetXLABEntry(BYTE iLabelID, const char *pStr) {
-	WORD nLen;
+	int nLen;
 
 	if (pStr) {
-		nLen = (WORD)strlen(pStr);
-		if (nLen > 24)
-			nLen = 24;
+		nLen = strlen(pStr);
+		if (nLen > MAX_LABEL_LEN)
+			nLen = MAX_LABEL_LEN;
 		// A combination of memcpy and setting the end null here.
 		// Attempts at using strcpy_s with 'dwMapXLAB[0][iLabelID].szLabel'
 		// here resulted in a program crash.
-		memcpy(&dwMapXLAB[0][iLabelID], pStr, nLen);
+		memcpy(dwMapXLAB[0][iLabelID].szLabel, pStr, nLen);
 		dwMapXLAB[0][iLabelID].szLabel[nLen] = 0;
 	}
 }

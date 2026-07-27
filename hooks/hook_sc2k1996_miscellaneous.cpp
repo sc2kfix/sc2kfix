@@ -51,7 +51,7 @@
 UINT mischook_debug = MISCHOOK_DEBUG;
 
 DLGPROC lpNewCityAfxProc = NULL;
-char szTempMayorName[24] = { 0 };
+char szTempMayorName[MAX_LABEL_LEN + 1] = { 0 };
 
 DLGPROC lpMainDialogAfxProc = NULL;
 HWND hwndMainDialog_SC2K1996 = NULL;
@@ -264,7 +264,9 @@ extern "C" void __stdcall Hook_CmdUI_Enable(BOOL bOn) {
 			pThis->m_nID == IDM_GAME_OPTIONS_MODCONFIG ||
 			pThis->m_nID == IDM_GAME_FILE_RELOADDEFAULTTILESET ||
 			pThis->m_nID == IDM_MAIN_FILE_OPENMAINDIALOG ||
-			pThis->m_nID == IDM_DEBUG_SPRITE_DISPLAY)
+			pThis->m_nID == IDM_DEBUG_SPRITE_DISPLAY ||
+			pThis->m_nID == IDM_DEBUG_LABEL_LIST_ORPHANS ||
+			pThis->m_nID == IDM_DEBUG_LABEL_CLEAR_ORPHANS)
 			bOnOverride = TRUE;
 		
 		EnableMenuItem(pThis->m_pMenu->m_hMenu, pThis->m_nIndex, MF_BYPOSITION |
@@ -929,6 +931,7 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		// Limit the City name to 30 characters (not 31 - this avoids a rather
 		// nasty overrun that can occur if the old limit is hit).
 		SendMessage(GetDlgItem(hwndDlg, 101), EM_SETLIMITTEXT, CITY_NAME_LEN, 0);
+		SendMessage(GetDlgItem(hwndDlg, 150), EM_SETLIMITTEXT, MAX_LABEL_LEN, 0);
 
 		// Set the default mayor name.
 		SetDlgItemText(hwndDlg, 150, jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
@@ -937,9 +940,9 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		// XXX (araxestroy): there's probably a better window message to use here.
 
 		// Set the XLAB entry for the mayor name, falling back to the default from settings.json
-		memset(szTempMayorName, 0, 24);
-		if (!GetDlgItemText(hwndDlg, 150, szTempMayorName, 24))
-			strcpy_s(szTempMayorName, 24, jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
+		memset(szTempMayorName, 0, sizeof(szTempMayorName));
+		if (!GetDlgItemText(hwndDlg, 150, szTempMayorName, sizeof(szTempMayorName)))
+			strcpy_s(szTempMayorName, sizeof(szTempMayorName), jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
 		SetXLABEntry(0, szTempMayorName);
 
 		// Clean up window tooltips
@@ -2246,6 +2249,54 @@ __declspec(naked) void Hook_DisplayInformationMessageBox(const char* szDescripti
 	GAMEJMP(0x42DC20);
 }
 
+static void DoOrphanLabel_SC2K1996(bool bRemove) {
+	int nCnt;
+	std::string str;
+	const char *pLbl;
+
+	str = "Orphaned labels";
+	str += (bRemove) ? " removed:\n\n" : " detected:\n\n";
+
+	nCnt = 0;
+	for (int i = 1; i <= MAX_USER_TEXT_ENTRIES; ++i) {
+		pLbl = GetXLABEntry(i);
+		if (pLbl && strlen(pLbl) > 0) {
+			if (mischook_debug & MISCHOOK_DEBUG_OTHER)
+				ConsoleLog(LOG_DEBUG, "Got Label '%s' at position '%d'\n", pLbl, i);
+			bool bLabelFound = false;
+			for (int iX = 0; iX < GAME_MAP_SIZE; ++iX) {
+				for (int iY = 0; iY < GAME_MAP_SIZE; ++iY) {
+					if (XTXTGetTextOverlayID(iX, iY) == i) {
+						bLabelFound = true;
+						break;
+					}
+				}
+				if (bLabelFound)
+					break;
+			}
+			if (!bLabelFound) {
+				str += std::to_string(i);
+				str += " - '";
+				str += pLbl;
+				str += "'\n";
+				if (mischook_debug & MISCHOOK_DEBUG_OTHER)
+					ConsoleLog(LOG_DEBUG, "Got Orphaned Label '%s' at position '%d'%s\n", pLbl, i, ((bRemove) ? " - Removing" : ""));
+				if (bRemove)
+					Game_RemoveLabel(i);
+				++nCnt;
+			}
+		}
+	}
+
+	if (nCnt > 0) {
+		str += "\nTotal Count: ";
+		str += std::to_string(nCnt);
+	}
+	else
+		str = "No orphaned labels detected.";
+	L_MessageBoxA(GameGetRootWindowHandle(), str.c_str(), gamePrimaryKey, MB_ICONINFORMATION);
+}
+
 // Hook for a couple different CWnd::OnCmdMessage derivatives
 static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void *pHandler, void *dwRetAddr) {
 	// Normally internally there'd be the class hierarchy regarding inheritence
@@ -2347,6 +2398,15 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 
 			case IDM_DEBUG_THING_CLEAN_MLDEPLOY:
 				DoThingClean_SC2K1996(THING_CLEAN_MLDEPLOY);
+				return TRUE;
+
+			case IDM_DEBUG_LABEL_LIST_ORPHANS:
+				DoOrphanLabel_SC2K1996(false);
+				return TRUE;
+
+			case IDM_DEBUG_LABEL_CLEAR_ORPHANS:
+				if (L_MessageBoxA(pThis->m_hWnd, "WARNING: You are about to clear out any detected orphaned labels, this action cannot be undone.\n\nDo you want to proceed?", gamePrimaryKey, MB_ICONWARNING|MB_YESNO) == IDYES)
+					DoOrphanLabel_SC2K1996(true);
 				return TRUE;
 			}
 			//ConsoleLog(LOG_DEBUG, "CFrameWnd::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, pExtra, pHandler, dwRetAddr);
@@ -2786,6 +2846,12 @@ skipgamemenu:
 	SafeVirtualProtect((LPVOID)0x41503F, 6, PAGE_EXECUTE_READWRITE);
 	NEWJMP(0x41503F, 0x415161);
 	*(BYTE*)0x415044 = 0x90;
+
+	// nop out this bit of code for when the sign dialogue is Cancelled.
+	// You otherwise end up with orphaned labels (the XTXT entry is removed
+	// but not the XLAB entry).
+	SafeVirtualProtect((LPVOID)0x44D893, 6, PAGE_EXECUTE_READWRITE);
+	memset((LPVOID)0x44D893, 0x90, 6);
 
 	// Call your cousin Vinnie!
 	PorntipsGuzzardo();
