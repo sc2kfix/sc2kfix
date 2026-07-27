@@ -1581,7 +1581,7 @@ static BOOL GetRunwayTilePositionalOffset(__int16 x, __int16 y, __int16 iZoneTyp
 	bMoveXAxis = FALSE;
 	bMoveYAxis = FALSE;
 	// Slight change here: distinguish between military and standard runway tiles.
-	wTileCountType = (iZoneType == ZONE_MILITARY) ? wMilitaryTiles[MILITARYTILE_RUNWAY] : dwTileCount[TILE_INFRASTRUCTURE_RUNWAY];
+	wTileCountType = (iZoneType == ZONE_MILITARY) ? wMilitaryTiles[MILITARYTILE_RUNWAY] : wTileCount[TILE_INFRASTRUCTURE_RUNWAY];
 	if (IsEven(wTileCountType)) {
 		if (!SetMoveRunwayTileAxis(x, y, &bMoveXAxis, &bMoveYAxis))
 			return FALSE;
@@ -2544,7 +2544,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 						bTextOverlay <= MAX_SIM_TEXT_ENTRIES) {
 						BYTE bMicrosimEntry = MICROSIMID_ENTRY(bTextOverlay);
 						if (GetMicroSimulatorTileID(bMicrosimEntry) == nTileID)
-							wSportsTeams += -1 << GetMicroSimulatorStat2(bMicrosimEntry);
+							wStadiumSportsTeams += -1 << GetMicroSimulatorStat2(bMicrosimEntry);
 					}
 					for (__int16 nPosX = 0; nArea > nPosX; ++nPosX) {
 						for (__int16 nPosY = 0; nArea > nPosY; ++nPosY) {

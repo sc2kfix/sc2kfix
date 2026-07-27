@@ -2868,6 +2868,23 @@ typedef struct {
 	int iEstimatedCost;
 } budget_t;
 
+typedef struct {
+	BYTE bName;
+	BYTE bStyle;
+	BYTE bTag;
+	BYTE bSurvey;
+	BYTE bWeather;
+} paper_t;
+
+typedef struct {
+	__int16 wType;
+	__int16 wPower;
+	BYTE bValue;
+	BYTE bItem;
+	BYTE bName;
+	BYTE bScore;
+} news_t;
+
 #pragma pack(push, 1)
 typedef struct {
 	BYTE bTileID;
@@ -3270,6 +3287,7 @@ GAMECALL(0x402C3E, int, __thiscall, CityToolBar_HitTestFromPoint, CCityToolBar *
 GAMECALL(0x402C4D, void, __cdecl, FailRadioToFileID, int, UINT)
 GAMECALL(0x402C98, void, __thiscall, GameDialog_SetCursor, CGameDialog *)
 GAMECALL(0x402CCF, void, __cdecl, GetFileExceptionError, UINT, CMFC3XFileException *, CMFC3XString *)
+GAMECALL(0x402CD9, int, __thiscall, SimcityApp_WriteCityCompressed, CSimcityAppPrimary *, CMFC3XFile *, DWORD, const void *, int)
 GAMECALL(0x402CF2, void, __thiscall, SimcityApp_SetGameCursor, CSimcityAppPrimary *pThis, int iNewCursor, BOOL bActive)
 GAMECALL(0x402D1F, __int16, __cdecl, CalcTileHit8, __int16, __int16)
 GAMECALL(0x402D2E, void, __stdcall, UpdateBudgetInformation, void)
@@ -3483,6 +3501,8 @@ GAMEOFF(WORD,	wDisasterFloodArea,			0x4C93A8)
 GAMEOFF(WORD,	wCityDevelopedTiles,		0x4C93B4)
 GAMEOFF(WORD,	wIndustrialMixPollutionBonus, 0x4C9428)
 GAMEOFF(WORD,	wViewRotation,				0x4C942C)
+GAMEOFF(DWORD *,	pRawPopRatioTable,		0x4C94B4)
+GAMEOFF(DWORD *,	pEQRatioTable,			0x4C94BC)
 GAMEOFF(BOOL,	bCityHasOcean,				0x4C94C0)
 GAMEOFF(DWORD,	dwArcologyPopulation,		0x4C94C4)
 GAMEOFF_ARR(CMFC3XString,	cityToolGroupStrings,		0x4C94C8)
@@ -3493,14 +3513,14 @@ GAMEOFF(CMFC3XString,	strUnusedString,		0x4CA188)
 GAMEOFF(DWORD,	dwCityResidentialPopulation,	0x4CA194)
 GAMEOFF(CMFC3XString, pszCityName,				0x4CA1A0)
 GAMEOFF(WORD,	wNationalEconomyTrend,		0x4CA1BC)
-GAMEOFF(BYTE*,	bArrNewspaperTable2,		0x4CA1C0)
+GAMEOFF(news_t*,	pNewsArr,				0x4CA1C0)
 GAMEOFF(WORD,	wPrisonBonus,				0x4CA1DC)
 GAMEOFF(WORD,	wCityTerrainSliderHills,	0x4CA1E0)
 GAMEOFF(__int16,	wClipXhigh,				0x4CA1E4)
 GAMEOFF(WORD,	wIndustrialMixBonus,		0x4CA1E8)
 GAMEOFF(WORD,	wCurrentMapToolGroup,		0x4CA1EC)
 GAMEOFF(WORD,	wIndustryConnect,			0x4CA3F0)
-GAMEOFF(WORD*,	wArrIndustrialDemands,		0x4CA3F4)
+GAMEOFF(__int16 *,	pIndividualIndDemands,	0x4CA3F4)
 GAMEOFF(DWORD,	dwInterestRateSum,			0x4CA400)
 GAMEOFF(WORD,	EditData,					0x4CA404)
 GAMEOFF(WORD,	wSubwayXUNDCount,			0x4CA41C)
@@ -3511,26 +3531,27 @@ GAMEOFF(WORD,	wOldArrests,				0x4CA430)
 GAMEOFF(COLORREF,	colGameBackgndAbove,	0x4CA43C)
 GAMEOFF(int,	dwCityLandValue,			0x4CA440)
 GAMEOFF(int,	dwCityFunds,				0x4CA444)
-GAMEOFF(WORD*, dwTileCount,					0x4CA4C8)		// WORD dwTileCount[256]
+GAMEOFF(__int16 *, wTileCount,				0x4CA4C8)		// WORD wTileCount[256]
 GAMEOFF(DWORD,	dwCityValue,				0x4CA4D0)
 GAMEOFF(BOOL,	bOptionsAutoGoto,			0x4CA5D8)
 GAMEOFF(DWORD,	dwCityGarbage,				0x4CA5F0)		// Unused in vanilla game (sort of)
 GAMEOFF(WORD,	wCityStartYear,				0x4CA5F4)
 GAMEOFF(DWORD,	dwCityUnemployment,			0x4CA5F8)
 GAMEOFF(DWORD*, dwNeighborValue,			0x4CA804)		// DWORD dwNeighborValue[4]
-GAMEOFF(WORD,	wNewspaperChoice,			0x4CA808)
+GAMEOFF(__int16,	wNewspaperChoice,		0x4CA808)
 GAMEOFF(__int16,	wWaterLevel,			0x4CA818)
 GAMEOFF(__int16,	wDisasterObject,		0x4CA81C)
 GAMEOFF(__int16,	wClipYhigh,				0x4CA820)
 GAMEOFF(DWORD,	dwNationalPopulation,		0x4CA928)
 GAMEOFF(DWORD*, dwNeighborFame,				0x4CA92C)		// DWORD dwNeighborFame[4]
 GAMEOFF(WORD*,	wMilitaryTiles,				0x4CA934)
-GAMEOFF(WORD,	wNationalTax,				0x4CA938)
-GAMEOFF(WORD,	wCurrentDisasterID,			0x4CA93C)
+GAMEOFF(WORD,	wNationalFedRate,			0x4CA938)
+GAMEOFF(__int16,	wCurrentDisasterType,	0x4CA93C)
 GAMEOFF(DWORD,	dwCityOrdinances,			0x4CAA40)
 GAMEOFF_ARR(CMFC3XBrush,	MainBrushFace,	0x4CAA48)
 GAMEOFF(DWORD,	dwPowerUsedPercentage,		0x4CAA50)
 GAMEOFF(POINT,	dwDisasterPoint,			0x4CAA58)
+GAMEOFF(DWORD *,	pLERatioTable,			0x4CAA70)
 GAMEOFF(DWORD,	dwCityPopulation,			0x4CAA74)
 GAMEOFF(WORD,	wCityTerrainSliderWater,	0x4CAAF8)
 GAMEOFF(CMFC3XFileException,	fileExcept,	0x4CAB00)
@@ -3540,7 +3561,7 @@ GAMEOFF(BOOL,	bMainFrameInactive,			0x4CAD14)
 GAMEOFF(__int16,	iScreenOffSetX,			0x4CAD18)
 GAMEOFF(__int16,	iScreenOffSetY,			0x4CAD1C)
 GAMEOFF(COLORREF,	colGameBackgndUnder,	0x4CAD20)
-GAMEOFF(BYTE*,	bArrNewspaperTable1,		0x4CAD24)
+GAMEOFF(paper_t*,	pPaperArr,				0x4CAD24)
 GAMEOFF(DWORD,	dwCityFame,					0x4CAD28)		// Unused in vanilla game
 GAMEOFF(BOOL,	bYearEndFlag,				0x4CAD2C)
 GAMEOFF(__int16,	iScreenPointX,			0x4CAD30)		// Used here in MapToolMenuAction
@@ -3570,10 +3591,10 @@ GAMEOFF(sprite_header_t*, pArrSpriteHeaders, 0x4CB1B8)
 GAMEOFF(BOOL,	bNewspaperSubscription,		0x4CB3D0)
 GAMEOFF(BYTE,	bWeatherRain,				0x4CB3D4)
 GAMEOFF(WORD,	wSewerBonus,				0x4CB3DC)
-GAMEOFF(WORD*,	wArrIndustrialTaxRates,		0x4CB3E0)
+GAMEOFF(__int16 *,	pIndividualIndTaxRate,	0x4CB3E0)
 GAMEOFF(WORD,	wCityCurrentSeason,			0x4CB3E8)
 GAMEOFF(microsim_t*, pMicrosimArr,			0x4CB3EC)
-GAMEOFF(DWORD*,	dwArrIndustrialPopulations,	0x4CB3F0)
+GAMEOFF(DWORD*,	pIndividualIndRatio,		0x4CB3F0)
 GAMEOFF(BOOL,	bCityHasRiver,				0x4CB3F8)
 GAMEOFF(COLORREF,	colBtnFace,				0x4CB3FC)
 GAMEOFF(WORD,	LastCursorX,				0x4CB400)
@@ -3583,10 +3604,11 @@ GAMEOFF(BYTE,	bWeatherTrend,				0x4CB40C)
 GAMEOFF(DWORD,	dwCityWorkforceLE,			0x4CB410)
 GAMEOFF_ARR(WORD,	wCityInventionYears,	0x4CB430)
 GAMEOFF(DWORD,	dwCityCrime,				0x4CB454)
-GAMEOFF(WORD,	wCityCenterX,				0x4CB458)
-GAMEOFF(WORD,	wCityCenterY,				0x4CB45C)
+GAMEOFF(__int16,	wCityCenterX,			0x4CB458)
+GAMEOFF(__int16,	wCityCenterY,			0x4CB45C)
 GAMEOFF(DWORD,	dwCityWorkforcePercent,		0x4CB460)
 GAMEOFF(WORD,	wCurrentCityToolGroup,		0x4CB464)
+GAMEOFF(int *,	cwCityStats,				0x4CC474)
 GAMEOFF(BOOL,	bOptionsAutoBudget,			0x4CC4B0)
 GAMEOFF(DWORD,	dwCityWorkforceEQ,			0x4CC4B4)
 GAMEOFF(DWORD,	dwWaterUsedPercentage,		0x4CC4B8)
@@ -3594,12 +3616,12 @@ GAMEOFF(BOOL,	bNewspaperExtra,			0x4CC4BC)
 GAMEOFF(budget_t*,	pBudgetArr,				0x4CC4CC)		// Needs reverse engineering. See wiki.
 GAMEOFF(BOOL,	bNoDisasters,				0x4CC4D4)
 GAMEOFF(WORD*,	wNeighborNameIdx,			0x4CC4DC)
-GAMEOFF(WORD,	wCommerceConnect,	0x4CC4D8)
-GAMEOFF(WORD,	wSportsTeams,				0x4CC4E0)
+GAMEOFF(WORD,	wCommerceConnect,			0x4CC4D8)
+GAMEOFF(__int16,	wStadiumSportsTeams,	0x4CC4E0)
 GAMEOFF(BYTE,	bMilitaryBaseType,			0x4CC4E4)
 GAMEOFF(int,	dwCityBonds,				0x4CC4E8)
 GAMEOFF(DWORD,	dwCityTrafficCount,			0x4CC6F4)
-GAMEOFF_ARR(__int16,	wCityDemand,			0x4CC8F8)
+GAMEOFF_ARR(__int16,	wCityDemand,		0x4CC8F8)
 GAMEOFF(DWORD,	dwCityPollution,			0x4CC910)		// Needs reverse engineering. See wiki.
 GAMEOFF(WORD,	wScenarioDisasterID,		0x4CC918)
 GAMEOFF(WORD,	wScenarioTimeLimitMonths,	0x4CC91C)
@@ -3691,7 +3713,7 @@ GAMEOFF_ARR(const char,	aScenarios,			0x4E70FC)
 GAMEOFF_ARR(DWORD, dwZoneNameStringIDs,		0x4E7140)
 GAMEOFF_ARR(const char,	aTilesets,			0x4E7244)
 GAMEOFF_ARR(const char,	aData,				0x4E728C)
-GAMEOFF(DWORD *,	MiscInfo,				0x4E72A8)
+GAMEOFF(DWORD *,	pMiscInfo,				0x4E72A8)
 GAMEOFF(DWORD,	dwMapEditingMode,			0x4E72F0)
 GAMEOFF_ARR(const char,	aCities,			0x4E730C)
 GAMEOFF_ARR(const char,	aSavegame,			0x4E7338)
@@ -4157,7 +4179,7 @@ static inline BYTE GetMilitaryFromNormalTile(BYTE iTileID) {
 
 static inline WORD GetFlaggedTileCount(BYTE iTileID, BOOL bMilitary) {
 	BYTE iMilitaryTileID = GetMilitaryFromNormalTile(iTileID);
-	return (bMilitary) ? wMilitaryTiles[iMilitaryTileID] : dwTileCount[iTileID];
+	return (bMilitary) ? wMilitaryTiles[iMilitaryTileID] : wTileCount[iTileID];
 }
 
 #define USE_OLD_ALTM_HANDLING 0

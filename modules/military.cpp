@@ -219,7 +219,7 @@ RETRYFROMCURRENT:
 				for (iCurrXPos = randPos.x; iCurrXPos < randPos.x + SILO_STRIP_LEN; ++iCurrXPos) {
 					for (iCurrYPos = randPos.y; iCurrYPos < randPos.y + SILO_STRIP_LEN; ++iCurrYPos) {
 						BYTE iTileID = GetTileID(iCurrXPos, iCurrYPos);
-						--dwTileCount[iTileID];
+						--wTileCount[iTileID];
 						if (iCurrXPos < GAME_MAP_SIZE && iCurrYPos < GAME_MAP_SIZE)
 							XZONSetNewZone(iCurrXPos, iCurrYPos, ZONE_MILITARY);
 						++wMilitaryTiles[MILITARYTILE_OTHER];
@@ -297,7 +297,7 @@ static void MilitaryBasePlotPlacement(coords_w_t *pRandPos) {
 				(iCurrXPos >= GAME_MAP_SIZE || iCurrYPos >= GAME_MAP_SIZE || !XBITReturnIsWater(iCurrXPos, iCurrYPos)) &&
 				XZONReturnZone(iCurrXPos, iCurrYPos) == ZONE_NONE &&
 				!GetUndergroundTileID(iCurrXPos, iCurrYPos)) {
-				--dwTileCount[iTileID];
+				--wTileCount[iTileID];
 				if (iCurrXPos < GAME_MAP_SIZE && iCurrYPos < GAME_MAP_SIZE)
 					XZONSetNewZone(iCurrXPos, iCurrYPos, ZONE_MILITARY);
 				++wMilitaryTiles[MILITARYTILE_OTHER];
@@ -596,7 +596,7 @@ static int MilitaryBaseNavalYard(BOOL bForce) {
 									ALTMReturnLandAltitude(iAdvanceBy.x, iAdvanceBy.y) == iBaseLevel) {
 									Game_PlaceTile(iAdvanceBy.x, iAdvanceBy.y, 0);
 									XZONSetNewZone(iAdvanceBy.x, iAdvanceBy.y, ZONE_MILITARY);
-									--dwTileCount[iTileID];
+									--wTileCount[iTileID];
 									++wMilitaryTiles[MILITARYTILE_OTHER];
 								}
 								iNextX = (iAdvanceBy.x + advanceX[iRotOne]);

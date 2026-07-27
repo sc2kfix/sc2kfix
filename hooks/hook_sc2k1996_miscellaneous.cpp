@@ -1157,8 +1157,8 @@ extern "C" void __stdcall Hook_SimcityDoc_UpdateDocumentTitle() {
 			iCityYear = wCityStartYear + dwCityDays / 300;
 			if (IsIconic(pSCApp->m_pMainWnd->m_hWnd)) {
 				if (dwDisasterActive) {
-					if (wCurrentDisasterID <= DISASTER_HURRICANE)
-						GameMain_String_LoadStringA(&cStr, dwDisasterStringIndex[wCurrentDisasterID]);
+					if (wCurrentDisasterType <= DISASTER_HURRICANE)
+						GameMain_String_LoadStringA(&cStr, dwDisasterStringIndex[wCurrentDisasterType]);
 					else
 						GameMain_String_Empty(&cStr);
 				}
@@ -1367,11 +1367,11 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 				if (dwScenarioTrafficLimit > 0 && dwCityTrafficCount > dwScenarioTrafficLimit)
 					bScenarioSuccess = FALSE;
 				if (bScenarioBuildingGoal1) {
-					if (dwTileCount[bScenarioBuildingGoal1] < wScenarioBuildingGoal1Count)
+					if (wTileCount[bScenarioBuildingGoal1] < wScenarioBuildingGoal1Count)
 						bScenarioSuccess = FALSE;
 				}
 				if (bScenarioBuildingGoal2) {
-					if (dwTileCount[bScenarioBuildingGoal2] < wScenarioBuildingGoal2Count)
+					if (wTileCount[bScenarioBuildingGoal2] < wScenarioBuildingGoal2Count)
 						bScenarioSuccess = FALSE;
 				}
 
@@ -1516,31 +1516,31 @@ extern "C" void __stdcall Hook_RecalculateCityValue(void) {
 		nVal = 0;
 
 		if (GET_TILE_RANGE(nTileID, TILE_POWERLINES_LR, TILE_POWERLINES_LTBR)) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(POWER_WIRES, CITYTOOL_GROUP_POWER)] * dwTileCount[nTileID];
+			nVal = costFromSubTool[CITY_MENUTOOL_POS(POWER_WIRES, CITYTOOL_GROUP_POWER)] * wTileCount[nTileID];
 			bValid = TRUE;
 		}
 		else if (GET_TILE_RANGE(nTileID, TILE_ROAD_LR, TILE_ROAD_LTBR)) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(ROADS_ROAD, CITYTOOL_GROUP_ROADS)] * dwTileCount[nTileID];
+			nVal = costFromSubTool[CITY_MENUTOOL_POS(ROADS_ROAD, CITYTOOL_GROUP_ROADS)] * wTileCount[nTileID];
 			bValid = TRUE;
 		}
 		else if (GET_TILE_RANGE(nTileID, TILE_RAIL_LR, TILE_RAIL_HHLR)) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(RAILS_RAIL, CITYTOOL_GROUP_RAIL)] * dwTileCount[nTileID];
+			nVal = costFromSubTool[CITY_MENUTOOL_POS(RAILS_RAIL, CITYTOOL_GROUP_RAIL)] * wTileCount[nTileID];
 			bValid = TRUE;
 		}
 		else if (GET_TILE_RANGE(nTileID, TILE_TUNNEL_T, TILE_CROSSOVER_HIGHWAYTB_POWERLR)) {
-			nVal = 15 * dwTileCount[nTileID];
+			nVal = 15 * wTileCount[nTileID];
 			bValid = TRUE;
 		}
 		else if (GET_TILE_RANGE(nTileID, TILE_SUSPENSION_BRIDGE_START_B, TILE_ONRAMP_BR)) {
-			nVal = 100 * dwTileCount[nTileID];
+			nVal = 100 * wTileCount[nTileID];
 			bValid = TRUE;
 		}
 		else if (GET_TILE_RANGE(nTileID, TILE_HIGHWAY_HTB, TILE_REINFORCED_BRIDGE)) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(ROADS_HIGHWAY, CITYTOOL_GROUP_ROADS)] * dwTileCount[nTileID];
+			nVal = costFromSubTool[CITY_MENUTOOL_POS(ROADS_HIGHWAY, CITYTOOL_GROUP_ROADS)] * wTileCount[nTileID];
 			bValid = TRUE;
 		}
 		else if (GET_TILE_RANGE(nTileID, TILE_SUBTORAIL_T, TILE_SUBTORAIL_L)) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(RAILS_SUBTORAIL, CITYTOOL_GROUP_RAIL)] * dwTileCount[nTileID];
+			nVal = costFromSubTool[CITY_MENUTOOL_POS(RAILS_SUBTORAIL, CITYTOOL_GROUP_RAIL)] * wTileCount[nTileID];
 			bValid = TRUE;
 		}
 		if (bValid)
@@ -1557,7 +1557,7 @@ extern "C" void __stdcall Hook_RecalculateCityValue(void) {
 				nSubTool = POWER_PLANTS_WIND;
 			else
 				nSubTool = POWER_PLANTS_HYDRO;
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(nSubTool, CITYTOOL_GROUP_POWER)] * dwTileCount[nTileID];
+			nVal = costFromSubTool[CITY_MENUTOOL_POS(nSubTool, CITYTOOL_GROUP_POWER)] * wTileCount[nTileID];
 			bValid = TRUE;
 		}
 		else if (GET_TILE_RANGE(nTileID, TILE_POWERPLANT_GAS, TILE_POWERPLANT_COAL)) {
@@ -1575,7 +1575,7 @@ extern "C" void __stdcall Hook_RecalculateCityValue(void) {
 				nSubTool = POWER_PLANTS_FUSION;
 			else
 				nSubTool = POWER_PLANTS_COAL;
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(nSubTool, CITYTOOL_GROUP_POWER)] * (dwTileCount[nTileID] / 16);
+			nVal = costFromSubTool[CITY_MENUTOOL_POS(nSubTool, CITYTOOL_GROUP_POWER)] * (wTileCount[nTileID] / 16);
 			bValid = TRUE;
 		}
 		else if (GET_TILE_RANGE(nTileID, TILE_SERVICES_HOSPITAL, TILE_INFRASTRUCTURE_WATERPUMP)) {
@@ -1619,35 +1619,35 @@ extern "C" void __stdcall Hook_RecalculateCityValue(void) {
 				nTool = CITYTOOL_GROUP_WATER;
 				nSubTool = WATER_PUMP;
 			}
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(nSubTool, nTool)] * (dwTileCount[nTileID] / nTileArea);
+			nVal = costFromSubTool[CITY_MENUTOOL_POS(nSubTool, nTool)] * (wTileCount[nTileID] / nTileArea);
 			bValid = TRUE;
 		}
 		else if (GET_TILE_RANGE(nTileID, TILE_INFRASTRUCTURE_RUNWAY, TILE_INFRASTRUCTURE_RUNWAYCROSS) ||
 			nTileID == TILE_INFRASTRUCTURE_CONTROLTOWER_CIV ||
 			GET_TILE_RANGE(nTileID, TILE_INFRASTRUCTURE_BUILDING1, TILE_MILITARY_TARMAC) ||
 			nTileID == TILE_MILITARY_RADAR || nTileID == TILE_INFRASTRUCTURE_PARKINGLOT || nTileID == TILE_INFRASTRUCTURE_HANGAR2) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(PORTS_AIRPORT, CITYTOOL_GROUP_PORTS)] * dwTileCount[nTileID];
+			nVal = costFromSubTool[CITY_MENUTOOL_POS(PORTS_AIRPORT, CITYTOOL_GROUP_PORTS)] * wTileCount[nTileID];
 			bValid = TRUE;
 		}
 		else if (nTileID == TILE_INFRASTRUCTURE_PIER || nTileID == TILE_INFRASTRUCTURE_CRANE || nTileID == TILE_MILITARY_WAREHOUSE ||
 			nTileID == TILE_INFRASTRUCTURE_LOADINGBAY || nTileID == TILE_INFRASTRUCTURE_CARGOYARD) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(PORTS_SEAPORT, CITYTOOL_GROUP_PORTS)] * dwTileCount[nTileID];
+			nVal = costFromSubTool[CITY_MENUTOOL_POS(PORTS_SEAPORT, CITYTOOL_GROUP_PORTS)] * wTileCount[nTileID];
 			bValid = TRUE;
 		}
 		else if (nTileID == TILE_INFRASTRUCTURE_SUBWAYSTATION) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(RAILS_SUBSTATION, CITYTOOL_GROUP_RAIL)] * dwTileCount[nTileID];
+			nVal = costFromSubTool[CITY_MENUTOOL_POS(RAILS_SUBSTATION, CITYTOOL_GROUP_RAIL)] * wTileCount[nTileID];
 			bValid = TRUE;
 		}
 		else if (nTileID == TILE_INFRASTRUCTURE_WATERTOWER) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(WATER_TOWER, CITYTOOL_GROUP_WATER)] * (dwTileCount[nTileID] / 4);
+			nVal = costFromSubTool[CITY_MENUTOOL_POS(WATER_TOWER, CITYTOOL_GROUP_WATER)] * (wTileCount[nTileID] / 4);
 			bValid = TRUE;
 		}
 		else if (nTileID == TILE_INFRASTRUCTURE_BUSDEPOT) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(ROADS_BUSSTATION, CITYTOOL_GROUP_ROADS)] * (dwTileCount[nTileID] / 4);
+			nVal = costFromSubTool[CITY_MENUTOOL_POS(ROADS_BUSSTATION, CITYTOOL_GROUP_ROADS)] * (wTileCount[nTileID] / 4);
 			bValid = TRUE;
 		}
 		else if (nTileID == TILE_INFRASTRUCTURE_RAILSTATION) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(RAILS_DEPOT, CITYTOOL_GROUP_RAIL)] * (dwTileCount[nTileID] / 4);
+			nVal = costFromSubTool[CITY_MENUTOOL_POS(RAILS_DEPOT, CITYTOOL_GROUP_RAIL)] * (wTileCount[nTileID] / 4);
 			bValid = TRUE;
 		}
 		else if (nTileID == TILE_INFRASTRUCTURE_WATERTREATMENT) {
@@ -1655,19 +1655,19 @@ extern "C" void __stdcall Hook_RecalculateCityValue(void) {
 			// the object only occupies 4 tiles it has been
 			// adjusted accordingly. (Marking this just in case
 			// this was NOT a bug)
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(WATER_TREATMENT, CITYTOOL_GROUP_WATER)] * (dwTileCount[nTileID] / 4);
+			nVal = costFromSubTool[CITY_MENUTOOL_POS(WATER_TREATMENT, CITYTOOL_GROUP_WATER)] * (wTileCount[nTileID] / 4);
 			bValid = TRUE;
 		}
 		else if (nTileID == TILE_INFRASTRUCTURE_LIBRARY) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(EDUCATION_LIBRARY, CITYTOOL_GROUP_EDUCATION)] * (dwTileCount[nTileID] / 4);
+			nVal = costFromSubTool[CITY_MENUTOOL_POS(EDUCATION_LIBRARY, CITYTOOL_GROUP_EDUCATION)] * (wTileCount[nTileID] / 4);
 			bValid = TRUE;
 		}
 		else if (nTileID == TILE_INFRASTRUCTURE_MARINA) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(PARKS_MARINA, CITYTOOL_GROUP_PARKS)] * (dwTileCount[nTileID] / 9);
+			nVal = costFromSubTool[CITY_MENUTOOL_POS(PARKS_MARINA, CITYTOOL_GROUP_PARKS)] * (wTileCount[nTileID] / 9);
 			bValid = TRUE;
 		}
 		else if (nTileID == TILE_INFRASTRUCTURE_DESALINIZATIONPLANT) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(WATER_DESALINIZATION, CITYTOOL_GROUP_WATER)] * (dwTileCount[nTileID] / 9);
+			nVal = costFromSubTool[CITY_MENUTOOL_POS(WATER_DESALINIZATION, CITYTOOL_GROUP_WATER)] * (wTileCount[nTileID] / 9);
 			bValid = TRUE;
 		}
 		else if (GET_TILE_RANGE(nTileID, TILE_ARCOLOGY_PLYMOUTH, TILE_ARCOLOGY_LAUNCH)) {
@@ -1679,7 +1679,7 @@ extern "C" void __stdcall Hook_RecalculateCityValue(void) {
 				nSubTool = REWARDS_ARCOLOGIES_DARCO;
 			else
 				nSubTool = REWARDS_ARCOLOGIES_LAUNCH;
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(nSubTool, CITYTOOL_GROUP_REWARDS)] * (dwTileCount[nTileID] / 16);
+			nVal = costFromSubTool[CITY_MENUTOOL_POS(nSubTool, CITYTOOL_GROUP_REWARDS)] * (wTileCount[nTileID] / 16);
 			bValid = TRUE;
 		}
 		if (bValid)

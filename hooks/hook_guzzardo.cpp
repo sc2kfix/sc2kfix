@@ -446,9 +446,9 @@ TRYAGAIN:
 				// Once the code is activated it takes a moment for the
 				// flood/wind to halt.
 				if (dwDisasterActive) {
-					if (wCurrentDisasterID == DISASTER_FLOOD ||
-						wCurrentDisasterID == DISASTER_HURRICANE ||
-						wCurrentDisasterID == DISASTER_MASSFLOODS) {
+					if (wCurrentDisasterType == DISASTER_FLOOD ||
+						wCurrentDisasterType == DISASTER_HURRICANE ||
+						wCurrentDisasterType == DISASTER_MASSFLOODS) {
 						if (wDisasterFloodArea > 0)
 							wDisasterFloodArea = 0;
 						if (wDisasterWindy > 0)

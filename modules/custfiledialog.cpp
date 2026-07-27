@@ -19,6 +19,11 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
+// !!!! TODO: Perform a check during the "FileOK" situation against expected
+//            results that would be encountered during file extension replacement
+//            situations - check to see whether the file exists and prompt accordingly
+//            if so, etc.
+
 BOOL CALLBACK FileHookProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 	HWND hWndParent;
 	RECT mainRect, itemRect;
