@@ -883,6 +883,99 @@ extern "C" int __stdcall Hook_SimcityApp_WriteCityName(CMFC3XFile *pFile, DWORD 
 	return 1;
 }
 
+extern "C" int __stdcall Hook_SimcityApp_WriteCityUncompressed(CMFC3XFile *pFile, DWORD scrChunk, WORD *pDat, int nDatSize) {
+	CSimcityAppPrimary* pThis;
+
+	__asm mov [pThis], ecx
+
+	WORD *pDst;
+	DWORD nChunk, nScrDatSize;
+
+	pDst = (WORD *)malloc(nDatSize);
+	if (!pDst)
+		return 0;
+	memset(pDst, 0, nDatSize);
+	memcpy(pDst, pDat, nDatSize);
+	nChunk = _byteswap_ulong(scrChunk);
+	GameMain_File_Write(pFile, &nChunk, sizeof(nChunk));
+	nScrDatSize = _byteswap_ulong(nDatSize);
+	GameMain_File_Write(pFile, &nScrDatSize, sizeof(nScrDatSize));
+	L_byteswap_ushorts(pDst, nDatSize);
+	GameMain_File_Write(pFile, pDst, nDatSize);
+	nDataOffset += nDatSize + 8;
+	free(pDst);
+	return 1;
+}
+
+extern "C" int __stdcall Hook_SimcityApp_WriteCityCompressed(CMFC3XFile *pFile, DWORD scrChunk, const void *pDat, int nDatSize) {
+	CSimcityAppPrimary* pThis;
+
+	__asm mov [pThis], ecx
+
+	char *pDst;
+	char *pTmp;
+	DWORD cmpChunkMISC, cmpChunkXGRP, cmpChunkXMIC;
+	int nDp, nTp, ix;
+	BYTE dat;
+	DWORD nChunk, nScrTp;
+
+	pDst = (char *)malloc(nDatSize);
+	if (!pDst)
+		return 0;
+	memset(pDst, 0, nDatSize);
+	memcpy(pDst, pDat, nDatSize);
+	pTmp = (char *)malloc(3 * nDatSize / 2);
+	if (!pTmp) {
+		free(pDst);
+		return 0;
+	}
+	memset(pTmp, 0, 3 * nDatSize / 2);
+	cmpChunkMISC = L_byteswap_longlabel("MISC");
+	cmpChunkXGRP = L_byteswap_longlabel("XGRP");
+	cmpChunkXMIC = L_byteswap_longlabel("XMIC");
+	if (cmpChunkMISC == scrChunk || cmpChunkXGRP == scrChunk)
+		L_byteswap_buffer((DWORD *)pDst, nDatSize);
+	else if (cmpChunkXMIC == scrChunk)
+		L_byteswap_micro((WORD *)pDst, nDatSize);
+	nDp = nTp = 0;
+	while (nDatSize - 1 > nDp) {
+		dat = pDst[nDp];
+		if (pDst[nDp + 1] == dat) {
+			for (ix = 2; pDst[nDp + ix] == dat && ix < 128 && nDp + ix < nDatSize; ++ix)
+				;
+			pTmp[nTp] = (ix - 1) | 0x80;
+			pTmp[++nTp] = dat;
+			++nTp;
+			nDp += ix;
+		}
+		else {
+			ix = 1;
+			pTmp[nTp + 1] = dat;
+			while (pDst[nDp + ix] != dat && ix < 128 && nDp + ix < nDatSize) {
+				dat = pDst[nDp + ix++];
+				pTmp[nTp + ix] = dat;
+			}
+			pTmp[nTp] = ix - 1;
+			nDp += ix - 1;
+			nTp += ix;
+		}
+	}
+	if (nDatSize - 1 == nDp) {
+		pTmp[nTp] = 1;
+		pTmp[++nTp] = pDst[nDp++];
+		++nTp;
+	}
+	nDataOffset += nTp + 8;
+	nChunk = _byteswap_ulong(scrChunk);
+	GameMain_File_Write(pFile, &nChunk, sizeof(nChunk));
+	nScrTp = _byteswap_ulong(nTp);
+	GameMain_File_Write(pFile, &nScrTp, sizeof(nScrTp));
+	GameMain_File_Write(pFile, pTmp, nTp);
+	free(pTmp);
+	free(pDst);
+	return 1;
+}
+
 extern "C" int __stdcall Hook_SimcityApp_WriteCityInfo(CMFC3XFile *pFile) {
 	CSimcityAppPrimary* pThis;
 
@@ -1038,99 +1131,6 @@ extern "C" int __stdcall Hook_SimcityApp_WriteCityInfo(CMFC3XFile *pFile) {
 		pMiscInfo[nArrOffset] = 0;
 	nScrChunk = L_byteswap_longlabel("MISC");
 	return Game_SimcityApp_WriteCityCompressed(pThis, pFile, nScrChunk, pMiscInfo, 4800);
-}
-
-extern "C" int __stdcall Hook_SimcityApp_WriteCityUncompressed(CMFC3XFile *pFile, DWORD scrChunk, WORD *pDat, int nDatSize) {
-	CSimcityAppPrimary* pThis;
-
-	__asm mov [pThis], ecx
-
-	WORD *pDst;
-	DWORD nChunk, nScrDatSize;
-
-	pDst = (WORD *)malloc(nDatSize);
-	if (!pDst)
-		return 0;
-	memset(pDst, 0, nDatSize);
-	memcpy(pDst, pDat, nDatSize);
-	nChunk = _byteswap_ulong(scrChunk);
-	GameMain_File_Write(pFile, &nChunk, sizeof(nChunk));
-	nScrDatSize = _byteswap_ulong(nDatSize);
-	GameMain_File_Write(pFile, &nScrDatSize, sizeof(nScrDatSize));
-	L_byteswap_ushorts(pDst, nDatSize);
-	GameMain_File_Write(pFile, pDst, nDatSize);
-	nDataOffset += nDatSize + 8;
-	free(pDst);
-	return 1;
-}
-
-extern "C" int __stdcall Hook_SimcityApp_WriteCityCompressed(CMFC3XFile *pFile, DWORD scrChunk, const void *pDat, int nDatSize) {
-	CSimcityAppPrimary* pThis;
-
-	__asm mov [pThis], ecx
-
-	char *pDst;
-	char *pTmp;
-	DWORD cmpChunkMISC, cmpChunkXGRP, cmpChunkXMIC;
-	int nDp, nTp, ix;
-	BYTE dat;
-	DWORD nChunk, nScrTp;
-
-	pDst = (char *)malloc(nDatSize);
-	if (!pDst)
-		return 0;
-	memset(pDst, 0, nDatSize);
-	memcpy(pDst, pDat, nDatSize);
-	pTmp = (char *)malloc(3 * nDatSize / 2);
-	if (!pTmp) {
-		free(pDst);
-		return 0;
-	}
-	memset(pTmp, 0, 3 * nDatSize / 2);
-	cmpChunkMISC = L_byteswap_longlabel("MISC");
-	cmpChunkXGRP = L_byteswap_longlabel("XGRP");
-	cmpChunkXMIC = L_byteswap_longlabel("XMIC");
-	if (cmpChunkMISC == scrChunk || cmpChunkXGRP == scrChunk)
-		L_byteswap_buffer((DWORD *)pDst, nDatSize);
-	else if (cmpChunkXMIC == scrChunk)
-		L_byteswap_micro((WORD *)pDst, nDatSize);
-	nDp = nTp = 0;
-	while (nDatSize - 1 > nDp) {
-		dat = pDst[nDp];
-		if (pDst[nDp + 1] == dat) {
-			for (ix = 2; pDst[nDp + ix] == dat && ix < 128 && nDp + ix < nDatSize; ++ix)
-				;
-			pTmp[nTp] = (ix - 1) | 0x80;
-			pTmp[++nTp] = dat;
-			++nTp;
-			nDp += ix;
-		}
-		else {
-			ix = 1;
-			pTmp[nTp + 1] = dat;
-			while (pDst[nDp + ix] != dat && ix < 128 && nDp + ix < nDatSize) {
-				dat = pDst[nDp + ix++];
-				pTmp[nTp + ix] = dat;
-			}
-			pTmp[nTp] = ix - 1;
-			nDp += ix - 1;
-			nTp += ix;
-		}
-	}
-	if (nDatSize - 1 == nDp) {
-		pTmp[nTp] = 1;
-		pTmp[++nTp] = pDst[nDp++];
-		++nTp;
-	}
-	nDataOffset += nTp + 8;
-	nChunk = _byteswap_ulong(scrChunk);
-	GameMain_File_Write(pFile, &nChunk, sizeof(nChunk));
-	nScrTp = _byteswap_ulong(nTp);
-	GameMain_File_Write(pFile, &nScrTp, sizeof(nScrTp));
-	GameMain_File_Write(pFile, pTmp, nTp);
-	free(pTmp);
-	free(pDst);
-	return 1;
 }
 
 // The new local call concerning wonky filenames - the original remote hook
