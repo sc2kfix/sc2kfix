@@ -292,7 +292,11 @@ void InstallMiscHooks_SC2KDemo(void) {
 	}
 
 skipmainmenu:
-	;
+	// nop out this bit of code for when the sign dialogue is Cancelled.
+	// You otherwise end up with orphaned labels (the XTXT entry is removed
+	// but not the XLAB entry).
+	SafeVirtualProtect((LPVOID)0x440037, 6, PAGE_EXECUTE_READWRITE);
+	memset((LPVOID)0x440037, 0x90, 6);
 	// Experiment with nullifying the timer during the first load.
 	//SafeVirtualProtect((LPVOID)0x47685E, 10, PAGE_EXECUTE_READWRITE);
 	//BYTE bTimePatch[10] = { 0xC7, 0x05, 0x68, 0x6A, 0x4B, 0x00, 0xFF, 0xFF, 0x00, 0x00 };
