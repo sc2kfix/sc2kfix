@@ -1572,9 +1572,9 @@ extern "C" void __stdcall Hook_InitializeCityData() {
 	dwInterestRateSum = 0;
 	if (dwCityBonds > 0) {
 		do {
-			--dwCurrBonds;
 			dwInterestRateSum += wArrBondData[wCurrBond];
 			++wCurrBond;
+			--dwCurrBonds;
 		} while (dwCurrBonds);
 	}
 }
