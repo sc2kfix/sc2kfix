@@ -332,10 +332,25 @@ typedef struct {
 // in the Windows version when the standard maximum city name length is used.
 #define CITY_NAME_LEN (CNAM_DAT_LEN - 2)
 
+// The extension to append/check against for (re)directed "Save As" cases.
+#define CITY_DEFAULT_EXTENSION        "sc2"
+#define CITY_DEFAULT_APPEND_EXTENSION "." CITY_DEFAULT_EXTENSION
+// The wildcard extension check in "Save" (not "Save As") cases to check against,
+// just in case the file in question was NOT a standard sc2 city (ie, whether it was
+// a scenario, a converted .cty classic city, or eventually when we use our own type).
+#define CITY_DEFAULT_SAVE_MATCH     "*" CITY_DEFAULT_APPEND_EXTENSION
+
+#define CITY_DEFAULT_TYPE_STRING    "SimCity 2000 City (" CITY_DEFAULT_SAVE_MATCH ")|" CITY_DEFAULT_SAVE_MATCH "||"
+
 typedef struct {
 	int nExtType;
 	bool bCityNameChanged;
 	char szCityName[CITY_NAME_LEN + 1];
+	char szAdjustedFile[MAX_PATH + 1];
+	// Always make sure a save extension is specified
+	// under this circumstance - it replaces the standard
+	// 'DefExt' argument to account for adjusted functionality.
+	const char *pSaveExt;
 } extFileDlg_t;
 
 // Enum for console command visibility in inline help. Documented commands always appear in inline

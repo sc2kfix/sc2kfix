@@ -777,7 +777,7 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 		m_ofn.nMaxFile = _countof(szPath);
 		m_ofn.nMaxFileTitle = _countof(szPath);
 		m_ofn.nFilterIndex = 1;
-		m_ofn.lpstrDefExt = "sc2";
+		m_ofn.lpstrDefExt = CITY_DEFAULT_EXTENSION;
 		m_ofn.lpstrFile = szPath;
 		m_ofn.lpstrFileTitle = szFilePath;
 		m_ofn.Flags = OFN_EXPLORER | OFN_ENABLETEMPLATE | OFN_ENABLEHOOK | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_ENABLESIZING;
@@ -1193,43 +1193,6 @@ ABORTWRITE:
 	return ret;
 }
 
-// The new local call concerning wonky filenames - the original remote hook
-// is no longer necessary.
-static bool L_CheckAndAppendCityExtension(char *lpFileName, char *pExt) {
-	char szTempFile[MAX_PATH + 1], szTempExt[16 + 1], szTempPath[MAX_PATH + 1];
-	int nLen;
-
-	// NOTE: An interesting quirk in an MDI program with multiple
-	// supported document types (file extensions) is that if you
-	// happen to specify either 'sc2' or 'scn' then either of those
-	// extensions will be used - before they're stipped in this function.
-	// However if you specify any other extension than the above
-	// then '.sc2' will be appended. Due to this the 'lpstrDefExt' attribute
-	// has been disabled to avoid this behaviour, the intended extension
-	// is then appended here.
-	strcpy_s(szTempFile, lpFileName);
-	strcpy_s(szTempExt, pExt);
-	PathStripPathA(szTempFile);
-	PathRemoveExtensionA(szTempFile);
-	_strlwr_s(szTempExt);
-	nLen = strlen(szTempFile);
-	// nLen above 0.
-	if (nLen > 0) {
-		// Check for a valid last stored city path, otherwise use the default
-		// derived from the game path.
-		if (L_IsDirectoryPathValid(jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_CITIES].ToString().c_str()))
-			strcpy_s(szTempPath, jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_CITIES].ToString().c_str());
-		else
-			sprintf_s(szTempPath, "%s\\Cities\\", szGamePath);
-
-		// Empty the filename string and rebuild it.
-		memset(lpFileName, 0, MAX_PATH + 1);
-		sprintf_s(lpFileName, MAX_PATH, "%s%s.%s", szTempPath, szTempFile, szTempExt);
-		return true;
-	}
-	return false;
-}
-
 // Function prototype: HOOKCB void L_SimcityApp_DoSave_Before(void)
 // Cannot be ignored.
 // SPECIAL NOTE: When the SC2X save format is implemented, this will be where mods will be fed a
@@ -1242,65 +1205,60 @@ std::vector<hook_function_t> stHooks_L_SimcityApp_DoSave_Before;
 //   API is finalized or for its argument to be BOOL bSaveSuccessful.
 std::vector<hook_function_t> stHooks_L_SimcityApp_DoSave_After;
 
-int L_SimcityApp_DoSave(CSimcityAppPrimary *pSCApp, char* lpFileName) {
+int L_SimcityApp_DoSave(CSimcityAppPrimary *pSCApp, const char* lpFileName) {
 	CMFC3XFile cFile;
 	DWORD dwWasZoomedIn;
 	int ret;
 	CSimcityView *pSCView;
 
-	// With this positioning the lpFileName will be prior to any adjustment.
 	for (const auto& hook : stHooks_L_SimcityApp_DoSave_Before) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
-			void (*fnHook)(CSimcityAppPrimary*, char*) = (void(*)(CSimcityAppPrimary*, char*))hook.pFunction;
+			void (*fnHook)(CSimcityAppPrimary*, const char*) = (void(*)(CSimcityAppPrimary*, const char*))hook.pFunction;
 			fnHook(pSCApp, lpFileName);
 		}
 	}
 
 	GameMain_File_Cons(&cFile);
 
-	ret = 0;
-	if (L_CheckAndAppendCityExtension(lpFileName, "SC2")) {
-		ret = -1;
-		// For the flag names see CMFC3XFile -> OpenFlags
-		if (GameMain_File_Open(&cFile, lpFileName, (0x8000 | 0x1000 | 0x0010 | 0x0001), &fileExcept)) {
-			nRetState = Game_SimcityApp_AllocateMiscInfo(pSCApp);
-			pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
-			// This variable is needed so it can store the last state
-			// of the dwSCVIsZoomed variable (assuming pSCView is valid)
-			// so it can be restored later.
-			dwWasZoomedIn = 0;
-			if (pSCView) {
-				dwWasZoomedIn = pSCView->dwSCVIsZoomed;
-				if (dwWasZoomedIn)
-					Game_SimcityView_ScaleOut(pSCView);
-			}
-			GameMain_CmdTarget_BeginWaitCursor(pSCApp);
-			// It should be noted that the 'strFileName' parameter
-			// doesn't appear to be used in the subsequent call (or
-			// perhaps not in the release build - beyond the downstream
-			// local-copy being destroyed).
-			ret = L_SimcityApp_WriteCity(pSCApp, &cFile);
-			GameMain_CmdTarget_EndWaitCursor(pSCApp);
-			if (pSCView) {
-				if (dwWasZoomedIn)
-					Game_SimcityView_ScaleIn(pSCView);
-			}
-			// Remote free due to the allocation
-			// occurring in the native program (for now).
-			GameMain_Op_Delete(pMiscInfo);
-			pMiscInfo = 0;
-			GameMain_File_Close(&cFile);
-			if (!ret)
-				GameMain_File_Remove(lpFileName);
+	ret = -1;
+	// For the flag names see CMFC3XFile -> OpenFlags
+	if (GameMain_File_Open(&cFile, lpFileName, (0x8000 | 0x1000 | 0x0010 | 0x0001), &fileExcept)) {
+		nRetState = Game_SimcityApp_AllocateMiscInfo(pSCApp);
+		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+		// This variable is needed so it can store the last state
+		// of the dwSCVIsZoomed variable (assuming pSCView is valid)
+		// so it can be restored later.
+		dwWasZoomedIn = 0;
+		if (pSCView) {
+			dwWasZoomedIn = pSCView->dwSCVIsZoomed;
+			if (dwWasZoomedIn)
+				Game_SimcityView_ScaleOut(pSCView);
 		}
+		GameMain_CmdTarget_BeginWaitCursor(pSCApp);
+		// It should be noted that the 'strFileName' parameter
+		// doesn't appear to be used in the subsequent call (or
+		// perhaps not in the release build - beyond the downstream
+		// local-copy being destroyed).
+		ret = L_SimcityApp_WriteCity(pSCApp, &cFile);
+		GameMain_CmdTarget_EndWaitCursor(pSCApp);
+		if (pSCView) {
+			if (dwWasZoomedIn)
+				Game_SimcityView_ScaleIn(pSCView);
+		}
+		// Remote free due to the allocation
+		// occurring in the native program (for now).
+		GameMain_Op_Delete(pMiscInfo);
+		pMiscInfo = 0;
+		GameMain_File_Close(&cFile);
+		if (!ret)
+			GameMain_File_Remove(lpFileName);
 	}
 
 	GameMain_File_Dest(&cFile);
 
-	// With this positioning the lpFIleName will be after any adjustment.
 	for (const auto& hook : stHooks_L_SimcityApp_DoSave_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
-			void (*fnHook)(CSimcityAppPrimary*, char*) = (void(*)(CSimcityAppPrimary*, char*))hook.pFunction;
+			void (*fnHook)(CSimcityAppPrimary*, const char*) = (void(*)(CSimcityAppPrimary*, const char*))hook.pFunction;
 			fnHook(pSCApp, lpFileName);
 		}
 	}
@@ -1320,12 +1278,13 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCity() {
 	memset(szPath, 0, sizeof(szPath));
 
 	if (pThis->dwSCAGameStarted) {
-		// If you're loading a scenario or any object that's
-		// NOT a standard sc2 city, go to SaveCityAs.
+		// If you're loading a scenario or any object that doesn't
+		// match the intended city file extension, go to Save City As.
+		// Let's avoid any downstream filename post-processing.
 		bCanDoDirectSave = false;
 		if (strCityFilename.m_nDataLength > 0) {
 			strcpy_s(szPath, strCityFilename.m_pchData);
-			if (PathMatchSpecA(szPath, "*.sc2"))
+			if (PathMatchSpecA(szPath, CITY_DEFAULT_SAVE_MATCH))
 				bCanDoDirectSave = true;
 		}
 		if (bCanDoDirectSave) {
@@ -1385,6 +1344,7 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 		m_extFileDlg.nExtType = FEXT_TYPE_SAVECITYNAME;
 		m_extFileDlg.bCityNameChanged = false;
 		memcpy(m_extFileDlg.szCityName, pszCityName.m_pchData, CITY_NAME_LEN);
+		m_extFileDlg.pSaveExt = CITY_DEFAULT_EXTENSION;
 		nLen = strlen(m_extFileDlg.szCityName);
 		m_extFileDlg.szCityName[nLen] = 0;
 
@@ -1395,19 +1355,17 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 		}
 		else
 			strcpy_s(szPath, m_extFileDlg.szCityName);
-		strcat_s(szPath, ".sc2");
+		strcat_s(szPath, CITY_DEFAULT_APPEND_EXTENSION);
 
 		memset(&m_ofn, 0, sizeof(OPENFILENAMEA));
 		m_ofn.lStructSize = sizeof(OPENFILENAMEA);
 		m_ofn.hwndOwner = pThis->m_pMainWnd->m_hWnd;
 		m_ofn.hInstance = hSC2KFixModule;
-		m_ofn.lpstrFilter = ConvertFileTypeFilterString("SimCity 2000 City (*.sc2)|*.sc2||");
+		m_ofn.lpstrFilter = ConvertFileTypeFilterString(CITY_DEFAULT_TYPE_STRING);
 		m_ofn.lpstrInitialDir = szFilePath;
 		m_ofn.nMaxFile = _countof(szPath);
 		m_ofn.nMaxFileTitle = _countof(szPath);
 		m_ofn.nFilterIndex = 1;
-		// Deliberately commented out - see comment in L_CheckAndAppendCityExtension()
-		//m_ofn.lpstrDefExt = "sc2";
 		m_ofn.lpstrFile = szPath;
 		m_ofn.lpstrFileTitle = szFilePath;
 		m_ofn.Flags = OFN_EXPLORER | OFN_ENABLETEMPLATE | OFN_ENABLEHOOK | OFN_NOREADONLYRETURN | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_ENABLESIZING;
@@ -1428,19 +1386,19 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 					GameMain_String_OperatorSet(&pszCityName, m_extFileDlg.szCityName);
 				}
 			}
-			strcpy_s(szDirPath, m_ofn.lpstrFile);
+			strcpy_s(szDirPath, m_extFileDlg.szAdjustedFile);
 			PathRemoveFileSpecA(szDirPath);
 			nPathLen = strlen(szDirPath);
 			if (szDirPath[nPathLen - 1] != '\\')
 				strcat_s(szDirPath, "\\");
-			int nSaveRet = L_SimcityApp_DoSave(pThis, m_ofn.lpstrFile);
+			int nSaveRet = L_SimcityApp_DoSave(pThis,m_extFileDlg.szAdjustedFile);
 			if (nSaveRet > 0) {
 				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 51, szErrStr, sizeof(szErrStr) - 1);
 				uType = 0;
 
 				GameMain_String_Empty(&strUnusedString);
-				GameMain_String_OperatorSet(&strCityFilename, m_ofn.lpstrFile);
-				strcat_s(szErrStr, m_ofn.lpstrFile);
+				GameMain_String_OperatorSet(&strCityFilename, m_extFileDlg.szAdjustedFile);
+				strcat_s(szErrStr, m_extFileDlg.szAdjustedFile);
 
 				if (L_IsPathValid(szDirPath))
 					jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_CITIES] = szDirPath;

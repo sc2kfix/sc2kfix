@@ -19,10 +19,34 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
-// !!!! TODO: Perform a check during the "FileOK" situation against expected
-//            results that would be encountered during file extension replacement
-//            situations - check to see whether the file exists and prompt accordingly
-//            if so, etc.
+static bool L_PreCheckForExistingFile(char *lpFileName, const char *pExt) {
+	char szTempFile[MAX_PATH + 1], szTempExt[16 + 1], szTempOnlyFile[MAX_PATH + 1];
+	int nLen;
+
+	strcpy_s(szTempFile, lpFileName);
+	strcpy_s(szTempOnlyFile, szTempFile);
+	PathStripPathA(szTempOnlyFile);
+	PathRemoveExtensionA(szTempOnlyFile);
+	PathRemoveExtensionA(szTempFile);
+	nLen = strlen(szTempOnlyFile);
+	// nLen above 0.
+	if (nLen > 0) {
+		// Under this circumstance only do the file extension
+		// validation and replacement if an extension has been
+		// set, otherwise only do the length check and return
+		// false if the stripped filename didn't contain anything
+		// but the extension.
+		if (pExt && strlen(pExt) > 0) {
+			strcpy_s(szTempExt, pExt);
+			_strlwr_s(szTempExt);
+			// Empty the filename string and rebuild it.
+			memset(lpFileName, 0, MAX_PATH + 1);
+			sprintf_s(lpFileName, MAX_PATH, "%s.%s", szTempFile, szTempExt);
+		}
+		return true;
+	}
+	return false;
+}
 
 BOOL CALLBACK FileHookProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 	HWND hWndParent;
@@ -30,7 +54,9 @@ BOOL CALLBACK FileHookProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
 	//SIZE dlgSZ;
 	int nPartHeight;
 	DWORD nFlags;
-	char szTempStr[MAX_PATH + 1];
+	bool bHasSaveExt;
+	char szTempStr[MAX_PATH + 1], szTempPath[MAX_PATH + 1], szTempFile[MAX_PATH + 1];
+	char szErrStr[1024 + 1];
 	int nLen;
 	OPENFILENAMEA *pOfn;
 	extFileDlg_t *pExtDlg;
@@ -97,27 +123,57 @@ BOOL CALLBACK FileHookProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
 			pOfNotify = (OFNOTIFY *)lParam;
 			pExtDlg = (extFileDlg_t *)pOfNotify->lpOFN->lCustData;
 			hWndParent = GetParent(hWnd);
-			//ConsoleLog(LOG_DEBUG, "(%u) (%u - 0x%08X)\n", pOfNotify->hdr.code, pOfNotify->hdr.idFrom, pOfNotify->hdr.idFrom);
 			switch (pOfNotify->hdr.code) {
 				case CDN_FILEOK:
-					memset(szTempStr, 0, sizeof(szTempStr));
-					GetDlgItemTextA(hWndParent, cmb13, szTempStr, sizeof(szTempStr) - 1);
-					PathRemoveExtensionA(szTempStr);
-					if (strlen(szTempStr) == 0) {
-						// This is to detect whether the entered
-						// filename was just 'a' file extension,
-						// in which case after it has been removed
-						// if the length is 0.. don't close the dialog.
-						SetWindowLongA(hWnd, DWL_MSGRESULT, 1);
-						return TRUE;
-					}
-					//ConsoleLog(LOG_DEBUG, "CDN_FILEOK: [%s]\n", szTempStr);
 					if (pExtDlg && pExtDlg->nExtType == FEXT_TYPE_SAVECITYNAME) {
+						bHasSaveExt = (pExtDlg->pSaveExt && strlen(pExtDlg->pSaveExt) > 0) ? true : false;
+						memset(szTempStr, 0, sizeof(szTempStr));
+						memset(szTempPath, 0, sizeof(szTempPath));
+						memset(szTempFile, 0, sizeof(szTempFile));
+						GetDlgItemTextA(hWndParent, cmb13, szTempStr, sizeof(szTempStr) - 1);
+						SendMessageA(hWndParent, CDM_GETFILEPATH, MAX_PATH, (LPARAM)szTempPath);
+						if (L_PreCheckForExistingFile(szTempPath, pExtDlg->pSaveExt)) {
+							strcpy_s(szTempFile, szTempPath);
+							PathStripPathA(szTempFile);
+							// Just in case the extension wasn't defined, make use of
+							// the default city save match case, otherwise warn and abort.
+							if (!bHasSaveExt) {
+								if (!PathMatchSpecA(szTempPath, CITY_DEFAULT_SAVE_MATCH)) {
+									sprintf_s(szErrStr, "'%s' does not have a valid extension set. You will need to set it to: '%s'", szTempFile, CITY_DEFAULT_APPEND_EXTENSION);
+									MessageBoxA(hWndParent, szErrStr, "Error", MB_ICONERROR);
+									SetWindowLongA(hWnd, DWL_MSGRESULT, 1);
+									return TRUE;
+								}
+							}
+							if (PathFileExistsA(szTempPath)) {
+								if (_stricmp(szTempStr, szTempFile) != 0) {
+									if (!bHasSaveExt)
+										sprintf_s(szErrStr, "WARNING: %s already exists.\nDo you want to replace it?", szTempFile);
+									else
+										sprintf_s(szErrStr, "WARNING: The file extension for '%s' has been set to: '.%s'\n\n%s already exists.\nDo you want to replace it?",
+											szTempStr, pExtDlg->pSaveExt, szTempFile);
+									if (MessageBoxA(hWndParent, szErrStr, "Confirm Save As", MB_ICONWARNING | MB_YESNO) != IDYES) {
+										SetWindowLongA(hWnd, DWL_MSGRESULT, 1);
+										return TRUE;
+									}
+								}
+							}
+						}
+						else {
+							// This is to detect whether the entered
+							// filename was just 'a' file extension,
+							// in which case after it has been removed
+							// if the length is 0.. don't close the dialog.
+							SetWindowLongA(hWnd, DWL_MSGRESULT, 1);
+							return TRUE;
+						}
+
+						strcpy_s(pExtDlg->szAdjustedFile, szTempPath);
+
 						memset(szTempStr, 0, sizeof(szTempStr));
 						GetDlgItemTextA(hWnd, IDC_CUST_EDIT1, szTempStr, sizeof(szTempStr) - 1);
 						nLen = strlen(szTempStr);
 						if (nLen < 1 || nLen > CITY_NAME_LEN) {
-							char szErrStr[256 + 1];
 							if (nLen < 1)
 								strcpy_s(szErrStr, "You must enter a city name.");
 							else
