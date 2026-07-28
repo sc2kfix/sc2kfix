@@ -1055,6 +1055,10 @@ extern "C" __int16 __cdecl Hook_PointToTile(__int16 x, __int16 y) {
 	__int16 ptY = y;
 	__int16 retval = 0;
 
+	// NOTE: Investigate behavioural case concerning differences between
+	// a standard 'center'/scroll behaviour and what happens when the
+	// PointToTile() case is invoked on save.
+	//ConsoleLog(LOG_DEBUG, "Start: (%d, %d) (%d, %d)\n", ptX, ptY, iScreenOffSetX, iScreenOffSetY);
 	if (pSCView->dwSCVIsZoomed) {
 		// TODO: multiple scales of zoomage
 		ptX >>= 1;
@@ -1075,6 +1079,7 @@ extern "C" __int16 __cdecl Hook_PointToTile(__int16 x, __int16 y) {
 	} else
 		retval = Game_CalcTileHit4(iOffsetAdjustmentY + 8, iOffsetAdjustmentX + 6);
 	
+	//ConsoleLog(LOG_DEBUG, "End: (%d, %d)\n", LOBYTE(retval), HIBYTE(retval));
 	if (HIBYTE(retval) < MAP_EDGE_MIN || LOBYTE(retval) > MAP_EDGE_MAX)
 		return -1;
 	return retval;

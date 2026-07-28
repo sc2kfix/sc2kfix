@@ -1108,10 +1108,11 @@ extern "C" int __stdcall Hook_SimcityApp_WriteCityInfo(CMFC3XFile *pFile) {
 	pMiscInfo[nArrNextOffset++] = bNewspaperSubscription;
 	pMiscInfo[nArrNextOffset++] = bNewspaperExtra;
 	pMiscInfo[nArrNextOffset++] = wNewspaperChoice;
-	// -- Originally the second argument for PointToTile and CalcTileHit4 was also iScreenPointX
+	// -- Originally the second argument for PointToTile was also iScreenPointX
 	// (bug reference: save -> (re)load position wild discrepancy).
-	pMiscInfo[nArrNextOffset++] = (pSCView) ? Game_PointToTile(iScreenPointX, iScreenPointY) : Game_CalcTileHit4(iScreenPointY + 8, iScreenPointX + 6);
-	pMiscInfo[nArrNextOffset++] = (pSCView) ? pSCView->wSCVZoomLevel : 1;
+	// Note: The 'else' case here now uses a standard default value of 128 and ZOOM_LEVEL_SMALL.
+	pMiscInfo[nArrNextOffset++] = (pSCView) ? Game_PointToTile(iScreenPointX, iScreenPointY) : 128;
+	pMiscInfo[nArrNextOffset++] = (pSCView) ? pSCView->wSCVZoomLevel : ZOOM_LEVEL_SMALL;
 	// ^--
 	pMiscInfo[nArrNextOffset++] = wCityCenterX;
 	pMiscInfo[nArrNextOffset++] = wCityCenterY;
@@ -1184,6 +1185,7 @@ std::vector<hook_function_t> stHooks_L_SimcityApp_DoSave_After;
 
 int L_SimcityApp_DoSave(CSimcityAppPrimary *pSCApp, char* lpFileName) {
 	CMFC3XFile cFile;
+	DWORD dwWasZoomedIn;
 	int ret;
 	CSimcityView *pSCView;
 	CMFC3XString strFileName;
@@ -1207,8 +1209,13 @@ int L_SimcityApp_DoSave(CSimcityAppPrimary *pSCApp, char* lpFileName) {
 		if (GameMain_File_Open(&cFile, lpFileName, (0x8000 | 0x1000 | 0x0010 | 0x0001), &fileExcept)) {
 			nRetState = Game_SimcityApp_AllocateMiscInfo(pSCApp);
 			pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+			// This variable is needed so it can store the last state
+			// of the dwSCVIsZoomed variable (assuming pSCView is valid)
+			// so it can be restored later.
+			dwWasZoomedIn = 0;
 			if (pSCView) {
-				if (pSCView->dwSCVIsZoomed)
+				dwWasZoomedIn = pSCView->dwSCVIsZoomed;
+				if (dwWasZoomedIn)
 					Game_SimcityView_ScaleOut(pSCView);
 			}
 			GameMain_CmdTarget_BeginWaitCursor(pSCApp);
@@ -1219,7 +1226,7 @@ int L_SimcityApp_DoSave(CSimcityAppPrimary *pSCApp, char* lpFileName) {
 			ret = Game_SimcityApp_WriteCity(pSCApp, &cFile, strFileName);
 			GameMain_CmdTarget_EndWaitCursor(pSCApp);
 			if (pSCView) {
-				if (pSCView->dwSCVIsZoomed)
+				if (dwWasZoomedIn)
 					Game_SimcityView_ScaleIn(pSCView);
 			}
 			// Remote free due to the allocation
