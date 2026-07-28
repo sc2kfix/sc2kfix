@@ -843,11 +843,7 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 	}
 }
 
-extern "C" int __stdcall Hook_SimcityApp_WriteCityHeader(CMFC3XFile *pFile, int nDatSize) {
-	CSimcityAppPrimary* pThis;
-
-	__asm mov [pThis], ecx
-
+static int L_SimcityApp_WriteCityHeader(CSimcityAppPrimary *pSCApp, CMFC3XFile *pFile, int nDatSize) {
 	DWORD scrChunk, nChunk, nScrDatSize;
 
 	GameMain_File_Seek(pFile, 0, 0);
@@ -862,32 +858,19 @@ extern "C" int __stdcall Hook_SimcityApp_WriteCityHeader(CMFC3XFile *pFile, int 
 	return 1;
 }
 
-extern "C" int __stdcall Hook_SimcityApp_WriteCityName(CMFC3XFile *pFile, DWORD scrChunk, CMFC3XString pName) {
-	CSimcityAppPrimary* pThis;
-
-	__asm mov [pThis], ecx
-
-	char szTemp[CNAM_DAT_LEN];
+static int L_SimcityApp_WriteCityName(CSimcityAppPrimary *pSCApp, CMFC3XFile *pFile, DWORD scrChunk, const char *pPCityName) {
 	DWORD nChunk, nFullLen;
-
-	memset(szTemp, 0, sizeof(szTemp));
-	L_CharStringToPascalString(pName.m_pchData, szTemp, CNAM_DAT_LEN - 1, true);
 
 	nChunk = _byteswap_ulong(scrChunk);
 	GameMain_File_Write(pFile, &nChunk, sizeof(nChunk));
 	nFullLen = _byteswap_ulong(CNAM_DAT_LEN);
 	GameMain_File_Write(pFile, &nFullLen, sizeof(nFullLen));
-	GameMain_File_Write(pFile, szTemp, CNAM_DAT_LEN);
+	GameMain_File_Write(pFile, pPCityName, CNAM_DAT_LEN);
 	nDataOffset += CNAM_DAT_LEN + 8;
-	GameMain_String_Dest(&pName);
 	return 1;
 }
 
-extern "C" int __stdcall Hook_SimcityApp_WriteCityUncompressed(CMFC3XFile *pFile, DWORD scrChunk, WORD *pDat, int nDatSize) {
-	CSimcityAppPrimary* pThis;
-
-	__asm mov [pThis], ecx
-
+static int L_SimcityApp_WriteCityUncompressed(CSimcityAppPrimary *pSCApp, CMFC3XFile *pFile, DWORD scrChunk, const void *pDat, int nDatSize) {
 	WORD *pDst;
 	DWORD nChunk, nScrDatSize;
 
@@ -907,11 +890,7 @@ extern "C" int __stdcall Hook_SimcityApp_WriteCityUncompressed(CMFC3XFile *pFile
 	return 1;
 }
 
-extern "C" int __stdcall Hook_SimcityApp_WriteCityCompressed(CMFC3XFile *pFile, DWORD scrChunk, const void *pDat, int nDatSize) {
-	CSimcityAppPrimary* pThis;
-
-	__asm mov [pThis], ecx
-
+static int L_SimcityApp_WriteCityCompressed(CSimcityAppPrimary *pSCApp, CMFC3XFile *pFile, DWORD scrChunk, const void *pDat, int nDatSize) {
 	char *pDst;
 	char *pTmp;
 	DWORD cmpChunkMISC, cmpChunkXGRP, cmpChunkXMIC;
@@ -976,16 +955,12 @@ extern "C" int __stdcall Hook_SimcityApp_WriteCityCompressed(CMFC3XFile *pFile, 
 	return 1;
 }
 
-extern "C" int __stdcall Hook_SimcityApp_WriteCityInfo(CMFC3XFile *pFile) {
-	CSimcityAppPrimary* pThis;
-
-	__asm mov [pThis], ecx
-
+static int L_SimcityApp_WriteCityInfo(CSimcityAppPrimary *pSCApp, CMFC3XFile *pFile) {
 	CSimcityView *pSCView;
 	__int16 nArrOffset, nArrNextOffset, nPosMain, nPosSub;
 	DWORD nScrChunk;
 
-	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pThis);
+	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 	nArrOffset = 0;
 	nArrNextOffset = nArrOffset + 1;
 	pMiscInfo[nArrOffset] = 290;
@@ -1099,11 +1074,11 @@ extern "C" int __stdcall Hook_SimcityApp_WriteCityInfo(CMFC3XFile *pFile) {
 		pMiscInfo[nArrOffset++] = wMilitaryTiles[nPosMain];
 	nArrNextOffset = nArrOffset + 1;
 	pMiscInfo[nArrOffset] = wSubwayXUNDCount;
-	pMiscInfo[nArrNextOffset++] = pThis->wSCAGameSpeedLOW;
+	pMiscInfo[nArrNextOffset++] = pSCApp->wSCAGameSpeedLOW;
 	pMiscInfo[nArrNextOffset++] = bOptionsAutoBudget;
 	pMiscInfo[nArrNextOffset++] = bOptionsAutoGoto;
-	pMiscInfo[nArrNextOffset++] = pThis->dwSCAGameSound;
-	pMiscInfo[nArrNextOffset++] = pThis->dwSCAGameMusic;
+	pMiscInfo[nArrNextOffset++] = pSCApp->dwSCAGameSound;
+	pMiscInfo[nArrNextOffset++] = pSCApp->dwSCAGameMusic;
 	pMiscInfo[nArrNextOffset++] = bNoDisasters;
 	pMiscInfo[nArrNextOffset++] = bNewspaperSubscription;
 	pMiscInfo[nArrNextOffset++] = bNewspaperExtra;
@@ -1131,7 +1106,91 @@ extern "C" int __stdcall Hook_SimcityApp_WriteCityInfo(CMFC3XFile *pFile) {
 	for (nArrOffset = nArrNextOffset + 1; nArrOffset < 1200; ++nArrOffset)
 		pMiscInfo[nArrOffset] = 0;
 	nScrChunk = L_byteswap_longlabel("MISC");
-	return Game_SimcityApp_WriteCityCompressed(pThis, pFile, nScrChunk, pMiscInfo, 4800);
+	return L_SimcityApp_WriteCityCompressed(pSCApp, pFile, nScrChunk, pMiscInfo, 0x12C0);
+}
+
+static int L_SimcityApp_WriteCity(CSimcityAppPrimary *pSCApp, CMFC3XFile *pFile) {
+	char szTempStr[CNAM_DAT_LEN];
+	DWORD scrChunk;
+
+	memset(szTempStr, 0, sizeof(szTempStr));
+
+	int ret = 0;
+	Game_GetOccupiedTileCount();
+	if (!L_SimcityApp_WriteCityHeader(pSCApp, pFile, 0))
+		goto ABORTWRITE;
+	nDataOffset = 4;
+	L_CharStringToPascalString(pszCityName.m_pchData, szTempStr, CNAM_DAT_LEN - 1, true);
+	scrChunk = L_byteswap_longlabel("CNAM");
+	if (!L_SimcityApp_WriteCityName(pSCApp, pFile, scrChunk, szTempStr))
+		goto ABORTWRITE;
+	if (!L_SimcityApp_WriteCityInfo(pSCApp, pFile))
+		goto ABORTWRITE;
+	scrChunk = L_byteswap_longlabel("ALTM");
+	if (!L_SimcityApp_WriteCityUncompressed(pSCApp, pFile, scrChunk, (const void *)dwMapALTM[0], 0x8000))
+		goto ABORTWRITE;
+	scrChunk = L_byteswap_longlabel("XTER");
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXTER[0], 0x4000))
+		goto ABORTWRITE;
+	scrChunk = L_byteswap_longlabel("XBLD");
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXBLD[0], 0x4000))
+		goto ABORTWRITE;
+	scrChunk = L_byteswap_longlabel("XZON");
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXZON[0], 0x4000))
+		goto ABORTWRITE;
+	scrChunk = L_byteswap_longlabel("XUND");
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXUND[0], 0x4000))
+		goto ABORTWRITE;
+	scrChunk = L_byteswap_longlabel("XTXT");
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXTXT[0], 0x4000))
+		goto ABORTWRITE;
+	GameMain_SaveLabels();
+	scrChunk = L_byteswap_longlabel("XLAB");
+	int nRetXLAB = L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXLAB[0], 0x1900);
+	GameMain_ResetLabelStringState();
+	if (!nRetXLAB)
+		goto ABORTWRITE;
+	scrChunk = L_byteswap_longlabel("XMIC");
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)pMicrosimArr, 0x4B0))
+		goto ABORTWRITE;
+	scrChunk = L_byteswap_longlabel("XTHG");
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXTHG[0], 0x1E0))
+		goto ABORTWRITE;
+	scrChunk = L_byteswap_longlabel("XBIT");
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXBIT[0], 0x4000))
+		goto ABORTWRITE;
+	scrChunk = L_byteswap_longlabel("XTRF");
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXTRF[0], 0x1000))
+		goto ABORTWRITE;
+	scrChunk = L_byteswap_longlabel("XPLT");
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXPLT[0], 0x1000))
+		goto ABORTWRITE;
+	scrChunk = L_byteswap_longlabel("XVAL");
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXVAL[0], 0x1000))
+		goto ABORTWRITE;
+	scrChunk = L_byteswap_longlabel("XCRM");
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXCRM[0], 0x1000))
+		goto ABORTWRITE;
+	scrChunk = L_byteswap_longlabel("XPLC");
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXPLC[0], 0x400))
+		goto ABORTWRITE;
+	scrChunk = L_byteswap_longlabel("XFIR");
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXFIR[0], 0x400))
+		goto ABORTWRITE;
+	scrChunk = L_byteswap_longlabel("XPOP");
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXPOP[0], 0x400))
+		goto ABORTWRITE;
+	scrChunk = L_byteswap_longlabel("XROG");
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXROG[0], 0x400))
+		goto ABORTWRITE;
+	scrChunk = L_byteswap_longlabel("XGRP");
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXGRP[0], 0xD00))
+		goto ABORTWRITE;
+	L_SimcityApp_WriteCityHeader(pSCApp, pFile, nDataOffset);
+	Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
+	ret = 1;
+ABORTWRITE:
+	return ret;
 }
 
 // The new local call concerning wonky filenames - the original remote hook
@@ -1188,7 +1247,6 @@ int L_SimcityApp_DoSave(CSimcityAppPrimary *pSCApp, char* lpFileName) {
 	DWORD dwWasZoomedIn;
 	int ret;
 	CSimcityView *pSCView;
-	CMFC3XString strFileName;
 
 	// With this positioning the lpFileName will be prior to any adjustment.
 	for (const auto& hook : stHooks_L_SimcityApp_DoSave_Before) {
@@ -1201,10 +1259,8 @@ int L_SimcityApp_DoSave(CSimcityAppPrimary *pSCApp, char* lpFileName) {
 	GameMain_File_Cons(&cFile);
 
 	ret = 0;
-
 	if (L_CheckAndAppendCityExtension(lpFileName, "SC2")) {
-		GameMain_String_Cons(&strFileName);
-		GameMain_String_OperatorSet(&strFileName, lpFileName);
+		ret = -1;
 		// For the flag names see CMFC3XFile -> OpenFlags
 		if (GameMain_File_Open(&cFile, lpFileName, (0x8000 | 0x1000 | 0x0010 | 0x0001), &fileExcept)) {
 			nRetState = Game_SimcityApp_AllocateMiscInfo(pSCApp);
@@ -1223,7 +1279,7 @@ int L_SimcityApp_DoSave(CSimcityAppPrimary *pSCApp, char* lpFileName) {
 			// doesn't appear to be used in the subsequent call (or
 			// perhaps not in the release build - beyond the downstream
 			// local-copy being destroyed).
-			ret = Game_SimcityApp_WriteCity(pSCApp, &cFile, strFileName);
+			ret = L_SimcityApp_WriteCity(pSCApp, &cFile);
 			GameMain_CmdTarget_EndWaitCursor(pSCApp);
 			if (pSCView) {
 				if (dwWasZoomedIn)
@@ -1237,9 +1293,6 @@ int L_SimcityApp_DoSave(CSimcityAppPrimary *pSCApp, char* lpFileName) {
 			if (!ret)
 				GameMain_File_Remove(lpFileName);
 		}
-		else
-			Game_GetFileExceptionError(47, &fileExcept, &strFileName);
-		GameMain_String_Dest(&strFileName);
 	}
 
 	GameMain_File_Dest(&cFile);
@@ -1276,7 +1329,8 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCity() {
 				bCanDoDirectSave = true;
 		}
 		if (bCanDoDirectSave) {
-			if (L_SimcityApp_DoSave(pThis, szPath)) {
+			int nSaveRet = L_SimcityApp_DoSave(pThis, szPath);
+			if (nSaveRet > 0) {
 				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 51, szErrStr, sizeof(szErrStr) - 1);
 				uType = 0;
 
@@ -1290,8 +1344,9 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCity() {
 				GameMain_String_OperatorSet(&strCityFilename, szPath);
 			}
 			else {
-				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 60, szErrStr, sizeof(szErrStr) - 1);
-				uType = 0xFFFFFFFF;
+				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, ((nSaveRet < 0) ? 47 : 60), szErrStr, sizeof(szErrStr) - 1);
+				strcat_s(szErrStr, ": ");
+				uType = MB_ICONERROR;
 			}
 			strcat_s(szErrStr, szPath);
 			L_MessageBoxA(0, szErrStr, gamePrimaryKey, uType);
@@ -1315,6 +1370,7 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 	char szFilePath[MAX_PATH + 1], szPath[MAX_PATH + 1], szDirPath[MAX_PATH + 1], szErrStr[512 + 1];
 	extFileDlg_t m_extFileDlg;
 	OPENFILENAMEA m_ofn;
+	UINT uType;
 
 	pMainFrm = (CMainFrame *)pThis->m_pMainWnd;
 	if (pThis->dwSCAGameStarted) {
@@ -1377,8 +1433,11 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 			nPathLen = strlen(szDirPath);
 			if (szDirPath[nPathLen - 1] != '\\')
 				strcat_s(szDirPath, "\\");
-			if (L_SimcityApp_DoSave(pThis, m_ofn.lpstrFile)) {
+			int nSaveRet = L_SimcityApp_DoSave(pThis, m_ofn.lpstrFile);
+			if (nSaveRet > 0) {
 				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 51, szErrStr, sizeof(szErrStr) - 1);
+				uType = 0;
+
 				GameMain_String_Empty(&strUnusedString);
 				GameMain_String_OperatorSet(&strCityFilename, m_ofn.lpstrFile);
 				strcat_s(szErrStr, m_ofn.lpstrFile);
@@ -1386,9 +1445,11 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 				if (L_IsPathValid(szDirPath))
 					jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_CITIES] = szDirPath;
 			}
-			else
-				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 60, szErrStr, sizeof(szErrStr) - 1);
-			L_MessageBoxA(0, szErrStr, gamePrimaryKey, 0);
+			else {
+				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, ((nSaveRet < 0) ? 47 : 60), szErrStr, sizeof(szErrStr) - 1);
+				uType = MB_ICONERROR;
+			}
+			L_MessageBoxA(0, szErrStr, gamePrimaryKey, uType);
 		}
 		pThis->dwSCAOnQuitSuspendSim = 0;
 		ToggleFloatingStatusDialog(TRUE);
@@ -1398,7 +1459,7 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 }
 
 // Assembly language hook to try to fix up corrupted save file headers.
-void __declspec(naked) Hook_OpenCityHeader_FormChunkCheck(void) {
+void __declspec(naked) Hook_OpenCityHeader_HeaderCheck(void) {
 	// Replace the code we're clobbering to inject ourselves
 	__asm {
 		// Original call flow
@@ -1623,27 +1684,7 @@ void InstallSaveHooks_SC2K1996(void) {
 
 	// Patch to attempt to fix loading partially corrupted saves
 	SafeVirtualProtect((LPVOID)0x431212, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x431212, Hook_OpenCityHeader_FormChunkCheck);
-
-	// CSimcityApp::WriteCityName
-	SafeVirtualProtect((LPVOID)0x4010CD, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x4010CD, Hook_SimcityApp_WriteCityHeader);
-
-	// CSimcityApp::WriteCityName
-	SafeVirtualProtect((LPVOID)0x402400, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x402400, Hook_SimcityApp_WriteCityName);
-
-	// CSimcityApp::WriteCityInfo
-	SafeVirtualProtect((LPVOID)0x402BBC, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x402BBC, Hook_SimcityApp_WriteCityInfo);
-
-	// CSimcityApp::WriteCityUncompressed
-	SafeVirtualProtect((LPVOID)0x401C2B, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x401C2B, Hook_SimcityApp_WriteCityUncompressed);
-
-	// CSimcityApp::WriteCityCompressed
-	SafeVirtualProtect((LPVOID)0x402CD9, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x402CD9, Hook_SimcityApp_WriteCityCompressed);
+	NEWJMP((LPVOID)0x431212, Hook_OpenCityHeader_HeaderCheck);
 
 	// CSimcityApp::SaveCity
 	SafeVirtualProtect((LPVOID)0x4015A0, 5, PAGE_EXECUTE_READWRITE);

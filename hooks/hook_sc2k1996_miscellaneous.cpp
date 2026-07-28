@@ -2249,6 +2249,28 @@ __declspec(naked) void Hook_DisplayInformationMessageBox(const char* szDescripti
 	GAMEJMP(0x42DC20);
 }
 
+extern "C" void __cdecl Hook_RemoveLabel(__int16 nTextOverlayID) {
+	bool bZeroLabel = false;
+
+	if (nTextOverlayID) {
+		if (nTextOverlayID <= MAX_SIM_TEXT_ENTRIES) {
+			if (nTextOverlayID <= MAX_USER_TEXT_ENTRIES) {
+				if (nTextOverlayID >= MIN_USER_TEXT_ENTRIES)
+					bZeroLabel = true;
+			}
+			else if (nTextOverlayID >= MIN_MICROSIM_LABEL_ENTRIES) {
+				pMicrosimArr[MICROSIMID_ENTRY(nTextOverlayID)].bTileID = TILE_CLEAR;
+				bZeroLabel = true;
+			}
+		}
+		else if (nTextOverlayID <= MAX_XTHG_TEXT_ENTRIES)
+			dwMapXTHG[0][XTHGID_ENTRY(nTextOverlayID)].bLabel = 0;
+	}
+
+	if (bZeroLabel)
+		memset(&dwMapXLAB[0][nTextOverlayID], 0, sizeof(map_XLAB_t));
+}
+
 static void DoOrphanLabel_SC2K1996(bool bRemove) {
 	int nCnt;
 	std::string str;
@@ -2260,9 +2282,12 @@ static void DoOrphanLabel_SC2K1996(bool bRemove) {
 	nCnt = 0;
 	for (int i = 1; i <= MAX_USER_TEXT_ENTRIES; ++i) {
 		pLbl = GetXLABEntry(i);
-		if (pLbl && strlen(pLbl) > 0) {
-			if (mischook_debug & MISCHOOK_DEBUG_OTHER)
-				ConsoleLog(LOG_DEBUG, "Got Label '%s' at position '%d'\n", pLbl, i);
+		if (pLbl) {
+			// Only report on populated labels.
+			if (strlen(pLbl) > 0) {
+				if (mischook_debug & MISCHOOK_DEBUG_OTHER)
+					ConsoleLog(LOG_DEBUG, "Got Label '%s' at position '%d'\n", pLbl, i);
+			}
 			bool bLabelFound = false;
 			for (int iX = 0; iX < GAME_MAP_SIZE; ++iX) {
 				for (int iY = 0; iY < GAME_MAP_SIZE; ++iY) {
@@ -2275,15 +2300,20 @@ static void DoOrphanLabel_SC2K1996(bool bRemove) {
 					break;
 			}
 			if (!bLabelFound) {
-				str += std::to_string(i);
-				str += " - '";
-				str += pLbl;
-				str += "'\n";
-				if (mischook_debug & MISCHOOK_DEBUG_OTHER)
-					ConsoleLog(LOG_DEBUG, "Got Orphaned Label '%s' at position '%d'%s\n", pLbl, i, ((bRemove) ? " - Removing" : ""));
+				// Only report on populated labels, otherwise
+				// go through the other user entries for
+				// sanitisation purposes.
+				if (strlen(pLbl) > 0) {
+					str += std::to_string(i);
+					str += " - '";
+					str += pLbl;
+					str += "'\n";
+					if (mischook_debug & MISCHOOK_DEBUG_OTHER)
+						ConsoleLog(LOG_DEBUG, "Got Orphaned Label '%s' at position '%d'%s\n", pLbl, i, ((bRemove) ? " - Removing" : ""));
+					++nCnt;
+				}
 				if (bRemove)
 					Game_RemoveLabel(i);
-				++nCnt;
 			}
 		}
 	}
@@ -2852,6 +2882,11 @@ skipgamemenu:
 	// but not the XLAB entry).
 	SafeVirtualProtect((LPVOID)0x44D893, 6, PAGE_EXECUTE_READWRITE);
 	memset((LPVOID)0x44D893, 0x90, 6);
+
+	// Hook RemoveLabel in-order to facilitate the complete wiping
+	// of a removed label entry.
+	SafeVirtualProtect((LPVOID)0x401DCA, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401DCA, Hook_RemoveLabel);
 
 	// Call your cousin Vinnie!
 	PorntipsGuzzardo();
