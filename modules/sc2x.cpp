@@ -55,9 +55,6 @@ void LoadInterleavedBudgetVanilla(budget_t* pTarget, DWORD* pSource) {
 	}
 }
 
-// NOTE: FIXME! - changes to certain variables have likely caused breakage here.
-//       Investigate after various OpenCity*() calls have been implemented.
-
 #ifdef SC2X_USE_VANILLA_LOAD_REPLACEMENT
 // WIP replacement for CSimcityApp::DoLoadGame for vanilla save game files.
 // This is incredibly ugly and should probably be rewritten at some point.
@@ -201,9 +198,9 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 
 				// TODO: figure out what this actually is
 				for (int i = 0; i < 20; i++) {
-					*(DWORD*)(0x4C94B4 + i * 4) = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
-					*(DWORD*)(0x4C94BC + i * 4) = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 4]);
-					*(DWORD*)(0x4CAA70 + i * 4) = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 8]);
+					pRawPopRatioTable[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
+					pEQRatioTable[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 4]);
+					pLERatioTable[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 8]);
 				}
 				i += 4 * 60;
 
@@ -229,11 +226,9 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 				// TODO: Encode as arrays of useful JSON
 				for (int i = 0; i < 4; i++) {
 					wNeighborNameIdx[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
-					if (wNeighborNameIdx[i]) {
-						// TODO: name this function
-						void (__cdecl * H_40146A)(char*, int, int) = (void (__cdecl*)(char*, int, int))0x40146A;
-						H_40146A((char*)stNeighborCities + i * 32, 1000, wNeighborNameIdx[i]);
-					} else
+					if (wNeighborNameIdx[i])
+						Game_LoadNamedEntryFromRsrcOffset((char*)stNeighborCities + i * 32, 1000, wNeighborNameIdx[i]);
+					else
 						strcpy_s((char*)stNeighborCities + i * 32, 32, "Ocean");
 					dwNeighborPopulation[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 4]);
 					dwNeighborValue[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 8]);
@@ -311,21 +306,31 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 				bMilitaryBaseType = ntohl(*(DWORD*)&pChunkMISC[i]);
 				i += 4;
 
+				// 2026-07-28 - AF: The types for pPaperArr and pNewsArr
+				// were adjusted; the loops have since been adjusted and
+				// the function does call once more, however it has NOT
+				// yet been tested.
+
 				// TODO: Encode as arrays of useful JSON
-				//sc2json["MISC"]["dwArrNewspaperTable1"] = EncodeDWORDArray((DWORD*)&pChunkMISC[i], 30, TRUE);
-				for (int i = 0; i < 30; i++)
-					pPaperArr[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
+				//sc2json["MISC"]["pPaperArr"] = EncodeDWORDArray((DWORD*)&pChunkMISC[i], 30, TRUE);
+				for (int i = 0; i < 6; i++) {
+					pPaperArr[i].bName = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
+					pPaperArr[i].bStyle = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 4]);
+					pPaperArr[i].bTag = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 8]);
+					pPaperArr[i].bSurvey = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 12]);
+					pPaperArr[i].bWeather = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 16]);
+				}
 				i += 4 * 30;
 
 				// TODO: Encode as arrays of useful JSON
-				//dwArrNewspaperTable2 = EncodeDWORDArray((DWORD*)&pChunkMISC[i], 54, TRUE);
+				//pNewsArr = EncodeDWORDArray((DWORD*)&pChunkMISC[i], 54, TRUE);
 				for (int i = 0; i < 9; i++) {
-					*(WORD*)&pNewsArr[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
-					*(WORD*)&pNewsArr[i + 1] = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 4]);
-					pNewsArr[i + 2] = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 8]);
-					pNewsArr[i + 3] = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 12]);
-					pNewsArr[i + 4] = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 16]);
-					pNewsArr[i + 5] = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 20]);
+					*(WORD*)&pNewsArr[i].wType = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
+					*(WORD*)&pNewsArr[i].wPower = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 4]);
+					pNewsArr[i].bValue = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 8]);
+					pNewsArr[i].bItem = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 12]);
+					pNewsArr[i].bName = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 16]);
+					pNewsArr[i].bScore = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 20]);
 				}
 				i += 4 * 54;
 
@@ -358,16 +363,8 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 				i += 4;
 
 				pThis->dwSCAGameMusic = ntohl(*(DWORD*)&pChunkMISC[i]);
-				if (!pThis->dwSCAGameMusic) {
-					// Stop music
-					__asm {
-						push ecx
-						mov ecx, [0x4C7158]
-						mov eax, 0x402BE4
-						call eax
-						pop ecx
-					}
-				}
+				if (!pThis->dwSCAGameMusic)
+					Game_Sound_MusicStop(pThis->SCASNDLayer);
 				i += 4;
 
 				bNoDisasters = ntohl(*(DWORD*)&pChunkMISC[i]);
@@ -382,8 +379,8 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 				wNewspaperChoice = ntohl(*(DWORD*)&pChunkMISC[i]);
 				i += 4;
 
-				WORD wViewCoords = ntohl(*(DWORD*)&pChunkMISC[i]);
-				if (wViewCoords == 0xFFFF) {
+				__int16 wViewCoords = ntohl(*(DWORD*)&pChunkMISC[i]);
+				if (wViewCoords == -1) {
 					wViewInitialCoordX = 64;
 					wViewInitialCoordY = 128;		// I don't know. This is just what the game does.
 				}
