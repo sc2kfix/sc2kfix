@@ -646,21 +646,21 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 }
 #endif
 
-// Function prototype: HOOKCB void Hook_SimcityApp_OpenCityData_Before(void)
+// Function prototype: HOOKCB void Hook_SimcityApp_OpenCity_Before(void)
 // Cannot be ignored.
 // SPECIAL NOTE: When the SC2X save format is implemented, this will be where mods will have a
 //   chance to pre-load any information and optionally manipulate the save file before it's parsed
 //   by sc2kfix and loaded into the SimCity 2000 engine.
-std::vector<hook_function_t> stHooks_Hook_SimcityApp_OpenCityData_Before;
+std::vector<hook_function_t> stHooks_Hook_SimcityApp_OpenCity_Before;
 
-// Function prototype: HOOKCB void Hook_SimcityApp_OpenCityData_After(void)
+// Function prototype: HOOKCB void Hook_SimcityApp_OpenCity_After(void)
 // Cannot be ignored.
 // SPECIAL NOTE: When the SC2X save format is implemented, this will be where mods will be fed a
 //   pointer to a JSON object wherein they can load their data and version information or a NULL
 //   or similar object to inform them that they have no known state to load.
-std::vector<hook_function_t> stHooks_Hook_SimcityApp_OpenCityData_After;
+std::vector<hook_function_t> stHooks_Hook_SimcityApp_OpenCity_After;
 
-extern "C" DWORD __stdcall Hook_SimcityApp_OpenCityData(CMFC3XFile* pFile, char* src) {
+extern "C" DWORD __stdcall Hook_SimcityApp_OpenCity(CMFC3XFile* pFile, char* src) {
 	CSimcityAppPrimary* pThis;
 	DWORD ret;
 
@@ -684,7 +684,7 @@ extern "C" DWORD __stdcall Hook_SimcityApp_OpenCityData(CMFC3XFile* pFile, char*
 		iCorruptedFixupSize = 0;
 	}
 
-	for (const auto& hook : stHooks_Hook_SimcityApp_OpenCityData_Before) {
+	for (const auto& hook : stHooks_Hook_SimcityApp_OpenCity_Before) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
 			void (*fnHook)(CSimcityAppPrimary*, CMFC3XFile*, char*) = (void(*)(CSimcityAppPrimary*, CMFC3XFile*, char*))hook.pFunction;
 			fnHook(pThis, pFile, src);
@@ -701,21 +701,21 @@ extern "C" DWORD __stdcall Hook_SimcityApp_OpenCityData(CMFC3XFile* pFile, char*
 #else
 		if (sc2x_debug & SC2X_DEBUG_LOAD)
 			ConsoleLog(LOG_DEBUG, "SC2X: Passing control to SC2K for load.\n");
-		ret = GameMain_SimcityApp_OpenCityData(pThis, pFile, src);
+		ret = GameMain_SimcityApp_OpenCity(pThis, pFile, src);
 #endif
 	} else if (std::regex_search(szLoadFileName, std::regex("\\.[Ss][Cc][Nn]$"))) {
 		if (sc2x_debug & SC2X_DEBUG_LOAD)
 			ConsoleLog(LOG_DEBUG, "SC2X: Saved game is a vanilla SCN file. Passing control to SC2K.\n");
 
-		ret = GameMain_SimcityApp_OpenCityData(pThis, pFile, src);
+		ret = GameMain_SimcityApp_OpenCity(pThis, pFile, src);
 	} else if (std::regex_search(szLoadFileName, std::regex("\\.[Cc][Tt][Yy]$"))) {
 		if (sc2x_debug & SC2X_DEBUG_LOAD)
 			ConsoleLog(LOG_DEBUG, "SC2X: Saved game is a SimCity Classic file. Passing control to SC2K.\n");
 
-		ret = GameMain_SimcityApp_OpenCityData(pThis, pFile, src);
+		ret = GameMain_SimcityApp_OpenCity(pThis, pFile, src);
 	}
 
-	for (const auto& hook : stHooks_Hook_SimcityApp_OpenCityData_After) {
+	for (const auto& hook : stHooks_Hook_SimcityApp_OpenCity_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
 			void (*fnHook)(CSimcityAppPrimary*, CMFC3XFile*, char*) = (void(*)(CSimcityAppPrimary*, CMFC3XFile*, char*))hook.pFunction;
 			fnHook(pThis, pFile, src);
@@ -807,7 +807,7 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 			nPathLen = strlen(szDirPath);
 			if (szDirPath[nPathLen - 1] != '\\')
 				strcat_s(szDirPath, "\\");
-			if (Game_SimcityApp_OpenCity(pThis, m_ofn.lpstrFile)) {
+			if (Game_SimcityApp_DoLoad(pThis, m_ofn.lpstrFile)) {
 				if (L_IsPathValid(szDirPath))
 					jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_CITIES] = szDirPath;
 				GameMain_Document_UpdateAllViews(pCSimcityDoc, 0, SCD_UPDATE_VIEW_UPDATE, 0);
@@ -1480,7 +1480,7 @@ void __declspec(naked) Hook_OpenCityHeader_HeaderCheck(void) {
 
 			"Developer info:\n"
 			"Save header corrupted (FORM header chunk size 0)\n"
-			"Failed to load iCorruptedFixupSize in Hook_SimcityApp_OpenCityData", "sc2kfix error", MB_OK | MB_ICONERROR);
+			"Failed to load iCorruptedFixupSize in Hook_SimcityApp_OpenCity", "sc2kfix error", MB_OK | MB_ICONERROR);
 
 		__asm jmp skip
 	}
@@ -1669,7 +1669,7 @@ void InstallSaveHooks_SC2K1996(void) {
 
 	// Load game hook
 	SafeVirtualProtect((LPVOID)0x4025A4, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x4025A4, Hook_SimcityApp_OpenCityData);
+	NEWJMP((LPVOID)0x4025A4, Hook_SimcityApp_OpenCity);
 
 	// CSimcityApp::LoadCity
 	SafeVirtualProtect((LPVOID)0x401E1F, 5, PAGE_EXECUTE_READWRITE);
