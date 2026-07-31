@@ -669,7 +669,7 @@ NOTVALID:
 	return ret;
 }
 
-extern "C" int __stdcall Hook_OpenCityHeader(CMFC3XFile *pFile, const char *lpFileName, int *pLength, __int16 nClassicPreCheck) {
+static int L_OpenCityHeader(CMFC3XFile *pFile, const char *lpFileName, int *pLength, __int16 nClassicPreCheck) {
 	int nActualLength = 0;
 	bool bSupportFixUp;
 	DWORD dwChunk, scrChunk;
@@ -682,7 +682,7 @@ extern "C" int __stdcall Hook_OpenCityHeader(CMFC3XFile *pFile, const char *lpFi
 		nActualLength = GameMain_File_GetLength(pFile);
 		nActualLength -= 8;
 		if (sc2x_debug & SC2X_DEBUG_LOAD)
-			ConsoleLog(LOG_DEBUG, "SC2X: Saved game nActualLength is %d bytes.\n", nActualLength);
+			ConsoleLog(LOG_DEBUG, "SC2X: city file nActualLength is %d bytes.\n", nActualLength);
 	}
 	if (!GameMain_File_Read(pFile, &dwChunk, sizeof(dwChunk))) {
 		Game_GetFileExceptionError(48, &fileExcept, 0);
@@ -696,43 +696,60 @@ extern "C" int __stdcall Hook_OpenCityHeader(CMFC3XFile *pFile, const char *lpFi
 			return 0;
 		}
 		*pLength = _byteswap_ulong(*pLength);
-		if (bSupportFixUp) {
-			if (*pLength == 0) {
-				// If we don't have a fixup size, inform the user that their game is about to crash
-				if (!nActualLength) {
-					MessageBoxA(GetActiveWindow(),
-						"sc2kfix has detected a corrupted save file but was unable to recover enough information to "
-						"attempt to fix it. Your game is likely to crash after closing this dialog box. Please file"
-						"a save corruption report on the sc2kfix GitHub issues page (https://github.com/sc2kfix/sc2kfix/issues).\n\n"
+		if (*pLength == 0) {
+			// If we don't have a fixup size, inform the user that their game is about to crash
+			if (!nActualLength) {
+				MessageBoxA(GetActiveWindow(),
+					"sc2kfix has detected a corrupted city file but was unable to recover enough information to "
+					"attempt to fix it. Your game is likely to crash after closing this dialog box. Please file"
+					"a save corruption report on the sc2kfix GitHub issues page (https://github.com/sc2kfix/sc2kfix/issues) and attach the sc2kfix.log file.\n\n"
 
-						"Developer info:\n"
-						"Save header corrupted (FORM header chunk size 0)\n"
-						"Failed to load nActualLength", "sc2kfix error", MB_OK | MB_ICONERROR);
+					"Developer info:\n"
+					"Game header corrupted (FORM header chunk size 0)\n"
+					"Failed to load nActualLength.", "sc2kfix error", MB_OK | MB_ICONERROR);
 
-					// A crash "should" no longer occur since we're now hitting
-					// the exception call and returning zero rather than with
-					// the original detour going into the next read call.
-					Game_GetFileExceptionError(48, &fileExcept, 0);
-					return 0;
-				}
+				// A crash "should" no longer occur since we're now hitting
+				// the exception call and returning zero rather than with
+				// the original detour going into the next read call.
+				Game_GetFileExceptionError(48, &fileExcept, 0);
+				return 0;
+			}
 
+			// Let's only do the fixup if bSupportFixUp is true, otherwise "safely" abort.
+			if (bSupportFixUp) {
 				// Log that we're attempting a fixup
-				ConsoleLog(LOG_NOTICE, "SC2X: Detected possible corrupted save \"%s\".\n", lpFileName);
+				ConsoleLog(LOG_NOTICE, "SC2X: Detected possible corrupted file \"%s\".\n", lpFileName);
 				ConsoleLog(LOG_NOTICE, "SC2X: Attempting to fix up corrupted save header, new size = %d.\n", nActualLength);
 
 				// Inform the user about what's going on
-				MessageBox(GetActiveWindow(),
-					"sc2kfix has detected a corrupted save file and will try to restore it. If your city loads "
+				MessageBoxA(GetActiveWindow(),
+					"sc2kfix has detected a corrupted city file and will try to restore it. If your city loads "
 					"successfully, you should save it to a new save game file as soon as possible, restart "
 					"SimCity 2000, and load the new save.\n\n"
 
 					"If the game crashes after closing this dialog box or after reloading the new save file, "
-					"please file a report on the sc2kfix GitHub issues page (https://github.com/sc2kfix/sc2kfix/issues).\n\n"
+					"please file a report on the sc2kfix GitHub issues page (https://github.com/sc2kfix/sc2kfix/issues) and attach the sc2kfix.log file.\n\n"
 
 					"Developer info:\n"
-					"Save header corrupted (FORM header chunk size 0)", "sc2kfix warning", MB_OK | MB_ICONWARNING);
+					"Game header corrupted (FORM header chunk size 0).", "sc2kfix warning", MB_OK | MB_ICONWARNING);
 
 				*pLength = nActualLength;
+			}
+			else {
+				// Inform the user about what's going on
+				MessageBoxA(GetActiveWindow(),
+					"sc2kfix has detected a corrupted file. Unfortunately the file in question doesn't support "
+					"the fixup process.\n\n"
+
+					"If the game crashes after closing this dialog box, "
+					"please file a report on the sc2kfix GitHub issues page (https://github.com/sc2kfix/sc2kfix/issues) and attach the sc2kfix.log file.\n\n"
+
+					"Developer info:\n"
+					"Game header corrupted (FORM header chunk size 0)\n"
+					"Unsupported file type.", "sc2kfix error", MB_OK | MB_ICONERROR);
+
+				Game_GetFileExceptionError(48, &fileExcept, 0);
+				return 0;
 			}
 		}
 		if (!GameMain_File_Read(pFile, &dwChunk, sizeof(dwChunk))) {
@@ -757,6 +774,18 @@ extern "C" int __stdcall Hook_OpenCityHeader(CMFC3XFile *pFile, const char *lpFi
 		}
 	}
 	return 0;
+}
+
+extern "C" int __stdcall Hook_OpenCityHeader(CMFC3XFile *pFile, const char *lpFileName, int *pLength, __int16 nClassicPreCheck) {
+	return L_OpenCityHeader(pFile, lpFileName, pLength, nClassicPreCheck);
+}
+
+static int L_OpenCityUncompressed(CMFC3XFile *pFile, unsigned int nSize, void *pDat) {
+	return GameMain_File_Read(pFile, pDat, nSize);
+}
+
+extern "C" int __stdcall Hook_OpenCityUncompressed(CMFC3XFile *pFile, unsigned int nSize, void *pDat) {
+	return L_OpenCityUncompressed(pFile, nSize, pDat);
 }
 
 static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, char* lpFileName) {
@@ -1741,6 +1770,10 @@ void InstallSaveHooks_SC2K1996(void) {
 	// headers.
 	SafeVirtualProtect((LPVOID)0x4020E0, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4020E0, Hook_OpenCityHeader);
+
+	// OpenCityUncompressed
+	SafeVirtualProtect((LPVOID)0x4019CE, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4019CE, Hook_OpenCityUncompressed);
 
 	// InitializeCityData:
 	// - Demystification
