@@ -788,6 +788,60 @@ extern "C" int __stdcall Hook_OpenCityUncompressed(CMFC3XFile *pFile, unsigned i
 	return L_OpenCityUncompressed(pFile, nSize, pDat);
 }
 
+static int L_SimcityApp_OpenCityCompressed(CSimcityAppPrimary *pSCApp, CMFC3XFile *pFile, int nSize, void *pDat, int nDatSize) {
+	int ret;
+	char *pDst, *pTmp;
+	int nTp, nDp, ix;
+	char dat;
+	char szResStr[255 + 1];
+
+	ret = 0;
+	pDst = (char *)pDat;
+	pTmp = (char *)malloc(nSize);
+	if (!pTmp)
+		return 0;
+	if (GameMain_File_Read(pFile, pTmp, nSize)) {
+		nTp = nDp = 0;
+		ix = 0;
+		while (nSize > nTp && nDatSize > nDp) {
+			dat = pTmp[nTp++];
+			if (dat >= 0) {
+				for (ix = dat; ix > 0; --ix)
+					pDst[nDp++] = pTmp[nTp++];
+			}
+			else {
+				ix = dat & 0x7F;
+				dat = pTmp[nTp++];
+				while (ix >= 0) {
+					pDst[nDp++] = dat;
+					--ix;
+				}
+			}
+		}
+		if (nTp != nSize) {
+			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 49, szResStr, sizeof(szResStr) - 1);
+			GameMain_AfxMessageBoxStr(szResStr, 0, 0);
+			goto ABORTREAD;
+		}
+	}
+	else {
+		Game_GetFileExceptionError(48, &fileExcept, 0);
+		goto ABORTREAD;
+	}
+	ret = 1;
+ABORTREAD:
+	free(pTmp);
+	return ret;
+}
+
+extern"C" int __stdcall Hook_SimcityApp_OpenCityCompressed(CMFC3XFile *pFile, int nSize, void *pDat, int nDatSize) {
+	CSimcityAppPrimary* pThis;
+
+	__asm mov [pThis], ecx
+
+	return L_SimcityApp_OpenCityCompressed(pThis, pFile, nSize, pDat, nDatSize);
+}
+
 static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, char* lpFileName) {
 	return Game_SimcityApp_OpenCity(pSCApp, pFile, lpFileName);
 }
@@ -1774,6 +1828,10 @@ void InstallSaveHooks_SC2K1996(void) {
 	// OpenCityUncompressed
 	SafeVirtualProtect((LPVOID)0x4019CE, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4019CE, Hook_OpenCityUncompressed);
+
+	// CSimcityApp::OpenCityCompressed
+	SafeVirtualProtect((LPVOID)0x40245A, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x40245A, Hook_SimcityApp_OpenCityCompressed);
 
 	// InitializeCityData:
 	// - Demystification
