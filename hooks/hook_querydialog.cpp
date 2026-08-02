@@ -470,9 +470,9 @@ extern "C" int __stdcall Hook_QuerySpecificDialog_OnInitDialog() {
 	BOOL nBtnCmdShow = SW_HIDE;
 	if (pThis->dwQSDTileID == TILE_SERVICES_CITYHALL || pThis->dwQSDTileID == TILE_INFRASTRUCTURE_LIBRARY) {
 		if (pThis->dwQSDTileID == TILE_SERVICES_CITYHALL)
-			LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 810, szBuf, sizeof(szBuf) - 1);
+			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 810, szBuf, sizeof(szBuf) - 1);
 		else
-			LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 811, szBuf, sizeof(szBuf) - 1);
+			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 811, szBuf, sizeof(szBuf) - 1);
 		SetWindowText(pThis->dwQSDCButton.m_hWnd, szBuf);
 		GetTextExtentPointA(paintDC.m_hAttribDC, szBuf, strlen(szBuf), &txtSz);
 		nWidth = txtSz.cx - btnTextRect.right + btnTextRect.left + 8;
@@ -776,7 +776,7 @@ extern "C" void __stdcall Hook_QueryGeneralDialog_OnPaint() {
 	wQueryTileID = GetTileID(tileCoords.x, tileCoords.y);
 	if (wZone) {
 		// Zone Label
-		LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 812, szResBuf, sizeof(szResBuf) - 1);
+		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 812, szResBuf, sizeof(szResBuf) - 1);
 		SetTextAlign(paintDC.m_hDC, TA_UPDATECP | TA_RIGHT);
 		MoveToEx(paintDC.m_hDC, nOffsetX + 100, 40, &pt);
 		TextOutA(paintDC.m_hDC, 0, 0, szResBuf, strlen(szResBuf));
@@ -805,7 +805,7 @@ extern "C" void __stdcall Hook_QueryGeneralDialog_OnPaint() {
 		// Traffic Label
 		if (bZoned)
 			nOffsetY = QG_LINE(2);
-		LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 813, szResBuf, sizeof(szResBuf) - 1);
+		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 813, szResBuf, sizeof(szResBuf) - 1);
 		SetTextAlign(paintDC.m_hDC, TA_UPDATECP | TA_RIGHT);
 		MoveToEx(paintDC.m_hDC, nOffsetX + 100, nOffsetY + 40, &pt);
 		TextOutA(paintDC.m_hDC, 0, 0, szResBuf, strlen(szResBuf));
@@ -829,7 +829,7 @@ extern "C" void __stdcall Hook_QueryGeneralDialog_OnPaint() {
 		if (GET_TILE_RANGE(wQueryTileID, TILE_HIGHWAY_HTB, TILE_REINFORCED_BRIDGE) ||
 			GET_TILE_RANGE(wQueryTileID, TILE_HIGHWAY_LR, TILE_CROSSOVER_HIGHWAYTB_POWERLR))
 			nTraffic *= 2;
-		LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 814, szResBuf, sizeof(szResBuf) - 1);
+		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 814, szResBuf, sizeof(szResBuf) - 1);
 		sprintf_s(szTextBuf, "%ld%s", nTraffic / 4 / 2, szResBuf);
 		MoveToEx(paintDC.m_hDC, nOffsetX + 110, nOffsetY + 40, &pt);
 		TextOutA(paintDC.m_hDC, 0, 0, szTextBuf, strlen(szTextBuf));
@@ -839,7 +839,7 @@ extern "C" void __stdcall Hook_QueryGeneralDialog_OnPaint() {
 
 	// Altitude Label
 	nOffsetY = (bZoned) ? QG_LINE(3) : QG_LINE(2);
-	LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 827, szResBuf, sizeof(szResBuf) - 1);
+	L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 827, szResBuf, sizeof(szResBuf) - 1);
 	SetTextAlign(paintDC.m_hDC, TA_UPDATECP | TA_RIGHT);
 	MoveToEx(paintDC.m_hDC, nOffsetX + 100, nOffsetY + 40, &pt);
 	TextOutA(paintDC.m_hDC, 0, 0, szResBuf, strlen(szResBuf));
@@ -852,13 +852,13 @@ extern "C" void __stdcall Hook_QueryGeneralDialog_OnPaint() {
 	nLandAlt = ALTMReturnLandAltitude(tileCoords.x, tileCoords.y);
 	if (nLandAlt < wWaterLevel) {
 		// feet deep Label
-		LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 815, szResBuf, sizeof(szResBuf) - 1);
+		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 815, szResBuf, sizeof(szResBuf) - 1);
 		nFeet = 100 * (wWaterLevel - nLandAlt) - 50;
 		bWetTile = TRUE;
 	}
 	else {
 		// feet Label
-		LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 824, szResBuf, sizeof(szResBuf) - 1);
+		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 824, szResBuf, sizeof(szResBuf) - 1);
 		if (!iTerrainTileID || iTerrainTileID >= SUBMERGED_00) {
 			if (iTerrainTileID >= SUBMERGED_00)
 				bWetTile = TRUE;
@@ -873,7 +873,7 @@ extern "C" void __stdcall Hook_QueryGeneralDialog_OnPaint() {
 	if (!bWetTile || nLandAlt < wWaterLevel) {
 		// Land Value Label
 		nOffsetY = (bZoned) ? QG_LINE(4) : QG_LINE(3);
-		LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 816, szResBuf, sizeof(szResBuf) - 1);
+		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 816, szResBuf, sizeof(szResBuf) - 1);
 		SetTextAlign(paintDC.m_hDC, TA_UPDATECP | TA_RIGHT);
 		MoveToEx(paintDC.m_hDC, nOffsetX + 100, nOffsetY + 40, &pt);
 		TextOutA(paintDC.m_hDC, 0, 0, szResBuf, strlen(szResBuf));
@@ -881,7 +881,7 @@ extern "C" void __stdcall Hook_QueryGeneralDialog_OnPaint() {
 		SetTextAlign(paintDC.m_hDC, TA_UPDATECP);
 
 		// Land Value and thousand acre label
-		LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 825, szResBuf, sizeof(szResBuf) - 1);
+		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 825, szResBuf, sizeof(szResBuf) - 1);
 		MoveToEx(paintDC.m_hDC, nOffsetX + 110, nOffsetY + 40, &pt);
 		sprintf_s(szTextBuf, "%ld%s", GetXVALByteDataWithNormalCoordinates(tileCoords.x, tileCoords.y) + 1, szResBuf);
 		TextOutA(paintDC.m_hDC, 0, 0, szTextBuf, strlen(szTextBuf));
@@ -889,7 +889,7 @@ extern "C" void __stdcall Hook_QueryGeneralDialog_OnPaint() {
 
 	// Crime Label
 	nOffsetY = (bZoned) ? QG_LINE(5) : QG_LINE(4);
-	LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 817, szResBuf, sizeof(szResBuf) - 1);
+	L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 817, szResBuf, sizeof(szResBuf) - 1);
 	SetTextAlign(paintDC.m_hDC, TA_UPDATECP | TA_RIGHT);
 	MoveToEx(paintDC.m_hDC, nOffsetX + 100, nOffsetY + 40, &pt);
 	TextOutA(paintDC.m_hDC, 0, 0, szResBuf, strlen(szResBuf));
@@ -908,7 +908,7 @@ extern "C" void __stdcall Hook_QueryGeneralDialog_OnPaint() {
 
 	// Pollution Label
 	nOffsetY = (bZoned) ? QG_LINE(6) : QG_LINE(5);
-	LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 818, szResBuf, sizeof(szResBuf) - 1);
+	L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 818, szResBuf, sizeof(szResBuf) - 1);
 	SetTextAlign(paintDC.m_hDC, TA_UPDATECP | TA_RIGHT);
 	MoveToEx(paintDC.m_hDC, nOffsetX + 100, nOffsetY + 40, &pt);
 	TextOutA(paintDC.m_hDC, 0, 0, szResBuf, strlen(szResBuf));
@@ -929,7 +929,7 @@ extern "C" void __stdcall Hook_QueryGeneralDialog_OnPaint() {
 	if (wQueryTileID >= TILE_SMALLPARK && wZone != ZONE_MILITARY && !bWetTile) {
 		// Powered Label
 		nOffsetY = (bZoned) ? QG_LINE(7) : QG_LINE(6);
-		LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 826, szResBuf, sizeof(szResBuf) - 1);
+		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 826, szResBuf, sizeof(szResBuf) - 1);
 		SetTextAlign(paintDC.m_hDC, TA_UPDATECP | TA_RIGHT);
 		MoveToEx(paintDC.m_hDC, nOffsetX + 100, nOffsetY + 40, &pt);
 		TextOutA(paintDC.m_hDC, 0, 0, szResBuf, strlen(szResBuf));
@@ -941,11 +941,11 @@ extern "C" void __stdcall Hook_QueryGeneralDialog_OnPaint() {
 		if (tileCoords.x < GAME_MAP_SIZE &&
 			tileCoords.y < GAME_MAP_SIZE &&
 			XBITReturnIsPowered(tileCoords.x, tileCoords.y)) {
-			LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 819, szResBuf, sizeof(szResBuf) - 1);
+			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 819, szResBuf, sizeof(szResBuf) - 1);
 			TextOutA(paintDC.m_hDC, 0, 0, szResBuf, strlen(szResBuf));
 		}
 		else {
-			LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 820, szResBuf, sizeof(szResBuf) - 1);
+			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 820, szResBuf, sizeof(szResBuf) - 1);
 			crOldCol = SetTextColor(paintDC.m_hDC, RGB(255, 0, 0));
 			TextOutA(paintDC.m_hDC, 0, 0, szResBuf, strlen(szResBuf));
 			SetTextColor(paintDC.m_hDC, crOldCol);
@@ -953,7 +953,7 @@ extern "C" void __stdcall Hook_QueryGeneralDialog_OnPaint() {
 
 		// Watered Label
 		nOffsetY = (bZoned) ? QG_LINE(8) : QG_LINE(7);
-		LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 821, szResBuf, sizeof(szResBuf) - 1);
+		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 821, szResBuf, sizeof(szResBuf) - 1);
 		SetTextAlign(paintDC.m_hDC, TA_UPDATECP | TA_RIGHT);
 		MoveToEx(paintDC.m_hDC, nOffsetX + 100, nOffsetY + 40, &pt);
 		TextOutA(paintDC.m_hDC, 0, 0, szResBuf, strlen(szResBuf));
@@ -980,7 +980,7 @@ extern "C" void __stdcall Hook_QueryGeneralDialog_OnPaint() {
 					}
 				}
 			}
-			LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 822, szResBuf, sizeof(szResBuf) - 1);
+			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 822, szResBuf, sizeof(szResBuf) - 1);
 			sprintf_s(szTextBuf, "%ld %s", 720 * nGallonsPerMonth, szResBuf);
 			TextOutA(paintDC.m_hDC, 0, 0, szTextBuf, strlen(szTextBuf));
 		}
@@ -1011,7 +1011,7 @@ extern "C" void __stdcall Hook_QueryGeneralDialog_OnPaint() {
 				nCurrentPointY < GAME_MAP_SIZE &&
 				XBITReturnIsWatered(nCurrentPointX, nCurrentPointY))
 				++nStoredGallons;
-			LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 823, szResBuf, sizeof(szResBuf) - 1);
+			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 823, szResBuf, sizeof(szResBuf) - 1);
 			sprintf_s(szTextBuf, "%ld %s", 10000 * nStoredGallons, szResBuf);
 			TextOutA(paintDC.m_hDC, 0, 0, szTextBuf, strlen(szTextBuf));
 		}
@@ -1019,11 +1019,11 @@ extern "C" void __stdcall Hook_QueryGeneralDialog_OnPaint() {
 			if (tileCoords.x < GAME_MAP_SIZE &&
 				tileCoords.y < GAME_MAP_SIZE &&
 				XBITReturnIsWatered(tileCoords.x, tileCoords.y)) {
-				LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 819, szResBuf, sizeof(szResBuf) - 1);
+				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 819, szResBuf, sizeof(szResBuf) - 1);
 				TextOutA(paintDC.m_hDC, 0, 0, szResBuf, strlen(szResBuf));
 			}
 			else {
-				LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 820, szResBuf, sizeof(szResBuf) - 1);
+				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 820, szResBuf, sizeof(szResBuf) - 1);
 				crOldCol = SetTextColor(paintDC.m_hDC, RGB(255, 0, 0));
 				TextOutA(paintDC.m_hDC, 0, 0, szResBuf, strlen(szResBuf));
 				SetTextColor(paintDC.m_hDC, crOldCol); // Restore the old colour (not present originally)

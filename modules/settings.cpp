@@ -38,6 +38,8 @@ bool bWeatherEffects = false;
 bool bDarkUnderground = false;
 int iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
 int nMovZoomFactor = MIN_MOVZOOMFACTOR;
+int nHangar1Mode = HANGAR1_ANIM;
+DWORD dwFixedTileMask = 0;
 
 char szGamePath[MAX_PATH];
 
@@ -126,6 +128,10 @@ void DefaultSettingsSC2KFixCore(json::JSON& jsonSettings) {
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND] = DEF_FIX_QOL_TITLECALEND;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_MOVZOOMFACTOR] = DEF_FIX_QOL_MOVZOOMFACTOR;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC] = DEF_FIX_QOL_TERRAINCOSMETIC;
+	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_FIXTILMSK] = DEF_FIX_QOL_SC2K_FIXTILMSK;
+	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SCURK_FIXTILMSK] = DEF_FIX_QOL_SCURK_FIXTILMSK;
+	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_HANGARCNV] = DEF_FIX_QOL_SC2K_HANGARCNV;
+	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SCURK_HANGARCNV] = DEF_FIX_QOL_SCURK_HANGARCNV;
 	
 	for (int i = 10000; i < 10019; i++) {
 		jsonSettings[C_SC2KFIX][S_FIX_MUSMID][std::to_string(i)] = "";
@@ -253,6 +259,31 @@ void InitializeJSONSettings(void) {
 		ConvertSettingsToJSON();
 }
 
+static void FinalizeFixedTileMask() {
+	DWORD dwTempTileMask = 0;
+
+	// We don't include any of the Hangar bits in this portion.
+	if (dwFixedTileMask & FIXTIL_MASK_HORZOFF)
+		dwTempTileMask |= FIXTIL_MASK_HORZOFF;
+	if (dwFixedTileMask & FIXTIL_MASK_VERTOFF)
+		dwTempTileMask |= FIXTIL_MASK_VERTOFF;
+	if (dwFixedTileMask & FIXTIL_MASK_BADPALIDX)
+		dwTempTileMask |= FIXTIL_MASK_BADPALIDX;
+	if (dwFixedTileMask & FIXTIL_MASK_MISSPIXELS)
+		dwTempTileMask |= FIXTIL_MASK_MISSPIXELS;
+	if (dwFixedTileMask & FIXTIL_MASK_OOBPALIDX)
+		dwTempTileMask |= FIXTIL_MASK_OOBPALIDX;
+
+	// Set the correct Hangar bit based on nHangar1Mode.
+	if (nHangar1Mode == HANGAR1_ANIM)
+		dwTempTileMask |= FIXTIL_MASK_HANGARANIM;
+	else if (nHangar1Mode == HANGAR1_OPEN)
+		dwTempTileMask |= FIXTIL_MASK_HANGAROPEN;
+	else if (nHangar1Mode == HANGAR1_SHUT)
+		dwTempTileMask |= FIXTIL_MASK_HANGARSHUT;
+	dwFixedTileMask = dwTempTileMask;
+}
+
 static void GetSpecificStoredJSONVars() {
 	bBackgroundMusic = jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND].ToBool();
 	bFrequentUpdates = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool();
@@ -260,6 +291,7 @@ static void GetSpecificStoredJSONVars() {
 	bDarkUnderground = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND].ToBool();
 	iTerrainCosmeticMode = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt();
 	nMovZoomFactor = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_MOVZOOMFACTOR].ToInt();
+
 	if (nMovZoomFactor < MIN_MOVZOOMFACTOR) {
 		ConsoleLog(LOG_INFO, "Invalid Movie Zoom Factor '%d' - it cannot be less than '%d'; setting to '%d'\n", nMovZoomFactor, MIN_MOVZOOMFACTOR, MIN_MOVZOOMFACTOR);
 		nMovZoomFactor = MIN_MOVZOOMFACTOR;
@@ -268,6 +300,22 @@ static void GetSpecificStoredJSONVars() {
 		ConsoleLog(LOG_INFO, "Invalid Movie Zoom Factor '%d' - it cannot be greater than '%d'; setting to '%d'\n", nMovZoomFactor, MAX_MOVZOOMFACTOR, MAX_MOVZOOMFACTOR);
 		nMovZoomFactor = MAX_MOVZOOMFACTOR;
 	}
+
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		dwFixedTileMask = (DWORD)jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SCURK_FIXTILMSK].ToInt();
+		nHangar1Mode = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SCURK_HANGARCNV].ToInt();
+	}
+	else {
+		dwFixedTileMask = (DWORD)jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_FIXTILMSK].ToInt();
+		nHangar1Mode = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_HANGARCNV].ToInt();
+	}
+
+	if (nHangar1Mode < HANGAR1_MIN)
+		nHangar1Mode = HANGAR1_MIN;
+	else if (nHangar1Mode > HANGAR1_MAX)
+		nHangar1Mode = HANGAR1_MAX;
+
+	FinalizeFixedTileMask();
 }
 
 void LoadJSONSettings(void) {
@@ -291,9 +339,9 @@ void SaveJSONSettings(void) {
 	std::ofstream fSettingsJSON(GetSettingsJsonPath(), std::ios::out | std::ios::trunc);
 	fSettingsJSON << jsonSettingsCore.dump();
 
-	if (dwDetectedVersion == VERSION_SC2K_1996) {
-		GetSpecificStoredJSONVars();
+	GetSpecificStoredJSONVars();
 
+	if (dwDetectedVersion == VERSION_SC2K_1996) {
 		UpdateMiscHooks_SC2K1996();
 		UpdateStatus_SC2K1996(-1);
 	}
@@ -447,6 +495,9 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 			"This setting controls whether or not SimCity 2000 plays higher quality versions of various sounds for which said higher quality versions exist.\n\n"
 
 			"Enabling or disabling this setting takes effect after restarting the game.");
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_CONFTILECONV),
+			"Configure which 'fixed' tiles are used when loading the default tileset.\n\n"
+			"Choose which 'Hangar1' type to use as well when it comes to both the 'fixed' tiles and also converting the default 'ORIGINAL' set from the DOS and Macintosh versions of the game.");
 
 		// Set fields based on the working JSON
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USEFLTSTATUS], IDC_SETTINGS_CHECK_STATUS_DIALOG);
@@ -479,6 +530,8 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 		switch (GET_WM_COMMAND_ID(wParam, lParam)) {
 		case IDC_SETTINGS_BUTTON_CONFKEYBINDINGS:
 			return DoConfigureKeyBindings(stSettingsDialogHeader.stSettingsChanges, hwndDlg);
+		case IDC_SETTINGS_BUTTON_CONFTILECONV:
+			return DoConfigureTileConv(hwndDlg);
 		}
 		return TRUE;
 	}
@@ -842,9 +895,9 @@ void ShowSettingsDialog(void) {
 
 		// Update volume of actively playing music/sounds if needed
 		if (pStreamCurrentSound)
-			SDL_SetAudioStreamGain(pStreamCurrentSound, jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat());
+			SDL_SetAudioStreamGain(pStreamCurrentSound, float(jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat()));
 		if (pStreamCurrentSong)
-			SDL_SetAudioStreamGain(pStreamCurrentSong, jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat());
+			SDL_SetAudioStreamGain(pStreamCurrentSong, float(jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat()));
 	}
 
 	ToggleFloatingStatusDialog(TRUE);

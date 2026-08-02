@@ -19,6 +19,8 @@
 #include <winmm_exports.h>
 #include "resource.h"
 
+#define FIXEDTIL_BUILD 0
+
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
@@ -49,7 +51,7 @@ BOOL bFixFileAssociations = FALSE;
 BOOL bDisableAutoThingCleanup = TRUE;
 BOOL bMapWireFrame = FALSE;
 BOOL bOnTheFlyPalIdx = FALSE;
-BOOL bDisableFixedTiles = FALSE;
+BOOL bBuildFixedTiles = FALSE;
 int iForcedBits = 0;
 
 std::random_device rdRandomDevice;
@@ -207,8 +209,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						bSkipLoadingMods = TRUE;
 					if (!lstrcmpiW(argv[i], L"-mapwireframe"))
 						bMapWireFrame = TRUE;
-					if (!lstrcmpiW(argv[i], L"-disablefixedtiles"))
-						bDisableFixedTiles = TRUE;
+#if FIXEDTIL_BUILD
+					if (!lstrcmpiW(argv[i], L"-buildfixedtiles"))
+						bBuildFixedTiles = TRUE;
+#endif
 #if USE_ONTHEFLYPALIDX
 					if (!lstrcmpiW(argv[i], L"-ontheflypalidx"))
 						bOnTheFlyPalIdx = TRUE;
@@ -419,6 +423,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		if (dwDetectedVersion == VERSION_PROG_UNKNOWN)
 			break;
 
+		L_InitDOSMacPaletteIdxTable();
+
 		// If we're attached to SCURK, switch over to the SCURK fix code
 		if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
 			if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
@@ -591,9 +597,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		if (dwMusicThreadID)
 			PostThreadMessage(dwMusicThreadID, WM_QUIT, NULL, NULL);
 
-		// Only save the bindings and stored paths during a graceful exit.
-		// (SC2K1996 only for now)
-		if (!bGameDead && dwDetectedVersion == VERSION_SC2K_1996)
+		// Only save the settings if the program has closed gracefully.
+		if (!bGameDead)
 			SaveJSONSettings();
 
 		// Clear out the stored sprite IDs (no allocated data are contained).

@@ -327,7 +327,7 @@ EXSTYLE WS_EX_TRANSPARENT
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     GROUPBOX        "Interface Settings",IDC_STATIC,6,2,294,85
-    GROUPBOX        "Visual and Performance Settings",IDC_STATIC,6,93,294,75
+    GROUPBOX        "Visual and Performance Settings",IDC_STATIC,6,93,294,97
     CONTROL         " Use new real-time renderer instead of original batched renderer (Default: on)",IDC_SETTINGS_CHECK_REFRESH_RATE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,107,280,10
     CONTROL         " Use dark underground background (Default: off)",IDC_SETTINGS_CHECK_DARK_UNDGRND,
@@ -343,6 +343,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,152,280,10
     CONTROL         " Display seasonal and weather effects (Default: on)",IDC_SETTINGS_CHECK_WEATHER_EFFECTS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,122,280,10
+    PUSHBUTTON      "Tile Conversion/Defaults",IDC_SETTINGS_BUTTON_CONFTILECONV,103,168,100,14
 END
 
 IDD_SETTINGS_GENERAL DIALOGEX 0, 0, 307, 217
@@ -398,16 +399,18 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,183,280,10
 END
 
-IDD_CONVERT_SELFIXOBJECTS DIALOGEX 0, 0, 316, 185
+IDD_CONVERT_SELFIXOBJECTS DIALOGEX 0, 0, 316, 213
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Include Fixed Objects"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,122,164,74,14
-    CONTROL         "",IDC_OBJECTLIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_ALIGNLEFT | LVS_NOSORTHEADER | WS_TABSTOP,17,43,283,113,WS_EX_CLIENTEDGE
-    PUSHBUTTON      "Enable All",IDC_ENBALLBUT,49,24,70,14
-    PUSHBUTTON      "Disable All",IDC_DISALLBUT,199,24,70,14
-    CTEXT           "Enable the 'Fixed"" objects you want to include during conversion.",IDC_STATIC,7,4,301,14,SS_CENTERIMAGE
+    DEFPUSHBUTTON   "OK",IDOK,122,195,74,14
+    CONTROL         "",IDC_OBJECTLIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_ALIGNLEFT | LVS_NOSORTHEADER | WS_TABSTOP,17,62,283,128,WS_EX_CLIENTEDGE
+    LTEXT           "Hangar1 Default Type:",IDC_STATIC,76,23,74,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_HANGAR1TYPE,158,23,90,16,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Enable All",IDC_ENBALLBUT,49,43,70,14
+    PUSHBUTTON      "Disable All",IDC_DISALLBUT,199,43,70,14
+    CTEXT           "Enable the 'Fixed"" objects you want to include during conversion.",IDC_STATIC,7,3,301,12,SS_CENTERIMAGE
 END
 
 IDD_SHUNT DIALOGEX 0, 0, 316, 135
@@ -461,6 +464,27 @@ BEGIN
     GROUPBOX        "",339,82,280,79,135
     GROUPBOX        "",340,164,280,79,135
     GROUPBOX        "",341,246,11,79,135
+END
+
+IDD_TILECONV DIALOGEX 0, 0, 313, 159
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Tile Conversion/Defaults Configuration"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,90,136,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,177,136,50,14
+    LTEXT           "Hangar1 Default Type:",IDC_STATIC,50,9,78,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_TILECONV_COMBO,136,9,120,12,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Horizontal Offset",IDC_TILECONV_CHECK_HORZOFF,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,26,44,160,12
+    CONTROL         "Vertical Offset (Only relevant in SCURK)",IDC_TILECONV_CHECK_VERTOFF,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,26,60,160,12
+    CONTROL         "Bad Palette Indices",IDC_TILECONV_CHECK_BADPALIDX,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,26,76,160,12
+    CONTROL         "Missing Pixels (Only relevant in SCURK)",IDC_TILECONV_CHECK_MISSPIXELS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,26,92,160,12
+    CONTROL         "Out-of-bounds Palette Indices",IDC_TILECONV_CHECK_OOBPALIDX,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,26,108,160,12
+    GROUPBOX        "Fixed Tile Categories (Only applied when the default object set is (re)loaded)",IDC_STATIC,11,30,290,97
 END
 
 
@@ -594,7 +618,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 309
         TOPMARGIN, 7
-        BOTTOMMARGIN, 178
+        BOTTOMMARGIN, 206
     END
 
     IDD_SHUNT, DIALOG
@@ -611,6 +635,14 @@ BEGIN
         RIGHTMARGIN, 314
         TOPMARGIN, 7
         BOTTOMMARGIN, 348
+    END
+
+    IDD_TILECONV, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 306
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 152
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -721,6 +753,11 @@ BEGIN
     0
 END
 
+IDD_TILECONV AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -812,7 +849,21 @@ END
 // TSET
 //
 
-IDR_TSET_FIXED          TSET                    "blobs\\FIXEDTILES.MIF"
+IDR_TSET_FIXTIL_HORZOFF TSET                    "blobs\\FIXEDTILES_HORZOFF.MIF"
+
+IDR_TSET_FIXTIL_VERTOFF TSET                    "blobs\\FIXEDTILES_VERTOFF.MIF"
+
+IDR_TSET_FIXTIL_BADPALIDX TSET                    "blobs\\FIXEDTILES_BADPALIDX.MIF"
+
+IDR_TSET_FIXTIL_MISSPIXELS TSET                    "blobs\\FIXEDTILES_MISSPIXELS.MIF"
+
+IDR_TSET_FIXTIL_OOBPALIDX TSET                    "blobs\\FIXEDTILES_OOBPALIDX.MIF"
+
+IDR_TSET_FIXTIL_HANGAROPEN TSET                    "blobs\\FIXEDTILES_HANGAR1_OPEN.MIF"
+
+IDR_TSET_FIXTIL_HANGARANIM TSET                    "blobs\\FIXEDTILES_HANGAR1_ANIM.MIF"
+
+IDR_TSET_FIXTIL_HANGARSHUT TSET                    "blobs\\FIXEDTILES_HANGAR1_SHUT.MIF"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -831,8 +882,6 @@ IDR_BLOB_LIBSC2KFIX_LUA BLOB                    "blobs\\libsc2kfix.lua"
 IDR_SCRKPALBMP          RAW                     "blobs\\SCURKBMP_PAL.bin"
 
 IDR_SCRKPALWND          RAW                     "blobs\\SCURKWND_PAL.bin"
-
-IDR_SCRKPALMAP          RAW                     "blobs\\SCURKMAP_PAL.bin"
 
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////

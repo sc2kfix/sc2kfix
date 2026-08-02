@@ -123,6 +123,12 @@ enum {
 #define ARCOLOGY_COUNT 4
 #define POWERPLANT_COUNT 9
 
+enum {
+	REV_WIN,
+	REV_DOSMAC,
+	REV_W00
+};
+
 // This specifical structure is the equivalent
 // of the LOGPALETTE struct from the WinAPI
 // except the pPalEnts array is preset to
@@ -200,6 +206,9 @@ public:
 
 	void DeleteStored_SC2K1996();
 	int CreateWithPalette_SC2K1996(LONG ibiWidth, LONG ibiHeight);
+#if 0
+	void SetAdjustedColorTableFromMainPalette(int nPal);
+#endif
 	void PaintNormalAndStretch(HDC hDC, int x, int y, int sX, int sY, int nFactor);
 	CMFC3XDC *GetDC_SC2K1996();
 	void ReleaseDC_SC2K1996(CMFC3XDC *pDC);

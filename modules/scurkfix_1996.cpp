@@ -42,6 +42,19 @@ extern "C" void __declspec(naked) Hook_SCURK1996_MoverWindow_DisableMaximizeBox(
 	GAMEJMP(0x44E55A);
 }
 
+extern "C" void __declspec(naked) __cdecl Hook_SCURK1996_winscurkApp_InitMainWindow_SCURKPalette(void) {
+	winscurkApp *pThis;
+
+	__asm mov [pThis], ebx
+
+	L_SCURK_winscurkApp_SCURKPalette(pThis);
+
+	__asm {
+		mov ebx, [pThis]
+	}
+	GAMEJMP(0x4591BC)
+}
+
 // And we're gritting our teeth...
 extern "C" void __declspec(naked) __cdecl Hook_SCURK1996_OwlMainCommandLineFix(void) {
 	int nArgs;
@@ -87,7 +100,6 @@ void InstallFixes_SCURK1996(void) {
 
 	InstallRegistryPathingHooks_SCURK1996();
 
-	L_SCURK_InitDOSMacPaletteIdxTable();
 
 	// Hook for palette animation fix
 	SafeVirtualProtect((LPVOID)0x449800, 5, PAGE_EXECUTE_READWRITE);
@@ -283,6 +295,10 @@ void InstallFixes_SCURK1996(void) {
 	NEWJMP((LPVOID)0x4517C8, Hook_SCURK_PaletteWindow_EvLButtonDown);
 	SafeVirtualProtect((LPVOID)0x451894, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x451894, Hook_SCURK_PaletteWindow_EvRButtonDown);
+
+	// winscurkApp::InitMainWindow() detour
+	SafeVirtualProtect((LPVOID)0x458FBD, 511, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x458FBD, Hook_SCURK1996_winscurkApp_InitMainWindow_SCURKPalette);
 
 	// OwlMain() command line fix.
 	SafeVirtualProtect((LPVOID)0x45A777, 7, PAGE_EXECUTE_READWRITE);

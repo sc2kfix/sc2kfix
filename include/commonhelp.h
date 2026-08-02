@@ -217,6 +217,7 @@ static inline BOOL IsEvenUnsigned(DWORD nVal) {
 
 // Borland
 void R_BOR_WRP_DC_SelectObjectPalette(TBC45XDC *pThis, TBC45XPalette *pPal, int nVal);
+TBC45XPalette *R_BOR_WRP_Palette_Construct(TBC45XPalette *pThis, PALETTEENTRY *pPalEnts, int nCols);
 void R_BOR_WRP_CommandEnabler_Enable(TBC45XCommandEnabler *pThis);
 LRESULT R_BOR_WRP_Window_EvCommand(TBC45XWindow *pThis, DWORD dwID, HWND hWndCtl, DWORD dwNotifyCode);
 unsigned int R_BOR_WRP_Window_DefaultProcessing(TBC45XParWindow *pThis);
@@ -230,6 +231,9 @@ TBC45XClientDC *R_BOR_WRP_ClientDC_Construct(TBC45XClientDC *pThis, HWND hWnd);
 void R_BOR_WRP_Dialog_SetupWindow(TBC45XParDialog *pThis);
 void R_BOR_WRP_Dialog_SetCaption(TBC45XParDialog *pThis, char *pCaption);
 void R_BOR_WRP_Dialog_EvClose(TBC45XParDialog *pThis);
+void R_BOR_WRP_Dib_Destruct(TBC45XDib *pThis, char c);
+TBC45XDib *R_BOR_WRP_Dib_Construct_Res(TBC45XDib *pThis, HINSTANCE hInstance, int nResID);
+TBC45XDib *R_BOR_WRP_Dib_Construct_Dimens(TBC45XDib *pThis, LONG nWidth, LONG nHeight, DWORD dwColors, WORD wMode);
 HWND R_BOR_WRP_FrameWindow_GetCommandTarget(TBC45XFrameWindow *pThis);
 int R_BOR_WRP_ListBox_GetSelIndex(TBC45XParListBox *pThis);
 LRESULT R_BOR_WRP_ListBox_GetString(TBC45XParListBox *pThis, char *pString, int nIndex);
@@ -308,6 +312,7 @@ winscurkEditWindow *R_SCURK_WRP_winscurkApp_GetEditWindow(winscurkApp *pThis);
 int R_SCURK_WRP_winscurkApp_mGetFileType(winscurkApp *pThis, char *pFilePath);
 
 void L_SCURK_gDebugOut(const char *fmt, va_list args);
+void L_SCURK_winscurkApp_SCURKPalette(winscurkApp *pThis);
 char *L_SCURK_OwlMainCommandLineFix(char **pArgs, int nArgs);
 extern "C" void __cdecl Hook_SCURK_PlaceTileListDlg_SetupWindow(TPlaceTileListDlg *pThis);
 extern "C" void __cdecl Hook_SCURK_PlaceTileListDlg_EvLButtonDblClk(TPlaceTileListDlg *pThis);
@@ -328,7 +333,6 @@ extern "C" void __cdecl Hook_SCURK_EditableTileSet_mRenderDBShapeToDIB_Dib(cEdit
 extern "C" void __cdecl Hook_SCURK_EditableTileSet_mRenderDBShapeToDIB_Graphic(cEditableTileSet *pThis, CWinGBitmap *pGraphic, int nDBID);
 extern "C" void __cdecl Hook_SCURK_EditableTileSet_mRenderShapeToTile(cEditableTileSet *pThis, TBC45XDib *pDib, int nEdNum);
 extern "C" void __cdecl Hook_SCURK_EditableTileSet_mReadFromDOSFile(cEditableTileSet *pThis, LPCSTR lpPathName);
-void L_SCURK_InitDOSMacPaletteIdxTable();
 extern "C" void __cdecl Hook_SCURK_PaintWindow_mFill(cPaintWindow *pThis, TBC45XPoint *pPoint);
 extern "C" void __cdecl Hook_SCURK_PaintWindow_mClipDrawing(cPaintWindow *pThis);
 extern "C" void __cdecl Hook_SCURK_PaintWindow_mEncodeShape(cPaintWindow *pThis, int nZoomLevel);

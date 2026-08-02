@@ -18,9 +18,9 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
-UINT mischook_scurk_debug = MISCHOOK_SCURK_DEBUG;
+extern BOOL bBuildFixedTiles;
 
-BYTE DOSMacPalTable[256];
+UINT mischook_scurk_debug = MISCHOOK_SCURK_DEBUG;
 
 // SCURK-side debug output function
 
@@ -37,6 +37,87 @@ void L_SCURK_gDebugOut(const char *fmt, va_list args) {
 
 		free(buf);
 	}
+}
+
+// Detour for including the previously non-present palette entries
+// that were used in the DOS and Macintosh sets, and to also adjust
+// the "slow" cycling range to avoid erroneous cycling on a range
+// of 8 that had been cut after the DOS/Macintosh 1.1 version.
+
+void L_SCURK_winscurkApp_SCURKPalette(winscurkApp *pThis) {
+	HWND hWnd;
+	HDC hPrimaryDC, hSavedDC;
+	int nSavedDCHndl;
+	TBC45XDib *pDIB;
+	int nPos;
+	PALETTEENTRY palEntries[HICOLORCNT], *pPalEnt;
+	RGBQUAD *pRGB;
+	TBC45XPalette *pPal;
+
+	hWnd = GetDesktopWindow();
+	hPrimaryDC = GetDC(hWnd);
+	hSavedDC = hPrimaryDC;
+	nSavedDCHndl = SaveDC(hSavedDC);
+	pDIB = (TBC45XDib *)R_BOR_Op_New(sizeof(TBC45XDib));
+	if (pDIB) {
+		R_BOR_WRP_Dib_Construct_Res(pDIB, pThis->HInstance, 22005);
+	}
+	else {
+		pDIB = 0;
+	}
+	pThis->mPaletteDIB = pDIB;
+
+	// Add in the missing entries without having to modify the
+	// base resource.
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0x0A], 79, 53,   0); // DOS Entry (0xCC - 204)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0x0B], 79, 79,   0); // DOS Entry (0xCD - 205)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0x0C], 79, 104,  0); // DOS Entry (0xCE - 206)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0x0D], 79, 130,  0); // DOS Entry (0xCF - 207)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0x0E], 79, 156,  0); // DOS Entry (0xD0 - 208)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0x0F], 79, 181,  0); // DOS Entry (0xD1 - 209)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xE8], 79, 207,  0); // DOS Entry (0xD2 - 210)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xE9], 104, 28,  0); // DOS Entry (0xD3 - 211)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xEA], 104, 53,  0); // DOS Entry (0xD4 - 212)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xEB], 104, 79,  0); // DOS Entry (0xD5 - 213)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xEC], 104, 104, 0); // DOS Entry (0xD6 - 214)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xED], 104, 130, 0); // DOS Entry (0xD7 - 215)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xEE], 104, 156, 0); // DOS Entry (0xD8 - 216)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xEF], 104, 181, 0); // DOS Entry (0xD9 - 217)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xF0], 104, 207, 0); // DOS Entry (0xDA - 218)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xF1], 130, 28,  0); // DOS Entry (0xDB - 219)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xF2], 130, 53,  0); // DOS Entry (0xDC - 220)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xF3], 130, 79,  0); // DOS Entry (0xDD - 221)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xF4], 130, 104, 0); // DOS Entry (0xDE - 222)
+	SetRGBEntry(&pThis->mPaletteDIB->Info->bmiColors[0xF5], 130, 130, 0); // DOS Entry (0xDF - 223)
+
+	for (nPos = 10; nPos < HICOLORCNT - 10; ++nPos) {
+		pPalEnt = &palEntries[nPos];
+		pRGB = &pThis->mPaletteDIB->Info->bmiColors[nPos];
+		pPalEnt->peRed = pRGB->rgbRed;
+		pPalEnt->peGreen = pRGB->rgbGreen;
+		pPalEnt->peBlue = pRGB->rgbBlue;
+		pPalEnt->peFlags = 1;
+	}
+	GetSystemPaletteEntries(hPrimaryDC, 0, 10, &palEntries[0]);
+	GetSystemPaletteEntries(hPrimaryDC, 246, 10, &palEntries[HICOLORCNT - 10]);
+	RestoreDC(hSavedDC, nSavedDCHndl);
+	DeleteDC(hPrimaryDC);
+	for (nPos = 171; nPos < 171 + 49; ++nPos) {
+		pPalEnt = &palEntries[nPos];
+		pPalEnt->peFlags = 1;
+	}
+	for (nPos = 224; nPos < 224 + 16; ++nPos) {
+		pPalEnt = &palEntries[nPos];
+		pPalEnt->peFlags = 1;
+	}
+	pPal = (TBC45XPalette *)R_BOR_Op_New(sizeof(TBC45XPalette));
+	if (pPal) {
+		R_BOR_WRP_Palette_Construct(pPal, palEntries, HICOLORCNT);
+	}
+	else {
+		pPal = 0;
+	}
+	pThis->mScurkPalette = pPal;
 }
 
 // OwlMainCommandLine-specific workaround
@@ -488,13 +569,13 @@ extern "C" void __cdecl Hook_SCURK_winscurkMDIClient_CycleColors(winscurkMDIClie
 		wColSlowCnt = R_SCURK_WRP_GetwColSlowCnt();
 		if (*wColFastCnt == 5) {
 			R_SCURK_WRP_winscurkMDIClient_RotateColors(pThis, 1);
-			AnimatePalette((HPALETTE)pPal->Handle, 0xAB, 0x31, pThis->mFastColors);
+			AnimatePalette((HPALETTE)pPal->Handle, 0xAB, 49, pThis->mFastColors);
 			*wColFastCnt = 0;
 			bRedraw = TRUE;
 		}
 		if (*wColSlowCnt == 30) {
 			R_SCURK_WRP_winscurkMDIClient_RotateColors(pThis, 0);
-			AnimatePalette((HPALETTE)pPal->Handle, 0xE0, 0x10, pThis->mSlowColors);
+			AnimatePalette((HPALETTE)pPal->Handle, 0xE0, 8, pThis->mSlowColors);
 			*wColSlowCnt = 0;
 			bRedraw = TRUE;
 		}
@@ -551,6 +632,78 @@ extern "C" void __cdecl Hook_SCURK_winscurkMDIClient_CycleColors(winscurkMDIClie
 
 // cEditableTileSet functions
 
+static void L_SCURK_TranslateConvert(cEditableTileSet *pThis, WORD nDBID, int nConvType, int nConvRepl) {
+	BYTE *pTileBits, pTileBitCount, pTileChunkMode, pBit;
+	WORD nShapeWidth, nShapeHeight, nCurrWidth;
+	BOOL bDone;
+	WORD pTileRemainingBitCount;
+
+	if (pThis->mTileSet) {
+		nCurrWidth = 0;
+		pTileBits = pThis->mTiles[nDBID];
+		if (pTileBits) {
+			nShapeHeight = pThis->mTileSet->pData[nDBID].sprHeader.wHeight;
+			nShapeWidth = pThis->mTileSet->pData[nDBID].sprHeader.wWidth;
+
+			bDone = 0;
+			while (!bDone) {
+				pTileBitCount = SPRITEDATA(pTileBits)->nCount;
+				pTileChunkMode = SPRITEDATA(pTileBits)->nChunkMode;
+				pTileBits = (BYTE *)&SPRITEDATA(pTileBits)->pBuf;
+				switch (pTileChunkMode) {
+				case MIF_CM_EMPTY:
+					continue;
+				case MIF_CM_NEWROWSTART:
+					nCurrWidth = 0;
+					bDone = nShapeHeight == 0;
+					--nShapeHeight;
+					break;
+				case MIF_CM_ENDOFSPRITE:
+					bDone = 1;
+					break;
+				case MIF_CM_SKIPPIXELS:
+					nCurrWidth += pTileBitCount;
+					break;
+				case MIF_CM_PROCPIXELS:
+					for (pTileRemainingBitCount = pTileBitCount; pTileRemainingBitCount; ++nCurrWidth) {
+						--pTileRemainingBitCount;
+						// *pTileBits here in this case is nPixelIndex (colour lookup palette index)
+						//
+						// 'if (nCurrWidth < nShapeWidth)' removed
+						// to avoid certain columns of pixels being
+						// missed during palette processing.
+						{
+							if (*pTileBits == 0xFC)
+								pBit = 0x61;
+							else {
+								// Exception needed in this case.
+								// Under DOS you want the bit to be 0xFF/White
+								// while under Mac you want it to be 0x00/Black.
+								if (nConvType == REV_DOSMAC)
+									pBit = (*pTileBits == 0xFF) ? 0x00 : L_GetTranslatedDOSMacPaletteIdx(*pTileBits, nConvRepl);
+								else if (nConvType == REV_WIN)
+									pBit = L_GetAdjustedPaletteIdx(*pTileBits, nConvRepl);
+								else
+									pBit = *pTileBits;
+							}
+							*pTileBits = pBit;
+						}
+						++pTileBits;
+					}
+					if (!IsEvenUnsigned(pTileBitCount)) {
+						++pTileBits;
+						++nCurrWidth;
+					}
+					break;
+				default:
+					bDone = 1;
+					break;
+				}
+			}
+		}
+	}
+}
+
 #if SPRITE_ARCHIVE_LOADING
 static void L_SCURK_LoadDataArchive(cEditableTileSet *pTileSet, const char *pArcPath) {
 	FILE *f;
@@ -606,6 +759,8 @@ static void L_SCURK_LoadDataArchive(cEditableTileSet *pTileSet, const char *pArc
 
 				fseek(f, shapHeader.dwSize, SEEK_SET);
 				fread(pTileSet->mTiles[nDBID], nSize, 1, f);
+
+				L_SCURK_TranslateConvert(pTileSet, nDBID, REV_WIN, 3);
 			}
 			R_SCURK_WRP_gFreeBlock(pSpriteArc);
 			pSpriteArc = 0;
@@ -692,51 +847,59 @@ extern "C" LONG __cdecl Hook_SCURK_EditableTileSet_mReadFromFile(cEditableTileSe
 			R_SCURK_WRP_gUpdateWaitWindow();
 		++nIdx;
 	} while (nIdx < pThis->mTileSet->nSprites);
+	// Added this block here due to some interesting 
+	// palette index strangeness that exists within 
+	// certain tiles in the TILES.DB
+	for (nIdx = 0; nIdx < SPRITE_COUNT; ++nIdx) {
+		WORD nDBID = pThis->mDBIndexFromShapeNum[nIdx];
+		L_SCURK_TranslateConvert(pThis, nDBID, REV_WIN, 3);
+	}
 	R_SCURK_WRP_gUpdateWaitWindow();
 	pThis->mTileSet[514].pData[0].sprHeader.wWidth += 4;
 	pThis->mTileSet[98].pData[0].nSprNum += 2;
 	pThis->mTileSet[543].pData[0].nSprNum += 4;
 	pThis->mTileSet[126].pData[0].sprHeader.sprOffset.sprLong += 2;
 	fclose(f);
-	if (!bDisableFixedTiles) {
-		if (nRes) {
-			// Leave this portion here, it specifically deals with
-			// loading the main game sprite archives.
+	if (nRes) {
+		// Leave this portion here, it specifically deals with
+		// loading the main game sprite archives.
 #if SPRITE_ARCHIVE_LOADING
-			winscurkApp *pSCApp;
-			char szDataPath[MAX_PATH + 1], szArchiveName[MAX_PATH + 1];
-			BOOL bArcsExist;
+		winscurkApp *pSCApp;
+		char szDataPath[MAX_PATH + 1], szArchiveName[MAX_PATH + 1];
+		BOOL bArcsExist;
 
-			pSCApp = R_SCURK_WRP_winscurkApp_GetPointerToClass();
+		pSCApp = R_SCURK_WRP_winscurkApp_GetPointerToClass();
 
-			bArcsExist = FALSE;
-			sprintf_s(szDataPath, "%s\\Data", pSCApp->mExePath);
-			if (_access(szDataPath, 0) != -1) {
-				sprintf_s(szArchiveName, "%s\\SPECIAL.DAT", szDataPath);
+		bArcsExist = FALSE;
+		sprintf_s(szDataPath, "%s\\Data", pSCApp->mExePath);
+		if (_access(szDataPath, 0) != -1) {
+			sprintf_s(szArchiveName, "%s\\SPECIAL.DAT", szDataPath);
+			if (FileExists(szArchiveName)) {
+				sprintf_s(szArchiveName, "%s\\LARGE.DAT", szDataPath);
 				if (FileExists(szArchiveName)) {
-					sprintf_s(szArchiveName, "%s\\LARGE.DAT", szDataPath);
-					if (FileExists(szArchiveName)) {
-						sprintf_s(szArchiveName, "%s\\SMALLMED.DAT", szDataPath);
-						if (FileExists(szArchiveName))
-							bArcsExist = TRUE;
-					}
+					sprintf_s(szArchiveName, "%s\\SMALLMED.DAT", szDataPath);
+					if (FileExists(szArchiveName))
+						bArcsExist = TRUE;
 				}
 			}
-
-			if (bArcsExist) {
-				sprintf_s(szArchiveName, "%s\\SPECIAL.DAT", szDataPath);
-				L_SCURK_LoadDataArchive(pThis, szArchiveName);
-
-				sprintf_s(szArchiveName, "%s\\LARGE.DAT", szDataPath);
-				L_SCURK_LoadDataArchive(pThis, szArchiveName);
-
-				sprintf_s(szArchiveName, "%s\\SMALLMED.DAT", szDataPath);
-				L_SCURK_LoadDataArchive(pThis, szArchiveName);
-			}
-#endif
-			L_SCURK_LoadFixedLargeSpritesRsrc(pThis);
-			R_SCURK_WRP_gUpdateWaitWindow();
 		}
+
+		if (bArcsExist) {
+			sprintf_s(szArchiveName, "%s\\SPECIAL.DAT", szDataPath);
+			L_SCURK_LoadDataArchive(pThis, szArchiveName);
+
+			sprintf_s(szArchiveName, "%s\\LARGE.DAT", szDataPath);
+			L_SCURK_LoadDataArchive(pThis, szArchiveName);
+
+			sprintf_s(szArchiveName, "%s\\SMALLMED.DAT", szDataPath);
+			L_SCURK_LoadDataArchive(pThis, szArchiveName);
+		}
+#endif
+		L_SCURK_LoadFixedLargeSpritesRsrc(pThis);
+#if !SPRITE_ARCHIVE_LOADING
+		R_SCURK_WRP_EditableTileSet_mBuildSmallMedTiles(pThis);
+#endif
+		R_SCURK_WRP_gUpdateWaitWindow();
 	}
 	return nRes;
 }
@@ -785,6 +948,28 @@ static void L_SCURK_WriteMIFFShap(cEditableTileSet *pThis, FILE *f, int nShapNum
 	fwrite(pThis->mTiles[nDBID], pThis->mTileSizeTable[nDBID], 1, f);
 }
 
+static void L_SCURK_WriteEmptyMIFFShap(cEditableTileSet *pThis, FILE *f, int nShapNum, int nShapSubtractStart) {
+	DWORD dwBuf, dwEmpty = 0;
+	WORD wBuf;
+	int nDBID;
+	char szHeadName[4];
+
+	nDBID = pThis->mDBIndexFromShapeNum[nShapNum] - nShapSubtractStart;
+	memcpy(szHeadName, "SHAP", 4);
+	fwrite(szHeadName, 1, sizeof(szHeadName), f);
+	dwBuf = _byteswap_ulong(4 + sizeof(tilesetShapHeader_t));
+	fwrite(&dwBuf, sizeof(dwBuf), 1, f);
+	wBuf = _byteswap_ushort(nShapNum - nShapSubtractStart);
+	fwrite(&wBuf, sizeof(wBuf), 1, f);
+	wBuf = _byteswap_ushort(pThis->mTileSet->pData[nDBID].sprHeader.wWidth);
+	fwrite(&wBuf, sizeof(wBuf), 1, f);
+	wBuf = _byteswap_ushort(0);
+	fwrite(&wBuf, sizeof(wBuf), 1, f);
+	dwBuf = _byteswap_ulong(4);
+	fwrite(&dwBuf, sizeof(dwBuf), 1, f);
+	fwrite(&dwEmpty, 4, 1, f);
+}
+
 extern "C" int __cdecl Hook_SCURK_EditableTileSet_mWriteToMIFFFile(cEditableTileSet *pThis, LPCSTR lpPathName) {
 	int ret;
 	FILE *f;
@@ -809,7 +994,10 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mWriteToMIFFFile(cEditableTile
 			nShapNum = pThis->mShapeNumFromEditableNum[nEdNum];
 			nDBID = pThis->mDBIndexFromShapeNum[nShapNum];
 
-			dwContLen += pThis->mTileSizeTable[nDBID - SPRITE_LARGE_START] + pThis->mTileSizeTable[nDBID - SPRITE_MEDIUM_START] + pThis->mTileSizeTable[nDBID];
+			if (bBuildFixedTiles)
+				dwContLen += 4 + 4 + pThis->mTileSizeTable[nDBID];
+			else
+				dwContLen += pThis->mTileSizeTable[nDBID - SPRITE_LARGE_START] + pThis->mTileSizeTable[nDBID - SPRITE_MEDIUM_START] + pThis->mTileSizeTable[nDBID];
 			if (pThis->mTileIsRenamed[nEdNum]) {
 				nNameLen = strlen(pThis->mTileNames[nEdNum]);
 				pThis->mTileNames[nNameLen] = 0;
@@ -860,7 +1048,7 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mWriteToMIFFFile(cEditableTile
 		// purposes.
 		// szInfoPortion[54] = mTileFileName[0]; // Remote var unused.
 		strcpy_s(&szInfoPortion[94], sizeof("winSCURK"), "winSCURK");
-		*(DWORD *)szInfoPortion = '_WIN'; // This gets reversed
+		*(DWORD *)szInfoPortion = '_W00'; // This gets reversed
 		fwrite(szInfoPortion, 1, sizeof(szInfoPortion), f);
 
 		// Next part:
@@ -917,11 +1105,20 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mWriteToMIFFFile(cEditableTile
 			// Large - subtract by SPRITE_SMALL_START
 			L_SCURK_WriteMIFFShap(pThis, f, nShapNum, SPRITE_SMALL_START);
 
-			// Small - subtract by SPRITE_MEDIUM_START
-			L_SCURK_WriteMIFFShap(pThis, f, nShapNum, SPRITE_MEDIUM_START);
+			if (!bBuildFixedTiles) {
+				// Small - subtract by SPRITE_MEDIUM_START
+				L_SCURK_WriteMIFFShap(pThis, f, nShapNum, SPRITE_MEDIUM_START);
 
-			// Tiny - subtract by SPRITE_LARGE_START
-			L_SCURK_WriteMIFFShap(pThis, f, nShapNum, SPRITE_LARGE_START);
+				// Tiny - subtract by SPRITE_LARGE_START
+				L_SCURK_WriteMIFFShap(pThis, f, nShapNum, SPRITE_LARGE_START);
+			}
+			else {
+				// Small - subtract by SPRITE_MEDIUM_START
+				L_SCURK_WriteEmptyMIFFShap(pThis, f, nShapNum, SPRITE_MEDIUM_START);
+
+				// Tiny - subtract by SPRITE_LARGE_START
+				L_SCURK_WriteEmptyMIFFShap(pThis, f, nShapNum, SPRITE_LARGE_START);
+			}
 		}
 		fclose(f);
 		ret = 1;
@@ -930,79 +1127,13 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mWriteToMIFFFile(cEditableTile
 	return ret;
 }
 
-static void L_SCURK_TranslateFromMac(cEditableTileSet *pThis, WORD nDBID) {
-	BYTE *pTileBits, pTileBitCount, pTileChunkMode, pBit;
-	WORD nShapeWidth, nShapeHeight, nCurrWidth;
-	BOOL bDone;
-	WORD pTileRemainingBitCount;
-
-	if (pThis->mTileSet) {
-		nCurrWidth = 0;
-		pTileBits = pThis->mTiles[nDBID];
-		if (pTileBits) {
-			nShapeHeight = pThis->mTileSet->pData[nDBID].sprHeader.wHeight;
-			nShapeWidth = pThis->mTileSet->pData[nDBID].sprHeader.wWidth;
-
-			bDone = 0;
-			while (!bDone) {
-				pTileBitCount = SPRITEDATA(pTileBits)->nCount;
-				pTileChunkMode = SPRITEDATA(pTileBits)->nChunkMode;
-				pTileBits = (BYTE *)&SPRITEDATA(pTileBits)->pBuf;
-				switch (pTileChunkMode) {
-				case MIF_CM_EMPTY:
-					continue;
-				case MIF_CM_NEWROWSTART:
-					nCurrWidth = 0;
-					bDone = nShapeHeight == 0;
-					--nShapeHeight;
-					break;
-				case MIF_CM_ENDOFSPRITE:
-					bDone = 1;
-					break;
-				case MIF_CM_SKIPPIXELS:
-					nCurrWidth += pTileBitCount;
-					break;
-				case MIF_CM_PROCPIXELS:
-					for (pTileRemainingBitCount = pTileBitCount; pTileRemainingBitCount; ++nCurrWidth) {
-						--pTileRemainingBitCount;
-						// *pTileBits here in this case is nPixelIndex (colour lookup palette index)
-						//
-						// 'if (nCurrWidth < nShapeWidth)' removed
-						// to avoid certain columns of pixels being
-						// missed during palette processing.
-						{
-							if (*pTileBits == 0xFC)
-								pBit = 0x61;
-							else {
-								// Exception needed in this case.
-								// Under DOS you want the bit to be 0xFF/White
-								// while under Mac you want it to be 0x00/Black.
-								pBit = (*pTileBits == 0xFF) ? 0x00 : DOSMacPalTable[*pTileBits];
-							}
-							*pTileBits = pBit;
-						}
-						++pTileBits;
-					}
-					if (!IsEvenUnsigned(pTileBitCount)) {
-						++pTileBits;
-						++nCurrWidth;
-					}
-					break;
-				default:
-					bDone = 1;
-					break;
-				}
-			}
-		}
-	}
-}
-
 extern "C" int __cdecl Hook_SCURK_EditableTileSet_mReadFromMIFFFile(cEditableTileSet *pThis, LPCSTR lpPathName) {
 	int ret;
 	FILE *f;
 	tilesetMainHeader_t mainHeader;
 	tilesetHeadInfo_t infoHeader;
 	char szHeader[4];
+	int nRevType;
 	BOOL bMac;
 	tilesetTileInfo_t tileHeader;
 	tilesetChunkHeader_t chunkHeader;
@@ -1032,8 +1163,11 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mReadFromMIFFFile(cEditableTil
 			if (memcmp(infoHeader.szHead, "INFO", 4) == 0) {
 				fread(szHeader, 1, 4, f);
 				fseek(f, -4, SEEK_CUR);
+				nRevType = REV_WIN;
 				if (memcmp(szHeader, "_MAC", 4) == 0)
-					bMac = TRUE;
+					nRevType = REV_DOSMAC;
+				else if (memcmp(szHeader, "00W_", 4) == 0)
+					nRevType = REV_W00;
 
 				mainHeader.dwSize = _byteswap_ulong(mainHeader.dwSize);
 				infoHeader.dwSize = _byteswap_ulong(infoHeader.dwSize);
@@ -1060,7 +1194,7 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mReadFromMIFFFile(cEditableTil
 							// MIF tilesets. It is necessary as a result of the
 							// empty SHAP entries only containing the size + 4
 							// (The size of the SHAP header).
-							if (bMac) {
+							if (nRevType == REV_DOSMAC) {
 								fread(szHeader, 1, 4, f);
 								fseek(f, -4, SEEK_CUR);
 								if (memcmp(szHeader, "SHAP", 4) == 0 && !chunkHeader.dwSize)
@@ -1078,20 +1212,34 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mReadFromMIFFFile(cEditableTil
 							shapHeader.nHeight = _byteswap_ushort(nHeight);
 							shapHeader.dwSize = _byteswap_ulong(dwSize);
 
+							int nConvRepl = 3;
+							if (nRevType == REV_DOSMAC) {
+								nConvRepl = 0;
+								if (GET_OVERALL_SPRITE(shapHeader.nSpriteID, SPRITE_SMALL_MILITARY_HANGAR1)) {
+									if (nHangar1Mode == HANGAR1_ANIM)
+										nConvRepl = 1;
+									else if (nHangar1Mode != HANGAR1_SHUT)
+										nConvRepl = 2;
+								}
+							}
+
 							nDBID = pThis->mDBIndexFromShapeNum[shapHeader.nSpriteID];
 
 							if (pThis->mTiles[nDBID])
 								R_SCURK_WRP_gFreeBlock(pThis->mTiles[nDBID]);
 							pThis->mTiles[nDBID] = (BYTE *)R_SCURK_WRP_gAllocBlock(shapHeader.dwSize);
 							memset(pThis->mTiles[nDBID], 0, shapHeader.dwSize);
-							pThis->mTileSet->pData[nDBID].sprHeader.wHeight = shapHeader.nHeight;
-							pThis->mTileSet->pData[nDBID].sprHeader.wWidth = shapHeader.nWidth;
-							pThis->mTileSizeTable[nDBID] = shapHeader.dwSize;
+							if (!bBuildFixedTiles || (bBuildFixedTiles && shapHeader.nSpriteID >= SPRITE_LARGE_START)) {
+								pThis->mTileSet->pData[nDBID].sprHeader.wHeight = shapHeader.nHeight;
+								pThis->mTileSet->pData[nDBID].sprHeader.wWidth = shapHeader.nWidth;
+								pThis->mTileSizeTable[nDBID] = shapHeader.dwSize;
 
-							fread(pThis->mTiles[nDBID], shapHeader.dwSize, 1, f);
-
-							if (bMac)
-								L_SCURK_TranslateFromMac(pThis, nDBID);
+								fread(pThis->mTiles[nDBID], shapHeader.dwSize, 1, f);
+								if (nRevType != REV_W00)
+									L_SCURK_TranslateConvert(pThis, nDBID, nRevType, nConvRepl);
+							}
+							else if (bBuildFixedTiles && shapHeader.nSpriteID < SPRITE_LARGE_START)
+								fseek(f, shapHeader.dwSize, SEEK_CUR);
 						}
 						else if (memcmp(chunkHeader.szHead, "NAME", 4) == 0) {
 							fread(&nameHeader, sizeof(tilesetNameHeader_t), 1, f);
@@ -1113,6 +1261,8 @@ extern "C" int __cdecl Hook_SCURK_EditableTileSet_mReadFromMIFFFile(cEditableTil
 
 						ret = 1;
 					}
+					if (bBuildFixedTiles)
+						R_SCURK_WRP_EditableTileSet_mBuildSmallMedTiles(pThis);
 				}
 			}
 		}
@@ -1444,12 +1594,22 @@ extern "C" void __cdecl Hook_SCURK_EditableTileSet_mRenderShapeToTile(cEditableT
 	}
 }
 
-static void L_SCURK_TranslateFromDOS(cEditableTileSet *pThis, WORD nDBID, BYTE *pDOSTileBuf) {
+static void L_SCURK_TranslateFromDOS(cEditableTileSet *pThis, WORD nShapNum, WORD nDBID, BYTE *pDOSTileBuf, bool bReadOnly) {
 	BYTE *pDOSTileBits, *pTileBitsBuf, *pTileBits;
 	int nTileSize;
 	BOOL bDone;
 	BYTE pDOSTileChunkMode, pDOSTileBitCount;
 	WORD pDOSTileRemainingBitCount;
+
+	int nConvRepl = 0;
+	if (bReadOnly) {
+		if (GET_OVERALL_SPRITE(nShapNum, SPRITE_SMALL_MILITARY_HANGAR1)) {
+			if (nHangar1Mode == HANGAR1_ANIM)
+				nConvRepl = 1;
+			else if (nHangar1Mode != HANGAR1_SHUT)
+				nConvRepl = 2;
+		}
+	}
 
 	if (pThis->mTiles[nDBID])
 		R_SCURK_WRP_gFreeBlock(pThis->mTiles[nDBID]);
@@ -1485,7 +1645,7 @@ static void L_SCURK_TranslateFromDOS(cEditableTileSet *pThis, WORD nDBID, BYTE *
 			pTileBitsBuf = (BYTE *)&SPRITEDATA(pTileBitsBuf)->pBuf;
 			pDOSTileRemainingBitCount = pDOSTileBitCount;
 			for (nTileSize += 2; pDOSTileRemainingBitCount--; ++nTileSize)
-				*pTileBitsBuf++ = DOSMacPalTable[*pDOSTileBits++];
+				*pTileBitsBuf++ = L_GetTranslatedDOSMacPaletteIdx(*pDOSTileBits++, nConvRepl);
 			if (!IsEvenUnsigned(pDOSTileBitCount) && pTileBits) {
 				++*pTileBits;
 				++pTileBitsBuf;
@@ -1516,6 +1676,7 @@ extern "C" void __cdecl Hook_SCURK_EditableTileSet_mReadFromDOSFile(cEditableTil
 	FILE *f;
 	BYTE *lpBuffer;
 	tilMainStruct_t Buffer;
+	bool bReadOnly;
 	tilHeader_t *lpLargeShapeBuf, *lpSmallShapeBuf, *lpOtherShapeBuf;
 	DWORD dwLargeSize, dwLargeOffset, dwSmallSize, dwSmallOffset, dwOtherSize, dwOtherOffset;
 	WORD nShapNum, nDBID;
@@ -1536,6 +1697,7 @@ extern "C" void __cdecl Hook_SCURK_EditableTileSet_mReadFromDOSFile(cEditableTil
 	if (f) {
 		lpBuffer = (BYTE *)R_SCURK_WRP_gAllocBlock(0xFFFF);
 		fread(&Buffer, 1, 0x80, f);
+		bReadOnly = (memcmp(Buffer.readOnlyFile, "READONLY.XXX", 12) == 0) ? true : false;
 		lpLargeShapeBuf = (tilHeader_t *)R_SCURK_WRP_gAllocBlock(0x2EE0);
 		fseek(f, Buffer.dwLargeOffset, SEEK_SET);
 		fread(lpLargeShapeBuf, 1, 0x2EE0, f);
@@ -1567,7 +1729,7 @@ extern "C" void __cdecl Hook_SCURK_EditableTileSet_mReadFromDOSFile(cEditableTil
 			fseek(f, dwLargeSize + dwLargeOffset, SEEK_SET);
 			fread(lpBuffer, 1, 0xFFFF, f);
 			if (validTiles[nShapNum].nValidated == 1)
-				L_SCURK_TranslateFromDOS(pThis, nDBID, lpBuffer);
+				L_SCURK_TranslateFromDOS(pThis, nShapNum, nDBID, lpBuffer, bReadOnly);
 		}
 
 		lpOtherShapeBuf = (tilHeader_t *)R_SCURK_WRP_gAllocBlock(0x2EE0);
@@ -1601,7 +1763,7 @@ extern "C" void __cdecl Hook_SCURK_EditableTileSet_mReadFromDOSFile(cEditableTil
 			fseek(f, dwOtherSize + dwOtherOffset, SEEK_SET);
 			fread(lpBuffer, 1, 0xFFFF, f);
 			if (validTiles[nShapNum].nValidated == 1)
-				L_SCURK_TranslateFromDOS(pThis, nDBID, lpBuffer);
+				L_SCURK_TranslateFromDOS(pThis, nShapNum, nDBID, lpBuffer, bReadOnly);
 		}
 
 		lpSmallShapeBuf = (tilHeader_t *)R_SCURK_WRP_gAllocBlock(0x2EE0);
@@ -1645,63 +1807,16 @@ extern "C" void __cdecl Hook_SCURK_EditableTileSet_mReadFromDOSFile(cEditableTil
 			// a) the tile has been successfully validated once here and now.
 			// b) the tile isn't valid (and wasn't previously valid - ie from a prior archive - it's a skip case)
 			if (validTiles[nShapNum].nValidated != 2)
-				L_SCURK_TranslateFromDOS(pThis, nDBID, lpBuffer);
+				L_SCURK_TranslateFromDOS(pThis, nShapNum, nDBID, lpBuffer, bReadOnly);
 		}
 		
-		R_SCURK_WRP_gFreeBlock(lpOtherShapeBuf);
 		R_SCURK_WRP_gFreeBlock(lpSmallShapeBuf);
+		R_SCURK_WRP_gFreeBlock(lpOtherShapeBuf);
 		R_SCURK_WRP_gFreeBlock(lpLargeShapeBuf);
 
 		R_SCURK_WRP_gFreeBlock(lpBuffer);
 		fclose(f);
 	}
-}
-
-void L_SCURK_InitDOSMacPaletteIdxTable() {
-	int i;
-
-	for (i = 0; i < 256; ++i) {
-		if (i >= 0 && i < 204)
-			DOSMacPalTable[i] = i + 16;
-		else if (i >= 224 && i < 239)
-			DOSMacPalTable[i] = i;
-		else
-			DOSMacPalTable[i] = 0;
-	}
-
-	// This fixes certain colours being lost during the DOS/Mac -> Windows
-	// translation process.
-	// It must be noted that these cases were manually determined during
-	// the comprehensive examination of certain tiles and their prior
-	// pre-conversion palette indices.
-	// Based on further checks, those currently set "did" exist in the
-	// DOS version of SCURK however in the Macintosh version any attempts
-	// to "pick" the colour will result in no entry being selected - while
-	// in the Windows version they simply don't exist.
-	//
-	// Tilesets used for nearest-confirmation cases:
-	// - FUTURE.TIL
-	// - ORIGINAL.TIL
-	//
-	// // CHECK AS NEEDED - these values
-	//    aren't fatal regardless, previously they were just being set to
-	//    0x00 - which caused a noticeable negative effect on certain tiles
-	//    (see the Marina, Seaport Warehouse, Seaport Loading Bar, Army Hangar,
-	//    Military Control Tower)
-	DOSMacPalTable[1] =   0x00; // This was previously 0x11 - which would "pick" within the animated range - not desirable.
-	DOSMacPalTable[204] = 0x38;
-	DOSMacPalTable[205] = 0x03;
-	DOSMacPalTable[210] = 0x44;
-	DOSMacPalTable[211] = 0x22;
-	DOSMacPalTable[212] = 0x7E;
-	DOSMacPalTable[213] = 0x7C;
-	DOSMacPalTable[215] = 0x03;
-	DOSMacPalTable[218] = 0x3D;
-	DOSMacPalTable[219] = 0x01;
-	DOSMacPalTable[222] = 0x79;
-	DOSMacPalTable[255] = 0xFF; // Only used during DOS conversion, a bad idea for Mac.
-
-	ConsoleLog(LOG_INFO, "Initialize DOS/Mac -> Windows Palette Index Table.\n");
 }
 
 // cPaintWindow functions
@@ -1864,6 +1979,29 @@ static void L_SCURK_FileAddConvMenu(HMENU hMenu, DWORD dwID, const void *pRetAdd
 	}
 }
 
+static void L_SCURK_OptionsMenuAdd(HMENU hMenu, DWORD dwID, int nMenuPos, const void *pRetAddr) {
+	HMENU hOptionsPopup;
+	MENUITEMINFO miiOptionsPopup;
+
+	if (mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_MENU)
+		ConsoleLog(LOG_DEBUG, "0x%06X -> OptionsMenuAdd(0x%06X, %u, %d)\n", pRetAddr, hMenu, dwID, nMenuPos);
+	miiOptionsPopup.cbSize = sizeof(MENUITEMINFO);
+	miiOptionsPopup.fMask = MIIM_SUBMENU;
+	if (!GetMenuItemInfo(hMenu, nMenuPos, TRUE, &miiOptionsPopup) && mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_MENU) {
+		ConsoleLog(LOG_DEBUG, "MISC: Options GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
+		return;
+	}
+	hOptionsPopup = miiOptionsPopup.hSubMenu;
+	if (!InsertMenu(hOptionsPopup, -1, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL) && mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_MENU) {
+		ConsoleLog(LOG_DEBUG, "MISC: Options InsertMenuA #1 failed, error = 0x%08X.\n", GetLastError());
+		return;
+	}
+	if (!InsertMenu(hOptionsPopup, -1, MF_BYPOSITION|MF_STRING, IDM_SCRK_OPTIONS_TILCONV_CONFIG, "Tile Conversion/Defaults...") && mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_MENU) {
+		ConsoleLog(LOG_DEBUG, "MISC: Options InsertMenuA #2 failed, error = 0x%08X.\n", GetLastError());
+		return;
+	}
+}
+
 extern "C" int __cdecl Hook_SCURK_winscurkMDIFrame_AssignMenu(winscurkMDIFrame *pThis, TBC45XResId menuResID) {
 	winscurkApp *pSCApp;
 	HMENU hDefaultMenu, hMenu;
@@ -1890,16 +2028,19 @@ extern "C" int __cdecl Hook_SCURK_winscurkMDIFrame_AssignMenu(winscurkMDIFrame *
 		if (mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_MENU)
 			ConsoleLog(LOG_DEBUG, "0x%06X -> winscurkMDIFrame::AssignMenu(%u): - PlaceWindow Menu\n", _ReturnAddress(), (DWORD)menuResID.Id);
 		L_SCURK_FileAddConvMenu(hMenu, (DWORD)pThis->__wndHead.pWnd->Attr.Menu.Id, _ReturnAddress());
+		L_SCURK_OptionsMenuAdd(hMenu, (DWORD)pThis->__wndHead.pWnd->Attr.Menu.Id, 1, _ReturnAddress());
 	}
 	else if (hMenu && pThis->__wndHead.pWnd->Attr.Menu.Id == (const char *)300) {
 		if (mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_MENU)
 			ConsoleLog(LOG_DEBUG, "0x%06X -> winscurkMDIFrame::AssignMenu(%u): - MoverWindow Menu\n", _ReturnAddress(), (DWORD)menuResID.Id);
 		L_SCURK_FileAddConvMenu(hMenu, (DWORD)pThis->__wndHead.pWnd->Attr.Menu.Id, _ReturnAddress());
+		L_SCURK_OptionsMenuAdd(hMenu, (DWORD)pThis->__wndHead.pWnd->Attr.Menu.Id, 2, _ReturnAddress());
 	}
 	else if (hMenu && pThis->__wndHead.pWnd->Attr.Menu.Id == (const char *)400) {
 		if (mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_MENU)
 			ConsoleLog(LOG_DEBUG, "0x%06X -> winscurkMDIFrame::AssignMenu(%u): - EditWindow Menu\n", _ReturnAddress(), (DWORD)menuResID.Id);
 		L_SCURK_FileAddConvMenu(hMenu, (DWORD)pThis->__wndHead.pWnd->Attr.Menu.Id, _ReturnAddress());
+		L_SCURK_OptionsMenuAdd(hMenu, (DWORD)pThis->__wndHead.pWnd->Attr.Menu.Id, 2, _ReturnAddress());
 
 		HMENU hEditPopup;
 		MENUITEMINFO miiEditPopup;
@@ -1989,17 +2130,7 @@ cPaletteWindow *L_SCURK_LoadOwnPaletteResources(cPaletteWindow *pThis) {
 	FreeResource(hResDat);
 	pDat = 0;
 
-	// Palette - Map of colours to palette indices (graphic <-> index table)
-	hRsrc = FindResourceA(hSC2KFixModule, MAKEINTRESOURCEA(IDR_SCRKPALMAP), "RAW");
-	if (!hRsrc) {
-		R_BOR_WRP_Window_MessageBox((TBC45XWindow *)pThis, "Resource Load Failed", 0, 0);
-		exit(0);
-	}
-	hResDat = LoadResource(hSC2KFixModule, hRsrc);
-	pDat = LockResource(hResDat);
-	memcpy(pThis->pPaletteBuffer, pDat, 1024);
-	FreeResource(hResDat);
-	pDat = 0;
+	memset(pThis->pPaletteBuffer, 0, 1024);
 
 	// Palette - Bitmap containing the palette colours in their absolute positions.
 	hRsrc = FindResourceA(hSC2KFixModule, MAKEINTRESOURCEA(IDR_SCRKPALBMP), "RAW");
@@ -2010,6 +2141,20 @@ cPaletteWindow *L_SCURK_LoadOwnPaletteResources(cPaletteWindow *pThis) {
 	hResDat = LoadResource(hSC2KFixModule, hRsrc);
 	pDat = LockResource(hResDat);
 	memcpy(pThis->pDibOne->Bits, pDat, 256);
+	// Set the BMP <-> palette selection mapping.
+	for (int nPos = 0; nPos < 256; ++nPos) {
+		BYTE nPPos = pThis->pDibOne->Bits[nPos];
+		if (nPPos == 0xFC)
+			memset(&pThis->pPaletteBuffer[nPPos], 0xFF, sizeof(pThis->pPaletteBuffer[nPPos]));
+		else if ((nPos >= 40 && nPos <= 47) ||
+			(nPos >= 125 && nPos <= 126) ||
+			(nPos >= 238 && nPos <= 239))
+			ULOWORD(ULOBYTE(pThis->pPaletteBuffer[nPPos])) = 0xEF;
+		else
+			ULOWORD(ULOBYTE(pThis->pPaletteBuffer[nPPos])) = nPos;
+		if (mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_PALETTE)
+			ConsoleLog(LOG_DEBUG, "BMP <-> Palette Selection Mapping: (%d - 0x%02X) (%u - 0x%02X) (%u - 0x%06X)\n", nPos, nPos, nPPos, nPPos, pThis->pPaletteBuffer[nPPos], pThis->pPaletteBuffer[nPPos]);
+	}
 	FreeResource(hResDat);
 	pDat = 0;
 
@@ -2026,7 +2171,7 @@ extern "C" void __cdecl Hook_SCURK_PaletteWindow_EvLButtonDown(cPaletteWindow *p
 	nScrollPos = GetScrollPos(pThis->HWindow, SB_VERT);
 	nRow = nScrollPos + (int)(pt->y / pThis->floatTwo);
 	nHorizPos = (int)(pt->x / pThis->floatOne);
-	if ((nRow == 10 && (nHorizPos > 11 && nHorizPos < 15)) || nRow == 11 || (nRow == 13 && nHorizPos > 7))
+	if ((nRow == 1 && nHorizPos == 14) || (nRow == 8 && (nHorizPos >= 13 && nHorizPos <= 14)) || (nRow == 13 && nHorizPos >= 8))
 		nSound = 3;
 	else {
 		pThis->colFrGrnd = nHorizPos + 16 * nRow;
@@ -2047,7 +2192,7 @@ extern "C" void __cdecl Hook_SCURK_PaletteWindow_EvRButtonDown(cPaletteWindow *p
 	nScrollPos = GetScrollPos(pThis->HWindow, SB_VERT);
 	nRow = nScrollPos + (int)(pt->y / pThis->floatTwo);
 	nHorizPos = (int)(pt->x / pThis->floatOne);
-	if ((nRow == 10 && (nHorizPos > 11 && nHorizPos < 15)) || nRow == 11 || (nRow == 13 && nHorizPos > 7))
+	if ((nRow == 1 && nHorizPos == 14) || (nRow == 8 && (nHorizPos >= 13 && nHorizPos <= 14)) || (nRow == 13 && nHorizPos >= 8))
 		nSound = 3;
 	else {
 		pThis->colBkGrnd = nHorizPos + 16 * nRow;
@@ -2067,7 +2212,8 @@ extern "C" void __cdecl Hook_SCURK_MenuItemEnabler_Enable(TBC45XMenuItemEnabler 
 	nEnableOverride = nEnable;
 	// These are the menu items we always want to enable.
 	if (pThis->Id == IDM_SCRK_EW_EDIT_MOVE ||
-	    (pThis->Id >= IDM_SCRK_EW_FILE_DIRCONV_CONVERT && pThis->Id <= IDM_SCRK_EW_FILE_DIRCONV_CONVERTLOADWRK))
+	    (pThis->Id >= IDM_SCRK_EW_FILE_DIRCONV_CONVERT && pThis->Id <= IDM_SCRK_EW_FILE_DIRCONV_CONVERTLOADWRK) ||
+		pThis->Id == IDM_SCRK_OPTIONS_TILCONV_CONFIG)
 		nEnableOverride = 1;
 	EnableMenuItem(pThis->hMenu, pThis->Position, (nEnableOverride ? MF_ENABLED : MF_GRAYED) | MF_BYPOSITION);
 	if (mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_MENU)
@@ -2119,6 +2265,9 @@ extern "C" LRESULT __cdecl Hook_SCURK_FrameWindow_EvCommand(TBC45XFrameWindow *p
 				return TRUE;
 			case IDM_SCRK_EW_FILE_DIRCONV_CONVERTLOADWRK:
 				L_SCURK_DirectConvert(pSCApp->mdiClient, CONVSAVEAS_LOADWRK);
+				return TRUE;
+			case IDM_SCRK_OPTIONS_TILCONV_CONFIG:
+				DoConfigureTileConv(pSCApp->mdiClient->pWnd->HWindow);
 				return TRUE;
 			default:
 				break;

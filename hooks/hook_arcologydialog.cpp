@@ -199,7 +199,7 @@ extern "C" void __stdcall Hook_SelectArcologyDialog_OnDrawEntire(int nPos, int n
 	SetBkColor(pDC->m_hDC, crDlgColBtnFace);
 	SetTextAlign(pDC->m_hDC, TA_UPDATECP);
 	hFont = SelectFont(pDC->m_hDC, pThis->dwSADCFont.m_hObject);
-	LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, dwArcologyPopStrIDs[nPos], szBuf, sizeof(szBuf) - 1);
+	L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, dwArcologyPopStrIDs[nPos], szBuf, sizeof(szBuf) - 1);
 	GetTextExtentPointA(pDC->m_hAttribDC, szBuf, strlen(szBuf), &textSz);
 	nY = nOuterHeight - textSz.cy - 4;
 	MoveToEx(pDC->m_hDC, nOuterHalfWidth - textSz.cx / 2, nY, &pt);

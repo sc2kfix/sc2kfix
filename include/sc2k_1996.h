@@ -2995,6 +2995,7 @@ GAMECALL(0x401000, void, __thiscall, CityToolBar_RefreshToolBar, CCityToolBar *)
 GAMECALL(0x401005, int, __cdecl, CityToolPlaceSelectedBuilding, __int16, __int16, __int16, __int16)
 GAMECALL(0x40103C, int, __thiscall, MainFrame_ToggleToolBars, CMainFrame *pThis, int iShow)
 GAMECALL(0x40104B, void, __cdecl, PlacePoliceDispatchUnit, __int16, __int16)
+GAMECALL(0x401064, void, __thiscall, Graphics_StretchPaint, CGraphics *, CMFC3XDC *, CMFC3XRect *, CMFC3XRect *)
 GAMECALL(0x401069, LONG, __cdecl, StackPop, POINT*)
 GAMECALL(0x40106E, int, __cdecl, PlaceRoadAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x401073, void, __cdecl, PlacePipesAtCoordinates, __int16 x, __int16 y)
@@ -3401,9 +3402,13 @@ GAMECALL_MAIN(0x4C0730, MFC3X_AFX_THREAD_STATE *, __stdcall, AfxGetThreadState, 
 
 GAMEOFF(CSimcityAppPrimary,	pCSimcityAppThis,			0x4C7010)
 GAMEOFF(WORD,	wCurrentTileCoordinates,	0x4C7A98)
+GAMEOFF(int,	dwSystemMetricCYHScroll,	0x4C7A9C)
 GAMEOFF(WORD,	wTileCoordinateX,			0x4C7AB0)
 GAMEOFF(WORD,	wTileCoordinateY,			0x4C7AB4)
 GAMEOFF(CMFC3XPoint,	gameViewPt,			0x4C7AC0)
+GAMEOFF(int,	dwSystemMetricCYVScroll,	0x4C7AC8)
+GAMEOFF(int,	dwSystemMetricCXVScroll,	0x4C7ACC)
+GAMEOFF(int,	dwSystemMetricCXHScroll,	0x4C7AD4)
 GAMEOFF(WORD,	wGameScreenAreaX,			0x4C7AD8)		// Used here in CSimcityView_WM_LBUTTONDOWN and CSimcityView_WM_MOUSEFIRST
 GAMEOFF(WORD,	wGameScreenAreaY,			0x4C7ADC)		// Used here in CSimcityView_WM_LBUTTONDOWN and CSimcityView_WM_MOUSEFIRST
 GAMEOFF(COLORREF,	crDlgColBtnShadow,	0x4C7AF0)

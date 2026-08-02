@@ -187,6 +187,7 @@ const char* szSC2KFixBuildInfo = "$(UserName)@$(ComputerName)  $([System.DateTim
     <ClCompile Include="modules\spritebrowse_dialog.cpp" />
     <ClCompile Include="modules\status_dialog.cpp" />
     <ClCompile Include="modules\things.cpp" />
+    <ClCompile Include="modules\tileconv_config.cpp" />
     <ClCompile Include="modules\track_config.cpp" />
     <ClCompile Include="modules\update_notifier.cpp" />
     <ClCompile Include="hooks\hook_movies.cpp" />
@@ -226,10 +227,16 @@ const char* szSC2KFixBuildInfo = "$(UserName)@$(ComputerName)  $([System.DateTim
     <ClCompile Include="utility.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="blobs\FIXEDTILES.MIF" />
+    <None Include="blobs\FIXEDTILES_BADPALIDX.MIF" />
+    <None Include="blobs\FIXEDTILES_HANGAR1_ANIM.MIF" />
+    <None Include="blobs\FIXEDTILES_HANGAR1_OPEN.MIF" />
+    <None Include="blobs\FIXEDTILES_HANGAR1_SHUT.MIF" />
+    <None Include="blobs\FIXEDTILES_HORZOFF.MIF" />
+    <None Include="blobs\FIXEDTILES_MISSPIXELS.MIF" />
+    <None Include="blobs\FIXEDTILES_OOBPALIDX.MIF" />
+    <None Include="blobs\FIXEDTILES_VERTOFF.MIF" />
     <None Include="blobs\libsc2kfix.lua" />
     <None Include="blobs\SCURKBMP_PAL.bin" />
-    <None Include="blobs\SCURKMAP_PAL.bin" />
     <None Include="blobs\SCURKWND_PAL.bin" />
     <None Include="hooks\exports.def" />
     <None Include="README.md" />

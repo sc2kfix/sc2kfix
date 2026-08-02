@@ -204,6 +204,52 @@ int CGraphics::CreateWithPalette_SC2K1996(LONG ibiWidth, LONG ibiHeight) {
 	return 1;
 }
 
+#if 0
+void CGraphics::SetAdjustedColorTableFromMainPalette(int nPal) {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CMFC3XPalette *pPal;
+	HPALETTE hPal;
+
+	pPal = Game_SimcityApp_GetActivePalette(pSCApp);
+	hPal = (pPal->m_hObject) ? hPal = (HPALETTE)pPal->m_hObject : NULL;
+
+	int nPos;
+	HGDIOBJ hObj;
+	RGBQUAD rgbq[HICOLORCNT];
+	PALETTEENTRY palEnts[HICOLORCNT];
+
+	if (GRBitmap) {
+		GetPaletteEntries(hPal, 0, HICOLORCNT, palEnts);
+		for (nPos = 0; nPos < HICOLORCNT; ++nPos) {
+			rgbq[nPos].rgbRed = palEnts[nPos].peRed;
+			rgbq[nPos].rgbGreen = palEnts[nPos].peGreen;
+			rgbq[nPos].rgbBlue = palEnts[nPos].peBlue;
+			rgbq[nPos].rgbReserved = 0;
+		}
+		while (nPos < HICOLORCNT);
+		if (nPal == 1) {
+			rgbq[36].rgbRed = rgbq[36].rgbGreen = rgbq[36].rgbBlue = 156;
+			rgbq[37].rgbRed = rgbq[37].rgbGreen = rgbq[37].rgbBlue = 130;
+			rgbq[38].rgbRed = rgbq[38].rgbGreen = rgbq[38].rgbBlue = 110;
+			rgbq[39].rgbRed = rgbq[39].rgbGreen = rgbq[39].rgbBlue = 88;
+			rgbq[40].rgbRed = rgbq[40].rgbGreen = rgbq[40].rgbBlue = 70;
+			rgbq[41].rgbRed = rgbq[41].rgbGreen = rgbq[41].rgbBlue = 52;
+			rgbq[42].rgbRed = rgbq[42].rgbGreen = rgbq[42].rgbBlue = 37;
+			rgbq[57].rgbRed = rgbq[57].rgbGreen = rgbq[57].rgbBlue = 168;
+			rgbq[58].rgbRed = rgbq[58].rgbGreen = rgbq[58].rgbBlue = 151;
+			rgbq[59].rgbRed = rgbq[59].rgbGreen = rgbq[59].rgbBlue = 135;
+			rgbq[60].rgbRed = rgbq[60].rgbGreen = rgbq[60].rgbBlue = 124;
+			rgbq[61].rgbRed = rgbq[61].rgbGreen = rgbq[61].rgbBlue = 108;
+			rgbq[62].rgbRed = rgbq[62].rgbGreen = rgbq[62].rgbBlue = 97;
+			rgbq[63].rgbRed = rgbq[63].rgbGreen = rgbq[63].rgbBlue = 81;
+		}
+		hObj = SelectObject(hDC_Global, GRBitmap);
+		SetDIBColorTable(hDC_Global, 0, HICOLORCNT, rgbq);
+		SelectObject(hDC_Global, hObj);
+	}
+}
+#endif
+
 void CGraphics::PaintNormalAndStretch(HDC hDC, int x, int y, int sX, int sY, int nFactor) {
 	CSimcityAppPrimary *pSCApp;
 	HGDIOBJ hObj;
@@ -395,6 +441,67 @@ void L_NextAnimatedImageFrame_SC2K1996(CGraphics *pGraphic) {
 	}
 }
 
+extern "C" HPALETTE __stdcall Hook_Graphics_MakeGraphicsPalette(BYTE peFlags) {
+	CGraphics *pThis;
+
+	__asm mov[pThis], ecx
+
+	int nPos;
+	HDC hDC;
+	HGDIOBJ hGdiObj;
+	RGBQUAD rgbq[HICOLORCNT];
+	LOGPAL plpal;
+
+	plpal.wVersion = 768;
+	plpal.wNumPalEnts = HICOLORCNT;
+	memset(plpal.pPalEnts, 0, sizeof(plpal.pPalEnts));
+	if (!pThis->GRBitmap)
+		return 0;
+	hDC = GetDC(0);
+	GetSystemPaletteEntries(hDC, 0, HICOLORCNT, plpal.pPalEnts);
+	ReleaseDC(0, hDC);
+	hGdiObj = SelectObject(hDC_Global, pThis->GRBitmap);
+	GetDIBColorTable(hDC_Global, 0, HICOLORCNT, rgbq);
+	SetRGBEntry(&rgbq[0x0A], 79, 53,   0); // DOS Entry (0xCC - 204)
+	SetRGBEntry(&rgbq[0x0B], 79, 79,   0); // DOS Entry (0xCD - 205)
+	SetRGBEntry(&rgbq[0x0C], 79, 104,  0); // DOS Entry (0xCE - 206)
+	SetRGBEntry(&rgbq[0x0D], 79, 130,  0); // DOS Entry (0xCF - 207)
+	SetRGBEntry(&rgbq[0x0E], 79, 156,  0); // DOS Entry (0xD0 - 208)
+	SetRGBEntry(&rgbq[0x0F], 79, 181,  0); // DOS Entry (0xD1 - 209)
+	SetRGBEntry(&rgbq[0xE8], 79, 207,  0); // DOS Entry (0xD2 - 210)
+	SetRGBEntry(&rgbq[0xE9], 104, 28,  0); // DOS Entry (0xD3 - 211)
+	SetRGBEntry(&rgbq[0xEA], 104, 53,  0); // DOS Entry (0xD4 - 212)
+	SetRGBEntry(&rgbq[0xEB], 104, 79,  0); // DOS Entry (0xD5 - 213)
+	SetRGBEntry(&rgbq[0xEC], 104, 104, 0); // DOS Entry (0xD6 - 214)
+	SetRGBEntry(&rgbq[0xED], 104, 130, 0); // DOS Entry (0xD7 - 215)
+	SetRGBEntry(&rgbq[0xEE], 104, 156, 0); // DOS Entry (0xD8 - 216)
+	SetRGBEntry(&rgbq[0xEF], 104, 181, 0); // DOS Entry (0xD9 - 217)
+	SetRGBEntry(&rgbq[0xF0], 104, 207, 0); // DOS Entry (0xDA - 218)
+	SetRGBEntry(&rgbq[0xF1], 130, 28,  0); // DOS Entry (0xDB - 219)
+	SetRGBEntry(&rgbq[0xF2], 130, 53,  0); // DOS Entry (0xDC - 220)
+	SetRGBEntry(&rgbq[0xF3], 130, 79,  0); // DOS Entry (0xDD - 221)
+	SetRGBEntry(&rgbq[0xF4], 130, 104, 0); // DOS Entry (0xDE - 222)
+	SetRGBEntry(&rgbq[0xF5], 130, 130, 0); // DOS Entry (0xDF - 223)
+	for (nPos = 0; nPos < HICOLORCNT; ++nPos) {
+		if (nPos >= 10 && nPos < 246 || bHiColor) {
+			plpal.pPalEnts[nPos].peRed = rgbq[nPos].rgbRed;
+			plpal.pPalEnts[nPos].peGreen = rgbq[nPos].rgbGreen;
+			plpal.pPalEnts[nPos].peBlue = rgbq[nPos].rgbBlue;
+			plpal.pPalEnts[nPos].peFlags = peFlags;
+		}
+		else {
+			plpal.pPalEnts[nPos].peFlags = 0;
+			rgbq[nPos].rgbRed = plpal.pPalEnts[nPos].peRed;
+			rgbq[nPos].rgbGreen = plpal.pPalEnts[nPos].peGreen;
+			rgbq[nPos].rgbBlue = plpal.pPalEnts[nPos].peBlue;
+			rgbq[nPos].rgbReserved = 0;
+		}
+	}
+	GetDIBColorTable(hDC_Global, 0, HICOLORCNT, rgbq);
+	SelectObject(hDC_Global, hGdiObj);
+	return CreatePalette((const LOGPALETTE *)&plpal);
+}
+
 extern "C" void __stdcall Hook_SimcityWnd_OnEraseBkgnd(CMFC3XDC *pDC) {
 	CSimcityWnd *pThis;
 
@@ -429,10 +536,56 @@ extern "C" void __stdcall Hook_SimcityWnd_OnEraseBkgnd(CMFC3XDC *pDC) {
 	DeleteObject(hBrush);
 }
 
+extern "C" void __stdcall Hook_SimcityView_OnDraw(CMFC3XDC *pDC) {
+	CSimcityView *pThis;
+
+	__asm mov[pThis], ecx
+
+	CMFC3XRect r[2];
+
+	if (pThis->pSCVGraphicLockDIBRes) {
+		Game_SimcityView_GetScreenAreaInfo(pThis, &r[0]);
+		r[1].left = 0;
+		r[1].top = 0;
+		r[1].right = Game_Graphics_Width(pThis->SCVGraphics);
+		r[1].bottom = Game_Graphics_Height(pThis->SCVGraphics);
+#if 0
+		pThis->SCVGraphics->SetAdjustedColorTableFromMainPalette(1);
+#else
+		Game_Graphics_SetColorTableFromApplicationPalette(pThis->SCVGraphics);
+#endif
+		if (pThis->dwSCVIsZoomed == 1) {
+			r[1] = r[0];
+			r[1].bottom = r[0].bottom >> 1;
+			r[1].right = r[0].right >> 1;
+			Game_Graphics_StretchPaint(pThis->SCVGraphics, pDC, &r[1], &r[0]);
+		}
+		else {
+			Game_Graphics_BitBlit(pThis->SCVGraphics, pDC->m_hDC,
+				r[0].left,
+				r[0].top,
+				r[0].right - r[0].left,
+				r[0].bottom - r[0].top,
+				r[1].left,
+				r[1].top);
+		}
+		if (bRedraw)
+			PatBlt(pDC->m_hDC, r[0].right, r[0].bottom, dwSystemMetricCXVScroll, dwSystemMetricCYHScroll, BLACKNESS);
+	}
+}
+
 void InstallGraphicHooks_SC2K1996(void) {
+	// Hook for CGraphics::MakeGraphicsPalette
+	SafeVirtualProtect((LPVOID)0x401F5F, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401F5F, Hook_Graphics_MakeGraphicsPalette);
+
 	// Hook for CSimcityWnd::OnEraseBkgnd
 	SafeVirtualProtect((LPVOID)0x401D75, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401D75, Hook_SimcityWnd_OnEraseBkgnd);
+
+	// Hook for CSimcityView::OnDraw
+	SafeVirtualProtect((LPVOID)0x401C62, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401C62, Hook_SimcityView_OnDraw);
 
 	// Fix the black <-> white palette index swap
 	// that occurs within CGraphics::RemapBitmapColors(BOOL)

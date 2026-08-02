@@ -23,6 +23,8 @@ HFONT hFontArialBold10;
 HFONT hFontArialBold16;
 HFONT hSystemRegular12;
 
+static BYTE DOSMacPalTable[256];
+
 void InitializeFonts(void) {
 	if (bFontsInitialized)
 		return;
@@ -493,6 +495,242 @@ void *__cdecl L_ReallocateDataEntry(char *pDest, char *pSrc) {
 		pDest[dwPos] = pSrc[dwPos];
 	pNew = realloc(pDest, dwSize);
 	return (pNew) ? pNew : pDest;
+}
+
+void SetRGBEntry(RGBQUAD *pRGB, BYTE r, BYTE g, BYTE b) {
+	pRGB->rgbRed = r;
+	pRGB->rgbGreen = g;
+	pRGB->rgbBlue = b;
+	pRGB->rgbReserved = 0;
+}
+
+int L_GetTranslatedDOSMacPaletteIdx(BYTE palIdx, int nType) {
+	// In the tiny/small equivalents of the
+	// "Hangar1", "Loading Bay" and "Crane" tiles
+	// instead of index 0xB3 it uses 0x34 - consider
+	// this as a conversion option during translation.
+	if (palIdx == 0xE8) {
+		if (nType == 0)
+			return 0x34;
+		else if (nType == 2)
+			return 0x00;
+	}
+	return DOSMacPalTable[palIdx];
+}
+
+int L_GetAdjustedPaletteIdx(BYTE palIdx, int nType) {
+	// In the tiny/small equivalents of the
+	// "Hangar1", "Loading Bay" and "Crane" tiles
+	// instead of index 0xB3 it uses 0x34 - consider
+	// this as a conversion option during translation.
+	if (nType == 3) {
+		if ((palIdx >= 0x0A && palIdx <= 0x0F) ||
+			(palIdx >= 0xE8 && palIdx <= 0xF5))
+			return 0x00;
+	}
+	if (palIdx == 0xE8) {
+		if (nType == 1)
+			return 0xB3;
+		else if (nType == 2)
+			return 0x00;
+		else
+			return 0x34;
+	}
+	return palIdx;
+}
+
+void L_InitDOSMacPaletteIdxTable() {
+	int i;
+
+	for (i = 0; i < 256; ++i) {
+		if (i >= 0 && i < 204)
+			DOSMacPalTable[i] = i + 16;
+		else if (i >= 224 && i < 239)
+			DOSMacPalTable[i] = i;
+		else
+			DOSMacPalTable[i] = 0;
+	}
+
+	// The values set below are the previously unavailable indices
+	// that have now been re-introduced into the main game palette
+	// on the Windows version of the game.
+	DOSMacPalTable[1] =   0x00; // This was previously 0x11 - which would "pick" within the animated range - not desirable.
+	DOSMacPalTable[204] = 0x0A;
+	DOSMacPalTable[205] = 0x0B;
+	DOSMacPalTable[206] = 0x0C;
+	DOSMacPalTable[207] = 0x0D;
+	DOSMacPalTable[208] = 0x0E;
+	DOSMacPalTable[209] = 0x0F;
+	DOSMacPalTable[210] = 0xE8;
+	DOSMacPalTable[211] = 0xE9;
+	DOSMacPalTable[212] = 0xEA;
+	DOSMacPalTable[213] = 0xEB;
+	DOSMacPalTable[214] = 0xEC;
+	DOSMacPalTable[215] = 0xED;
+	DOSMacPalTable[216] = 0xEE;
+	DOSMacPalTable[217] = 0xEF;
+	DOSMacPalTable[218] = 0xF0;
+	DOSMacPalTable[219] = 0xF1;
+	DOSMacPalTable[220] = 0xF2;
+	DOSMacPalTable[221] = 0xF3;
+	DOSMacPalTable[222] = 0xF4;
+	DOSMacPalTable[223] = 0xF5;
+	for (i = 0; i < 8; ++i)
+		DOSMacPalTable[232 + i] = 0xB3 + i;
+	DOSMacPalTable[255] = 0xFF; // Only used during DOS conversion, a bad idea for Mac.
+
+	ConsoleLog(LOG_INFO, "Initialize DOS/Mac -> Windows Palette Index Table.\n");
+}
+
+int L_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMax) {
+	if (hInstance == hSC2KAppModule) {
+		switch (uID) {
+		case 97:
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
+				"Hydroelectric Dam"))
+				return strlen(lpBuffer);
+			break;
+#if MAP_EDGE_BUILDING == 2
+		case 105:
+			if (!strcpy_s(lpBuffer, cchBufferMax,
+				"Sorry, you cannot\r\nplace items off\r\nthe edge of the map."))
+				return strlen(lpBuffer);
+			break;
+#endif
+		case 108:
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
+				"Hydroelectric dams can only be placed on waterfall tiles."))
+				return strlen(lpBuffer);
+			break;
+		case 111:
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
+				"Tunnel cannot be built as it would intersect an existing tunnel."))
+				return strlen(lpBuffer);
+			break;
+		case 112:
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
+				"Tunnel cannot be built as it would leave the city limits."))
+				return strlen(lpBuffer);
+			break;
+		case 113:
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
+				"Tunnel cannot be built as it would be too deep in the terrain."))
+				return strlen(lpBuffer);
+			break;
+		case 114:
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
+				"Tunnel cannot be built as the exit terrain is unstable."))
+				return strlen(lpBuffer);
+			break;
+		case 115:
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
+				"An existing subway or sewer line is blocking construction."))
+				return strlen(lpBuffer);
+			break;
+		case 116:
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
+				"Tunnel entrances must be placed on a hillside."))
+				return strlen(lpBuffer);
+			break;
+		case 129:
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
+				"Nuclear Power"))
+				return strlen(lpBuffer);
+			break;
+		case 132:
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
+				"Microwave Power"))
+				return strlen(lpBuffer);
+			break;
+		case 133:
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
+				"Fusion Power"))
+				return strlen(lpBuffer);
+			break;
+		case 240:
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
+				"Your nation's military is interested in building a base on your city's soil. "
+				"This could mean extra revenue. It could also raise new problems. "
+				"Do you wish to grant land to the military?"))
+				return strlen(lpBuffer);
+			break;
+		case 289:
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
+				"Current rates are %d%%.\r\n"
+				"Do you wish to issue the bond?"))
+				return strlen(lpBuffer);
+			break;
+		case 290:
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
+				"You need $10,000 in cash to repay an outstanding bond."))
+				return strlen(lpBuffer);
+			break;
+		case 291:
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
+				"The oldest outstanding bond rate is %d%%.\r\n"
+				"Do you wish to repay this bond?"))
+				return strlen(lpBuffer);
+			break;
+		case 346:
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
+				"Engineers report that tunnel construction costs will be %s.\r\n"
+				"Do you wish to construct the tunnel?"))
+				return strlen(lpBuffer);
+			break;
+		case 640:
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
+				"Grocery store"))
+				return strlen(lpBuffer);
+			break;
+		case 745:
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
+				"Launch Arcology"))
+				return strlen(lpBuffer);
+			break;
+		case 4002:
+			if (!strcpy_s(lpBuffer, cchBufferMax,
+				"SimCity 2000 City (*.SC2)|*.SC2|SimCity Classic City (*.CTY)|*.CTY||"))
+				return strlen(lpBuffer);
+			break;
+		case 4004:
+			if (!strcpy_s(lpBuffer, cchBufferMax,
+				"SimCity 2000 Tilesets (*.MIF, *.TIL)|*.MIF;*.TIL|SimCity 2000 Win/Mac Tilesets (*.MIF)|*.MIF|SimCity 2000 DOS Tilesets (*.TIL)|*.TIL||"))
+				return strlen(lpBuffer);
+			break;
+		case 32921:
+			if (CopyReplacementString(lpBuffer, cchBufferMax,
+				"Saves city every 5 years"))
+				return strlen(lpBuffer);
+			break;
+		default:
+			break;
+		}
+	}
+	return LoadStringA(hInstance, uID, lpBuffer, cchBufferMax);
+}
+
+const char *GetFixedTileType(int nTileSet) {
+	switch (nTileSet) {
+		case IDR_TSET_FIXTIL_HORZOFF:
+			return "Horizontal Offset";
+		case IDR_TSET_FIXTIL_VERTOFF:
+			return "Vertical Offset";
+		case IDR_TSET_FIXTIL_BADPALIDX:
+			return "Bad Palette Index";
+		case IDR_TSET_FIXTIL_MISSPIXELS:
+			return "Missing Pixels";
+		case IDR_TSET_FIXTIL_OOBPALIDX:
+			return "Out-of-bounds Palette Index";
+		case IDR_TSET_FIXTIL_HANGAROPEN:
+			return "Hangar1 Open (Black)";
+		case IDR_TSET_FIXTIL_HANGARANIM:
+			return "Hangar1 Anim (Grey)";
+		case IDR_TSET_FIXTIL_HANGARSHUT:
+			return "Hangar1 Shut (Yellow)";
+		default:
+			break;
+	}
+	return "";
 }
 
 // start of base64 code

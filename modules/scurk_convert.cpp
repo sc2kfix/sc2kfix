@@ -25,12 +25,15 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
+extern BOOL bBuildFixedTiles;
+
 // Functions to do with loading and referencing the "fixed"
 // large tiles.
 
 typedef struct {
 	__int16 nSpriteID;
 	__int16 nDBID;
+	int nVariantObject;
 	WORD nWidth;
 	WORD nHeight;
 	int nSize;
@@ -40,11 +43,18 @@ typedef struct {
 
 std::vector<recordedTiles_t> fixedTiles;
 
-recordedTiles_t *L_SCURK_GetRecordedTileBySpriteID(__int16 nSpriteID) {
+static int nSelectedHangar1Mode = nHangar1Mode;
+
+recordedTiles_t *L_SCURK_GetRecordedTileBySpriteID(__int16 nSpriteID, int nVariantObject) {
 	for (unsigned i = 0; i < fixedTiles.size(); ++i) {
 		recordedTiles_t *pFixedTile = &fixedTiles[i];
-		if (pFixedTile && pFixedTile->nSpriteID == nSpriteID)
+		if (pFixedTile && pFixedTile->nSpriteID == nSpriteID) {
+			if (nSpriteID == SPRITE_LARGE_MILITARY_HANGAR1) {
+				if (pFixedTile->nVariantObject != nVariantObject)
+					continue;
+			}
 			return pFixedTile;
+		}
 	}
 	return NULL;
 }
@@ -55,7 +65,7 @@ static void L_SCURK_ClearFixedTiles() {
 		if (pFixedTile) {
 			if (pFixedTile->pTileDat) {
 				if (mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_FIXEDTILES)
-					ConsoleLog(LOG_DEBUG, "Clearing (%u)\n", pFixedTile->nSpriteID);
+					ConsoleLog(LOG_DEBUG, "Clearing (%u) (%u)\n", pFixedTile->nSpriteID, pFixedTile->nVariantObject);
 				R_SCURK_WRP_gFreeBlock(pFixedTile->pTileDat);
 				pFixedTile->pTileDat = 0;
 			}
@@ -65,7 +75,7 @@ static void L_SCURK_ClearFixedTiles() {
 	fixedTiles.clear();
 }
 
-void L_SCURK_LoadFixedLargeSpritesRsrc(cEditableTileSet *pThis) {
+static void L_SCURK_LoadSpecificFixedLargeSpritesRsrc(cEditableTileSet *pThis, int nTileSet, int nVariantObject, bool bNoReplace) {
 	HRSRC hTileSetHandle;
 	HGLOBAL hTileSetGlobal;
 	DWORD dwTileDatSz;
@@ -91,10 +101,8 @@ void L_SCURK_LoadFixedLargeSpritesRsrc(cEditableTileSet *pThis) {
 	tileName_t *pTileName;
 	recordedTiles_t fixedEnt;
 
-	L_SCURK_ClearFixedTiles();
-
 	dwOffset = 0;
-	hTileSetHandle = FindResourceA(hSC2KFixModule, MAKEINTRESOURCE(IDR_TSET_FIXED), "TSET");
+	hTileSetHandle = FindResourceA(hSC2KFixModule, MAKEINTRESOURCE(nTileSet), "TSET");
 	if (hTileSetHandle) {
 		hTileSetGlobal = LoadResource(hSC2KFixModule, hTileSetHandle);
 		dwTileDatSz = SizeofResource(hSC2KFixModule, hTileSetHandle);
@@ -138,15 +146,17 @@ void L_SCURK_LoadFixedLargeSpritesRsrc(cEditableTileSet *pThis) {
 											// Only replace sprites with a height above 1 (similar to the main game
 											// under these circumstances).
 											if (nHeight > 1) {
-												if (pThis->mTiles[nDBID])
-													R_SCURK_WRP_gFreeBlock(pThis->mTiles[nDBID]);
-												pThis->mTiles[nDBID] = (uint8_t *)R_SCURK_WRP_gAllocBlock(dwSize_Shap);
-												if (pThis->mTiles[nDBID]) {
-													memset(pThis->mTiles[nDBID], 0, dwSize_Shap);
-													memcpy(pThis->mTiles[nDBID], &pTileShap->pBuf, dwSize_Shap);
-													pThis->mTileSet->pData[nDBID].sprHeader.wWidth = nWidth;
-													pThis->mTileSet->pData[nDBID].sprHeader.wHeight = nHeight;
-													pThis->mTileSizeTable[nDBID] = dwSize_Shap;
+												if (!bNoReplace) {
+													if (pThis->mTiles[nDBID])
+														R_SCURK_WRP_gFreeBlock(pThis->mTiles[nDBID]);
+													pThis->mTiles[nDBID] = (uint8_t *)R_SCURK_WRP_gAllocBlock(dwSize_Shap);
+													if (pThis->mTiles[nDBID]) {
+														memset(pThis->mTiles[nDBID], 0, dwSize_Shap);
+														memcpy(pThis->mTiles[nDBID], &pTileShap->pBuf, dwSize_Shap);
+														pThis->mTileSet->pData[nDBID].sprHeader.wWidth = nWidth;
+														pThis->mTileSet->pData[nDBID].sprHeader.wHeight = nHeight;
+														pThis->mTileSizeTable[nDBID] = dwSize_Shap;
+													}
 												}
 												bGotShap = (pThis->mTiles[nDBID]) ? TRUE : FALSE;
 											}
@@ -156,16 +166,17 @@ void L_SCURK_LoadFixedLargeSpritesRsrc(cEditableTileSet *pThis) {
 											if (bGotShap && nHeight > 1 && nSpriteID >= SPRITE_LARGE_START) {
 												fixedEnt.nSpriteID = nSpriteID;
 												fixedEnt.nDBID = nDBID;
+												fixedEnt.nVariantObject = nVariantObject;
 												fixedEnt.nHeight = nHeight;
 												fixedEnt.nWidth = nWidth;
 												fixedEnt.nSize = dwSize_Shap;
 												fixedEnt.bInclude = FALSE;
 												fixedEnt.pTileDat = (BYTE *)R_SCURK_WRP_gAllocBlock(dwSize_Shap);
-												memcpy(fixedEnt.pTileDat, pThis->mTiles[nDBID], dwSize_Shap);
+												memcpy(fixedEnt.pTileDat, &pTileShap->pBuf, dwSize_Shap);
 												fixedTiles.push_back(fixedEnt);
 
 												if (mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_FIXEDTILES)
-													ConsoleLog(LOG_DEBUG, "TILE: Loaded replacement large sprite for: %s\n", szSpriteNames[nSpriteID - SPRITE_LARGE_START]);
+													ConsoleLog(LOG_DEBUG, "TILE: %s (%s) replacement large sprite for: %s\n", ((!bNoReplace) ? "Loaded" : "Cached"), GetFixedTileType(nTileSet), szSpriteNames[nSpriteID - SPRITE_LARGE_START]);
 											}
 										}
 										else if (memcmp(szHead, "NAME", 4) == 0) {
@@ -186,6 +197,10 @@ void L_SCURK_LoadFixedLargeSpritesRsrc(cEditableTileSet *pThis) {
 										bResize = TRUE;
 										pTileContents = (tileMem_t *)L_ReallocateDataEntry((char *)pTileMem, pBuf);
 									}
+									if (!bNoReplace) {
+										if (bBuildFixedTiles)
+											R_SCURK_WRP_EditableTileSet_mBuildSmallMedTiles(pThis);
+									}
 								}
 							}
 						}
@@ -196,6 +211,47 @@ void L_SCURK_LoadFixedLargeSpritesRsrc(cEditableTileSet *pThis) {
 		}
 		FreeResource(hTileSetGlobal);
 	}
+}
+
+void L_SCURK_LoadFixedLargeSpritesRsrc(cEditableTileSet *pThis) {
+	bool bNoReplace, bNoSupersede = false;
+
+	L_SCURK_ClearFixedTiles();
+
+	bNoReplace = (dwFixedTileMask & FIXTIL_MASK_HORZOFF) ? false : true;
+	L_SCURK_LoadSpecificFixedLargeSpritesRsrc(pThis, IDR_TSET_FIXTIL_HORZOFF, 0, bNoReplace);
+	
+	bNoReplace = (dwFixedTileMask & FIXTIL_MASK_VERTOFF) ? false : true;
+	L_SCURK_LoadSpecificFixedLargeSpritesRsrc(pThis, IDR_TSET_FIXTIL_VERTOFF, 0, bNoReplace);
+	
+	bNoReplace = (dwFixedTileMask & FIXTIL_MASK_BADPALIDX) ? false : true;
+	L_SCURK_LoadSpecificFixedLargeSpritesRsrc(pThis, IDR_TSET_FIXTIL_BADPALIDX, 0, bNoReplace);
+	
+	bNoReplace = (dwFixedTileMask & FIXTIL_MASK_MISSPIXELS) ? false : true;
+	L_SCURK_LoadSpecificFixedLargeSpritesRsrc(pThis, IDR_TSET_FIXTIL_MISSPIXELS, 0, bNoReplace);
+
+	bNoReplace = (dwFixedTileMask & FIXTIL_MASK_OOBPALIDX) ? false : true;
+	L_SCURK_LoadSpecificFixedLargeSpritesRsrc(pThis, IDR_TSET_FIXTIL_OOBPALIDX, 0, bNoReplace);
+
+	// The 'Hangar1' case is a bit more comprehensive since there are
+	// three specific variants, priority ordering is as follows (just
+	// in case more than one is included in the mask):
+	// - Animated (grey)
+	// - Shut (yellow)
+	// - Open (black)
+
+	bNoReplace = (dwFixedTileMask & FIXTIL_MASK_HANGARANIM) ? false : true;
+	if (!bNoReplace)
+		bNoSupersede = true;
+	L_SCURK_LoadSpecificFixedLargeSpritesRsrc(pThis, IDR_TSET_FIXTIL_HANGARANIM, HANGAR1_ANIM, bNoReplace);
+
+	bNoReplace = ((dwFixedTileMask & FIXTIL_MASK_HANGARSHUT) && !bNoSupersede) ? false : true;
+	if (!bNoReplace)
+		bNoSupersede = true;
+	L_SCURK_LoadSpecificFixedLargeSpritesRsrc(pThis, IDR_TSET_FIXTIL_HANGARSHUT, HANGAR1_SHUT, bNoReplace);
+
+	bNoReplace = ((dwFixedTileMask & FIXTIL_MASK_HANGAROPEN) && !bNoSupersede) ? false : true;
+	L_SCURK_LoadSpecificFixedLargeSpritesRsrc(pThis, IDR_TSET_FIXTIL_HANGAROPEN, HANGAR1_OPEN, bNoReplace);
 }
 
 // The dialogue for merging "fixed" object(s) into
@@ -217,21 +273,23 @@ static void PopulateObjectEntryList(HWND hDlgListView) {
 	for (unsigned i = 0; i < fixedTiles.size(); i++) {
 		recordedTiles_t *pRecordedTile = &fixedTiles[i];
 		if (pRecordedTile && pRecordedTile->pTileDat) {
-			memset(szObjectID, 0, sizeof(szObjectID));
-			memset(szObjectName, 0, sizeof(szObjectName));
+			if (pRecordedTile->nVariantObject == 0) {
+				memset(szObjectID, 0, sizeof(szObjectID));
+				memset(szObjectName, 0, sizeof(szObjectName));
 
-			sprintf_s(szObjectID, "%d", pRecordedTile->nSpriteID);
-			sprintf_s(szObjectName, "(%s) %s", (
-					(pRecordedTile->nSpriteID < SPRITE_LARGE_START) ? "Small" : 
+				sprintf_s(szObjectID, "%d", pRecordedTile->nSpriteID);
+				sprintf_s(szObjectName, "(%s) %s", (
+					(pRecordedTile->nSpriteID < SPRITE_LARGE_START) ? "Small" :
 					(pRecordedTile->nSpriteID < SPRITE_MEDIUM_START) ? "Tiny" : "Large"
 					),
 					(
-					(pRecordedTile->nSpriteID < SPRITE_LARGE_START) ? szSpriteNames[pRecordedTile->nSpriteID - SPRITE_MEDIUM_START] : 
-					(pRecordedTile->nSpriteID < SPRITE_MEDIUM_START) ? szSpriteNames[pRecordedTile->nSpriteID] : szSpriteNames[pRecordedTile->nSpriteID - SPRITE_LARGE_START]
-					)
+					(pRecordedTile->nSpriteID < SPRITE_LARGE_START) ? szSpriteNames[pRecordedTile->nSpriteID - SPRITE_MEDIUM_START] :
+						(pRecordedTile->nSpriteID < SPRITE_MEDIUM_START) ? szSpriteNames[pRecordedTile->nSpriteID] : szSpriteNames[pRecordedTile->nSpriteID - SPRITE_LARGE_START]
+						)
 				);
-			InsertObjectEntryViewRow(hDlgListView, nIdx, szObjectID, szObjectName);
-			++nIdx;
+				InsertObjectEntryViewRow(hDlgListView, nIdx, szObjectID, szObjectName);
+				++nIdx;
+			}
 		}
 	}
 }
@@ -241,9 +299,10 @@ static void ToggleAllObjectItems(HWND hDlgListView, BOOL bEnable) {
 		ListView_SetCheckState(hDlgListView, i, bEnable);
 }
 
-static void GetIncludedObjects(HWND hDlgListView) {
+static void GetIncludedObjects(HWND hComboBox, HWND hDlgListView) {
 	char szObjectID[16 + 1];
 	__int16 nObjectID;
+	int nVariantObject = 0;
 	recordedTiles_t *pRecordedTile;
 
 	for (int i = 0; i < ListView_GetItemCount(hDlgListView); i++) {
@@ -251,8 +310,9 @@ static void GetIncludedObjects(HWND hDlgListView) {
 
 		ListView_GetItemText(hDlgListView, i, 1, szObjectID, countof(szObjectID) - 1);
 		nObjectID = (__int16)atoi(szObjectID);
+		nVariantObject = ComboBox_GetCurSel(hComboBox);
 
-		pRecordedTile = L_SCURK_GetRecordedTileBySpriteID(nObjectID);
+		pRecordedTile = L_SCURK_GetRecordedTileBySpriteID(nObjectID, nVariantObject);
 		if (pRecordedTile)
 			pRecordedTile->bInclude = (ListView_GetCheckState(hDlgListView, i) == TRUE) ? TRUE : FALSE;
 	}
@@ -267,11 +327,29 @@ static void ClearIncludedObjects() {
 }
 
 BOOL CALLBACK SelectFixedObjectsDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
-	HWND hDlgListView;
+	HWND hComboBox, hDlgListView;
+	RECT cmdRect;
 	int colOrder[] = { 1, 2, 0 };
 
 	switch (message) {
 		case WM_INITDIALOG:
+			DestroyStoredTooltips(storedToolTips, hwndDlg);
+
+			nSelectedHangar1Mode = nHangar1Mode;
+
+			hComboBox = GetDlgItem(hwndDlg, IDC_HANGAR1TYPE);
+			GetWindowRect(hComboBox, &cmdRect);
+			SetWindowRedraw(hComboBox, FALSE);
+			ComboBox_AddString(hComboBox, "(Ignore)");
+			ComboBox_AddString(hComboBox, "Shut");
+			ComboBox_AddString(hComboBox, "Anim (Grey)");
+			ComboBox_AddString(hComboBox, "Open");
+			SetWindowRedraw(hComboBox, TRUE);
+
+			ComboBox_SetCurSel(hComboBox, nHangar1Mode);
+
+			SetWindowPos(hComboBox, HWND_TOP, 0, 0, cmdRect.right - cmdRect.left, 100, SWP_NOZORDER | SWP_NOMOVE);
+
 			hDlgListView = GetDlgItem(hwndDlg, IDC_OBJECTLIST);
 			ListView_SetExtendedListViewStyle(hDlgListView, LVS_EX_CHECKBOXES);
 
@@ -285,10 +363,23 @@ BOOL CALLBACK SelectFixedObjectsDialogProc(HWND hwndDlg, UINT message, WPARAM wP
 
 			PopulateObjectEntryList(hDlgListView);
 
+			StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_HANGAR1TYPE),
+				"Select the 'Hangar1' default type you want to have applied during the conversion process.\n\n"
+				" Types:\n"
+				" - Shut (Yellow door - extrapolated from the tiny/small view)\n"
+				" - Anim (Grey door - DOS/Macintosh pre-release to version 1.1 cycling effect)\n"
+				" - Open (Black internal area - default from DOS/Macintosh 1.2 and all Windows editions)\n\n"
+				"** If set to '(Ignore)' it won't attempt to use the associated fixed tile or adjust the palette index.");
+
 			CenterDialogBox(hwndDlg);
 			return TRUE;
 
+		case WM_DESTROY:
+			DestroyStoredTooltips(storedToolTips, hwndDlg);
+			return TRUE;
+
 		case WM_COMMAND:
+			hComboBox = GetDlgItem(hwndDlg, IDC_HANGAR1TYPE);
 			hDlgListView = GetDlgItem(hwndDlg, IDC_OBJECTLIST);
 			switch (GET_WM_COMMAND_ID(wParam, lParam)) {
 				case IDC_ENBALLBUT:
@@ -298,7 +389,8 @@ BOOL CALLBACK SelectFixedObjectsDialogProc(HWND hwndDlg, UINT message, WPARAM wP
 					ToggleAllObjectItems(hDlgListView, FALSE);
 					return TRUE;
 				case IDOK:
-					GetIncludedObjects(hDlgListView);
+					GetIncludedObjects(hComboBox, hDlgListView);
+					nSelectedHangar1Mode = ComboBox_GetCurSel(hComboBox);
 					EndDialog(hwndDlg, 1);
 					return TRUE;
 				case IDCANCEL:
@@ -357,9 +449,9 @@ static void L_SCURK_GetIncludedFixedShape(tileConv_t *pObjSet, int nShapNum, int
 		recordedTiles_t *pFixedEnt = &fixedTiles[i];
 		if (pFixedEnt && pFixedEnt->pTileDat && pFixedEnt->nDBID == nDBID) {
 			if (!pFixedEnt->bInclude)
-				break;
+				continue;
 			if (mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_FIXEDTILES)
-				ConsoleLog(LOG_DEBUG, "Include Fixed Shape: (%d, %d) [%s] (%u, %u) (%d)\n", nShapNum, nDBID, szInternalSpriteName[nShapNum], pFixedEnt->nHeight, pFixedEnt->nWidth, pFixedEnt->nSize);
+				ConsoleLog(LOG_DEBUG, "Include Fixed Shape: (%d, %d) (%d) [%s] (%u, %u) (%d)\n", nShapNum, nDBID, pFixedEnt->nVariantObject, szInternalSpriteName[nShapNum], pFixedEnt->nHeight, pFixedEnt->nWidth, pFixedEnt->nSize);
 			pFixedOut->nSpriteID = pFixedEnt->nSpriteID;
 			pFixedOut->nDBID = pFixedEnt->nDBID;
 			pFixedOut->nWidth = pFixedEnt->nWidth;
@@ -467,7 +559,7 @@ static int L_SCURK_SaveConvertedSet(tileConv_t *pObjSet, cEditableTileSet *pWork
 		// purposes.
 		// szInfoPortion[54] = mTileFileName[0]; // Remote var unused.
 		strcpy_s(&szInfoPortion[94], sizeof("winSCURK"), "winSCURK");
-		*(DWORD *)szInfoPortion = '_WIN'; // This gets reversed
+		*(DWORD *)szInfoPortion = '_W00'; // This gets reversed
 		fwrite(szInfoPortion, 1, sizeof(szInfoPortion), f);
 
 		// Next part:
@@ -540,7 +632,7 @@ static int L_SCURK_SaveConvertedSet(tileConv_t *pObjSet, cEditableTileSet *pWork
 	return nRes;
 }
 
-static void L_SCURK_ConvertFromMac(tileConv_t *pObjSet, WORD nDBID) {
+static void L_SCURK_ConvertFromMac(tileConv_t *pObjSet, WORD nDBID, int nConvRepl) {
 	BYTE *pTileBits, pTileBitCount, pTileChunkMode, pBit;
 	WORD nShapeWidth, nShapeHeight, nCurrWidth;
 	BOOL bDone;
@@ -587,7 +679,7 @@ static void L_SCURK_ConvertFromMac(tileConv_t *pObjSet, WORD nDBID) {
 								// Exception needed in this case.
 								// Under DOS you want the bit to be 0xFF/White
 								// while under Mac you want it to be 0x00/Black.
-								pBit = (*pTileBits == 0xFF) ? 0x00 : DOSMacPalTable[*pTileBits];
+								pBit = (*pTileBits == 0xFF) ? 0x00 : L_GetTranslatedDOSMacPaletteIdx(*pTileBits, nConvRepl);
 							}
 							*pTileBits = pBit;
 						}
@@ -691,6 +783,14 @@ static int L_SCURK_ConvertMacMIFAndSave(tileConv_t *pObjSet, const char *pLoadFi
 								shapHeader.nHeight = _byteswap_ushort(nHeight);
 								shapHeader.dwSize = _byteswap_ulong(dwSize);
 
+								int nConvRepl = 0;
+								if (GET_OVERALL_SPRITE(shapHeader.nSpriteID, SPRITE_SMALL_MILITARY_HANGAR1)) {
+									if (nSelectedHangar1Mode == HANGAR1_ANIM)
+										nConvRepl = 1;
+									else if (nSelectedHangar1Mode != HANGAR1_SHUT)
+										nConvRepl = 2;
+								}
+
 								nDBID = pWorkSet->mDBIndexFromShapeNum[shapHeader.nSpriteID];
 
 								if (pObjSet->pObjects[nDBID])
@@ -703,7 +803,7 @@ static int L_SCURK_ConvertMacMIFAndSave(tileConv_t *pObjSet, const char *pLoadFi
 
 								fread(pObjSet->pObjects[nDBID], shapHeader.dwSize, 1, f);
 
-								L_SCURK_ConvertFromMac(pObjSet, nDBID);
+								L_SCURK_ConvertFromMac(pObjSet, nDBID, nConvRepl);
 							}
 							else
 								fseek(f, chunkHeader.dwSize, SEEK_CUR);
@@ -723,12 +823,22 @@ static int L_SCURK_ConvertMacMIFAndSave(tileConv_t *pObjSet, const char *pLoadFi
 	return nRes;
 }
 
-static void L_SCURK_ConvertFromDOS(tileConv_t *pObjSet, WORD nDBID, BYTE *pDOSTileBuf) {
+static void L_SCURK_ConvertFromDOS(tileConv_t *pObjSet, WORD nShapNum, WORD nDBID, BYTE *pDOSTileBuf, bool bReadOnly) {
 	BYTE *pDOSTileBits, *pTileBitsBuf, *pTileBits;
 	int nTileSize;
 	BOOL bDone;
 	BYTE pDOSTileChunkMode, pDOSTileBitCount;
 	WORD pDOSTileRemainingBitCount;
+
+	int nConvRepl = 0;
+	if (bReadOnly) {
+		if (GET_OVERALL_SPRITE(nShapNum, SPRITE_SMALL_MILITARY_HANGAR1)) {
+			if (nSelectedHangar1Mode == HANGAR1_ANIM)
+				nConvRepl = 1;
+			else if (nSelectedHangar1Mode != HANGAR1_SHUT)
+				nConvRepl = 2;
+		}
+	}
 
 	if (pObjSet->pObjects[nDBID])
 		R_SCURK_WRP_gFreeBlock(pObjSet->pObjects[nDBID]);
@@ -764,7 +874,7 @@ static void L_SCURK_ConvertFromDOS(tileConv_t *pObjSet, WORD nDBID, BYTE *pDOSTi
 			pTileBitsBuf = (BYTE *)&SPRITEDATA(pTileBitsBuf)->pBuf;
 			pDOSTileRemainingBitCount = pDOSTileBitCount;
 			for (nTileSize += 2; pDOSTileRemainingBitCount--; ++nTileSize)
-				*pTileBitsBuf++ = DOSMacPalTable[*pDOSTileBits++];
+				*pTileBitsBuf++ = L_GetTranslatedDOSMacPaletteIdx(*pDOSTileBits++, nConvRepl);
 			if (!IsEvenUnsigned(pDOSTileBitCount) && pTileBits) {
 				++*pTileBits;
 				++pTileBitsBuf;
@@ -798,6 +908,7 @@ static int L_SCURK_ConvertDOSTILAndSave(tileConv_t *pObjSet, const char *pLoadFi
 	FILE *f;
 	BYTE *lpBuffer;
 	tilMainStruct_t Buffer;
+	bool bReadOnly;
 	tilHeader_t *lpLargeShapeBuf, *lpSmallShapeBuf, *lpOtherShapeBuf;
 	DWORD dwLargeSize, dwLargeOffset, dwSmallSize, dwSmallOffset, dwOtherSize, dwOtherOffset;
 	WORD nShapNum, nDBID;
@@ -821,6 +932,7 @@ static int L_SCURK_ConvertDOSTILAndSave(tileConv_t *pObjSet, const char *pLoadFi
 	if (f) {
 		lpBuffer = (BYTE *)R_SCURK_WRP_gAllocBlock(0xFFFF);
 		fread(&Buffer, 1, 0x80, f);
+		bReadOnly = (memcmp(Buffer.readOnlyFile, "READONLY.XXX", 12) == 0) ? true : false;
 		lpLargeShapeBuf = (tilHeader_t *)R_SCURK_WRP_gAllocBlock(0x2EE0);
 		fseek(f, Buffer.dwLargeOffset, SEEK_SET);
 		fread(lpLargeShapeBuf, 1, 0x2EE0, f);
@@ -852,7 +964,7 @@ static int L_SCURK_ConvertDOSTILAndSave(tileConv_t *pObjSet, const char *pLoadFi
 			fseek(f, dwLargeSize + dwLargeOffset, SEEK_SET);
 			fread(lpBuffer, 1, 0xFFFF, f);
 			if (validTiles[nShapNum].nValidated == 1)
-				L_SCURK_ConvertFromDOS(pObjSet, nDBID, lpBuffer);
+				L_SCURK_ConvertFromDOS(pObjSet, nShapNum, nDBID, lpBuffer, bReadOnly);
 		}
 
 		lpOtherShapeBuf = (tilHeader_t *)R_SCURK_WRP_gAllocBlock(0x2EE0);
@@ -886,7 +998,7 @@ static int L_SCURK_ConvertDOSTILAndSave(tileConv_t *pObjSet, const char *pLoadFi
 			fseek(f, dwOtherSize + dwOtherOffset, SEEK_SET);
 			fread(lpBuffer, 1, 0xFFFF, f);
 			if (validTiles[nShapNum].nValidated == 1)
-				L_SCURK_ConvertFromDOS(pObjSet, nDBID, lpBuffer);
+				L_SCURK_ConvertFromDOS(pObjSet, nShapNum, nDBID, lpBuffer, bReadOnly);
 		}
 
 		lpSmallShapeBuf = (tilHeader_t *)R_SCURK_WRP_gAllocBlock(0x2EE0);
@@ -930,7 +1042,7 @@ static int L_SCURK_ConvertDOSTILAndSave(tileConv_t *pObjSet, const char *pLoadFi
 			// a) the tile has been successfully validated once here and now.
 			// b) the tile isn't valid (and wasn't previously valid - ie from a prior archive - it's a skip case)
 			if (validTiles[nShapNum].nValidated != 2)
-				L_SCURK_ConvertFromDOS(pObjSet, nDBID, lpBuffer);
+				L_SCURK_ConvertFromDOS(pObjSet, nShapNum, nDBID, lpBuffer, bReadOnly);
 		}
 
 		R_SCURK_WRP_gFreeBlock(lpOtherShapeBuf);
@@ -964,7 +1076,7 @@ static int L_SCURK_ConvertAndSaveSet(const char *pLoadFile, const char *pSaveFil
 		ConsoleLog(LOG_DEBUG, "ConvertAndSaveSet(%s, %s, %d)\n", pLoadFile, pSaveFile, nType);
 
 	convObjectSet.nObjectNum = SPRITE_COUNT;
-	nSize = 6040;
+	nSize = (SPRITE_COUNT + 10) * 4;
 	convObjectSet.pObjectSetSize = (int *)R_SCURK_WRP_gAllocBlock(nSize);
 	memset(convObjectSet.pObjectSetSize, 0, nSize);
 	nSize = sizeof(sprite_file_header_t) * convObjectSet.nObjectNum + sizeof(__int16);

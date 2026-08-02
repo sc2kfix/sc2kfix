@@ -400,6 +400,9 @@ extern bool bDarkUnderground;
 
 extern int iTerrainCosmeticMode;
 
+extern DWORD dwFixedTileMask;
+extern int nHangar1Mode;
+
 // Game path global
 
 extern char szGamePath[MAX_PATH];
@@ -510,9 +513,16 @@ const char* MusicEngineIntToString(UINT iMusicEngine);
 UINT MusicEngineStringToInt(const char* szMusicEngine);
 BOOL DoConfigureMusicTracks(settings_t *st, HWND hDlg, BOOL bMP3);
 BOOL DoConfigureKeyBindings(settings_t *st, HWND hwndDlg);
+BOOL DoConfigureTileConv(HWND hWnd);
 
 BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc);
 char *ConvertFileTypeFilterString(const char *pInStr);
+void SetRGBEntry(RGBQUAD *pRGB, BYTE r, BYTE g, BYTE b);
+int L_GetTranslatedDOSMacPaletteIdx(BYTE palIdx, int nType);
+int L_GetAdjustedPaletteIdx(BYTE palIdx, int nType);
+void L_InitDOSMacPaletteIdxTable();
+int L_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMax);
+const char *GetFixedTileType(int nTileSet);
 
 // Yes...
 FILE *log_fopen(const char *fname, const char *mode);
@@ -601,8 +611,6 @@ extern BOOL bStatusDialogMoving;
 
 extern char szLatestRelease[24];
 extern BOOL bUpdateAvailable;
-
-extern BOOL bDisableFixedTiles;
 
 HOOKEXT BOOL bHookStopProcessing;
 
