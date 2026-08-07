@@ -800,6 +800,7 @@ static int L_SimcityApp_OpenCityCompressed(CSimcityAppPrimary *pSCApp, CMFC3XFil
 	pTmp = (char *)malloc(nSize);
 	if (!pTmp)
 		return 0;
+	memset(pTmp, 0, nSize);
 	if (GameMain_File_Read(pFile, pTmp, nSize)) {
 		nTp = nDp = 0;
 		ix = 0;
@@ -834,12 +835,135 @@ ABORTREAD:
 	return ret;
 }
 
-extern"C" int __stdcall Hook_SimcityApp_OpenCityCompressed(CMFC3XFile *pFile, int nSize, void *pDat, int nDatSize) {
+extern "C" int __stdcall Hook_SimcityApp_OpenCityCompressed(CMFC3XFile *pFile, int nSize, void *pDat, int nDatSize) {
 	CSimcityAppPrimary* pThis;
 
 	__asm mov [pThis], ecx
 
+	ConsoleLog(LOG_DEBUG, "0x%06X -> CSimcityApp::OpenCityCompressed(%d, 0x%06X, 0x%06X)\n", _ReturnAddress(), nSize, pDat, nDatSize);
+
 	return L_SimcityApp_OpenCityCompressed(pThis, pFile, nSize, pDat, nDatSize);
+}
+
+static void L_InitializeCityData() {
+	__int16 iX, iY, iXHalf, iYHalf, iXQuarter, iYQuarter;
+	__int16 *pTempMapResCom, *pTempMapInd;
+	__int16 nBaseResComValue, nBaseIndValue;
+	BYTE iTileID, iTerrainTileID;
+	DWORD dwCurrBonds;
+	WORD wCurrBond;
+
+	wCommerceConnect = 0;
+	for (iX = 0; iX < GAME_MAP_SIZE; ++iX) {
+		for (iY = 0; iY < GAME_MAP_SIZE; ++iY) {
+			if (XTXTGetTextOverlayID(iX, iY) == NGHBR_CONNECTION_TEXT_ENTRY) {
+				iTileID = GetTileID(iX, iY);
+				if (GET_TILE_RANGE(iTileID, TILE_ROAD_LR, TILE_ROAD_LTBR) ||
+					GET_TILE_RANGE(iTileID, TILE_TUNNEL_T, TILE_TUNNEL_L) ||
+					GET_TILE_RANGE(iTileID, TILE_CROSSOVER_HIGHWAYLR_ROADTB, TILE_CROSSOVER_HIGHWAYTB_ROADLR) ||
+					GET_TILE_RANGE(iTileID, TILE_ONRAMP_TL, TILE_ONRAMP_BR))
+					++wCommerceConnect;
+			}
+		}
+	}
+
+	// The 'wIndustryConnect' block was previously missing
+	// and fixed via a separate detour, however it has now been
+	// formalized in this re-constructed call.
+	wIndustryConnect = 0;
+	for (iX = 0; iX < GAME_MAP_SIZE; ++iX) {
+		for (iY = 0; iY < GAME_MAP_SIZE; ++iY) {
+			if (XTXTGetTextOverlayID(iX, iY) == NGHBR_CONNECTION_TEXT_ENTRY) {
+				iTileID = GetTileID(iX, iY);
+				if (GET_TILE_RANGE(iTileID, TILE_RAIL_LR, TILE_RAIL_HHLR) ||
+					GET_TILE_RANGE(iTileID, TILE_CROSSOVER_ROADLR_RAILTB, TILE_CROSSOVER_HIGHWAYTB_POWERLR) ||
+					GET_TILE_RANGE(iTileID, TILE_HIGHWAY_HTB, TILE_HIGHWAY_LTBR))
+					++wIndustryConnect;
+			}
+		}
+	}
+
+	if (sc2x_debug & SC2X_DEBUG_LOAD)
+		ConsoleLog(LOG_DEBUG, "SC2X: Loaded %d $1500 neighbor connections (Industry Connect).\n", wIndustryConnect);
+
+	dwBusPassengers = 0;
+	dwRailPassengers = 0;
+	dwSubwayPassengers = 0;
+
+	Game_SimulationUpdatePowerConsumption();
+	Game_SimulationUpdateWaterConsumption();
+
+	wCityDevelopedTiles = 0;
+	for (iX = 0; iX < GAME_MAP_SIZE; ++iX) {
+		iXHalf = iX / 2;
+		iXQuarter = iXHalf / 2;
+		for (iY = 0; iY < GAME_MAP_SIZE; ++iY) {
+			iYHalf = iY / 2;
+			iYQuarter = iYHalf / 2;
+			pTempMapResCom = GetTMap(iXQuarter, iYQuarter);
+			pTempMapInd = GetTMap(iXQuarter + MINI_MAP_32, iYQuarter);
+			nBaseResComValue = *pTempMapResCom;
+			nBaseIndValue = *pTempMapInd;
+			iTileID = GetTileID(iX, iY);
+			if (iTileID) {
+				if (iTileID == TILE_SERVICES_BIGPARK)
+					nBaseResComValue += 40;
+				else if (iTileID < TILE_TREES1 || iTileID > TILE_SMALLPARK) {
+					if (iTileID <= TILE_RADIOACTIVITY)
+						nBaseResComValue -= 20;
+				}
+				else
+					nBaseResComValue += 20;
+			}
+			else if (XBITReturnIsWater(iX, iY)) {
+				nBaseResComValue += 12;
+				nBaseIndValue += 12;
+			}
+			else
+				nBaseResComValue += 4;
+			if (iTileID >= TILE_ROAD_LR || XZONReturnZone(iX, iY) != ZONE_NONE) {
+				// Maximum bound here changed from GAME_SIZE_MAP to
+				// MINI_MAP_64 due to it using the half-coordinate vars.
+				// In this context even if the coordinate values may not
+				// have a bearing on actual placement on the full-size map
+				// it seems that the intent is a temporary corresponding
+				// value that can be used in-conjunction with the temp map(s)
+				// and any referenced mini-maps.
+				if (iXHalf < MINI_MAP_64 && iYHalf < MINI_MAP_64)
+					XBITSetBits(iXHalf, iYHalf, XBIT_MARK);
+				++wCityDevelopedTiles;
+			}
+			if (XBITReturnIsWatered(iX, iY)) {
+				nBaseResComValue += 4;
+				nBaseIndValue += 4;
+			}
+			iTerrainTileID = GetTerrainTileID(iX, iY);
+			if (iTerrainTileID) {
+				if (iTerrainTileID < SUBMERGED_00)
+					nBaseResComValue += 12;
+			}
+			*pTempMapResCom = nBaseResComValue;
+			*pTempMapInd = nBaseIndValue;
+		}
+	}
+
+	wDisasterWindy = 0;
+	wDisasterFloodArea = 0;
+
+	wCurrBond = 0;
+	dwCurrBonds = dwCityBonds;
+	dwInterestRateSum = 0;
+	if (dwCityBonds > 0) {
+		do {
+			dwInterestRateSum += wArrBondData[wCurrBond];
+			++wCurrBond;
+			--dwCurrBonds;
+		} while (dwCurrBonds);
+	}
+}
+
+extern "C" void __stdcall Hook_InitializeCityData() {
+	L_InitializeCityData();
 }
 
 static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, char* lpFileName) {
@@ -1683,123 +1807,6 @@ extern "C" void __cdecl Hook_ByteSwap_Buffer(DWORD *pBuf, int nCount) {
 
 extern "C" void __cdecl Hook_ByteSwap_Micro(WORD *pBuf, int nCount) {
 	L_byteswap_micro(pBuf, nCount);
-}
-
-extern "C" void __stdcall Hook_InitializeCityData() {
-	__int16 iX, iY, iXHalf, iYHalf, iXQuarter, iYQuarter;
-	__int16 *pTempMapResCom, *pTempMapInd;
-	__int16 nBaseResComValue, nBaseIndValue;
-	BYTE iTileID, iTerrainTileID;
-	DWORD dwCurrBonds;
-	WORD wCurrBond;
-
-	wCommerceConnect = 0;
-	for (iX = 0; iX < GAME_MAP_SIZE; ++iX) {
-		for (iY = 0; iY < GAME_MAP_SIZE; ++iY) {
-			if (XTXTGetTextOverlayID(iX, iY) == NGHBR_CONNECTION_TEXT_ENTRY) {
-				iTileID = GetTileID(iX, iY);
-				if (GET_TILE_RANGE(iTileID, TILE_ROAD_LR, TILE_ROAD_LTBR) ||
-					GET_TILE_RANGE(iTileID, TILE_TUNNEL_T, TILE_TUNNEL_L) ||
-					GET_TILE_RANGE(iTileID, TILE_CROSSOVER_HIGHWAYLR_ROADTB, TILE_CROSSOVER_HIGHWAYTB_ROADLR) ||
-					GET_TILE_RANGE(iTileID, TILE_ONRAMP_TL, TILE_ONRAMP_BR))
-					++wCommerceConnect;
-			}
-		}
-	}
-
-	// The 'wIndustryConnect' block was previously missing
-	// and fixed via a separate detour, however it has now been
-	// formalized in this re-constructed call.
-	wIndustryConnect = 0;
-	for (iX = 0; iX < GAME_MAP_SIZE; ++iX) {
-		for (iY = 0; iY < GAME_MAP_SIZE; ++iY) {
-			if (XTXTGetTextOverlayID(iX, iY) == NGHBR_CONNECTION_TEXT_ENTRY) {
-				iTileID = GetTileID(iX, iY);
-				if (GET_TILE_RANGE(iTileID, TILE_RAIL_LR, TILE_RAIL_HHLR) ||
-					GET_TILE_RANGE(iTileID, TILE_CROSSOVER_ROADLR_RAILTB, TILE_CROSSOVER_HIGHWAYTB_POWERLR) ||
-					GET_TILE_RANGE(iTileID, TILE_HIGHWAY_HTB, TILE_HIGHWAY_LTBR))
-					++wIndustryConnect;
-			}
-		}
-	}
-
-	if (sc2x_debug & SC2X_DEBUG_LOAD)
-		ConsoleLog(LOG_DEBUG, "SC2X: Loaded %d $1500 neighbor connections (Industry Connect).\n", wIndustryConnect);
-
-	dwBusPassengers = 0;
-	dwRailPassengers = 0;
-	dwSubwayPassengers = 0;
-
-	Game_SimulationUpdatePowerConsumption();
-	Game_SimulationUpdateWaterConsumption();
-
-	wCityDevelopedTiles = 0;
-	for (iX = 0; iX < GAME_MAP_SIZE; ++iX) {
-		iXHalf = iX / 2;
-		iXQuarter = iXHalf / 2;
-		for (iY = 0; iY < GAME_MAP_SIZE; ++iY) {
-			iYHalf = iY / 2;
-			iYQuarter = iYHalf / 2;
-			pTempMapResCom = GetTMap(iXQuarter, iYQuarter);
-			pTempMapInd = GetTMap(iXQuarter + MINI_MAP_32, iYQuarter);
-			nBaseResComValue = *pTempMapResCom;
-			nBaseIndValue = *pTempMapInd;
-			iTileID = GetTileID(iX, iY);
-			if (iTileID) {
-				if (iTileID == TILE_SERVICES_BIGPARK)
-					nBaseResComValue += 40;
-				else if (iTileID < TILE_TREES1 || iTileID > TILE_SMALLPARK) {
-					if (iTileID <= TILE_RADIOACTIVITY)
-						nBaseResComValue -= 20;
-				}
-				else
-					nBaseResComValue += 20;
-			}
-			else if (XBITReturnIsWater(iX, iY)) {
-				nBaseResComValue += 12;
-				nBaseIndValue += 12;
-			}
-			else
-				nBaseResComValue += 4;
-			if (iTileID >= TILE_ROAD_LR || XZONReturnZone(iX, iY) != ZONE_NONE) {
-				// Maximum bound here changed from GAME_SIZE_MAP to
-				// MINI_MAP_64 due to it using the half-coordinate vars.
-				// In this context even if the coordinate values may not
-				// have a bearing on actual placement on the full-size map
-				// it seems that the intent is a temporary corresponding
-				// value that can be used in-conjunction with the temp map(s)
-				// and any referenced mini-maps.
-				if (iXHalf < MINI_MAP_64 && iYHalf < MINI_MAP_64)
-					XBITSetBits(iXHalf, iYHalf, XBIT_MARK);
-				++wCityDevelopedTiles;
-			}
-			if (XBITReturnIsWatered(iX, iY)) {
-				nBaseResComValue += 4;
-				nBaseIndValue += 4;
-			}
-			iTerrainTileID = GetTerrainTileID(iX, iY);
-			if (iTerrainTileID) {
-				if (iTerrainTileID < SUBMERGED_00)
-					nBaseResComValue += 12;
-			}
-			*pTempMapResCom = nBaseResComValue;
-			*pTempMapInd = nBaseIndValue;
-		}
-	}
-
-	wDisasterWindy = 0;
-	wDisasterFloodArea = 0;
-
-	wCurrBond = 0;
-	dwCurrBonds = dwCityBonds;
-	dwInterestRateSum = 0;
-	if (dwCityBonds > 0) {
-		do {
-			dwInterestRateSum += wArrBondData[wCurrBond];
-			++wCurrBond;
-			--dwCurrBonds;
-		} while (dwCurrBonds);
-	}
 }
 
 void InstallSaveHooks_SC2K1996(void) {
