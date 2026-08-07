@@ -967,7 +967,367 @@ extern "C" void __stdcall Hook_InitializeCityData() {
 }
 
 static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, char* lpFileName) {
+#if 1
 	return Game_SimcityApp_OpenCity(pSCApp, pFile, lpFileName);
+#else
+	int ret;
+	int nExpectedLength;
+	int nCurrentReadLength;
+	bool bReadComplete, bGotName, bGotLabel;
+	int nChunk, nSize, scrChunk;
+	char *pTemp;
+	char szTempCityName[255 + 1], szCityName[255 + 1], szChunk[4];
+
+	ret = 0;
+	nExpectedLength = 0;
+	if (!L_OpenCityHeader(pFile, lpFileName, &nExpectedLength, 1))
+		goto ABORTREAD;
+	GameMain_String_Empty(&pszCityName);
+	nCurrentReadLength = 4;
+	bReadComplete = false;
+	bGotName = false;
+	bGotLabel = false;
+	while (!bReadComplete) {
+		if (!GameMain_File_Read(pFile, &nChunk, sizeof(nChunk))) {
+			Game_FailRadioException(48, &fileExcept, lpFileName);
+			goto ABORTREAD;
+		}
+		memcpy(szChunk, &nChunk, sizeof(nChunk));
+		nChunk = _byteswap_ulong(nChunk);
+		if (!GameMain_File_Read(pFile, &nSize, sizeof(nSize))) {
+			Game_FailRadioException(48, &fileExcept, lpFileName);
+			goto ABORTREAD;
+		}
+		nSize = _byteswap_ulong(nSize);
+		ConsoleLog(LOG_DEBUG, "[%c%c%c%c] (%d)\n", szChunk[0], szChunk[1], szChunk[2], szChunk[3], nSize);
+		scrChunk = L_byteswap_longlabel("MISC");
+		if (scrChunk == nChunk) {
+			ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): (B) MISC (0x%06X)\n", lpFileName, nSize);
+			if (!Game_SimcityApp_OpenCityInfo(pSCApp, pFile, nSize))
+				goto ABORTREAD;
+			ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): MISC (0x%06X)\n", lpFileName, nSize);
+		}
+		else {
+			scrChunk = L_byteswap_longlabel("ALTM");
+			if (scrChunk == nChunk) {
+				ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): (B) ALTM (0x%06X)\n", lpFileName, nSize);
+				if (!L_OpenCityUncompressed(pFile, nSize, dwMapALTM[0]))
+					goto ABORTREAD;
+				L_byteswap_ushorts((WORD *)dwMapALTM[0], nSize);
+				ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): ALTM (0x%06X)\n", lpFileName, nSize);
+			}
+			else {
+				scrChunk = L_byteswap_longlabel("XTER");
+				if (scrChunk == nChunk) {
+					pTemp = (char *)malloc(0x4000);
+					if (!pTemp)
+						goto ABORTREAD;
+					ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): XTER (0x%06X)\n", lpFileName, nSize);
+					if (!Game_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, (char *)pTemp, 0x4000)) {
+						free(pTemp);
+						goto ABORTREAD;
+					}
+					memcpy(dwMapXTER, pTemp, 0x4000);
+					free(pTemp);
+					ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): XTER (0x%06X)\n", lpFileName, nSize);
+				}
+				else {
+					scrChunk = L_byteswap_longlabel("XBLD");
+					if (scrChunk == nChunk) {
+						pTemp = (char *)malloc(0x4000);
+						if (!pTemp)
+							goto ABORTREAD;
+						memset(pTemp, 0, 0x4000);
+						if (!Game_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, (char *)pTemp, 0x4000)) {
+							free(pTemp);
+							goto ABORTREAD;
+						}
+						memcpy(dwMapXBLD, pTemp, 0x4000);
+						free(pTemp);
+						ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): XBLD (0x%06X)\n", lpFileName, nSize);
+					}
+					else {
+						scrChunk = L_byteswap_longlabel("XZON");
+						if (scrChunk == nChunk) {
+							if (!Game_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, (char *)dwMapXZON, 0x4000))
+								goto ABORTREAD;
+							ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): XZON (0x%06X)\n", lpFileName, nSize);
+						}
+						else {
+							scrChunk = L_byteswap_longlabel("XUND");
+							if (scrChunk == nChunk) {
+								pTemp = (char *)malloc(0x4000);
+								if (!pTemp)
+									goto ABORTREAD;
+								memset(pTemp, 0, 0x4000);
+								if (!Game_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, (char *)pTemp, 0x4000)) {
+									free(pTemp);
+									goto ABORTREAD;
+								}
+								memcpy(dwMapXUND, pTemp, 0x4000);
+								free(pTemp);
+								ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): XUND (0x%06X)\n", lpFileName, nSize);
+							}
+							else {
+								scrChunk = L_byteswap_longlabel("XTXT");
+								if (scrChunk == nChunk) {
+									pTemp = (char *)malloc(0x4000);
+									if (!pTemp)
+										goto ABORTREAD;
+									memset(pTemp, 0, 0x4000);
+									if (!Game_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, (char *)pTemp, 0x4000)) {
+										free(pTemp);
+										goto ABORTREAD;
+									}
+									memcpy(dwMapXTXT, pTemp, 0x4000);
+									free(pTemp);
+									ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): XTXT (0x%06X)\n", lpFileName, nSize);
+								}
+								else {
+									scrChunk = L_byteswap_longlabel("XLAB");
+									if (scrChunk == nChunk) {
+										pTemp = (char *)malloc(0x1900);
+										if (!pTemp)
+											goto ABORTREAD;
+										memset(pTemp, 0, 0x1900);
+										if (!Game_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, (char *)pTemp, 0x1900)) {
+											free(pTemp);
+											goto ABORTREAD;
+										}
+										memcpy(dwMapXLAB, pTemp, 0x1900);
+										free(pTemp);
+										bGotLabel = true;
+										ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): XLAB (0x%06X)\n", lpFileName, nSize);
+									}
+									else {
+										scrChunk = L_byteswap_longlabel("XMIC");
+										if (scrChunk == nChunk) {
+											if (!Game_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, (char *)pMicrosimArr, 0x4B0))
+												goto ABORTREAD;
+											L_byteswap_micro((WORD *)pMicrosimArr, 0x4B0);
+											ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): XMIC (0x%06X)\n", lpFileName, nSize);
+										}
+										else {
+											scrChunk = L_byteswap_longlabel("XTHG");
+											if (scrChunk == nChunk) {
+												if (!Game_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, (char *)dwMapXTHG, 0x1E0))
+													goto ABORTREAD;
+												ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): XTHG (0x%06X)\n", lpFileName, nSize);
+											}
+											else {
+												scrChunk = L_byteswap_longlabel("XBIT");
+												if (scrChunk == nChunk) {
+													pTemp = (char *)malloc(0x4000);
+													if (!pTemp)
+														goto ABORTREAD;
+													memset(pTemp, 0, 0x4000);
+													if (!Game_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, (char *)pTemp, 0x4000)) {
+														free(pTemp);
+														goto ABORTREAD;
+													}
+													memcpy(dwMapXBIT, pTemp, 0x4000);
+													free(pTemp);
+													ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): XBIT (0x%06X)\n", lpFileName, nSize);
+												}
+												else {
+													scrChunk = L_byteswap_longlabel("XTRF");
+													if (scrChunk == nChunk) {
+														pTemp = (char *)malloc(0x1000);
+														if (!pTemp)
+															goto ABORTREAD;
+														memset(pTemp, 0, 0x1000);
+														if (!Game_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, (char *)pTemp, 0x1000)) {
+															free(pTemp);
+															goto ABORTREAD;
+														}
+														memcpy(dwMapXTRF, pTemp, 0x1000);
+														free(pTemp);
+														ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): XTRF (0x%06X)\n", lpFileName, nSize);
+													}
+													else {
+														scrChunk = L_byteswap_longlabel("XPLT");
+														if (scrChunk == nChunk) {
+															pTemp = (char *)malloc(0x1000);
+															if (!pTemp)
+																goto ABORTREAD;
+															memset(pTemp, 0, 0x1000);
+															if (!Game_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, (char *)pTemp, 0x1000)) {
+																free(pTemp);
+																goto ABORTREAD;
+															}
+															memcpy(dwMapXPLT, pTemp, 0x1000);
+															free(pTemp);
+															ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): XPLT (0x%06X)\n", lpFileName, nSize);
+														}
+														else {
+															scrChunk = L_byteswap_longlabel("XVAL");
+															if (scrChunk == nChunk) {
+																pTemp = (char *)malloc(0x1000);
+																if (!pTemp)
+																	goto ABORTREAD;
+																memset(pTemp, 0, 0x1000);
+																if (!Game_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, (char *)pTemp, 0x1000)) {
+																	free(pTemp);
+																	goto ABORTREAD;
+																}
+																memcpy(dwMapXVAL, pTemp, 0x1000);
+																free(pTemp);
+																ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): XVAL (0x%06X)\n", lpFileName, nSize);
+															}
+															else {
+																scrChunk = L_byteswap_longlabel("XCRM");
+																if (scrChunk == nChunk) {
+																	pTemp = (char *)malloc(0x1000);
+																	if (!pTemp)
+																		goto ABORTREAD;
+																	memset(pTemp, 0, 0x1000);
+																	if (!Game_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, (char *)pTemp, 0x1000)) {
+																		free(pTemp);
+																		goto ABORTREAD;
+																	}
+																	memcpy(dwMapXCRM, pTemp, 0x1000);
+																	free(pTemp);
+																	ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): XCRM (0x%06X)\n", lpFileName, nSize);
+																}
+																else {
+																	scrChunk = L_byteswap_longlabel("XPLC");
+																	if (scrChunk == nChunk) {
+																		pTemp = (char *)malloc(0x400);
+																		if (!pTemp)
+																			goto ABORTREAD;
+																		memset(pTemp, 0, 0x400);
+																		if (!Game_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, (char *)pTemp, 0x400)) {
+																			free(pTemp);
+																			goto ABORTREAD;
+																		}
+																		memcpy(dwMapXCRM, pTemp, 0x400);
+																		free(pTemp);
+																		ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): XPLC (0x%06X)\n", lpFileName, nSize);
+																	}
+																	else {
+																		scrChunk = L_byteswap_longlabel("XFIR");
+																		if (scrChunk == nChunk) {
+																			pTemp = (char *)malloc(0x400);
+																			if (!pTemp)
+																				goto ABORTREAD;
+																			memset(pTemp, 0, 0x400);
+																			if (!Game_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, (char *)pTemp, 0x400)) {
+																				free(pTemp);
+																				goto ABORTREAD;
+																			}
+																			memcpy(dwMapXFIR, pTemp, 0x400);
+																			free(pTemp);
+																			ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): XFIR (0x%06X)\n", lpFileName, nSize);
+																		}
+																		else {
+																			scrChunk = L_byteswap_longlabel("XPOP");
+																			if (scrChunk == nChunk) {
+																				pTemp = (char *)malloc(0x400);
+																				if (!pTemp)
+																					goto ABORTREAD;
+																				memset(pTemp, 0, 0x400);
+																				if (!Game_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, (char *)pTemp, 0x400)) {
+																					free(pTemp);
+																					goto ABORTREAD;
+																				}
+																				memcpy(dwMapXPOP, pTemp, 0x400);
+																				free(pTemp);
+																				ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): XPOP (0x%06X)\n", lpFileName, nSize);
+																			}
+																			else {
+																				scrChunk = L_byteswap_longlabel("XROG");
+																				if (scrChunk == nChunk) {
+																					ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): (B) XROG (0x%06X)\n", lpFileName, nSize);
+																					pTemp = (char *)malloc(0x400);
+																					if (!pTemp)
+																						goto ABORTREAD;
+																					memset(pTemp, 0, 0x400);
+																					if (!Game_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, (char *)pTemp, 0x400)) {
+																						free(pTemp);
+																						goto ABORTREAD;
+																					}
+																					memcpy(dwMapXROG, pTemp, 0x400);
+																					free(pTemp);
+																					ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): XROG (0x%06X)\n", lpFileName, nSize);
+																				}
+																				else {
+																					scrChunk = L_byteswap_longlabel("XGRP");
+																					if (scrChunk == nChunk) {
+																						pTemp = (char *)malloc(0xD00);
+																						if (!pTemp)
+																							goto ABORTREAD;
+																						memset(pTemp, 0, 0xD00);
+																						if (!Game_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, (char *)pTemp, 0xD00)) {
+																							free(pTemp);
+																							goto ABORTREAD;
+																						}
+																						L_byteswap_buffer((DWORD *)pTemp, 0xD00);
+																						memcpy(dwMapXGRP, pTemp, 0xD00);
+																						free(pTemp);
+																						ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): XGRP (0x%06X)\n", lpFileName, nSize);
+																					}
+																					else {
+																						scrChunk = L_byteswap_longlabel("CNAM");
+																						if (scrChunk == nChunk) {
+																							memset(szTempCityName, 0, sizeof(szTempCityName));
+																							if (nSize > 0) {
+																								if (!L_OpenCityUncompressed(pFile, nSize, szTempCityName))
+																									goto ABORTREAD;
+																								bGotName = true;
+																							}
+																							else
+																								GameMain_String_Empty(&pszCityName);
+																							ConsoleLog(LOG_DEBUG, "L_SimcityApp_OpenCity(%s): CNAM (0x%06X)\n", lpFileName, nSize);
+																						}
+																						else if (!Game_OpenCityCompleteGameRead(pFile, nSize))
+																							goto ABORTREAD;
+																					}
+																				}
+																			}
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		nCurrentReadLength += nSize + 8;
+		if (nCurrentReadLength >= nExpectedLength)
+			bReadComplete = true;
+	}
+	memset(szCityName, 0, sizeof(szCityName));
+	if (bGotName && szTempCityName[0]) {
+		if (!L_PascalStringToCharString(szTempCityName, szCityName)) {
+			ConsoleLog(LOG_WARNING, "L_SimcityApp_OpenCity(%s): Failed to convert string; deriving city name from file name.\n");
+			goto DERIVECITYNAME;
+		}
+		GameMain_String_OperatorSet(&pszCityName, szCityName);
+	}
+	else {
+	DERIVECITYNAME:
+		Game_MakeCityNameFromFileName(lpFileName);
+	}
+	Game_InitializeCityData();
+	Game_GetOccupiedTileCount();
+	Game_GraphKludge();
+	if (bGotLabel)
+		GameMain_ResetLabelStringState();
+	else
+		Game_ClearLabels();
+	ret = 1;
+ABORTREAD:
+	return ret;
+#endif
 }
 
 // Function prototype: HOOKCB void L_SimcityApp_DoLoad_Before(void)
