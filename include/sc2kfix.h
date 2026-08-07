@@ -176,6 +176,7 @@ template <typename T> std::string to_string_precision(const T value, const int p
 
 #define MIN_MICROSIM_LABEL_ENTRIES (MIN_SIM_TEXT_ENTRIES + 10)
 #define MAX_LABEL_TEXT_ENTRY_RANGE 128
+#define MAX_LABEL_ENTRIES 255
 
 #define MICROSIMID_MIN 0
 #define MICROSIMID_MAX (MAX_SIM_TEXT_ENTRIES - MIN_SIM_TEXT_ENTRIES)
@@ -564,6 +565,7 @@ void L_byteswap_buffer(DWORD *pBuf, int nCount);
 void L_byteswap_micro(WORD *pBuf, unsigned int nCount);
 void L_byteswap_ushorts(WORD *pBuf, int nCount);
 void L_CharStringToPascalString(const char *pInStr, char *pOutStr, int nMaxSize, bool bFixedSize);
+void L_PascalStringToCharString(const char *pInStr, char *pOutStr);
 
 // Yes...
 FILE *log_fopen(const char *fname, const char *mode);

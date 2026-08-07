@@ -781,6 +781,19 @@ void L_CharStringToPascalString(const char *pInStr, char *pOutStr, int nMaxSize,
 	memset(&pOutStr[0], nStoredSize, 1);
 }
 
+bool L_PascalStringToCharString(const char *pInStr, char *pOutStr) {
+	int nPos;
+	char c;
+
+	if (!pInStr || strlen(pInStr) == 0)
+		return false;
+	c = *pInStr;
+	for (nPos = 0; c > nPos; ++nPos)
+		pOutStr[nPos] = pInStr[nPos + 1];
+	pOutStr[nPos] = 0;
+	return true;
+}
+
 // start of base64 code
 /*
 * Base64 encoding/decoding (RFC1341)
