@@ -565,7 +565,7 @@ void L_byteswap_buffer(DWORD *pBuf, int nCount);
 void L_byteswap_micro(WORD *pBuf, unsigned int nCount);
 void L_byteswap_ushorts(WORD *pBuf, int nCount);
 void L_CharStringToPascalString(const char *pInStr, char *pOutStr, int nMaxSize, bool bFixedSize);
-void L_PascalStringToCharString(const char *pInStr, char *pOutStr);
+bool L_PascalStringToCharString(const char *pInStr, char *pOutStr);
 
 // Yes...
 FILE *log_fopen(const char *fname, const char *mode);

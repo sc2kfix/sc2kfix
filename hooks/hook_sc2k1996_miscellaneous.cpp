@@ -1114,7 +1114,7 @@ extern "C" void __stdcall Hook_StartCleanGame(void) {
 		pSCApp = &pCSimcityAppThis;
 		pThis = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 
-		if (((__int16)wCityMode < 0 && bNewGame) || bMapEditor) {
+		if ((wCityMode < 0 && bNewGame) || bMapEditor) {
 			// Rotate the map 90 degrees at a time until wViewRotation is north. We need to do
 			// this because SimCity 2000 was programmed by madmen and rotating the viewport is
 			// actually accomplished by rotating all the map data in memory.

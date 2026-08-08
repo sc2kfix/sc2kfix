@@ -258,8 +258,8 @@ public:
 	DWORD dwSCAGameSound;
 	CMFC3XString dwSCApCStringLongMonths[12];
 	CMFC3XString dwSCApCStringShortMonths[12];
-	WORD wSCAGameSpeedLOW;
-	WORD wSCAGameSpeedHIGH;
+	__int16 wSCAGameSpeedLOW;
+	__int16 wSCAGameSpeedHIGH;
 	DWORD dwSCASimulationTicking;
 	DWORD dwSCAOneHundredFortyFour;
 	DWORD dwSCAAnimationOnCycle;
@@ -312,8 +312,8 @@ public:
 	DWORD dwSCAGameSound;
 	CMFC3XString dwSCApCStringLongMonths[12];
 	CMFC3XString dwSCApCStringShortMonths[12];
-	WORD wSCAGameSpeedLOW;
-	WORD wSCAGameSpeedHIGH;
+	__int16 wSCAGameSpeedLOW;
+	__int16 wSCAGameSpeedHIGH;
 	DWORD dwSCASimulationTicking;
 	DWORD dwSCAOneHundredFortyFour;
 	DWORD dwSCAAnimationOnCycle;

@@ -142,6 +142,9 @@
 
 #define MAX_LABEL_LEN 23
 
+#define MAX_NEIGH_NAME_LEN 31
+#define MAX_NEIGH_BUF_SIZE MAX_NEIGH_NAME_LEN + 1
+
 #define GROWTH_TILE_MAX_TRIP_STEPS 100
 
 #define GAME_MAP_SIZE 128u
@@ -3153,7 +3156,6 @@ GAMECALL(0x401E47, BOOL, __cdecl, UseBulldozer, __int16 iTileTargetX, __int16 iT
 GAMECALL(0x401E51, int, __thiscall, SimcityView_CityToolPlaceWaterPipe, CSimcityView *, __int16, __int16)
 GAMECALL(0x401E65, void, __stdcall, UpdateWeatherOrDisasterState, void)
 GAMECALL(0x401E7E, void, __thiscall, SimcityApp_SoundPlayActionThingSound, CSimcityAppPrimary *, int, int)
-GAMECALL(0x401E9C, __int16, __thiscall, SimcityApp_AllocateMiscInfo, CSimcityAppPrimary *)
 GAMECALL(0x401EA1, int, __cdecl, MapToolLowerTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x401ECE, int, __thiscall, Graphics_Load, CGraphics *, const char *, int)
 GAMECALL(0x401ED8, void, __cdecl, DirtyCloud, __int16, __int16, __int16)
@@ -3517,7 +3519,7 @@ GAMEOFF(DWORD,	dwDisasterActive,			0x4C9EE8)
 GAMEOFF_ARR(WORD, wArrBondData,				0x4C9EF0)
 GAMEOFF_ARR(CMFC3XString,	cStrDataArchiveNames,	0x4CA160)
 GAMEOFF(CMFC3XString,	strUnusedString,		0x4CA188)
-GAMEOFF(DWORD,	dwCityResidentialPopulation,	0x4CA194)
+GAMEOFF(DWORD,	dwCityOldResPopulation,	0x4CA194)
 GAMEOFF(CMFC3XString, pszCityName,				0x4CA1A0)
 GAMEOFF(WORD,	wNationalEconomyTrend,		0x4CA1BC)
 GAMEOFF(news_t*,	pNewsArr,				0x4CA1C0)
@@ -3533,7 +3535,7 @@ GAMEOFF(WORD,	EditData,					0x4CA404)
 GAMEOFF(WORD,	wSubwayXUNDCount,			0x4CA41C)
 GAMEOFF(WORD,	wSetTriggerDisasterType,	0x4CA420)
 GAMEOFF(DWORD*,	pZonePops,					0x4CA428)
-GAMEOFF(WORD,	wCityMode,					0x4CA42C)
+GAMEOFF(__int16,	wCityMode,				0x4CA42C)
 GAMEOFF(WORD,	wOldArrests,				0x4CA430)
 GAMEOFF(COLORREF,	colGameBackgndAbove,	0x4CA43C)
 GAMEOFF(int,	dwCityLandValue,			0x4CA440)
@@ -3575,12 +3577,9 @@ GAMEOFF(__int16,	iScreenPointX,			0x4CAD30)		// Used here in MapToolMenuAction
 GAMEOFF(__int16,	iScreenPointY,			0x4CAD34)		// Used here in MapToolMenuAction
 GAMEOFF(CMFC3XString,	strCityFilename,	0x4CAD38)
 GAMEOFF(BOOL,	bInScenario,				0x4CAD44)
-GAMEOFF_ARR(char, szNeighborNameSouth,		0x4CAD58)		// char[32]
-GAMEOFF_ARR(char, szNeighborNameWest,		0x4CAD78)		// char[32]
-GAMEOFF_ARR(char, szNeighborNameNorth,		0x4CAD98)		// char[32]
-GAMEOFF_ARR(char, szNeighborNameEast,		0x4CADB8)		// char[32]
+GAMEOFF_ARR(char, szNeighborCities,			0x4CAD58)		// char[32 * 4]
 GAMEOFF(WORD,	wCityTerrainSliderTrees,	0x4CADD8)
-GAMEOFF(WORD,	wConnectTiles,				0x4CADDC)
+GAMEOFF(__int16,	wConnectTiles,			0x4CADDC)
 GAMEOFF(BYTE,	bWeatherHeat,				0x4CADE0)
 GAMEOFF(RECT,	dirtyRect,					0x4CAD48)
 GAMEOFF_ARR(BYTE, stNeighborCities,			0x4CAD58)
@@ -3609,7 +3608,7 @@ GAMEOFF(WORD,	wCityDifficulty,			0x4CB404)
 GAMEOFF(WORD,	LastCursorY,				0x4CB408)
 GAMEOFF(BYTE,	bWeatherTrend,				0x4CB40C)
 GAMEOFF(DWORD,	dwCityWorkforceLE,			0x4CB410)
-GAMEOFF_ARR(WORD,	wCityInventionYears,	0x4CB430)
+GAMEOFF_ARR(__int16,	wCityInventionYears,	0x4CB430)
 GAMEOFF(DWORD,	dwCityCrime,				0x4CB454)
 GAMEOFF(__int16,	wCityCenterX,			0x4CB458)
 GAMEOFF(__int16,	wCityCenterY,			0x4CB45C)
@@ -3622,7 +3621,7 @@ GAMEOFF(DWORD,	dwWaterUsedPercentage,		0x4CC4B8)
 GAMEOFF(BOOL,	bNewspaperExtra,			0x4CC4BC)
 GAMEOFF(budget_t*,	pBudgetArr,				0x4CC4CC)		// Needs reverse engineering. See wiki.
 GAMEOFF(BOOL,	bNoDisasters,				0x4CC4D4)
-GAMEOFF(WORD*,	wNeighborNameIdx,			0x4CC4DC)
+GAMEOFF(__int16*,	wNeighborNameIdx,		0x4CC4DC)
 GAMEOFF(WORD,	wCommerceConnect,			0x4CC4D8)
 GAMEOFF(__int16,	wStadiumSportsTeams,	0x4CC4E0)
 GAMEOFF(BYTE,	bMilitaryBaseType,			0x4CC4E4)
@@ -3720,7 +3719,6 @@ GAMEOFF_ARR(const char,	aScenarios,			0x4E70FC)
 GAMEOFF_ARR(DWORD, dwZoneNameStringIDs,		0x4E7140)
 GAMEOFF_ARR(const char,	aTilesets,			0x4E7244)
 GAMEOFF_ARR(const char,	aData,				0x4E728C)
-GAMEOFF(DWORD *,	pMiscInfo,				0x4E72A8)
 GAMEOFF(DWORD,	dwMapEditingMode,			0x4E72F0)
 GAMEOFF_ARR(const char,	aCities,			0x4E730C)
 GAMEOFF_ARR(const char,	aSavegame,			0x4E7338)
