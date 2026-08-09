@@ -2051,7 +2051,7 @@ static int L_SimcityApp_WriteCity(CSimcityAppPrimary *pSCApp, FILE *pFile) {
 	if (!L_SimcityApp_WriteCityHeader(pSCApp, pFile, 0))
 		goto ABORTWRITE;
 	nDataOffset = 4;
-	L_CharStringToPascalString(pszCityName.m_pchData, szTempStr, CNAM_DAT_LEN - 1, true);
+	L_CharStringToPascalString(pszCityName.m_pchData, szTempStr, CITY_NAME_LEN, true);
 	scrChunk = L_byteswap_longlabel("CNAM");
 	if (!L_SimcityApp_WriteCityName(pSCApp, pFile, scrChunk, szTempStr))
 		goto ABORTWRITE;
@@ -2141,7 +2141,7 @@ std::vector<hook_function_t> stHooks_L_SimcityApp_DoSave_After;
 int L_SimcityApp_DoSave(CSimcityAppPrimary *pSCApp, const char *lpFileName, char *pNewCityName, bool bChangeCityName) {
 	FILE *f;
 	bool bCanChangeCityName;
-	char szOldCityName[CNAM_DAT_LEN - 1];
+	char szOldCityName[CNAM_DAT_LEN];
 	DWORD dwWasZoomedIn;
 	int ret;
 	CSimcityView *pSCView;
