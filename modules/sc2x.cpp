@@ -655,14 +655,14 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 }
 #endif
 
-static bool IsMatchingChunk(int nChunk, char *pTargChunk) {
-	int scrChunk;
+static bool IsMatchingChunk(const char *pChunk, const char *pTargChunk) {
+	if (!pChunk || strlen(pChunk) < 1)
+		return false;
 
 	if (!pTargChunk || strlen(pTargChunk) < 1)
 		return false;
 
-	scrChunk = L_byteswap_longlabel(pTargChunk);
-	return (scrChunk == nChunk) ? true : false;
+	return (memcmp(pTargChunk, pChunk, 4) == 0) ? true : false;
 }
 
 static __int16 L_SimcityApp_AllocateMiscInfo(CSimcityAppPrimary *pSCApp) {
@@ -708,8 +708,7 @@ static int L_IsClassicCityFileValid(const char *lpFileName) {
 static int L_OpenCityHeader(FILE *pFile, const char *lpFileName, int *pLength, __int16 nClassicPreCheck) {
 	int nActualLength = 0;
 	bool bSupportFixUp;
-	DWORD dwChunk;
-	char szResStr[255 + 1];
+	char szChunk[4], szResStr[255 + 1];
 
 	memset(szResStr, 0, sizeof(szResStr));
 
@@ -722,13 +721,12 @@ static int L_OpenCityHeader(FILE *pFile, const char *lpFileName, int *pLength, _
 		if (sc2x_debug & SC2X_DEBUG_LOAD)
 			ConsoleLog(LOG_DEBUG, "SC2X: city file nActualLength is %d bytes.\n", nActualLength);
 	}
-	if (!fread(&dwChunk, 1, sizeof(dwChunk), pFile)) {
+	if (!fread(szChunk, 1, sizeof(szChunk), pFile)) {
 		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
 		GameMain_AfxMessageBoxStr(szResStr, 0, 0);
 		return 0;
 	}
-	dwChunk = _byteswap_ulong(dwChunk);
-	if (IsMatchingChunk(dwChunk, "FORM")) {
+	if (IsMatchingChunk(szChunk, "FORM")) {
 		if (!fread(pLength, 1, sizeof(*pLength), pFile)) {
 			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
 			GameMain_AfxMessageBoxStr(szResStr, 0, 0);
@@ -793,13 +791,12 @@ static int L_OpenCityHeader(FILE *pFile, const char *lpFileName, int *pLength, _
 				return 0;
 			}
 		}
-		if (!fread(&dwChunk, 1, sizeof(dwChunk), pFile)) {
+		if (!fread(szChunk, 1, sizeof(szChunk), pFile)) {
 			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
 			GameMain_AfxMessageBoxStr(szResStr, 0, 0);
 			return 0;
 		}
-		dwChunk = _byteswap_ulong(dwChunk);
-		if (IsMatchingChunk(dwChunk, "SCDH"))
+		if (IsMatchingChunk(szChunk, "SCDH"))
 			return 1;
 		else {
 			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 54, szResStr, sizeof(szResStr) - 1);
@@ -1057,9 +1054,12 @@ static int L_SimcityApp_OpenCityInfo(CSimcityAppPrimary *pSCApp, FILE *pFile, in
 	return ret;
 }
 
-static int L_OpenCityUnknownChunkRead(FILE *pFile, int nSize) {
+static int L_OpenCityUnknownChunkRead(FILE *pFile, char *pChunk, int nSize) {
 	int ret;
 	char *pTemp;
+
+	if (pChunk)
+		ConsoleLog(LOG_DEBUG, "Unknown Chunk: '%c%c%c%c' (Size: %d)\n", pChunk[0], pChunk[1], pChunk[2], pChunk[3], nSize);
 
 	ret = 0;
 	pTemp = (char *)malloc(nSize);
@@ -1209,10 +1209,10 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 	int nCurrentReadLength;
 	int iBadRead;
 	bool bReadComplete, bGotName, bGotLabel;
-	int nChunk, nSize;
+	int nSize;
 	char *pTemp;
 	int nPos;
-	char szResStr[255 + 1], szErrStr[1024 +1 ], szTempCityName[255 + 1], szCityName[255 + 1];
+	char szChunk[4], szResStr[255 + 1], szErrStr[1024 +1 ], szTempCityName[255 + 1], szCityName[255 + 1];
 
 	ret = 0;
 	nExpectedLength = 0;
@@ -1225,13 +1225,12 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 		pTemp = NULL;
 		while (!bReadComplete) {
 			iBadRead = CHUNK_BAD_HEAD;
-			if (fread(&nChunk, 1, sizeof(nChunk), pFile) == sizeof(nChunk)) {
+			if (fread(szChunk, 1, sizeof(szChunk), pFile) == sizeof(szChunk)) {
 				iBadRead = CHUNK_BAD_SIZE;
-				nChunk = _byteswap_ulong(nChunk);
 				if (fread(&nSize, 1, sizeof(nSize), pFile) == sizeof(nSize)) {
 					iBadRead = CHUNK_BAD_BODY;
 					nSize = _byteswap_ulong(nSize);
-					if (IsMatchingChunk(nChunk, "CNAM")) {
+					if (IsMatchingChunk(szChunk, "CNAM")) {
 						memset(szTempCityName, 0, sizeof(szTempCityName));
 						if (nSize > 0) {
 							if (L_OpenCityUncompressed(pFile, nSize, szTempCityName)) {
@@ -1244,11 +1243,11 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							GameMain_String_Empty(&pszCityName);
 						}
 					}
-					else if (IsMatchingChunk(nChunk, "MISC")) {
+					else if (IsMatchingChunk(szChunk, "MISC")) {
 						if (L_SimcityApp_OpenCityInfo(pSCApp, pFile, nSize))
 							iBadRead = CHUNK_OKAY;
 					}
-					else if (IsMatchingChunk(nChunk, "ALTM")) {
+					else if (IsMatchingChunk(szChunk, "ALTM")) {
 						pTemp = (char *)malloc(ALTM_ALLOC_SIZE);
 						if (pTemp) {
 							iBadRead = CHUNK_BAD_PROC;
@@ -1261,7 +1260,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							}
 						}
 					}
-					else if (IsMatchingChunk(nChunk, "XTER")) {
+					else if (IsMatchingChunk(szChunk, "XTER")) {
 						pTemp = (char *)malloc(FULLMAP_ALLOC_SIZE);
 						if (pTemp) {
 							iBadRead = CHUNK_BAD_PROC;
@@ -1273,7 +1272,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							}
 						}
 					}
-					else if (IsMatchingChunk(nChunk, "XBLD")) {
+					else if (IsMatchingChunk(szChunk, "XBLD")) {
 						pTemp = (char *)malloc(FULLMAP_ALLOC_SIZE);
 						if (pTemp) {
 							iBadRead = CHUNK_BAD_PROC;
@@ -1285,7 +1284,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							}
 						}
 					}
-					else if (IsMatchingChunk(nChunk, "XZON")) {
+					else if (IsMatchingChunk(szChunk, "XZON")) {
 						pTemp = (char *)malloc(FULLMAP_ALLOC_SIZE);
 						if (pTemp) {
 							iBadRead = CHUNK_BAD_PROC;
@@ -1297,7 +1296,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							}
 						}
 					}
-					else if (IsMatchingChunk(nChunk, "XUND")) {
+					else if (IsMatchingChunk(szChunk, "XUND")) {
 						pTemp = (char *)malloc(FULLMAP_ALLOC_SIZE);
 						if (pTemp) {
 							iBadRead = CHUNK_BAD_PROC;
@@ -1309,7 +1308,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							}
 						}
 					}
-					else if (IsMatchingChunk(nChunk, "XTXT")) {
+					else if (IsMatchingChunk(szChunk, "XTXT")) {
 						pTemp = (char *)malloc(FULLMAP_ALLOC_SIZE);
 						if (pTemp) {
 							iBadRead = CHUNK_BAD_PROC;
@@ -1321,7 +1320,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							}
 						}
 					}
-					else if (IsMatchingChunk(nChunk, "XLAB")) {
+					else if (IsMatchingChunk(szChunk, "XLAB")) {
 						pTemp = (char *)malloc(LABEL_ALLOC_SIZE);
 						if (pTemp) {
 							iBadRead = CHUNK_BAD_PROC;
@@ -1334,7 +1333,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							}
 						}
 					}
-					else if (IsMatchingChunk(nChunk, "XMIC")) {
+					else if (IsMatchingChunk(szChunk, "XMIC")) {
 						pTemp = (char *)malloc(MICROSIM_ALLOC_SIZE);
 						if (pTemp) {
 							iBadRead = CHUNK_BAD_PROC;
@@ -1347,7 +1346,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							}
 						}
 					}
-					else if (IsMatchingChunk(nChunk, "XTHG")) {
+					else if (IsMatchingChunk(szChunk, "XTHG")) {
 						pTemp = (char *)malloc(THING_ALLOC_SIZE);
 						if (pTemp) {
 							iBadRead = CHUNK_BAD_PROC;
@@ -1359,7 +1358,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							}
 						}
 					}
-					else if (IsMatchingChunk(nChunk, "XBIT")) {
+					else if (IsMatchingChunk(szChunk, "XBIT")) {
 						pTemp = (char *)malloc(FULLMAP_ALLOC_SIZE);
 						if (pTemp) {
 							iBadRead = CHUNK_BAD_PROC;
@@ -1371,7 +1370,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							}
 						}
 					}
-					else if (IsMatchingChunk(nChunk, "XTRF")) {
+					else if (IsMatchingChunk(szChunk, "XTRF")) {
 						pTemp = (char *)malloc(MINIMAP64_ALLOC_SIZE);
 						if (pTemp) {
 							iBadRead = CHUNK_BAD_PROC;
@@ -1383,7 +1382,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							}
 						}
 					}
-					else if (IsMatchingChunk(nChunk, "XPLT")) {
+					else if (IsMatchingChunk(szChunk, "XPLT")) {
 						pTemp = (char *)malloc(MINIMAP64_ALLOC_SIZE);
 						if (pTemp) {
 							iBadRead = CHUNK_BAD_PROC;
@@ -1395,7 +1394,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							}
 						}
 					}
-					else if (IsMatchingChunk(nChunk, "XVAL")) {
+					else if (IsMatchingChunk(szChunk, "XVAL")) {
 						pTemp = (char *)malloc(MINIMAP64_ALLOC_SIZE);
 						if (pTemp) {
 							iBadRead = CHUNK_BAD_PROC;
@@ -1407,7 +1406,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							}
 						}
 					}
-					else if (IsMatchingChunk(nChunk, "XCRM")) {
+					else if (IsMatchingChunk(szChunk, "XCRM")) {
 						pTemp = (char *)malloc(MINIMAP64_ALLOC_SIZE);
 						if (pTemp) {
 							iBadRead = CHUNK_BAD_PROC;
@@ -1419,7 +1418,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							}
 						}
 					}
-					else if (IsMatchingChunk(nChunk, "XPLC")) {
+					else if (IsMatchingChunk(szChunk, "XPLC")) {
 						pTemp = (char *)malloc(MINIMAP32_ALLOC_SIZE);
 						if (pTemp) {
 							iBadRead = CHUNK_BAD_PROC;
@@ -1431,7 +1430,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							}
 						}
 					}
-					else if (IsMatchingChunk(nChunk, "XFIR")) {
+					else if (IsMatchingChunk(szChunk, "XFIR")) {
 						pTemp = (char *)malloc(MINIMAP32_ALLOC_SIZE);
 						if (pTemp) {
 							iBadRead = CHUNK_BAD_PROC;
@@ -1443,7 +1442,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							}
 						}
 					}
-					else if (IsMatchingChunk(nChunk, "XPOP")) {
+					else if (IsMatchingChunk(szChunk, "XPOP")) {
 						pTemp = (char *)malloc(MINIMAP32_ALLOC_SIZE);
 						if (pTemp) {
 							iBadRead = CHUNK_BAD_PROC;
@@ -1455,7 +1454,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							}
 						}
 					}
-					else if (IsMatchingChunk(nChunk, "XROG")) {
+					else if (IsMatchingChunk(szChunk, "XROG")) {
 						pTemp = (char *)malloc(MINIMAP32_ALLOC_SIZE);
 						if (pTemp) {
 							iBadRead = CHUNK_BAD_PROC;
@@ -1467,7 +1466,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							}
 						}
 					}
-					else if (IsMatchingChunk(nChunk, "XGRP")) {
+					else if (IsMatchingChunk(szChunk, "XGRP")) {
 						pTemp = (char *)malloc(GRAPH_ALLOC_SIZE);
 						if (pTemp) {
 							iBadRead = CHUNK_BAD_PROC;
@@ -1480,7 +1479,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							}
 						}
 					}
-					else if (L_OpenCityUnknownChunkRead(pFile, nSize))
+					else if (L_OpenCityUnknownChunkRead(pFile, szChunk, nSize))
 						iBadRead = CHUNK_OKAY;
 				}
 			}
@@ -1740,32 +1739,31 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 }
 
 static int L_SimcityApp_WriteCityHeader(CSimcityAppPrimary *pSCApp, FILE *pFile, int nDatSize) {
-	DWORD scrChunk, nChunk, nScrDatSize;
+	char szChunk[4];
+	DWORD nScrDatSize;
 
 	if (fseek(pFile, 0, SEEK_SET))
 		return 0;
-	scrChunk = L_byteswap_longlabel("FORM");
-	nChunk = _byteswap_ulong(scrChunk);
-	if (!fwrite(&nChunk, sizeof(nChunk), 1, pFile))
+	memcpy(szChunk, "FORM", 4);
+	if (!fwrite(szChunk, sizeof(szChunk), 1, pFile))
 		return 0;
 	nScrDatSize = _byteswap_ulong(nDatSize);
 	if (!fwrite(&nScrDatSize, sizeof(nScrDatSize), 1, pFile))
 		return 0;
-	scrChunk = L_byteswap_longlabel("SCDH");
-	nChunk = _byteswap_ulong(scrChunk);
-	if (!fwrite(&nChunk, sizeof(nChunk), 1, pFile))
+	memcpy(szChunk, "SCDH", 4);
+	if (!fwrite(szChunk, sizeof(szChunk), 1, pFile))
 		return 0;
 	return 1;
 }
 
 static int L_SimcityApp_WriteCityName(CSimcityAppPrimary *pSCApp, FILE *pFile, char *pTargChunk, const char *pPCityName) {
-	DWORD scrChunk, nChunk, nFullLen;
+	char szChunk[4];
+	DWORD nFullLen;
 
 	if (!pTargChunk || strlen(pTargChunk) < 1)
 		return 0;
-	scrChunk = L_byteswap_longlabel(pTargChunk);
-	nChunk = _byteswap_ulong(scrChunk);
-	if (!fwrite(&nChunk, sizeof(nChunk), 1, pFile))
+	memcpy(szChunk, pTargChunk, 4);
+	if (!fwrite(szChunk, sizeof(szChunk), 1, pFile))
 		return 0;
 	nFullLen = _byteswap_ulong(CNAM_DAT_LEN);
 	if (!fwrite(&nFullLen, sizeof(nFullLen), 1, pFile))
@@ -1779,19 +1777,19 @@ static int L_SimcityApp_WriteCityName(CSimcityAppPrimary *pSCApp, FILE *pFile, c
 static int L_SimcityApp_WriteCityUncompressed(CSimcityAppPrimary *pSCApp, FILE *pFile, char *pTargChunk, const void *pDat, int nDatSize) {
 	int ret;
 	WORD *pDst;
-	DWORD scrChunk, nChunk, nScrDatSize;
+	char szChunk[4];
+	DWORD nScrDatSize;
 
 	ret = 0;
 	if (!pTargChunk || strlen(pTargChunk) < 1)
 		return 0;
-	scrChunk = L_byteswap_longlabel(pTargChunk);
 	pDst = (WORD *)malloc(nDatSize);
 	if (!pDst)
 		return 0;
 	memset(pDst, 0, nDatSize);
 	memcpy(pDst, pDat, nDatSize);
-	nChunk = _byteswap_ulong(scrChunk);
-	if (!fwrite(&nChunk, sizeof(nChunk), 1, pFile))
+	memcpy(szChunk, pTargChunk, 4);
+	if (!fwrite(szChunk, sizeof(szChunk), 1, pFile))
 		goto ABORTWRITE;
 	nScrDatSize = _byteswap_ulong(nDatSize);
 	if (!fwrite(&nScrDatSize, sizeof(nScrDatSize), 1, pFile))
@@ -1812,12 +1810,12 @@ static int L_SimcityApp_WriteCityCompressed(CSimcityAppPrimary *pSCApp, FILE *pF
 	char *pTmp;
 	int nDp, nTp, ix;
 	BYTE dat;
-	DWORD scrChunk, nChunk, nScrTp;
+	char szChunk[4];
+	DWORD nScrTp;
 
 	ret = 0;
 	if (!pTargChunk || strlen(pTargChunk) < 1)
 		return 0;
-	scrChunk = L_byteswap_longlabel(pTargChunk);
 	pDst = (char *)malloc(nDatSize);
 	if (!pDst)
 		return 0;
@@ -1829,9 +1827,9 @@ static int L_SimcityApp_WriteCityCompressed(CSimcityAppPrimary *pSCApp, FILE *pF
 		return 0;
 	}
 	memset(pTmp, 0, 3 * nDatSize / 2);
-	if (IsMatchingChunk(scrChunk, "MISC") || IsMatchingChunk(scrChunk, "XGRP"))
+	if (IsMatchingChunk(pTargChunk, "MISC") || IsMatchingChunk(pTargChunk, "XGRP"))
 		L_byteswap_buffer((DWORD *)pDst, nDatSize);
-	else if (IsMatchingChunk(scrChunk, "XMIC"))
+	else if (IsMatchingChunk(pTargChunk, "XMIC"))
 		L_byteswap_micro((WORD *)pDst, nDatSize);
 	nDp = nTp = 0;
 	while (nDatSize - 1 > nDp) {
@@ -1862,8 +1860,8 @@ static int L_SimcityApp_WriteCityCompressed(CSimcityAppPrimary *pSCApp, FILE *pF
 		++nTp;
 	}
 	nDataOffset += nTp + 8;
-	nChunk = _byteswap_ulong(scrChunk);
-	if (!fwrite(&nChunk, sizeof(nChunk), 1, pFile))
+	memcpy(szChunk, pTargChunk, 4);
+	if (!fwrite(szChunk, sizeof(szChunk), 1, pFile))
 		goto ABORTWRITE;
 	nScrTp = _byteswap_ulong(nTp);
 	if (!fwrite(&nScrTp, sizeof(nScrTp), 1, pFile))
