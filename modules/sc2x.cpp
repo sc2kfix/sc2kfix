@@ -65,7 +65,7 @@ void LoadInterleavedBudgetVanilla(budget_t* pTarget, DWORD* pSource) {
 }
 
 #ifdef SC2X_USE_VANILLA_LOAD_REPLACEMENT
-// WIP replacement for CSimcityApp::DoLoadGame for vanilla save game files.
+// WIP replacement for CSimcityApp::OpenCity for vanilla save game files.
 // This is incredibly ugly and should probably be rewritten at some point.
 BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 	if (!szFileName)
