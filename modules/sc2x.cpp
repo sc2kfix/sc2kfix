@@ -1210,6 +1210,16 @@ extern "C" void __stdcall Hook_InitializeCityData() {
 #define CHUNK_BAD_PROC 1
 #define CHUNK_OKAY     0       
 
+static bool IsMatchingChunk(int nChunk, char *pTargChunk) {
+	int scrChunk;
+
+	if (!pTargChunk || strlen(pTargChunk) < 1)
+		return false;
+
+	scrChunk = L_byteswap_longlabel(pTargChunk);
+	return (scrChunk == nChunk) ? true : false;
+}
+
 static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, char* lpFileName) {
 #if 0
 	return Game_SimcityApp_OpenCity(pSCApp, pFile, lpFileName);
@@ -1219,7 +1229,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 	int nCurrentReadLength;
 	int iBadRead;
 	bool bReadComplete, bGotName, bGotLabel;
-	int nChunk, nSize, scrChunk;
+	int nChunk, nSize;
 	char *pTemp;
 	int nPos;
 	char szTempCityName[255 + 1], szCityName[255 + 1];
@@ -1242,14 +1252,12 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 			if (GameMain_File_Read(pFile, &nSize, sizeof(nSize))) {
 				iBadRead = CHUNK_BAD_BODY;
 				nSize = _byteswap_ulong(nSize);
-				scrChunk = L_byteswap_longlabel("MISC");
-				if (scrChunk == nChunk) {
+				if (IsMatchingChunk(nChunk, "MISC")) {
 					if (L_SimcityApp_OpenCityInfo(pSCApp, pFile, nSize))
 						iBadRead = CHUNK_OKAY;
 				}
 				else {
-					scrChunk = L_byteswap_longlabel("ALTM");
-					if (scrChunk == nChunk) {
+					if (IsMatchingChunk(nChunk, "ALTM")) {
 						pTemp = (char *)malloc(ALTM_ALLOC_SIZE);
 						if (pTemp) {
 							iBadRead = CHUNK_BAD_PROC;
@@ -1263,8 +1271,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 						}
 					}
 					else {
-						scrChunk = L_byteswap_longlabel("XTER");
-						if (scrChunk == nChunk) {
+						if (IsMatchingChunk(nChunk, "XTER")) {
 							pTemp = (char *)malloc(FULLMAP_ALLOC_SIZE);
 							if (pTemp) {
 								iBadRead = CHUNK_BAD_PROC;
@@ -1277,8 +1284,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 							}
 						}
 						else {
-							scrChunk = L_byteswap_longlabel("XBLD");
-							if (scrChunk == nChunk) {
+							if (IsMatchingChunk(nChunk, "XBLD")) {
 								pTemp = (char *)malloc(FULLMAP_ALLOC_SIZE);
 								if (pTemp) {
 									iBadRead = CHUNK_BAD_PROC;
@@ -1291,8 +1297,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 								}
 							}
 							else {
-								scrChunk = L_byteswap_longlabel("XZON");
-								if (scrChunk == nChunk) {
+								if (IsMatchingChunk(nChunk, "XZON")) {
 									pTemp = (char *)malloc(FULLMAP_ALLOC_SIZE);
 									if (pTemp) {
 										iBadRead = CHUNK_BAD_PROC;
@@ -1305,8 +1310,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 									}
 								}
 								else {
-									scrChunk = L_byteswap_longlabel("XUND");
-									if (scrChunk == nChunk) {
+									if (IsMatchingChunk(nChunk, "XUND")) {
 										pTemp = (char *)malloc(FULLMAP_ALLOC_SIZE);
 										if (pTemp) {
 											iBadRead = CHUNK_BAD_PROC;
@@ -1319,8 +1323,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 										}
 									}
 									else {
-										scrChunk = L_byteswap_longlabel("XTXT");
-										if (scrChunk == nChunk) {
+										if (IsMatchingChunk(nChunk, "XTXT")) {
 											pTemp = (char *)malloc(FULLMAP_ALLOC_SIZE);
 											if (pTemp) {
 												iBadRead = CHUNK_BAD_PROC;
@@ -1333,8 +1336,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 											}
 										}
 										else {
-											scrChunk = L_byteswap_longlabel("XLAB");
-											if (scrChunk == nChunk) {
+											if (IsMatchingChunk(nChunk, "XLAB")) {
 												pTemp = (char *)malloc(LABEL_ALLOC_SIZE);
 												if (pTemp) {
 													iBadRead = CHUNK_BAD_PROC;
@@ -1348,8 +1350,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 												}
 											}
 											else {
-												scrChunk = L_byteswap_longlabel("XMIC");
-												if (scrChunk == nChunk) {
+												if (IsMatchingChunk(nChunk, "XMIC")) {
 													pTemp = (char *)malloc(MICROSIM_ALLOC_SIZE);
 													if (pTemp) {
 														iBadRead = CHUNK_BAD_PROC;
@@ -1363,8 +1364,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 													}
 												}
 												else {
-													scrChunk = L_byteswap_longlabel("XTHG");
-													if (scrChunk == nChunk) {
+													if (IsMatchingChunk(nChunk, "XTHG")) {
 														pTemp = (char *)malloc(THING_ALLOC_SIZE);
 														if (pTemp) {
 															iBadRead = CHUNK_BAD_PROC;
@@ -1377,8 +1377,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 														}
 													}
 													else {
-														scrChunk = L_byteswap_longlabel("XBIT");
-														if (scrChunk == nChunk) {
+														if (IsMatchingChunk(nChunk, "XBIT")) {
 															pTemp = (char *)malloc(FULLMAP_ALLOC_SIZE);
 															if (pTemp) {
 																iBadRead = CHUNK_BAD_PROC;
@@ -1391,8 +1390,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 															}
 														}
 														else {
-															scrChunk = L_byteswap_longlabel("XTRF");
-															if (scrChunk == nChunk) {
+															if (IsMatchingChunk(nChunk, "XTRF")) {
 																pTemp = (char *)malloc(MINIMAP64_ALLOC_SIZE);
 																if (pTemp) {
 																	iBadRead = CHUNK_BAD_PROC;
@@ -1405,8 +1403,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 																}
 															}
 															else {
-																scrChunk = L_byteswap_longlabel("XPLT");
-																if (scrChunk == nChunk) {
+																if (IsMatchingChunk(nChunk, "XPLT")) {
 																	pTemp = (char *)malloc(MINIMAP64_ALLOC_SIZE);
 																	if (pTemp) {
 																		iBadRead = CHUNK_BAD_PROC;
@@ -1419,8 +1416,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 																	}
 																}
 																else {
-																	scrChunk = L_byteswap_longlabel("XVAL");
-																	if (scrChunk == nChunk) {
+																	if (IsMatchingChunk(nChunk, "XVAL")) {
 																		pTemp = (char *)malloc(MINIMAP64_ALLOC_SIZE);
 																		if (pTemp) {
 																			iBadRead = CHUNK_BAD_PROC;
@@ -1433,8 +1429,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 																		}
 																	}
 																	else {
-																		scrChunk = L_byteswap_longlabel("XCRM");
-																		if (scrChunk == nChunk) {
+																		if (IsMatchingChunk(nChunk, "XCRM")) {
 																			pTemp = (char *)malloc(MINIMAP64_ALLOC_SIZE);
 																			if (pTemp) {
 																				iBadRead = CHUNK_BAD_PROC;
@@ -1447,8 +1442,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 																			}
 																		}
 																		else {
-																			scrChunk = L_byteswap_longlabel("XPLC");
-																			if (scrChunk == nChunk) {
+																			if (IsMatchingChunk(nChunk, "XPLC")) {
 																				pTemp = (char *)malloc(MINIMAP32_ALLOC_SIZE);
 																				if (pTemp) {
 																					iBadRead = CHUNK_BAD_PROC;
@@ -1461,8 +1455,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 																				}
 																			}
 																			else {
-																				scrChunk = L_byteswap_longlabel("XFIR");
-																				if (scrChunk == nChunk) {
+																				if (IsMatchingChunk(nChunk, "XFIR")) {
 																					pTemp = (char *)malloc(MINIMAP32_ALLOC_SIZE);
 																					if (pTemp) {
 																						iBadRead = CHUNK_BAD_PROC;
@@ -1475,8 +1468,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 																					}
 																				}
 																				else {
-																					scrChunk = L_byteswap_longlabel("XPOP");
-																					if (scrChunk == nChunk) {
+																					if (IsMatchingChunk(nChunk, "XPOP")) {
 																						pTemp = (char *)malloc(MINIMAP32_ALLOC_SIZE);
 																						if (pTemp) {
 																							iBadRead = CHUNK_BAD_PROC;
@@ -1489,8 +1481,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 																						}
 																					}
 																					else {
-																						scrChunk = L_byteswap_longlabel("XROG");
-																						if (scrChunk == nChunk) {
+																						if (IsMatchingChunk(nChunk, "XROG")) {
 																							pTemp = (char *)malloc(MINIMAP32_ALLOC_SIZE);
 																							if (pTemp) {
 																								iBadRead = CHUNK_BAD_PROC;
@@ -1503,8 +1494,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 																							}
 																						}
 																						else {
-																							scrChunk = L_byteswap_longlabel("XGRP");
-																							if (scrChunk == nChunk) {
+																							if (IsMatchingChunk(nChunk, "XGRP")) {
 																								pTemp = (char *)malloc(GRAPH_ALLOC_SIZE);
 																								if (pTemp) {
 																									iBadRead = CHUNK_BAD_PROC;
@@ -1518,8 +1508,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 																								}
 																							}
 																							else {
-																								scrChunk = L_byteswap_longlabel("CNAM");
-																								if (scrChunk == nChunk) {
+																								if (IsMatchingChunk(nChunk, "CNAM")) {
 																									memset(szTempCityName, 0, sizeof(szTempCityName));
 																									if (nSize > 0) {
 																										if (L_OpenCityUncompressed(pFile, nSize, szTempCityName)) {
