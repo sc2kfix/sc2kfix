@@ -336,7 +336,9 @@ typedef struct {
 // For now set to 30 rather than 31 due to some unsafe reading/writing further downstream
 // in the native game. What may have (perhaps) been safe in the DOS/Macintosh game is not
 // in the Windows version when the standard maximum city name length is used.
-#define CITY_NAME_LEN (CNAM_DAT_LEN - 2)
+// NOTE: As of 2026-08-09 this has now been changed to (CNAM_DAT_LEN - 1) (rather than
+//       subtracting 2).
+#define CITY_NAME_LEN (CNAM_DAT_LEN - 1)
 
 // The extension to append/check against for (re)directed "Save As" cases.
 #define CITY_DEFAULT_EXTENSION        "sc2"
