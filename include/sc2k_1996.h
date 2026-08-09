@@ -3223,7 +3223,6 @@ GAMECALL(0x402536, void, __thiscall, SimcityView_DrawMonster, CSimcityView *, __
 GAMECALL(0x402559, void, __stdcall, IncreaseWaterLevel, void)
 GAMECALL(0x40257C, void, __thiscall, Sound_LoadExplosionSound, CSound *)
 GAMECALL(0x40258B, int, __cdecl, GetScreenCoordsFromTileCoords, __int16 iTileTargetX, __int16 iTileTargetY, WORD *wNewScreenPointX, WORD *wNewScreenPointY)
-GAMECALL(0x4025A4, int, __thiscall, SimcityApp_OpenCity, CSimcityAppPrimary *, CMFC3XFile *, char*)
 GAMECALL(0x4025B3, void, __thiscall, NewspaperDialog_Destruct, CNewspaperDialog *)
 GAMECALL(0x4025E0, CMFC3XDC *, __thiscall, Graphics_GetDC, CGraphics *)
 GAMECALL(0x402603, __int16, __cdecl, ZonedBuildingTileDeletion, __int16 x, __int16 y)

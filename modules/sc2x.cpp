@@ -703,7 +703,7 @@ NOTVALID:
 	return ret;
 }
 
-static int L_OpenCityHeader(CMFC3XFile *pFile, const char *lpFileName, int *pLength, __int16 nClassicPreCheck) {
+static int L_OpenCityHeader(FILE *pFile, const char *lpFileName, int *pLength, __int16 nClassicPreCheck) {
 	int nActualLength = 0;
 	bool bSupportFixUp;
 	DWORD dwChunk;
@@ -713,19 +713,21 @@ static int L_OpenCityHeader(CMFC3XFile *pFile, const char *lpFileName, int *pLen
 
 	bSupportFixUp = PathMatchSpecA(lpFileName, "*.sc2") ? true : false;
 	if (bSupportFixUp) {
-		nActualLength = GameMain_File_GetLength(pFile);
+		fseek(pFile, 0, SEEK_END);
+		nActualLength = ftell(pFile);
+		fseek(pFile, 0, SEEK_SET);
 		nActualLength -= 8;
 		if (sc2x_debug & SC2X_DEBUG_LOAD)
 			ConsoleLog(LOG_DEBUG, "SC2X: city file nActualLength is %d bytes.\n", nActualLength);
 	}
-	if (!GameMain_File_Read(pFile, &dwChunk, sizeof(dwChunk))) {
+	if (!fread(&dwChunk, 1, sizeof(dwChunk), pFile)) {
 		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
 		GameMain_AfxMessageBoxStr(szResStr, 0, 0);
 		return 0;
 	}
 	dwChunk = _byteswap_ulong(dwChunk);
 	if (IsMatchingChunk(dwChunk, "FORM")) {
-		if (!GameMain_File_Read(pFile, pLength, sizeof(*pLength))) {
+		if (!fread(pLength, 1, sizeof(*pLength), pFile)) {
 			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
 			GameMain_AfxMessageBoxStr(szResStr, 0, 0);
 			return 0;
@@ -789,7 +791,7 @@ static int L_OpenCityHeader(CMFC3XFile *pFile, const char *lpFileName, int *pLen
 				return 0;
 			}
 		}
-		if (!GameMain_File_Read(pFile, &dwChunk, sizeof(dwChunk))) {
+		if (!fread(&dwChunk, 1, sizeof(dwChunk), pFile)) {
 			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
 			GameMain_AfxMessageBoxStr(szResStr, 0, 0);
 			return 0;
@@ -813,19 +815,11 @@ static int L_OpenCityHeader(CMFC3XFile *pFile, const char *lpFileName, int *pLen
 	return 0;
 }
 
-extern "C" int __stdcall Hook_OpenCityHeader(CMFC3XFile *pFile, const char *lpFileName, int *pLength, __int16 nClassicPreCheck) {
-	return L_OpenCityHeader(pFile, lpFileName, pLength, nClassicPreCheck);
+static int L_OpenCityUncompressed(FILE *pFile, unsigned int nSize, void *pDat) {
+	return fread(pDat, nSize, 1, pFile) > 0;
 }
 
-static int L_OpenCityUncompressed(CMFC3XFile *pFile, unsigned int nSize, void *pDat) {
-	return GameMain_File_Read(pFile, pDat, nSize);
-}
-
-extern "C" int __stdcall Hook_OpenCityUncompressed(CMFC3XFile *pFile, unsigned int nSize, void *pDat) {
-	return L_OpenCityUncompressed(pFile, nSize, pDat);
-}
-
-static int L_SimcityApp_OpenCityCompressed(CSimcityAppPrimary *pSCApp, CMFC3XFile *pFile, int nSize, void *pDat, int nDatSize) {
+static int L_SimcityApp_OpenCityCompressed(CSimcityAppPrimary *pSCApp, FILE *pFile, int nSize, void *pDat, int nDatSize) {
 	int ret;
 	char *pDst, *pTmp;
 	int nTp, nDp;
@@ -837,7 +831,7 @@ static int L_SimcityApp_OpenCityCompressed(CSimcityAppPrimary *pSCApp, CMFC3XFil
 	if (!pTmp)
 		return 0;
 	memset(pTmp, 0, nSize);
-	if (GameMain_File_Read(pFile, pTmp, nSize)) {
+	if (fread(pTmp, nSize, 1, pFile) > 0) {
 		nTp = nDp = 0;
 #if 0
 		int ix = 0;
@@ -877,7 +871,7 @@ ABORTREAD:
 	return ret;
 }
 
-static int L_SimcityApp_OpenCityInfo(CSimcityAppPrimary *pSCApp, CMFC3XFile *pFile, int nSize) {
+static int L_SimcityApp_OpenCityInfo(CSimcityAppPrimary *pSCApp, FILE *pFile, int nSize) {
 	int ret;
 	__int16 nArrOffset, nArrNextOffset, nPosMain, nPosSub;
 	char szResStr[255 + 1], szBuf[31 + 1], szErrStr[1024 + 1];
@@ -1063,23 +1057,7 @@ ABORTREAD:
 	return ret;
 }
 
-extern "C" int __stdcall Hook_SimcityApp_OpenCityInfo(CMFC3XFile *pFile, int nSize) {
-	CSimcityAppPrimary* pThis;
-
-	__asm mov [pThis], ecx
-
-	return L_SimcityApp_OpenCityInfo(pThis, pFile, nSize);
-}
-
-extern "C" int __stdcall Hook_SimcityApp_OpenCityCompressed(CMFC3XFile *pFile, int nSize, void *pDat, int nDatSize) {
-	CSimcityAppPrimary* pThis;
-
-	__asm mov [pThis], ecx
-
-	return L_SimcityApp_OpenCityCompressed(pThis, pFile, nSize, pDat, nDatSize);
-}
-
-static int L_OpenCityCompleteGameRead(CMFC3XFile *pFile, int nSize) {
+static int L_OpenCityUnknownChunkRead(FILE *pFile, int nSize) {
 	int ret;
 	char *pTemp;
 
@@ -1087,7 +1065,7 @@ static int L_OpenCityCompleteGameRead(CMFC3XFile *pFile, int nSize) {
 	pTemp = (char *)malloc(nSize);
 	if (!pTemp)
 		return 0;
-	if (GameMain_File_Read(pFile, pTemp, nSize))
+	if (fread(pTemp, nSize, 1, pFile) > 0)
 		ret = 1;
 	free(pTemp);
 	return ret;
@@ -1225,10 +1203,7 @@ extern "C" void __stdcall Hook_InitializeCityData() {
 #define CHUNK_BAD_PROC 1
 #define CHUNK_OKAY     0
 
-static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, char* lpFileName) {
-#if 0
-	return Game_SimcityApp_OpenCity(pSCApp, pFile, lpFileName);
-#else
+static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* lpFileName) {
 	int ret;
 	int nExpectedLength;
 	int nCurrentReadLength;
@@ -1250,10 +1225,10 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 		pTemp = NULL;
 		while (!bReadComplete) {
 			iBadRead = CHUNK_BAD_HEAD;
-			if (GameMain_File_Read(pFile, &nChunk, sizeof(nChunk))) {
+			if (fread(&nChunk, 1, sizeof(nChunk), pFile) == sizeof(nChunk)) {
 				iBadRead = CHUNK_BAD_SIZE;
 				nChunk = _byteswap_ulong(nChunk);
-				if (GameMain_File_Read(pFile, &nSize, sizeof(nSize))) {
+				if (fread(&nSize, 1, sizeof(nSize), pFile) == sizeof(nSize)) {
 					iBadRead = CHUNK_BAD_BODY;
 					nSize = _byteswap_ulong(nSize);
 					if (IsMatchingChunk(nChunk, "CNAM")) {
@@ -1505,7 +1480,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 							}
 						}
 					}
-					else if (L_OpenCityCompleteGameRead(pFile, nSize))
+					else if (L_OpenCityUnknownChunkRead(pFile, nSize))
 						iBadRead = CHUNK_OKAY;
 				}
 			}
@@ -1550,7 +1525,6 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 	}
 ABORTREAD:
 	return ret;
-#endif
 }
 
 // Function prototype: HOOKCB void L_SimcityApp_DoLoad_Before(void)
@@ -1569,7 +1543,7 @@ std::vector<hook_function_t> stHooks_L_SimcityApp_DoLoad_After;
 
 static int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName) {
 	int ret;
-	CMFC3XFile cFile;
+	FILE *f;
 	char szResStr[255 + 1], szErrStr[1024 + 1];
 	CSimcityView *pSCView;
 
@@ -1583,10 +1557,9 @@ static int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName) {
 		}
 	}
 
-	GameMain_File_Cons(&cFile);
-
 	ret = 0;
-	if (GameMain_File_Open(&cFile, lpFileName, (0x8000 | 0x0040), &fileExcept)) {
+	f = old_fopen(lpFileName, "rb");
+	if (f) {
 		nRetState = L_SimcityApp_AllocateMiscInfo(pSCApp);
 		GameMain_String_OperatorSet(&strCityFilename, lpFileName);
 		GameMain_CmdTarget_BeginWaitCursor(pSCApp);
@@ -1600,10 +1573,10 @@ static int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName) {
 			{
 				if (sc2x_debug & SC2X_DEBUG_LOAD)
 					ConsoleLog(LOG_DEBUG, "SC2X: Passing control to SC2K for load.\n");
-				ret = L_SimcityApp_OpenCity(pSCApp, &cFile, lpFileName);
+				ret = L_SimcityApp_OpenCity(pSCApp, f, lpFileName);
 			}
 		}
-		GameMain_File_Close(&cFile);
+		fclose(f);
 		if (!ret) {
 			if (L_IsClassicCityFileValid(lpFileName)) {
 				memset(szResStr, 0, sizeof(szResStr));
@@ -1630,8 +1603,6 @@ static int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName) {
 		sprintf_s(szErrStr, "%s\n%s", szResStr, lpFileName);
 		GameMain_AfxMessageBoxStr(szErrStr, 0, 0);
 	}
-
-	GameMain_File_Dest(&cFile);
 
 	for (const auto& hook : stHooks_L_SimcityApp_DoLoad_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
@@ -2395,24 +2366,6 @@ void InstallSaveHooks_SC2K1996(void) {
 	// Internal short micro byteswap call
 	SafeVirtualProtect((LPVOID)0x401FB4, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401FB4, Hook_ByteSwap_Micro);
-
-	// OpenCityHeader
-	// This now integrates the fix-up case concerning corrupted
-	// headers.
-	SafeVirtualProtect((LPVOID)0x4020E0, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x4020E0, Hook_OpenCityHeader);
-
-	// OpenCityUncompressed
-	SafeVirtualProtect((LPVOID)0x4019CE, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x4019CE, Hook_OpenCityUncompressed);
-
-	// CSimcityApp::OpenCityCompressed
-	SafeVirtualProtect((LPVOID)0x40245A, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x40245A, Hook_SimcityApp_OpenCityCompressed);
-
-	// CSimcityApp::OpenCityInfo
-	SafeVirtualProtect((LPVOID)0x402685, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x402685, Hook_SimcityApp_OpenCityInfo);
 
 	// InitializeCityData:
 	// - Demystification
