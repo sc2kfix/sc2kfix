@@ -1204,6 +1204,12 @@ extern "C" void __stdcall Hook_InitializeCityData() {
 
 #define COPYBLOCKTO(D, S, P, SZ, MLT) memcpy(D[P], &S[P * (SZ * MLT)], SZ * MLT)
 
+#define CHUNK_BAD_HEAD 4
+#define CHUNK_BAD_SIZE 3
+#define CHUNK_BAD_BODY 2
+#define CHUNK_BAD_PROC 1
+#define CHUNK_OKAY     0       
+
 static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, char* lpFileName) {
 #if 0
 	return Game_SimcityApp_OpenCity(pSCApp, pFile, lpFileName);
@@ -1211,6 +1217,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 	int ret;
 	int nExpectedLength;
 	int nCurrentReadLength;
+	int iBadRead;
 	bool bReadComplete, bGotName, bGotLabel;
 	int nChunk, nSize, scrChunk;
 	char *pTemp;
@@ -1226,325 +1233,309 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 	bReadComplete = false;
 	bGotName = false;
 	bGotLabel = false;
+	pTemp = NULL;
 	while (!bReadComplete) {
-		if (!GameMain_File_Read(pFile, &nChunk, sizeof(nChunk))) {
-			Game_FailRadioException(48, &fileExcept, lpFileName);
-			goto ABORTREAD;
-		}
-		nChunk = _byteswap_ulong(nChunk);
-		if (!GameMain_File_Read(pFile, &nSize, sizeof(nSize))) {
-			Game_FailRadioException(48, &fileExcept, lpFileName);
-			goto ABORTREAD;
-		}
-		nSize = _byteswap_ulong(nSize);
-		scrChunk = L_byteswap_longlabel("MISC");
-		if (scrChunk == nChunk) {
-			if (!L_SimcityApp_OpenCityInfo(pSCApp, pFile, nSize))
-				goto ABORTREAD;
-		}
-		else {
-			scrChunk = L_byteswap_longlabel("ALTM");
-			if (scrChunk == nChunk) {
-				pTemp = (char *)malloc(ALTM_ALLOC_SIZE);
-				if (!pTemp)
-					goto ABORTREAD;
-				memset(pTemp, 0, ALTM_ALLOC_SIZE);
-				if (!L_OpenCityUncompressed(pFile, nSize, pTemp)) {
-					free(pTemp);
-					goto ABORTREAD;
-				}
-				L_byteswap_ushorts((WORD *)pTemp, nSize);
-				for (nPos = 0; nPos < GAME_MAP_SIZE; ++nPos)
-					COPYBLOCKTO(dwMapALTM, pTemp, nPos, sizeof(map_ALTM_t), GAME_MAP_SIZE);
-				free(pTemp);
-			}
-			else {
-				scrChunk = L_byteswap_longlabel("XTER");
+		iBadRead = CHUNK_BAD_HEAD;
+		if (GameMain_File_Read(pFile, &nChunk, sizeof(nChunk))) {
+			iBadRead = CHUNK_BAD_SIZE;
+			nChunk = _byteswap_ulong(nChunk);
+			if (GameMain_File_Read(pFile, &nSize, sizeof(nSize))) {
+				iBadRead = CHUNK_BAD_BODY;
+				nSize = _byteswap_ulong(nSize);
+				scrChunk = L_byteswap_longlabel("MISC");
 				if (scrChunk == nChunk) {
-					pTemp = (char *)malloc(FULLMAP_ALLOC_SIZE);
-					if (!pTemp)
-						goto ABORTREAD;
-					memset(pTemp, 0, FULLMAP_ALLOC_SIZE);
-					if (!L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, FULLMAP_ALLOC_SIZE)) {
-						free(pTemp);
-						goto ABORTREAD;
-					}
-					for (nPos = 0; nPos < GAME_MAP_SIZE; ++nPos)
-						COPYBLOCKTO(dwMapXTER, pTemp, nPos, sizeof(map_XTER_t), GAME_MAP_SIZE);
-					free(pTemp);
+					if (L_SimcityApp_OpenCityInfo(pSCApp, pFile, nSize))
+						iBadRead = CHUNK_OKAY;
 				}
 				else {
-					scrChunk = L_byteswap_longlabel("XBLD");
+					scrChunk = L_byteswap_longlabel("ALTM");
 					if (scrChunk == nChunk) {
-						pTemp = (char *)malloc(FULLMAP_ALLOC_SIZE);
-						if (!pTemp)
-							goto ABORTREAD;
-						memset(pTemp, 0, FULLMAP_ALLOC_SIZE);
-						if (!L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, FULLMAP_ALLOC_SIZE)) {
-							free(pTemp);
-							goto ABORTREAD;
+						pTemp = (char *)malloc(ALTM_ALLOC_SIZE);
+						if (pTemp) {
+							iBadRead = CHUNK_BAD_PROC;
+							memset(pTemp, 0, ALTM_ALLOC_SIZE);
+							if (L_OpenCityUncompressed(pFile, nSize, pTemp)) {
+								L_byteswap_ushorts((WORD *)pTemp, nSize);
+								for (nPos = 0; nPos < GAME_MAP_SIZE; ++nPos)
+									COPYBLOCKTO(dwMapALTM, pTemp, nPos, sizeof(map_ALTM_t), GAME_MAP_SIZE);
+								iBadRead = CHUNK_OKAY;
+							}
 						}
-						for (nPos = 0; nPos < GAME_MAP_SIZE; ++nPos)
-							COPYBLOCKTO(dwMapXBLD, pTemp, nPos, sizeof(map_XBLD_t), GAME_MAP_SIZE);
-						free(pTemp);
 					}
 					else {
-						scrChunk = L_byteswap_longlabel("XZON");
+						scrChunk = L_byteswap_longlabel("XTER");
 						if (scrChunk == nChunk) {
 							pTemp = (char *)malloc(FULLMAP_ALLOC_SIZE);
-							if (!pTemp)
-								goto ABORTREAD;
-							memset(pTemp, 0, FULLMAP_ALLOC_SIZE);
-							if (!L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, FULLMAP_ALLOC_SIZE)) {
-								free(pTemp);
-								goto ABORTREAD;
+							if (pTemp) {
+								iBadRead = CHUNK_BAD_PROC;
+								memset(pTemp, 0, FULLMAP_ALLOC_SIZE);
+								if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, FULLMAP_ALLOC_SIZE)) {
+									for (nPos = 0; nPos < GAME_MAP_SIZE; ++nPos)
+										COPYBLOCKTO(dwMapXTER, pTemp, nPos, sizeof(map_XTER_t), GAME_MAP_SIZE);
+									iBadRead = CHUNK_OKAY;
+								}
 							}
-							for (nPos = 0; nPos < GAME_MAP_SIZE; ++nPos)
-								COPYBLOCKTO(dwMapXZON, pTemp, nPos, sizeof(map_XZON_t), GAME_MAP_SIZE);
-							free(pTemp);
 						}
 						else {
-							scrChunk = L_byteswap_longlabel("XUND");
+							scrChunk = L_byteswap_longlabel("XBLD");
 							if (scrChunk == nChunk) {
 								pTemp = (char *)malloc(FULLMAP_ALLOC_SIZE);
-								if (!pTemp)
-									goto ABORTREAD;
-								memset(pTemp, 0, FULLMAP_ALLOC_SIZE);
-								if (!L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, FULLMAP_ALLOC_SIZE)) {
-									free(pTemp);
-									goto ABORTREAD;
+								if (pTemp) {
+									iBadRead = CHUNK_BAD_PROC;
+									memset(pTemp, 0, FULLMAP_ALLOC_SIZE);
+									if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, FULLMAP_ALLOC_SIZE)) {
+										for (nPos = 0; nPos < GAME_MAP_SIZE; ++nPos)
+											COPYBLOCKTO(dwMapXBLD, pTemp, nPos, sizeof(map_XBLD_t), GAME_MAP_SIZE);
+										iBadRead = CHUNK_OKAY;
+									}
 								}
-								for (nPos = 0; nPos < GAME_MAP_SIZE; ++nPos)
-									COPYBLOCKTO(dwMapXUND, pTemp, nPos, sizeof(map_XUND_t), GAME_MAP_SIZE);
-								free(pTemp);
 							}
 							else {
-								scrChunk = L_byteswap_longlabel("XTXT");
+								scrChunk = L_byteswap_longlabel("XZON");
 								if (scrChunk == nChunk) {
 									pTemp = (char *)malloc(FULLMAP_ALLOC_SIZE);
-									if (!pTemp)
-										goto ABORTREAD;
-									memset(pTemp, 0, FULLMAP_ALLOC_SIZE);
-									if (!L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, FULLMAP_ALLOC_SIZE)) {
-										free(pTemp);
-										goto ABORTREAD;
+									if (pTemp) {
+										iBadRead = CHUNK_BAD_PROC;
+										memset(pTemp, 0, FULLMAP_ALLOC_SIZE);
+										if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, FULLMAP_ALLOC_SIZE)) {
+											for (nPos = 0; nPos < GAME_MAP_SIZE; ++nPos)
+												COPYBLOCKTO(dwMapXZON, pTemp, nPos, sizeof(map_XZON_t), GAME_MAP_SIZE);
+											iBadRead = CHUNK_OKAY;
+										}
 									}
-									for (nPos = 0; nPos < GAME_MAP_SIZE; ++nPos)
-										COPYBLOCKTO(dwMapXTXT, pTemp, nPos, sizeof(map_XTXT_t), GAME_MAP_SIZE);
-									free(pTemp);
 								}
 								else {
-									scrChunk = L_byteswap_longlabel("XLAB");
+									scrChunk = L_byteswap_longlabel("XUND");
 									if (scrChunk == nChunk) {
-										pTemp = (char *)malloc(LABEL_ALLOC_SIZE);
-										if (!pTemp)
-											goto ABORTREAD;
-										memset(pTemp, 0, MAX_LABEL_COUNT * sizeof(map_XLAB_t));
-										if (!L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, LABEL_ALLOC_SIZE)) {
-											free(pTemp);
-											goto ABORTREAD;
+										pTemp = (char *)malloc(FULLMAP_ALLOC_SIZE);
+										if (pTemp) {
+											iBadRead = CHUNK_BAD_PROC;
+											memset(pTemp, 0, FULLMAP_ALLOC_SIZE);
+											if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, FULLMAP_ALLOC_SIZE)) {
+												for (nPos = 0; nPos < GAME_MAP_SIZE; ++nPos)
+													COPYBLOCKTO(dwMapXUND, pTemp, nPos, sizeof(map_XUND_t), GAME_MAP_SIZE);
+												iBadRead = CHUNK_OKAY;
+											}
 										}
-										for (nPos = 0; nPos < MAX_LABEL_COUNT; ++nPos)
-											COPYBLOCKTO(&dwMapXLAB[0], pTemp, nPos, sizeof(map_XLAB_t), 1);
-										free(pTemp);
-										bGotLabel = true;
 									}
 									else {
-										scrChunk = L_byteswap_longlabel("XMIC");
+										scrChunk = L_byteswap_longlabel("XTXT");
 										if (scrChunk == nChunk) {
-											pTemp = (char *)malloc(MICROSIM_ALLOC_SIZE);
-											if (!pTemp)
-												goto ABORTREAD;
-											memset(pTemp, 0, MICROSIM_ALLOC_SIZE);
-											if (!L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MICROSIM_ALLOC_SIZE)) {
-												free(pTemp);
-												goto ABORTREAD;
+											pTemp = (char *)malloc(FULLMAP_ALLOC_SIZE);
+											if (pTemp) {
+												iBadRead = CHUNK_BAD_PROC;
+												memset(pTemp, 0, FULLMAP_ALLOC_SIZE);
+												if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, FULLMAP_ALLOC_SIZE)) {
+													for (nPos = 0; nPos < GAME_MAP_SIZE; ++nPos)
+														COPYBLOCKTO(dwMapXTXT, pTemp, nPos, sizeof(map_XTXT_t), GAME_MAP_SIZE);
+													iBadRead = CHUNK_OKAY;
+												}
 											}
-											L_byteswap_micro((WORD *)pTemp, MICROSIM_ALLOC_SIZE);
-											for (nPos = 0; nPos < MAX_MICROSIM_COUNT; ++nPos)
-												COPYBLOCKTO(&pMicrosimArr, pTemp, nPos, sizeof(microsim_t), 1);
-											free(pTemp);
 										}
 										else {
-											scrChunk = L_byteswap_longlabel("XTHG");
+											scrChunk = L_byteswap_longlabel("XLAB");
 											if (scrChunk == nChunk) {
-												pTemp = (char *)malloc(THING_ALLOC_SIZE);
-												if (!pTemp)
-													goto ABORTREAD;
-												memset(pTemp, 0, THING_ALLOC_SIZE);
-												if (!L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, THING_ALLOC_SIZE)) {
-													free(pTemp);
-													goto ABORTREAD;
+												pTemp = (char *)malloc(LABEL_ALLOC_SIZE);
+												if (pTemp) {
+													iBadRead = CHUNK_BAD_PROC;
+													memset(pTemp, 0, MAX_LABEL_COUNT * sizeof(map_XLAB_t));
+													if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, LABEL_ALLOC_SIZE)) {
+														for (nPos = 0; nPos < MAX_LABEL_COUNT; ++nPos)
+															COPYBLOCKTO(&dwMapXLAB[0], pTemp, nPos, sizeof(map_XLAB_t), 1);
+														iBadRead = CHUNK_OKAY;
+														bGotLabel = true;
+													}
 												}
-												for (nPos = 0; nPos < MAX_THING_COUNT; ++nPos)
-													COPYBLOCKTO(&dwMapXTHG[0], pTemp, nPos, sizeof(map_XTHG_t), 1);
-												free(pTemp);
 											}
 											else {
-												scrChunk = L_byteswap_longlabel("XBIT");
+												scrChunk = L_byteswap_longlabel("XMIC");
 												if (scrChunk == nChunk) {
-													pTemp = (char *)malloc(FULLMAP_ALLOC_SIZE);
-													if (!pTemp)
-														goto ABORTREAD;
-													memset(pTemp, 0, FULLMAP_ALLOC_SIZE);
-													if (!L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, FULLMAP_ALLOC_SIZE)) {
-														free(pTemp);
-														goto ABORTREAD;
+													pTemp = (char *)malloc(MICROSIM_ALLOC_SIZE);
+													if (pTemp) {
+														iBadRead = CHUNK_BAD_PROC;
+														memset(pTemp, 0, MICROSIM_ALLOC_SIZE);
+														if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MICROSIM_ALLOC_SIZE)) {
+															L_byteswap_micro((WORD *)pTemp, MICROSIM_ALLOC_SIZE);
+															for (nPos = 0; nPos < MAX_MICROSIM_COUNT; ++nPos)
+																COPYBLOCKTO(&pMicrosimArr, pTemp, nPos, sizeof(microsim_t), 1);
+															iBadRead = CHUNK_OKAY;
+														}
 													}
-													for (nPos = 0; nPos < GAME_MAP_SIZE; ++nPos)
-														COPYBLOCKTO(dwMapXBIT, pTemp, nPos, sizeof(map_XBIT_t), GAME_MAP_SIZE);
-													free(pTemp);
 												}
 												else {
-													scrChunk = L_byteswap_longlabel("XTRF");
+													scrChunk = L_byteswap_longlabel("XTHG");
 													if (scrChunk == nChunk) {
-														pTemp = (char *)malloc(MINIMAP64_ALLOC_SIZE);
-														if (!pTemp)
-															goto ABORTREAD;
-														memset(pTemp, 0, MINIMAP64_ALLOC_SIZE);
-														if (!L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP64_ALLOC_SIZE)) {
-															free(pTemp);
-															goto ABORTREAD;
+														pTemp = (char *)malloc(THING_ALLOC_SIZE);
+														if (pTemp) {
+															iBadRead = CHUNK_BAD_PROC;
+															memset(pTemp, 0, THING_ALLOC_SIZE);
+															if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, THING_ALLOC_SIZE)) {
+																for (nPos = 0; nPos < MAX_THING_COUNT; ++nPos)
+																	COPYBLOCKTO(&dwMapXTHG[0], pTemp, nPos, sizeof(map_XTHG_t), 1);
+																iBadRead = CHUNK_OKAY;
+															}
 														}
-														for (nPos = 0; nPos < MINI_MAP_64; ++nPos)
-															COPYBLOCKTO(dwMapXTRF, pTemp, nPos, sizeof(map_mini64_t), MINI_MAP_64);
-														free(pTemp);
 													}
 													else {
-														scrChunk = L_byteswap_longlabel("XPLT");
+														scrChunk = L_byteswap_longlabel("XBIT");
 														if (scrChunk == nChunk) {
-															pTemp = (char *)malloc(MINIMAP64_ALLOC_SIZE);
-															if (!pTemp)
-																goto ABORTREAD;
-															memset(pTemp, 0, MINIMAP64_ALLOC_SIZE);
-															if (!L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP64_ALLOC_SIZE)) {
-																free(pTemp);
-																goto ABORTREAD;
+															pTemp = (char *)malloc(FULLMAP_ALLOC_SIZE);
+															if (pTemp) {
+																iBadRead = CHUNK_BAD_PROC;
+																memset(pTemp, 0, FULLMAP_ALLOC_SIZE);
+																if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, FULLMAP_ALLOC_SIZE)) {
+																	for (nPos = 0; nPos < GAME_MAP_SIZE; ++nPos)
+																		COPYBLOCKTO(dwMapXBIT, pTemp, nPos, sizeof(map_XBIT_t), GAME_MAP_SIZE);
+																	iBadRead = CHUNK_OKAY;
+																}
 															}
-															for (nPos = 0; nPos < MINI_MAP_64; ++nPos)
-																COPYBLOCKTO(dwMapXPLT, pTemp, nPos, sizeof(map_mini64_t), MINI_MAP_64);
-															free(pTemp);
 														}
 														else {
-															scrChunk = L_byteswap_longlabel("XVAL");
+															scrChunk = L_byteswap_longlabel("XTRF");
 															if (scrChunk == nChunk) {
 																pTemp = (char *)malloc(MINIMAP64_ALLOC_SIZE);
-																if (!pTemp)
-																	goto ABORTREAD;
-																memset(pTemp, 0, MINIMAP64_ALLOC_SIZE);
-																if (!L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP64_ALLOC_SIZE)) {
-																	free(pTemp);
-																	goto ABORTREAD;
+																if (pTemp) {
+																	iBadRead = CHUNK_BAD_PROC;
+																	memset(pTemp, 0, MINIMAP64_ALLOC_SIZE);
+																	if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP64_ALLOC_SIZE)) {
+																		for (nPos = 0; nPos < MINI_MAP_64; ++nPos)
+																			COPYBLOCKTO(dwMapXTRF, pTemp, nPos, sizeof(map_mini64_t), MINI_MAP_64);
+																		iBadRead = CHUNK_OKAY;
+																	}
 																}
-																for (nPos = 0; nPos < MINI_MAP_64; ++nPos)
-																	COPYBLOCKTO(dwMapXVAL, pTemp, nPos, sizeof(map_mini64_t), MINI_MAP_64);
-																free(pTemp);
 															}
 															else {
-																scrChunk = L_byteswap_longlabel("XCRM");
+																scrChunk = L_byteswap_longlabel("XPLT");
 																if (scrChunk == nChunk) {
 																	pTemp = (char *)malloc(MINIMAP64_ALLOC_SIZE);
-																	if (!pTemp)
-																		goto ABORTREAD;
-																	memset(pTemp, 0, MINIMAP64_ALLOC_SIZE);
-																	if (!L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP64_ALLOC_SIZE)) {
-																		free(pTemp);
-																		goto ABORTREAD;
+																	if (pTemp) {
+																		iBadRead = CHUNK_BAD_PROC;
+																		memset(pTemp, 0, MINIMAP64_ALLOC_SIZE);
+																		if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP64_ALLOC_SIZE)) {
+																			for (nPos = 0; nPos < MINI_MAP_64; ++nPos)
+																				COPYBLOCKTO(dwMapXPLT, pTemp, nPos, sizeof(map_mini64_t), MINI_MAP_64);
+																			iBadRead = CHUNK_OKAY;
+																		}
 																	}
-																	for (nPos = 0; nPos < MINI_MAP_64; ++nPos)
-																		COPYBLOCKTO(dwMapXCRM, pTemp, nPos, sizeof(map_mini64_t), MINI_MAP_64);
-																	free(pTemp);
 																}
 																else {
-																	scrChunk = L_byteswap_longlabel("XPLC");
+																	scrChunk = L_byteswap_longlabel("XVAL");
 																	if (scrChunk == nChunk) {
-																		pTemp = (char *)malloc(MINIMAP32_ALLOC_SIZE);
-																		if (!pTemp)
-																			goto ABORTREAD;
-																		memset(pTemp, 0, MINIMAP32_ALLOC_SIZE);
-																		if (!L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP32_ALLOC_SIZE)) {
-																			free(pTemp);
-																			goto ABORTREAD;
+																		pTemp = (char *)malloc(MINIMAP64_ALLOC_SIZE);
+																		if (pTemp) {
+																			iBadRead = CHUNK_BAD_PROC;
+																			memset(pTemp, 0, MINIMAP64_ALLOC_SIZE);
+																			if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP64_ALLOC_SIZE)) {
+																				for (nPos = 0; nPos < MINI_MAP_64; ++nPos)
+																					COPYBLOCKTO(dwMapXVAL, pTemp, nPos, sizeof(map_mini64_t), MINI_MAP_64);
+																				iBadRead = CHUNK_OKAY;
+																			}
 																		}
-																		for (nPos = 0; nPos < MINI_MAP_32; ++nPos)
-																			COPYBLOCKTO(dwMapXPLC, pTemp, nPos, sizeof(map_mini32_t), MINI_MAP_32);
-																		free(pTemp);
 																	}
 																	else {
-																		scrChunk = L_byteswap_longlabel("XFIR");
+																		scrChunk = L_byteswap_longlabel("XCRM");
 																		if (scrChunk == nChunk) {
-																			pTemp = (char *)malloc(MINIMAP32_ALLOC_SIZE);
-																			if (!pTemp)
-																				goto ABORTREAD;
-																			memset(pTemp, 0, MINIMAP32_ALLOC_SIZE);
-																			if (!L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP32_ALLOC_SIZE)) {
-																				free(pTemp);
-																				goto ABORTREAD;
+																			pTemp = (char *)malloc(MINIMAP64_ALLOC_SIZE);
+																			if (pTemp) {
+																				iBadRead = CHUNK_BAD_PROC;
+																				memset(pTemp, 0, MINIMAP64_ALLOC_SIZE);
+																				if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP64_ALLOC_SIZE)) {
+																					for (nPos = 0; nPos < MINI_MAP_64; ++nPos)
+																						COPYBLOCKTO(dwMapXCRM, pTemp, nPos, sizeof(map_mini64_t), MINI_MAP_64);
+																					iBadRead = CHUNK_OKAY;
+																				}
 																			}
-																			for (nPos = 0; nPos < MINI_MAP_32; ++nPos)
-																				COPYBLOCKTO(dwMapXFIR, pTemp, nPos, sizeof(map_mini32_t), MINI_MAP_32);
-																			free(pTemp);
 																		}
 																		else {
-																			scrChunk = L_byteswap_longlabel("XPOP");
+																			scrChunk = L_byteswap_longlabel("XPLC");
 																			if (scrChunk == nChunk) {
 																				pTemp = (char *)malloc(MINIMAP32_ALLOC_SIZE);
-																				if (!pTemp)
-																					goto ABORTREAD;
-																				memset(pTemp, 0, MINIMAP32_ALLOC_SIZE);
-																				if (!L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP32_ALLOC_SIZE)) {
-																					free(pTemp);
-																					goto ABORTREAD;
+																				if (pTemp) {
+																					iBadRead = CHUNK_BAD_PROC;
+																					memset(pTemp, 0, MINIMAP32_ALLOC_SIZE);
+																					if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP32_ALLOC_SIZE)) {
+																						for (nPos = 0; nPos < MINI_MAP_32; ++nPos)
+																							COPYBLOCKTO(dwMapXPLC, pTemp, nPos, sizeof(map_mini32_t), MINI_MAP_32);
+																						iBadRead = CHUNK_OKAY;
+																					}
 																				}
-																				for (nPos = 0; nPos < MINI_MAP_32; ++nPos)
-																					COPYBLOCKTO(dwMapXPOP, pTemp, nPos, sizeof(map_mini32_t), MINI_MAP_32);
-																				free(pTemp);
 																			}
 																			else {
-																				scrChunk = L_byteswap_longlabel("XROG");
+																				scrChunk = L_byteswap_longlabel("XFIR");
 																				if (scrChunk == nChunk) {
 																					pTemp = (char *)malloc(MINIMAP32_ALLOC_SIZE);
-																					if (!pTemp)
-																						goto ABORTREAD;
-																					memset(pTemp, 0, MINIMAP32_ALLOC_SIZE);
-																					if (!L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP32_ALLOC_SIZE)) {
-																						free(pTemp);
-																						goto ABORTREAD;
+																					if (pTemp) {
+																						iBadRead = CHUNK_BAD_PROC;
+																						memset(pTemp, 0, MINIMAP32_ALLOC_SIZE);
+																						if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP32_ALLOC_SIZE)) {
+																							for (nPos = 0; nPos < MINI_MAP_32; ++nPos)
+																								COPYBLOCKTO(dwMapXFIR, pTemp, nPos, sizeof(map_mini32_t), MINI_MAP_32);
+																							iBadRead = CHUNK_OKAY;
+																						}
 																					}
-																					for (nPos = 0; nPos < MINI_MAP_32; ++nPos)
-																						COPYBLOCKTO(dwMapXROG, pTemp, nPos, sizeof(map_mini32_t), MINI_MAP_32);
-																					free(pTemp);
 																				}
 																				else {
-																					scrChunk = L_byteswap_longlabel("XGRP");
+																					scrChunk = L_byteswap_longlabel("XPOP");
 																					if (scrChunk == nChunk) {
-																						pTemp = (char *)malloc(GRAPH_ALLOC_SIZE);
-																						if (!pTemp)
-																							goto ABORTREAD;
-																						memset(pTemp, 0, GRAPH_ALLOC_SIZE);
-																						if (!L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, GRAPH_ALLOC_SIZE)) {
-																							free(pTemp);
-																							goto ABORTREAD;
+																						pTemp = (char *)malloc(MINIMAP32_ALLOC_SIZE);
+																						if (pTemp) {
+																							iBadRead = CHUNK_BAD_PROC;
+																							memset(pTemp, 0, MINIMAP32_ALLOC_SIZE);
+																							if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP32_ALLOC_SIZE)) {
+																								for (nPos = 0; nPos < MINI_MAP_32; ++nPos)
+																									COPYBLOCKTO(dwMapXPOP, pTemp, nPos, sizeof(map_mini32_t), MINI_MAP_32);
+																								iBadRead = CHUNK_OKAY;
+																							}
 																						}
-																						L_byteswap_buffer((DWORD *)pTemp, GRAPH_ALLOC_SIZE);
-																						for (nPos = 0; nPos < MAX_GRAPHS; ++nPos)
-																							COPYBLOCKTO(dwMapXGRP, pTemp, nPos, sizeof(DWORD), MAX_GRAPH_ENTRIES);
-																						free(pTemp);
 																					}
 																					else {
-																						scrChunk = L_byteswap_longlabel("CNAM");
+																						scrChunk = L_byteswap_longlabel("XROG");
 																						if (scrChunk == nChunk) {
-																							memset(szTempCityName, 0, sizeof(szTempCityName));
-																							if (nSize > 0) {
-																								if (!L_OpenCityUncompressed(pFile, nSize, szTempCityName))
-																									goto ABORTREAD;
-																								bGotName = true;
+																							pTemp = (char *)malloc(MINIMAP32_ALLOC_SIZE);
+																							if (pTemp) {
+																								iBadRead = CHUNK_BAD_PROC;
+																								memset(pTemp, 0, MINIMAP32_ALLOC_SIZE);
+																								if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP32_ALLOC_SIZE)) {
+																									for (nPos = 0; nPos < MINI_MAP_32; ++nPos)
+																										COPYBLOCKTO(dwMapXROG, pTemp, nPos, sizeof(map_mini32_t), MINI_MAP_32);
+																									iBadRead = CHUNK_OKAY;
+																								}
 																							}
-																							else
-																								GameMain_String_Empty(&pszCityName);
 																						}
-																						else if (!L_OpenCityCompleteGameRead(pFile, nSize))
-																							goto ABORTREAD;
+																						else {
+																							scrChunk = L_byteswap_longlabel("XGRP");
+																							if (scrChunk == nChunk) {
+																								pTemp = (char *)malloc(GRAPH_ALLOC_SIZE);
+																								if (pTemp) {
+																									iBadRead = CHUNK_BAD_PROC;
+																									memset(pTemp, 0, GRAPH_ALLOC_SIZE);
+																									if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, GRAPH_ALLOC_SIZE)) {
+																										L_byteswap_buffer((DWORD *)pTemp, GRAPH_ALLOC_SIZE);
+																										for (nPos = 0; nPos < MAX_GRAPHS; ++nPos)
+																											COPYBLOCKTO(dwMapXGRP, pTemp, nPos, sizeof(DWORD), MAX_GRAPH_ENTRIES);
+																										iBadRead = CHUNK_OKAY;
+																									}
+																								}
+																							}
+																							else {
+																								scrChunk = L_byteswap_longlabel("CNAM");
+																								if (scrChunk == nChunk) {
+																									memset(szTempCityName, 0, sizeof(szTempCityName));
+																									if (nSize > 0) {
+																										if (L_OpenCityUncompressed(pFile, nSize, szTempCityName)) {
+																											iBadRead = CHUNK_OKAY;
+																											bGotName = true;
+																										}
+																									}
+																									else {
+																										iBadRead = CHUNK_OKAY;
+																										GameMain_String_Empty(&pszCityName);
+																									}
+																								}
+																								else if (L_OpenCityCompleteGameRead(pFile, nSize))
+																									iBadRead = CHUNK_OKAY;
+																							}
+																						}
 																					}
 																				}
 																			}
@@ -1565,6 +1556,19 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 				}
 			}
 		}
+		if (iBadRead <= CHUNK_BAD_PROC) {
+			// To reach CHUNK_BAD_PROC <= pTemp isn't NULL, but best to check.
+			if (pTemp) {
+				free(pTemp);
+				pTemp = NULL;
+			}
+		}
+		if (iBadRead > CHUNK_OKAY) {
+			if (iBadRead > CHUNK_BAD_BODY)
+				Game_FailRadioException(48, &fileExcept, lpFileName);
+			goto ABORTREAD;
+		}
+
 		nCurrentReadLength += nSize + 8;
 		if (nCurrentReadLength >= nExpectedLength)
 			bReadComplete = true;
