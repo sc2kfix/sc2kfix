@@ -143,13 +143,13 @@
 #define MAX_LABEL_LEN 23
 
 #define MAX_NEIGH_NAME_LEN 31
-#define MAX_NEIGH_BUF_SIZE MAX_NEIGH_NAME_LEN + 1
+#define MAX_NEIGH_BUF_SIZE (MAX_NEIGH_NAME_LEN + 1)
 
 #define GROWTH_TILE_MAX_TRIP_STEPS 100
 
 #define GAME_MAP_SIZE 128u
-#define MINI_MAP_64   GAME_MAP_SIZE / 2
-#define MINI_MAP_32   GAME_MAP_SIZE / 4
+#define MINI_MAP_64   (GAME_MAP_SIZE / 2)
+#define MINI_MAP_32   (GAME_MAP_SIZE / 4)
 
 #define MAP_EDGE_MIN 0
 #define MAP_EDGE_MAX (GAME_MAP_SIZE - 1)
@@ -3047,6 +3047,7 @@ GAMECALL(0x401262, void, __stdcall, SimulationEQ_LE_Processing, void)
 GAMECALL(0x401267, void, __thiscall, SimcityApp_CloseWidgetWindows, CSimcityAppPrimary *)
 GAMECALL(0x401280, BOOL, __cdecl, CheckTilesetFileHeader, FILE *)
 GAMECALL(0x4012B2, int, __thiscall, CityToolBar_PressButton, CCityToolBar *, int)
+GAMECALL(0x4012AD, void, __stdcall, MakeCityNameFromFileName, char *)
 GAMECALL(0x4012B7, void, __cdecl, FailRadioException, UINT, CMFC3XFileException *, char *)
 GAMECALL(0x4012C1, int, __cdecl, DirtyTile, __int16 x, __int16 y)
 GAMECALL(0x4012DF, void, __stdcall, DecreaseWaterLevel, void)
@@ -3165,6 +3166,7 @@ GAMECALL(0x401F50, int, __cdecl, RecalculateCityValue, void)
 GAMECALL(0x401F82, void, __thiscall, SimcityView_DrawTornado, CSimcityView *, __int16, __int16, __int16)
 GAMECALL(0x401F9B, int, __stdcall, LoadSoundIntoBuffer, int iSoundID, void *lpBuffer)
 GAMECALL(0x401FA0, int, __cdecl, CheckAdjustTerrainAndPlacePowerLines, __int16 x, __int16 y)
+GAMECALL(0x401FFA, void, __stdcall, GraphKludge)
 GAMECALL(0x402022, void, __stdcall, UpdateGraphData, void)
 GAMECALL(0x402045, void *, __cdecl, AllocateDataEntry, size_t iSz)
 GAMECALL(0x402095, void, __cdecl, DrawLargeTile, __int16, __int16, int, int)
@@ -3294,6 +3296,7 @@ GAMECALL(0x402C4D, void, __cdecl, FailRadioToFileID, int, UINT)
 GAMECALL(0x402C98, void, __thiscall, GameDialog_SetCursor, CGameDialog *)
 GAMECALL(0x402CCF, void, __cdecl, GetFileExceptionError, UINT, CMFC3XFileException *, CMFC3XString *)
 GAMECALL(0x402CF2, void, __thiscall, SimcityApp_SetGameCursor, CSimcityAppPrimary *pThis, int iNewCursor, BOOL bActive)
+GAMECALL(0x402D15, void, __stdcall, ClearLabels)
 GAMECALL(0x402D1F, __int16, __cdecl, CalcTileHit8, __int16, __int16)
 GAMECALL(0x402D2E, void, __stdcall, UpdateBudgetInformation, void)
 GAMECALL(0x402D33, int, __thiscall, SimcityApp_ConvertClassicCity, CSimcityAppPrimary *, char *)
@@ -3853,7 +3856,7 @@ GAMEOFF_ARR(map_mini32_t*,	dwMapXROG,	0x4CB028)
 // totally different
 GAMEOFF_ARR(map_XLAB_t*,	dwMapXLAB,	0x4CA198)
 GAMEOFF_ARR(map_XTHG_t*,	dwMapXTHG,	0x4CA434)
-GAMEOFF_ARR(DWORD,			dwMapXGRP,	0x4CC470)
+GAMEOFF_ARR(DWORD*,			dwMapXGRP,	0x4CC470)
 
 // Temp map(s)
 GAMEOFF_ARR(__int16 *,		wTMap,		0x4CC6F8)

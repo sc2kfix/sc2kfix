@@ -784,11 +784,13 @@ void L_CharStringToPascalString(const char *pInStr, char *pOutStr, int nMaxSize,
 bool L_PascalStringToCharString(const char *pInStr, char *pOutStr) {
 	int nPos;
 	char c;
+	int nLen;
 
 	if (!pInStr || strlen(pInStr) == 0)
 		return false;
 	c = *pInStr;
-	for (nPos = 0; c > nPos; ++nPos)
+	nLen = c;
+	for (nPos = 0; nLen > nPos; ++nPos)
 		pOutStr[nPos] = pInStr[nPos + 1];
 	pOutStr[nPos] = 0;
 	return true;
@@ -930,7 +932,7 @@ HOOKEXT_CPP size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned c
 // end of base64 code
 
 // Decompresses a MaxisRLE blob into a buffer
-int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize) {
+int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize, int *nCompSize) {
 	int i = 0, j = 0;
 
 	for (; i < iCompressedSize && j < iBufSize;) {
@@ -950,7 +952,13 @@ int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int i
 
 	if (sc2x_debug & 4)
 		ConsoleLog(LOG_DEBUG, "LOAD: Uncompressed %d bytes into %d bytes.\n", i, j);
+	*nCompSize = i;
 	return j;
+}
+
+int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize) {
+	int nDummy;
+	return MaxisDecompress(pBuffer, iBufSize, pCompressedData, iCompressedSize, &nDummy);
 }
 
 HOOKEXT_CPP json::JSON json::Array() {

@@ -177,10 +177,12 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define MIN_MICROSIM_LABEL_ENTRIES (MIN_SIM_TEXT_ENTRIES + 10)
 #define MAX_LABEL_TEXT_ENTRY_RANGE 128
 #define MAX_LABEL_ENTRIES 255
+#define MAX_LABEL_COUNT (MAX_LABEL_ENTRIES + 1)
 
 #define MICROSIMID_MIN 0
 #define MICROSIMID_MAX (MAX_SIM_TEXT_ENTRIES - MIN_SIM_TEXT_ENTRIES)
 #define MICROSIMID_ENTRY(x) (x - MIN_SIM_TEXT_ENTRIES)
+#define MAX_MICROSIM_COUNT (MICROSIMID_MAX + 1)
 
 // These "appear" to be related to XTHG cases
 // based on the named sailboat case.
@@ -221,7 +223,10 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define MIN_THING_IDX 1
 #define MAX_THING_IDX 39
 
-#define MAX_THING_COUNT MAX_THING_IDX + 1
+#define MAX_THING_COUNT (MAX_THING_IDX + 1)
+
+#define MAX_GRAPHS 16
+#define MAX_GRAPH_ENTRIES 52
 
 #define HALVECOORD(x) (x >> 1)
 
@@ -505,6 +510,7 @@ HOOKEXT const char* GetOnIdleInitialDialogEnumName(int iInitialDialogState);
 //HBITMAP CreateSpriteBitmap(int iSpriteID);
 HOOKEXT BOOL IsFileNameValid(const char *pName);
 HOOKEXT BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, const char *ini_name);
+int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize, int *nCompSize);
 int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize);
 HOOKEXT_CPP std::string Base64Encode(const unsigned char* pSrcData, size_t iSrcCount);
 HOOKEXT_CPP size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned char* pSrcData, size_t iSrcCount);
