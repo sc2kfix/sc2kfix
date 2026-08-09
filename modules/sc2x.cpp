@@ -719,13 +719,15 @@ static int L_OpenCityHeader(CMFC3XFile *pFile, const char *lpFileName, int *pLen
 			ConsoleLog(LOG_DEBUG, "SC2X: city file nActualLength is %d bytes.\n", nActualLength);
 	}
 	if (!GameMain_File_Read(pFile, &dwChunk, sizeof(dwChunk))) {
-		Game_GetFileExceptionError(48, &fileExcept, 0);
+		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
+		GameMain_AfxMessageBoxStr(szResStr, 0, 0);
 		return 0;
 	}
 	dwChunk = _byteswap_ulong(dwChunk);
 	if (IsMatchingChunk(dwChunk, "FORM")) {
 		if (!GameMain_File_Read(pFile, pLength, sizeof(*pLength))) {
-			Game_GetFileExceptionError(48, &fileExcept, 0);
+			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
+			GameMain_AfxMessageBoxStr(szResStr, 0, 0);
 			return 0;
 		}
 		*pLength = _byteswap_ulong(*pLength);
@@ -744,7 +746,8 @@ static int L_OpenCityHeader(CMFC3XFile *pFile, const char *lpFileName, int *pLen
 				// A crash "should" no longer occur since we're now hitting
 				// the exception call and returning zero rather than with
 				// the original detour going into the next read call.
-				Game_GetFileExceptionError(48, &fileExcept, 0);
+				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
+				GameMain_AfxMessageBoxStr(szResStr, 0, 0);
 				return 0;
 			}
 
@@ -781,12 +784,14 @@ static int L_OpenCityHeader(CMFC3XFile *pFile, const char *lpFileName, int *pLen
 					"Game header corrupted (FORM header chunk size 0)\n"
 					"Unsupported file type.", "sc2kfix error", MB_OK | MB_ICONERROR);
 
-				Game_GetFileExceptionError(48, &fileExcept, 0);
+				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
+				GameMain_AfxMessageBoxStr(szResStr, 0, 0);
 				return 0;
 			}
 		}
 		if (!GameMain_File_Read(pFile, &dwChunk, sizeof(dwChunk))) {
-			Game_GetFileExceptionError(48, &fileExcept, 0);
+			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
+			GameMain_AfxMessageBoxStr(szResStr, 0, 0);
 			return 0;
 		}
 		dwChunk = _byteswap_ulong(dwChunk);
@@ -862,7 +867,8 @@ static int L_SimcityApp_OpenCityCompressed(CSimcityAppPrimary *pSCApp, CMFC3XFil
 		}
 	}
 	else {
-		Game_GetFileExceptionError(48, &fileExcept, 0);
+		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
+		GameMain_AfxMessageBoxStr(szResStr, 0, 0);
 		goto ABORTREAD;
 	}
 	ret = 1;
@@ -874,7 +880,7 @@ ABORTREAD:
 static int L_SimcityApp_OpenCityInfo(CSimcityAppPrimary *pSCApp, CMFC3XFile *pFile, int nSize) {
 	int ret;
 	__int16 nArrOffset, nArrNextOffset, nPosMain, nPosSub;
-	char szResStr[255 + 1], szBuf[31 + 1], szErrStr[512 + 1];
+	char szResStr[255 + 1], szBuf[31 + 1], szErrStr[1024 + 1];
 	__int16 wGrantedRewards;
 	bool bDisableRewardButton;
 
@@ -1231,7 +1237,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 	int nChunk, nSize;
 	char *pTemp;
 	int nPos;
-	char szTempCityName[255 + 1], szCityName[255 + 1];
+	char szResStr[255 + 1], szErrStr[1024 +1 ], szTempCityName[255 + 1], szCityName[255 + 1];
 
 	ret = 0;
 	nExpectedLength = 0;
@@ -1511,8 +1517,11 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, CMFC3XFile* pFile, 
 				}
 			}
 			if (iBadRead > CHUNK_OKAY) {
-				if (iBadRead > CHUNK_BAD_BODY)
-					Game_FailRadioException(48, &fileExcept, lpFileName);
+				if (iBadRead > CHUNK_BAD_BODY) {
+					L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
+					sprintf_s(szErrStr, "%s\n%s", szResStr, lpFileName);
+					GameMain_AfxMessageBoxStr(szErrStr, 0, 0);
+				}
 				goto ABORTREAD;
 			}
 
@@ -1561,7 +1570,7 @@ std::vector<hook_function_t> stHooks_L_SimcityApp_DoLoad_After;
 static int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName) {
 	int ret;
 	CMFC3XFile cFile;
-	char szResStr[255 + 1];
+	char szResStr[255 + 1], szErrStr[1024 + 1];
 	CSimcityView *pSCView;
 
 	if (sc2x_debug & SC2X_DEBUG_LOAD)
@@ -1614,8 +1623,13 @@ static int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName) {
 		Game_SimcityView_ResetAttributesAndCoordinates(pSCView, wViewInitialCoordX, wViewInitialCoordY, wViewInitialZoom);
 		Game_ToolMenuUpdate();
 	}
-	else
-		Game_FailRadioException(47, &fileExcept, lpFileName);
+	else {
+		// Adjust so this error is displayed primarily during this specific failure case.
+		// Once we've accounted for Scenario loading.
+		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 47, szResStr, sizeof(szResStr) - 1);
+		sprintf_s(szErrStr, "%s\n%s", szResStr, lpFileName);
+		GameMain_AfxMessageBoxStr(szErrStr, 0, 0);
+	}
 
 	GameMain_File_Dest(&cFile);
 
