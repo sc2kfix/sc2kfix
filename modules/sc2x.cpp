@@ -42,6 +42,16 @@ UINT sc2x_debug = SC2X_DEBUG;
 
 static DWORD *pMiscInfo = NULL;
 
+#define MISCINF_ALLOC_SIZE   0x12C0 // Pending demystification
+#define FULLMAP_ALLOC_SIZE   (GAME_MAP_SIZE * GAME_MAP_SIZE)
+#define ALTM_ALLOC_SIZE      (FULLMAP_ALLOC_SIZE * 2)
+#define MINIMAP64_ALLOC_SIZE (MINI_MAP_64 * MINI_MAP_64)
+#define MINIMAP32_ALLOC_SIZE (MINI_MAP_32 * MINI_MAP_32)
+#define LABEL_ALLOC_SIZE     (MAX_LABEL_COUNT * sizeof(map_XLAB_t))
+#define MICROSIM_ALLOC_SIZE  (MAX_MICROSIM_COUNT * sizeof(microsim_t))
+#define THING_ALLOC_SIZE     (MAX_THING_COUNT * sizeof(map_XTHG_t))
+#define GRAPH_ALLOC_SIZE     (MAX_GRAPHS * MAX_GRAPH_ENTRIES * sizeof(DWORD))
+
 void LoadInterleavedBudgetVanilla(budget_t* pTarget, DWORD* pSource) {
 	pTarget->iCurrentCosts = ntohl(pSource[0]);
 	pTarget->iFundingPercent = ntohl(pSource[1]);
@@ -650,10 +660,10 @@ static __int16 L_SimcityApp_AllocateMiscInfo(CSimcityAppPrimary *pSCApp) {
 		free(pMiscInfo);
 		pMiscInfo = 0;
 	}
-	pMiscInfo = (DWORD *)malloc(0x12C0);
+	pMiscInfo = (DWORD *)malloc(MISCINF_ALLOC_SIZE);
 	if (!pMiscInfo)
 		return 0;
-	memset(pMiscInfo, 0, 0x12C0);
+	memset(pMiscInfo, 0, MISCINF_ALLOC_SIZE);
 	return 1;
 }
 
@@ -863,9 +873,9 @@ static int L_SimcityApp_OpenCityInfo(CSimcityAppPrimary *pSCApp, CMFC3XFile *pFi
 	ret = 0;
 	// This was previously referenced though seemingly not used; preserving.
 	//strcpy_s(szErrStr, "Unable To Load, Old File Version = \r\n");
-	if (!L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pMiscInfo, 0x12C0))
+	if (!L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pMiscInfo, MISCINF_ALLOC_SIZE))
 		goto ABORTREAD;
-	L_byteswap_buffer(pMiscInfo, 0x12C0);
+	L_byteswap_buffer(pMiscInfo, MISCINF_ALLOC_SIZE);
 	nArrOffset = 0;
 	if (pMiscInfo[nArrOffset] != 290) {
 		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 55, szResStr, sizeof(szResStr) - 1);
@@ -1192,15 +1202,6 @@ static void L_InitializeCityData() {
 extern "C" void __stdcall Hook_InitializeCityData() {
 	L_InitializeCityData();
 }
-
-#define FULLMAP_ALLOC_SIZE   (GAME_MAP_SIZE * GAME_MAP_SIZE)
-#define ALTM_ALLOC_SIZE      (FULLMAP_ALLOC_SIZE * 2)
-#define MINIMAP64_ALLOC_SIZE (MINI_MAP_64 * MINI_MAP_64)
-#define MINIMAP32_ALLOC_SIZE (MINI_MAP_32 * MINI_MAP_32)
-#define LABEL_ALLOC_SIZE     (MAX_LABEL_COUNT * sizeof(map_XLAB_t))
-#define MICROSIM_ALLOC_SIZE  (MAX_MICROSIM_COUNT * sizeof(microsim_t))
-#define THING_ALLOC_SIZE     (MAX_THING_COUNT * sizeof(map_XTHG_t))
-#define GRAPH_ALLOC_SIZE     (MAX_GRAPHS * MAX_GRAPH_ENTRIES * sizeof(DWORD))
 
 #define COPYBLOCKTO(D, S, P, SZ, MLT) memcpy(D[P], &S[P * (SZ * MLT)], SZ * MLT)
 
@@ -2037,7 +2038,7 @@ static int L_SimcityApp_WriteCityInfo(CSimcityAppPrimary *pSCApp, FILE *pFile) {
 	for (nArrOffset = nArrNextOffset + 1; nArrOffset < 1200; ++nArrOffset)
 		pMiscInfo[nArrOffset] = 0;
 	nScrChunk = L_byteswap_longlabel("MISC");
-	return L_SimcityApp_WriteCityCompressed(pSCApp, pFile, nScrChunk, pMiscInfo, 0x12C0);
+	return L_SimcityApp_WriteCityCompressed(pSCApp, pFile, nScrChunk, pMiscInfo, MISCINF_ALLOC_SIZE);
 }
 
 static int L_SimcityApp_WriteCity(CSimcityAppPrimary *pSCApp, FILE *pFile) {
@@ -2058,64 +2059,64 @@ static int L_SimcityApp_WriteCity(CSimcityAppPrimary *pSCApp, FILE *pFile) {
 	if (!L_SimcityApp_WriteCityInfo(pSCApp, pFile))
 		goto ABORTWRITE;
 	scrChunk = L_byteswap_longlabel("ALTM");
-	if (!L_SimcityApp_WriteCityUncompressed(pSCApp, pFile, scrChunk, (const void *)dwMapALTM[0], 0x8000))
+	if (!L_SimcityApp_WriteCityUncompressed(pSCApp, pFile, scrChunk, (const void *)dwMapALTM[0], ALTM_ALLOC_SIZE))
 		goto ABORTWRITE;
 	scrChunk = L_byteswap_longlabel("XTER");
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXTER[0], 0x4000))
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXTER[0], FULLMAP_ALLOC_SIZE))
 		goto ABORTWRITE;
 	scrChunk = L_byteswap_longlabel("XBLD");
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXBLD[0], 0x4000))
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXBLD[0], FULLMAP_ALLOC_SIZE))
 		goto ABORTWRITE;
 	scrChunk = L_byteswap_longlabel("XZON");
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXZON[0], 0x4000))
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXZON[0], FULLMAP_ALLOC_SIZE))
 		goto ABORTWRITE;
 	scrChunk = L_byteswap_longlabel("XUND");
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXUND[0], 0x4000))
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXUND[0], FULLMAP_ALLOC_SIZE))
 		goto ABORTWRITE;
 	scrChunk = L_byteswap_longlabel("XTXT");
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXTXT[0], 0x4000))
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXTXT[0], FULLMAP_ALLOC_SIZE))
 		goto ABORTWRITE;
 	GameMain_SaveLabels();
 	scrChunk = L_byteswap_longlabel("XLAB");
-	int nRetXLAB = L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXLAB[0], 0x1900);
+	int nRetXLAB = L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXLAB[0], LABEL_ALLOC_SIZE);
 	GameMain_ResetLabelStringState();
 	if (!nRetXLAB)
 		goto ABORTWRITE;
 	scrChunk = L_byteswap_longlabel("XMIC");
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)pMicrosimArr, 0x4B0))
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)pMicrosimArr, MICROSIM_ALLOC_SIZE))
 		goto ABORTWRITE;
 	scrChunk = L_byteswap_longlabel("XTHG");
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXTHG[0], 0x1E0))
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXTHG[0], THING_ALLOC_SIZE))
 		goto ABORTWRITE;
 	scrChunk = L_byteswap_longlabel("XBIT");
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXBIT[0], 0x4000))
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXBIT[0], FULLMAP_ALLOC_SIZE))
 		goto ABORTWRITE;
 	scrChunk = L_byteswap_longlabel("XTRF");
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXTRF[0], 0x1000))
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXTRF[0], MINIMAP64_ALLOC_SIZE))
 		goto ABORTWRITE;
 	scrChunk = L_byteswap_longlabel("XPLT");
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXPLT[0], 0x1000))
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXPLT[0], MINIMAP64_ALLOC_SIZE))
 		goto ABORTWRITE;
 	scrChunk = L_byteswap_longlabel("XVAL");
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXVAL[0], 0x1000))
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXVAL[0], MINIMAP64_ALLOC_SIZE))
 		goto ABORTWRITE;
 	scrChunk = L_byteswap_longlabel("XCRM");
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXCRM[0], 0x1000))
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXCRM[0], MINIMAP64_ALLOC_SIZE))
 		goto ABORTWRITE;
 	scrChunk = L_byteswap_longlabel("XPLC");
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXPLC[0], 0x400))
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXPLC[0], MINIMAP32_ALLOC_SIZE))
 		goto ABORTWRITE;
 	scrChunk = L_byteswap_longlabel("XFIR");
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXFIR[0], 0x400))
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXFIR[0], MINIMAP32_ALLOC_SIZE))
 		goto ABORTWRITE;
 	scrChunk = L_byteswap_longlabel("XPOP");
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXPOP[0], 0x400))
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXPOP[0], MINIMAP32_ALLOC_SIZE))
 		goto ABORTWRITE;
 	scrChunk = L_byteswap_longlabel("XROG");
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXROG[0], 0x400))
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXROG[0], MINIMAP32_ALLOC_SIZE))
 		goto ABORTWRITE;
 	scrChunk = L_byteswap_longlabel("XGRP");
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXGRP[0], 0xD00))
+	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, scrChunk, (const void *)dwMapXGRP[0], GRAPH_ALLOC_SIZE))
 		goto ABORTWRITE;
 	if (!L_SimcityApp_WriteCityHeader(pSCApp, pFile, nDataOffset))
 		goto ABORTWRITE;
