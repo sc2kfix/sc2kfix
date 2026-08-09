@@ -1071,6 +1071,22 @@ static int L_OpenCityUnknownChunkRead(FILE *pFile, char *pChunk, int nSize) {
 	return ret;
 }
 
+static void L_MakeCityNameFromFileName(const char *lpFileName) {
+	int nLen;
+	char szTemp[MAX_PATH + 1], szCityName[CITY_NAME_LEN + 1];
+
+	memset(szCityName, 0, sizeof(szCityName));
+	strcpy_s(szTemp, lpFileName);
+	PathStripPathA(szTemp);
+	PathRemoveExtensionA(szTemp);
+	strncpy_s(szCityName, szTemp, sizeof(szCityName) - 1);
+	nLen = strlen(szCityName);
+	if (nLen > CITY_NAME_LEN)
+		nLen = CITY_NAME_LEN;
+	szCityName[nLen] = 0;
+	GameMain_String_OperatorSet(&pszCityName, szCityName);
+}
+
 static void L_InitializeCityData() {
 	__int16 iX, iY, iXHalf, iYHalf, iXQuarter, iYQuarter;
 	__int16 *pTempMapResCom, *pTempMapInd;
@@ -1514,7 +1530,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 					bGotName = false;
 			}
 			if (!bGotName)
-				Game_MakeCityNameFromFileName(lpFileName);
+				L_MakeCityNameFromFileName(lpFileName);
 			L_InitializeCityData();
 			Game_GetOccupiedTileCount();
 			Game_GraphKludge();
