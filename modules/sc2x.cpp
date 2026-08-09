@@ -666,15 +666,19 @@ static bool IsMatchingChunk(int nChunk, char *pTargChunk) {
 }
 
 static __int16 L_SimcityApp_AllocateMiscInfo(CSimcityAppPrimary *pSCApp) {
+	int ret;
+
+	ret = 0;
 	if (pMiscInfo) {
 		free(pMiscInfo);
 		pMiscInfo = 0;
 	}
 	pMiscInfo = (DWORD *)malloc(MISCINF_ALLOC_SIZE);
-	if (!pMiscInfo)
-		return 0;
-	memset(pMiscInfo, 0, MISCINF_ALLOC_SIZE);
-	return 1;
+	if (pMiscInfo) {
+		memset(pMiscInfo, 0, MISCINF_ALLOC_SIZE);
+		ret = 1;
+	}
+	return ret;
 }
 
 static int L_IsClassicCityFileValid(const char *lpFileName) {
@@ -683,23 +687,21 @@ static int L_IsClassicCityFileValid(const char *lpFileName) {
 
 	ret = 0;
 	f = old_fopen(lpFileName, "rb");
-	if (!f)
-		return 0;
-	fseek(f, 0, SEEK_END);
-	nFileLen = ftell(f);
-	fseek(f, 0, SEEK_SET);
-	// The referenced filesize here
-	// is for 1.0 Classic cities.
-	// Those that go outside of this
-	// value appear to be for later
-	// versions of Classic.
-	// 27264 has been observed for 1.1
-	// cities for instance.
-	if (nFileLen != 27248)
-		goto NOTVALID;
-	ret = 1;
-NOTVALID:
-	fclose(f);
+	if (f) {
+		fseek(f, 0, SEEK_END);
+		nFileLen = ftell(f);
+		fseek(f, 0, SEEK_SET);
+		// The referenced filesize here
+		// is for 1.0 Classic cities.
+		// Those that go outside of this
+		// value appear to be for later
+		// versions of Classic.
+		// 27264 has been observed for 1.1
+		// cities for instance.
+		if (nFileLen == 27248)
+			ret = 1;
+		fclose(f);
+	}
 	return ret;
 }
 
@@ -828,46 +830,44 @@ static int L_SimcityApp_OpenCityCompressed(CSimcityAppPrimary *pSCApp, FILE *pFi
 	ret = 0;
 	pDst = (char *)pDat;
 	pTmp = (char *)malloc(nSize);
-	if (!pTmp)
-		return 0;
-	memset(pTmp, 0, nSize);
-	if (fread(pTmp, nSize, 1, pFile) > 0) {
-		nTp = nDp = 0;
+	if (pTmp) {
+		memset(pTmp, 0, nSize);
+		if (fread(pTmp, nSize, 1, pFile) > 0) {
+			nTp = nDp = 0;
 #if 0
-		int ix = 0;
-		char dat;
-		while (nSize > nTp && nDatSize > nDp) {
-			dat = pTmp[nTp++];
-			if (dat >= 0) {
-				for (ix = dat; ix > 0; --ix)
-					pDst[nDp++] = pTmp[nTp++];
-			}
-			else {
-				ix = dat & 0x7F;
+			int ix = 0;
+			char dat;
+			while (nSize > nTp && nDatSize > nDp) {
 				dat = pTmp[nTp++];
-				while (ix >= 0) {
-					pDst[nDp++] = dat;
-					--ix;
+				if (dat >= 0) {
+					for (ix = dat; ix > 0; --ix)
+						pDst[nDp++] = pTmp[nTp++];
+				}
+				else {
+					ix = dat & 0x7F;
+					dat = pTmp[nTp++];
+					while (ix >= 0) {
+						pDst[nDp++] = dat;
+						--ix;
+					}
 				}
 			}
-		}
 #else
-		nDp = MaxisDecompress((BYTE *)pDst, nDatSize, (BYTE *)pTmp, nSize, &nTp);
+			nDp = MaxisDecompress((BYTE *)pDst, nDatSize, (BYTE *)pTmp, nSize, &nTp);
 #endif
-		if (nTp != nSize) {
-			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 49, szResStr, sizeof(szResStr) - 1);
-			GameMain_AfxMessageBoxStr(szResStr, 0, 0);
-			goto ABORTREAD;
+			if (nTp == nSize)
+				ret = 1;
+			else {
+				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 49, szResStr, sizeof(szResStr) - 1);
+				GameMain_AfxMessageBoxStr(szResStr, 0, 0);
+			}
 		}
+		else {
+			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
+			GameMain_AfxMessageBoxStr(szResStr, 0, 0);
+		}
+		free(pTmp);
 	}
-	else {
-		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
-		GameMain_AfxMessageBoxStr(szResStr, 0, 0);
-		goto ABORTREAD;
-	}
-	ret = 1;
-ABORTREAD:
-	free(pTmp);
 	return ret;
 }
 
@@ -881,177 +881,177 @@ static int L_SimcityApp_OpenCityInfo(CSimcityAppPrimary *pSCApp, FILE *pFile, in
 	ret = 0;
 	// This was previously referenced though seemingly not used; preserving.
 	//strcpy_s(szErrStr, "Unable To Load, Old File Version = \r\n");
-	if (!L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pMiscInfo, MISCINF_ALLOC_SIZE))
-		goto ABORTREAD;
-	L_byteswap_buffer(pMiscInfo, MISCINF_ALLOC_SIZE);
-	nArrOffset = 0;
-	if (pMiscInfo[nArrOffset] != 290) {
-		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 55, szResStr, sizeof(szResStr) - 1);
-		_itoa_s(pMiscInfo[nArrOffset], szBuf, 10);
-		sprintf_s(szErrStr, "%s%s", szResStr, szBuf);
-		GameMain_AfxMessageBoxStr(szErrStr, 0, 0);
-		goto ABORTREAD;
-	}
-	nArrNextOffset = nArrOffset + 1;
-	wCityMode = (__int16)pMiscInfo[nArrNextOffset++];
-	wViewRotation = (__int16)pMiscInfo[nArrNextOffset++];
-	wCityStartYear = (__int16)pMiscInfo[nArrNextOffset++];
-	dwCityDays = pMiscInfo[nArrNextOffset++];
-	dwCityFunds = pMiscInfo[nArrNextOffset++];
-	dwCityBonds = pMiscInfo[nArrNextOffset++];
-	wCityDifficulty = (__int16)pMiscInfo[nArrNextOffset++];
-	wCityProgression = (__int16)pMiscInfo[nArrNextOffset++];
-	dwCityValue = pMiscInfo[nArrNextOffset++];
-	dwCityLandValue = pMiscInfo[nArrNextOffset++];
-	dwCityCrime = pMiscInfo[nArrNextOffset++];
-	dwCityTrafficCount = pMiscInfo[nArrNextOffset++];
-	dwCityPollution = pMiscInfo[nArrNextOffset++];
-	dwCityFame = pMiscInfo[nArrNextOffset++];
-	dwCityAdvertising = pMiscInfo[nArrNextOffset++];
-	dwCityGarbage = pMiscInfo[nArrNextOffset++];
-	dwCityWorkforcePercent = pMiscInfo[nArrNextOffset++];
-	dwCityWorkforceLE = pMiscInfo[nArrNextOffset++];
-	dwCityWorkforceEQ = pMiscInfo[nArrNextOffset++];
-	dwNationalPopulation = pMiscInfo[nArrNextOffset++];
-	dwNationalValue = pMiscInfo[nArrNextOffset++];
-	wNationalFedRate = (__int16)pMiscInfo[nArrNextOffset++];
-	wNationalEconomyTrend = (__int16)pMiscInfo[nArrNextOffset++];
-	bWeatherHeat = (BYTE)pMiscInfo[nArrNextOffset++];
-	bWeatherWind = (BYTE)pMiscInfo[nArrNextOffset++];
-	bWeatherRain = (BYTE)pMiscInfo[nArrNextOffset++];
-	bWeatherTrend = (BYTE)pMiscInfo[nArrNextOffset++];
-	wSetTriggerDisasterType = (__int16)pMiscInfo[nArrNextOffset++];
-	dwCityOldResPopulation = pMiscInfo[nArrNextOffset++];
-	wGrantedRewards = (__int16)pMiscInfo[nArrNextOffset++];
-	bDisableRewardButton = false;
-	if (!dwGrantedItems[CITYTOOL_GROUP_REWARDS] || wGrantedRewards) {
-		if (dwGrantedItems[CITYTOOL_GROUP_REWARDS] || !wGrantedRewards)
-			bDisableRewardButton = true;
-	}
-	if (bDisableRewardButton)
-		Game_MainFrame_DisableCityToolBarButton((CMainFrame *)pSCApp->m_pMainWnd, CITYTOOL_BUTTON_REWARDS);
-	dwGrantedItems[CITYTOOL_GROUP_REWARDS] = wGrantedRewards;
-	nArrOffset = nArrNextOffset;
-	for (nPosMain = 0; nPosMain < 20; ++nPosMain) {
-		nArrNextOffset = nArrOffset + 1;
-		pRawPopRatioTable[nPosMain] = pMiscInfo[nArrOffset];
-		pEQRatioTable[nPosMain] = pMiscInfo[nArrNextOffset++];
-		pLERatioTable[nPosMain] = pMiscInfo[nArrNextOffset];
-		nArrOffset = nArrNextOffset + 1;
-	}
-	for (nPosMain = 0; nPosMain < 11; ++nPosMain) {
-		nArrNextOffset = nArrOffset + 1;
-		pIndividualIndDemands[nPosMain] = (__int16)pMiscInfo[nArrOffset];
-		pIndividualIndTaxRate[nPosMain] = (__int16)pMiscInfo[nArrNextOffset++];
-		pIndividualIndRatio[nPosMain] = pMiscInfo[nArrNextOffset];
-		nArrOffset = nArrNextOffset + 1;
-	}
-	for (nPosMain = 0; nPosMain < 256; ++nPosMain)
-		wTileCount[nPosMain] = (__int16)pMiscInfo[nArrOffset++];
-	for (nPosMain = 0; nPosMain < 8; ++nPosMain)
-		pZonePops[nPosMain] = pMiscInfo[nArrOffset++];
-	for (nPosMain = 0; nPosMain < 50; ++nPosMain)
-		wArrBondData[nPosMain] = (__int16)pMiscInfo[nArrOffset++];
-	for (nPosMain = 0; nPosMain < 4; ++nPosMain) {
-		nArrNextOffset = nArrOffset + 1;
-		wNeighborNameIdx[nPosMain] = (__int16)pMiscInfo[nArrOffset];
-		__int16 nIdx = wNeighborNameIdx[nPosMain];
-		if (nIdx)
-			Game_LoadNamedEntryFromRsrcOffset(&szNeighborCities[MAX_NEIGH_BUF_SIZE * nPosMain], 1000, nIdx);
-		else
-			strcpy_s(&szNeighborCities[MAX_NEIGH_BUF_SIZE * nPosMain], MAX_NEIGH_BUF_SIZE, "Ocean");
-		dwNeighborPopulation[nPosMain] = pMiscInfo[nArrNextOffset++];
-		dwNeighborValue[nPosMain] = pMiscInfo[nArrNextOffset++];
-		dwNeighborFame[nPosMain] = pMiscInfo[nArrNextOffset];
-		nArrOffset = nArrNextOffset + 1;
-	}
-	for (nPosMain = 0; nPosMain < 8; ++nPosMain)
-		wCityDemand[nPosMain] = (__int16)pMiscInfo[nArrOffset++];
-	for (nPosMain = 0; nPosMain < 17; ++nPosMain)
-		wCityInventionYears[nPosMain] = (__int16)pMiscInfo[nArrOffset++];
-	for (nPosMain = 0; nPosMain < 16; ++nPosMain) {
-		nArrNextOffset = nArrOffset + 1;
-		pBudgetArr[nPosMain].iCurrentCosts = pMiscInfo[nArrOffset];
-		pBudgetArr[nPosMain].iFundingPercent = pMiscInfo[nArrNextOffset++];
-		pBudgetArr[nPosMain].iYearToDateCost = pMiscInfo[nArrNextOffset];
-		nArrOffset = nArrNextOffset + 1;
-		for (nPosSub = 0; nPosSub < 12; ++nPosSub) {
+	if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pMiscInfo, MISCINF_ALLOC_SIZE)) {
+		L_byteswap_buffer(pMiscInfo, MISCINF_ALLOC_SIZE);
+		nArrOffset = 0;
+		if (pMiscInfo[nArrOffset] == 290) {
 			nArrNextOffset = nArrOffset + 1;
-			pBudgetArr[nPosMain].iCountMonth[nPosSub] = pMiscInfo[nArrOffset];
-			pBudgetArr[nPosMain].iFundMonth[nPosSub] = pMiscInfo[nArrNextOffset];
+			wCityMode = (__int16)pMiscInfo[nArrNextOffset++];
+			wViewRotation = (__int16)pMiscInfo[nArrNextOffset++];
+			wCityStartYear = (__int16)pMiscInfo[nArrNextOffset++];
+			dwCityDays = pMiscInfo[nArrNextOffset++];
+			dwCityFunds = pMiscInfo[nArrNextOffset++];
+			dwCityBonds = pMiscInfo[nArrNextOffset++];
+			wCityDifficulty = (__int16)pMiscInfo[nArrNextOffset++];
+			wCityProgression = (__int16)pMiscInfo[nArrNextOffset++];
+			dwCityValue = pMiscInfo[nArrNextOffset++];
+			dwCityLandValue = pMiscInfo[nArrNextOffset++];
+			dwCityCrime = pMiscInfo[nArrNextOffset++];
+			dwCityTrafficCount = pMiscInfo[nArrNextOffset++];
+			dwCityPollution = pMiscInfo[nArrNextOffset++];
+			dwCityFame = pMiscInfo[nArrNextOffset++];
+			dwCityAdvertising = pMiscInfo[nArrNextOffset++];
+			dwCityGarbage = pMiscInfo[nArrNextOffset++];
+			dwCityWorkforcePercent = pMiscInfo[nArrNextOffset++];
+			dwCityWorkforceLE = pMiscInfo[nArrNextOffset++];
+			dwCityWorkforceEQ = pMiscInfo[nArrNextOffset++];
+			dwNationalPopulation = pMiscInfo[nArrNextOffset++];
+			dwNationalValue = pMiscInfo[nArrNextOffset++];
+			wNationalFedRate = (__int16)pMiscInfo[nArrNextOffset++];
+			wNationalEconomyTrend = (__int16)pMiscInfo[nArrNextOffset++];
+			bWeatherHeat = (BYTE)pMiscInfo[nArrNextOffset++];
+			bWeatherWind = (BYTE)pMiscInfo[nArrNextOffset++];
+			bWeatherRain = (BYTE)pMiscInfo[nArrNextOffset++];
+			bWeatherTrend = (BYTE)pMiscInfo[nArrNextOffset++];
+			wSetTriggerDisasterType = (__int16)pMiscInfo[nArrNextOffset++];
+			dwCityOldResPopulation = pMiscInfo[nArrNextOffset++];
+			wGrantedRewards = (__int16)pMiscInfo[nArrNextOffset++];
+			bDisableRewardButton = false;
+			if (!dwGrantedItems[CITYTOOL_GROUP_REWARDS] || wGrantedRewards) {
+				if (dwGrantedItems[CITYTOOL_GROUP_REWARDS] || !wGrantedRewards)
+					bDisableRewardButton = true;
+			}
+			if (bDisableRewardButton)
+				Game_MainFrame_DisableCityToolBarButton((CMainFrame *)pSCApp->m_pMainWnd, CITYTOOL_BUTTON_REWARDS);
+			dwGrantedItems[CITYTOOL_GROUP_REWARDS] = wGrantedRewards;
+			nArrOffset = nArrNextOffset;
+			for (nPosMain = 0; nPosMain < 20; ++nPosMain) {
+				nArrNextOffset = nArrOffset + 1;
+				pRawPopRatioTable[nPosMain] = pMiscInfo[nArrOffset];
+				pEQRatioTable[nPosMain] = pMiscInfo[nArrNextOffset++];
+				pLERatioTable[nPosMain] = pMiscInfo[nArrNextOffset];
+				nArrOffset = nArrNextOffset + 1;
+			}
+			for (nPosMain = 0; nPosMain < 11; ++nPosMain) {
+				nArrNextOffset = nArrOffset + 1;
+				pIndividualIndDemands[nPosMain] = (__int16)pMiscInfo[nArrOffset];
+				pIndividualIndTaxRate[nPosMain] = (__int16)pMiscInfo[nArrNextOffset++];
+				pIndividualIndRatio[nPosMain] = pMiscInfo[nArrNextOffset];
+				nArrOffset = nArrNextOffset + 1;
+			}
+			for (nPosMain = 0; nPosMain < 256; ++nPosMain)
+				wTileCount[nPosMain] = (__int16)pMiscInfo[nArrOffset++];
+			for (nPosMain = 0; nPosMain < 8; ++nPosMain)
+				pZonePops[nPosMain] = pMiscInfo[nArrOffset++];
+			for (nPosMain = 0; nPosMain < 50; ++nPosMain)
+				wArrBondData[nPosMain] = (__int16)pMiscInfo[nArrOffset++];
+			for (nPosMain = 0; nPosMain < 4; ++nPosMain) {
+				nArrNextOffset = nArrOffset + 1;
+				wNeighborNameIdx[nPosMain] = (__int16)pMiscInfo[nArrOffset];
+				__int16 nIdx = wNeighborNameIdx[nPosMain];
+				if (nIdx)
+					Game_LoadNamedEntryFromRsrcOffset(&szNeighborCities[MAX_NEIGH_BUF_SIZE * nPosMain], 1000, nIdx);
+				else
+					strcpy_s(&szNeighborCities[MAX_NEIGH_BUF_SIZE * nPosMain], MAX_NEIGH_BUF_SIZE, "Ocean");
+				dwNeighborPopulation[nPosMain] = pMiscInfo[nArrNextOffset++];
+				dwNeighborValue[nPosMain] = pMiscInfo[nArrNextOffset++];
+				dwNeighborFame[nPosMain] = pMiscInfo[nArrNextOffset];
+				nArrOffset = nArrNextOffset + 1;
+			}
+			for (nPosMain = 0; nPosMain < 8; ++nPosMain)
+				wCityDemand[nPosMain] = (__int16)pMiscInfo[nArrOffset++];
+			for (nPosMain = 0; nPosMain < 17; ++nPosMain)
+				wCityInventionYears[nPosMain] = (__int16)pMiscInfo[nArrOffset++];
+			for (nPosMain = 0; nPosMain < 16; ++nPosMain) {
+				nArrNextOffset = nArrOffset + 1;
+				pBudgetArr[nPosMain].iCurrentCosts = pMiscInfo[nArrOffset];
+				pBudgetArr[nPosMain].iFundingPercent = pMiscInfo[nArrNextOffset++];
+				pBudgetArr[nPosMain].iYearToDateCost = pMiscInfo[nArrNextOffset];
+				nArrOffset = nArrNextOffset + 1;
+				for (nPosSub = 0; nPosSub < 12; ++nPosSub) {
+					nArrNextOffset = nArrOffset + 1;
+					pBudgetArr[nPosMain].iCountMonth[nPosSub] = pMiscInfo[nArrOffset];
+					pBudgetArr[nPosMain].iFundMonth[nPosSub] = pMiscInfo[nArrNextOffset];
+					nArrOffset = nArrNextOffset + 1;
+				}
+			}
+			nArrNextOffset = nArrOffset + 1;
+			bYearEndFlag = pMiscInfo[nArrOffset];
+			wWaterLevel = (__int16)pMiscInfo[nArrNextOffset++];
+			bCityHasOcean = pMiscInfo[nArrNextOffset++];
+			bCityHasRiver = pMiscInfo[nArrNextOffset++];
+			bMilitaryBaseType = (BYTE)pMiscInfo[nArrNextOffset];
 			nArrOffset = nArrNextOffset + 1;
+			for (nPosMain = 0; nPosMain < 6; ++nPosMain) {
+				nArrNextOffset = nArrOffset + 1;
+				pPaperArr[nPosMain].bName = (BYTE)pMiscInfo[nArrOffset];
+				pPaperArr[nPosMain].bStyle = (BYTE)pMiscInfo[nArrNextOffset++];
+				pPaperArr[nPosMain].bTag = (BYTE)pMiscInfo[nArrNextOffset++];
+				pPaperArr[nPosMain].bSurvey = (BYTE)pMiscInfo[nArrNextOffset++];
+				pPaperArr[nPosMain].bWeather = (BYTE)pMiscInfo[nArrNextOffset];
+				nArrOffset = nArrNextOffset + 1;
+			}
+			for (nPosMain = 0; nPosMain < 9; ++nPosMain) {
+				nArrNextOffset = nArrOffset + 1;
+				pNewsArr[nPosMain].wType = (__int16)pMiscInfo[nArrOffset];
+				pNewsArr[nPosMain].wPower = (__int16)pMiscInfo[nArrNextOffset++];
+				pNewsArr[nPosMain].bValue = (BYTE)pMiscInfo[nArrNextOffset++];
+				pNewsArr[nPosMain].bItem = (BYTE)pMiscInfo[nArrNextOffset++];
+				pNewsArr[nPosMain].bName = (BYTE)pMiscInfo[nArrNextOffset++];
+				pNewsArr[nPosMain].bScore = (BYTE)pMiscInfo[nArrNextOffset];
+				nArrOffset = nArrNextOffset + 1;
+			}
+			nArrNextOffset = nArrOffset + 1;
+			dwCityOrdinances = pMiscInfo[nArrOffset];
+			dwCityUnemployment = pMiscInfo[nArrNextOffset];
+			nArrOffset = nArrNextOffset + 1;
+			for (nPosMain = 0; nPosMain < 16; ++nPosMain)
+				wMilitaryTiles[nPosMain] = (WORD)pMiscInfo[nArrOffset++];
+			nArrNextOffset = nArrOffset + 1;
+			wSubwayXUNDCount = (WORD)pMiscInfo[nArrOffset];
+			pSCApp->wSCAGameSpeedLOW = (__int16)pMiscInfo[nArrNextOffset++];
+			pSCApp->wSCAGameSpeedHIGH = pSCApp->wSCAGameSpeedLOW;
+			bOptionsAutoBudget = pMiscInfo[nArrNextOffset++];
+			bOptionsAutoGoto = pMiscInfo[nArrNextOffset++];
+			pSCApp->dwSCAGameSound = pMiscInfo[nArrNextOffset++];
+			pSCApp->dwSCAGameMusic = pMiscInfo[nArrNextOffset++];
+			bNoDisasters = pMiscInfo[nArrNextOffset++];
+			bNewspaperSubscription = pMiscInfo[nArrNextOffset++];
+			bNewspaperExtra = pMiscInfo[nArrNextOffset++];
+			wNewspaperChoice = (__int16)pMiscInfo[nArrNextOffset++];
+			int nTilePos = pMiscInfo[nArrNextOffset++];
+			if (nTilePos == -1) {
+				wViewInitialCoordX = 64;
+				wViewInitialCoordY = 128;
+			}
+			else {
+				wViewInitialCoordX = nTilePos & 0x7F;
+				wViewInitialCoordY = nTilePos >> 8;
+			}
+			wViewInitialZoom = (__int16)pMiscInfo[nArrNextOffset++];
+			wCityCenterX = (__int16)pMiscInfo[nArrNextOffset++];
+			wCityCenterY = (__int16)pMiscInfo[nArrNextOffset++];
+			dwArcologyPopulation = pMiscInfo[nArrNextOffset++];
+			wConnectTiles = (__int16)pMiscInfo[nArrNextOffset++];
+			wStadiumSportsTeams = (__int16)pMiscInfo[nArrNextOffset++];
+			dwCityPopulation = pMiscInfo[nArrNextOffset++];
+			wIndustrialMixBonus = (WORD)pMiscInfo[nArrNextOffset++];
+			wIndustrialMixPollutionBonus = (WORD)pMiscInfo[nArrNextOffset++];
+			wOldArrests = (WORD)pMiscInfo[nArrNextOffset++];
+			wPrisonBonus = (WORD)pMiscInfo[nArrNextOffset++];
+			wDisasterObject = (__int16)pMiscInfo[nArrNextOffset++];
+			wCurrentDisasterType = (__int16)pMiscInfo[nArrNextOffset++];
+			dwDisasterActive = pMiscInfo[nArrNextOffset++];
+			wSewerBonus = (WORD)pMiscInfo[nArrNextOffset];
+			ret = 1;
+		}
+		else {
+			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 55, szResStr, sizeof(szResStr) - 1);
+			_itoa_s(pMiscInfo[nArrOffset], szBuf, 10);
+			sprintf_s(szErrStr, "%s%s", szResStr, szBuf);
+			GameMain_AfxMessageBoxStr(szErrStr, 0, 0);
 		}
 	}
-	nArrNextOffset = nArrOffset + 1;
-	bYearEndFlag = pMiscInfo[nArrOffset];
-	wWaterLevel = (__int16)pMiscInfo[nArrNextOffset++];
-	bCityHasOcean = pMiscInfo[nArrNextOffset++];
-	bCityHasRiver = pMiscInfo[nArrNextOffset++];
-	bMilitaryBaseType = (BYTE)pMiscInfo[nArrNextOffset];
-	nArrOffset = nArrNextOffset + 1;
-	for (nPosMain = 0; nPosMain < 6; ++nPosMain) {
-		nArrNextOffset = nArrOffset + 1;
-		pPaperArr[nPosMain].bName = (BYTE)pMiscInfo[nArrOffset];
-		pPaperArr[nPosMain].bStyle = (BYTE)pMiscInfo[nArrNextOffset++];
-		pPaperArr[nPosMain].bTag = (BYTE)pMiscInfo[nArrNextOffset++];
-		pPaperArr[nPosMain].bSurvey = (BYTE)pMiscInfo[nArrNextOffset++];
-		pPaperArr[nPosMain].bWeather = (BYTE)pMiscInfo[nArrNextOffset];
-		nArrOffset = nArrNextOffset + 1;
-	}
-	for (nPosMain = 0; nPosMain < 9; ++nPosMain) {
-		nArrNextOffset = nArrOffset + 1;
-		pNewsArr[nPosMain].wType = (__int16)pMiscInfo[nArrOffset];
-		pNewsArr[nPosMain].wPower = (__int16)pMiscInfo[nArrNextOffset++];
-		pNewsArr[nPosMain].bValue = (BYTE)pMiscInfo[nArrNextOffset++];
-		pNewsArr[nPosMain].bItem = (BYTE)pMiscInfo[nArrNextOffset++];
-		pNewsArr[nPosMain].bName = (BYTE)pMiscInfo[nArrNextOffset++];
-		pNewsArr[nPosMain].bScore = (BYTE)pMiscInfo[nArrNextOffset];
-		nArrOffset = nArrNextOffset + 1;
-	}
-	nArrNextOffset = nArrOffset + 1;
-	dwCityOrdinances = pMiscInfo[nArrOffset];
-	dwCityUnemployment = pMiscInfo[nArrNextOffset];
-	nArrOffset = nArrNextOffset + 1;
-	for (nPosMain = 0; nPosMain < 16; ++nPosMain)
-		wMilitaryTiles[nPosMain] = (WORD)pMiscInfo[nArrOffset++];
-	nArrNextOffset = nArrOffset + 1;
-	wSubwayXUNDCount = (WORD)pMiscInfo[nArrOffset];
-	pSCApp->wSCAGameSpeedLOW = (__int16)pMiscInfo[nArrNextOffset++];
-	pSCApp->wSCAGameSpeedHIGH = pSCApp->wSCAGameSpeedLOW;
-	bOptionsAutoBudget = pMiscInfo[nArrNextOffset++];
-	bOptionsAutoGoto = pMiscInfo[nArrNextOffset++];
-	pSCApp->dwSCAGameSound = pMiscInfo[nArrNextOffset++];
-	pSCApp->dwSCAGameMusic = pMiscInfo[nArrNextOffset++];
-	bNoDisasters = pMiscInfo[nArrNextOffset++];
-	bNewspaperSubscription = pMiscInfo[nArrNextOffset++];
-	bNewspaperExtra = pMiscInfo[nArrNextOffset++];
-	wNewspaperChoice = (__int16)pMiscInfo[nArrNextOffset++];
-	int nTilePos = pMiscInfo[nArrNextOffset++];
-	if (nTilePos == -1) {
-		wViewInitialCoordX = 64;
-		wViewInitialCoordY = 128;
-	}
-	else {
-		wViewInitialCoordX = nTilePos & 0x7F;
-		wViewInitialCoordY = nTilePos >> 8;
-	}
-	wViewInitialZoom = (__int16)pMiscInfo[nArrNextOffset++];
-	wCityCenterX = (__int16)pMiscInfo[nArrNextOffset++];
-	wCityCenterY = (__int16)pMiscInfo[nArrNextOffset++];
-	dwArcologyPopulation = pMiscInfo[nArrNextOffset++];
-	wConnectTiles = (__int16)pMiscInfo[nArrNextOffset++];
-	wStadiumSportsTeams = (__int16)pMiscInfo[nArrNextOffset++];
-	dwCityPopulation = pMiscInfo[nArrNextOffset++];
-	wIndustrialMixBonus = (WORD)pMiscInfo[nArrNextOffset++];
-	wIndustrialMixPollutionBonus = (WORD)pMiscInfo[nArrNextOffset++];
-	wOldArrests = (WORD)pMiscInfo[nArrNextOffset++];
-	wPrisonBonus = (WORD)pMiscInfo[nArrNextOffset++];
-	wDisasterObject = (__int16)pMiscInfo[nArrNextOffset++];
-	wCurrentDisasterType = (__int16)pMiscInfo[nArrNextOffset++];
-	dwDisasterActive = pMiscInfo[nArrNextOffset++];
-	wSewerBonus = (WORD)pMiscInfo[nArrNextOffset];
-	ret = 1;
-ABORTREAD:
 	free(pMiscInfo);
 	pMiscInfo = 0;
 	return ret;
@@ -1063,11 +1063,11 @@ static int L_OpenCityUnknownChunkRead(FILE *pFile, int nSize) {
 
 	ret = 0;
 	pTemp = (char *)malloc(nSize);
-	if (!pTemp)
-		return 0;
-	if (fread(pTemp, nSize, 1, pFile) > 0)
-		ret = 1;
-	free(pTemp);
+	if (pTemp) {
+		if (fread(pTemp, nSize, 1, pFile) > 0)
+			ret = 1;
+		free(pTemp);
+	}
 	return ret;
 }
 
@@ -1497,33 +1497,35 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 					sprintf_s(szErrStr, "%s\n%s", szResStr, lpFileName);
 					GameMain_AfxMessageBoxStr(szErrStr, 0, 0);
 				}
-				goto ABORTREAD;
+				// Set explicitly just in case.
+				bReadComplete = false;
+				break;
 			}
 
 			nCurrentReadLength += nSize + 8;
 			if (nCurrentReadLength >= nExpectedLength)
 				bReadComplete = true;
 		}
-		memset(szCityName, 0, sizeof(szCityName));
-		if (bGotName && szTempCityName[0]) {
-			if (!L_PascalStringToCharString(szTempCityName, szCityName))
-				goto DERIVECITYNAME;
-			GameMain_String_OperatorSet(&pszCityName, szCityName);
+		if (bReadComplete) {
+			memset(szCityName, 0, sizeof(szCityName));
+			if (bGotName && szTempCityName[0]) {
+				if (L_PascalStringToCharString(szTempCityName, szCityName))
+					GameMain_String_OperatorSet(&pszCityName, szCityName);
+				else
+					bGotName = false;
+			}
+			if (!bGotName)
+				Game_MakeCityNameFromFileName(lpFileName);
+			L_InitializeCityData();
+			Game_GetOccupiedTileCount();
+			Game_GraphKludge();
+			if (bGotLabel)
+				GameMain_ResetLabelStringState();
+			else
+				Game_ClearLabels();
+			ret = 1;
 		}
-		else {
-		DERIVECITYNAME:
-			Game_MakeCityNameFromFileName(lpFileName);
-		}
-		L_InitializeCityData();
-		Game_GetOccupiedTileCount();
-		Game_GraphKludge();
-		if (bGotLabel)
-			GameMain_ResetLabelStringState();
-		else
-			Game_ClearLabels();
-		ret = 1;
 	}
-ABORTREAD:
 	return ret;
 }
 
