@@ -1347,34 +1347,34 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 				bScenarioSuccess = TRUE;
 
 				// Iterate through possible the vanilla scenario requirements
-				if (dwScenarioCitySize > dwCityPopulation && dwScenarioCitySize)
+				if (scenarioAttrib.dwCitySize > dwCityPopulation && scenarioAttrib.dwCitySize)
 					bScenarioSuccess = FALSE;
-				if (pBudgetArr[BUDGET_RESFUND].iCurrentCosts < (int)dwScenarioResPopulation)
+				if (pBudgetArr[BUDGET_RESFUND].iCurrentCosts < scenarioAttrib.dwResPop)
 					bScenarioSuccess = FALSE;
-				if (pBudgetArr[BUDGET_COMFUND].iCurrentCosts < (int)dwScenarioComPopulation)
+				if (pBudgetArr[BUDGET_COMFUND].iCurrentCosts < scenarioAttrib.dwComPop)
 					bScenarioSuccess = FALSE;
-				if (pBudgetArr[BUDGET_INDFUND].iCurrentCosts < (int)dwScenarioIndPopulation)
+				if (pBudgetArr[BUDGET_INDFUND].iCurrentCosts < scenarioAttrib.dwIndPop)
 					bScenarioSuccess = FALSE;
-				if (dwCityFunds - dwCityBonds < (int)dwScenarioCashGoal)
+				if (dwCityFunds - dwCityBonds < scenarioAttrib.dwCashGoal)
 					bScenarioSuccess = FALSE;
-				if (dwCityLandValue < (int)dwScenarioLandValueGoal)
+				if (dwCityLandValue < scenarioAttrib.dwLandValueGoal)
 					bScenarioSuccess = FALSE;
-				if (wScenarioLEGoal > dwCityWorkforceLE)
+				if (scenarioAttrib.wLEGoal > dwCityWorkforceLE)
 					bScenarioSuccess = FALSE;
-				if (wScenarioEQGoal > dwCityWorkforceEQ)
+				if (scenarioAttrib.wEQGoal > dwCityWorkforceEQ)
 					bScenarioSuccess = FALSE;
-				if (dwScenarioPollutionLimit > 0 && dwCityPollution > dwScenarioPollutionLimit)
+				if (scenarioAttrib.dwPollutionLimit > 0 && dwCityPollution > scenarioAttrib.dwPollutionLimit)
 					bScenarioSuccess = FALSE;
-				if (dwScenarioCrimeLimit > 0 && dwCityCrime > dwScenarioCrimeLimit)
+				if (scenarioAttrib.dwCrimeLimit > 0 && dwCityCrime > scenarioAttrib.dwCrimeLimit)
 					bScenarioSuccess = FALSE;
-				if (dwScenarioTrafficLimit > 0 && dwCityTrafficCount > dwScenarioTrafficLimit)
+				if (scenarioAttrib.dwTrafficLimit > 0 && dwCityTrafficCount > scenarioAttrib.dwTrafficLimit)
 					bScenarioSuccess = FALSE;
-				if (bScenarioBuildingGoal1) {
-					if (wTileCount[bScenarioBuildingGoal1] < wScenarioBuildingGoal1Count)
+				if (scenarioAttrib.bFirstBuilding) {
+					if (wTileCount[scenarioAttrib.bFirstBuilding] < scenarioAttrib.wFirstBuildTileCnt)
 						bScenarioSuccess = FALSE;
 				}
-				if (bScenarioBuildingGoal2) {
-					if (wTileCount[bScenarioBuildingGoal2] < wScenarioBuildingGoal2Count)
+				if (scenarioAttrib.bSecondBuilding) {
+					if (wTileCount[scenarioAttrib.bSecondBuilding] < scenarioAttrib.wSecondBuildTileCnt)
 						bScenarioSuccess = FALSE;
 				}
 
@@ -1391,7 +1391,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 				// failure if they haven't
 				if (bScenarioSuccess)
 					Game_EventScenarioNotification(GAMEOVER_SCENARIO_VICTORY);
-				else if (!--wScenarioTimeLimitMonths)
+				else if (!--scenarioAttrib.wTimeLimit)
 					Game_EventScenarioNotification(GAMEOVER_SCENARIO_FAILURE);
 			}
 
