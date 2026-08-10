@@ -2224,31 +2224,6 @@ REFRESHMENUGRANTS:
 	Game_CityToolBar_RefreshToolBar(pCityToolBar);
 }
 
-// Hook for the scenario description popup.
-//
-// The popup is used for the following (just in case it comes up):
-// 1) Scenario information
-// 2) Version displayed from the debug option
-// 3) News paper section article.
-// 4) Specific Query Dialogue 'Ruminate' section.
-//
-// There could be a couple of other cases, however they're
-// not yet completely clear.
-__declspec(naked) void Hook_DisplayInformationMessageBox(const char* szDescription, int a2, void* cWnd) {
-	__asm push ecx
-
-	// Save the scenario starting state in order to be used later in the scenario status dialog
-	if (szDescription && strlen(szDescription))
-		scScenarioDescription = szDescription;
-	dwScenarioStartDays = dwCityDays;
-	dwScenarioStartPopulation = dwCityPopulation;
-	wScenarioStartXVALTiles = wCityDevelopedTiles;
-	dwScenarioStartTrafficDivisor = pBudgetArr[10].iCurrentCosts + pBudgetArr[11].iCurrentCosts + pBudgetArr[12].iCurrentCosts + 1;		// XXX - this should be a descriptive macro
-
-	__asm pop ecx
-	GAMEJMP(0x42DC20);
-}
-
 extern "C" void __cdecl Hook_RemoveLabel(__int16 nTextOverlayID) {
 	bool bZeroLabel = false;
 
@@ -2861,10 +2836,6 @@ skipgamemenu:
 	// Hook for CCmdUI::Enable
 	SafeVirtualProtect((LPVOID)0x4A296A, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4A296A, Hook_CmdUI_Enable);
-
-	// Hook the scenario start dialog so we can save the description
-	SafeVirtualProtect((LPVOID)0x402B4E, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x402B4E, Hook_DisplayInformationMessageBox);
 
 	// Skip over the strange bit of code that re-arranges the original main menu.
 	// 

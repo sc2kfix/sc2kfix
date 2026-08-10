@@ -1603,7 +1603,7 @@ std::vector<hook_function_t> stHooks_L_SimcityApp_DoLoad_Before;
 //   or similar object to inform them that they have no known state to load.
 std::vector<hook_function_t> stHooks_L_SimcityApp_DoLoad_After;
 
-static int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName) {
+int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName) {
 	int ret;
 	FILE *f;
 	char szResStr[255 + 1], szErrStr[1024 + 1];
