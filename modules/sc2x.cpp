@@ -52,6 +52,154 @@ static DWORD *pMiscInfo = NULL;
 #define THING_ALLOC_SIZE     (MAX_THING_COUNT * sizeof(map_XTHG_t))
 #define GRAPH_ALLOC_SIZE     (MAX_GRAPHS * MAX_GRAPH_ENTRIES * sizeof(DWORD))
 
+#define COPYBLOCKTO(D, S, P, SZ, MLT) memcpy(D[P], &S[P * (SZ * MLT)], SZ * MLT)
+
+static bool IsMatchingChunk(const char *pChunk, const char *pTargChunk) {
+	if (!pChunk || strlen(pChunk) < 1)
+		return false;
+
+	if (!pTargChunk || strlen(pTargChunk) < 1)
+		return false;
+
+	return (memcmp(pTargChunk, pChunk, 4) == 0) ? true : false;
+}
+
+static void L_MakeCityNameFromFileName(const char *lpFileName) {
+	int nLen;
+	char szTemp[MAX_PATH + 1], szCityName[CITY_NAME_LEN + 1];
+
+	memset(szCityName, 0, sizeof(szCityName));
+	strcpy_s(szTemp, lpFileName);
+	PathStripPathA(szTemp);
+	PathRemoveExtensionA(szTemp);
+	strncpy_s(szCityName, szTemp, sizeof(szCityName) - 1);
+	nLen = strlen(szCityName);
+	if (nLen > CITY_NAME_LEN)
+		nLen = CITY_NAME_LEN;
+	szCityName[nLen] = 0;
+	GameMain_String_OperatorSet(&pszCityName, szCityName);
+}
+
+static void L_InitializeCityData() {
+	__int16 iX, iY, iXHalf, iYHalf, iXQuarter, iYQuarter;
+	__int16 *pTempMapResCom, *pTempMapInd;
+	__int16 nBaseResComValue, nBaseIndValue;
+	BYTE iTileID, iTerrainTileID;
+	DWORD dwCurrBonds;
+	WORD wCurrBond;
+
+	wCommerceConnect = 0;
+	for (iX = 0; iX < GAME_MAP_SIZE; ++iX) {
+		for (iY = 0; iY < GAME_MAP_SIZE; ++iY) {
+			if (XTXTGetTextOverlayID(iX, iY) == NGHBR_CONNECTION_TEXT_ENTRY) {
+				iTileID = GetTileID(iX, iY);
+				if (GET_TILE_RANGE(iTileID, TILE_ROAD_LR, TILE_ROAD_LTBR) ||
+					GET_TILE_RANGE(iTileID, TILE_TUNNEL_T, TILE_TUNNEL_L) ||
+					GET_TILE_RANGE(iTileID, TILE_CROSSOVER_HIGHWAYLR_ROADTB, TILE_CROSSOVER_HIGHWAYTB_ROADLR) ||
+					GET_TILE_RANGE(iTileID, TILE_ONRAMP_TL, TILE_ONRAMP_BR))
+					++wCommerceConnect;
+			}
+		}
+	}
+
+	if (sc2x_debug & SC2X_DEBUG_LOAD)
+		ConsoleLog(LOG_DEBUG, "SC2X: Loaded %d $1000 neighbor connections (Commerce Connect).\n", wCommerceConnect);
+
+	// The 'wIndustryConnect' block was previously missing
+	// and fixed via a separate detour, however it has now been
+	// formalized in this re-constructed call.
+	wIndustryConnect = 0;
+	for (iX = 0; iX < GAME_MAP_SIZE; ++iX) {
+		for (iY = 0; iY < GAME_MAP_SIZE; ++iY) {
+			if (XTXTGetTextOverlayID(iX, iY) == NGHBR_CONNECTION_TEXT_ENTRY) {
+				iTileID = GetTileID(iX, iY);
+				if (GET_TILE_RANGE(iTileID, TILE_RAIL_LR, TILE_RAIL_HHLR) ||
+					GET_TILE_RANGE(iTileID, TILE_CROSSOVER_ROADLR_RAILTB, TILE_CROSSOVER_HIGHWAYTB_POWERLR) ||
+					GET_TILE_RANGE(iTileID, TILE_HIGHWAY_HTB, TILE_HIGHWAY_LTBR))
+					++wIndustryConnect;
+			}
+		}
+	}
+
+	if (sc2x_debug & SC2X_DEBUG_LOAD)
+		ConsoleLog(LOG_DEBUG, "SC2X: Loaded %d $1500 neighbor connections (Industry Connect).\n", wIndustryConnect);
+
+	dwBusPassengers = 0;
+	dwRailPassengers = 0;
+	dwSubwayPassengers = 0;
+
+	Game_SimulationUpdatePowerConsumption();
+	Game_SimulationUpdateWaterConsumption();
+
+	wCityDevelopedTiles = 0;
+	for (iX = 0; iX < GAME_MAP_SIZE; ++iX) {
+		iXHalf = iX / 2;
+		iXQuarter = iXHalf / 2;
+		for (iY = 0; iY < GAME_MAP_SIZE; ++iY) {
+			iYHalf = iY / 2;
+			iYQuarter = iYHalf / 2;
+			pTempMapResCom = GetTMap(iXQuarter, iYQuarter);
+			pTempMapInd = GetTMap(iXQuarter + MINI_MAP_32, iYQuarter);
+			nBaseResComValue = *pTempMapResCom;
+			nBaseIndValue = *pTempMapInd;
+			iTileID = GetTileID(iX, iY);
+			if (iTileID) {
+				if (iTileID == TILE_SERVICES_BIGPARK)
+					nBaseResComValue += 40;
+				else if (iTileID < TILE_TREES1 || iTileID > TILE_SMALLPARK) {
+					if (iTileID <= TILE_RADIOACTIVITY)
+						nBaseResComValue -= 20;
+				}
+				else
+					nBaseResComValue += 20;
+			}
+			else if (XBITReturnIsWater(iX, iY)) {
+				nBaseResComValue += 12;
+				nBaseIndValue += 12;
+			}
+			else
+				nBaseResComValue += 4;
+			if (iTileID >= TILE_ROAD_LR || XZONReturnZone(iX, iY) != ZONE_NONE) {
+				// Maximum bound here changed from GAME_SIZE_MAP to
+				// MINI_MAP_64 due to it using the half-coordinate vars.
+				// In this context even if the coordinate values may not
+				// have a bearing on actual placement on the full-size map
+				// it seems that the intent is a temporary corresponding
+				// value that can be used in-conjunction with the temp map(s)
+				// and any referenced mini-maps.
+				if (iXHalf < MINI_MAP_64 && iYHalf < MINI_MAP_64)
+					XBITSetBits(iXHalf, iYHalf, XBIT_MARK);
+				++wCityDevelopedTiles;
+			}
+			if (XBITReturnIsWatered(iX, iY)) {
+				nBaseResComValue += 4;
+				nBaseIndValue += 4;
+			}
+			iTerrainTileID = GetTerrainTileID(iX, iY);
+			if (iTerrainTileID) {
+				if (iTerrainTileID < SUBMERGED_00)
+					nBaseResComValue += 12;
+			}
+			*pTempMapResCom = nBaseResComValue;
+			*pTempMapInd = nBaseIndValue;
+		}
+	}
+
+	wDisasterWindy = 0;
+	wDisasterFloodArea = 0;
+
+	wCurrBond = 0;
+	dwCurrBonds = dwCityBonds;
+	dwInterestRateSum = 0;
+	if (dwCityBonds > 0) {
+		do {
+			dwInterestRateSum += wArrBondData[wCurrBond];
+			++wCurrBond;
+			--dwCurrBonds;
+		} while (dwCurrBonds);
+	}
+}
+
 void LoadInterleavedBudgetVanilla(budget_t* pTarget, DWORD* pSource) {
 	pTarget->iCurrentCosts = ntohl(pSource[0]);
 	pTarget->iFundingPercent = ntohl(pSource[1]);
@@ -84,8 +232,14 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 	if (sc2x_debug & SC2X_DEBUG_VANILLA_LOAD)
 		ConsoleLog(LOG_DEBUG, "LOAD: Read %d bytes of \"%s\" into sc2file buffer.\n", sc2size, szFileName);
 
-	if (*(DWORD*)&sc2file[0] != IFF_HEAD('F', 'O', 'R', 'M') || *(DWORD*)&sc2file[8] != IFF_HEAD('S', 'C', 'D', 'H'))
+	std::string strIFFHeadFORM((const char*)&sc2file[0], 4);
+	std::string strIFFHeadSCDH((const char*)&sc2file[8], 4);
+
+	if (!IsMatchingChunk(strIFFHeadFORM.c_str(), "FORM") || !IsMatchingChunk(strIFFHeadSCDH.c_str(), "SCDH"))
 		BAILOUT("Save file is not a valid vanilla SC2 file.\n");
+
+	bool bGotName = false;
+	bool bGotLabel = false;
 
 	int iChunkStart = 12;
 	int iChunkSize = 0;
@@ -94,23 +248,32 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 	do {
 		iChunkStart += iChunkSize;
 		iChunkSize = ntohl(*(DWORD*)&sc2file[iChunkStart + 4]);
+		
+		std::string strIFFHead((const char*)&sc2file[iChunkStart], 4);
 		if (sc2x_debug & SC2X_DEBUG_VANILLA_LOAD)
-			ConsoleLog(LOG_DEBUG, "LOAD: dwChunkType = '%c%c%c%c', iChunkStart = 0x%08X, iChunkSize = %d\n", sc2file[iChunkStart], sc2file[iChunkStart + 1], sc2file[iChunkStart + 2], sc2file[iChunkStart + 3], iChunkStart, iChunkSize);
+			ConsoleLog(LOG_DEBUG, "LOAD: strChunkType = '%s', iChunkStart = 0x%08X, iChunkSize = %d\n", strIFFHead.c_str(), iChunkStart, iChunkSize);
 
 		for (int i = 0; i < iChunkSize; ) {
-			if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('C', 'N', 'A', 'M')) {
-				std::string strCityName((char*)&sc2file[iChunkStart + 9]);
-				GameMain_String_OperatorSet(&pszCityName, (char *)strCityName.c_str());
+			if (IsMatchingChunk(strIFFHead.c_str(), "CNAM")) {
+				if (iChunkSize > 0) {
+					std::string strCityName((char*)&sc2file[iChunkStart + 9]);
+					GameMain_String_OperatorSet(&pszCityName, (char *)strCityName.c_str());
+					bGotName = true;
+				}
+				else
+					GameMain_String_Empty(&pszCityName);
 				i += iChunkSize;
 				iConvertedChunks++;
 			}
-			else if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('M', 'I', 'S', 'C')) {
-				// Allocate and decompressed a fixed length chunk
-				BYTE* pChunkMISC = (BYTE*)malloc(4800);
-				if (!pChunkMISC)
-					BAILOUT("Couldn't malloc 4800 bytes for MISC.");
+			else if (IsMatchingChunk(strIFFHead.c_str(), "MISC")) {
+				int j;
 
-				MaxisDecompress(pChunkMISC, 4800, &sc2file[iChunkStart + 8], ntohl(*(DWORD*)&sc2file[iChunkStart + 4]));
+				// Allocate and decompressed a fixed length chunk
+				BYTE* pChunkMISC = (BYTE*)malloc(MISCINF_ALLOC_SIZE);
+				if (!pChunkMISC)
+					BAILOUT("Couldn't malloc %d bytes for %s.", MISCINF_ALLOC_SIZE, strIFFHead.c_str());
+
+				MaxisDecompress(pChunkMISC, MISCINF_ALLOC_SIZE, &sc2file[iChunkStart + 8], iChunkSize);
 
 				//sc2json["MISC"]["dwAlways290"] = ntohl(*(DWORD*)&pChunkMISC[i]);
 				i += 4;
@@ -206,51 +369,58 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 				i += 4;
 
 				// TODO: figure out what this actually is
-				for (int i = 0; i < 20; i++) {
-					pRawPopRatioTable[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
-					pEQRatioTable[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 4]);
-					pLERatioTable[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 8]);
+				for (j = 0; j < 20; j++) {
+					pRawPopRatioTable[j] = ntohl(*(DWORD*)&pChunkMISC[i]);
+					pEQRatioTable[j] = ntohl(*(DWORD*)&pChunkMISC[i + 4]);
+					pLERatioTable[j] = ntohl(*(DWORD*)&pChunkMISC[i + 8]);
+					i += 4 * 3;
 				}
-				i += 4 * 60;
 
-				for (int i = 0; i < 11; i++) {
-					pIndividualIndDemands[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
-					pIndividualIndTaxRate[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 4]);
-					pIndividualIndRatio[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 8]);
+				for (j = 0; j < 11; j++) {
+					pIndividualIndDemands[j] = ntohl(*(DWORD*)&pChunkMISC[i]);
+					pIndividualIndTaxRate[j] = ntohl(*(DWORD*)&pChunkMISC[i + 4]);
+					pIndividualIndRatio[j] = ntohl(*(DWORD*)&pChunkMISC[i + 8]);
+					i += 4 * 3;
 				}
-				i += 4 * 33;
 
-				for (int i = 0; i < 256; i++)
-					wTileCount[i] = (BYTE)(ntohl(*(DWORD*)&pChunkMISC[i * 4]));
-				i += 4 * 256;
+				for (j = 0; j < 256; j++) {
+					wTileCount[j] = (BYTE)(ntohl(*(DWORD*)&pChunkMISC[i]));
+					i += 4;
+				}
 
-				for (int i = 0; i < 8; i++)
-					pZonePops[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
-				i += 4 * 8;
+				for (j = 0; j < 8; j++) {
+					pZonePops[j] = ntohl(*(DWORD*)&pChunkMISC[i]);
+					i += 4;
+				}
 
-				for (int i = 0; i < 50; i++)
-					wArrBondData[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
-				i += 4 * 50;
+				for (j = 0; j < 50; j++) {
+					wArrBondData[j] = ntohl(*(DWORD*)&pChunkMISC[i]);
+					i += 4;
+				}
 
 				// TODO: Encode as arrays of useful JSON
-				for (int i = 0; i < 4; i++) {
-					wNeighborNameIdx[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
-					if (wNeighborNameIdx[i])
-						Game_LoadNamedEntryFromRsrcOffset((char*)stNeighborCities + i * 32, 1000, wNeighborNameIdx[i]);
+				for (j = 0; j < 4; j++) {
+					wNeighborNameIdx[j] = ntohl(*(DWORD*)&pChunkMISC[i]);
+					__int16 nIdx = wNeighborNameIdx[j];
+					if (nIdx)
+						Game_LoadNamedEntryFromRsrcOffset(&szNeighborCities[MAX_NEIGH_BUF_SIZE * j], 1000, nIdx);
 					else
-						strcpy_s((char*)stNeighborCities + i * 32, 32, "Ocean");
-					dwNeighborPopulation[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 4]);
-					dwNeighborValue[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 8]);
-					dwNeighborFame[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 12]);
+						strcpy_s(&szNeighborCities[MAX_NEIGH_BUF_SIZE * j], MAX_NEIGH_BUF_SIZE, "Ocean");
+					dwNeighborPopulation[j] = ntohl(*(DWORD*)&pChunkMISC[i + 4]);
+					dwNeighborValue[j] = ntohl(*(DWORD*)&pChunkMISC[i + 8]);
+					dwNeighborFame[j] = ntohl(*(DWORD*)&pChunkMISC[i + 12]);
+					i += 4 * 4;
 				}
 
-				for (int i = 0; i < 8; i++)
-					wCityDemand[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
-				i += 4 * 8;
+				for (j = 0; j < 8; j++) {
+					wCityDemand[j] = ntohl(*(DWORD*)&pChunkMISC[i]);
+					i += 4;
+				}
 
-				for (int i = 0; i < 17; i++)
-					wCityInventionYears[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
-				i += 4 * 17;
+				for (j = 0; j < 17; j++) {
+					wCityInventionYears[j] = ntohl(*(DWORD*)&pChunkMISC[i]);
+					i += 4;
+				}
 
 				LoadInterleavedBudgetVanilla(pBudgetArr, (DWORD*)&pChunkMISC[i]);
 				i += 4 * 27;
@@ -322,26 +492,26 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 
 				// TODO: Encode as arrays of useful JSON
 				//sc2json["MISC"]["pPaperArr"] = EncodeDWORDArray((DWORD*)&pChunkMISC[i], 30, TRUE);
-				for (int i = 0; i < 6; i++) {
-					pPaperArr[i].bName = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
-					pPaperArr[i].bStyle = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 4]);
-					pPaperArr[i].bTag = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 8]);
-					pPaperArr[i].bSurvey = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 12]);
-					pPaperArr[i].bWeather = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 16]);
+				for (j = 0; j < 6; j++) {
+					pPaperArr[j].bName = ntohl(*(DWORD*)&pChunkMISC[i]);
+					pPaperArr[j].bStyle = ntohl(*(DWORD*)&pChunkMISC[i + 4]);
+					pPaperArr[j].bTag = ntohl(*(DWORD*)&pChunkMISC[i + 8]);
+					pPaperArr[j].bSurvey = ntohl(*(DWORD*)&pChunkMISC[i + 12]);
+					pPaperArr[j].bWeather = ntohl(*(DWORD*)&pChunkMISC[i + 16]);
+					i += 4 * 5;
 				}
-				i += 4 * 30;
 
 				// TODO: Encode as arrays of useful JSON
 				//pNewsArr = EncodeDWORDArray((DWORD*)&pChunkMISC[i], 54, TRUE);
-				for (int i = 0; i < 9; i++) {
-					*(WORD*)&pNewsArr[i].wType = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
-					*(WORD*)&pNewsArr[i].wPower = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 4]);
-					pNewsArr[i].bValue = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 8]);
-					pNewsArr[i].bItem = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 12]);
-					pNewsArr[i].bName = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 16]);
-					pNewsArr[i].bScore = ntohl(*(DWORD*)&pChunkMISC[i * 4 + 20]);
+				for (j = 0; j < 9; j++) {
+					*(WORD*)&pNewsArr[j].wType = ntohl(*(DWORD*)&pChunkMISC[i]);
+					*(WORD*)&pNewsArr[j].wPower = ntohl(*(DWORD*)&pChunkMISC[i + 4]);
+					pNewsArr[j].bValue = ntohl(*(DWORD*)&pChunkMISC[i + 8]);
+					pNewsArr[j].bItem = ntohl(*(DWORD*)&pChunkMISC[i + 12]);
+					pNewsArr[j].bName = ntohl(*(DWORD*)&pChunkMISC[i + 16]);
+					pNewsArr[j].bScore = ntohl(*(DWORD*)&pChunkMISC[i + 20]);
+					i += 4 * 6;
 				}
-				i += 4 * 54;
 
 				dwCityOrdinances = ntohl(*(DWORD*)&pChunkMISC[i]);
 				i += 4;
@@ -351,9 +521,10 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 
 				// This table is staying as a Base64Encode because you SHOULD NOT mess with it
 				//sc2json["MISC"]["wMilitaryTiles"] = Base64Encode(&pChunkMISC[i], 4 * 16);
-				for (int i = 0; i < 16; i++)
-					wMilitaryTiles[i] = ntohl(*(DWORD*)&pChunkMISC[i * 4]);
-				i += 4 * 16;
+				for (j = 0; j < 16; j++) {
+					wMilitaryTiles[j] = ntohl(*(DWORD*)&pChunkMISC[i]);
+					i += 4;
+				}
 
 				wSubwayXUNDCount = ntohl(*(DWORD*)&pChunkMISC[i]);
 				i += 4;
@@ -448,164 +619,188 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 				iConvertedChunks++;
 			}
 
-			else if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('A', 'L', 'T', 'M')) {
-				//memcpy(dwMapALTM, &sc2file[iChunkStart + 8], 16384);
-				for (int i = 0; i < 128; i++)
-					memcpy(dwMapALTM[i], &sc2file[iChunkStart + 8 + i * 256], 256);
+			else if (IsMatchingChunk(strIFFHead.c_str(), "ALTM")) {
+				BYTE* pChunkData = (BYTE*)malloc(ALTM_ALLOC_SIZE);
+				if (!pChunkData)
+					BAILOUT("Couldn't malloc %d bytes for %s.", ALTM_ALLOC_SIZE, strIFFHead.c_str());
+				memset(pChunkData, 0, ALTM_ALLOC_SIZE);
+
+				memcpy(pChunkData, &sc2file[iChunkStart + 8], iChunkSize);
+				L_byteswap_ushorts((WORD*)pChunkData, iChunkSize);
+				for (int i = 0; i < GAME_MAP_SIZE; ++i)
+					COPYBLOCKTO(dwMapALTM, pChunkData, i, sizeof(map_ALTM_t), GAME_MAP_SIZE);
 				iConvertedChunks++;
 			}
 
-			else if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'T', 'E', 'R') ||
-				*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'B', 'L', 'D') ||
-				*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'Z', 'O', 'N') ||
-				*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'U', 'N', 'D') ||
-				*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'T', 'X', 'T') ||
-				*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'B', 'I', 'T')) {
-				std::string strIFFHead((const char*)&sc2file[iChunkStart], 4);
-
+			else if (IsMatchingChunk(strIFFHead.c_str(), "XTER") ||
+				IsMatchingChunk(strIFFHead.c_str(), "XBLD") ||
+				IsMatchingChunk(strIFFHead.c_str(), "XZON") ||
+				IsMatchingChunk(strIFFHead.c_str(), "XUND") ||
+				IsMatchingChunk(strIFFHead.c_str(), "XTXT") ||
+				IsMatchingChunk(strIFFHead.c_str(), "XBIT")) {
 				// Allocate and decompressed a fixed length chunk
-				BYTE* pChunkData = (BYTE*)malloc(16384);
+				BYTE* pChunkData = (BYTE*)malloc(FULLMAP_ALLOC_SIZE);
 				if (!pChunkData)
-					BAILOUT("Couldn't malloc 16384 bytes for %s.", strIFFHead.c_str());
+					BAILOUT("Couldn't malloc %d bytes for %s.", FULLMAP_ALLOC_SIZE, strIFFHead.c_str());
+				memset(pChunkData, 0, FULLMAP_ALLOC_SIZE);
 
-				MaxisDecompress(pChunkData, 16384, &sc2file[iChunkStart + 8], ntohl(*(DWORD*)&sc2file[iChunkStart + 4]));
-				if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'T', 'E', 'R'))
-					memcpy(dwMapXTER, pChunkData, 16384);
-				else if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'B', 'L', 'D'))
-					memcpy(dwMapXBLD, pChunkData, 16384);
-				else if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'Z', 'O', 'N'))
-					memcpy(dwMapXZON, pChunkData, 16384);
-				else if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'U', 'N', 'D'))
-					memcpy(dwMapXUND, pChunkData, 16384);
-				else if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'T', 'X', 'T'))
-					memcpy(dwMapXTXT, pChunkData, 16384);
-				else if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'B', 'I', 'T'))
-					memcpy(dwMapXBIT, pChunkData, 16384);
-				free(pChunkData);
-				iConvertedChunks++;
-			}
-
-			else if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'L', 'A', 'B')) {
-				std::string strIFFHead((const char*)&sc2file[iChunkStart], 4);
-
-				// Allocate and decompressed a fixed length chunk
-				BYTE* pChunkData = (BYTE*)malloc(6400);
-				if (!pChunkData)
-					BAILOUT("Couldn't malloc 6400 bytes for XLAB.");
-
-				MaxisDecompress(pChunkData, 6400, &sc2file[iChunkStart + 8], ntohl(*(DWORD*)&sc2file[iChunkStart + 4]));
-				memcpy(dwMapXLAB, pChunkData, 6400);
-				free(pChunkData);
-				iConvertedChunks++;
-			}
-
-			else if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'T', 'R', 'F') ||
-				*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'P', 'L', 'T') ||
-				*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'V', 'A', 'L') ||
-				*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'C', 'R', 'M')) {
-				std::string strIFFHead((const char*)&sc2file[iChunkStart], 4);
-
-				// Allocate and decompressed a fixed length chunk
-				BYTE* pChunkData = (BYTE*)malloc(4096);
-				if (!pChunkData)
-					BAILOUT("Couldn't malloc 4096 bytes for %s.", strIFFHead.c_str());
-
-				MaxisDecompress(pChunkData, 4096, &sc2file[iChunkStart + 8], ntohl(*(DWORD*)&sc2file[iChunkStart + 4]));
-				if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'T', 'R', 'F'))
-					memcpy(dwMapXTRF, pChunkData, 4096);
-				else if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'P', 'L', 'T'))
-					memcpy(dwMapXPLT, pChunkData, 4096);
-				else if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'V', 'A', 'L'))
-					memcpy(dwMapXVAL, pChunkData, 4096);
-				else if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'C', 'R', 'M'))
-					memcpy(dwMapXCRM, pChunkData, 4096);
-				free(pChunkData);
-				iConvertedChunks++;
-			}
-
-			else if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'G', 'R', 'P')) {
-				std::string strIFFHead((const char*)&sc2file[iChunkStart], 4);
-
-				// Allocate and decompressed a fixed length chunk
-				BYTE* pChunkData = (BYTE*)malloc(3328);
-				if (!pChunkData)
-					BAILOUT("Couldn't malloc 3328 bytes for XGRP.");
-
-				MaxisDecompress(pChunkData, 3328, &sc2file[iChunkStart + 8], ntohl(*(DWORD*)&sc2file[iChunkStart + 4]));
-				memcpy(dwMapXGRP, pChunkData, 3328);
-				Game_FlipDWORDArrayEndianness(dwMapXGRP, 3328);
-				free(pChunkData);
-				iConvertedChunks++;
-			}
-
-			else if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'M', 'I', 'C')) {
-				std::string strIFFHead((const char*)&sc2file[iChunkStart], 4);
-
-				// Allocate and decompressed a fixed length chunk
-				BYTE* pChunkData = (BYTE*)malloc(1200);
-				if (!pChunkData)
-					BAILOUT("Couldn't malloc 1200 bytes for XMIC.");
-
-				MaxisDecompress(pChunkData, 1200, &sc2file[iChunkStart + 8], ntohl(*(DWORD*)&sc2file[iChunkStart + 4]));
-				memcpy(pMicrosimArr, pChunkData, 1200);
-
-				__asm {
-					push 1200
-					push pMicrosimArr
-					mov eax, 0x401FB4
-					call eax
+				MaxisDecompress(pChunkData, FULLMAP_ALLOC_SIZE, &sc2file[iChunkStart + 8], iChunkSize);
+				if (IsMatchingChunk(strIFFHead.c_str(), "XTER")) {
+					for (int i = 0; i < GAME_MAP_SIZE; ++i)
+						COPYBLOCKTO(dwMapXTER, pChunkData, i, sizeof(map_XTER_t), GAME_MAP_SIZE);
 				}
-
+				else if (IsMatchingChunk(strIFFHead.c_str(), "XBLD")) {
+					for (int i = 0; i < GAME_MAP_SIZE; ++i)
+						COPYBLOCKTO(dwMapXBLD, pChunkData, i, sizeof(map_XBLD_t), GAME_MAP_SIZE);
+				}
+				else if (IsMatchingChunk(strIFFHead.c_str(), "XZON")) {
+					for (int i = 0; i < GAME_MAP_SIZE; ++i)
+						COPYBLOCKTO(dwMapXZON, pChunkData, i, sizeof(map_XZON_t), GAME_MAP_SIZE);
+				}
+				else if (IsMatchingChunk(strIFFHead.c_str(), "XUND")) {
+					for (int i = 0; i < GAME_MAP_SIZE; ++i)
+						COPYBLOCKTO(dwMapXUND, pChunkData, i, sizeof(map_XUND_t), GAME_MAP_SIZE);
+				}
+				else if (IsMatchingChunk(strIFFHead.c_str(), "XTXT")) {
+					for (int i = 0; i < GAME_MAP_SIZE; ++i)
+						COPYBLOCKTO(dwMapXTXT, pChunkData, i, sizeof(map_XTXT_t), GAME_MAP_SIZE);
+				}
+				else if (IsMatchingChunk(strIFFHead.c_str(), "XBIT")) {
+					for (int i = 0; i < GAME_MAP_SIZE; ++i)
+						COPYBLOCKTO(dwMapXBIT, pChunkData, i, sizeof(map_XBIT_t), GAME_MAP_SIZE);
+				}
 				free(pChunkData);
 				iConvertedChunks++;
 			}
 
-			else if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'P', 'L', 'C') ||
-				*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'F', 'I', 'R') ||
-				*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'P', 'O', 'P') ||
-				*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'R', 'O', 'G')) {
-				std::string strIFFHead((const char*)&sc2file[iChunkStart], 4);
-
+			else if (IsMatchingChunk(strIFFHead.c_str(), "XLAB")) {
 				// Allocate and decompressed a fixed length chunk
-				BYTE* pChunkData = (BYTE*)malloc(1024);
+				BYTE* pChunkData = (BYTE*)malloc(LABEL_ALLOC_SIZE);
 				if (!pChunkData)
-					BAILOUT("Couldn't malloc 1024 bytes for %s.", strIFFHead.c_str());
+					BAILOUT("Couldn't malloc %d bytes for %s.", LABEL_ALLOC_SIZE, strIFFHead.c_str());
+				memset(pChunkData, 0, LABEL_ALLOC_SIZE);
 
-				MaxisDecompress(pChunkData, 1024, &sc2file[iChunkStart + 8], ntohl(*(DWORD*)&sc2file[iChunkStart + 4]));
-				if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'P', 'L', 'C'))
-					memcpy(dwMapXPLC, pChunkData, 1024);
-				else if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'F', 'I', 'R'))
-					memcpy(dwMapXFIR, pChunkData, 1024);
-				else if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'P', 'O', 'P'))
-					memcpy(dwMapXPOP, pChunkData, 1024);
-				else if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'R', 'O', 'G'))
-					memcpy(dwMapXROG, pChunkData, 1024);
+				MaxisDecompress(pChunkData, LABEL_ALLOC_SIZE, &sc2file[iChunkStart + 8], iChunkSize);
+				for (int i = 0; i < MAX_LABEL_COUNT; ++i)
+					COPYBLOCKTO(&dwMapXLAB[0], pChunkData, i, sizeof(map_XLAB_t), 1);
+				bGotLabel = true;
 				free(pChunkData);
 				iConvertedChunks++;
 			}
 
-			else if (*(DWORD*)&sc2file[iChunkStart] == IFF_HEAD('X', 'T', 'H', 'G')) {
+			else if (IsMatchingChunk(strIFFHead.c_str(), "XTRF") ||
+				IsMatchingChunk(strIFFHead.c_str(), "XPLT") ||
+				IsMatchingChunk(strIFFHead.c_str(), "XVAL") ||
+				IsMatchingChunk(strIFFHead.c_str(), "XCRM")) {
 				std::string strIFFHead((const char*)&sc2file[iChunkStart], 4);
 
 				// Allocate and decompressed a fixed length chunk
-				BYTE* pChunkData = (BYTE*)malloc(480);
+				BYTE* pChunkData = (BYTE*)malloc(MINIMAP64_ALLOC_SIZE);
 				if (!pChunkData)
-					BAILOUT("Couldn't malloc 480 bytes for XTHG.");
+					BAILOUT("Couldn't malloc %d bytes for %s.", MINIMAP64_ALLOC_SIZE, strIFFHead.c_str());
+				memset(pChunkData, 0, MINIMAP64_ALLOC_SIZE);
 
-				MaxisDecompress(pChunkData, 480, &sc2file[iChunkStart + 8], ntohl(*(DWORD*)&sc2file[iChunkStart + 4]));
-				memcpy(dwMapXTHG, pChunkData, 480);
+				MaxisDecompress(pChunkData, MINIMAP64_ALLOC_SIZE, &sc2file[iChunkStart + 8], iChunkSize);
+				if (IsMatchingChunk(strIFFHead.c_str(), "XTRF")) {
+					for (int i = 0; i < MINI_MAP_64; ++i)
+						COPYBLOCKTO(dwMapXTRF, pChunkData, i, sizeof(map_mini64_t), MINI_MAP_64);
+				}
+				else if (IsMatchingChunk(strIFFHead.c_str(), "XPLT")) {
+					for (int i = 0; i < MINI_MAP_64; ++i)
+						COPYBLOCKTO(dwMapXPLT, pChunkData, i, sizeof(map_mini64_t), MINI_MAP_64);
+				}
+				else if (IsMatchingChunk(strIFFHead.c_str(), "XVAL")) {
+					for (int i = 0; i < MINI_MAP_64; ++i)
+						COPYBLOCKTO(dwMapXVAL, pChunkData, i, sizeof(map_mini64_t), MINI_MAP_64);
+				}
+				else if (IsMatchingChunk(strIFFHead.c_str(), "XCRM")) {
+					for (int i = 0; i < MINI_MAP_64; ++i)
+						COPYBLOCKTO(dwMapXCRM, pChunkData, i, sizeof(map_mini64_t), MINI_MAP_64);
+				}
+				free(pChunkData);
+				iConvertedChunks++;
+			}
+
+			else if (IsMatchingChunk(strIFFHead.c_str(), "XGRP")) {
+				// Allocate and decompressed a fixed length chunk
+				BYTE* pChunkData = (BYTE*)malloc(GRAPH_ALLOC_SIZE);
+				if (!pChunkData)
+					BAILOUT("Couldn't malloc %d bytes for %s.", GRAPH_ALLOC_SIZE, strIFFHead.c_str());
+				memset(pChunkData, 0, GRAPH_ALLOC_SIZE);
+
+				MaxisDecompress(pChunkData, GRAPH_ALLOC_SIZE, &sc2file[iChunkStart + 8], iChunkSize);
+				L_byteswap_buffer((DWORD*)pChunkData, GRAPH_ALLOC_SIZE);
+				for (int i = 0; i < MAX_GRAPHS; ++i)
+					COPYBLOCKTO(dwMapXGRP, pChunkData, i, sizeof(DWORD), MAX_GRAPH_ENTRIES);
+				free(pChunkData);
+				iConvertedChunks++;
+			}
+
+			else if (IsMatchingChunk(strIFFHead.c_str(), "XMIC")) {
+				// Allocate and decompressed a fixed length chunk
+				BYTE* pChunkData = (BYTE*)malloc(MICROSIM_ALLOC_SIZE);
+				if (!pChunkData)
+					BAILOUT("Couldn't malloc %d bytes for %s.", MICROSIM_ALLOC_SIZE, strIFFHead.c_str());
+				memset(pChunkData, 0, MICROSIM_ALLOC_SIZE);
+
+				MaxisDecompress(pChunkData, MICROSIM_ALLOC_SIZE, &sc2file[iChunkStart + 8], iChunkSize);
+				L_byteswap_micro((WORD *)pChunkData, MICROSIM_ALLOC_SIZE);
+				for (int i = 0; i < MAX_MICROSIM_COUNT; ++i)
+					COPYBLOCKTO(&pMicrosimArr, pChunkData, i, sizeof(microsim_t), 1);
+				free(pChunkData);
+				iConvertedChunks++;
+			}
+
+			else if (IsMatchingChunk(strIFFHead.c_str(), "XPLC") ||
+				IsMatchingChunk(strIFFHead.c_str(), "XFIR") ||
+				IsMatchingChunk(strIFFHead.c_str(), "XPOP") ||
+				IsMatchingChunk(strIFFHead.c_str(), "XROG")) {
+				// Allocate and decompressed a fixed length chunk
+				BYTE* pChunkData = (BYTE*)malloc(MINIMAP32_ALLOC_SIZE);
+				if (!pChunkData)
+					BAILOUT("Couldn't malloc %d bytes for %s.", MINIMAP32_ALLOC_SIZE, strIFFHead.c_str());
+				memset(pChunkData, 0, MINIMAP32_ALLOC_SIZE);
+
+				MaxisDecompress(pChunkData, MINIMAP32_ALLOC_SIZE, &sc2file[iChunkStart + 8], iChunkSize);
+				if (IsMatchingChunk(strIFFHead.c_str(), "XPLC")) {
+					for (int i = 0; i < MINI_MAP_32; ++i)
+						COPYBLOCKTO(dwMapXPLC, pChunkData, i, sizeof(map_mini32_t), MINI_MAP_32);
+				}
+				else if (IsMatchingChunk(strIFFHead.c_str(), "XFIR")) {
+					for (int i = 0; i < MINI_MAP_32; ++i)
+						COPYBLOCKTO(dwMapXFIR, pChunkData, i, sizeof(map_mini32_t), MINI_MAP_32);
+				}
+				else if (IsMatchingChunk(strIFFHead.c_str(), "XPOP")) {
+					for (int i = 0; i < MINI_MAP_32; ++i)
+						COPYBLOCKTO(dwMapXPOP, pChunkData, i, sizeof(map_mini32_t), MINI_MAP_32);
+				}
+				else if (IsMatchingChunk(strIFFHead.c_str(), "XROG")) {
+					for (int i = 0; i < MINI_MAP_32; ++i)
+						COPYBLOCKTO(dwMapXROG, pChunkData, i, sizeof(map_mini32_t), MINI_MAP_32);
+				}
+				free(pChunkData);
+				iConvertedChunks++;
+			}
+
+			else if (IsMatchingChunk(strIFFHead.c_str(), "XTHG")) {
+				// Allocate and decompressed a fixed length chunk
+				BYTE* pChunkData = (BYTE*)malloc(THING_ALLOC_SIZE);
+				if (!pChunkData)
+					BAILOUT("Couldn't malloc %d bytes for %s.", THING_ALLOC_SIZE, strIFFHead.c_str());
+				memset(pChunkData, 0, THING_ALLOC_SIZE);
+
+				MaxisDecompress(pChunkData, THING_ALLOC_SIZE, &sc2file[iChunkStart + 8], iChunkSize);
+				for (int i = 0; i < MAX_THING_COUNT; ++i)
+					COPYBLOCKTO(&dwMapXTHG[0], pChunkData, i, sizeof(map_XTHG_t), 1);
 				free(pChunkData);
 				iConvertedChunks++;
 			}
 
 			else {
-				char szChunkName[5] = { 0 };
-				memcpy(szChunkName, &sc2file[iChunkStart], 4);
-				ConsoleLog(LOG_WARNING, "LOAD: Skipping unknown chunk %s\n", szChunkName);
+				ConsoleLog(LOG_WARNING, "LOAD: Skipping unknown chunk %s\n", strIFFHead.c_str());
 				//sc2json["sc2x"]["conversion"]["skipped_chunks"].append(szChunkName);
 			}
 
-		next:
 			i += iChunkSize;
 		}
 
@@ -616,54 +811,42 @@ BOOL SC2XLoadVanillaGame(CSimcityAppPrimary* pThis, const char* szFileName) {
 		ConsoleLog(LOG_DEBUG, "LOAD: Load complete. Fixing up afterwards using native game calls.\n");
 
 	// Post-load function calls.
-	__asm {
-		// Recalculate neighbour statistics, etc.
-		mov eax, 0x402743
-		call eax
+	if (!bGotName) {
+		L_MakeCityNameFromFileName(szFileName);
+
+		if (sc2x_debug & SC2X_DEBUG_VANILLA_LOAD)
+			ConsoleLog(LOG_DEBUG, "LOAD: Empty City Name - set based off of the filename.\n");
 	}
+
+	// Recalculate neighbour statistics, etc.
+	L_InitializeCityData();
 
 	if (sc2x_debug & SC2X_DEBUG_VANILLA_LOAD)
 		ConsoleLog(LOG_DEBUG, "LOAD: Stats recalculated.\n");
 
-	__asm {
-		// Recalculate tile data
-		mov eax, 0x402EF5
-		call eax
-	}
+	// Recalculate tile data
+	Game_GetOccupiedTileCount();
 
 	if (sc2x_debug & SC2X_DEBUG_VANILLA_LOAD)
 		ConsoleLog(LOG_DEBUG, "LOAD: Tile data recalculated.\n");
 
-	__asm {
-		// Fix up XGRP
-		mov eax, 0x401FFA
-		call eax
-	}
+	// Fix up XGRP
+	Game_GraphKludge();
 
 	if (sc2x_debug & SC2X_DEBUG_VANILLA_LOAD)
 		ConsoleLog(LOG_DEBUG, "LOAD: XGRP fixed up.\n");
 
-	__asm {
-		// Fix up XLAB
-		mov eax, 0x402D15
-		call eax
-	}
+	// Fix up XLAB
+	if (bGotLabel)
+		GameMain_ResetLabelStringState();
+	else
+		Game_ClearLabels();
 
 	if (sc2x_debug & SC2X_DEBUG_VANILLA_LOAD)
 		ConsoleLog(LOG_DEBUG, "LOAD: XLAB fixed up.\n");
 	return 1;
 }
 #endif
-
-static bool IsMatchingChunk(const char *pChunk, const char *pTargChunk) {
-	if (!pChunk || strlen(pChunk) < 1)
-		return false;
-
-	if (!pTargChunk || strlen(pTargChunk) < 1)
-		return false;
-
-	return (memcmp(pTargChunk, pChunk, 4) == 0) ? true : false;
-}
 
 static __int16 L_SimcityApp_AllocateMiscInfo(CSimcityAppPrimary *pSCApp) {
 	int ret;
@@ -1071,147 +1254,9 @@ static int L_OpenCityUnknownChunkRead(FILE *pFile, char *pChunk, int nSize) {
 	return ret;
 }
 
-static void L_MakeCityNameFromFileName(const char *lpFileName) {
-	int nLen;
-	char szTemp[MAX_PATH + 1], szCityName[CITY_NAME_LEN + 1];
-
-	memset(szCityName, 0, sizeof(szCityName));
-	strcpy_s(szTemp, lpFileName);
-	PathStripPathA(szTemp);
-	PathRemoveExtensionA(szTemp);
-	strncpy_s(szCityName, szTemp, sizeof(szCityName) - 1);
-	nLen = strlen(szCityName);
-	if (nLen > CITY_NAME_LEN)
-		nLen = CITY_NAME_LEN;
-	szCityName[nLen] = 0;
-	GameMain_String_OperatorSet(&pszCityName, szCityName);
-}
-
-static void L_InitializeCityData() {
-	__int16 iX, iY, iXHalf, iYHalf, iXQuarter, iYQuarter;
-	__int16 *pTempMapResCom, *pTempMapInd;
-	__int16 nBaseResComValue, nBaseIndValue;
-	BYTE iTileID, iTerrainTileID;
-	DWORD dwCurrBonds;
-	WORD wCurrBond;
-
-	wCommerceConnect = 0;
-	for (iX = 0; iX < GAME_MAP_SIZE; ++iX) {
-		for (iY = 0; iY < GAME_MAP_SIZE; ++iY) {
-			if (XTXTGetTextOverlayID(iX, iY) == NGHBR_CONNECTION_TEXT_ENTRY) {
-				iTileID = GetTileID(iX, iY);
-				if (GET_TILE_RANGE(iTileID, TILE_ROAD_LR, TILE_ROAD_LTBR) ||
-					GET_TILE_RANGE(iTileID, TILE_TUNNEL_T, TILE_TUNNEL_L) ||
-					GET_TILE_RANGE(iTileID, TILE_CROSSOVER_HIGHWAYLR_ROADTB, TILE_CROSSOVER_HIGHWAYTB_ROADLR) ||
-					GET_TILE_RANGE(iTileID, TILE_ONRAMP_TL, TILE_ONRAMP_BR))
-					++wCommerceConnect;
-			}
-		}
-	}
-
-	if (sc2x_debug & SC2X_DEBUG_LOAD)
-		ConsoleLog(LOG_DEBUG, "SC2X: Loaded %d $1000 neighbor connections (Commerce Connect).\n", wCommerceConnect);
-
-	// The 'wIndustryConnect' block was previously missing
-	// and fixed via a separate detour, however it has now been
-	// formalized in this re-constructed call.
-	wIndustryConnect = 0;
-	for (iX = 0; iX < GAME_MAP_SIZE; ++iX) {
-		for (iY = 0; iY < GAME_MAP_SIZE; ++iY) {
-			if (XTXTGetTextOverlayID(iX, iY) == NGHBR_CONNECTION_TEXT_ENTRY) {
-				iTileID = GetTileID(iX, iY);
-				if (GET_TILE_RANGE(iTileID, TILE_RAIL_LR, TILE_RAIL_HHLR) ||
-					GET_TILE_RANGE(iTileID, TILE_CROSSOVER_ROADLR_RAILTB, TILE_CROSSOVER_HIGHWAYTB_POWERLR) ||
-					GET_TILE_RANGE(iTileID, TILE_HIGHWAY_HTB, TILE_HIGHWAY_LTBR))
-					++wIndustryConnect;
-			}
-		}
-	}
-
-	if (sc2x_debug & SC2X_DEBUG_LOAD)
-		ConsoleLog(LOG_DEBUG, "SC2X: Loaded %d $1500 neighbor connections (Industry Connect).\n", wIndustryConnect);
-
-	dwBusPassengers = 0;
-	dwRailPassengers = 0;
-	dwSubwayPassengers = 0;
-
-	Game_SimulationUpdatePowerConsumption();
-	Game_SimulationUpdateWaterConsumption();
-
-	wCityDevelopedTiles = 0;
-	for (iX = 0; iX < GAME_MAP_SIZE; ++iX) {
-		iXHalf = iX / 2;
-		iXQuarter = iXHalf / 2;
-		for (iY = 0; iY < GAME_MAP_SIZE; ++iY) {
-			iYHalf = iY / 2;
-			iYQuarter = iYHalf / 2;
-			pTempMapResCom = GetTMap(iXQuarter, iYQuarter);
-			pTempMapInd = GetTMap(iXQuarter + MINI_MAP_32, iYQuarter);
-			nBaseResComValue = *pTempMapResCom;
-			nBaseIndValue = *pTempMapInd;
-			iTileID = GetTileID(iX, iY);
-			if (iTileID) {
-				if (iTileID == TILE_SERVICES_BIGPARK)
-					nBaseResComValue += 40;
-				else if (iTileID < TILE_TREES1 || iTileID > TILE_SMALLPARK) {
-					if (iTileID <= TILE_RADIOACTIVITY)
-						nBaseResComValue -= 20;
-				}
-				else
-					nBaseResComValue += 20;
-			}
-			else if (XBITReturnIsWater(iX, iY)) {
-				nBaseResComValue += 12;
-				nBaseIndValue += 12;
-			}
-			else
-				nBaseResComValue += 4;
-			if (iTileID >= TILE_ROAD_LR || XZONReturnZone(iX, iY) != ZONE_NONE) {
-				// Maximum bound here changed from GAME_SIZE_MAP to
-				// MINI_MAP_64 due to it using the half-coordinate vars.
-				// In this context even if the coordinate values may not
-				// have a bearing on actual placement on the full-size map
-				// it seems that the intent is a temporary corresponding
-				// value that can be used in-conjunction with the temp map(s)
-				// and any referenced mini-maps.
-				if (iXHalf < MINI_MAP_64 && iYHalf < MINI_MAP_64)
-					XBITSetBits(iXHalf, iYHalf, XBIT_MARK);
-				++wCityDevelopedTiles;
-			}
-			if (XBITReturnIsWatered(iX, iY)) {
-				nBaseResComValue += 4;
-				nBaseIndValue += 4;
-			}
-			iTerrainTileID = GetTerrainTileID(iX, iY);
-			if (iTerrainTileID) {
-				if (iTerrainTileID < SUBMERGED_00)
-					nBaseResComValue += 12;
-			}
-			*pTempMapResCom = nBaseResComValue;
-			*pTempMapInd = nBaseIndValue;
-		}
-	}
-
-	wDisasterWindy = 0;
-	wDisasterFloodArea = 0;
-
-	wCurrBond = 0;
-	dwCurrBonds = dwCityBonds;
-	dwInterestRateSum = 0;
-	if (dwCityBonds > 0) {
-		do {
-			dwInterestRateSum += wArrBondData[wCurrBond];
-			++wCurrBond;
-			--dwCurrBonds;
-		} while (dwCurrBonds);
-	}
-}
-
 extern "C" void __stdcall Hook_InitializeCityData() {
 	L_InitializeCityData();
 }
-
-#define COPYBLOCKTO(D, S, P, SZ, MLT) memcpy(D[P], &S[P * (SZ * MLT)], SZ * MLT)
 
 #define CHUNK_BAD_HEAD 4
 #define CHUNK_BAD_SIZE 3
@@ -1582,16 +1627,10 @@ static int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName) {
 		GameMain_CmdTarget_BeginWaitCursor(pSCApp);
 		if (PathMatchSpecA(lpFileName, "*.sc2") || PathMatchSpecA(lpFileName, "*.scn")) {
 #ifdef SC2X_USE_VANILLA_LOAD_REPLACEMENT
-			if (PathMatchSpecA(lpFileName, "*.sc2")) {
-				ret = SC2XLoadVanillaGame(pSCApp, lpFileName);
-			}
-			else
+			ret = SC2XLoadVanillaGame(pSCApp, lpFileName);
+#else
+			ret = L_SimcityApp_OpenCity(pSCApp, f, lpFileName);
 #endif
-			{
-				if (sc2x_debug & SC2X_DEBUG_LOAD)
-					ConsoleLog(LOG_DEBUG, "SC2X: Passing control to SC2K for load.\n");
-				ret = L_SimcityApp_OpenCity(pSCApp, f, lpFileName);
-			}
 		}
 		fclose(f);
 		if (!ret) {
