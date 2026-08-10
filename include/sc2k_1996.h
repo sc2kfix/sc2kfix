@@ -3260,7 +3260,6 @@ GAMECALL(0x402900, int, __cdecl, NewspaperStoryGenerator, __int16 iType, BYTE iV
 GAMECALL(0x402937, void, __thiscall, CityToolBar_ToolMenuDisable, CCityToolBar* pThis)
 GAMECALL(0x40293C, void, __cdecl, DisplayItemCost, CMFC3XPaintDC *, int)
 GAMECALL(0x402941, void, __stdcall, drawBridgeShape, __int16, __int16, __int16)
-GAMECALL(0x402964, void, __thiscall, SimcityApp_LoadScenarioFromCMDLine, CSimcityAppPrimary *, CMFC3XString)
 GAMECALL(0x402978, int, __cdecl, SpawnSailBoat, __int16 x, __int16 y)
 GAMECALL(0x40297D, int, __thiscall, SimcityView_CheckOrLoadGraphic, CSimcityView *)
 GAMECALL(0x402991, void, __cdecl, SwapCycle, int)
@@ -4706,3 +4705,7 @@ extern void L_drawShapeSpecific_SC2K1996(__int16 nSpriteID, __int16 right, __int
 extern void L_drawShapeDialog_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert);
 
 extern int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName);
+
+extern void L_ClearScenarioDetails();
+
+extern void L_SimcityApp_LoadScenarioFromCMDLine(CSimcityAppPrimary *pSCApp, const char *lpFileNameFromCMDLine);

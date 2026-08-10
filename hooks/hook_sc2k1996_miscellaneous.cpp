@@ -678,7 +678,7 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 				}
 				else {
 					pThis->iSCAProgramStep = ONIDLE_STATE_LOADSCENARIO_RETURN;
-					Game_SimcityApp_LoadScenarioFromCMDLine(pThis, pThis->dwSCACStringTargetTypePath);
+					L_SimcityApp_LoadScenarioFromCMDLine(pThis, pThis->dwSCACStringTargetTypePath.m_pchData);
 				}
 			}
 			break;
@@ -1104,6 +1104,9 @@ extern "C" void __stdcall Hook_PrepareGame(void) {
 extern "C" void __stdcall Hook_StartCleanGame(void) {
 	BOOL bMapEditor = ((DWORD)_ReturnAddress() == 0x42DF13);
 	BOOL bNewGame = ((DWORD)_ReturnAddress() == 0x42E482);
+
+	// Clear any information stored for the scenario goals dialogue.
+	L_ClearScenarioDetails();
 
 	// Ensure the view position (which is also the map data rotation in SC2K) is north-facing if
 	// we're generating a new map for the game or entering the map editor

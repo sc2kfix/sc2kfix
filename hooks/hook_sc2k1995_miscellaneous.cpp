@@ -98,6 +98,9 @@ static void L_ProcessCmdLine_1995(CSimcityAppPrimary *pSCApp) {
 		free(pArgv);
 	}
 
+	// Explicitly null-terminate szFileArg to be safe
+	szFileArg[sizeof(szFileArg) - 1] = 0;
+
 	if (strlen(szFileArg) > 0) {
 		if (L_IsPathValid(szFileArg)) {
 			// We only need the file extension in this case.

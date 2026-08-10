@@ -148,7 +148,7 @@ void __declspec(noreturn) MessageBoxCrash(std::string strComponent, DWORD dwErro
 // Wrapper for VirtualProtect that throws a fatal error if it fails
 bool SafeVirtualProtectEx(void* lpAddress, size_t dwSize, DWORD flNewProtect, const char* szFile, int iLine, const char* szFunction) {
 	DWORD dwDummy;
-	bool bSuccess = VirtualProtect(lpAddress, dwSize, flNewProtect, &dwDummy);
+	bool bSuccess = VirtualProtect(lpAddress, dwSize, flNewProtect, &dwDummy) ? true : false;
 
 	if (bSuccess)
 		return bSuccess;
@@ -935,7 +935,7 @@ HOOKEXT_CPP size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned c
 int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize, int *nCompSize) {
 	int i = 0, j = 0;
 
-	for (; i < iCompressedSize && j < iBufSize;) {
+	for (; i < iCompressedSize && j < (int)iBufSize;) {
 		if (pCompressedData[i] < 128) {
 			memcpy(pBuffer + j, pCompressedData + i + 1, pCompressedData[i]);
 			j += pCompressedData[i];

@@ -271,6 +271,24 @@ extern "C" int __stdcall Hook_SimcityApp_OpenScenario(char *lpFileName) {
 	return L_SimcityApp_OpenScenario(pThis, lpFileName);
 }
 
+static void L_CacheScenarioDetails(const char *szText) {
+	// Save the scenario starting state in order to be used later in the scenario status dialog
+	if (szText && strlen(szText) > 0)
+		scScenarioDescription = szText;
+	dwScenarioStartDays = dwCityDays;
+	dwScenarioStartPopulation = dwCityPopulation;
+	wScenarioStartXVALTiles = wCityDevelopedTiles;
+	dwScenarioStartTrafficDivisor = pBudgetArr[10].iCurrentCosts + pBudgetArr[11].iCurrentCosts + pBudgetArr[12].iCurrentCosts + 1;		// XXX - this should be a descriptive macro
+}
+
+void L_ClearScenarioDetails() {
+	scScenarioDescription = NULL;
+	dwScenarioStartDays = 0;
+	dwScenarioStartPopulation = 0;
+	wScenarioStartXVALTiles = 0;
+	dwScenarioStartTrafficDivisor = 0;
+}
+
 extern "C" void __stdcall Hook_SimcityApp_LoadScenario() {
 	CSimcityAppPrimary *pThis;
 
@@ -292,8 +310,7 @@ extern "C" void __stdcall Hook_SimcityApp_LoadScenario() {
 	if (scenDlg.nIdx == -1) {
 		if (!pThis->dwSCAOnInitToggleToolBar) {
 			pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
-			pThis->dwSCASetNextStep = 1;
-
+			pThis->dwSCASetNextStep = TRUE;
 		}
 		goto SCENFAIL;
 	}
@@ -301,7 +318,6 @@ extern "C" void __stdcall Hook_SimcityApp_LoadScenario() {
 		if (!pThis->dwSCAOnInitToggleToolBar) {
 			pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
 			pThis->dwSCASetNextStep = TRUE;
-
 		}
 		goto SCENFAIL;
 	}
@@ -344,15 +360,7 @@ extern "C" void __stdcall Hook_SimcityApp_LoadScenario() {
 			szText[nPos] = ' ';
 	}
 	Game_AdjustScenarioTextCharacters(szText, szText);
-
-	// Save the scenario starting state in order to be used later in the scenario status dialog
-	if (szText && strlen(szText) > 0)
-		scScenarioDescription = szText;
-	dwScenarioStartDays = dwCityDays;
-	dwScenarioStartPopulation = dwCityPopulation;
-	wScenarioStartXVALTiles = wCityDevelopedTiles;
-	dwScenarioStartTrafficDivisor = pBudgetArr[10].iCurrentCosts + pBudgetArr[11].iCurrentCosts + pBudgetArr[12].iCurrentCosts + 1;		// XXX - this should be a descriptive macro
-
+	L_CacheScenarioDetails(szText);
 	Game_DisplayInformationMessageBox(szText, 0, 0);
 	Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
 	dwMapEditingMode = 0;
@@ -360,6 +368,78 @@ extern "C" void __stdcall Hook_SimcityApp_LoadScenario() {
 	pThis->dwSCAMapModeVarCheck = 0;
 SCENFAIL:
 	Game_ScenarioDialog_Dest(&scenDlg);
+}
+
+void L_SimcityApp_LoadScenarioFromCMDLine(CSimcityAppPrimary *pSCApp, const char *lpFileNameFromCMDLine) {
+	char szFileName[MAX_PATH + 1], szText[768];
+	int nLen;
+	FILE *f;
+	bool bLoadSuccess;
+
+	memset(szFileName, 0, sizeof(szFileName));
+	memset(szText, 0, sizeof(szText));
+	bLoadSuccess = false;
+
+	pSCApp->dwSCAOnQuitSuspendSim = 0;
+	if (Game_SimcityApp_CheckActiveGame(pSCApp) == IDCANCEL) {
+		pSCApp->dwSCACMDLineLoadMode = 0;
+		if (!pSCApp->dwSCAOnInitToggleToolBar) {
+			pSCApp->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
+			pSCApp->dwSCASetNextStep = TRUE;
+			return;
+		}
+	}
+	Game_StartCleanGame();
+	Game_PrepareGame();
+	strncpy_s(szFileName, lpFileNameFromCMDLine, MAX_PATH);
+	nLen = strlen(szFileName);
+	szFileName[nLen] = 0;
+	if (!L_SimcityApp_OpenScenario(pSCApp, szFileName)) {
+		GameMain_AfxMessageBoxID(412, 0, 0xFFFFFFFF);
+		pSCApp->dwSCACMDLineLoadMode = 0;
+		if (!pSCApp->dwSCAOnInitToggleToolBar) {
+			pSCApp->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
+			pSCApp->dwSCASetNextStep = TRUE;
+			return;
+		}
+	}
+	GameMain_Document_UpdateAllViews(pCSimcityDoc, 0, SCD_UPDATE_VIEW_UPDATE, 0);
+	Game_ShowViewControls();
+	pSCApp->iSCAProgramStep = ONIDLE_STATE_INGAME;
+	pSCApp->dwSCASetNextStep = TRUE;
+	Game_SimcityApp_AdjustMenus(pSCApp, GAME_MODE_CITY);
+	f = old_fopen(szFileName, "rb");
+	if (!f) {
+		Game_FailRadio(0x2F);
+		pSCApp->dwSCACMDLineLoadMode = 0;
+		return;
+	}
+	if (L_LoadFileChunkAndInitVar(f, "TEXT", 129, szText)) {
+		int nLen = strlen(szText) + 1;
+		for (int nPos = 0; (nLen - 1) > nPos; ++nPos) {
+			char c = szText[nPos];
+			if (c == '\r' || c == '\t')
+				szText[nPos] = ' ';
+		}
+		Game_AdjustScenarioTextCharacters(szText, szText);
+		L_CacheScenarioDetails(szText);
+		Game_DisplayInformationMessageBox(szText, 0, 0);
+		Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
+		Game_MainFrame_ToggleToolBars((CMainFrame *)pSCApp->m_pMainWnd, TRUE);
+		dwMapEditingMode = 0;
+		pSCApp->dwSCAGameStarted = 1;
+		pSCApp->dwSCAMapModeVarCheck = 0;
+		bLoadSuccess = true;
+	}
+	fclose(f);
+	if (!bLoadSuccess) {
+		Game_FailRadio(0xEF);
+		pSCApp->dwSCACMDLineLoadMode = 0;
+		if (!pSCApp->dwSCAOnInitToggleToolBar) {
+			pSCApp->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
+			pSCApp->dwSCASetNextStep = TRUE;
+		}
+	}
 }
 
 void InstallScenarioHooks_SC2K1996(void) {

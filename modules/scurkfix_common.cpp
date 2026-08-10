@@ -147,6 +147,9 @@ static char *L_SCURK_ProcessCmdLine(char *pMainPath, char *pCmdLineParms, BOOL *
 		free(pArgv);
 	}
 
+	// Explicitly null-terminate szFileArg to be safe
+	szFileArg[sizeof(szFileArg) - 1] = 0;
+
 	*bValidFileEntry = FALSE;
 	if (iArgc > 1) {
 		if (strlen(szFileArg) > 0) {
