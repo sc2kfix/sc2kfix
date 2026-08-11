@@ -1760,7 +1760,7 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 			nPathLen = strlen(szDirPath);
 			if (szDirPath[nPathLen - 1] != '\\')
 				strcat_s(szDirPath, "\\");
-			if (Game_SimcityApp_DoLoad(pThis, m_ofn.lpstrFile)) {
+			if (L_SimcityApp_DoLoad(pThis, m_ofn.lpstrFile)) {
 				if (L_IsPathValid(szDirPath))
 					jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_CITIES] = szDirPath;
 				GameMain_Document_UpdateAllViews(pCSimcityDoc, 0, SCD_UPDATE_VIEW_UPDATE, 0);
@@ -1774,7 +1774,7 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 				Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
 				if (pThis->dwSCAOnInitToggleToolBar)
 					Game_MainFrame_ToggleToolBars(pMainFrm, TRUE);
-				pThis->dwSCAMapModeVarCheck = FALSE;
+				pThis->dwSCAGenerateFirstTimeMap = FALSE;
 				pThis->dwSCAGameStarted = TRUE;
 			}
 			else {

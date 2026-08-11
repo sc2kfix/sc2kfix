@@ -441,7 +441,8 @@ public:
 	CMFC3XString m_strDocStrings;
 };
 
-class CMFC3XMultiDocTemplate : CMFC3XDocTemplate {
+class CMFC3XMultiDocTemplate : public CMFC3XDocTemplate {
+public:
 	HMENU m_hMenuShared;
 	HACCEL m_hAccelTable;
 	CMFC3XPtrList m_docList;

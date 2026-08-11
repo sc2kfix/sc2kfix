@@ -365,7 +365,7 @@ extern "C" void __stdcall Hook_SimcityApp_LoadScenario() {
 	Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
 	dwMapEditingMode = 0;
 	pThis->dwSCAGameStarted = 1;
-	pThis->dwSCAMapModeVarCheck = 0;
+	pThis->dwSCAGenerateFirstTimeMap = 0;
 SCENFAIL:
 	Game_ScenarioDialog_Dest(&scenDlg);
 }
@@ -428,7 +428,7 @@ void L_SimcityApp_LoadScenarioFromCMDLine(CSimcityAppPrimary *pSCApp, const char
 		Game_MainFrame_ToggleToolBars((CMainFrame *)pSCApp->m_pMainWnd, TRUE);
 		dwMapEditingMode = 0;
 		pSCApp->dwSCAGameStarted = 1;
-		pSCApp->dwSCAMapModeVarCheck = 0;
+		pSCApp->dwSCAGenerateFirstTimeMap = 0;
 		bLoadSuccess = true;
 	}
 	fclose(f);

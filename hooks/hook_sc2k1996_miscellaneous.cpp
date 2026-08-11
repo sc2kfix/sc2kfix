@@ -1091,7 +1091,105 @@ extern "C" void __stdcall Hook_PrepareGame(void) {
 		}
 	}
 
-	GameMain_PrepareGame();
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CSimcityView *pSCView;
+	CMainFrame *pMainFrm;
+	bool bDrawHouse;
+
+	if (!pCSimcityDoc) {
+		// This case is hit at program start when the city doc/view first needs to be initialized.
+		CMFC3XMultiDocTemplate **pMultiDoc = (CMFC3XMultiDocTemplate **)pSCApp->m_templateList.m_pNodeHead;
+		pActiveSimDoc = (CSimcityDoc *)GameMain_MultiDocTemplate_OpenDocumentFile(pMultiDoc[2], NULL, TRUE);
+		GameMain_Document_SetTitle(pActiveSimDoc, pStartEngineStr);
+	}
+	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+	pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
+	Game_SimcityView_ResetScreenArea(pSCView);
+	bDrawHouse = false;
+	switch (pSCApp->iSCAProgramStep) {
+		case ONIDLE_STATE_NEWCITY_RETURN:
+			Game_SimcityDoc_NewGame(pCSimcityDoc);
+			if (!dwMapEditingMode)
+				Game_SimcityView_MakeTerrain(pSCView, bCityHasOcean, bCityHasRiver, wCityTerrainSliderHills, wCityTerrainSliderWater, wCityTerrainSliderTrees);
+			break;
+		case ONIDLE_STATE_EDITNEWMAP_RETURN:
+			if (!pSCApp->dwSCAGenerateFirstTimeMap) {
+				if (pSCView) {
+					// Rotate the map 90 degrees at a time until wViewRotation is north. We need to do
+					// this because SimCity 2000 was programmed by madmen and rotating the viewport is
+					// actually accomplished by rotating all the map data in memory.
+					if (wViewRotation != VIEWROTATION_NORTH) {
+						do
+							Game_SimcityView_RotateAntiClockwise(pSCView);
+						while (wViewRotation != VIEWROTATION_NORTH);
+					}
+				}
+			}
+			Game_StartCleanGame();
+			Game_SimcityDoc_PrepareData(pCSimcityDoc);
+			if (pSCApp->dwSCAGenerateFirstTimeMap)
+				Game_SimcityView_MakeTerrain(pSCView, bCityHasOcean, bCityHasRiver, wCityTerrainSliderHills, wCityTerrainSliderWater, wCityTerrainSliderTrees);
+			else
+				bDrawHouse = true;
+			break;
+		case ONIDLE_STATE_LOADCITY_RETURN:
+			Game_SimcityDoc_NewGame(pCSimcityDoc);
+			break;
+		case ONIDLE_STATE_LOADSCENARIO_RETURN:
+			bInScenario = TRUE;
+			Game_SimcityDoc_NewGame(pCSimcityDoc);
+			break;
+		default:
+			Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
+			break;
+	}
+	if (bDrawHouse)
+		Game_SimcityView_DrawHouse(pSCView);
+	if (!pSCApp->dwSCASCURK) {
+		if (dwShowSCURK) {
+			HMENU hMenu = GetMenu(pMainFrm->m_hWnd);
+			if (hMenu) {
+				HMENU hSubMenu = GetSubMenu(hMenu, 1);
+				if (hSubMenu) {
+					DeleteMenu(hSubMenu, 5, MF_BYPOSITION);
+					DeleteMenu(hSubMenu, 4, MF_BYPOSITION);
+				}
+			}
+			dwShowSCURK = 0;
+		}
+	}
+	Game_SimcityApp_AdjustNewspaperMenu(pSCApp);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_BULLDOZER], &cityToolGroupStrings[CITY_MENUTOOL_POS(BULLDOZER_DEMOLISH, CITYTOOL_GROUP_BULLDOZER)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_NATURE], &cityToolGroupStrings[CITY_MENUTOOL_POS(NATURE_TREES, CITYTOOL_GROUP_NATURE)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_DISPATCH], &cityToolGroupStrings[CITY_MENUTOOL_POS(DISPATCH_POLICE, CITYTOOL_GROUP_DISPATCH)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_POWER], &cityToolGroupStrings[CITY_MENUTOOL_POS(POWER_WIRES, CITYTOOL_GROUP_POWER)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_WATER], &cityToolGroupStrings[CITY_MENUTOOL_POS(WATER_PIPES, CITYTOOL_GROUP_WATER)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_REWARDS], &cityToolGroupStrings[CITY_MENUTOOL_POS(REWARDS_MAYORSHOUSE, CITYTOOL_GROUP_REWARDS)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_ROADS], &cityToolGroupStrings[CITY_MENUTOOL_POS(ROADS_ROAD, CITYTOOL_GROUP_ROADS)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_RAIL], &cityToolGroupStrings[CITY_MENUTOOL_POS(RAILS_RAIL, CITYTOOL_GROUP_RAIL)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_PORTS], &cityToolGroupStrings[CITY_MENUTOOL_POS(PORTS_SEAPORT, CITYTOOL_GROUP_PORTS)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_RESIDENTIAL], &cityToolGroupStrings[CITY_MENUTOOL_POS(ZONES_HIGH, CITYTOOL_GROUP_RESIDENTIAL)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_COMMERCIAL], &cityToolGroupStrings[CITY_MENUTOOL_POS(ZONES_HIGH, CITYTOOL_GROUP_COMMERCIAL)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_INDUSTRIAL], &cityToolGroupStrings[CITY_MENUTOOL_POS(ZONES_HIGH, CITYTOOL_GROUP_INDUSTRIAL)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_EDUCATION], &cityToolGroupStrings[CITY_MENUTOOL_POS(EDUCATION_SCHOOL, CITYTOOL_GROUP_EDUCATION)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_SERVICES], &cityToolGroupStrings[CITY_MENUTOOL_POS(SERVICES_POLICE, CITYTOOL_GROUP_SERVICES)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_PARKS], &cityToolGroupStrings[CITY_MENUTOOL_POS(PARKS_SMALLPARK, CITYTOOL_GROUP_PARKS)]);
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_BULLDOZER] = BULLDOZER_DEMOLISH;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_NATURE] = NATURE_TREES;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_DISPATCH] = DISPATCH_POLICE;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_POWER] = POWER_WIRES;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_WATER] = WATER_PIPES;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_REWARDS] = REWARDS_MAYORSHOUSE;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_ROADS] = ROADS_ROAD;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_RAIL] = RAILS_RAIL;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_PORTS] = PORTS_SEAPORT;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_RESIDENTIAL] = ZONES_HIGH;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_COMMERCIAL] = ZONES_HIGH;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_INDUSTRIAL] = ZONES_HIGH;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_EDUCATION] = EDUCATION_SCHOOL;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_SERVICES] = SERVICES_POLICE;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_PARKS] = PARKS_SMALLPARK;
+	Game_CityToolBar_RefreshToolBar(&pMainFrm->dwMFCityToolBar);
 
 	for (const auto& hook : stHooks_Hook_PrepareGame_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
@@ -1102,38 +1200,75 @@ extern "C" void __stdcall Hook_PrepareGame(void) {
 }
 
 extern "C" void __stdcall Hook_StartCleanGame(void) {
-	BOOL bMapEditor = ((DWORD)_ReturnAddress() == 0x42DF13);
-	BOOL bNewGame = ((DWORD)_ReturnAddress() == 0x42E482);
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CMainFrame *pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 
 	// Clear any information stored for the scenario goals dialogue.
 	L_ClearScenarioDetails();
 
-	// Ensure the view position (which is also the map data rotation in SC2K) is north-facing if
-	// we're generating a new map for the game or entering the map editor
-	if (bMapEditor || bNewGame) {
-		CSimcityAppPrimary *pSCApp;
-		CSimcityView *pThis;
-
-		pSCApp = &pCSimcityAppThis;
-		pThis = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
-
-		if ((wCityMode < 0 && bNewGame) || bMapEditor) {
-			// Rotate the map 90 degrees at a time until wViewRotation is north. We need to do
-			// this because SimCity 2000 was programmed by madmen and rotating the viewport is
-			// actually accomplished by rotating all the map data in memory.
-			if (wViewRotation != VIEWROTATION_NORTH) {
-				do
-					Game_SimcityView_RotateAntiClockwise(pThis);
-				while (wViewRotation != VIEWROTATION_NORTH);
-				UpdateWindow(pThis->m_hWnd);
-			}
-		}
-	}
-
 	// Clean up the game state and start the new game/map
 	iChurchVirus = -1;
 	ResetThingCleanupState_SC2K1996();
-	GameMain_StartCleanGame();
+
+	wSetTriggerDisasterType = DISASTER_NONE;
+	bNoDisasters = 0;
+	bOptionsAutoBudget = 0;
+	bOptionsAutoGoto = 1;
+	GameMain_String_Empty(&pszCityName);
+	GameMain_String_Empty(&strCityFilename);
+	GameMain_String_Empty(&strUnusedString);
+	wCityProgression = 0;
+	dwCityDays = 0;
+	wUnknownGameVarOne = 0; // This one doesn't "appear" to be used elsewhere.
+	bMilitaryBaseType = MILITARY_BASE_NONE;
+	wCityStartYear = 1900;
+	wViewRotation = VIEWROTATION_NORTH;
+	wCurrentCityToolGroup = CITYTOOL_GROUP_CENTERINGTOOL;
+	wCurrentMapToolGroup = MAPTOOL_GROUP_RAISETERRAIN;
+	EditData = 0;
+	wClipXlow = 1000;
+	wClipYlow = 1000;
+	wClipXhigh = 0;
+	wClipYhigh = 0;
+	LastCursorX = -1;
+	dirtyRect.left = -1000;
+	dirtyRect.top = -1000;
+	dirtyRect.right = -1;
+	dirtyRect.bottom = -1;
+	bYearEndFlag = 0;
+	wNewspaperChoice = 0;
+	wCityCenterX = 64;
+	wCityCenterY = 64;
+	dwCityOldResPopulation = 0;
+	switch (GameMain_WinApp_GetProfileIntA(pSCApp, "OPTIONS", "SPEED", CONF_GAME_SPEED_SETTING(GAME_SPEED_PAUSED))) {
+		case CONF_GAME_SPEED_SETTING(GAME_SPEED_PAUSED):
+			pSCApp->wSCAGameSpeedLOW = GAME_SPEED_PAUSED;
+			break;
+		case CONF_GAME_SPEED_SETTING(GAME_SPEED_TURTLE):
+			pSCApp->wSCAGameSpeedLOW = GAME_SPEED_TURTLE;
+			break;
+		case CONF_GAME_SPEED_SETTING(GAME_SPEED_LLAMA):
+			pSCApp->wSCAGameSpeedLOW = GAME_SPEED_LLAMA;
+			break;
+		case CONF_GAME_SPEED_SETTING(GAME_SPEED_CHEETAH):
+			pSCApp->wSCAGameSpeedLOW = GAME_SPEED_CHEETAH;
+			break;
+		case CONF_GAME_SPEED_SETTING(GAME_SPEED_AFRICAN_SWALLOW):
+			pSCApp->wSCAGameSpeedLOW = GAME_SPEED_AFRICAN_SWALLOW;
+			break;
+		default:
+			pSCApp->wSCAGameSpeedLOW = GAME_SPEED_PAUSED;
+			break;
+	}
+	if (pMainFrm)
+		Game_CityToolBar_UpdateControls(&pMainFrm->dwMFCityToolBar, TRUE);
+	// This nested loop here sets TunnelLvls to 0.
+	// Originally it was: dwMapALTM[x][y].w &= ~0xFC00; (0x7C00 being ALTM_TUNNELLVLS_BOUNDARY)
+	for (int x = 0; x < GAME_MAP_SIZE; ++x) {
+		for (int y = 0; y < GAME_MAP_SIZE; ++y) {
+			ALTMSetTunnelLevels(x, y, 0);
+		}
+	}
 }
 
 // Hook for updating the game titlebar. Still kind of rough from recompilation.

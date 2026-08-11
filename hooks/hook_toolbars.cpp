@@ -582,6 +582,14 @@ extern "C" void __stdcall Hook_MapToolBar_SetSelection(UINT nIndex, UINT nSubInd
 			Game_MapToolBar_PressButton(pThis, MAPTOOL_BUTTON_CENTERINGTOOL);
 			break;
 		case MAPTOOL_BUTTON_DONE:
+			// Rotate the map 90 degrees at a time until wViewRotation is north. We need to do
+			// this because SimCity 2000 was programmed by madmen and rotating the viewport is
+			// actually accomplished by rotating all the map data in memory.
+			if (wViewRotation != VIEWROTATION_NORTH) {
+				do
+					Game_SimcityView_RotateAntiClockwise(pSCView);
+				while (wViewRotation != VIEWROTATION_NORTH);
+			}
 			Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_DONE, 0);
 			Game_SimcityApp_NewCity(pSCApp);
 			break;

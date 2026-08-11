@@ -269,7 +269,7 @@ public:
 	int iSCAProgramStep;
 	DWORD dwSCADoStepSkip;
 	int iSCAMenuDialogStep;
-	DWORD dwSCAMapModeVarCheck;
+	DWORD dwSCAGenerateFirstTimeMap;
 	DWORD dwSCAOnInitToggleToolBar;
 	DWORD dwSCASysCmdOnQuitVar;
 	__int16 wSCAInitDialogFinishLastProgramStep;
@@ -323,7 +323,7 @@ public:
 	int iSCAProgramStep;
 	DWORD dwSCADoStepSkip;
 	int iSCAMenuDialogStep;
-	DWORD dwSCAMapModeVarCheck;
+	DWORD dwSCAGenerateFirstTimeMap;
 	DWORD dwSCAReturnToMenu;
 	DWORD dwSCAOnInitToggleToolBar;
 	DWORD dwSCASysCmdOnQuitVar;
