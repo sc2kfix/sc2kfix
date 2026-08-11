@@ -42,6 +42,7 @@ DWORD dwDetectedAppTimestamp = 0;
 DWORD dwSC2KFixVersion = SC2KFIX_VERSION_MAJOR << 24 | SC2KFIX_VERSION_MINOR << 16 | SC2KFIX_VERSION_PATCH << 8;
 const char* szSC2KFixVersion = SC2KFIX_VERSION;
 const char* szSC2KFixReleaseTag = SC2KFIX_RELEASE_TAG;
+DWORD dwOSVersion = 0;
 FILE* fdLog = NULL;
 DWORD dwExperimentsEnabled = EXPERIMENT_NONE;
 DWORD dwPerfMonEnabled = PERFMON_NONE;
@@ -317,6 +318,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			RtlGetVersion((LPOSVERSIONINFOW*)&stOSVersionInfoEx);
 			BOOL bX64 = FALSE;
 			IsWow64Process(GetCurrentProcess(), &bX64);
+
+			dwOSVersion = (stOSVersionInfoEx.dwMajorVersion << 16) + stOSVersionInfoEx.dwMinorVersion;
 
 			ConsoleLog(LOG_INFO, "CORE: OS is Windows%s %d.%d Build %d (%s)\n",
 				stOSVersionInfoEx.wProductType == VER_NT_WORKSTATION ? "" : " Server",

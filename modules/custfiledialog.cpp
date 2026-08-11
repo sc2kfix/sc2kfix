@@ -52,6 +52,7 @@ BOOL CALLBACK FileHookProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
 	HWND hWndParent;
 	RECT mainRect, itemRect;
 	//SIZE dlgSZ;
+	int nItemHorzOffset;
 	int nPartHeight;
 	DWORD nFlags;
 	bool bHasSaveExt;
@@ -90,16 +91,20 @@ BOOL CALLBACK FileHookProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
 			// Handle the adjustment of custom items here.
 			if (pExtDlg) {
 				if (pExtDlg->nExtType == FEXT_TYPE_SAVECITYNAME) {
+					// Horizontal positional offset observed beyond Windows NT 6.1
+					// (Observed on Windows 10 and 11; 8 or 8.1 is not known but accounted for).
+					nItemHorzOffset = (dwOSVersion > 0x00060001) ? 8 : 4;
+
 					nFlags &= ~SWP_NOMOVE;
 					GetWindowRect(GetDlgItem(hWndParent, stc2), &itemRect); // The "File Types" static label
 					SetDlgItemTextA(hWnd, IDC_CUST_STATIC1, "&City name:");
-					SetWindowPos(GetDlgItem(hWnd, IDC_CUST_STATIC1), HWND_TOP, itemRect.left - 4, 2, itemRect.right - itemRect.left, itemRect.bottom - itemRect.top, SWP_NOZORDER | SWP_SHOWWINDOW);
+					SetWindowPos(GetDlgItem(hWnd, IDC_CUST_STATIC1), HWND_TOP, itemRect.left - nItemHorzOffset, 2, itemRect.right - itemRect.left, itemRect.bottom - itemRect.top, SWP_NOZORDER | SWP_SHOWWINDOW);
 					GetWindowRect(GetDlgItem(hWndParent, cmb1), &itemRect); // The "File Types" ComboBox
 					memset(szTempStr, 0, sizeof(szTempStr));
 					memcpy(szTempStr, pExtDlg->szCityName, sizeof(pExtDlg->szCityName));
 					SetDlgItemTextA(hWnd, IDC_CUST_EDIT1, szTempStr);
 					SendMessage(GetDlgItem(hWnd, IDC_CUST_EDIT1), EM_SETLIMITTEXT, CITY_NAME_LEN, 0);
-					SetWindowPos(GetDlgItem(hWnd, IDC_CUST_EDIT1), HWND_TOP, itemRect.left - 4, 0, itemRect.right - itemRect.left, itemRect.bottom - itemRect.top, SWP_NOZORDER | SWP_SHOWWINDOW);
+					SetWindowPos(GetDlgItem(hWnd, IDC_CUST_EDIT1), HWND_TOP, itemRect.left - nItemHorzOffset, 0, itemRect.right - itemRect.left, itemRect.bottom - itemRect.top, SWP_NOZORDER | SWP_SHOWWINDOW);
 				}
 			}
 

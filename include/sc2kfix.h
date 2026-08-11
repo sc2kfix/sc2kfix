@@ -627,6 +627,7 @@ extern DWORD dwDetectedVersion;
 extern DWORD dwSC2KFixMode;
 extern DWORD dwDetectedAppTimestamp;
 extern DWORD dwSC2KFixVersion;
+extern DWORD dwOSVersion;
 extern const char* szSC2KFixVersion;
 extern const char* szSC2KFixReleaseTag;
 extern const char* szSC2KFixBuildInfo;
