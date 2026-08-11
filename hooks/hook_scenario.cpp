@@ -128,7 +128,7 @@ extern "C" BOOL __stdcall Hook_ScenarioDialog_SetCursorAndDeleteGraphics() {
 	return DeleteObject(pThis->hPictPal);
 }
 
-static void *L_LoadFileChunkAndInitVar(FILE *f, char *pName, __int16 nMaxSize, void *pBuf) {
+static void *L_LoadFileChunkAndInitVar(FILE *f, const char *pName, __int16 nMaxSize, void *pBuf) {
 	fpos_t pos;
 	DWORD dwSize;
 	char szEnt[4];
@@ -290,6 +290,7 @@ extern "C" void __stdcall Hook_SimcityApp_LoadScenario() {
 	CScenarioDialog scenDlg;
 	FILE *f;
 	char szText[768];
+	int nLen = 0;
 
 	Game_ScenarioDialog_Cons(&scenDlg, 0);
 	
@@ -345,7 +346,7 @@ extern "C" void __stdcall Hook_SimcityApp_LoadScenario() {
 		goto SCENFAIL;
 	}
 	fclose(f);
-	int nLen = strlen(szText) + 1;
+	nLen = strlen(szText) + 1;
 	for (int nPos = 0; (nLen - 1) > nPos; ++nPos) {
 		char c = szText[nPos];
 		if (c == '\r' || c == '\t')

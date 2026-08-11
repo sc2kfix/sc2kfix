@@ -1739,7 +1739,7 @@ static int L_SimcityApp_WriteCityHeader(CSimcityAppPrimary *pSCApp, FILE *pFile,
 	return 1;
 }
 
-static int L_SimcityApp_WriteCityName(CSimcityAppPrimary *pSCApp, FILE *pFile, char *pTargChunk, const char *pPCityName) {
+static int L_SimcityApp_WriteCityName(CSimcityAppPrimary *pSCApp, FILE *pFile, const char *pTargChunk, const char *pPCityName) {
 	char szChunk[4];
 	DWORD nFullLen;
 
@@ -1757,7 +1757,7 @@ static int L_SimcityApp_WriteCityName(CSimcityAppPrimary *pSCApp, FILE *pFile, c
 	return 1;
 }
 
-static int L_SimcityApp_WriteCityUncompressed(CSimcityAppPrimary *pSCApp, FILE *pFile, char *pTargChunk, const void *pDat, int nDatSize) {
+static int L_SimcityApp_WriteCityUncompressed(CSimcityAppPrimary *pSCApp, FILE *pFile, const char *pTargChunk, const void *pDat, int nDatSize) {
 	int ret;
 	WORD *pDst;
 	char szChunk[4];
@@ -1787,7 +1787,7 @@ ABORTWRITE:
 	return ret;
 }
 
-static int L_SimcityApp_WriteCityCompressed(CSimcityAppPrimary *pSCApp, FILE *pFile, char *pTargChunk, const void *pDat, int nDatSize) {
+static int L_SimcityApp_WriteCityCompressed(CSimcityAppPrimary *pSCApp, FILE *pFile, const char *pTargChunk, const void *pDat, int nDatSize) {
 	int ret;
 	char *pDst;
 	char *pTmp;
@@ -2011,6 +2011,7 @@ static int L_SimcityApp_WriteCityInfo(CSimcityAppPrimary *pSCApp, FILE *pFile) {
 }
 
 static int L_SimcityApp_WriteCity(CSimcityAppPrimary *pSCApp, FILE *pFile) {
+	int nRetXLAB = 0;
 	char szTempStr[CNAM_DAT_LEN];
 
 	memset(szTempStr, 0, sizeof(szTempStr));
@@ -2038,7 +2039,7 @@ static int L_SimcityApp_WriteCity(CSimcityAppPrimary *pSCApp, FILE *pFile) {
 	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XTXT", (const void *)dwMapXTXT[0], FULLMAP_ALLOC_SIZE))
 		goto ABORTWRITE;
 	GameMain_SaveLabels();
-	int nRetXLAB = L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XLAB", (const void *)dwMapXLAB[0], LABEL_ALLOC_SIZE);
+	nRetXLAB = L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XLAB", (const void *)dwMapXLAB[0], LABEL_ALLOC_SIZE);
 	GameMain_ResetLabelStringState();
 	if (!nRetXLAB)
 		goto ABORTWRITE;
