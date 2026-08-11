@@ -1115,8 +1115,16 @@ static int L_OpenCityUnknownChunkRead(FILE *pFile, char *pChunk, int nSize) {
 	int ret;
 	char *pTemp;
 
-	if (pChunk)
-		ConsoleLog(LOG_DEBUG, "Unknown Chunk: '%c%c%c%c' (Size: %d)\n", pChunk[0], pChunk[1], pChunk[2], pChunk[3], nSize);
+	// NOTE: Some chunks it may report here are "most likely" Scenario chunks.
+	// Those that have been noted:
+	// TMPL
+	// TEXT (This one occurs twice due to the two distinct cases)
+	// SCEN
+	// PICT
+	if (pChunk) {
+		if (sc2x_debug & SC2X_DEBUG_VANILLA_LOAD)
+			ConsoleLog(LOG_DEBUG, "Unknown Chunk: '%c%c%c%c' (Size: %d)\n", pChunk[0], pChunk[1], pChunk[2], pChunk[3], nSize);
+	}
 
 	ret = 0;
 	pTemp = (char *)malloc(nSize);
