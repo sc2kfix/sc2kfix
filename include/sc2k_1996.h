@@ -4709,6 +4709,8 @@ extern void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveCursorActive)
 extern void L_drawShapeSpecific_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert, int nType);
 extern void L_drawShapeDialog_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert);
 
+extern void L_InitializeCityData();
+
 extern int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName);
 extern void L_SimcityApp_LoadCityFromCMDLine(CSimcityAppPrimary *pSCApp, const char *lpFileNameFromCMDLine);
 

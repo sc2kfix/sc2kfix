@@ -716,6 +716,16 @@ void InstallMovieHooks(void);
 
 // Debugging settings
 
+// sc2x DEBUG defines - moved here due to them being used
+// in a distinct context elsewhere.
+
+#define SC2X_DEBUG_LOAD 1
+#define SC2X_DEBUG_SAVE 2
+#define SC2X_DEBUG_VANILLA_LOAD 4
+#define SC2X_DEBUG_VANILLA_SAVE 8
+#define SC2X_DEBUG_JSON_LOAD 16
+#define SC2X_DEBUG_JSON_SAVE 32
+
 extern UINT guzzardo_debug;
 extern UINT keybinds_debug;
 extern UINT mci_debug;
