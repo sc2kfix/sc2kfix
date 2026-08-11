@@ -3092,7 +3092,6 @@ GAMECALL(0x4016A9, void, __thiscall, SimcityApp_CallAutoSave, CSimcityAppPrimary
 GAMECALL(0x4016D1, int, __thiscall, SimcityView_CenterOnNewScreenCoordinates, CSimcityView *pThis, __int16 iNewScreenPointX, __int16 iNewScreenPointY)
 GAMECALL(0x4016DB, void, __thiscall, MainFrame_DisableCityToolBarButton, CMainFrame *, int)
 GAMECALL(0x4016F9, int, __cdecl, PlaceChurch, __int16 x, __int16 y)
-GAMECALL(0x401721, int, __thiscall, SimcityApp_DoLoad, CSimcityAppPrimary *, char *)
 GAMECALL(0x40174E, void, __cdecl, SetCPoint, POINT *pt, __int16 x, __int16 y)
 GAMECALL(0x401753, void, __thiscall, SimcityApp_OnQuit, CSimcityAppPrimary *)
 GAMECALL(0x401758, void, __cdecl, DirtyThing, __int16)
@@ -3243,7 +3242,6 @@ GAMECALL(0x402725, int, __cdecl, PlacePowerLinesAtCoordinates, __int16 x, __int1
 GAMECALL(0x402739, void, __stdcall, GetAndLoadNextTileFileChunkToMemory, FILE *, char *, DWORD)
 GAMECALL(0x402752, void, __thiscall, MapToolBar_PressButton, CMapToolBar *, int)
 GAMECALL(0x40275C, void, __stdcall, SelectArcologyDialog_OnDrawFocus, LPDRAWITEMSTRUCT)
-GAMECALL(0x402757, void, __thiscall, SimcityApp_LoadCityFromCMDLine, CSimcityAppPrimary *, CMFC3XString)
 GAMECALL(0x40278E, BOOL, __thiscall, MainFrame_OnQueryNewPalette, CMainFrame *)
 GAMECALL(0x402798, int, __cdecl, MapToolPlaceForest, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x4027A7, void, __thiscall, SimcityView_OnVScroll, CSimcityView *pThis, UINT nSBCode, UINT nPos, CMFC3XScrollBar *pScrollBar)
@@ -4712,7 +4710,7 @@ extern void L_drawShapeSpecific_SC2K1996(__int16 nSpriteID, __int16 right, __int
 extern void L_drawShapeDialog_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert);
 
 extern int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName);
+extern void L_SimcityApp_LoadCityFromCMDLine(CSimcityAppPrimary *pSCApp, const char *lpFileNameFromCMDLine);
 
 extern void L_ClearScenarioDetails();
-
 extern void L_SimcityApp_LoadScenarioFromCMDLine(CSimcityAppPrimary *pSCApp, const char *lpFileNameFromCMDLine);

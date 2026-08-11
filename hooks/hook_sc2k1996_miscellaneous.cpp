@@ -674,7 +674,7 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 				pThis->dwSCAOnInitToggleToolBar = FALSE;
 				if (pThis->dwSCACMDLineLoadMode == GAME_MODE_CITY) {
 					pThis->iSCAProgramStep = ONIDLE_STATE_LOADCITY_RETURN;
-					Game_SimcityApp_LoadCityFromCMDLine(pThis, pThis->dwSCACStringTargetTypePath);
+					L_SimcityApp_LoadCityFromCMDLine(pThis, pThis->dwSCACStringTargetTypePath.m_pchData);
 				}
 				else {
 					pThis->iSCAProgramStep = ONIDLE_STATE_LOADSCENARIO_RETURN;

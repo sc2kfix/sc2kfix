@@ -77,6 +77,7 @@ static void L_MakeCityNameFromFileName(const char *lpFileName) {
 	if (nLen > CITY_NAME_LEN)
 		nLen = CITY_NAME_LEN;
 	szCityName[nLen] = 0;
+	CharUpperA(szCityName);
 	GameMain_String_OperatorSet(&pszCityName, szCityName);
 }
 
@@ -1670,14 +1671,6 @@ int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName) {
 	return ret;
 }
 
-extern "C" int __stdcall Hook_SimcityApp_DoLoad(char *lpFileName) {
-	CSimcityAppPrimary* pThis;
-
-	__asm mov [pThis], ecx
-
-	return L_SimcityApp_DoLoad(pThis, lpFileName);
-}
-
 extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 	CSimcityAppPrimary* pThis;
 
@@ -1790,6 +1783,60 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 			Game_UpdateSectionsAndResetWindowMenu();
 		}
 		GameMain_String_Dest(&strFilePath);
+	}
+}
+
+void L_SimcityApp_LoadCityFromCMDLine(CSimcityAppPrimary *pSCApp, const char *lpFileNameFromCMDLine) {
+	CMainFrame *pMainFrm;
+	char szFileName[MAX_PATH + 1];
+	int nLen;
+
+	pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
+	pSCApp->dwSCAOnQuitSuspendSim = 0;
+	pSCApp->dwSCABackgroundColourCyclingActive = 1;
+	if (Game_SimcityApp_CheckActiveGame(pSCApp) == IDCANCEL) {
+		pSCApp->dwSCACMDLineLoadMode = 0;
+		if (pSCApp->dwSCAOnInitToggleToolBar)
+			Game_MainFrame_ToggleToolBars(pMainFrm, TRUE);
+		else {
+			pSCApp->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
+			pSCApp->dwSCASetNextStep = TRUE;
+		}
+	}
+	else {
+		pSCApp->dwSCABackgroundColourCyclingActive = 0;
+		pSCApp->iSCAProgramStep = ONIDLE_STATE_LOADCITY_RETURN;
+		pSCApp->dwSCASetNextStep = TRUE;
+		Game_StartCleanGame();
+		Game_PrepareGame();
+		strncpy_s(szFileName, lpFileNameFromCMDLine, MAX_PATH);
+		nLen = strlen(szFileName);
+		szFileName[nLen] = 0;
+		if (L_SimcityApp_DoLoad(pSCApp, szFileName) && pszCityName.m_nDataLength > 0) {
+			GameMain_Document_UpdateAllViews(pCSimcityDoc, 0, SCD_UPDATE_VIEW_UPDATE, 0);
+			Game_ShowViewControls();
+			pSCApp->iSCAProgramStep = ONIDLE_STATE_INGAME;
+			pSCApp->dwSCASetNextStep = TRUE;
+			Game_SimcityApp_AdjustMenus(pSCApp, wCityMode);
+			dwMapEditingMode = 0;
+			Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
+			if (pSCApp->dwSCAOnInitToggleToolBar)
+				Game_MainFrame_ToggleToolBars(pMainFrm, TRUE);
+			pSCApp->dwSCAGenerateFirstTimeMap = FALSE;
+			pSCApp->dwSCAGameStarted = TRUE;
+		}
+		else {
+			GameMain_AfxMessageBoxID(412, 0, 0xFFFFFFFF);
+			pSCApp->dwSCACMDLineLoadMode = 0;
+			if (pSCApp->dwSCAOnInitToggleToolBar)
+				Game_MainFrame_ToggleToolBars(pMainFrm, TRUE);
+			else {
+				pSCApp->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
+				pSCApp->dwSCASetNextStep = TRUE;
+			}
+			pSCApp->dwSCAGameStarted = FALSE;
+		}
+		_chdir(pSCApp->dwSCACStringDriveCurrentWorkingDirectory.m_pchData);
 	}
 }
 
@@ -2427,10 +2474,6 @@ void InstallSaveHooks_SC2K1996(void) {
 	// - A formal fix for the $1500 neighbor connections on game load (IndustryConnect)
 	SafeVirtualProtect((LPVOID)0x402743, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x402743, Hook_InitializeCityData);
-
-	// CSimcityApp::DoLoad
-	SafeVirtualProtect((LPVOID)0x401721, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x401721, Hook_SimcityApp_DoLoad);
 
 	// CSimcityApp::LoadCity
 	SafeVirtualProtect((LPVOID)0x401E1F, 5, PAGE_EXECUTE_READWRITE);
