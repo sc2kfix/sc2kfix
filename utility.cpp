@@ -767,14 +767,14 @@ void L_CharStringToPascalString(const char *pInStr, char *pOutStr, int nMaxSize,
 	nLen = strlen(pInStr);
 	if (nLen > nAbsMaxSize)
 		nLen = nAbsMaxSize;
-	if (nLen > 255)
-		nLen = 255;
 	nDiffLen = nAbsMaxSize - nLen;
 	memcpy(pOutStr, pInStr, nLen);
-	// Only zero the remainder in a
-	// fixed size situation.
-	if (bFixedSize)
-		memset(&pOutStr[nLen], 0, nDiffLen);
+	if (nDiffLen > 0) {
+		// Only zero the remainder in a
+		// fixed size situation.
+		if (bFixedSize)
+			memset(&pOutStr[nLen], 0, nDiffLen);
+	}
 	for (int nPos = nLen - 1; nPos >= 0; --nPos)
 		pOutStr[nPos + 1] = pOutStr[nPos];
 	nStoredSize = (bFixedSize) ? nAbsMaxSize : nLen;
