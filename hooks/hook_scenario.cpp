@@ -263,14 +263,6 @@ FAILOUT:
 	return ret;
 }
 
-extern "C" int __stdcall Hook_SimcityApp_OpenScenario(char *lpFileName) {
-	CSimcityAppPrimary *pThis;
-
-	__asm mov[pThis], ecx
-
-	return L_SimcityApp_OpenScenario(pThis, lpFileName);
-}
-
 static void L_CacheScenarioDetails(const char *szText) {
 	// Save the scenario starting state in order to be used later in the scenario status dialog
 	if (szText && strlen(szText) > 0)
@@ -453,10 +445,6 @@ void InstallScenarioHooks_SC2K1996(void) {
 	// Hook for CScenarioDialog::SetCursorAndDeleteGraphics
 	SafeVirtualProtect((LPVOID)0x402806, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x402806, Hook_ScenarioDialog_SetCursorAndDeleteGraphics);
-
-	// Hook for CSimcityApp::OpenScenario
-	SafeVirtualProtect((LPVOID)0x402806, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x402040, Hook_SimcityApp_OpenScenario);
 
 	// Hook for CSimcityApp::LoadScenario
 	SafeVirtualProtect((LPVOID)0x4023D8, 5, PAGE_EXECUTE_READWRITE);
