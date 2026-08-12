@@ -99,6 +99,9 @@
 #define IDC_TILECONV_CHECK_OOBPALIDX    21085
 #define IDC_CUST_STATIC1                21086
 #define IDC_CUST_EDIT1                  21087
+#define IDC_SETTINGS_CHECK_SAVECITY_BACKUPS 21088
+#define IDC_SETTINGS_COMBO_MOVIE_ZOOMLEVEL 21089
+#define IDC_SETTINGS_COMBO_TERRAIN_FORCEDMODE 21090
 #define IDR_WAVE_500                    23001
 #define IDR_WAVE_503                    23002
 #define IDR_WAVE_508                    23003
@@ -173,7 +176,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        23040
 #define _APS_NEXT_COMMAND_VALUE         40029
-#define _APS_NEXT_CONTROL_VALUE         21088
+#define _APS_NEXT_CONTROL_VALUE         21091
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
