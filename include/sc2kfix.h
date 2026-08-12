@@ -447,6 +447,8 @@ extern int iTerrainCosmeticMode;
 extern DWORD dwFixedTileMask;
 extern int nHangar1Mode;
 
+extern bool bSavedCityBackup;
+
 // Game path global
 
 extern char szGamePath[MAX_PATH];
@@ -574,6 +576,7 @@ void L_byteswap_micro(WORD *pBuf, unsigned int nCount);
 void L_byteswap_ushorts(WORD *pBuf, int nCount);
 void L_CharStringToPascalString(const char *pInStr, char *pOutStr, int nMaxSize, bool bFixedSize);
 bool L_PascalStringToCharString(const char *pInStr, char *pOutStr);
+void L_BackupFile(LPCSTR lpPathName, UINT debug_mask, UINT debug_flag);
 
 // Yes...
 FILE *log_fopen(const char *fname, const char *mode);
@@ -719,12 +722,14 @@ void InstallMovieHooks(void);
 // sc2x DEBUG defines - moved here due to them being used
 // in a distinct context elsewhere.
 
-#define SC2X_DEBUG_LOAD 1
-#define SC2X_DEBUG_SAVE 2
+#define SC2X_DEBUG_LOAD         1
+#define SC2X_DEBUG_SAVE         2
 #define SC2X_DEBUG_VANILLA_LOAD 4
 #define SC2X_DEBUG_VANILLA_SAVE 8
-#define SC2X_DEBUG_JSON_LOAD 16
-#define SC2X_DEBUG_JSON_SAVE 32
+#define SC2X_DEBUG_JSON_LOAD    16
+#define SC2X_DEBUG_JSON_SAVE    32
+#define SC2X_DEBUG_LOAD_CHECK   64
+#define SC2X_DEBUG_CREATEBAK    128
 
 extern UINT guzzardo_debug;
 extern UINT keybinds_debug;

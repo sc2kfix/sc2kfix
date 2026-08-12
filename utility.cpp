@@ -689,7 +689,7 @@ int L_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMa
 			break;
 		case 4002:
 			if (!strcpy_s(lpBuffer, cchBufferMax,
-				"SimCity 2000 City (*.SC2)|*.SC2|SimCity Classic City (*.CTY)|*.CTY||"))
+				"SimCity 2000 and Classic Cities (*.SC2, *.CTY)|*.SC2;*.CTY;*.BAK;*.BAK.*|SimCity 2000 City (*.SC2)|*.SC2;*.BAK;*.BAK.*|SimCity Classic City (*.CTY)|*.CTY||"))
 				return strlen(lpBuffer);
 			break;
 		case 4004:
@@ -794,6 +794,28 @@ bool L_PascalStringToCharString(const char *pInStr, char *pOutStr) {
 		pOutStr[nPos] = pInStr[nPos + 1];
 	pOutStr[nPos] = 0;
 	return true;
+}
+
+void L_BackupFile(LPCSTR lpPathName, UINT debug_mask, UINT debug_flag) {
+	time_t t;
+	tm pTM;
+	char szStamp[14 + 1], szFileName[MAX_PATH + 1];
+
+	if (FileExists(lpPathName)) {
+		t = time(NULL);
+		localtime_s(&pTM, &t);
+
+		sprintf_s(szStamp, "%04d%02d%02d%02d%02d%02d", pTM.tm_year + 1900, pTM.tm_mon + 1, pTM.tm_mday, pTM.tm_hour, pTM.tm_min, pTM.tm_sec);
+		for (int i = 0; i <= 10; ++i) {
+			sprintf_s(szFileName, "%s.bak.%s%02d", lpPathName, szStamp, i);
+			if (!FileExists(szFileName)) {
+				if (debug_mask & debug_flag)
+					ConsoleLog(LOG_DEBUG, "File Exists: %s - Creating Backup: %s\n", lpPathName, szFileName);
+				CopyFile(lpPathName, szFileName, TRUE);
+				break;
+			}
+		}
+	}
 }
 
 // start of base64 code

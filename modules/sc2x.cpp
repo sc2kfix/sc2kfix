@@ -60,11 +60,19 @@ static bool IsMatchingChunk(const char *pChunk, const char *pTargChunk) {
 static void L_MakeCityNameFromFileName(const char *lpFileName) {
 	int nLen;
 	char szTemp[MAX_PATH + 1], szCityName[CITY_NAME_LEN + 1];
+	const char *pExt = NULL;
 
 	memset(szCityName, 0, sizeof(szCityName));
 	strcpy_s(szTemp, lpFileName);
 	PathStripPathA(szTemp);
-	PathRemoveExtensionA(szTemp);
+	// Strip away all file extensions.
+	pExt = PathFindExtensionA(szTemp);
+	nLen = (pExt) ? strlen(pExt) : 0;
+	while (nLen > 0) {
+		PathRemoveExtensionA(szTemp);
+		pExt = PathFindExtensionA(szTemp);
+		nLen = strlen(pExt);
+	}
 	strncpy_s(szCityName, szTemp, sizeof(szCityName) - 1);
 	nLen = strlen(szCityName);
 	if (nLen > CITY_NAME_LEN)
@@ -775,7 +783,7 @@ static int L_OpenCityHeader(FILE *pFile, const char *lpFileName, int *pLength, _
 		nActualLength = ftell(pFile);
 		fseek(pFile, 0, SEEK_SET);
 		nActualLength -= 8;
-		if (sc2x_debug & SC2X_DEBUG_LOAD)
+		if (sc2x_debug & SC2X_DEBUG_VANILLA_LOAD)
 			ConsoleLog(LOG_DEBUG, "SC2X: city file nActualLength is %d bytes.\n", nActualLength);
 	}
 	if (!fread(szChunk, 1, sizeof(szChunk), pFile)) {
@@ -1471,6 +1479,39 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 	return ret;
 }
 
+static bool L_IsBaseGameFile(FILE *f, const char *lpFileName) {
+	bool bExtMatch = false;
+	bool bIsBaseFile = false;
+	int nFileLen;
+	char szChunkFORM[4], szChunkSCDH[4];
+
+	if (PathMatchSpecA(lpFileName, "*.sc2") || PathMatchSpecA(lpFileName, "*.scn"))
+		bExtMatch = true;
+
+	// Account primarily for loading backup files.
+	if (!bExtMatch) {
+		if (sc2x_debug & SC2X_DEBUG_LOAD_CHECK)
+			ConsoleLog(LOG_DEBUG, "IsBaseGame(%s): Expected primary file extension not found, proceeding to header pre-check.\n", lpFileName);
+
+		fseek(f, 0, SEEK_END);
+		nFileLen = ftell(f);
+		fseek(f, 0, SEEK_SET);
+		if (nFileLen >= 12) {
+			if (fread(szChunkFORM, 1, sizeof(szChunkFORM), f) == sizeof(szChunkFORM)) {
+				if (!fseek(f, 4, SEEK_CUR)) {
+					if (fread(szChunkSCDH, 1, sizeof(szChunkSCDH), f) == sizeof(szChunkSCDH)) {
+						if (IsMatchingChunk(szChunkFORM, "FORM") && IsMatchingChunk(szChunkSCDH, "SCDH")) {
+							bIsBaseFile = true;
+						}
+					}
+				}
+			}
+			fseek(f, 0, SEEK_SET);
+		}
+	}
+	return bExtMatch || bIsBaseFile;
+}
+
 // Function prototype: HOOKCB void L_SimcityApp_DoLoad_Before(void)
 // Cannot be ignored.
 // SPECIAL NOTE: When the SC2X save format is implemented, this will be where mods will have a
@@ -1507,7 +1548,7 @@ int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName) {
 		nRetState = L_SimcityApp_AllocateMiscInfo(pSCApp);
 		GameMain_String_OperatorSet(&strCityFilename, lpFileName);
 		GameMain_CmdTarget_BeginWaitCursor(pSCApp);
-		if (PathMatchSpecA(lpFileName, "*.sc2") || PathMatchSpecA(lpFileName, "*.scn")) {
+		if (L_IsBaseGameFile(f, lpFileName)) {
 #ifdef SC2X_USE_VANILLA_LOAD_REPLACEMENT
 			ret = SC2XLoadVanillaGame(pSCApp, lpFileName);
 #else
@@ -1535,8 +1576,6 @@ int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName) {
 		Game_ToolMenuUpdate();
 	}
 	else {
-		// Adjust so this error is displayed primarily during this specific failure case.
-		// Once we've accounted for Scenario loading.
 		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 47, szResStr, sizeof(szResStr) - 1);
 		sprintf_s(szErrStr, "%s\n%s", szResStr, lpFileName);
 		GameMain_AfxMessageBoxStr(szErrStr, 0, 0);
@@ -2108,6 +2147,10 @@ int L_SimcityApp_DoSave(CSimcityAppPrimary *pSCApp, const char *lpFileName, char
 	memset(szOldCityName, 0, sizeof(szOldCityName));
 
 	ret = -1;
+	// File backup call - but only if the specified
+	// 'original' file already exists.
+	if (bSavedCityBackup)
+		L_BackupFile(lpFileName, sc2x_debug, SC2X_DEBUG_CREATEBAK);
 	f = old_fopen(lpFileName, "wb+");
 	if (f) {
 		// Store the old city name.
@@ -2172,7 +2215,9 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCity() {
 
 	__asm mov [pThis], ecx
 
-	char szPath[MAX_PATH + 1], szErrStr[512 + 1];
+	char szPath[MAX_PATH + 1], szTempPath[MAX_PATH + 1], szErrStr[512 + 1];
+	const char *pExt = NULL;
+	int nLen, nExtCount = 0;
 	bool bCanDoDirectSave;
 	UINT uType;
 
@@ -2185,8 +2230,24 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCity() {
 		bCanDoDirectSave = false;
 		if (strCityFilename.m_nDataLength > 0) {
 			strcpy_s(szPath, strCityFilename.m_pchData);
-			if (PathMatchSpecA(szPath, CITY_DEFAULT_SAVE_MATCH))
-				bCanDoDirectSave = true;
+			if (PathMatchSpecA(szPath, CITY_DEFAULT_SAVE_MATCH)) {
+				strcpy_s(szTempPath, szPath);
+				PathStripPathA(szTempPath);
+				pExt = PathFindExtensionA(szTempPath);
+				nLen = (pExt) ? strlen(pExt) : 0;
+				// Count the number of file extensions.
+				while (nLen > 0) {
+					PathRemoveExtensionA(szTempPath);
+					pExt = PathFindExtensionA(szTempPath);
+					nLen = strlen(pExt);
+					++nExtCount;
+				}
+				// If there are multiple file extensions, direct to 'Save City As' for clean-up - inform accordingly.
+				if (nExtCount == 1)
+					bCanDoDirectSave = true;
+				else if (nExtCount > 1)
+					ConsoleLog(LOG_INFO, "SAVE: Multiple extensions detected (%d) on file '%s'; directing to \"Save City As\".\n", nExtCount, PathFindFileNameA(szPath));
+			}
 		}
 		if (bCanDoDirectSave) {
 			int nSaveRet = L_SimcityApp_DoSave(pThis, szPath, NULL, false);
@@ -2228,6 +2289,9 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 	CMFC3XString strFilePath;
 	int nLen, nRet, nPathLen;
 	char szFilePath[MAX_PATH + 1], szPath[MAX_PATH + 1], szDirPath[MAX_PATH + 1], szErrStr[512 + 1];
+	const char *pExt = NULL;
+	bool bContainsBak = false;
+	int nExtCount = 0;
 	extFileDlg_t m_extFileDlg;
 	bool bChangeCityName;
 	OPENFILENAMEA m_ofn;
@@ -2253,7 +2317,27 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 		if (strCityFilename.m_nDataLength > 0) {
 			strcpy_s(szPath, strCityFilename.m_pchData);
 			PathStripPathA(szPath);
-			PathRemoveExtensionA(szPath);
+			pExt = PathFindExtensionA(szPath);
+			nLen = (pExt) ? strlen(pExt) : 0;
+			// Strip all detected extensions here
+			// but detect if one was ".bak" and
+			// add a suffix to the filename.
+			while (nLen > 0) {
+				if (_stricmp(pExt, ".bak") == 0)
+					bContainsBak = true;
+				PathRemoveExtensionA(szPath);
+				pExt = PathFindExtensionA(szPath);
+				nLen = strlen(pExt);
+				++nExtCount;
+			}
+			if (nExtCount > 1)
+				ConsoleLog(LOG_INFO, "SAVE AS: Multiple extensions detected (%d) on file '%s'; stripping.\n", nExtCount, PathFindFileNameA(strCityFilename.m_pchData));
+			else if (nExtCount < 1)
+				ConsoleLog(LOG_INFO, "SAVE AS: Extension not detected on file '%s', amending filename as '%s%s'\n", PathFindFileNameA(strCityFilename.m_pchData), PathFindFileNameA(strCityFilename.m_pchData), CITY_DEFAULT_APPEND_EXTENSION);
+			if (bContainsBak) {
+				strcat_s(szPath, "_bak");
+				ConsoleLog(LOG_INFO, "SAVE AS: Backup extension detected, amending filename as '%s%s'\n", szPath, CITY_DEFAULT_APPEND_EXTENSION);
+			}
 		}
 		else
 			strcpy_s(szPath, m_extFileDlg.szCityName);
@@ -2281,9 +2365,9 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 		if (nRetState != IDCANCEL) {
 			bChangeCityName = false;
 			if (m_extFileDlg.bCityNameChanged) {
-				int nLen = strlen(m_extFileDlg.szCityName);
+				nLen = strlen(m_extFileDlg.szCityName);
 				if (nLen >= 1 && nLen <= CITY_NAME_LEN) {
-					if (sc2x_debug & SC2X_DEBUG_VANILLA_SAVE)
+					if (sc2x_debug & SC2X_DEBUG_SAVE)
 						ConsoleLog(LOG_DEBUG, "New City Name: '%s' (%d)\n", m_extFileDlg.szCityName, nLen);
 					bChangeCityName = true;
 				}

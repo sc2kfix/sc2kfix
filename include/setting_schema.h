@@ -99,6 +99,7 @@
 #define DEF_FIX_QOL_USENEWSTRINGS   true
 #define DEF_FIX_QOL_MOVZOOMFACTOR   2
 #define DEF_FIX_QOL_TERRAINCOSMETIC TERRAIN_COSMETIC_NONE
+#define DEF_FIX_QOL_SC2K_SAVECITYBK true
 
 #define DEF_FIX_QOL_SC2K_FIXTILMSK  FIXTIL_SC2K_MASK
 #define DEF_FIX_QOL_SCURK_FIXTILMSK FIXTIL_SCURK_MASK
@@ -201,6 +202,7 @@
 #define I_FIX_QOL_USENEWSTRINGS   "use_new_strings"
 #define I_FIX_QOL_MOVZOOMFACTOR   "movie_zoom_factor"
 #define I_FIX_QOL_TERRAINCOSMETIC "force_terrain_cosmetic_mode"
+#define I_FIX_QOL_SC2K_SAVECITYBK "save_city_backup_sc2k"
 
 #define I_FIX_QOL_SC2K_FIXTILMSK  "fixed_object_mask_sc2k"
 #define I_FIX_QOL_SCURK_FIXTILMSK "fixed_object_mask_scurk"

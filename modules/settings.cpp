@@ -40,6 +40,7 @@ int iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
 int nMovZoomFactor = MIN_MOVZOOMFACTOR;
 int nHangar1Mode = HANGAR1_ANIM;
 DWORD dwFixedTileMask = 0;
+bool bSavedCityBackup = true;
 
 char szGamePath[MAX_PATH];
 
@@ -128,6 +129,7 @@ void DefaultSettingsSC2KFixCore(json::JSON& jsonSettings) {
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND] = DEF_FIX_QOL_TITLECALEND;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_MOVZOOMFACTOR] = DEF_FIX_QOL_MOVZOOMFACTOR;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC] = DEF_FIX_QOL_TERRAINCOSMETIC;
+	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_SAVECITYBK] = DEF_FIX_QOL_SC2K_SAVECITYBK;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_FIXTILMSK] = DEF_FIX_QOL_SC2K_FIXTILMSK;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SCURK_FIXTILMSK] = DEF_FIX_QOL_SCURK_FIXTILMSK;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_HANGARCNV] = DEF_FIX_QOL_SC2K_HANGARCNV;
@@ -316,6 +318,11 @@ static void GetSpecificStoredJSONVars() {
 		nHangar1Mode = HANGAR1_MAX;
 
 	FinalizeFixedTileMask();
+
+	if (dwSC2KFixMode != SC2KFIX_MODE_SCURK)
+		bSavedCityBackup = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_SAVECITYBK].ToBool();
+	else
+		bSavedCityBackup = false; // Set to this for now since there aren't any hooks present for WinSCURK city saving.
 }
 
 void LoadJSONSettings(void) {
