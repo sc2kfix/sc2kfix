@@ -1131,13 +1131,11 @@ static int L_SimcityApp_WriteCityHeader(CSimcityAppPrimary *pSCApp, FILE *pFile,
 	return 1;
 }
 
-static int L_SimcityApp_WriteCityName(CSimcityAppPrimary *pSCApp, FILE *pFile, const char *pTargChunk, const char *pPCityName) {
+static int L_SimcityApp_WriteCityName(CSimcityAppPrimary *pSCApp, FILE *pFile, const char *pPCityName) {
 	char szChunk[4];
 	DWORD nFullLen;
 
-	if (!pTargChunk || strlen(pTargChunk) < 1)
-		return 0;
-	memcpy(szChunk, pTargChunk, 4);
+	memcpy(szChunk, "CNAM", 4);
 	if (!fwrite(szChunk, sizeof(szChunk), 1, pFile))
 		return 0;
 	nFullLen = _byteswap_ulong(CNAM_DAT_LEN);
@@ -1422,8 +1420,11 @@ static int L_SimcityApp_WriteCityLabels(CSimcityAppPrimary *pSCApp, FILE *pFile,
 				nLen = MAX_LABEL_LEN;
 			if (nLen > 0) {
 				memset(szTemp, 0, sizeof(szTemp));
+				// Convert string
 				L_CharStringToPascalString(pLab->szLabel, szTemp, nLen, true);
+				// Clear current entry
 				memset(pLab, 0, sizeof(map_XLAB_t));
+				// Copy converted string back
 				memcpy(pLab->szLabel, szTemp, nLen + 1);
 			}
 			else
@@ -1442,56 +1443,56 @@ static int L_SimcityApp_WriteCity(CSimcityAppPrimary *pSCApp, FILE *pFile) {
 
 	int ret = 0;
 	Game_GetOccupiedTileCount();
-	if (!L_SimcityApp_WriteCityHeader(pSCApp, pFile, 0))
-		goto ABORTWRITE;
-	nDataOffset = 4;
-	L_CharStringToPascalString(pszCityName.m_pchData, szTempStr, CITY_NAME_LEN, true);
-	if (!L_SimcityApp_WriteCityName(pSCApp, pFile, "CNAM", szTempStr))
-		goto ABORTWRITE;
-	if (!L_SimcityApp_WriteCityInfo(pSCApp, pFile))
-		goto ABORTWRITE;
-	if (!L_SimcityApp_WriteCityUncompressed(pSCApp, pFile, "ALTM", (const void *)dwMapALTM[0], ALTM_ALLOC_SIZE))
-		goto ABORTWRITE;
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XTER", (const void *)dwMapXTER[0], FULLMAP_ALLOC_SIZE))
-		goto ABORTWRITE;
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XBLD", (const void *)dwMapXBLD[0], FULLMAP_ALLOC_SIZE))
-		goto ABORTWRITE;
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XZON", (const void *)dwMapXZON[0], FULLMAP_ALLOC_SIZE))
-		goto ABORTWRITE;
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XUND", (const void *)dwMapXUND[0], FULLMAP_ALLOC_SIZE))
-		goto ABORTWRITE;
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XTXT", (const void *)dwMapXTXT[0], FULLMAP_ALLOC_SIZE))
-		goto ABORTWRITE;
-	if (!L_SimcityApp_WriteCityLabels(pSCApp, pFile, (const void *)dwMapXLAB[0], LABEL_ALLOC_SIZE))
-		goto ABORTWRITE;
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XMIC", (const void *)pMicrosimArr, MICROSIM_ALLOC_SIZE))
-		goto ABORTWRITE;
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XTHG", (const void *)dwMapXTHG[0], THING_ALLOC_SIZE))
-		goto ABORTWRITE;
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XBIT", (const void *)dwMapXBIT[0], FULLMAP_ALLOC_SIZE))
-		goto ABORTWRITE;
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XTRF", (const void *)dwMapXTRF[0], MINIMAP64_ALLOC_SIZE))
-		goto ABORTWRITE;
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XPLT", (const void *)dwMapXPLT[0], MINIMAP64_ALLOC_SIZE))
-		goto ABORTWRITE;
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XVAL", (const void *)dwMapXVAL[0], MINIMAP64_ALLOC_SIZE))
-		goto ABORTWRITE;
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XCRM", (const void *)dwMapXCRM[0], MINIMAP64_ALLOC_SIZE))
-		goto ABORTWRITE;
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XPLC", (const void *)dwMapXPLC[0], MINIMAP32_ALLOC_SIZE))
-		goto ABORTWRITE;
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XFIR", (const void *)dwMapXFIR[0], MINIMAP32_ALLOC_SIZE))
-		goto ABORTWRITE;
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XPOP", (const void *)dwMapXPOP[0], MINIMAP32_ALLOC_SIZE))
-		goto ABORTWRITE;
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XROG", (const void *)dwMapXROG[0], MINIMAP32_ALLOC_SIZE))
-		goto ABORTWRITE;
-	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XGRP", (const void *)dwMapXGRP[0], GRAPH_ALLOC_SIZE))
-		goto ABORTWRITE;
-	if (!L_SimcityApp_WriteCityHeader(pSCApp, pFile, nDataOffset))
-		goto ABORTWRITE;
-	Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
-	ret = 1;
+	if (L_SimcityApp_WriteCityHeader(pSCApp, pFile, 0)) {
+		nDataOffset = 4;
+		L_CharStringToPascalString(pszCityName.m_pchData, szTempStr, CITY_NAME_LEN, true);
+		if (!L_SimcityApp_WriteCityName(pSCApp, pFile, szTempStr))
+			goto ABORTWRITE;
+		if (!L_SimcityApp_WriteCityInfo(pSCApp, pFile))
+			goto ABORTWRITE;
+		if (!L_SimcityApp_WriteCityUncompressed(pSCApp, pFile, "ALTM", (const void *)dwMapALTM[0], ALTM_ALLOC_SIZE))
+			goto ABORTWRITE;
+		if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XTER", (const void *)dwMapXTER[0], FULLMAP_ALLOC_SIZE))
+			goto ABORTWRITE;
+		if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XBLD", (const void *)dwMapXBLD[0], FULLMAP_ALLOC_SIZE))
+			goto ABORTWRITE;
+		if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XZON", (const void *)dwMapXZON[0], FULLMAP_ALLOC_SIZE))
+			goto ABORTWRITE;
+		if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XUND", (const void *)dwMapXUND[0], FULLMAP_ALLOC_SIZE))
+			goto ABORTWRITE;
+		if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XTXT", (const void *)dwMapXTXT[0], FULLMAP_ALLOC_SIZE))
+			goto ABORTWRITE;
+		if (!L_SimcityApp_WriteCityLabels(pSCApp, pFile, (const void *)dwMapXLAB[0], LABEL_ALLOC_SIZE))
+			goto ABORTWRITE;
+		if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XMIC", (const void *)pMicrosimArr, MICROSIM_ALLOC_SIZE))
+			goto ABORTWRITE;
+		if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XTHG", (const void *)dwMapXTHG[0], THING_ALLOC_SIZE))
+			goto ABORTWRITE;
+		if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XBIT", (const void *)dwMapXBIT[0], FULLMAP_ALLOC_SIZE))
+			goto ABORTWRITE;
+		if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XTRF", (const void *)dwMapXTRF[0], MINIMAP64_ALLOC_SIZE))
+			goto ABORTWRITE;
+		if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XPLT", (const void *)dwMapXPLT[0], MINIMAP64_ALLOC_SIZE))
+			goto ABORTWRITE;
+		if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XVAL", (const void *)dwMapXVAL[0], MINIMAP64_ALLOC_SIZE))
+			goto ABORTWRITE;
+		if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XCRM", (const void *)dwMapXCRM[0], MINIMAP64_ALLOC_SIZE))
+			goto ABORTWRITE;
+		if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XPLC", (const void *)dwMapXPLC[0], MINIMAP32_ALLOC_SIZE))
+			goto ABORTWRITE;
+		if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XFIR", (const void *)dwMapXFIR[0], MINIMAP32_ALLOC_SIZE))
+			goto ABORTWRITE;
+		if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XPOP", (const void *)dwMapXPOP[0], MINIMAP32_ALLOC_SIZE))
+			goto ABORTWRITE;
+		if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XROG", (const void *)dwMapXROG[0], MINIMAP32_ALLOC_SIZE))
+			goto ABORTWRITE;
+		if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XGRP", (const void *)dwMapXGRP[0], GRAPH_ALLOC_SIZE))
+			goto ABORTWRITE;
+		if (!L_SimcityApp_WriteCityHeader(pSCApp, pFile, nDataOffset))
+			goto ABORTWRITE;
+		Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
+		ret = 1;
+	}
 ABORTWRITE:
 	return ret;
 }
