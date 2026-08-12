@@ -625,7 +625,7 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 		}
 	}
 	if (XTXTGetTextOverlayID(iX, iY))
-		Game_DrawLabelsAndObjects(iX, iY, iMapOffSetX, iTop);
+		L_DrawLabelsAndObjects(iX, iY, iMapOffSetX, iTop);
 }
 
 extern "C" void __stdcall Hook_DrawAllLarge() {
@@ -941,10 +941,8 @@ extern "C" void __cdecl Hook_DrawUnderTile(__int16 iX, __int16 iY) {
 					}
 				}
 			}
-
 			if (XTXTGetTextOverlayID(iX, iY))
-				Game_DrawLabelsAndObjects(iX, iY, iRight, iTop);
-
+				L_DrawLabelsAndObjects(iX, iY, iRight, iTop);
 		}
 	}
 }
@@ -1135,7 +1133,7 @@ extern "C" void __cdecl Hook_InvertTerrain(__int16 x, __int16 y) {
 	__int16 nSpriteID;
 	__int16 nShapeHeight;
 	LONG nTop;
-	RECT r;
+	RECT r, rScale;
 
 	nSprStart = SPRITE_BOUNDARY_MULTIPLIER * pSCView->wSCVZoomLevel;
 	nScale = SCALE_VAL(pSCView->wSCVZoomLevel);
@@ -1163,24 +1161,32 @@ extern "C" void __cdecl Hook_InvertTerrain(__int16 x, __int16 y) {
 	nTop = r.bottom - nShapeHeight;
 	r.top = nShapeHeight + 1;
 	Game_DrawProcessObject(nSpriteID, (__int16)r.left, (__int16)nTop, 0, 1);
+	r.right = r.left + 2 * nScale;
+	// Copy r to rScale for "IsZoomed" scaling and use for dirtyRect.
+	CopyRect(&rScale, &r);
+	// Set this again here.
+	r.top = iScreenOffSetY + ((2 * (x + y)) << pSCView->wSCVZoomLevel);
+	// Pass r to FindNearestSignPos() for bound checks in order to
+	// ensure that signs are correctly redrawn after tiles are inverted
+	// within their bounds.
+	L_FindNearestSignPos(pSCView, &r);
 	if (pSCView->dwSCVIsZoomed) {
-		r.left *= 2;
-		r.top *= 2;
-		r.bottom *= 2;
+		rScale.left *= 2;
+		rScale.top *= 2;
+		rScale.bottom *= 2;
 		nScale *= 2;
 	}
-	// This is here deliberately.
-	r.right = r.left + 2 * nScale;
-	nTop = r.bottom - r.top;
+	rScale.right = rScale.left + 2 * nScale;
+	nTop = rScale.bottom - rScale.top;
 	if (dirtyRect.top == -1000)
-		SetRect(&dirtyRect, r.left, nTop, r.right, r.bottom);
+		SetRect(&dirtyRect, rScale.left, nTop, rScale.right, rScale.bottom);
 	else {
-		if (dirtyRect.left > r.left)
-			dirtyRect.left = r.left;
-		if (dirtyRect.right < r.right)
-			dirtyRect.right = r.right;
-		if (dirtyRect.bottom < r.bottom)
-			dirtyRect.bottom = r.bottom;
+		if (dirtyRect.left > rScale.left)
+			dirtyRect.left = rScale.left;
+		if (dirtyRect.right < rScale.right)
+			dirtyRect.right = rScale.right;
+		if (dirtyRect.bottom < rScale.bottom)
+			dirtyRect.bottom = rScale.bottom;
 		if (dirtyRect.top > nTop)
 			dirtyRect.top = nTop;
 	}
@@ -1521,6 +1527,8 @@ void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveCursorActive) {
 			pBaseSCVDC = NULL;
 			theSCVDC = NULL;
 
+			L_ClearStoredSignPos();
+
 			// Draw colour data for map overlays if we're in one of those modes
 			if (!IsIconic(pSCView->m_hWnd) && showColor && EditData)
 				Game_DrawAllColor();
@@ -1532,13 +1540,13 @@ void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveCursorActive) {
 			// If neither of those, draw the above ground view
 			else {
 				switch (pSCView->wSCVZoomLevel) {
-				case 0:
+				case ZOOM_LEVEL_TINY:
 					Game_DrawAllTiny();
 					break;
-				case 1:
+				case ZOOM_LEVEL_SMALL:
 					Game_DrawAllSmall();
 					break;
-				case 2:
+				case ZOOM_LEVEL_LARGE:
 					Game_DrawAllLarge();
 					break;
 				default:
@@ -1630,13 +1638,13 @@ extern "C" void __stdcall Hook_SimcityView_UpdateHouse() {
 					// If neither of those, draw the above ground view
 					else {
 						switch (pThis->wSCVZoomLevel) {
-						case 0:
+						case ZOOM_LEVEL_TINY:
 							Game_DrawAllTiny();
 							break;
-						case 1:
+						case ZOOM_LEVEL_SMALL:
 							Game_DrawAllSmall();
 							break;
-						case 2:
+						case ZOOM_LEVEL_LARGE:
 							Game_DrawAllLarge();
 							break;
 						default:

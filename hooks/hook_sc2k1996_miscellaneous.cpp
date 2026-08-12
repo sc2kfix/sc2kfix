@@ -412,8 +412,15 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 		case ONIDLE_STATE_MAPMODE:
 			// All we need to do here is handle the basic cursor stuff, so hand that back off to
 			// the game engine to take care of.
-			if (pSCView)
+			if (pSCView) {
 				Game_SimcityView_MaintainCursor(pSCView);
+				if (pSCDoc) {
+					if (bFrequentUpdates || (!bFrequentUpdates && bOffCycle))
+						GameMain_Document_UpdateAllViews(pSCDoc, NULL, SCD_UPDATE_VIEW_UPDATE_DOCURSOR, NULL);
+					GameMain_Document_UpdateAllViews(pSCDoc, NULL, SCD_UPDATE_VIEW_CHECKCURSOR, NULL);
+				}
+				UpdateWindow(pSCView->m_hWnd);
+			}
 			break;
 		
 		// State 1: Display "Maxis Presents" logo
@@ -2522,10 +2529,6 @@ void InstallMiscHooks_SC2K1996(void) {
 	// Fix the sign fonts
 	SafeVirtualProtect((LPVOID)0x4E7267, 1, PAGE_EXECUTE_READWRITE);
 	*(BYTE*)0x4E7267 = 'a';
-	SafeVirtualProtect((LPVOID)0x44DC42, 1, PAGE_EXECUTE_READWRITE);
-	*(BYTE*)0x44DC42 = 5;
-	SafeVirtualProtect((LPVOID)0x44DC4F, 1, PAGE_EXECUTE_READWRITE);
-	*(BYTE*)0x44DC4F = 10;
 
 	// Hook for CSimcityApp::InitInstance to bypass and fix:
 	// a) Set m_nCmdShow to 'SW_MAXIMIZE' by default rather than

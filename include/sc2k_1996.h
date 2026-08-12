@@ -141,6 +141,7 @@
 #define XVALPOPLEVEL_HIGH (XVALPOPLEVEL_MEDIUM * 2)
 
 #define MAX_LABEL_LEN 23
+#define MAX_CONNLABEL_LEN 20
 
 #define MAX_NEIGH_NAME_LEN 31
 #define MAX_NEIGH_BUF_SIZE (MAX_NEIGH_NAME_LEN + 1)
@@ -3038,6 +3039,7 @@ GAMECALL(0x4011E5, BOOL, __thiscall, Sound_MapToolSoundTrigger, CSound* pThis)
 GAMECALL(0x4011EA, CMovieDialog *, __thiscall, MovieDialog_Cons, CMovieDialog *, CMFC3XWnd *)
 GAMECALL(0x401154, void, __stdcall, SimulationPollutionTerrainAndLandValueScan, void)
 GAMECALL(0x401181, int, __cdecl, FatStepTrace, __int16 *, __int16 *)
+GAMECALL(0x40119F, void, __cdecl, DrawDisasterObjects, __int16, __int16, __int16)
 GAMECALL(0x4011B8, void, __cdecl, FatBeginTrace, __int16, __int16, __int16, __int16)
 GAMECALL(0x401203, LONG, __cdecl, StackPeek, POINT*)
 GAMECALL(0x401212, int, __cdecl, CityToolPlaceSubToRail, __int16, __int16)
@@ -3052,6 +3054,7 @@ GAMECALL(0x4012C1, int, __cdecl, DirtyTile, __int16 x, __int16 y)
 GAMECALL(0x4012DF, void, __stdcall, DecreaseWaterLevel, void)
 GAMECALL(0x4012F8, __int16, __cdecl, GetDestDistance, __int16, __int16, __int16, __int16)
 GAMECALL(0x4012FD, void, __cdecl, UpdateSimNationDialog, void)
+GAMECALL(0x401334, void, __thiscall, SimcityView_DrawThingObjects, CSimcityView *, __int16, __int16, __int16)
 GAMECALL(0x401357, void, __cdecl, DrawProcessShadowObject, __int16, __int16, __int16, __int16)
 GAMECALL(0x401370, DWORD, __thiscall, Graphics_WidthBytes, CGraphics *)
 GAMECALL(0x401393, int, __cdecl, DrawProcessObject, __int16, __int16, __int16, __int16, __int16)
@@ -3311,7 +3314,6 @@ GAMECALL(0x402DA1, BYTE *, __thiscall, Graphics_LockDIBBits, CGraphics *)
 GAMECALL(0x402DD3, int, __thiscall, SimcityApp_CheckActiveGame, CSimcityAppPrimary *)
 GAMECALL(0x402DF1, void, __thiscall, Graphics_Paint, CGraphics *, HDC, int, int)
 GAMECALL(0x402E19, void, __cdecl, QueryGeneralItem, __int16, __int16)
-GAMECALL(0x402E73, void, __cdecl, DrawLabelsAndObjects, __int16, __int16, __int16, __int16)
 GAMECALL(0x402E96, void, __thiscall, SimcityApp_GetToolSound, CSimcityAppPrimary *)
 GAMECALL(0x402EA0, int, __cdecl, CityToolPlacePowerHydroDam, __int16, __int16)
 GAMECALL(0x402EA5, void, __cdecl, StackPush, __int16, __int16)
@@ -3587,7 +3589,7 @@ GAMEOFF(WORD,	wCityTerrainSliderTrees,	0x4CADD8)
 GAMEOFF(__int16,	wConnectTiles,			0x4CADDC)
 GAMEOFF(BYTE,	bWeatherHeat,				0x4CADE0)
 GAMEOFF(RECT,	dirtyRect,					0x4CAD48)
-GAMEOFF_ARR(BYTE, stNeighborCities,			0x4CAD58)
+GAMEOFF_ARR(char, stNeighborCities,			0x4CAD58)
 GAMEOFF(__int16,	wClipXlow,				0x4CAE00)
 GAMEOFF(DWORD,	dwCityDays,					0x4CAE04)
 GAMEOFF(BYTE,	bWeatherWind,				0x4CAE0C)
@@ -3708,6 +3710,7 @@ GAMEOFF_ARR(char,	aGraphicsDir,			0x4E70D0)
 GAMEOFF_ARR(char,	aScenarioDir,			0x4E70EC)
 GAMEOFF_ARR(const char,	aScenarios,			0x4E70FC)
 GAMEOFF_ARR(DWORD, dwZoneNameStringIDs,		0x4E7140)
+GAMEOFF_ARR(__int16,	wFontHeightsArl,	0x4E71C0)
 GAMEOFF_ARR(const char,	aTilesets,			0x4E7244)
 GAMEOFF_ARR(const char,	aData,				0x4E728C)
 GAMEOFF(DWORD,	dwShowSCURK,				0x4E72AC)
@@ -3726,6 +3729,7 @@ GAMEOFF_ARR(BYTE,	trafficSpriteOverlayLevels,	0x4E7798)
 GAMEOFF_ARR(BYTE,	BuiltUpZones,			0x4E77B8)
 GAMEOFF(void *,	curLockedDIBBits,			0x4E77C8)
 GAMEOFF_ARR(int,	traversableTerrain,		0x4E7B28)
+GAMEOFF(COLORREF,	crSignText,				0x4E7FA8)
 GAMEOFF(DWORD,	dwPlacePoliceThingFail,		0x4E7FC4)
 GAMEOFF(DWORD,	dwPlaceFireThingFail,		0x4E7FC8)
 GAMEOFF(DWORD,	dwPlaceMilitaryThingFail,	0x4E7FCC)
@@ -3743,6 +3747,9 @@ GAMEOFF(BOOL,	bCSimcityDocSC2InUse,		0x4E9744)
 GAMEOFF(BOOL,	bCSimcityDocSCNInUse,		0x4E9748)
 GAMEOFF(DWORD,	dwUnknownInitVarOne,		0x4E974C)
 GAMEOFF_ARR(DWORD, dwCityNoticeStringIDs,	0x4E98B8)
+GAMEOFF(COLORREF,	crSignShine,			0x4E9924)
+GAMEOFF(COLORREF,	crSignBase,				0x4E9930)
+GAMEOFF(COLORREF,	crSignShade,			0x4E9934)
 GAMEOFF(WORD,	wActivePlanes,				0x4E99C0)
 GAMEOFF(WORD,	wActiveHelicopters,			0x4E99C4)
 GAMEOFF(WORD,	wActiveShips,				0x4E99C8)
@@ -3866,7 +3873,7 @@ static inline BYTE GetUndergroundTileID(__int16 iTileX, __int16 iTileY) {
 }
 
 // Returns the XLAB entry from a given Label ID.
-static inline const char* GetXLABEntry(BYTE iLabelID) {
+static inline char* GetXLABEntry(BYTE iLabelID) {
 	return dwMapXLAB[0][iLabelID].szLabel;
 }
 
@@ -4696,6 +4703,10 @@ extern void DeleteAllDisasterDeploys_SC2K1996();
 extern void ResetThingCleanupState_SC2K1996();
 
 extern void DoThingClean_SC2K1996(int nThingDef);
+
+extern void L_ClearStoredSignPos();
+extern void L_FindNearestSignPos(CSimcityView *pSCView, RECT *r);
+extern void L_DrawLabelsAndObjects(__int16 x, __int16 y, __int16 inXOffset, __int16 inYOffset, bool bOnlySign = false);
 
 extern CGraphics *pBaseGraphics;
 extern LONG nBaseGraphicWidth;
