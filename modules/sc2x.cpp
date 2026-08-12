@@ -1402,8 +1402,40 @@ static int L_SimcityApp_WriteCityInfo(CSimcityAppPrimary *pSCApp, FILE *pFile) {
 	return L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "MISC", pMiscInfo, MISCINF_ALLOC_SIZE);
 }
 
+static int L_SimcityApp_WriteCityLabels(CSimcityAppPrimary *pSCApp, FILE *pFile, const void *pDat, int nDatSize) {
+	int ret;
+	char *pTemp, *pDst;
+	map_XLAB_t *pLab;
+	char szTemp[27];
+	int nLen;
+
+	ret = 0;
+	pTemp = (char *)malloc(nDatSize);
+	if (pTemp) {
+		pDst = (char *)pDat;
+		memset(pTemp, 0, nDatSize);
+		for (int nPos = 0; nPos < MAX_LABEL_COUNT; ++nPos) {
+			memcpy(&pTemp[nPos * sizeof(map_XLAB_t)], &pDst[nPos * sizeof(map_XLAB_t)], sizeof(map_XLAB_t));
+			pLab = (map_XLAB_t *)&pTemp[nPos * sizeof(map_XLAB_t)];
+			nLen = strlen(pLab->szLabel);
+			if (nLen > MAX_LABEL_LEN)
+				nLen = MAX_LABEL_LEN;
+			if (nLen > 0) {
+				memset(szTemp, 0, sizeof(szTemp));
+				L_CharStringToPascalString(pLab->szLabel, szTemp, nLen, true);
+				memset(pLab, 0, sizeof(map_XLAB_t));
+				memcpy(pLab->szLabel, szTemp, nLen + 1);
+			}
+			else
+				memset(pLab, 0, sizeof(map_XLAB_t));
+		}
+		ret = L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XLAB", pTemp, nDatSize);
+		free(pTemp);
+	}
+	return ret;
+}
+
 static int L_SimcityApp_WriteCity(CSimcityAppPrimary *pSCApp, FILE *pFile) {
-	int nRetXLAB = 0;
 	char szTempStr[CNAM_DAT_LEN];
 
 	memset(szTempStr, 0, sizeof(szTempStr));
@@ -1430,10 +1462,7 @@ static int L_SimcityApp_WriteCity(CSimcityAppPrimary *pSCApp, FILE *pFile) {
 		goto ABORTWRITE;
 	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XTXT", (const void *)dwMapXTXT[0], FULLMAP_ALLOC_SIZE))
 		goto ABORTWRITE;
-	GameMain_SaveLabels();
-	nRetXLAB = L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XLAB", (const void *)dwMapXLAB[0], LABEL_ALLOC_SIZE);
-	GameMain_ResetLabelStringState();
-	if (!nRetXLAB)
+	if (!L_SimcityApp_WriteCityLabels(pSCApp, pFile, (const void *)dwMapXLAB[0], LABEL_ALLOC_SIZE))
 		goto ABORTWRITE;
 	if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XMIC", (const void *)pMicrosimArr, MICROSIM_ALLOC_SIZE))
 		goto ABORTWRITE;

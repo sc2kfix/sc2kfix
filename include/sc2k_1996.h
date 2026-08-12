@@ -3346,7 +3346,6 @@ GAMECALL_MAIN(0x423860, void, __thiscall, CityToolBar_ToolMenuEnable, CCityToolB
 GAMECALL_MAIN(0x4255A0, void, __thiscall, SimcityApp_LoadCursorResources, CSimcityAppPrimary *)
 GAMECALL_MAIN(0x427C10, int, __thiscall, QueryGeneralDialog_OnInitDialog, CQueryGeneralDialog *)
 GAMECALL_MAIN(0x430C00, void, __stdcall, ResetLabelStringState)
-GAMECALL_MAIN(0x430C90, void, __stdcall, SaveLabels)
 GAMECALL_MAIN(0x44D1B0, void, __cdecl, QuerySpecificItem, __int16, __int16)
 GAMECALL_MAIN(0x458D40, void, __thiscall, SimcityView_Demolish, CSimcityView *, __int16, __int16, BOOL)
 GAMECALL_MAIN(0x45CF10, void, __stdcall, SimulationStartDisaster, void)
