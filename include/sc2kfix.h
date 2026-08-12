@@ -515,7 +515,6 @@ HOOKEXT const char* GetOnIdleInitialDialogEnumName(int iInitialDialogState);
 HOOKEXT BOOL IsFileNameValid(const char *pName);
 HOOKEXT BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, const char *ini_name);
 int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize, int *nCompSize);
-int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize);
 HOOKEXT_CPP std::string Base64Encode(const unsigned char* pSrcData, size_t iSrcCount);
 HOOKEXT_CPP size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned char* pSrcData, size_t iSrcCount);
 HOOKEXT_CPP json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBigEndian);

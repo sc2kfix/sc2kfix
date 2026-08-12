@@ -978,11 +978,6 @@ int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int i
 	return j;
 }
 
-int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize) {
-	int nDummy;
-	return MaxisDecompress(pBuffer, iBufSize, pCompressedData, iCompressedSize, &nDummy);
-}
-
 HOOKEXT_CPP json::JSON json::Array() {
 	return std::move(json::JSON::Make(json::JSON::Class::Array));
 }
