@@ -80,8 +80,10 @@ BOOL CALLBACK FileHookProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
 						nFlags &= ~SWP_HIDEWINDOW;
 					if ((nFlags & SWP_SHOWWINDOW) == 0)
 						nFlags |= SWP_SHOWWINDOW;
-					if (pExtDlg->nExtType == FEXT_TYPE_SAVECITYNAME)
-						nPartHeight = 30;
+					if (pExtDlg->nExtType == FEXT_TYPE_SAVECITYNAME) {
+						if (pExtDlg->wCityMode != GAME_MODE_TERRAIN_EDIT)
+							nPartHeight = 30;
+					}
 				}
 			}
 
@@ -91,20 +93,23 @@ BOOL CALLBACK FileHookProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
 			// Handle the adjustment of custom items here.
 			if (pExtDlg) {
 				if (pExtDlg->nExtType == FEXT_TYPE_SAVECITYNAME) {
-					// Horizontal positional offset observed beyond Windows NT 6.1
-					// (Observed on Windows 10 and 11; 8 or 8.1 is not known but accounted for).
-					nItemHorzOffset = (dwOSVersion > 0x00060001) ? 8 : 4;
+					if (pExtDlg->wCityMode != GAME_MODE_TERRAIN_EDIT) {
+						// Horizontal positional offset observed beyond Windows NT 6.1
+						// (Observed on Windows 10 and 11; 8 or 8.1 is not known but accounted for).
+						nItemHorzOffset = (dwOSVersion > 0x00060001) ? 8 : 4;
 
-					nFlags &= ~SWP_NOMOVE;
-					GetWindowRect(GetDlgItem(hWndParent, stc2), &itemRect); // The "File Types" static label
-					SetDlgItemTextA(hWnd, IDC_CUST_STATIC1, "&City name:");
-					SetWindowPos(GetDlgItem(hWnd, IDC_CUST_STATIC1), HWND_TOP, itemRect.left - nItemHorzOffset, 2, itemRect.right - itemRect.left, itemRect.bottom - itemRect.top, SWP_NOZORDER | SWP_SHOWWINDOW);
-					GetWindowRect(GetDlgItem(hWndParent, cmb1), &itemRect); // The "File Types" ComboBox
-					memset(szTempStr, 0, sizeof(szTempStr));
-					memcpy(szTempStr, pExtDlg->szCityName, sizeof(pExtDlg->szCityName));
-					SetDlgItemTextA(hWnd, IDC_CUST_EDIT1, szTempStr);
-					SendMessage(GetDlgItem(hWnd, IDC_CUST_EDIT1), EM_SETLIMITTEXT, CITY_NAME_LEN, 0);
-					SetWindowPos(GetDlgItem(hWnd, IDC_CUST_EDIT1), HWND_TOP, itemRect.left - nItemHorzOffset, 0, itemRect.right - itemRect.left, itemRect.bottom - itemRect.top, SWP_NOZORDER | SWP_SHOWWINDOW);
+						nFlags &= ~SWP_NOMOVE;
+						GetWindowRect(GetDlgItem(hWndParent, stc2), &itemRect); // The "File Types" static label
+						SetDlgItemTextA(hWnd, IDC_CUST_STATIC1, "&City name:");
+						SetWindowPos(GetDlgItem(hWnd, IDC_CUST_STATIC1), HWND_TOP, itemRect.left - nItemHorzOffset, 2, itemRect.right - itemRect.left, itemRect.bottom - itemRect.top, SWP_NOZORDER | SWP_SHOWWINDOW);
+						GetWindowRect(GetDlgItem(hWndParent, cmb1), &itemRect); // The "File Types" ComboBox
+						memset(szTempStr, 0, sizeof(szTempStr));
+						memcpy(szTempStr, pExtDlg->szCityName, sizeof(pExtDlg->szCityName));
+						SetDlgItemTextA(hWnd, IDC_CUST_EDIT1, szTempStr);
+						SendMessage(GetDlgItem(hWnd, IDC_CUST_EDIT1), EM_SETLIMITTEXT, CITY_NAME_LEN, 0);
+						SetWindowPos(GetDlgItem(hWnd, IDC_CUST_EDIT1), HWND_TOP, itemRect.left - nItemHorzOffset, 0, itemRect.right - itemRect.left, itemRect.bottom - itemRect.top, SWP_NOZORDER | SWP_SHOWWINDOW);
+
+					}
 				}
 			}
 
@@ -175,24 +180,26 @@ BOOL CALLBACK FileHookProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
 
 						strcpy_s(pExtDlg->szAdjustedFile, szTempPath);
 
-						memset(szTempStr, 0, sizeof(szTempStr));
-						GetDlgItemTextA(hWnd, IDC_CUST_EDIT1, szTempStr, sizeof(szTempStr) - 1);
-						nLen = strlen(szTempStr);
-						if (nLen < 1 || nLen > CITY_NAME_LEN) {
-							if (nLen < 1)
-								strcpy_s(szErrStr, "You must enter a city name.");
-							else
-								sprintf_s(szErrStr, "Your city name cannot exceed %d characters.", CITY_NAME_LEN);
-							MessageBoxA(hWndParent, szErrStr, gamePrimaryKey, MB_ICONERROR);
-							SetWindowLongA(hWnd, DWL_MSGRESULT, 1);
-							return TRUE;
-						}
-						if (memcmp(pExtDlg->szCityName, szTempStr, CITY_NAME_LEN) != 0) {
-							memset(pExtDlg->szCityName, 0, sizeof(pExtDlg->szCityName));
-							memcpy(pExtDlg->szCityName, szTempStr, CITY_NAME_LEN);
-							nLen = strlen(pExtDlg->szCityName);
-							pExtDlg->szCityName[nLen] = 0;
-							pExtDlg->bCityNameChanged = true;
+						if (pExtDlg->wCityMode != GAME_MODE_TERRAIN_EDIT) {
+							memset(szTempStr, 0, sizeof(szTempStr));
+							GetDlgItemTextA(hWnd, IDC_CUST_EDIT1, szTempStr, sizeof(szTempStr) - 1);
+							nLen = strlen(szTempStr);
+							if (nLen < 1 || nLen > CITY_NAME_LEN) {
+								if (nLen < 1)
+									strcpy_s(szErrStr, "You must enter a city name.");
+								else
+									sprintf_s(szErrStr, "Your city name cannot exceed %d characters.", CITY_NAME_LEN);
+								MessageBoxA(hWndParent, szErrStr, gamePrimaryKey, MB_ICONERROR);
+								SetWindowLongA(hWnd, DWL_MSGRESULT, 1);
+								return TRUE;
+							}
+							if (memcmp(pExtDlg->szCityName, szTempStr, CITY_NAME_LEN) != 0) {
+								memset(pExtDlg->szCityName, 0, sizeof(pExtDlg->szCityName));
+								memcpy(pExtDlg->szCityName, szTempStr, CITY_NAME_LEN);
+								nLen = strlen(pExtDlg->szCityName);
+								pExtDlg->szCityName[nLen] = 0;
+								pExtDlg->bCityNameChanged = true;
+							}
 						}
 					}
 					break;

@@ -1691,6 +1691,7 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 
 		memset(&m_extFileDlg, 0, sizeof(m_extFileDlg));
 		m_extFileDlg.nExtType = FEXT_TYPE_SAVECITYNAME;
+		m_extFileDlg.wCityMode = wCityMode;
 		m_extFileDlg.bCityNameChanged = false;
 		memcpy(m_extFileDlg.szCityName, pszCityName.m_pchData, CITY_NAME_LEN);
 		m_extFileDlg.pSaveExt = CITY_DEFAULT_EXTENSION;

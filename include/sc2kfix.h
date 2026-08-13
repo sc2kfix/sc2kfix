@@ -352,6 +352,7 @@ typedef struct {
 
 typedef struct {
 	int nExtType;
+	__int16 wCityMode;
 	bool bCityNameChanged;
 	char szCityName[CITY_NAME_LEN + 1];
 	char szAdjustedFile[MAX_PATH + 1];
