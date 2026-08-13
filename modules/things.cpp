@@ -674,7 +674,7 @@ void L_DrawLabelsAndObjects(__int16 x, __int16 y, __int16 inXOffset, __int16 inY
 	COLORREF crSignSurface, crSignPostEdge;
 	__int16 xOffset, yOffset;
 	BYTE bTextOverlay;
-	__int16 nNeighIdx, nPosNum;
+	__int16 nNeighCompassDir, nPosNum;
 	char *pLabel;
 	int nLen, nPos;
 	int nLabelLen;
@@ -709,30 +709,30 @@ void L_DrawLabelsAndObjects(__int16 x, __int16 y, __int16 inXOffset, __int16 inY
 				}
 				hFont = SelectFont(pDC->m_hDC, MainFontsArl[pSCView->wSCVZoomLevel]->m_hObject);
 				if (bTextOverlay == NGHBR_CONNECTION_TEXT_ENTRY) {
-					nNeighIdx = 0;
+					nNeighCompassDir = VIEWROTATION_NORTH;
 					nPosNum = 0;
 					if (y < MAP_EDGE_MIN + 2) {
-						nNeighIdx = 3;
+						nNeighCompassDir = VIEWROTATION_WEST;
 						nPosNum = x;
 					}
 					if (x > MAP_EDGE_MAX - 2) {
-						nNeighIdx = 0;
+						nNeighCompassDir = VIEWROTATION_NORTH;
 						nPosNum = y;
 					}
 					if (y > MAP_EDGE_MAX - 2) {
-						nNeighIdx = 1;
+						nNeighCompassDir = VIEWROTATION_EAST;
 						nPosNum = MAP_EDGE_MAX - x;
 					}
 					if (x < MAP_EDGE_MIN + 2) {
-						nNeighIdx = 2;
+						nNeighCompassDir = VIEWROTATION_SOUTH;
 						nPosNum = MAP_EDGE_MAX - y;
 					}
-					nLen = strlen(&stNeighborCities[MAX_NEIGH_BUF_SIZE * (nNeighIdx + (wViewRotation & 3))]);
+					nLen = strlen(&stNeighborCities[MAX_NEIGH_BUF_SIZE * ((nNeighCompassDir + wViewRotation) & 3)]);
 					if (nLen > MAX_CONNLABEL_LEN)
 						nLen = MAX_CONNLABEL_LEN;
 					memset(pLabel, 0, MAX_LABEL_LEN);
 					for (nPos = 0; nLen > nPos; ++nPos)
-						pLabel[nPos] = stNeighborCities[MAX_NEIGH_BUF_SIZE * (nNeighIdx + (wViewRotation & 3)) + nPos];
+						pLabel[nPos] = stNeighborCities[MAX_NEIGH_BUF_SIZE * ((nNeighCompassDir + wViewRotation) & 3) + nPos];
 					pLabel[nLen] = ' ';
 					pLabel[nLen + 1] = nPosNum % 5 + '5';
 					pLabel[nLen + 2] = 0;
