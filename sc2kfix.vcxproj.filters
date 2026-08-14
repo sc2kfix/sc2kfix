@@ -55,6 +55,12 @@
     <Filter Include="Resource Files\RAW">
       <UniqueIdentifier>{0fdd0012-770e-43e2-9531-8fd0dea3807b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Third-Party\miniz">
+      <UniqueIdentifier>{dd1851ef-5b89-45f3-b91a-0c340fec22a0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Third-Party\miniz">
+      <UniqueIdentifier>{5c69bd30-f55d-456f-b5b1-5afce4932d84}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\sc2kfix.h">
@@ -260,6 +266,9 @@
     </ClInclude>
     <ClInclude Include="include\sound_engine.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\miniz\miniz.h">
+      <Filter>Header Files\Third-Party\miniz</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -511,6 +520,9 @@
     </ClCompile>
     <ClCompile Include="hooks\hook_graphscanstats.cpp">
       <Filter>Source Files\Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\miniz\miniz.c">
+      <Filter>Source Files\Third-Party\miniz</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

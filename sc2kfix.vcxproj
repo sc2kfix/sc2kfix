@@ -142,6 +142,7 @@ const char* szSC2KFixBuildInfo = "$(UserName)@$(ComputerName)  $([System.DateTim
     <ClInclude Include="thirdparty\lua\lundump.h" />
     <ClInclude Include="thirdparty\lua\lvm.h" />
     <ClInclude Include="thirdparty\lua\lzio.h" />
+    <ClInclude Include="thirdparty\miniz\miniz.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="hooks\hook_animation.cpp" />
@@ -226,6 +227,7 @@ const char* szSC2KFixBuildInfo = "$(UserName)@$(ComputerName)  $([System.DateTim
     <ClCompile Include="thirdparty\lua\lutf8lib.c" />
     <ClCompile Include="thirdparty\lua\lvm.c" />
     <ClCompile Include="thirdparty\lua\lzio.c" />
+    <ClCompile Include="thirdparty\miniz\miniz.c" />
     <ClCompile Include="utility.cpp" />
   </ItemGroup>
   <ItemGroup>
