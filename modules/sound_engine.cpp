@@ -41,6 +41,7 @@ bool (*SDL_Init)(SDL_InitFlags flags);
 void (*SDL_DestroyAudioStream)(SDL_AudioStream* stream);
 bool (*SDL_ClearAudioStream)(SDL_AudioStream* stream);
 SDL_AudioStream* (*SDL_OpenAudioDeviceStream)(SDL_AudioDeviceID devid, const SDL_AudioSpec* spec, SDL_AudioStreamCallback callback, void* userdata);
+bool (*SDL_PauseAudioStreamDevice)(SDL_AudioStream* stream);
 bool (*SDL_PutAudioStreamData)(SDL_AudioStream* stream, const void* buf, int len);
 bool (*SDL_ResumeAudioStreamDevice)(SDL_AudioStream* stream);
 int (*SDL_GetAudioStreamAvailable)(SDL_AudioStream* stream);
@@ -73,8 +74,10 @@ SDL_AudioStream* pStreamCurrentSound = NULL;
 static void SoundEngineStopStream(SDL_AudioStream** pStream) {
 	if (!pStream)
 		return;
-	if (*pStream)
+	if (*pStream) {
+		SDL_PauseAudioStreamDevice(*pStream);
 		SDL_ClearAudioStream(*pStream);
+	}
 
 	bSoundPlaying = false;
 }
@@ -83,31 +86,20 @@ static void StopCurrentSound(SDL_AudioStream** pStream) {
 	if (*pStream) {
 		if (bSoundThreadActive[0] || bSoundThreadActive[1]) {
 			if (hCurrentSoundThread) {
-				int i = 0;
-
-				if (bSoundThreadActive[0]) {
-					bSoundStop = true;
-					for (i=MAX_START; i>0; i--)
-					{
-						if (!bSoundThreadActive[0]) break;
-						Sleep(100);
-					}
-				}
-				else if (bSoundThreadActive[1]) {
-					bSoundStop = true;
-					for (i=MAX_START; i>0; i--)
-					{
-						if (!bSoundThreadActive[1]) break;
-						Sleep(100);
-					}
-				}
+				bSoundStop = true;
 
 				DWORD dwThreadID = GetThreadId(hCurrentSoundThread);
 				if (dwThreadID) {
-					if (!TerminateThread(hCurrentSoundThread, EXIT_SUCCESS))
-						ConsoleLog(LOG_DEBUG, "StopCurrentSound(): Hmmm... 0x%06X\n", GetLastError());
-					else
+					DWORD dwWaitRes = WaitForSingleObject(hCurrentSoundThread, 70);
+					if (!dwWaitRes)
 						hCurrentSoundThread = 0;
+
+					if (hCurrentSoundThread) {
+						if (!TerminateThread(hCurrentSoundThread, EXIT_SUCCESS))
+							ConsoleLog(LOG_DEBUG, "StopCurrentSound(): Hmmm... 0x%06X\n", GetLastError());
+						else
+							hCurrentSoundThread = 0;
+					}
 				}
 			}
 			SoundEngineStopStream(pStream);
@@ -115,33 +107,56 @@ static void StopCurrentSound(SDL_AudioStream** pStream) {
 	}
 }
 
+static bool IsSoundStopping() {
+	return bSoundStop;
+}
+
+static bool IsSoundPlaying() {
+	return bSoundPlaying;
+}
+
+static bool IsActiveSoundStream() {
+	return (&pStreamCurrentSound) ? true : false;
+}
+
 static DWORD WINAPI SoundEngineOneShotThread(LPVOID lpParameter) {
 	audio_entity_t* stAudioData = (audio_entity_t*)lpParameter;
+
+	bool bGetSoundStop, bActiveSoundStream;
 
 	if (bSoundThreadActive[0])
 		return EXIT_SUCCESS;
 	bSoundThreadActive[0] = true;
 	bSoundStop = false;
 	while (SDL_GetAudioStreamAvailable(pStreamCurrentSound) > 0) {
-		if (bSoundStop || !pStreamCurrentSound)
+		bGetSoundStop = IsSoundStopping();
+		bActiveSoundStream = IsActiveSoundStream();
+		if (bGetSoundStop || !bActiveSoundStream)
 			break;
 		Sleep(1);
 	}
 
 	bSoundThreadActive[0] = false;
 	bSoundPlaying = false;
+	if (snd_debug & SND_DEBUG_THREADS)
+		ConsoleLog(LOG_DEBUG, "SoundEngineOneShotThread() - exiting.\n");
 	return EXIT_SUCCESS;
 }
 
 static DWORD WINAPI SoundEngineLoopThread(LPVOID lpParameter) {
 	audio_entity_t* stAudioData = (audio_entity_t*)lpParameter;
 
+	bool bGetSoundStop, bGetSoundPlaying, bActiveSoundStream;
+
 	if (bSoundThreadActive[1])
 		return EXIT_SUCCESS;
 	bSoundThreadActive[1] = true;
 	bSoundStop = false;
 	for (;;) {
-		if (bSoundStop || !bSoundPlaying || !pStreamCurrentSound)
+		bGetSoundStop = IsSoundStopping();
+		bGetSoundPlaying = IsSoundPlaying();
+		bActiveSoundStream = IsActiveSoundStream();
+		if (bGetSoundStop || !bGetSoundPlaying || !bActiveSoundStream)
 			break;
 		if (SDL_GetAudioStreamAvailable(pStreamCurrentSound) < (int)stAudioData->uBufferSize)
 			SDL_PutAudioStreamData(pStreamCurrentSound, stAudioData->pBuffer, stAudioData->uBufferSize);
@@ -149,6 +164,8 @@ static DWORD WINAPI SoundEngineLoopThread(LPVOID lpParameter) {
 	}
 
 	bSoundThreadActive[1] = false;
+	if (snd_debug & SND_DEBUG_THREADS)
+		ConsoleLog(LOG_DEBUG, "SoundEngineLoopThread() - exiting.\n");
 	return EXIT_SUCCESS;
 }
 
@@ -189,6 +206,7 @@ static bool SoundEnginePlayStream(SDL_AudioStream** pStream, audio_entity_t* stA
 
 DWORD WINAPI SDLSoundThread(LPVOID lpParameter) {
 	MSG msg;
+	bool bRequestThreadStop;
 	int nDuration;
 	gameSoundAttrib_t soundAttrib;
 	float fVolume;
@@ -196,10 +214,16 @@ DWORD WINAPI SDLSoundThread(LPVOID lpParameter) {
 	CSimcityAppPrimary *pSCApp;
 	CSound *pSound;
 
-	if (sdl_debug & SDL_DEBUG_THREADS)
+	if (snd_debug & SND_DEBUG_THREADS)
 		ConsoleLog(LOG_DEBUG, "SND:  Starting SDL Sound Thread!\n");
 
 	while (GetMessage(&msg, NULL, 0, 0)) {
+		bRequestThreadStop = IsAudioThreadStopRequest();
+		if (bRequestThreadStop) {
+			if (snd_debug & SND_DEBUG_THREADS)
+				ConsoleLog(LOG_DEBUG, "SND:  SDL Sound thread - got request to stop.\n");
+			break;
+		}
 		if (msg.message == WM_SDL_PLAY) {
 			nDuration = (int)msg.wParam;
 			soundAttrib.iSoundID = LOWORD(msg.lParam);
@@ -249,14 +273,17 @@ DWORD WINAPI SDLSoundThread(LPVOID lpParameter) {
 		else if (msg.message == WM_SDL_STOP) {
 			StopCurrentSound(&pStreamCurrentSound);
 		}
-		else if (msg.message == WM_QUIT)
+		else if (msg.message == WM_QUIT) {
+			if (snd_debug & SND_DEBUG_THREADS)
+				ConsoleLog(LOG_DEBUG, "SND:  SDL Sound thread - WM_QUIT.\n");
 			break;
+		}
 
 		DispatchMessage(&msg);
 	}
 
 	StopCurrentSound(&pStreamCurrentSound);
-	if (sdl_debug & SDL_DEBUG_THREADS)
+	if (snd_debug & SND_DEBUG_THREADS)
 		ConsoleLog(LOG_INFO, "SND:  Shutting down SDL Sound thread.\n");
 	return EXIT_SUCCESS;
 }
@@ -264,31 +291,30 @@ DWORD WINAPI SDLSoundThread(LPVOID lpParameter) {
 static void SoundEngineStopSong(SDL_AudioStream** pStream) {
 	if (!pStream)
 		return;
-	if (*pStream)
+	if (*pStream) {
+		SDL_PauseAudioStreamDevice(*pStream);
 		SDL_ClearAudioStream(*pStream);
+	}
 }
 
 static void StopCurrentSong(SDL_AudioStream** pStream) {
 	if (*pStream) {
 		if (bSongThreadActive) {
 			if (hCurrentSongThread) {
-				int i = 0;
-
-				if (bSongThreadActive) {
-					bSongStop = true;
-					for (i=MAX_START; i>0; i--)
-					{
-						if (!bSongThreadActive) break;
-						Sleep(100);
-					}
-				}
+				bSongStop = true;
 
 				DWORD dwThreadID = GetThreadId(hCurrentSongThread);
 				if (dwThreadID) {
-					if (!TerminateThread(hCurrentSongThread, EXIT_SUCCESS))
-						ConsoleLog(LOG_DEBUG, "StopCurrentSong(): Hmmm... 0x%06X\n", GetLastError());
-					else
+					DWORD dwWaitRes = WaitForSingleObject(hCurrentSongThread, 70);
+					if (!dwWaitRes)
 						hCurrentSongThread = 0;
+
+					if (hCurrentSongThread) {
+						if (!TerminateThread(hCurrentSongThread, EXIT_SUCCESS))
+							ConsoleLog(LOG_DEBUG, "StopCurrentSong(): Hmmm... 0x%06X\n", GetLastError());
+						else
+							hCurrentSongThread = 0;
+					}
 				}
 			}
 			SoundEngineStopSong(pStream);
@@ -299,8 +325,18 @@ static void StopCurrentSong(SDL_AudioStream** pStream) {
 	SetSongPlaying(false);
 }
 
+static bool IsSongStopping() {
+	return bSongStop;
+}
+
+static bool IsActiveSongStream() {
+	return (&pStreamCurrentSong) ? true : false;
+}
+
 static DWORD WINAPI SoundEngineSongThread(LPVOID lpParameter) {
 	audio_entity_t* stAudioData = (audio_entity_t*)lpParameter;
+
+	bool bGetSongStop, bActiveSongStream;
 
 	if (bSongThreadActive)
 		return EXIT_SUCCESS;
@@ -310,7 +346,9 @@ static DWORD WINAPI SoundEngineSongThread(LPVOID lpParameter) {
 	bSongThreadActive = true;
 	bSongStop = false;
 	while (SDL_GetAudioStreamAvailable(pStreamCurrentSong) > 0) {
-		if (bSongStop || !pStreamCurrentSong)
+		bGetSongStop = IsSongStopping();
+		bActiveSongStream = IsActiveSongStream();
+		if (bGetSongStop || !bActiveSongStream)
 			break;
 		Sleep(10);
 	}
@@ -318,6 +356,8 @@ static DWORD WINAPI SoundEngineSongThread(LPVOID lpParameter) {
 	bSongThreadActive = false;
 	SetMCIDevID(-1);
 	SetSongPlaying(false);
+	if (mus_debug & MUS_DEBUG_THREAD)
+		ConsoleLog(LOG_DEBUG, "SoundEngineSongThread() - exiting.\n");
 	return EXIT_SUCCESS;
 }
 
@@ -353,13 +393,20 @@ static bool SoundEnginePlaySong(SDL_AudioStream** pStream, audio_entity_t* stAud
 
 DWORD WINAPI SDLSongThread(LPVOID lpParameter) {
 	MSG msg;
+	bool bRequestThreadStop;
 	SF_INFO stInfoMP3File = { 0 };
 	audio_entity_t stAudioEntityMP3 = { 0 };
 
-	if (sdl_debug & SDL_DEBUG_THREADS)
-		ConsoleLog(LOG_DEBUG, "SND:  Starting SDL Song thread!\n");
+	if (mus_debug & MUS_DEBUG_THREAD)
+		ConsoleLog(LOG_DEBUG, "MUS:  Starting SDL Song thread!\n");
 
 	while (GetMessage(&msg, NULL, 0, 0)) {
+		bRequestThreadStop = IsAudioThreadStopRequest();
+		if (bRequestThreadStop) {
+			if (mus_debug & MUS_DEBUG_THREAD)
+				ConsoleLog(LOG_DEBUG, "MUS:  SDL Song thread - got request to stop.\n");
+			break;
+		}
 		if (msg.message == WM_SDL_PLAY) {
 			if (msg.wParam >= 10000 && msg.wParam <= 10018) {
 				if (IsSongPlaying())
@@ -410,8 +457,11 @@ DWORD WINAPI SDLSongThread(LPVOID lpParameter) {
 			free(stAudioEntityMP3.pBuffer);
 			memset(&stAudioEntityMP3, 0, sizeof(audio_entity_t));
 		}
-		else if (msg.message == WM_QUIT)
+		else if (msg.message == WM_QUIT) {
+			if (mus_debug & MUS_DEBUG_THREAD)
+				ConsoleLog(LOG_DEBUG, "MUS:  SDL Song thread - WM_QUIT.\n");
 			break;
+		}
 next:
 		DispatchMessage(&msg);
 	}
@@ -419,8 +469,8 @@ next:
 	StopCurrentSong(&pStreamCurrentSong);
 	free(stAudioEntityMP3.pBuffer);
 	memset(&stAudioEntityMP3, 0, sizeof(audio_entity_t));
-	if (sdl_debug & SDL_DEBUG_THREADS)
-		ConsoleLog(LOG_INFO, "SND:  Shutting down SDL Song thread.\n");
+	if (mus_debug & MUS_DEBUG_THREAD)
+		ConsoleLog(LOG_INFO, "MUS:  Shutting down SDL Song thread.\n");
 	return EXIT_SUCCESS;
 }
 
@@ -445,6 +495,7 @@ bool LoadSoundEngineLibraries(void) {
 	SDL_ClearAudioStream = (decltype(SDL_ClearAudioStream))GetProcAddress(hmodSDL3, "SDL_ClearAudioStream");
 	SDL_DestroyAudioStream = (decltype(SDL_DestroyAudioStream))GetProcAddress(hmodSDL3, "SDL_DestroyAudioStream");
 	SDL_OpenAudioDeviceStream = (decltype(SDL_OpenAudioDeviceStream))GetProcAddress(hmodSDL3, "SDL_OpenAudioDeviceStream");
+	SDL_PauseAudioStreamDevice = (decltype(SDL_PauseAudioStreamDevice))GetProcAddress(hmodSDL3, "SDL_PauseAudioStreamDevice");
 	SDL_PutAudioStreamData = (decltype(SDL_PutAudioStreamData))GetProcAddress(hmodSDL3, "SDL_PutAudioStreamData");
 	SDL_ResumeAudioStreamDevice = (decltype(SDL_ResumeAudioStreamDevice))GetProcAddress(hmodSDL3, "SDL_ResumeAudioStreamDevice");
 	SDL_GetAudioStreamAvailable = (decltype(SDL_GetAudioStreamAvailable))GetProcAddress(hmodSDL3, "SDL_GetAudioStreamAvailable");

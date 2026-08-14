@@ -15,10 +15,6 @@
 
 #pragma intrinsic(_ReturnAddress)
 
-#define SND_DEBUG_PLAYS 1
-#define SND_DEBUG_REPLACEMENTS 2
-#define SND_DEBUG_INTERNALS 4
-
 #define SND_DEBUG DEBUG_FLAGS_NONE
 
 #ifdef DEBUGALL

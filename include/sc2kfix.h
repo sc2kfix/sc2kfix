@@ -480,6 +480,9 @@ extern DWORD dwScenarioStartTrafficDivisor;
 
 extern int iForcedBits;
 
+// ThreadStop check
+bool IsAudioThreadStopRequest();
+
 // Path adjustment (from registry_pathing area)
 
 BOOL L_IsPathValid(const char *pStr);
@@ -736,6 +739,14 @@ void InstallMovieHooks(void);
 #define SAVE_DEBUG_LOAD_CHECK   64
 #define SAVE_DEBUG_CREATEBAK    128
 #define SAVE_DEBUG_XFIX			256
+
+// snd DEBUG defines - moved here due to them being used
+// in other sound-related areas.
+
+#define SND_DEBUG_PLAYS 1
+#define SND_DEBUG_REPLACEMENTS 2
+#define SND_DEBUG_INTERNALS 4
+#define SND_DEBUG_THREADS 8
 
 extern UINT guzzardo_debug;
 extern UINT keybinds_debug;

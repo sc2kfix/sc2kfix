@@ -217,21 +217,21 @@ static void FluidSynthStopSong(fluid_audio_driver_t** pAudDriver, fluid_synth_t*
 
 		if (bFSSongThreadActive || hCurrentFSSongThread) {
 			if (hCurrentFSSongThread) {
-				if (bFSSongThreadActive) {
-					for (i=MAX_START; i>0; i--)
-					{
-						if (!bFSSongThreadActive) break;
-						Sleep(100);
-					}
-				}
-
 				DWORD dwThreadID = GetThreadId(hCurrentFSSongThread);
 				if (dwThreadID) {
-					if (!TerminateThread(hCurrentFSSongThread, EXIT_SUCCESS))
-						ConsoleLog(LOG_DEBUG, "FluidSynthStopSong(): Hmmm... 0x%06X\n", GetLastError());
-					else {
+					DWORD dwWaitRes = WaitForSingleObject(hCurrentFSSongThread, 70);
+					if (!dwWaitRes) {
 						hCurrentFSSongThread = 0;
 						bFSSongThreadActive = false;
+					}
+
+					if (hCurrentFSSongThread) {
+						if (!TerminateThread(hCurrentFSSongThread, EXIT_SUCCESS))
+							ConsoleLog(LOG_DEBUG, "FluidSynthStopSong(): Hmmm... 0x%06X\n", GetLastError());
+						else {
+							hCurrentFSSongThread = 0;
+							bFSSongThreadActive = false;
+						}
 					}
 				}
 			}
@@ -343,11 +343,18 @@ static bool FluidSynthPlaySong(fluid_audio_driver_t** pAudDriver, fluid_synth_t*
 
 DWORD WINAPI FSMIDIThread(LPVOID lpParameter) {
 	MSG msg;
+	bool bRequestThreadStop;
 
 	if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
 		ConsoleLog(LOG_DEBUG, "MUS:  Starting new FluidSynth MIDI thread.\n");
 
 	while (GetMessage(&msg, NULL, 0, 0)) {
+		bRequestThreadStop = IsAudioThreadStopRequest();
+		if (bRequestThreadStop) {
+			if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
+				ConsoleLog(LOG_DEBUG, "MUS:  FluidSynth MIDI thread - got request to stop.\n");
+			break;
+		}
 		if (msg.message == WM_FS_PLAY) {
 			if (msg.wParam >= 10000 && msg.wParam <= 10018) {
 				if (IsSongPlaying())
@@ -359,8 +366,11 @@ DWORD WINAPI FSMIDIThread(LPVOID lpParameter) {
 		}
 		else if (msg.message == WM_FS_STOP)
 			FluidSynthStopSong(&pFluidSynthDriver, &pFluidSynthSynth, &pFluidSynthPlayer);
-		else if (msg.message == WM_QUIT)
+		else if (msg.message == WM_QUIT) {
+			if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
+				ConsoleLog(LOG_DEBUG, "MUS:  FluidSynth MIDI thread - WM_QUIT.\n");
 			break;
+		}
 	next:
 		DispatchMessage(&msg);
 	}

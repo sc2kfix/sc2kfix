@@ -1682,10 +1682,17 @@ extern "C" void __stdcall Hook_SimulationStartDisaster(void) {
 	// once more if it ends up being overridden by the
 	// bulldozer - an exception is present for if bFallbackSound
 	// is set to true (which defaults to the bulldozer sound).
+	//
+	// An additional check for whether the ActionThingSound is
+	// currently SOUND_SIREN but pSound->bSndPlaySound is 0
+	// (which will happen if sound was turned off and on again),
+	// in which case it gets restarted as well.
 	if (dwDisasterActive) {
 		if (pSCApp && pSound) {
-			if (pSound->iSNDActionThingSoundID != SOUND_SIREN && !bFallbackSound) {
-				if (pSound->iSNDActionThingSoundID == SOUND_BULLDOZER) {
+			if ((pSound->iSNDActionThingSoundID != SOUND_SIREN && !bFallbackSound) || 
+				(pSound->iSNDActionThingSoundID == SOUND_SIREN && !pSound->bSNDPlaySound)) {
+				if (pSound->iSNDActionThingSoundID == SOUND_BULLDOZER || 
+					(pSCApp->dwSCAGameSound && !pSound->bSNDPlaySound)) {
 					Game_SimcityApp_StopSounds(pSCApp);
 					Game_SimcityApp_SoundPlayActionThingSound(pSCApp, SOUND_SIREN, 5);
 				}
@@ -2537,10 +2544,56 @@ extern "C" int __stdcall Hook_SimcityApp_InitInstance() {
 	return GameMain_SimcityApp_InitInstance(pThis);
 }
 
+extern bool bStopAudioThread;
+
+extern HANDLE hMusicHandle;
+extern HANDLE hFSMIDIHandle;
+extern HANDLE hSDLSoundHandle;
+extern HANDLE hSDLSongHandle;
+
 // Hook to do cleanups at the start of ExitInstance
 extern "C" void __stdcall Hook_SimcityApp_ExitInstance() {
 	CSimcityAppPrimary* pThis;
 	__asm mov [pThis], ecx
+
+	DWORD dwWaitRes;
+
+	// First set the flag and then send WM_QUIT to the various
+	// sound/music threads.
+	bStopAudioThread = true;
+	if (dwSDLSongThreadID)
+		PostThreadMessage(dwSDLSongThreadID, WM_QUIT, NULL, NULL);
+	if (dwSDLSoundThreadID)
+		PostThreadMessage(dwSDLSoundThreadID, WM_QUIT, NULL, NULL);
+
+	// Shut down the music threads
+	if (dwFSMIDIThreadID)
+		PostThreadMessage(dwFSMIDIThreadID, WM_QUIT, NULL, NULL);
+	if (dwMusicThreadID)
+		PostThreadMessage(dwMusicThreadID, WM_QUIT, NULL, NULL);
+
+	// Then wait for the objects here first for 140ms.
+	// If dwWaitRes returns 0, zero the handle.
+	if (hSDLSongHandle) {
+		dwWaitRes = WaitForSingleObject(hSDLSongHandle, 140);
+		if (!dwWaitRes)
+			hSDLSongHandle = 0;
+	}
+	if (hSDLSoundHandle) {
+		dwWaitRes = WaitForSingleObject(hSDLSoundHandle, 140);
+		if (!dwWaitRes)
+			hSDLSoundHandle = 0;
+	}
+	if (hFSMIDIHandle) {
+		dwWaitRes = WaitForSingleObject(hFSMIDIHandle, 140);
+		if (!dwWaitRes)
+			hFSMIDIHandle = 0;
+	}
+	if (hMusicHandle) {
+		dwWaitRes = WaitForSingleObject(hMusicHandle, 140);
+		if (!dwWaitRes)
+			hMusicHandle = 0;
+	}
 
 	Game_PerhapsFreeDocumentsLibraryAndStrings();
 	FreeLibrary(pThis->dwSCAhModule);

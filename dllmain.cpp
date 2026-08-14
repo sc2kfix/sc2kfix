@@ -55,6 +55,12 @@ BOOL bOnTheFlyPalIdx = FALSE;
 BOOL bBuildFixedTiles = FALSE;
 BOOL bNoXFIX = FALSE;
 int iForcedBits = 0;
+bool bStopAudioThread = false;
+
+HANDLE hMusicHandle = NULL;
+HANDLE hFSMIDIHandle = NULL;
+HANDLE hSDLSoundHandle = NULL;
+HANDLE hSDLSongHandle = NULL;
 
 std::random_device rdRandomDevice;
 std::mt19937 mtMersenneTwister(rdRandomDevice());
@@ -101,10 +107,15 @@ static const char *GetProgramNameFromSC2KFixMode() {
 	return "Unknown Game";
 }
 
+bool IsAudioThreadStopRequest() {
+	return bStopAudioThread;
+}
+
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 	int argc = 0;
 	LPWSTR* argv = NULL;
 	BOOL bSkipLoadSettings = FALSE;
+	DWORD dwWaitRes;
 	INITCOMMONCONTROLSEX icc = { sizeof(INITCOMMONCONTROLSEX), ICC_WIN95_CLASSES };
 
 	switch (reason) {
@@ -467,12 +478,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		}
 
 		// Create music threads
-		CreateThread(NULL, 0, MusicThread, 0, 0, &dwMusicThreadID);
-		CreateThread(NULL, 0, FSMIDIThread, 0, 0, &dwFSMIDIThreadID);
+		hMusicHandle = CreateThread(NULL, 0, MusicThread, 0, 0, &dwMusicThreadID);
+		hFSMIDIHandle = CreateThread(NULL, 0, FSMIDIThread, 0, 0, &dwFSMIDIThreadID);
 		ConsoleLog(LOG_INFO, "MUS:  Music threads started.\n");
 
-		CreateThread(NULL, 0, SDLSoundThread, 0, 0, &dwSDLSoundThreadID);
-		CreateThread(NULL, 0, SDLSongThread, 0, 0, &dwSDLSongThreadID);
+		hSDLSoundHandle = CreateThread(NULL, 0, SDLSoundThread, 0, 0, &dwSDLSoundThreadID);
+		hSDLSongHandle = CreateThread(NULL, 0, SDLSongThread, 0, 0, &dwSDLSongThreadID);
 		ConsoleLog(LOG_INFO, "SND:  SDL Sound threads started.\n");
 
 		// Palette animation fix
@@ -596,16 +607,48 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
 	// Clean up after ourselves and get ready to exit
 	case DLL_PROCESS_DETACH:
-		if (dwSDLSongThreadID)
-			PostThreadMessage(dwSDLSongThreadID, WM_QUIT, NULL, NULL);
-		if (dwSDLSoundThreadID)
-			PostThreadMessage(dwSDLSoundThreadID, WM_QUIT, NULL, NULL);
+		// Do so here as well if any of the handles are still valid.
+		// If by the end the handles haven't been set to 0, TerminateThread.
+		if (hSDLSongHandle) {
+			dwWaitRes = WaitForSingleObject(hSDLSongHandle, 140);
+			if (!dwWaitRes)
+				hSDLSongHandle = 0;
 
-		// Shut down the music threads
-		if (dwFSMIDIThreadID)
-			PostThreadMessage(dwFSMIDIThreadID, WM_QUIT, NULL, NULL);
-		if (dwMusicThreadID)
-			PostThreadMessage(dwMusicThreadID, WM_QUIT, NULL, NULL);
+			if (hSDLSongHandle) {
+				if (!TerminateThread(hSDLSongHandle, EXIT_SUCCESS))
+					ConsoleLog(LOG_DEBUG, "hSDLSongHandle: Hmmm... 0x%06X\n", GetLastError());
+			}
+		}
+		if (hSDLSoundHandle) {
+			dwWaitRes = WaitForSingleObject(hSDLSoundHandle, 140);
+			if (!dwWaitRes)
+				hSDLSoundHandle = 0;
+
+			if (hSDLSoundHandle) {
+				if (!TerminateThread(hSDLSoundHandle, EXIT_SUCCESS))
+					ConsoleLog(LOG_DEBUG, "hSDLSoundHandle: Hmmm... 0x%06X\n", GetLastError());
+			}
+		}
+		if (hFSMIDIHandle) {
+			dwWaitRes = WaitForSingleObject(hFSMIDIHandle, 140);
+			if (!dwWaitRes)
+				hFSMIDIHandle = 0;
+
+			if (hFSMIDIHandle) {
+				if (!TerminateThread(hFSMIDIHandle, EXIT_SUCCESS))
+					ConsoleLog(LOG_DEBUG, "hFSMIDIHandle: Hmmm... 0x%06X\n", GetLastError());
+			}
+		}
+		if (hMusicHandle) {
+			dwWaitRes = WaitForSingleObject(hMusicHandle, 140);
+			if (!dwWaitRes)
+				hMusicHandle = 0;
+
+			if (hMusicHandle) {
+				if (!TerminateThread(hMusicHandle, EXIT_SUCCESS))
+					ConsoleLog(LOG_DEBUG, "hMusicHandle: Hmmm... 0x%06X\n", GetLastError());
+			}
+		}
 
 		// Only save the settings if the program has closed gracefully.
 		if (!bGameDead)
