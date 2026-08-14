@@ -573,6 +573,9 @@ void L_FindNearestSignPos(CSimcityView *pSCView, RECT *r) {
 	int nZoomDiff = 0;
 	RECT rBounds;
 
+	if (!DisplayLayer[LAYER_SIGNS])
+		return;
+
 	switch (pSCView->wSCVZoomLevel) {
 		case ZOOM_LEVEL_TINY:
 			nZoomDiff = 2;
