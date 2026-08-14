@@ -287,8 +287,8 @@ void L_InitializeCityData() {
 		}
 	}
 
-	if (sc2x_debug & SC2X_DEBUG_LOAD)
-		ConsoleLog(LOG_DEBUG, "SC2X: Loaded %d $1000 neighbor connections (Commerce Connect).\n", wCommerceConnect);
+	if (save_debug & SAVE_DEBUG_LOAD)
+		ConsoleLog(LOG_DEBUG, "SAVE: Loaded %d $1000 neighbor connections (Commerce Connect).\n", wCommerceConnect);
 
 	// The 'wIndustryConnect' block was previously missing
 	// and fixed via a separate detour, however it has now been
@@ -306,8 +306,8 @@ void L_InitializeCityData() {
 		}
 	}
 
-	if (sc2x_debug & SC2X_DEBUG_LOAD)
-		ConsoleLog(LOG_DEBUG, "SC2X: Loaded %d $1500 neighbor connections (Industry Connect).\n", wIndustryConnect);
+	if (save_debug & SAVE_DEBUG_LOAD)
+		ConsoleLog(LOG_DEBUG, "SAVE: Loaded %d $1500 neighbor connections (Industry Connect).\n", wIndustryConnect);
 
 	dwBusPassengers = 0;
 	dwRailPassengers = 0;

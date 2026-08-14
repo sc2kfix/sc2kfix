@@ -174,7 +174,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						mov_debug = DEBUG_FLAGS_EVERYTHING;
 						mus_debug = DEBUG_FLAGS_EVERYTHING;
 						registry_debug = DEBUG_FLAGS_EVERYTHING;
-						sc2x_debug = DEBUG_FLAGS_EVERYTHING;
+						save_debug = DEBUG_FLAGS_EVERYTHING;
 						snd_debug = DEBUG_FLAGS_EVERYTHING;
 						sprite_debug = DEBUG_FLAGS_EVERYTHING;
 						things_debug = DEBUG_FLAGS_EVERYTHING;
@@ -191,7 +191,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						mov_debug = DEBUG_FLAGS_NONE;
 						mus_debug = DEBUG_FLAGS_NONE;
 						registry_debug = DEBUG_FLAGS_NONE;
-						sc2x_debug = DEBUG_FLAGS_NONE;
+						save_debug = DEBUG_FLAGS_NONE;
 						snd_debug = DEBUG_FLAGS_NONE;
 						sprite_debug = DEBUG_FLAGS_NONE;
 						things_debug = DEBUG_FLAGS_NONE;

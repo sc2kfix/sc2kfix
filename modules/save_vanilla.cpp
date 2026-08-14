@@ -1,5 +1,4 @@
-// sc2kfix modules/sc2x.cpp: JSON-based extensible save game file format
-//                           and hooks for fixing save/load bugs.
+// sc2kfix modules/save_vanilla.cpp: reimplementation of vanilla load/save functions
 // (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
@@ -17,11 +16,11 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
-#define SC2X_DEBUG DEBUG_FLAGS_NONE
+#define SAVE_DEBUG DEBUG_FLAGS_NONE
 
 #ifdef DEBUGALL
-#undef SC2X_DEBUG
-#define SC2X_DEBUG DEBUG_FLAGS_EVERYTHING
+#undef SAVE_DEBUG
+#define SAVE_DEBUG DEBUG_FLAGS_EVERYTHING
 #endif
 
 #define BAILOUT(s, ...) do { \
@@ -29,7 +28,7 @@
 	return 0; \
 } while (0)
 
-UINT sc2x_debug = SC2X_DEBUG;
+UINT save_debug = SAVE_DEBUG;
 
 static DWORD *pMiscInfo = NULL;
 
@@ -133,8 +132,8 @@ static int L_OpenCityHeader(FILE *pFile, const char *lpFileName, int *pLength, _
 		nActualLength = ftell(pFile);
 		fseek(pFile, 0, SEEK_SET);
 		nActualLength -= 8;
-		if (sc2x_debug & SC2X_DEBUG_VANILLA_LOAD)
-			ConsoleLog(LOG_DEBUG, "SC2X: city file nActualLength is %d bytes.\n", nActualLength);
+		if (save_debug & SAVE_DEBUG_VANILLA_LOAD)
+			ConsoleLog(LOG_DEBUG, "SAVE: Vanilla city file nActualLength is %d bytes.\n", nActualLength);
 	}
 	if (!fread(szChunk, 1, sizeof(szChunk), pFile)) {
 		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
@@ -157,6 +156,7 @@ static int L_OpenCityHeader(FILE *pFile, const char *lpFileName, int *pLength, _
 					"a save corruption report on the sc2kfix GitHub issues page (https://github.com/sc2kfix/sc2kfix/issues) and attach the sc2kfix.log file.\n\n"
 
 					"Developer info:\n"
+					"File type vanilla\n"
 					"Game header corrupted (FORM header chunk size 0)\n"
 					"Failed to load nActualLength.", "sc2kfix error", MB_OK | MB_ICONERROR);
 
@@ -171,8 +171,8 @@ static int L_OpenCityHeader(FILE *pFile, const char *lpFileName, int *pLength, _
 			// Let's only do the fixup if bSupportFixUp is true, otherwise "safely" abort.
 			if (bSupportFixUp) {
 				// Log that we're attempting a fixup
-				ConsoleLog(LOG_NOTICE, "SC2X: Detected possible corrupted file \"%s\".\n", lpFileName);
-				ConsoleLog(LOG_NOTICE, "SC2X: Attempting to fix up corrupted save header, new size = %d.\n", nActualLength);
+				ConsoleLog(LOG_NOTICE, "SAVE: Detected possible corrupted file \"%s\".\n", lpFileName);
+				ConsoleLog(LOG_NOTICE, "SAVE: Attempting to fix up corrupted save header, new size = %d.\n", nActualLength);
 
 				// Inform the user about what's going on
 				MessageBoxA(GetActiveWindow(),
@@ -184,6 +184,7 @@ static int L_OpenCityHeader(FILE *pFile, const char *lpFileName, int *pLength, _
 					"please file a report on the sc2kfix GitHub issues page (https://github.com/sc2kfix/sc2kfix/issues) and attach the sc2kfix.log file.\n\n"
 
 					"Developer info:\n"
+					"File type vanilla\n"
 					"Game header corrupted (FORM header chunk size 0).", "sc2kfix warning", MB_OK | MB_ICONWARNING);
 
 				*pLength = nActualLength;
@@ -198,6 +199,7 @@ static int L_OpenCityHeader(FILE *pFile, const char *lpFileName, int *pLength, _
 					"please file a report on the sc2kfix GitHub issues page (https://github.com/sc2kfix/sc2kfix/issues) and attach the sc2kfix.log file.\n\n"
 
 					"Developer info:\n"
+					"File type vanilla\n"
 					"Game header corrupted (FORM header chunk size 0)\n"
 					"Unsupported file type.", "sc2kfix error", MB_OK | MB_ICONERROR);
 
@@ -480,8 +482,8 @@ static int L_OpenCityUnknownChunkRead(FILE *pFile, char *pChunk, int nSize) {
 	// SCEN
 	// PICT
 	if (pChunk) {
-		if (sc2x_debug & SC2X_DEBUG_VANILLA_LOAD)
-			ConsoleLog(LOG_DEBUG, "Unknown Chunk: '%c%c%c%c' (Size: %d)\n", pChunk[0], pChunk[1], pChunk[2], pChunk[3], nSize);
+		if (save_debug & SAVE_DEBUG_VANILLA_LOAD)
+			ConsoleLog(LOG_DEBUG, "SAVE: Unknown Chunk: '%c%c%c%c' (Size: %d)\n", pChunk[0], pChunk[1], pChunk[2], pChunk[3], nSize);
 	}
 
 	ret = 0;
@@ -840,8 +842,8 @@ static bool L_IsBaseGameFile(FILE *f, const char *lpFileName) {
 
 	// Account primarily for loading backup files.
 	if (!bExtMatch) {
-		if (sc2x_debug & SC2X_DEBUG_LOAD_CHECK)
-			ConsoleLog(LOG_DEBUG, "IsBaseGame(%s): Expected primary file extension not found, proceeding to header pre-check.\n", lpFileName);
+		if (save_debug & SAVE_DEBUG_LOAD_CHECK)
+			ConsoleLog(LOG_DEBUG, "SAVE: IsBaseGame(%s): Expected primary file extension not found, proceeding to header pre-check.\n", lpFileName);
 
 		fseek(f, 0, SEEK_END);
 		nFileLen = ftell(f);
@@ -887,8 +889,8 @@ int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName) {
 	char szResStr[255 + 1], szErrStr[1024 + 1];
 	CSimcityView *pSCView;
 
-	if (sc2x_debug & SC2X_DEBUG_LOAD)
-		ConsoleLog(LOG_DEBUG, "SC2X: Loading saved game \"%s\".\n", lpFileName);
+	if (save_debug & SAVE_DEBUG_LOAD)
+		ConsoleLog(LOG_DEBUG, "SAVE: Loading saved game \"%s\".\n", lpFileName);
 
 	for (const auto& hook : stHooks_L_SimcityApp_DoLoad_Before) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
@@ -1533,7 +1535,7 @@ int L_SimcityApp_DoSave(CSimcityAppPrimary *pSCApp, const char *lpFileName, char
 	// File backup call - but only if the specified
 	// 'original' file already exists.
 	if (bSavedCityBackup)
-		L_BackupFile(lpFileName, sc2x_debug, SC2X_DEBUG_CREATEBAK);
+		L_BackupFile(lpFileName, save_debug, SAVE_DEBUG_CREATEBAK);
 	f = old_fopen(lpFileName, "wb+");
 	if (f) {
 		// Store the old city name.
@@ -1751,8 +1753,8 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 			if (m_extFileDlg.bCityNameChanged) {
 				nLen = strlen(m_extFileDlg.szCityName);
 				if (nLen >= 1 && nLen <= CITY_NAME_LEN) {
-					if (sc2x_debug & SC2X_DEBUG_SAVE)
-						ConsoleLog(LOG_DEBUG, "New City Name: '%s' (%d)\n", m_extFileDlg.szCityName, nLen);
+					if (save_debug & SAVE_DEBUG_SAVE)
+						ConsoleLog(LOG_DEBUG, "SAVE: New City Name: '%s' (%d)\n", m_extFileDlg.szCityName, nLen);
 					bChangeCityName = true;
 				}
 			}

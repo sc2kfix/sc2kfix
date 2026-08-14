@@ -972,7 +972,7 @@ int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int i
 			ConsoleLog(LOG_WARNING, "LOAD: Unexpected 0x80 in MaxisDecompress. This should never happen.\n");
 	}
 
-	if (sc2x_debug & 4)
+	if (save_debug & SAVE_DEBUG_VANILLA_LOAD)
 		ConsoleLog(LOG_DEBUG, "LOAD: Uncompressed %d bytes into %d bytes.\n", i, j);
 	*nCompSize = i;
 	return j;

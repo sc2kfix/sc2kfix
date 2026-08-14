@@ -279,7 +279,7 @@ bool ConsoleCommandSetDebug(std::vector<std::string> args, int iBreakoutState, i
 				{"modloader", "Enable/disable native code mod loader debugging"},
 				{"mus", "Enable/disable music engine debugging"},
 				{"registry", "Enable/disable registry override hooks debugging"},
-				{"sc2x", "Enable/disable SC2X format and load/save debugging"},
+				{"save", "Enable/disable load/save debugging"},
 				{"snd", "Enable/disable sound hook debugging"},
 				{"sprite", "Enable/disable sprite and tileset hook debugging"},
 				{"timer", "Enable/disable timer hook debugging"},
@@ -322,7 +322,7 @@ bool ConsoleCommandSetDebug(std::vector<std::string> args, int iBreakoutState, i
 		SETDEBUGOP("modloader", modloader, "native code mod loader")
 		SETDEBUGOP("mus", mus, "music engine")
 		SETDEBUGOP("registry", registry, "registry override hooks")
-		SETDEBUGOP("sc2x", sc2x, "SC2X format and load/save")
+		SETDEBUGOP("save", save, "load/save")
 		SETDEBUGOP("snd", snd, "sound hook")
 		SETDEBUGOP("sprite", sprite, "sprite and tileset hook")
 		SETDEBUGOP("timer", timer, "timer hook")
@@ -1126,8 +1126,8 @@ bool ConsoleCommandShowDebug(std::vector<std::string> args, int iBreakoutState, 
 		printf("MUS=0x%08X ", mus_debug);
 	if (registry_debug)
 		printf("REG=0x%08X ", registry_debug);
-	if (sc2x_debug)
-		printf("SC2X=0x%08X ", sc2x_debug);
+	if (save_debug)
+		printf("SAVE=0x%08X ", save_debug);
 	if (snd_debug)
 		printf("SND=0x%08X ", snd_debug);
 	if (sprite_debug)
