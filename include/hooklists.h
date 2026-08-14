@@ -7,10 +7,10 @@
 #include <sc2kfix.h>
 
 extern std::vector<hook_function_t> stHooks_Hook_OnNewCity_Before;
-extern std::vector<hook_function_t> stHooks_Hook_LoadGame_Before;
-extern std::vector<hook_function_t> stHooks_Hook_LoadGame_After;
-extern std::vector<hook_function_t> stHooks_Hook_SaveGame_Before;
-extern std::vector<hook_function_t> stHooks_Hook_SaveGame_After;
+extern std::vector<hook_function_t> stHooks_L_SimcityApp_DoLoad_Before;
+extern std::vector<hook_function_t> stHooks_L_SimcityApp_DoLoad_After;
+extern std::vector<hook_function_t> stHooks_L_SimcityApp_DoSave_Before;
+extern std::vector<hook_function_t> stHooks_L_SimcityApp_DoSave_After;
 extern std::vector<hook_function_t> stHooks_Hook_PrepareGame_Before;
 extern std::vector<hook_function_t> stHooks_Hook_PrepareGame_After;
 extern std::vector<hook_function_t> stHooks_Hook_SimcityApp_BuildSubFrames_Before;

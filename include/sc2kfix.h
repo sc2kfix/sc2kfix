@@ -174,11 +174,15 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define MIN_SIM_TEXT_ENTRIES (MAX_USER_TEXT_ENTRIES + 1)
 #define MAX_SIM_TEXT_ENTRIES 200
 
+#define MIN_MICROSIM_LABEL_ENTRIES (MIN_SIM_TEXT_ENTRIES + 10)
 #define MAX_LABEL_TEXT_ENTRY_RANGE 128
+#define MAX_LABEL_ENTRIES 255
+#define MAX_LABEL_COUNT (MAX_LABEL_ENTRIES + 1)
 
 #define MICROSIMID_MIN 0
 #define MICROSIMID_MAX (MAX_SIM_TEXT_ENTRIES - MIN_SIM_TEXT_ENTRIES)
 #define MICROSIMID_ENTRY(x) (x - MIN_SIM_TEXT_ENTRIES)
+#define MAX_MICROSIM_COUNT (MICROSIMID_MAX + 1)
 
 // These "appear" to be related to XTHG cases
 // based on the named sailboat case.
@@ -219,7 +223,10 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define MIN_THING_IDX 1
 #define MAX_THING_IDX 39
 
-#define MAX_THING_COUNT MAX_THING_IDX + 1
+#define MAX_THING_COUNT (MAX_THING_IDX + 1)
+
+#define MAX_GRAPHS 16
+#define MAX_GRAPH_ENTRIES 52
 
 #define HALVECOORD(x) (x >> 1)
 
@@ -317,6 +324,44 @@ typedef struct {
 	std::string strSoundfont;
 } settings_t;
 
+// This structure is passed to the game file dialog (at the moment the Save As dialogue).
+#define FEXT_TYPE_NONE         0
+#define FEXT_TYPE_SAVECITYNAME 1
+#define FEXT_TYPE_OPENCITYATTR 2
+
+// For the CNAM chunk this must not be changed, it must
+// remain set to a value of 32.
+#define CNAM_DAT_LEN 32
+
+// For now set to 30 rather than 31 due to some unsafe reading/writing further downstream
+// in the native game. What may have (perhaps) been safe in the DOS/Macintosh game is not
+// in the Windows version when the standard maximum city name length is used.
+// NOTE: As of 2026-08-09 this has now been changed to (CNAM_DAT_LEN - 1) (rather than
+//       subtracting 2).
+#define CITY_NAME_LEN (CNAM_DAT_LEN - 1)
+
+// The extension to append/check against for (re)directed "Save As" cases.
+#define CITY_DEFAULT_EXTENSION        "sc2"
+#define CITY_DEFAULT_APPEND_EXTENSION "." CITY_DEFAULT_EXTENSION
+// The wildcard extension check in "Save" (not "Save As") cases to check against,
+// just in case the file in question was NOT a standard sc2 city (ie, whether it was
+// a scenario, a converted .cty classic city, or eventually when we use our own type).
+#define CITY_DEFAULT_SAVE_MATCH     "*" CITY_DEFAULT_APPEND_EXTENSION
+
+#define CITY_DEFAULT_TYPE_STRING    "SimCity 2000 City (" CITY_DEFAULT_SAVE_MATCH ")|" CITY_DEFAULT_SAVE_MATCH "||"
+
+typedef struct {
+	int nExtType;
+	__int16 wCityMode;
+	bool bCityNameChanged;
+	char szCityName[CITY_NAME_LEN + 1];
+	char szAdjustedFile[MAX_PATH + 1];
+	// Always make sure a save extension is specified
+	// under this circumstance - it replaces the standard
+	// 'DefExt' argument to account for adjusted functionality.
+	const char *pSaveExt;
+} extFileDlg_t;
+
 // Enum for console command visibility in inline help. Documented commands always appear in inline
 // help, undocumented commands only appear if `set undocumented` has been activated. Commands
 // tagged as aliases never appear. Commands tagged as script-only return an error in interactive
@@ -403,6 +448,8 @@ extern int iTerrainCosmeticMode;
 extern DWORD dwFixedTileMask;
 extern int nHangar1Mode;
 
+extern bool bSavedCityBackup;
+
 // Game path global
 
 extern char szGamePath[MAX_PATH];
@@ -468,7 +515,7 @@ HOOKEXT const char* GetOnIdleInitialDialogEnumName(int iInitialDialogState);
 //HBITMAP CreateSpriteBitmap(int iSpriteID);
 HOOKEXT BOOL IsFileNameValid(const char *pName);
 HOOKEXT BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, const char *ini_name);
-int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize);
+int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize, int *nCompSize);
 HOOKEXT_CPP std::string Base64Encode(const unsigned char* pSrcData, size_t iSrcCount);
 HOOKEXT_CPP size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned char* pSrcData, size_t iSrcCount);
 HOOKEXT_CPP json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBigEndian);
@@ -523,6 +570,13 @@ int L_GetAdjustedPaletteIdx(BYTE palIdx, int nType);
 void L_InitDOSMacPaletteIdxTable();
 int L_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMax);
 const char *GetFixedTileType(int nTileSet);
+int L_byteswap_longlabel(char *pBuf);
+void L_byteswap_buffer(DWORD *pBuf, int nCount);
+void L_byteswap_micro(WORD *pBuf, unsigned int nCount);
+void L_byteswap_ushorts(WORD *pBuf, int nCount);
+void L_CharStringToPascalString(const char *pInStr, char *pOutStr, int nMaxSize, bool bFixedSize);
+bool L_PascalStringToCharString(const char *pInStr, char *pOutStr);
+void L_BackupFile(LPCSTR lpPathName, UINT debug_mask, UINT debug_flag);
 
 // Yes...
 FILE *log_fopen(const char *fname, const char *mode);
@@ -576,6 +630,7 @@ extern DWORD dwDetectedVersion;
 extern DWORD dwSC2KFixMode;
 extern DWORD dwDetectedAppTimestamp;
 extern DWORD dwSC2KFixVersion;
+extern DWORD dwOSVersion;
 extern const char* szSC2KFixVersion;
 extern const char* szSC2KFixReleaseTag;
 extern const char* szSC2KFixBuildInfo;
@@ -623,6 +678,7 @@ void InstallAnimationHooks_SC2K1995(void);
 void InstallAnimationHooks_SC2KDemo(void);
 void InstallSpriteAndTileSetHooks_SC2K1996(void);
 void InstallTileGrowthOrPlacementHandlingHooks_SC2K1996(void);
+void InstallGraphsScanningStatsHandlingHooks_SC2K1996(void);
 void InstallToolBarHooks_SC2K1996(void);
 void InstallMiscHooks_SC2K1996(void);
 void UpdateMiscHooks_SC2K1996(void);
@@ -663,6 +719,18 @@ void InstallMovieHooks(void);
 
 // Debugging settings
 
+// sc2x DEBUG defines - moved here due to them being used
+// in a distinct context elsewhere.
+
+#define SC2X_DEBUG_LOAD         1
+#define SC2X_DEBUG_SAVE         2
+#define SC2X_DEBUG_VANILLA_LOAD 4
+#define SC2X_DEBUG_VANILLA_SAVE 8
+#define SC2X_DEBUG_JSON_LOAD    16
+#define SC2X_DEBUG_JSON_SAVE    32
+#define SC2X_DEBUG_LOAD_CHECK   64
+#define SC2X_DEBUG_CREATEBAK    128
+
 extern UINT guzzardo_debug;
 extern UINT keybinds_debug;
 extern UINT mci_debug;
@@ -683,3 +751,6 @@ extern UINT updatenotifier_debug;
 
 void InstallFixes_SCURKPrimary(void);
 void InstallFixes_SCURK1996(void);
+
+// Custom file dialog stuff
+BOOL CALLBACK FileHookProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);

@@ -148,7 +148,7 @@ void __declspec(noreturn) MessageBoxCrash(std::string strComponent, DWORD dwErro
 // Wrapper for VirtualProtect that throws a fatal error if it fails
 bool SafeVirtualProtectEx(void* lpAddress, size_t dwSize, DWORD flNewProtect, const char* szFile, int iLine, const char* szFunction) {
 	DWORD dwDummy;
-	bool bSuccess = VirtualProtect(lpAddress, dwSize, flNewProtect, &dwDummy);
+	bool bSuccess = VirtualProtect(lpAddress, dwSize, flNewProtect, &dwDummy) ? true : false;
 
 	if (bSuccess)
 		return bSuccess;
@@ -689,7 +689,7 @@ int L_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMa
 			break;
 		case 4002:
 			if (!strcpy_s(lpBuffer, cchBufferMax,
-				"SimCity 2000 City (*.SC2)|*.SC2|SimCity Classic City (*.CTY)|*.CTY||"))
+				"SimCity 2000 and Classic Cities (*.SC2, *.CTY)|*.SC2;*.CTY;*.BAK;*.BAK.*|SimCity 2000 City (*.SC2)|*.SC2;*.BAK;*.BAK.*|SimCity Classic City (*.CTY)|*.CTY||"))
 				return strlen(lpBuffer);
 			break;
 		case 4004:
@@ -731,6 +731,91 @@ const char *GetFixedTileType(int nTileSet) {
 			break;
 	}
 	return "";
+}
+
+int L_byteswap_longlabel(char *pBuf) {
+	return _byteswap_ulong(*(DWORD *)pBuf);
+}
+
+void L_byteswap_buffer(DWORD *pBuf, int nCount) {
+	for (int nPos = 0; int(nCount / 4) > nPos; ++nPos)
+		pBuf[nPos] = _byteswap_ulong(pBuf[nPos]);
+}
+
+void L_byteswap_micro(WORD *pBuf, unsigned int nCount) {
+	for (int nPos = 0; nPos < int(nCount >> 3); ++nPos) {
+		pBuf[1] = _byteswap_ushort(pBuf[1]);
+		pBuf[2] = _byteswap_ushort(pBuf[2]);
+		pBuf[3] = _byteswap_ushort(pBuf[3]);
+		pBuf += 4;
+	}
+}
+
+void L_byteswap_ushorts(WORD *pBuf, int nCount) {
+	for (int nPos = 0; int(nCount / 2) > nPos; ++nPos)
+		pBuf[nPos] = _byteswap_ushort(pBuf[nPos]);
+}
+
+void L_CharStringToPascalString(const char *pInStr, char *pOutStr, int nMaxSize, bool bFixedSize) {
+	int nAbsMaxSize, nLen, nDiffLen, nStoredSize;
+
+	if (!pInStr)
+		return;
+	nAbsMaxSize = nMaxSize;
+	if (nAbsMaxSize > 255)
+		nAbsMaxSize = 255;
+	nLen = strlen(pInStr);
+	if (nLen > nAbsMaxSize)
+		nLen = nAbsMaxSize;
+	nDiffLen = nAbsMaxSize - nLen;
+	memcpy(pOutStr, pInStr, nLen);
+	if (nDiffLen > 0) {
+		// Only zero the remainder in a
+		// fixed size situation.
+		if (bFixedSize)
+			memset(&pOutStr[nLen], 0, nDiffLen);
+	}
+	for (int nPos = nLen - 1; nPos >= 0; --nPos)
+		pOutStr[nPos + 1] = pOutStr[nPos];
+	nStoredSize = (bFixedSize) ? nAbsMaxSize : nLen;
+	memset(&pOutStr[0], nStoredSize, 1);
+}
+
+bool L_PascalStringToCharString(const char *pInStr, char *pOutStr) {
+	int nPos;
+	char c;
+	int nLen;
+
+	if (!pInStr || strlen(pInStr) == 0)
+		return false;
+	c = *pInStr;
+	nLen = c;
+	for (nPos = 0; nLen > nPos; ++nPos)
+		pOutStr[nPos] = pInStr[nPos + 1];
+	pOutStr[nPos] = 0;
+	return true;
+}
+
+void L_BackupFile(LPCSTR lpPathName, UINT debug_mask, UINT debug_flag) {
+	time_t t;
+	tm pTM;
+	char szStamp[14 + 1], szFileName[MAX_PATH + 1];
+
+	if (FileExists(lpPathName)) {
+		t = time(NULL);
+		localtime_s(&pTM, &t);
+
+		sprintf_s(szStamp, "%04d%02d%02d%02d%02d%02d", pTM.tm_year + 1900, pTM.tm_mon + 1, pTM.tm_mday, pTM.tm_hour, pTM.tm_min, pTM.tm_sec);
+		for (int i = 0; i <= 10; ++i) {
+			sprintf_s(szFileName, "%s.bak.%s%02d", lpPathName, szStamp, i);
+			if (!FileExists(szFileName)) {
+				if (debug_mask & debug_flag)
+					ConsoleLog(LOG_DEBUG, "File Exists: %s - Creating Backup: %s\n", lpPathName, szFileName);
+				CopyFile(lpPathName, szFileName, TRUE);
+				break;
+			}
+		}
+	}
 }
 
 // start of base64 code
@@ -869,10 +954,10 @@ HOOKEXT_CPP size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned c
 // end of base64 code
 
 // Decompresses a MaxisRLE blob into a buffer
-int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize) {
+int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize, int *nCompSize) {
 	int i = 0, j = 0;
 
-	for (; i < iCompressedSize && j < iBufSize;) {
+	for (; i < iCompressedSize && j < (int)iBufSize;) {
 		if (pCompressedData[i] < 128) {
 			memcpy(pBuffer + j, pCompressedData + i + 1, pCompressedData[i]);
 			j += pCompressedData[i];
@@ -889,6 +974,7 @@ int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int i
 
 	if (sc2x_debug & 4)
 		ConsoleLog(LOG_DEBUG, "LOAD: Uncompressed %d bytes into %d bytes.\n", i, j);
+	*nCompSize = i;
 	return j;
 }
 

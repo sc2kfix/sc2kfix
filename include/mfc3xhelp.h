@@ -301,6 +301,30 @@ public:
 	int m_bAutoDelete;
 };
 
+class CMFC3XFileException : public CMFC3XException {
+public:
+	enum {
+		none,
+		generic,
+		fileNotFound,
+		badPath,
+		tooManyOpenFiles,
+		accessDenied,
+		invalidFile,
+		removeCurrentDir,
+		directoryFull,
+		badSeek,
+		hardIO,
+		sharingViolation,
+		lockViolation,
+		diskFull,
+		endOfFile
+	};
+
+	int m_cause;
+	int m_lOsError;
+};
+
 struct CMFC3XAssoc {
 	CMFC3XAssoc* pNext;
 	UINT nHashValue;
@@ -417,7 +441,8 @@ public:
 	CMFC3XString m_strDocStrings;
 };
 
-class CMFC3XMultiDocTemplate : CMFC3XDocTemplate {
+class CMFC3XMultiDocTemplate : public CMFC3XDocTemplate {
+public:
 	HMENU m_hMenuShared;
 	HACCEL m_hAccelTable;
 	CMFC3XPtrList m_docList;

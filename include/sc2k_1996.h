@@ -140,9 +140,17 @@
 #define XVALPOPLEVEL_MEDIUM (XVALPOPLEVEL_LOW * 3)
 #define XVALPOPLEVEL_HIGH (XVALPOPLEVEL_MEDIUM * 2)
 
+#define MAX_LABEL_LEN 23
+#define MAX_CONNLABEL_LEN 20
+
+#define MAX_NEIGH_NAME_LEN 31
+#define MAX_NEIGH_BUF_SIZE (MAX_NEIGH_NAME_LEN + 1)
+
 #define GROWTH_TILE_MAX_TRIP_STEPS 100
 
 #define GAME_MAP_SIZE 128u
+#define MINI_MAP_64   (GAME_MAP_SIZE / 2)
+#define MINI_MAP_32   (GAME_MAP_SIZE / 4)
 
 #define MAP_EDGE_MIN 0
 #define MAP_EDGE_MAX (GAME_MAP_SIZE - 1)
@@ -2866,6 +2874,23 @@ typedef struct {
 	int iEstimatedCost;
 } budget_t;
 
+typedef struct {
+	BYTE bName;
+	BYTE bStyle;
+	BYTE bTag;
+	BYTE bSurvey;
+	BYTE bWeather;
+} paper_t;
+
+typedef struct {
+	__int16 wType;
+	__int16 wPower;
+	BYTE bValue;
+	BYTE bItem;
+	BYTE bName;
+	BYTE bScore;
+} news_t;
+
 #pragma pack(push, 1)
 typedef struct {
 	BYTE bTileID;
@@ -2983,7 +3008,7 @@ typedef struct {
 // Struct defining an SC2K XLAB (Label) entity.
 #pragma pack(push, 1)
 typedef struct {
-	char szLabel[24];
+	char szLabel[MAX_LABEL_LEN + 1];
 	BYTE bPadding;
 } map_XLAB_t;
 #pragma pack(pop)
@@ -3014,22 +3039,27 @@ GAMECALL(0x4011E5, BOOL, __thiscall, Sound_MapToolSoundTrigger, CSound* pThis)
 GAMECALL(0x4011EA, CMovieDialog *, __thiscall, MovieDialog_Cons, CMovieDialog *, CMFC3XWnd *)
 GAMECALL(0x401154, void, __stdcall, SimulationPollutionTerrainAndLandValueScan, void)
 GAMECALL(0x401181, int, __cdecl, FatStepTrace, __int16 *, __int16 *)
+GAMECALL(0x40119F, void, __cdecl, DrawDisasterObjects, __int16, __int16, __int16)
 GAMECALL(0x4011B8, void, __cdecl, FatBeginTrace, __int16, __int16, __int16, __int16)
 GAMECALL(0x401203, LONG, __cdecl, StackPeek, POINT*)
 GAMECALL(0x401212, int, __cdecl, CityToolPlaceSubToRail, __int16, __int16)
 GAMECALL(0x401226, int, __cdecl, BeginProcessObjects, CMFC3XWnd *pTargetWnd, void *, int, __int16, RECT *)
 GAMECALL(0x401235, UINT, __thiscall, MyToolBar_GetButtonStyle, CMyToolBar *, int)
 GAMECALL(0x401262, void, __stdcall, SimulationEQ_LE_Processing, void)
+GAMECALL(0x401267, void, __thiscall, SimcityApp_CloseWidgetWindows, CSimcityAppPrimary *)
 GAMECALL(0x401280, BOOL, __cdecl, CheckTilesetFileHeader, FILE *)
 GAMECALL(0x4012B2, int, __thiscall, CityToolBar_PressButton, CCityToolBar *, int)
+GAMECALL(0x4012B7, void, __cdecl, FailRadioException, UINT, CMFC3XFileException *, char *)
 GAMECALL(0x4012C1, int, __cdecl, DirtyTile, __int16 x, __int16 y)
 GAMECALL(0x4012DF, void, __stdcall, DecreaseWaterLevel, void)
 GAMECALL(0x4012F8, __int16, __cdecl, GetDestDistance, __int16, __int16, __int16, __int16)
 GAMECALL(0x4012FD, void, __cdecl, UpdateSimNationDialog, void)
+GAMECALL(0x401334, void, __thiscall, SimcityView_DrawThingObjects, CSimcityView *, __int16, __int16, __int16)
 GAMECALL(0x401357, void, __cdecl, DrawProcessShadowObject, __int16, __int16, __int16, __int16)
 GAMECALL(0x401370, DWORD, __thiscall, Graphics_WidthBytes, CGraphics *)
 GAMECALL(0x401393, int, __cdecl, DrawProcessObject, __int16, __int16, __int16, __int16, __int16)
 GAMECALL(0x4013B1, void, __thiscall, SimcityView_ScaleOut, CSimcityView *pThis)
+GAMECALL(0x4013DE, void, __thiscall, SimcityDoc_PrepareData, CSimcityDoc *)
 GAMECALL(0x4013E3, BOOL, __cdecl, ChangeTileSpriteEntry, int, WORD, WORD, DWORD, void *)
 GAMECALL(0x4013F7, CMFC3XPalette *, __thiscall, SimcityApp_GetActivePalette, CSimcityAppPrimary *)
 GAMECALL(0x40140B, void, __thiscall, SimcityView_ScaleIn, CSimcityView *pThis)
@@ -3050,7 +3080,10 @@ GAMECALL(0x40150A, int, __thiscall, SimcityApp_ExitRequester, CSimcityAppPrimary
 GAMECALL(0x401514, void, __stdcall, PerhapsFreeDocumentsLibraryAndStrings)
 GAMECALL(0x401519, void, __thiscall, CityToolBar_ToolMenuEnable, CCityToolBar* pThis)
 GAMECALL(0x40152D, BOOL, __thiscall, SimcityView_MainWindowUpdate, CSimcityView *, RECT *, BOOL)
+GAMECALL(0x401555, void, __thiscall, SimcityView_ResetScreenArea, CSimcityView *)
+GAMECALL(0x401564, CScenarioDialog *, __thiscall, ScenarioDialog_Cons, CScenarioDialog *, CMainFrame *)
 GAMECALL(0x401573, int, __thiscall, SimcityView_CityToolPlaceSubway, CSimcityView*, __int16, __int16)
+GAMECALL(0x401578, void, __stdcall, PrepareGame)
 GAMECALL(0x4015A0, void, __thiscall, SimcityApp_SaveCity, CSimcityAppPrimary *pThis)
 GAMECALL(0x4015C8, void, __thiscall, CityToolBar_AdjustLayers, CCityToolBar *, BOOL)
 GAMECALL(0x4015CD, CCurrencyString *, __thiscall, CurrencyString_SetString, CCurrencyString *, const char *pSrc, int iSize, double idAmount)
@@ -3074,6 +3107,7 @@ GAMECALL(0x401857, int, __cdecl, MapToolPlaceTree, __int16 iTileTargetX, __int16
 GAMECALL(0x4018C0, void, __stdcall, SelectArcologyDialog_OnDrawState, LPDRAWITEMSTRUCT)
 GAMECALL(0x401901, void, __thiscall, SelectArcologyDialog_OnDrawEntire, CSelectArcologyDialog *, int, int, LPDRAWITEMSTRUCT)
 GAMECALL(0x40191F, void, __cdecl, DoFund, __int16)
+GAMECALL(0x401929, void, __thiscall, SimcityApp_SaveCityAs, CSimcityAppPrimary *)
 GAMECALL(0x401951, void, __thiscall, Graphics_DeleteObject, CGraphics *)
 GAMECALL(0x40198D, int, __cdecl, MapToolPlaceStream, __int16 iTileTargetX, __int16 iTileTargetY, __int16) // XXX - the last parameter isn't entirely clear, perhaps area or offset?
 GAMECALL(0x401997, int, __cdecl, MapToolPlaceWater, __int16 iTileTargetX, __int16 iTileTargetY)
@@ -3130,11 +3164,14 @@ GAMECALL(0x401E7E, void, __thiscall, SimcityApp_SoundPlayActionThingSound, CSimc
 GAMECALL(0x401EA1, int, __cdecl, MapToolLowerTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x401ECE, int, __thiscall, Graphics_Load, CGraphics *, const char *, int)
 GAMECALL(0x401ED8, void, __cdecl, DirtyCloud, __int16, __int16, __int16)
+GAMECALL(0x401F05, void, __stdcall, StartCleanGame)
+GAMECALL(0x401F0F, void, __thiscall, ScenarioDialog_Dest, CScenarioDialog *)
 GAMECALL(0x401F23, CNewspaperDialog *, __thiscall, NewspaperDialog_Construct, CNewspaperDialog *, CMainFrame *)
 GAMECALL(0x401F50, int, __cdecl, RecalculateCityValue, void)
 GAMECALL(0x401F82, void, __thiscall, SimcityView_DrawTornado, CSimcityView *, __int16, __int16, __int16)
 GAMECALL(0x401F9B, int, __stdcall, LoadSoundIntoBuffer, int iSoundID, void *lpBuffer)
 GAMECALL(0x401FA0, int, __cdecl, CheckAdjustTerrainAndPlacePowerLines, __int16 x, __int16 y)
+GAMECALL(0x401FFA, void, __stdcall, GraphKludge)
 GAMECALL(0x402022, void, __stdcall, UpdateGraphData, void)
 GAMECALL(0x402045, void *, __cdecl, AllocateDataEntry, size_t iSz)
 GAMECALL(0x402095, void, __cdecl, DrawLargeTile, __int16, __int16, int, int)
@@ -3146,8 +3183,11 @@ GAMECALL(0x402121, void, __thiscall, CityToolBar_MoveAndBlitToolBar, CCityToolBa
 GAMECALL(0x40212B, void, __thiscall, Sound_LoadClickSound, CSound *)
 GAMECALL(0x40216C, int, __thiscall, Graphics_Height, CGraphics *)
 GAMECALL(0x40217B, void, __stdcall, SimulationRCIDemandUpdates, void)
+GAMECALL(0x402199, void, __thiscall, SimcityView_ResetAttributesAndCoordinates, CSimcityView *, __int16, __int16, __int16)
 GAMECALL(0x40219E, INT_PTR, __thiscall, GameDialog_DoModal, CGameDialog *)
+GAMECALL(0x4021A3, void, __cdecl, AdjustScenarioTextCharacters, const char *, char *)
 GAMECALL(0x4021A8, void, __thiscall, MainFrame_ToggleStatusControlBar, CMainFrame *, BOOL)
+GAMECALL(0x4021D5, void, __stdcall, ShowViewControls)
 GAMECALL(0x4021F8, void, __cdecl, ReadTilesetFile, char *)
 GAMECALL(0x402211, void, __thiscall, SimcityView_Demolish, CSimcityView *pThis, __int16 x, __int16 y, int iExplosion)
 GAMECALL(0x402225, int, __thiscall, MainFrame_LoadOwnerInformation, CMainFrame *)
@@ -3155,6 +3195,7 @@ GAMECALL(0x402252, int, __thiscall, MainFrame_DoInitialDialog, CMainFrame *)
 GAMECALL(0x402266, LONG, __cdecl, SetSpriteForDrawing, void *, sprite_header_t *, int, __int16, RECT *)
 GAMECALL(0x40226B, int, __thiscall, SimcityView_UpdateHouse, CSimcityView *) // Update partial sections ("dirty" areas)
 GAMECALL(0x402289, char, __cdecl, PerhapsGeneralZoneChooseAndPlaceBuilding, __int16 x, __int16 y, __int16 iBuildingPopLevel, __int16)
+GAMECALL(0x402293, void, __stdcall, UpdateSectionsAndResetWindowMenu)
 GAMECALL(0x4022FC, void, __cdecl, SimulationGrowthTick, __int16 iStep, __int16 iSubStep)
 GAMECALL(0x402306, void, __thiscall, MyToolBar_SetButtonStyle, CMyToolBar *, int nIndex, UINT nStyle)
 GAMECALL(0x40232E, void, __thiscall, MapToolBar_MoveAndBlitToolBar, CMapToolBar *, int, int)
@@ -3204,11 +3245,11 @@ GAMECALL(0x402725, int, __cdecl, PlacePowerLinesAtCoordinates, __int16 x, __int1
 GAMECALL(0x402739, void, __stdcall, GetAndLoadNextTileFileChunkToMemory, FILE *, char *, DWORD)
 GAMECALL(0x402752, void, __thiscall, MapToolBar_PressButton, CMapToolBar *, int)
 GAMECALL(0x40275C, void, __stdcall, SelectArcologyDialog_OnDrawFocus, LPDRAWITEMSTRUCT)
-GAMECALL(0x402757, void, __thiscall, SimcityApp_LoadCityFromCMDLine, CSimcityAppPrimary *, CMFC3XString)
 GAMECALL(0x40278E, BOOL, __thiscall, MainFrame_OnQueryNewPalette, CMainFrame *)
 GAMECALL(0x402798, int, __cdecl, MapToolPlaceForest, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x4027A7, void, __thiscall, SimcityView_OnVScroll, CSimcityView *pThis, UINT nSBCode, UINT nPos, CMFC3XScrollBar *pScrollBar)
 GAMECALL(0x4027B6, __int16, __cdecl, CalcTileHit16, __int16, __int16)
+GAMECALL(0x4027CF, void, __thiscall, SimcityApp_AdjustMenus, CSimcityAppPrimary *, __int16)
 GAMECALL(0x4027E3, BOOL, __cdecl, MoviePlay, HWND)
 GAMECALL(0x4027F2, int, __cdecl, ItemPlacementCheck, __int16 x, __int16 y, BYTE iTileID, __int16 iTileArea)
 GAMECALL(0x402810, int, __thiscall, SimcityView_DrawHouse, CSimcityView *) // Primary drawing call (complete draw/update)
@@ -3216,14 +3257,12 @@ GAMECALL(0x40281F, int, __cdecl, RunTripGenerator, __int16 x, __int16 y, __int16
 GAMECALL(0x402829, void, __cdecl, SpawnShip, __int16 x, __int16 y)
 GAMECALL(0x40282E, void, __thiscall, SimcityView_RotateClockwise, CSimcityView *pThis)
 GAMECALL(0x40285B, void, __thiscall, MainFrame_MoveStatusGoToButton, CMainFrame *)
-GAMECALL(0x402892, void, __thiscall, GameFileDialog_Dest, CMFC3XFileDialog *)
 GAMECALL(0x4028A1, void, __thiscall, SimcityApp_UpdateStatus, CSimcityAppPrimary *, BOOL)
 GAMECALL(0x4028BA, void, __thiscall, CityToolBar_OnCancelMode, CCityToolBar *)
 GAMECALL(0x402900, int, __cdecl, NewspaperStoryGenerator, __int16 iType, BYTE iValue)
 GAMECALL(0x402937, void, __thiscall, CityToolBar_ToolMenuDisable, CCityToolBar* pThis)
 GAMECALL(0x40293C, void, __cdecl, DisplayItemCost, CMFC3XPaintDC *, int)
 GAMECALL(0x402941, void, __stdcall, drawBridgeShape, __int16, __int16, __int16)
-GAMECALL(0x402964, void, __thiscall, SimcityApp_LoadScenarioFromCMDLine, CSimcityAppPrimary *, CMFC3XString)
 GAMECALL(0x402978, int, __cdecl, SpawnSailBoat, __int16 x, __int16 y)
 GAMECALL(0x40297D, int, __thiscall, SimcityView_CheckOrLoadGraphic, CSimcityView *)
 GAMECALL(0x402991, void, __cdecl, SwapCycle, int)
@@ -3236,12 +3275,14 @@ GAMECALL(0x402A40, void, __cdecl, FailRadio, UINT)
 GAMECALL(0x402A59, void, __cdecl, CityToolSetSign, __int16, __int16)
 GAMECALL(0x402A5E, void, __thiscall, MapToolBar_SetSelection, CMapToolBar *, UINT, UINT, CMFC3XPoint *)
 GAMECALL(0x402A68, void, __thiscall, CityToolBar_UpdateControls, CCityToolBar *, BOOL)
+GAMECALL(0x402A8B, void, __thiscall, SimcityDoc_NewGame, CSimcityDoc *)
 GAMECALL(0x402AB3, void, __thiscall, SimcityView_DoCenterOnPoint, CSimcityView *)
 GAMECALL(0x402ADB, void, __thiscall, MovieDialog_Dest, CMovieDialog *)
 GAMECALL(0x402AE5, void, __cdecl, CityToolTargetHelicopter, __int16, __int16)
 GAMECALL(0x402AF4, int, __cdecl, CityToolPlaceTunnel, __int16, __int16)
 GAMECALL(0x402B2B, int, __cdecl, MapToolStretchTerrain, __int16 iTileTargetX, __int16 iTileTargetY, __int16 iScreenTargetPointY)
 GAMECALL(0x402B44, __int16, __cdecl, MapToolMenuAction, int iMouseKeys, POINT pt)
+GAMECALL(0x402B4E, void, __cdecl, DisplayInformationMessageBox, const char *, DWORD, CMainFrame *)
 GAMECALL(0x402B7B, BOOL, __stdcall, FinishProcessObjects, void)
 GAMECALL(0x402B8A, void, __thiscall, Sound_LoadActionThingSound, CSound *, int)
 GAMECALL(0x402B94, int, __cdecl, MapToolLevelTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
@@ -3258,21 +3299,25 @@ GAMECALL(0x402C34, BOOL, __thiscall, MainFrame_LoadGraphic, CMainFrame *, const 
 GAMECALL(0x402C3E, int, __thiscall, CityToolBar_HitTestFromPoint, CCityToolBar *, CMFC3XPoint)
 GAMECALL(0x402C4D, void, __cdecl, FailRadioToFileID, int, UINT)
 GAMECALL(0x402C98, void, __thiscall, GameDialog_SetCursor, CGameDialog *)
+GAMECALL(0x402CCF, void, __cdecl, GetFileExceptionError, UINT, CMFC3XFileException *, CMFC3XString *)
 GAMECALL(0x402CF2, void, __thiscall, SimcityApp_SetGameCursor, CSimcityAppPrimary *pThis, int iNewCursor, BOOL bActive)
+GAMECALL(0x402D15, void, __stdcall, ClearLabels)
 GAMECALL(0x402D1F, __int16, __cdecl, CalcTileHit8, __int16, __int16)
 GAMECALL(0x402D2E, void, __stdcall, UpdateBudgetInformation, void)
+GAMECALL(0x402D33, int, __thiscall, SimcityApp_ConvertClassicCity, CSimcityAppPrimary *, char *)
 GAMECALL(0x402D51, void, __stdcall, SimulationUpdateMonthlyTrafficData, void)
 GAMECALL(0x402D56, BYTE, __stdcall, PrepareLabel, void)
 GAMECALL(0x402D6F, void, __stdcall, DrawAllColor)
 GAMECALL(0x402D97, CStadiumSelectTeamDialog *, __thiscall, StadiumSelectTeamDialog_Construct, CStadiumSelectTeamDialog *, CMainFrame *)
 GAMECALL(0x402D9C, void, __cdecl, DrawUnderTile, __int16, __int16)
 GAMECALL(0x402DA1, BYTE *, __thiscall, Graphics_LockDIBBits, CGraphics *)
+GAMECALL(0x402DD3, int, __thiscall, SimcityApp_CheckActiveGame, CSimcityAppPrimary *)
 GAMECALL(0x402DF1, void, __thiscall, Graphics_Paint, CGraphics *, HDC, int, int)
 GAMECALL(0x402E19, void, __cdecl, QueryGeneralItem, __int16, __int16)
-GAMECALL(0x402E73, void, __cdecl, DrawLabelsAndObjects, __int16, __int16, __int16, __int16)
 GAMECALL(0x402E96, void, __thiscall, SimcityApp_GetToolSound, CSimcityAppPrimary *)
 GAMECALL(0x402EA0, int, __cdecl, CityToolPlacePowerHydroDam, __int16, __int16)
 GAMECALL(0x402EA5, void, __cdecl, StackPush, __int16, __int16)
+GAMECALL(0x402EF5, void, __stdcall, GetOccupiedTileCount)
 GAMECALL(0x402EFA, int, __stdcall, GetSimcityViewMenuPos, int iPos)
 GAMECALL(0x402F0E, void, __thiscall, SimcityView_GameCursorHitTest, CSimcityView *)
 GAMECALL(0x402F18, void, __thiscall, MainFrame_UpdateCityToolBar, CMainFrame *)
@@ -3302,10 +3347,7 @@ GAMECALL_MAIN(0x4237F0, void, __thiscall, CityToolBar_ToolMenuDisable, CCityTool
 GAMECALL_MAIN(0x423860, void, __thiscall, CityToolBar_ToolMenuEnable, CCityToolBar* pThis)
 GAMECALL_MAIN(0x4255A0, void, __thiscall, SimcityApp_LoadCursorResources, CSimcityAppPrimary *)
 GAMECALL_MAIN(0x427C10, int, __thiscall, QueryGeneralDialog_OnInitDialog, CQueryGeneralDialog *)
-GAMECALL_MAIN(0x42DE20, void, __stdcall, PrepareGame, void)
-GAMECALL_MAIN(0x4302E0, DWORD, __thiscall, SimcityApp_DoLoadGame, CSimcityAppPrimary *, CMFC3XFile *, char*)
-GAMECALL_MAIN(0x432180, DWORD, __thiscall, SimcityApp_DoSaveGame, CSimcityAppPrimary *, CMFC3XString *)
-GAMECALL_MAIN(0x4348E0, void, __stdcall, StartCleanGame, void)
+GAMECALL_MAIN(0x430C00, void, __stdcall, ResetLabelStringState)
 GAMECALL_MAIN(0x44D1B0, void, __cdecl, QuerySpecificItem, __int16, __int16)
 GAMECALL_MAIN(0x458D40, void, __thiscall, SimcityView_Demolish, CSimcityView *, __int16, __int16, BOOL)
 GAMECALL_MAIN(0x45CF10, void, __stdcall, SimulationStartDisaster, void)
@@ -3323,13 +3365,12 @@ GAMECALL_MAIN(0x48B994, int, __cdecl, SmackOpen, const char *, int, int)
 GAMECALL_MAIN(0x48B99A, int, __cdecl, SmackSoundUseDirectSound, HWND)
 
 // MFC function pointers. Use with care.
+GAMECALL_MAIN(0x48C21F, void, __cdecl, Op_Delete, void *)
 GAMECALL_MAIN(0x48CF5A, int, __cdecl, _heapmin)
 GAMECALL_MAIN(0x48B9E6, BOOL, __thiscall, DC_TextOutA, CMFC3XDC *, int, int, const char *, int)
 GAMECALL_MAIN(0x48BA0A, BOOL, __thiscall, DC_ExtTextOutA, CMFC3XDC *, int, int, unsigned int, RECT *, const char *, unsigned int, int *)
 GAMECALL_MAIN(0x49E59F, void, __stdcall, AfxAbort)
 GAMECALL_MAIN(0x49EBD3, void, __cdecl, String_Format, CMFC3XString *pThis, char const *Ptr, ...)
-GAMECALL_MAIN(0x49FC26, CMFC3XFileDialog *, __thiscall, FileDialog_Cons, CMFC3XFileDialog *, void *, const char *, const char *, unsigned int, char *, CMFC3XWnd *)
-GAMECALL_MAIN(0x49FE18, int, __thiscall, FileDialog_DoModal, CMFC3XFileDialog *)
 GAMECALL_MAIN(0x4A194E, void, __thiscall, WinApp_WinHelpA, CMFC3XWinApp *, int, unsigned int)
 GAMECALL_MAIN(0x4A280C, BOOL, __thiscall, CmdTarget_OnCmdMsg, CMFC3XCmdTarget *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo)
 GAMECALL_MAIN(0x4A28BB, void, __thiscall, CmdTarget_BeginWaitCursor, CMFC3XCmdTarget *)
@@ -3360,8 +3401,18 @@ GAMECALL_MAIN(0x4A7445, CMFC3XMenu *, __stdcall, Menu_FromHandlePermanent, HMENU
 GAMECALL_MAIN(0x4A7483, int, __thiscall, Menu_Attach, CMFC3XMenu *, HMENU)
 GAMECALL_MAIN(0x4A74FB, BOOL, __thiscall, Menu_DestroyMenu, CMFC3XMenu *)
 GAMECALL_MAIN(0x4A7519, void, __thiscall, Menu_DrawItem, CMFC3XMenu *, LPDRAWITEMSTRUCT)
+GAMECALL_MAIN(0x4A7E82, CMFC3XFile *, __thiscall, File_Cons, CMFC3XFile *)
+GAMECALL_MAIN(0x4A8072, void, __thiscall, File_Dest, CMFC3XFile *)
+GAMECALL_MAIN(0x4A8190, int, __thiscall, File_Open, CMFC3XFile *, const char *, unsigned int, CMFC3XFileException *)
+GAMECALL_MAIN(0x4A8313, DWORD, __thiscall, File_Read, CMFC3XFile *, void *, DWORD)
+GAMECALL_MAIN(0x4A8360, void, __thiscall, File_Write, CMFC3XFile *, void const *, unsigned int)
+GAMECALL_MAIN(0x4A83B8, LONG, __thiscall, File_Seek, CMFC3XFile *, LONG, DWORD)
+GAMECALL_MAIN(0x4A8448, void, __thiscall, File_Close, CMFC3XFile *)
+GAMECALL_MAIN(0x4A854E, unsigned long, __thiscall, File_GetLength, CMFC3XFile *)
+GAMECALL_MAIN(0x4A85B4, void, __stdcall, File_Remove, const char *)
 GAMECALL_MAIN(0x4A8A58, BOOL, __stdcall, File_GetStatusWithString, const char *, CMFC3XFileStatus *)
 GAMECALL_MAIN(0x4AA573, void, __thiscall, WinApp_OnAppExit, CMFC3XWinApp *pThis)
+GAMECALL_MAIN(0x4AA9EB, CMFC3XDocument *, __thiscall, MultiDocTemplate_OpenDocumentFile, CMFC3XMultiDocTemplate *, char *, BOOL)
 GAMECALL_MAIN(0x4AABF3, CMFC3XDC *, __thiscall, DC_Cons, CMFC3XDC *)
 GAMECALL_MAIN(0x4AAD01, CMFC3XDC *, __stdcall, DC_FromHandle, HDC)
 GAMECALL_MAIN(0x4AAD1F, BOOL, __thiscall, DC_Attach, CMFC3XDC *, HDC)
@@ -3394,6 +3445,7 @@ GAMECALL_MAIN(0x4BA38B, CMFC3XDocument *, __thiscall, FrameWnd_GetActiveDocument
 GAMECALL_MAIN(0x4BB23A, void, __thiscall, FrameWnd_RecalcLayout, CMFC3XFrameWnd *pThis, int)
 GAMECALL_MAIN(0x4BE492, void, __thiscall, WinApp_ExitInstance, CMFC3XWinApp *)
 GAMECALL_MAIN(0x4BE7F7, void, __thiscall, WinApp_EnableShellOpen, CMFC3XWinApp *)
+GAMECALL_MAIN(0x4BEDD2, UINT, __thiscall, WinApp_GetProfileIntA, CMFC3XWinApp *, const char *, const char *, int)
 GAMECALL_MAIN(0x4C0730, MFC3X_AFX_THREAD_STATE *, __stdcall, AfxGetThreadState, void)
 
 // Unknown functions that do something we might need them to. Use with extreme care.
@@ -3425,10 +3477,13 @@ GAMEOFF_ARR(__int16,	wDlgAvailableBridges,	0x4C7C58)
 GAMEOFF(__int16,	wQueryTileID,			0x4C7C68)
 GAMEOFF(__int16,	wQuerySpriteID,			0x4C7C6C)
 GAMEOFF(void *,	pQuerySpriteBits,			0x4C7C70)
-GAMEOFF_ARR(CMFC3XFont *,	MainFontsArl,		0x4C7C88)
-GAMEOFF(WORD,	wViewInitialCoordX,			0x4C7CB0)
-GAMEOFF(WORD,	wViewInitialCoordY,			0x4C7CB4)
-GAMEOFF(WORD,	wViewInitialZoom,			0x4C7CB8)
+GAMEOFF_ARR(CMFC3XFont *,	MainFontsArl,	0x4C7C88)
+GAMEOFF(__int16,	wViewInitialCoordX,		0x4C7CB0)
+GAMEOFF(__int16,	wViewInitialCoordY,		0x4C7CB4)
+GAMEOFF(__int16,	wViewInitialZoom,		0x4C7CB8)
+GAMEOFF(CSimcityDoc *,	pActiveSimDoc,		0x4C7CBC)
+GAMEOFF(DWORD,	nRetState,					0x4C7CC0)
+GAMEOFF(DWORD,	nDataOffset,				0x4C7CC4)
 GAMEOFF(RECT,	currWndClientRect,			0x4C7CD0)
 GAMEOFF(WORD,	wCurrentAngle,				0x4C7CF8)
 GAMEOFF(CMFC3XDC *,	theSCVDC,				0x4C7D00)
@@ -3462,74 +3517,79 @@ GAMEOFF(WORD,	wDisasterFloodArea,			0x4C93A8)
 GAMEOFF(WORD,	wCityDevelopedTiles,		0x4C93B4)
 GAMEOFF(WORD,	wIndustrialMixPollutionBonus, 0x4C9428)
 GAMEOFF(WORD,	wViewRotation,				0x4C942C)
+GAMEOFF(DWORD *,	pRawPopRatioTable,		0x4C94B4)
+GAMEOFF(DWORD *,	pEQRatioTable,			0x4C94BC)
 GAMEOFF(BOOL,	bCityHasOcean,				0x4C94C0)
 GAMEOFF(DWORD,	dwArcologyPopulation,		0x4C94C4)
 GAMEOFF_ARR(CMFC3XString,	cityToolGroupStrings,		0x4C94C8)
 GAMEOFF(DWORD,	dwDisasterActive,			0x4C9EE8)
-GAMEOFF_ARR(WORD, wBondArr,					0x4C9EF0)
+GAMEOFF_ARR(WORD, wArrBondData,				0x4C9EF0)
 GAMEOFF_ARR(CMFC3XString,	cStrDataArchiveNames,	0x4CA160)
-GAMEOFF(DWORD,	dwCityResidentialPopulation,	0x4CA194)
+GAMEOFF(CMFC3XString,	strUnusedString,		0x4CA188)
+GAMEOFF(DWORD,	dwCityOldResPopulation,	0x4CA194)
 GAMEOFF(CMFC3XString, pszCityName,				0x4CA1A0)
 GAMEOFF(WORD,	wNationalEconomyTrend,		0x4CA1BC)
-GAMEOFF(BYTE*,	bArrNewspaperTable2,		0x4CA1C0)
+GAMEOFF(news_t*,	pNewsArr,				0x4CA1C0)
 GAMEOFF(WORD,	wPrisonBonus,				0x4CA1DC)
 GAMEOFF(WORD,	wCityTerrainSliderHills,	0x4CA1E0)
 GAMEOFF(__int16,	wClipXhigh,				0x4CA1E4)
 GAMEOFF(WORD,	wIndustrialMixBonus,		0x4CA1E8)
 GAMEOFF(WORD,	wCurrentMapToolGroup,		0x4CA1EC)
 GAMEOFF(WORD,	wIndustryConnect,			0x4CA3F0)
-GAMEOFF(WORD*,	wArrIndustrialDemands,		0x4CA3F4)
+GAMEOFF(__int16 *,	pIndividualIndDemands,	0x4CA3F4)
+GAMEOFF(DWORD,	dwInterestRateSum,			0x4CA400)
 GAMEOFF(WORD,	EditData,					0x4CA404)
 GAMEOFF(WORD,	wSubwayXUNDCount,			0x4CA41C)
 GAMEOFF(WORD,	wSetTriggerDisasterType,	0x4CA420)
 GAMEOFF(DWORD*,	pZonePops,					0x4CA428)
-GAMEOFF(WORD,	wCityMode,					0x4CA42C)
+GAMEOFF(__int16,	wCityMode,				0x4CA42C)
 GAMEOFF(WORD,	wOldArrests,				0x4CA430)
 GAMEOFF(COLORREF,	colGameBackgndAbove,	0x4CA43C)
 GAMEOFF(int,	dwCityLandValue,			0x4CA440)
 GAMEOFF(int,	dwCityFunds,				0x4CA444)
-GAMEOFF(WORD*, dwTileCount,					0x4CA4C8)		// WORD dwTileCount[256]
+GAMEOFF(__int16 *, wTileCount,				0x4CA4C8)		// WORD wTileCount[256]
 GAMEOFF(DWORD,	dwCityValue,				0x4CA4D0)
 GAMEOFF(BOOL,	bOptionsAutoGoto,			0x4CA5D8)
 GAMEOFF(DWORD,	dwCityGarbage,				0x4CA5F0)		// Unused in vanilla game (sort of)
 GAMEOFF(WORD,	wCityStartYear,				0x4CA5F4)
 GAMEOFF(DWORD,	dwCityUnemployment,			0x4CA5F8)
 GAMEOFF(DWORD*, dwNeighborValue,			0x4CA804)		// DWORD dwNeighborValue[4]
-GAMEOFF(WORD,	wNewspaperChoice,			0x4CA808)
+GAMEOFF(__int16,	wNewspaperChoice,		0x4CA808)
 GAMEOFF(__int16,	wWaterLevel,			0x4CA818)
 GAMEOFF(__int16,	wDisasterObject,		0x4CA81C)
 GAMEOFF(__int16,	wClipYhigh,				0x4CA820)
 GAMEOFF(DWORD,	dwNationalPopulation,		0x4CA928)
 GAMEOFF(DWORD*, dwNeighborFame,				0x4CA92C)		// DWORD dwNeighborFame[4]
 GAMEOFF(WORD*,	wMilitaryTiles,				0x4CA934)
-GAMEOFF(WORD,	wNationalTax,				0x4CA938)
-GAMEOFF(WORD,	wCurrentDisasterID,			0x4CA93C)
+GAMEOFF(WORD,	wNationalFedRate,			0x4CA938)
+GAMEOFF(__int16,	wCurrentDisasterType,	0x4CA93C)
 GAMEOFF(DWORD,	dwCityOrdinances,			0x4CAA40)
 GAMEOFF_ARR(CMFC3XBrush,	MainBrushFace,	0x4CAA48)
 GAMEOFF(DWORD,	dwPowerUsedPercentage,		0x4CAA50)
-GAMEOFF(POINT,	dwDisasterPoint,			0x4CAA58)
+GAMEOFF(POINT,	disasterPoint,				0x4CAA58)
+GAMEOFF(DWORD *,	pLERatioTable,			0x4CAA70)
 GAMEOFF(DWORD,	dwCityPopulation,			0x4CAA74)
 GAMEOFF(WORD,	wCityTerrainSliderWater,	0x4CAAF8)
+GAMEOFF(CMFC3XFileException,	fileExcept,	0x4CAB00)
 GAMEOFF_PTR(DWORD,	pSomeWnd,				0x4CAC18)		// Perhaps this is the active view window? (unclear)
 GAMEOFF(DWORD*, dwNeighborPopulation,		0x4CAD10)		// DWORD dwNeighborPopulation[4]
 GAMEOFF(BOOL,	bMainFrameInactive,			0x4CAD14)
 GAMEOFF(__int16,	iScreenOffSetX,			0x4CAD18)
 GAMEOFF(__int16,	iScreenOffSetY,			0x4CAD1C)
 GAMEOFF(COLORREF,	colGameBackgndUnder,	0x4CAD20)
-GAMEOFF(BYTE*,	bArrNewspaperTable1,		0x4CAD24)
+GAMEOFF(paper_t*,	pPaperArr,				0x4CAD24)
 GAMEOFF(DWORD,	dwCityFame,					0x4CAD28)		// Unused in vanilla game
 GAMEOFF(BOOL,	bYearEndFlag,				0x4CAD2C)
 GAMEOFF(__int16,	iScreenPointX,			0x4CAD30)		// Used here in MapToolMenuAction
 GAMEOFF(__int16,	iScreenPointY,			0x4CAD34)		// Used here in MapToolMenuAction
+GAMEOFF(CMFC3XString,	strCityFilename,	0x4CAD38)
 GAMEOFF(BOOL,	bInScenario,				0x4CAD44)
-GAMEOFF_ARR(char, szNeighborNameSouth,		0x4CAD58)		// char[32]
-GAMEOFF_ARR(char, szNeighborNameWest,		0x4CAD78)		// char[32]
-GAMEOFF_ARR(char, szNeighborNameNorth,		0x4CAD98)		// char[32]
-GAMEOFF_ARR(char, szNeighborNameEast,		0x4CADB8)		// char[32]
+GAMEOFF_ARR(char, szNeighborCities,			0x4CAD58)		// char[32 * 4]
 GAMEOFF(WORD,	wCityTerrainSliderTrees,	0x4CADD8)
+GAMEOFF(__int16,	wConnectTiles,			0x4CADDC)
 GAMEOFF(BYTE,	bWeatherHeat,				0x4CADE0)
 GAMEOFF(RECT,	dirtyRect,					0x4CAD48)
-GAMEOFF_ARR(BYTE, stNeighborCities,			0x4CAD58)
+GAMEOFF_ARR(char, stNeighborCities,			0x4CAD58)
 GAMEOFF(__int16,	wClipXlow,				0x4CAE00)
 GAMEOFF(DWORD,	dwCityDays,					0x4CAE04)
 GAMEOFF(BYTE,	bWeatherWind,				0x4CAE0C)
@@ -3541,57 +3601,43 @@ GAMEOFF(WORD,	wCityElapsedYears,			0x4CB020)
 GAMEOFF(__int16,	wClipYlow,				0x4CB024)
 GAMEOFF_ARR(CMFC3XBrush,	MainBrushBorder,	0x4CB1B0)
 GAMEOFF(sprite_header_t*, pArrSpriteHeaders, 0x4CB1B8)
+GAMEOFF(WORD,	wUnknownGameVarOne,			0x4CB1CC)
 GAMEOFF(BOOL,	bNewspaperSubscription,		0x4CB3D0)
 GAMEOFF(BYTE,	bWeatherRain,				0x4CB3D4)
 GAMEOFF(WORD,	wSewerBonus,				0x4CB3DC)
-GAMEOFF(WORD*,	wArrIndustrialTaxRates,		0x4CB3E0)
+GAMEOFF(__int16 *,	pIndividualIndTaxRate,	0x4CB3E0)
 GAMEOFF(WORD,	wCityCurrentSeason,			0x4CB3E8)
 GAMEOFF(microsim_t*, pMicrosimArr,			0x4CB3EC)
-GAMEOFF(DWORD*,	dwArrIndustrialPopulations,	0x4CB3F0)
+GAMEOFF(DWORD*,	pIndividualIndRatio,		0x4CB3F0)
 GAMEOFF(BOOL,	bCityHasRiver,				0x4CB3F8)
 GAMEOFF(COLORREF,	colBtnFace,				0x4CB3FC)
 GAMEOFF(WORD,	LastCursorX,				0x4CB400)
 GAMEOFF(WORD,	wCityDifficulty,			0x4CB404)
 GAMEOFF(WORD,	LastCursorY,				0x4CB408)
 GAMEOFF(BYTE,	bWeatherTrend,				0x4CB40C)
-GAMEOFF(DWORD,	dwCityWorkforceLE,			0x4CB410)
-GAMEOFF_ARR(WORD,	wCityInventionYears,	0x4CB430)
+GAMEOFF(int,	dwCityWorkforceLE,			0x4CB410)
+GAMEOFF_ARR(__int16,	wCityInventionYears,	0x4CB430)
 GAMEOFF(DWORD,	dwCityCrime,				0x4CB454)
-GAMEOFF(WORD,	wCityCenterX,				0x4CB458)
-GAMEOFF(WORD,	wCityCenterY,				0x4CB45C)
+GAMEOFF(__int16,	wCityCenterX,			0x4CB458)
+GAMEOFF(__int16,	wCityCenterY,			0x4CB45C)
 GAMEOFF(DWORD,	dwCityWorkforcePercent,		0x4CB460)
 GAMEOFF(WORD,	wCurrentCityToolGroup,		0x4CB464)
+GAMEOFF(int *,	cwCityStats,				0x4CC474)
 GAMEOFF(BOOL,	bOptionsAutoBudget,			0x4CC4B0)
-GAMEOFF(DWORD,	dwCityWorkforceEQ,			0x4CC4B4)
+GAMEOFF(int,	dwCityWorkforceEQ,			0x4CC4B4)
 GAMEOFF(DWORD,	dwWaterUsedPercentage,		0x4CC4B8)
 GAMEOFF(BOOL,	bNewspaperExtra,			0x4CC4BC)
 GAMEOFF(budget_t*,	pBudgetArr,				0x4CC4CC)		// Needs reverse engineering. See wiki.
 GAMEOFF(BOOL,	bNoDisasters,				0x4CC4D4)
-GAMEOFF(WORD*,	wNeighborNameIdx,			0x4CC4DC)
-GAMEOFF(WORD,	wCommerceConnect,	0x4CC4D8)
-GAMEOFF(WORD,	wSportsTeams,				0x4CC4E0)
+GAMEOFF(__int16*,	wNeighborNameIdx,		0x4CC4DC)
+GAMEOFF(WORD,	wCommerceConnect,			0x4CC4D8)
+GAMEOFF(__int16,	wStadiumSportsTeams,	0x4CC4E0)
 GAMEOFF(BYTE,	bMilitaryBaseType,			0x4CC4E4)
 GAMEOFF(int,	dwCityBonds,				0x4CC4E8)
-GAMEOFF(DWORD,	dwCityTrafficUnknown,		0x4CC6F4)
-GAMEOFF_ARR(__int16,	wCityDemand,			0x4CC8F8)
+GAMEOFF(DWORD,	dwCityTrafficCount,			0x4CC6F4)
+GAMEOFF_ARR(__int16,	wCityDemand,		0x4CC8F8)
 GAMEOFF(DWORD,	dwCityPollution,			0x4CC910)		// Needs reverse engineering. See wiki.
-GAMEOFF(WORD,	wScenarioDisasterID,		0x4CC918)
-GAMEOFF(WORD,	wScenarioTimeLimitMonths,	0x4CC91C)
-GAMEOFF(DWORD,	dwScenarioCitySize,			0x4CC91E)
-GAMEOFF(DWORD,	dwScenarioResPopulation,	0x4CC922)
-GAMEOFF(DWORD,	dwScenarioComPopulation,	0x4CC926)
-GAMEOFF(DWORD,	dwScenarioIndPopulation,	0x4CC92A)
-GAMEOFF(DWORD,	dwScenarioCashGoal,			0x4CC92E)
-GAMEOFF(DWORD,	dwScenarioLandValueGoal,	0x4CC932)
-GAMEOFF(WORD,	wScenarioLEGoal,			0x4CC936)
-GAMEOFF(WORD,	wScenarioEQGoal,			0x4CC938)
-GAMEOFF(DWORD,	dwScenarioPollutionLimit,	0x4CC93A)
-GAMEOFF(DWORD,	dwScenarioCrimeLimit,		0x4CC93E)
-GAMEOFF(DWORD,	dwScenarioTrafficLimit,		0x4CC942)
-GAMEOFF(BYTE,	bScenarioBuildingGoal1,		0x4CC946)
-GAMEOFF(BYTE,	bScenarioBuildingGoal2,		0x4CC947)
-GAMEOFF(WORD,	wScenarioBuildingGoal1Count,0x4CC948)
-GAMEOFF(WORD,	wScenarioBuildingGoal2Count,0x4CC94A)
+GAMEOFF(scenStruct_t,	scenarioAttrib,		0x4CC918)
 GAMEOFF_ARR(WORD,	wSelectedSubtool,		0x4CC950)
 GAMEOFF_PTR(const char *,	pCustomTileNamesFromSpriteID,	0x4CCEC8)
 GAMEOFF(__int16,	wGrantedArcologies,		0x4CDB2C)
@@ -3644,6 +3690,7 @@ GAMEOFF(int,	iCheatEntry,				0x4E6520)
 GAMEOFF(int,	iCheatExpectedCharPos,		0x4E6524)
 GAMEOFF_ARR(char,	szNewItem,				0x4E66EC)
 GAMEOFF(CSimcityDoc*,	pCSimcityDoc,		0x4E66F8)
+GAMEOFF_ARR(const char,	pStartEngineStr,	0x4E67D0)
 GAMEOFF(WORD,	wPreviousTileCoordinateX,	0x4E6808)
 GAMEOFF_ARR(const char,	gameStrHyphen,		0x4E6804)
 GAMEOFF(WORD,	wPreviousTileCoordinateY,	0x4E680C)
@@ -3663,8 +3710,13 @@ GAMEOFF_ARR(char,	aGraphicsDir,			0x4E70D0)
 GAMEOFF_ARR(char,	aScenarioDir,			0x4E70EC)
 GAMEOFF_ARR(const char,	aScenarios,			0x4E70FC)
 GAMEOFF_ARR(DWORD, dwZoneNameStringIDs,		0x4E7140)
+GAMEOFF_ARR(__int16,	wFontHeightsArl,	0x4E71C0)
 GAMEOFF_ARR(const char,	aTilesets,			0x4E7244)
 GAMEOFF_ARR(const char,	aData,				0x4E728C)
+GAMEOFF(DWORD,	dwShowSCURK,				0x4E72AC)
+GAMEOFF(DWORD,	dwMapEditingMode,			0x4E72F0)
+GAMEOFF_ARR(const char,	aCities,			0x4E730C)
+GAMEOFF_ARR(const char,	aSavegame,			0x4E7338)
 GAMEOFF_ARR(sprite_archive_stored_t,	dwBaseSpriteLoading,		0x4E7448)
 GAMEOFF_ARR(WORD,	wBuildingPopLevel,		0x4E7458)
 GAMEOFF_ARR(BYTE,	bTileState,				0x4E7508)
@@ -3677,6 +3729,7 @@ GAMEOFF_ARR(BYTE,	trafficSpriteOverlayLevels,	0x4E7798)
 GAMEOFF_ARR(BYTE,	BuiltUpZones,			0x4E77B8)
 GAMEOFF(void *,	curLockedDIBBits,			0x4E77C8)
 GAMEOFF_ARR(int,	traversableTerrain,		0x4E7B28)
+GAMEOFF(COLORREF,	crSignText,				0x4E7FA8)
 GAMEOFF(DWORD,	dwPlacePoliceThingFail,		0x4E7FC4)
 GAMEOFF(DWORD,	dwPlaceFireThingFail,		0x4E7FC8)
 GAMEOFF(DWORD,	dwPlaceMilitaryThingFail,	0x4E7FCC)
@@ -3694,6 +3747,9 @@ GAMEOFF(BOOL,	bCSimcityDocSC2InUse,		0x4E9744)
 GAMEOFF(BOOL,	bCSimcityDocSCNInUse,		0x4E9748)
 GAMEOFF(DWORD,	dwUnknownInitVarOne,		0x4E974C)
 GAMEOFF_ARR(DWORD, dwCityNoticeStringIDs,	0x4E98B8)
+GAMEOFF(COLORREF,	crSignShine,			0x4E9924)
+GAMEOFF(COLORREF,	crSignBase,				0x4E9930)
+GAMEOFF(COLORREF,	crSignShade,			0x4E9934)
 GAMEOFF(WORD,	wActivePlanes,				0x4E99C0)
 GAMEOFF(WORD,	wActiveHelicopters,			0x4E99C4)
 GAMEOFF(WORD,	wActiveShips,				0x4E99C8)
@@ -3796,7 +3852,10 @@ GAMEOFF_ARR(map_mini32_t*,	dwMapXROG,	0x4CB028)
 // totally different
 GAMEOFF_ARR(map_XLAB_t*,	dwMapXLAB,	0x4CA198)
 GAMEOFF_ARR(map_XTHG_t*,	dwMapXTHG,	0x4CA434)
-GAMEOFF_ARR(DWORD,			dwMapXGRP,	0x4CC470)
+GAMEOFF_ARR(DWORD*,			dwMapXGRP,	0x4CC470)
+
+// Temp map(s)
+GAMEOFF_ARR(__int16 *,		wTMap,		0x4CC6F8)
 
 extern const char *getXTERNames(BYTE iVal);
 
@@ -3814,21 +3873,21 @@ static inline BYTE GetUndergroundTileID(__int16 iTileX, __int16 iTileY) {
 }
 
 // Returns the XLAB entry from a given Label ID.
-static inline const char* GetXLABEntry(BYTE iLabelID) {
+static inline char* GetXLABEntry(BYTE iLabelID) {
 	return dwMapXLAB[0][iLabelID].szLabel;
 }
 
 static inline void SetXLABEntry(BYTE iLabelID, const char *pStr) {
-	WORD nLen;
+	int nLen;
 
 	if (pStr) {
-		nLen = (WORD)strlen(pStr);
-		if (nLen > 24)
-			nLen = 24;
+		nLen = strlen(pStr);
+		if (nLen > MAX_LABEL_LEN)
+			nLen = MAX_LABEL_LEN;
 		// A combination of memcpy and setting the end null here.
 		// Attempts at using strcpy_s with 'dwMapXLAB[0][iLabelID].szLabel'
 		// here resulted in a program crash.
-		memcpy(&dwMapXLAB[0][iLabelID], pStr, nLen);
+		memcpy(dwMapXLAB[0][iLabelID].szLabel, pStr, nLen);
 		dwMapXLAB[0][iLabelID].szLabel[nLen] = 0;
 	}
 }
@@ -4124,7 +4183,7 @@ static inline BYTE GetMilitaryFromNormalTile(BYTE iTileID) {
 
 static inline WORD GetFlaggedTileCount(BYTE iTileID, BOOL bMilitary) {
 	BYTE iMilitaryTileID = GetMilitaryFromNormalTile(iTileID);
-	return (bMilitary) ? wMilitaryTiles[iMilitaryTileID] : dwTileCount[iTileID];
+	return (bMilitary) ? wMilitaryTiles[iMilitaryTileID] : wTileCount[iTileID];
 }
 
 #define USE_OLD_ALTM_HANDLING 0
@@ -4382,6 +4441,14 @@ static inline void XBITSetBits(__int16 x, __int16 y, BYTE bitMask) {
 #endif
 }
 
+static inline __int16 *GetTMap(__int16 x, __int16 y) {
+	if (x < MAP_EDGE_MIN || x > MAP_EDGE_MAX)
+		return NULL;
+	if (y < MAP_EDGE_MIN || y > MAP_EDGE_MAX)
+		return NULL;
+	return &wTMap[x][y];
+}
+
 // Helper functions for the 'map_mini64_t'
 // and 'map_mini32_t' struct array cases.
 //
@@ -4637,6 +4704,10 @@ extern void ResetThingCleanupState_SC2K1996();
 
 extern void DoThingClean_SC2K1996(int nThingDef);
 
+extern void L_ClearStoredSignPos();
+extern void L_FindNearestSignPos(CSimcityView *pSCView, RECT *r);
+extern void L_DrawLabelsAndObjects(__int16 x, __int16 y, __int16 inXOffset, __int16 inYOffset, bool bOnlySign = false);
+
 extern CGraphics *pBaseGraphics;
 extern LONG nBaseGraphicWidth;
 extern LONG nBaseGraphicHeight;
@@ -4647,3 +4718,11 @@ extern int __cdecl L_BeginProcessObjects_SC2K1996(HWND hWnd, void *pBaseBits, vo
 extern void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveCursorActive);
 extern void L_drawShapeSpecific_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert, int nType);
 extern void L_drawShapeDialog_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert);
+
+extern void L_InitializeCityData();
+
+extern int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName);
+extern void L_SimcityApp_LoadCityFromCMDLine(CSimcityAppPrimary *pSCApp, const char *lpFileNameFromCMDLine);
+
+extern void L_ClearScenarioDetails();
+extern void L_SimcityApp_LoadScenarioFromCMDLine(CSimcityAppPrimary *pSCApp, const char *lpFileNameFromCMDLine);

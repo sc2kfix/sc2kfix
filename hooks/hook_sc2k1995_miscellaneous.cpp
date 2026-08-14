@@ -98,6 +98,9 @@ static void L_ProcessCmdLine_1995(CSimcityAppPrimary *pSCApp) {
 		free(pArgv);
 	}
 
+	// Explicitly null-terminate szFileArg to be safe
+	szFileArg[sizeof(szFileArg) - 1] = 0;
+
 	if (strlen(szFileArg) > 0) {
 		if (L_IsPathValid(szFileArg)) {
 			// We only need the file extension in this case.
@@ -439,4 +442,10 @@ skipmainmenu:
 	SafeVirtualProtect((LPVOID)0x4E6314, 32, PAGE_EXECUTE_READWRITE);
 	memset((LPVOID)0x4E6314, 0, 32);
 	memcpy_s((LPVOID)0x4E6314, 32, "SimCity Files (*.sc2)|*.sc2||", 30);
+
+	// nop out this bit of code for when the sign dialogue is Cancelled.
+	// You otherwise end up with orphaned labels (the XTXT entry is removed
+	// but not the XLAB entry).
+	SafeVirtualProtect((LPVOID)0x44D213, 6, PAGE_EXECUTE_READWRITE);
+	memset((LPVOID)0x44D213, 0x90, 6);
 }

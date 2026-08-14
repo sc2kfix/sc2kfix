@@ -40,6 +40,7 @@ int iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
 int nMovZoomFactor = MIN_MOVZOOMFACTOR;
 int nHangar1Mode = HANGAR1_ANIM;
 DWORD dwFixedTileMask = 0;
+bool bSavedCityBackup = true;
 
 char szGamePath[MAX_PATH];
 
@@ -128,6 +129,7 @@ void DefaultSettingsSC2KFixCore(json::JSON& jsonSettings) {
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND] = DEF_FIX_QOL_TITLECALEND;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_MOVZOOMFACTOR] = DEF_FIX_QOL_MOVZOOMFACTOR;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC] = DEF_FIX_QOL_TERRAINCOSMETIC;
+	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_SAVECITYBK] = DEF_FIX_QOL_SC2K_SAVECITYBK;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_FIXTILMSK] = DEF_FIX_QOL_SC2K_FIXTILMSK;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SCURK_FIXTILMSK] = DEF_FIX_QOL_SCURK_FIXTILMSK;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_HANGARCNV] = DEF_FIX_QOL_SC2K_HANGARCNV;
@@ -316,6 +318,11 @@ static void GetSpecificStoredJSONVars() {
 		nHangar1Mode = HANGAR1_MAX;
 
 	FinalizeFixedTileMask();
+
+	if (dwSC2KFixMode != SC2KFIX_MODE_SCURK)
+		bSavedCityBackup = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_SAVECITYBK].ToBool();
+	else
+		bSavedCityBackup = false; // Set to this for now since there aren't any hooks present for WinSCURK city saving.
 }
 
 void LoadJSONSettings(void) {
@@ -455,7 +462,8 @@ static BOOL CALLBACK SettingsDialogGeneralTabProc(HWND hwndDlg, UINT message, WP
 }
 
 static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
-	HWND hwndParent;
+	HWND hwndParent, hwndItem;
+	int nOpt;
 	char szTempRegistrationNameBuffer[64] = { 0 };
 
 	switch (message) {
@@ -466,6 +474,21 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 			(stSettingsDialogHeader.rcDisplay.right - stSettingsDialogHeader.rcDisplay.left),
 			(stSettingsDialogHeader.rcDisplay.bottom - stSettingsDialogHeader.rcDisplay.top),
 			SWP_SHOWWINDOW);
+
+		hwndItem = GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MOVIE_ZOOMLEVEL);
+		ComboBox_AddString(hwndItem, "1x");
+		ComboBox_AddString(hwndItem, "2x");
+		ComboBox_AddString(hwndItem, "3x");
+		ComboBox_AddString(hwndItem, "4x");
+		ComboBox_SetMinVisible(hwndItem, 4);
+
+		hwndItem = GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_TERRAIN_FORCEDMODE);
+		ComboBox_AddString(hwndItem, "Normal (No override)");
+		ComboBox_AddString(hwndItem, "Damp - Grey");
+		ComboBox_AddString(hwndItem, "Leafy - Green");
+		ComboBox_AddString(hwndItem, "Frost - Cold");
+		ComboBox_AddString(hwndItem, "Arid - Hot");
+		ComboBox_SetMinVisible(hwndItem, 5);
 
 		DestroyStoredTooltips(storedToolTips, hwndDlg);
 
@@ -479,6 +502,9 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 			"This setting does nothing unless the real-time renderer setting is also enabled.");
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEW_STRINGS),
 			"Certain strings in the game have typos, grammatical issues, and/or ambiguous wording. This setting loads corrected strings in memory in place of the affected originals.");
+
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MOVIE_ZOOMLEVEL),
+			"Scale both the Movie Interface and Playback by the selected factor.");
 
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_REFRESH_RATE),
 			"SimCity 2000 was designed to spend more CPU time on simulation than on rendering by only updating the city's growth when the display moves or on the 24th day of the month. "
@@ -495,11 +521,24 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 			"This setting controls whether or not SimCity 2000 plays higher quality versions of various sounds for which said higher quality versions exist.\n\n"
 
 			"Enabling or disabling this setting takes effect after restarting the game.");
+
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_TERRAIN_FORCEDMODE),
+			"Select which base cosmetic terrain effect you want to have forced.");
+
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_CONFTILECONV),
 			"Configure which 'fixed' tiles are used when loading the default tileset.\n\n"
 			"Choose which 'Hangar1' type to use as well when it comes to both the 'fixed' tiles and also converting the default 'ORIGINAL' set from the DOS and Macintosh versions of the game.");
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SAVECITY_BACKUPS),
+			"When enabled a backup copy of the unmodified city file is created with the suffix '.bak.datetimestampnum'.");
 
 		// Set fields based on the working JSON
+		nOpt = jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_MOVZOOMFACTOR].ToInt() - 1;
+		if (nOpt < 0)
+			nOpt = 0;
+		ComboBox_SetCurSel(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MOVIE_ZOOMLEVEL), nOpt);
+
+		ComboBox_SetCurSel(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_TERRAIN_FORCEDMODE), jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt());
+
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USEFLTSTATUS], IDC_SETTINGS_CHECK_STATUS_DIALOG);
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND], IDC_SETTINGS_CHECK_TITLE_DATE);
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USENEWSTRINGS], IDC_SETTINGS_CHECK_NEW_STRINGS);
@@ -509,10 +548,15 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND], IDC_SETTINGS_CHECK_DARK_UNDGRND);
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
 
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_SAVECITYBK], IDC_SETTINGS_CHECK_SAVECITY_BACKUPS);
+
 		return TRUE;
 
 	case WM_DESTROY:
 		// Update the working JSON based on our fields
+		jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_MOVZOOMFACTOR] = ComboBox_GetCurSel(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MOVIE_ZOOMLEVEL)) + 1;
+		jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC] = ComboBox_GetCurSel(GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_TERRAIN_FORCEDMODE));
+
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USEFLTSTATUS], IDC_SETTINGS_CHECK_STATUS_DIALOG);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND], IDC_SETTINGS_CHECK_TITLE_DATE);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USENEWSTRINGS], IDC_SETTINGS_CHECK_NEW_STRINGS);
@@ -521,6 +565,8 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_WEATHEREFFECTS], IDC_SETTINGS_CHECK_WEATHER_EFFECTS);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND], IDC_SETTINGS_CHECK_DARK_UNDGRND);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
+
+		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_SAVECITYBK], IDC_SETTINGS_CHECK_SAVECITY_BACKUPS);
 
 		DestroyStoredTooltips(storedToolTips, hwndDlg);
 

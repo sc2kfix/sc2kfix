@@ -258,8 +258,8 @@ public:
 	DWORD dwSCAGameSound;
 	CMFC3XString dwSCApCStringLongMonths[12];
 	CMFC3XString dwSCApCStringShortMonths[12];
-	WORD wSCAGameSpeedLOW;
-	WORD wSCAGameSpeedHIGH;
+	__int16 wSCAGameSpeedLOW;
+	__int16 wSCAGameSpeedHIGH;
 	DWORD dwSCASimulationTicking;
 	DWORD dwSCAOneHundredFortyFour;
 	DWORD dwSCAAnimationOnCycle;
@@ -269,7 +269,7 @@ public:
 	int iSCAProgramStep;
 	DWORD dwSCADoStepSkip;
 	int iSCAMenuDialogStep;
-	DWORD dwSCAMapModeVarCheck;
+	DWORD dwSCAGenerateFirstTimeMap;
 	DWORD dwSCAOnInitToggleToolBar;
 	DWORD dwSCASysCmdOnQuitVar;
 	__int16 wSCAInitDialogFinishLastProgramStep;
@@ -312,8 +312,8 @@ public:
 	DWORD dwSCAGameSound;
 	CMFC3XString dwSCApCStringLongMonths[12];
 	CMFC3XString dwSCApCStringShortMonths[12];
-	WORD wSCAGameSpeedLOW;
-	WORD wSCAGameSpeedHIGH;
+	__int16 wSCAGameSpeedLOW;
+	__int16 wSCAGameSpeedHIGH;
 	DWORD dwSCASimulationTicking;
 	DWORD dwSCAOneHundredFortyFour;
 	DWORD dwSCAAnimationOnCycle;
@@ -323,7 +323,7 @@ public:
 	int iSCAProgramStep;
 	DWORD dwSCADoStepSkip;
 	int iSCAMenuDialogStep;
-	DWORD dwSCAMapModeVarCheck;
+	DWORD dwSCAGenerateFirstTimeMap;
 	DWORD dwSCAReturnToMenu;
 	DWORD dwSCAOnInitToggleToolBar;
 	DWORD dwSCASysCmdOnQuitVar;

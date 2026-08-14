@@ -51,7 +51,7 @@
 UINT mischook_debug = MISCHOOK_DEBUG;
 
 DLGPROC lpNewCityAfxProc = NULL;
-char szTempMayorName[24] = { 0 };
+char szTempMayorName[MAX_LABEL_LEN + 1] = { 0 };
 
 DLGPROC lpMainDialogAfxProc = NULL;
 HWND hwndMainDialog_SC2K1996 = NULL;
@@ -94,56 +94,6 @@ int L_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
 	ToggleFloatingStatusDialog(TRUE);
 
 	return ret;
-}
-
-extern "C" int __stdcall Hook_FileDialog_DoModal() {
-	CMFC3XFileDialog *pThis;
-
-	__asm mov [pThis], ecx
-
-	HWND hWndOwner;
-	bool bIsReserved;
-	int iRet;
-	int nPathLen, nFileLen, nNewLen;
-	char szPath[MAX_PATH + 1];
-	OPENFILENAMEA* pOfn;
-
-	memset(szPath, 0, sizeof(szPath));
-
-	ToggleFloatingStatusDialog(FALSE);
-
-	hWndOwner = GameMain_Dialog_PreModal(pThis);
-	bIsReserved = pThis->m_ofn.pvReserved == 0;
-	pThis->m_ofn.hwndOwner = hWndOwner;
-	pOfn = &pThis->m_ofn;
-
-	if (bIsReserved)
-		iRet = GetSaveFileNameA(pOfn);
-	else
-		iRet = GetOpenFileNameA(pOfn);
-	GameMain_Dialog_PostModal(pThis);
-	if (!iRet)
-		iRet = IDCANCEL;
-
-	if (iRet != IDCANCEL) {
-		nPathLen = strlen(pOfn->lpstrFile);
-		nFileLen = strlen(pOfn->lpstrFileTitle);
-		if (nPathLen > 0 && nFileLen > 0) {
-			nNewLen = nPathLen - nFileLen;
-			if (nNewLen > 0) {
-				strncpy_s(szPath, sizeof(szPath)-1, pOfn->lpstrFile, nNewLen);
-				if (L_IsDirectoryPathValid(szPath)) {
-					if ((DWORD)_ReturnAddress() == 0x42EB82 ||
-						(DWORD)_ReturnAddress() == 0x42FDCE) // From 'LoadCity' or 'SaveCityAs'
-						jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_CITIES] = szPath;
-				}
-			}
-		}
-	}
-
-	ToggleFloatingStatusDialog(TRUE);
-
-	return iRet;
 }
 
 extern "C" INT_PTR __stdcall Hook_GameDialog_DoModal() {
@@ -314,7 +264,9 @@ extern "C" void __stdcall Hook_CmdUI_Enable(BOOL bOn) {
 			pThis->m_nID == IDM_GAME_OPTIONS_MODCONFIG ||
 			pThis->m_nID == IDM_GAME_FILE_RELOADDEFAULTTILESET ||
 			pThis->m_nID == IDM_MAIN_FILE_OPENMAINDIALOG ||
-			pThis->m_nID == IDM_DEBUG_SPRITE_DISPLAY)
+			pThis->m_nID == IDM_DEBUG_SPRITE_DISPLAY ||
+			pThis->m_nID == IDM_DEBUG_LABEL_LIST_ORPHANS ||
+			pThis->m_nID == IDM_DEBUG_LABEL_CLEAR_ORPHANS)
 			bOnOverride = TRUE;
 		
 		EnableMenuItem(pThis->m_pMenu->m_hMenu, pThis->m_nIndex, MF_BYPOSITION |
@@ -460,8 +412,15 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 		case ONIDLE_STATE_MAPMODE:
 			// All we need to do here is handle the basic cursor stuff, so hand that back off to
 			// the game engine to take care of.
-			if (pSCView)
+			if (pSCView) {
 				Game_SimcityView_MaintainCursor(pSCView);
+				if (pSCDoc) {
+					if (bFrequentUpdates || (!bFrequentUpdates && bOffCycle))
+						GameMain_Document_UpdateAllViews(pSCDoc, NULL, SCD_UPDATE_VIEW_UPDATE_DOCURSOR, NULL);
+					GameMain_Document_UpdateAllViews(pSCDoc, NULL, SCD_UPDATE_VIEW_CHECKCURSOR, NULL);
+				}
+				UpdateWindow(pSCView->m_hWnd);
+			}
 			break;
 		
 		// State 1: Display "Maxis Presents" logo
@@ -722,11 +681,11 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 				pThis->dwSCAOnInitToggleToolBar = FALSE;
 				if (pThis->dwSCACMDLineLoadMode == GAME_MODE_CITY) {
 					pThis->iSCAProgramStep = ONIDLE_STATE_LOADCITY_RETURN;
-					Game_SimcityApp_LoadCityFromCMDLine(pThis, pThis->dwSCACStringTargetTypePath);
+					L_SimcityApp_LoadCityFromCMDLine(pThis, pThis->dwSCACStringTargetTypePath.m_pchData);
 				}
 				else {
 					pThis->iSCAProgramStep = ONIDLE_STATE_LOADSCENARIO_RETURN;
-					Game_SimcityApp_LoadScenarioFromCMDLine(pThis, pThis->dwSCACStringTargetTypePath);
+					L_SimcityApp_LoadScenarioFromCMDLine(pThis, pThis->dwSCACStringTargetTypePath.m_pchData);
 				}
 			}
 			break;
@@ -976,6 +935,11 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 			" - Plymouth arcologies unlocked.\n"
 			" - 50% chance of Forest arcologies being unlocked.");
 
+		// Limit the City name to 30 characters (not 31 - this avoids a rather
+		// nasty overrun that can occur if the old limit is hit).
+		SendMessage(GetDlgItem(hwndDlg, 101), EM_SETLIMITTEXT, CITY_NAME_LEN, 0);
+		SendMessage(GetDlgItem(hwndDlg, 150), EM_SETLIMITTEXT, MAX_LABEL_LEN, 0);
+
 		// Set the default mayor name.
 		SetDlgItemText(hwndDlg, 150, jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
 		break;
@@ -983,9 +947,9 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		// XXX (araxestroy): there's probably a better window message to use here.
 
 		// Set the XLAB entry for the mayor name, falling back to the default from settings.json
-		memset(szTempMayorName, 0, 24);
-		if (!GetDlgItemText(hwndDlg, 150, szTempMayorName, 24))
-			strcpy_s(szTempMayorName, 24, jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
+		memset(szTempMayorName, 0, sizeof(szTempMayorName));
+		if (!GetDlgItemText(hwndDlg, 150, szTempMayorName, sizeof(szTempMayorName)))
+			strcpy_s(szTempMayorName, sizeof(szTempMayorName), jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
 		SetXLABEntry(0, szTempMayorName);
 
 		// Clean up window tooltips
@@ -1134,7 +1098,105 @@ extern "C" void __stdcall Hook_PrepareGame(void) {
 		}
 	}
 
-	GameMain_PrepareGame();
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CSimcityView *pSCView;
+	CMainFrame *pMainFrm;
+	bool bDrawHouse;
+
+	if (!pCSimcityDoc) {
+		// This case is hit at program start when the city doc/view first needs to be initialized.
+		CMFC3XMultiDocTemplate **pMultiDoc = (CMFC3XMultiDocTemplate **)pSCApp->m_templateList.m_pNodeHead;
+		pActiveSimDoc = (CSimcityDoc *)GameMain_MultiDocTemplate_OpenDocumentFile(pMultiDoc[2], NULL, TRUE);
+		GameMain_Document_SetTitle(pActiveSimDoc, pStartEngineStr);
+	}
+	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+	pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
+	Game_SimcityView_ResetScreenArea(pSCView);
+	bDrawHouse = false;
+	switch (pSCApp->iSCAProgramStep) {
+		case ONIDLE_STATE_NEWCITY_RETURN:
+			Game_SimcityDoc_NewGame(pCSimcityDoc);
+			if (!dwMapEditingMode)
+				Game_SimcityView_MakeTerrain(pSCView, bCityHasOcean, bCityHasRiver, wCityTerrainSliderHills, wCityTerrainSliderWater, wCityTerrainSliderTrees);
+			break;
+		case ONIDLE_STATE_EDITNEWMAP_RETURN:
+			if (!pSCApp->dwSCAGenerateFirstTimeMap) {
+				if (pSCView) {
+					// Rotate the map 90 degrees at a time until wViewRotation is north. We need to do
+					// this because SimCity 2000 was programmed by madmen and rotating the viewport is
+					// actually accomplished by rotating all the map data in memory.
+					if (wViewRotation != VIEWROTATION_NORTH) {
+						do
+							Game_SimcityView_RotateAntiClockwise(pSCView);
+						while (wViewRotation != VIEWROTATION_NORTH);
+					}
+				}
+			}
+			Game_StartCleanGame();
+			Game_SimcityDoc_PrepareData(pCSimcityDoc);
+			if (pSCApp->dwSCAGenerateFirstTimeMap)
+				Game_SimcityView_MakeTerrain(pSCView, bCityHasOcean, bCityHasRiver, wCityTerrainSliderHills, wCityTerrainSliderWater, wCityTerrainSliderTrees);
+			else
+				bDrawHouse = true;
+			break;
+		case ONIDLE_STATE_LOADCITY_RETURN:
+			Game_SimcityDoc_NewGame(pCSimcityDoc);
+			break;
+		case ONIDLE_STATE_LOADSCENARIO_RETURN:
+			bInScenario = TRUE;
+			Game_SimcityDoc_NewGame(pCSimcityDoc);
+			break;
+		default:
+			Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
+			break;
+	}
+	if (bDrawHouse)
+		Game_SimcityView_DrawHouse(pSCView);
+	if (!pSCApp->dwSCASCURK) {
+		if (dwShowSCURK) {
+			HMENU hMenu = GetMenu(pMainFrm->m_hWnd);
+			if (hMenu) {
+				HMENU hSubMenu = GetSubMenu(hMenu, 1);
+				if (hSubMenu) {
+					DeleteMenu(hSubMenu, 5, MF_BYPOSITION);
+					DeleteMenu(hSubMenu, 4, MF_BYPOSITION);
+				}
+			}
+			dwShowSCURK = 0;
+		}
+	}
+	Game_SimcityApp_AdjustNewspaperMenu(pSCApp);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_BULLDOZER], &cityToolGroupStrings[CITY_MENUTOOL_POS(BULLDOZER_DEMOLISH, CITYTOOL_GROUP_BULLDOZER)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_NATURE], &cityToolGroupStrings[CITY_MENUTOOL_POS(NATURE_TREES, CITYTOOL_GROUP_NATURE)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_DISPATCH], &cityToolGroupStrings[CITY_MENUTOOL_POS(DISPATCH_POLICE, CITYTOOL_GROUP_DISPATCH)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_POWER], &cityToolGroupStrings[CITY_MENUTOOL_POS(POWER_WIRES, CITYTOOL_GROUP_POWER)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_WATER], &cityToolGroupStrings[CITY_MENUTOOL_POS(WATER_PIPES, CITYTOOL_GROUP_WATER)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_REWARDS], &cityToolGroupStrings[CITY_MENUTOOL_POS(REWARDS_MAYORSHOUSE, CITYTOOL_GROUP_REWARDS)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_ROADS], &cityToolGroupStrings[CITY_MENUTOOL_POS(ROADS_ROAD, CITYTOOL_GROUP_ROADS)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_RAIL], &cityToolGroupStrings[CITY_MENUTOOL_POS(RAILS_RAIL, CITYTOOL_GROUP_RAIL)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_PORTS], &cityToolGroupStrings[CITY_MENUTOOL_POS(PORTS_SEAPORT, CITYTOOL_GROUP_PORTS)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_RESIDENTIAL], &cityToolGroupStrings[CITY_MENUTOOL_POS(ZONES_HIGH, CITYTOOL_GROUP_RESIDENTIAL)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_COMMERCIAL], &cityToolGroupStrings[CITY_MENUTOOL_POS(ZONES_HIGH, CITYTOOL_GROUP_COMMERCIAL)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_INDUSTRIAL], &cityToolGroupStrings[CITY_MENUTOOL_POS(ZONES_HIGH, CITYTOOL_GROUP_INDUSTRIAL)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_EDUCATION], &cityToolGroupStrings[CITY_MENUTOOL_POS(EDUCATION_SCHOOL, CITYTOOL_GROUP_EDUCATION)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_SERVICES], &cityToolGroupStrings[CITY_MENUTOOL_POS(SERVICES_POLICE, CITYTOOL_GROUP_SERVICES)]);
+	GameMain_String_OperatorCopy(&pMainFrm->dwMFCityToolBar.dwCTBString[CITYTOOL_GROUP_PARKS], &cityToolGroupStrings[CITY_MENUTOOL_POS(PARKS_SMALLPARK, CITYTOOL_GROUP_PARKS)]);
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_BULLDOZER] = BULLDOZER_DEMOLISH;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_NATURE] = NATURE_TREES;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_DISPATCH] = DISPATCH_POLICE;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_POWER] = POWER_WIRES;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_WATER] = WATER_PIPES;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_REWARDS] = REWARDS_MAYORSHOUSE;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_ROADS] = ROADS_ROAD;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_RAIL] = RAILS_RAIL;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_PORTS] = PORTS_SEAPORT;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_RESIDENTIAL] = ZONES_HIGH;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_COMMERCIAL] = ZONES_HIGH;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_INDUSTRIAL] = ZONES_HIGH;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_EDUCATION] = EDUCATION_SCHOOL;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_SERVICES] = SERVICES_POLICE;
+	pMainFrm->dwMFCityToolBar.dwCTToolSelection[CITYTOOL_GROUP_PARKS] = PARKS_SMALLPARK;
+	Game_CityToolBar_RefreshToolBar(&pMainFrm->dwMFCityToolBar);
 
 	for (const auto& hook : stHooks_Hook_PrepareGame_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
@@ -1145,35 +1207,75 @@ extern "C" void __stdcall Hook_PrepareGame(void) {
 }
 
 extern "C" void __stdcall Hook_StartCleanGame(void) {
-	BOOL bMapEditor = ((DWORD)_ReturnAddress() == 0x42DF13);
-	BOOL bNewGame = ((DWORD)_ReturnAddress() == 0x42E482);
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CMainFrame *pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 
-	// Ensure the view position (which is also the map data rotation in SC2K) is north-facing if
-	// we're generating a new map for the game or entering the map editor
-	if (bMapEditor || bNewGame) {
-		CSimcityAppPrimary *pSCApp;
-		CSimcityView *pThis;
-
-		pSCApp = &pCSimcityAppThis;
-		pThis = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
-
-		if (((__int16)wCityMode < 0 && bNewGame) || bMapEditor) {
-			// Rotate the map 90 degrees at a time until wViewRotation is north. We need to do
-			// this because SimCity 2000 was programmed by madmen and rotating the viewport is
-			// actually accomplished by rotating all the map data in memory.
-			if (wViewRotation != VIEWROTATION_NORTH) {
-				do
-					Game_SimcityView_RotateAntiClockwise(pThis);
-				while (wViewRotation != VIEWROTATION_NORTH);
-				UpdateWindow(pThis->m_hWnd);
-			}
-		}
-	}
+	// Clear any information stored for the scenario goals dialogue.
+	L_ClearScenarioDetails();
 
 	// Clean up the game state and start the new game/map
 	iChurchVirus = -1;
 	ResetThingCleanupState_SC2K1996();
-	GameMain_StartCleanGame();
+
+	wSetTriggerDisasterType = DISASTER_NONE;
+	bNoDisasters = 0;
+	bOptionsAutoBudget = 0;
+	bOptionsAutoGoto = 1;
+	GameMain_String_Empty(&pszCityName);
+	GameMain_String_Empty(&strCityFilename);
+	GameMain_String_Empty(&strUnusedString);
+	wCityProgression = 0;
+	dwCityDays = 0;
+	wUnknownGameVarOne = 0; // This one doesn't "appear" to be used elsewhere.
+	bMilitaryBaseType = MILITARY_BASE_NONE;
+	wCityStartYear = 1900;
+	wViewRotation = VIEWROTATION_NORTH;
+	wCurrentCityToolGroup = CITYTOOL_GROUP_CENTERINGTOOL;
+	wCurrentMapToolGroup = MAPTOOL_GROUP_RAISETERRAIN;
+	EditData = 0;
+	wClipXlow = 1000;
+	wClipYlow = 1000;
+	wClipXhigh = 0;
+	wClipYhigh = 0;
+	LastCursorX = -1;
+	dirtyRect.left = -1000;
+	dirtyRect.top = -1000;
+	dirtyRect.right = -1;
+	dirtyRect.bottom = -1;
+	bYearEndFlag = 0;
+	wNewspaperChoice = 0;
+	wCityCenterX = 64;
+	wCityCenterY = 64;
+	dwCityOldResPopulation = 0;
+	switch (GameMain_WinApp_GetProfileIntA(pSCApp, "OPTIONS", "SPEED", CONF_GAME_SPEED_SETTING(GAME_SPEED_PAUSED))) {
+		case CONF_GAME_SPEED_SETTING(GAME_SPEED_PAUSED):
+			pSCApp->wSCAGameSpeedLOW = GAME_SPEED_PAUSED;
+			break;
+		case CONF_GAME_SPEED_SETTING(GAME_SPEED_TURTLE):
+			pSCApp->wSCAGameSpeedLOW = GAME_SPEED_TURTLE;
+			break;
+		case CONF_GAME_SPEED_SETTING(GAME_SPEED_LLAMA):
+			pSCApp->wSCAGameSpeedLOW = GAME_SPEED_LLAMA;
+			break;
+		case CONF_GAME_SPEED_SETTING(GAME_SPEED_CHEETAH):
+			pSCApp->wSCAGameSpeedLOW = GAME_SPEED_CHEETAH;
+			break;
+		case CONF_GAME_SPEED_SETTING(GAME_SPEED_AFRICAN_SWALLOW):
+			pSCApp->wSCAGameSpeedLOW = GAME_SPEED_AFRICAN_SWALLOW;
+			break;
+		default:
+			pSCApp->wSCAGameSpeedLOW = GAME_SPEED_PAUSED;
+			break;
+	}
+	if (pMainFrm)
+		Game_CityToolBar_UpdateControls(&pMainFrm->dwMFCityToolBar, TRUE);
+	// This nested loop here sets TunnelLvls to 0.
+	// Originally it was: dwMapALTM[x][y].w &= ~0xFC00; (0x7C00 being ALTM_TUNNELLVLS_BOUNDARY)
+	for (int x = 0; x < GAME_MAP_SIZE; ++x) {
+		for (int y = 0; y < GAME_MAP_SIZE; ++y) {
+			ALTMSetTunnelLevels(x, y, 0);
+		}
+	}
 }
 
 // Hook for updating the game titlebar. Still kind of rough from recompilation.
@@ -1203,8 +1305,8 @@ extern "C" void __stdcall Hook_SimcityDoc_UpdateDocumentTitle() {
 			iCityYear = wCityStartYear + dwCityDays / 300;
 			if (IsIconic(pSCApp->m_pMainWnd->m_hWnd)) {
 				if (dwDisasterActive) {
-					if (wCurrentDisasterID <= DISASTER_HURRICANE)
-						GameMain_String_LoadStringA(&cStr, dwDisasterStringIndex[wCurrentDisasterID]);
+					if (wCurrentDisasterType <= DISASTER_HURRICANE)
+						GameMain_String_LoadStringA(&cStr, dwDisasterStringIndex[wCurrentDisasterType]);
 					else
 						GameMain_String_Empty(&cStr);
 				}
@@ -1390,34 +1492,34 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 				bScenarioSuccess = TRUE;
 
 				// Iterate through possible the vanilla scenario requirements
-				if (dwScenarioCitySize > dwCityPopulation && dwScenarioCitySize)
+				if (scenarioAttrib.dwCitySize > dwCityPopulation && scenarioAttrib.dwCitySize)
 					bScenarioSuccess = FALSE;
-				if (pBudgetArr[BUDGET_RESFUND].iCurrentCosts < (int)dwScenarioResPopulation)
+				if (pBudgetArr[BUDGET_RESFUND].iCurrentCosts < scenarioAttrib.dwResPop)
 					bScenarioSuccess = FALSE;
-				if (pBudgetArr[BUDGET_COMFUND].iCurrentCosts < (int)dwScenarioComPopulation)
+				if (pBudgetArr[BUDGET_COMFUND].iCurrentCosts < scenarioAttrib.dwComPop)
 					bScenarioSuccess = FALSE;
-				if (pBudgetArr[BUDGET_INDFUND].iCurrentCosts < (int)dwScenarioIndPopulation)
+				if (pBudgetArr[BUDGET_INDFUND].iCurrentCosts < scenarioAttrib.dwIndPop)
 					bScenarioSuccess = FALSE;
-				if (dwCityFunds - dwCityBonds < (int)dwScenarioCashGoal)
+				if (dwCityFunds - dwCityBonds < scenarioAttrib.dwCashGoal)
 					bScenarioSuccess = FALSE;
-				if (dwCityLandValue < (int)dwScenarioLandValueGoal)
+				if (dwCityLandValue < scenarioAttrib.dwLandValueGoal)
 					bScenarioSuccess = FALSE;
-				if (wScenarioLEGoal > dwCityWorkforceLE)
+				if (scenarioAttrib.wLEGoal > dwCityWorkforceLE)
 					bScenarioSuccess = FALSE;
-				if (wScenarioEQGoal > dwCityWorkforceEQ)
+				if (scenarioAttrib.wEQGoal > dwCityWorkforceEQ)
 					bScenarioSuccess = FALSE;
-				if (dwScenarioPollutionLimit > 0 && dwCityPollution > dwScenarioPollutionLimit)
+				if (scenarioAttrib.dwPollutionLimit > 0 && dwCityPollution > scenarioAttrib.dwPollutionLimit)
 					bScenarioSuccess = FALSE;
-				if (dwScenarioCrimeLimit > 0 && dwCityCrime > dwScenarioCrimeLimit)
+				if (scenarioAttrib.dwCrimeLimit > 0 && dwCityCrime > scenarioAttrib.dwCrimeLimit)
 					bScenarioSuccess = FALSE;
-				if (dwScenarioTrafficLimit > 0 && dwCityTrafficUnknown > dwScenarioTrafficLimit)
+				if (scenarioAttrib.dwTrafficLimit > 0 && dwCityTrafficCount > scenarioAttrib.dwTrafficLimit)
 					bScenarioSuccess = FALSE;
-				if (bScenarioBuildingGoal1) {
-					if (dwTileCount[bScenarioBuildingGoal1] < wScenarioBuildingGoal1Count)
+				if (scenarioAttrib.bFirstBuilding) {
+					if (wTileCount[scenarioAttrib.bFirstBuilding] < scenarioAttrib.wFirstBuildTileCnt)
 						bScenarioSuccess = FALSE;
 				}
-				if (bScenarioBuildingGoal2) {
-					if (dwTileCount[bScenarioBuildingGoal2] < wScenarioBuildingGoal2Count)
+				if (scenarioAttrib.bSecondBuilding) {
+					if (wTileCount[scenarioAttrib.bSecondBuilding] < scenarioAttrib.wSecondBuildTileCnt)
 						bScenarioSuccess = FALSE;
 				}
 
@@ -1434,7 +1536,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 				// failure if they haven't
 				if (bScenarioSuccess)
 					Game_EventScenarioNotification(GAMEOVER_SCENARIO_VICTORY);
-				else if (!--wScenarioTimeLimitMonths)
+				else if (!--scenarioAttrib.wTimeLimit)
 					Game_EventScenarioNotification(GAMEOVER_SCENARIO_FAILURE);
 			}
 
@@ -1547,191 +1649,6 @@ extern "C" int __stdcall Hook_AddAllInventions(void) {
 	Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_ZAP);
 
 	return 0;
-}
-
-extern "C" void __stdcall Hook_RecalculateCityValue(void) {
-	int dwNewCityValue, nVal, nTool, nSubTool, nTileArea;
-	BYTE nTileID;
-	BOOL bValid;
-
-	// Start with subway tiles to initialize the value.
-	dwNewCityValue = costFromSubTool[CITY_MENUTOOL_POS(RAILS_SUBWAY, CITYTOOL_GROUP_RAIL)] * wSubwayXUNDCount;
-	// Infrastructure tiles.
-	for (nTileID = TILE_POWERLINES_LR; nTileID <= TILE_SUBTORAIL_L; ++nTileID) {
-		bValid = FALSE;
-		nVal = 0;
-
-		if (GET_TILE_RANGE(nTileID, TILE_POWERLINES_LR, TILE_POWERLINES_LTBR)) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(POWER_WIRES, CITYTOOL_GROUP_POWER)] * dwTileCount[nTileID];
-			bValid = TRUE;
-		}
-		else if (GET_TILE_RANGE(nTileID, TILE_ROAD_LR, TILE_ROAD_LTBR)) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(ROADS_ROAD, CITYTOOL_GROUP_ROADS)] * dwTileCount[nTileID];
-			bValid = TRUE;
-		}
-		else if (GET_TILE_RANGE(nTileID, TILE_RAIL_LR, TILE_RAIL_HHLR)) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(RAILS_RAIL, CITYTOOL_GROUP_RAIL)] * dwTileCount[nTileID];
-			bValid = TRUE;
-		}
-		else if (GET_TILE_RANGE(nTileID, TILE_TUNNEL_T, TILE_CROSSOVER_HIGHWAYTB_POWERLR)) {
-			nVal = 15 * dwTileCount[nTileID];
-			bValid = TRUE;
-		}
-		else if (GET_TILE_RANGE(nTileID, TILE_SUSPENSION_BRIDGE_START_B, TILE_ONRAMP_BR)) {
-			nVal = 100 * dwTileCount[nTileID];
-			bValid = TRUE;
-		}
-		else if (GET_TILE_RANGE(nTileID, TILE_HIGHWAY_HTB, TILE_REINFORCED_BRIDGE)) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(ROADS_HIGHWAY, CITYTOOL_GROUP_ROADS)] * dwTileCount[nTileID];
-			bValid = TRUE;
-		}
-		else if (GET_TILE_RANGE(nTileID, TILE_SUBTORAIL_T, TILE_SUBTORAIL_L)) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(RAILS_SUBTORAIL, CITYTOOL_GROUP_RAIL)] * dwTileCount[nTileID];
-			bValid = TRUE;
-		}
-		if (bValid)
-			dwNewCityValue += nVal;
-	}
-
-	// Now for buildings objects.
-	for (nTileID = TILE_POWERPLANT_HYDRO1; nTileID <= TILE_ARCOLOGY_LAUNCH; ++nTileID) {
-		bValid = FALSE;
-		nVal = 0;
-
-		if (GET_TILE_RANGE(nTileID, TILE_POWERPLANT_HYDRO1, TILE_POWERPLANT_WIND)) {
-			if (nTileID == TILE_POWERPLANT_WIND)
-				nSubTool = POWER_PLANTS_WIND;
-			else
-				nSubTool = POWER_PLANTS_HYDRO;
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(nSubTool, CITYTOOL_GROUP_POWER)] * dwTileCount[nTileID];
-			bValid = TRUE;
-		}
-		else if (GET_TILE_RANGE(nTileID, TILE_POWERPLANT_GAS, TILE_POWERPLANT_COAL)) {
-			if (nTileID == TILE_POWERPLANT_GAS)
-				nSubTool = POWER_PLANTS_GAS;
-			else if (nTileID == TILE_POWERPLANT_OIL)
-				nSubTool = POWER_PLANTS_OIL;
-			else if (nTileID == TILE_POWERPLANT_NUCLEAR)
-				nSubTool = POWER_PLANTS_NUCLEAR;
-			else if (nTileID == TILE_POWERPLANT_SOLAR)
-				nSubTool = POWER_PLANTS_SOLAR;
-			else if (nTileID == TILE_POWERPLANT_MICROWAVE)
-				nSubTool = POWER_PLANTS_MICROWAVE;
-			else if (nTileID == TILE_POWERPLANT_FUSION)
-				nSubTool = POWER_PLANTS_FUSION;
-			else
-				nSubTool = POWER_PLANTS_COAL;
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(nSubTool, CITYTOOL_GROUP_POWER)] * (dwTileCount[nTileID] / 16);
-			bValid = TRUE;
-		}
-		else if (GET_TILE_RANGE(nTileID, TILE_SERVICES_HOSPITAL, TILE_INFRASTRUCTURE_WATERPUMP)) {
-			// Statues aren't factored into the calculation anywhere within this loop.
-			if (nTileID == TILE_SERVICES_STATUE)
-				continue;
-			if (nTileID == TILE_SERVICES_SCHOOL || nTileID == TILE_SERVICES_COLLEGE || nTileID == TILE_SERVICES_MUSEUM) {
-				nTileArea = (nTileID == TILE_SERVICES_COLLEGE) ? 16 : 9;
-				nTool = CITYTOOL_GROUP_EDUCATION;
-				if (nTileID == TILE_SERVICES_SCHOOL)
-					nSubTool = EDUCATION_SCHOOL;
-				else if (nTileID == TILE_SERVICES_COLLEGE)
-					nSubTool = EDUCATION_COLLEGE;
-				else
-					nSubTool = EDUCATION_MUSEUM;
-			}
-			else if (nTileID == TILE_SERVICES_POLICE || nTileID == TILE_SERVICES_FIRE || nTileID == TILE_SERVICES_HOSPITAL || nTileID == TILE_SERVICES_PRISON) {
-				nTileArea = (nTileID == TILE_SERVICES_PRISON) ? 16 : 9;
-				nTool = CITYTOOL_GROUP_SERVICES;
-				if (nTileID == TILE_SERVICES_POLICE)
-					nSubTool = SERVICES_POLICE;
-				else if (nTileID == TILE_SERVICES_FIRE)
-					nSubTool = SERVICES_FIRESTATION;
-				else if (nTileID == TILE_SERVICES_HOSPITAL)
-					nSubTool = SERVICES_HOSPITAL;
-				else
-					nSubTool = SERVICES_PRISON;
-			}
-			else if (nTileID == TILE_SERVICES_BIGPARK || nTileID == TILE_SERVICES_ZOO || nTileID == TILE_SERVICES_STADIUM) {
-				nTileArea = (nTileID == TILE_SERVICES_BIGPARK) ? 9 : 16;
-				nTool = CITYTOOL_GROUP_PARKS;
-				if (nTileID == TILE_SERVICES_BIGPARK)
-					nSubTool = PARKS_BIGPARK;
-				else if (nTileID == TILE_SERVICES_ZOO)
-					nSubTool = PARKS_ZOO;
-				else
-					nSubTool = PARKS_STADIUM;
-			}
-			else {
-				nTileArea = 1;
-				nTool = CITYTOOL_GROUP_WATER;
-				nSubTool = WATER_PUMP;
-			}
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(nSubTool, nTool)] * (dwTileCount[nTileID] / nTileArea);
-			bValid = TRUE;
-		}
-		else if (GET_TILE_RANGE(nTileID, TILE_INFRASTRUCTURE_RUNWAY, TILE_INFRASTRUCTURE_RUNWAYCROSS) ||
-			nTileID == TILE_INFRASTRUCTURE_CONTROLTOWER_CIV ||
-			GET_TILE_RANGE(nTileID, TILE_INFRASTRUCTURE_BUILDING1, TILE_MILITARY_TARMAC) ||
-			nTileID == TILE_MILITARY_RADAR || nTileID == TILE_INFRASTRUCTURE_PARKINGLOT || nTileID == TILE_INFRASTRUCTURE_HANGAR2) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(PORTS_AIRPORT, CITYTOOL_GROUP_PORTS)] * dwTileCount[nTileID];
-			bValid = TRUE;
-		}
-		else if (nTileID == TILE_INFRASTRUCTURE_PIER || nTileID == TILE_INFRASTRUCTURE_CRANE || nTileID == TILE_MILITARY_WAREHOUSE ||
-			nTileID == TILE_INFRASTRUCTURE_LOADINGBAY || nTileID == TILE_INFRASTRUCTURE_CARGOYARD) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(PORTS_SEAPORT, CITYTOOL_GROUP_PORTS)] * dwTileCount[nTileID];
-			bValid = TRUE;
-		}
-		else if (nTileID == TILE_INFRASTRUCTURE_SUBWAYSTATION) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(RAILS_SUBSTATION, CITYTOOL_GROUP_RAIL)] * dwTileCount[nTileID];
-			bValid = TRUE;
-		}
-		else if (nTileID == TILE_INFRASTRUCTURE_WATERTOWER) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(WATER_TOWER, CITYTOOL_GROUP_WATER)] * (dwTileCount[nTileID] / 4);
-			bValid = TRUE;
-		}
-		else if (nTileID == TILE_INFRASTRUCTURE_BUSDEPOT) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(ROADS_BUSSTATION, CITYTOOL_GROUP_ROADS)] * (dwTileCount[nTileID] / 4);
-			bValid = TRUE;
-		}
-		else if (nTileID == TILE_INFRASTRUCTURE_RAILSTATION) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(RAILS_DEPOT, CITYTOOL_GROUP_RAIL)] * (dwTileCount[nTileID] / 4);
-			bValid = TRUE;
-		}
-		else if (nTileID == TILE_INFRASTRUCTURE_WATERTREATMENT) {
-			// The divisor here was previously 9, however since
-			// the object only occupies 4 tiles it has been
-			// adjusted accordingly. (Marking this just in case
-			// this was NOT a bug)
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(WATER_TREATMENT, CITYTOOL_GROUP_WATER)] * (dwTileCount[nTileID] / 4);
-			bValid = TRUE;
-		}
-		else if (nTileID == TILE_INFRASTRUCTURE_LIBRARY) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(EDUCATION_LIBRARY, CITYTOOL_GROUP_EDUCATION)] * (dwTileCount[nTileID] / 4);
-			bValid = TRUE;
-		}
-		else if (nTileID == TILE_INFRASTRUCTURE_MARINA) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(PARKS_MARINA, CITYTOOL_GROUP_PARKS)] * (dwTileCount[nTileID] / 9);
-			bValid = TRUE;
-		}
-		else if (nTileID == TILE_INFRASTRUCTURE_DESALINIZATIONPLANT) {
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(WATER_DESALINIZATION, CITYTOOL_GROUP_WATER)] * (dwTileCount[nTileID] / 9);
-			bValid = TRUE;
-		}
-		else if (GET_TILE_RANGE(nTileID, TILE_ARCOLOGY_PLYMOUTH, TILE_ARCOLOGY_LAUNCH)) {
-			if (nTileID == TILE_ARCOLOGY_PLYMOUTH)
-				nSubTool = REWARDS_ARCOLOGIES_PLYMOUTH;
-			else if (nTileID == TILE_ARCOLOGY_FOREST)
-				nSubTool = REWARDS_ARCOLOGIES_FOREST;
-			else if (nTileID == TILE_ARCOLOGY_DARCO)
-				nSubTool = REWARDS_ARCOLOGIES_DARCO;
-			else
-				nSubTool = REWARDS_ARCOLOGIES_LAUNCH;
-			nVal = costFromSubTool[CITY_MENUTOOL_POS(nSubTool, CITYTOOL_GROUP_REWARDS)] * (dwTileCount[nTileID] / 16);
-			bValid = TRUE;
-		}
-		if (bValid)
-			dwNewCityValue += nVal;
- 	}
-	dwCityValue = dwNewCityValue;
 }
 
 CGraphics *pBaseGraphics = NULL;
@@ -2267,29 +2184,82 @@ REFRESHMENUGRANTS:
 	Game_CityToolBar_RefreshToolBar(pCityToolBar);
 }
 
-// Hook for the scenario description popup.
-//
-// The popup is used for the following (just in case it comes up):
-// 1) Scenario information
-// 2) Version displayed from the debug option
-// 3) News paper section article.
-// 4) Specific Query Dialogue 'Ruminate' section.
-//
-// There could be a couple of other cases, however they're
-// not yet completely clear.
-__declspec(naked) void Hook_DisplayInformationMessageBox(const char* szDescription, int a2, void* cWnd) {
-	__asm push ecx
+extern "C" void __cdecl Hook_RemoveLabel(__int16 nTextOverlayID) {
+	bool bZeroLabel = false;
 
-	// Save the scenario starting state in order to be used later in the scenario status dialog
-	if (szDescription && strlen(szDescription))
-		scScenarioDescription = szDescription;
-	dwScenarioStartDays = dwCityDays;
-	dwScenarioStartPopulation = dwCityPopulation;
-	wScenarioStartXVALTiles = wCityDevelopedTiles;
-	dwScenarioStartTrafficDivisor = pBudgetArr[10].iCurrentCosts + pBudgetArr[11].iCurrentCosts + pBudgetArr[12].iCurrentCosts + 1;		// XXX - this should be a descriptive macro
+	if (nTextOverlayID) {
+		if (nTextOverlayID <= MAX_SIM_TEXT_ENTRIES) {
+			if (nTextOverlayID <= MAX_USER_TEXT_ENTRIES) {
+				if (nTextOverlayID >= MIN_USER_TEXT_ENTRIES)
+					bZeroLabel = true;
+			}
+			else if (nTextOverlayID >= MIN_MICROSIM_LABEL_ENTRIES) {
+				pMicrosimArr[MICROSIMID_ENTRY(nTextOverlayID)].bTileID = TILE_CLEAR;
+				bZeroLabel = true;
+			}
+		}
+		else if (nTextOverlayID <= MAX_XTHG_TEXT_ENTRIES)
+			dwMapXTHG[0][XTHGID_ENTRY(nTextOverlayID)].bLabel = 0;
+	}
 
-	__asm pop ecx
-	GAMEJMP(0x42DC20);
+	if (bZeroLabel)
+		memset(&dwMapXLAB[0][nTextOverlayID], 0, sizeof(map_XLAB_t));
+}
+
+static void DoOrphanLabel_SC2K1996(bool bRemove) {
+	int nCnt;
+	std::string str;
+	const char *pLbl;
+
+	str = "Orphaned labels";
+	str += (bRemove) ? " removed:\n\n" : " detected:\n\n";
+
+	nCnt = 0;
+	for (int i = 1; i <= MAX_USER_TEXT_ENTRIES; ++i) {
+		pLbl = GetXLABEntry(i);
+		if (pLbl) {
+			// Only report on populated labels.
+			if (strlen(pLbl) > 0) {
+				if (mischook_debug & MISCHOOK_DEBUG_OTHER)
+					ConsoleLog(LOG_DEBUG, "Got Label '%s' at position '%d'\n", pLbl, i);
+			}
+			bool bLabelFound = false;
+			for (int iX = 0; iX < GAME_MAP_SIZE; ++iX) {
+				for (int iY = 0; iY < GAME_MAP_SIZE; ++iY) {
+					if (XTXTGetTextOverlayID(iX, iY) == i) {
+						bLabelFound = true;
+						break;
+					}
+				}
+				if (bLabelFound)
+					break;
+			}
+			if (!bLabelFound) {
+				// Only report on populated labels, otherwise
+				// go through the other user entries for
+				// sanitisation purposes.
+				if (strlen(pLbl) > 0) {
+					str += std::to_string(i);
+					str += " - '";
+					str += pLbl;
+					str += "'\n";
+					if (mischook_debug & MISCHOOK_DEBUG_OTHER)
+						ConsoleLog(LOG_DEBUG, "Got Orphaned Label '%s' at position '%d'%s\n", pLbl, i, ((bRemove) ? " - Removing" : ""));
+					++nCnt;
+				}
+				if (bRemove)
+					Game_RemoveLabel(i);
+			}
+		}
+	}
+
+	if (nCnt > 0) {
+		str += "\nTotal Count: ";
+		str += std::to_string(nCnt);
+	}
+	else
+		str = "No orphaned labels detected.";
+	L_MessageBoxA(GameGetRootWindowHandle(), str.c_str(), gamePrimaryKey, MB_ICONINFORMATION);
 }
 
 // Hook for a couple different CWnd::OnCmdMessage derivatives
@@ -2393,6 +2363,15 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 
 			case IDM_DEBUG_THING_CLEAN_MLDEPLOY:
 				DoThingClean_SC2K1996(THING_CLEAN_MLDEPLOY);
+				return TRUE;
+
+			case IDM_DEBUG_LABEL_LIST_ORPHANS:
+				DoOrphanLabel_SC2K1996(false);
+				return TRUE;
+
+			case IDM_DEBUG_LABEL_CLEAR_ORPHANS:
+				if (L_MessageBoxA(pThis->m_hWnd, "WARNING: You are about to clear out any detected orphaned labels, this action cannot be undone.\n\nDo you want to proceed?", gamePrimaryKey, MB_ICONWARNING|MB_YESNO) == IDYES)
+					DoOrphanLabel_SC2K1996(true);
 				return TRUE;
 			}
 			//ConsoleLog(LOG_DEBUG, "CFrameWnd::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, pExtra, pHandler, dwRetAddr);
@@ -2537,10 +2516,6 @@ void InstallMiscHooks_SC2K1996(void) {
 	// Install Movie hooks
 	InstallMovieHooks();
 
-	// Hook into the CFileDialog::DoModal function
-	SafeVirtualProtect((LPVOID)0x49FE18, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x49FE18, Hook_FileDialog_DoModal);
-
 	// Hook into the CGameDialog::DoModal function
 	SafeVirtualProtect((LPVOID)0x40219E, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x40219E, Hook_GameDialog_DoModal);
@@ -2554,10 +2529,6 @@ void InstallMiscHooks_SC2K1996(void) {
 	// Fix the sign fonts
 	SafeVirtualProtect((LPVOID)0x4E7267, 1, PAGE_EXECUTE_READWRITE);
 	*(BYTE*)0x4E7267 = 'a';
-	SafeVirtualProtect((LPVOID)0x44DC42, 1, PAGE_EXECUTE_READWRITE);
-	*(BYTE*)0x44DC42 = 5;
-	SafeVirtualProtect((LPVOID)0x44DC4F, 1, PAGE_EXECUTE_READWRITE);
-	*(BYTE*)0x44DC4F = 10;
 
 	// Hook for CSimcityApp::InitInstance to bypass and fix:
 	// a) Set m_nCmdShow to 'SW_MAXIMIZE' by default rather than
@@ -2619,6 +2590,8 @@ void InstallMiscHooks_SC2K1996(void) {
 	InstallThingHooks_SC2K1996();
 
 	InstallTileGrowthOrPlacementHandlingHooks_SC2K1996();
+
+	InstallGraphsScanningStatsHandlingHooks_SC2K1996();
 	
 	// Install the advanced query hook
 	InstallQueryHooks_SC2K1996();
@@ -2672,10 +2645,6 @@ void InstallMiscHooks_SC2K1996(void) {
 	NEWJMP((LPVOID)0x4017B2, Hook_SimcityDoc_UpdateDocumentTitle);
 	SafeVirtualProtect((LPVOID)0x401820, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401820, Hook_Engine_SimulationProcessTick);
-
-	// Hook RecalculateCityValue
-	SafeVirtualProtect((LPVOID)0x401F50, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x401F50, Hook_RecalculateCityValue);
 
 	// Hook SimulationStartDisaster
 	SafeVirtualProtect((LPVOID)0x402527, 5, PAGE_EXECUTE_READWRITE);
@@ -2822,10 +2791,6 @@ skipgamemenu:
 	SafeVirtualProtect((LPVOID)0x4A296A, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4A296A, Hook_CmdUI_Enable);
 
-	// Hook the scenario start dialog so we can save the description
-	SafeVirtualProtect((LPVOID)0x402B4E, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x402B4E, Hook_DisplayInformationMessageBox);
-
 	// Skip over the strange bit of code that re-arranges the original main menu.
 	// 
 	// For some reason the main menu dialog resource in simcity.exe has the Load Tile Set button
@@ -2836,6 +2801,17 @@ skipgamemenu:
 	SafeVirtualProtect((LPVOID)0x41503F, 6, PAGE_EXECUTE_READWRITE);
 	NEWJMP(0x41503F, 0x415161);
 	*(BYTE*)0x415044 = 0x90;
+
+	// nop out this bit of code for when the sign dialogue is Cancelled.
+	// You otherwise end up with orphaned labels (the XTXT entry is removed
+	// but not the XLAB entry).
+	SafeVirtualProtect((LPVOID)0x44D893, 6, PAGE_EXECUTE_READWRITE);
+	memset((LPVOID)0x44D893, 0x90, 6);
+
+	// Hook RemoveLabel in-order to facilitate the complete wiping
+	// of a removed label entry.
+	SafeVirtualProtect((LPVOID)0x401DCA, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401DCA, Hook_RemoveLabel);
 
 	// Call your cousin Vinnie!
 	PorntipsGuzzardo();

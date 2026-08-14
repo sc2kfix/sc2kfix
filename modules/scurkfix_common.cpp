@@ -147,6 +147,9 @@ static char *L_SCURK_ProcessCmdLine(char *pMainPath, char *pCmdLineParms, BOOL *
 		free(pArgv);
 	}
 
+	// Explicitly null-terminate szFileArg to be safe
+	szFileArg[sizeof(szFileArg) - 1] = 0;
+
 	*bValidFileEntry = FALSE;
 	if (iArgc > 1) {
 		if (strlen(szFileArg) > 0) {
@@ -905,25 +908,7 @@ extern "C" LONG __cdecl Hook_SCURK_EditableTileSet_mReadFromFile(cEditableTileSe
 }
 
 void L_SCURK_BackupFile(LPCSTR lpPathName) {
-	time_t t;
-	tm pTM;
-	char szStamp[14 + 1], szFileName[MAX_PATH + 1];
-
-	if (FileExists(lpPathName)) {
-		t = time(NULL);
-		localtime_s(&pTM, &t);
-
-		sprintf_s(szStamp, "%04d%02d%02d%02d%02d%02d", pTM.tm_year + 1900, pTM.tm_mon + 1, pTM.tm_mday, pTM.tm_hour, pTM.tm_min, pTM.tm_sec);
-		for (int i = 0; i <= 10; ++i) {
-			sprintf_s(szFileName, "%s.bak.%s%02d", lpPathName, szStamp, i);
-			if (!FileExists(szFileName)) {
-				if (mischook_scurk_debug & MISCHOOK_SCURK_DEBUG_CREATEBAK)
-					ConsoleLog(LOG_DEBUG, "File Exists: %s - Creating Backup: %s\n", lpPathName, szFileName);
-				CopyFile(lpPathName, szFileName, TRUE);
-				break;
-			}
-		}
-	}
+	L_BackupFile(lpPathName, mischook_scurk_debug, MISCHOOK_SCURK_DEBUG_CREATEBAK);
 }
 
 static void L_SCURK_WriteMIFFShap(cEditableTileSet *pThis, FILE *f, int nShapNum, int nShapSubtractStart) {

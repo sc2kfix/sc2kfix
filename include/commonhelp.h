@@ -203,6 +203,30 @@ typedef struct {
 #define TIL_CM_PROCPIXELS  0xC
 #define TIL_CM_NEWROWSTART 0x10
 
+#pragma pack(push, 1)
+typedef struct {
+	__int16 wDisasterID;
+	BYTE bDisasterX;
+	BYTE bDisasterY;
+	__int16 wTimeLimit;
+	DWORD dwCitySize;
+	int dwResPop;
+	int dwComPop;
+	int dwIndPop;
+	int dwCashGoal;
+	int dwLandValueGoal;
+	__int16 wLEGoal;
+	__int16 wEQGoal;
+	DWORD dwPollutionLimit;
+	DWORD dwCrimeLimit;
+	DWORD dwTrafficLimit;
+	BYTE bFirstBuilding;
+	BYTE bSecondBuilding;
+	__int16 wFirstBuildTileCnt;
+	__int16 wSecondBuildTileCnt;
+} scenStruct_t;
+#pragma pack(pop)
+
 // General
 static inline BOOL IsEven(int nVal) {
 	return (nVal % 2) == 0 ? TRUE : FALSE;

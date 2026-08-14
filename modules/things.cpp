@@ -553,6 +553,231 @@ extern "C" void __stdcall Hook_SimcityView_DrawThingObjects(__int16 x, __int16 y
 	}
 }
 
+typedef struct {
+	__int16 x;
+	__int16 y;
+	__int16 xOffset;
+	__int16 yOffset;
+	BYTE bTextOverlay;
+	RECT rFace;
+	RECT rPole;
+} signPositions_t;
+
+std::vector<signPositions_t> signPos;
+
+void L_ClearStoredSignPos() {
+	signPos.clear();
+}
+
+void L_FindNearestSignPos(CSimcityView *pSCView, RECT *r) {
+	int nZoomDiff = 0;
+	RECT rBounds;
+
+	if (!DisplayLayer[LAYER_SIGNS])
+		return;
+
+	switch (pSCView->wSCVZoomLevel) {
+		case ZOOM_LEVEL_TINY:
+			nZoomDiff = 2;
+			break;
+		case ZOOM_LEVEL_SMALL:
+			nZoomDiff = 4;
+			break;
+		default:
+			nZoomDiff = 8;
+			break;
+	}
+	SetRect(&rBounds, r->left - nZoomDiff, r->top - nZoomDiff, r->right + nZoomDiff, r->bottom + nZoomDiff);
+	for (std::vector<signPositions_t>::iterator sP = signPos.begin(); sP != signPos.end();) {
+		if (&sP) {
+			if (rBounds.left <= sP->rFace.right && 
+				rBounds.right >= sP->rFace.left && 
+				(rBounds.top <= sP->rPole.bottom || rBounds.top >= sP->rPole.top) && 
+				rBounds.bottom >= sP->rFace.top) {
+				//ConsoleLog(LOG_DEBUG, "L_FindNearestSignPos(): (%d, %d) (%d, %d) (%u) rFace(%d, %d, %d, %d) rPole(%d, %d, %d, %d) - (%d) rBounds(%d, %d, %d, %d)\n",
+				//	sP->x, sP->y,
+				//	sP->xOffset, sP->yOffset,
+				//	sP->bTextOverlay,
+				//	sP->rFace.left, sP->rFace.top, sP->rFace.right, sP->rFace.bottom,
+				//	sP->rPole.left, sP->rPole.bottom, sP->rPole.right, sP->rPole.top,
+				//	nZoomDiff,
+				//	rBounds.left, rBounds.top, rBounds.right, rBounds.bottom);
+				if (XTXTGetTextOverlayID(sP->x, sP->y))
+					L_DrawLabelsAndObjects(sP->x, sP->y, sP->xOffset, sP->yOffset, true);
+			}
+		}
+		++sP;
+	}
+}
+
+static bool L_FindStoredSignPos(__int16 x, __int16 y, __int16 xOffset, __int16 yOffset, BYTE bTextOverlay, RECT *rFace, RECT *rPole) {
+	for (std::vector<signPositions_t>::iterator sP = signPos.begin(); sP != signPos.end();) {
+		if (sP->x == x && sP->y == y && 
+			sP->xOffset == xOffset && sP->yOffset == yOffset && 
+			sP->bTextOverlay == bTextOverlay && 
+			&sP->rFace == rFace && 
+			&sP->rPole == rPole)
+			return true;
+		++sP;
+	}
+	return false;
+}
+
+static void L_StoreSignPos(__int16 x, __int16 y, __int16 xOffset, __int16 yOffset, BYTE bTextOverlay, RECT *rFace, RECT *rPole) {
+	signPositions_t sP;
+
+	if (L_FindStoredSignPos(x, y, xOffset, yOffset, bTextOverlay, rFace, rPole))
+		return;
+
+	sP.x = x;
+	sP.y = y;
+	sP.xOffset = xOffset;
+	sP.yOffset = yOffset;
+	sP.bTextOverlay = bTextOverlay;
+	CopyRect(&sP.rFace, rFace);
+	CopyRect(&sP.rPole, rPole);
+	signPos.push_back(sP);
+}
+
+static void L_DrawSignPart(HDC hDC, RECT *pRect, COLORREF cr) {
+	HPEN hPenBase, hPenShine, hPenShade, hPenInitial;
+	HBRUSH hBrush;
+	POINT pt;
+
+	hPenBase = CreatePen(PS_SOLID, 1, crSignBase);
+	hPenShine = CreatePen(PS_SOLID, 2, crSignShine);
+	hPenShade = CreatePen(PS_SOLID, 2, crSignShade); // There was previously also an unused hPenShade with a width of 1.
+	hBrush = CreateSolidBrush(cr);
+	FillRect(hDC, pRect, hBrush);
+	hPenInitial = SelectPen(hDC, hPenShine);
+	MoveToEx(hDC, pRect->right - 2, pRect->top, &pt);
+	LineTo(hDC, pRect->left, pRect->top);
+	LineTo(hDC, pRect->left, pRect->bottom - 2);
+	SelectPen(hDC, hPenShade);
+	MoveToEx(hDC, pRect->left + 1, pRect->bottom - 2, &pt);
+	LineTo(hDC, pRect->right - 2, pRect->bottom - 2);
+	LineTo(hDC, pRect->right - 2, pRect->top + 1);
+	SelectPen(hDC, hPenBase);
+	MoveToEx(hDC, pRect->left, pRect->bottom - 1, &pt);
+	LineTo(hDC, pRect->left + 1, pRect->bottom - 2);
+	MoveToEx(hDC, pRect->right - 1, pRect->top, &pt);
+	MoveToEx(hDC, pRect->right - 2, pRect->top + 1, &pt);
+	SelectPen(hDC, hPenInitial);
+	DeleteBrush(hBrush);
+	DeletePen(hPenShade);
+	DeletePen(hPenShine);
+	DeletePen(hPenBase);
+}
+
+void L_DrawLabelsAndObjects(__int16 x, __int16 y, __int16 inXOffset, __int16 inYOffset, bool bOnlySign) {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CSimcityView *pSCView;
+	CMFC3XDC *pDC;
+	HFONT hFont;
+	COLORREF crSignSurface, crSignPostEdge;
+	__int16 xOffset, yOffset;
+	BYTE bTextOverlay;
+	__int16 nNeighCompassDir, nPosNum;
+	char *pLabel;
+	int nLen, nPos;
+	int nLabelLen;
+	SIZE txtSZ;
+	RECT rFace;
+	RECT rPole;
+
+	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+	pDC = Game_Graphics_GetDC(pSCView->SCVGraphics);
+	crSignSurface = RGB(187, 187, 187);
+	crSignPostEdge = RGB(159, 159, 159);
+	xOffset = inXOffset;
+	yOffset = inYOffset;
+	bTextOverlay = XTXTGetTextOverlayID(x, y);
+	if (bTextOverlay) {
+		if (bTextOverlay < MIN_SIM_TEXT_ENTRIES || bTextOverlay == NGHBR_CONNECTION_TEXT_ENTRY) {
+			if (DisplayLayer[LAYER_SIGNS]) {
+				pLabel = GetXLABEntry(bTextOverlay);
+				if (pSCView->wSCVZoomLevel) {
+					if (pSCView->wSCVZoomLevel == ZOOM_LEVEL_SMALL) {
+						xOffset += 8;
+						yOffset -= 4;
+					}
+					else if (pSCView->wSCVZoomLevel == ZOOM_LEVEL_LARGE) {
+						xOffset += 16;
+						yOffset -= 8;
+					}
+				}
+				else {
+					xOffset += 4;
+					yOffset -= 2;
+				}
+				hFont = SelectFont(pDC->m_hDC, MainFontsArl[pSCView->wSCVZoomLevel]->m_hObject);
+				if (bTextOverlay == NGHBR_CONNECTION_TEXT_ENTRY) {
+					nNeighCompassDir = VIEWROTATION_NORTH;
+					nPosNum = 0;
+					if (y < MAP_EDGE_MIN + 2) {
+						nNeighCompassDir = VIEWROTATION_WEST;
+						nPosNum = x;
+					}
+					if (x > MAP_EDGE_MAX - 2) {
+						nNeighCompassDir = VIEWROTATION_NORTH;
+						nPosNum = y;
+					}
+					if (y > MAP_EDGE_MAX - 2) {
+						nNeighCompassDir = VIEWROTATION_EAST;
+						nPosNum = MAP_EDGE_MAX - x;
+					}
+					if (x < MAP_EDGE_MIN + 2) {
+						nNeighCompassDir = VIEWROTATION_SOUTH;
+						nPosNum = MAP_EDGE_MAX - y;
+					}
+					nLen = strlen(&stNeighborCities[MAX_NEIGH_BUF_SIZE * ((nNeighCompassDir + wViewRotation) & 3)]);
+					if (nLen > MAX_CONNLABEL_LEN)
+						nLen = MAX_CONNLABEL_LEN;
+					memset(pLabel, 0, MAX_LABEL_LEN);
+					for (nPos = 0; nLen > nPos; ++nPos)
+						pLabel[nPos] = stNeighborCities[MAX_NEIGH_BUF_SIZE * ((nNeighCompassDir + wViewRotation) & 3) + nPos];
+					pLabel[nLen] = ' ';
+					pLabel[nLen + 1] = nPosNum % 5 + '5';
+					pLabel[nLen + 2] = 0;
+				}
+				nLabelLen = strlen(pLabel);
+				GetTextExtentPointA(pDC->m_hAttribDC, pLabel, nLabelLen, &txtSZ);
+				rFace.bottom = yOffset - 15 * pSCView->wSCVZoomLevel - 20;
+				rFace.top = rFace.bottom - wFontHeightsArl[pSCView->wSCVZoomLevel] - 5;
+				rFace.left = xOffset - (txtSZ.cx / 2) - 5; // Was 8 - Sign Font Fix
+				rFace.right = rFace.left + txtSZ.cx + 10; // Was 16 - Sign Font Fix
+				rPole.top = rFace.bottom;
+				rPole.bottom = yOffset;
+				rPole.left = xOffset - 2;
+				rPole.right = xOffset + 2;
+				// Sign Pole
+				L_DrawSignPart(pDC->m_hDC, &rPole, crSignPostEdge);
+				// Sign face.
+				rFace.bottom += 2; // Added this to avoid some bottom-extent text overlap cases.
+				L_DrawSignPart(pDC->m_hDC, &rFace, crSignSurface);
+				SetTextColor(pDC->m_hDC, crSignText);
+				SetTextAlign(pDC->m_hDC, TA_LEFT);
+				TextOutA(pDC->m_hDC, rFace.left + 4, rFace.top + 2, pLabel, nLabelLen);
+				SelectFont(pDC->m_hDC, hFont);
+				// Only store during general drawing, not for sign bound checking during tile inversion.
+				if (!bOnlySign)
+					L_StoreSignPos(x, y, inXOffset, inYOffset, bTextOverlay, &rFace, &rPole);
+			}
+		}
+		else if (bTextOverlay < MIN_DISASTER_TEXT_ENTRIES) {
+			if (!bOnlySign) {
+				if (bTextOverlay <= MAX_XTHG_TEXT_ENTRIES && bTextOverlay >= MIN_XTHG_TEXT_ENTRIES)
+					Game_SimcityView_DrawThingObjects(pSCView, x, y, XTHGID_ENTRY(bTextOverlay));
+			}
+		}
+		else {
+			if (!bOnlySign)
+				Game_DrawDisasterObjects(x, y, bTextOverlay);
+		}
+	}
+	Game_Graphics_ReleaseDC(pSCView->SCVGraphics, pDC);
+}
+
 void InstallThingHooks_SC2K1996(void) {
 	// Hook for CSimcityView::DrawThingObjects
 	SafeVirtualProtect((LPVOID)0x401334, 5, PAGE_EXECUTE_READWRITE);

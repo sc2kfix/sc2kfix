@@ -4,6 +4,7 @@
 #undef UNICODE
 #include <windows.h>
 #include <windowsx.h>
+#include <Shlwapi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <intrin.h>
@@ -820,13 +821,17 @@ extern "C" void __stdcall Hook_SimcityApp_LoadTileset1996() {
 
 	__asm mov[pThis], ecx
 
+	CMainFrame *pMainFrm;
 	char szFileTypes[255 + 1], szCaption[255 + 1];
 	CMFC3XString strFilePath;
-	int nPathLen, nFileLen, nNewLen;
-	char szFilePath[MAX_PATH + 1], szPath[MAX_PATH + 1];
+	int nPathLen;
+	char szFilePath[MAX_PATH + 1], szPath[MAX_PATH + 1], szDirPath[MAX_PATH + 1];
 	OPENFILENAMEA m_ofn;
 
+	pMainFrm = (CMainFrame *)pThis->m_pMainWnd;
+
 	memset(szPath, 0, sizeof(szPath));
+	memset(szDirPath, 0, sizeof(szDirPath));
 
 	L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 4004, szFileTypes, sizeof(szFileTypes) - 1);
 	L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 4005, szCaption, sizeof(szCaption) - 1);
@@ -837,8 +842,8 @@ extern "C" void __stdcall Hook_SimcityApp_LoadTileset1996() {
 
 	memset(&m_ofn, 0, sizeof(OPENFILENAMEA));
 	m_ofn.lStructSize = sizeof(OPENFILENAMEA);
-	m_ofn.hwndOwner = pThis->m_pMainWnd->m_hWnd;
-	m_ofn.hInstance = pThis->m_hInstance;
+	m_ofn.hwndOwner = pMainFrm->m_hWnd;
+	m_ofn.hInstance = hSC2KFixModule;
 	m_ofn.lpstrFilter = ConvertFileTypeFilterString(szFileTypes);
 	m_ofn.lpstrInitialDir = szFilePath;
 	m_ofn.lpstrTitle = szCaption;
@@ -848,7 +853,10 @@ extern "C" void __stdcall Hook_SimcityApp_LoadTileset1996() {
 	m_ofn.lpstrDefExt = "mif";
 	m_ofn.lpstrFile = szPath;
 	m_ofn.lpstrFileTitle = szFilePath;
-	m_ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_ENABLESIZING;
+	m_ofn.Flags = OFN_ENABLEHOOK | OFN_ENABLETEMPLATE | OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_ENABLESIZING;
+	m_ofn.lpfnHook = (LPOFNHOOKPROC)FileHookProc;
+	m_ofn.lpTemplateName = MAKEINTRESOURCEA(IDD_FILEDLGEXT);
+	m_ofn.FlagsEx = OFN_EX_NOPLACESBAR;
 	ToggleFloatingStatusDialog(FALSE);
 	if (GetOpenFileNameA(&m_ofn)) {
 		GameMain_CmdTarget_BeginWaitCursor(pThis);
@@ -858,22 +866,19 @@ extern "C" void __stdcall Hook_SimcityApp_LoadTileset1996() {
 				Game_ReadTilesetFile(m_ofn.lpstrFile);
 			else
 				L_ReadDOSTilesetFile(m_ofn.lpstrFile);
-			nNewLen = 0;
-			nPathLen = strlen(m_ofn.lpstrFile);
-			nFileLen = strlen(m_ofn.lpstrFileTitle);
-			if (nPathLen > 0 && nFileLen > 0) {
-				nNewLen = nPathLen - nFileLen;
-				if (nNewLen > 0) {
-					strncpy_s(szPath, sizeof(szPath) - 1, m_ofn.lpstrFile, nNewLen);
-					if (L_IsPathValid(szPath))
-						jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_TILESETS] = szPath;
-				}
-			}
+
+			strcpy_s(szDirPath, m_ofn.lpstrFile);
+			PathRemoveFileSpecA(szDirPath);
+			nPathLen = strlen(szDirPath);
+			if (szDirPath[nPathLen - 1] != '\\')
+				strcat_s(szDirPath, "\\");
+			if (L_IsPathValid(szDirPath))
+				jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_TILESETS] = szDirPath;
 		}
 		else {
 			char szError[512 + 1];
 			sprintf_s(szError, "Invalid tileset file '%s'", m_ofn.lpstrFileTitle);
-			MessageBoxA(pThis->m_pMainWnd->m_hWnd, szError, gamePrimaryKey, MB_ICONERROR);
+			MessageBoxA(pMainFrm->m_hWnd, szError, gamePrimaryKey, MB_ICONERROR);
 		}
 		GameMain_CmdTarget_EndWaitCursor(pThis);
 	}

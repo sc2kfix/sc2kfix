@@ -33,7 +33,7 @@ DWORD dwScenarioStartTrafficDivisor = 0;
 
 BOOL CALLBACK ScenarioStatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
-	DWORD dwCityDueDate = wScenarioTimeLimitMonths * 25 + dwCityDays;
+	DWORD dwCityDueDate = scenarioAttrib.wTimeLimit * 25 + dwCityDays;
 	dwCityDueDate = dwCityDueDate / 25 * 25 + 22;
 	int iDueDateDay = dwCityDueDate % 25 + 1;
 	int iDueDateMonth = dwCityDueDate / 25 % 12;
@@ -54,66 +54,66 @@ BOOL CALLBACK ScenarioStatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam
 		strScenarioGoalsHeader += pszCityName.m_pchData;
 
 		// Compile the scenario goal strings
-		if (wScenarioDisasterID) {
+		if (scenarioAttrib.wDisasterID) {
 			strScenarioGoals += "Survive the disaster afflicting the city!\n\n";
 			strScenarioCurrent += "TBD...\n\n";
 		}
 
-		if (dwScenarioCitySize) {
-			strScenarioGoals += "Attain a total city population of " + std::to_string(dwScenarioCitySize) + ".\n\n";
+		if (scenarioAttrib.dwCitySize) {
+			strScenarioGoals += "Attain a total city population of " + std::to_string(scenarioAttrib.dwCitySize) + ".\n\n";
 			strScenarioCurrent += std::to_string(dwCityPopulation) + "\n\n";
 		}
 
-		if (dwScenarioResPopulation) {
-			strScenarioGoals += "Attain a residential population of " + std::to_string(dwScenarioResPopulation) + ".\n\n";
+		if (scenarioAttrib.dwResPop) {
+			strScenarioGoals += "Attain a residential population of " + std::to_string(scenarioAttrib.dwResPop) + ".\n\n";
 			strScenarioCurrent += std::to_string(pBudgetArr[0].iCurrentCosts) + "\n\n";
 		}
 
-		if (dwScenarioComPopulation) {
-			strScenarioGoals += "Attain a commercial population of " + std::to_string(dwScenarioComPopulation) + ".\n\n";
+		if (scenarioAttrib.dwComPop) {
+			strScenarioGoals += "Attain a commercial population of " + std::to_string(scenarioAttrib.dwComPop) + ".\n\n";
 			strScenarioCurrent += std::to_string(pBudgetArr[1].iCurrentCosts) + "\n\n";
 		}
 
-		if (dwScenarioIndPopulation) {
-			strScenarioGoals += "Attain an industrial population of " + std::to_string(dwScenarioIndPopulation) + ".\n\n";
+		if (scenarioAttrib.dwIndPop) {
+			strScenarioGoals += "Attain an industrial population of " + std::to_string(scenarioAttrib.dwIndPop) + ".\n\n";
 			strScenarioCurrent += std::to_string(pBudgetArr[2].iCurrentCosts) + "\n\n";
 		}
 
-		if (dwScenarioCashGoal) {
-			strScenarioGoals += "Have at least $" + std::to_string(dwScenarioCashGoal) + " in the city reserves (minus bonds).\n\n";
+		if (scenarioAttrib.dwCashGoal) {
+			strScenarioGoals += "Have at least $" + std::to_string(scenarioAttrib.dwCashGoal) + " in the city reserves (minus bonds).\n\n";
 			strScenarioCurrent += "$" + std::to_string(dwCityFunds - dwCityBonds) + "\n\n";
 		}
 
 		// BUG: does not work
-		if (dwScenarioLandValueGoal) {
-			strScenarioGoals += "Have at least $" + std::to_string(dwScenarioLandValueGoal) + "000 total city land value.\n\n";
+		if (scenarioAttrib.dwLandValueGoal) {
+			strScenarioGoals += "Have at least $" + std::to_string(scenarioAttrib.dwLandValueGoal) + "000 total city land value.\n\n";
 			strScenarioCurrent += "$" + std::to_string(dwCityLandValue) + "000\n\n";
 		}
 
-		if (wScenarioLEGoal) {
-			strScenarioGoals += "Attain an average Life Expectancy of " + std::to_string(wScenarioLEGoal) + " or higher.\n\n";
+		if (scenarioAttrib.wLEGoal) {
+			strScenarioGoals += "Attain an average Life Expectancy of " + std::to_string(scenarioAttrib.wLEGoal) + " or higher.\n\n";
 			strScenarioCurrent += std::to_string(dwCityWorkforceLE) + " years\n\n";
 		}
 
-		if (wScenarioEQGoal) {
-			strScenarioGoals += "Attain an average Education Quotient of " + std::to_string(wScenarioEQGoal) + " or higher.\n\n";
+		if (scenarioAttrib.wEQGoal) {
+			strScenarioGoals += "Attain an average Education Quotient of " + std::to_string(scenarioAttrib.wEQGoal) + " or higher.\n\n";
 			strScenarioCurrent += std::to_string(dwCityWorkforceEQ) + " EQ\n\n";
 		}
 
-		if (dwScenarioPollutionLimit) {
-			strScenarioGoals += "Maintain a pollution rating of " + to_string_precision((float)(dwScenarioPollutionLimit) / (float)(wScenarioStartXVALTiles / 4 + 1), 0) + "% or lower.\n\n";
+		if (scenarioAttrib.dwPollutionLimit) {
+			strScenarioGoals += "Maintain a pollution rating of " + to_string_precision((float)(scenarioAttrib.dwPollutionLimit) / (float)(wScenarioStartXVALTiles / 4 + 1), 0) + "% or lower.\n\n";
 			strScenarioCurrent += to_string_precision((float)(dwCityPollution) / (float)(wScenarioStartXVALTiles / 4 + 1), 0) + "%\n\n";
 		}
 
-		if (dwScenarioCrimeLimit) {
-			strScenarioGoals += "Maintain a crime rate of " + to_string_precision((float)(dwScenarioCrimeLimit) / (float)(wScenarioStartXVALTiles / 4 + 1), 0) + "% or lower.\n\n";
+		if (scenarioAttrib.dwCrimeLimit) {
+			strScenarioGoals += "Maintain a crime rate of " + to_string_precision((float)(scenarioAttrib.dwCrimeLimit) / (float)(wScenarioStartXVALTiles / 4 + 1), 0) + "% or lower.\n\n";
 			strScenarioCurrent += to_string_precision((float)(dwCityCrime) / (float)(wScenarioStartXVALTiles / 4 + 1), 0) + "%\n\n";
 		}
 
 		// BUG: Needs work
-		if (dwScenarioTrafficLimit) {
-			strScenarioGoals += "Maintain a traffic rating of " + to_string_precision(dwScenarioTrafficLimit, 0) + "% or lower.\n\n";
-			strScenarioCurrent += to_string_precision(dwCityTrafficUnknown, 0) + "%\n\n";
+		if (scenarioAttrib.dwTrafficLimit) {
+			strScenarioGoals += "Maintain a traffic rating of " + to_string_precision(scenarioAttrib.dwTrafficLimit, 0) + "% or lower.\n\n";
+			strScenarioCurrent += to_string_precision(dwCityTrafficCount, 0) + "%\n\n";
 		}
 
 		// TODO: Building goals

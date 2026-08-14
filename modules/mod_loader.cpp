@@ -54,10 +54,10 @@ int LoadNativeCodeHooks(HMODULE hModule) {
 
 		// Compare against each hook that we can register and flag if we register one
 		REGISTER_HOOK(Hook_OnNewCity_Before);
-		REGISTER_HOOK(Hook_LoadGame_Before);
-		REGISTER_HOOK(Hook_LoadGame_After);
-		REGISTER_HOOK(Hook_SaveGame_Before);
-		REGISTER_HOOK(Hook_SaveGame_After);
+		REGISTER_HOOK(L_SimcityApp_DoLoad_Before);
+		REGISTER_HOOK(L_SimcityApp_DoLoad_After);
+		REGISTER_HOOK(L_SimcityApp_DoSave_Before);
+		REGISTER_HOOK(L_SimcityApp_DoSave_After);
 		REGISTER_HOOK(Hook_PrepareGame_Before);
 		REGISTER_HOOK(Hook_PrepareGame_After);
 		REGISTER_HOOK(Hook_SimcityApp_BuildSubFrames_Before);
@@ -91,10 +91,10 @@ bool operator<(const hook_function_t& a, const hook_function_t& b) {
 
 void SortHookLists(void) {
 	SORT_HOOKS(Hook_OnNewCity_Before);
-	SORT_HOOKS(Hook_LoadGame_Before);
-	SORT_HOOKS(Hook_LoadGame_After);
-	SORT_HOOKS(Hook_SaveGame_Before);
-	SORT_HOOKS(Hook_SaveGame_After);
+	SORT_HOOKS(L_SimcityApp_DoLoad_Before);
+	SORT_HOOKS(L_SimcityApp_DoLoad_After);
+	SORT_HOOKS(L_SimcityApp_DoSave_Before);
+	SORT_HOOKS(L_SimcityApp_DoSave_After);
 	SORT_HOOKS(Hook_PrepareGame_Before);
 	SORT_HOOKS(Hook_PrepareGame_After);
 	SORT_HOOKS(Hook_SimcityApp_BuildSubFrames_Before);
