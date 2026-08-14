@@ -114,7 +114,7 @@ BOOL CALLBACK FileHookProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
 			}
 
 			CenterDialogBox(hWndParent);
-			return TRUE;
+			return FALSE;
 
 		case WM_SIZE:
 			hWndParent = GetParent(hWnd);
