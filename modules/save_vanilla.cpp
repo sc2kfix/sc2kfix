@@ -459,6 +459,8 @@ static int L_SimcityApp_OpenCityInfo(CSimcityAppPrimary *pSCApp, FILE *pFile, in
 			bOptionsAutoGoto = pMiscInfo[nArrNextOffset++];
 			pSCApp->dwSCAGameSound = pMiscInfo[nArrNextOffset++];
 			pSCApp->dwSCAGameMusic = pMiscInfo[nArrNextOffset++];
+			if (!pSCApp->dwSCAGameMusic)
+				Game_Sound_MusicStop(pSCApp->SCASNDLayer);
 			bNoDisasters = pMiscInfo[nArrNextOffset++];
 			bNewspaperSubscription = pMiscInfo[nArrNextOffset++];
 			bNewspaperExtra = pMiscInfo[nArrNextOffset++];
