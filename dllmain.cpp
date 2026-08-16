@@ -610,7 +610,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Do so here as well if any of the handles are still valid.
 		// If by the end the handles haven't been set to 0, TerminateThread.
 		if (hSDLSongHandle) {
-			dwWaitRes = WaitForSingleObject(hSDLSongHandle, 140);
+			dwWaitRes = WaitForSingleObject(hSDLSongHandle, THREAD_WAIT_TIME);
 			if (!dwWaitRes)
 				hSDLSongHandle = 0;
 
@@ -620,7 +620,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			}
 		}
 		if (hSDLSoundHandle) {
-			dwWaitRes = WaitForSingleObject(hSDLSoundHandle, 140);
+			dwWaitRes = WaitForSingleObject(hSDLSoundHandle, THREAD_WAIT_TIME);
 			if (!dwWaitRes)
 				hSDLSoundHandle = 0;
 
@@ -630,7 +630,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			}
 		}
 		if (hFSMIDIHandle) {
-			dwWaitRes = WaitForSingleObject(hFSMIDIHandle, 140);
+			dwWaitRes = WaitForSingleObject(hFSMIDIHandle, THREAD_WAIT_TIME);
 			if (!dwWaitRes)
 				hFSMIDIHandle = 0;
 
@@ -640,7 +640,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			}
 		}
 		if (hMusicHandle) {
-			dwWaitRes = WaitForSingleObject(hMusicHandle, 140);
+			dwWaitRes = WaitForSingleObject(hMusicHandle, THREAD_WAIT_TIME);
 			if (!dwWaitRes)
 				hMusicHandle = 0;
 

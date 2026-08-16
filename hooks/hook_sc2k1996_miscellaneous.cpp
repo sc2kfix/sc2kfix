@@ -2596,22 +2596,22 @@ extern "C" void __stdcall Hook_SimcityApp_ExitInstance() {
 	// Then wait for the objects here first for 140ms.
 	// If dwWaitRes returns 0, zero the handle.
 	if (hSDLSongHandle) {
-		dwWaitRes = WaitForSingleObject(hSDLSongHandle, 140);
+		dwWaitRes = WaitForSingleObject(hSDLSongHandle, THREAD_WAIT_TIME);
 		if (!dwWaitRes)
 			hSDLSongHandle = 0;
 	}
 	if (hSDLSoundHandle) {
-		dwWaitRes = WaitForSingleObject(hSDLSoundHandle, 140);
+		dwWaitRes = WaitForSingleObject(hSDLSoundHandle, THREAD_WAIT_TIME);
 		if (!dwWaitRes)
 			hSDLSoundHandle = 0;
 	}
 	if (hFSMIDIHandle) {
-		dwWaitRes = WaitForSingleObject(hFSMIDIHandle, 140);
+		dwWaitRes = WaitForSingleObject(hFSMIDIHandle, THREAD_WAIT_TIME);
 		if (!dwWaitRes)
 			hFSMIDIHandle = 0;
 	}
 	if (hMusicHandle) {
-		dwWaitRes = WaitForSingleObject(hMusicHandle, 140);
+		dwWaitRes = WaitForSingleObject(hMusicHandle, THREAD_WAIT_TIME);
 		if (!dwWaitRes)
 			hMusicHandle = 0;
 	}

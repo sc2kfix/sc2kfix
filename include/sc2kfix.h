@@ -162,6 +162,9 @@ template <typename T> std::string to_string_precision(const T value, const int p
 	(int)SNDMSG((hwndLV), LVM_INSERTCOLUMN, (WPARAM)(i), (LPARAM)(LV_COLUMN *)&_macro_lvc);\
 }
 
+#define THREAD_WAIT_TIME    140
+#define SUBTHREAD_WAIT_TIME 140
+
 #define MUSIC_TRACKS 19
 #define SOUND_ENTRIES 31
 
