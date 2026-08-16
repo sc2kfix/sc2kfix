@@ -1431,11 +1431,13 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	BYTE iPaperVal;
 	BOOL bScenarioSuccess;
 	CSimcityAppPrimary *pSCApp;
+	CMainFrame *pMainFrm;
 	CNewspaperDialog newsDialog;
 	if (!QueryPerformanceFrequency(&SPT_uTicksPerSecond))
 		ConsoleLog(LOG_WARNING, "CORE: WTF? QueryPerformanceFrequency errored out 0x%08X.\n", GetLastError());
 
 	pSCApp = &pCSimcityAppThis;
+	pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 	UpdateCityDateAndSeason(TRUE);
 	dwMonDay = (dwCityDays % 25);
 	if (pSCApp->dwSCAGameAutoSave > 0 &&
@@ -1469,8 +1471,13 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 				Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
 
 			// Happy new year; here's how broke you are
-			if (bYearEndFlag)
+			if (bYearEndFlag) {
+				if (!bOptionsAutoBudget) {
+					if (!IsIconic(pMainFrm->m_hWnd))
+						Game_Sound_StopSound(pSCApp->SCASNDLayer);
+				}
 				Game_SimulationPrepareBudgetDialog(0);
+			}
 
 			// Calculate any budget updates before any newspapers get displayed
 			Game_UpdateBudgetInformation();
@@ -1894,6 +1901,20 @@ extern "C" void __stdcall Hook_SimcityView_OnRButtonDown(UINT nFlags, CMFC3XPoin
 	__asm mov [pThis], ecx
 
 	GetKeyButtonBinding_SC2K1996(B_KEY_MOUSE_RBUTTON, FALSE, &pt);
+}
+
+extern "C" void __stdcall Hook_SimcityView_DoBudget() {
+	CSimcityView *pThis;
+	__asm mov [pThis], ecx
+
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	BOOL bSaveAutoBudget;
+
+	bSaveAutoBudget = bOptionsAutoBudget;
+	bOptionsAutoBudget = 0;
+	Game_Sound_StopSound(pSCApp->SCASNDLayer);
+	Game_SimulationPrepareBudgetDialog(0);
+	bOptionsAutoBudget = bSaveAutoBudget;
 }
 
 // Hook to fix cursor weirdness on some high resolution monitors
@@ -2746,6 +2767,12 @@ void InstallMiscHooks_SC2K1996(void) {
 	SafeVirtualProtect((LPVOID)0x40131B, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x40131B, Hook_MainFrame_UpdateSections);
 
+	// nop out "StopSound" call in SimulationPrepareBudgetDialog()
+	// this allows for the "click" to be played when executed from
+	// the city toolbar.
+	SafeVirtualProtect((LPVOID)0x473230, 10, PAGE_EXECUTE_READWRITE);
+	memset((LPVOID)0x473230, 0x90, 10);
+
 	InstallToolBarHooks_SC2K1996();
 
 	// New hooks for CSimcityDoc::UpdateDocumentTitle and
@@ -2889,6 +2916,10 @@ skipgamemenu:
 	// Hook for CSimcityView::OnRButtonDown
 	SafeVirtualProtect((LPVOID)0x401C9E, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401C9E, Hook_SimcityView_OnRButtonDown);
+
+	// Hook for CSimcityView::DoBudget
+	SafeVirtualProtect((LPVOID)0x4020AE, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4020AE, Hook_SimcityView_DoBudget);
 
 	// Hook for CSimcityApp::LoadCursorResources
 	SafeVirtualProtect((LPVOID)0x402234, 5, PAGE_EXECUTE_READWRITE);
