@@ -37,8 +37,6 @@ int GetSoundPlayTicksBySoundID_SC2K1996(int iSoundID) {
 	int i = iSoundID - SOUND_START;
 
 	if (i >= 0 && i < SOUND_ENTRIES) {
-		if (snd_debug & SND_DEBUG_INTERNALS)
-			ConsoleLog(LOG_DEBUG, "GetSoundPlayTicksBySoundID_SC2K1996(%d): i(%d) nSoundPlayTicks[i](%d)\n", iSoundID, i, nSoundPlayTicks[i]);
 		return nSoundPlayTicks[i];
 	}
 	return 0;
@@ -49,8 +47,6 @@ int GetTickDurationBySoundID_SC2K1996(int iSoundID, int nDuration) {
 	// of the following originally for the address:
 	// *((DWORD *)&rgbLoColor[8].wPos + iSoundID)
 	int nSoundPlayTicksEntry = GetSoundPlayTicksBySoundID_SC2K1996(iSoundID);
-	if (snd_debug & SND_DEBUG_INTERNALS)
-		ConsoleLog(LOG_DEBUG, "GetTickDurationBySoundID_SC2K1996(%d, %d): nSoundPlayTicksEntry(%d)\n", iSoundID, nDuration, nSoundPlayTicksEntry);
 	return nDuration * nSoundPlayTicksEntry;
 }
 

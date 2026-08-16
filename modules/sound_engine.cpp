@@ -138,7 +138,7 @@ static DWORD WINAPI SoundEngineOneShotThread(LPVOID lpParameter) {
 
 	bSoundThreadActive[0] = false;
 	bSoundPlaying = false;
-	if (snd_debug & SND_DEBUG_THREADS)
+	if (sdl_debug & SDL_DEBUG_THREADS)
 		ConsoleLog(LOG_DEBUG, "SoundEngineOneShotThread() - exiting.\n");
 	return EXIT_SUCCESS;
 }
@@ -164,7 +164,7 @@ static DWORD WINAPI SoundEngineLoopThread(LPVOID lpParameter) {
 	}
 
 	bSoundThreadActive[1] = false;
-	if (snd_debug & SND_DEBUG_THREADS)
+	if (sdl_debug & SDL_DEBUG_THREADS)
 		ConsoleLog(LOG_DEBUG, "SoundEngineLoopThread() - exiting.\n");
 	return EXIT_SUCCESS;
 }
@@ -228,8 +228,6 @@ DWORD WINAPI SDLSoundThread(LPVOID lpParameter) {
 			nDuration = (int)msg.wParam;
 			soundAttrib.iSoundID = LOWORD(msg.lParam);
 			soundAttrib.nOrig = HIWORD(msg.lParam);
-			if (sdl_debug & SDL_DEBUG_SOUND)
-				ConsoleLog(LOG_DEBUG, "SDLSoundThread: WM_SDL_PLAY: (%d) (%d) %d\n", soundAttrib.iSoundID, nDuration, soundAttrib.nOrig);
 			
 			fVolume = float(jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDVOLUME].ToFloat() * jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat());
 
@@ -243,8 +241,6 @@ DWORD WINAPI SDLSoundThread(LPVOID lpParameter) {
 						pSound->bSNDPlaySound = TRUE;
 						pSound->bSNDWasPlaying = TRUE;
 						nActionThingSoundPlayTicks = (nDuration <= 0) ? 0 : GetTickDurationBySoundID_SC2K1996(soundAttrib.iSoundID, nDuration);
-						if (sdl_debug & SDL_DEBUG_SOUND)
-							ConsoleLog(LOG_DEBUG, "SDLSoundThread: Sound(%d), Duration(%d), nActionThingSoundPlayTicks(%d)\n", soundAttrib.iSoundID, nDuration, nActionThingSoundPlayTicks);
 					}
 					else
 						pSound->bSNDWasPlaying = FALSE;
@@ -356,7 +352,7 @@ static DWORD WINAPI SoundEngineSongThread(LPVOID lpParameter) {
 	bSongThreadActive = false;
 	SetMCIDevID(-1);
 	SetSongPlaying(false);
-	if (mus_debug & MUS_DEBUG_THREAD)
+	if (sdl_debug & SDL_DEBUG_THREADS)
 		ConsoleLog(LOG_DEBUG, "SoundEngineSongThread() - exiting.\n");
 	return EXIT_SUCCESS;
 }
