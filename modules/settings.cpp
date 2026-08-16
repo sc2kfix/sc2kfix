@@ -21,10 +21,14 @@ json::JSON jsonSettingsCoreWorkingCopy;
 
 #define TAB_COUNT 3
 
+#define CLTOTAB_RECT_OFFS_LEFT   12
+#define CLTOTAB_RECT_OFFS_TOP    96
+#define CLTOTAB_RECT_OFFS_RIGHT  12
+#define CLTOTAB_RECT_OFFS_BOTTOM 68
+
 struct {
 	HWND hwndTab;
 	HWND hwndDisplay;
-	RECT rcDisplay;
 	DLGTEMPLATE* pDlgResource[TAB_COUNT];
 	DLGPROC pDlgProc[TAB_COUNT];
 	settings_t* stSettingsChanges;
@@ -384,15 +388,21 @@ static void SettingsTabSelectionChanged(HWND hwndDlg) {
 
 static BOOL CALLBACK SettingsDialogGeneralTabProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	HWND hwndParent;
+	RECT clientRect;
 	char szTempRegistrationNameBuffer[64] = { 0 };
 
 	switch (message) {
 	case WM_INITDIALOG:
 		// Place ourselves in the correct position
 		hwndParent = GetParent(hwndDlg);
-		SetWindowPos(hwndDlg, NULL, stSettingsDialogHeader.rcDisplay.left, stSettingsDialogHeader.rcDisplay.top,
-			(stSettingsDialogHeader.rcDisplay.right - stSettingsDialogHeader.rcDisplay.left),
-			(stSettingsDialogHeader.rcDisplay.bottom - stSettingsDialogHeader.rcDisplay.top),
+		GetWindowRect(hwndParent, &clientRect);
+		ScreenToClient(hwndParent, (LPPOINT)&clientRect.left);
+		ScreenToClient(hwndParent, (LPPOINT)&clientRect.right);
+		SetRect(&clientRect, clientRect.left + CLTOTAB_RECT_OFFS_LEFT, clientRect.top + CLTOTAB_RECT_OFFS_TOP, 
+			clientRect.right - CLTOTAB_RECT_OFFS_RIGHT, clientRect.bottom - CLTOTAB_RECT_OFFS_BOTTOM);
+		SetWindowPos(hwndDlg, NULL, clientRect.left, clientRect.top,
+			(clientRect.right - clientRect.left),
+			(clientRect.bottom - clientRect.top),
 			SWP_SHOWWINDOW);
 
 		Static_GetIcon(GetDlgItem(hwndDlg, IDC_STATIC_TOPSECRET), LoadIcon(hSC2KFixModule, MAKEINTRESOURCE(IDI_TOPSECRET)));
@@ -463,6 +473,7 @@ static BOOL CALLBACK SettingsDialogGeneralTabProc(HWND hwndDlg, UINT message, WP
 
 static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	HWND hwndParent, hwndItem;
+	RECT clientRect;
 	int nOpt;
 	char szTempRegistrationNameBuffer[64] = { 0 };
 
@@ -470,9 +481,14 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 	case WM_INITDIALOG:
 		// Place ourselves in the correct position
 		hwndParent = GetParent(hwndDlg);
-		SetWindowPos(hwndDlg, NULL, stSettingsDialogHeader.rcDisplay.left, stSettingsDialogHeader.rcDisplay.top,
-			(stSettingsDialogHeader.rcDisplay.right - stSettingsDialogHeader.rcDisplay.left),
-			(stSettingsDialogHeader.rcDisplay.bottom - stSettingsDialogHeader.rcDisplay.top),
+		GetWindowRect(hwndParent, &clientRect);
+		ScreenToClient(hwndParent, (LPPOINT)&clientRect.left);
+		ScreenToClient(hwndParent, (LPPOINT)&clientRect.right);
+		SetRect(&clientRect, clientRect.left + CLTOTAB_RECT_OFFS_LEFT, clientRect.top + CLTOTAB_RECT_OFFS_TOP, 
+			clientRect.right - CLTOTAB_RECT_OFFS_RIGHT, clientRect.bottom - CLTOTAB_RECT_OFFS_BOTTOM);
+		SetWindowPos(hwndDlg, NULL, clientRect.left, clientRect.top,
+			(clientRect.right - clientRect.left),
+			(clientRect.bottom - clientRect.top),
 			SWP_SHOWWINDOW);
 
 		hwndItem = GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MOVIE_ZOOMLEVEL);
@@ -587,6 +603,7 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 
 static BOOL CALLBACK SettingsDialogAudioTabProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	HWND hwndParent;
+	RECT clientRect;
 	char szFluidSynthSettingPath[MAX_PATH] = { 0 };
 	OPENFILENAMEA stOFNFluidSynth = {
 		sizeof(OPENFILENAMEA), hwndDlg, NULL,
@@ -601,9 +618,14 @@ static BOOL CALLBACK SettingsDialogAudioTabProc(HWND hwndDlg, UINT message, WPAR
 	case WM_INITDIALOG:
 		// Place ourselves in the correct position
 		hwndParent = GetParent(hwndDlg);
-		SetWindowPos(hwndDlg, NULL, stSettingsDialogHeader.rcDisplay.left, stSettingsDialogHeader.rcDisplay.top,
-			(stSettingsDialogHeader.rcDisplay.right - stSettingsDialogHeader.rcDisplay.left),
-			(stSettingsDialogHeader.rcDisplay.bottom - stSettingsDialogHeader.rcDisplay.top),
+		GetWindowRect(hwndParent, &clientRect);
+		ScreenToClient(hwndParent, (LPPOINT)&clientRect.left);
+		ScreenToClient(hwndParent, (LPPOINT)&clientRect.right);
+		SetRect(&clientRect, clientRect.left + CLTOTAB_RECT_OFFS_LEFT, clientRect.top + CLTOTAB_RECT_OFFS_TOP, 
+			clientRect.right - CLTOTAB_RECT_OFFS_RIGHT, clientRect.bottom - CLTOTAB_RECT_OFFS_BOTTOM);
+		SetWindowPos(hwndDlg, NULL, clientRect.left, clientRect.top,
+			(clientRect.right - clientRect.left),
+			(clientRect.bottom - clientRect.top),
 			SWP_SHOWWINDOW);
 
 		// Set up the music driver combo box
@@ -702,14 +724,20 @@ static BOOL CALLBACK SettingsDialogAudioTabProc(HWND hwndDlg, UINT message, WPAR
 // Template for future tabs
 static BOOL CALLBACK TabDlg(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	HWND hwndParent;
+	RECT clientRect;
 
 	switch (message) {
 	case WM_INITDIALOG:
 		// Place ourselves in the correct position
 		hwndParent = GetParent(hwndDlg);
-		SetWindowPos(hwndDlg, NULL, stSettingsDialogHeader.rcDisplay.left, stSettingsDialogHeader.rcDisplay.top,
-			(stSettingsDialogHeader.rcDisplay.right - stSettingsDialogHeader.rcDisplay.left),
-			(stSettingsDialogHeader.rcDisplay.bottom - stSettingsDialogHeader.rcDisplay.top),
+		GetWindowRect(hwndParent, &clientRect);
+		ScreenToClient(hwndParent, (LPPOINT)&clientRect.left);
+		ScreenToClient(hwndParent, (LPPOINT)&clientRect.right);
+		SetRect(&clientRect, clientRect.left + CLTOTAB_RECT_OFFS_LEFT, clientRect.top + CLTOTAB_RECT_OFFS_TOP, 
+			clientRect.right - CLTOTAB_RECT_OFFS_RIGHT, clientRect.bottom - CLTOTAB_RECT_OFFS_BOTTOM);
+		SetWindowPos(hwndDlg, NULL, clientRect.left, clientRect.top,
+			(clientRect.right - clientRect.left),
+			(clientRect.bottom - clientRect.top),
 			SWP_SHOWWINDOW);
 
 		DestroyStoredTooltips(storedToolTips, hwndDlg);
@@ -798,10 +826,6 @@ BOOL CALLBACK SettingsDialogContainerProc(HWND hwndDlg, UINT message, WPARAM wPa
 		SetRectEmpty(&rcTab);
 		GetWindowRect(stSettingsDialogHeader.hwndTab, &rcTab);
 		TabCtrl_AdjustRect(stSettingsDialogHeader.hwndTab, TRUE, &rcTab);
-		OffsetRect(&rcTab, 8, -16);
-		rcTab.right -= 20;
-		rcTab.bottom -= 64;
-		CopyRect(&stSettingsDialogHeader.rcDisplay, &rcTab);
 
 		// Center the dialog box and select tab 0
 		SettingsTabSelectionChanged(hwndDlg);
