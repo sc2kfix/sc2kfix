@@ -466,7 +466,7 @@ extern HOOKEXT_CPP json::JSON jsonSettingsCoreWorkingCopy;
 extern HOOKEXT_CPP json::JSON jsonSettingsMods;
 
 // No longer actually used for settings, but as temporary buffers
-extern char szSettingsMayorName[64];
+extern char szSettingsMayorName[MAX_LABEL_LEN + 1];
 extern char szSettingsCompanyName[64];
 extern char szSettingsMIDITrackPath[MUSIC_TRACKS][MAX_PATH + 1];
 extern char szSettingsMP3TrackPath[MUSIC_TRACKS][MAX_PATH + 1];

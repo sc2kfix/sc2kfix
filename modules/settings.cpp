@@ -50,7 +50,7 @@ bool bSavedCityBackup = true;
 char szGamePath[MAX_PATH];
 
 // No longer actually used for settings, but as temporary buffers
-char szSettingsMayorName[64];
+char szSettingsMayorName[MAX_LABEL_LEN + 1];
 char szSettingsCompanyName[64];
 char szSettingsMIDITrackPath[MUSIC_TRACKS][MAX_PATH + 1];
 char szSettingsMP3TrackPath[MUSIC_TRACKS][MAX_PATH + 1];
@@ -344,6 +344,26 @@ void LoadJSONSettings(void) {
 	LoadJSONBindings(jsonSettingsCore);
 
 	GetSpecificStoredJSONVars();
+
+	bool bNeedResave = false;
+	if (jsonSettingsCore[C_SIMCITY2000][S_SIM_REG].hasKey(I_SIM_REG_MAYORNAME)) {
+		if (strlen(jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str()) < 1) {
+			ConsoleLog(LOG_WARNING, "REG: Empty Mayor Name Detected! Setting the default.\n");
+			jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME] = DEF_SIM_REG_MAYOR_NAME;
+			bNeedResave = true;
+		}
+	}
+
+	if (jsonSettingsCore[C_SIMCITY2000][S_SIM_REG].hasKey(I_SIM_REG_COMPANYNAME)) {
+		if (strlen(jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_COMPANYNAME].ToString().c_str()) < 1) {
+			ConsoleLog(LOG_WARNING, "REG: Empty Company Name Detected! Setting the default.\n");
+			jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_COMPANYNAME] = DEF_SIM_REG_COMPANY_NAME;
+			bNeedResave = true;
+		}
+	}
+
+	if (bNeedResave)
+		SaveJSONSettings();
 }
 
 void SaveJSONSettings(void) {
