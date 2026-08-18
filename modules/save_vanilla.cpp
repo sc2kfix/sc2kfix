@@ -16,7 +16,7 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
-#define SAVE_DEBUG DEBUG_FLAGS_NONE
+#define SAVE_DEBUG SAVE_DEBUG_XFIX
 
 #ifdef DEBUGALL
 #undef SAVE_DEBUG
@@ -31,6 +31,7 @@
 UINT save_debug = SAVE_DEBUG;
 
 static DWORD *pMiscInfo = NULL;
+json::JSON jsonXFIX;
 
 #define MISCINF_ALLOC_SIZE   0x12C0 // Pending demystification
 #define FULLMAP_ALLOC_SIZE   (GAME_MAP_SIZE * GAME_MAP_SIZE)
@@ -43,6 +44,35 @@ static DWORD *pMiscInfo = NULL;
 #define GRAPH_ALLOC_SIZE     (MAX_GRAPHS * MAX_GRAPH_ENTRIES * sizeof(DWORD))
 
 #define COPYBLOCKTO(D, S, P, SZ, MLT) memcpy(D[P], &S[P * (SZ * MLT)], SZ * MLT)
+
+// Initializes the XFIX chunk structure to default values
+void CreateDefaultXFIX(void) {
+	jsonXFIX = {};
+
+	jsonXFIX["meta"] = {};
+	jsonXFIX["meta"]["creator"] = "sc2kfix " SC2KFIX_VERSION;
+	jsonXFIX["meta"]["timestamp"] = time(NULL);
+
+	jsonXFIX["map"] = {};
+	jsonXFIX["map"]["terrain_cosmetic_mode"] = TERRAIN_COSMETIC_NONE;
+	jsonXFIX["map"]["tilesets"] = json::Array();
+
+	if (save_debug & SAVE_DEBUG_XFIX)
+		ConsoleLog(LOG_DEBUG, "SAVE: XFIX chunk structure reset to defaults.\n");
+}
+
+void UpdateXFIXSettings(void) {
+	if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt() == TERRAIN_COSMETIC_NONE)
+		iTerrainCosmeticMode = jsonXFIX["map"]["terrain_cosmetic_mode"].ToInt();
+
+	// Reset the current tileset to the default and load any listed saved tilesets in order
+	ReloadDefaultTileSet_SC2K1996(true);
+	for (json::JSON j : jsonXFIX["map"]["tilesets"].ArrayRange()) {
+		Game_ReadTilesetFile((char*)j.ToString().c_str());
+		if (save_debug & SAVE_DEBUG_XFIX)
+			ConsoleLog(LOG_DEBUG, "LOAD: Loaded tileset \"%s\" from XFIX chunk.\n", j.ToString().c_str());
+	}
+}
 
 static bool IsMatchingChunk(const char *pChunk, const char *pTargChunk) {
 	if (!pChunk || strlen(pChunk) < 1)
@@ -782,6 +812,28 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							}
 						}
 					}
+
+					// Load the new XFIX chunk from r11a+ saves -- this is a JSON dump stored
+					// uncompressed as a single chunk and loaded straight back into sc2kfix.
+					else if (IsMatchingChunk(szChunk, "XFIX")) {
+						if (bNoXFIX)
+							ConsoleLog(LOG_INFO, "LOAD: XFIX found chunk in save file, but -noxfix was passed; skipping.\n");
+						else {
+							pTemp = (char*)malloc(nSize);
+							if (pTemp) {
+								iBadRead = CHUNK_BAD_PROC;
+								memset(pTemp, 0, nSize);
+								if (L_OpenCityUncompressed(pFile, nSize, pTemp)) {
+									if (save_debug & SAVE_DEBUG_XFIX)
+										ConsoleLog(LOG_DEBUG, "LOAD: Read XFIX chunk, contents:\n%s\n", pTemp);
+									jsonXFIX.merge(jsonXFIX.Load(pTemp));
+									UpdateXFIXSettings();
+									iBadRead = CHUNK_OKAY;
+								}
+							}
+						}
+					}
+
 					else if (L_OpenCityUnknownChunkRead(pFile, szChunk, nSize))
 						iBadRead = CHUNK_OKAY;
 				}
@@ -1148,8 +1200,7 @@ static int L_SimcityApp_WriteCityName(CSimcityAppPrimary *pSCApp, FILE *pFile, c
 	nDataOffset += CNAM_DAT_LEN + 8;
 	return 1;
 }
-
-static int L_SimcityApp_WriteCityUncompressed(CSimcityAppPrimary *pSCApp, FILE *pFile, const char *pTargChunk, const void *pDat, int nDatSize) {
+static int L_SimcityApp_WriteCityUncompressed(CSimcityAppPrimary *pSCApp, FILE *pFile, const char *pTargChunk, const void *pDat, int nDatSize, bool bBigEndian) {
 	int ret;
 	WORD *pDst;
 	char szChunk[4];
@@ -1169,7 +1220,10 @@ static int L_SimcityApp_WriteCityUncompressed(CSimcityAppPrimary *pSCApp, FILE *
 	nScrDatSize = _byteswap_ulong(nDatSize);
 	if (!fwrite(&nScrDatSize, sizeof(nScrDatSize), 1, pFile))
 		goto ABORTWRITE;
-	L_byteswap_ushorts(pDst, nDatSize);
+
+	if (bBigEndian)
+		L_byteswap_ushorts(pDst, nDatSize);
+
 	if (!fwrite(pDst, nDatSize, 1, pFile))
 		goto ABORTWRITE;
 	nDataOffset += nDatSize + 8;
@@ -1440,8 +1494,10 @@ static int L_SimcityApp_WriteCityLabels(CSimcityAppPrimary *pSCApp, FILE *pFile,
 
 static int L_SimcityApp_WriteCity(CSimcityAppPrimary *pSCApp, FILE *pFile) {
 	char szTempStr[CNAM_DAT_LEN];
+	std::string strXFIX;
 
 	memset(szTempStr, 0, sizeof(szTempStr));
+	strXFIX = jsonXFIX.dump();
 
 	int ret = 0;
 	Game_GetOccupiedTileCount();
@@ -1452,7 +1508,7 @@ static int L_SimcityApp_WriteCity(CSimcityAppPrimary *pSCApp, FILE *pFile) {
 			goto ABORTWRITE;
 		if (!L_SimcityApp_WriteCityInfo(pSCApp, pFile))
 			goto ABORTWRITE;
-		if (!L_SimcityApp_WriteCityUncompressed(pSCApp, pFile, "ALTM", (const void *)dwMapALTM[0], ALTM_ALLOC_SIZE))
+		if (!L_SimcityApp_WriteCityUncompressed(pSCApp, pFile, "ALTM", (const void *)dwMapALTM[0], ALTM_ALLOC_SIZE, true))
 			goto ABORTWRITE;
 		if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XTER", (const void *)dwMapXTER[0], FULLMAP_ALLOC_SIZE))
 			goto ABORTWRITE;
@@ -1490,6 +1546,10 @@ static int L_SimcityApp_WriteCity(CSimcityAppPrimary *pSCApp, FILE *pFile) {
 			goto ABORTWRITE;
 		if (!L_SimcityApp_WriteCityCompressed(pSCApp, pFile, "XGRP", (const void *)dwMapXGRP[0], GRAPH_ALLOC_SIZE))
 			goto ABORTWRITE;
+		if (!bNoXFIX)
+			if (!L_SimcityApp_WriteCityUncompressed(pSCApp, pFile, "XFIX", strXFIX.c_str(), strXFIX.size() + 1, false))
+				goto ABORTWRITE;
+
 		if (!L_SimcityApp_WriteCityHeader(pSCApp, pFile, nDataOffset))
 			goto ABORTWRITE;
 		Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);

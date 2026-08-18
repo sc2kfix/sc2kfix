@@ -337,12 +337,10 @@ namespace json {
 			return JSONConstWrapper<deque<JSON>>(nullptr);
 		}
 
-		// TODO: support arrays (we don't use them yet)
 		void merge(JSON jsonSource) {
 			for (auto& p : *jsonSource.Internal.Map) {
 				switch (p.second.Type) {
 				case Class::Array:
-					std::cerr << "json::JSON::merge called with jsonSource containing array; bad things likely to happen\n";
 					Internal.Map->operator[](p.first) = p.second;
 					break;
 				case Class::Object:

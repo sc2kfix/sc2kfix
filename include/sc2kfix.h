@@ -444,6 +444,7 @@ extern bool bWeatherEffects;
 extern bool bDarkUnderground;
 
 extern int iTerrainCosmeticMode;
+extern HOOKEXT_CPP json::JSON jsonXFIX;
 
 extern DWORD dwFixedTileMask;
 extern int nHangar1Mode;
@@ -561,6 +562,8 @@ UINT MusicEngineStringToInt(const char* szMusicEngine);
 BOOL DoConfigureMusicTracks(settings_t *st, HWND hDlg, BOOL bMP3);
 BOOL DoConfigureKeyBindings(settings_t *st, HWND hwndDlg);
 BOOL DoConfigureTileConv(HWND hWnd);
+void CreateDefaultXFIX(void);
+void UpdateXFIXSettings(void);
 
 BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc);
 char *ConvertFileTypeFilterString(const char *pInStr);
@@ -641,6 +644,7 @@ extern BOOL bSkipIntro;
 extern BOOL bUseAdvancedQuery;
 extern BOOL bOnTheFlyPalIdx;
 extern BOOL bDisableAutoThingCleanup;
+extern BOOL bNoXFIX;
 
 extern BOOL bFontsInitialized;
 extern HFONT hFontMSSansSerifRegular8;
@@ -699,7 +703,7 @@ void InstallBridgeDialogHooks_SC2K1996(void);
 void InstallMilitaryHooks_SC2K1996(void);
 void InstallSaveHooks_SC2K1996(void);
 int L_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
-void ReloadDefaultTileSet_SC2K1996();
+void ReloadDefaultTileSet_SC2K1996(bool bForce);
 int IsValidSiloPosCheck(__int16 m_x, __int16 m_y);
 void ProposeMilitaryBaseDecline(void);
 void ProposeMilitaryBaseMissileSilos(void);
@@ -730,6 +734,7 @@ void InstallMovieHooks(void);
 #define SAVE_DEBUG_JSON_SAVE    32
 #define SAVE_DEBUG_LOAD_CHECK   64
 #define SAVE_DEBUG_CREATEBAK    128
+#define SAVE_DEBUG_XFIX			256
 
 extern UINT guzzardo_debug;
 extern UINT keybinds_debug;
