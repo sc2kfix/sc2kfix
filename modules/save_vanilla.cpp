@@ -16,7 +16,7 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
-#define SAVE_DEBUG SAVE_DEBUG_XFIX
+#define SAVE_DEBUG DEBUG_FLAGS_NONE
 
 #ifdef DEBUGALL
 #undef SAVE_DEBUG
