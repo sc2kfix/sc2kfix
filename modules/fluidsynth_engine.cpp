@@ -30,6 +30,8 @@ static fluid_player_t* pFluidSynthPlayer = NULL;
 static fluid_audio_driver_t* pFluidSynthDriver = NULL;
 static bool bFSSongThreadActive = false;
 
+static CRITICAL_SECTION critSec_FSSubThread;
+
 // FluidSynth imports -- note that because we don't actually link against libfluidsynth-3.lib we
 // can't use the functions in the FluidSynth headers.
 
@@ -217,21 +219,21 @@ static void FluidSynthStopSong(fluid_audio_driver_t** pAudDriver, fluid_synth_t*
 
 		if (bFSSongThreadActive || hCurrentFSSongThread) {
 			if (hCurrentFSSongThread) {
-				if (bFSSongThreadActive) {
-					for (i=MAX_START; i>0; i--)
-					{
-						if (!bFSSongThreadActive) break;
-						Sleep(100);
-					}
-				}
-
 				DWORD dwThreadID = GetThreadId(hCurrentFSSongThread);
 				if (dwThreadID) {
-					if (!TerminateThread(hCurrentFSSongThread, EXIT_SUCCESS))
-						ConsoleLog(LOG_DEBUG, "FluidSynthStopSong(): Hmmm... 0x%06X\n", GetLastError());
-					else {
+					DWORD dwWaitRes = WaitForSingleObject(hCurrentFSSongThread, SUBTHREAD_WAIT_TIME);
+					if (!dwWaitRes) {
 						hCurrentFSSongThread = 0;
 						bFSSongThreadActive = false;
+					}
+
+					if (hCurrentFSSongThread) {
+						if (!TerminateThread(hCurrentFSSongThread, EXIT_SUCCESS))
+							ConsoleLog(LOG_DEBUG, "FluidSynthStopSong(): Hmmm... 0x%06X\n", GetLastError());
+						else {
+							hCurrentFSSongThread = 0;
+							bFSSongThreadActive = false;
+						}
 					}
 				}
 			}
@@ -248,6 +250,8 @@ static void FluidSynthStopSong(fluid_audio_driver_t** pAudDriver, fluid_synth_t*
 
 	SetMCIDevID(-1);
 	SetSongPlaying(false);
+
+	DeleteCriticalSection(&critSec_FSSubThread);
 }
 
 static DWORD WINAPI FluidSynthSongThread(LPVOID lpParameter) {
@@ -257,6 +261,8 @@ static DWORD WINAPI FluidSynthSongThread(LPVOID lpParameter) {
 			ConsoleLog(LOG_DEBUG, "MUS: FluidSynth song 'join' monitoring thread already active.\n");
 		return EXIT_SUCCESS;
 	}
+
+	EnterCriticalSection(&critSec_FSSubThread);
 
 	PostThreadMessage(dwMusicThreadID, WM_MUSIC_CONFIRM, NULL, NULL);
 
@@ -283,6 +289,7 @@ static DWORD WINAPI FluidSynthSongThread(LPVOID lpParameter) {
 	// overlap. It is being kept here in a commented-out state
 	// just in case it is indeed needed:
 	// Sleep(250);
+	LeaveCriticalSection(&critSec_FSSubThread);
 	return EXIT_SUCCESS;
 }
 
@@ -302,6 +309,8 @@ static bool FluidSynthPlaySong(fluid_audio_driver_t** pAudDriver, fluid_synth_t*
 		else
 			bFSSongThreadActive = false;
 	}
+
+	InitializeCriticalSection(&critSec_FSSubThread);
 
 	// Spin up a new player-driver combo
 	*pPlayer = FS_new_fluid_player(*pSynth);
@@ -343,11 +352,18 @@ static bool FluidSynthPlaySong(fluid_audio_driver_t** pAudDriver, fluid_synth_t*
 
 DWORD WINAPI FSMIDIThread(LPVOID lpParameter) {
 	MSG msg;
+	bool bRequestThreadStop;
 
 	if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
 		ConsoleLog(LOG_DEBUG, "MUS:  Starting new FluidSynth MIDI thread.\n");
 
 	while (GetMessage(&msg, NULL, 0, 0)) {
+		bRequestThreadStop = IsAudioThreadStopRequest();
+		if (bRequestThreadStop) {
+			if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
+				ConsoleLog(LOG_DEBUG, "MUS:  FluidSynth MIDI thread - got request to stop.\n");
+			break;
+		}
 		if (msg.message == WM_FS_PLAY) {
 			if (msg.wParam >= 10000 && msg.wParam <= 10018) {
 				if (IsSongPlaying())
@@ -359,8 +375,11 @@ DWORD WINAPI FSMIDIThread(LPVOID lpParameter) {
 		}
 		else if (msg.message == WM_FS_STOP)
 			FluidSynthStopSong(&pFluidSynthDriver, &pFluidSynthSynth, &pFluidSynthPlayer);
-		else if (msg.message == WM_QUIT)
+		else if (msg.message == WM_QUIT) {
+			if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
+				ConsoleLog(LOG_DEBUG, "MUS:  FluidSynth MIDI thread - WM_QUIT.\n");
 			break;
+		}
 	next:
 		DispatchMessage(&msg);
 	}

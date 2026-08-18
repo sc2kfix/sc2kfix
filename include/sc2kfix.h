@@ -162,6 +162,9 @@ template <typename T> std::string to_string_precision(const T value, const int p
 	(int)SNDMSG((hwndLV), LVM_INSERTCOLUMN, (WPARAM)(i), (LPARAM)(LV_COLUMN *)&_macro_lvc);\
 }
 
+#define THREAD_WAIT_TIME    140
+#define SUBTHREAD_WAIT_TIME 140
+
 #define MUSIC_TRACKS 19
 #define SOUND_ENTRIES 31
 
@@ -443,8 +446,11 @@ extern bool bBackgroundMusic;
 extern bool bFrequentUpdates;
 extern bool bWeatherEffects;
 extern bool bDarkUnderground;
+extern bool bLegacyTerrainMode;
 
 extern int iTerrainCosmeticMode;
+
+extern bool bUseMapTerrainCosmeticMode;
 extern HOOKEXT_CPP json::JSON jsonXFIX;
 
 extern DWORD dwFixedTileMask;
@@ -463,7 +469,7 @@ extern HOOKEXT_CPP json::JSON jsonSettingsCoreWorkingCopy;
 extern HOOKEXT_CPP json::JSON jsonSettingsMods;
 
 // No longer actually used for settings, but as temporary buffers
-extern char szSettingsMayorName[64];
+extern char szSettingsMayorName[MAX_LABEL_LEN + 1];
 extern char szSettingsCompanyName[64];
 extern char szSettingsMIDITrackPath[MUSIC_TRACKS][MAX_PATH + 1];
 extern char szSettingsMP3TrackPath[MUSIC_TRACKS][MAX_PATH + 1];
@@ -479,6 +485,9 @@ extern DWORD dwScenarioStartTrafficDivisor;
 // Command line globals
 
 extern int iForcedBits;
+
+// ThreadStop check
+bool IsAudioThreadStopRequest();
 
 // Path adjustment (from registry_pathing area)
 
@@ -563,6 +572,7 @@ UINT MusicEngineStringToInt(const char* szMusicEngine);
 BOOL DoConfigureMusicTracks(settings_t *st, HWND hDlg, BOOL bMP3);
 BOOL DoConfigureKeyBindings(settings_t *st, HWND hwndDlg);
 BOOL DoConfigureTileConv(HWND hWnd);
+int GetXFIXTerrainMode(void);
 void CreateDefaultXFIX(void);
 void UpdateXFIXSettings(void);
 
@@ -736,6 +746,14 @@ void InstallMovieHooks(void);
 #define SAVE_DEBUG_LOAD_CHECK   64
 #define SAVE_DEBUG_CREATEBAK    128
 #define SAVE_DEBUG_XFIX			256
+
+// snd DEBUG defines - moved here due to them being used
+// in other sound-related areas.
+
+#define SND_DEBUG_PLAYS 1
+#define SND_DEBUG_REPLACEMENTS 2
+#define SND_DEBUG_INTERNALS 4
+#define SND_DEBUG_THREADS 8
 
 extern UINT guzzardo_debug;
 extern UINT keybinds_debug;

@@ -21,10 +21,15 @@ json::JSON jsonSettingsCoreWorkingCopy;
 
 #define TAB_COUNT 3
 
+#define CLTOTAB_RECT_OFFS_LEFT   10
+#define CLTOTAB_RECT_OFFS_TOP    50
+#define CLTOTAB_RECT_OFFS_RIGHT  10
+#define CLTOTAB_RECT_OFFS_BOTTOM 16
+
 struct {
 	HWND hwndTab;
 	HWND hwndDisplay;
-	RECT rcDisplay;
+	RECT rcTab;
 	DLGTEMPLATE* pDlgResource[TAB_COUNT];
 	DLGPROC pDlgProc[TAB_COUNT];
 	settings_t* stSettingsChanges;
@@ -36,6 +41,7 @@ bool bBackgroundMusic = false;
 bool bFrequentUpdates = false;
 bool bWeatherEffects = false;
 bool bDarkUnderground = false;
+bool bLegacyTerrainMode = true;
 int iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
 int nMovZoomFactor = MIN_MOVZOOMFACTOR;
 int nHangar1Mode = HANGAR1_ANIM;
@@ -45,7 +51,7 @@ bool bSavedCityBackup = true;
 char szGamePath[MAX_PATH];
 
 // No longer actually used for settings, but as temporary buffers
-char szSettingsMayorName[64];
+char szSettingsMayorName[MAX_LABEL_LEN + 1];
 char szSettingsCompanyName[64];
 char szSettingsMIDITrackPath[MUSIC_TRACKS][MAX_PATH + 1];
 char szSettingsMP3TrackPath[MUSIC_TRACKS][MAX_PATH + 1];
@@ -128,6 +134,7 @@ void DefaultSettingsSC2KFixCore(json::JSON& jsonSettings) {
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USEFLTSTATUS] = DEF_FIX_QOL_USEFLTSTATUS;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND] = DEF_FIX_QOL_TITLECALEND;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_MOVZOOMFACTOR] = DEF_FIX_QOL_MOVZOOMFACTOR;
+	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_LEGACYCTYTRNCSM] = DEF_FIX_QOL_LEGACYCTYTRNCSM;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC] = DEF_FIX_QOL_TERRAINCOSMETIC;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_SAVECITYBK] = DEF_FIX_QOL_SC2K_SAVECITYBK;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_FIXTILMSK] = DEF_FIX_QOL_SC2K_FIXTILMSK;
@@ -291,7 +298,8 @@ static void GetSpecificStoredJSONVars() {
 	bFrequentUpdates = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool();
 	bWeatherEffects = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_WEATHEREFFECTS].ToBool();
 	bDarkUnderground = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND].ToBool();
-	iTerrainCosmeticMode = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt();
+	bLegacyTerrainMode = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_LEGACYCTYTRNCSM].ToBool();
+	iTerrainCosmeticMode = GetXFIXTerrainMode();
 	nMovZoomFactor = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_MOVZOOMFACTOR].ToInt();
 
 	if (nMovZoomFactor < MIN_MOVZOOMFACTOR) {
@@ -339,6 +347,26 @@ void LoadJSONSettings(void) {
 	LoadJSONBindings(jsonSettingsCore);
 
 	GetSpecificStoredJSONVars();
+
+	bool bNeedResave = false;
+	if (jsonSettingsCore[C_SIMCITY2000][S_SIM_REG].hasKey(I_SIM_REG_MAYORNAME)) {
+		if (strlen(jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str()) < 1) {
+			ConsoleLog(LOG_WARNING, "REG: Empty Mayor Name Detected! Setting the default.\n");
+			jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME] = DEF_SIM_REG_MAYOR_NAME;
+			bNeedResave = true;
+		}
+	}
+
+	if (jsonSettingsCore[C_SIMCITY2000][S_SIM_REG].hasKey(I_SIM_REG_COMPANYNAME)) {
+		if (strlen(jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_COMPANYNAME].ToString().c_str()) < 1) {
+			ConsoleLog(LOG_WARNING, "REG: Empty Company Name Detected! Setting the default.\n");
+			jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_COMPANYNAME] = DEF_SIM_REG_COMPANY_NAME;
+			bNeedResave = true;
+		}
+	}
+
+	if (bNeedResave)
+		SaveJSONSettings();
 }
 
 void SaveJSONSettings(void) {
@@ -383,16 +411,16 @@ static void SettingsTabSelectionChanged(HWND hwndDlg) {
 #define SET_CHECKBOX(src, dest) Button_SetCheck(GetDlgItem(hwndDlg, dest), src.ToBool() ? BST_CHECKED : BST_UNCHECKED)
 
 static BOOL CALLBACK SettingsDialogGeneralTabProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
-	HWND hwndParent;
+	RECT *pRect;
 	char szTempRegistrationNameBuffer[64] = { 0 };
 
 	switch (message) {
 	case WM_INITDIALOG:
 		// Place ourselves in the correct position
-		hwndParent = GetParent(hwndDlg);
-		SetWindowPos(hwndDlg, NULL, stSettingsDialogHeader.rcDisplay.left, stSettingsDialogHeader.rcDisplay.top,
-			(stSettingsDialogHeader.rcDisplay.right - stSettingsDialogHeader.rcDisplay.left),
-			(stSettingsDialogHeader.rcDisplay.bottom - stSettingsDialogHeader.rcDisplay.top),
+		pRect = &stSettingsDialogHeader.rcTab;
+		SetWindowPos(hwndDlg, NULL, pRect->left, pRect->top,
+			(pRect->right - pRect->left),
+			(pRect->bottom - pRect->top),
 			SWP_SHOWWINDOW);
 
 		Static_GetIcon(GetDlgItem(hwndDlg, IDC_STATIC_TOPSECRET), LoadIcon(hSC2KFixModule, MAKEINTRESOURCE(IDI_TOPSECRET)));
@@ -462,17 +490,18 @@ static BOOL CALLBACK SettingsDialogGeneralTabProc(HWND hwndDlg, UINT message, WP
 }
 
 static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
-	HWND hwndParent, hwndItem;
+	HWND hwndItem;
+	RECT *pRect;
 	int nOpt;
 	char szTempRegistrationNameBuffer[64] = { 0 };
 
 	switch (message) {
 	case WM_INITDIALOG:
 		// Place ourselves in the correct position
-		hwndParent = GetParent(hwndDlg);
-		SetWindowPos(hwndDlg, NULL, stSettingsDialogHeader.rcDisplay.left, stSettingsDialogHeader.rcDisplay.top,
-			(stSettingsDialogHeader.rcDisplay.right - stSettingsDialogHeader.rcDisplay.left),
-			(stSettingsDialogHeader.rcDisplay.bottom - stSettingsDialogHeader.rcDisplay.top),
+		pRect = &stSettingsDialogHeader.rcTab;
+		SetWindowPos(hwndDlg, NULL, pRect->left, pRect->top,
+			(pRect->right - pRect->left),
+			(pRect->bottom - pRect->top),
 			SWP_SHOWWINDOW);
 
 		hwndItem = GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_MOVIE_ZOOMLEVEL);
@@ -522,8 +551,13 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 
 			"Enabling or disabling this setting takes effect after restarting the game.");
 
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_LEGACYCTYTRNCSM),
+			"The selected 'Forced Terrain Mode' will only apply to cities that were not created with sc2kfix r11a (or later) loaded.");
+		
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_TERRAIN_FORCEDMODE),
-			"Select which base cosmetic terrain effect you want to have forced.");
+			"Select which base cosmetic terrain effect you want to have forced.\n\n"
+		
+			"NOTE: 'Normal (No override)' is for the 'Classic' view - however when this option is selected on a city with its own specific terrain effect set, then that city-preference takes priority and WILL be used.");
 
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_CONFTILECONV),
 			"Configure which 'fixed' tiles are used when loading the default tileset.\n\n"
@@ -547,6 +581,7 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_WEATHEREFFECTS], IDC_SETTINGS_CHECK_WEATHER_EFFECTS);
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND], IDC_SETTINGS_CHECK_DARK_UNDGRND);
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_LEGACYCTYTRNCSM], IDC_SETTINGS_CHECK_LEGACYCTYTRNCSM);
 
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_SAVECITYBK], IDC_SETTINGS_CHECK_SAVECITY_BACKUPS);
 
@@ -565,6 +600,7 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_WEATHEREFFECTS], IDC_SETTINGS_CHECK_WEATHER_EFFECTS);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND], IDC_SETTINGS_CHECK_DARK_UNDGRND);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
+		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_LEGACYCTYTRNCSM], IDC_SETTINGS_CHECK_LEGACYCTYTRNCSM);
 
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_SAVECITYBK], IDC_SETTINGS_CHECK_SAVECITY_BACKUPS);
 
@@ -586,7 +622,7 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 }
 
 static BOOL CALLBACK SettingsDialogAudioTabProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
-	HWND hwndParent;
+	RECT *pRect;
 	char szFluidSynthSettingPath[MAX_PATH] = { 0 };
 	OPENFILENAMEA stOFNFluidSynth = {
 		sizeof(OPENFILENAMEA), hwndDlg, NULL,
@@ -600,10 +636,10 @@ static BOOL CALLBACK SettingsDialogAudioTabProc(HWND hwndDlg, UINT message, WPAR
 	switch (message) {
 	case WM_INITDIALOG:
 		// Place ourselves in the correct position
-		hwndParent = GetParent(hwndDlg);
-		SetWindowPos(hwndDlg, NULL, stSettingsDialogHeader.rcDisplay.left, stSettingsDialogHeader.rcDisplay.top,
-			(stSettingsDialogHeader.rcDisplay.right - stSettingsDialogHeader.rcDisplay.left),
-			(stSettingsDialogHeader.rcDisplay.bottom - stSettingsDialogHeader.rcDisplay.top),
+		pRect = &stSettingsDialogHeader.rcTab;
+		SetWindowPos(hwndDlg, NULL, pRect->left, pRect->top,
+			(pRect->right - pRect->left),
+			(pRect->bottom - pRect->top),
 			SWP_SHOWWINDOW);
 
 		// Set up the music driver combo box
@@ -701,15 +737,15 @@ static BOOL CALLBACK SettingsDialogAudioTabProc(HWND hwndDlg, UINT message, WPAR
 
 // Template for future tabs
 static BOOL CALLBACK TabDlg(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
-	HWND hwndParent;
+	RECT *pRect;
 
 	switch (message) {
 	case WM_INITDIALOG:
 		// Place ourselves in the correct position
-		hwndParent = GetParent(hwndDlg);
-		SetWindowPos(hwndDlg, NULL, stSettingsDialogHeader.rcDisplay.left, stSettingsDialogHeader.rcDisplay.top,
-			(stSettingsDialogHeader.rcDisplay.right - stSettingsDialogHeader.rcDisplay.left),
-			(stSettingsDialogHeader.rcDisplay.bottom - stSettingsDialogHeader.rcDisplay.top),
+		pRect = &stSettingsDialogHeader.rcTab;
+		SetWindowPos(hwndDlg, NULL, pRect->left, pRect->top,
+			(pRect->right - pRect->left),
+			(pRect->bottom - pRect->top),
 			SWP_SHOWWINDOW);
 
 		DestroyStoredTooltips(storedToolTips, hwndDlg);
@@ -740,6 +776,7 @@ static BOOL CALLBACK TabDlg(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lP
 
 BOOL CALLBACK SettingsDialogContainerProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	std::string strVersionInfo;
+	RECT *pRect;
 
 	switch (message) {
 	case WM_INITDIALOG:
@@ -798,10 +835,12 @@ BOOL CALLBACK SettingsDialogContainerProc(HWND hwndDlg, UINT message, WPARAM wPa
 		SetRectEmpty(&rcTab);
 		GetWindowRect(stSettingsDialogHeader.hwndTab, &rcTab);
 		TabCtrl_AdjustRect(stSettingsDialogHeader.hwndTab, TRUE, &rcTab);
-		OffsetRect(&rcTab, 8, -16);
-		rcTab.right -= 20;
-		rcTab.bottom -= 64;
-		CopyRect(&stSettingsDialogHeader.rcDisplay, &rcTab);
+		pRect = &stSettingsDialogHeader.rcTab;
+		CopyRect(pRect, &rcTab);
+		ScreenToClient(hwndDlg, (LPPOINT)&pRect->left);
+		ScreenToClient(hwndDlg, (LPPOINT)&pRect->right);
+		SetRect(pRect, pRect->left + CLTOTAB_RECT_OFFS_LEFT, pRect->top + CLTOTAB_RECT_OFFS_TOP, 
+			pRect->right - CLTOTAB_RECT_OFFS_RIGHT, pRect->bottom - CLTOTAB_RECT_OFFS_BOTTOM);
 
 		// Center the dialog box and select tab 0
 		SettingsTabSelectionChanged(hwndDlg);
