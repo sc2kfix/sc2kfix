@@ -861,8 +861,12 @@ BAIL:
 std::vector<hook_function_t> stHooks_Hook_OnNewCity_Before;
 
 static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
+	CSimcityView *pSCView;
+
 	switch (message) {
 	case WM_INITDIALOG:
+		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis);
+
 		DestroyStoredTooltips(storedToolTips, hwndDlg);
 
 		// Difficulty selection tooltips
@@ -942,8 +946,22 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 
 		// Set the default mayor name.
 		SetDlgItemText(hwndDlg, 150, jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
+
+		Button_SetCheck(GetDlgItem(hwndDlg, 108), BST_CHECKED);
+		iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
+
+		if (!bLegacyTerrainMode) {
+			if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt() > TERRAIN_COSMETIC_NONE)
+				SetWindowText(GetDlgItem(hwndDlg, 117), "WARNING: You have a specific 'Forced Terrain Mode' set. Your 'Terrain Type' preference will be saved but not applied visually.");
+		}
+
+		if (pSCView) {
+			Game_SimcityView_DrawHouse(pSCView);
+			RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+		}
 		break;
 	case WM_DESTROY:
+		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis);
 		// XXX (araxestroy): there's probably a better window message to use here.
 
 		// Set the XLAB entry for the mayor name, falling back to the default from settings.json
@@ -966,10 +984,14 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		else if (Button_GetCheck(GetDlgItem(hwndDlg, 116)) == BST_CHECKED)
 			jsonXFIX["map"]["terrain_cosmetic_mode"] = rand() % 5;
 
-		if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt() == 0)
-			iTerrainCosmeticMode = jsonXFIX["map"]["terrain_cosmetic_mode"].ToInt();
-		Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
-		RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+		bUseMapTerrainCosmeticMode = true;
+
+		iTerrainCosmeticMode = GetXFIXTerrainMode();
+
+		if (pSCView) {
+			Game_SimcityView_DrawHouse(pSCView);
+			RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+		}
 
 		// Clean up window tooltips
 		DestroyStoredTooltips(storedToolTips, hwndDlg);
@@ -986,38 +1008,51 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		break;
 
 	case WM_COMMAND:
+		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis);
 		if (HIWORD(wParam) == BN_CLICKED) {
 			// Preview the selected terrain type
 			switch (LOWORD(wParam)) {
 			case 108:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
-				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
-				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				if (pSCView) {
+					Game_SimcityView_DrawHouse(pSCView);
+					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				}
 				break;
 			case 112:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_GREY;
-				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
-				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				if (pSCView) {
+					Game_SimcityView_DrawHouse(pSCView);
+					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				}
 				break;
 			case 113:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_GREEN;
-				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
-				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				if (pSCView) {
+					Game_SimcityView_DrawHouse(pSCView);
+					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				}
 				break;
 			case 114:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_COLD;
-				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
-				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				if (pSCView) {
+					Game_SimcityView_DrawHouse(pSCView);
+					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				}
 				break;
 			case 115:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_HOT;
-				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
-				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				if (pSCView) {
+					Game_SimcityView_DrawHouse(pSCView);
+					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				}
 				break;
 			case 116:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
-				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
-				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				if (pSCView) {
+					Game_SimcityView_DrawHouse(pSCView);
+					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				}
 				break;
 			}
 		}
@@ -1273,7 +1308,7 @@ extern "C" void __stdcall Hook_StartCleanGame(void) {
 	iChurchVirus = -1;
 	ResetThingCleanupState_SC2K1996();
 	CreateDefaultXFIX();
-	iTerrainCosmeticMode = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt();
+	iTerrainCosmeticMode = GetXFIXTerrainMode();
 
 	wSetTriggerDisasterType = DISASTER_NONE;
 	bNoDisasters = 0;

@@ -41,6 +41,7 @@ bool bBackgroundMusic = false;
 bool bFrequentUpdates = false;
 bool bWeatherEffects = false;
 bool bDarkUnderground = false;
+bool bLegacyTerrainMode = true;
 int iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
 int nMovZoomFactor = MIN_MOVZOOMFACTOR;
 int nHangar1Mode = HANGAR1_ANIM;
@@ -133,6 +134,7 @@ void DefaultSettingsSC2KFixCore(json::JSON& jsonSettings) {
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_USEFLTSTATUS] = DEF_FIX_QOL_USEFLTSTATUS;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TITLECALEND] = DEF_FIX_QOL_TITLECALEND;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_MOVZOOMFACTOR] = DEF_FIX_QOL_MOVZOOMFACTOR;
+	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_LEGACYCTYTRNCSM] = DEF_FIX_QOL_LEGACYCTYTRNCSM;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC] = DEF_FIX_QOL_TERRAINCOSMETIC;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_SAVECITYBK] = DEF_FIX_QOL_SC2K_SAVECITYBK;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_FIXTILMSK] = DEF_FIX_QOL_SC2K_FIXTILMSK;
@@ -296,7 +298,8 @@ static void GetSpecificStoredJSONVars() {
 	bFrequentUpdates = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES].ToBool();
 	bWeatherEffects = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_WEATHEREFFECTS].ToBool();
 	bDarkUnderground = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND].ToBool();
-	iTerrainCosmeticMode = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt();
+	bLegacyTerrainMode = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_LEGACYCTYTRNCSM].ToBool();
+	iTerrainCosmeticMode = GetXFIXTerrainMode();
 	nMovZoomFactor = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_MOVZOOMFACTOR].ToInt();
 
 	if (nMovZoomFactor < MIN_MOVZOOMFACTOR) {
@@ -548,8 +551,13 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 
 			"Enabling or disabling this setting takes effect after restarting the game.");
 
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_LEGACYCTYTRNCSM),
+			"The selected 'Forced Terrain Mode' will only apply to cities that were not created with sc2kfix r11a (or later) loaded.");
+		
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_COMBO_TERRAIN_FORCEDMODE),
-			"Select which base cosmetic terrain effect you want to have forced.");
+			"Select which base cosmetic terrain effect you want to have forced.\n\n"
+		
+			"NOTE: 'Normal (No override)' is for the 'Classic' view - however when this option is selected on a city with its own specific terrain effect set, then that city-preference takes priority and WILL be used.");
 
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_CONFTILECONV),
 			"Configure which 'fixed' tiles are used when loading the default tileset.\n\n"
@@ -573,6 +581,7 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_WEATHEREFFECTS], IDC_SETTINGS_CHECK_WEATHER_EFFECTS);
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND], IDC_SETTINGS_CHECK_DARK_UNDGRND);
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_LEGACYCTYTRNCSM], IDC_SETTINGS_CHECK_LEGACYCTYTRNCSM);
 
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_SAVECITYBK], IDC_SETTINGS_CHECK_SAVECITY_BACKUPS);
 
@@ -591,6 +600,7 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_WEATHEREFFECTS], IDC_SETTINGS_CHECK_WEATHER_EFFECTS);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND], IDC_SETTINGS_CHECK_DARK_UNDGRND);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
+		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_LEGACYCTYTRNCSM], IDC_SETTINGS_CHECK_LEGACYCTYTRNCSM);
 
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_SAVECITYBK], IDC_SETTINGS_CHECK_SAVECITY_BACKUPS);
 

@@ -30,8 +30,9 @@
 
 UINT save_debug = SAVE_DEBUG;
 
+bool bUseMapTerrainCosmeticMode = false;
 static DWORD *pMiscInfo = NULL;
-json::JSON jsonXFIX;
+json::JSON jsonXFIX = {};
 
 #define MISCINF_ALLOC_SIZE   0x12C0 // Pending demystification
 #define FULLMAP_ALLOC_SIZE   (GAME_MAP_SIZE * GAME_MAP_SIZE)
@@ -46,7 +47,21 @@ json::JSON jsonXFIX;
 #define COPYBLOCKTO(D, S, P, SZ, MLT) memcpy(D[P], &S[P * (SZ * MLT)], SZ * MLT)
 
 // Initializes the XFIX chunk structure to default values
+int GetXFIXTerrainMode(void) {
+	if (bLegacyTerrainMode || jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt() == TERRAIN_COSMETIC_NONE) {
+		if (bUseMapTerrainCosmeticMode) {
+			if (jsonXFIX.hasKey("map")) {
+				if (jsonXFIX["map"].hasKey("terrain_cosmetic_mode"))
+					return jsonXFIX["map"]["terrain_cosmetic_mode"].ToInt();
+			}
+		}
+	}
+	return jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt();
+}
+
 void CreateDefaultXFIX(void) {
+	bUseMapTerrainCosmeticMode = false;
+
 	jsonXFIX = {};
 
 	jsonXFIX["meta"] = {};
@@ -62,8 +77,10 @@ void CreateDefaultXFIX(void) {
 }
 
 void UpdateXFIXSettings(void) {
-	if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt() == TERRAIN_COSMETIC_NONE)
+	if (bLegacyTerrainMode || jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt() == TERRAIN_COSMETIC_NONE)
 		iTerrainCosmeticMode = jsonXFIX["map"]["terrain_cosmetic_mode"].ToInt();
+
+	bUseMapTerrainCosmeticMode = true;
 
 	// Reset the current tileset to the default and load any listed saved tilesets in order
 	ReloadDefaultTileSet_SC2K1996(true);

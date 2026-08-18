@@ -446,8 +446,11 @@ extern bool bBackgroundMusic;
 extern bool bFrequentUpdates;
 extern bool bWeatherEffects;
 extern bool bDarkUnderground;
+extern bool bLegacyTerrainMode;
 
 extern int iTerrainCosmeticMode;
+
+extern bool bUseMapTerrainCosmeticMode;
 extern HOOKEXT_CPP json::JSON jsonXFIX;
 
 extern DWORD dwFixedTileMask;
@@ -569,6 +572,7 @@ UINT MusicEngineStringToInt(const char* szMusicEngine);
 BOOL DoConfigureMusicTracks(settings_t *st, HWND hDlg, BOOL bMP3);
 BOOL DoConfigureKeyBindings(settings_t *st, HWND hwndDlg);
 BOOL DoConfigureTileConv(HWND hWnd);
+int GetXFIXTerrainMode(void);
 void CreateDefaultXFIX(void);
 void UpdateXFIXSettings(void);
 
