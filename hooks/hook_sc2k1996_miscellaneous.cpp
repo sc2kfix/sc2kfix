@@ -952,7 +952,7 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 
 		if (!bLegacyTerrainMode) {
 			if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt() > TERRAIN_COSMETIC_NONE)
-				SetWindowText(GetDlgItem(hwndDlg, 117), "WARNING: You have a specific 'Forced Terrain Mode' set. Your 'Terrain Type' preference will be saved but not applied visually.");
+				SetWindowText(GetDlgItem(hwndDlg, 117), "WARNING: A specific 'Forced Terrain Mode' is set. Once the city has started, the selected 'Terrain Type' will be saved but not applied.");
 		}
 
 		if (pSCView) {
