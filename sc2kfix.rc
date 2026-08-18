@@ -382,8 +382,8 @@ BEGIN
     CONTROL         " * Always skip introduction videos (Default: off)",IDC_SETTINGS_CHECK_SKIP_INTRO,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,145,280,10
     ICON            IDI_TOPSECRET,IDC_STATIC_TOPSECRET,24,242,21,20,SS_REALSIZEIMAGE,WS_EX_TRANSPARENT
-    CTEXT           "sc2kfix Release 11",IDC_STATIC_RELEASEBANNER,66,251,222,12
-    CTEXT           "Happy 30th birthday, SimCity 2000 Special Edition!",IDC_STATIC_RELEASEMESSAGE,66,263,222,12
+    CTEXT           "sc2kfix Release 11a",IDC_STATIC_RELEASEBANNER,66,251,222,12
+    CTEXT           "Rapidly approaching feature parity with SimCity 3000...",IDC_STATIC_RELEASEMESSAGE,66,263,222,12
 END
 
 IDD_SETTINGS_AUDIO DIALOGEX 0, 0, 307, 284
