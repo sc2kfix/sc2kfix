@@ -37,11 +37,11 @@ void DumpMapThings_SC2K1996() {
 	if (pSCApp) {
 		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 		if (pSCView) {
-			ConsoleLog(LOG_INFO, "DumpMapThings:\n");
+			ConsoleLog(LOG_INFO, "XTHG: DumpMapThings:\n");
 			for (__int16 i = MIN_THING_IDX; i < MAX_THING_COUNT; i++) {
 				map_XTHG_t *pXTHG = GetXTHG(i);
 				if (pXTHG) {
-					ConsoleLog(LOG_INFO, "Thing(%d): Label(0x%06X)(%u), Thing[%s](%u), Direction[%s](%u), DirCoord(%u, %u), Goal(%u), State(%u), Coord(%u, %u, %u), PCoord(%u, %u)\n", i, 
+					ConsoleLog(LOG_INFO, "XTHG:  - Thing(%d): Label(0x%06X)(%u), Thing[%s](%u), Direction[%s](%u), DirCoord(%u, %u), Goal(%u), State(%u), Coord(%u, %u, %u), PCoord(%u, %u)\n", i, 
 						((pXTHG->bLabel) ? pXTHG->bLabel : 0), ((pXTHG->bLabel) ? pXTHG->bLabel : 0),
 						szThingNames[pXTHG->iType], pXTHG->iType,
 						szThingDirectionNames[pXTHG->iDirection], pXTHG->iDirection,
@@ -51,18 +51,18 @@ void DumpMapThings_SC2K1996() {
 						pXTHG->iPX, pXTHG->iPY);
 				}
 			}
-			ConsoleLog(LOG_INFO, "wActiveMaxisMan: %u\n", wActiveMaxisMan);
-			ConsoleLog(LOG_INFO, "wActiveTrans: %u\n", wActiveTrains);
-			ConsoleLog(LOG_INFO, "wSailingBoats: %u\n", wSailingBoats);
-			ConsoleLog(LOG_INFO, "wActiveShips: %u\n", wActiveShips);
-			ConsoleLog(LOG_INFO, "wMonsterSpawned: %u\n", wMonsterSpawned);
-			ConsoleLog(LOG_INFO, "wActiveHelicopters: %u\n", wActiveHelicopters);
-			ConsoleLog(LOG_INFO, "wActivePlanes: %u\n", wActivePlanes);
-			ConsoleLog(LOG_INFO, "wActiveTornadoes: %u\n", wActiveTornadoes);
-			ConsoleLog(LOG_INFO, "wDisasterObject: %d\n", wDisasterObject);
-			ConsoleLog(LOG_INFO, "wPoliceUnitsDispatched: %u, wPoliceAvailDispatch: %u, dwPlacePoliceThingFail: %u\n", wPoliceUnitsDispatched, wPoliceAvailDispatch, dwPlacePoliceThingFail);
-			ConsoleLog(LOG_INFO, "wFireUnitsDispatched: %u, wFireAvailDispatch: %u, dwPlaceFireThingFail: %u\n", wFireUnitsDispatched, wFireAvailDispatch, dwPlaceFireThingFail);
-			ConsoleLog(LOG_INFO, "wMilitaryUnitsDispatched: %u, wMilitaryAvailDispatch: %u, dwPlaceMilitaryThingFail: %u\n", wMilitaryUnitsDispatched, wMilitaryAvailDispatch, dwPlaceMilitaryThingFail);
+			ConsoleLog(LOG_INFO, "XTHG:  - wActiveMaxisMan: %u\n", wActiveMaxisMan);
+			ConsoleLog(LOG_INFO, "XTHG:  - wActiveTrans: %u\n", wActiveTrains);
+			ConsoleLog(LOG_INFO, "XTHG:  - wSailingBoats: %u\n", wSailingBoats);
+			ConsoleLog(LOG_INFO, "XTHG:  - wActiveShips: %u\n", wActiveShips);
+			ConsoleLog(LOG_INFO, "XTHG:  - wMonsterSpawned: %u\n", wMonsterSpawned);
+			ConsoleLog(LOG_INFO, "XTHG:  - wActiveHelicopters: %u\n", wActiveHelicopters);
+			ConsoleLog(LOG_INFO, "XTHG:  - wActivePlanes: %u\n", wActivePlanes);
+			ConsoleLog(LOG_INFO, "XTHG:  - wActiveTornadoes: %u\n", wActiveTornadoes);
+			ConsoleLog(LOG_INFO, "XTHG:  - wDisasterObject: %d\n", wDisasterObject);
+			ConsoleLog(LOG_INFO, "XTHG:  - wPoliceUnitsDispatched: %u, wPoliceAvailDispatch: %u, dwPlacePoliceThingFail: %u\n", wPoliceUnitsDispatched, wPoliceAvailDispatch, dwPlacePoliceThingFail);
+			ConsoleLog(LOG_INFO, "XTHG:  - wFireUnitsDispatched: %u, wFireAvailDispatch: %u, dwPlaceFireThingFail: %u\n", wFireUnitsDispatched, wFireAvailDispatch, dwPlaceFireThingFail);
+			ConsoleLog(LOG_INFO, "XTHG:  - wMilitaryUnitsDispatched: %u, wMilitaryAvailDispatch: %u, dwPlaceMilitaryThingFail: %u\n", wMilitaryUnitsDispatched, wMilitaryAvailDispatch, dwPlaceMilitaryThingFail);
 		}
 	}
 }
@@ -150,18 +150,19 @@ static void RecalculateThings_SC2K1996(BOOL bVerbose = TRUE) {
 			wActiveMaxisMan = wMaxisManCnt;
 
 			if (bVerbose || things_debug & THINGS_DEBUG_VERBOSE) {
-				ConsoleLog(LOG_INFO, "wActiveMaxisMan: %d -> %u\n", wOldMaxisManCnt, wActiveMaxisMan);
-				ConsoleLog(LOG_INFO, "wActiveTrans: %d -> %u\n", wOldTrainCnt, wActiveTrains);
-				ConsoleLog(LOG_INFO, "wSailingBoats: %d -> %u\n", wOldSailingBoatCnt, wSailingBoats);
-				ConsoleLog(LOG_INFO, "wActiveShips: %d -> %u\n", wOldShipCnt, wActiveShips);
-				ConsoleLog(LOG_INFO, "wMonsterSpawned: %d -> %u\n", wOldMonsterCnt, wMonsterSpawned);
-				ConsoleLog(LOG_INFO, "wActiveHelicopters: %d -> %u\n", wOldCopterCnt, wActiveHelicopters);
-				ConsoleLog(LOG_INFO, "wActivePlanes: %d -> %u\n", wOldPlaneCnt, wActivePlanes);
-				ConsoleLog(LOG_INFO, "wActiveTornadoes: %d -> %u\n", wOldTornadoCnt, wActiveTornadoes);
-				ConsoleLog(LOG_INFO, "wDisasterObject: %d\n", wDisasterObject);
-				ConsoleLog(LOG_INFO, "wPoliceUnitsDispatched: %d -> %u, wPoliceAvailDispatch: %u, dwPlacePoliceThingFail: %u\n", wOldPoliceUnitCnt, wPoliceUnitsDispatched, wPoliceAvailDispatch, dwPlacePoliceThingFail);
-				ConsoleLog(LOG_INFO, "wFireUnitsDispatched: %d -> %u, wFireAvailDispatch: %u, dwPlaceFireThingFail: %u\n", wOldFireUnitCnt, wFireUnitsDispatched, wFireAvailDispatch, dwPlaceFireThingFail);
-				ConsoleLog(LOG_INFO, "wMilitaryUnitsDispatched: %d -> %u, wMilitaryAvailDispatch: %u, dwPlaceMilitaryThingFail: %u\n", wOldMilitaryUnitCnt, wMilitaryUnitsDispatched, wMilitaryAvailDispatch, dwPlaceMilitaryThingFail);
+				ConsoleLog(LOG_DEBUG, "XTHG: Thing counts recalculated:\n", wOldMaxisManCnt, wActiveMaxisMan);
+				ConsoleLog(LOG_DEBUG, "XTHG:  - wActiveMaxisMan: %d -> %u\n", wOldMaxisManCnt, wActiveMaxisMan);
+				ConsoleLog(LOG_DEBUG, "XTHG:  - wActiveTrans: %d -> %u\n", wOldTrainCnt, wActiveTrains);
+				ConsoleLog(LOG_DEBUG, "XTHG:  - wSailingBoats: %d -> %u\n", wOldSailingBoatCnt, wSailingBoats);
+				ConsoleLog(LOG_DEBUG, "XTHG:  - wActiveShips: %d -> %u\n", wOldShipCnt, wActiveShips);
+				ConsoleLog(LOG_DEBUG, "XTHG:  - wMonsterSpawned: %d -> %u\n", wOldMonsterCnt, wMonsterSpawned);
+				ConsoleLog(LOG_DEBUG, "XTHG:  - wActiveHelicopters: %d -> %u\n", wOldCopterCnt, wActiveHelicopters);
+				ConsoleLog(LOG_DEBUG, "XTHG:  - wActivePlanes: %d -> %u\n", wOldPlaneCnt, wActivePlanes);
+				ConsoleLog(LOG_DEBUG, "XTHG:  - wActiveTornadoes: %d -> %u\n", wOldTornadoCnt, wActiveTornadoes);
+				ConsoleLog(LOG_DEBUG, "XTHG:  - wDisasterObject: %d\n", wDisasterObject);
+				ConsoleLog(LOG_DEBUG, "XTHG:  - wPoliceUnitsDispatched: %d -> %u, wPoliceAvailDispatch: %u, dwPlacePoliceThingFail: %u\n", wOldPoliceUnitCnt, wPoliceUnitsDispatched, wPoliceAvailDispatch, dwPlacePoliceThingFail);
+				ConsoleLog(LOG_DEBUG, "XTHG:  - wFireUnitsDispatched: %d -> %u, wFireAvailDispatch: %u, dwPlaceFireThingFail: %u\n", wOldFireUnitCnt, wFireUnitsDispatched, wFireAvailDispatch, dwPlaceFireThingFail);
+				ConsoleLog(LOG_DEBUG, "XTHG:  - wMilitaryUnitsDispatched: %d -> %u, wMilitaryAvailDispatch: %u, dwPlaceMilitaryThingFail: %u\n", wOldMilitaryUnitCnt, wMilitaryUnitsDispatched, wMilitaryAvailDispatch, dwPlaceMilitaryThingFail);
 			}
 		}
 	}
@@ -177,7 +178,7 @@ static void CheckAndFixDeployThingCounter_SC2K1996(BOOL bVerbose = TRUE) {
 		if (pSCView) {
 			if (wActiveMaxisMan > 0 || wPoliceUnitsDispatched > 0 || wFireUnitsDispatched > 0 || wMilitaryUnitsDispatched > 0) {
 				if (bVerbose || things_debug & THINGS_DEBUG_VERBOSE)
-					ConsoleLog(LOG_INFO, "CheckAndFixDeployThingCounter(): wActiveMaxisMan(%u), wPoliceUnitsDispatched(%u), wFireUnitsDispatched(%u), wMilitaryUnitsDispatched(%u)\n",
+					ConsoleLog(LOG_INFO, "XTHG: CheckAndFixDeployThingCounter(): wActiveMaxisMan(%u), wPoliceUnitsDispatched(%u), wFireUnitsDispatched(%u), wMilitaryUnitsDispatched(%u)\n",
 						wActiveMaxisMan, wPoliceUnitsDispatched, wFireUnitsDispatched, wMilitaryUnitsDispatched);
 				RecalculateThings_SC2K1996(bVerbose);
 			}
@@ -194,17 +195,17 @@ void DeleteMapThingByIdx_SC2K1996(__int16 nIdx) {
 		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 		if (pSCView) {
 			if (things_debug & THINGS_DEBUG_VERBOSE)
-				ConsoleLog(LOG_DEBUG, "DeleteMapThingByIdx(%d):\n", nIdx);
+				ConsoleLog(LOG_DEBUG, "XTHG: DeleteMapThingByIdx(%d):\n", nIdx);
 
 			int nCnt = 0;
 			for (__int16 i = MIN_THING_IDX; i < MAX_THING_COUNT; i++) {
 				if (i == nIdx || nIdx == -1) {
 					map_XTHG_t *pXTHG = GetXTHG(i);
 					if (pXTHG) {
-						ConsoleLog(LOG_INFO, "DeleteMapThingByIdx(%d): (%d) [%s](%u)\n", nIdx, i, szThingNames[pXTHG->iType], pXTHG->iType);
+						ConsoleLog(LOG_INFO, "XTHG: DeleteMapThingByIdx(%d): (%d) [%s](%u)\n", nIdx, i, szThingNames[pXTHG->iType], pXTHG->iType);
 						if ((pXTHG->iX >= 0 && pXTHG->iX < GAME_MAP_SIZE) &&
 							(pXTHG->iY >= 0 && pXTHG->iY < GAME_MAP_SIZE)) {
-							ConsoleLog(LOG_INFO, "DeleteMapThingByIdx(%d): (%d) [%s](%u) (%d, %d) [%u] (XTXT entry cleared).\n", nIdx, i, szThingNames[pXTHG->iType], pXTHG->iType, 
+							ConsoleLog(LOG_INFO, "XTHG: DeleteMapThingByIdx(%d): (%d) [%s](%u) (%d, %d) [%u] (XTXT entry cleared).\n", nIdx, i, szThingNames[pXTHG->iType], pXTHG->iType, 
 								pXTHG->iX, pXTHG->iY, XTXTGetTextOverlayID(pXTHG->iX, pXTHG->iY));
 							XTXTSetTextOverlayID(pXTHG->iX, pXTHG->iY, 0);
 						}
@@ -216,7 +217,7 @@ void DeleteMapThingByIdx_SC2K1996(__int16 nIdx) {
 				}
 			}
 			if (nCnt > 0) {
-				ConsoleLog(LOG_INFO, "DeleteMapThingByIdx(%d): %d things deleted\n", nIdx, nCnt);
+				ConsoleLog(LOG_INFO, "XTHG: DeleteMapThingByIdx(%d): %d things deleted\n", nIdx, nCnt);
 				RecalculateThings_SC2K1996();
 			}
 		}
@@ -233,17 +234,17 @@ static int DeleteMapThingsByType_SC2K1996(BYTE nType, BOOL bVerbose = TRUE) {
 		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 		if (pSCView) {
 			if (things_debug & THINGS_DEBUG_VERBOSE)
-				ConsoleLog(LOG_DEBUG, "DeleteMapThingsByType(%u):\n", nType);
+				ConsoleLog(LOG_DEBUG, "XTHG: DeleteMapThingsByType(%u):\n", nType);
 	
 			for (__int16 i = MIN_THING_IDX; i < MAX_THING_COUNT; i++) {
 				map_XTHG_t *pXTHG = GetXTHG(i);
 				if (pXTHG && pXTHG->iType == nType) {
 					if (bVerbose || things_debug & THINGS_DEBUG_VERBOSE)
-						ConsoleLog(LOG_INFO, "DeleteMapThingsByType(%u): (%d) [%s](%u)\n", nType, i, szThingNames[pXTHG->iType], pXTHG->iType);
+						ConsoleLog(LOG_INFO, "XTHG: DeleteMapThingsByType(%u): (%d) [%s](%u)\n", nType, i, szThingNames[pXTHG->iType], pXTHG->iType);
 					if ((pXTHG->iX >= 0 && pXTHG->iX < GAME_MAP_SIZE) &&
 						(pXTHG->iY >= 0 && pXTHG->iY < GAME_MAP_SIZE)) {
 						if (bVerbose || things_debug & THINGS_DEBUG_VERBOSE)
-							ConsoleLog(LOG_INFO, "DeleteMapThingsByType(%u): (%d) [%s](%u) (%d, %d) [%u] (XTXT entry cleared).\n", nType, i, szThingNames[pXTHG->iType], pXTHG->iType, 
+							ConsoleLog(LOG_INFO, "XTHG: DeleteMapThingsByType(%u): (%d) [%s](%u) (%d, %d) [%u] (XTXT entry cleared).\n", nType, i, szThingNames[pXTHG->iType], pXTHG->iType, 
 								pXTHG->iX, pXTHG->iY, XTXTGetTextOverlayID(pXTHG->iX, pXTHG->iY));
 						XTXTSetTextOverlayID(pXTHG->iX, pXTHG->iY, 0);
 					}
@@ -253,7 +254,7 @@ static int DeleteMapThingsByType_SC2K1996(BYTE nType, BOOL bVerbose = TRUE) {
 			}
 			if (nCnt > 0) {
 				if (bVerbose || things_debug & THINGS_DEBUG_VERBOSE)
-					ConsoleLog(LOG_INFO, "DeleteMapThingsByType(%u): %d things deleted\n", nType, nCnt);
+					ConsoleLog(LOG_INFO, "XTHG: DeleteMapThingsByType(%u): %d things deleted\n", nType, nCnt);
 			}
 		}
 	}
@@ -387,7 +388,7 @@ void DeleteAllDisasterDeploys_SC2K1996() {
 
 void ResetThingCleanupState_SC2K1996() {
 	if (things_debug & THINGS_DEBUG_OTHER)
-		ConsoleLog(LOG_DEBUG, "ResetThingCleanupState()\n");
+		ConsoleLog(LOG_DEBUG, "XTHG: ResetThingCleanupState()\n");
 	nWillRunCleanup = 2;
 }
 

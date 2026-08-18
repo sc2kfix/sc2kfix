@@ -1,5 +1,5 @@
 // sc2kfix hooks/hook_sc2k1996_miscellaneous.cpp: miscellaneous hooks to be injected
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 // !!! HIC SUNT DRACONES !!!
 // This is where I test a bunch of stuff live to cross reference what I think is going on in the
@@ -14,6 +14,10 @@
 // fucking file does.
 //
 // I am not a religious man, but if anyone reading this is, please pray for me.
+
+// 2026-08-18 (@araxestroy): This file is going to definitely be split up into several components
+// as part of the Big Cleanup. I don't think I could live with myself if I touched pretty much
+// every other part of the project but left this file in the state that it's in.
 
 #undef UNICODE
 #include <windows.h>
@@ -2360,7 +2364,7 @@ static void DoOrphanLabel_SC2K1996(bool bRemove) {
 			// Only report on populated labels.
 			if (strlen(pLbl) > 0) {
 				if (mischook_debug & MISCHOOK_DEBUG_OTHER)
-					ConsoleLog(LOG_DEBUG, "Got Label '%s' at position '%d'\n", pLbl, i);
+					ConsoleLog(LOG_DEBUG, "MISC: Found label '%s' at position '%d'.\n", pLbl, i);
 			}
 			bool bLabelFound = false;
 			for (int iX = 0; iX < GAME_MAP_SIZE; ++iX) {
@@ -2378,12 +2382,9 @@ static void DoOrphanLabel_SC2K1996(bool bRemove) {
 				// go through the other user entries for
 				// sanitisation purposes.
 				if (strlen(pLbl) > 0) {
-					str += std::to_string(i);
-					str += " - '";
-					str += pLbl;
-					str += "'\n";
+					str += string_format("%d - '%s'\n", i, pLbl);
 					if (mischook_debug & MISCHOOK_DEBUG_OTHER)
-						ConsoleLog(LOG_DEBUG, "Got Orphaned Label '%s' at position '%d'%s\n", pLbl, i, ((bRemove) ? " - Removing" : ""));
+						ConsoleLog(LOG_DEBUG, "MISC: Found orphaned label '%s' at position '%d'%s.\n", pLbl, i, ((bRemove) ? "; removing" : ""));
 					++nCnt;
 				}
 				if (bRemove)
@@ -2392,12 +2393,11 @@ static void DoOrphanLabel_SC2K1996(bool bRemove) {
 		}
 	}
 
-	if (nCnt > 0) {
-		str += "\nTotal Count: ";
-		str += std::to_string(nCnt);
-	}
+	if (nCnt > 0)
+		str += string_format("\nTotal count: %d", nCnt);
 	else
 		str = "No orphaned labels detected.";
+
 	L_MessageBoxA(GameGetRootWindowHandle(), str.c_str(), gamePrimaryKey, MB_ICONINFORMATION);
 }
 
@@ -3024,4 +3024,3 @@ skipgamemenu:
 void UpdateMiscHooks_SC2K1996(void) {
 	UpdateDrawingHooks_SC2K1996();
 }
-

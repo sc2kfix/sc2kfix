@@ -306,7 +306,7 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 							goto next;
 						}
 						else
-							ConsoleLog(LOG_ERROR, "MUS: FluidSynth not loaded; failing back to MIDI sequencer.\n");
+							ConsoleLog(LOG_ERROR, "MUS:  FluidSynth not loaded; failing back to MIDI sequencer.\n");
 					}
 
 					// Attempt MP3 playback via SDL3 if we've got it selected

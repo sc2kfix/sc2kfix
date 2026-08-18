@@ -1796,12 +1796,12 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 				++nExtCount;
 			}
 			if (nExtCount > 1)
-				ConsoleLog(LOG_INFO, "SAVE AS: Multiple extensions detected (%d) on file '%s'; stripping.\n", nExtCount, PathFindFileNameA(strCityFilename.m_pchData));
+				ConsoleLog(LOG_INFO, "SAVE: (Save As) Multiple extensions detected (%d) on file '%s'; stripping.\n", nExtCount, PathFindFileNameA(strCityFilename.m_pchData));
 			else if (nExtCount < 1)
-				ConsoleLog(LOG_INFO, "SAVE AS: Extension not detected on file '%s', amending filename as '%s%s'\n", PathFindFileNameA(strCityFilename.m_pchData), PathFindFileNameA(strCityFilename.m_pchData), CITY_DEFAULT_APPEND_EXTENSION);
+				ConsoleLog(LOG_INFO, "SAVE: (Save As) Extension not detected on file '%s', amending filename as '%s%s'.\n", PathFindFileNameA(strCityFilename.m_pchData), PathFindFileNameA(strCityFilename.m_pchData), CITY_DEFAULT_APPEND_EXTENSION);
 			if (bContainsBak) {
 				strcat_s(szPath, "_bak");
-				ConsoleLog(LOG_INFO, "SAVE AS: Backup extension detected, amending filename as '%s%s'\n", szPath, CITY_DEFAULT_APPEND_EXTENSION);
+				ConsoleLog(LOG_INFO, "SAVE: (Save As) Backup extension detected, amending filename as '%s%s'.\n", szPath, CITY_DEFAULT_APPEND_EXTENSION);
 			}
 		}
 		else

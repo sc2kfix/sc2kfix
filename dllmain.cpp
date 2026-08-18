@@ -484,7 +484,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
 		hSDLSoundHandle = CreateThread(NULL, 0, SDLSoundThread, 0, 0, &dwSDLSoundThreadID);
 		hSDLSongHandle = CreateThread(NULL, 0, SDLSongThread, 0, 0, &dwSDLSongThreadID);
-		ConsoleLog(LOG_INFO, "SND:  SDL Sound threads started.\n");
+		ConsoleLog(LOG_INFO, "SND:  SDL sound threads started.\n");
 
 		// Palette animation fix
 		BOOL bCanFixAnimation;

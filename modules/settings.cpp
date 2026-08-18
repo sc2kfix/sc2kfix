@@ -303,11 +303,11 @@ static void GetSpecificStoredJSONVars() {
 	nMovZoomFactor = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_MOVZOOMFACTOR].ToInt();
 
 	if (nMovZoomFactor < MIN_MOVZOOMFACTOR) {
-		ConsoleLog(LOG_INFO, "Invalid Movie Zoom Factor '%d' - it cannot be less than '%d'; setting to '%d'\n", nMovZoomFactor, MIN_MOVZOOMFACTOR, MIN_MOVZOOMFACTOR);
+		ConsoleLog(LOG_INFO, "CORE: Invalid movie zoom factor '%d' less than '%d'; clamping.\n", nMovZoomFactor, MIN_MOVZOOMFACTOR);
 		nMovZoomFactor = MIN_MOVZOOMFACTOR;
 	}
 	else if (nMovZoomFactor > MAX_MOVZOOMFACTOR) {
-		ConsoleLog(LOG_INFO, "Invalid Movie Zoom Factor '%d' - it cannot be greater than '%d'; setting to '%d'\n", nMovZoomFactor, MAX_MOVZOOMFACTOR, MAX_MOVZOOMFACTOR);
+		ConsoleLog(LOG_INFO, "CORE: Invalid movie zoom factor '%d' greater than '%d'; clamping.\n", nMovZoomFactor, MAX_MOVZOOMFACTOR);
 		nMovZoomFactor = MAX_MOVZOOMFACTOR;
 	}
 
@@ -351,7 +351,7 @@ void LoadJSONSettings(void) {
 	bool bNeedResave = false;
 	if (jsonSettingsCore[C_SIMCITY2000][S_SIM_REG].hasKey(I_SIM_REG_MAYORNAME)) {
 		if (strlen(jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str()) < 1) {
-			ConsoleLog(LOG_WARNING, "REG: Empty Mayor Name Detected! Setting the default.\n");
+			ConsoleLog(LOG_WARNING, "CORE: Empty mayor name detected in settings.json; resetting to default.\n");
 			jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME] = DEF_SIM_REG_MAYOR_NAME;
 			bNeedResave = true;
 		}
@@ -359,7 +359,7 @@ void LoadJSONSettings(void) {
 
 	if (jsonSettingsCore[C_SIMCITY2000][S_SIM_REG].hasKey(I_SIM_REG_COMPANYNAME)) {
 		if (strlen(jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_COMPANYNAME].ToString().c_str()) < 1) {
-			ConsoleLog(LOG_WARNING, "REG: Empty Company Name Detected! Setting the default.\n");
+			ConsoleLog(LOG_WARNING, "CORE: Empty company name detected in settings.json; resetting to default.\n");
 			jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_COMPANYNAME] = DEF_SIM_REG_COMPANY_NAME;
 			bNeedResave = true;
 		}

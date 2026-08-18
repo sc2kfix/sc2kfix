@@ -1,5 +1,5 @@
 // sc2kfix modules/spritebrowse_dialog.cpp: sprite browsing dialog.
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
 #include <windows.h>
@@ -162,13 +162,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 			if (nBaseSpriteID > 0) {
 				nSpriteID = nBaseSpriteID + SPRITE_SMALL_START;
 				
-				str = "Small Sprite: ";
-				str += szInternalSpriteName[nSpriteID];
-				str += " / ";
-				str += std::to_string(nSpriteID);
-				str += " (";
-				str += HexPls(nSpriteID, 4);
-				str += ")";
+				str = string_format("Small Sprite: %s / %u (0x%04X)", szInternalSpriteName[nSpriteID], nSpriteID, nSpriteID);
 				if (bSpriteFailSmall)
 					str += " - Not found.";
 				FillRect(ps.hdc, &paintRect, (HBRUSH)MainBrushFace->m_hObject);
@@ -190,14 +184,8 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 				}
 
 				nSpriteID = nBaseSpriteID + SPRITE_MEDIUM_START;
-				
-				str = "Medium Sprite: ";
-				str += szInternalSpriteName[nSpriteID];
-				str += " / ";
-				str += std::to_string(nSpriteID);
-				str += " (";
-				str += HexPls(nSpriteID, 4);
-				str += ")";
+
+				str = string_format("Medium Sprite: %s / %u (0x%04X)", szInternalSpriteName[nSpriteID], nSpriteID, nSpriteID);
 				if (bSpriteFailMedium)
 					str += " - Not found.";
 				SetRect(&paintRect, paintRect.left, paintRect.top + 40, paintRect.right, paintRect.bottom + 40);
@@ -221,13 +209,7 @@ BOOL CALLBACK SpriteBrowserDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 
 				nSpriteID = nBaseSpriteID + SPRITE_LARGE_START;
 				
-				str = "Large Sprite: ";
-				str += szInternalSpriteName[nSpriteID];
-				str += " / ";
-				str += std::to_string(nSpriteID);
-				str += " (";
-				str += HexPls(nSpriteID, 4);
-				str += ")";
+				str = string_format("Large Sprite: %s / %u (0x%04X)", szInternalSpriteName[nSpriteID], nSpriteID, nSpriteID);
 				if (bSpriteFailLarge)
 					str += " - Not found.";
 				SetRect(&paintRect, paintRect.left, paintRect.top + 40, paintRect.right, paintRect.bottom + 40);

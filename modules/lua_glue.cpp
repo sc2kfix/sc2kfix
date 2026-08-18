@@ -23,7 +23,7 @@
 #endif
 
 #define BAILOUT(s, ...) do { \
-	ConsoleLog(LOG_ERROR, "SAVE: " s, __VA_ARGS__); \
+	ConsoleLog(LOG_ERROR, "LUA:  " s, __VA_ARGS__); \
 	return 0; \
 } while (0)
 

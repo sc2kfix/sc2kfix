@@ -189,7 +189,7 @@ bool ConsoleCommandFixupThingsClear(std::vector<std::string> args, int iBreakout
 		if (args[i] == "all") {
 			// Danger, Will Robinson!
 			DeleteMapThingByIdx_SC2K1996(-1);
-			ConsoleLog(LOG_INFO, "Cleared all things by console command.\n");
+			ConsoleLog(LOG_INFO, "CORE: Cleared all things by console command.\n");
 			continue;
 		}
 
@@ -203,7 +203,7 @@ bool ConsoleCommandFixupThingsClear(std::vector<std::string> args, int iBreakout
 
 			if (iIndex >= MIN_THING_IDX && iIndex <= MAX_THING_IDX) {
 				DeleteMapThingByIdx_SC2K1996(iIndex);
-				ConsoleLog(LOG_INFO, "Cleared thing index %d by console command.\n", iIndex);
+				ConsoleLog(LOG_INFO, "CORE: Cleared thing index %d by console command.\n", iIndex);
 			} else
 				return false;
 

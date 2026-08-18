@@ -1,5 +1,5 @@
 // sc2kfix hooks/hook_querydialog.cpp: hook for new query dialog features
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 // XXX: This code is Not Good and has done some bad stuff on certain versions of Windows 10. I'm
 // not entirely sure which versions are afflicted with Problems exacerbated by it but there are at
@@ -174,25 +174,14 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		} else
 			strTileHeader = szTileNames[iTileID];
 
-		strTileHeader += "  (iTileID ";
-		strTileHeader += std::to_string(iTileID);
-		strTileHeader += " / ";
-		strTileHeader += HexPls(iTileID, 2);
-		strTileHeader += " )\n";
+		strTileHeader += string_format("  (iTileID %u (0x%02X)\n", iTileID, iTileID);
 
 		if (szBuf[0] != 0) {
 			strTileHeader += szBuf;
 			strTileHeader += "  ";
 		}
-			
-		strTileHeader += "(nSpriteID ";
-		strTileHeader += std::to_string(nSpriteID);
-		strTileHeader += " / ";
-		strTileHeader += HexPls(nSpriteID, 4);
-		strTileHeader += " )\nCoordinates:   X=";
-		strTileHeader += std::to_string(iTileX);
-		strTileHeader += "  Y=";
-		strTileHeader += std::to_string(iTileY);
+
+		strTileHeader += string_format("(nSpriteID %u / 0x%04X)\nCoordinates:  X=%d  Y=%d", nSpriteID, nSpriteID, iTileX, iTileY);
 
 		// Build the data string
 		strTileInfo =  GetZoneName(XZONReturnZone(iTileX, iTileY));
@@ -208,32 +197,21 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		strTileInfo += " feet ";
 		if (XBITReturnIsWater(iTileX, iTileY) && ALTMReturnLandAltitude(iTileX, iTileY) < wWaterLevel)
 			strTileInfo += "deep ";
-		strTileInfo += "(ALTM: ";
-		strTileInfo += HexPls(ALTMReturnMask(iTileX, iTileY), 4);
-		strTileInfo += ")\n";
+		strTileInfo += string_format("(ALTM: 0x%04X)\n", ALTMReturnMask(iTileX, iTileY));
 
 		// Land value
-		strTileInfo += "$";
-		strTileInfo += std::to_string(GetXVALByteDataWithNormalCoordinates(iTileX, iTileY) + 1);
-		strTileInfo += ",000/acre\n";
+		strTileInfo += string_format("$%d,000/acre\n", GetXVALByteDataWithNormalCoordinates(iTileX, iTileY) + 1);
 
 		// Crime
-		strTileInfo += GetLowHighScale(GetXCRMByteDataWithNormalCoordinates(iTileX, iTileY));
-		strTileInfo += " (XCRM: ";
-		strTileInfo += std::to_string(GetXCRMByteDataWithNormalCoordinates(iTileX, iTileY));
-		strTileInfo += ")\n";
+		BYTE bCrimeData = GetXCRMByteDataWithNormalCoordinates(iTileX, iTileY);
+		strTileInfo += string_format("%s (XCRM: %u / 0x%02X)\n", GetLowHighScale(bCrimeData), bCrimeData, bCrimeData);
 
 		// Pollution
-		strTileInfo += GetLowHighScale(GetXPLTByteDataWithNormalCoordinates(iTileX, iTileY));
-		strTileInfo += " (XPLT: ";
-		strTileInfo += std::to_string(GetXPLTByteDataWithNormalCoordinates(iTileX, iTileY));
-		strTileInfo += ")\n\n";
+		BYTE bPollutionData = GetXPLTByteDataWithNormalCoordinates(iTileX, iTileY);
+		strTileInfo += string_format("%s (XPLT: %u / 0x%02X)\n", GetLowHighScale(bPollutionData), bPollutionData, bPollutionData);
 
 		// XTXT
-		strTileInfo += std::to_string(XTXTGetTextOverlayID(iTileX, iTileY));
-		strTileInfo += " / ";
-		strTileInfo += HexPls(XTXTGetTextOverlayID(iTileX, iTileY), 2);
-		strTileInfo += "\n";
+		strTileInfo += string_format("%u / 0x%02X\n", XTXTGetTextOverlayID(iTileX, iTileY), XTXTGetTextOverlayID(iTileX, iTileY));
 
 		// Raw XZON data
 		switch (XZONReturnCornerMask(iTileX, iTileY)) {
@@ -256,9 +234,7 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 			strTileInfo += "All four corners";
 			break;
 		}
-		strTileInfo += ", iZoneID ";
-		strTileInfo += HexPls(XZONReturnZone(iTileX, iTileY), 1);
-		strTileInfo += "\n";
+		strTileInfo += string_format(", iZoneID 0x%01X\n", XZONReturnZone(iTileX, iTileY));
 
 		// XBIT
 		if (!XBITReturnMask(iTileX, iTileY))
@@ -309,9 +285,8 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 				if (i == 5)
 					strTileInfo += "\n";
 			}
-			strTileInfo += "(XBIT: ";
-			strTileInfo += HexPls(XBITReturnMask(iTileX, iTileY), 1);
-			strTileInfo += ")\n";
+
+			strTileInfo += string_format("(XBIT: 0x%02X)\n", XBITReturnMask(iTileX, iTileY));
 			if (i < 5)
 				strTileInfo += "\n";
 		}
@@ -321,9 +296,7 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 			strTileInfo += "Unknown";
 		else
 			strTileInfo += szUndergroundNames[GetUndergroundTileID(iTileX, iTileY)];
-		strTileInfo += " (XUND: ";
-		strTileInfo += HexPls(GetUndergroundTileID(iTileX, iTileY), 2);
-		strTileInfo += ")\n";
+		strTileInfo += string_format(" (XUND: 0x%02X)\n", GetUndergroundTileID(iTileX, iTileY));
 
 		// Microsim info
 		BYTE bTextOverlay;
