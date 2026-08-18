@@ -68,10 +68,10 @@ BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case ID_INSTALL_OK:
-			if (!GetDlgItemText(hwndDlg, IDC_EDIT_MAYOR, szSettingsMayorName, 63))
-				strcpy_s(szSettingsMayorName, 64, DEF_SIM_REG_MAYOR_NAME);
+			if (!GetDlgItemText(hwndDlg, IDC_EDIT_MAYOR, szSettingsMayorName, MAX_LABEL_LEN + 1))
+				strcpy_s(szSettingsMayorName, sizeof(szSettingsMayorName), DEF_SIM_REG_MAYOR_NAME);
 			if (!GetDlgItemText(hwndDlg, IDC_EDIT_COMPANY, szSettingsCompanyName, 63))
-				strcpy_s(szSettingsCompanyName, 64, DEF_SIM_REG_COMPANY_NAME);
+				strcpy_s(szSettingsCompanyName, sizeof(szSettingsCompanyName), DEF_SIM_REG_COMPANY_NAME);
 
 			// Update the settings JSON object
 			jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME] = szSettingsMayorName;

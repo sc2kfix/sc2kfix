@@ -861,8 +861,12 @@ BAIL:
 std::vector<hook_function_t> stHooks_Hook_OnNewCity_Before;
 
 static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
+	CSimcityView *pSCView;
+
 	switch (message) {
 	case WM_INITDIALOG:
+		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis);
+
 		DestroyStoredTooltips(storedToolTips, hwndDlg);
 
 		// Difficulty selection tooltips
@@ -942,8 +946,22 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 
 		// Set the default mayor name.
 		SetDlgItemText(hwndDlg, 150, jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
+
+		Button_SetCheck(GetDlgItem(hwndDlg, 108), BST_CHECKED);
+		iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
+
+		if (!bLegacyTerrainMode) {
+			if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt() > TERRAIN_COSMETIC_NONE)
+				SetWindowText(GetDlgItem(hwndDlg, 117), "WARNING: A specific 'Forced Terrain Mode' is set. Once the city has started, the selected 'Terrain Type' will be saved but not applied.");
+		}
+
+		if (pSCView) {
+			Game_SimcityView_DrawHouse(pSCView);
+			RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+		}
 		break;
 	case WM_DESTROY:
+		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis);
 		// XXX (araxestroy): there's probably a better window message to use here.
 
 		// Set the XLAB entry for the mayor name, falling back to the default from settings.json
@@ -966,10 +984,14 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		else if (Button_GetCheck(GetDlgItem(hwndDlg, 116)) == BST_CHECKED)
 			jsonXFIX["map"]["terrain_cosmetic_mode"] = rand() % 5;
 
-		if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt() == 0)
-			iTerrainCosmeticMode = jsonXFIX["map"]["terrain_cosmetic_mode"].ToInt();
-		Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
-		RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+		bUseMapTerrainCosmeticMode = true;
+
+		iTerrainCosmeticMode = GetXFIXTerrainMode();
+
+		if (pSCView) {
+			Game_SimcityView_DrawHouse(pSCView);
+			RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+		}
 
 		// Clean up window tooltips
 		DestroyStoredTooltips(storedToolTips, hwndDlg);
@@ -986,38 +1008,51 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		break;
 
 	case WM_COMMAND:
+		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis);
 		if (HIWORD(wParam) == BN_CLICKED) {
 			// Preview the selected terrain type
 			switch (LOWORD(wParam)) {
 			case 108:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
-				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
-				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				if (pSCView) {
+					Game_SimcityView_DrawHouse(pSCView);
+					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				}
 				break;
 			case 112:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_GREY;
-				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
-				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				if (pSCView) {
+					Game_SimcityView_DrawHouse(pSCView);
+					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				}
 				break;
 			case 113:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_GREEN;
-				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
-				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				if (pSCView) {
+					Game_SimcityView_DrawHouse(pSCView);
+					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				}
 				break;
 			case 114:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_COLD;
-				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
-				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				if (pSCView) {
+					Game_SimcityView_DrawHouse(pSCView);
+					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				}
 				break;
 			case 115:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_HOT;
-				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
-				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				if (pSCView) {
+					Game_SimcityView_DrawHouse(pSCView);
+					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				}
 				break;
 			case 116:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
-				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
-				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				if (pSCView) {
+					Game_SimcityView_DrawHouse(pSCView);
+					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				}
 				break;
 			}
 		}
@@ -1273,7 +1308,7 @@ extern "C" void __stdcall Hook_StartCleanGame(void) {
 	iChurchVirus = -1;
 	ResetThingCleanupState_SC2K1996();
 	CreateDefaultXFIX();
-	iTerrainCosmeticMode = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt();
+	iTerrainCosmeticMode = GetXFIXTerrainMode();
 
 	wSetTriggerDisasterType = DISASTER_NONE;
 	bNoDisasters = 0;
@@ -1431,11 +1466,13 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	BYTE iPaperVal;
 	BOOL bScenarioSuccess;
 	CSimcityAppPrimary *pSCApp;
+	CMainFrame *pMainFrm;
 	CNewspaperDialog newsDialog;
 	if (!QueryPerformanceFrequency(&SPT_uTicksPerSecond))
 		ConsoleLog(LOG_WARNING, "CORE: WTF? QueryPerformanceFrequency errored out 0x%08X.\n", GetLastError());
 
 	pSCApp = &pCSimcityAppThis;
+	pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 	UpdateCityDateAndSeason(TRUE);
 	dwMonDay = (dwCityDays % 25);
 	if (pSCApp->dwSCAGameAutoSave > 0 &&
@@ -1469,8 +1506,13 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 				Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
 
 			// Happy new year; here's how broke you are
-			if (bYearEndFlag)
+			if (bYearEndFlag) {
+				if (!bOptionsAutoBudget) {
+					if (!IsIconic(pMainFrm->m_hWnd))
+						Game_Sound_StopSound(pSCApp->SCASNDLayer);
+				}
 				Game_SimulationPrepareBudgetDialog(0);
+			}
 
 			// Calculate any budget updates before any newspapers get displayed
 			Game_UpdateBudgetInformation();
@@ -1682,10 +1724,17 @@ extern "C" void __stdcall Hook_SimulationStartDisaster(void) {
 	// once more if it ends up being overridden by the
 	// bulldozer - an exception is present for if bFallbackSound
 	// is set to true (which defaults to the bulldozer sound).
+	//
+	// An additional check for whether the ActionThingSound is
+	// currently SOUND_SIREN but pSound->bSndPlaySound is 0
+	// (which will happen if sound was turned off and on again),
+	// in which case it gets restarted as well.
 	if (dwDisasterActive) {
 		if (pSCApp && pSound) {
-			if (pSound->iSNDActionThingSoundID != SOUND_SIREN && !bFallbackSound) {
-				if (pSound->iSNDActionThingSoundID == SOUND_BULLDOZER) {
+			if ((pSound->iSNDActionThingSoundID != SOUND_SIREN && !bFallbackSound) || 
+				(pSound->iSNDActionThingSoundID == SOUND_SIREN && !pSound->bSNDPlaySound)) {
+				if (pSound->iSNDActionThingSoundID == SOUND_BULLDOZER || 
+					(pSCApp->dwSCAGameSound && !pSound->bSNDPlaySound)) {
 					Game_SimcityApp_StopSounds(pSCApp);
 					Game_SimcityApp_SoundPlayActionThingSound(pSCApp, SOUND_SIREN, 5);
 				}
@@ -1693,6 +1742,10 @@ extern "C" void __stdcall Hook_SimulationStartDisaster(void) {
 		}
 	}
 	GameMain_SimulationStartDisaster();
+	// Added this here so that the siren sound will stop
+	// if it (continues to) play erroneously.
+	if (!dwDisasterActive)
+		Game_SimcityApp_StopSounds(pSCApp);
 }
 
 extern "C" int __stdcall Hook_AddAllInventions(void) {
@@ -1887,6 +1940,34 @@ extern "C" void __stdcall Hook_SimcityView_OnRButtonDown(UINT nFlags, CMFC3XPoin
 	__asm mov [pThis], ecx
 
 	GetKeyButtonBinding_SC2K1996(B_KEY_MOUSE_RBUTTON, FALSE, &pt);
+}
+
+extern "C" void __stdcall Hook_SimcityView_DoBudget() {
+	CSimcityView *pThis;
+	__asm mov [pThis], ecx
+
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	BOOL bSaveAutoBudget;
+
+	bSaveAutoBudget = bOptionsAutoBudget;
+	bOptionsAutoBudget = 0;
+	Game_Sound_StopSound(pSCApp->SCASNDLayer);
+	Game_SimulationPrepareBudgetDialog(0);
+	bOptionsAutoBudget = bSaveAutoBudget;
+}
+
+extern "C" void __stdcall Hook_NewspaperDialog_OnInitDialog() {
+	CNewspaperDialog *pThis;
+	__asm mov [pThis], ecx
+
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+
+	// Always attempt to stop the sound just prior to
+	// the Newspaper dialogue being initialized.
+	if (pSCApp)
+		Game_SimcityApp_StopSounds(pSCApp);
+
+	GameMain_NewspaperDialog_OnInitDialog(pThis);
 }
 
 // Hook to fix cursor weirdness on some high resolution monitors
@@ -2537,10 +2618,56 @@ extern "C" int __stdcall Hook_SimcityApp_InitInstance() {
 	return GameMain_SimcityApp_InitInstance(pThis);
 }
 
+extern bool bStopAudioThread;
+
+extern HANDLE hMusicHandle;
+extern HANDLE hFSMIDIHandle;
+extern HANDLE hSDLSoundHandle;
+extern HANDLE hSDLSongHandle;
+
 // Hook to do cleanups at the start of ExitInstance
 extern "C" void __stdcall Hook_SimcityApp_ExitInstance() {
 	CSimcityAppPrimary* pThis;
 	__asm mov [pThis], ecx
+
+	DWORD dwWaitRes;
+
+	// First set the flag and then send WM_QUIT to the various
+	// sound/music threads.
+	bStopAudioThread = true;
+	if (dwSDLSongThreadID)
+		PostThreadMessage(dwSDLSongThreadID, WM_QUIT, NULL, NULL);
+	if (dwSDLSoundThreadID)
+		PostThreadMessage(dwSDLSoundThreadID, WM_QUIT, NULL, NULL);
+
+	// Shut down the music threads
+	if (dwFSMIDIThreadID)
+		PostThreadMessage(dwFSMIDIThreadID, WM_QUIT, NULL, NULL);
+	if (dwMusicThreadID)
+		PostThreadMessage(dwMusicThreadID, WM_QUIT, NULL, NULL);
+
+	// Then wait for the objects here first for 140ms.
+	// If dwWaitRes returns 0, zero the handle.
+	if (hSDLSongHandle) {
+		dwWaitRes = WaitForSingleObject(hSDLSongHandle, THREAD_WAIT_TIME);
+		if (!dwWaitRes)
+			hSDLSongHandle = 0;
+	}
+	if (hSDLSoundHandle) {
+		dwWaitRes = WaitForSingleObject(hSDLSoundHandle, THREAD_WAIT_TIME);
+		if (!dwWaitRes)
+			hSDLSoundHandle = 0;
+	}
+	if (hFSMIDIHandle) {
+		dwWaitRes = WaitForSingleObject(hFSMIDIHandle, THREAD_WAIT_TIME);
+		if (!dwWaitRes)
+			hFSMIDIHandle = 0;
+	}
+	if (hMusicHandle) {
+		dwWaitRes = WaitForSingleObject(hMusicHandle, THREAD_WAIT_TIME);
+		if (!dwWaitRes)
+			hMusicHandle = 0;
+	}
 
 	Game_PerhapsFreeDocumentsLibraryAndStrings();
 	FreeLibrary(pThis->dwSCAhModule);
@@ -2693,6 +2820,12 @@ void InstallMiscHooks_SC2K1996(void) {
 	SafeVirtualProtect((LPVOID)0x40131B, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x40131B, Hook_MainFrame_UpdateSections);
 
+	// nop out "StopSound" call in SimulationPrepareBudgetDialog()
+	// this allows for the "click" to be played when executed from
+	// the city toolbar.
+	SafeVirtualProtect((LPVOID)0x473230, 10, PAGE_EXECUTE_READWRITE);
+	memset((LPVOID)0x473230, 0x90, 10);
+
 	InstallToolBarHooks_SC2K1996();
 
 	// New hooks for CSimcityDoc::UpdateDocumentTitle and
@@ -2836,6 +2969,14 @@ skipgamemenu:
 	// Hook for CSimcityView::OnRButtonDown
 	SafeVirtualProtect((LPVOID)0x401C9E, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401C9E, Hook_SimcityView_OnRButtonDown);
+
+	// Hook for CSimcityView::DoBudget
+	SafeVirtualProtect((LPVOID)0x4020AE, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4020AE, Hook_SimcityView_DoBudget);
+
+	// Hook for CNewspaperDialog::OnInitDialog
+	SafeVirtualProtect((LPVOID)0x401E2E, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401E2E, Hook_NewspaperDialog_OnInitDialog);
 
 	// Hook for CSimcityApp::LoadCursorResources
 	SafeVirtualProtect((LPVOID)0x402234, 5, PAGE_EXECUTE_READWRITE);

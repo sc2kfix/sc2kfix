@@ -261,6 +261,7 @@ static bool MusicThread_MusicStop() {
 DWORD WINAPI MusicThread(LPVOID lpParameter) {
 	CSimcityAppPrimary *pSCApp;
 	MSG msg;
+	bool bRequestThreadStop;
 	MCIERROR dwMCIError = NULL;
 
 	if (mus_debug & MUS_DEBUG_THREAD)
@@ -268,6 +269,12 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 	
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		pSCApp = &pCSimcityAppThis;
+		bRequestThreadStop = IsAudioThreadStopRequest();
+		if (bRequestThreadStop) {
+			if (mus_debug & MUS_DEBUG_THREAD)
+				ConsoleLog(LOG_DEBUG, "MUS:  music thread - got request to stop.\n");
+			break;
+		}
 		if (msg.message == WM_MUSIC_STOP)
 			MusicThread_MusicStop();
 		else if (msg.message == WM_MUSIC_PLAY) {
@@ -406,8 +413,11 @@ DWORD WINAPI MusicThread(LPVOID lpParameter) {
 				ConsoleLog(LOG_DEBUG, "MUS:  WM_MUSIC_CONFIRM - resetting iStartMusic (last value: %d)\n", iStartMusic);
 			iStartMusic = 0;
 		}
-		else if (msg.message == WM_QUIT)
+		else if (msg.message == WM_QUIT) {
+			if (mus_debug & MUS_DEBUG_THREAD)
+				ConsoleLog(LOG_DEBUG, "MUS:  music thread - WM_QUIT.\n");
 			break;
+		}
 
 		next:
 		DispatchMessage(&msg);

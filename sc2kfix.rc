@@ -117,34 +117,35 @@ BEGIN
     CTEXT           "",IDC_STATIC_UPDATENOTICE,2,120,68,34,NOT WS_VISIBLE
 END
 
-101 DIALOGEX 0, 0, 228, 126
+101 DIALOGEX 0, 0, 228, 142
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE
 FONT 10, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    EDITTEXT        101, 78, 6, 118, 12, ES_AUTOHSCROLL
-    EDITTEXT        150, 78, 23, 118, 12, ES_AUTOHSCROLL
-    CONTROL         "Easy", 109, "Button", BS_AUTORADIOBUTTON | WS_GROUP, 12, 62, 36, 10
-    CONTROL         "Medium", 110, "Button", BS_AUTORADIOBUTTON, 12, 73, 36, 10
-    CONTROL         "Hard", 111, "Button", BS_AUTORADIOBUTTON, 12, 84, 36, 10
-    LTEXT           "$10K Bond", 1003, 52, 85, 41, 8, SS_NOTIFY
-    CONTROL         "1900", 104, "Button", BS_AUTORADIOBUTTON | WS_GROUP, 102, 52, 26, 10
-    CONTROL         "1950", 105, "Button", BS_AUTORADIOBUTTON, 132, 52, 26, 10
-    CONTROL         "2000", 106, "Button", BS_AUTORADIOBUTTON, 162, 52, 26, 10
-    CONTROL         "2050", 107, "Button", BS_AUTORADIOBUTTON, 192, 52, 26, 10
-    DEFPUSHBUTTON   "Done", 1, 102, 108, 21, 14
-    CTEXT           "City Name", -1, 31, 7, 41, 8
-    CTEXT           "Mayor Name", -1, 31, 24, 41, 8
-    CTEXT           "Starting Year", 1010, 131, 42, 54, 8, SS_NOTIFY
-    LTEXT           "$10,000", 1002, 52, 74, 41, 8, SS_NOTIFY
-    LTEXT           "$20,000", 1001, 52, 63, 32, 8, SS_NOTIFY
-    CTEXT           "Difficulty", 1011, 22, 52, 54, 8, SS_NOTIFY
-    CTEXT           "Terrain Type", 1012, 131, 68, 54, 8, SS_NOTIFY
-    CONTROL         "Classic", 108, "Button", BS_AUTORADIOBUTTON | WS_GROUP, 107, 78, 31, 10
-    CONTROL         "Grey", 112, "Button", BS_AUTORADIOBUTTON, 143, 78, 25, 10
-    CONTROL         "Lush", 113, "Button", BS_AUTORADIOBUTTON, 173, 78, 30, 10
-    CONTROL         "Cold", 114, "Button", BS_AUTORADIOBUTTON, 107, 90, 31, 10
-    CONTROL         "Hot", 115, "Button", BS_AUTORADIOBUTTON, 143, 90, 25, 10
-    CONTROL         "Random", 116, "Button", BS_AUTORADIOBUTTON, 173, 90, 36, 10
+    EDITTEXT        101,78,6,118,12,ES_AUTOHSCROLL
+    EDITTEXT        150,78,23,118,12,ES_AUTOHSCROLL
+    CONTROL         "Easy",109,"Button",BS_AUTORADIOBUTTON | WS_GROUP,12,62,36,10
+    CONTROL         "Medium",110,"Button",BS_AUTORADIOBUTTON,12,73,36,10
+    CONTROL         "Hard",111,"Button",BS_AUTORADIOBUTTON,12,84,36,10
+    LTEXT           "$10K Bond",1003,52,85,41,8,SS_NOTIFY
+    CONTROL         "1900",104,"Button",BS_AUTORADIOBUTTON | WS_GROUP,102,52,26,10
+    CONTROL         "1950",105,"Button",BS_AUTORADIOBUTTON,132,52,26,10
+    CONTROL         "2000",106,"Button",BS_AUTORADIOBUTTON,162,52,26,10
+    CONTROL         "2050",107,"Button",BS_AUTORADIOBUTTON,192,52,26,10
+    DEFPUSHBUTTON   "Done",1,102,124,21,14
+    CTEXT           "City Name",-1,31,7,41,8
+    CTEXT           "Mayor Name",-1,31,24,41,8
+    CTEXT           "Starting Year",1010,131,42,54,8,SS_NOTIFY
+    LTEXT           "$10,000",1002,52,74,41,8,SS_NOTIFY
+    LTEXT           "$20,000",1001,52,63,32,8,SS_NOTIFY
+    CTEXT           "Difficulty",1011,22,52,54,8,SS_NOTIFY
+    CTEXT           "Terrain Type",1012,131,68,54,8,SS_NOTIFY
+    CONTROL         "Classic",108,"Button",BS_AUTORADIOBUTTON | WS_GROUP,107,78,31,10
+    CONTROL         "Grey",112,"Button",BS_AUTORADIOBUTTON,143,78,25,10
+    CONTROL         "Lush",113,"Button",BS_AUTORADIOBUTTON,173,78,30,10
+    CONTROL         "Cold",114,"Button",BS_AUTORADIOBUTTON,107,90,31,10
+    CONTROL         "Hot",115,"Button",BS_AUTORADIOBUTTON,143,90,25,10
+    CONTROL         "Random",116,"Button",BS_AUTORADIOBUTTON,173,90,36,10
+    LTEXT           "",117,12,103,205,18
 END
 
 102 DIALOGEX 0, 0, 255, 250
@@ -335,7 +336,7 @@ EXSTYLE WS_EX_TRANSPARENT
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     GROUPBOX        "Interface Settings",IDC_STATIC,6,2,294,102
-    GROUPBOX        "Visual and Performance Settings",IDC_STATIC,6,110,294,114
+    GROUPBOX        "Visual and Performance Settings",IDC_STATIC,6,110,294,128
     CONTROL         " Use new real-time renderer instead of original batched renderer (Default: on)",IDC_SETTINGS_CHECK_REFRESH_RATE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,124,280,10
     CONTROL         " Use dark underground background (Default: off)",IDC_SETTINGS_CHECK_DARK_UNDGRND,
@@ -353,12 +354,14 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,169,280,10
     CONTROL         " Display seasonal and weather effects (Default: on)",IDC_SETTINGS_CHECK_WEATHER_EFFECTS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,139,280,10
-    LTEXT           "Forced Terrain Mode",IDC_STATIC,29,187,68,10
-    COMBOBOX        IDC_SETTINGS_COMBO_TERRAIN_FORCEDMODE,103,184,100,122,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Tile Conversion/Defaults",IDC_SETTINGS_BUTTON_CONFTILECONV,103,202,100,14
-    GROUPBOX        "File Operation Settings",IDC_STATIC,6,230,294,33
+    CONTROL         "Only apply 'Forced Terrain Mode' on an old city/scenario (Default: on)",IDC_SETTINGS_CHECK_LEGACYCTYTRNCSM,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,184,280,10
+    LTEXT           "Forced Terrain Mode",IDC_STATIC,29,203,68,10
+    COMBOBOX        IDC_SETTINGS_COMBO_TERRAIN_FORCEDMODE,103,200,100,122,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Tile Conversion/Defaults",IDC_SETTINGS_BUTTON_CONFTILECONV,103,218,100,14
+    GROUPBOX        "File Operation Settings",IDC_STATIC,6,244,294,33
     CONTROL         "Enable city backups on save (Default: on)",IDC_SETTINGS_CHECK_SAVECITY_BACKUPS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,244,280,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,258,280,10
 END
 
 IDD_SETTINGS_GENERAL DIALOGEX 0, 0, 307, 284
@@ -535,7 +538,7 @@ BEGIN
     101, DIALOG
     BEGIN
         RIGHTMARGIN, 181
-        BOTTOMMARGIN, 104
+        BOTTOMMARGIN, 120
     END
 
     102, DIALOG
