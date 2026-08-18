@@ -952,6 +952,25 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 			strcpy_s(szTempMayorName, sizeof(szTempMayorName), jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
 		SetXLABEntry(0, szTempMayorName);
 
+		// Get the selected terrain setting (or randomize it if requested)
+		if (Button_GetCheck(GetDlgItem(hwndDlg, 108)) == BST_CHECKED)
+			jsonXFIX["map"]["terrain_cosmetic_mode"] = TERRAIN_COSMETIC_NONE;
+		else if (Button_GetCheck(GetDlgItem(hwndDlg, 112)) == BST_CHECKED)
+			jsonXFIX["map"]["terrain_cosmetic_mode"] = TERRAIN_COSMETIC_GREY;
+		else if (Button_GetCheck(GetDlgItem(hwndDlg, 113)) == BST_CHECKED)
+			jsonXFIX["map"]["terrain_cosmetic_mode"] = TERRAIN_COSMETIC_GREEN;
+		else if (Button_GetCheck(GetDlgItem(hwndDlg, 114)) == BST_CHECKED)
+			jsonXFIX["map"]["terrain_cosmetic_mode"] = TERRAIN_COSMETIC_COLD;
+		else if (Button_GetCheck(GetDlgItem(hwndDlg, 115)) == BST_CHECKED)
+			jsonXFIX["map"]["terrain_cosmetic_mode"] = TERRAIN_COSMETIC_HOT;
+		else if (Button_GetCheck(GetDlgItem(hwndDlg, 116)) == BST_CHECKED)
+			jsonXFIX["map"]["terrain_cosmetic_mode"] = rand() % 5;
+
+		if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt() == 0)
+			iTerrainCosmeticMode = jsonXFIX["map"]["terrain_cosmetic_mode"].ToInt();
+		Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
+		RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+
 		// Clean up window tooltips
 		DestroyStoredTooltips(storedToolTips, hwndDlg);
 
@@ -965,6 +984,43 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		}
 
 		break;
+
+	case WM_COMMAND:
+		if (HIWORD(wParam) == BN_CLICKED) {
+			// Preview the selected terrain type
+			switch (LOWORD(wParam)) {
+			case 108:
+				iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
+				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
+				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				break;
+			case 112:
+				iTerrainCosmeticMode = TERRAIN_COSMETIC_GREY;
+				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
+				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				break;
+			case 113:
+				iTerrainCosmeticMode = TERRAIN_COSMETIC_GREEN;
+				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
+				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				break;
+			case 114:
+				iTerrainCosmeticMode = TERRAIN_COSMETIC_COLD;
+				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
+				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				break;
+			case 115:
+				iTerrainCosmeticMode = TERRAIN_COSMETIC_HOT;
+				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
+				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				break;
+			case 116:
+				iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
+				Game_SimcityView_DrawHouse(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
+				RedrawWindow(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis)->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				break;
+			}
+		}
 	}
 
 	// Fall through to the original dialog procedure
@@ -1216,6 +1272,8 @@ extern "C" void __stdcall Hook_StartCleanGame(void) {
 	// Clean up the game state and start the new game/map
 	iChurchVirus = -1;
 	ResetThingCleanupState_SC2K1996();
+	CreateDefaultXFIX();
+	iTerrainCosmeticMode = jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt();
 
 	wSetTriggerDisasterType = DISASTER_NONE;
 	bNoDisasters = 0;
@@ -2310,7 +2368,7 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 				return TRUE;
 
 			case IDM_GAME_FILE_RELOADDEFAULTTILESET:
-				ReloadDefaultTileSet_SC2K1996();
+				ReloadDefaultTileSet_SC2K1996(false);
 				return TRUE;
 
 			case IDM_MAIN_FILE_OPENMAINDIALOG:

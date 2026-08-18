@@ -547,13 +547,13 @@ static void L_LoadFixedLargeSpritesRsrc_SC2K1996(int nTileSet) {
 	}
 }
 
-void ReloadDefaultTileSet_SC2K1996() {
+void ReloadDefaultTileSet_SC2K1996(bool bForce) {
 	CSimcityAppPrimary *pSCApp;
 	CSimcityView *pSCView;
 
 	pSCApp = &pCSimcityAppThis;
 
-	if (L_MessageBoxA(GameGetRootWindowHandle(), "Are you sure that you want to reload the base game tile set?", gamePrimaryKey, MB_YESNO | MB_DEFBUTTON2 | MB_ICONEXCLAMATION) != IDYES)
+	if (!bForce && L_MessageBoxA(GameGetRootWindowHandle(), "Are you sure that you want to reload the base game tile set?", gamePrimaryKey, MB_YESNO | MB_DEFBUTTON2 | MB_ICONEXCLAMATION) != IDYES)
 		return;
 
 	GameMain_CmdTarget_BeginWaitCursor(pSCApp);
@@ -866,6 +866,9 @@ extern "C" void __stdcall Hook_SimcityApp_LoadTileset1996() {
 				Game_ReadTilesetFile(m_ofn.lpstrFile);
 			else
 				L_ReadDOSTilesetFile(m_ofn.lpstrFile);
+
+			// Add the tileset to the list in XFIX
+			jsonXFIX["map"]["tilesets"].append(std::string(m_ofn.lpstrFile));
 
 			strcpy_s(szDirPath, m_ofn.lpstrFile);
 			PathRemoveFileSpecA(szDirPath);

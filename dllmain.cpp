@@ -53,6 +53,7 @@ BOOL bDisableAutoThingCleanup = TRUE;
 BOOL bMapWireFrame = FALSE;
 BOOL bOnTheFlyPalIdx = FALSE;
 BOOL bBuildFixedTiles = FALSE;
+BOOL bNoXFIX = FALSE;
 int iForcedBits = 0;
 
 std::random_device rdRandomDevice;
@@ -218,6 +219,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 					if (!lstrcmpiW(argv[i], L"-ontheflypalidx"))
 						bOnTheFlyPalIdx = TRUE;
 #endif
+					if (!lstrcmpiW(argv[i], L"-noxfix"))
+						bNoXFIX = TRUE;
 					if (!lstrcmpiW(argv[i], L"-experiment=tripgenerator"))
 						dwExperimentsEnabled |= EXPERIMENT_TRIPGENERATOR;
 					if (!lstrcmpiW(argv[i], L"-experiment=all"))
