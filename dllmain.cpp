@@ -304,8 +304,18 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		}
 
 		// Print the version banner
-		// Yes, I know, there's no CORE: prefix here. That's intentional. I promise.
-		ConsoleLog(LOG_INFO, "sc2kfix version %s started - https://sc2kfix.net\n", szSC2KFixVersion);
+		{
+			std::string strVersionBanner = "sc2kfix Release ";
+			strVersionBanner += std::to_string(SC2KFIX_VERSION_MINOR);
+			if (SC2KFIX_VERSION_PATCH)
+				strVersionBanner += (SC2KFIX_VERSION_PATCH - 1 + 'a');
+			if (SC2KFIX_IS_DEV_BRANCH) {
+				strVersionBanner += " Development Build ";
+				strVersionBanner += szSC2KFixBuildInfo;
+			}
+
+			ConsoleLog(LOG_INFO, "CORE: %s - https://sc2kfix.net\n", strVersionBanner.c_str());
+		}
 #ifdef DEBUGALL
 		ConsoleLog(LOG_DEBUG, "CORE: sc2kfix built with DEBUGALL. Strap in.\n");
 #endif

@@ -61,6 +61,7 @@
 #define SC2KFIX_VERSION_MINOR	12
 #define SC2KFIX_VERSION_PATCH	0
 #define SC2KFIX_RELEASE_TAG		"r11"
+#define SC2KFIX_IS_DEV_BRANCH	true		
 
 #define SC2KFIX_INIFILE		"sc2kfix.ini"
 #define SC2KFIX_COREJSON	"settings.json"
