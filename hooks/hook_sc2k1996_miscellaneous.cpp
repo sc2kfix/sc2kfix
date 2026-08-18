@@ -1707,6 +1707,10 @@ extern "C" void __stdcall Hook_SimulationStartDisaster(void) {
 		}
 	}
 	GameMain_SimulationStartDisaster();
+	// Added this here so that the siren sound will stop
+	// if it (continues to) play erroneously.
+	if (!dwDisasterActive)
+		Game_SimcityApp_StopSounds(pSCApp);
 }
 
 extern "C" int __stdcall Hook_AddAllInventions(void) {
@@ -1915,6 +1919,20 @@ extern "C" void __stdcall Hook_SimcityView_DoBudget() {
 	Game_Sound_StopSound(pSCApp->SCASNDLayer);
 	Game_SimulationPrepareBudgetDialog(0);
 	bOptionsAutoBudget = bSaveAutoBudget;
+}
+
+extern "C" void __stdcall Hook_NewspaperDialog_OnInitDialog() {
+	CNewspaperDialog *pThis;
+	__asm mov [pThis], ecx
+
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+
+	// Always attempt to stop the sound just prior to
+	// the Newspaper dialogue being initialized.
+	if (pSCApp)
+		Game_SimcityApp_StopSounds(pSCApp);
+
+	GameMain_NewspaperDialog_OnInitDialog(pThis);
 }
 
 // Hook to fix cursor weirdness on some high resolution monitors
@@ -2920,6 +2938,10 @@ skipgamemenu:
 	// Hook for CSimcityView::DoBudget
 	SafeVirtualProtect((LPVOID)0x4020AE, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4020AE, Hook_SimcityView_DoBudget);
+
+	// Hook for CNewspaperDialog::OnInitDialog
+	SafeVirtualProtect((LPVOID)0x401E2E, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401E2E, Hook_NewspaperDialog_OnInitDialog);
 
 	// Hook for CSimcityApp::LoadCursorResources
 	SafeVirtualProtect((LPVOID)0x402234, 5, PAGE_EXECUTE_READWRITE);
