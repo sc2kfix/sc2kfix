@@ -25,6 +25,7 @@ HFONT hSystemRegular12;
 
 static BYTE DOSMacPalTable[256];
 
+// Creates HFONTs and associated font objects for Windows API text rendering calls.
 void InitializeFonts(void) {
 	if (bFontsInitialized)
 		return;
@@ -159,6 +160,7 @@ bool SafeVirtualProtectEx(void* lpAddress, size_t dwSize, DWORD flNewProtect, co
 	MessageBoxCrash("SafeVirtualProtect", NULL);
 }
 
+// Centers a dialog box in the screen.
 HOOKEXT void CenterDialogBox(HWND hwndDlg) {
 	HWND hwndDesktop;
 	RECT rcTemp, rcDlg, rcDesktop;
@@ -239,7 +241,7 @@ HOOKEXT void DestroyStoredTooltips(std::vector<tooltip_store_t> &tt_s, HWND hPar
 }
 
 // Formats a hexadecimal number in a very temporary C string.
-// Please don't use this function if you can avoid it.
+// Please don't use this function if you can avoid it; consider using string_format instead.
 HOOKEXT const char* HexPls(UINT uNumber, int width) {
 	thread_local char szRet[16] = { 0 };
 	sprintf_s(szRet, 16, "0x%0*X", width, uNumber);
@@ -458,16 +460,17 @@ char *ConvertFileTypeFilterString(const char *pInStr) {
 	return szOutStr;
 }
 
-// This is done deliberately in order
-// to allow for a log file to be opened
-// while the program is active - fopen_s
-// doesn't allow for this while fopen does.
+// Wrapper for fopen that shuts up the compiler. fopen is deliberately used in order to allow for
+// a log file to be opened nonexclusively while the program is active - fopen_s doesn't let us
+// do this for some reason, while fopen does.
 #pragma warning(disable:4996)
 FILE* log_fopen(const char* fname, const char* mode) {
 	return fopen(fname, mode);
 }
 #pragma warning(default:4996)
 
+// Wrapper for fopen_s that simulates fopen, for places where we don't need to worry about writing
+// in non-exclusive mode.
 FILE* old_fopen(const char* fname, const char* mode) {
 	FILE* f;
 	if (!fopen_s(&f, fname, mode))
@@ -497,6 +500,8 @@ void *__cdecl L_ReallocateDataEntry(char *pDest, char *pSrc) {
 	return (pNew) ? pNew : pDest;
 }
 
+// Sets the contents of an RGBQUAD.
+// XXX (araxestroy): should this be a static inline void in a header instead?
 void SetRGBEntry(RGBQUAD *pRGB, BYTE r, BYTE g, BYTE b) {
 	pRGB->rgbRed = r;
 	pRGB->rgbGreen = g;
@@ -539,6 +544,8 @@ int L_GetAdjustedPaletteIdx(BYTE palIdx, int nType) {
 	return palIdx;
 }
 
+// Initializes the palette index translation table used when converting DOS/Mac tilesets to use
+// the Windows format.
 void L_InitDOSMacPaletteIdxTable() {
 	int i;
 
@@ -579,9 +586,11 @@ void L_InitDOSMacPaletteIdxTable() {
 		DOSMacPalTable[232 + i] = 0xB3 + i;
 	DOSMacPalTable[255] = 0xFF; // Only used during DOS conversion, a bad idea for Mac.
 
-	ConsoleLog(LOG_INFO, "Initialize DOS/Mac -> Windows Palette Index Table.\n");
+	ConsoleLog(LOG_INFO, "CORE: Initialized DOS/Mac -> Windows palette translation table.\n");
 }
 
+// Local reimplementation of LoadStringA that overrides various strings in the SimCity 2000
+// resource table.
 int L_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMax) {
 	if (hInstance == hSC2KAppModule) {
 		switch (uID) {
@@ -756,6 +765,8 @@ void L_byteswap_ushorts(WORD *pBuf, int nCount) {
 		pBuf[nPos] = _byteswap_ushort(pBuf[nPos]);
 }
 
+// Copies a C-style string into a buffer pointed to by pOutStr of nMaxSize+1 bytes as a Pascal
+// style string. Primarily used in XLAB handling.
 void L_CharStringToPascalString(const char *pInStr, char *pOutStr, int nMaxSize, bool bFixedSize) {
 	int nAbsMaxSize, nLen, nDiffLen, nStoredSize;
 
@@ -781,6 +792,8 @@ void L_CharStringToPascalString(const char *pInStr, char *pOutStr, int nMaxSize,
 	memset(&pOutStr[0], nStoredSize, 1);
 }
 
+// Reads a Pascal string and writes it out to the buffer pointed to by pOutStr as a C-style
+// string.
 bool L_PascalStringToCharString(const char *pInStr, char *pOutStr) {
 	int nPos;
 	char c;
@@ -796,6 +809,7 @@ bool L_PascalStringToCharString(const char *pInStr, char *pOutStr) {
 	return true;
 }
 
+// Makes a backup copy of the file pointed to by lpPathName.
 void L_BackupFile(LPCSTR lpPathName, UINT debug_mask, UINT debug_flag) {
 	time_t t;
 	tm pTM;
@@ -810,7 +824,7 @@ void L_BackupFile(LPCSTR lpPathName, UINT debug_mask, UINT debug_flag) {
 			sprintf_s(szFileName, "%s.bak.%s%02d", lpPathName, szStamp, i);
 			if (!FileExists(szFileName)) {
 				if (debug_mask & debug_flag)
-					ConsoleLog(LOG_DEBUG, "File Exists: %s - Creating Backup: %s\n", lpPathName, szFileName);
+					ConsoleLog(LOG_DEBUG, "CORE: L_BackupFile(): creating backup of \"%s\" at \"%s\".\n", lpPathName, szFileName);
 				CopyFile(lpPathName, szFileName, TRUE);
 				break;
 			}
