@@ -203,12 +203,16 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		strTileInfo += string_format("$%d,000/acre\n", GetXVALByteDataWithNormalCoordinates(iTileX, iTileY) + 1);
 
 		// Crime
-		BYTE bCrimeData = GetXCRMByteDataWithNormalCoordinates(iTileX, iTileY);
-		strTileInfo += string_format("%s (XCRM: %u / 0x%02X)\n", GetLowHighScale(bCrimeData), bCrimeData, bCrimeData);
+		{
+			BYTE bCrimeData = GetXCRMByteDataWithNormalCoordinates(iTileX, iTileY);
+			strTileInfo += string_format("%s (XCRM: %u / 0x%02X)\n", GetLowHighScale(bCrimeData), bCrimeData, bCrimeData);
+		}
 
 		// Pollution
-		BYTE bPollutionData = GetXPLTByteDataWithNormalCoordinates(iTileX, iTileY);
-		strTileInfo += string_format("%s (XPLT: %u / 0x%02X)\n", GetLowHighScale(bPollutionData), bPollutionData, bPollutionData);
+		{
+			BYTE bPollutionData = GetXPLTByteDataWithNormalCoordinates(iTileX, iTileY);
+			strTileInfo += string_format("%s (XPLT: %u / 0x%02X)\n", GetLowHighScale(bPollutionData), bPollutionData, bPollutionData);
+		}
 
 		// XTXT
 		strTileInfo += string_format("%u / 0x%02X\n", XTXTGetTextOverlayID(iTileX, iTileY), XTXTGetTextOverlayID(iTileX, iTileY));
