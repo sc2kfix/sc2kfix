@@ -2675,6 +2675,12 @@ extern "C" void __stdcall Hook_SimcityApp_ExitInstance() {
 	GameMain_WinApp_ExitInstance(pThis);
 }
 
+// Evil no good quick and dirty hack to fix bond issuance
+// TODO (araxestroy): Properly reimplement CBudgetFundDialog::IssueBond
+extern "C" uint32_t Hook_TemporaryBondCreditRatingFix(void) {
+	return (25000 * dwCityBonds / (unsigned int)(dwCityValue + 1));
+}
+
 // Install hooks and run code that we only want to do for the 1996 Special Edition SIMCITY.EXE.
 // This should probably have a better name. And maybe be broken out into smaller functions.
 //
@@ -3011,6 +3017,11 @@ skipgamemenu:
 	// of a removed label entry.
 	SafeVirtualProtect((LPVOID)0x401DCA, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401DCA, Hook_RemoveLabel);
+
+	// Temporary hack to fix bond issuance not being properly affected by credit rating.
+	SafeVirtualProtect((LPVOID)0x41B279, 31, PAGE_EXECUTE_READWRITE);
+	memset((LPVOID)0x41B279, 0x90, 31);
+	NEWCALL((LPVOID)0x41B279, Hook_TemporaryBondCreditRatingFix);
 
 	// Call your cousin Vinnie!
 	PorntipsGuzzardo();
