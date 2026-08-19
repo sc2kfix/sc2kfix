@@ -78,27 +78,27 @@ const char* szSC2KFixBuildInfo = "$(BuildString)"%3B
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\bc45xhelp.h" />
+    <ClInclude Include="include\frameworks\bc45xhelp.h" />
     <ClInclude Include="include\commandtree.hpp" />
-    <ClInclude Include="include\commonhelp.h" />
+    <ClInclude Include="include\frameworks\commonhelp.h" />
     <ClInclude Include="include\hooklists.h" />
     <ClInclude Include="include\json.hpp" />
     <ClInclude Include="include\keybindings.h" />
     <ClInclude Include="include\lua_glue.h" />
-    <ClInclude Include="include\mfc3xhelp.h" />
+    <ClInclude Include="include\frameworks\mfc3xhelp.h" />
     <ClInclude Include="include\music.h" />
-    <ClInclude Include="include\sc2kclasses.h" />
+    <ClInclude Include="include\sc2k\sc2k_classes.h" />
     <ClInclude Include="include\sc2kfix.h" />
-    <ClInclude Include="include\sc2k_1995.h" />
-    <ClInclude Include="include\sc2k_demo.h" />
-    <ClInclude Include="include\scurkclasses.h" />
-    <ClInclude Include="include\scurk_1996.h" />
-    <ClInclude Include="include\scurk_primary.h" />
+    <ClInclude Include="include\sc2k\sc2k_1995.h" />
+    <ClInclude Include="include\sc2k\sc2k_demo.h" />
+    <ClInclude Include="include\scurk\scurk_classes.h" />
+    <ClInclude Include="include\scurk\scurk_1996.h" />
+    <ClInclude Include="include\scurk\scurk_primary.h" />
     <ClInclude Include="include\setting_schema.h" />
     <ClInclude Include="include\sound_engine.h" />
     <ClInclude Include="include\vt100.h" />
     <ClInclude Include="include\winmm_exports.h" />
-    <ClInclude Include="include\sc2k_1996.h" />
+    <ClInclude Include="include\sc2k\sc2k_1996.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="thirdparty\fluidsynth\fluidsynth.h" />
     <ClInclude Include="thirdparty\fluidsynth\fluidsynth\audio.h" />

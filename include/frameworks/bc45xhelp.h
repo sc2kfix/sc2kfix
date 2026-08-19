@@ -1,5 +1,5 @@
-// sc2kfix include/bc45xhelp.h: helper classes/structs/macros/functions for manipulating Borland 4.5x state
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// sc2kfix include/frameworks/bc45xhelp.h: helper classes/structs/macros/functions for manipulating Borland 4.5x state
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 // NOTE: These classes have been entered in-order for there to be
 // visibility concerning contained variables, they also contain some

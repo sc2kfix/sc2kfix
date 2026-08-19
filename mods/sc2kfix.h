@@ -12,10 +12,10 @@
 
 #include "../include/json.hpp"
 #include "../include/commandtree.hpp"
-#include "../include/mfc3xhelp.h"
-#include "../include/commonhelp.h"
-#include "../include/sc2kclasses.h"
-#include "../include/sc2k_1996.h"
+#include "../include/frameworks/mfc3xhelp.h"
+#include "../include/frameworks/commonhelp.h"
+#include "../include/sc2k/sc2k_classes.h"
+#include "../include/sc2k/sc2k_1996.h"
 #include "../include/vt100.h"
 
 #define IFF_HEAD(a, b, c, d) ((DWORD)d << 24 | (DWORD)c << 16 | (DWORD)b << 8 | (DWORD)a)

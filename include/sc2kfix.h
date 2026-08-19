@@ -24,17 +24,17 @@
 #include <json.hpp>
 #include <setting_schema.h>
 #include <keybindings.h>
-#include <mfc3xhelp.h>
-#include <commonhelp.h>
-#include <sc2kclasses.h>
-#include <sc2k_1995.h>
-#include <sc2k_1996.h>
-#include <sc2k_demo.h>
-#include <bc45xhelp.h>
+#include <frameworks/mfc3xhelp.h>
+#include <frameworks/commonhelp.h>
+#include <sc2k/sc2k_classes.h>
+#include <sc2k/sc2k_1995.h>
+#include <sc2k/sc2k_1996.h>
+#include <sc2k/sc2k_demo.h>
+#include <frameworks/bc45xhelp.h>
 #include <music.h>
-#include <scurkclasses.h>
-#include <scurk_1996.h>
-#include <scurk_primary.h>
+#include <scurk/scurk_classes.h>
+#include <scurk/scurk_1996.h>
+#include <scurk/scurk_primary.h>
 #include <sound_engine.h>
 #include <vt100.h>
 

@@ -61,15 +61,21 @@
     <Filter Include="Header Files\Third-Party\miniz">
       <UniqueIdentifier>{5c69bd30-f55d-456f-b5b1-5afce4932d84}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\SimCity 2000">
+      <UniqueIdentifier>{110e3c2a-e43f-401d-8599-c44aedf3f5d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\SCURK">
+      <UniqueIdentifier>{c9c31d7a-a681-4d52-b50a-491928b116f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Framework Helpers">
+      <UniqueIdentifier>{0dd780e9-86b8-43e2-9aac-69d227dcd035}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\sc2kfix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\winmm_exports.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\sc2k_1996.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
@@ -82,12 +88,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\hooklists.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\sc2k_demo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\mfc3xhelp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="thirdparty\fluidsynth\fluidsynth\audio.h">
@@ -144,28 +144,7 @@
     <ClInclude Include="thirdparty\fluidsynth\fluidsynth.h">
       <Filter>Header Files\Third-Party\FluidSynth</Filter>
     </ClInclude>
-    <ClInclude Include="include\sc2kclasses.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\sc2k_1995.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\bc45xhelp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\scurk_primary.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\scurkclasses.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\scurk_1996.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\keybindings.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\commonhelp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="thirdparty\lua\lapi.h">
@@ -269,6 +248,36 @@
     </ClInclude>
     <ClInclude Include="thirdparty\miniz\miniz.h">
       <Filter>Header Files\Third-Party\miniz</Filter>
+    </ClInclude>
+    <ClInclude Include="include\frameworks\bc45xhelp.h">
+      <Filter>Header Files\Framework Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\frameworks\commonhelp.h">
+      <Filter>Header Files\Framework Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\frameworks\mfc3xhelp.h">
+      <Filter>Header Files\Framework Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sc2k\sc2k_1995.h">
+      <Filter>Header Files\SimCity 2000</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sc2k\sc2k_1996.h">
+      <Filter>Header Files\SimCity 2000</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sc2k\sc2k_classes.h">
+      <Filter>Header Files\SimCity 2000</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sc2k\sc2k_demo.h">
+      <Filter>Header Files\SimCity 2000</Filter>
+    </ClInclude>
+    <ClInclude Include="include\scurk\scurk_1996.h">
+      <Filter>Header Files\SCURK</Filter>
+    </ClInclude>
+    <ClInclude Include="include\scurk\scurk_classes.h">
+      <Filter>Header Files\SCURK</Filter>
+    </ClInclude>
+    <ClInclude Include="include\scurk\scurk_primary.h">
+      <Filter>Header Files\SCURK</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
