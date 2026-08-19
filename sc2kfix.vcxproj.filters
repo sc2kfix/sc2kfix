@@ -70,26 +70,11 @@
     <Filter Include="Header Files\Framework Helpers">
       <UniqueIdentifier>{0dd780e9-86b8-43e2-9aac-69d227dcd035}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\sc2kfix Core">
+      <UniqueIdentifier>{3359fea8-d9fb-42a7-899f-3f9adb7a7fec}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\sc2kfix.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\winmm_exports.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\music.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\json.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\hooklists.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="thirdparty\fluidsynth\fluidsynth\audio.h">
       <Filter>Header Files\Third-Party\FluidSynth</Filter>
     </ClInclude>
@@ -143,9 +128,6 @@
     </ClInclude>
     <ClInclude Include="thirdparty\fluidsynth\fluidsynth.h">
       <Filter>Header Files\Third-Party\FluidSynth</Filter>
-    </ClInclude>
-    <ClInclude Include="include\keybindings.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="thirdparty\lua\lapi.h">
       <Filter>Header Files\Third-Party\Lua</Filter>
@@ -231,21 +213,6 @@
     <ClInclude Include="thirdparty\lua\lzio.h">
       <Filter>Header Files\Third-Party\Lua</Filter>
     </ClInclude>
-    <ClInclude Include="include\vt100.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\lua_glue.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\commandtree.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\setting_schema.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\sound_engine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="thirdparty\miniz\miniz.h">
       <Filter>Header Files\Third-Party\miniz</Filter>
     </ClInclude>
@@ -278,6 +245,42 @@
     </ClInclude>
     <ClInclude Include="include\scurk\scurk_primary.h">
       <Filter>Header Files\SCURK</Filter>
+    </ClInclude>
+    <ClInclude Include="include\commandtree.hpp">
+      <Filter>Header Files\sc2kfix Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\hooklists.h">
+      <Filter>Header Files\sc2kfix Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\json.hpp">
+      <Filter>Header Files\sc2kfix Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\keybindings.h">
+      <Filter>Header Files\sc2kfix Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\lua_glue.h">
+      <Filter>Header Files\sc2kfix Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\music.h">
+      <Filter>Header Files\sc2kfix Core</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files\sc2kfix Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sc2kfix.h">
+      <Filter>Header Files\sc2kfix Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\setting_schema.h">
+      <Filter>Header Files\sc2kfix Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sound_engine.h">
+      <Filter>Header Files\sc2kfix Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vt100.h">
+      <Filter>Header Files\sc2kfix Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\winmm_exports.h">
+      <Filter>Header Files\sc2kfix Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
