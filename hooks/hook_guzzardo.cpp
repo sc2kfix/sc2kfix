@@ -1,5 +1,5 @@
 // sc2kfix hooks/hook_guzzardo.cpp: cheat handler replacement
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
 #include <windows.h>
@@ -52,7 +52,7 @@ enum {
 };
 
 // Some the codes here have been randomised once more.
-static cheat_t cheatStrArray[NUM_CHEATS] = {
+static cheat_t arrScrambledCheats[NUM_CHEATS] = {
 	{CHEAT_FUND,       "fund",      -1},
 	{CHEAT_CASS,       "cass",      -1},
 	{CHEAT_THEWORKS,   "ithecama",  -1},
@@ -73,7 +73,7 @@ static cheat_t cheatStrArray[NUM_CHEATS] = {
 // In the game itself it uses an array of 72 entries
 // (the original 8 cheat entries * 9 potential characters + current position).
 // For the custom version it has been adjusted to a multi-dimensional array.
-static int cheatCharPos[NUM_CHEATS][NUM_CHEAT_MAXCHARS] = {
+static int arrCheatScrambleKey[NUM_CHEATS][NUM_CHEAT_MAXCHARS] = {
 	{0,  1,  2,  3, -1, -1, -1, -1, -1},
 	{0,  1,  2,  3, -1, -1, -1, -1, -1},
 	{0,  6,  5,  4,  2,  3,  7,  1, -1},
@@ -92,10 +92,11 @@ static int cheatCharPos[NUM_CHEATS][NUM_CHEAT_MAXCHARS] = {
 };
 
 // This is set if there are multiple cheats detected matching the first character.
-static BOOL cheatMultipleDetections = FALSE;;
-static const char* theHouse = "Ilona's House";
+static BOOL bCheatMultipleDetections = FALSE;
+static const char* szIlonasHouseLabel = "Ilona's House";
 int iChurchVirus = -1;
 
+// Adds our new functionality to the priscilla debug menu.
 static void AdjustDebugMenu(HMENU hDebugMenu) {
 	if (hDebugMenu) {
 		HMENU hDebugPopup;
@@ -222,31 +223,35 @@ static void AdjustDebugMenu(HMENU hDebugMenu) {
 	}
 }
 
+// Attempts to locate the XLAB entry for Ilona's House. Returns the XLAB entry ID if found or -1
+// if not found.
 static int FindTheHouseLabel() {
 	const char *pLabel;
 	for (int i = MIN_USER_TEXT_ENTRIES; i <= MAX_USER_TEXT_ENTRIES; ++i) {
 		pLabel = GetXLABEntry(i);
-		if (pLabel && _stricmp(pLabel, theHouse) == 0) {
+		if (pLabel && _stricmp(pLabel, szIlonasHouseLabel) == 0) {
 			return i;
 		}
 	}
 	return -1;
 }
 
-static void SetTheHouseLabel(int xPos, int ySignPos) {
+// Allocates an XLAB entry for Ilona's House and creates a sign at the position requested.
+static void SetTheHouseLabel(int iX, int iY) {
 	BYTE iLabelIdx;
 
-	if (XTXTGetTextOverlayID(xPos, ySignPos)) {
-		if (XTXTGetTextOverlayID(xPos, ySignPos) > MAX_USER_TEXT_ENTRIES)
+	if (XTXTGetTextOverlayID(iX, iY)) {
+		if (XTXTGetTextOverlayID(iX, iY) > MAX_USER_TEXT_ENTRIES)
 			return;
 	}
 	iLabelIdx = Game_PrepareLabel();
 	if (iLabelIdx) {
-		XTXTSetTextOverlayID(xPos, ySignPos, iLabelIdx);
-		SetXLABEntry(iLabelIdx, theHouse);
+		XTXTSetTextOverlayID(iX, iY, iLabelIdx);
+		SetXLABEntry(iLabelIdx, szIlonasHouseLabel);
 	}
 }
 
+// Attempts to find Ilona's House and returns whether or not it was successful.
 static BOOL FindTheHouse() {
 	__int16 xPos, yPos, xWindPos, ySignPos;
 	__int16 iLength, iDepth, iLabelIdx;
@@ -292,6 +297,9 @@ static BOOL FindTheHouse() {
 	return FALSE;
 }
 
+// Attempts to build Ilona's House and returns whether or not it was successful. Effectively,
+// this chooses a random location to attempt to place a "bed and breakfast" tile with no zone and
+// a solitary wind power plant next to it.
 static BOOL BuildTheHouse() {
 	int iAttempts;
 	__int16 xPos;
@@ -336,18 +344,19 @@ static BOOL BuildTheHouse() {
 	return FALSE;
 }
 
+// Removes all churches on the map.
 static void ChangeChurchZone() {
 	__int16 iLength, iDepth;
 
+	// Iterate through the map, replacing every church with random rubble and re-zone them as
+	// dense residental. Note that we're *not* unsetting the powered/powerable bits, so
+	// consequently once the tiles are replaced and re-zoned they will immediately grow.
 	for (iLength = 0; iLength < GAME_MAP_SIZE; ++iLength) {
 		for (iDepth = 0; iDepth < GAME_MAP_SIZE; ++iDepth) {
 			if (GetTileID(iLength, iDepth) == TILE_INFRASTRUCTURE_CHURCH) {
 				if (XZONReturnZone(iLength, iDepth) == ZONE_NONE) {
-					Game_PlaceTile(iLength, iDepth, GetRubbleTileID()); // Replace
-					XZONSetNewZone(iLength, iDepth, ZONE_DENSE_RESIDENTIAL); // Re-zone
-					// It should be noted here that we're 'not' unsetting the powered/powerable
-					// bits so consequently once the tiles are replaced and re-zoned they will
-					// immediately grow.
+					Game_PlaceTile(iLength, iDepth, GetRubbleTileID());
+					XZONSetNewZone(iLength, iDepth, ZONE_DENSE_RESIDENTIAL);
 				}
 			}
 		}
@@ -361,14 +370,16 @@ static BOOL CheatInputReturn_SC2K1996() {
 }
 
 void ResetCheatInput_SC2K1996() {
-	if (iCheatEntry != -1 || iCheatExpectedCharPos > 0) {
+	if (iCheatEntry != -1 || iCheatExpectedCharPos > 0)
 		if (guzzardo_debug & GUZZARDO_DEBUG_OTHER)
-			ConsoleLog(LOG_DEBUG, "Resetting Cheat Input State.\n");
-	}
+			ConsoleLog(LOG_DEBUG, "GUZZ: Resetting cheat input state.\n");
+	
 	iCheatEntry = -1;
 	CheatInputReturn_SC2K1996();
 }
 
+// Reimplemented and extended vanilla SC2K cheat handler.
+// Replacement for CMainFrame::OnChar.
 extern "C" void __stdcall Hook_MainFrame_OnChar(UINT nChar, UINT nRepCnt, UINT nFlags) {
 	CMainFrame* pThis;
 
@@ -398,8 +409,8 @@ extern "C" void __stdcall Hook_MainFrame_OnChar(UINT nChar, UINT nRepCnt, UINT n
 TRYAGAIN:
 	bComplete = bFail = FALSE;
 	if (iCheatEntry != -1) {
-		strCheatEntry = &cheatStrArray[iCheatEntry]; // Cheat entry
-		nCodeArr = cheatCharPos[iCheatEntry]; // Target character position reference array
+		strCheatEntry = &arrScrambledCheats[iCheatEntry]; // Cheat entry
+		nCodeArr = arrCheatScrambleKey[iCheatEntry]; // Target character position reference array
 		nCodePos = nCodeArr[iCheatExpectedCharPos];
 		nCodeChar = strCheatEntry->pEntry[nCodePos];
 		if (nCodeChar == nLowerChar) {
@@ -411,14 +422,14 @@ TRYAGAIN:
 					return;
 			}
 		}
-		else if (cheatMultipleDetections) {
+		else if (bCheatMultipleDetections) {
 			for (i = 0; i < NUM_CHEATS; ++i) {
 				if (i == iCheatEntry)
 					continue;
-				j = cheatStrArray[i].iPos;
+				j = arrScrambledCheats[i].iPos;
 				if (j >= 0) {
-					strCheatEntry = &cheatStrArray[j];
-					nCodeArr = cheatCharPos[j];
+					strCheatEntry = &arrScrambledCheats[j];
+					nCodeArr = arrCheatScrambleKey[j];
 					nCodePos = nCodeArr[iCheatExpectedCharPos];
 					nCodeChar = strCheatEntry->pEntry[nCodePos];
 					if (nCodeChar == nLowerChar) {
@@ -539,9 +550,9 @@ TRYAGAIN:
 	if (!bComplete) {
 		iCheatExpectedCharPos = 0;
 
-		cheatMultipleDetections = FALSE;
+		bCheatMultipleDetections = FALSE;
 		for (i = 0; i < NUM_CHEATS; ++i) {
-			strCheatEntry = &cheatStrArray[i];
+			strCheatEntry = &arrScrambledCheats[i];
 			if (strCheatEntry) {
 				strCheatEntry->iPos = -1;
 				if (*strCheatEntry->pEntry == nLowerChar) {
@@ -551,7 +562,7 @@ TRYAGAIN:
 						iCheatEntry = strCheatEntry->iPos;
 					}
 					else
-						cheatMultipleDetections = TRUE;
+						bCheatMultipleDetections = TRUE;
 				}
 			}
 		}
