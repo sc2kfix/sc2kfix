@@ -52,7 +52,6 @@ BOOL CALLBACK FileHookProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
 	HWND hWndParent;
 	RECT mainRect, itemRect;
 	//SIZE dlgSZ;
-	int nItemHorzOffset;
 	int nPartHeight;
 	DWORD nFlags;
 	bool bHasSaveExt;
@@ -71,6 +70,8 @@ BOOL CALLBACK FileHookProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
 			
 			hWndParent = GetParent(hWnd);
 			GetWindowRect(hWndParent, &mainRect);
+			ScreenToClient(hWnd, (LPPOINT)&mainRect.left);
+			ScreenToClient(hWnd, (LPPOINT)&mainRect.right);
 
 			nPartHeight = 0;
 			nFlags = SWP_NOMOVE | SWP_NOZORDER | SWP_HIDEWINDOW;
@@ -94,20 +95,20 @@ BOOL CALLBACK FileHookProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
 			if (pExtDlg) {
 				if (pExtDlg->nExtType == FEXT_TYPE_SAVECITYNAME) {
 					if (pExtDlg->wCityMode != GAME_MODE_TERRAIN_EDIT) {
-						// Horizontal positional offset observed beyond Windows NT 6.1
-						// (Observed on Windows 10 and 11; 8 or 8.1 is not known but accounted for).
-						nItemHorzOffset = (dwOSVersion > 0x00060001) ? 8 : 4;
-
 						nFlags &= ~SWP_NOMOVE;
 						GetWindowRect(GetDlgItem(hWndParent, stc2), &itemRect); // The "File Types" static label
+						ScreenToClient(hWnd, (LPPOINT)&itemRect.left);
+						ScreenToClient(hWnd, (LPPOINT)&itemRect.right);
 						SetDlgItemTextA(hWnd, IDC_CUST_STATIC1, "&City name:");
-						SetWindowPos(GetDlgItem(hWnd, IDC_CUST_STATIC1), HWND_TOP, itemRect.left - nItemHorzOffset, 2, itemRect.right - itemRect.left, itemRect.bottom - itemRect.top, SWP_NOZORDER | SWP_SHOWWINDOW);
+						SetWindowPos(GetDlgItem(hWnd, IDC_CUST_STATIC1), HWND_TOP, itemRect.left, 2, itemRect.right - itemRect.left, itemRect.bottom - itemRect.top, SWP_NOZORDER | SWP_SHOWWINDOW);
 						GetWindowRect(GetDlgItem(hWndParent, cmb1), &itemRect); // The "File Types" ComboBox
+						ScreenToClient(hWnd, (LPPOINT)&itemRect.left);
+						ScreenToClient(hWnd, (LPPOINT)&itemRect.right);
 						memset(szTempStr, 0, sizeof(szTempStr));
 						memcpy(szTempStr, pExtDlg->szCityName, sizeof(pExtDlg->szCityName));
 						SetDlgItemTextA(hWnd, IDC_CUST_EDIT1, szTempStr);
 						SendMessage(GetDlgItem(hWnd, IDC_CUST_EDIT1), EM_SETLIMITTEXT, CITY_NAME_LEN, 0);
-						SetWindowPos(GetDlgItem(hWnd, IDC_CUST_EDIT1), HWND_TOP, itemRect.left - nItemHorzOffset, 0, itemRect.right - itemRect.left, itemRect.bottom - itemRect.top, SWP_NOZORDER | SWP_SHOWWINDOW);
+						SetWindowPos(GetDlgItem(hWnd, IDC_CUST_EDIT1), HWND_TOP, itemRect.left, 0, itemRect.right - itemRect.left, itemRect.bottom - itemRect.top, SWP_NOZORDER | SWP_SHOWWINDOW);
 
 					}
 				}
@@ -123,6 +124,8 @@ BOOL CALLBACK FileHookProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
 			//ConsoleLog(LOG_DEBUG, "dlgSZ(%d, %d)\n", dlgSZ.cx, dlgSZ.cy);
 
 			GetWindowRect(GetDlgItem(hWndParent, cmb1), &itemRect); // The "File Types" ComboBox
+			ScreenToClient(hWnd, (LPPOINT)&itemRect.left);
+			ScreenToClient(hWnd, (LPPOINT)&itemRect.right);
 			SetWindowPos(GetDlgItem(hWnd, IDC_CUST_EDIT1), HWND_TOP, 0, 0, itemRect.right - itemRect.left, itemRect.bottom - itemRect.top, SWP_NOMOVE | SWP_NOZORDER);
 			break;
 
