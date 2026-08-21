@@ -1365,7 +1365,7 @@ static int L_SimcityApp_WriteCityInfo(CSimcityAppPrimary *pSCApp, FILE *pFile) {
 	pMiscInfo[nArrNextOffset++] = bWeatherRain;
 	pMiscInfo[nArrNextOffset++] = bWeatherTrend;
 	pMiscInfo[nArrNextOffset++] = wSetTriggerDisasterType;
-	pMiscInfo[nArrNextOffset++] = cwCityStats[1];
+	pMiscInfo[nArrNextOffset++] = dwMapXGRP[1][1];
 	pMiscInfo[nArrNextOffset] = dwGrantedItems[CITYTOOL_GROUP_REWARDS];
 	nArrOffset = nArrNextOffset + 1;
 	for (nPosMain = 0; nPosMain < 20; ++nPosMain) {
