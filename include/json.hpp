@@ -23,6 +23,7 @@ namespace json {
 	using std::is_same;
 	using std::is_convertible;
 	using std::is_integral;
+	using std::is_enum;
 	using std::is_floating_point;
 
 	namespace {
@@ -171,6 +172,8 @@ namespace json {
 
 		template<typename T> JSON(T i, typename enable_if<is_integral<T>::value && !is_same<T, bool>::value>::type* = 0) : Internal((long)i), Type(Class::Integral) {}
 
+		template<typename T> JSON(T i, typename enable_if<is_enum<T>::value && !is_same<T, bool>::value>::type* = 0) : Internal((long)i), Type(Class::Integral) {}
+
 		template<typename T> JSON(T f, typename enable_if<is_floating_point<T>::value>::type* = 0) : Internal((double)f), Type(Class::Floating) {}
 
 		template<typename T> JSON(T s, typename enable_if<is_convertible<T, string>::value>::type* = 0) : Internal(string(s)), Type(Class::String) {}
@@ -200,6 +203,11 @@ namespace json {
 		}
 
 		template<typename T> typename enable_if<is_integral<T>::value && !is_same<T, bool>::value, JSON&>::type operator=(T i) {
+			SetType(Class::Integral); Internal.Int = i;
+			return *this;
+		}
+
+		template<typename T> typename enable_if<is_enum<T>::value && !is_same<T, bool>::value, JSON&>::type operator=(T i) {
 			SetType(Class::Integral); Internal.Int = i;
 			return *this;
 		}
