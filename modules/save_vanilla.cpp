@@ -59,18 +59,24 @@ int GetXFIXTerrainMode(void) {
 	return jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt();
 }
 
+// Initializes the XFIX chunk structure to default values.
+// Also serves as the "schema" for XFIX.
 void CreateDefaultXFIX(void) {
 	bUseMapTerrainCosmeticMode = false;
 
+	// Root node of the XFIX chunk
 	jsonXFIX = {};
 
+	// Metadata for the save file
 	jsonXFIX["meta"] = {};
-	jsonXFIX["meta"]["creator"] = "sc2kfix " SC2KFIX_VERSION;
-	jsonXFIX["meta"]["timestamp"] = time(NULL);
+	jsonXFIX["meta"]["creator"] = "sc2kfix " SC2KFIX_VERSION;	// Program that created this save
+	jsonXFIX["meta"]["timestamp"] = time(NULL);					// Unix timestamp of this save
+	jsonXFIX["meta"]["porntipsguzzardo"] = false;				// Have cheats been used in this game
 
+	// Data about visuals
 	jsonXFIX["map"] = {};
-	jsonXFIX["map"]["terrain_cosmetic_mode"] = TERRAIN_COSMETIC_NONE;
-	jsonXFIX["map"]["tilesets"] = json::Array();
+	jsonXFIX["map"]["terrain_cosmetic_mode"] = TERRAIN_COSMETIC_NONE;	// Terrain cosmetic mode (0-5)
+	jsonXFIX["map"]["tilesets"] = json::Array();						// Array of tilesets to automatically load, in order
 
 	if (save_debug & SAVE_DEBUG_XFIX)
 		ConsoleLog(LOG_DEBUG, "SAVE: XFIX chunk structure reset to defaults.\n");

@@ -447,6 +447,7 @@ TRYAGAIN:
 			switch (strCheatEntry->iIndex) {
 			case CHEAT_FUND:
 				Game_DoFund(25);
+				jsonXFIX["meta"]["porntipsguzzardo"] = true;
 				break;
 			case CHEAT_CASS:
 				if (!Game_RandomWordLFSRMod(16)) {
@@ -454,11 +455,13 @@ TRYAGAIN:
 					Game_SetCPoint(&disasterPoint, wCityCenterX, wCityCenterY);
 				}
 				dwCityFunds += 250;
+				jsonXFIX["meta"]["porntipsguzzardo"] = true;
 				break;
 			case CHEAT_THEWORKS:
 				pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 				if (pSCView)
 					Game_SimcityView_DebugGrantAllGifts(pSCView);
+				jsonXFIX["meta"]["porntipsguzzardo"] = true;
 				break;
 			case CHEAT_MAJORFLOOD:
 				wSetTriggerDisasterType = DISASTER_MASSFLOODS;
@@ -478,6 +481,7 @@ TRYAGAIN:
 							wDisasterWindy = 0;
 					}
 				}
+				jsonXFIX["meta"]["porntipsguzzardo"] = true;
 				break;
 			case CHEAT_FIRESTORM:
 				wSetTriggerDisasterType = DISASTER_FIRESTORM;
@@ -499,9 +503,11 @@ TRYAGAIN:
 					DrawMenuBar(hWnd);
 					pSCApp->bSCAPriscillaActivated = TRUE;
 				}
+				jsonXFIX["meta"]["porntipsguzzardo"] = true;
 				break;
 			case CHEAT_MILITARY:
 				Game_SimulationProposeMilitaryBase();
+				jsonXFIX["meta"]["porntipsguzzardo"] = true;
 				break;
 			case CHEAT_JOKE:
 				Game_JokeDialog_Construct(&jokeDlg, 0);
@@ -528,6 +534,7 @@ TRYAGAIN:
 					if (L_MessageBoxA(hWnd, "Tea Father?", gamePrimaryKey, MB_ICONINFORMATION | MB_YESNO) == IDYES) {
 						iChurchVirus = 0; // Set it back to 0 rather than -1; the next execution of the related cheats will result in immediate action.
 						ChangeChurchZone();
+						jsonXFIX["meta"]["porntipsguzzardo"] = true;
 					}
 					else
 						goto NO;
