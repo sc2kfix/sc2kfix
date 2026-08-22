@@ -757,8 +757,8 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							iBadRead = CHUNK_BAD_PROC;
 							memset(pTemp, 0, MINIMAP64_ALLOC_SIZE);
 							if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP64_ALLOC_SIZE)) {
-								for (nPos = 0; nPos < MINI_MAP_64; ++nPos)
-									COPYBLOCKTO(dwMapXVAL, pTemp, nPos, sizeof(map_mini64_t), MINI_MAP_64);
+								for (nPos = 0; nPos < MAP_MINI_HALF_SIZE; ++nPos)
+									COPYBLOCKTO(dwMapXVAL, pTemp, nPos, sizeof(map_mini_half_t), MAP_MINI_HALF_SIZE);
 								iBadRead = CHUNK_OKAY;
 							}
 						}
