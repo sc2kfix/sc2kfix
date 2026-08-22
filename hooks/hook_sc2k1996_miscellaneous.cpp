@@ -879,37 +879,37 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 			"Modifiers:\n"
 			" - $20,000 starting cash\n"
 			" - Slightly increased industrial demand\n"
-			" - Four months before disasters can occur");
+			" - Eight years before disasters can occur, and reduced chance of disasters");
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 1001),
 			"Start a game on Easy difficulty.\n"
 			"Modifiers:\n"
 			" - $20,000 starting cash\n"
 			" - Slightly increased industrial demand\n"
-			" - Four months before disasters can occur");
+			" - Eight years before disasters can occur, and reduced chance of disasters");
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 110),
 			"Start a game on Medium difficulty.\n"
 			"Modifiers:\n"
 			" - $10,000 starting cash\n"
 			" - Baseline industrial demand\n"
-			" - Two months before disasters can occur");
+			" - Five years before disasters can occur, and a moderate chance of disasters");
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 1002),
 			"Start a game on Medium difficulty.\n"
 			"Modifiers:\n"
 			" - $10,000 starting cash\n"
 			" - Baseline industrial demand\n"
-			" - Two months before disasters can occur");
+			" - Five years before disasters can occur, and a moderate chance of disasters");
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 111),
 			"Start a game on Hard difficulty.\n"
 			"Modifiers:\n"
 			" - $10,000 bond at 3% APR\n"
 			" - Slightly decreased industrial demand\n"
-			" - One month before disasters can occur");
+			" - Two and a half years before disasters can occur, and an increased chance of disasters");
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 1003),
 			"Start a game on Hard difficulty.\n"
 			"Modifiers:\n"
 			" - $10,000 bond at 3% APR\n"
 			" - Slightly decreased industrial demand\n"
-			" - One month before disasters can occur");
+			" - Two and a half years before disasters can occur, and an increased chance of disasters");
 
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 1010),
 			"Hover over a date to see the difference between starting years.");
