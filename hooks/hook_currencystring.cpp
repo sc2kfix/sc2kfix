@@ -13,7 +13,7 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
-char *L_GetCurrencyString_SC2K1996(unsigned __int32 nAmount) {
+char* L_GetCurrencyString_SC2K1996(int nAmount) {
 	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
 	CCurrencyString *pCurrString = NULL;
 	const char *pCurrStr = NULL;
