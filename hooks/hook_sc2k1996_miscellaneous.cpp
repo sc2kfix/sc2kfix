@@ -1522,6 +1522,8 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 			Game_UpdateBudgetInformation();
 
 			// If the newspaper subscription is selected, craft a newspaper on April 1 and August 1
+			// TODO (araxestroy): should be scaled based on some kind of newspaper frequency slider
+			// that also ties into game speed
 			if (bNewspaperSubscription) {
 				if (wCityCurrentMonth == 3 || wCityCurrentMonth == 7) {
 					Game_NewspaperDialog_Construct(&newsDialog, NULL);

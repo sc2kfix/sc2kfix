@@ -220,7 +220,7 @@ static void L_PrepareLandValueCalculations() {
 			iYHalf = iY / 2;
 			iYQuarter = iYHalf / 2;
 			pTempMapResCom = GetTMap(iXQuarter, iYQuarter);
-			pTempMapInd = GetTMap(iXQuarter + MINI_MAP_32, iYQuarter);
+			pTempMapInd = GetTMap(iXQuarter + MAP_MINI_QUARTER_SIZE, iYQuarter);
 			nBaseResComValue = *pTempMapResCom;
 			nBaseIndValue = *pTempMapInd;
 			iTileID = GetTileID(iX, iY);
@@ -242,13 +242,13 @@ static void L_PrepareLandValueCalculations() {
 				nBaseResComValue += 4;
 			if (iTileID >= TILE_ROAD_LR || XZONReturnZone(iX, iY) != ZONE_NONE) {
 				// Maximum bound here changed from GAME_SIZE_MAP to
-				// MINI_MAP_64 due to it using the half-coordinate vars.
+				// MAP_MINI_HALF_SIZE due to it using the half-coordinate vars.
 				// In this context even if the coordinate values may not
 				// have a bearing on actual placement on the full-size map
 				// it seems that the intent is a temporary corresponding
 				// value that can be used in-conjunction with the temp map(s)
 				// and any referenced mini-maps.
-				if (iXHalf < MINI_MAP_64 && iYHalf < MINI_MAP_64)
+				if (iXHalf < MAP_MINI_HALF_SIZE && iYHalf < MAP_MINI_HALF_SIZE)
 					XBITSetBits(iXHalf, iYHalf, XBIT_MARK);
 				++wCityDevelopedTiles;
 			}

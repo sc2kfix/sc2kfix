@@ -192,7 +192,7 @@ int __cdecl L_RunTripGenerator(__int16 x, __int16 y, __int16 nZoneType, __int16 
 	BOOL bUsedBus = FALSE;
 	unsigned __int16 iTransitType;
 
-	map_mini64_t* bXTRFData;
+	map_mini_half_t* bXTRFData;
 	unsigned int iBuffer = 0;
 	unsigned int iBuffer2 = 0;
 	tripStruct stTripData;

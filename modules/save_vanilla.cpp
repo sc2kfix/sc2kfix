@@ -37,8 +37,8 @@ json::JSON jsonXFIX = {};
 #define MISCINF_ALLOC_SIZE   0x12C0 // Pending demystification
 #define FULLMAP_ALLOC_SIZE   (GAME_MAP_SIZE * GAME_MAP_SIZE)
 #define ALTM_ALLOC_SIZE      (FULLMAP_ALLOC_SIZE * 2)
-#define MINIMAP64_ALLOC_SIZE (MINI_MAP_64 * MINI_MAP_64)
-#define MINIMAP32_ALLOC_SIZE (MINI_MAP_32 * MINI_MAP_32)
+#define MINIMAP64_ALLOC_SIZE (MAP_MINI_HALF_SIZE * MAP_MINI_HALF_SIZE)
+#define MINIMAP32_ALLOC_SIZE (MAP_MINI_QUARTER_SIZE * MAP_MINI_QUARTER_SIZE)
 #define LABEL_ALLOC_SIZE     (MAX_LABEL_COUNT * sizeof(map_XLAB_t))
 #define MICROSIM_ALLOC_SIZE  (MAX_MICROSIM_COUNT * sizeof(microsim_t))
 #define THING_ALLOC_SIZE     (MAX_THING_COUNT * sizeof(map_XTHG_t))
@@ -46,7 +46,6 @@ json::JSON jsonXFIX = {};
 
 #define COPYBLOCKTO(D, S, P, SZ, MLT) memcpy(D[P], &S[P * (SZ * MLT)], SZ * MLT)
 
-// Initializes the XFIX chunk structure to default values
 int GetXFIXTerrainMode(void) {
 	if (bLegacyTerrainMode || jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt() == TERRAIN_COSMETIC_NONE) {
 		if (bUseMapTerrainCosmeticMode) {
@@ -734,8 +733,8 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							iBadRead = CHUNK_BAD_PROC;
 							memset(pTemp, 0, MINIMAP64_ALLOC_SIZE);
 							if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP64_ALLOC_SIZE)) {
-								for (nPos = 0; nPos < MINI_MAP_64; ++nPos)
-									COPYBLOCKTO(dwMapXTRF, pTemp, nPos, sizeof(map_mini64_t), MINI_MAP_64);
+								for (nPos = 0; nPos < MAP_MINI_HALF_SIZE; ++nPos)
+									COPYBLOCKTO(dwMapXTRF, pTemp, nPos, sizeof(map_mini_half_t), MAP_MINI_HALF_SIZE);
 								iBadRead = CHUNK_OKAY;
 							}
 						}
@@ -746,8 +745,8 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							iBadRead = CHUNK_BAD_PROC;
 							memset(pTemp, 0, MINIMAP64_ALLOC_SIZE);
 							if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP64_ALLOC_SIZE)) {
-								for (nPos = 0; nPos < MINI_MAP_64; ++nPos)
-									COPYBLOCKTO(dwMapXPLT, pTemp, nPos, sizeof(map_mini64_t), MINI_MAP_64);
+								for (nPos = 0; nPos < MAP_MINI_HALF_SIZE; ++nPos)
+									COPYBLOCKTO(dwMapXPLT, pTemp, nPos, sizeof(map_mini_half_t), MAP_MINI_HALF_SIZE);
 								iBadRead = CHUNK_OKAY;
 							}
 						}
@@ -770,8 +769,8 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							iBadRead = CHUNK_BAD_PROC;
 							memset(pTemp, 0, MINIMAP64_ALLOC_SIZE);
 							if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP64_ALLOC_SIZE)) {
-								for (nPos = 0; nPos < MINI_MAP_64; ++nPos)
-									COPYBLOCKTO(dwMapXCRM, pTemp, nPos, sizeof(map_mini64_t), MINI_MAP_64);
+								for (nPos = 0; nPos < MAP_MINI_HALF_SIZE; ++nPos)
+									COPYBLOCKTO(dwMapXCRM, pTemp, nPos, sizeof(map_mini_half_t), MAP_MINI_HALF_SIZE);
 								iBadRead = CHUNK_OKAY;
 							}
 						}
@@ -782,8 +781,8 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							iBadRead = CHUNK_BAD_PROC;
 							memset(pTemp, 0, MINIMAP32_ALLOC_SIZE);
 							if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP32_ALLOC_SIZE)) {
-								for (nPos = 0; nPos < MINI_MAP_32; ++nPos)
-									COPYBLOCKTO(dwMapXPLC, pTemp, nPos, sizeof(map_mini32_t), MINI_MAP_32);
+								for (nPos = 0; nPos < MAP_MINI_QUARTER_SIZE; ++nPos)
+									COPYBLOCKTO(dwMapXPLC, pTemp, nPos, sizeof(map_mini_quarter_t), MAP_MINI_QUARTER_SIZE);
 								iBadRead = CHUNK_OKAY;
 							}
 						}
@@ -794,8 +793,8 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							iBadRead = CHUNK_BAD_PROC;
 							memset(pTemp, 0, MINIMAP32_ALLOC_SIZE);
 							if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP32_ALLOC_SIZE)) {
-								for (nPos = 0; nPos < MINI_MAP_32; ++nPos)
-									COPYBLOCKTO(dwMapXFIR, pTemp, nPos, sizeof(map_mini32_t), MINI_MAP_32);
+								for (nPos = 0; nPos < MAP_MINI_QUARTER_SIZE; ++nPos)
+									COPYBLOCKTO(dwMapXFIR, pTemp, nPos, sizeof(map_mini_quarter_t), MAP_MINI_QUARTER_SIZE);
 								iBadRead = CHUNK_OKAY;
 							}
 						}
@@ -806,8 +805,8 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							iBadRead = CHUNK_BAD_PROC;
 							memset(pTemp, 0, MINIMAP32_ALLOC_SIZE);
 							if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP32_ALLOC_SIZE)) {
-								for (nPos = 0; nPos < MINI_MAP_32; ++nPos)
-									COPYBLOCKTO(dwMapXPOP, pTemp, nPos, sizeof(map_mini32_t), MINI_MAP_32);
+								for (nPos = 0; nPos < MAP_MINI_QUARTER_SIZE; ++nPos)
+									COPYBLOCKTO(dwMapXPOP, pTemp, nPos, sizeof(map_mini_quarter_t), MAP_MINI_QUARTER_SIZE);
 								iBadRead = CHUNK_OKAY;
 							}
 						}
@@ -818,8 +817,8 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 							iBadRead = CHUNK_BAD_PROC;
 							memset(pTemp, 0, MINIMAP32_ALLOC_SIZE);
 							if (L_SimcityApp_OpenCityCompressed(pSCApp, pFile, nSize, pTemp, MINIMAP32_ALLOC_SIZE)) {
-								for (nPos = 0; nPos < MINI_MAP_32; ++nPos)
-									COPYBLOCKTO(dwMapXROG, pTemp, nPos, sizeof(map_mini32_t), MINI_MAP_32);
+								for (nPos = 0; nPos < MAP_MINI_QUARTER_SIZE; ++nPos)
+									COPYBLOCKTO(dwMapXROG, pTemp, nPos, sizeof(map_mini_quarter_t), MAP_MINI_QUARTER_SIZE);
 								iBadRead = CHUNK_OKAY;
 							}
 						}

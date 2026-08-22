@@ -148,9 +148,9 @@
 
 #define GROWTH_TILE_MAX_TRIP_STEPS 100
 
-#define GAME_MAP_SIZE 128u
-#define MINI_MAP_64   (GAME_MAP_SIZE / 2)
-#define MINI_MAP_32   (GAME_MAP_SIZE / 4)
+#define GAME_MAP_SIZE			128u
+#define MAP_MINI_HALF_SIZE		(GAME_MAP_SIZE / 2)
+#define MAP_MINI_QUARTER_SIZE   (GAME_MAP_SIZE / 4)
 
 #define MAP_EDGE_MIN 0
 #define MAP_EDGE_MAX (GAME_MAP_SIZE - 1)
@@ -2959,13 +2959,13 @@ typedef struct {
 #pragma pack(push, 1)
 typedef struct {
 	BYTE bBlock;
-} map_mini64_t;
+} map_mini_half_t;
 #pragma pack(pop)
 
 #pragma pack(push, 1)
 typedef struct {
 	BYTE bBlock;
-} map_mini32_t;
+} map_mini_quarter_t;
 #pragma pack(pop)
 
 #pragma pack(push, 1)
@@ -3561,6 +3561,7 @@ GAMEOFF(__int16,	wDisasterObject,		0x4CA81C)
 GAMEOFF(__int16,	wClipYhigh,				0x4CA820)
 GAMEOFF(DWORD,	dwNationalPopulation,		0x4CA928)
 GAMEOFF(DWORD*, dwNeighborFame,				0x4CA92C)		// DWORD dwNeighborFame[4]
+GAMEOFF(DWORD*,	pTaxPops,					0x4CA930)		// DWORD pTaxPops[3]
 GAMEOFF(WORD*,	wMilitaryTiles,				0x4CA934)
 GAMEOFF(WORD,	wNationalFedRate,			0x4CA938)
 GAMEOFF(__int16,	wCurrentDisasterType,	0x4CA93C)
@@ -3838,16 +3839,16 @@ GAMEOFF_ARR(map_XUND_t*,	dwMapXUND,	0x4CB1D0)
 GAMEOFF_ARR(map_XBLD_t*,	dwMapXBLD,	0x4CC4F0)
 
 // 64x64
-GAMEOFF_ARR(map_mini64_t*,	dwMapXCRM,	0x4CA4D8)
-GAMEOFF_ARR(map_mini64_t*,	dwMapXPLT,	0x4CA828)
-GAMEOFF_ARR(map_mini64_t*,	dwMapXTRF,	0x4CA940)
-GAMEOFF_ARR(map_mini64_t*,	dwMapXVAL,	0x4CB0A8)
+GAMEOFF_ARR(map_mini_half_t*,	dwMapXCRM,	0x4CA4D8)
+GAMEOFF_ARR(map_mini_half_t*,	dwMapXPLT,	0x4CA828)
+GAMEOFF_ARR(map_mini_half_t*,	dwMapXTRF,	0x4CA940)
+GAMEOFF_ARR(map_mini_half_t*,	dwMapXVAL,	0x4CB0A8)
 
 // 32x32
-GAMEOFF_ARR(map_mini32_t*,	dwMapXPLC,	0x4C9430)
-GAMEOFF_ARR(map_mini32_t*,	dwMapXPOP,	0x4CA448)
-GAMEOFF_ARR(map_mini32_t*,	dwMapXFIR,	0x4CAA78)
-GAMEOFF_ARR(map_mini32_t*,	dwMapXROG,	0x4CB028)
+GAMEOFF_ARR(map_mini_quarter_t*,	dwMapXPLC,	0x4C9430)
+GAMEOFF_ARR(map_mini_quarter_t*,	dwMapXPOP,	0x4CA448)
+GAMEOFF_ARR(map_mini_quarter_t*,	dwMapXFIR,	0x4CAA78)
+GAMEOFF_ARR(map_mini_quarter_t*,	dwMapXROG,	0x4CB028)
 
 // totally different
 GAMEOFF_ARR(map_XLAB_t*,	dwMapXLAB,	0x4CA198)
@@ -4449,8 +4450,8 @@ static inline __int16 *GetTMap(__int16 x, __int16 y) {
 	return &wTMap[x][y];
 }
 
-// Helper functions for the 'map_mini64_t'
-// and 'map_mini32_t' struct array cases.
+// Helper functions for the 'map_mini_half_t'
+// and 'map_mini_quarter_t' struct array cases.
 //
 // 'NormalCoordinates' - the usual coordinates are passed
 //                       to the function and then shifted accordingly
@@ -4461,12 +4462,12 @@ static inline __int16 *GetTMap(__int16 x, __int16 y) {
 
 // Coordinate shifting functions.
 
-static inline void GetShifted64x64Coords(__int16 x, __int16 y, __int16 *outX, __int16 *outY) {
+static inline void GetShiftedMiniHalfCoords(__int16 x, __int16 y, __int16 *outX, __int16 *outY) {
 	*outX = x >> 1;
 	*outY = y >> 1;
 }
 
-static inline void GetShifted32x32Coords(__int16 x, __int16 y, __int16 *outX, __int16 *outY) {
+static inline void GetShiftedMiniQuarterCoords(__int16 x, __int16 y, __int16 *outX, __int16 *outY) {
 	*outX = x >> 2;
 	*outY = y >> 2;
 }
@@ -4477,7 +4478,7 @@ static inline BYTE GetXCRMByteDataWithNormalCoordinates(__int16 x, __int16 y) {
 	__int16 iX;
 	__int16 iY;
 
-	GetShifted64x64Coords(x, y, &iX, &iY);
+	GetShiftedMiniHalfCoords(x, y, &iX, &iY);
 
 	return dwMapXCRM[iX][iY].bBlock;
 }
@@ -4490,7 +4491,7 @@ static inline BYTE GetXPLTByteDataWithNormalCoordinates(__int16 x, __int16 y) {
 	__int16 iX;
 	__int16 iY;
 
-	GetShifted64x64Coords(x, y, &iX, &iY);
+	GetShiftedMiniHalfCoords(x, y, &iX, &iY);
 
 	return dwMapXPLT[iX][iY].bBlock;
 }
@@ -4503,7 +4504,7 @@ static inline BYTE GetXTRFByteDataWithNormalCoordinates(__int16 x, __int16 y) {
 	__int16 iX;
 	__int16 iY;
 
-	GetShifted64x64Coords(x, y, &iX, &iY);
+	GetShiftedMiniHalfCoords(x, y, &iX, &iY);
 
 	return dwMapXTRF[iX][iY].bBlock;
 }
@@ -4516,7 +4517,7 @@ static inline BYTE GetXVALByteDataWithNormalCoordinates(__int16 x, __int16 y) {
 	__int16 iX;
 	__int16 iY;
 
-	GetShifted64x64Coords(x, y, &iX, &iY);
+	GetShiftedMiniHalfCoords(x, y, &iX, &iY);
 
 	return dwMapXVAL[iX][iY].bBlock;
 }
@@ -4531,7 +4532,7 @@ static inline BYTE GetXPLCByteDataWithNormalCoordinates(__int16 x, __int16 y) {
 	__int16 iX;
 	__int16 iY;
 
-	GetShifted32x32Coords(x, y, &iX, &iY);
+	GetShiftedMiniQuarterCoords(x, y, &iX, &iY);
 
 	return dwMapXPLC[iX][iY].bBlock;
 }
@@ -4544,7 +4545,7 @@ static inline BYTE GetXPOPByteDataWithNormalCoordinates(__int16 x, __int16 y) {
 	__int16 iX;
 	__int16 iY;
 
-	GetShifted32x32Coords(x, y, &iX, &iY);
+	GetShiftedMiniQuarterCoords(x, y, &iX, &iY);
 
 	return dwMapXPOP[iX][iY].bBlock;
 }
@@ -4557,7 +4558,7 @@ static inline BYTE GetXFIRByteDataWithNormalCoordinates(__int16 x, __int16 y) {
 	__int16 iX;
 	__int16 iY;
 
-	GetShifted32x32Coords(x, y, &iX, &iY);
+	GetShiftedMiniQuarterCoords(x, y, &iX, &iY);
 
 	return dwMapXFIR[iX][iY].bBlock;
 }
@@ -4570,7 +4571,7 @@ static inline BYTE GetXROGByteDataWithNormalCoordinates(__int16 x, __int16 y) {
 	__int16 iX;
 	__int16 iY;
 
-	GetShifted32x32Coords(x, y, &iX, &iY);
+	GetShiftedMiniQuarterCoords(x, y, &iX, &iY);
 
 	return dwMapXROG[iX][iY].bBlock;
 }
