@@ -46,17 +46,17 @@ namespace json {
 
 	class HOOKEXT_CPP JSON {
 		union HOOKEXT_CPP BackingData {
-			BackingData(double d) : Float(d) {}
-			BackingData(long   l) : Int(l) {}
-			BackingData(bool   b) : Bool(b) {}
-			BackingData(string s) : String(new string(s)) {}
+			BackingData(double  d) : Float(d) {}
+			BackingData(int64_t l) : Int(l) {}
+			BackingData(bool    b) : Bool(b) {}
+			BackingData(string  s) : String(new string(s)) {}
 			BackingData() : Int(0) {}
 
 			deque<JSON>* List;
 			map<string, JSON>* Map;
 			string* String;
 			double              Float;
-			long                Int;
+			int64_t             Int;
 			bool                Bool;
 		} Internal;
 
@@ -170,9 +170,9 @@ namespace json {
 
 		template<typename T> JSON(T b, typename enable_if<is_same<T, bool>::value>::type* = 0) : Internal(b), Type(Class::Boolean) {}
 
-		template<typename T> JSON(T i, typename enable_if<is_integral<T>::value && !is_same<T, bool>::value>::type* = 0) : Internal((long)i), Type(Class::Integral) {}
+		template<typename T> JSON(T i, typename enable_if<is_integral<T>::value && !is_same<T, bool>::value>::type* = 0) : Internal((int64_t)i), Type(Class::Integral) {}
 
-		template<typename T> JSON(T i, typename enable_if<is_enum<T>::value && !is_same<T, bool>::value>::type* = 0) : Internal((long)i), Type(Class::Integral) {}
+		template<typename T> JSON(T i, typename enable_if<is_enum<T>::value && !is_same<T, bool>::value>::type* = 0) : Internal((int64_t)i), Type(Class::Integral) {}
 
 		template<typename T> JSON(T f, typename enable_if<is_floating_point<T>::value>::type* = 0) : Internal((double)f), Type(Class::Floating) {}
 
@@ -248,7 +248,7 @@ namespace json {
 			return Internal.List->at(index);
 		}
 
-		int length() const {
+		size_t length() const {
 			if (Type == Class::Array)
 				return Internal.List->size();
 			return -1;
@@ -260,7 +260,7 @@ namespace json {
 			return false;
 		}
 
-		int size() const {
+		size_t size() const {
 			if (Type == Class::Object)
 				return Internal.Map->size();
 			else if (Type == Class::Array)
@@ -295,18 +295,18 @@ namespace json {
 			bool b;
 			return ToFloat(b);
 		}
-		
+
 		double ToFloat(bool& ok) const {
 			ok = (Type == Class::Floating);
 			return ok ? Internal.Float : 0.0;
 		}
 
-		long ToInt() const {
+		int64_t ToInt() const {
 			bool b;
 			return ToInt(b);
 		}
-		
-		long ToInt(bool& ok) const {
+
+		int64_t ToInt(bool& ok) const {
 			ok = (Type == Class::Integral);
 			return ok ? Internal.Int : 0;
 		}
@@ -314,7 +314,7 @@ namespace json {
 		bool ToBool() const {
 			bool b; return ToBool(b);
 		}
-		
+
 		bool ToBool(bool& ok) const {
 			ok = (Type == Class::Boolean);
 			return ok ? Internal.Bool : false;
@@ -439,7 +439,7 @@ namespace json {
 			case Class::Object:
 				delete Internal.Map;
 				break;
-			case Class::Array: 
+			case Class::Array:
 				delete Internal.List;
 				break;
 			case Class::String:
@@ -586,7 +586,7 @@ namespace json {
 			string val, exp_str;
 			char c;
 			bool isDouble = false;
-			long exp = 0;
+			int64_t exp = 0;
 			while (true) {
 				c = str[offset++];
 				if ((c == '-') || (c >= '0' && c <= '9'))
@@ -612,7 +612,7 @@ namespace json {
 					else
 						break;
 				}
-				exp = std::stol(exp_str);
+				exp = std::stoll(exp_str);
 			}
 			else if (!isspace(c) && c != ',' && c != ']' && c != '}') {
 				std::cerr << "ERROR: Number: unexpected character '" << c << "'\n";
@@ -624,9 +624,9 @@ namespace json {
 				Number = std::stod(val) * std::pow(10, exp);
 			else {
 				if (!exp_str.empty())
-					Number = std::stol(val) * std::pow(10, exp);
+					Number = std::stoll(val) * std::pow(10, exp);
 				else
-					Number = std::stol(val);
+					Number = std::stoll(val);
 			}
 			return Number;
 		}
