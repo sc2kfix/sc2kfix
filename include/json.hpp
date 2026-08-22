@@ -23,6 +23,7 @@ namespace json {
 	using std::is_same;
 	using std::is_convertible;
 	using std::is_integral;
+	using std::is_enum;
 	using std::is_floating_point;
 
 	namespace {
