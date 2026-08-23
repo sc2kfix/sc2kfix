@@ -1012,6 +1012,32 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		if (HIWORD(wParam) == BN_CLICKED) {
 			// Preview the selected terrain type
 			switch (LOWORD(wParam)) {
+			case 20:
+				// Reticulate some splines
+				Game_SimcityDoc_PrepareMap();
+
+				if (GetAsyncKeyState(VK_SHIFT)) {
+					// Fully random slider values
+					bCityHasRiver = rand() & 1;
+					bCityHasOcean = rand() & 1;
+					wCityTerrainSliderHills = rand() % 48;
+					wCityTerrainSliderWater = rand() % 48;
+					wCityTerrainSliderTrees = rand() % 48;
+				}
+				else {
+					// Weighted towards more usable landmass, but more varied than default
+					bCityHasRiver = (rand() & 3) == 3 ? 0 : 1;		// 75% chance of having a river
+					bCityHasOcean = rand() & 1;						// 50% chance of having an ocean
+					wCityTerrainSliderHills = rand() % 25 + 3;		// 3-27 out of 47
+					wCityTerrainSliderWater = rand() % 32 + 1;		// 1-32 out of 47
+					wCityTerrainSliderTrees = rand() % 36 + 7;		// 7-42 out of 47
+				}
+
+				Game_SimcityDoc_PrepareData(pCSimcityDoc);
+				Game_SimcityView_MakeTerrain(pSCView, bCityHasOcean, bCityHasRiver, wCityTerrainSliderHills, wCityTerrainSliderWater, wCityTerrainSliderTrees);
+				Game_SimcityView_DrawHouse(pSCView);
+				RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				break;
 			case 108:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
 				if (pSCView) {

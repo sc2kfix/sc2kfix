@@ -3128,6 +3128,7 @@ GAMECALL(0x401AC8, void, __thiscall, MapToolBar_AdjustSlider, CMapToolBar *, UIN
 GAMECALL(0x401AF0, int, __cdecl, BeginTrace, __int16 x1, __int16 y1, __int16 x2, __int16 y2)
 GAMECALL(0x401B04, int, __cdecl, CityToolPlaceOnRamp, __int16, __int16)
 GAMECALL(0x401B40, int, __cdecl, IsZonedTilePowered, __int16 x, __int16 y)
+GAMECALL(0x401B4A, void, __cdecl, SimcityDoc_PrepareMap, void)
 GAMECALL(0x401B4F, BOOL, __stdcall, MovieCreateWindow)
 GAMECALL(0x401B63, void, __cdecl, PlaceFireDispatchUnit, __int16, __int16)
 GAMECALL(0x401B9A, void, __thiscall, GameDialog_RepositionSubDialog, CGameDialog *, CMFC3XWnd *)
