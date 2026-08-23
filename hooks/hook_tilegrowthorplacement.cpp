@@ -56,7 +56,7 @@
 
 #define USE_NEW_TRIP_GENERATOR		1		// use the recompiled trip generator
 #define USE_NEW_STARTINGCOORDS		1		// use our own starting coords code
-#define USE_NATIVE_STACKS			0		// use std::stack instead of SC2K's shared point stack
+#define USE_NATIVE_STACKS			1		// use std::stack instead of SC2K's shared point stack
 
 #define SHUFFLE_TRIP_GENERATOR		0		// shuffles dwTripStartingCoords for added randomness
 
@@ -216,7 +216,7 @@ int __cdecl L_RunTripGenerator(__int16 x, __int16 y, __int16 nZoneType, __int16 
 		SetCPoint(&stTripData.ptTripCurrentLocation, x + dwTripStartingCoords[iTripStartAttempt].x, y + dwTripStartingCoords[iTripStartAttempt].y);
 
 		if (stTripData.ptTripCurrentLocation.x < GAME_MAP_SIZE && stTripData.ptTripCurrentLocation.y < GAME_MAP_SIZE) {
-			iTileID = GetTileID(stTripData.ptTripCurrentLocation.x, stTripData.ptTripCurrentLocation.y);
+			iTileID = GetTileID((short)stTripData.ptTripCurrentLocation.x, (short)stTripData.ptTripCurrentLocation.y);
 			if (TILE_IS_ROAD(iTileID))
 				stTripData.iCurrentTransitType = TRANSIT_TYPE_ROAD;
 			else {
@@ -240,7 +240,7 @@ int __cdecl L_RunTripGenerator(__int16 x, __int16 y, __int16 nZoneType, __int16 
 		return 0;
 
 #if !USE_NATIVE_STACKS
-	Game_InitStack(stTripData.ptTripCurrentLocation.x, stTripData.ptTripCurrentLocation.y);
+	Game_InitStack((short)stTripData.ptTripCurrentLocation.x, (short)stTripData.ptTripCurrentLocation.y);
 #endif
 
 	// Set up the initial variables for the trip
@@ -289,7 +289,7 @@ TRIPSUCCESS:
 						if (((unsigned __int16)(1 << (*(BYTE*)&dwMapXZON[SLOWORD(stTripData.ptTripNextLocation.x)][SLOWORD(stTripData.ptTripNextLocation.y)].b & 0xF)) & (unsigned __int16)wArrZoneDestinations[nZoneType]) != 0)
 							goto TRIPSUCCESS;
 
-						iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+						iTileID = GetTileID((short)stTripData.ptTripNextLocation.x, (short)stTripData.ptTripNextLocation.y);
 						
 						// TODO: rework this for clarity
 						if (iTileID < TILE_TUNNEL_T || iTileID >= TILE_CROSSOVER_POWERTB_ROADLR) {
@@ -341,7 +341,7 @@ TRIPSUCCESS:
 						break;
 
 					case TRANSIT_TYPE_HIGHWAY:
-						iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+						iTileID = GetTileID((short)stTripData.ptTripNextLocation.x, (short)stTripData.ptTripNextLocation.y);
 
 						if ((iTileID < 0x61u || iTileID >= 0x6Cu) && (iTileID < 0x49u || iTileID >= 0x51u)) {
 							if (iTileID >= 0x5Du && iTileID < 0x61u) {
@@ -361,7 +361,7 @@ TRIPSUCCESS:
 							iTripCurrentSteps += 3 * TRIP_SCALE_FACTOR_STEP;
 							v9 = 1;
 						} else {
-							iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+							iTileID = GetTileID((short)stTripData.ptTripNextLocation.x, (short)stTripData.ptTripNextLocation.y);
 
 							if (TILE_IS_ROAD(iTileID)) {
 								iTripCurrentSteps += 3 * TRIP_SCALE_FACTOR_STEP;
@@ -373,7 +373,7 @@ TRIPSUCCESS:
 						break;
 
 					case TRANSIT_TYPE_ROADBRIDGE:
-						iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+						iTileID = GetTileID((short)stTripData.ptTripNextLocation.x, (short)stTripData.ptTripNextLocation.y);
 
 						if (iTileID >= (unsigned int)TILE_SUSPENSION_BRIDGE_START_B && iTileID < (unsigned int)TILE_ONRAMP_TL
 							|| iTileID == TILE_REINFORCED_BRIDGE_PYLON
@@ -392,7 +392,7 @@ TRIPSUCCESS:
 						if (((unsigned __int16)(1 << (*(BYTE*)&dwMapXZON[SLOWORD(stTripData.ptTripNextLocation.x)][SLOWORD(stTripData.ptTripNextLocation.y)].b & 0xF)) & (unsigned __int16)wArrZoneDestinations[nZoneType]) != 0)
 							goto TRIPSUCCESS;
 
-						iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+						iTileID = GetTileID((short)stTripData.ptTripNextLocation.x, (short)stTripData.ptTripNextLocation.y);
 
 						if (iTileID < TILE_TUNNEL_T || iTileID >= TILE_CROSSOVER_POWERTB_ROADLR) {
 							if (iTileID >= TILE_TUNNEL_T && iTileID < TILE_ONRAMP_TL || iTileID == TILE_REINFORCED_BRIDGE_PYLON || iTileID == TILE_REINFORCED_BRIDGE) {
@@ -441,7 +441,7 @@ TRIPSUCCESS:
 
 					// TODO: determine if this is actually what it seems to be
 					case TRANSIT_TYPE_PEDESTRIAN_UNDERPASS:
-						iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+						iTileID = GetTileID((short)stTripData.ptTripNextLocation.x, (short)stTripData.ptTripNextLocation.y);
 
 						if ((iTileID < (unsigned int)TILE_HIGHWAY_HTB || iTileID >= (unsigned int)TILE_SUBTORAIL_T)
 							&& (iTileID < (unsigned int)TILE_HIGHWAY_LR || iTileID >= (unsigned int)TILE_SUSPENSION_BRIDGE_START_B)) {
@@ -463,7 +463,7 @@ TRIPSUCCESS:
 							iTripCurrentSteps += 2 * TRIP_SCALE_FACTOR_STEP;
 							v9 = 1;
 						} else {
-							iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+							iTileID = GetTileID((short)stTripData.ptTripNextLocation.x, (short)stTripData.ptTripNextLocation.y);
 
 							if (TILE_IS_ROAD(iTileID)) {
 								iTripCurrentSteps += 2 * TRIP_SCALE_FACTOR_STEP;
@@ -476,7 +476,7 @@ TRIPSUCCESS:
 
 					// TODO: determine if this is actually what it seems to be
 					case TRANSIT_TYPE_PEDESTRIAN_UNDERPASS2:
-						iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+						iTileID = GetTileID((short)stTripData.ptTripNextLocation.x, (short)stTripData.ptTripNextLocation.y);
 
 						if (iTileID >= TILE_SUSPENSION_BRIDGE_START_B && iTileID < TILE_ONRAMP_TL || iTileID == TILE_REINFORCED_BRIDGE_PYLON || iTileID == TILE_REINFORCED_BRIDGE) {
 							iTripCurrentSteps += 2 * TRIP_SCALE_FACTOR_STEP;
@@ -493,7 +493,7 @@ TRIPSUCCESS:
 						if (((unsigned __int16)(1 << (*(BYTE*)&dwMapXZON[SLOWORD(stTripData.ptTripNextLocation.x)][SLOWORD(stTripData.ptTripNextLocation.y)].b & 0xF)) & (unsigned __int16)wArrZoneDestinations[nZoneType]) != 0)
 							goto TRIPSUCCESS;
 
-						iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+						iTileID = GetTileID((short)stTripData.ptTripNextLocation.x, (short)stTripData.ptTripNextLocation.y);
 
 						if (iTileID == TILE_INFRASTRUCTURE_BUSDEPOT) {
 							iTripCurrentSteps += 4 * TRIP_SCALE_FACTOR_CHANGE;
@@ -510,7 +510,7 @@ TRIPSUCCESS:
 						if (((unsigned __int16)(1 << (*(BYTE*)&dwMapXZON[SLOWORD(stTripData.ptTripNextLocation.x)][SLOWORD(stTripData.ptTripNextLocation.y)].b & 0xF)) & (unsigned __int16)wArrZoneDestinations[nZoneType]) != 0)
 							goto TRIPSUCCESS;
 
-						iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+						iTileID = GetTileID((short)stTripData.ptTripNextLocation.x, (short)stTripData.ptTripNextLocation.y);
 
 						if (iTileID == TILE_INFRASTRUCTURE_BUSDEPOT || iTileID == TILE_INFRASTRUCTURE_RAILSTATION) {
 							iTripCurrentSteps += 4 * TRIP_SCALE_FACTOR_CHANGE;
@@ -524,7 +524,7 @@ TRIPSUCCESS:
 						break;
 
 					case TRANSIT_TYPE_RAIL_ENTER:
-						iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+						iTileID = GetTileID((short)stTripData.ptTripNextLocation.x, (short)stTripData.ptTripNextLocation.y);
 
 						if (iTileID == TILE_INFRASTRUCTURE_RAILSTATION) {
 							iTripCurrentSteps += 4 * TRIP_SCALE_FACTOR_CHANGE;
@@ -553,7 +553,7 @@ TRIPSUCCESS:
 						break;
 
 					case TRANSIT_TYPE_RAIL:
-						iTileID = GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+						iTileID = GetTileID((short)stTripData.ptTripNextLocation.x, (short)stTripData.ptTripNextLocation.y);
 
 						if (iTileID == TILE_INFRASTRUCTURE_RAILSTATION) {
 							iTripCurrentSteps += 4 * TRIP_SCALE_FACTOR_CHANGE;
@@ -568,7 +568,7 @@ TRIPSUCCESS:
 						break;
 
 					case TRANSIT_TYPE_SUBWAY:
-						if (GetTileID(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y) == TILE_INFRASTRUCTURE_SUBWAYSTATION) {
+						if (GetTileID((short)stTripData.ptTripNextLocation.x, (short)stTripData.ptTripNextLocation.y) == TILE_INFRASTRUCTURE_SUBWAYSTATION) {
 							iTripCurrentSteps += 4 * TRIP_SCALE_FACTOR_CHANGE;
 							v9 = 1;
 							stTripData.iCurrentTransitType = TRANSIT_TYPE_SUBWAY_EXIT;
@@ -605,7 +605,7 @@ FINISHTRIP:
 #if USE_NATIVE_STACKS
 			stackTripPoints.push({ stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y });
 #else
-			Game_StackPush(stTripData.ptTripNextLocation.x, stTripData.ptTripNextLocation.y);
+			Game_StackPush((short)stTripData.ptTripNextLocation.x, (short)stTripData.ptTripNextLocation.y);
 #endif
 
 			if (stTripData.iCurrentTransitType == TRANSIT_TYPE_ROADBRIDGE || stTripData.iCurrentTransitType == TRANSIT_TYPE_PEDESTRIAN_UNDERPASS2)
@@ -643,7 +643,8 @@ LABEL_229:
 #if USE_NATIVE_STACKS
 				if (!stackTripPoints.empty()) {
 					stackTripPoints.pop();
-					stTripData.ptTripCurrentLocation = stackTripPoints.top();
+					stTripData.ptTripCurrentLocation.x = stackTripPoints.top().x;
+					stTripData.ptTripCurrentLocation.y = stackTripPoints.top().y;
 				}
 #else
 				Game_StackPop(&stTripData.ptTripCurrentLocation);
@@ -677,7 +678,8 @@ LABEL_236:
 #endif
 			do {
 #if USE_NATIVE_STACKS
-				stTripData.ptTripCurrentLocation = stackTripPoints.top();
+				stTripData.ptTripCurrentLocation.x = stackTripPoints.top().x;
+				stTripData.ptTripCurrentLocation.y = stackTripPoints.top().y;
 				stackTripPoints.pop();
 #else
 				Game_StackPop(&stTripData.ptTripCurrentLocation);
