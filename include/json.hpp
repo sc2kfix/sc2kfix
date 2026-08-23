@@ -301,12 +301,22 @@ namespace json {
 			return ok ? Internal.Float : 0.0;
 		}
 
-		int64_t ToInt() const {
+		int ToInt() const {
 			bool b;
 			return ToInt(b);
 		}
 
-		int64_t ToInt(bool& ok) const {
+		int ToInt(bool& ok) const {
+			ok = (Type == Class::Integral);
+			return ok ? (int)Internal.Int : 0;
+		}
+
+		int64_t ToInt64() const {
+			bool b;
+			return ToInt(b);
+		}
+
+		int64_t ToInt64(bool& ok) const {
 			ok = (Type == Class::Integral);
 			return ok ? Internal.Int : 0;
 		}

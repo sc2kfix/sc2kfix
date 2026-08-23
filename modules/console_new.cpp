@@ -801,7 +801,7 @@ bool ConsoleCommandShowMemory(std::vector<std::string> args, int iBreakoutState,
 
 				BYTE buf[16];
 				AttemptSafeMemcpy(buf, (BYTE*)dwAddress, 16);
-				for (int i = 0; i < uNextElements; i++) {
+				for (size_t i = 0; i < uNextElements; i++) {
 					switch (iOptParam) {
 					case 1:
 						if (iBase == 10)

@@ -606,6 +606,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 	case DLL_PROCESS_DETACH:
 		// Do so here as well if any of the handles are still valid.
 		// If by the end the handles haven't been set to 0, TerminateThread.
+#pragma warning(disable : 6258)
 		if (hSDLSongHandle) {
 			dwWaitRes = WaitForSingleObject(hSDLSongHandle, THREAD_WAIT_TIME);
 			if (!dwWaitRes)
@@ -646,6 +647,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 					ConsoleLog(LOG_DEBUG, "hMusicHandle: Hmmm... 0x%06X\n", GetLastError());
 			}
 		}
+#pragma warning(default : 6258)
 
 		// Only save the settings if the program has closed gracefully.
 		if (!bGameDead)

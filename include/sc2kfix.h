@@ -2,8 +2,6 @@
 // (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #pragma once
-#pragma warning(disable : 4200)
-#pragma warning(disable : 4733)
 
 #include <windows.h>
 #include <windowsx.h>

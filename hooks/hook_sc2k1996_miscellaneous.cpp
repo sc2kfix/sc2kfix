@@ -1435,7 +1435,7 @@ static void UpdateCityDateAndSeason(BOOL bIncrement) {
 		++dwCityDays;
 	wCityCurrentMonth = (dwCityDays / 25) % 12;
 	wCityCurrentSeason = (wCityCurrentMonth + 1) % 12 / 3;
-	wCityElapsedYears = (dwCityDays / 300);
+	wCityElapsedYears = (WORD)(dwCityDays / 300);
 }
 
 // Function prototype: HOOKCB void Hook_SimCalendarAdvance_Before(void)

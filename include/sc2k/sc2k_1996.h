@@ -45,6 +45,16 @@
 #endif
 
 #ifdef GAMEOFF_IMPL
+#define GAMECALL_DEPRECATED(address, type, conv, name, ...) \
+	typedef type (conv *GameFuncPtr_##name)(__VA_ARGS__); \
+	GameFuncPtr_##name Game_##name = (GameFuncPtr_##name)address;
+#else
+#define GAMECALL_DEPRECATED(address, type, conv, name, ...) \
+	typedef type (conv *GameFuncPtr_##name)(__VA_ARGS__);\
+	[[deprecated("This function has been completely reimplemented; use the local call instead.")]] extern GameFuncPtr_##name Game_##name;
+#endif
+
+#ifdef GAMEOFF_IMPL
 #define GAMECALL_MAIN(address, type, conv, name, ...) \
 	typedef type (conv *GameMainFuncPtr_##name)(__VA_ARGS__); \
 	GameMainFuncPtr_##name GameMain_##name = (GameMainFuncPtr_##name)address;
