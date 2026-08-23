@@ -866,8 +866,22 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 	switch (message) {
 	case WM_INITDIALOG:
 		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis);
+		SendMessage(GetDlgItem(hwndDlg, 119), WM_SETFONT, (WPARAM)hFontMSSansSerifRegular8, TRUE);
 
+		// Set WS_EX_LAYERED on our window object, since we need that for transparency and can't
+		// do that in the MFC dialog creation function
+		SetWindowLong(hwndDlg, GWL_EXSTYLE, GetWindowLong(hwndDlg, GWL_EXSTYLE) | WS_EX_LAYERED);
+		SetLayeredWindowAttributes(hwndDlg, 0, 255, LWA_ALPHA);
+
+		// Clear out the tooltip cache for this dialog
 		DestroyStoredTooltips(storedToolTips, hwndDlg);
+		
+		// Button tooltips
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 1),
+			"Finalizes your city settings and starts the game.");
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 20),
+			"Generates a new map for your city. A larger variety of terrain is available than in the vanilla SimCity 2000 start game dialog.\n\n"
+			"Hold Shift while clicking this to increase the depth of the splines being reticulated.\n");
 
 		// Difficulty selection tooltips
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 109),
@@ -1005,6 +1019,15 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 			}
 		}
 
+		break;
+
+	// Apply transparency when the right mouse button is held so the player can peek at the map
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONDBLCLK:
+		SetLayeredWindowAttributes(hwndDlg, NULL, 32, LWA_ALPHA);
+		break;
+	case WM_RBUTTONUP:
+		SetLayeredWindowAttributes(hwndDlg, NULL, 255, LWA_ALPHA);
 		break;
 
 	case WM_COMMAND:
