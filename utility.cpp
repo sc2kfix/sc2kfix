@@ -362,14 +362,14 @@ HOOKEXT const char* GetLowHighScale(BYTE bScale) {
 	return "Very High";
 }
 
-HOOKEXT BOOL FileExists(const char* name) {
+HOOKEXT bool FileExists(const char* name) {
 	FILE* fdTest;
 	fdTest = old_fopen(name, "r");
 	if (fdTest) {
 		fclose(fdTest);
-		return TRUE;
+		return true;
 	}
-	return FALSE;
+	return false;
 }
 
 HOOKEXT const char* GetFileBaseName(const char* szPath) {
@@ -412,29 +412,29 @@ HOOKEXT const char* GetOnIdleInitialDialogEnumName(int iInitialDialogState) {
 	return szOnIdleInitialDialogEnums[iInitialDialogState];
 }
 
-static BOOL IsBadFileCharacter(char c) {
+static bool IsBadFileCharacter(char c) {
 	// Note: This takes out the most common
 	// invalid filename character cases.
 	if (c >= 0x00 && c <= 0x1F)
-		return TRUE;
+		return true;
 	if (c == '<' || c == '>' ||
 		c == ':' || c == '"' ||
 		c == '/' || c == '\\' ||
 		c == '|' || c == '?' ||
 		c == '*' || c == 0x7F)
-		return TRUE;
-	return FALSE;
+		return true;
+	return false;
 }
 
-HOOKEXT BOOL IsFileNameValid(const char *pName) {
+HOOKEXT bool IsFileNameValid(const char *pName) {
 	if (!pName)
-		return FALSE;
+		return true;
 
 	const char *pTemp = pName;
 	for (; *pTemp; pTemp++)
 		if (IsBadFileCharacter(*pTemp))
-			return FALSE;
-	return TRUE;
+			return false;
+	return true;
 }
 
 BOOL CopyReplacementString(char *pDest, rsize_t SizeInBytes, const char *pSrc) {
@@ -478,7 +478,7 @@ FILE* old_fopen(const char* fname, const char* mode) {
 	return NULL;
 }
 
-void *__cdecl L_ReallocateDataEntry(char *pDest, char *pSrc) {
+void* __cdecl L_ReallocateDataEntry(char *pDest, char *pSrc) {
 	DWORD dwCurr;
 	DWORD dwDiff;
 	char *pDestPtr;

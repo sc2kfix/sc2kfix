@@ -288,20 +288,10 @@ typedef struct {
 	int iPriority;
 	int iType;
 	void* pFunction;
-	BOOL bEnabled;
+	bool bEnabled;
 } hook_function_t;
 
 #include <hooklists.h>
-
-typedef BOOL (*console_cmdproc_t)(const char* szCommand, const char* szArguments);
-
-// Struct defining a core console command.
-typedef struct {
-	const char* szCommand;
-	console_cmdproc_t fpProc;
-	int iUndocumented;
-	const char* szDescription;
-} console_command_t;
 
 // Struct defining debugging information for sound buffers.
 typedef struct {
@@ -319,9 +309,9 @@ typedef struct {
 // This structure is passed to the settings dialog to allow it to return multiple pieces of
 // information about what settings were changed, if any.
 typedef struct {
-	BOOL bActiveTrackChanged;
-	BOOL bActiveMusicDriverTouched;
-	BOOL bKeyBindingsChanged;
+	bool bActiveTrackChanged;
+	bool bActiveMusicDriverTouched;
+	bool bKeyBindingsChanged;
 
 	std::string strMusicDriver;
 	std::string strSoundfont;
@@ -490,8 +480,8 @@ bool IsAudioThreadStopRequest();
 
 // Path adjustment (from registry_pathing area)
 
-BOOL L_IsPathValid(const char *pStr);
-BOOL L_IsDirectoryPathValid(const char *pStr);
+bool L_IsPathValid(const char *pStr);
+bool L_IsDirectoryPathValid(const char *pStr);
 
 // Utility functions
 
@@ -517,13 +507,13 @@ HOOKEXT const char* FormatVersion(int iMajor, int iMinor, int iPatch);
 HOOKEXT_CPP std::string WordWrap(std::string strInput, size_t iMaxWidth, size_t iIndentWidth);
 HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...);
 HOOKEXT const char* GetLowHighScale(BYTE bScale);
-HOOKEXT BOOL FileExists(const char* name);
+HOOKEXT bool FileExists(const char* name);
 HOOKEXT const char* GetFileBaseName(const char* szPath);
 HOOKEXT const char* GetModsFolderPath(void);
 HOOKEXT const char* GetOnIdleStateEnumName(int iState);
 HOOKEXT const char* GetOnIdleInitialDialogEnumName(int iInitialDialogState);
 //HBITMAP CreateSpriteBitmap(int iSpriteID);
-HOOKEXT BOOL IsFileNameValid(const char *pName);
+HOOKEXT bool IsFileNameValid(const char *pName);
 HOOKEXT BOOL WritePrivateProfileIntA(const char *section, const char *name, int value, const char *ini_name);
 int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize, int *nCompSize);
 HOOKEXT_CPP std::string Base64Encode(const unsigned char* pSrcData, size_t iSrcCount);

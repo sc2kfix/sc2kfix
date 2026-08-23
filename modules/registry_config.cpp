@@ -315,12 +315,12 @@ static const char *SectionLookup(HKEY hKey) {
 	return NULL;
 }
 
-BOOL L_IsPathValid(const char *pStr) {
-	return (pStr && PathFileExistsA(pStr)) ? TRUE : FALSE;
+bool L_IsPathValid(const char *pStr) {
+	return (pStr && PathFileExistsA(pStr)) ? true : false;
 }
 
-BOOL L_IsDirectoryPathValid(const char *pStr) {
-	return (L_IsPathValid(pStr) && PathIsDirectoryA(pStr)) ? TRUE : FALSE;
+bool L_IsDirectoryPathValid(const char *pStr) {
+	return (L_IsPathValid(pStr) && PathIsDirectoryA(pStr)) ? true : false;
 }
 
 static void GetOutString(const char *sString, LPBYTE lpData, LPDWORD lpcbData) {

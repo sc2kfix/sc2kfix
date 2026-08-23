@@ -30,96 +30,96 @@ UINT keybinds_debug = KEYBINDS_DEBUG;
 // NOTE: To avoid headaches, make sure the order matches that
 // of its enum.
 static bkey_t progkeys[B_KEY_COUNT] = {
-	{ B_KEY_INVALID,         0x00,          TRUE,  B_TYPE_GENERAL, "<None>"            },
+	{ B_KEY_INVALID,         0x00,          true,  B_TYPE_GENERAL, "<None>"            },
 
-	{ B_KEY_ESCAPE,          VK_ESCAPE,     TRUE,  B_TYPE_VIRTKEY, "Esc"               },
+	{ B_KEY_ESCAPE,          VK_ESCAPE,     true,  B_TYPE_VIRTKEY, "Esc"               },
 																					   
-	{ B_KEY_PAGEUP,          VK_PRIOR,      FALSE, B_TYPE_VIRTKEY, "PageUp"            },
-	{ B_KEY_PAGEDOWN,        VK_NEXT,       FALSE, B_TYPE_VIRTKEY, "PageDown"          },
-	{ B_KEY_HOME,            VK_HOME,       FALSE, B_TYPE_VIRTKEY, "Home"              },
-	{ B_KEY_END,             VK_END,        FALSE, B_TYPE_VIRTKEY, "End"               },
+	{ B_KEY_PAGEUP,          VK_PRIOR,      false, B_TYPE_VIRTKEY, "PageUp"            },
+	{ B_KEY_PAGEDOWN,        VK_NEXT,       false, B_TYPE_VIRTKEY, "PageDown"          },
+	{ B_KEY_HOME,            VK_HOME,       false, B_TYPE_VIRTKEY, "Home"              },
+	{ B_KEY_END,             VK_END,        false, B_TYPE_VIRTKEY, "End"               },
 																					   
-	{ B_KEY_CURSORLEFT,      VK_LEFT,       FALSE, B_TYPE_VIRTKEY, "CursorLeft"        },
-	{ B_KEY_CURSORUP,        VK_UP,         FALSE, B_TYPE_VIRTKEY, "CursorUp"          },
-	{ B_KEY_CURSORRIGHT,     VK_RIGHT,      FALSE, B_TYPE_VIRTKEY, "CursorRight"       },
-	{ B_KEY_CURSORDOWN,      VK_DOWN,       FALSE, B_TYPE_VIRTKEY, "CursorDown"        },
+	{ B_KEY_CURSORLEFT,      VK_LEFT,       false, B_TYPE_VIRTKEY, "CursorLeft"        },
+	{ B_KEY_CURSORUP,        VK_UP,         false, B_TYPE_VIRTKEY, "CursorUp"          },
+	{ B_KEY_CURSORRIGHT,     VK_RIGHT,      false, B_TYPE_VIRTKEY, "CursorRight"       },
+	{ B_KEY_CURSORDOWN,      VK_DOWN,       false, B_TYPE_VIRTKEY, "CursorDown"        },
 																					   
-	{ B_KEY_INSERT,          VK_INSERT,     FALSE, B_TYPE_VIRTKEY, "Insert"            },
-	{ B_KEY_DELETE,          VK_DELETE,     FALSE, B_TYPE_VIRTKEY, "Delete"            },
+	{ B_KEY_INSERT,          VK_INSERT,     false, B_TYPE_VIRTKEY, "Insert"            },
+	{ B_KEY_DELETE,          VK_DELETE,     false, B_TYPE_VIRTKEY, "Delete"            },
 																					   
-	{ B_KEY_0,               0x30,          FALSE, B_TYPE_VIRTKEY, "0"                 },
-	{ B_KEY_1,               0x31,          FALSE, B_TYPE_VIRTKEY, "1"                 },
-	{ B_KEY_2,               0x32,          FALSE, B_TYPE_VIRTKEY, "2"                 },
-	{ B_KEY_3,               0x33,          FALSE, B_TYPE_VIRTKEY, "3"                 },
-	{ B_KEY_4,               0x34,          FALSE, B_TYPE_VIRTKEY, "4"                 },
-	{ B_KEY_5,               0x35,          FALSE, B_TYPE_VIRTKEY, "5"                 },
-	{ B_KEY_6,               0x36,          FALSE, B_TYPE_VIRTKEY, "6"                 },
-	{ B_KEY_7,               0x37,          FALSE, B_TYPE_VIRTKEY, "7"                 },
-	{ B_KEY_8,               0x38,          FALSE, B_TYPE_VIRTKEY, "8"                 },
-	{ B_KEY_9,               0x39,          FALSE, B_TYPE_VIRTKEY, "9"                 },
+	{ B_KEY_0,               0x30,          false, B_TYPE_VIRTKEY, "0"                 },
+	{ B_KEY_1,               0x31,          false, B_TYPE_VIRTKEY, "1"                 },
+	{ B_KEY_2,               0x32,          false, B_TYPE_VIRTKEY, "2"                 },
+	{ B_KEY_3,               0x33,          false, B_TYPE_VIRTKEY, "3"                 },
+	{ B_KEY_4,               0x34,          false, B_TYPE_VIRTKEY, "4"                 },
+	{ B_KEY_5,               0x35,          false, B_TYPE_VIRTKEY, "5"                 },
+	{ B_KEY_6,               0x36,          false, B_TYPE_VIRTKEY, "6"                 },
+	{ B_KEY_7,               0x37,          false, B_TYPE_VIRTKEY, "7"                 },
+	{ B_KEY_8,               0x38,          false, B_TYPE_VIRTKEY, "8"                 },
+	{ B_KEY_9,               0x39,          false, B_TYPE_VIRTKEY, "9"                 },
 																					   
-	{ B_KEY_A,               0x41,          FALSE, B_TYPE_VIRTKEY, "A"                 },
-	{ B_KEY_B,               0x42,          FALSE, B_TYPE_VIRTKEY, "B"                 },
-	{ B_KEY_C,               0x43,          FALSE, B_TYPE_VIRTKEY, "C"                 },
-	{ B_KEY_D,               0x44,          FALSE, B_TYPE_VIRTKEY, "D"                 },
-	{ B_KEY_E,               0x45,          FALSE, B_TYPE_VIRTKEY, "E"                 },
-	{ B_KEY_F,               0x46,          FALSE, B_TYPE_VIRTKEY, "F"                 },
-	{ B_KEY_G,               0x47,          FALSE, B_TYPE_VIRTKEY, "G"                 },
-	{ B_KEY_H,               0x48,          FALSE, B_TYPE_VIRTKEY, "H"                 },
-	{ B_KEY_I,               0x49,          FALSE, B_TYPE_VIRTKEY, "I"                 },
-	{ B_KEY_J,               0x4A,          FALSE, B_TYPE_VIRTKEY, "J"                 },
-	{ B_KEY_K,               0x4B,          FALSE, B_TYPE_VIRTKEY, "K"                 },
-	{ B_KEY_L,               0x4C,          FALSE, B_TYPE_VIRTKEY, "L"                 },
-	{ B_KEY_M,               0x4D,          FALSE, B_TYPE_VIRTKEY, "M"                 },
-	{ B_KEY_N,               0x4E,          FALSE, B_TYPE_VIRTKEY, "N"                 },
-	{ B_KEY_O,               0x4F,          FALSE, B_TYPE_VIRTKEY, "O"                 },
-	{ B_KEY_P,               0x50,          FALSE, B_TYPE_VIRTKEY, "P"                 },
-	{ B_KEY_Q,               0x51,          FALSE, B_TYPE_VIRTKEY, "Q"                 },
-	{ B_KEY_R,               0x52,          FALSE, B_TYPE_VIRTKEY, "R"                 },
-	{ B_KEY_S,               0x53,          FALSE, B_TYPE_VIRTKEY, "S"                 },
-	{ B_KEY_T,               0x54,          FALSE, B_TYPE_VIRTKEY, "T"                 },
-	{ B_KEY_U,               0x55,          FALSE, B_TYPE_VIRTKEY, "U"                 },
-	{ B_KEY_V,               0x56,          FALSE, B_TYPE_VIRTKEY, "V"                 },
-	{ B_KEY_W,               0x57,          FALSE, B_TYPE_VIRTKEY, "W"                 },
-	{ B_KEY_X,               0x58,          FALSE, B_TYPE_VIRTKEY, "X"                 },
-	{ B_KEY_Y,               0x59,          FALSE, B_TYPE_VIRTKEY, "Y"                 },
-	{ B_KEY_Z,               0x5A,          FALSE, B_TYPE_VIRTKEY, "Z"                 },
+	{ B_KEY_A,               0x41,          false, B_TYPE_VIRTKEY, "A"                 },
+	{ B_KEY_B,               0x42,          false, B_TYPE_VIRTKEY, "B"                 },
+	{ B_KEY_C,               0x43,          false, B_TYPE_VIRTKEY, "C"                 },
+	{ B_KEY_D,               0x44,          false, B_TYPE_VIRTKEY, "D"                 },
+	{ B_KEY_E,               0x45,          false, B_TYPE_VIRTKEY, "E"                 },
+	{ B_KEY_F,               0x46,          false, B_TYPE_VIRTKEY, "F"                 },
+	{ B_KEY_G,               0x47,          false, B_TYPE_VIRTKEY, "G"                 },
+	{ B_KEY_H,               0x48,          false, B_TYPE_VIRTKEY, "H"                 },
+	{ B_KEY_I,               0x49,          false, B_TYPE_VIRTKEY, "I"                 },
+	{ B_KEY_J,               0x4A,          false, B_TYPE_VIRTKEY, "J"                 },
+	{ B_KEY_K,               0x4B,          false, B_TYPE_VIRTKEY, "K"                 },
+	{ B_KEY_L,               0x4C,          false, B_TYPE_VIRTKEY, "L"                 },
+	{ B_KEY_M,               0x4D,          false, B_TYPE_VIRTKEY, "M"                 },
+	{ B_KEY_N,               0x4E,          false, B_TYPE_VIRTKEY, "N"                 },
+	{ B_KEY_O,               0x4F,          false, B_TYPE_VIRTKEY, "O"                 },
+	{ B_KEY_P,               0x50,          false, B_TYPE_VIRTKEY, "P"                 },
+	{ B_KEY_Q,               0x51,          false, B_TYPE_VIRTKEY, "Q"                 },
+	{ B_KEY_R,               0x52,          false, B_TYPE_VIRTKEY, "R"                 },
+	{ B_KEY_S,               0x53,          false, B_TYPE_VIRTKEY, "S"                 },
+	{ B_KEY_T,               0x54,          false, B_TYPE_VIRTKEY, "T"                 },
+	{ B_KEY_U,               0x55,          false, B_TYPE_VIRTKEY, "U"                 },
+	{ B_KEY_V,               0x56,          false, B_TYPE_VIRTKEY, "V"                 },
+	{ B_KEY_W,               0x57,          false, B_TYPE_VIRTKEY, "W"                 },
+	{ B_KEY_X,               0x58,          false, B_TYPE_VIRTKEY, "X"                 },
+	{ B_KEY_Y,               0x59,          false, B_TYPE_VIRTKEY, "Y"                 },
+	{ B_KEY_Z,               0x5A,          false, B_TYPE_VIRTKEY, "Z"                 },
 																					   
-	{ B_KEY_NUMPAD0,         VK_NUMPAD0,    FALSE, B_TYPE_VIRTKEY, "Numpad0"           },
-	{ B_KEY_NUMPAD1,         VK_NUMPAD1,    FALSE, B_TYPE_VIRTKEY, "Numpad1"           },
-	{ B_KEY_NUMPAD2,         VK_NUMPAD2,    FALSE, B_TYPE_VIRTKEY, "Numpad2"           },
-	{ B_KEY_NUMPAD3,         VK_NUMPAD3,    FALSE, B_TYPE_VIRTKEY, "Numpad3"           },
-	{ B_KEY_NUMPAD4,         VK_NUMPAD4,    FALSE, B_TYPE_VIRTKEY, "Numpad4"           },
-	{ B_KEY_NUMPAD5,         VK_NUMPAD5,    FALSE, B_TYPE_VIRTKEY, "Numpad5"           },
-	{ B_KEY_NUMPAD6,         VK_NUMPAD6,    FALSE, B_TYPE_VIRTKEY, "Numpad6"           },
-	{ B_KEY_NUMPAD7,         VK_NUMPAD7,    FALSE, B_TYPE_VIRTKEY, "Numpad7"           },
-	{ B_KEY_NUMPAD8,         VK_NUMPAD8,    FALSE, B_TYPE_VIRTKEY, "Numpad8"           },
-	{ B_KEY_NUMPAD9,         VK_NUMPAD9,    FALSE, B_TYPE_VIRTKEY, "Numpad9"           },
-	{ B_KEY_NPMULT,          VK_MULTIPLY,   FALSE, B_TYPE_VIRTKEY, "NumpadMultiply"    },
-	{ B_KEY_NPADD,           VK_ADD,        FALSE, B_TYPE_VIRTKEY, "NumpadAdd"         },
-	{ B_KEY_NPSEP,           VK_SEPARATOR,  FALSE, B_TYPE_VIRTKEY, "NumpadSeparator"   },
-	{ B_KEY_NPSUB,           VK_SUBTRACT,   FALSE, B_TYPE_VIRTKEY, "NumpadSubtract"    },
-	{ B_KEY_NPDECIMAL,       VK_DECIMAL,    FALSE, B_TYPE_VIRTKEY, "NumpadDecimal"     },
-	{ B_KEY_NPDIV,           VK_DIVIDE,     FALSE, B_TYPE_VIRTKEY, "NumpadDivide"      },
+	{ B_KEY_NUMPAD0,         VK_NUMPAD0,    false, B_TYPE_VIRTKEY, "Numpad0"           },
+	{ B_KEY_NUMPAD1,         VK_NUMPAD1,    false, B_TYPE_VIRTKEY, "Numpad1"           },
+	{ B_KEY_NUMPAD2,         VK_NUMPAD2,    false, B_TYPE_VIRTKEY, "Numpad2"           },
+	{ B_KEY_NUMPAD3,         VK_NUMPAD3,    false, B_TYPE_VIRTKEY, "Numpad3"           },
+	{ B_KEY_NUMPAD4,         VK_NUMPAD4,    false, B_TYPE_VIRTKEY, "Numpad4"           },
+	{ B_KEY_NUMPAD5,         VK_NUMPAD5,    false, B_TYPE_VIRTKEY, "Numpad5"           },
+	{ B_KEY_NUMPAD6,         VK_NUMPAD6,    false, B_TYPE_VIRTKEY, "Numpad6"           },
+	{ B_KEY_NUMPAD7,         VK_NUMPAD7,    false, B_TYPE_VIRTKEY, "Numpad7"           },
+	{ B_KEY_NUMPAD8,         VK_NUMPAD8,    false, B_TYPE_VIRTKEY, "Numpad8"           },
+	{ B_KEY_NUMPAD9,         VK_NUMPAD9,    false, B_TYPE_VIRTKEY, "Numpad9"           },
+	{ B_KEY_NPMULT,          VK_MULTIPLY,   false, B_TYPE_VIRTKEY, "NumpadMultiply"    },
+	{ B_KEY_NPADD,           VK_ADD,        false, B_TYPE_VIRTKEY, "NumpadAdd"         },
+	{ B_KEY_NPSEP,           VK_SEPARATOR,  false, B_TYPE_VIRTKEY, "NumpadSeparator"   },
+	{ B_KEY_NPSUB,           VK_SUBTRACT,   false, B_TYPE_VIRTKEY, "NumpadSubtract"    },
+	{ B_KEY_NPDECIMAL,       VK_DECIMAL,    false, B_TYPE_VIRTKEY, "NumpadDecimal"     },
+	{ B_KEY_NPDIV,           VK_DIVIDE,     false, B_TYPE_VIRTKEY, "NumpadDivide"      },
 																					   
-	{ B_KEY_COLON,           VK_OEM_1,      FALSE, B_TYPE_VIRTKEY, "Colon"             },
-	{ B_KEY_PLUS,            VK_OEM_PLUS,   FALSE, B_TYPE_VIRTKEY, "Plus"              },
-	{ B_KEY_COMMA,           VK_OEM_COMMA,  FALSE, B_TYPE_VIRTKEY, "Comma"             },
-	{ B_KEY_MINUS,           VK_OEM_MINUS,  FALSE, B_TYPE_VIRTKEY, "Minus"             },
-	{ B_KEY_PERIOD,          VK_OEM_PERIOD, FALSE, B_TYPE_VIRTKEY, "Period"            },
-	{ B_KEY_FSLASH,          VK_OEM_2,      FALSE, B_TYPE_VIRTKEY, "ForwardSlash"      },
-	{ B_KEY_TILDE,           VK_OEM_3,      FALSE, B_TYPE_VIRTKEY, "Tilde"             },
+	{ B_KEY_COLON,           VK_OEM_1,      false, B_TYPE_VIRTKEY, "Colon"             },
+	{ B_KEY_PLUS,            VK_OEM_PLUS,   false, B_TYPE_VIRTKEY, "Plus"              },
+	{ B_KEY_COMMA,           VK_OEM_COMMA,  false, B_TYPE_VIRTKEY, "Comma"             },
+	{ B_KEY_MINUS,           VK_OEM_MINUS,  false, B_TYPE_VIRTKEY, "Minus"             },
+	{ B_KEY_PERIOD,          VK_OEM_PERIOD, false, B_TYPE_VIRTKEY, "Period"            },
+	{ B_KEY_FSLASH,          VK_OEM_2,      false, B_TYPE_VIRTKEY, "ForwardSlash"      },
+	{ B_KEY_TILDE,           VK_OEM_3,      false, B_TYPE_VIRTKEY, "Tilde"             },
 																					   
-	{ B_KEY_LBRACE,          VK_OEM_4,      FALSE, B_TYPE_VIRTKEY, "LeftBrace"         },
-	{ B_KEY_BSLASH,          VK_OEM_5,      FALSE, B_TYPE_VIRTKEY, "BackSlash"         },
-	{ B_KEY_RBRACE,          VK_OEM_6,      FALSE, B_TYPE_VIRTKEY, "RightBrace"        },
-	{ B_KEY_APOSTR,          VK_OEM_7,      FALSE, B_TYPE_VIRTKEY, "Apostrophe"        },
+	{ B_KEY_LBRACE,          VK_OEM_4,      false, B_TYPE_VIRTKEY, "LeftBrace"         },
+	{ B_KEY_BSLASH,          VK_OEM_5,      false, B_TYPE_VIRTKEY, "BackSlash"         },
+	{ B_KEY_RBRACE,          VK_OEM_6,      false, B_TYPE_VIRTKEY, "RightBrace"        },
+	{ B_KEY_APOSTR,          VK_OEM_7,      false, B_TYPE_VIRTKEY, "Apostrophe"        },
 
-	{ B_KEY_MOUSE_MBUTTON,   0x00,          FALSE, B_TYPE_MOUSEBT, "MouseMiddleButton" },
-	{ B_KEY_MOUSE_RBUTTON,   0x00,          FALSE, B_TYPE_MOUSEBT, "MouseRightButton"  },
+	{ B_KEY_MOUSE_MBUTTON,   0x00,          false, B_TYPE_MOUSEBT, "MouseMiddleButton" },
+	{ B_KEY_MOUSE_RBUTTON,   0x00,          false, B_TYPE_MOUSEBT, "MouseRightButton"  },
 
-	{ B_KEY_MOUSE_WHEELUP,   0x00,          FALSE, B_TYPE_GENERAL, "MouseWheelUp"      },
-	{ B_KEY_MOUSE_WHEELDOWN, 0x00,          FALSE, B_TYPE_GENERAL, "MouseWheelDown"    },
+	{ B_KEY_MOUSE_WHEELUP,   0x00,          false, B_TYPE_GENERAL, "MouseWheelUp"      },
+	{ B_KEY_MOUSE_WHEELDOWN, 0x00,          false, B_TYPE_GENERAL, "MouseWheelDown"    },
 };
 
 static bkey_t *GetKeyFromEntry(int nBkey) {
@@ -223,15 +223,15 @@ void InitializeDefaultBindings() {
 	}
 }
 
-static BOOL IsKeyAndActionValid(std::vector<baction_t> &targBindings, bkey_t *key_entry, const char *pDefAction, const char *pActionName) {
+static bool IsKeyAndActionValid(std::vector<baction_t> &targBindings, bkey_t *key_entry, const char *pDefAction, const char *pActionName) {
 	baction_t *prog_act = GetActionFromName(targBindings, pActionName);
 	if (prog_act) {
 		if (!prog_act->bImmutable) {
 			if (!prog_act->bMouseButtonOnly)
-				return TRUE;
+				return true;
 			else {
 				if (key_entry->iKeyType == B_TYPE_MOUSEBT)
-					return TRUE;
+					return true;
 			}
 		}
 		if (keybinds_debug & KEYBINDS_DEBUG_OTHER) {
@@ -240,8 +240,8 @@ static BOOL IsKeyAndActionValid(std::vector<baction_t> &targBindings, bkey_t *ke
 		}
 	}
 	else
-		return (strlen(pDefAction) > 0) ? TRUE : FALSE;
-	return FALSE;
+		return (strlen(pDefAction) > 0) ? true : false;
+	return false;
 }
 
 static void ShiftActionKeyArray(baction_t *prog_act) {
@@ -262,8 +262,8 @@ static void ShiftActionKeyArray(baction_t *prog_act) {
 	}
 }
 
-static BOOL CheckOrRemoveForAssignedKeyAndAction(std::vector<baction_t> &targBindings, bkey_t *key_entry, const char *pActionName) {
-	BOOL bModified = FALSE;
+static bool CheckOrRemoveForAssignedKeyAndAction(std::vector<baction_t> &targBindings, bkey_t *key_entry, const char *pActionName) {
+	bool bModified = false;
 
 	for (unsigned i = 0; i < targBindings.size(); i++) {
 		baction_t *prog_act = &targBindings[i];
@@ -280,7 +280,7 @@ static BOOL CheckOrRemoveForAssignedKeyAndAction(std::vector<baction_t> &targBin
 							}
 							prog_act->nDefVirtKeys[nKeyPos] = B_KEY_INVALID;
 							ShiftActionKeyArray(prog_act);
-							bModified = TRUE;
+							bModified = true;
 						}
 					}
 				}
@@ -291,11 +291,11 @@ static BOOL CheckOrRemoveForAssignedKeyAndAction(std::vector<baction_t> &targBin
 	return bModified;
 }
 
-static BOOL SetKeyToAction(std::vector<baction_t> &targBindings, bkey_t *key_entry, const char *pActionName) {
+static bool SetKeyToAction(std::vector<baction_t> &targBindings, bkey_t *key_entry, const char *pActionName) {
 	// With the following call it'll check to see whether there's a conflicting
 	// key <-> action case, or if the action is empty.. it'll remove that
 	// assignment from the key in question.
-	BOOL bRet = CheckOrRemoveForAssignedKeyAndAction(targBindings, key_entry, pActionName);
+	bool bRet = CheckOrRemoveForAssignedKeyAndAction(targBindings, key_entry, pActionName);
 
 	baction_t *prog_act = GetActionFromName(targBindings, pActionName);
 	int nKeyFreePos = -1;
@@ -317,7 +317,7 @@ static BOOL SetKeyToAction(std::vector<baction_t> &targBindings, bkey_t *key_ent
 			prog_act->nDefVirtKeys[nKeyFreePos] = key_entry->nBkey;
 			if (keybinds_debug & KEYBINDS_DEBUG_OTHER)
 				ConsoleLog(LOG_DEBUG, "Key '%s' set to action '%s' at key slot position %d\n", key_entry->pKeyName, prog_act->pActname, nKeyFreePos);
-			return TRUE;
+			return true;
 		}
 		else {
 			if (keybinds_debug & KEYBINDS_DEBUG_OTHER)
@@ -386,11 +386,11 @@ typedef struct {
 	int iItem;
 	bkey_t *pKey;
 	const char *pActionName;
-	BOOL bButtonOnly;
+	bool bButtonOnly;
 } keybindentry_t;
 
 typedef struct {
-	BOOL bKeyBindingsChanged;
+	bool bKeyBindingsChanged;
 } keybinds_t;
 
 void UpdateKeyBindings() {
@@ -423,12 +423,12 @@ void InitializeTempBindings() {
 	}
 }
 
-static BOOL ActionAvailableKeySlot(HWND hWndDlgListView, int iItem, const char *pActionName) {
+static bool ActionAvailableKeySlot(HWND hWndDlgListView, int iItem, const char *pActionName) {
 	int nKeySlots = 0;
 	char szTemp[64 + 1];
 
 	if (strlen(pActionName) <= 0)
-		return TRUE;
+		return true;
 
 	for (int i = 0; i < ListView_GetItemCount(hWndDlgListView); i++) {
 		memset(szTemp, 0, sizeof(szTemp));
@@ -438,7 +438,7 @@ static BOOL ActionAvailableKeySlot(HWND hWndDlgListView, int iItem, const char *
 				nKeySlots++;
 		}
 	}
-	return (nKeySlots >= MAX_BOUND_KEYS) ? FALSE : TRUE;
+	return (nKeySlots >= MAX_BOUND_KEYS) ? false : true;
 }
 
 static void UpdateTempKeyBindings(HWND hWndDlgListView) {
@@ -570,13 +570,13 @@ static void DoEditKeyBinding(keybinds_t *kbs, HWND hwndDlg, HWND hDlgListView, i
 	kbe.iItem = iItem;
 	kbe.pKey = prog_key;
 	kbe.pActionName = (prog_act) ? prog_act->pActname : "";
-	kbe.bButtonOnly = (prog_key->iKeyType == B_TYPE_MOUSEBT) ? TRUE : FALSE;
+	kbe.bButtonOnly = (prog_key->iKeyType == B_TYPE_MOUSEBT) ? true : false;
 
 	if (DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_EDITCONFIGENTRY), hwndDlg, EditKeyBindingDialogProc, (LPARAM)&kbe) == TRUE) {
 		if (_stricmp(pActionName, kbe.pActionName) != 0) {
 			ListView_SetItemText(hDlgListView, iItem, 1, (char *)kbe.pActionName);
 			if (!kbs->bKeyBindingsChanged)
-				kbs->bKeyBindingsChanged = TRUE;
+				kbs->bKeyBindingsChanged = true;
 		}
 	}
 }
@@ -606,7 +606,7 @@ static void InsertKeyBindingViewRow(HWND hDlgListView, int iRow, const char *pKe
 	ListView_SetItemText(hDlgListView, iRow, 1, (char *)pActionName);
 }
 
-static void PopulateKeyBindingList(HWND hDlgListView, BOOL bDefaults = FALSE) {
+static void PopulateKeyBindingList(HWND hDlgListView, bool bDefaults = false) {
 	int nIdx = 0;
 
 	ListView_DeleteAllItems(hDlgListView);
@@ -645,15 +645,15 @@ LRESULT CALLBACK NewListViewWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 				if (pKey && !pKey->bImmutable) {
 					ListView_SetItemText(hWnd, iRow, 1, (char *)"");
 
-					kbs->bKeyBindingsChanged = TRUE;
+					kbs->bKeyBindingsChanged = true;
 				}
 			}
 		}
 		else if (wParam == VK_F12) {
 			if (MessageBoxA(hWndParent, "WARNING: You are about to reset all key -> action binds back to their default state; are you quite sure that you want to proceed?", "Caution", MB_ICONEXCLAMATION | MB_YESNO) == IDYES) {
-				PopulateKeyBindingList(hWnd, TRUE);
+				PopulateKeyBindingList(hWnd, true);
 
-				kbs->bKeyBindingsChanged = TRUE;
+				kbs->bKeyBindingsChanged = true;
 			}
 		}
 		return FALSE;
@@ -750,12 +750,12 @@ BOOL DoConfigureKeyBindings(settings_t *st, HWND hwndDlg) {
 	BOOL bRet;
 
 	memset(&kbs, 0, sizeof(keybinds_t));
-	kbs.bKeyBindingsChanged = (st->bKeyBindingsChanged) ? TRUE : FALSE;
+	kbs.bKeyBindingsChanged = (st->bKeyBindingsChanged) ? true : false;
 
 	bRet = DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_CONFIGSECTION), hwndDlg, ConfKeyBindingsDialogProc, (LPARAM)&kbs);
 	if (bRet) {
 		if (kbs.bKeyBindingsChanged)
-			st->bKeyBindingsChanged = TRUE;
+			st->bKeyBindingsChanged = true;
 	}
 
 	return bRet;
@@ -949,7 +949,7 @@ static void DoBindAction_SC2K1996(int nAction, BOOL bRelease) {
 // where the bindaction will also need to be registered
 // in the "Release" (Up) handle for a finishing call.
 
-void GetKeyBinding_SC2K1996(int nBkey, BOOL bRelease, BOOL bGlobalPtSet) {
+void GetKeyBinding_SC2K1996(int nBkey, bool bRelease, bool bGlobalPtSet) {
 	if (IS_KEY_VALID(nBkey)) {
 		int nBindAction = GetBinding(nBkey);
 		if (IS_ACTION_VALID(nBindAction))
@@ -961,10 +961,10 @@ void GetKeyBinding_SC2K1996(int nBkey, BOOL bRelease, BOOL bGlobalPtSet) {
 // pass the POINT variable). The right-click SimcityView menu needs
 // gameViewPt to be set.
 
-void GetKeyButtonBinding_SC2K1996(int nBkey, BOOL bRelease, POINT *pt) {
+void GetKeyButtonBinding_SC2K1996(int nBkey, bool bRelease, POINT *pt) {
 	if (IS_KEY_VALID(nBkey)) {
 		gameViewPt.x = pt->x;
 		gameViewPt.y = pt->y;
-		GetKeyBinding_SC2K1996(nBkey, bRelease, TRUE);
+		GetKeyBinding_SC2K1996(nBkey, bRelease, true);
 	}
 }

@@ -131,7 +131,7 @@ enum {
 typedef struct {
 	int  nBkey;
 	UINT uVirtKey;
-	BOOL bImmutable;
+	bool bImmutable;
 	int iKeyType;
 	const char *pKeyName;
 } bkey_t;
@@ -139,8 +139,8 @@ typedef struct {
 typedef struct {
 	int nBaction;
 	int nDefVirtKeys[MAX_BOUND_KEYS];
-	BOOL bImmutable;
-	BOOL bMouseButtonOnly;
+	bool bImmutable;
+	bool bMouseButtonOnly;
 	const char *pActname;
 } baction_t;
 
@@ -151,5 +151,5 @@ void LoadJSONBindings(json::JSON& jsonSettings);
 void SaveJSONBindings(json::JSON& jsonSettings);
 void UpdateKeyBindings();
 void InitializeTempBindings();
-void GetKeyBinding_SC2K1996(int nBkey, BOOL bRelease, BOOL bGlobalPtSet = FALSE);
-void GetKeyButtonBinding_SC2K1996(int nBkey, BOOL bRelease, POINT *pt);
+void GetKeyBinding_SC2K1996(int nBkey, bool bRelease, bool bGlobalPtSet = false);
+void GetKeyButtonBinding_SC2K1996(int nBkey, bool bRelease, POINT *pt);

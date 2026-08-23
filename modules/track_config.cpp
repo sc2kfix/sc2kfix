@@ -19,14 +19,14 @@
 #define SONGID_STR_LEN 16
 
 typedef struct {
-	BOOL bMP3;
+	bool bMP3;
 	int iSongID;
 	char szTrackEntry[MAX_PATH + 1];
 } trackentry_t;
 
 typedef struct {
-	BOOL bMP3;
-	BOOL bActiveTrackTouched;
+	bool bMP3;
+	bool bActiveTrackTouched;
 	int iActiveTrack;
 	char szMusicTracks[MUSIC_TRACKS][MAX_PATH + 1];
 } conftracks_t;
@@ -127,7 +127,7 @@ static void DoEditMusicTrack(conftracks_t *cft, HWND hwndDlg, HWND hDlgListView,
 
 			if (!cft->bActiveTrackTouched) {
 				if (te.iSongID == cft->iActiveTrack)
-					cft->bActiveTrackTouched = TRUE;
+					cft->bActiveTrackTouched = true;
 			}
 		}
 	}
@@ -242,7 +242,7 @@ BOOL DoConfigureMusicTracks(settings_t *st, HWND hwndDlg, BOOL bMP3) {
 
 	memset(&cft, 0, sizeof(conftracks_t));
 	cft.bMP3 = bMP3;
-	cft.bActiveTrackTouched = FALSE;
+	cft.bActiveTrackTouched = false;
 	cft.iActiveTrack = GetCurrentActiveSongID();
 	for (int i = 0; i < MUSIC_TRACKS; i++) {
 		strMusicTrack = (bMP3) ? jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_MUSMP3][std::to_string(i + 10000)].ToString() : jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_MUSMID][std::to_string(i + 10000)].ToString();
@@ -260,19 +260,19 @@ BOOL DoConfigureMusicTracks(settings_t *st, HWND hwndDlg, BOOL bMP3) {
 
 		if (!st->bActiveTrackChanged) {
 			if (cft.bActiveTrackTouched)
-				st->bActiveTrackChanged = TRUE;
+				st->bActiveTrackChanged = true;
 		}
 
 		if (!st->bActiveMusicDriverTouched) {
 			if (st->strMusicDriver != "none") {
 				if (bMP3) {
 					if (st->strMusicDriver == "mp3")
-						st->bActiveMusicDriverTouched = TRUE;
+						st->bActiveMusicDriverTouched = true;
 				}
 				else {
 					if (st->strMusicDriver == "sequencer" ||
 						st->strMusicDriver == "fluidsynth")
-						st->bActiveMusicDriverTouched = TRUE;
+						st->bActiveMusicDriverTouched = true;
 				}
 			}
 		}

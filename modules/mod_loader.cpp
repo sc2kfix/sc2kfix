@@ -23,7 +23,7 @@
 #define REGISTER_HOOK(name) \
 	if (!strcmp(stModInfo->stHooks[i].szHookName, # name)) { \
 		stHooks_ ## name.push_back(stHookFn); \
-		bHookRegistered = TRUE; \
+		bHookRegistered = true; \
 	}
 #define SORT_HOOKS(name) std::sort(stHooks_ ## name.begin(), stHooks_ ## name.end());
 
@@ -41,12 +41,12 @@ int LoadNativeCodeHooks(HMODULE hModule) {
 	// Read the hook list and iterate through it
 	sc2kfix_mod_info_t* stModInfo = &mapLoadedNativeMods[hModule];
 	for (int i = 0; i < stModInfo->iHookCount; i++) {
-		BOOL bHookRegistered = FALSE;
+		bool bHookRegistered = false;
 		hook_function_t stHookFn;
 		stHookFn.iPriority = stModInfo->stHooks[i].iHookPriority;
 		stHookFn.iType = HOOKFN_TYPE_NATIVE;
 		stHookFn.pFunction = (void*)GetProcAddress(hModule, stModInfo->stHooks[i].szHookName);
-		stHookFn.bEnabled = TRUE;
+		stHookFn.bEnabled = true;
 		if (!stHookFn.pFunction) {
 			ConsoleLog(LOG_WARNING, "MODS: Couldn't load hook %s from native code mod %s.\n", stModInfo->stHooks[i].szHookName, mapLoadedNativeMods[hModule].szModShortName);
 			continue;

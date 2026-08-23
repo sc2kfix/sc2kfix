@@ -1593,8 +1593,8 @@ static bool GetRunwayTilePositionalOffset(mapcoord_t x, mapcoord_t y, int16_t iZ
 	return true;
 }
 
-static bool ShouldRunwayTileFlip(bool bMoveY) {
-	if (!bMoveY) {
+static bool ShouldRunwayTileFlip(mapcoord_t iMoveY) {
+	if (!iMoveY) {
 		if (!IsEven(wViewRotation))
 			return true;
 		return false;
