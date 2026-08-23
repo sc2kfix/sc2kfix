@@ -16,6 +16,24 @@
 
 typedef int16_t mapcoord_t;
 
+// Note: The main global arrays are currently present in sc2k_1996.cpp.
+//       They can likely be moved to a more generic area, however since
+//       that's the primary target we work with (WinSCURK aside) it
+//       seemed to be the most reasonable placement.
+
+extern __int16 wRotateCoordShiftX[VIEWROTATION_COUNT];
+extern __int16 wRotateCoordShiftY[VIEWROTATION_COUNT];
+
+extern __int16 wCornerStartBottomLeft[VIEWROTATION_COUNT];
+extern __int16 wCornerStartBottomRight[VIEWROTATION_COUNT];
+extern __int16 wCornerStartTopLeft[VIEWROTATION_COUNT];
+extern __int16 wCornerStartTopRight[VIEWROTATION_COUNT];
+
+extern coords_w_t cornerCoords[VIEWROTATION_COUNT];
+extern coords_w_t directionalSteps[VIEWROTATION_COUNT];
+extern __int16 advanceX[VIEWROTATION_COUNT];
+extern __int16 advanceY[VIEWROTATION_COUNT];
+
 NEWENGINE void Simulation_DoGrowthTick(int iStep, int iSubStep);
 NEWENGINE bool Simulation_GrowSpecificZone(mapcoord_t iX, mapcoord_t iY, uint32_t iTileID, int16_t iZoneType);
 NEWENGINE int Simulation_RunTripGenerator(mapcoord_t x, mapcoord_t y, int16_t nZoneType, int nBuildingPopLevel, int nTripMaxSteps);

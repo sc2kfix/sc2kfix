@@ -1,10 +1,94 @@
 // sc2kfix modules/sc2k_1996.cpp: variables specific to the 1996 Special Edition version
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 // DO NOT USE THIS IN ANY OTHER FILE. I MEAN IT.
 #define GAMEOFF_IMPL
 
 #include <sc2kfix.h>
+
+//// Active local use-case: Civilian Piers
+
+// Corresponds to the original wSomePierLengthWays
+__int16 wRotateCoordShiftX[VIEWROTATION_COUNT] = {
+	0,
+	1,
+	0,
+	-1
+};
+
+// Corresponds to the original wSomePierDepthWays
+__int16 wRotateCoordShiftY[VIEWROTATION_COUNT] = {
+	1,
+	0,
+	-1,
+	0
+};
+
+//// Active local use-case: Item Placement > 1x1 corner checks
+
+// Corresponds to the original wTileAreaBottomLeftCorner
+__int16 wCornerStartBottomLeft[VIEWROTATION_COUNT] = {
+	CORNER_BLEFT,
+	CORNER_BRIGHT,
+	CORNER_TLEFT,
+	CORNER_TRIGHT
+};
+
+// Corresponds to the original wTileAreaBottomRightCorner
+__int16 wCornerStartBottomRight[VIEWROTATION_COUNT] = {
+	CORNER_BRIGHT,
+	CORNER_TLEFT,
+	CORNER_TRIGHT,
+	CORNER_BLEFT
+};
+
+// Corresponds to the original wTileAreaTopLeftCorner
+__int16 wCornerStartTopLeft[VIEWROTATION_COUNT] = {
+	CORNER_TLEFT,
+	CORNER_TRIGHT,
+	CORNER_BLEFT,
+	CORNER_BRIGHT
+};
+
+// Corresponds to the original wTileAreaTopRightCorner
+__int16 wCornerStartTopRight[VIEWROTATION_COUNT] = {
+	CORNER_TRIGHT,
+	CORNER_BLEFT,
+	CORNER_BRIGHT,
+	CORNER_TLEFT
+};
+
+//// Active local use-case: corner coords, directional stap and area advancement for the Naval Yard
+
+coords_w_t cornerCoords[VIEWROTATION_COUNT] = {
+	{ MAP_EDGE_MAX, MAP_EDGE_MIN },
+	{ MAP_EDGE_MIN, MAP_EDGE_MIN },
+	{ MAP_EDGE_MIN, MAP_EDGE_MAX },
+	{ MAP_EDGE_MAX, MAP_EDGE_MAX }
+};
+
+coords_w_t directionalSteps[VIEWROTATION_COUNT] = {
+	{ -1,  0  },
+	{  0,  1  },
+	{  1,  0  },
+	{  0, -1  }
+};
+
+__int16 advanceX[VIEWROTATION_COUNT] = {
+	-1,
+	0,
+	1,
+	0
+};
+
+__int16 advanceY[VIEWROTATION_COUNT] = {
+	0,
+	1,
+	0,
+	-1
+};
+
+//// Value to name helper calls and arrays.
 
 const char *getXTERNames(BYTE iVal) {
 	if (iVal == TERRAIN_00)

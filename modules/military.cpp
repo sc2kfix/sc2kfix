@@ -35,28 +35,6 @@
 
 UINT military_debug = MILITARY_DEBUG;
 
-static coords_w_t cornerCoords[VIEWROTATION_COUNT] = {
-	{ MAP_EDGE_MAX, MAP_EDGE_MIN },
-	{ MAP_EDGE_MIN, MAP_EDGE_MIN },
-	{ MAP_EDGE_MIN, MAP_EDGE_MAX },
-	{ MAP_EDGE_MAX, MAP_EDGE_MAX }
-};
-
-static coords_w_t directionalSteps[VIEWROTATION_COUNT] = {
-	{ -1,  0  },
-	{  0,  1  },
-	{  1,  0  },
-	{  0, -1  }
-};
-
-static __int16 advanceX[VIEWROTATION_COUNT] = {
-	-1, 0, 1, 0
-};
-
-static __int16 advanceY[VIEWROTATION_COUNT] = {
-	0, 1, 0, -1
-};
-
 static void SetNewCoords(coords_w_t *pCoords, __int16 x, __int16 y) {
 	pCoords->x = x;
 	pCoords->y = y;
