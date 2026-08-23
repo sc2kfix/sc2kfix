@@ -235,9 +235,9 @@ BOOL CALLBACK ConfMusicTracksDialogProc(HWND hwndDlg, UINT message, WPARAM wPara
 	return FALSE;
 }
 
-BOOL DoConfigureMusicTracks(settings_t *st, HWND hwndDlg, BOOL bMP3) {
+bool DoConfigureMusicTracks(settings_t *st, HWND hwndDlg, bool bMP3) {
 	conftracks_t cft;
-	BOOL bRet;
+	bool bRet;
 	std::string strMusicTrack;
 
 	memset(&cft, 0, sizeof(conftracks_t));
@@ -249,8 +249,8 @@ BOOL DoConfigureMusicTracks(settings_t *st, HWND hwndDlg, BOOL bMP3) {
 		strcpy_s(cft.szMusicTracks[i], MAX_PATH, strMusicTrack.c_str());
 	}
 
-	bRet = DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_CONFIGSECTION), hwndDlg, ConfMusicTracksDialogProc, (LPARAM)&cft);
-	if (bRet == TRUE) {
+	bRet = DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_CONFIGSECTION), hwndDlg, ConfMusicTracksDialogProc, (LPARAM)&cft) ? true : false;
+	if (bRet == true) {
 		for (int i = 0; i < MUSIC_TRACKS; i++) {
 			if (bMP3)
 				jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_MUSMP3][std::to_string(i + 10000)] = cft.szMusicTracks[i];

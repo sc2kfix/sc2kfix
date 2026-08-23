@@ -745,14 +745,14 @@ BOOL CALLBACK ConfKeyBindingsDialogProc(HWND hwndDlg, UINT message, WPARAM wPara
 	return FALSE;
 }
 
-BOOL DoConfigureKeyBindings(settings_t *st, HWND hwndDlg) {
+bool DoConfigureKeyBindings(settings_t *st, HWND hwndDlg) {
 	keybinds_t kbs;
-	BOOL bRet;
+	bool bRet;
 
 	memset(&kbs, 0, sizeof(keybinds_t));
 	kbs.bKeyBindingsChanged = (st->bKeyBindingsChanged) ? true : false;
 
-	bRet = DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_CONFIGSECTION), hwndDlg, ConfKeyBindingsDialogProc, (LPARAM)&kbs);
+	bRet = DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_CONFIGSECTION), hwndDlg, ConfKeyBindingsDialogProc, (LPARAM)&kbs) ? true : false;
 	if (bRet) {
 		if (kbs.bKeyBindingsChanged)
 			st->bKeyBindingsChanged = true;
