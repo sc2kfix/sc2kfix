@@ -67,7 +67,7 @@ int LoadNativeCodeHooks(HMODULE hModule) {
 		REGISTER_HOOK(Hook_ScenarioSuccessCheck);
 		REGISTER_HOOK(Hook_SimCalendarDay23_After);
 		REGISTER_HOOK(Hook_SimCalendarAdvance_After);
-		REGISTER_HOOK(Hook_SimulationGrowSpecificZone_Success);
+		REGISTER_HOOK(Simulation_GrowSpecificZone_Success);
 
 		if (!bHookRegistered) {
 			ConsoleLog(LOG_WARNING, "MODS: Native code mod %s presented invalid hook %s; skipping.\n", mapLoadedNativeMods[hModule].szModShortName, stModInfo->stHooks[i].szHookName);
@@ -104,7 +104,7 @@ void SortHookLists(void) {
 	SORT_HOOKS(Hook_ScenarioSuccessCheck);
 	SORT_HOOKS(Hook_SimCalendarDay23_After);
 	SORT_HOOKS(Hook_SimCalendarAdvance_After);
-	SORT_HOOKS(Hook_SimulationGrowSpecificZone_Success);
+	SORT_HOOKS(Simulation_GrowSpecificZone_Success);
 
 	if (modloader_debug & MODLOADER_DEBUG_HOOKS)
 		ConsoleLog(LOG_DEBUG, "MODS: Sorted all hooks.\n");

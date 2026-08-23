@@ -1,6 +1,9 @@
 // sc2kfix hooks/hook_tilegrowthorplacement.cpp: tile placement and growth handling
 // (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
+// NOTE 2026-08-23 (araxestroy): This is rapidly becoming a large chunk of the simulation engine
+// and needs to be split out a bit before it turns into another hook_sc2k1996_miscellaneous.cpp.
+
 #undef UNICODE
 #include <windows.h>
 #include <stdio.h>
@@ -109,16 +112,16 @@ CPoint dwTripStartingCoords[24] = {
 	{ -1, -2 }
 };
 
-int IsValidTransitItems(int x, int y) {
+static int IsValidTransitItems(mapcoord_t x, mapcoord_t y) {
 	for (int i = 0; i < 24; i++) {
-		int newX = x + dwTripStartingCoords[i].x;
-		int newY = y + dwTripStartingCoords[i].y;
+		mapcoord_t newX = x + (mapcoord_t)dwTripStartingCoords[i].x;
+		mapcoord_t newY = y + (mapcoord_t)dwTripStartingCoords[i].y;
 
 		if ((newX < MAP_EDGE_MIN || newX > MAP_EDGE_MAX) ||
 			(newY < MAP_EDGE_MIN || newY > MAP_EDGE_MAX))
 			continue;
 
-		int iTileID = GetTileID(newX, newY);
+		uint32_t iTileID = GetTileID(newX, newY);
 
 		if (iTileID >= TILE_ROAD_LR && iTileID < TILE_RAIL_LR)
 			return 1;
@@ -153,20 +156,20 @@ static CPoint* dwTripStartingCoords = (CPoint*)0x4C92C0;
 
 // TODO: get these cleaned up and moved into sc2k_1996.h
 
-__int16 wTripX[] = { 0, 1, 0, -1 };
-__int16 wTripY[] = { -1, 0, 1, 0 };
-__int16& FTop = *(__int16*)0x4CA424;
-__int16& FBot = *(__int16*)0x4CC908;
+mapcoord_t wTripX[] = { 0, 1, 0, -1 };
+mapcoord_t wTripY[] = { -1, 0, 1, 0 };
+int16_t& FTop = *(int16_t*)0x4CA424;
+int16_t& FBot = *(int16_t*)0x4CC908;
 WORD* wArrZoneDestinations = (WORD*)0x4E8570;
 BYTE* byte_4E858C = (BYTE*)0x4E858C;
 
 #pragma pack(push, 1)
 typedef struct {
-	__int16 iCurrentTransitType;
-	__int16 iIterationCount;
-	__int16 iDunno1;
-	__int16 iMaybeDirection;
-	__int16 iDunno2;
+	int16_t iCurrentTransitType;
+	int16_t iIterationCount;
+	int16_t iDunno1;
+	int16_t iMaybeDirection;
+	int16_t iDunno2;
 	WORD wDunno3;
 	DWORD bTripCompleted;
 	CMFC3XPoint ptTripNextLocation;
@@ -181,16 +184,16 @@ static int iTotalTripCount = 0;
 
 // This is REALLY rough and has only had enough cleanup to make sense in my head so it probably
 // won't make much sense to anyone else yet.
-int __cdecl L_RunTripGenerator(__int16 x, __int16 y, __int16 nZoneType, __int16 nBuildingPopLevel, __int16 nTripMaxSteps) {
-	unsigned __int16 iTileID;
-	__int16 iTripCurrentSteps;
+NEWENGINE int Simulation_RunTripGenerator(mapcoord_t x, mapcoord_t y, int16_t nZoneType, int nBuildingPopLevel, int nTripMaxSteps) {
+	uint32_t iTileID;
+	int16_t iTripCurrentSteps;
 	int v9;
-	__int16 var_61A;
-	__int16 n15_1;
+	int16_t var_61A;
+	int16_t n15_1;
 	BOOL bUsedRail = FALSE;
 	BOOL bUsedSubway = FALSE;
 	BOOL bUsedBus = FALSE;
-	unsigned __int16 iTransitType;
+	int16_t iTransitType;
 
 	map_mini_half_t* bXTRFData;
 	unsigned int iBuffer = 0;
@@ -720,10 +723,9 @@ LABEL_236:
 	return stTripData.bTripCompleted;
 }
 
-static void GetItemPlacementAreaAndFarPosition(__int16 m_x, __int16 m_y, __int16 iTileArea, __int16 *outX, __int16 *outY, __int16 *outFarX, __int16 *outFarY, __int16 *outArea) {
-	__int16 x;
-	__int16 y;
-	__int16 iArea;
+static void GetItemPlacementAreaAndFarPosition(mapcoord_t m_x, mapcoord_t m_y, int16_t iTileArea, mapcoord_t* outX, mapcoord_t* outY, mapcoord_t* outFarX, mapcoord_t* outFarY, int16_t* outArea) {
+	mapcoord_t x, y;
+	int16_t iArea;
 
 	x = m_x;
 	y = m_y;
@@ -741,11 +743,10 @@ static void GetItemPlacementAreaAndFarPosition(__int16 m_x, __int16 m_y, __int16
 	*outArea = iArea;
 }
 
-static int IsValidGeneralPosPlacementMain(__int16 x, __int16 y, __int16 iFarX, __int16 iFarY, __int16 iArea, BYTE iTileID, BOOL bDoSilo, BOOL bSiloPlotCheck, __int16 *outMarinaWaterTileCount) {
-	__int16 iCurX;
-	__int16 iCurY;
-	__int16 iMarinaWaterTileCount;
-	BOOL bCanBeMarinaTile;
+static bool IsValidGeneralPosPlacementMain(mapcoord_t x, mapcoord_t y, mapcoord_t iFarX, mapcoord_t iFarY, int16_t iArea, BYTE iTileID, bool bDoSilo, bool bSiloPlotCheck, int16_t* outMarinaWaterTileCount) {
+	mapcoord_t iCurX, iCurY;
+	int16_t iMarinaWaterTileCount;
+	bool bCanBeMarinaTile;
 	BYTE iCurTile;
 
 	iMarinaWaterTileCount = 0;
@@ -755,7 +756,7 @@ static int IsValidGeneralPosPlacementMain(__int16 x, __int16 y, __int16 iFarX, _
 			// tiles are equal to or exceed GAME_MAP_SIZE.. definitely abort.
 			if (iArea <= 0) {
 				if (iCurX < MAP_EDGE_MIN || iCurY < MAP_EDGE_MIN || iCurX > MAP_EDGE_MAX || iCurY > MAP_EDGE_MAX)
-					return 0;
+					return false;
 			}
 			else if (iCurX < ABSOLUTE_MIN_EDGE || iCurY < ABSOLUTE_MIN_EDGE || iCurX > ABSOLUTE_MAX_EDGE || iCurY > ABSOLUTE_MAX_EDGE) {
 				// Added this due to legacy military plot drops,
@@ -763,25 +764,25 @@ static int IsValidGeneralPosPlacementMain(__int16 x, __int16 y, __int16 iFarX, _
 				// if the plot is on the edge of the map.
 				if (!bDoSilo) {
 					if (XZONReturnZone(iCurX, iCurY) == ZONE_MILITARY && (iCurX < MAP_EDGE_MIN || iCurY < MAP_EDGE_MIN || iCurX > MAP_EDGE_MAX || iCurY > MAP_EDGE_MAX))
-						return 0;
+						return false;
 					else
-						return 0;
+						return false;
 				}
 				else
-					return 0;
+					return false;
 			}
 
 			// If the current tile has the referenced
 			// item.
 			iCurTile = GetTileID(iCurX, iCurY);
 			if (iCurTile >= TILE_ROAD_LR)
-				return 0;
+				return false;
 
 			if (iCurTile == TILE_RADIOACTIVITY)
-				return 0;
+				return false;
 
 			if (iCurTile == TILE_SMALLPARK)
-				return 0;
+				return false;
 
 			// !bDoSilo case:
 			// Originally in the Win95 version this check
@@ -805,22 +806,22 @@ static int IsValidGeneralPosPlacementMain(__int16 x, __int16 y, __int16 iFarX, _
 					if (TILE_IS_MILITARY(iCurTile) ||
 						iCurTile == TILE_ROAD_LR ||
 						iCurTile == TILE_ROAD_TB)
-						return 0;
+						return false;
 				}
 			}
 			else {
 				if (bSiloPlotCheck) {
 					if (XZONReturnZone(iCurX, iCurY) != ZONE_NONE)
-						return 0;
+						return false;
 				}
 				else {
 					if (XZONReturnZone(iCurX, iCurY) != ZONE_MILITARY)
-						return 0;
+						return false;
 					else {
 						if (TILE_IS_MILITARY(iCurTile) ||
 							iCurTile == TILE_ROAD_LR ||
 							iCurTile == TILE_ROAD_TB)
-							return 0;
+							return false;
 					}
 				}
 			}
@@ -828,11 +829,11 @@ static int IsValidGeneralPosPlacementMain(__int16 x, __int16 y, __int16 iFarX, _
 			// Marina being an exception, this 'if' block
 			// checks to see whether the prospective area
 			// is suitable for placement.
-			bCanBeMarinaTile = FALSE;
+			bCanBeMarinaTile = false;
 			if (iTileID == TILE_INFRASTRUCTURE_MARINA) {
 				if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE && XBITReturnIsWater(iCurX, iCurY)) {
 					++iMarinaWaterTileCount;
-					bCanBeMarinaTile = TRUE;
+					bCanBeMarinaTile = true;
 				}
 			}
 
@@ -843,49 +844,44 @@ static int IsValidGeneralPosPlacementMain(__int16 x, __int16 y, __int16 iFarX, _
 			// would negate that entirely.
 			if (!bCanBeMarinaTile) {
 				if (GetTerrainTileID(iCurX, iCurY))
-					return 0;
+					return false;
 
 				if (bDoSilo) {
 					if (GetUndergroundTileID(iCurX, iCurY))
-						return 0;
+						return false;
 				}
 
 				if (iCurX < GAME_MAP_SIZE && iCurY < GAME_MAP_SIZE && XBITReturnIsWater(iCurX, iCurY))
-					return 0;
+					return false;
 			}
 		}
 	}
 
 	*outMarinaWaterTileCount = iMarinaWaterTileCount;
-	return 1;
+	return true;
 }
 
-int IsValidSiloPosCheck(__int16 m_x, __int16 m_y) {
-	__int16 x;
-	__int16 y;
-	__int16 iArea;
-	__int16 iFarX;
-	__int16 iFarY;
-	__int16 iDummy;
+int IsValidSiloPosCheck(mapcoord_t m_x, mapcoord_t m_y) {
+	mapcoord_t x, y;
+	mapcoord_t iFarX, iFarY;
+	int16_t iArea;
+	int16_t iDummy;
 
 	GetItemPlacementAreaAndFarPosition(m_x, m_y, AREA_3x3, &x, &y, &iFarX, &iFarY, &iArea);
 
-	return IsValidGeneralPosPlacementMain(x, y, iFarX, iFarY, iArea, TILE_MILITARY_MISSILESILO, TRUE, TRUE, &iDummy);
+	return IsValidGeneralPosPlacementMain(x, y, iFarX, iFarY, iArea, TILE_MILITARY_MISSILESILO, true, true, &iDummy);
 }
 
-static int IsValidGeneralPosPlacement(__int16 x, __int16 y, __int16 iFarX, __int16 iFarY, __int16 iArea, BYTE iTileID, BOOL bDoSilo, __int16 *outMarinaWaterTileCount) {
-	return IsValidGeneralPosPlacementMain(x, y, iFarX, iFarY, iArea, iTileID, bDoSilo, FALSE, outMarinaWaterTileCount);
+static int IsValidGeneralPosPlacement(mapcoord_t x, mapcoord_t y, mapcoord_t iFarX, mapcoord_t iFarY, int16_t iArea, BYTE iTileID, bool bDoSilo, int16_t* outMarinaWaterTileCount) {
+	return IsValidGeneralPosPlacementMain(x, y, iFarX, iFarY, iArea, iTileID, bDoSilo, false, outMarinaWaterTileCount);
 }
 
-static int L_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iTileID, __int16 iTileArea, BOOL bDoSilo) {
-	__int16 x;
-	__int16 y;
-	__int16 iArea;
-	__int16 iFarX;
-	__int16 iFarY;
-	__int16 iMarinaWaterTileCount;
-	__int16 iCurX;
-	__int16 iCurY;
+int L_ItemPlacementCheck(mapcoord_t m_x, mapcoord_t m_y, BYTE iTileID, int16_t iTileArea, bool bDoSilo) {
+	mapcoord_t x, y;
+	mapcoord_t iCurX, iCurY;
+	mapcoord_t iFarX, iFarY;
+	int16_t iArea;
+	int16_t iMarinaWaterTileCount;
 	BYTE iTileBitMask;
 	BYTE bTextOverlay;
 
@@ -960,7 +956,7 @@ static int L_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iTileID, __int16 
 	}
 }
 
-static BOOL IsTileThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, unsigned uComparator, DWORD nDiv, DWORD nMult) {
+static bool IsTileThresholdReached(BYTE iTileID, DWORD nTarget, bool bMilitary, unsigned uComparator, DWORD nDiv, DWORD nMult) {
 	WORD wTileIDCount;
 	DWORD nCount;
 
@@ -1008,42 +1004,42 @@ static BOOL IsTileThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, 
 //
 // IsTileNormalThresholdReached() - Use this one to check the direct iTileID count against the target.
 
-static BOOL IsTileMultipliedThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, unsigned uComparator, DWORD nMult) {
+static bool IsTileMultipliedThresholdReached(BYTE iTileID, DWORD nTarget, bool bMilitary, unsigned uComparator, DWORD nMult) {
 	return IsTileThresholdReached(iTileID, nTarget, bMilitary, uComparator, 1, nMult);
 }
 
-static BOOL IsTileDividedThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, unsigned uComparator, DWORD nDiv) {
+static bool IsTileDividedThresholdReached(BYTE iTileID, DWORD nTarget, bool bMilitary, unsigned uComparator, DWORD nDiv) {
 	return IsTileThresholdReached(iTileID, nTarget, bMilitary, uComparator, nDiv, 1);
 }
 
-static BOOL IsTileNormalThresholdReached(BYTE iTileID, DWORD nTarget, BOOL bMilitary, unsigned uComparator) {
+static bool IsTileNormalThresholdReached(BYTE iTileID, DWORD nTarget, bool bMilitary, unsigned uComparator) {
 	return IsTileThresholdReached(iTileID, nTarget, bMilitary, uComparator, 1, 1);
 }
 
-static void DoArmyBaseGrowth(__int16 iX, __int16 iY, __int16 iCurrZoneType) {
+static void Simulation_DoArmyBaseGrowth(mapcoord_t iX, mapcoord_t iY, int16_t iCurrZoneType) {
 	BYTE iFirstCheckedTileID, iSelectedTileID;
 	WORD wFlaggedTileCount;
 
 	if ((rand() & 3) == 0) {
-		wFlaggedTileCount = GetFlaggedTileCount(TILE_MILITARY_PARKINGLOT, TRUE) / GetTileArea(AREA_2x2);
+		wFlaggedTileCount = GetFlaggedTileCount(TILE_MILITARY_PARKINGLOT, true) / GetTileArea(AREA_2x2);
 		iSelectedTileID = TILE_MILITARY_PARKINGLOT;
 		iFirstCheckedTileID = TILE_MILITARY_TOPSECRET;
-		if (IsTileDividedThresholdReached(iFirstCheckedTileID, wFlaggedTileCount, TRUE, CMP_LESSTHAN, GetTileArea(AREA_2x2))) {
+		if (IsTileDividedThresholdReached(iFirstCheckedTileID, wFlaggedTileCount, true, CMP_LESSTHAN, GetTileArea(AREA_2x2))) {
 			iSelectedTileID = TILE_MILITARY_HANGAR1;
-			if (IsTileDividedThresholdReached(iSelectedTileID, wFlaggedTileCount, TRUE, CMP_GREATERTHAN, 8))
+			if (IsTileDividedThresholdReached(iSelectedTileID, wFlaggedTileCount, true, CMP_GREATERTHAN, 8))
 				iSelectedTileID = iFirstCheckedTileID;
 		}
-		if (!Game_SimulationGrowSpecificZone(iX, iY, iSelectedTileID, iCurrZoneType))
-			Game_SimulationGrowSpecificZone(iX, iY, TILE_MILITARY_HANGAR1, iCurrZoneType);
+		if (!Simulation_GrowSpecificZone(iX, iY, iSelectedTileID, iCurrZoneType))
+			Simulation_GrowSpecificZone(iX, iY, TILE_MILITARY_HANGAR1, iCurrZoneType);
 	}
 }
 
-static void DoAirPortGrowth(__int16 iX, __int16 iY, BYTE iCurrentTileID, __int16 iCurrZoneType) {
-	BOOL bMilitary, bTakeOffNorthSouth;
+static void Simulation_DoAirportGrowth(mapcoord_t iX, mapcoord_t iY, BYTE iCurrentTileID, int16_t iCurrZoneType) {
+	bool bMilitary, bTakeOffNorthSouth;
 	BYTE iFirstCheckedTileID, iSelectedTileID;
 	WORD wFlaggedTileCount;
 
-	bMilitary = (iCurrZoneType == ZONE_MILITARY) ? TRUE : FALSE;
+	bMilitary = (iCurrZoneType == ZONE_MILITARY) ? true : false;
 
 	if ((rand() & 3) != 0) {
 		// This section is for handling the spawning of aeroplanes and helicopters.
@@ -1055,14 +1051,14 @@ static void DoAirPortGrowth(__int16 iX, __int16 iY, BYTE iCurrentTileID, __int16
 						Game_SpawnHelicopter(iX, iY);
 						return;
 					}
-					bTakeOffNorthSouth = FALSE;
+					bTakeOffNorthSouth = false;
 					if (!IsEven(wViewRotation)) {
 						if (XBITReturnIsFlipped(iX, iY))
-							bTakeOffNorthSouth = TRUE;
+							bTakeOffNorthSouth = true;
 					}
 					else {
 						if (!XBITReturnIsFlipped(iX, iY))
-							bTakeOffNorthSouth = TRUE;
+							bTakeOffNorthSouth = true;
 					}
 					Game_SpawnAeroplane(iX, iY, (bTakeOffNorthSouth) ? XTHG_DIRECTION_NORTH : XTHG_DIRECTION_EAST);
 				}
@@ -1094,16 +1090,16 @@ static void DoAirPortGrowth(__int16 iX, __int16 iY, BYTE iCurrentTileID, __int16
 				}	
 			}
 		}
-		Game_SimulationGrowSpecificZone(iX, iY, iSelectedTileID, iCurrZoneType);
+		Simulation_GrowSpecificZone(iX, iY, iSelectedTileID, iCurrZoneType);
 	}
 }
 
-static void DoSeaPortGrowth(__int16 iX, __int16 iY, BYTE iCurrentTileID, __int16 iCurrZoneType) {
-	BOOL bMilitary;
+static void Simulation_DoSeaportGrowth(mapcoord_t iX, mapcoord_t iY, BYTE iCurrentTileID, int16_t iCurrZoneType) {
+	bool bMilitary;
 	BYTE iFirstCheckedTileID, iSelectedTileID;
 	WORD wFlaggedTileCount;
 
-	bMilitary = (iCurrZoneType == ZONE_MILITARY) ? TRUE : FALSE;
+	bMilitary = (iCurrZoneType == ZONE_MILITARY) ? true : false;
 
 	if ((rand() & 3) != 0) {
 		// This section is for handling the spawning of ships.
@@ -1125,17 +1121,17 @@ static void DoSeaPortGrowth(__int16 iX, __int16 iY, BYTE iCurrentTileID, __int16
 					iSelectedTileID = iFirstCheckedTileID;
 			}
 		}
-		if (!Game_SimulationGrowSpecificZone(iX, iY, iSelectedTileID, iCurrZoneType))
-			Game_SimulationGrowSpecificZone(iX, iY, TILE_MILITARY_WAREHOUSE, iCurrZoneType);
+		if (!Simulation_GrowSpecificZone(iX, iY, iSelectedTileID, iCurrZoneType))
+			Simulation_GrowSpecificZone(iX, iY, TILE_MILITARY_WAREHOUSE, iCurrZoneType);
 	}
 }
 
-static void DoSiloGrowth(__int16 iX, __int16 iY, BYTE iCurrentTileID, __int16 iCurrZoneType) {
+static void Simulation_DoSiloGrowth(mapcoord_t iX, mapcoord_t iY, BYTE iCurrentTileID, int16_t iCurrZoneType) {
 	if (iCurrentTileID != TILE_MILITARY_MISSILESILO)
-		Game_SimulationGrowSpecificZone(iX, iY, TILE_MILITARY_MISSILESILO, iCurrZoneType);
+		Simulation_GrowSpecificZone(iX, iY, TILE_MILITARY_MISSILESILO, iCurrZoneType);
 }
 
-static void DoUpdateMicrosimGrowthTick(__int16 iX, __int16 iY, BYTE iCurrentTileID) {
+static void Simulation_DoUpdateMicrosimGrowthTick(mapcoord_t iX, mapcoord_t iY, BYTE iCurrentTileID) {
 	BYTE iTextOverlay;
 	BYTE iMicrosimIdx;
 	BYTE iTileID;
@@ -1175,8 +1171,8 @@ static void DoUpdateMicrosimGrowthTick(__int16 iX, __int16 iY, BYTE iCurrentTile
 	}
 }
 
-static BOOL DoBudgetRoadCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID) {
-	signed __int16 iFundingPercent;
+static bool Simulation_DoBudgetRoadCheck(mapcoord_t iX, mapcoord_t iY, BYTE iCurrentTileID) {
+	int iFundingPercent;
 
 	if (iCurrentTileID >= TILE_ROAD_LR && iCurrentTileID < TILE_RAIL_LR ||
 		iCurrentTileID >= TILE_CROSSOVER_POWERTB_ROADLR && iCurrentTileID < TILE_CROSSOVER_POWERTB_RAILLR ||
@@ -1185,18 +1181,18 @@ static BOOL DoBudgetRoadCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID) {
 		iCurrentTileID >= TILE_ONRAMP_TL && iCurrentTileID < TILE_HIGHWAY_HTB) {
 		// Transportation budget, roads - if below 100% related tiles will be replaced with rubble.
 		iFundingPercent = pBudgetArr[BUDGET_ROAD].iFundingPercent;
-		if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
+		if (iFundingPercent != 100 && (rand() % 100) >= iFundingPercent) {
 			Game_PlaceTile(iX, iY, GetRubbleTileID());
 			XBITClearBits(iX, iY, XBIT_POWERABLE);
-			DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
+			Simulation_DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
 		}
-		return TRUE;
+		return true;
 	}
-	return FALSE;
+	return false;
 }
 
-static BOOL DoBudgetRailCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID) {
-	signed __int16 iFundingPercent;
+static bool Simulation_DoBudgetRailCheck(mapcoord_t iX, mapcoord_t iY, BYTE iCurrentTileID) {
+	int iFundingPercent;
 
 	if (iCurrentTileID >= TILE_RAIL_LR && iCurrentTileID < TILE_TUNNEL_T ||
 		iCurrentTileID >= TILE_CROSSOVER_ROADLR_RAILTB && iCurrentTileID < TILE_HIGHWAY_LR ||
@@ -1205,49 +1201,48 @@ static BOOL DoBudgetRailCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID) {
 		iCurrentTileID == TILE_CROSSOVER_HIGHWAYTB_RAILLR) {
 		// Transportation budget, rails - if below 100% related tiles will be replaced with rubble.
 		iFundingPercent = pBudgetArr[BUDGET_RAIL].iFundingPercent;
-		if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
+		if (iFundingPercent != 100 && (rand() % 100) >= iFundingPercent) {
 			Game_PlaceTile(iX, iY, GetRubbleTileID());
 			XBITClearBits(iX, iY, XBIT_POWERABLE);
-			DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
+			Simulation_DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
 		}
-		return TRUE;
+		return true;
 	}
-	return FALSE;
+	return false;
 }
 
-static BOOL DoBudgetBridgeCheck(CSimcityView *pSCView, __int16 iX, __int16 iY, BYTE iCurrentTileID) {
-	signed __int16 iFundingPercent;
+static bool Simulation_DoBudgetBridgeCheck(CSimcityView *pSCView, mapcoord_t iX, mapcoord_t iY, BYTE iCurrentTileID) {
+	int iFundingPercent;
 
 	if (iCurrentTileID >= TILE_SUSPENSION_BRIDGE_START_B && iCurrentTileID < TILE_ONRAMP_TL ||
 		iCurrentTileID == TILE_REINFORCED_BRIDGE_PYLON ||
 		iCurrentTileID == TILE_REINFORCED_BRIDGE) {
 		iFundingPercent = pBudgetArr[BUDGET_BRIDGE].iFundingPercent;
 		// Transportation budget, bridges - if below 100% and the weather isn't favourable, there's a chance of destruction.
-		if (iFundingPercent != 100 && (int)(bWeatherWind + (unsigned __int16)rand() % 50) >= iFundingPercent) {
+		if (iFundingPercent != 100 && (int)(bWeatherWind + rand() % 50) >= iFundingPercent) {
 			//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Bridge. Weather Vulnerable\n", iStep, iSubStep);
 			Game_CenterOnTileCoords(iX, iY);
 			Game_SimcityView_Demolish(pSCView, iX, iY, 1);
 			Game_NewspaperStoryGenerator(39, 0);
-			DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
+			Simulation_DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
 		}
-		return TRUE;
+		return true;
 	}
-	return FALSE;
+	return false;
 }
 
-static BOOL DoBudgetHighwayCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID) {
-	__int16 iNextX;
-	__int16 iNextY;
-	signed __int16 iFundingPercent;
+static bool Simulation_DoBudgetHighwayCheck(mapcoord_t iX, mapcoord_t iY, BYTE iCurrentTileID) {
+	mapcoord_t iNextX, iNextY;
+	int iFundingPercent;
 
 	if (iCurrentTileID < TILE_TUNNEL_T || iCurrentTileID >= TILE_CROSSOVER_POWERTB_ROADLR) {
 		if ((iCurrentTileID < TILE_HIGHWAY_HTB || iCurrentTileID >= TILE_SUBTORAIL_T) &&
 			(iCurrentTileID < TILE_HIGHWAY_LR || iCurrentTileID >= TILE_SUSPENSION_BRIDGE_START_B))
-			DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
+			Simulation_DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
 		else {
 			if (IsEven(iX) && IsEven(iY)) {
 				iFundingPercent = pBudgetArr[BUDGET_HIGHWAY].iFundingPercent;
-				if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
+				if (iFundingPercent != 100 && (rand() % 100) >= iFundingPercent) {
 					iNextX = iX + 1;
 					iNextY = iY + 1;
 
@@ -1272,55 +1267,55 @@ static BOOL DoBudgetHighwayCheck(__int16 iX, __int16 iY, BYTE iCurrentTileID) {
 					else
 						Game_PlaceTile(iNextX, iNextY, GetRubbleTileID());
 
-					DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
+					Simulation_DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
 				}
 			}
 		}
-		return TRUE;
+		return true;
 	}
-	return FALSE;
+	return false;
 }
 
-static BOOL DoBudgetTunnelCheck(CSimcityView *pSCView, __int16 iX, __int16 iY, BYTE iCurrentTileID) {
-	signed __int16 iFundingPercent;
+static bool Simulation_DoBudgetTunnelCheck(CSimcityView *pSCView, mapcoord_t iX, mapcoord_t iY, BYTE iCurrentTileID) {
+	int iFundingPercent;
 
 	if (iCurrentTileID >= TILE_TUNNEL_T && iCurrentTileID <= TILE_TUNNEL_L) {
 		iFundingPercent = pBudgetArr[BUDGET_TUNNEL].iFundingPercent;
-		if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
+		if (iFundingPercent != 100 && (rand() % 100) >= iFundingPercent) {
 			//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Tunnel. Item(%s)\n", iStep, iSubStep, szTileNames[iCurrentTileID]);
 			Game_CenterOnTileCoords(iX, iY);
 			Game_SimcityView_Demolish(pSCView, iX, iY, 1);
-			DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
+			Simulation_DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
 		}
-		return TRUE;
+		return true;
 	}
-	return FALSE;
+	return false;
 }
 
-static void DoBudgetOvergroundTransportCheck(CSimcityView *pSCView, __int16 iX, __int16 iY, BYTE iCurrentTileID) {
+static void Simulation_DoBudgetOvergroundTransportCheck(CSimcityView *pSCView, mapcoord_t iX, mapcoord_t iY, BYTE iCurrentTileID) {
 	if (iCurrentTileID >= TILE_ROAD_LR) {
 		if (!Game_RandomWordLFSRMod128()) {
-			if (DoBudgetRoadCheck(iX, iY, iCurrentTileID))
+			if (Simulation_DoBudgetRoadCheck(iX, iY, iCurrentTileID))
 				return;
-			else if (DoBudgetRailCheck(iX, iY, iCurrentTileID))
+			else if (Simulation_DoBudgetRailCheck(iX, iY, iCurrentTileID))
 				return;
-			else if (DoBudgetBridgeCheck(pSCView, iX, iY, iCurrentTileID))
+			else if (Simulation_DoBudgetBridgeCheck(pSCView, iX, iY, iCurrentTileID))
 				return;
-			else if (DoBudgetHighwayCheck(iX, iY, iCurrentTileID))
+			else if (Simulation_DoBudgetHighwayCheck(iX, iY, iCurrentTileID))
 				return;
-			else if (DoBudgetTunnelCheck(pSCView, iX, iY, iCurrentTileID))
+			else if (Simulation_DoBudgetTunnelCheck(pSCView, iX, iY, iCurrentTileID))
 				return;
 		}
 		else
-			DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
+			Simulation_DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
 	}
 }
 
-static void DoBudgetSubwayCheck(CSimcityView *pSCView, __int16 iX, __int16 iY) {
+static void Simulation_DoBudgetSubwayCheck(CSimcityView *pSCView, mapcoord_t iX, mapcoord_t iY) {
 	BOOL bRemoveUndergroundTile;
 	BYTE iCurrentUndergroundTileID;
 	BYTE iReplaceUndergroundTile;
-	signed __int16 iFundingPercent;
+	int iFundingPercent;
 
 	if (!Game_RandomWordLFSRMod128()) {
 		iCurrentUndergroundTileID = GetUndergroundTileID(iX, iY);
@@ -1329,7 +1324,7 @@ static void DoBudgetSubwayCheck(CSimcityView *pSCView, __int16 iX, __int16 iY) {
 			iCurrentUndergroundTileID == UNDER_TILE_CROSSOVER_PIPESTB_SUBWAYLR ||
 			iCurrentUndergroundTileID == UNDER_TILE_CROSSOVER_PIPESLR_SUBWAYTB) {
 			iFundingPercent = pBudgetArr[BUDGET_SUBWAY].iFundingPercent;
-			if (iFundingPercent != 100 && ((unsigned __int16)rand() % 100) >= iFundingPercent) {
+			if (iFundingPercent != 100 && (rand() % 100) >= iFundingPercent) {
 				//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Subway. Item(%s) / Underground Item(%s)\n", iStep, iSubStep, szTileNames[iCurrentTileID], (iCurrentUndergroundTileID > UNDER_TILE_SUBWAYENTRANCE) ? "** Unknown **" : szUndergroundNames[iCurrentUndergroundTileID]);
 				bRemoveUndergroundTile = FALSE;
 				iReplaceUndergroundTile = UNDER_TILE_CLEAR;
@@ -1351,7 +1346,7 @@ static void DoBudgetSubwayCheck(CSimcityView *pSCView, __int16 iX, __int16 iY) {
 	}
 }
 
-static BOOL GetPopulatedTileAndLevel(__int16 iX, __int16 iY, BYTE iCurrentTileID, WORD *p_iPopulatedTile, WORD *p_iTilePopLevel) {
+static bool GetPopulatedTileAndLevel(mapcoord_t iX, mapcoord_t iY, BYTE iCurrentTileID, WORD *p_iPopulatedTile, WORD *p_iTilePopLevel) {
 	WORD iPopulatedTile = 0;
 	WORD iTilePopLevel = 0;
 
@@ -1362,45 +1357,44 @@ static BOOL GetPopulatedTileAndLevel(__int16 iX, __int16 iY, BYTE iCurrentTileID
 		// bit (In order for those other tiles to not be
 		// included as part of the populated tile / populated level).
 		if (!XZONCornerCheck(iX, iY, wCurrentAngle))
-			return FALSE;
+			return false;
 		iPopulatedTile = iCurrentTileID - TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1;
 		iTilePopLevel = wBuildingPopLevel[iPopulatedTile];
 	}
 	else {
 		if (dwExperimentsEnabled & EXPERIMENT_TRIPGENERATOR && USE_NEW_TRIP_GENERATOR && USE_NEW_STARTINGCOORDS) {
 			if (iCurrentTileID >= TILE_ROAD_LR || !IsValidTransitItems(iX, iY))
-				return FALSE;
+				return false;
 		} else {
 			if (iCurrentTileID >= TILE_ROAD_LR || !Game_IsValidTransitItems(iX, iY))
-				return FALSE;
+				return false;
 		}
 	}
 
 	*p_iPopulatedTile = iPopulatedTile;
 	*p_iTilePopLevel = iTilePopLevel;
-	return TRUE;
+	return true;
 }
 
 extern int iChurchVirus;
 
-extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed __int16 iSubStep) {
+NEWENGINE void Simulation_DoGrowthTick(int iStep, int iSubStep) {
 	CSimcityAppPrimary *pSCApp;
 	CSimcityView *pSCView;
-	__int16 iX;
-	__int16 iY;
-	BOOL bPlaceChurch;
-	__int16 iCurrZoneType;
+	mapcoord_t iX, iY;
+	bool bPlaceChurch;
+	int16_t iCurrZoneType;
 	BYTE iCurrentTileID;
 	BYTE iTileState;
 	int iGrowthState, iPrevGrowthState;
 	// 'iDemandThreshold' must be 'int' (or a 32-bit integer at the very least),
 	// otherwise building growth will not correctly occur and you'll end up with a very
 	// high number of 1x1 abandonded buildings.
+	// TODO (araxestroy): we should probably figure out why this happens
 	int iDemandThreshold;
 	WORD iTilePopLevel;
 	WORD iPopulatedTile;
-	__int16 iCurrentDemand;
-	__int16 iRemainderDemand;
+	int16_t iCurrentDemand, iRemainderDemand;
 	BYTE iReplaceTile;
 
 	// Key:
@@ -1412,30 +1406,30 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 	// The calculation here is otherwise 2500 population multiplied by
 	// number of church tiles is less than the city population, in which
 	// case build a church (when the Church virus isn't active...).
-	bPlaceChurch = (iChurchVirus > 0) ? TRUE : IsTileMultipliedThresholdReached(TILE_INFRASTRUCTURE_CHURCH, dwCityPopulation, FALSE, CMP_LESSTHAN, 2500);
+	bPlaceChurch = (iChurchVirus > 0) ? true : IsTileMultipliedThresholdReached(TILE_INFRASTRUCTURE_CHURCH, dwCityPopulation, FALSE, CMP_LESSTHAN, 2500);
 	wCurrentAngle = wPositionAngle[wViewRotation];
 	for (iX = iStep; iX < GAME_MAP_SIZE; iX += 4) {
 		for (iY = iSubStep; iY < GAME_MAP_SIZE; iY += 4) {
 			iCurrZoneType = XZONReturnZone(iX, iY);
 			iCurrentTileID = GetTileID(iX, iY);
 			if (iCurrZoneType == ZONE_NONE)
-				DoBudgetOvergroundTransportCheck(pSCView, iX, iY, iCurrentTileID);
+				Simulation_DoBudgetOvergroundTransportCheck(pSCView, iX, iY, iCurrentTileID);
 			else {
 				if (iCurrZoneType > ZONE_DENSE_INDUSTRIAL) {
 					if (iCurrZoneType == ZONE_MILITARY) {
 						if (bMilitaryBaseType == MILITARY_BASE_ARMY)
-							DoArmyBaseGrowth(iX, iY, iCurrZoneType);
+							Simulation_DoArmyBaseGrowth(iX, iY, iCurrZoneType);
 						else if (bMilitaryBaseType == MILITARY_BASE_AIR_FORCE)
-							DoAirPortGrowth(iX, iY, iCurrentTileID, iCurrZoneType);
+							Simulation_DoAirportGrowth(iX, iY, iCurrentTileID, iCurrZoneType);
 						else if (bMilitaryBaseType == MILITARY_BASE_NAVY)
-							DoSeaPortGrowth(iX, iY, iCurrentTileID, iCurrZoneType);
+							Simulation_DoSeaportGrowth(iX, iY, iCurrentTileID, iCurrZoneType);
 						else if (bMilitaryBaseType == MILITARY_BASE_MISSILE_SILOS)
-							DoSiloGrowth(iX, iY, iCurrentTileID, iCurrZoneType);
+							Simulation_DoSiloGrowth(iX, iY, iCurrentTileID, iCurrZoneType);
 					}
 					else if (iCurrZoneType == ZONE_AIRPORT)
-						DoAirPortGrowth(iX, iY, iCurrentTileID, iCurrZoneType);
+						Simulation_DoAirportGrowth(iX, iY, iCurrentTileID, iCurrZoneType);
 					else if (iCurrZoneType == ZONE_SEAPORT)
-						DoSeaPortGrowth(iX, iY, iCurrentTileID, iCurrZoneType);
+						Simulation_DoSeaportGrowth(iX, iY, iCurrentTileID, iCurrZoneType);
 				}
 				else {
 					iPopulatedTile = 0;
@@ -1446,7 +1440,7 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 						if (Game_IsZonedTilePowered(iX, iY)) {
 							int iTripResult = 0;
 							if (dwExperimentsEnabled & EXPERIMENT_TRIPGENERATOR && USE_NEW_TRIP_GENERATOR)
-								iTripResult = L_RunTripGenerator(iX, iY, iCurrZoneType, iTilePopLevel, TRIP_MAX_STEPS_VANILLA * TRIP_MAX_STEPS_SCALE);
+								iTripResult = Simulation_RunTripGenerator(iX, iY, iCurrZoneType, iTilePopLevel, TRIP_MAX_STEPS_VANILLA * TRIP_MAX_STEPS_SCALE);
 							else
 								iTripResult = Game_RunTripGenerator(iX, iY, iCurrZoneType, iTilePopLevel, GROWTH_TILE_MAX_TRIP_STEPS);
 
@@ -1540,162 +1534,158 @@ extern "C" void __cdecl Hook_SimulationGrowthTick(signed __int16 iStep, signed _
 					}
 				}
 			}
-			DoBudgetSubwayCheck(pSCView, iX, iY);
+			Simulation_DoBudgetSubwayCheck(pSCView, iX, iY);
 		}
 	}
 	dirtyRect.top = -1000;
 }
 
-static void DeleteTilePortion(__int16 x, __int16 y) {
+static void DeleteTilePortion(mapcoord_t x, mapcoord_t y) {
 	if (GetTileID(x, y) >= TILE_SMALLPARK)
 		Game_ZonedBuildingTileDeletion(x, y);
 }
 
-static void SetNewZoneOnTilePortion(__int16 x, __int16 y, __int16 iZoneType) {
+static void SetNewZoneOnTilePortion(mapcoord_t x, mapcoord_t y, int16_t iZoneType) {
 	if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 		XZONSetNewZone(x, y, iZoneType);
 }
 
-static void MilitaryUnsetBitsOnTilePortion(__int16 x, __int16 y, __int16 iZoneType) {
+static void MilitaryUnsetBitsOnTilePortion(mapcoord_t x, mapcoord_t y, int16_t iZoneType) {
 	if (iZoneType == ZONE_MILITARY) {
 		if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 			XBITClearBits(x, y, XBIT_WATERED | XBIT_PIPED | XBIT_POWERED | XBIT_POWERABLE);
 	}
 }
 
-static BOOL SetMoveRunwayTileAxis(__int16 primaryAxis, __int16 secondaryAxis, BOOL *bMovePrimaryAxis, BOOL *bMoveSecondaryAxis) {
+static bool SetMoveRunwayTileAxis(mapcoord_t primaryAxis, mapcoord_t secondaryAxis, bool* bMovePrimaryAxis, bool* bMoveSecondaryAxis) {
 	if (!IsEven(primaryAxis))
-		*bMovePrimaryAxis = TRUE;
+		*bMovePrimaryAxis = true;
 	if (!*bMovePrimaryAxis) {
 		if (IsEven(secondaryAxis))
 			return FALSE;
 
-		*bMoveSecondaryAxis = TRUE;
+		*bMoveSecondaryAxis = true;
 	}
-	return TRUE;
+	return true;
 }
 
-static BOOL GetRunwayTilePositionalOffset(__int16 x, __int16 y, __int16 iZoneType, __int16 *iMoveX, __int16 *iMoveY) {
-	BOOL bMoveXAxis;
-	BOOL bMoveYAxis;
+// XXX (araxestroy): should the last two args be bools?
+static bool GetRunwayTilePositionalOffset(mapcoord_t x, mapcoord_t y, int16_t iZoneType, int16_t* iMoveX, int16_t* iMoveY) {
+	bool bMoveXAxis;
+	bool bMoveYAxis;
 	WORD wTileCountType;
 
-	bMoveXAxis = FALSE;
-	bMoveYAxis = FALSE;
+	bMoveXAxis = false;
+	bMoveYAxis = false;
 	// Slight change here: distinguish between military and standard runway tiles.
 	wTileCountType = (iZoneType == ZONE_MILITARY) ? wMilitaryTiles[MILITARYTILE_RUNWAY] : wTileCount[TILE_INFRASTRUCTURE_RUNWAY];
 	if (IsEven(wTileCountType)) {
 		if (!SetMoveRunwayTileAxis(x, y, &bMoveXAxis, &bMoveYAxis))
-			return FALSE;
+			return false;
 	}
 	else {
 		if (!SetMoveRunwayTileAxis(y, x, &bMoveYAxis, &bMoveXAxis))
-			return FALSE;
+			return false;
 	}
 
 	*iMoveX = (bMoveXAxis) ? 1 : 0;
 	*iMoveY = (bMoveYAxis) ? 1 : 0;
-	return TRUE;
+	return true;
 }
 
-static int ShouldRunwayTileFlip(__int16 iMoveY) {
-	int iToFlip;
-
-	iToFlip = 0;
-	if (!iMoveY) {
+static bool ShouldRunwayTileFlip(bool bMoveY) {
+	if (!bMoveY) {
 		if (!IsEven(wViewRotation))
-			iToFlip = 1;
+			return true;
+		return false;
 	}
 	else {
 		if (IsEven(wViewRotation))
-			iToFlip = 1;
+			return true;
 	}
 
-	return iToFlip;
+	return false;
 }
 
-static BOOL RunwayTileMilitaryCheck(__int16 x, __int16 y, __int16 iZoneType) {
+static bool RunwayTileMilitaryCheck(int16_t x, int16_t y, int16_t iZoneType) {
 	if (iZoneType == ZONE_MILITARY) {
 		if ((GetTileID(x, y) >= TILE_ROAD_LR && GetTileID(x, y) <= TILE_ROAD_LTBR) ||
 			GetTileID(x, y) == TILE_INFRASTRUCTURE_CRANE || GetTileID(x, y) == TILE_MILITARY_MISSILESILO)
-			return FALSE;
+			return false;
 		if (GetTerrainTileID(x, y))
-			return FALSE;
+			return false;
 		if (GetUndergroundTileID(x, y))
-			return FALSE;
+			return false;
 	}
-	return TRUE;
+	return true;
 }
 
-static BOOL RunwayStripLengthCheck(__int16 iRunwayStripTileCount) {
+static bool RunwayStripLengthCheck(int iRunwayStripTileCount) {
 	// Does the runway strip equal or exceed the defined number of max tiles?
-	return (iRunwayStripTileCount >= RUNWAYSTRIP_MAXTILES) ? TRUE : FALSE;
+	return (iRunwayStripTileCount >= RUNWAYSTRIP_MAXTILES) ? true : false;
 }
 
-static BOOL IsRunwayTypeTile(__int16 x, __int16 y) {
-	return (GetTileID(x, y) == TILE_INFRASTRUCTURE_RUNWAY || GetTileID(x, y) == TILE_INFRASTRUCTURE_RUNWAYCROSS) ? TRUE : FALSE;
+static bool IsRunwayTypeTile(mapcoord_t x, mapcoord_t y) {
+	return (GetTileID(x, y) == TILE_INFRASTRUCTURE_RUNWAY || GetTileID(x, y) == TILE_INFRASTRUCTURE_RUNWAYCROSS) ? true : false;
 }
 
-static int ShouldPierTileFlip(__int16 iMoveX) {
-	__int16 iToFlip;
-
-	iToFlip = 0;
-	if (!iMoveX) {
+static bool ShouldPierTileFlip(bool bMoveX) {
+	if (!bMoveX) {
 		if (!IsEven(wViewRotation))
-			iToFlip = 1;
+			return true;
 	}
 	else {
 		if (IsEven(wViewRotation))
-			iToFlip = 1;
+			return true;
 	}
 
-	return iToFlip;
+	return false;
 }
 
-static BOOL TwoByTwoGeneralBlockTileCheck(__int16 x, __int16 y) {
+static bool TwoByTwoGeneralBlockTileCheck(mapcoord_t x, mapcoord_t y) {
 	BYTE iTileID;
 
 	iTileID = GetTileID(x, y);
 	return (iTileID == TILE_INFRASTRUCTURE_RUNWAY || iTileID == TILE_INFRASTRUCTURE_RUNWAYCROSS ||
-		iTileID == TILE_INFRASTRUCTURE_CRANE || iTileID == TILE_MILITARY_MISSILESILO) ? TRUE : FALSE;
+		iTileID == TILE_INFRASTRUCTURE_CRANE || iTileID == TILE_MILITARY_MISSILESILO) ? true : false;
 }
 
-static BOOL TwoByTwoMismatchAndMilitaryBlockTileCheck(__int16 x, __int16 y, __int16 iZoneType) {
+static bool TwoByTwoMismatchAndMilitaryBlockTileCheck(mapcoord_t x, mapcoord_t y, int16_t iZoneType) {
 	if (XZONReturnZone(x, y) != iZoneType)
-		return TRUE;
+		return true;
 	if (iZoneType == ZONE_MILITARY) {
 		if (XZONReturnZone(x, y) == ZONE_MILITARY) {
 			if (GetTileID(x, y) >= TILE_ROAD_LR && GetTileID(x, y) <= TILE_ROAD_LTBR)
-				return TRUE;
+				return true;
 		}
 		if (GetUndergroundTileID(x, y))
-			return TRUE;
+			return true;
 	}
-	return FALSE;
+	return false;
 }
 
-// Function prototype: HOOKCB void Hook_SimulationGrowSpecificZone_Success(__int16 iX, __int16 iY, BYTE iTileID, __int16 iZoneType)
-// Called if SimulationGrowSpecificZone succeeds. Cannot be ignored.
-std::vector<hook_function_t> stHooks_Hook_SimulationGrowSpecificZone_Success;
+// Function prototype: HOOKCB void Hook_Simulation_GrowSpecificZone_Success(mapcoord_t iX, mapcoord_t iY, uint32_t iTileID, int16_t iZoneType)
+// Called if Simulation_GrowSpecificZone succeeds. Cannot be ignored.
+std::vector<hook_function_t> stHooks_Simulation_GrowSpecificZone_Success;
 
-extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, BYTE iTileID, __int16 iZoneType) {
-	__int16 x, y;
-	__int16 iMoveX, iMoveY;
-	__int16 iCurrX, iCurrY;
-	__int16 iNextX, iNextY;
-	__int16 iInitialRunwayStripTileCount;
-	__int16 iBranchingRunwayStripTileCount;
-	__int16 iToFlip;
-	__int16 iTileFlipped;
-	__int16 iPierTileCount;
-	__int16 iPierPathTileCount;
-	__int16 iPierLength;
+NEWENGINE bool Simulation_GrowSpecificZone(mapcoord_t iX, mapcoord_t iY, uint32_t iTileID, int16_t iZoneType) {
+	mapcoord_t x, y;
+	mapcoord_t iMoveX, iMoveY;
+	mapcoord_t iCurrX, iCurrY;
+	mapcoord_t iNextX, iNextY;
+	int16_t iInitialRunwayStripTileCount;
+	int16_t iBranchingRunwayStripTileCount;
+	bool bToFlip;
+	bool bTileFlipped;
+	int16_t iPierTileCount;
+	int16_t iPierPathTileCount;
+	int16_t iPierLength;
 
 	x = iX;
 	y = iY;
 	if (iZoneType != ZONE_MILITARY)
 		if (!Game_IsZonedTilePowered(x, y))
-			return 0;
+			return false;
 
 	switch (iTileID) {
 	case TILE_INFRASTRUCTURE_RUNWAY:
@@ -1703,16 +1693,16 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 		iMoveY = 0;
 
 		if (!GetRunwayTilePositionalOffset(x, y, iZoneType, &iMoveX, &iMoveY))
-			return 0;
+			return false;
 
 		iCurrX = x;
 		iCurrY = y;
 		iInitialRunwayStripTileCount = 0;
 		while (iCurrX < GAME_MAP_SIZE && iCurrY < GAME_MAP_SIZE) {
 			if (XZONReturnZone(iCurrX, iCurrY) != iZoneType)
-				return 0;
+				return false;
 			if (!RunwayTileMilitaryCheck(iCurrX, iCurrY, iZoneType))
-				return 0;
+				return false;
 			// With this check if there's a hit on an existing runway
 			// tile then we want to decrease the count until it reaches
 			// the first vacant tile.
@@ -1722,7 +1712,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 			iCurrY += iMoveX;
 			++iInitialRunwayStripTileCount;
 			if (RunwayStripLengthCheck(iInitialRunwayStripTileCount)) {
-				iToFlip = ShouldRunwayTileFlip(iMoveY);
+				bToFlip = ShouldRunwayTileFlip(iMoveY);
 
 				iBranchingRunwayStripTileCount = 0;
 				while (1) {
@@ -1737,8 +1727,8 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 						if (IsRunwayTypeTile(x, y)) {
 							--iBranchingRunwayStripTileCount;
 							if (GetTileID(x, y) == TILE_INFRASTRUCTURE_RUNWAY) {
-								iTileFlipped = (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE && XBITReturnIsFlipped(x, y));
-								if (iTileFlipped != iToFlip) {
+								bTileFlipped = (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE && XBITReturnIsFlipped(x, y));
+								if (bTileFlipped != bToFlip) {
 									Game_PlaceTile(x, y, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 									if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 										XZONSetCornerMask(x, y, CORNER_ALL);
@@ -1751,14 +1741,14 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 						}
 						else {
 							if (!RunwayTileMilitaryCheck(x, y, iZoneType))
-								return 0;
+								return false;
 							DeleteTilePortion(x, y);
 							Game_PlaceTile(x, y, TILE_INFRASTRUCTURE_RUNWAY);
 							if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 								XZONSetCornerMask(x, y, CORNER_ALL);
 							if (iZoneType != ZONE_MILITARY && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 								XBITSetBits(x, y, XBIT_POWERED | XBIT_POWERABLE);
-							if (iToFlip && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
+							if (bToFlip && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 								XBITSetBits(x, y, XBIT_FLIPPED);
 						}
 					}
@@ -1774,7 +1764,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 		goto PLACEMENT_SUCCESS;
 	case TILE_INFRASTRUCTURE_CRANE:
 		if (x < MAP_EDGE_MIN || x > MAP_EDGE_MAX || y < MAP_EDGE_MIN || y > MAP_EDGE_MAX)
-			return 0;
+			return false;
 		for (iPierTileCount = 0; iPierTileCount < PIER_MAXTILES; iPierTileCount++) {
 			iMoveX = x + wTilePierLengthWays[iPierTileCount];
 			if (iMoveX >= MAP_EDGE_MIN && iMoveX <= MAP_EDGE_MAX) {
@@ -1784,13 +1774,13 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 			}
 		}
 		if (iPierTileCount == PIER_MAXTILES || iMoveX < MAP_EDGE_MIN || iMoveX > MAP_EDGE_MAX || iMoveY < MAP_EDGE_MIN || iMoveY > MAP_EDGE_MAX)
-			return 0;
+			return false;
 		iMoveY = wTilePierDepthWays[iPierTileCount];
 		if (iMoveY && !IsEven(x))
-			return 0;
+			return false;
 		iMoveX = wTilePierLengthWays[iPierTileCount];
 		if (iMoveX && !IsEven(y))
-			return 0;
+			return false;
 		iPierPathTileCount = 0;
 		iCurrX = x;
 		iCurrY = y;
@@ -1798,19 +1788,19 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 			iCurrX += iMoveX;
 			iCurrY += iMoveY;
 			if (iCurrX >= GAME_MAP_SIZE || iCurrY >= GAME_MAP_SIZE || !XBITReturnIsWater(iCurrX, iCurrY))
-				return 0;
+				return false;
 			if (GetTileID(iCurrX, iCurrY))
-				return 0;
+				return false;
 			++iPierPathTileCount;
 		} while (iPierPathTileCount <= PIER_MAXTILES);
 		if (ALTMReturnWaterLevel(iCurrX, iCurrY) < ALTMReturnLandAltitude(iCurrX, iCurrY) + 2)
-			return 0;
+			return false;
 		DeleteTilePortion(x, y);
-		Game_ItemPlacementCheck(x, y, TILE_INFRASTRUCTURE_CRANE, AREA_1x1);
+		L_ItemPlacementCheck(x, y, TILE_INFRASTRUCTURE_CRANE, AREA_1x1, false);
 		SetNewZoneOnTilePortion(x, y, iZoneType);
 		MilitaryUnsetBitsOnTilePortion(x, y, iZoneType);
 
-		iToFlip = ShouldPierTileFlip(iMoveX);
+		bToFlip = ShouldPierTileFlip(iMoveX);
 
 		iPierLength = PIER_MAXTILES;
 		do {
@@ -1819,7 +1809,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 			Game_PlaceTile(x, y, TILE_INFRASTRUCTURE_PIER);
 			if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 				XZONSetCornerMask(x, y, CORNER_ALL);
-			if (iToFlip && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
+			if (bToFlip && x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 				XBITSetBits(x, y, XBIT_FLIPPED);
 			--iPierLength;
 		} while (iPierLength);
@@ -1834,7 +1824,7 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 	case TILE_MILITARY_HANGAR1:
 	case TILE_MILITARY_RADAR:
 		if (GetTileID(x, y) < TILE_SMALLPARK) {
-			Game_ItemPlacementCheck(x, y, iTileID, AREA_1x1);
+			L_ItemPlacementCheck(x, y, iTileID, AREA_1x1, false);
 			SetNewZoneOnTilePortion(x, y, iZoneType);
 			MilitaryUnsetBitsOnTilePortion(x, y, iZoneType);
 		}
@@ -1854,22 +1844,22 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 		iNextX = iCurrX + 1;
 		iNextY = iCurrY + 1;
 		if (GetTileID(iCurrX, iCurrY) >= TILE_INFRASTRUCTURE_WATERTOWER)
-			return 0;
+			return false;
 		if (TwoByTwoGeneralBlockTileCheck(iCurrX, iCurrY) ||
 			TwoByTwoGeneralBlockTileCheck(iNextX, iCurrY) ||
 			TwoByTwoGeneralBlockTileCheck(iCurrX, iNextY) ||
 			TwoByTwoGeneralBlockTileCheck(iNextX, iNextY))
-			return 0;
+			return false;
 		if (TwoByTwoMismatchAndMilitaryBlockTileCheck(iCurrX, iCurrY, iZoneType) ||
 			TwoByTwoMismatchAndMilitaryBlockTileCheck(iNextX, iCurrY, iZoneType) ||
 			TwoByTwoMismatchAndMilitaryBlockTileCheck(iCurrX, iNextY, iZoneType) ||
 			TwoByTwoMismatchAndMilitaryBlockTileCheck(iNextX, iNextY, iZoneType))
-			return 0;
+			return false;
 		DeleteTilePortion(iCurrX, iCurrY);
 		DeleteTilePortion(iNextX, iCurrY);
 		DeleteTilePortion(iCurrX, iNextY);
 		DeleteTilePortion(iNextX, iNextY);
-		Game_ItemPlacementCheck(iCurrX, iCurrY, iTileID, AREA_2x2);
+		L_ItemPlacementCheck(iCurrX, iCurrY, iTileID, AREA_2x2, false);
 		SetNewZoneOnTilePortion(iCurrX, iCurrY, iZoneType);
 		SetNewZoneOnTilePortion(iNextX, iCurrY, iZoneType);
 		SetNewZoneOnTilePortion(iCurrX, iNextY, iZoneType);
@@ -1880,23 +1870,23 @@ extern "C" int __cdecl Hook_SimulationGrowSpecificZone(__int16 iX, __int16 iY, B
 		MilitaryUnsetBitsOnTilePortion(iNextX, iNextY, iZoneType);
 		goto PLACEMENT_SUCCESS;
 	case TILE_MILITARY_MISSILESILO:
-		L_ItemPlacementCheck(x, y, TILE_MILITARY_MISSILESILO, AREA_3x3, TRUE);
+		L_ItemPlacementCheck(x, y, TILE_MILITARY_MISSILESILO, AREA_3x3, true);
 		goto PLACEMENT_SUCCESS;
 	default:
 		goto PLACEMENT_SUCCESS;
 	}
 
 PLACEMENT_SUCCESS:
-	for (const auto& hook : stHooks_Hook_SimulationGrowSpecificZone_Success) {
+	for (const auto& hook : stHooks_Simulation_GrowSpecificZone_Success) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
-			void(*fnHook)(__int16, __int16, BYTE, __int16) = (void(*)(__int16, __int16, BYTE, __int16))hook.pFunction;
+			void(*fnHook)(mapcoord_t, mapcoord_t, uint32_t, uint32_t) = (void(*)(mapcoord_t, mapcoord_t, uint32_t, uint32_t))hook.pFunction;
 			fnHook(iX, iY, iTileID, iZoneType);
 		}
 	}
-	return 1;
+	return true;
 }
 
-static void PlacePowerLineTile(__int16 x, __int16 y, BYTE iTileID) {
+static void PlacePowerLineTile(mapcoord_t x, mapcoord_t y, BYTE iTileID) {
 	Game_PlaceTile(x, y, iTileID);
 	if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 		XBITSetBits(x, y, XBIT_POWERABLE);
@@ -1911,7 +1901,7 @@ static void PlacePowerLineTile(__int16 x, __int16 y, BYTE iTileID) {
 		Game_CheckAdjustTerrainAndPlacePowerLines(x, y + 1);
 }
 
-extern "C" void __cdecl Hook_PlacePowerLinesAtCoordinates(__int16 x, __int16 y) {
+extern "C" void __cdecl Hook_PlacePowerLinesAtCoordinates(mapcoord_t x, mapcoord_t y) {
 	BYTE iTileID;
 	BYTE iBuildTileID;
 
@@ -1938,18 +1928,18 @@ extern "C" void __cdecl Hook_PlacePowerLinesAtCoordinates(__int16 x, __int16 y) 
 	}
 }
 
-extern "C" int __cdecl Hook_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iTileID, __int16 iTileArea) {
-	return L_ItemPlacementCheck(m_x, m_y, iTileID, iTileArea, FALSE);
+extern "C" int __cdecl Hook_ItemPlacementCheck(mapcoord_t m_x, mapcoord_t m_y, BYTE iTileID, int16_t iTileArea) {
+	return L_ItemPlacementCheck(m_x, m_y, iTileID, iTileArea, false);
 }
 
-extern "C" int __cdecl Hook_CityToolPlaceSelectedBuilding(__int16 iX, __int16 iY, __int16 iTool, __int16 iSubTool) {
+extern "C" int __cdecl Hook_CityToolPlaceSelectedBuilding(mapcoord_t iX, mapcoord_t iY, int16_t iTool, int16_t iSubTool) {
 	CSimcityAppPrimary *pSCApp;
 	CSimcityView *pSCView;
 	int iItemCost;
-	__int16 iResAreaNearX, iResAreaFarX;
-	__int16 iResAreaNearY, iResAreaFarY;
-	__int16 iResAreaCurX, iResAreaCurY;
-	__int16 nResSelCnt;
+	mapcoord_t iResAreaNearX, iResAreaFarX;
+	mapcoord_t iResAreaNearY, iResAreaFarY;
+	mapcoord_t iResAreaCurX, iResAreaCurY;
+	int16_t nResSelCnt;
 	BOOL bFail, bBadPlacement;
 	BYTE tileFromSubTool[CITY_MENUTOOL_TOTAL];
 	CMFC3XString errString;
@@ -2096,7 +2086,7 @@ extern "C" int __cdecl Hook_CityToolPlaceSelectedBuilding(__int16 iX, __int16 iY
 		}
 	}
 
-	if (!Game_ItemPlacementCheck(iX, iY, iTile, nBuildArea)) {
+	if (!L_ItemPlacementCheck(iX, iY, iTile, nBuildArea, false)) {
 		bFail = TRUE;
 		goto FAIL;
 	}
@@ -2164,23 +2154,24 @@ FAIL:
 	return (bFail) ? 0 : 1;
 }
 
-static void L_PierCheckStackPush(__int16 x, __int16 y) {
-	__int16 nTileID = GetTileID(x, y);
+static void L_PierCheckStackPush(mapcoord_t x, mapcoord_t y) {
+	uint32_t nTileID = GetTileID(x, y);
 	if (nTileID) {
 		if (GET_TILE_RANGE(nTileID, TILE_INFRASTRUCTURE_PIER, TILE_INFRASTRUCTURE_CRANE))
 			Game_StackPush(x, y);
 	}
 }
 
-static void L_RunwayCheckStackPush(__int16 x, __int16 y) {
-	__int16 nTileID = GetTileID(x, y);
+static void L_RunwayCheckStackPush(mapcoord_t x, mapcoord_t y) {
+	uint32_t nTileID = GetTileID(x, y);
 	if (nTileID) {
 		if (GET_TILE_RANGE(nTileID, TILE_INFRASTRUCTURE_RUNWAY, TILE_INFRASTRUCTURE_RUNWAYCROSS))
 			Game_StackPush(x, y);
 	}
 }
 
-extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL bExplosion) {
+// XXX (araxestroy): This function needs some serious comment work.
+extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, BOOL bExplosion) {
 	CSimcityView *pThis;
 
 	__asm mov [pThis], ecx
@@ -2188,21 +2179,21 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 	CSimcityAppPrimary *pSCApp;
 	BYTE *pLockedBits = NULL;
 	BYTE *pLockedBaseBits = NULL;
-	BOOL bDoYield;
-	__int16 nX, nY;
-	__int16 nTileID, nLoopTileID;
-	__int16 nCornerX, nCornerY;
-	__int16 nArea;
-	__int16 nCoordScale, nLandAltScale, nScaleVal;
-	__int16 nHighwayTile;
-	__int16 nHorzMult, nVertMult;
-	__int16 nStoredHorzMult, nStoredVertMult;
-	__int16 nSpriteBase, nSpriteID;
-	__int16 nExplodeX, nExplodeY, nAltitude;
-	__int16 nAreaExplodeX, nAreaExplodeY;
-	__int16 nAreaCornerX, nAreaCornerY;
-	__int16 nOffsetX, nOffsetY;
-	__int16 nRubbleTile;
+	bool bDoYield;
+	mapcoord_t nX, nY;
+	int16_t nTileID, nLoopTileID;
+	mapcoord_t nCornerX, nCornerY;
+	int16_t nArea;
+	int16_t nCoordScale, nLandAltScale, nScaleVal;
+	int16_t nHighwayTile;
+	int16_t nHorzMult, nVertMult;
+	int16_t nStoredHorzMult, nStoredVertMult;
+	int16_t nSpriteBase, nSpriteID;
+	mapcoord_t nExplodeX, nExplodeY, nAltitude;
+	mapcoord_t nAreaExplodeX, nAreaExplodeY;
+	mapcoord_t nAreaCornerX, nAreaCornerY;
+	mapcoord_t nOffsetX, nOffsetY;
+	int16_t nRubbleTile;
 	WORD nLandAlt;
 	BYTE bIsFlipped;
 	BYTE bTextOverlay;
@@ -2220,7 +2211,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 	pSCApp = &pCSimcityAppThis;
 	pLockedBits = Game_Graphics_LockDIBBits(pThis->SCVGraphics);
 	pLockedBaseBits = Game_Graphics_LockDIBBits(pBaseGraphics);
-	bDoYield = FALSE;
+	bDoYield = false;
 	nX = x;
 	nY = y;
 	nTileID = GetTileID(nX, nY);
@@ -2302,12 +2293,12 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 			nCornerY += nStoredVertMult;
 			if (bExplosion) {
 				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
-				bDoYield = TRUE;
+				bDoYield = true;
 				L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
 			}
 			nExplodeX = -1;
 			nExplodeY = -1;
-			while (TRUE) {
+			while (true) {
 				nHighwayTile = Game_GetHighwayTile(nCornerX, nCornerY);
 				if (nArea != 2 || nHighwayTile < 13) {
 					if (nArea != 1)
@@ -2427,8 +2418,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 			Game_InitStack(nX, nY);
 			while (Game_StackSize()) {
 				Game_StackPop(&pt);
-				tileCoords.x = (__int16)pt.x;
-				tileCoords.y = (__int16)pt.y;
+				tileCoords.x = (mapcoord_t)pt.x;
+				tileCoords.y = (mapcoord_t)pt.y;
 				Game_PlaceTile(tileCoords.x, tileCoords.y, TILE_CLEAR);
 				if (tileCoords.x < GAME_MAP_SIZE && tileCoords.y < GAME_MAP_SIZE) {
 					XZONClearCorners(tileCoords.x, tileCoords.y);
@@ -2487,19 +2478,19 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 						if (nTileID >= TILE_ARCOLOGY_PLYMOUTH)
 							dirtyRect.top = 0;
 						if (nArea > 0) {
-							__int16 nVertPos = 0;
-							__int16 nAreaPos = nArea;
+							int16_t nVertPos = 0;
+							int16_t nAreaPos = nArea;
 							do {
 								L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
 								if (nArea > 0) {
-									__int16 nHorzPos = 0;
-									__int16 nHorzAreaPos = nArea;
+									int16_t nHorzPos = 0;
+									int16_t nHorzAreaPos = nArea;
 									nAreaExplodeX = nExplodeX;
 									do {
 										if (nArea > 0) {
-											__int16 nAreaExplodeIntX = nAreaExplodeX;
-											__int16 nCurrHorzPos = nHorzPos;
-											__int16 nVertAreaPos = nArea;
+											int16_t nAreaExplodeIntX = nAreaExplodeX;
+											int16_t nCurrHorzPos = nHorzPos;
+											int16_t nVertAreaPos = nArea;
 											do {
 												nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
 												nAreaExplodeY = nCurrHorzPos + nExplodeY - pArrSpriteHeaders[nSpriteID].wHeight - nVertPos;
@@ -2524,7 +2515,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 								UpdateWindow(pThis->m_hWnd);
 								if (!bDoYield) {
 									Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
-									bDoYield = 1;
+									bDoYield = true;
 								}
 								Game_YieldToWindows(100);
 								nVertPos += nCoordScale;
@@ -2657,24 +2648,24 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 				UpdateWindow(pThis->m_hWnd);
 				if (!bExplosion) {
 				UpdHouse:
-					__int16 nFirstPosX = nX;
-					__int16 nSecondPosX = nX;
-					__int16 nAreaPosX = (nX + nArea);
+					mapcoord_t nFirstPosX = nX;
+					mapcoord_t nSecondPosX = nX;
+					mapcoord_t nAreaPosX = (nX + nArea);
 					if (nAreaPosX > nX) {
 						do {
-							__int16 nCurrPosX = nSecondPosX++;
+							mapcoord_t nCurrPosX = nSecondPosX++;
 							Game_DirtyTile(nCurrPosX - 1, nY - 1);
 							Game_DirtyTile(nCurrPosX - 2, nY - 2);
 							Game_DirtyTile(nCurrPosX - 3, nY - 3);
 							Game_DirtyTile(nCurrPosX - 4, nY - 4);
 						} while (nSecondPosX < nAreaPosX);
 					}
-					__int16 nFirstPosY = nY;
-					__int16 nSecondPosY = nY;
-					__int16 nAreaPosY = (nY + nArea);
+					mapcoord_t nFirstPosY = nY;
+					mapcoord_t nSecondPosY = nY;
+					mapcoord_t nAreaPosY = (nY + nArea);
 					if (nAreaPosY > nY) {
 						do {
-							__int16 nCurrPosY = nSecondPosY++;
+							mapcoord_t nCurrPosY = nSecondPosY++;
 							Game_DirtyTile(nX - 1, nCurrPosY - 1);
 							Game_DirtyTile(nX - 2, nCurrPosY - 2);
 							Game_DirtyTile(nX - 3, nCurrPosY - 3);
@@ -2683,7 +2674,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 					}
 					if (nAreaPosX > nX) {
 						do {
-							for (__int16 nCurrPosY = nFirstPosY; nCurrPosY < nAreaPosY; ++nCurrPosY)
+							for (mapcoord_t nCurrPosY = nFirstPosY; nCurrPosY < nAreaPosY; ++nCurrPosY)
 								Game_DirtyTile(nFirstPosX, nCurrPosY);
 							++nFirstPosX;
 						} while (nFirstPosX < nAreaPosX);
@@ -2698,8 +2689,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 			Game_InitStack(nX, nY);
 			while (Game_StackSize()) {
 				Game_StackPop(&pt);
-				tileCoords.x = (__int16)pt.x;
-				tileCoords.y = (__int16)pt.y;
+				tileCoords.x = (mapcoord_t)pt.x;
+				tileCoords.y = (mapcoord_t)pt.y;
 				nRubbleTile = (rand() & 3) + 1;
 				Game_PlaceTile(tileCoords.x, tileCoords.y, nRubbleTile);
 				if (tileCoords.x < GAME_MAP_SIZE && tileCoords.y < GAME_MAP_SIZE) {
@@ -2739,12 +2730,14 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(__int16 x, __int16 y, BOOL b
 
 void InstallTileGrowthOrPlacementHandlingHooks_SC2K1996(void) {
 	// Hook into the SimulationGrowthTick function
+	// DEPRECATED -- now local function
 	SafeVirtualProtect((LPVOID)0x4022FC, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x4022FC, Hook_SimulationGrowthTick);
+	NEWJMP((LPVOID)0x4022FC, Simulation_DoGrowthTick);
 
 	// Hook into the SimulationGrowSpecificZone function
+	// DEPRECATED -- now local function
 	SafeVirtualProtect((LPVOID)0x4026B2, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x4026B2, Hook_SimulationGrowSpecificZone);
+	NEWJMP((LPVOID)0x4026B2, Simulation_GrowSpecificZone);
 
 	// Hook into the PlacePowerLinesAtCoordinates function
 	SafeVirtualProtect((LPVOID)0x402725, 5, PAGE_EXECUTE_READWRITE);

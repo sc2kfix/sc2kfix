@@ -327,9 +327,9 @@ static BOOL BuildTheHouse() {
 					(xWindPos >= GAME_MAP_SIZE || yPos >= GAME_MAP_SIZE || !XBITReturnIsWater(xWindPos, yPos))) {
 					if (ALTMReturnLandAltitude(xPos, yPos) == ALTMReturnLandAltitude(xPos, ySignPos) &&
 						ALTMReturnLandAltitude(xPos, yPos) == ALTMReturnLandAltitude(xWindPos, yPos)) {
-						if (Game_ItemPlacementCheck(xPos, yPos, TILE_COMMERCIAL_1X1_BEDANDBREAKFAST, AREA_1x1)) {
+						if (L_ItemPlacementCheck(xPos, yPos, TILE_COMMERCIAL_1X1_BEDANDBREAKFAST, AREA_1x1, false)) {
 							SetTheHouseLabel(xPos, ySignPos);
-							Game_ItemPlacementCheck(xWindPos, yPos, TILE_POWERPLANT_WIND, AREA_1x1);
+							L_ItemPlacementCheck(xWindPos, yPos, TILE_POWERPLANT_WIND, AREA_1x1, false);
 							Game_CenterOnTileCoords(xPos, yPos);
 							return TRUE;
 						}

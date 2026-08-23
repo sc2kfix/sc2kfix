@@ -27,6 +27,7 @@
 #include <sc2k/sc2k_classes.h>
 #include <sc2k/sc2k_1995.h>
 #include <sc2k/sc2k_1996.h>
+#include <sc2k/sc2k_newengine.h>
 #include <sc2k/sc2k_demo.h>
 #include <frameworks/bc45xhelp.h>
 #include <music.h>

@@ -282,6 +282,9 @@
     <ClInclude Include="include\winmm_exports.h">
       <Filter>Header Files\sc2kfix Core</Filter>
     </ClInclude>
+    <ClInclude Include="include\sc2k\sc2k_newengine.h">
+      <Filter>Header Files\SimCity 2000</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="hooks\hook_mciSendCommand.cpp">

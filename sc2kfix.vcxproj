@@ -91,6 +91,7 @@ const char* szSC2KFixBuildInfo = "$(BuildString)"%3B
     <ClInclude Include="include\sc2kfix.h" />
     <ClInclude Include="include\sc2k\sc2k_1995.h" />
     <ClInclude Include="include\sc2k\sc2k_demo.h" />
+    <ClInclude Include="include\sc2k\sc2k_newengine.h" />
     <ClInclude Include="include\scurk\scurk_classes.h" />
     <ClInclude Include="include\scurk\scurk_1996.h" />
     <ClInclude Include="include\scurk\scurk_primary.h" />

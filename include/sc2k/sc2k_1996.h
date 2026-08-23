@@ -1,4 +1,4 @@
-// sc2kfix include/sc2k_1996.h: defines specific to the 1996 Special Edition version
+// sc2kfix include/sc2k/sc2k_1996.h: defines specific to the 1996 Special Edition version
 // (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 // !!! HIC SUNT DRACONES !!!
@@ -3206,7 +3206,7 @@ GAMECALL(0x402266, LONG, __cdecl, SetSpriteForDrawing, void *, sprite_header_t *
 GAMECALL(0x40226B, int, __thiscall, SimcityView_UpdateHouse, CSimcityView *) // Update partial sections ("dirty" areas)
 GAMECALL(0x402289, char, __cdecl, PerhapsGeneralZoneChooseAndPlaceBuilding, __int16 x, __int16 y, __int16 iBuildingPopLevel, __int16)
 GAMECALL(0x402293, void, __stdcall, UpdateSectionsAndResetWindowMenu)
-GAMECALL(0x4022FC, void, __cdecl, SimulationGrowthTick, __int16 iStep, __int16 iSubStep)
+GAMECALL_DEPRECATED(0x4022FC, void, __cdecl, SimulationGrowthTick, __int16 iStep, __int16 iSubStep)
 GAMECALL(0x402306, void, __thiscall, MyToolBar_SetButtonStyle, CMyToolBar *, int nIndex, UINT nStyle)
 GAMECALL(0x40232E, void, __thiscall, MapToolBar_MoveAndBlitToolBar, CMapToolBar *, int, int)
 GAMECALL(0x40235B, int, __thiscall, SimcityView_InvertZoneList, CSimcityView *pThis, WORD wX1, WORD wY1, WORD wX2, WORD wY2)
@@ -3248,7 +3248,7 @@ GAMECALL(0x40264E, void *, __cdecl, ReallocateDataEntry, char *, const char *)
 GAMECALL(0x40265D, void, __stdcall, DrawAllSmall)
 GAMECALL(0x40267B, HPALETTE, __thiscall, Graphics_MakeUnmappedPalette, CGraphics *)
 GAMECALL(0x402699, CSimcityView *, __thiscall, SimcityApp_PointerToCSimcityViewClass, CSimcityAppPrimary* CSimcityAppThis)
-GAMECALL(0x4026B2, int, __cdecl, SimulationGrowSpecificZone, __int16 x, __int16 y, __int16 iTileID, __int16 iZoneType)
+GAMECALL_DEPRECATED(0x4026B2, int, __cdecl, SimulationGrowSpecificZone, __int16 x, __int16 y, __int16 iTileID, __int16 iZoneType)
 GAMECALL(0x4026DF, void, __thiscall, Sound_PlayActionThingSound, CSound *, int, int)
 GAMECALL(0x4026F8, void, __stdcall, SimulationUpdatePowerConsumption, void)
 GAMECALL(0x402725, int, __cdecl, PlacePowerLinesAtCoordinates, __int16 x, __int16 y)
@@ -4192,7 +4192,7 @@ static inline BYTE GetMilitaryFromNormalTile(BYTE iTileID) {
 	return iMilitaryTileID;
 }
 
-static inline WORD GetFlaggedTileCount(BYTE iTileID, BOOL bMilitary) {
+static inline WORD GetFlaggedTileCount(BYTE iTileID, bool bMilitary) {
 	BYTE iMilitaryTileID = GetMilitaryFromNormalTile(iTileID);
 	return (bMilitary) ? wMilitaryTiles[iMilitaryTileID] : wTileCount[iTileID];
 }
@@ -4731,6 +4731,7 @@ extern void L_drawShapeSpecific_SC2K1996(__int16 nSpriteID, __int16 right, __int
 extern void L_drawShapeDialog_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert);
 
 extern void L_InitializeCityData();
+int L_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iTileID, __int16 iTileArea, bool bDoSilo);
 
 extern int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName);
 extern void L_SimcityApp_LoadCityFromCMDLine(CSimcityAppPrimary *pSCApp, const char *lpFileNameFromCMDLine);

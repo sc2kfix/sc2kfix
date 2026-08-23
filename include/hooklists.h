@@ -20,4 +20,4 @@ extern std::vector<hook_function_t> stHooks_Hook_SimCalendarDay23_Before;
 extern std::vector<hook_function_t> stHooks_Hook_ScenarioSuccessCheck;
 extern std::vector<hook_function_t> stHooks_Hook_SimCalendarDay23_After;
 extern std::vector<hook_function_t> stHooks_Hook_SimCalendarAdvance_After;
-extern std::vector<hook_function_t> stHooks_Hook_SimulationGrowSpecificZone_Success;
+extern std::vector<hook_function_t> stHooks_Simulation_GrowSpecificZone_Success;

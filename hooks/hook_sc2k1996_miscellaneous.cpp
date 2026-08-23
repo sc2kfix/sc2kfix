@@ -1703,7 +1703,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 				// each growth tick so the city changes relatively evenly over the month.
 				iStep = ((dwMonDay - 3) / 4 % 4);
 				iSubStep = (dwMonDay + 1) % 4;
-				Game_SimulationGrowthTick(iStep, iSubStep);
+				Simulation_DoGrowthTick(iStep, iSubStep);
 				break;
 			}
 			return;
