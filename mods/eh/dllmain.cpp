@@ -1,5 +1,5 @@
 // sc2kfix/eh dllmain.cpp: Canadianifies your military bases
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 // This is not meant to be a serious mod. It serves primarily as an example of how to manipulate
 // game state, make decisions based on events in a city, and make calls into SimCity 2000's code.
@@ -20,7 +20,7 @@ GAMECALL(0x40286A, void, __cdecl, DisplayEventMessage, int, CMFC3XString*)
 
 sc2kfix_mod_hook_t stModHooks[] = {
 	{ "Hook_PrepareGame_After", 0 },
-	{ "Hook_SimulationGrowSpecificZone_Success", 0 }
+	{ "Hook_Simulation_GrowSpecificZone_Success", 0 }
 };
 
 sc2kfix_mod_info_t stModInfo = {
@@ -125,7 +125,7 @@ HOOKCB void Hook_PrepareGame_After() {
 	}
 }
 
-HOOKCB void Hook_SimulationGrowSpecificZone_Success(__int16 iX, __int16 iY, BYTE iTileID, __int16 iZoneType) {
+HOOKCB void Hook_Simulation_GrowSpecificZone_Success(mapcoord_t iX, mapcoord_t iY, uint32_t iTileID, int16_t iZoneType) {
 	if (bTilesetAvailable && !bAlreadyCheered && iTileID == TILE_MILITARY_TOPSECRET) {
 		Game_SimcityApp_SoundPlaySound(&pCSimcityAppThis, SOUND_CHEERS);
 		CMFC3XString cStr;
