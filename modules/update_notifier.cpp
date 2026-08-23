@@ -35,6 +35,9 @@ DWORD WINAPI UpdaterThread(LPVOID lpParameter) {
 #define BUF_SIZE (FETCHBUF_SIZE * 4)
 
 BOOL UpdaterCheckForUpdates(void) {
+	if (SC2KFIX_IS_DEV_BRANCH)
+		return FALSE;
+
 	DWORD dwContext;
 	HINTERNET hInet = InternetOpen("sc2kfix Update Notifier", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, NULL);
 	if (!hInet) {
