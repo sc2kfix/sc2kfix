@@ -2423,7 +2423,6 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				Game_PlaceTile(tileCoords.x, tileCoords.y, TILE_CLEAR);
 				if (tileCoords.x < GAME_MAP_SIZE && tileCoords.y < GAME_MAP_SIZE) {
 					XZONClearCorners(tileCoords.x, tileCoords.y);
-					XZONClearZone(tileCoords.x, tileCoords.y);
 					XBITClearBits(tileCoords.x, tileCoords.y, XBIT_FLIPPED|XBIT_POWERED|XBIT_POWERABLE);
 				}
 				if (bExplosion) {
