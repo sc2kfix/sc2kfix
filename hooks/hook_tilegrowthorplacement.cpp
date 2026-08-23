@@ -940,13 +940,13 @@ int L_ItemPlacementCheck(mapcoord_t m_x, mapcoord_t m_y, BYTE iTileID, int16_t i
 			}
 			if (iArea) {
 				if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-					XZONSetCornerAngle(x, y, wTileAreaBottomLeftCorner[wViewRotation]);
+					XZONSetCornerAngle(x, y, wCornerStartBottomLeft[wViewRotation]);
 				if (iFarX >= 0 && iFarX < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
-					XZONSetCornerAngle(iFarX, y, wTileAreaBottomRightCorner[wViewRotation]);
+					XZONSetCornerAngle(iFarX, y, wCornerStartBottomRight[wViewRotation]);
 				if (iFarX < GAME_MAP_SIZE && iFarY >= 0 && iFarY < GAME_MAP_SIZE)
-					XZONSetCornerAngle(iFarX, iFarY, wTileAreaTopLeftCorner[wViewRotation]);
+					XZONSetCornerAngle(iFarX, iFarY, wCornerStartTopLeft[wViewRotation]);
 				if (x < GAME_MAP_SIZE && iFarY >= 0 && iFarY < GAME_MAP_SIZE)
-					XZONSetCornerAngle(x, iFarY, wTileAreaTopRightCorner[wViewRotation]);
+					XZONSetCornerAngle(x, iFarY, wCornerStartTopRight[wViewRotation]);
 			}
 			else if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 				XZONSetCornerMask(x, y, CORNER_ALL);
@@ -1569,6 +1569,19 @@ static bool SetMoveRunwayTileAxis(mapcoord_t primaryAxis, mapcoord_t secondaryAx
 	return true;
 }
 
+static bool ShouldCoupledObjectTileFlip(mapcoord_t mapCoord) {
+	if (mapCoord == 0) {
+		if (!IsEven(wViewRotation))
+			return true;
+	}
+	else {
+		if (IsEven(wViewRotation))
+			return true;
+	}
+
+	return false;
+}
+
 // XXX (araxestroy): should the last two args be bools?
 static bool GetRunwayTilePositionalOffset(mapcoord_t x, mapcoord_t y, int16_t iZoneType, int16_t* iMoveX, int16_t* iMoveY) {
 	bool bMoveXAxis;
@@ -1593,20 +1606,6 @@ static bool GetRunwayTilePositionalOffset(mapcoord_t x, mapcoord_t y, int16_t iZ
 	return true;
 }
 
-static bool ShouldRunwayTileFlip(mapcoord_t iMoveY) {
-	if (!iMoveY) {
-		if (!IsEven(wViewRotation))
-			return true;
-		return false;
-	}
-	else {
-		if (IsEven(wViewRotation))
-			return true;
-	}
-
-	return false;
-}
-
 static bool RunwayTileMilitaryCheck(int16_t x, int16_t y, int16_t iZoneType) {
 	if (iZoneType == ZONE_MILITARY) {
 		if ((GetTileID(x, y) >= TILE_ROAD_LR && GetTileID(x, y) <= TILE_ROAD_LTBR) ||
@@ -1627,19 +1626,6 @@ static bool RunwayStripLengthCheck(int iRunwayStripTileCount) {
 
 static bool IsRunwayTypeTile(mapcoord_t x, mapcoord_t y) {
 	return (GetTileID(x, y) == TILE_INFRASTRUCTURE_RUNWAY || GetTileID(x, y) == TILE_INFRASTRUCTURE_RUNWAYCROSS) ? true : false;
-}
-
-static bool ShouldPierTileFlip(mapcoord_t iMoveX) {
-	if (!iMoveX) {
-		if (!IsEven(wViewRotation))
-			return true;
-	}
-	else {
-		if (IsEven(wViewRotation))
-			return true;
-	}
-
-	return false;
 }
 
 static bool TwoByTwoGeneralBlockTileCheck(mapcoord_t x, mapcoord_t y) {
@@ -1712,7 +1698,7 @@ NEWENGINE bool Simulation_GrowSpecificZone(mapcoord_t iX, mapcoord_t iY, uint32_
 			iCurrY += iMoveX;
 			++iInitialRunwayStripTileCount;
 			if (RunwayStripLengthCheck(iInitialRunwayStripTileCount)) {
-				bToFlip = ShouldRunwayTileFlip(iMoveY);
+				bToFlip = ShouldCoupledObjectTileFlip(iMoveY);
 
 				iBranchingRunwayStripTileCount = 0;
 				while (1) {
@@ -1766,19 +1752,19 @@ NEWENGINE bool Simulation_GrowSpecificZone(mapcoord_t iX, mapcoord_t iY, uint32_
 		if (x < MAP_EDGE_MIN || x > MAP_EDGE_MAX || y < MAP_EDGE_MIN || y > MAP_EDGE_MAX)
 			return false;
 		for (iPierTileCount = 0; iPierTileCount < PIER_MAXTILES; iPierTileCount++) {
-			iMoveX = x + wTilePierLengthWays[iPierTileCount];
+			iMoveX = x + wRotateCoordShiftX[iPierTileCount];
 			if (iMoveX >= MAP_EDGE_MIN && iMoveX <= MAP_EDGE_MAX) {
-				iMoveY = y + wTilePierDepthWays[iPierTileCount];
+				iMoveY = y + wRotateCoordShiftY[iPierTileCount];
 				if (iMoveY >= MAP_EDGE_MIN && iMoveY <= MAP_EDGE_MAX && XBITReturnIsWater(iMoveX, iMoveY))
 					break;
 			}
 		}
 		if (iPierTileCount == PIER_MAXTILES || iMoveX < MAP_EDGE_MIN || iMoveX > MAP_EDGE_MAX || iMoveY < MAP_EDGE_MIN || iMoveY > MAP_EDGE_MAX)
 			return false;
-		iMoveY = wTilePierDepthWays[iPierTileCount];
+		iMoveY = wRotateCoordShiftY[iPierTileCount];
 		if (iMoveY && !IsEven(x))
 			return false;
-		iMoveX = wTilePierLengthWays[iPierTileCount];
+		iMoveX = wRotateCoordShiftX[iPierTileCount];
 		if (iMoveX && !IsEven(y))
 			return false;
 		iPierPathTileCount = 0;
@@ -1800,12 +1786,12 @@ NEWENGINE bool Simulation_GrowSpecificZone(mapcoord_t iX, mapcoord_t iY, uint32_
 		SetNewZoneOnTilePortion(x, y, iZoneType);
 		MilitaryUnsetBitsOnTilePortion(x, y, iZoneType);
 
-		bToFlip = ShouldPierTileFlip(iMoveX);
+		bToFlip = ShouldCoupledObjectTileFlip(iMoveX);
 
 		iPierLength = PIER_MAXTILES;
 		do {
-			x += wTilePierLengthWays[iPierTileCount];
-			y += wTilePierDepthWays[iPierTileCount];
+			x += wRotateCoordShiftX[iPierTileCount];
+			y += wRotateCoordShiftY[iPierTileCount];
 			Game_PlaceTile(x, y, TILE_INFRASTRUCTURE_PIER);
 			if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE)
 				XZONSetCornerMask(x, y, CORNER_ALL);

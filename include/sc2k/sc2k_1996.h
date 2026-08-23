@@ -3800,30 +3800,6 @@ GAMEOFF_ARR(WORD,	wMovButtonsUp,			0x4EAA90)
 GAMEOFF_ARR(WORD,	wMovButtonsDown,		0x4EAAA8)
 GAMEOFF_ARR(DWORD,	dwMovButtons,			0x4EAAC0)
 
-
-// Specific tile corner, length and depth cases.
-//
-// If need be these can be added to the main list.
-//
-// The commented out 'wTileStart' remote vars were previously
-// used instead of 'wTileArea', the primary difference is that
-// the 'wTileStart' cases were looking at subsequent values
-// outside of their immediate arrays (4 * wViewRotation) - looking
-// for the equivalent next value in subsequent arrays, whereas the
-// new 'wTileArea' arrays just use wViewRotation which will find the
-// next direct value which is otherwise identical to what you would
-// have got originally.
-//GAMEOFF_ARR(WORD, wTileStartBottomLeftCorner,	0x4DC4D0)
-//GAMEOFF_ARR(WORD, wTileStartBottomRightCorner,	0x4DC4D2)
-//GAMEOFF_ARR(WORD, wTileStartTopLeftCorner,	0x4DC4D4)
-//GAMEOFF_ARR(WORD, wTileStartTopRightCorner,	0x4DC4D6)
-GAMEOFF_ARR(WORD, wTileAreaBottomLeftCorner,	0x4DC4D0)
-GAMEOFF_ARR(WORD, wTileAreaBottomRightCorner,	0x4DC4D8)
-GAMEOFF_ARR(WORD, wTileAreaTopLeftCorner,	0x4DC4E0)
-GAMEOFF_ARR(WORD, wTileAreaTopRightCorner,	0x4DC4E8)
-GAMEOFF_ARR(WORD, wTilePierLengthWays,		0x4E75C0)
-GAMEOFF_ARR(WORD, wTilePierDepthWays,		0x4E75C8)
-
 // Pending classification
 
 // Pointers to map arrays
