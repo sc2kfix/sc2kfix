@@ -782,7 +782,7 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 								// Process the actual simulation tick, including calendar advance,
 								// budget updates, construction, etc. based on the in-game date
 								if (pSCDoc && pSCDoc->pSimEngine)
-									Game_Engine_SimulationProcessTick(pSCDoc->pSimEngine);
+									Simulation_ProcessTick();
 
 								// Start a disaster if we've been told to do so
 								if (wSetTriggerDisasterType)
@@ -1462,10 +1462,10 @@ std::vector<hook_function_t> stHooks_Hook_SimCalendarAdvance_After;
 
 LARGE_INTEGER SPT_uTickStart, SPT_uTickEnd, SPT_uTicksPerSecond;
 
-extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
+NEWENGINE void Simulation_ProcessTick(void) {
 	int i;
 	DWORD dwMonDay;
-	__int16 iStep, iSubStep;
+	int iStep, iSubStep;
 	DWORD dwCityProgressionRequirement;
 	BYTE iPaperVal;
 	BOOL bScenarioSuccess;
@@ -1660,8 +1660,7 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 
 			break;
 		case 23:
-			// Mode '3' also used here for "placement preview" preservation and
-			// blink mitigation.
+			// Mode '3' also used here for "placement preview" preservation and blink mitigation.
 			if (!bFrequentUpdates)
 				GameMain_Document_UpdateAllViews(pCSimcityDoc, NULL, SCD_UPDATE_VIEW_UPDATE_DOCURSOR, NULL);
 
@@ -2842,8 +2841,10 @@ void InstallMiscHooks_SC2K1996(void) {
 	// 2) The fine-grained simulation updates.
 	SafeVirtualProtect((LPVOID)0x4017B2, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4017B2, Hook_SimcityDoc_UpdateDocumentTitle);
+
+	// DEPRECATED -- now local function
 	SafeVirtualProtect((LPVOID)0x401820, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x401820, Hook_Engine_SimulationProcessTick);
+	NEWJMP((LPVOID)0x401820, Simulation_ProcessTick);
 
 	// Hook SimulationStartDisaster
 	SafeVirtualProtect((LPVOID)0x402527, 5, PAGE_EXECUTE_READWRITE);
