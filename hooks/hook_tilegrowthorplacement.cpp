@@ -1629,8 +1629,8 @@ static bool IsRunwayTypeTile(mapcoord_t x, mapcoord_t y) {
 	return (GetTileID(x, y) == TILE_INFRASTRUCTURE_RUNWAY || GetTileID(x, y) == TILE_INFRASTRUCTURE_RUNWAYCROSS) ? true : false;
 }
 
-static bool ShouldPierTileFlip(bool bMoveX) {
-	if (!bMoveX) {
+static bool ShouldPierTileFlip(mapcoord_t iMoveX) {
+	if (!iMoveX) {
 		if (!IsEven(wViewRotation))
 			return true;
 	}
