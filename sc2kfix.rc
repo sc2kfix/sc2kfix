@@ -131,7 +131,7 @@ BEGIN
     CONTROL         "1950",105,"Button",BS_AUTORADIOBUTTON,132,52,26,10
     CONTROL         "2000",106,"Button",BS_AUTORADIOBUTTON,162,52,26,10
     CONTROL         "2050",107,"Button",BS_AUTORADIOBUTTON,192,52,26,10
-    DEFPUSHBUTTON   "Done",1,102,124,21,14
+    DEFPUSHBUTTON   "Start New City",1,48,124,60,14
     CTEXT           "City Name",-1,31,7,41,8
     CTEXT           "Mayor Name",-1,31,24,41,8
     CTEXT           "Starting Year",1010,131,42,54,8,SS_NOTIFY
@@ -146,6 +146,7 @@ BEGIN
     CONTROL         "Hot",115,"Button",BS_AUTORADIOBUTTON,143,90,25,10
     CONTROL         "Random",116,"Button",BS_AUTORADIOBUTTON,173,90,36,10
     LTEXT           "",117,12,103,205,18
+    DEFPUSHBUTTON   "Regenerate Map",20,120,124,60,14
 END
 
 102 DIALOGEX 0, 0, 255, 250
