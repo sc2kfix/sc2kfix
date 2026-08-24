@@ -887,6 +887,7 @@ std::vector<hook_function_t> stHooks_Hook_OnNewCity_Before;
 static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	CSimcityView *pSCView;
 	static bool bAborting = false;
+	RECT rc;
 
 	switch (message) {
 	case WM_INITDIALOG:
@@ -1129,9 +1130,20 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 	case WM_RBUTTONDOWN:
 	case WM_RBUTTONDBLCLK:
 		SetLayeredWindowAttributes(hwndDlg, NULL, 32, LWA_ALPHA);
+
+		// Zoom while peeking if the window area is big enough to hold it (more or less) but not
+		// so big we're already zoomed in once
+		GetWindowRect(pCSimcityAppThis.m_pMainWnd->m_hWnd, &rc);
+		if ((rc.right - rc.left > 1600 && rc.bottom - rc.top > 900) &&
+			(rc.right - rc.left <= 2000 && rc.bottom - rc.top <= 1080))
+			Game_SimcityView_ScaleIn(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
 		break;
 	case WM_RBUTTONUP:
 		SetLayeredWindowAttributes(hwndDlg, NULL, 255, LWA_ALPHA);
+		GetWindowRect(pCSimcityAppThis.m_pMainWnd->m_hWnd, &rc);
+		if ((rc.right - rc.left > 1600 && rc.bottom - rc.top > 900) &&
+			(rc.right - rc.left <= 2000 && rc.bottom - rc.top <= 1080))
+			Game_SimcityView_ScaleOut(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
 		break;
 
 	case WM_COMMAND:
@@ -1152,6 +1164,12 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 				RandomizeCityTerrainVariables();
 				Game_SimcityDoc_PrepareData(pCSimcityDoc);
 				Game_SimcityView_MakeTerrain(pSCView, bCityHasOcean, bCityHasRiver, wCityTerrainSliderHills, wCityTerrainSliderWater, wCityTerrainSliderTrees);
+				// Use zoomlevel 2 if the window area is big enough to hold it
+				RECT rc;
+				GetWindowRect(pCSimcityAppThis.m_pMainWnd->m_hWnd, &rc);
+				if (rc.right - rc.left > 1920 && rc.bottom - rc.top > 1080)
+					Game_SimcityView_ScaleIn(pSCView);
+
 				Game_SimcityView_DrawHouse(pSCView);
 				RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 				break;
@@ -1228,6 +1246,12 @@ extern "C" void __stdcall L_SimcityApp_NewCity(void) {
 	wCityMode = -1;
 	Game_ShowViewControls();
 	Game_StartCleanGame();
+
+	// Use zoomlevel 2 if the window area is big enough to hold it
+	RECT rc;
+	GetWindowRect(pCSimcityAppThis.m_pMainWnd->m_hWnd, &rc);
+	if (rc.right - rc.left > 1920 && rc.bottom - rc.top > 1080)
+		Game_SimcityView_ScaleIn(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
 
 	// Display the dialog and break out back to the menu loop if it's cancelled
 	if (!DialogBoxParam(hSC2KFixModule, (LPCSTR)101, pThis->m_pMainWnd->m_hWnd, Hook_NewCityDialogProc, 0)) {
