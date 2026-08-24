@@ -55,6 +55,7 @@
 UINT mischook_debug = MISCHOOK_DEBUG;
 
 DLGPROC lpNewCityAfxProc = NULL;
+char szTempCityName[32] = { 0 };
 char szTempMayorName[MAX_LABEL_LEN + 1] = { 0 };
 
 DLGPROC lpMainDialogAfxProc = NULL;
@@ -866,9 +867,11 @@ std::vector<hook_function_t> stHooks_Hook_OnNewCity_Before;
 
 static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	CSimcityView *pSCView;
+	static bool bAborting = false;
 
 	switch (message) {
 	case WM_INITDIALOG:
+		bAborting = false;
 		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis);
 		SendMessage(GetDlgItem(hwndDlg, 119), WM_SETFONT, (WPARAM)hFontMSSansSerifRegular8, TRUE);
 
@@ -962,9 +965,12 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		SendMessage(GetDlgItem(hwndDlg, 101), EM_SETLIMITTEXT, CITY_NAME_LEN, 0);
 		SendMessage(GetDlgItem(hwndDlg, 150), EM_SETLIMITTEXT, MAX_LABEL_LEN, 0);
 
-		// Set the default mayor name.
+		// Set the default options.
+		SetDlgItemText(hwndDlg, 101, "New City");
 		SetDlgItemText(hwndDlg, 150, jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
 
+		Button_SetCheck(GetDlgItem(hwndDlg, 109), BST_CHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, 104), BST_CHECKED);
 		Button_SetCheck(GetDlgItem(hwndDlg, 108), BST_CHECKED);
 		iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
 
@@ -979,14 +985,89 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		}
 		break;
 	case WM_DESTROY:
+		if (bAborting)
+			return 0;
+
 		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis);
-		// XXX (araxestroy): there's probably a better window message to use here.
+
+		// Set the city name, defaulting to "New City" in case the player didn't enter one
+		memset(szTempCityName, 0, sizeof(szTempCityName));
+		if (!GetDlgItemText(hwndDlg, 101, szTempCityName, sizeof(szTempCityName)))
+			strcpy_s(szTempCityName, sizeof(szTempCityName), "New City");
+		GameMain_String_Cons(&pszCityName);
+		GameMain_String_OperatorSet(&pszCityName, szTempCityName);
 
 		// Set the XLAB entry for the mayor name, falling back to the default from settings.json
 		memset(szTempMayorName, 0, sizeof(szTempMayorName));
 		if (!GetDlgItemText(hwndDlg, 150, szTempMayorName, sizeof(szTempMayorName)))
 			strcpy_s(szTempMayorName, sizeof(szTempMayorName), jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
 		SetXLABEntry(0, szTempMayorName);
+
+		// Set the difficulty and starting year
+		wNationalFedRate = 3;
+
+		if (Button_GetCheck(GetDlgItem(hwndDlg, 109)) == BST_CHECKED) {
+			wCityDifficulty = GAME_DIFFICULTY_EASY;
+			dwCityFunds = 20000;
+		} else if (Button_GetCheck(GetDlgItem(hwndDlg, 110)) == BST_CHECKED) {
+			wCityDifficulty = GAME_DIFFICULTY_MEDIUM;
+			dwCityFunds = 10000;
+		} else if (Button_GetCheck(GetDlgItem(hwndDlg, 111)) == BST_CHECKED) {
+			wCityDifficulty = GAME_DIFFICULTY_HARD;
+			dwCityFunds = 10000;
+
+			// Manually "issue" a starting bond
+			wArrBondData[dwCityBonds++] = wNationalFedRate;
+			dwInterestRateSum = wNationalFedRate;
+			pBudgetArr[BUDGET_BOND].iCurrentCosts = dwCityBonds;
+			pBudgetArr[BUDGET_BOND].iCountMonth[0] = 1;
+			pBudgetArr[BUDGET_BOND].iFundingPercent = 10000 * dwInterestRateSum / dwCityBonds;
+			pBudgetArr[BUDGET_BOND].iFundMonth[0] = pBudgetArr[BUDGET_BOND].iFundingPercent;
+			pBudgetArr[BUDGET_BOND].iYearToDateCost = pBudgetArr[BUDGET_BOND].iFundingPercent * pBudgetArr[BUDGET_BOND].iCurrentCosts;
+			pBudgetArr[BUDGET_BOND].iEstimatedCost = 12 * pBudgetArr[BUDGET_BOND].iYearToDateCost;
+		}
+
+		wNationalEconomyTrend = wCityDifficulty - 1;
+
+		if (Button_GetCheck(GetDlgItem(hwndDlg, 104)) == BST_CHECKED) {
+			wCityStartYear = 1900;
+			dwNationalPopulation = 10000;
+		} else if (Button_GetCheck(GetDlgItem(hwndDlg, 105)) == BST_CHECKED) {
+			wCityStartYear = 1950;
+			dwNationalPopulation = 25000;
+		} else if (Button_GetCheck(GetDlgItem(hwndDlg, 106)) == BST_CHECKED) {
+			wCityStartYear = 2000;
+			dwNationalPopulation = 60000;
+		} else if (Button_GetCheck(GetDlgItem(hwndDlg, 107)) == BST_CHECKED) {
+			wCityStartYear = 2050;
+			dwNationalPopulation = 150000;
+		}
+
+		// TODO (araxestroy): need enums for this
+		dwMapXGRP[13][0] = 3;
+		dwMapXGRP[14][0] = dwNationalPopulation;
+
+		// Partially randomize the invention/innovation years, then update the toolbar accordingly
+		for (int i = 0; i < 17; i++) {
+			int iInventionYear = rand() % 20 + iInventionBaseYears[i];
+			wCityInventionYears[i] = wCityStartYear;
+			if (wCityStartYear < wCityStartYear)
+				wCityInventionYears[i] = 0;
+		}
+		Game_ToolMenuUpdate();
+
+		// Set the label for the ocean if we have one
+		if (bCityHasOcean) {
+			wNeighborNameIdx[0] = 0;
+			strcpy(stNeighborCities, "Ocean");
+			dwNeighborPopulation[0] = 0;
+			dwNeighborValue[0] = 0;
+			dwNeighborFame[0] = 0;
+		}
+
+		// Update the titlebar and set up the initial newspaper
+		Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
+		Game_NewspaperStoryGenerator(2, 0);
 
 		// Get the selected terrain setting (or randomize it if requested)
 		if (Button_GetCheck(GetDlgItem(hwndDlg, 108)) == BST_CHECKED)
@@ -1039,6 +1120,13 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		if (HIWORD(wParam) == BN_CLICKED) {
 			// Preview the selected terrain type
 			switch (LOWORD(wParam)) {
+			case IDOK:
+				EndDialog(hwndDlg, TRUE);
+				break;
+			case IDCANCEL:
+				bAborting = true;
+				EndDialog(hwndDlg, FALSE);
+				break;
 			case 20:
 				// Reticulate some splines
 				Game_SimcityDoc_PrepareMap();
@@ -1111,8 +1199,47 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		}
 	}
 
-	// Fall through to the original dialog procedure
-	return lpNewCityAfxProc(hwndDlg, message, wParam, lParam);
+	return 0;
+}
+
+// Local replacement for CSimcityApp::NewCity
+extern "C" void __stdcall L_SimcityApp_NewCity(void) {
+	CSimcityAppPrimary* pThis;
+	__asm mov [pThis], ecx
+	
+	// Do some checks to make sure we come out of map edit mode properly
+	pThis->dwSCAOnQuitSuspendSim = 0;
+	if (dwMapEditingMode)
+		Game_MainFrame_ToggleToolBars((CMainFrame*)pThis->m_pMainWnd, 0);
+	else if (Game_SimcityApp_CheckActiveGame(pThis) == 2) {
+		if (pThis->iSCAProgramStep != ONIDLE_STATE_INGAME) {
+			pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
+			pThis->dwSCASetNextStep = 1;
+		}
+		return;
+	}
+
+	// Start up the initial game state
+	pThis->iSCAProgramStep = ONIDLE_STATE_NEWCITY_RETURN;
+	pThis->dwSCASetNextStep = 1;
+	Game_PrepareGame();
+	wCityMode = -1;
+	Game_ShowViewControls();
+	Game_StartCleanGame();
+
+	// Display the dialog and break out back to the menu loop if it's cancelled
+	if (!DialogBoxParam(hSC2KFixModule, (LPCSTR)101, pThis->m_pMainWnd->m_hWnd, Hook_NewCityDialogProc, 0)) {
+		pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
+		pThis->dwSCASetNextStep = 1;
+		return;
+	}
+
+	pThis->iSCAProgramStep = ONIDLE_STATE_INGAME;
+	pThis->dwSCASetNextStep = 1;
+	Game_SimcityApp_AdjustMenus(pThis, GAME_MODE_CITY);
+	dwMapEditingMode = 0;
+	pThis->dwSCAGameStarted = 1;
+	pThis->dwSCAGenerateFirstTimeMap = 0;
 }
 
 // Function to resize the main menu dialog to add the "update available" notice
@@ -2823,6 +2950,10 @@ void InstallMiscHooks_SC2K1996(void) {
 	// Hook into the StartCleanGame function.
 	SafeVirtualProtect((LPVOID)0x401F05, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401F05, Hook_StartCleanGame);
+	
+	// Hook replacing CSimcityApp::NewCity
+	SafeVirtualProtect((LPVOID)0x40144C, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x40144C, L_SimcityApp_NewCity);
 
 	InstallDrawingHooks_SC2K1996();
 
