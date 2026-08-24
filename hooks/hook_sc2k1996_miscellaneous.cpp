@@ -874,6 +874,7 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		bAborting = false;
 		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis);
 		SendMessage(GetDlgItem(hwndDlg, 119), WM_SETFONT, (WPARAM)hFontMSSansSerifRegular8, TRUE);
+		SetFocus(GetDlgItem(hwndDlg, 1));
 
 		// Set WS_EX_LAYERED on our window object, since we need that for transparency and can't
 		// do that in the MFC dialog creation function
