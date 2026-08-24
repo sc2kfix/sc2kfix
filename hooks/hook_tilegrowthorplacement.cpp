@@ -1223,7 +1223,7 @@ static bool Simulation_DoBudgetBridgeCheck(CSimcityView *pSCView, mapcoord_t iX,
 			//ConsoleLog(LOG_DEBUG, "DBG: SimulationGrowthTick(%d, %d) - Bridge. Weather Vulnerable\n", iStep, iSubStep);
 			Game_CenterOnTileCoords(iX, iY);
 			Game_SimcityView_Demolish(pSCView, iX, iY, 1);
-			Game_NewspaperStoryGenerator(39, 0);
+			Game_NewspaperStoryGenerator(NEWSPAPER_TYPE_BRIDGE_COLLAPSE, 0);
 			Simulation_DoUpdateMicrosimGrowthTick(iX, iY, iCurrentTileID);
 		}
 		return true;

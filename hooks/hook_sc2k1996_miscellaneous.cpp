@@ -1043,9 +1043,8 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 			dwNationalPopulation = 150000;
 		}
 
-		// TODO (araxestroy): need enums for this
-		dwMapXGRP[13][0] = 3;
-		dwMapXGRP[14][0] = dwNationalPopulation;
+		dwMapXGRP[GRP_GNP][0] = 3;
+		dwMapXGRP[GRP_NATIONALPOP][0] = dwNationalPopulation;
 
 		// Partially randomize the invention/innovation years, then update the toolbar accordingly
 		for (int i = 0; i < 17; i++) {
@@ -1067,7 +1066,7 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 
 		// Update the titlebar and set up the initial newspaper
 		Game_SimcityDoc_UpdateDocumentTitle(pCSimcityDoc);
-		Game_NewspaperStoryGenerator(2, 0);
+		Game_NewspaperStoryGenerator(NEWSPAPER_TYPE_FOUNDING, 0);
 
 		// Get the selected terrain setting (or randomize it if requested)
 		if (Button_GetCheck(GetDlgItem(hwndDlg, 108)) == BST_CHECKED)
@@ -1752,7 +1751,7 @@ NEWENGINE void Simulation_ProcessTick(void) {
 					Game_SimcityApp_SetGameCursor(pSCApp, 24, 0);
 					// There are only 7 (0-6) progression levels, cast the warning away.
 					iPaperVal = (BYTE)wCityProgression++;
-					Game_NewspaperStoryGenerator(3, iPaperVal);
+					Game_NewspaperStoryGenerator(NEWSPAPER_TYPE_GROWTH, iPaperVal);
 					Game_SimcityApp_AdjustNewspaperMenu(pSCApp);
 					if (wCityProgression >= 4) {
 						if (wCityProgression == 4)
