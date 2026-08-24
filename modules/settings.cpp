@@ -137,6 +137,8 @@ void DefaultSettingsSC2KFixCore(json::JSON& jsonSettings) {
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_LEGACYCTYTRNCSM] = DEF_FIX_QOL_LEGACYCTYTRNCSM;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC] = DEF_FIX_QOL_TERRAINCOSMETIC;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_SAVECITYBK] = DEF_FIX_QOL_SC2K_SAVECITYBK;
+	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_NEWCITYVARIETY] = DEF_FIX_QOL_NEWCITYVARIETY;
+
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_FIXTILMSK] = DEF_FIX_QOL_SC2K_FIXTILMSK;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SCURK_FIXTILMSK] = DEF_FIX_QOL_SCURK_FIXTILMSK;
 	jsonSettings[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_HANGARCNV] = DEF_FIX_QOL_SC2K_HANGARCNV;
@@ -545,11 +547,6 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 			" - Bodies of water will partially freeze during snowy weather and blizzards.");
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_DARK_UNDGRND),
 			"When enabled the underground layer background will be dark.");
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS),
-			"Certain versions of SimCity 2000 had higher quality sounds than the Windows 95 versions. "
-			"This setting controls whether or not SimCity 2000 plays higher quality versions of various sounds for which said higher quality versions exist.\n\n"
-
-			"Enabling or disabling this setting takes effect after restarting the game.");
 
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_LEGACYCTYTRNCSM),
 			"The selected 'Forced Terrain Mode' will only apply to cities that were not created with sc2kfix r11a (or later) loaded.");
@@ -562,6 +559,8 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_BUTTON_CONFTILECONV),
 			"Configure which 'fixed' tiles are used when loading the default tileset.\n\n"
 			"Choose which 'Hangar1' type to use as well when it comes to both the 'fixed' tiles and also converting the default 'ORIGINAL' set from the DOS and Macintosh versions of the game.");
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_NEWCITY_TERRAIN),
+			"Enabling this setting allows the Start New City dialog to use a wider variety of settings when generating terrain for the first time.");
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SAVECITY_BACKUPS),
 			"When enabled a backup copy of the unmodified city file is created with the suffix '.bak.datetimestampnum'.");
 
@@ -580,9 +579,9 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES], IDC_SETTINGS_CHECK_REFRESH_RATE);
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_WEATHEREFFECTS], IDC_SETTINGS_CHECK_WEATHER_EFFECTS);
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND], IDC_SETTINGS_CHECK_DARK_UNDGRND);
-		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_LEGACYCTYTRNCSM], IDC_SETTINGS_CHECK_LEGACYCTYTRNCSM);
 
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_NEWCITYVARIETY], IDC_SETTINGS_CHECK_NEWCITY_TERRAIN);
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_SAVECITYBK], IDC_SETTINGS_CHECK_SAVECITY_BACKUPS);
 
 		return TRUE;
@@ -599,9 +598,9 @@ static BOOL CALLBACK SettingsDialogGameplayTabProc(HWND hwndDlg, UINT message, W
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_FREQUPDATES], IDC_SETTINGS_CHECK_REFRESH_RATE);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_WEATHEREFFECTS], IDC_SETTINGS_CHECK_WEATHER_EFFECTS);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_DARKUNDGRND], IDC_SETTINGS_CHECK_DARK_UNDGRND);
-		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_LEGACYCTYTRNCSM], IDC_SETTINGS_CHECK_LEGACYCTYTRNCSM);
 
+		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_NEWCITYVARIETY], IDC_SETTINGS_CHECK_NEWCITY_TERRAIN);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_SC2K_SAVECITYBK], IDC_SETTINGS_CHECK_SAVECITY_BACKUPS);
 
 		DestroyStoredTooltips(storedToolTips, hwndDlg);
@@ -676,6 +675,12 @@ static BOOL CALLBACK SettingsDialogAudioTabProc(HWND hwndDlg, UINT message, WPAR
 			"By default, SimCity 2000 selects \"random\" music by playing the next track in a looping playlist of songs. "
 			"This setting controls whether or not to shuffle the playlist when the game starts and when the end of the playlist is reached.");
 
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS),
+			"Certain versions of SimCity 2000 had higher quality sounds than the Windows 95 versions. "
+			"This setting controls whether or not SimCity 2000 plays higher quality versions of various sounds for which said higher quality versions exist.\n\n"
+
+			"Enabling or disabling this setting takes effect after restarting the game.");
+
 		// Set fields based on the working JSON
 		SendMessage(GetDlgItem(hwndDlg, IDC_SLIDER_VOLUME_MASTER), TBM_SETPOS, TRUE, (int)(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MASTERVOLUME].ToFloat() * 10));
 		SendMessage(GetDlgItem(hwndDlg, IDC_SLIDER_VOLUME_MASTER), TBM_SETTICFREQ, 1, 0);
@@ -694,6 +699,7 @@ static BOOL CALLBACK SettingsDialogAudioTabProc(HWND hwndDlg, UINT message, WPAR
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND], IDC_SETTINGS_CHECK_BKGDMUSIC);
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SHUFFLEMUSIC], IDC_SETTINGS_CHECK_SHUFFLE_MUSIC);
 		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_ALWAYSPLAYMUSIC], IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC);
+		SET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
 
 		return TRUE;
 
@@ -708,6 +714,7 @@ static BOOL CALLBACK SettingsDialogAudioTabProc(HWND hwndDlg, UINT message, WPAR
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND], IDC_SETTINGS_CHECK_BKGDMUSIC);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SHUFFLEMUSIC], IDC_SETTINGS_CHECK_SHUFFLE_MUSIC);
 		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_ALWAYSPLAYMUSIC], IDC_SETTINGS_CHECK_ALWAYSPLAYMUSIC);
+		GET_CHECKBOX(jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE], IDC_SETTINGS_CHECK_SOUND_REPLACEMENTS);
 
 		DestroyStoredTooltips(storedToolTips, hwndDlg);
 

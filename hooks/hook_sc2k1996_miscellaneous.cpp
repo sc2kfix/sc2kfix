@@ -855,6 +855,25 @@ BAIL:
 	return;
 }
 
+static void RandomizeCityTerrainVariables(void) {
+	if (GetAsyncKeyState(VK_SHIFT)) {
+		// Fully random slider values
+		bCityHasRiver = rand() & 1;
+		bCityHasOcean = rand() & 1;
+		wCityTerrainSliderHills = rand() % 48;
+		wCityTerrainSliderWater = rand() % 48;
+		wCityTerrainSliderTrees = rand() % 48;
+	}
+	else {
+		// Weighted towards more usable landmass, but more varied than default
+		bCityHasRiver = (rand() & 3) == 3 ? 0 : 1;		// 75% chance of having a river
+		bCityHasOcean = rand() & 1;						// 50% chance of having an ocean
+		wCityTerrainSliderHills = rand() % 25 + 3;		// 3-27 out of 47
+		wCityTerrainSliderWater = rand() % 32 + 1;		// 1-32 out of 47
+		wCityTerrainSliderTrees = rand() % 36 + 7;		// 7-42 out of 47
+	}
+}
+
 // Function prototype: HOOKCB void Hook_OnNewCity_Before(void)
 // Cannot be ignored.
 // SPECIAL NOTE: I cannot for the life of me remember why I added this. It will almost certainly
@@ -885,7 +904,7 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 			"Finalizes your city settings and starts the game.");
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 20),
 			"Generates a new map for your city. A larger variety of terrain is available than in the vanilla SimCity 2000 start game dialog.\n\n"
-			"Hold Shift while clicking this to increase the depth of the splines being reticulated.\n");
+			"Hold Shift while clicking this to increase the depth of the splines being reticulated.");
 
 		// Difficulty selection tooltips
 		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 109),
@@ -1127,24 +1146,7 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 			case 20:
 				// Reticulate some splines
 				Game_SimcityDoc_PrepareMap();
-
-				if (GetAsyncKeyState(VK_SHIFT)) {
-					// Fully random slider values
-					bCityHasRiver = rand() & 1;
-					bCityHasOcean = rand() & 1;
-					wCityTerrainSliderHills = rand() % 48;
-					wCityTerrainSliderWater = rand() % 48;
-					wCityTerrainSliderTrees = rand() % 48;
-				}
-				else {
-					// Weighted towards more usable landmass, but more varied than default
-					bCityHasRiver = (rand() & 3) == 3 ? 0 : 1;		// 75% chance of having a river
-					bCityHasOcean = rand() & 1;						// 50% chance of having an ocean
-					wCityTerrainSliderHills = rand() % 25 + 3;		// 3-27 out of 47
-					wCityTerrainSliderWater = rand() % 32 + 1;		// 1-32 out of 47
-					wCityTerrainSliderTrees = rand() % 36 + 7;		// 7-42 out of 47
-				}
-
+				RandomizeCityTerrainVariables();
 				Game_SimcityDoc_PrepareData(pCSimcityDoc);
 				Game_SimcityView_MakeTerrain(pSCView, bCityHasOcean, bCityHasRiver, wCityTerrainSliderHills, wCityTerrainSliderWater, wCityTerrainSliderTrees);
 				Game_SimcityView_DrawHouse(pSCView);
@@ -1384,8 +1386,13 @@ extern "C" void __stdcall Hook_PrepareGame(void) {
 	switch (pSCApp->iSCAProgramStep) {
 		case ONIDLE_STATE_NEWCITY_RETURN:
 			Game_SimcityDoc_NewGame(pCSimcityDoc);
-			if (!dwMapEditingMode)
+			if (!dwMapEditingMode) {
+				// Randomize the terrain variation slightly if the setting for that is set. Otherwise, use the
+				// defaults.
+				if (jsonSettingsCoreWorkingCopy[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_NEWCITYVARIETY].ToBool())
+					RandomizeCityTerrainVariables();
 				Game_SimcityView_MakeTerrain(pSCView, bCityHasOcean, bCityHasRiver, wCityTerrainSliderHills, wCityTerrainSliderWater, wCityTerrainSliderTrees);
+			}
 			break;
 		case ONIDLE_STATE_EDITNEWMAP_RETURN:
 			if (!pSCApp->dwSCAGenerateFirstTimeMap) {
