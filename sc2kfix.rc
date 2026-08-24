@@ -148,7 +148,7 @@ BEGIN
     LTEXT           "",117,12,103,205,18
     DEFPUSHBUTTON   "Regenerate Map",20,120,123,60,14
     CTEXT           "TIP: Hold the right mouse button on the dialog to peek at the map!",119,13,137,204,8
-    PUSHBUTTON      "X",21,220,1,8,10,NOT WS_VISIBLE | WS_DISABLED
+    PUSHBUTTON      "X",2,220,1,8,10
 END
 
 102 DIALOGEX 0, 0, 255, 250
