@@ -355,15 +355,15 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,32,280,10
     CONTROL         " Display seasonal and weather effects (Default: on)",IDC_SETTINGS_CHECK_WEATHER_EFFECTS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,139,280,10
-    CONTROL         "Only apply 'Forced Terrain Mode' on an old city/scenario (Default: on)",IDC_SETTINGS_CHECK_LEGACYCTYTRNCSM,
+    CONTROL         " Only apply 'Forced Terrain Mode' on an old city/scenario (Default: on)",IDC_SETTINGS_CHECK_LEGACYCTYTRNCSM,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,168,280,10
     LTEXT           "Forced Terrain Mode",IDC_STATIC,29,187,68,10
     COMBOBOX        IDC_SETTINGS_COMBO_TERRAIN_FORCEDMODE,103,184,100,122,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Tile Conversion/Defaults",IDC_SETTINGS_BUTTON_CONFTILECONV,103,202,100,14
     GROUPBOX        "Miscellaneous Settings",IDC_STATIC,6,228,294,46
-    CONTROL         "Enable city backups on save (Default: on)",IDC_SETTINGS_CHECK_SAVECITY_BACKUPS,
+    CONTROL         " Enable city backups on save (Default: on)",IDC_SETTINGS_CHECK_SAVECITY_BACKUPS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,256,281,10
-    CONTROL         "Use more varied terrain generation in the Start New City dialog (Default: on)",IDC_SETTINGS_CHECK_NEWCITY_TERRAIN,
+    CONTROL         " Use more varied terrain generation in the Start New City dialog (Default: on)",IDC_SETTINGS_CHECK_NEWCITY_TERRAIN,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,241,281,10
 END
 
