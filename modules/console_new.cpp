@@ -1292,7 +1292,13 @@ DWORD WINAPI NewConsoleThread(LPVOID lpParameter) {
 		bDoneQuestionOut = false;
 		while (!breakout) {
 			int c = _getch();
+			int iScanCode = 0;
 			switch (c) {
+			case 0xE0:
+				// Trap and ignore extended scancodes for now
+				// TODO (araxestroy): actually implement a proper editable command buffer
+				iScanCode = _getch();
+				break;
 			case CTRL('C'):
 				printf("\n");
 				breakout = BREAKOUT_INTERRUPT;
