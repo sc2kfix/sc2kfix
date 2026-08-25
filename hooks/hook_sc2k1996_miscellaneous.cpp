@@ -58,6 +58,11 @@ DLGPROC lpMainDialogAfxProc = NULL;
 HWND hwndMainDialog_SC2K1996 = NULL;
 BOOL bMainDialogUpdateState = FALSE;
 
+// Used for newspaper testing commands
+extern bool bForceNewspaperDisplay;
+extern int iForceNewspaperArg0;
+extern int iForceNewspaperArg1;
+
 // Override some strings that have egregiously bad grammar/capitalization.
 // Maxis fail English? That's unpossible!
 extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMax) {
@@ -1702,6 +1707,32 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 
 	// Bugfix: recalculate city valuation every day.
 	Game_RecalculateCityValue();
+
+	// Force a newspaper if requested (used in console commands)
+	if (bForceNewspaperDisplay) {
+		// Build the newspaper (also invoking it if it's type 2-5 or 36)
+		SafeVirtualProtect((LPVOID)0x47B69C, 1, PAGE_EXECUTE_READWRITE);
+		Game_NewspaperStoryGenerator(iForceNewspaperArg0, iForceNewspaperArg1);
+
+		switch (iForceNewspaperArg0) {
+		case 2:			// founding
+		case 3:			// progression		arg1 = progression level
+		case 4:			// invention		arg1 = invention type
+		case 5:			// innovation		arg1 = innovation type
+		case 36:		// power plant EOL	arg1 = power plant type
+			break;
+		default:
+			// Manually invoke the newspaper as if it's a subscription issue
+			Game_NewspaperDialog_Construct(&newsDialog, NULL);
+			newsDialog.dwNDPaperChoice = wNewspaperChoice;
+			Game_GameDialog_DoModal(&newsDialog);
+			Game_NewspaperDialog_Destruct(&newsDialog);
+			break;
+		}
+
+		// Unset the force options
+		bForceNewspaperDisplay = false;
+	}
 
 	// Advance the simulation for the current SimCalendar day
 	switch (dwMonDay) {
