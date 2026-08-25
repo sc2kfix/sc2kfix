@@ -1098,6 +1098,45 @@ bool ConsoleCommandShowMods(std::vector<std::string> args, int iBreakoutState, i
 	return true;
 }
 
+bool bForceNewspaperDisplay = false;
+int iForceNewspaperArg0 = 0;
+int iForceNewspaperArg1 = 0;
+
+bool ConsoleCommandShowNewspaper(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	if (dwDetectedVersion != VERSION_SC2K_1996) {
+		printf_yellow("Command only available when attached to 1996 Special Edition.\n");
+		return true;
+	}
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap(
+			{
+				{"<arg0> <arg1>", "Arguments to pass to NewspaperStoryGenerator"},
+			});
+		bConsoleKeepCommandBuffer = true;
+		return true;
+	}
+
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+
+	// Arguments are required for this command
+	if (args.size() != 2) {
+		bConsoleKeepCommandBuffer = true;
+		return false;
+	}
+
+	if (!sscanf_s(args[0].c_str(), "%u", &iForceNewspaperArg0))
+		return false;
+
+	if (!sscanf_s(args[1].c_str(), "%u", &iForceNewspaperArg1))
+		return false;
+
+	// Setting this will force a newspaper to display on the next game tick
+	bForceNewspaperDisplay = true;
+
+	return true;
+}
+
 bool ConsoleCommandShowDebug(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
 	// No arguments allowed
 	if (iBreakoutState == BREAKOUT_QUESTION) {
@@ -1260,6 +1299,7 @@ void NewConsoleInitializeCommands(console::CommandTree& treeCommands) {
 	treeCommands["show"]["memory"]["double"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowMemoryDouble, "Display double precision floating point elements");
 	treeCommands["show"]["microsim"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowMicrosim, "Show microsim data");
 	treeCommands["show"]["mods"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowMods, "Show loaded mods");
+	treeCommands["show"]["newspaper"] = ConsoleCommand(COMMAND_TYPE_UNDOCUMENTED, ConsoleCommandShowNewspaper, "Display a newspaper");
 	treeCommands["show"]["settings"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Show settings info");
 	treeCommands["show"]["settings"]["json"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowSettingsJson, "Dump JSON settings structure");
 	treeCommands["show"]["version"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandShowVersion, "Show sc2kfix and library versions");
