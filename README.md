@@ -2,7 +2,9 @@
 ![A GIF of SimCity 2000's palette animations in action, with the sc2kfix logo overlaid on top of it.](https://sc2kfix.net/images/sc2kfix-header-animated.gif)
 
 ## What does this do?
-sc2kfix is a plugin that patches the Special Edition release of SimCity 2000 for Windows 95 to work properly on modern Windows systems (Windows 7-11 and Wine/Proton) as well as fixing several original game bugs, adding quality of life features, restoring missing game content, and optionally enabling new gameplay features. While the game itself was always capable of running at high resolutions, oversights in the game's programming and techniques designed for use with 256-colour SVGA cards common in the mid 1990s cause problems with animations on truecolour displays. There are also a number of other bugs in the game ranging from minor rendering issues to major gameplay-damaging bugs that sc2kfix fixes.
+sc2kfix is a plugin that patches the Special Edition release of SimCity 2000 for Windows 95 to work properly on modern Windows systems (Windows 7-11 and Wine/Proton) as well as fixing several original game bugs, adding quality of life features, restoring missing game content, and optionally enabling new gameplay features. It also serves as a reverse engineering and reimplementation project for the SimCity 2000 engine, with significant progress having been made on both fronts.
+
+While the game itself was always capable of running at high resolutions, oversights in the game's programming and techniques designed for use with 256-colour SVGA cards common in the mid 1990s cause problems with animations on truecolour displays. There are also a number of other bugs in the game ranging from minor rendering issues to major gameplay-damaging bugs that sc2kfix fixes.
 
 **For the most up-to-date information on how to install and configure sc2kfix, as well as a full list of features, check out the plugin user guide on the sc2kfix website: https://sc2kfix.net**
 
@@ -17,12 +19,13 @@ The following game bugs are patched by this DLL:
 * SimCity 2000 now properly launches when started from Steam or other game launchers.
 * Music that was included in the game but was never added to the random playlist has been restored.
 * SCURK now works properly on Windows 11 24H2 and newer, as well as no longer having issues with tile alignment, palette conversion, and transparency, among myriad other optimizations being implemented.
-* Military bases now grow properly instead of staying as empty, unusable military zones, and the intended growth of army and naval bases has been restored, and the military will make multiple attempts at finding a location for a base instead of permanently giving up after the first try.
+* Military bases now grow properly instead of staying as empty, unusable military zones, the intended growth of army and naval bases has been restored, and the military will make multiple attempts at finding a location for a base instead of permanently giving up after the first try.
 * Rail and highway neighbor connections now work after a saved city is loaded.
 * Sign rendering has been fixed to use the originally intended font.
 * City and mayor names are now properly preserved when saving and loading cities.
 * The "Add All Inventions" option in the game's hidden debug menu has been fixed.
 * City infrastructure valuation and city center calculations have been fixed.
+* The bond system has been fixed to properly calculate city credit ratings in conjunction with the above valuation fixes.
 * Many miscellaneous display bugs have been fixed.
 
 ### New features
@@ -31,11 +34,15 @@ sc2kfix adds the following quality of life and optional gameplay features to Sim
 * A detailed settings dialog for configuring sc2kfix's features has been added to the main menu and the in-game Options menu, and the game's native settings are no longer stored in the registry but rather in a portable JSON-based settings file.
 * City growth is now displayed in real-time instead of in batches, giving you near-instant feedback on the development of your city.
 * Environmental effects based on simulation conditions such as seasons and extreme weather have been implemented when real-time city rendering is enabled. This has a bit of a performance cost at African Swallow game speed on extremely large cities and can be turned off separately in the settings.
-* The New City dialog has been updated to allow you to specify a different mayor name when starting a city, as well as with detailed tooltips for the other game settings.
-* Higher quality copies of the transit, pipe, and power construction sounds, as well as the Reticulating Splines soundbite have been ported from other versions of SimCity 2000.
+* A setting has been added to enable "dark mode" for the underground view to save your retinas.
+* The New City dialog has been reworked to allow you to specify a different mayor name when starting a city, as well as with detailed tooltips for the other game settings and the ability to "peek" at the map before starting. The New City screen will also generate more varied terrain, and a button has been added to randomly re-generate the map as many times as desired.
+* Terrain colour variations inspired by SimCity 3000 have been added and can be selected on the New City screen.
+* Higher quality copies of the transit, pipe, and power construction sounds, as well as the Reticulating Splines soundbite and bulldozer sound have been ported from other versions of SimCity 2000.
 * The full in-game date is now shown in the title bar when real-time city rendering is enabled.
 * The floating status widget from the Macintosh and DOS versions of the game has been reimplemented and can be enabled in the settings dialog.
 * The game's sound engine has been reimplemented with multithreading and SDL3, allowing support for music and sound volume settings, high-quality MIDI playback via FluidSynth, MP3 playback, music playback in the background, better support for Linux, and near-instant music load times on Windows 10 and 11.
+* Save files now keep track of loaded tilesets in their originally loaded order, and sc2kfix automatically will restore them when loading saves.
+* Backup copies of saves are automatically created when overwriting a previous saved game.
 * An advanced query dialog that shows game state information for tiles has been implemented and can be used by holding the Alt key when querying a tile.
 * The Lua programming language has been integrated into the sc2kfix plugin to allow for Lua scripts to be written that can interact with the SimCity 2000 game engine.
 * The middle mouse button now acts as a shortcut for the centering tool by default, similar to how the right mouse button works in the DOS version of the game.
