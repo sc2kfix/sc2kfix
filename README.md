@@ -72,7 +72,8 @@ sc2kfix includes the miniz single-file zlib-compatible DEFLATE/ZIP library (http
 ## How do I use it?
 1. If you are installing the game from scratch, copy the SC2K folder from your CD (under the WIN95 folder in the Special Edition CD) to your hard drive.
    * Make sure to copy the SC2K folder somewhere writable, as the game stores its saves in a subfolder of that directory.
-2. [Download the latest release](https://github.com/araxestroy/sc2kfix/releases) or build it from source. The whole plugin is a single file called `winmm.dll`.
+2. [Download the latest release](https://github.com/sc2kfix/sc2kfix/releases) or build it from source. The whole plugin is a single file called `winmm.dll`.
+   * If you want to test bleeding-edge improvements and are logged into GitHub, each commit to the repository results in an automatic build of the plugin that can be downloaded.
 3. Copy the `winmm.dll` file and all the additional DLL files alongside it to your SC2K folder. They should end up in the same folder as your `simcity.exe` executable.
    * If you're running the game on Wine/Proton, you'll need to set a DLL override for `simcity.exe` to use "native, then builtin" load order for the `winmm` library, otherwise Wine/Proton will not load the local `winmm.dll`.
    * If you have any mods to install, place them in a subdirectory named `mods` in the same folder as `simcity.exe`.
