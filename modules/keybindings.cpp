@@ -1,5 +1,5 @@
 // sc2kfix modules/keybindings.cpp: Key to Action bindings and configuration dialogues.
-// (c) 2025 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
 #include <windows.h>

@@ -1348,23 +1348,33 @@ extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lp
 }
 #pragma warning(default : 6387)
 
-// Hook for the default window procedure to allow mousewheel and MOUSE3 bindings to function
+// Hook for the default window procedure to allow additional mouse bindings to function
 extern "C" LRESULT __stdcall Hook_DefWindowProcA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
-	CSimcityAppPrimary *pSCApp;
-	CSimcityView *pSCView;
+	CSimcityAppPrimary* pSCApp;
+	CSimcityView* pSCView;
 
 	pSCApp = &pCSimcityAppThis;
 	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
-	if (Msg == WM_MBUTTONDOWN) {
+
+	// Handle additional mouse buttons. Windows usually sends WM_MBUTTONDOWN for MOUSE3/middle
+	// mouse button and WM_XBUTTONDOWN for MOUSE4/MOUSE5, but both can have all different mouse
+	// button flags in them.
+	if (Msg == WM_MBUTTONDOWN || Msg == WM_XBUTTONDOWN) {
 		if (pSCView && hWnd == pSCView->m_hWnd) {
 			POINT pt;
 
 			pt.x = GET_X_LPARAM(lParam);
 			pt.y = GET_Y_LPARAM(lParam);
-			GetKeyButtonBinding_SC2K1996(B_KEY_MOUSE_MBUTTON, FALSE, &pt);
+			if (wParam && MK_MBUTTON)
+				GetKeyButtonBinding_SC2K1996(B_KEY_MOUSE_MBUTTON, FALSE, &pt);
+			else if (wParam && MK_XBUTTON1)
+				GetKeyButtonBinding_SC2K1996(B_KEY_MOUSE_MOUSE4BUTTON, FALSE, &pt);
+			else if (wParam && MK_XBUTTON2)
+				GetKeyButtonBinding_SC2K1996(B_KEY_MOUSE_MOUSE5BUTTON, FALSE, &pt);
 			return TRUE;
 		}
 	}
+	// Handle mousewheel keybinds.
 	else if (Msg == WM_MOUSEWHEEL) {
 		if (pSCView && hWnd == pSCView->m_hWnd) {
 			int nDelta;
@@ -1376,6 +1386,7 @@ extern "C" LRESULT __stdcall Hook_DefWindowProcA(HWND hWnd, UINT Msg, WPARAM wPa
 				GetKeyBinding_SC2K1996(B_KEY_MOUSE_WHEELUP, FALSE);
 		}
 	}
+
 	return DefWindowProcA(hWnd, Msg, wParam, lParam);
 }
 
