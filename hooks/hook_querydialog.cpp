@@ -211,7 +211,7 @@ BOOL CALLBACK AdvancedQueryDialogProc(HWND hwndDlg, UINT message, WPARAM wParam,
 		// Pollution
 		{
 			BYTE bPollutionData = GetXPLTByteDataWithNormalCoordinates(iTileX, iTileY);
-			strTileInfo += string_format("%s (XPLT: %u / 0x%02X)\n", GetLowHighScale(bPollutionData), bPollutionData, bPollutionData);
+			strTileInfo += string_format("%s (XPLT: %u / 0x%02X)\n\n", GetLowHighScale(bPollutionData), bPollutionData, bPollutionData);
 		}
 
 		// XTXT
