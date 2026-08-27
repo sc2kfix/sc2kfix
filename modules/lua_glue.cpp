@@ -51,14 +51,50 @@ void LuaReport(lua_State* L, int iStatus) {
 	}
 }
 
-int LuaGlueCall_ConsoleLog(lua_State* L) {
+static int LuaGlueCall_ConsoleLog(lua_State* L) {
 	int iLogLevel = luaL_checkinteger(L, 1);
 	const char* szFormattedMessage = luaL_checkstring(L, 2);
 	ConsoleLog(iLogLevel, "MODS: (%s) %s", LuaGetModName(L), szFormattedMessage);
 	return 0;
 }
 
-int LuaGlueCall_ReadDword(lua_State* L) {
+static int LuaGlueCall_ReadCString(lua_State* L) {
+	DWORD dwAddress = luaL_checkinteger(L, 1);
+	__try {
+		lua_pushstring(L, (const char*)dwAddress);
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER) {
+		ConsoleLog(LOG_ERROR, "CORE: Segmentation fault caught in sc2k.read_string(0x%08X) call from Lua mod \"%s\".\n", dwAddress, LuaGetModName(L));
+		luaL_error(L, "sc2kfix caught segmentation fault");
+	}
+	return 1;
+}
+
+static int LuaGlueCall_ReadDouble(lua_State* L) {
+	DWORD dwAddress = luaL_checkinteger(L, 1);
+	__try {
+		lua_pushnumber(L, *(double*)dwAddress);
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER) {
+		ConsoleLog(LOG_ERROR, "CORE: Segmentation fault caught in sc2k.read_double(0x%08X) call from Lua mod \"%s\".\n", dwAddress, LuaGetModName(L));
+		luaL_error(L, "sc2kfix caught segmentation fault");
+	}
+	return 1;
+}
+
+static int LuaGlueCall_ReadFloat(lua_State* L) {
+	DWORD dwAddress = luaL_checkinteger(L, 1);
+	__try {
+		lua_pushnumber(L, *(float*)dwAddress);
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER) {
+		ConsoleLog(LOG_ERROR, "CORE: Segmentation fault caught in sc2k.read_float(0x%08X) call from Lua mod \"%s\".\n", dwAddress, LuaGetModName(L));
+		luaL_error(L, "sc2kfix caught segmentation fault");
+	}
+	return 1;
+}
+
+static int LuaGlueCall_ReadDword(lua_State* L) {
 	DWORD dwAddress = luaL_checkinteger(L, 1);
 	__try {
 		lua_pushinteger(L, *(DWORD*)dwAddress);
@@ -70,7 +106,7 @@ int LuaGlueCall_ReadDword(lua_State* L) {
 	return 1;
 }
 
-int LuaGlueCall_ReadWord(lua_State* L) {
+static int LuaGlueCall_ReadWord(lua_State* L) {
 	DWORD dwAddress = luaL_checkinteger(L, 1);
 	__try {
 		lua_pushinteger(L, *(WORD*)dwAddress);
@@ -82,7 +118,7 @@ int LuaGlueCall_ReadWord(lua_State* L) {
 	return 1;
 }
 
-int LuaGlueCall_ReadByte(lua_State* L) {
+static int LuaGlueCall_ReadByte(lua_State* L) {
 	DWORD dwAddress = luaL_checkinteger(L, 1);
 	__try {
 		lua_pushinteger(L, *(BYTE*)dwAddress);
@@ -94,7 +130,35 @@ int LuaGlueCall_ReadByte(lua_State* L) {
 	return 1;
 }
 
-int LuaGlueCall_WriteDword(lua_State* L) {
+static int LuaGlueCall_WriteDouble(lua_State* L) {
+	DWORD dwAddress = luaL_checkinteger(L, 1);
+	lua_Number fData = luaL_checknumber(L, 2);
+	__try {
+		lua_pushinteger(L, *(DWORD*)dwAddress);
+		*(double*)dwAddress = (double)fData;
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER) {
+		ConsoleLog(LOG_ERROR, "CORE: Segmentation fault caught in sc2k.write_double(0x%08X, %f) call from Lua mod \"%s\".\n", dwAddress, fData, LuaGetModName(L));
+		luaL_error(L, "sc2kfix caught segmentation fault");
+	}
+	return 1;
+}
+
+static int LuaGlueCall_WriteFloat(lua_State* L) {
+	DWORD dwAddress = luaL_checkinteger(L, 1);
+	lua_Number fData = luaL_checknumber(L, 2);
+	__try {
+		lua_pushinteger(L, *(DWORD*)dwAddress);
+		*(float*)dwAddress = (float)fData;
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER) {
+		ConsoleLog(LOG_ERROR, "CORE: Segmentation fault caught in sc2k.write_float(0x%08X, %f) call from Lua mod \"%s\".\n", dwAddress, fData, LuaGetModName(L));
+		luaL_error(L, "sc2kfix caught segmentation fault");
+	}
+	return 1;
+}
+
+static int LuaGlueCall_WriteDword(lua_State* L) {
 	DWORD dwAddress = luaL_checkinteger(L, 1);
 	DWORD dwData = luaL_checkinteger(L, 2) & 0xFFFFFFFF;
 	__try {
@@ -108,7 +172,7 @@ int LuaGlueCall_WriteDword(lua_State* L) {
 	return 1;
 }
 
-int LuaGlueCall_WriteWord(lua_State* L) {
+static int LuaGlueCall_WriteWord(lua_State* L) {
 	DWORD dwAddress = luaL_checkinteger(L, 1);
 	WORD wData = luaL_checkinteger(L, 2) & 0xFFFF;
 	__try {
@@ -122,7 +186,7 @@ int LuaGlueCall_WriteWord(lua_State* L) {
 	return 1;
 }
 
-int LuaGlueCall_WriteByte(lua_State* L) {
+static int LuaGlueCall_WriteByte(lua_State* L) {
 	DWORD dwAddress = luaL_checkinteger(L, 1);
 	BYTE bData = luaL_checkinteger(L, 2) & 0xFF;
 	__try {
@@ -211,9 +275,14 @@ void LuaGlueSetupState(lua_State* L) {
 	luaS_setCFuncEntry(L, "__ConsoleLog", LuaGlueCall_ConsoleLog);
 
 	lua_getglobal(L, "sc2k");
+	luaS_setCFuncEntry(L, "read_string", LuaGlueCall_ReadCString);
+	luaS_setCFuncEntry(L, "read_double", LuaGlueCall_ReadDouble);
+	luaS_setCFuncEntry(L, "read_float", LuaGlueCall_ReadFloat);
 	luaS_setCFuncEntry(L, "read_dword", LuaGlueCall_ReadDword);
 	luaS_setCFuncEntry(L, "read_word", LuaGlueCall_ReadWord);
 	luaS_setCFuncEntry(L, "read_byte", LuaGlueCall_ReadByte);
+	luaS_setCFuncEntry(L, "write_double", LuaGlueCall_WriteDouble);
+	luaS_setCFuncEntry(L, "write_float", LuaGlueCall_WriteFloat);
 	luaS_setCFuncEntry(L, "write_dword", LuaGlueCall_WriteDword);
 	luaS_setCFuncEntry(L, "write_word", LuaGlueCall_WriteWord);
 	luaS_setCFuncEntry(L, "write_byte", LuaGlueCall_WriteByte);
