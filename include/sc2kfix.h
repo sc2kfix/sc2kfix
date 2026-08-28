@@ -56,12 +56,12 @@
 #define SC2KFIX_MODE_SC2KDEMO 2
 #define SC2KFIX_MODE_SCURK    3
 
-#define SC2KFIX_VERSION			"0.11b"
+#define SC2KFIX_VERSION			"0.11c-dev"
 #define SC2KFIX_VERSION_MAJOR	0
 #define SC2KFIX_VERSION_MINOR	11
-#define SC2KFIX_VERSION_PATCH	2
+#define SC2KFIX_VERSION_PATCH	3
 #define SC2KFIX_RELEASE_TAG		"r11b"
-#define SC2KFIX_IS_DEV_BRANCH	false		
+#define SC2KFIX_IS_DEV_BRANCH	true		
 
 #define SC2KFIX_INIFILE		"sc2kfix.ini"
 #define SC2KFIX_COREJSON	"settings.json"
