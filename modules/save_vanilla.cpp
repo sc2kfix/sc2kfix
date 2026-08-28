@@ -16,7 +16,7 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
-#define SAVE_DEBUG DEBUG_FLAGS_NONE
+#define SAVE_DEBUG DEBUG_FLAGS_EVERYTHING
 
 #ifdef DEBUGALL
 #undef SAVE_DEBUG
@@ -1158,7 +1158,7 @@ void L_SimcityApp_LoadCityFromCMDLine(CSimcityAppPrimary *pSCApp, const char *lp
 		strncpy_s(szFileName, lpFileNameFromCMDLine, MAX_PATH);
 		nLen = strlen(szFileName);
 		szFileName[nLen] = 0;
-		if (L_SimcityApp_DoLoad(pSCApp, szFileName) && pszCityName.m_nDataLength > 0) {
+		if (L_SimcityApp_DoLoad(pSCApp, szFileName) && (pszCityName.m_nDataLength > 0 || wCityMode == GAME_MODE_TERRAIN_EDIT)) {
 			GameMain_Document_UpdateAllViews(pCSimcityDoc, 0, SCD_UPDATE_VIEW_UPDATE, 0);
 			Game_ShowViewControls();
 			pSCApp->iSCAProgramStep = ONIDLE_STATE_INGAME;
