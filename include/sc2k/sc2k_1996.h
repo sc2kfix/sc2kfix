@@ -4810,7 +4810,7 @@ extern void L_drawShapeSpecific_SC2K1996(__int16 nSpriteID, __int16 right, __int
 extern void L_drawShapeDialog_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert);
 
 extern void L_InitializeCityData();
-int L_ItemPlacementCheck(__int16 m_x, __int16 m_y, BYTE iTileID, __int16 iTileArea, bool bDoSilo);
+int L_ItemPlacementCheck(mapcoord_t m_x, mapcoord_t m_y, BYTE iTileID, int16_t iTileArea, bool bDoSilo);
 
 extern int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName);
 extern void L_SimcityApp_LoadCityFromCMDLine(CSimcityAppPrimary *pSCApp, const char *lpFileNameFromCMDLine);
