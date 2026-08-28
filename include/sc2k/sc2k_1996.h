@@ -75,23 +75,24 @@
 
 #define USE_ONTHEFLYPALIDX 0
 
-#define PALCACHE_TYPE_NONE						-1
-#define PALCACHE_TYPE_CYCLE						0
-#define PALCACHE_TYPE_TREES_SEASON_AUTUMN		1
-#define PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW	2
-#define PALCACHE_TYPE_TREES_SEASON_SNOW			3
-#define PALCACHE_TYPE_TERRAIN_GEN_GREY			4
-#define PALCACHE_TYPE_TERRAIN_GEN_GREEN			5
-#define PALCACHE_TYPE_TERRAIN_GEN_COLD			6
-#define PALCACHE_TYPE_TERRAIN_GEN_HOT			7
-#define PALCACHE_TYPE_TERRAIN_SNOW				8
-#define PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD		9
-#define PALCACHE_TYPE_WATER_ICE					10
-#define PALCACHE_TYPE_WATER_ICE_BLIZZARD		11
-#define PALCACHE_TYPE_GRASS_SNOW				12
-#define PALCACHE_TYPE_TREES_SEASON_HEAT			13
-#define PALCACHE_TYPE_GRASS_HEAT				14
-#define PALCACHE_TYPE_GRASS_DROUGHT				15
+#define PALCACHE_TYPE_NONE                    -1
+#define PALCACHE_TYPE_CYCLE                    0
+#define PALCACHE_TYPE_TREES_SEASON_AUTUMN      1
+#define PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW  2
+#define PALCACHE_TYPE_TREES_SEASON_SNOW        3
+#define PALCACHE_TYPE_TERRAIN_GEN_GREY         4
+#define PALCACHE_TYPE_TERRAIN_GEN_GREEN        5
+#define PALCACHE_TYPE_TERRAIN_GEN_COLD         6
+#define PALCACHE_TYPE_TERRAIN_GEN_HOT          7
+#define PALCACHE_TYPE_TERRAIN_SNOW             8
+#define PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD    9
+#define PALCACHE_TYPE_WATER_ICE                10
+#define PALCACHE_TYPE_WATER_ICE_BLIZZARD       11
+#define PALCACHE_TYPE_GRASS_SNOW               12
+#define PALCACHE_TYPE_TREES_SEASON_HEAT        13
+#define PALCACHE_TYPE_GRASS_HEAT               14
+#define PALCACHE_TYPE_GRASS_DROUGHT            15
+#define PALCACHE_TYPE_TERRAIN_ERROR            16
 
 #define CACHED_FRAMES 16
 
@@ -4655,6 +4656,17 @@ static inline BYTE GetXROGByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
 	return dwMapXROG[x][y].bBlock;
 }
 
+static inline bool MarkBadTerrain(__int16 x, __int16 y) {
+	if (!XBITReturnIsWater(x, y)) {
+		WORD wTileWaterLevel = ALTMReturnWaterLevel(x, y);
+		if (wTileWaterLevel > wWaterLevel) {
+			if (ALTMReturnLandAltitude(x, y) < wTileWaterLevel)
+				return true;
+		}
+	}
+	return false;
+}
+
 static inline int GetGameSeason(void) {
 	switch (dwCityDays / 25 % 12) {
 	case 0:
@@ -4733,6 +4745,7 @@ typedef struct {
 	std::vector<spriteFrame_t> sprSeasonHeatwaveFrame;    // Trees (heatwave)
 	std::vector<spriteFrame_t> sprGrassHeatwaveFrame;     // Buildings with grass (heatwave)
 	std::vector<spriteFrame_t> sprGrassDroughtFrame;      // Buildings with grass (drought)
+	std::vector<spriteFrame_t> sprTerrainErrCheck;        // Terrain tiles - re-colour for error cases.
 } spriteCache_t;
 
 extern HWND hwndMainDialog_SC2K1996;
@@ -4792,6 +4805,7 @@ extern BYTE *pBaseGraphicLockDIBRes;
 extern void L_CheckCursor_SC2K1996(CSimcityView *pSCView);
 extern int __cdecl L_BeginProcessObjects_SC2K1996(HWND hWnd, void *pBaseBits, void *pModdedBits, int x, int y, RECT *r);
 extern void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveCursorActive);
+extern void L_drawShape_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert, bool bTerrainError);
 extern void L_drawShapeSpecific_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert, int nType);
 extern void L_drawShapeDialog_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert);
 

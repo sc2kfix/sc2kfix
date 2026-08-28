@@ -1594,6 +1594,8 @@ extern "C" void __stdcall Hook_StartCleanGame(void) {
 	for (int x = 0; x < GAME_MAP_SIZE; ++x) {
 		for (int y = 0; y < GAME_MAP_SIZE; ++y) {
 			ALTMSetTunnelLevels(x, y, 0);
+			//if (MarkBadTerrain(x, y))
+			//	ALTMSetWaterLevel(x, y, wWaterLevel);
 		}
 	}
 }

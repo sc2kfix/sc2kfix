@@ -181,7 +181,7 @@ static void DoHighwayCoverageFill(int iX, int iY, __int16 nSprStart, __int16 nCo
 	
 	iSprite = GetTerrainSprite(iTerrainTile, nSprStart);
 	iTop = iBottom - pArrSpriteHeaders[iSprite].wHeight;
-	Game_DrawProcessObject(iSprite, iRight, iTop, 0, 0);
+	L_drawShape_SC2K1996(iSprite, iRight, iTop, 0, 0, MarkBadTerrain(iX, iY));
 }
 
 static BOOL IsSpecificUnderDraw(int iX, int iY, BYTE iTile) {
@@ -373,6 +373,7 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 	__int16 iTrafficSprite, iTrafficSpriteOffset;
 	__int16 iThing;
 	BOOL bSpecificEdge;
+	bool bMarkBadTerrain;
 	BOOL bIsFlipped;
 	BYTE iTerrainTile;
 	BYTE iTile;
@@ -433,6 +434,8 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 
 	DoUndergroundAspects(iX, iY, nSprStart, nSizeLevel);
 
+	bMarkBadTerrain = MarkBadTerrain(iX, iY);
+
 	// -------- Move the edge-drawing here with a specific check for the coverage version.
 	bSpecificEdge = DoSpecificEdge(iX, iY, iCoverage, iZone, iTile);
 	if (bSpecificEdge >= 0) {
@@ -454,7 +457,7 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 			iSprite = GetTerrainSprite(iTerrainTile, nSprStart);
 		else
 			iSprite = iZone + nSprWaterTer;
-		Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+		L_drawShape_SC2K1996(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0, bMarkBadTerrain);
 	}
 	else if (iTile >= TILE_ROAD_LR) {
 		if (iTile >= TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1) {
@@ -474,7 +477,7 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 						if (!IsEven(wViewRotation))
 							bIsFlipped = !bIsFlipped;
 						iSprite = iTile + nSprStart;
-						Game_DrawProcessObject(iSprite, iMapOffSetX, (pArrSpriteHeaders[iSprite].wWidth >> 2) - pArrSpriteHeaders[iSprite].wHeight + iTop - nCoordsScale, bIsFlipped, 0);
+						L_drawShape_SC2K1996(iSprite, iMapOffSetX, (pArrSpriteHeaders[iSprite].wWidth >> 2) - pArrSpriteHeaders[iSprite].wHeight + iTop - nCoordsScale, bIsFlipped, 0, bMarkBadTerrain);
 						if (iX < GAME_MAP_SIZE &&
 							iY < GAME_MAP_SIZE &&
 							XBITReturnIsPowerable(iX, iY) && !XBITReturnIsPowered(iX, iY)) {
@@ -484,7 +487,7 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 				}
 				else {
 					iSprite = iZone + nSprWaterTer;
-					Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+					L_drawShape_SC2K1996(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0, bMarkBadTerrain);
 				}
 			}
 			else {
@@ -492,7 +495,7 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 					iSprite = BuiltUpZones[iZone] + nSprGreenTile;
 				else
 					iSprite = iZone + nSprWaterTer;
-				Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+				L_drawShape_SC2K1996(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0, bMarkBadTerrain);
 			}
 		}
 		else {
@@ -513,7 +516,7 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 							bIsFlipped = FALSE;
 						else
 							bIsFlipped = XBITReturnIsFlipped(iX, iY);
-						Game_DrawProcessObject(iSprite, iMapOffSetX, iSprTop, bIsFlipped, 0);
+						L_drawShape_SC2K1996(iSprite, iMapOffSetX, iSprTop, bIsFlipped, 0, bMarkBadTerrain);
 						iTraffic = GetXTRFByteDataWithNormalCoordinates(iX, iY);
 						iLowTrfThreshold = 28;
 						iHeavyTrfThreshold = iLowTrfThreshold * 2;
@@ -528,7 +531,7 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 					}
 				}
 				else {
-					Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+					L_drawShape_SC2K1996(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0, bMarkBadTerrain);
 					// ---- This block was originally only present in both DrawLargeTile and DrawSmallTile.
 					if (iTile == TILE_RAISING_BRIDGE_LOWERED) {
 						if (wActiveShips) {
@@ -557,7 +560,7 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 						bIsFlipped = FALSE;
 					else
 						bIsFlipped = XBITReturnIsFlipped(iX, iY);
-					Game_DrawProcessObject(iSprite, iMapOffSetX, iSprTop, bIsFlipped, 0);
+					L_drawShape_SC2K1996(iSprite, iMapOffSetX, iSprTop, bIsFlipped, 0, bMarkBadTerrain);
 					iTraffic = GetXTRFByteDataWithNormalCoordinates(iX, iY);
 					if (iSprite < nSprHighway || iSprite >= nSprSuspBridge)
 						iLowTrfThreshold = 85;
@@ -598,7 +601,7 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 				}
 			}
 			else
-				Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+				L_drawShape_SC2K1996(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0, bMarkBadTerrain);
 		}
 	}
 	else {
@@ -609,10 +612,10 @@ static void L_DrawTile_SC2K1996(__int16 iMapOffSetX, __int16 iMapOffSetY, int iX
 			iSprite = GetTerrainSprite(iTerrainTile, nSprStart);
 		else
 			iSprite = iZone + nSprWaterTer;
-		Game_DrawProcessObject(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+		L_drawShape_SC2K1996(iSprite, iMapOffSetX, iTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0, bMarkBadTerrain);
 		if (DisplayLayer[LAYER_INFRANATURE]) {
 			iSprite = iTile + nSprStart;
-			Game_DrawProcessObject(iSprite, iMapOffSetX, iSprTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0);
+			L_drawShape_SC2K1996(iSprite, iMapOffSetX, iSprTop - pArrSpriteHeaders[iSprite].wHeight, 0, 0, bMarkBadTerrain);
 			if (iX < GAME_MAP_SIZE &&
 				iY < GAME_MAP_SIZE &&
 				XBITReturnIsPowerable(iX, iY) && !XBITReturnIsPowered(iX, iY)) {
@@ -1042,7 +1045,7 @@ extern "C" void __cdecl Hook_DrawColorTile(__int16 iX, __int16 iY) {
 			}
 		}
 		// ^ ----- Enabled the underground layer.
-		Game_DrawProcessObject(iSprite, g_iColorMapOffSetX, iBottom, 0, 0);
+		L_drawShape_SC2K1996(iSprite, g_iColorMapOffSetX, iBottom, 0, 0, MarkBadTerrain(iX, iY));
 	}
 }
 
@@ -1160,7 +1163,7 @@ extern "C" void __cdecl Hook_InvertTerrain(__int16 x, __int16 y) {
 	nShapeHeight = pArrSpriteHeaders[nSpriteID].wHeight;
 	nTop = r.bottom - nShapeHeight;
 	r.top = nShapeHeight + 1;
-	Game_DrawProcessObject(nSpriteID, (__int16)r.left, (__int16)nTop, 0, 1);
+	L_drawShape_SC2K1996(nSpriteID, (__int16)r.left, (__int16)nTop, 0, 1, MarkBadTerrain(x, y));
 	r.right = r.left + 2 * nScale;
 	// Copy r to rScale for "IsZoomed" scaling and use for dirtyRect.
 	CopyRect(&rScale, &r);
@@ -1928,6 +1931,24 @@ static BYTE ProcessTerrainBlizzardIndex(BYTE colIdx) {
 		return colIdx;
 }
 
+std::map<BYTE, BYTE> mapTerrainErrorIndexMap = {
+	// Ground tiles
+	{0x73, 0x27}, { 0x79, 0x2A }, { 0x7F, 0x21 }, { 0x80, 0x23 },
+	{0x74, 0x27}, { 0x7A, 0x2A }, { 0x81, 0x21 },
+	{0x75, 0x28}, { 0x7B, 0x1F }, { 0x82, 0x22 },
+	{0x76, 0x28}, { 0x7C, 0x1F }, { 0x85, 0x22 },
+	{0x77, 0x29}, { 0x7D, 0x20 },
+	{0x78, 0x29}, { 0x7E, 0x20 },
+};
+
+static BYTE ProcessTerrainErrorIndex(BYTE colIdx) {
+	auto iter = mapTerrainErrorIndexMap.find(colIdx);
+	if (iter != mapTerrainErrorIndexMap.end())
+		return iter->second;
+	else
+		return colIdx;
+}
+
 // Experimental. Looks pretty good on most default buildings but a few have had to be manually
 // flagged as exempt, and some separate adjustments might need to be done specifically for the
 // the Resort Hotel and College sprites.
@@ -2082,6 +2103,7 @@ static void Delete_Sprite_Cache(spriteCache_t *pSpriteCache) {
 	Delete_SpriteFrame_Cache(pSpriteCache->sprSeasonHeatwaveFrame, pSpriteCache->nID, PALCACHE_TYPE_TREES_SEASON_HEAT);
 	Delete_SpriteFrame_Cache(pSpriteCache->sprGrassHeatwaveFrame, pSpriteCache->nID, PALCACHE_TYPE_GRASS_HEAT);
 	Delete_SpriteFrame_Cache(pSpriteCache->sprGrassDroughtFrame, pSpriteCache->nID, PALCACHE_TYPE_GRASS_DROUGHT);
+	Delete_SpriteFrame_Cache(pSpriteCache->sprTerrainErrCheck, pSpriteCache->nID, PALCACHE_TYPE_TERRAIN_ERROR);
 }
 
 void Clear_SpriteCache() {
@@ -2228,6 +2250,8 @@ static void Adjust_SpritePalette(BYTE *shapePtr, WORD wHeight, int cIdx, int nTy
 				}
 				else if (nType == PALCACHE_TYPE_GRASS_SNOW)
 					palIdx = ProcessBuildingSnowIndex(palIdx);
+				else if (nType == PALCACHE_TYPE_TERRAIN_ERROR)
+					palIdx = ProcessTerrainErrorIndex(palIdx);
 				*spritePtr = palIdx;
 				--nPos;
 			}
@@ -2291,6 +2315,10 @@ static void Effect_SpritePalette_Terrain(DWORD nID, spriteFrame_t *pSpriteFrame,
 	Create_SpriteFrame(spriteCache[nID].sprTerrainBlizzardFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD);
 }
 
+static void Effect_SpritePalette_TerrainError(DWORD nID, spriteFrame_t *pSpriteFrame, int nFrmID) {
+	Create_SpriteFrame(spriteCache[nID].sprTerrainErrCheck, pSpriteFrame, nFrmID, PALCACHE_TYPE_TERRAIN_ERROR);
+}
+
 static void Snow_SpritePalette_Grass(DWORD nID, spriteFrame_t *pSpriteFrame, int nFrmID) {
 	// Cache accumulated snow on grass for various objects
 	Create_SpriteFrame(spriteCache[nID].sprGrassSnowFrame, pSpriteFrame, nFrmID, PALCACHE_TYPE_GRASS_SNOW);
@@ -2312,8 +2340,10 @@ void Cache_Sprite(DWORD nID, BYTE *pSpriteBuf, int nSize, WORD wHeight, WORD wWi
 			else if (TerrainSpritesCheck(nID)) {
 				if (DeepWaterSpriteCheck(nID))
 					Snow_SpritePalette_DeepWater(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
-				else
+				else {
 					Effect_SpritePalette_Terrain(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
+					Effect_SpritePalette_TerrainError(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
+				}
 			}
 			else if (ObjectGrassSpritesCheck(nID)) {
 				Snow_SpritePalette_Grass(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
@@ -2348,7 +2378,7 @@ static BYTE *Get_SpriteCache_BaseBuffer(sprite_header_t *pShapePtr, __int16 nSpr
 	return NULL;
 }
 
-static BYTE *Get_SpriteCache_Buffer(sprite_header_t *pShapePtr, __int16 nSpriteID) {
+static BYTE *Get_SpriteCache_Buffer(sprite_header_t *pShapePtr, __int16 nSpriteID, bool bTerrainError) {
 	int nType = PALCACHE_TYPE_NONE;
 
 	if (pShapePtr->wHeight > 1) {
@@ -2358,6 +2388,11 @@ static BYTE *Get_SpriteCache_Buffer(sprite_header_t *pShapePtr, __int16 nSpriteI
 		BYTE *pSpriteBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprFrame, NULL, nFrmIdx);
 		if (pSpriteBuf) {
 			if (!bLoColor && !bOnTheFlyPalIdx) {
+				if (bTerrainError) {
+					BYTE *pSpriteErrBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainErrCheck, pSpriteBuf, nFrmIdx);
+					if (pSpriteErrBuf && pSpriteErrBuf != pSpriteBuf)
+						return pSpriteErrBuf;
+				}
 				if (bWeatherEffects) {
 					if (TreeSpritesCheck(nSpriteID)) {
 						if (ColdWeatherCheck())
@@ -3345,14 +3380,14 @@ static void L_drawShapeSpecific_OutOfContext(BYTE *shapePtr, __int16 nSpriteID, 
 	}
 }
 
-extern "C" void __cdecl Hook_drawShape(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert) {
+void L_drawShape_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert, bool bTerrainError) {
 	sprite_header_t *shapePtr;
 	BYTE *shapeData, *baseShapeData;
 	int nShapeBottom, nShapeRight;
 
 	shapePtr = &shapeCurrent[nSpriteID];
 	if (shapePtr && shapeBaseBits) {
-		shapeData = Get_SpriteCache_Buffer(shapePtr, nSpriteID);
+		shapeData = Get_SpriteCache_Buffer(shapePtr, nSpriteID, bTerrainError);
 		if (shapeData) {
 			nShapeBottom = bottom + Get_SpriteCache_Height(shapePtr, nSpriteID);
 			nShapeRight = right + Get_SpriteCache_Width(shapePtr, nSpriteID);
@@ -3376,6 +3411,10 @@ extern "C" void __cdecl Hook_drawShape(__int16 nSpriteID, __int16 right, __int16
 			}
 		}
 	}
+}
+
+extern "C" void __cdecl Hook_drawShape(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert) {
+	L_drawShape_SC2K1996(nSpriteID, right, bottom, isFlipped, doInvert, false);
 }
 
 void L_drawShapeSpecific_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert, int nType) {
@@ -3418,7 +3457,7 @@ void L_drawShapeDialog_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom
 
 	shapePtr = &shapeCurrent[nSpriteID];
 	if (shapePtr) {
-		shapeData = Get_SpriteCache_Buffer(shapePtr, nSpriteID);
+		shapeData = Get_SpriteCache_Buffer(shapePtr, nSpriteID, false);
 		if (shapeData) {
 			nShapeBottom = bottom + Get_SpriteCache_Height(shapePtr, nSpriteID);
 			nShapeRight = right + Get_SpriteCache_Width(shapePtr, nSpriteID);
@@ -3628,7 +3667,7 @@ extern "C" void __cdecl Hook_drawMaskShape(__int16 nSpriteID, __int16 left, __in
 
 	shapePtr = &shapeCurrent[nSpriteID];
 	if (shapePtr && shapeBaseBits) {
-		shapeData = Get_SpriteCache_Buffer(shapePtr, nSpriteID);
+		shapeData = Get_SpriteCache_Buffer(shapePtr, nSpriteID, false);
 		if (shapeData) {
 			nShapeTop = top + Get_SpriteCache_Height(shapePtr, nSpriteID);
 			nShapeLeft = left + Get_SpriteCache_Width(shapePtr, nSpriteID);
@@ -3653,7 +3692,7 @@ extern "C" void __cdecl Hook_drawShadowShape(__int16 nSpriteID, __int16 right, _
 
 	shapePtr = &shapeCurrent[nSpriteID];
 	if (shapePtr && shapeBaseBits) {
-		shapeData = Get_SpriteCache_Buffer(shapePtr, nSpriteID);
+		shapeData = Get_SpriteCache_Buffer(shapePtr, nSpriteID, false);
 		if (shapeData) {
 			nShapeBottom = bottom + Get_SpriteCache_Height(shapePtr, nSpriteID);
 			nShapeRight = right + Get_SpriteCache_Width(shapePtr, nSpriteID);
