@@ -120,6 +120,9 @@ static bkey_t progkeys[B_KEY_COUNT] = {
 
 	{ B_KEY_MOUSE_WHEELUP,   0x00,          FALSE, B_TYPE_GENERAL, "MouseWheelUp"      },
 	{ B_KEY_MOUSE_WHEELDOWN, 0x00,          FALSE, B_TYPE_GENERAL, "MouseWheelDown"    },
+
+	{ B_KEY_MOUSE_MOUSE4BUTTON, 0x00,       FALSE, B_TYPE_MOUSEBT, "Mouse4Button"      },
+	{ B_KEY_MOUSE_MOUSE5BUTTON, 0x00,       FALSE, B_TYPE_MOUSEBT, "Mouse5Button"      },
 };
 
 static bkey_t *GetKeyFromEntry(int nBkey) {
