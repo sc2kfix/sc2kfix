@@ -1075,7 +1075,7 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		// Partially randomize the invention/innovation years, then update the toolbar accordingly
 		for (int i = 0; i < 17; i++) {
 			int iInventionYear = rand() % 20 + iInventionBaseYears[i];
-			wCityInventionYears[i] = wCityStartYear;
+			wCityInventionYears[i] = iInventionYear;
 			if (iInventionYear < wCityStartYear)
 				wCityInventionYears[i] = 0;
 		}
