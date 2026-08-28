@@ -1076,7 +1076,7 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		for (int i = 0; i < 17; i++) {
 			int iInventionYear = rand() % 20 + iInventionBaseYears[i];
 			wCityInventionYears[i] = wCityStartYear;
-			if (wCityStartYear < wCityStartYear)
+			if (iInventionYear < wCityStartYear)
 				wCityInventionYears[i] = 0;
 		}
 		Game_ToolMenuUpdate();
