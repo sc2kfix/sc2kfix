@@ -270,7 +270,7 @@ static void L_CacheScenarioDetails(const char *szText) {
 	dwScenarioStartDays = dwCityDays;
 	dwScenarioStartPopulation = dwCityPopulation;
 	wScenarioStartXVALTiles = wCityDevelopedTiles;
-	dwScenarioStartTrafficDivisor = pBudgetArr[10].iCurrentCosts + pBudgetArr[11].iCurrentCosts + pBudgetArr[12].iCurrentCosts + 1;		// XXX - this should be a descriptive macro
+	dwScenarioStartTrafficDivisor = pBudgetArr[BUDGET_ROAD].iCurrentCosts + pBudgetArr[BUDGET_HIGHWAY].iCurrentCosts + pBudgetArr[BUDGET_BRIDGE].iCurrentCosts + 1;
 }
 
 void L_ClearScenarioDetails() {

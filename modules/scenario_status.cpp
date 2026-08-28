@@ -66,17 +66,17 @@ BOOL CALLBACK ScenarioStatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam
 
 		if (scenarioAttrib.dwResPop) {
 			strScenarioGoals += "Attain a residential population of " + std::to_string(scenarioAttrib.dwResPop) + ".\n\n";
-			strScenarioCurrent += std::to_string(pBudgetArr[0].iCurrentCosts) + "\n\n";
+			strScenarioCurrent += std::to_string(pBudgetArr[BUDGET_RESFUND].iCurrentCosts) + "\n\n";
 		}
 
 		if (scenarioAttrib.dwComPop) {
 			strScenarioGoals += "Attain a commercial population of " + std::to_string(scenarioAttrib.dwComPop) + ".\n\n";
-			strScenarioCurrent += std::to_string(pBudgetArr[1].iCurrentCosts) + "\n\n";
+			strScenarioCurrent += std::to_string(pBudgetArr[BUDGET_COMFUND].iCurrentCosts) + "\n\n";
 		}
 
 		if (scenarioAttrib.dwIndPop) {
 			strScenarioGoals += "Attain an industrial population of " + std::to_string(scenarioAttrib.dwIndPop) + ".\n\n";
-			strScenarioCurrent += std::to_string(pBudgetArr[2].iCurrentCosts) + "\n\n";
+			strScenarioCurrent += std::to_string(pBudgetArr[BUDGET_INDFUND].iCurrentCosts) + "\n\n";
 		}
 
 		if (scenarioAttrib.dwCashGoal) {
