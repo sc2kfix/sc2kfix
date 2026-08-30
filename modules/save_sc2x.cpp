@@ -29,6 +29,15 @@
 #define THING_ALLOC_SIZE     (MAX_THING_COUNT * sizeof(map_XTHG_t))
 #define GRAPH_ALLOC_SIZE     (MAX_GRAPHS * MAX_GRAPH_ENTRIES * sizeof(DWORD))
 
+#define WRITE_BAILOUT(str) \
+	{ \
+		if (pZip) \
+			ConsoleLog(LOG_ERROR, "SC2X: " __FUNCTION__ " called BAILOUT, reason: %s -- miniz error %d\n", str, pZip->m_last_error); \
+		else \
+			ConsoleLog(LOG_ERROR, "SC2X: " __FUNCTION__ " called BAILOUT, reason: %s\n", str); \
+		goto ABORTWRITE;\
+	}
+
 static std::map<int, std::string> mapEnumBudgetTypeToJSONName = {
 	{ BUDGET_RESFUND, "residential" },
 	{ BUDGET_COMFUND, "commercial" },
@@ -155,18 +164,6 @@ static void Save_CreateJSONFromMiscInfo(CSimcityAppPrimary* pSCApp, json::JSON& 
 	jsonMISC["city"]["sewer_bonus"] = wSewerBonus;
 }
 
-#define BAILOUT(str) \
-	{ \
-		ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ " called BAILOUT, reason: " str " -- miniz error %d\n", pZip->m_last_error);\
-		goto ABORTWRITE;\
-	}
-
-#define BAILOUTNOMZ(str) \
-	{ \
-		ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ " called BAILOUT, reason: " str "\n");\
-		goto ABORTWRITE;\
-	}
-
 bool Save_WriteTestSC2XFile(CSimcityAppPrimary* pSCApp, const char* szFilename) {
 	mz_zip_archive* pZip = NULL;
 	std::string strJSONDumpTemp;
@@ -177,16 +174,16 @@ bool Save_WriteTestSC2XFile(CSimcityAppPrimary* pSCApp, const char* szFilename) 
 	size_t uArchiveSize;
 
 	if (!szFilename)
-		BAILOUTNOMZ("!szFilename");
+		WRITE_BAILOUT("!szFilename");
 
 	pZip = (mz_zip_archive*)malloc(sizeof(mz_zip_archive));
 	if (!pZip)
-		BAILOUTNOMZ("!pZip");
+		WRITE_BAILOUT("!pZip");
 
 	memset(pZip, 0, sizeof(mz_zip_archive));
 
 	if (!mz_zip_writer_init_heap(pZip, 0, 0))
-		BAILOUT("!mz_zip_writer_init_heap");
+		WRITE_BAILOUT("!mz_zip_writer_init_heap");
 
 	Game_GetOccupiedTileCount();
 
@@ -198,64 +195,64 @@ bool Save_WriteTestSC2XFile(CSimcityAppPrimary* pSCApp, const char* szFilename) 
 	jsonSaveMETA["game"]["city_name"] = pszCityName.m_pchData;
 	strJSONDumpTemp = jsonSaveMETA.dump();
 	if (!mz_zip_writer_add_mem(pZip, "META.json", strJSONDumpTemp.c_str(), strJSONDumpTemp.size() + 1, MZ_DEFAULT_COMPRESSION))
-		BAILOUT("ALTM");
+		WRITE_BAILOUT("ALTM");
 
 	// Write the MISC chunk as a JSON file
 	Save_CreateJSONFromMiscInfo(pSCApp, jsonSaveMISC);
 	strJSONDumpTemp = jsonSaveMISC.dump();
 	if (!mz_zip_writer_add_mem(pZip, "current/MISC.json", strJSONDumpTemp.c_str(), strJSONDumpTemp.size() + 1, MZ_DEFAULT_COMPRESSION))
-		BAILOUT("MISC");
+		WRITE_BAILOUT("MISC");
 
 	// Write the binary blob chunks
 	if (!mz_zip_writer_add_mem(pZip, "current/ALTM", (const void*)dwMapALTM[0], ALTM_ALLOC_SIZE, MZ_DEFAULT_COMPRESSION))
-		BAILOUT("ALTM");
+		WRITE_BAILOUT("ALTM");
 	if (!mz_zip_writer_add_mem(pZip, "current/XTER", (const void*)dwMapXTER[0], FULLMAP_ALLOC_SIZE, MZ_DEFAULT_COMPRESSION))
-		BAILOUT("XTER");
+		WRITE_BAILOUT("XTER");
 	if (!mz_zip_writer_add_mem(pZip, "current/XBLD", (const void*)dwMapXBLD[0], FULLMAP_ALLOC_SIZE, MZ_DEFAULT_COMPRESSION))
-		BAILOUT("XBLD");
+		WRITE_BAILOUT("XBLD");
 	if (!mz_zip_writer_add_mem(pZip, "current/XZON", (const void*)dwMapXZON[0], FULLMAP_ALLOC_SIZE, MZ_DEFAULT_COMPRESSION))
-		BAILOUT("XZON");
+		WRITE_BAILOUT("XZON");
 	if (!mz_zip_writer_add_mem(pZip, "current/XUND", (const void*)dwMapXUND[0], FULLMAP_ALLOC_SIZE, MZ_DEFAULT_COMPRESSION))
-		BAILOUT("XUND");
+		WRITE_BAILOUT("XUND");
 	if (!mz_zip_writer_add_mem(pZip, "current/XTXT", (const void*)dwMapXTXT[0], FULLMAP_ALLOC_SIZE, MZ_DEFAULT_COMPRESSION))
-		BAILOUT("XTXT");
+		WRITE_BAILOUT("XTXT");
 	if (!mz_zip_writer_add_mem(pZip, "current/XLAB", (const void*)dwMapXLAB[0], LABEL_ALLOC_SIZE, MZ_DEFAULT_COMPRESSION))
-		BAILOUT("XLAB");
+		WRITE_BAILOUT("XLAB");
 	if (!mz_zip_writer_add_mem(pZip, "current/XMIC", (const void*)pMicrosimArr, MICROSIM_ALLOC_SIZE, MZ_DEFAULT_COMPRESSION))
-		BAILOUT("XMIC");
+		WRITE_BAILOUT("XMIC");
 	if (!mz_zip_writer_add_mem(pZip, "current/XBIT", (const void*)dwMapXBIT[0], FULLMAP_ALLOC_SIZE, MZ_DEFAULT_COMPRESSION))
-		BAILOUT("XBIT");
+		WRITE_BAILOUT("XBIT");
 	if (!mz_zip_writer_add_mem(pZip, "current/XTRF", (const void*)dwMapXTRF[0], MINIMAP64_ALLOC_SIZE, MZ_DEFAULT_COMPRESSION))
-		BAILOUT("XTRF");
+		WRITE_BAILOUT("XTRF");
 	if (!mz_zip_writer_add_mem(pZip, "current/XPLT", (const void*)dwMapXPLT[0], MINIMAP64_ALLOC_SIZE, MZ_DEFAULT_COMPRESSION))
-		BAILOUT("XPLT");
+		WRITE_BAILOUT("XPLT");
 	if (!mz_zip_writer_add_mem(pZip, "current/XVAL", (const void*)dwMapXVAL[0], MINIMAP64_ALLOC_SIZE, MZ_DEFAULT_COMPRESSION))
-		BAILOUT("XVAL");
+		WRITE_BAILOUT("XVAL");
 	if (!mz_zip_writer_add_mem(pZip, "current/XCRM", (const void*)dwMapXCRM[0], MINIMAP64_ALLOC_SIZE, MZ_DEFAULT_COMPRESSION))
-		BAILOUT("XCRM");
+		WRITE_BAILOUT("XCRM");
 	if (!mz_zip_writer_add_mem(pZip, "current/XPLC", (const void*)dwMapXPLC[0], MINIMAP32_ALLOC_SIZE, MZ_DEFAULT_COMPRESSION))
-		BAILOUT("XPLC");
+		WRITE_BAILOUT("XPLC");
 	if (!mz_zip_writer_add_mem(pZip, "current/XFIR", (const void*)dwMapXFIR[0], MINIMAP32_ALLOC_SIZE, MZ_DEFAULT_COMPRESSION))
-		BAILOUT("XFIR");
+		WRITE_BAILOUT("XFIR");
 	if (!mz_zip_writer_add_mem(pZip, "current/XPOP", (const void*)dwMapXPOP[0], MINIMAP32_ALLOC_SIZE, MZ_DEFAULT_COMPRESSION))
-		BAILOUT("XPOP");
+		WRITE_BAILOUT("XPOP");
 	if (!mz_zip_writer_add_mem(pZip, "current/XROG", (const void*)dwMapXROG[0], MINIMAP32_ALLOC_SIZE, MZ_DEFAULT_COMPRESSION))
-		BAILOUT("XROG");
+		WRITE_BAILOUT("XROG");
 	if (!mz_zip_writer_add_mem(pZip, "current/XGRP", (const void*)dwMapXGRP[0], GRAPH_ALLOC_SIZE, MZ_DEFAULT_COMPRESSION))
-		BAILOUT("XGRP");
+		WRITE_BAILOUT("XGRP");
 
 	// Write the XFIX chunk as a JSON file
 	if (!bNoXFIX) {
 		strJSONDumpTemp = jsonXFIX.dump();
 		if (!mz_zip_writer_add_mem(pZip, "current/XFIX.json", strJSONDumpTemp.c_str(), strJSONDumpTemp.size() + 1, MZ_DEFAULT_COMPRESSION))
-			BAILOUT("XFIX");
+			WRITE_BAILOUT("XFIX");
 	}
 
 	// Finalize the archive in memory and write it out to the file
 	if (!mz_zip_writer_finalize_heap_archive(pZip, &pArchiveBuf, &uArchiveSize))
-		BAILOUT("!mz_zip_writer_finalize_heap_archive");
+		WRITE_BAILOUT("!mz_zip_writer_finalize_heap_archive");
 	if (fopen_s(&fOut, szFilename, "wb"))
-		BAILOUT("!fopen_s");
+		WRITE_BAILOUT("!fopen_s");
 	fwrite(pArchiveBuf, 1, uArchiveSize, fOut);
 	fclose(fOut);
 	mz_zip_writer_end(pZip);
