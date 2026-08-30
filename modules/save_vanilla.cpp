@@ -23,11 +23,6 @@
 #define SAVE_DEBUG DEBUG_FLAGS_EVERYTHING
 #endif
 
-#define BAILOUT(s, ...) do { \
-	ConsoleLog(LOG_ERROR, "SAVE: " s, __VA_ARGS__); \
-	return 0; \
-} while (0)
-
 UINT save_debug = SAVE_DEBUG;
 
 bool bUseMapTerrainCosmeticMode = false;

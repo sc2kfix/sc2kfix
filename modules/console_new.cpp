@@ -644,6 +644,8 @@ bool ConsoleCommandRunLua(std::vector<std::string> args, int iBreakoutState, int
 	return true;
 }
 
+extern bool Save_WriteTestSC2XFile(CSimcityAppPrimary* pSCApp, const char* szFilename);
+
 bool ConsoleCommandRunTest(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
 	// No arguments allowed
 	if (iBreakoutState == BREAKOUT_QUESTION) {
@@ -654,11 +656,8 @@ bool ConsoleCommandRunTest(std::vector<std::string> args, int iBreakoutState, in
 	if (iBreakoutState != BREAKOUT_RETURN)
 		return false;
 
-	int nAttrib;
-
-	ULOWORD(nAttrib) = SOUND_ZAP;
-	UHIWORD(nAttrib) = SND_ORIG_PLAYSND;
-	L_PlaySound_SC2K1996(nAttrib, 0);
+	if (!Save_WriteTestSC2XFile(&pCSimcityAppThis, "test.sc2x"))
+		printf("Test write failed.\n");
 	return true;
 }
 

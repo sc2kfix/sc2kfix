@@ -183,6 +183,7 @@ const char* szSC2KFixBuildInfo = "$(BuildString)"%3B
     <ClCompile Include="modules\mod_loader.cpp" />
     <ClCompile Include="modules\music.cpp" />
     <ClCompile Include="modules\registry_config.cpp" />
+    <ClCompile Include="modules\save_sc2x.cpp" />
     <ClCompile Include="modules\sc2k_1996.cpp" />
     <ClCompile Include="modules\save_vanilla.cpp" />
     <ClCompile Include="modules\scurkfix_1996.cpp" />
