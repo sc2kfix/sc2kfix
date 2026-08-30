@@ -311,14 +311,84 @@ namespace json {
 			return ok ? (int)Internal.Int : 0;
 		}
 
+		int ToInt8() const {
+			bool b;
+			return ToInt8(b);
+		}
+
+		int ToInt8(bool& ok) const {
+			ok = (Type == Class::Integral);
+			return (int8_t)(ok ? Internal.Int & 0xFF : 0);
+		}
+
+		int ToUint8() const {
+			bool b;
+			return ToUint8(b);
+		}
+
+		int ToUint8(bool& ok) const {
+			ok = (Type == Class::Integral);
+			return (uint8_t)(ok ? Internal.Int & 0xFF : 0);
+		}
+
+		int ToInt16() const {
+			bool b;
+			return ToInt16(b);
+		}
+
+		int ToInt16(bool& ok) const {
+			ok = (Type == Class::Integral);
+			return (int16_t)(ok ? Internal.Int & 0xFFFF : 0);
+		}
+
+		int ToUint16() const {
+			bool b;
+			return ToUint16(b);
+		}
+
+		int ToUint16(bool& ok) const {
+			ok = (Type == Class::Integral);
+			return (uint16_t)(ok ? Internal.Int & 0xFFFF : 0);
+		}
+
+		int ToInt32() const {
+			bool b;
+			return ToInt32(b);
+		}
+
+		int ToInt32(bool& ok) const {
+			ok = (Type == Class::Integral);
+			return (int32_t)(ok ? Internal.Int & 0xFFFFFFFF : 0);
+		}
+
+		int ToUint32() const {
+			bool b;
+			return ToUint32(b);
+		}
+
+		int ToUint32(bool& ok) const {
+			ok = (Type == Class::Integral);
+			return (uint32_t)(ok ? Internal.Int & 0xFFFFFFFF : 0);
+		}
+
 		int64_t ToInt64() const {
 			bool b;
-			return ToInt(b);
+			return ToInt64(b);
 		}
 
 		int64_t ToInt64(bool& ok) const {
 			ok = (Type == Class::Integral);
 			return ok ? Internal.Int : 0;
+		}
+
+		uint64_t ToUint64() const {
+			bool b;
+			return ToUint64(b);
+		}
+
+		uint64_t ToUint64(bool& ok) const {
+			ok = (Type == Class::Integral);
+			return ok ? *(uint64_t*)&Internal.Int : 0;
 		}
 
 		bool ToBool() const {
