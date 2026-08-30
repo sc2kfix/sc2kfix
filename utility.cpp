@@ -910,7 +910,7 @@ HOOKEXT_CPP std::string Base64Encode(const unsigned char* pSrcData, size_t iSrcC
 }
 
 // Decodes a base64 string into a memory buffer. Returns the number of bytes actually written.
-HOOKEXT_CPP size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned char* pSrcData, size_t iSrcCount) {
+HOOKEXT_CPP size_t Base64Decode(uint8_t* pBuffer, size_t iBufSize, const unsigned char* pSrcData, size_t iSrcCount) {
 	unsigned char* pos, block[4], tmp;
 	size_t i, count, olen;
 	int pad = 0;
@@ -1014,44 +1014,103 @@ console::CommandTree console::Object() {
 	return std::move(CommandTree::Make(CommandTree::Class::Object));
 }
 
-// Transforms an array of 32-bit integers into a JSON array, including endian swapping if needed
-HOOKEXT_CPP json::JSON EncodeDWORDArray(DWORD* dwArray, size_t iCount, BOOL bBigEndian) {
+// Transforms an array of 8-bit unsigned integers into a JSON array
+HOOKEXT_CPP json::JSON EncodeByteArray(uint8_t* dwArray, size_t iCount) {
 	json::JSON jsonArray = json::Array();
 	for (size_t i = 0; i < iCount; i++) {
-		if (bBigEndian)
-			jsonArray.append<DWORD>(SwapDWORD(dwArray[i]));
-		else
-			jsonArray.append<DWORD>(dwArray[i]);
+		jsonArray.append<uint8_t>(dwArray[i]);
 	}
 	return jsonArray;
 }
 
-// Transforms a budget array into a JSON array, including endian swapping if needed
-HOOKEXT_CPP json::JSON EncodeBudgetArray(DWORD* dwBudgetArray, BOOL bBigEndian) {
-	json::JSON jsonObject = json::Object();
-	jsonObject["iCurrentCosts"] = DWORD_NTOHL_CHECK(dwBudgetArray[0]);
-	jsonObject["iFundingPercent"] = DWORD_NTOHL_CHECK(dwBudgetArray[1]);
-	jsonObject["iYearToDateCost"] = DWORD_NTOHL_CHECK(dwBudgetArray[2]);
+// Transforms an array of 16-bit unsigned integers into a JSON array
+HOOKEXT_CPP json::JSON EncodeUint16Array(uint16_t* dwArray, size_t iCount) {
+	json::JSON jsonArray = json::Array();
+	for (size_t i = 0; i < iCount; i++) {
+		jsonArray.append<uint16_t>(dwArray[i]);
+	}
+	return jsonArray;
+}
 
-	jsonObject["iCountMonth"] = json::Array<DWORD>(
-		DWORD_NTOHL_CHECK(dwBudgetArray[3]), DWORD_NTOHL_CHECK(dwBudgetArray[5]), DWORD_NTOHL_CHECK(dwBudgetArray[7]),
-		DWORD_NTOHL_CHECK(dwBudgetArray[9]), DWORD_NTOHL_CHECK(dwBudgetArray[11]), DWORD_NTOHL_CHECK(dwBudgetArray[13]),
-		DWORD_NTOHL_CHECK(dwBudgetArray[15]), DWORD_NTOHL_CHECK(dwBudgetArray[17]), DWORD_NTOHL_CHECK(dwBudgetArray[19]),
-		DWORD_NTOHL_CHECK(dwBudgetArray[21]), DWORD_NTOHL_CHECK(dwBudgetArray[23]), DWORD_NTOHL_CHECK(dwBudgetArray[25]));
-	jsonObject["iFundMonth"] = json::Array<DWORD>(
-		DWORD_NTOHL_CHECK(dwBudgetArray[4]), DWORD_NTOHL_CHECK(dwBudgetArray[6]), DWORD_NTOHL_CHECK(dwBudgetArray[8]),
-		DWORD_NTOHL_CHECK(dwBudgetArray[10]), DWORD_NTOHL_CHECK(dwBudgetArray[12]), DWORD_NTOHL_CHECK(dwBudgetArray[14]),
-		DWORD_NTOHL_CHECK(dwBudgetArray[16]), DWORD_NTOHL_CHECK(dwBudgetArray[18]), DWORD_NTOHL_CHECK(dwBudgetArray[20]),
-		DWORD_NTOHL_CHECK(dwBudgetArray[22]), DWORD_NTOHL_CHECK(dwBudgetArray[24]), DWORD_NTOHL_CHECK(dwBudgetArray[26]));
+// Transforms an array of 32-bit integers into a JSON array
+HOOKEXT_CPP json::JSON EncodeInt32Array(int32_t* dwArray, size_t iCount) {
+	json::JSON jsonArray = json::Array();
+	for (size_t i = 0; i < iCount; i++) {
+		jsonArray.append<int32_t>(dwArray[i]);
+	}
+	return jsonArray;
+}
+
+// Transforms an array of 32-bit unsigned integers into a JSON array
+HOOKEXT_CPP json::JSON EncodeUint32Array(uint32_t* dwArray, size_t iCount) {
+	json::JSON jsonArray = json::Array();
+	for (size_t i = 0; i < iCount; i++) {
+		jsonArray.append<uint32_t>(dwArray[i]);
+	}
+	return jsonArray;
+}
+
+// Transforms a budget array into a JSON array
+HOOKEXT_CPP json::JSON EncodeBudgetArray(budget_t* pBudget) {
+	json::JSON jsonObject = json::Object();
+	jsonObject["current_costs"] = pBudget->iCurrentCosts;
+	jsonObject["funding_percent"] = pBudget->iFundingPercent;
+	jsonObject["year_to_date_cost"] = pBudget->iYearToDateCost;
+
+	jsonObject["count_month"] = json::Array<uint32_t>(
+		pBudget->iCountMonth[0], pBudget->iCountMonth[1], pBudget->iCountMonth[2],
+		pBudget->iCountMonth[3], pBudget->iCountMonth[4], pBudget->iCountMonth[5],
+		pBudget->iCountMonth[6], pBudget->iCountMonth[7], pBudget->iCountMonth[8],
+		pBudget->iCountMonth[9], pBudget->iCountMonth[10], pBudget->iCountMonth[11]);
+	jsonObject["fund_month"] = json::Array<uint32_t>(
+		pBudget->iFundMonth[0], pBudget->iFundMonth[1], pBudget->iFundMonth[2],
+		pBudget->iFundMonth[3], pBudget->iFundMonth[4], pBudget->iFundMonth[5],
+		pBudget->iFundMonth[6], pBudget->iFundMonth[7], pBudget->iFundMonth[8],
+		pBudget->iFundMonth[9], pBudget->iFundMonth[10], pBudget->iFundMonth[11]);
 	return jsonObject;
+}
+
+// Transforms a JSON array of integers into an array of 8-bit unsigned integers at a memory location.
+// WARNING: Be very sure you know what you're doing with this function, as it will happily over-
+// flow a buffer if you specify an iCount higher than the number of elements in the target array.
+HOOKEXT_CPP void DecodeByteArray(uint8_t* bArray, json::JSON jsonArray, size_t iCount) {
+	for (size_t i = 0; i < iCount; i++)
+		bArray[i] = (uint8_t)(jsonArray[i].ToInt() & 0xFF);
+}
+
+// Transforms a JSON array of integers into an array of 16-bit unsigned integers at a memory location.
+// WARNING: Be very sure you know what you're doing with this function, as it will happily over-
+// flow a buffer if you specify an iCount higher than the number of elements in the target array.
+HOOKEXT_CPP void DecodeUint16Array(uint16_t* wArray, json::JSON jsonArray, size_t iCount) {
+	for (size_t i = 0; i < iCount; i++)
+		wArray[i] = (uint16_t)(jsonArray[i].ToInt() & 0xFFFF);
 }
 
 // Transforms a JSON array of integers into an array of 32-bit integers at a memory location.
 // WARNING: Be very sure you know what you're doing with this function, as it will happily over-
 // flow a buffer if you specify an iCount higher than the number of elements in the target array.
-HOOKEXT_CPP void DecodeDWORDArray(DWORD* dwArray, json::JSON jsonArray, size_t iCount, BOOL bBigEndian) {
+HOOKEXT_CPP void DecodeInt32Array(int32_t* iArray, json::JSON jsonArray, size_t iCount) {
 	for (size_t i = 0; i < iCount; i++)
-		dwArray[i] = (bBigEndian ? SwapDWORD(jsonArray[i].ToInt()) : jsonArray[i].ToInt());
+		iArray[i] = jsonArray[i].ToInt();
+}
+
+// Transforms a JSON array of integers into an array of 32-bit unsigned integers at a memory location.
+// WARNING: Be very sure you know what you're doing with this function, as it will happily over-
+// flow a buffer if you specify an iCount higher than the number of elements in the target array.
+HOOKEXT_CPP void DecodeUint32Array(uint32_t* dwArray, json::JSON jsonArray, size_t iCount) {
+	for (size_t i = 0; i < iCount; i++)
+		dwArray[i] = (uint32_t)(jsonArray[i].ToInt64() & 0xFFFFFFFF);
+}
+
+// Transforms a budget array into a JSON array, including endian swapping if needed
+HOOKEXT_CPP void DecodeBudgetArray(budget_t* pBudget, json::JSON jsonBudget) {
+	json::JSON jsonObject = json::Object();
+	pBudget->iCurrentCosts = jsonBudget["current_costs"].ToInt();
+	pBudget->iFundingPercent = jsonBudget["funding_percent"].ToInt();
+	pBudget->iYearToDateCost = jsonBudget["year_to_date_cost"].ToInt();
+
+	DecodeInt32Array(pBudget->iCountMonth, jsonBudget["count_month"], 12);
+	DecodeInt32Array(pBudget->iFundMonth, jsonBudget["fund_month"], 12);
 }
 
 // Returns a std::string that's a clone of the parameter but entirely lowercase
