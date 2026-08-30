@@ -530,11 +530,13 @@ int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int i
 HOOKEXT_CPP std::string Base64Encode(const unsigned char* pSrcData, size_t iSrcCount);
 HOOKEXT_CPP size_t Base64Decode(uint8_t* pBuffer, size_t iBufSize, const unsigned char* pSrcData, size_t iSrcCount);
 HOOKEXT_CPP json::JSON EncodeByteArray(uint8_t* dwArray, size_t iCount);
+HOOKEXT_CPP json::JSON EncodeInt16Array(int16_t* dwArray, size_t iCount);
 HOOKEXT_CPP json::JSON EncodeUint16Array(uint16_t* dwArray, size_t iCount);
 HOOKEXT_CPP json::JSON EncodeInt32Array(int32_t* dwArray, size_t iCount);
 HOOKEXT_CPP json::JSON EncodeUint32Array(uint32_t* dwArray, size_t iCount);
 HOOKEXT_CPP json::JSON EncodeBudgetArray(budget_t* pBudget);
 HOOKEXT_CPP void DecodeByteArray(uint8_t* dwArray, json::JSON jsonArray, size_t iCount);
+HOOKEXT_CPP void DecodeInt16Array(int16_t* dwArray, json::JSON jsonArray, size_t iCount);
 HOOKEXT_CPP void DecodeUint16Array(uint16_t* dwArray, json::JSON jsonArray, size_t iCount);
 HOOKEXT_CPP void DecodeInt32Array(int32_t* dwArray, json::JSON jsonArray, size_t iCount);
 HOOKEXT_CPP void DecodeUint32Array(uint32_t* dwArray, json::JSON jsonArray, size_t iCount);
