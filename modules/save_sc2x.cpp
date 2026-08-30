@@ -203,7 +203,7 @@ bool Save_WriteTestSC2XFile(CSimcityAppPrimary* pSCApp, const char* szFilename) 
 	// Write the MISC chunk as a JSON file
 	Save_CreateJSONFromMiscInfo(pSCApp, jsonSaveMISC);
 	strJSONDumpTemp = jsonSaveMISC.dump();
-	if (!mz_zip_writer_add_mem(pZip, "MISC.json", strJSONDumpTemp.c_str(), strJSONDumpTemp.size() + 1, MZ_DEFAULT_COMPRESSION))
+	if (!mz_zip_writer_add_mem(pZip, "current/MISC.json", strJSONDumpTemp.c_str(), strJSONDumpTemp.size() + 1, MZ_DEFAULT_COMPRESSION))
 		BAILOUT("MISC");
 
 	// Write the binary blob chunks
