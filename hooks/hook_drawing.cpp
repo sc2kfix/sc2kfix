@@ -44,6 +44,7 @@ enum {
 #endif
 
 extern BOOL bMapWireFrame;
+extern bool bHighlightBadTerrain;
 
 UINT mdrawing_debug = MDRAWING_DEBUG;
 
@@ -1939,6 +1940,15 @@ std::map<BYTE, BYTE> mapTerrainErrorIndexMap = {
 	{0x76, 0x28}, { 0x7C, 0x1F }, { 0x85, 0x22 },
 	{0x77, 0x29}, { 0x7D, 0x20 },
 	{0x78, 0x29}, { 0x7E, 0x20 },
+
+	// Water tiles
+	{0xC8, 0x27}, { 0xCC, 0x29 }, { 0xD0, 0x1F },
+	{0xC9, 0x27}, { 0xCD, 0x29 }, { 0xD1, 0x1F },
+	{0xCA, 0x28}, { 0xCE, 0x2A }, { 0xD2, 0x20 },
+	{0xCB, 0x28}, { 0xCF, 0x2A }, { 0xD3, 0x20 },
+
+	// 'red' tile (though more orange in reality)
+	{0x24, 0x21}, { 0x25, 0x1F },
 };
 
 static BYTE ProcessTerrainErrorIndex(BYTE colIdx) {
@@ -2026,6 +2036,10 @@ bool TerrainSpritesCheck(DWORD nID) {
 
 bool DeepWaterSpriteCheck(DWORD nID) {
 	return GET_OVERALL_SPRITE(nID, SPRITE_SMALL_WATER_TRBL) ? true : false;
+}
+
+bool LayerPlaceholderSpritesCheck(DWORD nID) {
+	return GET_OVERALL_SPRITE(nID, SPRITE_SMALL_REDTILE) ? true : false;
 }
 
 bool ObjectGrassSpritesCheck(DWORD nID) {
@@ -2340,11 +2354,12 @@ void Cache_Sprite(DWORD nID, BYTE *pSpriteBuf, int nSize, WORD wHeight, WORD wWi
 			else if (TerrainSpritesCheck(nID)) {
 				if (DeepWaterSpriteCheck(nID))
 					Snow_SpritePalette_DeepWater(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
-				else {
+				else
 					Effect_SpritePalette_Terrain(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
-					Effect_SpritePalette_TerrainError(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
-				}
+				Effect_SpritePalette_TerrainError(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
 			}
+			else if (LayerPlaceholderSpritesCheck(nID))
+				Effect_SpritePalette_TerrainError(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
 			else if (ObjectGrassSpritesCheck(nID)) {
 				Snow_SpritePalette_Grass(nID, &spriteCache[nID].sprFrame[nFrm], nFrm);
 			}
@@ -2389,9 +2404,11 @@ static BYTE *Get_SpriteCache_Buffer(sprite_header_t *pShapePtr, __int16 nSpriteI
 		if (pSpriteBuf) {
 			if (!bLoColor && !bOnTheFlyPalIdx) {
 				if (bTerrainError) {
-					BYTE *pSpriteErrBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainErrCheck, pSpriteBuf, nFrmIdx);
-					if (pSpriteErrBuf && pSpriteErrBuf != pSpriteBuf)
-						return pSpriteErrBuf;
+					if (bHighlightBadTerrain) {
+						BYTE *pSpriteErrBuf = Get_SpriteFrame_Buffer(spriteCache[nSpriteID].sprTerrainErrCheck, pSpriteBuf, nFrmIdx);
+						if (pSpriteErrBuf && pSpriteErrBuf != pSpriteBuf)
+							return pSpriteErrBuf;
+					}
 				}
 				if (bWeatherEffects) {
 					if (TreeSpritesCheck(nSpriteID)) {

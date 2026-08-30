@@ -14,8 +14,6 @@
 
 #include <stdint.h>
 
-typedef int16_t mapcoord_t;
-
 // Note: The main global arrays are currently present in sc2k_1996.cpp.
 //       They can likely be moved to a more generic area, however since
 //       that's the primary target we work with (WinSCURK aside) it
