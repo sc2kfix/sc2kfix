@@ -235,6 +235,29 @@ static void AdjustDebugMenu(HMENU hDebugMenu) {
 	}
 }
 
+// Call for enabling and attaching the debug menu.
+void EnableDebugMenu(CSimcityAppPrimary *pSCApp, HWND hWnd) {
+	HMENU hMenu, hDebugMenu;
+	CMFC3XMenu *pMenu, *pDebugMenu;
+	int iSCMenuPos;
+
+	if (!pSCApp->bSCAPriscillaActivated) {
+		hMenu = GetMenu(hWnd);
+		pMenu = GameMain_Menu_FromHandle(hMenu);
+		pDebugMenu = new CMFC3XMenu();
+		if (pDebugMenu)
+			pDebugMenu->m_hMenu = 0;
+		hDebugMenu = LoadMenuA(hGameModule, (LPCSTR)223);
+		AdjustDebugMenu(hDebugMenu);
+		GameMain_Menu_Attach(pDebugMenu, hDebugMenu);
+		iSCMenuPos = Game_GetSimcityViewMenuPos(6);
+		InsertMenuA(pMenu->m_hMenu, iSCMenuPos + 6, MF_BYPOSITION | MF_POPUP, (UINT_PTR)pDebugMenu->m_hMenu, szNewItem);
+		Game_SimcityApp_AdjustNewspaperMenu(pSCApp);
+		DrawMenuBar(hWnd);
+		pSCApp->bSCAPriscillaActivated = TRUE;
+	}
+}
+
 // Attempts to locate the XLAB entry for Ilona's House. Returns the XLAB entry ID if found or -1
 // if not found.
 static int FindTheHouseLabel() {
@@ -406,16 +429,10 @@ extern "C" void __stdcall Hook_MainFrame_OnChar(UINT nChar, UINT nRepCnt, UINT n
 	char nCodeChar;
 	cheat_t* strCheatEntry;
 	CSimcityAppPrimary *pSCApp;
-	HWND hWnd;
 	CSimcityView* pSCView;
-	HMENU hMenu, hDebugMenu;
-	CMFC3XMenu *pMenu, *pDebugMenu;
-	int iSCMenuPos;
 	CJokeDialog jokeDlg;
 
 	pSCApp = &pCSimcityAppThis;
-
-	hWnd = pThis->m_hWnd;
 
 	nLowerChar = tolower(nChar);
 TRYAGAIN:
@@ -500,21 +517,7 @@ TRYAGAIN:
 				Game_SetCPoint(&disasterPoint, wCityCenterX, wCityCenterY);
 				break;
 			case CHEAT_DEBUG:
-				if (!pSCApp->bSCAPriscillaActivated) {
-					hMenu = GetMenu(hWnd);
-					pMenu = GameMain_Menu_FromHandle(hMenu);
-					pDebugMenu = new CMFC3XMenu();
-					if (pDebugMenu)
-						pDebugMenu->m_hMenu = 0;
-					hDebugMenu = LoadMenuA(hGameModule, (LPCSTR)223);
-					AdjustDebugMenu(hDebugMenu);
-					GameMain_Menu_Attach(pDebugMenu, hDebugMenu);
-					iSCMenuPos = Game_GetSimcityViewMenuPos(6);
-					InsertMenuA(pMenu->m_hMenu, iSCMenuPos + 6, MF_BYPOSITION | MF_POPUP, (UINT_PTR)pDebugMenu->m_hMenu, szNewItem);
-					Game_SimcityApp_AdjustNewspaperMenu(pSCApp);
-					DrawMenuBar(hWnd);
-					pSCApp->bSCAPriscillaActivated = TRUE;
-				}
+				EnableDebugMenu(pSCApp, pThis->m_hWnd);
 				jsonXFIX["meta"]["porntipsguzzardo"] = true;
 				break;
 			case CHEAT_MILITARY:
@@ -531,11 +534,11 @@ TRYAGAIN:
 			case CHEAT_WEBB:
 				if (!FindTheHouse()) {
 					if (!BuildTheHouse())
-						L_MessageBoxA(hWnd, "Sorry, no room to build Ilona's house!", gamePrimaryKey, MB_ICONINFORMATION | MB_OK);
+						L_MessageBoxA(pThis->m_hWnd, "Sorry, no room to build Ilona's house!", gamePrimaryKey, MB_ICONINFORMATION | MB_OK);
 				}
 				break;
 			case CHEAT_OOPS:
-				L_MessageBoxA(hWnd, "Same to you, buddy!", "Hey!", MB_ICONEXCLAMATION | MB_OK);
+				L_MessageBoxA(pThis->m_hWnd, "Same to you, buddy!", "Hey!", MB_ICONEXCLAMATION | MB_OK);
 				if (iChurchVirus < 0)
 					iChurchVirus = 0; // Warning
 				else if (iChurchVirus == 0)
@@ -543,7 +546,7 @@ TRYAGAIN:
 				break;
 			case CHEAT_REPENT:
 				if (iChurchVirus > 0) {
-					if (L_MessageBoxA(hWnd, "Tea Father?", gamePrimaryKey, MB_ICONINFORMATION | MB_YESNO) == IDYES) {
+					if (L_MessageBoxA(pThis->m_hWnd, "Tea Father?", gamePrimaryKey, MB_ICONINFORMATION | MB_YESNO) == IDYES) {
 						iChurchVirus = 0; // Set it back to 0 rather than -1; the next execution of the related cheats will result in immediate action.
 						ChangeChurchZone();
 						jsonXFIX["meta"]["porntipsguzzardo"] = true;
@@ -555,7 +558,7 @@ TRYAGAIN:
 					if (iChurchVirus == 0)
 						iChurchVirus = -1; // Set back to -1 if executed once more.
 				NO:
-					L_MessageBoxA(hWnd, "Oh go on..", gamePrimaryKey, MB_ICONEXCLAMATION | MB_OK);
+					L_MessageBoxA(pThis->m_hWnd, "Oh go on..", gamePrimaryKey, MB_ICONEXCLAMATION | MB_OK);
 				}
 				break;
 			default:

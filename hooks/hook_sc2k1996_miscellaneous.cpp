@@ -1435,18 +1435,21 @@ extern "C" void __stdcall Hook_PrepareGame(void) {
 	}
 
 	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
-	CSimcityView *pSCView;
 	CMainFrame *pMainFrm;
+	CSimcityView *pSCView;
 	bool bDrawHouse;
 
+	pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 	if (!pCSimcityDoc) {
 		// This case is hit at program start when the city doc/view first needs to be initialized.
 		CMFC3XMultiDocTemplate **pMultiDoc = (CMFC3XMultiDocTemplate **)pSCApp->m_templateList.m_pNodeHead;
 		pActiveSimDoc = (CSimcityDoc *)GameMain_MultiDocTemplate_OpenDocumentFile(pMultiDoc[2], NULL, TRUE);
 		GameMain_Document_SetTitle(pActiveSimDoc, pStartEngineStr);
+
+		if (bPriscillaOverrideOn)
+			EnableDebugMenu(pSCApp, pMainFrm->m_hWnd);
 	}
 	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
-	pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 	Game_SimcityView_ResetScreenArea(pSCView);
 	bDrawHouse = false;
 	switch (pSCApp->iSCAProgramStep) {

@@ -4053,6 +4053,11 @@ static inline HWND GameGetRootWindowHandle(void) {
 	return pCSimcityAppThis.m_pMainWnd->m_hWnd;
 }
 
+// Returns whether priscilla is active.
+static inline BOOL IsPriscillaActive() {
+	return pCSimcityAppThis.bSCAPriscillaActivated;
+}
+
 // Returns a raw byte-swapped DWORD (BE->LE and vice versa).
 // XXX: should we be using something like htnol here?
 static inline DWORD SwapDWORD(DWORD dwData) {
@@ -4769,6 +4774,7 @@ extern int L_DeleteAnimatedGraphic_SC2K1996(CMainFrame *pMainFrame, BOOL bUnused
 extern int GetSoundPlayTicksBySoundID_SC2K1996(int iSoundID);
 extern int GetTickDurationBySoundID_SC2K1996(int iSoundID, int nDuration);
 
+extern void EnableDebugMenu(CSimcityAppPrimary *pSCApp, HWND hWnd);
 extern void ResetCheatInput_SC2K1996();
 
 extern void L_PlaySound_SC2K1996(int nAttrib, int nDuration);

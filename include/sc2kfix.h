@@ -653,6 +653,7 @@ extern BOOL bUseAdvancedQuery;
 extern BOOL bOnTheFlyPalIdx;
 extern BOOL bDisableAutoThingCleanup;
 extern BOOL bNoXFIX;
+extern BOOL bPriscillaOverrideOn;
 
 extern BOOL bFontsInitialized;
 extern HFONT hFontMSSansSerifRegular8;
