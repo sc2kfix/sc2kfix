@@ -1023,6 +1023,15 @@ HOOKEXT_CPP json::JSON EncodeByteArray(uint8_t* dwArray, size_t iCount) {
 	return jsonArray;
 }
 
+// Transforms an array of 16-bit integers into a JSON array
+HOOKEXT_CPP json::JSON EncodeInt16Array(int16_t* dwArray, size_t iCount) {
+	json::JSON jsonArray = json::Array();
+	for (size_t i = 0; i < iCount; i++) {
+		jsonArray.append<int16_t>(dwArray[i]);
+	}
+	return jsonArray;
+}
+
 // Transforms an array of 16-bit unsigned integers into a JSON array
 HOOKEXT_CPP json::JSON EncodeUint16Array(uint16_t* dwArray, size_t iCount) {
 	json::JSON jsonArray = json::Array();
@@ -1076,6 +1085,14 @@ HOOKEXT_CPP json::JSON EncodeBudgetArray(budget_t* pBudget) {
 HOOKEXT_CPP void DecodeByteArray(uint8_t* bArray, json::JSON jsonArray, size_t iCount) {
 	for (size_t i = 0; i < iCount; i++)
 		bArray[i] = (uint8_t)(jsonArray[i].ToInt() & 0xFF);
+}
+
+// Transforms a JSON array of integers into an array of 16-bit integers at a memory location.
+// WARNING: Be very sure you know what you're doing with this function, as it will happily over-
+// flow a buffer if you specify an iCount higher than the number of elements in the target array.
+HOOKEXT_CPP void DecodeInt16Array(int16_t* wArray, json::JSON jsonArray, size_t iCount) {
+	for (size_t i = 0; i < iCount; i++)
+		wArray[i] = (int16_t)(jsonArray[i].ToInt());
 }
 
 // Transforms a JSON array of integers into an array of 16-bit unsigned integers at a memory location.
