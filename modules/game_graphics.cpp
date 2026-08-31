@@ -542,7 +542,7 @@ extern "C" void __stdcall Hook_SimcityView_OnDraw(CMFC3XDC *pDC) {
 	__asm mov[pThis], ecx
 
 	CMFC3XRect r[2];
-	char szBuf[128 + 1];
+	std::string str;
 	SIZE textSz;
 	POINT pt;
 
@@ -573,12 +573,13 @@ extern "C" void __stdcall Hook_SimcityView_OnDraw(CMFC3XDC *pDC) {
 				r[1].top);
 		}
 		if (bGameDebugMode) {
-			strcpy_s(szBuf, "Game Debugging Mode is enabled!");
+			str = strVersionBanner;
+			str += " - Game Debugging Mode is enabled!";
 			SetBkMode(pDC->m_hDC, TRANSPARENT);
 			SetTextColor(pDC->m_hDC, RGB(255, 255, 255));
-			GetTextExtentPointA(pDC->m_hAttribDC, szBuf, strlen(szBuf), &textSz);
+			GetTextExtentPointA(pDC->m_hAttribDC, str.c_str(), str.length(), &textSz);
 			MoveToEx(pDC->m_hDC, r[0].right - textSz.cx - 64, r[0].bottom - 32, &pt);
-			ExtTextOutA(pDC->m_hDC, r[0].right - textSz.cx - 32, r[0].bottom - 32, 0, &r[0], szBuf, strlen(szBuf), 0);
+			ExtTextOutA(pDC->m_hDC, r[0].right - textSz.cx - 32, r[0].bottom - 32, 0, &r[0], str.c_str(), str.length(), 0);
 		}
 		if (bRedraw)
 			PatBlt(pDC->m_hDC, r[0].right, r[0].bottom, dwSystemMetricCXVScroll, dwSystemMetricCYHScroll, BLACKNESS);

@@ -644,6 +644,7 @@ extern DWORD dwSC2KFixVersion;
 extern const char* szSC2KFixVersion;
 extern const char* szSC2KFixReleaseTag;
 extern const char* szSC2KFixBuildInfo;
+extern std::string strVersionBanner;
 extern DWORD dwExperimentsEnabled;
 extern DWORD dwPerfMonEnabled;
 extern BOOL bConsoleEnabled;
