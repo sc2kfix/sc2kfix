@@ -52,7 +52,7 @@ BOOL bMapWireFrame = FALSE;
 BOOL bOnTheFlyPalIdx = FALSE;
 BOOL bBuildFixedTiles = FALSE;
 BOOL bNoXFIX = FALSE;
-BOOL bPriscillaOverrideOn = FALSE;
+BOOL bGameDebugMode = FALSE;
 int iForcedBits = 0;
 bool bStopAudioThread = false;
 
@@ -231,8 +231,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 #endif
 					if (!lstrcmpiW(argv[i], L"-noxfix"))
 						bNoXFIX = TRUE;
-					if (!lstrcmpiW(argv[i], L"-forcedebugmenu"))
-						bPriscillaOverrideOn = TRUE;
+					if (!lstrcmpiW(argv[i], L"-gamedebugmode"))
+						bGameDebugMode = TRUE;
 					if (!lstrcmpiW(argv[i], L"-experiment=tripgenerator"))
 						dwExperimentsEnabled |= EXPERIMENT_TRIPGENERATOR;
 					if (!lstrcmpiW(argv[i], L"-experiment=all"))

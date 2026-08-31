@@ -1444,7 +1444,7 @@ extern "C" void __stdcall Hook_PrepareGame(void) {
 		pActiveSimDoc = (CSimcityDoc *)GameMain_MultiDocTemplate_OpenDocumentFile(pMultiDoc[2], NULL, TRUE);
 		GameMain_Document_SetTitle(pActiveSimDoc, pStartEngineStr);
 
-		if (bPriscillaOverrideOn)
+		if (bGameDebugMode)
 			EnableDebugMenu(pSCApp, pMainFrm->m_hWnd);
 	}
 	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
