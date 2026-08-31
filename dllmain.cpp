@@ -33,7 +33,6 @@ HMODULE hSC2KAppModule = NULL;
 HMODULE hSC2KFixModule = NULL;
 HMENU hMainMenu = NULL;
 HMENU hGameMenu = NULL;
-HMENU hDebugMenu = NULL;
 HMENU hSCURKEWMenu = NULL;
 FARPROC fpWinMMHookList[180] = { NULL };
 DWORD dwDetectedVersion = VERSION_PROG_UNKNOWN;

@@ -96,162 +96,16 @@ static BOOL bCheatMultipleDetections = FALSE;
 static const char* szIlonasHouseLabel = "Ilona's House";
 int iChurchVirus = -1;
 
-// Adds our new functionality to the priscilla debug menu.
-static void AdjustDebugMenu(HMENU hDebugMenu) {
-	if (hDebugMenu) {
-		HMENU hDebugPopup;
-		MENUITEMINFO miiDebugPopup;
-		miiDebugPopup.cbSize = sizeof(MENUITEMINFO);
-		miiDebugPopup.fMask = MIIM_SUBMENU;
-		if (!GetMenuItemInfo(hDebugMenu, 0, TRUE, &miiDebugPopup) && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		hDebugPopup = miiDebugPopup.hSubMenu;
-
-		// Insert in reverse order.
-		if (!InsertMenu(hDebugPopup, 12, MF_BYPOSITION | MF_STRING, IDM_DEBUG_FIX_BAD_TERRAIN, "Fix Bad Terrain") && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #1 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		if (!InsertMenu(hDebugPopup, 12, MF_BYPOSITION | MF_STRING, IDM_DEBUG_HIGHLIGHT_BAD_TERRAIN, "Highlight Bad Terrain") && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #2 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		if (!InsertMenu(hDebugPopup, 12, MF_BYPOSITION | MF_SEPARATOR, NULL, NULL) && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #3 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		if (!InsertMenu(hDebugPopup, 12, MF_BYPOSITION | MF_STRING, IDM_DEBUG_LABEL_CLEAR_ORPHANS, "Clear Orphaned Labels") && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #4 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		if (!InsertMenu(hDebugPopup, 12, MF_BYPOSITION | MF_STRING, IDM_DEBUG_LABEL_LIST_ORPHANS, "List Orphaned Labels") && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #5 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		if (!InsertMenu(hDebugPopup, 12, MF_BYPOSITION | MF_SEPARATOR, NULL, NULL) && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #6 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		if (!InsertMenu(hDebugPopup, 12, MF_BYPOSITION | MF_STRING, IDM_DEBUG_THING_CLEAN_MLDEPLOY, "Delete Military Deploy 'things'") && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #7 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		if (!InsertMenu(hDebugPopup, 12, MF_BYPOSITION | MF_STRING, IDM_DEBUG_THING_CLEAN_FRDEPLOY, "Delete Fire Deploy 'things'") && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #8 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		if (!InsertMenu(hDebugPopup, 12, MF_BYPOSITION | MF_STRING, IDM_DEBUG_THING_CLEAN_PLDEPLOY, "Delete Police Deploy 'things'") && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #9 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		if (!InsertMenu(hDebugPopup, 12, MF_BYPOSITION | MF_STRING, IDM_DEBUG_THING_CLEAN_TORNADO, "Delete Tornado 'things'") && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #10 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		if (!InsertMenu(hDebugPopup, 12, MF_BYPOSITION | MF_STRING, IDM_DEBUG_THING_CLEAN_MONSTER, "Delete Monster 'things'") && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #11 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		if (!InsertMenu(hDebugPopup, 12, MF_BYPOSITION | MF_STRING, IDM_DEBUG_THING_CLEAN_HERO, "Delete MaxisMan 'things'") && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #12 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		if (!InsertMenu(hDebugPopup, 12, MF_BYPOSITION | MF_STRING, IDM_DEBUG_THING_CLEAN_TRAINS, "Delete Train 'things'") && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #13 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		if (!InsertMenu(hDebugPopup, 12, MF_BYPOSITION | MF_STRING, IDM_DEBUG_THING_CLEAN_SAILBOATS, "Delete Sailboat 'things'") && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #14 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		if (!InsertMenu(hDebugPopup, 12, MF_BYPOSITION | MF_STRING, IDM_DEBUG_THING_CLEAN_SHIPS, "Delete CargoShip 'things'") && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #15 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		if (!InsertMenu(hDebugPopup, 12, MF_BYPOSITION | MF_STRING, IDM_DEBUG_THING_CLEAN_COPTERS, "Delete Helicopter 'things'") && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #16 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		if (!InsertMenu(hDebugPopup, 12, MF_BYPOSITION | MF_STRING, IDM_DEBUG_THING_CLEAN_PLANES, "Delete Airplane 'things'") && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #17 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		// Separator after "Graph Kludge"
-		if (!InsertMenu(hDebugPopup, 12, MF_BYPOSITION | MF_SEPARATOR, NULL, NULL) && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #18 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-
-		// Separator between the disasters and internal debugging functions.
-		if (!InsertMenu(hDebugPopup, 11, MF_BYPOSITION | MF_SEPARATOR, NULL, NULL) && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #19 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		// Separator between grants and disasters
-		if (!InsertMenu(hDebugPopup, 4, MF_BYPOSITION | MF_SEPARATOR, NULL, NULL) && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #20 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		// Separator between the version option and grants
-		if (!InsertMenu(hDebugPopup, 1, MF_BYPOSITION | MF_SEPARATOR, NULL, NULL) && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #21 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-
-		// Insert in reverse order.
-		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION | MF_STRING, IDM_DEBUG_SPRITE_DISPLAY, "Browse Sprites") && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #22 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION | MF_SEPARATOR, NULL, NULL) && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #23 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION | MF_STRING, IDM_DEBUG_MILITARY_MISSILESILOS, "Propose Missile Silos") && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #24 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION | MF_STRING, IDM_DEBUG_MILITARY_NAVALYARD, "Propose Naval Yard") && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #25 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION | MF_STRING, IDM_DEBUG_MILITARY_ARMYBASE, "Propose Army Base") && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #26 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION | MF_STRING, IDM_DEBUG_MILITARY_AIRFORCE, "Propose Air Force Base") && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #27 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-		if (!InsertMenu(hDebugPopup, 5, MF_BYPOSITION | MF_STRING, IDM_DEBUG_MILITARY_DECLINED, "Stop Military Spawning") && guzzardo_debug & GUZZARDO_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Debug InsertMenuA #28 failed, error = 0x%08X.\n", GetLastError());
-			return;
-		}
-
-		if (guzzardo_debug & GUZZARDO_DEBUG_MENU)
-			ConsoleLog(LOG_DEBUG, "MISC: Updated debug menu.\n");
-	}
-}
-
 // Call for enabling and attaching the debug menu.
 void EnableDebugMenu(CSimcityAppPrimary *pSCApp, HWND hWnd) {
-	HMENU hMenu, hDebugMenu;
-	CMFC3XMenu *pMenu, *pDebugMenu;
+	HMENU hMenu, hSubMenu;
 	int iSCMenuPos;
 
 	if (!pSCApp->bSCAPriscillaActivated) {
-		hMenu = GetMenu(hWnd);
-		pMenu = GameMain_Menu_FromHandle(hMenu);
-		pDebugMenu = new CMFC3XMenu();
-		if (pDebugMenu)
-			pDebugMenu->m_hMenu = 0;
-		hDebugMenu = LoadMenuA(hGameModule, (LPCSTR)223);
-		AdjustDebugMenu(hDebugMenu);
-		GameMain_Menu_Attach(pDebugMenu, hDebugMenu);
 		iSCMenuPos = Game_GetSimcityViewMenuPos(6);
-		InsertMenuA(pMenu->m_hMenu, iSCMenuPos + 6, MF_BYPOSITION | MF_POPUP, (UINT_PTR)pDebugMenu->m_hMenu, szNewItem);
+		hMenu = GetMenu(hWnd);
+		hSubMenu = LoadMenuA(hSC2KFixModule, (LPCSTR)IDR_MENU_DEBUG);
+		InsertMenuA(hMenu, iSCMenuPos + 6, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hSubMenu, "De&bug");
 		Game_SimcityApp_AdjustNewspaperMenu(pSCApp);
 		DrawMenuBar(hWnd);
 		pSCApp->bSCAPriscillaActivated = TRUE;
@@ -594,11 +448,6 @@ TRYAGAIN:
 
 // Call your cousin Vinnie!
 void PorntipsGuzzardo(void) {
-	// This case only occurs if the debug menu has been loaded
-	// from the original non-hooked CMainFrame::OnChar function.
-	hDebugMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(223));
-	AdjustDebugMenu(hDebugMenu);
-
 	// Hook for CMainFrame::OnChar
 	SafeVirtualProtect((LPVOID)0x4029E1, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4029E1, Hook_MainFrame_OnChar);

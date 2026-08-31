@@ -928,6 +928,73 @@ IDR_SCRKPALBMP          RAW                     "blobs\\SCURKBMP_PAL.bin"
 
 IDR_SCRKPALWND          RAW                     "blobs\\SCURKWND_PAL.bin"
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MENU_DEBUG MENU
+BEGIN
+    POPUP "&Info"
+    BEGIN
+        MENUITEM "Show Version Info...",        32908
+        MENUITEM "Sprite Browser...",           IDM_DEBUG_SPRITE_DISPLAY
+    END
+    POPUP "&Grants"
+    BEGIN
+        MENUITEM "More Money",                  32909
+        MENUITEM "Add All Gifts",               32910
+        MENUITEM "Add All Inventions",          32911
+    END
+    POPUP "&Military"
+    BEGIN
+        MENUITEM "Stop Military Spawning",      IDM_DEBUG_MILITARY_DECLINED
+        MENUITEM "Propose Air Force Base",      IDM_DEBUG_MILITARY_AIRFORCE
+        MENUITEM "Propose Army Base",           IDM_DEBUG_MILITARY_ARMYBASE
+        MENUITEM "Propose Naval Yard",          IDM_DEBUG_MILITARY_NAVALYARD
+        MENUITEM "Propose Missile Silos",       IDM_DEBUG_MILITARY_MISSILESILOS
+    END
+    POPUP "Other &Disasters"
+    BEGIN
+        MENUITEM "Melt Down",                   32926
+        MENUITEM "Microwave",                   32927
+        MENUITEM "Volcano",                     32923
+        MENUITEM "Fire Storm",                  32925
+        MENUITEM "Mass Riots",                  32922
+        MENUITEM "Major Flood",                 32928
+        MENUITEM "Toxic Spill",                 32924
+    END
+    POPUP "I&nternal"
+    BEGIN
+        MENUITEM "Graph Kludge",                32931
+    END
+    POPUP "&Thing Handling"
+    BEGIN
+        MENUITEM "Delete Airplanes",            IDM_DEBUG_THING_CLEAN_PLANES
+        MENUITEM "Delete Helicopters",          IDM_DEBUG_THING_CLEAN_COPTERS
+        MENUITEM "Delete CargoShips",           IDM_DEBUG_THING_CLEAN_SHIPS
+        MENUITEM "Delete Sailboats",            IDM_DEBUG_THING_CLEAN_SAILBOATS
+        MENUITEM "Delete Trains",               IDM_DEBUG_THING_CLEAN_TRAINS
+        MENUITEM "Delete MaxisMen",             IDM_DEBUG_THING_CLEAN_HERO
+        MENUITEM "Delete Monsters",             IDM_DEBUG_THING_CLEAN_MONSTER
+        MENUITEM "Delete Tornadoes",            IDM_DEBUG_THING_CLEAN_TORNADO
+        MENUITEM "Delete Police Deploys",       IDM_DEBUG_THING_CLEAN_PLDEPLOY
+        MENUITEM "Delete Fire Deploys",         IDM_DEBUG_THING_CLEAN_FRDEPLOY
+        MENUITEM "Delete Military Deploys",     IDM_DEBUG_THING_CLEAN_MLDEPLOY
+    END
+    POPUP "&Label Handling"
+    BEGIN
+        MENUITEM "List Orphaned Labels",        IDM_DEBUG_LABEL_LIST_ORPHANS
+        MENUITEM "Clear Orphaned Labels",       IDM_DEBUG_LABEL_CLEAR_ORPHANS
+    END
+    POPUP "Terrain &Handling"
+    BEGIN
+        MENUITEM "Highlight Bad Terrain",       IDM_DEBUG_HIGHLIGHT_BAD_TERRAIN
+        MENUITEM "Fix Bad Terrain",             IDM_DEBUG_FIX_BAD_TERRAIN
+    END
+END
+
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 

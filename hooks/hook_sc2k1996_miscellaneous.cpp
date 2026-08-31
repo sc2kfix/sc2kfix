@@ -83,8 +83,6 @@ extern "C" HMENU __stdcall Hook_LoadMenuA(HINSTANCE hInstance, LPCSTR lpMenuName
 		return hMainMenu;
 	if ((DWORD)lpMenuName == 3 && hGameMenu)
 		return hGameMenu;
-	if ((DWORD)lpMenuName == 223 && hDebugMenu)
-		return hDebugMenu;
 	return LoadMenuA(hInstance, lpMenuName);
 }
 #pragma warning(default : 6387)
@@ -309,12 +307,12 @@ static void SetHighlightBadTerrainMenuItem_SC2K1996() {
 	if (hOverallMenus) {
 		// Menu that you'd get after starting a game from the perspective
 		// of the mainframe - so position 7 is the debug menu.
-		HMENU hSubMenu = GetSubMenu(hOverallMenus, 7);
-		if (hSubMenu) {
-			// The underlying debug sub-menu.
-			HMENU hTargetMenu = GetSubMenu(hSubMenu, 0);
-			if (hTargetMenu)
-				CheckMenuItem(hTargetMenu, IDM_DEBUG_HIGHLIGHT_BAD_TERRAIN, (bHighlightBadTerrain ? MF_CHECKED : MF_UNCHECKED));
+		HMENU hDebugMenu = GetSubMenu(hOverallMenus, 7);
+		if (hDebugMenu) {
+			// Terrain sub menu.
+			HMENU hTerrainMenu = GetSubMenu(hDebugMenu, 7);
+			if (hTerrainMenu)
+				CheckMenuItem(hTerrainMenu, IDM_DEBUG_HIGHLIGHT_BAD_TERRAIN, (bHighlightBadTerrain ? MF_CHECKED : MF_UNCHECKED));
 		}
 	}
 }

@@ -1318,7 +1318,6 @@ sc2k = {
 		dwSimulationSubtickCounter = 0x4E63D8;
 		iCheatEntry = 0x4E6520;
 		iCheatExpectedCharPos = 0x4E6524;
-		szNewItem = 0x4E66EC;
 		pCSimcityDoc = 0x4E66F8;
 		pStartEngineStr = 0x4E67D0;
 		wPreviousTileCoordinateX = 0x4E6808;

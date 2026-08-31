@@ -635,7 +635,6 @@ extern HMODULE hmodFluidSynth;
 extern HANDLE hConsoleThread;
 extern HMENU hMainMenu;
 extern HMENU hGameMenu;
-extern HMENU hDebugMenu;
 extern HMENU hSCURKEWMenu;
 extern FARPROC fpWinMMHookList[180];
 extern DWORD dwDetectedVersion;
