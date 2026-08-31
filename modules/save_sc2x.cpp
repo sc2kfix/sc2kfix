@@ -57,6 +57,148 @@ static std::map<int, std::string> mapEnumBudgetTypeToJSONName = {
 	{ BUDGET_TUNNEL, "tunnels" }
 };
 
+static inline void Save_LoadNeighborName(int i) {
+	__int16 nIdx = wNeighborNameIdx[i];
+	if (nIdx)
+		Game_LoadNamedEntryFromRsrcOffset(&szNeighborCities[MAX_NEIGH_BUF_SIZE * i], 1000, nIdx);
+	else
+		strcpy_s(&szNeighborCities[MAX_NEIGH_BUF_SIZE * i], MAX_NEIGH_BUF_SIZE, "Ocean");
+}
+
+static void Save_LoadMiscInfoFromJSON(CSimcityAppPrimary* pSCApp, json::JSON& jsonMISC) {
+	CSimcityView* pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+
+	wCityMode = jsonMISC["city"]["mode"].ToInt16();
+	wViewRotation = jsonMISC["city"]["view_rotation"].ToInt16();
+	wCityStartYear = jsonMISC["city"]["start_year"].ToInt16();
+	dwCityDays = jsonMISC["city"]["days"].ToInt32();
+	dwCityFunds = jsonMISC["city"]["funds"].ToInt32();
+	dwCityBonds = jsonMISC["city"]["bonds"].ToInt32();
+	wCityDifficulty = jsonMISC["city"]["difficulty"].ToInt16();
+	wCityProgression = jsonMISC["city"]["progression"].ToInt16();
+	dwCityValue = jsonMISC["city"]["value"].ToInt32();
+	dwCityLandValue = jsonMISC["city"]["land_value"].ToInt32();
+	dwCityCrime = jsonMISC["city"]["crime"].ToInt32();
+	dwCityTrafficCount = jsonMISC["city"]["traffic_count"].ToInt32();
+	dwCityPollution = jsonMISC["city"]["pollution"].ToInt32();
+	dwCityFame = jsonMISC["city"]["fame"].ToInt32();
+	dwCityAdvertising = jsonMISC["city"]["advertising"].ToInt32();
+	dwCityGarbage = jsonMISC["city"]["garbage"].ToUint32();
+	dwCityWorkforcePercent = jsonMISC["city"]["workforce_percent"].ToInt32();
+	dwCityWorkforceLE = jsonMISC["city"]["workforce_le"].ToInt32();
+	dwCityWorkforceEQ = jsonMISC["city"]["workforce_eq"].ToInt32();
+	dwNationalPopulation = jsonMISC["nation"]["population"].ToInt32();
+	dwNationalValue = jsonMISC["nation"]["value"].ToInt32();
+	wNationalFedRate = jsonMISC["nation"]["fed_rate"].ToInt16();
+	wNationalEconomyTrend = jsonMISC["nation"]["economy_trend"].ToInt16();
+	bWeatherHeat = jsonMISC["city"]["weather_heat"].ToInt8();
+	bWeatherWind = jsonMISC["city"]["weather_wind"].ToInt8();
+	bWeatherRain = jsonMISC["city"]["weather_rain"].ToInt8();
+	bWeatherTrend = jsonMISC["city"]["weather_trend"].ToInt8();
+	wSetTriggerDisasterType = jsonMISC["city"]["disaster_type"].ToInt16();
+	dwCityOldResPopulation = jsonMISC["city"]["old_res_pop"].ToInt32();
+
+	// XXX (araxestroy): WTF?
+	int16_t wGrantedRewards = jsonMISC["city"]["granted_rewards"].ToInt16();
+	if (!dwGrantedItems[CITYTOOL_GROUP_REWARDS] || wGrantedRewards) {
+		if (dwGrantedItems[CITYTOOL_GROUP_REWARDS] || !wGrantedRewards)
+			Game_MainFrame_DisableCityToolBarButton((CMainFrame*)pSCApp->m_pMainWnd, CITYTOOL_BUTTON_REWARDS);
+	}
+	dwGrantedItems[CITYTOOL_GROUP_REWARDS] = wGrantedRewards;
+
+	DecodeUint32Array((uint32_t*)pRawPopRatioTable, jsonMISC["city"]["pop_ratio_table"], 20);
+	DecodeUint32Array((uint32_t*)pEQRatioTable, jsonMISC["city"]["eq_ratio_table"], 20);
+	DecodeUint32Array((uint32_t*)pLERatioTable, jsonMISC["city"]["le_ratio_table"], 20);
+
+	DecodeUint16Array((uint16_t*)wTileCount, jsonMISC["city"]["tile_count"], 256);
+	DecodeUint32Array((uint32_t*)pZonePops, jsonMISC["city"]["zone_pops"], 8);
+	DecodeUint16Array((uint16_t*)wArrBondData, jsonMISC["city"]["bond_data"], 50);
+
+	wNeighborNameIdx[0] = jsonMISC["neighbors"]["north"]["name"].ToInt16();
+	Save_LoadNeighborName(0);
+	dwNeighborPopulation[0] = jsonMISC["neighbors"]["north"]["population"].ToInt32();
+	dwNeighborValue[0] = jsonMISC["neighbors"]["north"]["value"].ToInt32();
+	dwNeighborFame[0] = jsonMISC["neighbors"]["north"]["fame"].ToInt32();
+
+	wNeighborNameIdx[1] = jsonMISC["neighbors"]["east"]["name"].ToInt16();
+	Save_LoadNeighborName(1);
+	dwNeighborPopulation[1] = jsonMISC["neighbors"]["east"]["population"].ToInt32();
+	dwNeighborValue[1] = jsonMISC["neighbors"]["east"]["value"].ToInt32();
+	dwNeighborFame[1] = jsonMISC["neighbors"]["east"]["fame"].ToInt32();
+
+	wNeighborNameIdx[2] = jsonMISC["neighbors"]["east"]["name"].ToInt16();
+	Save_LoadNeighborName(2);
+	dwNeighborPopulation[2] = jsonMISC["neighbors"]["east"]["population"].ToInt32();
+	dwNeighborValue[2] = jsonMISC["neighbors"]["east"]["value"].ToInt32();
+	dwNeighborFame[2] = jsonMISC["neighbors"]["east"]["fame"].ToInt32();
+
+	wNeighborNameIdx[3] = jsonMISC["neighbors"]["east"]["name"].ToInt16();
+	Save_LoadNeighborName(3);
+	dwNeighborPopulation[3] = jsonMISC["neighbors"]["east"]["population"].ToInt32();
+	dwNeighborValue[3] = jsonMISC["neighbors"]["east"]["value"].ToInt32();
+	dwNeighborFame[3] = jsonMISC["neighbors"]["east"]["fame"].ToInt32();
+
+	DecodeInt16Array(wCityDemand, jsonMISC["city"]["demands"], 8);
+	DecodeInt16Array(wCityInventionYears, jsonMISC["city"]["demands"], 17);
+
+	for (int i = 0; i < 16; i++)
+		DecodeBudgetArray(&pBudgetArr[i], jsonMISC["city"]["budget"][mapEnumBudgetTypeToJSONName[i]]);
+
+	bYearEndFlag = jsonMISC["city"]["year_end_flag"].ToInt8();
+	wWaterLevel = jsonMISC["city"]["water_level"].ToInt16();
+	bCityHasOcean = jsonMISC["city"]["has_ocean"].ToInt8();
+	bCityHasRiver = jsonMISC["city"]["has_river"].ToInt8();
+	bMilitaryBaseType = jsonMISC["city"]["military_base_type"].ToInt8();
+
+	DecodeByteArray((uint8_t*)pPaperArr, jsonMISC["city"]["newspaper_papers_array"], 30);
+	DecodeByteArray((uint8_t*)pNewsArr, jsonMISC["city"]["newspaper_news_array"], 72);
+
+	dwCityOrdinances = jsonMISC["city"]["ordinances"].ToUint32();
+	dwCityUnemployment = jsonMISC["city"]["unemployment"].ToInt32();
+
+	DecodeUint16Array((uint16_t*)wMilitaryTiles, jsonMISC["city"]["military_tile_count"], 16);
+
+	wSubwayXUNDCount = jsonMISC["city"]["xund_count"].ToUint16();
+	pSCApp->wSCAGameSpeedLOW = jsonMISC["options"]["speed"].ToInt16();
+	bOptionsAutoBudget = jsonMISC["options"]["auto_budget"].ToBool();
+	bOptionsAutoGoto = jsonMISC["options"]["auto_goto"].ToBool();
+	pSCApp->dwSCAGameSound = jsonMISC["options"]["sound"].ToBool();
+	pSCApp->dwSCAGameMusic = jsonMISC["options"]["music"].ToBool();
+	if (!pSCApp->dwSCAGameMusic)
+		Game_Sound_MusicStop(pSCApp->SCASNDLayer);
+
+	bNoDisasters = jsonMISC["options"]["no_disasters"].ToBool();
+	bNewspaperSubscription = jsonMISC["city"]["newspaper_subscription"].ToBool();
+	bNewspaperExtra = jsonMISC["city"]["newspaper_extra"].ToBool();
+	wNewspaperChoice = jsonMISC["city"]["newspaper_choice"].ToInt16();
+
+	int nTilePos = jsonMISC["city"]["screen_point"].ToInt32();
+	if (nTilePos == -1) {
+		wViewInitialCoordX = 64;
+		wViewInitialCoordY = 128;
+	}
+	else {
+		wViewInitialCoordX = nTilePos & 0x7F;
+		wViewInitialCoordY = nTilePos >> 8;
+	}
+
+	pSCView->wSCVZoomLevel = jsonMISC["city"]["screen_zoom"].ToUint16();
+	wCityCenterX = jsonMISC["city"]["center_x"].ToInt16();
+	wCityCenterY = jsonMISC["city"]["center_y"].ToInt16();
+	dwArcologyPopulation = jsonMISC["city"]["arcology_population"].ToInt32();
+	wConnectTiles = jsonMISC["city"]["connection_tiles"].ToInt16();
+	wStadiumSportsTeams = jsonMISC["city"]["sports_teams"].ToInt16();
+	dwCityPopulation = jsonMISC["city"]["population"].ToUint32();
+	wIndustrialMixBonus = jsonMISC["city"]["industrial_mix_bonus"].ToInt16();
+	wIndustrialMixPollutionBonus = jsonMISC["city"]["industrial_mix_pollution_bonus"].ToInt16();
+	wOldArrests = jsonMISC["city"]["old_arrests"].ToInt16();
+	wPrisonBonus = jsonMISC["city"]["prison_bonus"].ToInt16();
+	wDisasterObject = jsonMISC["city"]["disaster_object"].ToInt16();
+	wCurrentDisasterType = jsonMISC["city"]["disaster_type"].ToInt16();
+	dwDisasterActive = jsonMISC["city"]["disaster_active"].ToBool();
+	wSewerBonus = jsonMISC["city"]["sewer_bonus"].ToInt16();
+}
+
 static void Save_CreateJSONFromMiscInfo(CSimcityAppPrimary* pSCApp, json::JSON& jsonMISC) {
 	CSimcityView* pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 
