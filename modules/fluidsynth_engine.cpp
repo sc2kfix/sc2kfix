@@ -322,6 +322,7 @@ static bool FluidSynthPlaySong(fluid_audio_driver_t** pAudDriver, fluid_synth_t*
 	InitializeCriticalSection(&critSec_FSSubThread);
 
 	// Spin up a new player-driver combo
+	*pPlayer = FS_new_fluid_player(*pSynth);
 	if (FS_fluid_is_soundfont(jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT].ToString().c_str()))
 		iFluidSynthSoundFontID = FS_fluid_synth_sfload(*pSynth, jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT].ToString().c_str(), 1);
 	if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
