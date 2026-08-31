@@ -2722,7 +2722,7 @@ static bool DoFixBadTerrain_SC2K1996(HWND hWnd) {
 					// Tile-specific waterlevel is equivalent to detected water level
 					// and detected water level is greater than the Tile-specific land altitude.
 					bShouldBeWater = (ALTMReturnWaterLevel(x, y) == wDetectedWaterLvl && wDetectedWaterLvl > ALTMReturnLandAltitude(x, y)) ? true : false;
-					ConsoleLog(LOG_INFO, "Flagged Tiles: X/Y(%d, %d): TileLandAltitude(%u), TileWaterLevel(%u), CityWaterLevel(%u)%s\n", x, y, ALTMReturnLandAltitude(x, y), ALTMReturnWaterLevel(x, y), wDetectedWaterLvl, (bShouldBeWater) ? " - Should most likely be water based Detected Water Level threshold." : "");
+					ConsoleLog(LOG_INFO, "Flagged Tiles: X/Y(%d, %d): TileLandAltitude(%u), TileWaterLevel(%u), CityWaterLevel(%u)%s\n", x, y, ALTMReturnLandAltitude(x, y), ALTMReturnWaterLevel(x, y), wDetectedWaterLvl, (bShouldBeWater) ? " - Should most likely be water based on the Detected Water Level threshold." : "");
 					// Set the bit in this case.
 					if (bShouldBeWater)
 						XBITSetBits(x, y, XBIT_WATER);
