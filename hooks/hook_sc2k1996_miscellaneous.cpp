@@ -1105,7 +1105,7 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		// Set the label for the ocean if we have one
 		if (bCityHasOcean) {
 			wNeighborNameIdx[0] = 0;
-			strcpy(stNeighborCities, "Ocean");
+			strcpy_s(&szNeighborCities[MAX_NEIGH_BUF_SIZE * 0], MAX_NEIGH_BUF_SIZE, "Ocean");
 			dwNeighborPopulation[0] = 0;
 			dwNeighborValue[0] = 0;
 			dwNeighborFame[0] = 0;
