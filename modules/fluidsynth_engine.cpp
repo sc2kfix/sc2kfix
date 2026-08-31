@@ -29,6 +29,7 @@ static fluid_synth_t* pFluidSynthSynth = NULL;
 static fluid_player_t* pFluidSynthPlayer = NULL;
 static fluid_audio_driver_t* pFluidSynthDriver = NULL;
 static bool bFSSongThreadActive = false;
+static int iFluidSynthSoundFontID = 0;
 
 static CRITICAL_SECTION critSec_FSSubThread;
 
@@ -43,6 +44,7 @@ fluid_midi_router_t* (*FS_new_fluid_midi_router)(fluid_settings_t* settings, han
 int (*FS_fluid_synth_handle_midi_event)(void* data, fluid_midi_event_t* event) = NULL;
 int (*FS_fluid_is_soundfont)(const char* filename) = NULL;
 int (*FS_fluid_synth_sfload)(fluid_synth_t* synth, const char* filename, int reset_presets) = NULL;
+int (*FS_fluid_synth_sfunload)(fluid_synth_t* synth, int id, int reset_presets) = NULL;
 int (*FS_fluid_player_add)(fluid_player_t* player, const char* midifile) = NULL;
 int (*FS_fluid_player_play)(fluid_player_t* player) = NULL;
 int (*FS_fluid_player_stop)(fluid_player_t* player) = NULL;
@@ -134,6 +136,8 @@ bool MusicLoadFluidSynth(void) {
 		bUseFluidSynth = FALSE;
 	if ((FS_fluid_synth_sfload = (decltype(FS_fluid_synth_sfload))GetProcAddress(hmodFluidSynth, "fluid_synth_sfload")) == NULL)
 		bUseFluidSynth = FALSE;
+	if ((FS_fluid_synth_sfunload = (decltype(FS_fluid_synth_sfunload))GetProcAddress(hmodFluidSynth, "fluid_synth_sfunload")) == NULL)
+		bUseFluidSynth = FALSE;
 	if ((FS_fluid_player_add = (decltype(FS_fluid_player_add))GetProcAddress(hmodFluidSynth, "fluid_player_add")) == NULL)
 		bUseFluidSynth = FALSE;
 	if ((FS_fluid_player_play = (decltype(FS_fluid_player_play))GetProcAddress(hmodFluidSynth, "fluid_player_play")) == NULL)
@@ -210,7 +214,7 @@ bool MusicLoadFluidSynth(void) {
 static void FluidSynthStopSong(fluid_audio_driver_t** pAudDriver, fluid_synth_t** pSynth, fluid_player_t** pPlayer) {
 	int i;
 	
-	if (!pAudDriver && !pSynth && !pPlayer)
+	if (!pAudDriver || !pSynth || !pPlayer)
 		return;
 
 	// Stop and delete the existing player-driver combo if it exists
@@ -243,6 +247,11 @@ static void FluidSynthStopSong(fluid_audio_driver_t** pAudDriver, fluid_synth_t*
 			FS_fluid_synth_all_sounds_off(*pSynth, i);
 		FS_delete_fluid_audio_driver(*pAudDriver);
 		FS_delete_fluid_player(*pPlayer);
+
+		if (iFluidSynthSoundFontID) {
+			FS_fluid_synth_sfunload(*pSynth, iFluidSynthSoundFontID, 0);
+			iFluidSynthSoundFontID = 0;
+		}
 
 		*pAudDriver = 0;
 		*pPlayer = 0;
@@ -313,9 +322,8 @@ static bool FluidSynthPlaySong(fluid_audio_driver_t** pAudDriver, fluid_synth_t*
 	InitializeCriticalSection(&critSec_FSSubThread);
 
 	// Spin up a new player-driver combo
-	*pPlayer = FS_new_fluid_player(*pSynth);
 	if (FS_fluid_is_soundfont(jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT].ToString().c_str()))
-		FS_fluid_synth_sfload(*pSynth, jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT].ToString().c_str(), 1);
+		iFluidSynthSoundFontID = FS_fluid_synth_sfload(*pSynth, jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT].ToString().c_str(), 1);
 	if (mus_debug & MUS_DEBUG_THREAD || mus_debug & MUS_DEBUG_FLUIDSYNTH)
 		ConsoleLog(LOG_DEBUG, "MUS:  Loaded soundfont \"%s\" into new pFluidSynthPlayer.\n", jsonSettingsCore[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_SOUNDFONT].ToString().c_str());
 
