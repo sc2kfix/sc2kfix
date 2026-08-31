@@ -126,17 +126,17 @@ static void Save_LoadMiscInfoFromJSON(CSimcityAppPrimary* pSCApp, json::JSON& js
 	dwNeighborValue[1] = jsonMISC["neighbors"]["east"]["value"].ToInt32();
 	dwNeighborFame[1] = jsonMISC["neighbors"]["east"]["fame"].ToInt32();
 
-	wNeighborNameIdx[2] = jsonMISC["neighbors"]["east"]["name"].ToInt16();
+	wNeighborNameIdx[2] = jsonMISC["neighbors"]["south"]["name"].ToInt16();
 	Save_LoadNeighborName(2);
-	dwNeighborPopulation[2] = jsonMISC["neighbors"]["east"]["population"].ToInt32();
-	dwNeighborValue[2] = jsonMISC["neighbors"]["east"]["value"].ToInt32();
-	dwNeighborFame[2] = jsonMISC["neighbors"]["east"]["fame"].ToInt32();
+	dwNeighborPopulation[2] = jsonMISC["neighbors"]["south"]["population"].ToInt32();
+	dwNeighborValue[2] = jsonMISC["neighbors"]["south"]["value"].ToInt32();
+	dwNeighborFame[2] = jsonMISC["neighbors"]["south"]["fame"].ToInt32();
 
-	wNeighborNameIdx[3] = jsonMISC["neighbors"]["east"]["name"].ToInt16();
+	wNeighborNameIdx[3] = jsonMISC["neighbors"]["west"]["name"].ToInt16();
 	Save_LoadNeighborName(3);
-	dwNeighborPopulation[3] = jsonMISC["neighbors"]["east"]["population"].ToInt32();
-	dwNeighborValue[3] = jsonMISC["neighbors"]["east"]["value"].ToInt32();
-	dwNeighborFame[3] = jsonMISC["neighbors"]["east"]["fame"].ToInt32();
+	dwNeighborPopulation[3] = jsonMISC["neighbors"]["west"]["population"].ToInt32();
+	dwNeighborValue[3] = jsonMISC["neighbors"]["west"]["value"].ToInt32();
+	dwNeighborFame[3] = jsonMISC["neighbors"]["west"]["fame"].ToInt32();
 
 	DecodeInt16Array(wCityDemand, jsonMISC["city"]["demands"], 8);
 	DecodeInt16Array(wCityInventionYears, jsonMISC["city"]["demands"], 17);
