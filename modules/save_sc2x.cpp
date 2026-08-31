@@ -139,7 +139,7 @@ static void Save_LoadMiscInfoFromJSON(CSimcityAppPrimary* pSCApp, json::JSON& js
 	dwNeighborFame[3] = jsonMISC["neighbors"]["west"]["fame"].ToInt32();
 
 	DecodeInt16Array(wCityDemand, jsonMISC["city"]["demands"], 8);
-	DecodeInt16Array(wCityInventionYears, jsonMISC["city"]["demands"], 17);
+	DecodeInt16Array(wCityInventionYears, jsonMISC["city"]["invention_years"], 17);
 
 	for (int i = 0; i < 16; i++)
 		DecodeBudgetArray(&pBudgetArr[i], jsonMISC["city"]["budget"][mapEnumBudgetTypeToJSONName[i]]);
