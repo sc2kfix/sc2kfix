@@ -2738,7 +2738,7 @@ static bool DoFixBadTerrain_SC2K1996(HWND hWnd) {
 			bRet = true;
 		}
 		else
-			str += string_format("Nothing to fix.\n", nCnt);
+			str += string_format("Nothing to fix.\n");
 		L_MessageBoxA(hWnd, str.c_str(), gamePrimaryKey, MB_ICONINFORMATION);
 	}
 	return bRet;
