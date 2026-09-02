@@ -13,6 +13,8 @@
 #define HICOLORCNT 256
 #define LOCOLORCNT 16
 
+typedef int16_t mapcoord_t;
+
 // Forward declaration
 class CMainFrame;
 

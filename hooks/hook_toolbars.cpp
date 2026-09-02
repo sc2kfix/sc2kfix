@@ -765,7 +765,14 @@ extern "C" void __cdecl Hook_CityToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 					Game_PlaceMilitaryDispatchUnit(tileCoords.x, tileCoords.y);
 				else
 					Game_PlacePoliceDispatchUnit(tileCoords.x, tileCoords.y);
-				Game_SimcityView_UpdateHouse(pSCView);
+				// With wZoomLevel set to maximum and dwSCVIsZoomed set to
+				// true, there's a bug while paused that prevents a change
+				// to the tile from being displayed immediately (likely the
+				// dirtyRect calculation).
+				if (pSCView->dwSCVIsZoomed)
+					Game_SimcityView_DrawHouse(pSCView);
+				else
+					Game_SimcityView_UpdateHouse(pSCView);
 				break;
 			case CITYTOOL_GROUP_POWER:
 				if (wSelectedSubtool[iCurrCityToolGroupWithHotKey]) {
@@ -784,7 +791,14 @@ extern "C" void __cdecl Hook_CityToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 				}
 				else
 					L_PlayToolSound_SC2K1996(pSCApp, SOUND_ERROR);
-				Game_SimcityView_UpdateHouse(pSCView);
+				// With wZoomLevel set to maximum and dwSCVIsZoomed set to
+				// true, there's a bug while paused that prevents a change
+				// to the tile from being displayed immediately (likely the
+				// dirtyRect calculation).
+				if (pSCView->dwSCVIsZoomed)
+					Game_SimcityView_DrawHouse(pSCView);
+				else
+					Game_SimcityView_UpdateHouse(pSCView);
 				// Interesting case.. why return for anything that's not wind?
 				if (wSelectedSubtool[iCurrCityToolGroupWithHotKey] != POWER_PLANTS_WIND)
 					return;
@@ -802,11 +816,14 @@ extern "C" void __cdecl Hook_CityToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 				}
 				else
 					L_PlayToolSound_SC2K1996(pSCApp, SOUND_ERROR);
-#if 1 // Fix the pipe tool not refreshing properly at max zoom - consider revisiting to see about a more specific tweak.
-				Game_SimcityView_DrawHouse(pSCView);
-#else
-				Game_SimcityView_UpdateHouse(pSCView);
-#endif
+				// With wZoomLevel set to maximum and dwSCVIsZoomed set to
+				// true, there's a bug while paused that prevents a change
+				// to the tile from being displayed immediately (likely the
+				// dirtyRect calculation).
+				if (pSCView->dwSCVIsZoomed)
+					Game_SimcityView_DrawHouse(pSCView);
+				else
+					Game_SimcityView_UpdateHouse(pSCView);
 				// Interesting case.. why return for anything that's not a pump?
 				if (wSelectedSubtool[iCurrCityToolGroupWithHotKey] != WATER_PUMP)
 					return;
@@ -822,7 +839,14 @@ extern "C" void __cdecl Hook_CityToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 				}
 				else
 					L_PlayToolSound_SC2K1996(pSCApp, SOUND_ERROR);
-				Game_SimcityView_UpdateHouse(pSCView);
+				// With wZoomLevel set to maximum and dwSCVIsZoomed set to
+				// true, there's a bug while paused that prevents a change
+				// to the tile from being displayed immediately (likely the
+				// dirtyRect calculation).
+				if (pSCView->dwSCVIsZoomed)
+					Game_SimcityView_DrawHouse(pSCView);
+				else
+					Game_SimcityView_UpdateHouse(pSCView);
 				break;
 			case CITYTOOL_GROUP_ROADS:
 				ret = iBulldozerTool;
@@ -883,7 +907,14 @@ extern "C" void __cdecl Hook_CityToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
 					L_PlayToolSound_SC2K1996(pSCApp);
 				else
 					L_PlayToolSound_SC2K1996(pSCApp, SOUND_ERROR);
-				Game_SimcityView_UpdateHouse(pSCView);
+				// With wZoomLevel set to maximum and dwSCVIsZoomed set to
+				// true, there's a bug while paused that prevents a change
+				// to the tile from being displayed immediately (likely the
+				// dirtyRect calculation).
+				if (pSCView->dwSCVIsZoomed)
+					Game_SimcityView_DrawHouse(pSCView);
+				else
+					Game_SimcityView_UpdateHouse(pSCView);
 				return;
 			case CITYTOOL_GROUP_EDUCATION:
 			case CITYTOOL_GROUP_SERVICES:

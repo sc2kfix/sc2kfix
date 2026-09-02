@@ -65,7 +65,7 @@ void CreateDefaultXFIX(void) {
 	jsonXFIX["meta"] = {};
 	jsonXFIX["meta"]["creator"] = "sc2kfix " SC2KFIX_VERSION;	// Program that created this save
 	jsonXFIX["meta"]["timestamp"] = time(NULL);					// Unix timestamp of this save
-	jsonXFIX["meta"]["porntipsguzzardo"] = false;				// Have cheats been used in this game
+	jsonXFIX["meta"]["porntipsguzzardo"] = (IsPriscillaActive()) ? true : false;	// Have cheats been used in this game
 
 	// Data about visuals
 	jsonXFIX["map"] = {};
@@ -77,6 +77,12 @@ void CreateDefaultXFIX(void) {
 }
 
 void UpdateXFIXSettings(void) {
+	// Once priscilla is active it cannot be deactivated.
+	// It is best to reflect its current state and account
+	// for it here.
+	if (IsPriscillaActive())
+		jsonXFIX["meta"]["porntipsguzzardo"] = true;
+
 	if (bLegacyTerrainMode || jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt() == TERRAIN_COSMETIC_NONE)
 		iTerrainCosmeticMode = jsonXFIX["map"]["terrain_cosmetic_mode"].ToInt();
 

@@ -67,6 +67,9 @@ extern bool bForceNewspaperDisplay;
 extern int iForceNewspaperArg0;
 extern int iForceNewspaperArg1;
 
+// Used for the "bad" terrain highlighting
+bool bHighlightBadTerrain = false;
+
 // Override some strings that have egregiously bad grammar/capitalization.
 // Maxis fail English? That's unpossible!
 extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMax) {
@@ -80,8 +83,6 @@ extern "C" HMENU __stdcall Hook_LoadMenuA(HINSTANCE hInstance, LPCSTR lpMenuName
 		return hMainMenu;
 	if ((DWORD)lpMenuName == 3 && hGameMenu)
 		return hGameMenu;
-	if ((DWORD)lpMenuName == 223 && hDebugMenu)
-		return hDebugMenu;
 	return LoadMenuA(hInstance, lpMenuName);
 }
 #pragma warning(default : 6387)
@@ -276,7 +277,9 @@ extern "C" void __stdcall Hook_CmdUI_Enable(BOOL bOn) {
 			pThis->m_nID == IDM_MAIN_FILE_OPENMAINDIALOG ||
 			pThis->m_nID == IDM_DEBUG_SPRITE_DISPLAY ||
 			pThis->m_nID == IDM_DEBUG_LABEL_LIST_ORPHANS ||
-			pThis->m_nID == IDM_DEBUG_LABEL_CLEAR_ORPHANS)
+			pThis->m_nID == IDM_DEBUG_LABEL_CLEAR_ORPHANS ||
+			pThis->m_nID == IDM_DEBUG_HIGHLIGHT_BAD_TERRAIN ||
+			pThis->m_nID == IDM_DEBUG_FIX_BAD_TERRAIN)
 			bOnOverride = TRUE;
 		
 		EnableMenuItem(pThis->m_pMenu->m_hMenu, pThis->m_nIndex, MF_BYPOSITION |
@@ -294,6 +297,24 @@ extern "C" void __stdcall Hook_CmdUI_Enable(BOOL bOn) {
 		EnableWindow(pThis->m_pOther->m_hWnd, bOn);
 	}
 	pThis->m_bEnableChanged = TRUE;
+}
+
+static void SetHighlightBadTerrainMenuItem_SC2K1996() {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+
+	// Looks like "overall" menus here.
+	HMENU hOverallMenus = GetMenu(pSCApp->m_pMainWnd->m_hWnd);
+	if (hOverallMenus) {
+		// Menu that you'd get after starting a game from the perspective
+		// of the mainframe - so position 7 is the debug menu.
+		HMENU hDebugMenu = GetSubMenu(hOverallMenus, 7);
+		if (hDebugMenu) {
+			// Terrain sub menu.
+			HMENU hTerrainMenu = GetSubMenu(hDebugMenu, 7);
+			if (hTerrainMenu)
+				CheckMenuItem(hTerrainMenu, IDM_DEBUG_HIGHLIGHT_BAD_TERRAIN, (bHighlightBadTerrain ? MF_CHECKED : MF_UNCHECKED));
+		}
+	}
 }
 
 // Fix to make sure the main menu can't time out, disappear, and never come back
@@ -1084,7 +1105,7 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		// Set the label for the ocean if we have one
 		if (bCityHasOcean) {
 			wNeighborNameIdx[0] = 0;
-			strcpy(stNeighborCities, "Ocean");
+			strcpy_s(&szNeighborCities[MAX_NEIGH_BUF_SIZE * 0], MAX_NEIGH_BUF_SIZE, "Ocean");
 			dwNeighborPopulation[0] = 0;
 			dwNeighborValue[0] = 0;
 			dwNeighborFame[0] = 0;
@@ -1412,18 +1433,21 @@ extern "C" void __stdcall Hook_PrepareGame(void) {
 	}
 
 	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
-	CSimcityView *pSCView;
 	CMainFrame *pMainFrm;
+	CSimcityView *pSCView;
 	bool bDrawHouse;
 
+	pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 	if (!pCSimcityDoc) {
 		// This case is hit at program start when the city doc/view first needs to be initialized.
 		CMFC3XMultiDocTemplate **pMultiDoc = (CMFC3XMultiDocTemplate **)pSCApp->m_templateList.m_pNodeHead;
 		pActiveSimDoc = (CSimcityDoc *)GameMain_MultiDocTemplate_OpenDocumentFile(pMultiDoc[2], NULL, TRUE);
 		GameMain_Document_SetTitle(pActiveSimDoc, pStartEngineStr);
+
+		if (bGameDebugMode)
+			EnableDebugMenu(pSCApp, pMainFrm->m_hWnd);
 	}
 	pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
-	pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 	Game_SimcityView_ResetScreenArea(pSCView);
 	bDrawHouse = false;
 	switch (pSCApp->iSCAProgramStep) {
@@ -1533,6 +1557,8 @@ extern "C" void __stdcall Hook_StartCleanGame(void) {
 
 	// Clean up the game state and start the new game/map
 	iChurchVirus = -1;
+	bHighlightBadTerrain = false;
+	SetHighlightBadTerrainMenuItem_SC2K1996();
 	ResetThingCleanupState_SC2K1996();
 	CreateDefaultXFIX();
 	iTerrainCosmeticMode = GetXFIXTerrainMode();
@@ -1592,9 +1618,8 @@ extern "C" void __stdcall Hook_StartCleanGame(void) {
 	// This nested loop here sets TunnelLvls to 0.
 	// Originally it was: dwMapALTM[x][y].w &= ~0xFC00; (0x7C00 being ALTM_TUNNELLVLS_BOUNDARY)
 	for (int x = 0; x < GAME_MAP_SIZE; ++x) {
-		for (int y = 0; y < GAME_MAP_SIZE; ++y) {
+		for (int y = 0; y < GAME_MAP_SIZE; ++y)
 			ALTMSetTunnelLevels(x, y, 0);
-		}
 	}
 }
 
@@ -2651,8 +2676,78 @@ static void DoOrphanLabel_SC2K1996(bool bRemove) {
 	L_MessageBoxA(GameGetRootWindowHandle(), str.c_str(), gamePrimaryKey, MB_ICONINFORMATION);
 }
 
+static bool DoFixBadTerrain_SC2K1996(HWND hWnd) {
+	int nCnt = 0;
+	bool bRet, bShouldBeWater;
+	WORD wDetectedWaterLvl;
+	std::string str = "Report:\n\n";
+
+	bRet = false;
+	if (L_MessageBoxA(hWnd, "WARNING: You are about to attempt a fix of any 'bad' terrain tiles (ie, those that result in interaction problems); this cannot be undone.\n\nAre you absolutely sure that you want to proceed?", gamePrimaryKey, MB_ICONWARNING | MB_YESNO) == IDYES) {
+		// Do a scan to determine the global water level
+		// and see whether it matches wWaterLevel.
+		WORD wDetectTileLandAlt, wDetectTileWaterLvl;
+		WORD wLastTileLandAlt = 30, wLastTileWaterLvl = 0;
+		bool bDetectedWaterLevel = false;
+		for (int x = 0; x < GAME_MAP_SIZE; ++x) {
+			for (int y = 0; y < GAME_MAP_SIZE; ++y) {
+				if (XBITReturnIsWater(x, y)) {
+					wDetectTileLandAlt = ALTMReturnLandAltitude(x, y);
+					wDetectTileWaterLvl = ALTMReturnWaterLevel(x, y);
+					// If the new TileLandAlt is less than the last - record it.
+					if (wDetectTileLandAlt < wLastTileLandAlt) {
+						// The new TileWaterLvl must be greater than TileLandAlt.
+						// (This avoids erroneous detections when it comes to
+						//  the removable surface water).
+						if (wDetectTileWaterLvl > wDetectTileLandAlt) {
+							// If the new TileWaterLvl is greater than the last - record it.
+							// Make sure bDetectedWaterLevel is set to true at this point
+							// so it can be used later if necessary.
+							if (wDetectTileWaterLvl > wLastTileWaterLvl) {
+								wLastTileWaterLvl = wDetectTileWaterLvl;
+								bDetectedWaterLevel = true;
+							}
+						}
+						wLastTileLandAlt = wDetectTileLandAlt;
+					}
+				}
+			}
+		}
+		wDetectedWaterLvl = (bDetectedWaterLevel) ? wLastTileWaterLvl : wWaterLevel;
+		if (wWaterLevel != wDetectedWaterLvl)
+			str += string_format("Detected a mismatch with the city stored water level based on a preliminary scan: Stored Water Level '%u', Detected Water Level '%u'; using 'Detected Water Level' value.\n\n", wWaterLevel, wDetectedWaterLvl);
+		for (int x = 0; x < GAME_MAP_SIZE; ++x) {
+			for (int y = 0; y < GAME_MAP_SIZE; ++y) {
+				if (MarkBadTerrain(x, y)) {
+					// Tile-specific waterlevel is equivalent to detected water level
+					// and detected water level is greater than the Tile-specific land altitude.
+					bShouldBeWater = (ALTMReturnWaterLevel(x, y) == wDetectedWaterLvl && wDetectedWaterLvl > ALTMReturnLandAltitude(x, y)) ? true : false;
+					ConsoleLog(LOG_INFO, "Flagged Tiles: X/Y(%d, %d): TileLandAltitude(%u), TileWaterLevel(%u), CityWaterLevel(%u)%s\n", x, y, ALTMReturnLandAltitude(x, y), ALTMReturnWaterLevel(x, y), wDetectedWaterLvl, (bShouldBeWater) ? " - Should most likely be water based on the Detected Water Level threshold." : "");
+					// Set the bit in this case.
+					if (bShouldBeWater)
+						XBITSetBits(x, y, XBIT_WATER);
+					// Always set the water level.
+					ALTMSetWaterLevel(x, y, wDetectedWaterLvl);
+					++nCnt;
+				}
+			}
+		}
+
+		if (nCnt > 0) {
+			str += string_format("See console or logfile for comprehensive output.\n\nTotal fixed tiles: %d\n", nCnt);
+			bRet = true;
+		}
+		else
+			str += string_format("Nothing to fix.\n");
+		L_MessageBoxA(hWnd, str.c_str(), gamePrimaryKey, MB_ICONINFORMATION);
+	}
+	return bRet;
+}
+
 // Hook for a couple different CWnd::OnCmdMessage derivatives
 static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void *pHandler, void *dwRetAddr) {
+	CSimcityView *pSCView = Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis);
+
 	// Normally internally there'd be the class hierarchy regarding inheritence
 	// (which isn't present here).
 	//
@@ -2761,6 +2856,28 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 			case IDM_DEBUG_LABEL_CLEAR_ORPHANS:
 				if (L_MessageBoxA(pThis->m_hWnd, "WARNING: You are about to clear out any detected orphaned labels, this action cannot be undone.\n\nDo you want to proceed?", gamePrimaryKey, MB_ICONWARNING|MB_YESNO) == IDYES)
 					DoOrphanLabel_SC2K1996(true);
+				return TRUE;
+
+			case IDM_DEBUG_HIGHLIGHT_BAD_TERRAIN:
+				bHighlightBadTerrain = !bHighlightBadTerrain;
+				SetHighlightBadTerrainMenuItem_SC2K1996();
+				if (pSCView) {
+					Game_SimcityView_DrawHouse(pSCView);
+					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+				}
+				return TRUE;
+
+			case IDM_DEBUG_FIX_BAD_TERRAIN:
+				if (bHighlightBadTerrain) {
+					if (DoFixBadTerrain_SC2K1996(pThis->m_hWnd)) {
+						if (pSCView) {
+							Game_SimcityView_DrawHouse(pSCView);
+							RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
+						}
+					}
+				}
+				else
+					L_MessageBoxA(pThis->m_hWnd, "You must enable the 'Highlight Bad Terrain' option before this function can be used.", gamePrimaryKey, MB_ICONINFORMATION);
 				return TRUE;
 			}
 			//ConsoleLog(LOG_DEBUG, "CFrameWnd::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, pExtra, pHandler, dwRetAddr);
