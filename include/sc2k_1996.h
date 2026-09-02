@@ -63,23 +63,24 @@
 
 #define USE_ONTHEFLYPALIDX 0
 
-#define PALCACHE_TYPE_NONE						-1
-#define PALCACHE_TYPE_CYCLE						0
-#define PALCACHE_TYPE_TREES_SEASON_AUTUMN		1
-#define PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW	2
-#define PALCACHE_TYPE_TREES_SEASON_SNOW			3
-#define PALCACHE_TYPE_TERRAIN_GEN_GREY			4
-#define PALCACHE_TYPE_TERRAIN_GEN_GREEN			5
-#define PALCACHE_TYPE_TERRAIN_GEN_COLD			6
-#define PALCACHE_TYPE_TERRAIN_GEN_HOT			7
-#define PALCACHE_TYPE_TERRAIN_SNOW				8
-#define PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD		9
-#define PALCACHE_TYPE_WATER_ICE					10
-#define PALCACHE_TYPE_WATER_ICE_BLIZZARD		11
-#define PALCACHE_TYPE_GRASS_SNOW				12
-#define PALCACHE_TYPE_TREES_SEASON_HEAT			13
-#define PALCACHE_TYPE_GRASS_HEAT				14
-#define PALCACHE_TYPE_GRASS_DROUGHT				15
+#define PALCACHE_TYPE_NONE                    -1
+#define PALCACHE_TYPE_CYCLE                    0
+#define PALCACHE_TYPE_TREES_SEASON_AUTUMN      1
+#define PALCACHE_TYPE_TREES_SEASON_AUTUMNSNOW  2
+#define PALCACHE_TYPE_TREES_SEASON_SNOW        3
+#define PALCACHE_TYPE_TERRAIN_GEN_GREY         4
+#define PALCACHE_TYPE_TERRAIN_GEN_GREEN        5
+#define PALCACHE_TYPE_TERRAIN_GEN_COLD         6
+#define PALCACHE_TYPE_TERRAIN_GEN_HOT          7
+#define PALCACHE_TYPE_TERRAIN_SNOW             8
+#define PALCACHE_TYPE_TERRAIN_SNOW_BLIZZARD    9
+#define PALCACHE_TYPE_WATER_ICE                10
+#define PALCACHE_TYPE_WATER_ICE_BLIZZARD       11
+#define PALCACHE_TYPE_GRASS_SNOW               12
+#define PALCACHE_TYPE_TREES_SEASON_HEAT        13
+#define PALCACHE_TYPE_GRASS_HEAT               14
+#define PALCACHE_TYPE_GRASS_DROUGHT            15
+#define PALCACHE_TYPE_TERRAIN_ERROR            16
 
 #define CACHED_FRAMES 16
 
@@ -3690,7 +3691,6 @@ GAMEOFF(BOOL,	bRedraw,					0x4E62B4)
 GAMEOFF(DWORD,	dwSimulationSubtickCounter,	0x4E63D8)
 GAMEOFF(int,	iCheatEntry,				0x4E6520)
 GAMEOFF(int,	iCheatExpectedCharPos,		0x4E6524)
-GAMEOFF_ARR(char,	szNewItem,				0x4E66EC)
 GAMEOFF(CSimcityDoc*,	pCSimcityDoc,		0x4E66F8)
 GAMEOFF_ARR(const char,	pStartEngineStr,	0x4E67D0)
 GAMEOFF(WORD,	wPreviousTileCoordinateX,	0x4E6808)
@@ -3977,6 +3977,11 @@ static inline CMFC3XPalette *GameGetPalette(void) {
 // Returns the HWND of the game's root window.
 static inline HWND GameGetRootWindowHandle(void) {
 	return pCSimcityAppThis.m_pMainWnd->m_hWnd;
+}
+
+// Returns whether priscilla is active.
+static inline BOOL IsPriscillaActive() {
+	return pCSimcityAppThis.bSCAPriscillaActivated;
 }
 
 // Returns a raw byte-swapped DWORD (BE->LE and vice versa).
@@ -4582,6 +4587,17 @@ static inline BYTE GetXROGByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
 	return dwMapXROG[x][y].bBlock;
 }
 
+static inline bool MarkBadTerrain(__int16 x, __int16 y) {
+	if (!XBITReturnIsWater(x, y)) {
+		WORD wTileWaterLevel = ALTMReturnWaterLevel(x, y);
+		if (wTileWaterLevel > wWaterLevel) {
+			if (ALTMReturnLandAltitude(x, y) < wTileWaterLevel)
+				return true;
+		}
+	}
+	return false;
+}
+
 static inline int GetGameSeason(void) {
 	switch (dwCityDays / 25 % 12) {
 	case 0:
@@ -4660,6 +4676,7 @@ typedef struct {
 	std::vector<spriteFrame_t> sprSeasonHeatwaveFrame;    // Trees (heatwave)
 	std::vector<spriteFrame_t> sprGrassHeatwaveFrame;     // Buildings with grass (heatwave)
 	std::vector<spriteFrame_t> sprGrassDroughtFrame;      // Buildings with grass (drought)
+	std::vector<spriteFrame_t> sprTerrainErrCheck;        // Terrain tiles - re-colour for error cases.
 } spriteCache_t;
 
 extern HWND hwndMainDialog_SC2K1996;
@@ -4683,6 +4700,7 @@ extern int L_DeleteAnimatedGraphic_SC2K1996(CMainFrame *pMainFrame, BOOL bUnused
 extern int GetSoundPlayTicksBySoundID_SC2K1996(int iSoundID);
 extern int GetTickDurationBySoundID_SC2K1996(int iSoundID, int nDuration);
 
+extern void EnableDebugMenu(CSimcityAppPrimary *pSCApp, HWND hWnd);
 extern void ResetCheatInput_SC2K1996();
 
 extern void L_PlaySound_SC2K1996(int nAttrib, int nDuration);
@@ -4719,10 +4737,12 @@ extern BYTE *pBaseGraphicLockDIBRes;
 extern void L_CheckCursor_SC2K1996(CSimcityView *pSCView);
 extern int __cdecl L_BeginProcessObjects_SC2K1996(HWND hWnd, void *pBaseBits, void *pModdedBits, int x, int y, RECT *r);
 extern void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveCursorActive);
+extern void L_drawShape_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert, bool bTerrainError);
 extern void L_drawShapeSpecific_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert, int nType);
 extern void L_drawShapeDialog_SC2K1996(__int16 nSpriteID, __int16 right, __int16 bottom, __int16 isFlipped, __int16 doInvert);
 
 extern void L_InitializeCityData();
+int L_ItemPlacementCheck(mapcoord_t m_x, mapcoord_t m_y, BYTE iTileID, int16_t iTileArea, bool bDoSilo);
 
 extern int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName);
 extern void L_SimcityApp_LoadCityFromCMDLine(CSimcityAppPrimary *pSCApp, const char *lpFileNameFromCMDLine);

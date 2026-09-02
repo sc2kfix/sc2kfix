@@ -33,7 +33,6 @@ HMODULE hSC2KAppModule = NULL;
 HMODULE hSC2KFixModule = NULL;
 HMENU hMainMenu = NULL;
 HMENU hGameMenu = NULL;
-HMENU hDebugMenu = NULL;
 HMENU hSCURKEWMenu = NULL;
 FARPROC fpWinMMHookList[180] = { NULL };
 DWORD dwDetectedVersion = VERSION_PROG_UNKNOWN;
@@ -42,6 +41,7 @@ DWORD dwDetectedAppTimestamp = 0;
 DWORD dwSC2KFixVersion = SC2KFIX_VERSION_MAJOR << 24 | SC2KFIX_VERSION_MINOR << 16 | SC2KFIX_VERSION_PATCH << 8;
 const char* szSC2KFixVersion = SC2KFIX_VERSION;
 const char* szSC2KFixReleaseTag = SC2KFIX_RELEASE_TAG;
+std::string strVersionBanner = "";
 FILE* fdLog = NULL;
 DWORD dwExperimentsEnabled = EXPERIMENT_NONE;
 DWORD dwPerfMonEnabled = PERFMON_NONE;
@@ -53,6 +53,7 @@ BOOL bMapWireFrame = FALSE;
 BOOL bOnTheFlyPalIdx = FALSE;
 BOOL bBuildFixedTiles = FALSE;
 BOOL bNoXFIX = FALSE;
+BOOL bGameDebugMode = FALSE;
 int iForcedBits = 0;
 bool bStopAudioThread = false;
 
@@ -231,6 +232,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 #endif
 					if (!lstrcmpiW(argv[i], L"-noxfix"))
 						bNoXFIX = TRUE;
+					if (!lstrcmpiW(argv[i], L"-gamedebugmode"))
+						bGameDebugMode = TRUE;
 					if (!lstrcmpiW(argv[i], L"-experiment=tripgenerator"))
 						dwExperimentsEnabled |= EXPERIMENT_TRIPGENERATOR;
 					if (!lstrcmpiW(argv[i], L"-experiment=all"))
@@ -315,7 +318,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
 		// Print the version banner
 		{
-			std::string strVersionBanner = "sc2kfix Release ";
+			strVersionBanner = "sc2kfix Release ";
 			strVersionBanner += std::to_string(SC2KFIX_VERSION_MINOR);
 			if (SC2KFIX_VERSION_PATCH)
 				strVersionBanner += (SC2KFIX_VERSION_PATCH - 1 + 'a');
