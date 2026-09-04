@@ -295,7 +295,11 @@ static int L_SimcityApp_OpenCityCompressed(CSimcityAppPrimary *pSCApp, FILE *pFi
 		memset(pTmp, 0, nSize);
 		if (fread(pTmp, nSize, 1, pFile) > 0) {
 			nTp = nDp = 0;
-#if 0
+			// The re-constructed decompression code block has been
+			// kept around as a pre-caution; as of 2026-09-04 it has
+			// been enabled as a result of a very rare issue that crops
+			// up on certain cities.
+#if 1
 			int ix = 0;
 			char dat;
 			while (nSize > nTp && nDatSize > nDp) {
