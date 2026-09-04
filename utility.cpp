@@ -955,21 +955,27 @@ HOOKEXT_CPP size_t Base64Decode(BYTE* pBuffer, size_t iBufSize, const unsigned c
 
 // Decompresses a MaxisRLE blob into a buffer
 int MaxisDecompress(BYTE* pBuffer, size_t iBufSize, BYTE* pCompressedData, int iCompressedSize, int *nCompSize) {
-	int i = 0, j = 0;
+	int i = 0, j = 0, nLen;
+	char dat;
 
-	for (; i < iCompressedSize && j < (int)iBufSize;) {
-		if (pCompressedData[i] < 128) {
-			memcpy(pBuffer + j, pCompressedData + i + 1, pCompressedData[i]);
-			j += pCompressedData[i];
-			i += pCompressedData[i] + 1;
+	// The re-constructed decompression code is now used here.
+	// This resolves a prior issue that was occurring whereas
+	// in certain very rare cases during an attempted decompression
+	// it would get stuck in an infinite loop if it detected 0x80 (that
+	// check is now absent).
+	// Cases where this was detected: Hell.sc2
+
+	while (iCompressedSize > i && (int)iBufSize > j) {
+		dat = pCompressedData[i++];
+		if (dat >= 0) {
+			for (nLen = dat; nLen > 0; --nLen)
+				pBuffer[j++] = pCompressedData[i++];
 		}
-		else if (pCompressedData[i] > 128) {
-			memset(pBuffer + j, pCompressedData[i + 1], pCompressedData[i] - 127);
-			j += pCompressedData[i] - 127;
-			i += 2;
+		else {
+			nLen = dat & 127;
+			for (dat = pCompressedData[i++]; nLen >= 0; --nLen)
+				pBuffer[j++] = dat;
 		}
-		else
-			ConsoleLog(LOG_WARNING, "LOAD: Unexpected 0x80 in MaxisDecompress. This should never happen.\n");
 	}
 
 	if (save_debug & SAVE_DEBUG_VANILLA_LOAD)
