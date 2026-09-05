@@ -1592,6 +1592,70 @@ extern "C" void __stdcall Hook_SimcityView_DrawHouse() {
 	L_DrawHouse_SC2K1996(pThis, FALSE);
 }
 
+extern "C" void __stdcall Hook_SimcityView_DrawHouseBelowTile(mapcoord_t x, mapcoord_t y) {
+	CSimcityView *pThis;
+
+	__asm mov [pThis], ecx
+
+	if (pThis->SCVGraphics && pThis->pSCVGraphicLockDIBRes || Game_SimcityView_CheckOrLoadGraphic(pThis)) {
+		if (pBaseGraphics && pBaseGraphicLockDIBRes) {
+			// Lock what we need to and set up the drawing process
+			curBaseLockedDIBBits = Game_Graphics_LockDIBBits(pBaseGraphics);
+			curLockedDIBBits = Game_Graphics_LockDIBBits(pThis->SCVGraphics);
+			Game_Graphics_Width(pThis->SCVGraphics);		// XXX (araxestroy): needed? return value discarded, no side effects
+			Game_Graphics_Height(pThis->SCVGraphics);		// XXX (araxestroy): needed? return value discarded, no side effects
+			L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, curBaseLockedDIBBits, curLockedDIBBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
+			rcDst = pThis->SCVAreaView;
+			pBaseSCVDC = pBaseGraphics->GetDC_SC2K1996();
+			theSCVDC = Game_Graphics_GetDC(pThis->SCVGraphics);
+
+			pBaseGraphics->ReleaseDC_SC2K1996(pBaseSCVDC);
+			Game_Graphics_ReleaseDC(pThis->SCVGraphics, theSCVDC);
+			wCurrentPositionAngle = wPositionAngle[wViewRotation];
+
+			pBaseSCVDC = NULL;
+			theSCVDC = NULL;
+
+			// Draw colour data for map overlays if we're in one of those modes
+			if (!IsIconic(pThis->m_hWnd) && showColor && EditData)
+				Game_DrawAllColor();
+
+			// Otherwise check to see if the active display layer is the underground view
+			else if (DisplayLayer[LAYER_UNDERGROUND])
+				Game_DrawAllUnder();
+
+			// If neither of those, draw the above ground view
+			else {
+				switch (pThis->wSCVZoomLevel) {
+				case ZOOM_LEVEL_TINY:
+					Game_DrawAllTinyBelowTile();
+					break;
+				case ZOOM_LEVEL_SMALL:
+					Game_DrawAllSmallBelowTile(x, y);
+					break;
+				case ZOOM_LEVEL_LARGE:
+					Game_DrawAllLargeBelowTile(x, y);
+					break;
+				default:
+					ConsoleLog(LOG_WARNING, "DRAW: CSimcityView::DrawHouseBelowTile got bad ::wSCVZoomLevel = %d, assuming 2.\n", pThis->wSCVZoomLevel);
+					Game_DrawAllLargeBelowTile(x, y);
+					break;
+				}
+			}
+
+			// Clean up the drawing process and redraw the window (and any subdialogs)
+			Game_FinishProcessObjects();
+			wCursorActive = 0;
+			Game_SimcityView_MainWindowUpdate(pThis, 0, TRUE);
+			Game_UpdateCityMap();
+			Game_Graphics_UnlockDIBBits(pThis->SCVGraphics);
+			curLockedDIBBits = 0;
+			Game_Graphics_UnlockDIBBits(pBaseGraphics);
+			curBaseLockedDIBBits = 0;
+		}
+	}
+}
+
 extern "C" void __stdcall Hook_SimcityView_UpdateHouse() {
 	CSimcityView *pThis;
 
@@ -3787,6 +3851,10 @@ void InstallDrawingHooks_SC2K1996(void) {
 	// Hook for CSimcityView::DrawHouse
 	SafeVirtualProtect((LPVOID)0x402810, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x402810, Hook_SimcityView_DrawHouse);
+
+	// Hook for CSimcityView::DrawHouseBelowTile
+	SafeVirtualProtect((LPVOID)0x4018BB, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4018BB, Hook_SimcityView_DrawHouseBelowTile);
 
 	// Hook for CSimcityView::UpdateHouse
 	SafeVirtualProtect((LPVOID)0x40226B, 5, PAGE_EXECUTE_READWRITE);
