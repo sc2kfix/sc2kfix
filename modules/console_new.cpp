@@ -258,6 +258,26 @@ bool ConsoleCommandFixupThingsClear(std::vector<std::string> args, int iBreakout
 	return true;
 }
 
+bool bForceCrash = false;
+
+bool ConsoleCommandForceCrash(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap({ {"<[Enter]>", "Execute this command"} });
+		bConsoleKeepCommandBuffer = true;
+		return true;
+	}
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+
+	// No arguments
+	if (args.size())
+		return false;
+
+	bForceCrash = true;
+	printf_lightred("YOU DID IT! SimCity 2000 will crash on the next calendar tick. Good luck!\n");
+	return true;
+}
+
 // XXX (araxestroy): for testing, remove when SC2X saves are hooked up properly
 extern int L_SimcityApp_DoSave(CSimcityAppPrimary* pSCApp, const char* lpFileName, char* pNewCityName, bool bChangeCityName);
 
@@ -1304,11 +1324,11 @@ bool ConsoleCommandShowVersion(std::vector<std::string> args, int iBreakoutState
 
 void NewConsoleInitializeCommands(console::CommandTree& treeCommands) {
 	treeCommands["clear"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandClear, "Clear the console");
-	treeCommands["crash"] = ConsoleCommand(COMMAND_TYPE_UNDOCUMENTED, (command_proc_t)NULL, "Crash the game");
 	treeCommands["fixup"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Fix up engine gremlins");
 	treeCommands["fixup"]["things"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Fixup commands for Thing entities");
 	treeCommands["fixup"]["things"]["clear"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandFixupThingsClear, "Clear (specific) Thing entities");
 	treeCommands["force"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Force something to happen (be very careful!)");
+	treeCommands["force"]["crash"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandForceCrash, "Force the game to crash. No, really.");
 	treeCommands["force"]["load"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandForceLoad, "Force the game to load a save");
 	treeCommands["force"]["save"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandForceSave, "Force the game to write a save");
 	treeCommands["run"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Run Lua REPL or scripts");
