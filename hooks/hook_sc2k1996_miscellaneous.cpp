@@ -812,7 +812,7 @@ extern "C" void __stdcall Hook_SimcityApp_BuildSubFrames(void) {
 								// Process the actual simulation tick, including calendar advance,
 								// budget updates, construction, etc. based on the in-game date
 								if (pSCDoc && pSCDoc->pSimEngine)
-									Simulation_ProcessTick();
+									Simulation_Orchestrator_ProcessTick();
 
 								// Start a disaster if we've been told to do so
 								if (wSetTriggerDisasterType)
@@ -1711,14 +1711,14 @@ std::vector<hook_function_t> stHooks_Hook_SimCalendarDay23_After;
 std::vector<hook_function_t> stHooks_Hook_SimCalendarAdvance_After;
 
 
-LARGE_INTEGER SPT_uTickStart, SPT_uTickEnd, SPT_uTicksPerSecond;
+LARGE_INTEGER SOPT_uTickStart, SOPT_uTickEnd, SOPT_uTicksPerSecond;
 
 // Called by the main game loop to advance the calendar and orchestrate the simulation, as well as
 // updating graphs, checking scenario goals and progression requirements, and updating performance
 // monitoring timers.
 // 
 // MODDING: Many modding hooks are available; see the hook arrays above this function's definition.
-NEWENGINE void Simulation_ProcessTick(void) {
+NEWENGINE void Simulation_Orchestrator_ProcessTick(void) {
 	int i;
 	DWORD dwMonDay;
 	int iStep, iSubStep;
@@ -1728,7 +1728,7 @@ NEWENGINE void Simulation_ProcessTick(void) {
 	CSimcityAppPrimary *pSCApp;
 	CMainFrame *pMainFrm;
 	CNewspaperDialog newsDialog;
-	if (!QueryPerformanceFrequency(&SPT_uTicksPerSecond))
+	if (!QueryPerformanceFrequency(&SOPT_uTicksPerSecond))
 		ConsoleLog(LOG_WARNING, "CORE: WTF? QueryPerformanceFrequency errored out 0x%08X.\n", GetLastError());
 
 	pSCApp = &pCSimcityAppThis;
@@ -1790,7 +1790,7 @@ NEWENGINE void Simulation_ProcessTick(void) {
 	// Advance the simulation for the current SimCalendar day
 	switch (dwMonDay) {
 		case 0:
-			QueryPerformanceCounter(&SPT_uTickStart);
+			QueryPerformanceCounter(&SOPT_uTickStart);
 
 			// If we're not using the real-time renderer, then update the titlebar on the first of
 			// the month (vanilla behaviour)
@@ -1964,14 +1964,14 @@ NEWENGINE void Simulation_ProcessTick(void) {
 			Game_UpdateWeatherOrDisasterState();
 
 			// Update the performance counters for PERFMON_WHOLEMONTH
-			QueryPerformanceCounter(&SPT_uTickEnd);
+			QueryPerformanceCounter(&SOPT_uTickEnd);
 			if (dwPerfMonEnabled & PERFMON_WHOLEMONTH) {
-				if (SPT_uTicksPerSecond.QuadPart && SPT_uTickStart.QuadPart) {
-					if (((SPT_uTickEnd.QuadPart - SPT_uTickStart.QuadPart) * 1000000 / SPT_uTicksPerSecond.QuadPart) > 1000)
+				if (SOPT_uTicksPerSecond.QuadPart && SOPT_uTickStart.QuadPart) {
+					if (((SOPT_uTickEnd.QuadPart - SOPT_uTickStart.QuadPart) * 1000000 / SOPT_uTicksPerSecond.QuadPart) > 1000)
 						ConsoleLog(LOG_INFO, "PERFMON: %s %d - Month took %llu microseconds.\n",
 							pSCApp->dwSCApCStringLongMonths[dwCityDays / 25 % 12].m_pchData,
 							wCityStartYear + dwCityDays / 300,
-							((SPT_uTickEnd.QuadPart - SPT_uTickStart.QuadPart) * 1000000 / SPT_uTicksPerSecond.QuadPart));
+							((SOPT_uTickEnd.QuadPart - SOPT_uTickStart.QuadPart) * 1000000 / SOPT_uTicksPerSecond.QuadPart));
 				} else {
 					ConsoleLog(LOG_INFO, "PERFMON: %s %d - Incomplete month, performance data not available.\n");
 				}
@@ -1990,7 +1990,7 @@ NEWENGINE void Simulation_ProcessTick(void) {
 				// each growth tick so the city changes relatively evenly over the month.
 				iStep = ((dwMonDay - 3) / 4 % 4);
 				iSubStep = (dwMonDay + 1) % 4;
-				Simulation_DoGrowthTick(iStep, iSubStep);
+				Simulation_Growth_StartTick(iStep, iSubStep);
 				break;
 			}
 			return;
@@ -3228,7 +3228,7 @@ void InstallMiscHooks_SC2K1996(void) {
 
 	// DEPRECATED -- now local function
 	SafeVirtualProtect((LPVOID)0x401820, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x401820, Simulation_ProcessTick);
+	NEWJMP((LPVOID)0x401820, Simulation_Orchestrator_ProcessTick);
 
 	// Hook SimulationStartDisaster
 	SafeVirtualProtect((LPVOID)0x402527, 5, PAGE_EXECUTE_READWRITE);

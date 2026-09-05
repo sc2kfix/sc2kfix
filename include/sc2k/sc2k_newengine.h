@@ -36,10 +36,11 @@ extern coords_w_t directionalSteps[VIEWROTATION_COUNT];
 extern __int16 advanceX[VIEWROTATION_COUNT];
 extern __int16 advanceY[VIEWROTATION_COUNT];
 
-NEWENGINE void Simulation_ProcessTick(void);
-NEWENGINE void Simulation_DoGrowthTick(int iStep, int iSubStep);
-NEWENGINE bool Simulation_GrowSpecificZone(mapcoord_t iX, mapcoord_t iY, uint32_t iTileID, int16_t iZoneType);
-NEWENGINE int Simulation_RunTripGenerator(mapcoord_t x, mapcoord_t y, int16_t nZoneType, int nBuildingPopLevel, int nTripMaxSteps);
+NEWENGINE void Simulation_Orchestrator_ProcessTick(void);
+
+NEWENGINE void Simulation_Growth_StartTick(int iStep, int iSubStep);
+NEWENGINE bool Simulation_Growth_GrowSpecificZone(mapcoord_t iX, mapcoord_t iY, uint32_t iTileID, int16_t iZoneType);
+NEWENGINE int Simulation_Growth_RunTripGenerator(mapcoord_t x, mapcoord_t y, int16_t nZoneType, int nBuildingPopLevel, int nTripMaxSteps);
 
 NEWENGINE void Save_MakeCityNameFromFileName(const char* lpFileName);
 NEWENGINE bool Save_SaveCitySC2X(FILE* fOut);

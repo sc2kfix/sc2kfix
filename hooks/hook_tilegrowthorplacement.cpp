@@ -184,7 +184,7 @@ static int iTotalTripCount = 0;
 
 // This is REALLY rough and has only had enough cleanup to make sense in my head so it probably
 // won't make much sense to anyone else yet.
-NEWENGINE int Simulation_RunTripGenerator(mapcoord_t x, mapcoord_t y, int16_t nZoneType, int nBuildingPopLevel, int nTripMaxSteps) {
+NEWENGINE int Simulation_Growth_RunTripGenerator(mapcoord_t x, mapcoord_t y, int16_t nZoneType, int nBuildingPopLevel, int nTripMaxSteps) {
 	uint32_t iTileID;
 	int16_t iTripCurrentSteps;
 	int v9;
@@ -1029,8 +1029,8 @@ static void Simulation_DoArmyBaseGrowth(mapcoord_t iX, mapcoord_t iY, int16_t iC
 			if (IsTileDividedThresholdReached(iSelectedTileID, wFlaggedTileCount, true, CMP_GREATERTHAN, 8))
 				iSelectedTileID = iFirstCheckedTileID;
 		}
-		if (!Simulation_GrowSpecificZone(iX, iY, iSelectedTileID, iCurrZoneType))
-			Simulation_GrowSpecificZone(iX, iY, TILE_MILITARY_HANGAR1, iCurrZoneType);
+		if (!Simulation_Growth_GrowSpecificZone(iX, iY, iSelectedTileID, iCurrZoneType))
+			Simulation_Growth_GrowSpecificZone(iX, iY, TILE_MILITARY_HANGAR1, iCurrZoneType);
 	}
 }
 
@@ -1090,7 +1090,7 @@ static void Simulation_DoAirportGrowth(mapcoord_t iX, mapcoord_t iY, BYTE iCurre
 				}	
 			}
 		}
-		Simulation_GrowSpecificZone(iX, iY, iSelectedTileID, iCurrZoneType);
+		Simulation_Growth_GrowSpecificZone(iX, iY, iSelectedTileID, iCurrZoneType);
 	}
 }
 
@@ -1121,14 +1121,14 @@ static void Simulation_DoSeaportGrowth(mapcoord_t iX, mapcoord_t iY, BYTE iCurre
 					iSelectedTileID = iFirstCheckedTileID;
 			}
 		}
-		if (!Simulation_GrowSpecificZone(iX, iY, iSelectedTileID, iCurrZoneType))
-			Simulation_GrowSpecificZone(iX, iY, TILE_MILITARY_WAREHOUSE, iCurrZoneType);
+		if (!Simulation_Growth_GrowSpecificZone(iX, iY, iSelectedTileID, iCurrZoneType))
+			Simulation_Growth_GrowSpecificZone(iX, iY, TILE_MILITARY_WAREHOUSE, iCurrZoneType);
 	}
 }
 
 static void Simulation_DoSiloGrowth(mapcoord_t iX, mapcoord_t iY, BYTE iCurrentTileID, int16_t iCurrZoneType) {
 	if (iCurrentTileID != TILE_MILITARY_MISSILESILO)
-		Simulation_GrowSpecificZone(iX, iY, TILE_MILITARY_MISSILESILO, iCurrZoneType);
+		Simulation_Growth_GrowSpecificZone(iX, iY, TILE_MILITARY_MISSILESILO, iCurrZoneType);
 }
 
 static void Simulation_DoUpdateMicrosimGrowthTick(mapcoord_t iX, mapcoord_t iY, BYTE iCurrentTileID) {
@@ -1378,7 +1378,7 @@ static bool GetPopulatedTileAndLevel(mapcoord_t iX, mapcoord_t iY, BYTE iCurrent
 
 extern int iChurchVirus;
 
-NEWENGINE void Simulation_DoGrowthTick(int iStep, int iSubStep) {
+NEWENGINE void Simulation_Growth_StartTick(int iStep, int iSubStep) {
 	CSimcityAppPrimary *pSCApp;
 	CSimcityView *pSCView;
 	mapcoord_t iX, iY;
@@ -1440,7 +1440,7 @@ NEWENGINE void Simulation_DoGrowthTick(int iStep, int iSubStep) {
 						if (Game_IsZonedTilePowered(iX, iY)) {
 							int iTripResult = 0;
 							if (dwExperimentsEnabled & EXPERIMENT_TRIPGENERATOR && USE_NEW_TRIP_GENERATOR)
-								iTripResult = Simulation_RunTripGenerator(iX, iY, iCurrZoneType, iTilePopLevel, TRIP_MAX_STEPS_VANILLA * TRIP_MAX_STEPS_SCALE);
+								iTripResult = Simulation_Growth_RunTripGenerator(iX, iY, iCurrZoneType, iTilePopLevel, TRIP_MAX_STEPS_VANILLA * TRIP_MAX_STEPS_SCALE);
 							else
 								iTripResult = Game_RunTripGenerator(iX, iY, iCurrZoneType, iTilePopLevel, GROWTH_TILE_MAX_TRIP_STEPS);
 
@@ -1651,10 +1651,10 @@ static bool TwoByTwoMismatchAndMilitaryBlockTileCheck(mapcoord_t x, mapcoord_t y
 }
 
 // Function prototype: HOOKCB void Hook_Simulation_GrowSpecificZone_Success(mapcoord_t iX, mapcoord_t iY, uint32_t iTileID, int16_t iZoneType)
-// Called if Simulation_GrowSpecificZone succeeds. Cannot be ignored.
+// Called if Simulation_Growth_GrowSpecificZone succeeds. Cannot be ignored.
 std::vector<hook_function_t> stHooks_Simulation_GrowSpecificZone_Success;
 
-NEWENGINE bool Simulation_GrowSpecificZone(mapcoord_t iX, mapcoord_t iY, uint32_t iTileID, int16_t iZoneType) {
+NEWENGINE bool Simulation_Growth_GrowSpecificZone(mapcoord_t iX, mapcoord_t iY, uint32_t iTileID, int16_t iZoneType) {
 	mapcoord_t x, y;
 	mapcoord_t iMoveX, iMoveY;
 	mapcoord_t iCurrX, iCurrY;
@@ -2717,12 +2717,12 @@ void InstallTileGrowthOrPlacementHandlingHooks_SC2K1996(void) {
 	// Hook into the SimulationGrowthTick function
 	// DEPRECATED -- now local function
 	SafeVirtualProtect((LPVOID)0x4022FC, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x4022FC, Simulation_DoGrowthTick);
+	NEWJMP((LPVOID)0x4022FC, Simulation_Growth_StartTick);
 
 	// Hook into the SimulationGrowSpecificZone function
 	// DEPRECATED -- now local function
 	SafeVirtualProtect((LPVOID)0x4026B2, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x4026B2, Simulation_GrowSpecificZone);
+	NEWJMP((LPVOID)0x4026B2, Simulation_Growth_GrowSpecificZone);
 
 	// Hook into the PlacePowerLinesAtCoordinates function
 	SafeVirtualProtect((LPVOID)0x402725, 5, PAGE_EXECUTE_READWRITE);
