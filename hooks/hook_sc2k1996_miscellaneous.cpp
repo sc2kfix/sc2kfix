@@ -58,6 +58,9 @@ DLGPROC lpMainDialogAfxProc = NULL;
 HWND hwndMainDialog_SC2K1996 = NULL;
 BOOL bMainDialogUpdateState = FALSE;
 
+// Used for crash dump testing
+extern bool bForceCrash;
+
 // Used for newspaper testing commands
 extern bool bForceNewspaperDisplay;
 extern int iForceNewspaperArg0;
@@ -1744,10 +1747,16 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	// Bugfix: recalculate city valuation every day.
 	Game_RecalculateCityValue();
 
+	// Force a crash deep in the SimCity stack if requested (pretty cool, dudes)
+	if (bForceCrash) {
+		SafeVirtualProtect((LPVOID)0x47B1C0, 4, PAGE_EXECUTE_READWRITE);
+		*(DWORD*)0x47B1C0 = 0xD0FFC031;		// xor eax, eax; call eax
+		Game_NewspaperStoryGenerator(2, 0);
+	}
+
 	// Force a newspaper if requested (used in console commands)
 	if (bForceNewspaperDisplay) {
 		// Build the newspaper (also invoking it if it's type 2-5 or 36)
-		SafeVirtualProtect((LPVOID)0x47B69C, 1, PAGE_EXECUTE_READWRITE);
 		Game_NewspaperStoryGenerator(iForceNewspaperArg0, iForceNewspaperArg1);
 
 		switch (iForceNewspaperArg0) {
