@@ -16,7 +16,7 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
-#define SAVE_DEBUG DEBUG_FLAGS_NONE
+#define SAVE_DEBUG (SAVE_DEBUG_JSON_LOAD | SAVE_DEBUG_JSON_SAVE)
 
 #ifdef DEBUGALL
 #undef SAVE_DEBUG
@@ -40,6 +40,10 @@ json::JSON jsonXFIX = {};
 #define GRAPH_ALLOC_SIZE     (MAX_GRAPHS * MAX_GRAPH_ENTRIES * sizeof(DWORD))
 
 #define COPYBLOCKTO(D, S, P, SZ, MLT) memcpy(D[P], &S[P * (SZ * MLT)], SZ * MLT)
+
+// TODO (araxestroy): move this to its own header
+extern bool Save_SaveCitySC2X(CSimcityAppPrimary* pSCApp, FILE* fOut);
+extern bool Save_ReadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* fIn);
 
 int GetXFIXTerrainMode(void) {
 	if (bLegacyTerrainMode || jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt() == TERRAIN_COSMETIC_NONE) {
@@ -107,7 +111,7 @@ static bool IsMatchingChunk(const char *pChunk, const char *pTargChunk) {
 	return (memcmp(pTargChunk, pChunk, 4) == 0) ? true : false;
 }
 
-static void L_MakeCityNameFromFileName(const char *lpFileName) {
+void Save_MakeCityNameFromFileName(const char *lpFileName) {
 	int nLen;
 	char szTemp[MAX_PATH + 1], szCityName[CITY_NAME_LEN + 1];
 	const char *pExt = NULL;
@@ -303,7 +307,7 @@ static int L_SimcityApp_OpenCityCompressed(CSimcityAppPrimary *pSCApp, FILE *pFi
 			nTp = nDp = 0;
 			// The re-constructed decompression code block has been
 			// kept around as a pre-caution (in its original form here).
-#if 0
+#if 1
 			int ix = 0;
 			char dat;
 			while (nSize > nTp && nDatSize > nDp) {
@@ -853,7 +857,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 								if (L_OpenCityUncompressed(pFile, nSize, pTemp)) {
 									if (save_debug & SAVE_DEBUG_XFIX)
 										ConsoleLog(LOG_DEBUG, "LOAD: Read XFIX chunk, contents:\n%s\n", pTemp);
-									jsonXFIX.merge(jsonXFIX.Load(pTemp));
+									jsonXFIX.merge(json::Load(pTemp));
 									UpdateXFIXSettings();
 									iBadRead = CHUNK_OKAY;
 								}
@@ -896,7 +900,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 					bGotName = false;
 			}
 			if (!bGotName)
-				L_MakeCityNameFromFileName(lpFileName);
+				Save_MakeCityNameFromFileName(lpFileName);
 			L_InitializeCityData();
 			Game_GetOccupiedTileCount();
 			Game_GraphKludge();
@@ -984,11 +988,14 @@ int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName) {
 		nRetState = L_SimcityApp_AllocateMiscInfo(pSCApp);
 		GameMain_String_OperatorSet(&strCityFilename, lpFileName);
 		GameMain_CmdTarget_BeginWaitCursor(pSCApp);
+
 		// If the file is the "base game type", goto the vanilla loading calls
 		// otherwise for any other type (aside from Classic) and an else case
 		// here.
 		if (L_IsBaseGameFile(f, lpFileName))
 			ret = L_SimcityApp_OpenCity(pSCApp, f, lpFileName);
+		else if (PathMatchSpecA(lpFileName, "*.sc2x"))
+			ret = Save_LoadCitySC2X(pSCApp, f, lpFileName);
 		fclose(f);
 		if (!ret) {
 			if (L_IsClassicCityFileValid(lpFileName)) {
@@ -1650,7 +1657,10 @@ int L_SimcityApp_DoSave(CSimcityAppPrimary *pSCApp, const char *lpFileName, char
 		// doesn't appear to be used in the subsequent call (or
 		// perhaps not in the release build - beyond the downstream
 		// local-copy being destroyed).
-		ret = L_SimcityApp_WriteCity(pSCApp, f);
+		if (PathMatchSpecA(lpFileName, "*.sc2x"))
+			ret = Save_SaveCitySC2X(pSCApp, f);
+		else
+			ret = L_SimcityApp_WriteCity(pSCApp, f);
 		GameMain_CmdTarget_EndWaitCursor(pSCApp);
 		if (pSCView) {
 			if (dwWasZoomedIn)

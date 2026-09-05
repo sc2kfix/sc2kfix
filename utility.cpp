@@ -1011,9 +1011,10 @@ HOOKEXT_CPP std::ostream& json::operator<<(std::ostream& os, const json::JSON& j
 	return os;
 }
 
-HOOKEXT_CPP json::JSON json::JSON::Load(const string& str) {
+HOOKEXT_CPP json::JSON json::Load(const string& str) {
 	size_t offset = 0;
-	return std::move(parse_next(str, offset));
+	std::string strTemp = str;
+	return parse_next(strTemp, offset);
 }
 
 console::CommandTree console::Object() {

@@ -14,6 +14,10 @@
 #include <ostream>
 #include <iostream>
 
+#ifndef ConsoleLog
+	HOOKEXT void ConsoleLog(int iLogLevel, const char* fmt, ...);
+#endif
+
 namespace json {
 	using std::map;
 	using std::deque;
@@ -184,8 +188,6 @@ namespace json {
 			JSON ret; ret.SetType(type);
 			return ret;
 		}
-
-		JSON Load(const std::string&);
 
 		template<typename T> void append(T arg) {
 			SetType(Class::Array);
@@ -754,4 +756,5 @@ namespace json {
 		}
 	}
 
+	HOOKEXT_CPP JSON Load(const std::string&);
 }

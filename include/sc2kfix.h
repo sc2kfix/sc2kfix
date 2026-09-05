@@ -745,6 +745,15 @@ void InstallMovieHooks(void);
 #define SAVE_DEBUG_CREATEBAK    128
 #define SAVE_DEBUG_XFIX			256
 
+#define SC2X_MAGIC "d77bc72e0a78e3f47700f3a2efc04bb2f49e75908547c7bcd495e5518831a0e7"
+
+// Save module functions
+// XXX (araxestroy): this is probably one of the first major modules that needs to have its own
+// header. need to look into making this happen as part of r12-dev.
+void Save_MakeCityNameFromFileName(const char* lpFileName);
+bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFileName);
+bool Save_SaveCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFileName);
+
 // snd DEBUG defines - moved here due to them being used
 // in other sound-related areas.
 

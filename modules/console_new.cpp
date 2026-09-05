@@ -258,6 +258,45 @@ bool ConsoleCommandFixupThingsClear(std::vector<std::string> args, int iBreakout
 	return true;
 }
 
+// XXX (araxestroy): for testing, remove when SC2X saves are hooked up properly
+extern int L_SimcityApp_DoSave(CSimcityAppPrimary* pSCApp, const char* lpFileName, char* pNewCityName, bool bChangeCityName);
+
+bool ConsoleCommandForceLoad(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap({ {"<filename>", "Filename to load from"} });
+		bConsoleKeepCommandBuffer = true;
+		return true;
+	}
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+
+	// Exactly one argument
+	if (args.size() != 1)
+		return false;
+
+	if (!L_SimcityApp_DoLoad(&pCSimcityAppThis, (char*)args[0].c_str()))
+		printf("Force save failed.\n");
+	return true;
+}
+
+bool ConsoleCommandForceSave(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
+	if (iBreakoutState == BREAKOUT_QUESTION) {
+		PrintAlignedStringMap({ {"<filename>", "Filename to save to"} });
+		bConsoleKeepCommandBuffer = true;
+		return true;
+	}
+	if (iBreakoutState != BREAKOUT_RETURN)
+		return false;
+
+	// Exactly one argument
+	if (args.size() != 1)
+		return false;
+
+	if (!L_SimcityApp_DoSave(&pCSimcityAppThis, args[0].c_str(), NULL, false))
+		printf("Force save failed.\n");
+	return true;
+}
+
 #define SETDEBUGOP(keyword, var, description) \
 	if (args[i] == keyword || bSetAll) { \
 		var ## _debug = dwOperation; \
@@ -644,8 +683,6 @@ bool ConsoleCommandRunLua(std::vector<std::string> args, int iBreakoutState, int
 	return true;
 }
 
-extern bool Save_WriteTestSC2XFile(CSimcityAppPrimary* pSCApp, const char* szFilename);
-
 bool ConsoleCommandRunTest(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
 	// No arguments allowed
 	if (iBreakoutState == BREAKOUT_QUESTION) {
@@ -656,8 +693,6 @@ bool ConsoleCommandRunTest(std::vector<std::string> args, int iBreakoutState, in
 	if (iBreakoutState != BREAKOUT_RETURN)
 		return false;
 
-	if (!Save_WriteTestSC2XFile(&pCSimcityAppThis, "test.sc2x"))
-		printf("Test write failed.\n");
 	return true;
 }
 
@@ -1273,6 +1308,9 @@ void NewConsoleInitializeCommands(console::CommandTree& treeCommands) {
 	treeCommands["fixup"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Fix up engine gremlins");
 	treeCommands["fixup"]["things"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Fixup commands for Thing entities");
 	treeCommands["fixup"]["things"]["clear"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandFixupThingsClear, "Clear (specific) Thing entities");
+	treeCommands["force"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Force something to happen (be very careful!)");
+	treeCommands["force"]["load"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandForceLoad, "Force the game to load a save");
+	treeCommands["force"]["save"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandForceSave, "Force the game to write a save");
 	treeCommands["run"][""] = ConsoleCommand(COMMAND_TYPE_BRANCH, NULL, "Run Lua REPL or scripts");
 	treeCommands["run"]["lua"] = ConsoleCommand(COMMAND_TYPE_DOCUMENTED, ConsoleCommandRunLua, "Run Lua REPL or scripts");
 	treeCommands["run"]["test"] = ConsoleCommand(COMMAND_TYPE_UNDOCUMENTED, ConsoleCommandRunTest, "Test command");
