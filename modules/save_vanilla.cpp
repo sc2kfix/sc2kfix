@@ -29,22 +29,6 @@ bool bUseMapTerrainCosmeticMode = false;
 static DWORD *pMiscInfo = NULL;
 json::JSON jsonXFIX = {};
 
-#define MISCINF_ALLOC_SIZE   0x12C0 // Pending demystification
-#define FULLMAP_ALLOC_SIZE   (GAME_MAP_SIZE * GAME_MAP_SIZE)
-#define ALTM_ALLOC_SIZE      (FULLMAP_ALLOC_SIZE * 2)
-#define MINIMAP64_ALLOC_SIZE (MAP_MINI_HALF_SIZE * MAP_MINI_HALF_SIZE)
-#define MINIMAP32_ALLOC_SIZE (MAP_MINI_QUARTER_SIZE * MAP_MINI_QUARTER_SIZE)
-#define LABEL_ALLOC_SIZE     (MAX_LABEL_COUNT * sizeof(map_XLAB_t))
-#define MICROSIM_ALLOC_SIZE  (MAX_MICROSIM_COUNT * sizeof(microsim_t))
-#define THING_ALLOC_SIZE     (MAX_THING_COUNT * sizeof(map_XTHG_t))
-#define GRAPH_ALLOC_SIZE     (MAX_GRAPHS * MAX_GRAPH_ENTRIES * sizeof(DWORD))
-
-#define COPYBLOCKTO(D, S, P, SZ, MLT) memcpy(D[P], &S[P * (SZ * MLT)], SZ * MLT)
-
-// TODO (araxestroy): move this to its own header
-extern bool Save_SaveCitySC2X(CSimcityAppPrimary* pSCApp, FILE* fOut);
-extern bool Save_ReadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* fIn);
-
 int GetXFIXTerrainMode(void) {
 	if (bLegacyTerrainMode || jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt() == TERRAIN_COSMETIC_NONE) {
 		if (bUseMapTerrainCosmeticMode) {
@@ -111,7 +95,7 @@ static bool IsMatchingChunk(const char *pChunk, const char *pTargChunk) {
 	return (memcmp(pTargChunk, pChunk, 4) == 0) ? true : false;
 }
 
-void Save_MakeCityNameFromFileName(const char *lpFileName) {
+NEWENGINE void Save_MakeCityNameFromFileName(const char *lpFileName) {
 	int nLen;
 	char szTemp[MAX_PATH + 1], szCityName[CITY_NAME_LEN + 1];
 	const char *pExt = NULL;
@@ -995,7 +979,7 @@ int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName) {
 		if (L_IsBaseGameFile(f, lpFileName))
 			ret = L_SimcityApp_OpenCity(pSCApp, f, lpFileName);
 		else if (PathMatchSpecA(lpFileName, "*.sc2x"))
-			ret = Save_LoadCitySC2X(pSCApp, f, lpFileName);
+			ret = Save_LoadCitySC2X(f, lpFileName);
 		fclose(f);
 		if (!ret) {
 			if (L_IsClassicCityFileValid(lpFileName)) {
@@ -1658,7 +1642,7 @@ int L_SimcityApp_DoSave(CSimcityAppPrimary *pSCApp, const char *lpFileName, char
 		// perhaps not in the release build - beyond the downstream
 		// local-copy being destroyed).
 		if (PathMatchSpecA(lpFileName, "*.sc2x"))
-			ret = Save_SaveCitySC2X(pSCApp, f);
+			ret = Save_SaveCitySC2X(f);
 		else
 			ret = L_SimcityApp_WriteCity(pSCApp, f);
 		GameMain_CmdTarget_EndWaitCursor(pSCApp);

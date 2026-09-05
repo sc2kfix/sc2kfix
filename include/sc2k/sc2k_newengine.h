@@ -6,6 +6,10 @@
 //  - Figure out which prefix it should get (eg. Simulation_, Scenario_, SavedGame_...)
 //  - See if we can update the code to use new standards (32-bit ints instead of 8 and 16, Windows
 //    types and __intXX types switched out for stdint ones, etc.)
+//  - For functions, put a light documentation comment above the declaration for smaller ones and
+//    a more comprehensive documentation comment above the declaration for larger ones (eg. any
+//    function with modding hooks, stuff that hasn't been completely demystified, complex state
+//    machines, etc; use your best judgment)
 //  - Tag the function with NEWENGINE once all of the above is done so we know it's up to spec
 
 #pragma once
@@ -36,3 +40,7 @@ NEWENGINE void Simulation_ProcessTick(void);
 NEWENGINE void Simulation_DoGrowthTick(int iStep, int iSubStep);
 NEWENGINE bool Simulation_GrowSpecificZone(mapcoord_t iX, mapcoord_t iY, uint32_t iTileID, int16_t iZoneType);
 NEWENGINE int Simulation_RunTripGenerator(mapcoord_t x, mapcoord_t y, int16_t nZoneType, int nBuildingPopLevel, int nTripMaxSteps);
+
+NEWENGINE void Save_MakeCityNameFromFileName(const char* lpFileName);
+NEWENGINE bool Save_SaveCitySC2X(FILE* fOut);
+NEWENGINE bool Save_LoadCitySC2X(FILE* fIn, const char* lpFileName);

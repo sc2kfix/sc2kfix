@@ -18,27 +18,17 @@
 
 // NOTE: Debug variable is in save_vanilla.cpp
 
-// NOTE: Keep this in sync with save_vanilla.cpp
-#define MISCINF_ALLOC_SIZE   0x12C0 // Pending demystification
-#define FULLMAP_ALLOC_SIZE   (GAME_MAP_SIZE * GAME_MAP_SIZE)
-#define ALTM_ALLOC_SIZE      (FULLMAP_ALLOC_SIZE * 2)
-#define MINIMAP64_ALLOC_SIZE (MAP_MINI_HALF_SIZE * MAP_MINI_HALF_SIZE)
-#define MINIMAP32_ALLOC_SIZE (MAP_MINI_QUARTER_SIZE * MAP_MINI_QUARTER_SIZE)
-#define LABEL_ALLOC_SIZE     (MAX_LABEL_COUNT * sizeof(map_XLAB_t))
-#define MICROSIM_ALLOC_SIZE  (MAX_MICROSIM_COUNT * sizeof(microsim_t))
-#define THING_ALLOC_SIZE     (MAX_THING_COUNT * sizeof(map_XTHG_t))
-#define GRAPH_ALLOC_SIZE     (MAX_GRAPHS * MAX_GRAPH_ENTRIES * sizeof(DWORD))
-
-#define COPYBLOCKTO(D, S, P, SZ, MLT) memcpy(D[P], &S[P * (SZ * MLT)], SZ * MLT)
-
 #define WRITE_BAILOUT(str) \
 	{ \
 		if (pZip) \
-			ConsoleLog(LOG_ERROR, "SC2X: " __FUNCTION__ " called BAILOUT, reason: %s -- miniz error %d\n", str, pZip->m_last_error); \
+			ConsoleLog(LOG_ERROR, "SC2X: " __FUNCTION__ " called WRITE_BAILOUT, reason: %s -- miniz error %d\n", str, pZip->m_last_error); \
 		else \
-			ConsoleLog(LOG_ERROR, "SC2X: " __FUNCTION__ " called BAILOUT, reason: %s\n", str); \
+			ConsoleLog(LOG_ERROR, "SC2X: " __FUNCTION__ " called WRITE_BAILOUT, reason: %s\n", str); \
 		goto ABORTWRITE;\
 	}
+
+#define SC2X_TRACE(fmt, ...) ConsoleLog(LOG_DEBUG, "SC2X: " __FUNCTION__ ": " fmt, __VA_ARGS__)
+#define SC2X_ERROR(fmt, ...) ConsoleLog(LOG_ERROR, "SC2X: " __FUNCTION__ ": " fmt, __VA_ARGS__)
 
 static std::map<int, std::string> mapEnumBudgetTypeToJSONName = {
 	{ BUDGET_RESFUND, "residential" },
@@ -67,7 +57,8 @@ static inline void Save_LoadNeighborName(int i) {
 		strcpy_s(&szNeighborCities[MAX_NEIGH_BUF_SIZE * i], MAX_NEIGH_BUF_SIZE, "Ocean");
 }
 
-static void Save_LoadMiscInfoFromJSON(CSimcityAppPrimary* pSCApp, json::JSON& jsonMISC) {
+static void Save_LoadMiscInfoFromJSON(json::JSON& jsonMISC) {
+	CSimcityAppPrimary* pSCApp = &pCSimcityAppThis;
 	CSimcityView* pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 
 	wCityMode = jsonMISC["city"]["mode"].ToInt16();
@@ -201,7 +192,8 @@ static void Save_LoadMiscInfoFromJSON(CSimcityAppPrimary* pSCApp, json::JSON& js
 	wSewerBonus = jsonMISC["city"]["sewer_bonus"].ToInt16();
 }
 
-static void Save_CreateJSONFromMiscInfo(CSimcityAppPrimary* pSCApp, json::JSON& jsonMISC) {
+static void Save_CreateJSONFromMiscInfo(json::JSON& jsonMISC) {
+	CSimcityAppPrimary* pSCApp = &pCSimcityAppThis;
 	CSimcityView* pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 
 	jsonMISC["city"]["mode"] = wCityMode;
@@ -308,7 +300,7 @@ static void Save_CreateJSONFromMiscInfo(CSimcityAppPrimary* pSCApp, json::JSON& 
 	jsonMISC["city"]["sewer_bonus"] = wSewerBonus;
 }
 
-bool Save_SaveCitySC2X(CSimcityAppPrimary* pSCApp, FILE* fOut) {
+NEWENGINE bool Save_SaveCitySC2X(FILE* fOut) {
 	mz_zip_archive* pZip = NULL;
 	std::string strJSONDumpTemp;
 	json::JSON jsonSaveMETA = {};
@@ -345,7 +337,7 @@ bool Save_SaveCitySC2X(CSimcityAppPrimary* pSCApp, FILE* fOut) {
 		WRITE_BAILOUT("ALTM");
 
 	// Write the MISC chunk as a JSON file
-	Save_CreateJSONFromMiscInfo(pSCApp, jsonSaveMISC);
+	Save_CreateJSONFromMiscInfo(jsonSaveMISC);
 	strJSONDumpTemp = jsonSaveMISC.dump();
 	if (!mz_zip_writer_add_mem(pZip, "current/MISC.json", strJSONDumpTemp.c_str(), strJSONDumpTemp.size() + 1, MZ_DEFAULT_COMPRESSION))
 		WRITE_BAILOUT("MISC");
@@ -418,7 +410,7 @@ json::JSON jsonSaveMISC;
 
 // Attempts to load an SC2X file into the engine. Returns false if nothing went wrong or true
 // on an error.
-bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFileName) {
+NEWENGINE bool Save_LoadCitySC2X(FILE* fIn, const char* lpFileName) {
 	mz_zip_archive* pZip = NULL;
 	bool ret = false;
 	bool bGotLabel = false;
@@ -431,8 +423,8 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 	jsonSaveMETA = {};
 	jsonSaveMISC = {};
 	
-	// Open a ZIP stream on pFile from the beginning of the file
-	fseek(pFile, 0, 0);
+	// Open a ZIP stream on fIn from the beginning of the file
+	fseek(fIn, 0, 0);
 
 	pZip = (mz_zip_archive*)malloc(sizeof(mz_zip_archive));
 	if (!pZip)
@@ -440,7 +432,7 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 
 	memset(pZip, 0, sizeof(mz_zip_archive));
 
-	if (mz_zip_reader_init_cfile(pZip, pFile, 0, 0)) {
+	if (mz_zip_reader_init_cfile(pZip, fIn, 0, 0)) {
 		GameMain_String_Empty(&pszCityName);
 		
 		// META JSON chunk
@@ -449,11 +441,11 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 		pDump = (uint8_t*)mz_zip_reader_extract_file_to_heap(pZip, "META.json", &nFileSize, 0);
 		if (pDump) {
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Found META.json, size %d, addr: 0x%08X.\n", nFileSize, pDump);
+				SC2X_TRACE("Found META.json, size %d, addr: 0x%08X.\n", nFileSize, pDump);
 
 			char* szLoadedDump = (char*)malloc(nFileSize + 1);
 			if (!szLoadedDump) {
-				ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": szLoadedDump malloc returned null.\n");
+				SC2X_ERROR("szLoadedDump malloc returned null.\n");
 				ret = false;
 				goto FAIL;
 			}
@@ -462,12 +454,12 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 			memcpy(szLoadedDump, pDump, nFileSize);
 
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": META.json dump:\n%s\n", szLoadedDump);
+				SC2X_TRACE("META.json dump:\n%s\n", szLoadedDump);
 
 			jsonSaveMETA = json::Load(szLoadedDump);
 
 			if (jsonSaveMETA["sc2x"]["magic"].ToString() != SC2X_MAGIC) {
-				ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": magic number fail; expected \"%s\", got \"%s\".\n", SC2X_MAGIC, jsonSaveMETA["sc2x"]["magic"].ToString());
+				SC2X_ERROR("magic number fail; expected \"%s\", got \"%s\".\n", SC2X_MAGIC, jsonSaveMETA["sc2x"]["magic"].ToString());
 				ret = false;
 				goto FAIL;
 			}
@@ -479,28 +471,28 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 
 			free(pDump);
 		} else {
-			ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed to find META.json.\n");
+			SC2X_ERROR("Failed to find META.json.\n");
 			ret = false;
 			goto FAIL;
 		}
-		ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": pMicrosimArr = 0x%08X\n", pMicrosimArr);
+		SC2X_TRACE("pMicrosimArr = 0x%08X\n", pMicrosimArr);
 		
 		// MISC.json -> MiscInfo
 		pDump = (uint8_t*)mz_zip_reader_extract_file_to_heap(pZip, "current/MISC.json", &nFileSize, 0);
 		if (pDump) {
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Found current/MISC.json, size %d, addr: 0x%08X.\n", nFileSize, pDump);
+				SC2X_TRACE("Found current/MISC.json, size %d, addr: 0x%08X.\n", nFileSize, pDump);
 
 			char* szLoadedDump = (char*)malloc(nFileSize + 1);
 			memset(szLoadedDump, 0, nFileSize + 1);
 			memcpy(szLoadedDump, pDump, nFileSize);
 			jsonSaveMISC = json::Load(szLoadedDump);
 
-			Save_LoadMiscInfoFromJSON(pSCApp, jsonSaveMISC);
+			Save_LoadMiscInfoFromJSON(jsonSaveMISC);
 
 			free(pDump);
 		} else {
-			ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed to find current/MISC.json.\n");
+			SC2X_ERROR("Failed to find current / MISC.json.\n");
 			ret = false;
 			goto FAIL;
 		}
@@ -509,14 +501,14 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 		pDump = (uint8_t*)mz_zip_reader_extract_file_to_heap(pZip, "current/ALTM", &nFileSize, 0);
 		if (pDump) {
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Found current/ALTM.\n");
+				SC2X_TRACE("Found current/ALTM.\n");
 
 			for (int nPos = 0; nPos < GAME_MAP_SIZE; ++nPos)
 				COPYBLOCKTO(dwMapALTM, pDump, nPos, sizeof(map_ALTM_t), GAME_MAP_SIZE);
 
 			free(pDump);
 		} else {
-			ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed to find current/ALTM.\n");
+			SC2X_ERROR("Failed to find current/ALTM.\n");
 			ret = false;
 			goto FAIL;
 		}
@@ -525,14 +517,14 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 		pDump = (uint8_t*)mz_zip_reader_extract_file_to_heap(pZip, "current/XTER", &nFileSize, 0);
 		if (pDump) {
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Found current/XTER.\n");
+				SC2X_TRACE("Found current/XTER.\n");
 
 			for (int nPos = 0; nPos < GAME_MAP_SIZE; ++nPos)
 				COPYBLOCKTO(dwMapXTER, pDump, nPos, sizeof(map_XTER_t), GAME_MAP_SIZE);
 
 			free(pDump);
 		} else {
-			ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed to find current/XTER.\n");
+			SC2X_ERROR("Failed to find current/XTER.\n");
 			ret = false;
 			goto FAIL;
 		}
@@ -541,14 +533,14 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 		pDump = (uint8_t*)mz_zip_reader_extract_file_to_heap(pZip, "current/XBLD", &nFileSize, 0);
 		if (pDump) {
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Found current/XBLD.\n");
+				SC2X_TRACE("Found current/XBLD.\n");
 
 			for (int nPos = 0; nPos < GAME_MAP_SIZE; ++nPos)
 				COPYBLOCKTO(dwMapXBLD, pDump, nPos, sizeof(map_XBLD_t), GAME_MAP_SIZE);
 
 			free(pDump);
 		} else {
-			ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed to find current/XBLD.\n");
+			SC2X_ERROR("Failed to find current/XBLD.\n");
 			ret = false;
 			goto FAIL;
 		}
@@ -557,14 +549,14 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 		pDump = (uint8_t*)mz_zip_reader_extract_file_to_heap(pZip, "current/XZON", &nFileSize, 0);
 		if (pDump) {
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Found current/XZON.\n");
+				SC2X_TRACE("Found current/XZON.\n");
 
 			for (int nPos = 0; nPos < GAME_MAP_SIZE; ++nPos)
 				COPYBLOCKTO(dwMapXZON, pDump, nPos, sizeof(map_XZON_t), GAME_MAP_SIZE);
 
 			free(pDump);
 		} else {
-			ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed to find current/XZON.\n");
+			SC2X_ERROR("Failed to find current/XZON.\n");
 			ret = false;
 			goto FAIL;
 		}
@@ -573,14 +565,14 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 		pDump = (uint8_t*)mz_zip_reader_extract_file_to_heap(pZip, "current/XUND", &nFileSize, 0);
 		if (pDump) {
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Found current/XUND.\n");
+				SC2X_TRACE("Found current/XUND.\n");
 
 			for (int nPos = 0; nPos < GAME_MAP_SIZE; ++nPos)
 				COPYBLOCKTO(dwMapXUND, pDump, nPos, sizeof(map_XUND_t), GAME_MAP_SIZE);
 
 			free(pDump);
 		} else {
-			ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed to find current/XUND.\n");
+			SC2X_ERROR("Failed to find current/XUND.\n");
 			ret = false;
 			goto FAIL;
 		}
@@ -589,14 +581,14 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 		pDump = (uint8_t*)mz_zip_reader_extract_file_to_heap(pZip, "current/XTXT", &nFileSize, 0);
 		if (pDump) {
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Found current/XTXT.\n");
+				SC2X_TRACE("Found current/XTXT.\n");
 
 			for (int nPos = 0; nPos < GAME_MAP_SIZE; ++nPos)
 				COPYBLOCKTO(dwMapXTXT, pDump, nPos, sizeof(map_XTXT_t), GAME_MAP_SIZE);
 
 			free(pDump);
 		} else {
-			ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed to find current/XTXT.\n");
+			SC2X_ERROR("Failed to find current/XTXT.\n");
 			ret = false;
 			goto FAIL;
 		}
@@ -605,30 +597,30 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 		pDump = (uint8_t*)mz_zip_reader_extract_file_to_heap(pZip, "current/XLAB", &nFileSize, 0);
 		if (pDump) {
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Found current/XLAB.\n");
+				SC2X_TRACE("Found current/XLAB.\n");
 
 			memcpy(dwMapXLAB[0], pDump, LABEL_ALLOC_SIZE);
 			bGotLabel = true;
 
 			free(pDump);
 		} else {
-			ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed to find current/XLAB.\n");
+			SC2X_ERROR("Failed to find current/XLAB.\n");
 			ret = false;
 			goto FAIL;
 		}
-		ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": pMicrosimArr = 0x%08X\n", pMicrosimArr);
+		SC2X_TRACE("pMicrosimArr = 0x%08X\n", pMicrosimArr);
 
 		// XMIC
 		pDump = (uint8_t*)mz_zip_reader_extract_file_to_heap(pZip, "current/XMIC", &nFileSize, 0);
 		if (pDump) {
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Found current/XMIC.\n");
+				SC2X_TRACE("Found current/XMIC.\n");
 
 			memcpy(&pMicrosimArr[0], pDump, MICROSIM_ALLOC_SIZE);
 
 			free(pDump);
 		} else {
-			ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed to find current/XMIC.\n");
+			SC2X_ERROR("Failed to find current/XMIC.\n");
 			ret = false;
 			goto FAIL;
 		}
@@ -637,14 +629,14 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 		pDump = (uint8_t*)mz_zip_reader_extract_file_to_heap(pZip, "current/XTHG", &nFileSize, 0);
 		if (pDump) {
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Found current/XTHG.\n");
+				SC2X_TRACE("Found current/XTHG.\n");
 
 			for (int nPos = 0; nPos < MAX_THING_COUNT; ++nPos)
 				COPYBLOCKTO(&dwMapXTHG[0], pDump, nPos, sizeof(map_XTHG_t), 1);
 
 			free(pDump);
 		} else {
-			ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed to find current/XTHG.\n");
+			SC2X_ERROR("Failed to find current/XTHG.\n");
 			ret = false;
 			goto FAIL;
 		}
@@ -653,14 +645,14 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 		pDump = (uint8_t*)mz_zip_reader_extract_file_to_heap(pZip, "current/XBIT", &nFileSize, 0);
 		if (pDump) {
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Found current/XBIT.\n");
+				SC2X_TRACE("Found current/XBIT.\n");
 
 			for (int nPos = 0; nPos < GAME_MAP_SIZE; ++nPos)
 				COPYBLOCKTO(dwMapXBIT, pDump, nPos, sizeof(map_XBIT_t), GAME_MAP_SIZE);
 
 			free(pDump);
 		} else {
-			ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed to find current/XBIT.\n");
+			SC2X_ERROR("Failed to find current/XBIT.\n");
 			ret = false;
 			goto FAIL;
 		}
@@ -669,14 +661,14 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 		pDump = (uint8_t*)mz_zip_reader_extract_file_to_heap(pZip, "current/XTRF", &nFileSize, 0);
 		if (pDump) {
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Found current/XTRF.\n");
+				SC2X_TRACE("Found current/XTRF.\n");
 
 			for (int nPos = 0; nPos < MAP_MINI_HALF_SIZE; ++nPos)
 				COPYBLOCKTO(dwMapXTRF, pDump, nPos, sizeof(map_mini_half_t), MAP_MINI_HALF_SIZE);
 
 			free(pDump);
 		} else {
-			ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed to find current/XTRF.\n");
+			SC2X_ERROR("Failed to find current/XTRF.\n");
 			ret = false;
 			goto FAIL;
 		}
@@ -685,14 +677,14 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 		pDump = (uint8_t*)mz_zip_reader_extract_file_to_heap(pZip, "current/XPLT", &nFileSize, 0);
 		if (pDump) {
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Found current/XPLT.\n");
+				SC2X_TRACE("Found current/XPLT.\n");
 
 			for (int nPos = 0; nPos < MAP_MINI_HALF_SIZE; ++nPos)
 				COPYBLOCKTO(dwMapXPLT, pDump, nPos, sizeof(map_mini_half_t), MAP_MINI_HALF_SIZE);
 
 			free(pDump);
 		} else {
-			ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed to find current/XPLT.\n");
+			SC2X_ERROR("Failed to find current/XPLT.\n");
 			ret = false;
 			goto FAIL;
 		}
@@ -701,14 +693,14 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 		pDump = (uint8_t*)mz_zip_reader_extract_file_to_heap(pZip, "current/XVAL", &nFileSize, 0);
 		if (pDump) {
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Found current/XVAL.\n");
+				SC2X_TRACE("Found current/XVAL.\n");
 
 			for (int nPos = 0; nPos < MAP_MINI_HALF_SIZE; ++nPos)
 				COPYBLOCKTO(dwMapXVAL, pDump, nPos, sizeof(map_mini_half_t), MAP_MINI_HALF_SIZE);
 
 			free(pDump);
 		} else {
-			ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed to find current/XVAL.\n");
+			SC2X_ERROR("Failed to find current/XVAL.\n");
 			ret = false;
 			goto FAIL;
 		}
@@ -717,14 +709,14 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 		pDump = (uint8_t*)mz_zip_reader_extract_file_to_heap(pZip, "current/XCRM", &nFileSize, 0);
 		if (pDump) {
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Found current/XCRM.\n");
+				SC2X_TRACE("Found current/XCRM.\n");
 
 			for (int nPos = 0; nPos < MAP_MINI_HALF_SIZE; ++nPos)
 				COPYBLOCKTO(dwMapXCRM, pDump, nPos, sizeof(map_mini_half_t), MAP_MINI_HALF_SIZE);
 
 			free(pDump);
 		} else {
-			ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed to find current/XCRM.\n");
+			SC2X_ERROR("Failed to find current/XCRM.\n");
 			ret = false;
 			goto FAIL;
 		}
@@ -733,14 +725,14 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 		pDump = (uint8_t*)mz_zip_reader_extract_file_to_heap(pZip, "current/XPLC", &nFileSize, 0);
 		if (pDump) {
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Found current/XPLC.\n");
+				SC2X_TRACE("Found current/XPLC.\n");
 
 			for (int nPos = 0; nPos < MAP_MINI_QUARTER_SIZE; ++nPos)
 				COPYBLOCKTO(dwMapXPLC, pDump, nPos, sizeof(map_mini_half_t), MAP_MINI_QUARTER_SIZE);
 
 			free(pDump);
 		} else {
-			ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed to find current/XPLC.\n");
+			SC2X_ERROR("Failed to find current/XPLC.\n");
 			ret = false;
 			goto FAIL;
 		}
@@ -749,14 +741,14 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 		pDump = (uint8_t*)mz_zip_reader_extract_file_to_heap(pZip, "current/XFIR", &nFileSize, 0);
 		if (pDump) {
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Found current/XFIR.\n");
+				SC2X_TRACE("Found current/XFIR.\n");
 
 			for (int nPos = 0; nPos < MAP_MINI_QUARTER_SIZE; ++nPos)
 				COPYBLOCKTO(dwMapXFIR, pDump, nPos, sizeof(map_mini_half_t), MAP_MINI_QUARTER_SIZE);
 
 			free(pDump);
 		} else {
-			ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed to find current/XFIR.\n");
+			SC2X_ERROR("Failed to find current/XFIR.\n");
 			ret = false;
 			goto FAIL;
 		}
@@ -765,14 +757,14 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 		pDump = (uint8_t*)mz_zip_reader_extract_file_to_heap(pZip, "current/XPOP", &nFileSize, 0);
 		if (pDump) {
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Found current/XPOP.\n");
+				SC2X_TRACE("Found current/XPOP.\n");
 
 			for (int nPos = 0; nPos < MAP_MINI_QUARTER_SIZE; ++nPos)
 				COPYBLOCKTO(dwMapXPOP, pDump, nPos, sizeof(map_mini_half_t), MAP_MINI_QUARTER_SIZE);
 
 			free(pDump);
 		} else {
-			ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed to find current/XPOP.\n");
+			SC2X_ERROR("Failed to find current/XPOP.\n");
 			ret = false;
 			goto FAIL;
 		}
@@ -781,14 +773,14 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 		pDump = (uint8_t*)mz_zip_reader_extract_file_to_heap(pZip, "current/XROG", &nFileSize, 0);
 		if (pDump) {
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Found current/XROG.\n");
+				SC2X_TRACE("Found current/XROG.\n");
 
 			for (int nPos = 0; nPos < MAP_MINI_QUARTER_SIZE; ++nPos)
 				COPYBLOCKTO(dwMapXROG, pDump, nPos, sizeof(map_mini_half_t), MAP_MINI_QUARTER_SIZE);
 
 			free(pDump);
 		} else {
-			ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed to find current/XROG.\n");
+			SC2X_ERROR("Failed to find current/XROG.\n");
 			ret = false;
 			goto FAIL;
 		}
@@ -797,14 +789,14 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 		pDump = (uint8_t*)mz_zip_reader_extract_file_to_heap(pZip, "current/XGRP", &nFileSize, 0);
 		if (pDump) {
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Found current/XGRP.\n");
+				SC2X_TRACE("Found current/XGRP.\n");
 
 			for (int nPos = 0; nPos < MAX_GRAPHS; ++nPos)
 				COPYBLOCKTO(dwMapXGRP, pDump, nPos, sizeof(DWORD), MAX_GRAPH_ENTRIES);
 
 			free(pDump);
 		} else {
-			ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed to find current/XGRP.\n");
+			SC2X_ERROR("Failed to find current/XGRP.\n");
 			ret = false;
 			goto FAIL;
 		}
@@ -813,7 +805,7 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 		pDump = (uint8_t*)mz_zip_reader_extract_file_to_heap(pZip, "current/XFIX.json", &nFileSize, 0);
 		if (pDump) {
 			if (save_debug & SAVE_DEBUG_JSON_LOAD)
-				ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Found current/XFIX.json.\n");
+				SC2X_TRACE("Found current/XFIX.json.\n");
 
 			char* szLoadedDump = (char*)malloc(nFileSize + 1);
 			memset(szLoadedDump, 0, nFileSize + 1);
@@ -826,13 +818,13 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 
 			free(pDump);
 		} else {
-			ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed to find current/XFIX.json.\n");
+			SC2X_ERROR("Failed to find current/XFIX.json.\n");
 			ret = false;
 			goto FAIL;
 		}
 
 		if (save_debug & SAVE_DEBUG_JSON_LOAD)
-			ConsoleLog(LOG_DEBUG, "SAVE: " __FUNCTION__ ": Finalizing load.\n");
+			SC2X_TRACE("Finalizing load.\n");
 
 		// Finalize city load
 		L_InitializeCityData();
@@ -844,7 +836,7 @@ bool Save_LoadCitySC2X(CSimcityAppPrimary* pSCApp, FILE* pFile, const char* lpFi
 			Game_ClearLabels();
 		ret = true;
 	} else
-		ConsoleLog(LOG_ERROR, "SAVE: " __FUNCTION__ ": Failed at startup - miniz error %d.\n", pZip->m_last_error);
+		SC2X_ERROR("Failed at startup - miniz error %d.\n", pZip->m_last_error);
 FAIL:
 	return ret;
 }

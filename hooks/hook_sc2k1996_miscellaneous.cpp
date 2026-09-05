@@ -1713,6 +1713,11 @@ std::vector<hook_function_t> stHooks_Hook_SimCalendarAdvance_After;
 
 LARGE_INTEGER SPT_uTickStart, SPT_uTickEnd, SPT_uTicksPerSecond;
 
+// Called by the main game loop to advance the calendar and orchestrate the simulation, as well as
+// updating graphs, checking scenario goals and progression requirements, and updating performance
+// monitoring timers.
+// 
+// MODDING: Many modding hooks are available; see the hook arrays above this function's definition.
 NEWENGINE void Simulation_ProcessTick(void) {
 	int i;
 	DWORD dwMonDay;
@@ -1747,7 +1752,7 @@ NEWENGINE void Simulation_ProcessTick(void) {
 		}
 	}
 
-	// Bugfix: recalculate city valuation every day.
+	// Vanilla bugfix: recalculate city valuation every day.
 	Game_RecalculateCityValue();
 
 	// Force a crash deep in the SimCity stack if requested (pretty cool, dudes)

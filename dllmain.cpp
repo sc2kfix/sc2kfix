@@ -19,7 +19,8 @@
 #include <winmm_exports.h>
 #include "resource.h"
 
-#define FIXEDTIL_BUILD 0
+#define EXPERIMENT_DEFAULT			EXPERIMENT_NONE
+#define FIXEDTIL_BUILD				0
 
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
@@ -43,7 +44,7 @@ const char* szSC2KFixVersion = SC2KFIX_VERSION;
 const char* szSC2KFixReleaseTag = SC2KFIX_RELEASE_TAG;
 std::string strVersionBanner = "";
 FILE* fdLog = NULL;
-DWORD dwExperimentsEnabled = EXPERIMENT_NONE;
+DWORD dwExperimentsEnabled = EXPERIMENT_DEFAULT;
 DWORD dwPerfMonEnabled = PERFMON_NONE;
 BOOL bUseAdvancedQuery = TRUE;
 BOOL bSkipLoadingMods = FALSE;
@@ -156,6 +157,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		InitCommonControlsEx(&icc);
 
 		// Get our command line. WARNING: This uses WIDE STRINGS.
+		// XXX (araxestroy): this should probably not use wide strings
 		int iSetBitMode;
 		BOOL bSubArg;
 		int iLastArgPos;
@@ -176,7 +178,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						bUseAdvancedQuery = FALSE;
 					if (!lstrcmpiW(argv[i], L"-console"))
 						bConsoleEnabled = TRUE;
-					if (!lstrcmpiW(argv[i], L"-debugall")) {
+
+					if (!lstrcmpiW(argv[i], L"-debugall")) {			// NOTE: good luck
 						guzzardo_debug = DEBUG_FLAGS_EVERYTHING;
 						keybinds_debug = DEBUG_FLAGS_EVERYTHING;
 						mci_debug = DEBUG_FLAGS_EVERYTHING;
@@ -210,6 +213,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						timer_debug = DEBUG_FLAGS_NONE;
 						updatenotifier_debug = DEBUG_FLAGS_NONE;
 					}
+
 					if (!lstrcmpiW(argv[i], L"-resetfileassociations"))
 						bFixFileAssociations = TRUE;
 					if (!lstrcmpiW(argv[i], L"-enableautothingcleanup"))
@@ -227,17 +231,25 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						bBuildFixedTiles = TRUE;
 #endif
 #if USE_ONTHEFLYPALIDX
-					if (!lstrcmpiW(argv[i], L"-ontheflypalidx"))
+					if (!lstrcmpiW(argv[i], L"-ontheflypalidx"))	// NOTE: massively slows things down
 						bOnTheFlyPalIdx = TRUE;
 #endif
-					if (!lstrcmpiW(argv[i], L"-noxfix"))
+					if (!lstrcmpiW(argv[i], L"-noxfix"))			// NOTE: potentially dangerous
 						bNoXFIX = TRUE;
-					if (!lstrcmpiW(argv[i], L"-gamedebugmode"))
+					if (!lstrcmpiW(argv[i], L"-gamedebugmode"))		// NOTE: flags cities as cheated
 						bGameDebugMode = TRUE;
+
+					// Experiment settings; see sc2kfix.h
 					if (!lstrcmpiW(argv[i], L"-experiment=tripgenerator"))
 						dwExperimentsEnabled |= EXPERIMENT_TRIPGENERATOR;
 					if (!lstrcmpiW(argv[i], L"-experiment=all"))
 						dwExperimentsEnabled = EXPERIMENT_EVERYTHING;
+					if (!lstrcmpiW(argv[i], L"-optout=tripgenerator"))
+						dwExperimentsEnabled &= ~EXPERIMENT_TRIPGENERATOR;
+					if (!lstrcmpiW(argv[i], L"-optout=all"))
+						dwExperimentsEnabled = EXPERIMENT_NONE;
+
+					// Performance monitoring/profiling settings; see sc2kfix.h
 					if (!lstrcmpiW(argv[i], L"-perfmon=onupdate"))
 						dwPerfMonEnabled |= PERFMON_ONUPDATE;
 					if (!lstrcmpiW(argv[i], L"-perfmon=spritecache"))
@@ -246,6 +258,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 						dwPerfMonEnabled |= PERFMON_WHOLEMONTH;
 					if (!lstrcmpiW(argv[i], L"-perfmon=all"))
 						dwPerfMonEnabled = PERFMON_EVERYTHING;
+					if (!lstrcmpiW(argv[i], L"-perfmon=none"))
+						dwPerfMonEnabled = PERFMON_NONE;
+
+					// Bitmode forcing
 					if (!lstrcmpiW(argv[i], L"-bitmode"))
 					{
 						if (!iSetBitMode) {
@@ -279,11 +295,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 		// Update the game path in memory
 		SetGamePath();
 
-		sprintf_s(szLogPath, sizeof(szLogPath) - 1, "%s\\sc2kfix%s.log", szGamePath, GetLogSuffixFromSC2KFixMode());
-
 		// Open a log file. If it fails, we handle that safely elsewhere
 		// AF - Relocated so it will record any messages that occur
 		//      prior to the console itself being enabled.
+		sprintf_s(szLogPath, sizeof(szLogPath) - 1, "%s\\sc2kfix%s.log", szGamePath, GetLogSuffixFromSC2KFixMode());
 		fdLog = log_fopen(szLogPath, "w");
 		if (!fdLog)
 			ConsoleLog(LOG_ERROR, "Failed to open file handle for '%s'. Logs won't be recorded.\n", szLogPath);
