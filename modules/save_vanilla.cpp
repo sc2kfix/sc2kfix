@@ -307,7 +307,7 @@ static int L_SimcityApp_OpenCityCompressed(CSimcityAppPrimary *pSCApp, FILE *pFi
 			nTp = nDp = 0;
 			// The re-constructed decompression code block has been
 			// kept around as a pre-caution (in its original form here).
-#if 1
+#if 0
 			int ix = 0;
 			char dat;
 			while (nSize > nTp && nDatSize > nDp) {
