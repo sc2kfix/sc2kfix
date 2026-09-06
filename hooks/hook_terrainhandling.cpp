@@ -89,9 +89,10 @@ static void L_Demolish_FullRedrawUpdatePlaySoundYieldAndUpdHouse(CSimcityView *p
 }
 
 // XXX (araxestroy): This function needs some serious comment work.
-// Note: There's an original game bug when it comes to demoliting marinas
-//       whereas when they're in a certain position the dust cloud will
-//       be incorrectly offset (investigate eventually).
+// Note: There's an original game bug when it comes to demolishing (spelling...)
+//       Marinas (and perhaps other buildings) whereas the explosion will be offset
+//       erroneously depending on which part of the tile you click (the corner attribute
+//       being a factor).
 extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, BOOL bExplosion) {
 	CSimcityView *pThis;
 
