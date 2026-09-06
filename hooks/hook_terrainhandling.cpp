@@ -30,7 +30,7 @@ static void L_RunwayCheckStackPush(mapcoord_t x, mapcoord_t y) {
 	}
 }
 
-static void L_Demolish_UpdateHouse(CSimcityView *pSCView, mapcoord_t nX, mapcoord_t nY, int16_t nArea) {
+static void L_Demolish_UpdHouse(CSimcityView *pSCView, mapcoord_t nX, mapcoord_t nY, int16_t nArea) {
 	mapcoord_t nFirstPosX = nX;
 	mapcoord_t nSecondPosX = nX;
 	mapcoord_t nAreaPosX = (nX + nArea);
@@ -65,16 +65,16 @@ static void L_Demolish_UpdateHouse(CSimcityView *pSCView, mapcoord_t nX, mapcoor
 	Game_SimcityView_UpdateHouse(pSCView);
 }
 
-static void L_Demolish_YieldAndUpdate(CSimcityView *pSCView, mapcoord_t nX, mapcoord_t nY, int16_t nArea) {
+static void L_Demolish_YieldAndUpdHouse(CSimcityView *pSCView, mapcoord_t nX, mapcoord_t nY, int16_t nArea) {
 	Game_YieldToWindows(100);
-	L_Demolish_UpdateHouse(pSCView, nX, nY, nArea);
+	L_Demolish_UpdHouse(pSCView, nX, nY, nArea);
 }
 
-static void L_Demolish_PlaySoundYieldAndUpdate(CSimcityView *pSCView, mapcoord_t nX, mapcoord_t nY, int16_t nArea) {
+static void L_Demolish_PlaySoundYieldAndUpdHouse(CSimcityView *pSCView, mapcoord_t nX, mapcoord_t nY, int16_t nArea) {
 	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
 
 	Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
-	L_Demolish_YieldAndUpdate(pSCView, nX, nY, nArea);
+	L_Demolish_YieldAndUpdHouse(pSCView, nX, nY, nArea);
 }
 
 // XXX (araxestroy): This function needs some serious comment work.
@@ -306,7 +306,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				Game_DirtyTile(nCornerX, nCornerY + 1);
 			}
 			if (!bExplosion) {
-				L_Demolish_UpdateHouse(pThis, nX, nY, nArea);
+				L_Demolish_UpdHouse(pThis, nX, nY, nArea);
 				return;
 			}
 			Game_FinishProcessObjects();
@@ -316,10 +316,10 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
 			UpdateWindow(pThis->m_hWnd);
 			if (bDoYield) {
-				L_Demolish_YieldAndUpdate(pThis, nX, nY, nArea);
+				L_Demolish_YieldAndUpdHouse(pThis, nX, nY, nArea);
 				return;
 			}
-			L_Demolish_PlaySoundYieldAndUpdate(pThis, nX, nY, nArea);
+			L_Demolish_PlaySoundYieldAndUpdHouse(pThis, nX, nY, nArea);
 			return;
 		}
 		if (nArea == 2) {
@@ -365,7 +365,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					L_PierCheckStackPush(tileCoords.x, tileCoords.y + 1);
 			}
 			if (!bExplosion) {
-				L_Demolish_UpdateHouse(pThis, nX, nY, nArea);
+				L_Demolish_UpdHouse(pThis, nX, nY, nArea);
 				return;
 			}
 			Game_FinishProcessObjects();
@@ -374,7 +374,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
 			UpdWnd:
 				UpdateWindow(pThis->m_hWnd);
-				L_Demolish_PlaySoundYieldAndUpdate(pThis, nX, nY, nArea);
+				L_Demolish_PlaySoundYieldAndUpdHouse(pThis, nX, nY, nArea);
 				return;
 			}
 		}
@@ -494,7 +494,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 						if (GetTerrainTileID(nCornerX, nCornerY))
 							Game_SetTerrainTile(nCornerX, nCornerY);
 					}
-					L_Demolish_UpdateHouse(pThis, nX, nY, nArea);
+					L_Demolish_UpdHouse(pThis, nX, nY, nArea);
 					return;
 				}
 				nOffsetX = 0;
@@ -561,10 +561,10 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
 				UpdateWindow(pThis->m_hWnd);
 				if (!bExplosion) {
-					L_Demolish_UpdateHouse(pThis, nX, nY, nArea);
+					L_Demolish_UpdHouse(pThis, nX, nY, nArea);
 					return;
 				}
-				L_Demolish_PlaySoundYieldAndUpdate(pThis, nX, nY, nArea);
+				L_Demolish_PlaySoundYieldAndUpdHouse(pThis, nX, nY, nArea);
 				return;
 			}
 			if (bExplosion)
@@ -601,7 +601,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					L_RunwayCheckStackPush(tileCoords.x, tileCoords.y + 1);
 			}
 			if (!bExplosion) {
-				L_Demolish_UpdateHouse(pThis, nX, nY, nArea);
+				L_Demolish_UpdHouse(pThis, nX, nY, nArea);
 				return;
 			}
 			Game_FinishProcessObjects();
