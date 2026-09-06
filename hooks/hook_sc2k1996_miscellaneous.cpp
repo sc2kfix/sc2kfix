@@ -3165,6 +3165,8 @@ void InstallMiscHooks_SC2K1996(void) {
 
 	InstallThingHooks_SC2K1996();
 
+	InstallTerrainHandlingHooks_SC2K1996();
+
 	InstallTileGrowthOrPlacementHandlingHooks_SC2K1996();
 
 	InstallGraphsScanningStatsHandlingHooks_SC2K1996();
