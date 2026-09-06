@@ -30,7 +30,45 @@ static void L_RunwayCheckStackPush(mapcoord_t x, mapcoord_t y) {
 	}
 }
 
+static void L_Demolish_UpdateHouse(CSimcityView *pSCView, mapcoord_t nX, mapcoord_t nY, int16_t nArea) {
+	mapcoord_t nFirstPosX = nX;
+	mapcoord_t nSecondPosX = nX;
+	mapcoord_t nAreaPosX = (nX + nArea);
+	if (nAreaPosX > nX) {
+		do {
+			mapcoord_t nCurrPosX = nSecondPosX++;
+			Game_DirtyTile(nCurrPosX - 1, nY - 1);
+			Game_DirtyTile(nCurrPosX - 2, nY - 2);
+			Game_DirtyTile(nCurrPosX - 3, nY - 3);
+			Game_DirtyTile(nCurrPosX - 4, nY - 4);
+		} while (nSecondPosX < nAreaPosX);
+	}
+	mapcoord_t nFirstPosY = nY;
+	mapcoord_t nSecondPosY = nY;
+	mapcoord_t nAreaPosY = (nY + nArea);
+	if (nAreaPosY > nY) {
+		do {
+			mapcoord_t nCurrPosY = nSecondPosY++;
+			Game_DirtyTile(nX - 1, nCurrPosY - 1);
+			Game_DirtyTile(nX - 2, nCurrPosY - 2);
+			Game_DirtyTile(nX - 3, nCurrPosY - 3);
+			Game_DirtyTile(nX - 4, nCurrPosY - 4);
+		} while (nSecondPosY < nAreaPosY);
+	}
+	if (nAreaPosX > nX) {
+		do {
+			for (mapcoord_t nCurrPosY = nFirstPosY; nCurrPosY < nAreaPosY; ++nCurrPosY)
+				Game_DirtyTile(nFirstPosX, nCurrPosY);
+			++nFirstPosX;
+		} while (nFirstPosX < nAreaPosX);
+	}
+	Game_SimcityView_UpdateHouse(pSCView);
+}
+
 // XXX (araxestroy): This function needs some serious comment work.
+// Note: There's an original game bug when it comes to demoliting marinas
+//       whereas when they're in a certain position the dust cloud will
+//       be incorrectly offset (investigate eventually).
 extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, BOOL bExplosion) {
 	CSimcityView *pThis;
 
@@ -255,8 +293,10 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				Game_SetTerrainTile(nCornerX, nCornerY + 1);
 				Game_DirtyTile(nCornerX, nCornerY + 1);
 			}
-			if (!bExplosion)
-				goto UpdHouse;
+			if (!bExplosion) {
+				L_Demolish_UpdateHouse(pThis, nX, nY, nArea);
+				return;
+			}
 			Game_FinishProcessObjects();
 			if (pThis == (CSimcityView *)&pSomeWnd)
 				Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
@@ -309,8 +349,10 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				if (tileCoords.y < MAP_EDGE_MAX)
 					L_PierCheckStackPush(tileCoords.x, tileCoords.y + 1);
 			}
-			if (!bExplosion)
-				goto UpdHouse;
+			if (!bExplosion) {
+				L_Demolish_UpdateHouse(pThis, nX, nY, nArea);
+				return;
+			}
 			Game_FinishProcessObjects();
 			if (pThis == (CSimcityView *)&pSomeWnd) {
 			FullRdrw:
@@ -321,7 +363,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
 			YieldWnd:
 				Game_YieldToWindows(100);
-				goto UpdHouse;
+				L_Demolish_UpdateHouse(pThis, nX, nY, nArea);
+				return;
 			}
 		}
 		else {
@@ -440,7 +483,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 						if (GetTerrainTileID(nCornerX, nCornerY))
 							Game_SetTerrainTile(nCornerX, nCornerY);
 					}
-					goto UpdHouse;
+					L_Demolish_UpdateHouse(pThis, nX, nY, nArea);
+					return;
 				}
 				nOffsetX = 0;
 				nOffsetY = 0;
@@ -506,39 +550,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
 				UpdateWindow(pThis->m_hWnd);
 				if (!bExplosion) {
-				UpdHouse:
-					mapcoord_t nFirstPosX = nX;
-					mapcoord_t nSecondPosX = nX;
-					mapcoord_t nAreaPosX = (nX + nArea);
-					if (nAreaPosX > nX) {
-						do {
-							mapcoord_t nCurrPosX = nSecondPosX++;
-							Game_DirtyTile(nCurrPosX - 1, nY - 1);
-							Game_DirtyTile(nCurrPosX - 2, nY - 2);
-							Game_DirtyTile(nCurrPosX - 3, nY - 3);
-							Game_DirtyTile(nCurrPosX - 4, nY - 4);
-						} while (nSecondPosX < nAreaPosX);
-					}
-					mapcoord_t nFirstPosY = nY;
-					mapcoord_t nSecondPosY = nY;
-					mapcoord_t nAreaPosY = (nY + nArea);
-					if (nAreaPosY > nY) {
-						do {
-							mapcoord_t nCurrPosY = nSecondPosY++;
-							Game_DirtyTile(nX - 1, nCurrPosY - 1);
-							Game_DirtyTile(nX - 2, nCurrPosY - 2);
-							Game_DirtyTile(nX - 3, nCurrPosY - 3);
-							Game_DirtyTile(nX - 4, nCurrPosY - 4);
-						} while (nSecondPosY < nAreaPosY);
-					}
-					if (nAreaPosX > nX) {
-						do {
-							for (mapcoord_t nCurrPosY = nFirstPosY; nCurrPosY < nAreaPosY; ++nCurrPosY)
-								Game_DirtyTile(nFirstPosX, nCurrPosY);
-							++nFirstPosX;
-						} while (nFirstPosX < nAreaPosX);
-					}
-					Game_SimcityView_UpdateHouse(pThis);
+					L_Demolish_UpdateHouse(pThis, nX, nY, nArea);
 					return;
 				}
 				goto PlaySnd;
@@ -576,8 +588,10 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				if (tileCoords.y < MAP_EDGE_MAX)
 					L_RunwayCheckStackPush(tileCoords.x, tileCoords.y + 1);
 			}
-			if (!bExplosion)
-				goto UpdHouse;
+			if (!bExplosion) {
+				L_Demolish_UpdateHouse(pThis, nX, nY, nArea);
+				return;
+			}
 			Game_FinishProcessObjects();
 			if (pThis == (CSimcityView *)&pSomeWnd)
 				goto FullRdrw;
