@@ -317,21 +317,21 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				Game_SetTerrainTile(nCornerX, nCornerY + 1);
 				Game_DirtyTile(nCornerX, nCornerY + 1);
 			}
-			if (!bExplosion) {
-				L_Demolish_UpdHouse(pThis, nX, nY, nArea);
+			if (bExplosion) {
+				Game_FinishProcessObjects();
+				if (pThis == (CSimcityView *)&pSomeWnd)
+					Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
+				else
+					Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
+				UpdateWindow(pThis->m_hWnd);
+				if (bDoYield) {
+					L_Demolish_YieldAndUpdHouse(pThis, nX, nY, nArea);
+					return;
+				}
+				L_Demolish_PlaySoundYieldAndUpdHouse(pThis, nX, nY, nArea);
 				return;
 			}
-			Game_FinishProcessObjects();
-			if (pThis == (CSimcityView *)&pSomeWnd)
-				Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
-			else
-				Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
-			UpdateWindow(pThis->m_hWnd);
-			if (bDoYield) {
-				L_Demolish_YieldAndUpdHouse(pThis, nX, nY, nArea);
-				return;
-			}
-			L_Demolish_PlaySoundYieldAndUpdHouse(pThis, nX, nY, nArea);
+			L_Demolish_UpdHouse(pThis, nX, nY, nArea);
 			return;
 		}
 		if (nArea == 2) {
@@ -376,15 +376,15 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				if (tileCoords.y < MAP_EDGE_MAX)
 					L_PierCheckStackPush(tileCoords.x, tileCoords.y + 1);
 			}
-			if (!bExplosion) {
-				L_Demolish_UpdHouse(pThis, nX, nY, nArea);
-				return;
+			if (bExplosion) {
+				Game_FinishProcessObjects();
+				if (pThis == (CSimcityView *)&pSomeWnd) {
+					L_Demolish_FullRedrawUpdatePlaySoundYieldAndUpdHouse(pThis, nX, nY, nArea);
+					return;
+				}
 			}
-			Game_FinishProcessObjects();
-			if (pThis == (CSimcityView *)&pSomeWnd) {
-				L_Demolish_FullRedrawUpdatePlaySoundYieldAndUpdHouse(pThis, nX, nY, nArea);
-				return;
-			}
+			L_Demolish_UpdHouse(pThis, nX, nY, nArea);
+			return;
 		}
 		else {
 			if (nTileID != TILE_INFRASTRUCTURE_RUNWAY && nTileID != TILE_INFRASTRUCTURE_RUNWAYCROSS) {
@@ -568,11 +568,11 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				else
 					Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
 				UpdateWindow(pThis->m_hWnd);
-				if (!bExplosion) {
-					L_Demolish_UpdHouse(pThis, nX, nY, nArea);
+				if (bExplosion) {
+					L_Demolish_PlaySoundYieldAndUpdHouse(pThis, nX, nY, nArea);
 					return;
 				}
-				L_Demolish_PlaySoundYieldAndUpdHouse(pThis, nX, nY, nArea);
+				L_Demolish_UpdHouse(pThis, nX, nY, nArea);
 				return;
 			}
 			if (bExplosion)
@@ -608,15 +608,15 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				if (tileCoords.y < MAP_EDGE_MAX)
 					L_RunwayCheckStackPush(tileCoords.x, tileCoords.y + 1);
 			}
-			if (!bExplosion) {
-				L_Demolish_UpdHouse(pThis, nX, nY, nArea);
-				return;
+			if (bExplosion) {
+				Game_FinishProcessObjects();
+				if (pThis == (CSimcityView *)&pSomeWnd) {
+					L_Demolish_FullRedrawUpdatePlaySoundYieldAndUpdHouse(pThis, nX, nY, nArea);
+					return;
+				}
 			}
-			Game_FinishProcessObjects();
-			if (pThis == (CSimcityView *)&pSomeWnd) {
-				L_Demolish_FullRedrawUpdatePlaySoundYieldAndUpdHouse(pThis, nX, nY, nArea);
-				return;
-			}
+			L_Demolish_UpdHouse(pThis, nX, nY, nArea);
+			return;
 		}
 		Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
 		L_Demolish_UpdatePlaySoundYieldAndUpdHouse(pThis, nX, nY, nArea);
