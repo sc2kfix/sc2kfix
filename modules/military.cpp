@@ -315,7 +315,7 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 	__int16 iY;
 	__int16 iNewX;
 	__int16 iNewY;
-	BYTE iTileID;
+	BYTE iTileID, iTerrainTileID;
 
 	wOldTraceAction = traceAction;
 	iX = x2;
@@ -328,7 +328,8 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 		while (Game_StepTrace(&iNewX, &iNewY)) {
 			Game_TraceEdit(iX, iY);
 			iTileID = GetTileID(iX, iY);
-			if (iTileID < TILE_SMALLPARK && iTileID != TILE_RADIOACTIVITY) {
+			iTerrainTileID = GetTerrainTileID(iX, iY);
+			if (iTileID < TILE_SMALLPARK && iTileID != TILE_RADIOACTIVITY && iTerrainTileID < SUBMERGED_00) {
 				Game_PlaceRoadAtCoordinates(iX, iY);
 				if (GetTileID(iX, iY) >= TILE_ROAD_LR && GetTileID(iX, iY) <= TILE_ROAD_LTBR) {
 					XZONSetNewZone(iX, iY, ZONE_MILITARY);
@@ -340,7 +341,8 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 		}
 		Game_TraceEdit(iX, iY);
 		iTileID = GetTileID(iX, iY);
-		if (iTileID < TILE_SMALLPARK && iTileID != TILE_RADIOACTIVITY) {
+		iTerrainTileID = GetTerrainTileID(iX, iY);
+		if (iTileID < TILE_SMALLPARK && iTileID != TILE_RADIOACTIVITY && iTerrainTileID < SUBMERGED_00) {
 			Game_PlaceRoadAtCoordinates(iX, iY);
 			if (GetTileID(iX, iY) >= TILE_ROAD_LR && GetTileID(iX, iY) <= TILE_ROAD_LTBR) {
 				XZONSetNewZone(iX, iY, ZONE_MILITARY);
@@ -350,20 +352,22 @@ static void FormArmyBaseStrip(__int16 x1, __int16 y1, __int16 x2, __int16 y2) {
 	}
 	if (nCnt > 0) {
 		iTileID = GetTileID(x1, y1);
+		iTerrainTileID = GetTerrainTileID(x1, y1);
 		if (iTileID == TILE_ROAD_LR || iTileID == TILE_ROAD_TB) {
 			// TERRAIN_00 check added here to avoid the runwaycross
 			// being placed into a dip (likely replacing a slope or granite block).
-			if (!GetTerrainTileID(x1, y1) && XZONReturnZone(x1, y1) == ZONE_MILITARY) {
+			if (iTerrainTileID == TERRAIN_00 && XZONReturnZone(x1, y1) == ZONE_MILITARY) {
 				XZONSetCornerMask(x1, y1, CORNER_ALL);
 				Game_PlaceTile(x1, y1, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 			}
 		}
 		if (nCnt > 1) {
 			iTileID = GetTileID(iX, iY);
+			iTerrainTileID = GetTerrainTileID(iX, iY);
 			if (iTileID == TILE_ROAD_LR || iTileID <= TILE_ROAD_TB) {
 				// TERRAIN_00 check added here to avoid the runwaycross
 				// being placed into a dip (likely replacing a slope or granite block).
-				if (!GetTerrainTileID(iX, iY) && XZONReturnZone(iX, iY) == ZONE_MILITARY) {
+				if (iTerrainTileID == TERRAIN_00 && XZONReturnZone(iX, iY) == ZONE_MILITARY) {
 					XZONSetCornerMask(iX, iY, CORNER_ALL);
 					Game_PlaceTile(iX, iY, TILE_INFRASTRUCTURE_RUNWAYCROSS);
 				}
