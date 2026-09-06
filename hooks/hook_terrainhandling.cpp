@@ -101,7 +101,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 	CSimcityAppPrimary *pSCApp;
 	BYTE *pLockedBits = NULL;
 	BYTE *pLockedBaseBits = NULL;
-	bool bDoYield;
+	bool bExplosionSoundPlayed;
 	mapcoord_t nX, nY;
 	int16_t nTileID, nLoopTileID;
 	mapcoord_t nCornerX, nCornerY;
@@ -133,7 +133,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 	pSCApp = &pCSimcityAppThis;
 	pLockedBits = Game_Graphics_LockDIBBits(pThis->SCVGraphics);
 	pLockedBaseBits = Game_Graphics_LockDIBBits(pBaseGraphics);
-	bDoYield = false;
+	bExplosionSoundPlayed = false;
 	nX = x;
 	nY = y;
 	nTileID = GetTileID(nX, nY);
@@ -215,7 +215,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			nCornerY += nStoredVertMult;
 			if (bExplosion) {
 				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
-				bDoYield = true;
+				bExplosionSoundPlayed = true;
 				L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
 			}
 			nExplodeX = -1;
@@ -324,12 +324,9 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				else
 					Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
 				UpdateWindow(pThis->m_hWnd);
-				if (bDoYield) {
-					L_Demolish_YieldAndUpdHouse(pThis, nX, nY, nArea);
-					return;
-				}
-				L_Demolish_PlaySoundYieldAndUpdHouse(pThis, nX, nY, nArea);
-				return;
+				if (!bExplosionSoundPlayed)
+					Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
+				Game_YieldToWindows(100);
 			}
 			L_Demolish_UpdHouse(pThis, nX, nY, nArea);
 			return;
@@ -383,198 +380,9 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					return;
 				}
 			}
-			L_Demolish_UpdHouse(pThis, nX, nY, nArea);
-			return;
+			ConsoleLog(LOG_DEBUG, "if: (%d, %d) (%d) [%s]\n", nX, nY, nArea, szTileNames[nTileID]);
 		}
-		else {
-			if (nTileID != TILE_INFRASTRUCTURE_RUNWAY && nTileID != TILE_INFRASTRUCTURE_RUNWAYCROSS) {
-				if (nTileID < TILE_TUNNEL_T || nTileID > TILE_TUNNEL_L) {
-					if (bExplosion) {
-						nExplodeX = iScreenOffSetX + nScaleVal * (nCornerX - nCornerY);
-						if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE && XBITReturnIsWater(nX, nY))
-							nAltitude = ALTMReturnWaterLevel(nCornerX, nCornerY);
-						else
-							nAltitude = ALTMReturnLandAltitude(nCornerX, nCornerY);
-						nExplodeY = iScreenOffSetY + (nCoordScale * (nCornerX + nCornerY)) - nLandAltScale * nAltitude;
-						if (nTileID >= TILE_ARCOLOGY_PLYMOUTH)
-							dirtyRect.top = 0;
-						if (nArea > 0) {
-							int16_t nVertPos = 0;
-							int16_t nAreaPos = nArea;
-							do {
-								L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
-								if (nArea > 0) {
-									int16_t nHorzPos = 0;
-									int16_t nHorzAreaPos = nArea;
-									nAreaExplodeX = nExplodeX;
-									do {
-										if (nArea > 0) {
-											int16_t nAreaExplodeIntX = nAreaExplodeX;
-											int16_t nCurrHorzPos = nHorzPos;
-											int16_t nVertAreaPos = nArea;
-											do {
-												nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
-												nAreaExplodeY = nCurrHorzPos + nExplodeY - pArrSpriteHeaders[nSpriteID].wHeight - nVertPos;
-												bIsFlipped = rand() & 1;
-												Game_DrawProcessObject(nSpriteID, nAreaExplodeIntX, nAreaExplodeY, bIsFlipped, 0);
-												Game_DirtyCloud(nSpriteID, nAreaExplodeIntX, nAreaExplodeY);
-												nCurrHorzPos -= nCoordScale;
-												nAreaExplodeIntX += nScaleVal;
-												--nVertAreaPos;
-											} while (nVertAreaPos);
-										}
-										nHorzPos += nCoordScale;
-										nAreaExplodeX += nScaleVal;
-										--nHorzAreaPos;
-									} while (nHorzAreaPos);
-								}
-								Game_FinishProcessObjects();
-								if (pThis == (CSimcityView *)&pSomeWnd)
-									Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
-								else
-									Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
-								UpdateWindow(pThis->m_hWnd);
-								if (!bDoYield) {
-									Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
-									bDoYield = true;
-								}
-								Game_YieldToWindows(100);
-								nVertPos += nCoordScale;
-								--nAreaPos;
-							} while (nAreaPos);
-						}
-					}
-					bTextOverlay = XTXTGetTextOverlayID(nCornerX, nCornerY);
-					if (nTileID == TILE_INFRASTRUCTURE_MAYORSHOUSE)
-						Game_SimulationToggleGrantReward(0, 1);
-					if (nTileID == TILE_SERVICES_CITYHALL)
-						Game_SimulationToggleGrantReward(1, 1);
-					if (nTileID == TILE_SERVICES_STATUE)
-						Game_SimulationToggleGrantReward(2, 1);
-					if (nTileID == TILE_OTHER_BRAUNLLAMADOME)
-						Game_SimulationToggleGrantReward(3, 1);
-					if (nTileID == TILE_SERVICES_STADIUM &&
-						bTextOverlay >= MIN_SIM_TEXT_ENTRIES &&
-						bTextOverlay <= MAX_SIM_TEXT_ENTRIES) {
-						BYTE bMicrosimEntry = MICROSIMID_ENTRY(bTextOverlay);
-						if (GetMicroSimulatorTileID(bMicrosimEntry) == nTileID)
-							wStadiumSportsTeams += -1 << GetMicroSimulatorStat2(bMicrosimEntry);
-					}
-					for (__int16 nPosX = 0; nArea > nPosX; ++nPosX) {
-						for (__int16 nPosY = 0; nArea > nPosY; ++nPosY) {
-							__int16 nCurrX = nPosX + nCornerX;
-							__int16 nCurrY = nCornerY - nPosY;
-							if (nCurrX < GAME_MAP_SIZE && nCurrY < GAME_MAP_SIZE) {
-								nRubbleTile = (GetTerrainTileID(nCurrX, nCurrY)) ? TILE_CLEAR : (rand() & 3) + 1;
-								Game_PlaceTile(nCurrX, nCurrY, nRubbleTile);
-								if (nCurrX >= MAP_EDGE_MIN && nCurrX < GAME_MAP_SIZE && nCurrY < GAME_MAP_SIZE) {
-									XBITClearBits(nCurrX, nCurrY, XBIT_FLIPPED|XBIT_POWERED|XBIT_POWERABLE);
-									XZONClearCorners(nCurrX, nCurrY);
-								}
-								bTextOverlay = XTXTGetTextOverlayID(nCurrX, nCurrY);
-								if (bTextOverlay) {
-									if (bTextOverlay <= MAX_XTHG_TEXT_ENTRIES || bTextOverlay == NGHBR_CONNECTION_TEXT_ENTRY) {
-										if (bTextOverlay <= MAX_SIM_TEXT_ENTRIES || bTextOverlay == NGHBR_CONNECTION_TEXT_ENTRY)
-											XTXTSetTextOverlayID(nCurrX, nCurrY, 0);
-										Game_RemoveLabel(bTextOverlay);
-										if (bTextOverlay == NGHBR_CONNECTION_TEXT_ENTRY) {
-											if (GET_TILE_RANGE(nTileID, TILE_ROAD_LR, TILE_ROAD_LTBR) ||
-												GET_TILE_RANGE(nTileID, TILE_TUNNEL_T, TILE_CROSSOVER_ROADTB_RAILLR) ||
-												GET_TILE_RANGE(nTileID, TILE_CROSSOVER_HIGHWAYLR_ROADTB, TILE_CROSSOVER_HIGHWAYTB_ROADLR) ||
-												GET_TILE_RANGE(nTileID, TILE_ONRAMP_TL, TILE_ONRAMP_BR))
-												--wCommerceConnect;
-											else
-												--wIndustryConnect;
-										}
-									}
-								}
-							}
-						}
-					}
-					if (GET_TILE_RANGE(nTileID, TILE_HIGHWAY_HTB, TILE_REINFORCED_BRIDGE) ||
-						GET_TILE_RANGE(nTileID, TILE_HIGHWAY_LR, TILE_CROSSOVER_HIGHWAYTB_POWERLR)) {
-						Game_SetTerrainTile(nCornerX, nCornerY);
-						Game_SetTerrainTile(nCornerX + 1, nCornerY);
-						Game_SetTerrainTile(nCornerX + 1, nCornerY - 1);
-						Game_SetTerrainTile(nCornerX, nCornerY - 1);
-					}
-					if (nArea == 1 && nTileID <= TILE_SUBTORAIL_L) {
-						if (GetTerrainTileID(nCornerX, nCornerY))
-							Game_SetTerrainTile(nCornerX, nCornerY);
-					}
-					L_Demolish_UpdHouse(pThis, nX, nY, nArea);
-					return;
-				}
-				nOffsetX = 0;
-				nOffsetY = 0;
-				switch (nTileID) {
-				case TILE_TUNNEL_T:
-					nOffsetX = -1;
-					nOffsetY = 0;
-					break;
-				case TILE_TUNNEL_R:
-					nOffsetX = 0;
-					nOffsetY = -1;
-					break;
-				case TILE_TUNNEL_B:
-					nOffsetX = 1;
-					nOffsetY = 0;
-					break;
-				case TILE_TUNNEL_L:
-					nOffsetX = 0;
-					nOffsetY = 1;
-					break;
-				default:
-					break;
-				}
-				Game_DirtyTile(nX, nY);
-				nTileID = TILE_CLEAR;
-				nRubbleTile = (rand() & 3) + 1;
-				Game_PlaceTile(nX, nY, nRubbleTile);
-				if (nX >= MAP_EDGE_MIN) {
-					if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE) {
-						XZONClearCorners(nX, nY);
-						ALTMSetTunnelLevels(nX, nY, 0);
-					}
-				}
-				L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
-				nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
-				nExplodeX = iScreenOffSetX + nScaleVal * (nX - nY);
-				nExplodeY = iScreenOffSetY + nCoordScale * (nX + nY) - nLandAltScale * ALTMReturnLandAltitude(nX, nY) - pArrSpriteHeaders[nSpriteID].wHeight;
-				bIsFlipped = rand() & 1;
-				Game_DrawProcessObject(nSpriteID, nExplodeX, nExplodeY, bIsFlipped, 0);
-				Game_DirtyCloud(nSpriteID, nExplodeX, nExplodeY);
-				while (nTileID < TILE_TUNNEL_T || nTileID > TILE_TUNNEL_L) {
-					nX += nOffsetX;
-					nY += nOffsetY;
-					if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE)
-						ALTMSetTunnelLevels(nX, nY, 0);
-					nTileID = GetTileID(nX, nY);
-				}
-				Game_DirtyTile(nX, nY);
-				nRubbleTile = (rand() & 3) + 1;
-				Game_PlaceTile(nX, nY, nRubbleTile);
-				if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE)
-					XZONClearCorners(nX, nY);
-				nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
-				nExplodeX = iScreenOffSetX + nScaleVal * (nX - nY);
-				nExplodeY = iScreenOffSetY + nCoordScale * (nX + nY) - nLandAltScale * ALTMReturnLandAltitude(nX, nY) - pArrSpriteHeaders[nSpriteID].wHeight;
-				bIsFlipped = rand() & 1;
-				Game_DrawProcessObject(nSpriteID, nExplodeX, nExplodeY, bIsFlipped, 0);
-				Game_DirtyCloud(nSpriteID, nExplodeX, nExplodeY);
-				Game_FinishProcessObjects();
-				if (pThis == (CSimcityView *)&pSomeWnd)
-					Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
-				else
-					Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
-				UpdateWindow(pThis->m_hWnd);
-				if (bExplosion) {
-					L_Demolish_PlaySoundYieldAndUpdHouse(pThis, nX, nY, nArea);
-					return;
-				}
-				L_Demolish_UpdHouse(pThis, nX, nY, nArea);
-				return;
-			}
+		else if (GET_TILE_RANGE(nTileID, TILE_INFRASTRUCTURE_RUNWAY, TILE_INFRASTRUCTURE_RUNWAYCROSS)) {
 			if (bExplosion)
 				L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
 			Game_InitStack(nX, nY);
@@ -615,9 +423,200 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					return;
 				}
 			}
+			ConsoleLog(LOG_DEBUG, "else if: (%d, %d) (%d) [%s]\n", nX, nY, nArea, szTileNames[nTileID]);
+		}
+		else if (GET_TILE_RANGE(nTileID, TILE_TUNNEL_T, TILE_TUNNEL_L)) {
+			nOffsetX = 0;
+			nOffsetY = 0;
+			switch (nTileID) {
+			case TILE_TUNNEL_T:
+				nOffsetX = -1;
+				nOffsetY = 0;
+				break;
+			case TILE_TUNNEL_R:
+				nOffsetX = 0;
+				nOffsetY = -1;
+				break;
+			case TILE_TUNNEL_B:
+				nOffsetX = 1;
+				nOffsetY = 0;
+				break;
+			case TILE_TUNNEL_L:
+				nOffsetX = 0;
+				nOffsetY = 1;
+				break;
+			default:
+				break;
+			}
+			Game_DirtyTile(nX, nY);
+			nTileID = TILE_CLEAR;
+			nRubbleTile = (rand() & 3) + 1;
+			Game_PlaceTile(nX, nY, nRubbleTile);
+			if (nX >= MAP_EDGE_MIN) {
+				if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE) {
+					XZONClearCorners(nX, nY);
+					ALTMSetTunnelLevels(nX, nY, 0);
+				}
+			}
+			L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
+			nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
+			nExplodeX = iScreenOffSetX + nScaleVal * (nX - nY);
+			nExplodeY = iScreenOffSetY + nCoordScale * (nX + nY) - nLandAltScale * ALTMReturnLandAltitude(nX, nY) - pArrSpriteHeaders[nSpriteID].wHeight;
+			bIsFlipped = rand() & 1;
+			Game_DrawProcessObject(nSpriteID, nExplodeX, nExplodeY, bIsFlipped, 0);
+			Game_DirtyCloud(nSpriteID, nExplodeX, nExplodeY);
+			while (nTileID < TILE_TUNNEL_T || nTileID > TILE_TUNNEL_L) {
+				nX += nOffsetX;
+				nY += nOffsetY;
+				if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE)
+					ALTMSetTunnelLevels(nX, nY, 0);
+				nTileID = GetTileID(nX, nY);
+			}
+			Game_DirtyTile(nX, nY);
+			nRubbleTile = (rand() & 3) + 1;
+			Game_PlaceTile(nX, nY, nRubbleTile);
+			if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE)
+				XZONClearCorners(nX, nY);
+			nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
+			nExplodeX = iScreenOffSetX + nScaleVal * (nX - nY);
+			nExplodeY = iScreenOffSetY + nCoordScale * (nX + nY) - nLandAltScale * ALTMReturnLandAltitude(nX, nY) - pArrSpriteHeaders[nSpriteID].wHeight;
+			bIsFlipped = rand() & 1;
+			Game_DrawProcessObject(nSpriteID, nExplodeX, nExplodeY, bIsFlipped, 0);
+			Game_DirtyCloud(nSpriteID, nExplodeX, nExplodeY);
+			Game_FinishProcessObjects();
+			if (pThis == (CSimcityView *)&pSomeWnd)
+				Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
+			else
+				Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
+			UpdateWindow(pThis->m_hWnd);
+			// For this case it is the sound.
+			if (bExplosion) {
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
+				Game_YieldToWindows(100);
+			}
+			ConsoleLog(LOG_DEBUG, "else if: (%d, %d) (%d) bExplosionSoundPlayed(%c) bExplosion(%c) (pThis == (CSimcityView *)&pSomeWnd)(%c) [%s]\n", nX, nY, nArea, (bExplosionSoundPlayed ? 'Y' : 'N'), (bExplosion ? 'Y' : 'N'), ((pThis == (CSimcityView *)&pSomeWnd) ? 'Y' : 'N'), szTileNames[nTileID]);
 			L_Demolish_UpdHouse(pThis, nX, nY, nArea);
 			return;
 		}
+		else {
+			if (bExplosion) {
+				nExplodeX = iScreenOffSetX + nScaleVal * (nCornerX - nCornerY);
+				if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE && XBITReturnIsWater(nX, nY))
+					nAltitude = ALTMReturnWaterLevel(nCornerX, nCornerY);
+				else
+					nAltitude = ALTMReturnLandAltitude(nCornerX, nCornerY);
+				nExplodeY = iScreenOffSetY + (nCoordScale * (nCornerX + nCornerY)) - nLandAltScale * nAltitude;
+				if (nTileID >= TILE_ARCOLOGY_PLYMOUTH)
+					dirtyRect.top = 0;
+				if (nArea > 0) {
+					int16_t nVertPos = 0;
+					int16_t nAreaPos = nArea;
+					do {
+						L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
+						if (nArea > 0) {
+							int16_t nHorzPos = 0;
+							int16_t nHorzAreaPos = nArea;
+							nAreaExplodeX = nExplodeX;
+							do {
+								if (nArea > 0) {
+									int16_t nAreaExplodeIntX = nAreaExplodeX;
+									int16_t nCurrHorzPos = nHorzPos;
+									int16_t nVertAreaPos = nArea;
+									do {
+										nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
+										nAreaExplodeY = nCurrHorzPos + nExplodeY - pArrSpriteHeaders[nSpriteID].wHeight - nVertPos;
+										bIsFlipped = rand() & 1;
+										Game_DrawProcessObject(nSpriteID, nAreaExplodeIntX, nAreaExplodeY, bIsFlipped, 0);
+										Game_DirtyCloud(nSpriteID, nAreaExplodeIntX, nAreaExplodeY);
+										nCurrHorzPos -= nCoordScale;
+										nAreaExplodeIntX += nScaleVal;
+										--nVertAreaPos;
+									} while (nVertAreaPos);
+								}
+								nHorzPos += nCoordScale;
+								nAreaExplodeX += nScaleVal;
+								--nHorzAreaPos;
+							} while (nHorzAreaPos);
+						}
+						Game_FinishProcessObjects();
+						if (pThis == (CSimcityView *)&pSomeWnd)
+							Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
+						else
+							Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
+						UpdateWindow(pThis->m_hWnd);
+						if (!bExplosionSoundPlayed) {
+							Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
+							bExplosionSoundPlayed = true;
+						}
+						Game_YieldToWindows(100);
+						nVertPos += nCoordScale;
+						--nAreaPos;
+					} while (nAreaPos);
+				}
+			}
+			bTextOverlay = XTXTGetTextOverlayID(nCornerX, nCornerY);
+			if (nTileID == TILE_INFRASTRUCTURE_MAYORSHOUSE)
+				Game_SimulationToggleGrantReward(0, 1);
+			if (nTileID == TILE_SERVICES_CITYHALL)
+				Game_SimulationToggleGrantReward(1, 1);
+			if (nTileID == TILE_SERVICES_STATUE)
+				Game_SimulationToggleGrantReward(2, 1);
+			if (nTileID == TILE_OTHER_BRAUNLLAMADOME)
+				Game_SimulationToggleGrantReward(3, 1);
+			if (nTileID == TILE_SERVICES_STADIUM &&
+				bTextOverlay >= MIN_SIM_TEXT_ENTRIES &&
+				bTextOverlay <= MAX_SIM_TEXT_ENTRIES) {
+				BYTE bMicrosimEntry = MICROSIMID_ENTRY(bTextOverlay);
+				if (GetMicroSimulatorTileID(bMicrosimEntry) == nTileID)
+					wStadiumSportsTeams += -1 << GetMicroSimulatorStat2(bMicrosimEntry);
+			}
+			for (__int16 nPosX = 0; nArea > nPosX; ++nPosX) {
+				for (__int16 nPosY = 0; nArea > nPosY; ++nPosY) {
+					__int16 nCurrX = nPosX + nCornerX;
+					__int16 nCurrY = nCornerY - nPosY;
+					if (nCurrX < GAME_MAP_SIZE && nCurrY < GAME_MAP_SIZE) {
+						nRubbleTile = (GetTerrainTileID(nCurrX, nCurrY)) ? TILE_CLEAR : (rand() & 3) + 1;
+						Game_PlaceTile(nCurrX, nCurrY, nRubbleTile);
+						if (nCurrX >= MAP_EDGE_MIN && nCurrX < GAME_MAP_SIZE && nCurrY < GAME_MAP_SIZE) {
+							XBITClearBits(nCurrX, nCurrY, XBIT_FLIPPED | XBIT_POWERED | XBIT_POWERABLE);
+							XZONClearCorners(nCurrX, nCurrY);
+						}
+						bTextOverlay = XTXTGetTextOverlayID(nCurrX, nCurrY);
+						if (bTextOverlay) {
+							if (bTextOverlay <= MAX_XTHG_TEXT_ENTRIES || bTextOverlay == NGHBR_CONNECTION_TEXT_ENTRY) {
+								if (bTextOverlay <= MAX_SIM_TEXT_ENTRIES || bTextOverlay == NGHBR_CONNECTION_TEXT_ENTRY)
+									XTXTSetTextOverlayID(nCurrX, nCurrY, 0);
+								Game_RemoveLabel(bTextOverlay);
+								if (bTextOverlay == NGHBR_CONNECTION_TEXT_ENTRY) {
+									if (GET_TILE_RANGE(nTileID, TILE_ROAD_LR, TILE_ROAD_LTBR) ||
+										GET_TILE_RANGE(nTileID, TILE_TUNNEL_T, TILE_CROSSOVER_ROADTB_RAILLR) ||
+										GET_TILE_RANGE(nTileID, TILE_CROSSOVER_HIGHWAYLR_ROADTB, TILE_CROSSOVER_HIGHWAYTB_ROADLR) ||
+										GET_TILE_RANGE(nTileID, TILE_ONRAMP_TL, TILE_ONRAMP_BR))
+										--wCommerceConnect;
+									else
+										--wIndustryConnect;
+								}
+							}
+						}
+					}
+				}
+			}
+			if (GET_TILE_RANGE(nTileID, TILE_HIGHWAY_HTB, TILE_REINFORCED_BRIDGE) ||
+				GET_TILE_RANGE(nTileID, TILE_HIGHWAY_LR, TILE_CROSSOVER_HIGHWAYTB_POWERLR)) {
+				Game_SetTerrainTile(nCornerX, nCornerY);
+				Game_SetTerrainTile(nCornerX + 1, nCornerY);
+				Game_SetTerrainTile(nCornerX + 1, nCornerY - 1);
+				Game_SetTerrainTile(nCornerX, nCornerY - 1);
+			}
+			if (nArea == 1 && nTileID <= TILE_SUBTORAIL_L) {
+				if (GetTerrainTileID(nCornerX, nCornerY))
+					Game_SetTerrainTile(nCornerX, nCornerY);
+			}
+			ConsoleLog(LOG_DEBUG, "else: (%d, %d) (%d) bExplosionSoundPlayed(%c) bExplosion(%c) (pThis == (CSimcityView *)&pSomeWnd)(%c) [%s]\n", nX, nY, nArea, (bExplosionSoundPlayed ? 'Y' : 'N'), (bExplosion ? 'Y' : 'N'), ((pThis == (CSimcityView *)&pSomeWnd) ? 'Y' : 'N'), szTileNames[nTileID]);
+			L_Demolish_UpdHouse(pThis, nX, nY, nArea);
+			return;
+		}
+		ConsoleLog(LOG_DEBUG, "Demolish(): (%d, %d) (%d) bExplosionSoundPlayed(%c) bExplosion(%c) (pThis == (CSimcityView *)&pSomeWnd)(%c)\n", nX, nY, nArea, (bExplosionSoundPlayed ? 'Y' : 'N'), (bExplosion ? 'Y' : 'N'), ((pThis == (CSimcityView *)&pSomeWnd) ? 'Y' : 'N'));
 		Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
 		L_Demolish_UpdatePlaySoundYieldAndUpdHouse(pThis, nX, nY, nArea);
 		return;
