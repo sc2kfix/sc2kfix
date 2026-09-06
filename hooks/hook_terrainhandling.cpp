@@ -77,6 +77,11 @@ static void L_Demolish_PlaySoundYieldAndUpdHouse(CSimcityView *pSCView, mapcoord
 	L_Demolish_YieldAndUpdHouse(pSCView, nX, nY, nArea);
 }
 
+static void L_Demolish_UpdatePlaySoundYieldAndUpdHouse(CSimcityView *pSCView, mapcoord_t nX, mapcoord_t nY, int16_t nArea) {
+	UpdateWindow(pSCView->m_hWnd);
+	L_Demolish_PlaySoundYieldAndUpdHouse(pSCView, nX, nY, nArea);
+}
+
 // XXX (araxestroy): This function needs some serious comment work.
 // Note: There's an original game bug when it comes to demoliting marinas
 //       whereas when they're in a certain position the dust cloud will
@@ -372,9 +377,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			if (pThis == (CSimcityView *)&pSomeWnd) {
 			FullRdrw:
 				Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
-			UpdWnd:
-				UpdateWindow(pThis->m_hWnd);
-				L_Demolish_PlaySoundYieldAndUpdHouse(pThis, nX, nY, nArea);
+				L_Demolish_UpdatePlaySoundYieldAndUpdHouse(pThis, nX, nY, nArea);
 				return;
 			}
 		}
@@ -609,7 +612,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				goto FullRdrw;
 		}
 		Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
-		goto UpdWnd;
+		L_Demolish_UpdatePlaySoundYieldAndUpdHouse(pThis, nX, nY, nArea);
+		return;
 	}
 }
 
