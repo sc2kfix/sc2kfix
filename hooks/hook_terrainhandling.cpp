@@ -70,6 +70,13 @@ static void L_Demolish_YieldAndUpdate(CSimcityView *pSCView, mapcoord_t nX, mapc
 	L_Demolish_UpdateHouse(pSCView, nX, nY, nArea);
 }
 
+static void L_Demolish_PlaySoundYieldAndUpdate(CSimcityView *pSCView, mapcoord_t nX, mapcoord_t nY, int16_t nArea) {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+
+	Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
+	L_Demolish_YieldAndUpdate(pSCView, nX, nY, nArea);
+}
+
 // XXX (araxestroy): This function needs some serious comment work.
 // Note: There's an original game bug when it comes to demoliting marinas
 //       whereas when they're in a certain position the dust cloud will
@@ -312,7 +319,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				L_Demolish_YieldAndUpdate(pThis, nX, nY, nArea);
 				return;
 			}
-			goto PlaySnd;
+			L_Demolish_PlaySoundYieldAndUpdate(pThis, nX, nY, nArea);
+			return;
 		}
 		if (nArea == 2) {
 			nHighwayTile = Game_GetHighwayTile(nCornerX, nCornerY - 1);
@@ -366,9 +374,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
 			UpdWnd:
 				UpdateWindow(pThis->m_hWnd);
-			PlaySnd:
-				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
-				L_Demolish_YieldAndUpdate(pThis, nX, nY, nArea);
+				L_Demolish_PlaySoundYieldAndUpdate(pThis, nX, nY, nArea);
 				return;
 			}
 		}
@@ -558,7 +564,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					L_Demolish_UpdateHouse(pThis, nX, nY, nArea);
 					return;
 				}
-				goto PlaySnd;
+				L_Demolish_PlaySoundYieldAndUpdate(pThis, nX, nY, nArea);
+				return;
 			}
 			if (bExplosion)
 				L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
