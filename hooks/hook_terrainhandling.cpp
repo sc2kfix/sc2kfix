@@ -14,6 +14,18 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
+// Dust-cloud during explosions.
+static int16_t L_Demolish_GetDustCloudSprite(int16_t nSpriteBase) {
+	return (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
+}
+
+static bool L_Demolish_IsValidSingleBridgeTypeTile(mapcoord_t cornerX, mapcoord_t cornerY) {
+	// Only tile-types that are specified within the range are valid.
+	// The reinforced bridge tiles aren't valid and aren't included.
+	BYTE nTileID = GetTileID(cornerX, cornerY);
+	return (GET_TILE_RANGE(nTileID, TILE_SUSPENSION_BRIDGE_START_B, TILE_ELEVATED_POWERLINES)) ? true : false;
+}
+
 // This function is hit twice during demolition, but only during bridge-type object clearing
 // and only if their nArea is 1 (for bSingleObject).
 // It is for removing the entry/exit points and reverting the altitude and terrain back to the
@@ -107,7 +119,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 	bool bExplosionSoundPlayed;
 	bool bOnlyUpdateHouse;
 	mapcoord_t nX, nY;
-	int16_t nTileID, nLoopTileID;
+	int16_t nTileID;
 	mapcoord_t nCornerX, nCornerY;
 	int16_t nArea;
 	int16_t nCoordScale, nLandAltScale, nScaleVal;
@@ -178,10 +190,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 						bSingleTile = false;
 						break;
 					}
-					nLoopTileID = GetTileID(nCornerX, nCornerY);
-					if ((nLoopTileID < TILE_SUSPENSION_BRIDGE_START_B || nLoopTileID > TILE_ELEVATED_POWERLINES) &&
-						nLoopTileID != TILE_REINFORCED_BRIDGE_PYLON &&
-						nLoopTileID != TILE_REINFORCED_BRIDGE)
+					if (!L_Demolish_IsValidSingleBridgeTypeTile(nCornerX, nCornerY))
 						break;
 				}
 				nCornerX -= nStoredHorzMult;
@@ -222,10 +231,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 						bSingleTile = false;
 						break;
 					}
-					nLoopTileID = GetTileID(nCornerX, nCornerY);
-					if ((nLoopTileID < TILE_SUSPENSION_BRIDGE_START_B || nLoopTileID > TILE_ELEVATED_POWERLINES) &&
-						nLoopTileID != TILE_REINFORCED_BRIDGE_PYLON &&
-						nLoopTileID != TILE_REINFORCED_BRIDGE)
+					if (!L_Demolish_IsValidSingleBridgeTypeTile(nCornerX, nCornerY))
 						break;
 				}
 				Game_DirtyTile(nCornerX, nCornerY);
@@ -235,7 +241,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					Game_DirtyTile(nCornerX + 1, nCornerY);
 				}
 				if (bExplosion) {
-					nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
+					nSpriteID = L_Demolish_GetDustCloudSprite(nSpriteBase);
 					nExplodeX = iScreenOffSetX + nScaleVal * (nCornerX - nCornerY);
 					nExplodeY = iScreenOffSetY + nCoordScale * (nCornerX + nCornerY) -
 						nLandAltScale * ALTMReturnWaterLevel(nCornerX, nCornerY) -
@@ -331,7 +337,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					XBITClearBits(tileCoords.x, tileCoords.y, XBIT_FLIPPED|XBIT_POWERED|XBIT_POWERABLE);
 				}
 				if (bExplosion) {
-					nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
+					nSpriteID = L_Demolish_GetDustCloudSprite(nSpriteBase);
 					nExplodeX = iScreenOffSetX + nScaleVal * (tileCoords.x - tileCoords.y);
 					if (tileCoords.x < GAME_MAP_SIZE && tileCoords.y < GAME_MAP_SIZE && XBITReturnIsWater(tileCoords.x, tileCoords.y))
 						nAltitude = ALTMReturnWaterLevel(tileCoords.x, tileCoords.y);
@@ -381,7 +387,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					XBITClearBits(tileCoords.x, tileCoords.y, XBIT_FLIPPED|XBIT_POWERED|XBIT_POWERABLE);
 				}
 				if (bExplosion) {
-					nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
+					nSpriteID = L_Demolish_GetDustCloudSprite(nSpriteBase);
 					nExplodeX = iScreenOffSetX + nScaleVal * (tileCoords.x - tileCoords.y);
 					nExplodeY = iScreenOffSetY + nCoordScale * (tileCoords.x + tileCoords.y) - nLandAltScale * ALTMReturnLandAltitude(tileCoords.x, tileCoords.y) - pArrSpriteHeaders[nSpriteID].wHeight;
 					bIsFlipped = rand() & 1;
@@ -446,7 +452,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				}
 			}
 			L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
-			nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
+			nSpriteID = L_Demolish_GetDustCloudSprite(nSpriteBase);
 			nExplodeX = iScreenOffSetX + nScaleVal * (nX - nY);
 			nExplodeY = iScreenOffSetY + nCoordScale * (nX + nY) - nLandAltScale * ALTMReturnLandAltitude(nX, nY) - pArrSpriteHeaders[nSpriteID].wHeight;
 			bIsFlipped = rand() & 1;
@@ -464,7 +470,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			Game_PlaceTile(nX, nY, nRubbleTile);
 			if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE)
 				XZONClearCorners(nX, nY);
-			nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
+			nSpriteID = L_Demolish_GetDustCloudSprite(nSpriteBase);
 			nExplodeX = iScreenOffSetX + nScaleVal * (nX - nY);
 			nExplodeY = iScreenOffSetY + nCoordScale * (nX + nY) - nLandAltScale * ALTMReturnLandAltitude(nX, nY) - pArrSpriteHeaders[nSpriteID].wHeight;
 			bIsFlipped = rand() & 1;
@@ -509,7 +515,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 									int16_t nCurrHorzPos = nHorzPos;
 									int16_t nVertAreaPos = nArea;
 									do {
-										nSpriteID = (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
+										nSpriteID = L_Demolish_GetDustCloudSprite(nSpriteBase);
 										nAreaExplodeY = nCurrHorzPos + nExplodeY - pArrSpriteHeaders[nSpriteID].wHeight - nVertPos;
 										bIsFlipped = rand() & 1;
 										Game_DrawProcessObject(nSpriteID, nAreaExplodeIntX, nAreaExplodeY, bIsFlipped, 0);
