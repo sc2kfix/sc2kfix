@@ -14,6 +14,10 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
+#define VALID_BRIDGETYPEAREA_NOTSINGLE -1
+#define VALID_BRIDGETYPEAREA_NO        0
+#define VALID_BRIDGETYPEAREA_YES       1
+
 // Dust-cloud during explosions.
 static int16_t L_Demolish_GetDustCloudSprite(int16_t nSpriteBase) {
 	return (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
@@ -24,6 +28,19 @@ static bool L_Demolish_IsValidSingleBridgeTypeTile(mapcoord_t cornerX, mapcoord_
 	// The reinforced bridge tiles aren't valid and aren't included.
 	BYTE nTileID = GetTileID(cornerX, cornerY);
 	return (GET_TILE_RANGE(nTileID, TILE_SUSPENSION_BRIDGE_START_B, TILE_ELEVATED_POWERLINES)) ? true : false;
+}
+
+static int L_Demolish_IsValidBridgeTypeArea(mapcoord_t cornerX, mapcoord_t cornerY, __int16 nArea, __int16 *nOutHighwayRet) {
+	__int16 nHighwayRet = Game_ValidateHighwayTilePlacementType(cornerX, cornerY);
+	*nOutHighwayRet = nHighwayRet;
+	if (nArea != 2 || nHighwayRet < 13) {
+		if (nArea != 1) {
+			return VALID_BRIDGETYPEAREA_NOTSINGLE;
+		}
+		if (!L_Demolish_IsValidSingleBridgeTypeTile(cornerX, cornerY))
+			return VALID_BRIDGETYPEAREA_NO;
+	}
+	return VALID_BRIDGETYPEAREA_YES;
 }
 
 // This function is hit twice during demolition, but only during bridge-type object clearing
@@ -116,6 +133,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 	BYTE *pLockedBits = NULL;
 	BYTE *pLockedBaseBits = NULL;
 	bool bSingleTile;
+	int nValidBridgeType;
 	bool bExplosionSoundPlayed;
 	bool bOnlyUpdateHouse;
 	mapcoord_t nX, nY;
@@ -184,14 +202,11 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			nStoredVertMult = nVertMult * nArea;
 			bSingleTile = true;
 			while (TRUE) {
-				nHighwayRet = Game_ValidateHighwayTilePlacementType(nCornerX, nCornerY);
-				if (nArea != 2 || nHighwayRet < 13) {
-					if (nArea != 1) {
+				nValidBridgeType = L_Demolish_IsValidBridgeTypeArea(nCornerX, nCornerY, nArea, &nHighwayRet);
+				if (nValidBridgeType <= VALID_BRIDGETYPEAREA_NO) {
+					if (nValidBridgeType == VALID_BRIDGETYPEAREA_NOTSINGLE)
 						bSingleTile = false;
-						break;
-					}
-					if (!L_Demolish_IsValidSingleBridgeTypeTile(nCornerX, nCornerY))
-						break;
+					break;
 				}
 				nCornerX -= nStoredHorzMult;
 				nCornerY -= nStoredVertMult;
@@ -225,14 +240,11 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			nExplodeY = -1;
 			bSingleTile = true;
 			while (true) {
-				nHighwayRet = Game_ValidateHighwayTilePlacementType(nCornerX, nCornerY);
-				if (nArea != 2 || nHighwayRet < 13) {
-					if (nArea != 1) {
+				nValidBridgeType = L_Demolish_IsValidBridgeTypeArea(nCornerX, nCornerY, nArea, &nHighwayRet);
+				if (nValidBridgeType <= VALID_BRIDGETYPEAREA_NO) {
+					if (nValidBridgeType == VALID_BRIDGETYPEAREA_NOTSINGLE)
 						bSingleTile = false;
-						break;
-					}
-					if (!L_Demolish_IsValidSingleBridgeTypeTile(nCornerX, nCornerY))
-						break;
+					break;
 				}
 				Game_DirtyTile(nCornerX, nCornerY);
 				if (nArea == 2 && nHighwayRet < 15) {
