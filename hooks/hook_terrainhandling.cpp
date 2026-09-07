@@ -104,36 +104,29 @@ static void L_RunwayCheckStackPush(mapcoord_t x, mapcoord_t y) {
 }
 
 static void L_Demolish_UpdHouse(CSimcityView *pSCView, mapcoord_t nX, mapcoord_t nY, int16_t nArea) {
-	mapcoord_t nFirstPosX = nX;
-	mapcoord_t nSecondPosX = nX;
-	mapcoord_t nAreaPosX = (nX + nArea);
-	if (nAreaPosX > nX) {
-		do {
-			mapcoord_t nCurrPosX = nSecondPosX++;
-			Game_DirtyTile(nCurrPosX - 1, nY - 1);
-			Game_DirtyTile(nCurrPosX - 2, nY - 2);
-			Game_DirtyTile(nCurrPosX - 3, nY - 3);
-			Game_DirtyTile(nCurrPosX - 4, nY - 4);
-		} while (nSecondPosX < nAreaPosX);
+	int16_t nAreaX = (nX + nArea);
+	if (nAreaX > nX) {
+		for (mapcoord_t nCurrX = nX; nCurrX < nAreaX; ++nCurrX) {
+			Game_DirtyTile(nCurrX - 1, nY - 1);
+			Game_DirtyTile(nCurrX - 2, nY - 2);
+			Game_DirtyTile(nCurrX - 3, nY - 3);
+			Game_DirtyTile(nCurrX - 4, nY - 4);
+		}
 	}
-	mapcoord_t nFirstPosY = nY;
-	mapcoord_t nSecondPosY = nY;
-	mapcoord_t nAreaPosY = (nY + nArea);
-	if (nAreaPosY > nY) {
-		do {
-			mapcoord_t nCurrPosY = nSecondPosY++;
-			Game_DirtyTile(nX - 1, nCurrPosY - 1);
-			Game_DirtyTile(nX - 2, nCurrPosY - 2);
-			Game_DirtyTile(nX - 3, nCurrPosY - 3);
-			Game_DirtyTile(nX - 4, nCurrPosY - 4);
-		} while (nSecondPosY < nAreaPosY);
+	int16_t nAreaY = (nY + nArea);
+	if (nAreaY > nY) {
+		for (mapcoord_t nCurrY = nY; nCurrY < nAreaY; ++nCurrY) {
+			Game_DirtyTile(nX - 1, nCurrY - 1);
+			Game_DirtyTile(nX - 2, nCurrY - 2);
+			Game_DirtyTile(nX - 3, nCurrY - 3);
+			Game_DirtyTile(nX - 4, nCurrY - 4);
+		}
 	}
-	if (nAreaPosX > nX) {
-		do {
-			for (mapcoord_t nCurrPosY = nFirstPosY; nCurrPosY < nAreaPosY; ++nCurrPosY)
-				Game_DirtyTile(nFirstPosX, nCurrPosY);
-			++nFirstPosX;
-		} while (nFirstPosX < nAreaPosX);
+	if (nAreaX > nX) {
+		for (mapcoord_t nCurrX = nX; nCurrX < nAreaX; ++nCurrX) {
+			for (mapcoord_t nCurrY = nY; nCurrY < nAreaY; ++nCurrY)
+				Game_DirtyTile(nCurrX, nCurrY);
+		}
 	}
 	Game_SimcityView_UpdateHouse(pSCView);
 }
