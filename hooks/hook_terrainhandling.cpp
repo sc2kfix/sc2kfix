@@ -26,7 +26,7 @@ static int16_t L_Demolish_GetDustCloudSprite(int16_t nSpriteBase) {
 static bool L_Demolish_IsValidSingleBridgeTypeTile(mapcoord_t cornerX, mapcoord_t cornerY) {
 	// Only tile-types that are specified within the range are valid.
 	// The reinforced bridge tiles aren't valid and aren't included.
-	BYTE nTileID = GetTileID(cornerX, cornerY);
+	uint8_t nTileID = GetTileID(cornerX, cornerY);
 	return (GET_TILE_RANGE(nTileID, TILE_SUSPENSION_BRIDGE_START_B, TILE_ELEVATED_POWERLINES)) ? true : false;
 }
 
@@ -41,6 +41,15 @@ static int L_Demolish_IsValidBridgeTypeArea(mapcoord_t cornerX, mapcoord_t corne
 			return VALID_BRIDGETYPEAREA_NO;
 	}
 	return VALID_BRIDGETYPEAREA_YES;
+}
+
+// This checks to see whether the highway tile is constructed of
+// a distinct 1x1 object (of the non-crossover variety). I suspect
+// this is likely down to the 1x1 crossover highway-type tiles
+// not being present on a non-flat surface, so it wouldn't then go
+// "out-of-spec" with what's expected during terrain reversion.
+static bool L_Demolish_HighwayTileUnitCheck(uint8_t nTileID) {
+	return (GET_TILE_RANGE(nTileID, TILE_HIGHWAY_LR, TILE_HIGHWAY_TB));
 }
 
 // This function is hit twice during demolition, but only during bridge-type object clearing
@@ -137,7 +146,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 	bool bExplosionSoundPlayed;
 	bool bOnlyUpdateHouse;
 	mapcoord_t nX, nY;
-	int16_t nTileID;
+	uint8_t nTileID;
 	mapcoord_t nCornerX, nCornerY;
 	int16_t nArea;
 	int16_t nCoordScale, nLandAltScale, nScaleVal;
@@ -218,7 +227,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				L_Demolish_ClearEntryExitAndSetTerrain(nCornerX, nCornerY, true);
 			}
 			ConsoleLog(LOG_DEBUG, "bSingleTile check one: (%d, %d) (%d, %d) nArea(%d) nHighwayRet(%d) bSingleTile(%c) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, (bSingleTile ? 'Y' : 'N'), szTileNames[nTileID]);
-			if (nArea == 2 && nTileID != TILE_HIGHWAY_LR && nTileID != TILE_HIGHWAY_TB) {
+			if (nArea == 2 && !L_Demolish_HighwayTileUnitCheck(nTileID)) {
 				Game_DirtyTile(nCornerX, nCornerY);
 				Game_SetTerrainTile(nCornerX, nCornerY);
 				Game_DirtyTile(nCornerX, nCornerY);
@@ -311,7 +320,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				L_Demolish_ClearEntryExitAndSetTerrain(nCornerX, nCornerY, false);
 			}
 			ConsoleLog(LOG_DEBUG, "bSingleTile check two: (%d, %d) (%d, %d) nArea(%d) nHighwayRet(%d) bSingleTile(%c) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, (bSingleTile ? 'Y' : 'N'), szTileNames[nTileID]);
-			if (nArea == 2 && nTileID != TILE_HIGHWAY_LR && nTileID != TILE_HIGHWAY_TB) {
+			if (nArea == 2 && !L_Demolish_HighwayTileUnitCheck(nTileID)) {
 				Game_DirtyTile(nCornerX, nCornerY);
 				Game_SetTerrainTile(nCornerX, nCornerY);
 				Game_DirtyTile(nCornerX, nCornerY);
