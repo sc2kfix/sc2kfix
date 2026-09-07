@@ -66,6 +66,16 @@
 	extern GameMainFuncPtr_##name GameMain_##name;
 #endif
 
+#ifdef GAMEOFF_IMPL
+#define GAMECALL_DEPRECATED_MAIN(address, type, conv, name, ...) \
+	typedef type (conv *GameMainFuncPtr_##name)(__VA_ARGS__); \
+	GameMainFuncPtr_##name GameMain_##name = (GameMainFuncPtr_##name)address;
+#else
+#define GAMECALL_DEPRECATED_MAIN(address, type, conv, name, ...) \
+	typedef type (conv *GameMainFuncPtr_##name)(__VA_ARGS__);\
+	[[deprecated("This function has been completely reimplemented; use the local call instead.")]] extern GameMainFuncPtr_##name GameMain_##name;
+#endif
+
 #define GAMEJMP(address) { __asm push address __asm retn }
 
 
@@ -3182,7 +3192,7 @@ GAMECALL(0x40146A, void, __cdecl, LoadNamedEntryFromRsrcOffset, char *, int, int
 GAMECALL(0x40147E, int, __thiscall, Graphics_CreateWithPalette, CGraphics *, LONG, LONG)
 GAMECALL(0x40148D, DWORD, __thiscall, Sound_IsMusicPlaying, CSound *)
 GAMECALL(0x4014B0, void, __cdecl, InitStack, __int16, __int16)
-GAMECALL(0x4014C9, __int16, __cdecl, GetHighwayTile, __int16, __int16)
+GAMECALL(0x4014C9, __int16, __cdecl, ValidateHighwayTilePlacementType, __int16, __int16)
 GAMECALL(0x4014CE, int, __cdecl, SpawnAeroplane, __int16 x, __int16 y, __int16 iDirection)
 GAMECALL(0x4014EC, void, __cdecl, CityToolPlaceNature, CMFC3XPoint)
 GAMECALL(0x4014F1, int, __thiscall, SimcityView_KillCursor, CSimcityView *pThis)
@@ -3312,6 +3322,7 @@ GAMECALL(0x402293, void, __stdcall, UpdateSectionsAndResetWindowMenu)
 GAMECALL_DEPRECATED(0x4022FC, void, __cdecl, SimulationGrowthTick, __int16 iStep, __int16 iSubStep)
 GAMECALL(0x402306, void, __thiscall, MyToolBar_SetButtonStyle, CMyToolBar *, int nIndex, UINT nStyle)
 GAMECALL(0x40232E, void, __thiscall, MapToolBar_MoveAndBlitToolBar, CMapToolBar *, int, int)
+GAMECALL(0x40234C, void, __cdecl, QueuePop, CMFC3XPoint *)
 GAMECALL(0x40235B, int, __thiscall, SimcityView_InvertZoneList, CSimcityView *pThis, WORD wX1, WORD wY1, WORD wX2, WORD wY2)
 GAMECALL(0x402360, BOOL, __cdecl, MovieCheck, char *)
 GAMECALL(0x40239C, void, __cdecl, UpdateCityMap, void)
@@ -3465,6 +3476,7 @@ GAMECALL_MAIN(0x430C00, void, __stdcall, ResetLabelStringState)
 GAMECALL_MAIN(0x44D1B0, void, __cdecl, QuerySpecificItem, __int16, __int16)
 GAMECALL_MAIN(0x458D40, void, __thiscall, SimcityView_Demolish, CSimcityView *, __int16, __int16, BOOL)
 GAMECALL_MAIN(0x45CF10, void, __stdcall, SimulationStartDisaster, void)
+GAMECALL_MAIN(0x463C40, __int16, __cdecl, ValidateHighwayTilePlacementType, __int16, __int16)
 GAMECALL_MAIN(0x4719A0, void, __cdecl, QueryGeneralItem, __int16, __int16)
 GAMECALL_MAIN(0x477880, void, __thiscall, NewspaperDialog_OnInitDialog, CNewspaperDialog *)
 GAMECALL_MAIN(0x4815E0, INT_PTR, __thiscall, GameDialog_DoModal, CGameDialog *)
@@ -4327,213 +4339,295 @@ static inline void ALTMSetTunnelLevels(__int16 x, __int16 y, WORD nTunnelLevels)
 
 #define USE_OLD_XZON_HANDLING 0
 
+static inline map_XZON_t *GetXZON(__int16 x, __int16 y) {
+	if (x < 0 || x > GAME_MAP_SIZE - 1)
+		return NULL;
+	if (y < 0 || y > GAME_MAP_SIZE - 1)
+		return NULL;
+	return &dwMapXZON[x][y];
+}
+
 // These four functions will perform either an absolute comparison or that the
 // passed mask/angle is present within the current XZON coordinate corner mask.
 static inline BOOL XZONCornerAbsoluteCheckMask(__int16 x, __int16 y, BYTE cornerMask) {
+	map_XZON_t *pXZON = GetXZON(x, y);
+	if (!pXZON)
+		return FALSE;
 #if USE_OLD_XZON_HANDLING
-	return (*(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY) == (cornerMask);
+	return (*(BYTE *)&pXZON->b & CORNER_BOUNDARY) == (cornerMask);
 #else
-	return dwMapXZON[x][y].b.iCorners == (cornerMask >> 4);
+	return pXZON->b.iCorners == (cornerMask >> 4);
 #endif
 }
 
 static inline BOOL XZONCornerAbsoluteCheck(__int16 x, __int16 y, WORD wAngle) {
+	map_XZON_t *pXZON = GetXZON(x, y);
+	if (!pXZON)
+		return FALSE;
 #if USE_OLD_XZON_HANDLING
-	return (*(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY) == (LOBYTE(wAngle));
+	return (*(BYTE *)&pXZON->b & CORNER_BOUNDARY) == (LOBYTE(wAngle));
 #else
-	return dwMapXZON[x][y].b.iCorners == (LOBYTE(wAngle) >> 4);
+	return pXZON->b.iCorners == (LOBYTE(wAngle) >> 4);
 #endif
 }
 
 static inline BOOL XZONCornerCheckMask(__int16 x, __int16 y, BYTE cornerMask) {
+	map_XZON_t *pXZON = GetXZON(x, y);
+	if (!pXZON)
+		return FALSE;
 #if USE_OLD_XZON_HANDLING
-	return (*(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY) & (cornerMask);
+	return (*(BYTE *)&pXZON->b & CORNER_BOUNDARY) & (cornerMask);
 #else
-	return dwMapXZON[x][y].b.iCorners & (cornerMask >> 4);
+	return pXZON->b.iCorners & (cornerMask >> 4);
 #endif
 }
 
 static inline BOOL XZONCornerCheck(__int16 x, __int16 y, WORD wAngle) {
+	map_XZON_t *pXZON = GetXZON(x, y);
+	if (!pXZON)
+		return FALSE;
 #if USE_OLD_XZON_HANDLING
-	return (*(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY) & (LOBYTE(wAngle));
+	return (*(BYTE *)&pXZON->b & CORNER_BOUNDARY) & (LOBYTE(wAngle));
 #else
-	return dwMapXZON[x][y].b.iCorners & (LOBYTE(wAngle) >> 4);
+	return pXZON->b.iCorners & (LOBYTE(wAngle) >> 4);
 #endif
 }
 
 // These functions will right-shift the mask/angle by 4 and set it as the
 // XZON coordinate mask.
 static inline void XZONSetCornerMask(__int16 x, __int16 y, BYTE cornerMask) {
+	map_XZON_t *pXZON = GetXZON(x, y);
+	if (!pXZON)
+		return;
 	// This sets the cornerMask while retaining any zone bits.
 #if USE_OLD_XZON_HANDLING
-	*(BYTE *)&dwMapXZON[x][y].b |= (cornerMask);
+	*(BYTE *)&pXZON->b |= (cornerMask);
 #else
-	dwMapXZON[x][y].b.iCorners = (cornerMask >> 4);
+	pXZON->b.iCorners = (cornerMask >> 4);
 #endif
 }
 
 static inline void XZONSetCornerAngle(__int16 x, __int16 y, WORD wAngle) {
+	map_XZON_t *pXZON = GetXZON(x, y);
+	if (!pXZON)
+		return;
 	// This sets the LOBYTE of wAngle while retaining any zone bits.
 #if USE_OLD_XZON_HANDLING
-	*(BYTE *)&dwMapXZON[x][y].b |= (LOBYTE(wAngle));
+	*(BYTE *)&pXZON->b |= (LOBYTE(wAngle));
 #else
-	dwMapXZON[x][y].b.iCorners = (LOBYTE(wAngle) >> 4);
+	pXZON->b.iCorners = (LOBYTE(wAngle) >> 4);
 #endif
 }
 
 static inline void XZONClearCorners(__int16 x, __int16 y) {
+	map_XZON_t *pXZON = GetXZON(x, y);
+	if (!pXZON)
+		return;
 #if USE_OLD_XZON_HANDLING
-	*(BYTE *)&dwMapXZON[x][y].b &= ~(CORNER_BOUNDARY);
+	*(BYTE *)&pXZON->b &= ~(CORNER_BOUNDARY);
 #else
-	dwMapXZON[x][y].b.iCorners = CORNER_NONE;
+	pXZON->b.iCorners = CORNER_NONE;
 #endif
 }
 
 static inline BYTE XZONReturnCornerMask(__int16 x, __int16 y) {
+	map_XZON_t *pXZON = GetXZON(x, y);
+	if (!pXZON)
+		return 0;
 #if USE_OLD_XZON_HANDLING
-	return *(BYTE *)&dwMapXZON[x][y].b & CORNER_BOUNDARY;
+	return *(BYTE *)&pXZON->b & CORNER_BOUNDARY;
 #else
-	return dwMapXZON[x][y].b.iCorners << 4;
+	return pXZON->b.iCorners << 4;
 #endif
 }
 
 static inline void XZONClearZone(__int16 x, __int16 y) {
+	map_XZON_t *pXZON = GetXZON(x, y);
+	if (!pXZON)
+		return;
 #if USE_OLD_XZON_HANDLING
-	*(BYTE *)&dwMapXZON[x][y].b &= ~(ZONE_BOUNDARY);
+	*(BYTE *)&pXZON->b &= ~(ZONE_BOUNDARY);
 #else
-	dwMapXZON[x][y].b.iZoneType = ZONE_NONE;
+	pXZON->b.iZoneType = ZONE_NONE;
 #endif
 }
 
 static inline BYTE XZONReturnZone(__int16 x, __int16 y) {
+	map_XZON_t *pXZON = GetXZON(x, y);
+	if (!pXZON)
+		return 0;
 #if USE_OLD_XZON_HANDLING
-	return *(BYTE *)&dwMapXZON[x][y].b & ZONE_BOUNDARY;
+	return *(BYTE *)&pXZON->b & ZONE_BOUNDARY;
 #else
-	return dwMapXZON[x][y].b.iZoneType;
+	return pXZON->b.iZoneType;
 #endif
 }
 
 static inline void XZONSetNewZone(__int16 x, __int16 y, __int16 iNewZone) {
+	map_XZON_t *pXZON = GetXZON(x, y);
+	if (!pXZON)
+		return;
 #if USE_OLD_XZON_HANDLING
-	*(BYTE *)&dwMapXZON[x][y].b ^= (*(BYTE *)&dwMapXZON[x][y].b ^ iNewZone) & ZONE_BOUNDARY;
+	*(BYTE *)&pXZON->b ^= (*(BYTE *)&pXZON->b ^ iNewZone) & ZONE_BOUNDARY;
 #else
-	dwMapXZON[x][y].b.iZoneType = iNewZone;
+	pXZON->b.iZoneType = iNewZone;
 #endif
 }
 
 #define USE_OLD_XBIT_HANDLING 0
 
+static inline map_XBIT_t *GetXBIT(__int16 x, __int16 y) {
+	if (x < 0 || x > GAME_MAP_SIZE - 1)
+		return NULL;
+	if (y < 0 || y > GAME_MAP_SIZE - 1)
+		return NULL;
+	return &dwMapXBIT[x][y];
+}
+
 static inline BOOL XBITReturnIsSaltWater(__int16 x, __int16 y) {
+	map_XBIT_t *pXBIT = GetXBIT(x, y);
+	if (!pXBIT)
+		return FALSE;
 #if USE_OLD_XBIT_HANDLING
-	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_SALTWATER);
+	return (*(BYTE *)&pXBIT->b & XBIT_SALTWATER);
 #else
-	return (dwMapXBIT[x][y].b.iSaltWater);
+	return (pXBIT->b.iSaltWater);
 #endif
 }
 
 static inline BOOL XBITReturnIsFlipped(__int16 x, __int16 y) {
+	map_XBIT_t *pXBIT = GetXBIT(x, y);
+	if (!pXBIT)
+		return FALSE;
 #if USE_OLD_XBIT_HANDLING
-	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_FLIPPED);
+	return (*(BYTE *)&pXBIT->b & XBIT_FLIPPED);
 #else
-	return (dwMapXBIT[x][y].b.iFlipped);
+	return (pXBIT->b.iFlipped);
 #endif
 }
 
 static inline BOOL XBITReturnIsWater(__int16 x, __int16 y) {
+	map_XBIT_t *pXBIT = GetXBIT(x, y);
+	if (!pXBIT)
+		return FALSE;
 #if USE_OLD_XBIT_HANDLING
-	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_WATER);
+	return (*(BYTE *)&pXBIT->b & XBIT_WATER);
 #else
-	return (dwMapXBIT[x][y].b.iWater);
+	return (pXBIT->b.iWater);
 #endif
 }
 
 static inline BOOL XBITReturnIsMark(__int16 x, __int16 y) {
+	map_XBIT_t *pXBIT = GetXBIT(x, y);
+	if (!pXBIT)
+		return FALSE;
 #if USE_OLD_XBIT_HANDLING
-	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_MARK);
+	return (*(BYTE *)&pXBIT->b & XBIT_MARK);
 #else
-	return (dwMapXBIT[x][y].b.iMark);
+	return (pXBIT->b.iMark);
 #endif
 }
 
 static inline BOOL XBITReturnIsWatered(__int16 x, __int16 y) {
+	map_XBIT_t *pXBIT = GetXBIT(x, y);
+	if (!pXBIT)
+		return FALSE;
 #if USE_OLD_XBIT_HANDLING
-	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_WATERED);
+	return (*(BYTE *)&pXBIT->b & XBIT_WATERED);
 #else
-	return (dwMapXBIT[x][y].b.iWatered);
+	return (pXBIT->b.iWatered);
 #endif
 }
 
 static inline BOOL XBITReturnIsPiped(__int16 x, __int16 y) {
+	map_XBIT_t *pXBIT = GetXBIT(x, y);
+	if (!pXBIT)
+		return FALSE;
 #if USE_OLD_XBIT_HANDLING
-	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_PIPED);
+	return (*(BYTE *)&pXBIT->b & XBIT_PIPED);
 #else
-	return (dwMapXBIT[x][y].b.iPiped);
+	return (pXBIT->b.iPiped);
 #endif
 }
 
 static inline BOOL XBITReturnIsPowered(__int16 x, __int16 y) {
+	map_XBIT_t *pXBIT = GetXBIT(x, y);
+	if (!pXBIT)
+		return FALSE;
 #if USE_OLD_XBIT_HANDLING
-	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_POWERED);
+	return (*(BYTE *)&pXBIT->b & XBIT_POWERED);
 #else
-	return (dwMapXBIT[x][y].b.iPowered);
+	return (pXBIT->b.iPowered);
 #endif
 }
 
 static inline BOOL XBITReturnIsPowerable(__int16 x, __int16 y) {
+	map_XBIT_t *pXBIT = GetXBIT(x, y);
+	if (!pXBIT)
+		return FALSE;
 #if USE_OLD_XBIT_HANDLING
-	return (*(BYTE *)&dwMapXBIT[x][y].b & XBIT_POWERABLE);
+	return (*(BYTE *)&pXBIT->b & XBIT_POWERABLE);
 #else
-	return (dwMapXBIT[x][y].b.iPowerable);
+	return (pXBIT->b.iPowerable);
 #endif
 }
 
 static inline BYTE XBITReturnMask(__int16 x, __int16 y) {
-	return *(BYTE *)&dwMapXBIT[x][y].b;
+	map_XBIT_t *pXBIT = GetXBIT(x, y);
+	if (!pXBIT)
+		return 0;
+	return *(BYTE *)&pXBIT->b;
 }
 
 static inline void XBITClearBits(__int16 x, __int16 y, BYTE bitMask) {
+	map_XBIT_t *pXBIT = GetXBIT(x, y);
+	if (!pXBIT)
+		return;
 #if USE_OLD_XBIT_HANDLING
-	*(BYTE *)&dwMapXBIT[x][y].b &= ~(bitMask);
+	*(BYTE *)&pXBIT->b &= ~(bitMask);
 #else
 	if (bitMask & XBIT_SALTWATER)
-		dwMapXBIT[x][y].b.iSaltWater = 0;
+		pXBIT->b.iSaltWater = 0;
 	if (bitMask & XBIT_FLIPPED)
-		dwMapXBIT[x][y].b.iFlipped = 0;
+		pXBIT->b.iFlipped = 0;
 	if (bitMask & XBIT_WATER)
-		dwMapXBIT[x][y].b.iWater = 0;
+		pXBIT->b.iWater = 0;
 	if (bitMask & XBIT_MARK)
-		dwMapXBIT[x][y].b.iMark = 0;
+		pXBIT->b.iMark = 0;
 	if (bitMask & XBIT_WATERED)
-		dwMapXBIT[x][y].b.iWatered = 0;
+		pXBIT->b.iWatered = 0;
 	if (bitMask & XBIT_PIPED)
-		dwMapXBIT[x][y].b.iPiped = 0;
+		pXBIT->b.iPiped = 0;
 	if (bitMask & XBIT_POWERED)
-		dwMapXBIT[x][y].b.iPowered = 0;
+		pXBIT->b.iPowered = 0;
 	if (bitMask & XBIT_POWERABLE)
-		dwMapXBIT[x][y].b.iPowerable = 0;
+		pXBIT->b.iPowerable = 0;
 #endif
 }
 
 static inline void XBITSetBits(__int16 x, __int16 y, BYTE bitMask) {
+	map_XBIT_t *pXBIT = GetXBIT(x, y);
+	if (!pXBIT)
+		return;
 #if USE_OLD_XBIT_HANDLING
-	*(BYTE *)&dwMapXBIT[x][y].b |= (bitMask);
+	*(BYTE *)&pXBIT->b |= (bitMask);
 #else
 	if (bitMask & XBIT_SALTWATER)
-		dwMapXBIT[x][y].b.iSaltWater = 1;
+		pXBIT->b.iSaltWater = 1;
 	if (bitMask & XBIT_FLIPPED)
-		dwMapXBIT[x][y].b.iFlipped = 1;
+		pXBIT->b.iFlipped = 1;
 	if (bitMask & XBIT_WATER)
-		dwMapXBIT[x][y].b.iWater = 1;
+		pXBIT->b.iWater = 1;
 	if (bitMask & XBIT_MARK)
-		dwMapXBIT[x][y].b.iMark = 1;
+		pXBIT->b.iMark = 1;
 	if (bitMask & XBIT_WATERED)
-		dwMapXBIT[x][y].b.iWatered = 1;
+		pXBIT->b.iWatered = 1;
 	if (bitMask & XBIT_PIPED)
-		dwMapXBIT[x][y].b.iPiped = 1;
+		pXBIT->b.iPiped = 1;
 	if (bitMask & XBIT_POWERED)
-		dwMapXBIT[x][y].b.iPowered = 1;
+		pXBIT->b.iPowered = 1;
 	if (bitMask & XBIT_POWERABLE)
-		dwMapXBIT[x][y].b.iPowerable = 1;
+		pXBIT->b.iPowerable = 1;
 #endif
 }
 
@@ -4543,6 +4637,19 @@ static inline __int16 *GetTMap(__int16 x, __int16 y) {
 	if (y < MAP_EDGE_MIN || y > MAP_EDGE_MAX)
 		return NULL;
 	return &wTMap[x][y];
+}
+
+static inline __int16 GetTMapVal(__int16 x, __int16 y) {
+	__int16 *pTMap = GetTMap(x, y);
+	return (pTMap) ? *pTMap : 0;
+}
+
+static inline void SetTMap(__int16 x, __int16 y, __int16 nVal) {
+	if (x < MAP_EDGE_MIN || x > MAP_EDGE_MAX)
+		return;
+	if (y < MAP_EDGE_MIN || y > MAP_EDGE_MAX)
+		return;
+	wTMap[x][y] = nVal;
 }
 
 // Helper functions for the 'map_mini_half_t'
@@ -4569,17 +4676,32 @@ static inline void GetShiftedMiniQuarterCoords(__int16 x, __int16 y, __int16 *ou
 
 // 64x64
 
+static inline BYTE GetXCRMByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXCRM[x][y].bBlock;
+}
+
 static inline BYTE GetXCRMByteDataWithNormalCoordinates(__int16 x, __int16 y) {
 	__int16 iX;
 	__int16 iY;
 
 	GetShiftedMiniHalfCoords(x, y, &iX, &iY);
-
-	return dwMapXCRM[iX][iY].bBlock;
+	return GetXCRMByteDataWithShiftedCoordinates(iX, iY);
 }
 
-static inline BYTE GetXCRMByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
-	return dwMapXCRM[x][y].bBlock;
+static inline void SetXCRMByteDataWithShiftedCoordinates(__int16 x, __int16 y, BYTE bBlock) {
+	dwMapXCRM[x][y].bBlock = bBlock;
+}
+
+static inline void SetXCRMByteDataWithNormalCoordinates(__int16 x, __int16 y, BYTE bBlock) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShiftedMiniHalfCoords(x, y, &iX, &iY);
+	SetXCRMByteDataWithShiftedCoordinates(iX, iY, bBlock);
+}
+
+static inline BYTE GetXPLTByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXPLT[x][y].bBlock;
 }
 
 static inline BYTE GetXPLTByteDataWithNormalCoordinates(__int16 x, __int16 y) {
@@ -4587,12 +4709,23 @@ static inline BYTE GetXPLTByteDataWithNormalCoordinates(__int16 x, __int16 y) {
 	__int16 iY;
 
 	GetShiftedMiniHalfCoords(x, y, &iX, &iY);
-
-	return dwMapXPLT[iX][iY].bBlock;
+	return GetXPLTByteDataWithShiftedCoordinates(iX, iY);
 }
 
-static inline BYTE GetXPLTByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
-	return dwMapXPLT[x][y].bBlock;
+static inline void SetXPLTByteDataWithShiftedCoordinates(__int16 x, __int16 y, BYTE bBlock) {
+	dwMapXPLT[x][y].bBlock = bBlock;
+}
+
+static inline void SetXPLTByteDataWithNormalCoordinates(__int16 x, __int16 y, BYTE bBlock) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShiftedMiniHalfCoords(x, y, &iX, &iY);
+	SetXPLTByteDataWithShiftedCoordinates(iX, iY, bBlock);
+}
+
+static inline BYTE GetXTRFByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXTRF[x][y].bBlock;
 }
 
 static inline BYTE GetXTRFByteDataWithNormalCoordinates(__int16 x, __int16 y) {
@@ -4600,12 +4733,23 @@ static inline BYTE GetXTRFByteDataWithNormalCoordinates(__int16 x, __int16 y) {
 	__int16 iY;
 
 	GetShiftedMiniHalfCoords(x, y, &iX, &iY);
-
-	return dwMapXTRF[iX][iY].bBlock;
+	return GetXTRFByteDataWithShiftedCoordinates(iX, iY);
 }
 
-static inline BYTE GetXTRFByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
-	return dwMapXTRF[x][y].bBlock;
+static inline void SetXTRFByteDataWithShiftedCoordinates(__int16 x, __int16 y, BYTE bBlock) {
+	dwMapXTRF[x][y].bBlock = bBlock;
+}
+
+static inline void SetXTRFByteDataWithNormalCoordinates(__int16 x, __int16 y, BYTE bBlock) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShiftedMiniHalfCoords(x, y, &iX, &iY);
+	SetXTRFByteDataWithShiftedCoordinates(iX, iY, bBlock);
+}
+
+static inline BYTE GetXVALByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXVAL[x][y].bBlock;
 }
 
 static inline BYTE GetXVALByteDataWithNormalCoordinates(__int16 x, __int16 y) {
@@ -4613,27 +4757,49 @@ static inline BYTE GetXVALByteDataWithNormalCoordinates(__int16 x, __int16 y) {
 	__int16 iY;
 
 	GetShiftedMiniHalfCoords(x, y, &iX, &iY);
-
-	return dwMapXVAL[iX][iY].bBlock;
+	return GetXVALByteDataWithShiftedCoordinates(iX, iY);
 }
 
-static inline BYTE GetXVALByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
-	return dwMapXVAL[x][y].bBlock;
+static inline void SetXVALByteDataWithShiftedCoordinates(__int16 x, __int16 y, BYTE bBlock) {
+	dwMapXVAL[x][y].bBlock = bBlock;
+}
+
+static inline void SetXVALByteDataWithNormalCoordinates(__int16 x, __int16 y, BYTE bBlock) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShiftedMiniHalfCoords(x, y, &iX, &iY);
+	SetXVALByteDataWithShiftedCoordinates(iX, iY, bBlock);
 }
 
 // 32x32
+
+static inline BYTE GetXPLCByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXPLC[x][y].bBlock;
+}
 
 static inline BYTE GetXPLCByteDataWithNormalCoordinates(__int16 x, __int16 y) {
 	__int16 iX;
 	__int16 iY;
 
 	GetShiftedMiniQuarterCoords(x, y, &iX, &iY);
-
-	return dwMapXPLC[iX][iY].bBlock;
+	return GetXPLCByteDataWithShiftedCoordinates(iX, iY);
 }
 
-static inline BYTE GetXPLCByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
-	return dwMapXPLC[x][y].bBlock;
+static inline void SetXPLCByteDataWithShiftedCoordinates(__int16 x, __int16 y, BYTE bBlock) {
+	dwMapXPLC[x][y].bBlock = bBlock;
+}
+
+static inline void SetXPLCByteDataWithNormalCoordinates(__int16 x, __int16 y, BYTE bBlock) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShiftedMiniQuarterCoords(x, y, &iX, &iY);
+	SetXPLCByteDataWithShiftedCoordinates(iX, iY, bBlock);
+}
+
+static inline BYTE GetXPOPByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXPOP[x][y].bBlock;
 }
 
 static inline BYTE GetXPOPByteDataWithNormalCoordinates(__int16 x, __int16 y) {
@@ -4641,12 +4807,23 @@ static inline BYTE GetXPOPByteDataWithNormalCoordinates(__int16 x, __int16 y) {
 	__int16 iY;
 
 	GetShiftedMiniQuarterCoords(x, y, &iX, &iY);
-
-	return dwMapXPOP[iX][iY].bBlock;
+	return GetXPOPByteDataWithShiftedCoordinates(iX, iY);
 }
 
-static inline BYTE GetXPOPByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
-	return dwMapXPOP[x][y].bBlock;
+static inline void SetXPOPByteDataWithShiftedCoordinates(__int16 x, __int16 y, BYTE bBlock) {
+	dwMapXPOP[x][y].bBlock = bBlock;
+}
+
+static inline void SetXPOPByteDataWithNormalCoordinates(__int16 x, __int16 y, BYTE bBlock) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShiftedMiniQuarterCoords(x, y, &iX, &iY);
+	SetXPOPByteDataWithShiftedCoordinates(iX, iY, bBlock);
+}
+
+static inline BYTE GetXFIRByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXFIR[x][y].bBlock;
 }
 
 static inline BYTE GetXFIRByteDataWithNormalCoordinates(__int16 x, __int16 y) {
@@ -4654,12 +4831,23 @@ static inline BYTE GetXFIRByteDataWithNormalCoordinates(__int16 x, __int16 y) {
 	__int16 iY;
 
 	GetShiftedMiniQuarterCoords(x, y, &iX, &iY);
-
-	return dwMapXFIR[iX][iY].bBlock;
+	return GetXFIRByteDataWithShiftedCoordinates(iX, iY);
 }
 
-static inline BYTE GetXFIRByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
-	return dwMapXFIR[x][y].bBlock;
+static inline void SetXFIRByteDataWithShiftedCoordinates(__int16 x, __int16 y, BYTE bBlock) {
+	dwMapXFIR[x][y].bBlock = bBlock;
+}
+
+static inline void SetXFIRByteDataWithNormalCoordinates(__int16 x, __int16 y, BYTE bBlock) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShiftedMiniQuarterCoords(x, y, &iX, &iY);
+	SetXFIRByteDataWithShiftedCoordinates(iX, iY, bBlock);
+}
+
+static inline BYTE GetXROGByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
+	return dwMapXROG[x][y].bBlock;
 }
 
 static inline BYTE GetXROGByteDataWithNormalCoordinates(__int16 x, __int16 y) {
@@ -4667,12 +4855,19 @@ static inline BYTE GetXROGByteDataWithNormalCoordinates(__int16 x, __int16 y) {
 	__int16 iY;
 
 	GetShiftedMiniQuarterCoords(x, y, &iX, &iY);
-
-	return dwMapXROG[iX][iY].bBlock;
+	return GetXROGByteDataWithShiftedCoordinates(iX, iY);
 }
 
-static inline BYTE GetXROGByteDataWithShiftedCoordinates(__int16 x, __int16 y) {
-	return dwMapXROG[x][y].bBlock;
+static inline void SetXROGByteDataWithShiftedCoordinates(__int16 x, __int16 y, BYTE bBlock) {
+	dwMapXROG[x][y].bBlock = bBlock;
+}
+
+static inline void SetXROGByteDataWithNormalCoordinates(__int16 x, __int16 y, BYTE bBlock) {
+	__int16 iX;
+	__int16 iY;
+
+	GetShiftedMiniQuarterCoords(x, y, &iX, &iY);
+	SetXROGByteDataWithShiftedCoordinates(iX, iY, bBlock);
 }
 
 static inline bool MarkBadTerrain(__int16 x, __int16 y) {

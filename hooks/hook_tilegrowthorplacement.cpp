@@ -1914,6 +1914,75 @@ extern "C" void __cdecl Hook_PlacePowerLinesAtCoordinates(mapcoord_t x, mapcoord
 	}
 }
 
+static bool CheckForHighwayCrossoverTraversal(mapcoord_t x, mapcoord_t y, bool bFinal, __int16 *nOutHighwayRet) {
+	BYTE nTileID;
+
+	nTileID = GetTileID(x, y);
+	if (!GET_TILE_RANGE(nTileID, TILE_CROSSOVER_HIGHWAYLR_ROADTB, TILE_CROSSOVER_HIGHWAYTB_POWERLR)) {
+		if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE && XBITReturnIsWater(x, y)) {
+			*nOutHighwayRet = 14 - (nTileID == TILE_HIGHWAY_LR);
+			ConsoleLog(LOG_DEBUG, "'if water' CheckForHighwayCrossoverTraversal(%d, %d, %c): nOutHighwayRet(%d)\n", x, y, (bFinal ? 'Y' : 'N'), *nOutHighwayRet);
+			return true;
+		}
+		else {
+			if (bFinal) {
+				if (GET_TILE_RANGE(nTileID, TILE_HIGHWAY_LR, TILE_HIGHWAY_TB))
+					*nOutHighwayRet = (nTileID & 1) + 2;
+				else
+					*nOutHighwayRet = -1;
+				ConsoleLog(LOG_DEBUG, "'if final' CheckForHighwayCrossoverTraversal(%d, %d, %c): nOutHighwayRet(%d)\n", x, y, (bFinal ? 'Y' : 'N'), *nOutHighwayRet);
+			}
+			else
+				ConsoleLog(LOG_DEBUG, "CheckForHighwayCrossoverTraversal(%d, %d, %c): NEXT\n", x, y, (bFinal ? 'Y' : 'N'));
+			return false;
+		}
+	}
+	else {
+		*nOutHighwayRet = nTileID & 1;
+		ConsoleLog(LOG_DEBUG, "'else' CheckForHighwayCrossoverTraversal(%d, %d, %c): nOutHighwayRet(%d)\n", x, y, (bFinal ? 'Y' : 'N'), *nOutHighwayRet);
+		return true;
+	}
+}
+
+extern "C" __int16 __cdecl Hook_ValidateHighwayTilePlacementType(mapcoord_t x, mapcoord_t y) {
+	__int16 nHighwayRet;
+	BYTE nTileID;
+
+	nHighwayRet = 0;
+	if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE) {
+		nHighwayRet = -1;
+		nTileID = GetTileID(x, y);
+		if (GET_TILE_RANGE(nTileID, TILE_HIGHWAY_HTB, TILE_REINFORCED_BRIDGE) ||
+			GET_TILE_RANGE(nTileID, TILE_HIGHWAY_LR, TILE_CROSSOVER_HIGHWAYTB_POWERLR)) {
+			if (XZONCornerAbsoluteCheckMask(x, y, CORNER_ALL)) {
+				if (!CheckForHighwayCrossoverTraversal(x, y, false, &nHighwayRet)) {
+					if (!CheckForHighwayCrossoverTraversal(x + 1, y, false, &nHighwayRet)) {
+						if (!CheckForHighwayCrossoverTraversal(x + 1, y + 1, false, &nHighwayRet))
+							CheckForHighwayCrossoverTraversal(x, y + 1, true, &nHighwayRet);
+					}
+				}
+			}
+			else {
+				// This section could well be to do with objects that are already present,
+				// specifically the presence of roads, powerlines, rails, etc and then
+				// attempts to validate placement; this could potentially be the root
+				// of the weirdness that can occur when you have 3 connected powerlines
+				// present where a single highway tile will be placed (one segment ends
+				// up being flipped).
+				nHighwayRet = nTileID - TILE_ONRAMP_TL;
+				if (nHighwayRet >= 13) {
+					if (y + 1 < MAP_EDGE_MIN || y + 1 > MAP_EDGE_MAX)
+						nHighwayRet = 15;
+					else
+						nHighwayRet = 16 - (!XBITReturnIsFlipped(x, y + 1));
+				}
+			}
+		}
+		ConsoleLog(LOG_DEBUG, "ValidateHighwayTilePlacementType(%d, %d): nHighwayRet(%d)\n", x, y, nHighwayRet);
+	}
+	return nHighwayRet;
+}
+
 extern "C" int __cdecl Hook_ItemPlacementCheck(mapcoord_t m_x, mapcoord_t m_y, BYTE iTileID, int16_t iTileArea) {
 	return L_ItemPlacementCheck(m_x, m_y, iTileID, iTileArea, false);
 }
@@ -2154,6 +2223,10 @@ void InstallTileGrowthOrPlacementHandlingHooks_SC2K1996(void) {
 	// Hook into the PlacePowerLinesAtCoordinates function
 	SafeVirtualProtect((LPVOID)0x402725, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x402725, Hook_PlacePowerLinesAtCoordinates);
+
+	// Hook for ValidateHighwayTilePlacementType
+	SafeVirtualProtect((LPVOID)0x4014C9, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4014C9, Hook_ValidateHighwayTilePlacementType);
 
 	// Hook into the ItemPlacementCheck function
 	SafeVirtualProtect((LPVOID)0x4027F2, 5, PAGE_EXECUTE_READWRITE);

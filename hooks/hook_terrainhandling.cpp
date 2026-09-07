@@ -85,7 +85,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 	mapcoord_t nCornerX, nCornerY;
 	int16_t nArea;
 	int16_t nCoordScale, nLandAltScale, nScaleVal;
-	int16_t nHighwayTile;
+	int16_t nHighwayRet;
 	int16_t nHorzMult, nVertMult;
 	int16_t nStoredHorzMult, nStoredVertMult;
 	int16_t nSpriteBase, nSpriteID;
@@ -128,10 +128,12 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 		ConsoleLog(LOG_DEBUG, "coord(%d, %d) cornercoord(%d, %d) nArea(%d) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, szTileNames[nTileID]);
 		if (nArea == 1 && (GET_TILE_RANGE(nTileID, TILE_SUSPENSION_BRIDGE_START_B, TILE_ELEVATED_POWERLINES) ||
 			GET_TILE_RANGE(nTileID, TILE_REINFORCED_BRIDGE_PYLON, TILE_REINFORCED_BRIDGE))) {
+			ConsoleLog(LOG_DEBUG, "in 'if': coord(%d, %d) cornercoord(%d, %d) nArea(%d) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, szTileNames[nTileID]);
 			// Originally this one may have been undefined
 			// until it got further down the chain.
-			nHighwayTile = -1;
+			nHighwayRet = -1;
 		HighwayChk:
+			ConsoleLog(LOG_DEBUG, "in 'if' (after HighwayChk): coord(%d, %d) cornercoord(%d, %d) nArea(%d) nHighwayRet(%d) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, szTileNames[nTileID]);
 			if (nArea == 2)
 				--nCornerY;
 			if (nArea == 1 &&
@@ -139,7 +141,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				nCornerY < GAME_MAP_SIZE &&
 				XBITReturnIsFlipped(nCornerX, nCornerY) ||
 				nArea == 2 &&
-				(nHighwayTile & 1) == 0) {
+				(nHighwayRet & 1) == 0) {
 				nHorzMult = 1;
 				nVertMult = 0;
 			}
@@ -150,8 +152,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			nStoredHorzMult = nHorzMult * nArea;
 			nStoredVertMult = nVertMult * nArea;
 			while (TRUE) {
-				nHighwayTile = Game_GetHighwayTile(nCornerX, nCornerY);
-				if (nArea != 2 || nHighwayTile < 13) {
+				nHighwayRet = Game_ValidateHighwayTilePlacementType(nCornerX, nCornerY);
+				if (nArea != 2 || nHighwayRet < 13) {
 					if (nArea != 1)
 						goto AreaChkOne;
 					nLoopTileID = GetTileID(nCornerX, nCornerY);
@@ -201,8 +203,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			nExplodeX = -1;
 			nExplodeY = -1;
 			while (true) {
-				nHighwayTile = Game_GetHighwayTile(nCornerX, nCornerY);
-				if (nArea != 2 || nHighwayTile < 13) {
+				nHighwayRet = Game_ValidateHighwayTilePlacementType(nCornerX, nCornerY);
+				if (nArea != 2 || nHighwayRet < 13) {
 					if (nArea != 1)
 						goto AreaChkTwo;
 					nLoopTileID = GetTileID(nCornerX, nCornerY);
@@ -212,7 +214,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 						break;
 				}
 				Game_DirtyTile(nCornerX, nCornerY);
-				if (nArea == 2 && nHighwayTile < 15) {
+				if (nArea == 2 && nHighwayRet < 15) {
 					Game_DirtyTile(nCornerX, nCornerY + 1);
 					Game_DirtyTile(nCornerX + 1, nCornerY + 1);
 					Game_DirtyTile(nCornerX + 1, nCornerY);
@@ -312,9 +314,11 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			return;
 		}
 		if (nArea == 2) {
-			nHighwayTile = Game_GetHighwayTile(nCornerX, nCornerY - 1);
-			if (nHighwayTile >= 13)
+			nHighwayRet = Game_ValidateHighwayTilePlacementType(nCornerX, nCornerY - 1);
+			if (nHighwayRet >= 13) {
+				ConsoleLog(LOG_DEBUG, "goto HighwayChk: (%d, %d) (%d, %d) (%d) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, szTileNames[nTileID]);
 				goto HighwayChk;
+			}
 		}
 		if (GET_TILE_RANGE(nTileID, TILE_INFRASTRUCTURE_PIER, TILE_INFRASTRUCTURE_CRANE)) {
 			if (bExplosion)
