@@ -23,6 +23,11 @@ static int16_t L_Demolish_GetDustCloudSprite(int16_t nSpriteBase) {
 	return (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
 }
 
+static void L_Demolish_DoDustCloud(int16_t nSpriteID, mapcoord_t explodeX, mapcoord_t explodeY) {
+	Game_DrawProcessObject(nSpriteID, explodeX, explodeY, rand() & 1, 0);
+	Game_DirtyCloud(nSpriteID, explodeX, explodeY);
+}
+
 static bool L_Demolish_IsValidSingleBridgeTypeTile(mapcoord_t cornerX, mapcoord_t cornerY) {
 	// Only tile-types that are specified within the range are valid.
 	// The reinforced bridge tiles aren't valid and aren't included.
@@ -159,7 +164,6 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 	mapcoord_t nAreaCornerX, nAreaCornerY;
 	mapcoord_t nOffsetX, nOffsetY;
 	int16_t nRubbleTile;
-	BYTE bIsFlipped;
 	BYTE bTextOverlay;
 	CMFC3XPoint pt;
 	coords_w_t tileCoords;
@@ -267,9 +271,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					nExplodeY = iScreenOffSetY + nCoordScale * (nCornerX + nCornerY) -
 						nLandAltScale * ALTMReturnWaterLevel(nCornerX, nCornerY) -
 						pArrSpriteHeaders[nSpriteID].wHeight;
-					bIsFlipped = rand() & 1;
-					Game_DrawProcessObject(nSpriteID, nExplodeX, nExplodeY, bIsFlipped, 0);
-					Game_DirtyCloud(nSpriteID, nExplodeX, nExplodeY);
+					L_Demolish_DoDustCloud(nSpriteID, nExplodeX, nExplodeY);
 				}
 				Game_PlaceTile(nCornerX, nCornerY, TILE_CLEAR);
 				if (nCornerX >= MAP_EDGE_MIN) {
@@ -282,17 +284,11 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					if (bExplosion) {
 						nAreaExplodeX = nExplodeX + nScaleVal;
 						nAreaExplodeY = nExplodeY - nCoordScale;
-						bIsFlipped = rand() & 1;
-						Game_DrawProcessObject(nSpriteID, nAreaExplodeX, nAreaExplodeY, bIsFlipped, 0);
-						Game_DirtyCloud(nSpriteID, nAreaExplodeX, nAreaExplodeY);
+						L_Demolish_DoDustCloud(nSpriteID, nAreaExplodeX, nAreaExplodeY);
 						nAreaExplodeX = nExplodeX + 2 * nScaleVal;
-						bIsFlipped = rand() & 1;
-						Game_DrawProcessObject(nSpriteID, nAreaExplodeX, nExplodeY, bIsFlipped, 0);
-						Game_DirtyCloud(nSpriteID, nAreaExplodeX, nExplodeY);
+						L_Demolish_DoDustCloud(nSpriteID, nAreaExplodeX, nExplodeY);
 						nAreaExplodeY = nExplodeY + nCoordScale;
-						bIsFlipped = rand() & 1;
-						Game_DrawProcessObject(nSpriteID, nAreaExplodeX, nAreaExplodeY, bIsFlipped, 0);
-						Game_DirtyCloud(nSpriteID, nAreaExplodeX, nAreaExplodeY);
+						L_Demolish_DoDustCloud(nSpriteID, nAreaExplodeX, nAreaExplodeY);
 					}
 					nAreaCornerY = nCornerY + 1;
 					Game_PlaceTile(nCornerX, nAreaCornerY, TILE_CLEAR);
@@ -365,9 +361,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					else
 						nAltitude = ALTMReturnLandAltitude(tileCoords.x, tileCoords.y);
 					nExplodeY = iScreenOffSetY + (nCoordScale * (tileCoords.x + tileCoords.y)) - nLandAltScale * nAltitude - pArrSpriteHeaders[nSpriteID].wHeight;
-					bIsFlipped = rand() & 1;
-					Game_DrawProcessObject(nSpriteID, nExplodeX, nExplodeY, bIsFlipped, 0);
-					Game_DirtyCloud(nSpriteID, nExplodeX, nExplodeY);
+					L_Demolish_DoDustCloud(nSpriteID, nExplodeX, nExplodeY);
 				}
 				if (tileCoords.x > MAP_EDGE_MIN)
 					L_PierCheckStackPush(tileCoords.x - 1, tileCoords.y);
@@ -411,9 +405,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					nSpriteID = L_Demolish_GetDustCloudSprite(nSpriteBase);
 					nExplodeX = iScreenOffSetX + nScaleVal * (tileCoords.x - tileCoords.y);
 					nExplodeY = iScreenOffSetY + nCoordScale * (tileCoords.x + tileCoords.y) - nLandAltScale * ALTMReturnLandAltitude(tileCoords.x, tileCoords.y) - pArrSpriteHeaders[nSpriteID].wHeight;
-					bIsFlipped = rand() & 1;
-					Game_DrawProcessObject(nSpriteID, nExplodeX, nExplodeY, bIsFlipped, 0);
-					Game_DirtyCloud(nSpriteID, nExplodeX, nExplodeY);
+					L_Demolish_DoDustCloud(nSpriteID, nExplodeX, nExplodeY);
 				}
 				if (tileCoords.x > MAP_EDGE_MIN)
 					L_RunwayCheckStackPush(tileCoords.x - 1, tileCoords.y);
@@ -476,9 +468,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			nSpriteID = L_Demolish_GetDustCloudSprite(nSpriteBase);
 			nExplodeX = iScreenOffSetX + nScaleVal * (nX - nY);
 			nExplodeY = iScreenOffSetY + nCoordScale * (nX + nY) - nLandAltScale * ALTMReturnLandAltitude(nX, nY) - pArrSpriteHeaders[nSpriteID].wHeight;
-			bIsFlipped = rand() & 1;
-			Game_DrawProcessObject(nSpriteID, nExplodeX, nExplodeY, bIsFlipped, 0);
-			Game_DirtyCloud(nSpriteID, nExplodeX, nExplodeY);
+			L_Demolish_DoDustCloud(nSpriteID, nExplodeX, nExplodeY);
 			while (nTileID < TILE_TUNNEL_T || nTileID > TILE_TUNNEL_L) {
 				nX += nOffsetX;
 				nY += nOffsetY;
@@ -494,9 +484,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			nSpriteID = L_Demolish_GetDustCloudSprite(nSpriteBase);
 			nExplodeX = iScreenOffSetX + nScaleVal * (nX - nY);
 			nExplodeY = iScreenOffSetY + nCoordScale * (nX + nY) - nLandAltScale * ALTMReturnLandAltitude(nX, nY) - pArrSpriteHeaders[nSpriteID].wHeight;
-			bIsFlipped = rand() & 1;
-			Game_DrawProcessObject(nSpriteID, nExplodeX, nExplodeY, bIsFlipped, 0);
-			Game_DirtyCloud(nSpriteID, nExplodeX, nExplodeY);
+			L_Demolish_DoDustCloud(nSpriteID, nExplodeX, nExplodeY);
 			Game_FinishProcessObjects();
 			if (pThis == (CSimcityView *)&pSomeWnd)
 				Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
@@ -538,9 +526,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 									do {
 										nSpriteID = L_Demolish_GetDustCloudSprite(nSpriteBase);
 										nAreaExplodeY = nCurrHorzPos + nExplodeY - pArrSpriteHeaders[nSpriteID].wHeight - nVertPos;
-										bIsFlipped = rand() & 1;
-										Game_DrawProcessObject(nSpriteID, nAreaExplodeIntX, nAreaExplodeY, bIsFlipped, 0);
-										Game_DirtyCloud(nSpriteID, nAreaExplodeIntX, nAreaExplodeY);
+										L_Demolish_DoDustCloud(nSpriteID, nAreaExplodeIntX, nAreaExplodeY);
 										nCurrHorzPos -= nCoordScale;
 										nAreaExplodeIntX += nScaleVal;
 										--nVertAreaPos;
