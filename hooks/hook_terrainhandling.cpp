@@ -134,10 +134,6 @@ static void L_Demolish_UpdHouse(CSimcityView *pSCView, mapcoord_t nX, mapcoord_t
 }
 
 // XXX (araxestroy): This function needs some serious comment work.
-// Note: There's an original game bug when it comes to demolishing (spelling...)
-//       Marinas (and perhaps other buildings) whereas the explosion will be offset
-//       erroneously depending on which part of the tile you click (the corner attribute
-//       being a factor).
 extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, BOOL bExplosion) {
 	CSimcityView *pThis;
 
@@ -268,8 +264,12 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				if (bExplosion) {
 					nSpriteID = L_Demolish_GetDustCloudSprite(nSpriteBase);
 					nExplodeX = iScreenOffSetX + nScaleVal * (nCornerX - nCornerY);
+					if (nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE && XBITReturnIsWater(nCornerX, nCornerY))
+						nAltitude = ALTMReturnWaterLevel(nCornerX, nCornerY);
+					else
+						nAltitude = ALTMReturnLandAltitude(nCornerX, nCornerY);
 					nExplodeY = iScreenOffSetY + nCoordScale * (nCornerX + nCornerY) -
-						nLandAltScale * ALTMReturnWaterLevel(nCornerX, nCornerY) -
+						nLandAltScale * nAltitude -
 						pArrSpriteHeaders[nSpriteID].wHeight;
 					L_Demolish_DoDustCloud(nSpriteID, nExplodeX, nExplodeY);
 				}
@@ -502,7 +502,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 		else {
 			if (bExplosion) {
 				nExplodeX = iScreenOffSetX + nScaleVal * (nCornerX - nCornerY);
-				if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE && XBITReturnIsWater(nX, nY))
+				if (nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE && XBITReturnIsWater(nCornerX, nCornerY))
 					nAltitude = ALTMReturnWaterLevel(nCornerX, nCornerY);
 				else
 					nAltitude = ALTMReturnLandAltitude(nCornerX, nCornerY);
