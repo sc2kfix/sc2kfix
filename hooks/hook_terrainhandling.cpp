@@ -18,6 +18,11 @@
 #define VALID_BRIDGETYPEAREA_NO        0
 #define VALID_BRIDGETYPEAREA_YES       1
 
+static void L_Demolish_DirtyAndSetTerrainTile(mapcoord_t x, mapcoord_t y) {
+	Game_DirtyTile(x, y);
+	Game_SetTerrainTile(x, y);
+}
+
 // Dust-cloud during explosions.
 static int16_t L_Demolish_GetDustCloudSprite(int16_t nSpriteBase) {
 	return (rand() & 3) + nSpriteBase + SPRITE_SMALL_DUSTCLOUD1;
@@ -226,15 +231,10 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			}
 			ConsoleLog(LOG_DEBUG, "bSingleTile check one: (%d, %d) (%d, %d) nArea(%d) nHighwayRet(%d) bSingleTile(%c) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, (bSingleTile ? 'Y' : 'N'), szTileNames[nTileID]);
 			if (nArea == 2 && !L_Demolish_HighwayTileUnitCheck(nTileID)) {
-				Game_DirtyTile(nCornerX, nCornerY);
-				Game_SetTerrainTile(nCornerX, nCornerY);
-				Game_DirtyTile(nCornerX, nCornerY);
-				Game_SetTerrainTile(nCornerX + 1, nCornerY);
-				Game_DirtyTile(nCornerX + 1, nCornerY);
-				Game_SetTerrainTile(nCornerX + 1, nCornerY + 1);
-				Game_DirtyTile(nCornerX + 1, nCornerY + 1);
-				Game_SetTerrainTile(nCornerX, nCornerY + 1);
-				Game_DirtyTile(nCornerX, nCornerY + 1);
+				L_Demolish_DirtyAndSetTerrainTile(nCornerX, nCornerY);
+				L_Demolish_DirtyAndSetTerrainTile(nCornerX + 1, nCornerY);
+				L_Demolish_DirtyAndSetTerrainTile(nCornerX + 1, nCornerY + 1);
+				L_Demolish_DirtyAndSetTerrainTile(nCornerX, nCornerY + 1);
 			}
 			nCornerX += nStoredHorzMult;
 			nCornerY += nStoredVertMult;
@@ -315,15 +315,10 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			}
 			ConsoleLog(LOG_DEBUG, "bSingleTile check two: (%d, %d) (%d, %d) nArea(%d) nHighwayRet(%d) bSingleTile(%c) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, (bSingleTile ? 'Y' : 'N'), szTileNames[nTileID]);
 			if (nArea == 2 && !L_Demolish_HighwayTileUnitCheck(nTileID)) {
-				Game_DirtyTile(nCornerX, nCornerY);
-				Game_SetTerrainTile(nCornerX, nCornerY);
-				Game_DirtyTile(nCornerX, nCornerY);
-				Game_SetTerrainTile(nCornerX + 1, nCornerY);
-				Game_DirtyTile(nCornerX + 1, nCornerY);
-				Game_SetTerrainTile(nCornerX + 1, nCornerY + 1);
-				Game_DirtyTile(nCornerX + 1, nCornerY + 1);
-				Game_SetTerrainTile(nCornerX, nCornerY + 1);
-				Game_DirtyTile(nCornerX, nCornerY + 1);
+				L_Demolish_DirtyAndSetTerrainTile(nCornerX, nCornerY);
+				L_Demolish_DirtyAndSetTerrainTile(nCornerX + 1, nCornerY);
+				L_Demolish_DirtyAndSetTerrainTile(nCornerX + 1, nCornerY + 1);
+				L_Demolish_DirtyAndSetTerrainTile(nCornerX, nCornerY + 1);
 			}
 			if (bExplosion) {
 				Game_FinishProcessObjects();
