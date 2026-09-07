@@ -78,6 +78,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 	CSimcityAppPrimary *pSCApp;
 	BYTE *pLockedBits = NULL;
 	BYTE *pLockedBaseBits = NULL;
+	bool bSingleTile;
 	bool bExplosionSoundPlayed;
 	bool bOnlyUpdateHouse;
 	mapcoord_t nX, nY;
@@ -100,7 +101,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 	CMFC3XPoint pt;
 	coords_w_t tileCoords;
 
-#if 0
+#if 1
 	// Debugging and testing.
 	if (GetAsyncKeyState(VK_MENU) < 0) {
 		GameMain_SimcityView_Demolish(pThis, x, y, bExplosion);
@@ -120,28 +121,22 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 		nCornerX = nX;
 		nCornerY = nY;
 		nArea = Game_FindCorner(&nCornerX, &nCornerY, nTileID);
+		nHighwayRet = -1;
+		if (nArea == 2)
+			nHighwayRet = Game_ValidateHighwayTilePlacementType(nCornerX, nCornerY - 1);
 		nCoordScale = COORDSCALE_VAL(pThis->wSCVZoomLevel);
 		nLandAltScale = LANDALTSCALE_VAL(pThis->wSCVZoomLevel);
 		nScaleVal = SCALE_VAL(pThis->wSCVZoomLevel);
 		nSpriteBase = SPRITE_BOUNDARY_MULTIPLIER * pThis->wSCVZoomLevel;
 		Game_DirtyThing(wDisasterObject);
 		ConsoleLog(LOG_DEBUG, "coord(%d, %d) cornercoord(%d, %d) nArea(%d) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, szTileNames[nTileID]);
-		if (nArea == 1 && (GET_TILE_RANGE(nTileID, TILE_SUSPENSION_BRIDGE_START_B, TILE_ELEVATED_POWERLINES) ||
-			GET_TILE_RANGE(nTileID, TILE_REINFORCED_BRIDGE_PYLON, TILE_REINFORCED_BRIDGE))) {
-			ConsoleLog(LOG_DEBUG, "in 'if': coord(%d, %d) cornercoord(%d, %d) nArea(%d) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, szTileNames[nTileID]);
-			// Originally this one may have been undefined
-			// until it got further down the chain.
-			nHighwayRet = -1;
-		HighwayChk:
-			ConsoleLog(LOG_DEBUG, "in 'if' (after HighwayChk): coord(%d, %d) cornercoord(%d, %d) nArea(%d) nHighwayRet(%d) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, szTileNames[nTileID]);
+		if (nArea == 1 && (GET_TILE_RANGE(nTileID, TILE_SUSPENSION_BRIDGE_START_B, TILE_ELEVATED_POWERLINES) || GET_TILE_RANGE(nTileID, TILE_REINFORCED_BRIDGE_PYLON, TILE_REINFORCED_BRIDGE)) ||
+			nArea == 2 && nHighwayRet >= 13) {
+			ConsoleLog(LOG_DEBUG, "in 'if': coord(%d, %d) cornercoord(%d, %d) nArea(%d) nHighwayRet(%d) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, szTileNames[nTileID]);
 			if (nArea == 2)
 				--nCornerY;
-			if (nArea == 1 &&
-				nCornerX < GAME_MAP_SIZE &&
-				nCornerY < GAME_MAP_SIZE &&
-				XBITReturnIsFlipped(nCornerX, nCornerY) ||
-				nArea == 2 &&
-				(nHighwayRet & 1) == 0) {
+			if (nArea == 1 && nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE && XBITReturnIsFlipped(nCornerX, nCornerY) ||
+				nArea == 2 && (nHighwayRet & 1) == 0) {
 				nHorzMult = 1;
 				nVertMult = 0;
 			}
@@ -151,11 +146,14 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			}
 			nStoredHorzMult = nHorzMult * nArea;
 			nStoredVertMult = nVertMult * nArea;
+			bSingleTile = true;
 			while (TRUE) {
 				nHighwayRet = Game_ValidateHighwayTilePlacementType(nCornerX, nCornerY);
 				if (nArea != 2 || nHighwayRet < 13) {
-					if (nArea != 1)
-						goto AreaChkOne;
+					if (nArea != 1) {
+						bSingleTile = false;
+						break;
+					}
 					nLoopTileID = GetTileID(nCornerX, nCornerY);
 					if ((nLoopTileID < TILE_SUSPENSION_BRIDGE_START_B || nLoopTileID > TILE_ELEVATED_POWERLINES) &&
 						nLoopTileID != TILE_REINFORCED_BRIDGE_PYLON &&
@@ -165,23 +163,25 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				nCornerX -= nStoredHorzMult;
 				nCornerY -= nStoredVertMult;
 			}
-			if (nCornerX >= GAME_MAP_SIZE ||
-				nCornerY >= GAME_MAP_SIZE ||
-				!XBITReturnIsWater(nCornerX, nCornerY)) {
-				Game_DirtyTile(nCornerX, nCornerY);
-				Game_PlaceTile(nCornerX, nCornerY, TILE_CLEAR);
-				if (nCornerX >= MAP_EDGE_MIN) {
-					if (nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE) {
-						nLandAlt = ALTMReturnLandAltitude(nCornerX, nCornerY) - 1;
-						ALTMSetLandAltitude(nCornerX, nCornerY, nLandAlt);
-						XBITSetBits(nCornerX, nCornerY, XBIT_WATER);
+			if (bSingleTile) {
+				if (nCornerX >= GAME_MAP_SIZE ||
+					nCornerY >= GAME_MAP_SIZE ||
+					!XBITReturnIsWater(nCornerX, nCornerY)) {
+					Game_DirtyTile(nCornerX, nCornerY);
+					Game_PlaceTile(nCornerX, nCornerY, TILE_CLEAR);
+					if (nCornerX >= MAP_EDGE_MIN) {
+						if (nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE) {
+							nLandAlt = ALTMReturnLandAltitude(nCornerX, nCornerY) - 1;
+							ALTMSetLandAltitude(nCornerX, nCornerY, nLandAlt);
+							XBITSetBits(nCornerX, nCornerY, XBIT_WATER);
+						}
 					}
+					Game_SetTerrainTile(nCornerX, nCornerY);
+					if (nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE)
+						XBITClearBits(nCornerX, nCornerY, XBIT_FLIPPED);
 				}
-				Game_SetTerrainTile(nCornerX, nCornerY);
-				if (nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE)
-					XBITClearBits(nCornerX, nCornerY, XBIT_FLIPPED);
 			}
-		AreaChkOne:
+			ConsoleLog(LOG_DEBUG, "bSingleTile check one: (%d, %d) (%d, %d) nArea(%d) nHighwayRet(%d) bSingleTile(%c) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, (bSingleTile ? 'Y' : 'N'), szTileNames[nTileID]);
 			if (nArea == 2 && nTileID != TILE_HIGHWAY_LR && nTileID != TILE_HIGHWAY_TB) {
 				Game_DirtyTile(nCornerX, nCornerY);
 				Game_SetTerrainTile(nCornerX, nCornerY);
@@ -202,11 +202,14 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			}
 			nExplodeX = -1;
 			nExplodeY = -1;
+			bSingleTile = true;
 			while (true) {
 				nHighwayRet = Game_ValidateHighwayTilePlacementType(nCornerX, nCornerY);
 				if (nArea != 2 || nHighwayRet < 13) {
-					if (nArea != 1)
-						goto AreaChkTwo;
+					if (nArea != 1) {
+						bSingleTile = false;
+						break;
+					}
 					nLoopTileID = GetTileID(nCornerX, nCornerY);
 					if ((nLoopTileID < TILE_SUSPENSION_BRIDGE_START_B || nLoopTileID > TILE_ELEVATED_POWERLINES) &&
 						nLoopTileID != TILE_REINFORCED_BRIDGE_PYLON &&
@@ -273,21 +276,23 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				nCornerX += nStoredHorzMult;
 				nCornerY += nStoredVertMult;
 			}
-			if (nCornerX >= GAME_MAP_SIZE ||
-				nCornerY >= GAME_MAP_SIZE ||
-				!XBITReturnIsWater(nCornerX, nCornerY)) {
-				Game_DirtyTile(nCornerX, nCornerY);
-				Game_PlaceTile(nCornerX, nCornerY, TILE_CLEAR);
-				if (nCornerX >= MAP_EDGE_MIN) {
-					if (nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE) {
-						nLandAlt = ALTMReturnLandAltitude(nCornerX, nCornerY) - 1;
-						ALTMSetLandAltitude(nCornerX, nCornerY, nLandAlt);
-						XBITSetBits(nCornerX, nCornerY, XBIT_WATER);
+			if (bSingleTile) {
+				if (nCornerX >= GAME_MAP_SIZE ||
+					nCornerY >= GAME_MAP_SIZE ||
+					!XBITReturnIsWater(nCornerX, nCornerY)) {
+					Game_DirtyTile(nCornerX, nCornerY);
+					Game_PlaceTile(nCornerX, nCornerY, TILE_CLEAR);
+					if (nCornerX >= MAP_EDGE_MIN) {
+						if (nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE) {
+							nLandAlt = ALTMReturnLandAltitude(nCornerX, nCornerY) - 1;
+							ALTMSetLandAltitude(nCornerX, nCornerY, nLandAlt);
+							XBITSetBits(nCornerX, nCornerY, XBIT_WATER);
+						}
 					}
+					Game_SetTerrainTile(nCornerX, nCornerY);
 				}
-				Game_SetTerrainTile(nCornerX, nCornerY);
 			}
-		AreaChkTwo:
+			ConsoleLog(LOG_DEBUG, "bSingleTile check two: (%d, %d) (%d, %d) nArea(%d) nHighwayRet(%d) bSingleTile(%c) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, (bSingleTile ? 'Y' : 'N'), szTileNames[nTileID]);
 			if (nArea == 2 && nTileID != TILE_HIGHWAY_LR && nTileID != TILE_HIGHWAY_TB) {
 				Game_DirtyTile(nCornerX, nCornerY);
 				Game_SetTerrainTile(nCornerX, nCornerY);
@@ -310,17 +315,9 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
 				Game_YieldToWindows(100);
 			}
-			L_Demolish_UpdHouse(pThis, nX, nY, nArea);
-			return;
+			bOnlyUpdateHouse = true;
 		}
-		if (nArea == 2) {
-			nHighwayRet = Game_ValidateHighwayTilePlacementType(nCornerX, nCornerY - 1);
-			if (nHighwayRet >= 13) {
-				ConsoleLog(LOG_DEBUG, "goto HighwayChk: (%d, %d) (%d, %d) (%d) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, szTileNames[nTileID]);
-				goto HighwayChk;
-			}
-		}
-		if (GET_TILE_RANGE(nTileID, TILE_INFRASTRUCTURE_PIER, TILE_INFRASTRUCTURE_CRANE)) {
+		else if (GET_TILE_RANGE(nTileID, TILE_INFRASTRUCTURE_PIER, TILE_INFRASTRUCTURE_CRANE)) {
 			if (bExplosion)
 				L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
 			Game_InitStack(nX, nY);
@@ -367,7 +364,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					bOnlyUpdateHouse = true;
 				}
 			}
-			ConsoleLog(LOG_DEBUG, "if: (%d, %d) (%d) [%s]\n", nX, nY, nArea, szTileNames[nTileID]);
+			ConsoleLog(LOG_DEBUG, "else if (pier): (%d, %d) (%d) [%s]\n", nX, nY, nArea, szTileNames[nTileID]);
 		}
 		else if (GET_TILE_RANGE(nTileID, TILE_INFRASTRUCTURE_RUNWAY, TILE_INFRASTRUCTURE_RUNWAYCROSS)) {
 			if (bExplosion)
@@ -413,7 +410,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					bOnlyUpdateHouse = true;
 				}
 			}
-			ConsoleLog(LOG_DEBUG, "else if: (%d, %d) (%d) [%s]\n", nX, nY, nArea, szTileNames[nTileID]);
+			ConsoleLog(LOG_DEBUG, "else if (runway): (%d, %d) (%d) [%s]\n", nX, nY, nArea, szTileNames[nTileID]);
 		}
 		else if (GET_TILE_RANGE(nTileID, TILE_TUNNEL_T, TILE_TUNNEL_L)) {
 			nOffsetX = 0;
@@ -485,7 +482,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				Game_YieldToWindows(100);
 			}
 			bOnlyUpdateHouse = true;
-			ConsoleLog(LOG_DEBUG, "else if: (%d, %d) (%d) bExplosionSoundPlayed(%c) bExplosion(%c) (pThis == (CSimcityView *)&pSomeWnd)(%c) [%s]\n", nX, nY, nArea, (bExplosionSoundPlayed ? 'Y' : 'N'), (bExplosion ? 'Y' : 'N'), ((pThis == (CSimcityView *)&pSomeWnd) ? 'Y' : 'N'), szTileNames[nTileID]);
+			ConsoleLog(LOG_DEBUG, "else if (tunnel): (%d, %d) (%d) bExplosionSoundPlayed(%c) bExplosion(%c) (pThis == (CSimcityView *)&pSomeWnd)(%c) [%s]\n", nX, nY, nArea, (bExplosionSoundPlayed ? 'Y' : 'N'), (bExplosion ? 'Y' : 'N'), ((pThis == (CSimcityView *)&pSomeWnd) ? 'Y' : 'N'), szTileNames[nTileID]);
 		}
 		else {
 			if (bExplosion) {
@@ -602,7 +599,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					Game_SetTerrainTile(nCornerX, nCornerY);
 			}
 			bOnlyUpdateHouse = true;
-			ConsoleLog(LOG_DEBUG, "else: (%d, %d) (%d) bExplosionSoundPlayed(%c) bExplosion(%c) (pThis == (CSimcityView *)&pSomeWnd)(%c) [%s]\n", nX, nY, nArea, (bExplosionSoundPlayed ? 'Y' : 'N'), (bExplosion ? 'Y' : 'N'), ((pThis == (CSimcityView *)&pSomeWnd) ? 'Y' : 'N'), szTileNames[nTileID]);
+			ConsoleLog(LOG_DEBUG, "else (everything else): (%d, %d) (%d) bExplosionSoundPlayed(%c) bExplosion(%c) (pThis == (CSimcityView *)&pSomeWnd)(%c) [%s]\n", nX, nY, nArea, (bExplosionSoundPlayed ? 'Y' : 'N'), (bExplosion ? 'Y' : 'N'), ((pThis == (CSimcityView *)&pSomeWnd) ? 'Y' : 'N'), szTileNames[nTileID]);
 		}
 		ConsoleLog(LOG_DEBUG, "Demolish(): (%d, %d) (%d) bExplosionSoundPlayed(%c) bExplosion(%c) bOnlyUpdateHouse(%c) (pThis == (CSimcityView *)&pSomeWnd)(%c)\n", nX, nY, nArea, (bExplosionSoundPlayed ? 'Y' : 'N'), (bExplosion ? 'Y' : 'N'), (bOnlyUpdateHouse ? 'Y' : 'N'), ((pThis == (CSimcityView *)&pSomeWnd) ? 'Y' : 'N'));
 		if (!bOnlyUpdateHouse) {

@@ -1948,6 +1948,13 @@ extern "C" __int16 __cdecl Hook_ValidateHighwayTilePlacementType(mapcoord_t x, m
 	__int16 nHighwayRet;
 	BYTE nTileID;
 
+	if (!bWeatherEffects) {
+		nHighwayRet = GameMain_ValidateHighwayTilePlacementType(x, y);
+		if (nHighwayRet >= 0)
+			ConsoleLog(LOG_DEBUG, "(NATIVE) ValidateHighwayTilePlacementType(%d, %d): nHighwayRet(%d)\n", x, y, nHighwayRet);
+		return nHighwayRet;
+	}
+
 	nHighwayRet = 0;
 	if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE) {
 		nHighwayRet = -1;
@@ -1978,7 +1985,8 @@ extern "C" __int16 __cdecl Hook_ValidateHighwayTilePlacementType(mapcoord_t x, m
 				}
 			}
 		}
-		ConsoleLog(LOG_DEBUG, "ValidateHighwayTilePlacementType(%d, %d): nHighwayRet(%d)\n", x, y, nHighwayRet);
+		if (nHighwayRet >= 0)
+			ConsoleLog(LOG_DEBUG, "ValidateHighwayTilePlacementType(%d, %d): nHighwayRet(%d)\n", x, y, nHighwayRet);
 	}
 	return nHighwayRet;
 }
