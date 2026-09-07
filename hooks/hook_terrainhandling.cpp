@@ -184,9 +184,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 		nCornerX = nX;
 		nCornerY = nY;
 		nArea = Game_FindCorner(&nCornerX, &nCornerY, nTileID);
-		nHighwayRet = -1;
-		if (nArea == 2)
-			nHighwayRet = Game_ValidateHighwayTilePlacementType(nCornerX, nCornerY - 1);
+		nHighwayRet = (nArea == 2) ? Game_ValidateHighwayTilePlacementType(nCornerX, nCornerY - 1) : -1;
 		nCoordScale = COORDSCALE_VAL(pThis->wSCVZoomLevel);
 		nLandAltScale = LANDALTSCALE_VAL(pThis->wSCVZoomLevel);
 		nScaleVal = SCALE_VAL(pThis->wSCVZoomLevel);
