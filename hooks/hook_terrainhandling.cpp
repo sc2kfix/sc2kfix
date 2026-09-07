@@ -14,6 +14,31 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
+// This function is hit twice during demolition, but only during bridge-type object clearing
+// and only if their nArea is 1 (for bSingleObject).
+// It is for removing the entry/exit points and reverting the altitude and terrain back to the
+// water type.
+// The bClearFlipped boolean is only set to true on the first call (likely to account for the
+// entry or exit point being a flipped tile).
+static void L_Demolish_ClearEntryExitAndSetTerrain(mapcoord_t cornerX, mapcoord_t cornerY, bool bClearFlipped) {
+	if (cornerX >= GAME_MAP_SIZE || cornerY >= GAME_MAP_SIZE || !XBITReturnIsWater(cornerX, cornerY)) {
+		Game_DirtyTile(cornerX, cornerY);
+		Game_PlaceTile(cornerX, cornerY, TILE_CLEAR);
+		if (cornerX >= MAP_EDGE_MIN) {
+			if (cornerX < GAME_MAP_SIZE && cornerY < GAME_MAP_SIZE) {
+				WORD nLandAlt = ALTMReturnLandAltitude(cornerX, cornerY) - 1;
+				ALTMSetLandAltitude(cornerX, cornerY, nLandAlt);
+				XBITSetBits(cornerX, cornerY, XBIT_WATER);
+			}
+		}
+		Game_SetTerrainTile(cornerX, cornerY);
+		if (bClearFlipped) {
+			if (cornerX < GAME_MAP_SIZE && cornerY < GAME_MAP_SIZE)
+				XBITClearBits(cornerX, cornerY, XBIT_FLIPPED);
+		}
+	}
+}
+
 static void L_PierCheckStackPush(mapcoord_t x, mapcoord_t y) {
 	uint32_t nTileID = GetTileID(x, y);
 	if (nTileID) {
@@ -95,7 +120,6 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 	mapcoord_t nAreaCornerX, nAreaCornerY;
 	mapcoord_t nOffsetX, nOffsetY;
 	int16_t nRubbleTile;
-	WORD nLandAlt;
 	BYTE bIsFlipped;
 	BYTE bTextOverlay;
 	CMFC3XPoint pt;
@@ -164,22 +188,10 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				nCornerY -= nStoredVertMult;
 			}
 			if (bSingleTile) {
-				if (nCornerX >= GAME_MAP_SIZE ||
-					nCornerY >= GAME_MAP_SIZE ||
-					!XBITReturnIsWater(nCornerX, nCornerY)) {
-					Game_DirtyTile(nCornerX, nCornerY);
-					Game_PlaceTile(nCornerX, nCornerY, TILE_CLEAR);
-					if (nCornerX >= MAP_EDGE_MIN) {
-						if (nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE) {
-							nLandAlt = ALTMReturnLandAltitude(nCornerX, nCornerY) - 1;
-							ALTMSetLandAltitude(nCornerX, nCornerY, nLandAlt);
-							XBITSetBits(nCornerX, nCornerY, XBIT_WATER);
-						}
-					}
-					Game_SetTerrainTile(nCornerX, nCornerY);
-					if (nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE)
-						XBITClearBits(nCornerX, nCornerY, XBIT_FLIPPED);
-				}
+				// Entry point.
+				// bClearFlipped set to true to unset the 'flip' XBIT attribute
+				// from either the entry or exit point.
+				L_Demolish_ClearEntryExitAndSetTerrain(nCornerX, nCornerY, true);
 			}
 			ConsoleLog(LOG_DEBUG, "bSingleTile check one: (%d, %d) (%d, %d) nArea(%d) nHighwayRet(%d) bSingleTile(%c) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, (bSingleTile ? 'Y' : 'N'), szTileNames[nTileID]);
 			if (nArea == 2 && nTileID != TILE_HIGHWAY_LR && nTileID != TILE_HIGHWAY_TB) {
@@ -277,20 +289,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				nCornerY += nStoredVertMult;
 			}
 			if (bSingleTile) {
-				if (nCornerX >= GAME_MAP_SIZE ||
-					nCornerY >= GAME_MAP_SIZE ||
-					!XBITReturnIsWater(nCornerX, nCornerY)) {
-					Game_DirtyTile(nCornerX, nCornerY);
-					Game_PlaceTile(nCornerX, nCornerY, TILE_CLEAR);
-					if (nCornerX >= MAP_EDGE_MIN) {
-						if (nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE) {
-							nLandAlt = ALTMReturnLandAltitude(nCornerX, nCornerY) - 1;
-							ALTMSetLandAltitude(nCornerX, nCornerY, nLandAlt);
-							XBITSetBits(nCornerX, nCornerY, XBIT_WATER);
-						}
-					}
-					Game_SetTerrainTile(nCornerX, nCornerY);
-				}
+				// Exit point.
+				L_Demolish_ClearEntryExitAndSetTerrain(nCornerX, nCornerY, false);
 			}
 			ConsoleLog(LOG_DEBUG, "bSingleTile check two: (%d, %d) (%d, %d) nArea(%d) nHighwayRet(%d) bSingleTile(%c) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, (bSingleTile ? 'Y' : 'N'), szTileNames[nTileID]);
 			if (nArea == 2 && nTileID != TILE_HIGHWAY_LR && nTileID != TILE_HIGHWAY_TB) {
