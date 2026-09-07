@@ -180,7 +180,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 	nX = x;
 	nY = y;
 	nTileID = GetTileID(nX, nY);
-	if (nTileID >= TILE_TREES1) {
+	if (nTileID > TILE_RADIOACTIVITY) {
 		nCornerX = nX;
 		nCornerY = nY;
 		nArea = Game_FindCorner(&nCornerX, &nCornerY, nTileID);
