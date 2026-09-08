@@ -156,8 +156,6 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 	BYTE *pLockedBaseBits = NULL;
 	bool bSingleTile;
 	int nValidBridgeType;
-	bool bExplosionSoundPlayed;
-	bool bOnlyUpdateHouse;
 	mapcoord_t nX, nY;
 	uint8_t nTileID, nIntermediateTile;
 	mapcoord_t nCornerX, nCornerY;
@@ -175,9 +173,9 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 	CMFC3XPoint pt;
 	coords_w_t tileCoords;
 
-#if 1
+#if 0
 	// Debugging and testing.
-	if (GetAsyncKeyState(VK_MENU) < 0) {
+	if (!bWeatherEffects) {
 		GameMain_SimcityView_Demolish(pThis, x, y, bExplosion);
 		return;
 	}
@@ -186,8 +184,6 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 	pSCApp = &pCSimcityAppThis;
 	pLockedBits = Game_Graphics_LockDIBBits(pThis->SCVGraphics);
 	pLockedBaseBits = Game_Graphics_LockDIBBits(pBaseGraphics);
-	bExplosionSoundPlayed = false;
-	bOnlyUpdateHouse = false;
 	nX = x;
 	nY = y;
 	nTileID = GetTileID(nX, nY);
@@ -234,11 +230,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			}
 			nCornerX += nMoveX;
 			nCornerY += nMoveY;
-			if (bExplosion) {
-				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
-				bExplosionSoundPlayed = true;
+			if (bExplosion)
 				L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
-			}
 			nExplodeX = -1;
 			nExplodeY = -1;
 			bSingleTile = true;
@@ -314,18 +307,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				L_Demolish_DirtyAndSetTerrainTile(nCornerX + 1, nCornerY + 1);
 				L_Demolish_DirtyAndSetTerrainTile(nCornerX, nCornerY + 1);
 			}
-			if (bExplosion) {
+			if (bExplosion)
 				Game_FinishProcessObjects();
-				if (pThis == (CSimcityView *)&pSomeWnd)
-					Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
-				else
-					Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
-				UpdateWindow(pThis->m_hWnd);
-				if (!bExplosionSoundPlayed)
-					Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
-				Game_YieldToWindows(100);
-			}
-			bOnlyUpdateHouse = true;
 		}
 		else if (GET_TILE_RANGE(nTileID, TILE_INFRASTRUCTURE_PIER, TILE_INFRASTRUCTURE_CRANE)) {
 			if (bExplosion)
@@ -362,16 +345,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				if (tileCoords.y < MAP_EDGE_MAX)
 					L_PierCheckStackPush(tileCoords.x, tileCoords.y + 1);
 			}
-			if (bExplosion) {
+			if (bExplosion)
 				Game_FinishProcessObjects();
-				if (pThis == (CSimcityView *)&pSomeWnd) {
-					Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
-					UpdateWindow(pThis->m_hWnd);
-					Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
-					Game_YieldToWindows(100);
-					bOnlyUpdateHouse = true;
-				}
-			}
 			ConsoleLog(LOG_DEBUG, "else if (pier): (%d, %d) (%d) [%s]\n", nX, nY, nArea, szTileNames[nTileID]);
 		}
 		else if (GET_TILE_RANGE(nTileID, TILE_INFRASTRUCTURE_RUNWAY, TILE_INFRASTRUCTURE_RUNWAYCROSS)) {
@@ -406,16 +381,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				if (tileCoords.y < MAP_EDGE_MAX)
 					L_RunwayCheckStackPush(tileCoords.x, tileCoords.y + 1);
 			}
-			if (bExplosion) {
+			if (bExplosion)
 				Game_FinishProcessObjects();
-				if (pThis == (CSimcityView *)&pSomeWnd) {
-					Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
-					UpdateWindow(pThis->m_hWnd);
-					Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
-					Game_YieldToWindows(100);
-					bOnlyUpdateHouse = true;
-				}
-			}
 			ConsoleLog(LOG_DEBUG, "else if (runway): (%d, %d) (%d) [%s]\n", nX, nY, nArea, szTileNames[nTileID]);
 		}
 		else if (GET_TILE_RANGE(nTileID, TILE_TUNNEL_T, TILE_TUNNEL_L)) {
@@ -450,11 +417,13 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					ALTMSetTunnelLevels(nX, nY, 0);
 				}
 			}
-			L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
-			nSpriteID = L_Demolish_GetDustCloudSprite(nSpriteBase);
-			nExplodeX = iScreenOffSetX + nScaleVal * (nX - nY);
-			nExplodeY = iScreenOffSetY + nCoordScale * (nX + nY) - nLandAltScale * ALTMReturnLandAltitude(nX, nY) - pArrSpriteHeaders[nSpriteID].wHeight;
-			L_Demolish_DoDustCloud(nSpriteID, nExplodeX, nExplodeY);
+			if (bExplosion) {
+				L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
+				nSpriteID = L_Demolish_GetDustCloudSprite(nSpriteBase);
+				nExplodeX = iScreenOffSetX + nScaleVal * (nX - nY);
+				nExplodeY = iScreenOffSetY + nCoordScale * (nX + nY) - nLandAltScale * ALTMReturnLandAltitude(nX, nY) - pArrSpriteHeaders[nSpriteID].wHeight;
+				L_Demolish_DoDustCloud(nSpriteID, nExplodeX, nExplodeY);
+			}
 			nIntermediateTile = GetTileID(nX, nY);
 			while (!GET_TILE_RANGE(nIntermediateTile, TILE_TUNNEL_T, TILE_TUNNEL_L)) {
 				nX += nOffsetX;
@@ -468,22 +437,14 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			Game_PlaceTile(nX, nY, nRubbleTile);
 			if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE)
 				XZONClearCorners(nX, nY);
-			nSpriteID = L_Demolish_GetDustCloudSprite(nSpriteBase);
-			nExplodeX = iScreenOffSetX + nScaleVal * (nX - nY);
-			nExplodeY = iScreenOffSetY + nCoordScale * (nX + nY) - nLandAltScale * ALTMReturnLandAltitude(nX, nY) - pArrSpriteHeaders[nSpriteID].wHeight;
-			L_Demolish_DoDustCloud(nSpriteID, nExplodeX, nExplodeY);
-			Game_FinishProcessObjects();
-			if (pThis == (CSimcityView *)&pSomeWnd)
-				Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
-			else
-				Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
-			UpdateWindow(pThis->m_hWnd);
 			if (bExplosion) {
-				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
-				Game_YieldToWindows(100);
+				nSpriteID = L_Demolish_GetDustCloudSprite(nSpriteBase);
+				nExplodeX = iScreenOffSetX + nScaleVal * (nX - nY);
+				nExplodeY = iScreenOffSetY + nCoordScale * (nX + nY) - nLandAltScale * ALTMReturnLandAltitude(nX, nY) - pArrSpriteHeaders[nSpriteID].wHeight;
+				L_Demolish_DoDustCloud(nSpriteID, nExplodeX, nExplodeY);
+				Game_FinishProcessObjects();
 			}
-			bOnlyUpdateHouse = true;
-			ConsoleLog(LOG_DEBUG, "else if (tunnel): (%d, %d) (%d) bExplosionSoundPlayed(%c) bExplosion(%c) (pThis == (CSimcityView *)&pSomeWnd)(%c) [%s]\n", nX, nY, nArea, (bExplosionSoundPlayed ? 'Y' : 'N'), (bExplosion ? 'Y' : 'N'), ((pThis == (CSimcityView *)&pSomeWnd) ? 'Y' : 'N'), szTileNames[nTileID]);
+			ConsoleLog(LOG_DEBUG, "else if (tunnel): (%d, %d) (%d) bExplosion(%c) (pThis == (CSimcityView *)&pSomeWnd)(%c) [%s]\n", nX, nY, nArea, (bExplosion ? 'Y' : 'N'), ((pThis == (CSimcityView *)&pSomeWnd) ? 'Y' : 'N'), szTileNames[nTileID]);
 		}
 		else {
 			if (bExplosion) {
@@ -503,8 +464,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				if (nTileID >= TILE_ARCOLOGY_PLYMOUTH)
 					dirtyRect.top = 0;
 				int16_t nCurrPosHeightLimit = 0; // The current height limit for the explosion sprite
+				L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
 				for (int16_t nAreaPos = nArea; nAreaPos > 0; --nAreaPos) {
-					L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
 					int16_t nStartAreaExplodeX = nExplodeX; // The starting X tile position
 					int16_t nStartPosY = 0;                 // The Y tile starting/reset position
 					for (int16_t nHorzAreaPos = nArea; nHorzAreaPos > 0; --nHorzAreaPos) {
@@ -521,19 +482,9 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 						nStartAreaExplodeX += nScaleVal;
 						nStartPosY += nCoordScale;
 					}
-					Game_FinishProcessObjects();
-					if (pThis == (CSimcityView *)&pSomeWnd)
-						Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
-					else
-						Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
-					UpdateWindow(pThis->m_hWnd);
-					if (!bExplosionSoundPlayed) {
-						Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
-						bExplosionSoundPlayed = true;
-					}
-					Game_YieldToWindows(100);
 					nCurrPosHeightLimit += nCoordScale;
 				}
+				Game_FinishProcessObjects();
 			}
 			bTextOverlay = XTXTGetTextOverlayID(nCornerX, nCornerY);
 			if (nTileID == TILE_INFRASTRUCTURE_MAYORSHOUSE)
@@ -593,12 +544,15 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				if (GetTerrainTileID(nCornerX, nCornerY))
 					Game_SetTerrainTile(nCornerX, nCornerY);
 			}
-			bOnlyUpdateHouse = true;
-			ConsoleLog(LOG_DEBUG, "else (everything else): (%d, %d) (%d) bExplosionSoundPlayed(%c) bExplosion(%c) (pThis == (CSimcityView *)&pSomeWnd)(%c) [%s]\n", nX, nY, nArea, (bExplosionSoundPlayed ? 'Y' : 'N'), (bExplosion ? 'Y' : 'N'), ((pThis == (CSimcityView *)&pSomeWnd) ? 'Y' : 'N'), szTileNames[nTileID]);
+			ConsoleLog(LOG_DEBUG, "else (everything else): (%d, %d) (%d) bExplosion(%c) (pThis == (CSimcityView *)&pSomeWnd)(%c) [%s]\n", nX, nY, nArea, (bExplosion ? 'Y' : 'N'), ((pThis == (CSimcityView *)&pSomeWnd) ? 'Y' : 'N'), szTileNames[nTileID]);
 		}
-		ConsoleLog(LOG_DEBUG, "Demolish(): (%d, %d) (%d) bExplosionSoundPlayed(%c) bExplosion(%c) bOnlyUpdateHouse(%c) (pThis == (CSimcityView *)&pSomeWnd)(%c)\n", nX, nY, nArea, (bExplosionSoundPlayed ? 'Y' : 'N'), (bExplosion ? 'Y' : 'N'), (bOnlyUpdateHouse ? 'Y' : 'N'), ((pThis == (CSimcityView *)&pSomeWnd) ? 'Y' : 'N'));
-		if (!bOnlyUpdateHouse) {
-			Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
+		ConsoleLog(LOG_DEBUG, "Demolish(): (%d, %d) (%d) bExplosion(%c) (pThis == (CSimcityView *)&pSomeWnd)(%c)\n", nX, nY, nArea, (bExplosion ? 'Y' : 'N'), ((pThis == (CSimcityView *)&pSomeWnd) ? 'Y' : 'N'));
+		if (bExplosion) {
+			ConsoleLog(LOG_DEBUG, "bExplosion - true\n");
+			if (pThis == (CSimcityView *)&pSomeWnd)
+				Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
+			else
+				Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
 			UpdateWindow(pThis->m_hWnd);
 			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
 			Game_YieldToWindows(100);
