@@ -205,7 +205,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				--nCornerY;
 			L_Demolish_GetMoveDirection(nCornerX, nCornerY, nArea, nHighwayRet, &nMoveX, &nMoveY);
 			bSingleTile = true;
-			while (TRUE) {
+			while (true) {
 				nValidBridgeType = L_Demolish_IsValidBridgeTypeArea(nCornerX, nCornerY, nArea, &nHighwayRet);
 				if (nValidBridgeType <= VALID_BRIDGETYPEAREA_NO) {
 					if (nValidBridgeType == VALID_BRIDGETYPEAREA_NOTSINGLE)
