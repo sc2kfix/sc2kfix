@@ -18,6 +18,20 @@
 #define VALID_BRIDGETYPEAREA_NO        0
 #define VALID_BRIDGETYPEAREA_YES       1
 
+static void L_Demolish_GetMoveDirection(mapcoord_t cornerX, mapcoord_t cornerY, int16_t nArea, int16_t nHighwayRet, int16_t *nOutMoveX, int16_t *nOutMoveY) {
+	int16_t nMoveX, nMoveY;
+
+	nMoveX = 0;
+	nMoveY = 1;
+	if (nArea == 1 && cornerX < GAME_MAP_SIZE && cornerY < GAME_MAP_SIZE && XBITReturnIsFlipped(cornerX, cornerY) ||
+		nArea == 2 && (nHighwayRet & 1) == 0) {
+		nMoveX = 1;
+		nMoveY = 0;
+	}
+	*nOutMoveX = nMoveX * nArea;
+	*nOutMoveY = nMoveY * nArea;
+}
+
 static void L_Demolish_DirtyAndSetTerrainTile(mapcoord_t x, mapcoord_t y) {
 	Game_DirtyTile(x, y);
 	Game_SetTerrainTile(x, y);
@@ -145,13 +159,12 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 	bool bExplosionSoundPlayed;
 	bool bOnlyUpdateHouse;
 	mapcoord_t nX, nY;
-	uint8_t nTileID;
+	uint8_t nTileID, nIntermediateTile;
 	mapcoord_t nCornerX, nCornerY;
 	int16_t nArea;
 	int16_t nCoordScale, nLandAltScale, nScaleVal;
 	int16_t nHighwayRet;
-	int16_t nHorzMult, nVertMult;
-	int16_t nStoredHorzMult, nStoredVertMult;
+	int16_t nMoveX, nMoveY;
 	int16_t nSpriteBase, nSpriteID;
 	mapcoord_t nExplodeX, nExplodeY, nAltitude;
 	mapcoord_t nAreaExplodeX, nAreaExplodeY;
@@ -194,17 +207,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			ConsoleLog(LOG_DEBUG, "in 'if': coord(%d, %d) cornercoord(%d, %d) nArea(%d) nHighwayRet(%d) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, szTileNames[nTileID]);
 			if (nArea == 2)
 				--nCornerY;
-			if (nArea == 1 && nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE && XBITReturnIsFlipped(nCornerX, nCornerY) ||
-				nArea == 2 && (nHighwayRet & 1) == 0) {
-				nHorzMult = 1;
-				nVertMult = 0;
-			}
-			else {
-				nHorzMult = 0;
-				nVertMult = 1;
-			}
-			nStoredHorzMult = nHorzMult * nArea;
-			nStoredVertMult = nVertMult * nArea;
+			L_Demolish_GetMoveDirection(nCornerX, nCornerY, nArea, nHighwayRet, &nMoveX, &nMoveY);
 			bSingleTile = true;
 			while (TRUE) {
 				nValidBridgeType = L_Demolish_IsValidBridgeTypeArea(nCornerX, nCornerY, nArea, &nHighwayRet);
@@ -213,8 +216,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 						bSingleTile = false;
 					break;
 				}
-				nCornerX -= nStoredHorzMult;
-				nCornerY -= nStoredVertMult;
+				nCornerX -= nMoveX;
+				nCornerY -= nMoveY;
 			}
 			if (bSingleTile) {
 				// Entry point.
@@ -229,8 +232,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				L_Demolish_DirtyAndSetTerrainTile(nCornerX + 1, nCornerY + 1);
 				L_Demolish_DirtyAndSetTerrainTile(nCornerX, nCornerY + 1);
 			}
-			nCornerX += nStoredHorzMult;
-			nCornerY += nStoredVertMult;
+			nCornerX += nMoveX;
+			nCornerY += nMoveY;
 			if (bExplosion) {
 				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
 				bExplosionSoundPlayed = true;
@@ -259,9 +262,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 						nAltitude = ALTMReturnWaterLevel(nCornerX, nCornerY);
 					else
 						nAltitude = ALTMReturnLandAltitude(nCornerX, nCornerY);
-					nExplodeY = iScreenOffSetY + nCoordScale * (nCornerX + nCornerY) -
-						nLandAltScale * nAltitude -
-						pArrSpriteHeaders[nSpriteID].wHeight;
+					nExplodeY = iScreenOffSetY + nCoordScale * (nCornerX + nCornerY) - nLandAltScale * nAltitude - pArrSpriteHeaders[nSpriteID].wHeight;
 					L_Demolish_DoDustCloud(nSpriteID, nExplodeX, nExplodeY);
 				}
 				Game_PlaceTile(nCornerX, nCornerY, TILE_CLEAR);
@@ -299,8 +300,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 						XBITClearBits(nAreaCornerX, nCornerY, XBIT_FLIPPED);
 					}
 				}
-				nCornerX += nStoredHorzMult;
-				nCornerY += nStoredVertMult;
+				nCornerX += nMoveX;
+				nCornerY += nMoveY;
 			}
 			if (bSingleTile) {
 				// Exit point.
@@ -441,7 +442,6 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				break;
 			}
 			Game_DirtyTile(nX, nY);
-			nTileID = TILE_CLEAR;
 			nRubbleTile = (rand() & 3) + 1;
 			Game_PlaceTile(nX, nY, nRubbleTile);
 			if (nX >= MAP_EDGE_MIN) {
@@ -455,12 +455,13 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			nExplodeX = iScreenOffSetX + nScaleVal * (nX - nY);
 			nExplodeY = iScreenOffSetY + nCoordScale * (nX + nY) - nLandAltScale * ALTMReturnLandAltitude(nX, nY) - pArrSpriteHeaders[nSpriteID].wHeight;
 			L_Demolish_DoDustCloud(nSpriteID, nExplodeX, nExplodeY);
-			while (nTileID < TILE_TUNNEL_T || nTileID > TILE_TUNNEL_L) {
+			nIntermediateTile = GetTileID(nX, nY);
+			while (!GET_TILE_RANGE(nIntermediateTile, TILE_TUNNEL_T, TILE_TUNNEL_L)) {
 				nX += nOffsetX;
 				nY += nOffsetY;
 				if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE)
 					ALTMSetTunnelLevels(nX, nY, 0);
-				nTileID = GetTileID(nX, nY);
+				nIntermediateTile = GetTileID(nX, nY);
 			}
 			Game_DirtyTile(nX, nY);
 			nRubbleTile = (rand() & 3) + 1;
@@ -477,7 +478,6 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			else
 				Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
 			UpdateWindow(pThis->m_hWnd);
-			// For this case it is the sound.
 			if (bExplosion) {
 				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
 				Game_YieldToWindows(100);
