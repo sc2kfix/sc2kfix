@@ -488,55 +488,51 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 		else {
 			if (bExplosion) {
 				nExplodeX = iScreenOffSetX + nScaleVal * (nCornerX - nCornerY);
+				// There was a very old bug here in the game-side function whereas
+				// instead of it using nCornerX/nCornerY for the 'if' it used nX and nY
+				// which then resulted in an erroneous vertical offset of the explosive
+				// effect depending on where you clicked on certain objects (the Marina
+				// being a prime example).
 				if (nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE && XBITReturnIsWater(nCornerX, nCornerY))
 					nAltitude = ALTMReturnWaterLevel(nCornerX, nCornerY);
 				else
 					nAltitude = ALTMReturnLandAltitude(nCornerX, nCornerY);
 				nExplodeY = iScreenOffSetY + (nCoordScale * (nCornerX + nCornerY)) - nLandAltScale * nAltitude;
+				// For the Arcologies and Braun Llama Dome set dirtyRect.top to 0 to temporarily retain
+				// the object image until the explosion has completed.
 				if (nTileID >= TILE_ARCOLOGY_PLYMOUTH)
 					dirtyRect.top = 0;
-				if (nArea > 0) {
-					int16_t nVertPos = 0;
-					int16_t nAreaPos = nArea;
-					do {
-						L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
-						if (nArea > 0) {
-							int16_t nHorzPos = 0;
-							int16_t nHorzAreaPos = nArea;
-							nAreaExplodeX = nExplodeX;
-							do {
-								if (nArea > 0) {
-									int16_t nAreaExplodeIntX = nAreaExplodeX;
-									int16_t nCurrHorzPos = nHorzPos;
-									int16_t nVertAreaPos = nArea;
-									do {
-										nSpriteID = L_Demolish_GetDustCloudSprite(nSpriteBase);
-										nAreaExplodeY = nCurrHorzPos + nExplodeY - pArrSpriteHeaders[nSpriteID].wHeight - nVertPos;
-										L_Demolish_DoDustCloud(nSpriteID, nAreaExplodeIntX, nAreaExplodeY);
-										nCurrHorzPos -= nCoordScale;
-										nAreaExplodeIntX += nScaleVal;
-										--nVertAreaPos;
-									} while (nVertAreaPos);
-								}
-								nHorzPos += nCoordScale;
-								nAreaExplodeX += nScaleVal;
-								--nHorzAreaPos;
-							} while (nHorzAreaPos);
+				int16_t nCurrPosHeightLimit = 0; // The current height limit for the explosion sprite
+				for (int16_t nAreaPos = nArea; nAreaPos > 0; --nAreaPos) {
+					L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
+					int16_t nStartAreaExplodeX = nExplodeX; // The starting X tile position
+					int16_t nStartPosY = 0;                 // The Y tile starting/reset position
+					for (int16_t nHorzAreaPos = nArea; nHorzAreaPos > 0; --nHorzAreaPos) {
+						nAreaExplodeX = nStartAreaExplodeX; // Get the (new) X position
+						int16_t nCurrPosY = nStartPosY;     // Get the (new) Y position
+						for (int16_t nVertAreaPos = nArea; nVertAreaPos > 0; --nVertAreaPos) {
+							nSpriteID = L_Demolish_GetDustCloudSprite(nSpriteBase);
+							nAreaExplodeY = nCurrPosY + nExplodeY - pArrSpriteHeaders[nSpriteID].wHeight - nCurrPosHeightLimit;
+							L_Demolish_DoDustCloud(nSpriteID, nAreaExplodeX, nAreaExplodeY);
+							nAreaExplodeX += nScaleVal; // Advance the current X position (nScaleVal)
+							nCurrPosY -= nCoordScale;   // Move back on the current Y position (nCoordScale)
 						}
-						Game_FinishProcessObjects();
-						if (pThis == (CSimcityView *)&pSomeWnd)
-							Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
-						else
-							Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
-						UpdateWindow(pThis->m_hWnd);
-						if (!bExplosionSoundPlayed) {
-							Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
-							bExplosionSoundPlayed = true;
-						}
-						Game_YieldToWindows(100);
-						nVertPos += nCoordScale;
-						--nAreaPos;
-					} while (nAreaPos);
+						// Advance the starting positions (nScaleVal and nCoordScale respectively)
+						nStartAreaExplodeX += nScaleVal;
+						nStartPosY += nCoordScale;
+					}
+					Game_FinishProcessObjects();
+					if (pThis == (CSimcityView *)&pSomeWnd)
+						Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
+					else
+						Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
+					UpdateWindow(pThis->m_hWnd);
+					if (!bExplosionSoundPlayed) {
+						Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
+						bExplosionSoundPlayed = true;
+					}
+					Game_YieldToWindows(100);
+					nCurrPosHeightLimit += nCoordScale;
 				}
 			}
 			bTextOverlay = XTXTGetTextOverlayID(nCornerX, nCornerY);
