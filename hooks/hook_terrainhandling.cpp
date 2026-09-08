@@ -209,10 +209,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 		nScaleVal = SCALE_VAL(pThis->wSCVZoomLevel);
 		nSpriteBase = SPRITE_BOUNDARY_MULTIPLIER * pThis->wSCVZoomLevel;
 		Game_DirtyThing(wDisasterObject);
-		ConsoleLog(LOG_DEBUG, "coord(%d, %d) cornercoord(%d, %d) nArea(%d) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, szTileNames[nTileID]);
 		if (nArea == 1 && (GET_TILE_RANGE(nTileID, TILE_SUSPENSION_BRIDGE_START_B, TILE_ELEVATED_POWERLINES) || GET_TILE_RANGE(nTileID, TILE_REINFORCED_BRIDGE_PYLON, TILE_REINFORCED_BRIDGE)) ||
 			nArea == 2 && nHighwayRet > HIGHWAY_LTBR) {
-			ConsoleLog(LOG_DEBUG, "in 'if': coord(%d, %d) cornercoord(%d, %d) nArea(%d) nHighwayRet(%d)[%s] [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, GetHighwayEnumName(nHighwayRet), szTileNames[nTileID]);
 			if (nArea == 2)
 				--nCornerY;
 			// This block here determines the X/Y bridge tile direction as it advances from
@@ -244,7 +242,6 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				// from either the entry or exit point.
 				L_Demolish_ClearEntryExitAndSetTerrain(nCornerX, nCornerY, nArea, true);
 			}
-			ConsoleLog(LOG_DEBUG, "bSingleTile check one: (%d, %d) (%d, %d) nArea(%d) nHighwayRet(%d)[%s] bSingleTile(%c) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, GetHighwayEnumName(nHighwayRet), (bSingleTile ? 'Y' : 'N'), szTileNames[nTileID]);
 			if (nArea == 2 && !L_Demolish_HighwayTileUnitCheck(nTileID)) {
 				L_Demolish_DirtyAndSetTerrainTile(nCornerX, nCornerY);
 				L_Demolish_DirtyAndSetTerrainTile(nCornerX + 1, nCornerY);
@@ -332,7 +329,6 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				// Exit point.
 				L_Demolish_ClearEntryExitAndSetTerrain(nCornerX, nCornerY, nArea, false);
 			}
-			ConsoleLog(LOG_DEBUG, "bSingleTile check two: (%d, %d) (%d, %d) nArea(%d) nHighwayRet(%d)[%s] bSingleTile(%c) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, GetHighwayEnumName(nHighwayRet), (bSingleTile ? 'Y' : 'N'), szTileNames[nTileID]);
 			if (nArea == 2 && !L_Demolish_HighwayTileUnitCheck(nTileID)) {
 				L_Demolish_DirtyAndSetTerrainTile(nCornerX, nCornerY);
 				L_Demolish_DirtyAndSetTerrainTile(nCornerX + 1, nCornerY);
@@ -378,7 +374,6 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			}
 			if (bExplosion)
 				Game_FinishProcessObjects();
-			ConsoleLog(LOG_DEBUG, "else if (pier): (%d, %d) (%d) [%s]\n", nX, nY, nArea, szTileNames[nTileID]);
 		}
 		else if (GET_TILE_RANGE(nTileID, TILE_INFRASTRUCTURE_RUNWAY, TILE_INFRASTRUCTURE_RUNWAYCROSS)) {
 			if (bExplosion)
@@ -413,7 +408,6 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			}
 			if (bExplosion)
 				Game_FinishProcessObjects();
-			ConsoleLog(LOG_DEBUG, "else if (runway): (%d, %d) (%d) [%s]\n", nX, nY, nArea, szTileNames[nTileID]);
 		}
 		else if (GET_TILE_RANGE(nTileID, TILE_TUNNEL_T, TILE_TUNNEL_L)) {
 			// This block determines the X/Y direction based on the specific
@@ -479,7 +473,6 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				L_Demolish_DoDustCloud(nSpriteID, nExplodeX, nExplodeY);
 				Game_FinishProcessObjects();
 			}
-			ConsoleLog(LOG_DEBUG, "else if (tunnel): (%d, %d) (%d) bExplosion(%c) (pThis == (CSimcityView *)&pSomeWnd)(%c) [%s]\n", nX, nY, nArea, (bExplosion ? 'Y' : 'N'), ((pThis == (CSimcityView *)&pSomeWnd) ? 'Y' : 'N'), szTileNames[nTileID]);
 		}
 		else {
 			if (bExplosion) {
@@ -604,9 +597,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				if (GetTerrainTileID(nCornerX, nCornerY))
 					Game_SetTerrainTile(nCornerX, nCornerY);
 			}
-			ConsoleLog(LOG_DEBUG, "else (everything else): (%d, %d) (%d) bGeneralUpdate(%c) bExplosion(%c) (pThis == (CSimcityView *)&pSomeWnd)(%c) [%s]\n", nX, nY, nArea, (bGeneralUpdate ? 'Y' : 'N'), (bExplosion ? 'Y' : 'N'), ((pThis == (CSimcityView *)&pSomeWnd) ? 'Y' : 'N'), szTileNames[nTileID]);
 		}
-		ConsoleLog(LOG_DEBUG, "Demolish(): (%d, %d) (%d) bGeneralUpdate(%c) bExplosion(%c) (pThis == (CSimcityView *)&pSomeWnd)(%c)\n", nX, nY, nArea, (bGeneralUpdate ? 'Y' : 'N'), (bExplosion ? 'Y' : 'N'), ((pThis == (CSimcityView *)&pSomeWnd) ? 'Y' : 'N'));
 		// Except for when building area explosion dust clouds are generated,
 		// all other update and sound play situations occur here.
 		if (bGeneralUpdate) {
