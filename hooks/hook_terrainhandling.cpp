@@ -14,6 +14,8 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
+#define SOUND_YIELD_TICS 60
+
 #define VALID_BRIDGETYPEAREA_NOTSINGLE -1
 #define VALID_BRIDGETYPEAREA_NO        0
 #define VALID_BRIDGETYPEAREA_YES       1
@@ -107,6 +109,22 @@ static void L_RunwayCheckStackPush(mapcoord_t x, mapcoord_t y) {
 	if (nTileID) {
 		if (GET_TILE_RANGE(nTileID, TILE_INFRASTRUCTURE_RUNWAY, TILE_INFRASTRUCTURE_RUNWAYCROSS))
 			Game_StackPush(x, y);
+	}
+}
+
+static void L_Demolish_UpdateMainWindow(CSimcityView *pSCView) {
+	if (pSCView == (CSimcityView *)&pSomeWnd)
+		Game_SimcityView_MainWindowUpdate(pSCView, NULL, TRUE);
+	else
+		Game_SimcityView_MainWindowUpdate(pSCView, &dirtyRect, TRUE);
+	UpdateWindow(pSCView->m_hWnd);
+	Game_YieldToWindows(SOUND_YIELD_TICS);
+}
+
+static void L_Demolish_PlayExplosionSound(CSimcityAppPrimary *pSCApp) {
+	if (pSCApp->dwSCAGameSound) {
+		Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
+		Game_YieldToWindows(SOUND_YIELD_TICS);
 	}
 }
 
@@ -480,7 +498,6 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				// the object image until the explosion has completed.
 				if (nTileID >= TILE_ARCOLOGY_PLYMOUTH)
 					dirtyRect.top = 0;
-				bool bAlreadyPlayed = false;
 				int16_t nCurrPosHeightLimit = 0; // The current height limit for the explosion sprite
 				for (int16_t nAreaPos = nArea; nAreaPos > 0; --nAreaPos) {
 					L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
@@ -501,24 +518,16 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 						nStartPosY += nCoordScale;
 					}
 					Game_FinishProcessObjects();
+					bGeneralUpdate = false;
 					// This needs to be here, otherwise the explosive effect is
 					// truncated.
-					if (pThis == (CSimcityView *)&pSomeWnd)
-						Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
-					else
-						Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
-					UpdateWindow(pThis->m_hWnd);
-					if (!bAlreadyPlayed) {
-						Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
-						bAlreadyPlayed = true;
-					}
-					Game_YieldToWindows(100);
+					L_Demolish_UpdateMainWindow(pThis);
 					// Set bGeneralUpdate to false in-order to not
-					// hit the general version of the above (DrawHouse will still
-					// be called at the end as normal).
-					bGeneralUpdate = false;
+					// hit the general version of UpdateMainWindow
+					// (DrawHouse will still be called at the end as normal).
 					nCurrPosHeightLimit += nCoordScale;
 				}
+				L_Demolish_PlayExplosionSound(pSCApp);
 			}
 			// This block here handles the following:
 			// 1) During the demolition of certain rewards it toggles the grant back to available.
@@ -602,13 +611,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 		// all other update and sound play situations occur here.
 		if (bGeneralUpdate) {
 			if (bExplosion) {
-				if (pThis == (CSimcityView *)&pSomeWnd)
-					Game_SimcityView_MainWindowUpdate(pThis, NULL, TRUE);
-				else
-					Game_SimcityView_MainWindowUpdate(pThis, &dirtyRect, TRUE);
-				UpdateWindow(pThis->m_hWnd);
-				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
-				Game_YieldToWindows(100);
+				L_Demolish_UpdateMainWindow(pThis);
+				L_Demolish_PlayExplosionSound(pSCApp);
 			}
 		}
 		L_Demolish_UpdHouse(pThis, nX, nY, nArea);
