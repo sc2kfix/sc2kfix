@@ -400,6 +400,12 @@ HOOKEXT BOOL WritePrivateProfileIntA(const char *section, const char *name, int 
 	return WritePrivateProfileStringA(section, name, szBuf, ini_name);
 }
 
+HOOKEXT const char* GetHighwayEnumName(int iHighwayRet) {
+	if (iHighwayRet < HIGHWAY_INVALID || iHighwayRet > HIGHWAY_COUNT)
+		return "(invalid iHighwayRet)";
+	return szHighwayEnums[iHighwayRet + 1];
+}
+
 HOOKEXT const char* GetOnIdleStateEnumName(int iState) {
 	if (iState < ONIDLE_STATE_INGAME || iState >= ONIDLE_STATE_COUNT)
 		return "(invalid iState)";

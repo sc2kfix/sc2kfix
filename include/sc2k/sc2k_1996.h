@@ -2199,12 +2199,38 @@ enum {
 	XTHG_DIRECTION_COUNT
 };
 
+enum {
+	HIGHWAY_INVALID = -1,
+	HIGHWAY_XOVER_TB,
+	HIGHWAY_XOVER_LR,
+	HIGHWAY_TB,
+	HIGHWAY_LR,
+	HIGHWAY_HTB,
+	HIGHWAY_LHR,
+	HIGHWAY_THB,
+	HIGHWAY_HLR,
+	HIGHWAY_BR,
+	HIGHWAY_BL,
+	HIGHWAY_TL,
+	HIGHWAY_TR,
+	HIGHWAY_LTBR,
+	HIGHWAY_BRIDGE_LR,
+	HIGHWAY_BRIDGE_TB,
+	HIGHWAY_BRIDGE_REINFORCED,
+	HIGHWAY_BRIDGE_REINFORCED_FLIP,
+
+	HIGHWAY_COUNT
+};
+
+#define HIGHWAY_MAX (HIGHWAY_COUNT + 1)
+
 HOOKEXT const char* szTileNames[256];
 HOOKEXT const char* szSpriteNames[SPRITE_ENTRY_COUNT];
 HOOKEXT const char* szInternalSpriteName[SPRITE_COUNT];
 HOOKEXT const char* szUndergroundNames[36];
 HOOKEXT const char* szThingNames[XTHG_COUNT];
 HOOKEXT const char* szThingDirectionNames[XTHG_DIRECTION_COUNT];
+HOOKEXT const char* szHighwayEnums[HIGHWAY_MAX];
 HOOKEXT const char* szOnIdleStateEnums[ONIDLE_STATE_MAX];
 HOOKEXT const char* szOnIdleInitialDialogEnums[ONIDLE_INITIALDIALOG_MAX];
 
@@ -3192,7 +3218,7 @@ GAMECALL(0x40146A, void, __cdecl, LoadNamedEntryFromRsrcOffset, char *, int, int
 GAMECALL(0x40147E, int, __thiscall, Graphics_CreateWithPalette, CGraphics *, LONG, LONG)
 GAMECALL(0x40148D, DWORD, __thiscall, Sound_IsMusicPlaying, CSound *)
 GAMECALL(0x4014B0, void, __cdecl, InitStack, __int16, __int16)
-GAMECALL(0x4014C9, __int16, __cdecl, ValidateHighwayTilePlacementType, __int16, __int16)
+GAMECALL(0x4014C9, __int16, __cdecl, GetHighwayTilePlacementType, __int16, __int16)
 GAMECALL(0x4014CE, int, __cdecl, SpawnAeroplane, __int16 x, __int16 y, __int16 iDirection)
 GAMECALL(0x4014EC, void, __cdecl, CityToolPlaceNature, CMFC3XPoint)
 GAMECALL(0x4014F1, int, __thiscall, SimcityView_KillCursor, CSimcityView *pThis)
@@ -3476,7 +3502,7 @@ GAMECALL_MAIN(0x430C00, void, __stdcall, ResetLabelStringState)
 GAMECALL_MAIN(0x44D1B0, void, __cdecl, QuerySpecificItem, __int16, __int16)
 GAMECALL_MAIN(0x458D40, void, __thiscall, SimcityView_Demolish, CSimcityView *, __int16, __int16, BOOL)
 GAMECALL_MAIN(0x45CF10, void, __stdcall, SimulationStartDisaster, void)
-GAMECALL_MAIN(0x463C40, __int16, __cdecl, ValidateHighwayTilePlacementType, __int16, __int16)
+GAMECALL_MAIN(0x463C40, __int16, __cdecl, GetHighwayTilePlacementType, __int16, __int16)
 GAMECALL_MAIN(0x4719A0, void, __cdecl, QueryGeneralItem, __int16, __int16)
 GAMECALL_MAIN(0x477880, void, __thiscall, NewspaperDialog_OnInitDialog, CNewspaperDialog *)
 GAMECALL_MAIN(0x4815E0, INT_PTR, __thiscall, GameDialog_DoModal, CGameDialog *)

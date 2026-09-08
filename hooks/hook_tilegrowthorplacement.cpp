@@ -1914,81 +1914,76 @@ extern "C" void __cdecl Hook_PlacePowerLinesAtCoordinates(mapcoord_t x, mapcoord
 	}
 }
 
-static bool CheckForHighwayCrossoverTraversal(mapcoord_t x, mapcoord_t y, bool bFinal, int16_t *nOutHighwayRet) {
+static bool GetHighwayReturnType(mapcoord_t x, mapcoord_t y, bool bFinal, int16_t *nOutHighwayRet) {
 	uint8_t nTileID;
 
 	nTileID = GetTileID(x, y);
 	if (!GET_TILE_RANGE(nTileID, TILE_CROSSOVER_HIGHWAYLR_ROADTB, TILE_CROSSOVER_HIGHWAYTB_POWERLR)) {
 		if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE && XBITReturnIsWater(x, y)) {
-			*nOutHighwayRet = 14 - (nTileID == TILE_HIGHWAY_LR);
-			ConsoleLog(LOG_DEBUG, "'if water' CheckForHighwayCrossoverTraversal(%d, %d, %c): nOutHighwayRet(%d) nTileID(0x%02X)[%s]\n", x, y, (bFinal ? 'Y' : 'N'), *nOutHighwayRet, nTileID, szTileNames[nTileID]);
+			// Highway Bridge handling (not Reinforced); known results:
+			// 13 - HIGHWAY_BRIDGE_LR
+			// 14 - HIGHWAY_BRIDGE_TB
+			*nOutHighwayRet = HIGHWAY_BRIDGE_TB - (nTileID == TILE_HIGHWAY_LR);
 			return true;
 		}
 		else {
 			if (bFinal) {
+				// Standard non-crossover Highway 1x1 tile handling; known results:
+				// 2 - HIGHWAY_TB
+				// 3 - HIGHWAY_LR
 				if (GET_TILE_RANGE(nTileID, TILE_HIGHWAY_LR, TILE_HIGHWAY_TB))
 					*nOutHighwayRet = (nTileID & 1) + 2;
 				else
-					*nOutHighwayRet = -1;
-				ConsoleLog(LOG_DEBUG, "'if final' CheckForHighwayCrossoverTraversal(%d, %d, %c): nOutHighwayRet(%d) nTileID(0x%02X)[%s]\n", x, y, (bFinal ? 'Y' : 'N'), *nOutHighwayRet, nTileID, szTileNames[nTileID]);
+					*nOutHighwayRet = HIGHWAY_INVALID;
 			}
-			else
-				ConsoleLog(LOG_DEBUG, "CheckForHighwayCrossoverTraversal(%d, %d, %c): NEXT nTileID(0x%02X)[%s]\n", x, y, (bFinal ? 'Y' : 'N'), nTileID, szTileNames[nTileID]);
 			return false;
 		}
 	}
 	else {
+		// Highway powerline/rail/road crossover case; known results:
+		// 0 - HIGHWAY_XOVER_TB
+		// 1 - HIGHWAY_XOVER_LR
 		*nOutHighwayRet = nTileID & 1;
-		ConsoleLog(LOG_DEBUG, "'else' CheckForHighwayCrossoverTraversal(%d, %d, %c): nOutHighwayRet(%d) nTileID(0x%02X)[%s]\n", x, y, (bFinal ? 'Y' : 'N'), *nOutHighwayRet, nTileID, szTileNames[nTileID]);
 		return true;
 	}
 }
 
-extern "C" __int16 __cdecl Hook_ValidateHighwayTilePlacementType(mapcoord_t x, mapcoord_t y) {
+extern "C" __int16 __cdecl Hook_GetHighwayTilePlacementType(mapcoord_t x, mapcoord_t y) {
 	int16_t nHighwayRet;
 	uint8_t nTileID;
 
-	if (!bWeatherEffects) {
-		nHighwayRet = GameMain_ValidateHighwayTilePlacementType(x, y);
-		if (nHighwayRet >= 0)
-			ConsoleLog(LOG_DEBUG, "(NATIVE) ValidateHighwayTilePlacementType(%d, %d): nHighwayRet(%d)\n", x, y, nHighwayRet);
-		return nHighwayRet;
-	}
-
-	nHighwayRet = 0;
+	nHighwayRet = HIGHWAY_XOVER_TB;
 	if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE) {
-		nHighwayRet = -1;
+		nHighwayRet = HIGHWAY_INVALID;
 		nTileID = GetTileID(x, y);
 		if (GET_TILE_RANGE(nTileID, TILE_HIGHWAY_HTB, TILE_REINFORCED_BRIDGE) ||
 			GET_TILE_RANGE(nTileID, TILE_HIGHWAY_LR, TILE_CROSSOVER_HIGHWAYTB_POWERLR)) {
 			if (XZONCornerAbsoluteCheckMask(x, y, CORNER_ALL)) {
-				if (!CheckForHighwayCrossoverTraversal(x, y, false, &nHighwayRet)) {
-					if (!CheckForHighwayCrossoverTraversal(x + 1, y, false, &nHighwayRet)) {
-						if (!CheckForHighwayCrossoverTraversal(x + 1, y + 1, false, &nHighwayRet))
-							CheckForHighwayCrossoverTraversal(x, y + 1, true, &nHighwayRet);
+				// This section deals with the handling of all 1x1 tiles that makes up
+				// a 2x2 highway unit. Handling cases:
+				// 1) Highway placement that doesn't result in a given tile being set to its singular 2x2 equivalent
+				// 2) Highway powerline/rail/road crossovers
+				// 3) Standard Highway Bridges (not Reinforced)
+				if (!GetHighwayReturnType(x, y, false, &nHighwayRet)) {
+					if (!GetHighwayReturnType(x + 1, y, false, &nHighwayRet)) {
+						if (!GetHighwayReturnType(x + 1, y + 1, false, &nHighwayRet))
+							GetHighwayReturnType(x, y + 1, true, &nHighwayRet);
 					}
 				}
-				ConsoleLog(LOG_DEBUG, "ValidateHighwayTilePlacementType() - 'if'\n");
 			}
 			else {
-				// This section could well be to do with objects that are already present,
-				// specifically the presence of roads, powerlines, rails, etc and then
-				// attempts to validate placement; this could potentially be the root
-				// of the weirdness that can occur when you have 3 connected powerlines
-				// present where a single highway tile will be placed (one segment ends
-				// up being flipped).
+				// This section handles the following:
+				// 1) Highway tiles that are singular 2x2 objects
+				// 2) Reinforced Highway Bridge tiles
 				nHighwayRet = nTileID - TILE_ONRAMP_TL;
-				if (nHighwayRet >= 13) {
+				if (nHighwayRet > HIGHWAY_LTBR) {
 					if (y + 1 < MAP_EDGE_MIN || y + 1 > MAP_EDGE_MAX)
-						nHighwayRet = 15;
+						nHighwayRet = HIGHWAY_BRIDGE_REINFORCED;
 					else
-						nHighwayRet = 16 - (!XBITReturnIsFlipped(x, y + 1));
+						nHighwayRet = HIGHWAY_BRIDGE_REINFORCED_FLIP - (!XBITReturnIsFlipped(x, y + 1));
 				}
-				ConsoleLog(LOG_DEBUG, "ValidateHighwayTilePlacementType() - 'else'\n");
 			}
 		}
-		if (nHighwayRet >= 0)
-			ConsoleLog(LOG_DEBUG, "ValidateHighwayTilePlacementType(%d, %d): nHighwayRet(%d) nTileID(0x%02X)[%s]\n", x, y, nHighwayRet, nTileID, szTileNames[nTileID]);
 	}
 	return nHighwayRet;
 }
@@ -2234,9 +2229,9 @@ void InstallTileGrowthOrPlacementHandlingHooks_SC2K1996(void) {
 	SafeVirtualProtect((LPVOID)0x402725, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x402725, Hook_PlacePowerLinesAtCoordinates);
 
-	// Hook for ValidateHighwayTilePlacementType
+	// Hook for GetHighwayTilePlacementType
 	SafeVirtualProtect((LPVOID)0x4014C9, 5, PAGE_EXECUTE_READWRITE);
-	NEWJMP((LPVOID)0x4014C9, Hook_ValidateHighwayTilePlacementType);
+	NEWJMP((LPVOID)0x4014C9, Hook_GetHighwayTilePlacementType);
 
 	// Hook into the ItemPlacementCheck function
 	SafeVirtualProtect((LPVOID)0x4027F2, 5, PAGE_EXECUTE_READWRITE);

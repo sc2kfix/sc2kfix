@@ -55,9 +55,9 @@ static bool L_Demolish_IsValidSingleBridgeTypeTile(mapcoord_t cornerX, mapcoord_
 }
 
 static int L_Demolish_IsValidBridgeTypeArea(mapcoord_t cornerX, mapcoord_t cornerY, int16_t nArea, int16_t *nOutHighwayRet) {
-	int16_t nHighwayRet = Game_ValidateHighwayTilePlacementType(cornerX, cornerY);
+	int16_t nHighwayRet = Game_GetHighwayTilePlacementType(cornerX, cornerY);
 	*nOutHighwayRet = nHighwayRet;
-	if (nArea != 2 || nHighwayRet < 13) {
+	if (nArea != 2 || nHighwayRet < HIGHWAY_BRIDGE_LR) {
 		if (nArea != 1) {
 			return VALID_BRIDGETYPEAREA_NOTSINGLE;
 		}
@@ -174,7 +174,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 	CMFC3XPoint pt;
 	coords_w_t tileCoords;
 
-#if 1
+#if 0
 	// Debugging and testing.
 	if (!bWeatherEffects) {
 		GameMain_SimcityView_Demolish(pThis, x, y, bExplosion);
@@ -193,7 +193,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 		nCornerX = nX;
 		nCornerY = nY;
 		nArea = Game_FindCorner(&nCornerX, &nCornerY, nTileID);
-		nHighwayRet = (nArea == 2) ? Game_ValidateHighwayTilePlacementType(nCornerX, nCornerY - 1) : -1;
+		nHighwayRet = (nArea == 2) ? Game_GetHighwayTilePlacementType(nCornerX, nCornerY - 1) : HIGHWAY_INVALID;
 		nCoordScale = COORDSCALE_VAL(pThis->wSCVZoomLevel);
 		nLandAltScale = LANDALTSCALE_VAL(pThis->wSCVZoomLevel);
 		nScaleVal = SCALE_VAL(pThis->wSCVZoomLevel);
@@ -201,8 +201,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 		Game_DirtyThing(wDisasterObject);
 		ConsoleLog(LOG_DEBUG, "coord(%d, %d) cornercoord(%d, %d) nArea(%d) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, szTileNames[nTileID]);
 		if (nArea == 1 && (GET_TILE_RANGE(nTileID, TILE_SUSPENSION_BRIDGE_START_B, TILE_ELEVATED_POWERLINES) || GET_TILE_RANGE(nTileID, TILE_REINFORCED_BRIDGE_PYLON, TILE_REINFORCED_BRIDGE)) ||
-			nArea == 2 && nHighwayRet >= 13) {
-			ConsoleLog(LOG_DEBUG, "in 'if': coord(%d, %d) cornercoord(%d, %d) nArea(%d) nHighwayRet(%d) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, szTileNames[nTileID]);
+			nArea == 2 && nHighwayRet > HIGHWAY_LTBR) {
+			ConsoleLog(LOG_DEBUG, "in 'if': coord(%d, %d) cornercoord(%d, %d) nArea(%d) nHighwayRet(%d)[%s] [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, GetHighwayEnumName(nHighwayRet), szTileNames[nTileID]);
 			if (nArea == 2)
 				--nCornerY;
 			L_Demolish_GetMoveDirection(nCornerX, nCornerY, nArea, nHighwayRet, &nMoveX, &nMoveY);
@@ -223,7 +223,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				// from either the entry or exit point.
 				L_Demolish_ClearEntryExitAndSetTerrain(nCornerX, nCornerY, true);
 			}
-			ConsoleLog(LOG_DEBUG, "bSingleTile check one: (%d, %d) (%d, %d) nArea(%d) nHighwayRet(%d) bSingleTile(%c) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, (bSingleTile ? 'Y' : 'N'), szTileNames[nTileID]);
+			ConsoleLog(LOG_DEBUG, "bSingleTile check one: (%d, %d) (%d, %d) nArea(%d) nHighwayRet(%d)[%s] bSingleTile(%c) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, GetHighwayEnumName(nHighwayRet), (bSingleTile ? 'Y' : 'N'), szTileNames[nTileID]);
 			if (nArea == 2 && !L_Demolish_HighwayTileUnitCheck(nTileID)) {
 				L_Demolish_DirtyAndSetTerrainTile(nCornerX, nCornerY);
 				L_Demolish_DirtyAndSetTerrainTile(nCornerX + 1, nCornerY);
@@ -245,7 +245,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					break;
 				}
 				Game_DirtyTile(nCornerX, nCornerY);
-				if (nArea == 2 && nHighwayRet < 15) {
+				if (nArea == 2 && nHighwayRet < HIGHWAY_BRIDGE_REINFORCED) {
 					Game_DirtyTile(nCornerX, nCornerY + 1);
 					Game_DirtyTile(nCornerX + 1, nCornerY + 1);
 					Game_DirtyTile(nCornerX + 1, nCornerY);
@@ -302,7 +302,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				// Exit point.
 				L_Demolish_ClearEntryExitAndSetTerrain(nCornerX, nCornerY, false);
 			}
-			ConsoleLog(LOG_DEBUG, "bSingleTile check two: (%d, %d) (%d, %d) nArea(%d) nHighwayRet(%d) bSingleTile(%c) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, (bSingleTile ? 'Y' : 'N'), szTileNames[nTileID]);
+			ConsoleLog(LOG_DEBUG, "bSingleTile check two: (%d, %d) (%d, %d) nArea(%d) nHighwayRet(%d)[%s] bSingleTile(%c) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, GetHighwayEnumName(nHighwayRet), (bSingleTile ? 'Y' : 'N'), szTileNames[nTileID]);
 			if (nArea == 2 && !L_Demolish_HighwayTileUnitCheck(nTileID)) {
 				L_Demolish_DirtyAndSetTerrainTile(nCornerX, nCornerY);
 				L_Demolish_DirtyAndSetTerrainTile(nCornerX + 1, nCornerY);

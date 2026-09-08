@@ -509,6 +509,7 @@ HOOKEXT const char* GetLowHighScale(BYTE bScale);
 HOOKEXT bool FileExists(const char* name);
 HOOKEXT const char* GetFileBaseName(const char* szPath);
 HOOKEXT const char* GetModsFolderPath(void);
+HOOKEXT const char* GetHighwayEnumName(int iHighwayRet);
 HOOKEXT const char* GetOnIdleStateEnumName(int iState);
 HOOKEXT const char* GetOnIdleInitialDialogEnumName(int iInitialDialogState);
 //HBITMAP CreateSpriteBitmap(int iSpriteID);
