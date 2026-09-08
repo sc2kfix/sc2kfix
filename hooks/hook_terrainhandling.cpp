@@ -540,7 +540,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				Game_SetTerrainTile(nCornerX + 1, nCornerY - 1);
 				Game_SetTerrainTile(nCornerX, nCornerY - 1);
 			}
-			if (nArea == 1 && nTileID <= TILE_SUBTORAIL_L) {
+			if (nArea == 1 && nTileID < TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1) {
 				if (GetTerrainTileID(nCornerX, nCornerY))
 					Game_SetTerrainTile(nCornerX, nCornerY);
 			}
