@@ -1914,14 +1914,14 @@ extern "C" void __cdecl Hook_PlacePowerLinesAtCoordinates(mapcoord_t x, mapcoord
 	}
 }
 
-static bool CheckForHighwayCrossoverTraversal(mapcoord_t x, mapcoord_t y, bool bFinal, __int16 *nOutHighwayRet) {
-	BYTE nTileID;
+static bool CheckForHighwayCrossoverTraversal(mapcoord_t x, mapcoord_t y, bool bFinal, int16_t *nOutHighwayRet) {
+	uint8_t nTileID;
 
 	nTileID = GetTileID(x, y);
 	if (!GET_TILE_RANGE(nTileID, TILE_CROSSOVER_HIGHWAYLR_ROADTB, TILE_CROSSOVER_HIGHWAYTB_POWERLR)) {
 		if (x < GAME_MAP_SIZE && y < GAME_MAP_SIZE && XBITReturnIsWater(x, y)) {
 			*nOutHighwayRet = 14 - (nTileID == TILE_HIGHWAY_LR);
-			ConsoleLog(LOG_DEBUG, "'if water' CheckForHighwayCrossoverTraversal(%d, %d, %c): nOutHighwayRet(%d)\n", x, y, (bFinal ? 'Y' : 'N'), *nOutHighwayRet);
+			ConsoleLog(LOG_DEBUG, "'if water' CheckForHighwayCrossoverTraversal(%d, %d, %c): nOutHighwayRet(%d) nTileID(0x%02X)[%s]\n", x, y, (bFinal ? 'Y' : 'N'), *nOutHighwayRet, nTileID, szTileNames[nTileID]);
 			return true;
 		}
 		else {
@@ -1930,23 +1930,23 @@ static bool CheckForHighwayCrossoverTraversal(mapcoord_t x, mapcoord_t y, bool b
 					*nOutHighwayRet = (nTileID & 1) + 2;
 				else
 					*nOutHighwayRet = -1;
-				ConsoleLog(LOG_DEBUG, "'if final' CheckForHighwayCrossoverTraversal(%d, %d, %c): nOutHighwayRet(%d)\n", x, y, (bFinal ? 'Y' : 'N'), *nOutHighwayRet);
+				ConsoleLog(LOG_DEBUG, "'if final' CheckForHighwayCrossoverTraversal(%d, %d, %c): nOutHighwayRet(%d) nTileID(0x%02X)[%s]\n", x, y, (bFinal ? 'Y' : 'N'), *nOutHighwayRet, nTileID, szTileNames[nTileID]);
 			}
 			else
-				ConsoleLog(LOG_DEBUG, "CheckForHighwayCrossoverTraversal(%d, %d, %c): NEXT\n", x, y, (bFinal ? 'Y' : 'N'));
+				ConsoleLog(LOG_DEBUG, "CheckForHighwayCrossoverTraversal(%d, %d, %c): NEXT nTileID(0x%02X)[%s]\n", x, y, (bFinal ? 'Y' : 'N'), nTileID, szTileNames[nTileID]);
 			return false;
 		}
 	}
 	else {
 		*nOutHighwayRet = nTileID & 1;
-		ConsoleLog(LOG_DEBUG, "'else' CheckForHighwayCrossoverTraversal(%d, %d, %c): nOutHighwayRet(%d)\n", x, y, (bFinal ? 'Y' : 'N'), *nOutHighwayRet);
+		ConsoleLog(LOG_DEBUG, "'else' CheckForHighwayCrossoverTraversal(%d, %d, %c): nOutHighwayRet(%d) nTileID(0x%02X)[%s]\n", x, y, (bFinal ? 'Y' : 'N'), *nOutHighwayRet, nTileID, szTileNames[nTileID]);
 		return true;
 	}
 }
 
 extern "C" __int16 __cdecl Hook_ValidateHighwayTilePlacementType(mapcoord_t x, mapcoord_t y) {
-	__int16 nHighwayRet;
-	BYTE nTileID;
+	int16_t nHighwayRet;
+	uint8_t nTileID;
 
 	if (!bWeatherEffects) {
 		nHighwayRet = GameMain_ValidateHighwayTilePlacementType(x, y);
@@ -1968,6 +1968,7 @@ extern "C" __int16 __cdecl Hook_ValidateHighwayTilePlacementType(mapcoord_t x, m
 							CheckForHighwayCrossoverTraversal(x, y + 1, true, &nHighwayRet);
 					}
 				}
+				ConsoleLog(LOG_DEBUG, "ValidateHighwayTilePlacementType() - 'if'\n");
 			}
 			else {
 				// This section could well be to do with objects that are already present,
@@ -1983,10 +1984,11 @@ extern "C" __int16 __cdecl Hook_ValidateHighwayTilePlacementType(mapcoord_t x, m
 					else
 						nHighwayRet = 16 - (!XBITReturnIsFlipped(x, y + 1));
 				}
+				ConsoleLog(LOG_DEBUG, "ValidateHighwayTilePlacementType() - 'else'\n");
 			}
 		}
 		if (nHighwayRet >= 0)
-			ConsoleLog(LOG_DEBUG, "ValidateHighwayTilePlacementType(%d, %d): nHighwayRet(%d)\n", x, y, nHighwayRet);
+			ConsoleLog(LOG_DEBUG, "ValidateHighwayTilePlacementType(%d, %d): nHighwayRet(%d) nTileID(0x%02X)[%s]\n", x, y, nHighwayRet, nTileID, szTileNames[nTileID]);
 	}
 	return nHighwayRet;
 }
