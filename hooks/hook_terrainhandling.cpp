@@ -54,8 +54,8 @@ static bool L_Demolish_IsValidSingleBridgeTypeTile(mapcoord_t cornerX, mapcoord_
 	return (GET_TILE_RANGE(nTileID, TILE_SUSPENSION_BRIDGE_START_B, TILE_ELEVATED_POWERLINES)) ? true : false;
 }
 
-static int L_Demolish_IsValidBridgeTypeArea(mapcoord_t cornerX, mapcoord_t cornerY, __int16 nArea, __int16 *nOutHighwayRet) {
-	__int16 nHighwayRet = Game_ValidateHighwayTilePlacementType(cornerX, cornerY);
+static int L_Demolish_IsValidBridgeTypeArea(mapcoord_t cornerX, mapcoord_t cornerY, int16_t nArea, int16_t *nOutHighwayRet) {
+	int16_t nHighwayRet = Game_ValidateHighwayTilePlacementType(cornerX, cornerY);
 	*nOutHighwayRet = nHighwayRet;
 	if (nArea != 2 || nHighwayRet < 13) {
 		if (nArea != 1) {
@@ -152,8 +152,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 	__asm mov [pThis], ecx
 
 	CSimcityAppPrimary *pSCApp;
-	BYTE *pLockedBits = NULL;
-	BYTE *pLockedBaseBits = NULL;
+	uint8_t *pLockedBits = NULL;
+	uint8_t *pLockedBaseBits = NULL;
 	bool bSingleTile;
 	int nValidBridgeType;
 	mapcoord_t nX, nY;
@@ -169,7 +169,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 	mapcoord_t nAreaCornerX, nAreaCornerY;
 	mapcoord_t nOffsetX, nOffsetY;
 	int16_t nRubbleTile;
-	BYTE bTextOverlay;
+	uint8_t bTextOverlay;
 	CMFC3XPoint pt;
 	coords_w_t tileCoords;
 
@@ -498,14 +498,14 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			if (nTileID == TILE_SERVICES_STADIUM &&
 				bTextOverlay >= MIN_SIM_TEXT_ENTRIES &&
 				bTextOverlay <= MAX_SIM_TEXT_ENTRIES) {
-				BYTE bMicrosimEntry = MICROSIMID_ENTRY(bTextOverlay);
+				uint8_t bMicrosimEntry = MICROSIMID_ENTRY(bTextOverlay);
 				if (GetMicroSimulatorTileID(bMicrosimEntry) == nTileID)
 					wStadiumSportsTeams += -1 << GetMicroSimulatorStat2(bMicrosimEntry);
 			}
-			for (__int16 nPosX = 0; nArea > nPosX; ++nPosX) {
-				for (__int16 nPosY = 0; nArea > nPosY; ++nPosY) {
-					__int16 nCurrX = nPosX + nCornerX;
-					__int16 nCurrY = nCornerY - nPosY;
+			for (int16_t nPosX = 0; nArea > nPosX; ++nPosX) {
+				for (int16_t nPosY = 0; nArea > nPosY; ++nPosY) {
+					mapcoord_t nCurrX = nPosX + nCornerX;
+					mapcoord_t nCurrY = nCornerY - nPosY;
 					if (nCurrX < GAME_MAP_SIZE && nCurrY < GAME_MAP_SIZE) {
 						nRubbleTile = (GetTerrainTileID(nCurrX, nCurrY)) ? TILE_CLEAR : (rand() & 3) + 1;
 						Game_PlaceTile(nCurrX, nCurrY, nRubbleTile);
