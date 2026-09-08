@@ -4609,6 +4609,8 @@ static inline void XBITClearBits(__int16 x, __int16 y, BYTE bitMask) {
 	map_XBIT_t *pXBIT = GetXBIT(x, y);
 	if (!pXBIT)
 		return;
+	if (bitMask == 0)
+		return;
 #if USE_OLD_XBIT_HANDLING
 	*(BYTE *)&pXBIT->b &= ~(bitMask);
 #else
@@ -4634,6 +4636,8 @@ static inline void XBITClearBits(__int16 x, __int16 y, BYTE bitMask) {
 static inline void XBITSetBits(__int16 x, __int16 y, BYTE bitMask) {
 	map_XBIT_t *pXBIT = GetXBIT(x, y);
 	if (!pXBIT)
+		return;
+	if (bitMask == 0)
 		return;
 #if USE_OLD_XBIT_HANDLING
 	*(BYTE *)&pXBIT->b |= (bitMask);

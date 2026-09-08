@@ -82,7 +82,7 @@ static bool L_Demolish_HighwayTileUnitCheck(uint8_t nTileID) {
 // water type.
 // The bClearFlipped boolean is only set to true on the first call (likely to account for the
 // entry or exit point being a flipped tile).
-static void L_Demolish_ClearEntryExitAndSetTerrain(mapcoord_t cornerX, mapcoord_t cornerY, bool bClearFlipped) {
+static void L_Demolish_ClearEntryExitAndSetTerrain(mapcoord_t cornerX, mapcoord_t cornerY, int16_t nArea, bool bClearFlipped) {
 	if (cornerX >= GAME_MAP_SIZE || cornerY >= GAME_MAP_SIZE || !XBITReturnIsWater(cornerX, cornerY)) {
 		Game_DirtyTile(cornerX, cornerY);
 		Game_PlaceTile(cornerX, cornerY, TILE_CLEAR);
@@ -94,10 +94,17 @@ static void L_Demolish_ClearEntryExitAndSetTerrain(mapcoord_t cornerX, mapcoord_
 			}
 		}
 		Game_SetTerrainTile(cornerX, cornerY);
-		if (bClearFlipped) {
-			if (cornerX < GAME_MAP_SIZE && cornerY < GAME_MAP_SIZE)
-				XBITClearBits(cornerX, cornerY, XBIT_FLIPPED);
+		uint8_t xbitMask = 0;
+		if (bClearFlipped)
+			xbitMask = XBIT_FLIPPED;
+		if (nArea == 1) {
+			// Added this here so you have the ability to remove
+			// the relevant power bits.
+			if (GetAsyncKeyState(VK_MENU) < 0)
+				xbitMask |= (XBIT_POWERED | XBIT_POWERABLE);
 		}
+		if (cornerX < GAME_MAP_SIZE && cornerY < GAME_MAP_SIZE)
+			XBITClearBits(cornerX, cornerY, xbitMask);
 	}
 }
 
@@ -221,7 +228,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				// Entry point.
 				// bClearFlipped set to true to unset the 'flip' XBIT attribute
 				// from either the entry or exit point.
-				L_Demolish_ClearEntryExitAndSetTerrain(nCornerX, nCornerY, true);
+				L_Demolish_ClearEntryExitAndSetTerrain(nCornerX, nCornerY, nArea, true);
 			}
 			ConsoleLog(LOG_DEBUG, "bSingleTile check one: (%d, %d) (%d, %d) nArea(%d) nHighwayRet(%d)[%s] bSingleTile(%c) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, GetHighwayEnumName(nHighwayRet), (bSingleTile ? 'Y' : 'N'), szTileNames[nTileID]);
 			if (nArea == 2 && !L_Demolish_HighwayTileUnitCheck(nTileID)) {
@@ -264,7 +271,14 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				if (nCornerX >= MAP_EDGE_MIN) {
 					if (nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE) {
 						XZONClearCorners(nCornerX, nCornerY);
-						XBITClearBits(nCornerX, nCornerY, XBIT_FLIPPED);
+						uint8_t xbitMask = XBIT_FLIPPED;
+						if (nArea == 1) {
+							// Added this here so you have the ability to remove
+							// the relevant power bits.
+							if (GetAsyncKeyState(VK_MENU) < 0)
+								xbitMask |= (XBIT_POWERED | XBIT_POWERABLE);
+						}
+						XBITClearBits(nCornerX, nCornerY, xbitMask);
 					}
 				}
 				if (nArea == 2) {
@@ -300,7 +314,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			}
 			if (bSingleTile) {
 				// Exit point.
-				L_Demolish_ClearEntryExitAndSetTerrain(nCornerX, nCornerY, false);
+				L_Demolish_ClearEntryExitAndSetTerrain(nCornerX, nCornerY, nArea, false);
 			}
 			ConsoleLog(LOG_DEBUG, "bSingleTile check two: (%d, %d) (%d, %d) nArea(%d) nHighwayRet(%d)[%s] bSingleTile(%c) [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, GetHighwayEnumName(nHighwayRet), (bSingleTile ? 'Y' : 'N'), szTileNames[nTileID]);
 			if (nArea == 2 && !L_Demolish_HighwayTileUnitCheck(nTileID)) {

@@ -1891,26 +1891,36 @@ extern "C" void __cdecl Hook_PlacePowerLinesAtCoordinates(mapcoord_t x, mapcoord
 	BYTE iTileID;
 	BYTE iBuildTileID;
 
-	if ((x >= 0 || x < GAME_MAP_SIZE) && (y >= 0 || y < GAME_MAP_SIZE) && XBITReturnMask(x, y) >= 0) {
-		iTileID = GetTileID(x, y);
-		if (iTileID < TILE_POWERLINES_LR)
-			iBuildTileID = TILE_POWERLINES_LR;
-		else if (iTileID == TILE_ROAD_LR)
-			iBuildTileID = TILE_CROSSOVER_POWERTB_ROADLR;
-		else if (iTileID == TILE_ROAD_TB)
-			iBuildTileID = TILE_CROSSOVER_POWERLR_ROADTB;
-		else if (iTileID == TILE_RAIL_LR)
-			iBuildTileID = TILE_CROSSOVER_POWERTB_RAILLR;
-		else if (iTileID == TILE_RAIL_TB)
-			iBuildTileID = TILE_CROSSOVER_POWERLR_RAILTB;
-		else if (iTileID == TILE_HIGHWAY_LR)
-			iBuildTileID = TILE_CROSSOVER_HIGHWAYLR_POWERTB;
-		else if (iTileID == TILE_HIGHWAY_TB)
-			iBuildTileID = TILE_CROSSOVER_HIGHWAYTB_POWERLR;
-		else
-			return;
+	if ((x >= MAP_EDGE_MIN && x < GAME_MAP_SIZE) && (y >= MAP_EDGE_MIN && y < GAME_MAP_SIZE)) {
+		// The following check is commented out at this time.
+		// If uncommented it expresses a bug that will occur if
+		// you demolish either the start or end points of any bridge;
+		// when you demolish a powerline bridge by clicking on one of
+		// the bridge tiles (not the entry or exit powerline tiles)
+		// it doesn't unset the 'powerable' flag and consequently
+		// standard powerlines cannot be placed at either end.
+		// NOTE: CSimcityView::Demolish() concerning the root cause.
+		/*if (!XBITReturnIsPowerable(x, y))*/ {
+			iTileID = GetTileID(x, y);
+			if (iTileID < TILE_POWERLINES_LR)
+				iBuildTileID = TILE_POWERLINES_LR;
+			else if (iTileID == TILE_ROAD_LR)
+				iBuildTileID = TILE_CROSSOVER_POWERTB_ROADLR;
+			else if (iTileID == TILE_ROAD_TB)
+				iBuildTileID = TILE_CROSSOVER_POWERLR_ROADTB;
+			else if (iTileID == TILE_RAIL_LR)
+				iBuildTileID = TILE_CROSSOVER_POWERTB_RAILLR;
+			else if (iTileID == TILE_RAIL_TB)
+				iBuildTileID = TILE_CROSSOVER_POWERLR_RAILTB;
+			else if (iTileID == TILE_HIGHWAY_LR)
+				iBuildTileID = TILE_CROSSOVER_HIGHWAYLR_POWERTB;
+			else if (iTileID == TILE_HIGHWAY_TB)
+				iBuildTileID = TILE_CROSSOVER_HIGHWAYTB_POWERLR;
+			else
+				return;
 
-		PlacePowerLineTile(x, y, iBuildTileID);
+			PlacePowerLineTile(x, y, iBuildTileID);
+		}
 	}
 }
 
