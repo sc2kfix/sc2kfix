@@ -14,7 +14,8 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
-#define SOUND_YIELD_TICS 60
+#define MUTED_YIELD_TICS 100
+#define SOUND_YIELD_TICS 80
 
 #define VALID_BRIDGETYPEAREA_NOTSINGLE -1
 #define VALID_BRIDGETYPEAREA_NO        0
@@ -112,19 +113,20 @@ static void L_RunwayCheckStackPush(mapcoord_t x, mapcoord_t y) {
 	}
 }
 
-static void L_Demolish_UpdateMainWindow(CSimcityView *pSCView) {
+static void L_Demolish_UpdateMainWindow(CSimcityAppPrimary *pSCApp, CSimcityView *pSCView) {
 	if (pSCView == (CSimcityView *)&pSomeWnd)
 		Game_SimcityView_MainWindowUpdate(pSCView, NULL, TRUE);
 	else
 		Game_SimcityView_MainWindowUpdate(pSCView, &dirtyRect, TRUE);
 	UpdateWindow(pSCView->m_hWnd);
-	Game_YieldToWindows(SOUND_YIELD_TICS);
+	int nYieldTics = (pSCApp->dwSCAGameSound) ? SOUND_YIELD_TICS : MUTED_YIELD_TICS;
+	Game_YieldToWindows(nYieldTics);
 }
 
 static void L_Demolish_PlayExplosionSound(CSimcityAppPrimary *pSCApp) {
 	if (pSCApp->dwSCAGameSound) {
 		Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_EXPLODE);
-		Game_YieldToWindows(SOUND_YIELD_TICS);
+		Game_YieldToWindows(MUTED_YIELD_TICS - SOUND_YIELD_TICS);
 	}
 }
 
@@ -514,7 +516,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					bGeneralUpdate = false;
 					// This needs to be here, otherwise the explosive effect is
 					// truncated.
-					L_Demolish_UpdateMainWindow(pThis);
+					L_Demolish_UpdateMainWindow(pSCApp, pThis);
 					// Set bGeneralUpdate to false in-order to not
 					// hit the general version of UpdateMainWindow
 					// (DrawHouse will still be called at the end as normal).
@@ -602,7 +604,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 		// all other update and sound play situations occur here.
 		if (bGeneralUpdate) {
 			if (bExplosion) {
-				L_Demolish_UpdateMainWindow(pThis);
+				L_Demolish_UpdateMainWindow(pSCApp, pThis);
 				L_Demolish_PlayExplosionSound(pSCApp);
 			}
 		}
