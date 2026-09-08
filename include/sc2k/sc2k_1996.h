@@ -2200,24 +2200,24 @@ enum {
 };
 
 enum {
-	HIGHWAY_INVALID = -1,
-	HIGHWAY_XOVER_TB,
-	HIGHWAY_XOVER_LR,
-	HIGHWAY_TB,
-	HIGHWAY_LR,
-	HIGHWAY_HTB,
-	HIGHWAY_LHR,
-	HIGHWAY_THB,
-	HIGHWAY_HLR,
-	HIGHWAY_BR,
-	HIGHWAY_BL,
-	HIGHWAY_TL,
-	HIGHWAY_TR,
-	HIGHWAY_LTBR,
-	HIGHWAY_BRIDGE_LR,
-	HIGHWAY_BRIDGE_TB,
-	HIGHWAY_BRIDGE_REINFORCED,
-	HIGHWAY_BRIDGE_REINFORCED_FLIP,
+	HIGHWAY_INVALID = -1,              // Invalid or no longer applicable highway tile
+	HIGHWAY_XOVER_TB,                  // CORNER_ALL (1x1 segments)
+	HIGHWAY_XOVER_LR,                  // CORNER_ALL (1x1 segments)
+	HIGHWAY_TB,                        // CORNER_ALL (1x1 segments)
+	HIGHWAY_LR,                        // CORNER_ALL (1x1 segments)
+	HIGHWAY_HTB,                       // 2x2 object
+	HIGHWAY_LHR,                       // 2x2 object
+	HIGHWAY_THB,                       // 2x2 object
+	HIGHWAY_HLR,                       // 2x2 object
+	HIGHWAY_BR,                        // 2x2 object
+	HIGHWAY_BL,                        // 2x2 object
+	HIGHWAY_TL,                        // 2x2 object
+	HIGHWAY_TR,                        // 2x2 object
+	HIGHWAY_LTBR,                      // 2x2 object
+	HIGHWAY_BRIDGE_LR,                 // CORNER_ALL (water check)
+	HIGHWAY_BRIDGE_TB,                 // CORNER_ALL (water check)
+	HIGHWAY_BRIDGE_REINFORCED,         // 2x2 object (bridge check)
+	HIGHWAY_BRIDGE_REINFORCED_FLIP,    // 2x2 object (bridge check)
 
 	HIGHWAY_COUNT
 };

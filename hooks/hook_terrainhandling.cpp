@@ -18,20 +18,6 @@
 #define VALID_BRIDGETYPEAREA_NO        0
 #define VALID_BRIDGETYPEAREA_YES       1
 
-static void L_Demolish_GetMoveDirection(mapcoord_t cornerX, mapcoord_t cornerY, int16_t nArea, int16_t nHighwayRet, int16_t *nOutMoveX, int16_t *nOutMoveY) {
-	int16_t nMoveX, nMoveY;
-
-	nMoveX = 0;
-	nMoveY = 1;
-	if (nArea == 1 && cornerX < GAME_MAP_SIZE && cornerY < GAME_MAP_SIZE && XBITReturnIsFlipped(cornerX, cornerY) ||
-		nArea == 2 && (nHighwayRet & 1) == 0) {
-		nMoveX = 1;
-		nMoveY = 0;
-	}
-	*nOutMoveX = nMoveX * nArea;
-	*nOutMoveY = nMoveY * nArea;
-}
-
 static void L_Demolish_DirtyAndSetTerrainTile(mapcoord_t x, mapcoord_t y) {
 	Game_DirtyTile(x, y);
 	Game_SetTerrainTile(x, y);
@@ -99,7 +85,7 @@ static void L_Demolish_ClearEntryExitAndSetTerrain(mapcoord_t cornerX, mapcoord_
 			xbitMask = XBIT_FLIPPED;
 		if (nArea == 1) {
 			// Added this here so you have the ability to remove
-			// the relevant power bits.
+			// the relevant power bits (powerline entry/exit bug case).
 			if (GetAsyncKeyState(VK_MENU) < 0)
 				xbitMask |= (XBIT_POWERED | XBIT_POWERABLE);
 		}
@@ -175,7 +161,6 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 	mapcoord_t nExplodeX, nExplodeY, nAltitude;
 	mapcoord_t nAreaExplodeX, nAreaExplodeY;
 	mapcoord_t nAreaCornerX, nAreaCornerY;
-	mapcoord_t nOffsetX, nOffsetY;
 	int16_t nRubbleTile;
 	uint8_t bTextOverlay;
 	CMFC3XPoint pt;
@@ -212,7 +197,18 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			ConsoleLog(LOG_DEBUG, "in 'if': coord(%d, %d) cornercoord(%d, %d) nArea(%d) nHighwayRet(%d)[%s] [%s]\n", nX, nY, nCornerX, nCornerY, nArea, nHighwayRet, GetHighwayEnumName(nHighwayRet), szTileNames[nTileID]);
 			if (nArea == 2)
 				--nCornerY;
-			L_Demolish_GetMoveDirection(nCornerX, nCornerY, nArea, nHighwayRet, &nMoveX, &nMoveY);
+			// This block here determines the X/Y bridge tile direction as it advances from
+			// entry to exit points.
+			nMoveX = 0;
+			nMoveY = 1;
+			if (nArea == 1 && nCornerX < GAME_MAP_SIZE && nCornerY < GAME_MAP_SIZE && XBITReturnIsFlipped(nCornerX, nCornerY) ||
+				nArea == 2 && (nHighwayRet & 1) == 0) {
+				nMoveX = 1;
+				nMoveY = 0;
+			}
+			nMoveX *= nArea;
+			nMoveY *= nArea;
+			// Move back until the entry point is hit.
 			bSingleTile = true;
 			while (true) {
 				nValidBridgeType = L_Demolish_IsValidBridgeTypeArea(nCornerX, nCornerY, nArea, &nHighwayRet);
@@ -237,12 +233,14 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				L_Demolish_DirtyAndSetTerrainTile(nCornerX + 1, nCornerY + 1);
 				L_Demolish_DirtyAndSetTerrainTile(nCornerX, nCornerY + 1);
 			}
+			// Advance in order to hit the relevant bridge tile.
 			nCornerX += nMoveX;
 			nCornerY += nMoveY;
 			if (bExplosion)
 				L_BeginProcessObjects_SC2K1996(pThis->m_hWnd, pLockedBaseBits, pLockedBits, pThis->dwSCVGraphicWidth, pThis->dwSCVGraphicHeight, &pThis->SCVAreaView);
 			nExplodeX = -1;
 			nExplodeY = -1;
+			// Move forward until the exit point is hit.
 			bSingleTile = true;
 			while (true) {
 				nValidBridgeType = L_Demolish_IsValidBridgeTypeArea(nCornerX, nCornerY, nArea, &nHighwayRet);
@@ -274,7 +272,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 						uint8_t xbitMask = XBIT_FLIPPED;
 						if (nArea == 1) {
 							// Added this here so you have the ability to remove
-							// the relevant power bits.
+							// the relevant power bits (powerline entry/exit bug case).
 							if (GetAsyncKeyState(VK_MENU) < 0)
 								xbitMask |= (XBIT_POWERED | XBIT_POWERABLE);
 						}
@@ -356,8 +354,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				if (tileCoords.y > MAP_EDGE_MIN)
 					L_PierCheckStackPush(tileCoords.x, tileCoords.y - 1);
 				// This one here was also tileCoords.x.
-				// Most likely a bug, commenting
-				// just in case.
+				// Most likely a bug, commenting just in case.
 				if (tileCoords.y < MAP_EDGE_MAX)
 					L_PierCheckStackPush(tileCoords.x, tileCoords.y + 1);
 			}
@@ -392,8 +389,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				if (tileCoords.y > MAP_EDGE_MIN)
 					L_RunwayCheckStackPush(tileCoords.x, tileCoords.y - 1);
 				// This one here was also tileCoords.x.
-				// Most likely a bug, commenting
-				// just in case.
+				// Most likely a bug, commenting just in case.
 				if (tileCoords.y < MAP_EDGE_MAX)
 					L_RunwayCheckStackPush(tileCoords.x, tileCoords.y + 1);
 			}
@@ -402,29 +398,32 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			ConsoleLog(LOG_DEBUG, "else if (runway): (%d, %d) (%d) [%s]\n", nX, nY, nArea, szTileNames[nTileID]);
 		}
 		else if (GET_TILE_RANGE(nTileID, TILE_TUNNEL_T, TILE_TUNNEL_L)) {
-			nOffsetX = 0;
-			nOffsetY = 0;
+			// This block determines the X/Y direction based on the specific
+			// Tunnel tile-type that's being demolished.
+			nMoveX = 0;
+			nMoveY = 0;
 			switch (nTileID) {
-			case TILE_TUNNEL_T:
-				nOffsetX = -1;
-				nOffsetY = 0;
-				break;
-			case TILE_TUNNEL_R:
-				nOffsetX = 0;
-				nOffsetY = -1;
-				break;
-			case TILE_TUNNEL_B:
-				nOffsetX = 1;
-				nOffsetY = 0;
-				break;
-			case TILE_TUNNEL_L:
-				nOffsetX = 0;
-				nOffsetY = 1;
-				break;
-			default:
-				break;
+				case TILE_TUNNEL_T:
+					nMoveX = -1;
+					nMoveY = 0;
+					break;
+				case TILE_TUNNEL_R:
+					nMoveX = 0;
+					nMoveY = -1;
+					break;
+				case TILE_TUNNEL_B:
+					nMoveX = 1;
+					nMoveY = 0;
+					break;
+				case TILE_TUNNEL_L:
+					nMoveX = 0;
+					nMoveY = 1;
+					break;
+				default:
+					break;
 			}
 			Game_DirtyTile(nX, nY);
+			// Addition: rubble is now placed at the entry point.
 			nRubbleTile = (rand() & 3) + 1;
 			Game_PlaceTile(nX, nY, nRubbleTile);
 			if (nX >= MAP_EDGE_MIN) {
@@ -440,15 +439,17 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				nExplodeY = iScreenOffSetY + nCoordScale * (nX + nY) - nLandAltScale * ALTMReturnLandAltitude(nX, nY) - pArrSpriteHeaders[nSpriteID].wHeight;
 				L_Demolish_DoDustCloud(nSpriteID, nExplodeX, nExplodeY);
 			}
+			// This loop deals with the unsetting of the tunnel levels from entry to exit points.
 			nIntermediateTile = GetTileID(nX, nY);
 			while (!GET_TILE_RANGE(nIntermediateTile, TILE_TUNNEL_T, TILE_TUNNEL_L)) {
-				nX += nOffsetX;
-				nY += nOffsetY;
+				nX += nMoveX;
+				nY += nMoveY;
 				if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE)
 					ALTMSetTunnelLevels(nX, nY, 0);
 				nIntermediateTile = GetTileID(nX, nY);
 			}
 			Game_DirtyTile(nX, nY);
+			// Addition: rubble is now placed at the exit point.
 			nRubbleTile = (rand() & 3) + 1;
 			Game_PlaceTile(nX, nY, nRubbleTile);
 			if (nX < GAME_MAP_SIZE && nY < GAME_MAP_SIZE)
@@ -519,6 +520,10 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					nCurrPosHeightLimit += nCoordScale;
 				}
 			}
+			// This block here handles the following:
+			// 1) During the demolition of certain rewards it toggles the grant back to available.
+			// 2) During the demolition of a Stadium (assuming bTextOverlay is in-range), find the
+			//    related Microsim that matches the nTileID and adjust wStadiumSportsTeams.
 			bTextOverlay = XTXTGetTextOverlayID(nCornerX, nCornerY);
 			if (nTileID == TILE_INFRASTRUCTURE_MAYORSHOUSE)
 				Game_SimulationToggleGrantReward(0, 1);
@@ -528,9 +533,7 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				Game_SimulationToggleGrantReward(2, 1);
 			if (nTileID == TILE_OTHER_BRAUNLLAMADOME)
 				Game_SimulationToggleGrantReward(3, 1);
-			if (nTileID == TILE_SERVICES_STADIUM &&
-				bTextOverlay >= MIN_SIM_TEXT_ENTRIES &&
-				bTextOverlay <= MAX_SIM_TEXT_ENTRIES) {
+			if (nTileID == TILE_SERVICES_STADIUM && bTextOverlay >= MIN_SIM_TEXT_ENTRIES && bTextOverlay <= MAX_SIM_TEXT_ENTRIES) {
 				uint8_t bMicrosimEntry = MICROSIMID_ENTRY(bTextOverlay);
 				if (GetMicroSimulatorTileID(bMicrosimEntry) == nTileID)
 					wStadiumSportsTeams += -1 << GetMicroSimulatorStat2(bMicrosimEntry);
@@ -540,12 +543,16 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					mapcoord_t nCurrX = nPosX + nCornerX;
 					mapcoord_t nCurrY = nCornerY - nPosY;
 					if (nCurrX < GAME_MAP_SIZE && nCurrY < GAME_MAP_SIZE) {
+						// On TERRAIN_00 set down rubble, on anything else keep it clear.
 						nRubbleTile = (GetTerrainTileID(nCurrX, nCurrY)) ? TILE_CLEAR : (rand() & 3) + 1;
 						Game_PlaceTile(nCurrX, nCurrY, nRubbleTile);
 						if (nCurrX >= MAP_EDGE_MIN && nCurrX < GAME_MAP_SIZE && nCurrY < GAME_MAP_SIZE) {
 							XBITClearBits(nCurrX, nCurrY, XBIT_FLIPPED | XBIT_POWERED | XBIT_POWERABLE);
 							XZONClearCorners(nCurrX, nCurrY);
 						}
+						// In this block:
+						// 1) Label removal
+						// 2) Commerce/Industry connection removal
 						bTextOverlay = XTXTGetTextOverlayID(nCurrX, nCurrY);
 						if (bTextOverlay) {
 							if (bTextOverlay <= MAX_XTHG_TEXT_ENTRIES || bTextOverlay == NGHBR_CONNECTION_TEXT_ENTRY) {
@@ -566,6 +573,12 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 					}
 				}
 			}
+			// It should be noted here that when it comes to the demolition of
+			// certain highway tiles on inclines (partially or otherwise) it will
+			// leave the terrain permanently altered (this is native-original behaviour).
+			//
+			// Another detail that stands out is the lack of rubble, it's possible that
+			// any that was placed previously is subsequently removed during SetTerrainTile().
 			if (GET_TILE_RANGE(nTileID, TILE_HIGHWAY_HTB, TILE_REINFORCED_BRIDGE) ||
 				GET_TILE_RANGE(nTileID, TILE_HIGHWAY_LR, TILE_CROSSOVER_HIGHWAYTB_POWERLR)) {
 				Game_SetTerrainTile(nCornerX, nCornerY);
@@ -573,6 +586,11 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 				Game_SetTerrainTile(nCornerX + 1, nCornerY - 1);
 				Game_SetTerrainTile(nCornerX, nCornerY - 1);
 			}
+			// This case here is encountered while demolishing certain objects on hills.
+			// It should be noted that this case is also hit when you demolish a specific
+			// entry/exit point of a bridge - though it doesn't try to restore the original
+			// terrain under that circumstance (restoration only occurs after the main bridge
+			// portion is demolished).
 			if (nArea == 1 && nTileID < TILE_RESIDENTIAL_1X1_LOWERCLASSHOMES1) {
 				if (GetTerrainTileID(nCornerX, nCornerY))
 					Game_SetTerrainTile(nCornerX, nCornerY);
@@ -580,6 +598,8 @@ extern "C" void __stdcall Hook_SimcityView_Demolish(mapcoord_t x, mapcoord_t y, 
 			ConsoleLog(LOG_DEBUG, "else (everything else): (%d, %d) (%d) bGeneralUpdate(%c) bExplosion(%c) (pThis == (CSimcityView *)&pSomeWnd)(%c) [%s]\n", nX, nY, nArea, (bGeneralUpdate ? 'Y' : 'N'), (bExplosion ? 'Y' : 'N'), ((pThis == (CSimcityView *)&pSomeWnd) ? 'Y' : 'N'), szTileNames[nTileID]);
 		}
 		ConsoleLog(LOG_DEBUG, "Demolish(): (%d, %d) (%d) bGeneralUpdate(%c) bExplosion(%c) (pThis == (CSimcityView *)&pSomeWnd)(%c)\n", nX, nY, nArea, (bGeneralUpdate ? 'Y' : 'N'), (bExplosion ? 'Y' : 'N'), ((pThis == (CSimcityView *)&pSomeWnd) ? 'Y' : 'N'));
+		// Except for when building area explosion dust clouds are generated,
+		// all other update and sound play situations occur here.
 		if (bGeneralUpdate) {
 			if (bExplosion) {
 				if (pThis == (CSimcityView *)&pSomeWnd)
