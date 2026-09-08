@@ -296,11 +296,11 @@ static int MilitaryBaseAirForce(int iValidTiles, int iValidAltitudeTiles, coords
 
 	if (iValidTiles == iValidAltitudeTiles) {
 		bMilitaryBaseType = MILITARY_BASE_AIR_FORCE;
-		GameMain_AfxMessageBoxID(242, 0, -1);
 
 		MilitaryBasePlotPlacement(pRandPos);
 
-		return Game_CenterOnTileCoords(pRandPos->x + 4, pRandPos->y + 4);
+		Game_CenterOnTileCoords(pRandPos->x + 4, pRandPos->y + 4);
+		return GameMain_AfxMessageBoxID(242, 0, -1);
 	}
 
 	return -1;
@@ -390,7 +390,6 @@ static int MilitaryBaseArmyBase(int iValidTiles, int iValidAltitudeTiles, coords
 
 	if (iValidTiles != iValidAltitudeTiles) {
 		bMilitaryBaseType = MILITARY_BASE_ARMY;
-		GameMain_AfxMessageBoxID(241, 0, -1);
 
 		MilitaryBasePlotPlacement(pRandPos);
 
@@ -406,7 +405,8 @@ static int MilitaryBaseArmyBase(int iValidTiles, int iValidAltitudeTiles, coords
 		DoArmyBaseStrips(pRandPos->x, pRandPos->y + 2, pRandPos->x + 7, pRandPos->y + 2);
 		DoArmyBaseStrips(pRandPos->x, pRandPos->y + 5, pRandPos->x + 7, pRandPos->y + 5);
 
-		return Game_CenterOnTileCoords(pRandPos->x + 4, pRandPos->y + 4);
+		Game_CenterOnTileCoords(pRandPos->x + 4, pRandPos->y + 4);
+		return GameMain_AfxMessageBoxID(241, 0, -1);
 	}
 
 	return -1;

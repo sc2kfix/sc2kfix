@@ -3223,7 +3223,7 @@ GAMECALL(0x40198D, int, __cdecl, MapToolPlaceStream, __int16 iTileTargetX, __int
 GAMECALL(0x401997, int, __cdecl, MapToolPlaceWater, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x4019A1, char, __cdecl, TraceEdit, __int16 x, __int16 y)
 GAMECALL(0x4019B5, void, __thiscall, CurrencyString_TruncateAtSpace, CCurrencyString *)
-GAMECALL(0x4019EC, int, __cdecl, CenterOnTileCoords, __int16 x, __int16 y)
+GAMECALL(0x4019EC, void, __cdecl, CenterOnTileCoords, __int16 x, __int16 y)
 GAMECALL(0x4019F6, void, __cdecl, VerifyAndLoadNewTiles, FILE *)
 GAMECALL(0x401A1E, void, __thiscall, Graphics_SetColorTableFromApplicationPalette, CGraphics *)
 GAMECALL(0x401A2D, int, __thiscall, SimcityView_CityToolPlaceHighway, CSimcityView*, __int16, __int16)
