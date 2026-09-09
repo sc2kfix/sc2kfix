@@ -2855,6 +2855,15 @@ enum {
 };
 
 enum {
+	CURSORHIT_NA,
+	CURSORHIT_GAME,
+	CURSORHIT_CITYTOOLBAR,
+	CURSORHIT_MAPTOOLBAR,
+	CURSORHIT_STATUSDIALOG, // Floating status dialog
+	CURSORHIT_GAMEDIALOG    // Currently unused (it'll be used to account for the 'help' cursor while Shift is held down).
+};
+
+enum {
 	VIEWROTATION_NORTH = 0,
 	VIEWROTATION_EAST,
 	VIEWROTATION_SOUTH,
@@ -3933,6 +3942,8 @@ GAMEOFF_ARR(testColStruct,	rgbNormalColor,	0x4EA0B8)
 GAMEOFF_ARR(DWORD,	dwArcologySpriteIDs,	0x4EA748)
 GAMEOFF_ARR(DWORD,	dwArcologyPopStrIDs,	0x4EA778)
 GAMEOFF(WORD,	wCursorActive,				0x4EA7F0)
+GAMEOFF_ARR(__int16,	wCityToolBarCursorSelect,	0x4EA7F8)
+GAMEOFF_ARR(__int16,	wMapToolBarCursorSelect,	0x4EA820)
 GAMEOFF(DWORD,	dwSoundBufferClear,			0x4EA848)
 GAMEOFF(int,	nCurrentActionThingSoundID,	0x4EA854)
 GAMEOFF_ARR(int,	nSoundPlayTicks,		0x4EA858)

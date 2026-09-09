@@ -126,8 +126,10 @@ extern "C" void __stdcall Hook_CityToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoin
 			char temp[64+1];
 
 			sprintf_s(temp, sizeof(temp)-1, "Tool Help (%d) (%c)\n", iHitMenuButton, (bRCIAreaHit ? 'Y' : 'N'));
-			if (pSCView)
-				L_MessageBoxA(pSCView->m_hWnd, temp, gamePrimaryKey, MB_ICONINFORMATION|MB_TOPMOST);
+			if (pSCView) {
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+				L_MessageBoxA(pSCView->m_hWnd, temp, gamePrimaryKey, 0);
+			}
 			return;
 		}
 #endif
@@ -409,7 +411,7 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 		case CITYTOOL_BUTTON_HELP:
 #if USE_NEW_HELP_HANDLING
 			if (pSCView)
-				L_MessageBoxA(pSCView->m_hWnd, "Insert help message here", gamePrimaryKey, MB_ICONINFORMATION|MB_TOPMOST);
+				L_MessageBoxA(pSCView->m_hWnd, "Insert help message here", gamePrimaryKey, 0);
 #else
 			GameMain_WinApp_WinHelpA(game_AfxCoreState.m_pCurrentWinApp, 0, 11);
 #endif
@@ -466,8 +468,10 @@ extern "C" void __stdcall Hook_MapToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoint
 				char temp[64+1];
 
 				sprintf_s(temp, sizeof(temp)-1, "Tool Help (%d)\n", iHitMenuButton);
-				if (pSCView)
-					L_MessageBoxA(pSCView->m_hWnd, temp, gamePrimaryKey, MB_ICONINFORMATION|MB_TOPMOST);
+				if (pSCView) {
+					Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+					L_MessageBoxA(pSCView->m_hWnd, temp, gamePrimaryKey, 0);
+				}
 				return;
 			}
 #endif
@@ -581,7 +585,7 @@ extern "C" void __stdcall Hook_MapToolBar_SetSelection(UINT nIndex, UINT nSubInd
 		case MAPTOOL_BUTTON_HELP:
 #if USE_NEW_HELP_HANDLING
 			if (pSCView)
-				L_MessageBoxA(pSCView->m_hWnd, "Insert help message here", gamePrimaryKey, MB_ICONINFORMATION|MB_TOPMOST);
+				L_MessageBoxA(pSCView->m_hWnd, "Insert help message here", gamePrimaryKey, 0);
 #else
 			GameMain_WinApp_WinHelpA(game_AfxCoreState.m_pCurrentWinApp, 0, 11);
 #endif

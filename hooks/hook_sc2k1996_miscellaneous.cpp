@@ -2288,6 +2288,52 @@ extern "C" void __stdcall Hook_SimcityView_OnRButtonDown(UINT nFlags, CMFC3XPoin
 	GetKeyButtonBinding_SC2K1996(B_KEY_MOUSE_RBUTTON, FALSE, &pt);
 }
 
+extern "C" void __stdcall Hook_SimcityView_GameCursorHitTest() {
+	CSimcityView *pThis;
+	__asm mov [pThis], ecx
+
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	__int16 nCursor;
+	POINT pt;
+	RECT r;
+
+	if (pSCApp->dwSCACursorGameHit == CURSORHIT_GAME) {
+		if (wCityMode) {
+			if (wCityMode < GAME_MODE_CITY || wCityMode > GAME_MODE_DISASTER) {
+				nCursor = GAMECURSOR_ARROW;
+			}
+			else {
+				if (GetAsyncKeyState(VK_CONTROL) < 0)
+					nCursor = GAMECURSOR_BULLDOZER;
+				else if (GetAsyncKeyState(VK_SHIFT) < 0)
+					nCursor = GAMECURSOR_QUERY;
+				else if (wCurrentCityToolGroup == CITYTOOL_GROUP_NATURE && wSelectedSubtool[CITYTOOL_GROUP_NATURE] == NATURE_WATER)
+					nCursor = GAMECURSOR_POND;
+				else
+					nCursor = wCityToolBarCursorSelect[wCurrentCityToolGroup];
+			}
+		}
+		else {
+			if (GetAsyncKeyState(VK_CONTROL) < 0)
+				nCursor = GAMECURSOR_CENTER;
+			else
+				nCursor = wMapToolBarCursorSelect[wCurrentMapToolGroup];
+		}
+	}
+	else if (pSCApp->dwSCACursorGameHit >= CURSORHIT_CITYTOOLBAR && pSCApp->dwSCACursorGameHit <= CURSORHIT_GAMEDIALOG) {
+		if (GetAsyncKeyState(VK_SHIFT) < 0)
+			nCursor = GAMECURSOR_HELP;
+		else
+			nCursor = GAMECURSOR_ARROW;
+	}
+	else
+		nCursor = GAMECURSOR_ARROW;
+	GetWindowRect(pThis->m_hWnd, &r);
+	GetCursorPos(&pt);
+	if (PtInRect(&r, pt))
+		Game_SimcityApp_SetGameCursor(pSCApp, nCursor, FALSE);
+}
+
 extern "C" void __stdcall Hook_SimcityView_DoBudget() {
 	CSimcityView *pThis;
 	__asm mov [pThis], ecx
@@ -3431,6 +3477,10 @@ skipgamemenu:
 	// Hook for CSimcityView::OnRButtonDown
 	SafeVirtualProtect((LPVOID)0x401C9E, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401C9E, Hook_SimcityView_OnRButtonDown);
+
+	// Hook for CSimcityView::GameCursorHitTest
+	SafeVirtualProtect((LPVOID)0x402F0E, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402F0E, Hook_SimcityView_GameCursorHitTest);
 
 	// Hook for CSimcityView::DoBudget
 	SafeVirtualProtect((LPVOID)0x4020AE, 5, PAGE_EXECUTE_READWRITE);

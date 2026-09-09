@@ -309,6 +309,7 @@ void MoveAndBlitStatusWidget(HWND hWnd, int x, int y) {
 
 BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	CSimcityAppPrimary *pSCApp;
+	CSimcityView *pSCView;
 	LPDRAWITEMSTRUCT lpDIS;
 	PAINTSTRUCT ps;
 	HDC hDC, hDCMem;
@@ -409,8 +410,13 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 		// This will reset the pointer to the default arrow while
 		// while the cursor hovers over the status bar.
 		case WM_SETCURSOR:
-			Game_SimcityApp_SetGameCursor(pSCApp, 0, 0);
-			pSCApp->dwSCACursorGameHit = 4;
+			Game_SimcityApp_SetGameCursor(pSCApp, 0, TRUE);
+			if (wCursorActive) {
+				pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+				if (pSCView)
+					Game_SimcityView_KillCursor(pSCView);
+			}
+			pSCApp->dwSCACursorGameHit = CURSORHIT_STATUSDIALOG;
 			return TRUE;
 	}
 
