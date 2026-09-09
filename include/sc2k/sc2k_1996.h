@@ -3550,7 +3550,6 @@ GAMECALL_MAIN(0x4A3453, BOOL, __thiscall, String_LoadStringA, CMFC3XString *, un
 GAMECALL_MAIN(0x4A3B2F, LRESULT, __thiscall, Wnd_Default, CMFC3XWnd *)
 GAMECALL_MAIN(0x4A3BDF, CMFC3XWnd *, __stdcall, Wnd_FromHandle, HWND hWnd)
 GAMECALL_MAIN(0x4A3BFD, CMFC3XWnd *, __stdcall, Wnd_FromHandlePermanent, HWND)
-GAMECALL_MAIN(0x4A475F, BOOL, __thiscall, Menu_TrackPopupMenu, CMFC3XMenu *, UINT, int, int, CMFC3XWnd *, RECT *)
 GAMECALL_MAIN(0x4A5315, CMFC3XTestCmdUI *, __thiscall, TestCmdUI_Construct, CMFC3XTestCmdUI *)
 GAMECALL_MAIN(0x4A6091, BOOL, __thiscall, Wnd_SendChildNotifyLastMsg, CMFC3XWnd *, LRESULT *)
 GAMECALL_MAIN(0x4A6C8E, BOOL, __thiscall, Dialog_OnCmdMsg, CMFC3XDialog *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo)

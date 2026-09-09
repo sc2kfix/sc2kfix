@@ -58,7 +58,6 @@ extern "C" void __stdcall Hook_CityToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoin
 	int iStoredMenuButtonPos;
 	int iHitMenuButton;
 	HMENU hSubMenu;
-	CMFC3XMenu *pSubMenu;
 	int iCursorMoving;
 	DWORD nTargetTicks;
 	MSG Msg;
@@ -97,8 +96,7 @@ extern "C" void __stdcall Hook_CityToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoin
 		}
 		Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
 		hSubMenu = GetSubMenu(pThis->dwCTBMenuOne.m_hMenu, pThis->iMyTBMenuButtonPos);
-		pSubMenu = GameMain_Menu_FromHandle(hSubMenu);
-		if (pSubMenu) {
+		if (hSubMenu) {
 			iCursorMoving = 1;
 			nTargetTicks = GetTickCount32() + 500;
 			pThis->dwMyTBButtonMenu = 1;
@@ -118,22 +116,22 @@ extern "C" void __stdcall Hook_CityToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoin
 				if (iCursorMoving != 1) {
 					ClientToScreen(pThis->m_hWnd, &pt);
 					uMenuItem = 0;
-					if (GetMenuItemCount(pSubMenu->m_hMenu)) {
+					if (GetMenuItemCount(hSubMenu)) {
 						do {
 							GameMain_String_Cons(&cStr);
 							pBuffer = GameMain_String_GetBuffer(&cStr, 32);
-							GetMenuStringA(pSubMenu->m_hMenu, uMenuItem, pBuffer, 32, MF_BYPOSITION);
+							GetMenuStringA(hSubMenu, uMenuItem, pBuffer, 32, MF_BYPOSITION);
 							GameMain_String_ReleaseBuffer(&cStr, -1);
 							if (strcmp(pThis->dwCTBString[iHitMenuButton].m_pchData, cStr.m_pchData) == 0)
-								CheckMenuItem(pSubMenu->m_hMenu, uMenuItem, MF_BYPOSITION|MF_CHECKED);
+								CheckMenuItem(hSubMenu, uMenuItem, MF_BYPOSITION|MF_CHECKED);
 							else
-								CheckMenuItem(pSubMenu->m_hMenu, uMenuItem, MF_BYPOSITION);
+								CheckMenuItem(hSubMenu, uMenuItem, MF_BYPOSITION);
 							GameMain_String_Dest(&cStr);
 							++uMenuItem;
-							uItemCount = GetMenuItemCount(pSubMenu->m_hMenu);
+							uItemCount = GetMenuItemCount(hSubMenu);
 						} while (uItemCount > uMenuItem);
 					}
-					iTrackedMenu = GameMain_Menu_TrackPopupMenu(pSubMenu, TPM_RETURNCMD, pt.x + 3, pt.y + 3, pThis, 0);
+					iTrackedMenu = TrackPopupMenu(hSubMenu, TPM_RETURNCMD, pt.x + 3, pt.y + 3, 0, pThis->m_hWnd, 0);
 					if (iTrackedMenu > 0)
 						PostMessageA(pThis->m_hWnd, WM_COMMAND, iTrackedMenu, 0);
 					else
