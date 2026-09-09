@@ -15,7 +15,28 @@
 
 #pragma intrinsic(_ReturnAddress)
 
-#define USE_NEW_HELP_HANDLING 0
+// The "RCI" Indicator criteria.
+#define RCI_DEFRCI_TOP    21
+
+// If 'RCI_DEFRCI_TOP' is adjusted, the following
+// offset may also need a tweak in order to keep
+// the 'RCI' badge widget centred between the
+// demand and surplus graph bars.
+#define RCI_DEFWDG_OFFSET 2
+
+// The height of the 'RCI' widget badge.
+#define RCI_DEFWDG_HEIGHT 16
+
+#define RCI_RECT_LEFT     66
+#define RCI_RECT_TOP      257
+#define RCI_RECT_RIGHT    92
+
+// Offset values for drawing the +/_ indicators
+#define RCI_PLUS_OFFSET   12
+#define RCI_MINUS_OFFSET  8
+
+// Offset value for hitting the RCI area
+#define RCI_AREA_VERTOFFSET 5
 
 #define TOOLBAR_DEBUG_OTHER 1
 
@@ -48,6 +69,28 @@ extern "C" void __stdcall Hook_CityToolBar_ToolMenuEnable() {
 	GameMain_CityToolBar_ToolMenuEnable(pThis);
 }
 
+// This call is used for getting the 'top' of the bottom extent
+// for the demand graph rectangle, and is also used for determining
+// the top of the 'RCI' widget badge rectangle.
+static int getSurplusTopExtent(int nExtent, int nTop, int nOffset) {
+	return nExtent + nTop + nOffset;
+}
+
+static bool GetRCIWidgetCursorArea(CCityToolBar *pCCTB, CMFC3XPoint pt) {
+	RECT RCIRect;
+
+	RCIRect.left    = RCI_RECT_LEFT;
+	RCIRect.top     = RCI_RECT_TOP; // Maximum top extent for when there's demand.
+	RCIRect.right   = RCI_RECT_RIGHT;
+	RCIRect.bottom  = getSurplusTopExtent(RCI_DEFRCI_TOP, RCIRect.top, RCI_DEFWDG_OFFSET) + RCI_DEFWDG_HEIGHT + RCI_DEFWDG_OFFSET + RCI_DEFRCI_TOP; // Maximum bottom extent for when there's a surplus.
+
+	RCIRect.top    -= RCI_AREA_VERTOFFSET;
+	RCIRect.bottom += RCI_AREA_VERTOFFSET;
+
+	return (pt.x >= RCIRect.left && pt.x <= RCIRect.right) &&
+		(pt.y >= RCIRect.top && pt.y <= RCIRect.bottom) ? true : false;
+}
+
 extern "C" void __stdcall Hook_CityToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoint pt) {
 	CCityToolBar *pThis;
 
@@ -74,21 +117,22 @@ extern "C" void __stdcall Hook_CityToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoin
 	iStoredMenuButtonPos = pThis->iMyTBMenuButtonPos;
 	if (pThis->m_cyTopBorder < pt.y) {
 		iHitMenuButton = Game_CityToolBar_HitTestFromPoint(pThis, pt);
+		bool bRCIAreaHit = GetRCIWidgetCursorArea(pThis, pt);
 		pThis->iMyTBMenuButtonPos = iHitMenuButton;
-		if (iHitMenuButton < 0)
-			return;
 #if USE_NEW_HELP_HANDLING
 		// Added - 'Shift + Click' help messages that replaces the now non-functional
 		// help file in Windows.
-		if (iHitMenuButton != CITYTOOL_BUTTON_HELP && (nFlags & MK_SHIFT)) {
+		if (((iHitMenuButton > -1 && iHitMenuButton != CITYTOOL_BUTTON_HELP) || bRCIAreaHit) && (nFlags & MK_SHIFT)) {
 			char temp[64+1];
 
-			sprintf_s(temp, sizeof(temp)-1, "Tool Help (%d)\n", iHitMenuButton);
+			sprintf_s(temp, sizeof(temp)-1, "Tool Help (%d) (%c)\n", iHitMenuButton, (bRCIAreaHit ? 'Y' : 'N'));
 			if (pSCView)
 				L_MessageBoxA(pSCView->m_hWnd, temp, gamePrimaryKey, MB_ICONINFORMATION|MB_TOPMOST);
 			return;
 		}
 #endif
+		if (iHitMenuButton < 0)
+			return;
 		if (!Game_CityToolBar_PressButton(pThis, iHitMenuButton)) {
 			pThis->iMyTBMenuButtonPos = iStoredMenuButtonPos;
 			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_ERROR);
@@ -597,13 +641,6 @@ extern "C" void __stdcall Hook_MapToolBar_SetSelection(UINT nIndex, UINT nSubInd
 	Game_SimcityApp_GetToolSound(pSCApp);
 }
 
-// This call is used for getting the 'top' of the bottom extent
-// for the demand graph rectangle, and is also used for determining
-// the top of the 'RCI' widget badge rectangle.
-static int getSurplusTopExtent(int nExtent, int nTop, int nOffset) {
-	return nExtent + nTop + nOffset;
-}
-
 static void CityToolBar_RCIPlusMinus(CCityToolBar *pCCTB, HDC hDC, LONG x, LONG y, const char *pStr) {
 	if (!pStr)
 		return;
@@ -624,39 +661,24 @@ extern "C" void __stdcall Hook_CityToolBar_DrawRCIIndicator(CMFC3XDC *pDC) {
 
 	RECT RCIRect, RCIWidgRect, r;
 	COLORREF BkColor;
-	int defLeft, defRight, defRCITop, left, top, cx, cy;
-	int nIndicatorHorzOffset, nRCI, nColDemand, nColSepSpace, nColPos, defWidgOffset, defWidgHeight;
+	int left, top, cx, cy;
+	int nIndicatorHorzOffset, nRCI, nColDemand, nColSepSpace, nColPos;
 	RECT *pRectClear;
 	HFONT hOldFont;
 	const char *RCIStr;
-	
-	defLeft = 66;
-	defRight = 92;
 
-	// The "RCI" Indicator criteria.
-	defRCITop = 21;
-
-	// If 'defRCITop' is adjusted, the following
-	// offset may also need a tweak in order to keep
-	// the 'RCI' badge widget centred between the
-	// demand and surplus graph bars.
-	defWidgOffset = 2;
-
-	// The height of the 'RCI' widget badge.
-	defWidgHeight = 16;
-
-	RCIRect.left = defLeft;
-	RCIRect.top = 257; // Maximum top extent for when there's demand.
-	RCIRect.right = defRight;
-	RCIRect.bottom = getSurplusTopExtent(defRCITop, RCIRect.top, defWidgOffset) + defWidgHeight + 2 + defRCITop; // Maximum bottom extent for when there's a surplus.
+	RCIRect.left   = RCI_RECT_LEFT;
+	RCIRect.top    = RCI_RECT_TOP; // Maximum top extent for when there's demand.
+	RCIRect.right  = RCI_RECT_RIGHT;
+	RCIRect.bottom = getSurplusTopExtent(RCI_DEFRCI_TOP, RCIRect.top, RCI_DEFWDG_OFFSET) + RCI_DEFWDG_HEIGHT + RCI_DEFWDG_OFFSET + RCI_DEFRCI_TOP; // Maximum bottom extent for when there's a surplus.
 
 	// Horizontal offset for the +/_ indicator.
-	nIndicatorHorzOffset = 2 * (defRight - defLeft) / 4;
+	nIndicatorHorzOffset = 2 * (RCI_RECT_RIGHT - RCI_RECT_LEFT) / 4;
 
 	BkColor = GetBkColor(pDC->m_hAttribDC);
 
 	// +
-	CityToolBar_RCIPlusMinus(pThis, pDC->m_hDC, defLeft + nIndicatorHorzOffset, RCIRect.top - 12, "+");
+	CityToolBar_RCIPlusMinus(pThis, pDC->m_hDC, RCI_RECT_LEFT + nIndicatorHorzOffset, RCIRect.top - RCI_PLUS_OFFSET, "+");
 
 	// Annoying case here, if the painted graph
 	// area goes beyond a total height (top to bottom)
@@ -665,24 +687,24 @@ extern "C" void __stdcall Hook_CityToolBar_DrawRCIIndicator(CMFC3XDC *pDC) {
 	// height measurement.
 	nColSepSpace = 2;
 	for (nRCI = 0; nRCI < DEMAND_COUNT; ++nRCI) {
-		nColDemand = defRCITop * wCityDemand[nRCI] / 2000;
+		nColDemand = RCI_DEFRCI_TOP * wCityDemand[nRCI] / 2000;
 		if (nColDemand) {
-			nColPos = (nRCI + 1) * (defRight - defLeft) / 4;
+			nColPos = (nRCI + 1) * (RCI_RECT_RIGHT - RCI_RECT_LEFT) / 4;
 			if (nRCI == DEMAND_IND)
 				nColPos++;
 
-			r.left = defLeft + nColPos - nColSepSpace;
-			r.right = defLeft + nColSepSpace + nColPos;
+			r.left = RCI_RECT_LEFT + nColPos - nColSepSpace;
+			r.right = RCI_RECT_LEFT + nColSepSpace + nColPos;
 
 			pRectClear = &RCIRect;
 
 			if (nColDemand <= 0) {
-				r.top = pRectClear->bottom - defRCITop;
-				r.bottom = pRectClear->bottom - defRCITop - nColDemand;
+				r.top = pRectClear->bottom - RCI_DEFRCI_TOP;
+				r.bottom = pRectClear->bottom - RCI_DEFRCI_TOP - nColDemand;
 			}
 			else {
-				r.bottom = pRectClear->top + defRCITop;
-				r.top = pRectClear->top + defRCITop - nColDemand;
+				r.bottom = pRectClear->top + RCI_DEFRCI_TOP;
+				r.top = pRectClear->top + RCI_DEFRCI_TOP - nColDemand;
 			}
 
 			pRectClear->left = r.left;
@@ -707,15 +729,15 @@ extern "C" void __stdcall Hook_CityToolBar_DrawRCIIndicator(CMFC3XDC *pDC) {
 	}
 
 	// The "RCI" middle widget.
-	RCIWidgRect.left = defLeft;
+	RCIWidgRect.left = RCI_RECT_LEFT;
 	RCIWidgRect.top = RCIRect.top;
-	RCIWidgRect.right = defRight;
+	RCIWidgRect.right = RCI_RECT_RIGHT;
 	RCIWidgRect.bottom = RCIRect.bottom;
 
 	left = RCIWidgRect.left;
-	top = getSurplusTopExtent(defRCITop, RCIWidgRect.top, defWidgOffset);
+	top = getSurplusTopExtent(RCI_DEFRCI_TOP, RCIWidgRect.top, RCI_DEFWDG_OFFSET);
 	cx = RCIWidgRect.right - left;
-	cy = defWidgHeight;
+	cy = RCI_DEFWDG_HEIGHT;
 
 	hOldFont = SelectFont(pDC->m_hDC, MainFontsArl[0]->m_hObject);
 	SetBkColor(pDC->m_hDC, pThis->dwMyTBButtonFace);
@@ -737,7 +759,7 @@ extern "C" void __stdcall Hook_CityToolBar_DrawRCIIndicator(CMFC3XDC *pDC) {
 	GameMain_CityToolBarSetBgdAndText(pDC->m_hDC, left + 1, top + cy - 2, cx - 2, 1, pThis->dwMyTBButtonShadow);
 
 	// _ (An underscore stands out more than a dash)
-	CityToolBar_RCIPlusMinus(pThis, pDC->m_hDC, defLeft + nIndicatorHorzOffset, RCIRect.bottom - 8, "_");
+	CityToolBar_RCIPlusMinus(pThis, pDC->m_hDC, RCI_RECT_LEFT + nIndicatorHorzOffset, RCIRect.bottom - RCI_MINUS_OFFSET, "_");
 
 	SetBkColor(pDC->m_hAttribDC, BkColor);
 }
