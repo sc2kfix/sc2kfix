@@ -611,12 +611,12 @@ extern "C" void __stdcall Hook_CityToolBar_DrawRCIIndicator(CMFC3XDC *pDC) {
 
 	__asm mov[pThis], ecx
 
-	CMFC3XRect RCIRect, RCIWidgRect, r;
+	RECT RCIRect, RCIWidgRect, r;
 	COLORREF BkColor;
 	int defLeft, defRight, defRCITop, left, top, cx, cy;
 	int nRCI, nColDemand, nColSepSpace, nColPos, defWidgOffset, defWidgHeight;
 	RECT *pRectClear;
-	CMFC3XFont *RCIFont;
+	HFONT hOldFont;
 	const char *RCIStr;
 	
 	defLeft = 66;
@@ -673,19 +673,19 @@ extern "C" void __stdcall Hook_CityToolBar_DrawRCIIndicator(CMFC3XDC *pDC) {
 
 			// Clear the entire column.
 			InflateRect(pRectClear, 1, 1);
-			GameMain_DC_SetBkColor(pDC, pThis->dwMyTBButtonFace);
-			GameMain_DC_ExtTextOutA(pDC, pRectClear->left, pRectClear->top, ETO_OPAQUE, pRectClear, 0, 0, 0);
+			SetBkColor(pDC->m_hDC, pThis->dwMyTBButtonFace);
+			ExtTextOutA(pDC->m_hDC, pRectClear->left, pRectClear->top, ETO_OPAQUE, pRectClear, 0, 0, 0);
 			InflateRect(pRectClear, -1, -1);
 
 			// Border
 			InflateRect(&r, 1, 1);
-			GameMain_DC_SetBkColor(pDC, PALETTEINDEX(164));
-			GameMain_DC_ExtTextOutA(pDC, r.left, r.top, ETO_OPAQUE, &r, 0, 0, 0);
+			SetBkColor(pDC->m_hDC, PALETTEINDEX(164));
+			ExtTextOutA(pDC->m_hDC, r.left, r.top, ETO_OPAQUE, &r, 0, 0, 0);
 
 			// Graph bar
 			InflateRect(&r, -1, -1);
-			GameMain_DC_SetBkColor(pDC, colRCI[nRCI]);
-			GameMain_DC_ExtTextOutA(pDC, r.left, r.top, ETO_OPAQUE, &r, 0, 0, 0);
+			SetBkColor(pDC->m_hDC, colRCI[nRCI]);
+			ExtTextOutA(pDC->m_hDC, r.left, r.top, ETO_OPAQUE, &r, 0, 0, 0);
 		}
 	}
 
@@ -700,25 +700,25 @@ extern "C" void __stdcall Hook_CityToolBar_DrawRCIIndicator(CMFC3XDC *pDC) {
 	cx = RCIWidgRect.right - left;
 	cy = defWidgHeight;
 
-	RCIFont = (CMFC3XFont *)GameMain_DC_SelectObjectFont(pDC, MainFontsArl[0]);
-	GameMain_DC_SetBkColor(pDC, pThis->dwMyTBButtonFace);
-	GameMain_DC_SetTextColor(pDC, pThis->dwMyTBButtonText);
-	GameMain_DC_SetTextAlign(pDC, TA_CENTER);
-	GameMain_DC_SetBkMode(pDC, TRANSPARENT);
+	hOldFont = SelectFont(pDC->m_hDC, MainFontsArl[0]->m_hObject);
+	SetBkColor(pDC->m_hDC, pThis->dwMyTBButtonFace);
+	SetTextColor(pDC->m_hDC, pThis->dwMyTBButtonText);
+	SetTextAlign(pDC->m_hDC, TA_CENTER);
+	SetBkMode(pDC->m_hDC, TRANSPARENT);
 
 	RCIStr = "RCI";
 	RCIWidgRect.top = top;
 	RCIWidgRect.bottom = top + cy;
-	GameMain_DC_TextOutA(pDC, (cx / 2 + left) - 1, top + 2, RCIStr, strlen(RCIStr));
+	TextOutA(pDC->m_hDC, (cx / 2 + left) - 1, top + 2, RCIStr, strlen(RCIStr));
 
-	GameMain_DC_SelectObjectFont(pDC, RCIFont);
+	SelectFont(pDC->m_hDC, hOldFont);
 	GameMain_CityToolBarSetBgdAndText(pDC->m_hDC, left, top, 1, cy - 1, pThis->dwMyTBButtonHighlighted);
 	GameMain_CityToolBarSetBgdAndText(pDC->m_hDC, left, top, cx - 1, 1, pThis->dwMyTBButtonHighlighted);
 	GameMain_CityToolBarSetBgdAndText(pDC->m_hDC, left + cx - 1, top, 1, cy, pThis->dwMyTBButtonShadow);
 	GameMain_CityToolBarSetBgdAndText(pDC->m_hDC, left, top + cy - 1, cx, 1, pThis->dwMyTBButtonShadow);
 	GameMain_CityToolBarSetBgdAndText(pDC->m_hDC, left + cx - 2, top + 1, 1, cy - 2, pThis->dwMyTBButtonShadow);
 	GameMain_CityToolBarSetBgdAndText(pDC->m_hDC, left + 1, top + cy - 2, cx - 2, 1, pThis->dwMyTBButtonShadow);
-	GameMain_DC_SetBkColor(pDC, BkColor);
+	SetBkColor(pDC->m_hAttribDC, BkColor);
 }
 
 extern "C" void __cdecl Hook_CityToolMenuAction(UINT nFlags, CMFC3XPoint pt) {
