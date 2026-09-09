@@ -604,6 +604,19 @@ static int getSurplusTopExtent(int nExtent, int nTop, int nOffset) {
 	return nExtent + nTop + nOffset;
 }
 
+static void CityToolBar_RCIPlusMinus(CCityToolBar *pCCTB, HDC hDC, LONG x, LONG y, const char *pStr) {
+	if (!pStr)
+		return;
+
+	HFONT hOldFont = SelectFont(hDC, hFontMSSansSerifRegular8);
+	SetTextColor(hDC, pCCTB->dwMyTBButtonText);
+	SetTextAlign(hDC, TA_CENTER);
+	SetBkMode(hDC, TRANSPARENT);
+
+	TextOutA(hDC, x, y, pStr, strlen(pStr));
+	SelectFont(hDC, hOldFont);
+}
+
 extern "C" void __stdcall Hook_CityToolBar_DrawRCIIndicator(CMFC3XDC *pDC) {
 	CCityToolBar *pThis;
 
@@ -612,7 +625,7 @@ extern "C" void __stdcall Hook_CityToolBar_DrawRCIIndicator(CMFC3XDC *pDC) {
 	RECT RCIRect, RCIWidgRect, r;
 	COLORREF BkColor;
 	int defLeft, defRight, defRCITop, left, top, cx, cy;
-	int nRCI, nColDemand, nColSepSpace, nColPos, defWidgOffset, defWidgHeight;
+	int nIndicatorHorzOffset, nRCI, nColDemand, nColSepSpace, nColPos, defWidgOffset, defWidgHeight;
 	RECT *pRectClear;
 	HFONT hOldFont;
 	const char *RCIStr;
@@ -637,7 +650,13 @@ extern "C" void __stdcall Hook_CityToolBar_DrawRCIIndicator(CMFC3XDC *pDC) {
 	RCIRect.right = defRight;
 	RCIRect.bottom = getSurplusTopExtent(defRCITop, RCIRect.top, defWidgOffset) + defWidgHeight + 2 + defRCITop; // Maximum bottom extent for when there's a surplus.
 
+	// Horizontal offset for the +/_ indicator.
+	nIndicatorHorzOffset = 2 * (defRight - defLeft) / 4;
+
 	BkColor = GetBkColor(pDC->m_hAttribDC);
+
+	// +
+	CityToolBar_RCIPlusMinus(pThis, pDC->m_hDC, defLeft + nIndicatorHorzOffset, RCIRect.top - 12, "+");
 
 	// Annoying case here, if the painted graph
 	// area goes beyond a total height (top to bottom)
@@ -716,6 +735,10 @@ extern "C" void __stdcall Hook_CityToolBar_DrawRCIIndicator(CMFC3XDC *pDC) {
 	GameMain_CityToolBarSetBgdAndText(pDC->m_hDC, left, top + cy - 1, cx, 1, pThis->dwMyTBButtonShadow);
 	GameMain_CityToolBarSetBgdAndText(pDC->m_hDC, left + cx - 2, top + 1, 1, cy - 2, pThis->dwMyTBButtonShadow);
 	GameMain_CityToolBarSetBgdAndText(pDC->m_hDC, left + 1, top + cy - 2, cx - 2, 1, pThis->dwMyTBButtonShadow);
+
+	// _ (An underscore stands out more than a dash)
+	CityToolBar_RCIPlusMinus(pThis, pDC->m_hDC, defLeft + nIndicatorHorzOffset, RCIRect.bottom - 8, "_");
+
 	SetBkColor(pDC->m_hAttribDC, BkColor);
 }
 
