@@ -116,16 +116,17 @@ extern "C" void __stdcall Hook_CityToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoin
 	dwCityToolBarArcologyDialogCancel = 0;
 	iStoredMenuButtonPos = pThis->iMyTBMenuButtonPos;
 	if (pThis->m_cyTopBorder < pt.y) {
-		iHitMenuButton = Game_CityToolBar_HitTestFromPoint(pThis, pt);
-		bool bRCIAreaHit = GetRCIWidgetCursorArea(pThis, pt);
-		pThis->iMyTBMenuButtonPos = iHitMenuButton;
+		iHitMenuButton = (GetRCIWidgetCursorArea(pThis, pt)) ? CITYTOOL_BUTTON_RCI : Game_CityToolBar_HitTestFromPoint(pThis, pt);
+		pThis->iMyTBMenuButtonPos = (iHitMenuButton != CITYTOOL_BUTTON_RCI) ? iHitMenuButton : -1;
+		if (iHitMenuButton < 0)
+			return;
 #if USE_NEW_HELP_HANDLING
 		// Added - 'Shift + Click' help messages that replaces the now non-functional
 		// help file in Windows.
-		if (((iHitMenuButton > -1 && iHitMenuButton != CITYTOOL_BUTTON_HELP) || bRCIAreaHit) && (nFlags & MK_SHIFT)) {
+		if (iHitMenuButton != CITYTOOL_BUTTON_HELP && (nFlags & MK_SHIFT)) {
 			char temp[64+1];
 
-			sprintf_s(temp, sizeof(temp)-1, "Tool Help (%d) (%c)\n", iHitMenuButton, (bRCIAreaHit ? 'Y' : 'N'));
+			sprintf_s(temp, sizeof(temp)-1, "Tool Help (%d)\n", iHitMenuButton);
 			if (pSCView) {
 				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
 				L_MessageBoxA(pSCView->m_hWnd, temp, gamePrimaryKey, 0);
@@ -133,15 +134,15 @@ extern "C" void __stdcall Hook_CityToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoin
 			return;
 		}
 #endif
-		if (iHitMenuButton < 0)
-			return;
-		if (!Game_CityToolBar_PressButton(pThis, iHitMenuButton)) {
-			pThis->iMyTBMenuButtonPos = iStoredMenuButtonPos;
-			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_ERROR);
-			return;
+		if (pThis->iMyTBMenuButtonPos > -1) {
+			if (!Game_CityToolBar_PressButton(pThis, iHitMenuButton)) {
+				pThis->iMyTBMenuButtonPos = iStoredMenuButtonPos;
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_ERROR);
+				return;
+			}
+			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
 		}
-		Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
-		hSubMenu = GetSubMenu(pThis->dwCTBMenuOne.m_hMenu, pThis->iMyTBMenuButtonPos);
+		hSubMenu = (pThis->iMyTBMenuButtonPos > -1) ? GetSubMenu(pThis->dwCTBMenuOne.m_hMenu, pThis->iMyTBMenuButtonPos) : NULL;
 		if (hSubMenu) {
 			iCursorMoving = 1;
 			nTargetTicks = GetTickCount32() + 500;
@@ -417,6 +418,9 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 #endif
 			Game_MyToolBar_SetButtonStyle(pThis, CITYTOOL_BUTTON_HELP, 0);
 			break;
+		case CITYTOOL_BUTTON_RCI:
+			// Some functionality perhaps.
+			return;
 		default:
 			break;
 	}
