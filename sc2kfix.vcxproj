@@ -187,6 +187,7 @@ const char* szSC2KFixBuildInfo = "$(BuildString)"%3B
     <ClCompile Include="modules\save_sc2x.cpp" />
     <ClCompile Include="modules\sc2k_1996.cpp" />
     <ClCompile Include="modules\save_vanilla.cpp" />
+    <ClCompile Include="modules\sc2k_help.cpp" />
     <ClCompile Include="modules\scurkfix_1996.cpp" />
     <ClCompile Include="modules\scurkfix_common.cpp" />
     <ClCompile Include="modules\scurkfix_primary.cpp" />

@@ -122,11 +122,8 @@ extern "C" void __stdcall Hook_CityToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoin
 		// Added - 'Shift + Click' help messages that replaces the now non-functional
 		// help file in Windows.
 		if (iHitMenuButton != CITYTOOL_BUTTON_HELP && (nFlags & MK_SHIFT)) {
-			char temp[64+1];
-
-			sprintf_s(temp, sizeof(temp)-1, "Tool Help (%d)\n", iHitMenuButton);
 			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
-			L_MessageBoxA(pSCApp->m_pMainWnd->m_hWnd, temp, gamePrimaryKey, 0);
+			DisplayItemHelp(pSCApp->m_pMainWnd->m_hWnd, HELPTYPE_CITYTOOLBAR, iHitMenuButton);
 			return;
 		}
 #endif
@@ -407,7 +404,7 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 			break;
 		case CITYTOOL_BUTTON_HELP:
 #if USE_NEW_HELP_HANDLING
-			L_MessageBoxA(pSCApp->m_pMainWnd->m_hWnd, "Insert help message here", gamePrimaryKey, 0);
+			DisplayItemHelp(pSCApp->m_pMainWnd->m_hWnd, HELPTYPE_CITYTOOLBAR, nIndex);
 #else
 			GameMain_WinApp_WinHelpA(game_AfxCoreState.m_pCurrentWinApp, 0, 11);
 #endif
@@ -462,11 +459,8 @@ extern "C" void __stdcall Hook_MapToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoint
 			// Added - 'Shift + Click' help messages that replaces the now non-functional
 			// help file in Windows.
 			if (iHitMenuButton != MAPTOOL_BUTTON_HELP && (nFlags & MK_SHIFT)) {
-				char temp[64+1];
-
-				sprintf_s(temp, sizeof(temp)-1, "Tool Help (%d)\n", iHitMenuButton);
 				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
-				L_MessageBoxA(pSCApp->m_pMainWnd->m_hWnd, temp, gamePrimaryKey, 0);
+				DisplayItemHelp(pSCApp->m_pMainWnd->m_hWnd, HELPTYPE_MAPTOOLBAR, iHitMenuButton);
 				return;
 			}
 #endif
@@ -579,7 +573,7 @@ extern "C" void __stdcall Hook_MapToolBar_SetSelection(UINT nIndex, UINT nSubInd
 			break;
 		case MAPTOOL_BUTTON_HELP:
 #if USE_NEW_HELP_HANDLING
-			L_MessageBoxA(pSCApp->m_pMainWnd->m_hWnd, "Insert help message here", gamePrimaryKey, 0);
+			DisplayItemHelp(pSCApp->m_pMainWnd->m_hWnd, HELPTYPE_MAPTOOLBAR, nIndex);
 #else
 			GameMain_WinApp_WinHelpA(game_AfxCoreState.m_pCurrentWinApp, 0, 11);
 #endif

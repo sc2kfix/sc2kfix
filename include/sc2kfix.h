@@ -785,3 +785,6 @@ void InstallFixes_SCURK1996(void);
 
 // Custom file dialog stuff
 BOOL CALLBACK FileHookProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+
+// Help stuff
+extern void DisplayItemHelp(HWND hWnd, int nType, int nIndex);
