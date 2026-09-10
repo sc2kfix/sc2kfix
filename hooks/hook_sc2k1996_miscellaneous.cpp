@@ -3003,12 +3003,31 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 		return GameMain_FrameWnd_OnCmdMsg((CMFC3XFrameWnd *)pThis, nID, nCode, pExtra, pHandler);
 	}
 	else if ((DWORD)dwRetAddr == 0x4A4BB2) {
+		// This section here appears to relate to anything that generally goes through CWnd::WindowProc
+		// (unless the call has been overridden).
+		// Due to this, this area here is where you're most likely to want to override (or add) any dialogue
+		// WM_COMMAND cases.
+		// Due to this case, it is absolutely vital that no duplicate IDs are used (unless we verify the
+		// point of origin).
 		if (nCode == _CN_COMMAND) {
 			switch (nID) {
 			// This is the 'sc2kfix Settings' enddialog return code for the main dialog to
 			// execution from the BuildSubFrames section.
 			case IDC_GAME_MAIN_SC2KFIXSETTINGS:
 				return EndDialog(pThis->m_hWnd, ONIDLE_INITIALDIALOG_SC2KFIXSETTINGS);
+			//default:
+				// This block here handles all of the current Ordinance settings.
+				// If we ever want to redirect their calls here (and possibly add others
+				// add the given IDs to the list).
+				//if ((nID >= 148 && nID <= 151) ||
+				//	(nID >= 156 && nID <= 159) ||
+				//	(nID >= 164 && nID <= 167) ||
+				//	(nID >= 172 && nID <= 175) ||
+				//	(nID >= 180 && nID <= 183)) {
+				//	ConsoleLog(LOG_DEBUG, "nID(%u)\n", nID);
+				//	return TRUE;
+				//}
+				//break;
 			}
 			//ConsoleLog(LOG_DEBUG, "::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, pExtra, pHandler, dwRetAddr);
 		}
