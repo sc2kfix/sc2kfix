@@ -703,6 +703,8 @@ bool ConsoleCommandRunLua(std::vector<std::string> args, int iBreakoutState, int
 	return true;
 }
 
+bool bForceRunTestNextTick = false;
+
 bool ConsoleCommandRunTest(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
 	// No arguments allowed
 	if (iBreakoutState == BREAKOUT_QUESTION) {
@@ -713,11 +715,8 @@ bool ConsoleCommandRunTest(std::vector<std::string> args, int iBreakoutState, in
 	if (iBreakoutState != BREAKOUT_RETURN)
 		return false;
 
-	int nAttrib;
+	bForceRunTestNextTick = true;
 
-	ULOWORD(nAttrib) = SOUND_ZAP;
-	UHIWORD(nAttrib) = SND_ORIG_PLAYSND;
-	L_PlaySound_SC2K1996(nAttrib, 0);
 	return true;
 }
 

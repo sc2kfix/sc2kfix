@@ -944,25 +944,22 @@ static bool L_IsBaseGameFile(FILE *f, const char *lpFileName) {
 	return bExtMatch || bIsBaseFile;
 }
 
-// Function prototype: HOOKCB void L_SimcityApp_DoLoad_Before(void)
+// Function prototype: HOOKCB void L_SimcityApp_DoLoad_Before(CSimcityAppPrimary *pSCApp, char *lpFileName)
 // Cannot be ignored.
 // SPECIAL NOTE: When the SC2X save format is implemented, this will be where mods will have a
 //   chance to pre-load any information and optionally manipulate the save file before it's parsed
 //   by sc2kfix and loaded into the SimCity 2000 engine.
 std::vector<hook_function_t> stHooks_L_SimcityApp_DoLoad_Before;
 
-// Function prototype: HOOKCB void L_SimcityApp_DoLoad_After(void)
+// Function prototype: HOOKCB bool L_SimcityApp_DoLoad_After(CSimcityAppPrimary *pSCApp, char *lpFileName, bool ret)
 // Cannot be ignored.
 // SPECIAL NOTE: When the SC2X save format is implemented, this will be where mods will be fed a
 //   pointer to a JSON object wherein they can load their data and version information or a NULL
 //   or similar object to inform them that they have no known state to load.
 std::vector<hook_function_t> stHooks_L_SimcityApp_DoLoad_After;
 
-// DoLoad() is executed from:
-// LoadCity()
-// LoadCityFromCMDLine()
-// OpenScenario()
-
+// Executes the code needed to load a saved game into memory *after* the in-memory game state is
+// cleared out. This function is always called after calls to StartCleanGame and PrepareGame.
 int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName) {
 	int ret;
 	FILE *f;
@@ -1003,7 +1000,11 @@ int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName) {
 				else
 					GameMain_CmdTarget_BeginWaitCursor(pSCApp);
 			}
+			// XXX (araxestroy): no else case?
 		}
+
+		// Fiddle with the UI in prep for the game starting
+		// XXX (araxestroy): failure case? (see above XXX)
 		GameMain_CmdTarget_EndWaitCursor(pSCApp);
 		Game_SimcityApp_AdjustNewspaperMenu(pSCApp);
 		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
@@ -1018,8 +1019,8 @@ int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName) {
 
 	for (const auto& hook : stHooks_L_SimcityApp_DoLoad_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
-			void (*fnHook)(CSimcityAppPrimary*, char*) = (void(*)(CSimcityAppPrimary*, char*))hook.pFunction;
-			fnHook(pSCApp, lpFileName);
+			bool (*fnHook)(CSimcityAppPrimary*, char*, bool) = (bool(*)(CSimcityAppPrimary*, char*, bool))hook.pFunction;
+			ret = fnHook(pSCApp, lpFileName, ret);
 		}
 	}
 
@@ -1671,12 +1672,18 @@ int L_SimcityApp_DoSave(CSimcityAppPrimary *pSCApp, const char *lpFileName, char
 				GameMain_String_OperatorSet(&pszCityName, szOldCityName);
 			}
 		}
-	}
 
-	for (const auto& hook : stHooks_L_SimcityApp_DoSave_After) {
-		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
-			void (*fnHook)(CSimcityAppPrimary*, const char*, char*, bool) = (void(*)(CSimcityAppPrimary*, const char*, char*, bool))hook.pFunction;
-			fnHook(pSCApp, lpFileName, pNewCityName, bChangeCityName);
+		else {
+			// Update the last save timer
+			uLastSaveReminderTick = GetTickCount64();
+
+			// Call any post-save hooks
+			for (const auto& hook : stHooks_L_SimcityApp_DoSave_After) {
+				if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
+					void (*fnHook)(CSimcityAppPrimary*, const char*, char*, bool) = (void(*)(CSimcityAppPrimary*, const char*, char*, bool))hook.pFunction;
+					fnHook(pSCApp, lpFileName, pNewCityName, bChangeCityName);
+				}
+			}
 		}
 	}
 

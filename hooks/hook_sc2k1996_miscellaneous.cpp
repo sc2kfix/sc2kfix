@@ -58,6 +58,11 @@ DLGPROC lpMainDialogAfxProc = NULL;
 HWND hwndMainDialog_SC2K1996 = NULL;
 BOOL bMainDialogUpdateState = FALSE;
 
+uint64_t uLastSaveReminderTick;
+
+// Used for generic testing
+extern bool bForceRunTestNextTick;
+
 // Used for crash dump testing
 extern bool bForceCrash;
 
@@ -1562,6 +1567,7 @@ extern "C" void __stdcall Hook_StartCleanGame(void) {
 	ResetThingCleanupState_SC2K1996();
 	CreateDefaultXFIX();
 	iTerrainCosmeticMode = GetXFIXTerrainMode();
+	uLastSaveReminderTick = GetTickCount64();
 
 	wSetTriggerDisasterType = DISASTER_NONE;
 	bNoDisasters = 0;
@@ -1747,6 +1753,12 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 	// Bugfix: recalculate city valuation every day.
 	Game_RecalculateCityValue();
 
+	// Run test code if requested
+	if (bForceRunTestNextTick) {
+		bForceRunTestNextTick = false;
+		DisplayBudgetAdvisorMessage(ADVISOR_TRANSIT, "QUIT HITTING THE TORNADO BUTTON YOU CHUCKLEFUCK");
+	}
+
 	// Force a crash deep in the SimCity stack if requested (pretty cool, dudes)
 	if (bForceCrash) {
 		SafeVirtualProtect((LPVOID)0x47B1C0, 4, PAGE_EXECUTE_READWRITE);
@@ -1777,6 +1789,16 @@ extern "C" void __stdcall Hook_Engine_SimulationProcessTick() {
 
 		// Unset the force options
 		bForceNewspaperDisplay = false;
+	}
+	
+	// Remind the player to save once an hour
+	if (GetTickCount64() - uLastSaveReminderTick >= SEC_TO_MS(30 * 60)) {
+		uLastSaveReminderTick = GetTickCount64();
+		Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_BOOS);
+		if (rand() % 5)
+			DisplayBudgetAdvisorMessage(ADVISOR_TRANSIT, "You haven't saved in a while. You should probably do that.");
+		else
+			DisplayBudgetAdvisorMessage(ADVISOR_TRANSIT, "YOU HAVEN'T SAVED IN A WHILE! YOU WILL REGRET THIS!");
 	}
 
 	// Advance the simulation for the current SimCalendar day

@@ -221,6 +221,8 @@ template <typename T> std::string to_string_precision(const T value, const int p
 #define FORCED_SEASON_HEATWAVE	7	// NYI
 #define FORCED_SEASON_DROUGHT	8	// NYI
 
+#define SEC_TO_MS(x) ((x) * 1000)
+
 // Although there is a Thing Index '0'
 // that one is for the bulldozer; let's
 // not step on that one.
@@ -665,6 +667,7 @@ extern BOOL bOnTheFlyPalIdx;
 extern BOOL bDisableAutoThingCleanup;
 extern BOOL bNoXFIX;
 extern BOOL bGameDebugMode;
+extern uint64_t uLastSaveReminderTick;
 
 extern BOOL bFontsInitialized;
 extern HFONT hFontMSSansSerifRegular8;
