@@ -2429,6 +2429,17 @@ std::map<int, std::string> mapEnumBudgetTypeNames = {
 #endif
 
 enum {
+	ADVISOR_TAXES = 0,
+	ADVISOR_ORDINANCES,
+	ADVISOR_BONDS,
+	ADVISOR_POLICE,
+	ADVISOR_FIRE,
+	ADVISOR_HEALTH,
+	ADVISOR_EDUCATION,
+	ADVISOR_TRANSIT
+};
+
+enum {
 	ORDINANCE_SALES_TAX = 0,
 	ORDINANCE_INCOME_TAX,
 	ORDINANCE_LEGALIZED_GAMBLING,
@@ -3304,6 +3315,7 @@ GAMECALL(0x4021F3, void, __cdecl, DrawAllTinyBelowTile)
 GAMECALL(0x4021F8, void, __cdecl, ReadTilesetFile, char *)
 GAMECALL(0x402211, void, __thiscall, SimcityView_Demolish, CSimcityView *pThis, __int16 x, __int16 y, int iExplosion)
 GAMECALL(0x402225, int, __thiscall, MainFrame_LoadOwnerInformation, CMainFrame *)
+GAMECALL(0x40222A, void, __thiscall, BudgetAdvisorDialog_CreateDialog, CMFC3XBudgetAdvisorDialog* pThis, CMainFrame* pMainFrame)
 GAMECALL(0x402252, int, __thiscall, MainFrame_DoInitialDialog, CMainFrame *)
 GAMECALL(0x402266, LONG, __cdecl, SetSpriteForDrawing, void *, sprite_header_t *, int, __int16, RECT *)
 GAMECALL(0x40226B, int, __thiscall, SimcityView_UpdateHouse, CSimcityView *) // Update partial sections ("dirty" areas)
@@ -4837,3 +4849,5 @@ extern void L_SimcityApp_LoadCityFromCMDLine(CSimcityAppPrimary *pSCApp, const c
 
 extern void L_ClearScenarioDetails();
 extern void L_SimcityApp_LoadScenarioFromCMDLine(CSimcityAppPrimary *pSCApp, const char *lpFileNameFromCMDLine);
+
+void DisplayBudgetAdvisorMessage(int iAdvisor, const char* szMessage);

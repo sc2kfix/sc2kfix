@@ -175,6 +175,8 @@ class CMFC3XPtrList;
 class CMFC3XMapPtrToPtr;
 struct CMFC3XHandleMap;
 
+class CGraphics;
+
 // Reimplementation of the MFC 3.x message map entry structure.
 typedef struct {
 	UINT nMessage;
@@ -578,6 +580,18 @@ public:
 	const DLGTEMPLATE *m_lpDialogTemplate;
 	CMFC3XWnd *m_pParentWnd;
 	HWND m_hWndTop;
+};
+
+class CMFC3XGameDialog : public CMFC3XDialog {
+public:
+	DWORD m_dwGDOne;
+};
+
+class CMFC3XBudgetAdvisorDialog : public CMFC3XGameDialog {
+public:
+	DWORD m_dwBDAOne;
+	CGraphics* m_dwBDACGraphicsOne;
+	CMFC3XString m_dwBDACStringOne;
 };
 
 class CMFC3XCommonDialog : public CMFC3XDialog {

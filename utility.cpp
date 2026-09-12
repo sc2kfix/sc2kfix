@@ -1233,3 +1233,30 @@ HOOKEXT_CPP bool string_split(std::string str, std::vector<std::string>& qargs) 
 		return false;
 	return true;
 }
+
+// Spawns a budget advisor dialog for the selected advisor with a custom message.
+// XXX (araxestroy): this should probably go in another file since it's less utility and more
+// along the lines of "new functionality that operates within the existing game structures"
+void DisplayBudgetAdvisorMessage(int iAdvisor, const char* szMessage) {
+	CSimcityAppPrimary* pSCApp;
+	CMainFrame* pMainFrm;
+
+	pSCApp = &pCSimcityAppThis;
+	pMainFrm = (CMainFrame*)pSCApp->m_pMainWnd;
+
+	// HACK (araxestroy): nasty workaround until CBudgetAdvisorDialog::OnInitDialog is reimplemented
+	SafeVirtualProtect((LPVOID)0x41A4F9, 2, PAGE_EXECUTE_READWRITE);
+	*(uint8_t*)0x41A4F9 = 0xEB;		// jmp short 0x41A50B
+	*(uint8_t*)0x41A4FA = 0x10;
+
+	// Construct the dialog and display it
+	CMFC3XBudgetAdvisorDialog dlg;
+	Game_BudgetAdvisorDialog_CreateDialog(&dlg, pMainFrm);
+	dlg.m_dwBDAOne = iAdvisor;
+	GameMain_String_OperatorSet(&dlg.m_dwBDACStringOne, (char*)szMessage);
+	Game_GameDialog_DoModal((CGameDialog*)&dlg);
+
+	// Restore original code
+	*(uint8_t*)0x41A4F9 = 0x77;		// ja short def_41A4FB
+	*(uint8_t*)0x41A4FA = 0x07;
+}

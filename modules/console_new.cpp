@@ -703,6 +703,8 @@ bool ConsoleCommandRunLua(std::vector<std::string> args, int iBreakoutState, int
 	return true;
 }
 
+bool bForceRunTestNextTick = false;
+
 bool ConsoleCommandRunTest(std::vector<std::string> args, int iBreakoutState, intptr_t iOptParam) {
 	// No arguments allowed
 	if (iBreakoutState == BREAKOUT_QUESTION) {
@@ -712,6 +714,8 @@ bool ConsoleCommandRunTest(std::vector<std::string> args, int iBreakoutState, in
 	}
 	if (iBreakoutState != BREAKOUT_RETURN)
 		return false;
+
+	bForceRunTestNextTick = true;
 
 	return true;
 }
