@@ -700,6 +700,7 @@ void InstallTerrainHandlingHooks_SC2K1996(void);
 void InstallTileGrowthOrPlacementHandlingHooks_SC2K1996(void);
 void InstallGraphsScanningStatsHandlingHooks_SC2K1996(void);
 void InstallToolBarHooks_SC2K1996(void);
+void InstallHelpHooks_SC2K1996(void);
 void InstallMiscHooks_SC2K1996(void);
 void UpdateMiscHooks_SC2K1996(void);
 void InstallMiscHooks_SC2K1995(void);
@@ -787,4 +788,4 @@ void InstallFixes_SCURK1996(void);
 BOOL CALLBACK FileHookProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 // Help stuff
-extern void DisplayItemHelp(HWND hWnd, int nType, int nIndex);
+extern void DisplayItemHelp(HWND hWnd, int nType, int nIndex, bool bFromMain);

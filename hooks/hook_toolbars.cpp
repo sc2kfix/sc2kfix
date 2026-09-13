@@ -123,7 +123,7 @@ extern "C" void __stdcall Hook_CityToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoin
 		// help file in Windows.
 		if (iHitMenuButton != CITYTOOL_BUTTON_HELP && (nFlags & MK_SHIFT)) {
 			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
-			DisplayItemHelp(pSCApp->m_pMainWnd->m_hWnd, HELPTYPE_CITYTOOLBAR, iHitMenuButton);
+			DisplayItemHelp(pSCApp->m_pMainWnd->m_hWnd, HELPTYPE_CITYTOOLBAR, iHitMenuButton, true);
 			return;
 		}
 #endif
@@ -404,7 +404,7 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 			break;
 		case CITYTOOL_BUTTON_HELP:
 #if USE_NEW_HELP_HANDLING
-			DisplayItemHelp(pSCApp->m_pMainWnd->m_hWnd, HELPTYPE_CITYTOOLBAR, nIndex);
+			DisplayItemHelp(pSCApp->m_pMainWnd->m_hWnd, HELPTYPE_CITYTOOLBAR, nIndex, true);
 #else
 			GameMain_WinApp_WinHelpA(game_AfxCoreState.m_pCurrentWinApp, 0, 11);
 #endif
@@ -460,7 +460,7 @@ extern "C" void __stdcall Hook_MapToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoint
 			// help file in Windows.
 			if (iHitMenuButton != MAPTOOL_BUTTON_HELP && (nFlags & MK_SHIFT)) {
 				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
-				DisplayItemHelp(pSCApp->m_pMainWnd->m_hWnd, HELPTYPE_MAPTOOLBAR, iHitMenuButton);
+				DisplayItemHelp(pSCApp->m_pMainWnd->m_hWnd, HELPTYPE_MAPTOOLBAR, iHitMenuButton, true);
 				return;
 			}
 #endif
@@ -573,7 +573,7 @@ extern "C" void __stdcall Hook_MapToolBar_SetSelection(UINT nIndex, UINT nSubInd
 			break;
 		case MAPTOOL_BUTTON_HELP:
 #if USE_NEW_HELP_HANDLING
-			DisplayItemHelp(pSCApp->m_pMainWnd->m_hWnd, HELPTYPE_MAPTOOLBAR, nIndex);
+			DisplayItemHelp(pSCApp->m_pMainWnd->m_hWnd, HELPTYPE_MAPTOOLBAR, nIndex, true);
 #else
 			GameMain_WinApp_WinHelpA(game_AfxCoreState.m_pCurrentWinApp, 0, 11);
 #endif

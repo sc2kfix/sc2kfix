@@ -3015,6 +3015,9 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 			// execution from the BuildSubFrames section.
 			case IDC_GAME_MAIN_SC2KFIXSETTINGS:
 				return EndDialog(pThis->m_hWnd, ONIDLE_INITIALDIALOG_SC2KFIXSETTINGS);
+			case IDC_BUDGET_HELP:
+				DisplayItemHelp(pThis->m_hWnd, HELPTYPE_BUDGET, IDC_BUDGET_HELP, false);
+				return TRUE;
 			//default:
 				// This block here handles all of the current Ordinance settings.
 				// If we ever want to redirect their calls here (and possibly add others
@@ -3347,6 +3350,8 @@ void InstallMiscHooks_SC2K1996(void) {
 
 	InstallToolBarHooks_SC2K1996();
 
+	InstallHelpHooks_SC2K1996();
+
 	// New hooks for CSimcityDoc::UpdateDocumentTitle and
 	// SimulationProcessTick - these account for:
 	// 1) Including the day of the month in the window title.
@@ -3392,7 +3397,30 @@ void InstallMiscHooks_SC2K1996(void) {
 			goto skipmainmenu;
 		}
 		if (!InsertMenu(hFilePopup, 0, MF_BYPOSITION|MF_STRING, IDM_MAIN_FILE_OPENMAINDIALOG, "&Open Main Dialog") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Main InsertMenuA #1 failed, error = 0x%08X.\n", GetLastError());
+			ConsoleLog(LOG_DEBUG, "MISC: Main InsertMenuA #2 failed, error = 0x%08X.\n", GetLastError());
+			goto skipmainmenu;
+		}
+
+		// Help menu - remove unnecessary items here.
+		HMENU hHelpPopup;
+		MENUITEMINFO miiHelpPopup;
+		miiHelpPopup.cbSize = sizeof(MENUITEMINFO);
+		miiHelpPopup.fMask = MIIM_SUBMENU;
+		if (!GetMenuItemInfo(hMainMenu, 1, TRUE, &miiHelpPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Main GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
+			goto skipmainmenu;
+		}
+		hHelpPopup = miiHelpPopup.hSubMenu;
+		if (!DeleteMenu(hHelpPopup, 0, MF_BYPOSITION) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Main Delete Menu #1 failed, error = 0x%08X.\n", GetLastError());
+			goto skipmainmenu;
+		}
+		if (!DeleteMenu(hHelpPopup, 0, MF_BYPOSITION) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Main Delete Menu #2 failed, error = 0x%08X.\n", GetLastError());
+			goto skipmainmenu;
+		}
+		if (!DeleteMenu(hHelpPopup, 0, MF_BYPOSITION) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Main Delete Menu #3 failed, error = 0x%08X.\n", GetLastError());
 			goto skipmainmenu;
 		}
 
@@ -3460,6 +3488,29 @@ void InstallMiscHooks_SC2K1996(void) {
 		if (!InsertMenu(hMenuWindowsPopup, -1, MF_BYPOSITION | MF_STRING, IDM_GAME_WINDOWS_SCENARIOGOALS, "Show &Scenario Goals...") && mischook_debug & MISCHOOK_DEBUG_MENU) {
 			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #2 failed, error = 0x%08X.\n", GetLastError());
 			goto skipgamemenu;
+		}
+
+		// Help menu - rename and remove unnecessary items.
+		HMENU hHelpPopup;
+		MENUITEMINFO miiHelpPopup;
+		miiHelpPopup.cbSize = sizeof(MENUITEMINFO);
+		miiHelpPopup.fMask = MIIM_SUBMENU;
+		if (!GetMenuItemInfo(hGameMenu, 6, TRUE, &miiHelpPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
+			goto skipmainmenu;
+		}
+		hHelpPopup = miiHelpPopup.hSubMenu;
+		if (!ModifyMenu(hHelpPopup, 0, MF_BYPOSITION | MF_STRING, 57666, "Information...") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game Modify Menu #1 failed, error = 0x%08X.\n", GetLastError());
+			goto skipmainmenu;
+		}
+		if (!DeleteMenu(hHelpPopup, 1, MF_BYPOSITION) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game Delete Menu #1 failed, error = 0x%08X.\n", GetLastError());
+			goto skipmainmenu;
+		}
+		if (!DeleteMenu(hHelpPopup, 1, MF_BYPOSITION) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game Delete Menu #2 failed, error = 0x%08X.\n", GetLastError());
+			goto skipmainmenu;
 		}
 
 		if (mischook_debug & MISCHOOK_DEBUG_MENU)
