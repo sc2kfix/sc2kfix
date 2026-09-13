@@ -2831,6 +2831,7 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 
 			case IDM_GAME_FILE_RELOADDEFAULTTILESET:
 				ReloadDefaultTileSet_SC2K1996(false);
+				jsonXFIX["map"]["tilesets"] = json::Array();
 				return TRUE;
 
 			case IDM_MAIN_FILE_OPENMAINDIALOG:
