@@ -225,13 +225,94 @@ static const char *GetHelpString_CityToolBar(int nIndex) {
 static const char *GetHelpString_MapToolBar(int nIndex) {
 	const char *pStr = NULL;
 	switch (nIndex) {
-		case MAPTOOL_BUTTON_RAISETERRAIN:
-			break;
 		case MAPTOOL_BUTTON_TOGGLEOCEAN:
 			pStr = "- COAST SELECT\n\n"
 				"This button will add a coastline to the next map generated.";
 			break;
-			// TXT1201 next
+		case MAPTOOL_BUTTON_TOGGLERIVER:
+			pStr = "- RIVER SELECT\n\n"
+				"This button will add a river to the next map generated.";
+			break;
+		case MAPTOOL_BUTTON_TERRAINHILLS:
+			pStr = "- HILL SLIDER\n\n"
+				"This slider adjusts how hilly the generated terrain will be.";
+			break;
+		case MAPTOOL_BUTTON_TERRAINWATER:
+			pStr = "- WATER SLIDER\n\n"
+				"This slider adjusts how wet the generated terrain will be. It will adjust both the sea level on the map as well as the number of streams and lakes.";
+			break;
+		case MAPTOOL_BUTTON_TERRAINTREES:
+			pStr = "- TREE SLIDER\n\n"
+				"This slider adjusts the number of trees on the generated terrain.";
+			break;
+		case MAPTOOL_BUTTON_MAKE:
+			pStr = "- MAKE NEW MAP\n\n"
+				"This button will generate a new map. The new map will be based on the settings of the two buttons and three sliders above.";
+			break;
+		case MAPTOOL_BUTTON_RAISETERRAIN:
+			pStr = "- RAISE TERRAIN\n\n"
+				"This tool will raise the altitude when you click on the terrain, thereby creating hills.";
+			break;
+		case MAPTOOL_BUTTON_LOWERTERRAIN:
+			pStr = "- LOWER TERRAIN\n\n"
+				"This tool will lower the altitude when you click on the terrain, thereby creating valleys.";
+			break;
+		case MAPTOOL_BUTTON_STRETCHTERRAIN:
+			pStr = "- STRETCH TERRAIN\n\n"
+				"This tool will allow you to stretch the terrain up or down. Click on the tile you wish to change and slowly move the mouse up or down while holding the button.";
+			break;
+		case MAPTOOL_BUTTON_LEVELTERRAIN:
+			pStr = "- LEVEL TERRAIN\n\n"
+				"This tool will level terrain and remove trees. Click on the tile level you wish to extend and move the mouse in the direction you want while holding down the mouse button.";
+			break;
+		case MAPTOOL_BUTTON_INCREASEWATERLEVEL:
+			pStr = "- RAISE SEA LEVEL\n\n"
+				"Each time you press this button the sea level across the entire map will be raised one level.";
+			break;
+		case MAPTOOL_BUTTON_DECREASEWATERLEVEL:
+			pStr = "- LOWER SEA LEVEL\n\n"
+				"Each time you press this button the sea level across the entire map will be lowered one level.";
+			break;
+		case MAPTOOL_BUTTON_WATER:
+			pStr = "- PLACE WATER\n\n"
+				"This tool places tiles of water, thereby allowing you to create larger bodies of water like lakes and streams.";
+			break;
+		case MAPTOOL_BUTTON_STREAM:
+			pStr = "- PLACE STREAM\n\n"
+				"This tool creates streams. Click where you want the stream to start and it will flow downhill from that point.";
+			break;
+		case MAPTOOL_BUTTON_TREES:
+			pStr = "- PLACE TREE\n\n"
+				"This tool adds trees to the terrain. Holding down the SHIFT key while using this tool will remove trees.";
+			break;
+		case MAPTOOL_BUTTON_FOREST:
+			pStr = "- PLACE FOREST\n\n"
+				"This tool will add a forested area to the terrain. Holding down the SHIFT key while using this tool will remove trees.";
+			break;
+		case MAPTOOL_BUTTON_ZOOMOUT:
+			pStr = "- ZOOM OUT\n\n"
+				"There are four scales your city can be viewed at. This button allows you to increase the scale of your display. The tiles grow smaller and the area displayed grows.";
+			break;
+		case MAPTOOL_BUTTON_ZOOMIN:
+			pStr = "- ZOOM IN\n\n"
+				"There are three scales your city can be viewed at. This button allows you to decrease the scale of your display. The tiles grow larger and the area displayed shrinks.";
+			break;
+		case MAPTOOL_BUTTON_ROTATEANTICLOCKWISE:
+			pStr = "- ROTATE COUNTER-CLOCKWISE\n\n"
+				"Each time you click this button the scene in the window will rotate 90 degrees counter-clockwise.";
+			break;
+		case MAPTOOL_BUTTON_ROTATECLOCKWISE:
+			pStr = "- ROTATE CLOCKWISE\n\n"
+				"Each time you click this button the scene in the window will rotate 90 degrees clockwise.";
+			break;
+		case MAPTOOL_BUTTON_CENTERINGTOOL:
+			pStr = "- CENTER DISPLAY\n\n"
+				"This is the centering tool. It is used to scroll around your city. When you click in the window the scene will re-center on the place you clicked. If you click near the center of the window and hold both the 'Alt' key and mouse button down, you can then smoothly scroll around by moving the mouse to adjust direction.";
+			break;
+		case MAPTOOL_BUTTON_DONE:
+			pStr = "- DONE\n\n"
+				"When you are finished editing the terrain this button will bring you into the game. Make sure you are finished because you cannot return to the map-editing mode once the game has started.";
+			break;
 		case MAPTOOL_BUTTON_HELP:
 			pStr = GetHelpString_GeneralHelp();
 			break;
