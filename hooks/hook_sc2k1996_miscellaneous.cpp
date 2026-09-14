@@ -78,6 +78,9 @@ extern int iForceNewspaperArg1;
 // Used for the "bad" terrain highlighting
 bool bHighlightBadTerrain = false;
 
+bool bBudgetOpen = false;
+bool bOrdinanceOpen = false;
+
 // Override some strings that have egregiously bad grammar/capitalization.
 // Maxis fail English? That's unpossible!
 extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMax) {
@@ -131,6 +134,88 @@ extern "C" INT_PTR __stdcall Hook_GameDialog_DoModal() {
 		pSCApp->dwSCABackgroundColourCyclingActive = FALSE;
 
 	return ret;
+}
+
+extern "C" BOOL __stdcall Hook_GameDialog_OnSetCursor(CMFC3XWnd *pWnd, UINT nHitTest, UINT message) {
+	CGameDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CMainFrame *pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
+	CSimcityView *pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+
+	if (pThis == pWnd) {
+		if (bOrdinanceOpen ||
+			bBudgetOpen ||
+			(DWORD *)pThis == pMainFrm->dwMFCityMapDialog ||
+			(DWORD *)pThis == pMainFrm->dwMFCityIndustryDialog ||
+			(DWORD *)pThis == pMainFrm->dwMFNeighbourDialog ||
+			(DWORD *)pThis == pMainFrm->dwMFPopulationDialog ||
+			(DWORD *)pThis == pMainFrm->dwMFSimGraphDialog) {
+			Game_SimcityApp_SetGameCursor(pSCApp, GAMECURSOR_ARROW, TRUE);
+			pSCApp->dwSCACursorGameHit = CURSORHIT_GAMEDIALOG;
+			// When both the Ordinance and Budget dialogues are
+			// launched, either:
+			// a) The Ordinance dialogue is the child of CMainFrame pWnd or CBudgetMainWindow pWnd
+			// b) The Budget dialogue is the child of CMainFrame pWnd
+			// In either case the Simulation is suspended and CSimcityView::MaintainCursor() isn't
+			// hit so the normal was that CSimcityView::GameCursorHitTest() is invoked is never reached.
+			// To get around that, the following has been added (make sure pSCView is valid and either
+			// boolean variable happens to be true).
+			//
+			// NOTE: When you press the 'SHIFT' key there is a very slight delay before the cursor changes
+			//       though this is minor while this method exists.
+			if (pSCView && (bOrdinanceOpen || bBudgetOpen))
+				Game_SimcityView_GameCursorHitTest(pSCView);
+		}
+		else {
+			Game_SimcityApp_SetGameCursor(pSCApp, GAMECURSOR_ARROW, FALSE);
+			pSCApp->dwSCACursorGameHit = CURSORHIT_NA;
+		}
+	}
+	return TRUE;
+}
+
+extern "C" void __stdcall Hook_GameDialog_OnLButtonDown(UINT nFlags, CMFC3XPoint pt) {
+	CGameDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CMainFrame *pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
+
+	// The Ordinance dialogue can be opened from the Budget, so it must
+	// come first.
+	if (nFlags & MK_SHIFT) {
+		if (bOrdinanceOpen) {
+			ConsoleLog(LOG_DEBUG, "Ordinance.\n");
+			return;
+		}
+		else if (bBudgetOpen) {
+			ConsoleLog(LOG_DEBUG, "Budget.\n");
+			return;
+		}
+		else if ((DWORD *)pThis == pMainFrm->dwMFCityMapDialog) {
+			ConsoleLog(LOG_DEBUG, "Map Dialog.\n");
+			return;
+		}
+		else if ((DWORD *)pThis == pMainFrm->dwMFNeighbourDialog) {
+			ConsoleLog(LOG_DEBUG, "Neighbour Dialog.\n");
+			return;
+		}
+		else if ((DWORD *)pThis == pMainFrm->dwMFPopulationDialog) {
+			ConsoleLog(LOG_DEBUG, "Population Dialog.\n");
+			return;
+		}
+		else if ((DWORD *)pThis == pMainFrm->dwMFSimGraphDialog) {
+			ConsoleLog(LOG_DEBUG, "Graph Dialog.\n");
+			return;
+		}
+	}
+
+	pThis->dwLeftButtonDown = 1;
+	GameMain_Wnd_Default(pThis);
 }
 
 extern "C" void __stdcall Hook_GameDialog_OnDestroy() {
@@ -3221,6 +3306,14 @@ void InstallMiscHooks_SC2K1996(void) {
 	SafeVirtualProtect((LPVOID)0x40219E, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x40219E, Hook_GameDialog_DoModal);
 
+	// Hook into the CGameDialog::OnSetCursor function
+	SafeVirtualProtect((LPVOID)0x402112, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402112, Hook_GameDialog_OnSetCursor);
+
+	// Hook into the CGameDialog::OnLButtonDown function
+	SafeVirtualProtect((LPVOID)0x402720, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402720, Hook_GameDialog_OnLButtonDown);
+
 	// Hook into the CGameDialog::OnDestroy function
 	SafeVirtualProtect((LPVOID)0x401532, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401532, Hook_GameDialog_OnDestroy);
@@ -3343,12 +3436,6 @@ void InstallMiscHooks_SC2K1996(void) {
 	// Hook for CMainFrame::UpdateSections
 	SafeVirtualProtect((LPVOID)0x40131B, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x40131B, Hook_MainFrame_UpdateSections);
-
-	// nop out "StopSound" call in SimulationPrepareBudgetDialog()
-	// this allows for the "click" to be played when executed from
-	// the city toolbar.
-	SafeVirtualProtect((LPVOID)0x473230, 10, PAGE_EXECUTE_READWRITE);
-	memset((LPVOID)0x473230, 0x90, 10);
 
 	InstallToolBarHooks_SC2K1996();
 

@@ -403,7 +403,7 @@ public:
 
 class CGameDialog : public CMFC3XDialog {
 public:
-	DWORD dwGDOne;
+	DWORD dwLeftButtonDown;
 };
 
 class CNewspaperDialog : public CGameDialog {
@@ -597,4 +597,75 @@ public:
 	CMFC3XPalette MovPalette;
 	int iButtonDown;
 	int iButtonUp;
+};
+
+class CBudgetMainDialog : public CGameDialog {
+public:
+	CMFC3XBitmapButton dwBDMBitmapButtonOne[8];
+	CMFC3XBitmapButton dwBDMBitmapButtonTwo[8];
+	DWORD dwBDthreehundredtwentytwo;
+	DWORD dwBDthreehundredtwentythree;
+	CMFC3XString dwBDStringFour;
+	DWORD dwBDYearToDateCashFlow;
+	DWORD dwBDEstimatedCashFlow;
+	int dwDisplayHourGlass;
+	POINT dwBDPointOne;
+	CGraphics *dwBDCGraphicsOne;
+	CMFC3XScrollBar dwBDScrollBarTransit;
+	CMFC3XScrollBar dwBDScrollBarPropertyTax;
+	CMFC3XScrollBar dwBDScrollBarPoliceDepartment;
+	CMFC3XScrollBar dwBDScrollBarHealthAndWelfare;
+	CMFC3XScrollBar dwBDScrollBarFireDepartment;
+	CMFC3XScrollBar dwBDScrollBarEducation;
+	CMFC3XEdit dwBDEditTransitYEE;
+	CMFC3XEdit dwBDEditTransitTDE;
+	CMFC3XEdit dwBDEditPoliceDepartmentYEE;
+	CMFC3XEdit dwBDEditOrdinanceYEE;
+	CMFC3XEdit dwBDEditHealthAndWelfareYEE;
+	CMFC3XEdit dwBDEditFireDepartmentYEE;
+	CMFC3XEdit dwBDEditEducationYEE;
+	CMFC3XEdit dwBDEditBondPaymentsYEE;
+	CMFC3XEdit dwBDEditPoliceDepartmentTDE;
+	CMFC3XEdit dwBDEditHealthAndWelfareTDE;
+	CMFC3XEdit dwBDEditFireDepartmentTDE;
+	CMFC3XEdit dwBDEditEducationTDE;
+	CMFC3XEdit dwBDEditBondPaymentsTDE;
+	CMFC3XEdit dwBDEditOrdinanceTDE;
+	CMFC3XEdit dwBDEditPropertyTaxYEE;
+	CMFC3XEdit dwBDEditPropertyTaxTDE;
+	CMFC3XStatic dwBDStaticHourGlass;
+	CMFC3XStatic dwBDStaticBudgetSummary;
+	CMFC3XStatic dwBDStaticEndOfYearFunds;
+	CMFC3XEdit dwBDEditBudgetNameYearMonth;
+	DWORD dwEducationDepartmentPercent;
+	DWORD dwFireDepartmentPercent;
+	DWORD dwHealthDepartmentPercent;
+	DWORD dwPoliceDepartmentPercent;
+	DWORD dwPropertyTaxPercent;
+	DWORD dwTransitDepartmentPercent;
+	DWORD dwBDFireDepartmentTDELim;
+	DWORD dwBDHealthAndWelfareTDELim;
+	DWORD dwBDPoliceDepartmentTDELim;
+	DWORD dwBDPropertyTaxTDELim;
+	DWORD dwBDTransitTDELim;
+	DWORD dwBDEducationYEELim;
+	DWORD dwBDFireDepartmentYEELim;
+	DWORD dwBDHealthAndWelfareYEELim;
+	DWORD dwBDPoliceDepartmentYEELim;
+	DWORD dwBDPropertyTaxYEELim;
+	DWORD dwBDTransitYEELim;
+	DWORD dwBDBondPaymentsTDELim;
+	DWORD dwBDEducationTDELim;
+	DWORD dwBDOrdinanceTDELim;
+	DWORD dwBDBondPaymentsYEELim;
+	DWORD dwBDOrdinanceYEELim;
+	CMFC3XString dwBDStringBudgetNameYearMonth;
+	CMFC3XString dwBDStringYearEndEstimate;
+	CMFC3XString dwBDStringToDateExpense;
+};
+
+class CBudgetOrdinanceDialog : public CGameDialog {
+public:
+	DWORD dwUnknown[14];
+	CMFC3XBitmapButton dwBDOBitmapButton[25];
 };

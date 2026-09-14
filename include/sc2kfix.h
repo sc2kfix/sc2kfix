@@ -690,6 +690,9 @@ HOOKEXT BOOL bHookStopProcessing;
 
 extern HWND hWndExt;
 
+extern bool bBudgetOpen;
+extern bool bOrdinanceOpen;
+
 // Hooks to inject in dllmain.cpp
 
 void InstallAnimationHooks_SC2K1996(void);
