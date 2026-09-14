@@ -714,6 +714,7 @@ void InstallScenarioHooks_SC2K1996(void);
 void InstallDrawingHooks_SC2K1996(void);
 void InstallThingHooks_SC2K1996(void);
 void InstallQueryHooks_SC2K1996(void);
+void InstallCityManagementHooks_SC2K1996(void);
 void InstallArcologyDialogHooks_SC2K1996(void);
 void InstallPowerPlantDialogHooks_SC2K1996(void);
 void InstallBridgeDialogHooks_SC2K1996(void);

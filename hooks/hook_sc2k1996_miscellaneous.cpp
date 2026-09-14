@@ -3303,6 +3303,8 @@ void InstallMiscHooks_SC2K1996(void) {
 	// Install the advanced query hook
 	InstallQueryHooks_SC2K1996();
 
+	InstallCityManagementHooks_SC2K1996();
+
 	InstallArcologyDialogHooks_SC2K1996();
 
 	InstallPowerPlantDialogHooks_SC2K1996();
