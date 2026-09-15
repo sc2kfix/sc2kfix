@@ -109,7 +109,6 @@
 #define IDC_RADIO_INSTALL_BASIC         21095
 #define IDC_RADIO_INSTALL_BASIC2        21096
 #define IDC_RADIO_INSTALL_VANILLA       21097
-#define IDC_BUDGET_HELP                 21098
 #define IDR_WAVE_500                    23001
 #define IDR_WAVE_503                    23002
 #define IDR_WAVE_508                    23003

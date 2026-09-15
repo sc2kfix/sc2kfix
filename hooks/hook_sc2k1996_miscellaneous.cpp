@@ -193,7 +193,8 @@ extern "C" void __stdcall Hook_GameDialog_OnLButtonDown(UINT nFlags, CMFC3XPoint
 			return;
 		}
 		else if (bBudgetOpen) {
-			ConsoleLog(LOG_DEBUG, "Budget.\n");
+			HWND hWndChild = ChildWindowFromPoint(pThis->m_hWnd, pt);
+			ConsoleLog(LOG_DEBUG, "Budget. nID(%d)\n", GetDlgCtrlID(hWndChild));
 			return;
 		}
 		else if ((DWORD *)pThis == pMainFrm->dwMFCityMapDialog) {
@@ -3100,24 +3101,33 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 			// execution from the BuildSubFrames section.
 			case SC2K_DIALOG_MAIN_BTN_SC2KFIXSETTINGS:
 				return EndDialog(pThis->m_hWnd, ONIDLE_INITIALDIALOG_SC2KFIXSETTINGS);
-			case IDC_BUDGET_HELP:
-				DisplayItemHelp(pThis->m_hWnd, HELPTYPE_BUDGET, IDC_BUDGET_HELP, false);
+			case SC2K_DIALOG_BUDGET_HELP:
+				if (bBudgetOpen)
+					DisplayItemHelp(pThis->m_hWnd, HELPTYPE_BUDGET, SC2K_DIALOG_BUDGET_HELP, false);
 				return TRUE;
-			//default:
-				// This block here handles all of the current Ordinance settings.
-				// If we ever want to redirect their calls here (and possibly add others
-				// add the given IDs to the list).
-				//if ((nID >= 148 && nID <= 151) ||
-				//	(nID >= 156 && nID <= 159) ||
-				//	(nID >= 164 && nID <= 167) ||
-				//	(nID >= 172 && nID <= 175) ||
-				//	(nID >= 180 && nID <= 183)) {
-				//	ConsoleLog(LOG_DEBUG, "nID(%u)\n", nID);
-				//	return TRUE;
-				//}
-				//break;
+			default:
+				if (bOrdinanceOpen) {
+					// This block here handles all of the current Ordinance settings.
+					// If we ever want to redirect their calls here (and possibly add others
+					// add the given IDs to the list).
+					//if ((nID >= 148 && nID <= 151) ||
+					//	(nID >= 156 && nID <= 159) ||
+					//	(nID >= 164 && nID <= 167) ||
+					//	(nID >= 172 && nID <= 175) ||
+					//	(nID >= 180 && nID <= 183)) {
+					//	ConsoleLog(LOG_DEBUG, "nID(%u)\n", nID);
+					//	return TRUE;
+					//}
+				}
+				else if (bBudgetOpen) {
+					if (GetAsyncKeyState(VK_SHIFT) < 0) {
+						ConsoleLog(LOG_DEBUG, "nID == %d\n", nID);
+						return TRUE;
+					}
+				}
+				break;
 			}
-			//ConsoleLog(LOG_DEBUG, "::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, pExtra, pHandler, dwRetAddr);
+			ConsoleLog(LOG_DEBUG, "::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, pExtra, pHandler, dwRetAddr);
 		}
 	}
 	else {
@@ -3142,6 +3152,18 @@ extern "C" BOOL __stdcall Hook_Wnd_OnCommand(WPARAM wParam, LPARAM lParam) {
 	// If we didn't actually get a command, bail out
 	if (nID == 0)
 		return FALSE;
+
+	ConsoleLog(LOG_DEBUG, "0x%06X -> CWnd::OnCommand(0x%06X, 0x%06X): nID(%u) nCode(%d) hWndCtrl(%c)\n", _ReturnAddress(), wParam, lParam, nID, nCode, (hWndCtrl == NULL) ? 'N' : 'Y');
+
+	if (bOrdinanceOpen) {
+
+	}
+	else if (bBudgetOpen) {
+		if (GetAsyncKeyState(VK_SHIFT) < 0) {
+			ConsoleLog(LOG_DEBUG, "- nID == %d\n", nID);
+			return FALSE;
+		}
+	}
 
 	if (hWndCtrl == NULL) {
 		GameMain_TestCmdUI_Construct(&testCmd);

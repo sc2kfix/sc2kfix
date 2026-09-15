@@ -325,7 +325,7 @@ static const char *GetHelpString_MapToolBar(int nIndex) {
 static const char *GetHelpString_Budget(int nIndex) {
 	const char *pStr = NULL;
 	switch (nIndex) {
-		case IDC_BUDGET_HELP:
+		case SC2K_DIALOG_BUDGET_HELP:
 			pStr = GetHelpString_GeneralHelp();
 			break;
 		default:
