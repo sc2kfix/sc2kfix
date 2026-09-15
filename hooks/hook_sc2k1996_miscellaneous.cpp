@@ -1012,8 +1012,8 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 	case WM_INITDIALOG:
 		bAborting = false;
 		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis);
-		SendMessage(GetDlgItem(hwndDlg, 119), WM_SETFONT, (WPARAM)hFontMSSansSerifRegular8, TRUE);
-		SetFocus(GetDlgItem(hwndDlg, 1));
+		SendMessage(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_LBL_TIP), WM_SETFONT, (WPARAM)hFontMSSansSerifRegular8, TRUE);
+		SetFocus(GetDlgItem(hwndDlg, IDOK));
 
 		// Set WS_EX_LAYERED on our window object, since we need that for transparency and can't
 		// do that in the MFC dialog creation function
@@ -1024,73 +1024,73 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		DestroyStoredTooltips(storedToolTips, hwndDlg);
 		
 		// Button tooltips
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 1),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDOK),
 			"Finalizes your city settings and starts the game.");
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 20),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_BTN_REGENERATE),
 			"Generates a new map for your city. A larger variety of terrain is available than in the vanilla SimCity 2000 start game dialog.\n\n"
 			"Hold Shift while clicking this to increase the depth of the splines being reticulated.");
 
 		// Difficulty selection tooltips
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 109),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_DIFFEASY),
 			"Start a game on Easy difficulty.\n"
 			"Modifiers:\n"
 			" - $20,000 starting cash\n"
 			" - Slightly increased industrial demand\n"
 			" - Eight years before disasters can occur, and reduced chance of disasters");
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 1001),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_LBL_DIFFEASY),
 			"Start a game on Easy difficulty.\n"
 			"Modifiers:\n"
 			" - $20,000 starting cash\n"
 			" - Slightly increased industrial demand\n"
 			" - Eight years before disasters can occur, and reduced chance of disasters");
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 110),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_DIFFMEDIUM),
 			"Start a game on Medium difficulty.\n"
 			"Modifiers:\n"
 			" - $10,000 starting cash\n"
 			" - Baseline industrial demand\n"
 			" - Five years before disasters can occur, and a moderate chance of disasters");
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 1002),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_LBL_DIFFMEDIUM),
 			"Start a game on Medium difficulty.\n"
 			"Modifiers:\n"
 			" - $10,000 starting cash\n"
 			" - Baseline industrial demand\n"
 			" - Five years before disasters can occur, and a moderate chance of disasters");
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 111),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_DIFFHARD),
 			"Start a game on Hard difficulty.\n"
 			"Modifiers:\n"
 			" - $10,000 bond at 3% APR\n"
 			" - Slightly decreased industrial demand\n"
 			" - Two and a half years before disasters can occur, and an increased chance of disasters");
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 1003),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_LBL_DIFFHARD),
 			"Start a game on Hard difficulty.\n"
 			"Modifiers:\n"
 			" - $10,000 bond at 3% APR\n"
 			" - Slightly decreased industrial demand\n"
 			" - Two and a half years before disasters can occur, and an increased chance of disasters");
 
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 1010),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_LBL_STARTYEAR),
 			"Hover over a date to see the difference between starting years.");
 
 		// Year selection tooltips
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 104),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_YEAR1900),
 			"Start the game in 1900.\n"
 			"Modifiers:\n"
 			" - No forced unlocks.");
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 105),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_YEAR1950),
 			"Start the game in 1950.\n"
 			"Modifiers:\n"
 			" - Subways, buses, highways, and airports unlocked.\n"
 			" - Water treatment plants unlocked.\n"
 			" - 50% chance of natural gas power plants being unlocked.\n"
 			" - 5% chance of nuclear power plants being unlocked.");
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 106),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_YEAR2000),
 			"Start the game in 2000.\n"
 			"Modifiers:\n"
 			" - Subways, buses, highways, and airports unlocked.\n"
 			" - Water treatment and desalination plants unlocked.\n"
 			" - Natural gas, nuclear, wind, and solar power plants unlocked.\n"
 			" - 50% chance of Plymouth arcologies being unlocked.");
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 107),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_YEAR2050),
 			"Start the game in 2050.\n"
 			"Modifiers:\n"
 			" - Subways, buses, highways, and airports unlocked.\n"
@@ -1102,21 +1102,21 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 
 		// Limit the City name to 30 characters (not 31 - this avoids a rather
 		// nasty overrun that can occur if the old limit is hit).
-		SendMessage(GetDlgItem(hwndDlg, 101), EM_SETLIMITTEXT, CITY_NAME_LEN, 0);
-		SendMessage(GetDlgItem(hwndDlg, 150), EM_SETLIMITTEXT, MAX_LABEL_LEN, 0);
+		SendMessage(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_EDIT_CITYNAME), EM_SETLIMITTEXT, CITY_NAME_LEN, 0);
+		SendMessage(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_EDIT_MAYORNAME), EM_SETLIMITTEXT, MAX_LABEL_LEN, 0);
 
 		// Set the default options.
-		SetDlgItemText(hwndDlg, 101, "New City");
-		SetDlgItemText(hwndDlg, 150, jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
+		SetDlgItemText(hwndDlg, SC2K_DIALOG_NEWCITY_EDIT_CITYNAME, "New City");
+		SetDlgItemText(hwndDlg, SC2K_DIALOG_NEWCITY_EDIT_MAYORNAME, jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
 
-		Button_SetCheck(GetDlgItem(hwndDlg, 109), BST_CHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, 104), BST_CHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, 108), BST_CHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_DIFFEASY), BST_CHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_YEAR1900), BST_CHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_TRRNCLASSIC), BST_CHECKED);
 		iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
 
 		if (!bLegacyTerrainMode) {
 			if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt() > TERRAIN_COSMETIC_NONE)
-				SetWindowText(GetDlgItem(hwndDlg, 117), "WARNING: A specific 'Forced Terrain Mode' is set. Once the city has started, the selected 'Terrain Type' will be saved but not applied.");
+				SetWindowText(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_LBL_TRRNWARN), "WARNING: A specific 'Forced Terrain Mode' is set. Once the city has started, the selected 'Terrain Type' will be saved but not applied.");
 		}
 
 		if (pSCView) {
@@ -1132,27 +1132,27 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 
 		// Set the city name, defaulting to "New City" in case the player didn't enter one
 		memset(szTempCityName, 0, sizeof(szTempCityName));
-		if (!GetDlgItemText(hwndDlg, 101, szTempCityName, sizeof(szTempCityName)))
+		if (!GetDlgItemText(hwndDlg, SC2K_DIALOG_NEWCITY_EDIT_CITYNAME, szTempCityName, sizeof(szTempCityName)))
 			strcpy_s(szTempCityName, sizeof(szTempCityName), "New City");
 		GameMain_String_Cons(&pszCityName);
 		GameMain_String_OperatorSet(&pszCityName, szTempCityName);
 
 		// Set the XLAB entry for the mayor name, falling back to the default from settings.json
 		memset(szTempMayorName, 0, sizeof(szTempMayorName));
-		if (!GetDlgItemText(hwndDlg, 150, szTempMayorName, sizeof(szTempMayorName)))
+		if (!GetDlgItemText(hwndDlg, SC2K_DIALOG_NEWCITY_EDIT_MAYORNAME, szTempMayorName, sizeof(szTempMayorName)))
 			strcpy_s(szTempMayorName, sizeof(szTempMayorName), jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
 		SetXLABEntry(0, szTempMayorName);
 
 		// Set the difficulty and starting year
 		wNationalFedRate = 3;
 
-		if (Button_GetCheck(GetDlgItem(hwndDlg, 109)) == BST_CHECKED) {
+		if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_DIFFEASY)) == BST_CHECKED) {
 			wCityDifficulty = GAME_DIFFICULTY_EASY;
 			dwCityFunds = 20000;
-		} else if (Button_GetCheck(GetDlgItem(hwndDlg, 110)) == BST_CHECKED) {
+		} else if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_DIFFMEDIUM)) == BST_CHECKED) {
 			wCityDifficulty = GAME_DIFFICULTY_MEDIUM;
 			dwCityFunds = 10000;
-		} else if (Button_GetCheck(GetDlgItem(hwndDlg, 111)) == BST_CHECKED) {
+		} else if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_DIFFHARD)) == BST_CHECKED) {
 			wCityDifficulty = GAME_DIFFICULTY_HARD;
 			dwCityFunds = 10000;
 
@@ -1169,16 +1169,16 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 
 		wNationalEconomyTrend = wCityDifficulty - 1;
 
-		if (Button_GetCheck(GetDlgItem(hwndDlg, 104)) == BST_CHECKED) {
+		if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_YEAR1900)) == BST_CHECKED) {
 			wCityStartYear = 1900;
 			dwNationalPopulation = 10000;
-		} else if (Button_GetCheck(GetDlgItem(hwndDlg, 105)) == BST_CHECKED) {
+		} else if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_YEAR1950)) == BST_CHECKED) {
 			wCityStartYear = 1950;
 			dwNationalPopulation = 25000;
-		} else if (Button_GetCheck(GetDlgItem(hwndDlg, 106)) == BST_CHECKED) {
+		} else if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_YEAR2000)) == BST_CHECKED) {
 			wCityStartYear = 2000;
 			dwNationalPopulation = 60000;
-		} else if (Button_GetCheck(GetDlgItem(hwndDlg, 107)) == BST_CHECKED) {
+		} else if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_YEAR2050)) == BST_CHECKED) {
 			wCityStartYear = 2050;
 			dwNationalPopulation = 150000;
 		}
@@ -1209,17 +1209,17 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		Game_NewspaperStoryGenerator(NEWSPAPER_TYPE_FOUNDING, 0);
 
 		// Get the selected terrain setting (or randomize it if requested)
-		if (Button_GetCheck(GetDlgItem(hwndDlg, 108)) == BST_CHECKED)
+		if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_TRRNCLASSIC)) == BST_CHECKED)
 			jsonXFIX["map"]["terrain_cosmetic_mode"] = TERRAIN_COSMETIC_NONE;
-		else if (Button_GetCheck(GetDlgItem(hwndDlg, 112)) == BST_CHECKED)
+		else if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_TRRNGREY)) == BST_CHECKED)
 			jsonXFIX["map"]["terrain_cosmetic_mode"] = TERRAIN_COSMETIC_GREY;
-		else if (Button_GetCheck(GetDlgItem(hwndDlg, 113)) == BST_CHECKED)
+		else if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_TRRNLUSH)) == BST_CHECKED)
 			jsonXFIX["map"]["terrain_cosmetic_mode"] = TERRAIN_COSMETIC_GREEN;
-		else if (Button_GetCheck(GetDlgItem(hwndDlg, 114)) == BST_CHECKED)
+		else if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_TRRNCOLD)) == BST_CHECKED)
 			jsonXFIX["map"]["terrain_cosmetic_mode"] = TERRAIN_COSMETIC_COLD;
-		else if (Button_GetCheck(GetDlgItem(hwndDlg, 115)) == BST_CHECKED)
+		else if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_TRRNHOT)) == BST_CHECKED)
 			jsonXFIX["map"]["terrain_cosmetic_mode"] = TERRAIN_COSMETIC_HOT;
-		else if (Button_GetCheck(GetDlgItem(hwndDlg, 116)) == BST_CHECKED)
+		else if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_TRRNRANDOM)) == BST_CHECKED)
 			jsonXFIX["map"]["terrain_cosmetic_mode"] = rand() % 5;
 
 		bUseMapTerrainCosmeticMode = true;
@@ -1277,7 +1277,7 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 				bAborting = true;
 				EndDialog(hwndDlg, FALSE);
 				break;
-			case 20:
+			case SC2K_DIALOG_NEWCITY_BTN_REGENERATE:
 				// Reticulate some splines
 				Game_SimcityDoc_PrepareMap();
 				RandomizeCityTerrainVariables();
@@ -1292,42 +1292,42 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 				Game_SimcityView_DrawHouse(pSCView);
 				RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 				break;
-			case 108:
+			case SC2K_DIALOG_NEWCITY_RADIO_TRRNCLASSIC:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
 				if (pSCView) {
 					Game_SimcityView_DrawHouse(pSCView);
 					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 				}
 				break;
-			case 112:
+			case SC2K_DIALOG_NEWCITY_RADIO_TRRNGREY:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_GREY;
 				if (pSCView) {
 					Game_SimcityView_DrawHouse(pSCView);
 					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 				}
 				break;
-			case 113:
+			case SC2K_DIALOG_NEWCITY_RADIO_TRRNLUSH:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_GREEN;
 				if (pSCView) {
 					Game_SimcityView_DrawHouse(pSCView);
 					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 				}
 				break;
-			case 114:
+			case SC2K_DIALOG_NEWCITY_RADIO_TRRNCOLD:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_COLD;
 				if (pSCView) {
 					Game_SimcityView_DrawHouse(pSCView);
 					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 				}
 				break;
-			case 115:
+			case SC2K_DIALOG_NEWCITY_RADIO_TRRNHOT:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_HOT;
 				if (pSCView) {
 					Game_SimcityView_DrawHouse(pSCView);
 					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 				}
 				break;
-			case 116:
+			case SC2K_DIALOG_NEWCITY_RADIO_TRRNRANDOM:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
 				if (pSCView) {
 					Game_SimcityView_DrawHouse(pSCView);
