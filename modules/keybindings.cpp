@@ -934,7 +934,7 @@ static void DoBindAction_SC2K1996(int nAction, BOOL bRelease) {
 							tileCoords.x = LOBYTE(wTileCoords);
 							tileCoords.y = HIBYTE(wTileCoords);
 							if (tileCoords.x < GAME_MAP_SIZE && tileCoords.y < GAME_MAP_SIZE) {
-								hMenu = LoadMenuA(game_AfxCoreState.m_hCurrentResourceHandle, (LPCSTR)243);
+								hMenu = LoadMenuA(game_AfxCoreState.m_hCurrentResourceHandle, MAKEINTRESOURCEA(SC2K_MENU_RCLKSHORTCUT));
 								ClientToScreen(pSCView->m_hWnd, &pt);
 								hSubMenu = GetSubMenu(hMenu, 0);
 								TrackPopupMenu(hSubMenu, 0, pt.x, pt.y, 0, pMainFrame->m_hWnd, 0);

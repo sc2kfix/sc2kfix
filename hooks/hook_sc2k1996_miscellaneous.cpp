@@ -90,9 +90,9 @@ extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR l
 #pragma warning(disable : 6387)
 // Hook LoadMenuA so we can insert our own menu items.
 extern "C" HMENU __stdcall Hook_LoadMenuA(HINSTANCE hInstance, LPCSTR lpMenuName) {
-	if ((DWORD)lpMenuName == 2 && hMainMenu)
+	if ((DWORD)lpMenuName == SC2K_MENU_MAIN && hMainMenu)
 		return hMainMenu;
-	if ((DWORD)lpMenuName == 3 && hGameMenu)
+	if ((DWORD)lpMenuName == SC2K_MENU_GAME && hGameMenu)
 		return hGameMenu;
 	return LoadMenuA(hInstance, lpMenuName);
 }
@@ -400,7 +400,7 @@ static void SetHighlightBadTerrainMenuItem_SC2K1996() {
 	if (hOverallMenus) {
 		// Menu that you'd get after starting a game from the perspective
 		// of the mainframe - so position 7 is the debug menu.
-		HMENU hDebugMenu = GetSubMenu(hOverallMenus, 7);
+		HMENU hDebugMenu = GetSubMenu(hOverallMenus, SC2K_MENU_GAME_FROM_MAIN(SC2K_MENU_GAME_DEBUG));
 		if (hDebugMenu) {
 			// Terrain sub menu.
 			HMENU hTerrainMenu = GetSubMenu(hDebugMenu, 7);
@@ -1373,7 +1373,7 @@ extern "C" void __stdcall L_SimcityApp_NewCity(void) {
 		Game_SimcityView_ScaleIn(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
 
 	// Display the dialog and break out back to the menu loop if it's cancelled
-	if (!DialogBoxParam(hSC2KFixModule, (LPCSTR)101, pThis->m_pMainWnd->m_hWnd, Hook_NewCityDialogProc, 0)) {
+	if (!DialogBoxParam(hSC2KFixModule, MAKEINTRESOURCE(SC2K_DIALOG_NEWCITY), pThis->m_pMainWnd->m_hWnd, Hook_NewCityDialogProc, 0)) {
 		pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
 		pThis->dwSCASetNextStep = 1;
 		return;
@@ -1459,16 +1459,16 @@ static BOOL CALLBACK Hook_OwnerInfoDialogProc(HWND hwndDlg, UINT message, WPARAM
 // Load our own versions of dialog procedures for overridden dialogs as required
 extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam) {
 	switch ((DWORD)lpTemplateName) {
-	case 101:
+	case SC2K_DIALOG_NEWCITY:
 		lpNewCityAfxProc = lpDialogFunc;
 		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_NewCityDialogProc, dwInitParam);
-	case 103:
+	case SC2K_DIALOG_MAIN:
 		lpMainDialogAfxProc = lpDialogFunc;
 		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_MainDialogProc, dwInitParam);
-	case 102:
-	case 113:
-	case 142:
-	case 154:
+	case SC2K_DIALOG_BUDGET:
+	case SC2K_DIALOG_SELECTITEM:
+	case SC2K_DIALOG_QUERYGENERAL:
+	case SC2K_DIALOG_QUERYSPECIFIC:
 		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	default:
 		return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
@@ -1616,7 +1616,7 @@ extern "C" void __stdcall Hook_PrepareGame(void) {
 		if (dwShowSCURK) {
 			HMENU hMenu = GetMenu(pMainFrm->m_hWnd);
 			if (hMenu) {
-				HMENU hSubMenu = GetSubMenu(hMenu, 1);
+				HMENU hSubMenu = GetSubMenu(hMenu, SC2K_MENU_GAME_FROM_MAIN(SC2K_MENU_GAME_FILE));
 				if (hSubMenu) {
 					DeleteMenu(hSubMenu, 5, MF_BYPOSITION);
 					DeleteMenu(hSubMenu, 4, MF_BYPOSITION);
@@ -2752,7 +2752,7 @@ extern "C" void __stdcall Hook_MainFrame_UpdateSections() {
 REFRESHMENUGRANTS:
 	CMFC3XMenu* pMenu = &pCityToolBar->dwCTBMenuOne;
 	GameMain_Menu_DestroyMenu(pMenu);
-	HMENU hMenu = LoadMenuA(hGameModule, (LPCSTR)136);
+	HMENU hMenu = LoadMenuA(hGameModule, MAKEINTRESOURCEA(SC2K_MENU_CITYTOOLBAR));
 	GameMain_Menu_Attach(pMenu, hMenu);
 	for (nPos = CITYTOOL_BUTTON_BULLDOZER; nPos < CITYTOOL_BUTTON_SIGNS; ++nPos) {
 		if (dwGrantedItems[nPos]) {
@@ -3469,14 +3469,14 @@ void InstallMiscHooks_SC2K1996(void) {
 	NEWJMP((LPVOID)0x4A468C, Hook_Wnd_OnDrawItem);
 
 	// Add more buttons to SC2K's menus
-	hMainMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(2));
+	hMainMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(SC2K_MENU_MAIN));
 	if (hMainMenu) {
 		// File menu -> Open Main Dialog
 		HMENU hFilePopup;
 		MENUITEMINFO miiFilePopup;
 		miiFilePopup.cbSize = sizeof(MENUITEMINFO);
 		miiFilePopup.fMask = MIIM_SUBMENU;
-		if (!GetMenuItemInfo(hMainMenu, 0, TRUE, &miiFilePopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+		if (!GetMenuItemInfo(hMainMenu, SC2K_MENU_MAIN_FILE, TRUE, &miiFilePopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
 			ConsoleLog(LOG_DEBUG, "MISC: Main GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
 			goto skipmainmenu;
 		}
@@ -3495,7 +3495,7 @@ void InstallMiscHooks_SC2K1996(void) {
 		MENUITEMINFO miiHelpPopup;
 		miiHelpPopup.cbSize = sizeof(MENUITEMINFO);
 		miiHelpPopup.fMask = MIIM_SUBMENU;
-		if (!GetMenuItemInfo(hMainMenu, 1, TRUE, &miiHelpPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+		if (!GetMenuItemInfo(hMainMenu, SC2K_MENU_MAIN_HELP, TRUE, &miiHelpPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
 			ConsoleLog(LOG_DEBUG, "MISC: Main GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
 			goto skipmainmenu;
 		}
@@ -3520,14 +3520,14 @@ void InstallMiscHooks_SC2K1996(void) {
 	skipmainmenu:
 
 	// TODO: write a much cleaner and more programmatic way of doing this
-	hGameMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(3));
+	hGameMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(SC2K_MENU_GAME));
 	if (hGameMenu) {
 		// File menu -> Reload Default Tileset
 		HMENU hFilePopup;
 		MENUITEMINFO miiFilePopup;
 		miiFilePopup.cbSize = sizeof(MENUITEMINFO);
 		miiFilePopup.fMask = MIIM_SUBMENU;
-		if (!GetMenuItemInfo(hGameMenu, 0, TRUE, &miiFilePopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+		if (!GetMenuItemInfo(hGameMenu, SC2K_MENU_GAME_FILE, TRUE, &miiFilePopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
 			ConsoleLog(LOG_DEBUG, "MISC: Game GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
 			goto skipgamemenu;
 		}
@@ -3542,7 +3542,7 @@ void InstallMiscHooks_SC2K1996(void) {
 		MENUITEMINFO miiOptionsPopup;
 		miiOptionsPopup.cbSize = sizeof(MENUITEMINFO);
 		miiOptionsPopup.fMask = MIIM_SUBMENU;
-		if (!GetMenuItemInfo(hGameMenu, 2, TRUE, &miiOptionsPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+		if (!GetMenuItemInfo(hGameMenu, SC2K_MENU_GAME_OPTIONS, TRUE, &miiOptionsPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
 			ConsoleLog(LOG_DEBUG, "MISC: Game GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
 			goto skipgamemenu;
 		}
@@ -3565,7 +3565,7 @@ void InstallMiscHooks_SC2K1996(void) {
 		MENUITEMINFO miiWindowsPopup;
 		miiWindowsPopup.cbSize = sizeof(MENUITEMINFO);
 		miiWindowsPopup.fMask = MIIM_SUBMENU;
-		if (!GetMenuItemInfo(hGameMenu, 4, TRUE, &miiWindowsPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+		if (!GetMenuItemInfo(hGameMenu, SC2K_MENU_GAME_WINDOWS, TRUE, &miiWindowsPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
 			ConsoleLog(LOG_DEBUG, "MISC: Game GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
 			goto skipgamemenu;
 		}
@@ -3584,7 +3584,7 @@ void InstallMiscHooks_SC2K1996(void) {
 		MENUITEMINFO miiHelpPopup;
 		miiHelpPopup.cbSize = sizeof(MENUITEMINFO);
 		miiHelpPopup.fMask = MIIM_SUBMENU;
-		if (!GetMenuItemInfo(hGameMenu, 6, TRUE, &miiHelpPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+		if (!GetMenuItemInfo(hGameMenu, SC2K_MENU_GAME_HELP_NODBG, TRUE, &miiHelpPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
 			ConsoleLog(LOG_DEBUG, "MISC: Game GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
 			goto skipmainmenu;
 		}

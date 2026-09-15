@@ -363,9 +363,9 @@ extern "C" void __stdcall Hook_BridgeSelectDialog_SetCursorAndDeleteGraphics() {
 }
 
 void InstallBridgeDialogHooks_SC2K1996(void) {
-	// Adjust the dialog resource ID (113 - 0x71)
+	// Adjust the dialog resource ID (SC2K_DIALOG_SELECTITEM)
 	SafeVirtualProtect((LPVOID)0x426333, 1, PAGE_EXECUTE_READWRITE);
-	memset((LPVOID)0x426333, 0x71, 1);
+	memset((LPVOID)0x426333, SC2K_DIALOG_SELECTITEM, 1);
 
 	// Adjust the message map referenced IDs.
 	SafeVirtualProtect((LPVOID)0x4D8C18, 216, PAGE_EXECUTE_READWRITE);

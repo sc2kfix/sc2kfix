@@ -257,9 +257,9 @@ extern "C" void __stdcall Hook_SelectArcologyDialog_SetCursorDeleteGraphics() {
 }
 
 void InstallArcologyDialogHooks_SC2K1996(void) {
-	// Adjust the dialog resource ID (113 - 0x71)
+	// Adjust the dialog resource ID (SC2K_DIALOG_SELECTITEM)
 	SafeVirtualProtect((LPVOID)0x47B9A5, 1, PAGE_EXECUTE_READWRITE);
-	memset((LPVOID)0x47B9A5, 0x71, 1);
+	memset((LPVOID)0x47B9A5, SC2K_DIALOG_SELECTITEM, 1);
 
 	// Adjust the message map referenced IDs.
 	SafeVirtualProtect((LPVOID)0x4DD0B0, 360, PAGE_EXECUTE_READWRITE);
