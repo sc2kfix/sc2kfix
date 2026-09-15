@@ -1395,13 +1395,13 @@ static void SetMainDialogUpdateState(HWND hwndDlg) {
 
 	bMainDialogUpdateState = TRUE;
 	if (bMainDialogUpdateState) {
-		hdlgQuitItem = GetDlgItem(hwndDlg, 115);
+		hdlgQuitItem = GetDlgItem(hwndDlg, SC2K_DIALOG_MAIN_BTN_QUIT);
 		GetWindowRect(hdlgQuitItem, &quitRect);
 		ScreenToClient(hwndDlg, (LPPOINT)&quitRect);
 		ScreenToClient(hwndDlg, (LPPOINT)&quitRect.right);
 		addCY = quitRect.top;
 
-		hdlgStaticItem = GetDlgItem(hwndDlg, IDC_STATIC_UPDATENOTICE);
+		hdlgStaticItem = GetDlgItem(hwndDlg, SC2K_DIALOG_MAIN_LBL_UPDATENOTICE);
 		GetWindowRect(hdlgStaticItem, &statRect);
 		ScreenToClient(hwndDlg, (LPPOINT)&statRect);
 		ScreenToClient(hwndDlg, (LPPOINT)&statRect.right);
@@ -1417,7 +1417,7 @@ static void SetMainDialogUpdateState(HWND hwndDlg) {
 		dlgRect.bottom += addCY;
 		SetWindowPos(hwndDlg, HWND_TOP, 0, 0, dlgRect.right - dlgRect.left, dlgCY, SWP_NOMOVE | SWP_NOACTIVATE);
 
-		SetDlgItemText(hwndDlg, IDC_STATIC_UPDATENOTICE, UPDATE_STRING);
+		SetDlgItemText(hwndDlg, SC2K_DIALOG_MAIN_LBL_UPDATENOTICE, UPDATE_STRING);
 		ShowWindow(hdlgStaticItem, SW_SHOW);
 	}
 }
@@ -3098,7 +3098,7 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 			switch (nID) {
 			// This is the 'sc2kfix Settings' enddialog return code for the main dialog to
 			// execution from the BuildSubFrames section.
-			case IDC_GAME_MAIN_SC2KFIXSETTINGS:
+			case SC2K_DIALOG_MAIN_BTN_SC2KFIXSETTINGS:
 				return EndDialog(pThis->m_hWnd, ONIDLE_INITIALDIALOG_SC2KFIXSETTINGS);
 			case IDC_BUDGET_HELP:
 				DisplayItemHelp(pThis->m_hWnd, HELPTYPE_BUDGET, IDC_BUDGET_HELP, false);

@@ -8,6 +8,9 @@
 // via CMainFrame rather than CSimcityView.
 #define SC2K_MENU_GAME_FROM_MAIN(x) (x + 1)
 
+// Window Messages
+#define WM_SC2KFIX_UPDATE		  37241 // Not native
+
 // Dialog, Item IDs
 #define SC2K_DIALOG_NEWCITY       101
 #define SC2K_DIALOG_BUDGET        102
@@ -16,6 +19,7 @@
 #define SC2K_DIALOG_QUERYGENERAL  142
 #define SC2K_DIALOG_QUERYSPECIFIC 154
 
+// New City Dialog
 #define SC2K_DIALOG_NEWCITY_BTN_REGENERATE    20   // Not native
 #define SC2K_DIALOG_NEWCITY_EDIT_CITYNAME     101
 #define SC2K_DIALOG_NEWCITY_RADIO_YEAR1900    104
@@ -40,6 +44,17 @@
 #define SC2K_DIALOG_NEWCITY_LBL_STARTYEAR     1010 // Not native
 #define SC2K_DIALOG_NEWCITY_LBL_DIFFICULTY    1011 // Not native
 #define SC2K_DIALOG_NEWCITY_LBL_TRRNTYPE      1012 // Not native
+
+// 'Main' Dialog
+#define SC2K_DIALOG_MAIN_BTN_LOADCITY         111
+#define SC2K_DIALOG_MAIN_BTN_NEWCITY          112
+#define SC2K_DIALOG_MAIN_BTN_EDITNEWMAP       113
+#define SC2K_DIALOG_MAIN_BTN_LOADSCENARIO     114
+#define SC2K_DIALOG_MAIN_BTN_QUIT             115
+#define SC2K_DIALOG_MAIN_BTN_LOADTILESET      116
+#define SC2K_DIALOG_MAIN_BTN_WATCHTV          117
+#define SC2K_DIALOG_MAIN_BTN_SC2KFIXSETTINGS  21023 // Definitely not native
+#define SC2K_DIALOG_MAIN_LBL_UPDATENOTICE     21038 // Not native
 
 // Menu IDs
 #define SC2K_MENU_MAIN            2

@@ -67,9 +67,6 @@
 #define SC2KFIX_COREJSON	"settings.json"
 #define SC2KFIX_MODSFOLDER	"mods"
 
-#define WM_SC2KFIX_UPDATE		37241
-#define WM_SC2KFIX_AUDIO_STOP	37242
-
 #define UPDATE_STRING "A new version of sc2kfix is available for download from the GitHub releases page."
 
 #ifdef __cplusplus
