@@ -194,7 +194,9 @@ extern "C" void __stdcall Hook_GameDialog_OnLButtonDown(UINT nFlags, CMFC3XPoint
 		}
 		else if (bBudgetOpen) {
 			HWND hWndChild = ChildWindowFromPoint(pThis->m_hWnd, pt);
-			ConsoleLog(LOG_DEBUG, "Budget. nID(%d)\n", GetDlgCtrlID(hWndChild));
+			int nID = GetDlgCtrlID(hWndChild);
+			if (nID > 0)
+				ConsoleLog(LOG_DEBUG, "Budget. nID(%d)\n", nID);
 			return;
 		}
 		else if ((DWORD *)pThis == pMainFrm->dwMFCityMapDialog) {
@@ -3153,18 +3155,6 @@ extern "C" BOOL __stdcall Hook_Wnd_OnCommand(WPARAM wParam, LPARAM lParam) {
 	if (nID == 0)
 		return FALSE;
 
-	ConsoleLog(LOG_DEBUG, "0x%06X -> CWnd::OnCommand(0x%06X, 0x%06X): nID(%u) nCode(%d) hWndCtrl(%c)\n", _ReturnAddress(), wParam, lParam, nID, nCode, (hWndCtrl == NULL) ? 'N' : 'Y');
-
-	if (bOrdinanceOpen) {
-
-	}
-	else if (bBudgetOpen) {
-		if (GetAsyncKeyState(VK_SHIFT) < 0) {
-			ConsoleLog(LOG_DEBUG, "- nID == %d\n", nID);
-			return FALSE;
-		}
-	}
-
 	if (hWndCtrl == NULL) {
 		GameMain_TestCmdUI_Construct(&testCmd);
 		testCmd.m_nID = nID;
@@ -3196,6 +3186,10 @@ extern "C" void __stdcall Hook_Wnd_OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDIS
 		if (nOwnDrwDlg == OWNDRW_DLG_BRIDGE) {
 			L_BridgeSelectDialog_OnDrawItem_SC2K1996((CBridgeSelectDialog *)pThis, nIDCtl, lpDIS);
 			return;
+		}
+		else if (nOwnDrwDlg == OWNDRW_DLG_BUDGETMAIN) {
+			if (L_BudgetMainDialog_OnDrawItem_SC2K1996((CBudgetMainDialog *)pThis, nIDCtl, lpDIS))
+				return;
 		}
 	}
 

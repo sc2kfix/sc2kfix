@@ -87,6 +87,7 @@ enum {
 enum {
 	OWNDRW_DLG_NONE,
 	OWNDRW_DLG_BRIDGE,
+	OWNDRW_DLG_BUDGETMAIN,
 
 	OWNDRW_DLG_COUNT
 };
@@ -601,13 +602,13 @@ public:
 
 class CBudgetMainDialog : public CGameDialog {
 public:
-	CMFC3XBitmapButton dwBDMBitmapButtonOne[8];
-	CMFC3XBitmapButton dwBDMBitmapButtonTwo[8];
+	CMFC3XBitmapButton dwBDMBitmapButtonProperty[8];
+	CMFC3XBitmapButton dwBDMBitmapButtonAdvisor[8];
 	DWORD dwBDthreehundredtwentytwo;
 	DWORD dwBDthreehundredtwentythree;
 	CMFC3XString dwBDStringFour;
-	DWORD dwBDYearToDateCashFlow;
-	DWORD dwBDEstimatedCashFlow;
+	int dwBDYearToDateCashFlow;
+	int dwBDEstimatedCashFlow;
 	int dwDisplayHourGlass;
 	POINT dwBDPointOne;
 	CGraphics *dwBDCGraphicsOne;
