@@ -17,7 +17,7 @@
 typedef struct {
 	int nType;
 	int nIndex;
-	bool bOkayButton;
+	bool bGeneralClose;
 	RECT textRect;
 } helpDlg_t;
 
@@ -325,8 +325,111 @@ static const char *GetHelpString_MapToolBar(int nIndex) {
 static const char *GetHelpString_Budget(int nIndex) {
 	const char *pStr = NULL;
 	switch (nIndex) {
+		case SC2K_DIALOG_BUDGET_EDIT_NAMEYEARMONTH:
+			pStr = "This is the status region of the budget. It gives your city name, the current year and month. When the budget window automatically opens each January, it will also contain an hourglass that slowly empties unless you click in the window. When the sands run out, SimCity 2000 assumes that the mayor is out to lunch and resumes the simulation.";
+			break;
+		case IDOK:
+			pStr = "Click the DONE button when you are finished adjusting your city budget.";
+			break;
 		case SC2K_DIALOG_BUDGET_HELP:
 			pStr = GetHelpString_GeneralHelp();
+			break;
+		case SC2K_DIALOG_BUDGET_LBL_PROPTAX:
+			pStr = "These are your property taxes. The tax rate shown to the right is an average of the rates levied against your three zoning types (Residential, Commercial, Industrial). If you wish to alter taxes on a specific zone, then click on the book to the right.\n\n"
+				"The arrows to the right of the percent box will increase or decrease your tax rate by one percentage point. The minimum tax is 0% and the maximum is 20%. A tax rate of 7% is average. Low taxes attract citizens and businesses. High taxes will drive them out, but earn you more.";
+			break;
+		case SC2K_DIALOG_BUDGET_LBL_ORDINANCES:
+			pStr = "This is a summary of the costs and revenues of city programs and ordinances. To examine which programs are in effect (or to implement an ordinance) click on the book symbol to the right, which brings up the Ordinances Window.\n\n"
+				"If you see money in this column, but have never implemented an ordinance, you might want to check the Ordinances Window. If you have been doing very well, the city counselors sometimes take it into their heads to begin beneficial programs using public funds.";
+			break;
+		case SC2K_DIALOG_BUDGET_LBL_BINDPAYMNT:
+			pStr = "Bonds are moneys loaned to you by the public which you must repay at a given interest rate. The rate on these bonds is based on the prime rate plus a percentage based on your city value. The best rate is prime+1%. Given that the prime rate changes from year to year, it is possible to have an outstanding bond with a rate that is lower than the current prime.";
+			break;
+		case SC2K_DIALOG_BUDGET_LBL_POLICE:
+			pStr = "This is your police department funding. Police departments reduce crime and stop riots. With less than 100% funding, the police will be less efficient, but the annual cost will decrease accordingly. A single police station costs $100 for one full year of operation.";
+			break;
+		case SC2K_DIALOG_BUDGET_LBL_FIRE:
+			pStr = "This is your fire department funding. Fire departments prevent fires and clean up toxic spills. With less than 100% funding, your firefighters will be less efficient, but the annual cost will decrease accordingly. A single fire station costs $100 for one full year of operation.";
+			break;
+		case SC2K_DIALOG_BUDGET_LBL_HEALTH:
+			pStr = "This is your hospital funding. Hospitals receive matching funds from the state and federal government, but your money helps it to operate. Try to maintain 100% funding over several decades, and your average Life Expectancy (LE) will improve. Hospitals cost $50 for one full year of operation.";
+			break;
+		case SC2K_DIALOG_BUDGET_LBL_EDUCATION:
+			pStr = "This is your educational funding. Without public schools, education is based on a verbal lore handed from parent to child. Schools add to this Educational Quotient (EQ) and Colleges double EQ for 15-25 year olds. Maintain 100% funding for several decades in order to improve the city EQ. Schools cost $25 per year, Colleges cost $100 per year.";
+			break;
+		case SC2K_DIALOG_BUDGET_LBL_TRANSIT:
+			pStr = "Your city transit costs are broken down into six categories: Road, Highway, Bridge, Rail, Subway, Tunnel. When your maintenance is less than 100%, these vital city services start to decay. Roads, rails, and highways turn to rubble. Sections of subway collapse. Bridges and tunnels become unstable.\n\n"
+				"You might reduce some of these expenses for a year or two during a financial crisis, but extended cutbacks will strangle your city.";
+			break;
+		case SC2K_DIALOG_BUDGET_EDIT_PROPTAX:
+		case SC2K_DIALOG_BUDGET_EDIT_POLICE:
+		case SC2K_DIALOG_BUDGET_EDIT_FIRE:
+		case SC2K_DIALOG_BUDGET_EDIT_HEALTH:
+		case SC2K_DIALOG_BUDGET_EDIT_EDUCATION:
+		case SC2K_DIALOG_BUDGET_EDIT_TRANSIT:
+			pStr = "These are the 'percent' areas. It shows either your current funding level or your current tax rate.\n\n"
+				"For most budget items, the percent is a number from zero to one hundred. One hundred indicates full funding for that category. Less than full funding has a detrimental effect on the given department: Fire and police service smaller areas, hospitals help fewer people, transit cutbacks allow roads to decay, and education cutbacks result in a lowered EQ.\n\n"
+				"The percent next to Property Taxes indicates the average tax rate for all zones. A higher rate returns more revenues but inhibits growth. A lower rate encourages growth but returns less money. Sometimes a lower rate can bring in more funds because the city grows larger.";
+			break;
+		case SC2K_DIALOG_BUDGET_SCROLLBAR_PROPTAX:
+		case SC2K_DIALOG_BUDGET_SCROLLBAR_POLICE:
+		case SC2K_DIALOG_BUDGET_SCROLLBAR_FIRE:
+		case SC2K_DIALOG_BUDGET_SCROLLBAR_EDUCATION:
+		case SC2K_DIALOG_BUDGET_SCROLLBAR_TRANSIT:
+		case SC2K_DIALOG_BUDGET_SCROLLBAR_HEALTH:
+			pStr = "The arrows next to the percent boxes adjust your city's revenues and expenses. Up arrows increase the percentage and down arrows decrease it. When the percentage is adjusted, only the 'Estimated' costs will change. The 'Year to Date' column shows funds that have already been paid or collected.\n\n"
+				"The 'Property Taxes' are your main source of revenue. The arrows alter the tax rate by +/-1%. The minimum is zero and the maximum is twenty.\n\n"
+				"The other categories are funding rates for various city services. 100% funding means you are paying full price and receiving full service. The up and down arrows adjust the funding by +/-5%. The minimum is zero and the maximum is one hundred.";
+			break;
+		case SC2K_DIALOG_BUDGET_EDIT_TDE_PROPTAX:
+		case SC2K_DIALOG_BUDGET_EDIT_TDE_ORDINANCES:
+		case SC2K_DIALOG_BUDGET_EDIT_TDE_BONDPAYMNT:
+		case SC2K_DIALOG_BUDGET_EDIT_TDE_POLICE:
+		case SC2K_DIALOG_BUDGET_EDIT_TDE_FIRE:
+		case SC2K_DIALOG_BUDGET_EDIT_TDE_HEALTH:
+		case SC2K_DIALOG_BUDGET_EDIT_TDE_EDUCATION:
+		case SC2K_DIALOG_BUDGET_EDIT_TDE_TRANSIT:
+			pStr = "This column shows the Year To Date revenues and expenses. This is the money that has accumulated during the current budget year. It will not be added or subtracted from current funds until the year's end. If the number in this column baffles you, open the book to the right for detailed information.\n\n"
+				"Example: A police department costs $100 per year to maintain. If it were built in September, then it would only cost $33 for the year (one-third of a year). If it were set to 50% funding in July, it would cost $75 for the year ($50 for the first half, $25 for the second).";
+			break;
+		case SC2K_DIALOG_BUDGET_EDIT_YEE_PROPTAX:
+		case SC2K_DIALOG_BUDGET_EDIT_YEE_ORDINANCES:
+		case SC2K_DIALOG_BUDGET_EDIT_YEE_BONDPAYMNT:
+		case SC2K_DIALOG_BUDGET_EDIT_YEE_POLICE:
+		case SC2K_DIALOG_BUDGET_EDIT_YEE_FIRE:
+		case SC2K_DIALOG_BUDGET_EDIT_YEE_HEALTH:
+		case SC2K_DIALOG_BUDGET_EDIT_YEE_EDUCATION:
+		case SC2K_DIALOG_BUDGET_EDIT_YEE_TRANSIT:
+			pStr = "This shows the estimated total revenues and expenses for the current or next budget year. The number incorporates the year to date amount and makes an estimate based on the current city status. For example, if there were two police departments, the estimated cost would be $200 for the next year. This number is subject to change, however. If a police department were built or destroyed, or the funding levels changed in mid-year, then the actual year end amount would be different from the original estimate.\n\n"
+				"Examine the books to the right for more details.";
+			break;
+		case SC2K_DIALOG_BUDGET_BTN_PROPTAX:
+		case SC2K_DIALOG_BUDGET_BTN_ORDINANCES:
+		case SC2K_DIALOG_BUDGET_BTN_BONDPAYMNT:
+		case SC2K_DIALOG_BUDGET_BTN_POLICE:
+		case SC2K_DIALOG_BUDGET_BTN_FIRE:
+		case SC2K_DIALOG_BUDGET_BTN_HEALTH:
+		case SC2K_DIALOG_BUDGET_BTN_EDUCATION:
+		case SC2K_DIALOG_BUDGET_BTN_TRANSIT:
+			pStr = "The books give you detailed information and control for each of the budget categories. Clicking on a specific book icon will open a window for that item.";
+			break;
+		case SC2K_DIALOG_BUDGET_BTN_ADVISOR_PROPTAX:
+		case SC2K_DIALOG_BUDGET_BTN_ADVISOR_ORDINANCES:
+		case SC2K_DIALOG_BUDGET_BTN_ADVISOR_BONDPAYMNT:
+		case SC2K_DIALOG_BUDGET_BTN_ADVISOR_POLICE:
+		case SC2K_DIALOG_BUDGET_BTN_ADVISOR_FIRE:
+		case SC2K_DIALOG_BUDGET_BTN_ADVISOR_HEALTH:
+		case SC2K_DIALOG_BUDGET_BTN_ADVISOR_EDUCATION:
+		case SC2K_DIALOG_BUDGET_BTN_ADVISOR_TRANSIT:
+			pStr = "The question balloons ask each of the eight budget commisioners for advice on how to operate the budget. Remember that the commisioners each has his or her own priorities and they may give you conflicting advice.";
+			break;
+		case SC2K_DIALOG_BUDGET_STATIC_SUMMARY:
+			pStr = "This area shows the cash left over from the previous budget period, the amount of money accumulated this year, and the estimated total funds for the full year. Estimated and accrued funds are not added into current funds until the year's end.\n\n"
+				"Sometimes the totals for To Date Expenses and Year End Estimate do not add up. This is due to each category having fractional amounts that aren't shown. For example, if Property Taxes earn 4.5 dollars and Ordinances gather 3.5 dollars, they will be displayed as 4 and 3 respectively, but the total is still 8.";
+			break;
+		case SC2K_DIALOG_BUDGET_STATIC_EOYFUNDS:
+			pStr = "This shows what your total is with either accrued or estimated funds added in.\n\n"
+				"During a year end, the accrued column shows what your funds will be in the upcoming year. At other times, the Estimated column shows what you will probably earn during the current year.";
 			break;
 		default:
 			break;
@@ -385,13 +488,13 @@ BOOL CALLBACK ConfHelpDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 				nDlgFrameCX = GetSystemMetrics(SM_CXDLGFRAME);
 				nDlgFrameCY = GetSystemMetrics(SM_CYDLGFRAME);
 				hwndItem = GetDlgItem(hwndDlg, IDOK);
-				ShowWindow(hwndItem, (hlpD->bOkayButton) ? SW_SHOW : SW_HIDE);
+				ShowWindow(hwndItem, SW_SHOW);
 				GetClientRect(hwndItem, &butRect);
 				CopyRect(&r, &hlpD->textRect);
-				nHeight = (hlpD->bOkayButton) ? butRect.bottom + 2 * nDlgFrameCY + 44 - butRect.top + 24 : 2 * nDlgFrameCY + 44;
+				nHeight = butRect.bottom + 2 * nDlgFrameCY + 44 - butRect.top + 24;
 				InflateRect(&r, 2 * nDlgFrameCX + 44, nHeight);
 				SetWindowPos(hwndDlg, HWND_TOP, r.left, r.top, r.right, r.bottom, SWP_NOACTIVATE | SWP_NOMOVE);
-				nY = (hlpD->bOkayButton) ? butRect.bottom - butRect.top + 32 : 20;
+				nY = butRect.bottom - butRect.top + 32;
 				OffsetRect(&hlpD->textRect, 20, nY);
 				CopyRect(&r, &hlpD->textRect);
 				InflateRect(&r, 15, 15);
@@ -422,9 +525,10 @@ BOOL CALLBACK ConfHelpDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 	case WM_LBUTTONDOWN:
 	case WM_MBUTTONDOWN:
 	case WM_RBUTTONDOWN:
+	case WM_XBUTTONDOWN:
 	case WM_KEYDOWN:
 		hlpD = (helpDlg_t *)GetWindowLong(hwndDlg, GWL_USERDATA);
-		if (!hlpD->bOkayButton)
+		if (hlpD->bGeneralClose)
 			EndDialog(hwndDlg, TRUE);
 		return TRUE;
 
@@ -466,7 +570,7 @@ void DisplayItemHelp(HWND hWnd, int nType, int nIndex, bool bFromMain) {
 	memset(&hlpD, 0, sizeof(hlpD));
 	hlpD.nType = nType;
 	hlpD.nIndex = nIndex;
-	hlpD.bOkayButton = (nType == HELPTYPE_GENERAL) ? true : false;
+	hlpD.bGeneralClose = (nType == HELPTYPE_GENERAL) ? false : true;
 
 	bHelpOpen = true;
 	if (bFromMain)

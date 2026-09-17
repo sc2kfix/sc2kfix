@@ -5065,6 +5065,9 @@ extern void L_BridgeSelectDialog_OnDrawItem_SC2K1996(CBridgeSelectDialog *pThis,
 
 extern bool L_BudgetMainDialog_OnDrawItem_SC2K1996(CBudgetMainDialog *pThis, int nCtlID, LPDRAWITEMSTRUCT lpDIS);
 
+extern void BudgetMain_PreCheckHourGlassTimer(CBudgetMainDialog *bBudgetMainDialog);
+extern void BudgetMain_PostCheckHourGlassTimer(CBudgetMainDialog *bBudgetMainDialog);
+
 extern void Clear_SpriteCache();
 extern void Init_SpriteCache(bool bReload);
 extern void Cache_Sprite(DWORD nID, BYTE *pSpriteBuf, int nSize, WORD wHeight, WORD wWidth);

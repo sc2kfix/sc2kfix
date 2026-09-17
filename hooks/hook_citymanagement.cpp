@@ -111,6 +111,19 @@ extern "C" void __cdecl Hook_SimulationPrepareBudgetDialog(BOOL bNoParent) {
 	}
 }
 
+void BudgetMain_PreCheckHourGlassTimer(CBudgetMainDialog *bBudgetMainDialog) {
+	if (bBudgetMainDialog->dwDisplayHourGlass != -1)
+		KillTimer(bBudgetMainDialog->m_hWnd, 32917);
+}
+
+void BudgetMain_PostCheckHourGlassTimer(CBudgetMainDialog *bBudgetMainDialog) {
+	if (bBudgetMainDialog->dwDisplayHourGlass != -1) {
+		SetTimer(bBudgetMainDialog->m_hWnd, 32917, 6000, 0);
+		bBudgetMainDialog->dwDisplayHourGlass = 0;
+		Game_BudgetMainDialog_ReleaseObjects(bBudgetMainDialog);
+	}
+}
+
 extern int nOwnDrwDlg;
 extern CMFC3XWnd *pStoredWnd;
 
@@ -184,6 +197,8 @@ extern "C" void __stdcall Hook_BudgetMainDialog_OnVScroll(UINT nSBCode, UINT nPo
 
 	__asm mov [pThis], ecx
 
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+
 	// nLastSBCode has been introduced in order to account for an
 	// ancient problem whereas dwBudgetScrollClicked would be set
 	// to 1 with the wrong nSBCode - specifically SB_ENDSCROLL -
@@ -195,9 +210,18 @@ extern "C" void __stdcall Hook_BudgetMainDialog_OnVScroll(UINT nSBCode, UINT nPo
 	if (GetAsyncKeyState(VK_SHIFT) < 0) {
 		dwBudgetScrollClicked = 0;
 		nLastSBCode = -1;
+		if (pScrollBar) {
+			int nID = GetDlgCtrlID(pScrollBar->m_hWnd);
+			if (nID > 0) {
+				BudgetMain_PreCheckHourGlassTimer(pThis);
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+				DisplayItemHelp(pThis->m_hWnd, HELPTYPE_BUDGET, nID, false);
+				BudgetMain_PostCheckHourGlassTimer(pThis);
+			}
+		}
 		return;
 	}
-	ConsoleLog(LOG_DEBUG, "0x%06X -> CBudgetMainDialog::OnVScroll(%u, %u, 0x%06X): nLastSBCode(%d), dwBudgetScrollClicked(%u) dwBudgetScrollGoingUp(%u)\n", _ReturnAddress(), nSBCode, nPos, pScrollBar, nLastSBCode, dwBudgetScrollClicked, dwBudgetScrollGoingUp);
+	
 	if (dwBudgetScrollClicked) {
 		// Record the last nSBCode as long as it's not SB_ENDSCROLL.
 		if (nSBCode != SB_ENDSCROLL)
@@ -556,16 +580,9 @@ extern "C" void __stdcall Hook_BudgetMainDialog_OpenOrdinanceDialog() {
 	CBudgetOrdinanceDialog ordinanceDlg;
 
 	Game_BudgetOrdinanceDialog_Cons(&ordinanceDlg, NULL);
-	if (pThis->dwDisplayHourGlass == -1) {
-		OpenOrdinanceDialog(&ordinanceDlg);
-	}
-	else {
-		KillTimer(pThis->m_hWnd, 32917);
-		OpenOrdinanceDialog(&ordinanceDlg);
-		SetTimer(pThis->m_hWnd, 32917, 6000, 0);
-		pThis->dwDisplayHourGlass = 0;
-		Game_BudgetMainDialog_ReleaseObjects(pThis);
-	}
+	BudgetMain_PreCheckHourGlassTimer(pThis);
+	OpenOrdinanceDialog(&ordinanceDlg);
+	BudgetMain_PostCheckHourGlassTimer(pThis);
 	Game_BudgetMainDialog_UpdateInternalInformation(pThis, 0);
 	Game_BudgetOrdinanceDialog_Dest(&ordinanceDlg);
 }

@@ -188,15 +188,19 @@ extern "C" void __stdcall Hook_GameDialog_OnLButtonDown(UINT nFlags, CMFC3XPoint
 	// The Ordinance dialogue can be opened from the Budget, so it must
 	// come first.
 	if (nFlags & MK_SHIFT) {
+		HWND hWndChild = ChildWindowFromPointEx(pThis->m_hWnd, pt, CWP_SKIPINVISIBLE);
+		int nID = GetDlgCtrlID(hWndChild);
 		if (bOrdinanceOpen) {
 			ConsoleLog(LOG_DEBUG, "Ordinance.\n");
 			return;
 		}
 		else if (bBudgetOpen) {
-			HWND hWndChild = ChildWindowFromPoint(pThis->m_hWnd, pt);
-			int nID = GetDlgCtrlID(hWndChild);
-			if (nID > 0)
-				ConsoleLog(LOG_DEBUG, "Budget. nID(%d)\n", nID);
+			if (nID > 0) {
+				BudgetMain_PreCheckHourGlassTimer((CBudgetMainDialog *)pThis);
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+				DisplayItemHelp(pThis->m_hWnd, HELPTYPE_BUDGET, nID, false);
+				BudgetMain_PostCheckHourGlassTimer((CBudgetMainDialog *)pThis);
+			}
 			return;
 		}
 		else if ((DWORD *)pThis == pMainFrm->dwMFCityMapDialog) {
@@ -2947,7 +2951,8 @@ static bool DoFixBadTerrain_SC2K1996(HWND hWnd) {
 
 // Hook for a couple different CWnd::OnCmdMessage derivatives
 static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void *pHandler, void *dwRetAddr) {
-	CSimcityView *pSCView = Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis);
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CSimcityView *pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 
 	// Normally internally there'd be the class hierarchy regarding inheritence
 	// (which isn't present here).
@@ -3104,8 +3109,12 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 			case SC2K_DIALOG_MAIN_BTN_SC2KFIXSETTINGS:
 				return EndDialog(pThis->m_hWnd, ONIDLE_INITIALDIALOG_SC2KFIXSETTINGS);
 			case SC2K_DIALOG_BUDGET_HELP:
-				if (bBudgetOpen)
-					DisplayItemHelp(pThis->m_hWnd, HELPTYPE_BUDGET, SC2K_DIALOG_BUDGET_HELP, false);
+				if (bBudgetOpen) {
+					BudgetMain_PreCheckHourGlassTimer((CBudgetMainDialog *)pThis);
+					Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+					DisplayItemHelp(pThis->m_hWnd, HELPTYPE_BUDGET, nID, false);
+					BudgetMain_PostCheckHourGlassTimer((CBudgetMainDialog *)pThis);
+				}
 				return TRUE;
 			default:
 				if (bOrdinanceOpen) {
@@ -3122,9 +3131,14 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 					//}
 				}
 				else if (bBudgetOpen) {
-					if (GetAsyncKeyState(VK_SHIFT) < 0) {
-						ConsoleLog(LOG_DEBUG, "nID == %d\n", nID);
-						return TRUE;
+					if (nID != SC2K_DIALOG_BUDGET_HELP) {
+						if (GetAsyncKeyState(VK_SHIFT) < 0) {
+							BudgetMain_PreCheckHourGlassTimer((CBudgetMainDialog *)pThis);
+							Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+							DisplayItemHelp(pThis->m_hWnd, HELPTYPE_BUDGET, nID, false);
+							BudgetMain_PostCheckHourGlassTimer((CBudgetMainDialog *)pThis);
+							return TRUE;
+						}
 					}
 				}
 				break;
