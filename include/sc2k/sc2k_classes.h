@@ -670,3 +670,19 @@ public:
 	DWORD dwUnknown[14];
 	CMFC3XBitmapButton dwBDOBitmapButton[25];
 };
+
+class CBudgetZoneTaxDialog : public CGameDialog {
+public:
+	int dwBDZTDColumnWidth[8];
+	DWORD dwBZTDUnknown[2];
+	int dwBZTDColumnCount;
+	DWORD dwBZTDLeftPos;
+	DWORD dwBZTDTopPos;
+	DWORD dwBZTDRowHeight;
+	int dwBZTDComPercent;
+	int dwBZTDIndPercent;
+	int dwBZTDResPercent;
+	CMFC3XScrollBar dwBZTDComScrollBar;
+	CMFC3XScrollBar dwBZTDIndScrollBar;
+	CMFC3XScrollBar dwBZTDResScrollBar;
+};

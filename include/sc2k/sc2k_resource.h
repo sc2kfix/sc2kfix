@@ -117,6 +117,11 @@
 #define SC2K_DIALOG_BUDGET_SCROLLBAR_HEALTH       445
 #define SC2K_DIALOG_BUDGET_HELP                   21098 // Not native
 
+// Budget PropertyTax Dialog
+#define SC2K_DIALOG_BUDGET_PROPTAX_SCROLLBAR_RES  442
+#define SC2K_DIALOG_BUDGET_PROPTAX_SCROLLBAR_COM  443
+#define SC2K_DIALOG_BUDGET_PROPTAX_SCROLLBAR_IND  444
+
 // Menu IDs
 #define SC2K_MENU_MAIN            2
 #define SC2K_MENU_GAME            3

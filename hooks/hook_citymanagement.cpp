@@ -228,33 +228,37 @@ extern "C" void __stdcall Hook_BudgetMainDialog_OnVScroll(UINT nSBCode, UINT nPo
 			nLastSBCode = nSBCode;
 		dwBudgetScrollClicked = 0;
 		if (nLastSBCode == SB_VERT) // Up Arrow
-			dwBudgetScrollGoingUp = 0;
+			dwBudgetScrollDirection = -1;
 		else if (nLastSBCode == SB_HORZ) // Down Arrow
-			dwBudgetScrollGoingUp = 1;
+			dwBudgetScrollDirection = 1;
+		else
+			dwBudgetScrollDirection = 0;
 		// Reset here, otherwise it can get stuck trying to go in a specific direction.
 		if (nSBCode == SB_ENDSCROLL)
 			nLastSBCode = -1;
-		switch (GetDlgCtrlID(pScrollBar->m_hWnd)) {
-			case SC2K_DIALOG_BUDGET_SCROLLBAR_PROPTAX:
-				Game_BudgetMainDialog_AdjustPropertyTaxPercentage(pThis);
-				break;
-			case SC2K_DIALOG_BUDGET_SCROLLBAR_POLICE:
-				Game_BudgetMainDialog_AdjustPoliceFundingPercentage(pThis);
-				break;
-			case SC2K_DIALOG_BUDGET_SCROLLBAR_FIRE:
-				Game_BudgetMainDialog_AdjustFireFundingPercentage(pThis);
-				break;
-			case SC2K_DIALOG_BUDGET_SCROLLBAR_EDUCATION:
-				Game_BudgetMainDialog_AdjustEducationFundingPercentage(pThis);
-				break;
-			case SC2K_DIALOG_BUDGET_SCROLLBAR_TRANSIT:
-				Game_BudgetMainDialog_AdjustTransitFundingPercentage(pThis);
-				break;
-			case SC2K_DIALOG_BUDGET_SCROLLBAR_HEALTH:
-				Game_BudgetMainDialog_AdjustHealthFundingPercentage(pThis);
-				break;
-			default:
-				break;
+		if (dwBudgetScrollDirection != 0) {
+			switch (GetDlgCtrlID(pScrollBar->m_hWnd)) {
+				case SC2K_DIALOG_BUDGET_SCROLLBAR_PROPTAX:
+					Game_BudgetMainDialog_AdjustPropertyTaxPercentage(pThis);
+					break;
+				case SC2K_DIALOG_BUDGET_SCROLLBAR_POLICE:
+					Game_BudgetMainDialog_AdjustPoliceFundingPercentage(pThis);
+					break;
+				case SC2K_DIALOG_BUDGET_SCROLLBAR_FIRE:
+					Game_BudgetMainDialog_AdjustFireFundingPercentage(pThis);
+					break;
+				case SC2K_DIALOG_BUDGET_SCROLLBAR_EDUCATION:
+					Game_BudgetMainDialog_AdjustEducationFundingPercentage(pThis);
+					break;
+				case SC2K_DIALOG_BUDGET_SCROLLBAR_TRANSIT:
+					Game_BudgetMainDialog_AdjustTransitFundingPercentage(pThis);
+					break;
+				case SC2K_DIALOG_BUDGET_SCROLLBAR_HEALTH:
+					Game_BudgetMainDialog_AdjustHealthFundingPercentage(pThis);
+					break;
+				default:
+					break;
+			}
 		}
 	}
 	else {
@@ -599,6 +603,70 @@ extern "C" void __stdcall Hook_SimcityView_DoOrdinance() {
 	Game_BudgetOrdinanceDialog_Dest(&ordinanceDlg);
 }
 
+extern "C" void __stdcall Hook_BudgetZoneTaxDialog_OnVScroll(UINT nSBCode, UINT nPos, CMFC3XScrollBar *pScrollBar) {
+	CBudgetZoneTaxDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	int dwBudgetZoneTaxScrollDirection;
+	int nNewValue;
+
+	if (dwBudgetZoneTaxScrollClicked) {
+		// Record the last nSBCode as long as it's not SB_ENDSCROLL.
+		if (nSBCode != SB_ENDSCROLL)
+			nLastSBCode = nSBCode;
+		dwBudgetZoneTaxScrollClicked = 0;
+		if (nLastSBCode == SB_VERT) // Up Arrow
+			dwBudgetZoneTaxScrollDirection = -1;
+		else if (nLastSBCode == SB_HORZ) // Down Arrow
+			dwBudgetZoneTaxScrollDirection = 1;
+		else
+			dwBudgetZoneTaxScrollDirection = 0;
+		// Reset here, otherwise it can get stuck trying to go in a specific direction.
+		if (nSBCode == SB_ENDSCROLL)
+			nLastSBCode = -1;
+		if (dwBudgetZoneTaxScrollDirection != 0) {
+			switch (GetDlgCtrlID(pScrollBar->m_hWnd)) {
+				case SC2K_DIALOG_BUDGET_PROPTAX_SCROLLBAR_RES:
+					nNewValue = pThis->dwBZTDResPercent + dwBudgetZoneTaxScrollDirection;
+					if (nNewValue > 20)
+						nNewValue = 20;
+					else if (nNewValue < 0)
+						nNewValue = 0;
+					pThis->dwBZTDResPercent = nNewValue;
+					Game_BudgetZoneTaxDialog_UpdateResFunding(pThis);
+					break;
+				case SC2K_DIALOG_BUDGET_PROPTAX_SCROLLBAR_COM:
+					nNewValue = pThis->dwBZTDComPercent + dwBudgetZoneTaxScrollDirection;
+					if (nNewValue > 20)
+						nNewValue = 20;
+					else if (nNewValue < 0)
+						nNewValue = 0;
+					pThis->dwBZTDComPercent = nNewValue;
+					Game_BudgetZoneTaxDialog_UpdateComFunding(pThis);
+					break;
+				case SC2K_DIALOG_BUDGET_PROPTAX_SCROLLBAR_IND:
+					nNewValue = pThis->dwBZTDIndPercent + dwBudgetZoneTaxScrollDirection;
+					if (nNewValue > 20)
+						nNewValue = 20;
+					else if (nNewValue < 0)
+						nNewValue = 0;
+					pThis->dwBZTDIndPercent = nNewValue;
+					Game_BudgetZoneTaxDialog_UpdateIndFunding(pThis);
+					break;
+				default:
+					break;
+			}
+		}
+	}
+	else {
+		// Always record the last one here (regardless of what it is).
+		nLastSBCode = nSBCode;
+		dwBudgetZoneTaxScrollClicked = 1;
+	}
+	GameMain_Wnd_OnVScroll(pThis, nSBCode, nPos, pScrollBar);
+}
+
 void InstallCityManagementHooks_SC2K1996(void) {
 	// Hook for SimulationPrepareBudgetDialog
 	SafeVirtualProtect((LPVOID)0x4015E6, 5, PAGE_EXECUTE_READWRITE);
@@ -635,4 +703,8 @@ void InstallCityManagementHooks_SC2K1996(void) {
 	// Hook for CSimcityView::DoOrdinance
 	SafeVirtualProtect((LPVOID)0x4013C5, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4013C5, Hook_SimcityView_DoOrdinance);
+
+	// Hook for CBudgetZoneTaxDialog::OnVScroll
+	SafeVirtualProtect((LPVOID)0x402A0E, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402A0E, Hook_BudgetZoneTaxDialog_OnVScroll);
 }
