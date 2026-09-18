@@ -700,3 +700,26 @@ public:
 	int dwBEDSchoolPercent;
 	int dwBEDCollegePercent;
 };
+
+class CBudgetTransitDialog : public CGameDialog {
+public:
+	int dwBTDColumnWidth[8];
+	DWORD dwBTDUnknown[2];
+	int dwBTDColumnCount;
+	DWORD dwBTDLeftPosOne;
+	DWORD dwBTDTopPosOne;
+	DWORD dwBTDRowHeight;
+	RECT dwBTDRECTOne;
+	CMFC3XScrollBar dwBTDTunnelScrollBar;
+	CMFC3XScrollBar dwBTDSubwayScrollBar;
+	CMFC3XScrollBar dwBTDRoadScrollBar;
+	CMFC3XScrollBar dwBTDRailScrollBar;
+	CMFC3XScrollBar dwBTDHighwayScrollBar;
+	CMFC3XScrollBar dwBTDBridgeScrollBar;
+	int dwBTDBridgePercent;
+	int dwBTDHighwayPercent;
+	int dwBTDRailPercent;
+	int dwBTDRoadPercent;
+	int dwBTDSubwayPercent;
+	int dwBTDTunnelPercent;
+};

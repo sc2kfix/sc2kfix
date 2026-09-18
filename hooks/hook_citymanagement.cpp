@@ -21,6 +21,7 @@ extern CMFC3XWnd *pStoredWnd;
 static int nBudgetLastSBCode = -1;
 static int nBudgetZoneTaxLastSBCode = -1;
 static int nBudgetEducationLastSBCode = -1;
+static int nBudgetTransitLastSBCode = -1;
 
 // Local destruct function for proper clarity. Since allocation also occurs
 // local to the library, a crash would otherwise occur if the remote call
@@ -745,6 +746,107 @@ extern "C" void __stdcall Hook_BudgetEducationDialog_OnVScroll(UINT nSBCode, UIN
 	GameMain_Wnd_OnVScroll(pThis, nSBCode, nPos, pScrollBar);
 }
 
+extern "C" int __stdcall Hook_BudgetTransitDialog_OnInitDialog() {
+	CBudgetTransitDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	int ret = GameMain_BudgetTransitDialog_OnInitDialog(pThis);
+	nBudgetTransitLastSBCode = -1;
+	return ret;
+}
+
+extern "C" void __stdcall Hook_BudgetTransitDialog_OnVScroll(UINT nSBCode, UINT nPos, CMFC3XScrollBar *pScrollBar) {
+	CBudgetTransitDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	int dwBudgetTransitScrollDirection;
+	int nNewValue;
+
+	if (dwBudgetTransitScrollClicked) {
+		// Record the last nSBCode as long as it's not SB_ENDSCROLL.
+		if (nSBCode != SB_ENDSCROLL)
+			nBudgetTransitLastSBCode = nSBCode;
+		dwBudgetTransitScrollClicked = 0;
+		if (nBudgetTransitLastSBCode == SB_VERT) // Up Arrow
+			dwBudgetTransitScrollDirection = -1;
+		else if (nBudgetTransitLastSBCode == SB_HORZ) // Down Arrow
+			dwBudgetTransitScrollDirection = 1;
+		else
+			dwBudgetTransitScrollDirection = 0;
+		// Reset here, otherwise it can get stuck trying to go in a specific direction.
+		if (nSBCode == SB_ENDSCROLL)
+			nBudgetTransitLastSBCode = -1;
+		if (dwBudgetTransitScrollDirection != 0) {
+			switch (GetDlgCtrlID(pScrollBar->m_hWnd)) {
+			case SC2K_DIALOG_BUDGET_TRANSIT_SCROLLBAR_ROAD:
+				nNewValue = pThis->dwBTDRoadPercent + dwBudgetTransitScrollDirection;
+				if (nNewValue > 100)
+					nNewValue = 100;
+				else if (nNewValue < 0)
+					nNewValue = 0;
+				pThis->dwBTDRoadPercent = nNewValue;
+				Game_BudgetTransitDialog_UpdateRoadFunding(pThis);
+				break;
+			case SC2K_DIALOG_BUDGET_TRANSIT_SCROLLBAR_RAIL:
+				nNewValue = pThis->dwBTDRailPercent + dwBudgetTransitScrollDirection;
+				if (nNewValue > 100)
+					nNewValue = 100;
+				else if (nNewValue < 0)
+					nNewValue = 0;
+				pThis->dwBTDRailPercent = nNewValue;
+				Game_BudgetTransitDialog_UpdateRailFunding(pThis);
+				break;
+			case SC2K_DIALOG_BUDGET_TRANSIT_SCROLLBAR_HIGHWAY:
+				nNewValue = pThis->dwBTDHighwayPercent + dwBudgetTransitScrollDirection;
+				if (nNewValue > 100)
+					nNewValue = 100;
+				else if (nNewValue < 0)
+					nNewValue = 0;
+				pThis->dwBTDHighwayPercent = nNewValue;
+				Game_BudgetTransitDialog_UpdateHighwayFunding(pThis);
+				break;
+			case SC2K_DIALOG_BUDGET_TRANSIT_SCROLLBAR_SUBWAY:
+				nNewValue = pThis->dwBTDSubwayPercent + dwBudgetTransitScrollDirection;
+				if (nNewValue > 100)
+					nNewValue = 100;
+				else if (nNewValue < 0)
+					nNewValue = 0;
+				pThis->dwBTDSubwayPercent = nNewValue;
+				Game_BudgetTransitDialog_UpdateSubwayFunding(pThis);
+				break;
+			case SC2K_DIALOG_BUDGET_TRANSIT_SCROLLBAR_BRIDGE:
+				nNewValue = pThis->dwBTDBridgePercent + dwBudgetTransitScrollDirection;
+				if (nNewValue > 100)
+					nNewValue = 100;
+				else if (nNewValue < 0)
+					nNewValue = 0;
+				pThis->dwBTDBridgePercent = nNewValue;
+				Game_BudgetTransitDialog_UpdateBridgeFunding(pThis);
+				break;
+			case SC2K_DIALOG_BUDGET_TRANSIT_SCROLLBAR_TUNNEL:
+				nNewValue = pThis->dwBTDTunnelPercent + dwBudgetTransitScrollDirection;
+				if (nNewValue > 100)
+					nNewValue = 100;
+				else if (nNewValue < 0)
+					nNewValue = 0;
+				pThis->dwBTDTunnelPercent = nNewValue;
+				Game_BudgetTransitDialog_UpdateTunnelFunding(pThis);
+				break;
+			default:
+				break;
+			}
+		}
+	}
+	else {
+		// Always record the last one here (regardless of what it is).
+		nBudgetTransitLastSBCode = nSBCode;
+		dwBudgetTransitScrollClicked = 1;
+	}
+	GameMain_Wnd_OnVScroll(pThis, nSBCode, nPos, pScrollBar);
+}
+
 void InstallCityManagementHooks_SC2K1996(void) {
 	// Hook for SimulationPrepareBudgetDialog
 	SafeVirtualProtect((LPVOID)0x4015E6, 5, PAGE_EXECUTE_READWRITE);
@@ -797,4 +899,12 @@ void InstallCityManagementHooks_SC2K1996(void) {
 	// Hook for CBudgetEducationDialog::OnVScroll
 	SafeVirtualProtect((LPVOID)0x40243C, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x40243C, Hook_BudgetEducationDialog_OnVScroll);
+
+	// Hook for CBudgetTransitDialog::OnInitDialog
+	SafeVirtualProtect((LPVOID)0x40220C, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x40220C, Hook_BudgetTransitDialog_OnInitDialog);
+
+	// Hook for CBudgetTransitDialog::OnVScroll
+	SafeVirtualProtect((LPVOID)0x4011C2, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4011C2, Hook_BudgetTransitDialog_OnVScroll);
 }
