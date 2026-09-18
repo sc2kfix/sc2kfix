@@ -607,6 +607,17 @@ extern "C" void __stdcall Hook_SimcityView_DoOrdinance() {
 	Game_BudgetOrdinanceDialog_Dest(&ordinanceDlg);
 }
 
+static void UpdatePercentageValue(int *nPercent, int nDirection, int nMin, int nMax) {
+	int nNewValue;
+
+	nNewValue = *nPercent + nDirection;
+	if (nNewValue > nMax)
+		nNewValue = nMax;
+	else if (nNewValue < nMin)
+		nNewValue = nMin;
+	*nPercent = nNewValue;
+}
+
 extern "C" int __stdcall Hook_BudgetZoneTaxDialog_OnInitDialog() {
 	CBudgetZoneTaxDialog *pThis;
 
@@ -623,7 +634,6 @@ extern "C" void __stdcall Hook_BudgetZoneTaxDialog_OnVScroll(UINT nSBCode, UINT 
 	__asm mov [pThis], ecx
 
 	int dwBudgetZoneTaxScrollDirection;
-	int nNewValue;
 
 	if (dwBudgetZoneTaxScrollClicked) {
 		// Record the last nSBCode as long as it's not SB_ENDSCROLL.
@@ -642,30 +652,15 @@ extern "C" void __stdcall Hook_BudgetZoneTaxDialog_OnVScroll(UINT nSBCode, UINT 
 		if (dwBudgetZoneTaxScrollDirection != 0) {
 			switch (GetDlgCtrlID(pScrollBar->m_hWnd)) {
 				case SC2K_DIALOG_BUDGET_PROPTAX_SCROLLBAR_RES:
-					nNewValue = pThis->dwBZTDResPercent + dwBudgetZoneTaxScrollDirection;
-					if (nNewValue > 20)
-						nNewValue = 20;
-					else if (nNewValue < 0)
-						nNewValue = 0;
-					pThis->dwBZTDResPercent = nNewValue;
+					UpdatePercentageValue(&pThis->dwBZTDResPercent, dwBudgetZoneTaxScrollDirection, 0, 20);
 					Game_BudgetZoneTaxDialog_UpdateResFunding(pThis);
 					break;
 				case SC2K_DIALOG_BUDGET_PROPTAX_SCROLLBAR_COM:
-					nNewValue = pThis->dwBZTDComPercent + dwBudgetZoneTaxScrollDirection;
-					if (nNewValue > 20)
-						nNewValue = 20;
-					else if (nNewValue < 0)
-						nNewValue = 0;
-					pThis->dwBZTDComPercent = nNewValue;
+					UpdatePercentageValue(&pThis->dwBZTDComPercent, dwBudgetZoneTaxScrollDirection, 0, 20);
 					Game_BudgetZoneTaxDialog_UpdateComFunding(pThis);
 					break;
 				case SC2K_DIALOG_BUDGET_PROPTAX_SCROLLBAR_IND:
-					nNewValue = pThis->dwBZTDIndPercent + dwBudgetZoneTaxScrollDirection;
-					if (nNewValue > 20)
-						nNewValue = 20;
-					else if (nNewValue < 0)
-						nNewValue = 0;
-					pThis->dwBZTDIndPercent = nNewValue;
+					UpdatePercentageValue(&pThis->dwBZTDIndPercent, dwBudgetZoneTaxScrollDirection, 0, 20);
 					Game_BudgetZoneTaxDialog_UpdateIndFunding(pThis);
 					break;
 				default:
@@ -697,7 +692,6 @@ extern "C" void __stdcall Hook_BudgetEducationDialog_OnVScroll(UINT nSBCode, UIN
 	__asm mov [pThis], ecx
 
 	int dwBudgetEducationScrollDirection;
-	int nNewValue;
 
 	if (dwBudgetEducationScrollClicked) {
 		// Record the last nSBCode as long as it's not SB_ENDSCROLL.
@@ -716,21 +710,11 @@ extern "C" void __stdcall Hook_BudgetEducationDialog_OnVScroll(UINT nSBCode, UIN
 		if (dwBudgetEducationScrollDirection != 0) {
 			switch (GetDlgCtrlID(pScrollBar->m_hWnd)) {
 			case SC2K_DIALOG_BUDGET_EDUCATION_SCROLLBAR_COLLEGE:
-				nNewValue = pThis->dwBEDCollegePercent + dwBudgetEducationScrollDirection;
-				if (nNewValue > 100)
-					nNewValue = 100;
-				else if (nNewValue < 0)
-					nNewValue = 0;
-				pThis->dwBEDCollegePercent = nNewValue;
+				UpdatePercentageValue(&pThis->dwBEDCollegePercent, dwBudgetEducationScrollDirection, 0, 100);
 				Game_BudgetEducationDialog_UpdateCollegeFunding(pThis);
 				break;
 			case SC2K_DIALOG_BUDGET_EDUCATION_SCROLLBAR_SCHOOL:
-				nNewValue = pThis->dwBEDSchoolPercent + dwBudgetEducationScrollDirection;
-				if (nNewValue > 100)
-					nNewValue = 100;
-				else if (nNewValue < 0)
-					nNewValue = 0;
-				pThis->dwBEDSchoolPercent = nNewValue;
+				UpdatePercentageValue(&pThis->dwBEDSchoolPercent, dwBudgetEducationScrollDirection, 0, 100);
 				Game_BudgetEducationDialog_UpdateSchoolFunding(pThis);
 				break;
 			default:
@@ -762,7 +746,6 @@ extern "C" void __stdcall Hook_BudgetTransitDialog_OnVScroll(UINT nSBCode, UINT 
 	__asm mov [pThis], ecx
 
 	int dwBudgetTransitScrollDirection;
-	int nNewValue;
 
 	if (dwBudgetTransitScrollClicked) {
 		// Record the last nSBCode as long as it's not SB_ENDSCROLL.
@@ -781,57 +764,27 @@ extern "C" void __stdcall Hook_BudgetTransitDialog_OnVScroll(UINT nSBCode, UINT 
 		if (dwBudgetTransitScrollDirection != 0) {
 			switch (GetDlgCtrlID(pScrollBar->m_hWnd)) {
 			case SC2K_DIALOG_BUDGET_TRANSIT_SCROLLBAR_ROAD:
-				nNewValue = pThis->dwBTDRoadPercent + dwBudgetTransitScrollDirection;
-				if (nNewValue > 100)
-					nNewValue = 100;
-				else if (nNewValue < 0)
-					nNewValue = 0;
-				pThis->dwBTDRoadPercent = nNewValue;
+				UpdatePercentageValue(&pThis->dwBTDRoadPercent, dwBudgetTransitScrollDirection, 0, 100);
 				Game_BudgetTransitDialog_UpdateRoadFunding(pThis);
 				break;
 			case SC2K_DIALOG_BUDGET_TRANSIT_SCROLLBAR_RAIL:
-				nNewValue = pThis->dwBTDRailPercent + dwBudgetTransitScrollDirection;
-				if (nNewValue > 100)
-					nNewValue = 100;
-				else if (nNewValue < 0)
-					nNewValue = 0;
-				pThis->dwBTDRailPercent = nNewValue;
+				UpdatePercentageValue(&pThis->dwBTDRailPercent, dwBudgetTransitScrollDirection, 0, 100);
 				Game_BudgetTransitDialog_UpdateRailFunding(pThis);
 				break;
 			case SC2K_DIALOG_BUDGET_TRANSIT_SCROLLBAR_HIGHWAY:
-				nNewValue = pThis->dwBTDHighwayPercent + dwBudgetTransitScrollDirection;
-				if (nNewValue > 100)
-					nNewValue = 100;
-				else if (nNewValue < 0)
-					nNewValue = 0;
-				pThis->dwBTDHighwayPercent = nNewValue;
+				UpdatePercentageValue(&pThis->dwBTDHighwayPercent, dwBudgetTransitScrollDirection, 0, 100);
 				Game_BudgetTransitDialog_UpdateHighwayFunding(pThis);
 				break;
 			case SC2K_DIALOG_BUDGET_TRANSIT_SCROLLBAR_SUBWAY:
-				nNewValue = pThis->dwBTDSubwayPercent + dwBudgetTransitScrollDirection;
-				if (nNewValue > 100)
-					nNewValue = 100;
-				else if (nNewValue < 0)
-					nNewValue = 0;
-				pThis->dwBTDSubwayPercent = nNewValue;
+				UpdatePercentageValue(&pThis->dwBTDSubwayPercent, dwBudgetTransitScrollDirection, 0, 100);
 				Game_BudgetTransitDialog_UpdateSubwayFunding(pThis);
 				break;
 			case SC2K_DIALOG_BUDGET_TRANSIT_SCROLLBAR_BRIDGE:
-				nNewValue = pThis->dwBTDBridgePercent + dwBudgetTransitScrollDirection;
-				if (nNewValue > 100)
-					nNewValue = 100;
-				else if (nNewValue < 0)
-					nNewValue = 0;
-				pThis->dwBTDBridgePercent = nNewValue;
+				UpdatePercentageValue(&pThis->dwBTDBridgePercent, dwBudgetTransitScrollDirection, 0, 100);
 				Game_BudgetTransitDialog_UpdateBridgeFunding(pThis);
 				break;
 			case SC2K_DIALOG_BUDGET_TRANSIT_SCROLLBAR_TUNNEL:
-				nNewValue = pThis->dwBTDTunnelPercent + dwBudgetTransitScrollDirection;
-				if (nNewValue > 100)
-					nNewValue = 100;
-				else if (nNewValue < 0)
-					nNewValue = 0;
-				pThis->dwBTDTunnelPercent = nNewValue;
+				UpdatePercentageValue(&pThis->dwBTDTunnelPercent, dwBudgetTransitScrollDirection, 0, 100);
 				Game_BudgetTransitDialog_UpdateTunnelFunding(pThis);
 				break;
 			default:
