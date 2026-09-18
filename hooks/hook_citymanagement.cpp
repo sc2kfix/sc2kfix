@@ -15,6 +15,13 @@
 #include <sc2kfix.h>
 #include "../resource.h"
 
+extern int nOwnDrwDlg;
+extern CMFC3XWnd *pStoredWnd;
+
+static int nBudgetLastSBCode = -1;
+static int nBudgetZoneTaxLastSBCode = -1;
+static int nBudgetEducationLastSBCode = -1;
+
 // Local destruct function for proper clarity. Since allocation also occurs
 // local to the library, a crash would otherwise occur if the remote call
 // were used (and it were set to 'delete' pBudgetMainDialog remotely).
@@ -124,9 +131,6 @@ void BudgetMain_PostCheckHourGlassTimer(CBudgetMainDialog *bBudgetMainDialog) {
 	}
 }
 
-extern int nOwnDrwDlg;
-extern CMFC3XWnd *pStoredWnd;
-
 extern "C" int __stdcall Hook_BudgetMainDialog_OnInitDialog() {
 	CBudgetMainDialog *pThis;
 
@@ -135,6 +139,7 @@ extern "C" int __stdcall Hook_BudgetMainDialog_OnInitDialog() {
 	int ret = GameMain_BudgetMainDialog_OnInitDialog(pThis);
 	pStoredWnd = pThis;
 	nOwnDrwDlg = OWNDRW_DLG_BUDGETMAIN;
+	nBudgetLastSBCode = -1;
 	return ret;
 }
 
@@ -190,8 +195,6 @@ extern "C" void __stdcall Hook_BudgetMainDialog_DrawCosts(CMFC3XDC *pDC) {
 	InvalidateRect(pThis->dwBDStaticEndOfYearFunds.m_hWnd, NULL, FALSE);
 }
 
-static int nLastSBCode = -1;
-
 extern "C" void __stdcall Hook_BudgetMainDialog_OnVScroll(UINT nSBCode, UINT nPos, CMFC3XScrollBar *pScrollBar) {
 	CBudgetMainDialog *pThis;
 
@@ -209,7 +212,7 @@ extern "C" void __stdcall Hook_BudgetMainDialog_OnVScroll(UINT nSBCode, UINT nPo
 	// Reset all relevant variables.
 	if (GetAsyncKeyState(VK_SHIFT) < 0) {
 		dwBudgetScrollClicked = 0;
-		nLastSBCode = -1;
+		nBudgetLastSBCode = -1;
 		if (pScrollBar) {
 			int nID = GetDlgCtrlID(pScrollBar->m_hWnd);
 			if (nID > 0) {
@@ -225,17 +228,17 @@ extern "C" void __stdcall Hook_BudgetMainDialog_OnVScroll(UINT nSBCode, UINT nPo
 	if (dwBudgetScrollClicked) {
 		// Record the last nSBCode as long as it's not SB_ENDSCROLL.
 		if (nSBCode != SB_ENDSCROLL)
-			nLastSBCode = nSBCode;
+			nBudgetLastSBCode = nSBCode;
 		dwBudgetScrollClicked = 0;
-		if (nLastSBCode == SB_VERT) // Up Arrow
+		if (nBudgetLastSBCode == SB_VERT) // Up Arrow
 			dwBudgetScrollDirection = -1;
-		else if (nLastSBCode == SB_HORZ) // Down Arrow
+		else if (nBudgetLastSBCode == SB_HORZ) // Down Arrow
 			dwBudgetScrollDirection = 1;
 		else
 			dwBudgetScrollDirection = 0;
 		// Reset here, otherwise it can get stuck trying to go in a specific direction.
 		if (nSBCode == SB_ENDSCROLL)
-			nLastSBCode = -1;
+			nBudgetLastSBCode = -1;
 		if (dwBudgetScrollDirection != 0) {
 			switch (GetDlgCtrlID(pScrollBar->m_hWnd)) {
 				case SC2K_DIALOG_BUDGET_SCROLLBAR_PROPTAX:
@@ -263,7 +266,7 @@ extern "C" void __stdcall Hook_BudgetMainDialog_OnVScroll(UINT nSBCode, UINT nPo
 	}
 	else {
 		// Always record the last one here (regardless of what it is).
-		nLastSBCode = nSBCode;
+		nBudgetLastSBCode = nSBCode;
 		dwBudgetScrollClicked = 1;
 	}
 	GameMain_Wnd_OnVScroll(pThis, nSBCode, nPos, pScrollBar);
@@ -603,6 +606,16 @@ extern "C" void __stdcall Hook_SimcityView_DoOrdinance() {
 	Game_BudgetOrdinanceDialog_Dest(&ordinanceDlg);
 }
 
+extern "C" int __stdcall Hook_BudgetZoneTaxDialog_OnInitDialog() {
+	CBudgetZoneTaxDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	int ret = GameMain_BudgetZoneTaxDialog_OnInitDialog(pThis);
+	nBudgetZoneTaxLastSBCode = -1;
+	return ret;
+}
+
 extern "C" void __stdcall Hook_BudgetZoneTaxDialog_OnVScroll(UINT nSBCode, UINT nPos, CMFC3XScrollBar *pScrollBar) {
 	CBudgetZoneTaxDialog *pThis;
 
@@ -614,17 +627,17 @@ extern "C" void __stdcall Hook_BudgetZoneTaxDialog_OnVScroll(UINT nSBCode, UINT 
 	if (dwBudgetZoneTaxScrollClicked) {
 		// Record the last nSBCode as long as it's not SB_ENDSCROLL.
 		if (nSBCode != SB_ENDSCROLL)
-			nLastSBCode = nSBCode;
+			nBudgetZoneTaxLastSBCode = nSBCode;
 		dwBudgetZoneTaxScrollClicked = 0;
-		if (nLastSBCode == SB_VERT) // Up Arrow
+		if (nBudgetZoneTaxLastSBCode == SB_VERT) // Up Arrow
 			dwBudgetZoneTaxScrollDirection = -1;
-		else if (nLastSBCode == SB_HORZ) // Down Arrow
+		else if (nBudgetZoneTaxLastSBCode == SB_HORZ) // Down Arrow
 			dwBudgetZoneTaxScrollDirection = 1;
 		else
 			dwBudgetZoneTaxScrollDirection = 0;
 		// Reset here, otherwise it can get stuck trying to go in a specific direction.
 		if (nSBCode == SB_ENDSCROLL)
-			nLastSBCode = -1;
+			nBudgetZoneTaxLastSBCode = -1;
 		if (dwBudgetZoneTaxScrollDirection != 0) {
 			switch (GetDlgCtrlID(pScrollBar->m_hWnd)) {
 				case SC2K_DIALOG_BUDGET_PROPTAX_SCROLLBAR_RES:
@@ -661,8 +674,73 @@ extern "C" void __stdcall Hook_BudgetZoneTaxDialog_OnVScroll(UINT nSBCode, UINT 
 	}
 	else {
 		// Always record the last one here (regardless of what it is).
-		nLastSBCode = nSBCode;
+		nBudgetZoneTaxLastSBCode = nSBCode;
 		dwBudgetZoneTaxScrollClicked = 1;
+	}
+	GameMain_Wnd_OnVScroll(pThis, nSBCode, nPos, pScrollBar);
+}
+
+extern "C" int __stdcall Hook_BudgetEducationDialog_OnInitDialog() {
+	CBudgetEducationDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	int ret = GameMain_BudgetEducationDialog_OnInitDialog(pThis);
+	nBudgetEducationLastSBCode = -1;
+	return ret;
+}
+
+extern "C" void __stdcall Hook_BudgetEducationDialog_OnVScroll(UINT nSBCode, UINT nPos, CMFC3XScrollBar *pScrollBar) {
+	CBudgetEducationDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	int dwBudgetEducationScrollDirection;
+	int nNewValue;
+
+	if (dwBudgetEducationScrollClicked) {
+		// Record the last nSBCode as long as it's not SB_ENDSCROLL.
+		if (nSBCode != SB_ENDSCROLL)
+			nBudgetEducationLastSBCode = nSBCode;
+		dwBudgetEducationScrollClicked = 0;
+		if (nBudgetEducationLastSBCode == SB_VERT) // Up Arrow
+			dwBudgetEducationScrollDirection = -1;
+		else if (nBudgetEducationLastSBCode == SB_HORZ) // Down Arrow
+			dwBudgetEducationScrollDirection = 1;
+		else
+			dwBudgetEducationScrollDirection = 0;
+		// Reset here, otherwise it can get stuck trying to go in a specific direction.
+		if (nSBCode == SB_ENDSCROLL)
+			nBudgetEducationLastSBCode = -1;
+		if (dwBudgetEducationScrollDirection != 0) {
+			switch (GetDlgCtrlID(pScrollBar->m_hWnd)) {
+			case SC2K_DIALOG_BUDGET_EDUCATION_SCROLLBAR_COLLEGE:
+				nNewValue = pThis->dwBEDCollegePercent + dwBudgetEducationScrollDirection;
+				if (nNewValue > 100)
+					nNewValue = 100;
+				else if (nNewValue < 0)
+					nNewValue = 0;
+				pThis->dwBEDCollegePercent = nNewValue;
+				Game_BudgetEducationDialog_UpdateCollegeFunding(pThis);
+				break;
+			case SC2K_DIALOG_BUDGET_EDUCATION_SCROLLBAR_SCHOOL:
+				nNewValue = pThis->dwBEDSchoolPercent + dwBudgetEducationScrollDirection;
+				if (nNewValue > 100)
+					nNewValue = 100;
+				else if (nNewValue < 0)
+					nNewValue = 0;
+				pThis->dwBEDSchoolPercent = nNewValue;
+				Game_BudgetEducationDialog_UpdateSchoolFunding(pThis);
+				break;
+			default:
+				break;
+			}
+		}
+	}
+	else {
+		// Always record the last one here (regardless of what it is).
+		nBudgetEducationLastSBCode = nSBCode;
+		dwBudgetEducationScrollClicked = 1;
 	}
 	GameMain_Wnd_OnVScroll(pThis, nSBCode, nPos, pScrollBar);
 }
@@ -704,7 +782,19 @@ void InstallCityManagementHooks_SC2K1996(void) {
 	SafeVirtualProtect((LPVOID)0x4013C5, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4013C5, Hook_SimcityView_DoOrdinance);
 
+	// Hook for CBudgetZoneTaxDialog::OnInitDialog
+	SafeVirtualProtect((LPVOID)0x40166D, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x40166D, Hook_BudgetZoneTaxDialog_OnInitDialog);
+
 	// Hook for CBudgetZoneTaxDialog::OnVScroll
 	SafeVirtualProtect((LPVOID)0x402A0E, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x402A0E, Hook_BudgetZoneTaxDialog_OnVScroll);
+
+	// Hook for CBudgetEducationDialog::OnInitDialog
+	SafeVirtualProtect((LPVOID)0x40231A, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x40231A, Hook_BudgetEducationDialog_OnInitDialog);
+
+	// Hook for CBudgetEducationDialog::OnVScroll
+	SafeVirtualProtect((LPVOID)0x40243C, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x40243C, Hook_BudgetEducationDialog_OnVScroll);
 }

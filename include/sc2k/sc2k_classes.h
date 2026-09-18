@@ -686,3 +686,17 @@ public:
 	CMFC3XScrollBar dwBZTDIndScrollBar;
 	CMFC3XScrollBar dwBZTDResScrollBar;
 };
+
+class CBudgetEducationDialog : public CGameDialog {
+public:
+	int dwBEDColumnWidth[8];
+	DWORD dwBEDUnknown[2];
+	int dwBEDColumnCount;
+	DWORD dwBEDLeftPosOne;
+	DWORD dwBEDTopPosOne;
+	DWORD dwBEDRowHeight;
+	CMFC3XScrollBar dwBEDSchoolScrollBar;
+	CMFC3XScrollBar dwBEDCollegeScrollBar;
+	int dwBEDSchoolPercent;
+	int dwBEDCollegePercent;
+};
