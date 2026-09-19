@@ -633,6 +633,107 @@ extern "C" void __cdecl Hook_SCURK_winscurkMDIClient_CycleColors(winscurkMDIClie
 	}
 }
 
+void GetFileDirectory(char *pLoadPath) {
+	char *p;
+	int nLen;
+
+	nLen = strlen(pLoadPath);
+	for (p = &pLoadPath[nLen]; nLen > 0 && *p != '\\'; --p)
+		--nLen;
+	pLoadPath[nLen] = 0;
+}
+
+extern "C" void __cdecl Hook_SCURK_winscurkMDIClient_CmFileLoadSource(winscurkMDIClient *pThis) {
+	winscurkApp *pSCApp;
+	OPENFILENAMEA *pOfn;
+	int nRes;
+	BC45Xstring str;
+
+	pSCApp = R_SCURK_WRP_winscurkApp_GetPointerToClass();
+
+	pOfn = R_SCURK_WRP_winscurkMDIClient_mGetOpenFileName(pThis);
+	// Make sure both of these flags are specified, otherwise the program will crash.
+	pOfn->Flags |= OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
+	R_SCURK_WRP_gScurkLoadString(&str, 32556);
+	pOfn->lpstrFilter = str.p->array;
+	R_BOR_String_Destruct(&str, 2);
+	pOfn->lpstrInitialDir = R_SCURK_WRP_winscurkApp_mGetMiffPath(pSCApp);
+	if (GetOpenFileNameA(pOfn)) {
+		nRes = R_SCURK_WRP_winscurkApp_mGetFileType(pSCApp, pOfn->lpstrFile) - 1;
+		if (nRes) {
+			if (nRes == 1)
+				R_SCURK_WRP_winscurkMDIClient_mReadFromMIFFile(pThis, pSCApp->mSourceTiles, pOfn->lpstrFile);
+			else
+				R_SCURK_WRP_gScurkMessage(29009, 29003, 48);
+		}
+		else {
+			R_SCURK_WRP_winscurkMDIClient_mReadFromTILFile(pThis, pSCApp->mSourceTiles, pOfn->lpstrFile);
+			strcpy_s(pSCApp->mSourceTiles->mFileName, MAX_PATH, pOfn->lpstrFile);
+		}
+		GetFileDirectory(pOfn->lpstrFile);
+		R_SCURK_WRP_winscurkApp_mSetMiffPath(pSCApp, pOfn->lpstrFile);
+	}
+	InvalidateRect(pThis->mMoverWindow->__wndHead.pWnd->HWindow, 0, 0);
+}
+
+BOOL L_SCURK_WorkingSetCheck(winscurkMDIClient *pThis, int nLoad) {
+	if (nLoad != CONVSAVEAS_LOADWRK)
+		return TRUE;
+	int nRet = R_SCURK_WRP_gScurkMessage(29005, 29003, MB_YESNOCANCEL);
+	if (nRet) {
+		if (nRet != IDCANCEL) {
+			if (nRet == IDYES) {
+				R_SCURK_WRP_winscurkMDIClient_CmFileSaveWorking(pThis);
+				int *pSaveSucceeded = R_SCURK_WRP_GetgSaveSucceeded();
+				if (*pSaveSucceeded)
+					return TRUE;
+			}
+			else if (nRet == IDNO)
+				return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+extern "C" void __cdecl Hook_SCURK_winscurkMDIClient_CmFileLoadWorking(winscurkMDIClient *pThis) {
+	winscurkApp *pSCApp;
+	OPENFILENAMEA *pOfn;
+	int nRes;
+	BC45Xstring str;
+
+	// In this instance use 'CONVSAVEAS_LOADWRK' here so it fulfills the check
+	// concerning the working set.
+	if (L_SCURK_WorkingSetCheck(pThis, CONVSAVEAS_LOADWRK)) {
+		pSCApp = R_SCURK_WRP_winscurkApp_GetPointerToClass();
+
+		pOfn = R_SCURK_WRP_winscurkMDIClient_mGetOpenFileName(pThis);
+		// Make sure both of these flags are specified, otherwise the program will crash.
+		pOfn->Flags |= OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
+		R_SCURK_WRP_gScurkLoadString(&str, 32556);
+		pOfn->lpstrFilter = str.p->array;
+		R_BOR_String_Destruct(&str, 2);
+		pOfn->lpstrInitialDir = R_SCURK_WRP_winscurkApp_mGetMiffPath(pSCApp);
+		if (GetOpenFileNameA(pOfn)) {
+			nRes = R_SCURK_WRP_winscurkApp_mGetFileType(pSCApp, pOfn->lpstrFile) - 1;
+			if (nRes) {
+				if (nRes == 1)
+					R_SCURK_WRP_winscurkMDIClient_mReadFromMIFFile(pThis, pSCApp->mWorkingTiles, pOfn->lpstrFile);
+				else
+					R_SCURK_WRP_gScurkMessage(29009, 29003, 48);
+			}
+			else {
+				R_SCURK_WRP_winscurkMDIClient_mReadFromTILFile(pThis, pSCApp->mWorkingTiles, pOfn->lpstrFile);
+				strcpy_s(pSCApp->mWorkingTiles->mFileName, MAX_PATH, R_SCURK_WRP_winscurkMDIClient_mAttachMif(pThis, pOfn->lpstrFile));
+			}
+			GetFileDirectory(pOfn->lpstrFile);
+			R_SCURK_WRP_winscurkApp_mSetMiffPath(pSCApp, pOfn->lpstrFile);
+		}
+		R_SCURK_WRP_PlaceWindow_DrawHouse(pThis->mPlaceWindow, 0);
+		InvalidateRect(pThis->mPlaceWindow->__wndHead.pWnd->HWindow, 0, 0);
+		InvalidateRect(pThis->mMoverWindow->__wndHead.pWnd->HWindow, 0, 0);
+	}
+}
+
 // cEditableTileSet functions
 
 static void L_SCURK_TranslateConvert(cEditableTileSet *pThis, WORD nDBID, int nConvType, int nConvRepl) {

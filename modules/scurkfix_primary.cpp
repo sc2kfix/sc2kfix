@@ -118,6 +118,12 @@ void InstallFixes_SCURKPrimary(void) {
 	NEWJMP((LPVOID)0x4496D4, Hook_SCURK_winscurkMDIClient_CycleColors);
 	ConsoleLog(LOG_INFO, "CORE: Patched palette animation fix for SCURK.\n");
 
+	SafeVirtualProtect((LPVOID)0x44A328, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x44A328, Hook_SCURK_winscurkMDIClient_CmFileLoadSource);
+
+	SafeVirtualProtect((LPVOID)0x44A57C, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x44A57C, Hook_SCURK_winscurkMDIClient_CmFileLoadWorking);
+
 	// Add back the internal debug notices for tracing purposes.
 	SafeVirtualProtect((LPVOID)0x4132EC, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4132EC, Hook_SCURKPrimary_DebugOut);

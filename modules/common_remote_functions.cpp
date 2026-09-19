@@ -837,12 +837,31 @@ void R_SCURK_WRP_winscurkMDIClient_mReadFromMIFFile(winscurkMDIClient *pThis, cE
 	}
 }
 
+void R_SCURK_WRP_winscurkMDIClient_mReadFromTILFile(winscurkMDIClient *pThis, cEditableTileSet *pTileSet, const char *pFilePath) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			GameMain_winscurkMDIClient_mReadFromTILFile_SCURKPrimary(pThis, pTileSet, pFilePath);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			GameMain_winscurkMDIClient_mReadFromTILFile_SCURK1996(pThis, pTileSet, pFilePath);
+	}
+}
+
 OPENFILENAMEA *R_SCURK_WRP_winscurkMDIClient_mGetOpenFileName(winscurkMDIClient *pThis) {
 	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
 		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
 			return GameMain_winscurkMDIClient_mGetOpenFileName_SCURKPrimary(pThis);
 		else if (dwDetectedVersion == VERSION_SCURK_1996)
 			return GameMain_winscurkMDIClient_mGetOpenFileName_SCURK1996(pThis);
+	}
+	return NULL;
+}
+
+char *R_SCURK_WRP_winscurkMDIClient_mAttachMif(winscurkMDIClient *pThis, char *pStr) {
+	if (dwSC2KFixMode == SC2KFIX_MODE_SCURK) {
+		if (dwDetectedVersion == VERSION_SCURK_PRIMARY)
+			return GameMain_winscurkMDIClient_mAttachMif_SCURKPrimary(pThis, pStr);
+		else if (dwDetectedVersion == VERSION_SCURK_1996)
+			return GameMain_winscurkMDIClient_mAttachMif_SCURK1996(pThis, pStr);
 	}
 	return NULL;
 }
