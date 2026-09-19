@@ -899,9 +899,6 @@ extern "C" LONG __cdecl Hook_SCURK_EditableTileSet_mReadFromFile(cEditableTileSe
 		}
 #endif
 		L_SCURK_LoadFixedLargeSpritesRsrc(pThis);
-#if !SPRITE_ARCHIVE_LOADING
-		R_SCURK_WRP_EditableTileSet_mBuildSmallMedTiles(pThis);
-#endif
 		R_SCURK_WRP_gUpdateWaitWindow();
 	}
 	return nRes;
