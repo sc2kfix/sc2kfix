@@ -208,7 +208,8 @@ extern "C" void __stdcall Hook_GameDialog_OnLButtonDown(UINT nFlags, CMFC3XPoint
 			return;
 		}
 		else if ((DWORD *)pThis == pMainFrm->dwMFNeighbourDialog) {
-			ConsoleLog(LOG_DEBUG, "Neighbour Dialog.\n");
+			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+			DisplayItemHelp(pMainFrm->m_hWnd, HELPTYPE_NEIGHBOURS, 0, true);
 			return;
 		}
 		else if ((DWORD *)pThis == pMainFrm->dwMFPopulationDialog) {

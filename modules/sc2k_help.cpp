@@ -529,6 +529,9 @@ static const char *GetHelpString(int nType, int nIndex) {
 		case HELPTYPE_ORDINANCES:
 			pStr = GetHelpString_Ordinances(nIndex);
 			break;
+		case HELPTYPE_NEIGHBOURS:
+			pStr = "The neighbor window displays your city's population along with the population of its neighboring cities and the total population of SimNation. Use this window to compare your city with the cities you compete with for people and other resources, and to see just how big a part of the whole nation you are (or aren't).";
+			break;
 		default:
 			if (nIndex == 1)
 				pStr = "- Using Help:\n\nGo to Help -> Information";
@@ -566,6 +569,8 @@ BOOL CALLBACK ConfHelpDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 				GetClientRect(hwndDlg, &hlpD->textRect);
 				DrawTextA(hDC, pStr, strlen(pStr), &hlpD->textRect, DT_WORDBREAK | DT_CALCRECT);
 				nDlgFrameCX = GetSystemMetrics(SM_CXDLGFRAME);
+				if (hlpD->nType == HELPTYPE_GENERAL)
+					nDlgFrameCX *= 2;
 				nDlgFrameCY = GetSystemMetrics(SM_CYDLGFRAME);
 				hwndItem = GetDlgItem(hwndDlg, IDOK);
 				ShowWindow(hwndItem, SW_SHOW);
