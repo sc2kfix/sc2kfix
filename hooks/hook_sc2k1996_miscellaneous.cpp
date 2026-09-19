@@ -191,7 +191,7 @@ extern "C" void __stdcall Hook_GameDialog_OnLButtonDown(UINT nFlags, CMFC3XPoint
 		HWND hWndChild = ChildWindowFromPointEx(pThis->m_hWnd, pt, CWP_SKIPINVISIBLE);
 		int nID = GetDlgCtrlID(hWndChild);
 		if (bOrdinanceOpen) {
-			ConsoleLog(LOG_DEBUG, "Ordinance.\n");
+			// Unused here - keeping just in case for future possibilities.
 			return;
 		}
 		else if (bBudgetOpen) {
@@ -1473,6 +1473,7 @@ extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lp
 		lpMainDialogAfxProc = lpDialogFunc;
 		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_MainDialogProc, dwInitParam);
 	case SC2K_DIALOG_BUDGET:
+	case SC2K_DIALOG_ORDINANCES:
 	case SC2K_DIALOG_SELECTITEM:
 	case SC2K_DIALOG_QUERYGENERAL:
 	case SC2K_DIALOG_QUERYSPECIFIC:
@@ -3121,14 +3122,17 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 					// This block here handles all of the current Ordinance settings.
 					// If we ever want to redirect their calls here (and possibly add others
 					// add the given IDs to the list).
-					//if ((nID >= 148 && nID <= 151) ||
-					//	(nID >= 156 && nID <= 159) ||
-					//	(nID >= 164 && nID <= 167) ||
-					//	(nID >= 172 && nID <= 175) ||
-					//	(nID >= 180 && nID <= 183)) {
-					//	ConsoleLog(LOG_DEBUG, "nID(%u)\n", nID);
-					//	return TRUE;
-					//}
+					if ((nID >= SC2K_DIALOG_ORDINANCES_CHECKBOX_FINAN_ONEPCTSALESTAX && nID <= SC2K_DIALOG_ORDINANCES_CHECKBOX_FINAN_ONEPCTINCOMETAX) ||
+						(nID >= SC2K_DIALOG_ORDINANCES_CHECKBOX_HLSFT_VOLUNTEERFIREDEPT && nID <= SC2K_DIALOG_ORDINANCES_CHECKBOX_HLSFT_JUNIORSPORTS) ||
+						(nID >= SC2K_DIALOG_ORDINANCES_CHECKBOX_EDUCA_PROREADCAMPAIGN && nID <= SC2K_DIALOG_ORDINANCES_CHECKBOX_EDUCA_NGHBRHOODWATCH) ||
+						(nID >= SC2K_DIALOG_ORDINANCES_CHECKBOX_PROMO_TOURISTADVERT && nID <= SC2K_DIALOG_ORDINANCES_CHECKBOX_PROMO_ANNUALCARNIVAL) ||
+						(nID >= SC2K_DIALOG_ORDINANCES_CHECKBOX_OTHER_ENERGYCONSERV && nID <= SC2K_DIALOG_ORDINANCES_CHECKBOX_OTHER_POLLUTIONCTRLS)) {
+						if (GetAsyncKeyState(VK_SHIFT) < 0) {
+							Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+							DisplayItemHelp(pThis->m_hWnd, HELPTYPE_ORDINANCES, nID, false);
+							return TRUE;
+						}
+					}
 				}
 				else if (bBudgetOpen) {
 					if (nID != SC2K_DIALOG_BUDGET_HELP) {
@@ -3200,6 +3204,10 @@ extern "C" void __stdcall Hook_Wnd_OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDIS
 		if (nOwnDrwDlg == OWNDRW_DLG_BRIDGE) {
 			L_BridgeSelectDialog_OnDrawItem_SC2K1996((CBridgeSelectDialog *)pThis, nIDCtl, lpDIS);
 			return;
+		}
+		else if (nOwnDrwDlg == OWNDRW_DLG_ORDINANCES) {
+			if (L_BudgetOrdinanceDialog_OnDrawItem_SC2K1996((CBudgetOrdinanceDialog *)pThis, nIDCtl, lpDIS))
+				return;
 		}
 		else if (nOwnDrwDlg == OWNDRW_DLG_BUDGETMAIN) {
 			if (L_BudgetMainDialog_OnDrawItem_SC2K1996((CBudgetMainDialog *)pThis, nIDCtl, lpDIS))

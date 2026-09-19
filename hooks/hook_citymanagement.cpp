@@ -432,7 +432,7 @@ static void L_BudgetMainDialog_OnDraw_EOYFunds_SC2K1996(CBudgetMainDialog *pThis
 static void L_BudgetMainDialog_OnDraw_AlignedFields_SC2K1996(CBudgetMainDialog *pThis, int nCtlID, LPDRAWITEMSTRUCT lpDIS, int nVal, bool bRightAlign) {
 	HWND hDlgItem;
 	HDC hDlgDC;
-	RECT areaRect, tdeRect;
+	RECT areaRect;
 	COLORREF cr;
 	HBRUSH hBrush;
 	HFONT hOldFont;
@@ -453,11 +453,6 @@ static void L_BudgetMainDialog_OnDraw_AlignedFields_SC2K1996(CBudgetMainDialog *
 	CopyRect(&areaRect, &lpDIS->rcItem);
 	areaRect.left += 2;
 	areaRect.top  += 2;
-	// The field width is used in this case after the
-	// coordinates have been converted.
-	GetWindowRect(pThis->dwBDEditTransitTDE.m_hWnd, &tdeRect);
-	ScreenToClient(pThis->m_hWnd, (LPPOINT)&tdeRect.left);
-	ScreenToClient(pThis->m_hWnd, (LPPOINT)&tdeRect.right);
 	hOldFont = SelectFont(pDC->m_hDC, hFontMSSansSerifRegular8);
 	SetTextColor(pDC->m_hDC, RGB(0,0,0));
 	nOffSetX = (areaRect.right - areaRect.left);
@@ -574,9 +569,14 @@ bool L_BudgetMainDialog_OnDrawItem_SC2K1996(CBudgetMainDialog *pThis, int nCtlID
 	return false;
 }
 
-static void OpenOrdinanceDialog(CBudgetOrdinanceDialog *pOrdinanceDialog) {
+static void OpenOrdinanceDialog(CBudgetOrdinanceDialog *pOrdinanceDialog, bool bFromBudget) {
+	CMFC3XWnd *pOldWnd;
+
 	bOrdinanceOpen = true;
+	pOldWnd = pStoredWnd;
 	Game_GameDialog_DoModal(pOrdinanceDialog);
+	pStoredWnd = pOldWnd;
+	nOwnDrwDlg = (bFromBudget) ? OWNDRW_DLG_BUDGETMAIN : OWNDRW_DLG_NONE;
 	bOrdinanceOpen = false;
 }
 
@@ -589,10 +589,56 @@ extern "C" void __stdcall Hook_BudgetMainDialog_OpenOrdinanceDialog() {
 
 	Game_BudgetOrdinanceDialog_Cons(&ordinanceDlg, NULL);
 	BudgetMain_PreCheckHourGlassTimer(pThis);
-	OpenOrdinanceDialog(&ordinanceDlg);
+	OpenOrdinanceDialog(&ordinanceDlg, true);
 	BudgetMain_PostCheckHourGlassTimer(pThis);
 	Game_BudgetMainDialog_UpdateInternalInformation(pThis, 0);
 	Game_BudgetOrdinanceDialog_Dest(&ordinanceDlg);
+}
+
+static void L_BudgetOrdinanceDialog_OnDraw_AlignedFields_SC2K1996(CBudgetOrdinanceDialog *pThis, int nCtlID, LPDRAWITEMSTRUCT lpDIS, bool bRightAlign) {
+	HWND hDlgItem;
+	HDC hDlgDC;
+	RECT areaRect;
+	COLORREF cr;
+	HBRUSH hBrush;
+	HFONT hOldFont;
+	int nOffSetX, nPosX;
+	char szStr[255 + 1];
+	int nLen;
+	SIZE textSZ;
+	POINT pt;
+	CMFC3XPaintDC *pDC;
+
+	hDlgItem = GetDlgItem(pThis->m_hWnd, nCtlID);
+	hDlgDC = GetDC(hDlgItem);
+	pDC = (CMFC3XPaintDC *)GameMain_DC_FromHandle(hDlgDC);
+	cr = RGB(255, 255, 255);
+	SetTextAlign(pDC->m_hDC, TA_UPDATECP);
+	SetBkColor(pDC->m_hDC, cr);
+	hBrush = CreateSolidBrush(cr);
+	FillRect(pDC->m_hDC, &lpDIS->rcItem, hBrush);
+	CopyRect(&areaRect, &lpDIS->rcItem);
+	areaRect.left += 2;
+	areaRect.top  += 2;
+	hOldFont = SelectFont(pDC->m_hDC, hFontMSSansSerifRegular8);
+	SetTextColor(pDC->m_hDC, RGB(0,0,0));
+	nOffSetX = (areaRect.right - areaRect.left);
+	memset(szStr, 0, sizeof(szStr));
+	SendMessageA(hDlgItem, WM_GETTEXT, ARRAYSIZE(szStr), (LPARAM)szStr);
+	nLen = strlen(szStr);
+	GetTextExtentPointA(pDC->m_hAttribDC, szStr, nLen, &textSZ);
+	nPosX = (bRightAlign) ? nOffSetX - textSZ.cx : areaRect.left;
+	MoveToEx(pDC->m_hDC, nPosX, areaRect.top, &pt);
+	TextOutA(pDC->m_hDC, 0, 0, szStr, nLen);
+	SelectFont(pDC->m_hDC, hOldFont);
+	DeleteBrush(hBrush);
+	SetTextAlign(pDC->m_hDC, TA_LEFT);
+	ReleaseDC(hDlgItem, pDC->m_hDC);
+}
+
+bool L_BudgetOrdinanceDialog_OnDrawItem_SC2K1996(CBudgetOrdinanceDialog *pThis, int nCtlID, LPDRAWITEMSTRUCT lpDIS) {
+	L_BudgetOrdinanceDialog_OnDraw_AlignedFields_SC2K1996(pThis, nCtlID, lpDIS, false);
+	return true;
 }
 
 extern "C" void __stdcall Hook_SimcityView_DoOrdinance() {
@@ -603,7 +649,7 @@ extern "C" void __stdcall Hook_SimcityView_DoOrdinance() {
 	CBudgetOrdinanceDialog ordinanceDlg;
 
 	Game_BudgetOrdinanceDialog_Cons(&ordinanceDlg, NULL);
-	OpenOrdinanceDialog(&ordinanceDlg);
+	OpenOrdinanceDialog(&ordinanceDlg, false);
 	Game_BudgetOrdinanceDialog_Dest(&ordinanceDlg);
 }
 
@@ -616,6 +662,17 @@ static void UpdatePercentageValue(int *nPercent, int nDirection, int nMin, int n
 	else if (nNewValue < nMin)
 		nNewValue = nMin;
 	*nPercent = nNewValue;
+}
+
+extern "C" int __stdcall Hook_BudgetOrdinanceDialog_OnInitDialog() {
+	CBudgetOrdinanceDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	int ret = GameMain_BudgetOrdinanceDialog_OnInitDialog(pThis);
+	pStoredWnd = pThis;
+	nOwnDrwDlg = OWNDRW_DLG_ORDINANCES;
+	return ret;
 }
 
 extern "C" int __stdcall Hook_BudgetZoneTaxDialog_OnInitDialog() {
@@ -836,6 +893,10 @@ void InstallCityManagementHooks_SC2K1996(void) {
 	// Hook for CSimcityView::DoOrdinance
 	SafeVirtualProtect((LPVOID)0x4013C5, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4013C5, Hook_SimcityView_DoOrdinance);
+
+	// Hook for CBudgetOrdinanceDialog::OnInitDialog
+	SafeVirtualProtect((LPVOID)0x401447, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401447, Hook_BudgetOrdinanceDialog_OnInitDialog);
 
 	// Hook for CBudgetZoneTaxDialog::OnInitDialog
 	SafeVirtualProtect((LPVOID)0x40166D, 5, PAGE_EXECUTE_READWRITE);

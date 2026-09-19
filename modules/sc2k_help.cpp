@@ -437,6 +437,76 @@ static const char *GetHelpString_Budget(int nIndex) {
 	return pStr;
 }
 
+static const char *GetHelpString_Ordinances(int nIndex) {
+	const char *pStr = NULL;
+	switch (nIndex) {
+		case SC2K_DIALOG_ORDINANCES_CHECKBOX_FINAN_ONEPCTSALESTAX:
+			pStr = "A 1% Sales Tax will earn the city additional revenues each year, but may inhibit local commerce.";
+			break;
+		case SC2K_DIALOG_ORDINANCES_CHECKBOX_FINAN_ONEPCTINCOMETAX:
+			pStr = "The 1% Income Tax will bring additional funds to the city coffers, but may induce city residents to move away.";
+			break;
+		case SC2K_DIALOG_ORDINANCES_CHECKBOX_FINAN_LEGALIZEDGAMBLING:
+			pStr = "Legalized Gambling will increase your tourist trade and act as an incentive to commerce. It also earns the city money as permits are sold. Unfortunately, it tends to attract a criminal element.";
+			break;
+		case SC2K_DIALOG_ORDINANCES_CHECKBOX_FINAN_PARKINGFINES:
+			pStr = "Parking Fines will earn your city revenues and encourage city residents to use mass transit. It does, however, make people think twice before moving to your city.";
+			break;
+		case SC2K_DIALOG_ORDINANCES_CHECKBOX_HLSFT_VOLUNTEERFIREDEPT:
+			pStr = "A Volunteer Fire Dept. is much cheaper than a regular fire department. For a small monthly investment, Fire Protection is increased across the city.";
+			break;
+		case SC2K_DIALOG_ORDINANCES_CHECKBOX_HLSFT_PUBLICSMOKINGBAN:
+			pStr = "For a small monthly fee, you can enforce a Public Smoking Ban. This will marginally increase the Life Expectancy of your citizens due to reduced second-hand smoke inhalation.";
+			break;
+		case SC2K_DIALOG_ORDINANCES_CHECKBOX_HLSFT_FREECLINICS:
+			pStr = "Free Clinics cost a fair sum to maintain, but they significantly increase the Life Expectancy (LE) of your citizens by helping low-income families.";
+			break;
+		case SC2K_DIALOG_ORDINANCES_CHECKBOX_HLSFT_JUNIORSPORTS:
+			pStr = "Junior Sports programs cost a moderate sum of money, but promote healthy habits that can last throughout the young citizen's lives.";
+			break;
+		case SC2K_DIALOG_ORDINANCES_CHECKBOX_EDUCA_PROREADCAMPAIGN:
+			pStr = "A Pro Reading Campaign is an inexpensive advertising blitz that increases the Educational Quotient of your citizens.";
+			break;
+		case SC2K_DIALOG_ORDINANCES_CHECKBOX_EDUCA_ANTIDRUGCAMPAIGN:
+			pStr = "An Anti-Drug Campaign is an inexpensive advertising blitz that reduces crime.";
+			break;
+		case SC2K_DIALOG_ORDINANCES_CHECKBOX_EDUCA_CPRTRAINING:
+			pStr = "CPR Training programs are an inexpensive way to increase your citizens' Life Expectancy (LE).";
+			break;
+		case SC2K_DIALOG_ORDINANCES_CHECKBOX_EDUCA_NGHBRHOODWATCH:
+			pStr = "A Neighborhood Watch is an all-volunteer program. For a small investment, police protection across the city is increased.";
+			break;
+		case SC2K_DIALOG_ORDINANCES_CHECKBOX_PROMO_TOURISTADVERT:
+			pStr = "Tourist Advertising is an expensive, nationwide campaign to attract tourism. It will increase local commerce.";
+			break;
+		case SC2K_DIALOG_ORDINANCES_CHECKBOX_PROMO_BUSINESSADVERT:
+			pStr = "Business Advertising is an expensive, nationwide campaign to increase business contacts. This improves local industry.";
+			break;
+		case SC2K_DIALOG_ORDINANCES_CHECKBOX_PROMO_CITYBEAUTIFIC:
+			pStr = "The City Beautification program is fairly expensive, but it improves city-wide land values and attracts tourists.";
+			break;
+		case SC2K_DIALOG_ORDINANCES_CHECKBOX_PROMO_ANNUALCARNIVAL:
+			pStr = "The Annual Carnival is a moderately expensive way to increase your tourist trade and local commerce.";
+			break;
+		case SC2K_DIALOG_ORDINANCES_CHECKBOX_OTHER_ENERGYCONSERV:
+			pStr = "The Energy Conservation program is an advertising campaign that reduces energy use. It effectively increases the number of citizens your power plants can supply.";
+			break;
+		case SC2K_DIALOG_ORDINANCES_CHECKBOX_OTHER_NUCLEARFREEZONE:
+			pStr = "Declaring your city a Nuclear Free Zone costs nothing. It improves the desirability of your city to residents, but marginally decreases desirability for industry.\n\n"
+				"This will NOT stop the military from building missile silos or basing nuclear weapons near your city IF you give them permission to build a base.";
+			break;
+		case SC2K_DIALOG_ORDINANCES_CHECKBOX_OTHER_HOMELESSSHELTER:
+			pStr = "Homeless Shelters increase the number of laborers available to local industry and marginally improves downtown land values.";
+			break;
+		case SC2K_DIALOG_ORDINANCES_CHECKBOX_OTHER_POLLUTIONCTRLS:
+			pStr = "Pollution Controls will significantly reduce pollution emissions from local industry. Unfortunately, this will drive away some industries.";
+			break;
+		default:
+			break;
+	}
+	return pStr;
+}
+
 static const char *GetHelpString(int nType, int nIndex) {
 	const char *pStr = NULL;
 	switch (nType) {
@@ -448,6 +518,9 @@ static const char *GetHelpString(int nType, int nIndex) {
 			break;
 		case HELPTYPE_BUDGET:
 			pStr = GetHelpString_Budget(nIndex);
+			break;
+		case HELPTYPE_ORDINANCES:
+			pStr = GetHelpString_Ordinances(nIndex);
 			break;
 		default:
 			if (nIndex == 1)

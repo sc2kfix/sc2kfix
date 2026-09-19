@@ -3560,6 +3560,7 @@ GAMECALL_MAIN(0x40ECA0, CSimcityView *, __thiscall, SimcityView_Cons, CSimcityVi
 GAMECALL_MAIN(0x40EEC0, void, __thiscall, SimcityView_ResetScrollViewsAndDeleteGraphics, CSimcityView *)
 GAMECALL_MAIN(0x4167F0, int, __thiscall, BudgetMainDialog_OnInitDialog, CBudgetMainDialog *)
 GAMECALL_MAIN(0x417220, void, __thiscall, BudgetMainDialog_SetCursorAndClearGraphics, CBudgetMainDialog *)
+GAMECALL_MAIN(0x4192D0, int, __thiscall, BudgetOrdinanceDialog_OnInitDialog, CBudgetOrdinanceDialog *)
 GAMECALL_MAIN(0x419B60, int, __thiscall, BudgetZoneTaxDialog_OnInitDialog, CBudgetZoneTaxDialog *)
 GAMECALL_MAIN(0x41B620, int, __thiscall, BudgetEducationDialog_OnInitDialog, CBudgetEducationDialog *)
 GAMECALL_MAIN(0x41C2B0, int, __thiscall, BudgetTransitDialog_OnInitDialog, CBudgetTransitDialog *)
@@ -5081,6 +5082,7 @@ extern char *L_GetCurrencyString_SC2K1996(int nCost);
 extern void L_BridgeSelectDialog_OnDrawItem_SC2K1996(CBridgeSelectDialog *pThis, int nCtlID, LPDRAWITEMSTRUCT lpDIS);
 
 extern bool L_BudgetMainDialog_OnDrawItem_SC2K1996(CBudgetMainDialog *pThis, int nCtlID, LPDRAWITEMSTRUCT lpDIS);
+extern bool L_BudgetOrdinanceDialog_OnDrawItem_SC2K1996(CBudgetOrdinanceDialog *pThis, int nCtlID, LPDRAWITEMSTRUCT lpDIS);
 
 extern void BudgetMain_PreCheckHourGlassTimer(CBudgetMainDialog *bBudgetMainDialog);
 extern void BudgetMain_PostCheckHourGlassTimer(CBudgetMainDialog *bBudgetMainDialog);
