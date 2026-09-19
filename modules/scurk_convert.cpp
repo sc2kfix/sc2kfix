@@ -415,35 +415,6 @@ static void L_SCURK_DoSelectFixedObjects(winscurkMDIClient *pThis) {
 
 // Functions to do with conversion
 
-static void GetFileDirectory(char *pLoadPath) {
-	char *p;
-	int nLen;
-
-	nLen = strlen(pLoadPath);
-	for (p = &pLoadPath[nLen]; nLen > 0 && *p != '\\'; --p)
-		--nLen;
-	pLoadPath[nLen] = 0;
-}
-
-static BOOL L_SCURK_DirectConvert_WorkingSetCheck(winscurkMDIClient *pThis, int nLoad) {
-	if (nLoad != CONVSAVEAS_LOADWRK)
-		return TRUE;
-	int nRet = R_SCURK_WRP_gScurkMessage(29005, 29003, MB_YESNOCANCEL);
-	if (nRet) {
-		if (nRet != IDCANCEL) {
-			if (nRet == IDYES) {
-				R_SCURK_WRP_winscurkMDIClient_CmFileSaveWorking(pThis);
-				int *pSaveSucceeded = R_SCURK_WRP_GetgSaveSucceeded();
-				if (*pSaveSucceeded)
-					return TRUE;
-			}
-			else if (nRet == IDNO)
-				return TRUE;
-		}
-	}
-	return FALSE;
-}
-
 static void L_SCURK_GetIncludedFixedShape(tileConv_t *pObjSet, int nShapNum, int nDBID, recordedTiles_t *pFixedOut) {
 	for (unsigned i = 0; i < fixedTiles.size(); ++i) {
 		recordedTiles_t *pFixedEnt = &fixedTiles[i];
@@ -1125,7 +1096,7 @@ void L_SCURK_DirectConvert(winscurkMDIClient *pThis, int nLoad) {
 
 	pSCApp = R_SCURK_WRP_winscurkApp_GetPointerToClass();
 
-	if (!L_SCURK_DirectConvert_WorkingSetCheck(pThis, nLoad))
+	if (!L_SCURK_WorkingSetCheck(pThis, nLoad))
 		return;
 
 	pSaveSucceeded = R_SCURK_WRP_GetgSaveSucceeded();
@@ -1135,6 +1106,8 @@ void L_SCURK_DirectConvert(winscurkMDIClient *pThis, int nLoad) {
 	nFixCnt = 0;
 	mType = MB_OK;
 	pLoadOfn = R_SCURK_WRP_winscurkMDIClient_mGetOpenFileName(pThis);
+	// Make sure both of these flags are specified, otherwise the program will crash.
+	pLoadOfn->Flags |= OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
 	pLoadOfn->lpstrFilter = ConvertFileTypeFilterString("Macintosh MIF File (*.mif)|*.mif|DOS TIL File (*.til)|*.til|All Files (*.*)|*.*||");
 	pLoadOfn->lpstrInitialDir = R_SCURK_WRP_winscurkApp_mGetMiffPath(pSCApp);
 	if (GetOpenFileNameA(pLoadOfn)) {
@@ -1162,7 +1135,8 @@ void L_SCURK_DirectConvert(winscurkMDIClient *pThis, int nLoad) {
 			strcpy_s(szDefSaveExt, "mif");
 
 			pSaveOfn = R_SCURK_WRP_winscurkMDIClient_mGetOpenFileName(pThis);
-			pSaveOfn->Flags |= OFN_OVERWRITEPROMPT;
+			// Make sure both of these flags are specified - especially OFN_PATHMUSTEXIST - to avoid undefined behaviour (and a crash).
+			pSaveOfn->Flags |= OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
 			pSaveOfn->lpstrFilter = ConvertFileTypeFilterString("MIFF File (*.mif)|*.mif||");
 			pSaveOfn->lpstrDefExt = szDefSaveExt;
 			if (GetSaveFileNameA(pSaveOfn)) {
