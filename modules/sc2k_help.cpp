@@ -516,6 +516,13 @@ static const char *GetHelpString(int nType, int nIndex) {
 		case HELPTYPE_MAPTOOLBAR:
 			pStr = GetHelpString_MapToolBar(nIndex);
 			break;
+		case HELPTYPE_FLOATINGSTATUS:
+			if (nIndex == 1)
+				pStr = "This is the big red arrow. By clicking here, you can cycle through the disasters afflicting your city.";
+			else
+				pStr = "The Status Window shows the currently selected tool and its cost. It also has an iconic display for the weather. The second line of the window shows messages, warnings, and recommendations.\n\n"
+					"In the Emergency Mode, the weather icon changes into a big red arrow. By clicking here, you can cycle through the disasters afflicting your city.";
+			break;
 		case HELPTYPE_BUDGET:
 			pStr = GetHelpString_Budget(nIndex);
 			break;

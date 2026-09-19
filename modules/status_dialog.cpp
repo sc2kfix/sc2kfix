@@ -167,22 +167,30 @@ static void OnDrawGotoButton(LPDRAWITEMSTRUCT lpDIS) {
 }
 
 LRESULT CALLBACK NewGotoButtonWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
 	HWND hParentWindow;
 	HWND hGameStatusBar;
 
+	pSCApp = &pCSimcityAppThis;
 	switch (uMsg) {
 		case WM_LBUTTONUP:
 		case WM_MBUTTONUP:
 		case WM_RBUTTONUP:
 		case WM_KEYUP:
 			if (hWnd == hGotoButton) {
-				hParentWindow = GameGetRootWindowHandle();
+				hParentWindow = pSCApp->m_pMainWnd->m_hWnd;
 				if (hParentWindow) {
 					if (uMsg != WM_KEYUP) {
 						/// '111' - uID set in SC2K for the StatusControlBar.
 						hGameStatusBar = GetDlgItem(hParentWindow, 111);
-						if (hGameStatusBar)
-							SendMessage(GetDlgItem(hGameStatusBar, 120), BM_CLICK, 0, 0);
+						if (hGameStatusBar) {
+							if (wParam & MK_SHIFT) {
+								Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+								DisplayItemHelp(hParentWindow, HELPTYPE_FLOATINGSTATUS, 1, true);
+							}
+							else
+								SendMessage(GetDlgItem(hGameStatusBar, 120), BM_CLICK, 0, 0);
+						}
 					}
 					SetFocus(hParentWindow);
 				}
@@ -348,6 +356,11 @@ BOOL CALLBACK StatusDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 			return FALSE;
 
 		case WM_LBUTTONDOWN:
+			if (wParam & MK_SHIFT) {
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+				DisplayItemHelp(pSCApp->m_pMainWnd->m_hWnd, HELPTYPE_FLOATINGSTATUS, 0, true);
+				break;
+			}
 			pt.x = GET_X_LPARAM(lParam);
 			pt.y = GET_Y_LPARAM(lParam);
 
