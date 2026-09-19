@@ -438,6 +438,20 @@ public:
 	DWORD dwJDPrepare;
 };
 
+class CPopulationDialog : public CGameDialog {
+public:
+	DWORD dwPDone;
+	DWORD dwPDtwo;
+	tagRECT dwPDRECTOne;
+	tagRECT dwPDRECTTwo;
+	CMFC3XBitmap dwPDBitmapOne;
+	DWORD dwPDthirteen;
+	CMFC3XFont dwPDFontOne;
+	CMFC3XString *dwPDStringOne[3];
+	CMFC3XString *dwPDStringTwo[2];
+	int dwPDSelection;
+};
+
 class CSimcityWnd : public CMFC3XWnd {
 public:
 	CGraphics *m_pSCWGraphics;
@@ -447,7 +461,7 @@ public:
 class CMainFrame : public CMFC3XMDIFrameWnd {
 public:
 	DWORD *dwMFSimGraphDialog; // CSimGraphDialog
-	DWORD *dwMFPopulationDialog; // CPopulationDialog
+	CPopulationDialog *dwMFPopulationDialog; // CPopulationDialog
 	DWORD *dwMFCityMapDialog; // CCityMapDialog
 	DWORD *dwMFNeighbourDialog; // CNeighbourDialog
 	DWORD *dwMFCityIndustryDialog; // CCityIndustryDialog

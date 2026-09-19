@@ -507,6 +507,24 @@ static const char *GetHelpString_Ordinances(int nIndex) {
 	return pStr;
 }
 
+static const char *GetHelpString_Population(int nIndex) {
+	const char *pStr = NULL;
+	switch (nIndex) {
+		case SC2K_DIALOG_POPULATION_RADIO_POPULATION:
+			pStr = "This graph shows the percentage of citizens in each age group. The population graph bars between 20 and 55 are considered your potential working-class citizens.";
+			break;
+		case SC2K_DIALOG_POPULATION_RADIO_HEALTH:
+			pStr = "This graph shows the health of citizens in each age group. The average health of your working-class citizens is expressed as their Life Expectancy (LE).";
+			break;
+		case SC2K_DIALOG_POPULATION_RADIO_EDUCATION:
+			pStr = "This graph shows the education level or \"EQ\" of citizens in each age group. Higher EQ levels attract higher-tech industries to your city. Your citizens' EQ is affected by the presence of schools, colleges, libraries, and museums.";
+			break;
+		default:
+			break;
+	}
+	return pStr;
+}
+
 static const char *GetHelpString(int nType, int nIndex) {
 	const char *pStr = NULL;
 	switch (nType) {
@@ -528,6 +546,9 @@ static const char *GetHelpString(int nType, int nIndex) {
 			break;
 		case HELPTYPE_ORDINANCES:
 			pStr = GetHelpString_Ordinances(nIndex);
+			break;
+		case HELPTYPE_POPULATION:
+			pStr = GetHelpString_Population(nIndex);
 			break;
 		case HELPTYPE_NEIGHBOURS:
 			pStr = "The neighbor window displays your city's population along with the population of its neighboring cities and the total population of SimNation. Use this window to compare your city with the cities you compete with for people and other resources, and to see just how big a part of the whole nation you are (or aren't).";

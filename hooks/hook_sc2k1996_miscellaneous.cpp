@@ -151,7 +151,7 @@ extern "C" BOOL __stdcall Hook_GameDialog_OnSetCursor(CMFC3XWnd *pWnd, UINT nHit
 			(DWORD *)pThis == pMainFrm->dwMFCityMapDialog ||
 			(DWORD *)pThis == pMainFrm->dwMFCityIndustryDialog ||
 			(DWORD *)pThis == pMainFrm->dwMFNeighbourDialog ||
-			(DWORD *)pThis == pMainFrm->dwMFPopulationDialog ||
+			(CPopulationDialog *)pThis == pMainFrm->dwMFPopulationDialog ||
 			(DWORD *)pThis == pMainFrm->dwMFSimGraphDialog) {
 			Game_SimcityApp_SetGameCursor(pSCApp, GAMECURSOR_ARROW, TRUE);
 			pSCApp->dwSCACursorGameHit = CURSORHIT_GAMEDIALOG;
@@ -210,10 +210,6 @@ extern "C" void __stdcall Hook_GameDialog_OnLButtonDown(UINT nFlags, CMFC3XPoint
 		else if ((DWORD *)pThis == pMainFrm->dwMFNeighbourDialog) {
 			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
 			DisplayItemHelp(pMainFrm->m_hWnd, HELPTYPE_NEIGHBOURS, 0, true);
-			return;
-		}
-		else if ((DWORD *)pThis == pMainFrm->dwMFPopulationDialog) {
-			ConsoleLog(LOG_DEBUG, "Population Dialog.\n");
 			return;
 		}
 		else if ((DWORD *)pThis == pMainFrm->dwMFSimGraphDialog) {
@@ -1476,6 +1472,7 @@ extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lp
 	case SC2K_DIALOG_BUDGET:
 	case SC2K_DIALOG_ORDINANCES:
 	case SC2K_DIALOG_SELECTITEM:
+	case SC2K_DIALOG_POPULATION:
 	case SC2K_DIALOG_QUERYGENERAL:
 	case SC2K_DIALOG_QUERYSPECIFIC:
 		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
@@ -2951,9 +2948,24 @@ static bool DoFixBadTerrain_SC2K1996(HWND hWnd) {
 	return bRet;
 }
 
+// This function is to ensure that the radio controls retain their
+// correct state while using the shift-click 'Help' functionality.
+static void FixPopDialogRadioButtons(CPopulationDialog *pPopDlg) {
+	int nState[3];
+
+	memset(nState, BST_UNCHECKED, sizeof(nState));
+	if (pPopDlg->dwPDSelection >= 0 && pPopDlg->dwPDSelection <= 2) {
+		nState[pPopDlg->dwPDSelection] = BST_CHECKED;
+		Button_SetCheck(GetDlgItem(pPopDlg->m_hWnd, SC2K_DIALOG_POPULATION_RADIO_POPULATION), nState[0]);
+		Button_SetCheck(GetDlgItem(pPopDlg->m_hWnd, SC2K_DIALOG_POPULATION_RADIO_HEALTH), nState[1]);
+		Button_SetCheck(GetDlgItem(pPopDlg->m_hWnd, SC2K_DIALOG_POPULATION_RADIO_EDUCATION), nState[2]);
+	}
+}
+
 // Hook for a couple different CWnd::OnCmdMessage derivatives
 static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void *pHandler, void *dwRetAddr) {
 	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CMainFrame *pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
 	CSimcityView *pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 
 	// Normally internally there'd be the class hierarchy regarding inheritence
@@ -3144,6 +3156,14 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 							BudgetMain_PostCheckHourGlassTimer((CBudgetMainDialog *)pThis);
 							return TRUE;
 						}
+					}
+				}
+				else if ((CPopulationDialog *)pThis == pMainFrm->dwMFPopulationDialog) {
+					if (GetAsyncKeyState(VK_SHIFT) < 0) {
+						FixPopDialogRadioButtons((CPopulationDialog *)pThis);
+						Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+						DisplayItemHelp(pMainFrm->m_hWnd, HELPTYPE_POPULATION, nID, true);
+						return TRUE;
 					}
 				}
 				break;
