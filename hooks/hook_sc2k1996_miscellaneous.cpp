@@ -150,7 +150,7 @@ extern "C" BOOL __stdcall Hook_GameDialog_OnSetCursor(CMFC3XWnd *pWnd, UINT nHit
 			bBudgetOpen ||
 			(DWORD *)pThis == pMainFrm->dwMFCityMapDialog ||
 			(DWORD *)pThis == pMainFrm->dwMFCityIndustryDialog ||
-			(DWORD *)pThis == pMainFrm->dwMFNeighbourDialog ||
+			(CNeighbourDialog *)pThis == pMainFrm->dwMFNeighbourDialog ||
 			(CPopulationDialog *)pThis == pMainFrm->dwMFPopulationDialog ||
 			(DWORD *)pThis == pMainFrm->dwMFSimGraphDialog) {
 			Game_SimcityApp_SetGameCursor(pSCApp, GAMECURSOR_ARROW, TRUE);
@@ -207,7 +207,7 @@ extern "C" void __stdcall Hook_GameDialog_OnLButtonDown(UINT nFlags, CMFC3XPoint
 			ConsoleLog(LOG_DEBUG, "Map Dialog.\n");
 			return;
 		}
-		else if ((DWORD *)pThis == pMainFrm->dwMFNeighbourDialog) {
+		else if ((CNeighbourDialog *)pThis == pMainFrm->dwMFNeighbourDialog) {
 			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
 			DisplayItemHelp(pMainFrm->m_hWnd, HELPTYPE_NEIGHBOURS, 0, true);
 			return;
@@ -1459,6 +1459,18 @@ static BOOL CALLBACK Hook_OwnerInfoDialogProc(HWND hwndDlg, UINT message, WPARAM
 	return FALSE;
 }
 
+// Hook required due to the modeless dialog cases being handled in a different manner.
+extern "C" HWND __stdcall Hook_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam) {
+	switch ((DWORD)lpTemplateName) {
+	case 106:
+		return CreateDialogParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_OwnerInfoDialogProc, dwInitParam);
+	case SC2K_DIALOG_POPULATION:
+		return CreateDialogParamA(hSC2KFixModule, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
+	default:
+		return CreateDialogParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
+	}
+}
+
 #pragma warning(disable : 6387)
 // Load our own versions of dialog procedures for overridden dialogs as required
 extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam) {
@@ -1472,21 +1484,11 @@ extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lp
 	case SC2K_DIALOG_BUDGET:
 	case SC2K_DIALOG_ORDINANCES:
 	case SC2K_DIALOG_SELECTITEM:
-	case SC2K_DIALOG_POPULATION:
 	case SC2K_DIALOG_QUERYGENERAL:
 	case SC2K_DIALOG_QUERYSPECIFIC:
 		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	default:
 		return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
-	}
-}
-
-extern "C" HWND __stdcall Hook_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam) {
-	switch ((DWORD)lpTemplateName) {
-	case 106:
-		return CreateDialogParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_OwnerInfoDialogProc, dwInitParam);
-	default:
-		return CreateDialogParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	}
 }
 #pragma warning(default : 6387)
@@ -2948,20 +2950,6 @@ static bool DoFixBadTerrain_SC2K1996(HWND hWnd) {
 	return bRet;
 }
 
-// This function is to ensure that the radio controls retain their
-// correct state while using the shift-click 'Help' functionality.
-static void FixPopDialogRadioButtons(CPopulationDialog *pPopDlg) {
-	int nState[3];
-
-	memset(nState, BST_UNCHECKED, sizeof(nState));
-	if (pPopDlg->dwPDSelection >= 0 && pPopDlg->dwPDSelection <= 2) {
-		nState[pPopDlg->dwPDSelection] = BST_CHECKED;
-		Button_SetCheck(GetDlgItem(pPopDlg->m_hWnd, SC2K_DIALOG_POPULATION_RADIO_POPULATION), nState[0]);
-		Button_SetCheck(GetDlgItem(pPopDlg->m_hWnd, SC2K_DIALOG_POPULATION_RADIO_HEALTH), nState[1]);
-		Button_SetCheck(GetDlgItem(pPopDlg->m_hWnd, SC2K_DIALOG_POPULATION_RADIO_EDUCATION), nState[2]);
-	}
-}
-
 // Hook for a couple different CWnd::OnCmdMessage derivatives
 static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void *pHandler, void *dwRetAddr) {
 	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
@@ -3160,9 +3148,16 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 				}
 				else if ((CPopulationDialog *)pThis == pMainFrm->dwMFPopulationDialog) {
 					if (GetAsyncKeyState(VK_SHIFT) < 0) {
-						FixPopDialogRadioButtons((CPopulationDialog *)pThis);
 						Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
 						DisplayItemHelp(pMainFrm->m_hWnd, HELPTYPE_POPULATION, nID, true);
+						return TRUE;
+					}
+					// The selection buttons in this dialog are now routed through
+					// a local function - the game-side calls are no longer in play.
+					if (DoPopDialogButton((CPopulationDialog *)pThis, nID)) {
+						FixPopDialogButtons((CPopulationDialog *)pThis);
+						InvalidateRect(pThis->m_hWnd, NULL, TRUE);
+						UpdateWindow(pThis->m_hWnd);
 						return TRUE;
 					}
 				}

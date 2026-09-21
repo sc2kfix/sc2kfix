@@ -1,5 +1,5 @@
-// sc2kfix hooks/hook_citymanagement.cpp: hooks to do with city management: budget
-// and ordinances.
+// sc2kfix hooks/hook_citymanagement.cpp: hooks to do with city management: budget,
+// ordinances and population.
 // (c) 2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
@@ -857,6 +857,77 @@ extern "C" void __stdcall Hook_BudgetTransitDialog_OnVScroll(UINT nSBCode, UINT 
 	GameMain_Wnd_OnVScroll(pThis, nSBCode, nPos, pScrollBar);
 }
 
+bool DoPopDialogButton(CPopulationDialog *pPopDlg, int nDlgID) {
+	int nSelected;
+	CMFC3XString *pStr;
+
+	switch (nDlgID) {
+	case SC2K_DIALOG_POPULATION_RADIO_POPULATION:
+		nSelected = POPDLG_POPULATION;
+		break;
+	case SC2K_DIALOG_POPULATION_RADIO_HEALTH:
+		nSelected = POPDLG_HEALTH;
+		break;
+	case SC2K_DIALOG_POPULATION_RADIO_EDUCATION:
+		nSelected = POPDLG_EDUCATION;
+		break;
+	default:
+		return false;
+	}
+
+	pStr = pPopDlg->dwPDStringOne[nSelected];
+	pPopDlg->dwPDSelection = nSelected;
+	SetWindowTextA(pPopDlg->m_hWnd, pStr->m_pchData);
+	return true;
+}
+
+// This function is to ensure that the radio controls retain their
+// correct state while using the shift-click 'Help' functionality.
+void FixPopDialogButtons(CPopulationDialog *pPopDlg) {
+	int nState[POPDLG_COUNT];
+
+	memset(nState, BST_UNCHECKED, sizeof(nState));
+	if (pPopDlg->dwPDSelection >= POPDLG_POPULATION && pPopDlg->dwPDSelection <= POPDLG_EDUCATION) {
+		nState[pPopDlg->dwPDSelection] = BST_CHECKED;
+		Button_SetCheck(GetDlgItem(pPopDlg->m_hWnd, SC2K_DIALOG_POPULATION_RADIO_POPULATION), nState[POPDLG_POPULATION]);
+		Button_SetCheck(GetDlgItem(pPopDlg->m_hWnd, SC2K_DIALOG_POPULATION_RADIO_HEALTH), nState[POPDLG_HEALTH]);
+		Button_SetCheck(GetDlgItem(pPopDlg->m_hWnd, SC2K_DIALOG_POPULATION_RADIO_EDUCATION), nState[POPDLG_EDUCATION]);
+	}
+}
+
+extern "C" void __stdcall Hook_PopulationDialog_DoDataExchange(CMFC3XDataExchange *pDatEx) {
+	CPopulationDialog *pThis;
+
+	__asm mov [pThis], ecx
+	
+	// Nothing happens here at this point.
+	// Originally there was a DDX_Radio call that iterated through the 'then' radio controls
+	// starting from SC2K_DIALOG_POPULATION_RADIO_POPULATION and setting dwPDSelection based
+	// on which control was highlighted; this no longer occurs due to those radio controls
+	// now being checkboxes.
+}
+
+extern "C" BOOL __stdcall Hook_PopulationDialog_ToggleDialog() {
+	CPopulationDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	if (pThis->dwPDDialogActive) {
+		ShowWindow(pThis->m_hWnd, SW_HIDE);
+		if (dwRefreshControls)
+			Game_PopulationDialog_DeleteFont(pThis);
+		pThis->dwPDDialogActive = 0;
+	}
+	else {
+		if (dwRefreshControls)
+			Game_PopulationDialog_UpdateControls(pThis);
+		FixPopDialogButtons(pThis);
+		ShowWindow(pThis->m_hWnd, SW_SHOWNORMAL);
+		pThis->dwPDDialogActive = 1;
+	}
+	return pThis->dwPDDialogActive;
+}
+
 void InstallCityManagementHooks_SC2K1996(void) {
 	// Hook for SimulationPrepareBudgetDialog
 	SafeVirtualProtect((LPVOID)0x4015E6, 5, PAGE_EXECUTE_READWRITE);
@@ -921,4 +992,12 @@ void InstallCityManagementHooks_SC2K1996(void) {
 	// Hook for CBudgetTransitDialog::OnVScroll
 	SafeVirtualProtect((LPVOID)0x4011C2, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4011C2, Hook_BudgetTransitDialog_OnVScroll);
+
+	// Hook for CPopulationDialog::DoDataExchange
+	SafeVirtualProtect((LPVOID)0x402DE2, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402DE2, Hook_PopulationDialog_DoDataExchange);
+
+	// Hook for CPopulationDialog::ToggleDialog
+	SafeVirtualProtect((LPVOID)0x401EB5, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401EB5, Hook_PopulationDialog_ToggleDialog);
 }

@@ -438,12 +438,22 @@ public:
 	DWORD dwJDPrepare;
 };
 
+class CNeighbourDialog : public CGameDialog {
+public:
+	DWORD dwNDDialogActive;
+	CGraphics *dwNDGraphicsTwo;
+	CGraphics *dwNDGraphicsOne;
+	CMFC3XFont dwNDFontOne;
+	DWORD dwNDPixHeight;
+	CMFC3XString *dwNDStringOne;
+};
+
 class CPopulationDialog : public CGameDialog {
 public:
-	DWORD dwPDone;
-	DWORD dwPDtwo;
-	tagRECT dwPDRECTOne;
-	tagRECT dwPDRECTTwo;
+	DWORD dwPDDialogActive;
+	DWORD dwPDPainting;
+	RECT dwPDRECTOne;
+	RECT dwPDRECTTwo;
 	CMFC3XBitmap dwPDBitmapOne;
 	DWORD dwPDthirteen;
 	CMFC3XFont dwPDFontOne;
@@ -463,7 +473,7 @@ public:
 	DWORD *dwMFSimGraphDialog; // CSimGraphDialog
 	CPopulationDialog *dwMFPopulationDialog; // CPopulationDialog
 	DWORD *dwMFCityMapDialog; // CCityMapDialog
-	DWORD *dwMFNeighbourDialog; // CNeighbourDialog
+	CNeighbourDialog *dwMFNeighbourDialog; // CNeighbourDialog
 	DWORD *dwMFCityIndustryDialog; // CCityIndustryDialog
 	CMFC3XPalette *dwMFEight;
 	CGraphics *dwMFCGraphicsOne;

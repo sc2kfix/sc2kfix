@@ -2910,6 +2910,14 @@ enum {
 };
 
 enum {
+	POPDLG_POPULATION,
+	POPDLG_HEALTH,
+	POPDLG_EDUCATION,
+
+	POPDLG_COUNT
+};
+
+enum {
 	EDIT_DATA_NONE,
 	EDIT_DATA_TRAFFIC,
 	EDIT_DATA_POPDENSITY,
@@ -3361,6 +3369,7 @@ GAMECALL(0x401EA1, int, __cdecl, MapToolLowerTerrain, __int16 iTileTargetX, __in
 GAMECALL(0x401EC4, void, __cdecl, DrawAllSmallBelowTile, __int16, __int16)
 GAMECALL(0x401ECE, int, __thiscall, Graphics_Load, CGraphics *, const char *, int)
 GAMECALL(0x401ED8, void, __cdecl, DirtyCloud, __int16, __int16, __int16)
+GAMECALL(0x401EE7, void, __thiscall, PopulationDialog_UpdateControls, CPopulationDialog *)
 GAMECALL(0x401F05, void, __stdcall, StartCleanGame)
 GAMECALL(0x401F0F, void, __thiscall, ScenarioDialog_Dest, CScenarioDialog *)
 GAMECALL(0x401F23, CNewspaperDialog *, __thiscall, NewspaperDialog_Construct, CNewspaperDialog *, CMainFrame *)
@@ -3484,6 +3493,7 @@ GAMECALL(0x402A59, void, __cdecl, CityToolSetSign, __int16, __int16)
 GAMECALL(0x402A5E, void, __thiscall, MapToolBar_SetSelection, CMapToolBar *, UINT, UINT, CMFC3XPoint *)
 GAMECALL(0x402A63, void, __cdecl, DrawAllLargeBelowTile, __int16, __int16)
 GAMECALL(0x402A68, void, __thiscall, CityToolBar_UpdateControls, CCityToolBar *, BOOL)
+GAMECALL(0x402A86, void, __thiscall, PopulationDialog_DeleteFont, CPopulationDialog *)
 GAMECALL(0x402A8B, void, __thiscall, SimcityDoc_NewGame, CSimcityDoc *)
 GAMECALL(0x402AB3, void, __thiscall, SimcityView_DoCenterOnPoint, CSimcityView *)
 GAMECALL(0x402ADB, void, __thiscall, MovieDialog_Dest, CMovieDialog *)
@@ -3974,6 +3984,7 @@ GAMEOFF(WORD,	wDisasterWindy,				0x4E86B0)
 GAMEOFF(BOOL,	bCSimcityDocSC2InUse,		0x4E9744)
 GAMEOFF(BOOL,	bCSimcityDocSCNInUse,		0x4E9748)
 GAMEOFF(DWORD,	dwUnknownInitVarOne,		0x4E974C)
+GAMEOFF(DWORD,	dwRefreshControls,			0x4E97C8)
 GAMEOFF_ARR(DWORD, dwCityNoticeStringIDs,	0x4E98B8)
 GAMEOFF(COLORREF,	crSignShine,			0x4E9924)
 GAMEOFF(COLORREF,	crSignBase,				0x4E9930)
@@ -5086,6 +5097,9 @@ extern bool L_BudgetOrdinanceDialog_OnDrawItem_SC2K1996(CBudgetOrdinanceDialog *
 
 extern void BudgetMain_PreCheckHourGlassTimer(CBudgetMainDialog *bBudgetMainDialog);
 extern void BudgetMain_PostCheckHourGlassTimer(CBudgetMainDialog *bBudgetMainDialog);
+
+extern bool DoPopDialogButton(CPopulationDialog *pPopDlg, int nDlgID);
+extern void FixPopDialogButtons(CPopulationDialog *pPopDlg);
 
 extern void Clear_SpriteCache();
 extern void Init_SpriteCache(bool bReload);
