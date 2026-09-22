@@ -21,6 +21,10 @@
 #define SC2K_DIALOG_QUERYGENERAL  142
 #define SC2K_DIALOG_QUERYSPECIFIC 154
 #define SC2K_DIALOG_CITYMAP       246
+#define SC2K_DIALOG_STATUSBAR     255
+
+// Internal define for the Status Control Bar
+#define SC2K_STATUSBAR            111
 
 // New City Dialog
 #define SC2K_DIALOG_NEWCITY_BTN_REGENERATE    20   // Not native
@@ -197,6 +201,9 @@
 #define SC2K_DIALOG_CITYMAP_TABCTRL_TABS             448
 #define SC2K_DIALOG_CITYMAP_LISTBOX_SELECTION        449
 #define SC2K_DIALOG_CITYMAP_BTN_SHOWCITYINWINDOW     457
+
+// Statusbar Dialog
+#define SC2K_DIALOG_STATUSBAR_BTN_GOTO               120
 
 // Menu IDs
 #define SC2K_MENU_MAIN            2

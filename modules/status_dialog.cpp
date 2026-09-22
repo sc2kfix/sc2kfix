@@ -181,15 +181,14 @@ LRESULT CALLBACK NewGotoButtonWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				hParentWindow = pSCApp->m_pMainWnd->m_hWnd;
 				if (hParentWindow) {
 					if (uMsg != WM_KEYUP) {
-						/// '111' - uID set in SC2K for the StatusControlBar.
-						hGameStatusBar = GetDlgItem(hParentWindow, 111);
+						hGameStatusBar = GetDlgItem(hParentWindow, SC2K_STATUSBAR);
 						if (hGameStatusBar) {
 							if (wParam & MK_SHIFT) {
 								Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
 								DisplayItemHelp(hParentWindow, HELPTYPE_FLOATINGSTATUS, 1, true);
 							}
 							else
-								SendMessage(GetDlgItem(hGameStatusBar, 120), BM_CLICK, 0, 0);
+								SendMessage(GetDlgItem(hGameStatusBar, SC2K_DIALOG_STATUSBAR_BTN_GOTO), BM_CLICK, 0, 0);
 						}
 					}
 					SetFocus(hParentWindow);
@@ -468,7 +467,7 @@ extern "C" BOOL __stdcall Hook_StatusControlBar_CreateStatusBar_SC2K1996() {
 	// It's necessary to call CDialogBar::Create directly rather than
 	// the CStatusControlBar::CreateStatusBar call in order to avoid a crash.
 	pSCApp = &pCSimcityAppThis;
-	ret = GameMain_DialogBar_Create(pThis, pSCApp->m_pMainWnd, (LPCSTR)255, (0x8000 | 0x0200), 111);
+	ret = GameMain_DialogBar_Create(pThis, pSCApp->m_pMainWnd, MAKEINTRESOURCEA(SC2K_DIALOG_STATUSBAR), (CBRS_ALIGN_BOTTOM | CBRS_BORDER_TOP), SC2K_STATUSBAR);
 	if (ret) {
 		ptFloat.x = 360;
 		ptFloat.y = 160;

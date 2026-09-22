@@ -17,6 +17,30 @@
 #define TBBS_DISABLED       0x0400  // element is disabled
 #define TBBS_PRESSED        0x0800  // button is being depressed - mouse down
 
+// styles for the ControlBars
+// ControlBar styles
+#define CBRS_ALIGN_LEFT     0x1000
+#define CBRS_ALIGN_TOP      0x2000
+#define CBRS_ALIGN_RIGHT    0x4000
+#define CBRS_ALIGN_BOTTOM   0x8000
+#define CBRS_ALIGN_ANY      0xF000
+
+#define CBRS_BORDER_LEFT    0x0100
+#define CBRS_BORDER_TOP     0x0200
+#define CBRS_BORDER_RIGHT   0x0400
+#define CBRS_BORDER_BOTTOM  0x0800
+#define CBRS_BORDER_ANY     0x0F00
+
+#define CBRS_TOOLTIPS       0x0010
+#define CBRS_FLYBY          0x0020
+#define CBRS_FLOAT_MULTI    0x0040
+#define CBRS_BORDER_3D      0x0080
+#define CBRS_HIDE_INPLACE   0x0008
+
+#define CBRS_ORIENT_HORZ    (CBRS_ALIGN_TOP|CBRS_ALIGN_BOTTOM)
+#define CBRS_ORIENT_VERT    (CBRS_ALIGN_LEFT|CBRS_ALIGN_RIGHT)
+#define CBRS_ORIENT_ANY     (CBRS_ORIENT_HORZ|CBRS_ORIENT_VERT)
+
 // Hierarchy for reference:
 //
 // NOTE: Any classes that don't contain the 'MFC3X' term

@@ -2701,7 +2701,7 @@ extern "C" void __stdcall Hook_MainFrame_UpdateSections() {
 	unsigned nRewardBit;
 	CMFC3XString *citySubToolStrings;
 
-	HWND hDlgItem = GetDlgItem(pThis->dwMFStatusControlBar.m_hWnd, 120); // Status - GoTo button.
+	HWND hDlgItem = GetDlgItem(pThis->dwMFStatusControlBar.m_hWnd, SC2K_DIALOG_STATUSBAR_BTN_GOTO); // Status - GoTo button.
 	CMapToolBar* pMapToolBar = &pThis->dwMFMapToolBar;
 	if (!wCityMode)
 		Game_MapToolBar_ResetControls(pMapToolBar);
