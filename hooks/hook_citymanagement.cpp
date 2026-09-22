@@ -1,5 +1,5 @@
 // sc2kfix hooks/hook_citymanagement.cpp: hooks to do with city management: budget,
-// ordinances and population.
+// ordinances, graphs and population.
 // (c) 2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
@@ -928,6 +928,29 @@ extern "C" BOOL __stdcall Hook_PopulationDialog_ToggleDialog() {
 	return pThis->dwPDDialogActive;
 }
 
+extern "C" void __stdcall Hook_CityMapDialog_OnLButtonDown(UINT nFlags, CMFC3XPoint pt) {
+	CCityMapDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CMainFrame *pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
+	CSimcityView *pSCView;
+
+	if (PtInRect(&pThis->dwCMDRECTOne, pt)) {
+		if (GetAsyncKeyState(VK_SHIFT) < 0) {
+			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+			DisplayItemHelp(pMainFrm->m_hWnd, HELPTYPE_CITYMAP, SC2K_DIALOG_CITYMAP_STATIC_MAPAREA, true);
+			return;
+		}
+		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+		Game_CityMapDialog_CenterOnPoint(pThis, pt.x, pt.y);
+		Game_SimcityView_DrawHouse(pSCView);
+		UpdateWindow(pSCView->m_hWnd);
+	}
+	Game_GameDialog_OnLButtonDown(pThis, nFlags, pt);
+}
+
 void InstallCityManagementHooks_SC2K1996(void) {
 	// Hook for SimulationPrepareBudgetDialog
 	SafeVirtualProtect((LPVOID)0x4015E6, 5, PAGE_EXECUTE_READWRITE);
@@ -1000,4 +1023,8 @@ void InstallCityManagementHooks_SC2K1996(void) {
 	// Hook for CPopulationDialog::ToggleDialog
 	SafeVirtualProtect((LPVOID)0x401EB5, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401EB5, Hook_PopulationDialog_ToggleDialog);
+
+	// Hook for CCityMapDialog::OnLButtonDown
+	SafeVirtualProtect((LPVOID)0x402FD6, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402FD6, Hook_CityMapDialog_OnLButtonDown);
 }

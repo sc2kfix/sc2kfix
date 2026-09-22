@@ -49,6 +49,8 @@
 //			class CMFC3XBitmap;
 //			class CMFC3XPalette;
 //			class CMFC3XRgn;
+//
+//		class CImageList;
 //		
 //		class CMFC3XDC;
 //			class CMFC3XClientDC;
@@ -101,6 +103,7 @@
 //						class CSimcityEditOne;
 //						class CSimcityEditTwo;
 //				class CMFC3XScrollBar;
+//				class CMFC3XTabCtrl;
 //
 //				class CMFC3XButton
 //					class CMFC3XBitmapButton;
@@ -205,6 +208,11 @@ public:
 typedef struct {
 	MFC3X_AFX_EXCEPTION_LINK *m_pLinkTop;
 } MFC3X_AFX_EXCEPTION_CONTEXT;
+
+typedef struct {
+	LRESULT* pResult;
+	NMHDR* pNMHDR;
+} MFC3X_AFX_NOTIFY;
 
 #pragma pack(push, 1)
 struct CMFC3XPlex {
@@ -367,6 +375,11 @@ class CMFC3XPalette : public CMFC3XGdiObject {
 
 class CMFC3XPen : public CMFC3XGdiObject {
 
+};
+
+class CMFC3XImageList : public CMFC3XObject {
+public:
+	HIMAGELIST m_hImageList;
 };
 
 class CMFC3XDC : public CMFC3XObject {
@@ -624,6 +637,10 @@ class CMFC3XComboBox : public CMFC3XWnd {
 };
 
 class CMFC3XScrollBar : public CMFC3XWnd {
+
+};
+
+class CMFC3XTabCtrl : public CMFC3XWnd {
 
 };
 

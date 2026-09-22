@@ -10,6 +10,7 @@
 #define HOOKEXT_CPP	__declspec(dllimport)
 #define HOOKCB		extern "C" __declspec(dllexport)
 
+#include <commctrl.h>
 #include "../include/json.hpp"
 #include "../include/commandtree.hpp"
 #include "../include/frameworks/mfc3xhelp.h"

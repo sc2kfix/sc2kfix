@@ -462,6 +462,23 @@ public:
 	int dwPDSelection;
 };
 
+class CCityMapDialog : public CGameDialog {
+public:
+	CMFC3XButton dwCMDButton;
+	CMFC3XListBox dwCMDListBox;
+	CMFC3XTabCtrl dwCMDTabCtrl;
+	DWORD dwCMDDialogActive;
+	CMFC3XImageList dwCMDCImageListOne;
+	RECT dwCMDRECTOne;
+	TCITEMA dwCMDTabs[9];
+	CMFC3XString *dwCMDCStrings[36];
+	DWORD dwCMDTabSelected;
+	DWORD dwCMDListBoxSelection;
+	DWORD dwCMDInitialized;
+	CGraphics *dwCMDCGraphicsTwo;
+	RECT dwCMDRECTTwo;
+};
+
 class CSimcityWnd : public CMFC3XWnd {
 public:
 	CGraphics *m_pSCWGraphics;
@@ -472,7 +489,7 @@ class CMainFrame : public CMFC3XMDIFrameWnd {
 public:
 	DWORD *dwMFSimGraphDialog; // CSimGraphDialog
 	CPopulationDialog *dwMFPopulationDialog; // CPopulationDialog
-	DWORD *dwMFCityMapDialog; // CCityMapDialog
+	CCityMapDialog *dwMFCityMapDialog; // CCityMapDialog
 	CNeighbourDialog *dwMFNeighbourDialog; // CNeighbourDialog
 	DWORD *dwMFCityIndustryDialog; // CCityIndustryDialog
 	CMFC3XPalette *dwMFEight;

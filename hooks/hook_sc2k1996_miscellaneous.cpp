@@ -148,7 +148,7 @@ extern "C" BOOL __stdcall Hook_GameDialog_OnSetCursor(CMFC3XWnd *pWnd, UINT nHit
 	if (pThis == pWnd) {
 		if (bOrdinanceOpen ||
 			bBudgetOpen ||
-			(DWORD *)pThis == pMainFrm->dwMFCityMapDialog ||
+			(CCityMapDialog *)pThis == pMainFrm->dwMFCityMapDialog ||
 			(DWORD *)pThis == pMainFrm->dwMFCityIndustryDialog ||
 			(CNeighbourDialog *)pThis == pMainFrm->dwMFNeighbourDialog ||
 			(CPopulationDialog *)pThis == pMainFrm->dwMFPopulationDialog ||
@@ -201,10 +201,6 @@ extern "C" void __stdcall Hook_GameDialog_OnLButtonDown(UINT nFlags, CMFC3XPoint
 				DisplayItemHelp(pThis->m_hWnd, HELPTYPE_BUDGET, nID, false);
 				BudgetMain_PostCheckHourGlassTimer((CBudgetMainDialog *)pThis);
 			}
-			return;
-		}
-		else if ((DWORD *)pThis == pMainFrm->dwMFCityMapDialog) {
-			ConsoleLog(LOG_DEBUG, "Map Dialog.\n");
 			return;
 		}
 		else if ((CNeighbourDialog *)pThis == pMainFrm->dwMFNeighbourDialog) {
@@ -1465,6 +1461,7 @@ extern "C" HWND __stdcall Hook_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lp
 	case 106:
 		return CreateDialogParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_OwnerInfoDialogProc, dwInitParam);
 	case SC2K_DIALOG_POPULATION:
+	case SC2K_DIALOG_CITYMAP:
 		return CreateDialogParamA(hSC2KFixModule, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	default:
 		return CreateDialogParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
@@ -2961,6 +2958,8 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 	//
 	// 0x4B9080 - with CFrameWnd - use CFrameWnd::OnCmdMsg
 	//
+	// 0x4A4BF6 - CWnd::WindowProc -> CWnd::OnNotify
+	//
 	// All other flagged address references have thus far gracefully
 	// gone to CCmdTarget::OnCmdMsg (which is the non-overridden virtual call).
 	//
@@ -3161,10 +3160,53 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 						return TRUE;
 					}
 				}
+				else if ((CCityMapDialog *)pThis == pMainFrm->dwMFCityMapDialog) {
+					if (nID == SC2K_DIALOG_CITYMAP_BTN_SHOWCITYINWINDOW) {
+						if (GetAsyncKeyState(VK_SHIFT) < 0) {
+							Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+							DisplayItemHelp(pMainFrm->m_hWnd, HELPTYPE_CITYMAP, nID, true);
+							return TRUE;
+						}
+					}
+				}
 				break;
 			}
-			ConsoleLog(LOG_DEBUG, "::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, pExtra, pHandler, dwRetAddr);
+			//ConsoleLog(LOG_DEBUG, "CMD: ::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, pExtra, pHandler, dwRetAddr);
 		}
+	}
+	else if ((DWORD)dwRetAddr == 0x4A4BF6) {
+		MFC3X_AFX_NOTIFY *pNotify = (MFC3X_AFX_NOTIFY *)pExtra;
+		
+		if (pMainFrm && (CCityMapDialog *)pThis == pMainFrm->dwMFCityMapDialog) {
+			if (nID == SC2K_DIALOG_CITYMAP_TABCTRL_TABS) {
+				POINT pt;
+				TCHITTESTINFO hitTest;
+
+				GetCursorPos(&pt);
+				ScreenToClient(pNotify->pNMHDR->hwndFrom, &pt);
+
+				hitTest.flags = TCHT_ONITEM;
+				hitTest.pt = pt;
+
+				int nTab = TabCtrl_HitTest(pNotify->pNMHDR->hwndFrom, &hitTest);
+				// The int16_t cast is required in this case due to the legacy constraints of the day.
+				switch ((int16_t)LOWORD(nCode)) {
+				case NM_CLICK:
+				case TCN_SELCHANGING:
+					if (GetAsyncKeyState(VK_SHIFT) < 0) {
+						Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+						DisplayItemHelp(pMainFrm->m_hWnd, HELPTYPE_CITYMAP, nTab, true);
+						*pNotify->pResult = TRUE;
+						return TRUE; // Return TRUE in order to cancel tab switching (for click - no effect).
+					}
+					break;
+				default:
+					break;
+				}
+			}
+		}
+		// uint16_t the debug notice since that's how it's set down in the AFX_MESSAGE_MAP
+		//ConsoleLog(LOG_DEBUG, "NOTIFY: ::OnCmdMsg(0x%06X, %u, %d (%u), 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, (uint16_t)LOWORD(nCode), pExtra, pHandler, dwRetAddr);
 	}
 	else {
 		// Leaving this particular debug notice enabled without any flags.
@@ -3207,6 +3249,27 @@ extern "C" BOOL __stdcall Hook_Wnd_OnCommand(WPARAM wParam, LPARAM lParam) {
 	}
 
 	return L_OnCmdMsg(pThis, nID, nCode, 0, 0, _ReturnAddress());
+}
+
+extern "C" BOOL __stdcall Hook_Wnd_OnNotify(WPARAM wParam, LPARAM lParam, LRESULT *pResult) {
+	CMFC3XWnd *pThis;
+
+	__asm mov [pThis], ecx
+
+	NMHDR* pNMHDR = (NMHDR*)lParam;
+	HWND hWndCtrl = pNMHDR->hwndFrom;
+	UINT nID = GetDlgCtrlID(pNMHDR->hwndFrom);
+
+	int nCode = pNMHDR->code;
+	if (GameMain_AfxGetThreadState()->m_hLockoutNotifyWindow == pThis->m_hWnd)
+		return TRUE;
+	CMFC3XWnd* pChild = GameMain_Wnd_FromHandlePermanent(hWndCtrl);
+	if (pChild != NULL && GameMain_Wnd_SendChildNotifyLastMsg(pChild, pResult))
+		return TRUE;
+	MFC3X_AFX_NOTIFY notify;
+	notify.pResult = pResult;
+	notify.pNMHDR = pNMHDR;
+	return L_OnCmdMsg(pThis, nID, MAKELONG(nCode, WM_NOTIFY), &notify, NULL, _ReturnAddress());
 }
 
 int nOwnDrwDlg = OWNDRW_DLG_NONE;
@@ -3517,6 +3580,10 @@ void InstallMiscHooks_SC2K1996(void) {
 	// Hook CWnd::OnCommand
 	SafeVirtualProtect((LPVOID)0x4A5352, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4A5352, Hook_Wnd_OnCommand);
+
+	// Hook CWnd::OnNotify
+	SafeVirtualProtect((LPVOID)0x4A541A, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4A541A, Hook_Wnd_OnNotify);
 
 	// Hook into CWnd::OnDrawItem
 	SafeVirtualProtect((LPVOID)0x4A468C, 5, PAGE_EXECUTE_READWRITE);

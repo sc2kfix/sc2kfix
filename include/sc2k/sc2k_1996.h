@@ -2918,6 +2918,20 @@ enum {
 };
 
 enum {
+	CITYMAPDLG_STRUCTURESZONES,
+	CITYMAPDLG_ROADRAILTRAFFIC,
+	CITYMAPDLG_POWERGRID,
+	CITYMAPDLG_WATERSUPPLY,
+	CITYMAPDLG_POPDENSITYROG,
+	CITYMAPDLG_POLICECRIME,
+	CITYMAPDLG_POLLUTION,
+	CITYMAPDLG_LANDVALUE,
+	CITYMAPDLG_FIREEDUCATION,
+
+	CITYMAPDLG_COUNT
+};
+
+enum {
 	EDIT_DATA_NONE,
 	EDIT_DATA_TRAFFIC,
 	EDIT_DATA_POPDENSITY,
@@ -3377,6 +3391,7 @@ GAMECALL(0x401F50, int, __cdecl, RecalculateCityValue, void)
 GAMECALL(0x401F82, void, __thiscall, SimcityView_DrawTornado, CSimcityView *, __int16, __int16, __int16)
 GAMECALL(0x401F9B, int, __stdcall, LoadSoundIntoBuffer, int iSoundID, void *lpBuffer)
 GAMECALL(0x401FA0, int, __cdecl, CheckAdjustTerrainAndPlacePowerLines, __int16 x, __int16 y)
+GAMECALL(0x401FE1, void, __thiscall, CityMapDialog_CenterOnPoint, CCityMapDialog *, int, int)
 GAMECALL(0x401FFA, void, __stdcall, GraphKludge)
 GAMECALL(0x402022, void, __stdcall, UpdateGraphData, void)
 GAMECALL(0x402045, void *, __cdecl, AllocateDataEntry, size_t iSz)
@@ -3455,6 +3470,7 @@ GAMECALL_DEPRECATED(0x4026B2, int, __cdecl, SimulationGrowSpecificZone, __int16 
 GAMECALL(0x4026DF, void, __thiscall, Sound_PlayActionThingSound, CSound *, int, int)
 GAMECALL(0x4026E9, CBudgetMainDialog *, __thiscall, BudgetMainDialog_Cons, CBudgetMainDialog *, CMainFrame *)
 GAMECALL(0x4026F8, void, __stdcall, SimulationUpdatePowerConsumption, void)
+GAMECALL(0x402720, void, __thiscall, GameDialog_OnLButtonDown, CGameDialog *, UINT, CMFC3XPoint)
 GAMECALL(0x402725, int, __cdecl, PlacePowerLinesAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x402739, void, __stdcall, GetAndLoadNextTileFileChunkToMemory, FILE *, char *, DWORD)
 GAMECALL(0x402752, void, __thiscall, MapToolBar_PressButton, CMapToolBar *, int)

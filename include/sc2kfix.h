@@ -20,6 +20,7 @@
 #define HOOKEXT_CPP __declspec(dllexport)
 
 #include <json.hpp>
+#include <commctrl.h>
 #include <sc2k/sc2k_resource.h>
 #include <setting_schema.h>
 #include <keybindings.h>

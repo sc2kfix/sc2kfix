@@ -525,6 +525,64 @@ static const char *GetHelpString_Population(int nIndex) {
 	return pStr;
 }
 
+// The CityMap case is a combination of tab indices and control IDs.
+static const char *GetHelpString_CityMap(int nIndex) {
+	const char *pStr = NULL;
+	switch (nIndex) {
+		case CITYMAPDLG_STRUCTURESZONES:
+			pStr = "Click here to be able to select STRUCTURES or ZONES from the ListBox below.\n\n"
+				"In the STRUCTURES display, shades of brown indicate altitude; green areas are trees; blue areas are water.\n\n"
+				"In the ZONES display, green indicates residential zones, blue indicates commercial zones, and yellow indicates industrial zones.";
+			break;
+		case CITYMAPDLG_ROADRAILTRAFFIC:
+			pStr = "Click here to be able to select ROADS, RAIL or TRAFFIC from the ListBox below.\n\n"
+				"ROADS shows your roads as white areas.\n\n"
+				"RAIL shows your rail lines as white areas.\n\n"
+				"TRAFFIC indicates traffic density with shades of gray. Dark gray is dense traffic, white is light traffic.";
+			break;
+		case CITYMAPDLG_POWERGRID:
+			pStr = "Click here to see your power grid. White indicates wires, yellow indicates powered areas, and red indicates unpowered areas.";
+			break;
+		case CITYMAPDLG_WATERSUPPLY:
+			pStr = "Click here to examine your water/supply. Yellow indicates the areas receiving water. Red indicates the areas that are unwatered.";
+			break;
+		case CITYMAPDLG_POPDENSITYROG:
+			pStr = "Click here to be able to select the density or rate of growth of your city's growth from the ListBox below.\n\n"
+				"In the population density display, dark gray indicates dense population and white indicates sparse population.\n\n"
+				"In the rate of growth display, green indicates positive growth and red indicates negative growth.";
+			break;
+		case CITYMAPDLG_POLICECRIME:
+			pStr = "Click here to be able to select the CRIME RATE, POLICE POWER, or POLICE DEPTS from the ListBox below.\n\n"
+				"CRIME RATE indicates levels of crime with shades of gray. Dark gray is the worst, white is the best.\n\n"
+				"POLICE POWER shows the areas protected by police departments.\n\n"
+				"POLICE DEPTS shows the location of police stations.";
+			break;
+		case CITYMAPDLG_POLLUTION:
+			pStr = "Click here to see the pollution in your city. Dark gray is the worst pollution, white is the least.";
+			break;
+		case CITYMAPDLG_LANDVALUE:
+			pStr = "Click here to show land values in your city. Dark gray indicates the valuable land. Light gray indicates less valuable land.\n\n"
+				"Unshaded areas have not been zoned by the city and have not had their value assessed.";
+			break;
+		case CITYMAPDLG_FIREEDUCATION:
+			pStr = "Click here to be able to select the FIRE POWER, FIRE DEPTS, SCHOOLS or COLLEGES from the ListBox below.\n\n"
+				"FIRE POWER shows the areas protected by fire departments.\n\n"
+				"FIRE DEPTS, SCHOOLS, COLLEGES show the locations of each of these items.";
+			break;
+		case SC2K_DIALOG_CITYMAP_STATIC_MAPAREA:
+			pStr = "This is the Map window. Shift-Click on the tabs above to determine what can be displayed here (and the button below to indicate the effect in the main edit window).\n\n"
+				"The selected entry in the ListBox below will dictate what is currently displayed.\n\n"
+				"There is also a tilted box outlined in the window. This indicates the area viewed in the City window. The \"T\" on the box shows the top of the city window.";
+			break;
+		case SC2K_DIALOG_CITYMAP_BTN_SHOWCITYINWINDOW:
+			pStr = "While this button is depressed the data you are currently viewing will also appear in the main edit window. This is useful for pinpointing areas of high crime, heavy traffic, etc.";
+			break;
+		default:
+			break;
+	}
+	return pStr;
+}
+
 static const char *GetHelpString(int nType, int nIndex) {
 	const char *pStr = NULL;
 	switch (nType) {
@@ -549,6 +607,9 @@ static const char *GetHelpString(int nType, int nIndex) {
 			break;
 		case HELPTYPE_POPULATION:
 			pStr = GetHelpString_Population(nIndex);
+			break;
+		case HELPTYPE_CITYMAP:
+			pStr = GetHelpString_CityMap(nIndex);
 			break;
 		case HELPTYPE_NEIGHBOURS:
 			pStr = "The neighbor window displays your city's population along with the population of its neighboring cities and the total population of SimNation. Use this window to compare your city with the cities you compete with for people and other resources, and to see just how big a part of the whole nation you are (or aren't).";
