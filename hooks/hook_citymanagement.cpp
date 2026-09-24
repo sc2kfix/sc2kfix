@@ -951,6 +951,199 @@ extern "C" void __stdcall Hook_CityMapDialog_OnLButtonDown(UINT nFlags, CMFC3XPo
 	Game_GameDialog_OnLButtonDown(pThis, nFlags, pt);
 }
 
+extern "C" void __stdcall Hook_SimGraphDialog_DoDataExchange(CMFC3XDataExchange *pDatEx) {
+	CSimGraphDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	// Nothing happens here at this point.
+}
+
+static void SimGraphDialog_GetRangeSelect(CSimGraphDialog *pSimGraphDlg) {
+	int nRangeState[GRAPHDLG_RANGE_COUNT];
+
+	memset(nRangeState, BST_UNCHECKED, sizeof(nRangeState));
+	if (pSimGraphDlg->dwSGDRange >= GRAPHDLG_RANGE_ONEYEAR && pSimGraphDlg->dwSGDRange <= GRAPHDLG_RANGE_HUNDREDYEARS) {
+		nRangeState[pSimGraphDlg->dwSGDRange] = BST_CHECKED;
+		Button_SetCheck(GetDlgItem(pSimGraphDlg->m_hWnd, SC2K_DIALOG_GRAPH_RADIO_RANGEONEYEAR), nRangeState[GRAPHDLG_RANGE_ONEYEAR]);
+		Button_SetCheck(GetDlgItem(pSimGraphDlg->m_hWnd, SC2K_DIALOG_GRAPH_RADIO_RANGETENYEARS), nRangeState[GRAPHDLG_RANGE_TENYEARS]);
+		Button_SetCheck(GetDlgItem(pSimGraphDlg->m_hWnd, SC2K_DIALOG_GRAPH_RADIO_RANGEHUNDREDYEARS), nRangeState[GRAPHDLG_RANGE_HUNDREDYEARS]);
+	}
+}
+
+static void SimGraphDialog_GetOptionsSelect(CSimGraphDialog *pSimGraphDlg) {
+	Button_SetCheck(GetDlgItem(pSimGraphDlg->m_hWnd, SC2K_DIALOG_GRAPH_CHECKBOX_OPTCITYSIZE), pSimGraphDlg->dwSGDOptCitySize ? BST_CHECKED : BST_UNCHECKED);
+	Button_SetCheck(GetDlgItem(pSimGraphDlg->m_hWnd, SC2K_DIALOG_GRAPH_CHECKBOX_OPTRESIDENTS), pSimGraphDlg->dwSGDOptResidents ? BST_CHECKED : BST_UNCHECKED);
+	Button_SetCheck(GetDlgItem(pSimGraphDlg->m_hWnd, SC2K_DIALOG_GRAPH_CHECKBOX_OPTCOMMERCE), pSimGraphDlg->dwSGDOptCommerce ? BST_CHECKED : BST_UNCHECKED);
+	Button_SetCheck(GetDlgItem(pSimGraphDlg->m_hWnd, SC2K_DIALOG_GRAPH_CHECKBOX_OPTINDUSTRY), pSimGraphDlg->dwSGDOptIndustry ? BST_CHECKED : BST_UNCHECKED);
+	Button_SetCheck(GetDlgItem(pSimGraphDlg->m_hWnd, SC2K_DIALOG_GRAPH_CHECKBOX_OPTTRAFFIC), pSimGraphDlg->dwSGDOptTraffic ? BST_CHECKED : BST_UNCHECKED);
+	Button_SetCheck(GetDlgItem(pSimGraphDlg->m_hWnd, SC2K_DIALOG_GRAPH_CHECKBOX_OPTPOLLUTION), pSimGraphDlg->dwSGDOptPollution ? BST_CHECKED : BST_UNCHECKED);
+	Button_SetCheck(GetDlgItem(pSimGraphDlg->m_hWnd, SC2K_DIALOG_GRAPH_CHECKBOX_OPTLANDVALUE), pSimGraphDlg->dwSGDOptLandValue ? BST_CHECKED : BST_UNCHECKED);
+	Button_SetCheck(GetDlgItem(pSimGraphDlg->m_hWnd, SC2K_DIALOG_GRAPH_CHECKBOX_OPTCRIME), pSimGraphDlg->dwSGDOptCrime ? BST_CHECKED : BST_UNCHECKED);
+	Button_SetCheck(GetDlgItem(pSimGraphDlg->m_hWnd, SC2K_DIALOG_GRAPH_CHECKBOX_OPTPOWERPERCENT), pSimGraphDlg->dwSGDOptPowerPercentage ? BST_CHECKED : BST_UNCHECKED);
+	Button_SetCheck(GetDlgItem(pSimGraphDlg->m_hWnd, SC2K_DIALOG_GRAPH_CHECKBOX_OPTWATERPERCENT), pSimGraphDlg->dwSGDOptWaterPercentage ? BST_CHECKED : BST_UNCHECKED);
+	Button_SetCheck(GetDlgItem(pSimGraphDlg->m_hWnd, SC2K_DIALOG_GRAPH_CHECKBOX_OPTHEALTH), pSimGraphDlg->dwSGDOptHealth ? BST_CHECKED : BST_UNCHECKED);
+	Button_SetCheck(GetDlgItem(pSimGraphDlg->m_hWnd, SC2K_DIALOG_GRAPH_CHECKBOX_OPTEDUCATION), pSimGraphDlg->dwSGDOptEducation ? BST_CHECKED : BST_UNCHECKED);
+	Button_SetCheck(GetDlgItem(pSimGraphDlg->m_hWnd, SC2K_DIALOG_GRAPH_CHECKBOX_OPTUNEMPLOYMENT), pSimGraphDlg->dwSGDOptUnemployment ? BST_CHECKED : BST_UNCHECKED);
+	Button_SetCheck(GetDlgItem(pSimGraphDlg->m_hWnd, SC2K_DIALOG_GRAPH_CHECKBOX_OPTGNP), pSimGraphDlg->dwSGDOptGNP ? BST_CHECKED : BST_UNCHECKED);
+	Button_SetCheck(GetDlgItem(pSimGraphDlg->m_hWnd, SC2K_DIALOG_GRAPH_CHECKBOX_OPTNATIONALPOP), pSimGraphDlg->dwSGDOptNationalPop ? BST_CHECKED : BST_UNCHECKED);
+	Button_SetCheck(GetDlgItem(pSimGraphDlg->m_hWnd, SC2K_DIALOG_GRAPH_CHECKBOX_OPTFEDRATE), pSimGraphDlg->dwSGDOptFedRate ? BST_CHECKED : BST_UNCHECKED);
+}
+
+static void SimGraphDialog_SetControlStates(CSimGraphDialog *pSimGraphDlg) {
+	SimGraphDialog_GetRangeSelect(pSimGraphDlg);
+	SimGraphDialog_GetOptionsSelect(pSimGraphDlg);
+}
+
+extern "C" void __stdcall Hook_SimGraphDialog_UpdateDialog() {
+	CSimGraphDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	RECT r;
+
+	if (pThis->dwSGDDialogActive) {
+		SimGraphDialog_SetControlStates(pThis);
+		UnionRect(&r, &pThis->dwSGDRectSelectionAxis, &pThis->dwSGDRectRangeAxis);
+		InvalidateRect(pThis->m_hWnd, &r, 0);
+		UpdateWindow(pThis->m_hWnd);
+	}
+}
+
+void SimGraphDialog_UpdateRange(CSimGraphDialog *pSimGraphDlg, int nDlgID) {
+	int nSelected;
+
+	switch (nDlgID) {
+	case SC2K_DIALOG_GRAPH_RADIO_RANGEONEYEAR:
+		nSelected = GRAPHDLG_RANGE_ONEYEAR;
+		break;
+	case SC2K_DIALOG_GRAPH_RADIO_RANGETENYEARS:
+		nSelected = GRAPHDLG_RANGE_TENYEARS;
+		break;
+	case SC2K_DIALOG_GRAPH_RADIO_RANGEHUNDREDYEARS:
+		nSelected = GRAPHDLG_RANGE_HUNDREDYEARS;
+		break;
+	default:
+		return;
+	}
+
+	pSimGraphDlg->dwSGDRange = nSelected;
+	Game_SimGraphDialog_UpdateDialog(pSimGraphDlg);
+}
+
+static void SimGraphDialog_ToggleOption(CSimGraphDialog *pSimGraphDlg, int nDlgID) {
+	switch (nDlgID) {
+	case SC2K_DIALOG_GRAPH_CHECKBOX_OPTCITYSIZE:
+		pSimGraphDlg->dwSGDOptCitySize = !pSimGraphDlg->dwSGDOptCitySize;
+		break;
+	case SC2K_DIALOG_GRAPH_CHECKBOX_OPTRESIDENTS:
+		pSimGraphDlg->dwSGDOptResidents = !pSimGraphDlg->dwSGDOptResidents;
+		break;
+	case SC2K_DIALOG_GRAPH_CHECKBOX_OPTCOMMERCE:
+		pSimGraphDlg->dwSGDOptCommerce = !pSimGraphDlg->dwSGDOptCommerce;
+		break;
+	case SC2K_DIALOG_GRAPH_CHECKBOX_OPTINDUSTRY:
+		pSimGraphDlg->dwSGDOptIndustry = !pSimGraphDlg->dwSGDOptIndustry;
+		break;
+	case SC2K_DIALOG_GRAPH_CHECKBOX_OPTTRAFFIC:
+		pSimGraphDlg->dwSGDOptTraffic = !pSimGraphDlg->dwSGDOptTraffic;
+		break;
+	case SC2K_DIALOG_GRAPH_CHECKBOX_OPTPOLLUTION:
+		pSimGraphDlg->dwSGDOptPollution = !pSimGraphDlg->dwSGDOptPollution;
+		break;
+	case SC2K_DIALOG_GRAPH_CHECKBOX_OPTLANDVALUE:
+		pSimGraphDlg->dwSGDOptLandValue = !pSimGraphDlg->dwSGDOptLandValue;
+		break;
+	case SC2K_DIALOG_GRAPH_CHECKBOX_OPTCRIME:
+		pSimGraphDlg->dwSGDOptCrime = !pSimGraphDlg->dwSGDOptCrime;
+		break;
+	case SC2K_DIALOG_GRAPH_CHECKBOX_OPTPOWERPERCENT:
+		pSimGraphDlg->dwSGDOptPowerPercentage = !pSimGraphDlg->dwSGDOptPowerPercentage;
+		break;
+	case SC2K_DIALOG_GRAPH_CHECKBOX_OPTWATERPERCENT:
+		pSimGraphDlg->dwSGDOptWaterPercentage = !pSimGraphDlg->dwSGDOptWaterPercentage;
+		break;
+	case SC2K_DIALOG_GRAPH_CHECKBOX_OPTHEALTH:
+		pSimGraphDlg->dwSGDOptHealth = !pSimGraphDlg->dwSGDOptHealth;
+		break;
+	case SC2K_DIALOG_GRAPH_CHECKBOX_OPTEDUCATION:
+		pSimGraphDlg->dwSGDOptEducation = !pSimGraphDlg->dwSGDOptEducation;
+		break;
+	case SC2K_DIALOG_GRAPH_CHECKBOX_OPTUNEMPLOYMENT:
+		pSimGraphDlg->dwSGDOptUnemployment = !pSimGraphDlg->dwSGDOptUnemployment;
+		break;
+	case SC2K_DIALOG_GRAPH_CHECKBOX_OPTGNP:
+		pSimGraphDlg->dwSGDOptGNP = !pSimGraphDlg->dwSGDOptGNP;
+		break;
+	case SC2K_DIALOG_GRAPH_CHECKBOX_OPTNATIONALPOP:
+		pSimGraphDlg->dwSGDOptNationalPop = !pSimGraphDlg->dwSGDOptNationalPop;
+		break;
+	case SC2K_DIALOG_GRAPH_CHECKBOX_OPTFEDRATE:
+		pSimGraphDlg->dwSGDOptFedRate = !pSimGraphDlg->dwSGDOptFedRate;
+		break;
+	default:
+		return;
+	}
+}
+
+void SimGraphDialog_UpdateOptions(CSimGraphDialog *pSimGraphDlg, int nDlgID) {
+	if (pSimGraphDlg->dwSGDDialogActive) {
+		SimGraphDialog_ToggleOption(pSimGraphDlg, nDlgID);
+		SimGraphDialog_SetControlStates(pSimGraphDlg);
+		InvalidateRect(pSimGraphDlg->m_hWnd, &pSimGraphDlg->dwSGDRectSelectionAxis, 0);
+		UpdateWindow(pSimGraphDlg->m_hWnd);
+	}
+}
+
+extern "C" BOOL __stdcall Hook_SimGraphDialog_ToggleDialog() {
+	CSimGraphDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	int ret;
+
+	if (pThis->dwSGDDialogActive) {
+		ShowWindow(pThis->m_hWnd, SW_HIDE);
+		if (dwRefreshControls)
+			Game_SimGraphDialog_DeleteObjects(pThis);
+		pThis->dwSGDDialogActive = 0;
+		SimGraphDialog_SetControlStates(pThis);
+		ret = pThis->dwSGDDialogActive;
+	}
+	else {
+		SimGraphDialog_SetControlStates(pThis);
+		if (dwRefreshControls)
+			Game_SimGraphDialog_AttachObjects(pThis);
+		if (dwGraphBitmapResOne && dwGraphBitmapResTwo) {
+			ShowWindow(pThis->m_hWnd, SW_SHOWNORMAL);
+			pThis->dwSGDDialogActive = 1;
+			ret = pThis->dwSGDDialogActive;
+		}
+		else {
+			GameMain_AfxMessageBoxStr(aNotEnoughMem, 0, 0);
+			dwRefreshControls = 1;
+			Game_SimGraphDialog_DeleteObjects(pThis);
+			ret = 0;
+		}
+	}
+	return ret;
+}
+
+extern "C" BOOL __stdcall Hook_SimGraphDialog_HideDialog() {
+	CSimGraphDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	if (pThis->dwSGDDialogActive) {
+		ShowWindow(pThis->m_hWnd, SW_HIDE);
+		if (dwRefreshControls)
+			Game_SimGraphDialog_DeleteObjects(pThis);
+		pThis->dwSGDDialogActive = 0;
+		SimGraphDialog_SetControlStates(pThis);
+	}
+	return pThis->dwSGDDialogActive;
+}
+
 void InstallCityManagementHooks_SC2K1996(void) {
 	// Hook for SimulationPrepareBudgetDialog
 	SafeVirtualProtect((LPVOID)0x4015E6, 5, PAGE_EXECUTE_READWRITE);
@@ -1027,4 +1220,20 @@ void InstallCityManagementHooks_SC2K1996(void) {
 	// Hook for CCityMapDialog::OnLButtonDown
 	SafeVirtualProtect((LPVOID)0x402FD6, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x402FD6, Hook_CityMapDialog_OnLButtonDown);
+
+	// Hook for CSimGraphDialog::DoDataExchange
+	SafeVirtualProtect((LPVOID)0x4015A5, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4015A5, Hook_SimGraphDialog_DoDataExchange);
+
+	// Hook for CSimGraphDialog::UpdateDialog
+	SafeVirtualProtect((LPVOID)0x402CFC, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402CFC, Hook_SimGraphDialog_UpdateDialog);
+
+	// Hook for CSimGraphDialog::ToggleDialog
+	SafeVirtualProtect((LPVOID)0x403003, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x403003, Hook_SimGraphDialog_ToggleDialog);
+
+	// Hook for CSimGraphDialog::HideDialog
+	SafeVirtualProtect((LPVOID)0x4023C4, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4023C4, Hook_SimGraphDialog_HideDialog);
 }

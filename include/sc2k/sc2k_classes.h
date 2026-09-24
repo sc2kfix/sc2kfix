@@ -479,6 +479,33 @@ public:
 	RECT dwCMDRECTTwo;
 };
 
+class CSimGraphDialog : public CGameDialog {
+public:
+	DWORD dwSGDDialogActive;
+	DWORD dwSGDMask;
+	RECT dwSGDRectSelectionAxis;
+	RECT dwSGDRectRangeAxis;
+	CMFC3XBitmap dwSGDBitmapOne;
+	CMFC3XBitmap dwSGDBitmapTwo;
+	int dwSGDOptCitySize;
+	int dwSGDOptCommerce;
+	int dwSGDOptCrime;
+	int dwSGDOptEducation;
+	int dwSGDOptFedRate;
+	int dwSGDOptGNP;
+	int dwSGDOptHealth;
+	int dwSGDOptIndustry;
+	int dwSGDOptNationalPop;
+	int dwSGDOptPollution;
+	int dwSGDOptPowerPercentage;
+	int dwSGDOptResidents;
+	int dwSGDOptTraffic;
+	int dwSGDOptUnemployment;
+	int dwSGDOptLandValue;
+	int dwSGDOptWaterPercentage;
+	int dwSGDRange;
+};
+
 class CSimcityWnd : public CMFC3XWnd {
 public:
 	CGraphics *m_pSCWGraphics;
@@ -487,7 +514,7 @@ public:
 
 class CMainFrame : public CMFC3XMDIFrameWnd {
 public:
-	DWORD *dwMFSimGraphDialog; // CSimGraphDialog
+	CSimGraphDialog *dwMFSimGraphDialog; // CSimGraphDialog
 	CPopulationDialog *dwMFPopulationDialog; // CPopulationDialog
 	CCityMapDialog *dwMFCityMapDialog; // CCityMapDialog
 	CNeighbourDialog *dwMFNeighbourDialog; // CNeighbourDialog

@@ -583,6 +583,72 @@ static const char *GetHelpString_CityMap(int nIndex) {
 	return pStr;
 }
 
+static const char *GetHelpString_Graphs(int nIndex) {
+	const char *pStr = NULL;
+	switch (nIndex) {
+		case SC2K_DIALOG_GRAPH_RADIO_RANGEONEYEAR:
+			pStr = "This button displays the graph data for a one-year period. The time chart shows the months displayed. The current month is farthest to the right.";
+			break;
+		case SC2K_DIALOG_GRAPH_RADIO_RANGETENYEARS:
+			pStr = "This button displays the graph data for a ten-year period. The time chart shows the years displayed. The current year is farthest to the right.";
+			break;
+		case SC2K_DIALOG_GRAPH_RADIO_RANGEHUNDREDYEARS:
+			pStr = "This button displays the graph data for a hundred-year period. The time chart shows the decades displayed. The current decade is farthest to the right.";
+			break;
+		case SC2K_DIALOG_GRAPH_CHECKBOX_OPTCITYSIZE:
+			pStr = "City Size is your city's total population. It is the sum of commercial laborers, industrial laborers, and their families. \"Residents, \" \"Commerce, \" and \"Industry\" are all scaled according to \"City Size.\"";
+			break;
+		case SC2K_DIALOG_GRAPH_CHECKBOX_OPTRESIDENTS:
+			pStr = "Residents are the children, parents and home-spouses of the work force. It is scaled against the \"City Size.\"";
+			break;
+		case SC2K_DIALOG_GRAPH_CHECKBOX_OPTCOMMERCE:
+			pStr = "Commerce indicates the number of laborers working for local services. Their jobs produce for the local market only. It is scaled against the \"City Size.\"";
+			break;
+		case SC2K_DIALOG_GRAPH_CHECKBOX_OPTINDUSTRY:
+			pStr = "Industry are the laborers working for local industry. Their jobs produce for the external markets. It is scaled against the \"City Size.\"";
+			break;
+		case SC2K_DIALOG_GRAPH_CHECKBOX_OPTTRAFFIC:
+			pStr = "Traffic measures the average cars per minute of all city roads, highways and bridges.";
+			break;
+		case SC2K_DIALOG_GRAPH_CHECKBOX_OPTPOLLUTION:
+			pStr = "Pollution indicates the amount of air pollution. It is measured in PPM (parts per million).";
+			break;
+		case SC2K_DIALOG_GRAPH_CHECKBOX_OPTLANDVALUE:
+			pStr = "Value is an average of your city block value. It is measured in thousands of dollars per lot.";
+			break;
+		case SC2K_DIALOG_GRAPH_CHECKBOX_OPTCRIME:
+			pStr = "Crime is an average measure of criminal activity. It is measured in annual incidents per thousand citizens.";
+			break;
+		case SC2K_DIALOG_GRAPH_CHECKBOX_OPTPOWERPERCENT:
+			pStr = "Power% indicates your power surplus. It is measured as an INVERSE percent of usage. The percentage indicates how much power is left.";
+			break;
+		case SC2K_DIALOG_GRAPH_CHECKBOX_OPTWATERPERCENT:
+			pStr = "Water% indicates your water surplus. It is measured as an INVERSE percent of usage. The percentage indicates how much pumped water goes unused.";
+			break;
+		case SC2K_DIALOG_GRAPH_CHECKBOX_OPTHEALTH:
+			pStr = "Health is an average measure of your citizens' health. It is measured in Life Expectancy (LE), which is the number of years a laborer is expected to live.";
+			break;
+		case SC2K_DIALOG_GRAPH_CHECKBOX_OPTEDUCATION:
+			pStr = "Education is a measure of your citizens' educational level. It is measured using an Educational Quotient (EQ). The average national citizen has an EQ of 100.";
+			break;
+		case SC2K_DIALOG_GRAPH_CHECKBOX_OPTUNEMPLOYMENT:
+			pStr = "The unemp. graph shows the percentage of people in your city who want to find work but cannot.";
+			break;
+		case SC2K_DIALOG_GRAPH_CHECKBOX_OPTGNP:
+			pStr = "GNP is the Gross National Product of the SimNation your city is in. It is a general measure of external demand for your industrial production.";
+			break;
+		case SC2K_DIALOG_GRAPH_CHECKBOX_OPTNATIONALPOP:
+			pStr = "\"Nat'l Pop\" is your national population. It has little relevance to your city except for how it influences GNP, the Fed Rate and the current industrial demands, as indicated in the Industry window.";
+			break;
+		case SC2K_DIALOG_GRAPH_CHECKBOX_OPTFEDRATE:
+			pStr = "The \"Fed Rate\" is the percentage paid for bonds by the national government. The rate your city pays for bonds is closely related to this number. Fed Rate is influenced by both GNP and Nat'l Pop. You cannot control this, but by watching GNP and Nat'l Pop., you might predict it.";
+			break;
+		default:
+			break;
+	}
+	return pStr;
+}
+
 static const char *GetHelpString(int nType, int nIndex) {
 	const char *pStr = NULL;
 	switch (nType) {
@@ -610,6 +676,9 @@ static const char *GetHelpString(int nType, int nIndex) {
 			break;
 		case HELPTYPE_CITYMAP:
 			pStr = GetHelpString_CityMap(nIndex);
+			break;
+		case HELPTYPE_GRAPHS:
+			pStr = GetHelpString_Graphs(nIndex);
 			break;
 		case HELPTYPE_NEIGHBOURS:
 			pStr = "The neighbor window displays your city's population along with the population of its neighboring cities and the total population of SimNation. Use this window to compare your city with the cities you compete with for people and other resources, and to see just how big a part of the whole nation you are (or aren't).";

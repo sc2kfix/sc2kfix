@@ -2918,6 +2918,14 @@ enum {
 };
 
 enum {
+	GRAPHDLG_RANGE_ONEYEAR,
+	GRAPHDLG_RANGE_TENYEARS,
+	GRAPHDLG_RANGE_HUNDREDYEARS,
+
+	GRAPHDLG_RANGE_COUNT
+};
+
+enum {
 	CITYMAPDLG_STRUCTURESZONES,
 	CITYMAPDLG_ROADRAILTRAFFIC,
 	CITYMAPDLG_POWERGRID,
@@ -3316,6 +3324,7 @@ GAMECALL(0x40178F, __int16, __cdecl, PlaceTile, __int16 x, __int16 y, __int16 iT
 GAMECALL(0x4017B2, void, __thiscall, SimcityDoc_UpdateDocumentTitle, CSimcityDoc* pThis)
 GAMECALL(0x4017FD, void, __stdcall, DrawAllLarge)
 GAMECALL(0x401820, void, __thiscall, Engine_SimulationProcessTick, CEngine *)
+GAMECALL(0x40183E, void, __thiscall, SimGraphDialog_DeleteObjects, CSimGraphDialog *)
 GAMECALL(0x401857, int, __cdecl, MapToolPlaceTree, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x4018C0, void, __stdcall, SelectArcologyDialog_OnDrawState, LPDRAWITEMSTRUCT)
 GAMECALL(0x4018F7, void, __thiscall, BudgetMainDialog_AdjustFireFundingPercentage, CBudgetMainDialog *)
@@ -3411,6 +3420,7 @@ GAMECALL(0x402199, void, __thiscall, SimcityView_ResetAttributesAndCoordinates, 
 GAMECALL(0x40219E, INT_PTR, __thiscall, GameDialog_DoModal, CGameDialog *)
 GAMECALL(0x4021A3, void, __cdecl, AdjustScenarioTextCharacters, const char *, char *)
 GAMECALL(0x4021A8, void, __thiscall, MainFrame_ToggleStatusControlBar, CMainFrame *, BOOL)
+GAMECALL(0x4021C1, void, __thiscall, SimGraphDialog_AttachObjects, CSimGraphDialog *)
 GAMECALL(0x4021D5, void, __stdcall, ShowViewControls)
 GAMECALL(0x4021F3, void, __cdecl, DrawAllTinyBelowTile)
 GAMECALL(0x4021F8, void, __cdecl, ReadTilesetFile, char *)
@@ -3540,6 +3550,7 @@ GAMECALL(0x402C98, void, __thiscall, GameDialog_SetCursor, CGameDialog *)
 GAMECALL(0x402CCF, void, __cdecl, GetFileExceptionError, UINT, CMFC3XFileException *, CMFC3XString *)
 GAMECALL(0x402CE3, void, __thiscall, BudgetMainDialog_UpdateInternalInformation, CBudgetMainDialog *, int)
 GAMECALL(0x402CF2, void, __thiscall, SimcityApp_SetGameCursor, CSimcityAppPrimary *pThis, int iNewCursor, BOOL bActive)
+GAMECALL(0x402CFC, void, __thiscall, SimGraphDialog_UpdateDialog, CSimGraphDialog *)
 GAMECALL(0x402D15, void, __stdcall, ClearLabels)
 GAMECALL(0x402D1F, __int16, __cdecl, CalcTileHit8, __int16, __int16)
 GAMECALL(0x402D2E, void, __stdcall, UpdateBudgetInformation, void)
@@ -4001,6 +4012,9 @@ GAMEOFF(BOOL,	bCSimcityDocSC2InUse,		0x4E9744)
 GAMEOFF(BOOL,	bCSimcityDocSCNInUse,		0x4E9748)
 GAMEOFF(DWORD,	dwUnknownInitVarOne,		0x4E974C)
 GAMEOFF(DWORD,	dwRefreshControls,			0x4E97C8)
+GAMEOFF(DWORD,	dwGraphBitmapResOne,		0x4E97CC)
+GAMEOFF(DWORD,	dwGraphBitmapResTwo,		0x4E97D0)
+GAMEOFF_ARR(const char,	aNotEnoughMem,		0x4E97F0)
 GAMEOFF_ARR(DWORD, dwCityNoticeStringIDs,	0x4E98B8)
 GAMEOFF(COLORREF,	crSignShine,			0x4E9924)
 GAMEOFF(COLORREF,	crSignBase,				0x4E9930)
@@ -5116,6 +5130,9 @@ extern void BudgetMain_PostCheckHourGlassTimer(CBudgetMainDialog *bBudgetMainDia
 
 extern bool DoPopDialogButton(CPopulationDialog *pPopDlg, int nDlgID);
 extern void FixPopDialogButtons(CPopulationDialog *pPopDlg);
+
+extern void SimGraphDialog_UpdateRange(CSimGraphDialog *pSimGraphDlg, int nDlgID);
+extern void SimGraphDialog_UpdateOptions(CSimGraphDialog *pSimGraphDlg, int nDlgID);
 
 extern void Clear_SpriteCache();
 extern void Init_SpriteCache(bool bReload);

@@ -152,7 +152,7 @@ extern "C" BOOL __stdcall Hook_GameDialog_OnSetCursor(CMFC3XWnd *pWnd, UINT nHit
 			(DWORD *)pThis == pMainFrm->dwMFCityIndustryDialog ||
 			(CNeighbourDialog *)pThis == pMainFrm->dwMFNeighbourDialog ||
 			(CPopulationDialog *)pThis == pMainFrm->dwMFPopulationDialog ||
-			(DWORD *)pThis == pMainFrm->dwMFSimGraphDialog) {
+			(CSimGraphDialog *)pThis == pMainFrm->dwMFSimGraphDialog) {
 			Game_SimcityApp_SetGameCursor(pSCApp, GAMECURSOR_ARROW, TRUE);
 			pSCApp->dwSCACursorGameHit = CURSORHIT_GAMEDIALOG;
 			// When both the Ordinance and Budget dialogues are
@@ -208,7 +208,7 @@ extern "C" void __stdcall Hook_GameDialog_OnLButtonDown(UINT nFlags, CMFC3XPoint
 			DisplayItemHelp(pMainFrm->m_hWnd, HELPTYPE_NEIGHBOURS, 0, true);
 			return;
 		}
-		else if ((DWORD *)pThis == pMainFrm->dwMFSimGraphDialog) {
+		else if ((CSimGraphDialog *)pThis == pMainFrm->dwMFSimGraphDialog) {
 			ConsoleLog(LOG_DEBUG, "Graph Dialog.\n");
 			return;
 		}
@@ -1461,6 +1461,7 @@ extern "C" HWND __stdcall Hook_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lp
 	case 106:
 		return CreateDialogParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_OwnerInfoDialogProc, dwInitParam);
 	case SC2K_DIALOG_POPULATION:
+	case SC2K_DIALOG_GRAPH:
 	case SC2K_DIALOG_CITYMAP:
 		return CreateDialogParamA(hSC2KFixModule, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	default:
@@ -3167,6 +3168,21 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 							DisplayItemHelp(pMainFrm->m_hWnd, HELPTYPE_CITYMAP, nID, true);
 							return TRUE;
 						}
+					}
+				}
+				else if ((CSimGraphDialog *)pThis == pMainFrm->dwMFSimGraphDialog) {
+					if ((nID >= SC2K_DIALOG_GRAPH_CHECKBOX_OPTCITYSIZE && nID <= SC2K_DIALOG_GRAPH_CHECKBOX_OPTFEDRATE) ||
+						(nID >= SC2K_DIALOG_GRAPH_RADIO_RANGEONEYEAR && nID <= SC2K_DIALOG_GRAPH_RADIO_RANGEHUNDREDYEARS)) {
+						if (GetAsyncKeyState(VK_SHIFT) < 0) {
+							Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+							DisplayItemHelp(pMainFrm->m_hWnd, HELPTYPE_GRAPHS, nID, true);
+							return TRUE;
+						}
+						if (nID >= SC2K_DIALOG_GRAPH_CHECKBOX_OPTCITYSIZE && nID <= SC2K_DIALOG_GRAPH_CHECKBOX_OPTFEDRATE)
+							SimGraphDialog_UpdateOptions((CSimGraphDialog *)pThis, nID);
+						else if (nID >= SC2K_DIALOG_GRAPH_RADIO_RANGEONEYEAR && nID <= SC2K_DIALOG_GRAPH_RADIO_RANGEHUNDREDYEARS)
+							SimGraphDialog_UpdateRange((CSimGraphDialog *)pThis, nID);
+						return TRUE;
 					}
 				}
 				break;
