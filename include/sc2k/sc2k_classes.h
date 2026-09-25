@@ -734,6 +734,13 @@ public:
 	CMFC3XString dwBDStringToDateExpense;
 };
 
+class CBudgetAdvisorDialog : public CGameDialog {
+public:
+	DWORD m_dwBDAType;
+	CGraphics* m_dwBDACGraphicsOne;
+	CMFC3XString m_dwBDACStringOne;
+};
+
 class CBudgetOrdinanceDialog : public CGameDialog {
 public:
 	DWORD dwUnknown[14];

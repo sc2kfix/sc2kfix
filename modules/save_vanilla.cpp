@@ -1009,7 +1009,7 @@ int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName) {
 
 	for (const auto& hook : stHooks_L_SimcityApp_DoLoad_After) {
 		if (hook.iType == HOOKFN_TYPE_NATIVE && hook.bEnabled) {
-			bool (*fnHook)(CSimcityAppPrimary*, char*, bool) = (bool(*)(CSimcityAppPrimary*, char*, bool))hook.pFunction;
+			int (*fnHook)(CSimcityAppPrimary*, char*, int) = (int(*)(CSimcityAppPrimary*, char*, int))hook.pFunction;
 			ret = fnHook(pSCApp, lpFileName, ret);
 		}
 	}
@@ -1359,7 +1359,7 @@ static int L_SimcityApp_WriteCityInfo(CSimcityAppPrimary *pSCApp, FILE *pFile) {
 	pMiscInfo[nArrNextOffset++] = bWeatherRain;
 	pMiscInfo[nArrNextOffset++] = bWeatherTrend;
 	pMiscInfo[nArrNextOffset++] = wSetTriggerDisasterType;
-	pMiscInfo[nArrNextOffset++] = dwMapXGRP[1][1];
+	pMiscInfo[nArrNextOffset++] = dwMapXGRP[GRP_RESPOP][1];
 	pMiscInfo[nArrNextOffset] = dwGrantedItems[CITYTOOL_GROUP_REWARDS];
 	nArrOffset = nArrNextOffset + 1;
 	for (nPosMain = 0; nPosMain < 20; ++nPosMain) {

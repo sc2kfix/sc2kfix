@@ -224,7 +224,7 @@ static void Save_CreateJSONFromMiscInfo(json::JSON& jsonMISC) {
 	jsonMISC["city"]["weather_rain"] = bWeatherRain;
 	jsonMISC["city"]["weather_trend"] = bWeatherTrend;
 	jsonMISC["city"]["disaster_type"] = wSetTriggerDisasterType;
-	jsonMISC["city"]["old_res_pop"] = dwMapXGRP[1][1];
+	jsonMISC["city"]["old_res_pop"] = dwMapXGRP[GRP_RESPOP][1];
 	jsonMISC["city"]["granted_rewards"] = dwGrantedItems[CITYTOOL_GROUP_REWARDS];
 
 	jsonMISC["city"]["pop_ratio_table"] = EncodeUint32Array((uint32_t*)pRawPopRatioTable, 20);

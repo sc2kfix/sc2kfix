@@ -1,5 +1,5 @@
 // sc2kfix hooks/hook_citymanagement.cpp: hooks to do with city management: budget,
-// ordinances, graphs and population.
+// ordinances, graphs, population and advisors.
 // (c) 2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
@@ -17,6 +17,10 @@
 
 extern int nOwnDrwDlg;
 extern CMFC3XWnd *pStoredWnd;
+
+bool bBudgetOpen = false;
+bool bAdvisorCustomString = false;
+bool bOrdinanceOpen = false;
 
 static int nBudgetLastSBCode = -1;
 static int nBudgetZoneTaxLastSBCode = -1;
@@ -1144,6 +1148,228 @@ extern "C" BOOL __stdcall Hook_SimGraphDialog_HideDialog() {
 	return pThis->dwSGDDialogActive;
 }
 
+static void BudgetAdvisorDialog_SelectTypeAndSetMessage(CBudgetAdvisorDialog *pBudgetAdvisorDlg) {
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	int nItem, nTotalDemand, nCityCrime, nTotalFunding, nAdvice = -1, nSound = -1;
+	unsigned int nFireCoverage, nHealthCoverage, nHealthOrd, nTotalCosts;
+
+	switch (pBudgetAdvisorDlg->m_dwBDAType) {
+	case ADVISOR_TAXES:
+		nTotalDemand = wCityDemand[DEMAND_IND] + wCityDemand[DEMAND_COM] + wCityDemand[DEMAND_RES];
+		if (nTotalDemand >= -666) {
+			if (dwCityFunds >= (int)dwCityPopulation)
+				nAdvice = ADVICE_NONE;
+			else if (nTotalDemand <= 666)
+				nAdvice = ADVICE_PROPTAX_CUTBACK;
+			else
+				nAdvice = ADVICE_PROPTAX_RAISE;
+		}
+		else
+			nAdvice = ADVICE_PROPTAX_LOWER;
+		nSound = SOUND_BOOS;
+		break;
+	case ADVISOR_ORDINANCES:
+		if ((dwCityOrdinances & ORDINANCE_POLLUTION_CONTROLS) != 0 || dwMapXGRP[GRP_POLLUTION][0] <= 30) {
+			if ((dwCityOrdinances & ORDINANCE_ENERGY_CONSERVATION) != 0 || dwPowerUsedPercentage <= 98) {
+				if (dwMapXGRP[GRP_CITYCRIME][0] <= 30) {
+					if ((dwCityOrdinances & ORDINANCE_INCOME_TAX) != 0 && wCityDemand[DEMAND_RES] < -666)
+						nAdvice = ADVICE_ORDIN_DROP_INCOMETAX;
+					else {
+						if ((dwCityOrdinances & ORDINANCE_SALES_TAX) == 0 || wCityDemand[DEMAND_COM] >= -666)
+							nAdvice = ADVICE_NONE;
+						else
+							nAdvice = ADVICE_ORDIN_DROP_SALESTAX;
+					}
+				}
+				else {
+					if ((dwCityOrdinances & ORDINANCE_NEIGHBORHOOD_WATCH) == 0)
+						nAdvice = ADVICE_POLICE_DO_NEIGHBORWATCH;
+					else if ((dwCityOrdinances & ORDINANCE_ANTI_DRUG_CAMPAIGN) != 0) {
+						if ((dwCityOrdinances & ORDINANCE_LEGALIZED_GAMBLING) != 0)
+							nAdvice = ADVICE_ORDIN_DROP_LEGALGAMBLING;
+						else
+							nAdvice = ADVICE_NONE;
+					}
+					else
+						nAdvice = ADVICE_ORDIN_DO_ANTIDRUGCAMPGN;
+				}
+			}
+			else {
+				// Make sure of the following in order to hit this condition:
+				// - total number of generated tiles is above 0
+				// - energy conservation isn't enabled
+				// - utilisation is above 98%
+				//
+				// Previously on empty maps you'd also get the same warning - but there isn't anything to conserve.
+				//
+				// An alternative possibility could well be to get the player to enable it as early as possible.
+				// I'll leave that thought there while accounting for this change either way.
+				if (dwTotalGeneratedPowerTiles > 0 && (dwCityOrdinances & ORDINANCE_ENERGY_CONSERVATION) == 0 && dwPowerUsedPercentage > 98)
+					nAdvice = ADVICE_ORDIN_DO_ENERGYCONSERVE;
+				else
+					nAdvice = ADVICE_NONE;
+			}
+		}
+		else
+			nAdvice = ADVICE_ORDIN_DO_POLLUTIONCTRLS;
+		break;
+	case ADVISOR_BONDS:
+		if (dwCityFunds >= -1000) {
+			if (dwCityFunds >= 0) {
+				if (wNationalFedRate + (__int16)(25000 * dwCityBonds / (dwCityValue + 1)) + 1 >= 4) {
+					if (pBudgetArr[BUDGET_COMFUND].iEstimatedCost + pBudgetArr[BUDGET_INDFUND].iEstimatedCost + pBudgetArr[BUDGET_RESFUND].iEstimatedCost >= pBudgetArr[BUDGET_BOND].iEstimatedCost)
+						nAdvice = ADVICE_NONE;
+					else
+						nAdvice = ADVICE_BOND_OUTSTANDINGKILLING;
+				}
+				else
+					nAdvice = ADVICE_BOND_FLOATGOODRATES;
+			}
+			else
+				nAdvice = ADVICE_BOND_CUTBACK;
+		}
+		else
+			nAdvice = ADVICE_BOND_FLOATCITYEXPAND;
+		break;
+	case ADVISOR_POLICE:
+		nCityCrime = dwMapXGRP[GRP_CITYCRIME][0];
+		if (nCityCrime <= 40) {
+			if (nCityCrime <= 30 || (dwCityOrdinances & ORDINANCE_NEIGHBORHOOD_WATCH) != 0) {
+				if (nCityCrime >= 20)
+					nAdvice = ADVICE_POLICE_NATAVERAGE;
+				else
+					nAdvice = ADVICE_POLICE_CRIMELOW;
+			}
+			else
+				nAdvice = ADVICE_POLICE_DO_NEIGHBORWATCH;
+		}
+		else
+			nAdvice = ADVICE_POLICE_OUTOFCONTROL;
+		break;
+	case ADVISOR_FIRE:
+		nFireCoverage = pBudgetArr[BUDGET_FIRE].iFundingPercent * (150 * wTileCount[TILE_SERVICES_FIRE] / 9);
+		if (nFireCoverage >= dwCityPopulation) {
+			if ((int)(2 * nFireCoverage) / 3 <= (int)dwCityPopulation)
+				nAdvice = ADVICE_FIRE_COVERAGEADEQUATE;
+			else
+				nAdvice = ADVICE_FIRE_COVERAGEEXCELLENT;
+		}
+		else
+			nAdvice = ADVICE_FIRE_COVERAGENEEDMORE;
+		break;
+	case ADVISOR_HEALTH:
+		nHealthCoverage = pBudgetArr[BUDGET_HEALTH].iFundingPercent * (250 * wTileCount[TILE_SERVICES_HOSPITAL] / 9);
+		if (nHealthCoverage >= dwCityPopulation) {
+			if ((int)(2 * nHealthCoverage) / 3 <= (int)dwCityPopulation) {
+				nHealthOrd = rand() % 3u;
+				if (nHealthOrd) {
+					if (nHealthOrd == 1) {
+						if ((dwCityOrdinances & ORDINANCE_CPR_TRAINING) != 0)
+							nAdvice = ADVICE_HEALTH_ADEQUATE;
+						else
+							nAdvice = ADVICE_HEALTH_DO_CPRTRAINING;
+					}
+					else if (nHealthOrd == 2) {
+						if ((dwCityOrdinances & ORDINANCE_FREE_CLINICS) != 0)
+							nAdvice = ADVICE_HEALTH_ADEQUATE;
+						else
+							nAdvice = ADVICE_HEALTH_DO_FREECLINICS;
+					}
+					else
+						nAdvice = ADVICE_HEALTH_ADEQUATE;
+				}
+				else {
+					if ((dwCityOrdinances & ORDINANCE_PUBLIC_SMOKING_BAN) != 0)
+						nAdvice = ADVICE_HEALTH_ADEQUATE;
+					else
+						nAdvice = ADVICE_HEALTH_DO_SMOKINGBAN;
+				}
+			}
+			else
+				nAdvice = ADVICE_HEALTH_EXCELLENT;
+		}
+		else
+			nAdvice = ADVICE_HEALTH_NEEDMORE;
+		break;
+	case ADVISOR_EDUCATION:
+		if (pBudgetArr[BUDGET_SCHOOL].iFundingPercent * (15 * wTileCount[TILE_SERVICES_SCHOOL] / 9) >= (int)(pRawPopRatioTable[2] + pRawPopRatioTable[1])) {
+			if (pBudgetArr[BUDGET_COLLEGE].iFundingPercent * (50 * wTileCount[TILE_SERVICES_COLLEGE] / 16) >= (int)pRawPopRatioTable[3])
+				nAdvice = ADVICE_EDUCATION_ADEQUATE;
+			else
+				nAdvice = ADVICE_EDUCATION_NEEDMORECOLLEGES;
+		}
+		else
+			nAdvice = ADVICE_EDUCATION_NEEDMORESCHOOLS;
+		break;
+	case ADVISOR_TRANSIT:
+		nTotalCosts = 0;
+		nTotalFunding = 0;
+		for (nItem = BUDGET_ROAD; nItem <= BUDGET_TUNNEL; ++nItem) {
+			nTotalCosts += pBudgetArr[nItem].iCurrentCosts;
+			nTotalFunding += pBudgetArr[nItem].iFundingPercent;
+		}
+		if (nTotalFunding >= 600) {
+			if (dwCityPopulation / 100 <= nTotalCosts) {
+				if (dwCityPopulation / 10 >= nTotalCosts)
+					nAdvice = ADVICE_NONE;
+				else
+					nAdvice = ADVICE_TRANSIT_TOOMANYROADS;
+			}
+			else
+				nAdvice = ADVICE_TRANSIT_INADEQUATEFLOATBOND;
+		}
+		else
+			nAdvice = ADVICE_TRANSIT_YESWECAN;
+		break;
+	default:
+		break;
+	}
+
+	if (nAdvice < ADVICE_NONE || nAdvice >= ADVICE_COUNT)
+		return;
+
+	Game_BudgetAdvisorDialog_SetAdvisorMessage(pBudgetAdvisorDlg, nAdvice);
+	if (nSound >= SOUND_START && nSound <= SOUND_SILENT)
+		Game_SimcityApp_SoundPlaySound(pSCApp, nSound);
+}
+
+extern "C" BOOL _declspec(naked) Hook_BudgetAdvisorDialog_OnInitDialog_MsgHandling() {
+	CBudgetAdvisorDialog *pThis;
+
+	__asm {
+		mov ecx, esi
+		mov [pThis], ecx
+	}
+
+	if (bAdvisorCustomString)
+		GameMain_Wnd_UpdateData(pThis, 0);
+	else
+		BudgetAdvisorDialog_SelectTypeAndSetMessage(pThis);
+
+	__asm mov ecx, [pThis]
+
+	GAMEJMP(0x41A50B);
+}
+
+// Spawns a budget advisor dialog for the selected advisor with a custom message.
+void DisplayBudgetAdvisorMessage(int iAdvisor, const char* szMessage) {
+	CSimcityAppPrimary* pSCApp;
+	CMainFrame* pMainFrm;
+
+	pSCApp = &pCSimcityAppThis;
+	pMainFrm = (CMainFrame*)pSCApp->m_pMainWnd;
+
+	// Construct the dialog and display it
+	CBudgetAdvisorDialog dlg;
+	Game_BudgetAdvisorDialog_Cons(&dlg, pMainFrm);
+	dlg.m_dwBDAType = iAdvisor;
+	GameMain_String_OperatorSet(&dlg.m_dwBDACStringOne, (char*)szMessage);
+	bAdvisorCustomString = true;
+	Game_GameDialog_DoModal(&dlg);
+	bAdvisorCustomString = false;
+	Game_BudgetAdvisorDialog_Dest(&dlg);
+}
+
 void InstallCityManagementHooks_SC2K1996(void) {
 	// Hook for SimulationPrepareBudgetDialog
 	SafeVirtualProtect((LPVOID)0x4015E6, 5, PAGE_EXECUTE_READWRITE);
@@ -1236,4 +1462,12 @@ void InstallCityManagementHooks_SC2K1996(void) {
 	// Hook for CSimGraphDialog::HideDialog
 	SafeVirtualProtect((LPVOID)0x4023C4, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4023C4, Hook_SimGraphDialog_HideDialog);
+
+	// Detour hook for CBudgetAdvisorDialog::OnInitDialog
+	// This is to account for the following:
+	// 1) Being able to make use of any advisor while sending a custom string.
+	// 2) To import the standard advisor/advice handling and account for bug fixes.
+	SafeVirtualProtect((LPVOID)0x41A4F6, 21, PAGE_EXECUTE_READWRITE);
+	memset((LPVOID)0x41A4F6, 0x90, 21);
+	NEWJMP((LPVOID)0x41A4F6, Hook_BudgetAdvisorDialog_OnInitDialog_MsgHandling);
 }

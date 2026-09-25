@@ -690,6 +690,7 @@ HOOKEXT BOOL bHookStopProcessing;
 extern HWND hWndExt;
 
 extern bool bBudgetOpen;
+extern bool bAdvisorCustomString;
 extern bool bOrdinanceOpen;
 
 // Hooks to inject in dllmain.cpp

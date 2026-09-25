@@ -78,9 +78,6 @@ extern int iForceNewspaperArg1;
 // Used for the "bad" terrain highlighting
 bool bHighlightBadTerrain = false;
 
-bool bBudgetOpen = false;
-bool bOrdinanceOpen = false;
-
 // Override some strings that have egregiously bad grammar/capitalization.
 // Maxis fail English? That's unpossible!
 extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMax) {
