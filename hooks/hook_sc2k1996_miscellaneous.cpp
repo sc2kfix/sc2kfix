@@ -3118,18 +3118,15 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 			default:
 				if (bOrdinanceOpen) {
 					// This block here handles all of the current Ordinance settings.
-					// If we ever want to redirect their calls here (and possibly add others
-					// add the given IDs to the list).
+					// Directed to a local function for 'help' and normal handling.
+					// The game-side message map entries are now no longer used.
 					if ((nID >= SC2K_DIALOG_ORDINANCES_CHECKBOX_FINAN_ONEPCTSALESTAX && nID <= SC2K_DIALOG_ORDINANCES_CHECKBOX_FINAN_ONEPCTINCOMETAX) ||
 						(nID >= SC2K_DIALOG_ORDINANCES_CHECKBOX_HLSFT_VOLUNTEERFIREDEPT && nID <= SC2K_DIALOG_ORDINANCES_CHECKBOX_HLSFT_JUNIORSPORTS) ||
 						(nID >= SC2K_DIALOG_ORDINANCES_CHECKBOX_EDUCA_PROREADCAMPAIGN && nID <= SC2K_DIALOG_ORDINANCES_CHECKBOX_EDUCA_NGHBRHOODWATCH) ||
 						(nID >= SC2K_DIALOG_ORDINANCES_CHECKBOX_PROMO_TOURISTADVERT && nID <= SC2K_DIALOG_ORDINANCES_CHECKBOX_PROMO_ANNUALCARNIVAL) ||
 						(nID >= SC2K_DIALOG_ORDINANCES_CHECKBOX_OTHER_ENERGYCONSERV && nID <= SC2K_DIALOG_ORDINANCES_CHECKBOX_OTHER_POLLUTIONCTRLS)) {
-						if (GetAsyncKeyState(VK_SHIFT) < 0) {
-							Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
-							DisplayItemHelp(pThis->m_hWnd, HELPTYPE_ORDINANCES, nID, false);
-							return TRUE;
-						}
+						BudgetOrdinanceDialog_ToggleOrdinance((CBudgetOrdinanceDialog *)pThis, nID);
+						return TRUE;
 					}
 				}
 				else if (bBudgetOpen) {

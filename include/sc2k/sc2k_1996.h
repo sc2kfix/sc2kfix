@@ -2531,6 +2531,33 @@ enum {
 	ADVICE_COUNT
 };
 
+// Indices used when adjusting the linked dialog resources.
+enum {
+	ORDINANCE_OPT_SALES_TAX = 0,
+	ORDINANCE_OPT_INCOME_TAX,
+	ORDINANCE_OPT_LEGALIZED_GAMBLING,
+	ORDINANCE_OPT_PARKING_FINES,
+	ORDINANCE_OPT_VOLUNTEER_FIRE_DEPARTMENT,
+	ORDINANCE_OPT_PUBLIC_SMOKING_BAN,
+	ORDINANCE_OPT_FREE_CLINICS,
+	ORDINANCE_OPT_JUNIOR_SPORTS,
+	ORDINANCE_OPT_PRO_READING_CAMPAIGN,
+	ORDINANCE_OPT_ANTI_DRUG_CAMPAIGN,
+	ORDINANCE_OPT_CPR_TRAINING,
+	ORDINANCE_OPT_NEIGHBORHOOD_WATCH,
+	ORDINANCE_OPT_TOURIST_ADVERTISING,
+	ORDINANCE_OPT_BUSINESS_ADVERTISING,
+	ORDINANCE_OPT_CITY_BEAUTIFICATION,
+	ORDINANCE_OPT_ANNUAL_CARNIVAL,
+	ORDINANCE_OPT_ENERGY_CONSERVATION,
+	ORDINANCE_OPT_NUCLEAR_FREE_ZONE,
+	ORDINANCE_OPT_HOMELESS_SHELTER,
+	ORDINANCE_OPT_POLLUTION_CONTROLS,
+
+	ORDINANCE_OPT_COUNT
+};
+
+// Bits that are used with dwCityOrdinances
 enum {
 	ORDINANCE_SALES_TAX = 0x1,
 	ORDINANCE_INCOME_TAX = 0x2,
@@ -3291,6 +3318,7 @@ GAMECALL(0x401163, void, __thiscall, Sound_PlayPrioritySound, CSound *)
 GAMECALL(0x4011E5, BOOL, __thiscall, Sound_MapToolSoundTrigger, CSound* pThis)
 GAMECALL(0x4011EA, CMovieDialog *, __thiscall, MovieDialog_Cons, CMovieDialog *, CMFC3XWnd *)
 GAMECALL(0x401154, void, __stdcall, SimulationPollutionTerrainAndLandValueScan, void)
+GAMECALL(0x401168, void, __thiscall, BudgetOrdinanceDialog_ToggleOrdinanceOption, CBudgetOrdinanceDialog *, int)
 GAMECALL(0x401181, int, __cdecl, FatStepTrace, __int16 *, __int16 *)
 GAMECALL(0x40118B, void, __thiscall, BudgetMainDialog_AdjustPropertyTaxPercentage, CBudgetMainDialog *)
 GAMECALL(0x40119F, void, __cdecl, DrawDisasterObjects, __int16, __int16, __int16)
@@ -5166,6 +5194,8 @@ extern void L_BridgeSelectDialog_OnDrawItem_SC2K1996(CBridgeSelectDialog *pThis,
 
 extern bool L_BudgetMainDialog_OnDrawItem_SC2K1996(CBudgetMainDialog *pThis, int nCtlID, LPDRAWITEMSTRUCT lpDIS);
 extern bool L_BudgetOrdinanceDialog_OnDrawItem_SC2K1996(CBudgetOrdinanceDialog *pThis, int nCtlID, LPDRAWITEMSTRUCT lpDIS);
+
+extern void BudgetOrdinanceDialog_ToggleOrdinance(CBudgetOrdinanceDialog *pThis, int nDlgID);
 
 extern void BudgetMain_PreCheckHourGlassTimer(CBudgetMainDialog *bBudgetMainDialog);
 extern void BudgetMain_PostCheckHourGlassTimer(CBudgetMainDialog *bBudgetMainDialog);
