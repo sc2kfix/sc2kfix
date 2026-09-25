@@ -1153,153 +1153,110 @@ static void BudgetAdvisorDialog_SelectTypeAndSetMessage(CBudgetAdvisorDialog *pB
 	int nItem, nTotalDemand, nCityCrime, nTotalFunding, nAdvice = -1, nSound = -1;
 	unsigned int nFireCoverage, nHealthCoverage, nHealthOrd, nTotalCosts;
 
+	nCityCrime = dwMapXGRP[GRP_CITYCRIME][0];
 	switch (pBudgetAdvisorDlg->m_dwBDAType) {
 	case ADVISOR_TAXES:
 		nTotalDemand = wCityDemand[DEMAND_IND] + wCityDemand[DEMAND_COM] + wCityDemand[DEMAND_RES];
-		if (nTotalDemand >= -666) {
-			if (dwCityFunds >= (int)dwCityPopulation)
-				nAdvice = ADVICE_NONE;
-			else if (nTotalDemand <= 666)
-				nAdvice = ADVICE_PROPTAX_CUTBACK;
-			else
-				nAdvice = ADVICE_PROPTAX_RAISE;
-		}
-		else
+		if (nTotalDemand < -666) 
 			nAdvice = ADVICE_PROPTAX_LOWER;
+		else if (dwCityFunds >= (int)dwCityPopulation)
+			nAdvice = ADVICE_NONE;
+		else if (nTotalDemand <= 666)
+			nAdvice = ADVICE_PROPTAX_CUTBACK;
+		else
+			nAdvice = ADVICE_PROPTAX_RAISE;
 		nSound = SOUND_BOOS;
 		break;
 	case ADVISOR_ORDINANCES:
-		if ((dwCityOrdinances & ORDINANCE_POLLUTION_CONTROLS) != 0 || dwMapXGRP[GRP_POLLUTION][0] <= 30) {
-			if ((dwCityOrdinances & ORDINANCE_ENERGY_CONSERVATION) != 0 || dwPowerUsedPercentage <= 98) {
-				if (dwMapXGRP[GRP_CITYCRIME][0] <= 30) {
-					if ((dwCityOrdinances & ORDINANCE_INCOME_TAX) != 0 && wCityDemand[DEMAND_RES] < -666)
-						nAdvice = ADVICE_ORDIN_DROP_INCOMETAX;
-					else {
-						if ((dwCityOrdinances & ORDINANCE_SALES_TAX) == 0 || wCityDemand[DEMAND_COM] >= -666)
-							nAdvice = ADVICE_NONE;
-						else
-							nAdvice = ADVICE_ORDIN_DROP_SALESTAX;
-					}
-				}
-				else {
-					if ((dwCityOrdinances & ORDINANCE_NEIGHBORHOOD_WATCH) == 0)
-						nAdvice = ADVICE_POLICE_DO_NEIGHBORWATCH;
-					else if ((dwCityOrdinances & ORDINANCE_ANTI_DRUG_CAMPAIGN) != 0) {
-						if ((dwCityOrdinances & ORDINANCE_LEGALIZED_GAMBLING) != 0)
-							nAdvice = ADVICE_ORDIN_DROP_LEGALGAMBLING;
-						else
-							nAdvice = ADVICE_NONE;
-					}
-					else
-						nAdvice = ADVICE_ORDIN_DO_ANTIDRUGCAMPGN;
-				}
-			}
-			else {
-				// Make sure of the following in order to hit this condition:
-				// - total number of generated tiles is above 0
-				// - energy conservation isn't enabled
-				// - utilisation is above 98%
-				//
-				// Previously on empty maps you'd also get the same warning - but there isn't anything to conserve.
-				//
-				// An alternative possibility could well be to get the player to enable it as early as possible.
-				// I'll leave that thought there while accounting for this change either way.
-				if (dwTotalGeneratedPowerTiles > 0 && (dwCityOrdinances & ORDINANCE_ENERGY_CONSERVATION) == 0 && dwPowerUsedPercentage > 98)
-					nAdvice = ADVICE_ORDIN_DO_ENERGYCONSERVE;
-				else
-					nAdvice = ADVICE_NONE;
-			}
-		}
-		else
+		nAdvice = ADVICE_NONE;
+		if ((dwCityOrdinances & ORDINANCE_POLLUTION_CONTROLS) == 0 && dwMapXGRP[GRP_POLLUTION][0] > 30)
 			nAdvice = ADVICE_ORDIN_DO_POLLUTIONCTRLS;
+		else if ((dwCityOrdinances & ORDINANCE_ENERGY_CONSERVATION) == 0 && dwPowerUsedPercentage > 98) {
+			// Make sure of the following in order to hit this condition:
+			// - total number of generated tiles is above 0
+			// - energy conservation isn't enabled
+			// - utilisation is above 98%
+			//
+			// Previously on empty maps you'd also get the same warning - but there isn't anything to conserve.
+			//
+			// An alternative possibility could well be to get the player to enable it as early as possible.
+			// I'll leave that thought there while accounting for this change either way.
+			if (dwTotalGeneratedPowerTiles > 0)
+				nAdvice = ADVICE_ORDIN_DO_ENERGYCONSERVE;
+		}
+		else if (nCityCrime > 30) {
+			if ((dwCityOrdinances & ORDINANCE_NEIGHBORHOOD_WATCH) == 0)
+				nAdvice = ADVICE_POLICE_DO_NEIGHBORWATCH;
+			else if ((dwCityOrdinances & ORDINANCE_ANTI_DRUG_CAMPAIGN) == 0)
+				nAdvice = ADVICE_ORDIN_DO_ANTIDRUGCAMPGN;
+			else if ((dwCityOrdinances & ORDINANCE_LEGALIZED_GAMBLING) != 0)
+				nAdvice = ADVICE_ORDIN_DROP_LEGALGAMBLING;
+		}
+		else if ((dwCityOrdinances & ORDINANCE_INCOME_TAX) != 0 && wCityDemand[DEMAND_RES] < -666)
+			nAdvice = ADVICE_ORDIN_DROP_INCOMETAX;
+		else if ((dwCityOrdinances & ORDINANCE_SALES_TAX) != 0 && wCityDemand[DEMAND_COM] < -666)
+			nAdvice = ADVICE_ORDIN_DROP_SALESTAX;
 		break;
 	case ADVISOR_BONDS:
-		if (dwCityFunds >= -1000) {
-			if (dwCityFunds >= 0) {
-				if (wNationalFedRate + (__int16)(25000 * dwCityBonds / (dwCityValue + 1)) + 1 >= 4) {
-					if (pBudgetArr[BUDGET_COMFUND].iEstimatedCost + pBudgetArr[BUDGET_INDFUND].iEstimatedCost + pBudgetArr[BUDGET_RESFUND].iEstimatedCost >= pBudgetArr[BUDGET_BOND].iEstimatedCost)
-						nAdvice = ADVICE_NONE;
-					else
-						nAdvice = ADVICE_BOND_OUTSTANDINGKILLING;
-				}
-				else
-					nAdvice = ADVICE_BOND_FLOATGOODRATES;
-			}
-			else
-				nAdvice = ADVICE_BOND_CUTBACK;
-		}
-		else
+		nAdvice = ADVICE_NONE;
+		if (dwCityFunds < -1000) 
 			nAdvice = ADVICE_BOND_FLOATCITYEXPAND;
+		else if (dwCityFunds < 0) 
+			nAdvice = ADVICE_BOND_CUTBACK;
+		else if (wNationalFedRate + (__int16)(25000 * dwCityBonds / (dwCityValue + 1)) + 1 < 4) 
+			nAdvice = ADVICE_BOND_FLOATGOODRATES;
+		else if (pBudgetArr[BUDGET_COMFUND].iEstimatedCost + pBudgetArr[BUDGET_INDFUND].iEstimatedCost + pBudgetArr[BUDGET_RESFUND].iEstimatedCost < pBudgetArr[BUDGET_BOND].iEstimatedCost)
+			nAdvice = ADVICE_BOND_OUTSTANDINGKILLING;
 		break;
 	case ADVISOR_POLICE:
-		nCityCrime = dwMapXGRP[GRP_CITYCRIME][0];
-		if (nCityCrime <= 40) {
-			if (nCityCrime <= 30 || (dwCityOrdinances & ORDINANCE_NEIGHBORHOOD_WATCH) != 0) {
-				if (nCityCrime >= 20)
-					nAdvice = ADVICE_POLICE_NATAVERAGE;
-				else
-					nAdvice = ADVICE_POLICE_CRIMELOW;
-			}
-			else
-				nAdvice = ADVICE_POLICE_DO_NEIGHBORWATCH;
-		}
-		else
+		if (nCityCrime > 40) 
 			nAdvice = ADVICE_POLICE_OUTOFCONTROL;
+		else if (nCityCrime > 30 && (dwCityOrdinances & ORDINANCE_NEIGHBORHOOD_WATCH) == 0) 
+			nAdvice = ADVICE_POLICE_DO_NEIGHBORWATCH;
+		else if (nCityCrime >= 20)
+			nAdvice = ADVICE_POLICE_NATAVERAGE;
+		else
+			nAdvice = ADVICE_POLICE_CRIMELOW;
 		break;
 	case ADVISOR_FIRE:
 		nFireCoverage = pBudgetArr[BUDGET_FIRE].iFundingPercent * (150 * wTileCount[TILE_SERVICES_FIRE] / 9);
-		if (nFireCoverage >= dwCityPopulation) {
-			if ((int)(2 * nFireCoverage) / 3 <= (int)dwCityPopulation)
-				nAdvice = ADVICE_FIRE_COVERAGEADEQUATE;
-			else
-				nAdvice = ADVICE_FIRE_COVERAGEEXCELLENT;
-		}
-		else
+		if (nFireCoverage < dwCityPopulation) 
 			nAdvice = ADVICE_FIRE_COVERAGENEEDMORE;
+		else if ((int)(2 * nFireCoverage) / 3 <= (int)dwCityPopulation)
+			nAdvice = ADVICE_FIRE_COVERAGEADEQUATE;
+		else
+			nAdvice = ADVICE_FIRE_COVERAGEEXCELLENT;
 		break;
 	case ADVISOR_HEALTH:
 		nHealthCoverage = pBudgetArr[BUDGET_HEALTH].iFundingPercent * (250 * wTileCount[TILE_SERVICES_HOSPITAL] / 9);
-		if (nHealthCoverage >= dwCityPopulation) {
-			if ((int)(2 * nHealthCoverage) / 3 <= (int)dwCityPopulation) {
-				nHealthOrd = rand() % 3u;
-				if (nHealthOrd) {
-					if (nHealthOrd == 1) {
-						if ((dwCityOrdinances & ORDINANCE_CPR_TRAINING) != 0)
-							nAdvice = ADVICE_HEALTH_ADEQUATE;
-						else
-							nAdvice = ADVICE_HEALTH_DO_CPRTRAINING;
-					}
-					else if (nHealthOrd == 2) {
-						if ((dwCityOrdinances & ORDINANCE_FREE_CLINICS) != 0)
-							nAdvice = ADVICE_HEALTH_ADEQUATE;
-						else
-							nAdvice = ADVICE_HEALTH_DO_FREECLINICS;
-					}
-					else
-						nAdvice = ADVICE_HEALTH_ADEQUATE;
+		if (nHealthCoverage < dwCityPopulation) 
+			nAdvice = ADVICE_HEALTH_NEEDMORE;
+		else if ((int)(2 * nHealthCoverage) / 3 <= (int)dwCityPopulation) {
+			nAdvice = ADVICE_HEALTH_ADEQUATE;
+			nHealthOrd = rand() % 3;
+			if (nHealthOrd > 0) {
+				if (nHealthOrd == 1) {
+					if ((dwCityOrdinances & ORDINANCE_CPR_TRAINING) == 0)
+						nAdvice = ADVICE_HEALTH_DO_CPRTRAINING;
 				}
-				else {
-					if ((dwCityOrdinances & ORDINANCE_PUBLIC_SMOKING_BAN) != 0)
-						nAdvice = ADVICE_HEALTH_ADEQUATE;
-					else
-						nAdvice = ADVICE_HEALTH_DO_SMOKINGBAN;
+				else if (nHealthOrd == 2) {
+					if ((dwCityOrdinances & ORDINANCE_FREE_CLINICS) == 0)
+						nAdvice = ADVICE_HEALTH_DO_FREECLINICS;
 				}
 			}
-			else
-				nAdvice = ADVICE_HEALTH_EXCELLENT;
+			else if ((dwCityOrdinances & ORDINANCE_PUBLIC_SMOKING_BAN) == 0)
+				nAdvice = ADVICE_HEALTH_DO_SMOKINGBAN;
 		}
 		else
-			nAdvice = ADVICE_HEALTH_NEEDMORE;
+			nAdvice = ADVICE_HEALTH_EXCELLENT;
 		break;
 	case ADVISOR_EDUCATION:
-		if (pBudgetArr[BUDGET_SCHOOL].iFundingPercent * (15 * wTileCount[TILE_SERVICES_SCHOOL] / 9) >= (int)(pRawPopRatioTable[2] + pRawPopRatioTable[1])) {
-			if (pBudgetArr[BUDGET_COLLEGE].iFundingPercent * (50 * wTileCount[TILE_SERVICES_COLLEGE] / 16) >= (int)pRawPopRatioTable[3])
-				nAdvice = ADVICE_EDUCATION_ADEQUATE;
-			else
-				nAdvice = ADVICE_EDUCATION_NEEDMORECOLLEGES;
-		}
-		else
+		if (pBudgetArr[BUDGET_SCHOOL].iFundingPercent * (15 * wTileCount[TILE_SERVICES_SCHOOL] / 9) < (int)(pRawPopRatioTable[2] + pRawPopRatioTable[1])) 
 			nAdvice = ADVICE_EDUCATION_NEEDMORESCHOOLS;
+		else if (pBudgetArr[BUDGET_COLLEGE].iFundingPercent * (50 * wTileCount[TILE_SERVICES_COLLEGE] / 16) < (int)pRawPopRatioTable[3])
+			nAdvice = ADVICE_EDUCATION_NEEDMORECOLLEGES;
+		else
+			nAdvice = ADVICE_EDUCATION_ADEQUATE;
 		break;
 	case ADVISOR_TRANSIT:
 		nTotalCosts = 0;
@@ -1308,18 +1265,13 @@ static void BudgetAdvisorDialog_SelectTypeAndSetMessage(CBudgetAdvisorDialog *pB
 			nTotalCosts += pBudgetArr[nItem].iCurrentCosts;
 			nTotalFunding += pBudgetArr[nItem].iFundingPercent;
 		}
-		if (nTotalFunding >= 600) {
-			if (dwCityPopulation / 100 <= nTotalCosts) {
-				if (dwCityPopulation / 10 >= nTotalCosts)
-					nAdvice = ADVICE_NONE;
-				else
-					nAdvice = ADVICE_TRANSIT_TOOMANYROADS;
-			}
-			else
-				nAdvice = ADVICE_TRANSIT_INADEQUATEFLOATBOND;
-		}
-		else
-			nAdvice = ADVICE_TRANSIT_YESWECAN;
+		nAdvice = ADVICE_NONE;
+		if (nTotalFunding < 600) 
+			nAdvice = ADVICE_TRANSIT_YESWECAN; // and we do regret it...
+		else if (dwCityPopulation / 100 > nTotalCosts) 
+			nAdvice = ADVICE_TRANSIT_INADEQUATEFLOATBOND;
+		else if (dwCityPopulation / 10 < nTotalCosts)
+			nAdvice = ADVICE_TRANSIT_TOOMANYROADS;
 		break;
 	default:
 		break;
