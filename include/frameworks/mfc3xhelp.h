@@ -89,7 +89,7 @@
 //					class CAboutDialog;
 //					class CMovieDialog;
 //					class CGameDialog;
-//						class CBridgeSelectDIalog;
+//						class CBridgeSelectDialog;
 //						class CBudgetDialog;
 //						class CBudgetAdvisorDialog;
 //						class CBudgetEducationDialog;
@@ -123,9 +123,8 @@
 //				class CMFC3XListBox;
 //				class CMFC3XComboBox;
 //				class CMFC3XEdit;
-//					class CSimcityEdit;
-//						class CSimcityEditOne;
-//						class CSimcityEditTwo;
+//					class CSimcityEditPrimary;
+//						class CSimcityEditChild;
 //				class CMFC3XScrollBar;
 //				class CMFC3XTabCtrl;
 //
