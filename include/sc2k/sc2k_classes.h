@@ -405,7 +405,7 @@ public:
 
 class CGameDialog : public CMFC3XDialog {
 public:
-	DWORD dwLeftButtonDown;
+	DWORD dwGDButtonDown;
 };
 
 class CNewspaperDialog : public CGameDialog {
@@ -446,6 +446,21 @@ public:
 	CMFC3XFont dwNDFontOne;
 	DWORD dwNDPixHeight;
 	CMFC3XString *dwNDStringOne;
+};
+
+class CCityIndustryDialog : public CGameDialog {
+public:
+	CGraphics *dwCIDCGraphicsOne;
+	CMFC3XRect dwCIDRectOne;
+	DWORD dwCIDDialogActive;
+	int dwCIDItemPos;
+	int dwCIDSection;
+	DWORD dwCIDDivisor;
+	POINT dwCIDItem[11];
+	CMFC3XString *dwCIDStrings[11];
+	CMFC3XButton dwCIDActiveButton; // No longer used.
+	CMFC3XStatic dwCIDStaticBars;
+	CMFC3XStatic dwCIDStaticIcons;
 };
 
 class CPopulationDialog : public CGameDialog {
@@ -518,7 +533,7 @@ public:
 	CPopulationDialog *dwMFPopulationDialog; // CPopulationDialog
 	CCityMapDialog *dwMFCityMapDialog; // CCityMapDialog
 	CNeighbourDialog *dwMFNeighbourDialog; // CNeighbourDialog
-	DWORD *dwMFCityIndustryDialog; // CCityIndustryDialog
+	CCityIndustryDialog *dwMFCityIndustryDialog; // CCityIndustryDialog
 	CMFC3XPalette *dwMFEight;
 	CGraphics *dwMFCGraphicsOne;
 	CMFC3XPalette *dwMFnine;

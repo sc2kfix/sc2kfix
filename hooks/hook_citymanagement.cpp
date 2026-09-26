@@ -1012,6 +1012,133 @@ extern "C" BOOL __stdcall Hook_PopulationDialog_ToggleDialog() {
 	return pThis->dwPDDialogActive;
 }
 
+extern "C" void __stdcall Hook_CityIndustryDialog_DoDataExchange(CMFC3XDataExchange *pDatEx) {
+	CCityIndustryDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	GameMain_DDX_Control(pDatEx, SC2K_DIALOG_INDUSTRY_STATIC_BARS, &pThis->dwCIDStaticBars);
+	GameMain_DDX_Control(pDatEx, SC2K_DIALOG_INDUSTRY_STATIC_ICONS, &pThis->dwCIDStaticIcons);
+}
+
+static void CityIndustryDialog_GetRangeSelect(CCityIndustryDialog *pCityIndDlg) {
+	int nSectionState[IND_SECT_COUNT];
+
+	memset(nSectionState, BST_UNCHECKED, sizeof(nSectionState));
+	if (pCityIndDlg->dwCIDSection >= IND_SECT_RATIOS && pCityIndDlg->dwCIDSection <= IND_SECT_DEMAND) {
+		nSectionState[pCityIndDlg->dwCIDSection] = BST_CHECKED;
+		Button_SetCheck(GetDlgItem(pCityIndDlg->m_hWnd, SC2K_DIALOG_INDUSTRY_RADIO_RATIOS), nSectionState[IND_SECT_RATIOS]);
+		Button_SetCheck(GetDlgItem(pCityIndDlg->m_hWnd, SC2K_DIALOG_INDUSTRY_RADIO_TAXRATES), nSectionState[IND_SECT_TAXRATES]);
+		Button_SetCheck(GetDlgItem(pCityIndDlg->m_hWnd, SC2K_DIALOG_INDUSTRY_RADIO_DEMAND), nSectionState[IND_SECT_DEMAND]);
+	}
+}
+
+extern "C" int __stdcall Hook_CityIndustryDialog_ToggleDialog() {
+	CCityIndustryDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	if (pThis->dwCIDDialogActive) {
+		ShowWindow(pThis->m_hWnd, SW_HIDE);
+		if (dwRefreshControls)
+			Game_CityIndustryDialog_DeleteObject(pThis);
+		CityIndustryDialog_GetRangeSelect(pThis);
+		pThis->dwCIDDialogActive = 0;
+	}
+	else {
+		CityIndustryDialog_GetRangeSelect(pThis);
+		if (dwRefreshControls)
+			Game_CityIndustryDialog_AttachObject(pThis);
+		ShowWindow(pThis->m_hWnd, SW_SHOWNORMAL);
+		pThis->dwCIDDialogActive = 1;
+	}
+	return pThis->dwCIDDialogActive;
+}
+
+void CityIndustryDialog_UpdateSection(CCityIndustryDialog *pCityIndDlg, int nDlgID) {
+	int nSelected;
+
+	switch (nDlgID) {
+	case SC2K_DIALOG_INDUSTRY_RADIO_RATIOS:
+		nSelected = IND_SECT_RATIOS;
+		break;
+	case SC2K_DIALOG_INDUSTRY_RADIO_TAXRATES:
+		nSelected = IND_SECT_TAXRATES;
+		break;
+	case SC2K_DIALOG_INDUSTRY_RADIO_DEMAND:
+		nSelected = IND_SECT_DEMAND;
+		break;
+	default:
+		return;
+	}
+
+	if (pCityIndDlg->dwCIDSection != nSelected) {
+		pCityIndDlg->dwCIDSection = nSelected;
+		CityIndustryDialog_GetRangeSelect(pCityIndDlg);
+		Game_CityIndustryDialog_UpdateDialog(pCityIndDlg);
+	}
+}
+
+extern "C" void __stdcall Hook_CityIndustryDialog_OnLButtonDown(UINT nFlags, CMFC3XPoint pt) {
+	CCityIndustryDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CMainFrame *pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
+	HWND hWndCapt;
+	int16_t nOptPos, nOptSel;
+	int nIndPos;
+
+	if (GetAsyncKeyState(VK_SHIFT) < 0) {
+		if (PtInRect(&rectCIDArea, pt)) {
+			nOptPos = (int16_t)(int64_t)((double)(pt.y - rectCIDOptions.top) / fltCIDHeight);
+			pThis->dwCIDItemPos = nOptPos;
+			pThis->dwCIDItem[nOptPos].x = pt.x;
+			pThis->dwCIDItem[nOptPos].y = pt.y;
+			if (pThis->dwCIDItemPos > IND_NONE && pThis->dwCIDItemPos < IND_COUNT) {
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+				DisplayItemHelp(pMainFrm->m_hWnd, HELPTYPE_INDUSTRY, pThis->dwCIDItemPos, true);
+			}
+		}
+		pThis->dwGDButtonDown = 0;
+		pThis->dwCIDItemPos = IND_NONE;
+		return;
+	}
+	if (PtInRect(&rectCIDOptions, pt) && pThis->dwCIDSection == IND_SECT_TAXRATES) {
+		pThis->dwGDButtonDown = 1;
+		hWndCapt = SetCapture(pThis->m_hWnd);
+		nOptPos = (int16_t)(int64_t)((double)(pt.y - rectCIDOptions.top) / fltCIDHeight);
+		pThis->dwCIDItemPos = nOptPos;
+		pThis->dwCIDItem[nOptPos].x = pt.x;
+		pThis->dwCIDItem[nOptPos].y = pt.y;
+		if (pThis->dwCIDItemPos <= IND_NONE || pThis->dwCIDItemPos > IND_COUNT) {
+			pThis->dwGDButtonDown = 0;
+			ReleaseCapture();
+		}
+		else {
+			nOptSel = (int16_t)(int64_t)((pThis->dwCIDDivisor / fltCIDWidth) * (double)(pt.x - rectCIDOptions.left));
+			if (nOptSel < 0)
+				nOptSel = 0;
+			else if (nOptSel > 20)
+				nOptSel = 20;
+			if (GetAsyncKeyState(VK_MENU) < 0) {
+				for (nIndPos = 0; nIndPos < IND_COUNT; ++nIndPos)
+					pIndividualIndTaxRate[nIndPos] = nOptSel;
+				Game_AdjustIndustrialTaxRate(0);
+				Game_CityIndustryDialog_UpdateDialog(pThis);
+			}
+			else if (pIndividualIndTaxRate[pThis->dwCIDItemPos] != nOptSel) {
+				pIndividualIndTaxRate[pThis->dwCIDItemPos] = nOptSel;
+				Game_AdjustIndustrialTaxRate(0);
+				Game_CityIndustryDialog_UpdateDialog(pThis);
+			}
+		}
+		return;
+	}
+	pThis->dwGDButtonDown = 0;
+}
+
 extern "C" void __stdcall Hook_CityMapDialog_OnLButtonDown(UINT nFlags, CMFC3XPoint pt) {
 	CCityMapDialog *pThis;
 
@@ -1474,6 +1601,18 @@ void InstallCityManagementHooks_SC2K1996(void) {
 	// Hook for CPopulationDialog::ToggleDialog
 	SafeVirtualProtect((LPVOID)0x401EB5, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401EB5, Hook_PopulationDialog_ToggleDialog);
+
+	// Hook for CCityIndustryDialog::DoDataExchange
+	SafeVirtualProtect((LPVOID)0x401E01, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401E01, Hook_CityIndustryDialog_DoDataExchange);
+
+	// Hook for CCityIndustryDialog::ToggleDialog
+	SafeVirtualProtect((LPVOID)0x40123F, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x40123F, Hook_CityIndustryDialog_ToggleDialog);
+
+	// Hook for CCityIndustryDialog::OnLButtonDown
+	SafeVirtualProtect((LPVOID)0x401910, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x401910, Hook_CityIndustryDialog_OnLButtonDown);
 
 	// Hook for CCityMapDialog::OnLButtonDown
 	SafeVirtualProtect((LPVOID)0x402FD6, 5, PAGE_EXECUTE_READWRITE);

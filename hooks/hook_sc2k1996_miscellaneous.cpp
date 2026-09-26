@@ -146,7 +146,7 @@ extern "C" BOOL __stdcall Hook_GameDialog_OnSetCursor(CMFC3XWnd *pWnd, UINT nHit
 		if (bOrdinanceOpen ||
 			bBudgetOpen ||
 			(CCityMapDialog *)pThis == pMainFrm->dwMFCityMapDialog ||
-			(DWORD *)pThis == pMainFrm->dwMFCityIndustryDialog ||
+			(CCityIndustryDialog *)pThis == pMainFrm->dwMFCityIndustryDialog ||
 			(CNeighbourDialog *)pThis == pMainFrm->dwMFNeighbourDialog ||
 			(CPopulationDialog *)pThis == pMainFrm->dwMFPopulationDialog ||
 			(CSimGraphDialog *)pThis == pMainFrm->dwMFSimGraphDialog) {
@@ -211,7 +211,7 @@ extern "C" void __stdcall Hook_GameDialog_OnLButtonDown(UINT nFlags, CMFC3XPoint
 		}
 	}
 
-	pThis->dwLeftButtonDown = 1;
+	pThis->dwGDButtonDown = 1;
 	GameMain_Wnd_Default(pThis);
 }
 
@@ -1459,6 +1459,7 @@ extern "C" HWND __stdcall Hook_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lp
 		return CreateDialogParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_OwnerInfoDialogProc, dwInitParam);
 	case SC2K_DIALOG_POPULATION:
 	case SC2K_DIALOG_GRAPH:
+	case SC2K_DIALOG_INDUSTRY:
 	case SC2K_DIALOG_CITYMAP:
 		return CreateDialogParamA(hSC2KFixModule, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	default:
@@ -3152,6 +3153,17 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 						FixPopDialogButtons((CPopulationDialog *)pThis);
 						InvalidateRect(pThis->m_hWnd, NULL, TRUE);
 						UpdateWindow(pThis->m_hWnd);
+						return TRUE;
+					}
+				}
+				else if ((CCityIndustryDialog *)pThis == pMainFrm->dwMFCityIndustryDialog) {
+					if (nID >= SC2K_DIALOG_INDUSTRY_RADIO_RATIOS && nID <= SC2K_DIALOG_INDUSTRY_RADIO_DEMAND) {
+						if (GetAsyncKeyState(VK_SHIFT) < 0) {
+							Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+							DisplayItemHelp(pMainFrm->m_hWnd, HELPTYPE_INDUSTRY, nID, true);
+							return TRUE;
+						}
+						CityIndustryDialog_UpdateSection((CCityIndustryDialog *)pThis, nID);
 						return TRUE;
 					}
 				}

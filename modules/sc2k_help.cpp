@@ -583,6 +583,59 @@ static const char *GetHelpString_CityMap(int nIndex) {
 	return pStr;
 }
 
+// The Industry case is a combination of hit indices and control IDs.
+static const char *GetHelpString_Industry(int nIndex) {
+	const char *pStr = NULL;
+	switch (nIndex) {
+		case IND_STEELMINING:
+			pStr = "Steel/Mining is a heavy industry that prefers dense zoning. It is a major source of employment. It causes a lot of pollution, and can be stifled by enacting the Pollution Controls ordinance.";
+			break;
+		case IND_TEXTILES:
+			pStr = "Textiles is a fairly heavy industry that can employ thousands in a large city. It contributes to both air and water pollution, and can be hampered by enacting the Pollution Controls ordinance.";
+			break;
+		case IND_PETROCHEMICAL:
+			pStr = "Petrochemicals is a high-tech industry that requires a city with a high Education Quotient to be properly staffed. It is a serious polluter, and can be chased away by enacting the Pollution Controls ordinance.";
+			break;
+		case IND_FOOD:
+			pStr = "Food is a fairly stable industry that can exist in both high and low-density areas. It doesn't require a high Education Quotient, and doesn't pollute (much).";
+			break;
+		case IND_CONSTRUCTION:
+			pStr = "The construction industry isn't a big employer. Though spurred by local growth, it depends primarily on temporary, out of town workers.";
+			break;
+		case IND_AUTOMATIVE:
+			pStr = "The Automotive industry is a big employer. It requires a work force with a high Education Quotient. It has the potential to be a bad polluter, and is negatively affected by enacting the Pollution Controls ordinance.";
+			break;
+		case IND_AEROSPACE:
+			pStr = "Aerospace is a heavy, dense industry that can employ many citizens. It requires a work force with a very high Education Quotient.";
+			break;
+		case IND_FINANCE:
+			pStr = "Finance is a medium to low-density industry that requires an educated work force.";
+			break;
+		case IND_MEDIA:
+			pStr = "Media is a medium to low-density industry that requires an educated work force.";
+			break;
+		case IND_ELECTRONICS:
+			pStr = "Electronics is a potentially huge employer that will continue to grow for many decades to come. It is a mild polluter, and requires a very well-educated work force.";
+			break;
+		case IND_TOURISM:
+			pStr = "Tourism is a very mild polluter (mostly litter), that can exist in high or low-density areas. It thrives in cities with lots of tourist attractions (zoos, marinas, etc.) and scenic beauty. A high crime rate can ruin tourism.";
+			break;
+		case SC2K_DIALOG_INDUSTRY_RADIO_RATIOS:
+			pStr = "This button will graph the relative amount of each industry type that currently exists within your city. This ratio will influence employment, industrial growth, educational needs, and pollution within your city.";
+			break;
+		case SC2K_DIALOG_INDUSTRY_RADIO_TAXRATES:
+			pStr = "This graph allows you to set different tax rates for each industry type by dragging the particular industry's blue bar to the left or right. This is useful if you want to promote or retard certain industries. For instance if you think the automobile is about to be the next big thing, try lowering the tax rate for that industry to spur growth. On the other hand, if the pollution from the steel mills is getting you down, increase their tax rate to run them out of town.\n\n"
+				"You can adjust all the industries at the same time by holding the ALT key as you drag the bars.";
+			break;
+		case SC2K_DIALOG_INDUSTRY_RADIO_DEMAND:
+			pStr = "This graph will show you the national demand for each of the industry groups. This demand is what fuels the growth of your city. The demands here are based on a model of the national economy. The newspaper is your primary source of information on the national economy; look there for hints about which industries you should be promoting.";
+			break;
+		default:
+			break;
+	}
+	return pStr;
+}
+
 static const char *GetHelpString_Graphs(int nIndex) {
 	const char *pStr = NULL;
 	switch (nIndex) {
@@ -676,6 +729,9 @@ static const char *GetHelpString(int nType, int nIndex) {
 			break;
 		case HELPTYPE_CITYMAP:
 			pStr = GetHelpString_CityMap(nIndex);
+			break;
+		case HELPTYPE_INDUSTRY:
+			pStr = GetHelpString_Industry(nIndex);
 			break;
 		case HELPTYPE_GRAPHS:
 			pStr = GetHelpString_Graphs(nIndex);
@@ -785,7 +841,7 @@ BOOL CALLBACK ConfHelpDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 // 'nIndex' - this can be:
 // - For the City/Map Toolbars it is the button position index (not the control index).
 // - For the Floating Status Widget it is ignored.
-// - For all other dialogues it'll be their defined Ctrl IDs.
+// - For all other dialogues most of the time it'll be their defined Ctrl IDs (unless stated otherwise).
 //
 // 'bFromMain' should be set to true only when DisplayItemHelp() is called from a modeless
 // dialogue, the map/city toolbars, the Help menu of when F1 is pressed while the View

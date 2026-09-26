@@ -2983,6 +2983,31 @@ enum {
 };
 
 enum {
+	IND_NONE = -1,
+	IND_STEELMINING,
+	IND_TEXTILES,
+	IND_PETROCHEMICAL,
+	IND_FOOD,
+	IND_CONSTRUCTION,
+	IND_AUTOMATIVE,
+	IND_AEROSPACE,
+	IND_FINANCE,
+	IND_MEDIA,
+	IND_ELECTRONICS,
+	IND_TOURISM,
+
+	IND_COUNT
+};
+
+enum {
+	IND_SECT_RATIOS,
+	IND_SECT_TAXRATES,
+	IND_SECT_DEMAND,
+
+	IND_SECT_COUNT
+};
+
+enum {
 	GRAPHDLG_RANGE_ONEYEAR,
 	GRAPHDLG_RANGE_TENYEARS,
 	GRAPHDLG_RANGE_HUNDREDYEARS,
@@ -3390,8 +3415,10 @@ GAMECALL(0x40178F, __int16, __cdecl, PlaceTile, __int16 x, __int16 y, __int16 iT
 GAMECALL(0x4017B2, void, __thiscall, SimcityDoc_UpdateDocumentTitle, CSimcityDoc* pThis)
 GAMECALL(0x4017FD, void, __stdcall, DrawAllLarge)
 GAMECALL(0x401820, void, __thiscall, Engine_SimulationProcessTick, CEngine *)
+GAMECALL(0x401825, void, __thiscall, CityIndustryDialog_DeleteObject, CCityIndustryDialog *)
 GAMECALL(0x40183E, void, __thiscall, SimGraphDialog_DeleteObjects, CSimGraphDialog *)
 GAMECALL(0x401857, int, __cdecl, MapToolPlaceTree, __int16 iTileTargetX, __int16 iTileTargetY)
+GAMECALL(0x40186B, void, __thiscall, CityIndustryDialog_UpdateDialog, CCityIndustryDialog *)
 GAMECALL(0x4018C0, void, __stdcall, SelectArcologyDialog_OnDrawState, LPDRAWITEMSTRUCT)
 GAMECALL(0x4018F7, void, __thiscall, BudgetMainDialog_AdjustFireFundingPercentage, CBudgetMainDialog *)
 GAMECALL(0x401901, void, __thiscall, SelectArcologyDialog_OnDrawEntire, CSelectArcologyDialog *, int, int, LPDRAWITEMSTRUCT)
@@ -3442,6 +3469,7 @@ GAMECALL(0x401D16, __int16, __cdecl, PointToTile, __int16 x, __int16 y)
 GAMECALL(0x401D2A, int, __cdecl, InvertTerrain, __int16, __int16)
 GAMECALL(0x401D3E, int, __thiscall, MainFrame_CloseInflightDialog, CMainFrame *)
 GAMECALL(0x401D7A, int, __thiscall, JokeDialog_Destruct, CJokeDialog *)
+GAMECALL(0x401D89, void, __cdecl, AdjustIndustrialTaxRate, __int16)
 GAMECALL(0x401DBB, void, __thiscall, SimcityApp_UpdateTick, CSimcityAppPrimary *)
 GAMECALL(0x401DCA, void, __cdecl, RemoveLabel, __int16)
 GAMECALL(0x401E06, void, __cdecl, CalculateGrade, CMFC3XPaintDC *, __int16, __int16)
@@ -3518,6 +3546,7 @@ GAMECALL(0x402414, void, __thiscall, SimcityApp_MusicPlay, CSimcityAppPrimary *p
 GAMECALL(0x402419, LONG, __thiscall, Graphics_Width, CGraphics *)
 GAMECALL(0x40242D, void, __thiscall, CurrencyString_Dest, CCurrencyString *)
 GAMECALL(0x402450, void, __thiscall, Graphics_DeleteStored, CGraphics *)
+GAMECALL(0x40245F, void, __thiscall, CityIndustryDialog_AttachObject, CCityIndustryDialog *)
 GAMECALL(0x402478, int, __cdecl, SpawnHelicopter, __int16 x, __int16 y)
 GAMECALL(0x40247D, void, __stdcall, RecalculateMayorsHouseStats)
 GAMECALL(0x402487, void, __cdecl, EventScenarioNotification, __int16 iEvent)
@@ -3758,6 +3787,7 @@ GAMECALL_MAIN(0x4AE83A, BOOL, __thiscall, View_OnCmdMsg, CMFC3XView *, UINT nID,
 GAMECALL_MAIN(0x4B2206, int, __thiscall, WinApp_DoMessageBox, CMFC3XWinApp *pThis, const char *lpszPrompt, UINT nType, UINT nIDPrompt)
 GAMECALL_MAIN(0x4B232F, int, __stdcall, AfxMessageBoxStr, LPCSTR lpszPrompt, UINT nType, UINT nIDHelp)
 GAMECALL_MAIN(0x4B234F, int, __stdcall, AfxMessageBoxID, UINT nIDPrompt, UINT nType, UINT nIDHelp)
+GAMECALL_MAIN(0x4B3974, void, __stdcall, DDX_Control, CMFC3XDataExchange *, int, CMFC3XWnd *)
 GAMECALL_MAIN(0x4B5801, int, __thiscall, DialogBar_Create, CMFC3XDialogBar *pThis, CMFC3XWnd *pParentWnd, const char *lpszTemplateName, UINT nStyle, UINT nID)
 GAMECALL_MAIN(0x4B780A, BOOL, __thiscall, MDIFrameWnd_OnCmdMsg, CMFC3XMDIFrameWnd *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo)
 GAMECALL_MAIN(0x4B7C71, void, __thiscall, MDIFrameWnd_OnSize, CMFC3XMDIFrameWnd *, UINT, int, int)
@@ -3850,6 +3880,10 @@ GAMEOFF_ARR(PALETTEENTRY,	pPalOffCycle,		0x4C90A8)
 GAMEOFF(WORD,	wDisasterFloodArea,			0x4C93A8)
 GAMEOFF(DWORD,	dwTotalGeneratedPowerTiles,	0x4C93B0)
 GAMEOFF(WORD,	wCityDevelopedTiles,		0x4C93B4)
+GAMEOFF(float,	fltCIDHeight,				0x4C93B8)
+GAMEOFF(RECT,	rectCIDArea,				0x4C93D0)
+GAMEOFF(RECT,	rectCIDOptions,				0x4C93E0)
+GAMEOFF(float,	fltCIDWidth,				0x4C93F0)
 GAMEOFF(WORD,	wIndustrialMixPollutionBonus, 0x4C9428)
 GAMEOFF(WORD,	wViewRotation,				0x4C942C)
 GAMEOFF(DWORD *,	pRawPopRatioTable,		0x4C94B4)
@@ -5202,6 +5236,8 @@ extern void BudgetMain_PostCheckHourGlassTimer(CBudgetMainDialog *bBudgetMainDia
 
 extern bool DoPopDialogButton(CPopulationDialog *pPopDlg, int nDlgID);
 extern void FixPopDialogButtons(CPopulationDialog *pPopDlg);
+
+extern void CityIndustryDialog_UpdateSection(CCityIndustryDialog *pCityIndDlg, int nDlgID);
 
 extern void SimGraphDialog_UpdateRange(CSimGraphDialog *pSimGraphDlg, int nDlgID);
 extern void SimGraphDialog_UpdateOptions(CSimGraphDialog *pSimGraphDlg, int nDlgID);
