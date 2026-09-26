@@ -951,7 +951,7 @@ extern "C" void __stdcall Hook_SimcityApp_WinHelpA() {
 
 	if (pThis->m_pMainWnd && hWnd == pThis->m_pMainWnd->m_hWnd && pSCView && pSCView->bSCVViewActive) {
 		ConsoleLog(LOG_DEBUG, "0x%06X -> CSimcityApp::WinHelpA()\n", _ReturnAddress());
-		DisplayItemHelp(hWnd, HELPTYPE_GENERAL, 0, false);
+		DisplayItemHelp(hWnd, HELPTYPE_GENERAL, 0, true);
 	}
 }
 
