@@ -191,6 +191,7 @@
 #define I_FIX_CORE_INSTALLED      "installed"
 #define I_FIX_CORE_SETSAVETIME    "settings_save_time"
 #define I_FIX_CORE_SKIPMODS       "skip_mods"
+#define I_FIX_CORE_R11C           "r11c_defaults"
 
 #define I_FIX_PATHS_CITIES        "cities"
 #define I_FIX_PATHS_TILESETS      "tilesets"

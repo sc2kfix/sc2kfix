@@ -1359,8 +1359,19 @@ static BOOL CALLBACK Hook_MainDialogProc(HWND hwndDlg, UINT message, WPARAM wPar
 	return lpMainDialogAfxProc(hwndDlg, message, wParam, lParam);
 }
 
+// Hook to replace the MFC dialog proc for the registration dialog
+static BOOL CALLBACK Hook_OwnerInfoDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
+	switch (message) {
+	case WM_INITDIALOG:
+		SetDlgItemText(hwndDlg, 139, jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
+		CenterDialogBox(hwndDlg);
+		break;
+	}
+	return FALSE;
+}
+
 #pragma warning(disable : 6387)
-// Load our own version of the main menu and the New City dialog when called
+// Load our own versions of dialog procedures for overridden dialogs as required
 extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam) {
 	switch ((DWORD)lpTemplateName) {
 	case 101:
@@ -1376,6 +1387,15 @@ extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lp
 		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	default:
 		return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
+	}
+}
+
+extern "C" HWND __stdcall Hook_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam) {
+	switch ((DWORD)lpTemplateName) {
+	case 106:
+		return CreateDialogParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_OwnerInfoDialogProc, dwInitParam);
+	default:
+		return CreateDialogParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	}
 }
 #pragma warning(default : 6387)
@@ -3102,11 +3122,18 @@ void InstallMiscHooks_SC2K1996(void) {
 	*(DWORD*)(0x4EFBE8) = (DWORD)Hook_LoadStringA;
 	*(DWORD*)(0x4EFDCC) = (DWORD)Hook_LoadMenuA;
 	*(DWORD*)(0x4EFDE4) = (DWORD)Hook_MessageBoxA;
+	*(DWORD*)(0x4EFC5C) = (DWORD)Hook_CreateDialogParamA;
 	*(DWORD*)(0x4EFC64) = (DWORD)Hook_DialogBoxParamA;
 	*(DWORD*)(0x4EFCE8) = (DWORD)Hook_DefWindowProcA;
 
 	// Install registry pathing hooks
 	InstallRegistryPathingHooks_SC2K1996();
+
+	// Patch out the company name display
+	SafeVirtualProtect((LPVOID)0x40AC34, 4, PAGE_EXECUTE_READWRITE);
+	memset((LPVOID)0x40AC34, 0x90, 4);
+	SafeVirtualProtect((LPVOID)0x40AC3C, 5, PAGE_EXECUTE_READWRITE);
+	memset((LPVOID)0x40AC3C, 0x90, 5);
 
 	// Install Movie hooks
 	InstallMovieHooks();

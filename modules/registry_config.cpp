@@ -49,6 +49,7 @@ enum redirected_keys_t {
 
 const char *gamePrimaryKey = "SimCity 2000";
 
+// Function called to handle the initial install dialog.
 BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 	case WM_INITDIALOG:
@@ -59,7 +60,48 @@ BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 		// These both come from the game themselves.
 		// I don't know if they're used anywhere, but they're there.
 		SetDlgItemText(hwndDlg, IDC_EDIT_MAYOR, DEF_SIM_REG_MAYOR_NAME);
-		SetDlgItemText(hwndDlg, IDC_EDIT_COMPANY, DEF_SIM_REG_COMPANY_NAME);
+
+		Button_SetCheck(GetDlgItem(hwndDlg, IDC_RADIO_INSTALL_BASIC), TRUE);
+
+		// Update the icon and sizes for the banner.
+		Static_GetIcon(GetDlgItem(hwndDlg, IDC_STATIC_TOPSECRET), LoadIcon(hSC2KFixModule, MAKEINTRESOURCE(IDI_TOPSECRET)));
+		SendMessage(GetDlgItem(hwndDlg, IDC_STATIC_INSTALL_BANNER), WM_SETFONT, (WPARAM)hSystemRegular12, TRUE);
+
+		DestroyStoredTooltips(storedToolTips, hwndDlg);
+
+		// Create tooltips
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_STATIC_INSTALL_BANNER),
+			"Thank you for downloading sc2kfix! "
+			"We hope you'll have as much fun playing SimCity 2000 as we've had fixing it.");
+
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_EDIT_MAYOR),
+			"This is the default mayor name used in the New City dialog and shown on game startup.");
+
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_RADIO_INSTALL_FULL),
+			"Configures sc2kfix to use an \"enhanced\" set of settings by default.\n\n"
+
+			"Mod support is enabled, all quality of life fixes are enabled, and all vanilla bug fixes are "
+			"enabled, as in the \"vanilla+\" mode, but additional features such as the DOS/Mac floating status "
+			"dialog, dark mode underground view, and the enhanced save game format are enabled as well.\n\n"
+			
+			"These settings can be displayed in detail and changed at any time in the sc2kfix settings dialog.");
+
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_RADIO_INSTALL_BASIC),
+			"Configures sc2kfix to use a \"vanilla+\" set of settings by default.\n\n"
+
+			"Mod support is enabled, quality of life fixes are enabled, and all vanilla bug fixes are enabled, "
+			"but additional optional features may not be strictly compatible with the unmodified game or "
+			"versions of the game for other platforms are disabled. This is the default configuration for sc2kfix.\n\n"
+
+			"These settings can be displayed in detail and changed at any time in the sc2kfix settings dialog.");
+
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDC_RADIO_INSTALL_VANILLA),
+			"Configures sc2kfix to use a \"vanilla\" set of settings by default.\n\n"
+
+			"All vanilla bug fixes are enabled, but all additional gameplay and quality of life features are "
+			"disabled by default, and add-on mods will not be loaded.\n\n"
+
+			"These settings can be displayed in detail and changed at any time in the sc2kfix settings dialog.");
 
 		// Center the dialog box
 		CenterDialogBox(hwndDlg);
@@ -70,13 +112,47 @@ BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 		case ID_INSTALL_OK:
 			if (!GetDlgItemText(hwndDlg, IDC_EDIT_MAYOR, szSettingsMayorName, MAX_LABEL_LEN + 1))
 				strcpy_s(szSettingsMayorName, sizeof(szSettingsMayorName), DEF_SIM_REG_MAYOR_NAME);
-			if (!GetDlgItemText(hwndDlg, IDC_EDIT_COMPANY, szSettingsCompanyName, 63))
-				strcpy_s(szSettingsCompanyName, sizeof(szSettingsCompanyName), DEF_SIM_REG_COMPANY_NAME);
+
+			// Determine which type of default configuration we're using
+			if (Button_GetCheck(GetDlgItem(hwndDlg, IDC_RADIO_INSTALL_FULL)))
+				SettingsSetDefaultsEnhanced(jsonSettingsCore);
+			else if (Button_GetCheck(GetDlgItem(hwndDlg, IDC_RADIO_INSTALL_BASIC)))
+				SettingsSetDefaultsVanillaPlus(jsonSettingsCore);
+			else
+				SettingsSetDefaultsVanilla(jsonSettingsCore);
 
 			// Update the settings JSON object
 			jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME] = szSettingsMayorName;
-			jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_COMPANYNAME] = szSettingsCompanyName;
+			jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_COMPANYNAME] = DEF_SIM_REG_COMPANY_NAME;
 
+			EndDialog(hwndDlg, wParam);
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+// Function called to handle the Release 11c update dialog.
+// TODO (araxestroy): remember why the hell I started writing this
+BOOL CALLBACK InstallR11cDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
+	switch (message) {
+	case WM_INITDIALOG:
+		// Set the dialog box icon
+		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)LoadIcon(hSC2KFixModule, MAKEINTRESOURCE(IDI_TOPSECRET)));
+		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(hSC2KFixModule, MAKEINTRESOURCE(IDI_TOPSECRET)));
+
+		// Update the icon and sizes for the banner.
+		Static_GetIcon(GetDlgItem(hwndDlg, IDC_STATIC_TOPSECRET), LoadIcon(hSC2KFixModule, MAKEINTRESOURCE(IDI_TOPSECRET)));
+		SendMessage(GetDlgItem(hwndDlg, IDC_STATIC_INSTALL_BANNER), WM_SETFONT, (WPARAM)hSystemRegular12, TRUE);
+
+		// Center the dialog box
+		CenterDialogBox(hwndDlg);
+		return TRUE;
+
+	case WM_COMMAND:
+		switch (LOWORD(wParam)) {
+			// Update the settings JSON object
+			jsonSettingsCore[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_R11C] = 1;
 			EndDialog(hwndDlg, wParam);
 			return TRUE;
 		}

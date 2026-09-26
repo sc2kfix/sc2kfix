@@ -77,7 +77,7 @@ sc2kfix includes the miniz single-file zlib-compatible DEFLATE/ZIP library (http
 3. Copy the `winmm.dll` file and all the additional DLL files alongside it to your SC2K folder. They should end up in the same folder as your `simcity.exe` executable.
    * If you're running the game on Wine/Proton, you'll need to set a DLL override for `simcity.exe` to use "native, then builtin" load order for the `winmm` library, otherwise Wine/Proton will not load the local `winmm.dll`.
    * If you have any mods to install, place them in a subdirectory named `mods` in the same folder as `simcity.exe`.
-4. Play the game! On the first run of a new install, the game will prompt you for a default mayor and organization name. This simulates the original SimCity 2000 installer.
+4. Play the game! On the first run of a new install, the game will prompt you for a default mayor name, as well as default mod settings. This simulates the original SimCity 2000 installer and sets up the sc2kfix experience.
 
 You can configure different aspects of sc2kfix by clicking on the "sc2kfix Settings" button on the game's main menu, or while you're in a gameplay session by selecting the same option from the Options menu. Settings marked with an asterisk require restarting the game for them to take effect. sc2kfix defaults to providing a "vanilla plus" gameplay experience with bug fixes and minor quality of life improvements; gameplay-modifying features are opt-in through the settings dialog, and quality of life features can be opted out of the same way.
 

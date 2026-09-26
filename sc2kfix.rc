@@ -89,17 +89,26 @@ END
 // Dialog
 //
 
-IDD_INSTALL DIALOGEX 0, 0, 261, 130
+IDD_INSTALL DIALOGEX 0, 0, 309, 200
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "SimCity 2000 Installation (sc2kfix)"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",ID_INSTALL_OK,105,102,50,14
-    CTEXT           "SimCity 2000 needs some information to run on this computer.\nYou can change these at any time in the sc2kfix Settings dialog in-game.",IDC_STATIC,12,12,240,23
-    EDITTEXT        IDC_EDIT_MAYOR,55,51,150,14,ES_CENTER | ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT_COMPANY,55,78,150,14,ES_CENTER | ES_AUTOHSCROLL
-    CTEXT           "Default Mayor Name",IDC_STATIC,56,41,150,8
-    CTEXT           "Organization Name",IDC_STATIC,56,69,150,8
+    DEFPUSHBUTTON   "OK",ID_INSTALL_OK,130,180,50,14
+    CTEXT           "SimCity 2000 / sc2kfix needs some information to run on this computer.\nYou can change these at any time in the sc2kfix Settings dialog in-game.",IDC_STATIC,13,44,282,21
+    EDITTEXT        IDC_EDIT_MAYOR,117,92,167,14,ES_CENTER | ES_AUTOHSCROLL
+    CTEXT           "Default Mayor Name",IDC_STATIC,24,95,84,8
+    LTEXT           "Welcome to sck2fix!",IDC_STATIC_INSTALL_BANNER,136,19,87,18
+    ICON            IDI_TOPSECRET,IDC_STATIC_TOPSECRET,86,1,20,20,SS_REALSIZEIMAGE,WS_EX_TRANSPARENT
+    GROUPBOX        "Registration Settings",IDC_STATIC,7,81,294,33
+    GROUPBOX        "Default Gameplay Settings",IDC_STATIC,7,121,294,54
+    CONTROL         "  Configure sc2kfix with all enhancements, bug fixes, and mod support (enhanced)",IDC_RADIO_INSTALL_FULL,
+                    "Button",BS_AUTORADIOBUTTON,17,133,278,10
+    CONTROL         "  Configure sc2kfix with basic enhancements, bug fixes, and mod support (vanilla+)",IDC_RADIO_INSTALL_BASIC,
+                    "Button",BS_AUTORADIOBUTTON,17,146,278,10
+    CONTROL         "  Configure sc2kfix with only critical bug fixes and no enhancements (vanilla)",IDC_RADIO_INSTALL_VANILLA,
+                    "Button",BS_AUTORADIOBUTTON,17,159,278,10
+    CTEXT           "Hover over an option for more information.",IDC_STATIC,13,65,282,8
 END
 
 103 DIALOGEX 0, 0, 72, 158
@@ -224,6 +233,14 @@ BEGIN
     LTEXT           "%",-1,119,160,6,12
     LTEXT           "%",-1,119,180,6,12
     CONTROL         "",336,"Static",SS_BLACKFRAME,109,5,17,24
+END
+
+106 DIALOGEX 0, 0, 129, 74
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE
+FONT 10, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    CTEXT           "\nThis copy of SimCity 2000®  is the\nexclusive registered property of:",-1,2,16,125,29
+    CTEXT           "E. Squid Quam",139,2,47,125,10
 END
 
 IDD_SIMULATIONSTATUS DIALOGEX 0, 0, 146, 21
@@ -373,21 +390,19 @@ EXSTYLE WS_EX_TRANSPARENT
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     EDITTEXT        IDC_SETTINGS_MAYOR,119,20,165,14,ES_CENTER | ES_AUTOHSCROLL
-    EDITTEXT        IDC_SETTINGS_COMPANY,119,39,165,14,ES_CENTER | ES_AUTOHSCROLL
     CTEXT           "Default Mayor Name",IDC_STATIC,24,23,82,8
-    CTEXT           "Organization Name",IDC_STATIC,24,42,82,8
-    GROUPBOX        "SimCity 2000 Registration",IDC_STATIC,6,2,294,82
-    PUSHBUTTON      "Reset File Associations",IDC_SETTINGS_BUTTON_RESETFILEASSOCIATIONS,104,60,100,14
+    GROUPBOX        "SimCity 2000 Registration",IDC_STATIC,6,2,294,64
+    PUSHBUTTON      "Reset File Associations",IDC_SETTINGS_BUTTON_RESETFILEASSOCIATIONS,104,43,100,14
     CONTROL         " * Always start the sc2kfix console on game startup (Default: off)",IDC_SETTINGS_CHECK_CONSOLE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,102,280,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,85,280,10
     CONTROL         " * Check for sc2kfix updates on game startup (Default: on)",IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,116,280,10
-    GROUPBOX        "sc2kfix Core Settings",IDC_STATIC,6,90,294,73
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,99,280,10
+    GROUPBOX        "sc2kfix Core Settings",IDC_STATIC,6,73,294,73
     CONTROL         " * Skip loading any installed mods on startup (Default: off)",IDC_SETTINGS_CHECK_DONT_LOAD_MODS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,131,280,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,114,280,10
     CONTROL         " * Always skip introduction videos (Default: off)",IDC_SETTINGS_CHECK_SKIP_INTRO,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,145,280,10
-    ICON            IDI_TOPSECRET,IDC_STATIC_TOPSECRET,24,242,21,20,SS_REALSIZEIMAGE,WS_EX_TRANSPARENT
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,128,280,10
+    ICON            IDI_TOPSECRET,IDC_STATIC_TOPSECRET,24,242,20,20,SS_REALSIZEIMAGE,WS_EX_TRANSPARENT
     CTEXT           "sc2kfix Release 12 Development Branch",IDC_STATIC_RELEASEBANNER,66,251,222,12
     CTEXT           "Here be dragons (note: dragons not yet fully implemented)",IDC_STATIC_RELEASEMESSAGE,66,263,222,12
 END
@@ -531,9 +546,9 @@ BEGIN
     IDD_INSTALL, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 254
+        RIGHTMARGIN, 302
         TOPMARGIN, 7
-        BOTTOMMARGIN, 123
+        BOTTOMMARGIN, 193
     END
 
     103, DIALOG
@@ -550,6 +565,10 @@ BEGIN
     102, DIALOG
     BEGIN
         RIGHTMARGIN, 228
+    END
+
+    106, DIALOG
+    BEGIN
     END
 
     IDD_SIMULATIONSTATUS, DIALOG
@@ -799,6 +818,11 @@ BEGIN
 END
 
 IDD_FILEDLGEXT AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+106 AFX_DIALOG_LAYOUT
 BEGIN
     0
 END
