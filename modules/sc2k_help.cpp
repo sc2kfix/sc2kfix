@@ -880,7 +880,6 @@ void DisplayItemHelp(HWND hWnd, int nType, int nIndex, bool bFromMain) {
 	if (bFromMain)
 		ToggleFloatingStatusDialog(FALSE);
 
-	ConsoleLog(LOG_DEBUG, "DisplayItemHelp(%d, %d)\n", hlpD.nType, hlpD.nIndex);
 	DialogBoxParamA(hSC2KFixModule, MAKEINTRESOURCE(IDD_HELPDISPLAY), hWnd, ConfHelpDialogProc, (LPARAM)&hlpD);
 
 	if (bFromMain)
@@ -893,7 +892,6 @@ extern "C" void __stdcall Hook_WinApp_WinHelpA(unsigned int dwData, unsigned int
 
 	__asm mov [pThis], ecx
 
-	ConsoleLog(LOG_DEBUG, "0x%06X -> CWinApp::WinHelpA(%u, %u)\n", _ReturnAddress(), dwData, nCmd);
 	// Goes nowhere, does nothing. Will never do anything.
 }
 
@@ -902,12 +900,7 @@ extern "C" void __stdcall Hook_WinApp_OnHelpIndex() {
 
 	__asm mov [pThis], ecx
 
-	HWND hWnd;
-
-	ConsoleLog(LOG_DEBUG, "0x%06X -> CWinApp::OnHelpIndex()\n", _ReturnAddress());
-
-	hWnd = GetActiveWindow();
-	DisplayItemHelp(hWnd, HELPTYPE_GENERAL, 0, true);
+	DisplayItemHelp(GetActiveWindow(), HELPTYPE_GENERAL, 0, true);
 }
 
 extern "C" void __stdcall Hook_WinApp_OnHelpUsing() {
@@ -915,12 +908,7 @@ extern "C" void __stdcall Hook_WinApp_OnHelpUsing() {
 
 	__asm mov [pThis], ecx
 
-	HWND hWnd;
-
-	ConsoleLog(LOG_DEBUG, "0x%06X -> CWinApp::OnHelpUsing()\n", _ReturnAddress());
-
-	hWnd = GetActiveWindow();
-	DisplayItemHelp(hWnd, HELPTYPE_GENERAL, 1, true);
+	DisplayItemHelp(GetActiveWindow(), HELPTYPE_GENERAL, 1, true);
 }
 
 extern "C" LRESULT __stdcall Hook_FrameWnd_OnCommandHelp(WPARAM wParam, LPARAM lParam) {
@@ -928,7 +916,6 @@ extern "C" LRESULT __stdcall Hook_FrameWnd_OnCommandHelp(WPARAM wParam, LPARAM l
 
 	__asm mov [pThis], ecx
 
-	ConsoleLog(LOG_DEBUG, "0x%06X -> CFrameWnd::OnCommandHelp(%u, %u)\n", _ReturnAddress(), wParam, lParam);
 	// Goes nowhere, does nothing. Will never do anything.
 	return 1;
 }
@@ -938,7 +925,6 @@ extern "C" LRESULT __stdcall Hook_Dialog_OnCommandHelp(WPARAM wParam, LPARAM lPa
 
 	__asm mov [pThis], ecx
 
-	ConsoleLog(LOG_DEBUG, "0x%06X -> CDialog::OnCommandHelp(%u, %u)\n", _ReturnAddress(), wParam, lParam);
 	// Goes nowhere, does nothing. Will never do anything.
 	return 1;
 }
@@ -948,7 +934,6 @@ extern "C" LRESULT __stdcall Hook_GameDialog_OnCommandHelp(WPARAM wParam, LPARAM
 
 	__asm mov [pThis], ecx
 
-	ConsoleLog(LOG_DEBUG, "0x%06X -> CGameDialog::OnCommandHelp(%u, %u)\n", _ReturnAddress(), wParam, lParam);
 	// Goes nowhere, does nothing. Will never do anything.
 	return 1;
 }
@@ -967,7 +952,6 @@ extern "C" void __stdcall Hook_SimcityApp_WinHelpA() {
 		hWnd == pMainFrm->dwMFStatusControlBar.m_hWnd ||
 		hWnd == pMainFrm->dwMFCityToolBar.m_hWnd ||
 		hWnd == pMainFrm->dwMFMapToolBar.m_hWnd)) {
-		ConsoleLog(LOG_DEBUG, "0x%06X -> CSimcityApp::WinHelpA()\n", _ReturnAddress());
 		DisplayItemHelp(pMainFrm->m_hWnd, HELPTYPE_GENERAL, 0, true);
 	}
 }

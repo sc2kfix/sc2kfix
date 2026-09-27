@@ -205,10 +205,6 @@ extern "C" void __stdcall Hook_GameDialog_OnLButtonDown(UINT nFlags, CMFC3XPoint
 			DisplayItemHelp(pMainFrm->m_hWnd, HELPTYPE_NEIGHBOURS, 0, true);
 			return;
 		}
-		else if ((CSimGraphDialog *)pThis == pMainFrm->dwMFSimGraphDialog) {
-			ConsoleLog(LOG_DEBUG, "Graph Dialog.\n");
-			return;
-		}
 	}
 
 	pThis->dwGDButtonDown = 1;
