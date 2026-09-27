@@ -1448,6 +1448,7 @@ static BOOL CALLBACK Hook_OwnerInfoDialogProc(HWND hwndDlg, UINT message, WPARAM
 	return FALSE;
 }
 
+#pragma warning(disable : 6387)
 // Hook required due to the modeless dialog cases being handled in a different manner.
 extern "C" HWND __stdcall Hook_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam) {
 	switch ((DWORD)lpTemplateName) {
@@ -1463,7 +1464,6 @@ extern "C" HWND __stdcall Hook_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lp
 	}
 }
 
-#pragma warning(disable : 6387)
 // Load our own versions of dialog procedures for overridden dialogs as required
 extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam) {
 	switch ((DWORD)lpTemplateName) {
