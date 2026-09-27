@@ -10,6 +10,8 @@ While the game itself was always capable of running at high resolutions, oversig
 
 sc2kfix is an entirely human-created and human-driven project. No generative AI has been used in the development process. Any AI-generated or AI-assisted pull requests will be rejected. Maxis didn't need a neural network trained on billions of lines of scraped code, and neither do we.
 
+The sc2kfix project is part of the OpenCity Foundation.
+
 ### Bugs fixed
 The following game bugs are patched by this DLL:
 * The old, non-functional installer is no longer needed as sc2kfix will prompt for a default mayor and company name on first launch, as well as associate .sc2 and .scn files with SimCity 2000.

@@ -1,5 +1,5 @@
 // sc2kfix modules/settings.cpp: settings dialog code and configurator
-// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 OpenCity Foundation (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
 #include <windows.h>
@@ -83,6 +83,7 @@ void SettingsSetDefaultsEnhanced(json::JSON& jsonSettings) {
 	jsonSettings[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_FORCECON] = DEF_FIX_CORE_FORCECON;
 	jsonSettings[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_CHECKFORUPD] = DEF_FIX_CORE_CHECKFORUPD;
 	jsonSettings[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_SKIPMODS] = DEF_FIX_CORE_SKIPMODS;
+	jsonSettings[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_SC2XDEFAULT] = DEF_FIX_CORE_SC2XDEFAULT;
 
 	jsonSettings[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND] = DEF_FIX_AUD_MUSICINBKGRND;
 	jsonSettings[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE] = DEF_FIX_AUD_USESNDREPLACE;
@@ -117,6 +118,7 @@ void SettingsSetDefaultsVanillaPlus(json::JSON& jsonSettings) {
 	jsonSettings[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_FORCECON] = DEF_FIX_CORE_FORCECON;
 	jsonSettings[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_CHECKFORUPD] = DEF_FIX_CORE_CHECKFORUPD;
 	jsonSettings[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_SKIPMODS] = DEF_FIX_CORE_SKIPMODS;
+	jsonSettings[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_SC2XDEFAULT] = DEF_FIX_CORE_SC2XDEFAULT;
 
 	jsonSettings[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND] = DEF_FIX_AUD_MUSICINBKGRND;
 	jsonSettings[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE] = DEF_FIX_AUD_USESNDREPLACE;
@@ -151,6 +153,7 @@ void SettingsSetDefaultsVanilla(json::JSON& jsonSettings) {
 	jsonSettings[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_FORCECON] = DEF_FIX_CORE_FORCECON;
 	jsonSettings[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_CHECKFORUPD] = DEF_FIX_CORE_CHECKFORUPD;
 	jsonSettings[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_SKIPMODS] = DEF_FIX_CORE_SKIPMODS;
+	jsonSettings[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_SC2XDEFAULT] = false;
 
 	jsonSettings[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_MUSICINBKGRND] = false;
 	jsonSettings[C_SC2KFIX][S_FIX_AUDIO][I_FIX_AUD_USESNDREPLACE] = false;

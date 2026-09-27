@@ -1,5 +1,5 @@
 // sc2kfix include/setting_schema.h: setting defaults and schematic defines.
-// (c) 2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2026 OpenCity Foundation (https://sc2kfix.net) - released under the MIT license
 
 #pragma once
 
@@ -89,6 +89,7 @@
 #define DEF_FIX_CORE_FORCECON       false
 #define DEF_FIX_CORE_INSTALLED      false
 #define DEF_FIX_CORE_SKIPMODS       false
+#define DEF_FIX_CORE_SC2XDEFAULT    false
 
 #define DEF_FIX_QOL_DARKUNDGRND     false
 #define DEF_FIX_QOL_FREQUPDATES     true
@@ -191,7 +192,7 @@
 #define I_FIX_CORE_INSTALLED      "installed"
 #define I_FIX_CORE_SETSAVETIME    "settings_save_time"
 #define I_FIX_CORE_SKIPMODS       "skip_mods"
-#define I_FIX_CORE_R11C           "r11c_defaults"
+#define I_FIX_CORE_SC2XDEFAULT    "sc2x_always"
 
 #define I_FIX_PATHS_CITIES        "cities"
 #define I_FIX_PATHS_TILESETS      "tilesets"

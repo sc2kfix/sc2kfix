@@ -1,5 +1,5 @@
 // sc2kfix modules/registry_config.cpp: registry and pathing hooks and configuration file handling
-// (c) 2025-2026 sc2kfix project (https://sc2kfix.net) - released under the MIT license
+// (c) 2025-2026 OpenCity Foundation (https://sc2kfix.net) - released under the MIT license
 
 #undef UNICODE
 #include <windows.h>
@@ -125,34 +125,6 @@ BOOL CALLBACK InstallDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 			jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME] = szSettingsMayorName;
 			jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_COMPANYNAME] = DEF_SIM_REG_COMPANY_NAME;
 
-			EndDialog(hwndDlg, wParam);
-			return TRUE;
-		}
-	}
-	return FALSE;
-}
-
-// Function called to handle the Release 11c update dialog.
-// TODO (araxestroy): remember why the hell I started writing this
-BOOL CALLBACK InstallR11cDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
-	switch (message) {
-	case WM_INITDIALOG:
-		// Set the dialog box icon
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)LoadIcon(hSC2KFixModule, MAKEINTRESOURCE(IDI_TOPSECRET)));
-		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(hSC2KFixModule, MAKEINTRESOURCE(IDI_TOPSECRET)));
-
-		// Update the icon and sizes for the banner.
-		Static_GetIcon(GetDlgItem(hwndDlg, IDC_STATIC_TOPSECRET), LoadIcon(hSC2KFixModule, MAKEINTRESOURCE(IDI_TOPSECRET)));
-		SendMessage(GetDlgItem(hwndDlg, IDC_STATIC_INSTALL_BANNER), WM_SETFONT, (WPARAM)hSystemRegular12, TRUE);
-
-		// Center the dialog box
-		CenterDialogBox(hwndDlg);
-		return TRUE;
-
-	case WM_COMMAND:
-		switch (LOWORD(wParam)) {
-			// Update the settings JSON object
-			jsonSettingsCore[C_SC2KFIX][S_FIX_CORE][I_FIX_CORE_R11C] = 1;
 			EndDialog(hwndDlg, wParam);
 			return TRUE;
 		}

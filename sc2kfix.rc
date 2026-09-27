@@ -397,14 +397,16 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,85,280,10
     CONTROL         " * Check for sc2kfix updates on game startup (Default: on)",IDC_SETTINGS_CHECK_CHECK_FOR_UPDATES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,99,280,10
-    GROUPBOX        "sc2kfix Core Settings",IDC_STATIC,6,73,294,73
+    GROUPBOX        "sc2kfix Core Settings",IDC_STATIC,6,73,294,86
     CONTROL         " * Skip loading any installed mods on startup (Default: off)",IDC_SETTINGS_CHECK_DONT_LOAD_MODS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,114,280,10
-    CONTROL         " * Always skip introduction videos (Default: off)",IDC_SETTINGS_CHECK_SKIP_INTRO,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,128,280,10
+    CONTROL         " Always skip introduction videos (Default: off)",IDC_SETTINGS_CHECK_SKIP_INTRO,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,143,280,10
     ICON            IDI_TOPSECRET,IDC_STATIC_TOPSECRET,24,242,20,20,SS_REALSIZEIMAGE,WS_EX_TRANSPARENT
     CTEXT           "sc2kfix Release 12 Development Branch",IDC_STATIC_RELEASEBANNER,66,251,222,12
     CTEXT           "Here be dragons (note: dragons not yet fully implemented)",IDC_STATIC_RELEASEMESSAGE,66,263,222,12
+    CONTROL         " Use the new SC2X save format by default (Default: on)",IDC_SETTINGS_CHECK_SC2X_DEFAULT,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,128,280,10
 END
 
 IDD_SETTINGS_AUDIO DIALOGEX 0, 0, 307, 284
