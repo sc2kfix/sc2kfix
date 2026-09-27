@@ -1391,9 +1391,14 @@ extern "C" LRESULT __stdcall Hook_DefWindowProcA(HWND hWnd, UINT Msg, WPARAM wPa
 	if (Msg == WM_MBUTTONDOWN || Msg == WM_XBUTTONDOWN) {
 		if (pSCView && hWnd == pSCView->m_hWnd) {
 			POINT pt;
+			RECT r;
 
 			pt.x = GET_X_LPARAM(lParam);
 			pt.y = GET_Y_LPARAM(lParam);
+			Game_SimcityView_GetScreenAreaInfo(pSCView, &r);
+			if (pt.x >= r.right || pt.y > r.bottom)
+				return TRUE;
+				
 			if (wParam && MK_MBUTTON)
 				GetKeyButtonBinding_SC2K1996(B_KEY_MOUSE_MBUTTON, FALSE, &pt);
 			else if (wParam && MK_XBUTTON1)
@@ -2244,6 +2249,12 @@ extern "C" void __stdcall Hook_SimcityView_OnMouseMove(UINT nFlags, CMFC3XPoint 
 extern "C" void __stdcall Hook_SimcityView_OnRButtonDown(UINT nFlags, CMFC3XPoint pt) {
 	CSimcityView *pThis;
 	__asm mov [pThis], ecx
+	
+	RECT r;
+
+	Game_SimcityView_GetScreenAreaInfo(pThis, &r);
+	if (pt.x >= r.right || pt.y > r.bottom)
+		return;
 
 	GetKeyButtonBinding_SC2K1996(B_KEY_MOUSE_RBUTTON, FALSE, &pt);
 }
