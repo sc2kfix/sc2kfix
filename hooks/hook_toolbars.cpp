@@ -370,19 +370,19 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 			wCurrentCityToolGroup = CITYTOOL_GROUP_CENTERINGTOOL;
 			break;
 		case CITYTOOL_BUTTON_CITYMAP:
-			Game_MainFrame_ToggleNonModalDialog((CMainFrame *)pSCApp->m_pMainWnd, 246);
+			Game_MainFrame_ToggleNonModalDialog((CMainFrame *)pSCApp->m_pMainWnd, SC2K_DIALOG_CITYMAP);
 			break;
 		case CITYTOOL_BUTTON_CITYPOPULATION:
-			Game_MainFrame_ToggleNonModalDialog((CMainFrame *)pSCApp->m_pMainWnd, 128);
+			Game_MainFrame_ToggleNonModalDialog((CMainFrame *)pSCApp->m_pMainWnd, SC2K_DIALOG_POPULATION);
 			break;
 		case CITYTOOL_BUTTON_CITYNEIGHBOURS:
-			Game_MainFrame_ToggleNonModalDialog((CMainFrame *)pSCApp->m_pMainWnd, 157);
+			Game_MainFrame_ToggleNonModalDialog((CMainFrame *)pSCApp->m_pMainWnd, SC2K_DIALOG_NEIGHBORS);
 			break;
 		case CITYTOOL_BUTTON_CITYGRAPHS:
-			Game_MainFrame_ToggleNonModalDialog((CMainFrame *)pSCApp->m_pMainWnd, 152);
+			Game_MainFrame_ToggleNonModalDialog((CMainFrame *)pSCApp->m_pMainWnd, SC2K_DIALOG_GRAPH);
 			break;
 		case CITYTOOL_BUTTON_CITYINDUSTRY:
-			Game_MainFrame_ToggleNonModalDialog((CMainFrame *)pSCApp->m_pMainWnd, 160);
+			Game_MainFrame_ToggleNonModalDialog((CMainFrame *)pSCApp->m_pMainWnd, SC2K_DIALOG_INDUSTRY);
 			break;
 		case CITYTOOL_BUTTON_BUDGET:
 			bCurrentBudgetSetting = bOptionsAutoBudget;
