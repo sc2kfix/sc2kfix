@@ -250,6 +250,14 @@ enum {
 	HELPTYPE_COUNT
 };
 
+// These defines are to do with fetching strings based on
+// an offset or index.
+#define RSRCTYPE_IDS_NEIGHBORS   1000 // (N + 547)
+#define RSRCTYPE_IDS_INDCOMNAMES 1001 // (N + 583). This one appears is unused - perhaps it was for named ind/com buildings - or something that went unrealised.
+#define RSRCTYPE_IDS_TILENAMES   2000 // (N + 593)
+#define RSRCTYPE_IDS_ZONENAMES   2100 // Zone Names and Densities (fetched from the dwZoneRsrcUIDs uint32_t array at 0x4E7140
+#define RSRCTYPE_IDS_AMOUNTDESCR 2200 // (N + 776)
+
 // Disaster IDs
 enum {
 	DISASTER_NONE = 0,
@@ -288,6 +296,8 @@ enum {
 
 	ZONE_BOUNDARY = 15 // 0xF iZoneType mask boundary
 };
+
+#define ZONE_COUNT (ZONE_BOUNDARY + 1)
 
 static inline const char* GetZoneName(int iZoneID) {
 	switch (iZoneID) {

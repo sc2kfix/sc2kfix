@@ -443,7 +443,7 @@ extern "C" void __stdcall Hook_SimcityApp_GetCapabilities(CMainFrame* pMainFrm) 
 #pragma warning(default : 28159)
 #pragma warning(default : 4996)
 	if (LOBYTE(wVersion) <= 3 && (LOBYTE(wVersion) != 3 || HIBYTE(wVersion) < 51)) {
-		Game_FailRadio(238);
+		Game_FailRadio(SC2K_STRING_WINDOWSANCIENT);
 		pThis->wSCAGameSpeedLOW = GAME_SPEED_PAUSED;
 		Game_SimcityApp_OnQuit(pThis);
 	}

@@ -107,12 +107,12 @@ extern "C" void __cdecl Hook_SimulationPrepareBudgetDialog(BOOL bNoParent) {
 			pBudgetMainDialog = Game_BudgetMainDialog_Cons(pBudgetMainDialog, (bNoParent) ? NULL : pMainFrm);
 		if (pBudgetMainDialog) {
 			GameMain_String_OperatorSet(&pBudgetMainDialog->dwBDStringBudgetNameYearMonth, szBudgetStr);
-			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, ((bYearEndFlag) ? 890 : 891), szResStr, sizeof(szResStr) - 1);
+			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, ((bYearEndFlag) ? SC2K_STRING_BUDGETYRENDEXPENSE : SC2K_STRING_BUDGETTODATEEST), szResStr, sizeof(szResStr) - 1);
 			sprintf_s(szBudgetStr, szResStr, nCurrentYear);
 			GameMain_String_OperatorSet(&pBudgetMainDialog->dwBDStringToDateExpense, szBudgetStr);
 			if (bYearEndFlag)
 				++nCurrentYear;
-			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, ((bYearEndFlag) ? 892 : 893), szResStr, sizeof(szResStr) - 1);
+			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, ((bYearEndFlag) ? SC2K_STRING_BUDGETEST : SC2K_STRING_BUDGETYRENDEST), szResStr, sizeof(szResStr) - 1);
 			sprintf_s(szBudgetStr, szResStr, nCurrentYear);
 			GameMain_String_OperatorSet(&pBudgetMainDialog->dwBDStringYearEndEstimate, szBudgetStr);
 			bBudgetOpen = true;

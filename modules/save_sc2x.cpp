@@ -52,7 +52,7 @@ static std::map<int, std::string> mapEnumBudgetTypeToJSONName = {
 static inline void Save_LoadNeighborName(int i) {
 	__int16 nIdx = wNeighborNameIdx[i];
 	if (nIdx)
-		Game_LoadNamedEntryFromRsrcOffset(&szNeighborCities[MAX_NEIGH_BUF_SIZE * i], 1000, nIdx);
+		Game_LoadNamedEntryFromRsrcOffset(&szNeighborCities[MAX_NEIGH_BUF_SIZE * i], RSRCTYPE_IDS_NEIGHBORS, nIdx);
 	else
 		strcpy_s(&szNeighborCities[MAX_NEIGH_BUF_SIZE * i], MAX_NEIGH_BUF_SIZE, "Ocean");
 }

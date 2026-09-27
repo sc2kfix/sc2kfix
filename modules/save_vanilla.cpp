@@ -177,13 +177,13 @@ static int L_OpenCityHeader(FILE *pFile, const char *lpFileName, int *pLength, _
 			ConsoleLog(LOG_DEBUG, "SAVE: Vanilla city file nActualLength is %d bytes.\n", nActualLength);
 	}
 	if (!fread(szChunk, 1, sizeof(szChunk), pFile)) {
-		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
+		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, SC2K_STRING_ERRREADFILE, szResStr, sizeof(szResStr) - 1);
 		GameMain_AfxMessageBoxStr(szResStr, 0, 0);
 		return 0;
 	}
 	if (IsMatchingChunk(szChunk, "FORM")) {
 		if (!fread(pLength, 1, sizeof(*pLength), pFile)) {
-			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
+			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, SC2K_STRING_ERRREADFILE, szResStr, sizeof(szResStr) - 1);
 			GameMain_AfxMessageBoxStr(szResStr, 0, 0);
 			return 0;
 		}
@@ -204,7 +204,7 @@ static int L_OpenCityHeader(FILE *pFile, const char *lpFileName, int *pLength, _
 				// A crash "should" no longer occur since we're now hitting
 				// the exception call and returning zero rather than with
 				// the original detour going into the next read call.
-				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
+				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, SC2K_STRING_ERRREADFILE, szResStr, sizeof(szResStr) - 1);
 				GameMain_AfxMessageBoxStr(szResStr, 0, 0);
 				return 0;
 			}
@@ -244,27 +244,27 @@ static int L_OpenCityHeader(FILE *pFile, const char *lpFileName, int *pLength, _
 					"Game header corrupted (FORM header chunk size 0)\n"
 					"Unsupported file type.", "sc2kfix error", MB_OK | MB_ICONERROR);
 
-				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
+				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, SC2K_STRING_ERRREADFILE, szResStr, sizeof(szResStr) - 1);
 				GameMain_AfxMessageBoxStr(szResStr, 0, 0);
 				return 0;
 			}
 		}
 		if (!fread(szChunk, 1, sizeof(szChunk), pFile)) {
-			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
+			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, SC2K_STRING_ERRREADFILE, szResStr, sizeof(szResStr) - 1);
 			GameMain_AfxMessageBoxStr(szResStr, 0, 0);
 			return 0;
 		}
 		if (IsMatchingChunk(szChunk, "SCDH"))
 			return 1;
 		else {
-			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 54, szResStr, sizeof(szResStr) - 1);
+			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, SC2K_STRING_ERRFILENOTSC2SCN, szResStr, sizeof(szResStr) - 1);
 			GameMain_AfxMessageBoxStr(szResStr, 0, 0);
 		}
 	}
 	else {
 		if (nClassicPreCheck) {
 			if (!L_IsClassicCityFileValid(lpFileName)) {
-				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 53, szResStr, sizeof(szResStr) - 1);
+				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, SC2K_STRING_ERRFILENOTIFF, szResStr, sizeof(szResStr) - 1);
 				GameMain_AfxMessageBoxStr(szResStr, 0, 0);
 			}
 		}
@@ -315,12 +315,12 @@ static int L_SimcityApp_OpenCityCompressed(CSimcityAppPrimary *pSCApp, FILE *pFi
 			if (nTp == nSize)
 				ret = 1;
 			else {
-				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 49, szResStr, sizeof(szResStr) - 1);
+				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, SC2K_STRING_ERRDECOMPFAIL, szResStr, sizeof(szResStr) - 1);
 				GameMain_AfxMessageBoxStr(szResStr, 0, 0);
 			}
 		}
 		else {
-			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
+			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, SC2K_STRING_ERRREADFILE, szResStr, sizeof(szResStr) - 1);
 			GameMain_AfxMessageBoxStr(szResStr, 0, 0);
 		}
 		free(pTmp);
@@ -407,7 +407,7 @@ static int L_SimcityApp_OpenCityInfo(CSimcityAppPrimary *pSCApp, FILE *pFile, in
 				wNeighborNameIdx[nPosMain] = (__int16)pMiscInfo[nArrOffset];
 				__int16 nIdx = wNeighborNameIdx[nPosMain];
 				if (nIdx)
-					Game_LoadNamedEntryFromRsrcOffset(&szNeighborCities[MAX_NEIGH_BUF_SIZE * nPosMain], 1000, nIdx);
+					Game_LoadNamedEntryFromRsrcOffset(&szNeighborCities[MAX_NEIGH_BUF_SIZE * nPosMain], RSRCTYPE_IDS_NEIGHBORS, nIdx);
 				else
 					strcpy_s(&szNeighborCities[MAX_NEIGH_BUF_SIZE * nPosMain], MAX_NEIGH_BUF_SIZE, "Ocean");
 				dwNeighborPopulation[nPosMain] = pMiscInfo[nArrNextOffset++];
@@ -505,7 +505,7 @@ static int L_SimcityApp_OpenCityInfo(CSimcityAppPrimary *pSCApp, FILE *pFile, in
 			ret = 1;
 		}
 		else {
-			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 55, szResStr, sizeof(szResStr) - 1);
+			L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, SC2K_STRING_ERRCANNOTLOADOLDVER, szResStr, sizeof(szResStr) - 1);
 			_itoa_s(pMiscInfo[nArrOffset], szBuf, 10);
 			sprintf_s(szErrStr, "%s%s", szResStr, szBuf);
 			GameMain_AfxMessageBoxStr(szErrStr, 0, 0);
@@ -862,7 +862,7 @@ static int L_SimcityApp_OpenCity(CSimcityAppPrimary *pSCApp, FILE* pFile, char* 
 			}
 			if (iBadRead > CHUNK_OKAY) {
 				if (iBadRead > CHUNK_BAD_BODY) {
-					L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 48, szResStr, sizeof(szResStr) - 1);
+					L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, SC2K_STRING_ERRREADFILE, szResStr, sizeof(szResStr) - 1);
 					sprintf_s(szErrStr, "%s\n%s", szResStr, lpFileName);
 					GameMain_AfxMessageBoxStr(szErrStr, 0, 0);
 				}
@@ -981,7 +981,7 @@ int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName) {
 		if (!ret) {
 			if (L_IsClassicCityFileValid(lpFileName)) {
 				memset(szResStr, 0, sizeof(szResStr));
-				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 46, szResStr, sizeof(szResStr) - 1);
+				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, SC2K_STRING_FILECONVSIMCITY10, szResStr, sizeof(szResStr) - 1);
 				GameMain_CmdTarget_EndWaitCursor(pSCApp);
 				if (GameMain_AfxMessageBoxStr(szResStr, MB_YESNO, 0) == IDYES) {
 					GameMain_CmdTarget_BeginWaitCursor(pSCApp);
@@ -1002,7 +1002,7 @@ int L_SimcityApp_DoLoad(CSimcityAppPrimary *pSCApp, char *lpFileName) {
 		Game_ToolMenuUpdate();
 	}
 	else {
-		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 47, szResStr, sizeof(szResStr) - 1);
+		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, SC2K_STRING_ERROPENFILE, szResStr, sizeof(szResStr) - 1);
 		sprintf_s(szErrStr, "%s\n%s", szResStr, lpFileName);
 		GameMain_AfxMessageBoxStr(szErrStr, 0, 0);
 	}
@@ -1046,8 +1046,8 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 		memset(szPath, 0, sizeof(szPath));
 		memset(szDirPath, 0, sizeof(szDirPath));
 
-		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 4002, szFileTypes, sizeof(szFileTypes) - 1);
-		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 4003, szCaption, sizeof(szCaption) - 1);
+		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, SC2K_STRING_LOADCITYFILEEXTS, szFileTypes, sizeof(szFileTypes) - 1);
+		L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, SC2K_STRING_LOADSAVEDGAME, szCaption, sizeof(szCaption) - 1);
 
 		Game_SimcityApp_GetValueStringA(pThis, &strFilePath, aPaths, aCities);
 
@@ -1117,7 +1117,7 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 				pThis->dwSCAGameStarted = TRUE;
 			}
 			else {
-				GameMain_AfxMessageBoxID(412, 0, 0xFFFFFFFF);
+				GameMain_AfxMessageBoxID(SC2K_STRING_ERRLOADCITYFAIL, 0, 0xFFFFFFFF);
 				pThis->dwSCAOnInitToggleToolBar = 0;
 				pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
 				pThis->dwSCASetNextStep = TRUE;
@@ -1172,7 +1172,7 @@ void L_SimcityApp_LoadCityFromCMDLine(CSimcityAppPrimary *pSCApp, const char *lp
 			pSCApp->dwSCAGameStarted = TRUE;
 		}
 		else {
-			GameMain_AfxMessageBoxID(412, 0, 0xFFFFFFFF);
+			GameMain_AfxMessageBoxID(SC2K_STRING_ERRLOADCITYFAIL, 0, 0xFFFFFFFF);
 			pSCApp->dwSCACMDLineLoadMode = 0;
 			if (pSCApp->dwSCAOnInitToggleToolBar)
 				Game_MainFrame_ToggleToolBars(pMainFrm, TRUE);
@@ -1725,7 +1725,7 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCity() {
 		if (bCanDoDirectSave) {
 			int nSaveRet = L_SimcityApp_DoSave(pThis, szPath, NULL, false);
 			if (nSaveRet > 0) {
-				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 51, szErrStr, sizeof(szErrStr) - 1);
+				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, SC2K_STRING_GAMESAVEDAS, szErrStr, sizeof(szErrStr) - 1);
 				uType = 0;
 
 				// When a general save is performed, under normal
@@ -1738,7 +1738,7 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCity() {
 				GameMain_String_OperatorSet(&strCityFilename, szPath);
 			}
 			else {
-				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, ((nSaveRet < 0) ? 47 : 60), szErrStr, sizeof(szErrStr) - 1);
+				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, ((nSaveRet < 0) ? SC2K_STRING_ERROPENFILE : SC2K_STRING_GAMENOTSAVED), szErrStr, sizeof(szErrStr) - 1);
 				strcat_s(szErrStr, ": ");
 				uType = MB_ICONERROR;
 			}
@@ -1853,7 +1853,7 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 				strcat_s(szDirPath, "\\");
 			int nSaveRet = L_SimcityApp_DoSave(pThis, m_extFileDlg.szAdjustedFile, m_extFileDlg.szCityName, bChangeCityName);
 			if (nSaveRet > 0) {
-				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 51, szErrStr, sizeof(szErrStr) - 1);
+				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, SC2K_STRING_GAMESAVEDAS, szErrStr, sizeof(szErrStr) - 1);
 				uType = 0;
 
 				GameMain_String_Empty(&strUnusedString);
@@ -1864,7 +1864,7 @@ extern "C" void __stdcall Hook_SimcityApp_SaveCityAs() {
 					jsonSettingsCore[C_SC2KFIX][S_FIX_PATHS][I_FIX_PATHS_CITIES] = szDirPath;
 			}
 			else {
-				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, ((nSaveRet < 0) ? 47 : 60), szErrStr, sizeof(szErrStr) - 1);
+				L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, ((nSaveRet < 0) ? SC2K_STRING_ERROPENFILE : SC2K_STRING_GAMENOTSAVED), szErrStr, sizeof(szErrStr) - 1);
 				uType = MB_ICONERROR;
 			}
 			L_MessageBoxA(0, szErrStr, gamePrimaryKey, uType);

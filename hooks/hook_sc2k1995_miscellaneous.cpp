@@ -36,12 +36,12 @@ UINT mischook_1995_debug = MISCHOOK_1995_DEBUG;
 extern "C" int __stdcall Hook_1995_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMax) {
 	if (hInstance == hSC2KAppModule) {
 		switch (uID) {
-		case 4002:
+		case SC2K_STRING_LOADCITYFILEEXTS:
 			if (!strcpy_s(lpBuffer, cchBufferMax,
 				"SimCity 2000 City (*.SC2)|*.SC2|SimCity Classic City (*.CTY)|*.CTY||"))
 				return strlen(lpBuffer);
 			break;
-		case 4004:
+		case SC2K_STRING_LOADTILEFILEEXTS:
 			if (!strcpy_s(lpBuffer, cchBufferMax,
 				"SimCity 2000 Tilesets (*.mif)|*.mif||"))
 				return strlen(lpBuffer);

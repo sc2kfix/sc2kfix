@@ -207,7 +207,7 @@ RETRYFROMCURRENT:
 			if (randPos.x != -1 && randPos.y != -1) {
 				bMilitaryBaseType = MILITARY_BASE_MISSILE_SILOS;
 				Game_CenterOnTileCoords(randPos.x, randPos.y);
-				return GameMain_AfxMessageBoxID(244, 0, -1);
+				return GameMain_AfxMessageBoxID(SC2K_STRING_MILMISSILESITES, 0, -1);
 			}
 		}
 		else {
@@ -285,7 +285,7 @@ static void MilitaryBasePlotPlacement(coords_w_t *pRandPos) {
 }
 
 static int MilitaryBaseDecline(void) {
-	int iRes = GameMain_AfxMessageBoxID(411, 0, -1);
+	int iRes = GameMain_AfxMessageBoxID(SC2K_STRING_MILNOSITE, 0, -1);
 	bMilitaryBaseType = MILITARY_BASE_DECLINED;
 	return iRes;
 }
@@ -300,7 +300,7 @@ static int MilitaryBaseAirForce(int iValidTiles, int iValidAltitudeTiles, coords
 		MilitaryBasePlotPlacement(pRandPos);
 
 		Game_CenterOnTileCoords(pRandPos->x + 4, pRandPos->y + 4);
-		return GameMain_AfxMessageBoxID(242, 0, -1);
+		return GameMain_AfxMessageBoxID(SC2K_STRING_MILAIRFORCE, 0, -1);
 	}
 
 	return -1;
@@ -406,7 +406,7 @@ static int MilitaryBaseArmyBase(int iValidTiles, int iValidAltitudeTiles, coords
 		DoArmyBaseStrips(pRandPos->x, pRandPos->y + 5, pRandPos->x + 7, pRandPos->y + 5);
 
 		Game_CenterOnTileCoords(pRandPos->x + 4, pRandPos->y + 4);
-		return GameMain_AfxMessageBoxID(241, 0, -1);
+		return GameMain_AfxMessageBoxID(SC2K_STRING_MILARMYBASE, 0, -1);
 	}
 
 	return -1;
@@ -596,7 +596,7 @@ static int MilitaryBaseNavalYard(BOOL bForce) {
 					}
 					bMilitaryBaseType = MILITARY_BASE_NAVY;
 					Game_CenterOnTileCoords(iFinalCoords.x, iFinalCoords.y);
-					return GameMain_AfxMessageBoxID(243, 0, -1);
+					return GameMain_AfxMessageBoxID(SC2K_STRING_MILNAVALYARD, 0, -1);
 				}
 			}
 		}
@@ -740,7 +740,7 @@ extern "C" void __stdcall Hook_SimulationProposeMilitaryBase(void) {
 	nSiloCnt = 0;
 	memset(wSiloPos, 0, sizeof(wSiloPos));
 
-	if (GameMain_AfxMessageBoxID(240, MB_YESNO, -1) == IDNO)
+	if (GameMain_AfxMessageBoxID(SC2K_STRING_MILINTEREST, MB_YESNO, -1) == IDNO)
 		bMilitaryBaseType = MILITARY_BASE_DECLINED;
 	else {
 	REATTEMPT:
