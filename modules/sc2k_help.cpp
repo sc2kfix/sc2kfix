@@ -743,7 +743,19 @@ static const char *GetHelpString(int nType, int nIndex) {
 			if (nIndex == 1)
 				pStr = "- Using Help:\n\nGo to Help -> Information";
 			else
-				pStr = "- Welcome to SimCity 2000!\n\nINFORMATION\n\n1\n\n2\n\n3\n\n4\n\n5\n\n6\n\n7\n\n8\n\n9";
+				pStr = "- Welcome to SimCity 2000!\n\n"
+				"INFORMATION\n\n"
+				"Help 'tips' are available in the following areas by holding down 'Shift' and clicking your mouse over a given control or section:\n\n"
+				" - City ToolBar - Controls and RCI 'widget'\n\n"
+				" - Map ToolBar - Controls\n\n"
+				" - Status Floating - General area (also during the disaster state the 'Red Arrow' button)\n\n"
+				" - Budget Main Dialog - Controls, labels and various fields\n\n"
+				" - Ordinances Dialog - Checkbox controls\n\n"
+				" - Population Dialog - Buttons\n\n"
+				" - CityMap Dialog - Tabs, button at the bottom and minimap view\n\n"
+				" - Industry Dialog - Labels, icons, bars and buttons\n\n"
+				" - Graphs Dialog - Buttons\n\n"
+				" - Neighbors Dialog - Entire map area";
 			break;
 	}
 	return pStr;
@@ -947,11 +959,16 @@ extern "C" void __stdcall Hook_SimcityApp_WinHelpA() {
 	__asm mov [pThis], ecx
 
 	CSimcityView *pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pThis);
+	CMainFrame *pMainFrm = (CMainFrame *)pThis->m_pMainWnd;
 	HWND hWnd = GetActiveWindow();
 
-	if (pThis->m_pMainWnd && hWnd == pThis->m_pMainWnd->m_hWnd && pSCView && pSCView->bSCVViewActive) {
+	if (pMainFrm && pSCView && pSCView->bSCVViewActive &&
+		(hWnd == pMainFrm->m_hWnd || 
+		hWnd == pMainFrm->dwMFStatusControlBar.m_hWnd ||
+		hWnd == pMainFrm->dwMFCityToolBar.m_hWnd ||
+		hWnd == pMainFrm->dwMFMapToolBar.m_hWnd)) {
 		ConsoleLog(LOG_DEBUG, "0x%06X -> CSimcityApp::WinHelpA()\n", _ReturnAddress());
-		DisplayItemHelp(hWnd, HELPTYPE_GENERAL, 0, true);
+		DisplayItemHelp(pMainFrm->m_hWnd, HELPTYPE_GENERAL, 0, true);
 	}
 }
 
