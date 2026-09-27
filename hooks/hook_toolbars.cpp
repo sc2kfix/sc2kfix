@@ -118,7 +118,6 @@ extern "C" void __stdcall Hook_CityToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoin
 		pThis->iMyTBMenuButtonPos = (iHitMenuButton != CITYTOOL_BUTTON_RCI) ? iHitMenuButton : -1;
 		if (iHitMenuButton < 0)
 			return;
-#if USE_NEW_HELP_HANDLING
 		// Added - 'Shift + Click' help messages that replaces the now non-functional
 		// help file in Windows.
 		if (iHitMenuButton != CITYTOOL_BUTTON_HELP && (nFlags & MK_SHIFT)) {
@@ -126,7 +125,6 @@ extern "C" void __stdcall Hook_CityToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoin
 			DisplayItemHelp(pSCApp->m_pMainWnd->m_hWnd, HELPTYPE_CITYTOOLBAR, iHitMenuButton, true);
 			return;
 		}
-#endif
 		if (pThis->iMyTBMenuButtonPos > -1) {
 			if (!Game_CityToolBar_PressButton(pThis, iHitMenuButton)) {
 				pThis->iMyTBMenuButtonPos = iStoredMenuButtonPos;
@@ -403,11 +401,7 @@ extern "C" void __stdcall Hook_CityToolBar_SetSelection(DWORD nIndex, DWORD nSub
 			Game_SimcityView_DrawHouse(pSCView);
 			break;
 		case CITYTOOL_BUTTON_HELP:
-#if USE_NEW_HELP_HANDLING
 			DisplayItemHelp(pSCApp->m_pMainWnd->m_hWnd, HELPTYPE_CITYTOOLBAR, nIndex, true);
-#else
-			GameMain_WinApp_WinHelpA(game_AfxCoreState.m_pCurrentWinApp, 0, 11);
-#endif
 			Game_MyToolBar_SetButtonStyle(pThis, CITYTOOL_BUTTON_HELP, 0);
 			break;
 		case CITYTOOL_BUTTON_RCI:
@@ -455,7 +449,6 @@ extern "C" void __stdcall Hook_MapToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoint
 		iHitMenuButton = Game_MapToolBar_HitTestFromPoint(pThis, pt);
 		pThis->iMyTBMenuButtonPos = iHitMenuButton;
 		if (iHitMenuButton >= 0) {
-#if USE_NEW_HELP_HANDLING
 			// Added - 'Shift + Click' help messages that replaces the now non-functional
 			// help file in Windows.
 			if (iHitMenuButton != MAPTOOL_BUTTON_HELP && (nFlags & MK_SHIFT)) {
@@ -463,7 +456,6 @@ extern "C" void __stdcall Hook_MapToolBar_OnLButtonDown(UINT nFlags, CMFC3XPoint
 				DisplayItemHelp(pSCApp->m_pMainWnd->m_hWnd, HELPTYPE_MAPTOOLBAR, iHitMenuButton, true);
 				return;
 			}
-#endif
 			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
 			Game_MapToolBar_PressButton(pThis, iHitMenuButton);
 			Game_MapToolBar_SetSelection(pThis, iHitMenuButton, 0, &pt);
@@ -572,11 +564,7 @@ extern "C" void __stdcall Hook_MapToolBar_SetSelection(UINT nIndex, UINT nSubInd
 			Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_ROTATECLOCKWISE, 0);
 			break;
 		case MAPTOOL_BUTTON_HELP:
-#if USE_NEW_HELP_HANDLING
 			DisplayItemHelp(pSCApp->m_pMainWnd->m_hWnd, HELPTYPE_MAPTOOLBAR, nIndex, true);
-#else
-			GameMain_WinApp_WinHelpA(game_AfxCoreState.m_pCurrentWinApp, 0, 11);
-#endif
 			Game_MyToolBar_SetButtonStyle(pThis, MAPTOOL_BUTTON_HELP, 0);
 			break;
 		case MAPTOOL_BUTTON_TERRAINHILLS:
