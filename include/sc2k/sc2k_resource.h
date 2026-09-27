@@ -15,6 +15,7 @@
 #define SC2K_DIALOG_NEWCITY       101
 #define SC2K_DIALOG_BUDGET        102
 #define SC2K_DIALOG_MAIN          103
+#define SC2K_DIALOG_OWNER         106
 #define SC2K_DIALOG_SELECTITEM    113
 #define SC2K_DIALOG_ORDINANCES    119
 #define SC2K_DIALOG_POPULATION    128
@@ -64,6 +65,9 @@
 #define SC2K_DIALOG_MAIN_BTN_WATCHTV          117
 #define SC2K_DIALOG_MAIN_BTN_SC2KFIXSETTINGS  21023 // Definitely not native
 #define SC2K_DIALOG_MAIN_LBL_UPDATENOTICE     21038 // Not native
+
+// 'Owner' Dialog
+#define SC2K_DIALOG_OWNER_LBL_MAYORNAME       139
 
 // Budget Dialog
 #define SC2K_DIALOG_BUDGET_EDIT_NAMEYEARMONTH     101

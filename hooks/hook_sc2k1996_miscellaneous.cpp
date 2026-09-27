@@ -1445,7 +1445,7 @@ static BOOL CALLBACK Hook_MainDialogProc(HWND hwndDlg, UINT message, WPARAM wPar
 static BOOL CALLBACK Hook_OwnerInfoDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 	case WM_INITDIALOG:
-		SetDlgItemText(hwndDlg, 139, jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
+		SetDlgItemText(hwndDlg, SC2K_DIALOG_OWNER_LBL_MAYORNAME, jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
 		CenterDialogBox(hwndDlg);
 		break;
 	}
@@ -1455,7 +1455,7 @@ static BOOL CALLBACK Hook_OwnerInfoDialogProc(HWND hwndDlg, UINT message, WPARAM
 // Hook required due to the modeless dialog cases being handled in a different manner.
 extern "C" HWND __stdcall Hook_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam) {
 	switch ((DWORD)lpTemplateName) {
-	case 106:
+	case SC2K_DIALOG_OWNER:
 		return CreateDialogParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_OwnerInfoDialogProc, dwInitParam);
 	case SC2K_DIALOG_POPULATION:
 	case SC2K_DIALOG_GRAPH:

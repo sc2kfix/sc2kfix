@@ -325,12 +325,12 @@ BEGIN
     LTEXT           "Estimated Annual Cost",-1,160,146,89,8
 END
 
-106 DIALOGEX 0, 0, 129, 74
+SC2K_DIALOG_OWNER DIALOGEX 0, 0, 129, 74
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE
 FONT 10, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     CTEXT           "\nThis copy of SimCity 2000®  is the\nexclusive registered property of:",-1,2,16,125,29
-    CTEXT           "E. Squid Quam",139,2,47,125,10
+    CTEXT           "E. Squid Quam",SC2K_DIALOG_OWNER_LBL_MAYORNAME,2,47,125,10
 END
 
 IDD_SIMULATIONSTATUS DIALOGEX 0, 0, 146, 21
@@ -736,7 +736,7 @@ BEGIN
         BOTTOMMARGIN, 240
     END
     
-    106, DIALOG
+	SC2K_DIALOG_OWNER, DIALOG
     BEGIN
     END
 
@@ -1017,7 +1017,7 @@ BEGIN
     0
 END
 
-106 AFX_DIALOG_LAYOUT
+SC2K_DIALOG_OWNER AFX_DIALOG_LAYOUT
 BEGIN
     0
 END
