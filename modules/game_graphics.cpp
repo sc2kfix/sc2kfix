@@ -581,8 +581,12 @@ extern "C" void __stdcall Hook_SimcityView_OnDraw(CMFC3XDC *pDC) {
 			MoveToEx(pDC->m_hDC, r[0].right - textSz.cx - 64, r[0].bottom - 32, &pt);
 			ExtTextOutA(pDC->m_hDC, r[0].right - textSz.cx - 32, r[0].bottom - 32, 0, &r[0], str.c_str(), str.length(), 0);
 		}
-		if (bRedraw)
-			PatBlt(pDC->m_hDC, r[0].right, r[0].bottom, dwSystemMetricCXVScroll, dwSystemMetricCYHScroll, BLACKNESS);
+		if (bRedraw) {
+			// Only redraw if the control isn't visible; originally it would always do so which would result
+			// in a subtle blinking effect.
+			if (!IsWindowVisible(pThis->SCVStaticOne->m_hWnd))
+				PatBlt(pDC->m_hDC, r[0].right, r[0].bottom, dwSystemMetricCXVScroll, dwSystemMetricCYHScroll, BLACKNESS);
+		}
 	}
 }
 

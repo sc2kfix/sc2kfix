@@ -3398,6 +3398,12 @@ skipgamemenu:
 	// Hook for CSimcityView::ResetScrollViewsAndDeleteGraphics
 	SafeVirtualProtect((LPVOID)0x402B62, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x402B62, Hook_SimcityView_ResetScrollViewsAndDeleteGraphics);
+	
+	// CSimcityView::ScrollBarAndStaticSizing
+	// The following patches the Static control style bits
+	// during creation.
+	SafeVirtualProtect((LPVOID)0x411406, 4, PAGE_EXECUTE_READWRITE);
+	memset((LPVOID)0x411406, (WS_CHILD | WS_BORDER | SS_SUNKEN), 4);
 
 	// Hook for CSimcityView::OnUpdate
 	SafeVirtualProtect((LPVOID)0x4024E1, 5, PAGE_EXECUTE_READWRITE);
