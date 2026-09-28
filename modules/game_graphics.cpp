@@ -127,7 +127,7 @@ void CGraphics::DeleteStored_SC2K1996() {
 	GRBitmap = 0;
 	if (GRBitmapLoColor)
 		::DeleteObject(GRBitmapLoColor);
-	GRBitmapLoColor;
+	GRBitmapLoColor = 0;
 	if (GRpBitmapInfo) {
 		free(GRpBitmapInfo);
 		GRpBitmapInfo = 0;
