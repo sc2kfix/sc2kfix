@@ -52,7 +52,7 @@ static std::map<int, std::string> mapEnumBudgetTypeToJSONName = {
 static inline void Save_LoadNeighborName(int i) {
 	__int16 nIdx = wNeighborNameIdx[i];
 	if (nIdx)
-		Game_LoadNamedEntryFromRsrcOffset(&szNeighborCities[MAX_NEIGH_BUF_SIZE * i], 1000, nIdx);
+		Game_LoadNamedEntryFromRsrcOffset(&szNeighborCities[MAX_NEIGH_BUF_SIZE * i], RSRCTYPE_IDS_NEIGHBORS, nIdx);
 	else
 		strcpy_s(&szNeighborCities[MAX_NEIGH_BUF_SIZE * i], MAX_NEIGH_BUF_SIZE, "Ocean");
 }
@@ -224,7 +224,7 @@ static void Save_CreateJSONFromMiscInfo(json::JSON& jsonMISC) {
 	jsonMISC["city"]["weather_rain"] = bWeatherRain;
 	jsonMISC["city"]["weather_trend"] = bWeatherTrend;
 	jsonMISC["city"]["disaster_type"] = wSetTriggerDisasterType;
-	jsonMISC["city"]["old_res_pop"] = dwMapXGRP[1][1];
+	jsonMISC["city"]["old_res_pop"] = dwMapXGRP[GRP_RESPOP][1];
 	jsonMISC["city"]["granted_rewards"] = dwGrantedItems[CITYTOOL_GROUP_REWARDS];
 
 	jsonMISC["city"]["pop_ratio_table"] = EncodeUint32Array((uint32_t*)pRawPopRatioTable, 20);

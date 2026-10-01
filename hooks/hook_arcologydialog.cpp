@@ -14,17 +14,17 @@
 #include "../resource.h"
 
 static DWORD dwArcologyBtnIDs[ARCOLOGY_COUNT] = {
-	120,
-	121,
-	122,
-	129
+	SC2K_DIALOG_SELECTITEM_ARCO_BTN_ONE,
+	SC2K_DIALOG_SELECTITEM_ARCO_BTN_TWO,
+	SC2K_DIALOG_SELECTITEM_ARCO_BTN_THREE,
+	SC2K_DIALOG_SELECTITEM_ARCO_BTN_FOUR 
 };
 
 static DWORD dwArcologyInfoBtnIDs[ARCOLOGY_COUNT] = {
-	3,
-	4,
-	5,
-	12
+	SC2K_DIALOG_SELECTITEM_ARCO_BTN_INFO_ONE,
+	SC2K_DIALOG_SELECTITEM_ARCO_BTN_INFO_TWO,
+	SC2K_DIALOG_SELECTITEM_ARCO_BTN_INFO_THREE,
+	SC2K_DIALOG_SELECTITEM_ARCO_BTN_INFO_FOUR
 };
 
 static char *pArcologyCostStrs[ARCOLOGY_COUNT];
@@ -61,7 +61,7 @@ extern "C" int __stdcall Hook_SelectArcologyDialog_OnInitDialog() {
 		nCost = costFromSubTool[CITY_MENUTOOL_POS(nItem + REWARDS_ARCOLOGIES_PLYMOUTH, CITYTOOL_GROUP_REWARDS)];
 		pArcologyCostStrs[nItem] = L_GetCurrencyString_SC2K1996(nCost);
 	}
-	hDlgItem = GetDlgItem(pThis->m_hWnd, 331);
+	hDlgItem = GetDlgItem(pThis->m_hWnd, SC2K_DIALOG_SELECTITEM_GROUPBOX_ONE);
 	GetWindowRect(hDlgItem, &borderRect);
 	hDlgItem = GetDlgItem(pThis->m_hWnd, IDCANCEL);
 	GetWindowRect(hDlgItem, &cancelRect);
@@ -257,9 +257,9 @@ extern "C" void __stdcall Hook_SelectArcologyDialog_SetCursorDeleteGraphics() {
 }
 
 void InstallArcologyDialogHooks_SC2K1996(void) {
-	// Adjust the dialog resource ID (113 - 0x71)
+	// Adjust the dialog resource ID (SC2K_DIALOG_SELECTITEM)
 	SafeVirtualProtect((LPVOID)0x47B9A5, 1, PAGE_EXECUTE_READWRITE);
-	memset((LPVOID)0x47B9A5, 0x71, 1);
+	memset((LPVOID)0x47B9A5, SC2K_DIALOG_SELECTITEM, 1);
 
 	// Adjust the message map referenced IDs.
 	SafeVirtualProtect((LPVOID)0x4DD0B0, 360, PAGE_EXECUTE_READWRITE);

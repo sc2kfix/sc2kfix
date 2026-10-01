@@ -133,6 +133,14 @@
 #define CITY_MENUTOOL_TOTAL		CITY_MENUTOOL_COUNT(CITYTOOL_GROUP_COUNT)
 #define CITY_MENUTOOL_POS(x, y)	(x + CITY_MENUTOOL_COUNT(y))
 
+// These defines are to do with fetching strings based on
+// an offset or index.
+#define RSRCTYPE_IDS_NEIGHBORS   1000 // (N + 547)
+#define RSRCTYPE_IDS_INDCOMNAMES 1001 // (N + 583). This one appears is unused - perhaps it was for named ind/com buildings - or something that went unrealised.
+#define RSRCTYPE_IDS_TILENAMES   2000 // (N + 593)
+#define RSRCTYPE_IDS_ZONENAMES   2100 // Zone Names and Densities (fetched from the dwZoneRsrcUIDs uint32_t array at 0x4E7140
+#define RSRCTYPE_IDS_AMOUNTDESCR 2200 // (N + 776)
+
 #define AREA_1x1	1
 #define AREA_2x2	2
 #define AREA_3x3	3
@@ -232,6 +240,22 @@ enum {
 	TILEPOPLEVEL_VERYHIGH
 };
 
+enum {
+	HELPTYPE_GENERAL,
+	HELPTYPE_CITYTOOLBAR,
+	HELPTYPE_MAPTOOLBAR,
+	HELPTYPE_FLOATINGSTATUS,
+	HELPTYPE_BUDGET,
+	HELPTYPE_ORDINANCES,
+	HELPTYPE_POPULATION,
+	HELPTYPE_CITYMAP,
+	HELPTYPE_INDUSTRY,
+	HELPTYPE_GRAPHS,
+	HELPTYPE_NEIGHBOURS,
+
+	HELPTYPE_COUNT
+};
+
 // Disaster IDs
 enum {
 	DISASTER_NONE = 0,
@@ -270,6 +294,8 @@ enum {
 
 	ZONE_BOUNDARY = 15 // 0xF iZoneType mask boundary
 };
+
+#define ZONE_COUNT (ZONE_BOUNDARY + 1)
 
 static inline const char* GetZoneName(int iZoneID) {
 	switch (iZoneID) {
@@ -2476,26 +2502,91 @@ enum {
 };
 
 enum {
-	ORDINANCE_SALES_TAX = 0,
-	ORDINANCE_INCOME_TAX,
-	ORDINANCE_LEGALIZED_GAMBLING,
-	ORDINANCE_PARKING_FINES,
-	ORDINANCE_VOLUNTEER_FIRE_DEPARTMENT,
-	ORDINANCE_PUBLIC_SMOKING_BAN,
-	ORDINANCE_FREE_CLINICS,
-	ORDINANCE_JUNIOR_SPORTS,
-	ORDINANCE_PRO_READING_CAMPAIGN,
-	ORDINANCE_ANTI_DRUG_CAMPAIGN,
-	ORDINANCE_CPR_TRAINING,
-	ORDINANCE_NEIGHBORHOOD_WATCH,
-	ORDINANCE_TOURIST_ADVERTISING,
-	ORDINANCE_BUSINESS_ADVERTISING,
-	ORDINANCE_CITY_BEAUTIFICATION,
-	ORDINANCE_ANNUAL_CARNIVAL,
-	ORDINANCE_ENERGY_CONSERVATION,
-	ORDINANCE_NUCLEAR_FREE_ZONE,
-	ORDINANCE_HOMELESS_SHELTER,
-	ORDINANCE_POLLUTION_CONTROLS
+	ADVICE_NONE,
+	ADVICE_BOND_FLOATCITYEXPAND,
+	ADVICE_BOND_FLOATGOODRATES,
+	ADVICE_BOND_OUTSTANDINGKILLING,
+	ADVICE_BOND_CUTBACK,
+	ADVICE_POLICE_CRIMELOW,
+	ADVICE_POLICE_NATAVERAGE,
+	ADVICE_POLICE_OUTOFCONTROL,
+	ADVICE_FIRE_COVERAGEEXCELLENT,
+	ADVICE_FIRE_COVERAGEADEQUATE,
+	ADVICE_FIRE_COVERAGENEEDMORE,
+	ADVICE_PROPTAX_LOWER,
+	ADVICE_PROPTAX_RAISE,
+	ADVICE_PROPTAX_CUTBACK,
+	ADVICE_ORDIN_DO_POLLUTIONCTRLS,
+	ADVICE_ORDIN_DO_ENERGYCONSERVE,
+	ADVICE_POLICE_DO_NEIGHBORWATCH,
+	ADVICE_ORDIN_DO_ANTIDRUGCAMPGN,
+	ADVICE_ORDIN_DROP_LEGALGAMBLING,
+	ADVICE_ORDIN_DROP_INCOMETAX,
+	ADVICE_ORDIN_DROP_SALESTAX,
+	ADVICE_HEALTH_EXCELLENT,
+	ADVICE_HEALTH_NEEDMORE,
+	ADVICE_HEALTH_DO_SMOKINGBAN,
+	ADVICE_HEALTH_DO_CPRTRAINING,
+	ADVICE_HEALTH_DO_FREECLINICS,
+	ADVICE_HEALTH_ADEQUATE,
+	ADVICE_EDUCATION_ADEQUATE,
+	ADVICE_EDUCATION_NEEDMORESCHOOLS,
+	ADVICE_EDUCATION_NEEDMORECOLLEGES,
+	ADVICE_TRANSIT_YESWECAN,
+	ADVICE_TRANSIT_INADEQUATEFLOATBOND,
+	ADVICE_TRANSIT_TOOMANYROADS,
+
+	ADVICE_COUNT
+};
+
+// Indices used when adjusting the linked dialog resources.
+enum {
+	ORDINANCE_OPT_SALES_TAX = 0,
+	ORDINANCE_OPT_INCOME_TAX,
+	ORDINANCE_OPT_LEGALIZED_GAMBLING,
+	ORDINANCE_OPT_PARKING_FINES,
+	ORDINANCE_OPT_VOLUNTEER_FIRE_DEPARTMENT,
+	ORDINANCE_OPT_PUBLIC_SMOKING_BAN,
+	ORDINANCE_OPT_FREE_CLINICS,
+	ORDINANCE_OPT_JUNIOR_SPORTS,
+	ORDINANCE_OPT_PRO_READING_CAMPAIGN,
+	ORDINANCE_OPT_ANTI_DRUG_CAMPAIGN,
+	ORDINANCE_OPT_CPR_TRAINING,
+	ORDINANCE_OPT_NEIGHBORHOOD_WATCH,
+	ORDINANCE_OPT_TOURIST_ADVERTISING,
+	ORDINANCE_OPT_BUSINESS_ADVERTISING,
+	ORDINANCE_OPT_CITY_BEAUTIFICATION,
+	ORDINANCE_OPT_ANNUAL_CARNIVAL,
+	ORDINANCE_OPT_ENERGY_CONSERVATION,
+	ORDINANCE_OPT_NUCLEAR_FREE_ZONE,
+	ORDINANCE_OPT_HOMELESS_SHELTER,
+	ORDINANCE_OPT_POLLUTION_CONTROLS,
+
+	ORDINANCE_OPT_COUNT
+};
+
+// Bits that are used with dwCityOrdinances
+enum {
+	ORDINANCE_SALES_TAX = 0x1,
+	ORDINANCE_INCOME_TAX = 0x2,
+	ORDINANCE_LEGALIZED_GAMBLING = 0x4,
+	ORDINANCE_PARKING_FINES = 0x8,
+	ORDINANCE_VOLUNTEER_FIRE_DEPARTMENT = 0x10,
+	ORDINANCE_PUBLIC_SMOKING_BAN = 0x20,
+	ORDINANCE_FREE_CLINICS = 0x40,
+	ORDINANCE_JUNIOR_SPORTS = 0x80,
+	ORDINANCE_PRO_READING_CAMPAIGN = 0x100,
+	ORDINANCE_ANTI_DRUG_CAMPAIGN = 0x200,
+	ORDINANCE_CPR_TRAINING = 0x400,
+	ORDINANCE_NEIGHBORHOOD_WATCH = 0x800,
+	ORDINANCE_TOURIST_ADVERTISING = 0x1000,
+	ORDINANCE_BUSINESS_ADVERTISING = 0x2000,
+	ORDINANCE_CITY_BEAUTIFICATION = 0x4000,
+	ORDINANCE_ANNUAL_CARNIVAL = 0x8000,
+	ORDINANCE_ENERGY_CONSERVATION = 0x10000,
+	ORDINANCE_NUCLEAR_FREE_ZONE = 0x20000,
+	ORDINANCE_HOMELESS_SHELTER = 0x40000,
+	ORDINANCE_POLLUTION_CONTROLS = 0x80000
 };
 
 enum {
@@ -2641,7 +2732,8 @@ enum
 	CITYTOOL_BUTTON_DISPLAYINFRA,
 	CITYTOOL_BUTTON_DISPLAYZONES,
 	CITYTOOL_BUTTON_DISPLAYUNDERGROUND,
-	CITYTOOL_BUTTON_HELP
+	CITYTOOL_BUTTON_HELP,
+	CITYTOOL_BUTTON_RCI
 };
 
 // -- City Subtool enums --
@@ -2853,6 +2945,15 @@ enum {
 };
 
 enum {
+	CURSORHIT_NA,
+	CURSORHIT_GAME,
+	CURSORHIT_CITYTOOLBAR,
+	CURSORHIT_MAPTOOLBAR,
+	CURSORHIT_STATUSDIALOG, // Floating status dialog
+	CURSORHIT_GAMEDIALOG    // Currently unused (it'll be used to account for the 'help' cursor while Shift is held down).
+};
+
+enum {
 	VIEWROTATION_NORTH = 0,
 	VIEWROTATION_EAST,
 	VIEWROTATION_SOUTH,
@@ -2879,6 +2980,61 @@ enum {
 	DEMAND_IND,
 
 	DEMAND_COUNT
+};
+
+enum {
+	POPDLG_POPULATION,
+	POPDLG_HEALTH,
+	POPDLG_EDUCATION,
+
+	POPDLG_COUNT
+};
+
+enum {
+	IND_NONE = -1,
+	IND_STEELMINING,
+	IND_TEXTILES,
+	IND_PETROCHEMICAL,
+	IND_FOOD,
+	IND_CONSTRUCTION,
+	IND_AUTOMATIVE,
+	IND_AEROSPACE,
+	IND_FINANCE,
+	IND_MEDIA,
+	IND_ELECTRONICS,
+	IND_TOURISM,
+
+	IND_COUNT
+};
+
+enum {
+	IND_SECT_RATIOS,
+	IND_SECT_TAXRATES,
+	IND_SECT_DEMAND,
+
+	IND_SECT_COUNT
+};
+
+enum {
+	GRAPHDLG_RANGE_ONEYEAR,
+	GRAPHDLG_RANGE_TENYEARS,
+	GRAPHDLG_RANGE_HUNDREDYEARS,
+
+	GRAPHDLG_RANGE_COUNT
+};
+
+enum {
+	CITYMAPDLG_STRUCTURESZONES,
+	CITYMAPDLG_ROADRAILTRAFFIC,
+	CITYMAPDLG_POWERGRID,
+	CITYMAPDLG_WATERSUPPLY,
+	CITYMAPDLG_POPDENSITYROG,
+	CITYMAPDLG_POLICECRIME,
+	CITYMAPDLG_POLLUTION,
+	CITYMAPDLG_LANDVALUE,
+	CITYMAPDLG_FIREEDUCATION,
+
+	CITYMAPDLG_COUNT
 };
 
 enum {
@@ -3195,9 +3351,12 @@ GAMECALL(0x401163, void, __thiscall, Sound_PlayPrioritySound, CSound *)
 GAMECALL(0x4011E5, BOOL, __thiscall, Sound_MapToolSoundTrigger, CSound* pThis)
 GAMECALL(0x4011EA, CMovieDialog *, __thiscall, MovieDialog_Cons, CMovieDialog *, CMFC3XWnd *)
 GAMECALL(0x401154, void, __stdcall, SimulationPollutionTerrainAndLandValueScan, void)
+GAMECALL(0x401168, void, __thiscall, BudgetOrdinanceDialog_ToggleOrdinanceOption, CBudgetOrdinanceDialog *, int)
 GAMECALL(0x401181, int, __cdecl, FatStepTrace, __int16 *, __int16 *)
+GAMECALL(0x40118B, void, __thiscall, BudgetMainDialog_AdjustPropertyTaxPercentage, CBudgetMainDialog *)
 GAMECALL(0x40119F, void, __cdecl, DrawDisasterObjects, __int16, __int16, __int16)
 GAMECALL(0x4011B8, void, __cdecl, FatBeginTrace, __int16, __int16, __int16, __int16)
+GAMECALL(0x4011EF, void, __thiscall, BudgetEducationDialog_UpdateSchoolFunding, CBudgetEducationDialog *)
 GAMECALL(0x401203, LONG, __cdecl, StackPeek, POINT*)
 GAMECALL(0x401212, int, __cdecl, CityToolPlaceSubToRail, __int16, __int16)
 GAMECALL(0x401226, int, __cdecl, BeginProcessObjects, CMFC3XWnd *pTargetWnd, void *, int, __int16, RECT *)
@@ -3208,6 +3367,7 @@ GAMECALL(0x401280, BOOL, __cdecl, CheckTilesetFileHeader, FILE *)
 GAMECALL(0x4012B2, int, __thiscall, CityToolBar_PressButton, CCityToolBar *, int)
 GAMECALL(0x4012B7, void, __cdecl, FailRadioException, UINT, CMFC3XFileException *, char *)
 GAMECALL(0x4012C1, int, __cdecl, DirtyTile, __int16 x, __int16 y)
+GAMECALL(0x4012D5, void, __thiscall, BudgetEducationDialog_UpdateCollegeFunding, CBudgetEducationDialog *)
 GAMECALL(0x4012DF, void, __stdcall, DecreaseWaterLevel, void)
 GAMECALL(0x4012F8, __int16, __cdecl, GetDestDistance, __int16, __int16, __int16, __int16)
 GAMECALL(0x4012FD, void, __cdecl, UpdateSimNationDialog, void)
@@ -3241,10 +3401,12 @@ GAMECALL(0x401555, void, __thiscall, SimcityView_ResetScreenArea, CSimcityView *
 GAMECALL(0x401564, CScenarioDialog *, __thiscall, ScenarioDialog_Cons, CScenarioDialog *, CMainFrame *)
 GAMECALL(0x401573, int, __thiscall, SimcityView_CityToolPlaceSubway, CSimcityView*, __int16, __int16)
 GAMECALL(0x401578, void, __stdcall, PrepareGame)
+GAMECALL(0x40159B, CBudgetOrdinanceDialog *, __thiscall, BudgetOrdinanceDialog_Cons, CBudgetOrdinanceDialog *, CMFC3XWnd *)
 GAMECALL(0x4015A0, void, __thiscall, SimcityApp_SaveCity, CSimcityAppPrimary *pThis)
 GAMECALL(0x4015C8, void, __thiscall, CityToolBar_AdjustLayers, CCityToolBar *, BOOL)
 GAMECALL(0x4015CD, CCurrencyString *, __thiscall, CurrencyString_SetString, CCurrencyString *, const char *pSrc, int iSize, double idAmount)
 GAMECALL(0x4015E6, void, __cdecl, SimulationPrepareBudgetDialog, int)
+GAMECALL(0x40164A, void, __thiscall, Graphics_LoadWithHandleData, CGraphics *, unsigned __int16, int)
 GAMECALL(0x401654, void, __cdecl, LoadTilesFromMemory, char *)
 GAMECALL(0x401672, void, __cdecl, SimulationToggleGrantReward, __int16 iReward, int iToggle)
 GAMECALL(0x40169F, void, __stdcall, UpdatePopulationDialog, void)
@@ -3252,6 +3414,7 @@ GAMECALL(0x4016A9, void, __thiscall, SimcityApp_CallAutoSave, CSimcityAppPrimary
 GAMECALL(0x4016D1, int, __thiscall, SimcityView_CenterOnNewScreenCoordinates, CSimcityView *pThis, __int16 iNewScreenPointX, __int16 iNewScreenPointY)
 GAMECALL(0x4016DB, void, __thiscall, MainFrame_DisableCityToolBarButton, CMainFrame *, int)
 GAMECALL(0x4016F9, int, __cdecl, PlaceChurch, __int16 x, __int16 y)
+GAMECALL(0x401744, void, __thiscall, BudgetTransitDialog_UpdateHighwayFunding, CBudgetTransitDialog *)
 GAMECALL(0x40174E, void, __cdecl, SetCPoint, POINT *pt, __int16 x, __int16 y)
 GAMECALL(0x401753, void, __thiscall, SimcityApp_OnQuit, CSimcityAppPrimary *)
 GAMECALL(0x401758, void, __cdecl, DirtyThing, __int16)
@@ -3260,18 +3423,24 @@ GAMECALL(0x40178F, __int16, __cdecl, PlaceTile, __int16 x, __int16 y, __int16 iT
 GAMECALL(0x4017B2, void, __thiscall, SimcityDoc_UpdateDocumentTitle, CSimcityDoc* pThis)
 GAMECALL(0x4017FD, void, __stdcall, DrawAllLarge)
 GAMECALL(0x401820, void, __thiscall, Engine_SimulationProcessTick, CEngine *)
+GAMECALL(0x401825, void, __thiscall, CityIndustryDialog_DeleteObject, CCityIndustryDialog *)
+GAMECALL(0x40183E, void, __thiscall, SimGraphDialog_DeleteObjects, CSimGraphDialog *)
 GAMECALL(0x401857, int, __cdecl, MapToolPlaceTree, __int16 iTileTargetX, __int16 iTileTargetY)
+GAMECALL(0x40186B, void, __thiscall, CityIndustryDialog_UpdateDialog, CCityIndustryDialog *)
 GAMECALL(0x4018C0, void, __stdcall, SelectArcologyDialog_OnDrawState, LPDRAWITEMSTRUCT)
+GAMECALL(0x4018F7, void, __thiscall, BudgetMainDialog_AdjustFireFundingPercentage, CBudgetMainDialog *)
 GAMECALL(0x401901, void, __thiscall, SelectArcologyDialog_OnDrawEntire, CSelectArcologyDialog *, int, int, LPDRAWITEMSTRUCT)
 GAMECALL(0x40191F, void, __cdecl, DoFund, __int16)
 GAMECALL(0x401929, void, __thiscall, SimcityApp_SaveCityAs, CSimcityAppPrimary *)
 GAMECALL(0x401951, void, __thiscall, Graphics_DeleteObject, CGraphics *)
+GAMECALL(0x401988, void, __thiscall, BudgetMainDialog_AdjustTransitFundingPercentage, CBudgetMainDialog *)
 GAMECALL(0x40198D, int, __cdecl, MapToolPlaceStream, __int16 iTileTargetX, __int16 iTileTargetY, __int16) // XXX - the last parameter isn't entirely clear, perhaps area or offset?
 GAMECALL(0x401997, int, __cdecl, MapToolPlaceWater, __int16 iTileTargetX, __int16 iTileTargetY)
 GAMECALL(0x4019A1, char, __cdecl, TraceEdit, __int16 x, __int16 y)
 GAMECALL(0x4019B5, void, __thiscall, CurrencyString_TruncateAtSpace, CCurrencyString *)
 GAMECALL(0x4019EC, void, __cdecl, CenterOnTileCoords, __int16 x, __int16 y)
 GAMECALL(0x4019F6, void, __cdecl, VerifyAndLoadNewTiles, FILE *)
+GAMECALL(0x401A00, void, __thiscall, BudgetOrdinanceDialog_Dest, CBudgetOrdinanceDialog *)
 GAMECALL(0x401A1E, void, __thiscall, Graphics_SetColorTableFromApplicationPalette, CGraphics *)
 GAMECALL(0x401A2D, int, __thiscall, SimcityView_CityToolPlaceHighway, CSimcityView*, __int16, __int16)
 GAMECALL(0x401A37, int, __cdecl, StepTrace, __int16* x, __int16* y)
@@ -3284,6 +3453,7 @@ GAMECALL(0x401AB4, int, __cdecl, MapToolRaiseTerrain, __int16 iTileTargetX, __in
 GAMECALL(0x401AC8, void, __thiscall, MapToolBar_AdjustSlider, CMapToolBar *, UINT, CMFC3XPoint *)
 GAMECALL(0x401AF0, int, __cdecl, BeginTrace, __int16 x1, __int16 y1, __int16 x2, __int16 y2)
 GAMECALL(0x401B04, int, __cdecl, CityToolPlaceOnRamp, __int16, __int16)
+GAMECALL(0x401B3B, void, __thiscall, BudgetMainDialog_AdjustPoliceFundingPercentage, CBudgetMainDialog *)
 GAMECALL(0x401B40, int, __cdecl, IsZonedTilePowered, __int16 x, __int16 y)
 GAMECALL(0x401B4A, void, __cdecl, SimcityDoc_PrepareMap, void)
 GAMECALL(0x401B4F, BOOL, __stdcall, MovieCreateWindow)
@@ -3307,6 +3477,7 @@ GAMECALL(0x401D16, __int16, __cdecl, PointToTile, __int16 x, __int16 y)
 GAMECALL(0x401D2A, int, __cdecl, InvertTerrain, __int16, __int16)
 GAMECALL(0x401D3E, int, __thiscall, MainFrame_CloseInflightDialog, CMainFrame *)
 GAMECALL(0x401D7A, int, __thiscall, JokeDialog_Destruct, CJokeDialog *)
+GAMECALL(0x401D89, void, __cdecl, AdjustIndustrialTaxRate, __int16)
 GAMECALL(0x401DBB, void, __thiscall, SimcityApp_UpdateTick, CSimcityAppPrimary *)
 GAMECALL(0x401DCA, void, __cdecl, RemoveLabel, __int16)
 GAMECALL(0x401E06, void, __cdecl, CalculateGrade, CMFC3XPaintDC *, __int16, __int16)
@@ -3323,6 +3494,7 @@ GAMECALL(0x401EA1, int, __cdecl, MapToolLowerTerrain, __int16 iTileTargetX, __in
 GAMECALL(0x401EC4, void, __cdecl, DrawAllSmallBelowTile, __int16, __int16)
 GAMECALL(0x401ECE, int, __thiscall, Graphics_Load, CGraphics *, const char *, int)
 GAMECALL(0x401ED8, void, __cdecl, DirtyCloud, __int16, __int16, __int16)
+GAMECALL(0x401EE7, void, __thiscall, PopulationDialog_UpdateControls, CPopulationDialog *)
 GAMECALL(0x401F05, void, __stdcall, StartCleanGame)
 GAMECALL(0x401F0F, void, __thiscall, ScenarioDialog_Dest, CScenarioDialog *)
 GAMECALL(0x401F23, CNewspaperDialog *, __thiscall, NewspaperDialog_Construct, CNewspaperDialog *, CMainFrame *)
@@ -3330,28 +3502,33 @@ GAMECALL(0x401F50, int, __cdecl, RecalculateCityValue, void)
 GAMECALL(0x401F82, void, __thiscall, SimcityView_DrawTornado, CSimcityView *, __int16, __int16, __int16)
 GAMECALL(0x401F9B, int, __stdcall, LoadSoundIntoBuffer, int iSoundID, void *lpBuffer)
 GAMECALL(0x401FA0, int, __cdecl, CheckAdjustTerrainAndPlacePowerLines, __int16 x, __int16 y)
+GAMECALL(0x401FE1, void, __thiscall, CityMapDialog_CenterOnPoint, CCityMapDialog *, int, int)
 GAMECALL(0x401FFA, void, __stdcall, GraphKludge)
 GAMECALL(0x402022, void, __stdcall, UpdateGraphData, void)
 GAMECALL(0x402045, void *, __cdecl, AllocateDataEntry, size_t iSz)
 GAMECALL(0x402095, void, __cdecl, DrawLargeTile, __int16, __int16, int, int)
 GAMECALL(0x40209F, __int16, __cdecl, SpawnTrain, __int16 x, __int16 y)
+GAMECALL(0x4020B3, void, __thiscall, BudgetTransitDialog_UpdateTunnelFunding, CBudgetTransitDialog *)
 GAMECALL(0x4020B8, void, __thiscall, SimcityView_MakeTerrain, CSimcityView *, int, int, __int16, __int16, __int16)
+GAMECALL(0x4020EA, void, __thiscall, BudgetTransitDialog_UpdateRailFunding, CBudgetTransitDialog *)
 GAMECALL(0x40210D, void, __thiscall, SimcityApp_AdjustNewspaperMenu, CSimcityAppPrimary *)
 GAMECALL(0x40211C, void, __cdecl, DrawTrain, __int16, __int16, __int16)
 GAMECALL(0x402121, void, __thiscall, CityToolBar_MoveAndBlitToolBar, CCityToolBar *, int, int)
 GAMECALL(0x40212B, void, __thiscall, Sound_LoadClickSound, CSound *)
+GAMECALL(0x402144, void, __thiscall, BitmapButton_Dest, CMFC3XBitmapButton *)
 GAMECALL(0x40216C, int, __thiscall, Graphics_Height, CGraphics *)
 GAMECALL(0x40217B, void, __stdcall, SimulationRCIDemandUpdates, void)
 GAMECALL(0x402199, void, __thiscall, SimcityView_ResetAttributesAndCoordinates, CSimcityView *, __int16, __int16, __int16)
 GAMECALL(0x40219E, INT_PTR, __thiscall, GameDialog_DoModal, CGameDialog *)
 GAMECALL(0x4021A3, void, __cdecl, AdjustScenarioTextCharacters, const char *, char *)
 GAMECALL(0x4021A8, void, __thiscall, MainFrame_ToggleStatusControlBar, CMainFrame *, BOOL)
+GAMECALL(0x4021C1, void, __thiscall, SimGraphDialog_AttachObjects, CSimGraphDialog *)
 GAMECALL(0x4021D5, void, __stdcall, ShowViewControls)
 GAMECALL(0x4021F3, void, __cdecl, DrawAllTinyBelowTile)
 GAMECALL(0x4021F8, void, __cdecl, ReadTilesetFile, char *)
 GAMECALL(0x402211, void, __thiscall, SimcityView_Demolish, CSimcityView *pThis, __int16 x, __int16 y, int iExplosion)
 GAMECALL(0x402225, int, __thiscall, MainFrame_LoadOwnerInformation, CMainFrame *)
-GAMECALL(0x40222A, void, __thiscall, BudgetAdvisorDialog_CreateDialog, CMFC3XBudgetAdvisorDialog* pThis, CMainFrame* pMainFrame)
+GAMECALL(0x40222A, void, __thiscall, BudgetAdvisorDialog_Cons, CBudgetAdvisorDialog* pThis, CMainFrame* pMainFrame)
 GAMECALL(0x402252, int, __thiscall, MainFrame_DoInitialDialog, CMainFrame *)
 GAMECALL(0x402266, LONG, __cdecl, SetSpriteForDrawing, void *, sprite_header_t *, int, __int16, RECT *)
 GAMECALL(0x40226B, int, __thiscall, SimcityView_UpdateHouse, CSimcityView *) // Update partial sections ("dirty" areas)
@@ -3360,6 +3537,7 @@ GAMECALL(0x402293, void, __stdcall, UpdateSectionsAndResetWindowMenu)
 GAMECALL_DEPRECATED(0x4022FC, void, __cdecl, SimulationGrowthTick, __int16 iStep, __int16 iSubStep)
 GAMECALL(0x402306, void, __thiscall, MyToolBar_SetButtonStyle, CMyToolBar *, int nIndex, UINT nStyle)
 GAMECALL(0x40232E, void, __thiscall, MapToolBar_MoveAndBlitToolBar, CMapToolBar *, int, int)
+GAMECALL(0x402347, void, __thiscall, BudgetMainDialog_DrawCosts, CBudgetMainDialog *, CMFC3XDC *)
 GAMECALL(0x40234C, void, __cdecl, QueuePop, CMFC3XPoint *)
 GAMECALL(0x40235B, int, __thiscall, SimcityView_InvertZoneList, CSimcityView *pThis, WORD wX1, WORD wY1, WORD wX2, WORD wY2)
 GAMECALL(0x402360, BOOL, __cdecl, MovieCheck, char *)
@@ -3376,6 +3554,7 @@ GAMECALL(0x402414, void, __thiscall, SimcityApp_MusicPlay, CSimcityAppPrimary *p
 GAMECALL(0x402419, LONG, __thiscall, Graphics_Width, CGraphics *)
 GAMECALL(0x40242D, void, __thiscall, CurrencyString_Dest, CCurrencyString *)
 GAMECALL(0x402450, void, __thiscall, Graphics_DeleteStored, CGraphics *)
+GAMECALL(0x40245F, void, __thiscall, CityIndustryDialog_AttachObject, CCityIndustryDialog *)
 GAMECALL(0x402478, int, __cdecl, SpawnHelicopter, __int16 x, __int16 y)
 GAMECALL(0x40247D, void, __stdcall, RecalculateMayorsHouseStats)
 GAMECALL(0x402487, void, __cdecl, EventScenarioNotification, __int16 iEvent)
@@ -3395,6 +3574,7 @@ GAMECALL(0x4025B3, void, __thiscall, NewspaperDialog_Destruct, CNewspaperDialog 
 GAMECALL(0x4025E0, CMFC3XDC *, __thiscall, Graphics_GetDC, CGraphics *)
 GAMECALL(0x402603, __int16, __cdecl, ZonedBuildingTileDeletion, __int16 x, __int16 y)
 GAMECALL(0x40260D, BOOL, __cdecl, ReadTileNameInformation, tileName_t *)
+GAMECALL(0x402635, void, __thiscall, BudgetAdvisorDialog_Dest, CBudgetAdvisorDialog *)
 GAMECALL(0x40263A, __int16, __cdecl, FatTerrain, __int16, __int16)
 GAMECALL(0x40264E, void *, __cdecl, ReallocateDataEntry, char *, const char *)
 GAMECALL(0x40265D, void, __stdcall, DrawAllSmall)
@@ -3402,7 +3582,9 @@ GAMECALL(0x40267B, HPALETTE, __thiscall, Graphics_MakeUnmappedPalette, CGraphics
 GAMECALL(0x402699, CSimcityView *, __thiscall, SimcityApp_PointerToCSimcityViewClass, CSimcityAppPrimary* CSimcityAppThis)
 GAMECALL_DEPRECATED(0x4026B2, int, __cdecl, SimulationGrowSpecificZone, __int16 x, __int16 y, __int16 iTileID, __int16 iZoneType)
 GAMECALL(0x4026DF, void, __thiscall, Sound_PlayActionThingSound, CSound *, int, int)
+GAMECALL(0x4026E9, CBudgetMainDialog *, __thiscall, BudgetMainDialog_Cons, CBudgetMainDialog *, CMainFrame *)
 GAMECALL(0x4026F8, void, __stdcall, SimulationUpdatePowerConsumption, void)
+GAMECALL(0x402720, void, __thiscall, GameDialog_OnLButtonDown, CGameDialog *, UINT, CMFC3XPoint)
 GAMECALL(0x402725, int, __cdecl, PlacePowerLinesAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x402739, void, __stdcall, GetAndLoadNextTileFileChunkToMemory, FILE *, char *, DWORD)
 GAMECALL(0x402752, void, __thiscall, MapToolBar_PressButton, CMapToolBar *, int)
@@ -3421,7 +3603,9 @@ GAMECALL(0x40282E, void, __thiscall, SimcityView_RotateClockwise, CSimcityView *
 GAMECALL(0x40285B, void, __thiscall, MainFrame_MoveStatusGoToButton, CMainFrame *)
 GAMECALL(0x4028A1, void, __thiscall, SimcityApp_UpdateStatus, CSimcityAppPrimary *, BOOL)
 GAMECALL(0x4028BA, void, __thiscall, CityToolBar_OnCancelMode, CCityToolBar *)
+GAMECALL(0x4028D8, void, __thiscall, BudgetMainDialog_AdjustEducationFundingPercentage, CBudgetMainDialog *)
 GAMECALL(0x402900, int, __cdecl, NewspaperStoryGenerator, __int16 iType, BYTE iValue)
+GAMECALL(0x40290F, void, __thiscall, BudgetZoneTaxDialog_UpdateComFunding, CBudgetZoneTaxDialog *)
 GAMECALL(0x402937, void, __thiscall, CityToolBar_ToolMenuDisable, CCityToolBar* pThis)
 GAMECALL(0x40293C, void, __cdecl, DisplayItemCost, CMFC3XPaintDC *, int)
 GAMECALL(0x402941, void, __stdcall, drawBridgeShape, __int16, __int16, __int16)
@@ -3432,12 +3616,14 @@ GAMECALL(0x4029B4, void, __cdecl, LoadDataArchive, __int16)
 GAMECALL(0x4029C3, int, __cdecl, GetGameAreaMouseActivity, CSimcityView* pSCView, LPPOINT lpPoint)
 GAMECALL(0x4029C8, void, __thiscall, MyToolBar_InvalidateButton, CMyToolBar *, int)
 GAMECALL(0x4029E1, void, __thiscall, MainFrame_OnChar, CMainFrame *, UINT, UINT, UINT)
+GAMECALL(0x402A04, void, __thiscall, BudgetMainDialog_ReleaseObjects, CBudgetMainDialog *)
 GAMECALL(0x402A1D, void, __thiscall, CityToolBar_SetSelection, CCityToolBar *, DWORD, DWORD)
 GAMECALL(0x402A40, void, __cdecl, FailRadio, UINT)
 GAMECALL(0x402A59, void, __cdecl, CityToolSetSign, __int16, __int16)
 GAMECALL(0x402A5E, void, __thiscall, MapToolBar_SetSelection, CMapToolBar *, UINT, UINT, CMFC3XPoint *)
 GAMECALL(0x402A63, void, __cdecl, DrawAllLargeBelowTile, __int16, __int16)
 GAMECALL(0x402A68, void, __thiscall, CityToolBar_UpdateControls, CCityToolBar *, BOOL)
+GAMECALL(0x402A86, void, __thiscall, PopulationDialog_DeleteFont, CPopulationDialog *)
 GAMECALL(0x402A8B, void, __thiscall, SimcityDoc_NewGame, CSimcityDoc *)
 GAMECALL(0x402AB3, void, __thiscall, SimcityView_DoCenterOnPoint, CSimcityView *)
 GAMECALL(0x402ADB, void, __thiscall, MovieDialog_Dest, CMovieDialog *)
@@ -3449,8 +3635,11 @@ GAMECALL(0x402B4E, void, __cdecl, DisplayInformationMessageBox, const char *, DW
 GAMECALL(0x402B7B, BOOL, __stdcall, FinishProcessObjects, void)
 GAMECALL(0x402B8A, void, __thiscall, Sound_LoadActionThingSound, CSound *, int)
 GAMECALL(0x402B94, int, __cdecl, MapToolLevelTerrain, __int16 iTileTargetX, __int16 iTileTargetY)
+GAMECALL(0x402B99, void, __thiscall, BudgetMainDialog_AdjustHealthFundingPercentage, CBudgetMainDialog *)
+GAMECALL(0x402BB2, void, __thiscall, BudgetZoneTaxDialog_UpdateResFunding, CBudgetZoneTaxDialog *)
 GAMECALL(0x402BD5, void, __thiscall, Graphics_BitBlit, CGraphics *, HDC, int, int, int, int, int, int)
 GAMECALL(0x402BC6, int, __thiscall, MapToolBar_HitTestFromPoint, CMapToolBar *, CMFC3XPoint)
+GAMECALL(0x402BCB, void, __thiscall, BudgetTransitDialog_UpdateSubwayFunding, CBudgetTransitDialog *)
 GAMECALL(0x402BD0, void, __cdecl, SetTerrainTile, __int16, __int16)
 GAMECALL(0x402BE4, void, __thiscall, Sound_MusicStop, CSound *)
 GAMECALL(0x402BE9, void, __stdcall, DrawAllTiny)
@@ -3463,7 +3652,9 @@ GAMECALL(0x402C3E, int, __thiscall, CityToolBar_HitTestFromPoint, CCityToolBar *
 GAMECALL(0x402C4D, void, __cdecl, FailRadioToFileID, int, UINT)
 GAMECALL(0x402C98, void, __thiscall, GameDialog_SetCursor, CGameDialog *)
 GAMECALL(0x402CCF, void, __cdecl, GetFileExceptionError, UINT, CMFC3XFileException *, CMFC3XString *)
+GAMECALL(0x402CE3, void, __thiscall, BudgetMainDialog_UpdateInternalInformation, CBudgetMainDialog *, int)
 GAMECALL(0x402CF2, void, __thiscall, SimcityApp_SetGameCursor, CSimcityAppPrimary *pThis, int iNewCursor, BOOL bActive)
+GAMECALL(0x402CFC, void, __thiscall, SimGraphDialog_UpdateDialog, CSimGraphDialog *)
 GAMECALL(0x402D15, void, __stdcall, ClearLabels)
 GAMECALL(0x402D1F, __int16, __cdecl, CalcTileHit8, __int16, __int16)
 GAMECALL(0x402D2E, void, __stdcall, UpdateBudgetInformation, void)
@@ -3471,19 +3662,23 @@ GAMECALL(0x402D33, int, __thiscall, SimcityApp_ConvertClassicCity, CSimcityAppPr
 GAMECALL(0x402D51, void, __stdcall, SimulationUpdateMonthlyTrafficData, void)
 GAMECALL(0x402D56, BYTE, __stdcall, PrepareLabel, void)
 GAMECALL(0x402D6F, void, __stdcall, DrawAllColor)
+GAMECALL(0x402D88, void, __thiscall, BudgetTransitDialog_UpdateBridgeFunding, CBudgetTransitDialog *)
 GAMECALL(0x402D97, CStadiumSelectTeamDialog *, __thiscall, StadiumSelectTeamDialog_Construct, CStadiumSelectTeamDialog *, CMainFrame *)
 GAMECALL(0x402D9C, void, __cdecl, DrawUnderTile, __int16, __int16)
 GAMECALL(0x402DA1, BYTE *, __thiscall, Graphics_LockDIBBits, CGraphics *)
 GAMECALL(0x402DD3, int, __thiscall, SimcityApp_CheckActiveGame, CSimcityAppPrimary *)
 GAMECALL(0x402DF1, void, __thiscall, Graphics_Paint, CGraphics *, HDC, int, int)
+GAMECALL(0x402E05, void, __thiscall, BudgetTransitDialog_UpdateRoadFunding, CBudgetTransitDialog *)
 GAMECALL(0x402E19, void, __cdecl, QueryGeneralItem, __int16, __int16)
 GAMECALL(0x402E96, void, __thiscall, SimcityApp_GetToolSound, CSimcityAppPrimary *)
 GAMECALL(0x402EA0, int, __cdecl, CityToolPlacePowerHydroDam, __int16, __int16)
 GAMECALL(0x402EA5, void, __cdecl, StackPush, __int16, __int16)
+GAMECALL(0x402EDC, void, __thiscall, BudgetAdvisorDialog_SetAdvisorMessage, CBudgetAdvisorDialog *, int)
 GAMECALL(0x402EF5, void, __stdcall, GetOccupiedTileCount)
 GAMECALL(0x402EFA, int, __stdcall, GetSimcityViewMenuPos, int iPos)
 GAMECALL(0x402F0E, void, __thiscall, SimcityView_GameCursorHitTest, CSimcityView *)
 GAMECALL(0x402F18, void, __thiscall, MainFrame_UpdateCityToolBar, CMainFrame *)
+GAMECALL(0x402F22, void, __thiscall, BudgetZoneTaxDialog_UpdateIndFunding, CBudgetZoneTaxDialog *)
 GAMECALL(0x402F4A, void, __cdecl, PlaceSubwayAtCoordinates, __int16 x, __int16 y)
 GAMECALL(0x402F4F, void, __thiscall, SimcityApp_GetValueStringA, CSimcityAppPrimary *, CMFC3XString *, const char *, const char *)
 GAMECALL(0x402F9A, void, __thiscall, SimcityView_GetScreenAreaInfo, CSimcityView *pThis, LPRECT lpRect)
@@ -3505,6 +3700,12 @@ GAMECALL_MAIN(0x405650, int, __thiscall, SimcityApp_InitInstance, CSimcityAppPri
 GAMECALL_MAIN(0x409010, void, __thiscall, GameDialog_OnDestroy, CGameDialog *)
 GAMECALL_MAIN(0x40ECA0, CSimcityView *, __thiscall, SimcityView_Cons, CSimcityView *)
 GAMECALL_MAIN(0x40EEC0, void, __thiscall, SimcityView_ResetScrollViewsAndDeleteGraphics, CSimcityView *)
+GAMECALL_MAIN(0x4167F0, int, __thiscall, BudgetMainDialog_OnInitDialog, CBudgetMainDialog *)
+GAMECALL_MAIN(0x417220, void, __thiscall, BudgetMainDialog_SetCursorAndClearGraphics, CBudgetMainDialog *)
+GAMECALL_MAIN(0x4192D0, int, __thiscall, BudgetOrdinanceDialog_OnInitDialog, CBudgetOrdinanceDialog *)
+GAMECALL_MAIN(0x419B60, int, __thiscall, BudgetZoneTaxDialog_OnInitDialog, CBudgetZoneTaxDialog *)
+GAMECALL_MAIN(0x41B620, int, __thiscall, BudgetEducationDialog_OnInitDialog, CBudgetEducationDialog *)
+GAMECALL_MAIN(0x41C2B0, int, __thiscall, BudgetTransitDialog_OnInitDialog, CBudgetTransitDialog *)
 GAMECALL_MAIN(0x422EA0, void, __stdcall, CityToolBarSetBgdAndText, HDC, LONG, LONG, int, int, COLORREF)
 GAMECALL_MAIN(0x4237F0, void, __thiscall, CityToolBar_ToolMenuDisable, CCityToolBar* pThis)
 GAMECALL_MAIN(0x423860, void, __thiscall, CityToolBar_ToolMenuEnable, CCityToolBar* pThis)
@@ -3532,8 +3733,6 @@ GAMECALL_MAIN(0x48B99A, int, __cdecl, SmackSoundUseDirectSound, HWND)
 // MFC function pointers. Use with care.
 GAMECALL_MAIN(0x48C21F, void, __cdecl, Op_Delete, void *)
 GAMECALL_MAIN(0x48CF5A, int, __cdecl, _heapmin)
-GAMECALL_MAIN(0x48B9E6, BOOL, __thiscall, DC_TextOutA, CMFC3XDC *, int, int, const char *, int)
-GAMECALL_MAIN(0x48BA0A, BOOL, __thiscall, DC_ExtTextOutA, CMFC3XDC *, int, int, unsigned int, RECT *, const char *, unsigned int, int *)
 GAMECALL_MAIN(0x49E59F, void, __stdcall, AfxAbort)
 GAMECALL_MAIN(0x49EBD3, void, __cdecl, String_Format, CMFC3XString *pThis, char const *Ptr, ...)
 GAMECALL_MAIN(0x4A194E, void, __thiscall, WinApp_WinHelpA, CMFC3XWinApp *, int, unsigned int)
@@ -3552,14 +3751,16 @@ GAMECALL_MAIN(0x4A3453, BOOL, __thiscall, String_LoadStringA, CMFC3XString *, un
 GAMECALL_MAIN(0x4A3B2F, LRESULT, __thiscall, Wnd_Default, CMFC3XWnd *)
 GAMECALL_MAIN(0x4A3BDF, CMFC3XWnd *, __stdcall, Wnd_FromHandle, HWND hWnd)
 GAMECALL_MAIN(0x4A3BFD, CMFC3XWnd *, __stdcall, Wnd_FromHandlePermanent, HWND)
-GAMECALL_MAIN(0x4A475F, BOOL, __thiscall, Menu_TrackPopupMenu, CMFC3XMenu *, UINT, int, int, CMFC3XWnd *, RECT *)
 GAMECALL_MAIN(0x4A5315, CMFC3XTestCmdUI *, __thiscall, TestCmdUI_Construct, CMFC3XTestCmdUI *)
 GAMECALL_MAIN(0x4A6091, BOOL, __thiscall, Wnd_SendChildNotifyLastMsg, CMFC3XWnd *, LRESULT *)
+GAMECALL_MAIN(0x4A6294, void, __thiscall, Wnd_OnVScroll, CMFC3XWnd *, UINT, UINT, CMFC3XScrollBar *)
+GAMECALL_MAIN(0x4A6418, void, __thiscall, Wnd_UpdateData, CMFC3XWnd *, BOOL)
 GAMECALL_MAIN(0x4A6C8E, BOOL, __thiscall, Dialog_OnCmdMsg, CMFC3XDialog *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo)
 GAMECALL_MAIN(0x4A710B, HWND, __thiscall, Dialog_PreModal, CMFC3XDialog *)
 GAMECALL_MAIN(0x4A7154, void, __thiscall, Dialog_PostModal, CMFC3XDialog *)
 GAMECALL_MAIN(0x4A7196, INT_PTR, __thiscall, Dialog_DoModal, CMFC3XDialog*)
 GAMECALL_MAIN(0x4A7267, BOOL, __thiscall, Dialog_OnInitDialog, CMFC3XDialog *)
+GAMECALL_MAIN(0x4072F1, void, __thiscall, Dialog_OnOK, CMFC3XDialog *)
 GAMECALL_MAIN(0x4A7312, void, __thiscall, Dialog_OnCancel, CMFC3XDialog *)
 GAMECALL_MAIN(0x4A7427, CMFC3XMenu *, __stdcall, Menu_FromHandle, HMENU)
 GAMECALL_MAIN(0x4A7445, CMFC3XMenu *, __stdcall, Menu_FromHandlePermanent, HMENU)
@@ -3583,12 +3784,7 @@ GAMECALL_MAIN(0x4AAD01, CMFC3XDC *, __stdcall, DC_FromHandle, HDC)
 GAMECALL_MAIN(0x4AAD1F, BOOL, __thiscall, DC_Attach, CMFC3XDC *, HDC)
 GAMECALL_MAIN(0x4AAD6A, HDC, __thiscall, DC_Detach, CMFC3XDC *)
 GAMECALL_MAIN(0x4AADCB, void, __thiscall, DC_Destruct, CMFC3XDC *)
-GAMECALL_MAIN(0x4AB0D0, CMFC3XGdiObject *, __thiscall, DC_SelectObjectFont, CMFC3XDC *, CMFC3XFont *pFont)
 GAMECALL_MAIN(0x4AB1B3, CMFC3XPalette *, __thiscall, DC_SelectPalette, CMFC3XDC *, CMFC3XPalette *, BOOL)
-GAMECALL_MAIN(0x4AB1E2, COLORREF, __thiscall, DC_SetBkColor, CMFC3XDC *, COLORREF)
-GAMECALL_MAIN(0x4AB22F, int, __thiscall, DC_SetBkMode, CMFC3XDC *, int)
-GAMECALL_MAIN(0x4AB363, COLORREF, __thiscall, DC_SetTextColor, CMFC3XDC *, COLORREF)
-GAMECALL_MAIN(0x4ABAF0, UINT, __thiscall, DC_SetTextAlign, CMFC3XDC *, UINT)
 GAMECALL_MAIN(0x4AC670, CMFC3XPaintDC *, __thiscall, PaintDC_Cons, CMFC3XPaintDC *, CMFC3XWnd *)
 GAMECALL_MAIN(0x4AC716, void, __thiscall, PaintDC_Dest, CMFC3XPaintDC *)
 GAMECALL_MAIN(0x4AC851, BOOL, __thiscall, GdiObject_Attach, CMFC3XGdiObject *, HGDIOBJ)
@@ -3599,6 +3795,7 @@ GAMECALL_MAIN(0x4AE83A, BOOL, __thiscall, View_OnCmdMsg, CMFC3XView *, UINT nID,
 GAMECALL_MAIN(0x4B2206, int, __thiscall, WinApp_DoMessageBox, CMFC3XWinApp *pThis, const char *lpszPrompt, UINT nType, UINT nIDPrompt)
 GAMECALL_MAIN(0x4B232F, int, __stdcall, AfxMessageBoxStr, LPCSTR lpszPrompt, UINT nType, UINT nIDHelp)
 GAMECALL_MAIN(0x4B234F, int, __stdcall, AfxMessageBoxID, UINT nIDPrompt, UINT nType, UINT nIDHelp)
+GAMECALL_MAIN(0x4B3974, void, __stdcall, DDX_Control, CMFC3XDataExchange *, int, CMFC3XWnd *)
 GAMECALL_MAIN(0x4B5801, int, __thiscall, DialogBar_Create, CMFC3XDialogBar *pThis, CMFC3XWnd *pParentWnd, const char *lpszTemplateName, UINT nStyle, UINT nID)
 GAMECALL_MAIN(0x4B780A, BOOL, __thiscall, MDIFrameWnd_OnCmdMsg, CMFC3XMDIFrameWnd *, UINT nID, int nCode, void *pExtra, void *pHandlerInfo)
 GAMECALL_MAIN(0x4B7C71, void, __thiscall, MDIFrameWnd_OnSize, CMFC3XMDIFrameWnd *, UINT, int, int)
@@ -3608,6 +3805,9 @@ GAMECALL_MAIN(0x4BA2E5, CMFC3XView *, __thiscall, FrameWnd_GetActiveView, CMFC3X
 GAMECALL_MAIN(0x4BA3A0, void, __thiscall, FrameWnd_ShowControlBar, CMFC3XFrameWnd *pThis, CMFC3XControlBar *pBar, BOOL, int)
 GAMECALL_MAIN(0x4BA38B, CMFC3XDocument *, __thiscall, FrameWnd_GetActiveDocument, CMFC3XFrameWnd *)
 GAMECALL_MAIN(0x4BB23A, void, __thiscall, FrameWnd_RecalcLayout, CMFC3XFrameWnd *pThis, int)
+GAMECALL_MAIN(0x4BB54B, void, __thiscall, Static_Dest, CMFC3XStatic *)
+GAMECALL_MAIN(0x4BB9BF, void, __thiscall, Edit_Dest, CMFC3XEdit *)
+GAMECALL_MAIN(0x4BBA5D, void, __thiscall, ScrollBar_Dest, CMFC3XScrollBar *)
 GAMECALL_MAIN(0x4BE492, void, __thiscall, WinApp_ExitInstance, CMFC3XWinApp *)
 GAMECALL_MAIN(0x4BE7F7, void, __thiscall, WinApp_EnableShellOpen, CMFC3XWinApp *)
 GAMECALL_MAIN(0x4BEDD2, UINT, __thiscall, WinApp_GetProfileIntA, CMFC3XWinApp *, const char *, const char *, int)
@@ -3629,12 +3829,18 @@ GAMEOFF(int,	dwSystemMetricCXHScroll,	0x4C7AD4)
 GAMEOFF(WORD,	wGameScreenAreaX,			0x4C7AD8)		// Used here in CSimcityView_WM_LBUTTONDOWN and CSimcityView_WM_MOUSEFIRST
 GAMEOFF(WORD,	wGameScreenAreaY,			0x4C7ADC)		// Used here in CSimcityView_WM_LBUTTONDOWN and CSimcityView_WM_MOUSEFIRST
 GAMEOFF(COLORREF,	crDlgColBtnShadow,	0x4C7AF0)
+GAMEOFF(int,	dwBudgetScrollDirection,	0x4C7AF4)
+GAMEOFF(DWORD,	dwBudgetTransitScrollClicked,	0x4C7AF8)
+GAMEOFF(DWORD,	dwBudgetZoneTaxScrollClicked,	0x4C7B00)
 GAMEOFF(__int16,	wDlgNumAvailablePlants,	0x4C7B38)
+GAMEOFF(DWORD,	dwUpdateBudgetInformation,	0x4C7B3C)
 GAMEOFF(COLORREF,	crDlgColWndFrame,	0x4C7B40)
 GAMEOFF(COLORREF,	crDlgColBtnFace,	0x4C7B48)
 GAMEOFF_ARR(__int16,	wDlgAvailablePlants,	0x4C7B50)
 GAMEOFF(COLORREF,	crDlgColBtnText,	0x4C7B64)
+GAMEOFF(DWORD,	dwBudgetEducationScrollClicked,	0x4C7B6C)
 GAMEOFF(COLORREF,	crDlgColBtnHighlight,	0x4C7B70)
+GAMEOFF(DWORD,	dwBudgetScrollClicked,	0x4C7B74)
 GAMEOFF(DWORD,	dwCityToolBarArcologyDialogCancel,	0x4C7B98)
 GAMEOFF(__int16,	wDlgNumAvailableBridges,	0x4C7C50)
 GAMEOFF(void *,	vBridgeBits,				0x4C7C54)
@@ -3643,6 +3849,7 @@ GAMEOFF(__int16,	wQueryTileID,			0x4C7C68)
 GAMEOFF(__int16,	wQuerySpriteID,			0x4C7C6C)
 GAMEOFF(void *,	pQuerySpriteBits,			0x4C7C70)
 GAMEOFF_ARR(CMFC3XFont *,	MainFontsArl,	0x4C7C88)
+GAMEOFF_ARR(CMFC3XFont *,	MainFontsTNR,	0x4C7C98)
 GAMEOFF(__int16,	wViewInitialCoordX,		0x4C7CB0)
 GAMEOFF(__int16,	wViewInitialCoordY,		0x4C7CB4)
 GAMEOFF(__int16,	wViewInitialZoom,		0x4C7CB8)
@@ -3679,7 +3886,12 @@ GAMEOFF_ARR(PALETTEENTRY,	pPalAnimMain,		0x4C87D8)
 GAMEOFF_ARR(PALETTEENTRY,	pPalOnCycle,		0x4C8BD8)
 GAMEOFF_ARR(PALETTEENTRY,	pPalOffCycle,		0x4C90A8)
 GAMEOFF(WORD,	wDisasterFloodArea,			0x4C93A8)
+GAMEOFF(DWORD,	dwTotalGeneratedPowerTiles,	0x4C93B0)
 GAMEOFF(WORD,	wCityDevelopedTiles,		0x4C93B4)
+GAMEOFF(float,	fltCIDHeight,				0x4C93B8)
+GAMEOFF(RECT,	rectCIDArea,				0x4C93D0)
+GAMEOFF(RECT,	rectCIDOptions,				0x4C93E0)
+GAMEOFF(float,	fltCIDWidth,				0x4C93F0)
 GAMEOFF(WORD,	wIndustrialMixPollutionBonus, 0x4C9428)
 GAMEOFF(WORD,	wViewRotation,				0x4C942C)
 GAMEOFF(DWORD *,	pRawPopRatioTable,		0x4C94B4)
@@ -3860,6 +4072,7 @@ GAMEOFF_ARR(const char,	gameStrHyphen,		0x4E6804)
 GAMEOFF(WORD,	wPreviousTileCoordinateY,	0x4E680C)
 GAMEOFF(CSimcityView*,	pCSimcityView,				0x4E682C)
 GAMEOFF_ARR(DWORD,	dwCityProgressionRequirements,	0x4E6984)
+GAMEOFF_ARR(int,	dwHourGlassImage,		0x4E6AB8)
 GAMEOFF_ARR(WORD,	wPowerPlantSpriteIDs,	0x4E6C68)
 GAMEOFF_ARR(WORD,	wPowerPlantMWs,			0x4E6C80)
 GAMEOFF_ARR(DWORD,	dwPowerPlantInfoBtnIDs,	0x4E6C98)
@@ -3910,6 +4123,10 @@ GAMEOFF(WORD,	wDisasterWindy,				0x4E86B0)
 GAMEOFF(BOOL,	bCSimcityDocSC2InUse,		0x4E9744)
 GAMEOFF(BOOL,	bCSimcityDocSCNInUse,		0x4E9748)
 GAMEOFF(DWORD,	dwUnknownInitVarOne,		0x4E974C)
+GAMEOFF(DWORD,	dwRefreshControls,			0x4E97C8)
+GAMEOFF(DWORD,	dwGraphBitmapResOne,		0x4E97CC)
+GAMEOFF(DWORD,	dwGraphBitmapResTwo,		0x4E97D0)
+GAMEOFF_ARR(const char,	aNotEnoughMem,		0x4E97F0)
 GAMEOFF_ARR(DWORD, dwCityNoticeStringIDs,	0x4E98B8)
 GAMEOFF(COLORREF,	crSignShine,			0x4E9924)
 GAMEOFF(COLORREF,	crSignBase,				0x4E9930)
@@ -3938,6 +4155,8 @@ GAMEOFF_ARR(testColStruct,	rgbNormalColor,	0x4EA0B8)
 GAMEOFF_ARR(DWORD,	dwArcologySpriteIDs,	0x4EA748)
 GAMEOFF_ARR(DWORD,	dwArcologyPopStrIDs,	0x4EA778)
 GAMEOFF(WORD,	wCursorActive,				0x4EA7F0)
+GAMEOFF_ARR(__int16,	wCityToolBarCursorSelect,	0x4EA7F8)
+GAMEOFF_ARR(__int16,	wMapToolBarCursorSelect,	0x4EA820)
 GAMEOFF(DWORD,	dwSoundBufferClear,			0x4EA848)
 GAMEOFF(int,	nCurrentActionThingSoundID,	0x4EA854)
 GAMEOFF_ARR(int,	nSoundPlayTicks,		0x4EA858)
@@ -5014,6 +5233,22 @@ extern void L_SetButtonShape_SC2K1996(HDC hDC, int nInnerWidth, int nInnerHeight
 extern char *L_GetCurrencyString_SC2K1996(int nCost);
 
 extern void L_BridgeSelectDialog_OnDrawItem_SC2K1996(CBridgeSelectDialog *pThis, int nCtlID, LPDRAWITEMSTRUCT lpDIS);
+
+extern bool L_BudgetMainDialog_OnDrawItem_SC2K1996(CBudgetMainDialog *pThis, int nCtlID, LPDRAWITEMSTRUCT lpDIS);
+extern bool L_BudgetOrdinanceDialog_OnDrawItem_SC2K1996(CBudgetOrdinanceDialog *pThis, int nCtlID, LPDRAWITEMSTRUCT lpDIS);
+
+extern void BudgetOrdinanceDialog_ToggleOrdinance(CBudgetOrdinanceDialog *pThis, int nDlgID);
+
+extern void BudgetMain_PreCheckHourGlassTimer(CBudgetMainDialog *bBudgetMainDialog);
+extern void BudgetMain_PostCheckHourGlassTimer(CBudgetMainDialog *bBudgetMainDialog);
+
+extern bool DoPopDialogButton(CPopulationDialog *pPopDlg, int nDlgID);
+extern void FixPopDialogButtons(CPopulationDialog *pPopDlg);
+
+extern void CityIndustryDialog_UpdateSection(CCityIndustryDialog *pCityIndDlg, int nDlgID);
+
+extern void SimGraphDialog_UpdateRange(CSimGraphDialog *pSimGraphDlg, int nDlgID);
+extern void SimGraphDialog_UpdateOptions(CSimGraphDialog *pSimGraphDlg, int nDlgID);
 
 extern void Clear_SpriteCache();
 extern void Init_SpriteCache(bool bReload);

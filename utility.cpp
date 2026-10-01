@@ -600,119 +600,119 @@ void L_InitDOSMacPaletteIdxTable() {
 int L_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMax) {
 	if (hInstance == hSC2KAppModule) {
 		switch (uID) {
-		case 97:
+		case SC2K_STRING_HYDRO:
 			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Hydroelectric Dam"))
 				return strlen(lpBuffer);
 			break;
 #if MAP_EDGE_BUILDING == 2
-		case 105:
+		case SC2K_STRING_NOPLACEMAPEDGE:
 			if (!strcpy_s(lpBuffer, cchBufferMax,
 				"Sorry, you cannot\r\nplace items off\r\nthe edge of the map."))
 				return strlen(lpBuffer);
 			break;
 #endif
-		case 108:
+		case SC2K_STRING_NOHYDROPLACE:
 			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Hydroelectric dams can only be placed on waterfall tiles."))
 				return strlen(lpBuffer);
 			break;
-		case 111:
+		case SC2K_STRING_TUNNELNOCROSS:
 			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Tunnel cannot be built as it would intersect an existing tunnel."))
 				return strlen(lpBuffer);
 			break;
-		case 112:
+		case SC2K_STRING_TUNNELEXCEEDCITYLIM:
 			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Tunnel cannot be built as it would leave the city limits."))
 				return strlen(lpBuffer);
 			break;
-		case 113:
+		case SC2K_STRING_TUNNELTOODEEP:
 			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Tunnel cannot be built as it would be too deep in the terrain."))
 				return strlen(lpBuffer);
 			break;
-		case 114:
+		case SC2K_STRING_TUNNELEXITUNSTABLE:
 			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Tunnel cannot be built as the exit terrain is unstable."))
 				return strlen(lpBuffer);
 			break;
-		case 115:
+		case SC2K_STRING_TUNNELBLOCKED:
 			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"An existing subway or sewer line is blocking construction."))
 				return strlen(lpBuffer);
 			break;
-		case 116:
+		case SC2K_STRING_TUNNELNOTONHILLSIDE:
 			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Tunnel entrances must be placed on a hillside."))
 				return strlen(lpBuffer);
 			break;
-		case 129:
+		case SC2K_STRING_NUCLEAR:
 			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Nuclear Power"))
 				return strlen(lpBuffer);
 			break;
-		case 132:
+		case SC2K_STRING_MICROWAVE:
 			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Microwave Power"))
 				return strlen(lpBuffer);
 			break;
-		case 133:
+		case SC2K_STRING_FUSION:
 			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Fusion Power"))
 				return strlen(lpBuffer);
 			break;
-		case 240:
+		case SC2K_STRING_MILINTEREST:
 			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Your nation's military is interested in building a base on your city's soil. "
 				"This could mean extra revenue. It could also raise new problems. "
 				"Do you wish to grant land to the military?"))
 				return strlen(lpBuffer);
 			break;
-		case 289:
+		case SC2K_STRING_ISSUEBONDCURRATES:
 			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Current rates are %d%%.\r\n"
 				"Do you wish to issue the bond?"))
 				return strlen(lpBuffer);
 			break;
-		case 290:
+		case SC2K_STRING_OUTSTNDBONDNEEDCASH:
 			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"You need $10,000 in cash to repay an outstanding bond."))
 				return strlen(lpBuffer);
 			break;
-		case 291:
+		case SC2K_STRING_REPAYBONDOLDSTBONDRATE:
 			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"The oldest outstanding bond rate is %d%%.\r\n"
 				"Do you wish to repay this bond?"))
 				return strlen(lpBuffer);
 			break;
-		case 346:
+		case SC2K_STRING_TUNNELBUILDENGREPORT:
 			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Engineers report that tunnel construction costs will be %s.\r\n"
 				"Do you wish to construct the tunnel?"))
 				return strlen(lpBuffer);
 			break;
-		case 640:
+		case SC2K_STRING_GROCERY:
 			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Grocery store"))
 				return strlen(lpBuffer);
 			break;
-		case 745:
+		case SC2K_STRING_ARCOLAUNCH:
 			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Launch Arcology"))
 				return strlen(lpBuffer);
 			break;
-		case 4002:
+		case SC2K_STRING_LOADCITYFILEEXTS:
 			if (!strcpy_s(lpBuffer, cchBufferMax,
 				"SimCity 2000 and Classic Cities (*.SC2, *.CTY)|*.SC2;*.CTY;*.BAK;*.BAK.*|SimCity 2000 City (*.SC2)|*.SC2;*.BAK;*.BAK.*|SimCity Classic City (*.CTY)|*.CTY||"))
 				return strlen(lpBuffer);
 			break;
-		case 4004:
+		case SC2K_STRING_LOADTILEFILEEXTS:
 			if (!strcpy_s(lpBuffer, cchBufferMax,
 				"SimCity 2000 Tilesets (*.MIF, *.TIL)|*.MIF;*.TIL|SimCity 2000 Win/Mac Tilesets (*.MIF)|*.MIF|SimCity 2000 DOS Tilesets (*.TIL)|*.TIL||"))
 				return strlen(lpBuffer);
 			break;
-		case 32921:
+		case SC2K_STRING_CITYAUTOSAVEPRD:
 			if (CopyReplacementString(lpBuffer, cchBufferMax,
 				"Saves city every 5 years"))
 				return strlen(lpBuffer);
@@ -1238,31 +1238,4 @@ HOOKEXT_CPP bool string_split(std::string str, std::vector<std::string>& qargs) 
 	if (qot || sqot)
 		return false;
 	return true;
-}
-
-// Spawns a budget advisor dialog for the selected advisor with a custom message.
-// XXX (araxestroy): this should probably go in another file since it's less utility and more
-// along the lines of "new functionality that operates within the existing game structures"
-void DisplayBudgetAdvisorMessage(int iAdvisor, const char* szMessage) {
-	CSimcityAppPrimary* pSCApp;
-	CMainFrame* pMainFrm;
-
-	pSCApp = &pCSimcityAppThis;
-	pMainFrm = (CMainFrame*)pSCApp->m_pMainWnd;
-
-	// HACK (araxestroy): nasty workaround until CBudgetAdvisorDialog::OnInitDialog is reimplemented
-	SafeVirtualProtect((LPVOID)0x41A4F9, 2, PAGE_EXECUTE_READWRITE);
-	*(uint8_t*)0x41A4F9 = 0xEB;		// jmp short 0x41A50B
-	*(uint8_t*)0x41A4FA = 0x10;
-
-	// Construct the dialog and display it
-	CMFC3XBudgetAdvisorDialog dlg;
-	Game_BudgetAdvisorDialog_CreateDialog(&dlg, pMainFrm);
-	dlg.m_dwBDAOne = iAdvisor;
-	GameMain_String_OperatorSet(&dlg.m_dwBDACStringOne, (char*)szMessage);
-	Game_GameDialog_DoModal((CGameDialog*)&dlg);
-
-	// Restore original code
-	*(uint8_t*)0x41A4F9 = 0x77;		// ja short def_41A4FB
-	*(uint8_t*)0x41A4FA = 0x07;
 }

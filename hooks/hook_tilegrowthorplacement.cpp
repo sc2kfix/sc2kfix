@@ -892,7 +892,7 @@ int L_ItemPlacementCheck(mapcoord_t m_x, mapcoord_t m_y, BYTE iTileID, int16_t i
 		return 0;
 
 	if (iTileID == TILE_INFRASTRUCTURE_MARINA && (iMarinaWaterTileCount == MARINA_TILES_ALLDRY || iMarinaWaterTileCount == MARINA_TILES_ALLWET)) {
-		GameMain_AfxMessageBoxID(107, 0, -1);
+		GameMain_AfxMessageBoxID(SC2K_STRING_NOMARINAPLACE, 0, -1);
 		return 0;
 	}
 	else {
@@ -2150,7 +2150,7 @@ extern "C" int __cdecl Hook_CityToolPlaceSelectedBuilding(mapcoord_t iX, mapcoor
 		if (Game_RandomWordLCGMod(200) < nResSelCnt) {
 			Game_SimcityApp_SoundStopActionThingSound(pSCApp, SOUND_BULLDOZER);
 			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_BOOS);
-			Game_FailRadioToFileID(403, 106);
+			Game_FailRadioToFileID(403, SC2K_STRING_RECONSIDERPLACE);
 			bFail = TRUE;
 			goto FAIL;
 		}

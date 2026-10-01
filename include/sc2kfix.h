@@ -20,6 +20,8 @@
 #define HOOKEXT_CPP __declspec(dllexport)
 
 #include <json.hpp>
+#include <commctrl.h>
+#include <sc2k/sc2k_resource.h>
 #include <setting_schema.h>
 #include <keybindings.h>
 #include <frameworks/mfc3xhelp.h>
@@ -65,9 +67,6 @@
 #define SC2KFIX_INIFILE		"sc2kfix.ini"
 #define SC2KFIX_COREJSON	"settings.json"
 #define SC2KFIX_MODSFOLDER	"mods"
-
-#define WM_SC2KFIX_UPDATE		37241
-#define WM_SC2KFIX_AUDIO_STOP	37242
 
 #define UPDATE_STRING "A new version of sc2kfix is available for download from the GitHub releases page."
 
@@ -690,6 +689,10 @@ HOOKEXT BOOL bHookStopProcessing;
 
 extern HWND hWndExt;
 
+extern bool bBudgetOpen;
+extern bool bAdvisorCustomString;
+extern bool bOrdinanceOpen;
+
 // Hooks to inject in dllmain.cpp
 
 void InstallAnimationHooks_SC2K1996(void);
@@ -700,6 +703,7 @@ void InstallTerrainHandlingHooks_SC2K1996(void);
 void InstallTileGrowthOrPlacementHandlingHooks_SC2K1996(void);
 void InstallGraphsScanningStatsHandlingHooks_SC2K1996(void);
 void InstallToolBarHooks_SC2K1996(void);
+void InstallHelpHooks_SC2K1996(void);
 void InstallMiscHooks_SC2K1996(void);
 void UpdateMiscHooks_SC2K1996(void);
 void InstallMiscHooks_SC2K1995(void);
@@ -713,6 +717,7 @@ void InstallScenarioHooks_SC2K1996(void);
 void InstallDrawingHooks_SC2K1996(void);
 void InstallThingHooks_SC2K1996(void);
 void InstallQueryHooks_SC2K1996(void);
+void InstallCityManagementHooks_SC2K1996(void);
 void InstallArcologyDialogHooks_SC2K1996(void);
 void InstallPowerPlantDialogHooks_SC2K1996(void);
 void InstallBridgeDialogHooks_SC2K1996(void);
@@ -785,3 +790,6 @@ void InstallFixes_SCURK1996(void);
 
 // Custom file dialog stuff
 BOOL CALLBACK FileHookProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+
+// Help stuff
+extern void DisplayItemHelp(HWND hWnd, int nType, int nIndex, bool bFromMain);

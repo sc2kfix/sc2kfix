@@ -102,10 +102,10 @@ void EnableDebugMenu(CSimcityAppPrimary *pSCApp, HWND hWnd) {
 	int iSCMenuPos;
 
 	if (!pSCApp->bSCAPriscillaActivated) {
-		iSCMenuPos = Game_GetSimcityViewMenuPos(6);
+		iSCMenuPos = Game_GetSimcityViewMenuPos(SC2K_MENU_GAME_DEBUG);
 		hMenu = GetMenu(hWnd);
-		hSubMenu = LoadMenuA(hSC2KFixModule, (LPCSTR)IDR_MENU_DEBUG);
-		InsertMenuA(hMenu, iSCMenuPos + 6, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hSubMenu, "De&bug");
+		hSubMenu = LoadMenuA(hSC2KFixModule, MAKEINTRESOURCEA(IDR_MENU_DEBUG));
+		InsertMenuA(hMenu, iSCMenuPos + SC2K_MENU_GAME_DEBUG, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hSubMenu, "De&bug");
 		Game_SimcityApp_AdjustNewspaperMenu(pSCApp);
 		DrawMenuBar(hWnd);
 		pSCApp->bSCAPriscillaActivated = TRUE;

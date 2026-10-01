@@ -87,6 +87,8 @@ enum {
 enum {
 	OWNDRW_DLG_NONE,
 	OWNDRW_DLG_BRIDGE,
+	OWNDRW_DLG_BUDGETMAIN,
+	OWNDRW_DLG_ORDINANCES,
 
 	OWNDRW_DLG_COUNT
 };
@@ -403,7 +405,7 @@ public:
 
 class CGameDialog : public CMFC3XDialog {
 public:
-	DWORD dwGDOne;
+	DWORD dwGDButtonDown;
 };
 
 class CNewspaperDialog : public CGameDialog {
@@ -436,6 +438,89 @@ public:
 	DWORD dwJDPrepare;
 };
 
+class CNeighbourDialog : public CGameDialog {
+public:
+	DWORD dwNDDialogActive;
+	CGraphics *dwNDGraphicsTwo;
+	CGraphics *dwNDGraphicsOne;
+	CMFC3XFont dwNDFontOne;
+	DWORD dwNDPixHeight;
+	CMFC3XString *dwNDStringOne;
+};
+
+class CCityIndustryDialog : public CGameDialog {
+public:
+	CGraphics *dwCIDCGraphicsOne;
+	CMFC3XRect dwCIDRectOne;
+	DWORD dwCIDDialogActive;
+	int dwCIDItemPos;
+	int dwCIDSection;
+	DWORD dwCIDDivisor;
+	POINT dwCIDItem[11];
+	CMFC3XString *dwCIDStrings[11];
+	CMFC3XButton dwCIDActiveButton; // No longer used.
+	CMFC3XStatic dwCIDStaticBars;
+	CMFC3XStatic dwCIDStaticIcons;
+};
+
+class CPopulationDialog : public CGameDialog {
+public:
+	DWORD dwPDDialogActive;
+	DWORD dwPDPainting;
+	RECT dwPDRECTOne;
+	RECT dwPDRECTTwo;
+	CMFC3XBitmap dwPDBitmapOne;
+	DWORD dwPDthirteen;
+	CMFC3XFont dwPDFontOne;
+	CMFC3XString *dwPDStringOne[3];
+	CMFC3XString *dwPDStringTwo[2];
+	int dwPDSelection;
+};
+
+class CCityMapDialog : public CGameDialog {
+public:
+	CMFC3XButton dwCMDButton;
+	CMFC3XListBox dwCMDListBox;
+	CMFC3XTabCtrl dwCMDTabCtrl;
+	DWORD dwCMDDialogActive;
+	CMFC3XImageList dwCMDCImageListOne;
+	RECT dwCMDRECTOne;
+	TCITEMA dwCMDTabs[9];
+	CMFC3XString *dwCMDCStrings[36];
+	DWORD dwCMDTabSelected;
+	DWORD dwCMDListBoxSelection;
+	DWORD dwCMDInitialized;
+	CGraphics *dwCMDCGraphicsTwo;
+	RECT dwCMDRECTTwo;
+};
+
+class CSimGraphDialog : public CGameDialog {
+public:
+	DWORD dwSGDDialogActive;
+	DWORD dwSGDMask;
+	RECT dwSGDRectSelectionAxis;
+	RECT dwSGDRectRangeAxis;
+	CMFC3XBitmap dwSGDBitmapOne;
+	CMFC3XBitmap dwSGDBitmapTwo;
+	int dwSGDOptCitySize;
+	int dwSGDOptCommerce;
+	int dwSGDOptCrime;
+	int dwSGDOptEducation;
+	int dwSGDOptFedRate;
+	int dwSGDOptGNP;
+	int dwSGDOptHealth;
+	int dwSGDOptIndustry;
+	int dwSGDOptNationalPop;
+	int dwSGDOptPollution;
+	int dwSGDOptPowerPercentage;
+	int dwSGDOptResidents;
+	int dwSGDOptTraffic;
+	int dwSGDOptUnemployment;
+	int dwSGDOptLandValue;
+	int dwSGDOptWaterPercentage;
+	int dwSGDRange;
+};
+
 class CSimcityWnd : public CMFC3XWnd {
 public:
 	CGraphics *m_pSCWGraphics;
@@ -444,11 +529,11 @@ public:
 
 class CMainFrame : public CMFC3XMDIFrameWnd {
 public:
-	DWORD *dwMFSimGraphDialog; // CSimGraphDialog
-	DWORD *dwMFPopulationDialog; // CPopulationDialog
-	DWORD *dwMFCityMapDialog; // CCityMapDialog
-	DWORD *dwMFNeighbourDialog; // CNeighbourDialog
-	DWORD *dwMFCityIndustryDialog; // CCityIndustryDialog
+	CSimGraphDialog *dwMFSimGraphDialog; // CSimGraphDialog
+	CPopulationDialog *dwMFPopulationDialog; // CPopulationDialog
+	CCityMapDialog *dwMFCityMapDialog; // CCityMapDialog
+	CNeighbourDialog *dwMFNeighbourDialog; // CNeighbourDialog
+	CCityIndustryDialog *dwMFCityIndustryDialog; // CCityIndustryDialog
 	CMFC3XPalette *dwMFEight;
 	CGraphics *dwMFCGraphicsOne;
 	CMFC3XPalette *dwMFnine;
@@ -597,4 +682,135 @@ public:
 	CMFC3XPalette MovPalette;
 	int iButtonDown;
 	int iButtonUp;
+};
+
+class CBudgetMainDialog : public CGameDialog {
+public:
+	CMFC3XBitmapButton dwBDMBitmapButtonProperty[8];
+	CMFC3XBitmapButton dwBDMBitmapButtonAdvisor[8];
+	DWORD dwBDthreehundredtwentytwo;
+	DWORD dwBDthreehundredtwentythree;
+	CMFC3XString dwBDStringFour;
+	int dwBDYearToDateCashFlow;
+	int dwBDEstimatedCashFlow;
+	int dwDisplayHourGlass;
+	POINT dwBDPointOne;
+	CGraphics *dwBDCGraphicsOne;
+	CMFC3XScrollBar dwBDScrollBarTransit;
+	CMFC3XScrollBar dwBDScrollBarPropertyTax;
+	CMFC3XScrollBar dwBDScrollBarPoliceDepartment;
+	CMFC3XScrollBar dwBDScrollBarHealthAndWelfare;
+	CMFC3XScrollBar dwBDScrollBarFireDepartment;
+	CMFC3XScrollBar dwBDScrollBarEducation;
+	CMFC3XEdit dwBDEditTransitYEE;
+	CMFC3XEdit dwBDEditTransitTDE;
+	CMFC3XEdit dwBDEditPoliceDepartmentYEE;
+	CMFC3XEdit dwBDEditOrdinanceYEE;
+	CMFC3XEdit dwBDEditHealthAndWelfareYEE;
+	CMFC3XEdit dwBDEditFireDepartmentYEE;
+	CMFC3XEdit dwBDEditEducationYEE;
+	CMFC3XEdit dwBDEditBondPaymentsYEE;
+	CMFC3XEdit dwBDEditPoliceDepartmentTDE;
+	CMFC3XEdit dwBDEditHealthAndWelfareTDE;
+	CMFC3XEdit dwBDEditFireDepartmentTDE;
+	CMFC3XEdit dwBDEditEducationTDE;
+	CMFC3XEdit dwBDEditBondPaymentsTDE;
+	CMFC3XEdit dwBDEditOrdinanceTDE;
+	CMFC3XEdit dwBDEditPropertyTaxYEE;
+	CMFC3XEdit dwBDEditPropertyTaxTDE;
+	CMFC3XStatic dwBDStaticHourGlass;
+	CMFC3XStatic dwBDStaticBudgetSummary;
+	CMFC3XStatic dwBDStaticEndOfYearFunds;
+	CMFC3XEdit dwBDEditBudgetNameYearMonth;
+	DWORD dwEducationDepartmentPercent;
+	DWORD dwFireDepartmentPercent;
+	DWORD dwHealthDepartmentPercent;
+	DWORD dwPoliceDepartmentPercent;
+	DWORD dwPropertyTaxPercent;
+	DWORD dwTransitDepartmentPercent;
+	DWORD dwBDFireDepartmentTDELim;
+	DWORD dwBDHealthAndWelfareTDELim;
+	DWORD dwBDPoliceDepartmentTDELim;
+	DWORD dwBDPropertyTaxTDELim;
+	DWORD dwBDTransitTDELim;
+	DWORD dwBDEducationYEELim;
+	DWORD dwBDFireDepartmentYEELim;
+	DWORD dwBDHealthAndWelfareYEELim;
+	DWORD dwBDPoliceDepartmentYEELim;
+	DWORD dwBDPropertyTaxYEELim;
+	DWORD dwBDTransitYEELim;
+	DWORD dwBDBondPaymentsTDELim;
+	DWORD dwBDEducationTDELim;
+	DWORD dwBDOrdinanceTDELim;
+	DWORD dwBDBondPaymentsYEELim;
+	DWORD dwBDOrdinanceYEELim;
+	CMFC3XString dwBDStringBudgetNameYearMonth;
+	CMFC3XString dwBDStringYearEndEstimate;
+	CMFC3XString dwBDStringToDateExpense;
+};
+
+class CBudgetAdvisorDialog : public CGameDialog {
+public:
+	DWORD m_dwBDAType;
+	CGraphics* m_dwBDACGraphicsOne;
+	CMFC3XString m_dwBDACStringOne;
+};
+
+class CBudgetOrdinanceDialog : public CGameDialog {
+public:
+	DWORD dwUnknown[14];
+	CMFC3XBitmapButton dwBDOBitmapButton[25];
+};
+
+class CBudgetZoneTaxDialog : public CGameDialog {
+public:
+	int dwBDZTDColumnWidth[8];
+	DWORD dwBZTDUnknown[2];
+	int dwBZTDColumnCount;
+	DWORD dwBZTDLeftPos;
+	DWORD dwBZTDTopPos;
+	DWORD dwBZTDRowHeight;
+	int dwBZTDComPercent;
+	int dwBZTDIndPercent;
+	int dwBZTDResPercent;
+	CMFC3XScrollBar dwBZTDComScrollBar;
+	CMFC3XScrollBar dwBZTDIndScrollBar;
+	CMFC3XScrollBar dwBZTDResScrollBar;
+};
+
+class CBudgetEducationDialog : public CGameDialog {
+public:
+	int dwBEDColumnWidth[8];
+	DWORD dwBEDUnknown[2];
+	int dwBEDColumnCount;
+	DWORD dwBEDLeftPosOne;
+	DWORD dwBEDTopPosOne;
+	DWORD dwBEDRowHeight;
+	CMFC3XScrollBar dwBEDSchoolScrollBar;
+	CMFC3XScrollBar dwBEDCollegeScrollBar;
+	int dwBEDSchoolPercent;
+	int dwBEDCollegePercent;
+};
+
+class CBudgetTransitDialog : public CGameDialog {
+public:
+	int dwBTDColumnWidth[8];
+	DWORD dwBTDUnknown[2];
+	int dwBTDColumnCount;
+	DWORD dwBTDLeftPosOne;
+	DWORD dwBTDTopPosOne;
+	DWORD dwBTDRowHeight;
+	RECT dwBTDRECTOne;
+	CMFC3XScrollBar dwBTDTunnelScrollBar;
+	CMFC3XScrollBar dwBTDSubwayScrollBar;
+	CMFC3XScrollBar dwBTDRoadScrollBar;
+	CMFC3XScrollBar dwBTDRailScrollBar;
+	CMFC3XScrollBar dwBTDHighwayScrollBar;
+	CMFC3XScrollBar dwBTDBridgeScrollBar;
+	int dwBTDBridgePercent;
+	int dwBTDHighwayPercent;
+	int dwBTDRailPercent;
+	int dwBTDRoadPercent;
+	int dwBTDSubwayPercent;
+	int dwBTDTunnelPercent;
 };

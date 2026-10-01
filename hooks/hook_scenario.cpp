@@ -83,7 +83,7 @@ extern "C" void __stdcall Hook_ScenarioDialog_OnInitDialog() {
 	Game_SimcityApp_SetGameCursor(pSCApp, 0, 0);
 
 	if (!nScenCnt) {
-		GameMain_AfxMessageBoxID(75, 0, 0xFFFFFFFF);
+		GameMain_AfxMessageBoxID(SC2K_STRING_NOSCNFILESFOUND, 0, 0xFFFFFFFF);
 		GameMain_Dialog_OnCancel(pThis);
 		return;
 	}
@@ -231,11 +231,11 @@ static int L_SimcityApp_OpenScenario(CSimcityAppPrimary *pSCApp, char *lpFileNam
 		goto FAILOUT;
 	f = old_fopen(lpFileName, "rb");
 	if (!f) {
-		Game_FailRadio(0x2F);
+		Game_FailRadio(SC2K_STRING_ERROPENFILE);
 		goto FAILOUT;
 	}
 	if (!L_LoadFileChunkAndInitVar(f, "SCEN", 128, &scenarioAttrib)) {
-		Game_FailRadio(0xEF);
+		Game_FailRadio(SC2K_STRING_ERRSCNRESFAILEXTRACT);
 		goto ABORTOUT;
 	}
 	L_ByteSwapScenarioAttribute(&scenarioAttrib.wDisasterID);
@@ -333,11 +333,11 @@ extern "C" void __stdcall Hook_SimcityApp_LoadScenario() {
 	Game_SimcityApp_AdjustMenus(pThis, GAME_MODE_CITY);
 	f = old_fopen(scenDlg.szScenFilePath, "rb");
 	if (!f) {
-		Game_FailRadio(0x2F);
+		Game_FailRadio(SC2K_STRING_ERROPENFILE);
 		goto SCENFAIL;
 	}
 	if (!L_LoadFileChunkAndInitVar(f, "TEXT", 129, szText)) {
-		Game_FailRadio(0xEF);
+		Game_FailRadio(SC2K_STRING_ERRSCNRESFAILEXTRACT);
 		if (!pThis->dwSCAOnInitToggleToolBar) {
 			pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
 			pThis->dwSCASetNextStep = TRUE;
@@ -388,7 +388,7 @@ void L_SimcityApp_LoadScenarioFromCMDLine(CSimcityAppPrimary *pSCApp, const char
 	nLen = strlen(szFileName);
 	szFileName[nLen] = 0;
 	if (!L_SimcityApp_OpenScenario(pSCApp, szFileName)) {
-		GameMain_AfxMessageBoxID(412, 0, 0xFFFFFFFF);
+		GameMain_AfxMessageBoxID(SC2K_STRING_ERRLOADCITYFAIL, 0, 0xFFFFFFFF);
 		pSCApp->dwSCACMDLineLoadMode = 0;
 		if (!pSCApp->dwSCAOnInitToggleToolBar) {
 			pSCApp->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
@@ -403,7 +403,7 @@ void L_SimcityApp_LoadScenarioFromCMDLine(CSimcityAppPrimary *pSCApp, const char
 	Game_SimcityApp_AdjustMenus(pSCApp, GAME_MODE_CITY);
 	f = old_fopen(szFileName, "rb");
 	if (!f) {
-		Game_FailRadio(0x2F);
+		Game_FailRadio(SC2K_STRING_ERROPENFILE);
 		pSCApp->dwSCACMDLineLoadMode = 0;
 		return;
 	}
@@ -426,7 +426,7 @@ void L_SimcityApp_LoadScenarioFromCMDLine(CSimcityAppPrimary *pSCApp, const char
 	}
 	fclose(f);
 	if (!bLoadSuccess) {
-		Game_FailRadio(0xEF);
+		Game_FailRadio(SC2K_STRING_ERRSCNRESFAILEXTRACT);
 		pSCApp->dwSCACMDLineLoadMode = 0;
 		if (!pSCApp->dwSCAOnInitToggleToolBar) {
 			pSCApp->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;

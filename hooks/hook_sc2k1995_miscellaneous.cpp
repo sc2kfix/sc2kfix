@@ -36,12 +36,12 @@ UINT mischook_1995_debug = MISCHOOK_1995_DEBUG;
 extern "C" int __stdcall Hook_1995_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMax) {
 	if (hInstance == hSC2KAppModule) {
 		switch (uID) {
-		case 4002:
+		case SC2K_STRING_LOADCITYFILEEXTS:
 			if (!strcpy_s(lpBuffer, cchBufferMax,
 				"SimCity 2000 City (*.SC2)|*.SC2|SimCity Classic City (*.CTY)|*.CTY||"))
 				return strlen(lpBuffer);
 			break;
-		case 4004:
+		case SC2K_STRING_LOADTILEFILEEXTS:
 			if (!strcpy_s(lpBuffer, cchBufferMax,
 				"SimCity 2000 Tilesets (*.mif)|*.mif||"))
 				return strlen(lpBuffer);
@@ -56,7 +56,7 @@ extern "C" int __stdcall Hook_1995_LoadStringA(HINSTANCE hInstance, UINT uID, LP
 #pragma warning(disable : 6387)
 // Hook LoadMenuA so we can insert our own menu items.
 extern "C" HMENU __stdcall Hook_1995_LoadMenuA(HINSTANCE hInstance, LPCSTR lpMenuName) {
-	if ((DWORD)lpMenuName == 2 && hMainMenu)
+	if ((DWORD)lpMenuName == SC2K_MENU_MAIN && hMainMenu)
 		return hMainMenu;
 	return LoadMenuA(hInstance, lpMenuName);
 }
@@ -411,14 +411,14 @@ void InstallMiscHooks_SC2K1995(void) {
 	NEWJMP((LPVOID)0x4A185E, Hook_1995_CmdUI_Enable);
 
 	// Add more buttons to SC2K's menus
-	hMainMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(2));
+	hMainMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(SC2K_MENU_MAIN));
 	if (hMainMenu) {
 		// File menu -> Open Main Dialog
 		HMENU hFilePopup;
 		MENUITEMINFO miiFilePopup;
 		miiFilePopup.cbSize = sizeof(MENUITEMINFO);
 		miiFilePopup.fMask = MIIM_SUBMENU;
-		if (!GetMenuItemInfo(hMainMenu, 0, TRUE, &miiFilePopup) && mischook_1995_debug & MISCHOOK_1995_DEBUG_MENU) {
+		if (!GetMenuItemInfo(hMainMenu, SC2K_MENU_MAIN_FILE, TRUE, &miiFilePopup) && mischook_1995_debug & MISCHOOK_1995_DEBUG_MENU) {
 			ConsoleLog(LOG_DEBUG, "MISC: Main GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
 			goto skipmainmenu;
 		}

@@ -285,6 +285,9 @@
     <ClInclude Include="include\sc2k\sc2k_newengine.h">
       <Filter>Header Files\SimCity 2000</Filter>
     </ClInclude>
+    <ClInclude Include="include\sc2k\sc2k_resource.h">
+      <Filter>Header Files\SimCity 2000</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="hooks\hook_mciSendCommand.cpp">
@@ -543,6 +546,12 @@
       <Filter>Source Files\Modules</Filter>
     </ClCompile>
     <ClCompile Include="hooks\hook_terrainhandling.cpp">
+      <Filter>Source Files\Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\sc2k_help.cpp">
+      <Filter>Source Files\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="hooks\hook_citymanagement.cpp">
       <Filter>Source Files\Hooks</Filter>
     </ClCompile>
   </ItemGroup>

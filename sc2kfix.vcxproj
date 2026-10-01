@@ -92,6 +92,7 @@ const char* szSC2KFixBuildInfo = "$(BuildString)"%3B
     <ClInclude Include="include\sc2k\sc2k_1995.h" />
     <ClInclude Include="include\sc2k\sc2k_demo.h" />
     <ClInclude Include="include\sc2k\sc2k_newengine.h" />
+    <ClInclude Include="include\sc2k\sc2k_resource.h" />
     <ClInclude Include="include\scurk\scurk_classes.h" />
     <ClInclude Include="include\scurk\scurk_1996.h" />
     <ClInclude Include="include\scurk\scurk_primary.h" />
@@ -150,6 +151,7 @@ const char* szSC2KFixBuildInfo = "$(BuildString)"%3B
     <ClInclude Include="thirdparty\miniz\miniz.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="hooks\hook_citymanagement.cpp" />
     <ClCompile Include="hooks\hook_terrainhandling.cpp" />
     <ClCompile Include="hooks\hook_animation.cpp" />
     <ClCompile Include="hooks\hook_arcologydialog.cpp" />
@@ -187,6 +189,7 @@ const char* szSC2KFixBuildInfo = "$(BuildString)"%3B
     <ClCompile Include="modules\save_sc2x.cpp" />
     <ClCompile Include="modules\sc2k_1996.cpp" />
     <ClCompile Include="modules\save_vanilla.cpp" />
+    <ClCompile Include="modules\sc2k_help.cpp" />
     <ClCompile Include="modules\scurkfix_1996.cpp" />
     <ClCompile Include="modules\scurkfix_common.cpp" />
     <ClCompile Include="modules\scurkfix_primary.cpp" />

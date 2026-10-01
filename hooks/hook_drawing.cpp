@@ -1247,7 +1247,7 @@ extern "C" void __stdcall Hook_SimcityView_MaintainCursor() {
 	LONG x, y, bottom;
 
 	Game_SimcityView_GameCursorHitTest(pThis);
-	if (pSCApp->dwSCACursorGameHit != 1) {
+	if (pSCApp->dwSCACursorGameHit != CURSORHIT_GAME) {
 		if (wCursorActive)
 			Game_SimcityView_KillCursor(pThis);
 		return;
@@ -1347,7 +1347,7 @@ extern "C" void __stdcall Hook_SimcityView_MaintainCursor() {
 void L_CheckCursor_SC2K1996(CSimcityView *pSCView) {
 	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
 	if (wCursorActive) {
-		if (pSCApp->dwSCACursorGameHit)
+		if (pSCApp->dwSCACursorGameHit == CURSORHIT_GAME)
 			Game_SimcityView_MaintainCursor(pSCView);
 		else
 			Game_SimcityView_KillCursor(pSCView);
@@ -1565,7 +1565,7 @@ void L_DrawHouse_SC2K1996(CSimcityView *pSCView, BOOL bLeaveCursorActive) {
 				wCursorActive = 0;
 			else {
 				if (wCursorActive) {
-					if (pSCApp->dwSCACursorGameHit)
+					if (pSCApp->dwSCACursorGameHit == CURSORHIT_GAME)
 						Game_SimcityView_InvertZoneList(pSCView, wCurBndsX1, wCurBndsY1, wCurBndsX2, wCurBndsY2);
 					else
 						wCursorActive = 0;

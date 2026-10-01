@@ -87,9 +87,9 @@ extern "C" int __stdcall Hook_LoadStringA(HINSTANCE hInstance, UINT uID, LPSTR l
 #pragma warning(disable : 6387)
 // Hook LoadMenuA so we can insert our own menu items.
 extern "C" HMENU __stdcall Hook_LoadMenuA(HINSTANCE hInstance, LPCSTR lpMenuName) {
-	if ((DWORD)lpMenuName == 2 && hMainMenu)
+	if ((DWORD)lpMenuName == SC2K_MENU_MAIN && hMainMenu)
 		return hMainMenu;
-	if ((DWORD)lpMenuName == 3 && hGameMenu)
+	if ((DWORD)lpMenuName == SC2K_MENU_GAME && hGameMenu)
 		return hGameMenu;
 	return LoadMenuA(hInstance, lpMenuName);
 }
@@ -131,6 +131,84 @@ extern "C" INT_PTR __stdcall Hook_GameDialog_DoModal() {
 		pSCApp->dwSCABackgroundColourCyclingActive = FALSE;
 
 	return ret;
+}
+
+extern "C" BOOL __stdcall Hook_GameDialog_OnSetCursor(CMFC3XWnd *pWnd, UINT nHitTest, UINT message) {
+	CGameDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CMainFrame *pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
+	CSimcityView *pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
+
+	if (pThis == pWnd) {
+		if (bOrdinanceOpen ||
+			bBudgetOpen ||
+			(CCityMapDialog *)pThis == pMainFrm->dwMFCityMapDialog ||
+			(CCityIndustryDialog *)pThis == pMainFrm->dwMFCityIndustryDialog ||
+			(CNeighbourDialog *)pThis == pMainFrm->dwMFNeighbourDialog ||
+			(CPopulationDialog *)pThis == pMainFrm->dwMFPopulationDialog ||
+			(CSimGraphDialog *)pThis == pMainFrm->dwMFSimGraphDialog) {
+			Game_SimcityApp_SetGameCursor(pSCApp, GAMECURSOR_ARROW, TRUE);
+			pSCApp->dwSCACursorGameHit = CURSORHIT_GAMEDIALOG;
+			// When both the Ordinance and Budget dialogues are
+			// launched, either:
+			// a) The Ordinance dialogue is the child of CMainFrame pWnd or CBudgetMainWindow pWnd
+			// b) The Budget dialogue is the child of CMainFrame pWnd
+			// In either case the Simulation is suspended and CSimcityView::MaintainCursor() isn't
+			// hit so the normal was that CSimcityView::GameCursorHitTest() is invoked is never reached.
+			// To get around that, the following has been added (make sure pSCView is valid and either
+			// boolean variable happens to be true).
+			//
+			// NOTE: When you press the 'SHIFT' key there is a very slight delay before the cursor changes
+			//       though this is minor while this method exists.
+			if (pSCView && (bOrdinanceOpen || bBudgetOpen))
+				Game_SimcityView_GameCursorHitTest(pSCView);
+		}
+		else {
+			Game_SimcityApp_SetGameCursor(pSCApp, GAMECURSOR_ARROW, FALSE);
+			pSCApp->dwSCACursorGameHit = CURSORHIT_NA;
+		}
+	}
+	return TRUE;
+}
+
+extern "C" void __stdcall Hook_GameDialog_OnLButtonDown(UINT nFlags, CMFC3XPoint pt) {
+	CGameDialog *pThis;
+
+	__asm mov [pThis], ecx
+
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CMainFrame *pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
+
+	// The Ordinance dialogue can be opened from the Budget, so it must
+	// come first.
+	if (nFlags & MK_SHIFT) {
+		HWND hWndChild = ChildWindowFromPointEx(pThis->m_hWnd, pt, CWP_SKIPINVISIBLE);
+		int nID = GetDlgCtrlID(hWndChild);
+		if (bOrdinanceOpen) {
+			// Unused here - keeping just in case for future possibilities.
+			return;
+		}
+		else if (bBudgetOpen) {
+			if (nID > 0) {
+				BudgetMain_PreCheckHourGlassTimer((CBudgetMainDialog *)pThis);
+				Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+				DisplayItemHelp(pThis->m_hWnd, HELPTYPE_BUDGET, nID, false);
+				BudgetMain_PostCheckHourGlassTimer((CBudgetMainDialog *)pThis);
+			}
+			return;
+		}
+		else if ((CNeighbourDialog *)pThis == pMainFrm->dwMFNeighbourDialog) {
+			Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+			DisplayItemHelp(pMainFrm->m_hWnd, HELPTYPE_NEIGHBOURS, 0, true);
+			return;
+		}
+	}
+
+	pThis->dwGDButtonDown = 1;
+	GameMain_Wnd_Default(pThis);
 }
 
 extern "C" void __stdcall Hook_GameDialog_OnDestroy() {
@@ -315,7 +393,7 @@ static void SetHighlightBadTerrainMenuItem_SC2K1996() {
 	if (hOverallMenus) {
 		// Menu that you'd get after starting a game from the perspective
 		// of the mainframe - so position 7 is the debug menu.
-		HMENU hDebugMenu = GetSubMenu(hOverallMenus, 7);
+		HMENU hDebugMenu = GetSubMenu(hOverallMenus, SC2K_MENU_GAME_FROM_MAIN(SC2K_MENU_GAME_DEBUG));
 		if (hDebugMenu) {
 			// Terrain sub menu.
 			HMENU hTerrainMenu = GetSubMenu(hDebugMenu, 7);
@@ -361,7 +439,7 @@ extern "C" void __stdcall Hook_SimcityApp_GetCapabilities(CMainFrame* pMainFrm) 
 #pragma warning(default : 28159)
 #pragma warning(default : 4996)
 	if (LOBYTE(wVersion) <= 3 && (LOBYTE(wVersion) != 3 || HIBYTE(wVersion) < 51)) {
-		Game_FailRadio(238);
+		Game_FailRadio(SC2K_STRING_WINDOWSANCIENT);
 		pThis->wSCAGameSpeedLOW = GAME_SPEED_PAUSED;
 		Game_SimcityApp_OnQuit(pThis);
 	}
@@ -927,8 +1005,8 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 	case WM_INITDIALOG:
 		bAborting = false;
 		pSCView = Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis);
-		SendMessage(GetDlgItem(hwndDlg, 119), WM_SETFONT, (WPARAM)hFontMSSansSerifRegular8, TRUE);
-		SetFocus(GetDlgItem(hwndDlg, 1));
+		SendMessage(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_LBL_TIP), WM_SETFONT, (WPARAM)hFontMSSansSerifRegular8, TRUE);
+		SetFocus(GetDlgItem(hwndDlg, IDOK));
 
 		// Set WS_EX_LAYERED on our window object, since we need that for transparency and can't
 		// do that in the MFC dialog creation function
@@ -939,73 +1017,73 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		DestroyStoredTooltips(storedToolTips, hwndDlg);
 		
 		// Button tooltips
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 1),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, IDOK),
 			"Finalizes your city settings and starts the game.");
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 20),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_BTN_REGENERATE),
 			"Generates a new map for your city. A larger variety of terrain is available than in the vanilla SimCity 2000 start game dialog.\n\n"
 			"Hold Shift while clicking this to increase the depth of the splines being reticulated.");
 
 		// Difficulty selection tooltips
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 109),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_DIFFEASY),
 			"Start a game on Easy difficulty.\n"
 			"Modifiers:\n"
 			" - $20,000 starting cash\n"
 			" - Slightly increased industrial demand\n"
 			" - Eight years before disasters can occur, and reduced chance of disasters");
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 1001),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_LBL_DIFFEASY),
 			"Start a game on Easy difficulty.\n"
 			"Modifiers:\n"
 			" - $20,000 starting cash\n"
 			" - Slightly increased industrial demand\n"
 			" - Eight years before disasters can occur, and reduced chance of disasters");
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 110),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_DIFFMEDIUM),
 			"Start a game on Medium difficulty.\n"
 			"Modifiers:\n"
 			" - $10,000 starting cash\n"
 			" - Baseline industrial demand\n"
 			" - Five years before disasters can occur, and a moderate chance of disasters");
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 1002),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_LBL_DIFFMEDIUM),
 			"Start a game on Medium difficulty.\n"
 			"Modifiers:\n"
 			" - $10,000 starting cash\n"
 			" - Baseline industrial demand\n"
 			" - Five years before disasters can occur, and a moderate chance of disasters");
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 111),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_DIFFHARD),
 			"Start a game on Hard difficulty.\n"
 			"Modifiers:\n"
 			" - $10,000 bond at 3% APR\n"
 			" - Slightly decreased industrial demand\n"
 			" - Two and a half years before disasters can occur, and an increased chance of disasters");
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 1003),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_LBL_DIFFHARD),
 			"Start a game on Hard difficulty.\n"
 			"Modifiers:\n"
 			" - $10,000 bond at 3% APR\n"
 			" - Slightly decreased industrial demand\n"
 			" - Two and a half years before disasters can occur, and an increased chance of disasters");
 
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 1010),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_LBL_STARTYEAR),
 			"Hover over a date to see the difference between starting years.");
 
 		// Year selection tooltips
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 104),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_YEAR1900),
 			"Start the game in 1900.\n"
 			"Modifiers:\n"
 			" - No forced unlocks.");
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 105),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_YEAR1950),
 			"Start the game in 1950.\n"
 			"Modifiers:\n"
 			" - Subways, buses, highways, and airports unlocked.\n"
 			" - Water treatment plants unlocked.\n"
 			" - 50% chance of natural gas power plants being unlocked.\n"
 			" - 5% chance of nuclear power plants being unlocked.");
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 106),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_YEAR2000),
 			"Start the game in 2000.\n"
 			"Modifiers:\n"
 			" - Subways, buses, highways, and airports unlocked.\n"
 			" - Water treatment and desalination plants unlocked.\n"
 			" - Natural gas, nuclear, wind, and solar power plants unlocked.\n"
 			" - 50% chance of Plymouth arcologies being unlocked.");
-		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, 107),
+		StoreTooltip(storedToolTips, hwndDlg, GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_YEAR2050),
 			"Start the game in 2050.\n"
 			"Modifiers:\n"
 			" - Subways, buses, highways, and airports unlocked.\n"
@@ -1017,21 +1095,21 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 
 		// Limit the City name to 30 characters (not 31 - this avoids a rather
 		// nasty overrun that can occur if the old limit is hit).
-		SendMessage(GetDlgItem(hwndDlg, 101), EM_SETLIMITTEXT, CITY_NAME_LEN, 0);
-		SendMessage(GetDlgItem(hwndDlg, 150), EM_SETLIMITTEXT, MAX_LABEL_LEN, 0);
+		SendMessage(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_EDIT_CITYNAME), EM_SETLIMITTEXT, CITY_NAME_LEN, 0);
+		SendMessage(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_EDIT_MAYORNAME), EM_SETLIMITTEXT, MAX_LABEL_LEN, 0);
 
 		// Set the default options.
-		SetDlgItemText(hwndDlg, 101, "New City");
-		SetDlgItemText(hwndDlg, 150, jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
+		SetDlgItemText(hwndDlg, SC2K_DIALOG_NEWCITY_EDIT_CITYNAME, "New City");
+		SetDlgItemText(hwndDlg, SC2K_DIALOG_NEWCITY_EDIT_MAYORNAME, jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
 
-		Button_SetCheck(GetDlgItem(hwndDlg, 109), BST_CHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, 104), BST_CHECKED);
-		Button_SetCheck(GetDlgItem(hwndDlg, 108), BST_CHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_DIFFEASY), BST_CHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_YEAR1900), BST_CHECKED);
+		Button_SetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_TRRNCLASSIC), BST_CHECKED);
 		iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
 
 		if (!bLegacyTerrainMode) {
 			if (jsonSettingsCore[C_SC2KFIX][S_FIX_QOL][I_FIX_QOL_TERRAINCOSMETIC].ToInt() > TERRAIN_COSMETIC_NONE)
-				SetWindowText(GetDlgItem(hwndDlg, 117), "WARNING: A specific 'Forced Terrain Mode' is set. Once the city has started, the selected 'Terrain Type' will be saved but not applied.");
+				SetWindowText(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_LBL_TRRNWARN), "WARNING: A specific 'Forced Terrain Mode' is set. Once the city has started, the selected 'Terrain Type' will be saved but not applied.");
 		}
 
 		if (pSCView) {
@@ -1047,27 +1125,27 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 
 		// Set the city name, defaulting to "New City" in case the player didn't enter one
 		memset(szTempCityName, 0, sizeof(szTempCityName));
-		if (!GetDlgItemText(hwndDlg, 101, szTempCityName, sizeof(szTempCityName)))
+		if (!GetDlgItemText(hwndDlg, SC2K_DIALOG_NEWCITY_EDIT_CITYNAME, szTempCityName, sizeof(szTempCityName)))
 			strcpy_s(szTempCityName, sizeof(szTempCityName), "New City");
 		GameMain_String_Cons(&pszCityName);
 		GameMain_String_OperatorSet(&pszCityName, szTempCityName);
 
 		// Set the XLAB entry for the mayor name, falling back to the default from settings.json
 		memset(szTempMayorName, 0, sizeof(szTempMayorName));
-		if (!GetDlgItemText(hwndDlg, 150, szTempMayorName, sizeof(szTempMayorName)))
+		if (!GetDlgItemText(hwndDlg, SC2K_DIALOG_NEWCITY_EDIT_MAYORNAME, szTempMayorName, sizeof(szTempMayorName)))
 			strcpy_s(szTempMayorName, sizeof(szTempMayorName), jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
 		SetXLABEntry(0, szTempMayorName);
 
 		// Set the difficulty and starting year
 		wNationalFedRate = 3;
 
-		if (Button_GetCheck(GetDlgItem(hwndDlg, 109)) == BST_CHECKED) {
+		if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_DIFFEASY)) == BST_CHECKED) {
 			wCityDifficulty = GAME_DIFFICULTY_EASY;
 			dwCityFunds = 20000;
-		} else if (Button_GetCheck(GetDlgItem(hwndDlg, 110)) == BST_CHECKED) {
+		} else if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_DIFFMEDIUM)) == BST_CHECKED) {
 			wCityDifficulty = GAME_DIFFICULTY_MEDIUM;
 			dwCityFunds = 10000;
-		} else if (Button_GetCheck(GetDlgItem(hwndDlg, 111)) == BST_CHECKED) {
+		} else if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_DIFFHARD)) == BST_CHECKED) {
 			wCityDifficulty = GAME_DIFFICULTY_HARD;
 			dwCityFunds = 10000;
 
@@ -1084,16 +1162,16 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 
 		wNationalEconomyTrend = wCityDifficulty - 1;
 
-		if (Button_GetCheck(GetDlgItem(hwndDlg, 104)) == BST_CHECKED) {
+		if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_YEAR1900)) == BST_CHECKED) {
 			wCityStartYear = 1900;
 			dwNationalPopulation = 10000;
-		} else if (Button_GetCheck(GetDlgItem(hwndDlg, 105)) == BST_CHECKED) {
+		} else if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_YEAR1950)) == BST_CHECKED) {
 			wCityStartYear = 1950;
 			dwNationalPopulation = 25000;
-		} else if (Button_GetCheck(GetDlgItem(hwndDlg, 106)) == BST_CHECKED) {
+		} else if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_YEAR2000)) == BST_CHECKED) {
 			wCityStartYear = 2000;
 			dwNationalPopulation = 60000;
-		} else if (Button_GetCheck(GetDlgItem(hwndDlg, 107)) == BST_CHECKED) {
+		} else if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_YEAR2050)) == BST_CHECKED) {
 			wCityStartYear = 2050;
 			dwNationalPopulation = 150000;
 		}
@@ -1124,17 +1202,17 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 		Game_NewspaperStoryGenerator(NEWSPAPER_TYPE_FOUNDING, 0);
 
 		// Get the selected terrain setting (or randomize it if requested)
-		if (Button_GetCheck(GetDlgItem(hwndDlg, 108)) == BST_CHECKED)
+		if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_TRRNCLASSIC)) == BST_CHECKED)
 			jsonXFIX["map"]["terrain_cosmetic_mode"] = TERRAIN_COSMETIC_NONE;
-		else if (Button_GetCheck(GetDlgItem(hwndDlg, 112)) == BST_CHECKED)
+		else if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_TRRNGREY)) == BST_CHECKED)
 			jsonXFIX["map"]["terrain_cosmetic_mode"] = TERRAIN_COSMETIC_GREY;
-		else if (Button_GetCheck(GetDlgItem(hwndDlg, 113)) == BST_CHECKED)
+		else if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_TRRNLUSH)) == BST_CHECKED)
 			jsonXFIX["map"]["terrain_cosmetic_mode"] = TERRAIN_COSMETIC_GREEN;
-		else if (Button_GetCheck(GetDlgItem(hwndDlg, 114)) == BST_CHECKED)
+		else if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_TRRNCOLD)) == BST_CHECKED)
 			jsonXFIX["map"]["terrain_cosmetic_mode"] = TERRAIN_COSMETIC_COLD;
-		else if (Button_GetCheck(GetDlgItem(hwndDlg, 115)) == BST_CHECKED)
+		else if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_TRRNHOT)) == BST_CHECKED)
 			jsonXFIX["map"]["terrain_cosmetic_mode"] = TERRAIN_COSMETIC_HOT;
-		else if (Button_GetCheck(GetDlgItem(hwndDlg, 116)) == BST_CHECKED)
+		else if (Button_GetCheck(GetDlgItem(hwndDlg, SC2K_DIALOG_NEWCITY_RADIO_TRRNRANDOM)) == BST_CHECKED)
 			jsonXFIX["map"]["terrain_cosmetic_mode"] = rand() % 5;
 
 		bUseMapTerrainCosmeticMode = true;
@@ -1192,7 +1270,7 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 				bAborting = true;
 				EndDialog(hwndDlg, FALSE);
 				break;
-			case 20:
+			case SC2K_DIALOG_NEWCITY_BTN_REGENERATE:
 				// Reticulate some splines
 				Game_SimcityDoc_PrepareMap();
 				RandomizeCityTerrainVariables();
@@ -1207,42 +1285,42 @@ static BOOL CALLBACK Hook_NewCityDialogProc(HWND hwndDlg, UINT message, WPARAM w
 				Game_SimcityView_DrawHouse(pSCView);
 				RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 				break;
-			case 108:
+			case SC2K_DIALOG_NEWCITY_RADIO_TRRNCLASSIC:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
 				if (pSCView) {
 					Game_SimcityView_DrawHouse(pSCView);
 					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 				}
 				break;
-			case 112:
+			case SC2K_DIALOG_NEWCITY_RADIO_TRRNGREY:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_GREY;
 				if (pSCView) {
 					Game_SimcityView_DrawHouse(pSCView);
 					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 				}
 				break;
-			case 113:
+			case SC2K_DIALOG_NEWCITY_RADIO_TRRNLUSH:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_GREEN;
 				if (pSCView) {
 					Game_SimcityView_DrawHouse(pSCView);
 					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 				}
 				break;
-			case 114:
+			case SC2K_DIALOG_NEWCITY_RADIO_TRRNCOLD:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_COLD;
 				if (pSCView) {
 					Game_SimcityView_DrawHouse(pSCView);
 					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 				}
 				break;
-			case 115:
+			case SC2K_DIALOG_NEWCITY_RADIO_TRRNHOT:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_HOT;
 				if (pSCView) {
 					Game_SimcityView_DrawHouse(pSCView);
 					RedrawWindow(pSCView->m_hWnd, NULL, NULL, RDW_INVALIDATE);
 				}
 				break;
-			case 116:
+			case SC2K_DIALOG_NEWCITY_RADIO_TRRNRANDOM:
 				iTerrainCosmeticMode = TERRAIN_COSMETIC_NONE;
 				if (pSCView) {
 					Game_SimcityView_DrawHouse(pSCView);
@@ -1288,7 +1366,7 @@ extern "C" void __stdcall L_SimcityApp_NewCity(void) {
 		Game_SimcityView_ScaleIn(Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis));
 
 	// Display the dialog and break out back to the menu loop if it's cancelled
-	if (!DialogBoxParam(hSC2KFixModule, (LPCSTR)101, pThis->m_pMainWnd->m_hWnd, Hook_NewCityDialogProc, 0)) {
+	if (!DialogBoxParam(hSC2KFixModule, MAKEINTRESOURCE(SC2K_DIALOG_NEWCITY), pThis->m_pMainWnd->m_hWnd, Hook_NewCityDialogProc, 0)) {
 		pThis->iSCAProgramStep = ONIDLE_STATE_PENDINGACTION;
 		pThis->dwSCASetNextStep = 1;
 		return;
@@ -1310,13 +1388,13 @@ static void SetMainDialogUpdateState(HWND hwndDlg) {
 
 	bMainDialogUpdateState = TRUE;
 	if (bMainDialogUpdateState) {
-		hdlgQuitItem = GetDlgItem(hwndDlg, 115);
+		hdlgQuitItem = GetDlgItem(hwndDlg, SC2K_DIALOG_MAIN_BTN_QUIT);
 		GetWindowRect(hdlgQuitItem, &quitRect);
 		ScreenToClient(hwndDlg, (LPPOINT)&quitRect);
 		ScreenToClient(hwndDlg, (LPPOINT)&quitRect.right);
 		addCY = quitRect.top;
 
-		hdlgStaticItem = GetDlgItem(hwndDlg, IDC_STATIC_UPDATENOTICE);
+		hdlgStaticItem = GetDlgItem(hwndDlg, SC2K_DIALOG_MAIN_LBL_UPDATENOTICE);
 		GetWindowRect(hdlgStaticItem, &statRect);
 		ScreenToClient(hwndDlg, (LPPOINT)&statRect);
 		ScreenToClient(hwndDlg, (LPPOINT)&statRect.right);
@@ -1332,7 +1410,7 @@ static void SetMainDialogUpdateState(HWND hwndDlg) {
 		dlgRect.bottom += addCY;
 		SetWindowPos(hwndDlg, HWND_TOP, 0, 0, dlgRect.right - dlgRect.left, dlgCY, SWP_NOMOVE | SWP_NOACTIVATE);
 
-		SetDlgItemText(hwndDlg, IDC_STATIC_UPDATENOTICE, UPDATE_STRING);
+		SetDlgItemText(hwndDlg, SC2K_DIALOG_MAIN_LBL_UPDATENOTICE, UPDATE_STRING);
 		ShowWindow(hdlgStaticItem, SW_SHOW);
 	}
 }
@@ -1363,7 +1441,7 @@ static BOOL CALLBACK Hook_MainDialogProc(HWND hwndDlg, UINT message, WPARAM wPar
 static BOOL CALLBACK Hook_OwnerInfoDialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 	case WM_INITDIALOG:
-		SetDlgItemText(hwndDlg, 139, jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
+		SetDlgItemText(hwndDlg, SC2K_DIALOG_OWNER_LBL_MAYORNAME, jsonSettingsCore[C_SIMCITY2000][S_SIM_REG][I_SIM_REG_MAYORNAME].ToString().c_str());
 		CenterDialogBox(hwndDlg);
 		break;
 	}
@@ -1371,31 +1449,38 @@ static BOOL CALLBACK Hook_OwnerInfoDialogProc(HWND hwndDlg, UINT message, WPARAM
 }
 
 #pragma warning(disable : 6387)
-// Load our own versions of dialog procedures for overridden dialogs as required
-extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam) {
+// Hook required due to the modeless dialog cases being handled in a different manner.
+extern "C" HWND __stdcall Hook_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam) {
 	switch ((DWORD)lpTemplateName) {
-	case 101:
-		lpNewCityAfxProc = lpDialogFunc;
-		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_NewCityDialogProc, dwInitParam);
-	case 103:
-		lpMainDialogAfxProc = lpDialogFunc;
-		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_MainDialogProc, dwInitParam);
-	case 102:
-	case 113:
-	case 142:
-	case 154:
-		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
+	case SC2K_DIALOG_OWNER:
+		return CreateDialogParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_OwnerInfoDialogProc, dwInitParam);
+	case SC2K_DIALOG_POPULATION:
+	case SC2K_DIALOG_GRAPH:
+	case SC2K_DIALOG_INDUSTRY:
+	case SC2K_DIALOG_CITYMAP:
+		return CreateDialogParamA(hSC2KFixModule, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	default:
-		return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
+		return CreateDialogParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	}
 }
 
-extern "C" HWND __stdcall Hook_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam) {
+// Load our own versions of dialog procedures for overridden dialogs as required
+extern "C" INT_PTR __stdcall Hook_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam) {
 	switch ((DWORD)lpTemplateName) {
-	case 106:
-		return CreateDialogParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_OwnerInfoDialogProc, dwInitParam);
+	case SC2K_DIALOG_NEWCITY:
+		lpNewCityAfxProc = lpDialogFunc;
+		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_NewCityDialogProc, dwInitParam);
+	case SC2K_DIALOG_MAIN:
+		lpMainDialogAfxProc = lpDialogFunc;
+		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, Hook_MainDialogProc, dwInitParam);
+	case SC2K_DIALOG_BUDGET:
+	case SC2K_DIALOG_ORDINANCES:
+	case SC2K_DIALOG_SELECTITEM:
+	case SC2K_DIALOG_QUERYGENERAL:
+	case SC2K_DIALOG_QUERYSPECIFIC:
+		return DialogBoxParamA(hSC2KFixModule, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	default:
-		return CreateDialogParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
+		return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 	}
 }
 #pragma warning(default : 6387)
@@ -1531,7 +1616,7 @@ extern "C" void __stdcall Hook_PrepareGame(void) {
 		if (dwShowSCURK) {
 			HMENU hMenu = GetMenu(pMainFrm->m_hWnd);
 			if (hMenu) {
-				HMENU hSubMenu = GetSubMenu(hMenu, 1);
+				HMENU hSubMenu = GetSubMenu(hMenu, SC2K_MENU_GAME_FROM_MAIN(SC2K_MENU_GAME_FILE));
 				if (hSubMenu) {
 					DeleteMenu(hSubMenu, 5, MF_BYPOSITION);
 					DeleteMenu(hSubMenu, 4, MF_BYPOSITION);
@@ -2288,6 +2373,52 @@ extern "C" void __stdcall Hook_SimcityView_OnRButtonDown(UINT nFlags, CMFC3XPoin
 	GetKeyButtonBinding_SC2K1996(B_KEY_MOUSE_RBUTTON, FALSE, &pt);
 }
 
+extern "C" void __stdcall Hook_SimcityView_GameCursorHitTest() {
+	CSimcityView *pThis;
+	__asm mov [pThis], ecx
+
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	__int16 nCursor;
+	POINT pt;
+	RECT r;
+
+	if (pSCApp->dwSCACursorGameHit == CURSORHIT_GAME) {
+		if (wCityMode) {
+			if (wCityMode < GAME_MODE_CITY || wCityMode > GAME_MODE_DISASTER) {
+				nCursor = GAMECURSOR_ARROW;
+			}
+			else {
+				if (GetAsyncKeyState(VK_CONTROL) < 0)
+					nCursor = GAMECURSOR_BULLDOZER;
+				else if (GetAsyncKeyState(VK_SHIFT) < 0)
+					nCursor = GAMECURSOR_QUERY;
+				else if (wCurrentCityToolGroup == CITYTOOL_GROUP_NATURE && wSelectedSubtool[CITYTOOL_GROUP_NATURE] == NATURE_WATER)
+					nCursor = GAMECURSOR_POND;
+				else
+					nCursor = wCityToolBarCursorSelect[wCurrentCityToolGroup];
+			}
+		}
+		else {
+			if (GetAsyncKeyState(VK_CONTROL) < 0)
+				nCursor = GAMECURSOR_CENTER;
+			else
+				nCursor = wMapToolBarCursorSelect[wCurrentMapToolGroup];
+		}
+	}
+	else if (pSCApp->dwSCACursorGameHit >= CURSORHIT_CITYTOOLBAR && pSCApp->dwSCACursorGameHit <= CURSORHIT_GAMEDIALOG) {
+		if (GetAsyncKeyState(VK_SHIFT) < 0)
+			nCursor = GAMECURSOR_HELP;
+		else
+			nCursor = GAMECURSOR_ARROW;
+	}
+	else
+		nCursor = GAMECURSOR_ARROW;
+	GetWindowRect(pThis->m_hWnd, &r);
+	GetCursorPos(&pt);
+	if (PtInRect(&r, pt))
+		Game_SimcityApp_SetGameCursor(pSCApp, nCursor, FALSE);
+}
+
 extern "C" void __stdcall Hook_SimcityView_DoBudget() {
 	CSimcityView *pThis;
 	__asm mov [pThis], ecx
@@ -2565,7 +2696,7 @@ extern "C" void __stdcall Hook_MainFrame_UpdateSections() {
 	unsigned nRewardBit;
 	CMFC3XString *citySubToolStrings;
 
-	HWND hDlgItem = GetDlgItem(pThis->dwMFStatusControlBar.m_hWnd, 120); // Status - GoTo button.
+	HWND hDlgItem = GetDlgItem(pThis->dwMFStatusControlBar.m_hWnd, SC2K_DIALOG_STATUSBAR_BTN_GOTO); // Status - GoTo button.
 	CMapToolBar* pMapToolBar = &pThis->dwMFMapToolBar;
 	if (!wCityMode)
 		Game_MapToolBar_ResetControls(pMapToolBar);
@@ -2621,7 +2752,7 @@ extern "C" void __stdcall Hook_MainFrame_UpdateSections() {
 REFRESHMENUGRANTS:
 	CMFC3XMenu* pMenu = &pCityToolBar->dwCTBMenuOne;
 	GameMain_Menu_DestroyMenu(pMenu);
-	HMENU hMenu = LoadMenuA(hGameModule, (LPCSTR)136);
+	HMENU hMenu = LoadMenuA(hGameModule, MAKEINTRESOURCEA(SC2K_MENU_CITYTOOLBAR));
 	GameMain_Menu_Attach(pMenu, hMenu);
 	for (nPos = CITYTOOL_BUTTON_BULLDOZER; nPos < CITYTOOL_BUTTON_SIGNS; ++nPos) {
 		if (dwGrantedItems[nPos]) {
@@ -2813,12 +2944,16 @@ static bool DoFixBadTerrain_SC2K1996(HWND hWnd) {
 
 // Hook for a couple different CWnd::OnCmdMessage derivatives
 static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void *pHandler, void *dwRetAddr) {
-	CSimcityView *pSCView = Game_SimcityApp_PointerToCSimcityViewClass(&pCSimcityAppThis);
+	CSimcityAppPrimary *pSCApp = &pCSimcityAppThis;
+	CMainFrame *pMainFrm = (CMainFrame *)pSCApp->m_pMainWnd;
+	CSimcityView *pSCView = Game_SimcityApp_PointerToCSimcityViewClass(pSCApp);
 
 	// Normally internally there'd be the class hierarchy regarding inheritence
 	// (which isn't present here).
 	//
 	// 0x4B9080 - with CFrameWnd - use CFrameWnd::OnCmdMsg
+	//
+	// 0x4A4BF6 - CWnd::WindowProc -> CWnd::OnNotify
 	//
 	// All other flagged address references have thus far gracefully
 	// gone to CCmdTarget::OnCmdMsg (which is the non-overridden virtual call).
@@ -2957,15 +3092,139 @@ static BOOL L_OnCmdMsg(CMFC3XWnd *pThis, UINT nID, int nCode, void *pExtra, void
 		return GameMain_FrameWnd_OnCmdMsg((CMFC3XFrameWnd *)pThis, nID, nCode, pExtra, pHandler);
 	}
 	else if ((DWORD)dwRetAddr == 0x4A4BB2) {
+		// This section here appears to relate to anything that generally goes through CWnd::WindowProc
+		// (unless the call has been overridden).
+		// Due to this, this area here is where you're most likely to want to override (or add) any dialogue
+		// WM_COMMAND cases.
+		// Due to this case, it is absolutely vital that no duplicate IDs are used (unless we verify the
+		// point of origin).
 		if (nCode == _CN_COMMAND) {
 			switch (nID) {
 			// This is the 'sc2kfix Settings' enddialog return code for the main dialog to
 			// execution from the BuildSubFrames section.
-			case IDC_GAME_MAIN_SC2KFIXSETTINGS:
+			case SC2K_DIALOG_MAIN_BTN_SC2KFIXSETTINGS:
 				return EndDialog(pThis->m_hWnd, ONIDLE_INITIALDIALOG_SC2KFIXSETTINGS);
+			case SC2K_DIALOG_BUDGET_HELP:
+				if (bBudgetOpen) {
+					BudgetMain_PreCheckHourGlassTimer((CBudgetMainDialog *)pThis);
+					Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+					DisplayItemHelp(pThis->m_hWnd, HELPTYPE_BUDGET, nID, false);
+					BudgetMain_PostCheckHourGlassTimer((CBudgetMainDialog *)pThis);
+				}
+				return TRUE;
+			default:
+				if (bOrdinanceOpen) {
+					// This block here handles all of the current Ordinance settings.
+					// Directed to a local function for 'help' and normal handling.
+					// The game-side message map entries are now no longer used.
+					if ((nID >= SC2K_DIALOG_ORDINANCES_CHECKBOX_FINAN_ONEPCTSALESTAX && nID <= SC2K_DIALOG_ORDINANCES_CHECKBOX_FINAN_ONEPCTINCOMETAX) ||
+						(nID >= SC2K_DIALOG_ORDINANCES_CHECKBOX_HLSFT_VOLUNTEERFIREDEPT && nID <= SC2K_DIALOG_ORDINANCES_CHECKBOX_HLSFT_JUNIORSPORTS) ||
+						(nID >= SC2K_DIALOG_ORDINANCES_CHECKBOX_EDUCA_PROREADCAMPAIGN && nID <= SC2K_DIALOG_ORDINANCES_CHECKBOX_EDUCA_NGHBRHOODWATCH) ||
+						(nID >= SC2K_DIALOG_ORDINANCES_CHECKBOX_PROMO_TOURISTADVERT && nID <= SC2K_DIALOG_ORDINANCES_CHECKBOX_PROMO_ANNUALCARNIVAL) ||
+						(nID >= SC2K_DIALOG_ORDINANCES_CHECKBOX_OTHER_ENERGYCONSERV && nID <= SC2K_DIALOG_ORDINANCES_CHECKBOX_OTHER_POLLUTIONCTRLS)) {
+						BudgetOrdinanceDialog_ToggleOrdinance((CBudgetOrdinanceDialog *)pThis, nID);
+						return TRUE;
+					}
+				}
+				else if (bBudgetOpen) {
+					if (nID != SC2K_DIALOG_BUDGET_HELP) {
+						if (GetAsyncKeyState(VK_SHIFT) < 0) {
+							BudgetMain_PreCheckHourGlassTimer((CBudgetMainDialog *)pThis);
+							Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+							DisplayItemHelp(pThis->m_hWnd, HELPTYPE_BUDGET, nID, false);
+							BudgetMain_PostCheckHourGlassTimer((CBudgetMainDialog *)pThis);
+							return TRUE;
+						}
+					}
+				}
+				else if ((CPopulationDialog *)pThis == pMainFrm->dwMFPopulationDialog) {
+					if (GetAsyncKeyState(VK_SHIFT) < 0) {
+						Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+						DisplayItemHelp(pMainFrm->m_hWnd, HELPTYPE_POPULATION, nID, true);
+						return TRUE;
+					}
+					// The selection buttons in this dialog are now routed through
+					// a local function - the game-side calls are no longer in play.
+					if (DoPopDialogButton((CPopulationDialog *)pThis, nID)) {
+						FixPopDialogButtons((CPopulationDialog *)pThis);
+						InvalidateRect(pThis->m_hWnd, NULL, TRUE);
+						UpdateWindow(pThis->m_hWnd);
+						return TRUE;
+					}
+				}
+				else if ((CCityIndustryDialog *)pThis == pMainFrm->dwMFCityIndustryDialog) {
+					if (nID >= SC2K_DIALOG_INDUSTRY_RADIO_RATIOS && nID <= SC2K_DIALOG_INDUSTRY_RADIO_DEMAND) {
+						if (GetAsyncKeyState(VK_SHIFT) < 0) {
+							Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+							DisplayItemHelp(pMainFrm->m_hWnd, HELPTYPE_INDUSTRY, nID, true);
+							return TRUE;
+						}
+						CityIndustryDialog_UpdateSection((CCityIndustryDialog *)pThis, nID);
+						return TRUE;
+					}
+				}
+				else if ((CCityMapDialog *)pThis == pMainFrm->dwMFCityMapDialog) {
+					if (nID == SC2K_DIALOG_CITYMAP_BTN_SHOWCITYINWINDOW) {
+						if (GetAsyncKeyState(VK_SHIFT) < 0) {
+							Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+							DisplayItemHelp(pMainFrm->m_hWnd, HELPTYPE_CITYMAP, nID, true);
+							return TRUE;
+						}
+					}
+				}
+				else if ((CSimGraphDialog *)pThis == pMainFrm->dwMFSimGraphDialog) {
+					if ((nID >= SC2K_DIALOG_GRAPH_CHECKBOX_OPTCITYSIZE && nID <= SC2K_DIALOG_GRAPH_CHECKBOX_OPTFEDRATE) ||
+						(nID >= SC2K_DIALOG_GRAPH_RADIO_RANGEONEYEAR && nID <= SC2K_DIALOG_GRAPH_RADIO_RANGEHUNDREDYEARS)) {
+						if (GetAsyncKeyState(VK_SHIFT) < 0) {
+							Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+							DisplayItemHelp(pMainFrm->m_hWnd, HELPTYPE_GRAPHS, nID, true);
+							return TRUE;
+						}
+						if (nID >= SC2K_DIALOG_GRAPH_CHECKBOX_OPTCITYSIZE && nID <= SC2K_DIALOG_GRAPH_CHECKBOX_OPTFEDRATE)
+							SimGraphDialog_UpdateOptions((CSimGraphDialog *)pThis, nID);
+						else if (nID >= SC2K_DIALOG_GRAPH_RADIO_RANGEONEYEAR && nID <= SC2K_DIALOG_GRAPH_RADIO_RANGEHUNDREDYEARS)
+							SimGraphDialog_UpdateRange((CSimGraphDialog *)pThis, nID);
+						return TRUE;
+					}
+				}
+				break;
 			}
-			//ConsoleLog(LOG_DEBUG, "::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, pExtra, pHandler, dwRetAddr);
+			//ConsoleLog(LOG_DEBUG, "CMD: ::OnCmdMsg(0x%06X, %u, %d, 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, pExtra, pHandler, dwRetAddr);
 		}
+	}
+	else if ((DWORD)dwRetAddr == 0x4A4BF6) {
+		MFC3X_AFX_NOTIFY *pNotify = (MFC3X_AFX_NOTIFY *)pExtra;
+		
+		if (pMainFrm && (CCityMapDialog *)pThis == pMainFrm->dwMFCityMapDialog) {
+			if (nID == SC2K_DIALOG_CITYMAP_TABCTRL_TABS) {
+				POINT pt;
+				TCHITTESTINFO hitTest;
+
+				GetCursorPos(&pt);
+				ScreenToClient(pNotify->pNMHDR->hwndFrom, &pt);
+
+				hitTest.flags = TCHT_ONITEM;
+				hitTest.pt = pt;
+
+				int nTab = TabCtrl_HitTest(pNotify->pNMHDR->hwndFrom, &hitTest);
+				// The int16_t cast is required in this case due to the legacy constraints of the day.
+				switch ((int16_t)LOWORD(nCode)) {
+				case NM_CLICK:
+				case TCN_SELCHANGING:
+					if (GetAsyncKeyState(VK_SHIFT) < 0) {
+						Game_SimcityApp_SoundPlaySound(pSCApp, SOUND_CLICK);
+						DisplayItemHelp(pMainFrm->m_hWnd, HELPTYPE_CITYMAP, nTab, true);
+						*pNotify->pResult = TRUE;
+						return TRUE; // Return TRUE in order to cancel tab switching (for click - no effect).
+					}
+					break;
+				default:
+					break;
+				}
+			}
+		}
+		// uint16_t the debug notice since that's how it's set down in the AFX_MESSAGE_MAP
+		//ConsoleLog(LOG_DEBUG, "NOTIFY: ::OnCmdMsg(0x%06X, %u, %d (%u), 0x%06X, 0x%06X) - 0x%06X\n", pThis, nID, nCode, (uint16_t)LOWORD(nCode), pExtra, pHandler, dwRetAddr);
 	}
 	else {
 		// Leaving this particular debug notice enabled without any flags.
@@ -3010,6 +3269,27 @@ extern "C" BOOL __stdcall Hook_Wnd_OnCommand(WPARAM wParam, LPARAM lParam) {
 	return L_OnCmdMsg(pThis, nID, nCode, 0, 0, _ReturnAddress());
 }
 
+extern "C" BOOL __stdcall Hook_Wnd_OnNotify(WPARAM wParam, LPARAM lParam, LRESULT *pResult) {
+	CMFC3XWnd *pThis;
+
+	__asm mov [pThis], ecx
+
+	NMHDR* pNMHDR = (NMHDR*)lParam;
+	HWND hWndCtrl = pNMHDR->hwndFrom;
+	UINT nID = GetDlgCtrlID(pNMHDR->hwndFrom);
+
+	int nCode = pNMHDR->code;
+	if (GameMain_AfxGetThreadState()->m_hLockoutNotifyWindow == pThis->m_hWnd)
+		return TRUE;
+	CMFC3XWnd* pChild = GameMain_Wnd_FromHandlePermanent(hWndCtrl);
+	if (pChild != NULL && GameMain_Wnd_SendChildNotifyLastMsg(pChild, pResult))
+		return TRUE;
+	MFC3X_AFX_NOTIFY notify;
+	notify.pResult = pResult;
+	notify.pNMHDR = pNMHDR;
+	return L_OnCmdMsg(pThis, nID, MAKELONG(nCode, WM_NOTIFY), &notify, NULL, _ReturnAddress());
+}
+
 int nOwnDrwDlg = OWNDRW_DLG_NONE;
 CMFC3XWnd *pStoredWnd = NULL;
 
@@ -3021,6 +3301,14 @@ extern "C" void __stdcall Hook_Wnd_OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDIS
 		if (nOwnDrwDlg == OWNDRW_DLG_BRIDGE) {
 			L_BridgeSelectDialog_OnDrawItem_SC2K1996((CBridgeSelectDialog *)pThis, nIDCtl, lpDIS);
 			return;
+		}
+		else if (nOwnDrwDlg == OWNDRW_DLG_ORDINANCES) {
+			if (L_BudgetOrdinanceDialog_OnDrawItem_SC2K1996((CBudgetOrdinanceDialog *)pThis, nIDCtl, lpDIS))
+				return;
+		}
+		else if (nOwnDrwDlg == OWNDRW_DLG_BUDGETMAIN) {
+			if (L_BudgetMainDialog_OnDrawItem_SC2K1996((CBudgetMainDialog *)pThis, nIDCtl, lpDIS))
+				return;
 		}
 	}
 
@@ -3153,6 +3441,14 @@ void InstallMiscHooks_SC2K1996(void) {
 	SafeVirtualProtect((LPVOID)0x40219E, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x40219E, Hook_GameDialog_DoModal);
 
+	// Hook into the CGameDialog::OnSetCursor function
+	SafeVirtualProtect((LPVOID)0x402112, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402112, Hook_GameDialog_OnSetCursor);
+
+	// Hook into the CGameDialog::OnLButtonDown function
+	SafeVirtualProtect((LPVOID)0x402720, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402720, Hook_GameDialog_OnLButtonDown);
+
 	// Hook into the CGameDialog::OnDestroy function
 	SafeVirtualProtect((LPVOID)0x401532, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401532, Hook_GameDialog_OnDestroy);
@@ -3235,6 +3531,8 @@ void InstallMiscHooks_SC2K1996(void) {
 	// Install the advanced query hook
 	InstallQueryHooks_SC2K1996();
 
+	InstallCityManagementHooks_SC2K1996();
+
 	InstallArcologyDialogHooks_SC2K1996();
 
 	InstallPowerPlantDialogHooks_SC2K1996();
@@ -3274,13 +3572,9 @@ void InstallMiscHooks_SC2K1996(void) {
 	SafeVirtualProtect((LPVOID)0x40131B, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x40131B, Hook_MainFrame_UpdateSections);
 
-	// nop out "StopSound" call in SimulationPrepareBudgetDialog()
-	// this allows for the "click" to be played when executed from
-	// the city toolbar.
-	SafeVirtualProtect((LPVOID)0x473230, 10, PAGE_EXECUTE_READWRITE);
-	memset((LPVOID)0x473230, 0x90, 10);
-
 	InstallToolBarHooks_SC2K1996();
+
+	InstallHelpHooks_SC2K1996();
 
 	// New hooks for CSimcityDoc::UpdateDocumentTitle and
 	// SimulationProcessTick - these account for:
@@ -3305,19 +3599,23 @@ void InstallMiscHooks_SC2K1996(void) {
 	SafeVirtualProtect((LPVOID)0x4A5352, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4A5352, Hook_Wnd_OnCommand);
 
+	// Hook CWnd::OnNotify
+	SafeVirtualProtect((LPVOID)0x4A541A, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x4A541A, Hook_Wnd_OnNotify);
+
 	// Hook into CWnd::OnDrawItem
 	SafeVirtualProtect((LPVOID)0x4A468C, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x4A468C, Hook_Wnd_OnDrawItem);
 
 	// Add more buttons to SC2K's menus
-	hMainMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(2));
+	hMainMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(SC2K_MENU_MAIN));
 	if (hMainMenu) {
 		// File menu -> Open Main Dialog
 		HMENU hFilePopup;
 		MENUITEMINFO miiFilePopup;
 		miiFilePopup.cbSize = sizeof(MENUITEMINFO);
 		miiFilePopup.fMask = MIIM_SUBMENU;
-		if (!GetMenuItemInfo(hMainMenu, 0, TRUE, &miiFilePopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+		if (!GetMenuItemInfo(hMainMenu, SC2K_MENU_MAIN_FILE, TRUE, &miiFilePopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
 			ConsoleLog(LOG_DEBUG, "MISC: Main GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
 			goto skipmainmenu;
 		}
@@ -3327,7 +3625,30 @@ void InstallMiscHooks_SC2K1996(void) {
 			goto skipmainmenu;
 		}
 		if (!InsertMenu(hFilePopup, 0, MF_BYPOSITION|MF_STRING, IDM_MAIN_FILE_OPENMAINDIALOG, "&Open Main Dialog") && mischook_debug & MISCHOOK_DEBUG_MENU) {
-			ConsoleLog(LOG_DEBUG, "MISC: Main InsertMenuA #1 failed, error = 0x%08X.\n", GetLastError());
+			ConsoleLog(LOG_DEBUG, "MISC: Main InsertMenuA #2 failed, error = 0x%08X.\n", GetLastError());
+			goto skipmainmenu;
+		}
+
+		// Help menu - remove unnecessary items here.
+		HMENU hHelpPopup;
+		MENUITEMINFO miiHelpPopup;
+		miiHelpPopup.cbSize = sizeof(MENUITEMINFO);
+		miiHelpPopup.fMask = MIIM_SUBMENU;
+		if (!GetMenuItemInfo(hMainMenu, SC2K_MENU_MAIN_HELP, TRUE, &miiHelpPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Main GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
+			goto skipmainmenu;
+		}
+		hHelpPopup = miiHelpPopup.hSubMenu;
+		if (!DeleteMenu(hHelpPopup, 0, MF_BYPOSITION) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Main Delete Menu #1 failed, error = 0x%08X.\n", GetLastError());
+			goto skipmainmenu;
+		}
+		if (!DeleteMenu(hHelpPopup, 0, MF_BYPOSITION) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Main Delete Menu #2 failed, error = 0x%08X.\n", GetLastError());
+			goto skipmainmenu;
+		}
+		if (!DeleteMenu(hHelpPopup, 0, MF_BYPOSITION) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Main Delete Menu #3 failed, error = 0x%08X.\n", GetLastError());
 			goto skipmainmenu;
 		}
 
@@ -3338,14 +3659,14 @@ void InstallMiscHooks_SC2K1996(void) {
 	skipmainmenu:
 
 	// TODO: write a much cleaner and more programmatic way of doing this
-	hGameMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(3));
+	hGameMenu = LoadMenu(hSC2KAppModule, MAKEINTRESOURCE(SC2K_MENU_GAME));
 	if (hGameMenu) {
 		// File menu -> Reload Default Tileset
 		HMENU hFilePopup;
 		MENUITEMINFO miiFilePopup;
 		miiFilePopup.cbSize = sizeof(MENUITEMINFO);
 		miiFilePopup.fMask = MIIM_SUBMENU;
-		if (!GetMenuItemInfo(hGameMenu, 0, TRUE, &miiFilePopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+		if (!GetMenuItemInfo(hGameMenu, SC2K_MENU_GAME_FILE, TRUE, &miiFilePopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
 			ConsoleLog(LOG_DEBUG, "MISC: Game GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
 			goto skipgamemenu;
 		}
@@ -3360,7 +3681,7 @@ void InstallMiscHooks_SC2K1996(void) {
 		MENUITEMINFO miiOptionsPopup;
 		miiOptionsPopup.cbSize = sizeof(MENUITEMINFO);
 		miiOptionsPopup.fMask = MIIM_SUBMENU;
-		if (!GetMenuItemInfo(hGameMenu, 2, TRUE, &miiOptionsPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+		if (!GetMenuItemInfo(hGameMenu, SC2K_MENU_GAME_OPTIONS, TRUE, &miiOptionsPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
 			ConsoleLog(LOG_DEBUG, "MISC: Game GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
 			goto skipgamemenu;
 		}
@@ -3383,7 +3704,7 @@ void InstallMiscHooks_SC2K1996(void) {
 		MENUITEMINFO miiWindowsPopup;
 		miiWindowsPopup.cbSize = sizeof(MENUITEMINFO);
 		miiWindowsPopup.fMask = MIIM_SUBMENU;
-		if (!GetMenuItemInfo(hGameMenu, 4, TRUE, &miiWindowsPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+		if (!GetMenuItemInfo(hGameMenu, SC2K_MENU_GAME_WINDOWS, TRUE, &miiWindowsPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
 			ConsoleLog(LOG_DEBUG, "MISC: Game GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
 			goto skipgamemenu;
 		}
@@ -3395,6 +3716,29 @@ void InstallMiscHooks_SC2K1996(void) {
 		if (!InsertMenu(hMenuWindowsPopup, -1, MF_BYPOSITION | MF_STRING, IDM_GAME_WINDOWS_SCENARIOGOALS, "Show &Scenario Goals...") && mischook_debug & MISCHOOK_DEBUG_MENU) {
 			ConsoleLog(LOG_DEBUG, "MISC: Game InsertMenuA #2 failed, error = 0x%08X.\n", GetLastError());
 			goto skipgamemenu;
+		}
+
+		// Help menu - rename and remove unnecessary items.
+		HMENU hHelpPopup;
+		MENUITEMINFO miiHelpPopup;
+		miiHelpPopup.cbSize = sizeof(MENUITEMINFO);
+		miiHelpPopup.fMask = MIIM_SUBMENU;
+		if (!GetMenuItemInfo(hGameMenu, SC2K_MENU_GAME_HELP_NODBG, TRUE, &miiHelpPopup) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game GetMenuItemInfo failed, error = 0x%08X.\n", GetLastError());
+			goto skipmainmenu;
+		}
+		hHelpPopup = miiHelpPopup.hSubMenu;
+		if (!ModifyMenu(hHelpPopup, 0, MF_BYPOSITION | MF_STRING, 57666, "Information...") && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game Modify Menu #1 failed, error = 0x%08X.\n", GetLastError());
+			goto skipmainmenu;
+		}
+		if (!DeleteMenu(hHelpPopup, 1, MF_BYPOSITION) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game Delete Menu #1 failed, error = 0x%08X.\n", GetLastError());
+			goto skipmainmenu;
+		}
+		if (!DeleteMenu(hHelpPopup, 1, MF_BYPOSITION) && mischook_debug & MISCHOOK_DEBUG_MENU) {
+			ConsoleLog(LOG_DEBUG, "MISC: Game Delete Menu #2 failed, error = 0x%08X.\n", GetLastError());
+			goto skipmainmenu;
 		}
 
 		if (mischook_debug & MISCHOOK_DEBUG_MENU)
@@ -3431,6 +3775,10 @@ skipgamemenu:
 	// Hook for CSimcityView::OnRButtonDown
 	SafeVirtualProtect((LPVOID)0x401C9E, 5, PAGE_EXECUTE_READWRITE);
 	NEWJMP((LPVOID)0x401C9E, Hook_SimcityView_OnRButtonDown);
+
+	// Hook for CSimcityView::GameCursorHitTest
+	SafeVirtualProtect((LPVOID)0x402F0E, 5, PAGE_EXECUTE_READWRITE);
+	NEWJMP((LPVOID)0x402F0E, Hook_SimcityView_GameCursorHitTest);
 
 	// Hook for CSimcityView::DoBudget
 	SafeVirtualProtect((LPVOID)0x4020AE, 5, PAGE_EXECUTE_READWRITE);

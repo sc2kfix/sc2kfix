@@ -270,7 +270,7 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
 	if (f) {
 		// Set the uFailMsg by default here - then unset it once
 		// the main read begins.
-		uFailMsg = 48;
+		uFailMsg = SC2K_STRING_ERRREADFILE;
 		fseek(f, 0, SEEK_END);
 		nFlen = ftell(f);
 		fseek(f, 0, SEEK_SET);
@@ -329,7 +329,7 @@ extern "C" void __cdecl Hook_LoadSpriteDataArchive1996(WORD nSpriteSet) {
 		fclose(f);
 	}
 	else {
-		uFailMsg = 47;
+		uFailMsg = SC2K_STRING_ERROPENFILE;
 	}
 
 	if (uFailMsg)
@@ -833,8 +833,8 @@ extern "C" void __stdcall Hook_SimcityApp_LoadTileset1996() {
 	memset(szPath, 0, sizeof(szPath));
 	memset(szDirPath, 0, sizeof(szDirPath));
 
-	L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 4004, szFileTypes, sizeof(szFileTypes) - 1);
-	L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, 4005, szCaption, sizeof(szCaption) - 1);
+	L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, SC2K_STRING_LOADTILEFILEEXTS, szFileTypes, sizeof(szFileTypes) - 1);
+	L_LoadStringA(game_AfxCoreState.m_hCurrentResourceHandle, SC2K_STRING_LOADTILESET, szCaption, sizeof(szCaption) - 1);
 
 	Game_SimcityApp_GetValueStringA(pThis, &strFilePath, aPaths, aTilesets);
 
