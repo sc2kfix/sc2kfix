@@ -69,7 +69,9 @@ sc2kfix includes API bindings for the Simple DirectMedia Layer (SDL3) and libsnd
 
 sc2kfix includes the Lua embeddable programming language (https://www.lua.org). Lua is made available under the terms of the MIT license; a copy of this license has been included in the sc2kfix project as `thirdparty/lua/LICENSE`. Lua is copyright (c) 1994-2025 Lua.org, PUC-Rio.
 
-sc2kfix includes the miniz single-file zlib-compatible DEFLATE/ZIP library (https://github.com/richgel999/miniz). minizi is made available under the terms of the MIT license; a copy of this license has been included in the sc2kfix project as `thirdparty/miniz/LICENSE`.
+sc2kfix includes the miniz single-file zlib-compatible DEFLATE/ZIP library (https://github.com/richgel999/miniz). miniz is made available under the terms of the MIT license; a copy of this license has been included in the sc2kfix project as `thirdparty/miniz/LICENSE`.
+
+sc2kfix includes the libfmt text formatting library (https://github.com/fmtlib/fmt). libfmt is made available under the terms of the MIT license; a copy of this license has been included in the sc2kfix project as `thirdparty/fmt/LICENSE`.
 
 ## How do I use it?
 1. If you are installing the game from scratch, copy the SC2K folder from your CD (under the WIN95 folder in the Special Edition CD) to your hard drive.

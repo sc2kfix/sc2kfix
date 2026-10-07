@@ -1143,20 +1143,6 @@ HOOKEXT_CPP void DecodeBudgetArray(budget_t* pBudget, json::JSON jsonBudget) {
 	DecodeInt32Array(pBudget->iFundMonth, jsonBudget["fund_month"], 12);
 }
 
-// Returns a std::string that's a clone of the parameter but entirely lowercase
-HOOKEXT_CPP std::string string_tolower(std::string& str) {
-	std::string strNew = str;
-	std::transform(strNew.begin(), strNew.end(), strNew.begin(), std::tolower);
-	return strNew;
-}
-
-// Returns a std::string that's a clone of the parameter but entirely uppercase
-HOOKEXT_CPP std::string string_toupper(std::string& str) {
-	std::string strNew = str;
-	std::transform(strNew.begin(), strNew.end(), strNew.begin(), std::toupper);
-	return strNew;
-}
-
 // Similar to std::string::starts_with in C++20
 HOOKEXT_CPP bool string_starts_with(std::string& str, const char* prefix) {
 	return (str.rfind(prefix, 0) != std::string::npos);

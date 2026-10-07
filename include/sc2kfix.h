@@ -19,6 +19,10 @@
 #define HOOKEXT extern "C" __declspec(dllexport)
 #define HOOKEXT_CPP __declspec(dllexport)
 
+#define FMT_UNICODE 0
+#define FMT_HEADER_ONLY
+#include "../thirdparty/fmt/core.h"
+
 #include <json.hpp>
 #include <commctrl.h>
 #include <sc2k/sc2k_resource.h>
@@ -158,6 +162,8 @@ template <typename T> std::string to_string_precision(const T value, const int p
 	_macro_lvc.cx = (width);\
 	(int)SNDMSG((hwndLV), LVM_INSERTCOLUMN, (WPARAM)(i), (LPARAM)(LV_COLUMN *)&_macro_lvc);\
 }
+
+#define ConsoleLogFmt(iLogLevel, strFmt, ...) ConsoleLog(iLogLevel, fmt::format(strFmt, __VA_ARGS__).c_str())
 
 #define THREAD_WAIT_TIME    140
 #define SUBTHREAD_WAIT_TIME 140

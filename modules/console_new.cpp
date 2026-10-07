@@ -715,7 +715,9 @@ bool ConsoleCommandRunTest(std::vector<std::string> args, int iBreakoutState, in
 	if (iBreakoutState != BREAKOUT_RETURN)
 		return false;
 
-	bForceRunTestNextTick = true;
+	ConsoleLogFmt(LOG_INFO, "Hello {1:s}, it's {0:d} (probably)!\n", 2026, "Player");
+
+	//bForceRunTestNextTick = true;
 
 	return true;
 }
