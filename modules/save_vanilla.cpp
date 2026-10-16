@@ -1031,6 +1031,7 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 	OPENFILENAMEA m_ofn;
 
 	pMainFrm = (CMainFrame *)pThis->m_pMainWnd;
+	pThis->dwSCAOnQuitSuspendSim = 0;
 	if (Game_SimcityApp_CheckActiveGame(pThis) == IDCANCEL) {
 		if (pThis->dwSCAOnInitToggleToolBar)
 			Game_MainFrame_ToggleToolBars(pMainFrm, TRUE);
@@ -1077,6 +1078,7 @@ extern "C" void __stdcall Hook_SimcityApp_LoadCity() {
 		nRet = GetOpenFileNameA(&m_ofn);
 		nRetState = (!nRet) ? IDCANCEL : nRet;
 		if (nRetState == IDCANCEL || strlen(m_ofn.lpstrFile) == 0) {
+			pThis->dwSCAOnQuitSuspendSim = 0;
 			if (pThis->dwSCAOnInitToggleToolBar) {
 				Game_MainFrame_ToggleToolBars(pMainFrm, TRUE);
 				Game_UpdateSectionsAndResetWindowMenu();
