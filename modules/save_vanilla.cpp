@@ -480,8 +480,8 @@ static int L_SimcityApp_OpenCityInfo(CSimcityAppPrimary *pSCApp, FILE *pFile, in
 			wNewspaperChoice = (__int16)pMiscInfo[nArrNextOffset++];
 			int nTilePos = pMiscInfo[nArrNextOffset++];
 			if (nTilePos == -1) {
-				wViewInitialCoordX = 64;
-				wViewInitialCoordY = 128;
+				wViewInitialCoordX = 63;
+				wViewInitialCoordY = 127;
 			}
 			else {
 				wViewInitialCoordX = nTilePos & 0x7F;

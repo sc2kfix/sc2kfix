@@ -167,8 +167,8 @@ static void Save_LoadMiscInfoFromJSON(json::JSON& jsonMISC) {
 
 	int nTilePos = jsonMISC["city"]["screen_point"].ToInt32();
 	if (nTilePos == -1) {
-		wViewInitialCoordX = 64;
-		wViewInitialCoordY = 128;
+		wViewInitialCoordX = 63;
+		wViewInitialCoordY = 127;
 	}
 	else {
 		wViewInitialCoordX = nTilePos & 0x7F;
